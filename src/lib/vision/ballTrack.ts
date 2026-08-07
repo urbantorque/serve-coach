@@ -243,6 +243,79 @@ export const flightHeightAt = (flight: BallFlight, t: number): number => {
   return c0 + c1 * t + c2 * t * t
 }
 
+/** Least-squares straight line through (t, x), evaluated at `t`. Shared by the
+ *  apex-x fit below and by `flightXAt` — a ball in flight has no horizontal
+ *  acceleration worth modelling, so a line is enough for both. */
+function linearAt(pts: { t: number; x: number }[], t: number): number {
+  const meanT = pts.reduce((s, p) => s + p.t, 0) / pts.length
+  const meanX = pts.reduce((s, p) => s + p.x, 0) / pts.length
+  let num = 0
+  let den = 0
+  for (const p of pts) {
+    num += (p.t - meanT) * (p.x - meanX)
+    den += (p.t - meanT) ** 2
+  }
+  const slope = den > 1e-9 ? num / den : 0
+  return meanX + slope * (t - meanT)
+}
+
+/**
+ * Ball's fitted horizontal position at a moment, from the same straight-line
+ * fit through `flight.samples` that placed the apex's x. Companion to
+ * `flightHeightAt` — together the two give a point anywhere along the tracked
+ * flight, not just at the three moments (`apex`, and whatever a sample happened
+ * to land on) `BallFlight` stores directly.
+ */
+export const flightXAt = (flight: BallFlight, t: number): number => linearAt(flight.samples, t)
+
+/**
+ * The toss boiled down to what a picture needs: three points on the fitted
+ * arc — where the ball left the hand, where it topped out, and where it had
+ * fallen to by the moment of contact — plus the two ratios a coach actually
+ * talks about. Every height here is normalised against the player's own
+ * standing height, the same convention every other measurement in the report
+ * uses, so a caller never has to redo that division itself.
+ *
+ * A thin read of `flight`, nothing here is fitted independently — `peakHeight`
+ * and `fallToContact` are the same numbers the `tossPeakHeight` and
+ * `contactBelowPeak` metrics report, just packaged as plain geometry alongside
+ * the points a UI needs to draw them, rather than buried in a metrics list.
+ * `releaseT` and `contactT` are normally the toss and contact keyframe times —
+ * reading the fit at those moments, rather than at whichever raw detection
+ * happened to survive, is what keeps this lined up with every other
+ * keyframe-anchored number the app reports.
+ */
+export interface TossFlight {
+  release: { t: number; x: number; y: number }
+  apex: { t: number; x: number; y: number }
+  drop: { t: number; x: number; y: number }
+  /** Peak height above the court, in body heights. */
+  peakHeight: number
+  /** How far the ball had fallen from its peak by contact, in body heights. */
+  fallToContact: number
+  /** Sideways drift from release to contact, in body heights. Unsigned. */
+  horizontalDrift: number
+}
+
+export function summariseToss(
+  flight: BallFlight,
+  releaseT: number,
+  contactT: number,
+  scale: { bodyHeight: number; groundY: number },
+): TossFlight {
+  const { bodyHeight, groundY } = scale
+  const release = { t: releaseT, x: flightXAt(flight, releaseT), y: flightHeightAt(flight, releaseT) }
+  const drop = { t: contactT, x: flightXAt(flight, contactT), y: flightHeightAt(flight, contactT) }
+  return {
+    release,
+    apex: { ...flight.apex },
+    drop,
+    peakHeight: (groundY - flight.apex.y) / bodyHeight,
+    fallToContact: Math.max(0, (drop.y - flight.apex.y) / bodyHeight),
+    horizontalDrift: Math.abs(drop.x - release.x) / bodyHeight,
+  }
+}
+
 export interface TrackOptions {
   /**
    * Frame-normalised vertical acceleration of gravity, per second squared.
@@ -334,15 +407,7 @@ export function trackBall(
 
   // Horizontal position at the apex, from a straight-line fit — a ball in flight
   // has no horizontal acceleration worth modelling.
-  const meanT = best.inliers.reduce((s, p) => s + p.t, 0) / best.inliers.length
-  const meanX = best.inliers.reduce((s, p) => s + p.x, 0) / best.inliers.length
-  let num = 0
-  let den = 0
-  for (const p of best.inliers) {
-    num += (p.t - meanT) * (p.x - meanX)
-    den += (p.t - meanT) ** 2
-  }
-  const apexX = meanX + (den > 1e-9 ? (num / den) * (apexT - meanT) : 0)
+  const apexX = linearAt(best.inliers, apexT)
 
   const span = Math.max(...best.inliers.map((p) => p.t)) - Math.min(...best.inliers.map((p) => p.t))
   const residual =

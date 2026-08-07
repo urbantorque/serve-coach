@@ -1,5 +1,5 @@
 import type { ServeType } from '../storage/prefs'
-import type { BallFlight } from '../vision/ballTrack'
+import type { BallFlight, TossFlight } from '../vision/ballTrack'
 
 /** A single pose landmark. */
 export interface Landmark {
@@ -140,6 +140,15 @@ export interface Analysis {
    * perfectly valid without it. Plain data so it survives being stored.
    */
   ball?: BallFlight
+  /**
+   * The toss, boiled down to three points — release, apex, and where the ball
+   * had fallen to by contact — and the two ratios that come from them, in the
+   * same body-height units as every other measurement here. A component can
+   * draw and narrate the toss straight off this without knowing anything about
+   * quadratic fits or gravity. Present exactly when `ball` is; a report is
+   * still complete without it, the toss area just has one less thing to draw.
+   */
+  tossFlight?: TossFlight
   /**
    * Which serve this was judged as. Stored because the target bands differ, so a
    * score is only meaningful alongside the serve it was scored against — and the

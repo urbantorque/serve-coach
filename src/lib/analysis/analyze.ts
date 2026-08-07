@@ -9,7 +9,14 @@ import {
 } from '../pose/extract'
 import { framingIssues } from './groundTruth'
 import type { ServeType } from '../storage/prefs'
-import { findCandidates, flightHeightAt, trackBall, type BallFlight } from '../vision/ballTrack'
+import {
+  findCandidates,
+  flightHeightAt,
+  flightXAt,
+  summariseToss,
+  trackBall,
+  type BallFlight,
+} from '../vision/ballTrack'
 import { loadEngine, type EngineProgress } from '../pose/poseEngine'
 import { drawSkeleton, fitContain } from '../pose/skeleton'
 import { FUNDAMENTALS } from './coaching'
@@ -392,12 +399,24 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
       Math.max(1, totalWeight),
   )
 
+  // The keyframes and the tracked ball are unchanged by a serve-type rescore —
+  // only the target bands moved — so this recomputes to the same values every
+  // time. Redone here anyway rather than carried over from `analysis`, so a
+  // report reopened from before this field existed still gets one.
+  const tossFlight = analysis.ball
+    ? summariseToss(analysis.ball, analysis.frames[skel.keys.toss].t, analysis.frames[skel.keys.contact].t, {
+        bodyHeight: skel.bodyHeight,
+        groundY: skel.groundY,
+      })
+    : undefined
+
   return {
     ...analysis,
     fundamentals,
     overall,
     overallStatus: statusOf(overall),
     focus: pickFocus(fundamentals),
+    tossFlight,
     serveType,
   }
 }
@@ -538,6 +557,13 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       Math.max(1, totalWeight),
   )
 
+  const tossFlight = ball
+    ? summariseToss(ball, frames[skel.keys.toss].t, frames[skel.keys.contact].t, {
+        bodyHeight: skel.bodyHeight,
+        groundY: skel.groundY,
+      })
+    : undefined
+
   onProgress({ step: 'done', ratio: 1 })
 
   // Read the metadata before the finally block detaches the source: `load()`
@@ -564,6 +590,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     serves,
     scale: { bodyHeight: skel.bodyHeight, groundY: skel.groundY },
     ball,
+    tossFlight,
     serveType,
   }
 }
@@ -586,18 +613,8 @@ export function ballMarkerAt(
   const last = ball.samples[ball.samples.length - 1].t
   if (t < first - 0.1 || t > last + 0.1) return undefined
 
-  const xs = ball.samples
-  const meanT = xs.reduce((s, p) => s + p.t, 0) / xs.length
-  const meanX = xs.reduce((s, p) => s + p.x, 0) / xs.length
-  let num = 0
-  let den = 0
-  for (const p of xs) {
-    num += (p.t - meanT) * (p.x - meanX)
-    den += (p.t - meanT) ** 2
-  }
-  const slope = den > 1e-9 ? num / den : 0
   const at = (u: number) => ({
-    x: meanX + slope * (u - meanT),
+    x: flightXAt(ball, u),
     y: flightHeightAt(ball, u),
   })
 
