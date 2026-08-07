@@ -18,6 +18,7 @@
 import { LM, clamp, mean, type Side, sided } from './geometry'
 import type { Skeleton } from './phases'
 import type { Frame, Metric } from './types'
+import { cue } from './voice'
 
 /** Below this a measurement is shown hedged and never becomes the focus. */
 export const SOFT_MEASUREMENT = 0.55
@@ -161,15 +162,15 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
 export function softnessReason(id: string, ctx: ConfidenceContext): string | undefined {
   const deps = DEPENDENCIES[id] ?? []
   if (deps.includes('scale') && ctx.skel.derivation.scaleFromTorso) {
-    return 'Your feet were not in frame, so this is scaled from your upper body and is approximate.'
+    return cue('Your feet sat outside the frame. Read this one loosely and step back next time.')
   }
   if (deps.includes('swingTiming') && ctx.swingSamples < 4) {
-    return 'Your camera caught very few frames through the swing, so this timing is rough. Slow motion sharpens it.'
+    return cue('Your camera caught few frames through the swing. Film in slow motion to sharpen this.')
   }
   if (deps.includes('trophy') && ctx.skel.derivation.trophyFromArms) {
-    return 'Your legs barely load, so the trophy position had to be found from your arms — this one is approximate.'
+    return cue('Your legs barely load, so the trophy came from your arms. Read this one loosely.')
   }
-  return 'Parts of your body were hard to make out here, so this reading is less certain than the rest.'
+  return cue('Parts of your body blurred here. Read this one loosely.')
 }
 
 /** Confidence-weighted, so a measurement the app cannot see does not steer a score. */

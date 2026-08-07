@@ -353,7 +353,7 @@ check('the report says so, and stops claiming confidence it has not got', () => 
   )
   note(`confidence ${clean.confidence.toFixed(2)} clean, ${switched.confidence.toFixed(2)} switched`)
   assert(
-    switched.warnings.some((w) => /different body|somebody else/i.test(w)),
+    switched.warnings.some((w) => /another body|different body|somebody else/i.test(w)),
     `no warning raised. Warnings: ${switched.warnings.join(' / ') || '(none)'}`,
   )
   assert(
@@ -361,7 +361,7 @@ check('the report says so, and stops claiming confidence it has not got', () => 
     `confidence barely moved: ${clean.confidence.toFixed(2)} → ${switched.confidence.toFixed(2)}`,
   )
   assert(
-    clean.warnings.every((w) => !/different body/i.test(w)),
+    clean.warnings.every((w) => !/another body|different body/i.test(w)),
     'warned about a clip that stayed on one person',
   )
 })

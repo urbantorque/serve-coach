@@ -32,6 +32,7 @@ import {
   statusOf,
 } from './geometry'
 import { measure } from './metrics'
+import { cue } from './voice'
 import { buildPhases, detectServe, type Skeleton } from './phases'
 import { NotAServeError, type Analysis, type Frame, type Fundamental, type Quality } from './types'
 
@@ -149,26 +150,26 @@ async function locateServes(opts: AnalyzeOptions): Promise<number[] | undefined>
  */
 export function blockingFramingIssue(issues: string[]): NotAServeError | undefined {
   const filming = [
-    'Stand the phone side-on, 4–5 metres away, level with the baseline.',
-    'Fit the whole body in the shot, feet included, with room above the racket.',
+    'Stand the phone side-on, four metres back, level with the baseline.',
+    'Fit head to feet in the shot, with room above the racket.',
   ]
 
   if (issues.includes('nobody-visible') || issues.includes('body-unclear')) {
-    return new NotAServeError('I could not find a player in that clip.', [
-      'Make sure one person is fully in frame and well lit.',
+    return new NotAServeError('I found no player in that clip.', [
+      'Put one person fully in frame, well lit.',
       ...filming,
     ])
   }
   if (issues.includes('too-far-away')) {
-    return new NotAServeError('You are too far from the camera to measure.', [
-      'Move the phone closer — about 4–5 metres — so your body fills most of the height of the frame.',
-      'Filming from across the court leaves too few pixels on your body to read the angles.',
+    return new NotAServeError('You stand too far from the camera to measure.', [
+      'Move the phone to four metres so your body fills the frame height.',
+      'Filming from across the court leaves too few pixels to read your angles.',
     ])
   }
   if (issues.includes('feet-cropped') && issues.includes('head-cropped')) {
-    return new NotAServeError('Your whole body is not in the shot.', [
-      'Turn the phone upright and step back until your head and feet both fit, with room above for the racket.',
-      'Every height is measured against your own body, so both ends have to be visible.',
+    return new NotAServeError('Your body does not fit the shot.', [
+      'Turn the phone upright and step back until head and feet both fit.',
+      'Every height uses your own body as the ruler, so show both ends.',
     ])
   }
   return undefined
@@ -264,23 +265,23 @@ export function assessQuality(frames: Frame[], skel: Skeleton, sampledFps: numbe
   const warnings: string[] = []
   if (switched) {
     warnings.push(
-      'The tracking jumped to a different body part-way through, which usually means somebody else was in shot. Film with only the player in frame — these numbers may be measured from two different people.',
+      cue('Tracking jumped to another body mid-serve. Film with only the player in frame; this report may mix two people.'),
     )
   }
   if (visibility < 0.65) {
-    warnings.push('Parts of your body were hard to make out. Better light or a plainer background will sharpen the numbers.')
+    warnings.push(cue('Parts of your body blurred out. Add light or find a plainer background.'))
   }
   // Four samples across a ~150 ms drop-to-contact leaves ±30 ms of quantisation
   // on a measurement whose whole target band is only 120 ms wide, so below that
   // the swing timing is genuinely soft and the player should be told.
   if (swingSamples < 4) {
-    warnings.push('Your camera captured very few frames through the fastest part of the swing. Filming in slow motion makes the swing numbers far more precise.')
+    warnings.push(cue('Your camera caught few frames through the swing. Film in slow motion to sharpen the swing numbers.'))
   }
   if (anklesSeen < 0.5) {
-    warnings.push('Your feet were not clearly in frame, so heights are estimated from your upper body. Step back so your whole body fits.')
+    warnings.push(cue('Your feet sat outside the frame, so heights are estimated. Step back until your whole body fits.'))
   }
   if (skel.handednessConfidence < 0.35) {
-    warnings.push('I was not fully certain which hand holds your racket. Check the badge below and switch it if I guessed wrong.')
+    warnings.push(cue('I could not lock which hand holds your racket. Check the badge below and switch it if wrong.'))
   }
   // The player told us which hand, and the clip disagrees — confidently. Almost
   // always the wrong clip, somebody else serving, or a front-facing camera that
@@ -291,7 +292,7 @@ export function assessQuality(frames: Frame[], skel: Skeleton, sampledFps: numbe
     skel.detectionConfidence > 0.6
   ) {
     warnings.push(
-      `You have this set to ${skel.racket}-handed, but this clip looks ${skel.detectedRacket}-handed. If your phone's front camera mirrored the picture, or this is somebody else serving, the numbers below will be off.`,
+      cue(`You set ${skel.racket}-handed, but this clip looks ${skel.detectedRacket}-handed. Check the badge, or refilm without the mirrored front camera.`),
     )
   }
 
@@ -337,7 +338,7 @@ export function pickFocus(fundamentals: Fundamental[]): Analysis['focus'] {
   if (!worst) {
     return {
       title: 'Keep grooving this serve',
-      why: 'Nothing in this motion is holding you back.',
+      why: cue('Nothing here holds you back.'),
       drill: fundamentals[0].drill,
     }
   }
@@ -345,15 +346,18 @@ export function pickFocus(fundamentals: Fundamental[]): Analysis['focus'] {
   if (worst.metric.score >= 85) {
     return {
       title: 'Keep grooving this serve',
-      why: 'Nothing in this motion is holding you back. Film yourself again in a few sessions and check the numbers have held.',
+      why: cue('Nothing here holds you back. Film again in a few sessions and check it held.'),
       drill: worst.area.drill,
     }
   }
 
+  // The drill comes from the losing measurement when it carries its own — one
+  // fault, one exercise — and falls back to the area's broader session only for
+  // the handful of measurements that share a correction.
   return {
     title: worst.metric.label,
     why: worst.metric.fix ?? worst.metric.insight,
-    drill: worst.area.drill,
+    drill: worst.metric.drill ?? worst.area.drill,
   }
 }
 
@@ -483,9 +487,9 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   })
 
   if (frames.length < 8) {
-    throw new NotAServeError('I could not find a person in that video.', [
-      'Make sure the player is fully in frame and well lit.',
-      'Only one person should be visible.',
+    throw new NotAServeError('I found no player in that video.', [
+      'Put the player fully in frame, well lit.',
+      'Keep everyone else out of the shot.',
     ])
   }
 
@@ -502,7 +506,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // than as a blocking complaint about a clip that worked perfectly well.
   if (video.duration > LONG_CLIP_SECONDS) {
     quality.warnings.push(
-      `That clip is ${Math.round(video.duration)} seconds long, so finding the serves in it took most of the wait. Trimming to just the serves in your photo library makes this much quicker.`,
+      cue('Long clip, so most of the wait went on finding the serves. Trim to the serves before you upload.'),
     )
   }
 

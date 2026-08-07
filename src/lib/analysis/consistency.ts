@@ -1,5 +1,6 @@
 import { clamp, mean, statusOf } from './geometry'
 import type { Analysis, Metric, Status } from './types'
+import { cue } from './voice'
 
 export interface MetricSpread {
   id: string
@@ -131,10 +132,10 @@ export function buildConsistency(analyses: Analysis[], expected: number): Consis
 export function consistencyHeadline(c: Consistency): string {
   if (!c.weakest) return ''
   if (c.weakest.score >= 85) {
-    return `Across ${c.serves} serves almost nothing moved. That repeatability is what lets you serve under pressure.`
+    return cue(`Almost nothing moved across ${c.serves} serves. That repeatability holds up under pressure.`)
   }
   if (c.weakest.score >= 70) {
-    return `Your motion repeats well across ${c.serves} serves. ${c.weakest.label} is the one that drifts.`
+    return cue(`Your motion repeats well across ${c.serves} serves. ${c.weakest.label} drifts.`)
   }
-  return `Most of your motion repeats, but your ${c.weakest.label.toLowerCase()} changes noticeably from serve to serve. Grooving that one thing will do more for your serve than any other change.`
+  return cue(`Your ${c.weakest.label.toLowerCase()} changes serve to serve. Groove that one thing before anything else.`)
 }

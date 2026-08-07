@@ -1,5 +1,6 @@
-import { FUNDAMENTALS } from './analysis/coaching'
+import { FUNDAMENTALS, METRICS } from './analysis/coaching'
 import { mean } from './analysis/geometry'
+import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
 import { MEANINGFUL_DELTA, dominantType, typeOf } from './progress'
 import type { Session } from './storage/db'
@@ -142,7 +143,10 @@ export function findPracticeFocus(
     label: pick.label,
     fundamentalId: pick.fundamentalId,
     fundamentalLabel: fundamental.label,
-    drill: fundamental.drill,
+    // The measurement's own corrective first. A player told for three weeks to
+    // work on their racket drop should be handed the drop drill, not the area's
+    // general swing session that also spends reps on things they already do.
+    drill: METRICS[pick.id]?.drill ?? fundamental.drill,
     scores: pick.scores,
     average: Math.round(pick.average),
     timesWeakest: pick.weakest,
@@ -154,18 +158,19 @@ export function findPracticeFocus(
   }
 }
 
-/** The sentence at the top of the practice card. */
+/** The line at the top of the practice card. */
 export function practiceHeadline(f: PracticeFocus): string {
   const across = `across your last ${f.sessionsConsidered} ${SERVE_WORD[f.serveType]} serves`
+  const it = f.label.toLowerCase()
 
   if (f.verdict === 'improving') {
-    return `Your ${f.label.toLowerCase()} is still the weakest part of your serve ${across}, but it is moving in the right direction. Keep at it.`
+    return cue(`Your ${it} still trails ${across}, but it moves in the right direction. Keep going.`)
   }
   if (f.verdict === 'slipping') {
-    return `Your ${f.label.toLowerCase()} has gone backwards ${across}. Worth taking back to basics before it settles in.`
+    return cue(`Your ${it} has gone backwards ${across}. Take it back to basics now.`)
   }
   if (f.timesWeakest >= Math.ceil(f.sessionsConsidered / 2)) {
-    return `Your ${f.label.toLowerCase()} has been the weakest part of ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD[f.serveType]} serves, and it has not shifted. This is the one to put time into.`
+    return cue(`Your ${it} lost ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD[f.serveType]} serves and has not shifted. Spend your time here.`)
   }
-  return `Your ${f.label.toLowerCase()} is the lowest-scoring part of your serve ${across} and has not moved. This is the one to put time into.`
+  return cue(`Your ${it} scores lowest ${across} and has not moved. Spend your time here.`)
 }
