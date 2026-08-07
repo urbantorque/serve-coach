@@ -243,18 +243,28 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   // whole point is that it is a separate thing being tracked separately.
   if (o.ball) {
     const toPoint = (p: { x: number; y: number }) => ({ x: ox + p.x * dw, y: oy + p.y * dh })
+    // The path is already the fitted arc, evaluated at a fine, even step —
+    // not raw per-frame detections — so it is drawn as one smooth stroke
+    // rather than a dashed polyline. Older stretches of the arc sit closer to
+    // slate, and the curve warms toward the lime accent as it nears the
+    // ball's current moment, which reads as a single intentional flight
+    // rather than a trail of dots.
     if (o.ball.path && o.ball.path.length > 1) {
-      ctx.strokeStyle = 'rgba(255, 214, 92, 0.5)'
-      ctx.lineWidth = 2 * scale
-      ctx.setLineDash([4 * scale, 4 * scale])
-      ctx.beginPath()
-      o.ball.path.forEach((p, i) => {
-        const q = toPoint(p)
-        if (i === 0) ctx.moveTo(q.x, q.y)
-        else ctx.lineTo(q.x, q.y)
-      })
-      ctx.stroke()
-      ctx.setLineDash([])
+      const pts = o.ball.path.map(toPoint)
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      for (let i = 1; i < pts.length; i++) {
+        const age = i / (pts.length - 1)
+        const r = Math.round(152 + (205 - 152) * age)
+        const g = Math.round(162 + (249 - 162) * age)
+        const b = Math.round(179 + (74 - 179) * age)
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.16 + 0.4 * age})`
+        ctx.lineWidth = (1.3 + 0.5 * age) * scale
+        ctx.beginPath()
+        ctx.moveTo(pts[i - 1].x, pts[i - 1].y)
+        ctx.lineTo(pts[i].x, pts[i].y)
+        ctx.stroke()
+      }
     }
     const b = toPoint(o.ball)
     ctx.fillStyle = 'rgba(255, 214, 92, 0.95)'

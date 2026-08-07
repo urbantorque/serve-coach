@@ -196,12 +196,17 @@ check('the reference pose is drawn under the player, not over them', () => {
 
 heading('Drawing the ball')
 
-check('the ball and its flight path are drawn inside the picture', () => {
+check('the ball flight is drawn as one smooth curve, not a dashed raw path', () => {
   const rect = fitContain(W, H, 1)
   const path = Array.from({ length: 8 }, (_, i) => ({ x: 0.3 + i * 0.04, y: 0.2 + i * 0.03 }))
+  const withoutBall = drawOnce().strokes.length
   const { arcs, strokes } = drawOnce({ ball: { x: 0.45, y: 0.3, path } })
   const dashed = strokes.filter((s) => s.dashed)
-  assert(dashed.length >= path.length - 1, 'the flight path was not drawn')
+  assert(dashed.length === 0, 'the flight arc is still drawn dashed, like a polyline through raw samples')
+  assert(
+    strokes.length - withoutBall >= path.length - 1,
+    'the flight arc was not drawn as a continuous run of segments',
+  )
   const marker = arcs.find(
     (a) => Math.abs(a.x - (rect.ox + 0.45 * rect.dw)) < 1 && Math.abs(a.y - (rect.oy + 0.3 * rect.dh)) < 1,
   )

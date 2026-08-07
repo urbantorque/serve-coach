@@ -618,7 +618,11 @@ export function ballMarkerAt(
     y: flightHeightAt(ball, u),
   })
 
-  const steps = 14
+  // Fine enough that drawing straight segments between consecutive points
+  // reads as one continuous curve rather than a jointed polyline — the curve
+  // is already smooth (it's the fitted quadratic, not raw detections), the
+  // old coarse sampling was just hiding that.
+  const steps = 32
   const path = Array.from({ length: steps + 1 }, (_, i) => at(first + ((last - first) * i) / steps))
   return { ...at(t), path }
 }
