@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+.scratch
+*.local
+.DS_Store
+.vite
+
+# Vendored by `npm run setup:assets` — regenerate rather than commit.
+# The pose model alone is 9 MB and the WASM runtime another 19 MB.
+public/models/
+public/wasm/
