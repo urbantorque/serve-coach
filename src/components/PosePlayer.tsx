@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ballMarkerAt } from '../lib/analysis/analyze'
 import type { Analysis, Frame, PhaseId } from '../lib/analysis/types'
 import { drawSkeleton, fitContain } from '../lib/pose/skeleton'
+import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { Icon } from './primitives'
 
 const SPEEDS = [1, 0.5, 0.25] as const
@@ -41,6 +42,17 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
    * nine-megabyte pose model to fetch before it can do anything at all.
    */
   const [modelPose, setModelPose] = useState<typeof import('../lib/analysis/modelServe')>()
+
+  /**
+   * Steadies the skeleton against per-frame pose noise, for drawing only.
+   *
+   * One instance per mount rather than per draw, so it keeps a continuous
+   * sense of velocity across frames instead of restarting cold on every
+   * render. See `SkeletonSmoother` for why a scrub or a loop resets it
+   * instead of dragging the pose across the screen.
+   */
+  const smootherRef = useRef<SkeletonSmoother>()
+  if (!smootherRef.current) smootherRef.current = new SkeletonSmoother()
 
   useEffect(() => {
     if (!modelOn || modelPose) return
@@ -112,8 +124,13 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
           })
         : undefined
 
+    // Smoothed only for drawing — `f` itself, and everything derived from the
+    // raw `frames` array below (the trail, the racket estimate), is left
+    // untouched so the overlay's numbers never drift from what was measured.
+    const renderFrame: Frame = { ...f, image: smootherRef.current!.frame(f.image, f.t) }
+
     drawSkeleton(ctx, {
-      frame: f,
+      frame: renderFrame,
       aspect,
       rect,
       racket: analysis.handedness,

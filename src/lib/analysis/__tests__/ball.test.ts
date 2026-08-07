@@ -36,6 +36,14 @@ interface Disc {
   /** Radius as a fraction of frame height. */
   r: number
   colour: [number, number, number]
+  /**
+   * Motion blur: a trail behind the disc `len` pixels long, in the direction
+   * `(dx, dy)`, fading toward the tail. Approximates what a real shutter open
+   * for a slice of the frame interval does to a fast-moving ball, rather than
+   * the hard-edged circle below — which is what makes a low-fps, blurrier
+   * clip a harder detection problem than a clean one at the same distance.
+   */
+  smear?: { dx: number; dy: number; len: number }
 }
 
 /**
@@ -75,17 +83,39 @@ function render(discs: Disc[], seed: number, noise = 6): Bitmap {
     const cx = d.x * W
     const cy = d.y * H
     const rad = d.r * H
-    const x0 = Math.max(0, Math.floor(cx - rad - 1))
-    const x1 = Math.min(W - 1, Math.ceil(cx + rad + 1))
-    const y0 = Math.max(0, Math.floor(cy - rad - 1))
-    const y1 = Math.min(H - 1, Math.ceil(cy + rad + 1))
+    const trailLen = d.smear?.len ?? 0
+    const dirMag = d.smear ? Math.hypot(d.smear.dx, d.smear.dy) || 1 : 1
+    const dirx = d.smear ? d.smear.dx / dirMag : 0
+    const diry = d.smear ? d.smear.dy / dirMag : 0
+    const x0 = Math.max(0, Math.floor(cx - rad - trailLen - 1))
+    const x1 = Math.min(W - 1, Math.ceil(cx + rad + trailLen + 1))
+    const y0 = Math.max(0, Math.floor(cy - rad - trailLen - 1))
+    const y1 = Math.min(H - 1, Math.ceil(cy + rad + trailLen + 1))
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
-        if ((x - cx) ** 2 + (y - cy) ** 2 > rad * rad) continue
         const i = (y * W + x) * 4
-        data[i] = d.colour[0]
-        data[i + 1] = d.colour[1]
-        data[i + 2] = d.colour[2]
+        if (trailLen > 0) {
+          // Distance to the nearest point on the trail behind the disc, not
+          // just to its centre — that is what turns a circle into a streak.
+          const px = x - cx
+          const py = y - cy
+          const t = Math.max(-trailLen, Math.min(0, px * dirx + py * diry))
+          const dx = px - t * dirx
+          const dy = py - t * diry
+          if (dx * dx + dy * dy > rad * rad) continue
+          // Fades toward the tail, as a real motion-blur streak does rather
+          // than staying uniformly saturated end to end.
+          const along = -t / Math.max(1, trailLen)
+          const fade = 1 - 0.6 * along
+          data[i] = data[i] + (d.colour[0] - data[i]) * fade
+          data[i + 1] = data[i + 1] + (d.colour[1] - data[i + 1]) * fade
+          data[i + 2] = data[i + 2] + (d.colour[2] - data[i + 2]) * fade
+        } else {
+          if ((x - cx) ** 2 + (y - cy) ** 2 > rad * rad) continue
+          data[i] = d.colour[0]
+          data[i + 1] = d.colour[1]
+          data[i + 2] = d.colour[2]
+        }
       }
     }
   }
@@ -106,19 +136,40 @@ function tossFrames(opts: {
   extra?: (t: number) => Disc[]
   fps?: number
   duration?: number
+  /**
+   * Fraction of one frame interval the shutter is treated as open for, which
+   * bounds how far the ball can smear in a single shot — a real camera
+   * cannot expose for longer than the gap between frames without doubling
+   * up on the next one. 1.0 is already about as blurry as ordinary video
+   * gets; higher noise, not more of this, is what a worse phone adds.
+   */
+  blurExposure?: number
+  noise?: number
 }) {
   const fps = opts.fps ?? 30
   const duration = opts.duration ?? 0.9
   const count = Math.round(duration * fps)
+  const dt = 1 / fps
   const out: { t: number; bitmap: Bitmap; truth: { x: number; y: number } }[] = []
 
   for (let i = 0; i < count; i++) {
     const t = i / fps
-    const dt = t - opts.apexT
-    const y = opts.apexY + 0.5 * opts.gravity * dt * dt
+    const rt = t - opts.apexT
+    const y = opts.apexY + 0.5 * opts.gravity * rt * rt
     const x = opts.x0 + opts.driftX * t
-    const discs: Disc[] = [{ x, y, r: 0.011, colour: BALL }, ...(opts.extra?.(t) ?? [])]
-    out.push({ t, bitmap: render(discs, (opts.seed ?? 7) + i * 977), truth: { x, y } })
+    const smear = opts.blurExposure
+      ? (() => {
+          const vy = opts.gravity * rt // d/dt of the parabola
+          const vx = opts.driftX
+          return { dx: vx, dy: vy, len: Math.hypot(vx, vy) * H * dt * opts.blurExposure! }
+        })()
+      : undefined
+    const discs: Disc[] = [{ x, y, r: 0.011, colour: BALL, smear }, ...(opts.extra?.(t) ?? [])]
+    out.push({
+      t,
+      bitmap: render(discs, (opts.seed ?? 7) + i * 977, opts.noise ?? 6),
+      truth: { x, y },
+    })
   }
   return out
 }
@@ -213,6 +264,54 @@ check('slow motion is tracked as well as normal speed', () => {
     const flight = trackBall(candidatesFor(shots), { expectedGravity: GRAVITY })
     assert(flight !== undefined, `no flight at ${fps} fps`)
     near(flight!.apex.y, 0.16, 0.025, `apex height at ${fps} fps`)
+  }
+})
+
+/**
+ * A recreational clip is not the tripod-steady, 30fps-plus footage the other
+ * cases here use — it can be a phone at 15 or 12fps with the shutter open
+ * long enough to smear a fast-moving ball into a streak. `elongation` and
+ * `fill` in `findCandidates`, and `gravityTolerance`/`inlierBand` in
+ * `trackBall`, were checked against exactly this by pushing a synthetic toss
+ * to the blurriest a real shutter gets — a full frame interval of exposure;
+ * any longer and the next frame would double-expose — at several seeds down
+ * to 12fps: some individual frames lose their candidate to the elongation
+ * cutoff, same as a clean clip loses frames to occlusion, but RANSAC
+ * recovers the flight from whatever survives, the same way it already copes
+ * with a mid-flight gap above. The fit still lands within the app's own
+ * confidence floor for using a toss reading (0.45).
+ *
+ * (10fps and below was also tried, and is genuinely too sparse: a 0.9s toss
+ * samples down to eight or nine frames total, and losing even a few of those
+ * to blur leaves too little for either a curve fit or a person to trust — no
+ * threshold here fixes there not being enough frames. That is a real limit,
+ * not a bug, so it is not asserted on.)
+ */
+check('a blurry, low frame-rate toss is still tracked', () => {
+  for (const fps of [15, 12]) {
+    for (const seed of [7, 41, 103]) {
+      const shots = tossFrames({
+        apexT: 0.45,
+        apexY: 0.16,
+        gravity: GRAVITY,
+        x0: 0.45,
+        driftX: 0.05,
+        fps,
+        blurExposure: 1.0,
+        noise: 10,
+        seed,
+      })
+      const flight = trackBall(candidatesFor(shots), { expectedGravity: GRAVITY })
+      assert(flight !== undefined, `lost a toss blurred by a full frame interval at ${fps} fps (seed ${seed})`)
+      note(`${fps} fps blurred, seed ${seed}: apex y=${flight!.apex.y.toFixed(3)} conf=${flight!.confidence.toFixed(2)}`)
+      near(flight!.apex.y, 0.16, 0.04, `apex height at ${fps} fps, blurred, seed ${seed}`)
+      within(
+        flight!.confidence,
+        0.45,
+        1,
+        `confidence at ${fps} fps, blurred, seed ${seed}, must still clear the app's floor`,
+      )
+    }
   }
 })
 
