@@ -344,15 +344,46 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     if (target) seekTo(target.t)
   }, [seek, phases, seekTo])
 
-  const scrub = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-    const el = progressRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX
-    if (clientX === undefined) return
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-    seekTo(win.start + ratio * (win.end - win.start))
-  }
+  /**
+   * Press-and-drag on the track, not just a single tap.
+   *
+   * The seek on press was already there; what was missing was following the
+   * pointer while it stayed down. The listeners go on the window rather than
+   * the track itself so a drag that strays outside the narrow strip — easy
+   * to do on a phone — keeps tracking instead of freezing where it left.
+   */
+  const scrub = useCallback(
+    (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+      const el = progressRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+
+      const seekAt = (clientX: number) => {
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+        seekTo(win.start + ratio * (win.end - win.start))
+      }
+
+      const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX
+      if (clientX === undefined) return
+      seekAt(clientX)
+
+      const onMove = (ev: MouseEvent | TouchEvent) => {
+        const x = 'touches' in ev ? ev.touches[0]?.clientX : ev.clientX
+        if (x !== undefined) seekAt(x)
+      }
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove)
+        window.removeEventListener('mouseup', onUp)
+        window.removeEventListener('touchmove', onMove)
+        window.removeEventListener('touchend', onUp)
+      }
+      window.addEventListener('mousemove', onMove)
+      window.addEventListener('mouseup', onUp)
+      window.addEventListener('touchmove', onMove)
+      window.addEventListener('touchend', onUp)
+    },
+    [seekTo, win.start, win.end],
+  )
 
   /**
    * Step to the next or previous *sampled* frame rather than by a fixed time.

@@ -90,13 +90,18 @@
   height: 40px;
   border-radius: var(--r-pill);
   color: var(--fg-muted);
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
   flex: none;
 }
 
 .icon-btn:hover {
   background: var(--ink-2);
   color: var(--fg);
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
 }
 
 .icon-btn--solid {
@@ -143,12 +148,17 @@
 .chip--button {
   color: var(--fg);
   cursor: pointer;
-  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
 .chip--button:hover:not(:disabled) {
   background: var(--ink-3);
   border-color: var(--ink-4);
+}
+
+.chip--button:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .chip--button:disabled {
@@ -160,6 +170,16 @@
   color: var(--fair);
   border-color: rgba(255, 182, 72, 0.3);
   background: var(--fair-dim);
+}
+
+.chip--toggle {
+  cursor: pointer;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+
+.chip--toggle:active {
+  transform: scale(0.96);
 }
 
 .chip--toggle.is-on {
@@ -333,12 +353,17 @@
   background: var(--ink-1);
   border: 1px solid var(--hairline-soft);
   color: var(--fg-muted);
-  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
 .strap:hover {
   background: var(--ink-2);
   border-color: var(--hairline);
+}
+
+.strap:active {
+  transform: scale(0.985);
 }
 
 .strap > span {
@@ -497,7 +522,8 @@
 
 .compare-score-value {
   font-size: 30px;
-  font-weight: 700;
+  font-weight: 680;
+  letter-spacing: -0.02em;
   color: var(--fg);
 }
 
@@ -510,7 +536,7 @@
   padding: 5px 11px;
   border-radius: 999px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 640;
   background: var(--ink-3);
   color: var(--fg-muted);
 }
@@ -616,7 +642,7 @@
 
 .compare-row-delta {
   text-align: right;
-  font-weight: 700;
+  font-weight: 640;
   color: var(--fg-muted);
 }
 
@@ -1876,6 +1902,8 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  /* Dragging the scrubber must move the video, not the page underneath it. */
+  touch-action: none;
   --played: 0%;
 }
 
@@ -1933,7 +1961,12 @@
   font-size: 12.5px;
   font-weight: 600;
   color: var(--fg-faint);
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
+
+.seg-item:active {
+  transform: scale(0.92);
 }
 
 .seg-item.is-on {
@@ -2011,6 +2044,10 @@
   font-weight: 560;
   color: var(--fg-muted);
   transition: all var(--fast) var(--ease);
+}
+
+.phase-pill:active {
+  transform: scale(0.94);
 }
 
 .phase-pill.is-active {
@@ -2321,7 +2358,7 @@
   padding: 10px 13px;
   border-radius: var(--r-sm);
   background: var(--ink-3);
-  border-left: 2px solid var(--hairline-strong, var(--hairline));
+  border-left: 2px solid var(--hairline);
   font-size: 12.5px;
   line-height: 1.6;
   color: var(--fg-muted);

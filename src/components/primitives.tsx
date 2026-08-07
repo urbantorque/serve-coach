@@ -1,7 +1,47 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Status } from '../lib/analysis/types'
 
 /* ------------------------------------------------------------------ ScoreRing */
+
+/**
+ * Counts a displayed number up to its target instead of popping in place.
+ *
+ * Only runs when `enabled` — the many small rings in a list stay static, the
+ * same restraint the ring stroke itself already observes (see `animate` on
+ * `ScoreRing`). Mirrors the ring's own ~1s fill so the number settles roughly
+ * when the stroke does, rather than finishing early or lagging behind it.
+ */
+function useCountUp(target: number, enabled: boolean): number {
+  const [value, setValue] = useState(enabled ? 0 : target)
+  const from = useRef(enabled ? 0 : target)
+  const raf = useRef(0)
+
+  useEffect(() => {
+    if (!enabled || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setValue(target)
+      from.current = target
+      return
+    }
+    const start0 = from.current
+    const t0 = performance.now()
+    const duration = 1000
+    cancelAnimationFrame(raf.current)
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - t0) / duration)
+      const eased = 1 - (1 - t) ** 3
+      setValue(Math.round(start0 + (target - start0) * eased))
+      if (t < 1) {
+        raf.current = requestAnimationFrame(tick)
+      } else {
+        from.current = target
+      }
+    }
+    raf.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf.current)
+  }, [target, enabled])
+
+  return value
+}
 
 interface ScoreRingProps {
   score: number
@@ -17,6 +57,7 @@ export function ScoreRing({ score, status, size = 132, label, animate = true }: 
   const r = (size - stroke) / 2
   const circumference = 2 * Math.PI * r
   const filled = circumference * (Math.max(0, Math.min(100, score)) / 100)
+  const shown = useCountUp(score, animate)
 
   return (
     <div className="ring" style={{ width: size, height: size }}>
@@ -44,7 +85,7 @@ export function ScoreRing({ score, status, size = 132, label, animate = true }: 
       </svg>
       <div className="ring-inner">
         <span className="ring-score tnum" style={{ fontSize: size * 0.31 }}>
-          {score}
+          {shown}
         </span>
         {label && <span className="ring-label">{label}</span>}
       </div>
