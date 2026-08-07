@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing } from '../components/primitives'
 import { findPracticeFocus } from '../lib/practice'
@@ -41,12 +41,26 @@ export default function Home({
   const recent = sessions.slice(0, 3)
   const progress = useMemo(() => buildProgress(sessions), [sessions])
   const practice = useMemo(() => findPracticeFocus(sessions), [sessions])
+  const [dragging, setDragging] = useState(false)
 
   const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     // Reset so picking the same file twice still fires a change event.
     e.target.value = ''
     if (file) onPick(file)
+  }
+
+  // A phone's camera roll rarely benefits from this — dragging a file only
+  // exists as a gesture on a desktop trackpad — but on a laptop it is the
+  // fastest way in, and without a visible target for it a player has no way
+  // to discover it works at all.
+  const dropFile = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files?.[0]
+    if (!file) return
+    if (needsFilmingGuide) onGuideThenPick()
+    else onPick(file)
   }
 
   return (
@@ -81,42 +95,60 @@ export default function Home({
         </p>
       </section>
 
-      <div className="home-actions">
-        {/* The first clip decides whether anyone comes back, and the four rules
-            that make it usable take thirty seconds to read. So the guide is
-            shown once, at the moment of intent, rather than waiting behind a
-            link nobody taps until their clip has already been rejected. */}
-        <button
-          className="btn btn--primary btn--big"
-          onClick={() => (needsFilmingGuide ? onGuideThenPick() : pickRef.current?.click())}
-        >
-          <Icon name="film" size={19} />
-          Analyse a serve
-        </button>
-        {coarsePointer() && (
+      <div
+        className={`dropzone${dragging ? ' is-dragging' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDragging(true)
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={dropFile}
+      >
+        <div className="home-actions">
+          {/* The first clip decides whether anyone comes back, and the four rules
+              that make it usable take thirty seconds to read. So the guide is
+              shown once, at the moment of intent, rather than waiting behind a
+              link nobody taps until their clip has already been rejected. */}
           <button
-            className="btn btn--ghost btn--big"
-            onClick={() => (needsFilmingGuide ? onGuideThenPick() : recordRef.current?.click())}
+            className="btn btn--primary btn--big"
+            onClick={() => (needsFilmingGuide ? onGuideThenPick() : pickRef.current?.click())}
           >
-            <Icon name="camera" size={19} />
-            Record now
+            <Icon name="film" size={19} />
+            Analyse a serve
           </button>
+          {coarsePointer() && (
+            <button
+              className="btn btn--ghost btn--big"
+              onClick={() => (needsFilmingGuide ? onGuideThenPick() : recordRef.current?.click())}
+            >
+              <Icon name="camera" size={19} />
+              Record now
+            </button>
+          )}
+          <input
+            ref={pickRef}
+            type="file"
+            accept="video/*"
+            onChange={handle}
+            hidden
+          />
+          <input
+            ref={recordRef}
+            type="file"
+            accept="video/*"
+            capture="environment"
+            onChange={handle}
+            hidden
+          />
+        </div>
+        {/* Dragging a file is a desktop-only gesture — a touch device has no
+            equivalent — so the hint only appears where it is actually true. */}
+        {!coarsePointer() && (
+          <p className="dropzone-hint">
+            <Icon name="upload" size={14} />
+            or drop a video file anywhere here
+          </p>
         )}
-        <input
-          ref={pickRef}
-          type="file"
-          accept="video/*"
-          onChange={handle}
-          hidden
-        />
-        <input
-          ref={recordRef}
-          type="file"
-          accept="video/*"
-          capture="environment"
-          onChange={handle}
-          hidden
-        />
       </div>
 
       <button className="strap" onClick={onShowGuide}>

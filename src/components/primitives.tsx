@@ -251,6 +251,12 @@ const PATHS: Record<string, ReactNode> = {
       <path d="M12 10v4M12 16.6v.6" />
     </>
   ),
+  upload: (
+    <>
+      <path d="M12 15.5V4.5M8 8.5l4-4 4 4" />
+      <path d="M4.5 15v3a2 2 0 002 2h11a2 2 0 002-2v-3" />
+    </>
+  ),
 }
 
 export function Icon({ name, size = 20 }: { name: keyof typeof PATHS | string; size?: number }) {
