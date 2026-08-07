@@ -1,5 +1,5 @@
 import { practiceHeadline, type PracticeFocus } from '../lib/practice'
-import { Icon } from './primitives'
+import { Cue, Icon } from './primitives'
 
 const VERDICT: Record<PracticeFocus['verdict'], { label: string; icon: string }> = {
   improving: { label: 'Improving', icon: 'check' },
@@ -53,7 +53,9 @@ export default function PracticeCard({ focus }: { focus: PracticeFocus }) {
       </div>
 
       <h3>{focus.label}</h3>
-      <p className="practice-lead">{practiceHeadline(focus)}</p>
+      <p className="practice-lead">
+        <Cue text={practiceHeadline(focus)} />
+      </p>
 
       <div className="practice-stats">
         <span className={`practice-run practice-run--${focus.verdict}`}>
@@ -77,7 +79,11 @@ export default function PracticeCard({ focus }: { focus: PracticeFocus }) {
         </span>
       </div>
 
-      {focus.fix && <p className="practice-fix">{focus.fix}</p>}
+      {focus.fix && (
+        <p className="practice-fix">
+          <Cue text={focus.fix} />
+        </p>
+      )}
 
       <div className="drill">
         <span className="drill-kicker">Drill · {focus.fundamentalLabel}</span>

@@ -5,7 +5,12 @@ import { drawSkeleton, fitContain } from '../lib/pose/skeleton'
 import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { Icon } from './primitives'
 
-const SPEEDS = [1, 0.5, 0.25] as const
+/** Playback speeds, named rather than written as multipliers. */
+const SPEEDS = [
+  { rate: 1, label: 'Full' },
+  { rate: 0.5, label: 'Half' },
+  { rate: 0.25, label: 'Quarter' },
+] as const
 
 interface Props {
   videoUrl: string
@@ -29,7 +34,7 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
   const rafRef = useRef(0)
 
   const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(0.5)
+  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]['rate']>(0.5)
   const [activePhase, setActivePhase] = useState<PhaseId>('ready')
   const [skeletonOn, setSkeletonOn] = useState(true)
   const [modelOn, setModelOn] = useState(false)
@@ -530,12 +535,13 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
         <div className="seg">
           {SPEEDS.map((s) => (
             <button
-              key={s}
-              className={`seg-item${speed === s ? ' is-on' : ''}`}
-              onClick={() => setSpeed(s)}
-              aria-pressed={speed === s}
+              key={s.rate}
+              className={`seg-item${speed === s.rate ? ' is-on' : ''}`}
+              onClick={() => setSpeed(s.rate)}
+              aria-pressed={speed === s.rate}
+              aria-label={`${s.label} speed`}
             >
-              {s === 1 ? '1×' : `${s}×`}
+              {s.label}
             </button>
           ))}
         </div>

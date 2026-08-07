@@ -1,3 +1,4 @@
+import { readoutOf, targetOf } from '../analysis/anatomy'
 import type { Analysis } from '../analysis/types'
 
 /**
@@ -137,8 +138,18 @@ export function normalise(raw: unknown): Session | undefined {
       status: f.status ?? 'fair',
       blurb: f.blurb ?? '',
       headline: f.headline ?? '',
+      // Reports filed before the app spoke in body positions carry numbers and
+      // no readout, and the card would render a blank where the position goes.
+      // The ladder is a pure function of the value, so it can be filled in now
+      // rather than leaving an old report looking broken.
       metrics: Array.isArray(f.metrics)
-        ? f.metrics.filter((m) => typeof m?.id === 'string' && typeof m.score === 'number')
+        ? f.metrics
+            .filter((m) => typeof m?.id === 'string' && typeof m.score === 'number')
+            .map((m) => ({
+              ...m,
+              readout: m.readout ?? readoutOf(m.id, m.value),
+              target: m.target ?? (m.ideal ? targetOf(m.id, m.ideal) : ''),
+            }))
         : [],
       drill: f.drill ?? { name: '', how: '', reps: '' },
     }))

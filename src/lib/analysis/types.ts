@@ -44,8 +44,20 @@ export interface Metric {
   /** Raw measured value, in `unit`. */
   value: number
   unit: string
-  /** Pre-formatted for display, e.g. "168°" or "1.31×". */
+  /**
+   * Pre-formatted raw value, e.g. "168°" or "1.31×".
+   *
+   * Internal now rather than on screen: the report speaks in body positions, and
+   * a coordinate multiplier next to the words was the thing a player skipped
+   * over. Kept because the fixtures, the consistency sweep and the dev tools all
+   * need the number in a comparable form, and regenerating it from `value` in
+   * three places would be three chances to round it differently.
+   */
   display: string
+  /** What the body actually did, in body language — the on-screen readout. */
+  readout: string
+  /** What it should look like instead, said in the same vocabulary. */
+  target: string
   /** Decimal places this metric is meaningful to; axis labels must match, or a
    *  value below its band can appear to sit inside it. */
   decimals: number
@@ -60,6 +72,8 @@ export interface Metric {
   insight: string
   /** What to do about it — only when it needs work. */
   fix?: string
+  /** The one corrective drill for this fault. Present exactly when `fix` is. */
+  drill?: Drill
   /** Which keyframe this was measured on. */
   phase: PhaseId
   /**

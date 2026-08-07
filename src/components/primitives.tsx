@@ -125,6 +125,35 @@ export function MetricBar({ value, ideal, range, status }: MetricBarProps) {
   )
 }
 
+/* ------------------------------------------------------------------------ Cue */
+
+/**
+ * One line of coaching, with its marked words carried in bold.
+ *
+ * Copy marks the instruction itself — `**Keep the arm straight**` — and this is
+ * the only place those markers are turned into type. A player reading a report
+ * between serves scans for the bold and acts on it; the sentence around it is
+ * there for the ones who want the reason. Rendered as a fragment so the caller
+ * decides what element it lands in, and never with `dangerouslySetInnerHTML`:
+ * this is a formatting convention, not a licence to inject markup.
+ */
+export function Cue({ text }: { text: string }) {
+  const parts = text.split(/\*\*(.+?)\*\*/g)
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <strong key={i} className="cue-key">
+            {part}
+          </strong>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
+  )
+}
+
 /* ---------------------------------------------------------------------- Sheet */
 
 interface SheetProps {

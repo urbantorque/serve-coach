@@ -21,6 +21,7 @@ const FPS = 50
 function recordingContext() {
   const strokes: { from: [number, number]; to: [number, number]; dashed: boolean; style: string }[] = []
   const arcs: { x: number; y: number; r: number; style: string }[] = []
+  const texts: string[] = []
   let dash: number[] = []
   let current: [number, number] = [0, 0]
 
@@ -63,11 +64,13 @@ function recordingContext() {
     },
     stroke() {},
     fill() {},
-    fillText() {},
-    measureText: () => ({ width: 40 }),
+    fillText(text: string) {
+      texts.push(String(text))
+    },
+    measureText: (t: string) => ({ width: String(t).length * 7 }),
   }
 
-  return { ctx, strokes, arcs }
+  return { ctx, strokes, arcs, texts }
 }
 
 const W = 480
@@ -76,7 +79,7 @@ const H = 640
 function drawOnce(options: Partial<Parameters<typeof drawSkeleton>[1]> = {}) {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
-  const { ctx, strokes, arcs } = recordingContext()
+  const { ctx, strokes, arcs, texts } = recordingContext()
   drawSkeleton(ctx as unknown as CanvasRenderingContext2D, {
     frame: frames[skel.keys.trophy],
     aspect: 1,
@@ -86,7 +89,7 @@ function drawOnce(options: Partial<Parameters<typeof drawSkeleton>[1]> = {}) {
     sequence: { frames, index: skel.keys.trophy },
     ...options,
   })
-  return { strokes, arcs, frames, skel }
+  return { strokes, arcs, texts, frames, skel }
 }
 
 const finite = (n: number) => Number.isFinite(n)
@@ -119,6 +122,28 @@ check('nothing is drawn outside the video rectangle', () => {
       )
     }
   }
+})
+
+check('the keyframe callout names a body position, not a number', () => {
+  const { texts } = drawOnce({ annotation: 'trophy' })
+  assert(texts.length > 0, 'the callout drew no text at all')
+  const value = texts[0]
+  note(`callout reads "${value}"`)
+  assert(!/\d/.test(value), `the callout still shows a number: "${value}"`)
+  assert(!/[°×%]/.test(value), `the callout still shows a unit: "${value}"`)
+  // The trophy callout is judged on knee bend, and the synthetic serve loads its
+  // legs properly — so it has to come back as a load, not as straight legs.
+  assert(/load|bent|squat/i.test(value), `the trophy callout reads "${value}"`)
+  assert(
+    texts.some((t) => t.toUpperCase() === 'KNEE BEND'),
+    'the callout no longer says which joint it is describing',
+  )
+})
+
+check('the callout is anchored to the joint it describes', () => {
+  const plain = drawOnce().strokes.length
+  const annotated = drawOnce({ annotation: 'contact' }).strokes.length
+  assert(annotated > plain, 'the callout drew no leader line back to the body')
 })
 
 check('the racket is drawn when the hand is visible', () => {

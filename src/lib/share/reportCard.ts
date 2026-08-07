@@ -1,5 +1,7 @@
 import { SERVE_TYPES } from '../analysis/coaching'
 import type { Analysis } from '../analysis/types'
+import { plain } from '../analysis/voice'
+import { SOFT_READ, readQuality } from '../../components/statusLabels'
 import type { Session } from '../storage/db'
 
 type Report = Analysis | Session
@@ -130,7 +132,11 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   const textW = W - textX - PAD
 
   ctx.font = font(400, 20)
-  const focusLines = layoutLines(ctx, report.focus.why, textW)
+  // Flattened: the report marks its key words for the screen, and a canvas has
+  // no idea what an asterisk means. A card shared to a coach must not arrive
+  // with the markup showing.
+  const focusWhy = plain(report.focus.why)
+  const focusLines = layoutLines(ctx, focusWhy, textW)
   const focusEnd = cy + 20 + focusLines.length * 30
 
   // Clear both the paragraph and the bottom of the score ring: on a short fault
@@ -218,7 +224,7 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
       : report.quality.view === 'front-back'
         ? 'Front / back view'
         : 'Angled view',
-    `${Math.round(report.quality.confidence * 100)}% confidence`,
+    readQuality(report.quality.confidence),
   ]
 
   let chipX = PAD
@@ -233,7 +239,7 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
     ctx.fill()
     // Low confidence is the one of these that changes how the card should be
     // read, so it is the one that gets colour.
-    const low = label.includes('confidence') && report.quality.confidence < 0.6
+    const low = label.endsWith('read') && report.quality.confidence < SOFT_READ
     ctx.fillStyle = low ? STATUS_COLOR.fair : MUTED
     ctx.fillText(label, chipX + 13, chipY + 3)
     chipX += w + 8

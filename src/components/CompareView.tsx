@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
+import { readoutOf } from '../lib/analysis/anatomy'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
-import type { Metric, PhaseId } from '../lib/analysis/types'
+import type { PhaseId } from '../lib/analysis/types'
 import { typeOf } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 import { Icon } from './primitives'
@@ -175,8 +176,10 @@ export default function CompareView({ current, others }: Props) {
           {rows.map((r) => (
             <li key={r.id} className={`compare-row compare-row--${verdict(r.scoreDelta)}`}>
               <span className="compare-row-label">{r.label}</span>
-              <span className="compare-row-values tnum">
-                {fmt(r.theirs, r)} <Icon name="chevron" size={13} /> {fmt(r.mine, r)}
+              <span className="compare-row-values">
+                <em>{readoutOf(r.id, r.theirs)}</em>
+                <Icon name="chevron" size={13} />
+                <strong>{readoutOf(r.id, r.mine)}</strong>
               </span>
               <span className="compare-row-delta tnum">
                 {r.scoreDelta > 0 ? '+' : ''}
@@ -186,8 +189,8 @@ export default function CompareView({ current, others }: Props) {
           ))}
         </ul>
         <p className="compare-note">
-          Scores, not raw numbers — a measurement can move a long way and barely matter, or move a
-          little and cross the edge of its target band.
+          Then on the left, now on the right. The figure is the change in score, not in the
+          measurement — a position can shift a long way inside its band and barely matter.
         </p>
       </section>
     </div>
@@ -199,9 +202,3 @@ const MEANINGFUL = 3
 
 const verdict = (delta: number) =>
   Math.abs(delta) < MEANINGFUL ? 'flat' : delta > 0 ? 'better' : 'worse'
-
-function fmt(v: number, r: Pick<Metric, 'unit' | 'decimals'>): string {
-  if (r.unit === 'ms') return `${Math.round(v)}ms`
-  const n = v.toFixed(r.decimals)
-  return r.unit === '°' || r.unit === '%' || r.unit === '×' ? `${n}${r.unit}` : n
-}

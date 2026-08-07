@@ -1,8 +1,6 @@
+import { readoutOf } from '../lib/analysis/anatomy'
 import { consistencyHeadline, type Consistency, type MetricSpread } from '../lib/analysis/consistency'
 import { Icon, ScoreRing } from './primitives'
-
-const fmt = (v: number, m: MetricSpread) =>
-  m.unit === 'ms' ? `${Math.round(v)} ms` : `${v.toFixed(m.decimals)}${m.unit === '°' || m.unit === '%' ? m.unit : ''}`
 
 /**
  * How far each measurement travelled across the basket.
@@ -19,6 +17,8 @@ function SpreadRow({ m }: { m: MetricSpread }) {
   const width = Math.max(1.5, pct(m.max) - left)
   const bandLeft = pct(m.ideal[0])
   const bandWidth = Math.max(2, pct(m.ideal[1]) - bandLeft)
+  const low = readoutOf(m.id, m.min)
+  const high = readoutOf(m.id, m.max)
 
   return (
     <li className="spread">
@@ -36,12 +36,19 @@ function SpreadRow({ m }: { m: MetricSpread }) {
         />
       </div>
 
-      <p className="spread-detail tnum">
-        {fmt(m.min, m)} → {fmt(m.max, m)}
-        <span className="spread-sep">·</span>
-        varies by {fmt(m.spread, m)}
-        <span className="spread-sep">·</span>
-        average {fmt(m.average, m)}
+      {/* The two ends of the basket, in body language. A player cannot act on
+          "varies by 0.14×"; they can act on being told their contact ran from
+          head height to full reach across six serves. */}
+      <p className="spread-detail">
+        {low === high ? (
+          <>Every serve: {low}</>
+        ) : (
+          <>
+            {low}
+            <span className="spread-sep">→</span>
+            {high}
+          </>
+        )}
       </p>
     </li>
   )

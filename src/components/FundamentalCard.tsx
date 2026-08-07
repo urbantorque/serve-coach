@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Fundamental, Metric } from '../lib/analysis/types'
 import { DeltaChip } from './Trend'
-import { Icon, MetricBar, ScoreRing } from './primitives'
+import { Cue, Icon, MetricBar, ScoreRing } from './primitives'
 import { STATUS_LABEL } from './statusLabels'
 
 interface Props {
@@ -13,6 +13,15 @@ interface Props {
   defaultOpen?: boolean
 }
 
+/**
+ * One area of the serve, opened out into its measurements.
+ *
+ * Each measurement reads top to bottom as one thought: what your body did, where
+ * that sits against the target, the instruction, and the drill that fixes it.
+ * No raw numbers anywhere on the way down — the readout says the same thing in
+ * body language, and the bar carries the rest without asking anybody to compare
+ * a decimal against a band.
+ */
 export default function FundamentalCard({
   fundamental: f,
   delta,
@@ -20,6 +29,11 @@ export default function FundamentalCard({
   defaultOpen = false,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen)
+
+  // The area's own session is the fallback, not the default. Where the report
+  // has already named specific faults, each one carries the drill that corrects
+  // it, and a second general drill underneath is one more thing to skip past.
+  const hasFaultDrills = f.metrics.some((m) => m.fix && m.drill)
 
   return (
     <section className={`fcard fcard--${f.status}${open ? ' is-open' : ''}`}>
@@ -35,7 +49,9 @@ export default function FundamentalCard({
             <em className={`tag tag--${f.status}`}>{STATUS_LABEL[f.status]}</em>
             <DeltaChip delta={delta} compact />
           </span>
-          <span className="fcard-headline">{f.headline}</span>
+          <span className="fcard-headline">
+            <Cue text={f.headline} />
+          </span>
         </span>
         <span className="fcard-chevron">
           <Icon name="chevron" size={18} />
@@ -54,17 +70,24 @@ export default function FundamentalCard({
                     {m.label}
                     {m.softness && <em className="metric-approx">approximate</em>}
                   </span>
-                  <span className={`metric-value tnum metric-value--${m.status}`}>{m.display}</span>
+                  <span className={`metric-read metric-read--${m.status}`}>{m.readout}</span>
                 </div>
                 <MetricBar value={m.value} ideal={m.ideal} range={m.range} status={m.status} />
-                <div className="metric-scale">
-                  <span className="tnum">{fmt(m.range[0], m)}</span>
-                  <span className="metric-target tnum">
-                    target {fmt(m.ideal[0], m)}–{fmt(m.ideal[1], m)}
-                  </span>
-                  <span className="tnum">{fmt(m.range[1], m)}</span>
-                </div>
-                <p className="metric-insight">{m.insight}</p>
+                {/* The target says what to aim at in the same words as the
+                    readout above it, so the two can be read against each other
+                    at a glance. Only where the position is actually outside the
+                    band: a toss that is steadier than asked for still reads as a
+                    different phrase, and "aim for straight" under "dead straight"
+                    is the report correcting somebody who has nothing wrong. */}
+                {outsideBand(m) && m.readout !== m.target && (
+                  <p className="metric-aim">
+                    <span className="metric-aim-key">Aim for</span>
+                    <span className="metric-aim-value">{m.target}</span>
+                  </p>
+                )}
+                <p className="metric-insight">
+                  <Cue text={m.insight} />
+                </p>
                 {/* Why the number is soft goes *above* any instruction to change
                     something, so the player reads the caveat before they read
                     the advice rather than after acting on it. */}
@@ -77,19 +100,24 @@ export default function FundamentalCard({
                 {m.fix && (
                   <p className="metric-fix">
                     <Icon name="target" size={15} />
-                    <span>{m.fix}</span>
+                    <span>
+                      <Cue text={m.fix} />
+                    </span>
                   </p>
                 )}
+                {m.fix && m.drill && <DrillCard drill={m.drill} />}
               </li>
             ))}
           </ul>
 
-          <div className="drill">
-            <span className="drill-kicker">Drill</span>
-            <h4>{f.drill.name}</h4>
-            <p>{f.drill.how}</p>
-            <span className="drill-reps">{f.drill.reps}</span>
-          </div>
+          {!hasFaultDrills && (
+            <div className="drill">
+              <span className="drill-kicker">Drill</span>
+              <h4>{f.drill.name}</h4>
+              <p>{f.drill.how}</p>
+              <span className="drill-reps">{f.drill.reps}</span>
+            </div>
+          )}
 
           {onSeek && (
             <button className="btn btn--ghost btn--full" onClick={() => onSeek(f.phase)}>
@@ -103,13 +131,19 @@ export default function FundamentalCard({
   )
 }
 
-/**
- * Axis labels use the metric's own precision. Rounding them independently makes
- * a value that sits just outside its band appear to sit inside it — a release
- * height of 1.10 against a target shown as "1.1–1.4" reads as fine when it is
- * in fact the fault being reported.
- */
-function fmt(v: number, m: Metric): string {
-  const n = v.toFixed(m.decimals)
-  return m.unit === '°' || m.unit === '%' ? `${n}${m.unit}` : n
+const outsideBand = (m: Metric) => m.value < m.ideal[0] || m.value > m.ideal[1]
+
+/** The one exercise that corrects the fault directly above it. */
+function DrillCard({ drill }: { drill: NonNullable<Metric['drill']> }) {
+  return (
+    <div className="microdrill">
+      <span className="microdrill-kicker">
+        <Icon name="target" size={12} />
+        Drill
+      </span>
+      <h5>{drill.name}</h5>
+      <p>{drill.how}</p>
+      <span className="microdrill-reps">{drill.reps}</span>
+    </div>
+  )
 }

@@ -1,5 +1,7 @@
 import type { ServeType } from '../storage/prefs'
+import { readoutOf, targetOf } from './anatomy'
 import { FUNDAMENTALS, metricCopy, type MetricCopy } from './coaching'
+import { cue } from './voice'
 import {
   LM,
   chainScore,
@@ -53,20 +55,33 @@ function build(
   const needsFix = status === 'fair' || status === 'work'
   const fix = needsFix ? (below ? copy.fix.low : above ? copy.fix.high : undefined) : undefined
 
+  // Both go through the voice filter on the way out, even though the database
+  // they come from is linted in the tests. Serve-type copy, anything added
+  // later and anything assembled from live data lands here too, and the filter
+  // is the only thing every string is guaranteed to pass through.
+  const command = cue(insight)
+  const order = fix ? cue(fix) : undefined
+
   return {
     id,
     label: copy.label,
     value: v,
     unit: copy.unit,
     display: format(v, copy),
+    readout: readoutOf(id, v),
+    target: targetOf(id, copy.ideal),
     decimals: copy.decimals,
     ideal: copy.ideal,
     range: copy.range,
     score,
     status,
     weight: copy.weight,
-    insight,
-    fix: fix || undefined,
+    insight: command,
+    fix: order || undefined,
+    // One drill, and only where there is something to correct. A drill under a
+    // measurement already inside its band is a player practising what they
+    // already do.
+    drill: order ? copy.drill : undefined,
     phase: copy.phase,
     confidence,
     softness:
@@ -362,20 +377,21 @@ export function measure(
 }
 
 /**
- * One sentence at the top of each card: the weakest link, or genuine praise.
+ * One line at the top of each card: the weakest link, or genuine praise.
  *
  * The blunt version of the weakest metric's insight only leads when the area as
  * a whole is weak. An area scoring in the seventies is badged "Solid", and
- * opening it with "you barely bend your knees" reads as the card arguing with
- * its own badge — so a decent area names the weak link instead of scolding.
+ * opening it with "your legs stay straight" reads as the card arguing with its
+ * own badge — so a decent area names the weak link instead of scolding.
  */
 function headlineFor(metrics: Metric[], label: string, areaScore: number): string {
   const weakest = [...metrics].sort((a, b) => a.score - b.score)[0]
   if (!weakest) return ''
   const area = label.toLowerCase()
-  if (weakest.score >= 85) return `Your ${area} is working. Keep it exactly as it is.`
-  if (weakest.score >= 70) return `Solid ${area}. ${weakest.label} is the one to sharpen.`
-  if (areaScore >= 70) return `Good ${area} overall — ${weakest.label.toLowerCase()} is what is holding it back.`
+  const weak = weakest.label.toLowerCase()
+  if (weakest.score >= 85) return cue(`Your ${area} holds up. Leave it alone.`)
+  if (weakest.score >= 70) return cue(`Solid ${area}. Sharpen ${weak} next.`)
+  if (areaScore >= 70) return cue(`Decent ${area}. ${weakest.label} is the brake.`)
   return weakest.insight
 }
 

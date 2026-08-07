@@ -1,3 +1,4 @@
+import { readoutOf } from '../analysis/anatomy'
 import { LM, jointAngle, type Side, sided } from '../analysis/geometry'
 import { smoothedRacket } from '../analysis/racket'
 import type { Frame, Landmark, PhaseId } from '../analysis/types'
@@ -17,14 +18,41 @@ const BONES: [number, number][] = [
   [LM.rightAnkle, LM.rightToe],
 ]
 
-/** Which joint angle each keyframe is judged on, for the on-image callout. */
+/**
+ * Which joint each keyframe is judged on, for the on-image callout.
+ *
+ * `metric` is what turns the angle into words. The callout used to read "168°",
+ * which is the same fact as "arm dead straight" and none of the same use: a
+ * player watching their own contact frame cannot tell whether 168 is good, and
+ * can tell instantly whether their arm is straight. The arc stays, because the
+ * arc is the part that shows *where* on the body the reading came from.
+ */
 export const ANNOTATIONS: Partial<
-  Record<PhaseId, { label: string; joints: (racket: Limb, toss: Limb) => [number, number, number] }>
+  Record<
+    PhaseId,
+    {
+      label: string
+      metric: string
+      joints: (racket: Limb, toss: Limb) => [number, number, number]
+    }
+  >
 > = {
-  toss: { label: 'Tossing elbow', joints: (_r, t) => [t.shoulder, t.elbow, t.wrist] },
-  trophy: { label: 'Knee bend', joints: (r) => [r.hip, r.knee, r.ankle] },
-  drop: { label: 'Hitting elbow', joints: (r) => [r.shoulder, r.elbow, r.wrist] },
-  contact: { label: 'Arm extension', joints: (r) => [r.shoulder, r.elbow, r.wrist] },
+  toss: {
+    label: 'Tossing elbow',
+    metric: 'tossArmExtension',
+    joints: (_r, t) => [t.shoulder, t.elbow, t.wrist],
+  },
+  trophy: { label: 'Knee bend', metric: 'kneeBend', joints: (r) => [r.hip, r.knee, r.ankle] },
+  drop: {
+    label: 'Hitting elbow',
+    metric: 'elbowAtDrop',
+    joints: (r) => [r.shoulder, r.elbow, r.wrist],
+  },
+  contact: {
+    label: 'Arm extension',
+    metric: 'armExtension',
+    joints: (r) => [r.shoulder, r.elbow, r.wrist],
+  },
 }
 
 /** Where the video actually sits inside a box, under `object-fit: contain`. */
@@ -308,14 +336,19 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   if (annotation) {
     const [ai, bi, ci] = annotation.joints(arm, tossArm)
     const deg = jointAngle(f.world[ai], f.world[bi], f.world[ci])
+    // The knee measurement is stored as how far the leg is bent away from
+    // straight, not as the angle at the joint, so it is translated in the same
+    // units it was measured in — otherwise a deep load would read as straight.
+    const value = annotation.metric === 'kneeBend' ? 180 - deg : deg
     drawAngle(
       ctx,
       at(ai),
       at(bi),
       at(ci),
-      `${Math.round(deg)}°`,
+      readoutOf(annotation.metric, value),
       annotation.label,
       scale * (o.calloutScale ?? 1),
+      o.rect.dw,
     )
   }
 }
@@ -324,7 +357,17 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
 
 type Pt = { x: number; y: number }
 
-/** An arc at the joint plus a label, so the number on the card has a home. */
+const UI_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif'
+
+/**
+ * An arc at the joint, a hairline out to a card, and the position in words.
+ *
+ * The card is anchored rather than floating: the leader line runs from the arc
+ * to the card edge, so on a frame with four things happening at once it is never
+ * ambiguous which joint is being described. The phrase sets the card's width, so
+ * the type shrinks — down to a floor — rather than the card growing past the
+ * edge of the picture on a phone.
+ */
 function drawAngle(
   ctx: CanvasRenderingContext2D,
   a: Pt,
@@ -333,6 +376,7 @@ function drawAngle(
   value: string,
   label: string,
   scale: number,
+  maxWidth: number,
 ) {
   const a1 = Math.atan2(a.y - b.y, a.x - b.x)
   const a2 = Math.atan2(c.y - b.y, c.x - b.x)
@@ -349,22 +393,41 @@ function drawAngle(
   ctx.stroke()
 
   const mid = a1 + delta / 2
-  const lx = b.x + Math.cos(mid) * (radius + 30 * scale)
-  const ly = b.y + Math.sin(mid) * (radius + 30 * scale)
+  const lead = radius + 34 * scale
+  const lx = b.x + Math.cos(mid) * lead
+  const ly = b.y + Math.sin(mid) * lead
 
-  ctx.font = `600 ${15 * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+  // A body position needs more room than three digits did, so the type gives
+  // way before the card does. The floor keeps it legible on a filmstrip still.
+  const cap = Math.max(90 * scale, Math.min(maxWidth * 0.52, 260 * scale))
+  let size = 14 * scale
+  const measure = (px: number) => {
+    ctx.font = `620 ${px}px ${UI_FONT}`
+    return ctx.measureText(value).width
+  }
+  while (size > 8.5 * scale && measure(size) + 22 * scale > cap) size -= 0.5 * scale
+
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  const w = Math.max(ctx.measureText(value).width, ctx.measureText(label).width * 0.72) + 20 * scale
+  const w = Math.max(measure(size), ctx.measureText(label).width * 0.72) + 22 * scale
   const h = 38 * scale
+
+  // Hairline from the arc to the card, so the words stay attached to the joint.
+  ctx.strokeStyle = 'rgba(205, 249, 74, 0.55)'
+  ctx.lineWidth = Math.max(0.6, 1 * scale)
+  ctx.beginPath()
+  ctx.moveTo(b.x + Math.cos(mid) * radius, b.y + Math.sin(mid) * radius)
+  ctx.lineTo(lx - Math.cos(mid) * (w / 2), ly - Math.sin(mid) * (h / 2))
+  ctx.stroke()
 
   ctx.fillStyle = 'rgba(10, 12, 16, 0.82)'
   roundRect(ctx, lx - w / 2, ly - h / 2, w, h, 9 * scale)
   ctx.fill()
 
+  ctx.font = `620 ${size}px ${UI_FONT}`
   ctx.fillStyle = '#cdf94a'
   ctx.fillText(value, lx, ly - 6 * scale)
-  ctx.font = `500 ${9.5 * scale}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+  ctx.font = `500 ${9.5 * scale}px ${UI_FONT}`
   ctx.fillStyle = 'rgba(238,242,246,0.72)'
   ctx.fillText(label.toUpperCase(), lx, ly + 9 * scale)
 }

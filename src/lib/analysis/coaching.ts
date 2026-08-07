@@ -4,9 +4,18 @@ import type { Drill, FundamentalId, PhaseId } from './types'
 /**
  * Copy for every measurement the app makes.
  *
- * `insight` is what the number means and is always shown. `fix` is what to
- * change and is only shown when the metric falls outside its band, so the
- * report reads as praise where praise is due and instruction where it is not.
+ * `insight` is what the body did and is always shown. `fix` is the instruction
+ * and is only shown when the measurement falls outside its band, so the report
+ * reads as praise where praise is due and as an order where it is not.
+ *
+ * Every string here is a command, not a description. Two rules, both enforced by
+ * `voice.ts` and tested over this whole file: at most twenty-five words, at most
+ * two sentences. The key words carry `**markers**` so a player scanning the page
+ * on a court sees the instruction before they read the sentence around it.
+ *
+ * `drill` is the one corrective exercise for this fault — one step, done on a
+ * court, no equipment beyond a racket and a ball. One per measurement rather
+ * than a menu: a player given three drills does none of them.
  */
 export interface MetricCopy {
   id: string
@@ -19,6 +28,7 @@ export interface MetricCopy {
   decimals: number
   insight: { low: string; ok: string; high: string }
   fix: { low: string; high: string }
+  drill: Drill
 }
 
 export const METRICS: Record<string, MetricCopy> = {
@@ -33,13 +43,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [90, 180],
     decimals: 0,
     insight: {
-      low: 'Your tossing elbow is still bent when the ball leaves your hand, so the release point moves a little every time.',
-      ok: 'Straight tossing arm at release. This is the single biggest reason a toss repeats.',
-      high: 'Fully extended tossing arm at release.',
+      low: 'Your tossing elbow **bends** at release, so the ball leaves from a new spot every serve.',
+      ok: 'Tossing arm **straight** at release. That is what makes a toss repeat.',
+      high: 'Tossing arm **fully long** at release.',
     },
     fix: {
-      low: 'Lift from the shoulder with a straight arm and let go above eye level — think of placing the ball on a high shelf rather than throwing it.',
-      high: 'Keep the arm long but relaxed; locking the elbow hard adds tension you do not need.',
+      low: 'Lift from the shoulder with a **straight arm**. Place the ball on a high shelf, never throw it.',
+      high: 'Keep the arm long but **loose**. Locking the elbow adds tension you do not need.',
+    },
+    drill: {
+      name: 'Straight-arm shelf',
+      how: 'Toss with the elbow locked long and place the ball on an imaginary high shelf.',
+      reps: '20 tosses',
     },
   },
   releaseHeight: {
@@ -52,13 +67,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0.7, 1.6],
     decimals: 2,
     insight: {
-      low: 'You let go of the ball below full stretch. A low release gives the ball longer to drift and leaves you rushing to catch up.',
-      ok: 'You release at full stretch, which is the shortest and straightest path for the ball.',
-      high: 'You release very high, right at the top of your reach.',
+      low: 'You let the ball go **below full stretch**, so it drifts longer and you chase it.',
+      ok: 'You release at **full stretch**, the shortest path up for the ball.',
+      high: 'You release at the **top** of your reach.',
     },
     fix: {
-      low: 'Hold on until the arm is completely extended above your head. The ball should roll off your fingertips, not leave your palm.',
-      high: 'Check you are not pushing up onto your toes before the legs load — the release should be tall, not early.',
+      low: 'Hold the ball until the arm **locks out overhead**. Roll it off the fingertips, not the palm.',
+      high: 'Stay **flat-footed** until the legs load. Release tall, not early.',
+    },
+    drill: {
+      name: 'Fingertip release',
+      how: 'Toss slowly and let the ball roll off your fingertips only once the arm locks out.',
+      reps: '15 tosses',
     },
   },
   tossArmHold: {
@@ -71,13 +91,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 100],
     decimals: 0,
     insight: {
-      low: 'Your tossing arm drops away early. When it comes down the front shoulder collapses with it, and you lose both height and balance at contact.',
-      ok: 'You hold the tossing arm up into the swing, which keeps the chest open and the shoulders tilted.',
-      high: 'You hold the tossing arm up right through the swing.',
+      low: 'Your tossing arm **drops early**, the front shoulder falls with it, and contact drops too.',
+      ok: 'You **hold** the tossing arm up into the swing, so the chest stays open.',
+      high: 'You hold the tossing arm up **through** the swing.',
     },
     fix: {
-      low: 'Keep that arm up and pointing at the ball until the racket starts up to meet it, then tuck it into your chest — not before.',
-      high: 'Do tuck it in eventually; leaving it out through the finish costs you rotation.',
+      low: '**Point at the ball** until the racket starts up. Tuck the arm into your chest only then.',
+      high: '**Tuck the arm in** as the racket fires. Leaving it out costs rotation.',
+    },
+    drill: {
+      name: 'Point and hold',
+      how: 'Toss, then hold a finger pointing at the ball until the racket starts up.',
+      reps: '12 serves',
     },
   },
   tossPathWobble: {
@@ -91,13 +116,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 12],
     decimals: 1,
     insight: {
-      low: 'Your tossing hand travels dead straight up.',
-      ok: 'Your tossing hand travels straight up with very little sideways drift.',
-      high: 'Your tossing hand wanders sideways on the way up, so the ball finishes in a slightly different place each time.',
+      low: 'Your tossing hand travels **dead straight** up.',
+      ok: 'Your tossing hand travels **straight** up with almost no drift.',
+      high: 'Your tossing hand **drifts sideways**, so the ball finishes somewhere new each serve.',
     },
     fix: {
       low: '',
-      high: 'Toss with a quiet wrist and no flick. Stand side-on to a fence and toss so the ball brushes past it — twenty in a row without moving your feet.',
+      high: '**Quiet the wrist** and cut the flick. Lift side-on to a fence so the ball brushes past it.',
+    },
+    drill: {
+      name: 'Fence line toss',
+      how: 'Stand side-on beside a fence and toss so the ball brushes the fence going up.',
+      reps: '20 tosses',
     },
   },
 
@@ -120,13 +150,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0.9, 2.4],
     decimals: 2,
     insight: {
-      low: 'Your toss does not get above your hitting reach, so you have to shorten the swing to meet it and the racket never fully extends.',
-      ok: 'The ball tops out just above where you make contact, which is exactly where it hangs longest and is easiest to time.',
-      high: 'You toss the ball a long way above your contact point, so it is falling fast by the time you hit it and the timing has to be perfect every time.',
+      low: 'Your toss **stops below** your hitting reach, so you shorten the swing to meet it.',
+      ok: 'The ball **tops out** above contact, exactly where it hangs longest.',
+      high: 'Your toss climbs **far above** contact, so you hit it falling fast and time it perfectly or not at all.',
     },
     fix: {
-      low: 'Toss so the ball peaks about a foot above your racket at full stretch. Stand under a fence rail and toss to the same height ten times in a row.',
-      high: 'Bring the toss down until it peaks just above your reach. A high toss feels safer and is much harder to time — the ball is quickest exactly where you are trying to hit it.',
+      low: 'Toss so the ball peaks **one ball above** your racket at full stretch.',
+      high: '**Lower the toss** until it peaks one ball above your reach. A high toss times badly.',
+    },
+    drill: {
+      name: 'Rail height toss',
+      how: 'Pick a fence rail one ball above your racket reach and toss to that height.',
+      reps: '20 tosses',
     },
   },
   contactBelowPeak: {
@@ -140,13 +175,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 0.6],
     decimals: 3,
     insight: {
-      low: 'You strike the ball right at the top of its flight, where it is barely moving. That is the easiest moment to time and the highest you can possibly hit it.',
-      ok: 'You catch the ball close to the top of its flight, while it is still hanging.',
-      high: 'You are waiting for the ball to drop before you hit it. Every centimetre it falls is contact height you have given away, and it is moving faster the longer you wait.',
+      low: 'You strike the ball at the **top** of its flight, where it barely moves.',
+      ok: 'You catch the ball **near the top**, while it still hangs.',
+      high: 'You **wait for the drop**. Every centimetre it falls is contact height handed back.',
     },
     fix: {
       low: '',
-      high: 'Start the swing earlier so the racket arrives as the ball stops climbing. If the toss is too high you will always end up waiting — check your toss height first.',
+      high: '**Start the swing earlier** so the racket arrives as the ball stops climbing. Check your toss height first.',
+    },
+    drill: {
+      name: 'Catch the peak',
+      how: 'Toss and swing so the racket meets the ball the instant it stops climbing.',
+      reps: '15 serves',
     },
   },
 
@@ -161,13 +201,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 90],
     decimals: 0,
     insight: {
-      low: 'You barely bend your knees, so the serve is almost entirely arm. The legs are the cheapest speed on the court.',
-      ok: 'A strong, athletic load — deep enough to store energy, shallow enough to launch out of quickly.',
-      high: 'You sink very deep into the load.',
+      low: 'Your legs stay **straight**, so the serve runs on arm alone.',
+      ok: 'An **athletic load** — deep enough to store power, shallow enough to launch.',
+      high: 'You **sink deep** into the load.',
     },
     fix: {
-      low: 'Sink until your knees are over your toes, then drive up. Shadow serve slowly and pause at the bottom until the position feels normal.',
-      high: 'Trim the bend back towards 45°. Depth is not the goal — how fast you come out of the bottom is.',
+      low: '**Sink** until the knees sit over your toes, then drive up. Shadow serve and hold the bottom.',
+      high: '**Trim the bend**. Speed out of the bottom beats depth at the bottom.',
+    },
+    drill: {
+      name: 'Slow sink hold',
+      how: 'Shadow serve, sink until the knees sit over your toes, hold two seconds, drive up.',
+      reps: '3 sets of 8',
     },
   },
   hipShoulderSeparation: {
@@ -180,13 +225,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 55],
     decimals: 0,
     insight: {
-      low: 'Your hips and shoulders turn as one block, so you are serving with your arm instead of unwinding your body.',
-      ok: 'Your hips lead and your shoulders lag behind them. That stretch across the trunk is what whips the arm through.',
-      high: 'A big coil between hips and shoulders — a lot of stored energy.',
+      low: 'Your hips and chest turn as **one block**, so the arm does the work alone.',
+      ok: 'Your hips **lead** and the shoulders lag. That stretch whips the arm through.',
+      high: 'A **big coil** between hips and shoulders.',
     },
     fix: {
-      low: 'At the trophy, start the hips rotating towards the court while the shoulders stay closed a beat longer. Feel the stretch across your stomach.',
-      high: 'Check the front hip is not sliding into the court before the racket has dropped, or the timing gets fragile.',
+      low: '**Turn the hips** to the court while the chest stays closed. Feel the stretch across your stomach.',
+      high: '**Hold the front hip** until the racket drops. Sliding early makes the timing fragile.',
+    },
+    drill: {
+      name: 'Hip lead turn',
+      how: 'Shadow serve and turn the hips to the court while the chest stays closed.',
+      reps: '10 reps',
     },
   },
   shoulderTilt: {
@@ -199,13 +249,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 50],
     decimals: 0,
     insight: {
-      low: 'Your shoulders are almost level at the trophy. Flat shoulders send the racket up on a shallow angle and cost you contact height.',
-      ok: 'Hitting shoulder down, tossing shoulder up. This is the tilt that lets you hit up at the ball rather than around it.',
-      high: 'A steep shoulder tilt, which gets the racket travelling upwards nicely.',
+      low: 'Your shoulders stay **level**, so the racket climbs on a shallow angle.',
+      ok: 'Hitting shoulder **down**, tossing shoulder up. That tilt sends the racket up at the ball.',
+      high: 'A **steep tilt**, so the racket travels sharply upward.',
     },
     fix: {
-      low: 'Point the tossing hand at the ball and let the hitting shoulder drop underneath it. Cartwheel your shoulders, do not spin them.',
-      high: 'Make sure the tilt comes from the shoulders and not from leaning back — arching the lower back moves contact behind you.',
+      low: '**Cartwheel** the shoulders, never spin them. Point at the ball and drop the hitting shoulder under it.',
+      high: '**Tilt from the shoulders**, not the lower back. Arching moves contact behind you.',
+    },
+    drill: {
+      name: 'Cartwheel shoulders',
+      how: 'Freeze at the trophy with the hitting shoulder dropped under the tossing shoulder.',
+      reps: '10 holds',
     },
   },
   legDrive: {
@@ -218,13 +273,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 0.36],
     decimals: 3,
     insight: {
-      low: 'Very little upward drive. You loaded the legs but never cashed it in.',
-      ok: 'Strong upward drive out of the load — the legs are feeding the swing.',
-      high: 'A big launch upwards.',
+      low: 'You loaded the legs and **never cashed it in**.',
+      ok: 'You **drive up** hard out of the load, and the legs feed the swing.',
+      high: 'A **big launch** upward.',
     },
     fix: {
-      low: 'Explode up so that you leave the ground and land inside the baseline. Think up at the ball, not forward at it.',
-      high: 'Check you are going up rather than out. Landing a long way into the court usually means the toss is too far in front.',
+      low: '**Explode up** and land inside the baseline. Drive up at the ball, not forward at it.',
+      high: '**Drive up**, not out. Landing deep in the court means the toss sits too far ahead.',
+    },
+    drill: {
+      name: 'Land inside',
+      how: 'Serve and jump so you land a stride inside the baseline every time.',
+      reps: '15 serves',
     },
   },
 
@@ -239,13 +299,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 0.5],
     decimals: 3,
     insight: {
-      low: 'The racket never really falls behind your back. Without that drop there is no runway to accelerate — the swing starts already half finished.',
-      ok: 'The racket falls well down your back before it fires. That is where racket-head speed comes from.',
-      high: 'A very deep racket drop, with plenty of runway to accelerate through.',
+      low: 'Your racket **never falls** behind your back, so the swing starts half finished.',
+      ok: 'Your racket **falls down your back** before it fires. That is where head speed comes from.',
+      high: 'A **deep drop**, with plenty of runway to accelerate.',
     },
     fix: {
-      low: 'Let the racket head fall until you could scratch between your shoulder blades. It should feel loose and heavy, not lifted.',
-      high: 'Keep the elbow up so the racket stays behind your back rather than dropping down by your side.',
+      low: '**Let the racket fall** until you could scratch between your shoulder blades. Loose grip, no lifting.',
+      high: '**Keep the elbow up** so the racket stays behind your back, not down by your side.',
+    },
+    drill: {
+      name: 'Back-scratch drop',
+      how: 'Serve at half pace and let the racket fall between your shoulder blades before firing.',
+      reps: '20 serves',
     },
   },
   elbowAtDrop: {
@@ -258,13 +323,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [20, 170],
     decimals: 0,
     insight: {
-      low: 'Your hitting elbow folds extremely tight at the drop.',
-      ok: 'Your hitting arm folds into a loaded L at the drop, elbow up and racket head down.',
-      high: 'Your hitting arm stays fairly straight through the drop, which turns the serve into a windmill.',
+      low: 'Your hitting elbow **folds tight** against your back.',
+      ok: 'Your arm folds into a loaded **L**: elbow up, racket head down.',
+      high: 'Your arm stays **straight** through the drop, so the serve becomes a windmill.',
     },
     fix: {
-      low: 'Give the racket a little room — jamming it against your back stops it swinging freely into the drop.',
-      high: 'Let the elbow bend and lead the way up: racket head down, elbow up and pointing sideways, arm coiled like an L before it fires.',
+      low: '**Give the racket room**. Jammed against your back it cannot swing free into the drop.',
+      high: '**Bend the elbow** and lead with it. Racket head down, elbow up, arm coiled.',
+    },
+    drill: {
+      name: 'Elbow-up L',
+      how: 'Pause at the drop with the elbow high and the racket head hanging down your back.',
+      reps: '10 holds',
     },
   },
   dropToContact: {
@@ -277,13 +347,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [50, 450],
     decimals: 0,
     insight: {
-      low: 'Extremely quick from drop to contact — either genuinely explosive, or the drop was shallow enough that there was little distance to cover.',
-      ok: 'The racket covers the distance from drop to ball explosively. This is the acceleration window and yours is sharp.',
-      high: 'The racket takes a long time to get from the drop to the ball, so the swing is being guided rather than released.',
+      low: 'You **snap** from drop to contact: explosive, or a drop too shallow to cover.',
+      ok: 'Your racket **fires** from drop to ball. That acceleration window is sharp.',
+      high: 'Your racket **crawls** from drop to ball, so you are guiding the swing.',
     },
     fix: {
-      low: 'Cross-check your racket drop — if the drop is shallow, a quick swing is hiding a short one.',
-      high: 'Stop steering the racket. Serve at 80% intent but twice as loose, and let the arm extend late.',
+      low: '**Check the drop depth**. A quick swing off a shallow drop is a short swing.',
+      high: '**Stop steering**. Serve at easy pace but twice as loose, and extend late.',
+    },
+    drill: {
+      name: 'Loose arm serve',
+      how: 'Serve at easy intent with a light grip and let the arm extend late.',
+      reps: '20 serves',
     },
   },
 
@@ -298,13 +373,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0.9, 1.7],
     decimals: 2,
     insight: {
-      low: 'You are hitting the ball below full reach. Every centimetre you give up here shrinks the window the ball can land in.',
-      ok: 'You make contact right at full stretch, which is exactly where your margin over the net comes from.',
-      high: 'Contact is at the very top of your reach.',
+      low: 'You strike **below full reach**, which shrinks the window the ball can land in.',
+      ok: 'You strike at **full stretch**, exactly where your margin over the net lives.',
+      high: 'You strike at the **top of your reach**.',
     },
     fix: {
-      low: 'Reach up and hit at the top. Serve with your heels off the ground for a basket — it forces you to go up rather than out.',
-      high: 'Nothing to change here; just make sure the toss stays in front rather than drifting back to reach it.',
+      low: '**Reach up** and hit at the top. Serve a basket with your heels off the ground.',
+      high: '**Keep the toss in front** so you never lean back to reach it.',
+    },
+    drill: {
+      name: 'Heels-up basket',
+      how: 'Serve a full basket with your heels off the ground from start to finish.',
+      reps: '15 serves',
     },
   },
   armExtension: {
@@ -317,13 +397,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [100, 180],
     decimals: 0,
     insight: {
-      low: 'Your hitting arm is still bent at contact, which costs you height and power at the same time.',
-      ok: 'A long arm at contact — you are hitting at the top of the reach with nothing left on the table.',
-      high: 'Full extension through the ball.',
+      low: 'Your hitting arm stays **bent** at contact, costing height and power together.',
+      ok: '**Long arm** at contact, with nothing left on the table.',
+      high: '**Full extension** through the ball.',
     },
     fix: {
-      low: 'Chase the ball up with a long arm. Toss a little higher so you have to stretch to it instead of pulling down early.',
-      high: 'Stay loose through the elbow — a locked arm at contact stops the racket head releasing.',
+      low: '**Chase the ball up** with a long arm. Toss higher so you stretch instead of pulling down.',
+      high: '**Stay loose** through the elbow. A locked arm stops the racket head releasing.',
+    },
+    drill: {
+      name: 'Reach and freeze',
+      how: 'Serve and freeze at contact with the hitting arm locked long above you.',
+      reps: '12 serves',
     },
   },
   bodyExtension: {
@@ -336,13 +421,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 0.28],
     decimals: 3,
     insight: {
-      low: 'You are still flat-footed at contact, so the energy you loaded stayed in the ground.',
-      ok: 'You extend up off the court into the ball — the chain fired in the right order.',
-      high: 'You get well off the ground into contact.',
+      low: 'You stay **flat-footed** at contact, so the load never left the ground.',
+      ok: 'You **extend up** off the court into the ball, and the chain fired in order.',
+      high: 'You get **well off the ground** into contact.',
     },
     fix: {
-      low: 'Let the drive carry you off the court. You do not need a big jump — a few centimetres means the legs, hips and shoulders fired in sequence.',
-      high: 'Make sure the jump is up and slightly forward, and that you land on the front foot inside the baseline.',
+      low: '**Let the drive lift you** off the court. A few centimetres proves the sequence fired.',
+      high: '**Jump up** and a touch forward, then land on the front foot inside the baseline.',
+    },
+    drill: {
+      name: 'Off the court',
+      how: 'Serve so both feet leave the court and you land on the front foot.',
+      reps: '15 serves',
     },
   },
   contactAhead: {
@@ -356,13 +446,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [-10, 34],
     decimals: 1,
     insight: {
-      low: 'Contact is happening over or behind your head rather than out in front. This is why serves feel like they drop into the net and why your back arches.',
-      ok: 'Contact is nicely in front of your body, so your weight is moving into the court as you hit.',
-      high: 'Contact is a long way in front of you.',
+      low: 'You strike **over or behind** your head, which drops serves into the net and arches your back.',
+      ok: 'You strike **in front** of your body, with your weight moving into the court.',
+      high: 'You strike **far in front** of your body.',
     },
     fix: {
-      low: 'Toss about a foot inside the baseline so you have to move up and forward to reach it. Contact belongs in front of your front foot.',
-      high: 'Great for a flat first serve, but if you are falling into the court the toss has gone too far ahead.',
+      low: '**Toss a stride inside the baseline** so you move up and forward. Contact belongs ahead of the front foot.',
+      high: '**Rein the toss back** if you fall into the court. Ahead is good, falling is not.',
+    },
+    drill: {
+      name: 'Step-in toss',
+      how: 'Toss a stride inside the baseline and let it pull you forward into contact.',
+      reps: '15 serves',
     },
   },
 
@@ -377,13 +472,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [400, 3000],
     decimals: 0,
     insight: {
-      low: 'The whole motion is very quick. Rushed serves rarely repeat, because the legs never get time to load.',
-      ok: 'A well-paced motion: unhurried into the trophy, fast out of it.',
-      high: 'A long motion. Fine if it flows, but usually it means the ball goes up and then you wait for it.',
+      low: 'You **rush** the whole motion, so the legs never load.',
+      ok: '**Well paced**: unhurried into the trophy, fast out of it.',
+      high: 'A **long motion**. Usually the ball goes up and then you wait for it.',
     },
     fix: {
-      low: 'Slow the first half down. Only the last third of a serve should be fast.',
-      high: 'Trim the pause. The toss and the takeback start together and should not stop until contact.',
+      low: '**Slow the first half**. Only the last third of a serve moves fast.',
+      high: '**Cut the pause**. Toss and takeback start together and never stop until contact.',
+    },
+    drill: {
+      name: 'Three count',
+      how: 'Say one going down, two at the trophy, three at contact. Only three is fast.',
+      reps: '2 baskets',
     },
   },
   loadRatio: {
@@ -398,13 +498,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [8, 65],
     decimals: 0,
     insight: {
-      low: 'Almost all of your motion happens before the trophy, then everything is crammed into a tiny window at the end.',
-      ok: 'A good split between the slow build and the explosive finish.',
-      high: 'A large share of the motion is spent after the trophy, which usually means the back half is drifting rather than firing.',
+      low: 'You spend the motion **before the trophy**, then cram everything into the finish.',
+      ok: 'A **clean split** between the slow build and the explosive finish.',
+      high: 'You **linger after the trophy**, so the back half drifts instead of firing.',
     },
     fix: {
-      low: 'Give yourself more room after the trophy — start the drive a fraction earlier and let it flow into the swing.',
-      high: 'Sharpen the finish. From the trophy on, it should be one continuous acceleration.',
+      low: '**Start the drive earlier** and let it flow straight into the swing.',
+      high: '**Sharpen the finish**. From the trophy on, accelerate once and never pause.',
+    },
+    drill: {
+      name: 'One-beat finish',
+      how: 'From the trophy on, accelerate without a single pause until the ball leaves.',
+      reps: '20 serves',
     },
   },
   syncAtRelease: {
@@ -417,13 +522,18 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [-0.4, 0.5],
     decimals: 2,
     insight: {
-      low: 'When the ball leaves your hand the racket is still down by your leg. The two arms are out of step, so the second half of the serve has to be rushed.',
-      ok: 'Down together, up together — both arms arrive at the top at the same moment.',
-      high: 'Your racket is already high when the ball is released.',
+      low: 'Your racket sits **by your leg** when the ball leaves, so the back half gets rushed.',
+      ok: '**Down together, up together**: both arms reach the top at once.',
+      high: 'Your racket is already **high** when the ball leaves your hand.',
     },
     fix: {
-      low: 'Start both hands down together and let them rise together: tossing arm extended, racket arm cocked, arriving at the same time.',
-      high: 'Check you are not lifting the racket early and then stalling at the top waiting for the ball.',
+      low: '**Start both hands down together** and lift them together, arriving at the top as one.',
+      high: '**Stop lifting the racket early**. Waiting at the top kills the rhythm.',
+    },
+    drill: {
+      name: 'Mirror hands',
+      how: 'Start both hands together at your thigh and lift them together to the top.',
+      reps: '15 serves',
     },
   },
 }
@@ -462,7 +572,7 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
   },
   kick: {
     label: 'Kick / topspin',
-    blurb: 'Judged as a kick serve, so contact belongs more over your head than in front.',
+    blurb: 'Judged as a kick serve, so contact belongs over your head.',
     overrides: {
       // The racket travels up the back of the ball, so contact sits much closer
       // to over the head — and slightly lower, because you are brushing up it
@@ -476,16 +586,16 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
     },
     insight: {
       contactAhead: {
-        low: 'Contact is happening over your head, which is where a kick serve wants it. Watch that it does not drift behind you, which is what makes a kick serve land short.',
+        low: 'You strike **over your head**, where a kick wants it. Keep it from drifting behind you.',
       },
       contactHeight: {
-        ok: 'You make contact at the right height for a kick — high enough for margin, low enough to brush up the back of the ball.',
+        ok: 'You strike at **kick height**: high enough for margin, low enough to brush up the ball.',
       },
     },
   },
   slice: {
     label: 'Slice',
-    blurb: 'Judged as a slice serve, so contact belongs further in front and out to the side.',
+    blurb: 'Judged as a slice serve, so contact belongs in front and out to the side.',
     overrides: {
       // The racket cuts across the outside of the ball, in front of the body.
       contactAhead: [8, 24],
@@ -522,8 +632,8 @@ export const FUNDAMENTALS: Record<
     metrics: ['tossPeakHeight', 'tossArmExtension', 'releaseHeight', 'tossArmHold', 'tossPathWobble'],
     drill: {
       name: 'Fence toss',
-      how: 'Stand side-on, a racket length from a fence. Toss so the ball brushes past the fence on the way up and lands on the same spot every time. No racket, no serve — just the toss.',
-      reps: '20 tosses · aim for 15 landing inside a racket head',
+      how: 'Stand side-on a racket from a fence and toss so the ball brushes past it, landing on one spot.',
+      reps: '20 tosses · 15 inside a racket head',
     },
   },
   loading: {
@@ -534,8 +644,8 @@ export const FUNDAMENTALS: Record<
     metrics: ['kneeBend', 'hipShoulderSeparation', 'shoulderTilt', 'legDrive'],
     drill: {
       name: 'Freeze at the trophy',
-      how: 'Shadow serve and stop dead at the trophy: knees bent, tossing arm up and pointing, hitting shoulder dropped, chest to the sky. Hold two seconds, then drive up and finish the swing.',
-      reps: '3 sets of 8 · then 10 live serves keeping the same shape',
+      how: 'Shadow serve and stop dead at the trophy: knees bent, arm pointing, hitting shoulder dropped, chest up.',
+      reps: '3 sets of 8 · then 10 live serves',
     },
   },
   swing: {
@@ -546,8 +656,8 @@ export const FUNDAMENTALS: Record<
     metrics: ['dropDepth', 'elbowAtDrop', 'dropToContact'],
     drill: {
       name: 'Back-scratch drop',
-      how: 'Serve at half pace with a single thought: let the racket fall down your back before it goes anywhere else. Loose grip, no targets, no care where the ball lands.',
-      reps: '20 serves · then 10 at full pace keeping the same looseness',
+      how: 'Serve at half pace with one thought: let the racket fall down your back before anything else moves.',
+      reps: '20 serves · then 10 at full pace',
     },
   },
   contact: {
@@ -558,20 +668,20 @@ export const FUNDAMENTALS: Record<
     metrics: ['contactHeight', 'contactBelowPeak', 'armExtension', 'bodyExtension', 'contactAhead'],
     drill: {
       name: 'Heels up',
-      how: 'Serve a whole basket with your heels off the ground from start to finish. It removes the option of hitting out at the ball and forces you to reach up to it.',
-      reps: '15 serves · then 15 normal, keeping the same contact height',
+      how: 'Serve a whole basket with your heels off the ground, so you reach up to the ball instead of out.',
+      reps: '15 serves · then 15 normal',
     },
   },
   rhythm: {
     label: 'Rhythm',
-    blurb: 'How the pieces are timed against each other.',
+    blurb: 'Where each piece lands against the others.',
     phase: 'ready',
     weight: 12,
     metrics: ['totalTime', 'loadRatio', 'syncAtRelease'],
     drill: {
       name: 'Count the serve',
-      how: 'Say "one" as both hands go down, "two" as you hit the trophy, "three" at contact. One and two are slow and even; only three is fast.',
-      reps: '2 baskets · say it out loud',
+      how: 'Say one as both hands drop, two at the trophy, three at contact. One and two stay slow.',
+      reps: '2 baskets · out loud',
     },
   },
 }

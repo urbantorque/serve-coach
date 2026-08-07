@@ -3,7 +3,8 @@ import ConsistencyPanel from '../components/ConsistencyPanel'
 import FundamentalCard from '../components/FundamentalCard'
 import PosePlayer from '../components/PosePlayer'
 import { DeltaChip } from '../components/Trend'
-import { Icon, ScoreRing } from '../components/primitives'
+import { Cue, Icon, ScoreRing } from '../components/primitives'
+import { SOFT_READ, readQuality } from '../components/statusLabels'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import type { Consistency } from '../lib/analysis/consistency'
 import type { ServeType } from '../lib/storage/prefs'
@@ -15,19 +16,19 @@ import type { Session } from '../lib/storage/db'
 const VERDICT: Record<Status, { title: string; sub: string }> = {
   great: {
     title: 'A seriously good serve',
-    sub: 'The fundamentals are all in place. Keep filming to make sure they stay there.',
+    sub: 'Every fundamental holds. Keep filming and prove it stays there.',
   },
   good: {
     title: 'A solid, repeatable serve',
-    sub: 'The shape is right. One or two details are keeping you off your best.',
+    sub: 'The shape is right. One or two details keep you off your best.',
   },
   fair: {
     title: 'Good bones, a few gaps',
-    sub: 'The motion works, but there is real speed and consistency being left behind.',
+    sub: 'The motion works. Real speed and consistency are still on the table.',
   },
   work: {
     title: 'Plenty of free speed here',
-    sub: 'A couple of the basics are missing. Fix those and everything downstream gets easier.',
+    sub: 'Two basics are missing. Fix them and everything after gets easier.',
   },
 }
 
@@ -97,8 +98,6 @@ export default function Report({
     playerRef.current?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'center' })
   }
 
-  const confidencePct = Math.round(analysis.quality.confidence * 100)
-
   return (
     <div className="screen report">
       <header className="topbar">
@@ -144,8 +143,8 @@ export default function Report({
                 ? 'Front / back view'
                 : 'Angled view'}
           </span>
-          <span className={`chip${confidencePct < 60 ? ' chip--warn' : ''}`}>
-            {confidencePct}% confidence
+          <span className={`chip${analysis.quality.confidence < SOFT_READ ? ' chip--warn' : ''}`}>
+            {readQuality(analysis.quality.confidence)}
           </span>
         </div>
 
@@ -225,8 +224,11 @@ export default function Report({
           Work on this next
         </span>
         <h2>{analysis.focus.title}</h2>
-        <p>{analysis.focus.why}</p>
+        <p>
+          <Cue text={analysis.focus.why} />
+        </p>
         <div className="focus-drill">
+          <span className="drill-kicker">The drill</span>
           <h3>{analysis.focus.drill.name}</h3>
           <p>{analysis.focus.drill.how}</p>
           <span className="drill-reps">{analysis.focus.drill.reps}</span>
