@@ -286,6 +286,13 @@ export class NotAServeError extends Error {
    * only dev builds opt in.
    */
   capture?: FailedCapture
+  /**
+   * The hand that actually swung, when the only thing wrong was which arm was
+   * being watched. A refusal carrying this is not a verdict on the clip — the
+   * swing was found, on the other side — so callers are expected to read it
+   * again against this hand rather than show it to anybody.
+   */
+  suggestedHand?: 'right' | 'left'
   constructor(message: string, hints: string[]) {
     super(message)
     this.name = 'NotAServeError'

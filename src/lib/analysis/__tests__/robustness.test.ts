@@ -1191,30 +1191,37 @@ check('a stated hand is used, and the detector still reports what it saw', () =>
  * serve and given filming advice that could not fix it.
  */
 check('the wrong hand is diagnosed as the wrong hand, not as a bad clip', () => {
+  // This used to assert a refusal naming the hand. It now asserts the reading
+  // is produced instead, which serves the same intent better.
+  //
+  // The refusal was reached through the swing test, and that test cannot
+  // actually tell the arms apart: on this rig the tossing arm travels 0.86 body
+  // heights from its rest to its peak against the racket arm's 1.09, so both
+  // clear the bar for "went from the hip to overhead". What separates them is
+  // *when* each peaks — the tossing arm early, the racket arm at contact —
+  // which is what `detectHandedness` reads and what the detector preserves in
+  // `detectedRacket` even when it has been told otherwise.
+  //
+  // So a serve watched from the wrong side is not a bad clip and is no longer
+  // treated as one. The disagreement is carried out of the detector, the report
+  // warns in words, and the hand badge re-reads it in one tap.
   const frames = buildServe({}, FPS)
-  let thrown: Error | undefined
-  try {
-    detectServe(frames, FPS, 'left')
-  } catch (err) {
-    thrown = err as Error
-  }
-  assert(thrown !== undefined, 'a right-handed serve read as left-handed was accepted')
-  // The rig is right-handed, so being told "left" should produce exactly that
-  // correction back — naming the hand it actually saw, not the one it was given.
+  const skel = detectServe(frames, FPS, 'left')
+  assert(skel.racket === 'left', 'the stated hand was not honoured')
   assert(
-    /right-handed serve/i.test(thrown!.message),
-    `unhelpful rejection: "${thrown!.message}"`,
-  )
-  const hints = (thrown as NotAServeError).hints
-  assert(
-    hints.some((h) => /switch/i.test(h)),
-    'the player was not told they can switch hands',
+    skel.detectedRacket === 'right',
+    `the detector lost the hand it actually saw: ${skel.detectedRacket}`,
   )
   assert(
-    hints.some((h) => /mirror/i.test(h)),
-    'no mention of the front camera mirroring, which is the usual cause',
+    skel.detectionConfidence > 0.6,
+    `too unsure of the real hand to contradict the player: ${skel.detectionConfidence.toFixed(2)}`,
   )
-  note(thrown!.message)
+  const q = assessQuality(frames, skel, FPS)
+  assert(
+    q.warnings.some((w) => /right-handed/i.test(w)),
+    `the contradiction was never said out loud. Warnings: ${q.warnings.join(' / ') || '(none)'}`,
+  )
+  note(q.warnings.find((w) => /right-handed/i.test(w)) ?? '')
 })
 
 check('a confident disagreement with the stated hand is called out on the report', () => {
@@ -1873,11 +1880,30 @@ check('an empty clip reports nobody visible', () => {
 })
 
 check('a clip nothing can be read from is stopped before the full analysis', () => {
-  for (const issues of [['nobody-visible'], ['body-unclear'], ['too-far-away'], ['feet-cropped', 'head-cropped']]) {
+  // Only the two that leave nothing to measure. No player at all, and no ruler:
+  // standing height survives losing the feet, but the ground line is taken from
+  // the head, so with neither end in shot every height is measured against a
+  // reference that does not exist.
+  for (const issues of [['nobody-visible'], ['feet-cropped', 'head-cropped']]) {
     const blocked = blockingFramingIssue(issues)
     assert(blocked !== undefined, `did not stop for ${issues.join(' + ')}`)
     assert(blocked!.hints.length > 0, `stopped for ${issues.join(' + ')} without saying what to do`)
   }
+})
+
+check('a clip that is merely hard to read is not stopped here', () => {
+  // This gate runs before a single frame has been tracked, so whatever it stops
+  // for can never reach the machinery built to cope with it. Both of these used
+  // to be stopped, and both were shadowing something softer further down.
+  //
+  // A player small in frame breaks no measurement, because every measurement is
+  // a ratio of that player's own standing height rather than of anything in the
+  // room; it costs sharpness, which is what confidence is for. And a body the
+  // tracker keeps losing is the very statistic `triage` weighs at
+  // `LIMITS.visibility`, where the reason is named on screen and the numbers are
+  // still offered behind it.
+  assert(blockingFramingIssue(['too-far-away']) === undefined, 'refused a small but readable player')
+  assert(blockingFramingIssue(['body-unclear']) === undefined, 'refused before triage could weigh it')
 })
 
 check('cropped feet alone are a caveat, not a rejection', () => {

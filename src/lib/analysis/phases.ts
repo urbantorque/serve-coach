@@ -4,7 +4,6 @@ import {
   argMinIn,
   clamp,
   jointAngle,
-  keyVisibility,
   mean,
   median,
   sided,
@@ -391,7 +390,7 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
     }
   }
 
-  assertPlausible(frames, keys, racketHeight, bodyHeight, {
+  assertPlausible(keys, racketHeight, bodyHeight, {
     // The other arm's swing, so a clip rejected for having no swing in it can
     // tell the difference between "this is not a serve" and "you have the wrong
     // hand selected" — which look identical from the racket arm alone.
@@ -428,7 +427,6 @@ function lowestBefore(heights: number[], end: number): number {
  * about them. Every check here corresponds to something a real serve must do.
  */
 function assertPlausible(
-  frames: Frame[],
   keys: Keyframes,
   racketHeight: number[],
   bodyHeight: number,
@@ -440,17 +438,22 @@ function assertPlausible(
     'Hold the phone steady — prop it on the fence if you can.',
   ]
 
-  if (keys.contact <= keys.ready + 1) {
+  // Nothing between the start of the motion and contact leaves every window the
+  // measurements are taken over empty, so there is genuinely nothing to read.
+  // A single frame between them is thin rather than impossible: `triage` scores
+  // that as `too_few_frames` and offers the numbers anyway, which is a better
+  // answer than a dead end for a player whose phone simply sampled slowly.
+  if (keys.contact <= keys.ready) {
     throw new NotAServeError('I could not find a serve in that clip.', filming)
   }
 
-  const visible = mean(frames.slice(keys.ready, keys.finish + 1).map(keyVisibility))
-  if (visible < 0.4) {
-    throw new NotAServeError('I lost track of the player.', [
-      'Make sure only one person is in frame.',
-      ...filming,
-    ])
-  }
+  // Tracking that comes and goes across the swing used to be refused outright
+  // here, below 0.4. `triage` already computes this same mean over this same
+  // window and rejects it at 0.45 — softly, with the reason on screen and the
+  // numbers available behind it. Two thresholds on one statistic meant the
+  // worse clips got the worse treatment: 0.40–0.45 was handed the override,
+  // and anything below it a screen it could not get past. The soft one is the
+  // one worth keeping, so this now leaves the judgement to it.
 
   // A serve lifts the racket hand from somewhere around the hip to well above
   // the head.
@@ -484,19 +487,20 @@ function assertPlausible(
     const otherSwing =
       (Math.max(...context.otherArm) - lowestBefore(context.otherArm, keys.toss)) / bodyHeight
     if (otherSwing >= 0.5) {
-      const other = context.racket === 'right' ? 'left' : 'right'
-      throw new NotAServeError(
-        `This looks like a ${other}-handed serve.`,
-        context.stated
-          ? [
-              `You have the app set to ${context.racket}-handed, but the racket arm in this clip is the ${other}. Switch it and try again.`,
-              'If your phone filmed with the front camera it may have mirrored the picture, which flips which hand you appear to serve with.',
-            ]
-          : [
-              `Tap the hand badge on the report to switch to ${other}-handed, and I will re-read it.`,
-              'Front cameras often mirror the picture, which flips which hand you appear to serve with.',
-            ],
-      )
+      // A serve was found — on the other side. That is a fact about which arm
+      // was watched, not about the clip, so it is handed back tagged rather
+      // than shown: `runAnalysis` reads the clip again against this hand and
+      // the player never learns any of it happened. If the app was told the
+      // wrong hand, `assessQuality` still says so and the badge on the report
+      // still flips it; being told your serve is not a serve, when the app has
+      // just proved to itself that it is, helps nobody.
+      const swung = other(context.racket)
+      const err = new NotAServeError(`This looks like a ${swung}-handed serve.`, [
+        `Tap the hand badge on the report to switch to ${swung}-handed, and I will re-read it.`,
+        'Front cameras often mirror the picture, which flips which hand you appear to serve with.',
+      ])
+      err.suggestedHand = swung
+      throw err
     }
 
     throw new NotAServeError('That does not look like a serve.', [

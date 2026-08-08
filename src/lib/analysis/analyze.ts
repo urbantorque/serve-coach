@@ -171,30 +171,45 @@ async function locateServes(opts: AnalyzeOptions): Promise<number[] | undefined>
 /**
  * Which framing problems are worth stopping for, and which are worth a caveat.
  *
- * The line is whether the analysis can still say something true. Cropped feet
- * are survivable — standing height falls back to the torso, the heights that
- * depend on it are marked approximate, and the angles are untouched — so the
- * player gets a real report with one section hedged, which beats being turned
- * away. Nobody in frame, or a player so small the tracker has a few dozen pixels
- * of them, cannot produce anything worth reading, and saying so immediately is
- * far more use than saying it in thirty seconds.
+ * A clip can fail in one of three ways, and the app has separate machinery for
+ * each. Deciding which one a problem belongs in is the whole job here:
+ *
+ *   1. REFUSE — there is nothing to measure at all. A thrown error, a terminal
+ *      screen, no numbers, because there are none. This tier is small on
+ *      purpose: it should hold only "no player", "no pixels", "no swing".
+ *   2. DISTRUST — measurable, but the numbers may be wrong enough to mislead.
+ *      `triage` marks the analysis `rejected`, the report leads with the reason
+ *      and offers to show the numbers anyway, and nothing is filed to history.
+ *      The player is never left with a dead end.
+ *   3. HEDGE — readable with caveats. The analysis runs, `metricConfidence`
+ *      discounts whatever the problem touches, and anything below
+ *      `SOFT_MEASUREMENT` is marked on screen and barred from the headline.
+ *
+ * This gate is the earliest of the three and runs before a single frame has
+ * been tracked, so anything it stops for can never reach the other two. That is
+ * why it now stops for almost nothing.
+ *
+ * It previously refused three ways, and two of them were shadowing softer
+ * checks further down that were never given the chance to fire. `body-unclear`
+ * is the same statistic `triage` rejects at `LIMITS.visibility`, which offers
+ * the override; and a player small in frame breaks no measurement here, because
+ * every one of them is a ratio of that player's own body height rather than of
+ * anything in the room. Both now fall through to be hedged or distrusted on the
+ * evidence rather than guessed at from six preview frames.
+ *
+ * Head *and* feet both outside the shot is the one that still stops: standing
+ * height falls back to the torso, but the ground line is derived from the head,
+ * so with neither end visible the ruler every height is measured against has no
+ * fixed point. Numbers would still come out. They would be wrong in a way
+ * nothing downstream could detect, which is the one failure this app refuses to
+ * ship. Either end alone is survivable and always was.
  */
 export function blockingFramingIssue(issues: string[]): NotAServeError | undefined {
-  const filming = [
-    'Stand the phone side-on, four metres back, level with the baseline.',
-    'Fit head to feet in the shot, with room above the racket.',
-  ]
-
-  if (issues.includes('nobody-visible') || issues.includes('body-unclear')) {
+  if (issues.includes('nobody-visible')) {
     return new NotAServeError('I found no player in that clip.', [
       'Put one person fully in frame, well lit.',
-      ...filming,
-    ])
-  }
-  if (issues.includes('too-far-away')) {
-    return new NotAServeError('You stand too far from the camera to measure.', [
-      'Move the phone to four metres so your body fills the frame height.',
-      'Filming from across the court leaves too few pixels to read your angles.',
+      'Stand the phone side-on, four metres back, level with the baseline.',
+      'Fit head to feet in the shot, with room above the racket.',
     ])
   }
   if (issues.includes('feet-cropped') && issues.includes('head-cropped')) {
@@ -594,12 +609,23 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // throw time rather than closing over the original is deliberate: the second
   // detection runs on the levelled frames, and a fixture built from the
   // unlevelled ones would not reproduce the refusal being recorded.
+  // A refusal that names the hand that actually swung is answered by reading
+  // the clip again against that hand, rather than passed on. Tried once: the
+  // second read is against the arm the detector itself picked out as having
+  // served, so a second refusal is about the serve and worth showing.
   const detect = (): Skeleton => {
-    try {
-      return detectServe(frames, fps, opts.handedness)
-    } catch (err) {
-      if (opts.captureOnFailure && err instanceof NotAServeError) err.capture = { frames, fps }
-      throw err
+    let hand = opts.handedness
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return detectServe(frames, fps, hand)
+      } catch (err) {
+        if (err instanceof NotAServeError && err.suggestedHand && attempt === 0) {
+          hand = err.suggestedHand
+          continue
+        }
+        if (opts.captureOnFailure && err instanceof NotAServeError) err.capture = { frames, fps }
+        throw err
+      }
     }
   }
 
