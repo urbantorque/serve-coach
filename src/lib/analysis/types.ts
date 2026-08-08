@@ -1,6 +1,7 @@
 import type { ServeType } from '../storage/prefs'
 import type { BallFlight, TossFlight } from '../vision/ballTrack'
 import type { Diagnosis } from './diagnose'
+import type { Triage as TriageResult } from './triage'
 
 /** A single pose landmark. */
 export interface Landmark {
@@ -181,6 +182,15 @@ export interface Analysis {
    * saved serve keeps the diagnosis it was actually given.
    */
   diagnosis?: Diagnosis
+  /**
+   * The single thing to work on, or the reason this clip could not be read.
+   *
+   * The collapsed form of `diagnosis`: one flaw, one drill identifier, and how
+   * much the clip itself was worth. Optional for the same reason the diagnosis
+   * is — a report filed before it existed has none, and a consumer that does not
+   * care about triage can ignore it entirely.
+   */
+  triage?: TriageResult
 }
 
 /** Thrown when the clip does not contain a recognisable serve. */

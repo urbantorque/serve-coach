@@ -33,6 +33,8 @@ import {
 } from './geometry'
 import { diagnose } from './diagnose'
 import { measure } from './metrics'
+import { NOTABLE_ROLL, assessSpatial, levelFrames } from './spatial'
+import { assessResilience, triage } from './triage'
 import { cue } from './voice'
 import { buildPhases, detectServe, type Skeleton } from './phases'
 import { NotAServeError, type Analysis, type Frame, type Fundamental, type Quality } from './types'
@@ -483,7 +485,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     if (issue) throw issue
   }
 
-  const { frames, fps, window, serves } = await extractFrames(video, landmarker, {
+  const extracted = await extractFrames(video, landmarker, {
     signal,
     serveIndex: opts.serveIndex,
     knownServeTimes: opts.knownServeTimes,
@@ -495,6 +497,9 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       }),
   })
 
+  const { fps, window, serves } = extracted
+  let frames = extracted.frames
+
   if (frames.length < 8) {
     throw new NotAServeError('I found no player in that video.', [
       'Put the player fully in frame, well lit.',
@@ -505,7 +510,20 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   for (const f of frames) f.visibility = keyVisibility(f)
 
   onProgress({ step: 'measuring', ratio: 0.2, detail: 'Finding the key positions' })
-  const skel = detectServe(frames, fps, opts.handedness)
+  let skel = detectServe(frames, fps, opts.handedness)
+
+  // A phone held at an angle tilts every height and depth in the clip while
+  // leaving the pose tracking looking perfectly healthy. The player's own
+  // standing axis is a plumb line, so the frame can be rotated back onto gravity
+  // — and then the keyframes are found again, because they were found in the
+  // tilted frame. A level clip is detected as level and skips both, so the
+  // common case costs one comparison.
+  const tilt = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+  if (Math.abs(tilt.roll_deg) >= NOTABLE_ROLL) {
+    frames = levelFrames(frames, tilt.roll_deg)
+    for (const f of frames) f.visibility = keyVisibility(f)
+    skel = detectServe(frames, fps, opts.handedness)
+  }
 
   const quality = assessQuality(frames, skel, fps)
 
@@ -546,6 +564,13 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // over the video — it costs about a millisecond, which is why it is not
   // behind a flag.
   const diagnosis = diagnose(frames, skel, { tier: opts.tier, ball })
+
+  // What the clip itself was worth, and the single thing to work on — or the
+  // reason there is nothing worth saying. Carried as data rather than acted on
+  // here: whether a rejected clip is shown as a report or as a refusal is a
+  // decision for whatever is rendering, and the engine's job is to be right
+  // about which one it is.
+  const verdict = triage(diagnosis, assessResilience(frames, skel))
 
   const phases = buildPhases(frames, skel.keys)
   if (!opts.skipThumbnails) {
@@ -612,6 +637,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     tossFlight,
     serveType,
     diagnosis,
+    triage: verdict,
   }
 }
 

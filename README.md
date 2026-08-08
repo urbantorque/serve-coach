@@ -231,6 +231,9 @@ Everything is in `src/lib`:
 | `analysis/tiers.ts` | the rating ladder, and the band one rung above the player |
 | `analysis/flaws.ts` | named breakdowns, their evidence, and which cause which |
 | `analysis/diagnose.ts` | the diagnostic pass, out as one JSON object |
+| `analysis/spatial.ts` | which way is up, where the camera stood, and whether depth is readable |
+| `analysis/kalman.ts` | holds a landmark through blur, and scores how degraded the track is |
+| `analysis/triage.ts` | one thing to work on, or the reason the clip could not be read |
 | `analysis/voice.ts` | the house style as code: strips filler, caps length, lints the copy |
 | `analysis/confidence.ts` | how far to trust each measurement, and why |
 | `analysis/geometry.ts` | angles, smoothing, scoring curve |
@@ -261,6 +264,22 @@ on the flexibility-bound signals, chasing one is how people get hurt.
 diagnostic pass always hands back the band belonging to the tier above the
 player. Give it a rating and it uses it; give it nothing and it estimates one
 from the serve, deliberately pessimistically.
+
+**One answer, or an honest refusal.** A club serve has six things wrong with it
+and most of them are downstream of the first, so `analysis/triage.ts` collapses a
+diagnosis to a single instruction using a hierarchy — grip, toss, posture, drop,
+sequencing, contact. Whatever the deepest fault is, the shallowest one wins, and
+a flaw already attributed to another detected flaw is never chosen. When the clip
+itself cannot carry an answer — nobody visible, too few frames through the swing,
+a hand smeared past recognition — it returns a reason and nothing else, because
+half an answer off a clip that bad is the half the player would act on.
+
+**Every window is measured in seconds, never in frames.** Two frames is 16 ms of
+slow motion and 66 ms on a phone. Windows counted in frames therefore mean
+different things on different clips, and one of them used to average the two
+ends of a pronation measurement into each other and report an ordinary serve as
+a pushed contact. A test now reads the same serve at 24, 30, 50 and 120 fps and
+fails if the verdict moves.
 
 **The diagnosis is data, and only data.** `analysis/diagnose.ts` returns numbers,
 booleans and enums: signals, named flaws with the band they missed, severity,
