@@ -267,7 +267,12 @@ export function diagnose(
 
   const stated = options.tier !== undefined && Number.isFinite(options.tier)
   const current = stated ? clampTier(options.tier as number) : inferTier(signals)
-  const flaws = evaluateFlaws(readings, current)
+  // The detector found no drop to put a keyframe on, which settles whether the
+  // racket ever fell more directly than the depth reading can — see the note in
+  // `evaluateFlaws`.
+  const flaws = evaluateFlaws(readings, current, {
+    racketNeverFell: skel.derivation.dropOnTrophy,
+  })
 
   const gripFinding = flaws.find((f) => f.flaw === 'waiters_tray')
 

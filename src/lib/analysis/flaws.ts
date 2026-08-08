@@ -123,9 +123,34 @@ export const MIN_EVIDENCE = 0.45
  * skipped rather than defaulted. A flaw the engine could not look for must not
  * come back as a flaw the engine did not find.
  */
+/**
+ * Facts the detector established structurally, which no signal band can see.
+ */
+export interface StructuralEvidence {
+  /**
+   * The racket never fell below where it already sat at the trophy — the drop
+   * keyframe landed on the trophy rather than on an event of its own.
+   */
+  racketNeverFell?: boolean
+}
+
+/**
+ * A serve with no fall in it is at least this bad.
+ *
+ * Not measured, and it says so: the depth band cannot grade something it cannot
+ * see, and how much worse than "moderate" a missing drop is needs a set of real
+ * serves with hand-measured drops to say. Floored rather than fixed, so a clip
+ * whose depth *is* readable and worse keeps the worse answer.
+ */
+const NO_FALL_SEVERITY: Severity = 'medium'
+const SEVERITY_ORDER: Severity[] = ['none', 'low', 'medium', 'high']
+const worseOf = (a: Severity, b: Severity) =>
+  SEVERITY_ORDER.indexOf(a) >= SEVERITY_ORDER.indexOf(b) ? a : b
+
 export function evaluateFlaws(
   readings: Record<string, SignalReading | undefined>,
   currentTier: number,
+  structural: StructuralEvidence = {},
 ): FlawFinding[] {
   const target_tier = nextTier(currentTier)
   const found: FlawFinding[] = []
@@ -156,7 +181,25 @@ export function evaluateFlaws(
      * the second.
      */
     const resolvable = miss >= (NOISE_FLOOR[spec.signal] ?? 0)
-    const detected = !insideBand(spec.signal, reading.value, target) && resolvable
+
+    /*
+     * A racket that never fell is a shallow drop, whatever the depth says.
+     *
+     * `drop_depth_ratio` asks how far below the shoulder the hand got at its
+     * lowest, and on a serve with no drop in it that is answered by the trophy:
+     * the arm is cocked, the hand already sits a little under the shoulder, and
+     * the reading clears the band's floor without the racket having moved at
+     * all. Two real clips came back at 0.157 and 0.104 against a floor of 0.08,
+     * both scored as a sound drop, on serves whose racket provably never fell —
+     * the posture series rises from the trophy to contact without a dip in it.
+     *
+     * The number is not wrong. It is answering a question next to the one being
+     * asked: how *low* the hand was, rather than whether it ever fell. The
+     * detector settles the second one structurally when it finds no drop to
+     * put a keyframe on, and that fact is worth more here than the proxy.
+     */
+    const neverFell = spec.flaw === 'shallow_drop' && structural.racketNeverFell === true
+    const detected = neverFell || (!insideBand(spec.signal, reading.value, target) && resolvable)
 
     found.push({
       flaw: spec.flaw,
@@ -170,7 +213,14 @@ export function evaluateFlaws(
       miss: round(miss, spec.signal),
       target: [round(target[0], spec.signal), round(target[1], spec.signal)],
       target_tier,
-      severity: resolvable ? severityOf(spec.signal, reading.value, target) : 'none',
+      severity: neverFell
+        ? worseOf(
+            resolvable ? severityOf(spec.signal, reading.value, target) : 'none',
+            NO_FALL_SEVERITY,
+          )
+        : resolvable
+          ? severityOf(spec.signal, reading.value, target)
+          : 'none',
       confidence: Math.round(reading.confidence * 100) / 100,
     })
   }

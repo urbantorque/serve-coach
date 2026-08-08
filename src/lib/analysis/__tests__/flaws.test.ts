@@ -375,4 +375,43 @@ check('a signal band and its reading always agree about direction', () => {
   }
 })
 
+heading('A racket that never fell')
+
+check('a drop that never happened is named, whatever the depth reads', () => {
+  // The depth proxy cannot see this one. `drop_depth_ratio` asks how far under
+  // the shoulder the hand got at its lowest, and on a serve with no drop that is
+  // answered by the trophy: the arm is already cocked, the hand already sits a
+  // little under the shoulder, and the reading clears the band's floor without
+  // the racket having moved. Two real clips came in at 0.157 and 0.104 against a
+  // floor of 0.08 — both scored as a sound drop, on serves whose racket provably
+  // never fell.
+  const inBand = { value: 0.157, confidence: 0.95 }
+  const readings = { drop_depth_ratio: inBand }
+
+  const measured = evaluateFlaws(readings, 2).find((f) => f.flaw === 'shallow_drop')!
+  assert(!measured.detected, 'the premise is gone: this value is now a fault on its own')
+  assert(measured.severity === 'none', `expected no fault from the band, got ${measured.severity}`)
+
+  const structural = evaluateFlaws(readings, 2, { racketNeverFell: true }).find(
+    (f) => f.flaw === 'shallow_drop',
+  )!
+  assert(structural.detected, 'a racket that never fell was reported as a sound drop')
+  assert(
+    structural.severity !== 'none',
+    'named as a fault and graded as no fault, which are two answers to one question',
+  )
+  // Reported as measured, not rewritten: the number was never wrong, it was
+  // answering the question next to the one being asked.
+  assert(structural.value === 0.157, `the measurement was overwritten: ${structural.value}`)
+  note(`band says none, structure says ${structural.severity}`)
+})
+
+check('a real drop is left alone', () => {
+  const deep = { drop_depth_ratio: { value: 0.35, confidence: 0.95 } }
+  const finding = evaluateFlaws(deep, 2, { racketNeverFell: false }).find(
+    (f) => f.flaw === 'shallow_drop',
+  )!
+  assert(!finding.detected, 'a healthy drop was called shallow')
+})
+
 report()
