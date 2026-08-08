@@ -23,6 +23,77 @@ const MAX_FINE_FRAMES = 120
 /** How much of the clip around contact is worth sampling densely. */
 const LEAD_IN = 1.9
 const LEAD_OUT = 0.8
+/**
+ * How much of a long clip to read when the locating scan found nothing in it.
+ *
+ * The frame budget is fixed, so the span it is spread over sets the sampling
+ * rate: `MAX_FINE_FRAMES / FINE_FPS` is 3.75 s at full rate, and anything wider
+ * trades frames per second for seconds covered. Reading a whole long clip is
+ * therefore the one option that cannot work — an 18-second clip lands near
+ * 6 fps, where the swing from racket drop to contact gets less than a single
+ * sample and no amount of good filming can rescue it.
+ *
+ * Five seconds holds a whole service motion with room either side and still
+ * samples at 24 fps, which resolves the swing. Wider would cover more of the
+ * clip and read none of it.
+ */
+const FALLBACK_SPAN = 5
+
+export interface ReadWindow {
+  start: number
+  end: number
+  serves: { count: number; index: number }
+  /**
+   * Whether the window was found or guessed. False only when a long clip was
+   * scanned and no serve stood out, which changes what a later refusal means.
+   */
+  located: boolean
+}
+
+/**
+ * Which slice of the clip to read densely, and whether we know it holds a serve.
+ *
+ * Pure, and separate from the seeking around it, because the sampling rate falls
+ * straight out of the span it returns — `MAX_FINE_FRAMES / span`, capped at
+ * `FINE_FPS` — and that arithmetic decides whether a serve is resolvable at all
+ * before a single frame is decoded. It is worth being able to check without a
+ * browser.
+ */
+export function readWindow(duration: number, times: number[], serveIndex: number): ReadWindow {
+  if (duration <= SINGLE_PASS_SECONDS) {
+    return { start: 0, end: duration, serves: { count: 1, index: 0 }, located: true }
+  }
+  if (times.length) {
+    // Default to the last serve: when someone films a basket, the one they want
+    // feedback on is almost always the one they just hit.
+    const index = serveIndex < 0 ? times.length - 1 : Math.min(serveIndex, times.length - 1)
+    return {
+      start: Math.max(0, times[index] - LEAD_IN),
+      end: Math.min(duration, times[index] + LEAD_OUT),
+      serves: { count: times.length, index },
+      located: true,
+    }
+  }
+  // Nothing to aim at. Reading the whole clip anyway is the one choice that
+  // cannot succeed — see `FALLBACK_SPAN` — and it fails slowly and then blames
+  // the serve, because by the time the numbers come back a clip sampled too
+  // sparsely to hold a swing looks exactly like a player who never swung.
+  //
+  // So read the end of the clip, at a rate a serve survives. The end is the best
+  // guess available, for the same reason the last serve is the default above: it
+  // is the one they just hit. `located` carries the fact that this window was
+  // chosen blind, so a refusal downstream can say the scan missed rather than
+  // say the motion was not a serve.
+  return {
+    start: Math.max(0, duration - FALLBACK_SPAN),
+    end: duration,
+    serves: { count: 1, index: 0 },
+    located: false,
+  }
+}
+
+/** Samples per second a window of this length will be read at. */
+export const samplingRateFor = (span: number) => Math.min(FINE_FPS, MAX_FINE_FRAMES / Math.max(0.2, span))
 
 export interface ExtractProgress {
   phase: 'scanning' | 'tracking'
@@ -266,6 +337,11 @@ export async function extractFrames(
   fps: number
   window: { start: number; end: number }
   serves: { count: number; index: number }
+  /**
+   * Whether the window was found or guessed. False only when a long clip was
+   * scanned and no serve stood out, which changes what a later refusal means.
+   */
+  located: boolean
 }> {
   const { onProgress = () => {}, signal, serveIndex = -1, knownServeTimes: known } = opts
   const duration = video.duration
@@ -289,33 +365,22 @@ export async function extractFrames(
     }
   }
 
-  let start = 0
-  let end = duration
-  let serves = { count: 1, index: 0 }
+  const times =
+    duration <= SINGLE_PASS_SECONDS
+      ? []
+      : // A caller sweeping every serve in a clip already knows where they are;
+        // re-deriving that once per serve is the single most wasteful thing this
+        // module can do, since the scan covers the whole clip each time.
+        (known ??
+        (await scanForServes(video, landmarker, {
+          signal,
+          onProgress: (ratio) => onProgress({ phase: 'scanning', ratio }),
+        })))
 
-  if (duration > SINGLE_PASS_SECONDS) {
-    // A caller sweeping every serve in a clip already knows where they are;
-    // re-deriving that once per serve is the single most wasteful thing this
-    // module can do, since the scan covers the whole clip each time.
-    const times =
-      known ??
-      (await scanForServes(video, landmarker, {
-        signal,
-        onProgress: (ratio) => onProgress({ phase: 'scanning', ratio }),
-      }))
-
-    if (times.length) {
-      // Default to the last serve: when someone films a basket, the one they
-      // want feedback on is almost always the one they just hit.
-      const index = serveIndex < 0 ? times.length - 1 : Math.min(serveIndex, times.length - 1)
-      serves = { count: times.length, index }
-      start = Math.max(0, times[index] - LEAD_IN)
-      end = Math.min(duration, times[index] + LEAD_OUT)
-    }
-  }
+  const { start, end, serves, located } = readWindow(duration, times, serveIndex)
 
   const span = Math.max(0.2, end - start)
-  const fps = Math.min(FINE_FPS, MAX_FINE_FRAMES / span)
+  const fps = samplingRateFor(span)
   const count = Math.max(8, Math.round(span * fps))
   const frames: Frame[] = []
 
@@ -336,7 +401,7 @@ export async function extractFrames(
     onProgress({ phase: 'tracking', ratio: (i + 1) / count })
   }
 
-  return { frames, fps, window: { start, end }, serves }
+  return { frames, fps, window: { start, end }, serves, located }
 }
 
 /**

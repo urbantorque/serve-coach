@@ -610,7 +610,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       }),
   })
 
-  const { fps, window, serves } = extracted
+  const { fps, window, serves, located } = extracted
   let frames = extracted.frames
   const aspect = video.videoWidth / Math.max(1, video.videoHeight)
 
@@ -643,6 +643,19 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         if (err instanceof NotAServeError && err.suggestedHand && attempt === 0) {
           hand = err.suggestedHand
           continue
+        }
+        // The window was chosen blind, so a serve failing to turn up in it says
+        // far more about the scan than about the player. Told "that does not
+        // look like a serve" about a clip that is nothing but serves, the one
+        // thing they will not think to do is the thing that works — trim it.
+        if (err instanceof NotAServeError && !located) {
+          const missed = new NotAServeError('I could not find a serve in that clip.', [
+            'Trim the video to a single serve and try again.',
+            'Long clips are scanned for the serve first, and nothing in this one stood out.',
+            'Filming from the side or behind, four metres back, makes the swing easier to pick out.',
+          ])
+          if (opts.captureOnFailure) missed.capture = { frames, fps }
+          throw missed
         }
         if (opts.captureOnFailure && err instanceof NotAServeError) err.capture = { frames, fps }
         throw err

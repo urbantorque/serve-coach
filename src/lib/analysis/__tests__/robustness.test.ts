@@ -18,6 +18,7 @@
  * goes red even though every accuracy test still passes.
  */
 import { assessQuality, blockingFramingIssue, pickFocus, rescore } from '../analyze'
+import { readWindow, samplingRateFor } from '../../pose/extract'
 import { assessSpatial } from '../spatial'
 import {
   SOFT_MEASUREMENT,
@@ -1889,6 +1890,52 @@ check('a clip nothing can be read from is stopped before the full analysis', () 
     assert(blocked !== undefined, `did not stop for ${issues.join(' + ')}`)
     assert(blocked!.hints.length > 0, `stopped for ${issues.join(' + ')} without saying what to do`)
   }
+})
+
+/* ------------------------------------------------- which slice of a clip we read */
+
+check('a clip the scan found nothing in is still read at a usable rate', () => {
+  // The frame budget is fixed, so the span chosen sets the sampling rate. Read
+  // whole, a long clip samples too slowly for the swing to exist in the data at
+  // all — and the failure then arrives half a minute later looking like a
+  // verdict on the player's technique.
+  //
+  // A real 18.7s clip is the case this is sized against: read whole it came out
+  // near 6 fps, where the ~150ms from racket drop to contact gets less than one
+  // sample. `triage` wants three.
+  const whole = samplingRateFor(18.7)
+  assert(whole < 8, `a whole long clip used to sample at ${whole.toFixed(1)} fps`)
+  assert(whole * 0.15 < 1, 'the premise is wrong: the swing was resolvable after all')
+
+  const w = readWindow(18.7, [], -1)
+  assert(!w.located, 'a guessed window claimed to be a located one')
+  const rate = samplingRateFor(w.end - w.start)
+  assert(rate >= 20, `fallback window samples at only ${rate.toFixed(1)} fps`)
+  assert(
+    rate * 0.15 >= 3,
+    `only ${(rate * 0.15).toFixed(1)} samples through the swing, and triage wants 3`,
+  )
+  // Guessing the end of the clip, because the serve someone wants read is the
+  // one they just hit.
+  assert(w.end === 18.7, `did not read to the end of the clip: ${w.end}`)
+  note(`whole clip ${whole.toFixed(1)} fps -> fallback window ${rate.toFixed(1)} fps`)
+})
+
+check('a located serve is still read exactly where it was found', () => {
+  const w = readWindow(30, [10, 20], -1)
+  assert(w.located, 'a found serve was reported as a guess')
+  assert(w.serves.count === 2 && w.serves.index === 1, 'did not default to the last serve')
+  assert(w.start > 17 && w.end < 21, `window drifted off the serve: ${w.start}-${w.end}`)
+  assert(samplingRateFor(w.end - w.start) >= 30, 'a located serve lost sampling rate')
+
+  const first = readWindow(30, [10, 20], 0)
+  assert(first.serves.index === 0 && first.start > 7 && first.end < 11, 'asked-for serve ignored')
+})
+
+check('a short clip is read whole, not guessed at', () => {
+  const w = readWindow(3.5, [], -1)
+  assert(w.located, 'a clip read whole was reported as a guess')
+  assert(w.start === 0 && w.end === 3.5, `did not read the whole short clip: ${w.start}-${w.end}`)
 })
 
 check('hands the tracker never finds are spotted', () => {
