@@ -38,7 +38,14 @@ import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot, type Tilt } from 
 import { assessResilience, triage } from './triage'
 import { cue } from './voice'
 import { buildPhases, detectServe, type Skeleton } from './phases'
-import { NotAServeError, type Analysis, type Frame, type Fundamental, type Quality } from './types'
+import {
+  NotAServeError,
+  SCORING_VERSION,
+  type Analysis,
+  type Frame,
+  type Fundamental,
+  type Quality,
+} from './types'
 
 export type Step = 'engine' | 'reading' | 'scanning' | 'tracking' | 'measuring' | 'done'
 
@@ -397,6 +404,14 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     return undefined
   }
 
+  // Recovered here rather than carried on the report: the camera did not move
+  // between a flat scoring and a kick one, and reports saved before this mattered
+  // have no such field to read. It costs a handful of frames' arithmetic, and
+  // omitting it would quietly un-hedge the depth measurements the moment a player
+  // changed the serve type on a clip filmed dead side-on.
+  const depthUnreliable = assessSpatial(analysis.frames, skel.keys.ready, skel.bodyHeight)
+    .depth_unreliable
+
   const fundamentals = measure(analysis.frames, skel, analysis.quality.view === 'side', {
     ball: analysis.ball,
     serveType,
@@ -406,6 +421,7 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
       swingSamples: analysis.quality.swingSamples,
       view: analysis.quality.view,
       ballConfidence: analysis.ball?.confidence,
+      depthUnreliable,
     },
   })
 
@@ -435,6 +451,9 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     focus: pickFocus(fundamentals),
     tossFlight,
     serveType,
+    // Restamped, not inherited through the spread: every score above has just
+    // been recomputed by this build, whatever rubric the report arrived under.
+    scoringVersion: SCORING_VERSION,
   }
 }
 
@@ -535,6 +554,15 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   const quality = assessQuality(frames, skel, fps)
 
+  // Read before anything is measured, not after. `assessResilience` used to sit
+  // down beside the triage call it feeds, which put the one module that actually
+  // measures the camera angle *after* the measurements that depend on it — so
+  // hip-shoulder coil, read almost entirely from inferred world z, was scored
+  // and stated crisply on clips this had already decided could not show depth.
+  // It reads `frames` and `skel`, both settled above; nothing between here and
+  // the triage call touches either, so moving it up changes only who can see it.
+  const resilience = assessResilience(frames, skel)
+
   // Locating serves in a long clip is bounded now, but bounded is not free — it
   // still costs a few hundred video seeks, and the player has no way to know that
   // the length of their clip is why they waited. Said once, on the report, rather
@@ -573,6 +601,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       swingSamples: quality.swingSamples,
       view: quality.view,
       ballConfidence: ball?.confidence,
+      depthUnreliable: resilience.spatial.depth_unreliable,
     },
   })
 
@@ -587,7 +616,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // here: whether a rejected clip is shown as a report or as a refusal is a
   // decision for whatever is rendering, and the engine's job is to be right
   // about which one it is.
-  const verdict = triage(diagnosis, assessResilience(frames, skel))
+  const verdict = triage(diagnosis, resilience)
 
   const phases = buildPhases(frames, skel.keys)
   if (!opts.skipThumbnails) {
@@ -657,6 +686,13 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     ball,
     tossFlight,
     serveType,
+    // Stamped here, where the scores are produced, rather than on the way into
+    // storage. A report spends its whole first life on screen unsaved — the
+    // report page, the comparison sheet — and stamping at persistence left every
+    // one of those reading as old-rubric, which pointed the guard exactly the
+    // wrong way round: it refused comparisons between two current serves and
+    // allowed them straight across a recalibration.
+    scoringVersion: SCORING_VERSION,
     diagnosis,
     triage: verdict,
   }

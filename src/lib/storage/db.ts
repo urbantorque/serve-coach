@@ -1,5 +1,5 @@
 import { readoutOf, targetOf } from '../analysis/anatomy'
-import type { Analysis } from '../analysis/types'
+import { LEGACY_SCORING_VERSION, SCORING_VERSION, type Analysis } from '../analysis/types'
 
 /**
  * A saved report. Deliberately excludes `frames` and the video itself: the
@@ -123,8 +123,20 @@ async function prune(aggressive = false): Promise<void> {
 }
 
 export async function saveSession(analysis: Analysis): Promise<void> {
-  const { frames: _frames, ...session } = analysis
+  const { frames: _frames, ...rest } = analysis
   void _frames
+
+  const session: Session = {
+    ...rest,
+    // Stamped on the way in, because saving is the moment these scores stop
+    // being recomputable — the frames behind them are dropped just above — so a
+    // report that reaches storage unstamped can never be placed afterwards.
+    // Kept rather than overwritten when the report already carries a
+    // version: `importBackup` restores old reports through here, and restamping
+    // those as current would put an old-rubric score onto the new trend line —
+    // the exact fabricated gain the stamp exists to prevent.
+    scoringVersion: rest.scoringVersion ?? SCORING_VERSION,
+  }
 
   try {
     await tx('readwrite', (s) => s.put(session))
@@ -212,6 +224,13 @@ export function normalise(raw: unknown): Session | undefined {
     // Everything filed before serve types existed was scored against the flat
     // bands, which is exactly what 'flat' means.
     serveType: s.serveType ?? 'flat',
+    // Same reasoning, and the same trap in a costlier place: a report saved
+    // before the stamp existed was scored under the original rubric, so it is
+    // the old version rather than an unknown one. Type-checked rather than
+    // `??`-defaulted because a hand-edited backup carrying `"2"` as text would
+    // otherwise pass straight through and compare equal to nothing at all.
+    scoringVersion:
+      typeof s.scoringVersion === 'number' ? s.scoringVersion : LEGACY_SCORING_VERSION,
     video: s.video ?? { name: 'Your serve', durationMs: 0, width: 0, height: 0 },
     handedness: s.handedness ?? 'right',
     quality: s.quality ?? {

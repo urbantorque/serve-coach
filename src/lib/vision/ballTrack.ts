@@ -398,6 +398,246 @@ export interface TrackOptions {
 }
 
 /**
+ * How many standard errors of its own a fitted curvature may sit from the
+ * gravity the image scale implies before the fit is thrown away.
+ *
+ * The fixed ±`gravityTolerance` band alone is not a usable test, because the
+ * precision of a fitted curvature is not a property of the fit's units — it
+ * collapses as the tracked span shortens, roughly with span⁻². At the five-sample
+ * minimum this function advertises, a ball tossed by a player far enough away to
+ * measure 0.32 of the frame moves about 4 mm of image in the whole window, which
+ * is under the centroid noise; its curvature is then not measured at all, and the
+ * fixed band is narrower than the fit's own noise floor. Gating on the band alone
+ * there rejects fits whose apex height is right to within a centimetre, and the
+ * player is told nothing about their toss and never told why.
+ *
+ * So the curvature has to disagree on both counts — outside the fixed band *and*
+ * by more than this many standard errors — before the fit is discarded. Three
+ * sigma is the usual line for "this did not happen by chance", and it keeps the
+ * gate doing the job it was written for: a long, densely sampled track whose
+ * curvature is genuinely wrong has a tiny standard error, so its disagreement is
+ * significant and it is still rejected.
+ */
+const GRAVITY_SIGMAS = 3
+
+/**
+ * Widest that sigma-scaled allowance may grow, as a multiple of the gravity the
+ * image scale implies.
+ *
+ * The standard error is unbounded from above, and on the shortest tracks this
+ * function accepts it is enormous: at five or six inliers over a sixth of a
+ * second the three-sigma term runs past `expectedGravity` itself, at which point
+ * `gravityAllowed` admits *any* positive curvature and the test is not a test.
+ * Measured on the bent refit the suite already keeps: at six inliers the same
+ * lean that is rejected at seven or more came back at 2.6–3.4× the expected
+ * curvature, with the apex a few thousandths of a frame low and confidence
+ * hovering either side of the caller's 0.45 floor.
+ *
+ * A curvature this far out is not a precision problem. `expectedGravity` comes
+ * from the player's measured height, and half again on top of the fixed ±55%
+ * band means a ball falling two and a half times as fast as a ball at that
+ * distance can — which is a different object, or a fit dragged off by centroids
+ * that are not on one arc, whatever the error bars say. Wide enough to leave the
+ * short-track acceptance the sigma term was added for very nearly alone (measured
+ * on five samples at the far-player scale: 88% → 87% accepted at one pixel of
+ * centroid noise, 61% → 54% at two), narrow enough that the gate still means
+ * something at that length.
+ */
+const GRAVITY_ALLOWANCE_MAX = 1.5
+
+/**
+ * How many standard errors past the last tracked sample the fitted vertex may
+ * sit and still be believed.
+ *
+ * Some allowance is needed: a genuine toss rarely has a detection exactly on its
+ * apex — the ball is at its slowest and dimmest up there, and the true turning
+ * point usually falls between two frames or a hair past the last one that
+ * survived. Counting that allowance in sampling intervals, as this once did, uses
+ * the wrong ruler. The uncertainty in a vertex time comes from centroid noise,
+ * the tracked span and the curvature, none of which is the frame interval — at
+ * 30 fps with 2 px of noise and a third of a frame of motion-blur lag, a vertex
+ * genuinely one interval past the last sample was rejected three times in four.
+ * Scaling the allowance by the vertex's own standard error puts the allowance and
+ * the error in the same units, which is the only way the number can be tuned.
+ *
+ * It is not, however, the only thing the allowance has to cover — see
+ * `APEX_SLACK_MIN_FRAMES`.
+ */
+const APEX_SLACK_SIGMAS = 3
+
+/**
+ * Floor on that allowance, in frame intervals of the clip the caller sampled.
+ *
+ * A standard error is a statement about the fit, not about the film. It shrinks
+ * as the track lengthens and the residuals tighten, so taken on its own it hands
+ * the cleanest, longest, most convincing flights the *narrowest* licence to sit
+ * beyond the last sample — exactly backwards, and it fires on extrapolations that
+ * are physically nothing. Measured at 32 fps with a pixel of centroid noise and a
+ * vertex a quarter of an interval past the last detection, which moves the ball
+ * four hundredths of a pixel: 15 detections accepted 100% of runs, 25 accepted
+ * 96%, 40 accepted 11%. The fits being thrown out at 40 were the best fits in the
+ * set.
+ *
+ * So the sampling interval is a floor under the whole thing. A vertex cannot be
+ * placed to finer than the gap between the frames it was measured from, however
+ * clean the fit, so an overshoot smaller than one interval is a vertex between
+ * two frames rather than beyond the film — the plain reading of the sampling
+ * theorem, and the pre-uncertainty behaviour this file had before it went looking
+ * for a better ruler. The two scales are combined by taking whichever is larger:
+ * the gate then follows the uncertainty that actually dominates, and more
+ * evidence can only widen it.
+ */
+const APEX_SLACK_MIN_FRAMES = 1
+
+/**
+ * Hard ceiling on that allowance, in frame intervals of fully tracked flight.
+ *
+ * A standard error says how imprecise the vertex is, not how far it is honest to
+ * extrapolate: a noisy fit can earn an arbitrarily large allowance and walk the
+ * apex off the top of the frame. Two intervals is the point where the vertex
+ * stops being a near-miss between frames and starts being a claim about time the
+ * camera never covered.
+ *
+ * Scaled by how much of the window was actually tracked, so the licence follows
+ * the evidence. Alternating motion blur — the ball found on every other frame —
+ * leaves gaps that are uniformly one frame wide, so the *detections'* own median
+ * gap is the sparse interval and a half-evidence track used to buy double the
+ * extrapolation. Measured on a vertex 1.6 intervals past the last sample: a fully
+ * tracked flight was accepted 6% of the time and the same flight with alternate
+ * detections dropped 80%, exactly backwards. The frame interval below comes from
+ * the frames the caller offered rather than the frames the ball was found in, so
+ * losing detections can only shrink the licence.
+ */
+const APEX_SLACK_MAX_FRAMES = 2
+
+/**
+ * Floor on the residual scale, as a fraction of `inlierBand`.
+ *
+ * Both gates above divide by the spread of the inliers about the fitted curve,
+ * and a fit can have a residual spread of zero — three points define a parabola
+ * exactly, and a synthetic or lightly resampled track can land on one to floating
+ * point. Taken literally that says the curve is known perfectly and turns both
+ * gates into knife edges at exactly the boundary they were widened to soften. No
+ * blob centroid is better than about a pixel, whatever the residuals say, and
+ * `inlierBand` is the caller's own statement of how far off the curve a detection
+ * may sit, so a modest fraction of it is the honest floor.
+ */
+const NOISE_FLOOR_FRACTION = 0.15
+
+/**
+ * How much confidence a fit loses for sitting at the far edge of either gate.
+ *
+ * A quarter, not a half: the point of widening the gates was that a fit which is
+ * imprecise is not thereby wrong, and a penalty steep enough to push every
+ * marginal fit under the caller's 0.45 floor would restore the silence the
+ * widening was meant to end. A quarter is enough to sink a fit that is also short
+ * or sparse or scattered — which is the combination worth doubting — while a fit
+ * strong on every other count survives leaning on one allowance.
+ */
+const MARGINAL_PENALTY = 0.25
+
+/**
+ * Typical spacing between consecutive frames the caller sampled, in seconds.
+ *
+ * The median gap rather than span/(n−1): frame extraction can drop or duplicate a
+ * shot, and one long gap averaged in reports a sampling rate two or three times
+ * coarser than the clip really was. Used as a tolerance, that would be generous
+ * in exactly the case — a clip with holes in it — where generosity is least
+ * deserved. The median ignores the hole and returns the interval the clip was
+ * actually sampled at.
+ */
+function medianInterval(times: number[]): number {
+  const sorted = [...times].sort((a, b) => a - b)
+  const gaps: number[] = []
+  for (let i = 1; i < sorted.length; i++) gaps.push(sorted[i] - sorted[i - 1])
+  if (!gaps.length) return 0
+  gaps.sort((a, b) => a - b)
+  const mid = gaps.length >> 1
+  return gaps.length % 2 ? gaps[mid] : (gaps[mid - 1] + gaps[mid]) / 2
+}
+
+/** How precisely the fitted curve pins down the two numbers the gates test. */
+interface FitSpread {
+  /** Standard error of the fitted vertical acceleration, 2·c₂. */
+  gravity: number
+  /** Standard error of the vertex time, in seconds. */
+  apexT: number
+}
+
+/**
+ * Turn the inliers' scatter about the fitted parabola into error bars on the two
+ * derived quantities the gates below judge.
+ *
+ * This is the ordinary least-squares covariance, σ²·(XᵀX)⁻¹, and it is what makes
+ * the gates tunable: the same absolute disagreement means something quite
+ * different on a five-sample, eighth-of-a-second track than on a thirty-sample
+ * one, and only the covariance knows which. The vertex time is not a fitted
+ * coefficient but a ratio of two, so it goes through the delta method — and its
+ * error grows with how far the vertex sits from the centre of the samples, which
+ * is precisely the behaviour the apex gate wants.
+ *
+ * Time is centred on the samples' mean before the normal equations are formed,
+ * for the same reason `fitQuadratic` centres it: in absolute clip time the t⁴
+ * sums of a serve half a minute in overwhelm the determinant and the inverse is
+ * computed from floating-point noise. The quadratic coefficient is unchanged by a
+ * shift in time, and the vertex is put back afterwards.
+ */
+function fitSpread(
+  pts: { t: number; y: number }[],
+  coeffs: [number, number, number],
+  noiseFloor: number,
+): FitSpread {
+  const [c0, c1, c2] = coeffs
+  const n = pts.length
+  const t0 = pts.reduce((s, p) => s + p.t, 0) / n
+  let s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0
+  let sumSq = 0
+  for (const { t, y } of pts) {
+    const u = t - t0
+    const u2 = u * u
+    s0 += 1
+    s1 += u
+    s2 += u2
+    s3 += u2 * u
+    s4 += u2 * u2
+    const r = y - (c0 + c1 * t + c2 * t * t)
+    sumSq += r * r
+  }
+
+  // n − 3, not n: three parameters have already been spent making these
+  // residuals small, so dividing by n understates the noise — badly at the five
+  // samples this function will accept, where it would be out by a factor of √2.5
+  // and both gates would inherit the error.
+  const sigma = Math.max(noiseFloor, Math.sqrt(sumSq / Math.max(1, n - 3)))
+
+  const det =
+    s0 * (s2 * s4 - s3 * s3) - s1 * (s1 * s4 - s3 * s2) + s2 * (s1 * s3 - s2 * s2)
+  // A degenerate design — every sample at the same instant — would already have
+  // failed `fitQuadratic`, but if one reaches here nothing is measured and
+  // infinite error bars are the truthful answer: the gates fall back on their
+  // absolute limits rather than on a divide-by-zero.
+  if (!(Math.abs(det) > 1e-18)) return { gravity: Infinity, apexT: Infinity }
+
+  // Adjugate entries for the linear and quadratic coefficients of the centred
+  // fit, and their covariance.
+  const varLinear = (sigma * sigma * (s0 * s4 - s2 * s2)) / det
+  const varQuad = (sigma * sigma * (s0 * s2 - s1 * s1)) / det
+  const covar = (sigma * sigma * (s1 * s2 - s0 * s3)) / det
+
+  // Vertex offset from the centre of the samples, δ = −a₁/(2a₂). The delta
+  // method on that ratio gives the bracket below; the cross term matters because
+  // unevenly spaced samples correlate the two coefficients.
+  const delta = -c1 / (2 * c2) - t0
+  const varApex =
+    (varLinear + 4 * delta * delta * varQuad + 4 * delta * covar) / (4 * c2 * c2)
+
+  return {
+    gravity: 2 * Math.sqrt(Math.max(0, varQuad)),
+    apexT: Math.sqrt(Math.max(0, varApex)),
+  }
+}
+
+/**
  * Pick the one run of candidates that behaves like a thrown ball.
  *
  * RANSAC rather than a plain fit: most detections in most frames are not the
@@ -465,31 +705,138 @@ export function trackBall(
 
   // Refit on everything that agreed, which is more accurate than the three
   // points that happened to seed the winning hypothesis.
-  const refined = fitQuadratic(best.inliers.map((p) => ({ t: p.t, y: p.y }))) ?? best.coeffs
+  const inlierPts = best.inliers.map((p) => ({ t: p.t, y: p.y }))
+  const refined = fitQuadratic(inlierPts) ?? best.coeffs
   const [c0, c1, c2] = refined
   if (c2 <= 0) return undefined
 
+  const spread = fitSpread(inlierPts, [c0, c1, c2], NOISE_FLOOR_FRACTION * band)
+
+  // The seed passed the gravity test, but the refit is a different curve and it
+  // is the refit that gets reported. An inlier only has to sit within `band` of
+  // the seed to be counted, so a run of detections hugging the top of that band
+  // at the ends and the bottom in the middle — motion-blurred centroids, or a
+  // decoy that happened to agree — bends the least-squares curve well past the
+  // curvature a ball at this image scale can have, while every individual point
+  // still looks like it belongs. Checking only `c2 <= 0` catches a curve bending
+  // the wrong way and nothing else.
+  //
+  // But the refit is tested against its own error bars as well as the fixed band,
+  // and has to fail both. Applying the seed's flat ±55% to it rejects short
+  // tracks whose curvature was never measurable in the first place — see
+  // `GRAVITY_SIGMAS`. A curvature that is merely imprecise is not evidence of a
+  // wrong curve; a curvature that is precise and wrong is, and that is the case
+  // this still catches.
+  //
+  // And that widening is bounded. A standard error has no upper limit, so on a
+  // five- or six-sample track it can exceed `expectedGravity` itself and the test
+  // stops rejecting anything at all — see `GRAVITY_ALLOWANCE_MAX`.
+  const refinedG = 2 * c2
+  const gravityMiss = Math.abs(refinedG - opts.expectedGravity)
+  // The caller's own band is still the floor, so a caller that asks for a wider
+  // one than the cap gets what it asked for rather than a silently tighter gate.
+  const gravityAllowed = Math.max(
+    tolerance * opts.expectedGravity,
+    Math.min(GRAVITY_ALLOWANCE_MAX * opts.expectedGravity, GRAVITY_SIGMAS * spread.gravity),
+  )
+  if (gravityMiss > gravityAllowed) return undefined
+
+  const times = best.inliers.map((p) => p.t)
+  const firstT = Math.min(...times)
+  const lastT = Math.max(...times)
+
   const apexT = -c1 / (2 * c2)
+  // A vertex outside the tracked window is an extrapolation, not a measurement.
+  // The case that produces it is ordinary: the ball leaves the top of the frame,
+  // or is lost against a bright patch of sky before it turns over, and what is
+  // left is an ascending-only arc. That still fits a perfectly plausible
+  // curvature — nothing above rejects it — but the vertex lands beyond the last
+  // sample, sometimes above the top of the frame entirely, and `apex.y` is then
+  // a height the ball was never seen at.
+  //
+  // Rejected rather than reported at lower confidence, and deliberately so. The
+  // apex is not one number among several that degrade together: `tossPeakHeight`
+  // and `contactBelowPeak` are both computed from it and nothing else, so an
+  // extrapolated vertex is not a soft reading of the toss, it is a fabricated
+  // one. It also fails in a consistently flattering-to-nobody direction — an
+  // apex placed off the top of the frame tells a player to toss lower when they
+  // tossed too low, and that they waited on the ball when they never got the
+  // chance. Worse, a de-confidenced flight would still often clear the caller's
+  // 0.45 floor: this failure comes with a long, densely sampled, tight-residual
+  // track, which is precisely what the confidence blend rewards, so any penalty
+  // large enough to be safe would be arbitrary. The file already takes the
+  // honest line elsewhere — the ball is best-effort, and not finding it costs
+  // two measurements rather than the report — so it takes it here too.
+  //
+  // That argument is about a vertex nowhere near the samples, and it does not
+  // license rejecting a near miss. The allowance below is how far the vertex
+  // could honestly have slipped past the last frame, and two separate things
+  // decide that: how precisely the fit places it — its own standard error — and
+  // how finely the film could place anything at all, which is the interval the
+  // clip was sampled at. Neither alone is the answer, and taking the smaller of
+  // the two was worse than either, because the sharper the track the harder it
+  // then rejected. See `APEX_SLACK_SIGMAS` and `APEX_SLACK_MIN_FRAMES`; the
+  // ceiling on top of both, earned by the fraction of frames the ball was
+  // actually found in, is `APEX_SLACK_MAX_FRAMES`. Inside the allowance the
+  // vertex is a near miss rather than a fabrication, and it is the confidence
+  // that carries the doubt.
+  const framesInWindow = perFrame.filter((f) => f.t >= firstT && f.t <= lastT).length
+  const tracked = framesInWindow > 0 ? best.inliers.length / framesInWindow : 1
+  const frameInterval = medianInterval(perFrame.map((f) => f.t))
+  // Larger of the two uncertainties, not smaller: the vertex is unresolvable to
+  // finer than one sampling interval *and* to finer than its own standard error,
+  // so the gate has to cover whichever of the two is doing the work. The ceiling
+  // is held above the floor as well, so a thinly detected flight is capped at the
+  // sampling resolution rather than under it — it still never buys more
+  // extrapolation than a fully tracked one, which is the point of scaling it.
+  const resolution = APEX_SLACK_MIN_FRAMES * frameInterval
+  const ceiling = Math.max(resolution, APEX_SLACK_MAX_FRAMES * frameInterval * tracked)
+  const slack = Math.min(ceiling, Math.max(APEX_SLACK_SIGMAS * spread.apexT, resolution))
+  const apexOutside = Math.max(0, firstT - apexT, apexT - lastT)
+  if (apexOutside > slack) return undefined
+
   const apexY = c0 + c1 * apexT + c2 * apexT * apexT
 
   // Horizontal position at the apex, from a straight-line fit — a ball in flight
   // has no horizontal acceleration worth modelling.
   const apexX = linearAt(best.inliers, apexT)
 
-  const span = Math.max(...best.inliers.map((p) => p.t)) - Math.min(...best.inliers.map((p) => p.t))
+  const span = lastT - firstT
   const residual =
     best.inliers.reduce(
       (s, p) => s + Math.abs(p.y - (c0 + c1 * p.t + c2 * p.t * p.t)),
       0,
     ) / best.inliers.length
 
+  // Both gates above now admit fits they would once have thrown away, and the
+  // ones they admit at the very edge are the ones a caller should think hardest
+  // about. Rather than pick a second, stricter threshold — which is just the old
+  // over-rejection moved one line down — the softness is handed on: a fit that
+  // needed its error bars to clear the gravity band, or whose vertex sits outside
+  // the samples at all, is reported at reduced confidence. `analyze.ts` already
+  // drops the ball below 0.45, so a marginal fit that is marginal in nothing else
+  // still reaches the report, and one that is marginal in several ways does not.
+  const gravityTrust =
+    gravityMiss <= tolerance * opts.expectedGravity
+      ? 1
+      : 1 - MARGINAL_PENALTY * Math.min(1, gravityMiss / (GRAVITY_SIGMAS * spread.gravity))
+  // Measured in the same allowance the gate used, floor and all. Against the bare
+  // standard error it inherited the gate's inversion: a long, clean track whose
+  // vertex lands a hundredth of a pixel past the last sample has an error bar
+  // smaller still, so it was docked toward the full penalty for an extrapolation
+  // that is not there, and the accurate fits it hit were the ones nearest the
+  // caller's 0.45 floor.
+  const apexTrust = slack > 0 ? 1 - MARGINAL_PENALTY * Math.min(1, apexOutside / slack) : 1
+
   const confidence = Math.max(
     0,
     Math.min(
       1,
-      0.45 * Math.min(1, best.inliers.length / 10) +
+      (0.45 * Math.min(1, best.inliers.length / 10) +
         0.3 * Math.min(1, span / 0.6) +
-        0.25 * Math.max(0, 1 - residual / band),
+        0.25 * Math.max(0, 1 - residual / band)) *
+        gravityTrust *
+        apexTrust,
     ),
   )
 

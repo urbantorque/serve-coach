@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { readoutOf } from '../lib/analysis/anatomy'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import type { PhaseId } from '../lib/analysis/types'
-import { typeOf } from '../lib/progress'
+import { scoringVersionOf, typeOf } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 import { Icon } from './primitives'
 
@@ -45,13 +45,32 @@ export default function CompareView({ current, others }: Props) {
   // different target bands, so the score difference between them is mostly the
   // difference in what was being asked for — not a difference in the player.
   const currentType = typeOf(current)
-  const candidates = useMemo(
-    () =>
-      others
-        .filter((s) => s.id !== current.id && typeOf(s) === currentType)
-        .sort((a, b) => b.overall - a.overall),
+  const sameServe = useMemo(
+    () => others.filter((s) => s.id !== current.id && typeOf(s) === currentType),
     [current.id, currentType, others],
   )
+
+  // Same rubric only, which matters most here of anywhere: this view sorts by
+  // score and offers the top of the list as "Your best". A serve scored under the
+  // old rubric wins that slot on the recalibration alone — one whose racket never
+  // fell scored 6 then and 39 now — and every row below is then the change in
+  // scoring, rendered in the styling that means the player got better.
+  //
+  // `current` is as often a report that has never been saved as one read back
+  // from storage — the sheet opens straight off the report page — so this reads
+  // the stamp `analyzeServe` puts on it at the moment it scores it. Anything that
+  // stamps later leaves a freshly filmed serve looking old-rubric, which points
+  // the filter below at exactly the wrong half of the history.
+  const currentRubric = scoringVersionOf(current)
+  const candidates = useMemo(
+    () =>
+      sameServe
+        .filter((s) => scoringVersionOf(s) === currentRubric)
+        .sort((a, b) => b.overall - a.overall),
+    [currentRubric, sameServe],
+  )
+
+  const otherRubric = sameServe.length - candidates.length
   const otherTypes = others.filter((s) => s.id !== current.id && typeOf(s) !== currentType).length
   const [againstId, setAgainstId] = useState(() => candidates[0]?.id)
   const against = candidates.find((s) => s.id === againstId) ?? candidates[0]
@@ -82,11 +101,17 @@ export default function CompareView({ current, others }: Props) {
   }, [current, against])
 
   if (!against) {
+    // Whichever reason emptied the list, name it. An empty panel with serves
+    // plainly sitting in the history reads as the sheet having failed to load,
+    // and the rubric case is the one the player can make no sense of alone —
+    // nothing about the serve they filmed disqualified it.
     return (
       <p className="sheet-empty">
-        {otherTypes > 0
-          ? `Your other ${otherTypes === 1 ? 'serve was a different serve' : 'serves were different serves'} — a ${SERVE_TYPES[currentType].label.toLowerCase()} can only be compared against another one, because the targets differ. Film a second one and they will appear here.`
-          : 'Analyse a second serve and you can put them side by side here.'}
+        {otherRubric > 0
+          ? `The scoring changed between this serve and your other ${SERVE_TYPES[currentType].label.toLowerCase()} ${otherRubric === 1 ? 'serve' : 'serves'}, so the numbers do not compare. Film another and it appears here.`
+          : otherTypes > 0
+            ? `Your other ${otherTypes === 1 ? 'serve was a different serve' : 'serves were different serves'} — a ${SERVE_TYPES[currentType].label.toLowerCase()} can only be compared against another one, because the targets differ. Film a second one and they will appear here.`
+            : 'Analyse a second serve and you can put them side by side here.'}
       </p>
     )
   }
@@ -111,6 +136,16 @@ export default function CompareView({ current, others }: Props) {
           ))}
         </select>
       </label>
+
+      {/* A serve missing from the list it used to head — their old best — is the
+          same silent failure as a missing chip, so the shortlist says what it
+          dropped rather than leaving the player to hunt for it. */}
+      {otherRubric > 0 && (
+        <p className="compare-note">
+          This list leaves out serves scored the old way. Comparing across a change in scoring
+          would show progress you did not make.
+        </p>
+      )}
 
       <div className="compare-head">
         <div className="compare-score">

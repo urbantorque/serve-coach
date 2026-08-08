@@ -2,7 +2,7 @@ import { FUNDAMENTALS, METRICS } from './analysis/coaching'
 import { mean } from './analysis/geometry'
 import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
-import { MEANINGFUL_DELTA, dominantType, typeOf } from './progress'
+import { MEANINGFUL_DELTA, currentRubricEra, dominantType, typeOf } from './progress'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
 
@@ -78,11 +78,31 @@ export function findPracticeFocus(
   const type = serveType ?? dominantType(sessions)
 
   // `listSessions` returns newest first; work oldest → newest.
-  const recent = sessions
+  const sameServe = sessions
     .filter((s) => typeOf(s) === type)
     .sort((a, b) => a.createdAt - b.createdAt)
-    .slice(-windowSize)
 
+  /*
+   * One rubric at a time, for the same reason the trend chart is — and here it
+   * decides what the player practises, not just what a chip says.
+   *
+   * A saved report keeps no frames, so a recalibration leaves two sets of scores
+   * in one history permanently. Averaging a measurement across that break makes
+   * the recalibration look like the player: a racket drop that never moved comes
+   * out "improving" because the newer half was scored more generously, which
+   * retires the drill that was actually working. Worse, the ranking itself moves,
+   * so the app changes its mind about what to work on for a reason that has
+   * nothing to do with the serve.
+   *
+   * Trimmed before the window rather than after, so five sessions are counted
+   * from the era rather than the era being whatever survives five sessions.
+   */
+  const recent = currentRubricEra(sameServe).slice(-windowSize)
+
+  // Fewer than two comparable serves says nothing worth saying — the same answer
+  // a player gets on their first day, which is honest: after a recalibration the
+  // history behind them cannot be spoken about on this scale, and `sessionsConsidered`
+  // below counts only what the headline is allowed to claim.
   if (recent.length < 2) return undefined
 
   type Row = {

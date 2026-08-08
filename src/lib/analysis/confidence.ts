@@ -15,7 +15,7 @@
  * measurement carries its own confidence, low ones are visibly hedged, and
  * `pickFocus` will not build the headline advice on one.
  */
-import { LM, clamp, mean, type Side, sided } from './geometry'
+import { LM, clamp, mean, type Side, sided, trunkCoilReading } from './geometry'
 import type { Skeleton } from './phases'
 import type { Frame, Metric } from './types'
 import { cue } from './voice'
@@ -24,14 +24,26 @@ import { cue } from './voice'
 export const SOFT_MEASUREMENT = 0.55
 
 /**
+ * The measurements read off the tracked ball rather than off the player.
+ *
+ * They are the two the body-shaped guards below cannot speak for: no landmarks
+ * of their own, and nothing in `DEPENDENCIES` that describes the thing that
+ * actually failed. Named here so that softening them and explaining why they are
+ * soft cannot drift apart.
+ */
+const BALL_MEASUREMENTS = new Set(['tossPeakHeight', 'contactBelowPeak'])
+
+/**
  * What each measurement rests on beyond the landmarks it reads directly.
  *
  * `scale` — divided by standing height, so it inherits any error in that.
  * `trophy` — read on the trophy frame, so it needs the trophy to be well placed.
  * `swingTiming` — resolved in time across the fastest part of the motion.
  * `depth` — needs the camera to see the player's depth, not just their outline.
+ * `handedness` — signed against the racket arm, so the wrong hand mirrors it.
+ * `trunkSweep` — signed against the shoulders uncoiling, so it needs that sweep.
  */
-type Dependency = 'scale' | 'trophy' | 'swingTiming' | 'depth'
+type Dependency = 'scale' | 'trophy' | 'swingTiming' | 'depth' | 'handedness' | 'trunkSweep'
 
 const DEPENDENCIES: Record<string, Dependency[]> = {
   // Toss
@@ -42,8 +54,17 @@ const DEPENDENCIES: Record<string, Dependency[]> = {
   tossPathWobble: ['scale'],
   // Loading
   kneeBend: ['trophy'],
-  hipShoulderSeparation: ['trophy', 'depth'],
-  shoulderTilt: ['trophy', 'depth'],
+  // Coil takes its sign from the shoulders uncoiling between the trophy and
+  // contact, not from the racket arm — `trunkCoil` derives the direction rather
+  // than assuming it, which is what makes the reading identical for a left- and
+  // a right-hander. Listing `handedness` here outlived that change by one round
+  // and cost the truth twice: an unsure hand demoted a reading it could no
+  // longer alter, and the hand explanation then stood in front of the camera
+  // one, which was the fault the player could actually have fixed.
+  hipShoulderSeparation: ['trophy', 'depth', 'trunkSweep'],
+  // Tilt does still mirror with the hand: which shoulder should ride high is
+  // decided by which one swings the racket, and nothing in the motion says so.
+  shoulderTilt: ['trophy', 'depth', 'handedness'],
   legDrive: ['scale', 'trophy'],
   // Swing
   dropDepth: ['scale'],
@@ -96,7 +117,87 @@ export interface ConfidenceContext {
   view: 'side' | 'front-back' | 'angled'
   /** Set for measurements taken from the tracked ball rather than the body. */
   ballConfidence?: number
+  /**
+   * The spatial pass's own verdict on whether the camera could see depth at all.
+   *
+   * `view` is a coarse guess from the shoulder span; this is the recovered camera
+   * angle checked against the window outside which one axis of the player's depth
+   * points at the lens. Both exist because they disagree usefully — `view` calls a
+   * clip side-on and shrugs, `assessSpatial` calls the same clip unreadable in z
+   * and means it.
+   */
+  depthUnreliable?: boolean
 }
+
+/**
+ * What a depth measurement is worth once the camera angle has collapsed the axis
+ * it is read from.
+ *
+ * Deliberately below `SOFT_MEASUREMENT` on its own, with nothing else wrong: the
+ * point of the flag is that these numbers came out of the pose model's guess at
+ * a dimension it could not see, and a number like that has to arrive hedged and
+ * barred from the headline even on an otherwise flawless clip. The softer 0.85
+ * below is for a merely awkward view, which is a different and survivable thing.
+ *
+ * Exported because the flaw path has to hedge by the identical amount. A report
+ * that hedges a number to 0.35 while the triage layer states the same number as
+ * the one thing to fix is the worst pairing the app can produce, and two
+ * separate literals would drift into it again.
+ */
+export const DEPTH_COLLAPSED = 0.35
+
+/**
+ * What a coil reading is worth when the uncoiling sweep could not be resolved.
+ *
+ * Sitting alongside `DEPTH_COLLAPSED` rather than below it because it is the
+ * same class of failure: the number was produced, and the thing that gives it a
+ * direction was not seen. Low enough to hedge the card and to keep the reading
+ * out of both the headline advice and the flaw path — the alternative, a bare
+ * zero, reads as "hips and chest locked" and ships a fix and a drill for a
+ * trophy that may have coiled perfectly.
+ */
+export const SWEEP_UNRESOLVED = 0.35
+
+/**
+ * Whether the shoulders' uncoiling could be recovered from this clip at all.
+ *
+ * Asked of the geometry rather than carried on the context, so the confidence
+ * and the measurement cannot disagree about one trophy: the same call, on the
+ * same frames and the same keyframes, that produced the number being hedged.
+ */
+const sweepResolved = (ctx: ConfidenceContext): boolean =>
+  trunkCoilReading(ctx.frames, ctx.skel.keys.trophy, ctx.skel.keys.contact).resolved
+
+/**
+ * The least a sign-dependent measurement is worth once the hand is in doubt.
+ *
+ * Not zero, because the size of the reading survives a mirrored hand — a player
+ * who coils hard measures a large coil either way — so it is still worth showing
+ * with a caveat rather than withholding. Sitting well below `SOFT_MEASUREMENT`
+ * is the point: it keeps a possibly mirrored number out of the headline, which
+ * is where an inverted sign stops being a soft number and becomes an instruction
+ * to undo the thing the player did right.
+ */
+const HANDEDNESS_UNKNOWN = 0.3
+
+/**
+ * How far the racket hand can be trusted, for the readings that take their sign
+ * from it.
+ *
+ * Two different questions, and `Skeleton` keeps both answers apart precisely so
+ * they can be asked separately. With no stated hand, `handednessConfidence` is
+ * the detector's own certainty and is the whole story. With a stated hand it is
+ * 1 by construction — the player said so — and the evidence that remains is the
+ * independent detection kept alongside it: a detector that confidently reports
+ * the other hand is the strongest signal available that these two readings are
+ * mirrored, and what is left of its certainty is what the sign is worth.
+ */
+const handednessTrust = (skel: Skeleton): number =>
+  clamp(
+    skel.detectedRacket !== skel.racket ? 1 - skel.detectionConfidence : skel.handednessConfidence,
+    HANDEDNESS_UNKNOWN,
+    1,
+  )
 
 /**
  * Confidence for one measurement, 0–1.
@@ -127,10 +228,33 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
       // measurement whose whole target band is 120 ms wide.
       c *= clamp(ctx.swingSamples / 5, 0.3, 1)
     }
-    if (dep === 'depth' && ctx.view !== 'angled') {
+    if (dep === 'depth') {
       // Dead side-on or dead front-on, one axis of the player's depth is
-      // collapsed towards the lens and the pose model is inferring it.
-      c *= 0.85
+      // collapsed towards the lens and the pose model is inferring it. The
+      // shoulder-span view is a proxy for that and the spatial pass measures it
+      // outright, so when the measured verdict is in it replaces the proxy
+      // rather than compounding it — hip-shoulder coil is read almost entirely
+      // from inferred world z, and at 0.85 it still arrived as a crisp number
+      // steering the player's headline advice in exactly the camera position the
+      // app's own geometry calls unreadable.
+      c *= ctx.depthUnreliable ? DEPTH_COLLAPSED : ctx.view !== 'angled' ? 0.85 : 1
+    }
+    if (dep === 'handedness') {
+      // The hand does not shade this reading, it mirrors it. Read against the
+      // wrong arm a textbook trophy comes back as its own opposite, scores near
+      // the floor, and is promoted to the headline fix — so the player is told
+      // to correct the one thing they did well. Nothing else in the report fails
+      // that way, which is why the factor is the trust in the hand itself rather
+      // than a fixed cost: half-confidence in the sign is half a measurement.
+      c *= handednessTrust(skel)
+    }
+    if (dep === 'trunkSweep' && !sweepResolved(ctx)) {
+      // The magnitude survives — the trophy was still measured — but the sign
+      // came from a sweep that was never resolved, and an unsigned coil is not a
+      // coil. Costed rather than blanked for the same reason the hand is: half a
+      // sign is half a measurement, and withholding the number entirely tells
+      // the player less than showing it hedged.
+      c *= SWEEP_UNRESOLVED
     }
   }
 
@@ -146,7 +270,7 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
     c *= clamp((seen - 0.25) / 0.45, 0.25, 1)
   }
 
-  if (ctx.ballConfidence !== undefined && (id === 'tossPeakHeight' || id === 'contactBelowPeak')) {
+  if (ctx.ballConfidence !== undefined && BALL_MEASUREMENTS.has(id)) {
     c *= clamp(ctx.ballConfidence, 0, 1)
   }
 
@@ -161,16 +285,76 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
  */
 export function softnessReason(id: string, ctx: ConfidenceContext): string | undefined {
   const deps = DEPENDENCIES[id] ?? []
+
+  // Ranked by what each cause actually cost this measurement, rather than by the
+  // order they are written in. A fixed order meant whichever guard sat at the
+  // top spoke for every soft reading it could plausibly claim: a clip filmed
+  // dead side-on, with a hand the detector was unsure of, was explained as the
+  // hand — so the player checked a badge that was already right, and the camera
+  // position that actually broke the reading was never mentioned. Equal costs
+  // keep list order, and the hand leads it because it is the one cause a tap
+  // fixes rather than another trip to the court.
+  const causes: { cost: number; say: string }[] = []
+
+  if (deps.includes('handedness') && handednessTrust(ctx.skel) < SOFT_MEASUREMENT) {
+    causes.push({
+      cost: handednessTrust(ctx.skel),
+      say:
+        ctx.skel.detectedRacket !== ctx.skel.racket
+          ? cue('This clip looks like your other hand, so this reading may sit backwards. Check the hand badge before you trust it.')
+          : cue('I could not lock which hand holds your racket, so this reading may sit backwards. Set the hand badge yourself.'),
+    })
+  }
   if (deps.includes('scale') && ctx.skel.derivation.scaleFromTorso) {
-    return cue('Your feet sat outside the frame. Read this one loosely and step back next time.')
+    causes.push({
+      cost: 0.5,
+      say: cue('Your feet sat outside the frame. Read this one loosely and step back next time.'),
+    })
   }
   if (deps.includes('swingTiming') && ctx.swingSamples < 4) {
-    return cue('Your camera caught few frames through the swing. Film in slow motion to sharpen this.')
+    causes.push({
+      cost: clamp(ctx.swingSamples / 5, 0.3, 1),
+      say: cue('Your camera caught few frames through the swing. Film in slow motion to sharpen this.'),
+    })
   }
   if (deps.includes('trophy') && ctx.skel.derivation.trophyFromArms) {
-    return cue('Your legs barely load, so the trophy came from your arms. Read this one loosely.')
+    causes.push({
+      cost: 0.7,
+      say: cue('Your legs barely load, so the trophy came from your arms. Read this one loosely.'),
+    })
   }
-  return cue('Parts of your body blurred here. Read this one loosely.')
+  // The two measurements read off the tracked ball rather than off the body. They
+  // carry no landmarks and depend only on `scale`, so every guard above steps
+  // over them and the fallback used to tell the player their *body* was unclear —
+  // a false statement with a remedy attached, sending them off to refilm their
+  // whole serve when what actually failed was picking a small pale ball out of
+  // the background.
+  if (BALL_MEASUREMENTS.has(id) && (ctx.ballConfidence ?? 1) < SOFT_MEASUREMENT) {
+    causes.push({
+      cost: clamp(ctx.ballConfidence ?? 1, 0, 1),
+      say: cue('Your ball blurred into the background. Read this one loosely and film your whole toss against a plainer backdrop.'),
+    })
+  }
+  // Same shape of lie in the other direction: nothing is wrong with how well the
+  // body was seen, the camera simply stood where the depth it needed points at
+  // the lens. Worded for both ends of that — dead side-on and dead front-on are
+  // one failure, and "stands square on" described only the second, so the
+  // commonest way of all to film a serve was told it had done the opposite thing.
+  if (deps.includes('depth') && ctx.depthUnreliable) {
+    causes.push({
+      cost: DEPTH_COLLAPSED,
+      say: cue('Your camera sits in line with your stance, so depth here comes from a guess. Film from a corner instead.'),
+    })
+  }
+  if (deps.includes('trunkSweep') && !sweepResolved(ctx)) {
+    causes.push({
+      cost: SWEEP_UNRESOLVED,
+      say: cue('I could not follow your chest turning up to the ball, so this reading may be off. Read this one loosely.'),
+    })
+  }
+
+  causes.sort((a, b) => a.cost - b.cost)
+  return causes.length ? causes[0].say : cue('Parts of your body blurred here. Read this one loosely.')
 }
 
 /** Confidence-weighted, so a measurement the app cannot see does not steer a score. */

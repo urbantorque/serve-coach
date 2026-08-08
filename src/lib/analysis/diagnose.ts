@@ -14,7 +14,9 @@
  * call, and the returned object holds numbers only — never a frame, never a
  * landmark, nothing that would pin the clip in memory behind a saved report.
  */
-import { LM, clamp, groundPlaneSeparation, mean, sided } from './geometry'
+import { LM, clamp, mean, sided, trunkCoilReading } from './geometry'
+import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED } from './confidence'
+import { assessSpatial } from './spatial'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -194,18 +196,38 @@ export function diagnose(
 
   const tossPeak = options.ball ? (groundY - options.ball.apex.y) / bodyHeight : undefined
 
+  // The identical call the report makes, down to the keyframes, because this is
+  // the identical posture. Averaging across the trophy in one place and reading a
+  // single frame in the other had the two halves of the app disagreeing about one
+  // trophy by several degrees; deciding the sign by two different rules would be
+  // worse still — the card would praise a coil while the flaw pass named an open
+  // chest. Sharing `trunkCoil` makes that class of disagreement unrepresentable.
+  const coil = trunkCoilReading(frames, keys.trophy, keys.contact)
+
+  // And the identical hedging, for the identical reason. Coil is read almost
+  // entirely from inferred world z, so the camera angle decides whether there is
+  // a sign in it at all — and that verdict reached the report's confidence and
+  // stopped there. The card hedged the number to 0.35 while this pass handed the
+  // same number to triage at 1.00, which promoted "your chest opens ahead of
+  // your hips" to the one thing to work on: the app hedging and instructing off
+  // one reading, and the instruction is the half a player acts on. Below
+  // `MIN_EVIDENCE` the flaw pass drops the signal rather than naming a fault
+  // from it, which is the whole point of routing it here.
+  //
+  // Recovered here rather than passed in: `analyze` reads the same camera above
+  // this call, but a diagnosis taken straight off frames — a stored clip, a
+  // test — must not silently lose the hedge because its caller had nothing to
+  // hand over.
+  const depthUnreliable = assessSpatial(frames, keys.ready, bodyHeight).depth_unreliable
+  const separationConfidence =
+    trunkVisibility *
+    (depthUnreliable ? DEPTH_COLLAPSED : 1) *
+    (coil.resolved ? 1 : SWEEP_UNRESOLVED)
+
   /* --- assemble --------------------------------------------------------- */
   const readings: Record<string, SignalReading | undefined> = {
     palm_to_sky_deg: { value: palmToSky, confidence: handConfidence },
-    separation_deg: {
-      value: groundPlaneSeparation(
-        at(keys.trophy).world[LM.leftShoulder],
-        at(keys.trophy).world[LM.rightShoulder],
-        at(keys.trophy).world[LM.leftHip],
-        at(keys.trophy).world[LM.rightHip],
-      ),
-      confidence: trunkVisibility,
-    },
+    separation_deg: { value: coil.deg, confidence: separationConfidence },
     hip_lead_ms: { value: leadMs, confidence: sequenceConfidence },
     toss_drift_ratio: {
       value: tossDrift,

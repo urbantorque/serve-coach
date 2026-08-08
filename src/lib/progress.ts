@@ -1,6 +1,6 @@
 import { FUNDAMENTALS } from './analysis/coaching'
 import { statusOf } from './analysis/geometry'
-import type { FundamentalId, Status } from './analysis/types'
+import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
 
@@ -10,6 +10,8 @@ export interface TrendPoint {
   overall: number
   status: Status
   byArea: Record<string, number>
+  /** Which rubric these scores came from. Only equal versions may be compared. */
+  scoringVersion: number
 }
 
 export interface AreaDelta {
@@ -37,10 +39,60 @@ export interface Progress {
   serveType: ServeType
   /** Reports set aside because they were a different serve. */
   setAside: number
+  /**
+   * When the scoring changed partway through this history, the moment the
+   * current rubric starts — so the chart can draw the break instead of a line
+   * across it. Absent when every point was scored the same way.
+   *
+   * `points` still holds everything before it. The old scores are real, they
+   * are simply not the same measurement, and deleting them from the chart would
+   * read as the app having lost the player's history.
+   */
+  rubricBreakAt?: number
 }
 
 /** A report saved before serve types existed was scored against the flat bands. */
 export const typeOf = (s: Pick<Session, 'serveType'>): ServeType => s.serveType ?? 'flat'
+
+/**
+ * Which rubric a report's scores belong to — saved or still on screen.
+ *
+ * `analyzeServe` stamps a report as it scores it and `normalise` fills the field
+ * in on the way out of storage, so in practice the field is there. A report
+ * reaching here without one — a hand-edited backup, a fixture, a row written
+ * before stamping existed — must land on the old rubric rather than on whatever
+ * the current one happens to be, since a missing stamp can only mean it predates
+ * stamping.
+ *
+ * The one way any consumer should read this field. A call site that reaches for
+ * `s.scoringVersion` and defaults it itself is how the two halves of the guard
+ * came to disagree about what an absent stamp meant.
+ */
+export const scoringVersionOf = (s: Pick<Session, 'scoringVersion'>): number =>
+  typeof s.scoringVersion === 'number' ? s.scoringVersion : LEGACY_SCORING_VERSION
+
+/**
+ * The run of reports at the end of a history that were all scored the same way.
+ *
+ * `oldestFirst` must be in time order. Scanned from the newest backwards rather
+ * than filtered by version, so that a backup restored out of order cannot stitch
+ * two eras of the same version around a third era in between and then average
+ * across the lot.
+ *
+ * The one place any consumer decides what "comparable" means, so that the trend
+ * chart, the report page and the practice card cannot drift into disagreeing
+ * about which of a player's serves belong on the same scale.
+ */
+export function currentRubricEra<T extends Pick<Session, 'scoringVersion'>>(
+  oldestFirst: T[],
+): T[] {
+  for (let i = oldestFirst.length - 1; i > 0; i--) {
+    if (scoringVersionOf(oldestFirst[i - 1]) !== scoringVersionOf(oldestFirst[i])) {
+      return oldestFirst.slice(i)
+    }
+  }
+  return oldestFirst
+}
 
 /**
  * Which serve type a trend should be about, when nobody has said.
@@ -115,10 +167,29 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
       overall: s.overall,
       status: s.overallStatus,
       byArea: Object.fromEntries(s.fundamentals.map((f) => [f.id, f.score])),
+      scoringVersion: scoringVersionOf(s),
     }))
 
   const latest = points[points.length - 1]
-  const previous = points.length > 1 ? points[points.length - 2] : undefined
+
+  /*
+   * One rubric at a time, for the same reason as one serve type at a time — and
+   * with less warning to the player, because nothing about their serve changed.
+   *
+   * A saved report keeps no frames, so it can never be re-scored: when the
+   * scoring is recalibrated the old numbers stay as they were computed, and the
+   * two rubrics have to coexist in one history permanently. Subtracting across
+   * that boundary measures the recalibration, not the player. Refilming the
+   * identical serve after an update moved the total by far more than
+   * `MEANINGFUL_DELTA`, so the app congratulated somebody on a gain that did not
+   * happen — which is the one lie a coaching app cannot afford, because the
+   * trend is the whole reason to come back.
+   *
+   * So every comparison below is confined to the run of points that share the
+   * newest rubric.
+   */
+  const era = currentRubricEra(points)
+  const previous = era.length > 1 ? era[era.length - 2] : undefined
 
   const areaDeltas: AreaDelta[] = previous
     ? (Object.keys(FUNDAMENTALS) as FundamentalId[])
@@ -132,7 +203,11 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
         }))
     : []
 
-  const scores = points.map((p) => p.overall)
+  // The rolling average and the personal best come from the era too. A best set
+  // under the old rubric is not a bar this one can be held to, and an average
+  // taken across the break is part old scoring and part new — a number that
+  // describes neither the player's form nor anything else.
+  const scores = era.map((p) => p.overall)
   const recent = scores.slice(-3)
   const priorWindow = scores.slice(-6, -3)
 
@@ -148,15 +223,33 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
       priorWindow.length >= 2 ? Math.round(mean(recent) - mean(priorWindow)) : undefined,
     serveType: type,
     setAside: sessions.length - matching.length,
+    rubricBreakAt: era.length < points.length ? era[0].createdAt : undefined,
   }
 }
 
-/** Per-area change between one report and the one before it, for the report page. */
+/**
+ * Per-area change between one report and the one before it, for the report page.
+ *
+ * `scoringVersion` is the rubric the fundamentals passed in were scored under:
+ * `scoringVersionOf` the report they came off, which carries its own stamp
+ * whether it has been saved yet or not. Given it, a comparison across a change
+ * of rubric is refused for the same reason `buildProgress` refuses one: the
+ * difference would be the recalibration rather than the player, and it is per
+ * area, where a fabricated swing of a dozen points reads as a diagnosis.
+ *
+ * Omitting it keeps the old unchecked behaviour, which is what every caller did
+ * before the stamp existed. Left as opt-in rather than defaulting to the current
+ * rubric because defaulting would silently blank the deltas on every report
+ * saved before stamping, and a caller passing nothing is more likely to be a
+ * test or a tool than the report page.
+ */
 export function deltasAgainst(
   fundamentals: { id: FundamentalId; score: number }[],
   previous?: Session,
+  scoringVersion?: number,
 ): Record<string, number> {
   if (!previous) return {}
+  if (scoringVersion !== undefined && scoringVersionOf(previous) !== scoringVersion) return {}
   const before = Object.fromEntries(previous.fundamentals.map((f) => [f.id, f.score]))
   const out: Record<string, number> = {}
   for (const f of fundamentals) {

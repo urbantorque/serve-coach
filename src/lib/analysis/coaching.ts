@@ -25,6 +25,16 @@ export interface MetricCopy {
   weight: number
   ideal: [number, number]
   range: [number, number]
+  /**
+   * The axis length the scoring decay outside the band is measured against, when
+   * that is not the axis itself.
+   *
+   * Only the signed measurements set it. Their axis carries a mirror half — the
+   * same posture pointing the other way — and letting the scorer treat that as
+   * extra axis would soften every miss on a band that never moved. See
+   * `scoreAgainst`.
+   */
+  missSpan?: number
   decimals: number
   insight: { low: string; ok: string; high: string }
   fix: { low: string; high: string }
@@ -177,7 +187,7 @@ export const METRICS: Record<string, MetricCopy> = {
     insight: {
       low: 'You strike the ball at the **top** of its flight, where it barely moves.',
       ok: 'You catch the ball **near the top**, while it still hangs.',
-      high: 'You **wait for the drop**. Every centimetre it falls is contact height handed back.',
+      high: 'You let the ball **fall** before you hit it, so you meet it lower than you could have.',
     },
     fix: {
       low: '',
@@ -222,15 +232,31 @@ export const METRICS: Record<string, MetricCopy> = {
     phase: 'trophy',
     weight: 1,
     ideal: [15, 38],
-    range: [0, 55],
+    // Below zero the chest has unwound past the hips before the racket has even
+    // dropped, which is a different fault from failing to coil and reads
+    // differently on the card. The axis has to reach far enough down to show it.
+    range: [-30, 55],
+    // The old axis, kept as the yardstick for the decay. Admitting the reverse
+    // side lengthened the axis by more than half without moving a single band,
+    // and letting the scorer see that as more room would have handed a locked
+    // trunk points it had not earned.
+    missSpan: 55,
     decimals: 0,
     insight: {
-      low: 'Your hips and chest turn as **one block**, so the arm does the work alone.',
+      // Below the band now covers two different faults — a chest that opened
+      // ahead of the hips, and a real but shallow coil the ladder calls "Slight
+      // coil" — and `build()` has one string for the pair, because it picks by
+      // band and not by rung. So this names what both share, the stretch that
+      // never got stored, and leaves the direction to the readout beside it.
+      // Saying "turns open with your hips" instead denied the readout outright
+      // for every player between eight and fifteen degrees, which is most of
+      // them.
+      low: 'You reach the trophy with **too little coil** between hips and chest, so the arm swings on its own.',
       ok: 'Your hips **lead** and the shoulders lag. That stretch whips the arm through.',
       high: 'A **big coil** between hips and shoulders.',
     },
     fix: {
-      low: '**Turn the hips** to the court while the chest stays closed. Feel the stretch across your stomach.',
+      low: '**Hold the chest closed** while the hips turn to the court. Feel the stretch across your stomach.',
       high: '**Hold the front hip** until the racket drops. Sliding early makes the timing fragile.',
     },
     drill: {
@@ -246,15 +272,24 @@ export const METRICS: Record<string, MetricCopy> = {
     phase: 'trophy',
     weight: 1,
     ideal: [14, 32],
-    range: [0, 50],
+    // Below zero the cartwheel runs the wrong way: hitting shoulder high,
+    // tossing shoulder dropped. It is a common recreational fault and it pulls
+    // the racket down across the ball, so the axis has to be able to show it
+    // rather than reporting it as a level pair of shoulders.
+    range: [-25, 50],
+    // The old axis, kept as the yardstick for the decay — see
+    // `hipShoulderSeparation` above. Without it a flat-shouldered trophy rose
+    // from 45 to 58 on the strength of the widening alone, which moves the badge
+    // from "work on this" to "fair" for a serve that did not change.
+    missSpan: 50,
     decimals: 0,
     insight: {
-      low: 'Your shoulders stay **level**, so the racket climbs on a shallow angle.',
+      low: 'Your hitting shoulder sits **level or high**, so the racket comes down across the ball instead of up at it.',
       ok: 'Hitting shoulder **down**, tossing shoulder up. That tilt sends the racket up at the ball.',
       high: 'A **steep tilt**, so the racket travels sharply upward.',
     },
     fix: {
-      low: '**Cartwheel** the shoulders, never spin them. Point at the ball and drop the hitting shoulder under it.',
+      low: '**Drop the hitting shoulder** under the ball and lift the tossing one. Cartwheel the shoulders, never spin them.',
       high: '**Tilt from the shoulders**, not the lower back. Arching moves contact behind you.',
     },
     drill: {
@@ -300,7 +335,7 @@ export const METRICS: Record<string, MetricCopy> = {
     decimals: 3,
     insight: {
       low: 'Your racket **never falls** behind your back, so the swing starts half finished.',
-      ok: 'Your racket **falls down your back** before it fires. That is where head speed comes from.',
+      ok: 'Your racket **falls down your back** before it fires, and that fall is where racket speed comes from.',
       high: 'A **deep drop**, with plenty of runway to accelerate.',
     },
     fix: {
@@ -325,7 +360,7 @@ export const METRICS: Record<string, MetricCopy> = {
     insight: {
       low: 'Your hitting elbow **folds tight** against your back.',
       ok: 'Your arm folds into a loaded **L**: elbow up, racket head down.',
-      high: 'Your arm stays **straight** through the drop, so the serve becomes a windmill.',
+      high: 'Your arm stays **straight** through the drop, so the racket circles round your side instead of falling behind your back.',
     },
     fix: {
       low: '**Give the racket room**. Jammed against your back it cannot swing free into the drop.',
@@ -347,7 +382,7 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [50, 450],
     decimals: 0,
     insight: {
-      low: 'You **snap** from drop to contact: explosive, or a drop too shallow to cover.',
+      low: 'You **snap** from drop to ball. That is either explosive, or a sign the racket never fell far enough.',
       ok: 'Your racket **fires** from drop to ball. That acceleration window is sharp.',
       high: 'Your racket **crawls** from drop to ball, so you are guiding the swing.',
     },
@@ -373,7 +408,7 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0.9, 1.7],
     decimals: 2,
     insight: {
-      low: 'You strike **below full reach**, which shrinks the window the ball can land in.',
+      low: 'You strike **below full reach**, so the ball has less room to clear the net and still land in.',
       ok: 'You strike at **full stretch**, exactly where your margin over the net lives.',
       high: 'You strike at the **top of your reach**.',
     },
@@ -422,7 +457,7 @@ export const METRICS: Record<string, MetricCopy> = {
     decimals: 3,
     insight: {
       low: 'You stay **flat-footed** at contact, so the load never left the ground.',
-      ok: 'You **extend up** off the court into the ball, and the chain fired in order.',
+      ok: 'You **extend up** off the court into the ball, so your legs, body and arm fired in the right order.',
       high: 'You get **well off the ground** into contact.',
     },
     fix: {
@@ -441,8 +476,12 @@ export const METRICS: Record<string, MetricCopy> = {
     unit: '%',
     phase: 'contact',
     weight: 1,
-    // how far in front of the hips contact happens, as a share of height
-    ideal: [5, 20],
+    // How far in front of the hips contact happens, as a share of height. The
+    // floor sits on the ladder's own boundary between "struck over the head" and
+    // "struck in front of the body": a band opening at 5 spent three points of
+    // its width praising a contact the readout beside it still called over the
+    // head, which is the fault this measurement exists to name.
+    ideal: [8, 20],
     range: [-10, 34],
     decimals: 1,
     insight: {
@@ -473,7 +512,12 @@ export const METRICS: Record<string, MetricCopy> = {
     decimals: 0,
     insight: {
       low: 'You **rush** the whole motion, so the legs never load.',
-      ok: '**Well paced**: unhurried into the trophy, fast out of it.',
+      // Says only what this measurement can see. It times the whole motion from
+      // the first move to the ball and knows nothing about where the trophy fell
+      // inside it, so the old wording ("unhurried into the trophy, fast out of
+      // it") claimed a split it never measured — and printed a Strong badge
+      // three lines above `loadRatio` saying the back half drifts.
+      ok: '**Well paced** from first move to ball, neither rushed nor drawn out.',
       high: 'A **long motion**. Usually the ball goes up and then you wait for it.',
     },
     fix: {
@@ -522,7 +566,7 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [-0.4, 0.5],
     decimals: 2,
     insight: {
-      low: 'Your racket sits **by your leg** when the ball leaves, so the back half gets rushed.',
+      low: 'Your racket is still **down by your leg** when you release the ball, so everything after it happens in a rush.',
       ok: '**Down together, up together**: both arms reach the top at once.',
       high: 'Your racket is already **high** when the ball leaves your hand.',
     },
@@ -603,6 +647,19 @@ export interface ServeTypeCopy {
   overrides: Record<string, [number, number]>
   /** Replacement copy where the flat wording would be actively wrong. */
   insight?: Record<string, Partial<MetricCopy['insight']>>
+  /**
+   * The same, for the instruction — and it has to exist alongside `insight`
+   * rather than instead of it.
+   *
+   * Overriding one and not the other is what produced a kick serve card that
+   * described the contact point correctly and then ordered the player to move it
+   * somewhere the same card's blurb says a kick never goes. The insight and the
+   * fix are two halves of one sentence to a player; a serve type that moves one
+   * moves both.
+   */
+  fix?: Record<string, Partial<MetricCopy['fix']>>
+  /** And the exercise, which is the fix said again slowly. */
+  drill?: Record<string, Drill>
 }
 
 export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
@@ -618,19 +675,88 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
       // The racket travels up the back of the ball, so contact sits much closer
       // to over the head — and slightly lower, because you are brushing up it
       // rather than reaching through it.
-      contactAhead: [-2, 12],
-      contactHeight: [1.22, 1.46],
-      // More cartwheel: the hitting shoulder drops further under the ball.
-      shoulderTilt: [20, 40],
-      // A kick is tossed a little lower and further back than a flat serve.
-      tossPeakHeight: [1.3, 1.62],
+      //
+      // The band is exactly the ladder's "struck over the head" rung, floor and
+      // ceiling both. It used to run from -2 to 12, which put its bottom two
+      // points inside the rung the readout calls struck behind the head and its
+      // top four inside the one it calls struck in front of the body: a kick
+      // serve could be badged "Solid" under a readout naming a fault, or under
+      // one naming the flat serve's target.
+      contactAhead: [0, 8],
+      // Lower than a flat serve, and lower by a whole rung rather than by the
+      // couple of hundredths a kick is really struck below one. The card speaks
+      // in rungs, so a floor at 1.22 sat inside "struck below full reach" and
+      // praised the top of that rung while correcting the bottom of it: two kick
+      // serves, one readout, opposite verdicts. The ceiling stays where the flat
+      // serve's is, because a kick reached for at the very top of the stretch has
+      // been driven through rather than brushed up.
+      contactHeight: [1.1, 1.5],
+      // More cartwheel: the hitting shoulder drops further under the ball, and
+      // this band starts where the flat one stops. The steep tilt the flat card
+      // calls arching is the tilt a kick is hit with — the flat serve's fault is
+      // this serve's intent — so the two meet at the rung boundary instead of
+      // overlapping. Running from 20 to 40 split both rungs it touched: a
+      // shoulder the readout called under the ball was praised at 21 and
+      // corrected at 19.
+      shoulderTilt: [32, 50],
+      // A kick is tossed a little lower and further back than a flat serve, so
+      // the toss is allowed to peak at racket reach rather than a ball above it.
+      // The ceiling holds at the flat serve's: a toss climbing past that falls
+      // too fast to brush up, whatever spin you meant to put on it.
+      tossPeakHeight: [1.2, 1.72],
     },
     insight: {
       contactAhead: {
-        low: 'You strike **over your head**, where a kick wants it. Keep it from drifting behind you.',
+        // All three, because the kick band sits a whole rung below the flat one
+        // and every region around it therefore describes a different position.
+        // Under the band a kick is behind the head, not over it; over the band it
+        // is where a flat serve wants it, which is too far forward to brush up
+        // the back of the ball.
+        low: 'You strike **behind your head**, so your back arches and the racket cannot brush up the ball.',
+        ok: 'You strike **over your head**, where a kick wants it. Keep it from drifting behind you.',
+        high: 'You strike **in front of your body**, so the racket drives through the ball rather than up its back.',
       },
       contactHeight: {
         ok: 'You strike at **kick height**: high enough for margin, low enough to brush up the ball.',
+      },
+      shoulderTilt: {
+        // The kick band starts a whole rung above the flat one, so everything
+        // the ladder calls "hitting shoulder under the ball" falls below it. The
+        // flat wording — the shoulder sits level or high — would deny that
+        // readout outright for every kick between the two.
+        low: 'Your hitting shoulder **drops too little** for a kick, so the racket goes through the ball instead of up it.',
+      },
+    },
+    fix: {
+      contactAhead: {
+        low: 'Toss **over your head**, not behind it, and brush the racket up the back of the ball.',
+        high: 'Toss **back over your head** so the racket brushes up the ball instead of driving through it.',
+      },
+      contactHeight: {
+        // The flat order above the band is to keep the toss in front, and this
+        // card's own contact-depth order is to toss back over the head. One card,
+        // two instructions, opposite directions — and the player follows whichever
+        // they read second. A kick struck above the band was reached for and
+        // driven through, so the correction is depth of brush, never toss
+        // position: the toss stays exactly where the other line just put it.
+        high: '**Brush up the back of the ball** instead of reaching through it. Let contact sit under the top of your stretch.',
+      },
+      shoulderTilt: {
+        // The flat order is to drop the hitting shoulder under the ball, which is
+        // the position this card reads out for anything from fourteen degrees up
+        // — so a kick at eighteen was told to start doing what the same card had
+        // just said it was doing. A kick short of its band wants more of that
+        // drop, not the beginning of it.
+        low: '**Cartwheel further** so the hitting shoulder finishes well under the ball. Tilt from the shoulders, never the lower back.',
+      },
+    },
+    drill: {
+      // The flat serve's step-in toss walks contact forward, which is the last
+      // thing a kick serve struck too far in front needs.
+      contactAhead: {
+        name: 'Kick toss over the shoulder',
+        how: 'Toss over your hitting shoulder and brush the racket up the back of the ball.',
+        reps: '15 serves',
       },
     },
   },
@@ -638,10 +764,28 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
     label: 'Slice',
     blurb: 'Judged as a slice serve, so contact belongs in front and out to the side.',
     overrides: {
-      // The racket cuts across the outside of the ball, in front of the body.
-      contactAhead: [8, 24],
-      // Flatter shoulders than a kick: this is a sideways swing, not an upward one.
-      shoulderTilt: [10, 26],
+      // Nothing moves, and both of the bands that used to be moved are worth
+      // naming, because each bought a difference this app cannot actually see
+      // out of a rung the readout beside it was already using.
+      //
+      // Contact point in front is not overridden. What makes a slice a slice is
+      // lateral — the racket cuts across the outside of the ball, out to the
+      // side — and this measures only how far ahead of the hips contact happens,
+      // which for a slice is the flat serve's own rung, "struck in front of the
+      // body". The band that ran from 8 to 24 stopped four points inside the
+      // rung above it, so 22 came back badged Solid and 26 came back with an
+      // order to rein the toss in, both under one readout saying the ball was
+      // struck far in front. The lateral half of a slice is measured nowhere, and
+      // faking it on this axis prices a good slice as a flat serve falling into
+      // the court.
+      //
+      // Shoulder tilt is not overridden either. A slice cartwheels less than a
+      // kick, but the rung under the flat band is "shoulders near level" and
+      // nobody hits a slice with level shoulders — so the flat band is the honest
+      // one, and the difference that matters is the one against the kick. The
+      // band that ran from 10 to 26 bought its flatness out of that rung: 11.9
+      // degrees came back badged Solid under a readout saying the shoulders were
+      // near level, praising the posture the same card's fault line names.
     },
   },
 }
@@ -653,11 +797,15 @@ export function metricCopy(id: string, serveType: ServeType = 'flat'): MetricCop
   const type = SERVE_TYPES[serveType] ?? SERVE_TYPES.flat
   const ideal = type.overrides[id]
   const insight = type.insight?.[id]
-  if (!ideal && !insight) return base
+  const fix = type.fix?.[id]
+  const drill = type.drill?.[id]
+  if (!ideal && !insight && !fix && !drill) return base
   return {
     ...base,
     ideal: ideal ?? base.ideal,
     insight: insight ? { ...base.insight, ...insight } : base.insight,
+    fix: fix ? { ...base.fix, ...fix } : base.fix,
+    drill: drill ?? base.drill,
   }
 }
 

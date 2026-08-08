@@ -46,18 +46,37 @@ export interface Skeleton {
   detectedRacket: Side
   detectionConfidence: number
   /**
-   * How the two things everything else is built on were actually arrived at.
+   * How the things everything else is built on were actually arrived at, and —
+   * for the drop — whether the event was ever there to arrive at.
    *
-   * Both have fallbacks, and both fallbacks are correct — but a measurement
-   * resting on one is softer than the same measurement resting on a clean
-   * reading, and the report has no way to say so unless the detector admits
-   * which path it took. See `metricConfidence`.
+   * Each fallback below is correct, and none of them is a failure. But a
+   * measurement resting on one is softer than the same measurement resting on a
+   * clean reading, and one of them means a measurement has nothing under it at
+   * all; the report has no way to say either unless the detector admits which
+   * path it took. See `metricConfidence` and the `dropToContact` filter in
+   * `measure`.
    */
   derivation: {
     /** Feet were out of frame, so standing height came from the torso. */
     scaleFromTorso: boolean
     /** The knees never loaded, so the trophy was found from the arms. */
     trophyFromArms: boolean
+    /**
+     * The racket never fell behind the back, so the drop landed on the trophy
+     * frame rather than on an event of its own. See `MIN_DROP_SEPARATION`.
+     */
+    dropOnTrophy: boolean
+    /**
+     * The trophy landed on the toss frame rather than on a load of its own.
+     *
+     * The companion to `dropOnTrophy` at the other end of the same collapse, and
+     * it has to be recorded separately because the two do not always travel
+     * together: a player can load their legs properly and still never drop the
+     * racket. Postures read at the trophy survive this — the trunk was in *some*
+     * shape at that instant and reporting it is honest — but anything measuring
+     * the trophy's *position in time* is then describing the toss instead.
+     */
+    trophyOnToss: boolean
   }
 }
 
@@ -187,6 +206,20 @@ function findTrophy(
   return { index: argMaxIn(racketPosture, toss, provisionalDrop), fromArms: true }
 }
 
+/**
+ * Closer to the trophy than this and the drop is the same instant under a second
+ * name, not a fast racket.
+ *
+ * A serve that has a drop in it bottoms out around 150 ms before contact off a
+ * trophy around 400 ms before, so the two events are a quarter of a second apart
+ * even on a hurried club motion. Eighty milliseconds is well under that and
+ * still wide enough to swallow the couple of frames `sharpen` may nudge the drop
+ * by at 30 fps, the slowest camera the app will read — so the test answers "were
+ * these two events found separately" rather than "did the smoothing move one of
+ * them".
+ */
+const MIN_DROP_SEPARATION = 0.08
+
 /** Enforce a strictly readable order without letting one bad pick eat the rest. */
 function orderKeys(raw: Keyframes, n: number): Keyframes {
   const order: PhaseId[] = ['ready', 'toss', 'trophy', 'drop', 'contact', 'finish']
@@ -281,6 +314,25 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
 
   const keys = orderKeys({ ready, toss, trophy, drop, contact, finish }, frames.length)
 
+  // Did the drop happen at all?
+  //
+  // On straight legs with no drop — the commonest shape this app will ever be
+  // shown — every step above collapses onto one frame. The knees give no trough,
+  // so the trophy is looked for in the arms; the racket hand never falls below
+  // where it hung at the toss, so `findTrophy` hands back the toss itself; and
+  // the drop search, bounded below by that trophy, finds its minimum sitting on
+  // its own lower bound. Two keyframes, one instant.
+  //
+  // None of that is the wrong thing to do. A trophy at the toss is the best
+  // guess available, and `dropDepth` read there correctly reports a racket that
+  // never fell. What has no meaning is the *interval* between the two, which is
+  // now the toss-to-contact stretch wearing the drop's name. Recorded here
+  // because it is a fact about how these keyframes were found; re-deriving it
+  // from the keyframes downstream would be guessing at this function's reasoning
+  // from its output.
+  const dropOnTrophy = frames[keys.drop].t - frames[keys.trophy].t < MIN_DROP_SEPARATION
+  const trophyOnToss = frames[keys.trophy].t - frames[keys.toss].t < MIN_DROP_SEPARATION
+
   // --- scale references, measured while the player is still on the ground ----
   const readyFrame = frames[keys.ready]
   const stance = frames.slice(keys.ready, Math.max(keys.ready + 1, keys.trophy))
@@ -358,7 +410,7 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
     handednessConfidence: confidence,
     detectedRacket: guess.racket,
     detectionConfidence: guess.confidence,
-    derivation: { scaleFromTorso, trophyFromArms: found.fromArms },
+    derivation: { scaleFromTorso, trophyFromArms: found.fromArms, dropOnTrophy, trophyOnToss },
   }
 }
 

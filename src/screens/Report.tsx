@@ -8,9 +8,9 @@ import { SOFT_READ, readQuality } from '../components/statusLabels'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import type { Consistency } from '../lib/analysis/consistency'
 import type { ServeType } from '../lib/storage/prefs'
-import { deltasAgainst } from '../lib/progress'
+import { deltasAgainst, scoringVersionOf } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
-import type { Analysis, PhaseId, Status } from '../lib/analysis/types'
+import { SCORING_VERSION, type Analysis, type PhaseId, type Status } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
 
 const VERDICT: Record<Status, { title: string; sub: string }> = {
@@ -75,9 +75,29 @@ export default function Report({
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
   const verdict = VERDICT[analysis.overallStatus]
   const live = isLive(analysis) && Boolean(videoUrl)
+  /*
+   * Which rubric the numbers on this page were computed under.
+   *
+   * A report still on screen from the run that produced it carries no stamp yet
+   * — the stamp is written as it reaches storage — so an unstamped live analysis
+   * was scored by this build. An unstamped *saved* report is the opposite: it
+   * predates stamping and is old-rubric by definition, which is what
+   * `scoringVersionOf` says. Reading both the same way would either blank the
+   * deltas on every fresh report or compare one straight across a recalibration.
+   */
+  const rubric = isLive(analysis)
+    ? (analysis.scoringVersion ?? SCORING_VERSION)
+    : scoringVersionOf(analysis)
+
+  // A recalibration moves a saved score with nothing about the serve having
+  // changed, so a delta across one measures the rubric. Refilming the identical
+  // serve after the last change showed roughly twenty points of "gain" on knee
+  // bend, racket drop and toss arm — a fabricated diagnosis, per area.
+  const comparable = previous !== undefined && scoringVersionOf(previous) === rubric
+
   const deltas = useMemo(
-    () => deltasAgainst(analysis.fundamentals, previous),
-    [analysis.fundamentals, previous],
+    () => deltasAgainst(analysis.fundamentals, previous, rubric),
+    [analysis.fundamentals, previous, rubric],
   )
   const [sharing, setSharing] = useState<'idle' | 'working' | 'done'>('idle')
 
@@ -118,12 +138,21 @@ export default function Report({
 
       <section className="hero">
         <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={148} label="overall" />
-        {previous && (
-          <span className="hero-delta">
-            <DeltaChip delta={analysis.overall - previous.overall} />
-            <span>vs your last serve</span>
-          </span>
-        )}
+        {/* The break is said out loud rather than left as an absence. Every
+            comparison on this page goes at once when the rubric changes — this
+            chip and the per-area ones on the cards below — and a player who saw
+            them last time reads the silence as the app having broken. */}
+        {previous &&
+          (comparable ? (
+            <span className="hero-delta">
+              <DeltaChip delta={analysis.overall - previous.overall} />
+              <span>vs your last serve</span>
+            </span>
+          ) : (
+            <span className="hero-delta">
+              The scoring changed between these two serves, so this one starts a fresh run.
+            </span>
+          ))}
         <h1>{verdict.title}</h1>
         <p>{verdict.sub}</p>
         <div className="hero-chips">

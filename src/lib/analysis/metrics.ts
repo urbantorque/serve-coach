@@ -4,17 +4,19 @@ import { FUNDAMENTALS, metricCopy, type MetricCopy } from './coaching'
 import { cue } from './voice'
 import {
   LM,
+  TROPHY_POSTURE_RADIUS,
   chainScore,
   clamp,
-  elevationFromHorizontal,
-  groundPlaneSeparation,
   jointAngle,
   midpoint,
   scoreAgainst,
   sided,
+  signedElevationFromHorizontal,
   smooth,
   statusOf,
   stdev,
+  steadyWorld,
+  trunkCoil,
 } from './geometry'
 import {
   SOFT_MEASUREMENT,
@@ -46,14 +48,24 @@ function build(
   if (!copy) throw new Error(`no coaching copy for metric "${id}"`)
   const confidence = ctx ? metricConfidence(id, ctx) : 1
   const v = Number.isFinite(value) ? value : copy.ideal[0]
-  const score = scoreAgainst(v, copy.ideal, copy.range)
-  const status = statusOf(score)
+  const score = scoreAgainst(v, copy.ideal, copy.range, copy.missSpan)
   const below = v < copy.ideal[0]
   const above = v > copy.ideal[1]
 
+  // No cap here, and none needed. `scoreAgainst` crosses the "Solid" threshold
+  // at the band edge, so band membership and badge already say the same thing:
+  // out of band cannot score 70 and in band cannot score less. Capping the badge
+  // instead — the previous attempt at this — cost the app the "Solid" badge
+  // entirely, because in-band was then always "Strong" and out-of-band always at
+  // best "Refine", with a two-level jump across every edge.
+  const status = statusOf(score)
   const insight = below ? copy.insight.low : above ? copy.insight.high : copy.insight.ok
-  const needsFix = status === 'fair' || status === 'work'
-  const fix = needsFix ? (below ? copy.fix.low : above ? copy.fix.high : undefined) : undefined
+  // Band membership, not the score, is still what decides the fix — as
+  // `coaching.ts` documents. The fix names the correction the readout has
+  // already described, so it has to be present whenever there is something
+  // outside the band to correct, and reading it off the score would let the two
+  // drift apart again the moment anyone touches the curve.
+  const fix = below ? copy.fix.low : above ? copy.fix.high : undefined
 
   // Both go through the voice filter on the way out, even though the database
   // they come from is linted in the tests. Serve-type copy, anything added
@@ -99,11 +111,8 @@ function build(
  * straight arm measures bent. That matters here because arm extension is one of
  * the measurements that tells a player to change something.
  *
- * Averaging the positions first is what shrinks it: position noise is symmetric
- * and does cancel, and less positional noise means less of the one-sided angle
- * error. Every angle this is used for is read at an extremum of its own motion —
- * deepest knee bend, fullest reach — where the value is locally flat, so a
- * window of ±1 frame costs no real accuracy.
+ * Averaging the positions first is what shrinks it, for the reasons `steadyWorld`
+ * sets out: less positional noise means less of the one-sided angle error.
  */
 function steadyAngle(
   frames: Frame[],
@@ -113,21 +122,11 @@ function steadyAngle(
   c: number,
   radius = 1,
 ): number {
-  const lo = Math.max(0, idx - radius)
-  const hi = Math.min(frames.length - 1, idx + radius)
-  const at = (lm: number) => {
-    let x = 0
-    let y = 0
-    let z = 0
-    for (let i = lo; i <= hi; i++) {
-      x += frames[i].world[lm].x
-      y += frames[i].world[lm].y
-      z += frames[i].world[lm].z
-    }
-    const n = hi - lo + 1
-    return { x: x / n, y: y / n, z: z / n, visibility: 1 }
-  }
-  return jointAngle(at(a), at(b), at(c))
+  return jointAngle(
+    steadyWorld(frames, idx, a, radius),
+    steadyWorld(frames, idx, b, radius),
+    steadyWorld(frames, idx, c, radius),
+  )
 }
 
 /**
@@ -273,16 +272,26 @@ export function measure(
       steadyAngle(frames, keys.trophy, LM.rightHip, LM.rightKnee, LM.rightAnkle)) /
       2
 
-  values.hipShoulderSeparation = groundPlaneSeparation(
-    fTrophy.world[LM.leftShoulder],
-    fTrophy.world[LM.rightShoulder],
-    fTrophy.world[LM.leftHip],
-    fTrophy.world[LM.rightHip],
-  )
+  // Both trunk-rotation readings come from positions averaged across the trophy,
+  // the same treatment every joint angle above already gets. These two lean
+  // almost entirely on world z and were the last measurements at the trophy
+  // still taken from a single frame — the noisiest numbers in the app, read in
+  // the one way that keeps all of the noise.
+  const trophyPose = (lm: number) => steadyWorld(frames, keys.trophy, lm, TROPHY_POSTURE_RADIUS)
 
-  values.shoulderTilt = elevationFromHorizontal(
-    fTrophy.world[LM.leftShoulder],
-    fTrophy.world[LM.rightShoulder],
+  // Which rotational direction counts as coil is read off this player's own
+  // uncoiling, not assumed from the racket side — see `trunkCoil`. The whole
+  // trophy-to-contact window is handed over rather than a posture, so this and
+  // the diagnosis cannot drift into measuring the sign two different ways.
+  values.hipShoulderSeparation = trunkCoil(frames, keys.trophy, keys.contact)
+
+  // Ordered tossing shoulder first, hitting shoulder second, so a positive tilt
+  // is the hitting shoulder sitting below the tossing one — the cartwheel the
+  // report asks for in words. Passed unordered this cannot tell that apart from
+  // its mirror image, and a reverse cartwheel scores like a textbook trophy.
+  values.shoulderTilt = signedElevationFromHorizontal(
+    trophyPose(T.shoulder),
+    trophyPose(R.shoulder),
   )
 
   {
@@ -353,6 +362,36 @@ export function measure(
       .filter((m) => (m === 'contactAhead' ? sideView && netwards.certain : true))
       // The ball measurements exist only when the ball was tracked.
       .filter((m) => (BALL_METRICS.has(m) ? m in values : true))
+      // And the drop-to-contact interval exists only when the drop did. On a
+      // serve whose racket never falls, the drop keyframe lands on the trophy
+      // (`dropOnTrophy`), so this stops timing the acceleration window and
+      // starts timing the whole trophy-to-contact stretch: about 680 ms against
+      // a 110–230 ms band. It then scores at the floor, outvotes `dropDepth` for
+      // the swing card's headline, and hands the player a tempo drill — "stop
+      // steering, serve looser" — for a fault that is not tempo, while the
+      // measurement beside it has already named the real one.
+      //
+      // Dropped rather than hedged, on the same grounds as `contactAhead` above
+      // and the ball measurements below. Hedging is for a number that is right
+      // about the wrong quantity, and the softest possible caveat still leaves
+      // "your swing is slow" printed on the card next to a serve that has no
+      // swing to be slow. There is no interval here to state loosely.
+      .filter((m) => (m === 'dropToContact' ? !skel.derivation.dropOnTrophy : true))
+      // The elbow angle *at the drop* goes with it, for the same reason and one
+      // of its own. With no drop the angle is read at the toss, where the arm is
+      // still on its way up — and a near-straight arm there reads as the elbow
+      // being jammed tight against the back, which is the opposite fault. The
+      // card then carried both orders at once: "let the racket fall" from
+      // `dropDepth` directly above "give the racket room" from here.
+      .filter((m) => (m === 'elbowAtDrop' ? !skel.derivation.dropOnTrophy : true))
+      // And the share of the motion spent after the trophy needs a trophy that
+      // happened somewhere. When it lands on the toss (`trophyOnToss`) this stops
+      // being "how much of the serve is the explosive half" and becomes "how much
+      // of the serve happens after the ball leaves the hand", which is most of it
+      // by construction: about 60% against a 22–42% band. It scores near the
+      // floor and can take the headline back off the racket drop — the exact
+      // outcome the filter above exists to prevent, arriving one metric later.
+      .filter((m) => (m === 'loadRatio' ? !skel.derivation.trophyOnToss : true))
       .map((m) => build(m, values[m], confidenceCtx, serveType))
 
     // Weighted by confidence, so a measurement the app admits it cannot see

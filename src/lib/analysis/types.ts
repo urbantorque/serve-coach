@@ -27,6 +27,33 @@ export interface Frame {
   visibility: number
 }
 
+/**
+ * Which rubric a report's scores were produced by.
+ *
+ * Scores are recalibrated from time to time — the floor moved from 6 to 30 and
+ * the decay outside a band was softened — and a saved report deliberately keeps
+ * no frames, so nothing can ever re-score one. Two rubrics therefore live side
+ * by side in a history for as long as that history lasts, and a trend drawn
+ * straight across them reports the recalibration as the player improving:
+ * refilm the identical serve after an update and it "gains" far more than
+ * `MEANINGFUL_DELTA`. Stamping the rubric is what lets `progress.ts` refuse.
+ *
+ * Bump this whenever a change would move the number a saved report already
+ * carries — `scoreAgainst`, a target band, or how an area score is combined.
+ * Bumping it when nothing moved costs a player one break in their chart; not
+ * bumping it when something did costs them a gain they never made.
+ */
+export const SCORING_VERSION = 2
+
+/**
+ * What a report saved before the stamp existed is worth.
+ *
+ * Old-rubric by definition — there was only one rubric to be scored against
+ * before this one — so it is a known version rather than an unknown one, and
+ * naming it stops a caller from quietly treating it as current.
+ */
+export const LEGACY_SCORING_VERSION = 1
+
 export type PhaseId = 'ready' | 'toss' | 'trophy' | 'drop' | 'contact' | 'finish'
 
 export interface Phase {
@@ -181,6 +208,25 @@ export interface Analysis {
    * difference progress.
    */
   serveType: ServeType
+  /**
+   * The rubric `overall`, the area scores and every metric score here were
+   * computed under. Stamped where those numbers are produced — `analyzeServe`
+   * and `rescore` both set it — so a report carries its rubric from its first
+   * render, hours before anything saves it.
+   *
+   * Stamping on the way into storage instead was a real bug and worth naming: a
+   * freshly analysed report is on screen long before it is saved, so every
+   * consumer reading it back saw no stamp and had to guess. `scoringVersionOf`
+   * guesses old, which is right for a stored row and exactly wrong for a live
+   * one — the comparison sheet then refused two serves scored identically and
+   * accepted one across a recalibration.
+   *
+   * Optional only for reports that predate stamping, which arrive from storage
+   * and leave `normalise` filled in as `LEGACY_SCORING_VERSION`, and for the
+   * dev fixtures that assemble an `Analysis` by hand. Read it through
+   * `scoringVersionOf` rather than `??`-ing a default at the call site.
+   */
+  scoringVersion?: number
   /**
    * Named mechanical breakdowns, with targets scaled to the rung above the
    * player. Raw data: numbers, enums and booleans, no prose.

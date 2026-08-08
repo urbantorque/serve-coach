@@ -11,19 +11,33 @@ import { MEANINGFUL_DELTA, buildProgress, deltaStatus, deltasAgainst } from '../
 import { normalise } from '../../storage/db'
 import { sessionKeyFor } from '../../storage/sessionKey'
 import { assessQuality, pickFocus } from '../analyze'
+import { METRICS, metricCopy } from '../coaching'
 import { buildConsistency } from '../consistency'
-import { statusOf } from '../geometry'
+import { diagnose } from '../diagnose'
+import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
 import { measure } from '../metrics'
-import { detectServe } from '../phases'
+import { detectServe, type Skeleton } from '../phases'
 import { findServes } from '../serves'
-import { NotAServeError, type Fundamental, type Metric } from '../types'
+import type { BallFlight } from '../../vision/ballTrack'
+import type { ServeType } from '../../storage/prefs'
+import { NotAServeError, type Frame, type Fundamental, type Metric, type Status } from '../types'
 import { CLEAN_SERVE, U, buildServe, type ServeDials } from './syntheticServe'
-import { assert, check, near, report, within } from './harness'
+import { assert, check, near, note, report, within } from './harness'
 
 /** Declared up here because checks run top to bottom as the module executes. */
 const DAY = 86_400_000
 
 const FPS = 50
+
+/**
+ * A camera angle the spatial pass calls readable in depth.
+ *
+ * The rig's default is 82°, which is dead side-on and outside `DEPTH_YAW_RANGE`:
+ * a fine place to measure heights and angles from, and the one place the app
+ * refuses to state a coil *direction* from. Named so the checks that need a
+ * corner say why they moved.
+ */
+const CORNER = 45
 
 function run(dials: Partial<ServeDials> = {}) {
   const frames = buildServe(dials, FPS)
@@ -108,7 +122,20 @@ check('identifies a left-hander, and measures them the same', () => {
   assert(skel.racket === 'left', `mirrored serve read as ${skel.racket}-handed`)
 
   const left = measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
-  for (const id of ['contactHeight', 'kneeBend', 'dropDepth', 'armExtension', 'tossArmExtension']) {
+  // The two trunk measurements are in this list because they are signed, and a
+  // sign about a vertical axis is exactly the thing that reverses when a serve
+  // is mirrored. Measured without orienting them by the racket hand, every
+  // left-hander's correct coil and correct cartwheel would come back as the
+  // fault they are the opposite of.
+  for (const id of [
+    'contactHeight',
+    'kneeBend',
+    'dropDepth',
+    'armExtension',
+    'tossArmExtension',
+    'shoulderTilt',
+    'hipShoulderSeparation',
+  ]) {
     const expected = metric(right.fundamentals, id).value
     near(
       metric(left, id).value,
@@ -259,6 +286,480 @@ check('reads back hip–shoulder separation', () => {
   near(metric(fundamentals, 'hipShoulderSeparation').value, 26, 8, 'separation')
 })
 
+check('the trophy posture is not read off a single frame', () => {
+  const frames = buildServe({}, FPS)
+  const skel = detectServe(frames, FPS)
+  const clean = metric(measure(frames, skel, true), 'hipShoulderSeparation').value
+
+  // One frame where the tracker loses the depth of the trunk and puts the two
+  // shoulders on the wrong sides of each other in z. This is the failure world z
+  // actually has: it is the least reliable thing the pose model outputs, and it
+  // is almost the entire content of this measurement.
+  const spiked = frames.map((f, i) =>
+    i !== skel.keys.trophy
+      ? f
+      : {
+          ...f,
+          world: f.world.map((l, k) =>
+            k === LM.leftShoulder
+              ? { ...l, z: l.z + 0.14 }
+              : k === LM.rightShoulder
+                ? { ...l, z: l.z - 0.14 }
+                : l,
+          ),
+        },
+  )
+  // The same skeleton is reused deliberately, so the keyframes cannot move and
+  // the only thing under test is how the posture is sampled at them.
+  const averaged = metric(measure(spiked, skel, true), 'hipShoulderSeparation').value
+  // The same measurement with the trophy window closed to a single frame, which
+  // is what this replaced.
+  const single = trunkCoil(spiked, skel.keys.trophy, skel.keys.contact, 0)
+
+  note(`one bad frame: ${clean.toFixed(1)}° → ${averaged.toFixed(1)}° averaged, ${single.toFixed(1)}° raw`)
+  assert(
+    Math.abs(single - clean) > 20,
+    `the injected spike was too small to prove anything: it moved a raw read by ${Math.abs(single - clean).toFixed(1)}°`,
+  )
+  assert(
+    Math.abs(averaged - clean) < Math.abs(single - clean) / 3,
+    `one bad frame moved the reported coil ${Math.abs(averaged - clean).toFixed(1)}°, against ${Math.abs(single - clean).toFixed(1)}° raw`,
+  )
+})
+
+check('the report and the diagnosis read the same trophy', () => {
+  // Two pipelines measure this posture, and they are the same posture. When one
+  // averaged across the trophy and the other read a single frame, the app could
+  // hand a player a card praising their coil next to a flaw finding built from a
+  // number several degrees away.
+  //
+  // Filmed from a corner, here and in every check below that asks the diagnosis
+  // about coil. The rig's default camera sits dead side-on, which is exactly
+  // where `assessSpatial` says the depth this reading is built from cannot be
+  // seen — and the flaw pass now honours that verdict rather than stating the
+  // number anyway. A check about the *sign* has to stand somewhere both halves
+  // of the app will speak.
+  const frames = buildServe({ cameraYaw: CORNER }, FPS)
+  const skel = detectServe(frames, FPS)
+  const reported = metric(measure(frames, skel, true), 'hipShoulderSeparation').value
+  const diagnosed = diagnose(frames, skel).signals.separation_deg
+  near(diagnosed, reported, 1, 'the two readings of one trophy')
+})
+
+/* ------------------------------------------------------ trophy, the wrong way */
+
+console.log('\n\x1b[1mFaults that are the mirror of a virtue\x1b[0m')
+
+check('a reverse cartwheel does not score like a textbook trophy', () => {
+  // Tossing shoulder dropped, hitting shoulder riding high. It pulls the racket
+  // down across the ball, it is common at club level, and measured as a bare
+  // magnitude it is arithmetically indistinguishable from the trophy the report
+  // is asking for.
+  const good = run({ shoulderTilt: 24 }).fundamentals
+  const reversed = run({ shoulderTilt: -24 }).fundamentals
+  const tilt = metric(reversed, 'shoulderTilt')
+
+  assert(tilt.value < -15, `a reversed cartwheel measured ${tilt.value.toFixed(1)}°`)
+  assert(
+    tilt.score <= metric(good, 'shoulderTilt').score - 40,
+    `reversed tilt scored ${tilt.score} against ${metric(good, 'shoulderTilt').score} for the correct one`,
+  )
+  assert(tilt.status === 'work', `a reversed cartwheel was badged ${tilt.status}`)
+  assert(Boolean(tilt.fix), 'no fix offered for a reversed cartwheel')
+  assert(
+    tilt.readout !== metric(good, 'shoulderTilt').readout,
+    `both directions read back as "${tilt.readout}"`,
+  )
+  assert(
+    area(reversed, 'loading').score <= area(good, 'loading').score - 20,
+    `loading scored ${area(reversed, 'loading').score} against ${area(good, 'loading').score}`,
+  )
+})
+
+check('a chest already open at the trophy does not score like coil', () => {
+  // The shoulders have unwound past the hips before the racket has dropped. The
+  // magnitude of that is the magnitude of a good coil, so the player losing the
+  // serve to it used to be congratulated for it.
+  const good = run({ shoulderYaw: 82, hipYaw: 56 }).fundamentals
+  const open = run({ shoulderYaw: 82, hipYaw: 108 }).fundamentals
+  const sep = metric(open, 'hipShoulderSeparation')
+
+  assert(sep.value < -15, `an open chest measured ${sep.value.toFixed(1)}°`)
+  assert(
+    sep.score <= metric(good, 'hipShoulderSeparation').score - 40,
+    `an open chest scored ${sep.score} against ${metric(good, 'hipShoulderSeparation').score} for real coil`,
+  )
+  assert(sep.status === 'work', `an open chest was badged ${sep.status}`)
+  assert(
+    sep.readout !== metric(good, 'hipShoulderSeparation').readout,
+    `both directions read back as "${sep.readout}"`,
+  )
+  assert(
+    area(open, 'loading').score <= area(good, 'loading').score - 20,
+    `loading scored ${area(open, 'loading').score} against ${area(good, 'loading').score}`,
+  )
+})
+
+check('the diagnosis names an open chest that the old sign could not see', () => {
+  const frames = buildServe({ shoulderYaw: 82, hipYaw: 108, cameraYaw: CORNER }, FPS)
+  const skel = detectServe(frames, FPS)
+  const found = diagnose(frames, skel).flaws.find((f) => f.flaw === 'early_shoulder_rotation')
+  assert(Boolean(found?.detected), 'an already-open chest raised no early-rotation finding')
+})
+
+check('a mirrored trophy is wrong for a left-hander too', () => {
+  // The right-handed versions of these are covered above; the point here is that
+  // the orientation does not quietly turn the fault back into a virtue when the
+  // serve is mirrored.
+  const frames = mirror(buildServe({ shoulderTilt: -24, hipYaw: 108 }, FPS))
+  const skel = detectServe(frames, FPS)
+  assert(skel.racket === 'left', `the mirrored serve read as ${skel.racket}-handed`)
+  const f = measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
+  assert(metric(f, 'shoulderTilt').value < -15, `left-handed reverse tilt measured ${metric(f, 'shoulderTilt').value.toFixed(1)}°`)
+  assert(
+    metric(f, 'hipShoulderSeparation').value < -15,
+    `left-handed open chest measured ${metric(f, 'hipShoulderSeparation').value.toFixed(1)}°`,
+  )
+})
+
+check('coil is measured the same whichever way the trunk turns', () => {
+  // The one check the rig could not previously make about itself. It wears
+  // right-handed labels and turns the trunk one particular way, and with no
+  // recorded footage in the repo — RECORDED is empty — nothing here can say
+  // whether that way round matches a real right-hander. If it does not, and the
+  // measurement is oriented to agree with the rig, the two are inverted together
+  // and every other coil check in this file passes for that reason alone.
+  //
+  // Running both rotational conventions is what removes that possibility: a
+  // measurement that assumes a direction reports one of these two backwards, so
+  // the pair of them can only pass if the direction is being derived rather than
+  // assumed.
+  for (const trunkRotationSign of [1, -1] as const) {
+    const way = trunkRotationSign > 0 ? 'as dialled' : 'reversed'
+    const coiled = run({ trunkRotationSign, shoulderYaw: 82, hipYaw: 56, cameraYaw: CORNER })
+    const open = run({ trunkRotationSign, shoulderYaw: 82, hipYaw: 108, cameraYaw: CORNER })
+
+    const good = metric(coiled.fundamentals, 'hipShoulderSeparation')
+    const bad = metric(open.fundamentals, 'hipShoulderSeparation')
+    note(`trunk ${way}: coil ${good.value.toFixed(1)}°, open chest ${bad.value.toFixed(1)}°`)
+
+    near(good.value, 26, 8, `coil with the trunk ${way}`)
+    assert(bad.value < -15, `an open chest measured ${bad.value.toFixed(1)}° with the trunk ${way}`)
+    assert(good.score >= bad.score + 40, `coil scored ${good.score} against ${bad.score} for an open chest, trunk ${way}`)
+    assert(bad.status === 'work', `an open chest was badged ${bad.status} with the trunk ${way}`)
+
+    // The diagnosis has to derive the direction the same way, or the card and
+    // the flaw pass end up describing opposite trophies from one clip.
+    for (const { frames, skel, fundamentals } of [coiled, open]) {
+      near(
+        diagnose(frames, skel).signals.separation_deg,
+        metric(fundamentals, 'hipShoulderSeparation').value,
+        1,
+        `report and diagnosis with the trunk ${way}`,
+      )
+    }
+  }
+})
+
+/** The tracker's left and right shoulder, exchanged on one frame. */
+const swapShoulders = (marks: Frame['world']): Frame['world'] =>
+  marks.map((m, i) =>
+    i === LM.leftShoulder ? marks[LM.rightShoulder] : i === LM.rightShoulder ? marks[LM.leftShoulder] : m,
+  )
+
+check('a left/right swap on three frames does not invert the coil', () => {
+  // MediaPipe relabels left and right on a rotating torso, and the serve rotates
+  // hardest between the trophy and the ball — so a swap that covers the contact
+  // frames and nothing else is a live failure, not a hypothetical.
+  //
+  // What made it fatal was mixing two kinds of angle. The lag at the trophy is
+  // read as a line and cannot see a swap; the sweep that gives it its sign was
+  // read as an arrow and saw one at either end. An invariant magnitude times a
+  // swap-sensitive sign inverts, so 27.5° of correct coil came back as -27.5° —
+  // scored 30, read out as "your chest opens ahead of your hips", and promoted
+  // to the headline fix. The player is told to undo the thing they did well.
+  const frames = buildServe({ shoulderYaw: 82, hipYaw: 56, cameraYaw: CORNER }, FPS)
+  const skel = detectServe(frames, FPS)
+  const clean = trunkCoil(frames, skel.keys.trophy, skel.keys.contact)
+  assert(clean > 15, `the rig coiled ${clean.toFixed(1)}°, too little for this check to prove anything`)
+
+  // The same skeleton throughout: the keyframes must not be allowed to move, or
+  // the check stops being about the labels.
+  const swap = (fs: Frame[], at: (i: number) => boolean) =>
+    fs.map((f, i) =>
+      at(i) ? { ...f, world: swapShoulders(f.world), image: swapShoulders(f.image) } : f,
+    )
+
+  const atContact = trunkCoil(
+    swap(frames, (i) => Math.abs(i - skel.keys.contact) <= 1),
+    skel.keys.trophy,
+    skel.keys.contact,
+  )
+  const atTrophy = trunkCoil(
+    swap(frames, (i) => Math.abs(i - skel.keys.trophy) <= 1),
+    skel.keys.trophy,
+    skel.keys.contact,
+  )
+  // A swap across the whole clip was always harmless — both ends move together.
+  // It is here to show that the single-endpoint case is the one that mattered.
+  const throughout = trunkCoil(swap(frames, () => true), skel.keys.trophy, skel.keys.contact)
+
+  note(`coil ${clean.toFixed(1)}° clean · ${atContact.toFixed(1)}° swapped at contact · ${atTrophy.toFixed(1)}° at the trophy · ${throughout.toFixed(1)}° throughout`)
+  near(atContact, clean, 1, 'coil with the shoulders swapped around contact')
+  near(throughout, clean, 1, 'coil with the shoulders swapped for the whole clip')
+  // Looser: a swap on the trophy frames lands inside the ±2 window the lag is
+  // averaged over, which mixes the two shoulders together rather than merely
+  // relabelling them. The sign is what has to survive.
+  assert(atTrophy > 0, `a swap at the trophy turned ${clean.toFixed(1)}° of coil into ${atTrophy.toFixed(1)}°`)
+})
+
+check('a trunk yawed past the wrap point measures the coil it actually held', () => {
+  // The sweep from the trophy to contact runs 200° → 16° here, which crosses the
+  // ±180 wrap exactly. Read as one difference it aliased into its own mirror,
+  // flipping the sign and reporting -31° of open chest for 26° of correct coil.
+  // Accumulating the turn frame by frame cannot alias: no serve turns the
+  // shoulder line 90° between two samples.
+  const wrapped = run({ shoulderYaw: 200, hipYaw: 174, cameraYaw: CORNER })
+  const plain = run({ shoulderYaw: 82, hipYaw: 56, cameraYaw: CORNER })
+  const a = metric(wrapped.fundamentals, 'hipShoulderSeparation')
+  const b = metric(plain.fundamentals, 'hipShoulderSeparation')
+  note(`coil ${b.value.toFixed(1)}° at 82°, ${a.value.toFixed(1)}° with the same trunk yawed past the wrap`)
+  near(a.value, 26, 8, 'coil across the wrap point')
+  assert(a.status === b.status, `the same trophy was badged ${a.status} past the wrap and ${b.status} under it`)
+})
+
+check('a trunk that barely rotates is not handed a coil sign by noise', () => {
+  // The direction is read off the shoulders sweeping open between the trophy and
+  // contact. A player who arms the ball never makes that sweep, so there is no
+  // direction to read — and guessing one does not produce a vague number, it
+  // produces a confident "textbook coil" or a confident "chest opened early",
+  // one of which is always wrong and both of which look authoritative on a card.
+  for (const trunkRotationSign of [1, -1] as const) {
+    // Shoulders parked within a few degrees of where they finish: no uncoiling
+    // at all, which is the fault itself rather than a measurement problem.
+    const armed = run({ trunkRotationSign, shoulderYaw: 20, hipYaw: 14 })
+    const sep = metric(armed.fundamentals, 'hipShoulderSeparation')
+
+    // Measured off the rig rather than assumed from the dials, so this cannot
+    // quietly stop exercising the degenerate branch if the rig's contact yaw
+    // moves — at which point it would be asserting nothing at all.
+    const yaw = (i: number) => {
+      const f = armed.frames[i]
+      const a = f.world[LM.leftShoulder]
+      const b = f.world[LM.rightShoulder]
+      return (Math.atan2(b.z - a.z, b.x - a.x) * 180) / Math.PI
+    }
+    const sweep = Math.abs(yaw(armed.skel.keys.contact) - yaw(armed.skel.keys.trophy))
+    assert(
+      sweep < MIN_OPENING_SWEEP_DEG,
+      `the rig swept the shoulders ${sweep.toFixed(1)}°, past the ${MIN_OPENING_SWEEP_DEG}° this check needs it under`,
+    )
+    assert(sep.value === 0, `an unrotating trunk reported ${sep.value.toFixed(1)}° of coil`)
+    assert(
+      sep.status === 'work' || sep.status === 'fair',
+      `a trunk that never uncoiled was badged ${sep.status}`,
+    )
+    assert(Boolean(sep.fix), 'no fix offered for a trunk that never uncoiled')
+  }
+})
+
+/**
+ * A serve a club player actually hits, rather than one dialled fault at a time.
+ *
+ * No racket drop — so the arm is already straight at the bottom of the "drop" —
+ * barely bent knees, a flat trophy and contact a hand's width below full reach.
+ * This is the shape the score curve has to stay humane about: a player like this
+ * misses several bands at once by construction, which is why `SCORE_FLOOR` sits
+ * at 30 and not near zero.
+ */
+const RECREATIONAL: Partial<ServeDials> = {
+  dropBelowShoulder: 0.03,
+  contactReach: 1.2,
+  trophyKneeAngle: 160,
+  shoulderTilt: 8,
+  shoulderYaw: 70,
+  hipYaw: 62,
+  tossArmHold: 0.3,
+}
+
+/** The dial sets the badge checks below are run over: clean, then one fault each. */
+const BADGE_DIALS: Partial<ServeDials>[] = [
+  {},
+  { trophyKneeAngle: 176 },
+  { shoulderTilt: 6 },
+  { shoulderYaw: 68, hipYaw: 59 },
+  { contactReach: 1.15 },
+  { dropBelowShoulder: 0.03 },
+]
+
+check('the badge and the band agree on every measurement, both ways round', () => {
+  // `coaching.ts` states the rule: the fix is shown exactly when the measurement
+  // falls outside its band. Deriving the badge and the fix from the score
+  // instead broke it as soon as the score curve was recalibrated — 9.3° of
+  // separation scored 71, came back "Solid", read out as "Slight coil" six
+  // degrees under its own band, and suppressed the fix that names the
+  // correction. A card cannot congratulate a player and describe their fault at
+  // once.
+  //
+  // Both directions are asserted, because the first attempt at this capped
+  // out-of-band at "fair" and satisfied only one of them: it left in-band always
+  // "great", which is the same disagreement wearing the other face. The curve
+  // now crosses the "Solid" threshold exactly at the band edge, so both hold
+  // with nothing clamping anything.
+  for (const d of BADGE_DIALS) {
+    for (const m of run(d).fundamentals.flatMap((f) => f.metrics)) {
+      const inBand = m.value >= m.ideal[0] && m.value <= m.ideal[1]
+      if (inBand) {
+        assert(!m.fix, `${m.id} is inside its band at ${m.display} but still orders a fix`)
+        assert(
+          m.status === 'good' || m.status === 'great',
+          `${m.id} read ${m.display}, inside ${m.ideal.join('–')}, and was badged ${m.status} (score ${m.score})`,
+        )
+      } else {
+        assert(
+          m.status === 'fair' || m.status === 'work',
+          `${m.id} read ${m.display}, outside ${m.ideal.join('–')}, and was badged ${m.status} (score ${m.score})`,
+        )
+        assert(Boolean(m.fix), `${m.id} read ${m.display}, outside its band, and offers no fix`)
+      }
+    }
+  }
+})
+
+check('all four badges are reachable by a real measurement', () => {
+  // The cap this replaced made "Solid" dead copy: in-band scored 90–100 and was
+  // always "Strong", out-of-band was capped at "Refine", so `STATUS_LABEL.good`,
+  // the `.metric-read--good` rule and MetricBar's `var(--good)` could never fire
+  // and every band edge was a two-level jump. Nothing in the app would have
+  // failed — it would simply have had three badges and pretended to have four.
+  const seen = new Map<Status, string>()
+  for (const d of [...BADGE_DIALS, RECREATIONAL]) {
+    for (const m of run(d).fundamentals.flatMap((f) => f.metrics)) {
+      if (!seen.has(m.status)) seen.set(m.status, `${m.id} ${m.display} → ${m.score}`)
+    }
+  }
+  for (const s of ['great', 'good', 'fair', 'work'] as Status[]) {
+    assert(seen.has(s), `no measurement in any test serve is ever badged "${s}"`)
+  }
+  note([...seen].map(([s, why]) => `${s}: ${why}`).join(' · '))
+})
+
+check('the score curve is continuous across every band edge', () => {
+  // A discontinuity here is a cliff a player falls off for a measurement error.
+  // The worst case is `shoulderTilt`, where the frame averaging `steadyWorld`
+  // does "buys back several degrees" (see TROPHY_POSTURE_RADIUS) — so an edge
+  // that dropped two badges in a degree would be reporting noise as a fault.
+  // Landing the edge exactly on the "Solid" threshold is what removes it: one
+  // point, one badge, either side.
+  for (const serveType of ['flat', 'kick', 'slice'] as ServeType[]) {
+    for (const id of Object.keys(METRICS)) {
+      const copy = metricCopy(id, serveType)
+      const [lo, hi] = copy.ideal
+      const span = Math.abs(copy.missSpan ?? copy.range[1] - copy.range[0])
+      const at = (v: number) => scoreAgainst(v, copy.ideal, copy.range, copy.missSpan)
+      // A thousandth of the axis: far finer than any measurement resolves, so a
+      // gap that shows up here is in the curve and not in the sampling.
+      const nudge = span / 1000
+
+      for (const [edge, outside] of [
+        [lo, lo - nudge],
+        [hi, hi + nudge],
+      ]) {
+        // Bands that run to the end of their own axis have no crossable edge
+        // there — nobody can score below zero wobble.
+        if (outside < copy.range[0] || outside > copy.range[1]) continue
+        assert(
+          at(edge) === 70,
+          `${serveType} ${id} scores its band edge ${edge} as ${at(edge)}, not the 70 that "Solid" starts at`,
+        )
+        assert(
+          at(edge) - at(outside) <= 1,
+          `${serveType} ${id} drops ${at(edge) - at(outside)} points across its ${edge} edge`,
+        )
+        assert(
+          statusOf(at(edge)) === 'good' && statusOf(at(outside)) === 'fair',
+          `${serveType} ${id} jumps ${statusOf(at(edge))} → ${statusOf(at(outside))} across its ${edge} edge`,
+        )
+      }
+
+      // The two invariants the curve exists to guarantee, swept rather than
+      // sampled: inside the band never scores under 70, outside never reaches it.
+      for (let i = 0; i <= 400; i++) {
+        const v = copy.range[0] + ((copy.range[1] - copy.range[0]) * i) / 400
+        const inBand = v >= lo && v <= hi
+        assert(
+          inBand ? at(v) >= 70 : at(v) < 70,
+          `${serveType} ${id} scores ${v.toFixed(3)} (${inBand ? 'in' : 'out of'} band) as ${at(v)}`,
+        )
+      }
+    }
+  }
+})
+
+check('the widened axes still score their misses on the old curve, and it still bites', () => {
+  // Both bands now sit on an axis that runs below zero, and `scoreAgainst` takes
+  // its miss tolerance as a fraction of that axis — so admitting the reverse side
+  // would, on its own, have made every miss on these two cheaper. A flat pair of
+  // shoulders rose from 45 to 58 that way: the badge moving from "work on this"
+  // to "fair" for a serve nobody changed. `missSpan` is what holds the curve
+  // still, and this walks the positive half of both axes to prove it did.
+  for (const id of ['shoulderTilt', 'hipShoulderSeparation']) {
+    const copy = metricCopy(id)
+    assert(copy.range[0] < 0, `${id} cannot show its own reverse: the axis stops at ${copy.range[0]}`)
+    assert(copy.missSpan !== undefined, `${id} widened its axis without pinning the scoring span`)
+    const before: [number, number] = [0, copy.range[1]]
+    for (let v = 0; v <= copy.range[1]; v++) {
+      assert(
+        scoreAgainst(v, copy.ideal, copy.range, copy.missSpan) === scoreAgainst(v, copy.ideal, before),
+        `${id} now scores ${v} as ${scoreAgainst(v, copy.ideal, copy.range, copy.missSpan)}, was ${scoreAgainst(v, copy.ideal, before)}`,
+      )
+    }
+
+    // Comparing the curve against itself only catches a missing `missSpan`. It
+    // says nothing about the shape, and passed unchanged with the floor lifted
+    // to 60 — which would put every fault in the app at "fair" or better. These
+    // pin the shape itself.
+    const at = (v: number) => scoreAgainst(v, copy.ideal, copy.range, copy.missSpan)
+    const [lo, hi] = copy.ideal
+    const span = copy.missSpan as number
+
+    assert(at(lo) === 70 && at(hi) === 70, `${id} scores its own band edges ${at(lo)}/${at(hi)}, not 70`)
+    assert(at(lo - 0.5) < 70, `${id} scores ${at(lo - 0.5)} just outside its band, inside band territory`)
+
+    // A miss of a tenth of the axis has to leave "Solid" behind and cost real
+    // points on the way, and a miss of the full tolerance has to land in "work
+    // on this" outright. That second one is what a lifted floor breaks first: at
+    // SCORE_FLOOR 60 the worst any measurement can score is "fair", and the app
+    // loses the ability to call anything a fault at all.
+    //
+    // Ten points, where this once demanded fifteen, because the band edge moved
+    // from 90 to 70: everything below the band now shares 39 points instead of
+    // 58, so the same fraction of the decay is worth fewer of them. As a share
+    // of what is left below the band the charge went up, not down.
+    assert(
+      statusOf(at(lo - span * 0.1)) === 'fair',
+      `${id} is still badged ${statusOf(at(lo - span * 0.1))} a tenth of its axis below the band`,
+    )
+    assert(
+      at(lo) - at(lo - span * 0.1) >= 10,
+      `${id} charges only ${at(lo) - at(lo - span * 0.1)} points for missing low by a tenth of its axis`,
+    )
+    assert(
+      at(lo - span * 0.4) < 55 && at(hi + span * 0.4) < 55,
+      `${id} scores a full-tolerance miss ${at(lo - span * 0.4)}/${at(hi + span * 0.4)}, still out of "work on this"`,
+    )
+
+    // Monotone away from the band in both directions, so a worse serve can never
+    // score better than a less bad one.
+    for (let v = lo; v > copy.range[0]; v--) {
+      assert(at(v - 1) <= at(v), `${id} scores ${v - 1} above ${v} on the way down`)
+    }
+    for (let v = hi; v < copy.range[1]; v++) {
+      assert(at(v + 1) <= at(v), `${id} scores ${v + 1} above ${v} on the way up`)
+    }
+  }
+})
+
 check('reads back contact height', () => {
   const { fundamentals } = run({ contactReach: 1.38 })
   near(metric(fundamentals, 'contactHeight').value, 1.38, 0.09, 'contact height')
@@ -347,13 +848,153 @@ check('a shallow racket drop is reported as a swing fault, not rejected', () => 
   assert(Boolean(dd.fix), 'no fix offered for a shallow drop')
 })
 
-check('a low reach is reported as a contact fault', () => {
-  const { fundamentals } = run({ contactReach: 1.15 })
-  const ch = metric(fundamentals, 'contactHeight')
-  assert(ch.status === 'work' || ch.status === 'fair', `contact height scored ${ch.score} at 1.15×`)
+/**
+ * The commonest serve this app will ever be shown.
+ *
+ * Ten degrees of knee bend is below the trough `findTrophy` insists on, so the
+ * trophy is looked for in the arms; the racket hand comes down to shoulder
+ * height and no further, so there is no fall for the arms to find either. Both
+ * keyframes end up on the toss — the state `derivation.dropOnTrophy` records —
+ * and the interval between them stops being the swing's acceleration window.
+ *
+ * Not a pathological rig setting: this is a club player who stands tall and
+ * pushes the racket at the ball, which is most of them.
+ */
+const MODAL_CLUB_SERVE: Partial<ServeDials> = { trophyKneeAngle: 170, dropBelowShoulder: 0 }
+
+/**
+ * A toss already falling by the time the racket arrives, built by hand.
+ *
+ * `buildServe` draws a body and no ball, so the two ball measurements are simply
+ * absent from every other check in this file. That is fine everywhere except
+ * here: a player who never loads and never drops the racket is also, nearly
+ * always, waiting for the ball to come back down to them, and those two
+ * measurements have to be in the running when the report picks what to talk
+ * about — otherwise the drop wins a race half the field never entered.
+ *
+ * The arc is the real one, image y against seconds under the frame-normalised
+ * gravity `analyze.ts` hands the tracker, so how far the ball has fallen and how
+ * long it has been falling cannot be dialled apart the way an invented parabola
+ * would allow.
+ */
+function fallingToss(
+  frames: Frame[],
+  skel: Skeleton,
+  opts: { peak: number; fallenBy: number },
+): BallFlight {
+  const { bodyHeight, groundY, keys } = skel
+  const gravity = (9.81 * bodyHeight) / 1.78
+  const sinceApex = Math.sqrt((2 * opts.fallenBy * bodyHeight) / gravity)
+  const apexT = frames[keys.contact].t - sinceApex
+  const apexY = groundY - opts.peak * bodyHeight
+  const x = frames[keys.contact].image[LM.rightWrist].x
+  const heightAt = (t: number) => apexY + 0.5 * gravity * (t - apexT) ** 2
+
+  return {
+    coefficients: [apexY + 0.5 * gravity * apexT ** 2, -gravity * apexT, 0.5 * gravity],
+    apex: { t: apexT, x, y: apexY },
+    samples: frames.slice(keys.toss, keys.contact + 1).map((f) => ({ t: f.t, x, y: heightAt(f.t) })),
+    confidence: 0.9,
+  }
+}
+
+check('the commonest club serve is told about its drop, not its tempo', () => {
+  const frames = buildServe(MODAL_CLUB_SERVE, FPS)
+  const skel = detectServe(frames, FPS)
+  note(`trophy ${skel.keys.trophy}, drop ${skel.keys.drop}, contact ${skel.keys.contact}`)
   assert(
-    area(fundamentals, 'contact').score < 80,
-    `contact area scored ${area(fundamentals, 'contact').score} despite a low reach`,
+    skel.derivation.dropOnTrophy,
+    'the drop was treated as its own event on a serve where the racket never falls',
+  )
+
+  const fundamentals = measure(frames, skel, true, {
+    ball: fallingToss(frames, skel, { peak: 1.45, fallenBy: 0.18 }),
+  })
+  const all = fundamentals.flatMap((f) => f.metrics)
+
+  // Whatever else follows, the number that started this must not be on the card.
+  // With the two keyframes on one instant it reads the toss-to-contact stretch —
+  // roughly 680 ms against a 110–230 ms band — and scores at the floor.
+  const timing = all.find((m) => m.id === 'dropToContact')
+  assert(
+    !timing,
+    `drop-to-contact was reported as ${timing?.display} on a serve with no drop to time`,
+  )
+
+  // The swing card leads with its weakest measurement, and the weakest one has
+  // to be the drop that never happened rather than the tempo of a swing that
+  // never started.
+  const swing = area(fundamentals, 'swing')
+  const depth = metric(fundamentals, 'dropDepth')
+  note(`swing headline: ${swing.headline}`)
+  assert(
+    swing.headline === depth.insight,
+    `the swing card leads with something other than the racket drop: "${swing.headline}"`,
+  )
+
+  // And the one instruction the player is handed, ranked across every
+  // measurement in the report — including a knee bend and a ball struck late,
+  // both of which are genuinely poor on this serve.
+  const focus = pickFocus(fundamentals)
+  note(`focus: ${focus.title} · ${focus.drill.name}`)
+  assert(
+    focus.title === METRICS.dropDepth.label,
+    `the player is sent away to work on "${focus.title}" instead of their racket drop`,
+  )
+  assert(focus.drill.name === METRICS.dropDepth.drill.name, 'the focus carries the wrong drill')
+})
+
+check('a drop that did happen is still timed', () => {
+  // The mirror image, and the reason `MIN_DROP_SEPARATION` is small. Here the
+  // legs load, so the trophy comes off the knees and the racket bottoms out at
+  // its own moment however shallow that moment is — a real interval, and taking
+  // it away from every player whose drop is merely shallow would cost far more
+  // than the collapsed case ever cost.
+  const frames = buildServe({ dropBelowShoulder: 0.03 }, FPS)
+  const skel = detectServe(frames, FPS)
+  assert(!skel.derivation.dropOnTrophy, 'a drop found at its own moment was called a collapse')
+
+  const timing = metric(measure(frames, skel, true), 'dropToContact')
+  note(`shallow but separate drop: ${timing.display}`)
+  within(timing.value, 80, 260, 'drop→contact off a shallow drop')
+})
+
+check('the collapsed drop is spotted at any frame rate', () => {
+  // The separation is judged in seconds rather than in frames, so a phone
+  // shooting slow motion must not manufacture a drop out of the gap between two
+  // samples of the same instant.
+  for (const fps of [24, 30, 60, 120]) {
+    const frames = buildServe(MODAL_CLUB_SERVE, fps)
+    const skel = detectServe(frames, fps)
+    assert(skel.derivation.dropOnTrophy, `the collapse went unnoticed at ${fps} fps`)
+    assert(
+      !measure(frames, skel, true)
+        .flatMap((f) => f.metrics)
+        .some((m) => m.id === 'dropToContact'),
+      `drop-to-contact survived the collapse at ${fps} fps`,
+    )
+  }
+})
+
+check('a low reach is reported as a contact fault', () => {
+  const low = run({ contactReach: 1.15 }).fundamentals
+  const full = run({ contactReach: 1.38 }).fundamentals
+  const ch = metric(low, 'contactHeight')
+  assert(ch.status === 'work' || ch.status === 'fair', `contact height scored ${ch.score} at 1.15×`)
+  assert(Boolean(ch.fix), 'no fix offered for a low reach')
+  // Measured against the same serve struck at full reach rather than against a
+  // fixed number. An absolute threshold here was really pinning the bottom of
+  // the score scale: `SCORE_FLOOR` moved, every out-of-band measurement moved
+  // with it, and a test about whether a fault costs the area anything failed
+  // because the floor is now kinder — which is a different question entirely.
+  const cost = area(full, 'contact').score - area(low, 'contact').score
+  assert(
+    cost >= 10,
+    `a reach short by a fifth of a body height cost the contact area only ${cost} points`,
+  )
+  assert(
+    area(low, 'contact').score < area(full, 'contact').score,
+    'a low reach scored the contact area no worse than a full one',
   )
 })
 

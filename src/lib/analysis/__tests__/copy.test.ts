@@ -12,8 +12,15 @@
  * missing ladder is silent: the number simply disappears from the card and the
  * report looks fine while saying less than it did.
  */
-import { TRANSLATED, readoutOf, targetOf } from '../anatomy'
-import { DRILLS, FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from '../coaching'
+import { TRANSLATED, readoutOf, rungsOf, targetOf } from '../anatomy'
+import {
+  DRILLS,
+  FUNDAMENTALS,
+  METRICS,
+  SERVE_TYPES,
+  metricCopy,
+  type MetricCopy,
+} from '../coaching'
 import { MAX_SENTENCES, MAX_WORDS, command, cueIssues, plain, wordCount } from '../voice'
 import { assert, check, report } from './harness'
 import type { ServeType } from '../../storage/prefs'
@@ -37,6 +44,17 @@ function everyCue(): { where: string; text: string }[] {
       for (const [k, v] of Object.entries(insight)) {
         if (v) out.push({ where: `${id}.${metricId}.${k}`, text: v })
       }
+    }
+    // The instruction and the exercise a serve type replaces face the editor on
+    // the same terms as the description it replaces. They reach a player through
+    // exactly the same card.
+    for (const [metricId, fix] of Object.entries(type.fix ?? {})) {
+      for (const [k, v] of Object.entries(fix)) {
+        if (v) out.push({ where: `${id}.${metricId}.fix.${k}`, text: v })
+      }
+    }
+    for (const [metricId, drill] of Object.entries(type.drill ?? {})) {
+      out.push({ where: `${id}.${metricId}.drill.how`, text: drill.how })
     }
   }
   for (const [id, f] of Object.entries(FUNDAMENTALS)) {
@@ -77,6 +95,14 @@ check('key words are marked for scanning', () => {
     for (const [side, text] of Object.entries(m.fix)) {
       if (!text) continue
       assert(text.includes('**'), `${m.id}.fix.${side} has no marked instruction`)
+    }
+  }
+  for (const [id, type] of Object.entries(SERVE_TYPES)) {
+    for (const [metricId, fix] of Object.entries(type.fix ?? {})) {
+      for (const [side, text] of Object.entries(fix)) {
+        if (!text) continue
+        assert(text.includes('**'), `${id}.${metricId}.fix.${side} has no marked instruction`)
+      }
     }
   }
 })
@@ -127,6 +153,565 @@ check('a value outside the axis still lands somewhere', () => {
   assert(readoutOf('contactHeight', 99).length > 0, 'no readout above the axis')
   assert(readoutOf('contactHeight', NaN).length > 0, 'no readout for a broken value')
   assert(readoutOf('notAMeasurement', 1) === '', 'invented a readout for an unknown measurement')
+})
+
+/* ------------------------------------------------- one card, one story -- */
+
+console.log('\n\x1b[1mThe readout, the insight and the fix, saying one thing\x1b[0m')
+
+/**
+ * Which rungs of the ladder each line of copy can be printed beside.
+ *
+ * A card shows three things about one number at once: the readout, which names
+ * the body position off `anatomy.ts`; the insight, chosen by where the number
+ * falls against its band; and the fix, shown only outside that band. Nothing in
+ * the code makes the three agree. They agree because a person wrote them to, and
+ * they stop agreeing the moment a band moves, a rung is added or a sentence is
+ * rewritten — at which point the card praises and corrects the same position at
+ * once and the player is left to work out which half to believe.
+ *
+ * So each line declares, in the ladder's own words, the positions it can
+ * truthfully be read against, and the sweep below checks every value of every
+ * measurement against that declaration. The bar is not agreement of wording but
+ * absence of contradiction: "struck far in front" sits happily under "you strike
+ * in front of your body", because one is more of the other. "Struck behind the
+ * head" does not, because a player reading both has been told two opposite
+ * things about where their racket was.
+ *
+ * Keyed by measurement, and by `<serve type>.<measurement>` where a serve type
+ * replaces the line — the same place the string itself is written, so the claim
+ * and the sentence move together.
+ */
+type Kind = 'low' | 'ok' | 'high'
+
+interface Claimed {
+  /**
+   * A fingerprint of the exact sentences this claim was written against.
+   *
+   * Without it the table is a claim about copy that no longer exists. This whole
+   * class of bug arrived by rewrite — a sentence was rebuilt when the
+   * measurement became signed and quietly stopped covering a rung it used to —
+   * and a rewrite that leaves the claim untouched is the one edit the sweep
+   * below cannot see. So changing a line breaks the stamp, and the only way past
+   * it is to read the new sentence and say again which positions it can be
+   * printed beside.
+   */
+  stamp: string
+  /** Rungs each insight can describe without either taking the other back. */
+  insight: Partial<Record<Kind, string[]>>
+  /** The rung each fix orders the player onto. */
+  aim?: Partial<Record<'low' | 'high', string>>
+}
+
+const CLAIMED: Record<string, Claimed> = {
+  tossArmExtension: {
+    stamp: 'e2ea3dd9',
+    insight: { low: ['Elbow folded', 'Elbow soft'], ok: ['Arm straight'], high: ['Arm straight'] },
+    aim: { low: 'Arm straight', high: 'Arm straight' },
+  },
+  releaseHeight: {
+    stamp: 'e1c5c11a',
+    insight: {
+      low: ['Let go at head height', 'Let go above the head'],
+      ok: ['Let go at full stretch'],
+      high: ['Let go past full stretch'],
+    },
+    aim: { low: 'Let go at full stretch', high: 'Let go at full stretch' },
+  },
+  tossArmHold: {
+    stamp: 'c62244b5',
+    insight: {
+      low: ['Arm drops at once', 'Arm drops early'],
+      ok: ['Arm holds to the swing', 'Arm holds through contact'],
+      high: ['Arm holds through contact'],
+    },
+    aim: { low: 'Arm holds to the swing', high: 'Arm holds to the swing' },
+  },
+  tossPathWobble: {
+    stamp: '86c85fdf',
+    insight: {
+      low: ['Dead straight lift'],
+      ok: ['Dead straight lift', 'Straight lift'],
+      high: ['Drifts a hand wide', 'Wanders wide'],
+    },
+    aim: { high: 'Straight lift' },
+  },
+  tossPeakHeight: {
+    stamp: '99c04c3d',
+    insight: {
+      // "Peaks at racket reach" is claimed on both sides: it is the flat serve's
+      // near miss and the kick serve's floor, and neither sentence denies it.
+      low: ['Peaks below the racket', 'Peaks at racket reach'],
+      ok: ['Peaks at racket reach', 'Peaks a ball above the racket'],
+      high: ['Peaks a ball above the racket', 'Peaks far above the racket'],
+    },
+    aim: { low: 'Peaks a ball above the racket', high: 'Peaks a ball above the racket' },
+  },
+  contactBelowPeak: {
+    stamp: '4c48180c',
+    insight: {
+      low: ['Struck at the peak'],
+      ok: ['Struck at the peak', 'Struck near the peak'],
+      high: ['Struck on the way down', 'Struck well after the drop'],
+    },
+    aim: { high: 'Struck at the peak' },
+  },
+  kneeBend: {
+    stamp: 'c3f25db6',
+    insight: {
+      low: ['Legs straight', 'Legs barely bent'],
+      ok: ['Athletic load'],
+      high: ['Deep squat'],
+    },
+    aim: { low: 'Athletic load', high: 'Athletic load' },
+  },
+  hipShoulderSeparation: {
+    stamp: 'dcbbacf6',
+    insight: {
+      // Four rungs, two faults: a chest that opened ahead of the hips and a coil
+      // too shallow to unwind. The one string below the band names the shortfall
+      // they share and asserts no direction, which is the only way one sentence
+      // covers both without denying the readout at one end or the other.
+      low: [
+        'Chest opens ahead of the hips',
+        'Chest leads the hips',
+        'Hips and chest locked',
+        'Slight coil',
+      ],
+      ok: ['Hips lead the chest'],
+      high: ['Extreme coil'],
+    },
+    aim: { low: 'Hips lead the chest', high: 'Hips lead the chest' },
+  },
+  shoulderTilt: {
+    stamp: '55cccbbd',
+    insight: {
+      low: [
+        'Tossing shoulder under the ball',
+        'Hitting shoulder sits high',
+        'Shoulders level',
+        'Shoulders near level',
+      ],
+      // Two rungs of one direction: the flat and slice band is the "under the
+      // ball" rung and the kick band is the steep one above it, and "hitting
+      // shoulder down, tossing shoulder up" is true across both. "Shoulders near
+      // level" was claimed here too while the slice band reached down into it,
+      // which is how 11.9 degrees came back praised under a readout calling the
+      // shoulders level — the claim covering for the band rather than checking it.
+      ok: ['Hitting shoulder under the ball', 'Steep cartwheel'],
+      high: ['Hitting shoulder under the ball', 'Steep cartwheel'],
+    },
+    aim: { low: 'Hitting shoulder under the ball', high: 'Hitting shoulder under the ball' },
+  },
+  legDrive: {
+    stamp: '358b59d4',
+    insight: {
+      low: ['No push off the court', 'Light push'],
+      ok: ['Strong drive up'],
+      high: ['Big launch'],
+    },
+    aim: { low: 'Strong drive up', high: 'Strong drive up' },
+  },
+  dropDepth: {
+    stamp: '6585e1cf',
+    insight: {
+      low: ['Racket stays at the shoulder', 'Racket half drops'],
+      ok: ['Racket falls down the back'],
+      high: ['Racket falls past the back'],
+    },
+    aim: { low: 'Racket falls down the back', high: 'Racket falls down the back' },
+  },
+  elbowAtDrop: {
+    stamp: 'd737de98',
+    insight: {
+      low: ['Racket jammed on the back'],
+      ok: ['Arm folded in an L'],
+      high: ['Arm swings straight'],
+    },
+    aim: { low: 'Arm folded in an L', high: 'Arm folded in an L' },
+  },
+  dropToContact: {
+    stamp: '922908b9',
+    insight: {
+      low: ['Swing snaps through'],
+      ok: ['Explosive swing'],
+      high: ['Guided swing', 'Steered swing'],
+    },
+    aim: { low: 'Explosive swing', high: 'Explosive swing' },
+  },
+  contactHeight: {
+    stamp: 'e056d4f1',
+    insight: {
+      low: ['Struck at head height', 'Struck below full reach'],
+      ok: ['Struck at full racket reach'],
+      high: ['Struck at full racket reach', 'Struck at the top of the reach'],
+    },
+    aim: { low: 'Struck at full racket reach', high: 'Struck at full racket reach' },
+  },
+  armExtension: {
+    stamp: '857d8f5d',
+    insight: {
+      low: ['Elbow bent at contact', 'Arm short of straight'],
+      ok: ['Arm dead straight'],
+      high: ['Arm dead straight'],
+    },
+    aim: { low: 'Arm dead straight', high: 'Arm dead straight' },
+  },
+  bodyExtension: {
+    stamp: 'ec55edd2',
+    insight: {
+      low: ['Feet stay on the court'],
+      ok: ['Up off the court'],
+      high: ['Big jump'],
+    },
+    aim: { low: 'Up off the court', high: 'Up off the court' },
+  },
+  contactAhead: {
+    stamp: 'e993b3fb',
+    insight: {
+      low: ['Struck behind the head', 'Struck over the head'],
+      ok: ['Struck in front of the body', 'Struck far in front'],
+      high: ['Struck far in front'],
+    },
+    aim: { low: 'Struck in front of the body', high: 'Struck in front of the body' },
+  },
+  totalTime: {
+    // Re-stamped when `ok` stopped claiming "unhurried into the trophy, fast out
+    // of it". This measurement times the first move to the ball and cannot see
+    // where the trophy fell inside that, so the old line asserted a split it
+    // never measured. The rungs claimed below are unchanged by the rewrite.
+    stamp: 'ab8674d5',
+    insight: {
+      low: ['Rushed motion'],
+      ok: ['Even tempo'],
+      high: ['Long motion', 'Stalled motion'],
+    },
+    aim: { low: 'Even tempo', high: 'Even tempo' },
+  },
+  loadRatio: {
+    stamp: 'd5633430',
+    insight: {
+      low: ['Crammed finish'],
+      ok: ['Slow build, fast finish'],
+      high: ['Back half drifts'],
+    },
+    aim: { low: 'Slow build, fast finish', high: 'Slow build, fast finish' },
+  },
+  syncAtRelease: {
+    stamp: '60d2b726',
+    insight: {
+      low: ['Racket still by the leg'],
+      ok: ['Arms rise together'],
+      high: ['Racket up early'],
+    },
+    aim: { low: 'Arms rise together', high: 'Arms rise together' },
+  },
+
+  /* The lines a serve type replaces, claimed where they are written. */
+  'kick.contactAhead': {
+    stamp: 'bf5b00fa',
+    insight: {
+      low: ['Struck behind the head'],
+      ok: ['Struck over the head'],
+      high: ['Struck in front of the body', 'Struck far in front'],
+    },
+    aim: { low: 'Struck over the head', high: 'Struck over the head' },
+  },
+  'kick.contactHeight': {
+    // Re-stamped when the flat instruction above the band was replaced. The
+    // description is untouched and the two rungs claimed below are unchanged by
+    // the edit; what moved is the order underneath them.
+    stamp: '9a39cfda',
+    insight: { ok: ['Struck below full reach', 'Struck at full racket reach'] },
+    // The flat order above this band sends the toss forward, which is the one
+    // place a kick card must never point: its own contact-depth line orders the
+    // toss back over the head. The replacement aims at the lower of the two rungs
+    // this card praises — struck at full racket reach rather than above it — so
+    // the order and the description agree about where the ball is met.
+    aim: { high: 'Struck at full racket reach' },
+  },
+  'kick.shoulderTilt': {
+    stamp: '0f84abf5',
+    insight: {
+      // Every rung below the kick band, and the top one is the point: a shoulder
+      // the ladder calls under the ball is still short of what a kick asks for.
+      low: [
+        'Tossing shoulder under the ball',
+        'Hitting shoulder sits high',
+        'Shoulders level',
+        'Shoulders near level',
+        'Hitting shoulder under the ball',
+      ],
+    },
+    // Which is why the order underneath cannot be the flat one. It aims a rung
+    // higher than the flat fix does, at the only position this card praises.
+    aim: { low: 'Steep cartwheel' },
+  },
+}
+
+const SERVE_TYPE_IDS = Object.keys(SERVE_TYPES) as ServeType[]
+
+/** The five lines one site can carry, in a fixed order, for the stamp. */
+function linesAt(site: string): (string | undefined)[] {
+  const [type, id] = site.includes('.') ? site.split('.') : [undefined, site]
+  const insight = type ? SERVE_TYPES[type as ServeType]?.insight?.[id] : METRICS[id]?.insight
+  const fix = type ? SERVE_TYPES[type as ServeType]?.fix?.[id] : METRICS[id]?.fix
+  return [insight?.low, insight?.ok, insight?.high, fix?.low, fix?.high]
+}
+
+/**
+ * FNV-1a over those lines, marker-free so bolding a word costs nothing.
+ *
+ * A hash and not a copy of the text: the point is to notice an edit, and pasting
+ * every sentence in here a second time would only give them somewhere else to
+ * drift apart.
+ */
+function stampOf(site: string): string {
+  let h = 0x811c9dc5
+  for (const line of linesAt(site)) {
+    for (const ch of plain(line ?? '')) {
+      h ^= ch.charCodeAt(0)
+      h = Math.imul(h, 0x01000193)
+    }
+    // A line boundary of its own, so moving a clause from the insight into the
+    // fix does not leave the fingerprint unchanged.
+    h ^= 0x2f
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(16).padStart(8, '0')
+}
+
+/** Where a serve type's card reads its insight from: its own line, or the base. */
+const insightSite = (id: string, type: ServeType, kind: Kind) =>
+  SERVE_TYPES[type].insight?.[id]?.[kind] ? `${type}.${id}` : id
+
+/** The same for the instruction, which a serve type may replace on its own. */
+const fixSite = (id: string, type: ServeType, side: 'low' | 'high') =>
+  SERVE_TYPES[type].fix?.[id]?.[side] ? `${type}.${id}` : id
+
+function claimsFor(id: string, type: ServeType, kind: Kind): string[] {
+  const site = insightSite(id, type, kind)
+  const tags = CLAIMED[site]?.insight?.[kind]
+  assert(
+    tags !== undefined && tags.length > 0,
+    `${site}.insight.${kind} never says which body positions it can be printed beside`,
+  )
+  return tags as string[]
+}
+
+/**
+ * Where to look along one axis.
+ *
+ * A uniform sweep steps straight over the values that decide this: a band edge
+ * and a rung boundary are each a single point, and the bug always lives within a
+ * hair of one of them. So every edge is probed from both sides as well.
+ *
+ * The band's top edge is dropped when the rung above it opens exactly there. The
+ * band is inclusive and the rung is not, so the two overlap on one value out of
+ * an axis — arithmetic rather than a contradiction, and the sweep either side of
+ * it still holds.
+ */
+function probes(copy: MetricCopy): number[] {
+  const [lo, hi] = copy.range
+  const eps = (hi - lo) / 1e6
+  const out = new Set<number>()
+  for (let i = 0; i <= 240; i++) out.add(lo + ((hi - lo) * i) / 240)
+  for (const edge of [copy.ideal[0], copy.ideal[1], ...rungsOf(copy.id).map((r) => r.under)]) {
+    out.add(edge - eps)
+    out.add(edge)
+    out.add(edge + eps)
+  }
+  return [...out].filter(
+    (v) =>
+      v >= lo &&
+      v <= hi &&
+      (v !== copy.ideal[1] || readoutOf(copy.id, v) === readoutOf(copy.id, v - eps)),
+  )
+}
+
+check('no measurement is described one way and read out another', () => {
+  for (const type of SERVE_TYPE_IDS) {
+    for (const id of Object.keys(METRICS)) {
+      const copy = metricCopy(id, type)
+      for (const v of probes(copy)) {
+        // Exactly how `build()` chooses, so this walks the card a player sees
+        // rather than a second opinion about which string should have shown.
+        const kind: Kind = v < copy.ideal[0] ? 'low' : v > copy.ideal[1] ? 'high' : 'ok'
+        const readout = readoutOf(id, v)
+        assert(
+          claimsFor(id, type, kind).includes(readout),
+          `${type} ${id} at ${v.toFixed(3)} reads out "${readout}" under\n` +
+            `        "${copy.insight[kind]}"`,
+        )
+      }
+    }
+  }
+})
+
+check('a fault the card names always arrives with the order that corrects it', () => {
+  for (const type of SERVE_TYPE_IDS) {
+    for (const id of Object.keys(METRICS)) {
+      const copy = metricCopy(id, type)
+      for (const v of probes(copy)) {
+        if (v >= copy.ideal[0] && v <= copy.ideal[1]) continue
+        const side = v < copy.ideal[0] ? 'low' : 'high'
+        assert(
+          copy.fix[side].length > 0,
+          `${type} ${id} at ${v.toFixed(3)} is out of band, reads "${readoutOf(id, v)}" and offers no fix`,
+        )
+      }
+    }
+  }
+})
+
+check('every fix aims at a position the same card would praise', () => {
+  for (const type of SERVE_TYPE_IDS) {
+    for (const id of Object.keys(METRICS)) {
+      const copy = metricCopy(id, type)
+      const praised = claimsFor(id, type, 'ok')
+      for (const side of ['low', 'high'] as const) {
+        if (!copy.fix[side]) continue
+        const site = fixSite(id, type, side)
+        const aim = CLAIMED[site]?.aim?.[side]
+        assert(aim !== undefined, `${site}.fix.${side} never says which position it aims at`)
+        assert(
+          praised.includes(aim as string),
+          `${type} ${id} fix.${side} aims at "${aim}", which this card would not praise ` +
+            `(${praised.join(', ')}):\n        "${copy.fix[side]}"`,
+        )
+      }
+    }
+  }
+})
+
+check('a serve type that rewrites a fault also rewrites the order that corrects it', () => {
+  // The insight and the fix are two halves of one sentence to a player: the
+  // first names what the body did, the second says what to do about it. A serve
+  // type that replaces only the first leaves the flat instruction underneath its
+  // own description, and the card contradicts itself — the kick card read
+  // "hitting shoulder under the ball" and then ordered "drop the hitting
+  // shoulder under the ball", telling the player to start doing what it had just
+  // said they were doing.
+  //
+  // Nothing above catches that on its own. `every fix aims at a position the
+  // same card would praise` only sees the aim recorded in the table beside it,
+  // and a flat aim inside a moved band can still be a position that band
+  // praises. So the pairing is required here, at the point where the override is
+  // written, rather than noticed on a card months later.
+  //
+  // One direction only: a fix may be replaced without the description moving,
+  // because a band can move while what the body did is still described
+  // correctly. The reverse is what has now gone wrong twice.
+  for (const [type, copy] of Object.entries(SERVE_TYPES)) {
+    for (const [id, insight] of Object.entries(copy.insight ?? {})) {
+      assert(METRICS[id] !== undefined, `${type} rewrites copy for ${id}, which is not a measurement`)
+      for (const side of ['low', 'high'] as const) {
+        if (!insight[side]) continue
+        // Nothing to reorder where the flat card carries no order: a band that
+        // runs to the end of its own axis has no fault on that side to correct.
+        if (!METRICS[id].fix[side]) continue
+        assert(
+          Boolean(copy.fix?.[id]?.[side]),
+          `${type} rewrites ${id}.insight.${side} and leaves the flat instruction under it:\n` +
+            `        said:    "${insight[side]}"\n` +
+            `        ordered: "${METRICS[id].fix[side]}"`,
+        )
+      }
+    }
+  }
+})
+
+check('the target phrase is a position the card praises, for every serve type', () => {
+  // `targetOf` reads the middle of the band through the ladder, so this is the
+  // band and the ok insight checked against each other from the other end: the
+  // phrase printed as the target has to be one the praise can be said about.
+  for (const type of SERVE_TYPE_IDS) {
+    for (const id of Object.keys(METRICS)) {
+      const copy = metricCopy(id, type)
+      const target = targetOf(id, copy.ideal)
+      assert(
+        claimsFor(id, type, 'ok').includes(target),
+        `${type} ${id} asks for "${target}" and praises it with\n        "${copy.insight.ok}"`,
+      )
+    }
+  }
+})
+
+check('every band edge lands on a rung boundary, for every serve type', () => {
+  // The general form of a defect this file has now closed four times one band at
+  // a time. A band edge that stops inside a rung splits that rung in half, and a
+  // rung is exactly what the readout prints: the slice's contact band ended at
+  // 24, four points into "struck far in front", so 22 came back badged Solid and
+  // 26 came back with an order to rein the toss in, both under one line saying
+  // the ball was struck far in front. The kick's tilt band did it to "hitting
+  // shoulder under the ball", its contact band to "struck over the head".
+  //
+  // Each was found by a person reading one band against one ladder, months
+  // apart, and nothing stopped the next one arriving. The sweeps above cannot
+  // see it either — they ask whether the claim table covers the readout, and a
+  // claim naming both halves of a split rung covers it truthfully while the card
+  // still praises and corrects the same position.
+  //
+  // The ends of the axis count as boundaries. A band that runs to the end of its
+  // own axis has no values beyond it to correct, so there is no rung it could
+  // split — see `tossArmHold`, praised from 55 all the way to a full hold.
+  for (const type of SERVE_TYPE_IDS) {
+    for (const id of Object.keys(METRICS)) {
+      const copy = metricCopy(id, type)
+      const boundaries = [copy.range[0], copy.range[1], ...rungsOf(id).map((r) => r.under)]
+      for (const [side, edge] of [
+        ['floor', copy.ideal[0]],
+        ['ceiling', copy.ideal[1]],
+      ] as const) {
+        assert(
+          boundaries.includes(edge),
+          `${type} ${id} band ${side} of ${edge} stops inside "${readoutOf(id, edge)}", so that\n` +
+            `        one readout is praised on one side of ${edge} and corrected on the other.\n` +
+            `        Move it to a rung boundary: ${boundaries.filter(Number.isFinite).join(', ')}`,
+        )
+      }
+    }
+  }
+})
+
+check('a rewritten line has to say again which positions it claims', () => {
+  for (const site of Object.keys(CLAIMED)) {
+    const now = stampOf(site)
+    assert(
+      CLAIMED[site].stamp === now,
+      `the copy at ${site} changed since its claim was written.\n` +
+        `        Read the lines again, check the rungs claimed below still hold, then stamp '${now}'`,
+    )
+  }
+})
+
+check('every claim is written in the ladder’s own words, and every claim is used', () => {
+  // Without this the table above rots into prose about prose: a rung renamed in
+  // `anatomy.ts` would silently stop matching and the sweep would pass by
+  // claiming nothing at all.
+  for (const [site, claimed] of Object.entries(CLAIMED)) {
+    const [type, id] = site.includes('.') ? site.split('.') : [undefined, site]
+    assert(METRICS[id] !== undefined, `${site} claims things about a measurement that is gone`)
+    const tags = rungsOf(id).map((r) => r.tag)
+    for (const [kind, list] of Object.entries(claimed.insight)) {
+      if (type) {
+        assert(
+          SERVE_TYPES[type as ServeType]?.insight?.[id]?.[kind as Kind] !== undefined,
+          `${site}.insight.${kind} claims for a line ${type} no longer replaces`,
+        )
+      }
+      for (const tag of list) assert(tags.includes(tag), `${site}.insight.${kind}: no rung "${tag}"`)
+    }
+    for (const [side, aim] of Object.entries(claimed.aim ?? {})) {
+      if (type) {
+        assert(
+          SERVE_TYPES[type as ServeType]?.fix?.[id]?.[side as 'low' | 'high'] !== undefined,
+          `${site}.aim.${side} claims for a fix ${type} no longer replaces`,
+        )
+      }
+      assert(tags.includes(aim), `${site}.aim.${side}: no rung "${aim}"`)
+    }
+  }
 })
 
 /* ------------------------------------------------------------------ filter -- */

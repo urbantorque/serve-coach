@@ -18,14 +18,23 @@
  * goes red even though every accuracy test still passes.
  */
 import { assessQuality, blockingFramingIssue, pickFocus, rescore } from '../analyze'
-import { SOFT_MEASUREMENT } from '../confidence'
+import { assessSpatial } from '../spatial'
+import {
+  SOFT_MEASUREMENT,
+  metricConfidence,
+  softnessReason,
+  type ConfidenceContext,
+} from '../confidence'
+import { diagnose } from '../diagnose'
+import { assessResilience } from '../triage'
+import { cueIssues } from '../voice'
 import { cacheSize, forgetAll, recall, remember } from '../../analysisCache'
 import { normalise, type Session } from '../../storage/db'
-import { buildProgress } from '../../progress'
+import { MEANINGFUL_DELTA, buildProgress, deltasAgainst } from '../../progress'
 import { findPracticeFocus, practiceHeadline } from '../../practice'
 import { statusOf } from '../geometry'
 import { DEFAULT_TOLERANCE, framingIssues, packFrames, unpackFrames, validateFixture, type Fixture } from '../groundTruth'
-import { IMPLAUSIBLE_JUMP, LM, maxTrackingJump, median } from '../geometry'
+import { IMPLAUSIBLE_JUMP, LM, MIN_OPENING_SWEEP_DEG, maxTrackingJump, median, trunkCoil } from '../geometry'
 import { measure } from '../metrics'
 import { modelPoseAt, modelServe } from '../modelServe'
 import {
@@ -680,6 +689,96 @@ check('every serve type reads naturally in the headline', () => {
   }
 })
 
+/* ------------------------------------------- two rubrics on one trend line */
+
+heading('Not comparing a score to one from a different rubric')
+
+/** A saved report, stamped with the rubric its scores were computed under. */
+const scoredUnder = (createdAt: number, overall: number, scoringVersion?: number): Session =>
+  ({ ...savedServe(createdAt, overall, 'flat'), scoringVersion }) as Session
+
+/**
+ * Regression: `scoreAgainst` was recalibrated — the floor moved from 6 to 30 and
+ * the decay outside a band softened — and a saved report keeps no frames, so the
+ * old scores can never be recomputed. Both rubrics therefore sit on one trend
+ * line forever. Refilming the identical serve after the update lifted the total
+ * far past MEANINGFUL_DELTA, and the app congratulated the player on progress
+ * that did not exist. The trend is the whole reason they came back to it.
+ */
+check('a change of rubric breaks the series rather than inventing a gain', () => {
+  const sessions = [
+    scoredUnder(4 * 86_400_000, 74, 2),
+    scoredUnder(3 * 86_400_000, 72, 2),
+    scoredUnder(2 * 86_400_000, 44, 1),
+    scoredUnder(1 * 86_400_000, 42, 1),
+  ]
+  const progress = buildProgress(sessions)!
+  note(`delta ${progress.overallDelta} across ${progress.points.length} points, break at ${progress.rubricBreakAt}`)
+  // The honest comparison is the two serves scored the same way.
+  assert(progress.overallDelta === 2, `delta was ${progress.overallDelta}, expected 2`)
+  assert(
+    (progress.overallDelta ?? 0) < MEANINGFUL_DELTA,
+    'the recalibration was still reported as a real change',
+  )
+  // The old serves stay on the chart — they happened — with the break marked so
+  // it can be drawn rather than smoothed over.
+  assert(progress.points.length === 4, `dropped history: ${progress.points.length} points`)
+  assert(
+    progress.rubricBreakAt === 3 * 86_400_000,
+    `break marked at ${progress.rubricBreakAt}, expected the first report of the new rubric`,
+  )
+  // And nothing derived reaches back across it.
+  assert(progress.best === 74, `best of ${progress.best} was taken from the old rubric`)
+  assert(progress.recentAverage === 73, `rolling average ${progress.recentAverage} mixed rubrics`)
+})
+
+check('the first report under a new rubric has nothing to compare against', () => {
+  // Worse than a wrong delta would be a confident one: the single new-rubric
+  // report has no peer, so the honest answer is silence, not a comparison with
+  // the last serve of the old era.
+  const progress = buildProgress([
+    scoredUnder(3 * 86_400_000, 71, 2),
+    scoredUnder(2 * 86_400_000, 40, 1),
+    scoredUnder(1 * 86_400_000, 38, 1),
+  ])!
+  assert(progress.overallDelta === undefined, `invented a delta of ${progress.overallDelta}`)
+  assert(progress.areaDeltas.length === 0, 'invented per-area deltas across a change of rubric')
+  assert(progress.formDelta === undefined, 'reported a change in form across a change of rubric')
+  assert(progress.points.length === 3, 'lost the history behind the change')
+})
+
+check('reports saved before the stamp existed are the old rubric, not the new one', () => {
+  // They were scored under the original rubric by definition — there was only
+  // one — so an unstamped report must never compare equal to a fresh one.
+  const stored = normalise({
+    id: 'a', createdAt: 1, overall: 70, overallStatus: 'good',
+    fundamentals: [{ id: 'toss', metrics: [] }],
+  })!
+  assert(stored.scoringVersion === 1, `an unstamped report read as rubric ${stored.scoringVersion}`)
+  assert(normalise({ ...stored, scoringVersion: 2 })!.scoringVersion === 2, 'lost an existing stamp')
+
+  const progress = buildProgress([scoredUnder(2 * 86_400_000, 80, 2), scoredUnder(1 * 86_400_000, 50)])!
+  assert(progress.overallDelta === undefined, 'compared a fresh report against an unstamped one')
+})
+
+check('an unbroken history still compares exactly as it always did', () => {
+  // The guard must cost nothing to the player who has never lived through a
+  // recalibration, which is nearly all of them.
+  const progress = buildProgress([scoredUnder(2 * 86_400_000, 66, 2), scoredUnder(1 * 86_400_000, 60, 2)])!
+  assert(progress.overallDelta === 6, `delta was ${progress.overallDelta}, expected 6`)
+  assert(progress.rubricBreakAt === undefined, 'marked a break in a history that has none')
+})
+
+check('the report page can refuse a cross-rubric comparison too', () => {
+  const fundamentals = [{ id: 'swing' as const, score: 80 }]
+  const oldReport = scoredUnder(1, 50, 1)
+  assert(deltasAgainst(fundamentals, oldReport, 1).swing === 30, 'refused a like-for-like comparison')
+  assert(
+    Object.keys(deltasAgainst(fundamentals, oldReport, 2)).length === 0,
+    'compared a fresh report against one scored under the old rubric',
+  )
+})
+
 /* ------------------------------------------------------------- engine paths */
 
 heading('Where the pose engine looks for its assets')
@@ -821,14 +920,31 @@ check('a corrupt report inside a backup is dropped, not the whole file', () => {
 
 heading('Changing the serve type without re-reading the video')
 
-/** A full analysis-shaped object built from the rig, for the re-score path. */
+/**
+ * A full analysis-shaped object built from the rig, for the re-score path.
+ *
+ * The confidence context has to be assembled exactly as `rescore` assembles it,
+ * `depthUnreliable` included. That field is recovered rather than carried on the
+ * report, so a helper that omits it is not a simpler version of the real thing —
+ * it is a *different* one, and the test built on it then compares two pipelines
+ * that were never given the same inputs. It fails on whichever measurement the
+ * depth verdict happens to hedge, which is a true statement about the fixture
+ * and says nothing at all about the re-scoring this check exists to prove.
+ */
 function analysisFrom(serveType: 'flat' | 'kick' | 'slice') {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
   const quality = assessQuality(frames, skel, FPS)
+  const depthUnreliable = assessSpatial(frames, skel.keys.ready, skel.bodyHeight).depth_unreliable
   const fundamentals = measure(frames, skel, quality.view === 'side', {
     serveType,
-    confidence: { frames, skel, swingSamples: quality.swingSamples, view: quality.view },
+    confidence: {
+      frames,
+      skel,
+      swingSamples: quality.swingSamples,
+      view: quality.view,
+      depthUnreliable,
+    },
   })
   return {
     id: 'x', createdAt: 0, video: { name: 'x', durationMs: 0, width: 1, height: 1 },
@@ -1122,6 +1238,132 @@ check('agreeing with the stated hand says nothing', () => {
   )
 })
 
+/**
+ * Regression: shoulder tilt takes its sign from the racket arm, and handedness
+ * was in no measurement's dependency list. So a textbook trophy read as the
+ * wrong hand came back as its own mirror image — the tilt inverted, the reverse
+ * cartwheel stated as fact, the fault promoted to the headline fix — all at
+ * confidence 1.00 with no hedge anywhere. The player is then told to correct the
+ * opposite of what they actually did, which is worse than saying nothing at all.
+ *
+ * Hip–shoulder separation was in this list too, and is deliberately no longer:
+ * `trunkCoil` derives its direction from the shoulders uncoiling rather than
+ * from the racket side, so the hand cannot mirror it — the check below pins
+ * that, because a dependency nothing can act on still demoted a correct reading
+ * and, worse, put a hand explanation in front of the camera one.
+ */
+check('a hand the app is unsure of stops the sign it can mirror arriving crisp', () => {
+  const base = confidenceCtx()
+  // Below the soft line, above the 0.35 at which the report warns outright: the
+  // band where the old code said nothing and scored the mirror image anyway.
+  const unsure = {
+    ...base,
+    skel: { ...base.skel, handednessConfidence: 0.4, detectionConfidence: 0.4 },
+  }
+  note(`shoulderTilt: ${metricConfidence('shoulderTilt', base).toFixed(2)} → ${metricConfidence('shoulderTilt', unsure).toFixed(2)}`)
+  within(metricConfidence('shoulderTilt', base), SOFT_MEASUREMENT, 1, 'shoulder tilt when the hand is clear')
+  within(metricConfidence('shoulderTilt', unsure), 0, SOFT_MEASUREMENT, 'shoulder tilt when the hand is not')
+
+  // And only that one. Every other measurement is either unsigned or signed
+  // against something the hand has no say in, so an uncertain hand must leave
+  // them exactly where they were.
+  for (const id of [
+    'hipShoulderSeparation',
+    'kneeBend',
+    'contactHeight',
+    'contactAhead',
+    'dropDepth',
+    'armExtension',
+  ]) {
+    near(metricConfidence(id, unsure), metricConfidence(id, base), 1e-9, `${id} under an unsure hand`)
+  }
+})
+
+/**
+ * The evidence for that, rather than the assertion of it: force the hand the
+ * other way through the whole pipeline and watch which readings move. Tilt
+ * negates; coil does not shift by a bit. A dependency has to be able to change
+ * the number it is charged against, or all it does is hide a good reading behind
+ * the wrong explanation.
+ */
+check('forcing the wrong hand mirrors the tilt and leaves the coil untouched', () => {
+  const frames = buildServe({ cameraYaw: 45 }, FPS)
+  const skel = detectServe(frames, FPS)
+  // Swapped on the skeleton rather than through `detectServe`, which refuses a
+  // stated hand this far from what it sees — and refusing is the right
+  // behaviour, so the mirror has to be built by hand to get past it.
+  const asRight = measure(frames, skel, false)
+  const asLeft = measure(frames, { ...skel, racket: skel.toss, toss: skel.racket }, false)
+  const of = (f: typeof asRight, id: string) =>
+    f.flatMap((x) => x.metrics).find((m) => m.id === id)!.value
+
+  note(`tilt ${of(asRight, 'shoulderTilt').toFixed(1)}° → ${of(asLeft, 'shoulderTilt').toFixed(1)}°, coil ${of(asRight, 'hipShoulderSeparation').toFixed(1)}° → ${of(asLeft, 'hipShoulderSeparation').toFixed(1)}°`)
+  near(
+    of(asLeft, 'shoulderTilt'),
+    -of(asRight, 'shoulderTilt'),
+    1e-6,
+    'shoulder tilt read against the other arm',
+  )
+  assert(
+    of(asLeft, 'hipShoulderSeparation') === of(asRight, 'hipShoulderSeparation'),
+    `the hand moved a coil it cannot mirror: ${of(asRight, 'hipShoulderSeparation')} → ${of(asLeft, 'hipShoulderSeparation')}`,
+  )
+})
+
+check('a confident detection disagreeing with a stated hand is treated as evidence', () => {
+  // The player stated a hand, so `handednessConfidence` is 1 by construction and
+  // says nothing. The independent detection kept alongside it is the only
+  // cross-check there is, and a confident disagreement is the strongest signal
+  // available that these two readings are mirrored.
+  const base = confidenceCtx()
+  const contradicted = {
+    ...base,
+    skel: { ...base.skel, racket: 'right' as const, detectedRacket: 'left' as const, detectionConfidence: 0.9 },
+  }
+  assert(
+    contradicted.skel.handednessConfidence === 1,
+    'the rig no longer stands in for a player who told the app which hand they use',
+  )
+  note(`shoulderTilt against a contradicted hand: ${metricConfidence('shoulderTilt', contradicted).toFixed(2)}`)
+  within(metricConfidence('shoulderTilt', contradicted), 0, SOFT_MEASUREMENT, 'shoulder tilt on a contradicted hand')
+})
+
+check('a hedged sign is explained as the hand, in words that pass the voice lint', () => {
+  const base = confidenceCtx()
+  const unsure = { ...base, skel: { ...base.skel, handednessConfidence: 0.3, detectionConfidence: 0.3 } }
+  const contradicted = {
+    ...base,
+    skel: { ...base.skel, detectedRacket: 'left' as const, detectionConfidence: 0.9 },
+  }
+  for (const ctx of [unsure, contradicted]) {
+    const why = softnessReason('shoulderTilt', ctx)!
+    note(why)
+    assert(/hand/i.test(why), `never names the hand: "${why}"`)
+    // The remedy is a tap on the badge, not another trip to the court — so the
+    // fallback about a blurred body is exactly the wrong thing to say here.
+    assert(!/blurred here|film/i.test(why), `sent the player off to refilm: "${why}"`)
+    assert(cueIssues(why).length === 0, `off-voice: ${cueIssues(why).join('; ')} — "${why}"`)
+  }
+  // The two cases are not the same statement: one is the app admitting it cannot
+  // tell, the other is the app contradicting something the player typed in.
+  assert(
+    softnessReason('shoulderTilt', unsure) !== softnessReason('shoulderTilt', contradicted),
+    'the same sentence is used whether or not the player stated a hand',
+  )
+})
+
+check('a hand the app is sure of leaves the two readings alone', () => {
+  // The inverse failure: hedging every trunk rotation in the app on the strength
+  // of a dependency that is not actually in doubt.
+  const ctx = confidenceCtx()
+  for (const id of ['hipShoulderSeparation', 'shoulderTilt']) {
+    assert(
+      softnessReason(id, ctx) !== undefined && !/hand/i.test(softnessReason(id, ctx)!),
+      `blamed a hand the app read cleanly: "${softnessReason(id, ctx)}"`,
+    )
+  }
+})
+
 /* ------------------------------------------------------ per-metric confidence */
 
 heading('Knowing which measurements to trust')
@@ -1229,6 +1471,251 @@ check('an area is not condemned by a measurement the app cannot see', () => {
   const cropped = measured({}, cropFeet).fundamentals.find((f) => f.id === 'contact')!
   note(`contact area: ${clean.score} well framed, ${cropped.score} with feet cropped`)
   within(clean.score - cropped.score, -100, 18, 'how far a framing problem may move an area score')
+})
+
+/* ------------------------------------------- saying which thing went wrong */
+
+heading('Naming the right culprit for a soft measurement')
+
+/** The context the pipeline hands to `confidence.ts`, with one thing dialled. */
+function confidenceCtx(over: Partial<ConfidenceContext> = {}): ConfidenceContext {
+  const frames = buildServe({}, FPS)
+  const skel = detectServe(frames, FPS)
+  const quality = assessQuality(frames, skel, FPS)
+  return { frames, skel, swingSamples: quality.swingSamples, view: quality.view, ...over }
+}
+
+/**
+ * Regression: the two ball measurements carry no landmarks of their own and list
+ * only `scale` as a dependency, so every body-shaped guard in `softnessReason`
+ * stepped straight over them and the fallback told the player the app could not
+ * see their *body*. That is a false statement with a wrong remedy welded on — the
+ * player goes off and refilms their whole serve, and the small pale ball is still
+ * invisible against the same wall.
+ */
+check('a ball the app could not follow is reported as a ball problem', () => {
+  const ctx = confidenceCtx({ ballConfidence: 0.3 })
+  for (const id of ['tossPeakHeight', 'contactBelowPeak']) {
+    within(metricConfidence(id, ctx), 0, SOFT_MEASUREMENT, `${id} on a badly tracked ball`)
+    const why = softnessReason(id, ctx)!
+    note(`${id}: "${why}"`)
+    assert(/ball/i.test(why), `never mentions the ball: "${why}"`)
+    assert(!/your body|blurred here/i.test(why), `blamed the player's body: "${why}"`)
+    assert(cueIssues(why).length === 0, `off-voice: ${cueIssues(why).join('; ')} — "${why}"`)
+  }
+})
+
+check('a ball the app followed cleanly is never blamed', () => {
+  // The guard has to be the ball's own confidence, not merely which measurement
+  // this is, or a toss height softened by cropped feet would be explained as a
+  // ball the app tracked perfectly well.
+  const ctx = confidenceCtx({ ballConfidence: 0.95 })
+  within(metricConfidence('tossPeakHeight', ctx), SOFT_MEASUREMENT, 1, 'toss height on a clean track')
+  assert(!/ball/i.test(softnessReason('tossPeakHeight', ctx)!), 'blamed a well-tracked ball')
+  assert(!/ball/i.test(softnessReason('kneeBend', confidenceCtx())!), 'blamed the ball for a body angle')
+})
+
+/**
+ * Regression: `assessSpatial` decides from the recovered camera angle whether the
+ * depth axis is readable at all, and that verdict never reached the per-metric
+ * confidence — which had only the coarse `view` guess and a cost of 0.85, too
+ * small to cross the softness line on its own. So hip-shoulder coil, read almost
+ * entirely from inferred world z, was scored and stated crisply in exactly the
+ * camera position the app's own geometry calls unreadable.
+ */
+check('a camera that cannot see depth softens what is read from depth', () => {
+  const seen = confidenceCtx({ view: 'side' })
+  const collapsed = confidenceCtx({ view: 'side', depthUnreliable: true })
+  for (const id of ['hipShoulderSeparation', 'shoulderTilt']) {
+    note(`${id}: ${metricConfidence(id, seen).toFixed(2)} → ${metricConfidence(id, collapsed).toFixed(2)}`)
+    within(metricConfidence(id, seen), SOFT_MEASUREMENT, 1, `${id} before the depth verdict lands`)
+    within(metricConfidence(id, collapsed), 0, SOFT_MEASUREMENT, `${id} once depth is called unreadable`)
+  }
+  // And only those: a knee angle is read in the image plane and owes the camera
+  // angle nothing.
+  near(
+    metricConfidence('kneeBend', collapsed),
+    metricConfidence('kneeBend', seen),
+    1e-9,
+    'knee bend confidence under an unreadable camera angle',
+  )
+})
+
+check('a depth problem names the camera, not the body', () => {
+  const why = softnessReason('hipShoulderSeparation', confidenceCtx({ depthUnreliable: true }))!
+  note(why)
+  assert(/camera/i.test(why), `never names the camera: "${why}"`)
+  assert(!/blurred here|your body/i.test(why), `blamed the player's body: "${why}"`)
+  // Dead side-on and dead front-on are one failure and this sentence has to
+  // cover both. "Stands square on" described only the second, so the commonest
+  // way of all to film a serve was told it had done the opposite thing.
+  assert(!/square on/i.test(why), `told a side-on clip it stood square on: "${why}"`)
+  assert(cueIssues(why).length === 0, `off-voice: ${cueIssues(why).join('; ')} — "${why}"`)
+})
+
+check('a readable camera angle still leaves the depth measurements alone', () => {
+  const angled = confidenceCtx({ view: 'angled', depthUnreliable: false })
+  within(metricConfidence('hipShoulderSeparation', angled), SOFT_MEASUREMENT, 1, 'coil from a corner')
+  assert(
+    !/camera/i.test(softnessReason('hipShoulderSeparation', angled)!),
+    'blamed a camera angle the spatial read was happy with',
+  )
+})
+
+/**
+ * Regression: the hand guard sat ahead of every other reason in `softnessReason`,
+ * so it spoke for any soft reading it could plausibly claim. A clip filmed where
+ * the camera cannot see depth, by a player whose hand the detector was unsure of,
+ * was explained as the hand — the player checked a badge that was already right,
+ * and the camera position that actually broke the reading was never named.
+ */
+check('a depth problem outranks a hand that could not have changed the reading', () => {
+  const base = confidenceCtx({ depthUnreliable: true })
+  const unsure = {
+    ...base,
+    skel: { ...base.skel, handednessConfidence: 0.3, detectionConfidence: 0.3 },
+  }
+  const why = softnessReason('hipShoulderSeparation', unsure)!
+  note(why)
+  assert(/camera/i.test(why), `named something other than the camera: "${why}"`)
+  assert(!/hand/i.test(why), `blamed a hand that cannot move this reading: "${why}"`)
+})
+
+/**
+ * Regression: the degenerate-sweep guard returned a hard zero with no flag and no
+ * cost, and it fires on "the sweep could not be resolved" as readily as on "this
+ * player did not rotate". A trophy keyframe landing a third of a second late
+ * turned 27.5° of correct coil into 0.0, and the card then read "hips and chest
+ * locked" — with a fix, and a drill — for a trophy that coiled perfectly well.
+ */
+check('a trophy in the wrong place hedges the coil instead of inventing a fault', () => {
+  // Filmed from a corner, so the only thing wrong with this clip is where the
+  // trophy landed — from the rig's default camera the depth hedge would carry
+  // the check on its own and prove nothing about the sweep.
+  const frames = buildServe({ cameraYaw: 45 }, FPS)
+  const skel = detectServe(frames, FPS)
+  const base = {
+    frames,
+    skel,
+    swingSamples: assessQuality(frames, skel, FPS).swingSamples,
+    view: 'angled' as const,
+  }
+  const truth = trunkCoil(base.frames, base.skel.keys.trophy, base.skel.keys.contact)
+  assert(truth > MIN_OPENING_SWEEP_DEG, `the rig coiled ${truth.toFixed(1)}°, too little to lose`)
+
+  // Late enough to leave almost no swing between the trophy and the ball, which
+  // is what a mis-placed keyframe does — and what the sweep is then measured
+  // across.
+  const late = {
+    ...base,
+    skel: { ...base.skel, keys: { ...base.skel.keys, trophy: base.skel.keys.trophy + 16 } },
+  }
+  const lost = trunkCoil(late.frames, late.skel.keys.trophy, late.skel.keys.contact)
+  note(`coil ${truth.toFixed(1)}° → ${lost.toFixed(1)}°, confidence ${metricConfidence('hipShoulderSeparation', base).toFixed(2)} → ${metricConfidence('hipShoulderSeparation', late).toFixed(2)}`)
+  within(metricConfidence('hipShoulderSeparation', base), SOFT_MEASUREMENT, 1, 'coil off a trophy in the right place')
+  within(metricConfidence('hipShoulderSeparation', late), 0, SOFT_MEASUREMENT, 'coil off a trophy that landed late')
+  const why = softnessReason('hipShoulderSeparation', late)!
+  note(why)
+  assert(!/blurred here/i.test(why), `fell through to the fallback: "${why}"`)
+  assert(cueIssues(why).length === 0, `off-voice: ${cueIssues(why).join('; ')} — "${why}"`)
+
+  // And the flaw path with it, or the card hedges while triage states the same
+  // zero as the one thing to work on.
+  assert(
+    diagnose(base.frames, base.skel).signals.separation_deg !== undefined,
+    'a well-placed trophy stopped reaching the flaw pass',
+  )
+  assert(
+    diagnose(late.frames, late.skel).signals.separation_deg === undefined,
+    'a coil nobody could resolve was handed to the flaw pass as evidence',
+  )
+})
+
+check('a trunk that genuinely never turned is still measured, not hedged', () => {
+  // The other half of the distinction: this player really did arm the ball, the
+  // window was long enough to have shown a sweep, and zero is the measurement.
+  // Hedging it here would bury the fault the card exists to name.
+  const frames = buildServe({ shoulderYaw: 20, hipYaw: 14 }, FPS)
+  const skel = detectServe(frames, FPS)
+  const ctx = {
+    frames,
+    skel,
+    swingSamples: assessQuality(frames, skel, FPS).swingSamples,
+    view: 'side' as const,
+  }
+  assert(trunkCoil(frames, skel.keys.trophy, skel.keys.contact) === 0, 'the rig no longer arms the ball')
+  within(metricConfidence('hipShoulderSeparation', ctx), SOFT_MEASUREMENT, 1, 'coil on a trunk that never turned')
+})
+
+/**
+ * Regression: `separation_deg` reached the flaw pass carrying only trunk
+ * visibility, so the depth verdict that hedged the metric card to 0.35 never
+ * reached triage — which promoted "your chest opens ahead of your hips" to the
+ * one thing to work on, at confidence 1.00, off the same number the report had
+ * already said it could not see. Hedging and instructing off one reading is the
+ * worst pairing available: the instruction is the half a player acts on.
+ */
+check('a camera that cannot see depth cannot name the coil fault either', () => {
+  // An already-open chest, filmed dead side-on — the rig's default camera, and
+  // outside the window `assessSpatial` calls readable in depth.
+  const frames = buildServe({ shoulderYaw: 82, hipYaw: 108 }, FPS)
+  const skel = detectServe(frames, FPS)
+  const resilience = assessResilience(frames, skel)
+  assert(
+    resilience.spatial.depth_unreliable,
+    `the rig's own camera reads at ${resilience.spatial.yaw_deg}°, which the spatial pass is happy with`,
+  )
+
+  const quality = assessQuality(frames, skel, FPS)
+  const card = measure(frames, skel, quality.view === 'side', {
+    confidence: {
+      frames,
+      skel,
+      swingSamples: quality.swingSamples,
+      view: quality.view,
+      depthUnreliable: resilience.spatial.depth_unreliable,
+    },
+  })
+  const coil = card.flatMap((f) => f.metrics).find((m) => m.id === 'hipShoulderSeparation')!
+  within(coil.confidence, 0, SOFT_MEASUREMENT, 'the card the player reads')
+
+  const d = diagnose(frames, skel)
+  note(`card ${coil.confidence.toFixed(2)}, diagnosis ${d.flaws.filter((f) => f.flaw === 'early_shoulder_rotation').length} finding(s)`)
+  assert(
+    !d.flaws.some((f) => f.flaw === 'early_shoulder_rotation'),
+    'named the sequence fault off depth the report had already hedged',
+  )
+  assert(
+    d.signals.separation_deg === undefined,
+    `stated a coil of ${d.signals.separation_deg} as evidence for the tier and the injury flags`,
+  )
+
+  // And the same serve, filmed from a corner, is named outright — the hedge is
+  // about the camera, not about refusing to call an open chest an open chest.
+  const corner = buildServe({ shoulderYaw: 82, hipYaw: 108, cameraYaw: 45 }, FPS)
+  const cornerSkel = detectServe(corner, FPS)
+  const found = diagnose(corner, cornerSkel).flaws.find((f) => f.flaw === 'early_shoulder_rotation')
+  assert(Boolean(found?.detected), 'an open chest went unnamed from a camera angle that could see it')
+})
+
+/**
+ * The camera read now runs *above* `measure` in the pipeline rather than beside
+ * the triage call it feeds, which is the only way its depth verdict can reach the
+ * confidence context. That reordering is safe only while everything it was hoisted
+ * over leaves the frames and the skeleton exactly as it found them.
+ */
+check('measuring the serve does not disturb the camera read taken before it', () => {
+  const frames = buildServe({}, FPS)
+  const skel = detectServe(frames, FPS)
+  const before = assessResilience(frames, skel)
+  measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
+  diagnose(frames, skel)
+  const after = assessResilience(frames, skel)
+  note(`yaw ${before.spatial.yaw_deg}° before measuring, ${after.spatial.yaw_deg}° after`)
+  assert(
+    JSON.stringify(before) === JSON.stringify(after),
+    'measuring the serve changed what the camera read reports',
+  )
 })
 
 /* --------------------------------------------------------------- the racket */

@@ -387,4 +387,316 @@ check('too few frames to be sure produces nothing', () => {
   )
 })
 
+/* --------------------------------------------- fits that are not measurements */
+
+/**
+ * These last cases hand `trackBall` its detections directly instead of rendering
+ * pixels for them. That is not a shortcut. Both failures live in the arithmetic
+ * after RANSAC has already agreed on a set of inliers, and reproducing them
+ * through the renderer would mean hunting for a scene whose blob centroids
+ * happen to land where the arithmetic goes wrong — a fixture that says nothing
+ * about the bug and breaks the moment the detector's thresholds move. Stated as
+ * detections, each one is exactly the geometry it is about.
+ */
+heading('Fits that describe nothing that was seen')
+
+const detections = (pts: { t: number; y: number; x?: number }[]) =>
+  pts.map((p) => ({ t: p.t, candidates: [{ x: p.x ?? 0.45, y: p.y, r: 0.011, score: 1 }] }))
+
+const BEND_APEX_Y = 0.14
+
+/**
+ * A run of detections that all sit inside `inlierBand` of a seed whose curvature
+ * is legal, but which lean high at the ends of the flight and low through the
+ * middle — the signature of centroids pulled about by motion blur. RANSAC seeds
+ * on three of the outer ones and takes the lot, and the least-squares curve
+ * through all of them bends far harder than a ball at this scale can.
+ *
+ * Taken at two lengths below, because how hard it bends is not the only thing
+ * that decides whether it is caught: the gravity gate widens with the fit's own
+ * error bars, and those grow without limit as the track shortens.
+ */
+const leaningArc = (n: number, perturb: boolean) => {
+  const apexT = 0.4
+  const c2 = 2.1 // g = 4.2, inside the ±55% band around 2.8
+  const lean = 0.009 // ±this is 0.018 apart, inside the 0.022 inlier band
+  const half = (n - 1) / 30 / 2
+  return detections(
+    Array.from({ length: n }, (_, i) => {
+      const t = apexT - half + i / 30
+      const rt = t - apexT
+      // Sign flips where t² crosses its own mean, which is where a residual
+      // does the most to the fitted curvature per unit of residual.
+      const w = perturb ? (Math.abs(rt) > half / Math.sqrt(3) ? lean : -lean) : 0
+      return { t, y: BEND_APEX_Y + c2 * rt * rt + w }
+    }),
+  )
+}
+
+check('a refit dragged outside the gravity band is rejected', () => {
+  // The control matters as much as the case: the same arc without the lean is
+  // accepted, so the rejection below can only be the drifted curvature.
+  const clean = trackBall(leaningArc(15, false), { expectedGravity: GRAVITY })
+  assert(clean !== undefined, 'the unperturbed control arc was rejected')
+  near(clean!.apex.y, BEND_APEX_Y, 0.01, 'control apex height')
+
+  assert(
+    trackBall(leaningArc(15, true), { expectedGravity: GRAVITY }) === undefined,
+    'a refit at g = 5.0 was reported, having been gated only on its seed at 4.2',
+  )
+})
+
+check('the same bend is rejected on a track too short to measure a curvature', () => {
+  // The gravity gate widens by three standard errors of the fitted curvature, and
+  // at six detections over a sixth of a second that term ran past the expected
+  // gravity itself — an allowance wider than the quantity it is an allowance on,
+  // which excuses every positive curvature there is. This same bend came back at
+  // 3.2× the gravity the image scale implies, with the apex four thousandths of a
+  // frame height low and confidence 0.43 — near enough to `analyze.ts`'s 0.45
+  // floor that a slightly gentler lean clears it and is read out as a toss.
+  const bent = trackBall(leaningArc(6, true), { expectedGravity: GRAVITY })
+  note(
+    `six-detection bend: ${bent ? `g=${(2 * bent.coefficients[2] / GRAVITY).toFixed(2)}× expected at conf ${bent.confidence.toFixed(2)}` : 'rejected'} (was g=3.15× expected at conf 0.43)`,
+  )
+  assert(bent === undefined, 'a refit at 3.2x the expected gravity was reported from six detections')
+
+  // And the short control still passes, so what was bounded is the tolerance and
+  // not the shortest track's right to be measured at all.
+  const clean = trackBall(leaningArc(6, false), { expectedGravity: GRAVITY })
+  assert(clean !== undefined, 'the unperturbed six-detection control arc was rejected')
+  near(clean!.apex.y, BEND_APEX_Y, 0.01, 'six-detection control apex height')
+})
+
+check('an ascending-only track is not reported from an extrapolated apex', () => {
+  // The ball leaves the top of the frame, or is lost against bright sky before
+  // it turns over. The curvature is exactly right, every point is on the curve,
+  // and the vertex is 0.4s past the last thing anyone saw — at y = −0.2, which
+  // is above the top of the frame. Reporting that would tell the player their
+  // toss peaked a fifth of a frame height off-screen.
+  const vertexT = 0.9
+  const vertexY = -0.2
+  const rising = detections(
+    Array.from({ length: 16 }, (_, i) => {
+      const t = i / 30
+      return { t, y: vertexY + (GRAVITY / 2) * (t - vertexT) ** 2 }
+    }),
+  )
+  assert(
+    trackBall(rising, { expectedGravity: GRAVITY }) === undefined,
+    'reported an apex 0.4s and a whole frame edge beyond anything sampled',
+  )
+})
+
+check('an apex a fraction of a frame past the last sample is still allowed', () => {
+  // The other side of the same constraint. A real toss seldom puts a detection
+  // exactly on its turning point, and the last frame before the ball is lost is
+  // often just short of it; nudging the vertex barely outside the window must
+  // not cost the player their two toss numbers.
+  const vertexT = 0.5 + 0.5 / 30
+  const vertexY = 0.15
+  const flight = trackBall(
+    detections(
+      Array.from({ length: 16 }, (_, i) => {
+        const t = i / 30
+        return { t, y: vertexY + (GRAVITY / 2) * (t - vertexT) ** 2 }
+      }),
+    ),
+    { expectedGravity: GRAVITY },
+  )
+  assert(flight !== undefined, 'rejected an apex half a frame past the last sample')
+  near(flight!.apex.t, vertexT, 0.02, 'apex time just past the window')
+  near(flight!.apex.y, vertexY, 0.01, 'apex height just past the window')
+})
+
+/* --------------------------------------- gates measured against a noisy detector */
+
+/**
+ * The cases above are single fits with an obvious right answer. A rejection gate
+ * is not that kind of thing: it is a threshold on a noisy quantity, and the only
+ * question worth asking of one is what fraction of good tosses it throws away.
+ * Asked that way, both gates here were once badly mistuned in the direction that
+ * costs a player everything — the app reports no toss feedback at all and never
+ * says why — and neither mistuning is visible from any single fit.
+ *
+ * So these run the same toss a few hundred times with fresh centroid noise and
+ * count. Detections rather than rendered pixels, for the same reason as the
+ * section above, plus one more: the acceptance rate has to move with the noise
+ * and nothing else, and a renderer puts the detector's own thresholds in the way
+ * of that. The noise is stated in pixels of the frame above so it can be argued
+ * with — a blob centroid on a ball a few pixels across is good to about one.
+ */
+heading('Gates measured against a noisy detector')
+
+/** One pixel of the frame the renderer above draws, as a fraction of its height. */
+const PIXEL = 1 / H
+
+/** Box–Muller on the seeded stream: centroid error is a sum of many small pushes. */
+function normal(rand: () => number) {
+  return Math.sqrt(-2 * Math.log(Math.max(1e-9, rand()))) * Math.cos(2 * Math.PI * rand())
+}
+
+function noisyTrack(opts: {
+  samples: number
+  fps: number
+  apexT: number
+  apexY: number
+  gravity: number
+  noisePx: number
+  seed: number
+  /**
+   * Systematic lag in the measured centroid, in frames. A motion-blurred ball
+   * smears backwards along its travel, so its centroid sits behind the true
+   * position by a fraction of the distance covered in one exposure — which is a
+   * bias proportional to vertical speed, and a bias proportional to speed slides
+   * the fitted vertex in time without touching anything else about the fit.
+   */
+  blurLagFrames?: number
+  /** Keep only every nth detection, leaving the other frames ball-less. */
+  keepEvery?: number
+}) {
+  const rand = seeded(opts.seed)
+  const sigma = opts.noisePx * PIXEL
+  const lag = (opts.blurLagFrames ?? 0) / opts.fps
+  return Array.from({ length: opts.samples }, (_, i) => {
+    const t = i / opts.fps
+    const rt = t - opts.apexT - lag
+    const y = opts.apexY + 0.5 * opts.gravity * rt * rt + normal(rand) * sigma
+    const x = 0.45 + 0.05 * t + normal(rand) * sigma
+    const found = !opts.keepEvery || i % opts.keepEvery === 0
+    return { t, candidates: found ? [{ x, y, r: 0.011, score: 1 }] : [] }
+  })
+}
+
+/** Fraction of runs `trackBall` returns a flight for, and how good those were. */
+function acceptance(
+  trials: number,
+  gravity: number,
+  build: (seed: number) => ReturnType<typeof noisyTrack>,
+  trueApexY: number,
+) {
+  let accepted = 0
+  let apexError = 0
+  let softest = 1
+  for (let i = 0; i < trials; i++) {
+    const flight = trackBall(build(1000 + i * 7919), { expectedGravity: gravity })
+    if (!flight) continue
+    accepted++
+    apexError += Math.abs(flight.apex.y - trueApexY)
+    softest = Math.min(softest, flight.confidence)
+  }
+  return {
+    rate: accepted / trials,
+    apexError: accepted ? apexError / accepted : Infinity,
+    softest: accepted ? softest : 0,
+  }
+}
+
+/**
+ * `assessBall` derives `expectedGravity` from the player's measured height, so a
+ * player standing at the far end of the too-far cutoff (0.30) is the smallest
+ * legal scale and the shortest usable track. 0.32 is just inside it.
+ */
+const FAR_PLAYER_GRAVITY = (9.81 * 0.32) / 1.78
+
+check('a short track is not rejected for a curvature it could never have measured', () => {
+  // Five detections over 0.13s is the minimum this function advertises. A ball
+  // at this scale falls about four millimetres of image across the whole window
+  // — under the centroid noise — so its curvature is not measured at all, and a
+  // fixed ±55% band is narrower than the fit's own noise floor. Gating on that
+  // band alone rejected roughly a third of these outright.
+  const track = (noisePx: number) => (seed: number) =>
+    noisyTrack({
+      samples: 5, fps: 30, apexT: 2 / 30, apexY: 0.3, gravity: FAR_PLAYER_GRAVITY, noisePx, seed,
+    })
+
+  const clean = acceptance(400, FAR_PLAYER_GRAVITY, track(1), 0.3)
+  const rough = acceptance(400, FAR_PLAYER_GRAVITY, track(2), 0.3)
+  note(`far player, 5 samples/0.13s: 1px noise ${(clean.rate * 100).toFixed(0)}% accepted (was 58%), 2px ${(rough.rate * 100).toFixed(0)}% (was 28%)`)
+  note(`apex height error on the accepted fits: ${(clean.apexError / 0.32 * 178).toFixed(1)} cm at 1px, ${(rough.apexError / 0.32 * 178).toFixed(1)} cm at 2px`)
+
+  within(clean.rate, 0.8, 1, 'acceptance of a legal short track at 1px of centroid noise')
+  within(rough.rate, 0.5, 1, 'acceptance of a legal short track at 2px of centroid noise')
+  // The whole argument for accepting these: what was being thrown away was
+  // accurate. Expressed in body heights, which is the unit the toss metrics
+  // report in, and then in centimetres of a 1.78 m player.
+  within(clean.apexError / 0.32, 0, 0.02, 'apex height error, in body heights, at 1px')
+  within(rough.apexError / 0.32, 0, 0.03, 'apex height error, in body heights, at 2px')
+})
+
+check('an apex a frame past the last detection survives the noise that put it there', () => {
+  // The nominal allowance was one sampling interval, but a vertex time's error
+  // comes from centroid noise, span and curvature — not from sample spacing. A
+  // vertex genuinely one interval past the last detection, with the blur lag a
+  // real shutter adds, was rejected three runs in four.
+  const track = (past: number) => (seed: number) =>
+    noisyTrack({
+      samples: 13, fps: 30, apexT: 12 / 30 + past / 30, apexY: 0.15,
+      gravity: GRAVITY, noisePx: 2, seed, blurLagFrames: 0.3,
+    })
+
+  const full = acceptance(400, GRAVITY, track(1), 0.15)
+  const half = acceptance(400, GRAVITY, track(0.5), 0.15)
+  note(`apex past the last sample: +1.0 interval ${(full.rate * 100).toFixed(0)}% accepted (was 26%), +0.5 ${(half.rate * 100).toFixed(0)}% (was 65%)`)
+  within(full.rate, 0.55, 1, 'acceptance with the vertex one interval past the last sample')
+  within(half.rate, 0.85, 1, 'acceptance with the vertex half an interval past')
+  // Accepted at reduced confidence rather than waved through: the softening is
+  // the point of the widened gate, but it must not soften so hard that every
+  // one of these lands under the 0.45 floor `assessBall` drops the ball at.
+  note(`softest confidence among the accepted: ${full.softest.toFixed(2)}`)
+  within(full.softest, 0.45, 1, 'confidence of the least convincing accepted fit')
+})
+
+check('a longer, cleaner track is not given a smaller apex allowance', () => {
+  // The vertex a quarter of a sampling interval past the last detection, which
+  // at this curvature leaves the ball four hundredths of a pixel below its own
+  // turning point — an extrapolation of nothing. Scaled by the vertex's standard
+  // error alone the allowance shrinks as the track lengthens and its residuals
+  // tighten, so the gate rejected hardest exactly where the evidence was best:
+  // 40 detections were thrown out nine times in ten, 15 of them never.
+  const track = (samples: number) => (seed: number) =>
+    noisyTrack({
+      samples, fps: 32, apexT: (samples - 1) / 32 + 0.25 / 32, apexY: 0.15,
+      gravity: GRAVITY, noisePx: 1, seed,
+    })
+
+  const short = acceptance(150, GRAVITY, track(15), 0.15)
+  const long = acceptance(150, GRAVITY, track(40), 0.15)
+  note(`vertex a quarter-interval past: 15 detections ${(short.rate * 100).toFixed(0)}% accepted (was 100%), 40 detections ${(long.rate * 100).toFixed(0)}% (was 9%)`)
+  assert(
+    long.rate >= short.rate,
+    `a 40-detection track was accepted ${(long.rate * 100).toFixed(0)}% against a 15-detection one at ${(short.rate * 100).toFixed(0)}% — more evidence still bought a narrower gate`,
+  )
+  within(long.rate, 0.95, 1, 'acceptance of a long track whose vertex barely overshoots')
+
+  // The confidence term measured the same overshoot in the same shrinking units,
+  // so the fits that did survive were docked hardest for the least extrapolation
+  // — and these are accurate fits, landing well inside half a pixel of the true
+  // apex. Docking them toward `analyze.ts`'s 0.45 floor costs the player the toss
+  // numbers just as surely as rejecting them.
+  note(`softest confidence among them: ${long.softest.toFixed(2)} (was 0.74), apex height error ${(long.apexError / PIXEL).toFixed(2)} px`)
+  within(long.softest, 0.8, 1, 'confidence of a long clean track with a negligible overshoot')
+})
+
+check('losing half the detections buys less extrapolation, not more', () => {
+  // Alternating motion blur finds the ball on every other frame. The gaps are
+  // then uniformly one frame wide, so the detections' own median gap *is* the
+  // sparse interval — and an allowance counted in median gaps handed the
+  // half-evidence track double the licence of the fully tracked one.
+  const track = (keepEvery?: number) => (seed: number) =>
+    noisyTrack({
+      samples: 25, fps: 60, apexT: 24 / 60 + 1.6 / 60, apexY: 0.15,
+      gravity: GRAVITY, noisePx: 1, seed, keepEvery,
+    })
+
+  const dense = acceptance(200, GRAVITY, track(), 0.15)
+  const alternate = acceptance(200, GRAVITY, track(2), 0.15)
+  note(`vertex 1.6 intervals past: fully tracked ${(dense.rate * 100).toFixed(0)}% accepted (was 6%), alternate frames ${(alternate.rate * 100).toFixed(0)}% (was 80%)`)
+  assert(
+    alternate.rate < dense.rate,
+    `a half-tracked flight was accepted ${(alternate.rate * 100).toFixed(0)}% against the fully tracked ${(dense.rate * 100).toFixed(0)}% — sparser evidence still bought more licence`,
+  )
+  within(dense.rate, 0.3, 1, 'acceptance of a fully tracked flight whose vertex just overshoots')
+  within(alternate.rate, 0, 0.25, 'acceptance of the same flight with half the detections')
+})
+
 report()

@@ -17,7 +17,7 @@
  */
 
 /** One rung: everything below `under`, in body language. */
-interface Stop {
+export interface Stop {
   under: number
   tag: string
 }
@@ -71,13 +71,22 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 62, tag: 'Athletic load' },
     { under: Infinity, tag: 'Deep squat' },
   ],
+  // The bottom two rungs of each of these are the reverse of the fault above
+  // them, not more of it. Both measurements are signed, and a value below zero
+  // says the body did the opposite of what the serve wanted — chest opened ahead
+  // of the hips, hitting shoulder riding over the ball. Naming those as "locked"
+  // or "level" would describe a posture the player is nowhere near.
   hipShoulderSeparation: [
+    { under: -12, tag: 'Chest opens ahead of the hips' },
+    { under: -3, tag: 'Chest leads the hips' },
     { under: 8, tag: 'Hips and chest locked' },
     { under: 15, tag: 'Slight coil' },
     { under: 38, tag: 'Hips lead the chest' },
     { under: Infinity, tag: 'Extreme coil' },
   ],
   shoulderTilt: [
+    { under: -12, tag: 'Tossing shoulder under the ball' },
+    { under: -3, tag: 'Hitting shoulder sits high' },
     { under: 7, tag: 'Shoulders level' },
     { under: 14, tag: 'Shoulders near level' },
     { under: 32, tag: 'Hitting shoulder under the ball' },
@@ -128,9 +137,11 @@ const LADDERS: Record<string, Stop[]> = {
   ],
   contactAhead: [
     { under: 0, tag: 'Struck behind the head' },
-    // A kick serve is asked to contact over the head — its band centres here —
-    // so this rung has to be wide enough that a good kick and a good flat serve
-    // never come back reading as the same position.
+    // A kick serve is asked to contact over the head, and its band is exactly
+    // this rung — so this rung has to be wide enough that a good kick and a good
+    // flat serve never come back reading as the same position. Both bands stop
+    // on its edges rather than inside it: a band that ended mid-rung praised a
+    // contact the readout printed beside it still called a fault.
     { under: 8, tag: 'Struck over the head' },
     { under: 20, tag: 'Struck in front of the body' },
     { under: Infinity, tag: 'Struck far in front' },
@@ -178,3 +189,14 @@ export function targetOf(id: string, ideal: [number, number]): string {
 
 /** Measurements this module can speak for. Used by the copy tests. */
 export const TRANSLATED = Object.keys(LADDERS)
+
+/**
+ * The rungs of one measurement, low to high.
+ *
+ * Exposed so the copy tests can read a band against the ladder it will be
+ * printed next to, rather than against a second copy of the numbers written out
+ * in the test — which is how a band and a rung drift apart in the first place.
+ */
+export function rungsOf(id: string): readonly Readonly<Stop>[] {
+  return LADDERS[id] ?? []
+}

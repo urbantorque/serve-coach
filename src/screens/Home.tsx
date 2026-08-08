@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing } from '../components/primitives'
 import { findPracticeFocus } from '../lib/practice'
-import { buildProgress } from '../lib/progress'
+import { buildProgress, currentRubricEra } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 
 interface Props {
@@ -41,6 +41,17 @@ export default function Home({
   const recent = sessions.slice(0, 3)
   const progress = useMemo(() => buildProgress(sessions), [sessions])
   const practice = useMemo(() => findPracticeFocus(sessions), [sessions])
+  // `best` is era-only by construction, so a count taken over all of `points`
+  // puts the two halves of one sentence on different sets of serves: after a
+  // recalibration the personal best drops while the total still counts the
+  // serve that set it. A best going down on its own is read as the app having
+  // docked the player, and there is nothing on the card to say otherwise.
+  // Counted through `currentRubricEra` rather than by filtering on
+  // `rubricBreakAt`, so this cannot drift from whatever `best` was taken over.
+  const eraCount = useMemo(
+    () => (progress ? currentRubricEra(progress.points).length : 0),
+    [progress],
+  )
   const [dragging, setDragging] = useState(false)
 
   const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,8 +227,13 @@ export default function Home({
             <DeltaChip delta={progress.formDelta} />
           </div>
           <Sparkline points={progress.points} />
+          {/* The older serves are still on the sparkline above, greyed and
+              labelled, so the clause explains a figure that shrank rather than
+              claiming the history is gone. */}
           <span className="progress-foot tnum">
-            {progress.points.length} serves · best {progress.best}
+            {progress.rubricBreakAt
+              ? `${eraCount} serves since the scoring changed · best ${progress.best}`
+              : `${eraCount} serves · best ${progress.best}`}
           </span>
 
           {/* The one actionable thing the app knows, on the first screen rather

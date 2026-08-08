@@ -41,6 +41,24 @@ export interface ServeDials {
   /** Yaw of the shoulder and hip lines at the trophy, degrees. */
   shoulderYaw: number
   hipYaw: number
+  /**
+   * Which rotational sense the trunk unwinds in: +1 as dialled, -1 the mirror.
+   *
+   * This dial exists because the rig cannot prove its own convention. It wears
+   * right-handed landmark labels and turns the trunk one particular way, and
+   * there is no recorded MediaPipe footage in the repo to check that against —
+   * `__tests__/fixtures/index.ts` has an empty RECORDED list. So if the rig
+   * turned the trunk opposite to a real right-hander and the measurement was
+   * oriented to agree with the rig, the two would be inverted together and every
+   * test would pass for that reason alone.
+   *
+   * Negating both trunk yaws produces the same serve rotating the other way
+   * round while the labels stay put, which is precisely the case an inverted
+   * convention cannot survive: a measurement that assumes a direction reports
+   * coil as an open chest under one setting or the other. Anything asserted for
+   * both values of this dial is asserted independently of the convention.
+   */
+  trunkRotationSign: 1 | -1
   /** Hip height at contact, metres. Above 0.95 means the player left the ground. */
   contactHipHeight: number
   /** Wrist height at contact as a multiple of standing height. */
@@ -131,6 +149,7 @@ export const CLEAN_SERVE: ServeDials = {
   shoulderTilt: 24,
   shoulderYaw: 82,
   hipYaw: 56,
+  trunkRotationSign: 1,
   contactHipHeight: 1.09,
   contactReach: 1.38,
   dropBelowShoulder: 0.45,
@@ -220,28 +239,36 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       ],
       u,
     )
-    const shoulderYaw = track(
-      [
-        [U.ready, d.shoulderYaw + 4],
-        [U.trophy, d.shoulderYaw],
-        [U.contact, 16],
-      ],
-      u,
-    )
+    // Both trunk yaws are negated together, so the dial reverses the direction
+    // the trunk rotates in without touching how far it rotates, how the hips
+    // lead the shoulders, or which landmark is labelled which.
+    const spin = d.trunkRotationSign
+    const shoulderYaw =
+      spin *
+      track(
+        [
+          [U.ready, d.shoulderYaw + 4],
+          [U.trophy, d.shoulderYaw],
+          [U.contact, 16],
+        ],
+        u,
+      )
     // The hips run on their own clock, ahead of the shoulders by `hipLead`. A
     // serve where both lines unwind on the same schedule has no sequence in it
     // at all, and the sequencing detector would have nothing to find in either
     // direction — so the lead is part of the rig rather than a fault dialled on
     // top of it.
     const uHips = u + d.hipLead / Math.max(1e-6, d.motionSeconds)
-    const hipYaw = track(
-      [
-        [U.ready, d.shoulderYaw + 2],
-        [U.trophy, d.hipYaw],
-        [U.contact, 10],
-      ],
-      uHips,
-    )
+    const hipYaw =
+      spin *
+      track(
+        [
+          [U.ready, d.shoulderYaw + 2],
+          [U.trophy, d.hipYaw],
+          [U.contact, 10],
+        ],
+        uHips,
+      )
     const tilt = track(
       [
         [U.ready, 2],
