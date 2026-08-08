@@ -383,7 +383,7 @@ export const METRICS: Record<string, MetricCopy> = {
     decimals: 0,
     insight: {
       low: 'You **snap** from drop to ball. That is either explosive, or a sign the racket never fell far enough.',
-      ok: 'Your racket **fires** from drop to ball. That acceleration window is sharp.',
+      ok: 'Your racket **fires** from drop to ball, with no pause to slow it down.',
       high: 'Your racket **crawls** from drop to ball, so you are guiding the swing.',
     },
     fix: {
@@ -461,7 +461,7 @@ export const METRICS: Record<string, MetricCopy> = {
       high: 'You get **well off the ground** into contact.',
     },
     fix: {
-      low: '**Let the drive lift you** off the court. A few centimetres proves the sequence fired.',
+      low: '**Let the drive lift you** off the court. Leaving the ground at all proves your legs fed the swing.',
       high: '**Jump up** and a touch forward, then land on the front foot inside the baseline.',
     },
     drill: {

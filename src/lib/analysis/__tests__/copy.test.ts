@@ -331,7 +331,11 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Arm folded in an L', high: 'Arm folded in an L' },
   },
   dropToContact: {
-    stamp: '922908b9',
+    // Re-stamped when `ok` dropped the phrase "acceleration window" — lab
+    // vocabulary that clears the voice lint (it is not on the jargon list) and
+    // still loses a player who has never met the term. The rungs claimed below
+    // are unchanged: a racket that fires with no pause is an explosive swing.
+    stamp: '396a3a7c',
     insight: {
       low: ['Swing snaps through'],
       ok: ['Explosive swing'],
@@ -358,7 +362,12 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Arm dead straight', high: 'Arm dead straight' },
   },
   bodyExtension: {
-    stamp: 'ec55edd2',
+    // Re-stamped when `fix.low` stopped saying "proves the sequence fired". The
+    // insight beside it had already been plain-languaged to "your legs, body and
+    // arm fired in the right order", so one card was carrying both registers —
+    // the description in English and the correction in shorthand. The rung this
+    // fix aims at, "up off the court", is unchanged.
+    stamp: '2016d48c',
     insight: {
       low: ['Feet stay on the court'],
       ok: ['Up off the court'],
