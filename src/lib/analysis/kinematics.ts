@@ -307,7 +307,14 @@ export function palmNormalSeries(frames: Frame[], side: Side): { normal: Vec3[];
  * unit normals across a couple of frames either side settles it without
  * smearing a rotation that takes a tenth of a second.
  */
-export function palmNormalAt(frames: Frame[], side: Side, index: number, radius = 2): Vec3 {
+export function palmNormalAt(frames: Frame[], side: Side, index: number, seconds = 0.025): Vec3 {
+  // The window is given in time and converted to frames here, which is not
+  // fussiness. A radius of two frames is 16 ms at 120 fps and 66 ms at 30 —
+  // and 66 ms either side of contact spans most of the rotation being measured,
+  // so both ends of a pronation window get averaged towards each other and the
+  // rotation reads as almost nothing. That is exactly the false "pancake
+  // contact" a player gets told about for owning a normal phone.
+  const radius = frameRadius(frames, index, seconds)
   const lo = Math.max(0, index - radius)
   const hi = Math.min(frames.length - 1, index + radius)
   const { normal, seen } = palmNormalSeries(frames.slice(lo, hi + 1), side)
@@ -335,7 +342,25 @@ export function palmNormalAt(frames: Frame[], side: Side, index: number, radius 
  * a negative number nothing downstream would know what to do with.
  */
 export function palmSkyElevation(frames: Frame[], side: Side, index: number): number {
-  return clamp(90 - angleBetween(palmNormalAt(frames, side, index), UP), 0, 90)
+  // A wider window than the pronation measurement gets: the trophy is the one
+  // moment in the serve where the hand is nearly still, so there is nothing for
+  // a longer average to smear.
+  return clamp(90 - angleBetween(palmNormalAt(frames, side, index, 0.05), UP), 0, 90)
+}
+
+/**
+ * How many frames either side of an index cover a given span of time.
+ *
+ * Zero is a legitimate answer and means "this frame alone": on a clip sampled
+ * slowly enough, one frame already covers more time than the window asked for,
+ * and reaching for neighbours anyway would average across the very thing being
+ * measured.
+ */
+function frameRadius(frames: Frame[], index: number, seconds: number): number {
+  const i = clamp(index, 1, frames.length - 1)
+  const dt = Math.abs(frames[i].t - frames[i - 1].t)
+  if (!(dt > 1e-6)) return 1
+  return clamp(Math.round(seconds / dt), 0, 3)
 }
 
 /**
@@ -350,7 +375,7 @@ export function pronationBetween(frames: Frame[], side: Side, from: number, to: 
   const s = sided(side)
   const lo = clamp(from, 0, frames.length - 1)
   const hi = clamp(to, 0, frames.length - 1)
-  const normal = [palmNormalAt(frames, side, lo, 1), palmNormalAt(frames, side, hi, 1)]
+  const normal = [palmNormalAt(frames, side, lo, 0.015), palmNormalAt(frames, side, hi, 0.015)]
 
   const axisAt = (i: number) => unit(sub(frames[i].world[s.wrist], frames[i].world[s.elbow]))
   // One shared axis — the mean of the two — so the measurement is a rotation
