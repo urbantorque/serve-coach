@@ -57,6 +57,40 @@ export interface ServeDials {
   motionSeconds: number
   /** Camera yaw: 90 is fully side-on, 0 is face-on. */
   cameraYaw: number
+  /**
+   * How far the hitting palm has turned towards facing the sky at the trophy,
+   * in degrees. Zero is edge-on — the hand a continental grip produces. Large
+   * values are the waiter's tray, the palm flat under the racket.
+   *
+   * Realised by rotating the knuckle line about the forearm, which is what a
+   * grip change actually does to the hand. The achievable elevation is bounded
+   * by the forearm's own tilt — a dead vertical forearm cannot present its palm
+   * to the sky at all — so `trophyForearmDrop` moves with it.
+   */
+  palmToSky: number
+  /**
+   * How far the trophy arm flattens out of its cocked position, in metres.
+   *
+   * The tray is not only a wrist rotation. A cocked arm holds the forearm near
+   * vertical, and no grip can present a vertical forearm's palm to the sky —
+   * that is a fact about arms, and it is why the fault always comes with the arm
+   * laid over towards horizontal. This drops the hand towards shoulder height
+   * and pushes it out to the side, which is the shape a player carrying a tray
+   * actually makes.
+   */
+  trophyForearmDrop: number
+  /** Degrees the palm rotates about the forearm through contact — the snap. */
+  pronation: number
+  /**
+   * Seconds the hips lead the shoulders into the swing.
+   *
+   * Positive is the sequence working: the lower body starts and the upper body
+   * follows. Negative is arming the ball — the shoulders fire first and the legs
+   * contribute nothing.
+   */
+  hipLead: number
+  /** Sideways collapse of the spine by contact, in degrees. */
+  spineLean: number
   /** Someone standing around with the racket down — used to test rejection. */
   noSwing: boolean
   /**
@@ -105,6 +139,11 @@ export const CLEAN_SERVE: ServeDials = {
   tossWobble: 0.01,
   motionSeconds: 1.35,
   cameraYaw: 82,
+  palmToSky: 6,
+  trophyForearmDrop: 0,
+  pronation: 95,
+  hipLead: 0.07,
+  spineLean: 4,
   noSwing: false,
   noise: 0,
   dropout: 0,
@@ -189,13 +228,19 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       ],
       u,
     )
+    // The hips run on their own clock, ahead of the shoulders by `hipLead`. A
+    // serve where both lines unwind on the same schedule has no sequence in it
+    // at all, and the sequencing detector would have nothing to find in either
+    // direction — so the lead is part of the rig rather than a fault dialled on
+    // top of it.
+    const uHips = u + d.hipLead / Math.max(1e-6, d.motionSeconds)
     const hipYaw = track(
       [
         [U.ready, d.shoulderYaw + 2],
         [U.trophy, d.hipYaw],
         [U.contact, 10],
       ],
-      u,
+      uHips,
     )
     const tilt = track(
       [
@@ -217,18 +262,30 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     const shDir = { x: Math.cos(rad(shoulderYaw)), z: Math.sin(rad(shoulderYaw)) }
     const shCos = Math.cos(rad(tilt))
     const shSin = Math.sin(rad(tilt))
+
+    // Sideways collapse: the shoulder girdle slides across the hip line as the
+    // motion runs, so the spine stops being a straight vertical column. Applied
+    // as an offset to the whole girdle rather than as a rotation of each
+    // shoulder, because that is what a player chasing a toss actually does —
+    // the shoulders travel, they do not pivot in place.
+    const leanDeg = track([[U.ready, 0], [U.trophy, d.spineLean * 0.35], [U.contact, d.spineLean]], u)
+    const leanShift = Math.tan(rad(leanDeg)) * Math.abs(SHOULDER_DROP)
+    const acrossHips = { x: hipDir.x, z: hipDir.z }
+    const lx = acrossHips.x * leanShift
+    const lz = acrossHips.z * leanShift
+
     // Right shoulder (the hitting side) drops as the tilt grows.
     world[LM.leftShoulder] = lm(
-      -HALF_SHOULDER * shDir.x * shCos,
+      lx - HALF_SHOULDER * shDir.x * shCos,
       SHOULDER_DROP - HALF_SHOULDER * shSin,
-      -HALF_SHOULDER * shDir.z * shCos,
+      lz - HALF_SHOULDER * shDir.z * shCos,
     )
     world[LM.rightShoulder] = lm(
-      HALF_SHOULDER * shDir.x * shCos,
+      lx + HALF_SHOULDER * shDir.x * shCos,
       SHOULDER_DROP + HALF_SHOULDER * shSin,
-      HALF_SHOULDER * shDir.z * shCos,
+      lz + HALF_SHOULDER * shDir.z * shCos,
     )
-    world[LM.nose] = lm(0, NOSE_DROP, 0.06)
+    world[LM.nose] = lm(lx, NOSE_DROP, lz + 0.06)
 
     // Legs: bend splits evenly between hip and ankle, which is enough for the
     // knee angle to come out as dialled.
@@ -263,12 +320,22 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       // head — which is a fault, and not one a serve labelled clean should have.
       // The sweep is also what tells the engine which way the net is, and a
       // clean serve should give it plenty to work with.
-      x: track([[U.ready, 0.18], [U.trophy, 0.24], [U.drop, 0.2], [U.contact, -0.2]], u),
+      x: track(
+        [
+          [U.ready, 0.18],
+          [U.trophy, 0.24 + d.trophyForearmDrop * 1.25],
+          [U.drop, 0.2],
+          [U.contact, -0.2],
+        ],
+        u,
+      ),
       y: track(
         [
           [U.ready, 0.38],
           [U.toss, SHOULDER_DROP + 0.05],
-          [U.trophy, SHOULDER_DROP - 0.2],
+          // A flattening arm drops the hand towards shoulder height, which is
+          // the shape that lets a palm face the sky at all.
+          [U.trophy, SHOULDER_DROP - 0.2 + d.trophyForearmDrop],
           [U.drop, SHOULDER_DROP + d.dropBelowShoulder],
           [U.contact, -reachAboveHip],
           // The hand leaves contact immediately. Without this key the smoothstep
@@ -321,23 +388,28 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     for (const k of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) world[k] = lm(0, NOSE_DROP, 0.04)
     for (const k of [21, 22]) world[k] = k === 21 ? world[LM.leftWrist] : world[LM.rightWrist]
 
-    // Knuckles, roughly 9 cm past the wrist along the forearm. These used to be
-    // parked on the wrist as filler; the racket estimate reads them, and a hand
-    // with no length points nowhere.
-    for (const side of ['left', 'right'] as const) {
-      const elbow = side === 'left' ? LM.leftElbow : LM.rightElbow
-      const wrist = side === 'left' ? LM.leftWrist : LM.rightWrist
-      world[side === 'left' ? LM.leftIndex : LM.rightIndex] = extendPast(
-        world[elbow],
-        world[wrist],
-        0.09,
-      )
-      world[side === 'left' ? LM.leftPinky : LM.rightPinky] = extendPast(
-        world[elbow],
-        world[wrist],
-        0.085,
-      )
-    }
+    // Hands. The knuckles used to sit on the forearm line, one a few
+    // millimetres past the other — enough to point a racket along, and useless
+    // for anything that needs the hand's *plane*, because two points strung out
+    // along an axis do not have one. They are now a real knuckle line: across
+    // the hand, perpendicular to the forearm, rotated about it by the grip.
+    //
+    // The tossing hand keeps a fixed neutral rotation; nothing measures it, and
+    // giving it a dial would only be a second thing to get wrong.
+    const palmAt = track(
+      [
+        [U.ready, d.palmToSky],
+        [U.trophy, d.palmToSky],
+        // Pronation happens through contact, not before it: the palm holds its
+        // grip orientation into the drop and turns over as the arm extends.
+        [U.drop, d.palmToSky],
+        [U.contact, d.palmToSky + d.pronation * 0.55],
+        [1.12, d.palmToSky + d.pronation],
+      ],
+      u,
+    )
+    placeHand(world, 'right', palmAt)
+    placeHand(world, 'left', 10)
 
     /* --- project -------------------------------------------------------- */
     const cam = rad(90 - d.cameraYaw)
@@ -412,10 +484,25 @@ function solveElbow(sh: Landmark, wr: Landmark, side: 1 | -1, straighten?: numbe
   const ux = dx / Math.max(span, 1e-6)
   const uy = dy / Math.max(span, 1e-6)
   const uz = dz / Math.max(span, 1e-6)
-  // Any unit vector perpendicular to the arm works; bulge sideways and back.
-  let px = -uy
-  let py = ux
-  let pz = 0
+
+  // Any unit vector perpendicular to the arm places a valid elbow, and which
+  // one is chosen is the difference between two completely different arms. A
+  // purely sideways bulge hangs the elbow below the shoulder — a windmill — and
+  // the rig produced that on every frame, so a serve dialled clean came back
+  // with a collapsed elbow at the bottom of its racket drop.
+  //
+  // A racket drop is the opposite shape: elbow up and out, racket head hanging
+  // down the back. So the bulge tilts towards vertical in proportion to how far
+  // the hand has fallen below the shoulder, which is exactly when a real arm
+  // does it, and leaves the near-straight arm at contact untouched.
+  const belowShoulder = Math.max(0, uy)
+  const upX = -ux * -uy
+  const upY = -1 - uy * -uy
+  const upZ = -uz * -uy
+  const upN = Math.hypot(upX, upY, upZ) || 1
+  let px = (-uy) * (1 - belowShoulder) + (upX / upN) * belowShoulder
+  let py = ux * (1 - belowShoulder) + (upY / upN) * belowShoulder
+  let pz = (upZ / upN) * belowShoulder
   const pn = Math.hypot(px, py, pz) || 1
   px /= pn
   py /= pn
@@ -428,15 +515,83 @@ function solveElbow(sh: Landmark, wr: Landmark, side: 1 | -1, straighten?: numbe
   }
 }
 
-function extendPast(from: Landmark, through: Landmark, by: number): Landmark {
-  const dx = through.x - from.x
-  const dy = through.y - from.y
-  const dz = through.z - from.z
-  const n = Math.hypot(dx, dy, dz) || 1
-  return {
-    x: through.x + (dx / n) * by,
-    y: through.y + (dy / n) * by,
-    z: through.z + (dz / n) * by,
-    visibility: 1,
+const HAND_LENGTH = 0.09
+const KNUCKLE_HALF_SPAN = 0.042
+
+/**
+ * Put a hand on the end of a forearm, rotated about it by the grip.
+ *
+ * `palmToSky` is how far the palm is turned towards facing upwards, in degrees,
+ * and it is realised by rotating the knuckle line about the forearm axis — which
+ * is exactly what changing grip does to a hand holding a racket. The elevation
+ * the palm can actually reach is bounded by the forearm's own tilt: with the
+ * forearm dead vertical every direction across the hand is horizontal, so no
+ * grip can present the palm to the sky. That is a fact about arms, not a
+ * limitation of the rig, and it is why a waiter's tray comes with a flattened
+ * arm in the first place.
+ *
+ * The chirality flip mirrors the hand for the left side, so a left-hander's
+ * neutral grip does not come back reading as somebody else's fault.
+ */
+function placeHand(world: Landmark[], side: 'left' | 'right', palmToSky: number) {
+  const elbow = world[side === 'left' ? LM.leftElbow : LM.rightElbow]
+  const wrist = world[side === 'left' ? LM.leftWrist : LM.rightWrist]
+  const chirality = side === 'left' ? -1 : 1
+
+  const f = unitOf(wrist.x - elbow.x, wrist.y - elbow.y, wrist.z - elbow.z)
+
+  // The most upward direction available perpendicular to the forearm, and its
+  // partner. Any palm direction perpendicular to the arm is a rotation in this
+  // plane, and `e1` is the one that points as close to the sky as the arm
+  // allows — so asking for elevation reduces to a single angle from it.
+  const fUp = -f.y
+  const e1 = unitOf(-f.x * fUp, -1 - f.y * fUp, -f.z * fUp)
+  const e2 = crossOf(f, e1)
+  const reach = Math.hypot(e1.x, e1.y, e1.z) < 1e-6 ? 0 : Math.hypot(-f.x * fUp, -1 - f.y * fUp, -f.z * fUp)
+
+  // Solve the rotation that lands the palm normal at the requested elevation,
+  // and settle for the closest achievable when the arm cannot reach it.
+  const wanted = Math.sin(rad(Math.max(0, palmToSky)))
+  const phi = Math.acos(Math.max(-1, Math.min(1, reach > 1e-6 ? wanted / reach : 1)))
+
+  const n = {
+    x: e1.x * Math.cos(phi) + e2.x * Math.sin(phi),
+    y: e1.y * Math.cos(phi) + e2.y * Math.sin(phi),
+    z: e1.z * Math.cos(phi) + e2.z * Math.sin(phi),
   }
+  // Knuckle line: perpendicular to both the forearm and the palm normal, which
+  // makes the normal come back out of the plane the detector reconstructs.
+  const k = crossOf(n, f)
+
+  const base = {
+    x: wrist.x + f.x * HAND_LENGTH,
+    y: wrist.y + f.y * HAND_LENGTH,
+    z: wrist.z + f.z * HAND_LENGTH,
+  }
+  const span = KNUCKLE_HALF_SPAN * chirality
+  world[side === 'left' ? LM.leftIndex : LM.rightIndex] = lm(
+    base.x + k.x * span,
+    base.y + k.y * span,
+    base.z + k.z * span,
+  )
+  world[side === 'left' ? LM.leftPinky : LM.rightPinky] = lm(
+    base.x - k.x * span,
+    base.y - k.y * span,
+    base.z - k.z * span,
+  )
+  world[side === 'left' ? LM.leftThumb : LM.rightThumb] = lm(
+    base.x + k.x * span * 0.5 + n.x * 0.02,
+    base.y + k.y * span * 0.5 + n.y * 0.02,
+    base.z + k.z * span * 0.5 + n.z * 0.02,
+  )
 }
+
+function unitOf(x: number, y: number, z: number) {
+  const n = Math.hypot(x, y, z) || 1
+  return { x: x / n, y: y / n, z: z / n }
+}
+
+function crossOf(a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }) {
+  return unitOf(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x)
+}
+
