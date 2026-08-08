@@ -103,7 +103,7 @@ async function prune(aggressive = false): Promise<void> {
     // since an unreadable row may simply belong to a newer version of the app.
     const id = (row as { id?: unknown } | null)?.id
     if (aggressive && typeof id === 'string') {
-      await tx('readwrite', (store) => store.delete(id))
+      await safely(() => tx('readwrite', (store) => store.delete(id)), undefined)
     }
   }
   all.sort((a, b) => b.createdAt - a.createdAt)
@@ -112,17 +112,49 @@ async function prune(aggressive = false): Promise<void> {
   const keepAll = aggressive ? 25 : MAX_SESSIONS
 
   for (const doomed of all.slice(keepAll)) {
-    await tx('readwrite', (store) => store.delete(doomed.id))
+    await safely(() => tx('readwrite', (store) => store.delete(doomed.id)), undefined)
   }
 
+  /*
+   * Every step here is best-effort, and that is the point rather than laziness.
+   *
+   * This loop runs inside the quota recovery: `saveSession` catches a full disk,
+   * calls `prune(true)` to free room, then retries the write. Stripping stills
+   * is itself a `put`, and a `put` rewrites a record before the old copy is
+   * released — so under real quota pressure it can throw the very error it is
+   * being run to recover from. Unguarded, that rejection propagated out of
+   * `prune` and past the retry, and the report the player had just recorded was
+   * lost even though the delete loop above had already freed the space for it.
+   *
+   * Freeing less than hoped for is survivable. Not getting to the retry is not.
+   */
   for (const s of all.slice(keepStills, keepAll)) {
     if (s.phases.some((p) => p.thumbnail)) {
-      await tx('readwrite', (store) => store.put(stripStills(s)))
+      await safely(() => tx('readwrite', (store) => store.put(stripStills(s))), undefined)
     }
   }
 }
 
 export async function saveSession(analysis: Analysis): Promise<void> {
+  /*
+   * A clip the engine refused never enters the record.
+   *
+   * The refusal is rendered on the report page, and for a while that was the
+   * only place it applied — the same analysis was then filed like any other, and
+   * everything downstream reads the history without ever consulting triage. The
+   * score set a personal best in `buildProgress`, landed as a point on the trend
+   * chart, became the `previous` the next report's deltas were measured against,
+   * fed the practice window and appeared in the history sheet under a confident
+   * focus line. Six places acting on a number the app had just told the player
+   * not to trust, none of them carrying the banner that said so.
+   *
+   * Enforced here rather than at the call sites because there are five of them —
+   * a fresh analysis, a serve-type rescore, a level change, a cached re-open and
+   * the consistency sweep — and a rule that has to be remembered five times is a
+   * rule that holds four times.
+   */
+  if (analysis.triage?.status === 'rejected') return
+
   const { frames: _frames, ...rest } = analysis
   void _frames
 
@@ -245,6 +277,49 @@ export function normalise(raw: unknown): Session | undefined {
       why: 'This report was saved by an older version of the app, so some detail is missing.',
       drill: { name: '', how: '', reps: '' },
     },
+    // Dropped rather than repaired when it is the wrong shape. Every other field
+    // here is load-bearing and worth defaulting; the spreads are an extra a
+    // report is complete without, and the panel that draws them reaches through
+    // `metrics[].values` and `range` on every row. Half a spread is a crash in a
+    // component the ErrorBoundary can only replace with a blank screen.
+    consistency: usableConsistency(s.consistency),
+  }
+}
+
+/**
+ * A stored consistency block, or nothing.
+ *
+ * Structural, not exhaustive: enough of a check that the panel and the trend
+ * cannot be handed something they will throw on, without pretending to validate
+ * seventeen nested rows a hand-edited backup could still get subtly wrong.
+ */
+function usableConsistency(raw: unknown): Session['consistency'] {
+  if (typeof raw !== 'object' || raw === null) return undefined
+  const c = raw as Partial<NonNullable<Session['consistency']>>
+  if (typeof c.serves !== 'number' || typeof c.score !== 'number') return undefined
+  if (!Array.isArray(c.overallScores) || c.overallScores.some((n) => typeof n !== 'number')) {
+    return undefined
+  }
+  if (!Array.isArray(c.metrics)) return undefined
+  const metrics = c.metrics.filter(
+    (m) =>
+      typeof m?.id === 'string' &&
+      Array.isArray(m.values) &&
+      Array.isArray(m.ideal) &&
+      Array.isArray(m.range),
+  )
+  if (metrics.length === 0) return undefined
+
+  // Re-derived rather than carried over. `weakest` and `steadiest` are the ends
+  // of the same ranking the rows above came from, so a row dropped by the filter
+  // can leave them pointing at something no longer in the list — and the panel
+  // then names an element the table underneath it does not contain.
+  const ranked = [...metrics].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+  return {
+    ...(c as NonNullable<Session['consistency']>),
+    metrics,
+    weakest: ranked[0],
+    steadiest: ranked[ranked.length - 1],
   }
 }
 

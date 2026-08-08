@@ -158,6 +158,98 @@ export const SIGNALS: Record<string, SignalSpec> = {
   },
 }
 
+/**
+ * How far each signal moves on its own, filming the same serve twice.
+ *
+ * The band a signal is graded against is meaningless below its own
+ * repeatability, and four of these were being graded far below it. Measured on
+ * an ensemble of noise realisations of one identical synthetic serve — see
+ * `__tests__/depth.test.ts`, which prints the deviations these come from and
+ * fails if they drift. A miss smaller than the figure here is reported as no
+ * fault at all, for the same reason `MEANINGFUL_DELTA` refuses to call a
+ * two-point move on the trend chart progress.
+ *
+ * Each is `min(1.5 × deviation, seriousMiss)`. The deviation half of that is the
+ * measurement; the cap is a deliberate refusal. A floor at or above the signal's
+ * own `seriousMiss` would make its flaw structurally undetectable — no value
+ * could ever miss the band by enough — and quietly deleting a detector on the
+ * strength of a modelled camera is not a trade worth making silently. Where the
+ * cap binds, the measurement is telling us something uncomfortable and the test
+ * says so out loud rather than the constant hiding it.
+ *
+ * The cap binds on exactly two signals today, `hip_lead_ms` and `pronation_deg`.
+ * Both are recovered from rotation about the vertical axis, both moved further
+ * across noise realisations of one serve than the engine's own definition of a
+ * serious miss, and both therefore name their flaw at a resolution the
+ * measurement does not clearly support. That is the single most important thing
+ * real footage would settle.
+ *
+ * Two more caveats, both load-bearing:
+ *
+ * These are floors on *detection*, never on the injury flags. A joint being
+ * loaded wrongly is read from a pair of signals against absolute limits, and
+ * hedging that would be hedging the one output that is not a matter of degree.
+ *
+ * And they are derived from a model of camera noise rather than from footage.
+ * The rig's depth error is set from published characterisations of MediaPipe's
+ * world landmarks, not from clips filmed through this app, because there are no
+ * such clips — `fixtures/index.ts` is empty. So these are provisional: the right
+ * order of magnitude, honestly derived, and not yet confirmed against a real
+ * camera. Re-derive them the moment there is footage.
+ */
+export const NOISE_FLOOR: Record<string, number> = {
+  // Two peak-finds on a smoothed derivative, differenced. Easily the least
+  // repeatable number in the engine: the peak can land a frame either side on a
+  // noisy realisation, and at 50 fps that alone is 20 ms per side.
+  // Capped: the deviation is 57 ms, over three frames at a phone's frame rate.
+  hip_lead_ms: 45,
+  // Forearm rotation between two sampled instants, from the palm normal — a
+  // 3D orientation recovered from landmarks the network placed in depth, on the
+  // smallest structure in the skeleton. Capped: the deviation is 20°.
+  pronation_deg: 16,
+  // Same normal, read on one frame near the trophy.
+  palm_to_sky_deg: 10,
+  // A yaw difference. Hedged already by the camera check, and still this wide.
+  separation_deg: 9,
+  // Lateral spine angle, differenced against the ready position — so it carries
+  // the error of two frames rather than one.
+  spine_lean_deg: 6,
+  // The rest are read from x and y, which the camera genuinely saw, and are an
+  // order of magnitude steadier for it.
+  toss_drift_ratio: 0.006,
+  drop_depth_ratio: 0.012,
+  elbow_lift_ratio: 0.012,
+  contact_height_ratio: 0.012,
+  toss_peak_ratio: 0.02,
+}
+
+/**
+ * The ladder in words, because nobody knows their own number.
+ *
+ * The ratings here are UTR-shaped, and a player who books a court twice a month
+ * does not have a UTR and cannot answer a question phrased as one. These are the
+ * names the level control offers and the names the report says back — one
+ * vocabulary, defined once. Two of them, drifting apart, is a report that says
+ * "levelled for 4.5" directly above a control whose selected option reads "club
+ * level", which is one fact told twice in two languages.
+ *
+ * Deliberately coarse. Four names across ten rungs is as fine a distinction as
+ * somebody can honestly make about their own serve, and offering ten would
+ * invite a precision the ladder itself does not have — the bands are
+ * interpolated between four anchors.
+ */
+export const RUNGS: { tier: number; name: string; blurb: string }[] = [
+  { tier: 2, name: 'still learning', blurb: 'Getting it in play' },
+  { tier: 4, name: 'club level', blurb: 'Reliable first serve' },
+  { tier: 6, name: 'solid club', blurb: 'You can hit spin on demand' },
+  { tier: 8, name: 'league or open', blurb: 'The serve wins you points' },
+]
+
+/** The name of the rung a rating sits closest to. */
+export const rungName = (tier: number): string =>
+  RUNGS.reduce((best, r) => (Math.abs(r.tier - tier) < Math.abs(best.tier - tier) ? r : best), RUNGS[0])
+    .name
+
 /** The rungs the ladder is actually anchored at. */
 const ANCHORS = [3, 5, 7, 9] as const
 

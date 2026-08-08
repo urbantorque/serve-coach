@@ -7,6 +7,9 @@ import { pickFocus } from '../lib/analysis/analyze'
 import { measure } from '../lib/analysis/metrics'
 import { buildPhases, detectServe } from '../lib/analysis/phases'
 import { statusOf } from '../lib/analysis/geometry'
+import { diagnose } from '../lib/analysis/diagnose'
+import { assessResilience, triage } from '../lib/analysis/triage'
+import { causalFocus } from '../lib/analysis/verdict'
 import { FUNDAMENTALS } from '../lib/analysis/coaching'
 import type { Analysis } from '../lib/analysis/types'
 import { buildServe, type ServeDials } from '../lib/analysis/__tests__/syntheticServe'
@@ -70,6 +73,31 @@ export function fitToClip(analysis: Analysis, duration: number): Analysis {
   }
 }
 
+/**
+ * Serves dialled to reach a screen that is otherwise hard to get to.
+ *
+ * `?demo=injury` and `?demo=refused` exist because both of those screens are
+ * decided by the engine rather than by a prop — you cannot navigate to them, you
+ * have to produce a serve or a clip that triggers one. Which meant that until
+ * now the only way to look at the injury banner was to go and film somebody
+ * collapsing sideways, and the only way to look at the refusal was to film
+ * something bad enough to be thrown out. Neither got looked at.
+ *
+ * These are dials into the same rig every other demo uses, not fixtures with the
+ * answers written in: the injury clip earns its flag through `injuriesIn`, and
+ * the refused clip earns its rejection through `rejectionFor`, exactly as a real
+ * one would.
+ */
+export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
+  // A spine folding well past the absolute limit, plus a tray grip rotated hard
+  // through the ball: the lumbar flag and the wrist flag together.
+  injury: { spineLean: 34, palmToSky: 80, trophyForearmDrop: 0.4 },
+  // Heavy tracker noise smears the racket hand through the swing, which is what
+  // `too_blurry` is measuring. Nothing here says "reject"; the resilience pass
+  // decides that on its own.
+  refused: { noise: 0.05, dropout: 0.35 },
+}
+
 /** A basket of serves with a wandering contact height, for the comparison UI. */
 export function sampleBasket(): Analysis[] {
   // Five serves in the clip, of which the second could not be read — which is
@@ -85,7 +113,7 @@ export function sampleBasket(): Analysis[] {
   })
 }
 
-export function sampleAnalysis(dials: Partial<ServeDials> = {}): Analysis {
+export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): Analysis {
   const fps = 32
   // A recognisably club-level serve: stiff legs, shallow drop, arm dropping early.
   const frames = buildServe(
@@ -96,6 +124,13 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}): Analysis {
   const sideView = skel.shoulderWidth / skel.bodyHeight < 0.1
   const fundamentals = measure(frames, skel, sideView)
   const phases = buildPhases(frames, skel.keys)
+
+  // The diagnostic half of the pipeline, run for real. Without it the demo
+  // renders a report whose focus comes from the measurement ranking, which is
+  // the fallback rather than the behaviour — no injury flag, no named fault, no
+  // tier line, and no way to look at any of them without filming a serve.
+  const diagnosis = diagnose(frames, skel, { tier })
+  const verdict = triage(diagnosis, assessResilience(frames, skel))
 
   const totalWeight = fundamentals.reduce((s, f) => s + FUNDAMENTALS[f.id].weight, 0)
   const overall = Math.round(
@@ -122,10 +157,14 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}): Analysis {
     fundamentals,
     overall,
     overallStatus: statusOf(overall),
-    // Uses the real chooser rather than a copy of it: a harness that
-    // reimplements what it is meant to be previewing drifts away from the app
-    // silently, and then demonstrates behaviour that does not exist.
-    focus: pickFocus(fundamentals),
+    // The real chooser, both halves of it. A harness that reimplements what it
+    // is meant to be previewing drifts away from the app silently and then
+    // demonstrates behaviour that does not exist — which is exactly what
+    // happened when the focus moved to the named fault and this line was left
+    // calling the ranking on its own.
+    focus: causalFocus(verdict) ?? pickFocus(fundamentals),
+    diagnosis,
+    triage: verdict,
     frames,
     window: { start: frames[0].t, end: frames[frames.length - 1].t },
     serves: { count: 1, index: 0 },

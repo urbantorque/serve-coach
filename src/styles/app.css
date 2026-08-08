@@ -1799,6 +1799,242 @@
 }
 
 /* ============================================================================
+   Best-to-worst gap — the one chart where down is the good direction
+   ========================================================================= */
+
+.gaps {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.gap {
+  display: grid;
+  grid-template-columns: 62px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+}
+
+.gap-date {
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+
+/*
+ * Deliberately not the delta bars.
+ *
+ * These two sit one under the other in the same sheet and were built to the
+ * same label / track / value grid, but they mean opposite things: a delta bar
+ * runs out from a centre axis and up is good, while a gap bar runs from the left
+ * edge and *short* is good. Sharing the great/good/fair/work fills on top of
+ * that made them read as one chart with an inconsistent scale.
+ *
+ * So the colour coding goes. A single flat rule per row, with only the most
+ * recent basket picked out — the eye compares lengths, which is the one
+ * comparison this chart is for, and there is no second scale to misread.
+ */
+.gap-track {
+  position: relative;
+  height: 4px;
+  background: var(--ink-3);
+}
+
+.gap-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--fg-faint);
+}
+
+.gap:first-child .gap-fill {
+  background: var(--lime);
+  height: 8px;
+  top: -2px;
+}
+
+.gap:first-child .gap-value {
+  color: var(--fg);
+}
+
+.gap-value {
+  font-size: 12.5px;
+  font-weight: 620;
+  text-align: right;
+  color: var(--fg-muted);
+}
+
+.gaps-note {
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
+}
+
+/* ============================================================================
+   Injury risk — outranks the score, the refusal and everything else
+   ========================================================================= */
+
+/*
+ * Deliberately the loudest block in the app, and deliberately not a card.
+ *
+ * Everything else on this page is judged against the tier ladder and is
+ * therefore a matter of degree. These are read against absolute limits — a
+ * wrist has the same range at every rating — so they are the one thing here
+ * that is not a score. The square left edge and the flat fill are what stop it
+ * reading as another rounded panel of advice to scroll past.
+ */
+.injuries {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/*
+ * The base is the loud one, and every severity gets it.
+ *
+ * Styling only the high case and letting the rest fall through to a quiet
+ * default gets this exactly backwards: `medium` is the ordinary verdict — the
+ * flags escalate to high only well past the limit — so the common warning would
+ * have been the whispered one. High adds a filled edge on top rather than being
+ * the only case that shouts.
+ */
+.injury {
+  display: flex;
+  gap: 13px;
+  padding: 18px 18px 19px;
+  background: color-mix(in srgb, var(--work) 16%, var(--ink-1));
+  border: 1px solid rgba(255, 122, 107, 0.45);
+  border-left: 5px solid var(--work);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+
+.injury--high {
+  background: color-mix(in srgb, var(--work) 26%, var(--ink-1));
+  border-color: var(--work);
+  box-shadow: inset 0 0 0 1px rgba(255, 122, 107, 0.3);
+}
+
+.injury-mark {
+  color: var(--work);
+  margin-top: 2px;
+  flex: none;
+}
+
+/*
+ * Set to carry against the score ring and the focus card further down the page.
+ * At the body size of a caveat it lost to both, which made "first in the
+ * document" and "first thing you see" two different orderings.
+ */
+.injury-text strong {
+  display: block;
+  font-size: 17px;
+  font-weight: var(--wt-title);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
+  color: #ffe4df;
+}
+
+.injury-text p {
+  margin-top: 6px;
+  max-width: var(--measure);
+  font-size: 14px;
+  line-height: var(--lh-snug);
+  color: #f7d2cb;
+  text-wrap: pretty;
+}
+
+/* ============================================================================
+   Refusal — the clip the engine will not put a number on
+   ========================================================================= */
+
+.refusal {
+  padding: 28px 22px 24px;
+  border-radius: var(--r-lg);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+.refusal-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  background: var(--fair-dim);
+  color: var(--fair);
+}
+
+.refusal h1 {
+  margin: 16px 0 14px;
+  font-size: 24px;
+  font-weight: var(--wt-title);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display);
+  text-wrap: balance;
+}
+
+.refusal-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: var(--measure);
+}
+
+.refusal-hints li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 14px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.refusal-hints li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 6px;
+  height: 1px;
+  background: var(--lime);
+}
+
+.refusal-note {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid var(--hairline-soft);
+  max-width: var(--measure);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fg-faint);
+  text-wrap: pretty;
+}
+
+/* The banner that stays up once the numbers are shown anyway. */
+.unreliable {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--fair-dim);
+  border: 1px solid rgba(255, 182, 72, 0.24);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: #f0d5a8;
+  text-wrap: pretty;
+}
+
+.unreliable .icon {
+  color: var(--fair);
+  flex: none;
+  margin-top: 1px;
+}
+
+.unreliable strong {
+  color: #ffe6bd;
+}
+
+/* ============================================================================
    Focus card — the single most important thing on the page
    ========================================================================= */
 
@@ -1873,6 +2109,130 @@
   font-size: 13px;
   line-height: 1.6;
   color: var(--fg-muted);
+}
+
+/*
+ * What the report is holding back, as a count.
+ *
+ * Set below the instruction and above the drill, quieter than both. It exists
+ * so that a second fault surfacing on the next clip does not read as the app
+ * changing its mind — not to compete with the one thing to work on.
+ */
+.focus-suppressed {
+  position: relative;
+  margin-top: 10px;
+  max-width: var(--measure);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+  text-wrap: pretty;
+}
+
+/* Which rung these targets came off, and the way to move it. */
+.levelled {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--hairline);
+}
+
+.levelled-text {
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+}
+
+.levelled-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lime);
+}
+
+/* ============================================================================
+   Level picker — which rung to be marked against
+   ========================================================================= */
+
+/*
+ * A follow-on, not a peer.
+ *
+ * This sits directly under `.hand-pick` in the first-run sheet and directly
+ * under `.focus-drill` on the report, and both of those are bordered boxes on a
+ * panel. Given the same chrome it read as a second question of equal standing —
+ * which is wrong twice over: the hand has to be right before the first clip, and
+ * this one has a perfectly good answer of "don't ask me". So it carries a rule
+ * and no box.
+ */
+.level-pick {
+  position: relative;
+  margin-top: 18px;
+  padding: 15px 0 0;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.level-pick legend {
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.level-pick-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.level-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
+  text-align: left;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.level-option strong {
+  font-size: 13.5px;
+  font-weight: 620;
+  color: var(--fg-muted);
+}
+
+.level-option span {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--fg-faint);
+}
+
+.level-option.is-on {
+  border-color: var(--lime);
+  background: color-mix(in srgb, var(--lime) 12%, var(--ink-2));
+}
+
+.level-option.is-on strong {
+  color: var(--fg);
+}
+
+.level-pick-note {
+  margin-top: 11px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
 }
 
 /* ============================================================================

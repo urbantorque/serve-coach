@@ -319,9 +319,14 @@ check('a clean serve raises no injury flags', () => {
 })
 
 check('an injury flag survives triage even when its flaw is not the one chosen', () => {
+  // The forearm drop is what actually turns the palm up on this rig — the
+  // `palmToSky` dial alone left the measured grip three degrees outside its
+  // band, which the noise floor in `tiers.ts` now correctly declines to call a
+  // fault at all. A tray grip this test can rest an assertion on has to be one
+  // the engine could tell from a clean grip on a real camera.
   const { result } = pipeline({
     palmToSky: 80,
-    trophyForearmDrop: 0.22,
+    trophyForearmDrop: 0.4,
     spineLean: 30,
     tossWobble: 0.09,
   })

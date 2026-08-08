@@ -29,3 +29,20 @@ function hash(input: string): string {
 export function sessionKeyFor(clip: ClipIdentity, serveIndex: number): string {
   return `serve-${hash(`${clip.name}|${clip.size}|${clip.lastModified}`)}-${serveIndex}`
 }
+
+/**
+ * Which clip a stored report came from, dropping which serve within it.
+ *
+ * The consistency sweep measures a *clip*, not a serve, but it is stored on the
+ * report that happened to be on screen when it ran. Run it, flick to another
+ * serve in the same basket, run it again, and two reports now carry the same
+ * basket — which the trend would plot as two sessions of practice. This is the
+ * key that collapses them back into one.
+ *
+ * Anything not written by `sessionKeyFor` — a dev fixture, a report from before
+ * the key existed — has no clip part to recover and stands for itself.
+ */
+export function clipIdOf(sessionId: string): string {
+  const m = /^(serve-[0-9a-z]+)-\d+$/.exec(sessionId)
+  return m ? m[1] : sessionId
+}

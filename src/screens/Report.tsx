@@ -1,13 +1,14 @@
 import { useMemo, useRef, useState } from 'react'
 import ConsistencyPanel from '../components/ConsistencyPanel'
 import FundamentalCard from '../components/FundamentalCard'
+import LevelPicker from '../components/LevelPicker'
 import PosePlayer from '../components/PosePlayer'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
-import type { Consistency } from '../lib/analysis/consistency'
+import { injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { ServeType } from '../lib/storage/prefs'
 import { deltasAgainst, scoringVersionOf } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
@@ -45,13 +46,27 @@ interface Props {
   onPickServe?: (index: number) => void
   /** Re-score against a different serve type's target bands. */
   onPickServeType?: (type: ServeType) => void
+  /**
+   * Re-read the clip against a different rung of the tier ladder.
+   *
+   * A full re-run rather than a rescore: the tier decides every band the
+   * diagnostic pass judges against, and those bands are applied while the flaws
+   * are found, not after. `rescore` only moves the serve-type bands.
+   */
+  onPickTier?: (tier: number | undefined) => void
+  /** What the engine estimated, when the player has stated nothing. */
+  statedTier?: number
   /** Put this serve side by side with another saved one. */
   onCompare?: () => void
-  /** Measure every serve in the clip and compare them. */
+  /**
+   * Measure every serve in the clip and compare them.
+   *
+   * The result of that comparison is not a prop. It rides on the report as
+   * `analysis.consistency`, so it survives the back button and reaches the trend
+   * — which is what it is for. Passing it in beside the report is what let the
+   * two disagree about which clip they described.
+   */
   onCheckConsistency?: () => void
-  /** Result of that comparison, once it has run. */
-  consistency?: Consistency
-  onDismissConsistency?: () => void
 }
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -67,13 +82,33 @@ export default function Report({
   onFlipHandedness,
   onPickServe,
   onCheckConsistency,
-  consistency,
-  onDismissConsistency,
   onPickServeType,
+  onPickTier,
+  statedTier,
   onCompare,
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
+  const [pickingLevel, setPickingLevel] = useState(false)
+  /*
+   * Hiding the spreads, not deleting them.
+   *
+   * They cost a full pass over the video per serve and they are the input to the
+   * consistency trend, so "dismiss" has to mean "off my screen" rather than
+   * "throw it away" — which is what it meant while they lived in state above
+   * this component, and the player had no way to know.
+   */
+  const [hidSpreads, setHidSpreads] = useState(false)
+  const consistency = hidSpreads ? undefined : analysis.consistency
+  /**
+   * Whether the player has asked to see numbers off a clip that was refused.
+   *
+   * The escape hatch exists because the alternative is worse in both directions:
+   * throwing the report away loses work the engine already did, and showing it
+   * unmarked is the confident wrong answer the refusal exists to prevent. Behind
+   * a deliberate tap, under a banner that stays up, it is neither.
+   */
+  const [overrode, setOverrode] = useState(false)
   const verdict = VERDICT[analysis.overallStatus]
   const live = isLive(analysis) && Boolean(videoUrl)
   /*
@@ -120,23 +155,119 @@ export default function Report({
     playerRef.current?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'center' })
   }
 
+  /*
+   * The engine's own verdict on this clip, finally on screen.
+   *
+   * All three of these have been computed, stored and read back out again since
+   * the diagnostic pass shipped, and none of them had a consumer. The refusal is
+   * the one that mattered most: a clip the engine had already decided was not
+   * evidence still rendered as a full report, scores and drill and all, and
+   * looked identical to one off a clean side-on clip.
+   */
+  const refusal = refusalFor(analysis.triage)
+  const injuries = injuryNotes(analysis.triage)
+  const suppressed = suppressedNote(analysis.triage)
+  const levelled = tierLabel(analysis.triage)
+
+  /*
+   * Injuries lead, above the score and above everything else on the page.
+   *
+   * Not above a refusal, though — and that is the engine's decision rather than
+   * this component's. `triage` returns an empty `injury_risk` on any clip it
+   * rejects, because the flags are built from the same measurements the
+   * rejection has just declared confabulated, and a warning about somebody's
+   * wrist assembled from numbers the app does not believe is worse than no
+   * warning at all. So there is deliberately no injury block on the refusal
+   * screen: it would be unreachable code standing for a promise the engine does
+   * not make.
+   */
+  const injuryBlock = injuries.length > 0 && (
+    <section className="injuries" aria-label="Injury risk">
+      {injuries.map((n) => (
+        <div key={n.flag} className={`injury injury--${n.severity}`}>
+          <span className="injury-mark">
+            <Icon name="warn" size={18} />
+          </span>
+          <div className="injury-text">
+            <strong>{n.title}</strong>
+            <p>
+              <Cue text={n.body} />
+            </p>
+          </div>
+        </div>
+      ))}
+    </section>
+  )
+
+  const topbar = (
+    <header className="topbar">
+      <button className="icon-btn" onClick={onBack} aria-label="Back">
+        <Icon name="back" />
+      </button>
+      <span className="topbar-title">
+        {new Date(analysis.createdAt).toLocaleDateString(undefined, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        })}
+      </span>
+      <button className="icon-btn" onClick={onAnalyzeAnother} aria-label="Analyse another serve">
+        <Icon name="camera" />
+      </button>
+    </header>
+  )
+
+  // Refused, and not yet overridden: the numbers exist and stay off the screen.
+  if (refusal && !overrode) {
+    return (
+      <div className="screen report">
+        {topbar}
+        <section className="refusal">
+          <span className="refusal-mark">
+            <Icon name="warn" size={26} />
+          </span>
+          <h1>{refusal.title}</h1>
+          <ul className="refusal-hints">
+            {refusal.hints.map((h) => (
+              <li key={h}>{h}</li>
+            ))}
+          </ul>
+          <p className="refusal-note">
+            I measured this clip and I do not trust what came out. Numbers off footage this hard to
+            read look exactly like real ones.
+          </p>
+        </section>
+        <footer className="report-foot">
+          <button className="btn btn--primary btn--full" onClick={onAnalyzeAnother}>
+            <Icon name="camera" size={18} />
+            Film it again
+          </button>
+          <button className="btn btn--ghost btn--full" onClick={() => setOverrode(true)}>
+            Show me the numbers anyway
+          </button>
+        </footer>
+      </div>
+    )
+  }
+
   return (
     <div className="screen report">
-      <header className="topbar">
-        <button className="icon-btn" onClick={onBack} aria-label="Back">
-          <Icon name="back" />
-        </button>
-        <span className="topbar-title">
-          {new Date(analysis.createdAt).toLocaleDateString(undefined, {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-          })}
-        </span>
-        <button className="icon-btn" onClick={onAnalyzeAnother} aria-label="Analyse another serve">
-          <Icon name="camera" />
-        </button>
-      </header>
+      {topbar}
+      {injuryBlock}
+
+      {/* Overridden, so the banner stays up for as long as the numbers do. A
+          one-off dismissible warning would be gone by the time the player
+          scrolled to the fundamentals, which is where the invented precision
+          actually lives. */}
+      {refusal && (
+        <section className="unreliable">
+          <Icon name="warn" size={16} />
+          <span>
+            <strong>{refusal.title}.</strong> Everything below came off that clip, so treat it as a
+            rough sketch rather than a measurement.
+          </span>
+        </section>
+      )}
 
       <section className="hero">
         <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={148} label="overall" />
@@ -239,9 +370,7 @@ export default function Report({
         </section>
       )}
 
-      {consistency && onDismissConsistency && (
-        <ConsistencyPanel consistency={consistency} onDismiss={onDismissConsistency} />
-      )}
+      {consistency && <ConsistencyPanel consistency={consistency} onDismiss={() => setHidSpreads(true)} />}
 
       {analysis.quality.warnings.length > 0 && (
         <section className="notes">
@@ -263,12 +392,52 @@ export default function Report({
         <p>
           <Cue text={analysis.focus.why} />
         </p>
+
+        {/* A count, never a list. Six faults printed out is the list nobody acts
+            on that the hierarchy exists to prevent — but saying nothing at all
+            means a second fault appearing on the next clip reads as the app
+            changing its mind. */}
+        {suppressed && (
+          <p className="focus-suppressed">
+            <Cue text={suppressed} />
+          </p>
+        )}
+
         <div className="focus-drill">
           <span className="drill-kicker">The drill</span>
           <h3>{analysis.focus.drill.name}</h3>
           <p>{analysis.focus.drill.how}</p>
           <span className="drill-reps">{analysis.focus.drill.reps}</span>
         </div>
+
+        {/* The targets above are one rung up from wherever the engine has put
+            this player, and until now that was invisible — which made every band
+            look like an absolute somebody had chosen. */}
+        {levelled && (
+          <div className="levelled">
+            <span className="levelled-text">{levelled}</span>
+            {onPickTier && (
+              <button
+                className="levelled-btn"
+                onClick={() => setPickingLevel((v) => !v)}
+                aria-expanded={pickingLevel}
+              >
+                {pickingLevel ? 'Close' : 'Change'}
+                <Icon name="chevron" size={13} />
+              </button>
+            )}
+          </div>
+        )}
+        {levelled && onPickTier && pickingLevel && (
+          <LevelPicker
+            value={statedTier}
+            estimated={analysis.triage?.tier?.current}
+            onChange={(tier) => {
+              setPickingLevel(false)
+              onPickTier(tier)
+            }}
+          />
+        )}
       </section>
 
       {live && (

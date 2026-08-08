@@ -38,7 +38,29 @@ function useCountUp(target: number, enabled: boolean): number {
       if (t < 1) raf.current = requestAnimationFrame(tick)
     }
     raf.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf.current)
+
+    /*
+     * If the frames never come, land on the number anyway.
+     *
+     * `requestAnimationFrame` does not fire in a document that is not
+     * compositing — a backgrounded tab, an inert or hidden frame, a headless
+     * pane. The ring's stroke is plain SVG and draws the real score regardless,
+     * so a starved animation leaves the arc showing sixty-eight per cent with a
+     * hard zero in the middle of it: the two halves of one number disagreeing,
+     * which is worse than either being wrong on its own.
+     *
+     * Well past the animation's own second, so it only ever catches the case
+     * where the frames genuinely did not arrive.
+     */
+    const bail = setTimeout(() => {
+      setValue(target)
+      from.current = target
+    }, 2500)
+
+    return () => {
+      cancelAnimationFrame(raf.current)
+      clearTimeout(bail)
+    }
   }, [target, enabled])
 
   return value

@@ -3,6 +3,7 @@ import { statusOf } from './analysis/geometry'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
+import { clipIdOf } from './storage/sessionKey'
 
 export interface TrendPoint {
   id: string
@@ -224,6 +225,125 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
     serveType: type,
     setAside: sessions.length - matching.length,
     rubricBreakAt: era.length < points.length ? era[0].createdAt : undefined,
+  }
+}
+
+/* ------------------------------------------------- consistency, over time -- */
+
+export interface ConsistencyPoint {
+  id: string
+  createdAt: number
+  /**
+   * Points between the best and the worst serve in that basket.
+   *
+   * The headline number for a club player, and the one a single report cannot
+   * produce. An average tells somebody their serve is a 68; this tells them
+   * their good one is a 79 and their bad one is a 51, which is the difference
+   * between holding serve and double faulting — and it is the number that comes
+   * down first when technique starts to groove.
+   */
+  gap: number
+  /** How many serves in that clip were readable. A gap over two is thin. */
+  serves: number
+  /** The sweep's own repeatability score, which leans on the least steady parts. */
+  score: number
+}
+
+export interface ConsistencyTrend {
+  /** Oldest first. */
+  points: ConsistencyPoint[]
+  latest: ConsistencyPoint
+  /** Change in the gap since the basket before it. Negative is an improvement. */
+  gapDelta?: number
+  /**
+   * The element that came out least repeatable most often, and how many baskets
+   * it did that in. What to groove, as opposed to what to fix.
+   */
+  recurring?: { id: string; label: string; sessions: number }
+}
+
+/**
+ * Whether a player's serves are converging on each other, across sessions.
+ *
+ * `buildProgress` answers "is my serve getting better"; this answers "is it
+ * getting more repeatable", and for most club players the second is the one
+ * holding them back. It has been computable since the sweep shipped and was
+ * impossible to build, because the spreads lived in React state and were gone
+ * the moment the player pressed back.
+ *
+ * Guarded the same three ways `buildProgress` is — one serve type, one rubric,
+ * and no double counting — because every one of those would otherwise report a
+ * change the player did not make.
+ */
+export function buildConsistencyTrend(
+  sessions: Session[],
+  serveType?: ServeType,
+): ConsistencyTrend | undefined {
+  const type = serveType ?? dominantType(sessions)
+
+  const withSpreads = sessions
+    .filter(
+      (s) =>
+        typeOf(s) === type &&
+        s.consistency &&
+        s.consistency.serves >= 2 &&
+        // Gated on the array the gap is actually computed from, not on the count
+        // beside it. `serves` and `overallScores` agree on anything this app
+        // wrote, and a hand-edited backup can carry a count of three next to an
+        // empty list — from which `Math.max` of nothing produces −Infinity, and
+        // an infinite gap takes the chart's axis with it.
+        s.consistency.overallScores.length >= 2,
+    )
+    .sort((a, b) => a.createdAt - b.createdAt)
+
+  // One point per clip, not per report. A sweep run from serve three and again
+  // from serve four measures the same basket twice, and plotting both would
+  // draw a flat stretch that reads as a session where nothing changed.
+  const byClip = new Map<string, Session>()
+  for (const s of withSpreads) byClip.set(clipIdOf(s.id), s)
+
+  // The consistency score is graded against target bands, and the gap is a
+  // difference of two overall scores — both move when the rubric does, so both
+  // are confined to the newest era for the same reason the trend chart is.
+  const era = currentRubricEra([...byClip.values()].sort((a, b) => a.createdAt - b.createdAt))
+  if (era.length === 0) return undefined
+
+  const points: ConsistencyPoint[] = era.map((s) => {
+    const c = s.consistency!
+    return {
+      id: s.id,
+      createdAt: s.createdAt,
+      gap: Math.max(...c.overallScores) - Math.min(...c.overallScores),
+      serves: c.serves,
+      score: c.score,
+    }
+  })
+
+  const latest = points[points.length - 1]
+  const previous = points.length > 1 ? points[points.length - 2] : undefined
+
+  // The least repeatable element in each basket, tallied. A single basket's
+  // weakest link is noise — a toss wanders on any given day — and the same one
+  // coming last three times running is the thing to take to the practice court.
+  const tally = new Map<string, { label: string; sessions: number }>()
+  for (const s of era) {
+    const weakest = s.consistency?.weakest
+    if (!weakest) continue
+    const seen = tally.get(weakest.id)
+    tally.set(weakest.id, {
+      label: weakest.label,
+      sessions: (seen?.sessions ?? 0) + 1,
+    })
+  }
+  const top = [...tally.entries()].sort((a, b) => b[1].sessions - a[1].sessions)[0]
+
+  return {
+    points,
+    latest,
+    gapDelta: previous ? latest.gap - previous.gap : undefined,
+    // Only worth naming once it has happened more than once. Below that it is
+    // this clip's weakest element, which the report already said.
+    recurring: top && top[1].sessions >= 2 ? { id: top[0], ...top[1] } : undefined,
   }
 }
 

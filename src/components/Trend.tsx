@@ -1,5 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
-import { MEANINGFUL_DELTA, deltaStatus, type AreaDelta, type TrendPoint } from '../lib/progress'
+import {
+  MEANINGFUL_DELTA,
+  deltaStatus,
+  type AreaDelta,
+  type ConsistencyPoint,
+  type TrendPoint,
+} from '../lib/progress'
 
 /* ============================================================ delta chip === */
 
@@ -430,3 +436,49 @@ export function TrendTable({ points }: { points: TrendPoint[] }) {
     </>
   )
 }
+
+/* =========================================================== consistency === */
+
+/**
+ * How far apart a player's best and worst serve are, basket by basket.
+ *
+ * The one chart in the app where down is the good direction, which is exactly
+ * why it is drawn as bars running from a fixed left edge rather than as another
+ * line beside the score trend. Two lines on one page, one improving upwards and
+ * one improving downwards, is a reading everybody gets wrong once.
+ *
+ * A serve that averages 68 tells a club player almost nothing. Their good one
+ * being a 79 and their bad one a 51 tells them why they lose their serve, and
+ * that gap closing is usually the first thing that moves when technique starts
+ * to hold up under pressure.
+ */
+export function GapTrend({ points }: { points: ConsistencyPoint[] }) {
+  if (!points.length) return null
+  // Floored at 20 so a genuinely tight run of baskets does not get magnified
+  // into a wall of full-width bars by its own best case.
+  const widest = Math.max(20, ...points.map((p) => p.gap))
+  // Newest first, and capped. This block sits under a hero score, a sparkline
+  // and a set of delta bars, and every row it adds is another number competing
+  // with those. Six baskets is a season of sweeps for anybody filming them.
+  const shown = [...points].reverse().slice(0, MAX_GAP_ROWS)
+
+  return (
+    <ul className="gaps">
+      {shown.map((p) => (
+        <li key={p.id} className="gap">
+          <span className="gap-date">{fmtDate(p.createdAt)}</span>
+          <span className="gap-track">
+            <span className="gap-fill" style={{ width: `${Math.max(2, (p.gap / widest) * 100)}%` }} />
+          </span>
+          <span className="gap-value tnum">{p.gap}</span>
+        </li>
+      ))}
+      <li className="gaps-note">
+        Points between your best and worst serve in one basket. Smaller is steadier.
+        {points.length > shown.length && ` Showing your last ${shown.length}.`}
+      </li>
+    </ul>
+  )
+}
+
+const MAX_GAP_ROWS = 6

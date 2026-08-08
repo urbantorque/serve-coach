@@ -2,21 +2,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import CompareView from './components/CompareView'
 import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
+import LevelPicker from './components/LevelPicker'
 import StoragePanel from './components/StoragePanel'
 import PracticeCard from './components/PracticeCard'
-import { DeltaBars, DeltaChip, ScoreTrend, TrendTable } from './components/Trend'
+import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus } from './lib/practice'
-import { buildProgress, typeOf } from './lib/progress'
+import { buildConsistencyTrend, buildProgress, typeOf } from './lib/progress'
 import {
   MAX_CONSISTENCY_SERVES,
   analyzeAllServes,
   analyzeServe,
+  rediagnose,
   rescore,
   type AnalyzeProgress,
 } from './lib/analysis/analyze'
 import { forgetAll, recall, remember } from './lib/analysisCache'
-import { buildConsistency, type Consistency } from './lib/analysis/consistency'
+import { buildConsistency } from './lib/analysis/consistency'
 import { hintsOf, type Analysis } from './lib/analysis/types'
 import { SERVE_TYPES } from './lib/analysis/coaching'
 import { Cancelled } from './lib/pose/extract'
@@ -52,7 +54,6 @@ export default function App() {
     'guide' | 'guide-first' | 'history' | 'progress' | 'compare' | null
   >(null)
   const [offlineReady, setOfflineReady] = useState(false)
-  const [consistency, setConsistency] = useState<Consistency>()
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
 
   const abortRef = useRef<AbortController>()
@@ -88,6 +89,12 @@ export default function App() {
 
   const form = useMemo(() => buildProgress(sessions), [sessions])
   const practice = useMemo(() => findPracticeFocus(sessions), [sessions])
+  // Keyed to whatever serve type the form chart settled on, so the two blocks in
+  // the sheet cannot end up describing different halves of the history.
+  const spread = useMemo(
+    () => (form ? buildConsistencyTrend(sessions, form.serveType) : undefined),
+    [sessions, form],
+  )
 
   /**
    * The report currently on screen, as a stored session.
@@ -131,8 +138,12 @@ export default function App() {
     // the production bundle.
     const demo = import.meta.env.DEV && new URLSearchParams(location.search).get('demo')
     if (demo !== null && demo !== false) {
-      void import('./dev/sampleAnalysis').then(async ({ sampleAnalysis, sampleBasket, sampleClip, fitToClip }) => {
-        const analysis = sampleAnalysis()
+      void import('./dev/sampleAnalysis').then(async ({ sampleAnalysis, sampleBasket, sampleClip, fitToClip, DEMO_DIALS }) => {
+        // The two screens that are otherwise unreachable without going out and
+        // filming a bad serve: the injury banner, which needs a spine folding
+        // under load, and the refusal, which needs a clip the engine throws out.
+        // Both were built and neither could be looked at.
+        const analysis = sampleAnalysis(DEMO_DIALS[demo as string] ?? {})
         if (demo === 'basket' || demo === 'live') {
           const url = await sampleClip(analysis.window.end - analysis.window.start + 0.4)
           urlRef.current = url
@@ -150,7 +161,7 @@ export default function App() {
             // five — `sampleBasket` returns the four it could read. The counts
             // have to agree or the demo shows a panel no real clip produces.
             fitted.serves = { count: 5, index: 4 }
-            setConsistency(buildConsistency(sampleBasket(), 5))
+            fitted.consistency = buildConsistency(sampleBasket(), 5)
           }
           setView({ kind: 'report', analysis: fitted, videoUrl: url })
         } else {
@@ -194,10 +205,10 @@ export default function App() {
       const controller = new AbortController()
       abortRef.current = controller
 
-      // Whatever report this run produces, the consistency panel on screen was
-      // measured for a different clip, hand or serve — leaving it up would sit
-      // clip A's spreads under clip B's report.
-      setConsistency(undefined)
+      // Nothing to clear: the spreads ride on the report they were measured for,
+      // so a new report simply has none. When they lived in state beside the
+      // view this needed an explicit reset at every entry point, and the panel
+      // sat clip A's spreads under clip B's report wherever one was missed.
 
       // Already worked out during this session? Switching between the serves in
       // a basket, or correcting the hand and changing it back, otherwise pays
@@ -265,6 +276,11 @@ export default function App() {
         remember({ sessionKey: analysis.id, handedness: analysis.handedness }, analysis)
 
         setView({ kind: 'report', analysis, videoUrl: url })
+
+        // A clip the engine refused is dropped on the way into storage rather
+        // than here — see `saveSession`. It stays in the in-memory cache above,
+        // so flicking between the serves in the clip is still instant; it just
+        // never becomes part of the record.
         void safely(() => saveSession(analysis), undefined).then(refreshSessions)
         void isCachedOffline().then(setOfflineReady)
 
@@ -350,8 +366,7 @@ export default function App() {
           all,
           Math.min(analysis.serves.count, MAX_CONSISTENCY_SERVES),
         )
-        setConsistency(result)
-        setView({ kind: 'report', analysis, videoUrl: url })
+
         if (!result) {
           setView({
             kind: 'error',
@@ -361,13 +376,22 @@ export default function App() {
               'Keep the whole body in frame for every serve, and avoid anyone walking behind you.',
             ],
           })
+          return
         }
+
+        // Onto the report, and therefore into storage. This is the most
+        // expensive thing the app computes — one full pass over the video per
+        // serve — and it used to be discarded by the back button.
+        const measured: Analysis = { ...analysis, consistency: result }
+        remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)
+        setView({ kind: 'report', analysis: measured, videoUrl: url })
+        void safely(() => saveSession(measured), undefined).then(refreshSessions)
       } catch (err) {
         if (controller.signal.aborted || err instanceof Cancelled) return
         setView({ kind: 'report', analysis, videoUrl: url })
       }
     },
-    [],
+    [refreshSessions],
   )
 
   const cancel = () => {
@@ -410,6 +434,18 @@ export default function App() {
 
         {view.kind === 'report' && (
           <Report
+            /*
+             * Keyed, so the report's own state cannot outlive the report.
+             *
+             * Two things in there are decisions about one specific serve: having
+             * chosen to see the numbers off a clip that was refused, and having
+             * hidden the spreads. Switching serves inside a basket is a cache
+             * hit, which swaps the analysis without passing through the
+             * analysing screen — so without a key the component is never
+             * remounted, and serve three's override silently applies to serve
+             * two's refusal.
+             */
+            key={view.analysis.id}
             analysis={view.analysis}
             videoUrl={view.videoUrl}
             previous={priorTo(view.analysis.createdAt, typeOf(view.analysis))}
@@ -429,10 +465,7 @@ export default function App() {
             }
             onPickServe={
               lastFileRef.current
-                ? (i) => {
-                    setConsistency(undefined)
-                    void run(lastFileRef.current!, view.analysis.handedness, i)
-                  }
+                ? (i) => void run(lastFileRef.current!, view.analysis.handedness, i)
                 : undefined
             }
             onPickServeType={(serveType) => {
@@ -460,13 +493,27 @@ export default function App() {
                 )
               }
             }}
+            statedTier={prefs.tier}
+            onPickTier={(tier) => {
+              // Remembered for the next clip, and applied to this one without
+              // touching the video: the tier moves which band every signal is
+              // judged against and nothing that was measured, so re-reading the
+              // clip would spend half a minute arriving at the same landmarks.
+              setPrefs(writePrefs({ tier }))
+              const rejudged = rediagnose(view.analysis, tier)
+              if (!rejudged) return
+              remember(
+                { sessionKey: rejudged.id, handedness: rejudged.handedness },
+                rejudged,
+              )
+              setView({ kind: 'report', analysis: rejudged, videoUrl: view.videoUrl })
+              void safely(() => saveSession(rejudged), undefined).then(refreshSessions)
+            }}
             onCheckConsistency={
               lastFileRef.current && view.analysis.serves.count > 1
                 ? () => void compareServes(view.analysis)
                 : undefined
             }
-            consistency={consistency}
-            onDismissConsistency={() => setConsistency(undefined)}
             onCompare={
               sessions.some((s) => s.id !== view.analysis.id) ? () => setSheet('compare') : undefined
             }
@@ -475,6 +522,7 @@ export default function App() {
 
         {view.kind === 'saved' && (
           <Report
+            key={view.session.id}
             analysis={view.session}
             previous={priorTo(view.session.createdAt, typeOf(view.session))}
             onBack={goHome}
@@ -510,6 +558,7 @@ export default function App() {
 
       <Sheet open={sheet === 'guide'} onClose={() => setSheet(null)} title="How to film your serve">
         <FilmingGuide />
+        <LevelPicker value={prefs.tier} onChange={(tier) => setPrefs(writePrefs({ tier }))} />
       </Sheet>
 
       {/* The same guide, shown once before the very first clip, with the picker
@@ -528,6 +577,10 @@ export default function App() {
           value={prefs.handedness}
           onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
         />
+        {/* Asked here rather than made compulsory: leaving it on "work it out
+            for me" is a real answer, and the one most people should give. It is
+            the hand that has to be right before the first clip. */}
+        <LevelPicker value={prefs.tier} onChange={(tier) => setPrefs(writePrefs({ tier }))} />
         <button
           className="btn btn--primary btn--full"
           onClick={finishFirstRunGuide}
@@ -636,6 +689,27 @@ export default function App() {
               <section className="block">
                 <h3 className="block-title">Change since your last serve</h3>
                 <DeltaBars deltas={form.areaDeltas} />
+              </section>
+            )}
+
+            {/* The long loop: not whether one serve scored higher, but whether
+                the serves are converging on each other. Only appears once the
+                sweep has been run on more than one clip, because a single
+                basket is a reading rather than a trend. */}
+            {spread && spread.points.length > 1 && (
+              <section className="block">
+                {/* No summary chip on the head. The rows already show the
+                    direction, and a chip here would be one more number in a
+                    sheet that already carries the hero score, its own chip, a
+                    sparkline and a value per fundamental. */}
+                <h3 className="block-title">Best-to-worst gap</h3>
+                <GapTrend points={spread.points} />
+                {spread.recurring && (
+                  <p className="sheet-note">
+                    {spread.recurring.label} has been your least repeatable element in{' '}
+                    {spread.recurring.sessions} of these. That is the one to groove.
+                  </p>
+                )}
               </section>
             )}
 

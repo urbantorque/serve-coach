@@ -36,6 +36,7 @@ import { diagnose } from './diagnose'
 import { measure } from './metrics'
 import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot, type Tilt } from './spatial'
 import { assessResilience, triage } from './triage'
+import { causalFocus } from './verdict'
 import { cue } from './voice'
 import { buildPhases, detectServe, type Skeleton } from './phases'
 import {
@@ -454,12 +455,56 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     fundamentals,
     overall,
     overallStatus: statusOf(overall),
-    focus: pickFocus(fundamentals),
+    // The diagnosis is untouched by a serve-type rescore — it is judged against
+    // the tier ladder, not the serve-type bands — so the named fault and its
+    // drill carry straight over through the spread above, and the focus keeps
+    // coming from the fault rather than reverting to the ranking on a rescore.
+    focus: causalFocus(analysis.triage) ?? pickFocus(fundamentals),
     tossFlight,
     serveType,
     // Restamped, not inherited through the spread: every score above has just
     // been recomputed by this build, whatever rubric the report arrived under.
     scoringVersion: SCORING_VERSION,
+  }
+}
+
+/**
+ * Judge the same serve against a different rung of the tier ladder.
+ *
+ * The sibling of `rescore`, and worth having for the same reason: nothing
+ * measured changes. The tier moves which band each signal is judged against, so
+ * it moves which flaws are detected, which one triage picks and therefore what
+ * the player is told to work on — and it moves none of the landmarks, none of
+ * the keyframes and none of the area scores. Re-running the pipeline to discover
+ * that would cost half a minute of seeking and pose detection to arrive at
+ * identical numbers with a different verdict over them.
+ *
+ * The injury flags deliberately do not move. They are read against absolute
+ * limits rather than against the ladder — a wrist has the same range at every
+ * rating — so a player who says they are stronger than the engine guessed does
+ * not thereby talk themselves out of a warning.
+ *
+ * Returns undefined when the frames are gone, which is every report reopened
+ * from storage. A saved report keeps its verdict; it cannot be re-judged.
+ */
+export function rediagnose(analysis: Analysis, tier: number | undefined): Analysis | undefined {
+  if (!analysis.frames?.length) return undefined
+
+  let skel: Skeleton
+  try {
+    skel = detectServe(analysis.frames, analysis.quality.sampledFps, analysis.handedness)
+  } catch {
+    return undefined
+  }
+
+  const diagnosis = diagnose(analysis.frames, skel, { tier, ball: analysis.ball })
+  const verdict = triage(diagnosis, assessResilience(analysis.frames, skel))
+
+  return {
+    ...analysis,
+    diagnosis,
+    triage: verdict,
+    focus: causalFocus(verdict) ?? pickFocus(analysis.fundamentals),
   }
 }
 
@@ -683,7 +728,11 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     fundamentals,
     overall,
     overallStatus: statusOf(overall),
-    focus: pickFocus(fundamentals),
+    // The named fault first, the lowest-scoring measurement only if there is no
+    // named fault to give. Ranking measurements answers "which number is worst",
+    // which on a serve with a short toss is the contact height — the symptom —
+    // and sends the player away to reach for a ball that was never up there.
+    focus: causalFocus(verdict) ?? pickFocus(fundamentals),
     frames,
     window,
     serves,

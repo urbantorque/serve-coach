@@ -117,6 +117,38 @@ export interface ServeDials {
    * consecutive frames even when the arm is not moving.
    */
   noise: number
+  /**
+   * How much worse the depth axis is than the two the camera can actually see.
+   *
+   * `noise` on its own applies the same jitter to x, y and z, which quietly
+   * asserts that a monocular pose estimate resolves depth as well as it resolves
+   * position in the frame. It does not, and it is not close: x and y are read
+   * off pixels, while z is inferred by the network from apparent size and
+   * foreshortening. Published characterisations of MediaPipe's world landmarks
+   * put depth error at roughly three to five times the in-plane error.
+   *
+   * That matters more here than the raw ratio suggests, because two of the
+   * engine's readings are computed *entirely* from z — hip-shoulder separation
+   * and shoulder tilt are both yaw angles about the vertical axis — and a rig
+   * that models depth as exact has never once exercised them under the error
+   * they actually carry.
+   *
+   * A multiplier rather than an absolute, so it composes with `noise`, and
+   * defaulting to 1 so every existing expectation in the suite is untouched.
+   */
+  depthNoise: number
+  /**
+   * Whole-body depth wobble, in the same frame units as `noise`.
+   *
+   * The part that independent per-landmark jitter cannot stand in for. A network
+   * inferring depth from apparent size gets the *whole player* slightly too near
+   * or too far on a given frame, and every landmark moves together. Independent
+   * noise largely cancels in a difference of two angles; a shared bias does not
+   * cancel at all — it rotates both shoulder and hip lines the same way, which
+   * is precisely the failure mode a separation measurement is blind to and a
+   * tilt measurement is not.
+   */
+  depthBias: number
   /** Chance per frame that a limb is partly lost, as happens behind the body. */
   dropout: number
   /**
@@ -165,6 +197,11 @@ export const CLEAN_SERVE: ServeDials = {
   spineLean: 4,
   noSwing: false,
   noise: 0,
+  // Both default to the rig's previous behaviour — depth exactly as good as the
+  // frame, no shared bias — so nothing already in the suite moves. The depth
+  // calibration turns them up deliberately.
+  depthNoise: 1,
+  depthBias: 0,
   dropout: 0,
   seed: 20240803,
 }
@@ -442,6 +479,11 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     const cam = rad(90 - d.cameraYaw)
     // Gaussian-ish jitter from the sum of two uniforms, cheap and good enough.
     const jitter = () => (d.noise ? ((rand() + rand()) / 2 - 0.5) * 2 * d.noise : 0)
+    // The depth axis, which the camera never measured. Scaled up because the
+    // network infers it, and given a shared per-frame offset on top because it
+    // infers it for the whole body at once.
+    const frameDepthBias = d.depthBias ? ((rand() + rand()) / 2 - 0.5) * 2 * d.depthBias : 0
+    const zJitter = () => jitter() * d.depthNoise + frameDepthBias
 
     const image = world.map((p) => {
       // Rotate about the vertical axis so the camera can sit anywhere from
@@ -451,11 +493,11 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       return lm(
         0.5 + x * SCALE + jitter(),
         GROUND_Y - heightAboveGround * SCALE + jitter(),
-        p.z + jitter(),
+        p.z + zJitter(),
       )
     })
 
-    if (d.noise) {
+    if (d.noise || frameDepthBias) {
       // World landmarks come from the same tracker and are just as jittery — but
       // they are in metres, so the image-space figure has to be converted rather
       // than reused. One frame unit spans HEIGHT_M / 0.54 metres here, so 0.6% of
@@ -465,7 +507,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       for (const p of world) {
         p.x += jitter() * toMetres
         p.y += jitter() * toMetres
-        p.z += jitter() * toMetres
+        p.z += zJitter() * toMetres
       }
     }
 

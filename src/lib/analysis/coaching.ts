@@ -343,7 +343,13 @@ export const METRICS: Record<string, MetricCopy> = {
       high: '**Keep the elbow up** so the racket stays behind your back, not down by your side.',
     },
     drill: {
-      name: 'Back-scratch drop',
+      // Named for what the body does, not for the coaching shorthand. "Back
+      // scratch" is a phrase you have to already know to picture, and it now
+      // reaches the player through the largest heading on the report — the
+      // triage layer routes a shallow drop straight here. The instruction
+      // underneath already says where the racket goes, in words that need no
+      // translation.
+      name: 'Let the racket fall',
       how: 'Serve at half pace and let the racket fall between your shoulder blades before firing.',
       reps: '20 serves',
     },
@@ -844,7 +850,13 @@ export const FUNDAMENTALS: Record<
     weight: 20,
     metrics: ['dropDepth', 'elbowAtDrop', 'dropToContact'],
     drill: {
-      name: 'Back-scratch drop',
+      // Named for what the body does, not for the coaching shorthand. "Back
+      // scratch" is a phrase you have to already know to picture, and it now
+      // reaches the player through the largest heading on the report — the
+      // triage layer routes a shallow drop straight here. The instruction
+      // underneath already says where the racket goes, in words that need no
+      // translation.
+      name: 'Let the racket fall',
       how: 'Serve at half pace with one thought: let the racket fall down your back before anything else moves.',
       reps: '20 serves · then 10 at full pace',
     },

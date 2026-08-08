@@ -22,6 +22,9 @@ import {
   type MetricCopy,
 } from '../coaching'
 import { MAX_SENTENCES, MAX_WORDS, command, cueIssues, plain, wordCount } from '../voice'
+import { VERDICT_TABLES, causalFocus, everyVerdictCue, refusalFor } from '../verdict'
+import { FLAWS } from '../flaws'
+import { FLAW_DRILL } from '../triage'
 import { assert, check, report } from './harness'
 import type { ServeType } from '../../storage/prefs'
 
@@ -67,6 +70,10 @@ function everyCue(): { where: string; text: string }[] {
   for (const [id, drill] of Object.entries(DRILLS)) {
     out.push({ where: `DRILLS.${id}.how`, text: drill.how })
   }
+  // The sentences the verdict layer writes about a named flaw or an injury risk.
+  // These reach a player through the largest heading on the report — the one
+  // thing to work on — so they face the editor first, not last.
+  out.push(...everyVerdictCue())
   return out
 }
 
@@ -806,3 +813,89 @@ check('no two measurements share a drill name by accident', () => {
 })
 
 report()
+
+/* ===================================================== the verdict layer == */
+
+console.log('\n\x1b[1mFrom identifier to sentence\x1b[0m')
+
+check('every flaw the engine can name has words and an exercise', () => {
+  // Three tables have to agree, and nothing but this connects them: `FLAWS`
+  // decides what can be detected, `FLAW_DRILL` names the exercise, and
+  // `FLAW_COPY` writes the sentence. A gap in any one of them is a report whose
+  // single instruction is a blank heading or a drill card with no drill in it —
+  // and it would only show up for the player whose serve happened to have that
+  // fault as its worst one.
+  for (const spec of FLAWS) {
+    const copy = VERDICT_TABLES.flaws[spec.flaw]
+    assert(Boolean(copy), `${spec.flaw} can be detected but has no copy`)
+    assert(Boolean(copy.title.trim()), `${spec.flaw} has an empty title`)
+    assert(Boolean(FLAW_DRILL[spec.flaw]), `${spec.flaw} has no drill id`)
+    assert(
+      Boolean(DRILLS[FLAW_DRILL[spec.flaw]]),
+      `${spec.flaw} points at drill "${FLAW_DRILL[spec.flaw]}", which does not exist`,
+    )
+  }
+})
+
+check('a two-sided fault says something different on each side', () => {
+  // The toss peak is the one signal with a wrong answer above the band as well
+  // as below it. One sentence for both would tell half the players who see it
+  // the opposite of what they need, so the pair must exist and must differ.
+  for (const [flaw, copy] of Object.entries(VERDICT_TABLES.flaws)) {
+    if (!copy.high) continue
+    assert(copy.high !== copy.low, `${flaw} says the same thing above and below its band`)
+    assert(
+      Boolean(copy.highTitle) && copy.highTitle !== copy.title,
+      `${flaw} has two sentences and one heading`,
+    )
+  }
+})
+
+check('a refusal names something the player can film differently', () => {
+  // The one test a refusal has to pass. "Your clip was unusable" is true and
+  // costs the player the serve; every reason here has to come with an action.
+  for (const [reason, copy] of Object.entries(VERDICT_TABLES.refusals)) {
+    assert(copy.hints.length >= 2, `${reason} offers fewer than two things to try`)
+    for (const hint of copy.hints) {
+      assert(wordCount(hint) <= 30, `${reason} hint runs to ${wordCount(hint)} words`)
+      assert(/[.!?]$/.test(hint.trim()), `${reason} hint is not a finished sentence`)
+    }
+  }
+})
+
+check('a refused clip is never handed a fault to work on', () => {
+  // The two halves of the verdict layer must not both answer. A refusal that
+  // also produced a focus would put an instruction on screen underneath a
+  // heading saying the clip could not be read.
+  const refused = {
+    schema: 1 as const,
+    status: 'rejected' as const,
+    reason: 'too_blurry' as const,
+    quality: {
+      confidence: 0.2,
+      blur: 0.9,
+      roll_deg: 0,
+      yaw_deg: 80,
+      swing_samples: 4,
+      depth_unreliable: false,
+    },
+    injury_risk: [],
+    suppressed_count: 0,
+  }
+  assert(refusalFor(refused) !== undefined, 'a rejected clip produced no refusal')
+  assert(causalFocus(refused) === undefined, 'a rejected clip was still handed a fault to fix')
+})
+
+check('the verdict layer writes nothing an editor would cut', () => {
+  // Belt and braces over the sweep above: these strings are assembled and passed
+  // through `cue` at runtime, and a source line over the ceiling would be
+  // silently truncated mid-sentence rather than failing anything.
+  for (const { where, text } of everyVerdictCue()) {
+    const issues = cueIssues(text)
+    assert(issues.length === 0, `${where}: ${issues.join('; ')}\n        "${text}"`)
+    assert(
+      command(text) === text.trim(),
+      `${where} is changed by the filter, so the source and the screen disagree:\n        "${text}"\n        "${command(text)}"`,
+    )
+  }
+})

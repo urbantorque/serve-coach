@@ -16,6 +16,7 @@
  * there is the single most common way an automated analysis wastes a season.
  */
 import {
+  NOISE_FLOOR,
   SIGNALS,
   insideBand,
   missBy,
@@ -135,7 +136,27 @@ export function evaluateFlaws(
     if (reading.confidence < MIN_EVIDENCE) continue
 
     const target = targetFor(spec.signal, currentTier)
-    const detected = !insideBand(spec.signal, reading.value, target)
+    const miss = missBy(spec.signal, reading.value, target)
+
+    /*
+     * Outside the band, and outside it by more than the signal can resolve.
+     *
+     * The second half is new and it matters more than the first. `MIN_EVIDENCE`
+     * above asks whether the tracker could *see* the landmarks, which is a
+     * different question from whether the number built out of them holds still —
+     * and four of these signals are recovered from inferred depth, where it does
+     * not. Filming one identical serve twenty-four times moved the hip lead
+     * across a range wider than the entire band it is graded against, at full
+     * visibility and therefore at full confidence, so "your shoulders fire
+     * first" was decided by which frames the tracker had trouble with.
+     *
+     * A miss inside the floor is reported as no fault, not as a small one. The
+     * severity goes with it: a finding that says `detected: false` and
+     * `severity: 'high'` is two answers to one question, and `triage` sorts on
+     * the second.
+     */
+    const resolvable = miss >= (NOISE_FLOOR[spec.signal] ?? 0)
+    const detected = !insideBand(spec.signal, reading.value, target) && resolvable
 
     found.push({
       flaw: spec.flaw,
@@ -143,21 +164,37 @@ export function evaluateFlaws(
       signal: spec.signal,
       value: round(reading.value, spec.signal),
       unit: SIGNALS[spec.signal].unit,
-      miss: round(missBy(spec.signal, reading.value, target), spec.signal),
+      // Reported as measured either way. The floor decides whether the miss is
+      // worth acting on, not whether it happened — and a consumer that wants to
+      // show a near miss should be able to see one.
+      miss: round(miss, spec.signal),
       target: [round(target[0], spec.signal), round(target[1], spec.signal)],
       target_tier,
-      severity: severityOf(spec.signal, reading.value, target),
+      severity: resolvable ? severityOf(spec.signal, reading.value, target) : 'none',
       confidence: Math.round(reading.confidence * 100) / 100,
     })
   }
 
-  // Second pass, once every flaw is known: attribute the symptoms. Done after
-  // rather than during, so a cause declared later in the table still explains an
-  // earlier symptom and the order of `FLAWS` stays a reading order.
-  const detectedIds = new Set(found.filter((f) => f.detected).map((f) => f.flaw))
+  /*
+   * Second pass, once every flaw is known: attribute the symptoms. Done after
+   * rather than during, so a cause declared later in the table still explains an
+   * earlier symptom and the order of `FLAWS` stays a reading order.
+   *
+   * Attribution asks whether the cause is outside its band, not whether it was
+   * detected — and the two stopped being the same question when the noise floors
+   * arrived. A toss sitting a hair under its band misses by less than the toss
+   * can be measured to, so it is correctly not *named* as a fault; it is still
+   * the reason the contact underneath it is low, and dropping the link would
+   * have thrown away the one piece of causal information the pass exists to
+   * produce. The floor decides what the player is told to fix. It has no opinion
+   * about what causes what.
+   */
+  const outOfBand = new Set(
+    found.filter((f) => f.miss > 0).map((f) => f.flaw),
+  )
   for (const f of found) {
     const cause = FLAWS.find((s) => s.flaw === f.flaw)?.causedBy
-    if (f.detected && cause && detectedIds.has(cause)) f.caused_by = cause
+    if (f.detected && cause && outOfBand.has(cause)) f.caused_by = cause
   }
 
   const rank: Record<Severity, number> = { high: 0, medium: 1, low: 2, none: 3 }

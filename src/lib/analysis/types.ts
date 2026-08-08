@@ -1,5 +1,6 @@
 import type { ServeType } from '../storage/prefs'
 import type { BallFlight, TossFlight } from '../vision/ballTrack'
+import type { Consistency } from './consistency'
 import type { Diagnosis } from './diagnose'
 import type { Triage as TriageResult } from './triage'
 
@@ -246,6 +247,21 @@ export interface Analysis {
    * care about triage can ignore it entirely.
    */
   triage?: TriageResult
+  /**
+   * How far the measurements wandered across the serves in this clip.
+   *
+   * Attached to the report the sweep was run from, and therefore stored with it.
+   * It used to live in React state beside the report instead, which had two
+   * consequences worth naming. The player lost it the moment they navigated
+   * away — the most expensive thing the app computes, gone on a back button —
+   * and nothing could trend it, so the one number that actually describes a club
+   * player's serve, the gap between their best and their worst, existed for
+   * about ninety seconds and was never compared to anything.
+   *
+   * Present only on the report the sweep was run from, and only for a clip with
+   * more than one readable serve. Its absence is the normal case.
+   */
+  consistency?: Consistency
 }
 
 /** Thrown when the clip does not contain a recognisable serve. */
