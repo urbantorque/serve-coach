@@ -221,6 +221,9 @@ export default function App() {
           handedness,
           serveIndex,
           serveType,
+          // Absent unless the player has told us their rating, in which case the
+          // diagnostic pass estimates one from the serve rather than asking.
+          tier: prefs.tier,
           signal: controller.signal,
           onProgress: setProgress,
         })
@@ -275,7 +278,15 @@ export default function App() {
     },
     // `sessions` is read to preserve the original filing date of a re-analysis;
     // leaving it out would capture an empty list from the first render.
-    [refreshSessions, releaseVideo, sessions, prefs.handedness, prefs.serveType, prefs.askedToPersist],
+    [
+      refreshSessions,
+      releaseVideo,
+      sessions,
+      prefs.handedness,
+      prefs.serveType,
+      prefs.tier,
+      prefs.askedToPersist,
+    ],
   )
 
   /**

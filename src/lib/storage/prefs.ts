@@ -20,6 +20,15 @@ export interface Prefs {
   handedness?: Handedness
   /** What the player is practising, which shifts a few target bands. */
   serveType: ServeType
+  /**
+   * The player's own rating, on the ladder in `analysis/tiers.ts`.
+   *
+   * Optional and stays optional: the diagnostic pass estimates one from the
+   * serve when it is absent, and a wrong guess low is a target the player
+   * clears rather than one they cannot. Stored rather than asked for on every
+   * analysis because a rating changes over a season, not over a session.
+   */
+  tier?: number
   /** Whether the filming guide has been shown unprompted. */
   seenFilmingGuide: boolean
   /** Whether persistent storage has been requested from the browser. */

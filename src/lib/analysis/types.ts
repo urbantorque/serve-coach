@@ -1,5 +1,6 @@
 import type { ServeType } from '../storage/prefs'
 import type { BallFlight, TossFlight } from '../vision/ballTrack'
+import type { Diagnosis } from './diagnose'
 
 /** A single pose landmark. */
 export interface Landmark {
@@ -170,6 +171,16 @@ export interface Analysis {
    * difference progress.
    */
   serveType: ServeType
+  /**
+   * Named mechanical breakdowns, with targets scaled to the rung above the
+   * player. Raw data: numbers, enums and booleans, no prose.
+   *
+   * Optional because it is a separate pass over the same landmarks and a report
+   * is complete without it — and because everything filed before the pass
+   * existed has none. Carried on the report rather than recomputed on open, so a
+   * saved serve keeps the diagnosis it was actually given.
+   */
+  diagnosis?: Diagnosis
 }
 
 /** Thrown when the clip does not contain a recognisable serve. */

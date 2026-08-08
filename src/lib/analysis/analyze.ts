@@ -31,6 +31,7 @@ import {
   median,
   statusOf,
 } from './geometry'
+import { diagnose } from './diagnose'
 import { measure } from './metrics'
 import { cue } from './voice'
 import { buildPhases, detectServe, type Skeleton } from './phases'
@@ -59,6 +60,14 @@ export interface AnalyzeOptions {
   knownServeTimes?: number[]
   /** Which serve this is meant to be, which shifts a handful of target bands. */
   serveType?: ServeType
+  /**
+   * The player's rating, which decides what the diagnostic pass asks of them.
+   *
+   * Absent is a supported answer, not a missing one: the pass estimates a rung
+   * from the serve itself. Passing a stated rating only makes the estimate
+   * unnecessary.
+   */
+  tier?: number
 }
 
 const bytes = (n: number) => `${(n / 1e6).toFixed(1)} MB`
@@ -532,6 +541,12 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     },
   })
 
+  // Named breakdowns, on the same landmarks and keyframes the measurements
+  // used. A second pass over data already in memory rather than a second pass
+  // over the video — it costs about a millisecond, which is why it is not
+  // behind a flag.
+  const diagnosis = diagnose(frames, skel, { tier: opts.tier, ball })
+
   const phases = buildPhases(frames, skel.keys)
   if (!opts.skipThumbnails) {
     onProgress({ step: 'measuring', ratio: 0.8, detail: 'Capturing your key frames' })
@@ -596,6 +611,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     ball,
     tossFlight,
     serveType,
+    diagnosis,
   }
 }
 

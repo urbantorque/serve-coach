@@ -227,6 +227,10 @@ Everything is in `src/lib`:
 | `analysis/metrics.ts` | turns landmarks into measurements |
 | `analysis/coaching.ts` | target bands, serve types, every line of coaching copy, one drill per fault |
 | `analysis/anatomy.ts` | says each measurement as a body position instead of a number |
+| `analysis/kinematics.ts` | the motion as continuous series: rotation, spine, palm, and their rates |
+| `analysis/tiers.ts` | the rating ladder, and the band one rung above the player |
+| `analysis/flaws.ts` | named breakdowns, their evidence, and which cause which |
+| `analysis/diagnose.ts` | the diagnostic pass, out as one JSON object |
 | `analysis/voice.ts` | the house style as code: strips filler, caps length, lints the copy |
 | `analysis/confidence.ts` | how far to trust each measurement, and why |
 | `analysis/geometry.ts` | angles, smoothing, scoring curve |
@@ -247,6 +251,23 @@ so the card reads "peaks a ball above the racket" and the target underneath it
 is read back through the same ladder. The value is still on the report object
 for fixtures, the consistency sweep and the dev tools; it just never reaches the
 screen.
+
+**Targets are one rung above the player, never a fixed standard.** The
+measurements are scored against bands describing a well-struck serve, which is
+the right thing to score and the wrong thing to *aim* at — a club player asked
+for a tour racket drop has been handed a target indistinguishable from none, and
+on the flexibility-bound signals, chasing one is how people get hurt.
+`analysis/tiers.ts` carries a ladder anchored at four rating points, and the
+diagnostic pass always hands back the band belonging to the tier above the
+player. Give it a rating and it uses it; give it nothing and it estimates one
+from the serve, deliberately pessimistically.
+
+**The diagnosis is data, and only data.** `analysis/diagnose.ts` returns numbers,
+booleans and enums: signals, named flaws with the band they missed, severity,
+and which flaw caused which. No sentence is composed anywhere in that path — a
+test walks the output and fails on any string that is not an identifier. It also
+never returns a frame or a landmark, so a stored report cannot pin a decoded
+clip in memory.
 
 **The house style is enforced by a test, not a style guide.** Coaching copy rots
 towards the polite, the hedged and the long, a word at a time. `analysis/voice.ts`
