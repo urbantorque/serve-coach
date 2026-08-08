@@ -56,7 +56,9 @@ export async function sampleClip(seconds: number, width = 480, height = 480): Pr
  */
 export function fitToClip(analysis: Analysis, duration: number): Analysis {
   const span = analysis.window.end - analysis.window.start
-  if (span <= 0 || duration <= 0) return analysis
+  // `duration` can be NaN when the metadata probe timed out, and NaN fails
+  // `<= 0` — it would scale every frame and phase time to NaN.
+  if (span <= 0 || !(duration > 0)) return analysis
   const scale = (duration * 0.98) / span
   const at = (t: number) => (t - analysis.window.start) * scale
 

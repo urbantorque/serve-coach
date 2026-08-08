@@ -1,6 +1,18 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+
+/**
+ * The wasm runtime must match the @mediapipe/tasks-vision JS that drives it.
+ * That JS is precached and updates with every deploy, while the runtime cache
+ * below holds entries for up to a year and CacheFirst never revalidates — so
+ * the cache is named by the library version, and upgrading the package makes
+ * existing installs fetch a matching runtime instead of reviving a stale one.
+ */
+const engineVersion: string = JSON.parse(
+  readFileSync(new URL('./node_modules/@mediapipe/tasks-vision/package.json', import.meta.url), 'utf8'),
+).version
 
 /**
  * Where the app is served from.
@@ -77,7 +89,7 @@ export default defineConfig({
             urlPattern: ({ url }) => isEngineAsset(url.pathname),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'serve-coach-pose-engine-v1',
+              cacheName: `serve-coach-pose-engine-${engineVersion}`,
               expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
             },

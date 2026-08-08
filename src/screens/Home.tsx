@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing } from '../components/primitives'
 import { findPracticeFocus } from '../lib/practice'
@@ -62,6 +62,28 @@ export default function Home({
     if (needsFilmingGuide) onGuideThenPick()
     else onPick(file)
   }
+
+  // The hint promises "anywhere here", and the browser's default for a drop
+  // that misses the zone by a few pixels is to navigate the tab to the raw
+  // video file — unloading the app. So the whole window accepts the drop; the
+  // zone's own handler runs first and marks the event handled.
+  useEffect(() => {
+    const onDragOver = (e: DragEvent) => e.preventDefault()
+    const onDrop = (e: DragEvent) => {
+      if (e.defaultPrevented) return
+      e.preventDefault()
+      const file = e.dataTransfer?.files?.[0]
+      if (!file) return
+      if (needsFilmingGuide) onGuideThenPick()
+      else onPick(file)
+    }
+    window.addEventListener('dragover', onDragOver)
+    window.addEventListener('drop', onDrop)
+    return () => {
+      window.removeEventListener('dragover', onDragOver)
+      window.removeEventListener('drop', onDrop)
+    }
+  }, [needsFilmingGuide, onGuideThenPick, onPick])
 
   return (
     <div className="screen home">

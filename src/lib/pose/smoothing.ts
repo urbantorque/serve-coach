@@ -87,6 +87,7 @@ export class SkeletonSmoother {
   private xs: OneEuroScalar[] = []
   private ys: OneEuroScalar[] = []
   private lastT?: number
+  private lastOut?: Landmark[]
 
   /**
    * Smooth one frame's landmarks. `t` is the frame's own timestamp in
@@ -95,7 +96,18 @@ export class SkeletonSmoother {
    */
   frame(points: readonly Landmark[], t: number): Landmark[] {
     const dt = this.lastT === undefined ? undefined : t - this.lastT
-    const discontinuous = dt === undefined || dt <= 0 || dt > 0.5
+
+    // The rAF loop repaints the same sampled frame two to four times before
+    // the video advances: identical timestamp, identical points. That is a
+    // repaint, not motion — treating it as a discontinuity snapped the drawn
+    // pose back to the raw landmarks once per sampled frame and zeroed the
+    // filter's velocity, which disabled the smoothing in the only code path
+    // that uses it.
+    if (dt === 0 && this.lastOut && this.lastOut.length === points.length) {
+      return this.lastOut
+    }
+
+    const discontinuous = dt === undefined || dt < 0 || dt > 0.5
     this.lastT = t
 
     if (this.xs.length !== points.length) {
@@ -119,6 +131,7 @@ export class SkeletonSmoother {
         }
       }
     }
+    this.lastOut = out
     return out
   }
 }

@@ -154,26 +154,62 @@ function estimateYaw(frames: Frame[], readyIndex: number, bodyHeight: number): n
 }
 
 /**
+ * The correction `levelFrames` applied, carried on the report so drawing can
+ * invert it. `cx`/`cy` are the pivot in landmark units.
+ */
+export interface Tilt {
+  roll_deg: number
+  cx: number
+  cy: number
+}
+
+/** The centre `levelFrames` rotates about, for callers that need to apply the
+ *  identical transform to something else — the ball flight, above all. */
+export function levelPivot(frames: Frame[]): { cx: number; cy: number } {
+  return {
+    cx: 0.5,
+    cy: median(frames.map((f) => midXY(f, LM.leftHip, LM.rightHip).y)) || 0.5,
+  }
+}
+
+/**
  * Rotate the whole clip back onto gravity.
  *
  * Returns the frames untouched when there is nothing worth correcting, so the
- * common case costs one comparison rather than a copy of every landmark. When
- * it does correct, it rotates about the middle of the frame — the same centre
- * the camera rotated about — and leaves the world landmarks alone, because those
- * are already gravity-aligned by the pose model and rotating them would tilt a
- * frame that was never tilted.
+ * common case costs one comparison rather than a copy of every landmark.
+ *
+ * The world landmarks are rotated too, in their own x/y plane about their own
+ * hip-centre origin: MediaPipe's world axes follow the *camera*, not gravity
+ * (see the convention note in `kinematics.ts`), so a rolled phone rolls the
+ * world frame with it and every up-referenced world measurement — shoulder
+ * tilt, spine lean, palm-to-sky — would stay biased by the roll the image had
+ * just been corrected for. In-plane roll does not touch world z.
  *
  * Visibility rides along untouched: a landmark's confidence is a fact about the
  * tracker, not about the coordinate system it is expressed in.
  */
-export function levelFrames(frames: Frame[], roll_deg: number): Frame[] {
+export function levelFrames(
+  frames: Frame[],
+  roll_deg: number,
+  pivot = levelPivot(frames),
+): Frame[] {
   if (Math.abs(roll_deg) < NOTABLE_ROLL) return frames
+  return rotateFrames(frames, (-roll_deg * Math.PI) / 180, pivot)
+}
 
-  const theta = (-roll_deg * Math.PI) / 180
+/**
+ * The inverse of `levelFrames` — takes levelled landmarks back into the raw
+ * pixel frame, which is the only frame the video underneath them lives in.
+ * Drawing uses this; measurement never should.
+ */
+export function unlevelFrames(frames: Frame[], tilt: Tilt): Frame[] {
+  return rotateFrames(frames, (tilt.roll_deg * Math.PI) / 180, tilt)
+}
+
+function rotateFrames(frames: Frame[], theta: number, pivot: { cx: number; cy: number }): Frame[] {
   const cos = Math.cos(theta)
   const sin = Math.sin(theta)
-  const cx = 0.5
-  const cy = median(frames.map((f) => midXY(f, LM.leftHip, LM.rightHip).y)) || 0.5
+  const { cx, cy } = pivot
 
   return frames.map((f) => ({
     ...f,
@@ -186,6 +222,11 @@ export function levelFrames(frames: Frame[], roll_deg: number): Frame[] {
         y: cy + dx * sin + dy * cos,
       }
     }),
+    world: f.world.map((p) => ({
+      ...p,
+      x: p.x * cos - p.y * sin,
+      y: p.x * sin + p.y * cos,
+    })),
   }))
 }
 

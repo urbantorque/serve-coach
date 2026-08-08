@@ -151,9 +151,18 @@ export interface Analysis {
    */
   scale: { bodyHeight: number; groundY: number }
   /**
+   * The roll correction that was applied, when one was. Everything measured —
+   * frames, ball, groundY — lives in the levelled space; the raw video pixels
+   * do not, so anything drawing over them needs this to rotate the landmarks
+   * back. `cx`/`cy` are the pivot `levelFrames` rotated about, in landmark
+   * units. Absent on the clips that needed no correction, which is most.
+   */
+  tilt?: { roll_deg: number; cx: number; cy: number }
+  /**
    * The tossed ball's flight, when it could be found in the pixels. Optional on
    * purpose: the body is always tracked, the ball is not, and a report is
-   * perfectly valid without it. Plain data so it survives being stored.
+   * perfectly valid without it. Plain data so it survives being stored. Lives
+   * in the same levelled space as the frames when `tilt` is present.
    */
   ball?: BallFlight
   /**

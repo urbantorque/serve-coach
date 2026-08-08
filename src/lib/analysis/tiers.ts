@@ -269,7 +269,17 @@ export function inferTier(signals: Record<string, number>): number {
   // to where they already are — which is the one output this module must never
   // produce. A player genuinely at the ceiling can say so themselves.
   for (let tier = MIN_TIER; tier <= MAX_TIER - 1; tier++) {
-    const clears = used.every((s) => insideBand(s, signals[s], bandFor(s, tier)))
+    const clears = used.every((s) => {
+      const band = bandFor(s, tier)
+      if (!insideBand(s, signals[s], band)) return false
+      // For 'higher' signals the top of the band is a plausibility cap, and
+      // this is where it earns its keep: a hip lead of half a second is a
+      // peak-detection artifact, not sequencing mastery, and crediting a rung
+      // for it is exactly the mis-detection-as-virtue the cap was written to
+      // stop. Not treated as a flaw either — an implausible reading is
+      // evidence of nothing.
+      return !(SIGNALS[s]?.direction === 'higher' && signals[s] > band[1])
+    })
     if (clears) best = tier
   }
   return best

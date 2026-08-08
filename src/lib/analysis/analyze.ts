@@ -13,6 +13,7 @@ import {
   findCandidates,
   flightHeightAt,
   flightXAt,
+  levelFlight,
   summariseToss,
   trackBall,
   type BallFlight,
@@ -33,7 +34,7 @@ import {
 } from './geometry'
 import { diagnose } from './diagnose'
 import { measure } from './metrics'
-import { NOTABLE_ROLL, assessSpatial, levelFrames } from './spatial'
+import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot, type Tilt } from './spatial'
 import { assessResilience, triage } from './triage'
 import { cue } from './voice'
 import { buildPhases, detectServe, type Skeleton } from './phases'
@@ -422,6 +423,7 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     ? summariseToss(analysis.ball, analysis.frames[skel.keys.toss].t, analysis.frames[skel.keys.contact].t, {
         bodyHeight: skel.bodyHeight,
         groundY: skel.groundY,
+        aspect: analysis.video.width / Math.max(1, analysis.video.height),
       })
     : undefined
 
@@ -499,6 +501,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   const { fps, window, serves } = extracted
   let frames = extracted.frames
+  const aspect = video.videoWidth / Math.max(1, video.videoHeight)
 
   if (frames.length < 8) {
     throw new NotAServeError('I found no player in that video.', [
@@ -519,10 +522,15 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // tilted frame. A level clip is detected as level and skips both, so the
   // common case costs one comparison.
   const tilt = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+  let applied: Tilt | undefined
   if (Math.abs(tilt.roll_deg) >= NOTABLE_ROLL) {
-    frames = levelFrames(frames, tilt.roll_deg)
+    const pivot = levelPivot(frames)
+    frames = levelFrames(frames, tilt.roll_deg, pivot)
     for (const f of frames) f.visibility = keyVisibility(f)
     skel = detectServe(frames, fps, opts.handedness)
+    // Remembered on the report: measurement lives in this levelled space, the
+    // video pixels do not, and drawing needs the transform to bridge the two.
+    applied = { roll_deg: tilt.roll_deg, ...pivot }
   }
 
   const quality = assessQuality(frames, skel, fps)
@@ -539,10 +547,19 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   // Skipped when sweeping a basket: it is a second pass over the video per
   // serve, and the comparison only uses measurements every serve shares.
+  // Tracked against the *raw* frames — the ball is found in unrotated pixels,
+  // so the shoulder exclusion line has to be drawn in the same space.
   let ball: BallFlight | undefined
   if (!opts.skipThumbnails) {
     onProgress({ step: 'measuring', ratio: 0.4, detail: 'Looking for the ball' })
-    ball = await findBall(video, frames, skel, signal)
+    ball = await findBall(video, extracted.frames, skel, signal)
+  }
+
+  // What the pixels saw, kept for drawing over them; `ball` itself moves into
+  // the levelled space every measurement lives in.
+  const rawBall = ball
+  if (ball && applied) {
+    ball = levelFlight(ball, applied.roll_deg, { cx: applied.cx, cy: applied.cy }, aspect)
   }
 
   onProgress({ step: 'measuring', ratio: 0.55, detail: 'Measuring the fundamentals' })
@@ -575,19 +592,21 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   const phases = buildPhases(frames, skel.keys)
   if (!opts.skipThumbnails) {
     onProgress({ step: 'measuring', ratio: 0.8, detail: 'Capturing your key frames' })
-    const aspect = video.videoWidth / Math.max(1, video.videoHeight)
     const thumbs = await captureThumbnails(video, phases.map((p) => p.t), (ctx, i, size) => {
       // The stills outlive the clip, so they carry the tracking with them.
+      // Drawn from the raw frames and the raw flight: the still is unrotated
+      // pixels, and a levelled skeleton over them would sit off the body by
+      // exactly the roll that was corrected.
       drawSkeleton(ctx, {
-        frame: frames[phases[i].frame],
+        frame: extracted.frames[phases[i].frame],
         aspect,
         rect: fitContain(size.w, size.h, aspect),
         racket: skel.racket,
         annotation: phases[i].id,
         calloutScale: 1.7,
         bodyHeight: skel.bodyHeight,
-        sequence: { frames, index: phases[i].frame },
-        ball: ballMarkerAt(ball, phases[i].t),
+        sequence: { frames: extracted.frames, index: phases[i].frame },
+        ball: ballMarkerAt(rawBall, phases[i].t),
       })
     })
     phases.forEach((p, i) => {
@@ -605,6 +624,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     ? summariseToss(ball, frames[skel.keys.toss].t, frames[skel.keys.contact].t, {
         bodyHeight: skel.bodyHeight,
         groundY: skel.groundY,
+        aspect,
       })
     : undefined
 
@@ -633,6 +653,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     window,
     serves,
     scale: { bodyHeight: skel.bodyHeight, groundY: skel.groundY },
+    tilt: applied,
     ball,
     tossFlight,
     serveType,

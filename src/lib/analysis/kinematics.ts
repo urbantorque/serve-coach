@@ -345,7 +345,13 @@ export function palmSkyElevation(frames: Frame[], side: Side, index: number): nu
   // A wider window than the pronation measurement gets: the trophy is the one
   // moment in the serve where the hand is nearly still, so there is nothing for
   // a longer average to smear.
-  return clamp(90 - angleBetween(palmNormalAt(frames, side, index, 0.05), UP), 0, 90)
+  const normal = palmNormalAt(frames, side, index, 0.05)
+  // A hand nobody saw comes back as the zero vector, and `angleBetween`
+  // answers 0 for degenerate input — which 90 − 0 would report as a *maximal*
+  // waiter's tray, fabricated from nothing. Not-a-number is the honest answer,
+  // and every consumer already drops non-finite readings.
+  if (norm(normal) < 1e-9) return NaN
+  return clamp(90 - angleBetween(normal, UP), 0, 90)
 }
 
 /**

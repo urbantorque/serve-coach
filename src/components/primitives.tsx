@@ -29,12 +29,13 @@ function useCountUp(target: number, enabled: boolean): number {
     const tick = (now: number) => {
       const t = Math.min(1, (now - t0) / duration)
       const eased = 1 - (1 - t) ** 3
-      setValue(Math.round(start0 + (target - start0) * eased))
-      if (t < 1) {
-        raf.current = requestAnimationFrame(tick)
-      } else {
-        from.current = target
-      }
+      const shown = Math.round(start0 + (target - start0) * eased)
+      setValue(shown)
+      // Kept current every tick, not just at the end — if the target changes
+      // mid-animation the next run must start from the number on screen, not
+      // jump back to where the interrupted animation began.
+      from.current = shown
+      if (t < 1) raf.current = requestAnimationFrame(tick)
     }
     raf.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf.current)
@@ -185,13 +186,23 @@ const FOCUSABLE = [
 export function Sheet({ open, onClose, title, children }: SheetProps) {
   const panel = useRef<HTMLDivElement>(null)
 
+  // Reached through a ref so the trap effect depends only on `open`. Every
+  // caller passes an inline arrow, and an effect keyed on that identity tears
+  // down and re-arms on each parent re-render — yanking focus back to the
+  // panel root mid-interaction (delete a serve in the history sheet, and the
+  // list refresh stole your place in it).
+  const closeRef = useRef(onClose)
+  useEffect(() => {
+    closeRef.current = onClose
+  })
+
   useEffect(() => {
     if (!open) return
     const opener = document.activeElement as HTMLElement | null
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        closeRef.current()
         return
       }
       if (e.key !== 'Tab' || !panel.current) return
@@ -227,7 +238,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
       // dumped back at the top of the document every time they close a sheet.
       opener?.focus?.()
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 

@@ -337,7 +337,11 @@ export async function shareReportCard(report: Report): Promise<'shared' | 'downl
   const blob = await renderReportCard(report)
   if (!blob) return 'failed'
 
-  const name = `serve-${new Date(report.createdAt).toISOString().slice(0, 10)}.png`
+  // Local date, matching the one drawn on the card face — toISOString is UTC,
+  // and an evening serve west of Greenwich would be named for tomorrow.
+  const d = new Date(report.createdAt)
+  const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const name = `serve-${stamp}.png`
   const file = new File([blob], name, { type: 'image/png' })
 
   const nav = navigator as Navigator & {

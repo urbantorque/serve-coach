@@ -24,7 +24,10 @@ interface Props {
 }
 
 export default function Analyzing({ progress, fileName, onCancel }: Props) {
-  const activeIndex = Math.max(0, STEPS.findIndex((s) => s.id === progress.step))
+  // 'done' is past the end of the list, so every step reads as complete —
+  // findIndex would return −1 and light step one under a full bar.
+  const activeIndex =
+    progress.step === 'done' ? STEPS.length : Math.max(0, STEPS.findIndex((s) => s.id === progress.step))
   const overall =
     progress.step === 'done'
       ? 1

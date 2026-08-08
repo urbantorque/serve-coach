@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ballMarkerAt } from '../lib/analysis/analyze'
+import { unlevelFrames } from '../lib/analysis/spatial'
 import type { Analysis, Frame, PhaseId } from '../lib/analysis/types'
+import { levelFlight } from '../lib/vision/ballTrack'
 import { drawSkeleton, fitContain } from '../lib/pose/skeleton'
 import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { Icon } from './primitives'
@@ -73,6 +75,33 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
   const { frames, phases, window: win, video } = analysis
   const aspect = video.width / Math.max(1, video.height)
 
+  /**
+   * The frames and flight as the *pixels* saw them.
+   *
+   * When the clip needed roll correction, everything on `analysis` lives in
+   * the levelled space the measurements used — but the video underneath this
+   * canvas is the raw recording, so a levelled skeleton drawn straight onto
+   * it sits off the body by exactly the roll that was corrected. Drawing
+   * inverts the transform once, up front; timestamps are untouched, so the
+   * playback bookkeeping below stays on `frames`.
+   */
+  const drawFrames = useMemo(
+    () => (analysis.tilt ? unlevelFrames(frames, analysis.tilt) : frames),
+    [frames, analysis.tilt],
+  )
+  const drawBall = useMemo(
+    () =>
+      analysis.ball && analysis.tilt
+        ? levelFlight(
+            analysis.ball,
+            -analysis.tilt.roll_deg,
+            { cx: analysis.tilt.cx, cy: analysis.tilt.cy },
+            aspect,
+          )
+        : analysis.ball,
+    [analysis.ball, analysis.tilt, aspect],
+  )
+
   const frameAt = useCallback(
     (t: number): number => {
       let lo = 0
@@ -106,7 +135,7 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     if (t < win.start - 0.05 || t > win.end + 0.05) return
 
     const idx = frameAt(t)
-    const f: Frame | undefined = frames[idx]
+    const f: Frame | undefined = drawFrames[idx]
     if (!f) return
 
     const vw = videoEl.videoWidth || video.width
@@ -139,14 +168,14 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
       aspect,
       rect,
       racket: analysis.handedness,
-      trail: { frames, from: phases.find((p) => p.id === 'ready')?.frame ?? 0, to: idx },
+      trail: { frames: drawFrames, from: phases.find((p) => p.id === 'ready')?.frame ?? 0, to: idx },
       annotation: onKeyframe ? activePhase : undefined,
       bodyHeight: analysis.scale?.bodyHeight,
-      sequence: { frames, index: idx },
-      ball: ballMarkerAt(analysis.ball, t),
+      sequence: { frames: drawFrames, index: idx },
+      ball: ballMarkerAt(drawBall, t),
       ghost,
     })
-  }, [activePhase, analysis.ball, analysis.handedness, analysis.scale, aspect, frameAt, frames, modelOn, modelPose, phases, skeletonOn, video.height, video.width, win.end, win.start])
+  }, [activePhase, drawBall, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, modelOn, modelPose, phases, skeletonOn, video.height, video.width, win.end, win.start])
 
   /**
    * The latest `draw`, reachable from effects that must not re-run when it changes.
@@ -259,17 +288,45 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
    * Stop dead when the tab is hidden, and repaint when it comes back.
    *
    * Browsers throttle rAF in a background tab but do not reliably stop it, and a
-   * paused-and-hidden player should be doing nothing at all. Coming back needs a
-   * redraw because the canvas may have been dropped while it was away.
+   * paused-and-hidden player should be doing nothing at all. The video itself is
+   * paused too — cancelling only the loop left it running under a dead overlay,
+   * with `playing` stranded at true so the first tap back did nothing. Pausing
+   * through state keeps the button, the loop and the picture telling one story.
+   * Coming back needs a redraw because the canvas may have been dropped away.
    */
   useEffect(() => {
     const onVisibility = () => {
-      if (document.hidden) cancelAnimationFrame(rafRef.current)
-      else drawRef.current()
+      if (document.hidden) {
+        videoRef.current?.pause()
+        setPlaying(false)
+        cancelAnimationFrame(rafRef.current)
+      } else {
+        drawRef.current()
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
+
+  /**
+   * Loop from the media's own `ended` event, not just the rAF check.
+   *
+   * A serve window that runs to the end of the file — every tightly trimmed
+   * clip — ends the media before the loop check can wrap it: the element
+   * pauses itself, and a seek after `ended` does not resume. Without this the
+   * player froze on the first frame showing a Pause button, with the loop
+   * ticking forever over a video that had stopped.
+   */
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return
+    const onEnded = () => {
+      v.currentTime = win.start
+      void v.play()
+    }
+    v.addEventListener('ended', onEnded)
+    return () => v.removeEventListener('ended', onEnded)
+  }, [win.start])
 
   useEffect(() => {
     const v = videoRef.current
@@ -343,8 +400,14 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     [frameAt, phases],
   )
 
+  // Keyed on the bump counter, not the object: `seek` is sticky, so when a
+  // rescore hands down new `phases`/`seekTo` identities this effect re-fires —
+  // and without the guard it would replay a jump the player asked for minutes
+  // ago, yanking the video away from wherever they had scrubbed to.
+  const seenSeek = useRef<number>()
   useEffect(() => {
-    if (!seek) return
+    if (!seek || seek.n === seenSeek.current) return
+    seenSeek.current = seek.n
     const target = phases.find((p) => p.id === seek.phase)
     if (target) seekTo(target.t)
   }, [seek, phases, seekTo])
@@ -381,11 +444,16 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
         window.removeEventListener('mouseup', onUp)
         window.removeEventListener('touchmove', onMove)
         window.removeEventListener('touchend', onUp)
+        window.removeEventListener('touchcancel', onUp)
       }
       window.addEventListener('mousemove', onMove)
       window.addEventListener('mouseup', onUp)
       window.addEventListener('touchmove', onMove)
       window.addEventListener('touchend', onUp)
+      // A touch the browser takes back — notification shade, incoming call —
+      // ends in `touchcancel`, and without this the window-level move handler
+      // outlives the drag and every later touch keeps seeking the video.
+      window.addEventListener('touchcancel', onUp)
     },
     [seekTo, win.start, win.end],
   )
@@ -406,8 +474,15 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
       setPlaying(false)
       v.currentTime = frames[next].t
       setCursor(next)
+      // The phase follows the frame, exactly as it does when seeking — stepping
+      // onto the contact keyframe must light its pill, caption and annotation,
+      // not leave them describing wherever playback last was.
+      const nearest = phases.reduce((best, p) =>
+        Math.abs(p.t - frames[next].t) < Math.abs(best.t - frames[next].t) ? p : best,
+      )
+      setActivePhase(nearest.id)
     },
-    [frameAt, frames],
+    [frameAt, frames, phases],
   )
 
   const onKeyDown = (e: React.KeyboardEvent) => {

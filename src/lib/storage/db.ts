@@ -17,7 +17,7 @@ let dbPromise: Promise<IDBDatabase> | null = null
 
 function open(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise
-  dbPromise = new Promise((resolve, reject) => {
+  const attempt = new Promise<IDBDatabase>((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION)
     req.onupgradeneeded = () => {
       const db = req.result
@@ -29,7 +29,15 @@ function open(): Promise<IDBDatabase> {
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error ?? new Error('Could not open local storage'))
   })
-  return dbPromise
+  // A failed open must not poison the rest of the session. Safari in particular
+  // rejects transiently after the app is backgrounded — caching that rejection
+  // would leave history empty and every save a silent no-op until a full
+  // reload, when the very next attempt would have succeeded.
+  attempt.catch(() => {
+    if (dbPromise === attempt) dbPromise = null
+  })
+  dbPromise = attempt
+  return attempt
 }
 
 function tx<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
@@ -38,8 +46,20 @@ function tx<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequ
       new Promise<T>((resolve, reject) => {
         const t = db.transaction(STORE, mode)
         const req = run(t.objectStore(STORE))
-        req.onsuccess = () => resolve(req.result)
-        req.onerror = () => reject(req.error ?? new Error('Local storage write failed'))
+        const fail = () => reject(t.error ?? req.error ?? new Error('Local storage write failed'))
+        if (mode === 'readonly') {
+          req.onsuccess = () => resolve(req.result)
+          req.onerror = fail
+        } else {
+          // A write only counts once the transaction durably commits. The
+          // request's own success fires first, and a quota failure can still
+          // abort the commit after it — resolving there would report success
+          // for a report that was never stored, and the quota-retry path in
+          // `saveSession` would never see the error it exists to handle.
+          t.oncomplete = () => resolve(req.result)
+          t.onabort = fail
+          t.onerror = fail
+        }
       }),
   )
 }
@@ -67,7 +87,27 @@ const stripStills = (s: Session): Session => ({
  * whole reports oldest-first would do.
  */
 async function prune(aggressive = false): Promise<void> {
-  const all = await listSessions()
+  const raw = await tx<unknown[]>('readonly', (s) => s.getAll() as IDBRequest<unknown[]>)
+
+  const all: Session[] = []
+  for (const row of raw) {
+    const s = normalise(row)
+    if (s) {
+      all.push(s)
+      continue
+    }
+    // A row that cannot even be read still occupies quota, and `listSessions`
+    // hides it — so a store full of corrupt rows would defeat the quota
+    // recovery entirely, with every retry failing against bytes nothing can
+    // free. Under quota pressure they go first; otherwise they are left alone,
+    // since an unreadable row may simply belong to a newer version of the app.
+    const id = (row as { id?: unknown } | null)?.id
+    if (aggressive && typeof id === 'string') {
+      await tx('readwrite', (store) => store.delete(id))
+    }
+  }
+  all.sort((a, b) => b.createdAt - a.createdAt)
+
   const keepStills = aggressive ? 5 : KEEP_STILLS
   const keepAll = aggressive ? 25 : MAX_SESSIONS
 
@@ -160,7 +200,12 @@ export function normalise(raw: unknown): Session | undefined {
     ...(s as Session),
     fundamentals,
     overallStatus: s.overallStatus ?? 'fair',
-    phases: Array.isArray(s.phases) ? s.phases : [],
+    // Element-checked, not just array-checked: a null slipped in by a
+    // hand-edited backup would throw in every consumer that reaches for
+    // `p.thumbnail`.
+    phases: Array.isArray(s.phases)
+      ? s.phases.filter((p): p is Session['phases'][number] => typeof p === 'object' && p !== null)
+      : [],
     serves: s.serves ?? { count: 1, index: 0 },
     window: s.window ?? { start: 0, end: 0 },
     scale: s.scale ?? { bodyHeight: 0, groundY: 0 },

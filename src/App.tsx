@@ -185,6 +185,11 @@ export default function App() {
       const controller = new AbortController()
       abortRef.current = controller
 
+      // Whatever report this run produces, the consistency panel on screen was
+      // measured for a different clip, hand or serve — leaving it up would sit
+      // clip A's spreads under clip B's report.
+      setConsistency(undefined)
+
       // Already worked out during this session? Switching between the serves in
       // a basket, or correcting the hand and changing it back, otherwise pays
       // the full pipeline again for a result we are still holding.

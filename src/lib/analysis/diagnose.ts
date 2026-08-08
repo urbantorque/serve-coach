@@ -28,7 +28,7 @@ import {
   timeline,
   yawSeries,
 } from './kinematics'
-import { evaluateFlaws, type FlawFinding, type SignalReading } from './flaws'
+import { evaluateFlaws, MIN_EVIDENCE, type FlawFinding, type SignalReading } from './flaws'
 import { inferTier, nextTier, clampTier } from './tiers'
 import type { Skeleton } from './phases'
 import type { Frame } from './types'
@@ -233,7 +233,14 @@ export function diagnose(
 
   const signals: Record<string, number> = {}
   for (const [id, reading] of Object.entries(readings)) {
-    if (reading && Number.isFinite(reading.value)) signals[id] = reading.value
+    // The same evidence bar the flaw pass applies. `signals` feeds the tier
+    // inference and the injury flags, and a reading resting on landmarks the
+    // tracker lost is not evidence for those either — without this gate an
+    // unseen hand could clear a rung or pair up into a fabricated wrist-risk
+    // flag from numbers the flaw pass had already rejected.
+    if (reading && Number.isFinite(reading.value) && reading.confidence >= MIN_EVIDENCE) {
+      signals[id] = reading.value
+    }
   }
 
   const stated = options.tier !== undefined && Number.isFinite(options.tier)

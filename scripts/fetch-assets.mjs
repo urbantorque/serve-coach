@@ -34,7 +34,12 @@ async function vendorModel() {
   const buf = Buffer.from(await res.arrayBuffer())
   if (buf.length < MODEL.minBytes) throw new Error(`model download truncated (${buf.length} bytes)`)
   fs.mkdirSync(path.dirname(MODEL.dest), { recursive: true })
-  fs.writeFileSync(MODEL.dest, buf)
+  // Written to a temp name and renamed, so a build killed mid-write can never
+  // leave a truncated file at the real path — the size check above would then
+  // accept it forever and every build would ship a corrupt model.
+  const tmp = `${MODEL.dest}.tmp`
+  fs.writeFileSync(tmp, buf)
+  fs.renameSync(tmp, MODEL.dest)
   log(`model saved — ${(buf.length / 1e6).toFixed(1)} MB, sha256 ${createHash('sha256').update(buf).digest('hex').slice(0, 12)}`)
 }
 

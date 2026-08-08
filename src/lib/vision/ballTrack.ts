@@ -207,17 +207,25 @@ function blobs(
 /** Least-squares quadratic through (t, y). Returns [c0, c1, c2] or undefined. */
 function fitQuadratic(pts: { t: number; y: number }[]): [number, number, number] | undefined {
   if (pts.length < 3) return undefined
+  // Centre time before forming the normal equations. In absolute clip time a
+  // serve half a minute into a basket puts t⁴ terms near 10¹³ while the true
+  // determinant of near-adjacent samples is ~10⁻⁹ — the sums cancel
+  // catastrophically and Cramer's rule runs on floating-point noise. The fit
+  // is done in centred time and re-expanded, so callers still get
+  // coefficients in absolute time.
+  const t0 = pts.reduce((s, p) => s + p.t, 0) / pts.length
   let s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0
   let b0 = 0, b1 = 0, b2 = 0
   for (const { t, y } of pts) {
-    const t2 = t * t
+    const tc = t - t0
+    const t2 = tc * tc
     s0 += 1
-    s1 += t
+    s1 += tc
     s2 += t2
-    s3 += t2 * t
+    s3 += t2 * tc
     s4 += t2 * t2
     b0 += y
-    b1 += t * y
+    b1 += tc * y
     b2 += t2 * y
   }
   // Solve the 3×3 normal equations by Cramer's rule.
@@ -235,7 +243,11 @@ function fitQuadratic(pts: { t: number; y: number }[]): [number, number, number]
   if (Math.abs(d) < 1e-12) return undefined
   const withCol = (col: number, v: number[]) => m.map((row, i) => row.map((x, j) => (j === col ? v[i] : x)))
   const rhs = [b0, b1, b2]
-  return [det3(withCol(0, rhs)) / d, det3(withCol(1, rhs)) / d, det3(withCol(2, rhs)) / d]
+  const a0 = det3(withCol(0, rhs)) / d
+  const a1 = det3(withCol(1, rhs)) / d
+  const a2 = det3(withCol(2, rhs)) / d
+  // y = a0 + a1·(t−t0) + a2·(t−t0)², expanded back to powers of t.
+  return [a0 - a1 * t0 + a2 * t0 * t0, a1 - 2 * a2 * t0, a2]
 }
 
 export const flightHeightAt = (flight: BallFlight, t: number): number => {
@@ -301,7 +313,7 @@ export function summariseToss(
   flight: BallFlight,
   releaseT: number,
   contactT: number,
-  scale: { bodyHeight: number; groundY: number },
+  scale: { bodyHeight: number; groundY: number; aspect?: number },
 ): TossFlight {
   const { bodyHeight, groundY } = scale
   const release = { t: releaseT, x: flightXAt(flight, releaseT), y: flightHeightAt(flight, releaseT) }
@@ -312,7 +324,62 @@ export function summariseToss(
     drop,
     peakHeight: (groundY - flight.apex.y) / bodyHeight,
     fallToContact: Math.max(0, (drop.y - flight.apex.y) / bodyHeight),
-    horizontalDrift: Math.abs(drop.x - release.x) / bodyHeight,
+    // Ball x is width-normalised while bodyHeight is a fraction of frame
+    // height — different units on anything but a square video. The aspect
+    // ratio converts the sideways distance onto the height scale before the
+    // division; without it the drift read ~1.78× low on landscape and ~1.78×
+    // high on portrait.
+    horizontalDrift: (Math.abs(drop.x - release.x) * (scale.aspect ?? 1)) / bodyHeight,
+  }
+}
+
+/**
+ * Rotate a tracked flight into the levelled frame the landmarks live in.
+ *
+ * When a clip needs roll correction the landmarks are rotated back onto
+ * gravity, but the ball was found in the raw pixels — so its heights would be
+ * compared against a `groundY` from a different frame. A rigid rotation maps
+ * the quadratic-in-time flight to another quadratic, so the samples are
+ * rotated with the same transform `levelFrames` used and refitted exactly as
+ * `trackBall` fitted them.
+ *
+ * `pivot` must be the centre `levelFrames` rotated about, in landmark units
+ * (x in height units). Ball x is width-normalised, so it converts through
+ * `aspect` on the way in and back out. Passing a negated `roll_deg` inverts
+ * the transform, which is how drawing takes a levelled flight back to pixels.
+ */
+export function levelFlight(
+  flight: BallFlight,
+  roll_deg: number,
+  pivot: { cx: number; cy: number },
+  aspect: number,
+): BallFlight {
+  const theta = (-roll_deg * Math.PI) / 180
+  const cos = Math.cos(theta)
+  const sin = Math.sin(theta)
+  const rotate = (p: BallSample): BallSample => {
+    const dx = p.x * aspect - pivot.cx
+    const dy = p.y - pivot.cy
+    return {
+      t: p.t,
+      x: (pivot.cx + dx * cos - dy * sin) / aspect,
+      y: pivot.cy + dx * sin + dy * cos,
+    }
+  }
+
+  const samples = flight.samples.map(rotate)
+  const coeffs = fitQuadratic(samples.map((p) => ({ t: p.t, y: p.y })))
+  // A refit that fails or loses its downward curvature means the rotation has
+  // nothing trustworthy to offer; the original flight is the lesser wrong.
+  if (!coeffs || coeffs[2] <= 0) return flight
+
+  const [c0, c1, c2] = coeffs
+  const apexT = -c1 / (2 * c2)
+  return {
+    coefficients: coeffs,
+    apex: { t: apexT, x: linearAt(samples, apexT), y: c0 + c1 * apexT + c2 * apexT * apexT },
+    samples,
+    confidence: flight.confidence,
   }
 }
 

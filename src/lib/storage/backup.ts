@@ -103,7 +103,10 @@ export async function downloadBackup(): Promise<number> {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  const stamp = new Date(backup.exportedAt).toISOString().slice(0, 10)
+  // Local date — toISOString is UTC, and an evening export west of Greenwich
+  // would be stamped with tomorrow's date.
+  const d = new Date(backup.exportedAt)
+  const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   a.download = `serve-coach-${stamp}.json`
   a.click()
   // Revoking immediately can cancel the download in some browsers.

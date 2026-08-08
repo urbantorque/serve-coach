@@ -95,9 +95,12 @@ export function findPracticeFocus(
   const rows = new Map<string, Row>()
 
   for (const session of recent) {
-    const all = session.fundamentals.flatMap((f) =>
-      f.metrics.map((m) => ({ metric: m, fundamentalId: f.id })),
-    )
+    // An imported backup can carry a fundamental this version has never heard
+    // of; it survives `normalise` by design, but recommending practice for it
+    // would reach for a label and a drill that do not exist here.
+    const all = session.fundamentals
+      .filter((f) => f.id in FUNDAMENTALS)
+      .flatMap((f) => f.metrics.map((m) => ({ metric: m, fundamentalId: f.id })))
     if (!all.length) continue
 
     const weakestId = [...all].sort((a, b) => a.metric.score - b.metric.score)[0].metric.id
