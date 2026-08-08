@@ -1,0 +1,163 @@
+/* ============================================================================
+   Analysing — the wait
+
+   Honest and still. Everything that used to move on this screen moved whether
+   or not the work was moving: a ripple, a bobbing ball, a shimmer running along
+   the bar. On a mid-range phone the pose pass takes tens of seconds, and a
+   decorative animation over a genuinely slow job reads as reassurance the app
+   cannot back up. What is left is a determinate bar, the stage it is on, and
+   the step list — all three of which change only when something has happened.
+   ========================================================================= */
+
+.analyzing {
+  min-height: 100svh;
+  justify-content: center;
+}
+
+.analyzing-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: var(--s-3);
+  width: 100%;
+}
+
+.analyzing-label {
+  color: var(--fg-muted);
+}
+
+.analyzing h1 {
+  font-family: var(--font-display);
+  font-size: var(--t-headline);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display);
+}
+
+.analyzing-file {
+  max-width: 100%;
+  font-size: var(--t-small);
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Boxed, because the fill is optic yellow on a near-white track and those two
+ * are a few percent apart in luminance. The black rule is what makes the bar a
+ * bar; the yellow inside it is what makes it this app's bar.
+ */
+.progress {
+  width: 100%;
+  max-width: var(--measure);
+  height: 16px;
+  margin-top: var(--s-2);
+  background: var(--surface-raised);
+  border: var(--stroke) solid var(--black);
+  overflow: hidden;
+}
+
+/* Scaled rather than resized: animating `width` is a layout pass per frame, and
+   this bar is on screen while the pose engine is using the whole device. */
+.progress-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--yellow);
+  transform-origin: left center;
+  transition: transform var(--base) var(--ease-out);
+}
+
+.analyzing-detail {
+  min-height: 1.4em;
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+/* ---------------------------------------------------------------- the steps */
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  align-items: flex-start;
+  margin: var(--s-2) 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--t-small);
+  color: var(--fg-faint);
+  transition: color var(--base) var(--ease);
+}
+
+.step.is-active {
+  color: var(--fg);
+  font-weight: var(--wt-title);
+}
+
+.step.is-done {
+  color: var(--fg-muted);
+}
+
+.step-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: var(--stroke) solid var(--line);
+  color: var(--fg);
+  flex: none;
+}
+
+/* A thread running through the marks turns a list of labels into a route —
+   one line to walk, rather than five separate facts. */
+.step:not(:last-child) .step-mark::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: var(--stroke);
+  height: var(--s-2);
+  background: var(--line);
+  transform: translateX(-50%);
+}
+
+.step.is-done .step-mark {
+  border-color: var(--black);
+  background: var(--black);
+  color: var(--white);
+}
+
+.step.is-done:not(:last-child) .step-mark::after {
+  background: var(--black);
+}
+
+.step.is-active .step-mark {
+  border-color: var(--black);
+  background: var(--yellow);
+}
+
+.step-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--fg-faint);
+}
+
+.step.is-active .step-dot {
+  background: var(--yellow-ink);
+}
+
+.analyzing-aside {
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}

@@ -1,0 +1,921 @@
+/* ============================================================================
+   Report — the page the whole app exists to produce
+
+   Five rungs, in the order the engine ranks them. Each one gets a physically
+   different treatment so the ranking survives being skimmed at arm's length in
+   bright sun:
+
+     1  injury       red rule, wash fill, black type   — the only red in the app
+     2  refusal      a black box on white              — deliberate, not an error
+     3  focus        a pull quote under a blue rule    — the one thing to do
+     4  consistency  a quiet grey panel                — context, opt-in
+     5  fundamentals a plain list (fundamentals.css)   — the detail
+
+   What flattened the old page was that every one of those was a rounded panel
+   of the same weight, so the ranking only existed in the source order. Nothing
+   here shares a treatment with its neighbour.
+   ========================================================================= */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--stroke-hair) solid var(--line-subtle);
+}
+
+.topbar-title {
+  font-size: var(--t-overline);
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--fg-muted);
+}
+
+/* ============================================================================
+   The hero — the score, and nothing competing with it
+
+   Not a ring and not centred. A ring puts the number inside a circle roughly
+   the size of a thumbnail and then has to shrink it to fit; set flush left at
+   display size it is simply the biggest thing on the phone, which is what the
+   payoff screen is for. The tier is carried by the meter underneath rather than
+   by tinting the digits — three of the four ramp colours cannot hold 4.5:1 on
+   this background, and a score you have to squint at is not a celebration.
+   ========================================================================= */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: var(--s-3);
+}
+
+.hero-label {
+  display: block;
+  color: var(--fg-muted);
+}
+
+.hero-score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  /* Pulled up under its own label: the overline belongs to the number, not to
+     the space between the number and the topbar. */
+  margin-top: calc(-1 * var(--s-2));
+  /* Archivo Black carries its own side bearing; pull the glyph onto the margin
+     so the number lines up with the copy below it rather than sitting inboard. */
+  margin-left: -0.045em;
+}
+
+.hero-out-of {
+  font-family: var(--font-display);
+  font-size: var(--t-subhead);
+  line-height: 1;
+  letter-spacing: var(--tr-display);
+  color: var(--fg-faint);
+}
+
+.hero-meter {
+  display: block;
+  width: 100%;
+  max-width: var(--measure);
+  height: 14px;
+  background: var(--surface-raised);
+  /* The ramp tops out at optic yellow's neighbourhood on a near-white track, so
+     the fill is boxed rather than left to carry itself on colour alone. */
+  border: var(--stroke) solid var(--black);
+  overflow: hidden;
+}
+
+.hero-meter-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  transition: transform var(--slow) var(--ease-out);
+}
+
+.hero-meter-fill--great { background: var(--great); }
+.hero-meter-fill--good  { background: var(--good); }
+.hero-meter-fill--fair  { background: var(--fair); }
+.hero-meter-fill--work  { background: var(--work); }
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: var(--t-subhead);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
+  max-width: 22ch;
+  text-wrap: balance;
+}
+
+.hero > p {
+  max-width: var(--measure);
+  font-size: var(--t-body);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.hero-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+/* ============================================================================
+   How the clip was read — the assumptions, not the verdict
+
+   Everything here is correctable and none of it is the fix, so it sits under
+   the focus card. Stacked in the hero it added the better part of a screen
+   between the score and the one instruction on the page.
+   ========================================================================= */
+
+.reading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.reading-title {
+  color: var(--fg-muted);
+}
+
+.reading-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.judged {
+  width: 100%;
+  padding-top: var(--s-3);
+  border-top: var(--stroke-hair) solid var(--line-subtle);
+}
+
+.judged-lead {
+  display: block;
+  color: var(--fg-muted);
+}
+
+.judged-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.judged-options .serve-chip {
+  width: auto;
+  padding: 0 var(--s-3);
+  font-size: var(--t-small);
+}
+
+.judged-note {
+  max-width: var(--measure);
+  margin-top: var(--s-2);
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/* ============================================================================
+   Which serve in the clip
+   ========================================================================= */
+
+.serves {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  background: var(--surface);
+  border: var(--stroke) solid var(--line-subtle);
+}
+
+.serves-lead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: 1;
+  min-width: 12rem;
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.serves-lead .icon {
+  color: var(--fg);
+  flex: none;
+}
+
+.serves-lead strong {
+  color: var(--fg);
+  font-weight: var(--wt-title);
+}
+
+.serves-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+/* Square, and 44px even though the label is two characters — the whole strip is
+   thumb targets on a phone held in one hand. */
+.serve-chip {
+  min-width: 44px;
+  height: 44px;
+  background: var(--white);
+  border: var(--stroke) solid var(--line);
+  font-size: var(--t-small);
+  font-weight: var(--wt-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  transition:
+    background var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.serve-chip:hover:not(:disabled) {
+  border-color: var(--black);
+  color: var(--fg);
+}
+
+.serve-chip.is-on {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+.serve-chip:disabled {
+  cursor: default;
+}
+
+.serves-cta {
+  width: 100%;
+}
+
+/* ============================================================================
+   Consistency across the serves in one clip
+
+   Rung four. A grey panel with a coloured top rule: present, readable, and
+   visibly not the thing to act on.
+   ========================================================================= */
+
+.consistency {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  background: var(--surface);
+  border: var(--stroke) solid var(--line-subtle);
+  border-top: var(--stroke-heavy) solid var(--line);
+}
+
+.consistency--great { border-top-color: var(--great); }
+.consistency--good  { border-top-color: var(--good); }
+.consistency--fair  { border-top-color: var(--fair); }
+.consistency--work  { border-top-color: var(--work); }
+
+.consistency-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.consistency-kicker {
+  color: var(--fg-muted);
+}
+
+.consistency-score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-1);
+  font-family: var(--font-display);
+  font-size: var(--t-headline);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+}
+
+.consistency-out-of {
+  font-size: var(--t-lede);
+  color: var(--fg-faint);
+}
+
+.consistency-head h2 {
+  font-family: var(--font-display);
+  font-size: var(--t-subhead);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
+}
+
+.consistency-head > p {
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.consistency-scores {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.consistency-label {
+  color: var(--fg-muted);
+}
+
+.consistency-chips {
+  display: flex;
+  gap: var(--s-1);
+  flex-wrap: wrap;
+}
+
+.cchip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  min-width: 44px;
+  padding: var(--s-2);
+  background: var(--white);
+  border: var(--stroke-hair) solid var(--line);
+}
+
+.cchip em {
+  font-style: normal;
+  font-family: var(--font-display);
+  font-size: var(--t-body);
+  line-height: 1;
+  letter-spacing: var(--tr-title);
+}
+
+.cchip > span {
+  font-size: var(--t-overline);
+  font-weight: 700;
+  color: var(--fg-faint);
+}
+
+.spreads {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.spread-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+
+.spread-label {
+  font-size: var(--t-small);
+  font-weight: var(--wt-key);
+}
+
+/*
+ * Black digits, tier as a rule underneath.
+ *
+ * Two of the four ramp colours cannot hold 4.5:1 as 16px type on this panel, so
+ * colouring the number meant the middle of the ramp was the hardest rung to
+ * read. The underline carries the same information at the same glance and the
+ * number stays legible at every tier.
+ */
+.spread-score {
+  font-size: var(--t-body);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-title);
+  color: var(--fg);
+  border-bottom: 3px solid transparent;
+}
+
+.spread-score--great { border-bottom-color: var(--great); }
+.spread-score--good  { border-bottom-color: var(--good); }
+.spread-score--fair  { border-bottom-color: var(--fair); }
+.spread-score--work  { border-bottom-color: var(--work); }
+
+/*
+ * The measured range, drawn over the target band on the metric's own axis.
+ *
+ * Shorter than the axis it sits in, and edged in white: the band behind it is
+ * a filled box of its own, and a bar the same height as the band would read as
+ * having replaced it rather than as lying across it.
+ */
+.spread-fill {
+  position: absolute;
+  height: 12px;
+  min-width: 4px;
+  border: var(--stroke) solid var(--white);
+  box-sizing: content-box;
+  margin-left: calc(-1 * var(--stroke));
+}
+
+.spread-fill--great { background: var(--great); }
+.spread-fill--good  { background: var(--good); }
+.spread-fill--fair  { background: var(--fair); }
+.spread-fill--work  { background: var(--work); }
+
+.spread-detail {
+  margin-top: var(--s-2);
+  font-size: var(--t-caption);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.spread-sep {
+  padding: 0 var(--s-2);
+  font-weight: var(--wt-body);
+  color: var(--fg-faint);
+}
+
+.consistency-foot {
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/* A caveat, not a warning. Amber rule, black type — red is injury only. */
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.note {
+  max-width: var(--measure);
+  padding: var(--s-3);
+  background: var(--fair-wash);
+  border: var(--stroke-hair) solid var(--fair);
+  border-left: var(--stroke-heavy) solid var(--fair);
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+/* ============================================================================
+   Best-to-worst gap — the one chart where down is the good direction
+   ========================================================================= */
+
+.gaps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.gap {
+  display: grid;
+  grid-template-columns: 62px 1fr 28px;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.gap-date {
+  font-size: var(--t-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--fg-faint);
+}
+
+/*
+ * Deliberately not the delta bars.
+ *
+ * These two sit one under the other in the same sheet and were built to the
+ * same label / track / value grid, but they mean opposite things: a delta bar
+ * runs out from a centre axis and up is good, while a gap bar runs from the left
+ * edge and *short* is good. Sharing the great/good/fair/work fills on top of
+ * that made them read as one chart with an inconsistent scale.
+ *
+ * So the colour coding goes. A single flat rule per row, with only the most
+ * recent basket picked out — the eye compares lengths, which is the one
+ * comparison this chart is for, and there is no second scale to misread.
+ */
+.gap-track {
+  position: relative;
+  height: 4px;
+  background: var(--surface-raised);
+}
+
+.gap-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--fg-faint);
+}
+
+.gap:first-child .gap-fill {
+  background: var(--black);
+  height: 8px;
+  top: -2px;
+}
+
+.gap:first-child .gap-value {
+  color: var(--fg);
+}
+
+.gap-value {
+  font-size: var(--t-small);
+  font-weight: var(--wt-title);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--fg-muted);
+}
+
+.gaps-note {
+  margin-top: var(--s-1);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}
+
+/* ============================================================================
+   Rung 1 — injury risk. The only red in the app.
+
+   Everything else on this page is judged against the tier ladder and is
+   therefore a matter of degree. These are read against absolute limits — a
+   wrist has the same range at every rating — so they are the one thing here
+   that is not a score, and the one thing worth stopping a session for.
+
+   No icon, no glyph, no badge. A heavy red rule across the top and black type
+   underneath outranks any warning triangle, and reads at a glance in sun.
+   ========================================================================= */
+
+.injuries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+/*
+ * The base is the loud one, and every severity gets it.
+ *
+ * Styling only the high case and letting the rest fall through to a quiet
+ * default gets this exactly backwards: `medium` is the ordinary verdict — the
+ * flags escalate to high only well past the limit — so the common warning would
+ * have been the whispered one. High widens the spine rather than being the only
+ * case that shouts.
+ */
+.injury {
+  padding: var(--s-4);
+  background: var(--danger-wash);
+  border: var(--stroke) solid var(--danger);
+  border-top-width: var(--stroke-heavy);
+  border-left-width: var(--stroke-heavy);
+}
+
+.injury--high {
+  border-left-width: 12px;
+}
+
+.injury-label {
+  display: block;
+  margin-bottom: var(--s-2);
+  color: var(--fg);
+}
+
+/*
+ * Set to carry against the hero score and the focus card further down the page.
+ * At the body size of a caveat it lost to both, which made "first in the
+ * document" and "first thing you see" two different orderings.
+ */
+.injury-text strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--t-subhead);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
+  color: var(--fg);
+  text-wrap: balance;
+}
+
+.injury-text p {
+  margin-top: var(--s-2);
+  max-width: var(--measure);
+  font-size: var(--t-body);
+  line-height: var(--lh-copy);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+/* ============================================================================
+   Rung 2 — the clip the engine will not put a number on
+
+   This is the honesty feature, so it is drawn as a statement rather than as a
+   fault: a square black box on white, the reason in plain compact copy, and
+   refilming as the obvious next move. Nothing here is red and nothing here is
+   an icon — an alarm would tell the player they broke something, when what
+   happened is the app declining to invent a score.
+   ========================================================================= */
+
+.refusal {
+  padding: var(--s-5) var(--s-4) var(--s-4);
+  background: var(--white);
+  border: var(--stroke) solid var(--black);
+}
+
+.refusal-label {
+  display: block;
+  color: var(--fg-muted);
+}
+
+.refusal h1 {
+  margin: var(--s-3) 0 var(--s-4);
+  font-family: var(--font-display);
+  font-size: var(--t-headline);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display);
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.refusal-hints {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-width: var(--measure);
+}
+
+.refusal-hints li {
+  position: relative;
+  padding-left: var(--s-4);
+  font-size: var(--t-body);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+.refusal-hints li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 12px;
+  height: var(--stroke);
+  background: var(--black);
+}
+
+.refusal-note {
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: var(--stroke-hair) solid var(--line);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/* The banner that stays up once the numbers are shown anyway. */
+.unreliable {
+  max-width: var(--measure);
+  padding: var(--s-3);
+  background: var(--fair-wash);
+  border: var(--stroke-hair) solid var(--fair);
+  border-left: var(--stroke-heavy) solid var(--fair);
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+.unreliable strong {
+  font-weight: var(--wt-title);
+}
+
+/* ============================================================================
+   Rung 3 — the focus card. The one thing to act on.
+
+   A pull quote, not a notification. Blue is the coaching voice in this system,
+   so it gets the heavy rule; the instruction is set at the largest body size in
+   the scale and given the width of a column to itself, and the drill sits below
+   a plain rule rather than inside a second box — a box inside a box is how the
+   fix ended up looking like a footnote to itself.
+   ========================================================================= */
+
+.focus {
+  margin: var(--s-2) 0;
+  padding: var(--s-5) var(--s-4) var(--s-5);
+  background: var(--white);
+  border: var(--stroke) solid var(--line-subtle);
+  border-top: var(--stroke-heavy) solid var(--blue);
+}
+
+.focus-kicker {
+  display: block;
+  color: var(--blue);
+}
+
+.focus h2 {
+  margin: var(--s-3) 0 var(--s-4);
+  font-family: var(--font-display);
+  font-size: var(--t-headline);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display);
+  max-width: 20ch;
+  text-wrap: balance;
+}
+
+.focus > p {
+  max-width: var(--measure);
+  font-size: var(--t-lede);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+/*
+ * What the report is holding back, as a count.
+ *
+ * Set below the instruction and above the drill, quieter than both. It exists
+ * so that a second fault surfacing on the next clip does not read as the app
+ * changing its mind — not to compete with the one thing to work on.
+ */
+.focus-suppressed {
+  margin-top: var(--s-3);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.focus-drill {
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+  border-top: var(--stroke) solid var(--line);
+}
+
+.focus-drill-kicker {
+  display: block;
+  color: var(--fg-muted);
+}
+
+.focus-drill h3 {
+  margin: var(--s-2) 0;
+  font-size: var(--t-body);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-title);
+}
+
+.focus-drill p {
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.focus-reps {
+  display: inline-block;
+  margin-top: var(--s-3);
+  padding: var(--s-1) var(--s-2);
+  background: var(--yellow);
+  color: var(--yellow-ink);
+  font-size: var(--t-overline);
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+/* Which rung these targets came off, and the way to move it. */
+.levelled {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+  padding-top: var(--s-2);
+  border-top: var(--stroke-hair) solid var(--line-subtle);
+}
+
+.levelled-text {
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.levelled-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  flex: none;
+  min-height: 44px;
+  font-size: var(--t-overline);
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+/* ============================================================================
+   Level picker — which rung to be marked against
+   ========================================================================= */
+
+/*
+ * A follow-on, not a peer.
+ *
+ * This sits directly under `.hand-pick` in the first-run sheet and directly
+ * under `.focus-drill` on the report, and both of those are bordered boxes on a
+ * panel. Given the same chrome it read as a second question of equal standing —
+ * which is wrong twice over: the hand has to be right before the first clip, and
+ * this one has a perfectly good answer of "don't ask me". So it carries a rule
+ * and no box.
+ */
+.level-pick {
+  margin-top: var(--s-4);
+  padding: var(--s-4) 0 0;
+  border: 0;
+  border-top: var(--stroke) solid var(--line);
+}
+
+.level-pick legend {
+  padding: 0;
+  font-size: var(--t-overline);
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--fg-muted);
+}
+
+.level-pick-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}
+
+.level-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--s-1);
+  min-height: 44px;
+  padding: var(--s-2) var(--s-3);
+  background: var(--white);
+  border: var(--stroke) solid var(--line);
+  text-align: left;
+  transition:
+    background var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.level-option:hover {
+  border-color: var(--black);
+}
+
+.level-option strong {
+  font-size: var(--t-small);
+  font-weight: var(--wt-title);
+  color: var(--fg);
+}
+
+.level-option span {
+  font-size: var(--t-caption);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+/* Optic yellow as a fill with black ink on it — the one legal way to use it. */
+.level-option.is-on {
+  background: var(--yellow);
+  border-color: var(--black);
+}
+
+.level-option.is-on strong,
+.level-option.is-on span {
+  color: var(--yellow-ink);
+}
+
+.level-pick-note {
+  margin-top: var(--s-3);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}

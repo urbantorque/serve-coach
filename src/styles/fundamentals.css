@@ -1,0 +1,464 @@
+/* ============================================================================
+   Fundamental cards
+
+   The diagnostic card pattern: a 4px rule along the top in the score's own
+   colour, hairline-weight sides, and 24px of air inside. The rule is the only
+   place the colour is allowed to be large, which is what lets the verdict be
+   read from arm's length without any of the type going coloured.
+   ========================================================================= */
+
+.fcards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.fcard {
+  background: var(--white);
+  border: var(--stroke) solid var(--line-subtle);
+  border-top: var(--stroke-heavy) solid var(--blue);
+  transition: border-color var(--base) var(--ease);
+}
+
+.fcard--great { border-top-color: var(--great); }
+.fcard--good  { border-top-color: var(--good); }
+.fcard--fair  { border-top-color: var(--fair); }
+.fcard--work  { border-top-color: var(--work); }
+
+.fcard.is-open {
+  border-left-color: var(--line);
+  border-right-color: var(--line);
+  border-bottom-color: var(--line);
+}
+
+.fcard-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-4);
+  text-align: left;
+}
+
+.fcard-title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.fcard-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  font-family: var(--font-display);
+  font-size: var(--t-subhead);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
+}
+
+/* The verdict sits at the size of the name it qualifies, not at footnote size.
+   It is the answer to the question the player opened the report to ask. */
+.fcard-name .tag {
+  font-size: var(--t-caption);
+  letter-spacing: 0.09em;
+  padding: 4px var(--s-2);
+}
+
+.fcard-headline {
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fcard-chevron {
+  color: var(--fg);
+  transition: transform var(--base) var(--ease);
+}
+
+.fcard.is-open .fcard-chevron {
+  transform: rotate(90deg);
+}
+
+.fcard-body {
+  padding: 0 var(--s-4) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  animation: unfold var(--base) var(--ease-out) both;
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.fcard-blurb {
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  padding-bottom: var(--s-3);
+  border-bottom: var(--stroke-hair) solid var(--line);
+}
+
+/* --- metrics --------------------------------------------------------------- */
+
+/* Generous, and deliberately so: each of these is a separate instruction, and
+   the gap is what stops the page reading as one wall of advice. */
+.metrics {
+  display: flex;
+  flex-direction: column;
+}
+
+.metrics > .metric + .metric {
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: var(--stroke-hair) solid var(--line);
+}
+
+.metric-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+
+.metric-label {
+  font-size: var(--t-small);
+  font-weight: var(--wt-title);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* What the body did. The loudest thing in the row on purpose: it is the answer,
+   and everything under it is the reason and the correction.
+
+   The status is a rule under the words, never the colour of the words. Amber on
+   white is 2:1 and green is 3.4:1 — as type both fail outdoors, and this is the
+   one line in the report that has to survive being read in the sun. */
+.metric-read {
+  flex: 0 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-size: var(--t-lede);
+  font-weight: var(--wt-title);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
+  color: var(--fg);
+  padding-bottom: 3px;
+  border-bottom: var(--stroke-heavy) solid var(--line);
+  text-wrap: balance;
+}
+
+.metric-read--great { border-bottom-color: var(--great); }
+.metric-read--good  { border-bottom-color: var(--good); }
+.metric-read--fair  { border-bottom-color: var(--fair); }
+.metric-read--work  { border-bottom-color: var(--work); }
+
+/* --- the axis -------------------------------------------------------------- */
+
+.metric-axis {
+  margin-top: var(--s-3);
+}
+
+.bar {
+  position: relative;
+  height: 26px;
+  display: flex;
+  align-items: center;
+}
+
+/* A framed axis rather than a floating line — the two ends of the scale have to
+   be somewhere definite before "inside the band" means anything. */
+.bar-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 22px;
+  transform: translateY(-50%);
+  background: var(--surface-raised);
+  border: var(--stroke) solid var(--black);
+}
+
+.bar-band {
+  position: absolute;
+  top: 50%;
+  height: 22px;
+  transform: translateY(-50%);
+  background: var(--great-wash);
+  border: var(--stroke) solid var(--great);
+}
+
+/* Black, and edged in white so it stays a separate object when it lands exactly
+   on the band's own border. Just inside versus just outside is the verdict; a
+   marker that merges with the edge it is being judged against hides it. */
+.bar-marker {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 6px;
+  height: 22px;
+  box-sizing: content-box;
+  transform: translate(-50%, -50%);
+  background: var(--black);
+  border: var(--stroke) solid var(--white);
+}
+
+/* Both ends of the scale, said in body language. A bound printed as a number is
+   the one thing this report has never done. */
+.bar-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+  font-size: var(--t-overline);
+  font-weight: var(--wt-title);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  color: var(--fg-muted);
+}
+
+.bar-ends span:last-child {
+  text-align: right;
+}
+
+/* Where it should sit instead, in the same words as the readout above. */
+.metric-aim {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  font-size: var(--t-small);
+  line-height: var(--lh-tight);
+}
+
+.metric-aim-key {
+  flex: none;
+  font-size: var(--t-overline);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.metric-aim-value {
+  font-weight: var(--wt-title);
+  color: var(--blue);
+}
+
+.metric-insight {
+  margin-top: var(--s-2);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/* Blue is the coaching voice everywhere in this app: if it is edged in blue,
+   it is something to go and do. */
+.metric-fix {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+  padding: var(--s-3);
+  max-width: var(--measure);
+  background: var(--blue-wash);
+  border: var(--stroke) solid var(--blue-wash);
+  border-left: var(--stroke-heavy) solid var(--blue);
+  font-size: var(--t-small);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+.metric-fix .icon {
+  color: var(--blue);
+  flex: none;
+  margin-top: 2px;
+}
+
+/* The marked words inside any line of coaching. Weight and colour only — no
+   size change, or the instruction stops sitting on the same baseline grid as
+   the sentence it lives in. */
+.cue-key {
+  font-weight: var(--wt-title);
+  color: var(--fg);
+}
+
+/* --- the drill under a named fault ---------------------------------------- */
+
+.microdrill {
+  margin-top: var(--s-2);
+  margin-left: var(--s-3);
+  padding: var(--s-3);
+  max-width: var(--measure);
+  background: var(--white);
+  border: var(--stroke) solid var(--line);
+  border-left: var(--stroke-heavy) solid var(--blue);
+}
+
+.microdrill-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--t-overline);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.microdrill h5 {
+  margin: var(--s-2) 0 var(--s-1);
+  font-family: var(--font-display);
+  font-size: var(--t-body);
+  font-weight: 400;
+  letter-spacing: var(--tr-title);
+  line-height: var(--lh-tight);
+}
+
+.microdrill p {
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.microdrill-reps {
+  display: inline-block;
+  margin-top: var(--s-2);
+  font-size: var(--t-overline);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* --- an approximate measurement ------------------------------------------- */
+
+/* Held back rather than hidden. The number is still the best the app has and the
+   player should see it; it just must not read with the same authority as one
+   measured off a clip that showed everything. Opacity, not a lighter grey — the
+   grey is already at the floor of what survives outdoors. */
+.metric--soft .metric-read,
+.metric--soft .metric-axis {
+  opacity: 0.68;
+}
+
+.metric-approx {
+  display: inline-block;
+  margin-left: var(--s-1);
+  padding: 1px var(--s-1);
+  background: var(--surface);
+  border: var(--stroke-hair) solid var(--line);
+  font-size: var(--t-overline);
+  font-style: normal;
+  font-weight: var(--wt-title);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* Deliberately not edged in a score colour: a soft read is a caveat about the
+   footage, not a fault in the serve. */
+.metric-soft-note {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  max-width: var(--measure);
+  background: var(--surface);
+  border-left: var(--stroke-heavy) solid var(--line);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}
+
+.metric-soft-note .icon {
+  color: var(--fg-muted);
+  flex: none;
+  margin-top: 2px;
+}
+
+/* --- drill ---------------------------------------------------------------- */
+
+.drill {
+  padding: var(--s-3);
+  background: var(--blue-wash);
+  border: var(--stroke) solid var(--blue);
+}
+
+.drill-kicker {
+  font-size: var(--t-overline);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.drill h4 {
+  margin: var(--s-2) 0 var(--s-1);
+  font-family: var(--font-display);
+  font-size: var(--t-lede);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
+}
+
+.drill p {
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.drill-reps {
+  display: inline-block;
+  margin-top: var(--s-3);
+  padding: var(--s-1) var(--s-2);
+  background: var(--black);
+  color: var(--white);
+  font-size: var(--t-overline);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+}
+
+/* ============================================================================
+   Report footer
+   ========================================================================= */
+
+.report-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: var(--stroke-hair) solid var(--line);
+}
+
+.fineprint {
+  max-width: var(--measure);
+  font-size: var(--t-caption);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}

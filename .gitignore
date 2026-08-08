@@ -10,3 +10,4 @@ dist-ssr
 # The pose model alone is 9 MB and the WASM runtime another 19 MB.
 public/models/
 public/wasm/
+public/fonts/

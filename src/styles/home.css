@@ -1,0 +1,679 @@
+/* ============================================================================
+   Home — the cover
+
+   The front door of a sports app, not a settings screen. A headline set hard
+   against the left margin, one sentence of what it does, one black bar to tap.
+   Everything after that is a contents page: rules, not cards.
+   ========================================================================= */
+
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--s-2);
+  border-bottom: var(--stroke-hair) solid var(--line-subtle);
+}
+
+.brand {
+  font-size: var(--t-overline);
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+/* --- the cover ------------------------------------------------------------ */
+
+.home-cover {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+/* Optically flush with the shell's left edge. Archivo Black carries enough side
+   bearing at display size that a literal 0 reads as an indent. */
+.home-headline {
+  margin-left: -0.045em;
+  font-family: var(--font-display);
+  /* Sized off the longest line rather than off --t-display: two words of
+     Archivo Black caps are far wider than the two digits that token was cut
+     for, and at 15vw "ONE SERVE." breaks across three lines on a 375px phone. */
+  font-size: clamp(2.5rem, 12.5vw, 4.5rem);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.home-say {
+  max-width: var(--measure);
+  font-size: var(--t-lede);
+  line-height: var(--lh-snug);
+  font-weight: var(--wt-label);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/* --- the one action ------------------------------------------------------- */
+
+.home-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* Deliberately taller and louder than anything else on the page. If a second
+   button is showing, `--alt` makes sure it never reads as an equal choice. */
+.home-cta {
+  width: 100%;
+  min-height: 64px;
+  border-radius: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-cta--alt {
+  min-height: 52px;
+  font-size: var(--t-small);
+}
+
+/* Dropping a file is a desktop gesture, so the target only announces itself
+   once something is actually being dragged over the page. */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  border: var(--stroke) dashed transparent;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.dropzone.is-dragging {
+  border-color: var(--black);
+  background: var(--yellow);
+}
+
+.dropzone-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--t-caption);
+  font-weight: var(--wt-label);
+  color: var(--fg-muted);
+}
+
+.dropzone-hint .icon {
+  flex: none;
+}
+
+.dropzone.is-dragging .dropzone-hint {
+  color: var(--yellow-ink);
+}
+
+/* --- the promise ---------------------------------------------------------- */
+
+/* The reason to trust this app at all, set at reading size under a heavy rule
+   rather than whispered in a badge at the bottom of the page. */
+.home-promise {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: var(--stroke-heavy) solid var(--black);
+}
+
+.home-promise p {
+  max-width: var(--measure);
+  font-size: var(--t-lede);
+  line-height: var(--lh-snug);
+  font-weight: var(--wt-key);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+.home-promise-state {
+  font-family: var(--mono);
+  font-size: var(--t-caption);
+  color: var(--fg-muted);
+}
+
+/* --- contents page -------------------------------------------------------- */
+
+/* Pulled 12px wider than the column so the row's own padding puts the label
+   flush with the left margin while the rules run past it. */
+.home-nav {
+  margin: 0 -12px;
+  border-top: var(--stroke) solid var(--black);
+  border-bottom: var(--stroke) solid var(--black);
+}
+
+.home-nav li + li {
+  border-top: var(--stroke-hair) solid var(--line-subtle);
+}
+
+.home-nav-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px var(--s-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 13px 12px;
+  text-align: left;
+  color: var(--fg-muted);
+  transition: background var(--fast) var(--ease);
+}
+
+.home-nav-row .icon {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  color: var(--fg-faint);
+}
+
+.home-nav-label {
+  font-size: var(--t-small);
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+.home-nav-note {
+  font-size: var(--t-caption);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.home-nav-row:hover {
+  background: var(--yellow);
+}
+
+.home-nav-row:hover .home-nav-label,
+.home-nav-row:hover .home-nav-note,
+.home-nav-row:hover .icon {
+  color: var(--yellow-ink);
+}
+
+/* --- past serves ---------------------------------------------------------- */
+
+/* Square rows on hairlines. The score is the row's whole identity, so it is set
+   as a numeral in its own colour and nothing else competes with it. */
+.serve-log {
+  margin: 0 -12px;
+  border-top: var(--stroke) solid var(--black);
+  border-bottom: var(--stroke) solid var(--black);
+}
+
+.serve-log li + li {
+  border-top: var(--stroke-hair) solid var(--line-subtle);
+}
+
+.serve-log-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 11px 12px;
+  text-align: left;
+  transition: background var(--fast) var(--ease);
+}
+
+.serve-log-row:hover {
+  background: var(--surface);
+}
+
+/* Wide enough for a hundred, so the titles line up down the column whatever
+   each row scored. */
+.serve-log-score {
+  min-width: 3ch;
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  line-height: 1;
+  letter-spacing: var(--tr-display);
+}
+
+.serve-log-score--great { color: var(--great); }
+.serve-log-score--good  { color: var(--good); }
+.serve-log-score--fair  { color: var(--fair); }
+.serve-log-score--work  { color: var(--work); }
+
+.serve-log-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.serve-log-text strong {
+  font-size: var(--t-small);
+  font-weight: var(--wt-key);
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.serve-log-date {
+  font-family: var(--mono);
+  font-size: var(--t-overline);
+  color: var(--fg-muted);
+}
+
+/* The first-run guide ends in the file picker, so the button needs air after
+   the guide's own closing note. */
+.sheet-body > .btn--full {
+  margin-top: var(--s-4);
+}
+
+/* --- mixed serve types in the trend -------------------------------------- */
+
+.progress-aside {
+  margin-top: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  background: var(--surface);
+  border-left: var(--stroke) solid var(--line);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}
+
+/* --- keeping your history ------------------------------------------------- */
+
+.storage {
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+  border-top: var(--stroke) solid var(--black);
+}
+
+/* A status rule, not a proportion. The app cannot measure how full the disk is
+   without asking the browser, so the bar says the one thing it actually knows:
+   whether this data has been promised a life. */
+.storage-meter {
+  display: block;
+  height: 6px;
+  margin: var(--s-3) 0;
+  background: var(--surface-raised);
+}
+
+.storage-meter-fill {
+  display: block;
+  height: 100%;
+}
+
+.storage-meter-fill--kept { background: var(--great); }
+.storage-meter-fill--risk { background: var(--fair); }
+.storage-meter-fill--unknown { background: var(--line); }
+
+.storage-warn,
+.storage-note {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  background: var(--surface);
+  font-size: var(--t-small);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}
+
+.storage-warn {
+  border-left: var(--stroke) solid var(--fair);
+}
+
+.storage-warn .icon {
+  color: var(--fair);
+  flex: none;
+  margin-top: 2px;
+}
+
+.storage-note--ok {
+  border-left: var(--stroke) solid var(--great);
+}
+
+.storage-note--ok .icon {
+  color: var(--great);
+  flex: none;
+  margin-top: 2px;
+}
+
+.storage-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}
+
+.storage-outcome {
+  margin-top: var(--s-2);
+  font-family: var(--mono);
+  font-size: var(--t-caption);
+  color: var(--fg);
+}
+
+/* --- side by side --------------------------------------------------------- */
+
+.block-aside--btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--fg);
+  font-weight: var(--wt-key);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Mirrors .progress-sheet: without an explicit gap here, the two `.block`
+   sections below (photos, then numbers) sit flush against each other with
+   nothing but their own internal padding between them. */
+.compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.compare-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-small);
+  color: var(--fg-muted);
+}
+
+.compare-pick select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: var(--stroke) solid var(--black);
+  background: var(--white);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--t-small);
+}
+
+.compare-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  background: var(--surface);
+  border: var(--stroke-hair) solid var(--line-subtle);
+}
+
+.compare-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  text-align: center;
+}
+
+.compare-score-value {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  line-height: 1;
+  letter-spacing: var(--tr-display);
+  color: var(--fg);
+}
+
+.compare-score-label {
+  font-size: var(--t-overline);
+  color: var(--fg-muted);
+}
+
+.compare-arrow {
+  padding: var(--s-1) var(--s-2);
+  font-size: var(--t-small);
+  font-weight: var(--wt-title);
+  background: var(--surface-raised);
+  color: var(--fg-muted);
+}
+
+.compare-arrow--better {
+  background: var(--great-wash);
+  color: var(--great);
+}
+
+.compare-arrow--worse {
+  background: var(--work-wash);
+  color: var(--work);
+}
+
+.compare-strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.compare-pair figcaption {
+  margin-bottom: var(--s-1);
+  font-size: var(--t-small);
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+.compare-pair-images {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-1);
+}
+
+.compare-pair-images > span {
+  position: relative;
+  display: block;
+}
+
+.compare-pair-images img,
+.compare-pair-images .strip-placeholder {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  background: var(--surface-raised);
+}
+
+.compare-pair-images .strip-placeholder {
+  display: grid;
+  place-items: center;
+  padding: var(--s-2);
+  text-align: center;
+  font-size: var(--t-overline);
+  color: var(--fg-muted);
+}
+
+.compare-pair-images em {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 3px 7px;
+  background: var(--black);
+  font-size: var(--t-overline);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.compare-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr auto 46px;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  border-bottom: var(--stroke-hair) solid var(--line-subtle);
+  font-size: var(--t-small);
+}
+
+.compare-row-label {
+  color: var(--fg);
+  min-width: 0;
+}
+
+/* Then, an arrow, now. The old state stays quiet and the current one carries
+   the weight, so the direction of travel reads without parsing the words. */
+.compare-row-values {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-family: var(--mono);
+  font-size: var(--t-caption);
+  line-height: var(--lh-tight);
+  text-align: right;
+  color: var(--fg-faint);
+}
+
+.compare-row-values em {
+  font-style: normal;
+}
+
+.compare-row-values strong {
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+.compare-row--better .compare-row-values strong {
+  color: var(--great);
+}
+
+.compare-row--worse .compare-row-values strong {
+  color: var(--work);
+}
+
+.compare-row-delta {
+  text-align: right;
+  font-family: var(--font-display);
+  font-size: var(--t-small);
+  color: var(--fg-muted);
+}
+
+.compare-row--better .compare-row-delta {
+  color: var(--great);
+}
+
+.compare-row--worse .compare-row-delta {
+  color: var(--work);
+}
+
+.compare-note {
+  margin-top: var(--s-2);
+  font-size: var(--t-caption);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}
+
+/* --- the target shape ----------------------------------------------------- */
+
+.player-model-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  font-size: var(--t-caption);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}
+
+.player-model-key {
+  flex: none;
+  width: 18px;
+  height: 0;
+  margin-top: 9px;
+  border-top: var(--stroke) dashed var(--blue);
+}
+
+/* --- which serve ---------------------------------------------------------- */
+
+.serve-type {
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: var(--stroke-hair) solid var(--line-subtle);
+}
+
+.serve-type-lead {
+  display: block;
+  font-size: var(--t-overline);
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.serve-type-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.serve-type-options .serve-chip {
+  width: auto;
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--t-small);
+  font-weight: var(--wt-key);
+}
+
+.serve-type-note {
+  margin-top: var(--s-2);
+  font-size: var(--t-caption);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}
+
+/* --- which hand ----------------------------------------------------------- */
+
+.hand-pick {
+  margin-top: var(--s-4);
+  padding: var(--s-3);
+  border: var(--stroke) solid var(--black);
+  background: var(--white);
+}
+
+.hand-pick legend {
+  padding: 0 var(--s-1);
+  font-size: var(--t-small);
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+.hand-pick-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.hand-option {
+  min-height: 52px;
+  padding: var(--s-2);
+  border: var(--stroke) solid var(--black);
+  background: var(--white);
+  color: var(--fg);
+  font-size: var(--t-small);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.hand-option:hover {
+  background: var(--surface-raised);
+}
+
+.hand-option.is-on {
+  background: var(--yellow);
+  color: var(--yellow-ink);
+}
+
+.hand-pick-note {
+  margin-top: var(--s-2);
+  font-size: var(--t-caption);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}

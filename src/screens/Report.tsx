@@ -4,7 +4,7 @@ import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
 import PosePlayer from '../components/PosePlayer'
 import { DeltaChip } from '../components/Trend'
-import { Cue, Icon, ScoreRing } from '../components/primitives'
+import { Cue, Icon } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
@@ -185,9 +185,10 @@ export default function Report({
     <section className="injuries" aria-label="Injury risk">
       {injuries.map((n) => (
         <div key={n.flag} className={`injury injury--${n.severity}`}>
-          <span className="injury-mark">
-            <Icon name="warn" size={18} />
-          </span>
+          {/* The label does the work a warning glyph used to. A red rule plus a
+              word reads at arm's length; a triangle is one more small shape on
+              a page that already has several. */}
+          <span className="t-overline injury-label">Injury risk</span>
           <div className="injury-text">
             <strong>{n.title}</strong>
             <p>
@@ -223,9 +224,9 @@ export default function Report({
       <div className="screen report">
         {topbar}
         <section className="refusal">
-          <span className="refusal-mark">
-            <Icon name="warn" size={26} />
-          </span>
+          {/* No alarm glyph. The player has not broken anything — the app is
+              declining to invent a score, which is a statement, not a fault. */}
+          <span className="t-overline refusal-label">No score for this clip</span>
           <h1>{refusal.title}</h1>
           <ul className="refusal-hints">
             {refusal.hints.map((h) => (
@@ -261,76 +262,48 @@ export default function Report({
           actually lives. */}
       {refusal && (
         <section className="unreliable">
-          <Icon name="warn" size={16} />
-          <span>
-            <strong>{refusal.title}.</strong> Everything below came off that clip, so treat it as a
-            rough sketch rather than a measurement.
-          </span>
+          <strong>{refusal.title}.</strong> Everything below came off that clip, so read it as a
+          rough sketch rather than a measurement.
         </section>
       )}
 
       <section className="hero">
-        <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={148} label="overall" />
+        {/*
+         * The score, flush left and as large as the type scale goes.
+         *
+         * The tier rides on the meter rather than on the digits: three of the
+         * four ramp colours cannot hold their contrast as type on this
+         * background, so a coloured score would have been hardest to read
+         * exactly where it matters most.
+         */}
+        <span className="t-overline hero-label">Serve score</span>
+        <span className="hero-score">
+          <span className="t-display tnum">{analysis.overall}</span>
+          <span className="hero-out-of">/100</span>
+        </span>
+        <span className="hero-meter" aria-hidden="true">
+          <span
+            className={`hero-meter-fill hero-meter-fill--${analysis.overallStatus}`}
+            style={{ transform: `scaleX(${Math.max(0, Math.min(100, analysis.overall)) / 100})` }}
+          />
+        </span>
+        <h1>{verdict.title}</h1>
+        <p>{verdict.sub}</p>
         {/* The break is said out loud rather than left as an absence. Every
             comparison on this page goes at once when the rubric changes — this
             chip and the per-area ones on the cards below — and a player who saw
             them last time reads the silence as the app having broken. */}
         {previous &&
           (comparable ? (
-            <span className="hero-delta">
+            <span className="hero-note">
               <DeltaChip delta={analysis.overall - previous.overall} />
               <span>vs your last serve</span>
             </span>
           ) : (
-            <span className="hero-delta">
+            <span className="hero-note">
               The scoring changed between these two serves, so this one starts a fresh run.
             </span>
           ))}
-        <h1>{verdict.title}</h1>
-        <p>{verdict.sub}</p>
-        <div className="hero-chips">
-          <button
-            className="chip chip--button"
-            onClick={onFlipHandedness}
-            disabled={!onFlipHandedness}
-            title={onFlipHandedness ? 'Tap if I read the wrong hand' : undefined}
-          >
-            {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
-            {onFlipHandedness && <Icon name="chevron" size={13} />}
-          </button>
-          <span className="chip">
-            {analysis.quality.view === 'side'
-              ? 'Side view'
-              : analysis.quality.view === 'front-back'
-                ? 'Front / back view'
-                : 'Angled view'}
-          </span>
-          <span className={`chip${analysis.quality.confidence < SOFT_READ ? ' chip--warn' : ''}`}>
-            {readQuality(analysis.quality.confidence)}
-          </span>
-        </div>
-
-        {/* Which serve this was judged as. A kick serve measured against flat
-            bands is marked down for contacting the ball over the head, which is
-            the whole point of a kick — so the assumption has to be visible and
-            changeable, not buried. */}
-        <div className="serve-type">
-          <span className="serve-type-lead">Judged as</span>
-          <div className="serve-type-options">
-            {(Object.keys(SERVE_TYPES) as ServeType[]).map((t) => (
-              <button
-                key={t}
-                className={`serve-chip${analysis.serveType === t ? ' is-on' : ''}`}
-                aria-pressed={analysis.serveType === t}
-                disabled={!onPickServeType || analysis.serveType === t}
-                onClick={() => onPickServeType?.(t)}
-              >
-                {SERVE_TYPES[t].label}
-              </button>
-            ))}
-          </div>
-          <p className="serve-type-note">{SERVE_TYPES[analysis.serveType].blurb}</p>
-        </div>
       </section>
 
       {analysis.serves && analysis.serves.count > 1 && (
@@ -376,18 +349,14 @@ export default function Report({
         <section className="notes">
           {analysis.quality.warnings.map((w) => (
             <p key={w} className="note">
-              <Icon name="warn" size={16} />
-              <span>{w}</span>
+              {w}
             </p>
           ))}
         </section>
       )}
 
       <section className="focus">
-        <span className="focus-kicker">
-          <Icon name="target" size={15} />
-          Work on this next
-        </span>
+        <span className="t-overline focus-kicker">Work on this next</span>
         <h2>{analysis.focus.title}</h2>
         <p>
           <Cue text={analysis.focus.why} />
@@ -404,10 +373,10 @@ export default function Report({
         )}
 
         <div className="focus-drill">
-          <span className="drill-kicker">The drill</span>
+          <span className="t-overline focus-drill-kicker">The drill</span>
           <h3>{analysis.focus.drill.name}</h3>
           <p>{analysis.focus.drill.how}</p>
-          <span className="drill-reps">{analysis.focus.drill.reps}</span>
+          <span className="focus-reps">{analysis.focus.drill.reps}</span>
         </div>
 
         {/* The targets above are one rung up from wherever the engine has put
@@ -438,6 +407,60 @@ export default function Report({
             }}
           />
         )}
+      </section>
+
+      {/*
+       * How the clip was read: which hand, what angle, how clearly it came
+       * through, and which kind of serve the targets came from.
+       *
+       * Under the fix rather than above it. Every one of these is an assumption
+       * the player can correct — a kick serve marked against flat bands is
+       * penalised for contacting the ball over the head, which is the whole
+       * point of a kick — so it has to be visible and changeable. But none of
+       * them is the thing to do next, and stacked between the score and the fix
+       * they pushed the one instruction on the page off the first screen.
+       */}
+      <section className="reading" aria-label="How this clip was read">
+        <h2 className="t-overline reading-title">How I read this clip</h2>
+        <div className="reading-chips">
+          <button
+            className="chip chip--button"
+            onClick={onFlipHandedness}
+            disabled={!onFlipHandedness}
+            title={onFlipHandedness ? 'Tap if I read the wrong hand' : undefined}
+          >
+            {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
+            {onFlipHandedness && <Icon name="chevron" size={13} />}
+          </button>
+          <span className="chip">
+            {analysis.quality.view === 'side'
+              ? 'Side view'
+              : analysis.quality.view === 'front-back'
+                ? 'Front / back view'
+                : 'Angled view'}
+          </span>
+          <span className={`chip${analysis.quality.confidence < SOFT_READ ? ' chip--warn' : ''}`}>
+            {readQuality(analysis.quality.confidence)}
+          </span>
+        </div>
+
+        <div className="judged">
+          <span className="t-overline judged-lead">Judged as</span>
+          <div className="judged-options">
+            {(Object.keys(SERVE_TYPES) as ServeType[]).map((t) => (
+              <button
+                key={t}
+                className={`serve-chip${analysis.serveType === t ? ' is-on' : ''}`}
+                aria-pressed={analysis.serveType === t}
+                disabled={!onPickServeType || analysis.serveType === t}
+                onClick={() => onPickServeType?.(t)}
+              >
+                {SERVE_TYPES[t].label}
+              </button>
+            ))}
+          </div>
+          <p className="judged-note">{SERVE_TYPES[analysis.serveType].blurb}</p>
+        </div>
       </section>
 
       {live && (

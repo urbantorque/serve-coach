@@ -72,7 +72,16 @@ export default function FundamentalCard({
                   </span>
                   <span className={`metric-read metric-read--${m.status}`}>{m.readout}</span>
                 </div>
-                <MetricBar value={m.value} ideal={m.ideal} range={m.range} status={m.status} />
+                {/* The id is what lets the axis name its own two ends in the
+                    same vocabulary as the readout above it, instead of printing
+                    the raw bounds nobody can act on. */}
+                <MetricBar
+                  id={m.id}
+                  value={m.value}
+                  ideal={m.ideal}
+                  range={m.range}
+                  status={m.status}
+                />
                 {/* The target says what to aim at in the same words as the
                     readout above it, so the two can be read against each other
                     at a glance. Only where the position is actually outside the

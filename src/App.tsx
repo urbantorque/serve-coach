@@ -704,8 +704,7 @@ export default function App() {
               <p className="progress-aside">
                 Showing your {SERVE_TYPES[form.serveType].label.toLowerCase()} serves only.{' '}
                 {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored
-                against different targets, so mixing them in would show the change of serve as a
-                change in form.
+                against different targets, so mixing them in would look like a change in form.
               </p>
             )}
 

@@ -1,6 +1,5 @@
 import { readoutOf } from '../lib/analysis/anatomy'
 import { consistencyHeadline, type Consistency, type MetricSpread } from '../lib/analysis/consistency'
-import { Icon, ScoreRing } from './primitives'
 
 /**
  * How far each measurement travelled across the basket.
@@ -61,27 +60,31 @@ interface Props {
 
 export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
   return (
-    <section className="consistency">
+    /*
+     * Rung four. The tier rides on the panel's top rule rather than on a ring:
+     * the report already spends its one big number on the serve score, and a
+     * second gauge of the same shape halfway down the page competed with it.
+     */
+    <section className={`consistency consistency--${c.status}`}>
       <div className="consistency-head">
-        <ScoreRing score={c.score} status={c.status} size={72} label="repeat" />
-        <div>
-          <h2>Across {c.serves} serves</h2>
-          <p>{consistencyHeadline(c)}</p>
-        </div>
+        <span className="t-overline consistency-kicker">How repeatable</span>
+        <span className="consistency-score">
+          <span className="tnum">{c.score}</span>
+          <span className="consistency-out-of">/100</span>
+        </span>
+        <h2>Across {c.serves} serves</h2>
+        <p>{consistencyHeadline(c)}</p>
       </div>
 
       {c.skipped > 0 && (
         <p className="note">
-          <Icon name="warn" size={16} />
-          <span>
-            {c.skipped} {c.skipped === 1 ? 'serve was' : 'serves were'} too unclear to measure and
-            {c.skipped === 1 ? ' was' : ' were'} left out.
-          </span>
+          {c.skipped} {c.skipped === 1 ? 'serve was' : 'serves were'} too unclear to measure and
+          {c.skipped === 1 ? ' was' : ' were'} left out.
         </p>
       )}
 
       <div className="consistency-scores">
-        <span className="block-title">Overall, serve by serve</span>
+        <span className="t-overline consistency-label">Overall, serve by serve</span>
         <div className="consistency-chips">
           {c.overallScores.map((s, i) => (
             <span key={i} className="cchip">
@@ -103,8 +106,8 @@ export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
       </ul>
 
       <p className="consistency-foot">
-        Each score is how little that element moved, measured against its own target band. The
-        list is ordered worst first — the top one is what to groove.
+        Each score is how little that part of the serve moved. Worst first, so the top row is the
+        one to groove.
       </p>
 
       <button className="btn btn--ghost btn--full" onClick={onDismiss}>

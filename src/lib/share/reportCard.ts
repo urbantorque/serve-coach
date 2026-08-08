@@ -6,32 +6,41 @@ import type { Session } from '../storage/db'
 
 type Report = Analysis | Session
 
-const INK = '#0a0c10'
-const INK_2 = '#141822'
-const FG = '#eef2f6'
-const MUTED = '#98a2b3'
-const FAINT = '#616b7d'
-const LIME = '#cdf94a'
+/*
+ * This card is the only thing the app makes that ever leaves the phone, so it
+ * is the design at its plainest: a white ground, black display numerals, square
+ * everything, borders doing the structural work, and exactly one optic yellow
+ * element — the label on the thing to work on next.
+ */
+const WHITE = '#fafafa'
+const BLACK = '#0a0a0a'
+const SURFACE = '#f5f5f5'
+const LINE = '#e5e5e5'
+const MUTED = '#525252'
+const YELLOW = '#ccff00'
+/** The coaching voice, and the rule over the drill — same as a diagnostic card. */
+const BLUE = '#2563eb'
 
+/* The score ramp, four rungs, bottom one amber-deep. Red is the injury flag and
+   nothing on this card is an injury, so red does not appear here at all. */
 const STATUS_COLOR: Record<string, string> = {
-  great: '#5fe3a1',
-  good: '#cdf94a',
-  fair: '#ffb648',
-  work: '#ff7a6b',
+  great: '#16a34a',
+  good: '#0a0a0a',
+  fair: '#f59e0b',
+  work: '#b45309',
 }
 
-const font = (weight: number, size: number) =>
-  `${weight} ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+/* The token stacks, spelled out for canvas — same families, same fallbacks, so a
+   shared card is the page it was shared from. */
+const DISPLAY = "'Archivo Black', Impact, 'Haettenschweiler', 'Arial Black', sans-serif"
+const SANS =
+  "'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+const MONO = "'Space Mono', ui-monospace, 'Cascadia Mono', 'Courier New', Consolas, monospace"
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath()
-  ctx.moveTo(x + r, y)
-  ctx.arcTo(x + w, y, x + w, y + h, r)
-  ctx.arcTo(x + w, y + h, x, y + h, r)
-  ctx.arcTo(x, y + h, x, y, r)
-  ctx.arcTo(x, y, x + w, y, r)
-  ctx.closePath()
-}
+/** Archivo Black ships one weight; asking for a bolder one only synthesises it. */
+const display = (size: number) => `400 ${size}px ${DISPLAY}`
+const sans = (weight: number, size: number) => `${weight} ${size}px ${SANS}`
+const mono = (weight: number, size: number) => `${weight} ${size}px ${MONO}`
 
 /**
  * Break text into lines that fit, without drawing any of them.
@@ -131,7 +140,7 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   const textX = PAD + 210
   const textW = W - textX - PAD
 
-  ctx.font = font(400, 20)
+  ctx.font = sans(400, 20)
   // Flattened: the report marks its key words for the screen, and a canvas has
   // no idea what an asterisk means. A card shared to a coach must not arrive
   // with the markup showing.
@@ -148,27 +157,24 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   const H = HEADER + stripH + 260
   canvas.height = H
 
-  ctx.fillStyle = INK
+  ctx.fillStyle = WHITE
   ctx.fillRect(0, 0, W, H)
 
-  const glow = ctx.createRadialGradient(W / 2, -140, 40, W / 2, -140, 760)
-  glow.addColorStop(0, 'rgba(205,249,74,0.16)')
-  glow.addColorStop(1, 'rgba(205,249,74,0)')
-  ctx.fillStyle = glow
-  ctx.fillRect(0, 0, W, HEADER)
+  // What used to be a soft glow over the header. Hierarchy here comes from a
+  // hard rule and from the size of the numerals, not from light.
+  ctx.fillStyle = BLACK
+  ctx.fillRect(PAD, HEADER - 30, W - PAD * 2, 2)
 
   /* --- header ---------------------------------------------------------- */
   ctx.textBaseline = 'alphabetic'
-  ctx.fillStyle = LIME
-  ctx.beginPath()
-  ctx.arc(PAD + 9, PAD + 14, 9, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.font = font(640, 24)
-  ctx.fillStyle = FG
-  ctx.fillText('Serve Coach', PAD + 30, PAD + 22)
+  ctx.fillStyle = BLACK
+  ctx.fillRect(PAD, PAD + 5, 18, 18)
+  ctx.font = display(22)
+  ctx.fillStyle = BLACK
+  ctx.fillText('Serve Coach', PAD + 32, PAD + 22)
 
-  ctx.font = font(500, 20)
-  ctx.fillStyle = FAINT
+  ctx.font = mono(400, 17)
+  ctx.fillStyle = MUTED
   ctx.textAlign = 'right'
   ctx.fillText(
     new Date(report.createdAt).toLocaleDateString(undefined, {
@@ -184,26 +190,28 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   /* --- score ring ------------------------------------------------------- */
   const cx = PAD + 92
   const r = ringR
-  const status = STATUS_COLOR[report.overallStatus] ?? LIME
+  const status = STATUS_COLOR[report.overallStatus] ?? BLACK
 
   ctx.lineWidth = 14
-  ctx.strokeStyle = '#1b2130'
+  ctx.strokeStyle = LINE
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
   ctx.stroke()
 
   ctx.strokeStyle = status
-  ctx.lineCap = 'round'
+  // Butt ends, not round. The ring is a chart, so its geometry stays; the soft
+  // cap on it was chrome, and this system has none.
+  ctx.lineCap = 'butt'
   ctx.beginPath()
   ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (report.overall / 100) * Math.PI * 2)
   ctx.stroke()
 
   ctx.textAlign = 'center'
-  ctx.font = font(680, 54)
-  ctx.fillStyle = FG
+  ctx.font = display(54)
+  ctx.fillStyle = BLACK
   ctx.fillText(String(report.overall), cx, cy + 12)
-  ctx.font = font(600, 14)
-  ctx.fillStyle = FAINT
+  ctx.font = mono(700, 13)
+  ctx.fillStyle = MUTED
   ctx.fillText('OVERALL', cx, cy + 38)
   ctx.textAlign = 'left'
 
@@ -228,31 +236,49 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   ]
 
   let chipX = PAD
-  ctx.font = font(560, 17)
+  ctx.font = mono(400, 15)
+  ctx.lineWidth = 2
   for (const label of chips) {
     const w = ctx.measureText(label).width + 26
     // Wrap rather than run off the edge: translated or unusually long labels
     // would otherwise silently disappear past the right margin.
     if (chipX + w > W - PAD) break
-    ctx.fillStyle = INK_2
-    roundRect(ctx, chipX, chipY - 20, w, 34, 17)
-    ctx.fill()
     // Low confidence is the one of these that changes how the card should be
-    // read, so it is the one that gets colour.
+    // read, so it is the one that gets colour. Amber-deep, not red: a soft read
+    // is a caveat on the numbers, not a warning about the player.
     const low = label.endsWith('read') && report.quality.confidence < SOFT_READ
-    ctx.fillStyle = low ? STATUS_COLOR.fair : MUTED
+    ctx.fillStyle = low ? '#fdf0e3' : SURFACE
+    ctx.fillRect(chipX, chipY - 20, w, 34)
+    ctx.strokeStyle = low ? STATUS_COLOR.work : LINE
+    ctx.strokeRect(chipX + 1, chipY - 19, w - 2, 32)
+    ctx.fillStyle = low ? STATUS_COLOR.work : MUTED
     ctx.fillText(label, chipX + 13, chipY + 3)
     chipX += w + 8
   }
 
   /* --- focus ------------------------------------------------------------ */
-  ctx.font = font(700, 16)
-  ctx.fillStyle = LIME
-  ctx.fillText('WORK ON THIS NEXT', textX, cy - 58)
-  ctx.font = font(640, 34)
-  ctx.fillStyle = FG
+  // The one yellow thing on the card, on the one thing the card is asking for.
+  // Yellow is a fill and never type, so the plate is yellow and the words on it
+  // are black — the reverse is invisible.
+  const kicker = 'WORK ON THIS NEXT'
+  ctx.font = mono(700, 14)
+  ctx.fillStyle = YELLOW
+  ctx.fillRect(textX, cy - 76, ctx.measureText(kicker).width + 20, 26)
+  ctx.fillStyle = BLACK
+  ctx.fillText(kicker, textX + 10, cy - 58)
+
+  // Archivo Black is much wider per character than the sans it replaced, and the
+  // fault titles are written for a person rather than for a box, so the type
+  // steps down until it fits rather than running off the right edge.
+  let titleSize = 34
+  ctx.font = display(titleSize)
+  while (titleSize > 22 && ctx.measureText(report.focus.title).width > textW) {
+    titleSize -= 1
+    ctx.font = display(titleSize)
+  }
+  ctx.fillStyle = BLACK
   ctx.fillText(report.focus.title, textX, cy - 16)
-  ctx.font = font(400, 20)
+  ctx.font = sans(400, 20)
   ctx.fillStyle = MUTED
   // The same lines the layout above was measured from, so what is drawn and what
   // was reserved for it cannot disagree.
@@ -262,17 +288,21 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   const barW = (W - PAD * 2 - 14 * (report.fundamentals.length - 1)) / report.fundamentals.length
   report.fundamentals.forEach((f, i) => {
     const x = PAD + i * (barW + 14)
-    ctx.fillStyle = INK_2
-    roundRect(ctx, x, barY, barW, 74, 14)
-    ctx.fill()
+    ctx.fillStyle = SURFACE
+    ctx.fillRect(x, barY, barW, 74)
+    // The verdict is the rule across the top, the way it is on a diagnostic
+    // card. The number underneath stays black so five of these read as one row
+    // of scores rather than as five differently coloured things.
+    ctx.fillStyle = STATUS_COLOR[f.status] ?? BLACK
+    ctx.fillRect(x, barY, barW, 4)
 
-    ctx.fillStyle = STATUS_COLOR[f.status] ?? LIME
-    ctx.font = font(660, 30)
+    ctx.fillStyle = BLACK
+    ctx.font = display(30)
     ctx.textAlign = 'center'
-    ctx.fillText(String(f.score), x + barW / 2, barY + 38)
-    ctx.font = font(500, 15)
-    ctx.fillStyle = FAINT
-    ctx.fillText(f.label, x + barW / 2, barY + 60)
+    ctx.fillText(String(f.score), x + barW / 2, barY + 42)
+    ctx.font = mono(400, 12)
+    ctx.fillStyle = MUTED
+    ctx.fillText(f.label, x + barW / 2, barY + 62)
     ctx.textAlign = 'left'
   })
 
@@ -287,9 +317,10 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
       const y = top + row * (cellH + 44)
 
       ctx.save()
-      roundRect(ctx, x, y, cellW, cellH, 16)
+      ctx.beginPath()
+      ctx.rect(x, y, cellW, cellH)
       ctx.clip()
-      ctx.fillStyle = INK_2
+      ctx.fillStyle = SURFACE
       ctx.fillRect(x, y, cellW, cellH)
       const img = images[i]
       if (img) {
@@ -301,27 +332,36 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
       }
       ctx.restore()
 
-      ctx.font = font(620, 18)
-      ctx.fillStyle = FG
-      ctx.fillText(phase.label, x, y + cellH + 26)
+      // A hard frame on every still, drawn inside the cell so the six line up on
+      // the same grid whether or not their picture survived.
+      ctx.strokeStyle = BLACK
+      ctx.lineWidth = 2
+      ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2)
+
+      ctx.font = mono(700, 14)
+      ctx.fillStyle = BLACK
+      ctx.fillText(phase.label.toUpperCase(), x, y + cellH + 26)
     })
   }
 
   /* --- footer ----------------------------------------------------------- */
   const footY = H - 150
-  ctx.fillStyle = INK_2
-  roundRect(ctx, PAD, footY, W - PAD * 2, 100, 18)
-  ctx.fill()
+  ctx.fillStyle = SURFACE
+  ctx.fillRect(PAD, footY, W - PAD * 2, 100)
+  // The drill is the coaching voice, so it carries the blue rule a diagnostic
+  // card carries — the one place on this card that is not black, white or yellow.
+  ctx.fillStyle = BLUE
+  ctx.fillRect(PAD, footY, W - PAD * 2, 4)
 
-  ctx.font = font(620, 19)
-  ctx.fillStyle = FG
-  ctx.fillText(report.focus.drill.name, PAD + 26, footY + 36)
-  ctx.font = font(400, 17)
+  ctx.font = display(19)
+  ctx.fillStyle = BLACK
+  ctx.fillText(report.focus.drill.name, PAD + 26, footY + 40)
+  ctx.font = sans(400, 17)
   ctx.fillStyle = MUTED
-  wrap(ctx, report.focus.drill.reps, PAD + 26, footY + 64, W - PAD * 2 - 52, 24)
+  wrap(ctx, report.focus.drill.reps, PAD + 26, footY + 68, W - PAD * 2 - 52, 24)
 
-  ctx.font = font(400, 15)
-  ctx.fillStyle = FAINT
+  ctx.font = sans(400, 15)
+  ctx.fillStyle = MUTED
   ctx.textAlign = 'center'
   ctx.fillText('Measured on device · nothing was uploaded', W / 2, H - 22)
   ctx.textAlign = 'left'

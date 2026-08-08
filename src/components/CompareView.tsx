@@ -176,7 +176,12 @@ export default function CompareView({ current, others }: Props) {
             if (!a?.thumbnail && !b?.thumbnail) return null
             return (
               <figure key={id} className="compare-pair">
-                <figcaption>{a?.label ?? id}</figcaption>
+                {/* The position name is a section label, not a sentence, so it
+                    takes the overline role — the same one the report uses over
+                    every other pair of things being put next to each other. */}
+                <figcaption>
+                  <span className="t-overline">{a?.label ?? id}</span>
+                </figcaption>
                 <div className="compare-pair-images">
                   <span>
                     {a?.thumbnail ? (
@@ -184,7 +189,7 @@ export default function CompareView({ current, others }: Props) {
                     ) : (
                       <div className="strip-placeholder" />
                     )}
-                    <em>now</em>
+                    <em className="t-overline">now</em>
                   </span>
                   <span>
                     {b?.thumbnail ? (
@@ -196,7 +201,7 @@ export default function CompareView({ current, others }: Props) {
                         <span>Picture not kept</span>
                       </div>
                     )}
-                    <em>then</em>
+                    <em className="t-overline">then</em>
                   </span>
                 </div>
               </figure>

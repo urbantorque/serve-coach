@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DeltaChip, Sparkline } from '../components/Trend'
-import { Icon, ScoreRing } from '../components/primitives'
+import { Icon } from '../components/primitives'
 import { findPracticeFocus } from '../lib/practice'
 import { buildProgress, currentRubricEra } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
@@ -99,10 +99,7 @@ export default function Home({
   return (
     <div className="screen home">
       <header className="home-top">
-        <span className="brand">
-          <span className="brand-dot" />
-          Serve Coach
-        </span>
+        <span className="brand">Serve Coach</span>
         {/* Shown even with nothing saved. Restoring a backup onto a new phone is
             exactly the moment the history is empty, and hiding the only way in
             until there is something to see locks that player out of the one
@@ -116,15 +113,17 @@ export default function Home({
         </button>
       </header>
 
-      <section className="home-hero">
-        <h1>
-          World-class eyes
+      {/* The cover. One headline set hard against the left margin, one line of
+          what the thing does, then the only button that matters. Everything
+          below this is for somebody who has already used it once. */}
+      <section className="home-cover">
+        <h1 className="home-headline">
+          One serve.
           <br />
-          on your serve.
+          One fix.
         </h1>
-        <p>
-          Film one serve. Get the toss, the load, the swing and the contact measured frame by
-          frame — with the fix for whatever is costing you the most.
+        <p className="home-say">
+          Film one serve. The app measures it frame by frame and names the one thing to fix.
         </p>
       </section>
 
@@ -143,18 +142,18 @@ export default function Home({
               shown once, at the moment of intent, rather than waiting behind a
               link nobody taps until their clip has already been rejected. */}
           <button
-            className="btn btn--primary btn--big"
+            className="btn btn--primary home-cta"
             onClick={() => (needsFilmingGuide ? onGuideThenPick() : pickRef.current?.click())}
           >
-            <Icon name="film" size={19} />
+            <Icon name="film" size={20} />
             Analyse a serve
           </button>
           {coarsePointer() && (
             <button
-              className="btn btn--ghost btn--big"
+              className="btn btn--ghost home-cta home-cta--alt"
               onClick={() => (needsFilmingGuide ? onGuideThenPick() : recordRef.current?.click())}
             >
-              <Icon name="camera" size={19} />
+              <Icon name="camera" size={18} />
               Record now
             </button>
           )}
@@ -184,29 +183,18 @@ export default function Home({
         )}
       </div>
 
-      <button className="strap" onClick={onShowGuide}>
-        <Icon name="info" size={17} />
-        <span>
-          <strong>How to film it</strong>
-          Thirty seconds of setup makes the numbers far sharper.
+      {/* The most persuasive sentence on the page, and it used to be the
+          smallest. Stated plainly and given the weight it earns, rather than
+          shrunk into a badge at the bottom. */}
+      <section className="home-promise">
+        <p>
+          Your video stays on this device. Nothing is uploaded, and the app works with no signal
+          at all.
+        </p>
+        <span className="home-promise-state">
+          {offlineReady ? 'Ready to use offline' : 'Downloads once, then works offline'}
         </span>
-        <Icon name="chevron" size={16} />
-      </button>
-
-      {/* Somebody who has never used this has no serve video on their phone, so
-          the only thing the app can currently show them is a file picker. An
-          example report is the difference between understanding what this does
-          and having to go and film something to find out. */}
-      {sessions.length === 0 && (
-        <button className="strap strap--quiet" onClick={onShowExample}>
-          <Icon name="target" size={17} />
-          <span>
-            <strong>See an example report</strong>
-            What you get back, on a sample serve. No video needed.
-          </span>
-          <Icon name="chevron" size={16} />
-        </button>
-      )}
+      </section>
 
       {progress && progress.points.length > 1 && (
         <button className="progress-card" onClick={onShowProgress}>
@@ -228,8 +216,15 @@ export default function Home({
                   filmed since — and the line directly below already says so. */}
               last {Math.min(3, eraCount)} {Math.min(3, eraCount) === 1 ? 'serve' : 'serves'}
             </span>
-            <DeltaChip delta={progress.formDelta} />
           </div>
+          {/* Typeset, not badged: the numeral carries the weight and the small
+              caps beside it say what it is measured against. */}
+          {progress.formDelta !== undefined && (
+            <span className="progress-delta">
+              <DeltaChip delta={progress.formDelta} />
+              <span className="progress-delta-label">vs your three before</span>
+            </span>
+          )}
           <Sparkline points={progress.points} />
           {/* The older serves are still on the sparkline above, greyed and
               labelled, so the clause explains a figure that shrank rather than
@@ -261,14 +256,16 @@ export default function Home({
             <h2 className="block-title">Recent serves</h2>
             {progress && <span className="block-aside tnum">best {progress.best}</span>}
           </div>
-          <ul className="recents">
+          <ul className="serve-log">
             {recent.map((s) => (
               <li key={s.id}>
-                <button className="recent" onClick={() => onOpen(s)}>
-                  <ScoreRing score={s.overall} status={s.overallStatus} size={44} animate={false} />
-                  <span className="recent-text">
+                <button className="serve-log-row" onClick={() => onOpen(s)}>
+                  <span className={`serve-log-score tnum serve-log-score--${s.overallStatus}`}>
+                    {s.overall}
+                  </span>
+                  <span className="serve-log-text">
                     <strong>{s.focus.title}</strong>
-                    <span>
+                    <span className="serve-log-date">
                       {new Date(s.createdAt).toLocaleDateString(undefined, {
                         day: 'numeric',
                         month: 'short',
@@ -277,29 +274,47 @@ export default function Home({
                       {s.handedness === 'right' ? 'right' : 'left'}-handed
                     </span>
                   </span>
-                  <Icon name="chevron" size={16} />
                 </button>
               </li>
             ))}
           </ul>
-          {sessions.length > recent.length && (
-            <button className="btn btn--ghost btn--full" onClick={onShowHistory}>
-              All {sessions.length} serves
-            </button>
-          )}
         </section>
       )}
 
-      <footer className="home-foot">
-        <span className={`badge${offlineReady ? ' badge--on' : ''}`}>
-          <Icon name={offlineReady ? 'check' : 'offline'} size={15} />
-          {offlineReady ? 'Ready to use offline' : 'Downloads once, then works offline'}
-        </span>
-        <p>
-          Your video is read on this device and never uploaded. Analysis runs entirely in your
-          browser, on a court with no signal just as well as at home.
-        </p>
-      </footer>
+      {/* Everything that is not the one button. Kept as one bordered list so it
+          reads as a contents page rather than four things competing with the
+          cover above it. */}
+      <ul className="home-nav">
+        <li>
+          <button className="home-nav-row" onClick={onShowGuide}>
+            <span className="home-nav-label">How to film it</span>
+            <span className="home-nav-note">Thirty seconds of setup sharpens every number.</span>
+            <Icon name="chevron" size={15} />
+          </button>
+        </li>
+        {/* Somebody who has never used this has no serve video on their phone, so
+            the only thing the app can currently show them is a file picker. An
+            example report is the difference between understanding what this does
+            and having to go and film something to find out. */}
+        {sessions.length === 0 && (
+          <li>
+            <button className="home-nav-row" onClick={onShowExample}>
+              <span className="home-nav-label">See an example report</span>
+              <span className="home-nav-note">See what you get back. No video needed.</span>
+              <Icon name="chevron" size={15} />
+            </button>
+          </li>
+        )}
+        {sessions.length > recent.length && (
+          <li>
+            <button className="home-nav-row" onClick={onShowHistory}>
+              <span className="home-nav-label">All {sessions.length} serves</span>
+              <span className="home-nav-note">Your whole history, and how to back it up.</span>
+              <Icon name="chevron" size={15} />
+            </button>
+          </li>
+        )}
+      </ul>
     </div>
   )
 }

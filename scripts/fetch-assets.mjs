@@ -43,6 +43,74 @@ async function vendorModel() {
   log(`model saved — ${(buf.length / 1e6).toFixed(1)} MB, sha256 ${createHash('sha256').update(buf).digest('hex').slice(0, 12)}`)
 }
 
+/* --------------------------------------------------------------------- fonts */
+
+/*
+ * The three CourtSense faces, self-hosted.
+ *
+ * A `<link>` to fonts.googleapis.com would be a network request on every cold
+ * load of an app whose entire premise is that nothing leaves the device — and
+ * it would leave the headline blank on a court with no signal. So the faces are
+ * pulled once here and served from /fonts like every other vendored asset.
+ *
+ * All three are SIL Open Font License, which permits exactly this.
+ *
+ * Unlike the pose model, a missing font is survivable: tokens.css falls back to
+ * Arial Black / system sans, which hold the same shape. So this warns and
+ * carries on rather than failing the build.
+ */
+const FONTS = [
+  { file: 'archivo-black-400.woff2', query: 'Archivo+Black' },
+  { file: 'work-sans-variable.woff2', query: 'Work+Sans:wght@400..700' },
+  { file: 'space-mono-400.woff2', query: 'Space+Mono' },
+]
+
+// Google serves woff2 only to a UA it believes can read it; ask as Chrome or
+// you get a 2× larger truetype file back and never notice.
+const WOFF2_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
+async function vendorFonts() {
+  const dest = path.join(pub, 'fonts')
+  const missing = FONTS.filter((f) => !fs.existsSync(path.join(dest, f.file)))
+  if (!missing.length) {
+    log(`fonts already vendored → public/fonts (${FONTS.length} files)`)
+    return
+  }
+  fs.mkdirSync(dest, { recursive: true })
+
+  for (const font of missing) {
+    try {
+      const cssUrl = `https://fonts.googleapis.com/css2?family=${font.query}&display=swap`
+      const cssRes = await fetch(cssUrl, { headers: { 'User-Agent': WOFF2_UA } })
+      if (!cssRes.ok) throw new Error(`HTTP ${cssRes.status} for the stylesheet`)
+      const css = await cssRes.text()
+
+      // The response is one @font-face per unicode subset. Take `latin`; the
+      // app's copy is English and the extended subsets are dead weight.
+      const blocks = css.split('@font-face')
+      const latin =
+        blocks.find((b) => /unicode-range:[^;]*U\+0000/.test(b)) ?? blocks.find((b) => /url\(/.test(b))
+      const url = latin?.match(/url\((https:\/\/[^)]+\.woff2)\)/)?.[1]
+      if (!url) throw new Error('no woff2 URL in the stylesheet')
+
+      const res = await fetch(url, { headers: { 'User-Agent': WOFF2_UA } })
+      if (!res.ok) throw new Error(`HTTP ${res.status} for the font file`)
+      const buf = Buffer.from(await res.arrayBuffer())
+      // wOF2 magic. A captive-portal HTML page is also a 200 with bytes in it.
+      if (buf.subarray(0, 4).toString('ascii') !== 'wOF2') {
+        throw new Error('downloaded file is not woff2')
+      }
+      const tmp = path.join(dest, `${font.file}.tmp`)
+      fs.writeFileSync(tmp, buf)
+      fs.renameSync(tmp, path.join(dest, font.file))
+      log(`${font.file} — ${(buf.length / 1024).toFixed(0)} KB`)
+    } catch (err) {
+      console.warn(`   ! ${font.file} not vendored (${err.message}) — falling back to system type`)
+    }
+  }
+}
+
 function vendorWasm() {
   const src = path.join(root, 'node_modules', '@mediapipe', 'tasks-vision', 'wasm')
   const dest = path.join(pub, 'wasm')
@@ -119,10 +187,10 @@ const mix = (a, b, t) => [
 function drawIcon(size, { maskable = false } = {}) {
   const S = 3 // supersampling factor per axis
   const px = new Uint8Array(size * size * 4)
-  const bg = [10, 12, 16]
-  const ballLight = [214, 255, 79]
-  const ballDark = [126, 168, 20]
-  const seam = [248, 250, 245]
+  const bg = [10, 10, 10]
+  const ballLight = [204, 255, 0] // optic yellow, straight from the token set
+  const ballDark = [124, 156, 0]
+  const seam = [250, 250, 250]
 
   const cx = size / 2
   const cy = size / 2
@@ -217,5 +285,6 @@ function generateIcons() {
 console.log('\nServe Coach — vendoring offline assets\n')
 generateIcons()
 vendorWasm()
+await vendorFonts()
 await vendorModel()
 console.log('\nDone. The app now runs with no network at all.\n')

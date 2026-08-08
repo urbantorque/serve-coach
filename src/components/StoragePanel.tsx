@@ -72,21 +72,30 @@ export default function StoragePanel({ count, onImported }: Props) {
     <section className="storage">
       <h3 className="block-title">Keeping your history</h3>
 
+      {/* A state rule rather than a fill level. The app is not allowed to ask
+          the browser how full the disk is, so the bar reports the one thing it
+          genuinely knows: whether this data has been promised a life. */}
+      <span className="storage-meter" aria-hidden="true">
+        <span
+          className={`storage-meter-fill storage-meter-fill--${
+            persisted === true ? 'kept' : persisted === false ? 'risk' : 'unknown'
+          }`}
+        />
+      </span>
+
       {showIOSNudge && (
         <p className="storage-warn">
           <Icon name="warn" size={16} />
           <span>
-            On iPhone, Safari deletes saved data after a week without a visit. Add Serve Coach to
-            your home screen — Share, then <strong>Add to Home Screen</strong> — and it keeps your
-            serves indefinitely.
+            Safari deletes saved data after a week away. Add Serve Coach to your home screen —
+            Share, then <strong>Add to Home Screen</strong>.
           </span>
         </p>
       )}
 
       {!showIOSNudge && persisted === false && (
         <p className="storage-note">
-          Your browser has not promised to keep this data. It usually will once you have used the
-          app a few times or added it to your home screen. Exporting is the only certainty.
+          Your browser has not promised to keep this data. Exporting is the only certainty.
         </p>
       )}
 
@@ -130,9 +139,8 @@ export default function StoragePanel({ count, onImported }: Props) {
       {outcome && <p className="storage-outcome">{outcome}</p>}
 
       <p className="sheet-note">
-        An export is a plain file containing your scores and keyframe pictures. It never leaves your
-        device unless you send it somewhere — moving it to a new phone is the only way your history
-        follows you.
+        An export is one file holding your scores and keyframe pictures. Moving it is the only way
+        your history follows you to a new phone.
       </p>
     </section>
   )

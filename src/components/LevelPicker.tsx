@@ -63,8 +63,8 @@ export default function LevelPicker({ value, onChange, estimated }: Props) {
         ))}
       </div>
       <p className="level-pick-note">
-        Targets are always one step above where you are, never a professional's numbers. Set this
-        too high and you get asked for something your shoulder cannot give.
+        Targets sit one step above where you are, never a professional's. Set this too high and you
+        get asked for more than you have.
       </p>
     </fieldset>
   )

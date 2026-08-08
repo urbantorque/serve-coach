@@ -17,12 +17,12 @@ const RULES = [
   {
     title: 'Start filming before the toss',
     body:
-      'Roll from a second before the hands drop until after you land. Three to five seconds, one serve per clip.',
+      'Roll from a second before the ball leaves your hand until after you land. Three to five seconds, one serve per clip.',
   },
   {
     title: 'Use slow motion if your phone has it',
     body:
-      'The racket covers back to ball in a sixth of a second. More frames through there sharpen every swing number.',
+      'The racket travels from behind your back to the ball in a fraction of a second. More frames make that part sharper.',
   },
 ]
 
@@ -57,8 +57,8 @@ export default function FilmingGuide() {
       </div>
 
       <p className="guide-note">
-        A front or back view still works. You lose one measurement — how far in front of your body
-        contact happens — because only a side view can see it.
+        A front or back view still works. You just lose one reading: how far in front of you the
+        ball is hit.
       </p>
     </div>
   )

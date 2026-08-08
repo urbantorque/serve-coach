@@ -13,8 +13,8 @@ const STEPS: { id: Step; label: string }[] = [
 const ASIDES = [
   'Everything runs on your device. Nothing is uploaded.',
   'The racket hand’s highest point marks contact.',
-  'Your deepest load sets the knee bend.',
-  'Hips and shoulders read in three dimensions.',
+  'The lowest point of your bend is what gets measured.',
+  'Your hips and shoulders are tracked as they turn.',
 ]
 
 interface Props {
@@ -36,10 +36,7 @@ export default function Analyzing({ progress, fileName, onCancel }: Props) {
   return (
     <div className="screen analyzing">
       <div className="analyzing-inner">
-        <div className="pulse">
-          <span className="pulse-ball" />
-        </div>
-
+        <span className="t-overline analyzing-label">Working</span>
         <h1>Reading your serve</h1>
         <p className="analyzing-file">{fileName}</p>
 
@@ -51,7 +48,9 @@ export default function Analyzing({ progress, fileName, onCancel }: Props) {
           aria-valuenow={Math.round(overall * 100)}
           aria-label="Analysis progress"
         >
-          <div className="progress-fill" style={{ width: `${Math.round(overall * 100)}%` }} />
+          {/* Scaled, not resized. Animating `width` costs a layout pass a frame
+              on a device that is currently running pose estimation. */}
+          <div className="progress-fill" style={{ transform: `scaleX(${overall})` }} />
         </div>
         {/* Analysis takes several seconds; without this a screen-reader user
             gets silence and no idea whether anything is happening. */}

@@ -1,0 +1,44 @@
+/* ============================================================================
+   Serve Coach — the shell every screen sits in
+   ========================================================================= */
+
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+}
+
+/*
+ * One column, and a real margin.
+ *
+ * The report is read one-handed on a court, so the page is a single editorial
+ * column with the type flush against a consistent left edge — the hero score,
+ * the section labels and the body copy all start on the same line down the
+ * screen, which is what lets the eye run the page vertically without hunting.
+ */
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 var(--s-4);
+}
+
+/*
+ * The gap between rungs. Deliberately wide: on the report each of these is a
+ * different rank of information, and the white space is half of what says so.
+ */
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  padding: calc(var(--s-4) + var(--safe-top)) 0 calc(var(--s-6) + var(--safe-bottom));
+  animation: rise var(--slow) var(--ease-out) both;
+}
+
+/* Transform and opacity only — nothing here can cost the video player a frame. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
