@@ -1,0 +1,183 @@
+/**
+ * The named breakdowns, and which measured signal proves each one.
+ *
+ * The measurements in `metrics.ts` describe positions: how bent, how high, how
+ * fast. A player does not have "a contact height of 1.21" — they have a serve
+ * they are hitting off a dropping ball because the toss is low, and the height
+ * is the shadow that casts. This module names the breakdown itself, and every
+ * flaw here is one a coach would call out by name from the side of the court.
+ *
+ * Two rules run through it. First, nothing is judged against a fixed standard:
+ * the band a flaw is measured against comes from `tiers.ts` and belongs to the
+ * rung above the player, so the same serve produces different targets for a
+ * beginner and a strong club player. Second, a flaw that is downstream of
+ * another one says so. A low contact caused by a low toss is not a contact
+ * fault, and sending somebody away to reach higher off a ball that never got
+ * there is the single most common way an automated analysis wastes a season.
+ */
+import {
+  SIGNALS,
+  insideBand,
+  missBy,
+  nextTier,
+  severityOf,
+  targetFor,
+  type Severity,
+} from './tiers'
+
+export type FlawId =
+  | 'waiters_tray'
+  | 'arming_the_ball'
+  | 'early_shoulder_rotation'
+  | 'posture_collapse'
+  | 'toss_drift'
+  | 'shallow_drop'
+  | 'collapsed_elbow'
+  | 'pancake_contact'
+  | 'low_contact'
+  | 'toss_height'
+
+/** One breakdown, measured. Pure data — no sentence is ever built from this. */
+export interface FlawFinding {
+  flaw: FlawId
+  detected: boolean
+  signal: string
+  value: number
+  unit: SIGNAL_UNIT
+  /** How far outside the target band, in the signal's own units. */
+  miss: number
+  target: [number, number]
+  target_tier: number
+  severity: Severity
+  /** 0–1, inherited from how well the landmarks this rests on were seen. */
+  confidence: number
+  /** Set when this flaw is a symptom of another detected one. */
+  caused_by?: FlawId
+}
+
+type SIGNAL_UNIT = 'deg' | 'ms' | 'ratio'
+
+interface FlawSpec {
+  flaw: FlawId
+  signal: string
+  /**
+   * Which other flaw explains this one away when both fire.
+   *
+   * Not a general dependency graph — a chain of causes long enough to need one
+   * is a chain nobody can act on. One hop, and the head of it is what the player
+   * is asked to work on.
+   */
+  causedBy?: FlawId
+}
+
+/**
+ * Every flaw the engine can name, and the signal that proves it.
+ *
+ * Order matters only for reading: findings are sorted by severity before they
+ * leave `evaluateFlaws`.
+ */
+export const FLAWS: FlawSpec[] = [
+  { flaw: 'waiters_tray', signal: 'palm_to_sky_deg' },
+  { flaw: 'early_shoulder_rotation', signal: 'separation_deg' },
+  // Arming is the timing fault. When the coil is already gone at the trophy,
+  // the shoulders firing first is that same collapse showing up a moment later
+  // rather than a second thing to fix.
+  { flaw: 'arming_the_ball', signal: 'hip_lead_ms', causedBy: 'early_shoulder_rotation' },
+  { flaw: 'toss_drift', signal: 'toss_drift_ratio' },
+  // A spine that folds sideways is usually a body chasing a ball that went
+  // sideways. Told on its own it reads as "stand up straighter", which is
+  // advice nobody can follow while the toss keeps moving.
+  { flaw: 'posture_collapse', signal: 'spine_lean_deg', causedBy: 'toss_drift' },
+  { flaw: 'collapsed_elbow', signal: 'elbow_lift_ratio' },
+  // The hand can be well down the back with the elbow dropped beside it, which
+  // is a shallow arm, not a racket drop. When the elbow has fallen, the depth
+  // is a symptom of that.
+  { flaw: 'shallow_drop', signal: 'drop_depth_ratio', causedBy: 'collapsed_elbow' },
+  // A palm turned under the racket physically cannot rotate through the ball:
+  // the forearm is already at the end of its travel before the swing starts.
+  { flaw: 'pancake_contact', signal: 'pronation_deg', causedBy: 'waiters_tray' },
+  { flaw: 'toss_height', signal: 'toss_peak_ratio' },
+  { flaw: 'low_contact', signal: 'contact_height_ratio', causedBy: 'toss_height' },
+]
+
+export interface SignalReading {
+  value: number
+  /** 0–1. Signals resting on landmarks the tracker lost are not evidence. */
+  confidence: number
+}
+
+/**
+ * Below this a signal is not trusted to name a flaw at all.
+ *
+ * A hand the tracker could barely see produces a palm normal made of noise, and
+ * a noise-shaped normal points at the sky about as often as it points anywhere
+ * else. Reporting a grip fault from it would be inventing one.
+ */
+export const MIN_EVIDENCE = 0.45
+
+/**
+ * Judge every signal against the band one tier above the player.
+ *
+ * Signals that are absent — no ball tracked, a hand never clearly seen — are
+ * skipped rather than defaulted. A flaw the engine could not look for must not
+ * come back as a flaw the engine did not find.
+ */
+export function evaluateFlaws(
+  readings: Record<string, SignalReading | undefined>,
+  currentTier: number,
+): FlawFinding[] {
+  const target_tier = nextTier(currentTier)
+  const found: FlawFinding[] = []
+
+  for (const spec of FLAWS) {
+    const reading = readings[spec.signal]
+    if (!reading || !Number.isFinite(reading.value)) continue
+    if (reading.confidence < MIN_EVIDENCE) continue
+
+    const target = targetFor(spec.signal, currentTier)
+    const detected = !insideBand(spec.signal, reading.value, target)
+
+    found.push({
+      flaw: spec.flaw,
+      detected,
+      signal: spec.signal,
+      value: round(reading.value, spec.signal),
+      unit: SIGNALS[spec.signal].unit,
+      miss: round(missBy(spec.signal, reading.value, target), spec.signal),
+      target: [round(target[0], spec.signal), round(target[1], spec.signal)],
+      target_tier,
+      severity: severityOf(spec.signal, reading.value, target),
+      confidence: Math.round(reading.confidence * 100) / 100,
+    })
+  }
+
+  // Second pass, once every flaw is known: attribute the symptoms. Done after
+  // rather than during, so a cause declared later in the table still explains an
+  // earlier symptom and the order of `FLAWS` stays a reading order.
+  const detectedIds = new Set(found.filter((f) => f.detected).map((f) => f.flaw))
+  for (const f of found) {
+    const cause = FLAWS.find((s) => s.flaw === f.flaw)?.causedBy
+    if (f.detected && cause && detectedIds.has(cause)) f.caused_by = cause
+  }
+
+  const rank: Record<Severity, number> = { high: 0, medium: 1, low: 2, none: 3 }
+  return found.sort((a, b) => {
+    // Root causes ahead of their own symptoms at equal severity: fixing the
+    // cause is what moves both.
+    if (rank[a.severity] !== rank[b.severity]) return rank[a.severity] - rank[b.severity]
+    return Number(Boolean(a.caused_by)) - Number(Boolean(b.caused_by))
+  })
+}
+
+/**
+ * Round to the precision the signal is actually resolved to.
+ *
+ * Degrees and milliseconds to whole units, ratios to three places. A pose
+ * estimate does not support fourteen decimal places, and printing them into the
+ * output implies a precision that would survive being quoted back.
+ */
+function round(v: number, signal: string): number {
+  const unit = SIGNALS[signal]?.unit
+  if (unit === 'ratio') return Math.round(v * 1000) / 1000
+  return Math.round(v)
+}
