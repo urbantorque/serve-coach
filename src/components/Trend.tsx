@@ -57,8 +57,12 @@ interface Segment {
   stale: boolean
 }
 
-/** The colour of a run: the old rubric is drawn as background, not as series. */
-const strokeOf = (stale: boolean) => (stale ? 'var(--fg-faint)' : 'var(--black)')
+/**
+ * The colour of a run: the old rubric is drawn as background, not as series.
+ * Quiet, but not --fg-faint — that grey is 2.42:1 on the page, and a line a
+ * player is expected to read the shape of is a mark that carries data.
+ */
+const strokeOf = (stale: boolean) => (stale ? 'var(--fg-muted)' : 'var(--black)')
 
 /**
  * Optic yellow is 1.28:1 on this page's white, so it cannot carry the line — it
@@ -69,14 +73,16 @@ const strokeOf = (stale: boolean) => (stale ? 'var(--fg-faint)' : 'var(--black)'
 const MARKER = 'var(--yellow)'
 
 /**
- * Half the width of the break label at the 9px `.chart-axis` size, in viewBox
+ * Half the width of the break label at the `.chart-axis` size, in viewBox
  * units. Both charts set `overflow: visible`, so a label centred on a break near
  * either edge does not clip — it hangs outside the chart and over whatever sits
  * beside it. Clamping to this keeps the words inside the box; the couple of
  * units it slides off the rule cost nothing, since the rule is the thing being
  * labelled and it is the only one on screen.
+ *
+ * Widened with the tick type when it went from 9px to the 11px --t-overline.
  */
-const BREAK_LABEL_HALF = 34
+const BREAK_LABEL_HALF = 42
 
 const labelX = (at: number) => Math.min(VB_W - BREAK_LABEL_HALF, Math.max(BREAK_LABEL_HALF, at))
 
@@ -362,8 +368,8 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
 
       {broken && (
         <p className="sheet-note">
-          The line breaks where the scoring changed. Serves either side sit on different scales,
-          so the gap is the new scoring rather than your serve.
+          The line breaks where the scoring changed. Serves either side sit on different scales, so
+          the step is the new scoring rather than your serve.
         </p>
       )}
     </figure>
@@ -463,7 +469,7 @@ export function TrendTable({ points }: { points: TrendPoint[] }) {
       {broken && (
         <p className="sheet-note">
           The scoring changed partway through. Serves marked the old way sit on a different scale —
-          that gap is the scoring, not your serve.
+          that step is the scoring, not your serve.
         </p>
       )}
     </>
@@ -506,9 +512,11 @@ export function GapTrend({ points }: { points: ConsistencyPoint[] }) {
           <span className="gap-value tnum">{p.gap}</span>
         </li>
       ))}
+      {/* "Points" read as tennis points here, and "gap" was already doing duty
+          for the scoring break two blocks up in the same sheet. */}
       <li className="gaps-note">
-        Points between your best and worst serve in one basket. Smaller is steadier.
-        {points.length > shown.length && ` Showing your last ${shown.length}.`}
+        The score gap between your best and worst serve in one clip. Smaller is steadier
+        {points.length > shown.length ? ` — showing your last ${shown.length}` : ''}.
       </li>
     </ul>
   )

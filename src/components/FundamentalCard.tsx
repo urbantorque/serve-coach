@@ -46,7 +46,7 @@ export default function FundamentalCard({
         <span className="fcard-title">
           <span className="fcard-name">
             {f.label}
-            <em className={`tag tag--${f.status}`}>{STATUS_LABEL[f.status]}</em>
+            <em className={`tag tag--${f.status} t-overline`}>{STATUS_LABEL[f.status]}</em>
             <DeltaChip delta={delta} compact />
           </span>
           <span className="fcard-headline">
@@ -68,7 +68,7 @@ export default function FundamentalCard({
                 <div className="metric-top">
                   <span className="metric-label">
                     {m.label}
-                    {m.softness && <em className="metric-approx">approximate</em>}
+                    {m.softness && <em className="metric-approx t-overline">approximate</em>}
                   </span>
                   <span className={`metric-read metric-read--${m.status}`}>{m.readout}</span>
                 </div>
@@ -90,7 +90,7 @@ export default function FundamentalCard({
                     is the report correcting somebody who has nothing wrong. */}
                 {outsideBand(m) && m.readout !== m.target && (
                   <p className="metric-aim">
-                    <span className="metric-aim-key">Aim for</span>
+                    <span className="metric-aim-key t-overline">Aim for</span>
                     <span className="metric-aim-value">{m.target}</span>
                   </p>
                 )}
@@ -121,10 +121,10 @@ export default function FundamentalCard({
 
           {!hasFaultDrills && (
             <div className="drill">
-              <span className="drill-kicker">Drill</span>
+              <span className="drill-kicker t-overline">Drill</span>
               <h4>{f.drill.name}</h4>
               <p>{f.drill.how}</p>
-              <span className="drill-reps">{f.drill.reps}</span>
+              <span className="drill-reps t-overline">{f.drill.reps}</span>
             </div>
           )}
 
@@ -146,13 +146,13 @@ const outsideBand = (m: Metric) => m.value < m.ideal[0] || m.value > m.ideal[1]
 function DrillCard({ drill }: { drill: NonNullable<Metric['drill']> }) {
   return (
     <div className="microdrill">
-      <span className="microdrill-kicker">
+      <span className="microdrill-kicker t-overline">
         <Icon name="target" size={12} />
         Drill
       </span>
       <h5>{drill.name}</h5>
       <p>{drill.how}</p>
-      <span className="microdrill-reps">{drill.reps}</span>
+      <span className="microdrill-reps t-overline">{drill.reps}</span>
     </div>
   )
 }

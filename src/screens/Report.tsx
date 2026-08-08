@@ -26,11 +26,14 @@ const VERDICT: Record<Status, { title: string; sub: string }> = {
   },
   fair: {
     title: 'Good bones, a few gaps',
-    sub: 'The motion works. Real speed and consistency are still on the table.',
+    sub: 'The motion works. Fix the one thing below and the rest gets easier.',
   },
   work: {
     title: 'Plenty of free speed here',
-    sub: 'Two basics are missing. Fix them and everything after gets easier.',
+    // Not "two basics are missing" — nothing in this band guarantees two, and a
+    // count the report cannot stand behind is the kind of small invented
+    // certainty that makes a player stop believing the numbers.
+    sub: 'Some basics are missing. Fix them and everything after gets easier.',
   },
 }
 
@@ -329,29 +332,6 @@ export default function Report({
               ))}
             </div>
           )}
-          {onCheckConsistency && !consistency && (
-            <button className="btn btn--ghost btn--full serves-cta" onClick={onCheckConsistency}>
-              <Icon name="target" size={16} />
-              {/* The sweep is capped, so a longer basket cannot promise all of
-                  them. Said on the button rather than discovered afterwards as a
-                  count that does not match the clip. */}
-              {analysis.serves.count > MAX_CONSISTENCY_SERVES
-                ? `Compare your last ${MAX_CONSISTENCY_SERVES} serves`
-                : `Compare all ${analysis.serves.count} serves`}
-            </button>
-          )}
-        </section>
-      )}
-
-      {consistency && <ConsistencyPanel consistency={consistency} onDismiss={() => setHidSpreads(true)} />}
-
-      {analysis.quality.warnings.length > 0 && (
-        <section className="notes">
-          {analysis.quality.warnings.map((w) => (
-            <p key={w} className="note">
-              {w}
-            </p>
-          ))}
         </section>
       )}
 
@@ -408,6 +388,46 @@ export default function Report({
           />
         )}
       </section>
+
+      {/*
+       * Comparing the serves in the clip, and the caveats on how it was read.
+       *
+       * Both sat above the focus card until now, which meant the one
+       * instruction the report exists to deliver arrived two phone screens
+       * down, under a serve picker, a scored panel of per-position spread
+       * charts and a stack of quality notes. Consistency is worth showing and
+       * it is not the answer to "what do I fix" — it is rung four of five.
+       *
+       * The button and the panel it opens stay together, so tapping Compare
+       * still makes the thing appear directly underneath it. Only the picker
+       * chips stay up by the score, because they change which serve every
+       * number above is describing.
+       */}
+      {analysis.serves && analysis.serves.count > 1 && onCheckConsistency && !consistency && (
+        <section className="serves-compare">
+          <button className="btn btn--ghost btn--full serves-cta" onClick={onCheckConsistency}>
+            <Icon name="target" size={16} />
+            {/* The sweep is capped, so a longer basket cannot promise all of
+                them. Said on the button rather than discovered afterwards as a
+                count that does not match the clip. */}
+            {analysis.serves.count > MAX_CONSISTENCY_SERVES
+              ? `Score your last ${MAX_CONSISTENCY_SERVES} serves`
+              : `Score all ${analysis.serves.count} serves in this clip`}
+          </button>
+        </section>
+      )}
+
+      {consistency && <ConsistencyPanel consistency={consistency} onDismiss={() => setHidSpreads(true)} />}
+
+      {analysis.quality.warnings.length > 0 && (
+        <section className="notes">
+          {analysis.quality.warnings.map((w) => (
+            <p key={w} className="note">
+              {w}
+            </p>
+          ))}
+        </section>
+      )}
 
       {/*
        * How the clip was read: which hand, what angle, how clearly it came
@@ -473,9 +493,12 @@ export default function Report({
       <section className="block">
         <div className="block-head">
           <h2 className="block-title">The six key positions</h2>
+          {/* Named for what it opens. "Compare" alone appeared twice on this
+              page — here, and on the button that sweeps the serves inside this
+              one clip — and the two do entirely different things. */}
           {onCompare && (
             <button className="block-aside block-aside--btn" onClick={onCompare}>
-              Compare
+              Compare with a past serve
               <Icon name="chevron" size={13} />
             </button>
           )}

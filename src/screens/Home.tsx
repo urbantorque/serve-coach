@@ -117,12 +117,12 @@ export default function Home({
           what the thing does, then the only button that matters. Everything
           below this is for somebody who has already used it once. */}
       <section className="home-cover">
-        <h1 className="home-headline">
-          One serve.
+        <h1 className="home-headline t-display">
+          Fix your
           <br />
-          One fix.
+          serve.
         </h1>
-        <p className="home-say">
+        <p className="home-say t-lede">
           Film one serve. The app measures it frame by frame and names the one thing to fix.
         </p>
       </section>
@@ -174,11 +174,12 @@ export default function Home({
           />
         </div>
         {/* Dragging a file is a desktop-only gesture — a touch device has no
-            equivalent — so the hint only appears where it is actually true. */}
+            equivalent — so the hint only appears where it is actually true.
+            "Drag", never "drop": in this app the drop is the racket drop. */}
         {!coarsePointer() && (
           <p className="dropzone-hint">
             <Icon name="upload" size={14} />
-            or drop a video file anywhere here
+            or drag a video file anywhere here
           </p>
         )}
       </div>
@@ -187,7 +188,7 @@ export default function Home({
           smallest. Stated plainly and given the weight it earns, rather than
           shrunk into a badge at the bottom. */}
       <section className="home-promise">
-        <p>
+        <p className="t-lede">
           Your video stays on this device. Nothing is uploaded, and the app works with no signal
           at all.
         </p>
@@ -199,7 +200,10 @@ export default function Home({
       {progress && progress.points.length > 1 && (
         <button className="progress-card" onClick={onShowProgress}>
           <div className="progress-head">
-            <span className="block-title">Your form</span>
+            {/* Not "Your form" — the sheet behind the Details link is called
+                that and shows the latest serve, not this rolling average. Two
+                panels, two numbers, one name was the confusion. */}
+            <span className="block-title">Your recent average</span>
             <span className="progress-jump">
               Details
               <Icon name="chevron" size={14} />
@@ -260,7 +264,9 @@ export default function Home({
             {recent.map((s) => (
               <li key={s.id}>
                 <button className="serve-log-row" onClick={() => onOpen(s)}>
-                  <span className={`serve-log-score tnum serve-log-score--${s.overallStatus}`}>
+                  <span
+                    className={`serve-log-score t-headline tnum serve-log-score--${s.overallStatus}`}
+                  >
                     {s.overall}
                   </span>
                   <span className="serve-log-text">

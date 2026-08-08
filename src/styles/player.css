@@ -89,7 +89,15 @@
   align-items: center;
   /* Dragging the scrubber must move the video, not the page underneath it. */
   touch-action: none;
-  --played: 0%;
+  /*
+   * Unitless 0–1, not a percentage, and written by the animation loop on every
+   * frame the clip is moving. Both things that move off it below are moved with
+   * `transform` for that reason: a `width` or a `left` in this variable would
+   * put a layout and a paint on the compositor on the same frames the canvas
+   * overlay is being redrawn on, which is the one frame budget in this app that
+   * has nothing spare.
+   */
+  --played: 0;
 }
 
 .player-track::before {
@@ -101,28 +109,50 @@
   background: var(--court-2);
 }
 
+/* Full width, scaled down. `transform-origin` is what makes it grow from the
+   left rather than out of the middle. */
 .player-played {
   position: absolute;
   left: 0;
-  width: var(--played);
+  right: 0;
   height: 8px;
   background: var(--yellow);
+  transform: scaleX(var(--played));
+  transform-origin: left center;
 }
 
 /*
- * The playhead: a 16×24 rectangle, square, no glow. It is drawn as the track's
- * ::after so it paints over the keyframe ticks — the tick tells you where the
- * contact frame is, the playhead tells you where you are, and when the two
- * coincide the answer must be "you are on it".
+ * The playhead rides a full-width rail rather than being placed at a position.
+ *
+ * A percentage `translateX` resolves against the transformed element's own box,
+ * so the rail has to be the width of the track for `--played` to mean what it
+ * says. The head itself hangs off it, half its width to the left, so the mark
+ * straddles the moment instead of trailing it.
  */
-.player-track::after {
+.player-head {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 24px;
+  pointer-events: none;
+  transform: translateX(calc(var(--played) * 100%));
+}
+
+/*
+ * Black core, white edge, and it is the last thing drawn on the track — so it
+ * reads over the yellow fill it sits on the boundary of, over the dark track
+ * ahead of it, and over a keyframe tick when the two coincide. White alone was
+ * 1.3:1 against the fill on its left half, which is the half you are dragging.
+ */
+.player-head::before {
   content: '';
   position: absolute;
-  left: var(--played);
+  left: -8px;
+  top: 0;
   width: 16px;
   height: 24px;
-  background: var(--white);
-  transform: translateX(-8px);
+  background: var(--black);
+  border: var(--stroke) solid var(--white);
 }
 
 /*
@@ -193,17 +223,24 @@
   box-shadow: var(--focus-ring-dark);
 }
 
+/* --court-2 is a surface step, and used as an edge down here it is 1.32:1 — the
+   outline that says "this is a button" would be the one thing you cannot see.
+   Every control in the well is framed in --court-line for that reason. */
 .seg {
   display: flex;
   padding: 0;
   background: transparent;
-  border: var(--stroke) solid var(--court-2);
+  border: var(--stroke) solid var(--court-line);
 }
 
-/* 15px of padding on 11px of type is a 41px item inside a 2px frame: 45 tall,
-   which is the smallest a thing can be and still be hit on a court in the sun. */
+/* Sized rather than padded to 44: 11px of type plus padding lands at 43 and no
+   arrangement of whole pixels lands on 44, and this is the floor for a control
+   someone is hitting one-handed on a court. */
 .seg-item {
-  padding: 15px 14px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
   border-radius: 0;
   font-size: var(--t-overline);
   font-weight: 700;
@@ -229,12 +266,12 @@
   gap: 0;
   padding: 0;
   background: transparent;
-  border: var(--stroke) solid var(--court-2);
+  border: var(--stroke) solid var(--court-line);
 }
 
 .stepper .icon-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
 }
 
 .stepper .icon-btn:disabled {
@@ -256,9 +293,10 @@
 
 .player .chip--toggle {
   border-radius: 0;
-  border: var(--stroke) solid var(--court-2);
+  border: var(--stroke) solid var(--court-line);
   background: transparent;
-  padding: 15px 14px;
+  min-height: 44px;
+  padding: 0 14px;
   font-size: var(--t-overline);
   font-weight: 700;
   letter-spacing: var(--tr-kicker);
@@ -279,12 +317,14 @@
 
 /* ------------------------------------------------------ key positions row -- */
 
+/* 4px of padding on every side, not 2 on one: the row scrolls, so anything
+   short of the focus ring's own width clips the ring off a focused pill. */
 .phase-pills {
   display: flex;
   gap: var(--s-2);
   overflow-x: auto;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  padding: var(--s-1);
 }
 
 .phase-pills::-webkit-scrollbar {
@@ -294,9 +334,12 @@
 /* Square, despite the name. 44px tall so it can be hit on a court in the sun. */
 .phase-pill {
   flex: none;
-  padding: 15px 14px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
   background: transparent;
-  border: var(--stroke) solid var(--court-2);
+  border: var(--stroke) solid var(--court-line);
   font-size: var(--t-overline);
   font-weight: 700;
   letter-spacing: var(--tr-kicker);

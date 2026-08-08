@@ -31,8 +31,15 @@
   --yellow-deep: #a8d400; /* the same accent where it must survive on white */
   --yellow-ink: #0a0a0a; /* what you write on top of yellow */
 
-  /* Hardcourt Blue. The coaching voice: fixes, tips, "try this". */
-  --blue: #2563eb;
+  /*
+   * Hardcourt Blue. The coaching voice: fixes, tips, "try this".
+   *
+   * One step darker than the #2563EB the source system specifies. That value is
+   * 4.95:1 on this white — it passes indoors and fails on a court, because
+   * sunlight falling on the glass adds to both sides of the ratio and flattens
+   * it. Everything carrying an instruction is held above 6:1 for that reason.
+   */
+  --blue: #1d4ed8;
   --blue-wash: #eff4ff;
 
   /* --- surfaces ---------------------------------------------------------- */
@@ -52,7 +59,19 @@
   --court-fg: #fafafa;
   --court-fg-muted: #a3a3a3;
 
-  /* --- content ----------------------------------------------------------- */
+  /*
+   * The border on a control sitting in the dark well.
+   *
+   * --court-2 is a *surface* step; used as an edge it is 1.32:1 against the
+   * well, so the outline that says "this is a button" is the one thing you
+   * cannot see. Anything that must read as a control down there uses this.
+   */
+  --court-line: #a3a3a3;
+
+  /* --- content -----------------------------------------------------------
+     --fg-muted is the floor for anything a player has to READ. --fg-faint is
+     2.42:1 on the page; it is for placeholder and disabled text and for
+     hairline marks on a chart, and it must never carry a word that matters. */
   --fg: #0a0a0a;
   --fg-muted: #525252;
   --fg-faint: #a3a3a3;
@@ -62,23 +81,54 @@
   --line: #d4d4d4;
   --line-strong: #0a0a0a;
 
+  /*
+   * The resting edge of something you can tap.
+   *
+   * --line is 1.42:1 on the page: fine as a divider between two paragraphs,
+   * useless as the outline of a button, because the outline IS the affordance
+   * and outdoors it is simply not there. Prefer --line-strong, which is the
+   * source system's own instruction; use this where a full black frame would
+   * make a dense row of controls read as a grid of boxes.
+   */
+  --line-control: #8a8a8a;
+
   --stroke-hair: 1px;
   --stroke: 2px; /* every interactive element */
   --stroke-heavy: 4px; /* the coaching rule on a diagnostic card */
 
   /* --- score ramp --------------------------------------------------------
-     Four rungs, and the bottom one is amber — not red. See note 3 above. */
-  --great: #16a34a;
+     Four rungs, and the bottom one is amber — not red. See note 3 above.
+
+     Each rung is TWO tokens and they are not interchangeable:
+
+       --*-ink   the rung anywhere it must be SEEN against the page — type, a
+                 rule under a word, a marker on a chart. Every one is above
+                 4.5:1 on both --bg and --surface.
+       --great / --fair / --work
+                 the rung as a FILL, and only where something dark is already
+                 holding its edge: inside a black frame, on its own --*-wash,
+                 or down on the --court ramp.
+
+     Amber is why this split exists. #F59E0B is 2.06:1 on this white, so as a
+     bare rule it is not a faint status channel — it is no status channel. It
+     is brilliant on black (9.2:1), which is exactly where it earns its keep.
+     The same discipline as optic yellow, for the same reason. */
+  --great: #0f7a37;
+  --great-ink: #0f7a37;
   --great-wash: #e8f6ec;
   --good: #0a0a0a;
+  --good-ink: #0a0a0a;
   --good-wash: #eef0f2;
   --fair: #f59e0b;
+  --fair-ink: #8a5200;
   --fair-wash: #fef4e2;
-  --work: #b45309;
+  --work: #9a4404;
+  --work-ink: #9a4404;
   --work-wash: #fdf0e3;
 
   /* Injury only. Reaching for this anywhere else is a bug. */
   --danger: #ef4444;
+  --danger-ink: #b91c1c;
   --danger-wash: #fdeceb;
 
   /* --- geometry ----------------------------------------------------------
@@ -341,39 +391,5 @@ ol {
   }
 }
 
-/* ============================================================================
-   MIGRATION SHIM — temporary.
-
-   The old dark token names are still referenced by style modules that have not
-   been rewritten yet. Each module deletes its dependency on these as it is
-   converted; when the last one goes, this whole block goes with it. It exists
-   so the app stays runnable between commits instead of going white-on-white
-   for the duration of the overhaul.
-
-   If you are reading this after the overhaul shipped, it should not be here.
-   ========================================================================= */
-
-:root {
-  --ink: var(--bg);
-  --ink-1: var(--surface);
-  --ink-2: var(--surface);
-  --ink-3: var(--surface-raised);
-  --ink-4: var(--line);
-  --hairline: var(--line-subtle);
-  --hairline-soft: var(--line-subtle);
-  --lime: var(--blue);
-  --lime-bright: var(--blue);
-  --lime-deep: var(--yellow-deep);
-  --lime-ink: var(--white);
-  --lime-glow: transparent;
-  --great-dim: var(--great-wash);
-  --good-dim: var(--good-wash);
-  --fair-dim: var(--fair-wash);
-  --work-dim: var(--work-wash);
-  --r-xs: 0;
-  --r-sm: 0;
-  --r-md: 0;
-  --r-lg: 0;
-  --r-xl: 0;
-  --r-pill: 0;
-}
+/* The migration shim that carried the old dark token names through the
+   overhaul is gone — every module now reads the tokens above directly. */

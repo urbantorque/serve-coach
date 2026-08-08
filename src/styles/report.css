@@ -71,11 +71,10 @@
 }
 
 .hero-out-of {
-  font-family: var(--font-display);
   font-size: var(--t-subhead);
+  font-weight: var(--wt-title);
   line-height: 1;
-  letter-spacing: var(--tr-display);
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 .hero-meter {
@@ -90,26 +89,48 @@
   overflow: hidden;
 }
 
+/*
+ * The fill, plus a black rule marking where it stops.
+ *
+ * Amber is 1.70:1 against this track, so on a fair serve the colour alone does
+ * not say where the level is — the reader can see a bar and not see its end.
+ * The right-hand rule is the level; the colour is only which rung it lands on.
+ *
+ * The rule is set at 6px because the element is driven by `scaleX` and its own
+ * border scales with it: at the lowest score the ramp produces it still lands
+ * near 2px, and at the top it is a black end-cap. A separate unscaled marker
+ * would have to be positioned from the score, which is the screen's job, not
+ * this stylesheet's.
+ */
 .hero-meter-fill {
   display: block;
   width: 100%;
   height: 100%;
+  border-right: 6px solid var(--black);
   transform-origin: left center;
   transition: transform var(--slow) var(--ease-out);
 }
 
+/* Bright fills, legal here because the track holds a 2px black frame. */
 .hero-meter-fill--great { background: var(--great); }
 .hero-meter-fill--good  { background: var(--good); }
 .hero-meter-fill--fair  { background: var(--fair); }
 .hero-meter-fill--work  { background: var(--work); }
 
+/*
+ * The verdict, in Work Sans rather than the display face.
+ *
+ * This is a whole sentence at 20px, and Archivo Black is drawn for two-digit
+ * numbers and three-word titles — set as running copy at that size it stops
+ * being loud and starts being slow. The score above it is the display element;
+ * this is the line that explains it.
+ */
 .hero h1 {
-  font-family: var(--font-display);
   font-size: var(--t-subhead);
-  font-weight: 400;
+  font-weight: var(--wt-title);
   line-height: var(--lh-tight);
   letter-spacing: var(--tr-title);
-  max-width: 22ch;
+  max-width: 30ch;
   text-wrap: balance;
 }
 
@@ -236,7 +257,9 @@
   min-width: 44px;
   height: 44px;
   background: var(--white);
-  border: var(--stroke) solid var(--line);
+  /* --line is 1.42:1 — on a control the outline *is* the affordance, and a row
+     of eight full black frames reads as a grid rather than a set of choices. */
+  border: var(--stroke) solid var(--line-control);
   font-size: var(--t-small);
   font-weight: var(--wt-title);
   font-variant-numeric: tabular-nums;
@@ -262,6 +285,14 @@
   cursor: default;
 }
 
+/* The sweep, moved out from under the picker so it sits below the focus card:
+   measuring every serve in the basket is a second question, and it was standing
+   between the score and the one instruction on the page. */
+.serves-compare {
+  display: flex;
+  flex-direction: column;
+}
+
 .serves-cta {
   width: 100%;
 }
@@ -271,6 +302,11 @@
 
    Rung four. A grey panel with a coloured top rule: present, readable, and
    visibly not the thing to act on.
+
+   Held together by its fill and a hairline, not by a 2px frame. There is only
+   one strong border to spend on this page and it belongs to the focus card; a
+   panel of context drawn with a heavier edge than the one instruction is the
+   ladder upside down.
    ========================================================================= */
 
 .consistency {
@@ -279,14 +315,17 @@
   gap: var(--s-4);
   padding: var(--s-4);
   background: var(--surface);
-  border: var(--stroke) solid var(--line-subtle);
-  border-top: var(--stroke-heavy) solid var(--line);
+  border: var(--stroke-hair) solid var(--line-control);
+  border-top: var(--stroke-heavy) solid var(--line-control);
 }
 
-.consistency--great { border-top-color: var(--great); }
-.consistency--good  { border-top-color: var(--good); }
-.consistency--fair  { border-top-color: var(--fair); }
-.consistency--work  { border-top-color: var(--work); }
+/* The ink tokens, not the fills: this rule sits bare on the page with nothing
+   framing it, and bright amber there is 2.06:1 — not a faint channel, no
+   channel. */
+.consistency--great { border-top-color: var(--great-ink); }
+.consistency--good  { border-top-color: var(--good-ink); }
+.consistency--fair  { border-top-color: var(--fair-ink); }
+.consistency--work  { border-top-color: var(--work-ink); }
 
 .consistency-head {
   display: flex;
@@ -299,25 +338,29 @@
   color: var(--fg-muted);
 }
 
+/* Subhead, a step under the focus card's headline. At --t-headline this number
+   was the same size as the one instruction on the page and larger than the
+   injury title, which put rung four above rungs one and three by weight. */
 .consistency-score {
   display: flex;
   align-items: baseline;
   gap: var(--s-1);
   font-family: var(--font-display);
-  font-size: var(--t-headline);
+  font-size: var(--t-subhead);
   line-height: var(--lh-display);
-  letter-spacing: var(--tr-display);
+  letter-spacing: var(--tr-title);
 }
 
 .consistency-out-of {
-  font-size: var(--t-lede);
-  color: var(--fg-faint);
+  font-family: var(--font);
+  font-size: var(--t-body);
+  font-weight: var(--wt-title);
+  color: var(--fg-muted);
 }
 
 .consistency-head h2 {
-  font-family: var(--font-display);
-  font-size: var(--t-subhead);
-  font-weight: 400;
+  font-size: var(--t-body);
+  font-weight: var(--wt-title);
   line-height: var(--lh-tight);
   letter-spacing: var(--tr-title);
 }
@@ -354,13 +397,15 @@
   min-width: 44px;
   padding: var(--s-2);
   background: var(--white);
-  border: var(--stroke-hair) solid var(--line);
+  border: var(--stroke-hair) solid var(--line-control);
 }
 
+/* Work Sans, not the display face: two digits at 16px is below the size where
+   Archivo Black is doing anything except costing legibility. */
 .cchip em {
   font-style: normal;
-  font-family: var(--font-display);
   font-size: var(--t-body);
+  font-weight: var(--wt-title);
   line-height: 1;
   letter-spacing: var(--tr-title);
 }
@@ -368,7 +413,7 @@
 .cchip > span {
   font-size: var(--t-overline);
   font-weight: 700;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 .spreads {
@@ -406,10 +451,10 @@
   border-bottom: 3px solid transparent;
 }
 
-.spread-score--great { border-bottom-color: var(--great); }
-.spread-score--good  { border-bottom-color: var(--good); }
-.spread-score--fair  { border-bottom-color: var(--fair); }
-.spread-score--work  { border-bottom-color: var(--work); }
+.spread-score--great { border-bottom-color: var(--great-ink); }
+.spread-score--good  { border-bottom-color: var(--good-ink); }
+.spread-score--fair  { border-bottom-color: var(--fair-ink); }
+.spread-score--work  { border-bottom-color: var(--work-ink); }
 
 /*
  * The measured range, drawn over the target band on the metric's own axis.
@@ -442,7 +487,7 @@
 .spread-sep {
   padding: 0 var(--s-2);
   font-weight: var(--wt-body);
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 .consistency-foot {
@@ -453,7 +498,9 @@
   text-wrap: pretty;
 }
 
-/* A caveat, not a warning. Amber rule, black type — red is injury only. */
+/* A caveat, not a warning. Amber rule, black type — red is injury only. The
+   rule is --fair-ink: the bright fill is 2.06:1 on the page, so as the only
+   thing marking this block out it would not have marked it out at all. */
 .notes {
   display: flex;
   flex-direction: column;
@@ -464,8 +511,8 @@
   max-width: var(--measure);
   padding: var(--s-3);
   background: var(--fair-wash);
-  border: var(--stroke-hair) solid var(--fair);
-  border-left: var(--stroke-heavy) solid var(--fair);
+  border: var(--stroke-hair) solid var(--fair-ink);
+  border-left: var(--stroke-heavy) solid var(--fair-ink);
   font-size: var(--t-small);
   line-height: var(--lh-snug);
   color: var(--fg);
@@ -493,7 +540,7 @@
   font-size: var(--t-overline);
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 /*
@@ -518,7 +565,9 @@
 .gap-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  background: var(--fg-faint);
+  /* The bar is the datum. --fg-faint is 1.4:1 on this track — a chart drawn in
+     it is a chart you cannot read the short rows of. */
+  background: var(--fg-muted);
 }
 
 .gap:first-child .gap-fill {
@@ -593,17 +642,21 @@
 }
 
 /*
- * Set to carry against the hero score and the focus card further down the page.
- * At the body size of a caveat it lost to both, which made "first in the
- * document" and "first thing you see" two different orderings.
+ * Headline scale — the same step as the focus card, and a step above the
+ * consistency panel.
+ *
+ * Rung one cannot be smaller than rung three. At --t-subhead it was, which made
+ * "first in the document" and "first thing you see" two different orderings.
+ * The display face stays: these are three- and four-word titles set well above
+ * 20px, which is the size Archivo Black is drawn for.
  */
 .injury-text strong {
   display: block;
   font-family: var(--font-display);
-  font-size: var(--t-subhead);
+  font-size: var(--t-headline);
   font-weight: 400;
   line-height: var(--lh-tight);
-  letter-spacing: var(--tr-title);
+  letter-spacing: var(--tr-display);
   color: var(--fg);
   text-wrap: balance;
 }
@@ -691,8 +744,8 @@
   max-width: var(--measure);
   padding: var(--s-3);
   background: var(--fair-wash);
-  border: var(--stroke-hair) solid var(--fair);
-  border-left: var(--stroke-heavy) solid var(--fair);
+  border: var(--stroke-hair) solid var(--fair-ink);
+  border-left: var(--stroke-heavy) solid var(--fair-ink);
   font-size: var(--t-small);
   line-height: var(--lh-snug);
   color: var(--fg);
@@ -711,13 +764,25 @@
    the scale and given the width of a column to itself, and the drill sits below
    a plain rule rather than inside a second box — a box inside a box is how the
    fix ended up looking like a footnote to itself.
+
+   THE CANONICAL COACHING CALLOUT. Whenever an instruction is a card: a 4px
+   --blue rule on top, a 2px --black frame on the other three sides. There is
+   exactly one other permitted form, an inline note carrying a single --blue
+   left rule and no frame; nothing in this module needs it. Any third treatment
+   is one blue thing too many for a player to learn.
+
+   The frame is black rather than --line-subtle because --white and --bg are the
+   same value: on the page this card has no surface of its own, so the border is
+   the whole of its body. Drawn in the faintest line in the palette it had less
+   edge than the grey panel two rungs below it, and it now sits directly under
+   the largest type in the app with nothing between them.
    ========================================================================= */
 
 .focus {
   margin: var(--s-2) 0;
   padding: var(--s-5) var(--s-4) var(--s-5);
   background: var(--white);
-  border: var(--stroke) solid var(--line-subtle);
+  border: var(--stroke) solid var(--black);
   border-top: var(--stroke-heavy) solid var(--blue);
 }
 
@@ -877,7 +942,9 @@
   min-height: 44px;
   padding: var(--s-2) var(--s-3);
   background: var(--white);
-  border: var(--stroke) solid var(--line);
+  /* The outline is the affordance; --line is 1.42:1 and a stack of five black
+     frames reads as a table rather than as a set of choices. */
+  border: var(--stroke) solid var(--line-control);
   text-align: left;
   transition:
     background var(--fast) var(--ease),

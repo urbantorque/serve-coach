@@ -106,8 +106,8 @@ export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
       </ul>
 
       <p className="consistency-foot">
-        Each score is how little that part of the serve moved. Worst first, so the top row is the
-        one to groove.
+        A low score means that part of the serve changes every time. Worst first — the top row is
+        the one to start on.
       </p>
 
       <button className="btn btn--ghost btn--full" onClick={onDismiss}>

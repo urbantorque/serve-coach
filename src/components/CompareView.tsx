@@ -110,7 +110,7 @@ export default function CompareView({ current, others }: Props) {
         {otherRubric > 0
           ? `The scoring changed between this serve and your other ${SERVE_TYPES[currentType].label.toLowerCase()} ${otherRubric === 1 ? 'serve' : 'serves'}, so the numbers do not compare. Film another and it appears here.`
           : otherTypes > 0
-            ? `Your other ${otherTypes === 1 ? 'serve was a different serve' : 'serves were different serves'} — a ${SERVE_TYPES[currentType].label.toLowerCase()} can only be compared against another one, because the targets differ. Film a second one and they will appear here.`
+            ? `Your other ${otherTypes === 1 ? 'serve was' : 'serves were'} a different type, and each type is marked differently. Film a second ${SERVE_TYPES[currentType].label.toLowerCase()}.`
             : 'Analyse a second serve and you can put them side by side here.'}
       </p>
     )
@@ -229,8 +229,8 @@ export default function CompareView({ current, others }: Props) {
           ))}
         </ul>
         <p className="compare-note">
-          Then on the left, now on the right. The figure is the change in score, not in the
-          measurement — a position can shift a long way inside its band and barely matter.
+          Then on the left, now on the right. The number is the change in score, not in how far
+          you moved.
         </p>
       </section>
     </div>

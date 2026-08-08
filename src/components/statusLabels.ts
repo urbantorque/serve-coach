@@ -12,23 +12,30 @@ import type { Status } from '../lib/analysis/types'
 export const STATUS_LABEL: Record<Status, string> = {
   great: 'Strong',
   good: 'Solid',
-  fair: 'Refine',
+  // Not "Refine". Beside "Strong" and "Solid" — two plain judgements — a lone
+  // abstract verb asks the player to work out what it is even rating.
+  fair: 'Nearly there',
   work: 'Work on this',
 }
 
 /**
- * How well the app could see this clip, as a word rather than a percentage.
+ * How well the app could see this clip, said as what it did rather than a score.
  *
  * "68% confidence" invites arithmetic nobody performs: a player cannot act on
  * the difference between 68 and 74, and the figure reads as precision the
- * estimate does not have. Four words carry the only decision it feeds — whether
- * to trust the report or refilm.
+ * estimate does not have. Four phrases carry the only decision it feeds —
+ * whether to trust the report or refilm.
+ *
+ * Phrased as the app reporting on itself, because the earlier set graded the
+ * clip — "Sharp read" over "Clear read" — and those are the same word to
+ * anybody not holding the ladder that separates them. Two of four bands may as
+ * well not have existed.
  */
 export function readQuality(confidence: number): string {
-  if (confidence >= 0.8) return 'Sharp read'
-  if (confidence >= 0.6) return 'Clear read'
-  if (confidence >= 0.4) return 'Fair read'
-  return 'Rough read'
+  if (confidence >= 0.8) return 'Saw it clearly'
+  if (confidence >= 0.6) return 'Saw it well'
+  if (confidence >= 0.4) return 'Saw it partly'
+  return 'Struggled to see it'
 }
 
 /** Below this the read is hedged on screen rather than stated flat. */

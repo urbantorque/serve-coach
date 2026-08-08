@@ -84,7 +84,8 @@
   top: 0.6em;
   width: 6px;
   height: 6px;
-  background: var(--work);
+  /* A mark that has to be seen bare on the page, so the ink token, not the fill. */
+  background: var(--work-ink);
 }
 
 .guide-note {

@@ -20,10 +20,13 @@
   transition: border-color var(--base) var(--ease);
 }
 
-.fcard--great { border-top-color: var(--great); }
-.fcard--good  { border-top-color: var(--good); }
-.fcard--fair  { border-top-color: var(--fair); }
-.fcard--work  { border-top-color: var(--work); }
+/* The -ink values, not the fills: this rule sits directly on the page with
+   nothing dark holding its edge, and bright --fair there is 2.06:1 — the card
+   would carry no verdict at all on the one rung that most needs to say so. */
+.fcard--great { border-top-color: var(--great-ink); }
+.fcard--good  { border-top-color: var(--good-ink); }
+.fcard--fair  { border-top-color: var(--fair-ink); }
+.fcard--work  { border-top-color: var(--work-ink); }
 
 .fcard.is-open {
   border-left-color: var(--line);
@@ -146,9 +149,10 @@
 /* What the body did. The loudest thing in the row on purpose: it is the answer,
    and everything under it is the reason and the correction.
 
-   The status is a rule under the words, never the colour of the words. Amber on
-   white is 2:1 and green is 3.4:1 — as type both fail outdoors, and this is the
-   one line in the report that has to survive being read in the sun. */
+   The status is a rule under the words, never the colour of the words — and the
+   rule takes the -ink value. A channel drawn in bright --fair is 2.06:1 against
+   the page, which is not a faint channel, it is no channel: the rung would go
+   missing on exactly the serves that needed telling. */
 .metric-read {
   flex: 0 1 auto;
   min-width: 0;
@@ -159,14 +163,14 @@
   letter-spacing: var(--tr-title);
   color: var(--fg);
   padding-bottom: 3px;
-  border-bottom: var(--stroke-heavy) solid var(--line);
+  border-bottom: var(--stroke-heavy) solid var(--line-control);
   text-wrap: balance;
 }
 
-.metric-read--great { border-bottom-color: var(--great); }
-.metric-read--good  { border-bottom-color: var(--good); }
-.metric-read--fair  { border-bottom-color: var(--fair); }
-.metric-read--work  { border-bottom-color: var(--work); }
+.metric-read--great { border-bottom-color: var(--great-ink); }
+.metric-read--good  { border-bottom-color: var(--good-ink); }
+.metric-read--fair  { border-bottom-color: var(--fair-ink); }
+.metric-read--work  { border-bottom-color: var(--work-ink); }
 
 /* --- the axis -------------------------------------------------------------- */
 
@@ -182,7 +186,13 @@
 }
 
 /* A framed axis rather than a floating line — the two ends of the scale have to
-   be somewhere definite before "inside the band" means anything. */
+   be somewhere definite before "inside the band" means anything.
+
+   --surface, not --surface-raised. The band's green edge is 4.88:1 on its own
+   wash and 5.21:1 on the page, but it was only 4.32:1 against a raised track:
+   the line that says where "good" starts was at its weakest against the very
+   thing it divides. The black frame is what separates the axis from the page,
+   so the track itself can afford to be lighter. */
 .bar-track {
   position: absolute;
   left: 0;
@@ -190,17 +200,20 @@
   top: 50%;
   height: 22px;
   transform: translateY(-50%);
-  background: var(--surface-raised);
+  background: var(--surface);
   border: var(--stroke) solid var(--black);
 }
 
+/* The edge is the line that says where "good" starts, so it is drawn in -ink
+   and not in the fill. It has to hold against three neighbours at once: its own
+   wash inside, the grey track outside, and the black playhead crossing it. */
 .bar-band {
   position: absolute;
   top: 50%;
   height: 22px;
   transform: translateY(-50%);
   background: var(--great-wash);
-  border: var(--stroke) solid var(--great);
+  border: var(--stroke) solid var(--great-ink);
 }
 
 /* Black, and edged in white so it stays a separate object when it lands exactly
@@ -219,17 +232,12 @@
 }
 
 /* Both ends of the scale, said in body language. A bound printed as a number is
-   the one thing this report has never done. */
+   the one thing this report has never done. Type comes from `.t-overline`. */
 .bar-ends {
   display: flex;
   justify-content: space-between;
   gap: var(--s-3);
   margin-top: var(--s-2);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1.3;
   color: var(--fg-muted);
 }
 
@@ -250,10 +258,6 @@
 
 .metric-aim-key {
   flex: none;
-  font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--fg-muted);
 }
 
@@ -310,7 +314,7 @@
   padding: var(--s-3);
   max-width: var(--measure);
   background: var(--white);
-  border: var(--stroke) solid var(--line);
+  border: var(--stroke) solid var(--line-control);
   border-left: var(--stroke-heavy) solid var(--blue);
 }
 
@@ -318,18 +322,16 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-1);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--blue);
 }
 
+/* Work Sans, not Archivo Black. The display face is drawn for headline sizes —
+   at 16px its counters close up and it reads as a heavy blur rather than as
+   emphasis, which costs more than the family match is worth. */
 .microdrill h5 {
   margin: var(--s-2) 0 var(--s-1);
-  font-family: var(--font-display);
   font-size: var(--t-body);
-  font-weight: 400;
+  font-weight: var(--wt-title);
   letter-spacing: var(--tr-title);
   line-height: var(--lh-tight);
 }
@@ -345,10 +347,6 @@
 .microdrill-reps {
   display: inline-block;
   margin-top: var(--s-2);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--fg-muted);
 }
 
@@ -366,14 +364,10 @@
 .metric-approx {
   display: inline-block;
   margin-left: var(--s-1);
-  padding: 1px var(--s-1);
+  padding: 2px var(--s-1);
   background: var(--surface);
-  border: var(--stroke-hair) solid var(--line);
-  font-size: var(--t-overline);
+  border: var(--stroke-hair) solid var(--line-control);
   font-style: normal;
-  font-weight: var(--wt-title);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--fg-muted);
 }
 
@@ -386,7 +380,7 @@
   padding: var(--s-2) var(--s-3);
   max-width: var(--measure);
   background: var(--surface);
-  border-left: var(--stroke-heavy) solid var(--line);
+  border-left: var(--stroke-heavy) solid var(--line-control);
   font-size: var(--t-small);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
@@ -407,10 +401,6 @@
 }
 
 .drill-kicker {
-  font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--blue);
 }
 
@@ -434,13 +424,9 @@
 .drill-reps {
   display: inline-block;
   margin-top: var(--s-3);
-  padding: var(--s-1) var(--s-2);
+  padding: var(--s-2);
   background: var(--black);
   color: var(--white);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
 }
 
 /* ============================================================================

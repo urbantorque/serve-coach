@@ -17,7 +17,7 @@ const RULES = [
   {
     title: 'Start filming before the toss',
     body:
-      'Roll from a second before the ball leaves your hand until after you land. Three to five seconds, one serve per clip.',
+      'Hit record a second before the ball leaves your hand. Three to five seconds for one serve, or keep rolling for a whole basket.',
   },
   {
     title: 'Use slow motion if your phone has it',

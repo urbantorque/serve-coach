@@ -4,6 +4,9 @@
    The front door of a sports app, not a settings screen. A headline set hard
    against the left margin, one sentence of what it does, one black bar to tap.
    Everything after that is a contents page: rules, not cards.
+
+   Type roles come from the global helpers in tokens.css wherever one fits;
+   this file only adds what a helper cannot say.
    ========================================================================= */
 
 .home-top {
@@ -30,26 +33,17 @@
   gap: var(--s-3);
 }
 
-/* Optically flush with the shell's left edge. Archivo Black carries enough side
-   bearing at display size that a literal 0 reads as an indent. */
+/* Size and leading come from the .t-display helper on the element. Only the
+   optical trim lives here: Archivo Black carries enough side bearing at
+   display size that a literal 0 reads as an indent. */
 .home-headline {
   margin-left: -0.045em;
-  font-family: var(--font-display);
-  /* Sized off the longest line rather than off --t-display: two words of
-     Archivo Black caps are far wider than the two digits that token was cut
-     for, and at 15vw "ONE SERVE." breaks across three lines on a 375px phone. */
-  font-size: clamp(2.5rem, 12.5vw, 4.5rem);
-  line-height: var(--lh-display);
-  letter-spacing: var(--tr-display);
-  font-weight: 400;
   text-transform: uppercase;
   color: var(--fg);
 }
 
 .home-say {
   max-width: var(--measure);
-  font-size: var(--t-lede);
-  line-height: var(--lh-snug);
   font-weight: var(--wt-label);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -67,20 +61,20 @@
    button is showing, `--alt` makes sure it never reads as an equal choice. */
 .home-cta {
   width: 100%;
-  min-height: 64px;
+  min-height: var(--s-7);
   border-radius: 0;
-  font-size: 1.0625rem;
+  font-size: var(--t-body);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .home-cta--alt {
-  min-height: 52px;
+  min-height: var(--s-6);
   font-size: var(--t-small);
 }
 
-/* Dropping a file is a desktop gesture, so the target only announces itself
+/* Dragging a file is a desktop gesture, so the target only announces itself
    once something is actually being dragged over the page. */
 .dropzone {
   display: flex;
@@ -126,8 +120,6 @@
 
 .home-promise p {
   max-width: var(--measure);
-  font-size: var(--t-lede);
-  line-height: var(--lh-snug);
   font-weight: var(--wt-key);
   color: var(--fg);
   text-wrap: pretty;
@@ -141,10 +133,10 @@
 
 /* --- contents page -------------------------------------------------------- */
 
-/* Pulled 12px wider than the column so the row's own padding puts the label
-   flush with the left margin while the rules run past it. */
+/* Pulled one space step wider than the column so the row's own padding puts
+   the label flush with the left margin while the rules run past it. */
 .home-nav {
-  margin: 0 -12px;
+  margin: 0 calc(var(--s-3) * -1);
   border-top: var(--stroke) solid var(--black);
   border-bottom: var(--stroke) solid var(--black);
 }
@@ -157,19 +149,21 @@
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 2px var(--s-3);
+  gap: var(--s-1) var(--s-3);
   width: 100%;
-  min-height: 56px;
-  padding: 13px 12px;
+  min-height: calc(var(--s-6) + var(--s-2));
+  padding: var(--s-2) var(--s-3);
   text-align: left;
   color: var(--fg-muted);
   transition: background var(--fast) var(--ease);
 }
 
+/* The chevron is the affordance, not decoration, so it reads at --fg-muted
+   rather than the placeholder grey. */
 .home-nav-row .icon {
   grid-row: 1 / 3;
   grid-column: 2;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 .home-nav-label {
@@ -199,7 +193,7 @@
 /* Square rows on hairlines. The score is the row's whole identity, so it is set
    as a numeral in its own colour and nothing else competes with it. */
 .serve-log {
-  margin: 0 -12px;
+  margin: 0 calc(var(--s-3) * -1);
   border-top: var(--stroke) solid var(--black);
   border-bottom: var(--stroke) solid var(--black);
 }
@@ -214,8 +208,8 @@
   align-items: center;
   gap: var(--s-3);
   width: 100%;
-  min-height: 56px;
-  padding: 11px 12px;
+  min-height: calc(var(--s-6) + var(--s-2));
+  padding: var(--s-2) var(--s-3);
   text-align: left;
   transition: background var(--fast) var(--ease);
 }
@@ -225,24 +219,23 @@
 }
 
 /* Wide enough for a hundred, so the titles line up down the column whatever
-   each row scored. */
+   each row scored. Size comes from the .t-headline helper on the element. */
 .serve-log-score {
   min-width: 3ch;
-  font-family: var(--font-display);
-  font-size: 1.875rem;
-  line-height: 1;
-  letter-spacing: var(--tr-display);
 }
 
-.serve-log-score--great { color: var(--great); }
-.serve-log-score--good  { color: var(--good); }
-.serve-log-score--fair  { color: var(--fair); }
-.serve-log-score--work  { color: var(--work); }
+/* Every rung takes the -ink half of its pair, because here the rung IS the
+   type. Bare --fair is 2.06:1 on this page — at 28px that is not a quiet
+   status colour, it is a number nobody can read. */
+.serve-log-score--great { color: var(--great-ink); }
+.serve-log-score--good  { color: var(--good-ink); }
+.serve-log-score--fair  { color: var(--fair-ink); }
+.serve-log-score--work  { color: var(--work-ink); }
 
 .serve-log-text {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--s-1);
   min-width: 0;
 }
 
@@ -292,7 +285,7 @@
    whether this data has been promised a life. */
 .storage-meter {
   display: block;
-  height: 6px;
+  height: var(--s-2);
   margin: var(--s-3) 0;
   background: var(--surface-raised);
 }
@@ -302,9 +295,11 @@
   height: 100%;
 }
 
-.storage-meter-fill--kept { background: var(--great); }
-.storage-meter-fill--risk { background: var(--fair); }
-.storage-meter-fill--unknown { background: var(--line); }
+/* The -ink rungs again: this bar sits on a light grey track, which is neither
+   a black frame nor the rung's own wash, so the fill halves would not hold. */
+.storage-meter-fill--kept { background: var(--great-ink); }
+.storage-meter-fill--risk { background: var(--fair-ink); }
+.storage-meter-fill--unknown { background: var(--line-control); }
 
 .storage-warn,
 .storage-note {
@@ -319,23 +314,23 @@
 }
 
 .storage-warn {
-  border-left: var(--stroke) solid var(--fair);
+  border-left: var(--stroke) solid var(--fair-ink);
 }
 
 .storage-warn .icon {
-  color: var(--fair);
+  color: var(--fair-ink);
   flex: none;
-  margin-top: 2px;
+  margin-top: var(--s-1);
 }
 
 .storage-note--ok {
-  border-left: var(--stroke) solid var(--great);
+  border-left: var(--stroke) solid var(--great-ink);
 }
 
 .storage-note--ok .icon {
-  color: var(--great);
+  color: var(--great-ink);
   flex: none;
-  margin-top: 2px;
+  margin-top: var(--s-1);
 }
 
 .storage-actions {
@@ -357,11 +352,11 @@
 .block-aside--btn {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--s-1);
   color: var(--fg);
   font-weight: var(--wt-key);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 0.15em;
 }
 
 /* Mirrors .progress-sheet: without an explicit gap here, the two `.block`
@@ -384,7 +379,8 @@
 .compare-pick select {
   flex: 1;
   min-width: 0;
-  padding: 10px 12px;
+  min-height: var(--s-6);
+  padding: var(--s-2) var(--s-3);
   border: var(--stroke) solid var(--black);
   background: var(--white);
   color: var(--fg);
@@ -412,8 +408,8 @@
 
 .compare-score-value {
   font-family: var(--font-display);
-  font-size: 1.75rem;
-  line-height: 1;
+  font-size: var(--t-headline);
+  line-height: var(--lh-tight);
   letter-spacing: var(--tr-display);
   color: var(--fg);
 }
@@ -431,14 +427,16 @@
   color: var(--fg-muted);
 }
 
+/* Measured on the wash each one actually sits on rather than on the page:
+   --great-ink is 4.88:1 there and --work-ink 5.86:1. */
 .compare-arrow--better {
   background: var(--great-wash);
-  color: var(--great);
+  color: var(--great-ink);
 }
 
 .compare-arrow--worse {
   background: var(--work-wash);
-  color: var(--work);
+  color: var(--work-ink);
 }
 
 .compare-strip {
@@ -486,7 +484,7 @@
   position: absolute;
   left: 0;
   bottom: 0;
-  padding: 3px 7px;
+  padding: var(--s-1) var(--s-2);
   background: var(--black);
   font-size: var(--t-overline);
   font-style: normal;
@@ -503,7 +501,7 @@
 
 .compare-row {
   display: grid;
-  grid-template-columns: 1fr auto 46px;
+  grid-template-columns: 1fr auto var(--s-6);
   align-items: center;
   gap: var(--s-2);
   padding: var(--s-2) 0;
@@ -526,7 +524,7 @@
   font-size: var(--t-caption);
   line-height: var(--lh-tight);
   text-align: right;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 .compare-row-values em {
@@ -539,26 +537,28 @@
 }
 
 .compare-row--better .compare-row-values strong {
-  color: var(--great);
+  color: var(--great-ink);
 }
 
 .compare-row--worse .compare-row-values strong {
-  color: var(--work);
+  color: var(--work-ink);
 }
 
+/* Work Sans, not the display face: Archivo Black has no small sizes in it and
+   at 14px it stops being a voice and becomes a smear. */
 .compare-row-delta {
   text-align: right;
-  font-family: var(--font-display);
+  font-weight: 700;
   font-size: var(--t-small);
   color: var(--fg-muted);
 }
 
 .compare-row--better .compare-row-delta {
-  color: var(--great);
+  color: var(--great-ink);
 }
 
 .compare-row--worse .compare-row-delta {
-  color: var(--work);
+  color: var(--work-ink);
 }
 
 .compare-note {
@@ -582,48 +582,10 @@
 
 .player-model-key {
   flex: none;
-  width: 18px;
+  width: var(--s-3);
   height: 0;
-  margin-top: 9px;
+  margin-top: var(--s-2);
   border-top: var(--stroke) dashed var(--blue);
-}
-
-/* --- which serve ---------------------------------------------------------- */
-
-.serve-type {
-  margin-top: var(--s-4);
-  padding-top: var(--s-3);
-  border-top: var(--stroke-hair) solid var(--line-subtle);
-}
-
-.serve-type-lead {
-  display: block;
-  font-size: var(--t-overline);
-  font-weight: 700;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
-.serve-type-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-  margin-top: var(--s-2);
-}
-
-.serve-type-options .serve-chip {
-  width: auto;
-  padding: var(--s-2) var(--s-3);
-  font-size: var(--t-small);
-  font-weight: var(--wt-key);
-}
-
-.serve-type-note {
-  margin-top: var(--s-2);
-  font-size: var(--t-caption);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
 }
 
 /* --- which hand ----------------------------------------------------------- */
@@ -650,14 +612,14 @@
 }
 
 .hand-option {
-  min-height: 52px;
+  min-height: var(--s-6);
   padding: var(--s-2);
   border: var(--stroke) solid var(--black);
   background: var(--white);
   color: var(--fg);
   font-size: var(--t-small);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
 }

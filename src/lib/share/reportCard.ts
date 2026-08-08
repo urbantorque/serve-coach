@@ -17,17 +17,34 @@ const BLACK = '#0a0a0a'
 const SURFACE = '#f5f5f5'
 const LINE = '#e5e5e5'
 const MUTED = '#525252'
+/** Placeholder weight only. It never carries a word that has to be read. */
+const FAINT = '#a3a3a3'
 const YELLOW = '#ccff00'
 /** The coaching voice, and the rule over the drill — same as a diagnostic card. */
-const BLUE = '#2563eb'
+const BLUE = '#1d4ed8'
 
-/* The score ramp, four rungs, bottom one amber-deep. Red is the injury flag and
-   nothing on this card is an injury, so red does not appear here at all. */
-const STATUS_COLOR: Record<string, string> = {
-  great: '#16a34a',
+/*
+ * The score ramp is two maps, and they are not interchangeable — the same split
+ * tokens.css makes, for the same reason. Amber is 2.06:1 on this white, so as a
+ * bare rule under a word it is not a faint status channel, it is none at all;
+ * boxed in black or sat on its own wash it is the clearest of the four.
+ *
+ * Red appears in neither. Nothing on this card is an injury.
+ */
+/** The rung as a FILL — only inside a black frame or on its own wash. */
+const STATUS_FILL: Record<string, string> = {
+  great: '#0f7a37',
   good: '#0a0a0a',
   fair: '#f59e0b',
-  work: '#b45309',
+  work: '#9a4404',
+}
+
+/** The rung where it has to be SEEN on the page: type, or a rule over a word. */
+const STATUS_INK: Record<string, string> = {
+  great: '#0f7a37',
+  good: '#0a0a0a',
+  fair: '#8a5200',
+  work: '#9a4404',
 }
 
 /* The token stacks, spelled out for canvas — same families, same fallbacks, so a
@@ -135,10 +152,24 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   // a long coaching line pushes the card taller instead of running into what
   // comes next. Measured before the canvas is sized because the card's height is
   // one of the things it decides.
-  const cy = 250
-  const ringR = 78
-  const textX = PAD + 210
-  const textW = W - textX - PAD
+  //
+  // One column, flush left, read top to bottom. The score used to sit in a ring
+  // with the coaching text alongside it; the app dropped that arrangement for
+  // the reason the report hero now gives — a ring puts the number inside a
+  // circle about the size of a thumbnail and then shrinks it to fit, and the
+  // number is the entire payoff. The card follows the app, not the other way
+  // round: it is the only thing anyone else ever sees of this design.
+  const textX = PAD
+  const textW = W - PAD * 2
+
+  const labelY = PAD + 104 // 'SERVE SCORE' baseline
+  const scoreY = labelY + 96 // the numeral's baseline
+  const meterY = scoreY + 28 // the meter's top edge
+  const meterH = 20
+  const meterW = Math.min(textW, 620)
+
+  const kickerY = meterY + meterH + 64 // 'WORK ON THIS NEXT' baseline
+  const titleY = kickerY + 48
 
   ctx.font = sans(400, 20)
   // Flattened: the report marks its key words for the screen, and a canvas has
@@ -146,11 +177,10 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   // with the markup showing.
   const focusWhy = plain(report.focus.why)
   const focusLines = layoutLines(ctx, focusWhy, textW)
-  const focusEnd = cy + 20 + focusLines.length * 30
+  const focusTop = titleY + 40
+  const focusEnd = focusTop + focusLines.length * 30
 
-  // Clear both the paragraph and the bottom of the score ring: on a short fault
-  // the ring is the taller of the two.
-  const chipY = Math.max(focusEnd + 22, cy + ringR + 40)
+  const chipY = focusEnd + 16
   const barY = chipY + 48
   const HEADER = barY + 74 + 36
 
@@ -187,33 +217,32 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   )
   ctx.textAlign = 'left'
 
-  /* --- score ring ------------------------------------------------------- */
-  const cx = PAD + 92
-  const r = ringR
-  const status = STATUS_COLOR[report.overallStatus] ?? BLACK
-
-  ctx.lineWidth = 14
-  ctx.strokeStyle = LINE
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, 0, Math.PI * 2)
-  ctx.stroke()
-
-  ctx.strokeStyle = status
-  // Butt ends, not round. The ring is a chart, so its geometry stays; the soft
-  // cap on it was chrome, and this system has none.
-  ctx.lineCap = 'butt'
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (report.overall / 100) * Math.PI * 2)
-  ctx.stroke()
-
-  ctx.textAlign = 'center'
-  ctx.font = display(54)
-  ctx.fillStyle = BLACK
-  ctx.fillText(String(report.overall), cx, cy + 12)
+  /* --- score ------------------------------------------------------------ */
   ctx.font = mono(700, 13)
   ctx.fillStyle = MUTED
-  ctx.fillText('OVERALL', cx, cy + 38)
-  ctx.textAlign = 'left'
+  ctx.fillText('SERVE SCORE', textX, labelY)
+
+  const scoreText = String(report.overall)
+  ctx.font = display(104)
+  ctx.fillStyle = BLACK
+  ctx.fillText(scoreText, textX, scoreY)
+  const scoreW = ctx.measureText(scoreText).width
+  ctx.font = display(32)
+  ctx.fillStyle = FAINT
+  ctx.fillText('/100', textX + scoreW + 12, scoreY)
+
+  // The tier is carried by the meter rather than by tinting the digits: three of
+  // the four ramp colours cannot hold 4.5:1 on this ground, and a score you have
+  // to squint at is not a celebration. The black frame is what lets the fill be
+  // the fill colour — amber has no edge of its own on near-white.
+  ctx.fillStyle = LINE
+  ctx.fillRect(textX, meterY, meterW, meterH)
+  ctx.fillStyle = STATUS_FILL[report.overallStatus] ?? BLACK
+  const filled = (meterW * Math.max(0, Math.min(100, report.overall))) / 100
+  ctx.fillRect(textX, meterY, filled, meterH)
+  ctx.strokeStyle = BLACK
+  ctx.lineWidth = 2
+  ctx.strokeRect(textX + 1, meterY + 1, meterW - 2, meterH - 2)
 
   /* --- what this score is a score of ------------------------------------ */
   /*
@@ -224,21 +253,36 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
    * and a flat serve judged against flat ones are not comparable scores, and
    * without saying which is which the card invites exactly that comparison.
    */
-  const chips: string[] = [
-    SERVE_TYPES[report.serveType ?? 'flat']?.label ?? 'Flat / first serve',
-    report.handedness === 'left' ? 'Left-handed' : 'Right-handed',
-    report.quality.view === 'side'
-      ? 'Side view'
-      : report.quality.view === 'front-back'
-        ? 'Front / back view'
-        : 'Angled view',
-    readQuality(report.quality.confidence),
+  /*
+   * `soft` is carried on the chip rather than recovered from its words.
+   *
+   * This used to ask `label.endsWith('read')`, which worked only while the
+   * confidence phrases happened to be "Sharp read" and "Clear read". Renaming
+   * them for legibility silently switched the amber tint off — a caveat the
+   * card is supposed to carry, lost with nothing failing. Prose is not an
+   * identifier.
+   */
+  const chips: { label: string; soft?: boolean }[] = [
+    { label: SERVE_TYPES[report.serveType ?? 'flat']?.label ?? 'Flat / first serve' },
+    { label: report.handedness === 'left' ? 'Left-handed' : 'Right-handed' },
+    {
+      label:
+        report.quality.view === 'side'
+          ? 'Side view'
+          : report.quality.view === 'front-back'
+            ? 'Front / back view'
+            : 'Angled view',
+    },
+    {
+      label: readQuality(report.quality.confidence),
+      soft: report.quality.confidence < SOFT_READ,
+    },
   ]
 
   let chipX = PAD
   ctx.font = mono(400, 15)
   ctx.lineWidth = 2
-  for (const label of chips) {
+  for (const { label, soft } of chips) {
     const w = ctx.measureText(label).width + 26
     // Wrap rather than run off the edge: translated or unusually long labels
     // would otherwise silently disappear past the right margin.
@@ -246,12 +290,12 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
     // Low confidence is the one of these that changes how the card should be
     // read, so it is the one that gets colour. Amber-deep, not red: a soft read
     // is a caveat on the numbers, not a warning about the player.
-    const low = label.endsWith('read') && report.quality.confidence < SOFT_READ
+    const low = soft === true
     ctx.fillStyle = low ? '#fdf0e3' : SURFACE
     ctx.fillRect(chipX, chipY - 20, w, 34)
-    ctx.strokeStyle = low ? STATUS_COLOR.work : LINE
+    ctx.strokeStyle = low ? STATUS_INK.work : LINE
     ctx.strokeRect(chipX + 1, chipY - 19, w - 2, 32)
-    ctx.fillStyle = low ? STATUS_COLOR.work : MUTED
+    ctx.fillStyle = low ? STATUS_INK.work : MUTED
     ctx.fillText(label, chipX + 13, chipY + 3)
     chipX += w + 8
   }
@@ -263,9 +307,9 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   const kicker = 'WORK ON THIS NEXT'
   ctx.font = mono(700, 14)
   ctx.fillStyle = YELLOW
-  ctx.fillRect(textX, cy - 76, ctx.measureText(kicker).width + 20, 26)
+  ctx.fillRect(textX, kickerY - 18, ctx.measureText(kicker).width + 20, 26)
   ctx.fillStyle = BLACK
-  ctx.fillText(kicker, textX + 10, cy - 58)
+  ctx.fillText(kicker, textX + 10, kickerY)
 
   // Archivo Black is much wider per character than the sans it replaced, and the
   // fault titles are written for a person rather than for a box, so the type
@@ -277,12 +321,12 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
     ctx.font = display(titleSize)
   }
   ctx.fillStyle = BLACK
-  ctx.fillText(report.focus.title, textX, cy - 16)
+  ctx.fillText(report.focus.title, textX, titleY)
   ctx.font = sans(400, 20)
   ctx.fillStyle = MUTED
   // The same lines the layout above was measured from, so what is drawn and what
   // was reserved for it cannot disagree.
-  drawLines(ctx, focusLines, textX, cy + 20, 30)
+  drawLines(ctx, focusLines, textX, focusTop, 30)
 
   /* --- the five areas --------------------------------------------------- */
   const barW = (W - PAD * 2 - 14 * (report.fundamentals.length - 1)) / report.fundamentals.length
@@ -292,8 +336,9 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
     ctx.fillRect(x, barY, barW, 74)
     // The verdict is the rule across the top, the way it is on a diagnostic
     // card. The number underneath stays black so five of these read as one row
-    // of scores rather than as five differently coloured things.
-    ctx.fillStyle = STATUS_COLOR[f.status] ?? BLACK
+    // of scores rather than as five differently coloured things. The rule takes
+    // the -ink rung: it sits on the page with nothing holding its edge.
+    ctx.fillStyle = STATUS_INK[f.status] ?? BLACK
     ctx.fillRect(x, barY, barW, 4)
 
     ctx.fillStyle = BLACK

@@ -224,21 +224,22 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       [LM.rightShoulder, LM.rightElbow],
       [LM.rightElbow, LM.rightWrist],
     ]
-    // Both strokes run over the same dash pattern, so the underlay outlines each
-    // dash instead of filling the gaps back in and reading as a solid line.
+    // Every bone into one path with a subpath each, then two strokes over it.
+    // Both run on the same dash pattern, so the underlay outlines each dash
+    // rather than filling the gaps back in and reading as a solid line.
+    ctx.beginPath()
     for (const [a, b] of [...BONES, ...arms]) {
       const p = gp(a)
       const q = gp(b)
-      ctx.beginPath()
       ctx.moveTo(p.x, p.y)
       ctx.lineTo(q.x, q.y)
-      ctx.strokeStyle = PALETTE.under
-      ctx.lineWidth = 6.2 * gscale
-      ctx.stroke()
-      ctx.strokeStyle = PALETTE.reference
-      ctx.lineWidth = 3 * gscale
-      ctx.stroke()
     }
+    ctx.strokeStyle = PALETTE.under
+    ctx.lineWidth = 6.2 * gscale
+    ctx.stroke()
+    ctx.strokeStyle = PALETTE.reference
+    ctx.lineWidth = 3 * gscale
+    ctx.stroke()
     const gnose = gp(LM.nose)
     const gspan = Math.abs(gp(LM.leftShoulder).x - gp(LM.rightShoulder).x)
     const gr = Math.max(9 * gscale, gspan * 0.42, 11)
@@ -260,62 +261,95 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       x: ox + (fr.image[arm.wrist].x / aspect) * dw,
       y: oy + fr.image[arm.wrist].y * dh,
     })
-    // Two passes rather than two strokes per segment. The underlay is wider than
-    // the trail, so drawing it segment-by-segment would lay each segment's dark
-    // edge back over the end of the one before it and bead the swing path. It
-    // also fades with the same age curve — a constant dark line under a trail
-    // that has faded to nothing is just a dark line.
+    /*
+     * The fade is quantised into a handful of polylines, not drawn per segment.
+     *
+     * A trail can be fifty frames long and a per-segment stroke costs a path
+     * apiece, twice over — that is a hundred and eighty paths a frame for one
+     * fading tail. Six steps of alpha are indistinguishable from a continuous
+     * ramp at this width, and each step is a single polyline.
+     *
+     * The underlay is a whole pass rather than a second stroke per bucket
+     * because it is wider than the trail: interleaved, each bucket's dark edge
+     * would land back over the end of the bucket before it and bead the swing
+     * path. Butt caps because consecutive buckets share their endpoint exactly
+     * — a round cap there would double the alpha at six places along the arc.
+     */
+    ctx.lineCap = 'butt'
+    ctx.lineJoin = 'round'
+    const steps = 6
+    const segments = to - from
     for (let pass = 0; pass < 2; pass++) {
       ctx.lineWidth = (pass === 0 ? 6 : 3) * scale
-      for (let i = from + 1; i <= to; i++) {
-        const a = pt(frames[i - 1])
-        const b = pt(frames[i])
-        const age = (i - from) / Math.max(1, to - from)
-        const alpha = 0.08 + 0.5 * age
+      for (let k = 0; k < steps; k++) {
+        const lo = from + Math.floor((segments * k) / steps)
+        const hi = from + Math.floor((segments * (k + 1)) / steps)
+        if (hi <= lo) continue
+        const alpha = 0.08 + (0.5 * (k + 1)) / steps
         ctx.strokeStyle =
           pass === 0 ? `rgba(10, 10, 10, ${alpha})` : `rgba(204, 255, 0, ${alpha})`
         ctx.beginPath()
-        ctx.moveTo(a.x, a.y)
-        ctx.lineTo(b.x, b.y)
+        const first = pt(frames[lo])
+        ctx.moveTo(first.x, first.y)
+        for (let i = lo + 1; i <= hi; i++) {
+          const q = pt(frames[i])
+          ctx.lineTo(q.x, q.y)
+        }
         ctx.stroke()
       }
     }
   }
 
-  const bone = (a: number, b: number, color: string, width: number) => {
-    const p = at(a)
-    const q = at(b)
-    ctx.strokeStyle = color
-    ctx.lineWidth = width * scale
+  /*
+   * A chain is one path with a subpath per bone, stroked twice: dark and wide,
+   * then its own colour.
+   *
+   * Both halves of that matter. Two strokes of one path is half the path
+   * construction of building it again for the underlay — and the underlay has
+   * to cover the whole chain before any colour lands on it, because drawn bone
+   * by bone the next bone's dark edge would cut a notch out of the one already
+   * painted, at the joints, which are exactly what is being measured.
+   */
+  const chain = (pairs: [number, number][], under: number, color: string, width: number) => {
     ctx.lineCap = 'round'
     ctx.beginPath()
-    ctx.moveTo(p.x, p.y)
-    ctx.lineTo(q.x, q.y)
+    for (const [a, b] of pairs) {
+      const p = at(a)
+      const q = at(b)
+      ctx.moveTo(p.x, p.y)
+      ctx.lineTo(q.x, q.y)
+    }
+    ctx.strokeStyle = PALETTE.under
+    ctx.lineWidth = under * scale
+    ctx.stroke()
+    ctx.strokeStyle = color
+    ctx.lineWidth = width * scale
     ctx.stroke()
   }
 
-  // The dark outline goes under the *whole* skeleton before any colour does.
-  // Per-bone it would work out the same everywhere except the joints, where the
-  // next bone's underlay would cut a notch out of the bone already drawn — and
-  // the joints are the part being measured.
-  for (const [a, b] of BONES) bone(a, b, PALETTE.under, 7)
-  for (const [a, b] of BONES) bone(a, b, PALETTE.neutral, 3.4)
+  chain(BONES, 7, PALETTE.neutral, 3.4)
 
-  const tossBones: [number, number][] = [
-    [tossArm.shoulder, tossArm.elbow],
-    [tossArm.elbow, tossArm.wrist],
-  ]
-  for (const [a, b] of tossBones) bone(a, b, PALETTE.under, 8)
-  for (const [a, b] of tossBones) bone(a, b, PALETTE.limb, 4)
+  chain(
+    [
+      [tossArm.shoulder, tossArm.elbow],
+      [tossArm.elbow, tossArm.wrist],
+    ],
+    8,
+    PALETTE.limb,
+    4,
+  )
 
   // The racket arm last and in yellow: it is drawn over the tossing arm on
   // purpose, because when the two cross it is the hitting arm you are watching.
-  const racketBones: [number, number][] = [
-    [arm.shoulder, arm.elbow],
-    [arm.elbow, arm.wrist],
-  ]
-  for (const [a, b] of racketBones) bone(a, b, PALETTE.under, 9)
-  for (const [a, b] of racketBones) bone(a, b, PALETTE.active, 4.6)
+  chain(
+    [
+      [arm.shoulder, arm.elbow],
+      [arm.elbow, arm.wrist],
+    ],
+    9,
+    PALETTE.active,
+    4.6,
+  )
 
   // The racket, where the hand can be seen well enough to point it. Drawn under
   // the joint dots so the hand still reads as the anchor, and skipped silently
@@ -427,32 +461,43 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   ctx.lineWidth = 3 * scale
   ctx.stroke()
 
-  // The dots are filled and then ringed on the same path: a white dot on a white
-  // sleeve is a hole in the skeleton, and these mark the joints the angles are
-  // read from, so they are the last thing that can afford to disappear.
+  /*
+   * The joint dots: all the ones sharing a colour in a single path, filled and
+   * then ringed in the dark.
+   *
+   * The ring is not decoration — a white dot on a white sleeve is a hole in the
+   * skeleton, and these mark the joints every angle in the report is read from.
+   * `moveTo` before each arc keeps the discs as separate subpaths; without it
+   * the path draws a line from one joint to the next on its way round.
+   */
   ctx.strokeStyle = PALETTE.under
   ctx.lineWidth = 1.8 * scale
+  ctx.fillStyle = PALETTE.limb
+  const dotR = 3.2 * scale
+  ctx.beginPath()
   for (const lm of [
     LM.leftShoulder, LM.rightShoulder, LM.leftHip, LM.rightHip,
     LM.leftKnee, LM.rightKnee, LM.leftAnkle, LM.rightAnkle,
     tossArm.elbow, tossArm.wrist,
   ]) {
     const p = at(lm)
-    ctx.fillStyle = PALETTE.limb
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, 3.2 * scale, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
+    ctx.moveTo(p.x + dotR, p.y)
+    ctx.arc(p.x, p.y, dotR, 0, Math.PI * 2)
   }
+  ctx.fill()
+  ctx.stroke()
+
   ctx.lineWidth = 2.2 * scale
+  ctx.fillStyle = PALETTE.active
+  const armR = 4.6 * scale
+  ctx.beginPath()
   for (const lm of [arm.elbow, arm.wrist]) {
     const p = at(lm)
-    ctx.fillStyle = PALETTE.active
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, 4.6 * scale, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
+    ctx.moveTo(p.x + armR, p.y)
+    ctx.arc(p.x, p.y, armR, 0, Math.PI * 2)
   }
+  ctx.fill()
+  ctx.stroke()
 
   const annotation = o.annotation ? ANNOTATIONS[o.annotation] : undefined
   if (annotation) {

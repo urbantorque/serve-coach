@@ -93,7 +93,10 @@
   align-items: center;
   gap: var(--s-3);
   font-size: var(--t-small);
-  color: var(--fg-faint);
+  /* A step not yet reached is still a step the player is reading. --fg-faint is
+     2.42:1 and belongs to disabled text, not to the list that says what is
+     coming. */
+  color: var(--fg-muted);
   transition: color var(--base) var(--ease);
 }
 
@@ -112,7 +115,7 @@
   place-items: center;
   width: 20px;
   height: 20px;
-  border: var(--stroke) solid var(--line);
+  border: var(--stroke) solid var(--line-control);
   color: var(--fg);
   flex: none;
 }
@@ -126,7 +129,7 @@
   left: 50%;
   width: var(--stroke);
   height: var(--s-2);
-  background: var(--line);
+  background: var(--line-control);
   transform: translateX(-50%);
 }
 
@@ -148,7 +151,7 @@
 .step-dot {
   width: 6px;
   height: 6px;
-  background: var(--fg-faint);
+  background: var(--fg-muted);
 }
 
 .step.is-active .step-dot {

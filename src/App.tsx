@@ -6,7 +6,7 @@ import LevelPicker from './components/LevelPicker'
 import StoragePanel from './components/StoragePanel'
 import PracticeCard from './components/PracticeCard'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
-import { Icon, ScoreRing, Sheet } from './components/primitives'
+import { Icon, Sheet } from './components/primitives'
 import { findPracticeFocus } from './lib/practice'
 import { buildConsistencyTrend, buildProgress, typeOf } from './lib/progress'
 import {
@@ -641,17 +641,26 @@ export default function App() {
           <ul className="history">
             {sessions.map((s) => (
               <li key={s.id}>
+                {/* The same row Home draws. A past serve was two different
+                    objects in this app — a bordered box with a small gauge in
+                    the sheet, a hairline row with a display numeral on the
+                    front page — which made the history read as a different
+                    feature rather than the same list somewhere else. */}
                 <button
-                  className="recent"
+                  className="serve-log-row"
                   onClick={() => {
                     setSheet(null)
                     setView({ kind: 'saved', session: s })
                   }}
                 >
-                  <ScoreRing score={s.overall} status={s.overallStatus} size={42} animate={false} />
-                  <span className="recent-text">
+                  <span
+                    className={`serve-log-score t-headline tnum serve-log-score--${s.overallStatus}`}
+                  >
+                    {s.overall}
+                  </span>
+                  <span className="serve-log-text">
                     <strong>{s.focus.title}</strong>
-                    <span>
+                    <span className="serve-log-date">
                       {new Date(s.createdAt).toLocaleString(undefined, {
                         day: 'numeric',
                         month: 'short',
@@ -686,7 +695,11 @@ export default function App() {
         )}
       </Sheet>
 
-      <Sheet open={sheet === 'progress'} onClose={() => setSheet(null)} title="Your form">
+      {/* Not "Your form" — the home card already owns that name for the average
+          of the last three serves, and this sheet is the whole history behind
+          it. Two panels titled the same thing showing different numbers is the
+          one thing a player will read as a bug. */}
+      <Sheet open={sheet === 'progress'} onClose={() => setSheet(null)} title="Every serve so far">
         {form && form.points.length > 1 ? (
           <div className="progress-sheet">
             <div className="progress-summary">
@@ -732,12 +745,16 @@ export default function App() {
                     direction, and a chip here would be one more number in a
                     sheet that already carries the hero score, its own chip, a
                     sparkline and a value per fundamental. */}
-                <h3 className="block-title">Best-to-worst gap</h3>
+                {/* "Repeatable" is the one word this app uses for the idea, on
+                    the report and here. It was "gap" in this heading and
+                    "steadier" in the chart's own note — three names for one
+                    thing the player is meant to be tracking. */}
+                <h3 className="block-title">How repeatable, over time</h3>
                 <GapTrend points={spread.points} />
                 {spread.recurring && (
                   <p className="sheet-note">
-                    {spread.recurring.label} has been your least repeatable element in{' '}
-                    {spread.recurring.sessions} of these. That is the one to groove.
+                    {spread.recurring.label} has been your least repeatable part in{' '}
+                    {spread.recurring.sessions} of these. That is the one to practise most.
                   </p>
                 )}
               </section>

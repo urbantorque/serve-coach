@@ -90,16 +90,19 @@ export function ScoreRing({ score, status, size = 132, label, animate = true }: 
   const shown = useCountUp(score, animate)
   const pct = Math.max(0, Math.min(100, shown))
 
-  const hero = size >= 120
-  const segments = hero ? 10 : size >= 70 ? 6 : 4
-  const barHeight = hero ? 16 : size >= 70 ? 14 : 12
+  // Three stops, and the numeral takes a size off the type scale at each — not
+  // a fraction of `size`, which lands between the scale's rungs and slides
+  // Archivo Black under its 20px floor as the container gets smaller.
+  const tier = size >= 120 ? 'hero' : size >= 70 ? 'mid' : 'compact'
+  const segments = tier === 'hero' ? 10 : tier === 'mid' ? 6 : 4
+  const barHeight = tier === 'hero' ? 16 : tier === 'mid' ? 14 : 12
   const per = 100 / segments
 
   return (
     <div
       className={[
         'score-meter',
-        hero ? 'score-meter--hero' : '',
+        `score-meter--${tier}`,
         // Only while the number is still moving. Once it lands the transition
         // goes back on, so a later change to the score slides instead of
         // snapping.
@@ -109,26 +112,26 @@ export function ScoreRing({ score, status, size = 132, label, animate = true }: 
         .join(' ')}
       style={{ width: size }}
     >
-      <span
-        className="score-meter-value tnum"
-        style={hero ? undefined : { fontSize: Math.round(size * 0.46) }}
-      >
-        {shown}
-      </span>
+      <span className={`score-meter-value tnum${tier === 'hero' ? ' t-display' : ''}`}>{shown}</span>
       <div className="score-meter-bar" style={{ height: barHeight }} aria-hidden="true">
-        {Array.from({ length: segments }, (_, i) => (
-          <span className="score-meter-seg" key={i}>
-            <span
-              className="score-meter-fill"
-              style={{
-                background: `var(--${status})`,
-                transform: `scaleX(${Math.max(0, Math.min(1, (pct - i * per) / per))})`,
-              }}
-            />
-          </span>
-        ))}
+        {Array.from({ length: segments }, (_, i) => {
+          const fill = Math.max(0, Math.min(1, (pct - i * per) / per))
+          return (
+            <span className="score-meter-seg" key={i}>
+              <span
+                className="score-meter-fill"
+                style={{ background: `var(--${status})`, transform: `scaleX(${fill})` }}
+              />
+              {/* At most one segment is ever part-lit, and only that one needs
+                  the rule marking where the fill stops. */}
+              {fill > 0 && fill < 1 && (
+                <span className="score-meter-edge" style={{ left: `${fill * 100}%` }} />
+              )}
+            </span>
+          )
+        })}
       </div>
-      {label && <span className="score-meter-label">{label}</span>}
+      {label && <span className="score-meter-label t-overline">{label}</span>}
     </div>
   )
 }
@@ -182,7 +185,7 @@ export function MetricBar({ value, ideal, range, status, id }: MetricBarProps) {
         <div className="bar-marker" style={{ left: `${pct(value)}%` }} />
       </div>
       {low && high && low !== high && (
-        <p className="bar-ends">
+        <p className="bar-ends t-overline">
           <span>{low}</span>
           <span>{high}</span>
         </p>
@@ -320,7 +323,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
       >
         <div className="sheet-grip" />
         <header className="sheet-head">
-          <h2>{title}</h2>
+          <h2 className="t-subhead">{title}</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Close">
             <Icon name="close" />
           </button>

@@ -48,34 +48,19 @@
   color: var(--yellow-ink);
 }
 
-.btn--secondary {
-  background: transparent;
-  color: var(--fg);
-}
-
-.btn--secondary:hover:not(:disabled) {
-  background: var(--black);
-  color: var(--white);
-}
-
-/* Quieter than secondary, but quieter in the border and the fill — never in the
-   type. Grey uppercase at 14px is the first thing to go under court glare, so
-   the label stays black and the slab stays solid enough to aim a thumb at. */
+/* Quieter than primary, but quieter in the fill — never in the border and never
+   in the type. Grey uppercase at 14px is the first thing to go under court
+   glare, and a --line edge is 1.42:1: outdoors the button loses its outline,
+   which is the whole affordance. */
 .btn--ghost {
   background: var(--surface);
   color: var(--fg);
-  border-color: var(--line);
+  border-color: var(--line-strong);
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--surface-raised);
-  border-color: var(--black);
-}
-
-.btn--big {
-  min-height: 56px;
-  padding: 16px var(--s-5);
-  font-size: var(--t-body);
+  background: var(--black);
+  color: var(--white);
 }
 
 .btn--full {
@@ -90,7 +75,11 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: var(--stroke) solid var(--line);
+  /* --line-control, not --line-strong: these come in rows — a stepper, a close
+     beside a title, a delete on every history item — and a full black frame on
+     each one turns a list into a grid of boxes. This is the lightest edge that
+     is still an edge outdoors. */
+  border: var(--stroke) solid var(--line-control);
   background: var(--white);
   color: var(--fg);
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
@@ -147,7 +136,9 @@
   align-items: center;
   gap: var(--s-1);
   padding: 5px var(--s-2);
-  border: var(--stroke) solid var(--line);
+  /* Four of these sit in one row under the report hero. Black frames on all of
+     them fence the row off; --line-control holds an edge without doing that. */
+  border: var(--stroke) solid var(--line-control);
   background: var(--white);
   font-size: var(--t-overline);
   font-weight: var(--wt-title);
@@ -184,7 +175,7 @@
 
 .chip--warn {
   background: var(--fair-wash);
-  border-color: var(--fair);
+  border-color: var(--fair-ink);
 }
 
 /* Border and label track whatever colour the surrounding surface writes in, so
@@ -210,26 +201,28 @@
 }
 
 /* --- tags ------------------------------------------------------------------
-   The score colour is the border and the wash; the word itself stays black.
-   Amber at 11px on white is 2:1 — a verdict nobody can read is not a verdict. */
+   The rung is the border and the wash; the word itself stays black.
+
+   And the border is the -ink value, not the fill. A tag's edge is the only
+   thing separating its wash from the page, so it is a rule ON the page — bright
+   --fair there is 2.06:1 and the tag simply has no outline outdoors. The fill
+   tokens stay where they are legal: inside a black frame, or on the dark ramp. */
 
 .tag {
   display: inline-block;
+  /* Named, not inherited. A tag sits inside the card title, which is set in the
+     display face — and Archivo Black at tag size is a heavy blur, not a badge. */
+  font-family: var(--font);
   font-style: normal;
-  font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
-  line-height: 1.3;
   padding: 3px var(--s-2);
-  border: var(--stroke) solid var(--line);
+  border: var(--stroke) solid var(--line-control);
   color: var(--fg);
 }
 
-.tag--great { background: var(--great-wash); border-color: var(--great); }
-.tag--good  { background: var(--good-wash);  border-color: var(--good); }
-.tag--fair  { background: var(--fair-wash);  border-color: var(--fair); }
-.tag--work  { background: var(--work-wash);  border-color: var(--work); }
+.tag--great { background: var(--great-wash); border-color: var(--great-ink); }
+.tag--good  { background: var(--good-wash);  border-color: var(--good-ink); }
+.tag--fair  { background: var(--fair-wash);  border-color: var(--fair-ink); }
+.tag--work  { background: var(--work-wash);  border-color: var(--work-ink); }
 
 /* ============================================================================
    Score meter
@@ -248,16 +241,28 @@
   gap: var(--s-1);
 }
 
-.score-meter-value {
+/* Three stops on the type scale, never a fraction of the pixel width. Sizing
+   display type off a container measurement lands between the scale's rungs and
+   drifts under Archivo Black's 20px floor as the container shrinks. The hero
+   carries `.t-display` from the JSX; these two are the sizes below it. */
+.score-meter--mid .score-meter-value {
+  font-size: var(--t-subhead);
+}
+
+.score-meter--compact .score-meter-value {
+  font-size: var(--t-lede);
+}
+
+.score-meter--mid .score-meter-value,
+.score-meter--compact .score-meter-value {
   font-family: var(--font-display);
   font-weight: 400;
   line-height: var(--lh-display);
   letter-spacing: var(--tr-display);
-  color: var(--fg);
 }
 
-.score-meter--hero .score-meter-value {
-  font-size: var(--t-display);
+.score-meter-value {
+  color: var(--fg);
 }
 
 /* The black frame and the gaps are one surface: the segments are cut out of it,
@@ -272,11 +277,31 @@
 }
 
 .score-meter-seg {
+  position: relative;
   display: flex;
   flex: 1 1 0;
   min-width: 0;
   background: var(--white);
   overflow: hidden;
+}
+
+/*
+ * Where the fill stops inside the one part-lit segment.
+ *
+ * Full segments are separated by the frame's own black gaps, so they read at
+ * any rung. The partial one has no such edge: at --fair the boundary between
+ * amber and white is 2.06:1, and the meter appears to stop at the last whole
+ * segment — the score rounds itself down by up to a tenth of the ramp. A black
+ * rule puts the edge back. Outside the fill's transform, so it stays 2px
+ * instead of being squashed along with it.
+ */
+.score-meter-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--stroke);
+  transform: translateX(-100%);
+  background: var(--black);
 }
 
 /* Stretched by its own flex parent rather than sized in percentages: a
@@ -295,11 +320,7 @@
   transition: none;
 }
 
+/* Type comes from `.t-overline` on the element; this only says what colour. */
 .score-meter-label {
-  font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
-  line-height: 1;
   color: var(--fg-muted);
 }

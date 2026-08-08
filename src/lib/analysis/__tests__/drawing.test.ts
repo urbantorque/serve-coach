@@ -64,6 +64,12 @@ function recordingContext() {
     },
     stroke() {},
     fill() {},
+    // The callout draws its plate as a solid rectangle now — text on bare
+    // footage is unreadable, so every label sits on one. The stub records no
+    // fills, but it has to accept them or the callout tests die on the plate
+    // before they ever reach the words they are checking.
+    fillRect() {},
+    strokeRect() {},
     fillText(text: string) {
       texts.push(String(text))
     },

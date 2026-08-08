@@ -1,9 +1,14 @@
 /* ============================================================================
    Progress — trend card, charts, deltas
 
-   Deltas are typeset, never badged: an Archivo Black numeral in the score
-   colour with a small-caps label beside it. Improvement is --great, regression
-   is --work. Red belongs to injury and never appears here.
+   Deltas are typeset, never badged: a numeral in the score colour with a small
+   caps label beside it. Improvement is --great-ink, regression is --work-ink.
+   Red belongs to injury and never appears here.
+
+   Every rung on this screen is type or a data mark, so every one of them takes
+   the -ink half of its pair. The fill halves are only legal inside a black
+   frame, on their own wash, or down on the --court ramp, and nothing here is
+   any of those.
    ========================================================================= */
 
 .progress-card {
@@ -32,7 +37,7 @@
 .progress-jump {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--s-1);
   font-size: var(--t-overline);
   font-weight: 700;
   letter-spacing: var(--tr-kicker);
@@ -46,12 +51,13 @@
   gap: var(--s-2);
 }
 
-/* Between the cover headline and the body: big enough to be the payoff, small
-   enough that it never argues with the wordmark two sections above it. */
+/* Headline scale, not display: this is the payoff inside a card, and the cover
+   headline two sections above is the one thing on the page allowed to be
+   bigger. The sheet promotes it to --t-display, where it is the only figure. */
 .progress-hero {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 9.5vw, 3rem);
-  line-height: var(--lh-display);
+  font-size: var(--t-headline);
+  line-height: var(--lh-tight);
   letter-spacing: var(--tr-display);
 }
 
@@ -87,7 +93,7 @@
   gap: var(--s-2);
   padding: var(--s-2) var(--s-3);
   background: var(--surface);
-  border-left: var(--stroke-heavy) solid var(--fair);
+  border-left: var(--stroke-heavy) solid var(--fair-ink);
   font-size: var(--t-small);
   line-height: var(--lh-snug);
   color: var(--fg-muted);
@@ -100,13 +106,13 @@
 
 .progress-practice .icon {
   flex: none;
-  color: var(--fair);
+  color: var(--fair-ink);
 }
 
-.progress-practice--improving { border-left-color: var(--great); }
-.progress-practice--improving .icon { color: var(--great); }
-.progress-practice--slipping { border-left-color: var(--work); }
-.progress-practice--slipping .icon { color: var(--work); }
+.progress-practice--improving { border-left-color: var(--great-ink); }
+.progress-practice--improving .icon { color: var(--great-ink); }
+.progress-practice--slipping { border-left-color: var(--work-ink); }
+.progress-practice--slipping .icon { color: var(--work-ink); }
 
 .spark {
   width: 100%;
@@ -122,26 +128,35 @@
 .delta {
   display: inline-flex;
   align-items: baseline;
-  gap: 4px;
+  gap: var(--s-1);
   font-family: var(--font-display);
-  font-size: 1.375rem;
+  font-size: var(--t-subhead);
   line-height: 1;
   letter-spacing: var(--tr-display);
   white-space: nowrap;
 }
 
+/* A ratio, not a scale step: the arrow has to stay proportional to whichever
+   numeral it is riding, and it bottoms out around 11px in the compact form. */
 .delta > span:first-child {
   font-family: var(--font);
-  font-size: 0.6em;
+  font-size: 0.7em;
   font-weight: 700;
 }
 
-.delta--great { color: var(--great); }
-.delta--work  { color: var(--work); }
-.delta--flat  { color: var(--fg-faint); }
+.delta--great { color: var(--great-ink); }
+.delta--work  { color: var(--work-ink); }
+/* No real change is not a value, so it is the one place the placeholder grey
+   would be honest — but it is still a mark a player reads, so --fg-muted. */
+.delta--flat  { color: var(--fg-muted); }
 
+/* Inline beside a fundamental's score, where the display face has no small
+   sizes left in it. Work Sans at 700 holds the weight without the smear. */
 .delta--compact {
-  font-size: 1rem;
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: var(--t-body);
+  letter-spacing: 0;
 }
 
 .sr-only {
@@ -175,7 +190,7 @@
 .chart-tick,
 .chart-axis {
   fill: var(--fg-muted);
-  font-size: 9px;
+  font-size: var(--t-overline);
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
 }
@@ -191,7 +206,7 @@
 
 .chart-readout strong {
   font-family: var(--font-display);
-  font-size: 1.375rem;
+  font-size: var(--t-subhead);
   line-height: 1;
   letter-spacing: var(--tr-display);
   color: var(--fg);
@@ -211,7 +226,7 @@
 
 .dbar {
   display: grid;
-  grid-template-columns: 5.5rem 1fr auto;
+  grid-template-columns: calc(var(--s-8) - var(--s-2)) 1fr auto;
   align-items: center;
   gap: var(--s-2);
 }
@@ -223,7 +238,7 @@
 
 .dbar-track {
   position: relative;
-  height: 14px;
+  height: var(--s-3);
   background: var(--surface-raised);
   overflow: hidden;
 }
@@ -242,21 +257,20 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  min-width: 3px;
+  min-width: var(--s-1);
 }
 
-.dbar-fill--great { background: var(--great); }
-.dbar-fill--work  { background: var(--work); }
-.dbar-fill--flat  { background: var(--fg-faint); }
+.dbar-fill--great { background: var(--great-ink); }
+.dbar-fill--work  { background: var(--work-ink); }
+.dbar-fill--flat  { background: var(--fg-muted); }
 
 .dbar-value {
   display: inline-flex;
   align-items: baseline;
   gap: var(--s-1);
   justify-content: flex-end;
-  font-family: var(--font-display);
+  font-weight: 700;
   font-size: var(--t-body);
-  letter-spacing: var(--tr-display);
 }
 
 .dbars-note {
@@ -272,12 +286,12 @@
   padding: var(--s-4);
   background: var(--surface);
   border: var(--stroke) solid var(--line-subtle);
-  border-top: var(--stroke-heavy) solid var(--fg-faint);
+  border-top: var(--stroke-heavy) solid var(--fg-muted);
 }
 
-.practice--improving { border-top-color: var(--great); }
-.practice--stuck     { border-top-color: var(--fair); }
-.practice--slipping  { border-top-color: var(--work); }
+.practice--improving { border-top-color: var(--great-ink); }
+.practice--stuck     { border-top-color: var(--fair-ink); }
+.practice--slipping  { border-top-color: var(--work-ink); }
 
 .practice-top {
   display: flex;
@@ -308,9 +322,11 @@
   text-transform: uppercase;
 }
 
-.practice-verdict--improving { color: var(--great); }
-.practice-verdict--stuck     { color: var(--fair); }
-.practice-verdict--slipping  { color: var(--work); }
+/* 11px amber on a light surface is 1.97:1 — a verdict nobody can read is not
+   a quiet verdict, it is a missing one. */
+.practice-verdict--improving { color: var(--great-ink); }
+.practice-verdict--stuck     { color: var(--fair-ink); }
+.practice-verdict--slipping  { color: var(--work-ink); }
 
 .practice h3 {
   font-family: var(--font-display);
@@ -318,7 +334,7 @@
   line-height: var(--lh-tight);
   letter-spacing: var(--tr-title);
   font-weight: 400;
-  margin: var(--s-2) 0 var(--s-2);
+  margin: var(--s-2) 0;
 }
 
 .practice-lead {
@@ -345,24 +361,24 @@
   display: block;
 }
 
-.practice-run--improving { color: var(--great); }
-.practice-run--stuck     { color: var(--fair); }
-.practice-run--slipping  { color: var(--work); }
+.practice-run--improving { color: var(--great-ink); }
+.practice-run--stuck     { color: var(--fair-ink); }
+.practice-run--slipping  { color: var(--work-ink); }
 
 .practice-figures {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--s-1);
   font-size: var(--t-overline);
   letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
   color: var(--fg-muted);
-  line-height: 1.4;
+  line-height: var(--lh-snug);
 }
 
 .practice-figures strong {
   font-family: var(--font-display);
-  font-size: 1.375rem;
+  font-size: var(--t-subhead);
   line-height: 1;
   letter-spacing: var(--tr-display);
   text-transform: none;
@@ -396,6 +412,7 @@
 
 .progress-summary .progress-hero {
   font-size: var(--t-display);
+  line-height: var(--lh-display);
 }
 
 .progress-summary .progress-unit {
@@ -405,7 +422,11 @@
   font-size: var(--t-caption);
 }
 
+/* A disclosure triangle is a control, so it gets a control's target. */
 .progress-table summary {
+  display: flex;
+  align-items: center;
+  min-height: calc(var(--s-6) - var(--s-1));
   font-size: var(--t-small);
   font-weight: var(--wt-key);
   color: var(--fg);
@@ -439,16 +460,5 @@
 
 .dtable td {
   font-family: var(--mono);
-  color: var(--fg-muted);
-}
-
-.hero-delta {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--s-2);
-  font-size: var(--t-overline);
-  font-weight: 700;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--fg-muted);
 }

@@ -89,10 +89,10 @@ export default function PracticeCard({ focus }: { focus: PracticeFocus }) {
       )}
 
       <div className="drill">
-        <span className="drill-kicker">Drill · {focus.fundamentalLabel}</span>
+        <span className="drill-kicker t-overline">Drill · {focus.fundamentalLabel}</span>
         <h4>{focus.drill.name}</h4>
         <p>{focus.drill.how}</p>
-        <span className="drill-reps">{focus.drill.reps}</span>
+        <span className="drill-reps t-overline">{focus.drill.reps}</span>
       </div>
     </section>
   )

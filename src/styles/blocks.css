@@ -35,7 +35,6 @@
   color: var(--fg-muted);
 }
 
-.recents,
 .history {
   display: flex;
   flex-direction: column;
@@ -46,45 +45,4 @@
   display: flex;
   align-items: center;
   gap: var(--s-1);
-}
-
-.recent {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-  min-height: 44px;
-  padding: var(--s-2) var(--s-3);
-  background: var(--white);
-  border: var(--stroke) solid var(--line);
-  text-align: left;
-  color: var(--fg);
-  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
-}
-
-.recent:hover {
-  background: var(--surface);
-  border-color: var(--black);
-}
-
-.recent-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.recent-text strong {
-  font-size: var(--t-small);
-  font-weight: var(--wt-title);
-  color: var(--fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recent-text span {
-  font-size: var(--t-caption);
-  color: var(--fg-muted);
 }

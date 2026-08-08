@@ -199,13 +199,18 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
    * Now that the loop stops when the video does, seeking and stepping have to
    * move it themselves — otherwise the played bar sits wherever playback last
    * left it while the picture shows somewhere else entirely.
+   *
+   * Unitless 0–1 rather than a percentage: this runs on every animation frame,
+   * and the two things that read it are both scaled or translated by it. A
+   * length here would make each of these writes a layout on the same frames the
+   * canvas overlay is being redrawn on. See `--played` in player.css.
    */
   const syncProgress = useCallback(() => {
     const videoEl = videoRef.current
     if (!videoEl || !progressRef.current) return
     const span = Math.max(0.01, win.end - win.start)
-    const pct = ((videoEl.currentTime - win.start) / span) * 100
-    progressRef.current.style.setProperty('--played', `${Math.max(0, Math.min(100, pct))}%`)
+    const ratio = (videoEl.currentTime - win.start) / span
+    progressRef.current.style.setProperty('--played', `${Math.max(0, Math.min(1, ratio))}`)
   }, [win.end, win.start])
 
   /* ---------------------------------------------------------- rAF driver --- */
@@ -578,6 +583,10 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
             style={{ left: `${((p.t - win.start) / span) * 100}%` }}
           />
         ))}
+        {/* Last, so the playhead paints over the keyframe ticks: the tick says
+            where the contact frame is, the playhead says where you are, and
+            when they coincide the answer has to be "you are on it". */}
+        <div className="player-head" aria-hidden="true" />
       </div>
 
       <div className="player-controls">
