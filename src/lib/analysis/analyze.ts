@@ -100,6 +100,12 @@ export async function analyzeAllServes(
   opts: AnalyzeOptions & { count: number },
 ): Promise<Analysis[]> {
   const total = Math.min(opts.count, MAX_CONSISTENCY_SERVES)
+  // The *last* `total` serves, not the first. On a clip with more serves than
+  // the cap, sweeping from zero measures the warm-ups and leaves out the serve
+  // the report on screen is about — so the comparison the player asked for from
+  // that report would not contain it. The end of a basket is also the half worth
+  // comparing: it is what they were hitting once they had settled.
+  const first = Math.max(0, opts.count - total)
   const out: Analysis[] = []
 
   // Locate every serve once up front. Each analysis below would otherwise
@@ -108,19 +114,19 @@ export async function analyzeAllServes(
   // couple of seconds of it.
   const knownServeTimes = await locateServes(opts)
 
-  for (let i = 0; i < total; i++) {
+  for (let n = 0; n < total; n++) {
     if (opts.signal?.aborted) break
     try {
       out.push(
         await analyzeServe({
           ...opts,
-          serveIndex: i,
+          serveIndex: first + n,
           skipThumbnails: true,
           knownServeTimes,
           onProgress: (p) =>
             opts.onProgress?.({
               ...p,
-              detail: `Serve ${i + 1} of ${total} · ${p.detail ?? 'working'}`,
+              detail: `Serve ${n + 1} of ${total} · ${p.detail ?? 'working'}`,
             }),
         }),
       )

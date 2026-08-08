@@ -3,8 +3,9 @@
 Frame-by-frame tennis serve analysis that runs entirely on your device.
 
 Film one serve. The app finds the six key positions in the motion, measures
-eighteen things about your toss, loading, swing, contact and rhythm, and tells
+twenty things about your toss, loading, swing, contact and rhythm, and tells
 you which single change will buy you the most — with a drill to do about it.
+Two of the twenty come from the ball and are absent when it cannot be found.
 
 Your video is never uploaded. There is no account, no server and no network
 call after the first load.
@@ -364,9 +365,9 @@ Nothing else in the pipeline can see it: every landmark is present, visibility
 stays high, and the numbers look entirely ordinary.
 
 Physics gives it away. Hips are the steadiest thing on a serving body: across
-24–120 fps, and including the leg drive, they never move more than about 0.026 of
+24–120 fps, and including the leg drive, they never move more than about 0.03 of
 standing height between samples. A hand-off to somebody a metre away moves them
-half a body height in a single frame. Past a threshold six times the fastest real
+half a body height in a single frame. Past a threshold five times the fastest real
 motion, the app says so and halves the confidence — not another weighted term,
 because no amount of good light and frame rate makes a report built from two
 bodies trustworthy.

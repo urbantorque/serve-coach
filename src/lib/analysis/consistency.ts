@@ -26,6 +26,15 @@ export interface Consistency {
   /** Number of serves that were successfully measured. */
   serves: number
   overallScores: number[]
+  /**
+   * Which serve in the clip each of those scores belongs to, one-based.
+   *
+   * Carried rather than left to the panel to number `1..n` by position. A sweep
+   * skips a serve it could not read and covers only the last few of a long
+   * basket, so a chip numbered by array index labels the wrong serve — and the
+   * player is looking at a clip in which they can count them.
+   */
+  serveNumbers: number[]
   metrics: MetricSpread[]
   /** The element that varies most — what to groove before anything else. */
   weakest?: MetricSpread
@@ -33,7 +42,15 @@ export interface Consistency {
   steadiest?: MetricSpread
   score: number
   status: Status
-  /** Serves the scan found but that could not be measured. */
+  /**
+   * Serves the sweep tried to measure and could not.
+   *
+   * `attempted` is what was actually attempted, which is not the number of
+   * serves in the clip: the sweep is capped at `MAX_CONSISTENCY_SERVES`. Passing
+   * the clip's own count instead reported the serves beyond the cap as unreadable
+   * — a clip of ten came back as "four serves were too unclear to measure", about
+   * four serves nothing ever looked at.
+   */
   skipped: number
 }
 
@@ -61,7 +78,7 @@ function consistencyScore(spread: number, ideal: [number, number]): number {
  * are compared, since a measurement dropped for one serve (contact depth needs a
  * side-on view) would otherwise skew its own spread.
  */
-export function buildConsistency(analyses: Analysis[], expected: number): Consistency | undefined {
+export function buildConsistency(analyses: Analysis[], attempted: number): Consistency | undefined {
   if (analyses.length < 2) return undefined
 
   const byId = new Map<string, { metric: Metric; values: number[] }>()
@@ -119,12 +136,15 @@ export function buildConsistency(analyses: Analysis[], expected: number): Consis
   return {
     serves: analyses.length,
     overallScores: analyses.map((a) => a.overall),
+    // Falls back to the position when a caller hands over analyses assembled by
+    // hand — the tests do — rather than reading through a `serves` that is not there.
+    serveNumbers: analyses.map((a, i) => (a.serves?.index ?? i) + 1),
     metrics: ranked,
     weakest: ranked[0],
     steadiest: ranked[ranked.length - 1],
     score,
     status: statusOf(score),
-    skipped: Math.max(0, expected - analyses.length),
+    skipped: Math.max(0, attempted - analyses.length),
   }
 }
 

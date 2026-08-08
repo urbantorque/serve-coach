@@ -5,6 +5,7 @@ import PosePlayer from '../components/PosePlayer'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
+import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import type { Consistency } from '../lib/analysis/consistency'
 import type { ServeType } from '../lib/storage/prefs'
@@ -78,9 +79,10 @@ export default function Report({
   /*
    * Which rubric the numbers on this page were computed under.
    *
-   * A report still on screen from the run that produced it carries no stamp yet
-   * — the stamp is written as it reaches storage — so an unstamped live analysis
-   * was scored by this build. An unstamped *saved* report is the opposite: it
+   * `analyzeServe` and `rescore` both stamp a report where they score it, so a
+   * live analysis normally arrives carrying its own. One that does not — a dev
+   * fixture, an `Analysis` assembled by hand — was still produced by this build,
+   * so it reads as current. An unstamped *saved* report is the opposite: it
    * predates stamping and is old-rubric by definition, which is what
    * `scoringVersionOf` says. Reading both the same way would either blank the
    * deltas on every fresh report or compare one straight across a recalibration.
@@ -226,7 +228,12 @@ export default function Report({
           {onCheckConsistency && !consistency && (
             <button className="btn btn--ghost btn--full serves-cta" onClick={onCheckConsistency}>
               <Icon name="target" size={16} />
-              Compare all {analysis.serves.count} serves
+              {/* The sweep is capped, so a longer basket cannot promise all of
+                  them. Said on the button rather than discovered afterwards as a
+                  count that does not match the clip. */}
+              {analysis.serves.count > MAX_CONSISTENCY_SERVES
+                ? `Compare your last ${MAX_CONSISTENCY_SERVES} serves`
+                : `Compare all ${analysis.serves.count} serves`}
             </button>
           )}
         </section>

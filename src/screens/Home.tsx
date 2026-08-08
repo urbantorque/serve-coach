@@ -222,7 +222,11 @@ export default function Home({
             <span className="progress-unit">
               average of your
               <br />
-              last {Math.min(3, progress.points.length)} serves
+              {/* Counted over the era, because `recentAverage` is. Taken over all
+                  of `points` it claimed three serves right after a
+                  recalibration, when the average behind it was of the one serve
+                  filmed since — and the line directly below already says so. */}
+              last {Math.min(3, eraCount)} {Math.min(3, eraCount) === 1 ? 'serve' : 'serves'}
             </span>
             <DeltaChip delta={progress.formDelta} />
           </div>

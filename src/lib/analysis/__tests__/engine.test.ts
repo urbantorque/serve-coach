@@ -10,7 +10,7 @@ import { findPracticeFocus, practiceHeadline } from '../../practice'
 import { MEANINGFUL_DELTA, buildProgress, deltaStatus, deltasAgainst } from '../../progress'
 import { normalise } from '../../storage/db'
 import { sessionKeyFor } from '../../storage/sessionKey'
-import { assessQuality, pickFocus } from '../analyze'
+import { MAX_CONSISTENCY_SERVES, assessQuality, pickFocus } from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
 import { buildConsistency } from '../consistency'
 import { diagnose } from '../diagnose'
@@ -1092,7 +1092,7 @@ check('an element held steady while another varies keeps its own high score', ()
   assert(knee!.score >= 85, `knee bend scored ${knee!.score} despite never changing`)
 })
 
-check('reports serves the scan found but could not measure', () => {
+check('reports serves the sweep tried to measure and could not', () => {
   const c = basket([{}, {}])
   assert(c!.skipped === 0, `reported ${c!.skipped} skipped when all were measured`)
   const partial = buildConsistency(
@@ -1103,6 +1103,38 @@ check('reports serves the scan found but could not measure', () => {
     5,
   )
   assert(partial!.skipped === 3, `expected 3 skipped, got ${partial!.skipped}`)
+})
+
+// The count handed over is what the sweep *attempted*, which is capped — so a
+// clip with more serves in it than the cap must not come back reporting the
+// serves past the cap as ones too unclear to read. Nothing looked at them.
+check('serves past the sweep cap are not reported as unreadable', () => {
+  const measured = Array.from({ length: MAX_CONSISTENCY_SERVES }, () => {
+    const { fundamentals } = run()
+    return { fundamentals, overall: 70 } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  const c = buildConsistency(measured, Math.min(10, MAX_CONSISTENCY_SERVES))
+  assert(c!.skipped === 0, `a ten-serve clip reported ${c!.skipped} serves as unreadable`)
+})
+
+// Each chip is labelled with the serve's own number in the clip. Numbering by
+// position instead points the player at the wrong serve in a clip they can count
+// — and the sweep both skips unreadable serves and covers only the last few of a
+// long basket, so position and serve number routinely disagree.
+check('each serve is labelled by its number in the clip, not its place in the list', () => {
+  const analyses = [3, 5, 6].map((index) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: 70,
+      serves: { count: 7, index },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  const c = buildConsistency(analyses, 3)
+  assert(
+    JSON.stringify(c!.serveNumbers) === JSON.stringify([4, 6, 7]),
+    `labelled the serves ${JSON.stringify(c!.serveNumbers)}, expected [4,6,7]`,
+  )
 })
 
 /* ------------------------------------------------------ noisy tracking ---- */

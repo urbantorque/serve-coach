@@ -688,9 +688,10 @@ export function trackBall(
         for (const p of pool) {
           const predicted = coeffs[0] + coeffs[1] * p.t + coeffs[2] * p.t * p.t
           if (Math.abs(p.y - predicted) > band) continue
-          // One point per frame — the closest. Two candidates from the same
-          // frame both landing near the curve would otherwise inflate the
-          // score without adding any evidence.
+          // One point per frame — the strongest detection that fits, since the
+          // candidates arrive ranked by blob score. Two from the same frame both
+          // landing near the curve would otherwise inflate the count without
+          // adding any evidence.
           if (p.t === lastT) continue
           lastT = p.t
           inliers.push(p)

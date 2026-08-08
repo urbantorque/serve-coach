@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { readoutOf } from '../lib/analysis/anatomy'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import type { PhaseId } from '../lib/analysis/types'
-import { scoringVersionOf, typeOf } from '../lib/progress'
+import { MEANINGFUL_DELTA, scoringVersionOf, typeOf } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 import { Icon } from './primitives'
 
@@ -232,8 +232,13 @@ export default function CompareView({ current, others }: Props) {
   )
 }
 
-/** A change smaller than this is serve-to-serve noise, not an improvement. */
-const MEANINGFUL = 3
-
+/**
+ * A change smaller than this is serve-to-serve noise, not an improvement.
+ *
+ * The same threshold the delta chips and the trend chart use, imported rather
+ * than written out again: two copies of "what counts as a change" is how this
+ * sheet ends up styling a two-point move as progress while the chip beside it
+ * calls the same move nothing.
+ */
 const verdict = (delta: number) =>
-  Math.abs(delta) < MEANINGFUL ? 'flat' : delta > 0 ? 'better' : 'worse'
+  Math.abs(delta) < MEANINGFUL_DELTA ? 'flat' : delta > 0 ? 'better' : 'worse'

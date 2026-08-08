@@ -8,7 +8,13 @@ import { DeltaBars, DeltaChip, ScoreTrend, TrendTable } from './components/Trend
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus } from './lib/practice'
 import { buildProgress, typeOf } from './lib/progress'
-import { analyzeAllServes, analyzeServe, rescore, type AnalyzeProgress } from './lib/analysis/analyze'
+import {
+  MAX_CONSISTENCY_SERVES,
+  analyzeAllServes,
+  analyzeServe,
+  rescore,
+  type AnalyzeProgress,
+} from './lib/analysis/analyze'
 import { forgetAll, recall, remember } from './lib/analysisCache'
 import { buildConsistency, type Consistency } from './lib/analysis/consistency'
 import { hintsOf, type Analysis } from './lib/analysis/types'
@@ -140,7 +146,10 @@ export default function App() {
           })
           const fitted = fitToClip(analysis, probe.duration)
           if (demo === 'basket') {
-            fitted.serves = { count: 4, index: 3 }
+            // Five serves, the last one on screen, and the sweep attempted all
+            // five — `sampleBasket` returns the four it could read. The counts
+            // have to agree or the demo shows a panel no real clip produces.
+            fitted.serves = { count: 5, index: 4 }
             setConsistency(buildConsistency(sampleBasket(), 5))
           }
           setView({ kind: 'report', analysis: fitted, videoUrl: url })
@@ -200,7 +209,14 @@ export default function App() {
         if (hit && urlRef.current) {
           const shown = hit.serveType === serveType ? hit : rescore(hit, serveType) ?? hit
           setView({ kind: 'report', analysis: shown, videoUrl: urlRef.current })
-          if (shown !== hit) void safely(() => saveSession(shown), undefined).then(refreshSessions)
+          if (shown !== hit) {
+            // Put the rescored copy back, or the cache keeps handing out the old
+            // serve type and every return to this serve pays for the rescore
+            // again — and hands `remember` an analysis whose stored scores no
+            // longer match the ones on screen.
+            remember({ sessionKey: shown.id, handedness: shown.handedness }, shown)
+            void safely(() => saveSession(shown), undefined).then(refreshSessions)
+          }
           return
         }
       }
@@ -327,7 +343,13 @@ export default function App() {
         })
         if (controller.signal.aborted) return
 
-        const result = buildConsistency(all, analysis.serves.count)
+        // What the sweep actually attempted, which is capped — not how many
+        // serves are in the clip. Handing over the clip's count reported every
+        // serve past the cap as one too unclear to read.
+        const result = buildConsistency(
+          all,
+          Math.min(analysis.serves.count, MAX_CONSISTENCY_SERVES),
+        )
         setConsistency(result)
         setView({ kind: 'report', analysis, videoUrl: url })
         if (!result) {

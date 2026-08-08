@@ -163,16 +163,13 @@ function forwardDirection(
   if (n < 3) return { sign: 1, certain: false }
 
   // Slope of x against sample index. Indices are evenly spaced, so the usual
-  // sums reduce to this closed form.
-  let sumX = 0
+  // sums reduce to this closed form — and the mean of x drops out of it, because
+  // the index deviations already sum to zero.
   let sumIX = 0
   const meanI = (n - 1) / 2
   for (let i = lo; i <= hi; i++) {
-    const x = frames[i].image[wrist].x
-    sumX += x
-    sumIX += (i - lo - meanI) * x
+    sumIX += (i - lo - meanI) * frames[i].image[wrist].x
   }
-  void sumX
   const denom = (n * (n * n - 1)) / 12
   const slope = denom > 0 ? sumIX / denom : 0
   const travel = slope * (n - 1)

@@ -72,7 +72,17 @@ export function fitToClip(analysis: Analysis, duration: number): Analysis {
 
 /** A basket of serves with a wandering contact height, for the comparison UI. */
 export function sampleBasket(): Analysis[] {
-  return [1.38, 1.19, 1.44, 1.28].map((contactReach) => sampleAnalysis({ contactReach }))
+  // Five serves in the clip, of which the second could not be read — which is
+  // the ordinary shape of a real sweep and the one worth having the demo show.
+  // Each serve carries its own place in the clip: the panel labels its chips
+  // from that rather than from their position in the list, so a basket of
+  // `serves.index: 0` reports would render as several serves all numbered one.
+  const indices = [0, 2, 3, 4]
+  return [1.38, 1.19, 1.44, 1.28].map((contactReach, i) => {
+    const a = sampleAnalysis({ contactReach })
+    a.serves = { count: 5, index: indices[i] }
+    return a
+  })
 }
 
 export function sampleAnalysis(dials: Partial<ServeDials> = {}): Analysis {

@@ -86,7 +86,11 @@ export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
           {c.overallScores.map((s, i) => (
             <span key={i} className="cchip">
               <em className="tnum">{s}</em>
-              <span>#{i + 1}</span>
+              {/* The serve's own number in the clip, not its position in this
+                  list. A sweep drops a serve it could not read and covers only
+                  the last few of a long basket, so numbering by position points
+                  the player at the wrong serve in a clip they can count. */}
+              <span>#{c.serveNumbers[i] ?? i + 1}</span>
             </span>
           ))}
         </div>
