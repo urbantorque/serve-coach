@@ -5,24 +5,24 @@
  */
 const RULES = [
   {
-    title: 'Stand side-on, 4–5 metres away',
+    title: 'Stand side-on, four metres back',
     body:
-      'Level with the baseline, looking across at the player. A side view is the only angle that can see how far in front contact happens.',
+      'Line the phone up with the baseline, looking across at the player. Only a side view sees how far in front contact happens.',
   },
   {
     title: 'Fit the whole body in, feet included',
     body:
-      'Hold the phone upright and leave room above the racket at full stretch. Heights are measured against your own body, so cropped feet blur the numbers.',
+      'Hold the phone upright with room above the racket at full stretch. Every height uses your own body as the ruler.',
   },
   {
     title: 'Start filming before the toss',
     body:
-      'Roll from a second before the hands go down until after you land. Around three to five seconds. One serve per clip.',
+      'Roll from a second before the hands drop until after you land. Three to five seconds, one serve per clip.',
   },
   {
     title: 'Use slow motion if your phone has it',
     body:
-      'The racket goes from behind your back to the ball in about a sixth of a second. More frames through there means sharper swing numbers.',
+      'The racket covers back to ball in a sixth of a second. More frames through there sharpen every swing number.',
   },
 ]
 
@@ -57,8 +57,8 @@ export default function FilmingGuide() {
       </div>
 
       <p className="guide-note">
-        A front or back view still works — you will get every measurement except how far in front
-        of your body contact happens, which only a side view can see.
+        A front or back view still works. You lose one measurement — how far in front of your body
+        contact happens — because only a side view can see it.
       </p>
     </div>
   )

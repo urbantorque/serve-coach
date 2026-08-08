@@ -400,12 +400,11 @@ function drawAngle(
   // A body position needs more room than three digits did, so the type gives
   // way before the card does. The floor keeps it legible on a filmstrip still.
   const cap = Math.max(90 * scale, Math.min(maxWidth * 0.52, 260 * scale))
-  let size = 14 * scale
   const measure = (px: number) => {
     ctx.font = `620 ${px}px ${UI_FONT}`
     return ctx.measureText(value).width
   }
-  while (size > 8.5 * scale && measure(size) + 22 * scale > cap) size -= 0.5 * scale
+  const size = fittedSize(value, cap, scale, measure)
 
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -430,6 +429,38 @@ function drawAngle(
   ctx.font = `500 ${9.5 * scale}px ${UI_FONT}`
   ctx.fillStyle = 'rgba(238,242,246,0.72)'
   ctx.fillText(label.toUpperCase(), lx, ly + 9 * scale)
+}
+
+/**
+ * The largest type size at which the phrase still fits the card, remembered.
+ *
+ * The search is a dozen `measureText` calls, and this runs inside the animation
+ * loop — every frame the playhead sits on a keyframe, at sixty frames a second,
+ * for a string that changes a handful of times in a whole report. The cache is
+ * keyed on everything the answer depends on and capped, so a long session
+ * cannot grow it without bound: it holds a few dozen entries and then recycles.
+ */
+const FIT_CACHE = new Map<string, number>()
+const FIT_CACHE_MAX = 128
+
+function fittedSize(
+  value: string,
+  cap: number,
+  scale: number,
+  measure: (px: number) => number,
+): number {
+  // Rounded into the key so sub-pixel jitter in the canvas size — a device
+  // pixel ratio that is not a whole number — does not miss every single time.
+  const key = `${value}|${Math.round(cap)}|${Math.round(scale * 20)}`
+  const hit = FIT_CACHE.get(key)
+  if (hit !== undefined) return hit
+
+  let size = 14 * scale
+  while (size > 8.5 * scale && measure(size) + 22 * scale > cap) size -= 0.5 * scale
+
+  if (FIT_CACHE.size >= FIT_CACHE_MAX) FIT_CACHE.clear()
+  FIT_CACHE.set(key, size)
+  return size
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {

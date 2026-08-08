@@ -11,10 +11,10 @@ const STEPS: { id: Step; label: string }[] = [
 
 /** Rotating notes, so a slow first run on a phone still feels like progress. */
 const ASIDES = [
-  'Everything runs on your device — nothing is uploaded.',
+  'Everything runs on your device. Nothing is uploaded.',
   'The racket hand’s highest point marks contact.',
-  'Knee bend is measured at your deepest load.',
-  'Hip and shoulder rotation are read in three dimensions.',
+  'Your deepest load sets the knee bend.',
+  'Hips and shoulders read in three dimensions.',
 ]
 
 interface Props {

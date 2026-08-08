@@ -225,7 +225,9 @@ Everything is in `src/lib`:
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
 | `analysis/phases.ts` | finds the six keyframes |
 | `analysis/metrics.ts` | turns landmarks into measurements |
-| `analysis/coaching.ts` | target bands, serve types, every line of coaching copy |
+| `analysis/coaching.ts` | target bands, serve types, every line of coaching copy, one drill per fault |
+| `analysis/anatomy.ts` | says each measurement as a body position instead of a number |
+| `analysis/voice.ts` | the house style as code: strips filler, caps length, lints the copy |
 | `analysis/confidence.ts` | how far to trust each measurement, and why |
 | `analysis/geometry.ts` | angles, smoothing, scoring curve |
 | `analysis/racket.ts` | where the racket is, inferred from the hand |
@@ -236,6 +238,23 @@ Everything is in `src/lib`:
 | `analysis/analyze.ts` | orchestrates the above |
 
 ### Decisions worth knowing about
+
+**The report never shows the number it measured.** Everything spatial is a ratio
+of standing height, because that is what survives a change of camera — and
+"1.38×" is a coordinate multiplier that means nothing to a player. Each
+measurement carries a ladder of body positions instead (`analysis/anatomy.ts`),
+so the card reads "peaks a ball above the racket" and the target underneath it
+is read back through the same ladder. The value is still on the report object
+for fixtures, the consistency sweep and the dev tools; it just never reaches the
+screen.
+
+**The house style is enforced by a test, not a style guide.** Coaching copy rots
+towards the polite, the hedged and the long, a word at a time. `analysis/voice.ts`
+caps every line at two sentences and twenty-five words, strips openers and
+hedges, and lints the whole copy database in `__tests__/copy.test.ts` — a
+pleasantry fails the build. Copy marks its instruction with `**double
+asterisks**`, which is the only thing rendered in bold and is flattened for the
+share card.
 
 **Joint angles come from the 3D world landmarks, not the image.** An angle
 measured in the image plane changes when the camera moves. Shoulder tilt is the
