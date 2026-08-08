@@ -1,5 +1,8 @@
 /* ============================================================================
    Serve Coach — the shell every screen sits in
+
+   The whole page is one editorial column on warm paper. Nothing here draws a
+   line or a fill; the shell's only job is to set the measure and the air.
    ========================================================================= */
 
 .app {
@@ -11,27 +14,37 @@
 /*
  * One column, and a real margin.
  *
- * The report is read one-handed on a court, so the page is a single editorial
- * column with the type flush against a consistent left edge — the hero score,
- * the section labels and the body copy all start on the same line down the
- * screen, which is what lets the eye run the page vertically without hunting.
+ * The report is read one-handed on a court, so the page is a single column with
+ * the type flush against a consistent left edge — the hero score, the section
+ * labels and the body copy all start on the same line down the screen, which is
+ * what lets the eye run the page vertically without hunting.
+ *
+ * 24px is the gutter rather than something more lavish, and that is the one
+ * place on this page where the larger value is the wrong one: at 375px a 48px
+ * gutter leaves 279px, which is barely thirty characters of 17px type. The
+ * generosity this design needs is vertical. Wide screens take the bigger margin
+ * in the media query at the end of guide.css, where there is room for it.
  */
 .shell {
   width: 100%;
   max-width: var(--shell);
   margin: 0 auto;
-  padding: 0 var(--s-4);
+  padding: 0 var(--s-2);
 }
 
 /*
- * The gap between rungs. Deliberately wide: on the report each of these is a
- * different rank of information, and the white space is half of what says so.
+ * The gap between rungs.
+ *
+ * 60px, and it is doing more work than any border in this system. On the report
+ * each section is a different rank of information, and now that the frames are
+ * gone the white space is most of what says so. Anything tighter and the page
+ * starts reading as a dashboard again.
  */
 .screen {
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
-  padding: calc(var(--s-4) + var(--safe-top)) 0 calc(var(--s-6) + var(--safe-bottom));
+  padding: calc(var(--s-5) + var(--safe-top)) 0 calc(var(--s-7) + var(--safe-bottom));
   animation: rise var(--slow) var(--ease-out) both;
 }
 

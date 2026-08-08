@@ -70,24 +70,17 @@ export default function StoragePanel({ count, onImported }: Props) {
 
   return (
     <section className="storage">
-      <h3 className="block-title">Keeping your history</h3>
+      <h3 className="t-overline">Keeping your history</h3>
 
-      {/* A state rule rather than a fill level. The app is not allowed to ask
-          the browser how full the disk is, so the bar reports the one thing it
-          genuinely knows: whether this data has been promised a life. */}
-      <span className="storage-meter" aria-hidden="true">
-        <span
-          className={`storage-meter-fill storage-meter-fill--${
-            persisted === true ? 'kept' : persisted === false ? 'risk' : 'unknown'
-          }`}
-        />
-      </span>
+      {/* The coloured state bar that used to sit here reported nothing the
+          sentence under it did not already say, and it said it louder. One
+          line of plain text is both the honest version and the quiet one. */}
 
       {showIOSNudge && (
         <p className="storage-warn">
-          <Icon name="warn" size={16} />
+          <Icon name="warn" size={15} />
           <span>
-            Safari deletes saved data after a week away. Add Serve Coach to your home screen —
+            Safari clears saved data after a week away. Add Serve Coach to your home screen —
             Share, then <strong>Add to Home Screen</strong>.
           </span>
         </p>

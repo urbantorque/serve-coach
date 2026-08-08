@@ -60,9 +60,12 @@ async function vendorModel() {
  * carries on rather than failing the build.
  */
 const FONTS = [
-  { file: 'archivo-black-400.woff2', query: 'Archivo+Black' },
-  { file: 'work-sans-variable.woff2', query: 'Work+Sans:wght@400..700' },
-  { file: 'space-mono-400.woff2', query: 'Space+Mono' },
+  // Two static cuts rather than one query for both: the css2 API returns a
+  // separate @font-face per weight, and the parser below takes one URL.
+  { file: 'libre-baskerville-400.woff2', query: 'Libre+Baskerville:wght@400' },
+  { file: 'libre-baskerville-700.woff2', query: 'Libre+Baskerville:wght@700' },
+  { file: 'inter-variable.woff2', query: 'Inter:wght@400..600' },
+  { file: 'source-code-pro-400.woff2', query: 'Source+Code+Pro:wght@400' },
 ]
 
 // Google serves woff2 only to a UA it believes can read it; ask as Chrome or
@@ -187,10 +190,10 @@ const mix = (a, b, t) => [
 function drawIcon(size, { maskable = false } = {}) {
   const S = 3 // supersampling factor per axis
   const px = new Uint8Array(size * size * 4)
-  const bg = [10, 10, 10]
-  const ballLight = [204, 255, 0] // optic yellow, straight from the token set
-  const ballDark = [124, 156, 0]
-  const seam = [250, 250, 250]
+  const bg = [28, 25, 23] // warm black, the same ground the video well uses
+  const ballLight = [163, 230, 53] // olive, the one accent
+  const ballDark = [77, 124, 15]
+  const seam = [250, 250, 249]
 
   const cx = size / 2
   const cy = size / 2

@@ -638,14 +638,13 @@ export default function App() {
         {sessions.length === 0 ? (
           <p className="sheet-empty">No serves analysed yet.</p>
         ) : (
-          <ul className="history">
+          <ul className="serve-log">
             {sessions.map((s) => (
               <li key={s.id}>
-                {/* The same row Home draws. A past serve was two different
-                    objects in this app — a bordered box with a small gauge in
-                    the sheet, a hairline row with a display numeral on the
-                    front page — which made the history read as a different
-                    feature rather than the same list somewhere else. */}
+                {/* Literally the same list Home draws — same `serve-log` rules,
+                    same row, same numeral. A past serve was two objects in this
+                    app, which made the history read as a separate feature
+                    rather than the same list seen somewhere else. */}
                 <button
                   className="serve-log-row"
                   onClick={() => {
@@ -724,13 +723,13 @@ export default function App() {
             {practice && <PracticeCard focus={practice} />}
 
             <section className="block">
-              <h3 className="block-title">Overall score by session</h3>
+              <h3 className="t-subhead">Overall score by session</h3>
               <ScoreTrend points={form.points} />
             </section>
 
             {form.areaDeltas.length > 0 && (
               <section className="block">
-                <h3 className="block-title">Change since your last serve</h3>
+                <h3 className="t-subhead">Change since your last serve</h3>
                 <DeltaBars deltas={form.areaDeltas} />
               </section>
             )}
@@ -749,7 +748,7 @@ export default function App() {
                     the report and here. It was "gap" in this heading and
                     "steadier" in the chart's own note — three names for one
                     thing the player is meant to be tracking. */}
-                <h3 className="block-title">How repeatable, over time</h3>
+                <h3 className="t-subhead">How repeatable, over time</h3>
                 <GapTrend points={spread.points} />
                 {spread.recurring && (
                   <p className="sheet-note">

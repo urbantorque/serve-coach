@@ -37,7 +37,7 @@ export default function Analyzing({ progress, fileName, onCancel }: Props) {
     <div className="screen analyzing">
       <div className="analyzing-inner">
         <span className="t-overline analyzing-label">Working</span>
-        <h1>Reading your serve</h1>
+        <h1 className="t-headline">Reading your serve</h1>
         <p className="analyzing-file">{fileName}</p>
 
         <div

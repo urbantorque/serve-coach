@@ -59,18 +59,17 @@ interface Segment {
 
 /**
  * The colour of a run: the old rubric is drawn as background, not as series.
- * Quiet, but not --fg-faint — that grey is 2.42:1 on the page, and a line a
+ * Quiet, but not --fg-faint — that grey is 2.41:1 on the paper, and a line a
  * player is expected to read the shape of is a mark that carries data.
  */
-const strokeOf = (stale: boolean) => (stale ? 'var(--fg-muted)' : 'var(--black)')
+const strokeOf = (stale: boolean) => (stale ? 'var(--fg-muted)' : 'var(--warm-black)')
 
 /**
- * Optic yellow is 1.28:1 on this page's white, so it cannot carry the line — it
- * carries the area under it and the square markers on it, both of which are
- * fills sitting against a black stroke. The series itself is black, which is
- * both the loudest thing available and the only one that survives sunlight.
+ * Olive is the one accent, and here it is a fill: the wash under the current run
+ * and the dot at each reading. The series itself stays warm black, because a
+ * 2.96:1 line is not one you can follow across a court in daylight.
  */
-const MARKER = 'var(--yellow)'
+const MARKER = 'var(--olive)'
 
 /**
  * Half the width of the break label at the `.chart-axis` size, in viewBox
@@ -157,24 +156,23 @@ export function Sparkline({ points }: { points: TrendPoint[] }) {
           {/* Only the current run is filled. The old scores are real but they are
               not this measurement, so they read as the backdrop the new run is
               drawn against rather than as more of the same series. */}
-          {s.area && !s.stale && <path d={s.area} fill={MARKER} opacity="0.32" />}
+          {s.area && !s.stale && <path d={s.area} fill={MARKER} opacity="0.12" />}
           <path
             d={s.line}
             fill="none"
             stroke={strokeOf(s.stale)}
-            strokeWidth="2"
-            strokeLinejoin="miter"
-            strokeLinecap="butt"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
           />
           {/* A lone point between two breaks strokes nothing — `M` with no `L`
               draws no line at any linecap — so the serve would simply vanish
               from a chart that says how many serves are on it. */}
           {s.from === s.to && s.to !== last && (
-            <rect
-              x={g.x(s.from) - 3}
-              y={g.y(points[s.from].overall) - 3}
-              width="6"
-              height="6"
+            <circle
+              cx={g.x(s.from)}
+              cy={g.y(points[s.from].overall)}
+              r="2.5"
               fill={strokeOf(s.stale)}
             />
           )}
@@ -207,14 +205,13 @@ export function Sparkline({ points }: { points: TrendPoint[] }) {
         </text>
       )}
 
-      <rect
-        x={g.x(last) - 4}
-        y={g.y(points[last].overall) - 4}
-        width="8"
-        height="8"
+      <circle
+        cx={g.x(last)}
+        cy={g.y(points[last].overall)}
+        r="3.5"
         fill={MARKER}
-        stroke="var(--black)"
-        strokeWidth="2"
+        stroke="var(--bg)"
+        strokeWidth="1.5"
       />
     </svg>
   )
@@ -264,15 +261,15 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
         onPointerDown={track}
         onPointerLeave={() => setHover(undefined)}
       >
-        {/* The baseline is the axis and is drawn as one: black and heavy. The
-            two above it are guides, so they sit back in the raised surface
-            grey and never compete with the series. */}
+        {/* Every rule here is a hairline. The baseline is the axis so it takes
+            --line; the two above it are guides and sit back in the raised
+            surface grey, where they never compete with the series. */}
         {[0, 50, 100].map((v) => (
           <g key={v}>
             <line
               x1={pad} x2={VB_W - pad} y1={g.y(v)} y2={g.y(v)}
-              stroke={v === 0 ? 'var(--black)' : 'var(--surface-raised)'}
-              strokeWidth={v === 0 ? 2 : 1}
+              stroke={v === 0 ? 'var(--line)' : 'var(--surface-raised)'}
+              strokeWidth="1"
             />
             <text x={0} y={g.y(v) + 3.5} className="chart-tick">{v}</text>
           </g>
@@ -280,14 +277,14 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
 
         {g.segments.map((s) => (
           <g key={s.from}>
-            {s.area && !s.stale && <path d={s.area} fill={MARKER} opacity="0.32" />}
+            {s.area && !s.stale && <path d={s.area} fill={MARKER} opacity="0.12" />}
             <path
               d={s.line}
               fill="none"
               stroke={strokeOf(s.stale)}
-              strokeWidth="2.5"
-              strokeLinejoin="miter"
-              strokeLinecap="butt"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
             />
           </g>
         ))}
@@ -320,25 +317,24 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
         {active && (
           <line
             x1={g.x(hover!)} x2={g.x(hover!)} y1={pad} y2={h - pad}
-            stroke="var(--black)" strokeWidth="1"
+            stroke="var(--line-control)" strokeWidth="1"
           />
         )}
 
-        {/* Square markers, optic yellow on the current run and grey on the run
-            scored the old way — the same two-tone the line already uses, so a
-            reader never has to work out which dots belong to which scale. */}
+        {/* Olive on the current run, raised grey on the run scored the old way —
+            the same two-tone the line already uses, so a reader never has to
+            work out which dots belong to which scale. */}
         {points.map((p, i) => {
-          const r = i === points.length - 1 || i === hover ? 5 : 3.5
+          const r = i === points.length - 1 || i === hover ? 4.5 : 3
           return (
-            <rect
+            <circle
               key={p.id}
-              x={g.x(i) - r}
-              y={g.y(p.overall) - r}
-              width={r * 2}
-              height={r * 2}
+              cx={g.x(i)}
+              cy={g.y(p.overall)}
+              r={r}
               fill={stale(p) ? 'var(--surface-raised)' : MARKER}
-              stroke={strokeOf(stale(p))}
-              strokeWidth="2"
+              stroke={stale(p) ? strokeOf(true) : 'var(--bg)'}
+              strokeWidth="1.5"
             />
           )
         })}

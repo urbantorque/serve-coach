@@ -77,26 +77,32 @@ interface ScoreRingProps {
 }
 
 /**
- * A score, said as a number over a segmented ramp.
+ * A score, said as a number with a rule under it.
  *
- * Was a circular gauge, which spent its whole middle on a numeral it had then
- * shrunk to fit inside itself, and drew the one curve left in a squared system.
- * Flattened out, the number gets the room and the bar says where on the ramp it
- * lands. Kept as one component at every size because a report and a history row
- * must not disagree about what sixty-eight looks like: the small ones simply
- * carry fewer segments, since four blocks read at 42px wide and ten do not.
+ * Was a segmented bar in a heavy frame with a display-sans numeral inside — an
+ * instrument, and the loudest object on a page that is otherwise prose. The
+ * number is now Baskerville in warm black and the meter is a single 2-3px
+ * track: enough to place the score on its ramp at a glance, not enough to
+ * compete with the words that explain it.
+ *
+ * `status` stays in the props — every caller has it and the type is shared —
+ * but the meter no longer paints itself in the rung's colour. The rung is said
+ * in words on the tag beside it, and saying it twice, once in a colour, is how
+ * a diagnosis starts looking like a dashboard.
+ *
+ * Kept as one component at every size because a report and a history row must
+ * not disagree about what sixty-eight looks like. The small ones simply take
+ * the next size down and a thinner rule.
  */
-export function ScoreRing({ score, status, size = 132, label, animate = true }: ScoreRingProps) {
+export function ScoreRing({ score, size = 132, label, animate = true }: ScoreRingProps) {
   const shown = useCountUp(score, animate)
   const pct = Math.max(0, Math.min(100, shown))
 
   // Three stops, and the numeral takes a size off the type scale at each — not
-  // a fraction of `size`, which lands between the scale's rungs and slides
-  // Archivo Black under its 20px floor as the container gets smaller.
+  // a fraction of `size`, which lands between the scale's rungs and drifts as
+  // the container gets smaller.
   const tier = size >= 120 ? 'hero' : size >= 70 ? 'mid' : 'compact'
-  const segments = tier === 'hero' ? 10 : tier === 'mid' ? 6 : 4
-  const barHeight = tier === 'hero' ? 16 : tier === 'mid' ? 14 : 12
-  const per = 100 / segments
+  const barHeight = tier === 'compact' ? 2 : 3
 
   return (
     <div
@@ -112,24 +118,11 @@ export function ScoreRing({ score, status, size = 132, label, animate = true }: 
         .join(' ')}
       style={{ width: size }}
     >
-      <span className={`score-meter-value tnum${tier === 'hero' ? ' t-display' : ''}`}>{shown}</span>
+      <span className="score-meter-value tnum">{shown}</span>
+      {/* Drawn from the counting number rather than from the score, so the two
+          halves of one reading can never sit on screen disagreeing. */}
       <div className="score-meter-bar" style={{ height: barHeight }} aria-hidden="true">
-        {Array.from({ length: segments }, (_, i) => {
-          const fill = Math.max(0, Math.min(1, (pct - i * per) / per))
-          return (
-            <span className="score-meter-seg" key={i}>
-              <span
-                className="score-meter-fill"
-                style={{ background: `var(--${status})`, transform: `scaleX(${fill})` }}
-              />
-              {/* At most one segment is ever part-lit, and only that one needs
-                  the rule marking where the fill stops. */}
-              {fill > 0 && fill < 1 && (
-                <span className="score-meter-edge" style={{ left: `${fill * 100}%` }} />
-              )}
-            </span>
-          )
-        })}
+        <span className="score-meter-fill" style={{ transform: `scaleX(${pct / 100})` }} />
       </div>
       {label && <span className="score-meter-label t-overline">{label}</span>}
     </div>
@@ -158,11 +151,12 @@ interface MetricBarProps {
 /**
  * One measurement against the band it should be inside.
  *
- * The clearest thing in the report: a framed axis, the target zone drawn as a
- * green block, and a hard playhead where the body actually was. The playhead
- * carries a white edge so it stays a separate object when it lands exactly on
- * the band's own border, which is precisely the case a player most needs to
- * read — just inside versus just outside is the whole verdict.
+ * The clearest thing in the report, and quiet with it: a hairline axis, the
+ * target band as a soft olive wash under a single olive edge, and a small warm
+ * black marker where the body actually was. The marker is taller than the band
+ * and carries a ring of paper, so it stays a separate object when it lands
+ * exactly on the band's own border — which is precisely the case a player most
+ * needs to read. Just inside versus just outside is the whole verdict.
  */
 export function MetricBar({ value, ideal, range, status, id }: MetricBarProps) {
   const span = range[1] - range[0] || 1
@@ -185,7 +179,7 @@ export function MetricBar({ value, ideal, range, status, id }: MetricBarProps) {
         <div className="bar-marker" style={{ left: `${pct(value)}%` }} />
       </div>
       {low && high && low !== high && (
-        <p className="bar-ends t-overline">
+        <p className="bar-ends t-caption">
           <span>{low}</span>
           <span>{high}</span>
         </p>
@@ -350,8 +344,8 @@ const PATHS: Record<string, ReactNode> = {
   ),
   film: (
     <>
-      <rect x="3.5" y="5.5" width="17" height="13" />
-      {/* Butt caps here alone: a square cap would push each sprocket line a
+      <rect x="3.5" y="5.5" width="17" height="13" rx="2.5" />
+      {/* Butt caps here alone: a round cap would push each sprocket line half a
           stroke past the frame it is supposed to sit inside. */}
       <path d="M8 5.5v13M16 5.5v13" strokeLinecap="butt" />
     </>
@@ -387,7 +381,7 @@ const PATHS: Record<string, ReactNode> = {
     <>
       <circle cx="12" cy="12" r="8.5" />
       <circle cx="12" cy="12" r="4" />
-      <rect x="11.2" y="11.2" width="1.6" height="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
     </>
   ),
   info: (
@@ -411,13 +405,14 @@ const PATHS: Record<string, ReactNode> = {
 }
 
 /**
- * Line icons cut to the same weight as everything around them.
+ * Line icons cut to the weight of the type they sit beside.
  *
- * 2.4 in a 24 unit box lands on 2px at the default 20px, which is the border
- * width on every control — at 1.7 the icons read as a lighter, older set that
- * had wandered in next to Archivo Black. Caps and joins are square, matching
- * the geometry of the page; the two places that hurt legibility say so where
- * they are drawn rather than dropping the whole set back to round.
+ * 1.7 in a 24 unit box lands near 1.4px at the default 20px — about the stem of
+ * Inter at reading size, so an icon in a sentence reads as part of the sentence.
+ * The previous set was cut at 2.4 to hold its own against a display sans and
+ * 2px borders; both are gone, and at that weight the icons now look stamped on
+ * rather than drawn. Caps and joins are round for the same reason: nothing else
+ * on this page has a corner that sharp.
  */
 export function Icon({ name, size = 20 }: { name: keyof typeof PATHS | string; size?: number }) {
   return (
@@ -428,9 +423,9 @@ export function Icon({ name, size = 20 }: { name: keyof typeof PATHS | string; s
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.4"
-      strokeLinecap="square"
-      strokeLinejoin="miter"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
     >
       {PATHS[name] ?? null}

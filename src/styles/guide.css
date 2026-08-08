@@ -1,9 +1,11 @@
 /* ============================================================================
    Filming guide
 
-   Four numbered instructions, read once, standing on a court. The numbers are
-   solid black squares because they are the only thing anyone scans for when
-   they come back to check step three.
+   Four numbered instructions, read once, standing on a court. The numbers used
+   to be solid black squares on the argument that they are the only thing anyone
+   scans for coming back to check step three — but a serif numeral in the margin
+   is just as findable and does not put four black blocks down the side of a
+   page whose whole character is that it has none.
    ========================================================================= */
 
 .guide {
@@ -20,77 +22,90 @@
 
 .guide-list li {
   display: flex;
-  gap: var(--s-3);
+  gap: var(--s-2);
 }
 
+/* A numeral in the margin. Libre Baskerville is legal here because it is a
+   number that matters, not a UI label. */
 .guide-num {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  background: var(--black);
-  color: var(--white);
-  font-family: var(--font-display);
-  font-size: var(--t-small);
-  line-height: 1;
+  width: 1.6em;
   flex: none;
+  font-family: var(--font-display);
+  font-weight: var(--wt-serif-bold);
+  font-size: var(--t-subhead);
+  line-height: var(--lh-subhead);
+  color: var(--olive-ink);
 }
 
 .guide-list h3 {
-  margin-bottom: var(--s-1);
-  font-size: var(--t-body);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-title);
-  line-height: var(--lh-tight);
+  margin-bottom: var(--s-hair);
+  font-family: var(--font-display);
+  font-weight: var(--wt-serif);
+  font-size: var(--t-subhead);
+  line-height: var(--lh-subhead);
+  letter-spacing: var(--tr-subhead);
+  text-wrap: balance;
 }
 
 .guide-list p {
   max-width: var(--measure);
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
 }
 
+/* An elevated card: raised surface and a --line edge, never a shadow. */
 .guide-avoid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
   padding: var(--s-3);
   background: var(--surface);
-  border: var(--stroke) solid var(--line-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
 }
 
 .guide-avoid h3 {
-  margin-bottom: var(--s-2);
-  font-size: var(--t-overline);
-  font-weight: 700;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
-  line-height: 1;
   color: var(--fg-muted);
 }
 
+.guide-avoid ul {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The list-item shape: a hairline between entries and nothing else. On the
+   raised surface that hairline has to be --line — --hairline against --surface
+   is 1.13:1, which is a rule nobody sees. */
 .guide-avoid li {
   position: relative;
-  padding-left: var(--s-4);
+  padding: var(--s-1) 0 var(--s-1) var(--s-2);
   max-width: var(--measure);
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   line-height: var(--lh-copy);
   color: var(--fg);
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-avoid li:last-child {
+  border-bottom: 0;
 }
 
 .guide-avoid li::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 0.6em;
-  width: 6px;
-  height: 6px;
+  top: calc(var(--s-1) + 0.85em);
+  width: 8px;
+  height: 1px;
   /* A mark that has to be seen bare on the page, so the ink token, not the fill. */
   background: var(--work-ink);
 }
 
 .guide-note {
   max-width: var(--measure);
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -106,9 +121,17 @@
    ========================================================================= */
 
 @media (min-width: 640px) {
+  /* The gutter the phone could not afford. At this width the column still
+     clears 500px of measure with 48px either side. */
+  .shell {
+    padding: 0 var(--s-4);
+  }
+
   .screen {
     gap: var(--s-6);
-    padding-top: var(--s-6);
+    /* Still adding the inset: a bare --s-6 here dropped the safe area on a
+       landscape notch, which is exactly the width this query is for. */
+    padding-top: calc(var(--s-6) + var(--safe-top));
   }
 
   .sheet-backdrop {

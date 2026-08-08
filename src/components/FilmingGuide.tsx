@@ -48,7 +48,7 @@ export default function FilmingGuide() {
       </ol>
 
       <div className="guide-avoid">
-        <h3>Worth avoiding</h3>
+        <h3 className="t-overline">Worth avoiding</h3>
         <ul>
           {AVOID.map((a) => (
             <li key={a}>{a}</li>

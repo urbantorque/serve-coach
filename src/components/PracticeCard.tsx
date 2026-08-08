@@ -30,11 +30,10 @@ function Runline({ scores }: { scores: number[] }) {
       role="img"
       aria-label={`Score across the last ${n} serves: ${scores.join(', ')}`}
     >
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="miter" strokeLinecap="butt" />
-      {/* The latest serve, marked square like every other measurement on the
-          page. Butt caps above so the line stops at the point rather than
-          overshooting it by half a stroke. */}
-      <rect x={x(n - 1) - 3} y={y(scores[n - 1]) - 3} width="6" height="6" fill="currentColor" />
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" />
+      {/* The latest serve. A drawn dot rather than a stamped square, at the
+          weight of the line it ends. */}
+      <circle cx={x(n - 1)} cy={y(scores[n - 1])} r="2.75" fill="currentColor" />
     </svg>
   )
 }

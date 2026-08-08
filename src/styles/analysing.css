@@ -5,8 +5,11 @@
    or not the work was moving: a ripple, a bobbing ball, a shimmer running along
    the bar. On a mid-range phone the pose pass takes tens of seconds, and a
    decorative animation over a genuinely slow job reads as reassurance the app
-   cannot back up. What is left is a determinate bar, the stage it is on, and
+   cannot back up. What is left is a determinate rule, the stage it is on, and
    the step list — all three of which change only when something has happened.
+
+   No spinner, no pulse, no shimmer. The only thing that moves is the rule, and
+   it moves because the work moved.
    ========================================================================= */
 
 .analyzing {
@@ -27,17 +30,9 @@
   color: var(--fg-muted);
 }
 
-.analyzing h1 {
-  font-family: var(--font-display);
-  font-size: var(--t-headline);
-  font-weight: 400;
-  line-height: var(--lh-tight);
-  letter-spacing: var(--tr-display);
-}
-
 .analyzing-file {
   max-width: 100%;
-  font-size: var(--t-small);
+  font-size: var(--t-caption);
   color: var(--fg-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -45,17 +40,21 @@
 }
 
 /*
- * Boxed, because the fill is optic yellow on a near-white track and those two
- * are a few percent apart in luminance. The black rule is what makes the bar a
- * bar; the yellow inside it is what makes it this app's bar.
+ * A rule, not a trough.
+ *
+ * The last version boxed this in a 1px frame because the fill was optic yellow
+ * a few percent off the track. Olive on --surface-raised has enough separation
+ * to stand on its own, so the frame goes and what is left is a hairline that
+ * fills — which is the right amount of ceremony for a progress bar on a page
+ * that is otherwise asking the player to wait quietly.
  */
 .progress {
   width: 100%;
   max-width: var(--measure);
-  height: 16px;
+  height: 3px;
   margin-top: var(--s-2);
   background: var(--surface-raised);
-  border: var(--stroke) solid var(--black);
+  border-radius: var(--r-pill);
   overflow: hidden;
 }
 
@@ -65,17 +64,19 @@
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--yellow);
+  background: var(--olive);
   transform-origin: left center;
   transition: transform var(--base) var(--ease-out);
 }
 
+/* The stage, at reading size. This is the one line on the screen that answers
+   "what is it doing right now", and it was set two steps down the scale. */
 .analyzing-detail {
-  min-height: 1.4em;
+  min-height: calc(var(--t-body) * var(--lh-copy));
   max-width: var(--measure);
-  font-size: var(--t-small);
-  line-height: var(--lh-snug);
-  color: var(--fg-muted);
+  font-size: var(--t-body);
+  line-height: var(--lh-copy);
+  color: var(--fg);
 }
 
 /* ---------------------------------------------------------------- the steps */
@@ -91,7 +92,7 @@
 .step {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2);
   font-size: var(--t-small);
   /* A step not yet reached is still a step the player is reading. --fg-faint is
      2.42:1 and belongs to disabled text, not to the list that says what is
@@ -102,7 +103,7 @@
 
 .step.is-active {
   color: var(--fg);
-  font-weight: var(--wt-title);
+  font-weight: var(--wt-key);
 }
 
 .step.is-done {
@@ -115,7 +116,8 @@
   place-items: center;
   width: 20px;
   height: 20px;
-  border: var(--stroke) solid var(--line-control);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
   color: var(--fg);
   flex: none;
 }
@@ -127,39 +129,43 @@
   position: absolute;
   top: 100%;
   left: 50%;
-  width: var(--stroke);
+  width: 1px;
   height: var(--s-2);
-  background: var(--line-control);
+  background: var(--line);
   transform: translateX(-50%);
 }
 
 .step.is-done .step-mark {
-  border-color: var(--black);
-  background: var(--black);
-  color: var(--white);
+  border-color: var(--olive);
+  background: var(--olive);
+  color: var(--bg);
 }
 
 .step.is-done:not(:last-child) .step-mark::after {
-  background: var(--black);
+  background: var(--olive);
 }
 
+/* Olive as the ring rather than the fill: the active mark holds a dot that has
+   to be read against it, and an olive dot on an olive disc is nothing. */
 .step.is-active .step-mark {
-  border-color: var(--black);
-  background: var(--yellow);
+  border-color: var(--olive);
+  background: var(--olive-wash);
 }
 
 .step-dot {
   width: 6px;
   height: 6px;
-  background: var(--fg-muted);
+  border-radius: var(--r-pill);
+  background: var(--fg-faint);
 }
 
 .step.is-active .step-dot {
-  background: var(--yellow-ink);
+  background: var(--olive-ink);
 }
 
 .analyzing-aside {
   max-width: var(--measure);
+  margin-top: var(--s-2);
   font-size: var(--t-small);
   line-height: var(--lh-copy);
   color: var(--fg-muted);

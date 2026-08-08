@@ -1,48 +1,72 @@
 /* ============================================================================
    Blocks and lists
+
+   The generic shapes: a titled section, and a list of rows. Neither is a card.
+   Structure on this page comes from rules and from air, and a list of things
+   that are already separated by hairlines does not need a box around each one.
    ========================================================================= */
 
 .block {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--s-2);
 }
 
-/* A hairline under the label, so a section starts with a line across the page
-   rather than a floating word. Structure comes from rules here, not from boxes
-   around everything. */
+/* A hairline under the label, so a section opens with a line across the page
+   rather than a floating word. */
 .block-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--s-3);
-  padding-bottom: var(--s-2);
-  border-bottom: var(--stroke-hair) solid var(--line);
+  gap: var(--s-2);
+  padding-bottom: var(--s-1);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .block-title {
+  font-family: var(--font);
   font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-overline);
   text-transform: uppercase;
-  line-height: 1;
+  line-height: 1.4;
   color: var(--fg-muted);
 }
 
 .block-aside {
   font-size: var(--t-caption);
-  font-weight: var(--wt-label);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tr-caption);
   color: var(--fg-muted);
 }
 
-.history {
+/* --- lists -----------------------------------------------------------------
+   The shape every list in this app takes: a row with padding, a hairline
+   underneath, a wash on hover, and no card. Nothing here is boxed.
+
+   The one list that used to live in this file — `.history`, the serves in the
+   history sheet — is gone, because that sheet and the front page now draw the
+   same `.serve-log` rows from `home.css` rather than two different objects. If
+   a second generic list appears, this is the shape it takes. */
+
+.list {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
 }
 
-.history li {
+.list > li {
   display: flex;
   align-items: center;
   gap: var(--s-1);
+  padding: var(--s-1) 0;
+  border-bottom: 1px solid var(--hairline);
+  transition: background var(--fast) var(--ease);
+}
+
+.list > li:last-child {
+  border-bottom: none;
+}
+
+.list > li:hover {
+  background: var(--surface);
 }

@@ -193,7 +193,7 @@ export default function Report({
               a page that already has several. */}
           <span className="t-overline injury-label">Injury risk</span>
           <div className="injury-text">
-            <strong>{n.title}</strong>
+            <strong className="t-headline injury-title">{n.title}</strong>
             <p>
               <Cue text={n.body} />
             </p>
@@ -208,7 +208,7 @@ export default function Report({
       <button className="icon-btn" onClick={onBack} aria-label="Back">
         <Icon name="back" />
       </button>
-      <span className="topbar-title">
+      <span className="t-overline topbar-title">
         {new Date(analysis.createdAt).toLocaleDateString(undefined, {
           weekday: 'short',
           day: 'numeric',
@@ -230,7 +230,12 @@ export default function Report({
           {/* No alarm glyph. The player has not broken anything — the app is
               declining to invent a score, which is a statement, not a fault. */}
           <span className="t-overline refusal-label">No score for this clip</span>
-          <h1>{refusal.title}</h1>
+          {/* Headline, not display. These titles run to eight words — "I could
+              not work out where the camera was" — and at 40px in a phone column
+              that is five lines of very large serif, which reads as a
+              pronouncement rather than an explanation. Same scale as the injury
+              title and the focus instruction, which keeps the ladder honest. */}
+          <h1 className="t-headline">{refusal.title}</h1>
           <ul className="refusal-hints">
             {refusal.hints.map((h) => (
               <li key={h}>{h}</li>
@@ -274,24 +279,23 @@ export default function Report({
         {/*
          * The score, flush left and as large as the type scale goes.
          *
-         * The tier rides on the meter rather than on the digits: three of the
-         * four ramp colours cannot hold their contrast as type on this
-         * background, so a coloured score would have been hardest to read
-         * exactly where it matters most.
+         * No meter under it any more. The bar was there because the old fill
+         * could not hold its own contrast on the track, so it needed a frame —
+         * and a framed gauge under the number restated in a second visual
+         * language the one thing the number already says. What carries the tier
+         * now is a short rule: enough to colour-code the band, far too small to
+         * compete with the digits. The digits stay warm black because three of
+         * the four ramp colours cannot hold 4.5:1 on this paper, and a score you
+         * have to squint at is not a celebration.
          */}
         <span className="t-overline hero-label">Serve score</span>
         <span className="hero-score">
-          <span className="t-display tnum">{analysis.overall}</span>
+          <span className="t-hero tnum">{analysis.overall}</span>
           <span className="hero-out-of">/100</span>
         </span>
-        <span className="hero-meter" aria-hidden="true">
-          <span
-            className={`hero-meter-fill hero-meter-fill--${analysis.overallStatus}`}
-            style={{ transform: `scaleX(${Math.max(0, Math.min(100, analysis.overall)) / 100})` }}
-          />
-        </span>
-        <h1>{verdict.title}</h1>
-        <p>{verdict.sub}</p>
+        <span className={`hero-mark hero-mark--${analysis.overallStatus}`} aria-hidden="true" />
+        <h1 className="t-headline">{verdict.title}</h1>
+        <p className="t-lede">{verdict.sub}</p>
         {/* The break is said out loud rather than left as an absence. Every
             comparison on this page goes at once when the rubric changes — this
             chip and the per-area ones on the cards below — and a player who saw
@@ -337,7 +341,7 @@ export default function Report({
 
       <section className="focus">
         <span className="t-overline focus-kicker">Work on this next</span>
-        <h2>{analysis.focus.title}</h2>
+        <h2 className="t-headline">{analysis.focus.title}</h2>
         <p>
           <Cue text={analysis.focus.why} />
         </p>
@@ -354,7 +358,7 @@ export default function Report({
 
         <div className="focus-drill">
           <span className="t-overline focus-drill-kicker">The drill</span>
-          <h3>{analysis.focus.drill.name}</h3>
+          <h3 className="t-subhead">{analysis.focus.drill.name}</h3>
           <p>{analysis.focus.drill.how}</p>
           <span className="focus-reps">{analysis.focus.drill.reps}</span>
         </div>

@@ -5,17 +5,18 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#fafafa" />
+    <meta name="theme-color" content="#fafaf9" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <!--
       Only the display face is preloaded. It sets the hero score, which is the
       first thing on the page and the one place a font swap is a visible jolt;
-      the body face swaps inside a paragraph where nobody notices.
+      the body face swaps inside a paragraph where nobody notices. Georgia is
+      the fallback, so the jolt is serif-to-serif even when it happens.
     -->
     <link
       rel="preload"
-      href="/fonts/archivo-black-400.woff2"
+      href="/fonts/libre-baskerville-700.woff2"
       as="font"
       type="font/woff2"
       crossorigin

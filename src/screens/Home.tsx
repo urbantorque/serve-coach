@@ -99,7 +99,7 @@ export default function Home({
   return (
     <div className="screen home">
       <header className="home-top">
-        <span className="brand">Serve Coach</span>
+        <span className="brand t-overline">Serve Coach</span>
         {/* Shown even with nothing saved. Restoring a backup onto a new phone is
             exactly the moment the history is empty, and hiding the only way in
             until there is something to see locks that player out of the one
@@ -113,17 +113,14 @@ export default function Home({
         </button>
       </header>
 
-      {/* The cover. One headline set hard against the left margin, one line of
-          what the thing does, then the only button that matters. Everything
-          below this is for somebody who has already used it once. */}
+      {/* The opening page of a book, not a cover. A serif line in sentence case,
+          one lede beneath it, and then a lot of paper before the only button
+          that matters. Everything below is for somebody who has been here. */}
       <section className="home-cover">
-        <h1 className="home-headline t-display">
-          Fix your
-          <br />
-          serve.
-        </h1>
+        <h1 className="home-headline t-display">One serve, one fix.</h1>
         <p className="home-say t-lede">
-          Film one serve. The app measures it frame by frame and names the one thing to fix.
+          Film a single serve. This reads it frame by frame and names the one thing worth
+          changing.
         </p>
       </section>
 
@@ -184,12 +181,12 @@ export default function Home({
         )}
       </div>
 
-      {/* The most persuasive sentence on the page, and it used to be the
-          smallest. Stated plainly and given the weight it earns, rather than
-          shrunk into a badge at the bottom. */}
+      {/* The most persuasive sentence on the page. It gets its presence from a
+          hairline, reading size and a lot of air around it — not from weight,
+          not from a badge, and not from a padlock. */}
       <section className="home-promise">
         <p className="t-lede">
-          Your video stays on this device. Nothing is uploaded, and the app works with no signal
+          Your video is read here on your phone and never uploaded. The app works with no signal
           at all.
         </p>
         <span className="home-promise-state">
@@ -203,11 +200,8 @@ export default function Home({
             {/* Not "Your form" — the sheet behind the Details link is called
                 that and shows the latest serve, not this rolling average. Two
                 panels, two numbers, one name was the confusion. */}
-            <span className="block-title">Your recent average</span>
-            <span className="progress-jump">
-              Details
-              <Icon name="chevron" size={14} />
-            </span>
+            <span className="t-overline">Your recent average</span>
+            <span className="progress-jump">Details</span>
           </div>
           <div className="progress-figures">
             <span className="progress-hero tnum">{progress.recentAverage}</span>
@@ -257,8 +251,8 @@ export default function Home({
       {recent.length > 0 && (
         <section className="block">
           <div className="block-head">
-            <h2 className="block-title">Recent serves</h2>
-            {progress && <span className="block-aside tnum">best {progress.best}</span>}
+            <h2 className="t-overline">Recent serves</h2>
+            {progress && <span className="t-caption tnum">best {progress.best}</span>}
           </div>
           <ul className="serve-log">
             {recent.map((s) => (

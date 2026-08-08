@@ -29,27 +29,32 @@ const PALETTE = {
    * the leader line — and each is wide enough to leave ~1.6px of dark showing
    * on both sides of the colour.
    */
-  under: 'rgba(10, 10, 10, 0.72)',
+  under: 'rgba(28, 25, 23, 0.72)',
 
   /** Torso and legs: tracked, but not what any of the six positions is judged on. */
-  neutral: 'rgba(250, 250, 250, 0.82)',
+  neutral: 'rgba(250, 250, 249, 0.82)',
 
   /** Head and tossing arm — the same body, at full strength so the limbs lead. */
-  limb: '#fafafa',
+  limb: '#fafaf9',
 
   /**
-   * Optic yellow, and the only yellow in the overlay.
+   * The app's one accent, in the one place it is allowed to be bright.
    *
    * It marks the racket arm and its callout, and nothing else, so that "the
-   * yellow one" is always the answer to "which arm am I meant to be watching".
+   * green one" is always the answer to "which arm am I meant to be watching".
+   * This is `--olive-bright`, which tokens.css permits only on the dark well —
+   * and footage is the darkest ground in the app.
    */
-  active: '#ccff00',
+  active: '#a3e635',
 
   /**
-   * Hardcourt blue is the coaching voice everywhere else in the app, so here it
-   * is the reference pose: the shape the targets describe. Never the player.
+   * The reference pose: the shape the targets describe. Never the player.
+   *
+   * Warm grey, because there is no blue left in this system and because a
+   * reference should sit behind the body rather than compete with it. Dashed
+   * and thinner than the player's own bones does the rest of that work.
    */
-  reference: 'rgba(37, 99, 235, 0.78)',
+  reference: '#a8a29e',
 
   /**
    * Injury risk, and nothing else — not a bad toss, not a low score.
@@ -58,31 +63,35 @@ const PALETTE = {
    * already spoken for when a joint does have to be flagged, and so nobody
    * reaches for red to mean "worst rung of the ramp".
    */
-  risk: '#ef4444',
+  risk: '#dc2626',
 
   /**
-   * The ball marker: white, not yellow.
+   * The ball marker: warm white, not the accent.
    *
-   * A yellow marker on a yellow tennis ball is an invisible marker, which is
-   * the one thing a tracking overlay cannot be. White with a hard dark ring
+   * A green marker on a yellow-green tennis ball is an invisible marker, which
+   * is the one thing a tracking overlay cannot be. White with a dark ring
    * separates from the ball, the sky and the court all at once.
    */
-  ball: '#fafafa',
+  ball: '#fafaf9',
 
-  /** Flight path, oldest → newest: muted grey warming to the marker's white. */
-  ballOld: [163, 163, 163] as const,
-  ballNew: [250, 250, 250] as const,
+  /** Flight path, oldest → newest: warm grey warming to the marker's white. */
+  ballOld: [168, 162, 158] as const,
+  ballNew: [250, 250, 249] as const,
 
-  /** Any text on the picture sits on this. Solid, square, opaque — never bare video. */
-  plate: '#0a0a0a',
-  plateLabel: 'rgba(250, 250, 250, 0.78)',
+  /** Any text on the picture sits on this. Opaque warm black — never bare video. */
+  plate: '#1c1917',
+  plateLabel: 'rgba(250, 250, 249, 0.78)',
 } as const
+
+/** The trail's two passes, pre-split so the alpha can be spliced in per bucket. */
+const TRAIL_UNDER_RGB = '28, 25, 23'
+const TRAIL_ACTIVE_RGB = '163, 230, 53'
 
 /* The token stacks, spelled out for canvas. Same families and same fallbacks as
    tokens.css, so a callout burned into a keyframe still matches the page it was
    captured from — and still reads if the vendored fonts were never fetched. */
-const DISPLAY_FONT = "'Archivo Black', Impact, 'Haettenschweiler', 'Arial Black', sans-serif"
-const MONO_FONT = "'Space Mono', ui-monospace, 'Cascadia Mono', 'Courier New', Consolas, monospace"
+const DISPLAY_FONT = "'Libre Baskerville', Georgia, 'Times New Roman', serif"
+const MONO_FONT = "'Source Code Pro', ui-monospace, 'Fira Code', Consolas, monospace"
 
 const BONES: [number, number][] = [
   [LM.leftShoulder, LM.rightShoulder],
@@ -287,7 +296,9 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
         if (hi <= lo) continue
         const alpha = 0.08 + (0.5 * (k + 1)) / steps
         ctx.strokeStyle =
-          pass === 0 ? `rgba(10, 10, 10, ${alpha})` : `rgba(204, 255, 0, ${alpha})`
+          pass === 0
+            ? `rgba(${TRAIL_UNDER_RGB}, ${alpha})`
+            : `rgba(${TRAIL_ACTIVE_RGB}, ${alpha})`
         ctx.beginPath()
         const first = pt(frames[lo])
         ctx.moveTo(first.x, first.y)
@@ -339,7 +350,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
     4,
   )
 
-  // The racket arm last and in yellow: it is drawn over the tossing arm on
+  // The racket arm last and in the accent: it is drawn over the tossing arm on
   // purpose, because when the two cross it is the hitting arm you are watching.
   chain(
     [
@@ -370,7 +381,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       const throatY = grip.y + dy * 0.62
 
       // Shaft and head are each built once and stroked twice — dark and wide,
-      // then yellow — so the underlay costs a stroke rather than a second path.
+      // then the accent — so the underlay costs a stroke, not a second path.
       ctx.lineCap = 'round'
       ctx.beginPath()
       ctx.moveTo(grip.x, grip.y)
@@ -399,9 +410,9 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
     }
   }
 
-  // The ball. Not the racket arm's yellow, because the whole point is that it is
-  // a separate thing being tracked separately — and because a yellow marker on a
-  // tennis ball is no marker at all. See PALETTE.ball.
+  // The ball. Not the racket arm's accent, because the whole point is that it is
+  // a separate thing being tracked separately — and because a yellow-green marker
+  // on a tennis ball is no marker at all. See PALETTE.ball.
   if (o.ball) {
     const toPoint = (p: { x: number; y: number }) => ({ x: ox + p.x * dw, y: oy + p.y * dh })
     // The path is already the fitted arc, evaluated at a fine, even step —
@@ -525,14 +536,46 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
 type Pt = { x: number; y: number }
 
 /**
+ * A rounded rectangle as the context's *current* path, ready to be filled and
+ * then stroked.
+ *
+ * Written out of `arcTo` rather than calling `ctx.roundRect`, which is recent
+ * enough that a phone two iOS versions behind would throw mid-frame and take
+ * the whole overlay with it — and the overlay is the app. It builds into the
+ * current path instead of returning a `Path2D` so that nothing is allocated on
+ * a frame: the caller fills and strokes the one path it built.
+ */
+function roundRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+): void {
+  const rad = Math.max(0, Math.min(r, w / 2, h / 2))
+  ctx.beginPath()
+  ctx.moveTo(x + rad, y)
+  ctx.lineTo(x + w - rad, y)
+  ctx.arcTo(x + w, y, x + w, y + rad, rad)
+  ctx.lineTo(x + w, y + h - rad)
+  ctx.arcTo(x + w, y + h, x + w - rad, y + h, rad)
+  ctx.lineTo(x + rad, y + h)
+  ctx.arcTo(x, y + h, x, y + h - rad, rad)
+  ctx.lineTo(x, y + rad)
+  ctx.arcTo(x, y, x + rad, y, rad)
+  ctx.closePath()
+}
+
+/**
  * An arc at the joint, a hairline out to a plate, and the position in words.
  *
  * The plate is anchored rather than floating: the leader line runs from the arc
  * to its edge, so on a frame with four things happening at once it is never
  * ambiguous which joint is being described. The phrase sets the plate's width, so
  * the type shrinks — down to a floor — rather than the plate growing past the
- * edge of the picture on a phone. It is opaque and square: type set straight
- * onto footage is legible right up until the frame it is not.
+ * edge of the picture on a phone. It is opaque and soft-cornered: type set
+ * straight onto footage is legible right up until the frame it is not.
  */
 function drawAngle(
   ctx: CanvasRenderingContext2D,
@@ -598,14 +641,19 @@ function drawAngle(
   ctx.lineWidth = Math.max(0.6, 1 * scale)
   ctx.stroke()
 
-  // Solid, square, and edged in yellow — an opaque black plate on dark footage
-  // has no edge of its own, and the edge is what makes it read as a label
-  // rather than as a hole punched in the picture.
+  // Opaque, soft-cornered, and edged in the accent — a warm-black plate on dark
+  // footage has no edge of its own, and the edge is what makes it read as a
+  // label rather than as a hole punched in the picture.
+  //
+  // One path, filled and then stroked. Building it twice would double the only
+  // per-frame path work the callout does, and a Path2D would allocate on every
+  // frame the playhead is parked on a keyframe.
+  roundRectPath(ctx, lx - w / 2, ly - h / 2, w, h, Math.min(8 * scale, h / 2))
   ctx.fillStyle = PALETTE.plate
-  ctx.fillRect(lx - w / 2, ly - h / 2, w, h)
+  ctx.fill()
   ctx.strokeStyle = PALETTE.active
   ctx.lineWidth = Math.max(1.5, 2 * scale)
-  ctx.strokeRect(lx - w / 2, ly - h / 2, w, h)
+  ctx.stroke()
 
   ctx.font = `400 ${size}px ${DISPLAY_FONT}`
   ctx.fillStyle = PALETTE.active

@@ -121,7 +121,9 @@ export default function CompareView({ current, others }: Props) {
   return (
     <div className="compare">
       <label className="compare-pick">
-        <span>Compare against</span>
+        {/* A field label, not a sentence — the same overline role the pairs of
+            stills below it take, so every label on this sheet is one thing. */}
+        <span className="t-overline">Compare against</span>
         <select value={against.id} onChange={(e) => setAgainstId(e.target.value)}>
           {candidates.map((s, i) => (
             <option key={s.id} value={s.id}>

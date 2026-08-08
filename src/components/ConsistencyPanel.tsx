@@ -61,9 +61,11 @@ interface Props {
 export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
   return (
     /*
-     * Rung four. The tier rides on the panel's top rule rather than on a ring:
-     * the report already spends its one big number on the serve score, and a
-     * second gauge of the same shape halfway down the page competed with it.
+     * Rung four. The tier rides on the ink colour of the score rather than on a
+     * ring or a coloured rule: the report already spends its one big number on
+     * the serve score, and a second gauge of the same shape halfway down the
+     * page competed with it. A card of context with a heavier edge than the one
+     * instruction on the page is the ladder upside down.
      */
     <section className={`consistency consistency--${c.status}`}>
       <div className="consistency-head">
@@ -72,7 +74,7 @@ export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
           <span className="tnum">{c.score}</span>
           <span className="consistency-out-of">/100</span>
         </span>
-        <h2>Across {c.serves} serves</h2>
+        <h2 className="t-subhead">Across {c.serves} serves</h2>
         <p>{consistencyHeadline(c)}</p>
       </div>
 

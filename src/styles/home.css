@@ -1,9 +1,9 @@
 /* ============================================================================
-   Home — the cover
+   Home — the opening page of a quiet book
 
-   The front door of a sports app, not a settings screen. A headline set hard
-   against the left margin, one sentence of what it does, one black bar to tap.
-   Everything after that is a contents page: rules, not cards.
+   Not a cover, not a landing page. A serif headline in sentence case, one line
+   of what the thing does, a great deal of paper, and one filled stone button.
+   Everything below it is a contents page set on hairlines: rules, never boxes.
 
    Type roles come from the global helpers in tokens.css wherever one fits;
    this file only adds what a helper cannot say.
@@ -13,38 +13,37 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: var(--s-2);
-  border-bottom: var(--stroke-hair) solid var(--line-subtle);
+  gap: var(--s-2);
 }
 
+/* The masthead, and it stays a masthead: small, spaced, and quieter than the
+   headline it sits above. Inter — the display face is for headings and for
+   numbers, never for a label. */
 .brand {
-  font-size: var(--t-overline);
-  font-weight: 700;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
-  color: var(--fg);
+  color: var(--fg-muted);
 }
 
-/* --- the cover ------------------------------------------------------------ */
+/* --- the opening page ----------------------------------------------------- */
 
 .home-cover {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--s-2);
+  padding-top: var(--s-3);
 }
 
-/* Size and leading come from the .t-display helper on the element. Only the
-   optical trim lives here: Archivo Black carries enough side bearing at
-   display size that a literal 0 reads as an indent. */
+/* Size and leading come from `.t-display`. Only the optical trim lives here:
+   Libre Baskerville carries enough side bearing at 40px that a literal zero
+   reads as an indent against the lede underneath it. */
 .home-headline {
-  margin-left: -0.045em;
-  text-transform: uppercase;
+  margin-left: -0.03em;
+  max-width: 14ch;
   color: var(--fg);
+  text-wrap: balance;
 }
 
 .home-say {
   max-width: var(--measure);
-  font-weight: var(--wt-label);
   color: var(--fg-muted);
   text-wrap: pretty;
 }
@@ -54,47 +53,86 @@
 .home-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--s-1);
 }
 
-/* Deliberately taller and louder than anything else on the page. If a second
-   button is showing, `--alt` makes sure it never reads as an equal choice. */
+/*
+ * A filled stone button, not a black slab.
+ *
+ * The last skin made this 64px of uppercase black and it read as a shout. At
+ * 48px with sixty pixels of paper above and below it there is still exactly one
+ * obvious thing to tap, and the restraint is what makes it look expensive.
+ */
 .home-cta {
   width: 100%;
-  min-height: var(--s-7);
-  border-radius: 0;
-  font-size: var(--t-body);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  min-height: 48px;
+  padding: var(--s-1) var(--s-2);
+  border: none;
+  border-radius: var(--r);
+  background: var(--fg-muted);
+  color: var(--bg);
+  font-family: var(--font);
+  font-size: var(--t-small);
+  font-weight: var(--wt-key);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
+.home-cta:hover:not(:disabled),
+.home-cta:active:not(:disabled) {
+  background: var(--warm-black);
+  color: var(--bg);
+}
+
+/*
+ * The second way in, on a phone: film it now instead of picking one.
+ *
+ * A ghost, and not full width. Outlined and stretched it was a second slab of
+ * the same size directly under the first, and the page stopped having one
+ * obvious thing to tap — which is the only question this screen has to answer.
+ */
 .home-cta--alt {
-  min-height: var(--s-6);
-  font-size: var(--t-small);
+  align-self: flex-start;
+  width: auto;
+  min-height: 44px;
+  padding: var(--s-tight) var(--s-1);
+  margin-left: calc(var(--s-1) * -1);
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--fg-muted);
+}
+
+.home-cta--alt:hover:not(:disabled),
+.home-cta--alt:active:not(:disabled) {
+  background: var(--surface);
+  color: var(--fg);
 }
 
 /* Dragging a file is a desktop gesture, so the target only announces itself
-   once something is actually being dragged over the page. */
+   once something is actually being dragged over the page. Drawn as an outline
+   rather than a border: a border would take a pixel out of the column and
+   knock the button a pixel off the margin every other element is set on. */
 .dropzone {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-  border: var(--stroke) dashed transparent;
-  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+  padding: var(--s-1);
+  margin: calc(var(--s-1) * -1);
+  border-radius: var(--r-lg);
+  outline: 1px dashed transparent;
+  transition: outline-color var(--base) var(--ease), background var(--base) var(--ease);
 }
 
 .dropzone.is-dragging {
-  border-color: var(--black);
-  background: var(--yellow);
+  outline-color: var(--olive);
+  background: var(--olive-wash);
 }
 
 .dropzone-hint {
   display: flex;
   align-items: center;
-  gap: var(--s-1);
-  font-size: var(--t-caption);
-  font-weight: var(--wt-label);
+  gap: var(--s-tight);
   color: var(--fg-muted);
 }
 
@@ -103,63 +141,71 @@
 }
 
 .dropzone.is-dragging .dropzone-hint {
-  color: var(--yellow-ink);
+  color: var(--olive-ink);
 }
 
 /* --- the promise ---------------------------------------------------------- */
 
-/* The reason to trust this app at all, set at reading size under a heavy rule
-   rather than whispered in a badge at the bottom of the page. */
+/*
+ * The most persuasive sentence in the app, and this system says restraint
+ * persuades. So it gets no border, no wash and no badge — a hairline above it,
+ * a lot of air, and reading size. Placement is the emphasis.
+ */
 .home-promise {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-  padding-top: var(--s-3);
-  border-top: var(--stroke-heavy) solid var(--black);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--hairline);
 }
 
 .home-promise p {
-  max-width: var(--measure);
-  font-weight: var(--wt-key);
+  max-width: 40ch;
   color: var(--fg);
   text-wrap: pretty;
 }
 
 .home-promise-state {
-  font-family: var(--mono);
   font-size: var(--t-caption);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tr-caption);
   color: var(--fg-muted);
 }
 
 /* --- contents page -------------------------------------------------------- */
 
-/* Pulled one space step wider than the column so the row's own padding puts
-   the label flush with the left margin while the rules run past it. */
+/* No frame around the list. The rows are separated from each other and from
+   whatever is above them by hairlines, which is all the structure this needs. */
 .home-nav {
-  margin: 0 calc(var(--s-3) * -1);
-  border-top: var(--stroke) solid var(--black);
-  border-bottom: var(--stroke) solid var(--black);
+  border-top: 1px solid var(--hairline);
 }
 
-.home-nav li + li {
-  border-top: var(--stroke-hair) solid var(--line-subtle);
+.home-nav li {
+  border-bottom: 1px solid var(--hairline);
 }
 
+/* Bled one step into the left margin so the hover wash has somewhere to sit
+   while the label itself stays flush with the column the page is set on. */
 .home-nav-row {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: var(--s-1) var(--s-3);
-  width: 100%;
-  min-height: calc(var(--s-6) + var(--s-2));
-  padding: var(--s-2) var(--s-3);
+  gap: var(--s-hair) var(--s-2);
+  width: calc(100% + var(--s-1));
+  min-height: 44px;
+  padding: var(--s-1);
+  margin-left: calc(var(--s-1) * -1);
+  border-radius: var(--r-sm);
   text-align: left;
-  color: var(--fg-muted);
   transition: background var(--fast) var(--ease);
 }
 
-/* The chevron is the affordance, not decoration, so it reads at --fg-muted
-   rather than the placeholder grey. */
+.home-nav-row:hover {
+  background: var(--surface);
+}
+
+/* One chevron per row and it is the affordance, not decoration — these rows
+   have no border and no fill, so without it nothing says they are doors. */
 .home-nav-row .icon {
   grid-row: 1 / 3;
   grid-column: 2;
@@ -167,49 +213,47 @@
 }
 
 .home-nav-label {
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   font-weight: var(--wt-key);
+  line-height: var(--lh-snug);
   color: var(--fg);
 }
 
 .home-nav-note {
   font-size: var(--t-caption);
   line-height: var(--lh-snug);
+  letter-spacing: var(--tr-caption);
   color: var(--fg-muted);
-}
-
-.home-nav-row:hover {
-  background: var(--yellow);
-}
-
-.home-nav-row:hover .home-nav-label,
-.home-nav-row:hover .home-nav-note,
-.home-nav-row:hover .icon {
-  color: var(--yellow-ink);
 }
 
 /* --- past serves ---------------------------------------------------------- */
 
-/* Square rows on hairlines. The score is the row's whole identity, so it is set
-   as a numeral in its own colour and nothing else competes with it. */
-.serve-log {
-  margin: 0 calc(var(--s-3) * -1);
-  border-top: var(--stroke) solid var(--black);
-  border-bottom: var(--stroke) solid var(--black);
-}
-
-.serve-log li + li {
-  border-top: var(--stroke-hair) solid var(--line-subtle);
+/*
+ * One row, one serve, everywhere in the app — the home list and the history
+ * sheet draw this same object. Hairline between rows, wash on hover, nothing
+ * boxed. The score is the row's identity, so it is the only thing set in the
+ * display face and nothing beside it competes.
+ */
+/* The row carries a delete button beside it in the history sheet and nothing
+   beside it on the front page. Same li either way, so the list is one object. */
+.serve-log li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-hair);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .serve-log-row {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-  min-height: calc(var(--s-6) + var(--s-2));
-  padding: var(--s-2) var(--s-3);
+  gap: var(--s-2);
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--s-1);
+  margin-left: calc(var(--s-1) * -1);
+  border-radius: var(--r-sm);
   text-align: left;
   transition: background var(--fast) var(--ease);
 }
@@ -218,14 +262,16 @@
   background: var(--surface);
 }
 
-/* Wide enough for a hundred, so the titles line up down the column whatever
-   each row scored. Size comes from the .t-headline helper on the element. */
+/* Regular weight, not the bold the helper carries: a two-digit number at 30px
+   is already the loudest thing in the row. Wide enough for a hundred so the
+   titles line up down the column whatever each serve scored. */
 .serve-log-score {
   min-width: 3ch;
+  font-weight: var(--wt-serif);
 }
 
 /* Every rung takes the -ink half of its pair, because here the rung IS the
-   type. Bare --fair is 2.06:1 on this page — at 28px that is not a quiet
+   type. Bare --fair is 2.06:1 on this paper — at 30px that is not a quiet
    status colour, it is a number nobody can read. */
 .serve-log-score--great { color: var(--great-ink); }
 .serve-log-score--good  { color: var(--good-ink); }
@@ -235,22 +281,25 @@
 .serve-log-text {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: var(--s-hair);
   min-width: 0;
 }
 
 .serve-log-text strong {
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   font-weight: var(--wt-key);
+  line-height: var(--lh-snug);
   color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* A caption, not telemetry. The mono face is for joint angles. */
 .serve-log-date {
-  font-family: var(--mono);
-  font-size: var(--t-overline);
+  font-size: var(--t-caption);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tr-caption);
   color: var(--fg-muted);
 }
 
@@ -263,87 +312,70 @@
 /* --- mixed serve types in the trend -------------------------------------- */
 
 .progress-aside {
-  margin-top: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  background: var(--surface);
-  border-left: var(--stroke) solid var(--line);
+  max-width: var(--measure);
+  padding-left: var(--s-2);
+  border-left: 1px solid var(--line);
   font-size: var(--t-small);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
+  text-wrap: pretty;
 }
 
 /* --- keeping your history ------------------------------------------------- */
 
+/* Compact and quiet. What the browser has or has not promised is said in one
+   sentence; it used to be said twice, once as a coloured bar that could not
+   report anything the sentence did not. */
 .storage {
-  margin-top: var(--s-5);
-  padding-top: var(--s-4);
-  border-top: var(--stroke) solid var(--black);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--hairline);
 }
-
-/* A status rule, not a proportion. The app cannot measure how full the disk is
-   without asking the browser, so the bar says the one thing it actually knows:
-   whether this data has been promised a life. */
-.storage-meter {
-  display: block;
-  height: var(--s-2);
-  margin: var(--s-3) 0;
-  background: var(--surface-raised);
-}
-
-.storage-meter-fill {
-  display: block;
-  height: 100%;
-}
-
-/* The -ink rungs again: this bar sits on a light grey track, which is neither
-   a black frame nor the rung's own wash, so the fill halves would not hold. */
-.storage-meter-fill--kept { background: var(--great-ink); }
-.storage-meter-fill--risk { background: var(--fair-ink); }
-.storage-meter-fill--unknown { background: var(--line-control); }
 
 .storage-warn,
 .storage-note {
   display: flex;
-  gap: var(--s-2);
-  margin-top: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  background: var(--surface);
+  gap: var(--s-tight);
+  max-width: var(--measure);
   font-size: var(--t-small);
-  line-height: var(--lh-copy);
+  line-height: var(--lh-snug);
   color: var(--fg-muted);
+  text-wrap: pretty;
 }
 
-.storage-warn {
-  border-left: var(--stroke) solid var(--fair-ink);
+.storage-warn .icon,
+.storage-note .icon {
+  flex: none;
+  margin-top: 0.25em;
 }
 
 .storage-warn .icon {
-  color: var(--fair-ink);
-  flex: none;
-  margin-top: var(--s-1);
-}
-
-.storage-note--ok {
-  border-left: var(--stroke) solid var(--great-ink);
+  color: var(--work-ink);
 }
 
 .storage-note--ok .icon {
   color: var(--great-ink);
-  flex: none;
-  margin-top: var(--s-1);
+}
+
+.storage-warn strong {
+  font-weight: var(--wt-key);
+  color: var(--fg);
 }
 
 .storage-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  margin-top: var(--s-3);
+  gap: var(--s-1);
+  margin-top: var(--s-1);
 }
 
 .storage-outcome {
-  margin-top: var(--s-2);
-  font-family: var(--mono);
   font-size: var(--t-caption);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tr-caption);
   color: var(--fg);
 }
 
@@ -352,11 +384,15 @@
 .block-aside--btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-1);
-  color: var(--fg);
-  font-weight: var(--wt-key);
+  gap: var(--s-tight);
+  color: var(--fg-muted);
   text-decoration: underline;
-  text-underline-offset: 0.15em;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--line);
+}
+
+.block-aside--btn:hover {
+  color: var(--fg);
 }
 
 /* Mirrors .progress-sheet: without an explicit gap here, the two `.block`
@@ -379,10 +415,11 @@
 .compare-pick select {
   flex: 1;
   min-width: 0;
-  min-height: var(--s-6);
-  padding: var(--s-2) var(--s-3);
-  border: var(--stroke) solid var(--black);
-  background: var(--white);
+  min-height: 48px;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--line-control);
+  border-radius: var(--r);
+  background: var(--bg);
   color: var(--fg);
   font: inherit;
   font-size: var(--t-small);
@@ -393,51 +430,45 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--s-2);
-  padding: var(--s-3);
+  padding: var(--s-2);
   background: var(--surface);
-  border: var(--stroke-hair) solid var(--line-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
 }
 
 .compare-score {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-1);
+  gap: var(--s-hair);
   text-align: center;
 }
 
 .compare-score-value {
   font-family: var(--font-display);
+  font-weight: var(--wt-serif);
   font-size: var(--t-headline);
-  line-height: var(--lh-tight);
-  letter-spacing: var(--tr-display);
+  line-height: var(--lh-headline);
+  letter-spacing: var(--tr-headline);
   color: var(--fg);
 }
 
 .compare-score-label {
-  font-size: var(--t-overline);
+  font-size: var(--t-caption);
+  line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
 
+/* Typeset, not badged: no wash and no pill, just the direction set in the
+   colour of the direction. */
 .compare-arrow {
-  padding: var(--s-1) var(--s-2);
   font-size: var(--t-small);
-  font-weight: var(--wt-title);
-  background: var(--surface-raised);
+  font-weight: var(--wt-key);
   color: var(--fg-muted);
 }
 
-/* Measured on the wash each one actually sits on rather than on the page:
-   --great-ink is 4.88:1 there and --work-ink 5.86:1. */
-.compare-arrow--better {
-  background: var(--great-wash);
-  color: var(--great-ink);
-}
-
-.compare-arrow--worse {
-  background: var(--work-wash);
-  color: var(--work-ink);
-}
+.compare-arrow--better { color: var(--great-ink); }
+.compare-arrow--worse { color: var(--work-ink); }
 
 .compare-strip {
   display: flex;
@@ -455,7 +486,7 @@
 .compare-pair-images {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s-1);
+  gap: var(--s-tight);
 }
 
 .compare-pair-images > span {
@@ -468,30 +499,32 @@
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
+  border-radius: var(--r);
   background: var(--surface-raised);
 }
 
 .compare-pair-images .strip-placeholder {
   display: grid;
   place-items: center;
-  padding: var(--s-2);
+  padding: var(--s-1);
   text-align: center;
-  font-size: var(--t-overline);
+  font-size: var(--t-caption);
   color: var(--fg-muted);
 }
 
 .compare-pair-images em {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  padding: var(--s-1) var(--s-2);
-  background: var(--black);
+  left: var(--s-tight);
+  bottom: var(--s-tight);
+  padding: 2px var(--s-tight);
+  border-radius: var(--r-pill);
+  background: var(--well);
   font-size: var(--t-overline);
   font-style: normal;
-  font-weight: 700;
-  letter-spacing: var(--tr-kicker);
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-overline);
   text-transform: uppercase;
-  color: var(--white);
+  color: var(--well-fg);
 }
 
 .compare-rows {
@@ -501,11 +534,11 @@
 
 .compare-row {
   display: grid;
-  grid-template-columns: 1fr auto var(--s-6);
+  grid-template-columns: 1fr auto 4ch;
   align-items: center;
   gap: var(--s-2);
-  padding: var(--s-2) 0;
-  border-bottom: var(--stroke-hair) solid var(--line-subtle);
+  padding: var(--s-1) 0;
+  border-bottom: 1px solid var(--hairline);
   font-size: var(--t-small);
 }
 
@@ -518,11 +551,11 @@
    the weight, so the direction of travel reads without parsing the words. */
 .compare-row-values {
   display: inline-flex;
-  align-items: center;
-  gap: var(--s-1);
+  align-items: baseline;
+  gap: var(--s-tight);
   font-family: var(--mono);
   font-size: var(--t-caption);
-  line-height: var(--lh-tight);
+  line-height: var(--lh-snug);
   text-align: right;
   color: var(--fg-muted);
 }
@@ -544,11 +577,11 @@
   color: var(--work-ink);
 }
 
-/* Work Sans, not the display face: Archivo Black has no small sizes in it and
-   at 14px it stops being a voice and becomes a smear. */
+/* The display face has no small sizes left in it at 15px, so the change reads
+   in Inter at the key weight instead. */
 .compare-row-delta {
   text-align: right;
-  font-weight: 700;
+  font-weight: var(--wt-key);
   font-size: var(--t-small);
   color: var(--fg-muted);
 }
@@ -562,7 +595,8 @@
 }
 
 .compare-note {
-  margin-top: var(--s-2);
+  margin-top: var(--s-1);
+  max-width: var(--measure);
   font-size: var(--t-caption);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
@@ -573,8 +607,8 @@
 .player-model-note {
   display: flex;
   align-items: flex-start;
-  gap: var(--s-2);
-  margin-top: var(--s-2);
+  gap: var(--s-tight);
+  margin-top: var(--s-1);
   font-size: var(--t-caption);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
@@ -582,10 +616,10 @@
 
 .player-model-key {
   flex: none;
-  width: var(--s-3);
+  width: var(--s-2);
   height: 0;
-  margin-top: var(--s-2);
-  border-top: var(--stroke) dashed var(--blue);
+  margin-top: 0.7em;
+  border-top: 1px dashed var(--stone);
 }
 
 /* --- which hand ----------------------------------------------------------- */
@@ -593,49 +627,57 @@
 .hand-pick {
   margin-top: var(--s-4);
   padding: var(--s-3);
-  border: var(--stroke) solid var(--black);
-  background: var(--white);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--bg);
 }
 
 .hand-pick legend {
-  padding: 0 var(--s-1);
-  font-size: var(--t-small);
+  padding: 0;
+  font-size: var(--t-body);
   font-weight: var(--wt-key);
+  line-height: var(--lh-snug);
   color: var(--fg);
 }
 
 .hand-pick-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s-2);
+  gap: var(--s-1);
   margin-top: var(--s-2);
 }
 
+/* The secondary control: an outline on paper. The chosen one fills, because a
+   1.4:1 wash is not enough to say which of two answers is the live one. */
 .hand-option {
-  min-height: var(--s-6);
-  padding: var(--s-2);
-  border: var(--stroke) solid var(--black);
-  background: var(--white);
-  color: var(--fg);
+  min-height: 48px;
+  padding: var(--s-1) var(--s-2);
+  border: 1px solid var(--line-control);
+  border-radius: var(--r);
+  background: none;
+  color: var(--fg-muted);
   font-size: var(--t-small);
-  font-weight: 700;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  font-weight: var(--wt-key);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
 }
 
 .hand-option:hover {
-  background: var(--surface-raised);
+  background: var(--surface);
+  color: var(--fg);
 }
 
 .hand-option.is-on {
-  background: var(--yellow);
-  color: var(--yellow-ink);
+  background: var(--fg-muted);
+  border-color: var(--fg-muted);
+  color: var(--bg);
 }
 
 .hand-pick-note {
   margin-top: var(--s-2);
+  max-width: var(--measure);
   font-size: var(--t-caption);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
+  text-wrap: pretty;
 }

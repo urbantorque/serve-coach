@@ -1,80 +1,80 @@
 /* ============================================================================
    Fundamental cards
 
-   The diagnostic card pattern: a 4px rule along the top in the score's own
-   colour, hairline-weight sides, and 24px of air inside. The rule is the only
-   place the colour is allowed to be large, which is what lets the verdict be
-   read from arm's length without any of the type going coloured.
+   The page a player actually reads to find out what went wrong, so it is set
+   like a page: a hairline round the outside, 36px of margin inside it, the name
+   in Baskerville, and the copy at 17/1.8 inside the measure. The verdict is a
+   small chip beside the name — it used to be a 4px band of colour along the top
+   edge, which shouted the answer at somebody who had come to read the reason.
+
+   Every gap in here is deliberately larger than it needs to be. The failure
+   mode of a diagnostic card is a wall of advice, and air is the only thing that
+   separates one instruction from the next.
    ========================================================================= */
 
 .fcards {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--s-2);
 }
 
 .fcard {
-  background: var(--white);
-  border: var(--stroke) solid var(--line-subtle);
-  border-top: var(--stroke-heavy) solid var(--blue);
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
   transition: border-color var(--base) var(--ease);
 }
 
-/* The -ink values, not the fills: this rule sits directly on the page with
-   nothing dark holding its edge, and bright --fair there is 2.06:1 — the card
-   would carry no verdict at all on the one rung that most needs to say so. */
-.fcard--great { border-top-color: var(--great-ink); }
-.fcard--good  { border-top-color: var(--good-ink); }
-.fcard--fair  { border-top-color: var(--fair-ink); }
-.fcard--work  { border-top-color: var(--work-ink); }
-
+.fcard:hover,
 .fcard.is-open {
-  border-left-color: var(--line);
-  border-right-color: var(--line);
-  border-bottom-color: var(--line);
+  border-color: var(--line);
 }
 
 .fcard-head {
   display: flex;
-  align-items: center;
-  gap: var(--s-3);
+  align-items: flex-start;
+  gap: var(--s-2);
   width: 100%;
-  padding: var(--s-4);
+  padding: var(--s-3);
   text-align: left;
+  border-radius: var(--r-lg);
 }
 
 .fcard-title {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--s-1);
   flex: 1;
   min-width: 0;
 }
 
 .fcard-name {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
-  gap: var(--s-2);
+  gap: var(--s-1);
   font-family: var(--font-display);
   font-size: var(--t-subhead);
-  font-weight: 400;
-  line-height: var(--lh-tight);
-  letter-spacing: var(--tr-title);
+  font-weight: var(--wt-serif);
+  line-height: var(--lh-subhead);
+  letter-spacing: var(--tr-subhead);
+  color: var(--fg);
 }
 
-/* The verdict sits at the size of the name it qualifies, not at footnote size.
-   It is the answer to the question the player opened the report to ask. */
+/* Small, and beside the name rather than over it. The word is the verdict; it
+   does not also need to be the largest thing in the card — which is what a 4px
+   band of colour across the top edge amounted to. Nudged up a hair because a
+   pill's baseline sits low against 22px serif. */
 .fcard-name .tag {
-  font-size: var(--t-caption);
-  letter-spacing: 0.09em;
-  padding: 4px var(--s-2);
+  transform: translateY(-1px);
 }
 
+/* The one line the player reads before deciding whether to open the card, so it
+   is set at reading size rather than as a caption. */
 .fcard-headline {
   max-width: var(--measure);
-  font-size: var(--t-small);
-  line-height: var(--lh-snug);
+  font-size: var(--t-body);
+  line-height: var(--lh-copy);
   color: var(--fg-muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -82,9 +82,19 @@
   overflow: hidden;
 }
 
+/* The one mark saying the card opens, so --stone (4.6:1) rather than --fg-faint
+   — faint is for placeholder and disabled, and an affordance drawn at 2.4:1 is
+   an affordance nobody finds outdoors. */
 .fcard-chevron {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  color: var(--stone);
+  transition: transform var(--base) var(--ease), color var(--fast) var(--ease);
+}
+
+.fcard-head:hover .fcard-chevron {
   color: var(--fg);
-  transition: transform var(--base) var(--ease);
 }
 
 .fcard.is-open .fcard-chevron {
@@ -92,7 +102,7 @@
 }
 
 .fcard-body {
-  padding: 0 var(--s-4) var(--s-4);
+  padding: 0 var(--s-3) var(--s-3);
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
@@ -106,64 +116,64 @@
   }
 }
 
+/* The standfirst: what this area of the serve is for, before any measurement of
+   it. A rule under it, then air, then the measurements. */
 .fcard-blurb {
   max-width: var(--measure);
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   padding-bottom: var(--s-3);
-  border-bottom: var(--stroke-hair) solid var(--line);
+  border-bottom: 1px solid var(--hairline);
 }
 
 /* --- metrics --------------------------------------------------------------- */
 
-/* Generous, and deliberately so: each of these is a separate instruction, and
-   the gap is what stops the page reading as one wall of advice. */
 .metrics {
   display: flex;
   flex-direction: column;
 }
 
+/* Each of these is a separate instruction. The gap is what stops them reading
+   as one paragraph of advice nobody finishes. */
 .metrics > .metric + .metric {
   margin-top: var(--s-4);
   padding-top: var(--s-4);
-  border-top: var(--stroke-hair) solid var(--line);
+  border-top: 1px solid var(--hairline);
 }
 
 .metric-top {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--s-3);
-  margin-bottom: var(--s-2);
+  gap: var(--s-2);
+  margin-bottom: var(--s-1);
 }
 
 .metric-label {
-  font-size: var(--t-small);
-  font-weight: var(--wt-title);
-  letter-spacing: 0.06em;
+  font-size: var(--t-overline);
+  font-weight: var(--wt-key);
+  line-height: 1.4;
+  letter-spacing: var(--tr-overline);
   text-transform: uppercase;
   color: var(--fg-muted);
 }
 
-/* What the body did. The loudest thing in the row on purpose: it is the answer,
-   and everything under it is the reason and the correction.
-
-   The status is a rule under the words, never the colour of the words — and the
-   rule takes the -ink value. A channel drawn in bright --fair is 2.06:1 against
-   the page, which is not a faint channel, it is no channel: the rung would go
-   missing on exactly the serves that needed telling. */
+/* What the body did, said in words. It is the answer, so it takes the largest
+   type in the row — and nothing else. The rung underneath it is a hairline in
+   the -ink value rather than a 3px channel: a rule that thick in a colour is
+   the card raising its voice about something the tag has already named. */
 .metric-read {
   flex: 0 1 auto;
   min-width: 0;
   text-align: right;
   font-size: var(--t-lede);
-  font-weight: var(--wt-title);
-  line-height: var(--lh-tight);
-  letter-spacing: var(--tr-title);
+  font-weight: var(--wt-body);
+  line-height: var(--lh-subhead);
+  letter-spacing: var(--tr-subhead);
   color: var(--fg);
-  padding-bottom: 3px;
-  border-bottom: var(--stroke-heavy) solid var(--line-control);
+  padding-bottom: var(--s-hair);
+  border-bottom: 1px solid var(--line);
   text-wrap: balance;
 }
 
@@ -172,73 +182,69 @@
 .metric-read--fair  { border-bottom-color: var(--fair-ink); }
 .metric-read--work  { border-bottom-color: var(--work-ink); }
 
-/* --- the axis -------------------------------------------------------------- */
+/* --- the axis --------------------------------------------------------------
+   A hairline the width of the range, the target band washed in olive over it,
+   and a small warm black mark where the body was. No frame: the two ends of the
+   scale are named underneath in words, which is what actually places them. */
 
 .metric-axis {
-  margin-top: var(--s-3);
+  margin-top: var(--s-2);
 }
 
 .bar {
   position: relative;
-  height: 26px;
+  height: 20px;
   display: flex;
   align-items: center;
 }
 
-/* A framed axis rather than a floating line — the two ends of the scale have to
-   be somewhere definite before "inside the band" means anything.
-
-   --surface, not --surface-raised. The band's green edge is 4.88:1 on its own
-   wash and 5.21:1 on the page, but it was only 4.32:1 against a raised track:
-   the line that says where "good" starts was at its weakest against the very
-   thing it divides. The black frame is what separates the axis from the page,
-   so the track itself can afford to be lighter. */
 .bar-track {
   position: absolute;
   left: 0;
   right: 0;
   top: 50%;
-  height: 22px;
+  height: 1px;
   transform: translateY(-50%);
-  background: var(--surface);
-  border: var(--stroke) solid var(--black);
+  background: var(--line-control);
 }
 
-/* The edge is the line that says where "good" starts, so it is drawn in -ink
-   and not in the fill. It has to hold against three neighbours at once: its own
-   wash inside, the grey track outside, and the black playhead crossing it. */
+/* --olive, not the wash's own colour: this 1px edge is the line that says where
+   "good" starts, it sits directly on paper, and it has to survive the marker
+   crossing it. 5.21:1 against the page. */
 .bar-band {
   position: absolute;
   top: 50%;
-  height: 22px;
+  height: 10px;
   transform: translateY(-50%);
-  background: var(--great-wash);
-  border: var(--stroke) solid var(--great-ink);
+  border: 1px solid var(--olive);
+  border-radius: var(--r-sm);
+  background: var(--olive-wash);
 }
 
-/* Black, and edged in white so it stays a separate object when it lands exactly
-   on the band's own border. Just inside versus just outside is the verdict; a
-   marker that merges with the edge it is being judged against hides it. */
+/* Taller than the band and ringed in paper, so it stays a separate object when
+   it lands exactly on the band's own border. Just inside versus just outside is
+   the whole verdict; a mark that merges with the edge it is judged against
+   hides the one thing the player came to read. */
 .bar-marker {
   position: absolute;
   top: 50%;
   left: 0;
-  width: 6px;
-  height: 22px;
+  width: 3px;
+  height: 14px;
   box-sizing: content-box;
   transform: translate(-50%, -50%);
-  background: var(--black);
-  border: var(--stroke) solid var(--white);
+  border: 2px solid var(--bg);
+  border-radius: var(--r-pill);
+  background: var(--fg);
 }
 
 /* Both ends of the scale, said in body language. A bound printed as a number is
-   the one thing this report has never done. Type comes from `.t-overline`. */
+   the one thing this report has never done. Type comes from `.t-caption`. */
 .bar-ends {
   display: flex;
   justify-content: space-between;
-  gap: var(--s-3);
-  margin-top: var(--s-2);
-  color: var(--fg-muted);
+  gap: var(--s-2);
+  margin-top: var(--s-tight);
 }
 
 .bar-ends span:last-child {
@@ -250,10 +256,10 @@
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: var(--s-2);
+  gap: var(--s-tight);
   margin-top: var(--s-2);
   font-size: var(--t-small);
-  line-height: var(--lh-tight);
+  line-height: var(--lh-snug);
 }
 
 .metric-aim-key {
@@ -262,47 +268,49 @@
 }
 
 .metric-aim-value {
-  font-weight: var(--wt-title);
-  color: var(--blue);
+  font-weight: var(--wt-key);
+  color: var(--olive-ink);
 }
 
 .metric-insight {
   margin-top: var(--s-2);
   max-width: var(--measure);
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
 }
 
-/* Blue is the coaching voice everywhere in this app: if it is edged in blue,
-   it is something to go and do. */
+/* Olive is the coaching voice: if it is washed in olive, it is something to go
+   and do. A wash and a radius, no rule down the side — the tint is already the
+   whole signal. */
 .metric-fix {
   display: flex;
-  gap: var(--s-2);
-  margin-top: var(--s-3);
-  padding: var(--s-3);
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+  padding: var(--s-2);
   max-width: var(--measure);
-  background: var(--blue-wash);
-  border: var(--stroke) solid var(--blue-wash);
-  border-left: var(--stroke-heavy) solid var(--blue);
-  font-size: var(--t-small);
-  line-height: var(--lh-snug);
+  background: var(--olive-wash);
+  border-radius: var(--r-lg);
+  font-size: var(--t-body);
+  line-height: var(--lh-copy);
   color: var(--fg);
   text-wrap: pretty;
 }
 
+/* Centred on the first line of a 17/1.8 paragraph, not on its top edge — an
+   icon hung off the cap height of a generously leaded line looks dropped. */
 .metric-fix .icon {
-  color: var(--blue);
+  color: var(--olive-ink);
   flex: none;
-  margin-top: 2px;
+  margin-top: 8px;
 }
 
 /* The marked words inside any line of coaching. Weight and colour only — no
    size change, or the instruction stops sitting on the same baseline grid as
    the sentence it lives in. */
 .cue-key {
-  font-weight: var(--wt-title);
+  font-weight: var(--wt-key);
   color: var(--fg);
 }
 
@@ -310,35 +318,34 @@
 
 .microdrill {
   margin-top: var(--s-2);
-  margin-left: var(--s-3);
-  padding: var(--s-3);
+  padding: var(--s-2);
   max-width: var(--measure);
-  background: var(--white);
-  border: var(--stroke) solid var(--line-control);
-  border-left: var(--stroke-heavy) solid var(--blue);
+  background: var(--surface);
+  border-radius: var(--r-lg);
 }
 
 .microdrill-kicker {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-1);
-  color: var(--blue);
+  gap: var(--s-tight);
+  color: var(--olive-ink);
 }
 
-/* Work Sans, not Archivo Black. The display face is drawn for headline sizes —
-   at 16px its counters close up and it reads as a heavy blur rather than as
-   emphasis, which costs more than the family match is worth. */
+/* The serif at 400, not at 700. A drill name is a heading inside a heading, and
+   bold Baskerville at reading size is heavier than the card name above it. */
 .microdrill h5 {
-  margin: var(--s-2) 0 var(--s-1);
+  margin: var(--s-1) 0 var(--s-tight);
+  font-family: var(--font-display);
   font-size: var(--t-body);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-title);
-  line-height: var(--lh-tight);
+  font-weight: var(--wt-serif);
+  line-height: var(--lh-subhead);
+  letter-spacing: var(--tr-subhead);
+  color: var(--fg);
 }
 
 .microdrill p {
   max-width: var(--measure);
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -346,7 +353,7 @@
 
 .microdrill-reps {
   display: inline-block;
-  margin-top: var(--s-2);
+  margin-top: var(--s-1);
   color: var(--fg-muted);
 }
 
@@ -354,8 +361,7 @@
 
 /* Held back rather than hidden. The number is still the best the app has and the
    player should see it; it just must not read with the same authority as one
-   measured off a clip that showed everything. Opacity, not a lighter grey — the
-   grey is already at the floor of what survives outdoors. */
+   measured off a clip that showed everything. */
 .metric--soft .metric-read,
 .metric--soft .metric-axis {
   opacity: 0.68;
@@ -363,24 +369,24 @@
 
 .metric-approx {
   display: inline-block;
-  margin-left: var(--s-1);
-  padding: 2px var(--s-1);
-  background: var(--surface);
-  border: var(--stroke-hair) solid var(--line-control);
+  margin-left: var(--s-tight);
+  padding: 2px var(--s-tight);
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
   font-style: normal;
   color: var(--fg-muted);
 }
 
-/* Deliberately not edged in a score colour: a soft read is a caveat about the
-   footage, not a fault in the serve. */
+/* Deliberately not tinted olive: a soft read is a caveat about the footage, not
+   something to go and practise. */
 .metric-soft-note {
   display: flex;
-  gap: var(--s-2);
+  gap: var(--s-1);
   margin-top: var(--s-2);
-  padding: var(--s-2) var(--s-3);
+  padding: var(--s-2);
   max-width: var(--measure);
+  border-radius: var(--r-lg);
   background: var(--surface);
-  border-left: var(--stroke-heavy) solid var(--line-control);
   font-size: var(--t-small);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
@@ -389,44 +395,47 @@
 .metric-soft-note .icon {
   color: var(--fg-muted);
   flex: none;
-  margin-top: 2px;
+  margin-top: 6px;
 }
 
 /* --- drill ---------------------------------------------------------------- */
 
 .drill {
   padding: var(--s-3);
-  background: var(--blue-wash);
-  border: var(--stroke) solid var(--blue);
+  border-radius: var(--r-lg);
+  background: var(--olive-wash);
 }
 
 .drill-kicker {
-  color: var(--blue);
+  color: var(--olive-ink);
 }
 
 .drill h4 {
-  margin: var(--s-2) 0 var(--s-1);
+  margin: var(--s-1) 0 var(--s-tight);
   font-family: var(--font-display);
   font-size: var(--t-lede);
-  font-weight: 400;
-  line-height: var(--lh-tight);
-  letter-spacing: var(--tr-title);
+  font-weight: var(--wt-serif);
+  line-height: var(--lh-subhead);
+  letter-spacing: var(--tr-subhead);
+  color: var(--fg);
 }
 
 .drill p {
   max-width: var(--measure);
-  font-size: var(--t-small);
+  font-size: var(--t-body);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
 }
 
+/* A quiet stamp, not a black block. It is the dose, read once. */
 .drill-reps {
   display: inline-block;
-  margin-top: var(--s-3);
-  padding: var(--s-2);
-  background: var(--black);
-  color: var(--white);
+  margin-top: var(--s-2);
+  padding: var(--s-hair) var(--s-1);
+  border: 1px solid var(--olive);
+  border-radius: var(--r-pill);
+  color: var(--olive-ink);
 }
 
 /* ============================================================================
@@ -437,9 +446,9 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--s-3);
+  gap: var(--s-2);
   padding-top: var(--s-3);
-  border-top: var(--stroke-hair) solid var(--line);
+  border-top: 1px solid var(--hairline);
 }
 
 .fineprint {

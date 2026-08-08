@@ -15,41 +15,43 @@
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  gap: var(--s-3);
+  gap: var(--s-2);
 }
 
-/* A black square with the mark cut out in optic yellow — the one combination in
-   the palette that holds up at any brightness, and the only place yellow type
-   is legal. */
+/* Was a black square with the mark cut out in optic yellow. It is now a tile of
+   the warm surface with a drawn line mark on it — the first thing on an empty
+   screen should not be the darkest object in the app. */
 .empty-mark {
   display: grid;
   place-items: center;
   width: 56px;
   height: 56px;
-  background: var(--black);
-  color: var(--yellow);
-  margin-bottom: var(--s-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--stone);
+  margin-bottom: var(--s-2);
 }
 
 .empty h1 {
   font-family: var(--font-display);
   font-size: var(--t-headline);
-  font-weight: 400;
-  letter-spacing: var(--tr-display);
-  line-height: var(--lh-tight);
+  font-weight: var(--wt-serif-bold);
+  letter-spacing: var(--tr-headline);
+  line-height: var(--lh-headline);
   max-width: 18ch;
 }
 
 .empty-lead {
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
+  font-size: var(--t-lede);
+  line-height: var(--lh-lede);
   color: var(--fg-muted);
   max-width: var(--measure);
 }
 
 .error-detail {
   width: 100%;
-  margin-top: var(--s-1);
+  margin-top: var(--s-2);
 }
 
 /* A disclosure on an error screen is a control like any other, and at 11px it
@@ -57,19 +59,20 @@
    marker with it and leave nothing saying the row opens. */
 .error-detail summary {
   min-height: 44px;
-  padding: var(--s-3) 0;
+  padding: var(--s-1) 0;
   font-size: var(--t-overline);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-kicker);
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-overline);
   text-transform: uppercase;
   color: var(--fg-muted);
   cursor: pointer;
 }
 
 .error-detail pre {
-  padding: var(--s-3);
+  padding: var(--s-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r);
   background: var(--surface);
-  border: var(--stroke) solid var(--line-control);
   font-family: var(--mono);
   font-size: var(--t-caption);
   line-height: var(--lh-snug);
@@ -82,33 +85,41 @@
 .empty-hints {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  margin: var(--s-1) 0 var(--s-3);
+  gap: var(--s-1);
+  margin: var(--s-tight) 0 var(--s-2);
   max-width: var(--measure);
 }
 
 .empty-hints li {
   position: relative;
-  padding-left: var(--s-4);
-  font-size: var(--t-small);
+  padding-left: var(--s-2);
+  font-size: var(--t-body);
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-align: left;
 }
 
-/* Square bullets. A round dot in here was the last curve left on the screen. */
+/* A small round mark, sized and placed off the reading line rather than off a
+   grid — it should read as a bullet in a book, not as a UI element. */
 .empty-hints li::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 8px;
-  width: 6px;
-  height: 6px;
-  background: var(--black);
+  top: 13px;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--stone);
 }
 
 /* ============================================================================
    Sheet
+
+   The one place a completely flat system genuinely strains: this thing floats
+   over the page and has to say so without a shadow. It says it with a scrim
+   underneath and a single --line-control edge along the top — a 3.2:1 rule,
+   which is the contrast a real edge is held to, unlike the hairlines that
+   separate passages inside it.
    ========================================================================= */
 
 .sheet-backdrop {
@@ -121,23 +132,20 @@
   animation: fade var(--base) var(--ease) both;
 }
 
-/* The scrim is its own layer so the dimming can be an opacity on a token rather
-   than a colour with alpha baked into it, and so no blur is needed to tell the
-   two apart — the sheet's hard black edge does that on its own. */
+/* Its own layer so the dimming is an opacity over a token rather than a colour
+   with alpha baked into it, and so no blur is needed to tell the two apart. */
 .sheet-backdrop::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--black);
-  opacity: 0.7;
+  background: var(--warm-black);
+  opacity: 0.45;
 }
 
 @keyframes fade {
   from { opacity: 0; }
 }
 
-/* Square, flat, and still plainly a layer above the page: the 2px black edge is
-   doing the job a shadow used to, and does it better in sunlight. */
 .sheet {
   position: relative;
   z-index: 1;
@@ -146,9 +154,9 @@
   max-height: 88svh;
   display: flex;
   flex-direction: column;
-  background: var(--white);
-  border: var(--stroke) solid var(--black);
-  border-bottom: none;
+  background: var(--bg);
+  border-top: 1px solid var(--line-control);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
   animation: slide-up var(--base) var(--ease-out) both;
 }
 
@@ -156,11 +164,13 @@
   from { transform: translateY(28px); }
 }
 
+/* Pill, not a bar. It is the one shape on screen that is asking to be held. */
 .sheet-grip {
-  width: 48px;
+  width: 40px;
   height: 4px;
-  background: var(--black);
-  margin: var(--s-2) auto var(--s-1);
+  border-radius: var(--r-pill);
+  background: var(--sage);
+  margin: var(--s-1) auto 0;
   flex: none;
 }
 
@@ -168,33 +178,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-3);
-  padding: var(--s-2) var(--s-3) var(--s-3) var(--s-4);
-  border-bottom: var(--stroke-hair) solid var(--line);
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--hairline);
 }
 
+/* Type comes from `.t-subhead` on the element. */
 .sheet-head h2 {
-  font-family: var(--font-display);
-  font-size: var(--t-subhead);
-  font-weight: 400;
-  line-height: var(--lh-tight);
-  letter-spacing: var(--tr-title);
+  color: var(--fg);
 }
 
 .sheet-body {
   overflow-y: auto;
-  padding: var(--s-3) var(--s-4) calc(var(--s-5) + var(--safe-bottom));
+  padding: var(--s-3) var(--s-3) calc(var(--s-5) + var(--safe-bottom));
   -webkit-overflow-scrolling: touch;
 }
 
 .sheet-empty {
-  padding: var(--s-4) 0;
+  padding: var(--s-3) 0;
   color: var(--fg-muted);
-  font-size: var(--t-small);
+  font-size: var(--t-body);
+  line-height: var(--lh-copy);
 }
 
 .sheet-note {
-  margin-top: var(--s-4);
+  margin-top: var(--s-3);
   max-width: var(--measure);
   font-size: var(--t-caption);
   line-height: var(--lh-copy);

@@ -60,8 +60,8 @@ export default defineConfig({
         short_name: 'Serve Coach',
         description:
           'Frame-by-frame tennis serve analysis that runs entirely on your device. Your video never leaves your phone.',
-        theme_color: '#fafafa',
-        background_color: '#fafafa',
+        theme_color: '#fafaf9',
+        background_color: '#fafaf9',
         display: 'standalone',
         orientation: 'portrait',
         // Both must respect the base, or an installed app launches at the wrong
