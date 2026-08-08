@@ -14,9 +14,11 @@
  * `src/lib/analysis/__tests__/fixtures/README.md` for what to do with it.
  */
 import { packFrames, type Fixture } from '../lib/analysis/groundTruth'
-import type { Analysis } from '../lib/analysis/types'
+import type { Analysis, FailedCapture } from '../lib/analysis/types'
 
 type Draft = Fixture & { _UNVERIFIED: true; _enginePhases: Record<string, number> }
+
+type RejectedDraft = Fixture & { _UNVERIFIED: true; _engineRejection: string }
 
 export function buildFixtureDraft(analysis: Analysis): Draft {
   const keyframes: Record<string, number> = {}
@@ -64,9 +66,41 @@ const slug = (s: string) =>
     .replace(/^-|-$/g, '')
     .slice(0, 48)
 
-/** Hand the draft to the browser as a download. */
-export function downloadFixture(analysis: Analysis): void {
-  const draft = buildFixtureDraft(analysis)
+/**
+ * The same, for a clip the engine refused to read.
+ *
+ * A refusal produces no analysis, so there is nothing for `buildFixtureDraft`
+ * to describe — but the pose output exists, it is what the refusal was decided
+ * from, and `validateFixture` already knows how to run a fixture whose expected
+ * result is a refusal. Only the capture step was missing.
+ *
+ * `rejected` is prefilled with the engine's own verdict for the same reason the
+ * keyframes are in the other draft: it is what the engine said, not what is
+ * true. If the clip is plainly a serve, set it false and label the keyframes —
+ * the fixture then fails until the engine stops refusing it, which is the whole
+ * reason for recording it.
+ */
+export function buildRejectedDraft(
+  capture: FailedCapture,
+  fileName: string,
+  reason: string,
+): RejectedDraft {
+  return {
+    id: slug(fileName) || 'unnamed-clip',
+    label: `TODO: describe this clip — player, camera angle, frame rate, phone`,
+    source: 'recorded',
+    notes:
+      `Refused by the engine. ${capture.frames.length} frames ` +
+      `sampled at ${capture.fps.toFixed(1)} fps.`,
+    fps: capture.fps,
+    frames: packFrames(capture.frames),
+    expect: { rejected: true },
+    _UNVERIFIED: true,
+    _engineRejection: reason,
+  }
+}
+
+function save(draft: Draft | RejectedDraft): void {
   const blob = new Blob([JSON.stringify(draft)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -76,4 +110,18 @@ export function downloadFixture(analysis: Analysis): void {
   // Revoking immediately can cancel the download in some browsers; a tick is
   // enough for the fetch to have started.
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+/** Hand the draft to the browser as a download. */
+export function downloadFixture(analysis: Analysis): void {
+  save(buildFixtureDraft(analysis))
+}
+
+/** The same for a refusal, which never produced an analysis to export. */
+export function downloadRejectedFixture(
+  capture: FailedCapture,
+  fileName: string,
+  reason: string,
+): void {
+  save(buildRejectedDraft(capture, fileName, reason))
 }

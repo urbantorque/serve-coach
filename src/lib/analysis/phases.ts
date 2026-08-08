@@ -414,6 +414,15 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   }
 }
 
+/** The lowest a hand-height series gets up to and including `end`. */
+function lowestBefore(heights: number[], end: number): number {
+  let low = heights[0] ?? 0
+  for (let i = 1; i <= Math.min(end, heights.length - 1); i++) {
+    if (heights[i] < low) low = heights[i]
+  }
+  return low
+}
+
 /**
  * Reject clips that are not a serve rather than reporting confident nonsense
  * about them. Every check here corresponds to something a real serve must do.
@@ -444,10 +453,23 @@ function assertPlausible(
   }
 
   // A serve lifts the racket hand from somewhere around the hip to well above
-  // the head. Measured from the start of the motion rather than from the racket
-  // drop, so that a player with a shallow drop still gets a report about their
-  // shallow drop instead of being told this was not a serve.
-  const swing = (racketHeight[keys.contact] - racketHeight[keys.ready]) / bodyHeight
+  // the head.
+  //
+  // Measured from the lowest the hand sits *before the toss*, not from its
+  // height at `ready`. `ready` is found by walking back to where the tossing
+  // hand was last quiet, and on a clip that opens with the player already in
+  // their rhythm it lands after the racket hand has begun to lift — which
+  // shortens the swing by exactly the quantity being tested for. A recorded
+  // serve measured 0.47 that way against a true rise of 0.59, and was told it
+  // was not a serve.
+  //
+  // Bounded at the toss rather than run over the whole clip so the racket drop,
+  // which is lower still and comes after it, can never become the reference:
+  // measuring from there would fail a player with a shallow drop for having
+  // one, and telling them their serve is not a serve is the worst thing this
+  // app can do with a shallow drop.
+  const restHeight = lowestBefore(racketHeight, keys.toss)
+  const swing = (racketHeight[keys.contact] - restHeight) / bodyHeight
   if (swing < 0.5) {
     // Before calling this "not a serve", check the other arm. If *that* one
     // swept from hip to overhead, this is a serve — we were simply watching the
@@ -455,8 +477,12 @@ function assertPlausible(
     // "which hand" looks like from here. Telling a player their serve is not a
     // serve when it plainly is, is the most disheartening thing this app can do,
     // and the fix is one tap away once they know what to tap.
+    // Read the same way as the swing above, and for the same reason: anchored
+    // at `ready` this shares the fault it is meant to rescue, so the one clip
+    // that most needs the other arm checked is the one where the check cannot
+    // fire.
     const otherSwing =
-      (Math.max(...context.otherArm) - context.otherArm[keys.ready]) / bodyHeight
+      (Math.max(...context.otherArm) - lowestBefore(context.otherArm, keys.toss)) / bodyHeight
     if (otherSwing >= 0.5) {
       const other = context.racket === 'right' ? 'left' : 'right'
       throw new NotAServeError(

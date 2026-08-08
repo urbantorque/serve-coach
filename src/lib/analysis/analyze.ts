@@ -79,6 +79,11 @@ export interface AnalyzeOptions {
    * unnecessary.
    */
   tier?: number
+  /**
+   * Carry the pose output out on a refusal, so a rejected clip can be filed as
+   * a ground-truth fixture. Dev builds only — see `NotAServeError.capture`.
+   */
+  captureOnFailure?: boolean
 }
 
 const bytes = (n: number) => `${(n / 1e6).toFixed(1)} MB`
@@ -583,7 +588,22 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   for (const f of frames) f.visibility = keyVisibility(f)
 
   onProgress({ step: 'measuring', ratio: 0.2, detail: 'Finding the key positions' })
-  let skel = detectServe(frames, fps, opts.handedness)
+
+  // Both calls below go through this so a refusal from either one carries its
+  // frames. `frames` is reassigned by the levelling pass, and reading it here at
+  // throw time rather than closing over the original is deliberate: the second
+  // detection runs on the levelled frames, and a fixture built from the
+  // unlevelled ones would not reproduce the refusal being recorded.
+  const detect = (): Skeleton => {
+    try {
+      return detectServe(frames, fps, opts.handedness)
+    } catch (err) {
+      if (opts.captureOnFailure && err instanceof NotAServeError) err.capture = { frames, fps }
+      throw err
+    }
+  }
+
+  let skel = detect()
 
   // A phone held at an angle tilts every height and depth in the clip while
   // leaving the pose tracking looking perfectly healthy. The player's own
@@ -597,7 +617,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     const pivot = levelPivot(frames)
     frames = levelFrames(frames, tilt.roll_deg, pivot)
     for (const f of frames) f.visibility = keyVisibility(f)
-    skel = detectServe(frames, fps, opts.handedness)
+    skel = detect()
     // Remembered on the report: measurement lives in this levelled space, the
     // video pixels do not, and drawing needs the transform to bridge the two.
     applied = { roll_deg: tilt.roll_deg, ...pivot }

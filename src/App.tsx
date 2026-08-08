@@ -19,7 +19,12 @@ import {
 } from './lib/analysis/analyze'
 import { forgetAll, recall, remember } from './lib/analysisCache'
 import { buildConsistency } from './lib/analysis/consistency'
-import { hintsOf, type Analysis } from './lib/analysis/types'
+import {
+  hintsOf,
+  type Analysis,
+  type FailedCapture,
+  type NotAServeError,
+} from './lib/analysis/types'
 import { SERVE_TYPES } from './lib/analysis/coaching'
 import { Cancelled } from './lib/pose/extract'
 import { isCachedOffline } from './lib/pose/poseEngine'
@@ -42,7 +47,7 @@ type View =
   | { kind: 'analyzing'; fileName: string }
   | { kind: 'report'; analysis: Analysis; videoUrl: string }
   | { kind: 'saved'; session: Session }
-  | { kind: 'error'; title: string; hints: string[] }
+  | { kind: 'error'; title: string; hints: string[]; capture?: FailedCapture; fileName?: string }
 
 const MAX_BYTES = 400 * 1024 * 1024
 
@@ -256,6 +261,10 @@ export default function App() {
           // Absent unless the player has told us their rating, in which case the
           // diagnostic pass estimates one from the serve rather than asking.
           tier: prefs.tier,
+          // Dev only: lets a refused clip be filed as a ground-truth fixture,
+          // which is otherwise impossible — the capture button lives on the
+          // report and a refusal never reaches one.
+          captureOnFailure: import.meta.env.DEV,
           signal: controller.signal,
           onProgress: setProgress,
         })
@@ -300,7 +309,13 @@ export default function App() {
         // explain itself better than a generic message can.
         const hints = hintsOf(err)
         if (hints) {
-          setView({ kind: 'error', title: (err as Error).message, hints })
+          setView({
+            kind: 'error',
+            title: (err as Error).message,
+            hints,
+            capture: (err as NotAServeError).capture,
+            fileName: file.name || 'refused-clip',
+          })
         } else {
           setView({
             kind: 'error',
@@ -551,6 +566,22 @@ export default function App() {
               <button className="btn btn--ghost btn--full" onClick={() => setSheet('guide')}>
                 How to film it
               </button>
+              {/* Dev-only: file this refusal as a ground-truth fixture. The
+                  import is dynamic so none of it reaches the production bundle. */}
+              {import.meta.env.DEV && view.capture && (
+                <button
+                  className="btn btn--ghost btn--full"
+                  onClick={() => {
+                    const { capture, fileName, title } = view
+                    if (!capture) return
+                    void import('./dev/exportFixture').then((m) =>
+                      m.downloadRejectedFixture(capture, fileName ?? 'refused-clip', title),
+                    )
+                  }}
+                >
+                  Save refusal as test fixture
+                </button>
+              )}
             </div>
           </div>
         )}

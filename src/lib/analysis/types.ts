@@ -264,9 +264,28 @@ export interface Analysis {
   consistency?: Consistency
 }
 
+/** The pose output behind a refusal, carried out so it can be filed as a test. */
+export interface FailedCapture {
+  frames: Frame[]
+  fps: number
+}
+
 /** Thrown when the clip does not contain a recognisable serve. */
 export class NotAServeError extends Error {
   readonly hints: string[]
+  /**
+   * The frames this refusal was decided from, attached only when the caller
+   * asked for them via `AnalyzeOptions.captureOnFailure`.
+   *
+   * Refusals are the fixtures the suite most needs and the only ones that could
+   * not be collected: the capture button lives on the report, and a clip
+   * rejected here never reaches one, so the failure modes worth testing were
+   * exactly the ones with no way to record them. The frames are handed over by
+   * reference rather than copied, so this costs nothing beyond keeping them
+   * reachable while the error is on screen — which is why it is opt-in and why
+   * only dev builds opt in.
+   */
+  capture?: FailedCapture
   constructor(message: string, hints: string[]) {
     super(message)
     this.name = 'NotAServeError'
