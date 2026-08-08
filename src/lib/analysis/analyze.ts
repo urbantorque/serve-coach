@@ -218,6 +218,27 @@ export function blockingFramingIssue(issues: string[]): NotAServeError | undefin
       'Every height uses your own body as the ruler, so show both ends.',
     ])
   }
+  // No wrist ever found, so there is no swing here to measure whatever else is
+  // in shot. Almost always distance, and said that way when the framing agrees,
+  // because "move closer" is something the player can act on and "I could not
+  // see your hand" on its own sounds like a fault in the app.
+  //
+  // Worth saying plainly why this is a refusal when standing small in frame is
+  // not: a clip filmed from the far baseline still produces a full set of
+  // numbers, assembled from a hand the model placed by inference. They are not
+  // rough, they are invented, and nothing downstream can tell the difference —
+  // which is the one failure this app will not ship.
+  if (issues.includes('hands-unseen')) {
+    return new NotAServeError(
+      issues.includes('too-far-away')
+        ? 'You stand too far from the camera to measure.'
+        : 'I could not see your racket hand.',
+      [
+        'Move the phone to about four metres, so your body fills the frame height.',
+        'Every swing measurement is read off your racket hand, so it has to be visible.',
+      ],
+    )
+  }
   return undefined
 }
 

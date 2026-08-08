@@ -308,5 +308,36 @@ export function framingIssues(frames: Frame[]): string[] {
   const typical = heights.length ? heights.sort((a, b) => a - b)[heights.length >> 1] : 0
   if (typical > 0 && typical < 0.3) issues.push('too-far-away')
 
+  /**
+   * Neither hand ever found.
+   *
+   * Standing small in the frame costs sharpness and is survivable, because every
+   * measurement is a ratio of the player's own height rather than of anything in
+   * the room. Losing the hands is different in kind: the swing, the drop, the
+   * toss and contact are all read off a wrist, so a clip with no wrist in it has
+   * no serve in it to read however good the rest of the framing looks.
+   *
+   * It has to be checked separately from distance because the pose model does
+   * not fail loudly. At the far end of a court a hand is a couple of pixels and
+   * the model infers one, returning coordinates indistinguishable from a tracked
+   * hand and a visibility near zero that nothing else here was reading.
+   *
+   * Taken on the better of the two wrists: one arm disappearing behind the torso
+   * is ordinary, and both being invisible for most of a clip is not.
+   */
+  const hands = Math.max(seen(LM.leftWrist), seen(LM.rightWrist))
+  if (hands < HANDS_SEEN_FLOOR) issues.push('hands-unseen')
+
   return issues
 }
+
+/**
+ * How much of a clip at least one wrist has to be visible in.
+ *
+ * Deliberately low. This is not a quality bar — a hand seen a third of the time
+ * makes for a soft reading, not a refused one, and softness is measured
+ * elsewhere. It is the point below which the swing being measured is the pose
+ * model's guesswork rather than the player's arm. A real clip filmed from the
+ * far baseline came in at zero.
+ */
+export const HANDS_SEEN_FLOOR = 0.3

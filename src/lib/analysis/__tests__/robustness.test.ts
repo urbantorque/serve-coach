@@ -1891,6 +1891,41 @@ check('a clip nothing can be read from is stopped before the full analysis', () 
   }
 })
 
+check('hands the tracker never finds are spotted', () => {
+  const frames = buildServe({}, FPS).map((f) => ({
+    ...f,
+    image: f.image.map((l, i) =>
+      i === LM.leftWrist || i === LM.rightWrist ? { ...l, visibility: 0.05 } : l,
+    ),
+  }))
+  assert(framingIssues(frames).includes('hands-unseen'), 'a clip with no hand in it went unnoticed')
+  // One arm behind the torso is ordinary and must not trip it.
+  const oneArm = buildServe({}, FPS).map((f) => ({
+    ...f,
+    image: f.image.map((l, i) => (i === LM.leftWrist ? { ...l, visibility: 0.05 } : l)),
+  }))
+  assert(
+    !framingIssues(oneArm).includes('hands-unseen'),
+    'a single hidden arm was mistaken for no hands at all',
+  )
+})
+
+check('a clip with no hand in it is refused, and told why', () => {
+  // A player small in frame is survivable; a hand the tracker never finds is
+  // not. Every swing measurement is read off a wrist, and from the far baseline
+  // the model returns an inferred one indistinguishable from a tracked one — so
+  // the numbers come out complete and invented rather than merely rough.
+  const far = blockingFramingIssue(['too-far-away', 'hands-unseen'])
+  assert(far !== undefined, 'a clip with nothing measurable in it was let through')
+  assert(
+    /too far/i.test(far!.message),
+    `the player was not told the thing they can act on: "${far!.message}"`,
+  )
+  const close = blockingFramingIssue(['hands-unseen'])
+  assert(close !== undefined, 'a clip with no visible hand was let through')
+  assert(/racket hand/i.test(close!.message), `unhelpful refusal: "${close!.message}"`)
+})
+
 check('a clip that is merely hard to read is not stopped here', () => {
   // This gate runs before a single frame has been tracked, so whatever it stops
   // for can never reach the machinery built to cope with it. Both of these used
