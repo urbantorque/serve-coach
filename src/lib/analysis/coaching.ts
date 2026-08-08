@@ -538,6 +538,47 @@ export const METRICS: Record<string, MetricCopy> = {
   },
 }
 
+/* ------------------------------------------------------------------ drills */
+
+/**
+ * Every drill, addressable by name.
+ *
+ * The triage layer answers with a drill *identifier* rather than a drill,
+ * because that layer deals in raw data and a paragraph of instruction is not
+ * data. This is where an identifier becomes something a player can read, and it
+ * is the only place the two vocabularies meet.
+ *
+ * Most entries point at the drill already attached to the measurement they
+ * correct, so there is one canonical wording per exercise. The three that follow
+ * exist only here: they correct faults the per-measurement copy has no home for,
+ * because they are named breakdowns rather than numbers off a band.
+ */
+export const DRILLS: Record<string, Drill> = {
+  rail_height_toss: METRICS.tossPeakHeight.drill,
+  fence_line_toss: METRICS.tossPathWobble.drill,
+  back_scratch_drop: METRICS.dropDepth.drill,
+  elbow_up_l: METRICS.elbowAtDrop.drill,
+  hip_lead_turn: METRICS.hipShoulderSeparation.drill,
+  slow_sink_hold: METRICS.kneeBend.drill,
+  heels_up_basket: METRICS.contactHeight.drill,
+
+  edge_first_serve: {
+    name: 'Edge-first serve',
+    how: 'Serve at half pace leading with the racket edge, so the strings never face the sky.',
+    reps: '20 serves',
+  },
+  head_up_hold: {
+    name: 'Head up hold',
+    how: 'Serve and hold your chin up at the contact point until the ball lands.',
+    reps: '15 serves',
+  },
+  pronation_snap: {
+    name: 'Turn the hand over',
+    how: 'Serve at half pace and let the palm turn out through the ball, thumb finishing down.',
+    reps: '20 serves',
+  },
+}
+
 /* ------------------------------------------------------------- serve types */
 
 /**

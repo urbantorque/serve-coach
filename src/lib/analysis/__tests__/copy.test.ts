@@ -13,7 +13,7 @@
  * report looks fine while saying less than it did.
  */
 import { TRANSLATED, readoutOf, targetOf } from '../anatomy'
-import { FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from '../coaching'
+import { DRILLS, FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from '../coaching'
 import { MAX_SENTENCES, MAX_WORDS, command, cueIssues, plain, wordCount } from '../voice'
 import { assert, check, report } from './harness'
 import type { ServeType } from '../../storage/prefs'
@@ -42,6 +42,12 @@ function everyCue(): { where: string; text: string }[] {
   for (const [id, f] of Object.entries(FUNDAMENTALS)) {
     out.push({ where: `${id}.blurb`, text: f.blurb })
     out.push({ where: `${id}.drill.how`, text: f.drill.how })
+  }
+  // The drills the triage layer can name. Most are the same objects as above and
+  // are simply checked twice, which costs nothing; the handful that exist only
+  // in the registry would otherwise never face the editor at all.
+  for (const [id, drill] of Object.entries(DRILLS)) {
+    out.push({ where: `DRILLS.${id}.how`, text: drill.how })
   }
   return out
 }
