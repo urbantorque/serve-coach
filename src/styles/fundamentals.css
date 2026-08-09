@@ -286,12 +286,16 @@
   border: 1px solid var(--hairline);
 }
 
+/* Sits inside `.drill`, which is `--ink-3` — the one surface `--fg-faint` does
+   not clear 4.5:1 on. The kicker is still the quietest thing in the card: it
+   carries its rank in size, weight and tracking rather than in colour alone,
+   which is what lets it move up a step without competing with the heading. */
 .drill-kicker {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 .drill h4 {

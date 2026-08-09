@@ -83,6 +83,31 @@
   background: var(--ink-3);
 }
 
+/*
+ * The drag target, 26px tall until now against a 44px floor.
+ *
+ * This is the control the player came for — park on contact and look at the
+ * arm — and a serve is 64 to 120 sampled frames across roughly 350px, so a
+ * frame is three to five pixels wide. A thumb centroid wanders further than
+ * that. The rail cannot be made precise enough to land on contact by dragging;
+ * what it can be is easy to grab, with the frame stepper and the six keyframe
+ * ticks doing the precise work.
+ *
+ * Nothing painted moves: the 4px rail, the fill, the 12/18px ticks and the
+ * focus ring are all unchanged. The transparent region overhangs 9px into the
+ * 12px gaps above and below, so it reaches into empty space and never overlaps
+ * the video stage or the controls row.
+ */
+.player-track::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
 /* Full width and scaled down, rather than a width that is written sixty times a
    second — same bar, off the layout path. */
 .player-played {

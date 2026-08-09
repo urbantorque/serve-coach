@@ -846,11 +846,35 @@
 .levelled-btn {
   display: inline-flex;
   align-items: center;
+  position: relative;
   gap: 3px;
   flex: none;
   font-size: 12px;
   font-weight: 600;
   color: var(--lime);
+}
+
+/*
+ * The smallest target in the app was 57 x 18, and it is the only way to correct
+ * the rung every target band in the report is measured against. A clip the
+ * engine reads as a beginner hands the player targets they already clear, and
+ * the control that fixes that was an 18px-tall word hard against the right edge.
+ *
+ * Height only: `.levelled` is `justify-content: space-between`, so this button
+ * has the right edge to itself and needs no sideways growth. The 13px of
+ * overhang each way lands inside `.levelled`'s own padding above and `.focus`'s
+ * below, so it collides with nothing. `position: relative` on the button is
+ * load-bearing — `.levelled` already sets it, and without it the pseudo-element
+ * would resolve against the whole row.
+ */
+.levelled-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
 }
 
 /*

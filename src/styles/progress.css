@@ -109,7 +109,11 @@
 
 .delta--great { background: var(--great-dim); color: var(--great); }
 .delta--work  { background: var(--work-dim);  color: var(--work); }
-.delta--flat  { background: var(--ink-3);     color: var(--fg-faint); }
+/* `--fg-muted`, not `--fg-faint`, because this is the one delta chip whose
+   background is `--ink-3`: faint reads 4.41:1 there against a 4.5 floor, where
+   the other two sit on their own dim tints and pass comfortably. Still the
+   unsaturated one of the three, which is what marks it as "no real change". */
+.delta--flat  { background: var(--ink-3);     color: var(--fg-muted); }
 
 .delta--compact {
   padding: 2px 6px;

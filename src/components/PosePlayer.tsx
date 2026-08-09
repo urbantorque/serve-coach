@@ -523,6 +523,17 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
   )
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // Space belongs to whichever button has focus. This handler sits on the
+    // player's root div and every control in the component is inside it, so a
+    // Space that bubbled up from a focused button was being cancelled here and
+    // spent on play/pause instead — a browser activates a button on keyup and
+    // only if the keydown was not cancelled. Tabbing to "Skeleton", "Half",
+    // "Next frame" or a keyframe pill and pressing the habitual activation key
+    // started the video and left the control alone, with nothing on screen to
+    // explain it. The slider is deliberately not covered: it has no native
+    // Space behaviour to protect, and play/pause from the scrubber is useful.
+    if (e.key === ' ' && (e.target as HTMLElement).closest('button')) return
+
     const keys: Record<string, () => void> = {
       ArrowRight: () => step(1),
       ArrowLeft: () => step(-1),
@@ -688,7 +699,14 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
           </button>
         ))}
       </div>
-      <p className="player-caption" aria-live="polite">
+      {/* Announced when the player is parked on a phase, silent while it runs.
+          The clip loops forever at half speed, so six phase captions crossed
+          about once a second with no end — polite announcements queue faster
+          than they drain, and a screen reader ended up talking over everything
+          else on the report, including the hunt for the pause button that would
+          have stopped it. Paused, stepped or seeked, the caption is exactly the
+          thing worth reading aloud. */}
+      <p className="player-caption" aria-live={playing ? 'off' : 'polite'}>
         {phases.find((p) => p.id === activePhase)?.caption}
       </p>
     </div>

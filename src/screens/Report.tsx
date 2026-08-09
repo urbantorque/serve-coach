@@ -515,15 +515,30 @@ export default function Report({
       <section className="reading" aria-label="How this clip was read">
         <h2 className="t-overline reading-title">How I read this clip</h2>
         <div className="reading-chips">
-          <button
-            className="chip chip--button"
-            onClick={onFlipHandedness}
-            disabled={!onFlipHandedness}
-            title={onFlipHandedness ? 'Tap if I read the wrong hand' : undefined}
-          >
-            {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
-            {onFlipHandedness && <Icon name="chevron" size={13} />}
-          </button>
+          {/* A fact rather than a dead button once the frames are gone.
+              Reopening a serve from history is the main way saved work is read,
+              and it arrives with no handlers at all — so this whole row used to
+              be controls that looked tappable, did nothing, and offered no
+              reason. Worst on exactly the clip that needs it: when the hand is
+              uncertain the report prints "check the badge below and switch it
+              if wrong" directly above a badge that had been disabled. The
+              disabled button already rendered identically to a plain chip, so
+              nothing on screen changes; what goes is a control the keyboard and
+              the screen reader had to walk past. */}
+          {onFlipHandedness ? (
+            <button
+              className="chip chip--button"
+              onClick={onFlipHandedness}
+              title="Tap if I read the wrong hand"
+            >
+              {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
+              <Icon name="chevron" size={13} />
+            </button>
+          ) : (
+            <span className="chip">
+              {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
+            </span>
+          )}
           <span className="chip">
             {analysis.quality.view === 'side'
               ? 'Side view'
@@ -538,18 +553,27 @@ export default function Report({
 
         <div className="judged">
           <span className="t-overline judged-lead">Judged as</span>
+          {/* Same rule as the hand above: three dead chips on a reopened report
+              become the one name that is still true. The row is kept rather
+              than dropped because `judged-note` underneath explains what that
+              serve type means for the targets, and without the label it
+              explains nothing. */}
           <div className="judged-options">
-            {(Object.keys(SERVE_TYPES) as ServeType[]).map((t) => (
-              <button
-                key={t}
-                className={`serve-chip${analysis.serveType === t ? ' is-on' : ''}`}
-                aria-pressed={analysis.serveType === t}
-                disabled={!onPickServeType || analysis.serveType === t}
-                onClick={() => onPickServeType?.(t)}
-              >
-                {SERVE_TYPES[t].label}
-              </button>
-            ))}
+            {onPickServeType ? (
+              (Object.keys(SERVE_TYPES) as ServeType[]).map((t) => (
+                <button
+                  key={t}
+                  className={`serve-chip${analysis.serveType === t ? ' is-on' : ''}`}
+                  aria-pressed={analysis.serveType === t}
+                  disabled={analysis.serveType === t}
+                  onClick={() => onPickServeType(t)}
+                >
+                  {SERVE_TYPES[t].label}
+                </button>
+              ))
+            ) : (
+              <span className="chip">{SERVE_TYPES[analysis.serveType].label}</span>
+            )}
           </div>
           <p className="judged-note">{SERVE_TYPES[analysis.serveType].blurb}</p>
         </div>
@@ -620,12 +644,20 @@ export default function Report({
       <section className="block">
         <h2 className="block-title">Every area we scored</h2>
         <div className="fcards">
-          {analysis.fundamentals.map((f, i) => (
+          {/* Nothing opens by itself. `defaultOpen={i === 0}` opened whatever
+              sat first in the array, and that order is hard-coded in
+              `measure()` — toss, loading, swing, contact, rhythm — so it was
+              always the toss, and the toss card is the largest of the five. A
+              player whose problem is the racket drop read a ranked plan saying
+              so and then found a different area expanded underneath it,
+              offering up to five more instructions about something else. The
+              plan above decides what to do first; this list is for looking
+              things up. */}
+          {analysis.fundamentals.map((f) => (
             <FundamentalCard
               key={f.id}
               fundamental={f}
               delta={deltas[f.id]}
-              defaultOpen={i === 0}
               onSeek={live ? goToPhase : undefined}
             />
           ))}
