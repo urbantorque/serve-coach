@@ -1,7 +1,7 @@
 import { readoutOf } from '../analysis/anatomy'
 import { LM, jointAngle, type Side, sided } from '../analysis/geometry'
 import { smoothedRacket } from '../analysis/racket'
-import type { Frame, Landmark, PhaseId } from '../analysis/types'
+import type { Frame, PhaseId } from '../analysis/types'
 
 export type Limb = ReturnType<typeof sided>
 
@@ -12,9 +12,8 @@ export type Limb = ReturnType<typeof sided>
  * green ended up meaning "racket arm" in one function and "ball trail" in
  * another — and how a change of palette becomes a hunt.
  *
- * Four meanings, and no fifth: neutral body, the chain being judged, the
- * reference shape, injury. If something new needs drawing it has to claim one
- * of those or explain itself.
+ * Three meanings, and no fourth: neutral body, the chain being judged, injury.
+ * If something new needs drawing it has to claim one of those or explain itself.
  */
 const PALETTE = {
   /**
@@ -38,7 +37,7 @@ const PALETTE = {
   limb: '#eef2f6',
 
   /**
-   * The tossing arm, in the reference's own blue.
+   * The tossing arm, in blue.
    *
    * It is the other arm doing the other job, and it is deliberately not the
    * accent: the accent answers "which arm am I meant to be watching", and if
@@ -60,14 +59,6 @@ const PALETTE = {
 
   /** The hairline from the callout arc out to its plate. Quieter than a bone. */
   leader: 'rgba(205, 249, 74, 0.55)',
-
-  /**
-   * The reference pose: the shape the targets describe. Never the player.
-   *
-   * Sky blue and faint, so it sits behind the body rather than competing with
-   * it. Dashed and thinner than the player's own bones does the rest of that work.
-   */
-  reference: 'rgba(120, 200, 255, 0.42)',
 
   /**
    * Injury risk, and nothing else — not a bad toss, not a low score.
@@ -195,12 +186,6 @@ export interface SkeletonOptions {
   /** The tracked ball, drawn as a marker plus its flight path. */
   ball?: { x: number; y: number; path?: { x: number; y: number }[] }
   /**
-   * A reference pose to draw behind the player — the shape the target bands
-   * describe. Drawn first, dashed and thinner than the body, so it reads as
-   * something to move towards rather than as a second player in the frame.
-   */
-  ghost?: Landmark[]
-  /**
    * Enlarges the angle callout relative to the body. The stills are shown far
    * smaller than the player, so a callout sized for the player shrinks to a few
    * illegible pixels in the filmstrip.
@@ -226,54 +211,6 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
     y: oy + f.image[lm].y * dh,
   })
   const scale = Math.min(dw, dh) / 420
-
-  // The reference shape goes down before anything else, so the player's own
-  // skeleton always sits on top of it — the comparison only reads correctly if
-  // it is obvious which one is you.
-  if (o.ghost) {
-    const g = o.ghost
-    const gp = (lm: number) => ({
-      x: ox + (g[lm].x / aspect) * dw,
-      y: oy + g[lm].y * dh,
-    })
-    const gscale = Math.min(dw, dh) / 420
-    ctx.lineCap = 'round'
-    ctx.setLineDash([6 * gscale, 5 * gscale])
-    const arms: [number, number][] = [
-      [LM.leftShoulder, LM.leftElbow],
-      [LM.leftElbow, LM.leftWrist],
-      [LM.rightShoulder, LM.rightElbow],
-      [LM.rightElbow, LM.rightWrist],
-    ]
-    // Every bone into one path with a subpath each, then two strokes over it.
-    // Both run on the same dash pattern, so the underlay outlines each dash
-    // rather than filling the gaps back in and reading as a solid line.
-    ctx.beginPath()
-    for (const [a, b] of [...BONES, ...arms]) {
-      const p = gp(a)
-      const q = gp(b)
-      ctx.moveTo(p.x, p.y)
-      ctx.lineTo(q.x, q.y)
-    }
-    ctx.strokeStyle = PALETTE.under
-    ctx.lineWidth = 6.2 * gscale
-    ctx.stroke()
-    ctx.strokeStyle = PALETTE.reference
-    ctx.lineWidth = 3 * gscale
-    ctx.stroke()
-    const gnose = gp(LM.nose)
-    const gspan = Math.abs(gp(LM.leftShoulder).x - gp(LM.rightShoulder).x)
-    const gr = Math.max(9 * gscale, gspan * 0.42, 11)
-    ctx.beginPath()
-    ctx.arc(gnose.x, gnose.y - gr * 0.25, gr, 0, Math.PI * 2)
-    ctx.strokeStyle = PALETTE.under
-    ctx.lineWidth = 6.2 * gscale
-    ctx.stroke()
-    ctx.strokeStyle = PALETTE.reference
-    ctx.lineWidth = 3 * gscale
-    ctx.stroke()
-    ctx.setLineDash([])
-  }
 
   if (o.trail && o.trail.to > o.trail.from + 1) {
     const { frames, from, to } = o.trail

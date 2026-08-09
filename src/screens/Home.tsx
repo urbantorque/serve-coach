@@ -53,6 +53,10 @@ export default function Home({
     [progress],
   )
   const [dragging, setDragging] = useState(false)
+  // A media query, not a render-time question. This was three `matchMedia` calls
+  // on every render of the first screen, all of them asking the same thing about
+  // a device that cannot change its pointer while the page is open.
+  const coarse = useMemo(coarsePointer, [])
 
   const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -149,7 +153,7 @@ export default function Home({
             <Icon name="film" size={19} />
             Analyse a serve
           </button>
-          {coarsePointer() && (
+          {coarse && (
             <button
               className="btn btn--ghost btn--big"
               onClick={() => (needsFilmingGuide ? onGuideThenPick() : recordRef.current?.click())}
@@ -177,7 +181,7 @@ export default function Home({
         {/* Dragging a file is a desktop-only gesture — a touch device has no
             equivalent — so the hint only appears where it is actually true.
             "Drag", never "drop": in this app the drop is the racket drop. */}
-        {!coarsePointer() && (
+        {!coarse && (
           <p className="dropzone-hint">
             <Icon name="upload" size={14} />
             or drag a video file anywhere here

@@ -346,7 +346,9 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
  * Hand the card to the OS share sheet where there is one, otherwise download it.
  * Both paths are local; nothing is sent anywhere by the app itself.
  */
-export async function shareReportCard(report: Report): Promise<'shared' | 'downloaded' | 'failed'> {
+export async function shareReportCard(
+  report: Report,
+): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
   const blob = await renderReportCard(report)
   if (!blob) return 'failed'
 
@@ -366,9 +368,14 @@ export async function shareReportCard(report: Report): Promise<'shared' | 'downl
     try {
       await nav.share({ files: [file], title: 'My serve' })
       return 'shared'
-    } catch {
-      // Dismissing the share sheet lands here; fall through to a download
-      // rather than leaving the button looking broken.
+    } catch (err) {
+      // Backing out of the share sheet is a decision, not a failure, and the
+      // browser says which it was: a dismissal rejects with `AbortError`. This
+      // used to fall through to the download either way, so a player who opened
+      // the sheet and thought better of it got the file written to their phone
+      // anyway — the one outcome they had just declined. Anything else really is
+      // the share machinery failing, and the download is the right answer to it.
+      if ((err as Error)?.name === 'AbortError') return 'cancelled'
     }
   }
 

@@ -15,7 +15,7 @@
  * new phone — and it keeps the privacy promise intact, because the player is the
  * one who moves the file.
  */
-import { listSessions, normalise, saveSession, type Session } from './db'
+import { listSessions, normalise, pruneSessions, saveSession, type Session } from './db'
 import type { Analysis } from '../analysis/types'
 
 const FORMAT = 'serve-coach-backup'
@@ -158,11 +158,22 @@ export async function importBackup(text: string): Promise<ImportResult> {
       result.skipped++
       continue
     }
+    // A clip the engine refused never enters the record — `saveSession` drops it
+    // on the way in. Counted here rather than reported as added, or the panel
+    // tells the player nine serves arrived and the history then shows eight.
+    if (session.triage?.status === 'rejected') {
+      result.skipped++
+      continue
+    }
     // `saveSession` takes an Analysis and strips the frames a report never had.
-    await saveSession(session as Analysis)
+    // Unbounded: pruning per report would re-read the whole store once per row.
+    await saveSession(session as Analysis, false)
     if (here) result.updated++
     else result.added++
   }
+
+  // Once, over the store the import actually left behind.
+  await pruneSessions()
 
   return result
 }

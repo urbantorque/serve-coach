@@ -26,7 +26,24 @@ function open(): Promise<IDBDatabase> {
         store.createIndex('createdAt', 'createdAt')
       }
     }
-    req.onsuccess = () => resolve(req.result)
+    req.onsuccess = () => {
+      const db = req.result
+      // A connection can die while we are still holding it, and a cached dead
+      // one is worse than no cache: every later transaction throws
+      // `InvalidStateError` for the rest of the session, so history stops
+      // loading and every save is a silent no-op until a full reload. Safari
+      // closes idle connections after the app is backgrounded, and a second tab
+      // upgrading the schema closes this one too. Both are recoverable — drop
+      // the handle and the next call opens a fresh one.
+      db.onclose = () => {
+        if (dbPromise === attempt) dbPromise = null
+      }
+      db.onversionchange = () => {
+        db.close()
+        if (dbPromise === attempt) dbPromise = null
+      }
+      resolve(db)
+    }
     req.onerror = () => reject(req.error ?? new Error('Could not open local storage'))
   })
   // A failed open must not poison the rest of the session. Safari in particular
@@ -135,7 +152,25 @@ async function prune(aggressive = false): Promise<void> {
   }
 }
 
-export async function saveSession(analysis: Analysis): Promise<void> {
+/**
+ * Bring the store back inside its limits. Exported for `importBackup`, which
+ * writes a whole history in one go and must not pay for this per report.
+ */
+export const pruneSessions = (): Promise<void> => prune()
+
+export async function saveSession(
+  analysis: Analysis,
+  /**
+   * Whether to bound the store afterwards.
+   *
+   * On by default, because a single save is the only moment the store grows.
+   * A bulk restore turns that into the dominant cost: `prune` reads every row
+   * back — thumbnails and all — so pruning per report makes an import O(n²) in
+   * reads and, past `KEEP_STILLS`, in image-sized writes too. Sixty reports is
+   * then sixty full reads of sixty reports. The caller prunes once at the end.
+   */
+  bound = true,
+): Promise<void> {
   /*
    * A clip the engine refused never enters the record.
    *
@@ -180,7 +215,7 @@ export async function saveSession(analysis: Analysis): Promise<void> {
     await tx('readwrite', (s) => s.put(session))
   }
 
-  await prune()
+  if (bound) await prune()
 }
 
 /**

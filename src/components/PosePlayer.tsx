@@ -39,16 +39,7 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]['rate']>(0.5)
   const [activePhase, setActivePhase] = useState<PhaseId>('ready')
   const [skeletonOn, setSkeletonOn] = useState(true)
-  const [modelOn, setModelOn] = useState(false)
   const [cursor, setCursor] = useState(0)
-  /**
-   * The reference pose, loaded on demand.
-   *
-   * Behind a dynamic import because it drags in the whole parametric rig, which
-   * most sessions never ask for — and the first load of this app already has a
-   * nine-megabyte pose model to fetch before it can do anything at all.
-   */
-  const [modelPose, setModelPose] = useState<typeof import('../lib/analysis/modelServe')>()
 
   /**
    * Steadies the skeleton against per-frame pose noise, for drawing only.
@@ -60,17 +51,6 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
    */
   const smootherRef = useRef<SkeletonSmoother>()
   if (!smootherRef.current) smootherRef.current = new SkeletonSmoother()
-
-  useEffect(() => {
-    if (!modelOn || modelPose) return
-    let alive = true
-    void import('../lib/analysis/modelServe').then((m) => {
-      if (alive) setModelPose(m)
-    })
-    return () => {
-      alive = false
-    }
-  }, [modelOn, modelPose])
 
   const { frames, phases, window: win, video } = analysis
   const aspect = video.width / Math.max(1, video.height)
@@ -147,17 +127,6 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     const onKeyframe =
       Math.abs(t - (phases.find((p) => p.id === activePhase)?.t ?? -9)) < 0.09
 
-    // The reference shape only means anything parked on the position it
-    // describes — mid-swing it would be a second skeleton doing something else.
-    const ghost =
-      modelOn && onKeyframe && modelPose && analysis.scale?.bodyHeight
-        ? modelPose.modelPoseAt(activePhase, {
-            frame: f,
-            bodyHeight: analysis.scale.bodyHeight,
-            racket: analysis.handedness,
-          })
-        : undefined
-
     // Smoothed only for drawing — `f` itself, and everything derived from the
     // raw `frames` array below (the trail, the racket estimate), is left
     // untouched so the overlay's numbers never drift from what was measured.
@@ -173,9 +142,8 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
       bodyHeight: analysis.scale?.bodyHeight,
       sequence: { frames: drawFrames, index: idx },
       ball: ballMarkerAt(drawBall, t),
-      ghost,
     })
-  }, [activePhase, drawBall, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, modelOn, modelPose, phases, skeletonOn, video.height, video.width, win.end, win.start])
+  }, [activePhase, drawBall, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start])
 
   /**
    * The latest `draw`, reachable from effects that must not re-run when it changes.
@@ -228,10 +196,19 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
    * Paused, the overlay is instead redrawn only when something about it changes,
    * which the effect below handles.
    */
+  /**
+   * What the last painted overlay was of. See the redraw gate in the loop.
+   */
+  const drawnKey = useRef<string>()
+
   useEffect(() => {
     if (!playing) return
+    // A loop that has just started always paints its first frame, whatever the
+    // one before it left behind.
+    drawnKey.current = undefined
     const tick = () => {
       const videoEl = videoRef.current
+      let key: string | undefined
       if (videoEl) {
         // Loop inside the detected serve rather than the whole clip.
         if (videoEl.currentTime >= win.end || videoEl.currentTime < win.start - 0.25) {
@@ -245,8 +222,35 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
         // Only re-render when the frame actually changes, not 60 times a second.
         const idx = frameAt(videoEl.currentTime)
         setCursor((prev) => (prev === idx ? prev : idx))
+        key = `${idx}|${nearest.id}`
       }
-      draw()
+      /*
+       * And only repaint the canvas when the picture over it would differ.
+       *
+       * The body half of this overlay — the skeleton, the swing trail, the
+       * estimated racket, the callout — is read off the nearest *sampled* frame,
+       * and there are 32 of those a second at best. Playback defaults to half
+       * speed, which is where a player leaves it, so the loop was rebuilding an
+       * identical picture three times out of four: a whole skeleton, a
+       * six-bucket fading trail and a 32-segment flight path, sixty times a
+       * second, on a phone. That is not a dropped frame anywhere, it is the
+       * handset getting warm — the same thing the loop was stopped from doing
+       * while paused, still happening while it plays.
+       *
+       * The one thing this does change is the ball marker, which is read off the
+       * fitted curve at the exact playhead and so used to glide between samples
+       * while the body it belongs to stepped. It now steps with the body, which
+       * is the more honest of the two: the flight is only known where the ball
+       * was detected, and a marker moving smoothly over a skeleton that is not
+       * says the arc is better measured than the swing.
+       *
+       * The bookkeeping above stays on every frame: the loop wrap and the
+       * scrubber are cheap and the scrubber has to move smoothly.
+       */
+      if (key === undefined || key !== drawnKey.current) {
+        drawnKey.current = key
+        draw()
+      }
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
@@ -258,7 +262,7 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
    *
    * `draw` is a `useCallback`, so its identity changes exactly when something it
    * reads changes — the frame being shown, the phase being annotated, whether
-   * the skeleton or the reference shape is on. Depending on it here is therefore
+   * the skeleton is on. Depending on it here is therefore
    * the same set of triggers the loop was covering by brute force, minus the
    * fifty-nine redraws a second that changed nothing.
    */
@@ -425,6 +429,14 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
    * the track itself so a drag that strays outside the narrow strip — easy
    * to do on a phone — keeps tracking instead of freezing where it left.
    */
+  const endScrubRef = useRef<() => void>()
+  // A drag that never ends is a drag the component unmounted underneath —
+  // tapping back, or switching serves inside a basket, mid-scrub. `onUp` is the
+  // only thing that removes these, and it is a window listener closing over
+  // `seekTo`, which closes over every tracked frame of the clip. Left behind it
+  // keeps a megabyte or two alive and goes on seeking a video that is gone.
+  useEffect(() => () => endScrubRef.current?.(), [])
+
   const scrub = useCallback(
     (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
       const el = progressRef.current
@@ -445,12 +457,17 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
         if (x !== undefined) seekAt(x)
       }
       const onUp = () => {
+        endScrubRef.current = undefined
         window.removeEventListener('mousemove', onMove)
         window.removeEventListener('mouseup', onUp)
         window.removeEventListener('touchmove', onMove)
         window.removeEventListener('touchend', onUp)
         window.removeEventListener('touchcancel', onUp)
       }
+      // A second press before the first one lifted — a mouse button held while a
+      // finger lands — would otherwise strand the first drag's listeners.
+      endScrubRef.current?.()
+      endScrubRef.current = onUp
       window.addEventListener('mousemove', onMove)
       window.addEventListener('mouseup', onUp)
       window.addEventListener('touchmove', onMove)
@@ -537,6 +554,17 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
           onLoadedMetadata={() => {
             sizeCanvas()
             if (videoRef.current) videoRef.current.currentTime = win.start
+            // And the speed, again, here.
+            //
+            // The effect below sets it on mount, and the element's own load
+            // algorithm then resets `playbackRate` to `defaultPlaybackRate` —
+            // which is 1 — as part of selecting the resource. That is a task,
+            // and React's effect is not, so which of the two lands last depends
+            // on how quickly the blob resolves. Lose the race and the segmented
+            // control reads Half while the clip runs at full speed, with nothing
+            // on screen admitting it: the one control on this player whose whole
+            // job is slowing a serve down enough to see it.
+            if (videoRef.current) videoRef.current.playbackRate = speed
             // Paint immediately rather than waiting for the seek to land. If the
             // video already happens to sit at the start of the window no `seeked`
             // event ever fires, and now that the animation loop only runs during
@@ -632,14 +660,6 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
         >
           Skeleton
         </button>
-        <button
-          className={`chip chip--toggle${modelOn ? ' is-on' : ''}`}
-          onClick={() => setModelOn((v) => !v)}
-          aria-pressed={modelOn}
-          title="Show the shape the targets describe, at each key position"
-        >
-          Target shape
-        </button>
       </div>
 
       <div className="phase-pills">
@@ -656,13 +676,6 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
       <p className="player-caption" aria-live="polite">
         {phases.find((p) => p.id === activePhase)?.caption}
       </p>
-      {modelOn && (
-        <p className="player-model-note">
-          <span className="player-model-key" aria-hidden="true" />
-          {modelPose?.MODEL_NOTES[activePhase] ??
-            "The dashed figure shows what you're aiming for. Step to one of the six key moments to see it."}
-        </p>
-      )}
     </div>
   )
 }

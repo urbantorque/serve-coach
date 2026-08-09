@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import CompareView from './components/CompareView'
 import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
-import LevelPicker from './components/LevelPicker'
 import StoragePanel from './components/StoragePanel'
 import PracticeCard from './components/PracticeCard'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
@@ -55,9 +53,7 @@ export default function App() {
   const [view, setView] = useState<View>({ kind: 'home' })
   const [progress, setProgress] = useState<AnalyzeProgress>({ step: 'engine', ratio: 0 })
   const [sessions, setSessions] = useState<Session[]>([])
-  const [sheet, setSheet] = useState<
-    'guide' | 'guide-first' | 'history' | 'progress' | 'compare' | null
-  >(null)
+  const [sheet, setSheet] = useState<'guide' | 'guide-first' | 'history' | 'progress' | null>(null)
   const [offlineReady, setOfflineReady] = useState(false)
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
 
@@ -100,23 +96,6 @@ export default function App() {
     () => (form ? buildConsistencyTrend(sessions, form.serveType) : undefined),
     [sessions, form],
   )
-
-  /**
-   * The report currently on screen, as a stored session.
-   *
-   * The comparison works on saved reports, and a live analysis is one of those
-   * minus its frames — so this drops them rather than making the comparison
-   * handle two shapes of the same thing.
-   */
-  const comparing: Session | undefined = useMemo(() => {
-    if (view.kind === 'saved') return view.session
-    if (view.kind === 'report') {
-      const { frames: _f, ...session } = view.analysis
-      void _f
-      return session
-    }
-    return undefined
-  }, [view])
 
   /**
    * The most recent report filed before this one — what a delta is measured against.
@@ -535,9 +514,6 @@ export default function App() {
                 ? () => void compareServes(view.analysis)
                 : undefined
             }
-            onCompare={
-              sessions.some((s) => s.id !== view.analysis.id) ? () => setSheet('compare') : undefined
-            }
           />
         )}
 
@@ -548,9 +524,6 @@ export default function App() {
             previous={priorTo(view.session.createdAt, typeOf(view.session))}
             onBack={goHome}
             onAnalyzeAnother={goHome}
-            onCompare={
-              sessions.some((s) => s.id !== view.session.id) ? () => setSheet('compare') : undefined
-            }
           />
         )}
 
@@ -595,12 +568,21 @@ export default function App() {
 
       <Sheet open={sheet === 'guide'} onClose={() => setSheet(null)} title="How to film your serve">
         <FilmingGuide />
-        <LevelPicker value={prefs.tier} onChange={(tier) => setPrefs(writePrefs({ tier }))} />
       </Sheet>
 
-      {/* The same guide, shown once before the very first clip, with the picker
+      {/* The same guide, shown once before the very first clip, with the hand
           on the end of it so reading it is on the way to the task rather than a
-          detour away from it. */}
+          detour away from it.
+
+          The hand and nothing else. A rating used to be asked for here too, and
+          it is the one question this screen cannot help with: it comes before
+          the player has filmed anything, so there is no estimate to show them
+          and no report to check the answer against — and "work it out for me"
+          was both the default and the right answer, which makes it a question
+          standing between somebody and their first clip for no gain. The engine
+          estimates a rung from the serve itself, and the report says which one
+          it used and offers to change it, where the targets it moves are on
+          screen to be judged against. */}
       <Sheet
         open={sheet === 'guide-first'}
         onClose={() => {
@@ -610,14 +592,13 @@ export default function App() {
         title="First, how to film it"
       >
         <FilmingGuide />
+        {/* The hand is the one thing that has to be right before the first clip:
+            every swing measurement is read off the racket arm, and the detector
+            cross-checks a stated hand rather than being overridden by it. */}
         <HandednessPicker
           value={prefs.handedness}
           onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
         />
-        {/* Asked here rather than made compulsory: leaving it on "work it out
-            for me" is a real answer, and the one most people should give. It is
-            the hand that has to be right before the first clip. */}
-        <LevelPicker value={prefs.tier} onChange={(tier) => setPrefs(writePrefs({ tier }))} />
         <button
           className="btn btn--primary btn--full"
           onClick={finishFirstRunGuide}
@@ -686,14 +667,6 @@ export default function App() {
           Reports are kept on this device only. The video itself is never saved.
         </p>
         <StoragePanel count={sessions.length} onImported={refreshSessions} />
-      </Sheet>
-
-      <Sheet open={sheet === 'compare'} onClose={() => setSheet(null)} title="Side by side">
-        {comparing ? (
-          <CompareView current={comparing} others={sessions} />
-        ) : (
-          <p className="sheet-empty">Nothing to compare this against yet.</p>
-        )}
       </Sheet>
 
       {/* Not "Your form" — the home card already owns that name for the average

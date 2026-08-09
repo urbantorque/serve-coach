@@ -204,8 +204,36 @@ function blobs(
 
 /* ----------------------------------------------------------------- fitting */
 
-/** Least-squares quadratic through (t, y). Returns [c0, c1, c2] or undefined. */
-function fitQuadratic(pts: { t: number; y: number }[]): [number, number, number] | undefined {
+/**
+ * Determinant of a 3×3 given as nine scalars, in the order Cramer's rule wants.
+ *
+ * Scalars rather than nested arrays because the RANSAC seed loop below runs this
+ * up to four times per candidate triple and there are ~10⁵ triples in a densely
+ * detected toss. Built as arrays, each of those allocated the matrix, then a
+ * fresh copy of it per substituted column — well over a million throwaway arrays
+ * for one ball, on the phone that has just spent thirty seconds tracking a body.
+ * The expression is the same one, in the same order, so the arithmetic is
+ * unchanged down to the last bit.
+ */
+const det3 = (
+  a: number, b: number, c: number,
+  d: number, e: number, f: number,
+  g: number, h: number, i: number,
+) => a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
+
+/**
+ * Least-squares quadratic through (t, y). Returns [c0, c1, c2] or undefined.
+ *
+ * `curvature`, when given, is a band the fitted t² coefficient must land in —
+ * `undefined` comes back when it does not. It is an early exit rather than a
+ * courtesy: `c2` is the one coefficient the RANSAC gate below judges a seed on,
+ * it needs only two of the four determinants, and the overwhelming majority of
+ * triples fail it. Checking it here skips the other two for all of them.
+ */
+function fitQuadratic(
+  pts: { t: number; y: number }[],
+  curvature?: { lo: number; hi: number },
+): [number, number, number] | undefined {
   if (pts.length < 3) return undefined
   // Centre time before forming the normal equations. In absolute clip time a
   // serve half a minute into a basket puts t⁴ terms near 10¹³ while the true
@@ -229,23 +257,17 @@ function fitQuadratic(pts: { t: number; y: number }[]): [number, number, number]
     b2 += t2 * y
   }
   // Solve the 3×3 normal equations by Cramer's rule.
-  const m = [
-    [s0, s1, s2],
-    [s1, s2, s3],
-    [s2, s3, s4],
-  ]
-  const det3 = (a: number[][]) =>
-    a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) -
-    a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0]) +
-    a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0])
-
-  const d = det3(m)
+  const d = det3(s0, s1, s2, s1, s2, s3, s2, s3, s4)
   if (Math.abs(d) < 1e-12) return undefined
-  const withCol = (col: number, v: number[]) => m.map((row, i) => row.map((x, j) => (j === col ? v[i] : x)))
-  const rhs = [b0, b1, b2]
-  const a0 = det3(withCol(0, rhs)) / d
-  const a1 = det3(withCol(1, rhs)) / d
-  const a2 = det3(withCol(2, rhs)) / d
+
+  // The quadratic coefficient first, and alone when a band was given. Centring
+  // time does not change it — a shift in t leaves the t² term untouched — so
+  // this is already the coefficient the caller will read off the expansion.
+  const a2 = det3(s0, s1, b0, s1, s2, b1, s2, s3, b2) / d
+  if (curvature && (a2 < curvature.lo || a2 > curvature.hi)) return undefined
+
+  const a0 = det3(b0, s1, s2, b1, s2, s3, b2, s3, s4) / d
+  const a1 = det3(s0, b0, s2, s1, b1, s3, s2, b2, s4) / d
   // y = a0 + a1·(t−t0) + a2·(t−t0)², expanded back to powers of t.
   return [a0 - a1 * t0 + a2 * t0 * t0, a1 - 2 * a2 * t0, a2]
 }
@@ -671,22 +693,43 @@ export function trackBall(
 
   let best: { coeffs: [number, number, number]; inliers: BallSample[] } | undefined
 
+  // Image y grows downwards, so a falling ball curves positively. The band is
+  // halved because the physical quantity is 2·c₂, and the fit gates on c₂ —
+  // both are exact, so this is the same test one step earlier.
+  const curvature = { lo: gLo / 2, hi: gHi / 2 }
+  // One array, rewritten per triple. There are on the order of 10⁵ of them and
+  // the fit only reads `.t` and `.y` off each element, so building a fresh
+  // three-element array of fresh objects for every one was pure garbage.
+  const seed: BallSample[] = [pool[0], pool[0], pool[0]]
+
   for (let i = 0; i < pool.length; i++) {
+    seed[0] = pool[i]
     for (let j = i + 1; j < pool.length; j++) {
       if (pool[j].t === pool[i].t) continue
+      seed[1] = pool[j]
       for (let k = j + 1; k < pool.length; k++) {
         if (pool[k].t === pool[j].t || pool[k].t === pool[i].t) continue
+        seed[2] = pool[k]
 
-        const coeffs = fitQuadratic([pool[i], pool[j], pool[k]].map((p) => ({ t: p.t, y: p.y })))
+        const coeffs = fitQuadratic(seed, curvature)
         if (!coeffs) continue
-        // Image y grows downwards, so a falling ball curves positively.
-        const g = 2 * coeffs[2]
-        if (g < gLo || g > gHi) continue
 
+        const [k0, k1, k2] = coeffs
         const inliers: BallSample[] = []
         let lastT = -Infinity
-        for (const p of pool) {
-          const predicted = coeffs[0] + coeffs[1] * p.t + coeffs[2] * p.t * p.t
+        const target = best ? best.inliers.length : 0
+        for (let n = 0; n < pool.length; n++) {
+          // Nothing left to find. Every remaining point could agree and this
+          // hypothesis would still only tie, and a tie loses to the incumbent on
+          // the strict comparison below — so the rest of the scan cannot change
+          // the answer. This is the whole cost of the search: the triple loop is
+          // cubic in the pool and each triple used to walk all of it, which on a
+          // densely detected toss is tens of millions of comparisons in the
+          // middle of the report. Counting what is left is exact rather than
+          // heuristic, so the fit that comes out is the same fit as before.
+          if (inliers.length + (pool.length - n) <= target) break
+          const p = pool[n]
+          const predicted = k0 + k1 * p.t + k2 * p.t * p.t
           if (Math.abs(p.y - predicted) > band) continue
           // One point per frame — the strongest detection that fits, since the
           // candidates arrive ranked by blob score. Two from the same frame both

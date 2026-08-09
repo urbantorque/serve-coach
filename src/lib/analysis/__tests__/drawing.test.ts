@@ -5,11 +5,10 @@
  * looking at it, and it is also the piece a player looks at most — it is what
  * the keyframe stills carry, and those outlive the video. A recording stub
  * standing in for a canvas context is enough to assert the things that actually
- * go wrong: a limb drawn to a landmark that was never populated, a racket drawn
- * from knuckles nobody could see, or a reference pose quietly not drawn at all.
+ * go wrong: a limb drawn to a landmark that was never populated, or a racket drawn
+ * from knuckles nobody could see.
  */
 import { LM } from '../geometry'
-import { modelPoseAt } from '../modelServe'
 import { detectServe } from '../phases'
 import { drawSkeleton, fitContain } from '../../pose/skeleton'
 import { buildServe } from './syntheticServe'
@@ -183,46 +182,6 @@ check('no racket is drawn when the knuckles are lost', () => {
   })
   const visible = drawOnce().strokes.length
   assert(strokes.length < visible, 'a racket was drawn from knuckles nobody could see')
-})
-
-heading('Drawing the target shape')
-
-check('the reference pose is drawn, dashed, and only when asked for', () => {
-  const plain = drawOnce()
-  const frames = plain.frames
-  const skel = plain.skel
-  const ghost = modelPoseAt('trophy', {
-    frame: frames[skel.keys.trophy],
-    bodyHeight: skel.bodyHeight,
-    racket: skel.racket,
-  })
-  assert(ghost !== undefined, 'no reference pose was produced')
-
-  const withGhost = drawOnce({ ghost })
-  const dashed = withGhost.strokes.filter((s) => s.dashed)
-  note(`${dashed.length} dashed segments for the reference pose`)
-  assert(dashed.length >= 10, `the reference skeleton drew only ${dashed.length} segments`)
-  assert(
-    plain.strokes.filter((s) => s.dashed).length === 0,
-    'dashed lines appeared without a reference pose being supplied',
-  )
-})
-
-check('the reference pose is drawn under the player, not over them', () => {
-  const frames = buildServe({}, FPS)
-  const skel = detectServe(frames, FPS)
-  const ghost = modelPoseAt('trophy', {
-    frame: frames[skel.keys.trophy],
-    bodyHeight: skel.bodyHeight,
-    racket: skel.racket,
-  })!
-  const { strokes } = drawOnce({ ghost })
-  const lastDashed = strokes.map((s) => s.dashed).lastIndexOf(true)
-  const firstSolid = strokes.findIndex((s) => !s.dashed)
-  assert(
-    firstSolid > lastDashed,
-    'the player was drawn before the reference, so the reference covers them',
-  )
 })
 
 heading('Drawing the ball')

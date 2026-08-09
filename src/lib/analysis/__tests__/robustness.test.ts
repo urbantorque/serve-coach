@@ -37,7 +37,6 @@ import { statusOf } from '../geometry'
 import { DEFAULT_TOLERANCE, framingIssues, packFrames, unpackFrames, validateFixture, type Fixture } from '../groundTruth'
 import { IMPLAUSIBLE_JUMP, LM, MIN_OPENING_SWEEP_DEG, maxTrackingJump, median, trunkCoil } from '../geometry'
 import { measure } from '../metrics'
-import { modelPoseAt, modelServe } from '../modelServe'
 import {
   MIN_SERVE_GAP,
   SCAN_BUDGET,
@@ -1027,73 +1026,6 @@ check('a report with no frames cannot be re-scored, and says so', () => {
   // back to a real re-run instead of showing stale scores under new targets.
   const stored = { ...analysisFrom('flat'), frames: [] }
   assert(rescore(stored, 'kick') === undefined, 're-scored a report with no landmarks')
-})
-
-/* --------------------------------------------------------- the target shape */
-
-heading('The shape the targets describe')
-
-check('the model serve scores well against its own bands', () => {
-  // The ghost is built from the middle of every target band, so if the app
-  // does not consider it a good serve then the shape and the numbers have come
-  // apart — and the player is being shown something to copy that the report
-  // would then mark down.
-  const model = modelServe()
-  const skel = detectServe(model.frames, 50)
-  const fundamentals = measure(model.frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
-  for (const f of fundamentals) {
-    note(`${f.label}: ${f.score}`)
-    within(f.score, 80, 100, `${f.label} on the model serve`)
-  }
-})
-
-check('the model is scaled and placed onto the player it is drawn over', () => {
-  // A taller player filmed closer must get a larger ghost, aligned on their own
-  // hips — otherwise it is a picture of somebody else standing nearby.
-  const frames = buildServe({}, FPS)
-  const skel = detectServe(frames, FPS)
-  const player = frames[skel.keys.trophy]
-  const pose = modelPoseAt('trophy', {
-    frame: player,
-    bodyHeight: skel.bodyHeight,
-    racket: skel.racket,
-  })
-  assert(pose !== undefined, 'no model pose produced for the trophy')
-
-  const hipOf = (lms: { x: number; y: number }[]) => ({
-    x: (lms[LM.leftHip].x + lms[LM.rightHip].x) / 2,
-    y: (lms[LM.leftHip].y + lms[LM.rightHip].y) / 2,
-  })
-  const mine = hipOf(player.image)
-  const ghost = hipOf(pose!)
-  near(ghost.x, mine.x, 1e-6, 'ghost hip x')
-  near(ghost.y, mine.y, 1e-6, 'ghost hip y')
-
-  // And the same size: head-to-hip should match the player's within a few percent.
-  const reach = (lms: { x: number; y: number }[]) =>
-    Math.abs(lms[LM.nose].y - hipOf(lms).y)
-  near(reach(pose!) / reach(player.image), 1, 0.12, 'ghost scale against the player')
-})
-
-check('a left-hander is shown a left-handed model', () => {
-  const frames = buildServe({}, FPS)
-  const skel = detectServe(frames, FPS)
-  const player = frames[skel.keys.contact]
-  const asRight = modelPoseAt('contact', {
-    frame: player, bodyHeight: skel.bodyHeight, racket: 'right',
-  })!
-  const asLeft = modelPoseAt('contact', {
-    frame: player, bodyHeight: skel.bodyHeight, racket: 'left',
-  })!
-  const hipX = (player.image[LM.leftHip].x + player.image[LM.rightHip].x) / 2
-  // At contact the racket wrist is well clear of the body centre; mirroring must
-  // put it on the other side, not merely relabel the landmarks.
-  const rightSide = Math.sign(asRight[LM.rightWrist].x - hipX)
-  const leftSide = Math.sign(asLeft[LM.leftWrist].x - hipX)
-  assert(
-    rightSide !== 0 && leftSide !== 0 && rightSide !== leftSide,
-    'the model was not mirrored for a left-hander',
-  )
 })
 
 /* ------------------------------------------------------------- serve types */

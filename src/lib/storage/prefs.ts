@@ -33,8 +33,6 @@ export interface Prefs {
   seenFilmingGuide: boolean
   /** Whether persistent storage has been requested from the browser. */
   askedToPersist: boolean
-  /** Whether the "add to home screen" nudge has been dismissed. */
-  dismissedInstallPrompt: boolean
 }
 
 const KEY = 'serve-coach-prefs'
@@ -43,7 +41,6 @@ export const DEFAULTS: Prefs = {
   serveType: 'flat',
   seenFilmingGuide: false,
   askedToPersist: false,
-  dismissedInstallPrompt: false,
 }
 
 export function readPrefs(): Prefs {
