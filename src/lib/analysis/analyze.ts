@@ -1,5 +1,5 @@
 import {
-  captureBitmaps,
+  readBitmaps,
   captureThumbnails,
   extractFrames,
   loadVideo,
@@ -313,30 +313,35 @@ async function findBall(
   if (to - from < 4 || !(bodyHeight > 0)) return undefined
 
   const times = frames.slice(from, to + 1).map((f) => f.t)
-  let shots: { t: number; bitmap: ImageData }[]
-  try {
-    shots = await captureBitmaps(video, times)
-  } catch {
-    return undefined
-  }
-  if (signal?.aborted || shots.length < 5) return undefined
 
   // The ball is above the player's shoulders for essentially all of its flight,
   // so everything below that line is excluded — which removes the player's kit,
   // their moving limbs and the court surface in one go, and those are what a
   // colour-and-motion detector would otherwise trip over.
+  //
+  // Read off the pose, so it is known before a single pixel is fetched.
   const shoulderY = Math.min(
     ...frames
       .slice(from, to + 1)
       .map((f) => Math.min(f.image[LM.leftShoulder].y, f.image[LM.rightShoulder].y)),
   )
+  const belowY = Math.min(1, shoulderY + 0.05)
 
-  const perFrame = shots.map((shot, i) => ({
-    t: shot.t,
-    candidates: findCandidates(shot.bitmap, i > 0 ? shots[i - 1].bitmap : undefined, {
-      belowY: Math.min(1, shoulderY + 0.05),
-    }),
-  }))
+  // Detected as the pixels arrive rather than after all of them have. The
+  // candidates for a frame are a few numbers; the frame itself is half a
+  // megabyte, and the window is dozens of frames long.
+  let perFrame: { t: number; candidates: ReturnType<typeof findCandidates> }[]
+  try {
+    perFrame = await readBitmaps(
+      video,
+      times,
+      (frame, previous, t) => ({ t, candidates: findCandidates(frame, previous, { belowY }) }),
+      { signal },
+    )
+  } catch {
+    return undefined
+  }
+  if (signal?.aborted || perFrame.length < 5) return undefined
 
   // Gravity in frame-normalised units. The player's own measured height is the
   // only real-world scale the pipeline has: `bodyHeight` image units span about

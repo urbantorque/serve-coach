@@ -344,16 +344,32 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
 
   /* ------------------------------------------------------------ controls --- */
 
-  const sizeCanvas = () => {
+  /**
+   * Match the canvas to the video box. Reports whether the backing store was
+   * actually reallocated, and so whether the overlay on it was destroyed.
+   *
+   * Assigning `canvas.width` resets the bitmap whether or not the value changed,
+   * so an unguarded call on every resize event threw away a multi-megabyte
+   * buffer, zeroed a new one and forced a full repaint of the overlay for
+   * nothing. A phone fires a burst of these for the keyboard, the URL bar
+   * collapsing and any rotation. The CSS size is still written every time — it
+   * is a cheap string and it tracks the sub-pixel width the rounded bitmap
+   * cannot.
+   */
+  const sizeCanvas = (): boolean => {
     const canvas = canvasRef.current
     const videoEl = videoRef.current
-    if (!canvas || !videoEl) return
+    if (!canvas || !videoEl) return false
     const rect = videoEl.getBoundingClientRect()
     const dpr = Math.min(2, window.devicePixelRatio || 1)
-    canvas.width = Math.round(rect.width * dpr)
-    canvas.height = Math.round(rect.height * dpr)
     canvas.style.width = `${rect.width}px`
     canvas.style.height = `${rect.height}px`
+    const w = Math.round(rect.width * dpr)
+    const h = Math.round(rect.height * dpr)
+    if (canvas.width === w && canvas.height === h) return false
+    canvas.width = w
+    canvas.height = h
+    return true
   }
 
   // Empty deps on purpose. Assigning `canvas.width` clears the canvas, so this
@@ -365,8 +381,7 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     // Resizing clears the canvas, so a paused player would otherwise be left
     // blank after a rotation until something else happened to trigger a redraw.
     const onResize = () => {
-      sizeCanvas()
-      drawRef.current()
+      if (sizeCanvas()) drawRef.current()
     }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)

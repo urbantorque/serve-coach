@@ -219,7 +219,16 @@
   font-size: 12.5px;
   font-weight: 560;
   color: var(--fg-muted);
-  transition: all var(--fast) var(--ease);
+  /* Named rather than `all`. The active pill is a heavier weight, and `all`
+     interpolated it — the system UI stacks here are variable fonts, so every
+     phase change re-shaped the text and reflowed the whole pill row for the
+     length of the transition, six times per loop of the serve. Weight now
+     snaps, which is what it looked like it was doing anyway. */
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
 .phase-pill:active {

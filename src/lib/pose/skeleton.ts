@@ -87,6 +87,9 @@ const PALETTE = {
   plateLabel: 'rgba(238, 242, 246, 0.72)',
 } as const
 
+/** Colour steps along the ball's flight. Eight is past the eye's resolution here. */
+const BALL_PATH_BANDS = 8
+
 /** The trail's two passes, pre-split so the alpha can be spliced in per bucket. */
 const TRAIL_UNDER_RGB = '0, 0, 0'
 const TRAIL_ACTIVE_RGB = '205, 249, 74'
@@ -384,18 +387,35 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       ctx.strokeStyle = PALETTE.under
       ctx.lineWidth = 4.4 * scale
       ctx.stroke()
+      // Graded in bands rather than a stroke per segment. The arc is evaluated
+      // at a fine even step, so a per-segment gradient meant thirty-odd
+      // `beginPath`/`stroke` pairs and thirty-odd freshly built `rgba(...)`
+      // strings every repaint — on its own, about half the rasterising work of
+      // the entire overlay, for one curve. The grade it produced was far finer
+      // than anything visible: across the whole flight the alpha moves 0.16 to
+      // 0.56 and the width by half a pixel, so eight steps of it look the same
+      // and cost a quarter as much. Consecutive bands share their end point and
+      // the joins are round, so the flight is still one continuous line.
       const [r0, g0, b0] = PALETTE.ballOld
       const [r1, g1, b1] = PALETTE.ballNew
-      for (let i = 1; i < pts.length; i++) {
-        const age = i / (pts.length - 1)
+      const segments = pts.length - 1
+      const bands = Math.min(BALL_PATH_BANDS, segments)
+      for (let band = 0; band < bands; band++) {
+        const from = Math.round((band * segments) / bands)
+        const to = Math.round(((band + 1) * segments) / bands)
+        if (to <= from) continue
+        // The mean of the ages the per-segment loop would have used here, so the
+        // band sits where its segments' colours averaged out rather than at one
+        // end of them.
+        const age = (from + 1 + to) / 2 / segments
         const r = Math.round(r0 + (r1 - r0) * age)
         const g = Math.round(g0 + (g1 - g0) * age)
         const b = Math.round(b0 + (b1 - b0) * age)
         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.16 + 0.4 * age})`
         ctx.lineWidth = (1.3 + 0.5 * age) * scale
         ctx.beginPath()
-        ctx.moveTo(pts[i - 1].x, pts[i - 1].y)
-        ctx.lineTo(pts[i].x, pts[i].y)
+        ctx.moveTo(pts[from].x, pts[from].y)
+        for (let i = from + 1; i <= to; i++) ctx.lineTo(pts[i].x, pts[i].y)
         ctx.stroke()
       }
     }

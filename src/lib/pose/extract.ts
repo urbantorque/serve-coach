@@ -504,26 +504,34 @@ export async function preflight(
 }
 
 /**
- * Read raw pixels at each of `times`, downscaled.
+ * Read raw pixels at each of `times`, downscaled, one frame at a time.
  *
  * Only the ball tracker needs pixels, and it needs very few of them: a tennis
  * ball is a handful of pixels across even at full resolution, and the detector
  * works on colour, motion and roundness rather than detail.
  *
- * Every frame in the window is held at once, so the size is worth being exact
- * about rather than reassuring about. At the default 256 wide each `ImageData`
- * is about 147 KB, and a toss-to-contact window runs 40–55 frames, so the live
- * cost is 6–8 MB — held only until `findBall` returns. That is two orders of
- * magnitude under the same window at full resolution, which is the saving that
- * matters on a phone; it was previously described here as "under a megabyte",
- * which was wrong by roughly eightfold and would have hidden a real regression
- * in the window size from anybody who trusted it.
+ * `read` is handed each frame and the one before it — everything the tracker
+ * looks at — and whatever it returns is kept instead of the pixels. Two
+ * `ImageData` are live at a time, and that is the whole point of the shape.
+ * This used to capture the window and hand back the array: at the default 256
+ * wide a portrait frame is 256×455, so 466 KB each rather than the 147 KB a
+ * landscape frame costs, and a toss-to-contact window of 40–55 frames put
+ * 19–26 MB resident on a phone that is concurrently holding a 9 MB pose model
+ * and the MediaPipe heap. The app recommends slow motion, which stretches that
+ * window further. Peak is now under a megabyte at any window length.
+ *
+ * A frame that will not seek is skipped rather than stamped with a time it is
+ * not from, which would put the ball on a parabola through moments it never
+ * occupied. The tracker copes with gaps — the ball is lost against sky on
+ * plenty of frames — so a miss is an ordinary outcome.
  */
-export async function captureBitmaps(
+export async function readBitmaps<T>(
   video: HTMLVideoElement,
   times: number[],
-  maxWidth = 256,
-): Promise<{ t: number; bitmap: ImageData }[]> {
+  read: (frame: ImageData, previous: ImageData | undefined, t: number) => T,
+  opts: { signal?: AbortSignal; maxWidth?: number } = {},
+): Promise<T[]> {
+  const { signal, maxWidth = 256 } = opts
   const scale = Math.min(1, maxWidth / Math.max(1, video.videoWidth))
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, Math.round(video.videoWidth * scale))
@@ -533,14 +541,18 @@ export async function captureBitmaps(
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
   if (!ctx) return []
 
-  const out: { t: number; bitmap: ImageData }[] = []
+  const out: T[] = []
+  let previous: ImageData | undefined
   for (const t of times) {
-    // Pixels stamped with a time they are not from would put the ball on a
-    // parabola through moments it never occupied. The tracker copes with gaps —
-    // the ball is lost against sky on plenty of frames — so a miss is dropped.
+    // Checked per frame rather than once at the end. Cancelling used to leave
+    // the whole window still to capture, seek by seek, against a report nobody
+    // was going to see.
+    if (signal?.aborted) break
     if (!(await seekTo(video, t))) continue
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    out.push({ t, bitmap: ctx.getImageData(0, 0, canvas.width, canvas.height) })
+    const frame = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    out.push(read(frame, previous, t))
+    previous = frame
   }
   return out
 }
