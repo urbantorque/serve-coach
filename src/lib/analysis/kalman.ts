@@ -135,12 +135,38 @@ export interface StabilisedTrack {
   /**
    * Median distance the raw detections moved between samples.
    *
-   * The scale the innovation has to be read against. A prediction error of two
-   * centimetres is nothing on a hand crossing ten between frames and is the
-   * whole motion on a hand crossing three — and which of those a clip produces
-   * is decided by its frame rate, not by how good it is.
+   * Carried for callers that want the raw scale of the motion. It is *not* what
+   * the innovation is read against any more — see `wildness`.
    */
   step: number
+  /**
+   * How much the raw detections zig-zag, in frame units.
+   *
+   * Divided by the player's standing height where it is read — `blurOf` — since
+   * that is where the height is known. The median second difference of the
+   * unfiltered track: how far each detection
+   * sits from the straight line between its neighbours. A hand on a smooth arc
+   * produces a small one whatever it is doing; a hand the model is guessing at
+   * through a smear produces a large one, because the guesses are independent
+   * frame to frame and the truth is not.
+   *
+   * Measured against the player's own height, which is the one scale in the
+   * picture that does not move with the frame rate. The previous statistic
+   * divided the filter's prediction error by `step`, the median inter-frame
+   * travel, on the documented grounds that this "lands in the same place at
+   * every rate". It does not: `step` halves when the rate doubles and the
+   * tracker's per-frame jitter does not, so the identical clip scored 0.02 at
+   * 24 fps and 0.93 at 120 — and the refusal it drove tells the player to refilm
+   * in slow motion, which makes it worse. Measured across 24/30/50/120 fps at
+   * fixed jitter, this reads within 1.0–1.5x of itself where the old ratio
+   * moved 2.0–2.3x, and the difference is concentrated exactly in the band
+   * where clips were being turned away.
+   *
+   * The one thing it also picks up is real curvature in the swing itself, which
+   * at 24 fps is about 0.008 of a body height. That sits an order below the
+   * refusal and is the reason this is a median rather than a mean.
+   */
+  wildness: number
 }
 
 /**
@@ -177,7 +203,7 @@ export function stabilise(
     weights[i] = v
     seenSum += v
   }
-  if (n === 0) return { points: [], innovation: 0, seen: 0, step: 0 }
+  if (n === 0) return { points: [], innovation: 0, seen: 0, step: 0, wildness: 0 }
 
   const reversed = [...times].reverse().map((t, _i, arr) => arr[0] - t + times[0])
   const backwards = (forward: number[]) =>
@@ -206,14 +232,26 @@ export function stabilise(
     residuals.push(Math.hypot(fx.innovation[i], fy.innovation[i]))
     steps.push(Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]))
   }
-  residuals.sort((a, b) => a - b)
-  steps.sort((a, b) => a - b)
+
+  // Read off the raw detections rather than anything the filter produced: the
+  // filter's job is to remove exactly the zig-zag being measured here.
+  const zigzag: number[] = []
+  for (let i = 1; i < n - 1; i++) {
+    zigzag.push(Math.hypot(xs[i - 1] - 2 * xs[i] + xs[i + 1], ys[i - 1] - 2 * ys[i] + ys[i + 1]))
+  }
+
+  const mid = (a: number[]) => {
+    if (!a.length) return 0
+    const sorted = [...a].sort((p, q) => p - q)
+    return sorted[sorted.length >> 1]
+  }
 
   return {
     points,
-    innovation: residuals.length ? residuals[residuals.length >> 1] : 0,
+    innovation: mid(residuals),
     seen: n ? seenSum / n : 0,
-    step: steps.length ? steps[steps.length >> 1] : 0,
+    step: mid(steps),
+    wildness: mid(zigzag),
   }
 }
 
@@ -225,22 +263,34 @@ export function stabilise(
  * follow a plausible motion. Either alone is survivable; the pair together is
  * what a blurred serve looks like.
  *
- * The prediction error is read against the motion itself rather than against the
- * player's height, because frame rate decides both. Measured on the same serve,
- * the raw error at 120 fps is a tenth of what it is at 24 — not because the clip
- * is better but because there is a twentieth of a second less to be wrong about.
- * As a fraction of how far the hand travelled between samples it lands in the
- * same place at every rate, which is the only version of this number that can
- * carry a threshold. A clean track sits near a third; an incoherent one
- * approaches one, where the error is the size of the motion.
+ * The zig-zag is read against the player's standing height, which is the only
+ * scale in the picture the frame rate does not move. It used to be read against
+ * `step`, the distance the hand travelled between samples, on the stated grounds
+ * that this made it rate-invariant. Measured, it did the opposite: `step` halves
+ * when the rate doubles while the tracker's per-frame jitter does not, so one
+ * clip at a fixed jitter scored 0.02 at 24 fps and 0.93 at 120. Every refusal in
+ * the app's own scrappy-clip ensemble came through this gate, and the copy on
+ * the refusal tells the player to refilm in slow motion — advice that made the
+ * number worse and refused them twice.
+ *
+ * The band is set from where the engine stops missing faults and starts naming
+ * the wrong ones, measured by dialling a known fault into the synthetic rig and
+ * sweeping the tracker jitter. Below CLEAN sits everything up to and including
+ * the rig's own figure for a well-lit modern phone; a dialled fault is still
+ * found on two clips in three there and the third reports nothing rather than
+ * something false. Past UNREADABLE — around twice the rig's figure for dusk or
+ * a cluttered background — the flaws that come back start being inventions of
+ * the noise, in a different group of the hierarchy and at a higher severity
+ * than the real one. In between the clip is measured, the swing readings are
+ * hedged and the whole-clip confidence falls, which is what the rest of the
+ * pipeline is built to carry.
  */
+const CLEAN_ZIGZAG = 0.02
+const UNREADABLE_ZIGZAG = 0.085
+
 export function blurOf(track: StabilisedTrack, bodyHeight: number): number {
-  // A hand that is barely moving would divide by almost nothing, so the scale
-  // has a floor: half a percent of standing height, which is under the tracker's
-  // own jitter and therefore never the dominant term on a real swing.
-  const scale = Math.max(track.step, 0.005 * Math.max(bodyHeight, 1e-6))
-  const ratio = scale > 0 ? track.innovation / scale : 0
-  const wildness = clamp((ratio - 0.35) / 0.45, 0, 1)
+  const zigzag = track.wildness / Math.max(bodyHeight, 1e-6)
+  const wildness = clamp((zigzag - CLEAN_ZIGZAG) / (UNREADABLE_ZIGZAG - CLEAN_ZIGZAG), 0, 1)
   const unseen = clamp((0.75 - track.seen) / 0.5, 0, 1)
   return clamp(Math.max(wildness, unseen * 0.9), 0, 1)
 }

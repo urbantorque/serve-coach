@@ -12,7 +12,9 @@
  * thing to fix and exactly one drill, chosen by what causes what rather than by
  * what scored worst.
  */
+import { assessQuality } from '../analyze'
 import { DRILLS } from '../coaching'
+import { metricConfidence, SOFT_MEASUREMENT } from '../confidence'
 import { diagnose } from '../diagnose'
 import type { FlawId } from '../flaws'
 import { detectServe } from '../phases'
@@ -362,6 +364,77 @@ check('the same serve gets the same verdict at every frame rate', () => {
   }
 })
 
+/*
+ * The blur figure used to divide the filter's prediction error by `step`, the
+ * distance the hand travelled between samples. `step` halves when the frame rate
+ * doubles and a tracker's per-frame jitter does not, so the identical clip
+ * scored 0.02 at 24 fps and 0.93 at 120 — and every single refusal in the
+ * ensemble below came through that gate, on copy telling the player to refilm in
+ * slow motion. These three pin the shape of what replaced it: the number means
+ * the same thing at every rate, an ordinary phone clip is not hedged for it, and
+ * a clip that has genuinely stopped describing a swing is still refused.
+ */
+check('the same jitter reads the same blur at every frame rate', () => {
+  const blurAt = (fps: number) =>
+    pipeline({ noise: 0.012, seed: 7 }, fps).resilience.blur
+  const rates = [24, 30, 50, 120]
+  const seen = rates.map(blurAt)
+  note(rates.map((f, i) => `${f}: ${seen[i].toFixed(2)}`).join(', '))
+  const spread = Math.max(...seen) - Math.min(...seen)
+  assert(spread < 0.3, `blur moved ${spread.toFixed(2)} across frame rate on one clip`)
+})
+
+check('an ordinary phone clip is not called blurred', () => {
+  // The rig's own figure for a well-lit clip from a modern phone.
+  for (const fps of [30, 60, 120]) {
+    const { resilience, result } = pipeline({ noise: 0.008, seed: 11 }, fps)
+    assert(
+      result.status === 'ok',
+      `a typical phone clip at ${fps} fps was refused: ${result.reason}`,
+    )
+    assert(
+      resilience.blur < LIMITS.blur,
+      `a typical phone clip at ${fps} fps read blur ${resilience.blur}`,
+    )
+  }
+})
+
+check('a smeared swing is measured and hedged, not thrown away', () => {
+  // Between the rig's figure for a poorly-lit clip and the point where the
+  // engine starts naming faults the noise invented — the band that used to be
+  // refused outright and now has to come back hedged instead.
+  const noise = 0.025
+  const frames = buildServe({ noise, seed: 5 }, PHONE_FPS)
+  const skel = detectServe(frames, PHONE_FPS)
+  const resilience = assessResilience(frames, skel)
+  const result = triage(diagnose(frames, skel, { tier: 5 }), resilience)
+
+  assert(result.status === 'ok', `a readable-but-smeared clip was refused: ${result.reason}`)
+  assert(resilience.blur > 0.3, `blur read only ${resilience.blur} on a visibly smeared clip`)
+
+  const quality = assessQuality(frames, skel, PHONE_FPS, resilience.blur)
+  assert(
+    quality.warnings.some((w) => w.includes('racket arm')),
+    'a smeared swing was measured without telling the player it was smeared',
+  )
+
+  const ctx = {
+    frames,
+    skel,
+    swingSamples: quality.swingSamples,
+    view: quality.view,
+    blur: resilience.blur,
+  }
+  // The smear is measured on the racket wrist, so it may only cost the readings
+  // taken from it. A knee angle at the trophy is as readable as it ever was, and
+  // hedging it would teach the player to ignore the hedges that matter.
+  const swing = metricConfidence('contactHeight', ctx)
+  const knee = metricConfidence('kneeBend', ctx)
+  note(`contact height ${swing.toFixed(2)}, knee bend ${knee.toFixed(2)}`)
+  assert(swing < knee, `the smeared swing (${swing}) was trusted as much as the knee (${knee})`)
+  assert(knee > SOFT_MEASUREMENT, `a knee angle was hedged for a blurred racket hand (${knee})`)
+})
+
 check('a shaky, low-light, phone-rate clip does not crash and reports honestly', () => {
   const { result } = pipeline({ noise: 0.012, dropout: 0.2, seed: 31, cameraYaw: 58 }, PHONE_FPS)
   assert(result.schema === 1, 'the output lost its shape')
@@ -376,6 +449,7 @@ check('a shaky, low-light, phone-rate clip does not crash and reports honestly',
 
 check('nothing in the ensemble of bad clips throws', () => {
   let refused = 0
+  let hedged = 0
   for (const seed of [2, 13, 29, 41, 57]) {
     for (const fps of [24, 30, 50]) {
       for (const dials of [
@@ -391,10 +465,21 @@ check('nothing in the ensemble of bad clips throws', () => {
           'a refusal came back with no reason',
         )
         if (result.status === 'rejected') refused++
+        else if (result.quality.confidence < 0.7) hedged++
       }
     }
   }
-  note(`${refused} of 60 scrappy clips refused rather than guessed at`)
+  // Both numbers, because the first on its own stopped meaning what it says.
+  // Every one of these clips used to be refused or not on the blur gate alone,
+  // and the gate was measuring frame rate as much as blur. The ensemble is
+  // scrappy but readable — jitter up to the rig's poor-light figure and a bit
+  // beyond — so the answer that should come back is a hedged report, not a dead
+  // end. What must never grow is a fourth category: read, and read confidently.
+  note(`${refused} of 60 scrappy clips refused, ${hedged} read at collapsed confidence`)
+  assert(
+    refused + hedged > 30,
+    `only ${refused + hedged} of 60 deliberately scrappy clips were either refused or hedged`,
+  )
 })
 
 check('confidence falls as the clip gets worse', () => {

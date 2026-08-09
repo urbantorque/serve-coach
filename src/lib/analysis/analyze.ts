@@ -107,6 +107,15 @@ export const MAX_CONSISTENCY_SERVES = 6
 export const LONG_CLIP_SECONDS = 45
 
 /**
+ * The blur at which the player is told their swing numbers are rough.
+ *
+ * Below the point where `blurTrust` has taken a swing measurement under
+ * `SOFT_MEASUREMENT`, so the sentence arrives with, or just before, the hedged
+ * numbers it explains rather than after them.
+ */
+const BLUR_WORTH_SAYING = 0.4
+
+/**
  * Measure every serve in a clip so they can be compared against each other.
  *
  * Each serve costs a full pass over its own couple of seconds, so this is
@@ -359,7 +368,13 @@ async function findBall(
 const isCancelled = (err: unknown) =>
   typeof err === 'object' && err !== null && (err as Error).name === 'Cancelled'
 
-export function assessQuality(frames: Frame[], skel: Skeleton, sampledFps: number): Quality {
+export function assessQuality(
+  frames: Frame[],
+  skel: Skeleton,
+  sampledFps: number,
+  /** How smeared the racket hand's track is, 0–1, from `blurOf`. */
+  blur = 0,
+): Quality {
   const win = frames.slice(skel.keys.ready, skel.keys.finish + 1)
   const visibility = mean(win.map(keyVisibility))
   // Counted rather than subtracted, for the reason given in `capturedSamples`:
@@ -387,6 +402,17 @@ export function assessQuality(frames: Frame[], skel: Skeleton, sampledFps: numbe
   }
   if (visibility < 0.65) {
     warnings.push(cue('Parts of your body blurred out. Add light or find a plainer background.'))
+  }
+  // Said separately from the visibility line above, because they are different
+  // failures and only one of them is fixed by more light. A smeared racket hand
+  // comes back at full visibility — the model returns a wrist for every frame
+  // whether or not it can see one — so this is the case where the tracking looks
+  // healthy and the coordinates are guesses. Named for the arm it was measured
+  // on, since that is what the softened numbers on the report will be.
+  if (blur >= BLUR_WORTH_SAYING) {
+    warnings.push(
+      cue('Your racket arm moved faster than the camera could follow, so the swing numbers are rough.'),
+    )
   }
   // Four samples across a ~150 ms drop-to-contact leaves ±30 ms of quantisation
   // on a measurement whose whole target band is only 120 ms wide, so below that
@@ -422,7 +448,13 @@ export function assessQuality(frames: Frame[], skel: Skeleton, sampledFps: numbe
       // some of these measurements are of somebody else. Halving the whole figure
       // rather than adding another weighted term, because no amount of good
       // lighting and frame rate makes a report built from two bodies trustworthy.
-      (switched ? 0.5 : 1),
+      (switched ? 0.5 : 1) *
+      // Blur multiplies rather than joining the weighted sum, for the same
+      // reason: the four terms above all ask how well the body was *seen*, and a
+      // smeared hand scores full marks on every one of them. It is the question
+      // of whether the coordinates were measured or inferred, and it applies to
+      // whatever the other four concluded.
+      clamp(1 - 0.5 * blur, 0.4, 1),
     0.05,
     1,
   )
@@ -506,9 +538,11 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
   // between a flat scoring and a kick one, and reports saved before this mattered
   // have no such field to read. It costs a handful of frames' arithmetic, and
   // omitting it would quietly un-hedge the depth measurements the moment a player
-  // changed the serve type on a clip filmed dead side-on.
-  const depthUnreliable = assessSpatial(analysis.frames, skel.keys.ready, skel.bodyHeight)
-    .depth_unreliable
+  // changed the serve type on a clip filmed dead side-on. The same argument, and
+  // the same trap, applies to blur: the swing was as smeared under one serve type
+  // as under the other.
+  const resilience = assessResilience(analysis.frames, skel)
+  const depthUnreliable = resilience.spatial.depth_unreliable
 
   const fundamentals = measure(analysis.frames, skel, analysis.quality.view === 'side', {
     ball: analysis.ball,
@@ -520,6 +554,7 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
       view: analysis.quality.view,
       ballConfidence: analysis.ball?.confidence,
       depthUnreliable,
+      blur: resilience.blur,
     },
   })
 
@@ -743,8 +778,6 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     applied = { roll_deg: tilt.roll_deg, ...pivot }
   }
 
-  const quality = assessQuality(frames, skel, fps)
-
   // Read before anything is measured, not after. `assessResilience` used to sit
   // down beside the triage call it feeds, which put the one module that actually
   // measures the camera angle *after* the measurements that depend on it — so
@@ -752,7 +785,14 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // and stated crisply on clips this had already decided could not show depth.
   // It reads `frames` and `skel`, both settled above; nothing between here and
   // the triage call touches either, so moving it up changes only who can see it.
+  //
+  // Now above `assessQuality` as well, for the same reason one step further on:
+  // the blur figure it measures had exactly one consumer, the refusal, so a clip
+  // was either thrown out for a smeared swing or reported as though there were
+  // none. Nothing in between, which is where most amateur footage lives.
   const resilience = assessResilience(frames, skel)
+
+  const quality = assessQuality(frames, skel, fps, resilience.blur)
 
   // Locating serves in a long clip is bounded now, but bounded is not free — it
   // still costs a few hundred video seeks, and the player has no way to know that
@@ -793,6 +833,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       view: quality.view,
       ballConfidence: ball?.confidence,
       depthUnreliable: resilience.spatial.depth_unreliable,
+      blur: resilience.blur,
     },
   })
 

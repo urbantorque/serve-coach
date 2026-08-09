@@ -109,6 +109,36 @@ const LANDMARKS: Record<string, (racket: Side) => number[]> = {
 const other = (s: Side): Side => (s === 'left' ? 'right' : 'left')
 const armOf = (s: Side) => [sided(s).shoulder, sided(s).elbow, sided(s).wrist]
 
+/**
+ * Whether a measurement reads the fast end of the arm holding the racket.
+ *
+ * The elbow and the wrist, deliberately not the shoulder. Blur is measured on
+ * the racket wrist, and what smears is whatever is travelling fast enough to
+ * cross several of its own widths between frames — which through a serve is the
+ * forearm and the hand. The racket shoulder barely moves, so shoulder tilt and
+ * hip–shoulder separation are as readable on a smeared clip as on a clean one
+ * and keep their confidence. Derived from `LANDMARKS` rather than listed
+ * separately, so a measurement that starts or stops reading the swinging arm
+ * cannot end up hedged for a smear it never touched, or crisp through one it did.
+ */
+function readsRacketArm(id: string, racket: Side): boolean {
+  const fast = new Set<number>([sided(racket).elbow, sided(racket).wrist])
+  return (LANDMARKS[id]?.(racket) ?? []).some((lm) => fast.has(lm))
+}
+
+/**
+ * What a reading off a smeared arm is worth, 0–1.
+ *
+ * Flat until the track is visibly zig-zagging, because an ordinary well-lit
+ * phone clip carries some jitter and hedging those would mark most of the app's
+ * own footage soft for no reason. Past that it falls fast, and it crosses
+ * `SOFT_MEASUREMENT` well before the refusal does — so the band of clips that
+ * used to be thrown out arrives visibly hedged, kept out of the headline by
+ * `pickFocus`, and down-weighted in the score, rather than either refused
+ * outright or reported as though the camera had held still.
+ */
+const blurTrust = (blur: number) => clamp(1 - blur * 0.85, 0.2, 1)
+
 export interface ConfidenceContext {
   frames: Frame[]
   skel: Skeleton
@@ -127,6 +157,17 @@ export interface ConfidenceContext {
    * and means it.
    */
   depthUnreliable?: boolean
+  /**
+   * How smeared the racket hand's track is, 0–1, from `blurOf`.
+   *
+   * Until this existed the number reached exactly one place in the app — the
+   * refusal — so a clip was either thrown out for blur or read as though there
+   * were none. That is the one shape of degradation this file was written to
+   * replace: it is local, it lands on the measurements taken off the racket arm
+   * through the fastest part of the swing, and it leaves a knee angle at the
+   * trophy untouched.
+   */
+  blur?: number
 }
 
 /**
@@ -268,6 +309,17 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
       win.map((f) => Math.min(...landmarks.map((lm) => f.image[lm]?.visibility ?? 0))),
     )
     c *= clamp((seen - 0.25) / 0.45, 0.25, 1)
+
+    // Visibility and blur are the two halves of "was this landmark actually
+    // measured", and they fail independently. A hand smeared across a frame is
+    // reported at full visibility — the model is obliged to return a wrist and
+    // it does — so the check above sees nothing wrong with a track that has
+    // stopped describing the motion. Applied only where the smear was measured:
+    // `blurOf` reads the racket wrist, so a knee angle at the trophy keeps its
+    // confidence and the readings taken off the swinging arm lose theirs.
+    if (ctx.blur !== undefined && readsRacketArm(id, skel.racket)) {
+      c *= blurTrust(ctx.blur)
+    }
   }
 
   if (ctx.ballConfidence !== undefined && BALL_MEASUREMENTS.has(id)) {

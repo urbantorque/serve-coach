@@ -161,11 +161,26 @@ export function assessResilience(frames: Frame[], skel: Skeleton): Resilience {
 
   const spatial = assessSpatial(frames, keys.ready, bodyHeight)
 
-  // The racket hand through the swing: the fastest-moving landmark in the clip,
-  // on the frames where the camera has the least light per frame to find it.
-  // Nothing else degrades first.
-  const lo = clamp(keys.trophy, 0, frames.length - 1)
-  const hi = clamp(keys.contact + 2, 0, frames.length - 1)
+  // The racket hand: the fastest-moving landmark in the clip, and the first
+  // thing to degrade when the camera has little light per frame.
+  //
+  // Read across the whole serve rather than trophy-to-contact. The narrow
+  // window is where the smear is worst, which is why it was chosen, but it is
+  // five frames at 24 fps and thirty at 120 — and over five frames of the
+  // fastest part of a swing the statistic is dominated by the real curvature of
+  // the arc, which scales with the sampling interval. Measured, that made the
+  // same clip read blur 0.58 at 24 fps and 0.17 at 120. Across the full serve
+  // the median has enough samples to be a median, and the flat stretches at
+  // either end are what make it comparable between clips shot at different
+  // rates: 1.0-1.3x across 24 to 120 fps, against 3.4x before.
+  //
+  // The cost is real and worth stating: a smear confined to the eight frames
+  // around contact moves this far less than it moved the narrow window. That is
+  // accepted because the failure it replaces was certain rather than possible —
+  // every clip filmed at a high frame rate was being scored as though it were
+  // blurred, and the refusal told the player to refilm in slow motion.
+  const lo = clamp(keys.ready, 0, frames.length - 1)
+  const hi = clamp(keys.finish, 0, frames.length - 1)
   const window = frames.slice(lo, hi + 1)
   const track = stabilise(
     window.map((f) => f.image[R.wrist]),
@@ -217,18 +232,34 @@ export function rejectionFor(r: Resilience): RejectReason | undefined {
  * was to say that fixing it directly is wasted work.
  */
 export function triage(diagnosis: Diagnosis, resilience: Resilience): Triage {
+  /*
+   * The floor of everything that could have gone wrong with the clip, then
+   * shaded by whatever else also went wrong.
+   *
+   * The floor is the important half and the reason this is not an average: one
+   * broken input is enough, and averaging lets three healthy signals paper over
+   * the one that matters. But a pure `Math.min` has the opposite failure, which
+   * only became visible once the blur figure stopped being enormous on every
+   * clip and therefore stopped always being the minimum: a clip that is worse
+   * than a clean one in a dimension that is *not* currently the smallest scores
+   * exactly the same as the clean one. A shaky, partly-dropped clip came back
+   * at 0.75, the same figure a flawless one gets, because both were capped by
+   * the camera angle.
+   *
+   * So the worst term still sets the ceiling, and the others can only take it
+   * down from there — never up.
+   */
+  const terms = [
+    resilience.spatial.confidence,
+    1 - resilience.blur,
+    clamp(resilience.visibility, 0, 1),
+    clamp(resilience.swingSamples / 5, 0, 1),
+  ]
+  const worst = Math.min(...terms)
+  const others = terms.reduce((a, b) => a * b, 1) / Math.max(worst, 1e-6)
+
   const quality = {
-    // The floor of everything that could have gone wrong with the clip, not an
-    // average of it: one broken input is enough, and averaging lets three
-    // healthy signals paper over the one that matters.
-    confidence: round2(
-      Math.min(
-        resilience.spatial.confidence,
-        1 - resilience.blur,
-        clamp(resilience.visibility, 0, 1),
-        clamp(resilience.swingSamples / 5, 0, 1),
-      ),
-    ),
+    confidence: round2(clamp(worst * (0.6 + 0.4 * clamp(others, 0, 1)), 0, 1)),
     blur: round2(resilience.blur),
     roll_deg: resilience.spatial.roll_deg,
     yaw_deg: resilience.spatial.yaw_deg,
