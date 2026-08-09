@@ -124,9 +124,12 @@ function detectHandedness(frames: Frame[]): { racket: Side; confidence: number }
 /**
  * Walk backwards from the toss to where the motion actually began: the last
  * moment the tossing hand was still low and quiet.
+ *
+ * `limit` is how far back is worth looking, handed in as an index rather than
+ * derived here from a frame rate — see `clockOf` for why that distinction is not
+ * cosmetic on a clip the tracker lost frames from.
  */
-function findReady(tossIdx: number, tossHeight: number[], fps: number): number {
-  const limit = Math.max(0, tossIdx - Math.round(2.0 * fps))
+function findReady(tossIdx: number, tossHeight: number[], limit: number): number {
   const rest = median(tossHeight.slice(limit, tossIdx + 1))
   const peak = tossHeight[tossIdx]
   // 12% of the way up from the resting level counts as "started"
@@ -233,6 +236,55 @@ function orderKeys(raw: Keyframes, n: number): Keyframes {
 }
 
 /**
+ * The clip's own clock, for every span below that is meant to mean seconds.
+ *
+ * The frames do not arrive on the grid the nominal frame rate describes. A
+ * sample the pose model found nobody in is dropped and the survivors are
+ * re-indexed compactly — `extractFrames` does exactly that — so the array is
+ * continuous while the timestamps on it are not. Sizing a search window as
+ * `seconds × fps` therefore counts *surviving samples*, not time: on a clip that
+ * lost a third of its detections a window meant to hold two seconds holds nearly
+ * three, and every keyframe below is hunted for in the wrong stretch of the
+ * serve. It fails worst on the footage this app exists for, and it fails
+ * silently, because a window in the wrong place still returns an answer.
+ *
+ * So `at` walks the timestamps themselves, and `rate` is how densely the samples
+ * actually landed rather than how densely the camera claimed to shoot. `fps`
+ * remains the answer for a clip carrying no usable clock at all — a hand-built
+ * fixture, or a run of frames all stamped the same instant — which is the one
+ * case where the nominal rate is the better guess.
+ */
+function clockOf(frames: Frame[], fps: number) {
+  const last = frames.length - 1
+  const span = last > 0 ? frames[last].t - frames[0].t : 0
+  const timed = Number.isFinite(span) && span > 0
+  return {
+    /** The index `seconds` of real time from `from`; negative walks backwards. */
+    at(from: number, seconds: number): number {
+      const origin = clamp(Math.round(from), 0, Math.max(0, last))
+      const step = seconds < 0 ? -1 : 1
+      // A window has to reach at least one sample past the frame it starts from,
+      // or there is nothing inside it to search. This is what the old
+      // `Math.max(1, …)` was protecting, and it still matters at low frame rates.
+      const atLeastOne = clamp(origin + step, 0, Math.max(0, last))
+      if (!timed) {
+        const bySamples = Math.max(1, Math.round(Math.abs(seconds) * fps))
+        return clamp(origin + step * bySamples, 0, Math.max(0, last))
+      }
+      const target = frames[origin].t + seconds
+      let out = origin
+      for (let i = origin + step; i >= 0 && i <= last; i += step) {
+        if (step > 0 ? frames[i].t > target : frames[i].t < target) break
+        out = i
+      }
+      return out === origin ? atLeastOne : out
+    },
+    /** Samples per second as they actually arrived, for spans measured in samples. */
+    rate: timed ? last / span : fps,
+  }
+}
+
+/**
  * Locate the six keyframes of the serve.
  *
  * Contact is the anchor — it is the single most reliable event in the clip
@@ -270,11 +322,11 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
 
   const contact = sharpen(racketHeightSharp, argMaxIn(racketHeight, 0, frames.length - 1))
 
-  const sec = (s: number) => Math.max(1, Math.round(s * fps))
+  const clock = clockOf(frames, fps)
   const beforeContact = Math.max(0, contact - 1)
 
   // Toss: tossing arm at full stretch above its shoulder, searched back from contact.
-  const toss = argMaxIn(tossPosture, Math.max(0, contact - sec(2.0)), beforeContact)
+  const toss = argMaxIn(tossPosture, clock.at(contact, -2.0), beforeContact)
 
   // Trophy: deepest leg load. Both knees averaged so a side-on view — where the
   // far leg is often occluded — still reads sensibly. Found from the knees
@@ -292,9 +344,13 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
         jointAngle(f.world[LM.rightHip], f.world[LM.rightKnee], f.world[LM.rightAnkle]),
       ]),
     ),
-    Math.max(2, Math.round(fps / 12)),
+    // Sized off how densely the samples actually arrived, not off the nominal
+    // rate: a radius counted in samples covers more of the serve the more of
+    // them are missing, and this is the one series smoothed hard enough for
+    // that to move the trophy.
+    Math.max(2, Math.round(clock.rate / 12)),
   )
-  const trophyFrom = Math.max(0, toss - sec(0.2))
+  const trophyFrom = clock.at(toss, -0.2)
   const found = findTrophy(kneeAngles, racketPosture, toss, trophyFrom, beforeContact)
   const trophy = found.index
 
@@ -308,8 +364,8 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   // racket being cocked at the trophy and it arriving at the ball.
   const drop = sharpen(racketPostureSharp, argMinIn(racketPosture, trophy, beforeContact))
 
-  const ready = findReady(toss, tossPosture, fps)
-  const finish = clamp(contact + sec(0.5), 0, frames.length - 1)
+  const ready = findReady(toss, tossPosture, clock.at(toss, -2.0))
+  const finish = clock.at(contact, 0.5)
 
   const keys = orderKeys({ ready, toss, trophy, drop, contact, finish }, frames.length)
 

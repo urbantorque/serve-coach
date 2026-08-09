@@ -33,6 +33,7 @@ import {
   statusOf,
 } from './geometry'
 import { diagnose } from './diagnose'
+import { capturedSamples } from './kalman'
 import { measure } from './metrics'
 import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot, type Tilt } from './spatial'
 import { assessResilience, triage } from './triage'
@@ -114,40 +115,63 @@ export async function analyzeAllServes(
   const first = Math.max(0, opts.count - total)
   const out: Analysis[] = []
 
-  // Locate every serve once up front. Each analysis below would otherwise
-  // repeat this scan over the entire clip, which is by far the most expensive
-  // thing here — the scan covers the whole video, the extraction only covers a
-  // couple of seconds of it.
-  const knownServeTimes = await locateServes(opts)
+  /*
+   * One element for the whole sweep — the locating scan and every serve after it.
+   *
+   * Each pass used to create its own, which meant seven decoder set-ups over one
+   * blob on a phone that is also running pose estimation: the file is demuxed
+   * again, a hardware decoder session is acquired again, and the first seek of
+   * each pass waits on all of it. None of that work differs between passes,
+   * because it is the same clip every time.
+   */
+  const video = document.createElement('video')
+  video.crossOrigin = 'anonymous'
 
-  for (let n = 0; n < total; n++) {
-    if (opts.signal?.aborted) break
-    try {
-      out.push(
-        await analyzeServe({
-          ...opts,
-          serveIndex: first + n,
-          skipThumbnails: true,
-          knownServeTimes,
-          onProgress: (p) =>
-            opts.onProgress?.({
-              ...p,
-              detail: `Serve ${n + 1} of ${total} · ${p.detail ?? 'working'}`,
-            }),
-        }),
-      )
-    } catch (err) {
-      if (isCancelled(err)) throw err
-      // One unreadable serve should not cost the player the other five.
+  try {
+    // Locate every serve once up front. Each analysis below would otherwise
+    // repeat this scan over the entire clip, which is by far the most expensive
+    // thing here — the scan covers the whole video, the extraction only covers a
+    // couple of seconds of it.
+    const knownServeTimes = await locateServes(opts, video)
+
+    for (let n = 0; n < total; n++) {
+      if (opts.signal?.aborted) break
+      try {
+        out.push(
+          await analyzeServe(
+            {
+              ...opts,
+              serveIndex: first + n,
+              skipThumbnails: true,
+              knownServeTimes,
+              onProgress: (p) =>
+                opts.onProgress?.({
+                  ...p,
+                  detail: `Serve ${n + 1} of ${total} · ${p.detail ?? 'working'}`,
+                }),
+            },
+            video,
+          ),
+        )
+      } catch (err) {
+        if (isCancelled(err)) throw err
+        // One unreadable serve should not cost the player the other five.
+      }
     }
+  } finally {
+    video.removeAttribute('src')
+    video.load()
   }
 
   return out
 }
 
-/** One scan of the clip, on a video element of its own. */
-async function locateServes(opts: AnalyzeOptions): Promise<number[] | undefined> {
-  const video = document.createElement('video')
+/** One scan of the clip. Borrows the caller's element when given one. */
+async function locateServes(
+  opts: AnalyzeOptions,
+  shared?: HTMLVideoElement,
+): Promise<number[] | undefined> {
+  const video = shared ?? document.createElement('video')
   video.crossOrigin = 'anonymous'
   try {
     const landmarker = await loadEngine()
@@ -163,8 +187,13 @@ async function locateServes(opts: AnalyzeOptions): Promise<number[] | undefined>
     // Fall back to letting each analysis scan for itself.
     return undefined
   } finally {
-    video.removeAttribute('src')
-    video.load()
+    // A borrowed element belongs to the caller, which is about to read the same
+    // clip several more times through it. Detaching here would make the saving
+    // the loan exists for impossible.
+    if (!shared) {
+      video.removeAttribute('src')
+      video.load()
+    }
   }
 }
 
@@ -314,7 +343,9 @@ const isCancelled = (err: unknown) =>
 export function assessQuality(frames: Frame[], skel: Skeleton, sampledFps: number): Quality {
   const win = frames.slice(skel.keys.ready, skel.keys.finish + 1)
   const visibility = mean(win.map(keyVisibility))
-  const swingSamples = Math.max(0, skel.keys.contact - skel.keys.drop)
+  // Counted rather than subtracted, for the reason given in `capturedSamples`:
+  // a frame bridged over a lost detection sits in the array but was never filmed.
+  const swingSamples = capturedSamples(frames, skel.keys.drop, skel.keys.contact)
 
   const spanRatio = skel.shoulderWidth / skel.bodyHeight
   const view: Quality['view'] = spanRatio > 0.17 ? 'front-back' : spanRatio < 0.1 ? 'side' : 'angled'
@@ -555,7 +586,18 @@ export function rediagnose(analysis: Analysis, tier: number | undefined): Analys
  * Everything here runs on the device. The video is never uploaded, and after
  * the first run the model is cached so this works with no network at all.
  */
-export async function analyzeServe(opts: AnalyzeOptions): Promise<Analysis> {
+export async function analyzeServe(
+  opts: AnalyzeOptions,
+  /**
+   * An element to read the clip through, when the caller has one already loaded
+   * with it. The sweep across a basket passes its own; the decoder is then set
+   * up once for the clip rather than once per serve, and tearing it down is the
+   * lender's job rather than this function's.
+   */
+  shared?: HTMLVideoElement,
+): Promise<Analysis> {
+  if (shared) return runAnalysis(shared, opts)
+
   const video = document.createElement('video')
   video.crossOrigin = 'anonymous'
 

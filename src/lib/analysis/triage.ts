@@ -21,7 +21,7 @@
  * tracker could not see the hand, and the only safe output is a reason the clip
  * could not be read.
  */
-import { blurOf, stabilise } from './kalman'
+import { blurOf, capturedSamples, stabilise } from './kalman'
 import { assessSpatial, spatialVisibility, type Spatial } from './spatial'
 import { LM, clamp, keyVisibility, mean, sided } from './geometry'
 import type { Diagnosis } from './diagnose'
@@ -172,7 +172,9 @@ export function assessResilience(frames: Frame[], skel: Skeleton): Resilience {
     window.map((f) => f.t),
   )
 
-  const swingSamples = Math.max(0, keys.contact - keys.drop)
+  // Counted rather than subtracted: short detection gaps are bridged before the
+  // measurements see them, and an interpolated frame is not a captured sample.
+  const swingSamples = capturedSamples(frames, keys.drop, keys.contact)
   const serve = frames.slice(
     clamp(keys.ready, 0, frames.length - 1),
     clamp(keys.finish, 0, frames.length - 1) + 1,

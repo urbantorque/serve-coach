@@ -6,6 +6,7 @@ import {
   planScan,
   type ReachSample,
 } from '../analysis/serves'
+import { bridgeDetectionGaps, type PoseSample } from '../analysis/kalman'
 import { UnreadableVideoError, type Frame, type Landmark } from '../analysis/types'
 import { nextVideoTimestamp } from './poseEngine'
 
@@ -190,10 +191,26 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
   ])
 }
 
-async function seekTo(video: HTMLVideoElement, t: number): Promise<void> {
+/**
+ * How far the playhead may sit from where it was sent and still be believed.
+ *
+ * Deliberately loose. Browsers report `currentTime` quantised to the decoded
+ * frame, and a seek to a moment between two frames lands on one of them — a
+ * third of a second is far wider than any of that, so this only ever fires on a
+ * seek that genuinely did not happen. Which is the case worth catching: `waitFor`
+ * resolves rather than rejects on its timeout, so a seek the browser never
+ * completed returns here looking exactly like one that did, and the frame is
+ * then filed with the timestamp that was *asked for* and the landmarks of
+ * whatever was still on screen. Nothing downstream can tell — a swing assembled
+ * from frames out of order is a swing, just not the one that was filmed.
+ */
+const SEEK_TOLERANCE = 0.25
+
+/** Move the playhead, and say whether it actually arrived. */
+async function seekTo(video: HTMLVideoElement, t: number): Promise<boolean> {
   // Nudge off the exact end: seeking to `duration` never fires `seeked` in Safari.
   const target = Math.min(Math.max(t, 0), Math.max(0, video.duration - 0.02))
-  if (Math.abs(video.currentTime - target) < 1e-4) return
+  if (Math.abs(video.currentTime - target) < 1e-4) return true
   const seeked = waitFor(video, 'seeked')
   video.currentTime = target
   await seeked
@@ -214,10 +231,15 @@ async function seekTo(video: HTMLVideoElement, t: number): Promise<void> {
       })
     })
   }
+  return Math.abs(video.currentTime - target) <= SEEK_TOLERANCE
 }
 
 export async function loadVideo(video: HTMLVideoElement, src: string): Promise<void> {
-  video.src = src
+  // Assigning `src` tears down and rebuilds the decoder even when it is the same
+  // source, so a caller making several passes over one clip on one element — the
+  // basket sweep — would pay that per pass. The readyState guards below then
+  // skip the waits too, and a reused element is ready immediately.
+  if (video.src !== src) video.src = src
   video.muted = true
   video.playsInline = true
   video.preload = 'auto'
@@ -252,8 +274,33 @@ export async function loadVideo(video: HTMLVideoElement, src: string): Promise<v
 
 /* ---------------------------------------------------------------- conversion */
 
-const toLandmark = (l: { x: number; y: number; z: number; visibility?: number }): Landmark => ({
+interface RawLandmark {
+  x: number
+  y: number
+  z: number
+  visibility?: number
+}
+
+const toLandmark = (l: RawLandmark): Landmark => ({
   x: l.x,
+  y: l.y,
+  z: l.z,
+  visibility: l.visibility ?? 1,
+})
+
+/**
+ * An image landmark, put onto a single scale.
+ *
+ * x is normalised by width and y by height, so on anything but a square video
+ * they are different units. Scaling x by the aspect ratio puts them back on a
+ * common footing and makes 2D distances meaningful.
+ *
+ * One function rather than the conversion written out at each call site: this
+ * runs on every landmark of every sampled frame, and both copies of it built the
+ * neutral landmark twice per point to read one field off the throwaway.
+ */
+const toImageLandmark = (l: RawLandmark, aspect: number): Landmark => ({
+  x: l.x * aspect,
   y: l.y,
   z: l.z,
   visibility: l.visibility ?? 1,
@@ -277,7 +324,9 @@ export async function scanForServes(
   /** Read the highest either hand gets at one moment. */
   const sampleAt = async (t: number) => {
     if (signal?.aborted) throw new Cancelled()
-    await seekTo(video, t)
+    // A seek that never landed would put this reach reading at a moment the
+    // player was somewhere else, and a scan is nothing but a ranking of those.
+    if (!(await seekTo(video, t))) return
     const res = landmarker.detectForVideo(video, nextVideoTimestamp(landmarker))
     const image = res.landmarks?.[0]
     if (image) {
@@ -357,10 +406,7 @@ export async function extractFrames(
     const world = res.worldLandmarks?.[0]
     if (!image || !world) return null
     return {
-      // x is normalised by width and y by height, so on anything but a square
-      // video they are different units. Scaling x by the aspect ratio puts them
-      // back on a common footing and makes 2D distances meaningful.
-      image: image.map((l) => ({ ...toLandmark(l), x: toLandmark(l).x * aspect })),
+      image: image.map((l) => toImageLandmark(l, aspect)),
       world: world.map(toLandmark),
     }
   }
@@ -382,24 +428,29 @@ export async function extractFrames(
   const span = Math.max(0.2, end - start)
   const fps = samplingRateFor(span)
   const count = Math.max(8, Math.round(span * fps))
-  const frames: Frame[] = []
+  const samples: PoseSample[] = []
 
   for (let i = 0; i < count; i++) {
     check()
     const t = start + (span * i) / (count - 1)
-    await seekTo(video, t)
-    const r = detect()
-    if (r) {
-      frames.push({
-        index: frames.length,
-        t,
-        image: r.image,
-        world: r.world,
-        visibility: 0,
-      })
-    }
+    // A frame filed at a time the playhead never reached is the one failure
+    // nothing downstream can see: the landmarks are real, they just belong to
+    // another moment, and the swing is then measured out of order. A missing
+    // sample is already an ordinary outcome here — `detect` returns null on any
+    // frame the model found nobody in — so dropping it costs nothing new.
+    const landed = await seekTo(video, t)
+    samples.push({ t, pose: landed ? detect() : null })
     onProgress({ phase: 'tracking', ratio: (i + 1) / count })
   }
+
+  // The misses are handed on rather than quietly skipped, because a hole is
+  // information and closing over it destroys it twice. Short ones are filled
+  // from the motion either side — a limb behind the body for a frame or two is
+  // the commonest thing that happens on amateur footage, and there is no reason
+  // to measure the serve around it. Long ones stay open, and the compacted array
+  // that results is why nothing downstream may size a window in array positions:
+  // see `clockOf` in phases.ts.
+  const frames = bridgeDetectionGaps(samples)
 
   return { frames, fps, window: { start, end }, serves, located }
 }
@@ -429,7 +480,7 @@ export async function preflight(
     // Spread across the middle of the clip: the very start and end are often a
     // hand reaching for the phone.
     const t = video.duration * (0.12 + (0.76 * i) / Math.max(1, n - 1))
-    await seekTo(video, t)
+    if (!(await seekTo(video, t))) continue
     const res = landmarker.detectForVideo(video, nextVideoTimestamp(landmarker))
     const image = res.landmarks?.[0]
     const world = res.worldLandmarks?.[0]
@@ -437,7 +488,7 @@ export async function preflight(
     out.push({
       index: out.length,
       t,
-      image: image.map((l) => ({ ...toLandmark(l), x: toLandmark(l).x * aspect })),
+      image: image.map((l) => toImageLandmark(l, aspect)),
       world: world.map(toLandmark),
       visibility: 0,
     })
@@ -451,10 +502,16 @@ export async function preflight(
  *
  * Only the ball tracker needs pixels, and it needs very few of them: a tennis
  * ball is a handful of pixels across even at full resolution, and the detector
- * works on colour, motion and roundness rather than detail. Downscaling to a
- * couple of hundred pixels wide keeps a whole toss under a megabyte instead of
- * the tens of megabytes full frames would cost on a phone, and makes the
- * per-pixel scan of every frame cheap enough not to be noticed.
+ * works on colour, motion and roundness rather than detail.
+ *
+ * Every frame in the window is held at once, so the size is worth being exact
+ * about rather than reassuring about. At the default 256 wide each `ImageData`
+ * is about 147 KB, and a toss-to-contact window runs 40–55 frames, so the live
+ * cost is 6–8 MB — held only until `findBall` returns. That is two orders of
+ * magnitude under the same window at full resolution, which is the saving that
+ * matters on a phone; it was previously described here as "under a megabyte",
+ * which was wrong by roughly eightfold and would have hidden a real regression
+ * in the window size from anybody who trusted it.
  */
 export async function captureBitmaps(
   video: HTMLVideoElement,
@@ -472,7 +529,10 @@ export async function captureBitmaps(
 
   const out: { t: number; bitmap: ImageData }[] = []
   for (const t of times) {
-    await seekTo(video, t)
+    // Pixels stamped with a time they are not from would put the ball on a
+    // parabola through moments it never occupied. The tracker copes with gaps —
+    // the ball is lost against sky on plenty of frames — so a miss is dropped.
+    if (!(await seekTo(video, t))) continue
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
     out.push({ t, bitmap: ctx.getImageData(0, 0, canvas.width, canvas.height) })
   }
@@ -502,7 +562,15 @@ export async function captureThumbnails(
 
   const out: string[] = []
   for (let i = 0; i < times.length; i++) {
-    await seekTo(video, times[i])
+    // No still rather than the wrong one. A frame captioned "contact" showing
+    // the trophy position, with the contact skeleton drawn over it, is a picture
+    // that disagrees with itself — and these are the part of a serve that
+    // outlives the clip. The report already draws a placeholder for a missing
+    // still, because older saved reports have their stills stripped.
+    if (!(await seekTo(video, times[i]))) {
+      out.push('')
+      continue
+    }
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
     decorate?.(ctx, i, { w: canvas.width, h: canvas.height })
     out.push(canvas.toDataURL('image/jpeg', 0.72))
