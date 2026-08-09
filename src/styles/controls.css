@@ -50,10 +50,26 @@
   width: 100%;
 }
 
+/*
+ * A 44px touch target without a 44px button.
+ *
+ * Three controls sat under the 44px minimum — this one at 40, `.chip--button`
+ * at 32 tall and `.serve-chip` at 30 square — and the obvious fix, growing
+ * them, is the one thing not on offer: these sizes are the design, they were
+ * chosen on a real screen, and moving them moves every row they sit in.
+ *
+ * So the hit area grows and the button does not. An absolutely positioned
+ * `::after` centred on the control takes the press; nothing about it is
+ * painted, so not one pixel of the interface changes. The rule is written per
+ * control rather than once, because how far each may grow is decided by what
+ * sits next to it: two overlapping targets are worse than one small one, and on
+ * a row of numbered serves a mis-tap does not just miss, it re-runs an analysis.
+ */
 .icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   width: 40px;
   height: 40px;
   border-radius: var(--r-pill);
@@ -61,6 +77,18 @@
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
     transform var(--fast) var(--ease);
   flex: none;
+}
+
+/* 2px of overhang each way. `.stepper` sets a 2px gap between these, so
+   neighbouring targets meet exactly and never overlap. */
+.icon-btn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 
 .icon-btn:hover {
@@ -114,10 +142,23 @@
 }
 
 .chip--button {
+  position: relative;
   color: var(--fg);
   cursor: pointer;
   transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease),
     transform var(--fast) var(--ease);
+}
+
+/* Height only. These are already 100px and more across, and they sit in wrapping
+   rows where growing sideways would put a target under the chip beside it. */
+.chip--button::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
 }
 
 .chip--button:hover:not(:disabled) {

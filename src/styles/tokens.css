@@ -18,7 +18,23 @@
   /* --- text -------------------------------------------------------------- */
   --fg: #eef2f6;
   --fg-muted: #98a2b3;
-  --fg-faint: #616b7d;
+  /*
+   * Lifted from #616b7d, which failed the 4.5:1 floor everywhere it was used.
+   *
+   * Measured on the rendered page rather than argued about: 3.64:1 on --ink,
+   * 3.51 on --ink-1 and 3.30 on --ink-2, across twenty small-text sites on the
+   * report alone and sixty-two rules in all. This is the third tier of the text
+   * ramp — kickers, captions, units, the "Aim for" labels — so it is the type
+   * that is already smallest, at 9.5 to 13px, and it was the type hardest to
+   * read.
+   *
+   * #7b8799 rather than anything lighter: it clears the floor on every surface
+   * this colour actually sits on (5.38 / 5.19 / 4.87), and going further starts
+   * closing the gap to --fg-muted at #98a2b3, which would flatten three tiers of
+   * hierarchy into two to fix a problem that is already fixed. It is the same
+   * hue and chroma, one step up in lightness — the ramp, not a new colour.
+   */
+  --fg-faint: #7b8799;
 
   /* --- accent: tennis ball ------------------------------------------------ */
   --lime: #cdf94a;

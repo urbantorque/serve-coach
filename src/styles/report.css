@@ -90,6 +90,7 @@
 }
 
 .serve-chip {
+  position: relative;
   width: 30px;
   height: 30px;
   border-radius: var(--r-sm);
@@ -100,6 +101,33 @@
   font-variant-numeric: tabular-nums;
   color: var(--fg-muted);
   transition: all var(--fast) var(--ease);
+}
+
+/*
+ * Full height, but sideways only as far as the gutter.
+ *
+ * `.serves-pick` sets a 5px gap between 30px chips, so a centred 44px-wide
+ * target would reach 7px past each edge and overlap its neighbour by 9px. These
+ * are the numbered serves in a basket: tapping the wrong one does not merely
+ * miss, it re-reads the clip against a different serve. So the width grows by
+ * exactly the gutter — adjacent targets meet and never overlap — and the height,
+ * where there is nothing to collide with, takes the full 44. 30x30 to 35x44.
+ */
+.serve-chip::after {
+  content: '';
+  position: absolute;
+  left: -2.5px;
+  right: -2.5px;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+/* The serve-type row is wide chips in an 8px-gapped wrapping row, so these keep
+   their own width and take the height only. */
+.judged-options .serve-chip::after {
+  left: 0;
+  right: 0;
 }
 
 .serve-chip:hover {
