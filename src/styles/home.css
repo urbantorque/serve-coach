@@ -288,3 +288,28 @@
   background: var(--great-dim);
   border-color: rgba(95, 227, 161, 0.26);
 }
+
+/* The same badge, when tapping it does something. Sized to the 44px target
+   rather than the 6px padding a static label can get away with. */
+button.badge {
+  min-height: 44px;
+  padding: 6px 16px;
+  color: var(--fg);
+  cursor: pointer;
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+button.badge:hover {
+  background: var(--ink-3);
+}
+
+button.badge:active {
+  transform: scale(0.97);
+}
+
+button.badge[disabled] {
+  color: var(--fg-muted);
+  cursor: default;
+}

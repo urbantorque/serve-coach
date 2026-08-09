@@ -19,6 +19,32 @@ interface Props {
   onGuideThenPick: () => void
   /** Render a report from a simulated serve, so the app can be seen empty. */
   onShowExample: () => void
+  /**
+   * Fetch the pose engine now, so the app works at a court with no signal.
+   *
+   * Until this existed the 19 MB of model and runtime were only ever fetched
+   * during an analysis, so the one thing a player could not do was get ready.
+   * They installed the app at home, read the badge, drove to a court and found
+   * the app could not start — at the exact moment the promise on this screen
+   * was supposed to hold.
+   */
+  onMakeOffline: () => void
+  /** How that download is going, while it is going. */
+  warming?: OfflineWarmup
+}
+
+/**
+ * The state of a warm-up, as the badge needs to say it.
+ *
+ * `unkept` is the case worth having a name for: the engine downloaded and this
+ * session can analyse with it, but it is not in the cache, so a reload starts
+ * from nothing. That is an iOS private window, a browser with service workers
+ * off, or a dev build. Reporting it as a failed download would be untrue, and
+ * reporting it as ready would be the untruth that actually strands somebody.
+ */
+export type OfflineWarmup = {
+  stage: 'downloading' | 'starting' | 'failed' | 'unkept'
+  ratio?: number
 }
 
 const coarsePointer = () =>
@@ -35,6 +61,8 @@ export default function Home({
   needsFilmingGuide,
   onGuideThenPick,
   onShowExample,
+  onMakeOffline,
+  warming,
 }: Props) {
   const pickRef = useRef<HTMLInputElement>(null)
   const recordRef = useRef<HTMLInputElement>(null)
@@ -300,10 +328,33 @@ export default function Home({
       )}
 
       <footer className="home-foot">
-        <span className={`badge${offlineReady ? ' badge--on' : ''}`}>
-          <Icon name={offlineReady ? 'check' : 'offline'} size={15} />
-          {offlineReady ? 'Ready to use offline' : 'Downloads once, then works offline'}
-        </span>
+        {offlineReady ? (
+          <span className="badge badge--on">
+            <Icon name="check" size={15} />
+            Ready to use offline
+          </span>
+        ) : (
+          // A button rather than a label, because the label was describing
+          // something the player had no way to make happen. Downloading is
+          // opt-in and the size is on it: 19 MB is real money on a metered
+          // connection, and the honest place to say so is before the tap.
+          <button
+            className="badge"
+            onClick={onMakeOffline}
+            disabled={warming !== undefined && warming.stage !== 'failed'}
+          >
+            <Icon name="offline" size={15} />
+            {warming?.stage === 'downloading'
+              ? `Downloading… ${Math.round((warming.ratio ?? 0) * 100)}%`
+              : warming?.stage === 'starting'
+                ? 'Setting up…'
+                : warming?.stage === 'failed'
+                  ? 'Download failed. Tap to try again'
+                  : warming?.stage === 'unkept'
+                    ? 'Downloaded, but this browser will not keep it'
+                    : 'Download now to use offline · 19 MB'}
+          </button>
+        )}
         <p>
           Your video is read on this device and never uploaded. Analysis runs entirely in your
           browser, on a court with no signal just as well as at home.

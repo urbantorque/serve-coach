@@ -108,7 +108,18 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: `serve-coach-pose-engine-${engineVersion}`,
-              expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              /*
+               * No `maxAgeSeconds`. There was a one-year limit here, which
+               * quietly un-installed offline support: an app opened regularly
+               * but not re-fetching the engine within a year had the 9 MB model
+               * and the 9 MB runtime evicted, and the only place that shows up
+               * is a court with no signal. Staleness is already handled, and
+               * handled better, by the cache being named for the library
+               * version — upgrading the package makes existing installs fetch a
+               * matching runtime rather than reviving a mismatched one. An age
+               * limit on top of that expires assets that are still correct.
+               */
+              expiration: { maxEntries: 12 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

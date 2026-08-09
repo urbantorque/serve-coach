@@ -25,7 +25,7 @@ import {
 } from './lib/analysis/types'
 import { SERVE_TYPES } from './lib/analysis/coaching'
 import { Cancelled } from './lib/pose/extract'
-import { isCachedOffline } from './lib/pose/poseEngine'
+import { isCachedOffline, loadEngine } from './lib/pose/poseEngine'
 import {
   deleteSession,
   getSession,
@@ -38,7 +38,7 @@ import { requestPersistence } from './lib/storage/backup'
 import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage/prefs'
 import { sessionKeyFor } from './lib/storage/sessionKey'
 import Analyzing from './screens/Analyzing'
-import Home from './screens/Home'
+import Home, { type OfflineWarmup } from './screens/Home'
 import Report from './screens/Report'
 
 type View =
@@ -56,6 +56,7 @@ export default function App() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [sheet, setSheet] = useState<'guide' | 'guide-first' | 'history' | 'progress' | null>(null)
   const [offlineReady, setOfflineReady] = useState(false)
+  const [warming, setWarming] = useState<OfflineWarmup>()
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
 
   const abortRef = useRef<AbortController>()
@@ -85,6 +86,34 @@ export default function App() {
     const { frames: _f, ...session } = sampleAnalysis()
     void _f
     setView({ kind: 'saved', session })
+  }, [])
+
+  /**
+   * Fetch the pose engine now rather than during the first analysis.
+   *
+   * The same `loadEngine` every analysis calls, so this is a warm-up and not a
+   * second download path: whatever it caches is what the next analysis skips.
+   * The cache is re-read afterwards rather than assumed, because a browser that
+   * declined to store 19 MB should leave the badge saying so.
+   */
+  const makeOffline = useCallback(async () => {
+    setWarming({ stage: 'downloading', ratio: 0 })
+    try {
+      await loadEngine((p) => {
+        if (p.stage === 'downloading') setWarming({ stage: 'downloading', ratio: p.ratio })
+        else if (p.stage === 'starting') setWarming({ stage: 'starting' })
+      })
+    } catch {
+      setWarming({ stage: 'failed' })
+      return
+    }
+    // Downloading and keeping are separate questions, and only the cache
+    // answers the second one. A browser that will not store 19 MB — an iOS
+    // private window, service workers turned off — has just loaded an engine
+    // this session can use and will have nothing after a reload.
+    const cached = await isCachedOffline()
+    setOfflineReady(cached)
+    setWarming(cached ? undefined : { stage: 'unkept' })
   }, [])
 
   /** Mark the guide as seen and open the file picker straight after it. */
@@ -471,6 +500,8 @@ export default function App() {
             needsFilmingGuide={!prefs.seenFilmingGuide}
             onGuideThenPick={() => setSheet('guide-first')}
             onShowExample={() => void showExample()}
+            onMakeOffline={() => void makeOffline()}
+            warming={warming}
           />
         )}
 
