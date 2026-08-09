@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ConsistencyPanel from '../components/ConsistencyPanel'
 import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
@@ -8,7 +8,7 @@ import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
-import { injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
+import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { ServeType } from '../lib/storage/prefs'
 import { deltasAgainst, scoringVersionOf } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
@@ -26,7 +26,11 @@ const VERDICT: Record<Status, { title: string; sub: string }> = {
   },
   fair: {
     title: 'Good bones, a few gaps',
-    sub: 'The motion works. Fix the one thing below and the rest gets easier.',
+    // Not "the one thing" any more: the report hands over a short ordered plan
+    // rather than a single instruction, and a line promising one item above a
+    // list of three is the page disagreeing with itself. Phrased so it stays
+    // true whether the plan came out at one entry or at four.
+    sub: 'The motion works. Start with the first fix below and the rest gets easier.',
   },
   work: {
     title: 'Plenty of free speed here',
@@ -59,8 +63,6 @@ interface Props {
   onPickTier?: (tier: number | undefined) => void
   /** What the engine estimated, when the player has stated nothing. */
   statedTier?: number
-  /** Put this serve side by side with another saved one. */
-  onCompare?: () => void
   /**
    * Measure every serve in the clip and compare them.
    *
@@ -88,7 +90,6 @@ export default function Report({
   onPickServeType,
   onPickTier,
   statedTier,
-  onCompare,
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
@@ -141,11 +142,24 @@ export default function Report({
   )
   const [sharing, setSharing] = useState<'idle' | 'working' | 'done'>('idle')
 
+  // The "Saved" confirmation clears itself after a couple of seconds, and the
+  // report is very often gone before then — sharing is the last thing a player
+  // does on this screen. Held so it can be cancelled, rather than left to fire
+  // into a component that no longer exists.
+  const sharedTimer = useRef<ReturnType<typeof setTimeout>>()
+  useEffect(() => () => clearTimeout(sharedTimer.current), [])
+
   const share = async () => {
     setSharing('working')
     const outcome = await shareReportCard(analysis)
-    setSharing(outcome === 'failed' ? 'idle' : 'done')
-    if (outcome !== 'failed') setTimeout(() => setSharing('idle'), 2500)
+    // Nothing happened when the player backed out of the share sheet, so the
+    // button says nothing happened rather than claiming the card was saved.
+    const done = outcome === 'shared' || outcome === 'downloaded'
+    setSharing(done ? 'done' : 'idle')
+    if (done) {
+      clearTimeout(sharedTimer.current)
+      sharedTimer.current = setTimeout(() => setSharing('idle'), 2500)
+    }
   }
 
   const goToPhase = (phase: PhaseId) => {
@@ -169,7 +183,17 @@ export default function Report({
    */
   const refusal = refusalFor(analysis.triage)
   const injuries = injuryNotes(analysis.triage)
-  const suppressed = suppressedNote(analysis.triage)
+  /*
+   * The queue of things to work on, worst cause first.
+   *
+   * Falls back to `analysis.focus` — which is the ranked lowest measurement —
+   * for a report filed before the diagnostic pass existed, or one whose faults
+   * were all attributed to each other. That fallback is why the plan is read as
+   * an array with a guaranteed first entry rather than as an optional.
+   */
+  const ranked = causalPlan(analysis.triage, analysis.diagnosis)
+  const plan = ranked.length ? ranked : [analysis.focus]
+  const suppressed = suppressedNote(analysis.triage, plan.length)
   const levelled = tierLabel(analysis.triage)
 
   /*
@@ -340,15 +364,14 @@ export default function Report({
 
       <section className="focus">
         <span className="t-overline focus-kicker">Work on this next</span>
-        <h2 className="t-headline">{analysis.focus.title}</h2>
+        <h2 className="t-headline">{plan[0].title}</h2>
         <p>
-          <Cue text={analysis.focus.why} />
+          <Cue text={plan[0].why} />
         </p>
 
-        {/* A count, never a list. Six faults printed out is the list nobody acts
-            on that the hierarchy exists to prevent — but saying nothing at all
-            means a second fault appearing on the next clip reads as the app
-            changing its mind. */}
+        {/* A count, never a list. Whatever the plan did not print is held back
+            on purpose — but saying nothing at all means a fault appearing on the
+            next clip reads as the app changing its mind. */}
         {suppressed && (
           <p className="focus-suppressed">
             <Cue text={suppressed} />
@@ -357,10 +380,43 @@ export default function Report({
 
         <div className="focus-drill">
           <span className="t-overline focus-drill-kicker">The drill</span>
-          <h3 className="t-subhead">{analysis.focus.drill.name}</h3>
-          <p>{analysis.focus.drill.how}</p>
-          <span className="focus-reps">{analysis.focus.drill.reps}</span>
+          <h3 className="t-subhead">{plan[0].drill.name}</h3>
+          <p>{plan[0].drill.how}</p>
+          <span className="focus-reps">{plan[0].drill.reps}</span>
         </div>
+
+        {/*
+         * The rest of the plan, in causal order rather than by score.
+         *
+         * Numbered, because the order is the whole point: these are not four
+         * equal options to choose between, they are a queue. Deliberately
+         * quieter than the first — same information, less of the page — so the
+         * report still answers "what do I fix" before it answers "what else".
+         */}
+        {plan.length > 1 && (
+          <ol className="focus-next">
+            <li className="focus-next-kicker t-overline" aria-hidden>
+              Then, in this order
+            </li>
+            {plan.slice(1).map((item, i) => (
+              <li className="focus-next-item" key={item.drill.name}>
+                <span className="focus-next-rank">{i + 2}</span>
+                <div className="focus-next-body">
+                  <h3 className="focus-next-title">{item.title}</h3>
+                  <p className="focus-next-why">
+                    <Cue text={item.why} />
+                  </p>
+                  <p className="focus-next-drill">
+                    <Icon name="target" size={14} />
+                    <span>
+                      <strong>{item.drill.name}</strong> — {item.drill.reps}
+                    </span>
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
 
         {/* The targets above are one rung up from wherever the engine has put
             this player, and until now that was invisible — which made every band
@@ -381,14 +437,27 @@ export default function Report({
           </div>
         )}
         {levelled && onPickTier && pickingLevel && (
-          <LevelPicker
-            value={statedTier}
-            estimated={analysis.triage?.tier?.current}
-            onChange={(tier) => {
-              setPickingLevel(false)
-              onPickTier(tier)
-            }}
-          />
+          <>
+            <LevelPicker
+              value={statedTier}
+              estimated={analysis.triage?.tier?.current}
+              onChange={(tier) => {
+                setPickingLevel(false)
+                onPickTier(tier)
+              }}
+            />
+            {/* A reopened report has no frames, so `rediagnose` cannot re-judge
+                it and returns undefined — deliberately, because the bands are
+                applied while the flaws are found and there is nothing left to
+                find them in. The level still saves and still applies to the next
+                clip. Left unsaid, the control looked like it had failed. */}
+            {!isLive(analysis) && (
+              <p className="levelled-note">
+                This report was saved without its footage, so its verdict stays as it is.
+                The level applies from your next clip on.
+              </p>
+            )}
+          </>
         )}
       </section>
 
@@ -494,18 +563,7 @@ export default function Report({
       )}
 
       <section className="block">
-        <div className="block-head">
-          <h2 className="block-title">Six moments in your serve</h2>
-          {/* Named for what it opens. "Compare" alone appeared twice on this
-              page — here, and on the button that sweeps the serves inside this
-              one clip — and the two do entirely different things. */}
-          {onCompare && (
-            <button className="block-aside block-aside--btn" onClick={onCompare}>
-              Compare with a past serve
-              <Icon name="chevron" size={13} />
-            </button>
-          )}
-        </div>
+        <h2 className="block-title">Six moments in your serve</h2>
         <div className="strip">
           {analysis.phases.map((p) =>
             // A clickable <figure> is invisible to a keyboard. When these seek

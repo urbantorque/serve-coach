@@ -24,8 +24,9 @@
  * and sentence ceiling as the rest of the copy database. The tests lint it.
  */
 import { DRILLS } from './coaching'
+import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
-import type { InjuryFlag, RejectReason, Triage } from './triage'
+import { FLAW_DRILL, HIERARCHY, type InjuryFlag, type RejectReason, type Triage } from './triage'
 import { rungName, type Severity } from './tiers'
 import type { Analysis, Drill } from './types'
 import { cue } from './voice'
@@ -255,12 +256,31 @@ export function causalFocus(triage: Triage | undefined): Analysis['focus'] | und
   if (!triage || triage.status !== 'ok' || !triage.primary_flaw) return undefined
 
   const { flaw, value, target } = triage.primary_flaw
+  return focusFor(flaw, value, target)
+}
+
+/**
+ * One flaw, turned into a title, a reason and the exercise that corrects it.
+ *
+ * The drill is resolved from `FLAW_DRILL` rather than from `triage.drill_id`,
+ * which only ever names the primary's. Returns undefined where either table has
+ * no entry, so a flaw the copy database has not caught up with is left out of a
+ * plan rather than printed as a blank heading.
+ */
+function focusFor(
+  flaw: FlawId,
+  value: number,
+  target: [number, number],
+): Analysis['focus'] | undefined {
   const copy = FLAW_COPY[flaw]
   if (!copy) return undefined
 
-  const drill = drillFor(triage.drill_id)
+  const drill = drillFor(FLAW_DRILL[flaw])
   if (!drill) return undefined
 
+  // Which half of the sentence applies: a signal past the top of its band is a
+  // different fault from one under the bottom of it, and the same flaw id covers
+  // both. A toss too high and a toss too low are not the same instruction.
   const overshot = copy.high !== undefined && value > target[1]
   return {
     title: overshot ? (copy.highTitle ?? copy.title) : copy.title,
@@ -270,24 +290,91 @@ export function causalFocus(triage: Triage | undefined): Analysis['focus'] | und
 }
 
 /**
+ * How many drills the report will ever put in front of a player at once.
+ *
+ * One was the original answer and it was too thin: somebody who has just filmed
+ * a whole basket has earned more than a single sentence. A drill per failing
+ * measurement was the other extreme and the worse one — five open areas put a
+ * dozen exercises on screen, which is the list nobody acts on. Four is the cap
+ * on a plan that still reads as a plan.
+ */
+export const MAX_PLAN = 4
+
+/**
+ * Severity, worst first. Mirrors the ranking `triage` sorts its groups by.
+ *
+ * Held here rather than imported because `triage` deals in data and this module
+ * deals in what reaches a screen; the two agreeing is asserted by a test rather
+ * than by a shared import.
+ */
+const SEVERITY_RANK: Record<Severity, number> = { high: 0, medium: 1, low: 2, none: 3 }
+
+/**
+ * The two-to-four things to work on, in the order that causes the others.
+ *
+ * Built by the same rule `triage` picks its primary by, continued instead of
+ * stopped: walk the hierarchy from grip down to contact, take the detected
+ * faults in each group worst-first, and skip anything already attributed to a
+ * fault also detected. The first entry is therefore always the primary flaw, so
+ * the plan and the stored verdict cannot disagree.
+ *
+ * Symptoms stay out no matter how much room is left. A low contact point caused
+ * by a toss that never got high enough is not a second thing to practise — it is
+ * the first thing, seen from underneath, and listing it would send somebody to
+ * reach higher for a ball that was never there.
+ *
+ * Reads `diagnosis` rather than re-deriving anything: both it and `triage` are
+ * stored on the report, so a reopened session gets the same plan it had.
+ */
+export function causalPlan(
+  triage: Triage | undefined,
+  diagnosis: Diagnosis | undefined,
+): Analysis['focus'][] {
+  const primary = causalFocus(triage)
+  if (!primary || !triage?.primary_flaw) return []
+
+  const out = [primary]
+  const detected = (diagnosis?.flaws ?? []).filter((f) => f.detected)
+  const attributed = new Set(detected.filter((f) => f.caused_by).map((f) => f.flaw))
+
+  for (const level of HIERARCHY) {
+    if (out.length >= MAX_PLAN) break
+    const here = detected
+      .filter((f) => level.flaws.includes(f.flaw))
+      .filter((f) => f.flaw !== triage.primary_flaw!.flaw && !attributed.has(f.flaw))
+      .sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity])
+
+    for (const f of here) {
+      if (out.length >= MAX_PLAN) break
+      const entry = focusFor(f.flaw, f.value, f.target)
+      if (entry) out.push(entry)
+    }
+  }
+
+  return out
+}
+
+/**
  * What was found and deliberately not said.
  *
- * The count is on the triage output already; this is the sentence that makes it
- * mean something. Without it, a player who fixes the named fault and refilms has
- * no way to know the report was ever holding anything back — and a second fault
- * appearing out of nowhere on the next clip reads as the app changing its mind.
- *
- * Never a list. Six faults printed out is the list nobody acts on that the
- * hierarchy exists to prevent, and printing it under a heading that says "one
- * thing" would be the report arguing with itself.
+ * Still a count, never a list. The plan above it now carries up to four things,
+ * so what is left over is whatever the cap and the causal rule between them held
+ * back — and a player who clears the plan and refilms needs to know the report
+ * was holding anything at all, or a new fault next week reads as the app
+ * changing its mind.
  */
-export function suppressedNote(triage: Triage | undefined): string | undefined {
-  const n = triage?.suppressed_count ?? 0
-  if (!triage || triage.status !== 'ok' || n < 1) return undefined
+export function suppressedNote(
+  triage: Triage | undefined,
+  /** How many the plan actually printed. Defaults to the one-item case. */
+  shown = 1,
+): string | undefined {
+  if (!triage || triage.status !== 'ok') return undefined
+  const n = (triage.suppressed_count ?? 0) - Math.max(0, shown - 1)
+  if (n < 1) return undefined
   return cue(
     n === 1
-      ? 'One other thing shows up in this serve. It sits downstream of this one, so fix this first.'
-      : `${n} other things show up in this serve. They sit downstream of this one, so fix this first.`,
+      ? 'One other thing shows up in this serve. It sits downstream of these, so start here.'
+      : `${n} other things show up in this serve. They sit downstream of these, so start here.`,
   )
 }
 

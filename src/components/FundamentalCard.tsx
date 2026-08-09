@@ -17,10 +17,16 @@ interface Props {
  * One area of the serve, opened out into its measurements.
  *
  * Each measurement reads top to bottom as one thought: what your body did, where
- * that sits against the target, the instruction, and the drill that fixes it.
- * No raw numbers anywhere on the way down — the readout says the same thing in
- * body language, and the bar carries the rest without asking anybody to compare
- * a decimal against a band.
+ * that sits against the target, and the instruction. No raw numbers anywhere on
+ * the way down — the readout says the same thing in body language, and the bar
+ * carries the rest without asking anybody to compare a decimal against a band.
+ *
+ * No drills here, deliberately. A card used to carry one exercise per named
+ * fault plus a general one where there were none, and five open cards on a poor
+ * serve put a dozen drills on screen — which is the list nobody acts on. Every
+ * drill the report gives now comes off the one ranked plan at the top, so what
+ * to do first is decided once, in causal order, rather than by whichever card
+ * the player happened to open.
  */
 export default function FundamentalCard({
   fundamental: f,
@@ -29,11 +35,6 @@ export default function FundamentalCard({
   defaultOpen = false,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen)
-
-  // The area's own session is the fallback, not the default. Where the report
-  // has already named specific faults, each one carries the drill that corrects
-  // it, and a second general drill underneath is one more thing to skip past.
-  const hasFaultDrills = f.metrics.some((m) => m.fix && m.drill)
 
   return (
     <section className={`fcard fcard--${f.status}${open ? ' is-open' : ''}`}>
@@ -105,19 +106,9 @@ export default function FundamentalCard({
                     </span>
                   </p>
                 )}
-                {m.fix && m.drill && <DrillCard drill={m.drill} />}
               </li>
             ))}
           </ul>
-
-          {!hasFaultDrills && (
-            <div className="drill">
-              <span className="drill-kicker">Drill</span>
-              <h4>{f.drill.name}</h4>
-              <p>{f.drill.how}</p>
-              <span className="drill-reps">{f.drill.reps}</span>
-            </div>
-          )}
 
           {onSeek && (
             <button className="btn btn--ghost btn--full" onClick={() => onSeek(f.phase)}>
@@ -132,18 +123,3 @@ export default function FundamentalCard({
 }
 
 const outsideBand = (m: Metric) => m.value < m.ideal[0] || m.value > m.ideal[1]
-
-/** The one exercise that corrects the fault directly above it. */
-function DrillCard({ drill }: { drill: NonNullable<Metric['drill']> }) {
-  return (
-    <div className="microdrill">
-      <span className="microdrill-kicker">
-        <Icon name="target" size={12} />
-        Drill
-      </span>
-      <h5>{drill.name}</h5>
-      <p>{drill.how}</p>
-      <span className="microdrill-reps">{drill.reps}</span>
-    </div>
-  )
-}

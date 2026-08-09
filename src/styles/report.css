@@ -701,6 +701,102 @@
   text-wrap: pretty;
 }
 
+/*
+ * The rest of the queue.
+ *
+ * Everything here is one step down from the item above it — no panel of its own,
+ * no lime, a smaller title — because the ranking is the content. Four boxes of
+ * equal weight would be the dashboard this section exists instead of: the player
+ * would have to decide which to start with, which is the decision the hierarchy
+ * already made for them.
+ */
+.focus-next {
+  position: relative;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+  list-style: none;
+}
+
+.focus-next-kicker {
+  display: block;
+  margin-bottom: 13px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.focus-next-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.focus-next-item:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* The position in the queue, carried by a numeral rather than by a bullet: the
+   order is the instruction, so it has to survive being skim-read. */
+.focus-next-rank {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-next-body {
+  min-width: 0;
+}
+
+.focus-next-title {
+  font-size: 13.5px;
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-title);
+  line-height: var(--lh-snug);
+}
+
+.focus-next-why {
+  margin-top: 4px;
+  max-width: var(--measure);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.focus-next-drill {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.focus-next-drill svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--fg-faint);
+}
+
+.focus-next-drill strong {
+  font-weight: 600;
+  color: var(--fg);
+}
+
 /* Which rung these targets came off, and the way to move it. */
 .levelled {
   position: relative;
@@ -727,6 +823,20 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--lime);
+}
+
+/*
+ * Why a saved report will not move when the level does.
+ *
+ * `--fg-muted` rather than the `--fg-faint` its neighbour uses: this is the one
+ * line that explains why the control above it appears to have done nothing, so
+ * it is the wrong place to be the least legible text on the panel.
+ */
+.levelled-note {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
 }
 
 /* ============================================================================
