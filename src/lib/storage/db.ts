@@ -95,6 +95,20 @@ const stripStills = (s: Session): Session => ({
 })
 
 /**
+ * How hard to work to make room.
+ *
+ * `routine` runs after every save and must be nearly free. The other two are
+ * the quota recovery, escalating in the order that costs the player least:
+ * images before reports.
+ */
+type PruneLevel = 'routine' | 'stills' | 'hard'
+
+/** Reports that keep their stills once the disk has actually pushed back. */
+const KEEP_STILLS_UNDER_PRESSURE = 3
+/** Reports kept in full once stripping every recoverable image was not enough. */
+const KEEP_ALL_UNDER_PRESSURE = 25
+
+/**
  * Keep history bounded without throwing away what makes it useful.
  *
  * Nearly all of a stored report's size is its six keyframe JPEGs, and those are
@@ -103,52 +117,88 @@ const stripStills = (s: Session): Session => ({
  * the measurements survive far longer, which is the opposite of what deleting
  * whole reports oldest-first would do.
  */
-async function prune(aggressive = false): Promise<void> {
-  const raw = await tx<unknown[]>('readonly', (s) => s.getAll() as IDBRequest<unknown[]>)
+async function prune(level: PruneLevel = 'routine'): Promise<void> {
+  const keepStills = level === 'routine' ? KEEP_STILLS : KEEP_STILLS_UNDER_PRESSURE
+  const keepAll = level === 'hard' ? KEEP_ALL_UNDER_PRESSURE : MAX_SESSIONS
 
-  const all: Session[] = []
-  for (const row of raw) {
-    const s = normalise(row)
-    if (s) {
-      all.push(s)
-      continue
-    }
-    // A row that cannot even be read still occupies quota, and `listSessions`
-    // hides it — so a store full of corrupt rows would defeat the quota
-    // recovery entirely, with every retry failing against bytes nothing can
-    // free. Under quota pressure they go first; otherwise they are left alone,
-    // since an unreadable row may simply belong to a newer version of the app.
-    const id = (row as { id?: unknown } | null)?.id
-    if (aggressive && typeof id === 'string') {
-      await safely(() => tx('readwrite', (store) => store.delete(id)), undefined)
-    }
-  }
-  all.sort((a, b) => b.createdAt - a.createdAt)
+  /*
+   * Oldest first, as keys alone.
+   *
+   * Routine pruning runs after every single save, including the two chip taps
+   * that only rescore a report already in the store. Reading the rows
+   * themselves to decide meant structured-cloning the entire history back onto
+   * the main thread each time — with a full store that is 120 base64 JPEGs,
+   * megabytes of text inflated to UTF-16, to conclude almost every time that
+   * there was nothing to do. The `createdAt` index was created for this and
+   * had never been read.
+   *
+   * A row with no usable `createdAt` is absent from the index, so it is neither
+   * counted against the limits nor deleted here. That is deliberate: it may
+   * belong to a newer version of the app. Under real quota pressure
+   * `dropUnreadable` reaches them.
+   */
+  const ordered = await tx<IDBValidKey[]>(
+    'readonly',
+    (s) => s.index('createdAt').getAllKeys() as IDBRequest<IDBValidKey[]>,
+  )
 
-  const keepStills = aggressive ? 5 : KEEP_STILLS
-  const keepAll = aggressive ? 25 : MAX_SESSIONS
+  if (level !== 'routine') await dropUnreadable()
 
-  for (const doomed of all.slice(keepAll)) {
-    await safely(() => tx('readwrite', (store) => store.delete(doomed.id)), undefined)
+  for (const doomed of ordered.slice(0, Math.max(0, ordered.length - keepAll))) {
+    await safely(() => tx('readwrite', (store) => store.delete(doomed)), undefined)
   }
 
   /*
-   * Every step here is best-effort, and that is the point rather than laziness.
+   * Only the band between the two limits is read back at all: the newest
+   * `keepStills` reports keep their images and everything past `keepAll` has
+   * just been deleted. One report is resident at a time, which matters because
+   * this loop's other caller is the out-of-room path.
    *
-   * This loop runs inside the quota recovery: `saveSession` catches a full disk,
-   * calls `prune(true)` to free room, then retries the write. Stripping stills
-   * is itself a `put`, and a `put` rewrites a record before the old copy is
-   * released — so under real quota pressure it can throw the very error it is
-   * being run to recover from. Unguarded, that rejection propagated out of
-   * `prune` and past the retry, and the report the player had just recorded was
-   * lost even though the delete loop above had already freed the space for it.
+   * Every step is best-effort, and that is the point rather than laziness.
+   * Stripping stills is itself a `put`, and a `put` rewrites a record before
+   * the old copy is released — so under real quota pressure it can throw the
+   * very error it is being run to recover from. Unguarded, that rejection
+   * propagated out of `prune` and past the retry, and the report the player had
+   * just recorded was lost even though the delete loop above had already freed
+   * the space for it.
    *
    * Freeing less than hoped for is survivable. Not getting to the retry is not.
    */
-  for (const s of all.slice(keepStills, keepAll)) {
-    if (s.phases.some((p) => p.thumbnail)) {
-      await safely(() => tx('readwrite', (store) => store.put(stripStills(s))), undefined)
-    }
+  const banded = ordered.slice(
+    Math.max(0, ordered.length - keepAll),
+    Math.max(0, ordered.length - keepStills),
+  )
+  for (const key of banded) {
+    await safely(async () => {
+      const row = await tx<unknown>('readonly', (store) => store.get(key) as IDBRequest<unknown>)
+      const s = normalise(row)
+      if (!s || !s.phases.some((p) => p.thumbnail)) return
+      await tx('readwrite', (store) => store.put(stripStills(s)))
+    }, undefined)
+  }
+}
+
+/**
+ * Delete rows nothing can read, one at a time.
+ *
+ * A row that cannot be parsed still occupies quota, and `listSessions` hides it
+ * — so a store full of corrupt rows would defeat the quota recovery entirely,
+ * with every retry failing against bytes nothing can free. Read singly rather
+ * than with one `getAll`, because the only caller is already out of room and
+ * materialising the whole store to find the junk in it is the wrong move at
+ * exactly that moment.
+ */
+async function dropUnreadable(): Promise<void> {
+  const keys = await tx<IDBValidKey[]>(
+    'readonly',
+    (s) => s.getAllKeys() as IDBRequest<IDBValidKey[]>,
+  )
+  for (const key of keys) {
+    await safely(async () => {
+      const row = await tx<unknown>('readonly', (store) => store.get(key) as IDBRequest<unknown>)
+      if (normalise(row)) return
+      await tx('readwrite', (store) => store.delete(key))
+    }, undefined)
   }
 }
 
@@ -209,13 +259,37 @@ export async function saveSession(
     await tx('readwrite', (s) => s.put(session))
   } catch (err) {
     if (!isQuotaError(err)) throw err
-    // Out of room. Free some and try once more, rather than silently losing the
-    // report the player just recorded.
-    await prune(true)
-    await tx('readwrite', (s) => s.put(session))
+    /*
+     * Out of room. Free the cheap bytes first, and only the cheap bytes.
+     *
+     * The recovery used to go in one shot: strip stills back to five reports
+     * *and* delete every report past the newest twenty-five. But
+     * `QuotaExceededError` is raised by a device with no free space at all, not
+     * only by an origin over its own share — so a phone whose disk was filled
+     * by photos and podcasts had thirty-five serve reports destroyed to reclaim
+     * a few megabytes that were never the problem, and the retry then failed
+     * anyway. The player lost most of their history and still lost the report
+     * they had just recorded.
+     *
+     * Stills are almost all of the bytes and can be recaptured from a re-run;
+     * the measurements behind a report cannot be recovered once the clip is
+     * gone. So the images go first, across the whole history, and reports are
+     * deleted only if losing every recoverable image was genuinely not enough.
+     */
+    await prune('stills')
+    try {
+      await tx('readwrite', (s) => s.put(session))
+    } catch (stillFull) {
+      if (!isQuotaError(stillFull)) throw stillFull
+      await prune('hard')
+      await tx('readwrite', (s) => s.put(session))
+    }
   }
 
-  if (bound) await prune()
+  // Bounding the store is housekeeping, not part of the save. A failure here
+  // must not turn a report that is already durably written into a rejected
+  // promise the caller reports to the player as a lost save.
+  if (bound) await safely(() => prune(), undefined)
 }
 
 /**
@@ -358,12 +432,55 @@ function usableConsistency(raw: unknown): Session['consistency'] {
   }
 }
 
-export async function listSessions(): Promise<Session[]> {
-  const all = await tx<unknown[]>('readonly', (s) => s.getAll() as IDBRequest<unknown[]>)
-  return all
-    .map(normalise)
-    .filter((s): s is Session => s !== undefined)
-    .sort((a, b) => b.createdAt - a.createdAt)
+/**
+ * Walk the store a row at a time, reshaping each one as it arrives.
+ *
+ * A cursor rather than `getAll()` so that only one report is materialised at a
+ * time. It matters for `listSummaries`, whose whole point is that the keyframe
+ * images never reach the caller: `getAll()` would deserialise all 120 base64
+ * JPEGs into one array first and only then let us drop them, which is the peak
+ * we are trying to avoid on a mid-range phone.
+ */
+function readAll(shape: (s: Session) => Session): Promise<Session[]> {
+  return open().then(
+    (db) =>
+      new Promise<Session[]>((resolve, reject) => {
+        const out: Session[] = []
+        const req = db.transaction(STORE, 'readonly').objectStore(STORE).openCursor()
+        req.onsuccess = () => {
+          const cursor = req.result
+          if (!cursor) {
+            resolve(out.sort((a, b) => b.createdAt - a.createdAt))
+            return
+          }
+          const s = normalise(cursor.value)
+          if (s) out.push(shape(s))
+          cursor.continue()
+        }
+        req.onerror = () => reject(req.error ?? new Error('Could not read local storage'))
+      }),
+  )
+}
+
+/** Every stored report in full, newest first. */
+export const listSessions = (): Promise<Session[]> => readAll((s) => s)
+
+/**
+ * Every stored report, newest first, without its keyframe images.
+ *
+ * What the app holds in state for its whole life. The history list and the home
+ * screen draw a score ring, a title and a date; the trend chart, the practice
+ * window and the consistency sweep read numbers. None of them touch a
+ * thumbnail. Keeping the full reports there meant 120 base64 JPEGs — tens of
+ * megabytes once the browser inflated them to UTF-16 — pinned from the moment
+ * the app opened, for images that are only ever on screen inside one open
+ * report. That report is fetched on demand by `getSession`.
+ */
+export const listSummaries = (): Promise<Session[]> => readAll(stripStills)
+
+/** One stored report in full, images included. */
+export async function getSession(id: string): Promise<Session | undefined> {
+  return normalise(await tx<unknown>('readonly', (s) => s.get(id) as IDBRequest<unknown>))
 }
 
 export async function deleteSession(id: string): Promise<void> {
