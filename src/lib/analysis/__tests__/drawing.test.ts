@@ -11,7 +11,7 @@
 import { LM } from '../geometry'
 import { detectServe } from '../phases'
 import { drawSkeleton, fitContain } from '../../pose/skeleton'
-import { buildServe } from './syntheticServe'
+import { buildServe } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
 
 const FPS = 50

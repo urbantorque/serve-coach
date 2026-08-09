@@ -1,18 +1,24 @@
 /**
  * Builds a complete Analysis from the synthetic serve rig, with no camera and
- * no video file. Used to exercise the report UI during development — open the
- * app with `?demo` — and dynamically imported so it never reaches production.
+ * no video file.
+ *
+ * Not dev-only, whatever the folder name suggests: "See an example report" on
+ * an empty home screen is this, and it is the first thing a real first-time
+ * player sees. Dynamic import keeps it out of the initial bundle — that is what
+ * the `import()` buys, not exclusion from the build. The rig it is built on
+ * therefore lives in `lib/analysis` rather than under `__tests__`, so that
+ * editing it is visibly editing something a user can reach.
  */
 import { pickFocus } from '../lib/analysis/analyze'
 import { measure } from '../lib/analysis/metrics'
 import { buildPhases, detectServe } from '../lib/analysis/phases'
-import { statusOf } from '../lib/analysis/geometry'
+import { statusOf, weightedScore } from '../lib/analysis/geometry'
 import { diagnose } from '../lib/analysis/diagnose'
 import { assessResilience, triage } from '../lib/analysis/triage'
 import { causalFocus } from '../lib/analysis/verdict'
 import { FUNDAMENTALS } from '../lib/analysis/coaching'
 import type { Analysis } from '../lib/analysis/types'
-import { buildServe, type ServeDials } from '../lib/analysis/__tests__/syntheticServe'
+import { buildServe, type ServeDials } from '../lib/analysis/syntheticServe'
 
 /**
  * A blank clip matching the sample analysis's duration, so the player and its
@@ -132,9 +138,8 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): 
   const diagnosis = diagnose(frames, skel, { tier })
   const verdict = triage(diagnosis, assessResilience(frames, skel))
 
-  const totalWeight = fundamentals.reduce((s, f) => s + FUNDAMENTALS[f.id].weight, 0)
-  const overall = Math.round(
-    fundamentals.reduce((s, f) => s + f.score * FUNDAMENTALS[f.id].weight, 0) / totalWeight,
+  const overall = weightedScore(
+    fundamentals.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
   )
 
   return {

@@ -21,7 +21,7 @@ import { findServes } from '../serves'
 import type { BallFlight } from '../../vision/ballTrack'
 import type { ServeType } from '../../storage/prefs'
 import { NotAServeError, type Frame, type Fundamental, type Metric, type Status } from '../types'
-import { CLEAN_SERVE, U, buildServe, type ServeDials } from './syntheticServe'
+import { CLEAN_SERVE, U, buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, near, note, report, within } from './harness'
 
 /** Declared up here because checks run top to bottom as the module executes. */

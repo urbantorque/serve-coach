@@ -58,7 +58,7 @@ import {
   type Frame,
   type Fundamental,
 } from '../types'
-import { CLEAN_SERVE, buildServe, type ServeDials } from './syntheticServe'
+import { CLEAN_SERVE, buildServe, type ServeDials } from '../syntheticServe'
 import { MINIMUM_RECORDED, RECORDED } from './fixtures'
 import { assert, check, heading, near, note, report, within } from './harness'
 

@@ -23,10 +23,10 @@
  */
 import { blurOf, capturedSamples, stabilise } from './kalman'
 import { assessSpatial, spatialVisibility, type Spatial } from './spatial'
-import { LM, clamp, keyVisibility, mean, sided } from './geometry'
+import { clamp, keyVisibility, mean, sided } from './geometry'
 import type { Diagnosis } from './diagnose'
 import type { FlawFinding, FlawId } from './flaws'
-import type { Severity } from './tiers'
+import { SEVERITY_RANK, type Severity } from './tiers'
 import type { Skeleton } from './phases'
 import type { Frame } from './types'
 
@@ -208,8 +208,6 @@ export function rejectionFor(r: Resilience): RejectReason | undefined {
 
 /* ---------------------------------------------------------------- triage -- */
 
-const SEVERITY_RANK: Record<Severity, number> = { high: 0, medium: 1, low: 2, none: 3 }
-
 /**
  * Collapse a diagnosis to the single thing to work on, or to a refusal.
  *
@@ -355,13 +353,5 @@ function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
 }
 
 const round2 = (v: number) => Math.round(v * 100) / 100
-
-/** Landmarks the resilience read depends on, for callers that want to pre-check. */
-export const RESILIENCE_LANDMARKS = [
-  LM.leftShoulder,
-  LM.rightShoulder,
-  LM.leftHip,
-  LM.rightHip,
-] as const
 
 export { spatialVisibility }

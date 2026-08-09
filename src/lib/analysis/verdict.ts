@@ -27,7 +27,7 @@ import { DRILLS } from './coaching'
 import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
 import { FLAW_DRILL, HIERARCHY, type InjuryFlag, type RejectReason, type Triage } from './triage'
-import { rungName, type Severity } from './tiers'
+import { SEVERITY_RANK, rungName, type Severity } from './tiers'
 import type { Analysis, Drill } from './types'
 import { cue } from './voice'
 
@@ -149,9 +149,8 @@ const INJURIES: Record<InjuryFlag, { title: string; body: string }> = {
  */
 export function injuryNotes(triage: Triage | undefined): InjuryNote[] {
   if (!triage?.injury_risk?.length) return []
-  const rank: Record<Severity, number> = { high: 0, medium: 1, low: 2, none: 3 }
   return [...triage.injury_risk]
-    .sort((a, b) => rank[a.severity] - rank[b.severity])
+    .sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity])
     // A flag this build has no words for is dropped rather than rendered as a
     // crash. Reports outlive the code that wrote them, and a row restored from a
     // backup — or written by a newer version and read by an older one — can name
@@ -299,15 +298,6 @@ function focusFor(
  * on a plan that still reads as a plan.
  */
 export const MAX_PLAN = 4
-
-/**
- * Severity, worst first. Mirrors the ranking `triage` sorts its groups by.
- *
- * Held here rather than imported because `triage` deals in data and this module
- * deals in what reaches a screen; the two agreeing is asserted by a test rather
- * than by a shared import.
- */
-const SEVERITY_RANK: Record<Severity, number> = { high: 0, medium: 1, low: 2, none: 3 }
 
 /**
  * The two-to-four things to work on, in the order that causes the others.

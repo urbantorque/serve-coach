@@ -17,7 +17,7 @@ import { bridgeDetectionGaps, MAX_BRIDGED_SAMPLES, MAX_BRIDGED_SPAN, type PoseSa
 import { keyVisibility, LM } from '../geometry'
 import { detectServe, type Keyframes } from '../phases'
 import type { Frame } from '../types'
-import { buildServe } from './syntheticServe'
+import { buildServe } from '../syntheticServe'
 import { assert, check, heading, near, note, report, within } from './harness'
 
 const FPS = 50

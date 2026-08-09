@@ -23,7 +23,7 @@ import {
   targetFor,
 } from '../tiers'
 import type { BallFlight } from '../../vision/ballTrack'
-import { buildServe, type ServeDials } from './syntheticServe'
+import { buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, near, note, report } from './harness'
 
 const FPS = 50

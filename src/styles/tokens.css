@@ -202,21 +202,15 @@ ol {
    stylesheets were repeating: the 11px uppercase kicker at --tr-kicker that
    appears in four modules, the clamped section title, the muted 13px caption.
    Naming them stops the fifth copy drifting half a pixel from the other four,
-   which is exactly what happened to the kickers before. */
+   which is exactly what happened to the kickers before.
 
-.t-hero {
-  font-size: clamp(34px, 9vw, 44px);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-display);
-  line-height: 1.04;
-}
-
-.t-display {
-  font-size: clamp(26px, 7vw, 34px);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-display);
-  line-height: 1.1;
-}
+   Only the roles something actually wears. Eight were defined and three were
+   used; the other five — hero, display, lede, caption, code — were never
+   applied to an element anywhere in the app, which made this file a list of
+   what the type *could* be rather than what it is, in the one place whose job
+   is to be the single answer. They are deleted rather than retrofitted onto
+   the hand-set values they resemble: the near-matches are near, not exact, and
+   adopting them would move pixels on screens nobody asked to change. */
 
 .t-headline {
   font-size: clamp(20px, 5.4vw, 24px);
@@ -232,20 +226,6 @@ ol {
   line-height: var(--lh-tight);
 }
 
-.t-lede {
-  font-size: 15px;
-  font-weight: var(--wt-body);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
-}
-
-.t-caption {
-  font-size: 13px;
-  font-weight: var(--wt-body);
-  line-height: var(--lh-snug);
-  color: var(--fg-muted);
-}
-
 .t-overline {
   font-size: 11px;
   font-weight: var(--wt-key);
@@ -253,13 +233,6 @@ ol {
   line-height: 1.2;
   text-transform: uppercase;
   color: var(--fg-faint);
-}
-
-.t-code {
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: var(--lh-snug);
-  font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {

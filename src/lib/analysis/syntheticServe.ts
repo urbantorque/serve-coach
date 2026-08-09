@@ -10,8 +10,8 @@
  * origin at the hip centre and +y pointing DOWN, matching MediaPipe. Image
  * landmarks are an orthographic projection along +z, already aspect-corrected.
  */
-import { LM } from '../geometry'
-import type { Frame, Landmark } from '../types'
+import { LM } from './geometry'
+import type { Frame, Landmark } from './types'
 
 const HEIGHT_M = 1.8
 const HIP_M = 0.95

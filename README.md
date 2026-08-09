@@ -3,12 +3,16 @@
 Frame-by-frame tennis serve analysis that runs entirely on your device.
 
 Film one serve. The app finds the six key positions in the motion, measures
-twenty things about your toss, loading, swing, contact and rhythm, and tells
-you which single change will buy you the most — with a drill to do about it.
-Two of the twenty come from the ball and are absent when it cannot be found.
+twenty things about your toss, loading, swing, contact and rhythm, and hands
+back the two to four changes worth making, in the order that causes the
+others — worst cause first, each with a drill. Two of the twenty come from the
+ball and are absent when it cannot be found.
 
-Your video is never uploaded. There is no account, no server and no network
-call after the first load.
+Your video is never uploaded. There is no account and no server: nothing you
+film, and nothing measured from it, leaves the device. The app itself is a
+service worker and it does check for its own updates, so a devtools network
+tab is not empty — but no request carries your data, and everything works with
+the network off.
 
 ---
 
@@ -39,9 +43,13 @@ npm run build
 ```
 
 To use it at the court, build and host `dist/` on any static host over HTTPS,
-open it on your phone, and add it to your home screen. After the first analysis
-the model is cached and the app works with the network switched off entirely —
-including in aeroplane mode on a court with no signal.
+open it on your phone, and add it to your home screen. Tap **Download now to
+use offline** on the home screen while you still have signal — that fetches the
+19 MB of pose model and WASM runtime and caches them. After that the app works
+with the network switched off entirely, including in aeroplane mode on a court
+with no signal. Running an analysis fetches the same assets, so the badge also
+turns itself green the first time you use the app for real; the button exists
+so that getting ready does not require analysing something first.
 
 **Hosting under a subdirectory.** By default the build assumes it owns the whole
 origin. To serve it from a path — a GitHub Pages project site, a staging folder,
@@ -221,7 +229,9 @@ Everything is in `src/lib`:
 | `analysis/diagnose.ts` | the diagnostic pass, out as one JSON object |
 | `analysis/spatial.ts` | which way is up, where the camera stood, and whether depth is readable |
 | `analysis/kalman.ts` | holds a landmark through blur, and scores how degraded the track is |
-| `analysis/triage.ts` | one thing to work on, or the reason the clip could not be read |
+| `analysis/triage.ts` | the primary fault as stored data, or the reason the clip could not be read |
+| `analysis/verdict.ts` | the same walk continued into the two-to-four plan the player reads |
+| `analysis/syntheticServe.ts` | a parametric serve with no camera — drives the tests and the `?demo` report |
 | `analysis/voice.ts` | the house style as code: strips filler, caps length, lints the copy |
 | `analysis/confidence.ts` | how far to trust each measurement, and why |
 | `analysis/geometry.ts` | angles, smoothing, scoring curve |
@@ -417,7 +427,7 @@ The analysis engine is pure TypeScript with no DOM dependency, so it is tested
 in Node with no browser and no test framework — `scripts/run-tests.mjs` bundles
 it with esbuild and runs it.
 
-The tests drive a **parametric synthetic serve** (`__tests__/syntheticServe.ts`)
+The tests drive a **parametric synthetic serve** (`analysis/syntheticServe.ts`)
 built from the quantities a coach would name: knee bend, shoulder tilt, hip and
 shoulder rotation, where the hands are, how long the motion takes, and where the
 camera is. That means a test can dial in a specific fault and assert the app

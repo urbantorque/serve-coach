@@ -323,6 +323,24 @@ export function missBy(signal: string, value: number, band: [number, number]): n
 export type Severity = 'none' | 'low' | 'medium' | 'high'
 
 /**
+ * Severity as a sort key, worst first.
+ *
+ * Beside the type it orders, because it is part of what the type means rather
+ * than a preference any one module holds. Four copies of this literal had
+ * accumulated — two inside `verdict.ts` alone, plus `triage.ts` and `flaws.ts`,
+ * and a fifth encoding of the same order reversed — and one of them carried a
+ * comment claiming a test asserted they agreed. No such test existed. The
+ * failure they were risking is the quiet one: the stored primary flaw and the
+ * plan the player reads ordered by different rules, in the one direction this
+ * app is built to get right, worst cause first.
+ */
+export const SEVERITY_RANK: Record<Severity, number> = { high: 0, medium: 1, low: 2, none: 3 }
+
+/** Worse of two severities, by the same ranking. */
+export const worseSeverity = (a: Severity, b: Severity): Severity =>
+  SEVERITY_RANK[a] <= SEVERITY_RANK[b] ? a : b
+
+/**
  * Severity, graded against how big a miss is serious for this signal.
  *
  * Scaled per signal rather than as a percentage of the value: eight degrees of

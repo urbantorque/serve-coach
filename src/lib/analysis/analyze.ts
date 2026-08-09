@@ -31,6 +31,7 @@ import {
   mean,
   median,
   statusOf,
+  weightedScore,
 } from './geometry'
 import { diagnose } from './diagnose'
 import { capturedSamples } from './kalman'
@@ -522,10 +523,8 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     },
   })
 
-  const totalWeight = fundamentals.reduce((s, f) => s + FUNDAMENTALS[f.id].weight, 0)
-  const overall = Math.round(
-    fundamentals.reduce((s, f) => s + f.score * FUNDAMENTALS[f.id].weight, 0) /
-      Math.max(1, totalWeight),
+  const overall = weightedScore(
+    fundamentals.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
   )
 
   // The keyframes and the tracked ball are unchanged by a serve-type rescore —
@@ -835,10 +834,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     })
   }
 
-  const totalWeight = fundamentals.reduce((s, f) => s + FUNDAMENTALS[f.id].weight, 0)
-  const overall = Math.round(
-    fundamentals.reduce((s, f) => s + f.score * FUNDAMENTALS[f.id].weight, 0) /
-      Math.max(1, totalWeight),
+  const overall = weightedScore(
+    fundamentals.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
   )
 
   const tossFlight = ball

@@ -18,7 +18,7 @@ import type { FlawId } from '../flaws'
 import { detectServe } from '../phases'
 import { FLAW_DRILL, HIERARCHY, assessResilience, triage } from '../triage'
 import { MAX_PLAN, causalPlan, suppressedNote } from '../verdict'
-import { buildServe, type ServeDials } from './syntheticServe'
+import { buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
 
 const FPS = 50

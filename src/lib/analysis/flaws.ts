@@ -17,12 +17,14 @@
  */
 import {
   NOISE_FLOOR,
+  SEVERITY_RANK,
   SIGNALS,
   insideBand,
   missBy,
   nextTier,
   severityOf,
   targetFor,
+  worseSeverity,
   type Severity,
 } from './tiers'
 
@@ -143,9 +145,6 @@ export interface StructuralEvidence {
  * whose depth *is* readable and worse keeps the worse answer.
  */
 const NO_FALL_SEVERITY: Severity = 'medium'
-const SEVERITY_ORDER: Severity[] = ['none', 'low', 'medium', 'high']
-const worseOf = (a: Severity, b: Severity) =>
-  SEVERITY_ORDER.indexOf(a) >= SEVERITY_ORDER.indexOf(b) ? a : b
 
 export function evaluateFlaws(
   readings: Record<string, SignalReading | undefined>,
@@ -214,7 +213,7 @@ export function evaluateFlaws(
       target: [round(target[0], spec.signal), round(target[1], spec.signal)],
       target_tier,
       severity: neverFell
-        ? worseOf(
+        ? worseSeverity(
             resolvable ? severityOf(spec.signal, reading.value, target) : 'none',
             NO_FALL_SEVERITY,
           )
@@ -247,11 +246,11 @@ export function evaluateFlaws(
     if (f.detected && cause && outOfBand.has(cause)) f.caused_by = cause
   }
 
-  const rank: Record<Severity, number> = { high: 0, medium: 1, low: 2, none: 3 }
   return found.sort((a, b) => {
     // Root causes ahead of their own symptoms at equal severity: fixing the
     // cause is what moves both.
-    if (rank[a.severity] !== rank[b.severity]) return rank[a.severity] - rank[b.severity]
+    const bySeverity = SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]
+    if (bySeverity !== 0) return bySeverity
     return Number(Boolean(a.caused_by)) - Number(Boolean(b.caused_by))
   })
 }

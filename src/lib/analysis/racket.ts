@@ -16,7 +16,7 @@
  * is precisely where a racket-based number would have to be trustworthy.
  */
 import { LM, type Side } from './geometry'
-import type { Frame, Landmark } from './types'
+import type { Frame } from './types'
 
 /**
  * Grip to head centre, as a fraction of standing height.
@@ -119,6 +119,3 @@ export function smoothedRacket(
     confidence: confidence / n,
   }
 }
-
-/** Convenience for callers that only have loose landmarks. */
-export const midpointOf = (a: Landmark, b: Landmark) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })

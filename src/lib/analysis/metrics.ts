@@ -463,12 +463,3 @@ function headlineFor(metrics: Metric[], label: string, areaScore: number): strin
   if (areaScore >= 70) return cue(`Decent ${area}. ${weakest.label} is the brake.`)
   return weakest.insight
 }
-
-/** Smoothed racket-hand height, exposed for the swing-path graph in the UI. */
-export function racketPath(frames: Frame[], skel: Skeleton): number[] {
-  const R = sided(skel.racket)
-  return smooth(
-    frames.map((f) => (skel.groundY - f.image[R.wrist].y) / skel.bodyHeight),
-    1,
-  )
-}

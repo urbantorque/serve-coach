@@ -359,9 +359,6 @@ export function chainScore(
 
 /* --------------------------------------------------------------- frame utils */
 
-export const lmAt = (f: Frame, i: number): Landmark => f.image[i]
-export const wAt = (f: Frame, i: number): Landmark => f.world[i]
-
 /**
  * Where a world landmark was at a keyframe, averaged over a frame or two either
  * side.
