@@ -38,19 +38,46 @@ function format(value: number, copy: MetricCopy): string {
   return copy.unit === '°' || copy.unit === '%' || copy.unit === '×' ? `${n}${copy.unit}` : n
 }
 
+/**
+ * Assemble one measurement, or nothing at all when there was no measurement.
+ *
+ * A value that did not come out finite used to be replaced by `copy.ideal[0]`,
+ * the floor of the target band — and that is the one thing this app must never
+ * do. It is not a cautious default; it is a number nobody measured, printed with
+ * a readout, a badge and a place in the area score. Worse, where the floor lands
+ * depends on the band's shape, so the invention flattered as often as it
+ * scolded: a toss wobble that failed to compute came back as 0 against an ideal
+ * of 0–3 and scored 100, telling a player their toss path was flawless on a
+ * clip the app could not read it from at all.
+ *
+ * Nothing downstream could catch it either. The value sat inside its band, so
+ * there was no fix and no drill to look wrong; `confidence` describes how well
+ * the clip was *seen*, not whether the arithmetic produced a number, so a
+ * perfectly framed serve hedged nothing. The fabrication was indistinguishable
+ * from a reading.
+ *
+ * Scoring it at the floor of the *scale* instead would be the same invention
+ * pointing the other way — "your arm never straightens" is as much a claim about
+ * the player as "your toss is perfect". So it is dropped, on exactly the grounds
+ * the filters in `measure` already use for contact depth and the ball: a
+ * measurement that could not be taken is not a bad measurement, and the honest
+ * report of one is to say nothing. The card carries one row fewer, the area
+ * score is averaged over what was actually measured, and no advice is built on
+ * top of it.
+ */
 function build(
   id: string,
   value: number,
   ctx?: ConfidenceContext,
   serveType: ServeType = 'flat',
-): Metric {
+): Metric | undefined {
   const copy = metricCopy(id, serveType)
   if (!copy) throw new Error(`no coaching copy for metric "${id}"`)
+  if (!Number.isFinite(value)) return undefined
   const confidence = ctx ? metricConfidence(id, ctx) : 1
-  const v = Number.isFinite(value) ? value : copy.ideal[0]
-  const score = scoreAgainst(v, copy.ideal, copy.range, copy.missSpan)
-  const below = v < copy.ideal[0]
-  const above = v > copy.ideal[1]
+  const score = scoreAgainst(value, copy.ideal, copy.range, copy.missSpan)
+  const below = value < copy.ideal[0]
+  const above = value > copy.ideal[1]
 
   // No cap here, and none needed. `scoreAgainst` crosses the "Solid" threshold
   // at the band edge, so band membership and badge already say the same thing:
@@ -77,10 +104,10 @@ function build(
   return {
     id,
     label: copy.label,
-    value: v,
+    value,
     unit: copy.unit,
-    display: format(v, copy),
-    readout: readoutOf(id, v),
+    display: format(value, copy),
+    readout: readoutOf(id, value),
     target: targetOf(id, copy.ideal),
     decimals: copy.decimals,
     ideal: copy.ideal,
@@ -390,6 +417,12 @@ export function measure(
       // outcome the filter above exists to prevent, arriving one metric later.
       .filter((m) => (m === 'loadRatio' ? !skel.derivation.trophyOnToss : true))
       .map((m) => build(m, values[m], confidenceCtx, serveType))
+      // And whatever `build` declined to invent. Everything above this line
+      // names a condition we can see coming and drops the measurement for a
+      // stated reason; this catches the ones we cannot — an arithmetic that came
+      // out non-finite is a measurement that did not happen, however it got
+      // there, and it leaves the report the same way the named ones do.
+      .filter((m): m is Metric => m !== undefined)
 
     // Weighted by confidence, so a measurement the app admits it cannot see
     // properly does not get a full vote in the area's score — and cannot be the
