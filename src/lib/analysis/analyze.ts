@@ -70,6 +70,16 @@ export interface AnalyzeOptions {
   skipThumbnails?: boolean
   /** Serve times already located, so the clip is not scanned again per serve. */
   knownServeTimes?: number[]
+  /**
+   * Where the serves in this clip turned out to be, reported as soon as they are
+   * known so the caller can hand them back as `knownServeTimes` next time.
+   *
+   * Serve positions are a property of the clip, not of the serve being read, and
+   * on a long clip locating them is most of the wait — the scan covers the whole
+   * video where the measurement covers two seconds of it. A caller that drops
+   * them pays the entire scan again the moment the player taps a serve chip.
+   */
+  onServesLocated?: (times: number[]) => void
   /** Which serve this is meant to be, which shifts a handful of target bands. */
   serveType?: ServeType
   /**
@@ -131,8 +141,11 @@ export async function analyzeAllServes(
     // Locate every serve once up front. Each analysis below would otherwise
     // repeat this scan over the entire clip, which is by far the most expensive
     // thing here — the scan covers the whole video, the extraction only covers a
-    // couple of seconds of it.
-    const knownServeTimes = await locateServes(opts, video)
+    // couple of seconds of it. Once for the whole app, in fact: the report this
+    // sweep was launched from has already scanned this clip, so the caller
+    // hands the answer back and nobody scans at all.
+    const knownServeTimes = opts.knownServeTimes ?? (await locateServes(opts, video))
+    if (knownServeTimes?.length) opts.onServesLocated?.(knownServeTimes)
 
     for (let n = 0; n < total; n++) {
       if (opts.signal?.aborted) break
@@ -653,6 +666,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   })
 
   const { fps, window, serves, located } = extracted
+  if (extracted.times.length) opts.onServesLocated?.(extracted.times)
   let frames = extracted.frames
   const aspect = video.videoWidth / Math.max(1, video.videoHeight)
 

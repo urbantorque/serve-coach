@@ -391,6 +391,12 @@ export async function extractFrames(
    * scanned and no serve stood out, which changes what a later refusal means.
    */
   located: boolean
+  /**
+   * Where the serves in this clip are, as used for this pass — handed back so a
+   * caller who is going to read the same clip again does not have to scan for
+   * them a second time. Empty for a clip short enough to skip the scan.
+   */
+  times: number[]
 }> {
   const { onProgress = () => {}, signal, serveIndex = -1, knownServeTimes: known } = opts
   const duration = video.duration
@@ -452,7 +458,7 @@ export async function extractFrames(
   // see `clockOf` in phases.ts.
   const frames = bridgeDetectionGaps(samples)
 
-  return { frames, fps, window: { start, end }, serves, located }
+  return { frames, fps, window: { start, end }, serves, located, times }
 }
 
 /**

@@ -28,7 +28,8 @@ import { Cancelled } from './lib/pose/extract'
 import { isCachedOffline } from './lib/pose/poseEngine'
 import {
   deleteSession,
-  listSessions,
+  getSession,
+  listSummaries,
   safely,
   saveSession,
   type Session,
@@ -60,6 +61,16 @@ export default function App() {
   const abortRef = useRef<AbortController>()
   const urlRef = useRef<string>()
   const lastFileRef = useRef<File>()
+  /**
+   * Where the serves in the clip currently loaded are, once anything has looked.
+   *
+   * Cleared with the clip, in `run`, because the times index into that video and
+   * nothing else. Tapping a serve chip for a serve not yet measured used to
+   * re-scan the whole clip to re-derive an answer the first pass already had —
+   * up to 420 seek-and-detect pairs, twenty-odd seconds, before the two seconds
+   * of footage the player actually asked about were even opened.
+   */
+  const serveTimesRef = useRef<number[]>()
   const firstRunPickRef = useRef<HTMLInputElement>(null)
 
   /**
@@ -84,8 +95,30 @@ export default function App() {
     setTimeout(() => firstRunPickRef.current?.click(), 60)
   }, [])
 
+  /**
+   * Reload the history, without its keyframe images.
+   *
+   * Nothing rendered from this list draws a still — the home card and the
+   * history sheet draw a ring, a title and a date, and the trend, practice and
+   * consistency blocks read numbers. `openSaved` fetches the images back for
+   * the one report actually being looked at.
+   */
   const refreshSessions = useCallback(() => {
-    void safely(listSessions, []).then(setSessions)
+    void safely(listSummaries, []).then(setSessions)
+  }, [])
+
+  /**
+   * Open a stored report, fetching the keyframe stills it needs on the way.
+   *
+   * Falls back to the summary if the read fails rather than refusing to open:
+   * a report with no images in its phase strip is still the report, and the
+   * strip already handles a phase that never got a thumbnail.
+   */
+  const openSaved = useCallback((summary: Session) => {
+    setView({ kind: 'saved', session: summary })
+    void safely(() => getSession(summary.id), undefined).then((full) => {
+      if (full) setView((v) => (v.kind === 'saved' && v.session.id === full.id ? { kind: 'saved', session: full } : v))
+    })
   }, [])
 
   const form = useMemo(() => buildProgress(sessions), [sessions])
@@ -220,6 +253,7 @@ export default function App() {
         // A different clip: the cached analyses describe a video whose object URL
         // is about to be revoked, so nothing can play them back.
         forgetAll()
+        serveTimesRef.current = undefined
       }
 
       releaseVideo()
@@ -237,6 +271,13 @@ export default function App() {
           handedness,
           serveIndex,
           serveType,
+          // Same clip, so the serves are in the same places. This is what makes
+          // tapping a second serve chip cost the two seconds of footage it is
+          // about rather than another full scan of the video.
+          knownServeTimes: serveTimesRef.current,
+          onServesLocated: (times) => {
+            serveTimesRef.current = times
+          },
           // Absent unless the player has told us their rating, in which case the
           // diagnostic pass estimates one from the serve rather than asking.
           tier: prefs.tier,
@@ -356,6 +397,11 @@ export default function App() {
           count: analysis.serves.count,
           signal: controller.signal,
           onProgress: setProgress,
+          // The report this was launched from already scanned this clip.
+          knownServeTimes: serveTimesRef.current,
+          onServesLocated: (times) => {
+            serveTimesRef.current = times
+          },
         })
         if (controller.signal.aborted) return
 
@@ -418,7 +464,7 @@ export default function App() {
             sessions={sessions}
             offlineReady={offlineReady}
             onPick={(f) => void run(f)}
-            onOpen={(s) => setView({ kind: 'saved', session: s })}
+            onOpen={openSaved}
             onShowGuide={() => setSheet('guide')}
             onShowHistory={() => setSheet('history')}
             onShowProgress={() => setSheet('progress')}
@@ -636,7 +682,7 @@ export default function App() {
                   className="recent"
                   onClick={() => {
                     setSheet(null)
-                    setView({ kind: 'saved', session: s })
+                    openSaved(s)
                   }}
                 >
                   <ScoreRing score={s.overall} status={s.overallStatus} size={42} animate={false} />
