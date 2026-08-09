@@ -103,15 +103,15 @@ change. Spatial measurements are divided by the player's own standing height,
 so they mean the same thing for a junior filmed close up and an adult filmed
 from the back fence.
 
-**The ball, not just the arm.** Two of the toss measurements come from tracking
-the ball itself in the pixels — how high it really goes, and whether you hit it
-at the top of its flight or stood waiting for it to fall. Neither is visible
-from the arm, and both are among the first things a coach looks at. The ball is
-found by demanding that a run of candidate blobs fit a free-fall arc with the
-curvature the player's own height implies, which is what stops a passing bird or
-somebody else's ball being reported as your toss. When it cannot be found —
-against a cluttered background, or simply out of frame above you — those two
-measurements are absent rather than guessed.
+**The ball, not just the arm.** Two measurements come from tracking the ball
+itself in the pixels — how high the toss really goes, and, scored under Contact
+rather than Toss, whether you hit it at the top of its flight or stood waiting
+for it to fall. Neither is visible from the arm, and both are among the first
+things a coach looks at. The ball is found by demanding that a run of candidate
+blobs fit a free-fall arc with the curvature the player's own height implies,
+which is what stops a passing bird or somebody else's ball being reported as
+your toss. When it cannot be found — against a cluttered background, or simply
+out of frame above you — those two measurements are absent rather than guessed.
 
 **Which serve you were hitting.** A good kick serve makes contact more over the
 head than in front, and needs more shoulder tilt than a flat one. Judged against
@@ -164,19 +164,6 @@ without a mouse.
 stills are all that outlives a session — which is why the skeleton and the angle
 each position is judged on are drawn onto them at capture time, rather than only
 existing in the live player.
-
-**Side by side.** Any serve can be put next to another one — your best by
-default, rather than your last, because your last is whatever you happened to
-film and on a bad day makes today look like progress. The same four positions
-are shown as paired stills with every shared measurement ranked by how much it
-moved. All of it comes from data already on the device; nothing is re-analysed.
-
-**The shape you are aiming for.** The target bands describe a position, and a
-position is far easier to copy than to read. Turning on "target shape" draws a
-dashed figure at each key position, scaled to your body and aligned on your
-hips. It is not an illustration — it is the same parametric rig the tests run
-against, with every dial set to the middle of the band the report scores you
-against, so the picture and the numbers cannot drift apart.
 
 **Save or share a report.** One button renders the score, the thing to work on,
 the five areas and the annotated keyframes into a single image, and hands it to
@@ -239,7 +226,6 @@ Everything is in `src/lib`:
 | `analysis/confidence.ts` | how far to trust each measurement, and why |
 | `analysis/geometry.ts` | angles, smoothing, scoring curve |
 | `analysis/racket.ts` | where the racket is, inferred from the hand |
-| `analysis/modelServe.ts` | the shape the target bands describe, for drawing |
 | `analysis/groundTruth.ts` | fixture format and validator for real labelled clips |
 | `vision/ballTrack.ts` | finds the tossed ball in the pixels |
 | `storage/backup.ts` | persistence, export and import of the history |
@@ -351,7 +337,8 @@ any peak more than a tolerance below the best — so an under-read serve is not
 merely imprecise, it is dropped, and the player is told one of their serves could
 not be read. Spending the samples where the answer lives gives better peak
 heights than a uniform scan at four times the cost. A thirty-minute clip went
-from 21,600 frames to 464.
+from 21,600 frames to at most 596: 420 for the coarse pass, plus the twenty-odd
+frames the refinement spends on each of up to eight candidates.
 
 Both passes land on one grid across the whole clip rather than being laid out from
 each candidate, so windows around two serves close together genuinely share their

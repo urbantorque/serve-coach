@@ -159,20 +159,27 @@ export function nextVideoTimestamp(landmarker: PoseLandmarker): number {
   return next
 }
 
-/** True once the model and runtime are in the cache and the app works offline. */
+/**
+ * True once the model and runtime are in the cache and the app works offline.
+ *
+ * Both runtime builds have to be asked about. `FilesetResolver` picks one at load
+ * time — the SIMD build where the browser supports it, `_nosimd` where it does
+ * not — and only the one it picked is ever fetched, so only that one is ever
+ * cached. Checking for the SIMD build alone told every no-SIMD device that it was
+ * not ready to work offline while it was sitting on a complete cache, which is
+ * the answer most likely to send somebody looking for signal at a court that has
+ * none.
+ */
 export async function isCachedOffline(): Promise<boolean> {
   if (!('caches' in window)) return false
   try {
-    const model = await caches.match(MODEL_URL)
-    const wasm = await caches.match(`${WASM_DIR}/vision_wasm_internal.wasm`)
-    return Boolean(model && wasm)
+    const [model, simd, nosimd] = await Promise.all([
+      caches.match(MODEL_URL),
+      caches.match(`${WASM_DIR}/vision_wasm_internal.wasm`),
+      caches.match(`${WASM_DIR}/vision_wasm_nosimd_internal.wasm`),
+    ])
+    return Boolean(model && (simd || nosimd))
   } catch {
     return false
   }
-}
-
-export function disposeEngine(): void {
-  landmarker?.close()
-  landmarker = null
-  pending = null
 }
