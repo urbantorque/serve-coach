@@ -362,10 +362,26 @@ export function severityOf(signal: string, value: number, band: [number, number]
  *
  * Reads the four signals that separate levels most cleanly and least
  * ambiguously — how high the ball is struck, how deep the racket falls, how much
- * the trunk coils, and whether the sequence is in order — and finds the highest
- * rung all four would sit inside. Deliberately pessimistic: a wrong guess low
- * hands the player a target they will clear, and a wrong guess high hands them
- * one they cannot, which is the failure this module exists to prevent.
+ * the trunk coils, and whether the sequence is in order. Deliberately
+ * pessimistic: a wrong guess low hands the player a target they will clear, and
+ * a wrong guess high hands them one they cannot, which is the failure this
+ * module exists to prevent.
+ *
+ * Pessimistic, but not hostage to one number. This used to take the highest rung
+ * *all four* signals sat inside, which makes the worst-measured signal the whole
+ * rating. A real clip showed what that costs: a high-intermediate player filmed
+ * from behind the baseline came back at the bottom rung of the ladder, because
+ * `contact_height_ratio` missed the tier-1 band by 0.003 and `drop_depth_ratio`
+ * missed it by 0.001 — both inside their own documented noise floors — while the
+ * two depth-derived signals read near zero from a camera angle that cannot see
+ * rotation. Four failures, two of them a rounding error, and the player is told
+ * they are still learning.
+ *
+ * So each signal is asked separately how high it reaches, near misses are
+ * forgiven to the same `NOISE_FLOOR` the flaw pass already uses, and the rating
+ * is the median of the answers. The median keeps the pessimism where it belongs
+ * — two bad signals out of four still pull it down — without letting a single
+ * unmeasurable one define a player.
  */
 export function inferTier(signals: Record<string, number>): number {
   const used = ['contact_height_ratio', 'drop_depth_ratio', 'separation_deg', 'hip_lead_ms'].filter(
@@ -373,24 +389,36 @@ export function inferTier(signals: Record<string, number>): number {
   )
   if (!used.length) return 4
 
-  let best = MIN_TIER
   // Capped one below the top of the ladder. An inferred rating is a guess, and a
   // guess that lands on the last rung leaves the player with a target identical
   // to where they already are — which is the one output this module must never
   // produce. A player genuinely at the ceiling can say so themselves.
-  for (let tier = MIN_TIER; tier <= MAX_TIER - 1; tier++) {
-    const clears = used.every((s) => {
+  const reach = used.map((s) => {
+    let best = MIN_TIER
+    for (let tier = MIN_TIER; tier <= MAX_TIER - 1; tier++) {
       const band = bandFor(s, tier)
-      if (!insideBand(s, signals[s], band)) return false
+      // Forgiven to the noise floor, because a band edge is not a cliff and this
+      // signal's own repeatability is written down two hundred lines above.
+      const slack = NOISE_FLOOR[s] ?? 0
+      const inside =
+        insideBand(s, signals[s], band) ||
+        (signals[s] >= band[0] - slack && signals[s] <= band[1] + slack)
+      if (!inside) continue
       // For 'higher' signals the top of the band is a plausibility cap, and
       // this is where it earns its keep: a hip lead of half a second is a
       // peak-detection artifact, not sequencing mastery, and crediting a rung
       // for it is exactly the mis-detection-as-virtue the cap was written to
       // stop. Not treated as a flaw either — an implausible reading is
       // evidence of nothing.
-      return !(SIGNALS[s]?.direction === 'higher' && signals[s] > band[1])
-    })
-    if (clears) best = tier
-  }
-  return best
+      if (SIGNALS[s]?.direction === 'higher' && signals[s] > band[1]) continue
+      best = tier
+    }
+    return best
+  })
+
+  // The lower median, so an even split of two good signals and two bad ones
+  // settles on the cautious side rather than averaging into a rung nothing
+  // actually reached.
+  const sorted = [...reach].sort((a, b) => a - b)
+  return clampTier(sorted[Math.max(0, Math.ceil(sorted.length / 2) - 1)])
 }

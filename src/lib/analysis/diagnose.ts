@@ -108,6 +108,20 @@ const MIN_SEQUENCE_SAMPLES = 6
  */
 const DROP_VISIBLE = 0.5
 
+/**
+ * How much further the racket hand must travel in depth than in height before
+ * the height trace stops being allowed to speak for the whole swing.
+ *
+ * On the clip this came from the hand covered about 1.5 m toward and away from
+ * the camera against 0.8 m of rise — a ratio near two — while a serve filmed
+ * from the side puts nearly all of the drop in the picture plane and lands well
+ * under one. The threshold sits between those, nearer the side-on case, because
+ * the cost of the two mistakes is not symmetric: withholding a fault the player
+ * may have costs them one line of advice, and asserting one they do not have
+ * sends them to the court to fix a thing that is not broken.
+ */
+const DEPTH_DOMINATES = 1.3
+
 export function diagnose(
   frames: Frame[],
   skel: Skeleton,
@@ -298,14 +312,41 @@ export function diagnose(
    * racket wrist was not seen through the stretch a drop would live in, the
    * flat posture series says nothing about the player and the reading is left
    * to the depth proxy and its own confidence.
+   *
+   * Visibility is necessary and not sufficient, and a real clip is what showed
+   * why. Filmed from behind the baseline at about seventy degrees of yaw, a
+   * high-intermediate player's racket hand travelled from a metre behind the
+   * hips to in front of them between the trophy and contact — a textbook drop —
+   * while `racketPosture`, which is hand height against the shoulder line, rose
+   * monotonically with no dip anywhere in it. Wrist visibility across the whole
+   * swing was 0.96 to 0.98. Nothing about that clip was unclear; the drop simply
+   * happened along the one axis a camera behind the player cannot see, and the
+   * projection of it into the picture is almost flat.
+   *
+   * So the second test asks whether the vertical trace is the whole motion. The
+   * depth series is MediaPipe's inference and is never trusted as a measurement
+   * here — it produces no number and never will. It is used only to answer
+   * "could the swing have been mostly in the direction the camera is pointing",
+   * and when the answer is yes, the flat vertical trace is evidence about the
+   * camera rather than about the player.
    */
   const dropWindow = frames.slice(
     clamp(keys.trophy, 0, frames.length - 1),
     clamp(keys.contact, 0, frames.length - 1) + 1,
   )
+  const range = (pick: (f: Frame) => number) => {
+    const vs = dropWindow.map(pick).filter((v) => Number.isFinite(v))
+    return vs.length ? Math.max(...vs) - Math.min(...vs) : 0
+  }
+  // Both in metres, from the same world landmarks, so the ratio is meaningful.
+  const acrossDepth = range((f) => f.world[R.wrist]?.z ?? Number.NaN)
+  const acrossHeight = range((f) => f.world[R.wrist]?.y ?? Number.NaN)
+  const swungIntoTheLens = acrossDepth > acrossHeight * DEPTH_DOMINATES
+
   const sawTheDrop =
     dropWindow.length > 0 &&
-    mean(dropWindow.map((f) => f.image[R.wrist]?.visibility ?? 0)) >= DROP_VISIBLE
+    mean(dropWindow.map((f) => f.image[R.wrist]?.visibility ?? 0)) >= DROP_VISIBLE &&
+    !swungIntoTheLens
 
   const flaws = evaluateFlaws(readings, current, {
     racketNeverFell: skel.derivation.dropOnTrophy && sawTheDrop,
