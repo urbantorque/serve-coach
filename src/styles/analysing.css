@@ -1,15 +1,5 @@
 /* ============================================================================
-   Analysing — the wait
-
-   Honest and still. Everything that used to move on this screen moved whether
-   or not the work was moving: a ripple, a bobbing ball, a shimmer running along
-   the bar. On a mid-range phone the pose pass takes tens of seconds, and a
-   decorative animation over a genuinely slow job reads as reassurance the app
-   cannot back up. What is left is a determinate rule, the stage it is on, and
-   the step list — all three of which change only when something has happened.
-
-   No spinner, no pulse, no shimmer. The only thing that moves is the rule, and
-   it moves because the work moved.
+   Analysing
    ========================================================================= */
 
 .analyzing {
@@ -20,90 +10,141 @@
 .analyzing-inner {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: var(--s-3);
-  width: 100%;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
 }
 
-.analyzing-label {
-  color: var(--fg-muted);
+.analyzing h1 {
+  font-size: 25px;
+  font-weight: 640;
+  letter-spacing: -0.028em;
 }
 
 .analyzing-file {
-  max-width: 100%;
-  font-size: var(--t-caption);
-  color: var(--fg-muted);
+  font-size: 12.5px;
+  color: var(--fg-faint);
+  max-width: 30ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-top: -10px;
 }
 
-/*
- * A rule, not a trough.
- *
- * The last version boxed this in a 1px frame because the fill was optic yellow
- * a few percent off the track. Olive on --surface-raised has enough separation
- * to stand on its own, so the frame goes and what is left is a hairline that
- * fills — which is the right amount of ceremony for a progress bar on a page
- * that is otherwise asking the player to wait quietly.
- */
+.pulse {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 6px;
+}
+
+.pulse::before,
+.pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--lime);
+  opacity: 0;
+  animation: ripple 2.4s var(--ease-out) infinite;
+}
+
+.pulse::after {
+  animation-delay: 1.2s;
+}
+
+@keyframes ripple {
+  0% { transform: scale(0.42); opacity: 0.55; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.pulse-ball {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, var(--lime-bright), var(--lime-deep));
+  box-shadow: 0 0 34px var(--lime-glow);
+  animation: bob 1.6s var(--ease) infinite;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(-5px); }
+  50% { transform: translateY(5px); }
+}
+
 .progress {
   width: 100%;
-  max-width: var(--measure);
-  height: 3px;
-  margin-top: var(--s-2);
-  background: var(--surface-raised);
+  max-width: 320px;
+  height: 5px;
   border-radius: var(--r-pill);
+  background: var(--ink-3);
   overflow: hidden;
 }
 
-/* Scaled rather than resized: animating `width` is a layout pass per frame, and
-   this bar is on screen while the pose engine is using the whole device. */
+/*
+ * Scaled from the left edge, not resized.
+ *
+ * The fill is a full-width bar the markup squashes with `scaleX`, so the
+ * transition has to name `transform` — left on `width` it animated a property
+ * nothing changes any more and the bar jumped between steps. Transform also
+ * keeps this off the layout path, which matters on the one screen where the
+ * device is already running pose estimation.
+ */
 .progress-fill {
-  display: block;
+  position: relative;
   width: 100%;
   height: 100%;
-  background: var(--olive);
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--lime-deep), var(--lime));
   transform-origin: left center;
-  transition: transform var(--base) var(--ease-out);
+  transition: transform 320ms var(--ease-out);
+  overflow: hidden;
 }
 
-/* The stage, at reading size. This is the one line on the screen that answers
-   "what is it doing right now", and it was set two steps down the scale. */
+/* A sweep across the filled portion — the one cue on this screen that says
+   "still working" independent of the step list, for the seconds between one
+   step label appearing and the next. */
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: sweep 1.6s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
 .analyzing-detail {
-  min-height: calc(var(--t-body) * var(--lh-copy));
-  max-width: var(--measure);
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
-  color: var(--fg);
+  font-size: 13.5px;
+  color: var(--fg-muted);
+  min-height: 1.4em;
 }
-
-/* ---------------------------------------------------------------- the steps */
 
 .steps {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: 9px;
   align-items: flex-start;
-  margin: var(--s-2) 0;
+  margin: 8px 0;
 }
 
 .step {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  font-size: var(--t-small);
-  /* A step not yet reached is still a step the player is reading. --fg-faint is
-     2.42:1 and belongs to disabled text, not to the list that says what is
-     coming. */
-  color: var(--fg-muted);
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--fg-faint);
   transition: color var(--base) var(--ease);
 }
 
 .step.is-active {
   color: var(--fg);
-  font-weight: var(--wt-key);
+  font-weight: 560;
 }
 
 .step.is-done {
@@ -114,11 +155,11 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  color: var(--fg);
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  color: var(--great);
   flex: none;
 }
 
@@ -130,43 +171,46 @@
   top: 100%;
   left: 50%;
   width: 1px;
-  height: var(--s-2);
-  background: var(--line);
+  height: 9px;
+  background: var(--hairline);
   transform: translateX(-50%);
-}
-
-.step.is-done .step-mark {
-  border-color: var(--olive);
-  background: var(--olive);
-  color: var(--bg);
+  transition: background var(--base) var(--ease);
 }
 
 .step.is-done:not(:last-child) .step-mark::after {
-  background: var(--olive);
+  background: var(--great);
+  opacity: 0.4;
 }
 
-/* Olive as the ring rather than the fill: the active mark holds a dot that has
-   to be read against it, and an olive dot on an olive disc is nothing. */
+.step.is-done .step-mark {
+  border-color: rgba(95, 227, 161, 0.4);
+  background: var(--great-dim);
+}
+
 .step.is-active .step-mark {
-  border-color: var(--olive);
-  background: var(--olive-wash);
+  border-color: var(--lime);
 }
 
 .step-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--r-pill);
-  background: var(--fg-faint);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  color: var(--fg-faint);
 }
 
 .step.is-active .step-dot {
-  background: var(--olive-ink);
+  background: var(--lime);
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.25; }
 }
 
 .analyzing-aside {
-  max-width: var(--measure);
-  margin-top: var(--s-2);
-  font-size: var(--t-small);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
+  font-size: 12.5px;
+  color: var(--fg-faint);
+  max-width: 34ch;
+  line-height: 1.55;
 }

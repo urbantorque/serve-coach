@@ -15,7 +15,10 @@ export const STATUS_LABEL: Record<Status, string> = {
   // Not "Refine". Beside "Strong" and "Solid" — two plain judgements — a lone
   // abstract verb asks the player to work out what it is even rating.
   fair: 'Nearly there',
-  work: 'Work on this',
+  // Not "Work on this": the report's one priority is headed "Work on this next",
+  // and a fair report can tag five cards with it. The tag names the band; the
+  // heading names the single thing to do about it.
+  work: 'Needs work',
 }
 
 /**

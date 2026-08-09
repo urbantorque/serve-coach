@@ -36,8 +36,16 @@ export default function Analyzing({ progress, fileName, onCancel }: Props) {
   return (
     <div className="screen analyzing">
       <div className="analyzing-inner">
-        <span className="t-overline analyzing-label">Working</span>
-        <h1 className="t-headline">Reading your serve</h1>
+        {/* The ball, back where it was. It is the only thing on this screen
+            that says "still working" without words, which is what the seconds
+            between one step label and the next need — and it says it without
+            being a second copy of the word the live region below is already
+            reading out. */}
+        <div className="pulse">
+          <span className="pulse-ball" />
+        </div>
+
+        <h1>Reading your serve</h1>
         <p className="analyzing-file">{fileName}</p>
 
         <div

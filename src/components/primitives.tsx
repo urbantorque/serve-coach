@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { readoutOf } from '../lib/analysis/anatomy'
 import type { Status } from '../lib/analysis/types'
 
 /* ------------------------------------------------------------------ ScoreRing */
@@ -7,11 +6,10 @@ import type { Status } from '../lib/analysis/types'
 /**
  * Counts a displayed number up to its target instead of popping in place.
  *
- * Only runs when `enabled` — the many small meters in a list stay static, the
- * same restraint the bar itself already observes (see `animate` on
- * `ScoreRing`). The bar is drawn from this number rather than from the score,
- * so the two halves of one reading can never sit on screen disagreeing about
- * what the score is.
+ * Only runs when `enabled` — the many small rings in a list stay static, the
+ * same restraint the ring stroke itself already observes (see `animate` on
+ * `ScoreRing`). Mirrors the ring's own ~1s fill so the number settles roughly
+ * when the stroke does, rather than finishing early or lagging behind it.
  */
 function useCountUp(target: number, enabled: boolean): number {
   const [value, setValue] = useState(enabled ? 0 : target)
@@ -46,9 +44,10 @@ function useCountUp(target: number, enabled: boolean): number {
      *
      * `requestAnimationFrame` does not fire in a document that is not
      * compositing — a backgrounded tab, an inert or hidden frame, a headless
-     * pane. Without this the meter would sit at a hard zero for as long as that
-     * lasted, and a score of nought is a claim about the serve, not an absence
-     * of one.
+     * pane. The ring's stroke is plain SVG and draws the real score regardless,
+     * so a starved animation leaves the arc showing sixty-eight per cent with a
+     * hard zero in the middle of it: the two halves of one number disagreeing,
+     * which is worse than either being wrong on its own.
      *
      * Well past the animation's own second, so it only ever catches the case
      * where the frames genuinely did not arrive.
@@ -72,59 +71,47 @@ interface ScoreRingProps {
   status: Status
   size?: number
   label?: string
-  /** Meters animate on first paint; suppressed for the many small ones. */
+  /** Rings animate on first paint; suppressed for the many small ones. */
   animate?: boolean
 }
 
-/**
- * A score, said as a number with a rule under it.
- *
- * Was a segmented bar in a heavy frame with a display-sans numeral inside — an
- * instrument, and the loudest object on a page that is otherwise prose. The
- * number is now Baskerville in warm black and the meter is a single 2-3px
- * track: enough to place the score on its ramp at a glance, not enough to
- * compete with the words that explain it.
- *
- * `status` stays in the props — every caller has it and the type is shared —
- * but the meter no longer paints itself in the rung's colour. The rung is said
- * in words on the tag beside it, and saying it twice, once in a colour, is how
- * a diagnosis starts looking like a dashboard.
- *
- * Kept as one component at every size because a report and a history row must
- * not disagree about what sixty-eight looks like. The small ones simply take
- * the next size down and a thinner rule.
- */
-export function ScoreRing({ score, size = 132, label, animate = true }: ScoreRingProps) {
+export function ScoreRing({ score, status, size = 132, label, animate = true }: ScoreRingProps) {
+  const stroke = size < 70 ? 5 : 9
+  const r = (size - stroke) / 2
+  const circumference = 2 * Math.PI * r
+  const filled = circumference * (Math.max(0, Math.min(100, score)) / 100)
   const shown = useCountUp(score, animate)
-  const pct = Math.max(0, Math.min(100, shown))
-
-  // Three stops, and the numeral takes a size off the type scale at each — not
-  // a fraction of `size`, which lands between the scale's rungs and drifts as
-  // the container gets smaller.
-  const tier = size >= 120 ? 'hero' : size >= 70 ? 'mid' : 'compact'
-  const barHeight = tier === 'compact' ? 2 : 3
 
   return (
-    <div
-      className={[
-        'score-meter',
-        `score-meter--${tier}`,
-        // Only while the number is still moving. Once it lands the transition
-        // goes back on, so a later change to the score slides instead of
-        // snapping.
-        shown !== score ? 'score-meter--counting' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      style={{ width: size }}
-    >
-      <span className="score-meter-value tnum">{shown}</span>
-      {/* Drawn from the counting number rather than from the score, so the two
-          halves of one reading can never sit on screen disagreeing. */}
-      <div className="score-meter-bar" style={{ height: barHeight }} aria-hidden="true">
-        <span className="score-meter-fill" style={{ transform: `scaleX(${pct / 100})` }} />
+    <div className="ring" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--ink-3)"
+          strokeWidth={stroke}
+        />
+        <circle
+          className={animate ? 'ring-fill ring-fill--animate' : 'ring-fill'}
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={`var(--${status})`}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${circumference}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </svg>
+      <div className="ring-inner">
+        <span className="ring-score tnum" style={{ fontSize: size * 0.31 }}>
+          {shown}
+        </span>
+        {label && <span className="ring-label">{label}</span>}
       </div>
-      {label && <span className="score-meter-label t-overline">{label}</span>}
     </div>
   )
 }
@@ -136,54 +123,27 @@ interface MetricBarProps {
   ideal: [number, number]
   range: [number, number]
   status: Status
-  /**
-   * Which measurement this is, so the two ends of the axis can be named.
-   *
-   * Optional because the axis is drawn in one other place from a spread rather
-   * than a single value; without it the bar is unlabelled, never numbered. A
-   * raw bound printed under a bar is the one thing this report has always
-   * refused — "0.14×" tells a club player nothing they can stand on a court
-   * and change.
-   */
-  id?: string
 }
 
-/**
- * One measurement against the band it should be inside.
- *
- * The clearest thing in the report, and quiet with it: a hairline axis, the
- * target band as a soft olive wash under a single olive edge, and a small warm
- * black marker where the body actually was. The marker is taller than the band
- * and carries a ring of paper, so it stays a separate object when it lands
- * exactly on the band's own border — which is precisely the case a player most
- * needs to read. Just inside versus just outside is the whole verdict.
- */
-export function MetricBar({ value, ideal, range, status, id }: MetricBarProps) {
+/** A single axis with the target band shaded and a marker at the measurement. */
+export function MetricBar({ value, ideal, range, status }: MetricBarProps) {
   const span = range[1] - range[0] || 1
   const pct = (v: number) => ((Math.max(range[0], Math.min(range[1], v)) - range[0]) / span) * 100
 
   const bandLeft = pct(ideal[0])
   const bandRight = pct(ideal[1])
 
-  const low = id ? readoutOf(id, range[0]) : ''
-  const high = id ? readoutOf(id, range[1]) : ''
-
   return (
-    <div className={`metric-axis metric-axis--${status}`}>
-      <div className="bar" role="presentation">
-        <div className="bar-track" />
-        <div
-          className="bar-band"
-          style={{ left: `${bandLeft}%`, width: `${Math.max(2, bandRight - bandLeft)}%` }}
-        />
-        <div className="bar-marker" style={{ left: `${pct(value)}%` }} />
-      </div>
-      {low && high && low !== high && (
-        <p className="bar-ends t-caption">
-          <span>{low}</span>
-          <span>{high}</span>
-        </p>
-      )}
+    <div className="bar" role="presentation">
+      <div className="bar-track" />
+      <div
+        className="bar-band"
+        style={{ left: `${bandLeft}%`, width: `${Math.max(2, bandRight - bandLeft)}%` }}
+      />
+      <div
+        className="bar-marker"
+        style={{ left: `${pct(value)}%`, background: `var(--${status})` }}
+      />
     </div>
   )
 }
@@ -317,7 +277,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
       >
         <div className="sheet-grip" />
         <header className="sheet-head">
-          <h2 className="t-subhead">{title}</h2>
+          <h2>{title}</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Close">
             <Icon name="close" />
           </button>
@@ -344,10 +304,8 @@ const PATHS: Record<string, ReactNode> = {
   ),
   film: (
     <>
-      <rect x="3.5" y="5.5" width="17" height="13" rx="2.5" />
-      {/* Butt caps here alone: a round cap would push each sprocket line half a
-          stroke past the frame it is supposed to sit inside. */}
-      <path d="M8 5.5v13M16 5.5v13" strokeLinecap="butt" />
+      <rect x="3" y="5" width="18" height="14" rx="2.5" />
+      <path d="M8 5v14M16 5v14" />
     </>
   ),
   clock: (
@@ -381,7 +339,7 @@ const PATHS: Record<string, ReactNode> = {
     <>
       <circle cx="12" cy="12" r="8.5" />
       <circle cx="12" cy="12" r="4" />
-      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="0.6" fill="currentColor" />
     </>
   ),
   info: (
@@ -404,16 +362,6 @@ const PATHS: Record<string, ReactNode> = {
   ),
 }
 
-/**
- * Line icons cut to the weight of the type they sit beside.
- *
- * 1.7 in a 24 unit box lands near 1.4px at the default 20px — about the stem of
- * Inter at reading size, so an icon in a sentence reads as part of the sentence.
- * The previous set was cut at 2.4 to hold its own against a display sans and
- * 2px borders; both are gone, and at that weight the icons now look stamped on
- * rather than drawn. Caps and joins are round for the same reason: nothing else
- * on this page has a corner that sharp.
- */
 export function Icon({ name, size = 20 }: { name: keyof typeof PATHS | string; size?: number }) {
   return (
     <svg

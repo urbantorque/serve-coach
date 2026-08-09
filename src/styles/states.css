@@ -7,75 +7,60 @@
   justify-content: center;
 }
 
-/* Ranged left, not centred. Centred copy is the house style of the template
-   this app is trying not to be, and a ragged left edge is the harder of the two
-   to find again at the start of every line. */
 .empty-inner {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: var(--s-2);
+  align-items: center;
+  text-align: center;
+  gap: 15px;
 }
 
-/* Was a black square with the mark cut out in optic yellow. It is now a tile of
-   the warm surface with a drawn line mark on it — the first thing on an empty
-   screen should not be the darkest object in the app. */
 .empty-mark {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  color: var(--stone);
-  margin-bottom: var(--s-2);
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--fair-dim);
+  color: var(--fair);
+  margin-bottom: 4px;
 }
 
 .empty h1 {
-  font-family: var(--font-display);
-  font-size: var(--t-headline);
-  font-weight: var(--wt-serif-bold);
-  letter-spacing: var(--tr-headline);
-  line-height: var(--lh-headline);
-  max-width: 18ch;
+  font-size: 22px;
+  font-weight: 640;
+  letter-spacing: -0.026em;
+  line-height: 1.25;
+  max-width: 22ch;
 }
 
 .empty-lead {
-  font-size: var(--t-lede);
-  line-height: var(--lh-lede);
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--fg-muted);
-  max-width: var(--measure);
+  max-width: 38ch;
 }
 
 .error-detail {
   width: 100%;
-  margin-top: var(--s-2);
+  margin-top: 6px;
 }
 
-/* A disclosure on an error screen is a control like any other, and at 11px it
-   was a 33px target. Padded to 44 rather than set in flex, which would take the
-   marker with it and leave nothing saying the row opens. */
 .error-detail summary {
-  min-height: 44px;
-  padding: var(--s-1) 0;
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
-  text-transform: uppercase;
-  color: var(--fg-muted);
+  font-size: 12px;
+  color: var(--fg-faint);
   cursor: pointer;
+  padding: 6px 0;
 }
 
 .error-detail pre {
-  padding: var(--s-2);
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-2);
   border: 1px solid var(--hairline);
-  border-radius: var(--r);
-  background: var(--surface);
   font-family: var(--mono);
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
+  font-size: 11.5px;
+  line-height: 1.5;
   color: var(--fg-muted);
   text-align: left;
   white-space: pre-wrap;
@@ -85,41 +70,33 @@
 .empty-hints {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
-  margin: var(--s-tight) 0 var(--s-2);
-  max-width: var(--measure);
+  gap: 9px;
+  margin: 4px 0 12px;
+  max-width: 40ch;
 }
 
 .empty-hints li {
   position: relative;
-  padding-left: var(--s-2);
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
+  padding-left: 17px;
+  font-size: 13.5px;
+  line-height: 1.6;
   color: var(--fg-muted);
   text-align: left;
 }
 
-/* A small round mark, sized and placed off the reading line rather than off a
-   grid — it should read as a bullet in a book, not as a UI element. */
 .empty-hints li::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 13px;
+  left: 3px;
+  top: 9px;
   width: 4px;
   height: 4px;
-  border-radius: var(--r-pill);
-  background: var(--stone);
+  border-radius: 50%;
+  background: var(--lime);
 }
 
 /* ============================================================================
    Sheet
-
-   The one place a completely flat system genuinely strains: this thing floats
-   over the page and has to say so without a shadow. It says it with a scrim
-   underneath and a single --line-control edge along the top — a 3.2:1 rule,
-   which is the contrast a real edge is held to, unlike the hairlines that
-   separate passages inside it.
    ========================================================================= */
 
 .sheet-backdrop {
@@ -129,17 +106,9 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  background: rgba(4, 6, 9, 0.66);
+  backdrop-filter: blur(6px);
   animation: fade var(--base) var(--ease) both;
-}
-
-/* Its own layer so the dimming is an opacity over a token rather than a colour
-   with alpha baked into it, and so no blur is needed to tell the two apart. */
-.sheet-backdrop::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--warm-black);
-  opacity: 0.45;
 }
 
 @keyframes fade {
@@ -147,16 +116,16 @@
 }
 
 .sheet {
-  position: relative;
-  z-index: 1;
   width: 100%;
   max-width: var(--shell);
   max-height: 88svh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
-  border-top: 1px solid var(--line-control);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline);
+  border-bottom: none;
   border-radius: var(--r-xl) var(--r-xl) 0 0;
+  box-shadow: var(--shadow-lg);
   animation: slide-up var(--base) var(--ease-out) both;
 }
 
@@ -164,13 +133,12 @@
   from { transform: translateY(28px); }
 }
 
-/* Pill, not a bar. It is the one shape on screen that is asking to be held. */
 .sheet-grip {
-  width: 40px;
+  width: 38px;
   height: 4px;
   border-radius: var(--r-pill);
-  background: var(--sage);
-  margin: var(--s-1) auto 0;
+  background: var(--ink-4);
+  margin: 10px auto 2px;
   flex: none;
 }
 
@@ -178,33 +146,32 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
-  border-bottom: 1px solid var(--hairline);
+  gap: 12px;
+  padding: 12px 16px 12px 20px;
 }
 
-/* Type comes from `.t-subhead` on the element. */
 .sheet-head h2 {
-  color: var(--fg);
+  font-size: 17px;
+  font-weight: 640;
+  letter-spacing: -0.022em;
 }
 
 .sheet-body {
   overflow-y: auto;
-  padding: var(--s-3) var(--s-3) calc(var(--s-5) + var(--safe-bottom));
+  padding: 4px 20px calc(28px + var(--safe-bottom));
   -webkit-overflow-scrolling: touch;
 }
 
 .sheet-empty {
-  padding: var(--s-3) 0;
-  color: var(--fg-muted);
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
+  padding: 24px 0;
+  text-align: center;
+  color: var(--fg-faint);
+  font-size: 14px;
 }
 
 .sheet-note {
-  margin-top: var(--s-3);
-  max-width: var(--measure);
-  font-size: var(--t-caption);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
+  margin-top: 18px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-faint);
 }

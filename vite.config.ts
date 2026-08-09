@@ -42,7 +42,25 @@ function normaliseBase(raw: string): string {
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 const enginePathPrefixes = [`${base}models/`, `${base}wasm/`]
-const isEngineAsset = (pathname: string) => enginePathPrefixes.some((p) => pathname.startsWith(p))
+
+/*
+ * The engine-asset route, as a RegExp rather than a predicate.
+ *
+ * This has to be a value Workbox can write into the generated worker. A
+ * function passed as `urlPattern` is serialised with `toString()`, which keeps
+ * the body and drops everything it closed over — so `({url}) => isEngineAsset(
+ * url.pathname)` landed in dist/sw.js as a call to a name that was never
+ * defined there. The callback threw ReferenceError on every request, the route
+ * never matched, and the 9 MB model and 19 MB wasm runtime were re-downloaded
+ * on every cold start. An app whose whole promise is that it works with the
+ * network off did not.
+ *
+ * A RegExp is serialised as a literal, so it carries no closure to lose. It is
+ * deliberately unanchored: Workbox tests it against the full href, and only
+ * requires a match at index 0 for cross-origin requests. These are our own
+ * assets on our own origin.
+ */
+const ENGINE_ASSET_RE = new RegExp(`${escapeRegExp(base)}(models|wasm)/`)
 
 // The pose model and wasm runtime are ~19 MB combined. Precaching them would
 // block the install on a big silent download, so the shell is precached and the
@@ -60,8 +78,8 @@ export default defineConfig({
         short_name: 'Serve Coach',
         description:
           'Frame-by-frame tennis serve analysis that runs entirely on your device. Your video never leaves your phone.',
-        theme_color: '#fafaf9',
-        background_color: '#fafaf9',
+        theme_color: '#0a0c10',
+        background_color: '#0a0c10',
         display: 'standalone',
         orientation: 'portrait',
         // Both must respect the base, or an installed app launches at the wrong
@@ -86,7 +104,7 @@ export default defineConfig({
         ),
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => isEngineAsset(url.pathname),
+            urlPattern: ENGINE_ASSET_RE,
             handler: 'CacheFirst',
             options: {
               cacheName: `serve-coach-pose-engine-${engineVersion}`,

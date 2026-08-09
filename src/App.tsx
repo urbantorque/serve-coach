@@ -6,7 +6,7 @@ import LevelPicker from './components/LevelPicker'
 import StoragePanel from './components/StoragePanel'
 import PracticeCard from './components/PracticeCard'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
-import { Icon, Sheet } from './components/primitives'
+import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus } from './lib/practice'
 import { buildConsistencyTrend, buildProgress, typeOf } from './lib/progress'
 import {
@@ -248,7 +248,7 @@ export default function App() {
       urlRef.current = url
       lastFileRef.current = file
 
-      setProgress({ step: 'engine', ratio: 0, detail: 'Loading the pose engine' })
+      setProgress({ step: 'engine', ratio: 0, detail: 'Getting the coach ready' })
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
 
       try {
@@ -317,11 +317,17 @@ export default function App() {
             fileName: file.name || 'refused-clip',
           })
         } else {
+          // The exception text used to be printed as one of the two bullets
+          // telling the player what to do next. It is a stack-trace sentence
+          // written for whoever wrote the decoder, and there is no action in
+          // it — so it goes to the console, where it is actually useful, and
+          // the player gets the two things that do sometimes fix this.
+          console.error(err)
           setView({
             kind: 'error',
             title: 'Something went wrong reading that video',
             hints: [
-              (err as Error)?.message ?? 'Unknown error.',
+              'Try a clip straight from your camera roll, not a shared link.',
               'MP4 or MOV clips from a phone camera work best.',
             ],
           })
@@ -638,28 +644,24 @@ export default function App() {
         {sessions.length === 0 ? (
           <p className="sheet-empty">No serves analysed yet.</p>
         ) : (
-          <ul className="serve-log">
+          <ul className="history">
             {sessions.map((s) => (
               <li key={s.id}>
-                {/* Literally the same list Home draws — same `serve-log` rules,
-                    same row, same numeral. A past serve was two objects in this
-                    app, which made the history read as a separate feature
-                    rather than the same list seen somewhere else. */}
+                {/* Literally the same row Home draws — same `.recent` rules,
+                    same ring. A past serve was two objects in this app, which
+                    made the history read as a separate feature rather than the
+                    same list seen somewhere else. */}
                 <button
-                  className="serve-log-row"
+                  className="recent"
                   onClick={() => {
                     setSheet(null)
                     setView({ kind: 'saved', session: s })
                   }}
                 >
-                  <span
-                    className={`serve-log-score t-headline tnum serve-log-score--${s.overallStatus}`}
-                  >
-                    {s.overall}
-                  </span>
-                  <span className="serve-log-text">
+                  <ScoreRing score={s.overall} status={s.overallStatus} size={42} animate={false} />
+                  <span className="recent-text">
                     <strong>{s.focus.title}</strong>
-                    <span className="serve-log-date">
+                    <span>
                       {new Date(s.createdAt).toLocaleString(undefined, {
                         day: 'numeric',
                         month: 'short',
@@ -723,13 +725,13 @@ export default function App() {
             {practice && <PracticeCard focus={practice} />}
 
             <section className="block">
-              <h3 className="t-subhead">Overall score by session</h3>
+              <h3 className="block-title">Overall score by session</h3>
               <ScoreTrend points={form.points} />
             </section>
 
             {form.areaDeltas.length > 0 && (
               <section className="block">
-                <h3 className="t-subhead">Change since your last serve</h3>
+                <h3 className="block-title">Change since your last serve</h3>
                 <DeltaBars deltas={form.areaDeltas} />
               </section>
             )}
@@ -748,7 +750,7 @@ export default function App() {
                     the report and here. It was "gap" in this heading and
                     "steadier" in the chart's own note — three names for one
                     thing the player is meant to be tracking. */}
-                <h3 className="t-subhead">How repeatable, over time</h3>
+                <h3 className="block-title">How repeatable, over time</h3>
                 <GapTrend points={spread.points} />
                 {spread.recurring && (
                   <p className="sheet-note">

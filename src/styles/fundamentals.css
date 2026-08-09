@@ -1,80 +1,55 @@
 /* ============================================================================
    Fundamental cards
-
-   The page a player actually reads to find out what went wrong, so it is set
-   like a page: a hairline round the outside, 36px of margin inside it, the name
-   in Baskerville, and the copy at 17/1.8 inside the measure. The verdict is a
-   small chip beside the name — it used to be a 4px band of colour along the top
-   edge, which shouted the answer at somebody who had come to read the reason.
-
-   Every gap in here is deliberately larger than it needs to be. The failure
-   mode of a diagnostic card is a wall of advice, and air is the only thing that
-   separates one instruction from the next.
    ========================================================================= */
 
 .fcards {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: 10px;
 }
 
 .fcard {
-  background: var(--bg);
-  border: 1px solid var(--hairline);
   border-radius: var(--r-lg);
-  transition: border-color var(--base) var(--ease);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+  overflow: hidden;
+  transition: border-color var(--base) var(--ease), background var(--base) var(--ease);
 }
 
-.fcard:hover,
 .fcard.is-open {
-  border-color: var(--line);
+  background: var(--ink-2);
+  border-color: var(--hairline);
 }
 
 .fcard-head {
   display: flex;
-  align-items: flex-start;
-  gap: var(--s-2);
+  align-items: center;
+  gap: 14px;
   width: 100%;
-  padding: var(--s-3);
+  padding: 15px 16px;
   text-align: left;
-  border-radius: var(--r-lg);
 }
 
 .fcard-title {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 4px;
   flex: 1;
   min-width: 0;
 }
 
 .fcard-name {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--s-1);
-  font-family: var(--font-display);
-  font-size: var(--t-subhead);
-  font-weight: var(--wt-serif);
-  line-height: var(--lh-subhead);
-  letter-spacing: var(--tr-subhead);
-  color: var(--fg);
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-title);
 }
 
-/* Small, and beside the name rather than over it. The word is the verdict; it
-   does not also need to be the largest thing in the card — which is what a 4px
-   band of colour across the top edge amounted to. Nudged up a hair because a
-   pill's baseline sits low against 22px serif. */
-.fcard-name .tag {
-  transform: translateY(-1px);
-}
-
-/* The one line the player reads before deciding whether to open the card, so it
-   is set at reading size rather than as a caption. */
 .fcard-headline {
-  max-width: var(--measure);
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
   color: var(--fg-muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -82,19 +57,9 @@
   overflow: hidden;
 }
 
-/* The one mark saying the card opens, so --stone (4.6:1) rather than --fg-faint
-   — faint is for placeholder and disabled, and an affordance drawn at 2.4:1 is
-   an affordance nobody finds outdoors. */
 .fcard-chevron {
-  display: flex;
-  align-items: center;
-  min-height: 30px;
-  color: var(--stone);
-  transition: transform var(--base) var(--ease), color var(--fast) var(--ease);
-}
-
-.fcard-head:hover .fcard-chevron {
-  color: var(--fg);
+  color: var(--fg-faint);
+  transition: transform var(--base) var(--ease);
 }
 
 .fcard.is-open .fcard-chevron {
@@ -102,10 +67,10 @@
 }
 
 .fcard-body {
-  padding: 0 var(--s-3) var(--s-3);
+  padding: 4px 17px 18px;
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: 20px;
   animation: unfold var(--base) var(--ease-out) both;
 }
 
@@ -116,84 +81,65 @@
   }
 }
 
-/* The standfirst: what this area of the serve is for, before any measurement of
-   it. A rule under it, then air, then the measurements. */
 .fcard-blurb {
-  max-width: var(--measure);
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
-  padding-bottom: var(--s-3);
-  border-bottom: 1px solid var(--hairline);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg-faint);
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--hairline-soft);
 }
 
 /* --- metrics --------------------------------------------------------------- */
 
+/* Generous, and deliberately so: each of these is a separate instruction, and
+   the gap is what stops the page reading as one wall of advice. */
 .metrics {
   display: flex;
   flex-direction: column;
 }
 
-/* Each of these is a separate instruction. The gap is what stops them reading
-   as one paragraph of advice nobody finishes. */
 .metrics > .metric + .metric {
-  margin-top: var(--s-4);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--hairline);
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--hairline-soft);
 }
 
 .metric-top {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--s-2);
-  margin-bottom: var(--s-1);
+  gap: 14px;
+  margin-bottom: 10px;
 }
 
 .metric-label {
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  line-height: 1.4;
-  letter-spacing: var(--tr-overline);
-  text-transform: uppercase;
+  font-size: 13.5px;
+  font-weight: var(--wt-label);
+  letter-spacing: var(--tr-title);
   color: var(--fg-muted);
 }
 
-/* What the body did, said in words. It is the answer, so it takes the largest
-   type in the row — and nothing else. The rung underneath it is a hairline in
-   the -ink value rather than a 3px channel: a rule that thick in a colour is
-   the card raising its voice about something the tag has already named. */
+/* What the body did. This is the loudest thing in the row on purpose: it is the
+   answer, and everything under it is the reason and the correction. */
 .metric-read {
   flex: 0 1 auto;
   min-width: 0;
   text-align: right;
-  font-size: var(--t-lede);
-  font-weight: var(--wt-body);
-  line-height: var(--lh-subhead);
-  letter-spacing: var(--tr-subhead);
-  color: var(--fg);
-  padding-bottom: var(--s-hair);
-  border-bottom: 1px solid var(--line);
+  font-size: 14.5px;
+  font-weight: var(--wt-key);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
   text-wrap: balance;
 }
 
-.metric-read--great { border-bottom-color: var(--great-ink); }
-.metric-read--good  { border-bottom-color: var(--good-ink); }
-.metric-read--fair  { border-bottom-color: var(--fair-ink); }
-.metric-read--work  { border-bottom-color: var(--work-ink); }
-
-/* --- the axis --------------------------------------------------------------
-   A hairline the width of the range, the target band washed in olive over it,
-   and a small warm black mark where the body was. No frame: the two ends of the
-   scale are named underneath in words, which is what actually places them. */
-
-.metric-axis {
-  margin-top: var(--s-2);
-}
+.metric-read--great { color: var(--great); }
+.metric-read--good  { color: var(--good); }
+.metric-read--fair  { color: var(--fair); }
+.metric-read--work  { color: var(--work); }
 
 .bar {
   position: relative;
-  height: 20px;
+  height: 16px;
   display: flex;
   align-items: center;
 }
@@ -202,108 +148,81 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 50%;
-  height: 1px;
-  transform: translateY(-50%);
-  background: var(--line-control);
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: var(--ink-3);
 }
 
-/* --olive, not the wash's own colour: this 1px edge is the line that says where
-   "good" starts, it sits directly on paper, and it has to survive the marker
-   crossing it. 5.21:1 against the page. */
 .bar-band {
   position: absolute;
-  top: 50%;
-  height: 10px;
-  transform: translateY(-50%);
-  border: 1px solid var(--olive);
-  border-radius: var(--r-sm);
-  background: var(--olive-wash);
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: rgba(205, 249, 74, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(205, 249, 74, 0.35);
 }
 
-/* Taller than the band and ringed in paper, so it stays a separate object when
-   it lands exactly on the band's own border. Just inside versus just outside is
-   the whole verdict; a mark that merges with the edge it is judged against
-   hides the one thing the player came to read. */
 .bar-marker {
   position: absolute;
-  top: 50%;
-  left: 0;
-  width: 3px;
-  height: 14px;
-  box-sizing: content-box;
-  transform: translate(-50%, -50%);
-  border: 2px solid var(--bg);
-  border-radius: var(--r-pill);
-  background: var(--fg);
-}
-
-/* Both ends of the scale, said in body language. A bound printed as a number is
-   the one thing this report has never done. Type comes from `.t-caption`. */
-.bar-ends {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--s-2);
-  margin-top: var(--s-tight);
-}
-
-.bar-ends span:last-child {
-  text-align: right;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  border: 2.5px solid var(--ink-2);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.6);
+  transition: left var(--slow) var(--ease-out);
 }
 
 /* Where it should sit instead, in the same words as the readout above. */
 .metric-aim {
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--s-tight);
-  margin-top: var(--s-2);
-  font-size: var(--t-small);
-  line-height: var(--lh-snug);
+  gap: 8px;
+  margin-top: 7px;
+  font-size: 11.5px;
+  line-height: var(--lh-tight);
 }
 
 .metric-aim-key {
   flex: none;
-  color: var(--fg-muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--fg-faint);
 }
 
 .metric-aim-value {
-  font-weight: var(--wt-key);
-  color: var(--olive-ink);
+  font-weight: var(--wt-label);
+  color: var(--lime);
 }
 
 .metric-insight {
-  margin-top: var(--s-2);
+  margin-top: 11px;
   max-width: var(--measure);
-  font-size: var(--t-body);
+  font-size: 13px;
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
 }
 
-/* Olive is the coaching voice: if it is washed in olive, it is something to go
-   and do. A wash and a radius, no rule down the side — the tint is already the
-   whole signal. */
 .metric-fix {
   display: flex;
-  gap: var(--s-1);
-  margin-top: var(--s-2);
-  padding: var(--s-2);
-  max-width: var(--measure);
-  background: var(--olive-wash);
-  border-radius: var(--r-lg);
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  border-left: 2px solid var(--lime);
+  font-size: 13.5px;
+  line-height: var(--lh-snug);
   color: var(--fg);
   text-wrap: pretty;
 }
 
-/* Centred on the first line of a 17/1.8 paragraph, not on its top edge — an
-   icon hung off the cap height of a generously leaded line looks dropped. */
 .metric-fix .icon {
-  color: var(--olive-ink);
+  color: var(--lime);
   flex: none;
-  margin-top: 8px;
+  margin-top: 2px;
 }
 
 /* The marked words inside any line of coaching. Weight and colour only — no
@@ -317,35 +236,35 @@
 /* --- the drill under a named fault ---------------------------------------- */
 
 .microdrill {
-  margin-top: var(--s-2);
-  padding: var(--s-2);
-  max-width: var(--measure);
-  background: var(--surface);
-  border-radius: var(--r-lg);
+  margin-top: 10px;
+  margin-left: 13px;
+  padding: 12px 14px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
 }
 
 .microdrill-kicker {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-tight);
-  color: var(--olive-ink);
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--lime-deep);
 }
 
-/* The serif at 400, not at 700. A drill name is a heading inside a heading, and
-   bold Baskerville at reading size is heavier than the card name above it. */
 .microdrill h5 {
-  margin: var(--s-1) 0 var(--s-tight);
-  font-family: var(--font-display);
-  font-size: var(--t-body);
-  font-weight: var(--wt-serif);
-  line-height: var(--lh-subhead);
-  letter-spacing: var(--tr-subhead);
-  color: var(--fg);
+  margin: 6px 0 5px;
+  font-size: 13.5px;
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-title);
 }
 
 .microdrill p {
   max-width: var(--measure);
-  font-size: var(--t-body);
+  font-size: 12.5px;
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -353,89 +272,98 @@
 
 .microdrill-reps {
   display: inline-block;
-  margin-top: var(--s-1);
-  color: var(--fg-muted);
+  margin-top: 9px;
+  font-size: 11px;
+  font-weight: var(--wt-label);
+  letter-spacing: 0.01em;
+  color: var(--fg-faint);
 }
 
 /* --- an approximate measurement ------------------------------------------- */
 
-/* Held back rather than hidden. The number is still the best the app has and the
+/* Dimmed rather than hidden. The number is still the best the app has and the
    player should see it; it just must not read with the same authority as one
    measured off a clip that showed everything. */
 .metric--soft .metric-read,
-.metric--soft .metric-axis {
-  opacity: 0.68;
+.metric--soft .bar {
+  opacity: 0.62;
 }
 
 .metric-approx {
-  display: inline-block;
-  margin-left: var(--s-tight);
-  padding: 2px var(--s-tight);
-  border-radius: var(--r-pill);
-  background: var(--surface-raised);
+  margin-left: 7px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ink-3);
+  border: 1px solid var(--hairline);
+  font-size: 10px;
   font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--fg-muted);
+  vertical-align: 1px;
 }
 
-/* Deliberately not tinted olive: a soft read is a caveat about the footage, not
-   something to go and practise. */
 .metric-soft-note {
   display: flex;
-  gap: var(--s-1);
-  margin-top: var(--s-2);
-  padding: var(--s-2);
-  max-width: var(--measure);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  font-size: var(--t-small);
-  line-height: var(--lh-copy);
+  gap: 9px;
+  margin-top: 10px;
+  padding: 10px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  border-left: 2px solid var(--hairline);
+  font-size: 12.5px;
+  line-height: 1.6;
   color: var(--fg-muted);
 }
 
 .metric-soft-note .icon {
   color: var(--fg-muted);
   flex: none;
-  margin-top: 6px;
+  margin-top: 2px;
 }
 
 /* --- drill ---------------------------------------------------------------- */
 
 .drill {
-  padding: var(--s-3);
-  border-radius: var(--r-lg);
-  background: var(--olive-wash);
+  padding: 15px 16px;
+  border-radius: var(--r-md);
+  background: var(--ink-3);
+  border: 1px solid var(--hairline);
 }
 
 .drill-kicker {
-  color: var(--olive-ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
 }
 
 .drill h4 {
-  margin: var(--s-1) 0 var(--s-tight);
-  font-family: var(--font-display);
-  font-size: var(--t-lede);
-  font-weight: var(--wt-serif);
-  line-height: var(--lh-subhead);
-  letter-spacing: var(--tr-subhead);
-  color: var(--fg);
+  font-size: 14.5px;
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-title);
+  margin: 7px 0 6px;
 }
 
 .drill p {
   max-width: var(--measure);
-  font-size: var(--t-body);
+  font-size: 13px;
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
 }
 
-/* A quiet stamp, not a black block. It is the dose, read once. */
 .drill-reps {
   display: inline-block;
-  margin-top: var(--s-2);
-  padding: var(--s-hair) var(--s-1);
-  border: 1px solid var(--olive);
+  margin-top: 11px;
+  padding: 5px 11px;
   border-radius: var(--r-pill);
-  color: var(--olive-ink);
+  background: var(--lime-glow);
+  color: var(--lime);
+  font-size: 11.5px;
+  font-weight: 600;
 }
 
 /* ============================================================================
@@ -445,15 +373,15 @@
 .report-foot {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: var(--s-2);
-  padding-top: var(--s-3);
-  border-top: 1px solid var(--hairline);
+  align-items: center;
+  gap: 14px;
+  padding-top: 12px;
 }
 
 .fineprint {
-  max-width: var(--measure);
-  font-size: var(--t-caption);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-faint);
+  text-align: center;
+  max-width: 34ch;
 }

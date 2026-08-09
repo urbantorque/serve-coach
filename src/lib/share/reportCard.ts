@@ -1,154 +1,36 @@
 import { SERVE_TYPES } from '../analysis/coaching'
 import type { Analysis } from '../analysis/types'
 import { plain } from '../analysis/voice'
-import { SOFT_READ, STATUS_LABEL, readQuality } from '../../components/statusLabels'
+import { SOFT_READ, readQuality } from '../../components/statusLabels'
 import type { Session } from '../storage/db'
 
 type Report = Analysis | Session
 
-/*
- * This card is the only thing the app makes that ever leaves the phone, and it
- * is therefore the design at its purest rather than at its loudest: warm paper,
- * one large serif numeral, hairlines doing every piece of structural work, very
- * large margins, and exactly one olive element — the mark on the thing to work
- * on next.
- *
- * It should read like the cover of a quiet book about one player's serve. If it
- * ever starts to look like a scoreboard, the card has drifted from the app.
- */
-const PAPER = '#fafaf9'
-const INK = '#1c1917'
-const SURFACE = '#f5f5f4'
-/** A rule between passages. Decoration — never the only edge of anything. */
-const HAIRLINE = '#e7e5e4'
-/** The edge of a resting frame, where a picture has to be told from the paper. */
-const LINE = '#d6d3d1'
-const MUTED = '#57534e'
-/** Placeholder weight only. It never carries a word that has to be read. */
-const FAINT = '#a8a29e'
-const OLIVE = '#4d7c0f'
-const OLIVE_INK = '#3f6212'
+const INK = '#0a0c10'
+const INK_2 = '#141822'
+const FG = '#eef2f6'
+const MUTED = '#98a2b3'
+const FAINT = '#616b7d'
+const LIME = '#cdf94a'
 
-/*
- * The score ramp is two maps, and they are not interchangeable — the same split
- * tokens.css makes, for the same reason. Amber is 2.1:1 on this paper, so as
- * type it is not a faint status channel, it is none at all; as a filled bar
- * against its own track it is the clearest of the four.
- *
- * Red appears in neither. Nothing on this card is an injury.
- */
-/** The rung as a FILL — a meter bar, sitting on its own track. */
-const STATUS_FILL: Record<string, string> = {
-  great: '#4d7c0f',
-  good: '#57534e',
-  fair: '#ca8a04',
-  work: '#a16207',
+const STATUS_COLOR: Record<string, string> = {
+  great: '#5fe3a1',
+  good: '#cdf94a',
+  fair: '#ffb648',
+  work: '#ff7a6b',
 }
 
-/** The rung where it has to be READ: a word set on the paper. */
-const STATUS_INK: Record<string, string> = {
-  great: '#3f6212',
-  good: '#1c1917',
-  fair: '#854d0e',
-  work: '#854d0e',
-}
+const font = (weight: number, size: number) =>
+  `${weight} ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 
-/* The token stacks, spelled out for canvas — same families, same fallbacks, so a
-   shared card is the page it was shared from. */
-const DISPLAY = "'Libre Baskerville', Georgia, 'Times New Roman', serif"
-const SANS = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
-const MONO = "'Source Code Pro', ui-monospace, 'Fira Code', Consolas, monospace"
-
-/** Libre Baskerville ships 400 and 700, and the system allows no third weight. */
-const display = (weight: 400 | 700, size: number) => `${weight} ${size}px ${DISPLAY}`
-const sans = (weight: number, size: number) => `${weight} ${size}px ${SANS}`
-const mono = (weight: number, size: number) => `${weight} ${size}px ${MONO}`
-
-/**
- * An overline, tracked out by hand.
- *
- * `ctx.letterSpacing` is too recent to rely on — a phone a couple of iOS
- * versions back ignores it silently, and an untracked 11px uppercase run is
- * exactly the cramped, cheap-looking thing this system is trying not to be. So
- * the tracking is applied per character. This runs a handful of times for one
- * still image, not in a loop, so the cost is irrelevant.
- *
- * The size is passed rather than read back off `ctx.font`, which normalises to
- * "<weight> <size>px <family>" — parsing a number out of the front of that gets
- * you the weight.
- *
- * Returns the width drawn, for anything that has to sit after it.
- */
-function overline(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  size: number,
-): number {
-  const tracking = 0.08 * size
-  let cursor = x
-  for (const ch of text) {
-    ctx.fillText(ch, cursor, y)
-    cursor += ctx.measureText(ch).width + tracking
-  }
-  return cursor - x - tracking
-}
-
-/**
- * A soft-cornered rectangle as the current path, ready to fill or stroke.
- *
- * Not `ctx.roundRect`, which throws on browsers this app still supports — and a
- * share that fails is worse than one that is square. Pass `h / 2` as the radius
- * for a pill.
- */
-function roundRectPath(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number,
-): void {
-  const rad = Math.max(0, Math.min(r, w / 2, h / 2))
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
-  ctx.moveTo(x + rad, y)
-  ctx.lineTo(x + w - rad, y)
-  ctx.arcTo(x + w, y, x + w, y + rad, rad)
-  ctx.lineTo(x + w, y + h - rad)
-  ctx.arcTo(x + w, y + h, x + w - rad, y + h, rad)
-  ctx.lineTo(x + rad, y + h)
-  ctx.arcTo(x, y + h, x, y + h - rad, rad)
-  ctx.lineTo(x, y + rad)
-  ctx.arcTo(x, y, x + rad, y, rad)
+  ctx.moveTo(x + r, y)
+  ctx.arcTo(x + w, y, x + w, y + h, r)
+  ctx.arcTo(x + w, y + h, x, y + h, r)
+  ctx.arcTo(x, y + h, x, y, r)
+  ctx.arcTo(x, y, x + w, y, r)
   ctx.closePath()
-}
-
-/**
- * The one meter shape in the product, drawn the once here and matched by the
- * scrubber and the score meter on screen: a thin track with a rounded fill.
- *
- * It replaced a segmented bar in a heavy frame. Segments imply rungs the score
- * does not have, and the frame was there to give an amber fill an edge it could
- * not hold on its own — which the track now does, quietly, at any value.
- */
-function meter(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  value: number,
-  fill: string,
-): void {
-  ctx.fillStyle = HAIRLINE
-  roundRectPath(ctx, x, y, w, h, h / 2)
-  ctx.fill()
-  const filled = (w * Math.max(0, Math.min(100, value))) / 100
-  if (filled <= 0) return
-  ctx.fillStyle = fill
-  roundRectPath(ctx, x, y, Math.max(filled, h), h, h / 2)
-  ctx.fill()
 }
 
 /**
@@ -224,19 +106,15 @@ const loadImage = (src: string) =>
  */
 export async function renderReportCard(report: Report): Promise<Blob | undefined> {
   const W = 1080
-  // Very large. The margin is not leftover space — on a card that will be seen
-  // at thumbnail size in a message thread, it is the single thing that makes the
-  // difference between a considered page and a printout.
-  const PAD = 96
+  const PAD = 64
   const stills = report.phases.filter((p) => p.thumbnail)
 
   // Lay the keyframes out three across; height follows from what is available.
   const cols = 3
-  const gap = 20
   const rows = stills.length ? Math.ceil(stills.length / cols) : 0
-  const cellW = (W - PAD * 2 - gap * (cols - 1)) / cols
+  const cellW = (W - PAD * 2 - 16 * (cols - 1)) / cols
   const cellH = cellW * 1.25
-  const stripH = rows ? rows * (cellH + 52) : 0
+  const stripH = rows ? rows * (cellH + 44) + 30 : 0
 
   const canvas = document.createElement('canvas')
   canvas.width = W
@@ -248,74 +126,49 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   // a long coaching line pushes the card taller instead of running into what
   // comes next. Measured before the canvas is sized because the card's height is
   // one of the things it decides.
-  //
-  // One column, flush left, read top to bottom. The score used to sit in a ring
-  // with the coaching text alongside it; the app dropped that arrangement for
-  // the reason the report hero now gives — a ring puts the number inside a
-  // circle about the size of a thumbnail and then shrinks it to fit, and the
-  // number is the entire payoff. The card follows the app, not the other way
-  // round: it is the only thing anyone else ever sees of this design.
-  const textX = PAD
-  const textW = W - PAD * 2
+  const cy = 250
+  const ringR = 78
+  const textX = PAD + 210
+  const textW = W - textX - PAD
 
-  const headY = PAD + 24 // the wordmark's baseline
-  const headRuleY = PAD + 52
-
-  const labelY = PAD + 152 // 'SERVE SCORE' baseline
-  const scoreSize = 152
-  const scoreY = labelY + 150 // the numeral's baseline
-  const meterY = scoreY + 42 // the meter's top edge
-  const meterH = 6
-  const meterW = Math.min(textW, 520)
-  const statusY = meterY + meterH + 36 // the verdict word's baseline
-
-  const chipH = 38
-  const chipTop = statusY + 44
-  const chipY = chipTop + 25 // chip label baseline
-  const chipRuleY = chipTop + chipH + 56
-
-  const oliveRuleY = chipRuleY + 56 // the one olive element
-  const kickerY = oliveRuleY + 30 // 'WORK ON THIS NEXT' baseline
-  const titleY = kickerY + 60
-
-  ctx.font = sans(400, 20)
+  ctx.font = font(400, 20)
   // Flattened: the report marks its key words for the screen, and a canvas has
   // no idea what an asterisk means. A card shared to a coach must not arrive
   // with the markup showing.
   const focusWhy = plain(report.focus.why)
-  // Body copy stays inside a reading measure rather than running the full width
-  // of the card. 888px of 20px type is about 95 characters a line, which is
-  // roughly double what anybody reads comfortably.
-  const proseW = Math.min(textW, 700)
-  const focusLines = layoutLines(ctx, focusWhy, proseW)
-  const focusTop = titleY + 48
-  const focusEnd = focusTop + focusLines.length * 34
+  const focusLines = layoutLines(ctx, focusWhy, textW)
+  const focusEnd = cy + 20 + focusLines.length * 30
 
-  const areasRuleY = focusEnd + 28
-  const areasTop = areasRuleY + 52 // top edge of the five small meters
-  const areasBottom = areasTop + 82
+  // Clear both the paragraph and the bottom of the score ring: on a short fault
+  // the ring is the taller of the two.
+  const chipY = Math.max(focusEnd + 22, cy + ringR + 40)
+  const barY = chipY + 48
+  const HEADER = barY + 74 + 36
 
-  const stripRuleY = areasBottom + 64
-  const stripTop = stripRuleY + 56
-
-  const footRuleY = stripTop + stripH + 76
-  const H = footRuleY + 300
+  const H = HEADER + stripH + 260
   canvas.height = H
 
-  ctx.fillStyle = PAPER
+  ctx.fillStyle = INK
   ctx.fillRect(0, 0, W, H)
 
-  /* --- header ---------------------------------------------------------- */
-  // No mark, no logotype block. The name set in the same serif the score is set
-  // in is the whole masthead — the hierarchy on this card comes from size and
-  // from space, and a filled square at the top of it is a second voice.
-  ctx.textBaseline = 'alphabetic'
-  ctx.font = display(400, 21)
-  ctx.fillStyle = INK
-  ctx.fillText('Serve Coach', textX, headY)
+  const glow = ctx.createRadialGradient(W / 2, -140, 40, W / 2, -140, 760)
+  glow.addColorStop(0, 'rgba(205,249,74,0.16)')
+  glow.addColorStop(1, 'rgba(205,249,74,0)')
+  ctx.fillStyle = glow
+  ctx.fillRect(0, 0, W, HEADER)
 
-  ctx.font = mono(400, 15)
-  ctx.fillStyle = MUTED
+  /* --- header ---------------------------------------------------------- */
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = LIME
+  ctx.beginPath()
+  ctx.arc(PAD + 9, PAD + 14, 9, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.font = font(640, 24)
+  ctx.fillStyle = FG
+  ctx.fillText('Serve Coach', PAD + 30, PAD + 22)
+
+  ctx.font = font(500, 20)
+  ctx.fillStyle = FAINT
   ctx.textAlign = 'right'
   ctx.fillText(
     new Date(report.createdAt).toLocaleDateString(undefined, {
@@ -324,36 +177,35 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
       year: 'numeric',
     }),
     W - PAD,
-    headY,
+    PAD + 22,
   )
   ctx.textAlign = 'left'
 
-  ctx.fillStyle = HAIRLINE
-  ctx.fillRect(textX, headRuleY, textW, 1)
+  /* --- score ring ------------------------------------------------------- */
+  const cx = PAD + 92
+  const r = ringR
+  const status = STATUS_COLOR[report.overallStatus] ?? LIME
 
-  /* --- score ------------------------------------------------------------ */
-  ctx.font = sans(600, 13)
-  ctx.fillStyle = MUTED
-  overline(ctx, 'SERVE SCORE', textX, labelY, 13)
+  ctx.lineWidth = 14
+  ctx.strokeStyle = '#1b2130'
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.stroke()
 
-  const scoreText = String(report.overall)
-  ctx.font = display(700, scoreSize)
-  ctx.fillStyle = INK
-  ctx.fillText(scoreText, textX, scoreY)
-  const scoreW = ctx.measureText(scoreText).width
-  ctx.font = display(400, 30)
+  ctx.strokeStyle = status
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (report.overall / 100) * Math.PI * 2)
+  ctx.stroke()
+
+  ctx.textAlign = 'center'
+  ctx.font = font(680, 54)
+  ctx.fillStyle = FG
+  ctx.fillText(String(report.overall), cx, cy + 12)
+  ctx.font = font(600, 14)
   ctx.fillStyle = FAINT
-  ctx.fillText('/100', textX + scoreW + 16, scoreY)
-
-  // The tier is carried by the meter and by one word, never by tinting the
-  // digits: three of the four ramp colours cannot hold 4.5:1 on this paper, and
-  // a score you have to squint at is not a celebration. The numeral is warm
-  // black on warm paper and its size is the whole of the emphasis.
-  meter(ctx, textX, meterY, meterW, meterH, report.overall, STATUS_FILL[report.overallStatus] ?? INK)
-
-  ctx.font = sans(600, 17)
-  ctx.fillStyle = STATUS_INK[report.overallStatus] ?? INK
-  ctx.fillText(STATUS_LABEL[report.overallStatus] ?? '', textX, statusY)
+  ctx.fillText('OVERALL', cx, cy + 38)
+  ctx.textAlign = 'left'
 
   /* --- what this score is a score of ------------------------------------ */
   /*
@@ -368,10 +220,9 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
    * `soft` is carried on the chip rather than recovered from its words.
    *
    * This used to ask `label.endsWith('read')`, which worked only while the
-   * confidence phrases happened to be "Sharp read" and "Clear read". Renaming
-   * them for legibility silently switched the amber tint off — a caveat the
-   * card is supposed to carry, lost with nothing failing. Prose is not an
-   * identifier.
+   * confidence phrases happened to end in that word. Renaming them for
+   * legibility silently switched the amber tint off — a caveat the card is
+   * supposed to carry, lost with nothing failing. Prose is not an identifier.
    */
   const chips: { label: string; soft?: boolean }[] = [
     { label: SERVE_TYPES[report.serveType ?? 'flat']?.label ?? 'Flat / first serve' },
@@ -390,107 +241,68 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
     },
   ]
 
-  let chipX = textX
-  ctx.font = sans(400, 14)
-  ctx.lineWidth = 1
+  let chipX = PAD
+  ctx.font = font(560, 17)
   for (const { label, soft } of chips) {
-    const w = ctx.measureText(label).width + 32
+    const w = ctx.measureText(label).width + 26
     // Wrap rather than run off the edge: translated or unusually long labels
     // would otherwise silently disappear past the right margin.
     if (chipX + w > W - PAD) break
-    // Low confidence is the one of these that changes how the card should be
-    // read, so it is the one that gets colour. Amber-deep, not red: a soft read
-    // is a caveat on the numbers, not a warning about the player.
-    const low = soft === true
-    // A wash with a matching -ink edge and -ink type, pill-shaped: the same
-    // status chip the report uses, so the card is recognisably the same object.
-    roundRectPath(ctx, chipX, chipTop, w, chipH, chipH / 2)
-    ctx.fillStyle = low ? '#fbf4e9' : SURFACE
+    ctx.fillStyle = INK_2
+    roundRect(ctx, chipX, chipY - 20, w, 34, 17)
     ctx.fill()
-    ctx.strokeStyle = low ? STATUS_INK.work : LINE
-    ctx.stroke()
-    ctx.fillStyle = low ? STATUS_INK.work : MUTED
-    ctx.fillText(label, chipX + 16, chipY)
-    chipX += w + 10
+    // Low confidence is the one of these that changes how the card should be
+    // read, so it is the one that gets colour.
+    ctx.fillStyle = soft ? STATUS_COLOR.fair : MUTED
+    ctx.fillText(label, chipX + 13, chipY + 3)
+    chipX += w + 8
   }
-
-  ctx.fillStyle = HAIRLINE
-  ctx.fillRect(textX, chipRuleY, textW, 1)
 
   /* --- focus ------------------------------------------------------------ */
-  /*
-   * The one olive element on the card, on the one thing the card is asking for.
-   *
-   * A short rule and an overline set in the ink variant, rather than a filled
-   * plate with reversed type. Olive at plate strength next to a 152px numeral is
-   * two things shouting at each other; a rule the width of a thumb is enough to
-   * say "this part is the point" on a page that is otherwise entirely warm
-   * black on warm white.
-   */
-  ctx.fillStyle = OLIVE
-  ctx.fillRect(textX, oliveRuleY, 56, 2)
-  ctx.font = sans(600, 12)
-  ctx.fillStyle = OLIVE_INK
-  overline(ctx, 'WORK ON THIS NEXT', textX, kickerY, 12)
-
-  // The fault titles are written for a person rather than for a box, so the type
-  // steps down until it fits rather than running off the right edge.
-  let titleSize = 38
-  ctx.font = display(400, titleSize)
-  while (titleSize > 26 && ctx.measureText(report.focus.title).width > textW) {
-    titleSize -= 1
-    ctx.font = display(400, titleSize)
-  }
-  ctx.fillStyle = INK
-  ctx.fillText(report.focus.title, textX, titleY)
-  ctx.font = sans(400, 20)
+  ctx.font = font(700, 16)
+  ctx.fillStyle = LIME
+  ctx.fillText('WORK ON THIS NEXT', textX, cy - 58)
+  ctx.font = font(640, 34)
+  ctx.fillStyle = FG
+  ctx.fillText(report.focus.title, textX, cy - 16)
+  ctx.font = font(400, 20)
   ctx.fillStyle = MUTED
   // The same lines the layout above was measured from, so what is drawn and what
   // was reserved for it cannot disagree.
-  drawLines(ctx, focusLines, textX, focusTop, 34)
+  drawLines(ctx, focusLines, textX, cy + 20, 30)
 
   /* --- the five areas --------------------------------------------------- */
-  ctx.fillStyle = HAIRLINE
-  ctx.fillRect(textX, areasRuleY, textW, 1)
-
-  const colGap = 24
-  const barW = (textW - colGap * (report.fundamentals.length - 1)) / report.fundamentals.length
+  const barW = (W - PAD * 2 - 14 * (report.fundamentals.length - 1)) / report.fundamentals.length
   report.fundamentals.forEach((f, i) => {
-    const x = textX + i * (barW + colGap)
-    // No surface block behind these any more. Five filled boxes in a row is a
-    // dashboard; five columns separated by nothing but space is a page. The
-    // verdict is the fill in each small meter — the same shape as the score
-    // meter above and the scrubber in the player — and the number below it stays
-    // warm black so the row reads as one row of scores rather than as five
-    // differently coloured things.
-    meter(ctx, x, areasTop, barW, 4, f.score, STATUS_FILL[f.status] ?? INK)
+    const x = PAD + i * (barW + 14)
+    ctx.fillStyle = INK_2
+    roundRect(ctx, x, barY, barW, 74, 14)
+    ctx.fill()
 
-    ctx.fillStyle = INK
-    ctx.font = display(400, 30)
+    ctx.fillStyle = STATUS_COLOR[f.status] ?? LIME
+    ctx.font = font(660, 30)
     ctx.textAlign = 'center'
-    ctx.fillText(String(f.score), x + barW / 2, areasTop + 56)
-    ctx.font = sans(400, 13)
-    ctx.fillStyle = MUTED
-    ctx.fillText(f.label, x + barW / 2, areasTop + 82)
+    ctx.fillText(String(f.score), x + barW / 2, barY + 38)
+    ctx.font = font(500, 15)
+    ctx.fillStyle = FAINT
+    ctx.fillText(f.label, x + barW / 2, barY + 60)
     ctx.textAlign = 'left'
   })
 
   /* --- keyframes -------------------------------------------------------- */
   if (rows) {
-    ctx.fillStyle = HAIRLINE
-    ctx.fillRect(textX, stripRuleY, textW, 1)
-
+    const top = HEADER
     const images = await Promise.all(stills.map((p) => loadImage(p.thumbnail!)))
     stills.forEach((phase, i) => {
       const col = i % cols
       const row = Math.floor(i / cols)
-      const x = textX + col * (cellW + gap)
-      const y = stripTop + row * (cellH + 52)
+      const x = PAD + col * (cellW + 16)
+      const y = top + row * (cellH + 44)
 
       ctx.save()
-      roundRectPath(ctx, x, y, cellW, cellH, 12)
+      roundRect(ctx, x, y, cellW, cellH, 16)
       ctx.clip()
-      ctx.fillStyle = SURFACE
+      ctx.fillStyle = INK_2
       ctx.fillRect(x, y, cellW, cellH)
       const img = images[i]
       if (img) {
@@ -502,42 +314,29 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
       }
       ctx.restore()
 
-      // A hairline frame on every still, drawn inside the cell so the six line
-      // up on the same grid whether or not their picture survived. --line, not
-      // --hairline: this edge separates a photograph from the paper, which is
-      // work, where a rule between two passages is decoration.
-      roundRectPath(ctx, x + 0.5, y + 0.5, cellW - 1, cellH - 1, 12)
-      ctx.strokeStyle = LINE
-      ctx.lineWidth = 1
-      ctx.stroke()
-
-      ctx.font = sans(600, 11)
-      ctx.fillStyle = MUTED
-      overline(ctx, phase.label.toUpperCase(), x, y + cellH + 28, 11)
+      ctx.font = font(620, 18)
+      ctx.fillStyle = FG
+      ctx.fillText(phase.label, x, y + cellH + 26)
     })
   }
 
   /* --- footer ----------------------------------------------------------- */
-  // No filled panel and no coloured rule. The drill closes the card the way a
-  // last paragraph closes a page: a hairline above it and then the words.
-  ctx.fillStyle = HAIRLINE
-  ctx.fillRect(textX, footRuleY, textW, 1)
+  const footY = H - 150
+  ctx.fillStyle = INK_2
+  roundRect(ctx, PAD, footY, W - PAD * 2, 100, 18)
+  ctx.fill()
 
-  ctx.font = sans(600, 12)
+  ctx.font = font(620, 19)
+  ctx.fillStyle = FG
+  ctx.fillText(report.focus.drill.name, PAD + 26, footY + 36)
+  ctx.font = font(400, 17)
   ctx.fillStyle = MUTED
-  overline(ctx, 'ONE DRILL TO TRY', textX, footRuleY + 44, 12)
+  wrap(ctx, report.focus.drill.reps, PAD + 26, footY + 64, W - PAD * 2 - 52, 24)
 
-  ctx.font = display(400, 22)
-  ctx.fillStyle = INK
-  ctx.fillText(report.focus.drill.name, textX, footRuleY + 92)
-  ctx.font = sans(400, 17)
-  ctx.fillStyle = MUTED
-  wrap(ctx, report.focus.drill.reps, textX, footRuleY + 128, proseW, 28)
-
-  ctx.font = sans(400, 14)
-  ctx.fillStyle = MUTED
+  ctx.font = font(400, 15)
+  ctx.fillStyle = FAINT
   ctx.textAlign = 'center'
-  ctx.fillText('Measured on device · nothing was uploaded', W / 2, H - 44)
+  ctx.fillText('Measured on device · nothing was uploaded', W / 2, H - 22)
   ctx.textAlign = 'left'
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))

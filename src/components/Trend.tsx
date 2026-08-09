@@ -57,31 +57,18 @@ interface Segment {
   stale: boolean
 }
 
-/**
- * The colour of a run: the old rubric is drawn as background, not as series.
- * Quiet, but not --fg-faint — that grey is 2.41:1 on the paper, and a line a
- * player is expected to read the shape of is a mark that carries data.
- */
-const strokeOf = (stale: boolean) => (stale ? 'var(--fg-muted)' : 'var(--warm-black)')
+/** The colour of a run: the old rubric is drawn as background, not as series. */
+const strokeOf = (stale: boolean) => (stale ? 'var(--fg-faint)' : 'var(--lime)')
 
 /**
- * Olive is the one accent, and here it is a fill: the wash under the current run
- * and the dot at each reading. The series itself stays warm black, because a
- * 2.96:1 line is not one you can follow across a court in daylight.
- */
-const MARKER = 'var(--olive)'
-
-/**
- * Half the width of the break label at the `.chart-axis` size, in viewBox
+ * Half the width of the break label at the 9px `.chart-axis` size, in viewBox
  * units. Both charts set `overflow: visible`, so a label centred on a break near
  * either edge does not clip — it hangs outside the chart and over whatever sits
  * beside it. Clamping to this keeps the words inside the box; the couple of
  * units it slides off the rule cost nothing, since the rule is the thing being
  * labelled and it is the only one on screen.
- *
- * Widened with the tick type when it went from 9px to the 11px --t-overline.
  */
-const BREAK_LABEL_HALF = 42
+const BREAK_LABEL_HALF = 34
 
 const labelX = (at: number) => Math.min(VB_W - BREAK_LABEL_HALF, Math.max(BREAK_LABEL_HALF, at))
 
@@ -156,12 +143,12 @@ export function Sparkline({ points }: { points: TrendPoint[] }) {
           {/* Only the current run is filled. The old scores are real but they are
               not this measurement, so they read as the backdrop the new run is
               drawn against rather than as more of the same series. */}
-          {s.area && !s.stale && <path d={s.area} fill={MARKER} opacity="0.12" />}
+          {s.area && !s.stale && <path d={s.area} fill="var(--lime)" opacity="0.1" />}
           <path
             d={s.line}
             fill="none"
             stroke={strokeOf(s.stale)}
-            strokeWidth="1.5"
+            strokeWidth="2"
             strokeLinejoin="round"
             strokeLinecap="round"
           />
@@ -169,12 +156,7 @@ export function Sparkline({ points }: { points: TrendPoint[] }) {
               draws no line at any linecap — so the serve would simply vanish
               from a chart that says how many serves are on it. */}
           {s.from === s.to && s.to !== last && (
-            <circle
-              cx={g.x(s.from)}
-              cy={g.y(points[s.from].overall)}
-              r="2.5"
-              fill={strokeOf(s.stale)}
-            />
+            <circle cx={g.x(s.from)} cy={g.y(points[s.from].overall)} r="3" fill={strokeOf(s.stale)} />
           )}
         </g>
       ))}
@@ -186,7 +168,7 @@ export function Sparkline({ points }: { points: TrendPoint[] }) {
           x2={bx}
           y1={0}
           y2={h - 11}
-          stroke="var(--line)"
+          stroke="var(--fg-faint)"
           strokeWidth="1"
           strokeDasharray="2 3"
         />
@@ -205,14 +187,7 @@ export function Sparkline({ points }: { points: TrendPoint[] }) {
         </text>
       )}
 
-      <circle
-        cx={g.x(last)}
-        cy={g.y(points[last].overall)}
-        r="3.5"
-        fill={MARKER}
-        stroke="var(--bg)"
-        strokeWidth="1.5"
-      />
+      <circle cx={g.x(last)} cy={g.y(points[last].overall)} r="4.5" fill="var(--lime)" stroke="var(--ink-2)" strokeWidth="2" />
     </svg>
   )
 }
@@ -261,15 +236,11 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
         onPointerDown={track}
         onPointerLeave={() => setHover(undefined)}
       >
-        {/* Every rule here is a hairline. The baseline is the axis so it takes
-            --line; the two above it are guides and sit back in the raised
-            surface grey, where they never compete with the series. */}
         {[0, 50, 100].map((v) => (
           <g key={v}>
             <line
               x1={pad} x2={VB_W - pad} y1={g.y(v)} y2={g.y(v)}
-              stroke={v === 0 ? 'var(--line)' : 'var(--surface-raised)'}
-              strokeWidth="1"
+              stroke="var(--hairline)" strokeWidth="1"
             />
             <text x={0} y={g.y(v) + 3.5} className="chart-tick">{v}</text>
           </g>
@@ -277,7 +248,7 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
 
         {g.segments.map((s) => (
           <g key={s.from}>
-            {s.area && !s.stale && <path d={s.area} fill={MARKER} opacity="0.12" />}
+            {s.area && !s.stale && <path d={s.area} fill="var(--lime)" opacity="0.1" />}
             <path
               d={s.line}
               fill="none"
@@ -298,7 +269,7 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
             x2={bx}
             y1={pad - 2}
             y2={h - pad}
-            stroke="var(--line)"
+            stroke="var(--fg-faint)"
             strokeWidth="1"
             strokeDasharray="3 3"
           />
@@ -317,27 +288,21 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
         {active && (
           <line
             x1={g.x(hover!)} x2={g.x(hover!)} y1={pad} y2={h - pad}
-            stroke="var(--line-control)" strokeWidth="1"
+            stroke="var(--fg-faint)" strokeWidth="1"
           />
         )}
 
-        {/* Olive on the current run, raised grey on the run scored the old way —
-            the same two-tone the line already uses, so a reader never has to
-            work out which dots belong to which scale. */}
-        {points.map((p, i) => {
-          const r = i === points.length - 1 || i === hover ? 4.5 : 3
-          return (
-            <circle
-              key={p.id}
-              cx={g.x(i)}
-              cy={g.y(p.overall)}
-              r={r}
-              fill={stale(p) ? 'var(--surface-raised)' : MARKER}
-              stroke={stale(p) ? strokeOf(true) : 'var(--bg)'}
-              strokeWidth="1.5"
-            />
-          )
-        })}
+        {points.map((p, i) => (
+          <circle
+            key={p.id}
+            cx={g.x(i)}
+            cy={g.y(p.overall)}
+            r={i === points.length - 1 || i === hover ? 4.5 : 3}
+            fill={strokeOf(stale(p))}
+            stroke="var(--ink-2)"
+            strokeWidth="2"
+          />
+        ))}
 
         <text x={pad} y={h - 2} className="chart-axis">{fmtDate(points[0].createdAt)}</text>
         <text x={VB_W - pad} y={h - 2} className="chart-axis" textAnchor="end">

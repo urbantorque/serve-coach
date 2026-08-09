@@ -1,258 +1,98 @@
 /* ============================================================================
-   Serve Coach — design tokens (ThoughtStream)
-
-   Adapted from ThoughtStream-DESIGN.md, a system written for a contemplative
-   reading blog. Most of it transfers: a serve report IS long-form reading, and
-   the thing a club player needs is not to be shouted at but to understand one
-   correction. Warm neutrals, hairlines, generous space, serif for the numbers
-   that matter.
-
-   Four places it needed bending, each deliberate:
-
-   1. CORNERS ARE SOFT. The source insists on 0px — "sharp edges reinforce the
-      clean geometric identity". Sharp edges on a warm white page is precisely
-      what makes an interface read as severe rather than expensive, and this
-      app is handed to someone who has just finished serving and is slightly
-      out of breath. Cards 12px, controls 10px, chips pill, video 14px.
-
-   2. THE PALETTE IS TOO PALE TO OPERATE. All three of its border tokens sit
-      between 1.2:1 and 2.4:1, and stone (#78716C) fails as body text on the
-      raised surface. Faint is correct for a rule between two paragraphs and
-      wrong for the edge that tells you something is a control. So borders
-      split by job, and every colour that has to be read has an -ink variant.
-
-   3. RESTRAINT IS NOT THE ABSENCE OF A MOMENT. A blog never has to celebrate
-      anything. A serve score does. The hero number is Libre Baskerville well
-      above the source's 40px display size — but it is warm black on warm
-      white, not a coloured badge, so it stays quiet while being unmistakably
-      the point of the page.
-
-   4. ONE DARK ROOM. Video is not reading. Frame-by-frame review lives on the
-      --well ramp, which is the source's own Warm Black, so the picture has an
-      edge and the overlay has somewhere to be bright.
+   Serve Coach — design tokens
+   Dark by default: you use this at dusk on a court, or indoors reviewing video.
+   One accent (tennis lime) carries every affordance; status colours are
+   reserved exclusively for score feedback so they always mean something.
    ========================================================================= */
 
 :root {
-  /* --- warm neutral ground ------------------------------------------------
-     Never a cool grey. The whole character of this system is that the paper
-     is warm; a neutral grey next to it reads as a rendering bug. */
-  --bg: #fafaf9;
-  --surface: #f5f5f4;
-  --surface-raised: #efedeb;
+  /* --- surface ramp, cool near-black -------------------------------------- */
+  --ink: #0a0c10;
+  --ink-1: #0e1118;
+  --ink-2: #141822;
+  --ink-3: #1b2130;
+  --ink-4: #242c3d;
+  --hairline: #232a38;
+  --hairline-soft: #1a202c;
 
-  --stone: #78716c;
-  --sage: #a8a29e;
-  --warm-black: #1c1917;
+  /* --- text -------------------------------------------------------------- */
+  --fg: #eef2f6;
+  --fg-muted: #98a2b3;
+  --fg-faint: #616b7d;
 
-  /* --- content ------------------------------------------------------------
-     --fg-faint is 2.41:1. It is for placeholder and disabled text and for a
-     mark on a chart that carries no data. It must never hold a word that
-     matters — the source lists it as Text Tertiary and then uses it for
-     bylines, which is the one instruction here not worth following. */
-  --fg: #1c1917;
-  --fg-muted: #57534e;
-  --fg-faint: #a8a29e;
+  /* --- accent: tennis ball ------------------------------------------------ */
+  --lime: #cdf94a;
+  --lime-bright: #e0ff6e;
+  --lime-deep: #9bc816;
+  --lime-ink: #131a04;
+  --lime-glow: rgba(205, 249, 74, 0.22);
 
-  /* --- borders, split by what they are for --------------------------------
-     A hairline separating two blocks of text is decoration and should barely
-     register — that restraint is most of what makes this system feel calm.
-     An edge that says "this is a field you can type in" is information, and
-     WCAG wants 3:1 for it. Conflating the two is how a beautiful page becomes
-     unusable in daylight. */
-  --hairline: #e7e5e4; /* 1.20:1 — dividers between passages. Decorative. */
-  --line: #d6d3d1; /* 1.43:1 — the edge of a resting card. Decorative. */
-  --line-control: #8a837d; /* 3.20:1 on the raised surface. Real controls. */
-  --line-strong: #57534e; /* 7.30:1 — a deliberate, heavy frame. */
+  /* --- score semantics ---------------------------------------------------- */
+  --great: #5fe3a1;
+  --great-dim: rgba(95, 227, 161, 0.14);
+  --good: #cdf94a;
+  --good-dim: rgba(205, 249, 74, 0.14);
+  --fair: #ffb648;
+  --fair-dim: rgba(255, 182, 72, 0.14);
+  --work: #ff7a6b;
+  --work-dim: rgba(255, 122, 107, 0.14);
 
-  /* --- accent -------------------------------------------------------------
-     One accent, and it is olive.
-
-     The source system has no accent at all; its "Success" green is the closest
-     thing, and for a tennis app that reads as a ball left out in the sun for a
-     season — which is exactly the right amount of reference. Muted enough to
-     sit in a quiet page, present enough to mean something.
-
-     #65A30D as specified is 2.96:1, so it is a FILL. --olive is the version
-     you can write with. */
-  --olive: #4d7c0f;
-  --olive-ink: #3f6212;
-  --olive-wash: #f2f7e9;
-  --olive-bright: #a3e635; /* on the dark well only, where it has room */
-
-  /* --- the dark room ------------------------------------------------------
-     Warm Black, straight from the source palette. Video sits in here so the
-     frame has an edge, and it is the only place bright olive is legal. */
-  --well: #1c1917;
-  --well-1: #292524;
-  --well-2: #3a3532;
-  --well-fg: #fafaf9;
-  --well-fg-muted: #a8a29e; /* 6.93:1 down there, unlike up here */
-  --well-line: #57534e;
-
-  /* --- score ramp ---------------------------------------------------------
-     Four rungs. Same discipline as the accent: the plain token is a fill or a
-     mark, the -ink token is the one you are allowed to write with.
-
-     The bottom rung is deep amber, not red. Red is reserved for injury. A
-     player whose toss drifts is not hurt, and telling them in the colour of
-     an emergency is both wrong and discouraging. */
-  --great: #4d7c0f;
-  --great-ink: #3f6212;
-  --great-wash: #f2f7e9;
-  --good: #57534e;
-  --good-ink: #1c1917;
-  --good-wash: #f5f5f4;
-  --fair: #ca8a04;
-  --fair-ink: #854d0e;
-  --fair-wash: #fdf8ea;
-  --work: #a16207;
-  --work-ink: #854d0e;
-  --work-wash: #fbf4e9;
-
-  /* Injury only. Reaching for this anywhere else is a bug. */
-  --danger: #dc2626;
-  --danger-ink: #b91c1c;
-  --danger-wash: #fdf2f2;
-
-  /* --- geometry -----------------------------------------------------------
-     Softened against the source's 0px. See note 1 at the top. */
-  --r-sm: 6px;
-  --r: 10px; /* controls */
-  --r-lg: 12px; /* cards */
-  --r-xl: 14px; /* the video frame */
+  /* --- geometry ----------------------------------------------------------- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
   --r-pill: 999px;
 
-  /* --- space --------------------------------------------------------------
-     12px base, per the source, and the generosity is the point rather than a
-     side effect: --s-5 between sections is what lets a diagnosis feel
-     considered instead of dumped.
+  /* --- elevation ---------------------------------------------------------- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.65);
+  --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
 
-     Two sub-units below the base, because a 12px floor cannot express the gap
-     between a label and the number it labels — that is 4px, and forcing it to
-     12 does not make the page calmer, it makes the pair stop reading as one
-     thing. */
-  --s-hair: 4px;
-  --s-tight: 8px;
-  --s-1: 12px;
-  --s-2: 24px;
-  --s-3: 36px;
-  --s-4: 48px;
-  --s-5: 60px;
-  --s-6: 72px;
-  --s-7: 96px;
-  --s-8: 120px;
-
-  /* Completely flat. Separation is borders and white space, nothing else. */
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-
-  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--stone);
-  --focus-ring-dark: 0 0 0 2px var(--well), 0 0 0 4px var(--olive-bright);
-
-  /* --- motion -------------------------------------------------------------
-     Slower than the last skin. Nothing here is urgent. */
+  /* --- motion ------------------------------------------------------------- */
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --fast: 160ms;
-  --base: 280ms;
-  --slow: 520ms;
+  --fast: 140ms;
+  --base: 240ms;
+  --slow: 480ms;
 
-  /* --- type ---------------------------------------------------------------
-     Vendored at setup by scripts/fetch-assets.mjs. The app's whole promise is
-     that your video never leaves the device; a webfont request would leave
-     with it, and would blank the page on a court with no signal. */
-  --font-display: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
-  --font: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  --mono: 'Source Code Pro', ui-monospace, 'Fira Code', Consolas, monospace;
+  /* --- type --------------------------------------------------------------- */
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI',
+    Inter, Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
 
   /*
-   * The hero score is the one override of the type scale.
-   *
-   * The source tops out at 40px because a blog never has to celebrate
-   * anything. A serve score does — it is the reason the player opened the app.
-   * Baskerville at this size is not loud: it is warm black on warm paper with
-   * no badge, no ring and no colour, which is a very different thing from
-   * shouting. The rest of the scale is the source's, unchanged.
+   * One weight ramp for the whole app, so a heading and an instruction never
+   * disagree about what "emphasis" means. The values are variable-font weights:
+   * on SF Pro and Inter they land between the static cuts, which is the point —
+   * 560 is the weight a label wants and 600 is already too loud next to it.
    */
-  --t-hero: clamp(3.5rem, 17vw, 4.75rem); /* 56 → 76 */
-  --t-display: 2.5rem; /* 40 */
-  --t-headline: 1.875rem; /* 30 */
-  --t-subhead: 1.375rem; /* 22 */
-  --t-lede: 1.25rem; /* 20 */
-  --t-body: 1.0625rem; /* 17 — the reading size, and it is not negotiable */
-  --t-small: 0.9375rem; /* 15 */
-  --t-caption: 0.8125rem; /* 13 */
-  --t-overline: 0.6875rem; /* 11 */
-  --t-code: 0.9375rem; /* 15 */
+  --wt-body: 420;
+  --wt-label: 560;
+  --wt-key: 640;
+  --wt-title: 680;
 
-  /* Two weights per family. The source asks for restraint and it is right:
-     a third weight is nearly always someone avoiding a hierarchy decision. */
-  --wt-body: 400;
-  --wt-key: 600;
-  --wt-serif: 400;
-  --wt-serif-bold: 700;
+  /* Line heights, named for the job rather than the number. */
+  --lh-tight: 1.24;
+  --lh-snug: 1.42;
+  --lh-copy: 1.58;
 
-  --lh-hero: 1;
-  --lh-display: 1.2;
-  --lh-headline: 1.3;
-  --lh-subhead: 1.4;
-  --lh-lede: 1.75;
-  --lh-copy: 1.8; /* long-form comfort, and the reason the page breathes */
-  --lh-snug: 1.5;
+  /* Optical tracking. Display type needs negative tracking; small caps need the
+     opposite, or the kickers read as one long word at a glance. */
+  --tr-display: -0.022em;
+  --tr-title: -0.015em;
+  --tr-kicker: 0.11em;
 
-  --tr-display: -0.02em;
-  --tr-headline: -0.015em;
-  --tr-subhead: -0.01em;
-  --tr-caption: 0.01em;
-  --tr-overline: 0.08em;
+  /* An editorial column: past this, the eye loses the start of the next line. */
+  --measure: 46ch;
 
-  /* --- layout -------------------------------------------------------------
-     The source caps body text at 680px for reading measure. Expressed in ch so
-     it holds when the type scales, and the shell is allowed to grow to meet it
-     on a wide screen instead of staying a narrow phone column. */
-  --measure: 68ch;
-  --shell: 640px;
+  /* --- layout ------------------------------------------------------------- */
+  --shell: 560px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  color-scheme: light;
-}
-
-/* ============================================================================
-   Fonts — self-hosted, zero network at runtime.
-   ========================================================================= */
-
-@font-face {
-  font-family: 'Libre Baskerville';
-  src: url('/fonts/libre-baskerville-400.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Libre Baskerville';
-  src: url('/fonts/libre-baskerville-700.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: Inter;
-  src: url('/fonts/inter-variable.woff2') format('woff2');
-  font-weight: 400 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Source Code Pro';
-  src: url('/fonts/source-code-pro-400.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+  color-scheme: dark;
 }
 
 /* ============================================================================
@@ -278,14 +118,27 @@ body,
 
 body {
   font-family: var(--font);
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
+  font-size: 16px;
+  line-height: 1.5;
   color: var(--fg);
-  background: var(--bg);
+  background: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
+}
+
+/* A single wash of court-light behind everything, so flat black never reads
+   as "broken screen" on OLED. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(205, 249, 74, 0.07), transparent 60%),
+    radial-gradient(80% 50% at 100% 100%, rgba(80, 130, 255, 0.05), transparent 70%);
 }
 
 img,
@@ -313,7 +166,6 @@ button {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.4;
 }
 
 a {
@@ -327,13 +179,14 @@ ol {
 }
 
 :focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
 }
 
 ::selection {
-  background: var(--olive-wash);
-  color: var(--olive-ink);
+  background: var(--lime);
+  color: var(--lime-ink);
 }
 
 /* Numbers in metrics must not jitter as they animate. */
@@ -343,66 +196,68 @@ ol {
 }
 
 /* ----------------------------------------------------------------- type roles
-   Named for the job. Use these rather than restating four declarations; the
-   last skin hand-rolled them everywhere and the scale drifted in two files. */
+   The same roles the screens were already setting by hand, named once.
+
+   These are not a new scale — every value here is lifted from what the
+   stylesheets were repeating: the 11px uppercase kicker at --tr-kicker that
+   appears in four modules, the clamped section title, the muted 13px caption.
+   Naming them stops the fifth copy drifting half a pixel from the other four,
+   which is exactly what happened to the kickers before. */
 
 .t-hero {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif-bold);
-  font-size: var(--t-hero);
-  line-height: var(--lh-hero);
+  font-size: clamp(34px, 9vw, 44px);
+  font-weight: var(--wt-title);
   letter-spacing: var(--tr-display);
+  line-height: 1.04;
 }
 
 .t-display {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif-bold);
-  font-size: var(--t-display);
-  line-height: var(--lh-display);
+  font-size: clamp(26px, 7vw, 34px);
+  font-weight: var(--wt-title);
   letter-spacing: var(--tr-display);
+  line-height: 1.1;
 }
 
 .t-headline {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif-bold);
-  font-size: var(--t-headline);
-  line-height: var(--lh-headline);
-  letter-spacing: var(--tr-headline);
+  font-size: clamp(20px, 5.4vw, 24px);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-title);
+  line-height: var(--lh-tight);
 }
 
-/* The one serif role at 400 — section headings, where bold would shout. */
 .t-subhead {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif);
-  font-size: var(--t-subhead);
-  line-height: var(--lh-subhead);
-  letter-spacing: var(--tr-subhead);
+  font-size: 17px;
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-title);
+  line-height: var(--lh-tight);
 }
 
 .t-lede {
-  font-size: var(--t-lede);
-  line-height: var(--lh-lede);
+  font-size: 15px;
+  font-weight: var(--wt-body);
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
 }
 
 .t-caption {
-  font-size: var(--t-caption);
+  font-size: 13px;
+  font-weight: var(--wt-body);
   line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
   color: var(--fg-muted);
 }
 
 .t-overline {
-  font-size: var(--t-overline);
+  font-size: 11px;
   font-weight: var(--wt-key);
-  line-height: 1.4;
-  letter-spacing: var(--tr-overline);
+  letter-spacing: var(--tr-kicker);
+  line-height: 1.2;
   text-transform: uppercase;
-  color: var(--fg-muted);
+  color: var(--fg-faint);
 }
 
 .t-code {
   font-family: var(--mono);
-  font-size: var(--t-code);
+  font-size: 13px;
   line-height: var(--lh-snug);
   font-variant-numeric: tabular-nums;
 }
@@ -417,6 +272,3 @@ ol {
     scroll-behavior: auto !important;
   }
 }
-
-/* The shim that carried the previous skin's token names through the overhaul is
-   gone — every module reads the tokens above directly. */

@@ -1,139 +1,81 @@
 /* ============================================================================
-   Home — the opening page of a quiet book
-
-   Not a cover, not a landing page. A serif headline in sentence case, one line
-   of what the thing does, a great deal of paper, and one filled stone button.
-   Everything below it is a contents page set on hairlines: rules, never boxes.
-
-   Type roles come from the global helpers in tokens.css wherever one fits;
-   this file only adds what a helper cannot say.
+   Home
    ========================================================================= */
 
 .home-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-2);
 }
 
-/* The masthead, and it stays a masthead: small, spaced, and quieter than the
-   headline it sits above. Inter — the display face is for headings and for
-   numbers, never for a label. */
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+}
+
+.brand-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 14px var(--lime-glow);
+}
+
+.home-hero h1 {
+  font-size: clamp(34px, 9vw, 46px);
+  line-height: 1.04;
+  letter-spacing: -0.038em;
+  font-weight: 660;
+  margin-bottom: 16px;
+  background: linear-gradient(168deg, var(--fg) 30%, #97a6b4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.home-hero p {
+  font-size: 16px;
+  line-height: 1.6;
   color: var(--fg-muted);
+  max-width: 42ch;
 }
-
-/* --- the opening page ----------------------------------------------------- */
-
-.home-cover {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding-top: var(--s-3);
-}
-
-/* Size and leading come from `.t-display`. Only the optical trim lives here:
-   Libre Baskerville carries enough side bearing at 40px that a literal zero
-   reads as an indent against the lede underneath it. */
-.home-headline {
-  margin-left: -0.03em;
-  max-width: 14ch;
-  color: var(--fg);
-  text-wrap: balance;
-}
-
-.home-say {
-  max-width: var(--measure);
-  color: var(--fg-muted);
-  text-wrap: pretty;
-}
-
-/* --- the one action ------------------------------------------------------- */
 
 .home-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 11px;
 }
 
-/*
- * A filled stone button, not a black slab.
- *
- * The last skin made this 64px of uppercase black and it read as a shout. At
- * 48px with sixty pixels of paper above and below it there is still exactly one
- * obvious thing to tap, and the restraint is what makes it look expensive.
- */
-.home-cta {
-  width: 100%;
-  min-height: 48px;
-  padding: var(--s-1) var(--s-2);
-  border: none;
-  border-radius: var(--r);
-  background: var(--fg-muted);
-  color: var(--bg);
-  font-family: var(--font);
-  font-size: var(--t-small);
-  font-weight: var(--wt-key);
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.home-cta:hover:not(:disabled),
-.home-cta:active:not(:disabled) {
-  background: var(--warm-black);
-  color: var(--bg);
-}
-
-/*
- * The second way in, on a phone: film it now instead of picking one.
- *
- * A ghost, and not full width. Outlined and stretched it was a second slab of
- * the same size directly under the first, and the page stopped having one
- * obvious thing to tap — which is the only question this screen has to answer.
- */
-.home-cta--alt {
-  align-self: flex-start;
-  width: auto;
-  min-height: 44px;
-  padding: var(--s-tight) var(--s-1);
-  margin-left: calc(var(--s-1) * -1);
-  border: none;
-  border-radius: var(--r-sm);
-  background: none;
-  color: var(--fg-muted);
-}
-
-.home-cta--alt:hover:not(:disabled),
-.home-cta--alt:active:not(:disabled) {
-  background: var(--surface);
-  color: var(--fg);
-}
-
-/* Dragging a file is a desktop gesture, so the target only announces itself
-   once something is actually being dragged over the page. Drawn as an outline
-   rather than a border: a border would take a pixel out of the column and
-   knock the button a pixel off the margin every other element is set on. */
+/* The primary action doubles as a drop target: a dashed hairline reads as
+   "things can land here" the same way it already does on the quiet strap
+   below, so the affordance borrows a pattern the player has seen once
+   already rather than inventing a new one. */
 .dropzone {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-1);
-  margin: calc(var(--s-1) * -1);
+  gap: 13px;
+  padding: 14px;
   border-radius: var(--r-lg);
-  outline: 1px dashed transparent;
-  transition: outline-color var(--base) var(--ease), background var(--base) var(--ease);
+  border: 1.5px dashed var(--hairline);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
 }
 
 .dropzone.is-dragging {
-  outline-color: var(--olive);
-  background: var(--olive-wash);
+  border-color: var(--lime);
+  background: var(--lime-glow);
 }
 
 .dropzone-hint {
   display: flex;
   align-items: center;
-  gap: var(--s-tight);
-  color: var(--fg-muted);
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-faint);
 }
 
 .dropzone-hint .icon {
@@ -141,241 +83,126 @@
 }
 
 .dropzone.is-dragging .dropzone-hint {
-  color: var(--olive-ink);
+  color: var(--lime);
 }
 
-/* --- the promise ---------------------------------------------------------- */
+.strap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 17px;
+  text-align: left;
+  border-radius: var(--r-md);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+  color: var(--fg-muted);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
 
-/*
- * The most persuasive sentence in the app, and this system says restraint
- * persuades. So it gets no border, no wash and no badge — a hairline above it,
- * a lot of air, and reading size. Placement is the emphasis.
- */
-.home-promise {
+.strap:hover {
+  background: var(--ink-2);
+  border-color: var(--hairline);
+}
+
+.strap:active {
+  transform: scale(0.985);
+}
+
+.strap > span {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--hairline);
+  gap: 2px;
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
-.home-promise p {
-  max-width: 40ch;
+.strap strong {
   color: var(--fg);
-  text-wrap: pretty;
+  font-size: 14.5px;
+  font-weight: 600;
 }
 
-.home-promise-state {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
+/* Sits under the filming guide on an empty home screen. Quieter than it, so the
+   pair reads as "here is how to do it" then "or just look at one". */
+.strap--quiet {
+  margin-top: 10px;
+  background: transparent;
+  border-style: dashed;
 }
 
-/* --- contents page -------------------------------------------------------- */
-
-/* No frame around the list. The rows are separated from each other and from
-   whatever is above them by hairlines, which is all the structure this needs. */
-.home-nav {
-  border-top: 1px solid var(--hairline);
-}
-
-.home-nav li {
-  border-bottom: 1px solid var(--hairline);
-}
-
-/* Bled one step into the left margin so the hover wash has somewhere to sit
-   while the label itself stays flush with the column the page is set on. */
-.home-nav-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: var(--s-hair) var(--s-2);
-  width: calc(100% + var(--s-1));
-  min-height: 44px;
-  padding: var(--s-1);
-  margin-left: calc(var(--s-1) * -1);
-  border-radius: var(--r-sm);
-  text-align: left;
-  transition: background var(--fast) var(--ease);
-}
-
-.home-nav-row:hover {
-  background: var(--surface);
-}
-
-/* One chevron per row and it is the affordance, not decoration — these rows
-   have no border and no fill, so without it nothing says they are doors. */
-.home-nav-row .icon {
-  grid-row: 1 / 3;
-  grid-column: 2;
-  color: var(--fg-muted);
-}
-
-.home-nav-label {
-  font-size: var(--t-body);
-  font-weight: var(--wt-key);
-  line-height: var(--lh-snug);
-  color: var(--fg);
-}
-
-.home-nav-note {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
-}
-
-/* --- past serves ---------------------------------------------------------- */
-
-/*
- * One row, one serve, everywhere in the app — the home list and the history
- * sheet draw this same object. Hairline between rows, wash on hover, nothing
- * boxed. The score is the row's identity, so it is the only thing set in the
- * display face and nothing beside it competes.
- */
-/* The row carries a delete button beside it in the history sheet and nothing
-   beside it on the front page. Same li either way, so the list is one object. */
-.serve-log li {
-  display: flex;
-  align-items: center;
-  gap: var(--s-hair);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.serve-log-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: var(--s-2);
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 44px;
-  padding: var(--s-1);
-  margin-left: calc(var(--s-1) * -1);
-  border-radius: var(--r-sm);
-  text-align: left;
-  transition: background var(--fast) var(--ease);
-}
-
-.serve-log-row:hover {
-  background: var(--surface);
-}
-
-/* Regular weight, not the bold the helper carries: a two-digit number at 30px
-   is already the loudest thing in the row. Wide enough for a hundred so the
-   titles line up down the column whatever each serve scored. */
-.serve-log-score {
-  min-width: 3ch;
-  font-weight: var(--wt-serif);
-}
-
-/* Every rung takes the -ink half of its pair, because here the rung IS the
-   type. Bare --fair is 2.06:1 on this paper — at 30px that is not a quiet
-   status colour, it is a number nobody can read. */
-.serve-log-score--great { color: var(--great-ink); }
-.serve-log-score--good  { color: var(--good-ink); }
-.serve-log-score--fair  { color: var(--fair-ink); }
-.serve-log-score--work  { color: var(--work-ink); }
-
-.serve-log-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-hair);
-  min-width: 0;
-}
-
-.serve-log-text strong {
-  font-size: var(--t-body);
-  font-weight: var(--wt-key);
-  line-height: var(--lh-snug);
-  color: var(--fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* A caption, not telemetry. The mono face is for joint angles. */
-.serve-log-date {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
+.strap--quiet:hover {
+  background: var(--ink-1);
 }
 
 /* The first-run guide ends in the file picker, so the button needs air after
    the guide's own closing note. */
 .sheet-body > .btn--full {
-  margin-top: var(--s-4);
+  margin-top: 18px;
 }
 
 /* --- mixed serve types in the trend -------------------------------------- */
 
 .progress-aside {
-  max-width: var(--measure);
-  padding-left: var(--s-2);
-  border-left: 1px solid var(--line);
-  font-size: var(--t-small);
-  line-height: var(--lh-copy);
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  border-left: 2px solid var(--hairline);
+  font-size: 12.5px;
+  line-height: 1.58;
   color: var(--fg-muted);
-  text-wrap: pretty;
 }
 
 /* --- keeping your history ------------------------------------------------- */
 
-/* Compact and quiet. What the browser has or has not promised is said in one
-   sentence; it used to be said twice, once as a coloured bar that could not
-   report anything the sentence did not. */
 .storage {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  margin-top: var(--s-4);
-  padding-top: var(--s-3);
-  border-top: 1px solid var(--hairline);
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hairline-soft);
 }
 
 .storage-warn,
 .storage-note {
   display: flex;
-  gap: var(--s-tight);
-  max-width: var(--measure);
-  font-size: var(--t-small);
-  line-height: var(--lh-snug);
+  gap: 9px;
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  font-size: 12.5px;
+  line-height: 1.58;
   color: var(--fg-muted);
-  text-wrap: pretty;
 }
 
-.storage-warn .icon,
-.storage-note .icon {
-  flex: none;
-  margin-top: 0.25em;
+.storage-warn {
+  border-left: 2px solid var(--fair);
 }
 
 .storage-warn .icon {
-  color: var(--work-ink);
+  color: var(--fair);
+  flex: none;
+  margin-top: 2px;
 }
 
 .storage-note--ok .icon {
-  color: var(--great-ink);
-}
-
-.storage-warn strong {
-  font-weight: var(--wt-key);
-  color: var(--fg);
+  color: var(--great);
+  flex: none;
+  margin-top: 2px;
 }
 
 .storage-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
-  margin-top: var(--s-1);
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .storage-outcome {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
+  margin-top: 11px;
+  font-size: 12.5px;
   color: var(--fg);
 }
 
@@ -384,15 +211,9 @@
 .block-aside--btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-tight);
-  color: var(--fg-muted);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-  text-decoration-color: var(--line);
-}
-
-.block-aside--btn:hover {
-  color: var(--fg);
+  gap: 3px;
+  color: var(--lime);
+  font-weight: 600;
 }
 
 /* Mirrors .progress-sheet: without an explicit gap here, the two `.block`
@@ -401,92 +222,96 @@
 .compare {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: 26px;
 }
 
 .compare-pick {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  font-size: var(--t-small);
+  gap: 10px;
+  font-size: 13px;
   color: var(--fg-muted);
 }
 
 .compare-pick select {
   flex: 1;
   min-width: 0;
-  min-height: 48px;
-  padding: 0 var(--s-2);
-  border: 1px solid var(--line-control);
-  border-radius: var(--r);
-  background: var(--bg);
+  padding: 9px 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
   color: var(--fg);
   font: inherit;
-  font-size: var(--t-small);
+  font-size: 13px;
 }
 
 .compare-head {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-2);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  gap: 12px;
+  padding: 18px;
   border-radius: var(--r-lg);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
 }
 
 .compare-score {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-hair);
+  gap: 3px;
   text-align: center;
 }
 
 .compare-score-value {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif);
-  font-size: var(--t-headline);
-  line-height: var(--lh-headline);
-  letter-spacing: var(--tr-headline);
+  font-size: 30px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
   color: var(--fg);
 }
 
 .compare-score-label {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  color: var(--fg-muted);
+  font-size: 11.5px;
+  color: var(--fg-faint);
 }
 
-/* Typeset, not badged: no wash and no pill, just the direction set in the
-   colour of the direction. */
 .compare-arrow {
-  font-size: var(--t-small);
-  font-weight: var(--wt-key);
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 640;
+  background: var(--ink-3);
   color: var(--fg-muted);
 }
 
-.compare-arrow--better { color: var(--great-ink); }
-.compare-arrow--worse { color: var(--work-ink); }
+.compare-arrow--better {
+  background: color-mix(in srgb, var(--great) 20%, var(--ink-3));
+  color: var(--great);
+}
+
+.compare-arrow--worse {
+  background: color-mix(in srgb, var(--work) 20%, var(--ink-3));
+  color: var(--work);
+}
 
 .compare-strip {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: 16px;
 }
 
 .compare-pair figcaption {
-  margin-bottom: var(--s-1);
-  font-size: var(--t-small);
-  font-weight: var(--wt-key);
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--fg);
 }
 
 .compare-pair-images {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s-tight);
+  gap: 8px;
 }
 
 .compare-pair-images > span {
@@ -499,47 +324,50 @@
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: var(--r);
-  background: var(--surface-raised);
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
 }
 
 .compare-pair-images .strip-placeholder {
   display: grid;
   place-items: center;
-  padding: var(--s-1);
+  padding: 8px;
   text-align: center;
-  font-size: var(--t-caption);
-  color: var(--fg-muted);
+  font-size: 11px;
+  color: var(--fg-faint);
 }
 
 .compare-pair-images em {
   position: absolute;
-  left: var(--s-tight);
-  bottom: var(--s-tight);
-  padding: 2px var(--s-tight);
-  border-radius: var(--r-pill);
-  background: var(--well);
-  font-size: var(--t-overline);
+  left: 7px;
+  bottom: 7px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(10, 12, 16, 0.78);
+  font-size: 10.5px;
   font-style: normal;
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--well-fg);
+  color: var(--fg);
 }
 
 .compare-rows {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
 .compare-row {
   display: grid;
-  grid-template-columns: 1fr auto 4ch;
+  grid-template-columns: 1fr auto 46px;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-1) 0;
-  border-bottom: 1px solid var(--hairline);
-  font-size: var(--t-small);
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+  font-size: 13px;
 }
 
 .compare-row-label {
@@ -551,13 +379,12 @@
    the weight, so the direction of travel reads without parsing the words. */
 .compare-row-values {
   display: inline-flex;
-  align-items: baseline;
-  gap: var(--s-tight);
-  font-family: var(--mono);
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  line-height: var(--lh-tight);
   text-align: right;
-  color: var(--fg-muted);
+  color: var(--fg-faint);
 }
 
 .compare-row-values em {
@@ -565,41 +392,37 @@
 }
 
 .compare-row-values strong {
-  font-weight: 400;
+  font-weight: var(--wt-label);
   color: var(--fg-muted);
 }
 
 .compare-row--better .compare-row-values strong {
-  color: var(--great-ink);
+  color: var(--great);
 }
 
 .compare-row--worse .compare-row-values strong {
-  color: var(--work-ink);
+  color: var(--work);
 }
 
-/* The display face has no small sizes left in it at 15px, so the change reads
-   in Inter at the key weight instead. */
 .compare-row-delta {
   text-align: right;
-  font-weight: var(--wt-key);
-  font-size: var(--t-small);
+  font-weight: 640;
   color: var(--fg-muted);
 }
 
 .compare-row--better .compare-row-delta {
-  color: var(--great-ink);
+  color: var(--great);
 }
 
 .compare-row--worse .compare-row-delta {
-  color: var(--work-ink);
+  color: var(--work);
 }
 
 .compare-note {
-  margin-top: var(--s-1);
-  max-width: var(--measure);
-  font-size: var(--t-caption);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--fg-faint);
 }
 
 /* --- the target shape ----------------------------------------------------- */
@@ -607,77 +430,100 @@
 .player-model-note {
   display: flex;
   align-items: flex-start;
-  gap: var(--s-tight);
-  margin-top: var(--s-1);
-  font-size: var(--t-caption);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
+  gap: 9px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
 }
 
 .player-model-key {
   flex: none;
-  width: var(--s-2);
+  width: 18px;
   height: 0;
-  margin-top: 0.7em;
-  border-top: 1px dashed var(--stone);
+  margin-top: 9px;
+  border-top: 2px dashed rgba(120, 200, 255, 0.7);
 }
 
 /* --- which hand ----------------------------------------------------------- */
 
 .hand-pick {
-  margin-top: var(--s-4);
-  padding: var(--s-3);
+  margin-top: 22px;
+  padding: 16px;
   border: 1px solid var(--hairline);
-  border-radius: var(--r-lg);
-  background: var(--bg);
+  border-radius: var(--r-md);
+  background: var(--ink-1);
 }
 
 .hand-pick legend {
-  padding: 0;
-  font-size: var(--t-body);
-  font-weight: var(--wt-key);
-  line-height: var(--lh-snug);
+  padding: 0 6px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--fg);
 }
 
 .hand-pick-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s-1);
-  margin-top: var(--s-2);
+  gap: 10px;
+  margin-top: 4px;
 }
 
-/* The secondary control: an outline on paper. The chosen one fills, because a
-   1.4:1 wash is not enough to say which of two answers is the live one. */
 .hand-option {
-  min-height: 48px;
-  padding: var(--s-1) var(--s-2);
-  border: 1px solid var(--line-control);
-  border-radius: var(--r);
-  background: none;
+  padding: 13px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
   color: var(--fg-muted);
-  font-size: var(--t-small);
-  font-weight: var(--wt-key);
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
-}
-
-.hand-option:hover {
-  background: var(--surface);
-  color: var(--fg);
+  font-size: 14px;
+  font-weight: 600;
+  transition: border-color var(--fast) var(--ease), color var(--fast) var(--ease);
 }
 
 .hand-option.is-on {
-  background: var(--fg-muted);
-  border-color: var(--fg-muted);
-  color: var(--bg);
+  border-color: var(--lime);
+  color: var(--fg);
+  background: color-mix(in srgb, var(--lime) 12%, var(--ink-2));
 }
 
 .hand-pick-note {
-  margin-top: var(--s-2);
-  max-width: var(--measure);
-  font-size: var(--t-caption);
-  line-height: var(--lh-copy);
+  margin-top: 11px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
+}
+
+.home-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 26px;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.home-foot p {
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: var(--fg-faint);
+  max-width: 46ch;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  font-size: 12px;
+  font-weight: 560;
   color: var(--fg-muted);
-  text-wrap: pretty;
+}
+
+.badge--on {
+  color: var(--great);
+  background: var(--great-dim);
+  border-color: rgba(95, 227, 161, 0.26);
 }

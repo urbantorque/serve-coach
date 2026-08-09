@@ -1,126 +1,91 @@
 /* ============================================================================
-   Progress — the recent-average card, the charts, the deltas
-
-   Deltas are typeset, never badged: a Libre Baskerville numeral with a caption
-   beside it saying what it is measured against. Improvement is --great-ink,
-   regression is --work-ink. Red belongs to injury and never appears here.
-
-   Every rung on this screen is type or a data mark, so every one of them takes
-   the -ink half of its pair. The fill halves are only legal on their own wash
-   or down on the --well ramp, and nothing here is either.
+   Progress — trend card, charts, deltas
    ========================================================================= */
 
-/* A card, per the contract: paper, one hairline, soft corners, generous
-   padding, and a border that firms up on hover. No fill, no shadow. */
 .progress-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-2);
+  gap: 12px;
   width: 100%;
-  padding: var(--s-3);
+  padding: 18px;
   text-align: left;
-  background: var(--bg);
-  border: 1px solid var(--hairline);
   border-radius: var(--r-lg);
-  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
 }
 
 .progress-card:hover {
-  border-color: var(--line);
-  background: var(--surface);
+  background: var(--ink-2);
+  border-color: var(--hairline);
 }
 
 .progress-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--s-2);
-  width: 100%;
 }
 
 .progress-jump {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-  text-decoration-color: var(--line);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--fg-faint);
 }
 
 .progress-figures {
   display: flex;
   align-items: baseline;
-  gap: var(--s-1);
+  gap: 11px;
 }
 
-/* Display scale, warm black on warm paper. No ring, no wash, no colour: the
-   size is the emphasis and the caption beside it says what it counts. */
 .progress-hero {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif);
-  font-size: var(--t-display);
-  line-height: var(--lh-display);
-  letter-spacing: var(--tr-display);
-  color: var(--fg);
+  font-size: 46px;
+  font-weight: 680;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
 .progress-unit {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
-}
-
-.progress-delta {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s-tight);
-}
-
-.progress-delta-label {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--fg-faint);
 }
 
 .progress-foot {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
+  font-size: 11.5px;
+  color: var(--fg-faint);
 }
 
-/* The one actionable line on the card. A hairline above it and nothing else —
-   it was a heavy amber bar, which made the least urgent thing on the page look
-   like the most. */
 .progress-practice {
   display: flex;
-  align-items: flex-start;
-  gap: var(--s-tight);
-  width: 100%;
-  padding-top: var(--s-2);
-  border-top: 1px solid var(--hairline);
-  font-size: var(--t-small);
-  line-height: var(--lh-snug);
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  background: var(--ink-2);
+  border-left: 2px solid var(--fair);
+  font-size: 12.5px;
+  line-height: 1.4;
   color: var(--fg-muted);
 }
 
 .progress-practice strong {
   color: var(--fg);
-  font-weight: var(--wt-key);
+  font-weight: 620;
 }
 
 .progress-practice .icon {
   flex: none;
-  margin-top: 0.15em;
-  color: var(--fg-faint);
+  color: var(--fair);
 }
 
-.progress-practice--improving .icon { color: var(--great-ink); }
-.progress-practice--slipping .icon { color: var(--work-ink); }
+.progress-practice--improving { border-left-color: var(--great); }
+.progress-practice--improving .icon { color: var(--great); }
+.progress-practice--slipping { border-left-color: var(--work); }
+.progress-practice--slipping .icon { color: var(--work); }
 
 .spark {
   width: 100%;
@@ -128,44 +93,27 @@
   overflow: visible;
 }
 
-/* --- delta, typeset -------------------------------------------------------- */
+/* --- delta chip ------------------------------------------------------------ */
 
-/* The arrow is the redundant channel that keeps this readable without colour,
-   so it stays — set in the body face at a size that supports the numeral
-   rather than competing with it. */
 .delta {
   display: inline-flex;
-  align-items: baseline;
-  gap: var(--s-hair);
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif);
-  font-size: var(--t-subhead);
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  font-size: 11.5px;
+  font-weight: 640;
   line-height: 1;
-  letter-spacing: var(--tr-subhead);
   white-space: nowrap;
 }
 
-/* A ratio, not a scale step: the arrow has to stay proportional to whichever
-   numeral it is riding, and it bottoms out around 11px in the compact form. */
-.delta > span:first-child {
-  font-family: var(--font);
-  font-size: 0.62em;
-  font-weight: var(--wt-key);
-}
+.delta--great { background: var(--great-dim); color: var(--great); }
+.delta--work  { background: var(--work-dim);  color: var(--work); }
+.delta--flat  { background: var(--ink-3);     color: var(--fg-faint); }
 
-.delta--great { color: var(--great-ink); }
-.delta--work  { color: var(--work-ink); }
-/* No real change is not a value, so it is the one place the placeholder grey
-   would be honest — but it is still a mark a player reads, so --fg-muted. */
-.delta--flat  { color: var(--fg-muted); }
-
-/* Inline beside a fundamental's score, where the display face has no small
-   sizes left in it. Inter at the key weight holds without the smear. */
 .delta--compact {
-  font-family: var(--font);
-  font-weight: var(--wt-key);
-  font-size: var(--t-small);
-  letter-spacing: 0;
+  padding: 2px 6px;
+  font-size: 10.5px;
 }
 
 .sr-only {
@@ -185,7 +133,7 @@
 .chart {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 8px;
 }
 
 .chart-svg {
@@ -196,36 +144,31 @@
   cursor: crosshair;
 }
 
-/* Telemetry, which is exactly what the mono face is for. */
 .chart-tick,
 .chart-axis {
-  fill: var(--fg-muted);
-  font-size: var(--t-overline);
-  font-family: var(--mono);
+  fill: var(--fg-faint);
+  font-size: 9px;
+  font-family: var(--font);
   font-variant-numeric: tabular-nums;
 }
 
 .chart-readout {
   display: flex;
   align-items: baseline;
-  gap: var(--s-tight);
-  min-height: 2em;
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
+  gap: 7px;
+  min-height: 1.6em;
+  font-size: 12.5px;
   color: var(--fg-muted);
 }
 
 .chart-readout strong {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif);
-  font-size: var(--t-subhead);
-  line-height: 1;
-  letter-spacing: var(--tr-subhead);
+  font-size: 17px;
+  font-weight: 660;
   color: var(--fg);
 }
 
 .chart-hint {
-  color: var(--fg-muted);
+  color: var(--fg-faint);
 }
 
 /* --- diverging change bars -------------------------------------------------- */
@@ -233,27 +176,26 @@
 .dbars {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 11px;
 }
 
 .dbar {
   display: grid;
-  grid-template-columns: minmax(0, 9ch) 1fr auto;
+  grid-template-columns: 5.5rem 1fr auto;
   align-items: center;
-  gap: var(--s-2);
+  gap: 10px;
 }
 
 .dbar-label {
-  font-size: var(--t-small);
-  line-height: var(--lh-snug);
+  font-size: 12.5px;
   color: var(--fg-muted);
 }
 
 .dbar-track {
   position: relative;
-  height: var(--s-tight);
-  background: var(--surface-raised);
-  border-radius: var(--r-pill);
+  height: 14px;
+  border-radius: var(--r-xs);
+  background: var(--ink-3);
   overflow: hidden;
 }
 
@@ -263,101 +205,94 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  margin-left: -1px;
-  background: var(--line);
+  background: var(--hairline);
 }
 
 .dbar-fill {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 3px;
   min-width: 2px;
-  border-radius: var(--r-pill);
 }
 
 .dbar-fill--great { background: var(--great); }
 .dbar-fill--work  { background: var(--work); }
-.dbar-fill--flat  { background: var(--sage); }
+.dbar-fill--flat  { background: var(--fg-faint); }
 
 .dbar-value {
   display: inline-flex;
-  align-items: baseline;
-  gap: var(--s-tight);
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 620;
   justify-content: flex-end;
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif);
-  font-size: var(--t-subhead);
-  line-height: 1;
-  color: var(--fg);
 }
 
 .dbars-note {
-  margin-top: var(--s-1);
-  max-width: var(--measure);
-  font-size: var(--t-caption);
-  line-height: var(--lh-copy);
-  color: var(--fg-muted);
-  text-wrap: pretty;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
+  margin-top: 3px;
 }
 
 /* --- practise-this card ------------------------------------------------------ */
 
-/* An elevated card: raised surface, a real border, no shadow. The verdict is
-   carried by the words and by one -ink colour, not by a stripe. */
 .practice {
-  padding: var(--s-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  padding: 18px;
   border-radius: var(--r-lg);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--fg-faint);
 }
+
+.practice--improving { border-left-color: var(--great); }
+.practice--stuck     { border-left-color: var(--fair); }
+.practice--slipping  { border-left-color: var(--work); }
 
 .practice-top {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--s-2);
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .practice-kicker {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-hair);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--fg-muted);
+  color: var(--lime);
 }
 
 .practice-verdict {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-hair);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
-  text-transform: uppercase;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 620;
 }
 
-/* 11px amber on a light surface is 1.97:1 — a verdict nobody can read is not
-   a quiet verdict, it is a missing one. */
-.practice-verdict--improving { color: var(--great-ink); }
-.practice-verdict--stuck     { color: var(--fair-ink); }
-.practice-verdict--slipping  { color: var(--work-ink); }
+.practice-verdict--improving { background: var(--great-dim); color: var(--great); }
+.practice-verdict--stuck     { background: var(--fair-dim);  color: var(--fair); }
+.practice-verdict--slipping  { background: var(--work-dim);  color: var(--work); }
 
 .practice h3 {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif);
-  font-size: var(--t-subhead);
-  line-height: var(--lh-subhead);
-  letter-spacing: var(--tr-subhead);
-  margin: var(--s-1) 0;
+  font-size: 19px;
+  font-weight: 640;
+  letter-spacing: -0.024em;
+  margin: 12px 0 8px;
 }
 
 .practice-lead {
   max-width: var(--measure);
-  font-size: var(--t-small);
+  font-size: 13.5px;
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -366,11 +301,12 @@
 .practice-stats {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  margin: var(--s-2) 0;
-  padding: var(--s-2) 0;
-  border-top: 1px solid var(--hairline);
-  border-bottom: 1px solid var(--hairline);
+  gap: 14px;
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
 }
 
 .runline {
@@ -379,39 +315,34 @@
   display: block;
 }
 
-.practice-run--improving { color: var(--great-ink); }
-.practice-run--stuck     { color: var(--fair-ink); }
-.practice-run--slipping  { color: var(--work-ink); }
+.practice-run--improving { color: var(--great); }
+.practice-run--stuck     { color: var(--fair); }
+.practice-run--slipping  { color: var(--work); }
 
 .practice-figures {
   display: flex;
   flex-direction: column;
-  gap: var(--s-hair);
-  font-size: var(--t-caption);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
-  line-height: var(--lh-snug);
+  gap: 2px;
+  font-size: 11.5px;
+  color: var(--fg-faint);
+  line-height: 1.4;
 }
 
 .practice-figures strong {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif);
-  font-size: var(--t-subhead);
-  line-height: 1;
-  letter-spacing: var(--tr-subhead);
-  text-transform: none;
+  font-size: 19px;
+  font-weight: 660;
+  letter-spacing: -0.02em;
   color: var(--fg);
 }
 
-/* The coaching voice. One olive rule, which is the app's only accent and the
-   one place a reader is being told what to go and do. */
 .practice-fix {
-  padding-left: var(--s-2);
-  margin-bottom: var(--s-2);
-  border-left: 1px solid var(--olive);
-  max-width: var(--measure);
-  font-size: var(--t-small);
-  line-height: var(--lh-copy);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  border-left: 2px solid var(--lime);
+  font-size: 13.5px;
+  line-height: var(--lh-snug);
   text-wrap: pretty;
 }
 
@@ -420,60 +351,60 @@
 .progress-sheet {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: 26px;
 }
 
 .progress-summary {
   display: flex;
   align-items: baseline;
-  gap: var(--s-2);
+  gap: 12px;
 }
 
 .progress-summary .progress-unit {
   display: flex;
-  align-items: baseline;
-  gap: var(--s-tight);
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
 }
 
-/* A disclosure triangle is a control, so it gets a control's target. */
 .progress-table summary {
-  display: flex;
-  align-items: center;
-  min-height: 48px;
-  font-size: var(--t-small);
-  font-weight: var(--wt-key);
+  font-size: 12.5px;
   color: var(--fg-muted);
   cursor: pointer;
-}
-
-.progress-table summary:hover {
-  color: var(--fg);
+  padding: 6px 0;
 }
 
 .dtable {
   width: 100%;
   border-collapse: collapse;
-  margin-top: var(--s-1);
-  font-size: var(--t-small);
+  margin-top: 8px;
+  font-size: 13px;
 }
 
 .dtable th,
 .dtable td {
   text-align: left;
-  padding: var(--s-1) var(--s-1) var(--s-1) 0;
-  border-bottom: 1px solid var(--hairline);
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--hairline-soft);
 }
 
 .dtable th {
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
+  font-size: 10.5px;
+  font-weight: 660;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--fg-muted);
-  border-bottom-color: var(--line);
+  color: var(--fg-faint);
 }
 
 .dtable td {
-  font-family: var(--mono);
   color: var(--fg-muted);
+}
+
+.hero-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--fg-faint);
+  margin-top: -4px;
 }

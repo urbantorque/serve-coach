@@ -1,316 +1,223 @@
 /* ============================================================================
-   Buttons, chips, tags, icons, score meter
-
-   Nothing here is framed. A filled button is a block of warm stone on warm
-   paper; everything quieter than that is type with air around it, and the only
-   edges that exist are the ones a control needs to be found by. Hover changes
-   the ground, never adds a glow — this system has no shadows to lift with.
+   Buttons, chips, icons
    ========================================================================= */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--s-tight);
-  /* 48, not 44. The floor is a thumb; the height is the reading rhythm, and a
-     control set to the minimum reads as something squeezed in. */
-  min-height: 48px;
-  padding: var(--s-1) var(--s-2);
-  border: 1px solid transparent;
-  border-radius: var(--r);
-  font-family: var(--font);
-  font-size: var(--t-small);
-  font-weight: var(--wt-key);
-  line-height: 1.4;
-  text-align: center;
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+  gap: 9px;
+  padding: 13px 20px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: transform var(--fast) var(--ease), background var(--fast) var(--ease),
+    border-color var(--fast) var(--ease), opacity var(--fast) var(--ease);
 }
 
-.btn:disabled {
-  opacity: 0.4;
+.btn:active {
+  transform: scale(0.975);
 }
 
-/* The fill carries the shape, so there is nothing for a border to add. */
 .btn--primary {
-  background: var(--fg-muted);
-  color: var(--bg);
+  background: var(--lime);
+  color: var(--lime-ink);
+  box-shadow: 0 6px 26px -10px var(--lime-glow), inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
-.btn--primary:hover:not(:disabled),
-.btn--primary:active:not(:disabled) {
-  background: var(--warm-black);
-  color: var(--bg);
+.btn--primary:hover {
+  background: var(--lime-bright);
 }
 
-/* The secondary pattern, and the one nearly every screen reaches for: a cancel
-   beside a primary, "Watch this moment" under a diagnosis, the row of actions in
-   the storage panel. It is transparent, so --line-control rather than --line is
-   what stops it dissolving into the page — the edge is the whole affordance. */
-.btn--ghost,
-.btn--secondary {
-  background: none;
-  color: var(--fg-muted);
-  border-color: var(--line-control);
-}
-
-.btn--ghost:hover:not(:disabled),
-.btn--secondary:hover:not(:disabled) {
-  background: var(--surface);
+.btn--ghost {
+  background: var(--ink-2);
   color: var(--fg);
+  border: 1px solid var(--hairline);
 }
 
-/* Truly borderless. For a third action that must not compete with the two
-   above it. */
-.btn--quiet {
-  background: none;
-  color: var(--fg-muted);
-  border-color: transparent;
+.btn--ghost:hover {
+  background: var(--ink-3);
+  border-color: var(--ink-4);
 }
 
-.btn--quiet:hover:not(:disabled) {
-  background: var(--surface);
-  color: var(--fg);
+.btn--big {
+  padding: 17px 26px;
+  font-size: 16.5px;
 }
 
 .btn--full {
   width: 100%;
 }
 
-/* --- icon buttons ----------------------------------------------------------
-   No outline. These arrive in rows — a stepper, a close beside a title, a
-   delete on every history row — and an edge on each one turns a list into a
-   grid of little boxes. The icon is the target; hover washes the ground under
-   it so the hit area is still legible the moment a pointer is near. */
-
 .icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid transparent;
-  border-radius: var(--r);
-  background: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
   color: var(--fg-muted);
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+    transform var(--fast) var(--ease);
   flex: none;
 }
 
-.icon-btn:hover:not(:disabled) {
-  background: var(--surface);
+.icon-btn:hover {
+  background: var(--ink-2);
   color: var(--fg);
 }
 
-/* The one filled icon button: play, over the video. Round, because it is the
-   only control in the app that is a single gesture rather than a labelled
-   choice, and because a stone disc on a dark frame needs no edge at all. */
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
 .icon-btn--solid {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--r-pill);
-  background: var(--fg-muted);
-  color: var(--bg);
+  background: var(--lime);
+  color: var(--lime-ink);
+  width: 46px;
+  height: 46px;
 }
 
-.icon-btn--solid:hover:not(:disabled) {
-  background: var(--warm-black);
-  color: var(--bg);
+.icon-btn--solid:hover {
+  background: var(--lime-bright);
+  color: var(--lime-ink);
 }
 
-/* Lighter, for the ones that repeat down a list — a delete on every row, the
-   frame steppers. --stone (4.6:1) rather than --fg-faint: a delete control has
-   to be findable, and faint is for placeholder and disabled text only. */
 .icon-btn--quiet {
-  color: var(--stone);
+  width: 36px;
+  height: 36px;
+  color: var(--fg-faint);
 }
 
-.icon-btn--quiet:hover:not(:disabled) {
-  background: var(--surface);
-  color: var(--fg);
+.icon-btn--quiet:hover {
+  color: var(--work);
+  background: var(--work-dim);
 }
 
 .icon {
   flex: none;
 }
 
-/* --- chips -----------------------------------------------------------------
-   A chip is a small fact, not a button, so it sits on a wash and carries a
-   hairline rather than an edge. The two that are operable say so by being 44
-   tall and taking --line-control. */
-
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-tight);
-  padding: var(--s-hair) var(--s-1);
-  border: 1px solid var(--hairline);
+  gap: 5px;
+  padding: 6px 12px;
   border-radius: var(--r-pill);
-  background: var(--surface);
-  font-family: var(--font);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  line-height: 1.4;
-  letter-spacing: var(--tr-overline);
-  text-transform: uppercase;
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--fg-muted);
   white-space: nowrap;
 }
 
 .chip--button {
-  min-height: 44px;
-  padding: 0 var(--s-2);
-  background: none;
-  border-color: var(--line-control);
+  color: var(--fg);
   cursor: pointer;
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
 .chip--button:hover:not(:disabled) {
-  background: var(--surface);
-  color: var(--fg);
+  background: var(--ink-3);
+  border-color: var(--ink-4);
+}
+
+.chip--button:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .chip--button:disabled {
   cursor: default;
-  border-color: var(--hairline);
-  color: var(--fg-faint);
-}
-
-/* A hedge on the reading, not an alarm: amber wash, amber ink, and the same
-   hairline everything else has. */
-.chip--warn {
-  background: var(--fair-wash);
-  border-color: var(--fair-ink);
-  color: var(--fair-ink);
-}
-
-/* Border and label track whatever colour the surrounding surface writes in, so
-   the same toggle survives being lifted onto the dark player well. */
-.chip--toggle {
-  min-height: 44px;
-  padding: 0 var(--s-2);
-  background: none;
-  border-color: currentColor;
   color: var(--fg-muted);
+}
+
+.chip--warn {
+  color: var(--fair);
+  border-color: rgba(255, 182, 72, 0.3);
+  background: var(--fair-dim);
+}
+
+.chip--toggle {
   cursor: pointer;
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+
+.chip--toggle:active {
+  transform: scale(0.96);
 }
 
 .chip--toggle.is-on {
-  background: var(--olive-wash);
-  border-color: var(--olive);
-  color: var(--olive-ink);
+  background: var(--lime-glow);
+  border-color: rgba(205, 249, 74, 0.42);
+  color: var(--lime);
 }
-
-/* --- status tags -----------------------------------------------------------
-   The verdict, typeset small and set in Inter. Wash for the ground, the -ink
-   value for the word and for the hairline holding it — the plain ramp tokens
-   are fills, and --fair as a border on paper is 2.06:1, which is no border. */
 
 .tag {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--s-hair) var(--s-1);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  /* Named, not inherited: a tag sits inside a card title set in the serif, and
-     Baskerville at 11px uppercase is a smudge rather than a label. Stated in
-     full here so the tag survives being used without `.t-overline` on it. */
-  font-family: var(--font);
   font-style: normal;
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  line-height: 1.4;
-  letter-spacing: var(--tr-overline);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: var(--fg-muted);
-  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
 }
 
-.tag--great { background: var(--great-wash); border-color: var(--great-ink); color: var(--great-ink); }
-/* --good's ink is warm black, and a warm black ring round a grey pill is the
-   quietest rung shouting loudest. The word carries it; the edge stays a rule. */
-.tag--good  { background: var(--good-wash);  border-color: var(--line);      color: var(--good-ink); }
-.tag--fair  { background: var(--fair-wash);  border-color: var(--fair-ink);  color: var(--fair-ink); }
-.tag--work  { background: var(--work-wash);  border-color: var(--work-ink);  color: var(--work-ink); }
+.tag--great { background: var(--great-dim); color: var(--great); }
+.tag--good  { background: var(--good-dim);  color: var(--good); }
+.tag--fair  { background: var(--fair-dim);  color: var(--fair); }
+.tag--work  { background: var(--work-dim);  color: var(--work); }
 
 /* ============================================================================
-   Score meter
-
-   Was a segmented bar inside a black frame with a heavy sans numeral in it —
-   an instrument panel. It is now a number and a rule: Baskerville in warm
-   black, and beneath it a 2-3px track with an olive fill and no frame at all.
-   The rule is a footnote to the number, which is what says the score.
-
-   The rung is not drawn here. It is said in words on the tag beside it, and
-   painting a bar in the ramp colour was the loudest object on the old card for
-   information the player had already read.
+   Score ring
    ========================================================================= */
 
-.score-meter {
+.ring {
+  position: relative;
   flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.ring svg {
+  position: absolute;
+  inset: 0;
+}
+
+.ring-fill {
+  transition: stroke-dasharray var(--slow) var(--ease-out);
+}
+
+.ring-fill--animate {
+  animation: ring-in 1s var(--ease-out) both;
+}
+
+@keyframes ring-in {
+  from {
+    stroke-dasharray: 0 9999;
+  }
+}
+
+.ring-inner {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-tight);
+  align-items: center;
+  line-height: 1;
 }
 
-/* Three stops on the type scale, never a fraction of the pixel width. Sizing
-   display type off a container measurement lands between the scale's rungs and
-   drifts as the container shrinks. */
-.score-meter-value {
-  font-family: var(--font-display);
-  font-weight: var(--wt-serif-bold);
-  line-height: var(--lh-display);
-  letter-spacing: var(--tr-display);
-  color: var(--fg);
+.ring-score {
+  font-weight: 680;
+  letter-spacing: -0.035em;
 }
 
-.score-meter--hero .score-meter-value {
-  font-size: var(--t-display);
-}
-
-.score-meter--mid .score-meter-value {
-  font-size: var(--t-subhead);
-}
-
-.score-meter--compact .score-meter-value {
-  font-size: var(--t-lede);
-}
-
-/* Height comes from the JSX so the three tiers stay in one place. The track is
-   the raised surface rather than a border, which is how it stays a rule instead
-   of becoming a container. */
-.score-meter-bar {
-  width: 100%;
-  border-radius: var(--r-pill);
-  background: var(--surface-raised);
-  overflow: hidden;
-}
-
-/* Scaled, never resized: width is not a compositable property and this animates
-   beside a video that must not drop frames. */
-.score-meter-fill {
-  display: block;
-  width: 100%;
-  height: 100%;
-  transform-origin: left center;
-  background: var(--olive);
-  transition: transform var(--slow) var(--ease-out);
-}
-
-/* Mid count-up the fill is redrawn every frame from the number on screen; a
-   transition on top of that would drag it a beat behind its own digits. */
-.score-meter--counting .score-meter-fill {
-  transition: none;
-}
-
-/* Type comes from `.t-overline` on the element; this only says what colour. */
-.score-meter-label {
-  color: var(--fg-muted);
+.ring-label {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
 }

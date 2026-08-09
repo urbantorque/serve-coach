@@ -4,7 +4,7 @@ import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
 import PosePlayer from '../components/PosePlayer'
 import { DeltaChip } from '../components/Trend'
-import { Cue, Icon } from '../components/primitives'
+import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
@@ -270,47 +270,46 @@ export default function Report({
           actually lives. */}
       {refusal && (
         <section className="unreliable">
-          <strong>{refusal.title}.</strong> Everything below came off that clip, so read it as a
-          rough sketch rather than a measurement.
+          {/* One flex item, not two. The banner is laid out as a row for the
+              caution glyph that used to lead it, so a bare `<strong>` beside a
+              bare text node became two columns and broke the sentence in half. */}
+          <span>
+            <strong>{refusal.title}.</strong> Everything below came off that clip, so read it as a
+            rough sketch rather than a measurement.
+          </span>
         </section>
       )}
 
       <section className="hero">
         {/*
-         * The score, flush left and as large as the type scale goes.
-         *
-         * No meter under it any more. The bar was there because the old fill
-         * could not hold its own contrast on the track, so it needed a frame —
-         * and a framed gauge under the number restated in a second visual
-         * language the one thing the number already says. What carries the tier
-         * now is a short rule: enough to colour-code the band, far too small to
-         * compete with the digits. The digits stay warm black because three of
-         * the four ramp colours cannot hold 4.5:1 on this paper, and a score you
-         * have to squint at is not a celebration.
+         * The score, as the ring. One big gauge, centred, and the tier carried
+         * by the arc's own colour — the number and the band said once, in one
+         * shape, rather than a figure with a second coloured mark under it
+         * restating the same fact in a different visual language.
          */}
-        <span className="t-overline hero-label">Serve score</span>
-        <span className="hero-score">
-          <span className="t-hero tnum">{analysis.overall}</span>
-          <span className="hero-out-of">/100</span>
-        </span>
-        <span className={`hero-mark hero-mark--${analysis.overallStatus}`} aria-hidden="true" />
-        <h1 className="t-headline">{verdict.title}</h1>
-        <p className="t-lede">{verdict.sub}</p>
+        <ScoreRing
+          score={analysis.overall}
+          status={analysis.overallStatus}
+          size={148}
+          label="overall"
+        />
         {/* The break is said out loud rather than left as an absence. Every
             comparison on this page goes at once when the rubric changes — this
             chip and the per-area ones on the cards below — and a player who saw
             them last time reads the silence as the app having broken. */}
         {previous &&
           (comparable ? (
-            <span className="hero-note">
+            <span className="hero-delta">
               <DeltaChip delta={analysis.overall - previous.overall} />
               <span>vs your last serve</span>
             </span>
           ) : (
-            <span className="hero-note">
+            <span className="hero-delta">
               The scoring changed between these two serves, so this one starts a fresh run.
             </span>
           ))}
+        <h1>{verdict.title}</h1>
+        <p>{verdict.sub}</p>
       </section>
 
       {analysis.serves && analysis.serves.count > 1 && (
@@ -496,7 +495,7 @@ export default function Report({
 
       <section className="block">
         <div className="block-head">
-          <h2 className="block-title">The six key positions</h2>
+          <h2 className="block-title">Six moments in your serve</h2>
           {/* Named for what it opens. "Compare" alone appeared twice on this
               page — here, and on the button that sweeps the serves inside this
               one clip — and the two do entirely different things. */}
@@ -561,7 +560,7 @@ export default function Report({
       )}
 
       <section className="block">
-        <h2 className="block-title">The fundamentals</h2>
+        <h2 className="block-title">Every area we scored</h2>
         <div className="fcards">
           {analysis.fundamentals.map((f, i) => (
             <FundamentalCard

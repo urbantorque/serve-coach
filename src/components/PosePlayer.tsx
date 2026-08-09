@@ -583,10 +583,6 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
             style={{ left: `${((p.t - win.start) / span) * 100}%` }}
           />
         ))}
-        {/* Last, so the playhead paints over the keyframe ticks: the tick says
-            where the contact frame is, the playhead says where you are, and
-            when they coincide the answer has to be "you are on it". */}
-        <div className="player-head" aria-hidden="true" />
       </div>
 
       <div className="player-controls">
@@ -664,7 +660,7 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
         <p className="player-model-note">
           <span className="player-model-key" aria-hidden="true" />
           {modelPose?.MODEL_NOTES[activePhase] ??
-            'The dashed figure is the shape the targets describe. It appears when you park on one of the six key positions.'}
+            "The dashed figure shows what you're aiming for. Step to one of the six key moments to see it."}
         </p>
       )}
     </div>

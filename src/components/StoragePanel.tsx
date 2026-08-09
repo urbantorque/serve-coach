@@ -70,7 +70,7 @@ export default function StoragePanel({ count, onImported }: Props) {
 
   return (
     <section className="storage">
-      <h3 className="t-overline">Keeping your history</h3>
+      <h3 className="block-title">Keeping your history</h3>
 
       {/* The coloured state bar that used to sit here reported nothing the
           sentence under it did not already say, and it said it louder. One
@@ -95,7 +95,13 @@ export default function StoragePanel({ count, onImported }: Props) {
       {persisted === true && (
         <p className="storage-note storage-note--ok">
           <Icon name="check" size={15} />
-          <span>Your browser has marked this data as worth keeping.</span>
+          {/* "Marked as worth keeping" is what the browser API says, and it
+              read as a guarantee. This says the same thing in the terms the
+              player has — and keeps the export as the only real answer. */}
+          <span>
+            Your phone is holding onto your serves for now. Exporting is still the only way to keep
+            them for good.
+          </span>
         </p>
       )}
 

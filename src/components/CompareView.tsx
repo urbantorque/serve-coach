@@ -121,9 +121,7 @@ export default function CompareView({ current, others }: Props) {
   return (
     <div className="compare">
       <label className="compare-pick">
-        {/* A field label, not a sentence — the same overline role the pairs of
-            stills below it take, so every label on this sheet is one thing. */}
-        <span className="t-overline">Compare against</span>
+        <span>Compare against</span>
         <select value={against.id} onChange={(e) => setAgainstId(e.target.value)}>
           {candidates.map((s, i) => (
             <option key={s.id} value={s.id}>
@@ -178,12 +176,7 @@ export default function CompareView({ current, others }: Props) {
             if (!a?.thumbnail && !b?.thumbnail) return null
             return (
               <figure key={id} className="compare-pair">
-                {/* The position name is a section label, not a sentence, so it
-                    takes the overline role — the same one the report uses over
-                    every other pair of things being put next to each other. */}
-                <figcaption>
-                  <span className="t-overline">{a?.label ?? id}</span>
-                </figcaption>
+                <figcaption>{a?.label ?? id}</figcaption>
                 <div className="compare-pair-images">
                   <span>
                     {a?.thumbnail ? (
@@ -191,7 +184,7 @@ export default function CompareView({ current, others }: Props) {
                     ) : (
                       <div className="strip-placeholder" />
                     )}
-                    <em className="t-overline">now</em>
+                    <em>now</em>
                   </span>
                   <span>
                     {b?.thumbnail ? (
@@ -203,7 +196,7 @@ export default function CompareView({ current, others }: Props) {
                         <span>Picture not kept</span>
                       </div>
                     )}
-                    <em className="t-overline">then</em>
+                    <em>then</em>
                   </span>
                 </div>
               </figure>

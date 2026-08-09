@@ -1,72 +1,82 @@
 /* ============================================================================
    Blocks and lists
-
-   The generic shapes: a titled section, and a list of rows. Neither is a card.
-   Structure on this page comes from rules and from air, and a list of things
-   that are already separated by hairlines does not need a box around each one.
    ========================================================================= */
 
 .block {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: 14px;
 }
 
-/* A hairline under the label, so a section opens with a line across the page
-   rather than a floating word. */
 .block-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--s-2);
-  padding-bottom: var(--s-1);
-  border-bottom: 1px solid var(--hairline);
 }
 
 .block-title {
-  font-family: var(--font);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
+  font-size: 11.5px;
+  font-weight: 660;
+  letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
-  line-height: 1.4;
-  color: var(--fg-muted);
+  color: var(--fg-faint);
 }
 
 .block-aside {
-  font-size: var(--t-caption);
-  line-height: var(--lh-snug);
-  letter-spacing: var(--tr-caption);
-  color: var(--fg-muted);
+  font-size: 12px;
+  color: var(--fg-faint);
 }
 
-/* --- lists -----------------------------------------------------------------
-   The shape every list in this app takes: a row with padding, a hairline
-   underneath, a wash on hover, and no card. Nothing here is boxed.
-
-   The one list that used to live in this file — `.history`, the serves in the
-   history sheet — is gone, because that sheet and the front page now draw the
-   same `.serve-log` rows from `home.css` rather than two different objects. If
-   a second generic list appears, this is the shape it takes. */
-
-.list {
+.recents,
+.history {
   display: flex;
   flex-direction: column;
+  gap: 9px;
 }
 
-.list > li {
+.history li {
   display: flex;
   align-items: center;
-  gap: var(--s-1);
-  padding: var(--s-1) 0;
-  border-bottom: 1px solid var(--hairline);
-  transition: background var(--fast) var(--ease);
+  gap: 6px;
 }
 
-.list > li:last-child {
-  border-bottom: none;
+.recent {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: var(--r-md);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+  text-align: left;
+  color: var(--fg-muted);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
 }
 
-.list > li:hover {
-  background: var(--surface);
+.recent:hover {
+  background: var(--ink-2);
+  border-color: var(--hairline);
+}
+
+.recent-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-text strong {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-text span {
+  font-size: 12px;
+  color: var(--fg-faint);
 }

@@ -46,7 +46,7 @@ export default function FundamentalCard({
         <span className="fcard-title">
           <span className="fcard-name">
             {f.label}
-            <em className={`tag tag--${f.status} t-overline`}>{STATUS_LABEL[f.status]}</em>
+            <em className={`tag tag--${f.status}`}>{STATUS_LABEL[f.status]}</em>
             <DeltaChip delta={delta} compact />
           </span>
           <span className="fcard-headline">
@@ -68,20 +68,11 @@ export default function FundamentalCard({
                 <div className="metric-top">
                   <span className="metric-label">
                     {m.label}
-                    {m.softness && <em className="metric-approx t-overline">approximate</em>}
+                    {m.softness && <em className="metric-approx">approximate</em>}
                   </span>
                   <span className={`metric-read metric-read--${m.status}`}>{m.readout}</span>
                 </div>
-                {/* The id is what lets the axis name its own two ends in the
-                    same vocabulary as the readout above it, instead of printing
-                    the raw bounds nobody can act on. */}
-                <MetricBar
-                  id={m.id}
-                  value={m.value}
-                  ideal={m.ideal}
-                  range={m.range}
-                  status={m.status}
-                />
+                <MetricBar value={m.value} ideal={m.ideal} range={m.range} status={m.status} />
                 {/* The target says what to aim at in the same words as the
                     readout above it, so the two can be read against each other
                     at a glance. Only where the position is actually outside the
@@ -90,7 +81,7 @@ export default function FundamentalCard({
                     is the report correcting somebody who has nothing wrong. */}
                 {outsideBand(m) && m.readout !== m.target && (
                   <p className="metric-aim">
-                    <span className="metric-aim-key t-overline">Aim for</span>
+                    <span className="metric-aim-key">Aim for</span>
                     <span className="metric-aim-value">{m.target}</span>
                   </p>
                 )}
@@ -121,10 +112,10 @@ export default function FundamentalCard({
 
           {!hasFaultDrills && (
             <div className="drill">
-              <span className="drill-kicker t-overline">Drill</span>
+              <span className="drill-kicker">Drill</span>
               <h4>{f.drill.name}</h4>
               <p>{f.drill.how}</p>
-              <span className="drill-reps t-overline">{f.drill.reps}</span>
+              <span className="drill-reps">{f.drill.reps}</span>
             </div>
           )}
 
@@ -146,13 +137,13 @@ const outsideBand = (m: Metric) => m.value < m.ideal[0] || m.value > m.ideal[1]
 function DrillCard({ drill }: { drill: NonNullable<Metric['drill']> }) {
   return (
     <div className="microdrill">
-      <span className="microdrill-kicker t-overline">
+      <span className="microdrill-kicker">
         <Icon name="target" size={12} />
         Drill
       </span>
       <h5>{drill.name}</h5>
       <p>{drill.how}</p>
-      <span className="microdrill-reps t-overline">{drill.reps}</span>
+      <span className="microdrill-reps">{drill.reps}</span>
     </div>
   )
 }

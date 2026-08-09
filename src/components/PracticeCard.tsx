@@ -30,10 +30,8 @@ function Runline({ scores }: { scores: number[] }) {
       role="img"
       aria-label={`Score across the last ${n} serves: ${scores.join(', ')}`}
     >
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" />
-      {/* The latest serve. A drawn dot rather than a stamped square, at the
-          weight of the line it ends. */}
-      <circle cx={x(n - 1)} cy={y(scores[n - 1])} r="2.75" fill="currentColor" />
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={x(n - 1)} cy={y(scores[n - 1])} r="3.5" fill="currentColor" />
     </svg>
   )
 }
@@ -88,10 +86,10 @@ export default function PracticeCard({ focus }: { focus: PracticeFocus }) {
       )}
 
       <div className="drill">
-        <span className="drill-kicker t-overline">Drill · {focus.fundamentalLabel}</span>
+        <span className="drill-kicker">Drill · {focus.fundamentalLabel}</span>
         <h4>{focus.drill.name}</h4>
         <p>{focus.drill.how}</p>
-        <span className="drill-reps t-overline">{focus.drill.reps}</span>
+        <span className="drill-reps">{focus.drill.reps}</span>
       </div>
     </section>
   )

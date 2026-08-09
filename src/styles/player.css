@@ -1,45 +1,20 @@
 /* ============================================================================
    Player
-
-   The one dark room in a light app. Footage of a serve is rarely bright and it
-   is never a flat colour, so a video dropped straight onto warm paper has no
-   edge — it bleeds into the report around it. Everything from `.player` inwards
-   therefore sits on the `--well` ramp, which is the system's own warm black, and
-   it is the only region of this app where `--olive-bright` is legal.
-
-   The well is dark; it is not loud. The frame is a hairline and soft-cornered,
-   the controls are washes rather than outlines, and the spacing is the same
-   generous scale the report is set on. A player who has just finished serving is
-   looking at their own body — the chrome around it should be almost absent.
    ========================================================================= */
 
 .player {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
-  padding: var(--s-3);
-  background: var(--well);
-  border: 1px solid var(--well-line);
-  border-radius: var(--r-xl);
-  color: var(--well-fg);
+  gap: 12px;
 }
 
-.player:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring-dark);
-}
-
-/* The frame is the picture's edge, and a 1px warm line is all that takes: the
-   well behind it is already darker than almost any footage, so the edge only
-   has to exist, not assert itself. Soft corners so the picture sits in the page
-   rather than being cut out of it. */
 .player-stage {
   position: relative;
   width: 100%;
-  border: 1px solid var(--well-line);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-lg);
   overflow: hidden;
-  background: var(--well);
+  background: #000;
+  border: 1px solid var(--hairline);
   max-height: 68svh;
 }
 
@@ -64,52 +39,36 @@
   background: transparent;
 }
 
-/*
- * The play affordance over the picture.
- *
- * Warm white on the footage rather than the accent: this disc is competing with
- * the overlay, which is already carrying olive on the racket arm, and a second
- * olive object over the same frame makes the two argue about which one is the
- * thing to look at. White separates from sky, court and kit alike, and it does
- * it without blur — no frosted disc, no glow, per the flat rule.
- */
 .player-play {
   display: grid;
   place-items: center;
-  width: 68px;
-  height: 68px;
-  border-radius: var(--r-pill);
-  background: var(--well-fg);
-  color: var(--well);
-  padding-left: 3px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: rgba(10, 12, 16, 0.62);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  padding-left: 4px;
   animation: rise var(--base) var(--ease-out) both;
 }
 
-/* ------------------------------------------------------------- scrubber --- */
-
-/*
- * The track is 5px; the row is 44px.
- *
- * The extra height is transparent padding, not a fatter bar. A scrubber thick
- * enough to hit with a thumb reads as a progress bar rather than a control, and
- * on a phone this is the one thing in the report people drag — so the hit area
- * grows and the drawn track does not.
- */
 .player-track {
   position: relative;
-  height: 44px;
+  height: 26px;
   cursor: pointer;
   display: flex;
   align-items: center;
   /* Dragging the scrubber must move the video, not the page underneath it. */
   touch-action: none;
   /*
-   * Unitless 0–1, not a percentage, and written by the animation loop on every
-   * frame the clip is moving. Both things that move off it below are moved with
-   * `transform` for that reason: a `width` or a `left` in this variable would
-   * put a layout and a paint on the compositor on the same frames the canvas
-   * overlay is being redrawn on, which is the one frame budget in this app that
-   * has nothing spare.
+   * How far through the serve we are, 0–1 and unitless.
+   *
+   * A number rather than a percentage because the fill below is transformed by
+   * it rather than sized by it. This property is rewritten on every animation
+   * frame while the clip plays; as a length it would put a layout on each of
+   * the same frames the canvas overlay is being redrawn on. See `syncProgress`
+   * in PosePlayer.tsx.
    */
   --played: 0;
 }
@@ -119,82 +78,38 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 5px;
+  height: 4px;
   border-radius: var(--r-pill);
-  background: var(--well-2);
+  background: var(--ink-3);
 }
 
-/* Full width, scaled down. `transform-origin` is what makes it grow from the
-   left rather than out of the middle. */
+/* Full width and scaled down, rather than a width that is written sixty times a
+   second — same bar, off the layout path. */
 .player-played {
   position: absolute;
   left: 0;
-  right: 0;
-  height: 5px;
+  width: 100%;
+  height: 4px;
   border-radius: var(--r-pill);
-  background: var(--olive-bright);
-  transform: scaleX(var(--played));
+  background: var(--lime);
   transform-origin: left center;
+  transform: scaleX(var(--played));
 }
 
-/*
- * The playhead rides a full-width rail rather than being placed at a position.
- *
- * A percentage `translateX` resolves against the transformed element's own box,
- * so the rail has to be the width of the track for `--played` to mean what it
- * says. The head itself hangs off it, half its width to the left, so the mark
- * straddles the moment instead of trailing it.
- */
-.player-head {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 16px;
-  pointer-events: none;
-  transform: translateX(calc(var(--played) * 100%));
-}
-
-/*
- * A small warm-white disc with a warm-black ring, and it is the last thing drawn
- * on the track — so it reads over the olive fill it sits on the boundary of,
- * over the dark track ahead of it, and over a keyframe tick when the two
- * coincide. White alone was 1.3:1 against the fill on its left half, which is
- * the half you are dragging; the ring is what fixes that, and it is a border
- * rather than a shadow because nothing in this system is allowed to glow.
- */
-.player-head::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: var(--r-pill);
-  background: var(--well-fg);
-  border: 2px solid var(--well);
-}
-
-/*
- * The six keyframes. Taller than the track on purpose: the middle few pixels of
- * a tick land on the filled bar, where nothing is guaranteed to contrast, and
- * the ends overhang onto `--well` where everything does.
- */
 .player-tick {
   position: absolute;
   width: 2px;
-  height: 11px;
-  border-radius: var(--r-pill);
-  background: var(--well-fg-muted);
+  height: 12px;
+  border-radius: 1px;
+  background: var(--fg-faint);
   transform: translateX(-1px);
-  /* Colour only. Animating height would lay the row out again mid-drag. */
-  transition: background var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), height var(--fast) var(--ease);
 }
 
 .player-tick.is-active {
-  background: var(--olive-bright);
+  background: var(--lime-bright);
+  height: 18px;
 }
-
-/* ------------------------------------------------------------- controls --- */
 
 /* Wraps rather than running off the side of a phone. Naming the speeds instead
    of writing them as multipliers costs width, and this row was already the
@@ -204,119 +119,66 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-2);
+  gap: 10px;
 }
 
-/*
- * Everything below re-points the shared control styles at the dark ramp. They
- * are written for the warm page, which is correct everywhere else in the app;
- * inside the well their light neutrals are all but invisible, so each one is
- * restated here against `--well` rather than forked into a second component.
- *
- * Down here a control is identified by what is written or drawn inside it —
- * a glyph or a word at `--well-fg-muted`, 6.93:1 on this ground — and the frame
- * around a group is decoration. That is the opposite of the light page, where
- * the frame is the affordance, and it is deliberate: outlining eight separate
- * things under a video turns the row into a fence and pulls the eye off the
- * picture, which is the only thing here worth looking at.
- */
-.player .icon-btn {
-  border-radius: var(--r);
-  border-color: transparent;
-  background: transparent;
-  color: var(--well-fg-muted);
-}
-
-.player .icon-btn:hover:not(:disabled) {
-  background: var(--well-1);
-  border-color: transparent;
-  color: var(--well-fg);
-}
-
-/* The one filled control in the well, and it is warm white rather than olive:
-   the accent belongs to the thing being judged, not to the transport. */
-.player .icon-btn--solid {
-  border-radius: var(--r-pill);
-  background: var(--well-fg);
-  border-color: transparent;
-  color: var(--well);
-}
-
-.player .icon-btn--solid:hover:not(:disabled) {
-  background: var(--hairline);
-  border-color: transparent;
-  color: var(--well);
-}
-
-.player .icon-btn--quiet:hover:not(:disabled) {
-  background: var(--well-1);
-  color: var(--well-fg);
-}
-
-.player :focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring-dark);
-}
-
-/* A grouped control reads as one object through its own wash, not through a
-   bright outline. `--well-1` is the step above the ground; the hairline on top
-   of it closes the shape. */
 .seg {
   display: flex;
-  padding: 0;
-  overflow: hidden;
-  background: var(--well-1);
-  border: 1px solid var(--well-line);
-  border-radius: var(--r);
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
 }
 
-/* Sized rather than padded to 44: 11px of type plus padding lands at 43 and no
-   arrangement of whole pixels lands on 44, and this is the floor for a control
-   someone is hitting one-handed on a court. */
 .seg-item {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 16px;
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
-  text-transform: uppercase;
-  line-height: 1;
-  color: var(--well-fg-muted);
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  padding: 6px 11px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: var(--wt-label);
+  letter-spacing: 0.005em;
+  color: var(--fg-faint);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
-.seg-item:hover {
-  background: var(--well-2);
-  color: var(--well-fg);
+.seg-item:active {
+  transform: scale(0.92);
 }
 
 .seg-item.is-on {
-  background: var(--olive-bright);
-  color: var(--well);
+  background: var(--ink-4);
+  color: var(--fg);
 }
 
-.seg-item.is-on:hover {
-  background: var(--olive-bright);
-  color: var(--well);
+.player-controls .chip--toggle {
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.player:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 6px;
+}
+
+.player-track:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 4px;
+  border-radius: var(--r-pill);
 }
 
 .stepper {
   display: flex;
   align-items: center;
-  gap: 0;
-  padding: 0;
-  overflow: hidden;
-  background: var(--well-1);
-  border: 1px solid var(--well-line);
-  border-radius: var(--r);
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-pill);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
 }
 
 .stepper .icon-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 0;
+  width: 30px;
+  height: 30px;
 }
 
 .stepper .icon-btn:disabled {
@@ -325,119 +187,61 @@
 
 .stepper .icon-btn:disabled:hover {
   background: none;
-  color: var(--well-fg-muted);
+  color: var(--fg-faint);
 }
 
 .stepper-read {
-  min-width: 3.6rem;
+  min-width: 3.4rem;
   text-align: center;
-  font-family: var(--mono);
-  font-size: var(--t-caption);
-  color: var(--well-fg);
+  font-size: 11.5px;
+  font-weight: 560;
+  color: var(--fg-faint);
 }
 
-.player .chip--toggle {
-  border-radius: var(--r-pill);
-  border: 1px solid var(--well-line);
-  background: transparent;
-  min-height: 44px;
-  padding: 0 16px;
-  font-family: var(--font);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
-  text-transform: uppercase;
-  color: var(--well-fg-muted);
-}
-
-.player .chip--toggle:hover {
-  background: var(--well-1);
-  color: var(--well-fg);
-}
-
-.player .chip--toggle.is-on {
-  background: var(--olive-bright);
-  border-color: var(--olive-bright);
-  color: var(--well);
-}
-
-.player-controls .chip--toggle {
-  margin-left: auto;
-  cursor: pointer;
-}
-
-/* ------------------------------------------------------ key positions row -- */
-
-/* 4px of padding on every side, not 2 on one: the row scrolls, so anything
-   short of the focus ring's own width clips the ring off a focused pill. */
 .phase-pills {
   display: flex;
-  gap: var(--s-1);
+  gap: 7px;
   overflow-x: auto;
   scrollbar-width: none;
-  padding: var(--s-1);
+  padding-bottom: 2px;
 }
 
 .phase-pills::-webkit-scrollbar {
   display: none;
 }
 
-/* Actually a pill now. 44px tall so it can be hit on a court in the sun. */
 .phase-pill {
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 16px;
-  background: transparent;
-  border: 1px solid var(--well-line);
+  padding: 8px 14px;
   border-radius: var(--r-pill);
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
-  text-transform: uppercase;
-  line-height: 1;
-  color: var(--well-fg-muted);
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--fg-muted);
+  transition: all var(--fast) var(--ease);
 }
 
-.phase-pill:hover {
-  background: var(--well-1);
-  color: var(--well-fg);
-  border-color: var(--well-fg-muted);
+.phase-pill:active {
+  transform: scale(0.94);
 }
 
 .phase-pill.is-active {
-  background: var(--olive-bright);
-  border-color: var(--olive-bright);
-  color: var(--well);
+  background: var(--lime);
+  border-color: var(--lime);
+  color: var(--lime-ink);
+  font-weight: 640;
 }
 
-/* Read prose, so it keeps the reading size the rest of the app is set in. */
 .player-caption {
-  font-size: var(--t-body);
-  line-height: var(--lh-copy);
-  color: var(--well-fg-muted);
-  max-width: var(--measure);
-  min-height: 3.6em;
-}
-
-/* The target-shape note lives inside the well, so it is restated on the dark
-   ramp here; its dashed key must keep matching the overlay it describes, which
-   is drawn in `--sage`. */
-.player .player-model-note {
-  color: var(--well-fg-muted);
-}
-
-.player .player-model-key {
-  border-top: 1px dashed var(--sage);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  min-height: 2.6em;
 }
 
 /* ============================================================================
    Keyframe filmstrip
-
-   Back on the warm page — the stills are report content, not player chrome.
    ========================================================================= */
 
 /*
@@ -458,7 +262,7 @@
 .strip {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s-3) var(--s-2);
+  gap: 16px 11px;
 }
 
 @media (min-width: 480px) {
@@ -471,7 +275,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 9px;
   text-align: left;
   color: inherit;
 }
@@ -485,34 +289,30 @@
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  background: var(--surface-raised);
+  border-radius: var(--r-md);
+  background: var(--ink-2);
   border: 1px solid var(--hairline);
-  border-radius: var(--r-lg);
   transition: border-color var(--fast) var(--ease);
 }
 
 .strip-item--live:hover img,
 .strip-item--live:focus-visible img {
-  border-color: var(--line-control);
+  border-color: var(--lime);
 }
 
 .strip-caption {
   display: flex;
   flex-direction: column;
-  gap: var(--s-hair);
+  gap: 3px;
 }
 
 .strip-item strong {
-  font-size: var(--t-overline);
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-overline);
-  text-transform: uppercase;
-  line-height: 1.4;
-  color: var(--fg-muted);
+  font-size: 13px;
+  font-weight: 620;
 }
 
 .strip-item span {
-  font-size: var(--t-small);
-  line-height: var(--lh-snug);
-  color: var(--fg-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--fg-faint);
 }

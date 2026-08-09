@@ -29,69 +29,81 @@ const PALETTE = {
    * the leader line — and each is wide enough to leave ~1.6px of dark showing
    * on both sides of the colour.
    */
-  under: 'rgba(28, 25, 23, 0.72)',
+  under: 'rgba(0, 0, 0, 0.45)',
 
   /** Torso and legs: tracked, but not what any of the six positions is judged on. */
-  neutral: 'rgba(250, 250, 249, 0.82)',
+  neutral: 'rgba(238, 242, 246, 0.82)',
 
-  /** Head and tossing arm — the same body, at full strength so the limbs lead. */
-  limb: '#fafaf9',
+  /** Head outline and the joint dots on it — the same body at full strength. */
+  limb: '#eef2f6',
+
+  /**
+   * The tossing arm, in the reference's own blue.
+   *
+   * It is the other arm doing the other job, and it is deliberately not the
+   * accent: the accent answers "which arm am I meant to be watching", and if
+   * both arms carry it the answer is gone.
+   */
+  toss: 'rgba(120, 200, 255, 0.95)',
 
   /**
    * The app's one accent, in the one place it is allowed to be bright.
    *
    * It marks the racket arm and its callout, and nothing else, so that "the
    * green one" is always the answer to "which arm am I meant to be watching".
-   * This is `--olive-bright`, which tokens.css permits only on the dark well —
-   * and footage is the darkest ground in the app.
+   * This is `--lime`, and footage is the darkest ground in the app.
    */
-  active: '#a3e635',
+  active: 'rgb(205, 249, 74)',
+
+  /** The accent held back, for the parts that are an estimate: the racket. */
+  activeSoft: 'rgba(205, 249, 74, 0.7)',
+
+  /** The hairline from the callout arc out to its plate. Quieter than a bone. */
+  leader: 'rgba(205, 249, 74, 0.55)',
 
   /**
    * The reference pose: the shape the targets describe. Never the player.
    *
-   * Warm grey, because there is no blue left in this system and because a
-   * reference should sit behind the body rather than compete with it. Dashed
-   * and thinner than the player's own bones does the rest of that work.
+   * Sky blue and faint, so it sits behind the body rather than competing with
+   * it. Dashed and thinner than the player's own bones does the rest of that work.
    */
-  reference: '#a8a29e',
+  reference: 'rgba(120, 200, 255, 0.42)',
 
   /**
    * Injury risk, and nothing else — not a bad toss, not a low score.
    *
    * Nothing in this file draws it yet. It is named here so the colour is
    * already spoken for when a joint does have to be flagged, and so nobody
-   * reaches for red to mean "worst rung of the ramp".
+   * reaches for the accent to mean "worst rung of the ramp".
    */
-  risk: '#dc2626',
+  risk: '#ff7a6b',
 
   /**
-   * The ball marker: warm white, not the accent.
+   * The ball marker: warm amber, not the accent.
    *
-   * A green marker on a yellow-green tennis ball is an invisible marker, which
-   * is the one thing a tracking overlay cannot be. White with a dark ring
+   * A lime marker on a yellow-green tennis ball is an invisible marker, which
+   * is the one thing a tracking overlay cannot be. Amber with a dark ring
    * separates from the ball, the sky and the court all at once.
    */
-  ball: '#fafaf9',
+  ball: 'rgba(255, 214, 92, 0.95)',
 
-  /** Flight path, oldest → newest: warm grey warming to the marker's white. */
-  ballOld: [168, 162, 158] as const,
-  ballNew: [250, 250, 249] as const,
+  /** Flight path, oldest → newest: slate warming toward the accent. */
+  ballOld: [152, 162, 179] as const,
+  ballNew: [205, 249, 74] as const,
 
-  /** Any text on the picture sits on this. Opaque warm black — never bare video. */
-  plate: '#1c1917',
-  plateLabel: 'rgba(250, 250, 249, 0.78)',
+  /** Any text on the picture sits on this. Near-black ink — never bare video. */
+  plate: 'rgba(10, 12, 16, 0.82)',
+  plateLabel: 'rgba(238, 242, 246, 0.72)',
 } as const
 
 /** The trail's two passes, pre-split so the alpha can be spliced in per bucket. */
-const TRAIL_UNDER_RGB = '28, 25, 23'
-const TRAIL_ACTIVE_RGB = '163, 230, 53'
+const TRAIL_UNDER_RGB = '0, 0, 0'
+const TRAIL_ACTIVE_RGB = '205, 249, 74'
 
-/* The token stacks, spelled out for canvas. Same families and same fallbacks as
-   tokens.css, so a callout burned into a keyframe still matches the page it was
-   captured from — and still reads if the vendored fonts were never fetched. */
-const DISPLAY_FONT = "'Libre Baskerville', Georgia, 'Times New Roman', serif"
-const MONO_FONT = "'Source Code Pro', ui-monospace, 'Fira Code', Consolas, monospace"
+/* The token stack, spelled out for canvas. Same family and same fallbacks as
+   `--font` in tokens.css, so a callout burned into a keyframe still matches the
+   page it was captured from. The app ships no webfonts. */
+const UI_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif'
 
 const BONES: [number, number][] = [
   [LM.leftShoulder, LM.rightShoulder],
@@ -346,7 +358,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       [tossArm.elbow, tossArm.wrist],
     ],
     8,
-    PALETTE.limb,
+    PALETTE.toss,
     4,
   )
 
@@ -389,7 +401,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       ctx.strokeStyle = PALETTE.under
       ctx.lineWidth = 6 * scale
       ctx.stroke()
-      ctx.strokeStyle = PALETTE.active
+      ctx.strokeStyle = PALETTE.activeSoft
       ctx.lineWidth = 2.6 * scale
       ctx.stroke()
 
@@ -403,7 +415,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       ctx.strokeStyle = PALETTE.under
       ctx.lineWidth = 5.6 * scale
       ctx.stroke()
-      ctx.strokeStyle = PALETTE.active
+      ctx.strokeStyle = PALETTE.activeSoft
       ctx.lineWidth = 2.2 * scale
       ctx.stroke()
       ctx.restore()
@@ -411,16 +423,16 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   }
 
   // The ball. Not the racket arm's accent, because the whole point is that it is
-  // a separate thing being tracked separately — and because a yellow-green marker
-  // on a tennis ball is no marker at all. See PALETTE.ball.
+  // a separate thing being tracked separately — and because a lime marker on a
+  // yellow-green tennis ball is no marker at all. See PALETTE.ball.
   if (o.ball) {
     const toPoint = (p: { x: number; y: number }) => ({ x: ox + p.x * dw, y: oy + p.y * dh })
     // The path is already the fitted arc, evaluated at a fine, even step —
     // not raw per-frame detections — so it is drawn as one smooth stroke
     // rather than a dashed polyline. Older stretches of the arc sit closer to
-    // grey, and the curve brightens toward the marker's white as it nears the
-    // ball's current moment, which reads as a single intentional flight
-    // rather than a trail of dots.
+    // slate, and the curve warms toward the accent as it nears the ball's
+    // current moment, which reads as a single intentional flight rather than
+    // a trail of dots.
     if (o.ball.path && o.ball.path.length > 1) {
       const pts = o.ball.path.map(toPoint)
       ctx.lineCap = 'round'
@@ -574,7 +586,7 @@ function roundRectPath(
  * to its edge, so on a frame with four things happening at once it is never
  * ambiguous which joint is being described. The phrase sets the plate's width, so
  * the type shrinks — down to a floor — rather than the plate growing past the
- * edge of the picture on a phone. It is opaque and soft-cornered: type set
+ * edge of the picture on a phone. The plate is soft-cornered ink: type set
  * straight onto footage is legible right up until the frame it is not.
  */
 function drawAngle(
@@ -613,7 +625,7 @@ function drawAngle(
   // way before the plate does. The floor keeps it legible on a filmstrip still.
   const cap = Math.max(90 * scale, Math.min(maxWidth * 0.52, 260 * scale))
   const measure = (px: number) => {
-    ctx.font = `400 ${px}px ${DISPLAY_FONT}`
+    ctx.font = `620 ${px}px ${UI_FONT}`
     return ctx.measureText(value).width
   }
   const size = fittedSize(value, cap, scale, measure)
@@ -622,11 +634,11 @@ function drawAngle(
   ctx.textBaseline = 'middle'
   const valueW = measure(size)
   // The overline is measured in the font it is actually set in. It used to be
-  // measured in the value's font and scaled by a guess, which was close enough
-  // for one sans face at two weights and is not close enough for two families —
-  // and a plate that comes out too narrow puts the label back on bare video.
+  // measured in the value's font and scaled by a guess, which is close enough
+  // right up until a long position name arrives — and a plate that comes out too
+  // narrow puts the label back on bare video.
   const labelSize = 9.5 * scale
-  ctx.font = `400 ${labelSize}px ${MONO_FONT}`
+  ctx.font = `500 ${labelSize}px ${UI_FONT}`
   const w = Math.max(valueW, ctx.measureText(label.toUpperCase()).width) + 22 * scale
   const h = 38 * scale
 
@@ -637,28 +649,21 @@ function drawAngle(
   ctx.strokeStyle = PALETTE.under
   ctx.lineWidth = Math.max(2.4, 3.6 * scale)
   ctx.stroke()
-  ctx.strokeStyle = PALETTE.active
+  ctx.strokeStyle = PALETTE.leader
   ctx.lineWidth = Math.max(0.6, 1 * scale)
   ctx.stroke()
 
-  // Opaque, soft-cornered, and edged in the accent — a warm-black plate on dark
-  // footage has no edge of its own, and the edge is what makes it read as a
-  // label rather than as a hole punched in the picture.
-  //
-  // One path, filled and then stroked. Building it twice would double the only
-  // per-frame path work the callout does, and a Path2D would allocate on every
-  // frame the playhead is parked on a keyframe.
-  roundRectPath(ctx, lx - w / 2, ly - h / 2, w, h, Math.min(8 * scale, h / 2))
+  // A soft-cornered ink plate, the same near-black the app's cards sit on. One
+  // path, built once and filled: a Path2D would allocate on every frame the
+  // playhead is parked on a keyframe.
+  roundRectPath(ctx, lx - w / 2, ly - h / 2, w, h, Math.min(9 * scale, h / 2))
   ctx.fillStyle = PALETTE.plate
   ctx.fill()
-  ctx.strokeStyle = PALETTE.active
-  ctx.lineWidth = Math.max(1.5, 2 * scale)
-  ctx.stroke()
 
-  ctx.font = `400 ${size}px ${DISPLAY_FONT}`
+  ctx.font = `620 ${size}px ${UI_FONT}`
   ctx.fillStyle = PALETTE.active
   ctx.fillText(value, lx, ly - 6 * scale)
-  ctx.font = `400 ${labelSize}px ${MONO_FONT}`
+  ctx.font = `500 ${labelSize}px ${UI_FONT}`
   ctx.fillStyle = PALETTE.plateLabel
   ctx.fillText(label.toUpperCase(), lx, ly + 9 * scale)
 }
