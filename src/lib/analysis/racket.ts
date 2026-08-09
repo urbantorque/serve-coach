@@ -15,7 +15,7 @@
  * output and they are at their worst behind the back at the racket drop, which
  * is precisely where a racket-based number would have to be trustworthy.
  */
-import { LM, type Side } from './geometry'
+import { LM, clamp, type Side } from './geometry'
 import type { Frame } from './types'
 
 /**
@@ -25,6 +25,24 @@ import type { Frame } from './types'
  * roughly 0.55 m beyond it — about 0.31 of a 1.78 m player.
  */
 const RACKET_REACH = 0.31
+
+/**
+ * What the wrist-to-knuckle span measures when the hand is side-on to the lens.
+ *
+ * The direction this module extends by a racket length is a 2D vector across a
+ * hand, and a hand pointed at or away from the camera foreshortens toward
+ * nothing. What survives in the picture is then mostly tracker noise — and
+ * `RACKET_REACH` multiplies it by about three, which is how a racket held out
+ * towards the net gets drawn hanging down by the player's leg.
+ *
+ * The angle itself cannot be recovered: that is the axis the camera cannot see.
+ * So the span is read as evidence about whether there is a direction here worth
+ * trusting, and the estimate is withdrawn rather than guessed. Roughly a tenth
+ * of standing height is a hand seen square on; half of that is a hand turned
+ * about sixty degrees out of the picture, and it takes the confidence under the
+ * 0.5 the drawing gates on.
+ */
+const BROADSIDE_HAND_SPAN = 0.08
 
 export interface RacketEstimate {
   /** Head centre in the same aspect-corrected image coordinates as landmarks. */
@@ -63,7 +81,13 @@ export function estimateRacket(
   const handSpan = span / Math.max(1e-6, bodyHeight)
   const plausible = handSpan > 0.03 && handSpan < 0.2
   const visibility = Math.min(wrist.visibility, index.visibility, pinky.visibility)
-  const confidence = plausible ? Math.min(1, visibility) : 0
+  // Two separate questions, and only one of them was being asked. Visibility
+  // says whether the model could see the hand; the span says whether what it saw
+  // points anywhere. A hand aimed at the lens is reported at full visibility —
+  // it is right there in the middle of the frame — while the direction taken
+  // from it has collapsed to a couple of pixels of jitter. Both have to hold.
+  const aim = clamp(handSpan / BROADSIDE_HAND_SPAN, 0, 1)
+  const confidence = plausible ? Math.min(1, visibility) * aim : 0
   if (confidence <= 0 || span < 1e-6) return undefined
 
   const reach = RACKET_REACH * bodyHeight

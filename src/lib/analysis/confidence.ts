@@ -110,6 +110,50 @@ const other = (s: Side): Side => (s === 'left' ? 'right' : 'left')
 const armOf = (s: Side) => [sided(s).shoulder, sided(s).elbow, sided(s).wrist]
 
 /**
+ * The stretch of the motion each measurement is actually read over.
+ *
+ * Visibility used to be averaged across the whole serve for every measurement,
+ * which is the wrong question for the ones taken at a single instant. The
+ * racket hand disappears behind the body for the handful of frames around the
+ * racket drop — that is what a racket drop *is*, and it is the one moment the
+ * pose model has to guess a wrist it cannot see. Averaged over a hundred frames
+ * of a clearly-filmed serve those ten guesses move the mean by almost nothing,
+ * so `dropDepth` arrived as a crisp number built on the least reliable frames
+ * in the clip, and a serve whose drop the camera simply could not see was told
+ * its racket never fell.
+ *
+ * Anything not listed is read across the whole motion, which is the honest
+ * window for a duration or a path.
+ */
+const READ_AT: Record<string, (k: Skeleton['keys']) => [number, number]> = {
+  tossArmExtension: (k) => [k.toss, k.toss],
+  releaseHeight: (k) => [k.toss, k.toss],
+  tossArmHold: (k) => [k.toss, k.contact],
+  tossPathWobble: (k) => [k.toss, k.contact],
+  syncAtRelease: (k) => [k.toss, k.toss],
+  kneeBend: (k) => [k.trophy, k.trophy],
+  hipShoulderSeparation: (k) => [k.trophy, k.trophy],
+  shoulderTilt: (k) => [k.trophy, k.trophy],
+  legDrive: (k) => [k.trophy, k.contact],
+  dropDepth: (k) => [k.drop, k.drop],
+  elbowAtDrop: (k) => [k.drop, k.drop],
+  dropToContact: (k) => [k.drop, k.contact],
+  contactHeight: (k) => [k.contact, k.contact],
+  armExtension: (k) => [k.contact, k.contact],
+  bodyExtension: (k) => [k.contact, k.contact],
+  contactAhead: (k) => [k.contact, k.contact],
+}
+
+/**
+ * Frames either side of a keyframe that still describe the same instant.
+ *
+ * A keyframe is a peak in a smoothed series, so it is never resolved to the
+ * exact sample; and one frame the tracker happened to nail, sitting in the
+ * middle of a stretch it lost, should not speak for the reading taken there.
+ */
+const KEYFRAME_SLACK = 2
+
+/**
  * Whether a measurement reads the fast end of the arm holding the racket.
  *
  * The elbow and the wrist, deliberately not the shoulder. Blur is measured on
@@ -300,14 +344,19 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
   }
 
   // How well the landmarks this measurement reads were actually seen, over the
-  // whole motion — a limb the tracker keeps losing gives a number built partly
-  // from its guesses.
+  // stretch it is read across — a limb the tracker lost gives a number built
+  // partly from its guesses, and it is the frames the number came from that
+  // decide how much of it is guesswork.
   const landmarks = LANDMARKS[id]?.(skel.racket) ?? []
   if (landmarks.length) {
-    const win = ctx.frames.slice(skel.keys.ready, skel.keys.finish + 1)
-    const seen = mean(
-      win.map((f) => Math.min(...landmarks.map((lm) => f.image[lm]?.visibility ?? 0))),
-    )
+    const [readFrom, readTo] = READ_AT[id]?.(skel.keys) ?? [skel.keys.ready, skel.keys.finish]
+    const last = ctx.frames.length - 1
+    const from = clamp(Math.round(readFrom) - KEYFRAME_SLACK, 0, last)
+    const to = clamp(Math.round(readTo) + KEYFRAME_SLACK, from, last)
+    const win = ctx.frames.slice(from, to + 1)
+    const seen = win.length
+      ? mean(win.map((f) => Math.min(...landmarks.map((lm) => f.image[lm]?.visibility ?? 0))))
+      : 0
     c *= clamp((seen - 0.25) / 0.45, 0.25, 1)
 
     // Visibility and blur are the two halves of "was this landmark actually

@@ -89,7 +89,18 @@
   gap: 5px;
 }
 
+/*
+ * A button is `display: block` by default, so a fixed height does not centre
+ * anything inside it. At 30px tall with a 19.5px line box the numeral sat about
+ * five pixels high in its own chip, and the serve-type variant below — which
+ * adds 8px of vertical padding without clearing this height — had 12px of
+ * content box for that same 19.5px line and overflowed its border by 7px.
+ * Centring is what a flex box does; nothing here needs a height to do it.
+ */
 .serve-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
   width: 30px;
   height: 30px;
@@ -1035,8 +1046,11 @@
   margin-top: 10px;
 }
 
+/* Sized by its padding, not by the 30px square the numbered chips want. Leaving
+   the base height in place was what squeezed the label out of the box. */
 .judged-options .serve-chip {
   width: auto;
+  height: auto;
   padding: 8px 14px;
   font-size: 13px;
   font-weight: 600;

@@ -97,6 +97,17 @@ const SERIES_COUNT = 8
  */
 const MIN_SEQUENCE_SAMPLES = 6
 
+/**
+ * How well the racket wrist has to be seen between the trophy and contact
+ * before "there was no drop" counts as a fact about the player.
+ *
+ * The same floor `metricConfidence` uses to decide a reading is soft: below a
+ * mean visibility of 0.5 across the window, what the tracker returns there is
+ * mostly its own guess, and a series with no dip in it is evidence about the
+ * camera rather than about the swing.
+ */
+const DROP_VISIBLE = 0.5
+
 export function diagnose(
   frames: Frame[],
   skel: Skeleton,
@@ -267,11 +278,37 @@ export function diagnose(
 
   const stated = options.tier !== undefined && Number.isFinite(options.tier)
   const current = stated ? clampTier(options.tier as number) : inferTier(signals)
-  // The detector found no drop to put a keyframe on, which settles whether the
-  // racket ever fell more directly than the depth reading can — see the note in
-  // `evaluateFlaws`.
+  /*
+   * The detector found no drop to put a keyframe on, which settles whether the
+   * racket ever fell more directly than the depth reading can — see the note in
+   * `evaluateFlaws`. But only when the camera could have seen one.
+   *
+   * A racket drop puts the hitting hand behind the player's back, which on a
+   * clip filmed from behind or square-on is the one moment in the serve the
+   * hand is not there to be tracked. The pose model still returns a wrist,
+   * because it always does, and it puts it against the body outline rather than
+   * behind it — so the posture series has no dip in it, the detector finds no
+   * drop, and `dropOnTrophy` goes true on a serve with a perfectly good drop in
+   * it. Downstream that is not a soft number, it is a hard structural claim
+   * that bypasses `resolvable` entirely and floors the severity at medium: the
+   * player is told their racket never falls behind their back, and the whole
+   * Swing area is marked down for it.
+   *
+   * Absence of evidence only counts where evidence could have appeared. If the
+   * racket wrist was not seen through the stretch a drop would live in, the
+   * flat posture series says nothing about the player and the reading is left
+   * to the depth proxy and its own confidence.
+   */
+  const dropWindow = frames.slice(
+    clamp(keys.trophy, 0, frames.length - 1),
+    clamp(keys.contact, 0, frames.length - 1) + 1,
+  )
+  const sawTheDrop =
+    dropWindow.length > 0 &&
+    mean(dropWindow.map((f) => f.image[R.wrist]?.visibility ?? 0)) >= DROP_VISIBLE
+
   const flaws = evaluateFlaws(readings, current, {
-    racketNeverFell: skel.derivation.dropOnTrophy,
+    racketNeverFell: skel.derivation.dropOnTrophy && sawTheDrop,
   })
 
   const gripFinding = flaws.find((f) => f.flaw === 'waiters_tray')
