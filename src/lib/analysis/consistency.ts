@@ -50,9 +50,25 @@ export interface Consistency {
    * the clip's own count instead reported the serves beyond the cap as unreadable
    * — a clip of ten came back as "four serves were too unclear to measure", about
    * four serves nothing ever looked at.
+   *
+   * The same rule decides what a stopped sweep reports. `Sweep.attempted` counts
+   * only the serves read to a conclusion, so a player who stops after four of six
+   * is told about four serves and nothing else. The two they interrupted were not
+   * unclear; nothing finished looking at them either.
    */
   skipped: number
 }
+
+/**
+ * Fewer serves than this and there is no comparison to draw.
+ *
+ * One serve has no spread — `max − min` over a single reading is zero, which
+ * would score a perfect 100 for repeatability off a sample that contains no
+ * repetition. Exported because the screens have to know when a part-finished
+ * sweep has become worth showing, and a second hard-coded 2 somewhere else is
+ * how a screen ends up offering a comparison this function then refuses to make.
+ */
+export const MIN_COMPARABLE_SERVES = 2
 
 /**
  * How consistent is this element, given how much it moved?
@@ -79,7 +95,7 @@ function consistencyScore(spread: number, ideal: [number, number]): number {
  * side-on view) would otherwise skew its own spread.
  */
 export function buildConsistency(analyses: Analysis[], attempted: number): Consistency | undefined {
-  if (analyses.length < 2) return undefined
+  if (analyses.length < MIN_COMPARABLE_SERVES) return undefined
 
   const byId = new Map<string, { metric: Metric; values: number[] }>()
 

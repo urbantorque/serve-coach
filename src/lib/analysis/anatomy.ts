@@ -45,11 +45,20 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 85, tag: 'Arm holds to the swing' },
     { under: Infinity, tag: 'Arm holds through contact' },
   ],
+  // The top two rungs used to say "wide", which is a direction, and this ladder
+  // is not entitled to one. The number underneath is drift along whichever body
+  // axis the camera laid across the frame — front-to-back on the side-on footage
+  // this app asks for, sideways on a face-on clip — and `coaching.ts` says which
+  // on the day, from the camera angle, in a line written per axis. A readout
+  // cannot: `readoutOf` is handed an identifier and a number and nothing else,
+  // and it is printed beside a card that has already named the axis correctly.
+  // So these rungs say how far the hand left its line and stop there, which is
+  // the one thing true of both.
   tossPathWobble: [
     { under: 1.5, tag: 'Dead straight lift' },
     { under: 3, tag: 'Straight lift' },
-    { under: 6, tag: 'Drifts a hand wide' },
-    { under: Infinity, tag: 'Wanders wide' },
+    { under: 6, tag: 'Drifts a hand off line' },
+    { under: Infinity, tag: 'Wanders off line' },
   ],
   tossPeakHeight: [
     { under: 1.2, tag: 'Peaks below the racket' },
@@ -110,6 +119,21 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 40, tag: 'Racket jammed on the back' },
     { under: 95, tag: 'Arm folded in an L' },
     { under: Infinity, tag: 'Arm swings straight' },
+  ],
+  // Three rungs rather than four, and the gap between the first two is a whole
+  // twelve points, because this measurement counts frames: at 30 fps a
+  // toss-to-contact window holds a couple of dozen of them, so one frame is
+  // worth three or four points. Rungs any closer than that would be reporting
+  // the sampling rate as a change of body position, which is the same fault
+  // `metrics.ts` refuses the measurement outright for below ten samples.
+  //
+  // Nothing above "hangs under the elbow" — see the band in `coaching.ts`. There
+  // is no footage here to say what too much of it looks like, and a rung is a
+  // claim about a body.
+  handUnderElbow: [
+    { under: 8, tag: 'Hand never gets under the elbow' },
+    { under: 20, tag: 'Hand dips under the elbow' },
+    { under: Infinity, tag: 'Hand hangs under the elbow' },
   ],
   dropToContact: [
     { under: 110, tag: 'Swing snaps through' },

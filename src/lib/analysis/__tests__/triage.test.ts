@@ -535,6 +535,10 @@ function base(over: BaseOver = {}): Resilience {
       yaw_deg: 60,
       depth_unreliable: false,
       confidence: over.spatial ?? 1,
+      // With `depth_unreliable` false these two are the same number by
+      // construction — `confidence` is the roll cost times a yaw cost of 1 — so
+      // the stub says so rather than inventing a second dial nothing here tests.
+      roll_confidence: over.spatial ?? 1,
     },
     blur: over.blur ?? 0,
     swingSamples: over.swingSamples ?? LIMITS.swingSamples + 2,

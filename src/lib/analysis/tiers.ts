@@ -95,7 +95,21 @@ export const SIGNALS: Record<string, SignalSpec> = {
     id: 'toss_drift_ratio',
     unit: 'ratio',
     direction: 'lower',
-    // Sideways travel of the tossing hand on the way up, in standing heights.
+    // Travel of the tossing hand off its own line on the way up, in standing
+    // heights, along whichever body axis the camera laid across image x —
+    // `axes.ts` decides which, and the finding carries the answer.
+    //
+    // The id still says "drift" and no longer says which way, which is correct
+    // and is worth stating because these bands were calibrated when it did. They
+    // were derived against raw image x on side-on footage, i.e. against a DEPTH
+    // reading nobody knew was one. Recovering the axis now divides by a gain of
+    // 0.99 at that angle, so the depth case moves by under one percent and the
+    // numbers below keep their provenance intact. At a corner camera the divisor
+    // reaches about 1.4, and the lateral case has never been calibrated against
+    // anything — no footage in this repo drove that axis until the rig grew a
+    // dial for it. Same band either way, on the argument that a hand wandering
+    // 3% of standing height wandered that far whichever way it went. PROVISIONAL
+    // for the lateral axis; re-derive it the first time there is face-on footage.
     anchors: { 3: [0, 0.09], 5: [0, 0.07], 7: [0, 0.05], 9: [0, 0.038] },
     seriousMiss: 0.05,
   },
@@ -162,27 +176,33 @@ export const SIGNALS: Record<string, SignalSpec> = {
  * How far each signal moves on its own, filming the same serve twice.
  *
  * The band a signal is graded against is meaningless below its own
- * repeatability, and four of these were being graded far below it. Measured on
- * an ensemble of noise realisations of one identical synthetic serve — see
- * `__tests__/depth.test.ts`, which prints the deviations these come from and
- * fails if they drift. A miss smaller than the figure here is reported as no
- * fault at all, for the same reason `MEANINGFUL_DELTA` refuses to call a
+ * repeatability, and three of these were being graded below it: `hip_lead_ms`
+ * (45 against a measured 85), `pronation_deg` (16 against 31) and
+ * `palm_to_sky_deg` (10 against 11, by rounding). Measured on an ensemble of
+ * noise realisations of one identical synthetic serve — the ensemble lives in
+ * `__tests__/repeatability.ts`, which is where every figure in this comment and
+ * in `UNDER_RESOLVED` can be re-derived, and `__tests__/depth.test.ts` prints
+ * them and fails if they drift. A miss smaller than the figure here is reported
+ * as no fault at all, for the same reason `MEANINGFUL_DELTA` refuses to call a
  * two-point move on the trend chart progress.
  *
- * Each is `min(1.5 × deviation, seriousMiss)`. The deviation half of that is the
- * measurement; the cap is a deliberate refusal. A floor at or above the signal's
- * own `seriousMiss` would make its flaw structurally undetectable — no value
- * could ever miss the band by enough — and quietly deleting a detector on the
- * strength of a modelled camera is not a trade worth making silently. Where the
- * cap binds, the measurement is telling us something uncomfortable and the test
- * says so out loud rather than the constant hiding it.
+ * Read in two places, and the direction of harm is opposite in each: see
+ * `rungStep` under `inferTier` before widening one of these.
  *
- * The cap binds on exactly two signals today, `hip_lead_ms` and `pronation_deg`.
- * Both are recovered from rotation about the vertical axis, both moved further
- * across noise realisations of one serve than the engine's own definition of a
- * serious miss, and both therefore name their flaw at a resolution the
- * measurement does not clearly support. That is the single most important thing
- * real footage would settle.
+ * Each is one and a half deviations, rounded up to the signal's own precision.
+ * Nothing caps that any more, and the cap coming off is what this round was
+ * about.
+ *
+ * The rule used to be `min(1.5 × deviation, seriousMiss)`. For two signals the
+ * second half bound: the measurement was less repeatable than the engine's own
+ * definition of a fault worth acting on, so the floor was clipped down to
+ * `seriousMiss` to keep their detectors reachable. The clipping was invisible.
+ * It looked like a number that happened to equal another number, and what it
+ * actually meant was that two flaws were being named at a resolution the
+ * measurement did not support. Naming a fault the camera cannot resolve is the
+ * same failure as stating a number that was never measured, arriving one layer
+ * further down — so the clip is gone and the two signals were decided on their
+ * merits instead. `UNDER_RESOLVED` below records what was decided and why.
  *
  * Two more caveats, both load-bearing:
  *
@@ -200,15 +220,31 @@ export const SIGNALS: Record<string, SignalSpec> = {
 export const NOISE_FLOOR: Record<string, number> = {
   // Two peak-finds on a smoothed derivative, differenced. Easily the least
   // repeatable number in the engine: the peak can land a frame either side on a
-  // noisy realisation, and at 50 fps that alone is 20 ms per side.
-  // Capped: the deviation is 57 ms, over three frames at a phone's frame rate.
-  hip_lead_ms: 45,
+  // noisy realisation, and at 50 fps that alone is 20 ms per side. The deviation
+  // is 56.6 ms — over three frames at a phone's frame rate — so 1.5× is 85.
+  // Was 45, clipped to `seriousMiss`. See `UNDER_RESOLVED.hip_lead_ms`.
+  hip_lead_ms: 85,
   // Forearm rotation between two sampled instants, from the palm normal — a
   // 3D orientation recovered from landmarks the network placed in depth, on the
-  // smallest structure in the skeleton. Capped: the deviation is 20°.
-  pronation_deg: 16,
-  // Same normal, read on one frame near the trophy.
-  palm_to_sky_deg: 10,
+  // smallest structure in the skeleton. The deviation is 20.2°, so 1.5 × that is
+  // 30.4, which rounds up to 31. Was 16, clipped to `seriousMiss`.
+  //
+  // Nothing is graded against this floor any longer — `pancake_contact` is
+  // measured and never named, for the reasons in `UNDER_RESOLVED` — but the
+  // figure stays, because it is the measurement, and the day a better pronation
+  // estimator arrives this is the number it has to beat.
+  pronation_deg: 31,
+  // Same normal, read on one frame near the trophy. Deviation 6.8°, so 1.5×
+  // rounds up to 11.
+  //
+  // Was 10, and that one degree is worth the comment it costs. Nobody capped
+  // this on purpose: 1.5 × 6.783 is 10.17, and somebody wrote down the round
+  // number. It went unnoticed for as long as it did because the check that
+  // would have caught it compared floors against one deviation rather than
+  // against the one-and-a-half this file documents. A rounded-down floor is a
+  // cap however small and however accidental, and this is a signal that names a
+  // grip fault, so it now rounds the way floors have to round — up.
+  palm_to_sky_deg: 11,
   // A yaw difference. Hedged already by the camera check, and still this wide.
   separation_deg: 9,
   // Lateral spine angle, differenced against the ready position — so it carries
@@ -221,6 +257,267 @@ export const NOISE_FLOOR: Record<string, number> = {
   elbow_lift_ratio: 0.012,
   contact_height_ratio: 0.012,
   toss_peak_ratio: 0.02,
+}
+
+/**
+ * Signals the engine cannot resolve to its own definition of a serious miss.
+ *
+ * A signal is in here when one and a half of its measured deviations exceeds its
+ * `seriousMiss` — when filming the same serve twice moves the number further
+ * than the gap between "fine" and "seriously wrong". That is a fact about the
+ * measurement and no choice of floor makes it false, so the entry is not a
+ * threshold. It is the decision that was taken about it, in words, and
+ * `__tests__/depth.test.ts` fails if a signal joins this set without one.
+ *
+ * The list is short and it is meant to stay short. Something arriving here is
+ * the engine saying it has been grading a number it cannot read.
+ *
+ * Not to be confused with `UNCALIBRATED` below, which is the opposite failure: a
+ * measurement steady enough to grade, with no band to grade it against. A
+ * reader looking for "why is this measured and never said out loud" has to check
+ * both, and the two can never hold the same key — one is about a band being too
+ * fine for the measurement, the other about there being no band at all.
+ *
+ * Figures below come from `__tests__/repeatability.ts`, at 50 fps with modelled
+ * MediaPipe depth error on one identical synthetic serve. Deviations are over its
+ * twenty-four-seed ensemble — `realise()` — and the naming *rates* are over sixty
+ * seeds of the same ensemble — `realise(dials, tier, seeds(60))` — because a rate
+ * in the low percent needs more draws to hold still than a deviation does. Both
+ * are runnable from that file as written; the suite runs the twenty-four, since
+ * sixty is slow enough that it would stop being run at all. They are model
+ * figures — see the caveat above `NOISE_FLOOR`.
+ */
+export const UNDER_RESOLVED: Record<string, string> = {
+  /*
+   * Kept, at an honest floor, because it still tells a gross fault from none.
+   *
+   * Deviation 56.6 ms against a 45 ms serious miss. On the ensemble serve — a
+   * clean one, hips genuinely leading by 70 ms — the reading ran from -49 ms to
+   * +180 ms, and the old clipped floor of 45 named `arming_the_ball` at *high*
+   * severity on 12% of realisations. Twelve percent of players with a
+   * well-sequenced serve being told their shoulders fire first, as the one
+   * thing the report asks them to fix.
+   *
+   * Neither of the other two options looked open, and the evidence for each is
+   * a different strength, so they are stated separately.
+   *
+   * No camera-angle gate was found, and this rig cannot find one. Swept from 25°
+   * to 88° of yaw the deviation is 56.6 ms, flat. That flatness is a property of
+   * the rig, not a finding about cameras: `syntheticServe.ts` adds its depth
+   * error to the *world* landmarks in the player's own frame, and `cameraYaw`
+   * only ever builds the image projection, while `hip_lead_ms` is derived from
+   * `world.x` and `world.z` and never reads the image at all. So the sweep is
+   * structurally incapable of coming out any other way, and the honest reading is
+   * "there is no evidence here for a gate", not "a gate cannot help". A camera
+   * check would have to be justified against real footage, where MediaPipe's
+   * depth error genuinely does depend on how much of the player it can see.
+   *
+   * More frames make it worse rather than better — 110.6 ms at 120 fps against
+   * 45.4 at 30 — which is a measurement of the engine and stands on its own. The
+   * peak-finder's smoothing in `diagnose.ts` is a fixed three *samples*, so its
+   * span in time shrinks as the frame rate rises: 3 samples is 100 ms of clip at
+   * 30 fps and 25 ms at 120, and it is applied twice, which widens the effective
+   * window beyond either. That is the signature of a derivative locking onto
+   * noise, not of a resolution limit a better phone would fix — a time-based
+   * window, as `palmNormalAt` in `kinematics.ts` already uses, is where anyone
+   * trying to recover this signal should start.
+   *
+   * So the floor went to where the measurement puts it, 85 ms, and the detector
+   * was measured at both:
+   *
+   *              serve            floor 45     floor 85
+   *   clean (hips lead 70 ms)        12%           2%
+   *   mild arming (-20 ms)           43%          22%
+   *   real arming (-60 ms)           68%          50%
+   *   gross arming (-120 ms)         93%          78%
+   *
+   * Two percent against seventy-eight is a detector. Half of the players who
+   * genuinely arm the ball now hear nothing, which is the trade: this engine is
+   * allowed to miss a fault and is not allowed to invent one.
+   *
+   * One honest consequence, since the floor now sits above `seriousMiss`: every
+   * `arming_the_ball` finding comes back at severity 'high', because any miss
+   * large enough to clear the floor is by definition larger than a serious one.
+   * The severity is not a gradient any more. For this signal that is the truth
+   * rather than a defect — the only misses it can resolve are gross ones.
+   */
+  hip_lead_ms:
+    'kept: floor raised to the measured 85 ms, which names only gross arming — ' +
+    '2% of clean serves against 78% of grossly armed ones',
+
+  /*
+   * Not named. `pancake_contact` is measured and never reported to a player.
+   *
+   * Deviation 20.2° against a 16° serious miss, and unlike the hip lead there is
+   * no floor that rescues it, in either direction:
+   *
+   * Leave the floor clipped at 16 and the detector is a coin. Measured across
+   * the ensemble at a tier-5 target, `pancake_contact` was named on 10% of
+   * serves with 95° of real forearm turn in them and on 35% of serves with none
+   * at all. A player with a textbook snap had a one-in-ten chance of being sent
+   * away to fix their pronation; a player with a genuine pancake had a
+   * two-in-three chance of hearing nothing. Thirty-five against ten is not a
+   * detector, it is a weighted coin, and the report spends its single
+   * instruction on it.
+   *
+   * Raise the floor to the measured 31° and the detector cannot fire at all.
+   * `pronationBetween` returns an unsigned angle, so the value is never below
+   * zero and the miss can never exceed the band's own lower edge — which runs
+   * from 12° to 36° across the whole ladder. A 31° floor is above that edge for
+   * every club player. The detector would not be hedged, it would be dead while
+   * still appearing in the code, which is the one outcome worse than removing
+   * it.
+   *
+   * Both roads end in the same place, so this takes the one that says so. The
+   * signal stays: `signals.pronation_deg` still carries the measured value, and
+   * the `wrist_strain_forced_pronation` injury flag still reads it against an
+   * absolute limit, deliberately unfloored, for the reason two comments above.
+   * What stops is naming a stroke fault from it.
+   *
+   * A separate observation for whoever revisits this, weaker but pointed in the
+   * same direction: swept against the rig's own pronation dial the reading is
+   * not monotonic. Dialled turns of 10°, 40°, 95° and 150° read back as a mean
+   * 13°, 40°, 33° and 16° — so past roughly 40° more real rotation reads as
+   * less. That could be the estimator folding or the rig's single-angle hand
+   * orientation folding; this ensemble cannot tell them apart, and it is worth
+   * settling before anyone rebuilds this detector. Note that `palmNormalAt` in
+   * `kinematics.ts` already carries a comment about a *different* mechanism
+   * producing a false pancake, from window smearing at low frame rates. Two
+   * independent ways to read a snap as a push is itself the finding.
+   */
+  pronation_deg:
+    'not named: `pancake_contact` fires on 10% of clean serves against 35% of ' +
+    'genuine pancakes, and an unsigned angle cannot miss its band by 31°',
+}
+
+/**
+ * Measurements the engine reports and has nothing to grade against.
+ *
+ * The sibling of `UNDER_RESOLVED`, and the distinction between them is the
+ * point. A signal lands in that one when it moves further across noise than the
+ * gap between "fine" and "seriously wrong" — the measurement is too coarse for
+ * the band. Something lands *here* when the measurement is fine and there is no
+ * band: nothing in this repo has ever established what value a club player
+ * should have, and no anchor could be written down without inventing four
+ * numbers. Both are refusals to grade. They fail at opposite ends.
+ *
+ * A stricter test applies here than anywhere else in this file, because this is
+ * where a plausible number with no calibration behind it would otherwise
+ * accumulate. Every key must be a quantity the engine actually produces, and no
+ * key may have a `SIGNALS` entry — the moment somebody writes anchors for one
+ * of these it is calibrated, this entry is stale, and `depth.test.ts` fails
+ * until it is removed. There is deliberately no way to have both.
+ *
+ * These are not to-do items. Two of the three below cannot be settled by any
+ * amount of work on this rig, and say so; what they are waiting for is footage
+ * of real serves with a coach's judgement attached, which is the same thing
+ * `NOISE_FLOOR` is waiting for.
+ */
+export const UNCALIBRATED: Record<string, string> = {
+  /*
+   * Peak leg drive: the fastest the hips rose in the frame.
+   *
+   * The most proximal link the camera can see, and the only one that needs no
+   * hedge for where the phone stood — it is read from image y alone, which is
+   * vertical for every camera this app accepts, and its mean does not move at
+   * all across yaw from 20° to 88°. Deviation 7.5 ms across the ensemble.
+   *
+   * It times the drive and says nothing about its size, which is the first
+   * reason there is nothing to grade. Dialled from a player who barely leaves
+   * the ground to one driving hard, the peak stays at -196 to -204 ms — the
+   * same moment, because the moment is set by when the legs extend and not by
+   * how far. What does move is the deviation, 16.1 ms with almost no drive
+   * against 6.8 ms with a normal one, which is the honest signature of a peak
+   * being found in a smaller and smaller event. A detector for "no leg drive"
+   * wants the amplitude, not this.
+   *
+   * And the second reason is the one the whole chain shares: nothing here knows
+   * what a club player's number should be, and the rig cannot be asked, because
+   * every one of its tracks hangs off a single normalised phase schedule.
+   */
+  legs_peak_ms:
+    'measured and not named: 7.5 ms deviation, camera-invariant, and it times ' +
+    'the leg drive without measuring it — the same peak whether the player drives or not',
+
+  /*
+   * The whole chain's span: peak leg drive to peak racket-hand speed.
+   *
+   * Easily the best-conditioned timing this engine produces. Both ends are read
+   * from the picture plane — the hips rising in image y, the hand's planar speed
+   * off image x and y — so neither touches MediaPipe's inferred depth. Across the
+   * twenty-four-seed ensemble its deviation is 7.8 ms, against 56.6 for
+   * `hip_lead_ms` measured on the same clips; across camera angles from 20° to
+   * 88° its mean moves 0.7 ms; across 30, 50 and 120 fps it reads 123.2, 119.8
+   * and 117.9 ms. By every test this repo applies to repeatability it is the strongest
+   * timing in the engine.
+   *
+   * And there is nothing to compare it against, for two independent reasons,
+   * either of which is enough on its own.
+   *
+   * It is not scale-free. The span scales with how long the motion took: 156 ms
+   * on a 1.7 s serve and 102 ms on a 1.1 s one, same dials otherwise. A band in
+   * milliseconds would therefore grade tempo, and mark a deliberate server as
+   * having no chain. The obvious repair is to divide by the motion's duration,
+   * and it is the right one — the ratio comes out 0.092, 0.088 and 0.092 across
+   * those three tempos, scale-free to within 5%. It only moves the problem,
+   * because what that ratio should be for a club player is exactly the number
+   * nobody here has.
+   *
+   * And the rig cannot say. `syntheticServe.ts` keys every track to one
+   * normalised phase schedule, so the span is a constant of that schedule once
+   * tempo is divided out: swept against the arming dial at -20, -60 and -120 ms
+   * the span reads 118.6 ms every time, to a tenth of a millisecond. That is not
+   * evidence the chain span is unrelated to arming. It is the rig being
+   * structurally incapable of producing a serve where they differ — the same
+   * shape of non-finding as the camera-angle sweep recorded under
+   * `UNDER_RESOLVED.hip_lead_ms`, and it is recorded rather than reported as a
+   * negative result for the same reason.
+   *
+   * So: measured, reported in `Diagnosis.chain`, kept out of `signals`, and not
+   * named. A detector built on it today would be a band somebody made up,
+   * validated against a rig that holds the quantity fixed.
+   */
+  chain_span_ms:
+    'measured and not named: 7.8 ms deviation and no band — the span scales ' +
+    'with tempo, and the rig holds it fixed once tempo is divided out',
+
+  /*
+   * Peak racket-hand speed, and peak elbow speed, as moments in the serve.
+   *
+   * Two links rather than two entries, because the decision is one decision.
+   *
+   * The wrist is the steadiest single reading in the engine: 0.5 ms of deviation
+   * across the ensemble, and its mean moves 0.7 ms across camera angles from 20°
+   * to 88°. The elbow is nearly as steady against noise, 0.7 ms, and is NOT
+   * camera-invariant — its mean moves 10.2 ms across the same angles, from
+   * -123.3 at side-on to -113.1 at 20°, swept every two degrees and read before
+   * the chain rounds to whole milliseconds, because a planar speed mixes image x
+   * with image y and how much of a limb's travel lands in image x depends on
+   * where the phone stood. Routing image x through
+   * `axes.ts` was tried and measured and does not fix it: recovering the
+   * dominant axis moved the spread from 10.8 ms to 11.6, for the reason stated
+   * at the top of that file, which is that one image-x scalar cannot be de-mixed
+   * into two components. So the elbow-to-wrist interval carries a 10.2 ms
+   * camera artifact against a 0.9 ms deviation, and grading it would be grading
+   * the framing.
+   *
+   * Both are timed relative to the contact keyframe, which is derived from the
+   * same racket-hand track, so their absolute values are partly a statement
+   * about where the detector puts contact rather than only about the player.
+   * That is survivable for an interval between two links and not for either
+   * one alone.
+   *
+   * The honest summary of what these two are for: they are the evidence that a
+   * chain assembled from image-plane speeds is two orders of magnitude more
+   * repeatable than one assembled from world-z yaw, which was the question this
+   * work existed to answer. They are not evidence about any player's serve.
+   */
+  wrist_peak_ms:
+    'measured and not named: 0.5 ms deviation, no band, and timed against a ' +
+    'contact keyframe derived from the same track',
+  elbow_peak_ms:
+    'measured and not named: 0.7 ms deviation but a 10.2 ms camera-angle ' +
+    'artifact, which axes.ts cannot remove because image x cannot be de-mixed',
 }
 
 /**
@@ -380,13 +677,53 @@ export function severityOf(signal: string, value: number, band: [number, number]
  * So each signal is asked separately how high it reaches, near misses are
  * forgiven to the same `NOISE_FLOOR` the flaw pass already uses, and the rating
  * is the median of the answers. The median keeps the pessimism where it belongs
- * — two bad signals out of four still pull it down — without letting a single
- * unmeasurable one define a player.
+ * — two bad signals still pull it down — without letting a single unmeasurable
+ * one define a player.
+ *
+ * The forgiveness is why `rungStep` exists. `NOISE_FLOOR`'s direction of harm
+ * *inverts* between the two places it is read. In the flaw pass a wider floor is
+ * more forgiving: fewer faults named, fewer false accusations. Here a wider floor
+ * lets a signal reach a *higher* rung, and the rating picks the target band every
+ * other signal is then graded against — so a generous floor hands the player a
+ * harder target and buys back as new accusations elsewhere what it saved on the
+ * one flaw. Measured, when `hip_lead_ms`'s floor moved from 45 to 85: a serve
+ * whose shoulders fire 30 ms *early* went from rating 4 to rating 9, the same
+ * rung as a clean 70 ms lead, because 85 ms of slack is wider than the whole
+ * 42 ms ladder that signal is graded on. That is not forgiveness, it is a signal
+ * with nothing left to say voting anyway.
  */
+/**
+ * How far one signal's band moves per rung of the ladder.
+ *
+ * The unit a rating is made of. A signal whose own repeatability is wider than
+ * this cannot tell rung 5 from rung 6 — whichever rung it reports is the noise
+ * talking — so `inferTier` drops it rather than averaging it in, the same way
+ * `metrics.ts` drops a value it could not compute instead of defaulting one.
+ * Currently that excludes `hip_lead_ms` (85 ms floor against a 7 ms rung) and
+ * `separation_deg` (9° against 2.8°), leaving the two signals read from x and y,
+ * which the camera genuinely saw. Both excluded signals are still measured, still
+ * shown and still graded for flaws; what they no longer do is guess a rating.
+ *
+ * A rule rather than a list, so that re-deriving `NOISE_FLOOR` from real footage
+ * puts a signal back to work by itself. If a floor comes down below its rung the
+ * signal starts voting again with no edit here — which is the point, because a
+ * hand-maintained exclusion list is the thing that goes stale silently.
+ *
+ * Taken across rungs 3 to 9, the four anchors the ladder is actually defined at,
+ * on whichever band edge moves; interpolated rungs sit between them by
+ * construction.
+ */
+function rungStep(signal: string): number {
+  const low = bandFor(signal, ANCHORS[0])
+  const high = bandFor(signal, ANCHORS[ANCHORS.length - 1])
+  const rungs = ANCHORS[ANCHORS.length - 1] - ANCHORS[0]
+  return Math.max(Math.abs(high[0] - low[0]), Math.abs(high[1] - low[1])) / rungs
+}
+
 export function inferTier(signals: Record<string, number>): number {
-  const used = ['contact_height_ratio', 'drop_depth_ratio', 'separation_deg', 'hip_lead_ms'].filter(
-    (s) => Number.isFinite(signals[s]),
-  )
+  const used = ['contact_height_ratio', 'drop_depth_ratio', 'separation_deg', 'hip_lead_ms']
+    .filter((s) => Number.isFinite(signals[s]))
+    .filter((s) => (NOISE_FLOOR[s] ?? 0) < rungStep(s))
   if (!used.length) return 4
 
   // Capped one below the top of the ladder. An inferred rating is a guess, and a

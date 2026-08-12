@@ -69,8 +69,45 @@ export interface ServeDials {
   tossElbow: number
   /** Fraction of toss→contact that the tossing arm stays above its shoulder. */
   tossArmHold: number
-  /** Sideways wobble amplitude of the tossing hand, metres. */
+  /**
+   * Front-to-back wobble amplitude of the tossing hand, metres.
+   *
+   * This dial is applied to world +x, which the racket-wrist block below
+   * documents as "away from the net" — the player's DEPTH axis. It was described
+   * here as "sideways wobble" for as long as it has existed, and that one word
+   * is the whole of the bug this rig hid.
+   *
+   * Being pointed at depth is exactly what made `tossPathWobble` look correct.
+   * The projection below lays image x across the two body axes as
+   * `depth·sin(yaw) + lateral·cos(yaw)`, so at the rig's own default of 82° a
+   * metre of depth arrives as 0.990 of image x and a metre of lateral as 0.139.
+   * The rig drove the axis the camera could see best, the measurement read image
+   * x, and the two agreed to four decimal places about a quantity neither of
+   * them was naming correctly. Nothing in the suite could tell, because until
+   * `tossWobbleLateral` below there was no way to move the other axis at all.
+   *
+   * Deliberately NOT renamed to `tossWobbleDepth`, which is what it should be
+   * called. The dial is set by name in four test files this workstream does not
+   * own (engine, triage, flaws, plan), and a rename that silently reverts to the
+   * clean-serve default in someone else's file would turn their dialled-in fault
+   * into a clean toss and their assertion into a coincidence.
+   */
   tossWobble: number
+  /**
+   * Sideways wobble amplitude of the tossing hand, metres — the real one.
+   *
+   * Applied to world z, which is across the player: at the ready pose the
+   * shoulder line runs along it (`shDir` is built from `shoulderYaw`, 86° at
+   * ready, so the line is 0.998 of z and 0.070 of x). This is the axis a
+   * fence-line toss drill constrains, and the axis every player-facing string
+   * about toss drift used to claim it was describing.
+   *
+   * Same waveform and same units as `tossWobble`, so the pair differ in nothing
+   * but the axis they move. That is the point: a test can now dial an identical
+   * wobble onto each axis in turn and assert that the app names them apart,
+   * which is the one thing the rig could not previously be asked.
+   */
+  tossWobbleLateral: number
   /** Seconds from the start of the motion to contact. */
   motionSeconds: number
   /** Camera yaw: 90 is fully side-on, 0 is face-on. */
@@ -84,6 +121,17 @@ export interface ServeDials {
    * grip change actually does to the hand. The achievable elevation is bounded
    * by the forearm's own tilt — a dead vertical forearm cannot present its palm
    * to the sky at all — so `trophyForearmDrop` moves with it.
+   *
+   * KNOWN LIMIT: this dial saturates, and it matters more than it looks. Dialled
+   * at 80, 90 and 100 the engine reads back 49–51° every time, so the most
+   * extreme waiter's tray this rig can build is about 50° of palm. Against
+   * `palm_to_sky_deg`'s own deviation of 6.8° that leaves `waiters_tray` — the
+   * top of the triage hierarchy — clearing a tier-5 band by roughly half a
+   * degree, and `flaws.test.ts`'s jitter check had to move to tier 7 to stay
+   * meaningful because of it. The bound is `placeHand`'s `sin(palmToSky)` against
+   * the forearm tilt, so a bigger number cannot fix it; the rig needs a hand
+   * orientation with more than one angle in it. Until then, no test here can
+   * claim a margin on this signal that it has not separately checked.
    */
   palmToSky: number
   /**
@@ -188,6 +236,12 @@ export const CLEAN_SERVE: ServeDials = {
   tossElbow: 172,
   tossArmHold: 0.72,
   tossWobble: 0.01,
+  // Zero rather than matching `tossWobble`, so every expectation already in the
+  // suite keeps the serve it was written against. A clean toss wandering a
+  // centimetre front-to-back and not at all sideways is not a claim about real
+  // players; it is the rig's previous behaviour, held still while the axis it
+  // was driving is finally named.
+  tossWobbleLateral: 0,
   motionSeconds: 1.35,
   cameraYaw: 82,
   palmToSky: 6,
@@ -417,6 +471,11 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // hold fraction controls when it drops back below the shoulder.
     const dropStart = U.toss + (U.contact - U.toss) * d.tossArmHold
     const tossWrist = {
+      // The two wobble dials, on the two axes they are named for. Splitting them
+      // costs one term and buys the only thing that can catch an axis being
+      // mislabelled: a serve that wanders on one axis and is dead still on the
+      // other. With a single dial on x, a measurement reading raw image x scored
+      // identically whether it was told the answer was depth or lateral.
       x:
         track([[U.ready, -0.16], [U.toss, -0.1], [U.contact, -0.22]], u) +
         Math.sin(u * 37) * d.tossWobble,
@@ -430,7 +489,9 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
         ],
         u,
       ),
-      z: track([[U.ready, 0.08], [U.toss, -0.1], [U.contact, 0.1]], u),
+      z:
+        track([[U.ready, 0.08], [U.toss, -0.1], [U.contact, 0.1]], u) +
+        Math.sin(u * 37) * d.tossWobbleLateral,
     }
 
     if (d.noSwing) {

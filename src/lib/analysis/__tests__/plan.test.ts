@@ -71,7 +71,14 @@ check('the plan opens on the same fault triage chose', () => {
   // The plan is built by continuing triage's own walk rather than by re-ranking,
   // so its first entry has to be the fault the stored verdict already named. If
   // these two ever disagree the report is arguing with its own database.
-  const primaryDrill = DRILLS[FLAW_DRILL[verdict.primary_flaw!.flaw]]
+  //
+  // Compared against `verdict.drill_id` — what triage actually stored — rather
+  // than against `FLAW_DRILL[flaw]`. Those stopped being the same thing when
+  // `toss_drift` started choosing its drill by the axis the toss wandered along:
+  // re-deriving from the flaw alone dropped the axis and this test asserted the
+  // plan had gone wrong when the two halves in fact agreed. A check on the
+  // stored value cannot drift out of step with the thing it is checking.
+  const primaryDrill = DRILLS[verdict.drill_id!]
   assert(
     plan[0].drill.name === primaryDrill.name,
     `plan opens on "${plan[0].drill.name}", triage chose "${primaryDrill.name}"`,

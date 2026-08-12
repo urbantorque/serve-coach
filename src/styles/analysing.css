@@ -151,6 +151,17 @@
   color: var(--fg-muted);
 }
 
+/* A serve in the sweep that could not be read.
+   Not a failure state and not a done state: the row was reached, looked at, and
+   came back with nothing in it. `.step-mark` carries the tick's green, which is
+   right for a measured serve and wrong for this one — so the mark is faded to
+   the same weight as a row that has not happened yet, and the cross inside it
+   carries the meaning. Lives here rather than as an inline style on the element,
+   which is where it started. */
+.step.is-skipped .step-mark {
+  color: var(--fg-faint);
+}
+
 .step-mark {
   position: relative;
   display: grid;

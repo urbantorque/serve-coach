@@ -193,6 +193,183 @@ export function refinedPeakTime(xs: Float32Array, t: Float32Array, at: number): 
   return t[at] + shift * Math.abs(dt)
 }
 
+/**
+ * How many samples either side cover a span of time, on this clip's own clock.
+ *
+ * The fix for the defect `diagnose.ts` documents against `hip_lead_ms` and
+ * `UNDER_RESOLVED` states in full: a smoothing window counted in SAMPLES spans
+ * 100 ms of clip at 30 fps and 25 ms at 120, so every timing taken through one
+ * is partly a fact about the phone. Measured on the chain, at a fixed three
+ * samples, the elbow-to-wrist interval read 47 ms at 30 fps and 26 ms at 50 —
+ * a 21 ms swing on one identical serve, which is most of the quantity. Through
+ * this the same interval reads 47 / 41 / 39 ms across 30, 50 and 120 fps.
+ *
+ * The sibling below, `frameRadius`, answers the same question from the LOCAL
+ * interval at one index and clamps much harder, because `palmNormalAt` is
+ * averaging across a rotation it must not smear. This one takes the whole
+ * timeline's mean interval, which is what a series-wide window wants: a clip
+ * with one long gap in it should not get a different window either side of it.
+ *
+ * `max` exists because the radius is a loop bound over every sample of every
+ * series, so a mis-stated `seconds` would turn a phone-sized clip quadratic.
+ *
+ * Twenty-four, and the arithmetic matters because it is the only thing keeping
+ * this function honest about its own purpose. At the 0.09 s the chain asks for,
+ * 120 fps wants 11 samples and 240 fps wants 22. The cap was 12, which was
+ * described as "three times what 120 fps asks for" and is in fact 1.09 times
+ * it — so it began binding at about 139 fps, and at 240 the window silently
+ * became 12 samples of 4.2 ms each: 50 ms, not 90. A function whose entire
+ * reason for existing is that a window must not be a fact about the phone,
+ * quietly becoming a fact about the phone above a rate nobody had checked.
+ *
+ * Where it binds now: nothing in the app can reach it. The pose grid is capped
+ * at `FINE_FPS` = 32 in `extract.ts`, so the chain's radius is 3 samples on
+ * real footage however fast the file was shot. What can reach it is the
+ * synthetic rig, which films at whatever rate it is handed, and the frame-rate
+ * tables in `diagnose.ts` are derived exactly that way — so the trap was set
+ * for the next person deriving one, not for a player.
+ */
+export function sampleRadius(t: Float32Array, seconds: number, max = 24): number {
+  if (t.length < 2) return 1
+  const dt = (t[t.length - 1] - t[0]) / (t.length - 1)
+  if (!(dt > 1e-6)) return 1
+  return clamp(Math.round(seconds / dt), 1, max)
+}
+
+/**
+ * The refined time of the largest peak in a window, or null if it is not in it.
+ *
+ * `peakAbsIn` always returns an index, and at the edge of its window that index
+ * is not a peak — it is the largest sample it was allowed to look at, which is
+ * a different thing and is exactly what a rising signal produces. `refinedPeakTime`
+ * then declines to fit a parabola there and hands back the edge sample's own
+ * time, so the whole pipeline reports the window boundary as an event, with a
+ * deviation near zero because a boundary is the same on every realisation.
+ *
+ * That is the most dangerous shape a measurement can have here: a fabricated
+ * number that looks *more* repeatable than a real one. A racket-hand speed that
+ * is still climbing at the end of the window belongs to a clip whose contact was
+ * mis-detected or whose swing runs past it, and the honest answer is that this
+ * link has no peak in view — so it is dropped, the way `metrics.ts` drops
+ * anything it could not compute rather than defaulting it.
+ */
+export function peakTimeInside(
+  xs: Float32Array,
+  t: Float32Array,
+  from: number,
+  to: number,
+): number | null {
+  const lo = clamp(Math.min(from, to), 0, xs.length - 1)
+  const hi = clamp(Math.max(from, to), 0, xs.length - 1)
+  if (hi - lo < 2) return null
+  const at = peakAbsIn(xs, lo, hi)
+  if (at <= lo || at >= hi) return null
+  return refinedPeakTime(xs, t, at)
+}
+
+/**
+ * Speed of a landmark in the picture plane, body heights per second.
+ *
+ * Built from image x and image y — the two coordinates the camera genuinely
+ * measured — rather than from the world landmarks, and that is the whole point
+ * of it. A trunk yaw is recovered from MediaPipe's inferred z and its peak moves
+ * 53.3 ms across noise realisations of one identical serve; a wrist's planar
+ * speed peak, on the same realisations, moves 0.5 ms. Two orders of magnitude,
+ * from reading a quantity the sensor saw instead of one a network guessed.
+ *
+ * Deliberately NOT rescaled through `axes.ts`, and this is the one surprise in
+ * the file. Image x carries the player's front/back axis with gain sin(yaw) and
+ * their across-body axis with gain cos(yaw), so the obvious move is to divide
+ * the horizontal component by the dominant axis's gain before taking the
+ * magnitude. Measured across camera yaw from 20° to 88°, that made the elbow
+ * peak time *worse* — its mean spread 11.6 ms recovered against 10.8 ms raw —
+ * and left the wrist unchanged at 0.7 ms. (Those two figures come from that
+ * side-by-side comparison; the shipped raw form measures 10.2 ms on the
+ * ensemble the suite runs.) The reason is written at the top of
+ * `axes.ts`: one image-x scalar cannot be de-mixed into two components, and a
+ * limb moves on both horizontal axes at once, so dividing all of it by one
+ * axis's gain corrects for a mix that is not there.
+ *
+ * Nor is `axes.ts` any use here as a confidence, which was the next thing tried
+ * and the next thing wrong. This is a magnitude; it is never named for a body
+ * axis, so "how much of this is the depth axis" is not a doubt it has, and
+ * multiplying by that share deleted the elbow and wrist links outright at 45°
+ * of yaw — where the share splits evenly, `dominant` is null, and `estimateYaw`
+ * also lands when it cannot measure at all. What the angle actually costs is a
+ * systematic drift in when the peak lands (10.2 ms for the elbow across yaw 20°
+ * to 88°, against a 0.7 ms deviation across noise), and a systematic belongs in
+ * `UNCALIBRATED` rather than in a per-reading confidence.
+ *
+ * The vertical half needs no such hedge and that is why `riseSpeedSeries` below
+ * exists separately: image y is vertical for every camera this app accepts.
+ *
+ * Smoothed either side of the derivative for the reason `diagnose.ts` gives at
+ * length — differentiating a jittery position amplifies the jitter by the frame
+ * rate — with the radius given in samples by `sampleRadius` so the window is a
+ * span of time rather than a span of frames.
+ */
+export function planarSpeedSeries(
+  frames: Frame[],
+  landmark: number,
+  bodyHeight: number,
+  radius: number,
+): Float32Array {
+  const n = frames.length
+  const xs = new Float32Array(n)
+  const ys = new Float32Array(n)
+  // A body height of zero is a skeleton that was never scaled; dividing by it
+  // would produce an infinite speed whose peak is wherever the first infinity
+  // landed. Left in raw image units instead, which is wrong in magnitude and
+  // right in timing — and timing is all any caller of this reads.
+  const scale = bodyHeight > 1e-6 ? 1 / bodyHeight : 1
+  for (let i = 0; i < n; i++) {
+    xs[i] = (frames[i].image[landmark]?.x ?? Number.NaN) * scale
+    ys[i] = (frames[i].image[landmark]?.y ?? Number.NaN) * scale
+  }
+  const t = timeline(frames)
+  const vx = rateOf(smoothF32(xs, radius), t)
+  const vy = rateOf(smoothF32(ys, radius), t)
+  const out = new Float32Array(n)
+  for (let i = 0; i < n; i++) out[i] = Math.hypot(vx[i], vy[i])
+  return smoothF32(out, radius)
+}
+
+/**
+ * How fast a set of landmarks is rising in the picture, body heights per second.
+ *
+ * Up is positive, so the peak of this is the fastest the body was travelling
+ * skywards — read on the hip pair, that is the leg drive, the most proximal link
+ * of the chain this engine can see.
+ *
+ * Vertical only, on purpose. Image y is the one image axis whose meaning does
+ * not depend on where the phone stood: every camera this app accepts is upright
+ * to within the roll check, so a landmark climbing in the frame is a landmark
+ * climbing on the court. Measured across camera yaw from 20° to 88° the peak of
+ * this moves under a millisecond, where a *planar* speed on the same landmarks
+ * carries whatever the horizontal mix does. A leg drive is almost entirely
+ * vertical anyway, so the horizontal half would be adding a camera dependence
+ * to buy nothing.
+ */
+export function riseSpeedSeries(
+  frames: Frame[],
+  landmarks: number[],
+  bodyHeight: number,
+  radius: number,
+): Float32Array {
+  const n = frames.length
+  const ys = new Float32Array(n)
+  const scale = bodyHeight > 1e-6 ? 1 / bodyHeight : 1
+  for (let i = 0; i < n; i++) {
+    let sum = 0
+    for (const lm of landmarks) sum += frames[i].image[lm]?.y ?? Number.NaN
+    // Negated because image y grows downwards: rising in the world is falling
+    // in the frame, and a sign error here would report the leg drive at the
+    // moment the player was sinking into the trophy.
+    ys[i] = (-sum / Math.max(1, landmarks.length)) * scale
+  }
+  return smoothF32(rateOf(smoothF32(ys, radius), timeline(frames)), radius)
+}
+
 /* -------------------------------------------------------------- body series */
 
 /**

@@ -24,6 +24,7 @@
 import { blurOf, capturedSamples, stabilise } from './kalman'
 import { assessSpatial, spatialVisibility, type Spatial } from './spatial'
 import { clamp, keyVisibility, mean, sided } from './geometry'
+import type { BodyAxis } from './axes'
 import type { Diagnosis } from './diagnose'
 import type { FlawFinding, FlawId } from './flaws'
 import { SEVERITY_RANK, type Severity } from './tiers'
@@ -54,14 +55,33 @@ export const HIERARCHY: { group: string; flaws: FlawId[] }[] = [
   { group: 'sequence', flaws: ['early_shoulder_rotation', 'arming_the_ball'] },
   // And last, what happens at the ball itself — the most visible faults, and
   // the ones most often caused by something above them.
+  //
+  // `pancake_contact` is still listed and can no longer reach this list: it is
+  // marked `notNamed` in `flaws.ts`, so it never comes back detected and this
+  // group is `low_contact` in practice. Left in place rather than deleted
+  // because the hierarchy is a statement about what causes what, which is still
+  // true, and because deleting it here would only strand the drill below. If
+  // somebody rebuilds the pronation measurement, this is where it plugs back in.
   { group: 'contact', flaws: ['pancake_contact', 'low_contact'] },
 ]
 
-/** The one drill for each flaw. Identifiers only; the copy lives in coaching. */
+/**
+ * The one drill for each flaw. Identifiers only; the copy lives in coaching.
+ *
+ * `pronation_snap` is unreachable for as long as `pancake_contact` is not named.
+ * Kept so this stays a total map over `FlawId` — a partial one would push the
+ * missing-key check out to every reader — and kept deliberately rather than by
+ * neglect: the drill is sound, it is the measurement underneath it that is not.
+ */
 export const FLAW_DRILL: Record<FlawId, string> = {
   waiters_tray: 'edge_first_serve',
   toss_height: 'rail_height_toss',
-  toss_drift: 'fence_line_toss',
+  // The axis-blind answer, and the fallback for a stored report from before
+  // findings carried an axis. `FLAW_DRILL_BY_AXIS` below overrides it whenever
+  // the diagnosis knows which way the toss actually wandered — which, on the
+  // framing this app recommends, is almost always front-to-back rather than the
+  // sideways this drill constrains.
+  toss_drift: 'one_line_toss',
   posture_collapse: 'head_up_hold',
   shallow_drop: 'back_scratch_drop',
   collapsed_elbow: 'elbow_up_l',
@@ -69,6 +89,41 @@ export const FLAW_DRILL: Record<FlawId, string> = {
   arming_the_ball: 'slow_sink_hold',
   pancake_contact: 'pronation_snap',
   low_contact: 'heels_up_basket',
+}
+
+/**
+ * The drill to hand out when the finding knows which axis it measured.
+ *
+ * A drill cannot hedge, which is the whole reason this table exists. "Toss so
+ * the ball brushes a fence you are standing side-on to" pins the hand's sideways
+ * position and says nothing at all about how far in front of the body it went —
+ * so a player whose toss wanders front-to-back can do it perfectly, twenty times
+ * a day, and change nothing. The instruction is the half of the report a player
+ * acts on, and an instruction aimed at the wrong axis costs them the session and
+ * the trust.
+ *
+ * It matters because the wrong axis was the usual case, not the edge case. On
+ * the side-on framing this app recommends, `axes.ts` puts 99% of an image-x toss
+ * reading on the front/back axis, and `toss_drift` handed out the fence drill on
+ * every one of those clips.
+ *
+ * Partial on purpose: a flaw with no entry has no axis question, and its answer
+ * stays the single one in `FLAW_DRILL`.
+ */
+export const FLAW_DRILL_BY_AXIS: Partial<Record<FlawId, Record<BodyAxis, string>>> = {
+  toss_drift: { depth: 'baseline_drop_toss', lateral: 'fence_line_toss' },
+}
+
+/**
+ * The drill for one finding: by axis where there is one, by flaw otherwise.
+ *
+ * The fallback is not a formality. A report stored before findings carried an
+ * axis has none, and a clip filmed at the 45° tie has none either because
+ * `diagnose` refuses to guess there — both must come back with the axis-neutral
+ * drill rather than with whichever axis happened to be listed first.
+ */
+export function drillIdFor(flaw: FlawId, axis?: BodyAxis): string {
+  return (axis && FLAW_DRILL_BY_AXIS[flaw]?.[axis]) || FLAW_DRILL[flaw]
 }
 
 /* --------------------------------------------------------------- refusal -- */
@@ -106,6 +161,14 @@ export interface Triage {
     target: [number, number]
     target_tier: number
     severity: Severity
+    /**
+     * The body axis the signal was read along, where the signal has one.
+     *
+     * Stored on the report rather than re-derived, so a reopened session says
+     * the same thing about the same clip. Absent on flaws with no axis question
+     * and on reports written before this field existed.
+     */
+    axis?: BodyAxis
   }
   drill_id?: string
   /**
@@ -327,8 +390,9 @@ export function triage(diagnosis: Diagnosis, resilience: Resilience): Triage {
       target: f.target,
       target_tier: f.target_tier,
       severity: f.severity,
+      ...(f.axis ? { axis: f.axis } : {}),
     },
-    drill_id: FLAW_DRILL[f.flaw],
+    drill_id: drillIdFor(f.flaw, f.axis),
     injury_risk,
     suppressed_count: Math.max(0, detected.length - 1),
   }

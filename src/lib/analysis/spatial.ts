@@ -44,6 +44,20 @@ export interface Spatial {
   depth_unreliable: boolean
   /** 0–1. How much of the spatial geometry is usable at all. */
   confidence: number
+  /**
+   * 0–1. The part of `confidence` that is about the *angle* rather than the
+   * depth axis: what a levelling correction from a noisy vertical is worth.
+   *
+   * Split out because `confidence` answers two questions at once and one of its
+   * two factors is about world z. A caller that never touches world z — `axes.ts`
+   * asks only which body axis image x lay across — was paying the
+   * `depth_unreliable` quarter anyway, and paying it in the wrong direction: the
+   * flag fires above 78°, which is where the axis split is at its *purest*
+   * (0.992 of the reading is one axis) and where the yaw estimate is best
+   * conditioned. The effect was a 25% cliff between 78° and 79° of yaw for a
+   * reading that gets marginally better across it.
+   */
+  roll_confidence: number
 }
 
 /**
@@ -87,6 +101,7 @@ export function assessSpatial(frames: Frame[], readyIndex: number, bodyHeight: n
     yaw_deg: Math.round(yaw),
     depth_unreliable,
     confidence: Math.round(rollCost * yawCost * 100) / 100,
+    roll_confidence: Math.round(rollCost * 100) / 100,
   }
 }
 

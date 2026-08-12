@@ -86,6 +86,103 @@
 }
 
 /* ============================================================================
+   Framing check — the guide, live
+
+   Sized for a glance from four metres away. The player props the phone, walks
+   to where they will serve and looks back at it, so the verdict has to survive
+   being read at arm's length times four: the whole preview carries the colour,
+   not a badge in a corner.
+   ========================================================================= */
+
+.framer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.framer-stage {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--ink);
+  border: 3px solid var(--ink-4);
+  aspect-ratio: 3 / 4;
+  transition: border-color var(--base) var(--ease);
+}
+
+/* `contain`, never `cover`.
+   The stream's shape is whatever the device hands back — `getUserMedia` is asked
+   for a width and no aspect ratio — so on a laptop or on many phone stacks it
+   arrives 4:3 or 16:9. `cover` into this 3/4 box shows only 0.75/sourceAspect of
+   the source width: 56% of a 4:3 stream, 42% of a 16:9 one. `framingIssues` and
+   `estimateYaw` read the whole frame, so up to 58% of the width the verdict was
+   taken from would be outside the picture the player is looking at — a player
+   standing near the real left edge would appear comfortably centred while being
+   told to move. The verdict would still be right, which is exactly what makes
+   that dangerous: right verdict, wrong evidence. Letterboxing against the stage
+   background costs a black bar and shows what the model sees. */
+.framer-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.framer-stage--clear { border-color: var(--great); }
+.framer-stage--hedged { border-color: var(--fair); }
+.framer-stage--refused { border-color: var(--work); }
+
+/* The badge repeats the verdict as a shape, for anyone who cannot separate the
+   three border colours. It is the same information, never extra information. */
+.framer-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(4, 6, 9, 0.72);
+  color: var(--fg);
+}
+
+.framer-stage--looking .framer-badge { display: none; }
+.framer-stage--clear .framer-badge { color: var(--great); }
+.framer-stage--hedged .framer-badge { color: var(--fair); }
+.framer-stage--refused .framer-badge { color: var(--work); }
+
+.framer-cue {
+  font-size: 16px;
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
+.framer-cue .cue-key {
+  font-weight: var(--wt-key);
+}
+
+.framer-cue--clear .cue-key { color: var(--great); }
+.framer-cue--hedged .cue-key { color: var(--fair); }
+.framer-cue--refused .cue-key { color: var(--work); }
+
+.framer-foot {
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: var(--fg-faint);
+}
+
+/* A tilt correction on the preview would be a lie: the phone really is crooked
+   and the picture is what proves it. So nothing here moves, and there is no
+   motion for a reduced-motion preference to turn off — only the border colour
+   changes, and that transition is dropped with everything else. */
+@media (prefers-reduced-motion: reduce) {
+  .framer-stage {
+    transition: none;
+  }
+}
+
+/* ============================================================================
    Wider screens: the app stays a single column, but breathes more
    ========================================================================= */
 

@@ -15,6 +15,7 @@
  * fault, and sending somebody away to reach higher off a ball that never got
  * there is the single most common way an automated analysis wastes a season.
  */
+import type { BodyAxis } from './axes'
 import {
   NOISE_FLOOR,
   SEVERITY_RANK,
@@ -56,6 +57,23 @@ export interface FlawFinding {
   confidence: number
   /** Set when this flaw is a symptom of another detected one. */
   caused_by?: FlawId
+  /**
+   * Which body axis the signal underneath was read along, where that is a
+   * question at all.
+   *
+   * Only `toss_drift_ratio` sets it today. It exists because the fault this
+   * engine can measure — a tossing hand that does not repeat its line — is one
+   * fault with two different sentences and two different drills under it, and
+   * which one is true depends on where the phone stood rather than on the
+   * player. Carried as data, so the layers that write prose can pick the true
+   * sentence instead of the one that used to be hard-coded: before this, a
+   * side-on clip whose drift is 99% front-to-back was headed "Your toss drifts
+   * sideways" and answered with a drill that constrains the other axis.
+   *
+   * Absent means the question does not arise for this flaw, or the reading
+   * predates the axis work. Readers fall back to axis-neutral copy.
+   */
+  axis?: BodyAxis
 }
 
 type SIGNAL_UNIT = 'deg' | 'ms' | 'ratio'
@@ -71,6 +89,23 @@ interface FlawSpec {
    * is asked to work on.
    */
   causedBy?: FlawId
+  /**
+   * Why this flaw is measured but never named, when it is not.
+   *
+   * The engine still reads the signal, still records how far outside its band it
+   * landed, and still hands both to anything that wants the data. What it stops
+   * doing is telling a player they have this fault. That is the honest shape for
+   * a signal whose repeatability cannot support the distinction its band is
+   * drawing — the noise floor's own logic, taken to the point where no floor
+   * works — and it is a shape the codebase can carry: everything player-facing
+   * filters on `detected`, so this removes the flaw from the report without
+   * removing it from the type and stranding `FLAW_COPY` and `FLAW_DRILL`.
+   *
+   * Prefer this to deleting the entry. A deleted detector leaves nothing behind
+   * that says a detector was ever tried, and the next person re-derives the same
+   * bad one. The reason belongs in `UNDER_RESOLVED`; this field points at it.
+   */
+  notNamed?: string
 }
 
 /**
@@ -87,9 +122,22 @@ export const FLAWS: FlawSpec[] = [
   // rather than a second thing to fix.
   { flaw: 'arming_the_ball', signal: 'hip_lead_ms', causedBy: 'early_shoulder_rotation' },
   { flaw: 'toss_drift', signal: 'toss_drift_ratio' },
-  // A spine that folds sideways is usually a body chasing a ball that went
-  // sideways. Told on its own it reads as "stand up straighter", which is
-  // advice nobody can follow while the toss keeps moving.
+  // A spine that folds sideways is usually a body chasing a ball that did not
+  // go where the last one did. Told on its own it reads as "stand up
+  // straighter", which is advice nobody can follow while the toss keeps moving.
+  //
+  // The link used to be justified as "a body chasing a ball that went
+  // sideways", and that sentence stopped being true when `toss_drift_ratio`
+  // started naming its own axis: on the side-on framing this app recommends the
+  // drift it measures is 99% front-to-back, so the old wording had a sideways
+  // collapse caused by a wobble nothing had measured. The mechanism is the one
+  // that survives either way — a toss that does not repeat its position makes
+  // the trunk reach for it, and `spine_lean_deg` is a *lateral* lean because
+  // that is the component the camera can see, not because the toss error was
+  // lateral. What is not established is the strength of the link per axis. It
+  // wants real footage; the honest state today is a plausible mechanism, named
+  // as such, on a link that only ever suppresses a second instruction rather
+  // than inventing one.
   { flaw: 'posture_collapse', signal: 'spine_lean_deg', causedBy: 'toss_drift' },
   { flaw: 'collapsed_elbow', signal: 'elbow_lift_ratio' },
   // The hand can be well down the back with the elbow dropped beside it, which
@@ -98,7 +146,19 @@ export const FLAWS: FlawSpec[] = [
   { flaw: 'shallow_drop', signal: 'drop_depth_ratio', causedBy: 'collapsed_elbow' },
   // A palm turned under the racket physically cannot rotate through the ball:
   // the forearm is already at the end of its travel before the swing starts.
-  { flaw: 'pancake_contact', signal: 'pronation_deg', causedBy: 'waiters_tray' },
+  //
+  // True, and not something this engine can see. `pronation_deg` moves 20°
+  // across noise realisations of one identical serve against a 16° serious
+  // miss, which had this naming a pancake on a tenth of the serves that had a
+  // full forearm turn in them and missing two thirds of the ones that had none.
+  // Measured, kept as data, never said out loud — the full derivation and the
+  // two roads that both ended here are in `UNDER_RESOLVED.pronation_deg`.
+  {
+    flaw: 'pancake_contact',
+    signal: 'pronation_deg',
+    causedBy: 'waiters_tray',
+    notNamed: 'see UNDER_RESOLVED.pronation_deg',
+  },
   { flaw: 'toss_height', signal: 'toss_peak_ratio' },
   { flaw: 'low_contact', signal: 'contact_height_ratio', causedBy: 'toss_height' },
 ]
@@ -107,6 +167,14 @@ export interface SignalReading {
   value: number
   /** 0–1. Signals resting on landmarks the tracker lost are not evidence. */
   confidence: number
+  /**
+   * The body axis this number is a movement along, when it is one.
+   *
+   * Set by `diagnose` for readings taken through `axes.ts`, and passed straight
+   * through to the finding. Left off by every signal that is an angle, a
+   * duration or a height, none of which have an axis to be wrong about.
+   */
+  axis?: BodyAxis
 }
 
 /**
@@ -198,7 +266,34 @@ export function evaluateFlaws(
      * put a keyframe on, and that fact is worth more here than the proxy.
      */
     const neverFell = spec.flaw === 'shallow_drop' && structural.racketNeverFell === true
-    const detected = neverFell || (!insideBand(spec.signal, reading.value, target) && resolvable)
+
+    /*
+     * The last gate, and the widest one: is this flaw named to players at all?
+     *
+     * `resolvable` above asks whether *this* miss is bigger than the signal's
+     * noise. `notNamed` is the answer when that question has no good answer for
+     * any miss — when the band the flaw is drawn against is finer than the
+     * measurement across its whole range, so there is no floor that both keeps
+     * the detector alive and keeps it honest. See `UNDER_RESOLVED` in tiers.ts.
+     *
+     * Applied to `detected` and to `severity` together, deliberately. Splitting
+     * them would produce a finding reading `detected: false, severity: 'high'`,
+     * which is two answers to one question and which `triage` sorts on the
+     * second of.
+     */
+    const named = spec.notNamed === undefined
+
+    const detected =
+      named && (neverFell || (!insideBand(spec.signal, reading.value, target) && resolvable))
+
+    const graded: Severity = neverFell
+      ? worseSeverity(
+          resolvable ? severityOf(spec.signal, reading.value, target) : 'none',
+          NO_FALL_SEVERITY,
+        )
+      : resolvable
+        ? severityOf(spec.signal, reading.value, target)
+        : 'none'
 
     found.push({
       flaw: spec.flaw,
@@ -212,15 +307,12 @@ export function evaluateFlaws(
       miss: round(miss, spec.signal),
       target: [round(target[0], spec.signal), round(target[1], spec.signal)],
       target_tier,
-      severity: neverFell
-        ? worseSeverity(
-            resolvable ? severityOf(spec.signal, reading.value, target) : 'none',
-            NO_FALL_SEVERITY,
-          )
-        : resolvable
-          ? severityOf(spec.signal, reading.value, target)
-          : 'none',
+      severity: named ? graded : 'none',
       confidence: Math.round(reading.confidence * 100) / 100,
+      // Carried through untouched. This layer has no opinion about which axis a
+      // reading was taken along; it only has to stop the fact getting lost
+      // between the pass that measured it and the pass that writes the sentence.
+      ...(reading.axis ? { axis: reading.axis } : {}),
     })
   }
 

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import FramingCheck from '../components/FramingCheck'
 import { DeltaChip, Sparkline } from '../components/Trend'
-import { Icon, ScoreRing } from '../components/primitives'
+import { Icon, ScoreRing, Sheet } from '../components/primitives'
+import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
 import { buildProgress, currentRubricEra } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
@@ -85,6 +87,11 @@ export default function Home({
   // on every render of the first screen, all of them asking the same thing about
   // a device that cannot change its pointer while the page is open.
   const coarse = useMemo(coarsePointer, [])
+  const [checking, setChecking] = useState(false)
+  // Whether a live preview is possible at all. Asked once, for the same reason
+  // as the pointer above, and a page served over plain http has no camera API to
+  // find — so on those the offer is simply not made rather than made and broken.
+  const canPreview = useMemo(() => previewSupported(), [])
 
   const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -226,6 +233,25 @@ export default function Home({
         <Icon name="chevron" size={16} />
       </button>
 
+      {/* The guide's four rules, checked against the camera the player is
+          actually holding. Everything the engine gives up on because of where
+          the phone was — the depth axis outside eighteen to seventy-eight
+          degrees of yaw, a body with one end out of shot, a hand it never found
+          — is decided by the framing and knowable before the serve. Until this
+          existed the earliest anyone could learn it was half a minute after
+          they had finished filming. Offered rather than imposed: it sits below
+          both ways in, and both still work without ever opening it. */}
+      {canPreview && (
+        <button className="strap" onClick={() => setChecking(true)}>
+          <Icon name="camera" size={17} />
+          <span>
+            <strong>Check your framing first</strong>
+            Point the phone at your spot and see what the coach can read.
+          </span>
+          <Icon name="chevron" size={16} />
+        </button>
+      )}
+
       {/* Somebody who has never used this has no serve video on their phone, so
           the only thing the app can currently show them is a file picker. An
           example report is the difference between understanding what this does
@@ -360,6 +386,14 @@ export default function Home({
           browser, on a court with no signal just as well as at home.
         </p>
       </footer>
+
+      {/* Mounted only while it is open, which is what guarantees the camera is
+          released: the component stops its own tracks on unmount, and closing
+          the sheet is an unmount. Through `Sheet` for the focus trap and the
+          Escape key, rather than a second overlay with its own half of that. */}
+      <Sheet open={checking} onClose={() => setChecking(false)} title="Check your framing">
+        <FramingCheck />
+      </Sheet>
     </div>
   )
 }

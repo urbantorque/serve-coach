@@ -14,6 +14,7 @@
  */
 import { TRANSLATED, readoutOf, rungsOf, targetOf } from '../anatomy'
 import {
+  AXIS_COPY,
   DRILLS,
   FUNDAMENTALS,
   METRICS,
@@ -21,10 +22,11 @@ import {
   metricCopy,
   type MetricCopy,
 } from '../coaching'
+import type { BodyAxis } from '../axes'
 import { MAX_SENTENCES, MAX_WORDS, command, cueIssues, plain, wordCount } from '../voice'
 import { VERDICT_TABLES, causalFocus, everyVerdictCue, refusalFor } from '../verdict'
-import { FLAWS } from '../flaws'
-import { FLAW_DRILL } from '../triage'
+import { FLAWS, type FlawId } from '../flaws'
+import { FLAW_DRILL, FLAW_DRILL_BY_AXIS, drillIdFor } from '../triage'
 import { assert, check, report } from './harness'
 import type { ServeType } from '../../storage/prefs'
 
@@ -58,6 +60,20 @@ function everyCue(): { where: string; text: string }[] {
     }
     for (const [metricId, drill] of Object.entries(type.drill ?? {})) {
       out.push({ where: `${id}.${metricId}.drill.how`, text: drill.how })
+    }
+  }
+  // The lines a body axis replaces. They reach a player through the same card as
+  // the ones above and are chosen by the camera rather than by the player, which
+  // is the one thing about them the editor does not care about.
+  for (const [metricId, byAxis] of Object.entries(AXIS_COPY)) {
+    for (const [axis, copy] of Object.entries(byAxis)) {
+      for (const [k, v] of Object.entries(copy.insight ?? {})) {
+        if (v) out.push({ where: `${axis}.${metricId}.${k}`, text: v })
+      }
+      for (const [k, v] of Object.entries(copy.fix ?? {})) {
+        if (v) out.push({ where: `${axis}.${metricId}.fix.${k}`, text: v })
+      }
+      if (copy.drill) out.push({ where: `${axis}.${metricId}.drill.how`, text: copy.drill.how })
     }
   }
   for (const [id, f] of Object.entries(FUNDAMENTALS)) {
@@ -109,6 +125,14 @@ check('key words are marked for scanning', () => {
       for (const [side, text] of Object.entries(fix)) {
         if (!text) continue
         assert(text.includes('**'), `${id}.${metricId}.fix.${side} has no marked instruction`)
+      }
+    }
+  }
+  for (const [metricId, byAxis] of Object.entries(AXIS_COPY)) {
+    for (const [axis, copy] of Object.entries(byAxis)) {
+      for (const [side, text] of Object.entries(copy.fix ?? {})) {
+        if (!text) continue
+        assert(text.includes('**'), `${axis}.${metricId}.fix.${side} has no marked instruction`)
       }
     }
   }
@@ -235,11 +259,16 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Arm holds to the swing', high: 'Arm holds to the swing' },
   },
   tossPathWobble: {
-    stamp: '86c85fdf',
+    // Re-stamped when the fault line and its order stopped saying "sideways".
+    // The number under them is drift along whichever body axis the camera laid
+    // across image x, which side-on is front-to-back — so the old wording named
+    // a direction on every clip and had it right on some of them. The rungs
+    // moved with it, from "wide" to "off line", for the same reason.
+    stamp: '6c55745d',
     insight: {
       low: ['Dead straight lift'],
       ok: ['Dead straight lift', 'Straight lift'],
-      high: ['Drifts a hand wide', 'Wanders wide'],
+      high: ['Drifts a hand off line', 'Wanders off line'],
     },
     aim: { high: 'Straight lift' },
   },
@@ -336,6 +365,27 @@ const CLAIMED: Record<string, Claimed> = {
       high: ['Arm swings straight'],
     },
     aim: { low: 'Arm folded in an L', high: 'Arm folded in an L' },
+  },
+  handUnderElbow: {
+    stamp: '53ad2911',
+    insight: {
+      // Two rungs under one sentence, which is only safe because that sentence
+      // names the shortfall the two share instead of a position. "Never gets
+      // under the elbow" and "dips under the elbow" are different bodies, and a
+      // line committing to either would be taken back by the readout beside it
+      // for every player at the other end.
+      low: ['Hand never gets under the elbow', 'Hand dips under the elbow'],
+      ok: ['Hand hangs under the elbow'],
+      // Claimed although the band runs to the end of the axis and this line
+      // therefore cannot be shown today. The claim is what a future ceiling
+      // would be checked against, and writing it now is cheaper than
+      // reconstructing it then.
+      high: ['Hand hangs under the elbow'],
+    },
+    // No `high`, because there is no instruction above a band that ends at the
+    // top of its own axis — the same blank `tossPathWobble` carries at the
+    // opposite end.
+    aim: { low: 'Hand hangs under the elbow' },
   },
   dropToContact: {
     // Re-stamped when `ok` dropped the phrase "acceleration window" — lab
@@ -446,6 +496,27 @@ const CLAIMED: Record<string, Claimed> = {
     // the order and the description agree about where the ball is met.
     aim: { high: 'Struck at full racket reach' },
   },
+  /*
+   * The lines a body axis replaces, claimed where they are written.
+   *
+   * Both name the same rungs as the axis-neutral pair they replace, and that is
+   * the point rather than a coincidence: the ladder measures how far the hand
+   * left its line and the axis says which way it left it, so an overlay changes
+   * the direction in the sentence and never the distance in the readout. A claim
+   * here that differed from the base claim would mean an overlay had quietly
+   * started describing a different amount of drift.
+   */
+  'depth.tossPathWobble': {
+    stamp: '595419a2',
+    insight: { high: ['Drifts a hand off line', 'Wanders off line'] },
+    aim: { high: 'Straight lift' },
+  },
+  'lateral.tossPathWobble': {
+    stamp: '0dd1afff',
+    insight: { high: ['Drifts a hand off line', 'Wanders off line'] },
+    aim: { high: 'Straight lift' },
+  },
+
   'kick.shoulderTilt': {
     stamp: '0f84abf5',
     insight: {
@@ -467,12 +538,76 @@ const CLAIMED: Record<string, Claimed> = {
 
 const SERVE_TYPE_IDS = Object.keys(SERVE_TYPES) as ServeType[]
 
+/**
+ * The overlays a site prefix can name.
+ *
+ * Two kinds now write copy over a measurement's own: a serve type, chosen by the
+ * player, and a body axis, decided by where their phone stood. They share this
+ * table's `<prefix>.<measurement>` key space because they share everything that
+ * matters to an editor — both replace a line on a real card, both have to say
+ * again which body positions the replacement can be printed beside, and both go
+ * stale in exactly the same way when someone rewrites the sentence.
+ *
+ * The two vocabularies do not collide (`flat`/`kick`/`slice` against
+ * `depth`/`lateral`) and this asserts that rather than trusting it, because the
+ * day they do collide a claim silently starts checking the wrong sentence.
+ */
+const AXIS_IDS = ['depth', 'lateral'] as const
+const isAxis = (prefix: string): prefix is BodyAxis =>
+  (AXIS_IDS as readonly string[]).includes(prefix)
+
+check('the two overlay vocabularies stay apart', () => {
+  for (const axis of AXIS_IDS) {
+    assert(
+      !SERVE_TYPE_IDS.includes(axis as unknown as ServeType),
+      `"${axis}" is both a body axis and a serve type, so a claim site names two things`,
+    )
+  }
+})
+
+/** The insight and fix a site owns: an overlay's own lines, or the base copy's. */
+function copyAt(site: string): {
+  insight?: Partial<MetricCopy['insight']>
+  fix?: Partial<MetricCopy['fix']>
+} {
+  const [prefix, id] = site.includes('.') ? site.split('.') : [undefined, site]
+  if (!prefix) return { insight: METRICS[id]?.insight, fix: METRICS[id]?.fix }
+  if (isAxis(prefix)) {
+    return { insight: AXIS_COPY[id]?.[prefix]?.insight, fix: AXIS_COPY[id]?.[prefix]?.fix }
+  }
+  return {
+    insight: SERVE_TYPES[prefix as ServeType]?.insight?.[id],
+    fix: SERVE_TYPES[prefix as ServeType]?.fix?.[id],
+  }
+}
+
 /** The five lines one site can carry, in a fixed order, for the stamp. */
 function linesAt(site: string): (string | undefined)[] {
-  const [type, id] = site.includes('.') ? site.split('.') : [undefined, site]
-  const insight = type ? SERVE_TYPES[type as ServeType]?.insight?.[id] : METRICS[id]?.insight
-  const fix = type ? SERVE_TYPES[type as ServeType]?.fix?.[id] : METRICS[id]?.fix
+  const { insight, fix } = copyAt(site)
   return [insight?.low, insight?.ok, insight?.high, fix?.low, fix?.high]
+}
+
+/**
+ * Every axis a measurement's card can be written in, the neutral one first.
+ *
+ * `undefined` is not a placeholder here — it is the card `build` produces when
+ * the caller has no camera angle to hand over, written to be true whichever way
+ * the hand went, and it faces the sweeps below on the same terms as the two that
+ * name a direction.
+ */
+function axesFor(id: string): (BodyAxis | undefined)[] {
+  return [undefined, ...(Object.keys(AXIS_COPY[id] ?? {}) as BodyAxis[])]
+}
+
+/** Every card a player can be shown for one measurement: serve type × axis. */
+function cardsFor(id: string): { type: ServeType; axis?: BodyAxis; label: string }[] {
+  const out: { type: ServeType; axis?: BodyAxis; label: string }[] = []
+  for (const type of SERVE_TYPE_IDS) {
+    for (const axis of axesFor(id)) {
+      out.push({ type, axis, label: axis ? `${type}/${axis}` : type })
+    }
+  }
+  return out
 }
 
 /**
@@ -497,16 +632,32 @@ function stampOf(site: string): string {
   return (h >>> 0).toString(16).padStart(8, '0')
 }
 
-/** Where a serve type's card reads its insight from: its own line, or the base. */
-const insightSite = (id: string, type: ServeType, kind: Kind) =>
-  SERVE_TYPES[type].insight?.[id]?.[kind] ? `${type}.${id}` : id
+/**
+ * Where one card reads its insight from: the axis line, the serve type's, or the
+ * base.
+ *
+ * The order is `metricCopy`'s, and it has to be: whichever line that function
+ * would put on the card is the line whose claim decides whether the card
+ * contradicts itself. Checking the serve type's claim about a sentence the axis
+ * overlay has already replaced would pass a card nobody is ever shown.
+ */
+const insightSite = (id: string, type: ServeType, kind: Kind, axis?: BodyAxis) =>
+  axis && AXIS_COPY[id]?.[axis]?.insight?.[kind]
+    ? `${axis}.${id}`
+    : SERVE_TYPES[type].insight?.[id]?.[kind]
+      ? `${type}.${id}`
+      : id
 
-/** The same for the instruction, which a serve type may replace on its own. */
-const fixSite = (id: string, type: ServeType, side: 'low' | 'high') =>
-  SERVE_TYPES[type].fix?.[id]?.[side] ? `${type}.${id}` : id
+/** The same for the instruction, which either overlay may replace on its own. */
+const fixSite = (id: string, type: ServeType, side: 'low' | 'high', axis?: BodyAxis) =>
+  axis && AXIS_COPY[id]?.[axis]?.fix?.[side]
+    ? `${axis}.${id}`
+    : SERVE_TYPES[type].fix?.[id]?.[side]
+      ? `${type}.${id}`
+      : id
 
-function claimsFor(id: string, type: ServeType, kind: Kind): string[] {
-  const site = insightSite(id, type, kind)
+function claimsFor(id: string, type: ServeType, kind: Kind, axis?: BodyAxis): string[] {
+  const site = insightSite(id, type, kind, axis)
   const tags = CLAIMED[site]?.insight?.[kind]
   assert(
     tags !== undefined && tags.length > 0,
@@ -546,17 +697,17 @@ function probes(copy: MetricCopy): number[] {
 }
 
 check('no measurement is described one way and read out another', () => {
-  for (const type of SERVE_TYPE_IDS) {
-    for (const id of Object.keys(METRICS)) {
-      const copy = metricCopy(id, type)
+  for (const id of Object.keys(METRICS)) {
+    for (const { type, axis, label } of cardsFor(id)) {
+      const copy = metricCopy(id, type, axis)
       for (const v of probes(copy)) {
         // Exactly how `build()` chooses, so this walks the card a player sees
         // rather than a second opinion about which string should have shown.
         const kind: Kind = v < copy.ideal[0] ? 'low' : v > copy.ideal[1] ? 'high' : 'ok'
         const readout = readoutOf(id, v)
         assert(
-          claimsFor(id, type, kind).includes(readout),
-          `${type} ${id} at ${v.toFixed(3)} reads out "${readout}" under\n` +
+          claimsFor(id, type, kind, axis).includes(readout),
+          `${label} ${id} at ${v.toFixed(3)} reads out "${readout}" under\n` +
             `        "${copy.insight[kind]}"`,
         )
       }
@@ -565,15 +716,15 @@ check('no measurement is described one way and read out another', () => {
 })
 
 check('a fault the card names always arrives with the order that corrects it', () => {
-  for (const type of SERVE_TYPE_IDS) {
-    for (const id of Object.keys(METRICS)) {
-      const copy = metricCopy(id, type)
+  for (const id of Object.keys(METRICS)) {
+    for (const { type, axis, label } of cardsFor(id)) {
+      const copy = metricCopy(id, type, axis)
       for (const v of probes(copy)) {
         if (v >= copy.ideal[0] && v <= copy.ideal[1]) continue
         const side = v < copy.ideal[0] ? 'low' : 'high'
         assert(
           copy.fix[side].length > 0,
-          `${type} ${id} at ${v.toFixed(3)} is out of band, reads "${readoutOf(id, v)}" and offers no fix`,
+          `${label} ${id} at ${v.toFixed(3)} is out of band, reads "${readoutOf(id, v)}" and offers no fix`,
         )
       }
     }
@@ -581,18 +732,18 @@ check('a fault the card names always arrives with the order that corrects it', (
 })
 
 check('every fix aims at a position the same card would praise', () => {
-  for (const type of SERVE_TYPE_IDS) {
-    for (const id of Object.keys(METRICS)) {
-      const copy = metricCopy(id, type)
-      const praised = claimsFor(id, type, 'ok')
+  for (const id of Object.keys(METRICS)) {
+    for (const { type, axis, label } of cardsFor(id)) {
+      const copy = metricCopy(id, type, axis)
+      const praised = claimsFor(id, type, 'ok', axis)
       for (const side of ['low', 'high'] as const) {
         if (!copy.fix[side]) continue
-        const site = fixSite(id, type, side)
+        const site = fixSite(id, type, side, axis)
         const aim = CLAIMED[site]?.aim?.[side]
         assert(aim !== undefined, `${site}.fix.${side} never says which position it aims at`)
         assert(
           praised.includes(aim as string),
-          `${type} ${id} fix.${side} aims at "${aim}", which this card would not praise ` +
+          `${label} ${id} fix.${side} aims at "${aim}", which this card would not praise ` +
             `(${praised.join(', ')}):\n        "${copy.fix[side]}"`,
         )
       }
@@ -637,17 +788,52 @@ check('a serve type that rewrites a fault also rewrites the order that corrects 
   }
 })
 
-check('the target phrase is a position the card praises, for every serve type', () => {
+check('a body axis that rewrites a fault also rewrites the order that corrects it', () => {
+  // The serve-type rule below, applied to the other overlay, and here it is not
+  // a hypothetical: the whole reason this overlay exists is that the fence-line
+  // instruction and its drill were being printed under a reading taken along the
+  // player's front/back axis. An axis that renames the fault and leaves the old
+  // order beneath it would rebuild that exact card — the description finally
+  // correct, the one line the player acts on still pointing at the wrong axis.
+  //
+  // The drill is required with them, which the serve-type rule does not demand.
+  // A serve type moves a band and can leave the exercise alone; an axis is a
+  // direction, and every drill here constrains one. A fence pins the hand
+  // sideways and says nothing about how far in front of the body it went, so an
+  // axis carrying its own words and the other axis's exercise sends the player
+  // to practise the one thing that cannot move their number.
+  for (const [id, byAxis] of Object.entries(AXIS_COPY)) {
+    assert(METRICS[id] !== undefined, `an axis rewrites copy for ${id}, which is not a measurement`)
+    for (const [axis, copy] of Object.entries(byAxis)) {
+      for (const side of ['low', 'high'] as const) {
+        if (!copy.insight?.[side]) continue
+        if (!METRICS[id].fix[side]) continue
+        assert(
+          Boolean(copy.fix?.[side]),
+          `${axis} rewrites ${id}.insight.${side} and leaves the axis-neutral instruction under it:\n` +
+            `        said:    "${copy.insight[side]}"\n` +
+            `        ordered: "${METRICS[id].fix[side]}"`,
+        )
+      }
+      assert(
+        Boolean(copy.drill),
+        `${axis}.${id} names the fault in its own words and offers no drill of its own`,
+      )
+    }
+  }
+})
+
+check('the target phrase is a position the card praises, for every card', () => {
   // `targetOf` reads the middle of the band through the ladder, so this is the
   // band and the ok insight checked against each other from the other end: the
   // phrase printed as the target has to be one the praise can be said about.
-  for (const type of SERVE_TYPE_IDS) {
-    for (const id of Object.keys(METRICS)) {
-      const copy = metricCopy(id, type)
+  for (const id of Object.keys(METRICS)) {
+    for (const { type, axis, label } of cardsFor(id)) {
+      const copy = metricCopy(id, type, axis)
       const target = targetOf(id, copy.ideal)
       assert(
-        claimsFor(id, type, 'ok').includes(target),
-        `${type} ${id} asks for "${target}" and praises it with\n        "${copy.insight.ok}"`,
+        claimsFor(id, type, 'ok', axis).includes(target),
+        `${label} ${id} asks for "${target}" and praises it with\n        "${copy.insight.ok}"`,
       )
     }
   }
@@ -706,23 +892,26 @@ check('every claim is written in the ladder’s own words, and every claim is us
   // `anatomy.ts` would silently stop matching and the sweep would pass by
   // claiming nothing at all.
   for (const [site, claimed] of Object.entries(CLAIMED)) {
-    const [type, id] = site.includes('.') ? site.split('.') : [undefined, site]
+    const [prefix, id] = site.includes('.') ? site.split('.') : [undefined, site]
     assert(METRICS[id] !== undefined, `${site} claims things about a measurement that is gone`)
     const tags = rungsOf(id).map((r) => r.tag)
+    // Read through the same resolver the stamp uses, so an overlay that stops
+    // replacing a line cannot leave a claim behind still being counted.
+    const { insight: written, fix: ordered } = copyAt(site)
     for (const [kind, list] of Object.entries(claimed.insight)) {
-      if (type) {
+      if (prefix) {
         assert(
-          SERVE_TYPES[type as ServeType]?.insight?.[id]?.[kind as Kind] !== undefined,
-          `${site}.insight.${kind} claims for a line ${type} no longer replaces`,
+          written?.[kind as Kind] !== undefined,
+          `${site}.insight.${kind} claims for a line ${prefix} no longer replaces`,
         )
       }
       for (const tag of list) assert(tags.includes(tag), `${site}.insight.${kind}: no rung "${tag}"`)
     }
     for (const [side, aim] of Object.entries(claimed.aim ?? {})) {
-      if (type) {
+      if (prefix) {
         assert(
-          SERVE_TYPES[type as ServeType]?.fix?.[id]?.[side as 'low' | 'high'] !== undefined,
-          `${site}.aim.${side} claims for a fix ${type} no longer replaces`,
+          ordered?.[side as 'low' | 'high'] !== undefined,
+          `${site}.aim.${side} claims for a fix ${prefix} no longer replaces`,
         )
       }
       assert(tags.includes(aim), `${site}.aim.${side}: no rung "${aim}"`)
@@ -834,6 +1023,44 @@ check('every flaw the engine can name has words and an exercise', () => {
       Boolean(DRILLS[FLAW_DRILL[spec.flaw]]),
       `${spec.flaw} points at drill "${FLAW_DRILL[spec.flaw]}", which does not exist`,
     )
+  }
+})
+
+check('every axis a flaw can be measured along has words and an exercise of its own', () => {
+  /*
+   * The same three-table agreement as above, one level down, where it was
+   * missing. `toss_drift` chooses its drill by the axis the toss wandered along,
+   * and `DRILLS` gained two entries for it that nothing referenced and no test
+   * could reach — an unreachable drill goes stale silently, and the day triage
+   * starts asking for it the player gets a blank card.
+   *
+   * Both directions are checked. Every axis with copy needs a drill, and every
+   * axis with a drill needs copy — a heading in one axis's words above an
+   * exercise for the other is the exact failure this whole axis pass was about.
+   */
+  for (const [flaw, copy] of Object.entries(VERDICT_TABLES.flaws)) {
+    const axes = new Set([
+      ...Object.keys(copy.byAxis ?? {}),
+      ...Object.keys(FLAW_DRILL_BY_AXIS[flaw as FlawId] ?? {}),
+    ]) as Set<BodyAxis>
+
+    for (const axis of axes) {
+      const words = copy.byAxis?.[axis]
+      assert(Boolean(words?.title?.trim()), `${flaw}/${axis} has a drill but no heading`)
+      assert(Boolean(words?.low?.trim()), `${flaw}/${axis} has a heading but nothing under it`)
+
+      const id = drillIdFor(flaw as FlawId, axis)
+      assert(Boolean(DRILLS[id]), `${flaw}/${axis} points at drill "${id}", which does not exist`)
+      assert(
+        id !== drillIdFor(flaw as FlawId),
+        `${flaw}/${axis} falls back to the axis-neutral drill, so the axis buys nothing`,
+      )
+    }
+
+    // Two axes cannot share one exercise: the whole reason the axis is carried
+    // is that a drill constrains one direction and says nothing about the other.
+    const ids = [...axes].map((a) => drillIdFor(flaw as FlawId, a))
+    assert(new Set(ids).size === ids.length, `${flaw} hands the same drill to two different axes`)
   }
 })
 

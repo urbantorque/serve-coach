@@ -177,11 +177,30 @@ check('posture collapse is caught, and a shallow drop is told from a real one', 
   assert(!flagged(deep).includes('shallow_drop'), 'a real drop was called shallow')
 })
 
-check('a pancake is told from a snap', () => {
+check('a pancake is measured and never named', () => {
+  /*
+   * This used to assert that a pushed contact was caught and a snapping forearm
+   * was not. It is not caught any more, on purpose: `pancake_contact` carries
+   * `notNamed`, because the pronation estimate's own deviation is 20.2° against
+   * a 16° serious miss, and measured over the ensemble the detector fired on 10%
+   * of serves with 95° of real rotation and 35% of serves with none — a coin the
+   * camera flips, spending the report's one instruction as it goes.
+   *
+   * So the assertion inverts, and it has to check both halves or `notNamed`
+   * means nothing: the player never hears it, and the number is still measured
+   * and still outside its band. The rate evidence lives in `depth.test.ts`; this
+   * is the wiring.
+   */
   const pancake = run({ pronation: 8 }, 5).diagnosis
-  assert(flagged(pancake).includes('pancake_contact'), 'a pushed contact was not caught')
-  const snap = run({}, 5).diagnosis
-  assert(!flagged(snap).includes('pancake_contact'), 'a rotating forearm was called a pancake')
+  assert(!flagged(pancake).includes('pancake_contact'), 'a suppressed flaw was named to a player')
+
+  const finding = findingFor(pancake, 'pancake_contact')
+  assert(finding !== undefined, 'the pancake finding vanished rather than being suppressed')
+  assert(finding!.detected === false, 'a notNamed flaw came back detected')
+  assert(
+    finding!.miss > 0,
+    `the flaw was suppressed by losing the measurement, not by declining to name it: miss ${finding!.miss}`,
+  )
 })
 
 /* ======================================================== root causes ===== */
@@ -236,7 +255,13 @@ check('a cause is only named when it was itself detected', () => {
 })
 
 check('root causes are listed ahead of the symptoms they explain', () => {
-  const { diagnosis } = run({ shoulderYaw: 60, hipYaw: 56, hipLead: -0.05 }, 5)
+  // The hip lead is dialled to -90 ms rather than the -50 this used to use.
+  // `hip_lead_ms`'s floor is now the 85 ms its own repeatability asks for, and a
+  // 50 ms dial reads as a miss of 79 — under the floor, so `arming_the_ball` is
+  // correctly not named and the pair under test never both fire. The ordering
+  // being checked is unrelated to the size of the fault, so the honest fix is to
+  // dial a fault this engine can actually resolve.
+  const { diagnosis } = run({ shoulderYaw: 60, hipYaw: 56, hipLead: -0.09 }, 5)
   const order = diagnosis.flaws.filter((f) => f.detected).map((f) => f.flaw)
   const cause = order.indexOf('early_shoulder_rotation')
   const symptom = order.indexOf('arming_the_ball')
@@ -321,8 +346,24 @@ check('tracker jitter does not change what is reported', () => {
 })
 
 check('a dialled fault survives the jitter that hides it', () => {
+  /*
+   * Read at tier 7 rather than tier 5, and the reason is worth more than the one
+   * line it takes. `palm_to_sky_deg`'s floor moved from 10 to the 11 its own
+   * repeatability asks for, and at tier 5 the three seeds here miss their band by
+   * 10 to 13 — straddling the floor, so one seed's tray disappeared. At tier 7
+   * the same serve misses by 21 to 23 and all three clear it comfortably.
+   *
+   * The uncomfortable part, which belongs here rather than in a report nobody
+   * reads: the rig's `palmToSky` dial SATURATES. 80, 90 and 100 all read back as
+   * 49–51°, so the most extreme waiter's tray this rig can build was clearing a
+   * tier-5 band by half a degree, against a signal whose own deviation is 6.8°.
+   * `waiters_tray` sits at the top of the triage hierarchy. Moving the tier is
+   * the honest way to keep this check meaningful; widening the dial is not
+   * available, and that is a finding about the rig — see the handoff in
+   * `syntheticServe.ts`'s `palmToSky` comment.
+   */
   for (const seed of [3, 19, 47]) {
-    const noisy = flagged(run({ palmToSky: 80, trophyForearmDrop: 0.22, noise: 0.006, seed }, 5).diagnosis)
+    const noisy = flagged(run({ palmToSky: 80, trophyForearmDrop: 0.22, noise: 0.006, seed }, 7).diagnosis)
     assert(noisy.includes('waiters_tray'), `seed ${seed} lost the tray: ${noisy.join(', ')}`)
   }
 })

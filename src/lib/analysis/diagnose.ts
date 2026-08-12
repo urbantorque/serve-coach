@@ -15,16 +15,21 @@
  * landmark, nothing that would pin the clip in memory behind a saved report.
  */
 import { LM, clamp, mean, sided, trunkCoilReading } from './geometry'
+import { imageXSplitFrom, readImageX } from './axes'
 import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED } from './confidence'
 import { assessSpatial } from './spatial'
 import {
   palmNormalSeries,
   palmSkyElevation,
   peakAbsIn,
+  peakTimeInside,
+  planarSpeedSeries,
   pronationBetween,
   rateOf,
   refinedPeakTime,
+  riseSpeedSeries,
   sampleAt,
+  sampleRadius,
   smoothF32,
   spineSeries,
   timeline,
@@ -59,9 +64,85 @@ export interface Diagnosis {
     lead_ms: number
     confidence: number
   }
+  /**
+   * The kinetic chain: when each link of the body peaked, relative to contact.
+   *
+   * DATA ONLY. Nothing downstream grades any of this, no flaw is named from it,
+   * and none of it reaches `signals` — so it cannot vote on a tier, pair into an
+   * injury flag or become an instruction. That is a decision, not an oversight,
+   * and the reasons per link are in `UNCALIBRATED` in `tiers.ts`.
+   *
+   * A link is `null` when its peak was not in view: the landmark was not seen
+   * well enough, or the peak sat on the edge of the search window and is
+   * therefore the window rather than an event. Never a zero, never a default.
+   *
+   * Required here and absent from every report saved before it existed. `schema`
+   * is deliberately still 1: nothing reads it, and bumping it would say the
+   * stored shape had become unreadable when what actually happened is that it
+   * gained a field no consumer touches. A future reader of a stored diagnosis
+   * has to guard this, the way `db.ts normalise` guards every other field added
+   * after the fact — which is the reason it is written down here rather than
+   * left for that reader to discover.
+   */
+  chain: ChainTiming
   flaws: FlawFinding[]
   /** What the pass cost, so a slow device can be seen rather than guessed at. */
   cost: { frames: number; series: number; ms: number }
+}
+
+/**
+ * One link of the chain: when it peaked, and how much of it the camera saw.
+ *
+ * `ms` is relative to contact, negative before it, so the links read as an
+ * ordering straight off the object. `confidence` is the same 0–1 the signals
+ * carry and is inherited the same way: how well the landmarks underneath this
+ * link were seen, and nothing else.
+ *
+ * Nothing else deliberately. A camera angle that biases WHEN a link peaks is a
+ * systematic every clip at that angle shares, not doubt about one reading, and
+ * spending it as confidence deleted whole links at one angle while leaving the
+ * bias in place at every other — see the note above `linkAt`. Systematics are
+ * recorded in `UNCALIBRATED`, which is also what stops these being graded.
+ */
+export interface ChainLink {
+  ms: number | null
+  confidence: number
+}
+
+/**
+ * The chain, proximal to distal, in the order a serve is supposed to fire.
+ *
+ * Five links and two provenances, which is the whole finding of this pass.
+ * `legs`, `elbow` and `wrist` are read from image x and y — coordinates the
+ * camera measured. `hips` and `shoulders` are yaw angles recovered from
+ * MediaPipe's inferred world z. Filming one identical synthetic serve
+ * twenty-four times moves the first group by 0.5 to 7.5 ms and the second by
+ * 27.6 and 53.3. The derivation is in `__tests__/depth.test.ts`; the point is
+ * no ordering claim resting on the trunk pair can be resolved and the ones
+ * resting on the image plane have no band to be resolved against.
+ */
+export interface ChainTiming {
+  legs: ChainLink
+  hips: ChainLink
+  shoulders: ChainLink
+  elbow: ChainLink
+  wrist: ChainLink
+  /**
+   * Peak leg drive to peak racket-hand speed: the whole chain's span, in ms.
+   *
+   * The one interval whose ends are both read from the picture plane, and the
+   * best-conditioned number this pass produces — deviation 7.8 ms across the
+   * ensemble, and its mean moves 0.7 ms across camera angles from 20° to 88°.
+   * Null when either end is.
+   *
+   * It is still not graded, and `UNCALIBRATED.chain_span_ms` says why at length.
+   * The short version is that it scales with how long the whole motion took —
+   * 156 ms on a 1.7 s serve against 102 ms on a 1.1 s one — so a band in
+   * milliseconds would grade a deliberate server as faulty, and the rig cannot
+   * produce a serve whose span differs from its own phase schedule once that is
+   * divided out. A well-measured quantity with nothing to compare it against.
+   */
+  span_ms: number | null
 }
 
 export interface DiagnoseOptions {
@@ -82,8 +163,12 @@ const now = () =>
  * Stated rather than counted so the number in the output cannot quietly drift
  * upwards as detectors are added — if this and the code disagree, the test that
  * checks the allocation budget fails, which is the point.
+ *
+ * Eleven since the chain arrived: the leg-drive rise and the elbow and wrist
+ * planar speeds. The three of them are read from image x and y, so none of them
+ * needs the world landmarks the two trunk yaws are built from.
  */
-const SERIES_COUNT = 8
+const SERIES_COUNT = 11
 
 /**
  * Below this many samples through the trophy-to-contact window, the sequence
@@ -122,6 +207,73 @@ const DROP_VISIBLE = 0.5
  */
 const DEPTH_DOMINATES = 1.3
 
+/**
+ * The smoothing window the chain is measured through, as a radius in SECONDS.
+ *
+ * Given in time rather than in samples, which is the defect `UNDER_RESOLVED`
+ * names against `hip_lead_ms` and points at as the first thing to try: three
+ * samples is 100 ms of clip at 30 fps and 25 ms at 120, so a timing taken
+ * through one is partly a fact about the phone. The proof is in this pass's own
+ * output, because the two trunk links still use the old fixed three and the
+ * three new ones use this. Across 30 / 50 / 120 fps on one identical serve the
+ * fixed-sample pair deviate 42.2 / 53.3 / 98.1 ms and 20.0 / 27.6 / 38.8 —
+ * worse the more frames they are given, which is the signature of a derivative
+ * locking onto noise — while the leg, elbow and wrist links deviate
+ * 5.3 / 7.5 / 4.8, 1.1 / 0.7 / 2.5 and 0.6 / 0.5 / 2.3. Flat, and an order of
+ * magnitude down at the legs and two at the hand.
+ *
+ * HOW TO REPRODUCE ANY NUMBER BELOW, because a provenance nobody can re-run is
+ * a recorded number wearing a derivation's clothes — the defect this file was
+ * caught in once already, and `repeatability.ts`'s own header names it. The
+ * frame-rate axis is a parameter: `realise({}, 5, SEEDS, fps)` and read
+ * `chainDeviations`. The radius axis is not, and deliberately is not — a
+ * test-only override on `DiagnoseOptions` would be a production door held open
+ * for a table. It is reproduced by setting this constant to the value in
+ * question, re-running the same call at each of the three rates, and putting it
+ * back. Every figure in the two paragraphs below was taken that way, on the
+ * tree as it stands.
+ *
+ * Ninety rather than forty or sixty, chosen against the ensemble rather than by
+ * eye. The leg-drive link's deviation across those same three frame rates runs
+ * 20.3 / 20.0 / 20.7 ms at a 40 ms radius, 6.9 / 12.2 / 12.4 at 60, and
+ * 5.3 / 7.5 / 4.8 at 90.
+ *
+ * Two costs, both stated because neither is zero. The peaks are dragged later —
+ * the racket hand reads -77.2 ms at a 40 ms radius and -82.3 at 90, a quarter
+ * of a frame at 50 fps, paid by every clip equally so no ordering moves. And
+ * the chain span's *mean* is less flat in frame rate here than at 60:
+ * 123.2 / 119.8 / 117.9 ms, a 5.3 ms spread, against 123.3 / 120.3 / 120.8 and
+ * a 3.0 ms one. That spread is bought with the leg deviation cut from 12.2 to
+ * 7.5 at the rate most clips arrive at, which is the right way round for a
+ * number nothing grades and everything compares.
+ *
+ * Not widened past this. At a 120 ms radius the deviations barely improve
+ * (4.7 / 5.3 / 5.0) while the span's frame-rate spread doubles to 10.3 ms — and
+ * the window is a radius, so 120 ms spans 240 against the roughly 400 ms of a
+ * club player's whole trophy-to-contact stretch. Past here the smoothing starts
+ * averaging one link's peak into its neighbour's, which is the one failure that
+ * would make the chain look *more* ordered than it is.
+ */
+const CHAIN_WINDOW_SECONDS = 0.09
+
+/**
+ * How far either side of the swing the chain's peaks are looked for, in seconds.
+ *
+ * The lower body starts unwinding while the racket is still going back, so the
+ * search opens before the trophy — 80 ms, matching the four frames at 50 fps
+ * the rotation window above has always used, restated in time for the same
+ * reason `CHAIN_WINDOW_SECONDS` is.
+ *
+ * It closes *after* contact, which the rotation window does not, because the
+ * distal links legitimately peak later than the proximal ones and the racket
+ * hand is still accelerating into the ball. A window that stopped at contact
+ * would clip the wrist's peak against its own edge on any clip whose contact
+ * frame landed early, and `peakTimeInside` would then drop the link — losing
+ * the best-conditioned reading in the pass to a keyframe being one frame out.
+ */
+const CHAIN_LOOKS_BACK = 0.08
+const CHAIN_LOOKS_ON = 0.04
+
 export function diagnose(
   frames: Frame[],
   skel: Skeleton,
@@ -147,6 +299,19 @@ export function diagnose(
   // Without this the sequencing verdict flipped between noise realisations of
   // the same clean serve — a player told they were arming the ball because of
   // which frame the tracker happened to be having trouble with.
+  //
+  // Known limit, and the next thing to try if anyone wants `hip_lead_ms` back.
+  // The window is three SAMPLES, so what it spans in time shrinks as the frame
+  // rate rises: 100 ms of clip at 30 fps, 25 ms at 120, and applied twice. The
+  // signal gets *worse* with more frames for exactly that reason — its deviation
+  // over one identical serve is 45.4 ms at 30 fps, 56.6 at 50 and 110.6 at 120,
+  // from `realise({}, 5, SEEDS, fps)` in `__tests__/repeatability.ts`. That
+  // fourth argument was hard-coded until the frame rate became the thing the
+  // table was about; the three figures were correct and the file they cited
+  // could not produce them. That is why `NOISE_FLOOR` has to
+  // hold it at 85 ms, and why `tiers.ts` UNDER_RESOLVED can only claim it tells
+  // gross arming from none. A time-based window, as `palmNormalAt` in
+  // `kinematics.ts` already uses, is the change that might bring the floor down.
   const hipRate = smoothF32(
     rateOf(smoothF32(yawSeries(frames, LM.leftHip, LM.rightHip), 3), t),
     3,
@@ -163,8 +328,13 @@ export function diagnose(
   const to = clamp(keys.contact, 0, frames.length - 1)
   const samples = to - from + 1
 
-  const hipPeakT = refinedPeakTime(hipRate, t, peakAbsIn(hipRate, from, to))
-  const shoulderPeakT = refinedPeakTime(shoulderRate, t, peakAbsIn(shoulderRate, from, to))
+  // The indices are kept, not just the refined times, because `chain` has to be
+  // able to tell a peak from a window edge and `peakAbsIn` returns an index
+  // either way — see `trunkLink` below.
+  const hipPeakAt = peakAbsIn(hipRate, from, to)
+  const shoulderPeakAt = peakAbsIn(shoulderRate, from, to)
+  const hipPeakT = refinedPeakTime(hipRate, t, hipPeakAt)
+  const shoulderPeakT = refinedPeakTime(shoulderRate, t, shoulderPeakAt)
   const leadMs = (shoulderPeakT - hipPeakT) * 1000
 
   const trunkVisibility = windowVisibility(frames, from, to, [
@@ -204,9 +374,168 @@ export function diagnose(
   // collapse — the collapse is what the motion adds to it.
   const spineLean = Math.abs(spine.lateral[to]) - Math.abs(spine.lateral[clamp(keys.ready, 0, frames.length - 1)])
 
+  /* --- where the camera stood ------------------------------------------- */
+  // Recovered here rather than passed in: `analyze` reads the same camera above
+  // this call, but a diagnosis taken straight off frames — a stored clip, a
+  // test — must not silently lose what depends on it because its caller had
+  // nothing to hand over. Two things depend on it: the coil hedge below, and
+  // which body axis the toss drift is.
+  const spatial = assessSpatial(frames, keys.ready, bodyHeight)
+  const imageX = imageXSplitFrom(spatial)
+
+  /* --- the chain, proximal to distal ------------------------------------ */
+  /*
+   * Five links, two provenances, and the point of measuring them together.
+   *
+   * The pair above — hip yaw and shoulder yaw — is the whole of what this
+   * engine used to call sequencing, and both are recovered from MediaPipe's
+   * inferred world z. This adds the three the camera can actually see: the leg
+   * drive as the hips rising in the frame, and the elbow and racket hand as
+   * planar speeds off image x and y. Measured on the same twenty-four-seed
+   * ensemble that produced every other figure in this engine, at 50 fps with
+   * modelled depth error — `__tests__/depth.test.ts` prints this table and
+   * fails if either group crosses into the other's range — the peak times move:
+   *
+   *     link        read from        deviation    band it would be graded on
+   *     legs        image y             7.5 ms    none — see UNCALIBRATED
+   *     hips        world z            53.3 ms    hip_lead_ms, seriousMiss 45
+   *     shoulders   world z            27.6 ms    hip_lead_ms, seriousMiss 45
+   *     elbow       image x, y          0.7 ms    none — see UNCALIBRATED
+   *     wrist       image x, y          0.5 ms    none — see UNCALIBRATED
+   *
+   * Two orders of magnitude between the two provenances, on the same clip, from
+   * the same tracker, in the same pass. That is the finding, and it is why the
+   * three new links are built the way they are rather than as five more yaws.
+   *
+   * It buys no new flaw, and the honesty of that is the other half of the work.
+   * A repeatable measurement is necessary and nowhere near sufficient: a number
+   * that holds still across noise but does not move when the fault appears is a
+   * constant with a units label. Swept against the rig's own arming dial — the
+   * shoulders firing 20, 60 and 120 ms early — every image-plane link here reads
+   * within 0.2 ms of its clean value, because the rig implements arming as hip
+   * yaw timing and nothing else. That is a fact about the rig, not a finding
+   * about serves, and it is stated as such in `UNCALIBRATED`. Either way there
+   * is nothing here a detector could have been validated against.
+   *
+   * One number worth carrying forward for whoever revisits this with footage:
+   * the chain span divided by the motion's own duration comes out 0.092, 0.088
+   * and 0.092 on serves taking 1.1, 1.35 and 1.7 seconds. Scale-free to within
+   * 5%, which is what a band would have to be written in — and what nobody has
+   * a value for.
+   */
+  const chainRadius = sampleRadius(t, CHAIN_WINDOW_SECONDS)
+  const chainFrom = clamp(keys.trophy - secondsToFrames(t, CHAIN_LOOKS_BACK), 0, frames.length - 1)
+  const chainTo = clamp(keys.contact + secondsToFrames(t, CHAIN_LOOKS_ON), 0, frames.length - 1)
+
+  // Both hips together: one leg driving is a step across, two is the drive.
+  const legsSpeed = riseSpeedSeries(frames, [LM.leftHip, LM.rightHip], bodyHeight, chainRadius)
+  const elbowSpeed = planarSpeedSeries(frames, R.elbow, bodyHeight, chainRadius)
+  const wristSpeed = planarSpeedSeries(frames, R.wrist, bodyHeight, chainRadius)
+
+  /*
+   * What the camera angle costs a planar link, and why it is not a confidence.
+   *
+   * This used to multiply the elbow and wrist links by `axes.ts`'s `share` —
+   * how much of an image-x reading is honestly one named body axis. That was
+   * the wrong quantity applied to the wrong kind of number, and it deleted
+   * readings rather than hedging them. Two reasons, both measurable:
+   *
+   *   - These links are `hypot(vx, vy)` magnitudes. Nothing downstream ever
+   *     asks which body axis they ran along, so "which axis is this" is not a
+   *     doubt they have. `share` bottoms out at 0.5 at 45° of yaw and rises to
+   *     1 at both ends, which for a magnitude is if anything backwards: at 45°
+   *     both horizontal axes reach the sensor at gain 0.707 and neither is
+   *     invisible, while at 90° the across-body axis is gone entirely.
+   *   - `imageX.dominant` is null at exactly 45°, so the factor was zero there
+   *     and `MIN_EVIDENCE` swallowed the rest of the tie. Measured on the rig
+   *     by sweeping the camera dial one degree at a time: at a measured yaw of
+   *     45 the elbow, wrist and span all came back null at confidence 0, while
+   *     44° and 46° read the same wrist at -83 ms. `estimateYaw` also returns
+   *     45 when it cannot measure at all (spatial.ts:132), so an unmeasurable
+   *     camera silently deleted the three best-conditioned timings in the pass.
+   *
+   * What the angle really costs these links is a systematic drift in WHEN they
+   * peak — the elbow's mean moves 10.2 ms across yaw 20° to 88°, against a
+   * 0.7 ms deviation across noise. That is an offset every clip at a given
+   * angle shares, not doubt about one reading, so it cannot honestly be spent
+   * as confidence. It is recorded where a systematic lives: `UNCALIBRATED`,
+   * which is also why elbow-to-wrist is not graded.
+   *
+   * So a planar link is confident exactly as far as its landmark was seen —
+   * the same rule the leg link already had, since image y is vertical for every
+   * camera this app accepts.
+   */
+
+  const linkAt = (series: Float32Array, confidence: number): ChainLink => {
+    const peak = peakTimeInside(series, t, chainFrom, chainTo)
+    // A link nobody could see is not a link that happened at zero. The evidence
+    // bar is the flaw pass's own, so a reading too soft to name a fault from is
+    // also too soft to record as a moment in the serve.
+    if (peak === null || confidence < MIN_EVIDENCE) return { ms: null, confidence: round2(confidence) }
+    return { ms: Math.round((peak - contactT) * 1000), confidence: round2(confidence) }
+  }
+
+  const legsSeen = windowVisibility(frames, chainFrom, chainTo, [LM.leftHip, LM.rightHip])
+  const elbowSeen = windowVisibility(frames, chainFrom, chainTo, [R.elbow])
+  const wristSeen = windowVisibility(frames, chainFrom, chainTo, [R.wrist])
+
+  /*
+   * The trunk pair, held to the same two tests as the three above.
+   *
+   * They reuse the rate series the rotation block already built and the window
+   * it already searched, so `chain.hips` and `sequence.hip_peak_ms` are the same
+   * measurement rather than two that could disagree about one serve. What they
+   * did NOT reuse was `linkAt`, and that made `ChainTiming` contradict its own
+   * documented contract on a single clip: with the four trunk landmarks blinded
+   * to visibility 0.02, `chain.legs` was correctly null while `chain.hips`
+   * reported -249 ms at confidence 0.02 — from the same two unseen hips — and
+   * `hip_lead_ms`, built from the same peaks, was correctly dropped. One object
+   * saying both things about one pair of landmarks.
+   *
+   * Same two tests, spelled out here rather than routed through `linkAt` because
+   * these two arrive as an index and a time rather than as a series:
+   * `MIN_EVIDENCE`, and the peak being strictly inside the window rather than on
+   * its edge. The edge test is what `peakTimeInside` exists for, and it applies
+   * here for exactly the reason it applies there — `peakAbsIn` returns an index
+   * whether or not there was a peak, so a rate still climbing at contact reports
+   * the boundary as an event, with a deviation near zero because a boundary
+   * lands in the same place on every realisation. Across the twenty-four-seed
+   * ensemble neither trunk peak ever lands on an edge (0/24 for both), so this
+   * costs nothing on ordinary footage and only fires where it should.
+   */
+  const trunkLink = (at: number, peakT: number): ChainLink => {
+    const confidence = round2(sequenceConfidence)
+    if (at <= from || at >= to || sequenceConfidence < MIN_EVIDENCE) return { ms: null, confidence }
+    return { ms: Math.round((peakT - contactT) * 1000), confidence }
+  }
+
+  const chain: ChainTiming = {
+    legs: linkAt(legsSpeed, legsSeen),
+    hips: trunkLink(hipPeakAt, hipPeakT),
+    shoulders: trunkLink(shoulderPeakAt, shoulderPeakT),
+    elbow: linkAt(elbowSpeed, elbowSeen),
+    wrist: linkAt(wristSpeed, wristSeen),
+    span_ms: null,
+  }
+  // Differenced from the links themselves rather than recomputed, so a span can
+  // never exist for a link that was dropped.
+  if (chain.legs.ms !== null && chain.wrist.ms !== null) {
+    chain.span_ms = chain.wrist.ms - chain.legs.ms
+  }
+
   /* --- the toss --------------------------------------------------------- */
   const liftFrom = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
-  const tossDrift = lateralDrift(frames, liftFrom, keys.toss, T.wrist, bodyHeight)
+  // Drift along image x, then along the body axis image x turns out to be. This
+  // used to stop at the first step and the signal was named `toss_drift_ratio`
+  // off the back of a function called `lateralDrift`, so the flaw it feeds — and
+  // the sentence and the fence drill under that flaw — asserted a direction
+  // nothing had measured. On the side-on framing this app recommends, the number
+  // is front-to-back drift almost entirely.
+  const driftImageX = offLineDrift(frames, liftFrom, keys.toss, T.wrist, bodyHeight)
+  const driftAxis = imageX.dominant
+  const drift = driftAxis
+    ? readImageX(driftImageX, driftAxis, imageX)
+    : { value: null, confidence: 0 }
 
   /* --- depth, lift and height ------------------------------------------- */
   const fDrop = at(keys.drop)
@@ -239,11 +568,9 @@ export function diagnose(
   // `MIN_EVIDENCE` the flaw pass drops the signal rather than naming a fault
   // from it, which is the whole point of routing it here.
   //
-  // Recovered here rather than passed in: `analyze` reads the same camera above
-  // this call, but a diagnosis taken straight off frames — a stored clip, a
-  // test — must not silently lose the hedge because its caller had nothing to
-  // hand over.
-  const depthUnreliable = assessSpatial(frames, keys.ready, bodyHeight).depth_unreliable
+  // The camera this rests on is recovered once, above the toss block, because
+  // the toss drift needs the same angle to answer a different question.
+  const depthUnreliable = spatial.depth_unreliable
   const separationConfidence =
     trunkVisibility *
     (depthUnreliable ? DEPTH_COLLAPSED : 1) *
@@ -254,10 +581,32 @@ export function diagnose(
     palm_to_sky_deg: { value: palmToSky, confidence: handConfidence },
     separation_deg: { value: coil.deg, confidence: separationConfidence },
     hip_lead_ms: { value: leadMs, confidence: sequenceConfidence },
-    toss_drift_ratio: {
-      value: tossDrift,
-      confidence: windowVisibility(frames, liftFrom, keys.toss, [T.wrist]),
-    },
+    // Absent when no body axis owns image x — the 45° tie, where the drift is
+    // half front-to-back and half sideways and nothing can say which. Dropped
+    // rather than passed on hedged, because everything downstream of this signal
+    // commits to a direction: `toss_drift` is stated as "your toss drifts
+    // sideways" and answered with a drill that constrains one axis, and a fault
+    // named on the wrong axis costs the player the practice session they spend
+    // on it. The report drops its own toss-wobble row on the same tie, for the
+    // same reason, so the two halves of the app go quiet together.
+    //
+    // The confidence carries both halves of the doubt: how well the tossing
+    // wrist was seen, and how much of this number is honestly the axis it is
+    // about to be named for.
+    toss_drift_ratio:
+      drift.value === null || driftAxis === null
+        ? undefined
+        : {
+            value: drift.value,
+            confidence:
+              windowVisibility(frames, liftFrom, keys.toss, [T.wrist]) * drift.confidence,
+            // The axis travels with the number. Recovering it here and then
+            // dropping it was the half-fix: the metric card said "forwards and
+            // back" while the largest heading on the same report still said
+            // "sideways" and handed the player a drill for the other axis.
+            // Everything that writes a sentence about this flaw reads this.
+            axis: driftAxis,
+          },
     spine_lean_deg: { value: spineLean, confidence: trunkVisibility },
     drop_depth_ratio: {
       value: dropDepth,
@@ -372,6 +721,7 @@ export function diagnose(
       lead_ms: Math.round(leadMs),
       confidence: round2(sequenceConfidence),
     },
+    chain,
     flaws,
     cost: {
       frames: frames.length,
@@ -382,6 +732,19 @@ export function diagnose(
 }
 
 /* ---------------------------------------------------------------- helpers -- */
+
+/**
+ * How many frames a span of seconds covers on this clip.
+ *
+ * The same argument as `sampleRadius` in `kinematics.ts`, for a window offset
+ * rather than a smoothing radius: a search that opens "four frames before the
+ * trophy" opens 133 ms early on a 30 fps clip and 33 ms early at 120, so which
+ * peaks are even eligible depends on the phone. At least one frame, because a
+ * window of zero width has no interior and `peakTimeInside` would drop every
+ * link on a clip sampled slowly enough.
+ */
+const secondsToFrames = (t: Float32Array, seconds: number): number =>
+  Math.max(1, sampleRadius(t, seconds, 30))
 
 /** Mean of the worst-seen landmark per frame across a window. */
 function windowVisibility(frames: Frame[], from: number, to: number, landmarks: number[]): number {
@@ -399,15 +762,21 @@ function windowVisibility(frames: Frame[], from: number, to: number, landmarks: 
 }
 
 /**
- * Sideways travel of a landmark across a window, in body heights, with the
+ * Travel of a landmark along IMAGE X across a window, in body heights, with the
  * straight line through it removed first.
  *
  * The subtraction is the whole measurement. A player walking their hand up and
  * forward through the toss is not drifting — that is the motion — and without
  * removing the trend, every serve filmed from anywhere but dead side-on would
  * report a wandering toss.
+ *
+ * Called `lateralDrift` until now, and the name was the bug. Image x is not
+ * sideways; it is the player's front/back axis and their sideways axis mixed in
+ * a proportion set by where the phone stood, and side-on — the framing this app
+ * recommends — it is 99% front/back. Naming the axis is `axes.ts`'s job and the
+ * caller's; this function's job stops at the image, and its name now says so.
  */
-function lateralDrift(
+function offLineDrift(
   frames: Frame[],
   from: number,
   to: number,

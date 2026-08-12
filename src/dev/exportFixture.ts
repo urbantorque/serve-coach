@@ -16,7 +16,25 @@
 import { packFrames, type Fixture } from '../lib/analysis/groundTruth'
 import type { Analysis, FailedCapture } from '../lib/analysis/types'
 
-type Draft = Fixture & { _UNVERIFIED: true; _enginePhases: Record<string, number> }
+/**
+ * Sidecar keys are underscore-prefixed on purpose.
+ *
+ * `validateFixtureSchema` rejects any fixture still carrying one, so they cannot
+ * reach the RECORDED list. That is the point: they exist so the labeller can see
+ * what the engine said while correcting it, and deleting them is the moment the
+ * labeller has to hold their own answer next to the engine's and decide the two
+ * differ. The validator also compares them value-for-value against `expect`, so
+ * a value left exactly as the engine printed it is caught by name.
+ *
+ * `_enginePhases` was the old name for the metrics sidecar and never held
+ * phases; the schema check that reads these matches on the `_` prefix, not the
+ * name, so the rename costs nothing and stops the next reader from trusting it.
+ */
+type Draft = Fixture & {
+  _UNVERIFIED: true
+  _engineMetrics: Record<string, number>
+  _engineKeyframes: Record<string, number>
+}
 
 type RejectedDraft = Fixture & { _UNVERIFIED: true; _engineRejection: string }
 
@@ -49,12 +67,19 @@ export function buildFixtureDraft(analysis: Analysis): Draft {
       handedness: analysis.handedness,
       view: analysis.quality.view,
       // The engine's own keyframe times, to be corrected by scrubbing the clip.
+      // Also copied to `_engineKeyframes` so the schema check can tell a
+      // corrected time from one left exactly as the engine found it.
       keyframes,
       // Empty on purpose. Fill only with values measured outside the app.
       metrics: {},
+      // One note per metric, required by the schema. A metric added here without
+      // one fails the suite, which is the only reason it is hard to paste the
+      // app's own numbers in and call them ground truth.
+      metricSource: {},
     },
     _UNVERIFIED: true,
-    _enginePhases: measured,
+    _engineMetrics: measured,
+    _engineKeyframes: { ...keyframes },
   }
 }
 

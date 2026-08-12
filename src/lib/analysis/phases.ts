@@ -13,6 +13,55 @@ import {
 } from './geometry'
 import { NotAServeError, type Frame, type Phase, type PhaseId } from './types'
 
+/*
+ * The three numbers that define the ruler every height in this report is a
+ * ratio of.
+ *
+ * Exported rather than kept as locals because `detectServe` is no longer the
+ * only place a standing height is built: `standingHeight` in framing/judge.ts
+ * builds one over a live preview, and while these were literals in here it had
+ * to copy all three and carry a comment explaining where they came from. Two
+ * copies of a ruler is one ruler that can drift — and a viewfinder measuring a
+ * player against a slightly different body than the analyser uses would pass
+ * framing the analysis then hedges.
+ *
+ * Exporting them does NOT make the two rulers identical, and nothing here
+ * should be read as claiming it does. `detectServe` takes its head reading
+ * across the opening ~30% of the stance only (see the comment above `upright`)
+ * because the player sinks into the load; the preview has no motion to slice
+ * and takes the median across its whole window. Same constants, same recipe,
+ * different window — which is exactly right for a player standing still and
+ * diverges the moment one is walking into shot.
+ */
+
+/**
+ * Where the nose sits as a fraction of standing height.
+ *
+ * Nose rather than crown because MediaPipe has no crown landmark. Anything
+ * derived from a raw nose-to-ankle span instead is about 7.5% short of standing
+ * height, which `estimateYaw` then divides a shoulder span by: at a true 18
+ * degrees of yaw that pushes its arccos argument past 1 and the angle comes
+ * back as 0.
+ */
+export const NOSE_SHARE_OF_HEIGHT = 0.93
+
+/**
+ * How much of the picture an ankle has to be visible in before the ground line
+ * under it is believed.
+ *
+ * The reason is the comment above `anklesSeen` below: a foot outside the frame
+ * is not a foot the tracker declines to place, it is one it places near the
+ * edge of the picture and flags unseen. The height that results is perfectly
+ * finite and wrong, so a finiteness check alone never catches it.
+ */
+export const ANKLES_SEEN_FLOOR = 0.5
+
+/** Torso length as a share of standing height — the fallback ruler when the feet are out of shot. */
+export const TORSO_SHARE_OF_HEIGHT = 0.3
+
+/** Below this a standing height is a degenerate number, not a small player. */
+export const MIN_STANDING_HEIGHT = 0.02
+
 export interface Keyframes {
   ready: number
   toss: number
@@ -409,8 +458,7 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   )
   const upright = stance.slice(0, Math.max(3, Math.round(stance.length * 0.3)))
   const headY = median(upright.map((f) => f.image[LM.nose].y))
-  // nose sits at roughly 93% of standing height
-  let bodyHeight = (groundY - headY) / 0.93
+  let bodyHeight = (groundY - headY) / NOSE_SHARE_OF_HEIGHT
 
   const shoulderWidth = median(
     stance.map((f) => Math.abs(f.image[LM.leftShoulder].x - f.image[LM.rightShoulder].x)),
@@ -433,15 +481,19 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   )
 
   let scaleFromTorso = false
-  if (anklesSeen < 0.5 || !Number.isFinite(bodyHeight) || bodyHeight <= 0.02) {
+  if (
+    anklesSeen < ANKLES_SEEN_FLOOR ||
+    !Number.isFinite(bodyHeight) ||
+    bodyHeight <= MIN_STANDING_HEIGHT
+  ) {
     // Torso length is about 30% of standing height. Less precise than head to
     // heel, but it rests only on landmarks that are in frame — and the ground
     // then follows from the head rather than from a guess at where the feet are.
     const torso = Math.abs(readyFrame.image[LM.leftShoulder].y - readyFrame.image[LM.leftHip].y)
-    const fromTorso = torso / 0.3
-    if (Number.isFinite(fromTorso) && fromTorso > 0.02) {
+    const fromTorso = torso / TORSO_SHARE_OF_HEIGHT
+    if (Number.isFinite(fromTorso) && fromTorso > MIN_STANDING_HEIGHT) {
       bodyHeight = fromTorso
-      groundY = headY + bodyHeight * 0.93
+      groundY = headY + bodyHeight * NOSE_SHARE_OF_HEIGHT
       scaleFromTorso = true
     }
   }

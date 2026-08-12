@@ -8,11 +8,11 @@ import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus } from './lib/practice'
 import { buildConsistencyTrend, buildProgress, typeOf } from './lib/progress'
 import {
-  MAX_CONSISTENCY_SERVES,
   analyzeAllServes,
   analyzeServe,
   rediagnose,
   rescore,
+  sweepWindow,
   type AnalyzeProgress,
 } from './lib/analysis/analyze'
 import { forgetAll, recall, remember } from './lib/analysisCache'
@@ -37,7 +37,7 @@ import {
 import { requestPersistence } from './lib/storage/backup'
 import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage/prefs'
 import { sessionKeyFor } from './lib/storage/sessionKey'
-import Analyzing from './screens/Analyzing'
+import Analyzing, { type SweepProgress } from './screens/Analyzing'
 import Home, { type OfflineWarmup } from './screens/Home'
 import Report from './screens/Report'
 
@@ -53,6 +53,15 @@ const MAX_BYTES = 400 * 1024 * 1024
 export default function App() {
   const [view, setView] = useState<View>({ kind: 'home' })
   const [progress, setProgress] = useState<AnalyzeProgress>({ step: 'engine', ratio: 0 })
+  /**
+   * The basket sweep filling in, or nothing when a single serve is being read.
+   *
+   * Held here rather than inside `compareServes` because it is what the
+   * analysing screen draws while the sweep runs, and because its presence is
+   * how the cancel button knows it should stop the sweep and keep the results
+   * rather than throw the clip away and go home.
+   */
+  const [sweep, setSweep] = useState<SweepProgress>()
   const [sessions, setSessions] = useState<Session[]>([])
   const [sheet, setSheet] = useState<'guide' | 'guide-first' | 'history' | 'progress' | null>(null)
   const [offlineReady, setOfflineReady] = useState(false)
@@ -291,6 +300,10 @@ export default function App() {
       lastFileRef.current = file
 
       setProgress({ step: 'engine', ratio: 0, detail: 'Getting the coach ready' })
+      // One serve, so the analysing screen shows steps rather than a basket. A
+      // sweep stopped a moment ago would otherwise leave its serve rows under
+      // the progress bar of an unrelated clip.
+      setSweep(undefined)
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
 
       try {
@@ -400,6 +413,10 @@ export default function App() {
    * Measure every serve in the clip. Deliberately opt-in: it re-reads the video
    * once per serve, so it is worth several seconds and the player should be the
    * one deciding to spend them.
+   *
+   * Every serve is surfaced as it lands rather than at the end, which is what
+   * makes stopping early survivable: the screen fills in serve by serve, and
+   * whatever was measured before the player stopped is still compared.
    */
   const compareServes = useCallback(
     async (analysis: Analysis) => {
@@ -411,11 +428,17 @@ export default function App() {
       const controller = new AbortController()
       abortRef.current = controller
 
+      // The same window the sweep itself walks, so the rows on screen are
+      // labelled with the serve numbers that will end up on the chips. Working
+      // it out separately here is how a screen ends up counting from one while
+      // the sweep measures serves five through ten.
+      const { first, total } = sweepWindow(analysis.serves.count)
+      setSweep({ total, firstNumber: first + 1, done: [] })
       setProgress({ step: 'engine', ratio: 0, detail: 'Comparing your serves' })
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
 
       try {
-        const all = await analyzeAllServes({
+        const swept = await analyzeAllServes({
           videoUrl: url,
           fileName: file.name || 'Your serve',
           handedness: analysis.handedness,
@@ -426,26 +449,47 @@ export default function App() {
           count: analysis.serves.count,
           signal: controller.signal,
           onProgress: setProgress,
+          // Each serve as it is measured, so a run of full analysis passes is
+          // visible while it happens instead of arriving all at once at the end.
+          onServe: ({ number, analysis: serve }) =>
+            setSweep((s) => (s ? { ...s, done: [...s.done, { number, score: serve?.overall }] } : s)),
           // The report this was launched from already scanned this clip.
           knownServeTimes: serveTimesRef.current,
           onServesLocated: (times) => {
             serveTimesRef.current = times
           },
         })
-        if (controller.signal.aborted) return
 
-        // What the sweep actually attempted, which is capped — not how many
-        // serves are in the clip. Handing over the clip's count reported every
-        // serve past the cap as one too unclear to read.
-        const result = buildConsistency(
-          all,
-          Math.min(analysis.serves.count, MAX_CONSISTENCY_SERVES),
-        )
+        // A newer run owns the screen — the player stopped this and picked
+        // another clip. Checking the controller rather than its abort flag,
+        // because a stopped sweep is now an ordinary result with serves in it
+        // and this is the only thing that still distinguishes "stale" from
+        // "finished early".
+        if (abortRef.current !== controller) return
+
+        // What the sweep actually read to a conclusion — not how many serves are
+        // in the clip, and not how many it set out to measure. Either of those
+        // would report serves nothing finished looking at as ones too unclear
+        // to read: the ones past the cap, or the ones the player stopped.
+        const result = buildConsistency(swept.serves, swept.attempted)
 
         if (!result) {
+          // Stopped before there were two serves to compare. Nothing failed and
+          // nothing is wrong with the clip, so this is not an error screen —
+          // it is the report they launched the sweep from, exactly as it was.
+          if (swept.cancelled) {
+            setView({ kind: 'report', analysis, videoUrl: url })
+            return
+          }
           setView({
             kind: 'error',
-            title: 'I could only read one of those serves',
+            // Said as it happened. The sweep can come back with one readable
+            // serve or with none, and a fixed "only one" told the second player
+            // about a serve that was never read.
+            title:
+              swept.serves.length === 1
+                ? 'I could only read one of those serves'
+                : 'I could not read the serves in that clip',
             hints: [
               'Comparing serves needs at least two clear ones in the same clip.',
               'Keep the whole body in frame for every serve, and avoid anyone walking behind you.',
@@ -457,13 +501,23 @@ export default function App() {
         // Onto the report, and therefore into storage. This is the most
         // expensive thing the app computes — one full pass over the video per
         // serve — and it used to be discarded by the back button.
+        //
+        // A stopped sweep is filed on the same terms as a complete one, and it
+        // is not a half-written report: it describes the serves it measured,
+        // says how many that was, and claims nothing about the ones it never
+        // reached. Throwing four measured serves away because a fifth was never
+        // started would be the dishonest half of that trade, not the safe one.
         const measured: Analysis = { ...analysis, consistency: result }
         remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)
         setView({ kind: 'report', analysis: measured, videoUrl: url })
         void safely(() => saveSession(measured), undefined).then(refreshSessions)
       } catch (err) {
-        if (controller.signal.aborted || err instanceof Cancelled) return
+        if (abortRef.current !== controller || err instanceof Cancelled) return
         setView({ kind: 'report', analysis, videoUrl: url })
+      } finally {
+        // Guarded, so a sweep that was superseded cannot wipe the rows of the
+        // run that replaced it.
+        if (abortRef.current === controller) setSweep(undefined)
       }
     },
     [refreshSessions],
@@ -472,7 +526,29 @@ export default function App() {
   const cancel = () => {
     abortRef.current?.abort()
     releaseVideo()
+    setSweep(undefined)
     setView({ kind: 'home' })
+  }
+
+  /**
+   * Stop the sweep, keep the clip, keep the serves already measured.
+   *
+   * Deliberately not `cancel`: that one is for a single analysis, where
+   * stopping means there is nothing to show and the object URL should go. A
+   * sweep is launched from a report that is still there behind it, and every
+   * serve it has finished is a complete measurement — so stopping hands back
+   * what it has and `compareServes` carries on from the line after the await.
+   *
+   * The flag is set here rather than left to the abort, because the abort is
+   * not visible to the player: the signal is read at the seek checks in the
+   * extraction pass, so the screen would carry on filling in rows for the rest
+   * of a serve while the button still read "Stop and compare these 4". Marking
+   * it answers the press in the same frame; the sweep itself unwinds when it
+   * gets there.
+   */
+  const stopSweep = () => {
+    abortRef.current?.abort()
+    setSweep((s) => (s ? { ...s, stopping: true } : s))
   }
 
   const goHome = () => {
@@ -506,7 +582,12 @@ export default function App() {
         )}
 
         {view.kind === 'analyzing' && (
-          <Analyzing progress={progress} fileName={view.fileName} onCancel={cancel} />
+          <Analyzing
+            progress={progress}
+            fileName={view.fileName}
+            sweep={sweep}
+            onCancel={sweep ? stopSweep : cancel}
+          />
         )}
 
         {view.kind === 'report' && (

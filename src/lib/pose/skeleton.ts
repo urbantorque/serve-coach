@@ -1,7 +1,8 @@
 import { readoutOf } from '../analysis/anatomy'
+import { SOFT_MEASUREMENT } from '../analysis/confidence'
 import { LM, jointAngle, type Side, sided } from '../analysis/geometry'
 import { smoothedRacket } from '../analysis/racket'
-import type { Frame, PhaseId } from '../analysis/types'
+import type { Frame, Metric, PhaseId } from '../analysis/types'
 
 export type Limb = ReturnType<typeof sided>
 
@@ -85,6 +86,26 @@ const PALETTE = {
   /** Any text on the picture sits on this. Near-black ink — never bare video. */
   plate: 'rgba(10, 12, 16, 0.82)',
   plateLabel: 'rgba(238, 242, 246, 0.72)',
+
+  /**
+   * The target pose, and the band it was placed by.
+   *
+   * This claims no fourth meaning: it is `neutral` again, held back and always
+   * stroked dashed, because a ghost is the same player somewhere they were not.
+   * A solid line of any colour here reads as a second tracked body, and the one
+   * thing this overlay must never do is let a target be mistaken for a
+   * measurement. Dashed and dim is the whole distinction, so both halves are
+   * mandatory — see `drawGhost`, which sets the dash itself rather than
+   * trusting a caller to have left one on.
+   */
+  ghost: 'rgba(238, 242, 246, 0.38)',
+
+  /**
+   * The target band as a zone across the picture. Deliberately not the accent:
+   * the accent means "the arm being judged", and a lime wash over a third of
+   * the frame would drown the one thing it is reserved for.
+   */
+  ghostZone: 'rgba(238, 242, 246, 0.09)',
 } as const
 
 /** Colour steps along the ball's flight. Eight is past the eye's resolution here. */
@@ -149,6 +170,294 @@ export const ANNOTATIONS: Partial<
   },
 }
 
+/* --------------------------------------------------------------------- ghost ---
+ *
+ * The position the player should have been in, drawn over the position they
+ * were in.
+ *
+ * The report can say "struck below full reach" all day; a player cannot act on
+ * a phrase they have to translate into their own body. So this puts the target
+ * on the picture. Everything below exists to stop that from becoming a lie,
+ * because a crisp outline is far more convincing than a sentence and will be
+ * believed long after the sentence has been hedged.
+ *
+ * ONE RULE: the ghost is placed by the same number the card prints, and by
+ * nothing else. It is not a model pose, not a pro's serve, not a hand-drawn
+ * ideal. It is this player's own tracked landmarks moved by exactly the
+ * distance the target band asks for, so `readoutOf` applied to the ghost
+ * returns the phrase already printed beside it. A ghost that disagrees with its
+ * own caption is worse than no ghost — the player would be looking at one claim
+ * and reading another, and would rightly stop believing both.
+ *
+ * WHAT THAT RULES OUT, which is most of the report. A target can only be drawn
+ * where the measurement lives in the plane the canvas draws in. Three of the
+ * app's five areas fail that outright:
+ *
+ *   - `shoulderTilt` is world-space by construction, and `geometry.ts` already
+ *     spells out why: side-on, the shoulder line points nearly at the camera,
+ *     its horizontal component collapses, and a modest 20° tilt projects as
+ *     60°+.
+ *   - `hipShoulderSeparation` is built almost entirely out of world z, the
+ *     least reliable thing the pose model outputs.
+ *   - `kneeBend` is a world 3-D angle, and this ghost has only image
+ *     coordinates to place. There is no image-space construction that would
+ *     re-measure to the world angle on the caption, and the ONE RULE above is
+ *     that the ghost's own readout must be the phrase printed beside it. It is
+ *     also not a height, so the one motion this ghost can perform — sliding the
+ *     whole body along image y — cannot express it at all: a translation
+ *     changes no angle anywhere. So the trophy keyframe gets no ghost, and the
+ *     honest description of that is "this mechanism cannot draw an angle",
+ *     not "the camera cannot see one".
+ *
+ *     WHICH IS WHAT THIS SAID, and it was wrong in a way worth leaving on the
+ *     record, because it is the failure mode Wave 1 was about. It read: a knee
+ *     bends front-to-back, front-to-back is the axis a side-on camera cannot
+ *     see, and a 70° bend projects as a 168.9° leg at 82° of yaw and a
+ *     dead-straight 180.0° at 90°. Those two figures are real and they
+ *     reproduce. They are also a measurement of the RIG, not of cameras.
+ *     `syntheticServe.ts` bends the knee purely in world z — dump the trophy
+ *     frame and the thigh moves dx 0.0000, dz 0.2516 — and world z on this rig
+ *     is the axis ACROSS the player, which `axes.ts` prices at cos(yaw): 0.139
+ *     at 82° and 0.000 at 90°. So the rig bends the knee sideways, and the
+ *     sideways axis is the one that collapses side-on. A knee bent the way a
+ *     knee bends, in the sagittal plane — world x here, gain sin(yaw) — projects
+ *     at the same yaws and the same 70° bend to 110.5° at 82° and 110.0° at 90°
+ *     against a world 110.3°. Half a degree, at the framing the app recommends.
+ *     The sentence had the geometry exactly backwards: it is the FACE-ON
+ *     framing that destroys a knee angle (153.1° image against 110° world at
+ *     20° of yaw), which is the framing the app already tells people not to use.
+ *     `__tests__/ghost.test.ts` pins all of this so the reversal cannot come
+ *     back as a fresh discovery.
+ *
+ * WHAT SURVIVES is the family measured straight down image y against the court:
+ * `(groundY - landmark.y) / bodyHeight`. There is no projection in it, no depth
+ * to infer and no angle to foreshorten — it is a height in the picture, divided
+ * by a height in the picture, and both of its terms are carried on the report
+ * for exactly this purpose (see `Analysis.scale`, which names "a model pose to
+ * compare against" as the reason it exists).
+ */
+const HEIGHT_TARGETS: Partial<
+  Record<PhaseId, { metric: string; landmark: (racket: Limb, toss: Limb) => number }>
+> = {
+  toss: { metric: 'releaseHeight', landmark: (_r, t) => t.wrist },
+  contact: { metric: 'contactHeight', landmark: (r) => r.wrist },
+}
+
+/**
+ * The ghost's own bones: the torso and both arms, and nothing below the hips.
+ *
+ * The arms are here because a target drawn as a torso with no arms is a target
+ * for nothing a player can see themselves doing — the whole measurement is
+ * about where one hand was.
+ *
+ * The legs are gone because of what a rigid translation does to them. The ghost
+ * is this player's own pose slid up image y, so every joint angle is identical
+ * and the only way the hand reaches higher is if the feet leave the court. Drawn
+ * feet hanging in the air are a claim, and the claim is "jump this much
+ * higher" — a cause the report already scores on its own card, with its own
+ * band, right beside this picture. The numbers are in `ghostFor`: the implied
+ * `bodyExtension` runs 0.213 to 0.302 against the serve's real 0.086 and a top
+ * rung of 0.16.
+ *
+ * From the hips up the translation still asserts nothing beyond the number it
+ * came from, so that is where it stops. This is the same trade the ghost makes
+ * everywhere: draw only what the measurement licenses, and let the shaded band
+ * and the gap line carry what is left.
+ */
+const GHOST_BONES: [number, number][] = [
+  [LM.leftShoulder, LM.rightShoulder],
+  [LM.leftShoulder, LM.leftHip],
+  [LM.rightShoulder, LM.rightHip],
+  [LM.leftHip, LM.rightHip],
+  [LM.leftShoulder, LM.leftElbow],
+  [LM.leftElbow, LM.leftWrist],
+  [LM.rightShoulder, LM.rightElbow],
+  [LM.rightElbow, LM.rightWrist],
+]
+
+/** A target pose, in the same normalised image space as `Frame.image`. */
+export interface Ghost {
+  /** Where every landmark should have been, indexed exactly as `Frame.image`. */
+  image: { x: number; y: number }[]
+  /** The target band itself, as a horizontal zone in normalised image y. */
+  zone: { top: number; bottom: number }
+  /**
+   * Image y of the NEAR edge of the band, at the anchor: the actual shortfall.
+   *
+   * The one number on this overlay that a player reads as a distance, and the
+   * reason it is separate from the body. `image` is translated to the band's
+   * midpoint, because that is the only placement whose readout is the phrase on
+   * the caption — see `ghostFor`. The gap line is a different claim: it says
+   * "you were here, you needed to be there", and what the player needed was to
+   * reach the band, not its middle.
+   *
+   * Drawing that line to the midpoint overstated the correction by up to half a
+   * band no matter how small the real miss was. Swept through the real pipeline:
+   * a contact height of 1.2632 against an ideal of [1.28, 1.50] is a shortfall
+   * of 0.0168 body heights — about 3 cm on a 1.8 m player — and the picture drew
+   * 0.1268, seven and a half times the miss and 6.5% of the frame's height. At
+   * 1.2434 it was four times, at 1.2237 three. A house that will not state a
+   * number it did not measure cannot draw one either, and the drawn magnitude
+   * was the only quantity on the overlay nobody had measured.
+   */
+  reachY: number
+  /**
+   * Where the measured hand actually was, in the same normalised image space.
+   *
+   * Carried rather than read off whatever frame happens to be on screen, and
+   * that is what lets the caller stop pinning the ghost to one exact sample
+   * index. `drawGhost` used to start its gap line at the LIVE frame's anchor, so
+   * drawing it a sample past contact would have run the line from a hand that
+   * was never measured — the arm is already coming down — and overstated the
+   * correction by however far it fell in 30 ms. The defence against that was
+   * exact index equality in `PosePlayer`, which is a defence with a silent
+   * failure in it: `seekTo` sets `currentTime` and the browser snaps it to a
+   * decoded frame boundary, so on a clip whose boundaries sit more than half a
+   * sample off the pose cadence the nearest sample is the neighbour and the
+   * ghost simply never appears, while the angle callout beside it still does.
+   *
+   * With the measured point travelling on the ghost, the gap line is the gap on
+   * the card no matter which frame is showing, and the caller can use the same
+   * 90 ms window its sibling callout uses.
+   */
+  from: { x: number; y: number }
+  /** The landmark the target is about — where the leader and the plate hang. */
+  anchor: number
+  /** The report's own target phrase. Never a second wording of it. */
+  label: string
+}
+
+export interface GhostInput {
+  phase: PhaseId
+  /**
+   * The keyframe the measurement was taken on, in the space it was taken in.
+   * Undefined for a report reopened from storage, which keeps no frames — the
+   * ordinary case, and the reason every gate below starts by refusing.
+   */
+  frame?: Frame
+  /** Every measurement on the report. An absent one is absent, never defaulted. */
+  metrics: readonly Metric[]
+  racket: Side
+  /** Standing height and the court surface, in image units. */
+  scale?: { bodyHeight: number; groundY: number }
+  /**
+   * Whether the report carries a roll correction.
+   *
+   * `scale.groundY` and `scale.bodyHeight` are quantities of the *levelled*
+   * space the measurements were taken in, and the canvas draws raw video
+   * pixels. On a corrected clip the two differ by exactly the roll that was
+   * taken out, so a ghost placed off `groundY` would sit tilted away from the
+   * body it is meant to be a target for — a hand's width out at the edge of the
+   * frame on a 4° correction, which is `NOTABLE_ROLL` and the smallest one that
+   * gets corrected at all. The transform back is owned by `spatial.ts` at frame
+   * granularity and there is no point-level export of it; a second copy here is
+   * how a pivot and a sign drift apart. So a rolled clip gets no ghost. It is a
+   * minority of clips — see `Analysis.tilt`, "absent on the clips that needed no
+   * correction, which is most".
+   */
+  rolled?: boolean
+}
+
+/**
+ * The target pose for a keyframe, or nothing.
+ *
+ * Nothing is the common answer and the safe one. Every refusal below is a case
+ * where the app would otherwise be drawing a crisp outline over a number it has
+ * already admitted it cannot see.
+ */
+export function ghostFor(o: GhostInput): Ghost | undefined {
+  const spec = HEIGHT_TARGETS[o.phase]
+  if (!spec || !o.frame || o.rolled) return undefined
+
+  const { bodyHeight, groundY } = o.scale ?? { bodyHeight: 0, groundY: 0 }
+  if (!(bodyHeight > 0) || !Number.isFinite(groundY)) return undefined
+
+  const m = o.metrics.find((x) => x.id === spec.metric)
+  // Absent is absent. `metrics.ts` drops a measurement it could not take rather
+  // than flooring it, so a missing card here means the app never had the number
+  // — and a ghost is a claim about a number.
+  if (!m || !Number.isFinite(m.value)) return undefined
+
+  // Soft is not good enough either, and this is the gate the whole feature turns
+  // on. `confidence.ts` softens every height ratio at once when the feet are
+  // cropped and standing height falls back to a torso estimate — which is
+  // precisely the input `groundY` and `bodyHeight` are, so a low-confidence
+  // height ghost would be a crisp line drawn from two guessed numbers. The card
+  // beside it already says "approximate"; the picture must not say otherwise.
+  if (m.confidence < SOFT_MEASUREMENT || m.softness) return undefined
+
+  const [lo, hi] = m.ideal
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return undefined
+
+  // Inside the band, nothing is drawn. `FundamentalCard` withholds "Aim for" on
+  // exactly this test and for exactly this reason: a player who is already where
+  // they were asked to be does not need the app correcting them, and a ghost
+  // sitting on top of their own body is a correction with no content.
+  if (m.value >= lo && m.value <= hi) return undefined
+
+  // The midpoint, not the near edge. `targetOf` reads the printed target phrase
+  // off the middle of the band, so the midpoint is the one value in it whose
+  // readout is guaranteed to be the words already on the card. Placing the ghost
+  // at the near edge would ask for less than the caption says and could land it
+  // a whole rung away from its own label.
+  const target = (lo + hi) / 2
+
+  // And the near edge, which is a different question with a different answer:
+  // how far short the player actually was. That is what the gap line measures —
+  // see `Ghost.reachY`. A player under the band has to come up to `lo`; one
+  // over it has to come down to `hi`.
+  const reach = m.value < lo ? lo : hi
+
+  const arm = sided(o.racket)
+  const anchor = spec.landmark(arm, sided(o.racket === 'right' ? 'left' : 'right'))
+  const actual = o.frame.image[anchor]
+  if (!actual || !Number.isFinite(actual.y)) return undefined
+
+  // Image y grows downwards, so a taller target is a smaller y.
+  const targetY = groundY - target * bodyHeight
+  const dy = targetY - actual.y
+  if (!Number.isFinite(dy)) return undefined
+
+  /*
+   * The whole body moves, not the arm.
+   *
+   * The measurement is "how high above the court did that hand meet the ball",
+   * and the only correction it licenses is "that body, this much higher".
+   * Moving the arm alone would be asserting the fix is an arm action, which
+   * this number does not say — the report scores arm extension, leg drive and
+   * body extension on their own cards, each with their own band.
+   *
+   * A rigid translation is the least any of that, and it is not none, which is
+   * why the legs are left out of `GHOST_BONES`. Every joint angle is unchanged
+   * by construction, so the only way the ghost's hand gets higher is by the
+   * whole body leaving the court — and drawn feet floating above the surface
+   * read as one thing only. Measured on the same sweep, the ghost's ankles imply
+   * a `bodyExtension` of 0.302 at a contact reach of 1.15 and 0.213 at 1.24,
+   * against the serve's real 0.086; `anatomy.ts` puts the top rung, 'Big jump',
+   * at above 0.16. A player parked on the contact keyframe would be reading a
+   * card that says they were up off the court by a normal amount while looking
+   * at a target hanging one and a half to two times the top rung of that card's
+   * own ladder. So the ghost is drawn from the hips up, where the translation
+   * asserts nothing beyond the number it came from, and the band and the gap
+   * line carry the rest.
+   *
+   * Taken from the raw tracked frame rather than the smoothed one the player
+   * sees, for the reason `PosePlayer` gives about the trail and the racket: the
+   * smoother is for the eye, and anything carrying a number is derived from what
+   * was measured. It costs nothing here anyway — the anchor lands on an absolute
+   * height computed from the band and the scale, so the one landmark the ghost
+   * is judged by does not depend on the player's per-frame noise at all.
+   */
+  return {
+    image: o.frame.image.map((p) => ({ x: p.x, y: p.y + dy })),
+    zone: { top: groundY - hi * bodyHeight, bottom: groundY - lo * bodyHeight },
+    reachY: groundY - reach * bodyHeight,
+    from: { x: actual.x, y: actual.y },
+    anchor,
+    label: m.target,
+  }
+}
+
 /** Where the video actually sits inside a box, under `object-fit: contain`. */
 export interface DrawRect {
   ox: number
@@ -194,6 +503,14 @@ export interface SkeletonOptions {
    * illegible pixels in the filmstrip.
    */
   calloutScale?: number
+  /**
+   * The target pose to draw behind the tracked one, from `ghostFor`.
+   *
+   * Optional, and absent far more often than not. Passing one is a claim that
+   * the app can see the measurement it was built from — build it with
+   * `ghostFor`, which owns every reason not to, rather than assembling one here.
+   */
+  ghost?: Ghost
 }
 
 /**
@@ -214,6 +531,14 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
     y: oy + f.image[lm].y * dh,
   })
   const scale = Math.min(dw, dh) / 420
+
+  // The target goes down before anything tracked does, so the player's own body
+  // is always the thing on top. Drawn last it would sit over the very limb it is
+  // a target for, and the picture would be answering "where were you" with the
+  // answer to "where should you have been".
+  // Drawn from the ghost's own record of where the measured hand was, not from
+  // this frame's — see `Ghost.from`.
+  if (o.ghost) drawGhost(ctx, o.ghost, rect, aspect, scale)
 
   if (o.trail && o.trail.to > o.trail.from + 1) {
     const { frames, from, to } = o.trail
@@ -535,6 +860,145 @@ function roundRectPath(
   ctx.arcTo(x, y, x + rad, y, rad)
   ctx.closePath()
 }
+
+/**
+ * The target pose: a band, a dashed body inside it, and the gap between the two
+ * spelled out as a line from where the player was to where they should have been.
+ *
+ * Everything here is dashed and dim on purpose, and the dash is set inside this
+ * function rather than by the caller. It is the only thing separating a target
+ * from a measurement on a picture where both are white lines over the same body,
+ * and a caller that forgot to set it would produce a second solid skeleton — two
+ * bodies, equally confident, one of them fictional. It is also cleared before
+ * returning, because this draws first and every tracked limb after it is solid.
+ */
+function drawGhost(
+  ctx: CanvasRenderingContext2D,
+  g: Ghost,
+  rect: DrawRect,
+  aspect: number,
+  scale: number,
+): void {
+  const { ox, oy, dw, dh } = rect
+  const at = (p: { x: number; y: number }) => ({
+    x: ox + (p.x / aspect) * dw,
+    y: oy + p.y * dh,
+  })
+
+  // The band, first and underneath. It is drawn as a zone and not a line because
+  // the target *is* a range — `ideal` is a pair — and a single rule across the
+  // picture would be claiming a precision the report does not have. A player who
+  // lands anywhere in the shaded strip has done what was asked.
+  const edges = [oy + g.zone.top * dh, oy + g.zone.bottom * dh]
+  const bandTop = Math.min(edges[0], edges[1])
+  const bandHeight = Math.abs(edges[1] - edges[0])
+  ctx.fillStyle = PALETTE.ghostZone
+  ctx.fillRect(ox, bandTop, dw, bandHeight)
+
+  ctx.setLineDash([6 * scale, 5 * scale])
+  ctx.lineCap = 'butt'
+  ctx.lineJoin = 'round'
+
+  // Same two-stroke treatment as every tracked chain: one dark pass wide enough
+  // to leave an edge showing, then the colour. Footage is not a backdrop, and a
+  // dim white line has less to spare than a bright one, not more.
+  const stroke = () => {
+    ctx.strokeStyle = PALETTE.under
+    ctx.lineWidth = 4.4 * scale
+    ctx.stroke()
+    ctx.strokeStyle = PALETTE.ghost
+    ctx.lineWidth = 2 * scale
+    ctx.stroke()
+  }
+
+  ctx.beginPath()
+  for (const [a, b] of GHOST_BONES) {
+    const p = at(g.image[a])
+    const q = at(g.image[b])
+    ctx.moveTo(p.x, p.y)
+    ctx.lineTo(q.x, q.y)
+  }
+  stroke()
+
+  const nose = at(g.image[LM.nose])
+  const span = Math.abs(at(g.image[LM.leftShoulder]).x - at(g.image[LM.rightShoulder]).x)
+  const headR = Math.max(9 * scale, span * 0.42, 11)
+  ctx.beginPath()
+  ctx.arc(nose.x, nose.y - headR * 0.25, headR, 0, Math.PI * 2)
+  stroke()
+
+  /*
+   * The gap itself, from the hand that was measured to the near edge of the
+   * band — not to the dashed hand.
+   *
+   * This is the one thing the two poses cannot say on their own: overlaid, a
+   * body and its target read as a double exposure until something names which
+   * way the correction runs. It is also the only mark on this overlay carrying a
+   * MAGNITUDE, which is why it does not end where the ghost's hand ends. The
+   * ghost stands at the band's midpoint because that is the only placement whose
+   * readout is the phrase on the plate; the player's actual shortfall is the
+   * distance to the band's near edge, and on a serve missing by 3 cm the two
+   * differ by seven and a half times. See `Ghost.reachY`.
+   *
+   * So the line stops at the edge of the shaded zone, where the correction
+   * genuinely ends, and the dashed body above it is the caption's pose rather
+   * than the size of anybody's miss.
+   */
+  const target = at(g.image[g.anchor])
+  const measured = at(g.from)
+  ctx.beginPath()
+  ctx.moveTo(measured.x, measured.y)
+  ctx.lineTo(target.x, oy + g.reachY * dh)
+  stroke()
+
+  ctx.setLineDash([])
+
+  // The label sits on the same soft-cornered ink plate as the angle callout, so
+  // a player reads the two as one voice. Its type is `limb` rather than the
+  // accent: the accent is what a *measured* callout is set in, and the whole
+  // point of this plate is that it is the only words on the picture describing
+  // something that did not happen.
+  const labelSize = 9.5 * scale
+  const valueSize = 12.5 * scale
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `620 ${valueSize}px ${UI_FONT}`
+  const valueW = ctx.measureText(g.label).width
+  ctx.font = `500 ${labelSize}px ${UI_FONT}`
+  const w = Math.max(valueW, ctx.measureText(GHOST_OVERLINE).width) + 22 * scale
+  const h = 36 * scale
+
+  // Pinned inside the picture on both axes. The target is by construction
+  // further up the frame than the player, and at the top of the reach it is
+  // close enough to the edge that a plate centred on it would hang half outside
+  // the video — over the page, on a letterboxed clip.
+  const lx = Math.min(Math.max(target.x, ox + w / 2 + 4 * scale), ox + dw - w / 2 - 4 * scale)
+  const ly = Math.min(
+    Math.max(target.y - headR - h * 0.9, oy + h / 2 + 4 * scale),
+    oy + dh - h / 2 - 4 * scale,
+  )
+
+  roundRectPath(ctx, lx - w / 2, ly - h / 2, w, h, Math.min(9 * scale, h / 2))
+  ctx.fillStyle = PALETTE.plate
+  ctx.fill()
+
+  ctx.font = `620 ${valueSize}px ${UI_FONT}`
+  ctx.fillStyle = PALETTE.limb
+  ctx.fillText(g.label, lx, ly - 5 * scale)
+  ctx.font = `500 ${labelSize}px ${UI_FONT}`
+  ctx.fillStyle = PALETTE.plateLabel
+  ctx.fillText(GHOST_OVERLINE, lx, ly + 9 * scale)
+}
+
+/**
+ * The overline on the ghost's plate, in the report's own words.
+ *
+ * Literally the string `FundamentalCard` prints above the same target phrase, so
+ * the picture and the card are not two different ways of saying it. Upper-cased
+ * once here rather than at the call site because it is also measured, and
+ * measuring one casing while drawing another is how a plate comes out too narrow.
+ */
+const GHOST_OVERLINE = 'AIM FOR'
 
 /**
  * An arc at the joint, a hairline out to a plate, and the position in words.

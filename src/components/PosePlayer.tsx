@@ -3,7 +3,7 @@ import { ballMarkerAt } from '../lib/analysis/analyze'
 import { unlevelFrames } from '../lib/analysis/spatial'
 import type { Analysis, Frame, PhaseId } from '../lib/analysis/types'
 import { levelFlight } from '../lib/vision/ballTrack'
-import { drawSkeleton, fitContain } from '../lib/pose/skeleton'
+import { type Ghost, drawSkeleton, fitContain, ghostFor } from '../lib/pose/skeleton'
 import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { Icon } from './primitives'
 
@@ -82,6 +82,50 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     [analysis.ball, analysis.tilt, aspect],
   )
 
+  /**
+   * The target pose for each keyframe that has an honest one, worked out once.
+   *
+   * Once per report, not once per painted frame. `ghostFor` walks the whole
+   * metric list and copies a landmark array, and the answer cannot change while
+   * a report is on screen — it is a function of the bands, the scale and the
+   * keyframes, none of which move. Doing it inside `draw` would put that work on
+   * every repaint of a clip looping forever at half speed, which is the exact
+   * cost the rAF gate below was written to stop.
+   *
+   * Most reports get nothing back for most keyframes, and that is the designed
+   * outcome: `ghostFor` refuses a soft measurement, an absent one, a player
+   * already inside the band, a roll-corrected clip and a keyframe with no frame
+   * behind it. A stored report has no frames at all — `drawFrames[p.frame]` is
+   * undefined and every phase refuses — though in practice `Report` does not
+   * mount this player without a video to put under it.
+   */
+  const ghosts = useMemo(() => {
+    const metrics = analysis.fundamentals.flatMap((f) => f.metrics)
+    // Keyed by phase and nothing else. The frame index used to travel with each
+    // ghost so `draw` could insist on exact equality; `Ghost.from` carries the
+    // measured point now, so the index had no reader left.
+    const found: Partial<Record<PhaseId, Ghost>> = {}
+    for (const p of phases) {
+      const ghost = ghostFor({
+        phase: p.id,
+        frame: drawFrames[p.frame],
+        metrics,
+        racket: analysis.handedness,
+        scale: analysis.scale,
+        rolled: Boolean(analysis.tilt),
+      })
+      if (ghost) found[p.id] = ghost
+    }
+    return found
+  }, [
+    analysis.fundamentals,
+    analysis.handedness,
+    analysis.scale,
+    analysis.tilt,
+    drawFrames,
+    phases,
+  ])
+
   const frameAt = useCallback(
     (t: number): number => {
       let lo = 0
@@ -127,6 +171,27 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     const onKeyframe =
       Math.abs(t - (phases.find((p) => p.id === activePhase)?.t ?? -9)) < 0.09
 
+    /*
+     * The target, on the same 90 ms window its sibling callout uses.
+     *
+     * This was exact index equality against the frame the measurement came from,
+     * for a reason that was real: the ghost is a fixed height in the picture
+     * with a moving body underneath it, so a gap line starting at the LIVE
+     * frame's hand and parked one sample past contact would run from a hand that
+     * was never measured, overstating the correction by however far the arm fell
+     * in 30 ms.
+     *
+     * The fix for that belongs in the ghost and is now there — `Ghost.from`
+     * carries the measured point, so the gap line is the gap on the card at any
+     * frame. Exact equality has a silent failure mode of its own: `seekTo` sets
+     * `currentTime` and the browser snaps it to a decoded frame boundary, and on
+     * a clip whose boundaries sit more than half a sample off the pose cadence
+     * `frameAt` returns the neighbour — so the ghost would never draw at all
+     * while the lime angle callout beside it still did. A no-op, not a visible
+     * bug, which is the kind nobody reports.
+     */
+    const ghost = onKeyframe ? ghosts[activePhase] : undefined
+
     // Smoothed only for drawing — `f` itself, and everything derived from the
     // raw `frames` array below (the trail, the racket estimate), is left
     // untouched so the overlay's numbers never drift from what was measured.
@@ -142,8 +207,9 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
       bodyHeight: analysis.scale?.bodyHeight,
       sequence: { frames: drawFrames, index: idx },
       ball: ballMarkerAt(drawBall, t),
+      ghost,
     })
-  }, [activePhase, drawBall, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start])
+  }, [activePhase, drawBall, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start])
 
   /**
    * The latest `draw`, reachable from effects that must not re-run when it changes.

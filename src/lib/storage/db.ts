@@ -392,6 +392,39 @@ export function normalise(raw: unknown): Session | undefined {
     // `metrics[].values` and `range` on every row. Half a spread is a crash in a
     // component the ErrorBoundary can only replace with a blank screen.
     consistency: usableConsistency(s.consistency),
+    diagnosis: withChain(s.diagnosis),
+  }
+}
+
+/**
+ * A stored diagnosis, with the kinetic chain filled in as never measured.
+ *
+ * `Diagnosis.chain` is required by the type and absent from every report saved
+ * before it existed, so a stored diagnosis is a shape the compiler believes and
+ * the data does not. Nothing reads it yet — no card, no flaw, no copy — which is
+ * exactly why this is worth doing now rather than after the first reader lands
+ * and takes the report screen down for anyone with older history.
+ *
+ * The links come back `null` at zero confidence, which is this repo's word for
+ * "not measured" everywhere else and is the literal truth here: those clips were
+ * analysed by a build that never looked. What must not happen is a zero — a
+ * chain of `ms: 0` would read as five links all peaking exactly at contact, an
+ * invented serve rather than a missing measurement.
+ */
+function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
+  if (!d) return d
+  if (d.chain && typeof d.chain === 'object') return d
+  const missing = { ms: null, confidence: 0 }
+  return {
+    ...d,
+    chain: {
+      legs: { ...missing },
+      hips: { ...missing },
+      shoulders: { ...missing },
+      elbow: { ...missing },
+      wrist: { ...missing },
+      span_ms: null,
+    },
   }
 }
 

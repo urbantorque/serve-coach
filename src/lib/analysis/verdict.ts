@@ -26,7 +26,14 @@
 import { DRILLS } from './coaching'
 import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
-import { FLAW_DRILL, HIERARCHY, type InjuryFlag, type RejectReason, type Triage } from './triage'
+import type { BodyAxis } from './axes'
+import {
+  HIERARCHY,
+  drillIdFor,
+  type InjuryFlag,
+  type RejectReason,
+  type Triage,
+} from './triage'
 import { SEVERITY_RANK, rungName, type Severity } from './tiers'
 import type { Analysis, Drill } from './types'
 import { cue } from './voice'
@@ -179,6 +186,21 @@ interface FlawCopy {
   low: string
   high?: string
   highTitle?: string
+  /**
+   * The same fault, said for the axis it was actually measured along.
+   *
+   * One entry today, and it is the largest heading on the report. `toss_drift`
+   * read "Your toss drifts sideways" on every clip, while the number underneath
+   * it is 99% front-to-back on the side-on framing this app recommends — so the
+   * heading, and the drill under it, named the one axis the reading barely
+   * contained. The base entry above is now axis-neutral and true of both, and
+   * these say which way once the camera has been asked.
+   *
+   * Overrides only what it declares. A stored report with no axis on it, or a
+   * clip filmed at the 45° tie where `diagnose` refuses to guess, falls back to
+   * the neutral line rather than to a coin toss.
+   */
+  byAxis?: Partial<Record<BodyAxis, Partial<Pick<FlawCopy, 'title' | 'low'>>>>
 }
 
 const FLAW_COPY: Record<FlawId, FlawCopy> = {
@@ -193,8 +215,29 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     high: 'The ball hangs above your reach, so you wait for it and the swing loses its rhythm.',
   },
   toss_drift: {
-    title: 'Your toss drifts sideways',
-    low: 'The ball leaves your hand travelling across your body, so you chase it instead of standing under it.',
+    // Axis-neutral, because this is what the report says when it does not know
+    // which way the toss wandered. True of both axes and of the tie between
+    // them; `byAxis` sharpens it wherever the camera angle can be read.
+    title: 'Your toss wanders off line',
+    low: 'The ball leaves your hand on a new path each serve, so you move to it instead of standing under it.',
+    byAxis: {
+      // The usual case on the framing this app recommends. No direction is
+      // claimed — `axes.ts` recovers yaw from an `acos` and cannot tell a lens
+      // in front of the player from one behind, so "forwards and back" names
+      // the axis and stops. "Your toss drifts forwards" would be a coin toss
+      // printed as an observation.
+      depth: {
+        title: 'Your toss drifts forwards and back',
+        low: 'The ball leaves your hand nearer or further out each serve, so you reach for it or crowd it.',
+      },
+      // The original line, unchanged, now printed only where it is true: a
+      // camera round towards face-on, where image x really does carry the
+      // shoulder-line axis.
+      lateral: {
+        title: 'Your toss drifts sideways',
+        low: 'The ball leaves your hand travelling across your body, so you chase it instead of standing under it.',
+      },
+    },
   },
   posture_collapse: {
     title: 'Your body folds sideways',
@@ -216,6 +259,12 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     title: 'The arm goes first',
     low: 'Your shoulders fire before your hips, so the serve runs on arm strength and the speed stops there.',
   },
+  // Unreachable today, and kept rather than deleted. `pancake_contact` carries
+  // `notNamed` in flaws.ts — see `UNDER_RESOLVED.pronation_deg` in tiers.ts for
+  // the measurement that decided it — so no report can print this copy. It stays
+  // because the record has to be total and because the suppression is a fact
+  // about the pronation estimator rather than about the fault: the day a better
+  // estimator lands, this is the copy that comes back. Do not read it as live.
   pancake_contact: {
     title: 'The strings meet the ball flat',
     low: 'Your hand never turns over through the ball, so you push it forward instead of driving across it.',
@@ -254,27 +303,38 @@ export const drillFor = (id: string | undefined): Drill | undefined =>
 export function causalFocus(triage: Triage | undefined): Analysis['focus'] | undefined {
   if (!triage || triage.status !== 'ok' || !triage.primary_flaw) return undefined
 
-  const { flaw, value, target } = triage.primary_flaw
-  return focusFor(flaw, value, target)
+  const { flaw, value, target, axis } = triage.primary_flaw
+  return focusFor(flaw, value, target, axis)
 }
 
 /**
  * One flaw, turned into a title, a reason and the exercise that corrects it.
  *
- * The drill is resolved from `FLAW_DRILL` rather than from `triage.drill_id`,
+ * The drill is resolved from `drillIdFor` rather than from `triage.drill_id`,
  * which only ever names the primary's. Returns undefined where either table has
  * no entry, so a flaw the copy database has not caught up with is left out of a
  * plan rather than printed as a blank heading.
+ *
+ * `axis` is what the diagnosis measured the signal along, where that is a
+ * question. It picks both halves of the answer — the sentence and the exercise —
+ * from the same fact, so the heading and the drill under it cannot name opposite
+ * axes. They did: the card read "drifts forwards and back" under a heading that
+ * said "sideways", above a drill for sideways.
  */
 function focusFor(
   flaw: FlawId,
   value: number,
   target: [number, number],
+  axis?: BodyAxis,
 ): Analysis['focus'] | undefined {
-  const copy = FLAW_COPY[flaw]
-  if (!copy) return undefined
+  const base = FLAW_COPY[flaw]
+  if (!base) return undefined
 
-  const drill = drillFor(FLAW_DRILL[flaw])
+  // Spread rather than replaced: an axis entry states only the lines that differ
+  // by axis, and `high`/`highTitle` stay whatever the base said.
+  const copy = { ...base, ...(axis ? base.byAxis?.[axis] : undefined) }
+
+  const drill = drillFor(drillIdFor(flaw, axis))
   if (!drill) return undefined
 
   // Which half of the sentence applies: a signal past the top of its band is a
@@ -336,7 +396,7 @@ export function causalPlan(
 
     for (const f of here) {
       if (out.length >= MAX_PLAN) break
-      const entry = focusFor(f.flaw, f.value, f.target)
+      const entry = focusFor(f.flaw, f.value, f.target, f.axis)
       if (entry) out.push(entry)
     }
   }
@@ -402,6 +462,12 @@ export function everyVerdictCue(): { where: string; text: string }[] {
   for (const [flaw, copy] of Object.entries(FLAW_COPY)) {
     out.push({ where: `flaw.${flaw}.low`, text: copy.low })
     if (copy.high) out.push({ where: `flaw.${flaw}.high`, text: copy.high })
+    // The per-axis lines are the ones a player actually reads on most clips —
+    // the neutral entry above is the fallback — so they are linted at the same
+    // ceiling rather than sitting behind a nested key the walk never opened.
+    for (const [axis, byAxis] of Object.entries(copy.byAxis ?? {})) {
+      if (byAxis?.low) out.push({ where: `flaw.${flaw}.${axis}.low`, text: byAxis.low })
+    }
   }
   for (const [flag, copy] of Object.entries(INJURIES)) {
     out.push({ where: `injury.${flag}`, text: copy.body })

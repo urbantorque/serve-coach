@@ -1,6 +1,8 @@
 import type { ServeType } from '../storage/prefs'
 import { readoutOf, targetOf } from './anatomy'
 import { FUNDAMENTALS, metricCopy, type MetricCopy } from './coaching'
+import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
+import { assessSpatial } from './spatial'
 import { cue } from './voice'
 import {
   LM,
@@ -31,6 +33,24 @@ import type { Frame, Fundamental, FundamentalId, Metric } from './types'
 
 /** Measurements that only exist when the ball was found in the pixels. */
 const BALL_METRICS = new Set(['tossPeakHeight', 'contactBelowPeak'])
+
+/**
+ * Samples the toss-to-contact window needs before a share of it means anything.
+ *
+ * `handUnderElbow` counts frames, so one frame is worth 100/N of the answer. Its
+ * ladder turns over at 8 — below that the hand never gets under the elbow at all
+ * — so at nine samples or fewer a single frame is worth more than that entire
+ * bottom rung, and which side of it a player lands on is decided by which
+ * instant the camera happened to catch rather than by what their arm did.
+ *
+ * Ten rather than something larger because this has to fire almost never. At 30
+ * fps, the slowest camera the app reads (see `MIN_DROP_SEPARATION` in
+ * phases.ts), a toss-to-contact stretch of 0.7–1.2 s is 22–37 samples, and the
+ * synthetic rig's collapsed-drop serve gives 21 at that rate. Below ten samples
+ * either the clip is far under spec or contact landed on the toss, and in both
+ * cases there is no window to take a share of.
+ */
+const HAND_HANG_MIN_SAMPLES = 10
 
 function format(value: number, copy: MetricCopy): string {
   if (copy.unit === 'ms') return `${Math.round(value)} ms`
@@ -70,8 +90,9 @@ function build(
   value: number,
   ctx?: ConfidenceContext,
   serveType: ServeType = 'flat',
+  axis?: BodyAxis,
 ): Metric | undefined {
-  const copy = metricCopy(id, serveType)
+  const copy = metricCopy(id, serveType, axis)
   if (!copy) throw new Error(`no coaching copy for metric "${id}"`)
   if (!Number.isFinite(value)) return undefined
   const confidence = ctx ? metricConfidence(id, ctx) : 1
@@ -255,6 +276,26 @@ export function measure(
 
   const values: Record<string, number> = {}
 
+  /**
+   * Which body axis each image-x reading was actually taken along.
+   *
+   * Only `tossPathWobble` is in here today, and it is a record rather than a
+   * single variable because the axis has to travel with the measurement all the
+   * way to `build`: the card's words and its drill are chosen by it, and a
+   * fence-line drill printed under a front-to-back reading is the exact failure
+   * this whole path exists to stop.
+   */
+  const measuredAxis: Record<string, BodyAxis> = {}
+
+  // What image x means for this camera, recovered once and shared. Taken here
+  // rather than accepted from `analyze` for the same reason `diagnose` recovers
+  // it itself: a report measured straight off frames — a stored clip, a test —
+  // must not quietly lose the attribution because its caller had no angle to
+  // hand over. `confidence.ts` asks the identical question of the identical
+  // frames, so the axis a card is named for and the axis its confidence is
+  // priced against cannot disagree.
+  const imageX = imageXSplitFrom(assessSpatial(frames, keys.ready, bodyHeight))
+
   /* ----------------------------------------------------------------- toss */
   values.tossArmExtension = steadyAngle(frames, keys.toss, T.shoulder, T.elbow, T.wrist)
   values.releaseHeight = above(fToss, T.wrist)
@@ -271,21 +312,45 @@ export function measure(
     values.tossArmHold = (held / (span + 1)) * 100
   }
 
-  // Sideways wobble of the tossing hand on the way up. The straight line from
-  // the start of the lift to the release is removed first, so travelling
-  // forwards with the body does not read as a wobble.
+  // Wobble of the tossing hand on the way up, along whichever body axis this
+  // camera laid across image x. The straight line from the start of the lift to
+  // the release is removed first, so travelling forwards with the body does not
+  // read as a wobble.
+  //
+  // This block used to end at the image-x figure and call it sideways. It is
+  // not sideways; it is `depth·sin(yaw) + lateral·cos(yaw)` and which of those
+  // it mostly is depends on where the phone stood — dead side-on, the framing
+  // this app recommends, the number is 99% front-to-back drift. The player was
+  // then told their hand "drifts sideways" and sent to a fence-line drill that
+  // constrains the one axis the reading barely contained.
   {
     const from = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
     const seg = frames.slice(from, keys.toss + 1)
+    let wobbleImageX = 0
     if (seg.length >= 3) {
       // Smoothed first, so landmark jitter does not masquerade as a wobbly toss.
       const xs = smooth(seg.map((f) => f.image[T.wrist].x), 2)
       const x0 = xs[0]
       const x1 = xs[xs.length - 1]
       const residual = xs.map((x, i) => x - (x0 + ((x1 - x0) * i) / (xs.length - 1)))
-      values.tossPathWobble = (stdev(residual) / bodyHeight) * 100
-    } else {
-      values.tossPathWobble = 0
+      wobbleImageX = (stdev(residual) / bodyHeight) * 100
+    }
+
+    // `dominant` is null only where the two axes are laid across image x in
+    // equal measure, at which point naming either one is a coin toss wearing a
+    // measurement's clothes. `readImageX` can refuse a second time, where the
+    // named axis has folded into the lens — it cannot fire from here, because
+    // the dominant axis is by construction the readable one, and it is written
+    // through rather than around so that a future caller asking for a *named*
+    // axis rather than the dominant one inherits the guard instead of a number
+    // made of jitter multiplied by eleven. Either refusal leaves the value
+    // unset, which is this file's established answer to a measurement that could
+    // not be taken: see the filters at the bottom of `measure`.
+    const axis = imageX.dominant
+    const reading = axis ? readImageX(wobbleImageX, axis, imageX) : { value: null, confidence: 0 }
+    if (reading.value !== null) {
+      values.tossPathWobble = reading.value
+      measuredAxis.tossPathWobble = axis as BodyAxis
     }
   }
 
@@ -328,6 +393,65 @@ export function measure(
   values.dropDepth = (fDrop.image[R.wrist].y - fDrop.image[R.shoulder].y) / bodyHeight
   values.elbowAtDrop = steadyAngle(frames, keys.drop, R.shoulder, R.elbow, R.wrist)
   values.dropToContact = Math.max(0, (fContact.t - fDrop.t) * 1000)
+
+  // How much of the swing the racket hand spends hanging under its own elbow.
+  //
+  // This is the one measurement on the Swing card that survives a serve with no
+  // racket drop, and that is why it is here. The three above it are all read at
+  // or between keyframes, and on a rigid-legged serve whose racket never falls —
+  // the commonest shape this app will ever be shown — the trophy, the drop and
+  // sometimes the toss collapse onto one instant, at which point the filters at
+  // the bottom of `measure` correctly take two of them off the card and leave a
+  // beginner with one row. A share of a window is not read at an instant, so it
+  // is still the same quantity on exactly that clip: on the synthetic rig it is
+  // 2.9% for a serve with no drop and 28.6% for the clean one, and it climbs
+  // monotonically between them (14.3 at a 0.10 m drop, 20.0 at 0.20, 25.7 at
+  // 0.30).
+  //
+  // Three deliberate choices, each of them a fault this file has already paid
+  // for somewhere else:
+  //
+  // The window is toss→contact and not trophy→contact, even though the trophy is
+  // where a swing arguably begins. `trophyOnToss` is exactly the collapse this
+  // measurement exists to survive, and a share taken over a window that silently
+  // grows when a keyframe moves is `loadRatio`'s defect rebuilt: on the rig, the
+  // trophy→contact share of an otherwise clean serve reads 43.5% with the legs
+  // loaded and 45.5% with them rigid — same arm, different window, and the
+  // difference lands on the player. Anchored at the toss it reads 28.6% for
+  // both.
+  //
+  // It counts nothing but the vertical order of three landmarks in the frame, so
+  // there is no `imageXAxis` question to get wrong and no depth to infer: which
+  // of two points sits higher in the picture is the same fact from every camera
+  // angle. Measured across the rig at 20°, 45°, 60° and 89° of yaw it does not
+  // move at all.
+  //
+  // And the hand has to be up off the hip line as well as under the elbow. A
+  // racket left hanging by the thigh also puts the elbow above the hand — that
+  // is what a hanging arm is — so without the hip gate a player who never takes
+  // the racket back at all scores full marks for a loaded arm they never made.
+  // The rig's idling serve, racket by the hip from first frame to last, reads
+  // 100% without the gate and 0% with it.
+  {
+    const from = clamp(keys.toss, 0, frames.length - 1)
+    const to = clamp(keys.contact, from, frames.length - 1)
+    const samples = to - from + 1
+    // Left unset below the floor rather than reported coarsely, which is this
+    // file's established answer to a measurement that could not be taken — see
+    // the filters at the bottom of `measure`, and `HAND_HANG_MIN_SAMPLES` for
+    // why ten.
+    if (samples >= HAND_HANG_MIN_SAMPLES) {
+      let hung = 0
+      for (let i = from; i <= to; i++) {
+        const f = frames[i]
+        const hip = midpoint(f.image[LM.leftHip], f.image[LM.rightHip])
+        // Image y grows downwards, so "above" is the smaller number: the elbow
+        // sits above the hand, and the hand sits above the hips.
+        if (f.image[R.elbow].y < f.image[R.wrist].y && f.image[R.wrist].y < hip.y) hung++
+      }
+      values.handUnderElbow = (hung / samples) * 100
+    }
+  }
 
   /* -------------------------------------------------------------- contact */
   values.contactHeight = above(fContact, R.wrist)
@@ -416,7 +540,27 @@ export function measure(
       // floor and can take the headline back off the racket drop — the exact
       // outcome the filter above exists to prevent, arriving one metric later.
       .filter((m) => (m === 'loadRatio' ? !skel.derivation.trophyOnToss : true))
-      .map((m) => build(m, values[m], confidenceCtx, serveType))
+      // And the toss wobble needs a camera that says which way the hand
+      // wandered. Image x is one number carrying two body axes mixed by the
+      // camera angle, and one number cannot be split into two: at 45° it is half
+      // front-to-back and half sideways, and there is no third reading anywhere
+      // in a monocular clip to separate them with.
+      //
+      // Dropped rather than hedged, because what fails here is not the size of
+      // the drift but its name — and the name is what the card is written in.
+      // Every string this measurement can print, and the drill under it, commits
+      // to one axis or the other; there is no wording for "your toss wandered,
+      // and I cannot tell you which way" that a player could take onto a court.
+      // So the row leaves the card the way contact depth does, and the toss
+      // score is averaged over the four measurements that survived.
+      .filter((m) => (m === 'tossPathWobble' ? m in values : true))
+      // And the share of the swing spent with the hand under the elbow needs
+      // enough samples for a share to mean anything. Unlike the four filters
+      // above, this one is not about a keyframe that moved: the quantity is
+      // right, there is simply too little of the window recorded to place the
+      // answer on the right side of a rung. See `HAND_HANG_MIN_SAMPLES`.
+      .filter((m) => (m === 'handUnderElbow' ? m in values : true))
+      .map((m) => build(m, values[m], confidenceCtx, serveType, measuredAxis[m]))
       // And whatever `build` declined to invent. Everything above this line
       // names a condition we can see coming and drops the measurement for a
       // stated reason; this catches the ones we cannot — an arithmetic that came

@@ -59,7 +59,7 @@ import {
   type Fundamental,
 } from '../types'
 import { CLEAN_SERVE, buildServe, type ServeDials } from '../syntheticServe'
-import { MINIMUM_RECORDED, RECORDED } from './fixtures'
+import { RECORDED } from './fixtures'
 import { assert, check, heading, near, note, report, within } from './harness'
 
 const FPS = 50
@@ -1932,38 +1932,28 @@ check('cropped feet alone are a caveat, not a rejection', () => {
 
 heading('Recorded footage')
 
-check('no fixture is left unlabelled', () => {
-  // A dump straight from the app carries the engine's own answers. Asserting
-  // against those proves only that the engine is reproducible, which is not what
-  // this suite is for — so an unlabelled file must fail rather than pad the count.
-  const unverified = RECORDED.filter((f) => (f as unknown as Record<string, unknown>)._UNVERIFIED)
-  assert(
-    unverified.length === 0,
-    `unlabelled fixtures present: ${unverified.map((f) => f.id).join(', ')} — see fixtures/README.md`,
-  )
-})
-
+// The unlabelled-dump check and the coverage warning that used to live here now
+// belong to `fixtures.test.ts`, which owns the whole question of whether the
+// fixture set means anything: `validateFixtureSchema` catches `_UNVERIFIED`
+// wherever it runs, and `fixtureGate` prints the coverage line once. Both were
+// printing twice per suite run from here.
+//
+// What stays is this loop, which is a different claim: the engine, on the
+// footage there is.
 for (const fixture of RECORDED) {
   check(`${fixture.id} — ${fixture.label}`, () => {
     const result = validateFixture(fixture)
-    if (result.error) throw new Error(result.error)
+    // `result.error` carries two different failures and this heading says
+    // "Recorded footage", i.e. the engine. A fatal schema fault means the file
+    // never reached the engine, so re-throwing it here would send the reader
+    // hunting a detector bug that is really a malformed fixture; the schema
+    // faults are already mirrored into `issues` and reported below.
+    if (result.error && !result.schema.some((s) => s.fatal)) throw new Error(result.error)
     const detail = result.issues
       .map((i) => `${i.what}: expected ${i.expected}, got ${i.actual}`)
       .join('; ')
     assert(result.passed, detail)
   })
-}
-
-if (RECORDED.length < MINIMUM_RECORDED) {
-  // Loud, but not a failure. A red suite for footage nobody has filmed yet gets
-  // muted within a week, and a muted suite catches nothing at all.
-  console.log(
-    `\n  \x1b[33m⚠ ${RECORDED.length} of ${MINIMUM_RECORDED} recorded fixtures.\x1b[0m` +
-      `\n  \x1b[2mEverything above this line is synthetic. Hip–shoulder separation and` +
-      `\n  shoulder tilt are computed from world-space z, which the rig models as` +
-      `\n  exact and MediaPipe does not — they are currently unvalidated against` +
-      `\n  any real footage. See src/lib/analysis/__tests__/fixtures/README.md\x1b[0m`,
-  )
 }
 
 report()

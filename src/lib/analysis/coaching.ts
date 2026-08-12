@@ -1,4 +1,5 @@
 import type { ServeType } from '../storage/prefs'
+import type { BodyAxis } from './axes'
 import type { Drill, FundamentalId, PhaseId } from './types'
 
 /**
@@ -121,22 +122,53 @@ export const METRICS: Record<string, MetricCopy> = {
     unit: '%',
     phase: 'toss',
     weight: 0.9,
-    // sideways drift of the tossing hand as a share of the player's height
+    /*
+     * Drift of the tossing hand off its own line, as a share of standing height,
+     * along whichever body axis the camera laid across image x. `AXIS_COPY`
+     * below says which axis on the day; this band is the same either way, and
+     * that is worth stating plainly rather than leaving to be assumed.
+     *
+     * PROVENANCE, honestly: 0–3 was calibrated against the number this app used
+     * to produce, which was raw image x on side-on footage. At the framing the
+     * app recommends that reading is 0.99 front-to-back and 0.14 sideways, so
+     * what was actually calibrated here is a DEPTH-axis band that nobody knew
+     * was one. Recovering the depth axis divides by a gain of 0.99 at that
+     * angle, which moves the band's meaning by under one percent — so the depth
+     * case keeps its calibration intact and needs no re-derivation.
+     *
+     * The lateral case does not have that luxury. No footage in this repo has
+     * ever driven the lateral axis — until `tossWobbleLateral` was added to the
+     * rig there was no way to drive it at all — so applying 0–3 to a sideways
+     * reading is an inheritance, not a measurement. It is kept because a hand
+     * that wanders 3% of standing height is a hand that wanders that far
+     * whichever way it went, and because the alternative is inventing a second
+     * pair of numbers with even less behind them. PROVISIONAL: re-derive the
+     * lateral band the first time there is face-on footage to derive it from.
+     */
     ideal: [0, 3],
     range: [0, 12],
     decimals: 1,
+    /*
+     * The axis-neutral wording, which is what the base card has to be.
+     *
+     * "Drifts sideways" lived here for as long as the measurement did, and on
+     * the framing this app recommends it was describing an axis the number
+     * barely contained. The line below asserts only what every reading of this
+     * measurement has in common — the hand left its line — and `AXIS_COPY` says
+     * which way once the camera has been asked.
+     */
     insight: {
       low: 'Your tossing hand travels **dead straight** up.',
       ok: 'Your tossing hand travels **straight** up with almost no drift.',
-      high: 'Your tossing hand **drifts sideways**, so the ball finishes somewhere new each serve.',
+      high: 'Your tossing hand **wanders off line**, so the ball finishes somewhere new each serve.',
     },
     fix: {
       low: '',
-      high: '**Quiet the wrist** and cut the flick. Lift side-on to a fence so the ball brushes past it.',
+      high: '**Quiet the wrist** and cut the flick. Lift the ball on one line and catch it back on that line.',
     },
     drill: {
-      name: 'Fence line toss',
-      how: 'Stand side-on beside a fence and toss so the ball brushes the fence going up.',
+      name: 'One line toss',
+      how: 'Toss, keep your feet still, and catch the ball back in the hand that threw it.',
       reps: '20 tosses',
     },
   },
@@ -378,6 +410,73 @@ export const METRICS: Record<string, MetricCopy> = {
       reps: '10 holds',
     },
   },
+  handUnderElbow: {
+    id: 'handUnderElbow',
+    label: 'Hand under the elbow',
+    unit: '%',
+    phase: 'drop',
+    // Under every other measurement on this card, and deliberately so. The band
+    // below is provisional in a way none of the others are, and weight is the
+    // one honest lever for that: it holds down the vote a guessed band gets in
+    // the Swing score without touching the number itself, which is measured
+    // exactly as well as the ones beside it.
+    weight: 0.7,
+    /*
+     * PROVISIONAL BAND. There is no recorded footage in this repo to calibrate
+     * against — `__tests__/fixtures/index.ts` still has an empty RECORDED list —
+     * so the floor here is anchored to the synthetic rig and to nothing else.
+     * On that rig a serve with a textbook racket drop spends 28.6% of its
+     * toss-to-contact window with the hand under the elbow, one with no drop at
+     * all spends 2.9%, and the share climbs monotonically between them: 14.3 at
+     * a 0.10 m drop, 20.0 at 0.20, 25.7 at 0.30. Twenty is the rung boundary
+     * that sits under every serve the rig calls loaded and over every one it
+     * calls flat, and that is the entire evidence for it. Re-derive it from real
+     * clips the moment there are any.
+     *
+     * The ceiling is the end of the axis because naming a fault above the band
+     * would be inventing one. Hanging under the elbow for a very long share of
+     * the swing is probably a pause at the trophy — probably, and this app does
+     * not print probably. An open top also means `insight.high` and `fix.high`
+     * can never be shown while the band ends here; they are written out so that
+     * a future ceiling arrives with its words already checked, exactly as
+     * `tossArmHold` carries its own.
+     *
+     * Two consequences of that open top, both intended and neither an accident
+     * to be tidied away later. `scoreAgainst` grades an open-topped band by how
+     * far up it a value sits, so the rig's clean serve scores 73 — "Solid", no
+     * fix and no drill — and nothing short of a 60% share reaches "Strong".
+     * Nothing will: this measurement will not call a swing excellent until there
+     * is footage to say what a lot of hang is worth, and a band that praised
+     * loudly off a rig would be doing precisely what the rest of this file
+     * refuses to do. The other consequence is that a clean serve's Swing card
+     * will often name this its weakest row. That is true — it is the weakest row
+     * — and `weight` above is what keeps it from being more than a note.
+     */
+    ideal: [20, 100],
+    range: [0, 100],
+    decimals: 0,
+    insight: {
+      // Worded as a shortfall and not as a position, because one sentence has to
+      // cover two rungs that describe different bodies — a hand that never gets
+      // under the elbow and one that dips under it and leaves. Naming either
+      // would deny the readout printed beside it for players at the other end.
+      low: 'Your hand **spends too little time under your elbow**, so the arm pushes the ball instead of throwing it.',
+      ok: 'Your hand **hangs under your elbow** on the way up, which is where racket speed comes from.',
+      high: 'Your hand **hangs under your elbow** for a long stretch of the swing.',
+    },
+    fix: {
+      low: '**Let the hand hang under your elbow** as the arm goes up. Keep the grip loose.',
+      // Empty while the band runs to the end of its own axis: there is nothing
+      // above it to correct. `tossPathWobble` carries the same blank at the
+      // other end for the same reason.
+      high: '',
+    },
+    drill: {
+      name: 'Hang under the elbow',
+      how: 'Shadow serve slowly and hold the hand hanging under a high elbow before the arm fires.',
+      reps: '12 shadow serves',
+    },
+  },
   dropToContact: {
     id: 'dropToContact',
     label: 'Drop to contact',
@@ -588,6 +687,96 @@ export const METRICS: Record<string, MetricCopy> = {
   },
 }
 
+/* -------------------------------------------------------------- body axes */
+
+/**
+ * Copy that changes with the body axis a reading was actually taken along.
+ *
+ * The same shape as the serve-type override below it, and for a closely related
+ * reason: one measurement, two situations in which the flat wording would be
+ * actively wrong. The difference is what decides it. A serve type is what the
+ * player meant to hit; an axis is what the camera could see. The player chooses
+ * one and the phone decides the other, and neither is a fact about the number.
+ *
+ * Why this has to exist rather than one careful sentence covering both: a drill
+ * cannot hedge. "Toss so the ball brushes a fence you are standing side-on to"
+ * pins the hand's sideways position and says nothing whatever about how far in
+ * front of the body it went — so a player whose toss wanders front-to-back can
+ * do that drill perfectly, a hundred times, and change nothing. The instruction
+ * is the half of the card a player acts on, and an instruction aimed at the
+ * wrong axis is worse than no instruction: it costs them the practice session
+ * and the trust.
+ *
+ * Only the `high` lines are replaced. Below and inside the band the card says
+ * the hand went straight up, which is true on both axes at once and needs no
+ * help from the camera.
+ */
+export interface AxisCopy {
+  insight?: Partial<MetricCopy['insight']>
+  fix?: Partial<MetricCopy['fix']>
+  drill?: Drill
+}
+
+/**
+ * The two toss-path drills, named here because two tables need them.
+ *
+ * `AXIS_COPY` puts one on the card and `DRILLS` publishes both under names
+ * `triage.ts` resolves by axis — `FLAW_DRILL_BY_AXIS` there maps depth to the
+ * baseline drop and lateral to the fence. Written once and referenced twice
+ * rather than typed out twice, so the fence drill a card prints and the fence
+ * drill triage hands out cannot drift into two different exercises with one
+ * name.
+ */
+const BASELINE_DROP_TOSS: Drill = {
+  name: 'Baseline drop toss',
+  how: 'Toss from behind the baseline and let the ball drop on the line, not in front of it or behind.',
+  reps: '20 tosses',
+}
+
+const FENCE_LINE_TOSS: Drill = {
+  name: 'Fence line toss',
+  how: 'Stand side-on beside a fence and toss so the ball brushes the fence going up.',
+  reps: '20 tosses',
+}
+
+export const AXIS_COPY: Record<string, Partial<Record<BodyAxis, AxisCopy>>> = {
+  tossPathWobble: {
+    /*
+     * Front-to-back, and the one this app produces most often, because it is
+     * what a phone propped side-on to the court measures. No direction is
+     * claimed in either line — `axes.ts` recovers the camera angle from an
+     * `acos` and cannot tell a lens in front of the player from one behind, so
+     * "forwards and back" names the axis and stops there. Saying "your toss
+     * drifts forwards" would be a coin toss printed as an observation.
+     */
+    depth: {
+      insight: {
+        high: 'Your tossing hand **drifts forwards and back**, so the ball finishes nearer or further out each serve.',
+      },
+      fix: {
+        high: '**Keep the toss on one line** and let the ball drop back onto the baseline every serve.',
+      },
+      drill: BASELINE_DROP_TOSS,
+    },
+    /*
+     * Across the body — what every string here used to claim, on every clip.
+     * The three lines below are the originals, unchanged and now printed only
+     * where they are true: a camera round towards face-on, where image x really
+     * does carry the shoulder-line axis. The fence is the right constraint for
+     * exactly this reading and no other.
+     */
+    lateral: {
+      insight: {
+        high: 'Your tossing hand **drifts sideways**, so the ball finishes somewhere new each serve.',
+      },
+      fix: {
+        high: '**Quiet the wrist** and cut the flick. Lift side-on to a fence so the ball brushes past it.',
+      },
+      drill: FENCE_LINE_TOSS,
+    },
+  },
+}
+
 /* ------------------------------------------------------------------ drills */
 
 /**
@@ -605,7 +794,17 @@ export const METRICS: Record<string, MetricCopy> = {
  */
 export const DRILLS: Record<string, Drill> = {
   rail_height_toss: METRICS.tossPeakHeight.drill,
-  fence_line_toss: METRICS.tossPathWobble.drill,
+  // Three entries for one measurement, because a toss that wanders needs a
+  // different exercise depending on which way it wandered — see `AXIS_COPY`.
+  // `fence_line_toss` keeps its name and still means the fence; repointing that
+  // key at a drill about the baseline would have swapped the exercise under
+  // every caller silently, which is why `triage.ts` chooses between the three by
+  // axis instead. `one_line_toss` is the axis-neutral one it falls back to when
+  // the camera angle cannot say — a stored report from before findings carried
+  // an axis, or a clip filmed at the 45° tie.
+  fence_line_toss: FENCE_LINE_TOSS,
+  baseline_drop_toss: BASELINE_DROP_TOSS,
+  one_line_toss: METRICS.tossPathWobble.drill,
   back_scratch_drop: METRICS.dropDepth.drill,
   elbow_up_l: METRICS.elbowAtDrop.drill,
   hip_lead_turn: METRICS.hipShoulderSeparation.drill,
@@ -796,15 +995,35 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
   },
 }
 
-/** The copy for one measurement, with any serve-type adjustment applied. */
-export function metricCopy(id: string, serveType: ServeType = 'flat'): MetricCopy {
+/**
+ * The copy for one measurement, for this serve and this camera.
+ *
+ * Two overlays, applied in a fixed order: the serve type first, then the body
+ * axis. The order is stated rather than left to chance because it decides who
+ * wins if both ever touch one line. The axis wins, and should: a serve type
+ * moves a band and describes an intention, while the axis is the difference
+ * between naming the direction a hand went and naming the other one. Nothing
+ * overlaps today — no serve type touches `tossPathWobble` and no axis touches a
+ * contact band — so this costs nothing now and settles the question before the
+ * first pair that does.
+ *
+ * `axis` is omitted by callers that have no camera to ask and by every
+ * measurement not read off image x. That case gets the axis-neutral base copy,
+ * which is written to be true whichever way the hand actually went.
+ */
+export function metricCopy(
+  id: string,
+  serveType: ServeType = 'flat',
+  axis?: BodyAxis,
+): MetricCopy {
   const base = METRICS[id]
   if (!base) return base
   const type = SERVE_TYPES[serveType] ?? SERVE_TYPES.flat
+  const byAxis = axis ? AXIS_COPY[id]?.[axis] : undefined
   const ideal = type.overrides[id]
-  const insight = type.insight?.[id]
-  const fix = type.fix?.[id]
-  const drill = type.drill?.[id]
+  const insight = merge(type.insight?.[id], byAxis?.insight)
+  const fix = merge(type.fix?.[id], byAxis?.fix)
+  const drill = byAxis?.drill ?? type.drill?.[id]
   if (!ideal && !insight && !fix && !drill) return base
   return {
     ...base,
@@ -813,6 +1032,13 @@ export function metricCopy(id: string, serveType: ServeType = 'flat'): MetricCop
     fix: fix ? { ...base.fix, ...fix } : base.fix,
     drill: drill ?? base.drill,
   }
+}
+
+/** Two optional overlays into one, later winning, or nothing if both are absent. */
+function merge<T extends object>(first?: Partial<T>, second?: Partial<T>): Partial<T> | undefined {
+  if (!first) return second
+  if (!second) return first
+  return { ...first, ...second }
 }
 
 export const FUNDAMENTALS: Record<
@@ -848,7 +1074,12 @@ export const FUNDAMENTALS: Record<
     blurb: 'The racket drop and the acceleration that follows it.',
     phase: 'drop',
     weight: 20,
-    metrics: ['dropDepth', 'elbowAtDrop', 'dropToContact'],
+    // `handUnderElbow` is last and is the only one of the four that survives a
+    // collapsed motion. The other three are read at or between keyframes that
+    // land on one instant when the legs stay rigid and the racket never falls,
+    // and `metrics.ts` drops two of them there — which left the player this app
+    // exists for looking at a Swing card with a single row on it.
+    metrics: ['dropDepth', 'elbowAtDrop', 'dropToContact', 'handUnderElbow'],
     drill: {
       // Named for what the body does, not for the coaching shorthand. "Back
       // scratch" is a phrase you have to already know to picture, and it now

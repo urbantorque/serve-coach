@@ -10,9 +10,18 @@ import { findPracticeFocus, practiceHeadline } from '../../practice'
 import { MEANINGFUL_DELTA, buildProgress, deltaStatus, deltasAgainst } from '../../progress'
 import { normalise } from '../../storage/db'
 import { sessionKeyFor } from '../../storage/sessionKey'
-import { MAX_CONSISTENCY_SERVES, assessQuality, pickFocus } from '../analyze'
+import {
+  MAX_CONSISTENCY_SERVES,
+  assessQuality,
+  pickFocus,
+  sweepServes,
+  sweepWindow,
+  type Sweep,
+  type SweepServe,
+} from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
-import { buildConsistency } from '../consistency'
+import { MIN_COMPARABLE_SERVES, buildConsistency } from '../consistency'
+import { Cancelled } from '../../pose/extract'
 import { diagnose } from '../diagnose'
 import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
 import { measure } from '../metrics'
@@ -20,7 +29,14 @@ import { detectServe, type Skeleton } from '../phases'
 import { findServes } from '../serves'
 import type { BallFlight } from '../../vision/ballTrack'
 import type { ServeType } from '../../storage/prefs'
-import { NotAServeError, type Frame, type Fundamental, type Metric, type Status } from '../types'
+import {
+  NotAServeError,
+  type Analysis,
+  type Frame,
+  type Fundamental,
+  type Metric,
+  type Status,
+} from '../types'
 import { CLEAN_SERVE, U, buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, near, note, report, within } from './harness'
 
@@ -1134,6 +1150,212 @@ check('each serve is labelled by its number in the clip, not its place in the li
   assert(
     JSON.stringify(c!.serveNumbers) === JSON.stringify([4, 6, 7]),
     `labelled the serves ${JSON.stringify(c!.serveNumbers)}, expected [4,6,7]`,
+  )
+})
+
+/* --------------------------------------------------- sweeping a basket ---- */
+
+/*
+ * The sweep loop, without a video in it.
+ *
+ * `analyzeAllServes` needs a decoder, an element and a real clip; `sweepServes`
+ * needs none of those, which is the whole reason it was split out. Everything
+ * below is about what the loop promises the screen and the panel above it: that
+ * a serve is handed over the moment it lands rather than at the end, that one
+ * unreadable serve costs one serve, and that stopping early leaves the player
+ * with what was actually measured and no claim about anything else.
+ */
+console.log('\n\x1b[1mSweeping a basket, serve by serve\x1b[0m')
+
+/** A measured serve, as far as the sweep and the comparison are concerned. */
+const measuredServe = (index: number, count: number, overall = 70) => {
+  const { fundamentals } = run()
+  return { fundamentals, overall, serves: { count, index } } as unknown as Analysis
+}
+
+interface SweepRun {
+  result: Sweep
+  /** Serve indexes handed to `measure`, in order — what the video work costs. */
+  asked: number[]
+  /** Every serve streamed out, in order. */
+  streamed: SweepServe[]
+  /** Interleaved measure/stream events, so "streamed as it lands" is checkable. */
+  log: string[]
+  /** Whether anything was streamed after the sweep's promise had already settled. */
+  streamedLate: boolean
+}
+
+/**
+ * Run one sweep against a scripted basket.
+ *
+ * `unreadable` names clip-relative serve indexes that throw the way a mishit or
+ * a passer-by does. `stopAfter` presses stop between serves; `stopDuring`
+ * presses it while a serve is being read, which is the case that decides
+ * whether an interrupted serve gets reported to the player as an unclear one.
+ */
+async function sweepOf(opts: {
+  count: number
+  unreadable?: number[]
+  stopAfter?: number
+  stopDuring?: number
+  stopBefore?: boolean
+}): Promise<SweepRun> {
+  const controller = new AbortController()
+  const asked: number[] = []
+  const streamed: SweepServe[] = []
+  const log: string[] = []
+  let settled = false
+  let streamedLate = false
+
+  if (opts.stopBefore) controller.abort()
+
+  const result = await sweepServes(
+    {
+      count: opts.count,
+      signal: controller.signal,
+      onServe: (s) => {
+        if (settled) streamedLate = true
+        streamed.push(s)
+        log.push(`serve ${s.number}${s.analysis ? '' : ' unreadable'}`)
+        if (streamed.length === opts.stopAfter) controller.abort()
+      },
+    },
+    async (serveIndex, position) => {
+      asked.push(serveIndex)
+      log.push(`measure ${serveIndex}`)
+      if (position === opts.stopDuring) {
+        // The player presses stop while this serve is being read: the abort
+        // reaches the extraction, which throws on its way out.
+        controller.abort()
+        throw new Cancelled()
+      }
+      if (opts.unreadable?.includes(serveIndex)) {
+        throw new NotAServeError('I could not find a serve there.', ['Trim the clip.'])
+      }
+      return measuredServe(serveIndex, opts.count)
+    },
+  )
+  settled = true
+
+  return { result, asked, streamed, log, streamedLate }
+}
+
+const wholeBasket = await sweepOf({ count: 4 })
+const longBasket = await sweepOf({ count: 10 })
+const withUnreadable = await sweepOf({ count: 5, unreadable: [2] })
+const stoppedBetweenServes = await sweepOf({ count: 6, stopAfter: 4 })
+const stoppedMidServe = await sweepOf({ count: 6, stopDuring: 4 })
+const stoppedAtOnce = await sweepOf({ count: 6, stopBefore: true })
+const stoppedAfterOne = await sweepOf({ count: 6, stopAfter: 1 })
+
+// The streaming contract. Each serve reaches the caller before the next one is
+// started, which is what lets the screen fill in during the minute the sweep
+// takes rather than showing one undifferentiated bar and then everything at
+// once. Checked as an interleaving rather than a count, because a loop that
+// collected the results and replayed the callbacks at the end would pass on
+// counts alone and be exactly the thing this replaced.
+check('each serve is handed over as it lands, before the next one starts', () => {
+  assert(
+    JSON.stringify(wholeBasket.log) ===
+      JSON.stringify(['measure 0', 'serve 1', 'measure 1', 'serve 2', 'measure 2', 'serve 3', 'measure 3', 'serve 4']),
+    `serves did not stream one at a time: ${JSON.stringify(wholeBasket.log)}`,
+  )
+  assert(!wholeBasket.streamedLate, 'a serve was streamed after the sweep had already finished')
+  assert(
+    wholeBasket.streamed.every((s) => s.analysis !== undefined),
+    'a readable serve was streamed without its measurement',
+  )
+})
+
+check('a streamed serve carries its number in the clip, not its place in the sweep', () => {
+  assert(
+    JSON.stringify(longBasket.streamed.map((s) => s.number)) === JSON.stringify([5, 6, 7, 8, 9, 10]),
+    `streamed the serves as ${JSON.stringify(longBasket.streamed.map((s) => s.number))}, expected 5–10`,
+  )
+})
+
+// The cap decides how many, and the window decides which. A clip of ten is
+// swept from serve five, not serve one: the last six are the ones the report on
+// screen came from and the ones hit after the player had settled.
+check('a long basket is swept from the end, up to the cap', () => {
+  const { first, total } = sweepWindow(10)
+  assert(total === MAX_CONSISTENCY_SERVES, `swept ${total} serves of ten, expected the cap`)
+  assert(first === 10 - MAX_CONSISTENCY_SERVES, `started at serve ${first + 1}`)
+  assert(
+    JSON.stringify(longBasket.asked) === JSON.stringify([4, 5, 6, 7, 8, 9]),
+    `measured serve indexes ${JSON.stringify(longBasket.asked)}`,
+  )
+  assert(longBasket.result.attempted === total, `attempted ${longBasket.result.attempted} of ${total}`)
+})
+
+check('one unreadable serve costs one serve, not the sweep', () => {
+  assert(withUnreadable.result.serves.length === 4, `kept ${withUnreadable.result.serves.length} of 5`)
+  assert(withUnreadable.result.attempted === 5, `attempted ${withUnreadable.result.attempted}, expected 5`)
+  const empty = withUnreadable.streamed.filter((s) => s.analysis === undefined)
+  assert(empty.length === 1, `streamed ${empty.length} empty slots, expected 1`)
+  assert(empty[0].number === 3, `the empty slot was labelled serve ${empty[0].number}, expected 3`)
+  const c = buildConsistency(withUnreadable.result.serves, withUnreadable.result.attempted)
+  assert(c!.skipped === 1, `reported ${c!.skipped} serves as too unclear, expected 1`)
+})
+
+/*
+ * A stopped sweep is worth what it measured.
+ *
+ * It used to be worth nothing: cancellation threw out of the loop and the
+ * player who stopped after four of six serves — four full analysis passes, the
+ * most expensive work this app does — got the report back with no comparison on
+ * it at all. (Four passes, not a number of seconds: nothing in this tree times
+ * one, and `measure` below returns instantly.)
+ */
+check('stopping between serves keeps every serve already measured', () => {
+  const r = stoppedBetweenServes.result
+  assert(r.serves.length === 4, `kept ${r.serves.length} serves of the four measured`)
+  assert(r.cancelled, 'a stopped sweep did not report itself as stopped')
+  assert(
+    stoppedBetweenServes.asked.length === 4,
+    `kept measuring after the stop: ${stoppedBetweenServes.asked.length} serves read`,
+  )
+  const c = buildConsistency(r.serves, r.attempted)
+  assert(c !== undefined, 'four measured serves produced no comparison')
+  assert(c!.serves === 4, `compared ${c!.serves} serves`)
+})
+
+// The one that decides whether the panel lies. `skipped` is shown to the player
+// as "too unclear to measure", and a serve whose read was interrupted was not
+// unclear — nothing ever finished looking at it. Counting it would put a
+// sentence about the camera and the player on screen off the back of the player
+// pressing stop.
+check('a serve interrupted mid-read is never reported as one too unclear to measure', () => {
+  const r = stoppedMidServe.result
+  assert(r.cancelled, 'a sweep stopped mid-serve did not report itself as stopped')
+  assert(r.serves.length === 4, `measured ${r.serves.length} serves before the stop, expected 4`)
+  assert(r.attempted === 4, `counted ${r.attempted} serves as attempted, expected 4`)
+  assert(
+    stoppedMidServe.streamed.length === 4,
+    `streamed ${stoppedMidServe.streamed.length} slots, expected 4 — the interrupted serve is not one`,
+  )
+  const c = buildConsistency(r.serves, r.attempted)
+  assert(c!.skipped === 0, `blamed the clip for ${c!.skipped} serves the player stopped`)
+})
+
+check('a sweep stopped before it starts measures nothing and claims nothing', () => {
+  const r = stoppedAtOnce.result
+  assert(stoppedAtOnce.asked.length === 0, `read ${stoppedAtOnce.asked.length} serves after being stopped`)
+  assert(r.serves.length === 0 && r.attempted === 0, `came back with ${r.serves.length} serves`)
+  assert(r.cancelled, 'did not report itself as stopped')
+})
+
+// Below two serves there is no spread to compare — one reading has a max equal
+// to its min, which would score a perfect 100 for repeatability off a sample
+// containing no repetition. The screen offering to compare must agree with the
+// function that refuses to.
+check('one measured serve is not passed off as a comparison', () => {
+  const r = stoppedAfterOne.result
+  assert(r.serves.length === 1, `measured ${r.serves.length} serves`)
+  assert(r.serves.length < MIN_COMPARABLE_SERVES, 'one serve is not below the comparison floor')
+  assert(
+    buildConsistency(r.serves, r.attempted) === undefined,
+    'a single serve produced a comparison',
   )
 })
 

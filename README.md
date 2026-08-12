@@ -415,6 +415,59 @@ that had not changed, which on a phone shows up as the handset getting warm
 rather than as a bug. Paused, the overlay is redrawn only when something about
 it actually changes.
 
+**A detector the engine cannot resolve is withdrawn, not hedged.** Hedging is for
+a number that is roughly right; it is the wrong answer for one that is a coin
+flip, because the softest caveat still leaves an accusation on the card.
+`pancake_contact` was named on 10% of serves the rig calls clean, so it is now
+measured and never reported to a player, and `pronation_deg` is graded against
+nothing. Two registers record the two ways this happens and both are printed by
+the suite as standing warnings: `UNDER_RESOLVED` in `analysis/tiers.ts` for a
+signal that moves further between two takes of one serve than the band it would
+be graded against — `hip_lead_ms` deviates 57 ms against a 45 ms serious miss —
+and `UNCALIBRATED` for the opposite, a signal steady enough to grade with no
+honest band to grade it against. The five-link kinetic chain is entirely in the
+second: the wrist link holds to 0.5 ms across the noise ensemble where trunk
+rotation read from world *z* moves 53 ms, and not one of the five names a flaw,
+because nothing here can say what a good one looks like.
+
+**Image x is not "sideways" — it is whichever body axis the camera laid across
+the sensor.** Toss drift was read straight off image x and called sideways by
+the metric, by the flaw and by the copy. Filmed side-on, the angle this app
+recommends, image x is 0.99 front-to-back and 0.14 across the body, so the number
+was depth drift wearing the wrong name — and the drill handed out for it was
+"stand side-on beside a fence and brush the ball past it", which constrains the
+axis nobody had measured. `analysis/axes.ts` now owns that conversion and nothing
+else re-derives it; the axis travels from the reading through the flaw to
+`FLAW_DRILL_BY_AXIS`, so a toss that wandered forwards is drilled forwards.
+The band moved with it honestly: the depth case keeps its calibration because
+dividing by a 0.99 gain shifts it under one percent, and the lateral case is
+marked provisional, because until the rig gained a lateral dial there was no way
+to drive that axis at all.
+
+**The ghost is drawn only where a translation can express the correction, and
+never over a number the app has hedged.** Showing a target beats stating one, but
+a picture asserts more than a sentence does. The ghost is a rigid translation of
+the player's own tracked body, so it can say "be higher" and cannot say anything
+about a joint angle — the trophy ghost was withdrawn for that reason, not because
+the knee is hard to see. Its legs are not drawn, because lifting them implied a
+leg drive of 0.305 against the serve's real 0.089 and quietly reassigned the fix
+to a card scored separately. The gap line ends at the near edge of the target
+band rather than its middle, which at one dial was overstating the player's
+actual shortfall by 7.6×. A measurement below `SOFT_MEASUREMENT`, or absent, gets
+no ghost at all.
+
+**The live framing check borrows every threshold and admits what it cannot
+tell.** A viewfinder with its own idea of good enough would wave through clips
+the upload path then throws out, so `lib/framing/judge.ts` owns the *order* of
+what to say and not one number: cropping and distance come from
+`framingIssues`, which of them refuse from `blockingFramingIssue`, camera angle
+from `DEPTH_YAW_RANGE`, tilt from `NOTABLE_ROLL`. The sharpest thing it does is
+refuse to overclaim: roll is the angle of the player's own standing axis off
+image vertical, and a leaning player and a tilted phone produce that reading
+identically — so the cue names the picture, offers both fixes and says it cannot
+tell which. A test rotates the body about the ankles on a level phone and asserts
+both cases give the same words, so the admission cannot be edited back out.
+
 ---
 
 ## Testing

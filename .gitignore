@@ -6,6 +6,12 @@ dist-ssr
 .DS_Store
 .vite
 
+# Throwaway bundles from probing the engine outside the test runner. One of
+# these — a 255 KB esbuild of the analysis pass — was left in src/lib/framing/,
+# where `git add src/lib/framing` would have committed it with the workstream.
+*.tmp.mjs
+*.tmp.js
+
 # Vendored by `npm run setup:assets` — regenerate rather than commit.
 # The pose model alone is 9 MB and the WASM runtime another 19 MB.
 public/models/
