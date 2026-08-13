@@ -151,8 +151,8 @@ export default function StoragePanel({ count, onImported }: Props) {
 
       <p className="sheet-note">
         An export is one file holding your scores and keyframe pictures. To carry it to a new
-        phone: send the file to yourself — email, AirDrop, a cloud drive, whatever gets a file from
-        one device to another — then open it there and tap Import from a file.
+        phone, send the file to yourself — email, AirDrop, a cloud drive — then tap Import from
+        a file there.
       </p>
     </section>
   )

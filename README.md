@@ -888,6 +888,26 @@ round might otherwise have had to build now already exists, built for a
 different stated reason (a non-gamified milestone) that happens to answer
 this one too.
 
+**Phase 4's own copy pass, closing it out.** Every player-facing line added
+across this whole engineering programme (R4 through R27) was read by hand
+against the twenty-five-word cap and the coach-jargon list — windmill,
+cartwheel, back-scratch, the chain, head speed — none of which the
+automated lint reaches, because `copy.test.ts` only walks the coaching
+copy database (`METRICS`, `FUNDAMENTALS`, `DRILLS`, `AXIS_COPY`,
+`VERDICT_TABLES` and the rest of `coaching.ts`/`verdict.ts`/`flaws.ts`),
+none of which this programme ever touched — every new sentence lived in
+component JSX or in `progress.ts`/`reportCard.ts`'s own generated strings,
+outside anything the test suite already checks. One real violation:
+`StoragePanel.tsx`'s own R24 fix, tightening a promise the panel used to
+make and never keep, had itself grown a thirty-six-word second sentence
+in the course of naming three transfer methods. Tightened to twenty-four,
+same three methods, same meaning, no clause lost. Everything else audited
+clean — `FramePair`'s screen-reader text, `DeviceCheck`'s status
+announcements, `Glance`'s score label, the basket card's canvas text,
+`ConsistencyPanel`'s share button, `sixWeekMilestone`'s three sentence
+templates, the guide-first sheet's titles and button labels — no coach
+jargon anywhere, nothing reusing a word the app already owns.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

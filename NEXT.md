@@ -19,232 +19,6 @@ phase's entries and drops the working notes underneath them.
 
 ---
 
-## Phase 4 — Feature and retention (R22–28)
-
-- [x] **R22** — Read `reportCard.ts` before assuming either answer. Its own
-      doc comment already carries a reasoned refusal — the paired keyframe
-      stills (best-against-worst, then-against-now) are deliberately absent
-      from the single-serve card, because half of a comparison shared
-      without the dates or serve numbers that give it meaning says nothing.
-      That refusal is about *pictures*, though, and does not reach
-      `Consistency`: the score, which serve was which, and the named
-      differences between the best and the worst all already read as words,
-      and `ConsistencyPanel` proves every one of them survives a reopened
-      report with no clip behind it. A basket export was buildable, not a
-      second refusal — the data just needed a second drawing function, not
-      a second engine.
-
-      `renderBasketCard`/`shareBasketCard` in `reportCard.ts` draw exactly
-      what survives without the clip: the consistency score, per-serve
-      chips, the best-against-worst comparison in the same body-language
-      phrases `ConsistencyPanel` uses, and `possibleHandoff`'s caution when
-      it applies — ahead of the comparison it qualifies, since dropping the
-      one sentence that says "read this carefully" would be the
-      confident-nonsense failure this app is built against, aimed at a
-      coach who never sees the panel's own warning. Deliberately scoped down
-      from the panel's own nineteen measured spreads (live count, on the
-      demo basket) to the two `Consistency` already flags as worth
-      naming — `weakest`/`steadiest` — on the same restraint the
-      single-serve card already applies to itself: everything would not be
-      a card read at the net, it would be the panel again in a different
-      frame. A "Share this basket" button in `ConsistencyPanel.tsx`, styled
-      identically to `Report.tsx`'s own share button and reusing its exact
-      state machine (`idle`/`working`/`done`), calls it.
-
-      A real bug found by rendering the card, not by reading the layout
-      math: the first version right-aligned the best and worst readouts a
-      fixed 200px apart, which collided into overlapping unreadable text
-      the moment one phrase ("Struck at full racket reach" against "Struck
-      below full reach") ran wider than the gap — confirmed against the
-      demo basket's own data, not a synthetic worst case. Fixed by stacking
-      each value on its own full-width line instead of two competing
-      right-aligned columns, then reconfirmed against both the ordinary
-      basket and a forced `possibleHandoff` case.
-
-      Verified live: rendered the card directly against the demo basket's
-      real `Consistency` object and inspected the PNG, twice — once for the
-      overlap bug, once after the fix — then drove the actual button
-      through its full state machine (`Preparing…` → a real
-      `HTMLAnchorElement.download` triggered with the correct
-      `basket-2026-08-14.png` name → `Saved`) with `.click()` instrumented
-      rather than trusting the state names alone. Full suite green.
-- [x] **R23** — Read `shareBlob` (added in R22) before assuming it already
-      handled every refusal, and found it had never been asked "what if the
-      capability check itself is unreliable" — the exact question
-      `record.ts`'s `recordingType` already asks about `isTypeSupported` and
-      `canPlayType`, applied nowhere in the sharing path. Two real gaps, both
-      the same shape: `nav.canShare?.({...})` sat outside the `try`, so a
-      browser whose `canShare` throws would have propagated an unhandled
-      rejection out of the whole share flow instead of falling back to a
-      download; and a browser with `share` but no `canShare` — an older or
-      partial implementation — was refused a share attempt entirely, the
-      identical mistake `recordingType` already guards against for a
-      `canPlayType` that is absent rather than negative. Neither was a
-      hypothetical: this is precisely how "refused by more browsers than
-      accept it" happens in practice — not one missing API, several
-      partially-present ones each closing the door a different way.
-
-      Fixed by extracting the decision into `attemptShare`, injected with a
-      `ShareNavigator` the same way `recordingType` is injected with a fake
-      `MediaRecorder`/`<video>`, so the choosing can be tested without a
-      browser to really share into. A throwing or absent capability check
-      now reads as "try it", never as a hard no, on both counts; the
-      existing try/catch around the real `share()` call is what actually
-      decides shared, cancelled or fallen-through — unchanged, because it
-      was already reading `AbortError` correctly.
-
-      Eight tests in the new `share/__tests__/reportCard.test.ts` drive
-      every combination a fake `navigator` can produce: no `share` at all;
-      `canShare` saying no without `share` ever being called; `share`
-      present with no `canShare` tried anyway; a throwing `canShare` tried
-      anyway; a clean share; a dismissal read as cancelled, not failed; a
-      real failure read as failed, not cancelled; and a closed-set pin on
-      the four possible outcomes so a fifth cannot get added without this
-      file noticing. Verified live as well, not only in Node: both share
-      buttons (`Report.tsx`'s and R22's basket one) driven end to end
-      through the refactored code with `HTMLAnchorElement.prototype.click`
-      instrumented, confirming the real download names still land correctly
-      after the extraction.
-- [x] **R24** — Walked live, `StoragePanel`/`backup.ts` read first but not
-      trusted as the answer: two sessions seeded via `saveSession` directly
-      (no real footage available), history sheet opened, export tapped with
-      `HTMLAnchorElement.prototype.click` instrumented to confirm a real
-      file (`serve-coach-2026-08-14.json`) rather than trusting the
-      resolved promise alone. Every button already does what it says —
-      export downloads and reports a count, import merges rather than
-      replaces, and three failure paths tried live (malformed JSON, valid
-      JSON that is not a backup, re-importing the same data) each produced
-      a plain sentence a non-technical player could act on, none of them a
-      stack trace. Neither button was the worst step.
-
-      The worst step was between them, and only visible by reading every
-      word of copy on the panel rather than testing behaviour alone: "An
-      export is one file holding your scores and keyframe pictures. Moving
-      it is the only way your history follows you to a new phone." — a
-      promise made and left unkept in the same sentence. Backup exists,
-      per `backup.ts`'s own doc comment, specifically so history survives a
-      new phone; the one non-technical player for whom that use case
-      matters most reads a sentence that names the destination and never
-      the route. A player who already knows a downloaded file can be
-      emailed, AirDropped or dropped in a cloud drive does not need the
-      sentence at all; the player this feature is supposed to serve does.
-
-      Fixed with copy alone — `StoragePanel.tsx`'s `sheet-note`, same class,
-      same position, one sentence longer: three concrete, platform-agnostic
-      ways to move a file (email, AirDrop, a cloud drive) and what to do
-      with it on the other end ("open it there and tap Import from a
-      file"), closing the loop the old sentence opened and never finished.
-      No new UI, no new colour — constraint 3's normal tasteful-refinement
-      latitude covers a sentence. Verified live: the new copy renders in
-      full inside the history sheet with the seeded sessions still present,
-      nothing truncated, nothing broken.
-- [x] **R25** — Read `db.ts`'s `Session` type and `sessionKey.ts` before
-      assuming the answer was no. It was not: `sessionKeyFor`/`clipIdOf`
-      already group serves by *clip* — which basket a serve came from — and
-      `progress.ts`'s `thenAndNow` already refuses to compare two reports
-      filed minutes apart, in a comment that says "the same trip to the
-      court" outright. The concept was never missing. It was unnamed: a
-      24-hour threshold, `MIN_THEN_AND_NOW_GAP_MS`, written inline into the
-      one function that needed it, untested on its own, and not something a
-      second caller could reuse without reading that function's comment and
-      reconstructing the comparison by hand.
-
-      Named rather than built: `sameTrip(a, b, gapMs)` in `progress.ts`,
-      `thenAndNow` rewritten to call it. No behaviour changed — the same
-      24-hour threshold, the same strict comparison at the boundary — only
-      the concept now has a signature instead of living inside one
-      function's control flow. Deliberately not a stored `Trip` type: no
-      feature asked to persist a trip, reference one by id, or query "every
-      trip in the last month" — clipIdOf earned its extraction because
-      `progress.ts` and `consistency.ts` both needed to collapse by clip
-      already, and nothing here shows the same double demand for a
-      persisted visit. A type earned by two callers is a real
-      abstraction; a type earned by zero is a guess at a future one, which
-      is exactly what this programme's own rule against premature structure
-      says to leave alone.
-
-      Found and named, not fixed: `findPracticeFocus`'s window
-      (`PRACTICE_WINDOW = 5`) counts sessions, not trips. Its own doc
-      comment says the point is catching "the thing that is *still* wrong
-      three weeks later" rather than a single day's noise — but a player
-      who records six serves in one sitting through the coached live
-      preview R18 just made the default mobile path fills that entire
-      window with one trip, and the recommendation becomes about that
-      sitting's variance rather than what persists across visits. Real, and
-      out of scope here: R25 asked whether the concept existed and whether
-      it needed a type, not to redefine what a practice window counts —
-      changing that changes `PracticeFocus.sessionsConsidered`'s meaning
-      everywhere it is printed, which is its own round.
-
-      Pinned with nine tests in the new `lib/__tests__/progress.test.ts` —
-      the first either `sameTrip` or `thenAndNow` has had: the boundary
-      itself (exactly the threshold apart reads as a different trip, not
-      the same one), argument order not mattering, a custom gap being
-      honoured, and `thenAndNow` choosing the true oldest and newest rather
-      than two reports in the middle.
-- [x] **R26** — Read `LOOP.md` in full for the constraint this round's own
-      wording assumes rather than finding a rule by that name — there is
-      none written down as such. What exists is `PracticeCard`'s own
-      standard, already in the codebase: "deliberately not a streak, a
-      badge or a congratulation... an app that celebrates the tap is asking
-      to be tapped, which would fill the record with drills nobody did and
-      make the evidence worthless." The deliverable was stretching that
-      rule from a single rep to a training block, honestly, not inventing
-      an achievement system and calling it something else.
-
-      `sixWeekMilestone` (`progress.ts`): one sentence, gated on the same
-      rubric-era discipline `thenAndNow`/`buildProgress` already apply,
-      comparing the current rolling `recentAverage` against the score the
-      player's very first serve in this era got, once a real six weeks
-      separate them. Reports every direction the same way — improved, flat,
-      or backwards — because a milestone that only speaks up on good news
-      is the same lie a badge tells with the shape sanded off. Surfaced on
-      the home screen's "Your form" card, reusing the existing
-      `.progress-foot` class verbatim: no new colour, no new component, one
-      more line that is either there or is not.
-
-      `Progress` gained one field, `first` — the era's oldest point,
-      alongside the `latest` it already carried — rather than have the new
-      function re-derive the era `buildProgress` had already computed.
-      Fifteen tests now live in `lib/__tests__/progress.test.ts` (R25's
-      `sameTrip`/`thenAndNow` cases plus six new ones here): the boundary
-      itself, a flat six weeks read as flat rather than forced into a
-      direction, a regression reported exactly as plainly as an
-      improvement, and a recalibration refusing to be used as the "before"
-      for a score it did not produce. Verified live as well: seeded a first
-      serve six weeks back and three recent ones through direct IndexedDB
-      writes (no real footage to film one with), confirmed the sentence
-      renders correctly with real numbers and disappears cleanly on a
-      two-serve, two-day history that has not earned one yet.
-- [x] **R27** — Read `App.tsx`'s progress sheet before trusting the round's own
-      "two sheets deep" — and it was wrong. `onShowProgress` has exactly one
-      caller: `Home.tsx`'s progress card, and tapping it opens
-      `sheet === 'progress'` directly. One sheet, one tap, not two.
-
-      Measured rather than guessed, the way this programme has caught a
-      wrong premise before (R18's "Record now", R20's frame budget): two
-      sessions seeded ten days apart via direct `saveSession` calls (with
-      placeholder still images stitched onto the phases — `FramePair`'s
-      positions filter out any pair missing a thumbnail, and the synthetic
-      rig draws none by default), the progress card tapped on a 375×812
-      viewport, and the "Then, and now" heading's offset measured against
-      the sheet's own scrollable height: 686px into a body whose visible
-      height is 634px — 1.08 screens of scrolling past the hero score and
-      the practice card, never a second tap or a second sheet.
-
-      No change made. Forcing one onto a path that measures as already
-      reachable is exactly the failure `LOOP.md` names by name — "inventing
-      a change to make a round feel productive... the same thing as feature
-      bloat, arriving one plausible improvement at a time." Noted instead:
-      R26, landed one round earlier, already puts the substance of a
-      then-and-now comparison — the first serve's score against the current
-      one, in words — directly on the home screen's progress card, at zero
-      taps, for a different stated reason. The "give somebody a reason to
-      open the app" job this round was reaching for was already done.
-- [ ] **R28** — Copy pass over every line added in Phases 1–4, against the
-      twenty-five-word cap and the coach jargon the lint cannot see. **Phase
-      close-out.**
-
 ## Phase 5 — Security, privacy, QA, freeze (R29–35)
 
 - [ ] **R29** — Egress audit. Every request the running app makes after load,
@@ -293,6 +67,39 @@ phase's entries and drops the working notes underneath them.
       `UNCALIBRATED` stays there.
 
 ## The record
+
+**Phase 4 — Feature and retention**, seven rounds landed, ledger in git at
+`c4136f2`. The pattern across the phase: read the existing reasoning before
+assuming a round needed either a build or a refusal, because the honest
+answer kept turning out narrower or different than the round's own opening
+question. `reportCard.ts`'s doc comment already refused paired keyframe
+stills in the single-serve share card — but that refusal was about
+*pictures*, not about `Consistency`, whose score, serve numbers and named
+differences already survive a reopened report with no clip behind it, which
+made a basket card buildable rather than a second refusal
+(`renderBasketCard`/`shareBasketCard`, R22). The sharing code that round
+produced had never been asked what a `recordingType`-style capability check
+already asks elsewhere — a throwing or absent `canShare` was read as a hard
+no instead of "try it anyway" — caught by applying an established codebase
+pattern to code just written rather than by walking a UI (`attemptShare`,
+R23). "A trip to the court" turned out to already exist, unnamed, as a
+24-hour threshold inline in `thenAndNow`'s own comparison since it was
+written (`sameTrip`, R25), and "two sheets deep" turned out to be one tap
+and about one screen of scrolling, measured on a real viewport rather than
+taken on faith (R27) — the second time this phase found a stated premise
+simply wrong, after R18 found the same in Phase 3. R24 found working code
+behind broken prose: export and import both worked correctly, but the panel
+promised a file would carry a player's history to a new phone and never
+said how to move one, fixed with three concrete transfer methods in the
+same sentence class. R26 stretched `PracticeCard`'s own long-standing
+"not a streak, a badge or a congratulation" restraint from a single drill
+to a six-week training block, reporting a regression exactly as plainly as
+an improvement because a milestone that only speaks on good news is the
+same lie with the shape sanded off. And the close-out found the phase's
+own copy holding up under a hand audit — no coach jargon anywhere, nothing
+reusing a word the app already owns — bar one sentence of R24's own fix
+that had grown to thirty-six words explaining how to move a file, tightened
+to fit the cap it was auditing everything else against (R28).
 
 **Phase 3 — UX and onboarding**, seven rounds landed, ledger in git at
 `b1f8a01`. Four of the seven turned on the same discipline: walk the surface
