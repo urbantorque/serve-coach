@@ -61,8 +61,19 @@ footage except the footage, then stop.
       / 174 ms across tempos 1.1 / 1.35 / 1.7 s at 50 fps, ratio 0.1010 / 0.1000
       / 0.1225 — a 58% spread becoming 21%, not 5%. The sweep is printed by
       `depth.test.ts` on every run so it cannot age the same way.
-- [ ] **1e** — Stop. Mark every remaining Theme 1 slice `[!] blocked — needs
-      real footage`, tell the user precisely what to film, move to Theme 2.
+- [x] **1e** — Stopped here. Everything in Theme 1 that does not need a camera
+      is done.
+- [!] **1g** — **blocked: needs real footage.** `RECORDED` is still empty and
+      nothing an agent can do changes that. Six clips clear the gate and the
+      order is in `fixtures/README.md`: right-handed side-on at 30 fps, the same
+      serve in slow motion, the same player front-on, a **left-hander** side-on
+      at 30 fps, that left-hander at 60 fps from a second angle, and one
+      right-hander side-on with the feet deliberately out of frame. The
+      left-handed pair is the hard one and cannot be faked by mirroring a clip
+      — that is what a front camera does and the app already treats it as an
+      artifact. Until those exist: hip–shoulder separation and shoulder tilt are
+      unvalidated against anything real, `NOISE_FLOOR` has no measurement behind
+      it, and every entry in `UNCALIBRATED` stays there.
 
 ## Theme 2 — The basket, promoted to the main event
 
