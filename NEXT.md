@@ -21,10 +21,51 @@ phase's entries and drops the working notes underneath them.
 
 ## Phase 3 — UX and onboarding (R15–21)
 
-- [ ] **R15** — What does a genuine first run look like today? There is a
-      `guide-first` sheet and a `firstRunPickRef`; nobody has walked the whole
-      path as a stranger. Deliverable: the walk written down, gaps named, no
-      code.
+- [x] **R15** — Walked live in the browser as a stranger, `localStorage`
+      cleared each time, not just read from the source. The path through
+      **Analyse a serve** works exactly as designed: the guide-first sheet
+      opens with the four filming rules, the continue button is genuinely
+      disabled until a hand is picked ("Pick a hand to continue" →
+      "Got it — choose my video"), and `seenFilmingGuide`/`handedness` land in
+      `localStorage` correctly. Confirmed by driving the real components, not
+      by inspection.
+
+      Two real gaps, worst first.
+
+      1. **"Check your framing first" skips onboarding entirely.** It is the
+         second-most prominent control on the home screen — sitting right
+         below the two main buttons, worded as an invitation ("Point the phone
+         at your spot and see what the coach can read") — and its `onClick`
+         is the one entry point on the whole screen with no
+         `needsFilmingGuide` check. Confirmed live: tapped first, on a
+         completely fresh install, it opens the camera viewfinder directly.
+         No rules, no hand question, and `localStorage` after is `{}`. A
+         stranger who explores before committing — which this control is
+         worded to invite — never gets oriented, and a clip recorded from here
+         has no stated hand to cross-check against for every analysis after
+         it, not just this one.
+      2. **Reading "How to film it" does not count as having read it.** The
+         read-only strap shows the identical four rules but its `Sheet` closes
+         with a bare `setSheet(null)` — no `writePrefs`. A conscientious
+         stranger who reads it first, then taps "Analyse a serve", is shown
+         the same four rules again before being asked for their hand. Minor,
+         not broken — the two "show the filming guide" surfaces just do not
+         share completion state.
+
+      One flagged, not confirmed. `finishFirstRunGuide` closes the sheet, then
+      calls the hidden file input's `.click()` from inside `setTimeout(…, 60)`
+      — a synthetic click on a file input outside its own event handler needs
+      the browser to still consider the tap "active". Instrumented live: the
+      deferred call does reach the input correctly, but this environment
+      cannot produce a genuinely trusted tap to check whether one survives the
+      delay — the pane cannot composite a real click without being displayed,
+      the same limit R4 and R9 already ran into. Sixty milliseconds is very
+      likely inside every major browser's activation window, which is
+      measured in seconds — so this is a low-confidence item for
+      `COURT-CHECK.md`, not a claimed defect.
+
+      No code this round, as asked. R16 takes the worst of the two confirmed
+      gaps.
 - [ ] **R16** — Build the worst of those gaps. Assembled from `primitives.tsx`
       and existing tokens — constraint 3 is not negotiable for onboarding.
 - [ ] **R17** — Build the second worst.
