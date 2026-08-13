@@ -48,8 +48,11 @@ footage except the footage, then stop.
       for a label it is not meant to carry. Count the spread over serve fixtures
       only; keep refusals counting towards the minimum, since they are real
       footage proving a real behaviour.
-- [ ] **1c** — `npm run replay:fixture` prints, per measurement, labelled value
-      against measured value and the delta — good enough to settle a band.
+- [x] **1c** — `replay-fixture.mjs` already printed the per-measurement diff for
+      one clip. It now takes many, and prints a row per measurement across all
+      of them: `n`, the span of engine-minus-label, the median, and how much of
+      the allowance the worst clip needed. It reports a spread and never
+      proposes a band.
 - [ ] **1d** — Implement the scale-free `chain_span_ms ÷ motion duration` ratio
       (0.092 / 0.088 / 0.092 across three tempos). Keep it in `UNCALIBRATED`.
       Write down exactly what evidence would move it to `SIGNALS`. Invent no

@@ -70,6 +70,35 @@ A disagreement is a finding. Check your label first; if the label is right, the
 engine is wrong and that is the entire reason this folder exists. Do not widen
 `tolerance` to make it green.
 
+## Looking across the clips
+
+Give it more than one file and it also prints a row per measurement over all of
+them:
+
+```
+node scripts/replay-fixture.mjs src/lib/analysis/__tests__/fixtures/*.fixture.json
+```
+
+```
+Across 6 clips (engine minus label, in the measurement's own unit)
+  ✓ metric kneeBend      n=6  -1.799 … +2.803  median -0.098  31% of ±9 on clip-b
+```
+
+One clip answers "did the engine agree with this label". Every question this
+folder actually exists to settle is plural — is the allowance on contact height
+right, does the trophy land late on everybody or only on this player, is a
+signal steady enough to grade at all — and each of those is a distribution, not
+a comparison.
+
+Read `n` first. Two clips is an anecdote with an average, and a tidy median next
+to `n=2` is the easiest way there is to talk yourself into a band; the tool says
+so out loud under any row resting on fewer than three.
+
+It reports a spread and never proposes a band. A tool that suggested one from
+six clips would be inventing exactly the number `UNCALIBRATED` in `tiers.ts`
+refuses to invent, and it would arrive wearing the authority of having been
+computed.
+
 ## What to film
 
 This is the list to take to a court. Six clips clear the gate; they are chosen
