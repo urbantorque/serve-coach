@@ -101,9 +101,37 @@ where the state machine hiding in `App.tsx` gets a name.
       `hard`-level pressure deleting down to `KEEP_ALL_UNDER_PRESSURE`, and a
       thin history losing nothing even under hard pressure. `prune` itself is
       unchanged behaviour, calling the extracted function instead of inlining it.
-- [ ] **R6** — What happens when the browser refuses a write? Quota exceeded
-      mid-save, an import larger than the quota, a device that never grants
-      persistence. Deliverable: each path ends somewhere a player can act.
+- [x] **R6** — Two of the three paths did not end anywhere a player could act,
+      and both were the same root cause. `saveSession` already retries through
+      its own pressure ladder before giving up, but a caller could not tell its
+      *fallback* from its *success*: every call site read
+      `safely(() => saveSession(x), undefined)`, and `saveSession` returns
+      `void` — so the sentinel for "could not save" and the value for "saved
+      fine" were literally the same `undefined`. A report that survived every
+      retry and still would not fit vanished exactly like one that saved,
+      silently, and the player found out only when it was missing from their
+      history. `App.tsx` now calls a `trySave` that awaits the real promise and
+      sets a warning on catch; `Report.tsx` renders it in the existing
+      `.storage-warn` style, no new CSS. The import path had the same shape:
+      `importBackup`'s loop had no try/catch around `saveSession`, so one report
+      that would not fit aborted the whole import and silently dropped every row
+      after it — worse than the single-save case, because a partial import used
+      to look identical to a failed one. Caught per row now, counted as
+      `failed` rather than `skipped` because the two need different advice, and
+      `StoragePanel` says so.
+
+      The third path — persistence never granted — was already handled:
+      `requestPersistence`/`isPersisted` are asked and shown honestly, with the
+      iOS home-screen nudge. Nothing to fix there; pinned by reading the
+      existing code rather than by a new test, since it was already correct.
+
+      Not independently verified: a live `QuotaExceededError` could not be
+      forced from script in this environment — `indexedDB.open` is cached
+      module-private state in `db.ts`, and mutating an ES module's live export
+      binding from outside the module silently no-ops rather than taking hold.
+      Checked by typecheck, lint, the full suite, and a careful trace of the
+      exact code path rather than a live repro — the same limit as the court
+      trip and the fixture shoot, arriving somewhere new.
 - [ ] **R7** — Where does App state live? 19 hooks across ~1,100 lines, and
       `view`, `sweep`, `pair` and `thenNow` are stages of one machine.
       Deliverable: the machine made explicit, or the reason it stays implicit

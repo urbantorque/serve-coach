@@ -141,6 +141,16 @@ export interface ImportResult {
   added: number
   updated: number
   skipped: number
+  /**
+   * Readable, newer than what is on file, and still not written — storage
+   * refused it even after `saveSession`'s own pressure ladder ran.
+   *
+   * Counted apart from `skipped`, which means the opposite thing: a row that
+   * was never going to change anything. A failed row might still fit once
+   * something else is deleted, and a player told "4 skipped" would have no
+   * reason to think freeing space and importing again could recover it.
+   */
+  failed: number
   /** Drill records brought in. Counted apart from reports — they are not serves. */
   logs: number
   skippedLogs: number
@@ -171,7 +181,7 @@ export async function importBackup(text: string): Promise<ImportResult> {
   }
 
   const existing = new Map((await listSessions()).map((s) => [s.id, s]))
-  const result: ImportResult = { added: 0, updated: 0, skipped: 0, logs: 0, skippedLogs: 0 }
+  const result: ImportResult = { added: 0, updated: 0, skipped: 0, failed: 0, logs: 0, skippedLogs: 0 }
 
   for (const raw of backup.sessions) {
     const session = normalise(raw)
@@ -193,9 +203,20 @@ export async function importBackup(text: string): Promise<ImportResult> {
     }
     // `saveSession` takes an Analysis and strips the frames a report never had.
     // Unbounded: pruning per report would re-read the whole store once per row.
-    await saveSession(session as Analysis, false)
-    if (here) result.updated++
-    else result.added++
+    //
+    // Caught per row rather than left to abort the loop. Unguarded, one report
+    // that still would not fit after saveSession's own retries lost every row
+    // after it in the file too — and did so silently, because the caller never
+    // learns the tally already reached before the throw. Each row gets its own
+    // honest attempt: `saveSession` already strips stills and deletes old
+    // reports before giving up, and that ladder ran again for this row alone.
+    try {
+      await saveSession(session as Analysis, false)
+      if (here) result.updated++
+      else result.added++
+    } catch {
+      result.failed++
+    }
   }
 
   /*

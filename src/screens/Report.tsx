@@ -80,6 +80,15 @@ interface Props {
    * never joins the analysis — a saved report gets the words and not the images.
    */
   servePair?: ServePairFrames
+  /**
+   * The report on screen could not be written to storage.
+   *
+   * Storage is best-effort — see `db.ts` — so a save failure never blocks this
+   * screen from rendering. It must not be invisible either: a report that looks
+   * saved and quietly is not is the confident-nonsense failure this app is built
+   * to avoid, just aimed at the player's history instead of at their serve.
+   */
+  saveWarning?: string
 }
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -99,6 +108,7 @@ export default function Report({
   onPickTier,
   statedTier,
   servePair,
+  saveWarning,
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
@@ -296,6 +306,13 @@ export default function Report({
     <div className="screen report">
       {topbar}
       {injuryBlock}
+
+      {saveWarning && (
+        <p className="storage-warn">
+          <Icon name="warn" size={15} />
+          <span>{saveWarning}</span>
+        </p>
+      )}
 
       {/* Overridden, so the banner stays up for as long as the numbers do. A
           one-off dismissible warning would be gone by the time the player

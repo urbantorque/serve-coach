@@ -63,7 +63,16 @@ export default function StoragePanel({ count, onImported }: Props) {
         // player reading "nine added" wants that to be nine serves.
         r.logs ? `${r.logs} ${r.logs === 1 ? 'drill' : 'drills'}` : '',
       ].filter(Boolean)
-      setOutcome(parts.length ? parts.join(', ') + '.' : 'Nothing new in that file.')
+      setOutcome(
+        (parts.length ? parts.join(', ') + '.' : 'Nothing new in that file.') +
+          // Said separately from the tally above: this is not "up to date", it
+          // is storage refusing the write, and the fix is different — free up
+          // room and import the same file again, which only re-adds what still
+          // is not on the device.
+          (r.failed
+            ? ` ${r.failed} could not be saved — your device is out of storage. Free up space and import this file again.`
+            : ''),
+      )
       onImported()
     } catch (err) {
       setOutcome((err as Error).message)

@@ -831,3 +831,14 @@ keeping, nudges iPhone users to install it, and can export the whole history to
 a file you can carry to a new phone. Import merges rather than replaces, and a
 report already on the device wins if it is the newer of the two, so restoring an
 old backup cannot roll back training you have done since.
+
+**A report that could not be saved says so.** `saveSession` frees space and
+retries before giving up — stripping stills across the whole history, then
+deleting the oldest reports — but a device that is still out of room after that
+used to fail silently: the report stayed on screen looking saved, and the only
+sign anything was wrong was its absence from the history weeks later. The report
+screen now carries a warning when that happens, telling you to export or free up
+space. Importing a backup has the same honesty: a report that will not fit is
+counted apart from one that was already on file, because the two need different
+advice — an up-to-date report needs nothing, one that failed to save is worth
+freeing space and importing again for.

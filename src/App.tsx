@@ -139,6 +139,17 @@ export default function App() {
   const [offlineReady, setOfflineReady] = useState(false)
   const [warming, setWarming] = useState<OfflineWarmup>()
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
+  /**
+   * The report on screen looks saved and is not.
+   *
+   * `safely(() => saveSession(x), undefined)` cannot tell a caller this: its
+   * fallback and its success value are both `void`, so the two are the same
+   * value. A save that fails after `saveSession`'s own quota retries are
+   * exhausted — a device with truly no room left — used to vanish exactly like
+   * a successful one, and the player found out only when the serve was not in
+   * their history weeks later.
+   */
+  const [saveWarning, setSaveWarning] = useState<string>()
 
   const abortRef = useRef<AbortController>()
   const urlRef = useRef<string>()
@@ -243,6 +254,31 @@ export default function App() {
     // things about a player in each case.
     void safely<PracticeLog[] | undefined>(listPracticeLogs, undefined).then(setDrillLogs)
   }, [])
+
+  /**
+   * Save a report and say so when it did not work.
+   *
+   * `saveSession` already retries through its own pressure ladder — stripping
+   * stills, then deleting the oldest reports — before it ever throws, so a
+   * failure reaching here means that ladder ran out of room. Cleared before the
+   * attempt rather than only on success, so a warning from the last report never
+   * outlives it by even one frame: `setView` for the new report and this run in
+   * the same synchronous stretch of `run`, so React batches them into one paint.
+   */
+  const trySave = useCallback(
+    async (analysis: Analysis) => {
+      setSaveWarning(undefined)
+      try {
+        await saveSession(analysis)
+      } catch {
+        setSaveWarning(
+          'This report could not be saved — your device has run out of storage. Export your history from Your serves, or free up space and analyse it again.',
+        )
+      }
+      refreshSessions()
+    },
+    [refreshSessions],
+  )
 
   /**
    * Record that the drill on the practice card was done.
@@ -523,7 +559,7 @@ export default function App() {
             // again — and hands `remember` an analysis whose stored scores no
             // longer match the ones on screen.
             remember({ sessionKey: shown.id, handedness: shown.handedness }, shown)
-            void safely(() => saveSession(shown), undefined).then(refreshSessions)
+            void trySave(shown)
           }
           return
         }
@@ -594,7 +630,7 @@ export default function App() {
         // than here — see `saveSession`. It stays in the in-memory cache above,
         // so flicking between the serves in the clip is still instant; it just
         // never becomes part of the record.
-        void safely(() => saveSession(analysis), undefined).then(refreshSessions)
+        void trySave(analysis)
         void isCachedOffline().then(setOfflineReady)
 
         // Ask the browser not to evict the history, once, at the first moment
@@ -643,8 +679,8 @@ export default function App() {
     // `sessions` is read to preserve the original filing date of a re-analysis;
     // leaving it out would capture an empty list from the first render.
     [
-      refreshSessions,
       releaseVideo,
+      trySave,
       sessions,
       prefs.handedness,
       prefs.serveType,
@@ -760,7 +796,7 @@ export default function App() {
         const measured: Analysis = { ...analysis, consistency: result }
         remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)
         setView({ kind: 'report', analysis: measured, videoUrl: url })
-        void safely(() => saveSession(measured), undefined).then(refreshSessions)
+        void trySave(measured)
       } catch (err) {
         if (abortRef.current !== controller || err instanceof Cancelled) return
         setView({ kind: 'report', analysis, videoUrl: url })
@@ -770,7 +806,7 @@ export default function App() {
         if (abortRef.current === controller) setSweep(undefined)
       }
     },
-    [refreshSessions],
+    [trySave],
   )
 
   /**
@@ -972,7 +1008,7 @@ export default function App() {
                   rescored,
                 )
                 setView({ kind: 'report', analysis: rescored, videoUrl: view.videoUrl })
-                void safely(() => saveSession(rescored), undefined).then(refreshSessions)
+                void trySave(rescored)
               } else if (lastFileRef.current) {
                 void run(
                   lastFileRef.current,
@@ -996,7 +1032,7 @@ export default function App() {
                 rejudged,
               )
               setView({ kind: 'report', analysis: rejudged, videoUrl: view.videoUrl })
-              void safely(() => saveSession(rejudged), undefined).then(refreshSessions)
+              void trySave(rejudged)
             }}
             onCheckConsistency={
               lastFileRef.current && view.analysis.serves.count > 1
@@ -1004,6 +1040,7 @@ export default function App() {
                 : undefined
             }
             servePair={pair}
+            saveWarning={saveWarning}
           />
         )}
 
