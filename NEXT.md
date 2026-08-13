@@ -105,8 +105,39 @@ phase's entries and drops the working notes underneath them.
       through the refactored code with `HTMLAnchorElement.prototype.click`
       instrumented, confirming the real download names still land correctly
       after the extraction.
-- [ ] **R24** — Is export and import a thing a non-technical player can do?
-      Deliverable: the path walked, and the worst step fixed.
+- [x] **R24** — Walked live, `StoragePanel`/`backup.ts` read first but not
+      trusted as the answer: two sessions seeded via `saveSession` directly
+      (no real footage available), history sheet opened, export tapped with
+      `HTMLAnchorElement.prototype.click` instrumented to confirm a real
+      file (`serve-coach-2026-08-14.json`) rather than trusting the
+      resolved promise alone. Every button already does what it says —
+      export downloads and reports a count, import merges rather than
+      replaces, and three failure paths tried live (malformed JSON, valid
+      JSON that is not a backup, re-importing the same data) each produced
+      a plain sentence a non-technical player could act on, none of them a
+      stack trace. Neither button was the worst step.
+
+      The worst step was between them, and only visible by reading every
+      word of copy on the panel rather than testing behaviour alone: "An
+      export is one file holding your scores and keyframe pictures. Moving
+      it is the only way your history follows you to a new phone." — a
+      promise made and left unkept in the same sentence. Backup exists,
+      per `backup.ts`'s own doc comment, specifically so history survives a
+      new phone; the one non-technical player for whom that use case
+      matters most reads a sentence that names the destination and never
+      the route. A player who already knows a downloaded file can be
+      emailed, AirDropped or dropped in a cloud drive does not need the
+      sentence at all; the player this feature is supposed to serve does.
+
+      Fixed with copy alone — `StoragePanel.tsx`'s `sheet-note`, same class,
+      same position, one sentence longer: three concrete, platform-agnostic
+      ways to move a file (email, AirDrop, a cloud drive) and what to do
+      with it on the other end ("open it there and tap Import from a
+      file"), closing the loop the old sentence opened and never finished.
+      No new UI, no new colour — constraint 3's normal tasteful-refinement
+      latitude covers a sentence. Verified live: the new copy renders in
+      full inside the history sheet with the seeded sessions still present,
+      nothing truncated, nothing broken.
 - [ ] **R25** — Is a session a thing the app knows about? Reports are keyed per
       serve; a trip to the court is not represented anywhere. Deliverable: the
       answer, and whether it earns a type.

@@ -802,6 +802,25 @@ success, cancellation or fallback. Eight tests in
 that was previously only ever run for real, once, by whichever browser
 happened to be open.
 
+**Export and import both already work; the step between them was never
+mentioned.** Walked live as a stranger rather than assumed from reading
+`StoragePanel.tsx`: every button does what it says — "Export N serves"
+downloads a real file and reports the count, "Import from a file" reads it
+back and merges rather than replaces, and every failure mode tried (a
+picked file that is not JSON, one that is JSON but not a Serve Coach
+backup, an import of the same data twice) produces a plain sentence a
+non-technical player could act on rather than a stack trace. The gap was
+never in either button. It was in what happens *between* them: the panel's
+own copy says "moving it is the only way your history follows you to a new
+phone" and then gives no instruction on how — a promise made and left
+unkept in the same sentence, for the one use case backup exists to serve.
+A technical player already knows a downloaded file can be emailed,
+AirDropped or put in a cloud drive; a non-technical one, reading a sentence
+that names a destination and not a route, does not. Replaced with three
+concrete, platform-agnostic ways to move a file and where it lands on the
+other end — one sentence longer, zero new UI, the same `sheet-note` class
+the old copy already used.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm
