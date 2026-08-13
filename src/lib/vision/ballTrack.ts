@@ -560,6 +560,36 @@ const APEX_SLACK_MAX_FRAMES = 2
 const NOISE_FLOOR_FRACTION = 0.15
 
 /**
+ * How far the inliers' horizontal positions may scatter from their own
+ * straight-line fit, in frame widths, before the flight they agree on is
+ * rejected as more than one object.
+ *
+ * R11 in `NEXT.md`: the curvature gate only ever looks at *height*, because
+ * that is where gravity shows up. It has nothing to say about *width* — two
+ * background objects drifting on unrelated paths can each contribute a couple
+ * of frames whose height happens to sit near one shared parabola, and RANSAC
+ * has no way to know those points came from different things, because nothing
+ * before this checked whether they were also consistent with each other
+ * sideways. A real ball has no horizontal acceleration worth modelling (see
+ * `linearAt`), so its inliers sit close to one line; a fit stitched together
+ * across two objects moving in different horizontal directions does not, and
+ * this is what catches that a curvature match alone cannot.
+ *
+ * Found by measurement, not by argument: tightened against the multi-decoy
+ * false-positive ensemble below until it started rejecting `the real ball is
+ * picked out from among distractors` above — a genuine toss whose drift
+ * amplitude is real, just mostly linear, so the *residual* left after a
+ * straight line is much smaller than the drift itself. 0.02 rejects that
+ * genuine toss; 0.03 is the tightest value that does not, and it still cuts
+ * the multi-decoy false-positive rate from 24% to 6–7% — a real improvement
+ * and not a claim that the search is now immune to it. A cross-object fit
+ * that happens to share both a curvature and a near-linear width, by
+ * coincidence, is not something this gate — or any gate that only reads
+ * position — can rule out.
+ */
+const X_CONSISTENCY_BAND = 0.03
+
+/**
  * How much confidence a fit loses for sitting at the far edge of either gate.
  *
  * A quarter, not a half: the point of widening the gates was that a fit which is
@@ -766,6 +796,16 @@ export function trackBall(
   const refined = fitQuadratic(inlierPts) ?? best.coeffs
   const [c0, c1, c2] = refined
   if (c2 <= 0) return undefined
+
+  // The curvature agreed on says nothing about whether the same object was
+  // seen the whole time — see `X_CONSISTENCY_BAND`. Checked on the inliers
+  // that survived the height fit, not the seed, for the same reason the
+  // refit above is: three points that happened to seed the hypothesis are
+  // not the evidence for it.
+  const xFit = lineFit(best.inliers.map((p) => ({ t: p.t, v: p.x })))
+  const xResidual =
+    best.inliers.reduce((s, p) => s + Math.abs(p.x - xFit.at(p.t)), 0) / best.inliers.length
+  if (xResidual > X_CONSISTENCY_BAND) return undefined
 
   const spread = fitSpread(inlierPts, [c0, c1, c2], NOISE_FLOOR_FRACTION * band)
 

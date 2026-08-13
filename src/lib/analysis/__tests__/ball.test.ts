@@ -705,6 +705,133 @@ check('losing half the detections buys less extrapolation, not more', () => {
   within(alternate.rate, 0, 0.25, 'acceptance of the same flight with half the detections')
 })
 
+/* ------------------------------------------------- missed, and mistaken -- */
+
+/**
+ * R11 in NEXT.md. Everything above pins individual gates against individual
+ * scenarios — a short track, a late vertex, a specific decoy. None of it adds
+ * up to a rate, and a rate is what the question actually asks: across many
+ * independent clips, how often is a real toss missed, and how often is
+ * something that was never a toss reported as one? Both are ensembles over
+ * many seeds for the same reason the noise ensembles elsewhere in this suite
+ * are — a single trial answers "did this one work", not "how often does it".
+ */
+heading('How often the toss is missed, and how often something else is found')
+
+check('an ordinarily filmed toss is missed only rarely, not routinely', () => {
+  // Not one of the edge cases above, tuned to a specific gate: the pose grid's
+  // own cap (`FINE_FPS`, 32) for close to the span a toss actually spends in
+  // the air, at the centroid noise the short-track check above already
+  // established as realistic for a clean daylight clip.
+  const track = (seed: number) =>
+    noisyTrack({ samples: 18, fps: 32, apexT: 9 / 32, apexY: 0.2, gravity: GRAVITY, noisePx: 1.5, seed })
+  const result = acceptance(500, GRAVITY, track, 0.2)
+  note(
+    `ordinary toss, 18 samples at 32 fps, 1.5 px centroid noise: found in ${(result.rate * 100).toFixed(1)}% of 500 trials, missed in ${((1 - result.rate) * 100).toFixed(1)}%`,
+  )
+  within(result.rate, 0.9, 1, 'the false-negative rate on an ordinarily filmed toss')
+})
+
+/**
+ * Started as a stress test and found a real gap. Every candidate in these
+ * frames is an independent random point with no relationship to the one
+ * before it — not something a real camera produces, but a sharp probe of the
+ * search on its own terms: with `n` points there are `n`-choose-3 candidate
+ * curves, and before `X_CONSISTENCY_BAND` existed `fitQuadratic` gated on
+ * curvature alone, so trying thousands of hypotheses against a small pool
+ * found *some* triple whose curvature landed in the gravity band by chance
+ * more often than not — 85% of these 300 trials, on the first run of this
+ * check. Requiring the inliers to also agree on a straight line sideways,
+ * which a stitched-together fit across unrelated points essentially never
+ * does by coincidence, took that to zero. Kept as a regression check on the
+ * search itself, now that there is a real number behind it rather than an
+ * assumption.
+ */
+check('fully decorrelated noise is not stitched into a false toss', () => {
+  const trials = 300
+  let falsePositives = 0
+  for (let i = 0; i < trials; i++) {
+    const rand = seeded(9000 + i * 7919)
+    const perFrame = Array.from({ length: 24 }, (_, k) => ({
+      t: k / 30,
+      candidates: Array.from({ length: 2 }, () => ({
+        x: rand(),
+        y: rand() * 0.6,
+        r: 0.008 + rand() * 0.02,
+        score: rand(),
+      })),
+    }))
+    if (trackBall(perFrame, { expectedGravity: GRAVITY })) falsePositives++
+  }
+  const rate = falsePositives / trials
+  note(`fully decorrelated noise reported as a toss in ${(rate * 100).toFixed(1)}% of ${trials} trials (was 85% before X_CONSISTENCY_BAND)`)
+  within(rate, 0, 0.05, 'the false-positive rate on fully decorrelated noise')
+})
+
+check('two or three background objects, each moving smoothly, are still rejected in the overwhelming majority of clips', () => {
+  // The realistic version of the check above: not fresh independent points
+  // every frame, but a small number of distinct things — another player's
+  // ball, a bird, a bright reflection — each on its own smooth path, which is
+  // what a real background actually offers a detector that does not know it
+  // is clutter. Straight lines and constant-ish drifts, per the decoys `ball
+  // is picked out from among distractors` above already uses, but here there
+  // is no genuine ball in the frame at all: everything the tracker sees is a
+  // decoy, so any accepted flight is a false positive by construction.
+  const trials = 300
+  let falsePositives = 0
+  for (let i = 0; i < trials; i++) {
+    const rand = seeded(13000 + i * 7919)
+    const decoys = Array.from({ length: 2 + (i % 2) }, () => ({
+      x0: rand(),
+      y0: rand() * 0.5,
+      vx: (rand() - 0.5) * 1.0,
+      vy: (rand() - 0.5) * 0.5,
+    }))
+    const perFrame = Array.from({ length: 24 }, (_, k) => {
+      const t = k / 30
+      return {
+        t,
+        candidates: decoys.map((d) => ({ x: d.x0 + d.vx * t, y: d.y0 + d.vy * t, r: 0.011, score: 1 })),
+      }
+    })
+    if (trackBall(perFrame, { expectedGravity: GRAVITY })) falsePositives++
+  }
+  const rate = falsePositives / trials
+  note(`two or three independently-drifting background objects reported as a toss in ${(rate * 100).toFixed(1)}% of ${trials} trials`)
+  // 24% before X_CONSISTENCY_BAND in ballTrack.ts existed; tightening that gate
+  // further starts rejecting genuine tosses filmed among real distractors — see
+  // its own comment. This is the validated floor, not a target chosen in
+  // advance, and the ratchet is here so a future change cannot silently widen
+  // the gap back towards where it started.
+  within(rate, 0, 0.1, 'the false-positive rate on realistic multi-object clutter')
+})
+
+check('a single randomly-moving object — a bird, a second ball, a reflection — is rejected far more often than not', () => {
+  // A generalisation of "a ball-sized object crossing the frame in a straight
+  // line is rejected" and "an object rising the whole time is rejected" above,
+  // over many random directions and starting points rather than the one each
+  // of those names. A straight-line mover has no curvature to speak of, so the
+  // gravity gate is expected to reject nearly all of these — the point of
+  // measuring it is to say how nearly, and to notice if that ever changes.
+  const trials = 300
+  let falsePositives = 0
+  for (let i = 0; i < trials; i++) {
+    const rand = seeded(11000 + i * 7919)
+    const vx = (rand() - 0.5) * 1.2
+    const vy = (rand() - 0.5) * 0.6
+    const x0 = rand()
+    const y0 = rand() * 0.5
+    const perFrame = Array.from({ length: 24 }, (_, k) => {
+      const t = k / 30
+      return { t, candidates: [{ x: x0 + vx * t, y: y0 + vy * t, r: 0.011, score: 1 }] }
+    })
+    if (trackBall(perFrame, { expectedGravity: GRAVITY })) falsePositives++
+  }
+  const rate = falsePositives / trials
+  note(`a single randomly-moving object alone is reported as a toss in ${(rate * 100).toFixed(1)}% of ${trials} trials`)
+  within(rate, 0, 0.05, 'the false-positive rate on one non-parabolic mover')
+})
+
 /* ------------------------------------------ the ball after it has been hit */
 
 /**

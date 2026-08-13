@@ -604,6 +604,23 @@ drop-to-contact window — the one stretch of any serve guaranteed to be a
 large, fast excursion — and a track that did not is refused rather than
 measured, whatever its curvature says.
 
+**A curvature match is not enough to say two points came from the same
+object.** The toss is found by fitting a run of candidate blobs to a
+free-fall arc — but that fit only ever reads *height* against time, because
+that is where gravity shows up, and it has nothing to say about *width*. Two
+background objects each on their own smooth path — another ball, a bird, a
+reflection, the ordinary clutter of a busy court — can each contribute a few
+frames whose height happens to sit near one shared parabola, and the search
+had no way to know those points came from different things: measured across
+hundreds of simulated clips with two or three such objects and no real ball
+anywhere, a false toss was reported in a quarter of them. A real ball has no
+sideways acceleration worth modelling, so its accepted points sit close to
+one straight line; points stitched together across two objects drifting in
+different directions do not, and the fit is now checked for that too — which
+took the same measurement to one in fourteen, and a harder stress test of
+pure decorrelated noise, with no coherent object in frame at all, from 85%
+of trials to none.
+
 **A detector the engine cannot resolve is withdrawn, not hedged.** Hedging is for
 a number that is roughly right; it is the wrong answer for one that is a coin
 flip, because the softest caveat still leaves an accusation on the card.

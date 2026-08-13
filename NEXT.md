@@ -110,9 +110,37 @@ synthetic rig can produce.
       `LIMITS.visibility` the clip is refused outright as `body_not_visible`
       rather than measured at a confidence too low to trust — the cliff is by
       design, not a gap. All three pinned in `robustness.test.ts`.
-- [ ] **R11** — How often is the ball missed, and how often is something else
-      found? Deliverable: false-positive and false-negative figures on the rig,
-      printed by the suite so they cannot age silently.
+- [x] **R11** — Missed rarely, found something else more often than it should
+      have — and driving the measurement fixed what it found. Everything
+      already in `ball.test.ts` pinned individual scenarios; nothing turned
+      them into a rate, so a new ensemble section does, over hundreds of seeds
+      each. **Missed**: an ordinarily filmed toss (32 fps, 1.5 px centroid
+      noise, the span a toss actually takes) is found in 100% of 500 trials —
+      the false-negative rate on real footage is not the problem here.
+      **Found something else**: two or three background objects each on their
+      own smooth path — another ball, a bird, a reflection, all things a busy
+      club court actually has — produced a false toss in **24.3%** of 300
+      trials on the first run. The curvature gate that catches a single
+      distractor has nothing to say about *width*: it fits height against
+      time and accepts whichever points agree, with no check that they came
+      from the same object, so RANSAC could stitch a plausible parabola from
+      fragments of two different decoys' tracks.
+
+      Fixed rather than only measured: `X_CONSISTENCY_BAND` in
+      `vision/ballTrack.ts` requires the accepted inliers to also sit close to
+      one straight line sideways, which a real ball does (no horizontal
+      acceleration worth modelling) and points stitched across two objects
+      moving different directions do not. Tuned by measurement against the
+      existing suite, not chosen in advance: 0.02 started rejecting a genuine
+      toss in `the real ball is picked out from among distractors`, an
+      existing check; 0.03 is the tightest value that does not, and it takes
+      the multi-decoy rate to **7.0%** and, as a side effect neither predicted
+      nor aimed at, a harder stress test — fully decorrelated random noise,
+      no real object anywhere — from **85%** to **0%**. Full suite green
+      throughout tuning; nothing already calibrated moved. Not a claim the
+      search is now immune to coincidence: two objects that happened to share
+      both a curvature and a near-linear width would still pass, and nothing
+      that reads only position can rule that out.
 - [ ] **R12** — Does the multi-body hand-off check cover the sweep, or only the
       single serve? A basket filmed at a club has other people in it by
       definition. Deliverable: the check where the sweep can see it.
