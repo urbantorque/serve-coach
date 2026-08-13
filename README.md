@@ -136,6 +136,16 @@ approximate, are given a reduced vote in their area's score, and can never
 become the "work on this next" advice. Being sent to fix a fault the app cannot
 actually see is the fastest way to lose a player who knows their own serve.
 
+**Poor light degrades the whole body at once, and confidence follows it down
+smoothly, before there is a cliff.** Every other clip problem here is local —
+one limb, one moment. Dusk is not: the tracker gets a little less sure of
+everywhere at the same time, and the numbers it reports do not move, only how
+much the app is willing to stand behind them — the toss, the trophy, the
+contact, all softened together rather than one card quietly going first. Below
+a visibility floor the clip is refused outright rather than measured at a
+confidence too low to mean anything, which is a real edge rather than a
+number that simply gets smaller forever.
+
 **Bad clips are caught in two seconds, not thirty.** Before committing to the
 full pipeline the app samples a handful of frames and checks the framing. If
 nobody is in shot, or the player is too far away to measure, it says so

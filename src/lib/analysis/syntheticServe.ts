@@ -10,7 +10,7 @@
  * origin at the hip centre and +y pointing DOWN, matching MediaPipe. Image
  * landmarks are an orthographic projection along +z, already aspect-corrected.
  */
-import { LM } from './geometry'
+import { LM, clamp } from './geometry'
 import type { Frame, Landmark } from './types'
 
 const HEIGHT_M = 1.8
@@ -215,6 +215,18 @@ export interface ServeDials {
    */
   occlusionSeconds: number
   /**
+   * How well lit the clip is, 1 (full daylight) down towards 0 (too dark to
+   * see anything). Scales every landmark's visibility uniformly, for the
+   * whole clip — R10 in `NEXT.md`: contrast is the one clip problem that
+   * degrades the *whole body at once* rather than one limb, which is what
+   * separates it from `dropout` (one limb, one frame) and `occlusionSeconds`
+   * (one limb, held still, position corrupted). Position is untouched here —
+   * a dusk clip is not one MediaPipe has started guessing coordinates on, it
+   * is one where the model is less sure of coordinates it still reads
+   * correctly, and visibility is exactly the channel it uses to say so.
+   */
+  lightLevel: number
+  /**
    * Which noise realisation to draw.
    *
    * Vary this to measure across an ensemble. Holding it fixed while changing
@@ -273,6 +285,7 @@ export const CLEAN_SERVE: ServeDials = {
   depthBias: 0,
   dropout: 0,
   occlusionSeconds: 0,
+  lightLevel: 1,
   seed: 20240803,
 }
 
@@ -601,6 +614,14 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
         p.y += jitter() * toMetres
         p.z += zJitter() * toMetres
       }
+    }
+
+    // Poor light: every landmark a little less certain, all at once — the
+    // whole-body counterpart to `dropout`'s one limb. Applied before it so a
+    // dropped limb on a dark clip still reads as more degraded than the rest
+    // of the body, the way a tracker losing a limb entirely would.
+    if (d.lightLevel < 1) {
+      for (const p of image) p.visibility = clamp(d.lightLevel, 0, 1)
     }
 
     // Occlusion: a limb the tracker briefly loses, reported as low visibility

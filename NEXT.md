@@ -86,9 +86,30 @@ synthetic rig can produce.
       `currentTime` on every seek. Before this fix that harness's output was a
       perfectly even grid regardless of the jitter fed in; after it, the
       recorded timestamps carry the jitter, exactly as they should.
-- [ ] **R10** — What does bad light do? Low contrast lowers landmark visibility
-      before it lowers accuracy. Deliverable: the visibility signal traced into
-      `confidence.ts`, and a clip filmed at dusk degrading rather than lying.
+- [x] **R10** — Already true, and it needed a rig capability and a test to say
+      so rather than an inspection. `metricConfidence` already reads landmark
+      visibility directly, and `blurOf` already folds it in through `unseen` —
+      the wiring R10 asked whether existed was already there. What did not
+      exist was a way to *drive* it: every clip problem the rig could dial was
+      local — one limb, one frame, one occlusion — and dusk is not local, it
+      dulls the whole body's visibility at once. A new `lightLevel` dial does
+      that: every landmark's visibility scaled uniformly, position untouched,
+      so anything that moves downstream moved because of confidence, not
+      because the rig quietly changed the answer.
+
+      First pass through this round measured nothing: calling `measure()`
+      without a confidence context — which is a valid call, and what
+      `dev/sampleAnalysis.ts` itself does — reports every metric at confidence
+      1 by construction (`ctx ? metricConfidence(id, ctx) : 1` in
+      `metrics.ts`), so a sweep against that always read back an unmoved
+      1.000. Rebuilt to assemble the context the way `analyze.ts` actually
+      does, blur included, and the real shape appeared: at dusk (`lightLevel`
+      0.55) `dropDepth` and `contactHeight` fall to 0.46 confidence and
+      `kneeBend` to 0.67, while the *values* do not move at all — the camera
+      read them correctly, the app is only less sure of what it read. Below
+      `LIMITS.visibility` the clip is refused outright as `body_not_visible`
+      rather than measured at a confidence too low to trust — the cliff is by
+      design, not a gap. All three pinned in `robustness.test.ts`.
 - [ ] **R11** — How often is the ball missed, and how often is something else
       found? Deliverable: false-positive and false-negative figures on the rig,
       printed by the suite so they cannot age silently.

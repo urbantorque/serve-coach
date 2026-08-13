@@ -27,7 +27,7 @@ import {
   type ConfidenceContext,
 } from '../confidence'
 import { diagnose } from '../diagnose'
-import { assessResilience } from '../triage'
+import { assessResilience, rejectionFor, LIMITS } from '../triage'
 import { cueIssues } from '../voice'
 import { cacheSize, forgetAll, recall, remember } from '../../analysisCache'
 import { normalise, normalisePracticeLog, type Session } from '../../storage/db'
@@ -1444,6 +1444,78 @@ check('an area is not condemned by a measurement the app cannot see', () => {
   const cropped = measured({}, cropFeet).fundamentals.find((f) => f.id === 'contact')!
   note(`contact area: ${clean.score} well framed, ${cropped.score} with feet cropped`)
   within(clean.score - cropped.score, -100, 18, 'how far a framing problem may move an area score')
+})
+
+/* ------------------------------------------------------------- bad light -- */
+
+heading('What bad light does')
+
+/**
+ * R10 in NEXT.md: the whole-body counterpart to a cropped or blurred limb.
+ * `lightLevel` scales every landmark's visibility uniformly and leaves
+ * position untouched, so anything that moves here moved because of
+ * `metricConfidence`, not because the rig quietly changed the answer.
+ *
+ * Assembled exactly the way `analyze.ts` assembles it — blur included, not
+ * an abridged context — because `measure()` reports every confidence as 1
+ * when `blur` is left out, and a test that left it out would be measuring its
+ * own helper rather than the pipeline. See `confidenceCtx` below for the
+ * narrower version other checks in this file use on purpose.
+ */
+function litServe(lightLevel: number) {
+  const frames = buildServe({ lightLevel }, FPS)
+  const skel = detectServe(frames, FPS)
+  const resilience = assessResilience(frames, skel)
+  const quality = assessQuality(frames, skel, FPS, resilience.blur)
+  const fundamentals = measure(frames, skel, quality.view === 'side', {
+    confidence: {
+      frames,
+      skel,
+      swingSamples: quality.swingSamples,
+      view: quality.view,
+      depthUnreliable: resilience.spatial.depth_unreliable,
+      blur: resilience.blur,
+    },
+  })
+  return { resilience, fundamentals, reason: rejectionFor(resilience) }
+}
+
+check('confidence falls smoothly as the light drops, before the clip is refused', () => {
+  const bright = litServe(1)
+  const dusk = litServe(0.55)
+  assert(bright.reason === undefined, `a well-lit clip was refused: ${bright.reason}`)
+  assert(dusk.reason === undefined, `dusk on its own was already refused: ${dusk.reason}`)
+
+  const conf = (r: ReturnType<typeof litServe>, id: string) =>
+    r.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === id)!.confidence
+
+  for (const id of ['dropDepth', 'kneeBend', 'contactHeight']) {
+    const b = conf(bright, id)
+    const d = conf(dusk, id)
+    assert(d < b, `${id}: dusk (${d.toFixed(2)}) was not softer than daylight (${b.toFixed(2)})`)
+    note(`${id}: ${b.toFixed(2)} in daylight, ${d.toFixed(2)} at dusk`)
+  }
+})
+
+check('the value itself does not move — only what the app is willing to say about it', () => {
+  // The whole point of confidence over silence: the number the camera actually
+  // read is still the honest one, and dusk should hedge it rather than
+  // invent a different one. Position was never touched by `lightLevel`.
+  const bright = litServe(1)
+  const dusk = litServe(0.55)
+  const value = (r: ReturnType<typeof litServe>, id: string) =>
+    r.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === id)!.value
+  for (const id of ['dropDepth', 'kneeBend', 'contactHeight']) {
+    near(value(dusk, id), value(bright, id), 1e-6, `${id} at dusk`)
+  }
+})
+
+check('past the visibility floor the clip is refused, not quietly reported at low confidence', () => {
+  // The cliff is deliberate, not a gap: below LIMITS.visibility the tracker is
+  // not "a bit unsure", it cannot be trusted to have seen a person at all, and
+  // a number under that line is a guess wearing a confidence score.
+  const dark = litServe(LIMITS.visibility - 0.05)
+  assert(dark.reason === 'body_not_visible', `a clip below the visibility floor was not refused: ${dark.reason}`)
 })
 
 /* ------------------------------------------- saying which thing went wrong */
