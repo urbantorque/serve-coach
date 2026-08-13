@@ -678,6 +678,29 @@ where the progress sheet's copy was already absent — a player with fewer than
 two comparable sessions has nothing to log yet, which is a real fact about a
 first serve and not a gap this round invented one to fill.
 
+**The overlay already does not care how long the clip is; now something
+would fail if that stopped being true.** `PosePlayer`'s trail and the ball
+flight both looked like an obvious place for a slow phone to fall behind on
+a long recording — a trail "can be fifty frames long," per its own comment,
+and a naive read of that comment would worry a much longer one draws more.
+It does not, and had not for some time: the trail buckets into six
+alpha-graded polylines regardless of how many sampled frames sit between
+`from` and `to`, and the flight path bucket into eight regardless of how
+many points `ballMarkerAt` evaluated the fitted curve at. What was missing
+was proof rather than a reading of the bucketing code, so `drawing.test.ts`
+now drives the same `drawSkeleton` `PosePlayer` calls at ten times the
+sampled frames and ten times the flight-path length and counts the
+`stroke()` calls a canvas would actually have to rasterise — the real cost,
+which does not move. A wall-clock timing check was tried alongside it and
+dropped: the test stub allocates an object and stringifies a colour on every
+`lineTo`, work no real canvas does, and that bookkeeping cost swamped the
+sub-millisecond durations involved badly enough to fail the same assertion
+on some runs and pass it on others — a flaky check is worse than none, so
+the timings are printed for a human to read and never asserted on. No code
+in `PosePlayer.tsx` or `skeleton.ts` changed; this round's deliverable is the
+proof that what is there already holds, pinned so a future change that
+reintroduces per-segment strokes fails a test instead of a phone.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

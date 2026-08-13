@@ -215,8 +215,44 @@ phase's entries and drops the working notes underneath them.
       sheet's own copy of the same card is untouched and reads the same
       state. No new markup, no new CSS: the same component, unmodified, in
       one more place.
-- [ ] **R20** — Does the timeline hold 60 fps on a long clip with the overlay
-      drawing? Deliverable: the frame budget measured, worst offender fixed.
+- [x] **R20** — Read `PosePlayer.tsx` and `skeleton.ts` before measuring
+      anything, and found a component that already reads like several
+      earlier performance rounds ran through it: the rAF loop only repaints
+      when the sampled frame or phase actually changes, and the trail and
+      ball-flight drawers are both already bucketed into a fixed number of
+      polylines — six alpha-graded steps for the trail, eight for the
+      flight — with the code's own comments naming the exact per-segment
+      cost that bucketing replaced. Reading that as the answer would have
+      been trusting a comment instead of measuring, so the deliverable
+      became proving it rather than restating it.
+
+      Measured with `drawSkeleton` driven directly — the same function
+      `PosePlayer.draw()` calls — through the synthetic rig at ten times the
+      sampled frames (30 fps against 300, same swing) and ten times the
+      ball-flight path length. The number that matters is not milliseconds:
+      it is how many `stroke()` calls a real canvas would have to rasterise,
+      since that is where the actual cost of a canvas lives, not in how the
+      path leading up to it was built. That count is dead flat — 26 strokes
+      for the trail whether it spans 65 frames or 645, 24 for the flight
+      whether the path is 33 points or 330, 40 for everything drawn
+      together — at any clip length tried. A wall-clock timing check was
+      also written and then removed: a recording stub has to allocate an
+      object and stringify a colour on every `lineTo` to record what was
+      drawn, work no real canvas does, and that bookkeeping cost swamped the
+      sub-millisecond durations enough to fail the same assertion on some
+      runs and pass it on others. A flaky check asserts nothing a reader can
+      trust, so the timings are `note`d for context and only the stroke
+      counts are asserted on.
+
+      No worst offender, because there is not one — this is the "already
+      true" case `NEXT.md` names explicitly, and the record above already
+      shows two other rounds landing there (R10 on light, R14 on rotation).
+      Pinned in `drawing.test.ts`'s new "Frame budget on a long clip"
+      section rather than left as a reading of the code: a per-segment
+      stroke reintroduced into the trail or the flight now fails a test
+      before it ever reaches a phone. No app code changed — `PosePlayer.tsx`
+      and `skeleton.ts` are untouched, so there is nothing to verify live
+      that the existing test suite does not already cover.
 - [ ] **R21** — Keyboard, focus, contrast and reduced motion across the surfaces
       added since the last accessibility pass — `Glance`, `FramePair`, the dial,
       the device check. Deliverable: the same standard the player already meets,

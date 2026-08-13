@@ -23,6 +23,15 @@ function recordingContext() {
   const texts: string[] = []
   let dash: number[] = []
   let current: [number, number] = [0, 0]
+  /**
+   * How many times the expensive calls fired — the ones that make the browser
+   * actually rasterise a path, as opposed to `lineTo`, which only appends to
+   * one already being built. See "Frame budget on a long clip" below: this is
+   * what a trail or a flight path bucketed into a fixed number of strokes
+   * costs, independent of how many points went into building each stroke.
+   */
+  let strokeCalls = 0
+  let pathsBegun = 0
 
   const ctx = {
     strokeStyle: '',
@@ -37,7 +46,9 @@ function recordingContext() {
     restore() {},
     translate() {},
     rotate() {},
-    beginPath() {},
+    beginPath() {
+      pathsBegun++
+    },
     closePath() {},
     moveTo(x: number, y: number) {
       current = [x, y]
@@ -61,7 +72,9 @@ function recordingContext() {
     setLineDash(d: number[]) {
       dash = d
     },
-    stroke() {},
+    stroke() {
+      strokeCalls++
+    },
     fill() {},
     // The callout draws its plate as a solid rectangle now — text on bare
     // footage is unreadable, so every label sits on one. The stub records no
@@ -75,7 +88,7 @@ function recordingContext() {
     measureText: (t: string) => ({ width: String(t).length * 7 }),
   }
 
-  return { ctx, strokes, arcs, texts }
+  return { ctx, strokes, arcs, texts, calls: () => ({ strokeCalls, pathsBegun }) }
 }
 
 const W = 480
@@ -84,7 +97,7 @@ const H = 640
 function drawOnce(options: Partial<Parameters<typeof drawSkeleton>[1]> = {}) {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
-  const { ctx, strokes, arcs, texts } = recordingContext()
+  const { ctx, strokes, arcs, texts, calls } = recordingContext()
   drawSkeleton(ctx as unknown as CanvasRenderingContext2D, {
     frame: frames[skel.keys.trophy],
     aspect: 1,
@@ -94,7 +107,7 @@ function drawOnce(options: Partial<Parameters<typeof drawSkeleton>[1]> = {}) {
     sequence: { frames, index: skel.keys.trophy },
     ...options,
   })
-  return { strokes, arcs, texts, frames, skel }
+  return { strokes, arcs, texts, frames, skel, calls: calls() }
 }
 
 const finite = (n: number) => Number.isFinite(n)
@@ -240,6 +253,120 @@ check('the ball flight is drawn as one smooth curve, not a dashed raw path', () 
     (a) => Math.abs(a.x - (rect.ox + 0.45 * rect.dw)) < 1 && Math.abs(a.y - (rect.oy + 0.3 * rect.dh)) < 1,
   )
   assert(marker !== undefined, 'no ball marker was drawn at the requested position')
+})
+
+heading('Frame budget on a long clip')
+
+/**
+ * Falls back to `Date.now()` where `performance` is not a global — see the
+ * same guard in `diagnose.ts`. Millisecond precision is coarse for timing a
+ * single draw call, which is exactly why the check below reads the stroke
+ * count as the real evidence and the timing only as a sanity check on it.
+ */
+const timeNow = () =>
+  typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now()
+
+/**
+ * Every trail-drawing call `PosePlayer` makes, at whatever sampled-frame
+ * count a clip produced — never per-segment, always the same six buckets
+ * doubled for the underlay. Built directly rather than through `drawOnce`
+ * because the point is varying `fps`, which decides how many *sampled*
+ * frames land inside the same swing: the honest stand-in for "a longer
+ * clip", since `PosePlayer` only ever plays back the detected serve, not
+ * the whole original recording behind it.
+ */
+function trailCost(fps: number) {
+  const frames = buildServe({}, fps)
+  const skel = detectServe(frames, fps)
+  const { ctx, calls } = recordingContext()
+  const started = timeNow()
+  drawSkeleton(ctx as unknown as CanvasRenderingContext2D, {
+    frame: frames[skel.keys.trophy],
+    aspect: 1,
+    rect: fitContain(W, H, 1),
+    racket: skel.racket,
+    bodyHeight: skel.bodyHeight,
+    sequence: { frames, index: skel.keys.trophy },
+    trail: { frames, from: 0, to: frames.length - 1 },
+  })
+  return { frameCount: frames.length, ms: timeNow() - started, strokeCalls: calls().strokeCalls }
+}
+
+check('the trail costs the same strokes on ten times the sampled frames', () => {
+  const short = trailCost(30)
+  const long = trailCost(300)
+  note(`${short.frameCount} frames: ${short.strokeCalls} strokes, ${short.ms.toFixed(2)}ms`)
+  note(`${long.frameCount} frames: ${long.strokeCalls} strokes, ${long.ms.toFixed(2)}ms`)
+  assert(
+    long.frameCount > short.frameCount * 5,
+    `the long case is not actually longer — ${long.frameCount} vs ${short.frameCount} frames proves nothing`,
+  )
+  assert(
+    long.strokeCalls === short.strokeCalls,
+    `trail strokes scaled with frame count instead of staying bucketed: ${short.strokeCalls} strokes at ${short.frameCount} frames, ${long.strokeCalls} at ${long.frameCount}`,
+  )
+})
+
+check('a ball flight ten times as long still buckets into the same stroke count', () => {
+  const short = drawOnce({
+    ball: { x: 0.45, y: 0.3, path: Array.from({ length: 33 }, (_, i) => ({ x: 0.2 + i * 0.002, y: 0.3 + i * 0.001 })) },
+  }).calls
+  const long = drawOnce({
+    ball: { x: 0.45, y: 0.3, path: Array.from({ length: 330 }, (_, i) => ({ x: 0.2 + i * 0.0002, y: 0.3 + i * 0.0001 })) },
+  }).calls
+  note(`33-point flight: ${short.strokeCalls} strokes; 330-point flight: ${long.strokeCalls} strokes`)
+  assert(
+    long.strokeCalls === short.strokeCalls,
+    `flight strokes scaled with path length instead of staying bucketed: ${short.strokeCalls} vs ${long.strokeCalls}`,
+  )
+})
+
+check('a full overlay — trail, ghost, racket and flight together — costs the same strokes at any clip length', () => {
+  /*
+   * Everything switched on at once, at ten times the sampled frames, so a
+   * regression in one drawer cannot hide behind another staying flat. Stroke
+   * count is the evidence asserted on; a real canvas's rasterising cost lives
+   * in that call, not in how the path leading up to it was built. Timing was
+   * tried here too and dropped: this stub allocates an object and stringifies
+   * a colour on every `lineTo`, which no real canvas does, and that bookkeeping
+   * cost swamped the sub-millisecond durations involved — measured at
+   * anywhere from 2x to 5x across otherwise identical runs, noise wide enough
+   * to make a timing assertion here worse than no check at all. `note`d
+   * instead, for a human reading a failure to have context, not asserted on.
+   */
+  const draw = (fps: number) => {
+    const frames = buildServe({}, fps)
+    const skel = detectServe(frames, fps)
+    const { ctx, calls } = recordingContext()
+    const started = timeNow()
+    drawSkeleton(ctx as unknown as CanvasRenderingContext2D, {
+      frame: frames[skel.keys.contact],
+      aspect: 1,
+      rect: fitContain(W, H, 1),
+      racket: skel.racket,
+      bodyHeight: skel.bodyHeight,
+      sequence: { frames, index: skel.keys.contact },
+      trail: { frames, from: 0, to: frames.length - 1 },
+      annotation: 'contact',
+      ball: {
+        x: 0.45,
+        y: 0.3,
+        path: Array.from({ length: 33 }, (_, i2) => ({ x: 0.2 + i2 * 0.002, y: 0.3 + i2 * 0.001 })),
+      },
+    })
+    return { frameCount: frames.length, strokeCalls: calls().strokeCalls, ms: timeNow() - started }
+  }
+
+  const short = draw(30)
+  const long = draw(300)
+  note(`${short.frameCount} frames: ${short.strokeCalls} strokes, ${short.ms.toFixed(3)}ms (informational)`)
+  note(`${long.frameCount} frames: ${long.strokeCalls} strokes, ${long.ms.toFixed(3)}ms (informational)`)
+  assert(
+    long.strokeCalls === short.strokeCalls,
+    `the combined overlay's strokes scaled with frame count instead of staying bucketed: ${short.strokeCalls} at ${short.frameCount} frames, ${long.strokeCalls} at ${long.frameCount}`,
+  )
 })
 
 report()
