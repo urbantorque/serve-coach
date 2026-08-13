@@ -221,6 +221,16 @@ average rather than by whoever lost the most recent report — and says whether 
 is actually moving. Being told to work on the same thing forever, with no sense
 of whether it is working, is the fastest way to stop bothering.
 
+It also says what to *groove*, which is a different question from what to fix.
+Ranking by score cannot see a measurement that lands in its band every time and
+wanders right across it — and for a club player that wandering is usually what
+is costing them the point. The element that came out least repeatable in more
+than one basket gets a sentence under the drill: a second thing to work on when
+it is a different measurement, and a stronger reason to stay on the first when
+it is the same one. It is read off the same trend the progress screen draws
+rather than worked out again, because two screens with their own opinion about
+which element wanders would eventually disagree in front of the player.
+
 **Progress over time.** Saved reports feed a trend view: overall score by
 session, and what changed per fundamental since your last serve. Because a
 single serve is noisy, the headline figure is a rolling average of your last

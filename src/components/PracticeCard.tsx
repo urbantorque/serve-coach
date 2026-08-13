@@ -1,4 +1,4 @@
-import { practiceHeadline, type PracticeFocus } from '../lib/practice'
+import { practiceHeadline, repeatabilityNote, type PracticeFocus } from '../lib/practice'
 import { Cue, Icon } from './primitives'
 
 const VERDICT: Record<PracticeFocus['verdict'], { label: string; icon: string }> = {
@@ -38,6 +38,7 @@ function Runline({ scores }: { scores: number[] }) {
 
 export default function PracticeCard({ focus }: { focus: PracticeFocus }) {
   const v = VERDICT[focus.verdict]
+  const note = repeatabilityNote(focus)
 
   return (
     <section className={`practice practice--${focus.verdict}`}>
@@ -82,6 +83,15 @@ export default function PracticeCard({ focus }: { focus: PracticeFocus }) {
       {focus.fix && (
         <p className="practice-fix">
           <Cue text={focus.fix} />
+        </p>
+      )}
+
+      {/* What to groove, when it is not what to fix. A sentence and not a second
+          drill: this card carries one instruction, and the ranked plan on the
+          report is where more than one thing to do lives. */}
+      {note && (
+        <p className="practice-groove">
+          <Cue text={note} />
         </p>
       )}
 

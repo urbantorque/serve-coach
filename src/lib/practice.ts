@@ -2,7 +2,7 @@ import { FUNDAMENTALS, METRICS } from './analysis/coaching'
 import { mean } from './analysis/geometry'
 import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
-import { MEANINGFUL_DELTA, currentRubricEra, dominantType, typeOf } from './progress'
+import { MEANINGFUL_DELTA, buildConsistencyTrend, currentRubricEra, dominantType, typeOf } from './progress'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
 
@@ -35,6 +35,26 @@ export interface PracticeFocus {
    * wrong in a way that makes the player doubt the rest of it.
    */
   serveType: ServeType
+  /**
+   * The element that came out least repeatable in more than one basket.
+   *
+   * A different question from the rest of this object, and the reason it is
+   * here. Everything above ranks by score, so a measurement that lands in its
+   * band on average is invisible however far it moves around inside it — and for
+   * a club player that wandering is usually the thing actually costing them
+   * points. The app has been computing this since the sweep started being
+   * stored and printing it only on the trend screen, two taps from the card that
+   * tells them what to practise.
+   *
+   * `same` says whether it is the measurement this focus already names, which is
+   * the difference between a second thing to do and a stronger reason to do the
+   * first one.
+   *
+   * Absent until the same element has topped that list in at least two baskets;
+   * one basket's least steady element is just that basket's, which the report
+   * already said.
+   */
+  repeatability?: { id: string; label: string; sessions: number; same: boolean }
 }
 
 /** How to refer to each serve in a sentence. */
@@ -161,6 +181,12 @@ export function findPracticeFocus(
 
   const fundamental = FUNDAMENTALS[pick.fundamentalId]
 
+  // Read off the same trend the progress screen draws, rather than re-derived
+  // here from the stored spreads. Two functions with their own opinion about
+  // which element is least repeatable would eventually disagree, on two screens
+  // the player can hold open at once.
+  const recurring = buildConsistencyTrend(sessions, type)?.recurring
+
   return {
     metricId: pick.id,
     label: pick.label,
@@ -178,7 +204,35 @@ export function findPracticeFocus(
     verdict,
     fix: pick.fix,
     serveType: type,
+    repeatability: recurring
+      ? { ...recurring, same: recurring.id === pick.id }
+      : undefined,
   }
+}
+
+/**
+ * What to groove, as opposed to what to fix.
+ *
+ * A second sentence rather than a second drill. The card already carries one
+ * instruction and one drill, and the ranked plan on the report is where more
+ * than one thing to do belongs; this says which measurement wanders, which is a
+ * different claim about the same serve and often about a different measurement
+ * entirely.
+ *
+ * Empty when there is nothing to add, so the caller can drop the line rather
+ * than print a hedge.
+ */
+export function repeatabilityNote(f: PracticeFocus): string {
+  const r = f.repeatability
+  if (!r) return ''
+  const baskets = `${r.sessions} of your baskets`
+
+  if (r.same) {
+    // The same measurement failing both tests. Worth saying plainly: it is the
+    // strongest case this app can make for spending a session on one thing.
+    return cue(`It also moves more than anything else you do, in ${baskets}. Both point the same way.`)
+  }
+  return cue(`Your ${r.label.toLowerCase()} scores fine and moves more than anything else you do, in ${baskets}. Groove it once this is fixed.`)
 }
 
 /** The line at the top of the practice card. */

@@ -6,7 +6,7 @@
  * right order at the right moments, and a serve with a dialled-in fault is
  * reported as having that fault and not some other one.
  */
-import { findPracticeFocus, practiceHeadline } from '../../practice'
+import { findPracticeFocus, practiceHeadline, repeatabilityNote } from '../../practice'
 import { MEANINGFUL_DELTA, buildProgress, deltaStatus, deltasAgainst } from '../../progress'
 import { normalise } from '../../storage/db'
 import { sessionKeyFor } from '../../storage/sessionKey'
@@ -1978,6 +1978,66 @@ check('reads a genuine improvement as improving', () => {
   const f = findPracticeFocus(persistentWeakness([30, 34, 42, 52, 58]))
   assert(f!.verdict === 'improving', `verdict was ${f!.verdict} (trend ${f!.trend})`)
   assert(practiceHeadline(f!).includes('right direction'), 'headline does not acknowledge progress')
+})
+
+/**
+ * The same sessions, each carrying a stored basket whose least steady element is
+ * named. `weakestId` is what that basket's spread ranking put first.
+ */
+const withBaskets = (
+  sessions: ReturnType<typeof persistentWeakness>,
+  weakestId: string,
+  weakestLabel: string,
+) =>
+  sessions.map((s, i) => ({
+    ...s,
+    consistency: {
+      serves: 4,
+      overallScores: [70, 64, 68, 61],
+      serveNumbers: [1, 2, 3, 4],
+      metrics: [],
+      weakest: { id: weakestId, label: weakestLabel },
+      score: 70 + i,
+      status: 'fair',
+      skipped: 0,
+    },
+  })) as unknown as Parameters<typeof findPracticeFocus>[0]
+
+check('what to groove is carried alongside what to fix', () => {
+  // The whole point of the field: contact height scores 88 across every session,
+  // so nothing that ranks by score can ever mention it — and it is the element
+  // that wanders most, basket after basket, which for a club player is usually
+  // what is actually costing them the point.
+  const f = findPracticeFocus(
+    withBaskets(persistentWeakness([42, 45, 41, 44, 43]), 'contactHeight', 'Contact height'),
+  )
+  assert(f!.metricId === 'dropDepth', `focus moved to ${f!.metricId}`)
+  assert(f!.repeatability !== undefined, 'the recurring wanderer was not carried')
+  assert(f!.repeatability!.id === 'contactHeight', `carried ${f!.repeatability!.id}`)
+  assert(f!.repeatability!.same === false, 'called it the same measurement as the focus')
+  const note = repeatabilityNote(f!)
+  assert(note.toLowerCase().includes('contact height'), `note does not name it: ${note}`)
+})
+
+check('the same measurement failing both tests is said once, not twice', () => {
+  const f = findPracticeFocus(
+    withBaskets(persistentWeakness([42, 45, 41, 44, 43]), 'dropDepth', 'Racket drop'),
+  )
+  assert(f!.repeatability!.same === true, 'did not notice it is the focus measurement')
+  const note = repeatabilityNote(f!)
+  assert(note.length > 0, 'said nothing about the strongest case it can make')
+  assert(
+    !note.toLowerCase().includes('racket drop'),
+    `named the measurement a second time in the same card: ${note}`,
+  )
+})
+
+check('a history with no baskets in it says nothing about repeatability', () => {
+  // Every report before the sweep was stored, and every player who films one
+  // serve at a time. The line has to be absent rather than hedged.
+  const f = findPracticeFocus(persistentWeakness([42, 45, 41, 44, 43]))
+  assert(f!.repeatability === undefined, 'invented a wanderer from no baskets')
+  assert(repeatabilityNote(f!) === '', 'printed a line with nothing behind it')
 })
 
 check('reads a flat run as stuck', () => {

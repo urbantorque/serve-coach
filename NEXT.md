@@ -118,9 +118,12 @@ product does not behave as though it believes that.
       reaches storage; a re-opened report degrades to the words, which is 2d's
       requirement met by construction. `?demo=basket` draws stand-in tiles so
       the layout is reachable without filming.
-- [ ] **2c** — Route the consistency result into the practice focus, so
-      `practice.ts` can say "your toss is fine on average and moves more than
-      anything else you do".
+- [x] **2c** — `findPracticeFocus` now carries `repeatability`, read off
+      `buildConsistencyTrend().recurring` rather than re-derived, so the two
+      screens cannot disagree about which element wanders. `repeatabilityNote`
+      says it as one sentence under the fix — a second thing to groove when it
+      is a different measurement, a stronger reason when it is the same one, and
+      nothing at all for a history with no baskets in it.
 - [ ] **2d** — Respect `KEEP_STILLS = 20`. A comparison against a report whose
       stills were pruned degrades to the numbers, with a line saying why.
 
