@@ -21,9 +21,13 @@ import {
   mb,
   stillBytes,
   sweepFootprint,
+  worstCase,
+  HEAP_BUDGET_BYTES,
   LANDMARKS_PER_FRAME,
   UNSEEN,
 } from '../footprint'
+import { MAX_FINE_FRAMES } from '../pose/extract'
+import { MAX_SERVES } from '../analysis/serves'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
 declare const process: { memoryUsage(): { heapUsed: number } }
@@ -137,6 +141,48 @@ check('an absent still costs nothing, rather than counting as an empty one', () 
 check('a canvas is four bytes a pixel and never negative', () => {
   assert(canvasBytes(2, 3) === 24, `${canvasBytes(2, 3)}`)
   assert(canvasBytes(-5, 10) === 0, 'a negative dimension produced bytes')
+})
+
+heading('The bound')
+
+const worst = worstCase(MAX_FINE_FRAMES, MAX_SERVES, STILL.length)
+note(
+  `the constants allow ${mb(worst.total)} MB over ${worst.frameCount} frames — ` +
+    `${MAX_SERVES} serves × ${MAX_FINE_FRAMES} frames`,
+)
+note(`budget ${mb(HEAP_BUDGET_BYTES)} MB, headroom ${(HEAP_BUDGET_BYTES / worst.total).toFixed(1)}×`)
+
+check('the constants cannot allow more than the budget', () => {
+  // Read off MAX_FINE_FRAMES and MAX_SERVES themselves rather than copied from
+  // them, so raising either is what turns this red. That is the point: the two
+  // numbers that bound the largest allocation in the app were a module-private
+  // const and a default argument, and neither had anywhere to be argued with.
+  assert(
+    worst.total < HEAP_BUDGET_BYTES,
+    `${mb(worst.total)} MB against a ${mb(HEAP_BUDGET_BYTES)} MB budget`,
+  )
+})
+
+check('the budget is a ratchet with real headroom, not a line drawn under today', () => {
+  // A budget sitting just above the current figure fails on the first honest
+  // change and gets raised without thought, which is worse than not having one.
+  // A budget a hundred times above it never fails at all.
+  const headroom = HEAP_BUDGET_BYTES / worst.total
+  assert(headroom > 2 && headroom < 20, `headroom is ${headroom.toFixed(1)}×`)
+})
+
+check('raising either constant is what the budget is watching', () => {
+  // The failure mode this exists for, driven rather than described: a serve cap
+  // raised to cover a long practice session, or a sampler taking four times the
+  // frames, and nothing anywhere saying what that costs.
+  assert(
+    worstCase(MAX_FINE_FRAMES, 64, STILL.length).total > HEAP_BUDGET_BYTES,
+    'a serve cap of 64 did not breach the budget',
+  )
+  assert(
+    worstCase(MAX_FINE_FRAMES * 8, MAX_SERVES, STILL.length).total > HEAP_BUDGET_BYTES,
+    'eight times the frames did not breach the budget',
+  )
 })
 
 report()

@@ -20,7 +20,16 @@ const SINGLE_PASS_SECONDS = 4.5
  * recovered analytically instead — see refineExtremum in phases.ts.
  */
 const FINE_FPS = 32
-const MAX_FINE_FRAMES = 120
+/**
+ * The most frames one serve is ever extracted at.
+ *
+ * Exported because it is half of the resident cost of an analysis — `frames` is
+ * the largest thing an `Analysis` holds in memory — and `footprint.ts` bounds
+ * that cost against this rather than against a number copied out of it. Raising
+ * it raises the memory budget, and the budget test is where that has to be
+ * argued for.
+ */
+export const MAX_FINE_FRAMES = 120
 /** How much of the clip around contact is worth sampling densely. */
 const LEAD_IN = 1.9
 const LEAD_OUT = 0.8

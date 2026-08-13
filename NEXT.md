@@ -48,8 +48,22 @@ where the state machine hiding in `App.tsx` gets a name.
       that could breach it is in `UNSEEN` — the decoded video, the WASM heap, the
       GPU copies. None of those is reachable from script, so they are named
       rather than estimated. R3 has to bound what it can and say so.
-- [ ] **R3** — Bound the pipeline to it. Deliverable: a test that fails when the
-      bound is exceeded, not a comment saying what the bound should be.
+- [x] **R3** — Bounded, and the bound is computed from the live constants rather
+      than copied from them, so **raising either is what turns it red**. Both had
+      to be given names first: `MAX_FINE_FRAMES` was module-private in
+      `extract.ts` and the serve cap was a default argument on `peakCandidates`
+      with no name at all — so the product of the two, which is the biggest thing
+      the app ever holds, was written down in one place and understood in none.
+      Worst case the constants allow: **10.9 MB**, budget 64 MB, headroom 5.9×.
+      Two tests drive the failure rather than describing it — a serve cap of 64,
+      and eight times the frames — and one asserts the headroom stays between 2×
+      and 20×, because a budget just above today's figure gets raised without
+      thought on the first honest change and a budget a hundred times above it
+      never fires. **The budget is explicitly not the 500 MB ceiling divided by
+      something**: nobody has measured a phone and three of the largest things in
+      an analysis are unreachable from script, so a split would be arithmetic
+      dressed as evidence. If a device reading ever exists it becomes the smaller
+      of the two and that reasoning gets deleted rather than qualified.
 - [ ] **R4** — Is the heap flat across ten consecutive analyses? Object URLs,
       canvases, the landmarker, `MediaRecorder` chunks, the paired stills held in
       App state. Deliverable: the leak, or the proof there is none.

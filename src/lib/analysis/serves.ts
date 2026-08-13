@@ -103,7 +103,19 @@ export function planRefinement(
  * height alone returns N samples from whichever single serve happened to be
  * read closest to its peak, and never looks at the others at all.
  */
-export function peakCandidates(samples: ReachSample[], count = 8): number[] {
+/**
+ * The most serves one clip is ever broken into.
+ *
+ * A cap on the scan, and therefore a cap on memory: a sweep holds one whole
+ * `Analysis` per serve so the comparison can be built from them, so this
+ * multiplies `MAX_FINE_FRAMES` into the resident cost of a basket. It was a
+ * default argument with no name, which meant the number that bounds the biggest
+ * allocation in the app was written down in one place and understood in none.
+ * `footprint.ts` reads it.
+ */
+export const MAX_SERVES = 8
+
+export function peakCandidates(samples: ReachSample[], count = MAX_SERVES): number[] {
   if (!samples.length) return []
 
   // Only samples that stand out from the resting height are worth a second look.

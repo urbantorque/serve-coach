@@ -124,6 +124,39 @@ export function sweepFootprint(analyses: readonly Pick<Analysis, 'frames' | 'pha
   }
 }
 
+/**
+ * The most the countable half of the pipeline may hold, in bytes.
+ *
+ * A RATCHET, NOT A DEVICE LIMIT, and the difference matters. Nobody here has
+ * measured a phone, and `UNSEEN` names three things larger than everything this
+ * module counts. So this cannot be "the 500 MB constraint, divided" — that would
+ * be arithmetic dressed as evidence. It is set at roughly six times today's
+ * worst case, which leaves room for an honest change and fails on a change in
+ * kind: another landmark set per frame, a serve cap raised past what a basket
+ * needs, stills kept for every serve instead of two.
+ *
+ * If a real device reading ever exists, this becomes the smaller of the two and
+ * the reasoning above gets deleted rather than qualified.
+ */
+export const HEAP_BUDGET_BYTES = 64e6
+
+/**
+ * The worst case the constants allow, rather than the worst case anybody has
+ * seen.
+ *
+ * Read from `MAX_FINE_FRAMES` and `MAX_SERVES` themselves, so raising either
+ * moves this number and the budget test is where that gets argued. A still is
+ * passed in because its size is a property of the footage rather than of the
+ * code — see `stillBytes`.
+ */
+export function worstCase(maxFrames: number, maxServes: number, stillChars: number): Footprint {
+  const frames = frameBytes(maxFrames) * maxServes
+  // Six keyframes a serve. The paired strip holds two serves' worth again, and
+  // those are the same strings rather than copies, so they are not counted twice.
+  const stills = maxServes * 6 * (stillChars + BYTES_PER_STRING)
+  return { frames, stills, total: frames + stills, frameCount: maxFrames * maxServes }
+}
+
 /** A frame shaped like the real thing, for measuring and for tests. */
 export function blankFrame(index: number, landmarks = LANDMARKS_PER_FRAME): Frame {
   const set = () =>

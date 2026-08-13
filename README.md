@@ -770,6 +770,17 @@ headline is bounded on one side only: the JavaScript half of an analysis is
 around fifty times under the ceiling this app is held to, and everything that
 could breach it is in that unseen list.
 
+**The two numbers that bound the largest allocation now have names.** How many
+frames one serve is extracted at was a module-private constant, and how many
+serves a clip is broken into was a default argument — so the product of the two,
+which is the biggest thing the app ever holds, was written down in one place and
+understood in none. Both are exported, and a budget test computes the worst case
+the constants allow *from those constants* rather than from a copy. Raising
+either is what turns it red. The budget itself is a ratchet at about six times
+today's worst case, not the device ceiling divided by something: nobody has
+measured a phone, and three of the largest things in an analysis are unreachable
+from script, so a split would be arithmetic dressed as evidence.
+
 **History is bounded, numbers before pictures.** Nearly all of a stored report's
 size is its six keyframe stills, and those are the part nobody revisits after a
 few weeks — while the measurements are what the trend chart and the practice
