@@ -12,11 +12,14 @@
  */
 import {
   decodeVerdicts,
+  deviceReportText,
   hardwareVerdict,
   playback,
   playbackQuery,
   recordingVerdict,
   storageVerdict,
+  REPORT_VOCABULARY,
+  type DeviceReport,
 } from '../selfCheck'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 
@@ -152,6 +155,103 @@ check('hardware readings absent on this browser are absent, not guessed', () => 
   assert(partial.screen === '390×844', `screen read ${partial.screen}`)
   assert(partial.cores === undefined, 'invented a core count')
   assert(partial.memoryGb === undefined, 'invented a memory figure')
+})
+
+heading('What the player is invited to paste')
+
+/**
+ * A report with every field populated, so the walks below have something to
+ * walk. Deliberately built by hand rather than by `readDeviceReport`, which
+ * needs a browser — and a fixture that cannot be produced here is a fixture that
+ * cannot go stale silently either, because the type will not compile without it.
+ */
+const full: DeviceReport = {
+  recording: recordingVerdict(records('video/webm;codecs=vp9'), plays(MP4)),
+  decode: decodeVerdicts(plays(MP4)),
+  camera: { api: true, secure: true },
+  storage: { quotaMb: 2945, usedMb: 41, persisted: false },
+  hardware: { screen: '390×844', dpr: 3, cores: 8, memoryGb: 4 },
+  offline: true,
+}
+
+/** Every string anywhere in a value, with the path that reached it. */
+function strings(value: unknown, at: string, out: [string, string][] = []): [string, string][] {
+  if (typeof value === 'string') out.push([at, value])
+  else if (Array.isArray(value)) value.forEach((v, i) => strings(v, `${at}[${i}]`, out))
+  else if (value && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value)) strings(v, `${at}.${k}`, out)
+  }
+  return out
+}
+
+check('a report can only contain strings from a fixed vocabulary', () => {
+  // The same shape as the check that walks `diagnose.ts` and fails on a
+  // sentence. The point is not that today's fields are careful — it is that a
+  // field added later cannot quietly carry a file name, a serve or a person into
+  // a block of text the player is being invited to paste to somebody.
+  const allowed = new Set<string>(REPORT_VOCABULARY)
+  for (const [at, s] of strings(full, 'report')) {
+    const ok = allowed.has(s) || /^\d+×\d+$/.test(s)
+    assert(ok, `${at} carried "${s}", which is not in the report vocabulary`)
+  }
+})
+
+/** The fixed words the text block is written in, longest first so `no` cannot eat `nothing`. */
+const KEYWORDS = [
+  'serve-coach device check',
+  'DEAD END',
+  'persisted',
+  'playable',
+  'nothing',
+  'records',
+  'storage',
+  'offline',
+  'camera',
+  'screen',
+  'secure',
+  'memory',
+  'record',
+  'cores',
+  'opens',
+  'plays',
+  'none',
+  'play',
+  'dpr',
+  'MB',
+  'of',
+]
+
+check('the pasted block contains nothing but its own vocabulary', () => {
+  const text = deviceReportText(full)
+  let residue = text
+  for (const word of [...REPORT_VOCABULARY, ...KEYWORDS].sort((a, b) => b.length - a.length)) {
+    residue = residue.split(word).join(' ')
+  }
+  // What is left should be numbers, spacing and the two punctuation marks the
+  // template supplies. Any letter surviving this is a field somebody added
+  // without thinking about who reads it.
+  residue = residue.replace(/[\d\s×.?]/g, '')
+  assert(residue === '', `the block carried unexpected content: ${residue}`)
+})
+
+check('the block says nothing about the browser it was produced on', () => {
+  // No user agent, by decision rather than by oversight. It is the field most
+  // likely to identify one person's device across sites, and every other line
+  // here is the capability a UA string is only ever used to guess at.
+  const text = deviceReportText(full).toLowerCase()
+  for (const leak of ['mozilla', 'safari', 'chrome', 'iphone', 'android', 'windows']) {
+    assert(!text.includes(leak), `the block named ${leak}`)
+  }
+})
+
+check('the same phone twice produces the same block', () => {
+  // No clock and no random, so a second report after a fix reads as a diff
+  // rather than as a new document.
+  assert(deviceReportText(full) === deviceReportText(full), 'the block moved between runs')
+})
+
+check('a dead end is stated in the block, not only coloured on the screen', () => {
+  assert(deviceReportText(full).includes('DEAD END'), 'the pasted block hid the failure')
 })
 
 report()

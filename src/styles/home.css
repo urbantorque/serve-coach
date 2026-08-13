@@ -280,6 +280,22 @@
   color: var(--work);
 }
 
+.devcheck-text {
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+  /* Wraps rather than scrolls sideways: the block is here to be selected with a
+     finger, and a horizontal scroller inside a sheet is two gestures fighting. */
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
 /* --- which hand ----------------------------------------------------------- */
 
 .hand-pick {

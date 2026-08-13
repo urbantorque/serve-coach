@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { isCachedOffline } from '../lib/pose/poseEngine'
-import { readDeviceReport, type DeviceReport, type Playback } from '../lib/selfCheck'
+import { deviceReportText, readDeviceReport, type DeviceReport, type Playback } from '../lib/selfCheck'
 import { Icon } from './primitives'
 
 /**
@@ -34,6 +34,7 @@ const tone = (p: Playback) => (p === 'no' ? ('bad' as const) : ('ok' as const))
 
 export default function DeviceCheck() {
   const [report, setReport] = useState<DeviceReport>()
+  const [copied, setCopied] = useState<'done' | 'failed'>()
 
   useEffect(() => {
     void readDeviceReport(isCachedOffline).then(setReport)
@@ -121,6 +122,28 @@ export default function DeviceCheck() {
         Nothing here is sent anywhere. It is read from your browser, shown to you, and forgotten
         when you close this.
       </p>
+
+      {/* The block is always on screen and always selectable, and the button is
+          an accelerator for it. `navigator.clipboard` is refused often enough on
+          a phone — an insecure context, a browser that wants a user gesture it
+          did not see — that a copy button which is the only way out is a copy
+          button that sometimes strands somebody. */}
+      <pre className="devcheck-text">{deviceReportText(report)}</pre>
+      <button
+        className="btn btn--ghost btn--full"
+        onClick={() => {
+          void navigator.clipboard
+            ?.writeText(deviceReportText(report))
+            .then(() => setCopied('done'))
+            .catch(() => setCopied('failed'))
+        }}
+      >
+        <Icon name="share" size={17} />
+        {copied === 'done' ? 'Copied' : 'Copy this'}
+      </button>
+      {copied === 'failed' && (
+        <p className="storage-outcome">Select the text above and copy it by hand.</p>
+      )}
     </section>
   )
 }

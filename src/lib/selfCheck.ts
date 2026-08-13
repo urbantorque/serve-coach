@@ -271,6 +271,67 @@ export interface DeviceReport {
  * it, and would turn a self-check into a nine-megabyte download on a screen
  * whose entire purpose is to be openable on a phone with no signal.
  */
+/**
+ * The whole report as one block of text, for pasting into a message.
+ *
+ * A player on a court cannot be asked to describe what a diagnostic screen says,
+ * and a screenshot of it arrives as a picture somebody then has to read numbers
+ * out of. This is the same readings in a form that survives being pasted.
+ *
+ * THE USER AGENT IS DELIBERATELY ABSENT. It is the field most likely to identify
+ * one person's device across sites, and it adds nothing the rest of this says: a
+ * UA string is what you read when you want to *guess* at capabilities, and every
+ * line here is the capability itself, asked directly. Leaving it out is also
+ * what makes the vocabulary of this block finite, which is what lets a test
+ * assert that nothing about the player can ever appear in it.
+ *
+ * Deterministic on purpose — no clock, no random, nothing read from storage. Two
+ * runs on one phone produce the same block, so a second report after a fix is
+ * legible as a diff.
+ */
+export function deviceReportText(r: DeviceReport): string {
+  const chosen = r.recording.chosen
+  const plays = chosen ? r.recording.containers.find((c) => c.type === chosen)?.plays : undefined
+  const lines = [
+    'serve-coach device check',
+    `records ${chosen ?? 'nothing'}${chosen ? ` plays ${plays ?? 'no'}` : ''}`,
+    r.recording.deadEnd ? `DEAD END playable ${r.recording.playable ?? 'none'}` : '',
+    ...r.recording.containers.map(
+      (c) => `  ${c.type} record ${c.records ? 'yes' : 'no'} play ${c.plays}`,
+    ),
+    ...DECODE_PROBES.map((p, i) => `  opens ${p.type} ${r.decode[i]?.plays ?? 'no'}`),
+    `camera ${r.camera.api ? 'yes' : 'no'} secure ${r.camera.secure ? 'yes' : 'no'}`,
+    `offline ${r.offline ? 'yes' : 'no'}`,
+    `storage ${r.storage.usedMb ?? '?'} of ${r.storage.quotaMb ?? '?'} MB persisted ${
+      r.storage.persisted === undefined ? '?' : r.storage.persisted ? 'yes' : 'no'
+    }`,
+    `screen ${r.hardware.screen ?? '?'} dpr ${r.hardware.dpr ?? '?'} cores ${
+      r.hardware.cores ?? '?'
+    } memory ${r.hardware.memoryGb ?? '?'}`,
+  ]
+  return lines.filter(Boolean).join('\n')
+}
+
+/**
+ * Every string a `DeviceReport` is allowed to contain.
+ *
+ * Read by a test that walks a report and fails on anything outside it — the same
+ * shape as the check that walks `diagnose.ts`'s output and fails on a sentence.
+ * The point is not that today's code is careful; it is that a field added later
+ * cannot quietly carry a file name, a serve, or a phone into a block of text the
+ * player is being invited to paste to somebody.
+ *
+ * The screen dimension is the one free-form value, and it is two integers.
+ */
+export const REPORT_VOCABULARY: readonly string[] = [
+  ...RECORDING_TYPES,
+  ...DECODE_PROBES.map((p) => p.type),
+  ...DECODE_PROBES.map((p) => p.label),
+  'yes',
+  'maybe',
+  'no',
+]
+
 export async function readDeviceReport(offline: () => Promise<boolean>): Promise<DeviceReport> {
   const video = typeof document === 'undefined' ? undefined : document.createElement('video')
   return {

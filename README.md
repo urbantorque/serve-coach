@@ -244,6 +244,18 @@ that plays perfectly in the camera roll cannot be read.
 Nothing there is a fix. It reports; where it reports something that ought not to
 be true, that is a defect with its own name.
 
+The whole thing is also one block of text, always on screen and always
+selectable, with a copy button as an accelerator rather than as the only way
+out — `navigator.clipboard` is refused often enough on a phone that a button
+which is the only route strands somebody. **The user agent is deliberately
+absent.** It is the field most likely to identify one person's device across
+sites, and it adds nothing the rest of the block says: a UA string is what you
+read when you want to *guess* at capabilities, and every line there is the
+capability itself, asked directly. Leaving it out is also what makes the block's
+vocabulary finite — a test walks the report and fails on any string outside a
+fixed list, so a field added later cannot quietly carry a file name or a serve
+into something the player is being invited to paste to somebody.
+
 **Save or share a report.** One button renders the score, the thing to work on,
 the five areas and the annotated keyframes into a single image, and hands it to
 the share sheet or saves it. That is the only way anything leaves the app, and it

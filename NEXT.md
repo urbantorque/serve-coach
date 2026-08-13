@@ -49,9 +49,20 @@ reports back, and then ask.
       which is the documented iPhone case made visible before anybody films.
       14 tests. Rendered and read at `?check`, no console errors; **no screenshot**
       — the pane does not composite frames, so what was checked is the DOM.
-- [ ] **R3** — Make that report handable back without a screenshot of a wall of
-      text. Deliverable: one copyable block, no personal data in it, and a test
-      on what it is allowed to contain.
+- [x] **R3** — `deviceReportText` renders the whole report as one deterministic
+      block — no clock, no random — so a second report after a fix reads as a
+      diff rather than as a new document. **The user agent is deliberately
+      absent**, which is the decision worth keeping: it is the field most likely
+      to identify a device across sites and it adds nothing the readings do not
+      already say, since a UA is what you read to *guess* at capabilities. Its
+      absence is also what makes `REPORT_VOCABULARY` finite, so the test can
+      walk a report and fail on any string outside a fixed list — the same shape
+      as the check that walks `diagnose.ts` and fails on a sentence, and the
+      reason a field added later cannot carry a file name into something the
+      player is invited to paste. The block is always on screen and selectable;
+      the copy button is an accelerator, because `navigator.clipboard` is
+      refused often enough on a phone that a button as the only route strands
+      somebody. 19 tests. Verified rendered at `?check`.
 - [ ] **R4** — The court protocol. Deliverable: exactly what to film, tap and
       report, in order, each step naming what it proves — same shape as
       `fixtures/README.md`, and short enough to do in twenty minutes.
