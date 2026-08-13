@@ -113,21 +113,25 @@ They are roles, not processes — apply them as questions, not as ceremony.
 | Lens | The question it asks |
 | --- | --- |
 | **Architect** | Does this pay down the right debt, and is the ledger still honest? |
-| **A · Biomechanics** | Would a coach recognise this as the fault it names? |
-| **B · Product** | Could somebody who has never opened this find it, first try? |
-| **C · Architecture** | Where does the state live, what does it cost to store, does it still hold 60 fps? |
-| **D · Growth** | Does this give somebody a reason to open the app again on Thursday? |
-| **E · Vision** | Does this survive footage shot by a parent on a windy Tuesday? |
-| **1 · QA & physics** | Is there a test that fails if this regresses? |
+| **A · Core engine** | Would a coach recognise this as the fault it names, on a clip that is not clean? |
+| **B · UX & onboarding** | Could somebody who has never opened this find it, first try? |
+| **C · Performance & state** | Where does the state live, what does it cost to store, does it still hold 60 fps? |
+| **D · Product & growth** | Does this give somebody a reason to open the app again on Thursday? |
+| **1 · QA & logic** | Is there a test that fails if this regresses? |
 | **2 · UX & copy** | Twenty-five words. Is this a dashboard nobody asked for? |
-| **3 · Hardware & privacy** | Any request after load? Any megabyte that does not go back? |
+| **3 · Perf & security** | Any request after load? Any megabyte that does not go back? |
 | **4 · Janitor** | What is now dead, duplicated, or contradicted by the README? |
 
-**Retry limits.** Five attempts on anything in biomechanics, vision or the test
-suite; three on product, architecture or growth. On exhausting them, revert to
-the last green commit, mark the round `[!]` with what was actually tried, and
-move on. A discarded refactor costs one round; a half-landed one costs the rest
-of the programme.
+**Retry limits.** Five attempts on anything in the core engine or the test
+suite; three on UI, product or growth. On exhausting them, revert to the last
+green commit, mark the round `[!]` with what was actually tried, and move on. A
+discarded refactor costs one round; a half-landed one costs the rest of the
+programme.
+
+**Purge at every phase boundary.** The close-out round compresses the phase's
+ledger entries to their deltas and drops the working notes underneath them. The
+README carries the standing description; `NEXT.md` carries the moves; git carries
+the rest. A ledger nobody can read in one sitting has stopped being a ledger.
 
 ## Verification standard
 
@@ -152,39 +156,47 @@ every remaining round is blocked, stop the loop and report what is needed.
 
 ---
 
-# The programme — forty rounds, five phases
+# The programme — thirty-five rounds, five phases
 
-This app is already built. The previous programme closed the feature gaps; this
-one closes the **evidence** gaps. Rounds are therefore ordered by "what does this
-app claim that nobody has checked", not by construction order — which is why
-onboarding and growth sit behind memory and hostile footage rather than in front
-of them.
+This app is already built. Two programmes have run on this branch and their
+outcomes are in `README.md`, which is current. So rounds here are ordered by
+**what this app claims that nobody has checked**, not by construction order.
+Several are questions whose honest answer may be "already true"; that answer,
+pinned by a test that would fail if it stopped being true, is a finished round.
+Inventing a change to make a round feel productive is the failure mode this
+phrasing exists to prevent — and it is the same thing as feature bloat, arriving
+one plausible improvement at a time.
 
-Each phase ends on a close-out round that syncs the README and purges whatever
-the phase left dead. The janitor's work is scheduled, not hoped for.
+Six pillars run through the five phases rather than being owned by one of them:
+**core logic, performance and storage, UX and onboarding, feature and retention,
+security and privacy, architecture health.** Each phase leads with one and is
+read by the lenses of the others.
 
-| Phase | Rounds | Focus | Why it is here and not later |
+| Phase | Rounds | Leading pillar | What it settles |
 | --- | --- | --- | --- |
-| **1** | R1–8 | **Device truth** | The recorder, the glance and the target dial shipped and have never run on a phone. Build the evidence path an agent can build, then hand the user a court protocol. |
-| **2** | R9–16 | **Hostile footage** | The rig produces only clean failures, so every robustness claim is untested against the way real clips actually break. |
-| **3** | R17–24 | **Cost: memory, heat, frames** | The 500 MB ceiling, 60 fps and the thermal budget are assertions. Also where `App.tsx`'s implicit state machine gets made explicit. |
-| **4** | R25–32 | **The stranger and the coach** | First run walked as a stranger, the record route made findable, and an export a coach can read without the app. |
-| **5** | R33–40 | **Honesty audit and freeze** | Egress pinned by a test rather than asserted, the uncalibrated registers re-read, README end to end, stop. |
+| **1** | R1–7 | Performance, storage, architecture health | The 500 MB ceiling, the byte cost of a report and the quota paths are assertions nobody has measured. Also where `App.tsx`'s implicit state machine gets a name. |
+| **2** | R8–14 | Core logic and reliability | The synthetic rig produces only clean failures, so every robustness claim is untested against the way real clips actually break — occlusion, dropped frames, dusk, other people in shot. |
+| **3** | R15–21 | UX and onboarding | Nobody has walked the first run as a stranger, the best feature hides behind something that reads as a file picker, and the timeline's frame budget is unmeasured. |
+| **4** | R22–28 | Feature and retention | The share card is one serve and a coach wants the basket; a trip to the court is not a thing the app knows about. |
+| **5** | R29–35 | Security, privacy, QA, freeze | Zero egress is asserted rather than pinned by a test, the uncalibrated registers need re-reading, README end to end, stop. |
 
-The round list, with what each one has to answer, is in `NEXT.md`. It is written
-as questions rather than as tickets because several of them may turn out to have
-the answer "already true" — and that answer, pinned by a test, is a finished
-round. Terminate at R40. Do not start an R41.
+The round list, with what each one has to answer, is in `NEXT.md`. Terminate at
+R35. Do not start an R36.
 
 ---
 
 ## What came before
 
-A five-theme programme ran to completion on this branch: ground truth and the
-fixture gate (Theme 1), the basket promoted to the main event (Theme 2), the
-practice loop closed with a player-side record (Theme 3), recording and glancing
-on court (Theme 4), and the target dial and paired stills (Theme 5). Its
-outcomes are in `README.md`, which is current. Its ledger is preserved at the
-foot of `NEXT.md`, compressed, with the one slice that is still open —
-**1g, blocked on real footage** — kept in full, because it is still the largest
-honest gap in the project and no round below closes it.
+**A five-theme programme**, run to completion: the fixture gate, the basket
+promoted to the main event, the practice loop closed with a player-side record,
+recording and glancing on court, and the target dial. Outcomes in `README.md`.
+
+**Eight rounds of a device-truth phase**, of which five landed and two are held
+for a court trip. It built `lib/selfCheck.ts` and the `?check` panel, made its
+report pasteable under a fixed vocabulary, wrote `COURT-CHECK.md`, and fixed the
+one defect it found: `recordingType` chose a container by an ordering that
+assumed decodability and never asked the decoder.
+
+Both ledgers are compressed at the foot of `NEXT.md`. Two entries are kept in
+full because they are still open and **nothing in the thirty-five rounds below
+closes either** — the fixture shoot, and the court trip.
