@@ -569,6 +569,7 @@ export default function Report({
           consistency={consistency}
           onDismiss={() => setHidSpreads(true)}
           pair={servePair}
+          createdAt={analysis.createdAt}
         />
       )}
 

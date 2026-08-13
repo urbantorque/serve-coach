@@ -745,6 +745,40 @@ translucent plate could be composited over, and its redraws were already
 proven flat against clip length by R20. Nothing to fix without moving a
 pixel that was not already fixed.
 
+**A basket gets its own share card, built from what already survives without
+the clip.** `reportCard.ts`'s own doc comment already explains why the
+single-serve card never carried the best-against-worst or then-against-now
+comparisons: "half of a comparison, shared without the dates or serve
+numbers that give it meaning, is a picture of two serves with nothing
+saying which is which." That reasoning is about *pictures* — the paired
+keyframe stills, which never survive a reopened report and were never
+going to survive a shared PNG either. It does not reach `Consistency`
+itself: the score, which serve was which, the differences between the best
+and the worst, all already read as words rather than images, and
+`ConsistencyPanel` proves every one of them survives with no clip behind it
+every time a stored report reopens. So `renderBasketCard` draws exactly
+that — score, per-serve chips, best-against-worst in the same body-language
+phrases the panel uses, and the two things `Consistency` already flags as
+worth naming, `weakest`/`steadiest` — and deliberately not the other
+nineteen measured spreads a basket can carry, on the same restraint the
+single-serve card already applies to itself: a card that printed everything
+would not be a card read at the net, it would be the panel again in a
+different frame. `possibleHandoff` — the caution that the serves being
+compared may not be the same body — draws too, ahead of the comparison it
+qualifies, because leaving out the one sentence that says "read this
+carefully" would be the confident-nonsense failure this whole codebase is
+built against, aimed at a coach who never opens the app to see the panel's
+own warning.
+
+A real bug was caught building this, not assumed away: the first version
+right-aligned the best and worst readouts a fixed 200px apart, which
+collided into unreadable overlapping text the moment a coaching phrase
+("Struck at full racket reach" against "Struck below full reach") ran wider
+than the gap — confirmed by actually rendering the card against the demo
+basket rather than trusting the layout math. Stacked instead: each value on
+its own line, sized to the full card width, so nothing about the layout
+depends on how long a given fault's readout happens to be.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

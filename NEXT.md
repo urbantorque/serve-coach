@@ -21,9 +21,53 @@ phase's entries and drops the working notes underneath them.
 
 ## Phase 4 — Feature and retention (R22–28)
 
-- [ ] **R22** — The share card is one serve; a coach wants the basket.
-      Deliverable: an export a coach can read without the app, or the reasoned
-      refusal written into `reportCard.ts` the way 5c's was.
+- [x] **R22** — Read `reportCard.ts` before assuming either answer. Its own
+      doc comment already carries a reasoned refusal — the paired keyframe
+      stills (best-against-worst, then-against-now) are deliberately absent
+      from the single-serve card, because half of a comparison shared
+      without the dates or serve numbers that give it meaning says nothing.
+      That refusal is about *pictures*, though, and does not reach
+      `Consistency`: the score, which serve was which, and the named
+      differences between the best and the worst all already read as words,
+      and `ConsistencyPanel` proves every one of them survives a reopened
+      report with no clip behind it. A basket export was buildable, not a
+      second refusal — the data just needed a second drawing function, not
+      a second engine.
+
+      `renderBasketCard`/`shareBasketCard` in `reportCard.ts` draw exactly
+      what survives without the clip: the consistency score, per-serve
+      chips, the best-against-worst comparison in the same body-language
+      phrases `ConsistencyPanel` uses, and `possibleHandoff`'s caution when
+      it applies — ahead of the comparison it qualifies, since dropping the
+      one sentence that says "read this carefully" would be the
+      confident-nonsense failure this app is built against, aimed at a
+      coach who never sees the panel's own warning. Deliberately scoped down
+      from the panel's own nineteen measured spreads (live count, on the
+      demo basket) to the two `Consistency` already flags as worth
+      naming — `weakest`/`steadiest` — on the same restraint the
+      single-serve card already applies to itself: everything would not be
+      a card read at the net, it would be the panel again in a different
+      frame. A "Share this basket" button in `ConsistencyPanel.tsx`, styled
+      identically to `Report.tsx`'s own share button and reusing its exact
+      state machine (`idle`/`working`/`done`), calls it.
+
+      A real bug found by rendering the card, not by reading the layout
+      math: the first version right-aligned the best and worst readouts a
+      fixed 200px apart, which collided into overlapping unreadable text
+      the moment one phrase ("Struck at full racket reach" against "Struck
+      below full reach") ran wider than the gap — confirmed against the
+      demo basket's own data, not a synthetic worst case. Fixed by stacking
+      each value on its own full-width line instead of two competing
+      right-aligned columns, then reconfirmed against both the ordinary
+      basket and a forced `possibleHandoff` case.
+
+      Verified live: rendered the card directly against the demo basket's
+      real `Consistency` object and inspected the PNG, twice — once for the
+      overlap bug, once after the fix — then drove the actual button
+      through its full state machine (`Preparing…` → a real
+      `HTMLAnchorElement.download` triggered with the correct
+      `basket-2026-08-14.png` name → `Saved`) with `.click()` instrumented
+      rather than trusting the state names alone. Full suite green.
 - [ ] **R23** — Does one-tap share actually work everywhere? `navigator.share`
       with files is refused by more browsers than accept it. Deliverable: the
       fallbacks tested rather than assumed.

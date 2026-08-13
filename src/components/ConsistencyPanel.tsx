@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import FramePair from './FramePair'
+import { Icon } from './primitives'
 import { readoutOf } from '../lib/analysis/anatomy'
 import {
   consistencyHeadline,
@@ -7,6 +9,7 @@ import {
   type ServeGap,
   type ServePairFrames,
 } from '../lib/analysis/consistency'
+import { shareBasketCard } from '../lib/share/reportCard'
 
 /**
  * How far each measurement travelled across the basket.
@@ -155,9 +158,26 @@ interface Props {
   onDismiss: () => void
   /** The two serves as pictures, when the clip they came from is still open. */
   pair?: ServePairFrames
+  /** When the clip this basket came from was filmed — stamped on the shared card. */
+  createdAt: number
 }
 
-export default function ConsistencyPanel({ consistency: c, onDismiss, pair }: Props) {
+export default function ConsistencyPanel({ consistency: c, onDismiss, pair, createdAt }: Props) {
+  const [sharing, setSharing] = useState<'idle' | 'working' | 'done'>('idle')
+  const sharedTimer = useRef<ReturnType<typeof setTimeout>>()
+  useEffect(() => () => clearTimeout(sharedTimer.current), [])
+
+  const share = async () => {
+    setSharing('working')
+    const outcome = await shareBasketCard(c, createdAt)
+    const done = outcome === 'shared' || outcome === 'downloaded'
+    setSharing(done ? 'done' : 'idle')
+    if (done) {
+      clearTimeout(sharedTimer.current)
+      sharedTimer.current = setTimeout(() => setSharing('idle'), 2500)
+    }
+  }
+
   return (
     /*
      * Rung four. The tier rides on the ink colour of the score rather than on a
@@ -250,6 +270,21 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair }: Pr
         A low score means that part of the serve changes every time. Worst first — the top row is
         the one to start on.
       </p>
+
+      {/* Everything above survives a reopened report with no clip behind it —
+          the chips, the best-against-worst words, the wanders-most/holds-
+          steadiest lines are all read straight off `Consistency`, never off
+          a still. So the card this renders needs nothing this screen might
+          not have, which is the whole reason it exists: a coach at the net
+          reads what this basket did without opening the app. */}
+      <button
+        className="btn btn--ghost btn--full"
+        onClick={() => void share()}
+        disabled={sharing === 'working'}
+      >
+        <Icon name={sharing === 'done' ? 'check' : 'share'} size={17} />
+        {sharing === 'working' ? 'Preparing…' : sharing === 'done' ? 'Saved' : 'Share this basket'}
+      </button>
 
       <button className="btn btn--ghost btn--full" onClick={onDismiss}>
         Back to this serve
