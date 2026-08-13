@@ -1,0 +1,157 @@
+/**
+ * What the device check will say, on browsers this runner does not have.
+ *
+ * The check exists because nothing in this repo has recorded a frame, so the one
+ * thing it must not do is be wrong in the same direction the untested code is.
+ * `recordingType()` picks a container by an ordering that assumes what a browser
+ * can decode; this asserts that the check notices when that assumption fails,
+ * rather than inheriting it.
+ *
+ * Browsers are modelled as the two probes the real ones are: something with
+ * `isTypeSupported`, and something with `canPlayType`. That is the whole surface.
+ */
+import {
+  decodeVerdicts,
+  hardwareVerdict,
+  playback,
+  playbackQuery,
+  recordingVerdict,
+  storageVerdict,
+} from '../selfCheck'
+import { assert, check, heading, report } from '../analysis/__tests__/harness'
+
+/** A recorder that accepts exactly the types listed. */
+const records = (...types: string[]) => ({ isTypeSupported: (t: string) => types.includes(t) })
+
+/** A decoder that answers `probably` for the queries listed and `''` otherwise. */
+const plays = (...queries: string[]) => ({
+  canPlayType: (q: string) => (queries.includes(q) ? 'probably' : ''),
+})
+
+const MP4 = 'video/mp4; codecs="avc1.42E01E"'
+const WEBM9 = 'video/webm; codecs="vp9"'
+
+heading('Asking a browser what it will play')
+
+check('the H.264 query carries a profile, because a bare family answers maybe', () => {
+  // `avc1` alone is a codec family. Browsers will not commit to a family, so the
+  // honest-looking `maybe` that comes back is an artifact of the question rather
+  // than a fact about the device — and `maybe` is treated as playable here.
+  assert(playbackQuery('video/mp4;codecs=avc1') === MP4, playbackQuery('video/mp4;codecs=avc1'))
+})
+
+check('a container with no codec is asked about as a container', () => {
+  assert(playbackQuery('video/mp4') === 'video/mp4', playbackQuery('video/mp4'))
+  assert(playbackQuery('video/webm;codecs=vp9') === WEBM9, playbackQuery('video/webm;codecs=vp9'))
+})
+
+check('the three answers are named, and the blank one is a refusal', () => {
+  assert(playback(plays(MP4), MP4) === 'yes', 'probably did not read as yes')
+  assert(playback({ canPlayType: () => 'maybe' }, MP4) === 'maybe', 'maybe was collapsed')
+  assert(playback(plays(), MP4) === 'no', 'the empty string did not read as a refusal')
+  assert(playback(undefined, MP4) === 'no', 'a missing decoder was not a refusal')
+})
+
+check('a decoder that throws is a no about that container, not a broken check', () => {
+  const hostile = {
+    canPlayType: () => {
+      throw new Error('never heard of it')
+    },
+  }
+  assert(playback(hostile, MP4) === 'no', 'a throw escaped')
+  assert(decodeVerdicts(hostile).every((v) => v.plays === 'no'), 'a throw escaped the sweep')
+})
+
+heading('Whether this browser can record something it can then read')
+
+check('a browser with no MediaRecorder is not a dead end, it is no button', () => {
+  // The distinction matters to the player: nothing to press is the designed
+  // fallback, and a button that produces an unreadable file is the defect.
+  const v = recordingVerdict(undefined, plays(MP4))
+  assert(v.chosen === undefined, 'chose a container with no recorder')
+  assert(v.deadEnd === false, 'absence was reported as a dead end')
+})
+
+check('the ordinary browser records MP4 and plays it', () => {
+  const v = recordingVerdict(records('video/mp4;codecs=avc1', 'video/webm;codecs=vp9'), plays(MP4, WEBM9))
+  assert(v.chosen === 'video/mp4;codecs=avc1', `chose ${v.chosen}`)
+  assert(v.deadEnd === false, 'called a working browser a dead end')
+  assert(v.playable === undefined, 'proposed an alternative to a working choice')
+})
+
+check('recording a container this browser cannot open is caught', () => {
+  // The failure the recording path was designed around, arriving from the
+  // direction nothing could test: a browser that will encode WebM and will not
+  // decode it. `recordingType` returns the WebM happily — its ordering is a
+  // guess about decoders, and this is the case where the guess is wrong.
+  const v = recordingVerdict(records('video/webm;codecs=vp9'), plays(MP4))
+  assert(v.chosen === 'video/webm;codecs=vp9', `chose ${v.chosen}`)
+  assert(v.deadEnd === true, 'an unplayable recording was not flagged')
+  assert(v.playable === undefined, 'named an alternative that this browser cannot record')
+})
+
+check('an alternative is named only when the browser can actually record it', () => {
+  const v = recordingVerdict(records('video/mp4', 'video/webm'), {
+    canPlayType: (q: string) => (q === 'video/webm' ? 'probably' : ''),
+  })
+  assert(v.chosen === 'video/mp4', `chose ${v.chosen}`)
+  assert(v.deadEnd === true, 'an unplayable choice was not flagged')
+  assert(v.playable === 'video/webm', `named ${v.playable ?? 'nothing'}`)
+})
+
+check('Safari saying maybe about everything is not a dead end', () => {
+  // Safari answers `maybe` for files it plays perfectly. Reading that as a
+  // refusal would report the recording path broken on the browser where it
+  // matters most, which is the exact overclaim this whole check is against.
+  const v = recordingVerdict(records('video/mp4;codecs=avc1'), { canPlayType: () => 'maybe' })
+  assert(v.deadEnd === false, 'maybe was read as a refusal')
+})
+
+check('every container in the list is reported, recorded or not', () => {
+  const v = recordingVerdict(records('video/mp4'), plays())
+  assert(v.containers.length === 5, `reported ${v.containers.length} containers`)
+  assert(v.containers.filter((c) => c.records).length === 1, 'reported the wrong count as recordable')
+})
+
+heading('What the device says about itself')
+
+// Awaited out here rather than inside a `check`. The harness takes a synchronous
+// function, so a returned promise counts as passed the instant it is created and
+// a rejection lands as an unhandled one — a suite that cannot fail.
+const silent = await storageVerdict({} as StorageManager)
+const hostile = await storageVerdict({
+  estimate: () => Promise.reject(new Error('no')),
+  persisted: () => Promise.reject(new Error('no')),
+} as unknown as StorageManager)
+const generous = await storageVerdict({
+  estimate: () => Promise.resolve({ quota: 2_500_000_000, usage: 41_000_000 }),
+  persisted: () => Promise.resolve(true),
+} as unknown as StorageManager)
+
+check('a browser that will not estimate leaves the fields absent, not zero', () => {
+  // Zero megabytes of quota is a sentence about a broken phone. Absent is a
+  // sentence about a browser that would not say, and they are different things
+  // to read at a court.
+  assert(silent.quotaMb === undefined, 'invented a quota')
+  assert(silent.persisted === undefined, 'invented a persistence answer')
+})
+
+check('a storage manager that throws is survived', () => {
+  assert(hostile.quotaMb === undefined && hostile.usedMb === undefined, 'a rejection produced numbers')
+})
+
+check('bytes are reported in megabytes, which is what the rest of the app counts in', () => {
+  assert(generous.quotaMb === 2500, `quota read ${generous.quotaMb}`)
+  assert(generous.usedMb === 41, `usage read ${generous.usedMb}`)
+  assert(generous.persisted === true, 'lost the persistence answer')
+})
+
+check('hardware readings absent on this browser are absent, not guessed', () => {
+  assert(Object.keys(hardwareVerdict(undefined)).length === 0, 'invented hardware')
+  const partial = hardwareVerdict({ innerWidth: 390, innerHeight: 844, navigator: {} })
+  assert(partial.screen === '390×844', `screen read ${partial.screen}`)
+  assert(partial.cores === undefined, 'invented a core count')
+  assert(partial.memoryGb === undefined, 'invented a memory figure')
+})
+
+report()

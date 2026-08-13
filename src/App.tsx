@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
 import StoragePanel from './components/StoragePanel'
+import DeviceCheck from './components/DeviceCheck'
 import PracticeCard from './components/PracticeCard'
 import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
@@ -130,7 +131,9 @@ export default function App() {
    */
   const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
   const [sessions, setSessions] = useState<Session[]>([])
-  const [sheet, setSheet] = useState<'guide' | 'guide-first' | 'history' | 'progress' | null>(null)
+  const [sheet, setSheet] = useState<
+    'guide' | 'guide-first' | 'history' | 'progress' | 'check' | null
+  >(null)
   /** Bumped to ask the home screen to open its viewfinder. See Home's `openFraming`. */
   const [framingNonce, setFramingNonce] = useState(0)
   const [offlineReady, setOfflineReady] = useState(false)
@@ -366,6 +369,13 @@ export default function App() {
   useEffect(() => {
     refreshSessions()
     void isCachedOffline().then(setOfflineReady)
+
+    // `?check` opens the device report. Deliberately NOT dev-only, unlike
+    // `?demo` below: its whole purpose is to be run on a phone, and a dev build
+    // is the one place it can tell nobody anything. It is a URL rather than a
+    // navigation path because that is what can be handed to somebody standing
+    // on a baseline.
+    if (new URLSearchParams(location.search).has('check')) setSheet('check')
 
     // Dev-only: `?demo` renders a report from a simulated serve, so the UI can
     // be worked on without filming one. Dynamically imported so it is not in
@@ -1147,6 +1157,17 @@ export default function App() {
           Reports are kept on this device only. The video itself is never saved.
         </p>
         <StoragePanel count={sessions.length} onImported={refreshSessions} />
+        {/* Under storage rather than on the home screen. Nothing here helps
+            anybody analyse a serve, and a diagnostic on the path to the thing
+            the app is for is a diagnostic somebody has to step over. */}
+        <button className="btn btn--ghost btn--full" onClick={() => setSheet('check')}>
+          <Icon name="info" size={17} />
+          What this phone can do
+        </button>
+      </Sheet>
+
+      <Sheet open={sheet === 'check'} onClose={() => setSheet(null)} title="What this phone can do">
+        <DeviceCheck />
       </Sheet>
 
       {/* Not "Your form" — the home card already owns that name for the average

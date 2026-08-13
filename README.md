@@ -227,6 +227,23 @@ The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream thirty seconds before the analysis needs the GPU.
 
+**What this phone can do.** Open the app at `?check`, or tap it at the foot of
+the history sheet, and it says what this particular browser will record, what it
+will open, whether the camera and the offline download are there, and how much
+room the browser has given it. It makes no request and stores nothing.
+
+It exists because the recording path chooses a container by an ordering that
+assumes what a browser can decode, and never asks. That assumption held on every
+browser it was written against and cannot be checked from here — so on the one
+where it is wrong, the player serves, the file lands, and nothing can open it.
+The check asks both questions of the same browser and says when the answers
+disagree. It also asks about HEVC, which is the same failure arriving through the
+file picker instead: Chrome on Windows answers no, which is why an iPhone clip
+that plays perfectly in the camera roll cannot be read.
+
+Nothing there is a fix. It reports; where it reports something that ought not to
+be true, that is a defect with its own name.
+
 **Save or share a report.** One button renders the score, the thing to work on,
 the five areas and the annotated keyframes into a single image, and hands it to
 the share sheet or saves it. That is the only way anything leaves the app, and it
@@ -345,6 +362,7 @@ Everything is in `src/lib`:
 | `analysis/groundTruth.ts` | fixture format and validator for real labelled clips |
 | `vision/ballTrack.ts` | finds the tossed ball in the pixels |
 | `storage/backup.ts` | persistence, export and import of the history |
+| `selfCheck.ts` | what this browser will record, open, store and show, asked on the device |
 | `analysis/analyze.ts` | orchestrates the above |
 
 ### Decisions worth knowing about

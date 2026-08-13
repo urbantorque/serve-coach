@@ -206,6 +206,80 @@
   color: var(--fg);
 }
 
+/* --- what this phone will do ---------------------------------------------- */
+
+/* Built from the storage panel's vocabulary rather than a new one: the same
+   inset note, the same hairline rules, the same muted label against a brighter
+   value. The only addition is the monospace value column, because these are
+   readings rather than sentences and a column of them has to line up. */
+
+.devcheck-verdict {
+  display: flex;
+  gap: 9px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  font-size: 12.5px;
+  line-height: 1.58;
+  color: var(--fg-muted);
+}
+
+.devcheck-verdict .icon {
+  flex: none;
+  margin-top: 2px;
+}
+
+.devcheck-verdict--ok {
+  border-left: 2px solid var(--great);
+}
+
+.devcheck-verdict--ok .icon {
+  color: var(--great);
+}
+
+.devcheck-verdict--bad {
+  border-left: 2px solid var(--work);
+}
+
+.devcheck-verdict--bad .icon {
+  color: var(--work);
+}
+
+.devcheck .block-title {
+  margin-top: 22px;
+  margin-bottom: 4px;
+}
+
+.devcheck-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+  font-size: 12.5px;
+}
+
+.devcheck-label {
+  color: var(--fg-muted);
+}
+
+.devcheck-value {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+  text-align: right;
+}
+
+.devcheck-value--ok {
+  color: var(--great);
+}
+
+.devcheck-value--bad {
+  color: var(--work);
+}
+
 /* --- which hand ----------------------------------------------------------- */
 
 .hand-pick {

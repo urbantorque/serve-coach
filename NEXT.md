@@ -37,11 +37,18 @@ reports back, and then ask.
       replaces is compressed to the foot of this file with **1g** kept in full,
       since no round below closes it. Baseline recorded green before the first
       edit: typecheck, lint, 19 test files passing.
-- [ ] **R2** — A self-check route the user opens on their own phone: what this
-      browser will record, what it will decode, what storage it granted, what the
-      pose model cost. Deliverable: the answers `record.ts` and `access.ts`
-      already compute, made visible on the device that computes them. No network,
-      no upload.
+- [x] **R2** — `lib/selfCheck.ts` and `components/DeviceCheck.tsx`, reached at
+      `?check` or from the foot of the history sheet. **In the production bundle,
+      unlike `?demo`** — a check that only exists in a dev build cannot be run on
+      the phone that matters. It found something on its first run rather than
+      merely reporting: `recordingType()` orders containers by an assumption
+      about what a browser can decode and **never asks**, so `recordingVerdict`
+      now asks both questions of the same browser and flags `deadEnd` when the
+      answers disagree. Nothing is fixed here — that is R5. Also asks about HEVC,
+      the same failure arriving through the picker; this Chromium answers `no`,
+      which is the documented iPhone case made visible before anybody films.
+      14 tests. Rendered and read at `?check`, no console errors; **no screenshot**
+      — the pane does not composite frames, so what was checked is the DOM.
 - [ ] **R3** — Make that report handable back without a screenshot of a wall of
       text. Deliverable: one copyable block, no personal data in it, and a test
       on what it is allowed to contain.

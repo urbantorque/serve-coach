@@ -1,0 +1,290 @@
+/**
+ * What this particular phone will actually do, asked on the phone.
+ *
+ * THE PROBLEM THIS EXISTS FOR. Three features shipped that no device has ever
+ * run: recording off the viewfinder stream, the glance screen, and the target
+ * dial drawn into a captured still. The pane they were developed against reports
+ * `document.hidden`, so there was no camera, no encoder, and no decode of a
+ * recording. What was verified was the choosing — and the choosing is exactly
+ * the part that cannot tell you it chose wrong.
+ *
+ * So this module asks the device the questions the code has been assuming
+ * answers to, and shows them on the device that answered. It is not diagnostics
+ * for their own sake: every field below decides whether some path in the app
+ * works or produces a file nothing can open.
+ *
+ * IT IS IN THE PRODUCTION BUNDLE, unlike `?demo`. A check that only exists in a
+ * dev build cannot be run on the phone that matters, which is the whole point of
+ * it. It costs a few kilobytes, makes no request, and is reached by a URL or by
+ * a button at the foot of the history sheet — never by anything on the path a
+ * player takes to analyse a serve.
+ *
+ * NOTHING HERE IS A FIX. The report says what is true. Where it says something
+ * that ought not to be true — a browser that records a container it cannot play
+ * back is the case this was built to catch — that is a defect for its own round,
+ * not something to paper over at the point of measurement.
+ */
+import { RECORDING_TYPES, recordingType } from './framing/record'
+import { previewSupported } from './framing/access'
+
+/**
+ * What `canPlayType` said, in three words rather than its own two-and-a-blank.
+ *
+ * The API answers `'probably'`, `'maybe'` or the empty string, and the empty
+ * string is the one that matters: it is a refusal, and it reads in a debugger
+ * like a missing value. `'maybe'` is genuinely different from both — the browser
+ * recognises the container and will not commit to the codec inside it — and
+ * collapsing it into either neighbour would throw away the only signal that
+ * distinguishes "no" from "we will find out after the player has served".
+ */
+export type Playback = 'yes' | 'maybe' | 'no'
+
+export interface RecorderProbe {
+  isTypeSupported?: (t: string) => boolean
+}
+
+export interface DecoderProbe {
+  canPlayType?: (t: string) => string
+}
+
+export interface ContainerVerdict {
+  /** The MediaRecorder mime type, as `record.ts` writes it. */
+  type: string
+  /** Whether `MediaRecorder` will record it. */
+  records: boolean
+  /** Whether a `<video>` element on the same browser will play it back. */
+  plays: Playback
+}
+
+export interface RecordingVerdict {
+  /** What `recordingType()` would choose here, if anything. */
+  chosen?: string
+  containers: ContainerVerdict[]
+  /**
+   * The chosen container is one this browser will not play back.
+   *
+   * This is the failure the whole recording path was designed around, arriving
+   * from the direction nobody could test: the player serves, the file lands, and
+   * the analyser cannot open it. `recordingType()` orders its list by what is
+   * *likely* decodable and never asks — so on any browser where the likelihood
+   * is wrong, this flag is the only thing that says so.
+   */
+  deadEnd: boolean
+  /**
+   * A container this browser both records and plays, when the chosen one is a
+   * dead end. Absent when the chosen one is fine, and absent when there is no
+   * such container at all — which are different answers and read differently.
+   */
+  playable?: string
+}
+
+/**
+ * The `canPlayType` query for a `MediaRecorder` mime type.
+ *
+ * The two APIs disagree about syntax for the same container. `MediaRecorder`
+ * takes `video/mp4;codecs=avc1`; `canPlayType` wants the codec quoted, and on
+ * H.264 it wants a full profile string before it will answer anything better
+ * than `'maybe'` — a bare `avc1` is a family, not a codec, and browsers say so.
+ * `avc1.42E01E` is baseline profile at level 3.0, which is what a phone encoder
+ * produces and what every decoder in this app's range opens.
+ *
+ * A type with no codecs parameter is passed through: the browser is being asked
+ * about the container alone, and `'maybe'` is the honest answer to that.
+ */
+export function playbackQuery(type: string): string {
+  const [container, codecs] = type.split(';codecs=')
+  if (!codecs) return container
+  const profile = codecs === 'avc1' ? 'avc1.42E01E' : codecs
+  return `${container}; codecs="${profile}"`
+}
+
+/** `canPlayType`'s three answers, named. */
+export function playback(decoder: DecoderProbe | undefined, query: string): Playback {
+  if (typeof decoder?.canPlayType !== 'function') return 'no'
+  try {
+    const said = decoder.canPlayType(query)
+    return said === 'probably' ? 'yes' : said === 'maybe' ? 'maybe' : 'no'
+  } catch {
+    // Same reading as `recordingType`'s: a browser that throws from a capability
+    // check has been asked about a string it has never heard of. That is a "no"
+    // about this container, not a broken decoder.
+    return 'no'
+  }
+}
+
+/**
+ * Whether this browser can record something it will also read back.
+ *
+ * `'maybe'` counts as playable. It is what Safari says about almost everything,
+ * including files it plays perfectly, so treating it as a refusal would report a
+ * dead end on the one browser where the recording path matters most.
+ */
+export function recordingVerdict(
+  recorder: RecorderProbe | undefined,
+  decoder: DecoderProbe | undefined,
+): RecordingVerdict {
+  const containers: ContainerVerdict[] = RECORDING_TYPES.map((type) => {
+    let records = false
+    try {
+      records = recorder?.isTypeSupported?.(type) === true
+    } catch {
+      records = false
+    }
+    return { type, records, plays: playback(decoder, playbackQuery(type)) }
+  })
+
+  const chosen = recordingType(recorder)
+  if (!chosen) return { containers, deadEnd: false }
+
+  const it = containers.find((c) => c.type === chosen)
+  const deadEnd = it?.plays === 'no'
+  const playable = deadEnd
+    ? containers.find((c) => c.records && c.plays !== 'no')?.type
+    : undefined
+  return { chosen, containers, deadEnd, playable }
+}
+
+/**
+ * The containers a clip can arrive in from the picker, as opposed to from the
+ * recorder.
+ *
+ * HEVC is on this list because it is the app's most-reported failure that is not
+ * a bug: iPhones record it by default, Safari plays it, and Chrome on Windows
+ * frequently will not — so the file looks perfect in the camera roll and cannot
+ * be opened. `analyze.ts` already names that codec when a decode fails; this
+ * asks the same question before anybody has filmed anything.
+ */
+export const DECODE_PROBES = [
+  { label: 'MP4, H.264', type: 'video/mp4; codecs="avc1.42E01E"' },
+  { label: 'MP4, HEVC — what an iPhone records', type: 'video/mp4; codecs="hvc1"' },
+  { label: 'WebM, VP9', type: 'video/webm; codecs="vp9"' },
+  { label: 'WebM, VP8', type: 'video/webm; codecs="vp8"' },
+] as const
+
+export interface DecodeVerdict {
+  label: string
+  plays: Playback
+}
+
+export function decodeVerdicts(decoder: DecoderProbe | undefined): DecodeVerdict[] {
+  return DECODE_PROBES.map(({ label, type }) => ({ label, plays: playback(decoder, type) }))
+}
+
+export interface StorageVerdict {
+  /** Megabytes the browser says it will allow, when it will say. */
+  quotaMb?: number
+  /** Megabytes already used by this origin. */
+  usedMb?: number
+  /** Whether the browser has promised not to evict it. */
+  persisted?: boolean
+}
+
+/**
+ * How much room there is, in the units the rest of the app thinks in.
+ *
+ * `estimate()` is absent on older Safari and returns wildly conservative numbers
+ * on some browsers in private mode, which is worth showing rather than hiding —
+ * a player whose phone reports 40 MB of quota has an explanation for a history
+ * that keeps vanishing, and no other screen in the app can give them one.
+ */
+export async function storageVerdict(
+  storage: StorageManager | undefined = typeof navigator === 'undefined'
+    ? undefined
+    : navigator.storage,
+): Promise<StorageVerdict> {
+  const out: StorageVerdict = {}
+  try {
+    if (typeof storage?.estimate === 'function') {
+      const { quota, usage } = await storage.estimate()
+      const mb = (n?: number) => (typeof n === 'number' ? Math.round(n / 1e6) : undefined)
+      out.quotaMb = mb(quota)
+      out.usedMb = mb(usage)
+    }
+    if (typeof storage?.persisted === 'function') out.persisted = await storage.persisted()
+  } catch {
+    // A refusal to answer is not a failure of the check. Leave the fields absent
+    // and let the panel say the browser would not say.
+  }
+  return out
+}
+
+export interface HardwareVerdict {
+  /** CSS pixels, as the layout sees them. */
+  screen?: string
+  /** Device pixel ratio — how much bigger the canvases really are. */
+  dpr?: number
+  /** Logical cores, which bounds how much of the pose work can overlap. */
+  cores?: number
+  /**
+   * `navigator.deviceMemory`, in gigabytes, rounded down to a power of two by
+   * the browser before anybody here sees it. Chrome only. It is the only
+   * available reading on the constraint the app is held to and it is a coarse
+   * one, which is why the panel prints it as "about".
+   */
+  memoryGb?: number
+}
+
+export function hardwareVerdict(
+  win: unknown = typeof window === 'undefined' ? undefined : window,
+): HardwareVerdict {
+  const w = win as
+    | {
+        innerWidth?: number
+        innerHeight?: number
+        devicePixelRatio?: number
+        navigator?: { hardwareConcurrency?: number; deviceMemory?: number }
+      }
+    | undefined
+  if (!w) return {}
+  const out: HardwareVerdict = {}
+  if (typeof w.innerWidth === 'number' && typeof w.innerHeight === 'number') {
+    out.screen = `${w.innerWidth}×${w.innerHeight}`
+  }
+  if (typeof w.devicePixelRatio === 'number') out.dpr = w.devicePixelRatio
+  if (typeof w.navigator?.hardwareConcurrency === 'number') {
+    out.cores = w.navigator.hardwareConcurrency
+  }
+  if (typeof w.navigator?.deviceMemory === 'number') out.memoryGb = w.navigator.deviceMemory
+  return out
+}
+
+export interface DeviceReport {
+  recording: RecordingVerdict
+  decode: DecodeVerdict[]
+  camera: {
+    /** `getUserMedia` exists — which it does not at all over plain http. */
+    api: boolean
+    /** Whether this is a secure context, which is why it would not exist. */
+    secure: boolean
+  }
+  storage: StorageVerdict
+  hardware: HardwareVerdict
+  /** Whether the model and runtime are cached, so the app works with no signal. */
+  offline: boolean
+}
+
+/**
+ * Every answer, gathered.
+ *
+ * The `offline` reading is injected rather than imported, so that this module
+ * stays free of `poseEngine` — which pulls the whole MediaPipe binding in with
+ * it, and would turn a self-check into a nine-megabyte download on a screen
+ * whose entire purpose is to be openable on a phone with no signal.
+ */
+export async function readDeviceReport(offline: () => Promise<boolean>): Promise<DeviceReport> {
+  const video = typeof document === 'undefined' ? undefined : document.createElement('video')
+  return {
+    recording: recordingVerdict(
+      typeof MediaRecorder === 'undefined' ? undefined : MediaRecorder,
+      video ?? undefined,
+    ),
+    decode: decodeVerdicts(video ?? undefined),
+    camera: {
+      api: previewSupported(),
+      secure: typeof window === 'undefined' ? false : window.isSecureContext === true,
+    },
+    storage: await storageVerdict(),
+    hardware: hardwareVerdict(),
+    offline: await offline().catch(() => false),
+  }
+}
