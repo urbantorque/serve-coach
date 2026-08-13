@@ -940,6 +940,25 @@ typeless modules, so declaring them fresh reads as augmenting something
 that exists rather than describing something new, and augmentation of a
 module with no prior declaration is itself an error.
 
+**An export was disclosed after the button that creates it, not before.**
+`StoragePanel.tsx`'s copy already named "keyframe pictures" — R24 wrote
+that sentence — but it sat below the Export button as a clause inside
+instructions for moving the file to a new phone, the one place on the
+panel a player who already knows what they came to do has least reason to
+read before tapping. Confirmed what is actually in the file rather than
+trusted the reading of `buildBackup`: a live-generated export of one
+report carried six base64 PNG stills at 26 KB total for a single serve
+with placeholder images — a real one runs 27–80 KB per still, and up to
+twenty recent reports keep all six of theirs, so a full history's export
+can carry more than a hundred real photographs of whoever was on court,
+not an abstraction. Split the one sentence in two and moved the half that
+says what is inside ahead of the buttons: "An export is one file holding
+your scores and real photos of you serving, not just numbers." The half
+that says how to move the file to a new phone stays below the buttons,
+where it belongs — that part is instructions for after the decision, not
+a fact that should shape it. No new UI, no new colour: the same
+`sheet-note` class, split and reordered.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

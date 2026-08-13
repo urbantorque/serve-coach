@@ -117,6 +117,16 @@ export default function StoragePanel({ count, onImported }: Props) {
         </p>
       )}
 
+      {/* Said before the button, not after it. The old copy for this lived
+          below the buttons in a sentence mainly about moving the file to a
+          new phone, so the one fact that changes what a player is actually
+          agreeing to — this is not just a table of numbers — was the thing
+          least likely to be read before the tap that creates it. */}
+      <p className="sheet-note">
+        An export is one file holding your scores and real photos of you serving, not just
+        numbers.
+      </p>
+
       <div className="storage-actions">
         <button
           className="btn btn--ghost btn--full"
@@ -150,9 +160,8 @@ export default function StoragePanel({ count, onImported }: Props) {
       {outcome && <p className="storage-outcome">{outcome}</p>}
 
       <p className="sheet-note">
-        An export is one file holding your scores and keyframe pictures. To carry it to a new
-        phone, send the file to yourself — email, AirDrop, a cloud drive — then tap Import from
-        a file there.
+        To carry it to a new phone, send the file to yourself — email, AirDrop, a cloud drive —
+        then tap Import from a file there.
       </p>
     </section>
   )

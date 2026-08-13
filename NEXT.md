@@ -64,9 +64,37 @@ phase's entries and drops the working notes underneath them.
       temporary `fetch('https://example.com')` into an unrelated file,
       confirmed the suite failed with the exact file and pattern named,
       reverted it, confirmed green again.
-- [ ] **R30** — What does an export contain that a player would not expect to
-      hand somebody? Deliverable: the contents stated in the UI at the moment of
-      export.
+- [x] **R30** — Read `buildBackup`/`Session` before assuming the disclosure
+      was missing outright — it was not, quite. `StoragePanel.tsx` already
+      named "keyframe pictures", from R24's own fix earlier this session.
+      What was missing was *when*: that clause sat below the Export button,
+      inside a sentence mainly about moving the finished file to a new
+      phone — read, if at all, after the tap that already created it, not
+      before.
+
+      Confirmed the actual contents live rather than trusted the reading of
+      the code: a real `buildBackup()` call against one seeded report
+      produced 26 KB of JSON carrying six base64 PNG stills for that one
+      serve alone (placeholder images — a real still runs 27–80 KB, per
+      Phase 1's own measurement). Up to twenty recent reports keep all six
+      of theirs, so a full history's export can carry upward of a hundred
+      real photographs of whoever was on court — the tracked skeleton drawn
+      over the player's own unrotated video frame, not an abstraction or a
+      chart. A player exporting "their scores" to move to a new phone is
+      also handing over a substantial photo library, and the one sentence
+      that said so was positioned to be read last, if at all.
+
+      Fixed by splitting that sentence and reordering, not by adding one:
+      "An export is one file holding your scores and real photos of you
+      serving, not just numbers" now sits above the Export/Import buttons,
+      where a player reads it before deciding; "To carry it to a new phone,
+      send the file to yourself..." keeps its place below them, since that
+      half is instructions for after the decision rather than a fact that
+      should shape it. Same `sheet-note` class both times — no new UI, no
+      new colour. Verified live: the reordered copy renders correctly
+      above the buttons, and export itself still works end to end
+      (`serve-coach-2026-08-14.json`, `HTMLAnchorElement.prototype.click`
+      instrumented to confirm) with the reorder in place.
 - [ ] **R31** — Stress the ingestion: a thirty-minute clip, a one-frame clip, a
       rotated clip, 4K, and a file that is not a video at all. Deliverable: five
       answers a player can act on, none of them a stack trace.
