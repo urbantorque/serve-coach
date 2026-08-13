@@ -84,6 +84,22 @@
   font-weight: 640;
 }
 
+/* The basket's verdict, on its own line under the picker.
+   `flex-basis: 100%` rather than a wrapper, because `.serves` is already the
+   row that holds the lead and the chips and a third item beside them would sit
+   wherever the wrap put it. Full brightness, unlike the lead above it: this is
+   a finding about the player, and the count of serves is a label. */
+.serves-spread {
+  flex-basis: 100%;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
 .serves-pick {
   display: flex;
   gap: 5px;

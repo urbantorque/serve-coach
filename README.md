@@ -148,8 +148,15 @@ serve shows up as a peak in hand height; the app finds them all, reports on the
 last one by default — the one you just hit — and lets you switch to any other
 without re-filming.
 
-**Consistency across a basket.** From a multi-serve clip you can measure every
-serve and compare them. One serve tells you about that serve; several tell you
+**Consistency across a basket.** A clip with more than one serve in it is
+measured all the way through before the report appears — one video pass per
+serve, with a row filling in on the analysing screen as each lands, and whatever
+was measured kept if you stop it early. The report then opens on the serve you
+just hit with the basket's verdict beside the serve picker, and the full spread
+sits below the fix. It used to be a button under the report that most people
+never pressed, which made the app's own argument — that the gap between your
+best serve and your worst one matters more than the average — something it
+stated and did not act on. One serve tells you about that serve; several tell you
 about the technique, and for a club player the gap between the best and worst
 serve is usually a bigger problem than the average. Each element is scored on
 how little it moved relative to its own target band, ordered worst first. The

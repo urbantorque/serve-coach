@@ -243,7 +243,17 @@ export default function App() {
       handedness = prefs.handedness,
       serveIndex?: number,
       serveType = prefs.serveType,
-    ) => {
+      /**
+       * Where this run finishes.
+       *
+       * `report` puts the serve on screen, which is what a correction and a
+       * serve switch want. `sweep` returns the analysis without showing it, so
+       * the caller can go straight into measuring the whole basket — otherwise
+       * the report renders for two frames and is replaced by a progress screen,
+       * which reads as a glitch rather than as a step.
+       */
+      landOn: 'report' | 'sweep' = 'report',
+    ): Promise<Analysis | undefined> => {
       if (file.size > MAX_BYTES) {
         setView({
           kind: 'error',
@@ -346,7 +356,7 @@ export default function App() {
         // the last serve in the clip.
         remember({ sessionKey: analysis.id, handedness: analysis.handedness }, analysis)
 
-        setView({ kind: 'report', analysis, videoUrl: url })
+        if (landOn === 'report') setView({ kind: 'report', analysis, videoUrl: url })
 
         // A clip the engine refused is dropped on the way into storage rather
         // than here — see `saveSession`. It stays in the in-memory cache above,
@@ -363,6 +373,8 @@ export default function App() {
           setPrefs(writePrefs({ askedToPersist: true }))
           void requestPersistence()
         }
+
+        return analysis
       } catch (err) {
         if (controller.signal.aborted || err instanceof Cancelled) return
         releaseVideo()
@@ -523,6 +535,48 @@ export default function App() {
     [refreshSessions],
   )
 
+  /**
+   * A clip the player has just picked, as opposed to a serve they switched to.
+   *
+   * One serve behaves exactly as it always has. More than one goes straight into
+   * the sweep, because for a club player the gap between the best serve and the
+   * worst one is usually a bigger problem than the average of them — which this
+   * app has argued in its own README for a long time while putting the
+   * comparison behind a button most people never pressed.
+   *
+   * It costs a video pass per serve, and that is the trade. The analysing screen
+   * already draws a row per serve as each one lands, so the wait is watched
+   * rather than blank, and stopping it early keeps whatever was measured.
+   *
+   * The comparison button stays on the report for the cases this does not cover:
+   * a sweep the player stopped, and a report reached by any other route.
+   */
+  const openClip = useCallback(
+    async (file: File) => {
+      // Positional `undefined` so the defaults on `run` still apply — restating
+      // them here would be two places to change the day one of them moves.
+      const analysis = await run(file, undefined, undefined, undefined, 'sweep')
+      if (!analysis) return
+
+      // `run` was told not to show it, so nothing else can, and the analysing
+      // screen has no way out on its own. Every path below this line has to
+      // either start the sweep or put the report up.
+      const show = () => {
+        if (urlRef.current) setView({ kind: 'report', analysis, videoUrl: urlRef.current })
+      }
+
+      // The same two things `compareServes` needs before it will do anything.
+      // Asked here as well, because it returns quietly when they are missing and
+      // the screen it would have been leaving is a progress bar that never ends.
+      if (analysis.serves.count > 1 && lastFileRef.current && urlRef.current) {
+        await compareServes(analysis)
+        return
+      }
+      show()
+    },
+    [compareServes, run],
+  )
+
   const cancel = () => {
     abortRef.current?.abort()
     releaseVideo()
@@ -568,7 +622,7 @@ export default function App() {
           <Home
             sessions={sessions}
             offlineReady={offlineReady}
-            onPick={(f) => void run(f)}
+            onPick={(f) => void openClip(f)}
             onOpen={openSaved}
             onShowGuide={() => setSheet('guide')}
             onShowHistory={() => setSheet('history')}
@@ -775,7 +829,7 @@ export default function App() {
         onChange={(e) => {
           const file = e.target.files?.[0]
           e.target.value = ''
-          if (file) void run(file)
+          if (file) void openClip(file)
         }}
       />
 

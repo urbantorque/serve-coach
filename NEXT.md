@@ -82,9 +82,20 @@ footage except the footage, then stop.
 gap between best and worst serve beats the average for a club player; the
 product does not behave as though it believes that.
 
-- [ ] **2a** — A clip with more than one serve lands on the consistency view.
-      Single serve becomes the drill-down, reached by tapping a serve. Genuine
-      single-serve clips behave exactly as they do now.
+- [x] **2a** — A clip with more than one serve now sweeps automatically:
+      `openClip` in `App.tsx` runs the single serve with `landOn: 'sweep'` (so
+      the report does not flash for two frames before the progress screen
+      replaces it) and goes straight into `compareServes`. Single-serve clips
+      are untouched. The serve chips were already the drill-down.
+      **Departed from the brief on one point, deliberately.** The answer to the
+      question was "report opens with consistency at the top", and the full
+      panel is not at the top — commit `740a9d8` moved it below the focus card
+      because the one instruction the report exists to deliver was arriving two
+      phone screens down, under a picker and a stack of spread charts, and
+      [[two-to-four-drills-not-one]] says the ranked fix is the point of the
+      report. What is at the top is `consistencyHeadline` as one sentence beside
+      the serve picker, which says which element moved without displacing the
+      fix. Say the word and the whole panel moves up.
 - [ ] **2b** — Best-serve versus worst-serve: the six keyframe stills of each,
       paired position by position. Stills already carry the skeleton and the
       judged angle and are already stored, so this is layout over existing data.

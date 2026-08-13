@@ -8,6 +8,7 @@ import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
+import { consistencyHeadline } from '../lib/analysis/consistency'
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { ServeType } from '../lib/storage/prefs'
 import { deltasAgainst, scoringVersionOf } from '../lib/progress'
@@ -345,6 +346,23 @@ export default function Report({
               <strong>{analysis.serves.index + 1}</strong>.
             </span>
           </p>
+
+          {/*
+            * The basket's verdict, up where the serve chips are, when there is
+            * one.
+            *
+            * A clip of several serves is now measured all the way through
+            * before this screen appears, so arriving at a report about one of
+            * them with no word about the rest until two screens down would be
+            * the app hiding work it has already done.
+            *
+            * One sentence, not the panel. The spread charts stay below the
+            * focus card, where `740a9d8` deliberately put them: the fix is what
+            * this report exists to deliver, and it used to arrive under a serve
+            * picker and a stack of charts. A sentence costs the focus card
+            * nothing and still says which thing moved.
+            */}
+          {consistency && <p className="serves-spread"><Cue text={consistencyHeadline(consistency)} /></p>}
           {onPickServe && (
             <div className="serves-pick">
               {Array.from({ length: analysis.serves.count }, (_, i) => (
