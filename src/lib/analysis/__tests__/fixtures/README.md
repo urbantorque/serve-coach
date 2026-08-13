@@ -14,10 +14,15 @@ anything real.
 
 1. `npm run dev`, analyse the clip in the browser.
 2. On the report, in dev builds only, there is a **Save as test fixture** button
-   under the filmstrip. It downloads `<clip>.fixture.json`: the pose output for
-   every tracked frame, plus what the engine currently detected — *not* the
-   video, which never leaves the page.
-3. Move the file into this folder.
+   under the filmstrip. It asks you to describe the clip — who, which hand,
+   which angle, which frame rate, which phone — and writes nothing until you do.
+   Then it downloads `<clip>.fixture.json`: the pose output for every tracked
+   frame, plus what the engine currently detected — *not* the video, which never
+   leaves the page.
+3. Read the console. It prints everything still standing between that file and a
+   fixture the suite will accept, in the validator's own words. That list is the
+   rest of this page, generated rather than remembered.
+4. Move the file into this folder.
 
 ## Labelling one
 
@@ -25,20 +30,25 @@ The downloaded file has the engine's own answers pre-filled in `expect` and a
 `"_UNVERIFIED": true` flag. **Those answers are not ground truth** — they are
 what the engine said, which is the thing being tested. Go through them:
 
-- Replace the `label` with a real description: player, hand, camera angle, frame
-  rate, phone. The coverage table below is unreadable without it.
 - Scrub the clip and correct each keyframe time in `expect.keyframes` by eye.
   Delete any you cannot pick confidently; a wrong label is worse than none.
-- Delete every entry in `expect.metrics` except values you have measured
-  independently — contact height against a mark on a wall, knee angle with a
-  protractor on a paused frame, drop-to-contact from counting frames. A value
-  copied from the engine's own output asserts only that the engine is
-  reproducible, which is not what this suite is for.
+- Fill `expect.metrics` with values you have measured independently — contact
+  height against a mark on a wall, knee angle with a protractor on a paused
+  frame, drop-to-contact from counting frames. **Check the unit** against
+  `_engineUnits`, which names the unit each measurement is compared in: heights
+  are in the player's own standing heights rather than in metres, so a tape
+  measure's answer needs dividing before it means anything here. A value copied
+  from the engine's own output asserts only that the engine is reproducible,
+  which is not what this suite is for.
 - Write an `expect.metricSource` note for each metric you kept, saying how you
   measured it. One per metric, and the schema check rejects the file without
   them. It is not paperwork: it is the step that makes pasting the app's own
   number an explicit false statement rather than a box left empty.
-- Fill in `expect.handedness` and `expect.view` from what you can see.
+- Confirm `expect.handedness` and `expect.view` against the clip. They arrive
+  prefilled with the engine's own read, which makes them the two assertions in
+  the file that pass by construction until a human has agreed with them — and
+  handedness labelled by a human is the only thing that catches a clip mirrored
+  by a front-facing camera.
 - Remove the `"_UNVERIFIED"` flag and delete the `_engine…` keys. The suite fails
   loudly while any of them are present, so an unlabelled dump cannot quietly
   masquerade as a validated fixture. The `_engine…` keys are there so you can see
@@ -60,20 +70,51 @@ A disagreement is a finding. Check your label first; if the label is right, the
 engine is wrong and that is the entire reason this folder exists. Do not widen
 `tolerance` to make it green.
 
-## What to collect
+## What to film
 
-The suite is only as good as its spread. Aim to cover:
+This is the list to take to a court. Six clips clear the gate; they are chosen
+so that no two of them prove the same thing, which is why the order matters more
+than the count.
 
-| Axis | Wanted |
+Every clip follows the four rules in the top-level `README.md` — side-on and
+4–5 m away unless the row says otherwise, whole body in frame with room above
+the racket, three to five seconds, one serve — except where a row deliberately
+breaks one of them, which is the point of that row.
+
+### The six that clear the gate
+
+| # | Film | Phone | What it proves |
+| --- | --- | --- | --- |
+| 1 | Right-handed adult, side-on | 30 fps | The everyday case. Every keyframe, every angle and every height against one clip a human has scrubbed. If this one disagrees, nothing below matters yet. |
+| 2 | The same player, same angle | slow motion, 120 or 240 fps | Timing survives frame rate. Drop-to-contact is about a sixth of a second, so at 30 fps it is four or five samples wide; this is the clip that says whether the engine reads the same serve the same way with thirty. |
+| 3 | The same player, front-on or from behind | 30 fps | The view detection does what it claims: contact-depth is *dropped* rather than guessed, and the measurements that survive still read true. Also the first real test of hip–shoulder separation from a view where the shoulder line is not pointing at the lens. |
+| 4 | **Left-handed** adult, side-on | 30 fps | A left-hander is not a mirrored right-hander to a pose model. The racket arm is the one the torso occludes on a side-on clip, so which arm holds the racket decides which measurements survive at all. |
+| 5 | The left-hander, front-on or angled | 60 fps | The third frame rate, and the second hand seen from the second view — the combination neither 3 nor 4 covers on its own. |
+| 6 | Right-handed adult, side-on, **feet deliberately out of frame** | 30 fps | `scaleFromTorso`. Every height in the report is a ratio of standing height, so this is the clip that says whether the fallback measures the same serve or a different one. Expect the heights to be marked approximate; that is the fixture passing, not failing. |
+
+**Do not mirror a clip in a video editor to produce row 4.** A mirrored
+right-hander is exactly what a front-facing phone camera produces, the app
+already treats that as an artifact to be diagnosed, and the pose model's
+behaviour on a real left arm is the thing being tested. Ask somebody at the
+club. If nobody left-handed is available, the gate stays red and it is right to
+— five clips of one hand is a suite that is green against half the players this
+app has.
+
+### Beyond the six
+
+The gate cannot read any of these, and the count going quiet is not a claim they
+are covered. They are where the engine will actually break.
+
+| Film | What it proves |
 | --- | --- |
-| Camera | side-on, front, behind, and one deliberately bad angle |
-| Frame rate | 30 fps, 60 fps, and 120/240 fps slow motion |
-| Player | right and left handed; an adult and a junior |
-| Framing | one filmed close, one from the back fence, one with feet cropped |
-| Conditions | bright sun, floodlit, cluttered background, someone walking behind |
-| Non-serves | a rally, a practice swing, someone standing still — all `rejected: true` |
+| A junior, filmed close | Every ratio is against the player's own body, so a short player filmed near should measure the same as a tall one filmed far. This is the clip that says whether that is true. |
+| From the back fence | Where the tracker gives up. `MIN_FRAME_HEIGHT_SHARE` and `HANDS_SEEN_FLOOR` are conventions with a test around them, not findings — see the comment above them. Footage is the only thing that turns them into measurements. |
+| Bright sun, and floodlit | Two different failures: blown highlights lose a white shirt against a white wall, and floodlights add motion blur by dropping the shutter speed. |
+| A cluttered background, or somebody walking behind | The hand-off check. The pose model is asked for one body and picks one every frame with no obligation to pick the same one twice. |
+| Somebody else's ball in shot | The ball tracker demands a free-fall arc with the curvature the player's own height implies. This is the clip that says whether that is enough. |
+| A rally, a practice swing, somebody standing still | `rejected: true`. A refusal is a behaviour with a failure mode of its own, and the app refusing a real serve is the complaint this project has already had. |
 
-Twelve clips chosen across those axes are worth more than fifty of the same
+Twelve clips chosen across these rows are worth more than fifty of the same
 player filmed the same way.
 
 ## The gate

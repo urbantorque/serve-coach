@@ -33,11 +33,21 @@ footage except the footage, then stop.
       `validateFixtureSchema` rather than restated. `labelProblem` in
       `groundTruth.ts` is the one definition of "described", read by both the
       export and the gate.
-- [ ] **1b** — The shooting list. Rewrite
-      `src/lib/analysis/__tests__/fixtures/README.md` as a checklist that can be
-      taken to a court: which clips satisfy `SPREAD` (both hands, two views, two
-      frame rates) plus the three prose axes (build, framing, lighting), how to
-      film each, and what each one proves.
+- [x] **1b** — The shooting list. `fixtures/README.md` now carries the six clips
+      that clear the gate, in order, each with what it proves and why no two
+      prove the same thing — plus the rows beyond the six that the gate cannot
+      read, and the warning not to mirror a clip to fake a left-hander.
+- [ ] **1f** — The gate names a non-serve fixture as unlabelled, forever. Found
+      while writing 1b, which now tells people to film rally and practice-swing
+      clips. `spreadGaps` in `fixtures/index.ts` filters on
+      `!f.expect.handedness || !f.expect.view`, and a `rejected: true` fixture
+      has neither by construction — `buildRejectedDraft` writes
+      `expect: { rejected: true }` and nothing else, and `validateFixture`
+      returns before it would ever compare them. So a refusal clip counts
+      towards `MINIMUM_RECORDED` and then fails the spread check permanently,
+      for a label it is not meant to carry. Count the spread over serve fixtures
+      only; keep refusals counting towards the minimum, since they are real
+      footage proving a real behaviour.
 - [ ] **1c** — `npm run replay:fixture` prints, per measurement, labelled value
       against measured value and the delta — good enough to settle a band.
 - [ ] **1d** — Implement the scale-free `chain_span_ms ÷ motion duration` ratio
