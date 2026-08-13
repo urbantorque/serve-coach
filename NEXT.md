@@ -106,7 +106,36 @@ phase's entries and drops the working notes underneath them.
       moment `HTMLInputElement.prototype.click` fires, not merely present in
       the DOM). Assembled entirely from existing primitives, tokens and
       copy patterns — no new colour, no restyled surface, per constraint 3.
-- [ ] **R17** — Build the second worst.
+- [x] **R17** — Build the second worst: reading the read-only "How to film
+      it" strap now counts as having read it. The naive fix — mark
+      `seenFilmingGuide` when that sheet closes — was checked against the
+      caution this round opened with and confirmed it would have regressed
+      things: `needsFilmingGuide` gated both the rules and the handedness
+      question as one flag, so a stranger who only read the rules would then
+      have "Analyse a serve" skip straight to the file picker with no hand
+      ever asked. Split the gate instead. `Home.tsx`'s prop is now
+      `needsHandedness`, true only until `prefs.handedness` is set — the
+      three entry points still open the shared interstitial until a hand is
+      on record, never more, never less. The read-only guide sheet
+      (`sheet === 'guide'`) marks `seenFilmingGuide` in its own `onClose`.
+      The interstitial itself (`sheet === 'guide-first'`) reads that same
+      flag to decide whether `<FilmingGuide />` renders again — skipped with
+      the title changed to "One more thing" when the rules were already
+      read, shown under the original "First, how to film it" title
+      otherwise — but `HandednessPicker` renders unconditionally either way,
+      because the sheet only opens at all when a hand is still missing.
+
+      Verified live, both directions, `localStorage` cleared each time: read
+      "How to film it" first, closed with Escape, confirmed `seenFilmingGuide`
+      landed true with no `handedness` yet; tapped "Analyse a serve" next and
+      confirmed the rules did not render a second time while the handedness
+      question still did, picked a hand, confirmed `handedness` landed in
+      `localStorage` and the file picker (not the camera) was the input
+      clicked. Reran the untouched path as a control — a fully fresh install
+      tapping "Analyse a serve" first — and confirmed the rules and the
+      handedness question still render together exactly as R16 left them.
+      No new copy beyond the one conditional sheet title; no new colour, no
+      restyled surface, per constraint 3.
 - [ ] **R18** — Can a player find the on-court record route at all? It is the
       best feature in the app and it hides behind a screen most people read as a
       file picker. Deliverable: discoverability, without a tour.

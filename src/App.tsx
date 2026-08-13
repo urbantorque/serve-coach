@@ -998,7 +998,7 @@ export default function App() {
             onShowGuide={() => setSheet('guide')}
             onShowHistory={() => setSheet('history')}
             onShowProgress={() => setSheet('progress')}
-            needsFilmingGuide={!prefs.seenFilmingGuide}
+            needsHandedness={!prefs.handedness}
             onGuideThen={onGuideThen}
             onShowExample={() => void showExample()}
             onMakeOffline={() => void makeOffline()}
@@ -1168,7 +1168,19 @@ export default function App() {
         )}
       </main>
 
-      <Sheet open={sheet === 'guide'} onClose={() => setSheet(null)} title="How to film your serve">
+      <Sheet
+        open={sheet === 'guide'}
+        onClose={() => {
+          // Reading the rules here is the same fact as reading them inside
+          // the first-run guide — a stranger who opens this one first must
+          // not be shown the identical four rules again the moment they tap
+          // into an analysis. Handedness is untouched: this sheet never asks
+          // for it, so `needsHandedness` still gates the interstitial on it.
+          setPrefs(writePrefs({ seenFilmingGuide: true }))
+          setSheet(null)
+        }}
+        title="How to film your serve"
+      >
         <FilmingGuide />
       </Sheet>
 
@@ -1191,9 +1203,14 @@ export default function App() {
           setPrefs(writePrefs({ seenFilmingGuide: true }))
           setSheet(null)
         }}
-        title="First, how to film it"
+        title={prefs.seenFilmingGuide ? 'One more thing' : 'First, how to film it'}
       >
-        <FilmingGuide />
+        {/* Skipped for a stranger who already read the rules through the
+            read-only "How to film it" strap — showing the same four rules
+            twice was R17's fix. Handedness still has to be asked either way,
+            which is why this sheet opens at all: `needsHandedness` in
+            `Home.tsx` gates on the hand, not on the rules. */}
+        {!prefs.seenFilmingGuide && <FilmingGuide />}
         {/* The hand is the one thing that has to be right before the first clip:
             every swing measurement is read off the racket arm, and the detector
             cross-checks a stated hand rather than being overridden by it. */}

@@ -621,6 +621,20 @@ and finishing branches on it — reusing the same `framingNonce` counter
 `Glance`'s "Record another" already bumps to open the viewfinder, rather than
 inventing a second way to ask for it.
 
+**Reading the rules and stating a hand are two different facts, not one.**
+The interstitial above gated on a single flag, `seenFilmingGuide`, for both
+whether to show the four filming rules and whether to ask which hand serves —
+so a stranger who read "How to film it" on the home screen first, unprompted,
+then tapped Analyse a serve, would see the identical four rules again before
+being asked for a hand never actually collected. The fix is not "stop asking
+after the rules are read": that would let the same stranger skip the hand
+question entirely, since nothing else on the path asks for it and every swing
+measurement is read off the racket arm the hand names. `Home.tsx`'s gate is
+now `needsHandedness`, true only until a hand is stored — the read-only guide
+sheet marks `seenFilmingGuide` on its own close, and the interstitial it
+shares with the first run reads that flag itself to decide whether `FilmingGuide`
+renders inside it this time, always asking the hand regardless.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

@@ -30,8 +30,16 @@ interface Props {
   onShowGuide: () => void
   onShowHistory: () => void
   onShowProgress: () => void
-  /** True until the player has been walked through how to film one. */
-  needsFilmingGuide: boolean
+  /**
+   * True until the player has stated which hand holds the racket.
+   *
+   * Deliberately not "has the guide been read" — those are separate
+   * questions. A stranger who reads "How to film it" first has seen the four
+   * rules but has not said which hand is theirs, and every route in still
+   * has to ask that before it can proceed. `App.tsx` decides on its own
+   * whether the interstitial it opens for this also shows the rules again.
+   */
+  needsHandedness: boolean
   /**
    * Open the guide first, then continue to whichever of the three routes in
    * asked for it — the first time only. One sheet, three reasons to open it:
@@ -83,7 +91,7 @@ export default function Home({
   onShowGuide,
   onShowHistory,
   onShowProgress,
-  needsFilmingGuide,
+  needsHandedness,
   onGuideThen,
   onShowExample,
   onMakeOffline,
@@ -141,7 +149,7 @@ export default function Home({
     if (!file) return
     // The dropped file is not carried through the guide — a first run still
     // has to pick it again afterwards. Not fixed here; see NEXT.md.
-    if (needsFilmingGuide) onGuideThen('pick')
+    if (needsHandedness) onGuideThen('pick')
     else onPick(file)
   }
 
@@ -156,7 +164,7 @@ export default function Home({
       e.preventDefault()
       const file = e.dataTransfer?.files?.[0]
       if (!file) return
-      if (needsFilmingGuide) onGuideThen('pick')
+      if (needsHandedness) onGuideThen('pick')
       else onPick(file)
     }
     window.addEventListener('dragover', onDragOver)
@@ -165,7 +173,7 @@ export default function Home({
       window.removeEventListener('dragover', onDragOver)
       window.removeEventListener('drop', onDrop)
     }
-  }, [needsFilmingGuide, onGuideThen, onPick])
+  }, [needsHandedness, onGuideThen, onPick])
 
   return (
     <div className="screen home">
@@ -215,7 +223,7 @@ export default function Home({
               link nobody taps until their clip has already been rejected. */}
           <button
             className="btn btn--primary btn--big"
-            onClick={() => (needsFilmingGuide ? onGuideThen('pick') : pickRef.current?.click())}
+            onClick={() => (needsHandedness ? onGuideThen('pick') : pickRef.current?.click())}
           >
             <Icon name="film" size={19} />
             Analyse a serve
@@ -223,7 +231,7 @@ export default function Home({
           {coarse && (
             <button
               className="btn btn--ghost btn--big"
-              onClick={() => (needsFilmingGuide ? onGuideThen('record') : recordRef.current?.click())}
+              onClick={() => (needsHandedness ? onGuideThen('record') : recordRef.current?.click())}
             >
               <Icon name="camera" size={19} />
               Record now
@@ -276,7 +284,7 @@ export default function Home({
       {canPreview && (
         <button
           className="strap"
-          onClick={() => (needsFilmingGuide ? onGuideThen('check') : setChecking(true))}
+          onClick={() => (needsHandedness ? onGuideThen('check') : setChecking(true))}
         >
           <Icon name="camera" size={17} />
           <span>
