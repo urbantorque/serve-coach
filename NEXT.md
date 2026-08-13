@@ -137,9 +137,46 @@ phase's entries and drops the working notes underneath them.
       guess unchanged), and an empty-type file (confirmed to fall through
       unchanged) — the last two proving the fix touches only what it
       should.
-- [ ] **R32** — Re-read `UNDER_RESOLVED` and `UNCALIBRATED`. Deliverable: per
-      signal, the exact evidence that would move it — or the statement that none
-      exists and it stays withdrawn.
+- [x] **R32** — Re-read both registries in full (`tiers.ts:290-391` and
+      `:416-573`), cross-referenced against README's account of them
+      (`:1055-1084`) and against `depth.test.ts`, which already reprints this
+      same per-signal audit as a standing runtime warning on every run
+      (`:855-869`, `:882-903`). Nothing was stale; every entry already carries
+      what would move it, or says nothing will — the deliverable stated below
+      is a restatement of a decision already on record, not a new one.
+
+      `UNDER_RESOLVED` — `hip_lead_ms` is not withdrawn, it is *kept* at a
+      floor raised to the measured 85 ms, so only gross arming clears it and
+      every finding returns `high`. What would move it further: real footage
+      to re-derive `NOISE_FLOOR` itself, presently modelled from published
+      depth-error figures and not from a clip filmed through this app; or a
+      time-based smoothing window in the peak-finder, matching
+      `palmNormalAt`'s in `kinematics.ts`, in place of the current fixed-
+      sample one — named in the comment as where a rebuild should start.
+      `pronation_deg` is fully withdrawn, neither direction of floor rescues
+      it, and it stays that way absent real footage at known rotation angles
+      to settle whether its non-monotonic reading past ~40° is the estimator
+      folding or the rig's own synthetic-dial limit.
+
+      `UNCALIBRATED` — three of five are dead ends by construction, not by
+      absence of evidence. `legs_peak_ms` times leg drive without measuring
+      its amplitude, so no footage would let a millisecond value grade "no
+      leg drive" — that wants a different quantity, not more evidence on this
+      one. `wrist_peak_ms` and `elbow_peak_ms` exist only to prove the
+      chain's own construction (image-plane readings beat world-*z* ones by
+      two orders of magnitude) and say nothing about a player's serve;
+      `elbow_peak_ms` additionally carries a 10.2 ms camera-angle artifact
+      `axes.ts` cannot remove, since one image-*x* scalar cannot be de-mixed
+      into two components — a structural block footage alone would not
+      clear. `chain_span_ms` is superseded by design: dividing by tempo is
+      the fix, and that fix is `chain_span_ratio`, the one entry with a real
+      path to calibration, already stated in three parts in its own comment
+      — settle the residual 21% tempo-dependence at 120 fps, get real
+      footage since the rig cannot vary tempo any other way, and attach a
+      coach's judgement to that footage.
+
+      No code changed. README's account of the two registries is accurate as
+      far as it goes and was not touched.
 - [ ] **R33** — Fold in whatever the court trip and the fixture shoot returned,
       or restate both asks with what has been learned since. Neither is closed by
       anything above.
