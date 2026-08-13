@@ -482,6 +482,58 @@ export const UNCALIBRATED: Record<string, string> = {
     'with tempo, and the rig holds it fixed once tempo is divided out',
 
   /*
+   * The same span divided by how long the motion took. Dimensionless.
+   *
+   * The repair named in the entry above, carried out — and it is here rather
+   * than in `SIGNALS` because being scale-free is what a quantity needs before a
+   * band could exist, not a band. Nothing in this repo knows what this number
+   * should be for a club player, and the rig cannot be asked: `syntheticServe.ts`
+   * keys every track to one normalised phase schedule, so a serve whose sequence
+   * differs from that schedule is not a serve it can build.
+   *
+   * TWO THINGS MEASURED HERE DISAGREE WITH WHAT THE ENTRY ABOVE CLAIMS, and the
+   * disagreement is recorded rather than reconciled.
+   *
+   * Dividing helps, and it does not remove the dependence. Swept over the
+   * `motionSeconds` dial at 1.1, 1.35 and 1.7 s, with `DEPTH_AWARE` dials at
+   * 50 fps and one seed: the raw span reads 99, 114 and 174 ms — a 58% spread
+   * about its own mean — and the ratio reads 0.1010, 0.1000 and 0.1225, which is
+   * 21%. Most of the tempo dependence is gone. A fifth of it is not, because the
+   * span is not actually proportional to the motion: 1.0/1.15/1.76 against
+   * tempos of 1.0/1.23/1.55.
+   *
+   * The entry above records that ratio as "0.092, 0.088 and 0.092 across those
+   * three tempos, scale-free to within 5%". That does not reproduce. It states
+   * neither its frame rate nor its dials, so it cannot be re-run as written, and
+   * `__tests__/depth.test.ts` now prints the sweep it was derived from on every
+   * run so this one cannot go the same way. The check there asserts the
+   * comparative claim — that the division at least halves the spread — and
+   * deliberately not an absolute bound, which would be a number nobody derived.
+   *
+   * What would move this into `SIGNALS`, stated so nobody has to guess:
+   *
+   *   1. The residual has to be understood. A quantity 21% dependent on tempo
+   *      grades a deliberate server, which is the exact fault that sent the raw
+   *      span here. Either the residual is sampling — 20 ms of frame at 50 fps
+   *      against a 99 ms span is a fifth of it, which would be settled by the
+   *      same sweep at 120 fps — or the sequence genuinely changes shape with
+   *      tempo, which is a finding about serving and not a calibration problem.
+   *   2. Real footage, because the rig cannot produce the variation a band would
+   *      have to separate. See `fixtures/index.ts`: RECORDED is empty.
+   *   3. A coach's judgement attached to that footage. A ratio spread over
+   *      twenty clips is a distribution, not a standard; somebody has to say
+   *      which of those serves had a chain and which did not, and
+   *      `scripts/replay-fixture.mjs` prints the spread for exactly that
+   *      conversation.
+   *
+   * Until all three, this is a well-conditioned number with nothing to compare
+   * it against, which is what this register is for.
+   */
+  chain_span_ratio:
+    'measured and not named: the division removes most of the tempo dependence ' +
+    'and not all of it — 58% spread becomes 21% — and no band exists either way',
+
+  /*
    * Peak racket-hand speed, and peak elbow speed, as moments in the serve.
    *
    * Two links rather than two entries, because the decision is one decision.

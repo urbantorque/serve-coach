@@ -424,6 +424,7 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
       elbow: { ...missing },
       wrist: { ...missing },
       span_ms: null,
+      span_ratio: null,
     },
   }
 }

@@ -184,6 +184,13 @@ export function flattenChain(chain: Diagnosis['chain']): Record<string, number> 
       if (typeof v === 'number') out.chain_span_ms = v
       continue
     }
+    if (link === 'span_ratio') {
+      // Dimensionless, where every other entry here is milliseconds. Anything
+      // reading this record has to know that — `depth.test.ts` keeps it out of
+      // the ms-bounded provenance groups for exactly that reason.
+      if (typeof v === 'number') out.chain_span_ratio = v
+      continue
+    }
     const ms = (v as { ms: number | null }).ms
     if (ms !== null) out[`${link}_peak_ms`] = ms
   }

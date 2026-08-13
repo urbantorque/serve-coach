@@ -436,6 +436,16 @@ check('the chain read from the picture plane holds still where the one read from
   }
 
   for (const d of chainDeviations(deep.reads)) {
+    // The ratio is dimensionless and every other row here is milliseconds. It
+    // printed as "0.0 ms, range 0" under this format, which reads as a quantity
+    // that does not move rather than as one measured in the wrong unit.
+    if (d.id === 'chain_span_ratio') {
+      note(
+        `  ${d.id.padEnd(17)} image x,y   deviation ${d.sd.toFixed(4)}      ` +
+          `range ${d.range.toFixed(4)}   n=${d.n}   (dimensionless)`,
+      )
+      continue
+    }
     note(
       `  ${d.id.padEnd(17)} ${SEEN.includes(d.id) ? 'image x,y ' : 'world z   '} ` +
         `deviation ${d.sd.toFixed(1).padStart(5)} ms   range ${d.range.toFixed(0).padStart(4)}   n=${d.n}`,
@@ -695,6 +705,54 @@ check('the corner camera does not delete the links it cannot name an axis for', 
   )
 })
 
+check('dividing the span by the motion takes the tempo out of it', () => {
+  /*
+   * The repair `UNCALIBRATED.chain_span_ms` names, measured rather than asserted.
+   *
+   * The span is the interval from peak leg drive to peak racket-hand speed, and
+   * it scales with how long the whole motion took: the same serve served slowly
+   * has a longer chain, so a band in milliseconds would mark a deliberate server
+   * as having no sequence. Dividing by the motion's own duration is supposed to
+   * remove that, and this is the check that it does — same dials throughout, one
+   * tempo dial swept, so anything that moves moved because of tempo.
+   *
+   * It says nothing about whether the ratio can be graded. That is a separate
+   * failure with a separate entry, and footage is the only thing that settles
+   * it: scale-free is what a quantity needs before a band could exist, not a
+   * band.
+   */
+  const readings = [1.1, 1.35, 1.7].map((motionSeconds) => {
+    const frames = buildServe({ ...DEPTH_AWARE, seed: SEEDS[0], motionSeconds }, FPS)
+    const skel = detectServe(frames, FPS)
+    const { chain } = diagnose(frames, skel, { tier: 5 })
+    return { motionSeconds, span: chain.span_ms, ratio: chain.span_ratio }
+  })
+
+  const missing = readings.filter((r) => r.span === null || r.ratio === null)
+  assert(missing.length === 0, `no span at ${missing.map((r) => r.motionSeconds).join(', ')} s`)
+
+  const spans = readings.map((r) => r.span as number)
+  const ratios = readings.map((r) => r.ratio as number)
+  const relative = (xs: number[]) =>
+    (Math.max(...xs) - Math.min(...xs)) / (xs.reduce((a, b) => a + b, 0) / xs.length)
+
+  note(
+    `  tempo ${readings.map((r) => r.motionSeconds).join('/')} s: ` +
+      `span ${spans.join('/')} ms (${(relative(spans) * 100).toFixed(0)}% spread), ` +
+      `ratio ${ratios.map((r) => r.toFixed(4)).join('/')} (${(relative(ratios) * 100).toFixed(0)}%)`,
+  )
+
+  // The claim is comparative and is stated that way. An absolute bound on the
+  // ratio's spread would be a number nobody derived — the point is that the
+  // division removes most of a dependence that is plainly there in the raw span,
+  // and the raw span's own spread is the only honest scale to measure it on.
+  assert(
+    relative(ratios) < relative(spans) / 2,
+    `dividing by the motion barely helped: span spread ${(relative(spans) * 100).toFixed(0)}%, ` +
+      `ratio spread ${(relative(ratios) * 100).toFixed(0)}%`,
+  )
+})
+
 /* ============================================ does the verdict hold still == */
 
 check('one identical serve produces one verdict', () => {
@@ -826,7 +884,15 @@ if (underResolved.length) {
     console.log(
       `\n  \x1b[33m⚠ Measured well, graded not at all:\x1b[0m` +
         links
-          .map((d) => `\n  \x1b[2m· ${d.id}: deviation ${d.sd.toFixed(1)} ms. ${UNCALIBRATED[d.id]}\x1b[0m`)
+          .map((d) => {
+            // One of these is a ratio. Printed to one decimal place with "ms"
+            // after it, the span ratio reported a deviation of 0.0 ms — a
+            // quantity that never moves, said about the one entry here whose
+            // whole reason for existing is that it is dimensionless.
+            const dimensionless = d.id.endsWith('_ratio')
+            const dev = dimensionless ? d.sd.toFixed(4) : `${d.sd.toFixed(1)} ms`
+            return `\n  \x1b[2m· ${d.id}: deviation ${dev}. ${UNCALIBRATED[d.id]}\x1b[0m`
+          })
           .join('') +
         `\n  \x1b[2mThese are the best-conditioned timings in the engine and none of them names` +
         `\n  a fault. Repeatability was never the missing piece: what is missing is any` +

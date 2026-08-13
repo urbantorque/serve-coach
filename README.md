@@ -430,6 +430,22 @@ second: the wrist link holds to 0.5 ms across the noise ensemble where trunk
 rotation read from world *z* moves 53 ms, and not one of the five names a flaw,
 because nothing here can say what a good one looks like.
 
+**Fixing what makes a number ungradable does not make it gradable.** The chain's
+span is measured in milliseconds and therefore grades tempo: the same serve
+served slowly has a longer chain, so a band in milliseconds would mark a
+deliberate server as having no sequence at all. Dividing by how long the motion
+took is the obvious repair, it is now computed, and it stays in `UNCALIBRATED`
+for two separate reasons the suite prints on every run. The division removes most
+of the dependence and not all of it — swept at 1.1, 1.35 and 1.7 seconds the raw
+span spreads 58% about its own mean and the ratio still spreads 21%, because the
+span is not in fact proportional to the motion. And even at zero, being
+scale-free is what a quantity needs before a band could exist, not a band:
+nobody here knows what this number should be for a club player, and the rig
+cannot be asked, because every track in it hangs off one normalised phase
+schedule. The note this replaces recorded that ratio as scale-free to within 5%
+and stated neither its frame rate nor its dials. It does not reproduce, which is
+why the sweep is now printed rather than transcribed.
+
 **Image x is not "sideways" — it is whichever body axis the camera laid across
 the sensor.** Toss drift was read straight off image x and called sideways by
 the metric, by the flaw and by the copy. Filmed side-on, the angle this app

@@ -53,10 +53,14 @@ footage except the footage, then stop.
       of them: `n`, the span of engine-minus-label, the median, and how much of
       the allowance the worst clip needed. It reports a spread and never
       proposes a band.
-- [ ] **1d** — Implement the scale-free `chain_span_ms ÷ motion duration` ratio
-      (0.092 / 0.088 / 0.092 across three tempos). Keep it in `UNCALIBRATED`.
-      Write down exactly what evidence would move it to `SIGNALS`. Invent no
-      band.
+- [x] **1d** — `chain.span_ratio` is computed, divided by `contact − ready`
+      (`metrics.ts`'s `totalTime`, not a second definition), and stays in
+      `UNCALIBRATED` with the three things that would move it to `SIGNALS`
+      written out. **The 0.092 / 0.088 / 0.092 figure in this ledger and in
+      `UNCALIBRATED.chain_span_ms` does not reproduce.** Measured: span 99 / 114
+      / 174 ms across tempos 1.1 / 1.35 / 1.7 s at 50 fps, ratio 0.1010 / 0.1000
+      / 0.1225 — a 58% spread becoming 21%, not 5%. The sweep is printed by
+      `depth.test.ts` on every run so it cannot age the same way.
 - [ ] **1e** — Stop. Mark every remaining Theme 1 slice `[!] blocked — needs
       real footage`, tell the user precisely what to film, move to Theme 2.
 

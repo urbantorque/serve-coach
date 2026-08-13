@@ -143,6 +143,26 @@ export interface ChainTiming {
    * divided out. A well-measured quantity with nothing to compare it against.
    */
   span_ms: number | null
+  /**
+   * The same span as a share of how long the motion took. Dimensionless.
+   *
+   * The repair `UNCALIBRATED.chain_span_ms` names, carried out. `span_ms` grades
+   * tempo whether it means to or not: the same serve served slowly has a longer
+   * chain, so a band in milliseconds marks a deliberate server as having no
+   * chain at all. Divided by the motion's own duration that goes away, and what
+   * is left is the shape of the sequence rather than its clock.
+   *
+   * Divided by `contact − ready`, in seconds, which is `metrics.ts`'s
+   * `totalTime` in different units and deliberately not a second definition of
+   * how long a serve took.
+   *
+   * This does NOT make it gradable, and `UNCALIBRATED.chain_span_ratio` says so
+   * separately from its sibling — the two entries fail for different reasons and
+   * collapsing them would lose the one that footage can fix. Being scale-free is
+   * what a quantity needs before a band could exist; it is not a band. Nothing
+   * in this repo knows what this number should be for a club player.
+   */
+  span_ratio: number | null
 }
 
 export interface DiagnoseOptions {
@@ -516,11 +536,20 @@ export function diagnose(
     elbow: linkAt(elbowSpeed, elbowSeen),
     wrist: linkAt(wristSpeed, wristSeen),
     span_ms: null,
+    span_ratio: null,
   }
   // Differenced from the links themselves rather than recomputed, so a span can
   // never exist for a link that was dropped.
   if (chain.legs.ms !== null && chain.wrist.ms !== null) {
     chain.span_ms = chain.wrist.ms - chain.legs.ms
+    // Ready to contact, which is `metrics.ts`'s `totalTime` in seconds. A clip
+    // where those two land on one frame is not a serve, and a ratio against a
+    // duration of zero is an infinity that would travel a long way before
+    // anything noticed.
+    const motionSeconds = contactT - at(keys.ready).t
+    if (motionSeconds > 0) {
+      chain.span_ratio = Number((chain.span_ms / (motionSeconds * 1000)).toFixed(4))
+    }
   }
 
   /* --- the toss --------------------------------------------------------- */
