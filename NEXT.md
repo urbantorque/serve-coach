@@ -25,10 +25,33 @@ The engine is honest about what it cannot see. The open question is whether it
 notices the specific ways amateur footage goes wrong, or only the ways the
 synthetic rig can produce.
 
-- [ ] **R8** — What does a limb hidden for half a second do to the report?
-      `kalman.ts` holds a landmark through blur; occlusion is a different
-      failure, and MediaPipe answers it by guessing rather than by declining.
-      Deliverable: occlusion driven in the rig, and confidence that falls.
+- [x] **R8** — It invented a racket drop that never happened, at full
+      confidence. `dropout`, the rig's existing occlusion dial, only ever
+      touches leg landmarks and only ever *lowers visibility* — the easy case,
+      already caught by the visibility check `metricConfidence` already runs.
+      A new `occlusionSeconds` dial freezes the racket wrist at its position
+      from the drop for a stated span, visibility untouched — the case R8 asked
+      about, and the one `kalman.ts`'s own docstring already named as the real
+      danger. Driven at 0.5 s: `dropDepth` flipped from 0.237 to -0.156 — not
+      noise, a different sign, a racket drop reported as not having happened —
+      at confidence 1.000. `blurOf`'s zig-zag statistic never saw it, because a
+      track MediaPipe has frozen on a stale guess is smooth, not noisy, and
+      zig-zag is a curvature statistic. Confirmed rather than assumed: a test
+      pins that the existing statistic reads 0.00 here, specifically so nobody
+      "simplifies" the fix back out.
+
+      Fixed with a second, different question — not how erratic the track is,
+      how far it travelled — asked only over drop-to-contact, the one stretch
+      of any serve guaranteed to be a large excursion by construction (`drop`
+      is the lowest point after the trophy, `contact` the highest of the
+      swing). `frozenThroughSwing` in `kalman.ts`, threshold at a twelfth of
+      standing height against the rig's own ~0.7 for a clean serve — enormous
+      margin on both sides, and the full suite (400+ existing checks across
+      every dialled fault) passed unchanged, so nothing already calibrated
+      moved. The frozen case now scores blur 1.0 and is refused — sometimes as
+      `too_blurry`, sometimes as `too_few_frames` when the frozen wrist also
+      confuses where the drop and contact keyframes land; both are the same
+      honest outcome and the test accepts either rather than asserting one.
 - [ ] **R9** — Are frames assumed evenly spaced? Real clips drop frames and
       phones record variable frame timing. Deliverable: the assumption located,
       and either defended in prose or removed in code.

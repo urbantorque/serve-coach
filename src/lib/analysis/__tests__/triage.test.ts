@@ -188,6 +188,65 @@ check('blur is scored from both what was seen and what made sense', () => {
   note(`blur ${clean.toFixed(2)} clean, ${smeared.toFixed(2)} smeared`)
 })
 
+/*
+ * R8 in NEXT.md: occlusion is a different failure from blur, and `wildness`
+ * cannot see it. A hand smeared by fast motion produces a noisy track — large
+ * second differences, which `wildness` is built to catch. A hand MediaPipe has
+ * lost behind the body for a stretch is often the opposite: the model holds
+ * roughly still on its last plausible guess rather than declining, at full
+ * visibility, which reads as a *clean* track to a statistic built on
+ * curvature. `frozenThroughSwing` in kalman.ts asks the other question —
+ * did the racket hand travel at all through the one window guaranteed to be a
+ * large, fast excursion — and these drive it with the rig's own
+ * `occlusionSeconds` dial.
+ */
+check('a racket hand frozen through the whole drop-to-contact window is caught', () => {
+  const frames = buildServe({}, FPS)
+  const skel = detectServe(frames, FPS)
+  const clean = assessResilience(frames, skel)
+  const occluded = assessResilience(buildServe({ occlusionSeconds: 0.5 }, FPS), skel)
+
+  assert(clean.blur < LIMITS.blur, `a clean track was already flagged blurred: ${clean.blur}`)
+  assert(occluded.blur >= LIMITS.blur, `a frozen track scored only ${occluded.blur}`)
+  note(`blur ${clean.blur.toFixed(2)} clean, ${occluded.blur.toFixed(2)} frozen through the drop`)
+})
+
+check('a frozen drop-to-contact window is refused, not reported as a number', () => {
+  // Not necessarily 'too_blurry': a wrist frozen for half a second can also
+  // confuse where the drop and contact keyframes themselves land — `drop` is
+  // the lowest point *after* the trophy, and a track that stopped moving can
+  // leave too little of the window either side of it for `swingSamples` to
+  // clear its own floor first. `rejectionFor` checks that ahead of blur, and
+  // either reason is the same honest outcome: refused rather than guessed at.
+  const frames = buildServe({ occlusionSeconds: 0.5 }, FPS)
+  const skel = detectServe(frames, FPS)
+  const resilience = assessResilience(frames, skel)
+  const reason = rejectionFor(resilience)
+  assert(
+    reason === 'too_blurry' || reason === 'too_few_frames',
+    `a frozen swing was not refused at all: got ${reason}`,
+  )
+})
+
+check('the wildness statistic alone misses a frozen track — this is why the second check exists', () => {
+  // Not a claim about a defect: it is the reason `frozenThroughSwing` had to
+  // be a different statistic rather than a tighter band on the existing one.
+  // A held-still landmark has near-zero curvature, so `wildness` reads it as
+  // clean however long it is held — pinned so nobody "simplifies" the two
+  // checks back into one.
+  const frames = buildServe({ occlusionSeconds: 0.5 }, FPS)
+  const skel = detectServe(frames, FPS)
+  const window = frames.slice(skel.keys.ready, skel.keys.finish + 1)
+  // Right wrist, MediaPipe's index — the rig's default player is right-handed,
+  // matching the same landmark the filter test above reads.
+  const track = stabilise(
+    window.map((f) => f.image[16]),
+    window.map((f) => f.t),
+  )
+  const zigzag = track.wildness / skel.bodyHeight
+  assert(zigzag < 0.02, `wildness alone already caught this: ${zigzag}`)
+})
+
 /* ============================================================= refusal ==== */
 
 heading('Refusing a clip it cannot read')

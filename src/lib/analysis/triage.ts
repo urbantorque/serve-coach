@@ -21,7 +21,7 @@
  * tracker could not see the hand, and the only safe output is a reason the clip
  * could not be read.
  */
-import { blurOf, capturedSamples, stabilise } from './kalman'
+import { blurOf, capturedSamples, frozenThroughSwing, stabilise } from './kalman'
 import { assessSpatial, spatialVisibility, type Spatial } from './spatial'
 import { clamp, keyVisibility, mean, sided } from './geometry'
 import type { BodyAxis } from './axes'
@@ -258,9 +258,23 @@ export function assessResilience(frames: Frame[], skel: Skeleton): Resilience {
     clamp(keys.finish, 0, frames.length - 1) + 1,
   )
 
+  // A second, different question from `wildness` above: not whether the track
+  // is erratic, but whether it moved at all. MediaPipe frozen on a stale guess
+  // through an occlusion is often smooth rather than noisy, which reads as
+  // clean to a statistic built on curvature — see `frozenThroughSwing`. Asked
+  // only over drop-to-contact, the one stretch guaranteed to be a large,
+  // fast excursion whichever fundamentals were dialled, so a genuinely
+  // compact swing is never mistaken for a frozen one.
+  const dropLo = clamp(keys.drop, 0, frames.length - 1)
+  const dropHi = clamp(keys.contact, dropLo, frames.length - 1)
+  const frozen = frozenThroughSwing(
+    frames.slice(dropLo, dropHi + 1).map((f) => f.image[R.wrist]),
+    bodyHeight,
+  )
+
   return {
     spatial,
-    blur: blurOf(track, bodyHeight),
+    blur: frozen ? 1 : blurOf(track, bodyHeight),
     swingSamples,
     visibility: serve.length
       ? mean(serve.map(keyVisibility))

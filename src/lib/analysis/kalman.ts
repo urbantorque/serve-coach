@@ -295,6 +295,65 @@ export function blurOf(track: StabilisedTrack, bodyHeight: number): number {
   return clamp(Math.max(wildness, unseen * 0.9), 0, 1)
 }
 
+/**
+ * How far a raw, unfiltered track actually moved, as the diagonal of its own
+ * bounding box in image space.
+ *
+ * Built to catch what `wildness` cannot: a landmark MediaPipe has frozen on a
+ * stale guess through an occlusion rather than declined to place. That track
+ * is often smooth rather than jittery — a model that has learned where a
+ * wrist plausibly sits does not hallucinate noisily, it holds roughly still —
+ * so its second differences read as clean, whatever the median across the
+ * whole clip already accepts as ordinary jitter. A track that barely moved at
+ * all is a different question from a track that moved erratically, and the
+ * zig-zag statistic can only ever ask the second one.
+ *
+ * A bounding box rather than a summed path length: both catch a frozen track,
+ * and the box is cheaper and needs no ordering assumption about the samples.
+ */
+export function travelOf(points: (Landmark | undefined)[]): number {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  for (const p of points) {
+    if (!p) continue
+    if (p.x < minX) minX = p.x
+    if (p.x > maxX) maxX = p.x
+    if (p.y < minY) minY = p.y
+    if (p.y > maxY) maxY = p.y
+  }
+  if (!Number.isFinite(minX)) return 0
+  return Math.hypot(maxX - minX, maxY - minY)
+}
+
+/**
+ * Below this fraction of standing height, the racket hand did not travel far
+ * enough across the drop-to-contact window to be a real racket drop.
+ *
+ * The window exists precisely because that is the biggest, fastest excursion
+ * in the whole serve — `drop` is the lowest point after the trophy and
+ * `contact` the highest point of the swing, by construction (`phases.ts`) —
+ * so a clean serve clears this with enormous margin: the rig's own default
+ * dials put the drop-to-contact travel at roughly 0.7 of standing height.
+ * Set low enough that no fault this rig can dial — a shallow drop, a low
+ * contact reach — comes near it; a real clip clearing it by less than this
+ * would need a racket drop-to-contact spanning under a twelfth of the
+ * player's own height, which is not a serve a human arm produces.
+ */
+export const FROZEN_TRAVEL = 0.08
+
+/**
+ * Whether the racket hand's raw track through the drop-to-contact window is
+ * too still to be a real swing.
+ *
+ * `bodyHeight` in the same image-space units `travelOf` reads its points in —
+ * the caller's own scale, not metres.
+ */
+export function frozenThroughSwing(points: (Landmark | undefined)[], bodyHeight: number): boolean {
+  return travelOf(points) / Math.max(bodyHeight, 1e-6) < FROZEN_TRAVEL
+}
+
 /* ------------------------------------------------------------------ bridging */
 
 /**

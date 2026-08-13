@@ -378,7 +378,7 @@ Everything is in `src/lib`:
 | `analysis/flaws.ts` | named breakdowns, their evidence, and which cause which |
 | `analysis/diagnose.ts` | the diagnostic pass, out as one JSON object |
 | `analysis/spatial.ts` | which way is up, where the camera stood, and whether depth is readable |
-| `analysis/kalman.ts` | holds a landmark through blur, and scores how degraded the track is |
+| `analysis/kalman.ts` | holds a landmark through blur, and scores how degraded or how frozen the track is |
 | `analysis/triage.ts` | the primary fault as stored data, or the reason the clip could not be read |
 | `analysis/verdict.ts` | the same walk continued into the two-to-four plan the player reads |
 | `analysis/syntheticServe.ts` | a parametric serve with no camera — drives the tests and the `?demo` report |
@@ -566,6 +566,21 @@ long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm
 rather than as a bug. Paused, the overlay is redrawn only when something about
 it actually changes.
+
+**A frozen track is a different failure from a jittery one, and needed a
+different check.** A hand smeared by fast motion produces a noisy track that
+the existing blur statistic is built to catch — large frame-to-frame swings
+around the true path. A hand MediaPipe has lost behind the body for a stretch
+often does the opposite: the model holds roughly still on its last plausible
+guess rather than declining, at full visibility, because it is obliged to
+return a wrist every frame and a learned prior about where wrists plausibly
+sit is not noisy. That read as a *clean* track to a statistic built on
+curvature — a racket wrist frozen for half a second through the drop scored
+zero blur, and `dropDepth` came back a confident, invented number. The engine
+now also asks whether the racket hand travelled at all through the
+drop-to-contact window — the one stretch of any serve guaranteed to be a
+large, fast excursion — and a track that did not is refused rather than
+measured, whatever its curvature says.
 
 **A detector the engine cannot resolve is withdrawn, not hedged.** Hedging is for
 a number that is roughly right; it is the wrong answer for one that is a coin

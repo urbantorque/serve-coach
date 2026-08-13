@@ -200,6 +200,21 @@ export interface ServeDials {
   /** Chance per frame that a limb is partly lost, as happens behind the body. */
   dropout: number
   /**
+   * Seconds the racket wrist is frozen at its position, starting at the racket
+   * drop — a different failure from `dropout`, and the one R8 in `NEXT.md`
+   * exists to drive: real occlusion is not always MediaPipe admitting it cannot
+   * see a limb. Behind the body for long enough, the model has learned priors
+   * about where a wrist plausibly sits and holds roughly still there rather
+   * than declining — which reads as full visibility on a track that has
+   * stopped moving, not lowered visibility on a track that kept jittering.
+   * `dropout` models the first kind, correctly flagged; this models the
+   * second, which nothing downstream is told about. Visibility is left at 1.
+   * Starts at the drop because that is the window `kalman.ts`'s own docstring
+   * names as the costliest: two invented frames there are enough to report a
+   * racket drop that never happened.
+   */
+  occlusionSeconds: number
+  /**
    * Which noise realisation to draw.
    *
    * Vary this to measure across an ensemble. Holding it fixed while changing
@@ -257,6 +272,7 @@ export const CLEAN_SERVE: ServeDials = {
   depthNoise: 1,
   depthBias: 0,
   dropout: 0,
+  occlusionSeconds: 0,
   seed: 20240803,
 }
 
@@ -304,6 +320,10 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
   const total = preroll + d.motionSeconds + postroll
   const count = Math.round(total * fps)
   const frames: Frame[] = []
+  // Captured the first frame `u` enters the occlusion window, then held for
+  // its whole span — see `occlusionSeconds`.
+  let frozenWrist: { x: number; y: number; z: number } | undefined
+  const occlusionEnd = U.drop + d.occlusionSeconds / Math.max(1e-6, d.motionSeconds)
 
   const kneeBendDeg = 180 - d.trophyKneeAngle
 
@@ -465,6 +485,17 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
         u,
       ),
       z: track([[U.ready, 0.1], [U.trophy, 0.26], [U.drop, 0.3], [U.contact, -0.1]], u),
+    }
+
+    // Occlusion: held at the position last seen, not at the true one — see
+    // `occlusionSeconds`. Position only; visibility stays at 1 below, because a
+    // model that guessed and did not admit it is exactly the failure this
+    // dial exists to drive.
+    if (d.occlusionSeconds > 0 && u >= U.drop && u < occlusionEnd) {
+      frozenWrist ??= { ...racketWrist }
+      racketWrist.x = frozenWrist.x
+      racketWrist.y = frozenWrist.y
+      racketWrist.z = frozenWrist.z
     }
 
     // Tossing arm: up to full stretch at release, held, then folded away. The
