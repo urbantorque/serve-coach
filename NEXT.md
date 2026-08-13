@@ -182,8 +182,40 @@ phase's entries and drops the working notes underneath them.
       the same one), argument order not mattering, a custom gap being
       honoured, and `thenAndNow` choosing the true oldest and newest rather
       than two reports in the middle.
-- [ ] **R26** — A milestone that is not a badge. Deliverable: something worth
-      telling somebody after six weeks that survives the no-gamification rule.
+- [x] **R26** — Read `LOOP.md` in full for the constraint this round's own
+      wording assumes rather than finding a rule by that name — there is
+      none written down as such. What exists is `PracticeCard`'s own
+      standard, already in the codebase: "deliberately not a streak, a
+      badge or a congratulation... an app that celebrates the tap is asking
+      to be tapped, which would fill the record with drills nobody did and
+      make the evidence worthless." The deliverable was stretching that
+      rule from a single rep to a training block, honestly, not inventing
+      an achievement system and calling it something else.
+
+      `sixWeekMilestone` (`progress.ts`): one sentence, gated on the same
+      rubric-era discipline `thenAndNow`/`buildProgress` already apply,
+      comparing the current rolling `recentAverage` against the score the
+      player's very first serve in this era got, once a real six weeks
+      separate them. Reports every direction the same way — improved, flat,
+      or backwards — because a milestone that only speaks up on good news
+      is the same lie a badge tells with the shape sanded off. Surfaced on
+      the home screen's "Your form" card, reusing the existing
+      `.progress-foot` class verbatim: no new colour, no new component, one
+      more line that is either there or is not.
+
+      `Progress` gained one field, `first` — the era's oldest point,
+      alongside the `latest` it already carried — rather than have the new
+      function re-derive the era `buildProgress` had already computed.
+      Fifteen tests now live in `lib/__tests__/progress.test.ts` (R25's
+      `sameTrip`/`thenAndNow` cases plus six new ones here): the boundary
+      itself, a flat six weeks read as flat rather than forced into a
+      direction, a regression reported exactly as plainly as an
+      improvement, and a recalibration refusing to be used as the "before"
+      for a score it did not produce. Verified live as well: seeded a first
+      serve six weeks back and three recent ones through direct IndexedDB
+      writes (no real footage to film one with), confirmed the sentence
+      renders correctly with real numbers and disappears cleanly on a
+      two-serve, two-day history that has not earned one yet.
 - [ ] **R27** — What brings somebody back on Thursday? "Then, and now" exists and
       is two sheets deep. Deliverable: reachability measured, not a notification.
 - [ ] **R28** — Copy pass over every line added in Phases 1–4, against the

@@ -28,6 +28,18 @@ export interface Progress {
   points: TrendPoint[]
   latest: TrendPoint
   previous?: TrendPoint
+  /**
+   * The oldest point in the current rubric era — where this run of
+   * comparable scores began.
+   *
+   * Not necessarily `points[0]`: a recalibration starts a fresh era, and a
+   * comparison spanning the break would measure the rubric change rather
+   * than the player, the same reason every other figure below is confined
+   * to `era`. Kept apart from `latest` even when they are the same point,
+   * so a caller asking "how long has this era run" never has to rebuild
+   * the era to find out.
+   */
+  first: TrendPoint
   /** Change in overall score against the session before it. */
   overallDelta?: number
   areaDeltas: AreaDelta[]
@@ -216,6 +228,7 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
     points,
     latest,
     previous,
+    first: era[0],
     overallDelta: previous ? latest.overall - previous.overall : undefined,
     areaDeltas,
     best: Math.max(...scores),
@@ -226,6 +239,47 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
     setAside: sessions.length - matching.length,
     rubricBreakAt: era.length < points.length ? era[0].createdAt : undefined,
   }
+}
+
+/**
+ * How long a stretch of practice has to span before it is worth naming as
+ * one.
+ *
+ * Six weeks: long enough that one good or bad basket cannot decide it, short
+ * enough to still be about the training block somebody is actually in.
+ */
+export const MILESTONE_SPAN_MS = 6 * 7 * 24 * 60 * 60 * 1000
+
+/**
+ * One honest sentence about a real stretch of practice, or nothing.
+ *
+ * Not a reward for a tap. `PracticeCard`'s own drill button is deliberately
+ * "not a streak, a badge or a congratulation" — logging a rep gets no
+ * celebration, because a control that rewards the tap fills the record with
+ * drills nobody did. The same restraint applies here, stretched from a
+ * single rep to a training block: nothing below can be produced by pressing
+ * anything, only by real analyses filed over real time, and it reports
+ * whichever way the number actually moved. A stretch that went backwards
+ * still gets a sentence — a milestone that only ever appears on good news is
+ * a quieter version of the same lie a badge would tell.
+ *
+ * Confined to `progress.first`, the current rubric era's oldest point, for
+ * the reason every other comparison in this file is: the score on the far
+ * side of a recalibration is not a fair "before" for the score it produced.
+ */
+export function sixWeekMilestone(progress: Progress): string | undefined {
+  const { first, latest, recentAverage } = progress
+  if (first.id === latest.id) return undefined
+  if (latest.createdAt - first.createdAt < MILESTONE_SPAN_MS) return undefined
+
+  const weeks = Math.floor((latest.createdAt - first.createdAt) / (7 * 24 * 60 * 60 * 1000))
+  const delta = recentAverage - first.overall
+  if (Math.abs(delta) < MEANINGFUL_DELTA) {
+    return `${weeks} weeks in, averaging ${recentAverage} — about where you started.`
+  }
+  return delta > 0
+    ? `${weeks} weeks in: your first serve scored ${first.overall}, and you're averaging ${recentAverage} now.`
+    : `${weeks} weeks in: averaging ${recentAverage}, down from your first serve's ${first.overall}.`
 }
 
 /* ------------------------------------------------- consistency, over time -- */

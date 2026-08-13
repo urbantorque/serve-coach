@@ -4,7 +4,7 @@ import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing, Sheet } from '../components/primitives'
 import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
-import { buildProgress, currentRubricEra } from '../lib/progress'
+import { buildProgress, currentRubricEra, sixWeekMilestone } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 
 interface Props {
@@ -101,6 +101,7 @@ export default function Home({
   const recordRef = useRef<HTMLInputElement>(null)
   const recent = sessions.slice(0, 3)
   const progress = useMemo(() => buildProgress(sessions), [sessions])
+  const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
   const practice = useMemo(() => findPracticeFocus(sessions), [sessions])
   // `best` is era-only by construction, so a count taken over all of `points`
   // puts the two halves of one sentence on different sets of serves: after a
@@ -367,6 +368,13 @@ export default function Home({
               ? `${eraCount} serves since we changed how we mark · best ${progress.best}`
               : `${eraCount} serves · best ${progress.best}`}
           </span>
+
+          {/* A fact about the training block, not a reward for one — see
+              `sixWeekMilestone`. Absent until there has been six weeks of
+              comparable serves to say anything true about, and worded the
+              same way whichever direction the number moved: nothing here
+              can be produced by a tap, so nothing here is a badge for one. */}
+          {milestone && <span className="progress-foot tnum">{milestone}</span>}
 
           {/* The one actionable thing the app knows, on the first screen rather
               than two taps inside it. */}

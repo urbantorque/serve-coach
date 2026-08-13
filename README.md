@@ -844,6 +844,27 @@ round rather than fixed here: redefining what the window counts changes
 this round asked whether the concept existed, not to redesign the
 recommendation it was found inside.
 
+**A milestone that cannot be produced by a tap.** `PracticeCard`'s drill
+button has always been "deliberately not a streak, a badge or a
+congratulation" — logging a rep gets no reward, because a control that
+celebrates the tap fills the record with drills nobody did. R26 asked for a
+milestone that survives that same rule, stretched from a single rep to a
+training block. `sixWeekMilestone` (`progress.ts`) is one sentence, on the
+home screen's "Your form" card, that says how a real span of practice —
+six weeks, confined to the current rubric era for the same reason every
+other comparison in this file is — actually went: the score the player's
+first serve got, against `recentAverage` now. It reports whichever way the
+number moved. A stretch that went backwards gets a sentence too, in the same
+plain tone as one that improved, because a milestone that only speaks up on
+good news is a quieter version of the badge this feature exists to not be —
+the same standard `DeviceCheck` already holds for the device itself. Nothing
+new to look at: the sentence uses the existing `.progress-foot` class
+verbatim, appears once six real weeks have actually passed, and is absent
+entirely until then. Fifteen tests in `lib/__tests__/progress.test.ts`
+(shared with R25's `sameTrip`/`thenAndNow`, both newly covered there too)
+pin the boundary, the flat case, the regression case and the guard against
+measuring across a recalibration.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm
