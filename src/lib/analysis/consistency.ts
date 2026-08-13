@@ -1,5 +1,5 @@
 import { clamp, mean, statusOf } from './geometry'
-import type { Analysis, Metric, Status } from './types'
+import type { Analysis, Metric, PhaseId, Status } from './types'
 import { cue } from './voice'
 
 export interface MetricSpread {
@@ -60,6 +60,58 @@ export interface ServeGap {
   worstScore: number
   /** Every measurement, ranked by how far apart the two serves were. */
   differences: ServeDifference[]
+}
+
+/**
+ * The best serve's six keyframes beside the worst serve's, position by position.
+ *
+ * Held apart from `Consistency` on purpose, and never stored. A stored report is
+ * mostly its keyframe stills, which is why `db.ts` drops them from older reports
+ * before it drops anything else; putting twelve more into every basket report
+ * would be filing the largest thing in the record under the heading of a
+ * comparison. So this rides on the screen for as long as the clip is open and is
+ * simply absent afterwards — see `ServeGap`, which is the durable half and says
+ * the same thing in words.
+ */
+export interface ServePairFrames {
+  best: number
+  worst: number
+  /** One entry per keyframe both serves reached. Either still may be missing. */
+  positions: { id: PhaseId; label: string; best?: string; worst?: string }[]
+}
+
+/**
+ * Pull the two named serves' stills out of the analyses the sweep produced.
+ *
+ * Matched on the serve's own number in the clip rather than on position in the
+ * array, for the same reason `serveNumbers` exists: a sweep skips serves it
+ * could not read and covers only the last few of a long basket, so the third
+ * entry is routinely not the third serve.
+ *
+ * Positions are paired by keyframe id, not by index. Both serves have all six
+ * under any ordinary reading, and pairing by index would silently put one
+ * serve's trophy beside the other's racket drop on the day that stops being
+ * true.
+ */
+export function pairStills(analyses: Analysis[], gap: ServeGap): ServePairFrames | undefined {
+  const at = (serveNumber: number) =>
+    analyses.find((a, i) => ((a.serves?.index ?? i) + 1) === serveNumber)
+
+  const best = at(gap.best)
+  const worst = at(gap.worst)
+  if (!best || !worst) return undefined
+
+  const positions = best.phases
+    .map((p) => ({
+      id: p.id,
+      label: p.label,
+      best: p.thumbnail,
+      worst: worst.phases.find((q) => q.id === p.id)?.thumbnail,
+    }))
+    // A position with no picture on either side is a row of two empty boxes.
+    .filter((p) => p.best || p.worst)
+
+  return positions.length ? { best: gap.best, worst: gap.worst, positions } : undefined
 }
 
 export interface Consistency {

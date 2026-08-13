@@ -8,7 +8,7 @@ import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
-import { consistencyHeadline } from '../lib/analysis/consistency'
+import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { ServeType } from '../lib/storage/prefs'
 import { deltasAgainst, scoringVersionOf } from '../lib/progress'
@@ -73,6 +73,13 @@ interface Props {
    * two disagree about which clip they described.
    */
   onCheckConsistency?: () => void
+  /**
+   * The best and worst serve as pictures, while the clip they came from is open.
+   *
+   * A prop rather than something read off the analysis, because it deliberately
+   * never joins the analysis — a saved report gets the words and not the images.
+   */
+  servePair?: ServePairFrames
 }
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -91,6 +98,7 @@ export default function Report({
   onPickServeType,
   onPickTier,
   statedTier,
+  servePair,
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
@@ -507,7 +515,13 @@ export default function Report({
         </section>
       )}
 
-      {consistency && <ConsistencyPanel consistency={consistency} onDismiss={() => setHidSpreads(true)} />}
+      {consistency && (
+        <ConsistencyPanel
+          consistency={consistency}
+          onDismiss={() => setHidSpreads(true)}
+          pair={servePair}
+        />
+      )}
 
       {analysis.quality.warnings.length > 0 && (
         <section className="notes">

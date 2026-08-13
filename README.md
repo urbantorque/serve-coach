@@ -168,7 +168,26 @@ worst by the same score already on the chips, and the three measurements where
 they differed. Only differences big enough to be said in different words are
 printed. Two serves can differ by a real number of degrees and both read "arm
 dead straight", and pointing at that pair would be pointing at something the
-player cannot see in their own clip. Each element is scored on
+player cannot see in their own clip.
+
+Underneath that, the two serves as pictures: the same six positions, the good
+serve beside the bad one, each still already carrying the tracked skeleton and
+the angle that position is judged on. It is the one place in the report where
+somebody sees their own good trophy position next to their own bad one, which is
+what a coach does with a phone at the net.
+
+Those twelve images are never stored. Nearly all of a saved report's size is its
+keyframe stills, which is why old reports lose their stills before they lose
+anything else — filing twelve more under the heading of a comparison would make
+the comparison the largest thing in the record. So the pictures last as long as
+the clip is open and a re-opened report has the words instead, which say the
+same thing and cost nothing.
+
+Getting them at all meant separating three decisions that had been sharing one
+name. `skipThumbnails` also turned off the framing preflight and the ball pass —
+a whole second pass over the video, per serve — so the only way to keep a swept
+serve's stills was to buy eight ball passes with them. That is why the serves in
+a basket had no stills, and it was never a decision anybody took about stills. Each element is scored on
 how little it moved relative to its own target band, ordered worst first. The
 headline score leans on the least repeatable elements rather than the flat
 average — a serve is a chain, and one toss that wanders ruins it however steady

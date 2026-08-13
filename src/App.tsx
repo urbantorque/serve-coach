@@ -16,7 +16,7 @@ import {
   type AnalyzeProgress,
 } from './lib/analysis/analyze'
 import { forgetAll, recall, remember } from './lib/analysisCache'
-import { buildConsistency } from './lib/analysis/consistency'
+import { buildConsistency, pairStills, type ServePairFrames } from './lib/analysis/consistency'
 import {
   hintsOf,
   type Analysis,
@@ -50,6 +50,32 @@ type View =
 
 const MAX_BYTES = 400 * 1024 * 1024
 
+/**
+ * A stand-in keyframe still, for `?demo=basket` only.
+ *
+ * The synthetic rig has no camera and therefore no pictures, so the paired strip
+ * would be the one part of a basket report the demo route could not show — and
+ * showing the UI without filming anything is the entire reason that route
+ * exists. Labelled and the right aspect, so the layout it produces is the real
+ * layout; obviously not a body, so nobody mistakes it for one.
+ */
+function placeholderStill(label: string): string {
+  const canvas = document.createElement('canvas')
+  canvas.width = 150
+  canvas.height = 200
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+  ctx.fillStyle = '#151a24'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.strokeStyle = '#232a38'
+  ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1)
+  ctx.fillStyle = '#7b8799'
+  ctx.font = '13px system-ui, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText(label, canvas.width / 2, canvas.height / 2)
+  return canvas.toDataURL('image/png')
+}
+
 export default function App() {
   const [view, setView] = useState<View>({ kind: 'home' })
   const [progress, setProgress] = useState<AnalyzeProgress>({ step: 'engine', ratio: 0 })
@@ -62,6 +88,21 @@ export default function App() {
    * rather than throw the clip away and go home.
    */
   const [sweep, setSweep] = useState<SweepProgress>()
+  /**
+   * The best serve's keyframes beside the worst serve's, for as long as the clip
+   * is open.
+   *
+   * In state rather than on the analysis, which is the difference between this
+   * and every other part of the comparison. The spreads ride on the report and
+   * therefore survive the back button, reach storage and feed the trend; twelve
+   * keyframe stills doing the same would put the largest thing in a stored
+   * report there under the heading of a comparison, in an app that already drops
+   * stills from older reports before it drops anything else.
+   *
+   * The cost of that choice is that it does not survive a reload, which is the
+   * right way round: `ServeGap` says the same thing in words and does survive.
+   */
+  const [pair, setPair] = useState<ServePairFrames>()
   const [sessions, setSessions] = useState<Session[]>([])
   const [sheet, setSheet] = useState<'guide' | 'guide-first' | 'history' | 'progress' | null>(null)
   const [offlineReady, setOfflineReady] = useState(false)
@@ -216,7 +257,21 @@ export default function App() {
             // five — `sampleBasket` returns the four it could read. The counts
             // have to agree or the demo shows a panel no real clip produces.
             fitted.serves = { count: 5, index: 4 }
-            fitted.consistency = buildConsistency(sampleBasket(), 5)
+            const basket = sampleBasket()
+            fitted.consistency = buildConsistency(basket, 5)
+            // The rig draws no pictures, so the paired strip would be the one
+            // part of a basket report `?demo=basket` could not show — which is
+            // the whole reason this route exists. Stand-in tiles rather than
+            // nothing: they are the right count, the right shape and the right
+            // labels, so the layout is real even though the bodies in them are
+            // not. Dev-only, like everything else down this branch.
+            if (fitted.consistency?.gap) {
+              const { gap } = fitted.consistency
+              for (const a of basket) {
+                for (const p of a.phases) p.thumbnail = p.thumbnail ?? placeholderStill(p.label)
+              }
+              setPair(pairStills(basket, gap))
+            }
           }
           setView({ kind: 'report', analysis: fitted, videoUrl: url })
         } else {
@@ -270,10 +325,18 @@ export default function App() {
       const controller = new AbortController()
       abortRef.current = controller
 
-      // Nothing to clear: the spreads ride on the report they were measured for,
-      // so a new report simply has none. When they lived in state beside the
-      // view this needed an explicit reset at every entry point, and the panel
-      // sat clip A's spreads under clip B's report wherever one was missed.
+      // The spreads need no clearing: they ride on the report they were measured
+      // for, so a new report simply has none. When they lived in state beside
+      // the view this needed an explicit reset at every entry point, and the
+      // panel sat clip A's spreads under clip B's report wherever one was
+      // missed.
+      //
+      // The paired stills are the exception and are cleared here for exactly
+      // that reason. They deliberately do not ride on the report — twelve images
+      // is the largest thing a stored report would carry — so they are the one
+      // piece of the comparison that can outlive the clip it describes, and this
+      // is every entry point.
+      setPair(undefined)
 
       // Already worked out during this session? Switching between the serves in
       // a basket, or correcting the hand and changing it back, otherwise pays
@@ -519,6 +582,12 @@ export default function App() {
         // says how many that was, and claims nothing about the ones it never
         // reached. Throwing four measured serves away because a fifth was never
         // started would be the dishonest half of that trade, not the safe one.
+        // Built here and not inside `buildConsistency`, because this is the last
+        // moment the swept analyses exist: that call reduces them to numbers and
+        // nothing else holds the originals. The stills go no further than the
+        // screen.
+        setPair(result.gap ? pairStills(swept.serves, result.gap) : undefined)
+
         const measured: Analysis = { ...analysis, consistency: result }
         remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)
         setView({ kind: 'report', analysis: measured, videoUrl: url })
@@ -726,6 +795,7 @@ export default function App() {
                 ? () => void compareServes(view.analysis)
                 : undefined
             }
+            servePair={pair}
           />
         )}
 

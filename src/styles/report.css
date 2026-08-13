@@ -378,6 +378,68 @@
   color: var(--fg-muted);
 }
 
+/* The two serves as pictures, position by position. */
+.pair-frames {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pair-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pair-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+
+/* Two columns at every width, never wrapping to one.
+   A pair that stacks is not a pair — the whole argument is that the eye can
+   cross from one trophy position to the other without scrolling, and on a phone
+   two 3:4 stills at half width each are still taller than they are wide. */
+.pair-shots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pair-shots figure {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pair-shots img,
+.pair-missing {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+.pair-shots figcaption {
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
+/* The better serve's number carries the accent, matching the readout above it,
+   so the two halves of this block agree about which serve is the good one. */
+.pair-shots figure:first-child figcaption {
+  color: var(--good);
+}
+
 .best-worst-none {
   margin: 0;
   font-size: 12.5px;

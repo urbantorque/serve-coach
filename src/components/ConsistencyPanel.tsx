@@ -4,6 +4,7 @@ import {
   type Consistency,
   type MetricSpread,
   type ServeGap,
+  type ServePairFrames,
 } from '../lib/analysis/consistency'
 
 /**
@@ -119,12 +120,56 @@ function BestAgainstWorst({ gap }: { gap: ServeGap }) {
   )
 }
 
+/**
+ * The two serves, position by position.
+ *
+ * The stills already carry the tracked skeleton and the angle each position is
+ * judged on, drawn on at capture time — so a pair of them is the whole argument
+ * without a word of copy. This is the one place in the report where a player can
+ * see their own good trophy position next to their own bad one, which is what a
+ * coach does with a phone at the net.
+ *
+ * Absent on any re-opened report, and that is by design rather than an oversight
+ * — see `ServePairFrames`. The words above it say the same thing and do survive.
+ */
+function PairedFrames({ pair }: { pair: ServePairFrames }) {
+  return (
+    <div className="pair-frames">
+      <span className="t-overline consistency-label">The same moments, both serves</span>
+      <ul className="pair-list">
+        {pair.positions.map((p) => (
+          <li key={p.id}>
+            <span className="pair-label">{p.label}</span>
+            <div className="pair-shots">
+              <figure>
+                {/* Decorative only where the caption beside it already names the
+                    position and the serve. A screen reader reading "Trophy,
+                    serve 1" and then an alt text saying the same thing twice is
+                    noise, and there is nothing in the picture a sentence can
+                    carry. */}
+                {p.best ? <img src={p.best} alt="" /> : <span className="pair-missing" />}
+                <figcaption>#{pair.best}</figcaption>
+              </figure>
+              <figure>
+                {p.worst ? <img src={p.worst} alt="" /> : <span className="pair-missing" />}
+                <figcaption>#{pair.worst}</figcaption>
+              </figure>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 interface Props {
   consistency: Consistency
   onDismiss: () => void
+  /** The two serves as pictures, when the clip they came from is still open. */
+  pair?: ServePairFrames
 }
 
-export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
+export default function ConsistencyPanel({ consistency: c, onDismiss, pair }: Props) {
   return (
     /*
      * Rung four. The tier rides on the ink colour of the score rather than on a
@@ -168,6 +213,14 @@ export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
       </div>
 
       {c.gap && <BestAgainstWorst gap={c.gap} />}
+
+      {/* Only when the pictures describe the two serves the words just named.
+          A pair left over from a comparison whose gap has since been recomputed
+          would put the wrong serve numbers under the wrong images, and the
+          numbers are the whole point of showing them. */}
+      {pair && c.gap && pair.best === c.gap.best && pair.worst === c.gap.worst && (
+        <PairedFrames pair={pair} />
+      )}
 
       <ul className="spreads">
         {c.metrics.map((m) => (

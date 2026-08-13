@@ -315,18 +315,17 @@ export async function analyzeAllServes(
         {
           ...opts,
           serveIndex,
-          // All three, which is what this call has always done — the split above
-          // is about being able to say so, not about changing it yet.
+          // The two that cost real time, and not the stills.
           //
-          // Stills stay off until something keeps them. They are six seeks a
-          // serve, roughly fifty across a basket, and every one of those images
-          // is currently built and dropped on the floor: `buildConsistency`
-          // reduces the swept analyses to numbers and nothing holds the
-          // originals. Turning them on belongs in the same change as the thing
-          // that pairs the best serve's six frames against the worst serve's.
+          // The preflight is a check this clip already passed on the serve the
+          // sweep was launched from, and the ball is a whole second pass over
+          // the video per serve for two measurements the comparison does not
+          // use. The stills are six seeks, they are what lets the best serve in
+          // the basket be shown beside the worst one as pictures rather than as
+          // two sentences, and until these three had separate names there was no
+          // way to keep them without buying the ball pass as well.
           skipFramingCheck: true,
           skipBall: true,
-          skipThumbnails: true,
           knownServeTimes,
           onProgress: (p) =>
             opts.onProgress?.({

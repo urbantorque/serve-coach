@@ -111,11 +111,13 @@ product does not behave as though it believes that.
       `skipFramingCheck`, `skipBall` and `skipThumbnails`. The sweep still sets
       all three: stills are ~50 seeks across a basket and nothing keeps them
       yet, so turning them on belongs with the thing that pairs them.
-- [ ] **2b-ii-b** — The paired strip. Turn stills back on for the sweep, hold
-      the swept analyses in memory (not storage — the report already drops
-      stills first under `KEEP_STILLS`), and pair the best serve's six frames
-      against the worst serve's. Degrade to 2b-i wherever the images cannot be
-      produced, which includes every re-opened saved report.
+- [x] **2b-ii-b** — The paired strip. Stills are back on for the sweep (~6 seeks
+      a serve, no ball pass), `pairStills` pulls the two named serves' frames
+      out at the last moment the swept analyses exist, and the strip renders six
+      positions two-up. Held in App state and never on the analysis, so nothing
+      reaches storage; a re-opened report degrades to the words, which is 2d's
+      requirement met by construction. `?demo=basket` draws stand-in tiles so
+      the layout is reachable without filming.
 - [ ] **2c** — Route the consistency result into the practice focus, so
       `practice.ts` can say "your toss is fine on average and moves more than
       anything else you do".

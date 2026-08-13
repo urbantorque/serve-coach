@@ -20,7 +20,7 @@ import {
   type SweepServe,
 } from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
-import { MIN_COMPARABLE_SERVES, buildConsistency } from '../consistency'
+import { MIN_COMPARABLE_SERVES, buildConsistency, pairStills } from '../consistency'
 import { Cancelled } from '../../pose/extract'
 import { diagnose } from '../diagnose'
 import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
@@ -1218,6 +1218,70 @@ check('every measurement is offered, and the cutting is left to whoever prints i
     c!.gap!.differences.length === c!.metrics.length,
     `offered ${c!.gap!.differences.length} of ${c!.metrics.length} measurements`,
   )
+})
+
+/* ------------------------------------------------------ the paired stills */
+
+/** A basket whose serves carry named stills, so the pairing can be checked by name. */
+function withStills(numbers: number[], overalls: number[]) {
+  return numbers.map((index, i) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: overalls[i],
+      serves: { count: 9, index },
+      phases: [
+        { id: 'trophy', label: 'Trophy', thumbnail: `serve${index + 1}-trophy` },
+        { id: 'contact', label: 'Contact', thumbnail: `serve${index + 1}-contact` },
+      ],
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+}
+
+check('the stills come from the two serves the words named', () => {
+  // Matched on the serve's own number in the clip, not on position in the array.
+  // A sweep skips serves it could not read and covers only the last few of a
+  // long basket, so the third entry is routinely not the third serve — and
+  // pairing by position would put a picture of one serve under the number of
+  // another, which is worse than showing nothing.
+  const analyses = withStills([2, 5, 7], [61, 80, 55])
+  const c = buildConsistency(analyses, 3)!
+  const pair = pairStills(analyses, c.gap!)
+  assert(pair !== undefined, 'no stills paired')
+  assert(pair!.best === 6 && pair!.worst === 8, `paired serves ${pair!.best} and ${pair!.worst}`)
+  const trophy = pair!.positions.find((p) => p.id === 'trophy')!
+  assert(
+    trophy.best === 'serve6-trophy' && trophy.worst === 'serve8-trophy',
+    `trophy paired ${trophy.best} against ${trophy.worst}`,
+  )
+})
+
+check('positions are paired by keyframe, not by their place in the list', () => {
+  // Both serves have all six under any ordinary reading. On the day one of them
+  // does not, pairing by index puts one serve's trophy beside the other's
+  // racket drop and nothing in the picture says so.
+  const analyses = withStills([0, 1], [80, 50])
+  const worst = analyses[1] as unknown as { phases: { id: string }[] }
+  worst.phases.reverse()
+  const c = buildConsistency(analyses, 2)!
+  const pair = pairStills(analyses, c.gap!)!
+  for (const p of pair.positions) {
+    assert(
+      (p.best ?? '').endsWith(p.id) && (p.worst ?? '').endsWith(p.id),
+      `${p.id} was paired with ${p.best} and ${p.worst}`,
+    )
+  }
+})
+
+check('a basket with no pictures in it pairs nothing rather than empty boxes', () => {
+  // The rig draws no stills, and neither does a sweep on a build where they are
+  // turned off. Six rows of two empty frames is worse than the sentence.
+  const analyses = withStills([0, 1], [80, 50])
+  for (const a of analyses as unknown as { phases: { thumbnail?: string }[] }[]) {
+    for (const p of a.phases) p.thumbnail = undefined
+  }
+  const c = buildConsistency(analyses, 2)!
+  assert(pairStills(analyses, c.gap!) === undefined, 'paired a basket that has no pictures')
 })
 
 /* --------------------------------------------------- sweeping a basket ---- */
