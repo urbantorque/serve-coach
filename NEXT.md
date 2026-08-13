@@ -66,8 +66,46 @@ phase's entries and drops the working notes underneath them.
 
       No code this round, as asked. R16 takes the worst of the two confirmed
       gaps.
-- [ ] **R16** — Build the worst of those gaps. Assembled from `primitives.tsx`
-      and existing tokens — constraint 3 is not negotiable for onboarding.
+- [x] **R16** — Fixed at the root rather than patched at the one call site R15
+      named. The guide-first sheet was one sheet built for a single reason to
+      open it — `finishFirstRunGuide` always finished by clicking the file
+      picker — so every button that wanted something else on a first run had
+      nowhere correct to send the player. `onGuideThen(intent)` in `App.tsx`
+      remembers which of three reasons opened it: `'pick'` (Analyse a serve),
+      `'record'` (Record now), or `'check'` (Check your framing first, the
+      gap R15 named). Finishing the guide now branches on that — `'check'`
+      bumps `framingNonce`, the same counter `Glance`'s "Record another"
+      already uses to ask the home screen to open its viewfinder, so no new
+      cross-component state was needed; `'pick'` and `'record'` still click
+      the one hidden file input, which now carries `capture="environment"`
+      only for `'record'` rather than a second near-duplicate input.
+
+      Fixing "Record now" cost nothing extra once the mechanism existed and
+      was in the same two files, so it went in too: a first run through it
+      used to land on a generic file browser instead of the phone's camera
+      app, silently, because it funnelled through the same single-destination
+      `finishFirstRunGuide` "Check your framing" did. Both are the identical
+      root cause. The continue button's own label now says which of the three
+      it is about to do — "choose my video" / "open my camera" / "check my
+      framing" — rather than a fixed sentence that was wrong two times out of
+      three.
+
+      Found and deliberately left alone: a file dropped on the dropzone during
+      a first run is discarded rather than carried through the guide, so the
+      player has to find and pick it again afterwards. Same family of bug,
+      genuinely separate fix — it needs holding a `File` across the
+      interstitial rather than redirecting a click — so it is named here and
+      not built, per the one-round rule.
+
+      Verified live, not by inspection: `localStorage` cleared, each of the
+      three buttons dispatched as the *first* tap in a fresh session. All
+      three now open the guide; the continue button reads correctly for each;
+      finishing correctly opens the camera checker for `'check'` (confirmed
+      the hidden file input is never clicked), and correctly carries
+      `capture="environment"` into the click for `'record'` (confirmed at the
+      moment `HTMLInputElement.prototype.click` fires, not merely present in
+      the DOM). Assembled entirely from existing primitives, tokens and
+      copy patterns — no new colour, no restyled surface, per constraint 3.
 - [ ] **R17** — Build the second worst.
 - [ ] **R18** — Can a player find the on-court record route at all? It is the
       best feature in the app and it hides behind a screen most people read as a

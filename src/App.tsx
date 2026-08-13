@@ -183,6 +183,18 @@ export default function App() {
   >(null)
   /** Bumped to ask the home screen to open its viewfinder. See Home's `openFraming`. */
   const [framingNonce, setFramingNonce] = useState(0)
+  /**
+   * Where the first-run guide continues to, once it closes.
+   *
+   * The guide is one sheet shared by three different reasons to open it —
+   * pick a video, record one, or just check the framing — and until this
+   * existed it only ever remembered one of them: `finishFirstRunGuide` always
+   * opened the file picker, whatever the player had actually tapped. A first
+   * run through "Record now" got a generic file browser instead of the
+   * camera, and "Check your framing first" had no route through the guide at
+   * all — seeing R15 in `NEXT.md` for how that surfaced.
+   */
+  const [firstRunIntent, setFirstRunIntent] = useState<'pick' | 'record' | 'check'>('pick')
   const [offlineReady, setOfflineReady] = useState(false)
   const [warming, setWarming] = useState<OfflineWarmup>()
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
@@ -255,13 +267,29 @@ export default function App() {
     setWarming(cached ? undefined : { stage: 'unkept' })
   }, [])
 
-  /** Mark the guide as seen and open the file picker straight after it. */
+  /**
+   * Open the guide, remembering which of the three reasons for opening it
+   * this is — see `firstRunIntent`.
+   */
+  const onGuideThen = useCallback((intent: typeof firstRunIntent) => {
+    setFirstRunIntent(intent)
+    setSheet('guide-first')
+  }, [])
+
+  /** Mark the guide as seen and continue to whichever intent opened it. */
   const finishFirstRunGuide = useCallback(() => {
     setPrefs(writePrefs({ seenFilmingGuide: true }))
     setSheet(null)
-    // After the sheet unmounts, or the click lands on an element being removed.
+    if (firstRunIntent === 'check') {
+      setFramingNonce((n) => n + 1)
+      return
+    }
+    // After the sheet unmounts, or the click lands on an element being
+    // removed. `firstRunPickRef`'s own `capture` attribute already tracks
+    // `firstRunIntent` — see where it is rendered — so the same input opens
+    // a file browser for "pick" and the camera app for "record".
     setTimeout(() => firstRunPickRef.current?.click(), 60)
-  }, [])
+  }, [firstRunIntent])
 
   /**
    * Reload the history, without its keyframe images.
@@ -971,7 +999,7 @@ export default function App() {
             onShowHistory={() => setSheet('history')}
             onShowProgress={() => setSheet('progress')}
             needsFilmingGuide={!prefs.seenFilmingGuide}
-            onGuideThenPick={() => setSheet('guide-first')}
+            onGuideThen={onGuideThen}
             onShowExample={() => void showExample()}
             onMakeOffline={() => void makeOffline()}
             warming={warming}
@@ -1179,14 +1207,26 @@ export default function App() {
           disabled={!prefs.handedness}
         >
           <Icon name="film" size={18} />
-          {prefs.handedness ? 'Got it — choose my video' : 'Pick a hand to continue'}
+          {!prefs.handedness
+            ? 'Pick a hand to continue'
+            : firstRunIntent === 'record'
+              ? 'Got it — open my camera'
+              : firstRunIntent === 'check'
+                ? 'Got it — check my framing'
+                : 'Got it — choose my video'}
         </button>
       </Sheet>
 
+      {/* Shared by "pick" and "record" — `capture` is the only difference
+          between a generic file browser and the phone's camera app, and
+          setting it from `firstRunIntent` here means `finishFirstRunGuide`
+          only has to click one ref rather than choose between two. Absent
+          entirely for "check", which never reaches this input at all. */}
       <input
         ref={firstRunPickRef}
         type="file"
         accept="video/*"
+        capture={firstRunIntent === 'record' ? 'environment' : undefined}
         hidden
         onChange={(e) => {
           const file = e.target.files?.[0]

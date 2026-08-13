@@ -32,8 +32,14 @@ interface Props {
   onShowProgress: () => void
   /** True until the player has been walked through how to film one. */
   needsFilmingGuide: boolean
-  /** Open the guide first, then the picker — the first time only. */
-  onGuideThenPick: () => void
+  /**
+   * Open the guide first, then continue to whichever of the three routes in
+   * asked for it — the first time only. One sheet, three reasons to open it:
+   * picking a file, recording one, or just checking the framing, and each
+   * has to land where it actually said it would rather than all funnelling
+   * into the file picker regardless of which button was pressed.
+   */
+  onGuideThen: (intent: 'pick' | 'record' | 'check') => void
   /** Render a report from a simulated serve, so the app can be seen empty. */
   onShowExample: () => void
   /**
@@ -78,7 +84,7 @@ export default function Home({
   onShowHistory,
   onShowProgress,
   needsFilmingGuide,
-  onGuideThenPick,
+  onGuideThen,
   onShowExample,
   onMakeOffline,
   warming,
@@ -133,7 +139,9 @@ export default function Home({
     setDragging(false)
     const file = e.dataTransfer.files?.[0]
     if (!file) return
-    if (needsFilmingGuide) onGuideThenPick()
+    // The dropped file is not carried through the guide — a first run still
+    // has to pick it again afterwards. Not fixed here; see NEXT.md.
+    if (needsFilmingGuide) onGuideThen('pick')
     else onPick(file)
   }
 
@@ -148,7 +156,7 @@ export default function Home({
       e.preventDefault()
       const file = e.dataTransfer?.files?.[0]
       if (!file) return
-      if (needsFilmingGuide) onGuideThenPick()
+      if (needsFilmingGuide) onGuideThen('pick')
       else onPick(file)
     }
     window.addEventListener('dragover', onDragOver)
@@ -157,7 +165,7 @@ export default function Home({
       window.removeEventListener('dragover', onDragOver)
       window.removeEventListener('drop', onDrop)
     }
-  }, [needsFilmingGuide, onGuideThenPick, onPick])
+  }, [needsFilmingGuide, onGuideThen, onPick])
 
   return (
     <div className="screen home">
@@ -207,7 +215,7 @@ export default function Home({
               link nobody taps until their clip has already been rejected. */}
           <button
             className="btn btn--primary btn--big"
-            onClick={() => (needsFilmingGuide ? onGuideThenPick() : pickRef.current?.click())}
+            onClick={() => (needsFilmingGuide ? onGuideThen('pick') : pickRef.current?.click())}
           >
             <Icon name="film" size={19} />
             Analyse a serve
@@ -215,7 +223,7 @@ export default function Home({
           {coarse && (
             <button
               className="btn btn--ghost btn--big"
-              onClick={() => (needsFilmingGuide ? onGuideThenPick() : recordRef.current?.click())}
+              onClick={() => (needsFilmingGuide ? onGuideThen('record') : recordRef.current?.click())}
             >
               <Icon name="camera" size={19} />
               Record now
@@ -266,7 +274,10 @@ export default function Home({
           they had finished filming. Offered rather than imposed: it sits below
           both ways in, and both still work without ever opening it. */}
       {canPreview && (
-        <button className="strap" onClick={() => setChecking(true)}>
+        <button
+          className="strap"
+          onClick={() => (needsFilmingGuide ? onGuideThen('check') : setChecking(true))}
+        >
           <Icon name="camera" size={17} />
           <span>
             <strong>Check your framing first</strong>

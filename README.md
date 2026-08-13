@@ -607,6 +607,20 @@ unreadable more often than not — a real cost in lost readings, measured and
 tracked rather than fixed, because the two fixes tried each helped one camera
 angle and made another worse.
 
+**The first-run guide is one sheet with three reasons to open it, and it has to
+remember which.** Analyse a serve, Record now and Check your framing first are
+three different destinations after the four filming rules and the hand
+question — a file picker, the phone's camera app, and the live viewfinder —
+and until this was named as `firstRunIntent` the guide only ever knew one of
+them: finishing it always opened the file picker, whatever had actually been
+tapped. A first run through Check your framing first had no route through the
+guide at all and skipped it entirely; a first run through Record now landed on
+a generic file browser instead of the camera. Both are the same root cause,
+fixed once: the continue button reads which of the three it is about to do,
+and finishing branches on it — reusing the same `framingNonce` counter
+`Glance`'s "Record another" already bumps to open the viewfinder, rather than
+inventing a second way to ask for it.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm
