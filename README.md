@@ -158,7 +158,17 @@ never pressed, which made the app's own argument — that the gap between your
 best serve and your worst one matters more than the average — something it
 stated and did not act on. One serve tells you about that serve; several tell you
 about the technique, and for a club player the gap between the best and worst
-serve is usually a bigger problem than the average. Each element is scored on
+serve is usually a bigger problem than the average.
+
+**And which serve was the good one.** The spread rows say how far each element
+travelled and say it anonymously — "struck below full reach → struck at full
+racket reach" is true of the basket and names neither serve. A player standing
+on a court can count their serves, so the panel now names both: the best and the
+worst by the same score already on the chips, and the three measurements where
+they differed. Only differences big enough to be said in different words are
+printed. Two serves can differ by a real number of degrees and both read "arm
+dead straight", and pointing at that pair would be pointing at something the
+player cannot see in their own clip. Each element is scored on
 how little it moved relative to its own target band, ordered worst first. The
 headline score leans on the least repeatable elements rather than the flat
 average — a serve is a chain, and one toss that wanders ruins it however steady

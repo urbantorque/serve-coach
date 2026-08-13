@@ -96,10 +96,19 @@ product does not behave as though it believes that.
       report. What is at the top is `consistencyHeadline` as one sentence beside
       the serve picker, which says which element moved without displacing the
       fix. Say the word and the whole panel moves up.
-- [ ] **2b** — Best-serve versus worst-serve: the six keyframe stills of each,
-      paired position by position. Stills already carry the skeleton and the
-      judged angle and are already stored, so this is layout over existing data.
-      Say what differed in words, through `analysis/anatomy.ts` readouts.
+- [x] **2b-i** — Best-serve versus worst-serve, in words. `buildGap` in
+      `consistency.ts` names both serves by their number in the clip, picked on
+      the `overall` the chips already show, and ranks every measurement by how
+      far apart the two were as a multiple of its own band. `ConsistencyPanel`
+      prints the three biggest that read back as *different words* through
+      `anatomy.ts` — two serves that differ by real degrees and both read "arm
+      dead straight" are not a difference a player can act on.
+- [ ] **2b-ii** — The stills. **The brief's premise was wrong**: the sweep runs
+      with `skipThumbnails: true`, so swept serves carry no keyframe images at
+      all and only the serve on screen has them. Pairing the six positions
+      therefore needs the two named serves re-analysed through the normal path
+      (which does capture stills and does cache them), on an explicit tap, at
+      roughly two video passes. Degrade to 2b-i when they cannot be produced.
 - [ ] **2c** — Route the consistency result into the practice focus, so
       `practice.ts` can say "your toss is fine on average and moves more than
       anything else you do".

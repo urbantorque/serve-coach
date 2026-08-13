@@ -22,6 +22,46 @@ export interface MetricSpread {
   range: [number, number]
 }
 
+/**
+ * One measurement, on the best serve and on the worst one.
+ *
+ * `size` is the gap divided by the width of the metric's own target band, which
+ * is what makes a joint angle in degrees and a height in body-heights sortable
+ * against each other — the same normalisation `volatility` already uses, for the
+ * same reason.
+ */
+export interface ServeDifference {
+  id: string
+  label: string
+  bestValue: number
+  worstValue: number
+  /** How far apart they were, as a multiple of the target band's width. */
+  size: number
+}
+
+/**
+ * The best serve in the basket against the worst one.
+ *
+ * The spread rows say how far each element travelled and say it anonymously:
+ * "struck below full reach → struck at full racket reach" is true of the basket
+ * and names neither serve. A player standing on a court can count their serves,
+ * and the question they actually have is which one was the good one and what
+ * they did differently on it. Both ends of every row are already known per
+ * serve; nothing here is a new measurement, only an attribution.
+ *
+ * Absent when there is nothing to attribute — every serve scoring the same means
+ * there is no better one to point at.
+ */
+export interface ServeGap {
+  /** One-based serve numbers, matching the chips. */
+  best: number
+  worst: number
+  bestScore: number
+  worstScore: number
+  /** Every measurement, ranked by how far apart the two serves were. */
+  differences: ServeDifference[]
+}
+
 export interface Consistency {
   /** Number of serves that were successfully measured. */
   serves: number
@@ -40,6 +80,8 @@ export interface Consistency {
   weakest?: MetricSpread
   /** The steadiest element, so the report has something to stand on. */
   steadiest?: MetricSpread
+  /** The best serve against the worst one. Absent when they scored the same. */
+  gap?: ServeGap
   score: number
   status: Status
   /**
@@ -149,18 +191,82 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
   const worstTwo = ranked.slice(0, 2).map((m) => m.score)
   const score = Math.round(0.4 * mean(metrics.map((m) => m.score)) + 0.6 * mean(worstTwo))
 
+  const overallScores = analyses.map((a) => a.overall)
+  const serveNumbers = analyses.map((a, i) => (a.serves?.index ?? i) + 1)
+
   return {
     serves: analyses.length,
-    overallScores: analyses.map((a) => a.overall),
+    overallScores,
     // Falls back to the position when a caller hands over analyses assembled by
     // hand — the tests do — rather than reading through a `serves` that is not there.
-    serveNumbers: analyses.map((a, i) => (a.serves?.index ?? i) + 1),
+    serveNumbers,
     metrics: ranked,
     weakest: ranked[0],
     steadiest: ranked[ranked.length - 1],
+    gap: buildGap(metrics, overallScores, serveNumbers),
     score,
     status: statusOf(score),
     skipped: Math.max(0, attempted - analyses.length),
+  }
+}
+
+/**
+ * Which serve was the good one, and what was different about it.
+ *
+ * Picked on `overall`, which is the number already on the chips — a "best serve"
+ * chosen on some other footing than the one the player can read off the screen
+ * is the panel disagreeing with itself.
+ *
+ * Ties go to the earlier serve for best and the later one for worst, so the pair
+ * is stable rather than depending on which way the array happened to be walked.
+ * Identical scores throughout produce nothing at all: there is no better serve
+ * to point at, and inventing one out of a rounding difference would send the
+ * player looking for a difference that is not there.
+ *
+ * The differences are ranked and not cut. Which of them is worth printing
+ * depends on whether the two readings are far enough apart to be said in
+ * different words, and the vocabulary that decides that belongs to whatever is
+ * doing the saying.
+ */
+function buildGap(
+  metrics: MetricSpread[],
+  overallScores: number[],
+  serveNumbers: number[],
+): ServeGap | undefined {
+  if (overallScores.length < MIN_COMPARABLE_SERVES) return undefined
+
+  let bestAt = 0
+  let worstAt = 0
+  for (let i = 1; i < overallScores.length; i++) {
+    if (overallScores[i] > overallScores[bestAt]) bestAt = i
+    if (overallScores[i] <= overallScores[worstAt]) worstAt = i
+  }
+  // On the scores, not on the indices. Every serve scoring the same still walks
+  // out of that loop with two different positions — best stays at the first and
+  // worst slides to the last — so an index comparison called serve one better
+  // than serve three on identical numbers, and the panel would then have printed
+  // whichever measurements happened to differ under a heading claiming one of
+  // them was the good serve.
+  if (overallScores[bestAt] === overallScores[worstAt]) return undefined
+
+  const differences: ServeDifference[] = metrics
+    .map((m) => ({
+      id: m.id,
+      label: m.label,
+      bestValue: m.values[bestAt],
+      worstValue: m.values[worstAt],
+      size:
+        Math.abs(m.values[bestAt] - m.values[worstAt]) /
+        Math.max(1e-9, Math.abs(m.ideal[1] - m.ideal[0])),
+    }))
+    .sort((a, b) => b.size - a.size)
+
+  return {
+    best: serveNumbers[bestAt] ?? bestAt + 1,
+    worst: serveNumbers[worstAt] ?? worstAt + 1,
+    bestScore: overallScores[bestAt],
+    worstScore: overallScores[worstAt],
+    differences,
   }
 }
 

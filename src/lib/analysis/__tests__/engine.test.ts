@@ -1153,6 +1153,73 @@ check('each serve is labelled by its number in the clip, not its place in the li
   )
 })
 
+/* ------------------------------------------------ best against worst ---- */
+
+/** A basket where the overall score of each serve is dictated rather than measured. */
+function scored(pairs: { overall: number; dials?: Partial<ServeDials>; index?: number }[]) {
+  const analyses = pairs.map(({ overall, dials, index }, i) => {
+    const { fundamentals } = run(dials ?? {})
+    return {
+      fundamentals,
+      overall,
+      serves: { count: pairs.length, index: index ?? i },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  return buildConsistency(analyses, pairs.length)
+}
+
+check('the best and worst serve are named by their number in the clip', () => {
+  // Picked on `overall`, which is the number already on the chips. A best serve
+  // chosen on any other footing is the panel disagreeing with its own display.
+  const c = scored([{ overall: 61 }, { overall: 78 }, { overall: 55 }])
+  assert(c!.gap !== undefined, 'no best-against-worst produced from three different scores')
+  assert(c!.gap!.best === 2, `named serve ${c!.gap!.best} as the best, expected 2`)
+  assert(c!.gap!.worst === 3, `named serve ${c!.gap!.worst} as the worst, expected 3`)
+  assert(c!.gap!.bestScore === 78 && c!.gap!.worstScore === 55, 'carried the wrong scores')
+})
+
+check('serves that all scored the same have no better one to point at', () => {
+  // The alternative is naming a best serve out of a tie, which sends the player
+  // looking for a difference nothing measured.
+  const c = scored([{ overall: 70 }, { overall: 70 }, { overall: 70 }])
+  assert(c!.gap === undefined, 'invented a best serve out of three identical scores')
+})
+
+check('the differences are ranked by how far apart the two serves were', () => {
+  // Normalised by each metric's own band width, or degrees and body-heights
+  // cannot be ranked against each other at all — a 9° knee difference and a
+  // 0.09× height difference would sort by which unit happened to be bigger.
+  const c = scored([
+    { overall: 80, dials: { contactReach: 1.2 } },
+    { overall: 50, dials: { contactReach: 1.45 } },
+  ])
+  const d = c!.gap!.differences
+  assert(d.length > 0, 'no differences reported between two clearly different serves')
+  for (let i = 1; i < d.length; i++) {
+    assert(d[i - 1].size >= d[i].size, `differences out of order at ${d[i].id}`)
+  }
+  assert(
+    d[0].id === 'contactHeight',
+    `ranked ${d[0].id} above contact height, which was the dial that moved`,
+  )
+  assert(
+    d[0].bestValue !== d[0].worstValue,
+    'the top difference reports the same value on both serves',
+  )
+})
+
+check('every measurement is offered, and the cutting is left to whoever prints it', () => {
+  // The panel drops any pair that reads back as the same words, which is a
+  // question about vocabulary rather than about measurement. If this list
+  // arrived pre-cut, the two halves of the panel would be filtering on
+  // different rules.
+  const c = scored([{ overall: 80 }, { overall: 50 }])
+  assert(
+    c!.gap!.differences.length === c!.metrics.length,
+    `offered ${c!.gap!.differences.length} of ${c!.metrics.length} measurements`,
+  )
+})
+
 /* --------------------------------------------------- sweeping a basket ---- */
 
 /*

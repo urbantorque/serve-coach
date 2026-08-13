@@ -313,6 +313,79 @@
   color: var(--fg-faint);
 }
 
+/* The best serve against the worst one. Sits between the chips it names and the
+   spread rows it is drawn from, so the reading order is: here are your serves,
+   here are the two worth comparing, here is every element's travel. */
+.best-worst {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.best-worst-lead {
+  margin: 0;
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.best-worst-lead strong {
+  color: var(--fg);
+  font-weight: 640;
+}
+
+.best-worst-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.best-worst-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.best-worst-metric {
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+
+/* Wraps rather than sitting in two columns: the readouts are sentences of
+   unpredictable length ("Racket jammed on the back"), and a two-column grid put
+   one of them on three lines beside a one-line neighbour. */
+.best-worst-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 13px;
+  line-height: var(--lh-snug);
+}
+
+/* The better serve carries the accent and the worse one is plain, rather than
+   the pair being scored green against red. Both are the same player on the same
+   day, and one of them is the thing to repeat. */
+.best-worst-good {
+  color: var(--good);
+}
+
+.best-worst-bad {
+  color: var(--fg-muted);
+}
+
+.best-worst-none {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
 .spreads {
   display: flex;
   flex-direction: column;

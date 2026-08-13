@@ -1,5 +1,10 @@
 import { readoutOf } from '../lib/analysis/anatomy'
-import { consistencyHeadline, type Consistency, type MetricSpread } from '../lib/analysis/consistency'
+import {
+  consistencyHeadline,
+  type Consistency,
+  type MetricSpread,
+  type ServeGap,
+} from '../lib/analysis/consistency'
 
 /**
  * How far each measurement travelled across the basket.
@@ -53,6 +58,67 @@ function SpreadRow({ m }: { m: MetricSpread }) {
   )
 }
 
+/**
+ * How many differences between the best and worst serve are worth printing.
+ *
+ * Three. The list is here to answer "what did I do differently on the good one",
+ * and a player who has just come off court can hold three things. Ranked
+ * worst-first by `size`, so the three are the three biggest.
+ */
+const MAX_DIFFERENCES = 3
+
+/**
+ * The best serve against the worst one, in body language.
+ *
+ * Only differences big enough to be said in different words survive. Two serves
+ * can differ by a real number of degrees and still both read "arm dead straight"
+ * — printing that pair would be the panel pointing at a difference the player
+ * cannot see, act on, or verify by watching their own clip. `readoutOf` is the
+ * same vocabulary the spread rows above use, so the two halves of the panel
+ * cannot describe one serve in two different ways.
+ */
+function BestAgainstWorst({ gap }: { gap: ServeGap }) {
+  const said = gap.differences
+    .map((d) => ({ ...d, best: readoutOf(d.id, d.bestValue), worst: readoutOf(d.id, d.worstValue) }))
+    .filter((d) => d.best && d.worst && d.best !== d.worst)
+    .slice(0, MAX_DIFFERENCES)
+
+  return (
+    <div className="best-worst">
+      <span className="t-overline consistency-label">Your best serve against your worst</span>
+
+      <p className="best-worst-lead">
+        Serve <strong>#{gap.best}</strong> scored <strong className="tnum">{gap.bestScore}</strong>.
+        Serve <strong>#{gap.worst}</strong> scored <strong className="tnum">{gap.worstScore}</strong>.
+      </p>
+
+      {said.length > 0 ? (
+        <ul className="best-worst-list">
+          {said.map((d) => (
+            <li key={d.id}>
+              <span className="best-worst-metric">{d.label}</span>
+              <span className="best-worst-pair">
+                <span className="best-worst-good">#{gap.best}: {d.best}</span>
+                <span className="best-worst-bad">#{gap.worst}: {d.worst}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        /* Worth saying rather than leaving blank. Two serves that score
+           differently and do the same measurable things did something this app
+           does not measure — where the ball went, most likely — and a player
+           who can see the scores differ deserves to be told that rather than
+           left to assume the list failed to load. */
+        <p className="best-worst-none">
+          Those two serves did the same things, as far as this can see. The difference is
+          somewhere it does not measure.
+        </p>
+      )}
+    </div>
+  )
+}
+
 interface Props {
   consistency: Consistency
   onDismiss: () => void
@@ -100,6 +166,8 @@ export default function ConsistencyPanel({ consistency: c, onDismiss }: Props) {
           ))}
         </div>
       </div>
+
+      {c.gap && <BestAgainstWorst gap={c.gap} />}
 
       <ul className="spreads">
         {c.metrics.map((m) => (
