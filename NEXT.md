@@ -64,9 +64,20 @@ where the state machine hiding in `App.tsx` gets a name.
       an analysis are unreachable from script, so a split would be arithmetic
       dressed as evidence. If a device reading ever exists it becomes the smaller
       of the two and that reasoning gets deleted rather than qualified.
-- [ ] **R4** — Is the heap flat across ten consecutive analyses? Object URLs,
-      canvases, the landmarker, `MediaRecorder` chunks, the paired stills held in
-      App state. Deliverable: the leak, or the proof there is none.
+- [x] **R4** — Flat, on the ten consecutive real analyses this repo can produce
+      without real footage: a blank clip pushed through `analyzeServe` ten times
+      in a running browser, using the pipeline's own decoder, object URLs and
+      landmarker — `src/dev/leakProbe.ts`. The JS heap oscillated in a 0.66 MB
+      band across the ten runs with no upward trend (24.3 → 22.1 MB on the first
+      run as start-up buffers freed, then 22.1–22.8 MB for the rest). The
+      analysis cache's LRU bound was already covered by `robustness.test.ts`. Two
+      of the four named suspects — `captureThumbnails` and `findBall`, the other
+      two canvas users in the pipeline — never run on a clip with no player in
+      it, so this does not cover them; that needs a clip a serve can be found in,
+      which is the same block the fixture shoot and the court trip are already
+      waiting on. `MediaRecorder` chunks are a local array dropped when the
+      recording function returns, which is inspection rather than measurement —
+      nothing in this repo can record one to check.
 - [ ] **R5** — What does one stored report actually cost? Stills are JPEG at
       0.72; `KEEP_STILLS = 20`, `KEEP_STILLS_UNDER_PRESSURE = 3`. Deliverable:
       the real byte cost, and a test that drives the pressure ladder rather than

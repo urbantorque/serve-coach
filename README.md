@@ -708,6 +708,18 @@ and shoulder tilt are computed almost entirely from world-space `z`, which the
 rig models as exact and MediaPipe emphatically does not, so those two are
 unvalidated against anything real until it is not.
 
+**Is the heap flat across repeated analyses?** Object URLs, the extraction
+canvases, the pose landmarker and `MediaRecorder`'s chunk buffer are all real
+browser objects a Node test cannot see. `src/dev/leakProbe.ts` pushes a blank
+recorded clip through the real `analyzeServe` pipeline ten times in a row in a
+running browser — same decoder, same object URL lifecycle, same landmarker a
+real serve uses — and reads the JS heap between each. Run across ten analyses it
+oscillated in a 0.66 MB band with no upward trend, after an initial drop as
+start-up buffers freed. It cannot reach `captureThumbnails` or `findBall`,
+because both need a serve the pipeline actually finds, and a blank clip is
+refused before either runs — the same missing-real-footage block the fixture
+shoot and the court trip are already waiting on.
+
 During development, `?demo` renders a report from a simulated serve,
 `?demo=live` also mounts the player, `?demo=basket` shows the consistency
 comparison, and `?demo=glance` and `?demo=glance-refused` show the two halves of
