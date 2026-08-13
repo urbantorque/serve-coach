@@ -42,6 +42,7 @@ import { requestPersistence } from './lib/storage/backup'
 import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage/prefs'
 import { sessionKeyFor } from './lib/storage/sessionKey'
 import Analyzing, { type SweepProgress } from './screens/Analyzing'
+import Glance from './screens/Glance'
 import Home, { type OfflineWarmup } from './screens/Home'
 import Report from './screens/Report'
 
@@ -49,6 +50,15 @@ type View =
   | { kind: 'home' }
   | { kind: 'analyzing'; fileName: string }
   | { kind: 'report'; analysis: Analysis; videoUrl: string }
+  /**
+   * The same analysis, said in one number and one line.
+   *
+   * Only ever reached from a clip recorded inside the app, because that is the
+   * only route where the player is demonstrably still on a court holding a
+   * phone. A file picked from the camera roll is somebody sitting down with
+   * their serve, and the report is the right screen for that.
+   */
+  | { kind: 'glance'; analysis: Analysis; videoUrl: string }
   | { kind: 'saved'; session: Session }
   | { kind: 'error'; title: string; hints: string[]; capture?: FailedCapture; fileName?: string }
 
@@ -119,6 +129,8 @@ export default function App() {
   const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
   const [sessions, setSessions] = useState<Session[]>([])
   const [sheet, setSheet] = useState<'guide' | 'guide-first' | 'history' | 'progress' | null>(null)
+  /** Bumped to ask the home screen to open its viewfinder. See Home's `openFraming`. */
+  const [framingNonce, setFramingNonce] = useState(0)
   const [offlineReady, setOfflineReady] = useState(false)
   const [warming, setWarming] = useState<OfflineWarmup>()
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
@@ -344,6 +356,22 @@ export default function App() {
             }
           }
           setView({ kind: 'report', analysis: fitted, videoUrl: url })
+        } else if (demo === 'glance') {
+          // The between-serves screen, which is otherwise only reachable by
+          // recording a serve on a device with a camera — and no camera has
+          // ever pointed at this code. `?demo=glance-refused` is the other half:
+          // a clip the engine threw out, which is the branch that must never
+          // show a score.
+          setView({ kind: 'glance', analysis, videoUrl: '' })
+        } else if (demo === 'glance-refused') {
+          setView({
+            kind: 'glance',
+            analysis: {
+              ...analysis,
+              triage: { ...analysis.triage, status: 'rejected', reason: 'too_few_frames' },
+            } as Analysis,
+            videoUrl: '',
+          })
         } else {
           const { frames: _f, ...session } = analysis
           void _f
@@ -691,7 +719,17 @@ export default function App() {
    * a sweep the player stopped, and a report reached by any other route.
    */
   const openClip = useCallback(
-    async (file: File) => {
+    async (
+      file: File,
+      /**
+       * Land on the glance rather than the report.
+       *
+       * Set only by the in-app recorder. It is the one entry point that knows
+       * the player is on a court rather than on a sofa, and guessing that from
+       * anything else — the file's age, its name — would be guessing.
+       */
+      glance = false,
+    ) => {
       // Positional `undefined` so the defaults on `run` still apply — restating
       // them here would be two places to change the day one of them moves.
       const analysis = await run(file, undefined, undefined, undefined, 'sweep')
@@ -701,13 +739,23 @@ export default function App() {
       // screen has no way out on its own. Every path below this line has to
       // either start the sweep or put the report up.
       const show = () => {
-        if (urlRef.current) setView({ kind: 'report', analysis, videoUrl: urlRef.current })
+        if (!urlRef.current) return
+        setView({ kind: glance ? 'glance' : 'report', analysis, videoUrl: urlRef.current })
       }
 
       // The same two things `compareServes` needs before it will do anything.
       // Asked here as well, because it returns quietly when they are missing and
       // the screen it would have been leaving is a progress bar that never ends.
-      if (analysis.serves.count > 1 && lastFileRef.current && urlRef.current) {
+      /*
+       * A basket recorded on court is still glanced at, not swept.
+       *
+       * The sweep is a video pass per serve — twenty-five seconds on a full
+       * basket — and spending that while somebody is standing on a baseline is
+       * the opposite of what this route is for. The comparison is for sitting
+       * down with the clip afterwards, and the button for it is still on the
+       * report one tap away.
+       */
+      if (!glance && analysis.serves.count > 1 && lastFileRef.current && urlRef.current) {
         await compareServes(analysis)
         return
       }
@@ -762,6 +810,8 @@ export default function App() {
             sessions={sessions}
             offlineReady={offlineReady}
             onPick={(f) => void openClip(f)}
+            onRecorded={(f) => void openClip(f, true)}
+            openFraming={framingNonce}
             onOpen={openSaved}
             onShowGuide={() => setSheet('guide')}
             onShowHistory={() => setSheet('history')}
@@ -780,6 +830,23 @@ export default function App() {
             fileName={view.fileName}
             sweep={sweep}
             onCancel={sweep ? stopSweep : cancel}
+          />
+        )}
+
+        {view.kind === 'glance' && (
+          <Glance
+            analysis={view.analysis}
+            onBack={goHome}
+            // Home owns the viewfinder sheet, so going back and reopening it is
+            // the honest route — and it releases this clip's object URL on the
+            // way, which a second recording would otherwise leak.
+            onRecordAnother={() => {
+              goHome()
+              setFramingNonce((n) => n + 1)
+            }}
+            onOpenReport={() =>
+              setView({ kind: 'report', analysis: view.analysis, videoUrl: view.videoUrl })
+            }
           />
         )}
 

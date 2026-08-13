@@ -175,3 +175,85 @@
   line-height: 1.6;
   color: var(--fg-faint);
 }
+
+/* ============================================================================
+   The glance — one number and one line, read from a phone on a fence
+   ==========================================================================*/
+
+/* Centred and vertically settled, unlike the report, which is a document to be
+   scrolled. This is a screen somebody looks up at, reads, and leaves. */
+.glance {
+  min-height: 82svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.glance-top {
+  display: flex;
+  padding-bottom: 4px;
+}
+
+.glance-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.glance-mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--fair-dim);
+  color: var(--fair);
+}
+
+/* Wider than the report's measure. There are only two lines on this screen and
+   no column of cards beside them to keep them honest about width. */
+.glance-fix {
+  margin: 2px 0 0;
+  max-width: 20ch;
+}
+
+.glance-why {
+  margin: 0;
+  max-width: 30ch;
+  font-size: 14.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.glance-hints {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 32ch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.glance-serves {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--fg-faint);
+}
+
+/* Pinned to the bottom, thumb-height, because the next action is nearly always
+   "record another" and it is taken one-handed while holding a racket. */
+.glance-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding-top: 20px;
+}

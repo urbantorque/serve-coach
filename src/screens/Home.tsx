@@ -11,6 +11,21 @@ interface Props {
   sessions: Session[]
   offlineReady: boolean
   onPick: (file: File) => void
+  /**
+   * A clip recorded inside the app, which is a different claim from a picked
+   * one: the player is demonstrably still on a court.
+   */
+  onRecorded?: (file: File) => void
+  /**
+   * Bumped to ask for the viewfinder to open on arrival.
+   *
+   * A counter rather than a boolean, because the request is "open it now" and
+   * that has to be distinguishable from the last time it was asked — a boolean
+   * would need clearing, and a caller that forgot would reopen the camera every
+   * time this screen rendered. Zero is never a request, so the home screen does
+   * not open a camera on first load.
+   */
+  openFraming?: number
   onOpen: (session: Session) => void
   onShowGuide: () => void
   onShowHistory: () => void
@@ -56,6 +71,8 @@ export default function Home({
   sessions,
   offlineReady,
   onPick,
+  onRecorded,
+  openFraming = 0,
   onOpen,
   onShowGuide,
   onShowHistory,
@@ -88,6 +105,13 @@ export default function Home({
   // a device that cannot change its pointer while the page is open.
   const coarse = useMemo(coarsePointer, [])
   const [checking, setChecking] = useState(false)
+
+  // Asked for by the glance screen's "Record another", which is the loop this
+  // whole route exists for: record, glance, record. Guarded on zero so the
+  // first render of the home screen never opens a camera nobody asked for.
+  useEffect(() => {
+    if (openFraming > 0) setChecking(true)
+  }, [openFraming])
   // Whether a live preview is possible at all. Asked once, for the same reason
   // as the pointer above, and a page served over plain http has no camera API to
   // find — so on those the offer is simply not made rather than made and broken.
@@ -397,10 +421,13 @@ export default function Home({
             the same device for the GPU — and so the player is not left looking
             at a viewfinder while the screen behind it starts working. */}
         <FramingCheck
-          onRecorded={(file) => {
-            setChecking(false)
-            onPick(file)
-          }}
+          onRecorded={
+            onRecorded &&
+            ((file) => {
+              setChecking(false)
+              onRecorded(file)
+            })
+          }
         />
       </Sheet>
     </div>

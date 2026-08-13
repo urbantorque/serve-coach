@@ -209,6 +209,24 @@ stills are all that outlives a session — which is why the skeleton and the ang
 each position is judged on are drawn onto them at capture time, rather than only
 existing in the live player.
 
+**Record it here, and glance at it between serves.** The viewfinder that checks
+your framing can also record, off the same stream it is already watching, where
+the browser will record something the app can then read back. The loop it
+replaces was minutes long — film in the camera app, stop, leave it, find the clip
+in the picker — and every step of that is spent not serving.
+
+A clip recorded that way lands on a glance rather than the report: the score, the
+one thing to change, and a button back to the viewfinder. The report is the right
+screen for somebody sitting down with their serve and the wrong one for somebody
+holding a basket of balls, and it is one tap away. The glance runs no analysis of
+its own and ranks nothing differently — it is the same report with less of it said
+at once — and a clip the engine could not read gets the refusal with no score
+attached, because there is no room here for the caveats the report carries.
+
+The pose model stops while recording. The player has stopped aiming and started
+serving, so there is no verdict left to read, and a hardware encoder is running on
+the same stream thirty seconds before the analysis needs the GPU.
+
 **Save or share a report.** One button renders the score, the thing to work on,
 the five areas and the annotated keyframes into a single image, and hands it to
 the share sheet or saves it. That is the only way anything leaves the app, and it

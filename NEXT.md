@@ -181,10 +181,20 @@ the loop is: film, walk over, pick the file, wait, read.
       access, so what was checked is the refusal path (correct cue, and no
       record button on it) and the eleven unit tests behind the choosing.
       Nothing in this repo has yet recorded a frame.
-- [ ] **4b** — Auto-trim to the detected serve, reusing `analysis/serves.ts`
-      rather than writing a second detector.
-- [ ] **4c** — A between-serves glance: one line, one number, no report. When
-      the clip cannot carry an answer it says so rather than guessing.
+- [x] **4b** — **Nothing to build, and the reason is worth keeping.** The brief
+      assumed a long recording costs more to analyse. It does not: `planScan`
+      spends a fixed budget however long the clip is, and extraction covers only
+      a couple of seconds around the serve, so a ninety-second recording costs
+      the same locate as a five-second one. Trimming the file would mean
+      re-encoding — expensive, lossy — to save bytes in a file that is never
+      stored. The detector already does what trimming was for.
+- [x] **4c** — `screens/Glance.tsx`. One number, one line, two buttons, and a
+      recorded basket is glanced at rather than swept, because twenty-five
+      seconds of sweep while somebody stands on a baseline is the opposite of
+      what this route is for. Runs no analysis of its own — same `Analysis`,
+      same `causalPlan` the report ranks with, so there is no second opinion
+      about the serve. A refused clip gets the refusal and **no score**.
+      Verified via `?demo=glance` and `?demo=glance-refused`.
 - [x] **4d** — Done inside 4a rather than after it. The pose loop stops dead
       while recording: the player has stopped aiming and started serving, so the
       verdict has no reader, and it is the worst moment in the app to spend
