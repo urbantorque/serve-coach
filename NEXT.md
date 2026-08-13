@@ -138,9 +138,50 @@ phase's entries and drops the working notes underneath them.
       latitude covers a sentence. Verified live: the new copy renders in
       full inside the history sheet with the seeded sessions still present,
       nothing truncated, nothing broken.
-- [ ] **R25** — Is a session a thing the app knows about? Reports are keyed per
-      serve; a trip to the court is not represented anywhere. Deliverable: the
-      answer, and whether it earns a type.
+- [x] **R25** — Read `db.ts`'s `Session` type and `sessionKey.ts` before
+      assuming the answer was no. It was not: `sessionKeyFor`/`clipIdOf`
+      already group serves by *clip* — which basket a serve came from — and
+      `progress.ts`'s `thenAndNow` already refuses to compare two reports
+      filed minutes apart, in a comment that says "the same trip to the
+      court" outright. The concept was never missing. It was unnamed: a
+      24-hour threshold, `MIN_THEN_AND_NOW_GAP_MS`, written inline into the
+      one function that needed it, untested on its own, and not something a
+      second caller could reuse without reading that function's comment and
+      reconstructing the comparison by hand.
+
+      Named rather than built: `sameTrip(a, b, gapMs)` in `progress.ts`,
+      `thenAndNow` rewritten to call it. No behaviour changed — the same
+      24-hour threshold, the same strict comparison at the boundary — only
+      the concept now has a signature instead of living inside one
+      function's control flow. Deliberately not a stored `Trip` type: no
+      feature asked to persist a trip, reference one by id, or query "every
+      trip in the last month" — clipIdOf earned its extraction because
+      `progress.ts` and `consistency.ts` both needed to collapse by clip
+      already, and nothing here shows the same double demand for a
+      persisted visit. A type earned by two callers is a real
+      abstraction; a type earned by zero is a guess at a future one, which
+      is exactly what this programme's own rule against premature structure
+      says to leave alone.
+
+      Found and named, not fixed: `findPracticeFocus`'s window
+      (`PRACTICE_WINDOW = 5`) counts sessions, not trips. Its own doc
+      comment says the point is catching "the thing that is *still* wrong
+      three weeks later" rather than a single day's noise — but a player
+      who records six serves in one sitting through the coached live
+      preview R18 just made the default mobile path fills that entire
+      window with one trip, and the recommendation becomes about that
+      sitting's variance rather than what persists across visits. Real, and
+      out of scope here: R25 asked whether the concept existed and whether
+      it needed a type, not to redefine what a practice window counts —
+      changing that changes `PracticeFocus.sessionsConsidered`'s meaning
+      everywhere it is printed, which is its own round.
+
+      Pinned with nine tests in the new `lib/__tests__/progress.test.ts` —
+      the first either `sameTrip` or `thenAndNow` has had: the boundary
+      itself (exactly the threshold apart reads as a different trip, not
+      the same one), argument order not mattering, a custom gap being
+      honoured, and `thenAndNow` choosing the true oldest and newest rather
+      than two reports in the middle.
 - [ ] **R26** — A milestone that is not a badge. Deliverable: something worth
       telling somebody after six weeks that survives the no-gamification rule.
 - [ ] **R27** — What brings somebody back on Thursday? "Then, and now" exists and

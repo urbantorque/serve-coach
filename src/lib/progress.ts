@@ -433,7 +433,7 @@ export function thenAndNow(
   // are the same trip to the court — a player correcting the handedness and
   // re-reading the same clip would otherwise be shown their serve against
   // itself, and an hour's variation would be printed as progress.
-  if (now.createdAt - then.createdAt < MIN_THEN_AND_NOW_GAP_MS) return undefined
+  if (sameTrip(then, now)) return undefined
   return { then, now }
 }
 
@@ -445,6 +445,21 @@ export function thenAndNow(
  * heading about progress would be calling an hour's variation improvement.
  */
 export const MIN_THEN_AND_NOW_GAP_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Whether two serves happened on the same trip to the court.
+ *
+ * Not a stored concept — there is no `Trip` row anywhere, and nothing in this
+ * codebase persists one. It is a threshold on `createdAt`, used exactly once
+ * before this was given a name: `thenAndNow` needed to know that a report
+ * filed minutes after another is not a "then" for it, and wrote the check
+ * inline. Named here so the concept is one definition rather than a magic
+ * comparison a second caller would have to reconstruct correctly by reading
+ * this comment rather than a function signature.
+ */
+export function sameTrip(a: Session, b: Session, gapMs = MIN_THEN_AND_NOW_GAP_MS): boolean {
+  return Math.abs(a.createdAt - b.createdAt) < gapMs
+}
 
 export const MEANINGFUL_DELTA = 3
 

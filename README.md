@@ -821,6 +821,29 @@ concrete, platform-agnostic ways to move a file and where it lands on the
 other end — one sentence longer, zero new UI, the same `sheet-note` class
 the old copy already used.
 
+**A trip to the court was never missing, only unnamed.** `progress.ts`'s
+`thenAndNow` has refused to compare two reports filed minutes apart since it
+was written, in a comment that already says "the same trip to the court" —
+a 24-hour threshold, `MIN_THEN_AND_NOW_GAP_MS`, living inline in the one
+function that needed it, untested on its own. `sameTrip(a, b, gapMs)` gives
+that comparison a name and a signature instead of a comment a second caller
+would have had to read and reconstruct by hand. No behaviour changed and no
+new persisted type was built: nothing in this codebase asks to store a trip,
+reference one by id, or query every trip in a date range, which is the
+difference between `clipIdOf` (extracted because two callers, `progress.ts`
+and `consistency.ts`, both already needed to collapse by clip) and a `Trip`
+row (which nothing yet asks for). Naming the concept surfaced a real, if
+separate, cost of not having reckoned with it sooner: `findPracticeFocus`'s
+`PRACTICE_WINDOW = 5` counts sessions, not trips, so a player who records
+several serves in one sitting through the coached live preview — the
+default mobile path since R18 — can fill that entire window with one
+visit's own variance rather than the cross-visit persistence the feature's
+own doc comment says it exists to catch. Named in `NEXT.md` for a future
+round rather than fixed here: redefining what the window counts changes
+`PracticeFocus.sessionsConsidered`'s meaning everywhere it is printed, and
+this round asked whether the concept existed, not to redesign the
+recommendation it was found inside.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm
