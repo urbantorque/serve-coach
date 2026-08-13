@@ -362,6 +362,29 @@
   text-wrap: pretty;
 }
 
+/* The drill tick, and what it has recorded.
+   Ghost, never accent: this is evidence being filed, not an achievement. An app
+   that celebrates the tap is asking to be tapped, and the record is only worth
+   keeping while it means somebody actually did the drill. */
+.drill-done {
+  margin-top: 14px;
+}
+
+.drill-logged {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.drill-logged p {
+  margin: 0;
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+}
+
 /* --- sheet contents --------------------------------------------------------- */
 
 .progress-sheet {

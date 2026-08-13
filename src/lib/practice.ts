@@ -3,7 +3,7 @@ import { mean } from './analysis/geometry'
 import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
 import { MEANINGFUL_DELTA, buildConsistencyTrend, currentRubricEra, dominantType, typeOf } from './progress'
-import type { Session } from './storage/db'
+import type { PracticeLog, Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
 
 export type Verdict = 'improving' | 'stuck' | 'slipping'
@@ -55,6 +55,17 @@ export interface PracticeFocus {
    * already said.
    */
   repeatability?: { id: string; label: string; sessions: number; same: boolean }
+  /**
+   * How many times the player marked this drill done, inside the same window.
+   *
+   * Zero and undefined are different answers and both are kept. Zero means the
+   * card has been asking and nothing has been logged; undefined means this
+   * history has no drill records at all, which is every history before the
+   * button existed and every player who has never used it. Telling the second
+   * group they have not been drilling would be the app inventing a fact about
+   * somebody from its own missing feature.
+   */
+  drilled?: number
 }
 
 /** How to refer to each serve in a sentence. */
@@ -86,6 +97,15 @@ export function findPracticeFocus(
   sessions: Session[],
   windowSize = PRACTICE_WINDOW,
   serveType?: ServeType,
+  /**
+   * Every drill the player has marked done, or nothing if this app has never
+   * been asked to keep any.
+   *
+   * An empty array and an absent one mean different things and are treated
+   * differently all the way to the sentence on the card — see
+   * `PracticeFocus.drilled`.
+   */
+  logs?: PracticeLog[],
 ): PracticeFocus | undefined {
   if (sessions.length === 0) return undefined
 
@@ -207,6 +227,12 @@ export function findPracticeFocus(
     repeatability: recurring
       ? { ...recurring, same: recurring.id === pick.id }
       : undefined,
+    // Counted from the first serve in the window rather than over all time. The
+    // claim the card makes is about this run of sessions, and a drill done last
+    // winter is not evidence about a measurement that has been flat since May.
+    drilled: logs
+      ? logs.filter((l) => l.metricId === pick.id && l.doneAt >= recent[0].createdAt).length
+      : undefined,
   }
 }
 
@@ -235,16 +261,53 @@ export function repeatabilityNote(f: PracticeFocus): string {
   return cue(`Your ${r.label.toLowerCase()} scores fine and moves more than anything else you do, in ${baskets}. Groove it once this is fixed.`)
 }
 
+/**
+ * A count of drills, said the way somebody would say it.
+ *
+ * `voice.ts` lints length, hedging and lab jargon and has no opinion about
+ * grammar, so "drilled it 1 times" passed every check the build makes and
+ * reached a real screen. One and two get words because that is how a sentence
+ * about doing a drill twice is spoken; past that the digit reads better than
+ * "seventeen times".
+ */
+const times = (n: number): string =>
+  n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`
+
 /** The line at the top of the practice card. */
 export function practiceHeadline(f: PracticeFocus): string {
   const across = `across your last ${f.sessionsConsidered} ${SERVE_WORD[f.serveType]} serves`
   const it = f.label.toLowerCase()
 
   if (f.verdict === 'improving') {
+    // Said differently when the player has been putting the work in, because
+    // "keep going" to somebody who has logged four sessions of it is the app
+    // failing to notice.
+    if (f.drilled) {
+      return cue(`Your ${it} is moving, and you have drilled it ${times(f.drilled)}. That is the drill working.`)
+    }
     return cue(`Your ${it} still trails ${across}, but it moves in the right direction. Keep going.`)
   }
   if (f.verdict === 'slipping') {
     return cue(`Your ${it} has gone backwards ${across}. Take it back to basics now.`)
+  }
+
+  /*
+   * Stuck, which is the case this whole record exists to split in two.
+   *
+   * Drilled and not moving is a fact about the drill: the player has done the
+   * work and the measurement has not answered, so telling them to spend more
+   * time here is the wrong instruction and, repeated for long enough, is how
+   * somebody stops opening the app. Never logged is a fact about nothing yet.
+   *
+   * `drilled === undefined` — a history with no records in it at all — takes
+   * neither branch, because the app not having been asked to keep any is not
+   * evidence that the player has not been drilling.
+   */
+  if (f.drilled) {
+    return cue(`You have drilled your ${it} ${times(f.drilled)} and it has not moved. Take this one to a coach.`)
+  }
+  if (f.drilled === 0 && f.timesWeakest >= 2) {
+    return cue(`Your ${it} has lost ${f.timesWeakest} serves and no drill is logged against it. Start there.`)
   }
   if (f.timesWeakest >= Math.ceil(f.sessionsConsidered / 2)) {
     return cue(`Your ${it} lost ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD[f.serveType]} serves and has not shifted. Spend your time here.`)

@@ -149,10 +149,21 @@ despite drilling" from "never tried it", and renders both as one badge.
       `normalisePracticeLog` rejects rather than repairs; backup carries the
       logs on the same newer-wins merge, per log, and an import that loses one
       never fails the reports.
-- [ ] **3b** — `PracticeCard` earns a sharper sentence from it: drilled and
-      moving, drilled and not moving, assigned and never logged.
-      `MEANINGFUL_DELTA = 3` still gates any claim of progress.
-- [ ] **3c** — No gamification. No streaks, no badges, no congratulation.
+- [x] **3b** — Four sentences where there was one: drilled and moving, drilled
+      and not moving ("take this one to a coach" — the right answer when the
+      player has done the work and the measurement has not answered), never
+      logged, and *no records at all*, which stays distinct because the app not
+      having been asked to keep any is not evidence about the player.
+      `MEANINGFUL_DELTA` still gates every claim of progress. Verified end to
+      end in the browser against a seeded history: tap → IndexedDB → sentence
+      flips → undo → sentence flips back.
+- [x] **3c** — No gamification, honoured rather than implemented: a ghost
+      button, no streak, no badge, no congratulation, and the count shown only
+      so the player can see what the sentence counts and spot an accidental
+      tap. An app that celebrates the tap is asking to be tapped, which fills
+      the record with drills nobody did and makes the evidence worthless.
+      Caught one copy defect the voice lint structurally cannot: "drilled it 1
+      times" passed every check in the build and reached a real screen.
 
 ## Theme 4 — Capture on court, not from the camera roll
 

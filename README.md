@@ -221,6 +221,24 @@ average rather than by whoever lost the most recent report — and says whether 
 is actually moving. Being told to work on the same thing forever, with no sense
 of whether it is working, is the fastest way to stop bothering.
 
+**"Stuck" and "never tried it" are different answers.** A measurement flat across
+five sessions means one thing if the player has been drilling it and something
+else entirely if they have not, and nothing in the record could tell those apart
+— so the card said the same thing to both. There is now one tap to say the drill
+was done, and four sentences where there was one: drilled and moving, drilled and
+not moving, never logged, and no records at all. The last stays separate on
+purpose. A history from before the button existed is not evidence that somebody
+has not been practising.
+
+Drilled and not moving is the one worth having. It says to take that one to a
+coach, because a player who has done the work and watched the number sit still
+is being failed by "spend your time here", and hearing it a fourth time is how
+somebody stops opening the app.
+
+There is no streak, no badge and no congratulation for the tap. What it records
+is evidence, and an app that celebrates it is asking to be tapped — which fills
+the record with drills nobody did and makes the sentence above worthless.
+
 It also says what to *groove*, which is a different question from what to fix.
 Ranking by score cannot see a measurement that lands in its band every time and
 wanders right across it — and for a club player that wandering is usually what

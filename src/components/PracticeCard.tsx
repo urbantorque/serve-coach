@@ -36,7 +36,15 @@ function Runline({ scores }: { scores: number[] }) {
   )
 }
 
-export default function PracticeCard({ focus }: { focus: PracticeFocus }) {
+interface Props {
+  focus: PracticeFocus
+  /** Record that the player did the drill. Absent where nothing can store it. */
+  onLogDrill?: () => void
+  /** Take back the most recent one. A tap on a phone is easy to make by accident. */
+  onUndoDrill?: () => void
+}
+
+export default function PracticeCard({ focus, onLogDrill, onUndoDrill }: Props) {
   const v = VERDICT[focus.verdict]
   const note = repeatabilityNote(focus)
 
@@ -100,6 +108,41 @@ export default function PracticeCard({ focus }: { focus: PracticeFocus }) {
         <h4>{focus.drill.name}</h4>
         <p>{focus.drill.how}</p>
         <span className="drill-reps">{focus.drill.reps}</span>
+
+        {/*
+          * One tap, and no reward for it.
+          *
+          * Deliberately not a streak, a badge or a congratulation. What this
+          * records is evidence, and the sentence it changes at the top of the
+          * card is the whole payoff: an app that celebrates the tap is asking
+          * to be tapped, which would fill the record with drills nobody did and
+          * make the evidence worthless.
+          *
+          * Absent when there is nothing to write to, so a build without storage
+          * does not show a control that silently does nothing.
+          */}
+        {onLogDrill && (
+          <button type="button" className="btn btn--ghost btn--full drill-done" onClick={onLogDrill}>
+            I did this drill
+          </button>
+        )}
+
+        {/* A count, not a tally to grow. It is here so the player can see what
+            the sentence above is counting, and so an accidental tap is visible
+            rather than silently becoming evidence. */}
+        {focus.drilled ? (
+          <div className="drill-logged">
+            <p>
+              Logged {focus.drilled} {focus.drilled === 1 ? 'time' : 'times'} since your{' '}
+              {focus.sessionsConsidered}-serve run started.
+            </p>
+            {onUndoDrill && (
+              <button type="button" className="btn btn--ghost" onClick={onUndoDrill}>
+                Undo the last one
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
     </section>
   )

@@ -2040,6 +2040,82 @@ check('a history with no baskets in it says nothing about repeatability', () => 
   assert(repeatabilityNote(f!) === '', 'printed a line with nothing behind it')
 })
 
+/** Drill records for a measurement, all inside the window. */
+const drilledLogs = (metricId: string, times: number) =>
+  Array.from({ length: times }, (_, i) => ({
+    id: `${metricId}-${i}`,
+    metricId,
+    drill: 'Let the racket fall',
+    assignedAt: (i + 1) * DAY,
+    doneAt: (i + 1) * DAY,
+  }))
+
+check('drilled and not moving reads differently from never drilled', () => {
+  /*
+   * The whole reason the record exists. Both of these players have a racket
+   * drop stuck in the low forties across five serves; one has done the drill
+   * four times and one has never logged it, and telling the first to spend more
+   * time here is the wrong instruction — repeated long enough, it is how
+   * somebody stops opening the app.
+   */
+  const sessions = persistentWeakness([42, 45, 41, 44, 43])
+  const drilled = findPracticeFocus(sessions, undefined, undefined, drilledLogs('dropDepth', 4))!
+  const never = findPracticeFocus(sessions, undefined, undefined, [])!
+
+  assert(drilled.drilled === 4, `counted ${drilled.drilled} drills`)
+  assert(never.drilled === 0, `counted ${never.drilled} drills on a player who logged none`)
+  assert(
+    practiceHeadline(drilled) !== practiceHeadline(never),
+    'the two say the same thing, which is the defect this record exists to fix',
+  )
+  assert(practiceHeadline(drilled).includes('coach'), `drilled-and-stuck: ${practiceHeadline(drilled)}`)
+})
+
+check('the drill count is said the way somebody would say it', () => {
+  // `voice.ts` lints length, hedging and lab jargon and has no opinion about
+  // grammar, so "drilled it 1 times" cleared every check the build makes and
+  // reached a real screen.
+  const sessions = persistentWeakness([42, 45, 41, 44, 43])
+  const said = (n: number) =>
+    practiceHeadline(findPracticeFocus(sessions, undefined, undefined, drilledLogs('dropDepth', n))!)
+  assert(said(1).includes('once'), said(1))
+  assert(said(2).includes('twice'), said(2))
+  assert(said(5).includes('5 times'), said(5))
+  for (const n of [1, 2, 3]) {
+    assert(!said(n).includes(`${n} times`) || n > 2, `said "${n} times": ${said(n)}`)
+  }
+})
+
+check('a history with no records says nothing about whether they drilled', () => {
+  // Every history from before the button existed, and every player who has
+  // never used it. Reading that as "has not been drilling" would be the app
+  // inventing a fact about somebody out of its own missing feature.
+  const sessions = persistentWeakness([42, 45, 41, 44, 43])
+  const unknown = findPracticeFocus(sessions)!
+  const never = findPracticeFocus(sessions, undefined, undefined, [])!
+  assert(unknown.drilled === undefined, `claimed ${unknown.drilled} drills from no records at all`)
+  assert(
+    practiceHeadline(unknown) !== practiceHeadline(never),
+    'told a player with no records the same thing as one who logged nothing',
+  )
+})
+
+check('drills done before this run started are not evidence about it', () => {
+  // The claim on the card is about this window of sessions. A drill done last
+  // winter says nothing about a measurement that has been flat since May.
+  const sessions = persistentWeakness([42, 45, 41, 44, 43])
+  const stale = [{ id: 'old', metricId: 'dropDepth', drill: 'x', assignedAt: -DAY, doneAt: -DAY }]
+  const f = findPracticeFocus(sessions, undefined, undefined, stale)!
+  assert(f.drilled === 0, `counted ${f.drilled} drills from before the window`)
+})
+
+check('a drill for something else is not credited to the focus', () => {
+  const sessions = persistentWeakness([42, 45, 41, 44, 43])
+  const f = findPracticeFocus(sessions, undefined, undefined, drilledLogs('kneeBend', 3))!
+  assert(f.metricId === 'dropDepth', `focus was ${f.metricId}`)
+  assert(f.drilled === 0, `credited ${f.drilled} knee-bend drills to the racket drop`)
+})
+
 check('reads a flat run as stuck', () => {
   const f = findPracticeFocus(persistentWeakness([44, 43, 45, 44, 43]))
   assert(f!.verdict === 'stuck', `verdict was ${f!.verdict} (trend ${f!.trend})`)

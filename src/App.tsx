@@ -5,7 +5,7 @@ import StoragePanel from './components/StoragePanel'
 import PracticeCard from './components/PracticeCard'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
-import { findPracticeFocus } from './lib/practice'
+import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import { buildConsistencyTrend, buildProgress, typeOf } from './lib/progress'
 import {
   analyzeAllServes,
@@ -29,9 +29,13 @@ import { isCachedOffline, loadEngine } from './lib/pose/poseEngine'
 import {
   deleteSession,
   getSession,
+  listPracticeLogs,
   listSummaries,
+  logPractice,
   safely,
   saveSession,
+  unlogPractice,
+  type PracticeLog,
   type Session,
 } from './lib/storage/db'
 import { requestPersistence } from './lib/storage/backup'
@@ -103,6 +107,16 @@ export default function App() {
    * right way round: `ServeGap` says the same thing in words and does survive.
    */
   const [pair, setPair] = useState<ServePairFrames>()
+  /**
+   * The drills the player has marked done, or `undefined` when storage could not
+   * be read.
+   *
+   * The two are different answers and stay different all the way to the card:
+   * empty means nothing has been logged, missing means this app cannot say. A
+   * player on a browser with no IndexedDB must not be told they have not been
+   * practising.
+   */
+  const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
   const [sessions, setSessions] = useState<Session[]>([])
   const [sheet, setSheet] = useState<'guide' | 'guide-first' | 'history' | 'progress' | null>(null)
   const [offlineReady, setOfflineReady] = useState(false)
@@ -182,9 +196,53 @@ export default function App() {
    * consistency blocks read numbers. `openSaved` fetches the images back for
    * the one report actually being looked at.
    */
+  const practiceRef = useRef<PracticeFocus | undefined>(undefined)
+
   const refreshSessions = useCallback(() => {
     void safely(listSummaries, []).then(setSessions)
+    // `undefined` on failure rather than `[]`, and the difference is the whole
+    // point of the field it feeds: an empty list is "nothing has been logged"
+    // and a missing one is "this app cannot say", and the card says different
+    // things about a player in each case.
+    void safely<PracticeLog[] | undefined>(listPracticeLogs, undefined).then(setDrillLogs)
   }, [])
+
+  /**
+   * Record that the drill on the practice card was done.
+   *
+   * Stamped with the moment it was tapped rather than the moment the card was
+   * rendered — the card can sit on a home screen for a week, and a record dated
+   * from the render would be evidence about the wrong session.
+   */
+  const logDrill = useCallback(() => {
+    if (!practiceRef.current) return
+    const f = practiceRef.current
+    const now = Date.now()
+    void safely(
+      () =>
+        logPractice({
+          id: `${f.metricId}-${now}`,
+          metricId: f.metricId,
+          drill: f.drill.name,
+          // The app does not record when the card first offered it, so this is
+          // the same instant. The field is kept because "assigned and not done"
+          // is a state worth being able to write later, and a reader that has
+          // to guess whether it is meaningful is worse than one told plainly.
+          assignedAt: now,
+          doneAt: now,
+        }),
+      undefined,
+    ).then(refreshSessions)
+  }, [refreshSessions])
+
+  /** Take back the most recent one for this measurement. */
+  const undoDrill = useCallback(() => {
+    const f = practiceRef.current
+    if (!f || !drillLogs?.length) return
+    const last = drillLogs.filter((l) => l.metricId === f.metricId)[0]
+    if (!last) return
+    void safely(() => unlogPractice(last.id), undefined).then(refreshSessions)
+  }, [drillLogs, refreshSessions])
 
   /**
    * Open a stored report, fetching the keyframe stills it needs on the way.
@@ -201,7 +259,14 @@ export default function App() {
   }, [])
 
   const form = useMemo(() => buildProgress(sessions), [sessions])
-  const practice = useMemo(() => findPracticeFocus(sessions), [sessions])
+  const practice = useMemo(
+    () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
+    [sessions, drillLogs],
+  )
+  // Read by `logDrill`, which is declared above this and would otherwise have to
+  // be redefined every time the focus changes — and it is handed to a button
+  // that must not be replaced under the player's finger.
+  practiceRef.current = practice
   // Keyed to whatever serve type the form chart settled on, so the two blocks in
   // the sheet cannot end up describing different halves of the history.
   const spread = useMemo(
@@ -982,7 +1047,13 @@ export default function App() {
               </p>
             )}
 
-            {practice && <PracticeCard focus={practice} />}
+            {practice && (
+              <PracticeCard
+                focus={practice}
+                onLogDrill={logDrill}
+                onUndoDrill={practice.drilled ? undoDrill : undefined}
+              />
+            )}
 
             <section className="block">
               <h3 className="block-title">Overall score by session</h3>
