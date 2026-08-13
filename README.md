@@ -714,6 +714,19 @@ identically — so the cue names the picture, offers both fixes and says it cann
 tell which. A test rotates the body about the ankles on a level phone and asserts
 both cases give the same words, so the admission cannot be edited back out.
 
+**A severely rotated clip is refused rather than measured through a clamp.**
+Every height and axis in this app assumes image y is vertical, which is only
+true if a clip's rotation was honoured on the way in — a real test of that
+needs a genuinely mis-rotated file from a real phone, which is the same block
+`COURT-CHECK.md` is already waiting on. What can be checked is the reachable
+proxy: `estimateRoll` clamps its own reading to ±25° so the correction it
+drives never over-rotates a frame, and that clamp could have quietly meant a
+clip actually rotated 60 or 89 degrees got corrected as if it were a mild 25
+and then reported in full. It does not — the confidence cost the roll drives
+already pushes a clip that far off level under `LIMITS.spatial` on its own,
+so it is refused rather than measured through the clamp, at every severity
+tested from 30° to 89°.
+
 ---
 
 ## Testing

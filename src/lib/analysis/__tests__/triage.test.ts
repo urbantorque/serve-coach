@@ -95,6 +95,31 @@ check('a small tilt is left alone rather than rotated on a noisy estimate', () =
   )
 })
 
+/**
+ * R14 in NEXT.md: axes.ts assumes image y is vertical, which is only true if
+ * the sensor's rotation was honoured on the way in. The rig cannot render a
+ * genuinely mis-rotated MP4 — that needs a real decoder and a real phone,
+ * the same block the court trip and the fixture shoot are already waiting on
+ * — but it can render what a badly-rotated *reading* of one would look like
+ * to the pose model: a body that is not where an upright clip says it should
+ * be. `rollFrames` already does that faithfully for an ordinary cocked phone;
+ * driven past `NOTABLE_ROLL`'s own ±25° clamp, it is the closest thing to
+ * that clip this suite can build.
+ */
+check('a severely rotated clip is refused, not measured through a 25° clamp', () => {
+  for (const deg of [30, 45, 60, 75, 89]) {
+    const level = buildServe({}, FPS)
+    const skel = detectServe(level, FPS)
+    const tilted = rollFrames(level, deg)
+    const resilience = assessResilience(tilted, skel)
+    const reason = rejectionFor(resilience)
+    assert(
+      reason !== undefined,
+      `a clip rotated ${deg}° was not refused — spatial confidence ${resilience.spatial.confidence}`,
+    )
+  }
+})
+
 check('the camera angle is recovered from the shoulder line', () => {
   const sideOn = pipeline({ cameraYaw: 88 })
   const angled = pipeline({ cameraYaw: 45 })

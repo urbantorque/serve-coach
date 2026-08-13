@@ -19,190 +19,6 @@ phase's entries and drops the working notes underneath them.
 
 ---
 
-## Phase 2 — Core logic and reliability (R8–14)
-
-The engine is honest about what it cannot see. The open question is whether it
-notices the specific ways amateur footage goes wrong, or only the ways the
-synthetic rig can produce.
-
-- [x] **R8** — It invented a racket drop that never happened, at full
-      confidence. `dropout`, the rig's existing occlusion dial, only ever
-      touches leg landmarks and only ever *lowers visibility* — the easy case,
-      already caught by the visibility check `metricConfidence` already runs.
-      A new `occlusionSeconds` dial freezes the racket wrist at its position
-      from the drop for a stated span, visibility untouched — the case R8 asked
-      about, and the one `kalman.ts`'s own docstring already named as the real
-      danger. Driven at 0.5 s: `dropDepth` flipped from 0.237 to -0.156 — not
-      noise, a different sign, a racket drop reported as not having happened —
-      at confidence 1.000. `blurOf`'s zig-zag statistic never saw it, because a
-      track MediaPipe has frozen on a stale guess is smooth, not noisy, and
-      zig-zag is a curvature statistic. Confirmed rather than assumed: a test
-      pins that the existing statistic reads 0.00 here, specifically so nobody
-      "simplifies" the fix back out.
-
-      Fixed with a second, different question — not how erratic the track is,
-      how far it travelled — asked only over drop-to-contact, the one stretch
-      of any serve guaranteed to be a large excursion by construction (`drop`
-      is the lowest point after the trophy, `contact` the highest of the
-      swing). `frozenThroughSwing` in `kalman.ts`, threshold at a twelfth of
-      standing height against the rig's own ~0.7 for a clean serve — enormous
-      margin on both sides, and the full suite (400+ existing checks across
-      every dialled fault) passed unchanged, so nothing already calibrated
-      moved. The frozen case now scores blur 1.0 and is refused — sometimes as
-      `too_blurry`, sometimes as `too_few_frames` when the frozen wrist also
-      confuses where the drop and contact keyframes land; both are the same
-      honest outcome and the test accepts either rather than asserting one.
-- [x] **R9** — Every derivative in `kinematics.ts` — `rateOf`, `sampleRadius`,
-      `frameRadius`, `refinedPeakTime` — already reads real per-sample gaps
-      rather than assuming a fixed frame rate; that half of the assumption was
-      already defended, at length, in prose already in the file. What was not
-      defended: `extractFrames`, `scanForServes`, `preflight` and `readBitmaps`
-      all requested an evenly-spaced grid of times from the video and then
-      **filed the sample under the time they asked for**, not the time
-      `video.currentTime` actually landed at after the seek. `seekTo`'s own
-      docstring already named the failure case where a seek times out; it did
-      not name the ordinary case, where a seek succeeds within tolerance but a
-      few milliseconds off target — which is not rare, it is what a decoder
-      snapping to its nearest real frame does on every seek. So every one of
-      those carefully dt-aware functions downstream was computing exact
-      derivatives from admittedly-inexact numbers.
-
-      Fixed at the source: `seekTo` now returns the achieved
-      `video.currentTime` (or `false` on genuine failure) instead of a bare
-      boolean, and all five callers file that instead of the request. One real
-      bug caught fixing it: three call sites used `!(await seekTo(...))` to
-      detect failure, which reads a returned `0` — landing exactly on the first
-      frame of a clip — as falsy and therefore as a failure. All now compare
-      `=== false` explicitly.
-
-      Verified live rather than assumed: the Node suite cannot reach this code
-      at all — the synthetic rig builds `Frame[]` directly and has never gone
-      through a `<video>` element — and the real browser tooling in this
-      environment cannot run timer- or compositor-driven code while its pane is
-      not displayed (the same limit the court trip already recorded, now
-      costing a different kind of check). Worked around with a fake
-      `HTMLVideoElement` driven by microtasks instead of timers — outside that
-      throttling entirely — that returns a deliberately jittered
-      `currentTime` on every seek. Before this fix that harness's output was a
-      perfectly even grid regardless of the jitter fed in; after it, the
-      recorded timestamps carry the jitter, exactly as they should.
-- [x] **R10** — Already true, and it needed a rig capability and a test to say
-      so rather than an inspection. `metricConfidence` already reads landmark
-      visibility directly, and `blurOf` already folds it in through `unseen` —
-      the wiring R10 asked whether existed was already there. What did not
-      exist was a way to *drive* it: every clip problem the rig could dial was
-      local — one limb, one frame, one occlusion — and dusk is not local, it
-      dulls the whole body's visibility at once. A new `lightLevel` dial does
-      that: every landmark's visibility scaled uniformly, position untouched,
-      so anything that moves downstream moved because of confidence, not
-      because the rig quietly changed the answer.
-
-      First pass through this round measured nothing: calling `measure()`
-      without a confidence context — which is a valid call, and what
-      `dev/sampleAnalysis.ts` itself does — reports every metric at confidence
-      1 by construction (`ctx ? metricConfidence(id, ctx) : 1` in
-      `metrics.ts`), so a sweep against that always read back an unmoved
-      1.000. Rebuilt to assemble the context the way `analyze.ts` actually
-      does, blur included, and the real shape appeared: at dusk (`lightLevel`
-      0.55) `dropDepth` and `contactHeight` fall to 0.46 confidence and
-      `kneeBend` to 0.67, while the *values* do not move at all — the camera
-      read them correctly, the app is only less sure of what it read. Below
-      `LIMITS.visibility` the clip is refused outright as `body_not_visible`
-      rather than measured at a confidence too low to trust — the cliff is by
-      design, not a gap. All three pinned in `robustness.test.ts`.
-- [x] **R11** — Missed rarely, found something else more often than it should
-      have — and driving the measurement fixed what it found. Everything
-      already in `ball.test.ts` pinned individual scenarios; nothing turned
-      them into a rate, so a new ensemble section does, over hundreds of seeds
-      each. **Missed**: an ordinarily filmed toss (32 fps, 1.5 px centroid
-      noise, the span a toss actually takes) is found in 100% of 500 trials —
-      the false-negative rate on real footage is not the problem here.
-      **Found something else**: two or three background objects each on their
-      own smooth path — another ball, a bird, a reflection, all things a busy
-      club court actually has — produced a false toss in **24.3%** of 300
-      trials on the first run. The curvature gate that catches a single
-      distractor has nothing to say about *width*: it fits height against
-      time and accepts whichever points agree, with no check that they came
-      from the same object, so RANSAC could stitch a plausible parabola from
-      fragments of two different decoys' tracks.
-
-      Fixed rather than only measured: `X_CONSISTENCY_BAND` in
-      `vision/ballTrack.ts` requires the accepted inliers to also sit close to
-      one straight line sideways, which a real ball does (no horizontal
-      acceleration worth modelling) and points stitched across two objects
-      moving different directions do not. Tuned by measurement against the
-      existing suite, not chosen in advance: 0.02 started rejecting a genuine
-      toss in `the real ball is picked out from among distractors`, an
-      existing check; 0.03 is the tightest value that does not, and it takes
-      the multi-decoy rate to **7.0%** and, as a side effect neither predicted
-      nor aimed at, a harder stress test — fully decorrelated random noise,
-      no real object anywhere — from **85%** to **0%**. Full suite green
-      throughout tuning; nothing already calibrated moved. Not a claim the
-      search is now immune to coincidence: two objects that happened to share
-      both a curvature and a near-linear width would still pass, and nothing
-      that reads only position can rule that out.
-- [x] **R12** — Only the single serve. `maxTrackingJump`/`IMPLAUSIBLE_JUMP`
-      reads one serve's own frames, ready to finish, for a body that jumps
-      mid-window — a coach who serves once in the middle of a basket produces
-      a serve with nothing to jump *from*: each serve in a sweep is extracted
-      and tracked as its own internally-consistent window, so the existing
-      check has nothing to say about whether serve two is the same person as
-      serve one. `buildConsistency` confirmed the gap directly: it reads only
-      `fundamentals` and `overall` off each analysis, never `scale`, so two
-      different people's measurements were compared exactly like one player's
-      good and bad days.
-
-      `possibleHandoff` in `consistency.ts` is the check placed where the
-      sweep can actually see it: whether the serves being compared agree on
-      standing height, the one signal a fixed camera and a consistent body
-      should hold steady across a basket. Set generously (18%) rather than
-      tightly — no real basket with a genuine hand-off exists to calibrate
-      against, the same block the fixture shoot is already waiting on, and a
-      threshold that fired on ordinary session noise would train players to
-      ignore it. Surfaced as a caveat on the comparison, not a refusal: each
-      serve's own numbers stand regardless, only the claim that they describe
-      one player's consistency is in doubt. A report with no height reading at
-      all — older saves, hand-assembled analyses — is not flagged; absence is
-      not evidence of a mismatch.
-
-      `?demo=basket` builds its clip through the same `sampleClip`
-      canvas/timer path R4's leak probe used, and this environment's preview
-      pane does not run timers while it is not displayed — so the panel was
-      verified a different way: `ConsistencyPanel` rendered directly against
-      the running app's own React and its real dev-server module graph, with
-      `possibleHandoff` set both ways. `true` renders the warning verbatim;
-      `false` renders nothing. The real component, not a description of it.
-- [x] **R13** — Handedness: robust, and now pinned rather than assumed. Every
-      existing check read `buildServe({}, FPS)` — clean landmarks, noise off
-      by the rig's own default — so nothing had actually driven a track that
-      jitters through it. Swept at poor-light noise, 60 trials: **0 flips**.
-      `detectHandedness` reads which arm's peak comes later *in time*, and the
-      gap this rig produces between the toss arm and the racket arm is wide
-      enough in seconds that per-landmark centroid noise, which moves a peak
-      by at most a frame or two, has never once closed it.
-
-      Camera-angle detection is a genuinely different answer depending which
-      direction is asked. `estimateYaw` divides a measured shoulder span and
-      takes `acos` of it, and `acos`'s derivative diverges as its argument
-      nears 1 — exactly what a near-face-on camera produces — so the same
-      noise handedness shrugs off is *amplified* near that one boundary. The
-      dangerous direction — a camera too face-on to read depth from,
-      confidently read as one that can be — stays small: **7/100** at 14°
-      under poor-light noise, **0/100** on the symmetric side-on boundary at
-      any angle tested. The costly-but-safe direction is not small: a camera
-      angle 2° *inside* the nominally readable range was over-hedged as
-      unreadable in **77/100** trials at ordinary noise. Two fixes were tried
-      and neither shipped — widening `estimateYaw`'s averaging window helped
-      at 25° and made 20–22° worse; raising `DEPTH_YAW_RANGE`'s floor to
-      relocate the boundary just moved the same fragility to wherever the new
-      line landed. Both are measured and pinned as ensembles rather than
-      silently fixed or silently accepted, so neither number can drift further
-      without the suite saying so — and a real fix, if one exists, has an
-      honest baseline to be judged against.
-- [ ] **R14** — Rotation metadata and portrait clips. `axes.ts` assumes the
-      sensor told the truth about which way was up. Deliverable: the assumption
-      tested against a clip where it did not. **Phase close-out.**
-
 ## Phase 3 — UX and onboarding (R15–21)
 
 - [ ] **R15** — What does a genuine first run look like today? There is a
@@ -293,6 +109,33 @@ synthetic rig can produce.
       `UNCALIBRATED` stays there.
 
 ## The record
+
+**Phase 2 — core logic and reliability**, seven rounds landed, ledger in git
+at `0f0817e`. The pattern across the phase: measuring what a round asked
+about, rather than inspecting the code and guessing, kept finding real gaps.
+A racket wrist MediaPipe froze on a stale guess through an occlusion read as
+a clean track to the existing blur statistic and reported a fabricated
+racket drop at full confidence — caught only by asking whether the hand had
+travelled at all, a different question from how erratic its track was
+(`frozenThroughSwing`, `kalman.ts`). Every sample the extraction pipeline
+took was filed under the time it *asked* the video to seek to rather than
+the time the seek actually reached, feeding fictional precision into every
+downstream derivative (`seekTo`, `pose/extract.ts`) — and fixing it surfaced
+a real `!(...)` falsy-zero bug along the way. The ball tracker's curvature
+gate checked height against time and nothing about width, so two unrelated
+background objects on their own smooth paths could be stitched into a false
+toss a quarter of the time (`X_CONSISTENCY_BAND`, `vision/ballTrack.ts`,
+24%→7%). A basket's consistency comparison never checked the serves came
+from the same body at all (`possibleHandoff`, `consistency.ts`). Two rounds
+measured and found the code already correct — confidence under poor light,
+handedness under noise — and needed a new rig capability and an ensemble
+test to say so with evidence rather than an inspection. And one round found
+an asymmetric, unresolved cost rather than a bug: camera-angle detection
+rarely mis-reads an unreadable angle as readable, but readable angles near
+the boundary are over-hedged as unreadable most of the time, and two
+candidate fixes each helped one angle while hurting another — measured and
+pinned rather than force-fixed. Severe rotation, driven past the roll
+correction's own clamp, is refused rather than measured through it.
 
 **Phase 1 — performance, storage, architecture health**, seven rounds landed,
 ledger in git at `e8579f2`. Every constant governing the biggest allocation the

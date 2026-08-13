@@ -311,7 +311,7 @@ export function blurOf(track: StabilisedTrack, bodyHeight: number): number {
  * A bounding box rather than a summed path length: both catch a frozen track,
  * and the box is cheaper and needs no ordering assumption about the samples.
  */
-export function travelOf(points: (Landmark | undefined)[]): number {
+function travelOf(points: (Landmark | undefined)[]): number {
   let minX = Infinity
   let maxX = -Infinity
   let minY = Infinity
@@ -341,7 +341,7 @@ export function travelOf(points: (Landmark | undefined)[]): number {
  * would need a racket drop-to-contact spanning under a twelfth of the
  * player's own height, which is not a serve a human arm produces.
  */
-export const FROZEN_TRAVEL = 0.08
+const FROZEN_TRAVEL = 0.08
 
 /**
  * Whether the racket hand's raw track through the drop-to-contact window is
