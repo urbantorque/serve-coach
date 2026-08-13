@@ -124,8 +124,11 @@ product does not behave as though it believes that.
       says it as one sentence under the fix — a second thing to groove when it
       is a different measurement, a stronger reason when it is the same one, and
       nothing at all for a history with no baskets in it.
-- [ ] **2d** — Respect `KEEP_STILLS = 20`. A comparison against a report whose
-      stills were pruned degrades to the numbers, with a line saying why.
+- [x] **2d** — Met by construction rather than by pruning: the paired stills
+      never enter storage, so every re-opened report is the degraded case. What
+      was missing was the sentence saying so — a player who watched the strip
+      yesterday and finds words today reads silence as a bug.
+      `?demo=basket&nostills` reaches that branch.
 
 ## Theme 3 — Closing the practice loop
 

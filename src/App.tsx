@@ -265,7 +265,12 @@ export default function App() {
             // nothing: they are the right count, the right shape and the right
             // labels, so the layout is real even though the bodies in them are
             // not. Dev-only, like everything else down this branch.
-            if (fitted.consistency?.gap) {
+            // `?demo=basket&nostills` is the state every re-opened report is in:
+            // the words kept, the pictures gone with the clip. Reachable on
+            // purpose, because it is the branch nobody would otherwise look at
+            // and the one where a silent blank reads as a bug.
+            const noStills = new URLSearchParams(location.search).has('nostills')
+            if (fitted.consistency?.gap && !noStills) {
               const { gap } = fitted.consistency
               for (const a of basket) {
                 for (const p of a.phases) p.thumbnail = p.thumbnail ?? placeholderStill(p.label)

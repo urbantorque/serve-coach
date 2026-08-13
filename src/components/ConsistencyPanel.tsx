@@ -218,8 +218,27 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair }: Pr
           A pair left over from a comparison whose gap has since been recomputed
           would put the wrong serve numbers under the wrong images, and the
           numbers are the whole point of showing them. */}
-      {pair && c.gap && pair.best === c.gap.best && pair.worst === c.gap.worst && (
+      {pair && c.gap && pair.best === c.gap.best && pair.worst === c.gap.worst ? (
         <PairedFrames pair={pair} />
+      ) : (
+        c.gap && (
+          /*
+           * Why the pictures are not here.
+           *
+           * A player who watched the strip yesterday and opens the same report
+           * today finds the words and no images, and silence about it reads as
+           * a bug rather than as the trade it is: twelve stills is the largest
+           * thing a stored report could carry, in an app that already drops
+           * stills from old reports before it drops anything else.
+           *
+           * Only under a gap, so it appears exactly where something is missing
+           * rather than on every report that never had one.
+           */
+          <p className="pair-absent">
+            Those pictures need the clip, and clips are never saved. What they showed is in
+            the words above.
+          </p>
+        )
       )}
 
       <ul className="spreads">

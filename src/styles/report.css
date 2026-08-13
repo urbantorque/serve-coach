@@ -440,6 +440,14 @@
   color: var(--good);
 }
 
+.pair-absent {
+  margin: 0;
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+  text-wrap: pretty;
+}
+
 .best-worst-none {
   margin: 0;
   font-size: 12.5px;
