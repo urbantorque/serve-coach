@@ -177,9 +177,26 @@ phase's entries and drops the working notes underneath them.
 
       No code changed. README's account of the two registries is accurate as
       far as it goes and was not touched.
-- [ ] **R33** — Fold in whatever the court trip and the fixture shoot returned,
-      or restate both asks with what has been learned since. Neither is closed by
-      anything above.
+- [x] **R33** — Neither blocker moved: no commit since they were last written
+      has touched `RecordScreen`, the glance screen, the target dial or
+      `COURT-CHECK.md`, and a direct search this round found zero `.mp4`/
+      `.mov`/`.webm`/`.mkv` files anywhere in the repo outside `node_modules` —
+      there is no bundled real clip to substitute for a phone, so the
+      dial-on-a-real-still question still cannot be answered from here.
+      `RECORDED` is still empty, `MINIMUM_RECORDED` still 6. This round folds
+      in what changed instead: R32's answer to which of the fixture shoot's
+      unblocks are actually true.
+
+      The "Still open" bullet below used to say footage would move "every
+      entry in `UNCALIBRATED`". R32 found that overclaims it — of the five,
+      only `chain_span_ratio` has a real path through footage; `legs_peak_ms`,
+      `chain_span_ms`, `wrist_peak_ms` and `elbow_peak_ms` are dead ends by
+      construction (they time the wrong quantity, or exist only to prove the
+      chain's own construction, or carry a camera-angle artifact no clip
+      count fixes) and would stay uncalibrated regardless of how much footage
+      arrives. Footage would also settle `UNDER_RESOLVED.pronation_deg`, at
+      known rotation angles — a connection the bullet did not draw before.
+      Corrected below.
 - [ ] **R34** — DRY and dead-code purge across the whole tree, then README end to
       end against the code. It is the deliverable, not an afterthought.
 - [ ] **R35** — Freeze. Final green run recorded, the open gaps stated plainly,
@@ -196,7 +213,10 @@ phase's entries and drops the working notes underneath them.
       and 9 need no racket. Two candidates were chased down without a phone and
       both came back clean: the glance already says "6 serves in that clip — this
       is number 6", and `?demo=live` captures no stills, so **the dial has still
-      not been seen drawn on a real frame**. R33 folds in whatever comes back.
+      not been seen drawn on a real frame**. As of R33, the repo has no bundled
+      real video anywhere in it either (checked directly — zero `.mp4`/`.mov`/
+      `.webm`/`.mkv` outside `node_modules`), so there is nothing left to try
+      without a phone. Unchanged since R25.
 - [!] **The fixture shoot** — **blocked: needs real footage.** `RECORDED` in
       `src/lib/analysis/__tests__/fixtures/index.ts` is empty, 0 of
       `MINIMUM_RECORDED = 6`. Six clips clear the gate and the order is in
@@ -206,9 +226,13 @@ phase's entries and drops the working notes underneath them.
       side-on with the feet deliberately out of frame. The left-handed pair
       cannot be faked by mirroring — that is what a front camera does and the app
       already treats it as an artifact. Until those exist: hip–shoulder
-      separation and shoulder tilt are unvalidated against anything real,
-      `NOISE_FLOOR` has no measurement behind it, and every entry in
-      `UNCALIBRATED` stays there.
+      separation and shoulder tilt are unvalidated against anything real, and
+      `UNDER_RESOLVED.pronation_deg` cannot be re-examined at known rotation
+      angles. Of `UNCALIBRATED`'s five entries, footage moves only one —
+      `chain_span_ratio`, and even then only alongside a coach's judgement
+      attached to the clips (R32). The other four — `legs_peak_ms`,
+      `chain_span_ms`, `wrist_peak_ms`, `elbow_peak_ms` — are dead ends by
+      construction and stay uncalibrated no matter how much footage arrives.
 
 ## The record
 
