@@ -390,6 +390,7 @@ Everything is in `src/lib`:
 | `vision/ballTrack.ts` | finds the tossed ball in the pixels |
 | `storage/backup.ts` | persistence, export and import of the history |
 | `selfCheck.ts` | what this browser will record, open, store and show, asked on the device |
+| `footprint.ts` | what an analysis is holding in bytes, and what it cannot count |
 | `analysis/analyze.ts` | orchestrates the above |
 
 ### Decisions worth knowing about
@@ -746,6 +747,28 @@ paying; and a note that somebody did a drill in March has no reason to be delete
 when the report that suggested it is pruned. It rides along in an export, merged
 newer-wins per record so two phones each keep what the other never saw, and a
 history with none of it behaves exactly as it always did.
+
+**What one analysis holds, and it is not what a stored one holds.** The two
+budgets have opposite shapes and reading either as the other is how somebody
+optimises the wrong thing. In memory the sampled frames dominate: 120 frames of
+33 landmarks twice over is 1.1 MB against 0.3 MB of stills, and a swept basket of
+eight serves is about 11 MB. In storage there are no frames at all — a saved
+`Session` is `Omit<Analysis, 'frames'>` — so nearly all of it is stills, which is
+why pruning drops pictures before numbers.
+
+A landmark costs about 120 bytes to hold four numbers that are 32 bytes, because
+V8 boxes each double rather than storing it in the object. That constant is
+measured on every test run rather than asserted, and the suite prints the whole
+accounting. The canvases turn out to be the smallest thing in the pipeline: the
+ball pass runs 256 px wide and the stills 420, both scaled down, so 4K footage
+does not enlarge them.
+
+`footprint.ts` counts what is on the JavaScript heap, exactly, and names what it
+cannot see rather than estimating it — the decoded video the browser holds, the
+WASM heap with its 9 MB model, and the GPU-side copies of anything drawn. So the
+headline is bounded on one side only: the JavaScript half of an analysis is
+around fifty times under the ceiling this app is held to, and everything that
+could breach it is in that unseen list.
 
 **History is bounded, numbers before pictures.** Nearly all of a stored report's
 size is its six keyframe stills, and those are the part nobody revisits after a

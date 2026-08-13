@@ -31,10 +31,23 @@ where the state machine hiding in `App.tsx` gets a name.
       the foot of this file, and its two court-trip blocks are carried forward
       whole. Phases re-led — what was Phase 3 leads now, because memory and
       storage are the oldest unchecked assertions in the repo.
-- [ ] **R2** — What is the peak resident memory of one analysis? Decode, pose,
-      the frame buffer, the six stills and the canvas all coexist, and nobody has
-      put a number on any of it. Deliverable: a measurement, taken somewhere it
-      can be taken again.
+- [x] **R2** — `lib/footprint.ts`, with the constants **measured on every run**
+      rather than asserted: the test allocates the real shapes and reads the
+      heap, and fails on a two-fold move either way. Worst single serve **1.4 MB**
+      (1.1 frames, 0.3 stills), a swept basket of eight **10.9 MB**, canvases
+      negligible because the ball pass runs 256 px wide and the stills 420, both
+      scaled down — 4K footage does not enlarge them. A landmark costs **120
+      bytes to hold 32 bytes of numbers**, because V8 boxes each double; that one
+      constant is most of the total.
+
+      Two findings worth keeping. **The memory and storage budgets have opposite
+      shapes** — in memory the frames dominate, in storage there are no frames at
+      all, so a test asserting the README's "stills are nearly all of it" against
+      an in-memory report fails, correctly. And **the answer is bounded on one
+      side only**: the JavaScript half is ~50× under the ceiling, and everything
+      that could breach it is in `UNSEEN` — the decoded video, the WASM heap, the
+      GPU copies. None of those is reachable from script, so they are named
+      rather than estimated. R3 has to bound what it can and say so.
 - [ ] **R3** — Bound the pipeline to it. Deliverable: a test that fails when the
       bound is exceeded, not a comment saying what the bound should be.
 - [ ] **R4** — Is the heap flat across ten consecutive analyses? Object URLs,
