@@ -172,15 +172,28 @@ despite drilling" from "never tried it", and renders both as one badge.
 player from a tilted phone. Filming still hands off to the phone camera app, so
 the loop is: film, walk over, pick the file, wait, read.
 
-- [ ] **4a** — Record in-app from the same preview stream where the browser
-      supports it. The existing file input stays a first-class path, not a
-      degraded mode.
+- [x] **4a** — Recording off the stream the viewfinder already holds, never a
+      second `getUserMedia`. `lib/framing/record.ts` decides what this browser
+      will record *and then decode* — MP4 first, because a WebM recording is a
+      file Safari cannot play back — and the button does not appear at all
+      where that answer is nothing. The file picker and the OS camera are both
+      untouched. **Not verified on a device**: the Browser pane blocks camera
+      access, so what was checked is the refusal path (correct cue, and no
+      record button on it) and the eleven unit tests behind the choosing.
+      Nothing in this repo has yet recorded a frame.
 - [ ] **4b** — Auto-trim to the detected serve, reusing `analysis/serves.ts`
       rather than writing a second detector.
 - [ ] **4c** — A between-serves glance: one line, one number, no report. When
       the clip cannot carry an answer it says so rather than guessing.
-- [ ] **4d** — Battery and heat. Hold the standard the animation loop already
-      sets for anything touching a camera stream.
+- [x] **4d** — Done inside 4a rather than after it. The pose loop stops dead
+      while recording: the player has stopped aiming and started serving, so the
+      verdict has no reader, and it is the worst moment in the app to spend
+      thermal headroom — a hardware encoder is on the same stream and the
+      analysis that needs the GPU is thirty seconds away. `MAX_POSE_DUTY` caps
+      the model against wall clock and cannot know that half of wall clock is
+      too much while something else has the device. The recorder is also torn
+      down on unmount, and capped at `MAX_RECORDING_SECONDS` because
+      `MediaRecorder` accumulates chunks in memory until stopped.
 
 ## Theme 5 — Showing the correction
 

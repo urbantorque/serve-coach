@@ -8,6 +8,7 @@ import {
   readFraming,
   type FramingVerdict,
 } from '../lib/framing/judge'
+import { MAX_RECORDING_SECONDS, recordingFileName, recordingType } from '../lib/framing/record'
 import { loadEngine, nextVideoTimestamp } from '../lib/pose/poseEngine'
 import type { Frame } from '../lib/analysis/types'
 
@@ -93,12 +94,49 @@ const NOTHING_YET: FramingVerdict = judgeFraming({
   samples: 0,
 })
 
-export default function FramingCheck() {
+interface Props {
+  /**
+   * Take the recording and analyse it.
+   *
+   * Absent where nothing wants one, and the whole recording control disappears
+   * with it — this component's original job is to check framing, and it still
+   * does that on its own.
+   */
+  onRecorded?: (file: File) => void
+}
+
+export default function FramingCheck({ onRecorded }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [block, setBlock] = useState<PreviewBlock | null>(null)
   /** Download progress for the pose model, 0–1, while it is still arriving. */
   const [warming, setWarming] = useState<number | null>(null)
   const [verdict, setVerdict] = useState<FramingVerdict>(NOTHING_YET)
+
+  /**
+   * The live stream, so the recorder can be attached to the one already running.
+   *
+   * A second `getUserMedia` would open the camera twice — two encodes, two
+   * hardware paths, and on some phones a refusal, since a rear camera is not
+   * always shareable between two capture sessions.
+   */
+  const streamRef = useRef<MediaStream | null>(null)
+  const recorderRef = useRef<MediaRecorder | null>(null)
+  /**
+   * True while recording, read inside the detection loop.
+   *
+   * A ref rather than state because `tick` closes over its scope once and would
+   * otherwise keep reading whatever `recording` was when the effect ran.
+   */
+  const recordingRef = useRef(false)
+  const [recording, setRecording] = useState(false)
+
+  /**
+   * Which container this browser will record, decided once.
+   *
+   * Absent means the control never appears. See `record.ts`: a record button
+   * that produces a file the analyser then refuses is worse than no button.
+   */
+  const [type] = useState(recordingType)
 
   useEffect(() => {
     if (!previewSupported()) {
@@ -113,6 +151,14 @@ export default function FramingCheck() {
     const stop = () => {
       live = false
       cancelAnimationFrame(frame)
+      // A recorder still running when the sheet closes holds the encoder open
+      // and keeps accumulating chunks for a clip nobody will ever be handed.
+      // `stop()` on an inactive recorder throws, so the state is checked rather
+      // than the reference.
+      if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+      recorderRef.current = null
+      recordingRef.current = false
+      streamRef.current = null
       // Releasing the tracks is what turns the camera light off. A stream left
       // attached to a detached element keeps the hardware open for the rest of
       // the session, and on a phone that is the battery and the recording
@@ -160,6 +206,7 @@ export default function FramingCheck() {
         stop()
         return
       }
+      streamRef.current = stream
 
       video.srcObject = stream
       // Muted and inline are already set on the element, which is what lets this
@@ -200,6 +247,19 @@ export default function FramingCheck() {
 
       const tick = (now: number) => {
         frame = requestAnimationFrame(tick)
+        /*
+         * Nothing to check while the serve is being recorded, and every reason
+         * not to check it.
+         *
+         * The player has stopped aiming the phone and started serving, so the
+         * verdict has no reader — and this is the worst moment in the whole app
+         * to be spending thermal headroom: a hardware encoder is running on the
+         * same stream, and the analysis that needs the GPU is thirty seconds
+         * away. `MAX_POSE_DUTY` caps the model against wall clock; it cannot
+         * know that half of wall clock is too much while something else has the
+         * device.
+         */
+        if (recordingRef.current) return
         if (now < nextAt) return
         // `readyState` below HAVE_CURRENT_DATA means there is no picture yet;
         // handing that to the model returns a pose from nothing.
@@ -257,6 +317,86 @@ export default function FramingCheck() {
     return stop
   }, [])
 
+  /**
+   * Start recording, or stop and hand the clip over.
+   *
+   * One control rather than two, because the second press happens while the
+   * player is walking back from the baseline and a screen with a live Start on
+   * it is a screen that can be started twice.
+   *
+   * Everything that can fail here ends with the recording abandoned and the
+   * preview still running, never with a broken screen: the file picker is still
+   * behind this sheet and is still the way in that always works.
+   */
+  const toggleRecording = () => {
+    const existing = recorderRef.current
+    if (existing) {
+      // `onstop` does the handing over, so a recording stopped by the cap and
+      // one stopped by the player take exactly the same path out.
+      if (existing.state === 'recording') existing.stop()
+      return
+    }
+
+    const stream = streamRef.current
+    if (!stream || !type || !onRecorded) return
+
+    let recorder: MediaRecorder
+    try {
+      recorder = new MediaRecorder(stream, { mimeType: type })
+    } catch {
+      // A browser that passed `isTypeSupported` and then refused the same type
+      // at construction. Nothing to say about it that the player can act on, so
+      // the control simply stops offering.
+      recorderRef.current = null
+      setRecording(false)
+      return
+    }
+
+    const chunks: Blob[] = []
+    let capped = 0
+
+    recorder.ondataavailable = (e) => {
+      if (e.data?.size) chunks.push(e.data)
+    }
+    recorder.onstop = () => {
+      clearTimeout(capped)
+      recorderRef.current = null
+      recordingRef.current = false
+      setRecording(false)
+      if (!chunks.length) return
+      const file = new File([new Blob(chunks, { type })], recordingFileName(type, new Date()), {
+        type,
+      })
+      onRecorded(file)
+    }
+    recorder.onerror = () => {
+      clearTimeout(capped)
+      recorderRef.current = null
+      recordingRef.current = false
+      setRecording(false)
+    }
+
+    try {
+      recorder.start()
+    } catch {
+      recorderRef.current = null
+      setRecording(false)
+      return
+    }
+
+    recorderRef.current = recorder
+    recordingRef.current = true
+    setRecording(true)
+
+    // The backstop. See MAX_RECORDING_SECONDS: chunks accumulate in memory
+    // until something stops the recorder, and the likeliest way for nothing to
+    // is a player who has put the phone down and forgotten which button they
+    // pressed.
+    capped = setTimeout(() => {
+      if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+    }, MAX_RECORDING_SECONDS * 1000) as unknown as number
+  }
+
   if (block) {
     return (
       <div className="framer">
@@ -304,10 +444,34 @@ export default function FramingCheck() {
         </p>
       )}
 
+      {/* Only where the browser will record something this app can then read.
+          See `recordingType` — a control that produces a file the analyser
+          refuses is worse than no control. */}
+      {onRecorded && type && !block && (
+        <button
+          type="button"
+          className={`btn btn--full framer-record${recording ? ' framer-record--on' : ''}`}
+          onClick={toggleRecording}
+        >
+          <Icon name={recording ? 'check' : 'camera'} size={17} />
+          {recording ? 'Stop and analyse' : 'Record the serve here'}
+        </button>
+      )}
+
       <p className="framer-foot">
         {warming !== null
           ? 'This is the same download an analysis needs, so it only happens once.'
-          : 'This reads the camera angle, the tilt and how much of you fits the shot — nothing about the serve itself. Your video never leaves the device, and nothing here is recorded.'}
+          : recording
+            ? 'Recording. Serve, then stop — the clip is read on this device and never uploaded.'
+            : /*
+               * The old line ended "and nothing here is recorded", which stopped
+               * being true the moment this button existed. Left alone it would
+               * have been the one false sentence on the most privacy-sensitive
+               * screen in the app, sitting under a live camera.
+               */
+              type && onRecorded
+              ? 'This reads the camera angle, the tilt and how much of you fits the shot — nothing about the serve itself. Nothing is recorded until you press record, and a recording is read on this device and never uploaded.'
+              : 'This reads the camera angle, the tilt and how much of you fits the shot — nothing about the serve itself. Your video never leaves the device, and nothing here is recorded.'}
       </p>
     </div>
   )

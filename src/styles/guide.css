@@ -166,6 +166,23 @@
 .framer-cue--hedged .cue-key { color: var(--fair); }
 .framer-cue--refused .cue-key { color: var(--work); }
 
+/* Primary while idle, because pressing it is what this screen is for once the
+   framing reads clear. Amber-bordered while running rather than red: a
+   recording in progress is a state, not a fault, and this app spends red on
+   things the camera could not read. */
+.framer-record {
+  margin: 4px 0 2px;
+  background: var(--lime);
+  color: var(--lime-ink);
+  border: 1px solid transparent;
+}
+
+.framer-record--on {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--fair);
+}
+
 .framer-foot {
   font-size: 12.5px;
   line-height: 1.62;

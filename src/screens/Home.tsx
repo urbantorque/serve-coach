@@ -392,7 +392,16 @@ export default function Home({
           the sheet is an unmount. Through `Sheet` for the focus trap and the
           Escape key, rather than a second overlay with its own half of that. */}
       <Sheet open={checking} onClose={() => setChecking(false)} title="Check your framing">
-        <FramingCheck />
+        {/* A recording goes down exactly the path a picked file does. Closing
+            the sheet first, so the camera is released before the analysis asks
+            the same device for the GPU — and so the player is not left looking
+            at a viewfinder while the screen behind it starts working. */}
+        <FramingCheck
+          onRecorded={(file) => {
+            setChecking(false)
+            onPick(file)
+          }}
+        />
       </Sheet>
     </div>
   )

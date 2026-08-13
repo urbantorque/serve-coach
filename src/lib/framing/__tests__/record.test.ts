@@ -1,0 +1,114 @@
+/**
+ * The decisions behind recording a serve in the page.
+ *
+ * The recording itself cannot be tested here — no browser, no camera, no
+ * `MediaRecorder` — and that is exactly why the choosing was pulled out of the
+ * component. What a browser will record, what it will then decode, and what the
+ * resulting file is called are the three things that decide whether the player
+ * ends up with a clip the analyser reads or one nothing can open, and all three
+ * are ordinary logic.
+ */
+import { MAX_RECORDING_SECONDS, RECORDING_TYPES, recordingFileName, recordingType } from '../record'
+import { assert, check, heading, report } from '../../analysis/__tests__/harness'
+
+/** A browser that supports exactly the types listed. */
+const supporting = (...types: string[]) => ({
+  isTypeSupported: (t: string) => types.includes(t),
+})
+
+heading('What this browser will record')
+
+check('a browser with no MediaRecorder is not offered the button', () => {
+  // The control disappears entirely rather than appearing and failing. Both
+  // shapes of absence are the same answer: no API, and an API with no
+  // capability check on it.
+  assert(recordingType(undefined) === undefined, 'offered recording with no MediaRecorder')
+  assert(recordingType({}) === undefined, 'offered recording with no isTypeSupported')
+})
+
+check('a browser that supports nothing is not offered the button', () => {
+  assert(recordingType(supporting()) === undefined, 'offered a container nothing supports')
+})
+
+check('MP4 is preferred over WebM where both are offered', () => {
+  // Not a quality judgement. MP4/H.264 is the container every decoder in this
+  // app's range opens — including Safari's, which is where a WebM recording
+  // becomes a file the same phone cannot play back.
+  const both = supporting('video/mp4;codecs=avc1', 'video/webm;codecs=vp9')
+  assert(recordingType(both) === 'video/mp4;codecs=avc1', `chose ${recordingType(both)}`)
+})
+
+check('a browser that only records WebM still gets a button', () => {
+  const webmOnly = supporting('video/webm;codecs=vp8')
+  assert(recordingType(webmOnly) === 'video/webm;codecs=vp8', `chose ${recordingType(webmOnly)}`)
+})
+
+check('a bare type is tried after the parameterised one', () => {
+  // Some browsers report the codec-qualified strings as unsupported and then
+  // record the plain one perfectly well.
+  const bare = supporting('video/webm')
+  assert(recordingType(bare) === 'video/webm', `chose ${recordingType(bare)}`)
+})
+
+check('a capability check that throws is skipped, not fatal', () => {
+  // A browser throwing from `isTypeSupported` is a browser being asked about a
+  // string it has never heard of. Treating that as "no recording at all" would
+  // remove the button from a device that can record perfectly well.
+  const grumpy = {
+    isTypeSupported: (t: string) => {
+      if (t.includes('mp4')) throw new TypeError('unknown type')
+      return t === 'video/webm;codecs=vp9'
+    },
+  }
+  assert(recordingType(grumpy) === 'video/webm;codecs=vp9', `chose ${recordingType(grumpy)}`)
+})
+
+check('every type offered is one the list actually ranks', () => {
+  // A guard against the list and the preference order drifting apart: whatever
+  // comes back has to be a member, whichever browser is asked.
+  for (const t of RECORDING_TYPES) {
+    assert(recordingType(supporting(t)) === t, `${t} was supported and not chosen`)
+  }
+})
+
+heading('What the recording is called')
+
+check('the extension matches what was actually recorded', () => {
+  // Everything downstream reads the name — `sessionKeyFor` keys stored reports
+  // on it and the report prints it — so an .mp4 holding WebM is the kind of
+  // wrong that only surfaces much later.
+  const at = new Date(2026, 7, 13, 9, 5, 3)
+  assert(recordingFileName('video/mp4;codecs=avc1', at).endsWith('.mp4'), 'mp4 was not named .mp4')
+  assert(recordingFileName('video/mp4', at).endsWith('.mp4'), 'bare mp4 was not named .mp4')
+  assert(recordingFileName('video/webm;codecs=vp9', at).endsWith('.webm'), 'webm was not named .webm')
+})
+
+check('two recordings in one afternoon get two different names', () => {
+  // Six baskets called `serve` is six reports the player cannot tell apart, and
+  // `sessionKeyFor` keys on the name.
+  const a = recordingFileName('video/mp4', new Date(2026, 7, 13, 9, 5, 3))
+  const b = recordingFileName('video/mp4', new Date(2026, 7, 13, 9, 5, 4))
+  assert(a !== b, `both recordings were called ${a}`)
+})
+
+check('the stamp is local time, not UTC', () => {
+  // Same defect `downloadBackup` already avoids: an evening west of Greenwich
+  // stamped with tomorrow's date.
+  const at = new Date(2026, 0, 2, 23, 30, 0)
+  assert(
+    recordingFileName('video/mp4', at).includes('2026-01-02'),
+    `stamped ${recordingFileName('video/mp4', at)} for a local 2 January`,
+  )
+})
+
+heading('The backstop')
+
+check('the cap is long enough for a basket and short enough to be a backstop', () => {
+  // Not a limit anybody serves into: a serve needs four or five seconds and a
+  // basket of six well under a minute. It exists because MediaRecorder holds
+  // its chunks in memory until something stops it.
+  assert(MAX_RECORDING_SECONDS >= 60, `a cap of ${MAX_RECORDING_SECONDS}s would cut a basket short`)
+  assert(MAX_RECORDING_SECONDS <= 180, `a cap of ${MAX_RECORDING_SECONDS}s is not a backstop`)
+})
+
+report()
