@@ -489,6 +489,17 @@ export interface SkeletonOptions {
   /** Angle callout to draw, if this frame is a judged keyframe. */
   annotation?: PhaseId
   /**
+   * Target bands by metric id, for the measurements worth drawing one for.
+   *
+   * A metric absent from here gets no dial. That is how "nothing is drawn over
+   * a measurement the app has hedged" is enforced, and it is enforced at the
+   * caller rather than here because confidence is the caller's to know — the
+   * same division `drawGhost` already uses. Whatever is passed has to be the
+   * band the report prints as the target, or the picture and the caption
+   * disagree, which is the one thing the ghost's rule forbids outright.
+   */
+  bands?: Record<string, [number, number] | undefined>
+  /**
    * Standing height in image units. Supplying it draws the estimated racket;
    * without it the arm simply ends at the hand, as before.
    */
@@ -812,6 +823,9 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
     // straight, not as the angle at the joint, so it is translated in the same
     // units it was measured in — otherwise a deep load would read as straight.
     const value = annotation.metric === 'kneeBend' ? 180 - deg : deg
+    // Only where the caller handed over a band for this measurement, which it
+    // does only for one it measured and trusts. See `bands`.
+    const band = o.bands?.[annotation.metric]
     drawAngle(
       ctx,
       at(ai),
@@ -821,6 +835,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       annotation.label,
       scale * (o.calloutScale ?? 1),
       o.rect.dw,
+      band && { value, band },
     )
   }
 }
@@ -1010,6 +1025,68 @@ const GHOST_OVERLINE = 'AIM FOR'
  * edge of the picture on a phone. The plate is soft-cornered ink: type set
  * straight onto footage is legible right up until the frame it is not.
  */
+/**
+ * The target band beside the reading, as a dial rather than as a wedge on the
+ * body.
+ *
+ * IT IS NOT DRAWN AT THE JOINT, and that is the whole decision. The arc at the
+ * joint is a locator — its own doc comment says so — because it is drawn between
+ * two limb directions in image space while the number beside it is
+ * `jointAngle` of the *world* landmarks. Those are different quantities: the
+ * projection is exactly what `geometry.ts` refuses to reason about for shoulder
+ * tilt, where a real 20° reads as 60°+ side-on. Shading a band across that arc
+ * would turn a pointer into a measurement, and a picture asserts far more than
+ * the sentence beside it — the same reason the trophy ghost was withdrawn.
+ *
+ * So the band is drawn in the space the number lives in: a small fixed sweep
+ * where 0 and 180 are the ends of what a joint can do, the target shaded, the
+ * reading marked. It is a chart, and a chart claims nothing about the pixels
+ * behind it.
+ */
+function drawDial(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  value: number,
+  band: [number, number],
+  scale: number,
+): void {
+  // Half a turn, opening rightwards, so a bigger angle reads as a more open
+  // dial — the same direction a straightening limb moves.
+  const START = Math.PI * 0.75
+  const SWEEP = Math.PI * 1.5
+  const at = (deg: number) => START + (Math.max(0, Math.min(180, deg)) / 180) * SWEEP
+
+  ctx.lineCap = 'butt'
+
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, START, START + SWEEP)
+  ctx.strokeStyle = PALETTE.under
+  ctx.lineWidth = 4.2 * scale
+  ctx.stroke()
+
+  // The band as an arc segment, because the target is a range. A single mark
+  // would claim a precision `ideal` does not have.
+  const lo = Math.min(band[0], band[1])
+  const hi = Math.max(band[0], band[1])
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, at(lo), at(hi))
+  ctx.strokeStyle = PALETTE.leader
+  ctx.lineWidth = 4.2 * scale
+  ctx.stroke()
+
+  // Where the player actually was, across the full width of the track so it
+  // reads over the band rather than beside it.
+  const a = at(value)
+  ctx.beginPath()
+  ctx.moveTo(cx + Math.cos(a) * (r - 4.4 * scale), cy + Math.sin(a) * (r - 4.4 * scale))
+  ctx.lineTo(cx + Math.cos(a) * (r + 4.4 * scale), cy + Math.sin(a) * (r + 4.4 * scale))
+  ctx.strokeStyle = PALETTE.active
+  ctx.lineWidth = 2.4 * scale
+  ctx.stroke()
+}
+
 function drawAngle(
   ctx: CanvasRenderingContext2D,
   a: Pt,
@@ -1019,6 +1096,17 @@ function drawAngle(
   label: string,
   scale: number,
   maxWidth: number,
+  /**
+   * The measured value and the band it is judged against, in the metric's own
+   * units — or nothing, which draws no dial at all.
+   *
+   * Absent for every measurement the caller does not trust. That gate lives at
+   * the caller because that is where confidence lives, and it is the same rule
+   * the ghost follows: nothing below `SOFT_MEASUREMENT` gets a picture, because
+   * a hedge in the copy cannot catch up with a diagram somebody has already
+   * believed.
+   */
+  judged?: { value: number; band: [number, number] },
 ) {
   const a1 = Math.atan2(a.y - b.y, a.x - b.x)
   const a2 = Math.atan2(c.y - b.y, c.x - b.x)
@@ -1060,7 +1148,12 @@ function drawAngle(
   // narrow puts the label back on bare video.
   const labelSize = 9.5 * scale
   ctx.font = `500 ${labelSize}px ${UI_FONT}`
-  const w = Math.max(valueW, ctx.measureText(label.toUpperCase()).width) + 22 * scale
+  // The dial sits inside the plate, so the plate has to grow by exactly its
+  // width plus its gap — computed here rather than guessed, or a long body
+  // position and a dial end up sharing the same pixels.
+  const dialR = 11 * scale
+  const dialGap = judged ? dialR * 2 + 10 * scale : 0
+  const w = Math.max(valueW, ctx.measureText(label.toUpperCase()).width) + 22 * scale + dialGap
   const h = 38 * scale
 
   // Hairline from the arc to the plate, so the words stay attached to the joint.
@@ -1081,12 +1174,20 @@ function drawAngle(
   ctx.fillStyle = PALETTE.plate
   ctx.fill()
 
+  // Text shifts right by half the dial's footprint so the pair stays centred in
+  // the plate they now share.
+  const textX = lx + dialGap / 2
+
   ctx.font = `620 ${size}px ${UI_FONT}`
   ctx.fillStyle = PALETTE.active
-  ctx.fillText(value, lx, ly - 6 * scale)
+  ctx.fillText(value, textX, ly - 6 * scale)
   ctx.font = `500 ${labelSize}px ${UI_FONT}`
   ctx.fillStyle = PALETTE.plateLabel
-  ctx.fillText(label.toUpperCase(), lx, ly + 9 * scale)
+  ctx.fillText(label.toUpperCase(), textX, ly + 9 * scale)
+
+  if (judged) {
+    drawDial(ctx, lx - w / 2 + 11 * scale + dialR, ly, dialR, judged.value, judged.band, scale)
+  }
 }
 
 /**

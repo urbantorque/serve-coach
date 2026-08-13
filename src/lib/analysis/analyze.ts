@@ -1428,6 +1428,28 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   const verdict = triage(diagnosis, resilience)
 
   const phases = buildPhases(frames, skel.keys)
+
+  /*
+   * Which measurements have earned a target dial on their keyframe still.
+   *
+   * The band is the one the report prints, taken straight off the metric, so
+   * the picture and the caption cannot disagree — the rule `drawGhost` states
+   * at length and the reason the trophy ghost was withdrawn.
+   *
+   * Hedged measurements are left out. Anything under `SOFT_MEASUREMENT` is
+   * marked approximate on the card and barred from the headline, and a diagram
+   * is more convincing than either of those: a player who has seen a dial does
+   * not un-see it because a sentence nearby said "about". Absent values are
+   * excluded by construction, since a metric that could not be computed is not
+   * in `fundamentals`.
+   */
+  const bands: Record<string, [number, number]> = {}
+  for (const area of fundamentals) {
+    for (const m of area.metrics) {
+      if ((m.confidence ?? 1) >= SOFT_MEASUREMENT && m.ideal) bands[m.id] = m.ideal
+    }
+  }
+
   if (!opts.skipThumbnails) {
     onProgress({ step: 'measuring', ratio: 0.8, detail: 'Capturing your key frames' })
     const thumbs = await captureThumbnails(video, phases.map((p) => p.t), (ctx, i, size) => {
@@ -1441,6 +1463,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         rect: fitContain(size.w, size.h, aspect),
         racket: skel.racket,
         annotation: phases[i].id,
+        bands,
         calloutScale: 1.7,
         bodyHeight: skel.bodyHeight,
         sequence: { frames: extracted.frames, index: phases[i].frame },

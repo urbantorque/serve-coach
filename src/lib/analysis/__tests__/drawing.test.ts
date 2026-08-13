@@ -151,6 +151,45 @@ check('the callout is anchored to the joint it describes', () => {
   assert(annotated > plain, 'the callout drew no leader line back to the body')
 })
 
+check('a target dial is drawn only for a measurement that was handed a band', () => {
+  // The gate that keeps a hedged measurement from getting a picture. Confidence
+  // lives at the caller, so the caller withholds the band — and this is what
+  // says the drawing side honours that rather than reaching for a default.
+  const bare = drawOnce({ annotation: 'trophy' }).strokes.length
+  const dialled = drawOnce({ annotation: 'trophy', bands: { kneeBend: [30, 60] } }).strokes.length
+  assert(dialled > bare, 'a band was supplied and nothing extra was drawn')
+
+  const unrelated = drawOnce({
+    annotation: 'trophy',
+    bands: { armExtension: [160, 180] },
+  }).strokes.length
+  assert(
+    unrelated === bare,
+    'a band for a different measurement drew a dial on this keyframe anyway',
+  )
+})
+
+check('the dial never claims the arc on the body is the measurement', () => {
+  /*
+   * The reason this is a dial in the plate and not a wedge at the joint.
+   *
+   * The arc at the joint is drawn between two limb directions in image space;
+   * the number beside it is `jointAngle` of the world landmarks. Those differ by
+   * the projection `geometry.ts` refuses to reason about — side-on, a real 20°
+   * of shoulder tilt reads as 60°+. Shading a band across that arc would turn a
+   * pointer into a measurement.
+   *
+   * So: whatever the band says, the arc at the joint is unchanged. Only the
+   * plate grows.
+   */
+  const narrow = drawOnce({ annotation: 'trophy', bands: { kneeBend: [30, 35] } })
+  const wide = drawOnce({ annotation: 'trophy', bands: { kneeBend: [5, 175] } })
+  assert(
+    narrow.strokes.length === wide.strokes.length,
+    'the number of strokes moved with the band, so something is being scaled by it at the joint',
+  )
+})
+
 check('the racket is drawn when the hand is visible', () => {
   const withRacket = drawOnce().strokes.length
   const withoutBodyHeight = drawOnce({ bodyHeight: undefined }).strokes.length

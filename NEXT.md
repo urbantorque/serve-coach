@@ -212,10 +212,19 @@ below `SOFT_MEASUREMENT`, trophy ghost withdrawn because a translation cannot
 express a joint angle. That restraint stands. The hole it left is that knee bend
 and shoulder tilt have no picture at all.
 
-- [ ] **5a** — A visual that can honestly say "angle": an arc at the joint on
-      the keyframe still, target band as a wedge behind it. Same evidence rules
-      as the ghost; band read through `analysis/tiers.ts` as the tier above the
-      player.
+- [x] **5a** — A dial in the callout plate, **not** a wedge at the joint, and
+      the difference is the point. The arc at the joint is a locator: it is
+      drawn between two limb directions in image space while the number beside
+      it is `jointAngle` of the *world* landmarks, and those differ by exactly
+      the projection `geometry.ts` refuses to reason about — side-on, a real 20°
+      of shoulder tilt reads as 60°+. Shading a band across that arc would turn
+      a pointer into a measurement. So the band is drawn where the number lives:
+      a small sweep, target shaded, reading marked, claiming nothing about the
+      pixels behind it. Bands come off the metric the report prints, and only
+      for measurements at or above `SOFT_MEASUREMENT`. Two tests pin it: a dial
+      appears only for a banded metric, and the strokes at the joint do not move
+      with the band. **Not seen rendered** — a captured still needs a real video
+      and `?demo=live` cannot record one in this pane.
 - [ ] **5b** — A then-versus-now still pair from history, reusing 2b's
       component.
 - [ ] **5c** — Both render into `share/reportCard.ts`, or are deliberately
