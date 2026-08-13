@@ -119,7 +119,7 @@ function tx<T>(
 /** Reports kept in full. Beyond this the oldest are dropped entirely. */
 const MAX_SESSIONS = 60
 /** Reports that keep their keyframe stills. Older ones keep only their numbers. */
-const KEEP_STILLS = 20
+export const KEEP_STILLS = 20
 
 const isQuotaError = (err: unknown) =>
   err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22)

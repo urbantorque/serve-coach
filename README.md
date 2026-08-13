@@ -232,6 +232,14 @@ the five areas and the annotated keyframes into a single image, and hands it to
 the share sheet or saves it. That is the only way anything leaves the app, and it
 is the player who does it — the app itself never sends anything anywhere.
 
+The target dial goes with it, because it is drawn into the still rather than
+composed on screen — a shared card showing a bare arc where the report shows an
+arc, a band and a reading would be the quieter claim about the same serve, and
+the honest half is the one that would have been lost. The two paired comparisons
+do not. That card is one serve; a pair is a statement about a set of them, and
+half a comparison shared without its dates or serve numbers is a picture of two
+serves with nothing saying which is which.
+
 **What to practise.** Any single report picks the weakest thing in that serve,
 which on a given day might just be the serve you happened to film. Across
 sessions the app looks for the thing that is *still* wrong — ranked by lowest
@@ -266,6 +274,21 @@ it is a different measurement, and a stronger reason to stay on the first when
 it is the same one. It is read off the same trend the progress screen draws
 rather than worked out again, because two screens with their own opinion about
 which element wanders would eventually disagree in front of the player.
+
+**Then, and now.** A chart says the number went from 58 to 66. It cannot show
+that the racket now falls behind the back where it used to stop at the shoulder,
+and that is the thing somebody wants to see after six weeks of the same drill. So
+the progress view puts the oldest serve that still has pictures beside the newest
+one, the same six positions paired up — the same grid the basket comparison uses,
+because they are the same picture with different captions.
+
+The oldest that still has pictures, rather than a fixed distance back: stills
+survive on the newest twenty reports and are dropped from everything older, so
+that is the widest honest comparison there is. Asking for "three months ago"
+would quietly return whatever happened to still have images. Both serves have to
+be the same type, from the same scoring era, and at least a day apart — two
+reports from one afternoon are one trip to the court, and showing them under a
+heading about progress would call an hour's variation improvement.
 
 **Progress over time.** Saved reports feed a trend view: overall score by
 session, and what changed per fundamental since your last serve. Because a

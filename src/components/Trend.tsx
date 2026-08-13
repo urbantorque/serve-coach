@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import {
   MEANINGFUL_DELTA,
   deltaStatus,
+  shortDate,
   type AreaDelta,
   type ConsistencyPoint,
   type TrendPoint,
@@ -194,8 +195,7 @@ export function Sparkline({ points }: { points: TrendPoint[] }) {
 
 /* ============================================================ score trend === */
 
-const fmtDate = (t: number) =>
-  new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+const fmtDate = shortDate
 
 /**
  * Overall score across sessions. One series, so no legend — the heading says

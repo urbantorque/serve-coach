@@ -225,11 +225,22 @@ and shoulder tilt have no picture at all.
       appears only for a banded metric, and the strokes at the joint do not move
       with the band. **Not seen rendered** — a captured still needs a real video
       and `?demo=live` cannot record one in this pane.
-- [ ] **5b** — A then-versus-now still pair from history, reusing 2b's
-      component.
-- [ ] **5c** — Both render into `share/reportCard.ts`, or are deliberately
-      omitted from it with a stated reason. A report that looks different shared
-      than read is a bug.
+- [x] **5b** — Then against now, in the progress sheet, on the same
+      `FramePair` 2b's strip was refactored into — one grid, two callers. The
+      pair is chosen from summaries and then *fetched*, because
+      `listSummaries` strips stills by design, so nothing in App state has ever
+      held an image; which two reports to compare is knowable from the
+      summaries, whether the pictures survive is not. Bounded by `KEEP_STILLS`,
+      same serve type, same rubric era, and at least a day apart so one trip to
+      the court is not printed as progress. Verified against a seeded history:
+      "Then, and now", Jul 4 against Aug 12, six rows, twelve images.
+- [x] **5c** — The dial reaches the share card automatically and by design: it
+      is drawn into the still at capture time, so a shared image carries the
+      same evidence the report does rather than a quieter version of it. Both
+      paired comparisons are deliberately **omitted**, with the reason written
+      into `reportCard.ts` — that card is one serve, and a pair is a statement
+      about a set of them that cannot be read without the dates or serve numbers
+      giving it meaning.
 
 ---
 

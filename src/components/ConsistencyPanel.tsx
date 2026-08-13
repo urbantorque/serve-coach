@@ -1,3 +1,4 @@
+import FramePair from './FramePair'
 import { readoutOf } from '../lib/analysis/anatomy'
 import {
   consistencyHeadline,
@@ -134,31 +135,17 @@ function BestAgainstWorst({ gap }: { gap: ServeGap }) {
  */
 function PairedFrames({ pair }: { pair: ServePairFrames }) {
   return (
-    <div className="pair-frames">
-      <span className="t-overline consistency-label">The same moments, both serves</span>
-      <ul className="pair-list">
-        {pair.positions.map((p) => (
-          <li key={p.id}>
-            <span className="pair-label">{p.label}</span>
-            <div className="pair-shots">
-              <figure>
-                {/* Decorative only where the caption beside it already names the
-                    position and the serve. A screen reader reading "Trophy,
-                    serve 1" and then an alt text saying the same thing twice is
-                    noise, and there is nothing in the picture a sentence can
-                    carry. */}
-                {p.best ? <img src={p.best} alt="" /> : <span className="pair-missing" />}
-                <figcaption>#{pair.best}</figcaption>
-              </figure>
-              <figure>
-                {p.worst ? <img src={p.worst} alt="" /> : <span className="pair-missing" />}
-                <figcaption>#{pair.worst}</figcaption>
-              </figure>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <FramePair
+      heading="The same moments, both serves"
+      leftCaption={`#${pair.best}`}
+      rightCaption={`#${pair.worst}`}
+      positions={pair.positions.map((p) => ({
+        id: p.id,
+        label: p.label,
+        left: p.best,
+        right: p.worst,
+      }))}
+    />
   )
 }
 

@@ -379,9 +379,86 @@ export function deltasAgainst(
 }
 
 /** A change smaller than this is serve-to-serve noise, not a trend. */
+/**
+ * The oldest serve still worth putting beside today's, and today's.
+ *
+ * The question a trend line cannot answer. A chart says the number went from 58
+ * to 66; it cannot show that the racket now falls behind the back where it used
+ * to stop at the shoulder, and that is the thing somebody wants to see after six
+ * weeks of the same drill.
+ *
+ * Deliberately the *oldest* kept serve rather than a fixed interval. Stills
+ * survive on the newest `KEEP_STILLS` reports and are dropped from everything
+ * older, so the furthest-back picture that still exists is the widest honest
+ * comparison there is — and asking for "three months ago" would silently return
+ * whatever happened to still have images.
+ *
+ * Both must be the same serve type and the same rubric era, for the reasons
+ * `buildProgress` refuses a comparison across either: different target bands and
+ * a recalibration that would show up as the player changing.
+ */
+export function thenAndNow(
+  sessions: Session[],
+  keepStills: number,
+  serveType?: ServeType,
+): { then: Session; now: Session } | undefined {
+  const type = serveType ?? dominantType(sessions)
+  const mine = currentRubricEra(
+    sessions.filter((s) => typeOf(s) === type).sort((a, b) => a.createdAt - b.createdAt),
+  )
+  if (mine.length < 2) return undefined
+
+  /*
+   * Chosen by position rather than by looking for pictures.
+   *
+   * `listSummaries` strips the stills on the way out — that is the whole point
+   * of it, since deserialising 120 base64 images to throw them away is the peak
+   * it exists to avoid — so nothing here can see which reports still have any.
+   * What is knowable is the rule: stills survive on the newest `keepStills`
+   * reports across the whole store. So the furthest back worth asking for is
+   * that far back, and whether the images are really there is settled by
+   * fetching them.
+   *
+   * Counted over `sessions` rather than over this serve type, because the prune
+   * does not care about serve types either.
+   */
+  const oldestKept = [...sessions].sort((a, b) => b.createdAt - a.createdAt)[keepStills - 1]
+  const floor = oldestKept?.createdAt ?? 0
+  const eligible = mine.filter((s) => s.createdAt >= floor)
+  if (eligible.length < 2) return undefined
+
+  const then = eligible[0]
+  const now = eligible[eligible.length - 1]
+  // One report cannot be its own before-and-after, and two filed minutes apart
+  // are the same trip to the court — a player correcting the handedness and
+  // re-reading the same clip would otherwise be shown their serve against
+  // itself, and an hour's variation would be printed as progress.
+  if (now.createdAt - then.createdAt < MIN_THEN_AND_NOW_GAP_MS) return undefined
+  return { then, now }
+}
+
+/**
+ * How far apart two serves have to be before one is a "then".
+ *
+ * A day. Below that they are the same trip to the court, and a comparison across
+ * one basket is what the consistency panel is for — showing it here under a
+ * heading about progress would be calling an hour's variation improvement.
+ */
+export const MIN_THEN_AND_NOW_GAP_MS = 24 * 60 * 60 * 1000
+
 export const MEANINGFUL_DELTA = 3
 
 export const deltaStatus = (delta: number): Status | 'flat' =>
   Math.abs(delta) < MEANINGFUL_DELTA ? 'flat' : delta > 0 ? 'great' : 'work'
 
 export { statusOf }
+
+/**
+ * A date as the trend axis writes it.
+ *
+ * Here rather than in a component, so the chart's axis and the then-and-now
+ * pair's two column captions cannot come out in different formats on one
+ * screen — which reads as two different kinds of date rather than as one.
+ */
+export const shortDate = (t: number): string =>
+  new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })

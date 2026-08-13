@@ -3,10 +3,11 @@ import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
 import StoragePanel from './components/StoragePanel'
 import PracticeCard from './components/PracticeCard'
+import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
-import { buildConsistencyTrend, buildProgress, typeOf } from './lib/progress'
+import { buildConsistencyTrend, buildProgress, shortDate, thenAndNow, typeOf } from './lib/progress'
 import {
   analyzeAllServes,
   analyzeServe,
@@ -29,6 +30,7 @@ import { isCachedOffline, loadEngine } from './lib/pose/poseEngine'
 import {
   deleteSession,
   getSession,
+  KEEP_STILLS,
   listPracticeLogs,
   listSummaries,
   logPractice,
@@ -210,6 +212,26 @@ export default function App() {
    */
   const practiceRef = useRef<PracticeFocus | undefined>(undefined)
 
+  /**
+   * The oldest serve that still has pictures, beside the newest, once both have
+   * been fetched.
+   *
+   * Fetched rather than read off `sessions`, because `listSummaries` strips the
+   * stills on the way out — that is its whole purpose — so the summaries this
+   * app holds in state have never had an image in them. Which two reports are
+   * worth comparing is decided from the summaries; whether the pictures are
+   * really still there is settled by asking for them.
+   *
+   * Only while the progress sheet is open. Two full reports is twelve base64
+   * images, and holding them for a screen nobody has opened is the cost
+   * `listSummaries` exists to avoid, paid somewhere else.
+   */
+  const [thenNow, setThenNow] = useState<{
+    then: Session
+    now: Session
+    positions: PairPosition[]
+  }>()
+
   const refreshSessions = useCallback(() => {
     void safely(listSummaries, []).then(setSessions)
     // `undefined` on failure rather than `[]`, and the difference is the whole
@@ -275,6 +297,45 @@ export default function App() {
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
     [sessions, drillLogs],
   )
+
+  useEffect(() => {
+    if (sheet !== 'progress') {
+      setThenNow(undefined)
+      return
+    }
+    const pick = thenAndNow(sessions, KEEP_STILLS)
+    if (!pick) return
+
+    let live = true
+    void (async () => {
+      const [then, now] = await Promise.all([
+        safely(() => getSession(pick.then.id), undefined),
+        safely(() => getSession(pick.now.id), undefined),
+      ])
+      if (!live || !then || !now) return
+
+      // Paired by keyframe id, never by index, for the reason `pairStills` gives:
+      // one serve's trophy beside the other's racket drop is a comparison
+      // nothing in the picture would admit to.
+      const positions: PairPosition[] = then.phases
+        .map((p) => ({
+          id: p.id,
+          label: p.label,
+          left: p.thumbnail,
+          right: now.phases.find((q) => q.id === p.id)?.thumbnail,
+        }))
+        // Both sides, not either: a row with one picture in it is a comparison
+        // with nothing to compare, and the prune takes a report's stills all at
+        // once rather than a frame at a time.
+        .filter((p) => p.left && p.right)
+
+      if (positions.length) setThenNow({ then, now, positions })
+    })()
+
+    return () => {
+      live = false
+    }
+  }, [sheet, sessions])
   // Read by `logDrill`, which is declared above this and would otherwise have to
   // be redefined every time the focus changes — and it is handed to a button
   // that must not be replaced under the player's finger.
@@ -1119,6 +1180,19 @@ export default function App() {
                 focus={practice}
                 onLogDrill={logDrill}
                 onUndoDrill={practice.drilled ? undoDrill : undefined}
+              />
+            )}
+
+            {/* Then against now. A chart says the number went from 58 to 66; it
+                cannot show that the racket now falls behind the back where it
+                used to stop at the shoulder, which is the thing somebody wants
+                after six weeks of the same drill. */}
+            {thenNow && (
+              <FramePair
+                heading="Then, and now"
+                leftCaption={shortDate(thenNow.then.createdAt)}
+                rightCaption={shortDate(thenNow.now.createdAt)}
+                positions={thenNow.positions}
               />
             )}
 

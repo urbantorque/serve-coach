@@ -103,6 +103,22 @@ const loadImage = (src: string) =>
  * thing to work on, the five areas, and the keyframes with the tracking drawn
  * on. The video itself is never stored and never leaves the device, so these
  * stills are what there is to show — which is also why they carry the skeleton.
+ *
+ * WHAT IS AND IS NOT HERE, of the two pictures added since:
+ *
+ * The target dial arrives for free and deliberately. It is drawn into the still
+ * at capture time rather than composed on screen, so the shared image carries
+ * the same evidence the report does — a card that showed a bare arc where the
+ * report shows an arc, a band and a reading would be a quieter claim about the
+ * same serve, and the honest half is the one that would have been dropped.
+ *
+ * The paired comparisons — best serve against worst, and then against now — are
+ * deliberately absent. This card is one serve: its score, its fault, its six
+ * moments. Both pairs are statements about a *set* of serves, one of them about
+ * a basket and one about two months, and neither can be read without the dates
+ * or serve numbers that give it meaning. Half of a comparison, shared without
+ * them, is a picture of two serves with nothing saying which is which. The
+ * report holds both, and the report is where they mean something.
  */
 export async function renderReportCard(report: Report): Promise<Blob | undefined> {
   const W = 1080
