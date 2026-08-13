@@ -76,31 +76,95 @@ export const MAX_RECORDING_SECONDS = 90
 /**
  * Whether this browser can be asked to record, and in what.
  *
- * Returns the first container it will both accept and — as far as anything here
- * can tell — decode, or nothing at all. Nothing means the button does not
- * appear.
+ * Returns the first container it will both accept and decode, or nothing at all.
+ * Nothing means the button does not appear.
  *
- * Written against an injected `MediaRecorder` so the choosing can be tested. The
- * default reads the global, which is absent in the test runner and on any
- * browser without the API, and both of those are the same answer.
+ * IT ASKS ABOUT DECODING NOW, WHICH IT DID NOT. The ordering above is a
+ * statement about which containers are *likely* to be readable, and for a long
+ * time it was the whole of the reasoning: whatever the encoder accepted first
+ * was handed back, and the comment claimed "as far as anything here can tell"
+ * about a question nothing here had asked. On any browser where the likelihood
+ * is wrong, the player serves, the file lands, and nothing opens it — which is
+ * the exact failure the ordering exists to avoid, surviving inside it. The
+ * device check in `selfCheck.ts` was built to catch that and caught it before a
+ * phone did.
+ *
+ * A SILENT DECODER IS NOT A REFUSAL. Where there is no `canPlayType` to ask —
+ * the test runner, an old browser, anything that hands back something other than
+ * a video element — the answer falls back to encoder support alone, which is
+ * what this did before. Absence of evidence must not remove a working button;
+ * that would be refusing a clip for want of a threshold reading, which this
+ * codebase treats as a defect rather than as caution.
+ *
+ * `'maybe'` counts as playable. Safari says it about files it plays perfectly,
+ * and reading it as a refusal would delete the record button from the browser
+ * where recording in the page matters most.
+ *
+ * Written against injected probes so the choosing can be tested. The defaults
+ * read the globals, both absent in the test runner.
  */
 export function recordingType(
   recorder: { isTypeSupported?: (t: string) => boolean } | undefined = typeof MediaRecorder ===
   'undefined'
     ? undefined
     : MediaRecorder,
+  decoder: { canPlayType?: (t: string) => string } | undefined = typeof document === 'undefined'
+    ? undefined
+    : document.createElement('video'),
 ): string | undefined {
   if (typeof recorder?.isTypeSupported !== 'function') return undefined
+  const canAsk = typeof decoder?.canPlayType === 'function'
   for (const type of RECORDING_TYPES) {
     try {
-      if (recorder.isTypeSupported(type)) return type
+      if (!recorder.isTypeSupported(type)) continue
     } catch {
       // A browser that throws from a capability check is a browser being asked
       // about a string it has never heard of. Try the next one rather than
       // treating the whole API as missing.
+      continue
     }
+    if (!canAsk || playsBack(decoder, type)) return type
   }
+  // Something recordable, nothing readable. No button — see the note at the head
+  // of this file: a control that produces a file the app then refuses is worse
+  // than no control, and the file picker is still there.
   return undefined
+}
+
+/**
+ * The `canPlayType` question for a `MediaRecorder` mime type.
+ *
+ * The two APIs disagree about syntax for the same container. `MediaRecorder`
+ * takes `video/mp4;codecs=avc1`; `canPlayType` wants the codec quoted, and on
+ * H.264 it will not answer better than `'maybe'` for a bare `avc1` — that is a
+ * codec family rather than a codec, and browsers say so. `avc1.42E01E` is
+ * baseline profile at level 3.0, which is what a phone encoder produces.
+ *
+ * Lives here rather than in `selfCheck.ts` so that the recording path does not
+ * depend on the diagnostic that reports on it. The diagnostic imports this.
+ */
+export function playbackQuery(type: string): string {
+  const [container, codecs] = type.split(';codecs=')
+  if (!codecs) return container
+  return `${container}; codecs="${codecs === 'avc1' ? 'avc1.42E01E' : codecs}"`
+}
+
+/**
+ * Whether a `<video>` on this browser will play back what `MediaRecorder` would
+ * write.
+ */
+export function playsBack(
+  decoder: { canPlayType?: (t: string) => string } | undefined,
+  type: string,
+): boolean {
+  if (typeof decoder?.canPlayType !== 'function') return false
+  try {
+    // Anything but the empty string. `'maybe'` is Safari's answer about files it
+    // plays perfectly, so treating it as a no would be the overclaim in reverse.
+    return decoder.canPlayType(playbackQuery(type)) !== ''
+  } catch {
+    return false
+  }
 }
 
 /**

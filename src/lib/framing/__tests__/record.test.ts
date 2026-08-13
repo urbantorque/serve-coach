@@ -8,7 +8,13 @@
  * ends up with a clip the analyser reads or one nothing can open, and all three
  * are ordinary logic.
  */
-import { MAX_RECORDING_SECONDS, RECORDING_TYPES, recordingFileName, recordingType } from '../record'
+import {
+  MAX_RECORDING_SECONDS,
+  RECORDING_TYPES,
+  playbackQuery,
+  recordingFileName,
+  recordingType,
+} from '../record'
 import { assert, check, heading, report } from '../../analysis/__tests__/harness'
 
 /** A browser that supports exactly the types listed. */
@@ -28,6 +34,56 @@ check('a browser with no MediaRecorder is not offered the button', () => {
 
 check('a browser that supports nothing is not offered the button', () => {
   assert(recordingType(supporting()) === undefined, 'offered a container nothing supports')
+})
+
+check('the H.264 question carries a profile, because a bare family answers maybe', () => {
+  // `avc1` alone is a codec family. Browsers will not commit to a family, so the
+  // honest-looking `maybe` that comes back is an artifact of the question rather
+  // than a fact about the device.
+  assert(
+    playbackQuery('video/mp4;codecs=avc1') === 'video/mp4; codecs="avc1.42E01E"',
+    playbackQuery('video/mp4;codecs=avc1'),
+  )
+  assert(playbackQuery('video/mp4') === 'video/mp4', playbackQuery('video/mp4'))
+  assert(
+    playbackQuery('video/webm;codecs=vp9') === 'video/webm; codecs="vp9"',
+    playbackQuery('video/webm;codecs=vp9'),
+  )
+})
+
+check('a container this browser will not play back is not chosen', () => {
+  // The ordering above is a statement about which containers are *likely*
+  // readable. For a long time it was the whole of the reasoning: whatever the
+  // encoder took first was handed back, and nothing asked the decoder. On the
+  // browser where the likelihood is wrong, the player serves and the file cannot
+  // be opened — the failure this list exists to avoid, surviving inside it.
+  const encodesWebmOnly = supporting('video/webm;codecs=vp9')
+  const opensMp4Only = { canPlayType: (q: string) => (q.startsWith('video/mp4') ? 'probably' : '') }
+  assert(
+    recordingType(encodesWebmOnly, opensMp4Only) === undefined,
+    'handed back a container this browser cannot open',
+  )
+})
+
+check('a readable container beats a higher-ranked unreadable one', () => {
+  const both = supporting('video/mp4', 'video/webm')
+  const opensWebmOnly = { canPlayType: (q: string) => (q === 'video/webm' ? 'probably' : '') }
+  assert(recordingType(both, opensWebmOnly) === 'video/webm', 'kept the unreadable ranking')
+})
+
+check('a browser with no canPlayType keeps the button it had', () => {
+  // Absence of evidence must not remove a working control. Refusing a clip for
+  // want of a threshold reading is the defect this codebase names most often,
+  // and this is the same move in the recording path.
+  const encodesWebmOnly = supporting('video/webm;codecs=vp9')
+  assert(recordingType(encodesWebmOnly, undefined) === 'video/webm;codecs=vp9', 'lost the button')
+  assert(recordingType(encodesWebmOnly, {}) === 'video/webm;codecs=vp9', 'lost the button')
+})
+
+check('maybe is playable, because Safari says it about files it plays', () => {
+  const mp4 = supporting('video/mp4;codecs=avc1')
+  const hedging = { canPlayType: () => 'maybe' }
+  assert(recordingType(mp4, hedging) === 'video/mp4;codecs=avc1', 'read a hedge as a refusal')
 })
 
 check('MP4 is preferred over WebM where both are offered', () => {

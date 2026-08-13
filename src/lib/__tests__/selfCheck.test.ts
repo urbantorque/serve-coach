@@ -15,7 +15,6 @@ import {
   deviceReportText,
   hardwareVerdict,
   playback,
-  playbackQuery,
   recordingVerdict,
   storageVerdict,
   REPORT_VOCABULARY,
@@ -35,18 +34,6 @@ const MP4 = 'video/mp4; codecs="avc1.42E01E"'
 const WEBM9 = 'video/webm; codecs="vp9"'
 
 heading('Asking a browser what it will play')
-
-check('the H.264 query carries a profile, because a bare family answers maybe', () => {
-  // `avc1` alone is a codec family. Browsers will not commit to a family, so the
-  // honest-looking `maybe` that comes back is an artifact of the question rather
-  // than a fact about the device — and `maybe` is treated as playable here.
-  assert(playbackQuery('video/mp4;codecs=avc1') === MP4, playbackQuery('video/mp4;codecs=avc1'))
-})
-
-check('a container with no codec is asked about as a container', () => {
-  assert(playbackQuery('video/mp4') === 'video/mp4', playbackQuery('video/mp4'))
-  assert(playbackQuery('video/webm;codecs=vp9') === WEBM9, playbackQuery('video/webm;codecs=vp9'))
-})
 
 check('the three answers are named, and the blank one is a refusal', () => {
   assert(playback(plays(MP4), MP4) === 'yes', 'probably did not read as yes')
@@ -79,27 +66,27 @@ check('the ordinary browser records MP4 and plays it', () => {
   const v = recordingVerdict(records('video/mp4;codecs=avc1', 'video/webm;codecs=vp9'), plays(MP4, WEBM9))
   assert(v.chosen === 'video/mp4;codecs=avc1', `chose ${v.chosen}`)
   assert(v.deadEnd === false, 'called a working browser a dead end')
-  assert(v.playable === undefined, 'proposed an alternative to a working choice')
 })
 
-check('recording a container this browser cannot open is caught', () => {
+check('a container this browser cannot open is not the one it records in', () => {
   // The failure the recording path was designed around, arriving from the
   // direction nothing could test: a browser that will encode WebM and will not
-  // decode it. `recordingType` returns the WebM happily — its ordering is a
-  // guess about decoders, and this is the case where the guess is wrong.
+  // decode it. The choosing used to hand that back, because its ordering is a
+  // guess about decoders and this is the case where the guess is wrong.
   const v = recordingVerdict(records('video/webm;codecs=vp9'), plays(MP4))
-  assert(v.chosen === 'video/webm;codecs=vp9', `chose ${v.chosen}`)
-  assert(v.deadEnd === true, 'an unplayable recording was not flagged')
-  assert(v.playable === undefined, 'named an alternative that this browser cannot record')
+  assert(v.chosen === undefined, `chose ${v.chosen}, which this browser cannot open`)
+  assert(v.deadEnd === true, 'a browser that records nothing readable was not flagged')
 })
 
-check('an alternative is named only when the browser can actually record it', () => {
+check('the readable container is preferred over the higher-ranked unreadable one', () => {
+  // MP4 outranks WebM in `RECORDING_TYPES` and this browser records both. The
+  // ranking is a statement about what is *likely* readable, and it loses to the
+  // browser's own answer about what actually is.
   const v = recordingVerdict(records('video/mp4', 'video/webm'), {
     canPlayType: (q: string) => (q === 'video/webm' ? 'probably' : ''),
   })
-  assert(v.chosen === 'video/mp4', `chose ${v.chosen}`)
-  assert(v.deadEnd === true, 'an unplayable choice was not flagged')
-  assert(v.playable === 'video/webm', `named ${v.playable ?? 'nothing'}`)
+  assert(v.chosen === 'video/webm', `chose ${v.chosen}`)
+  assert(v.deadEnd === false, 'flagged a browser that found a working container')
 })
 
 check('Safari saying maybe about everything is not a dead end', () => {

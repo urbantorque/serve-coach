@@ -75,9 +75,20 @@ reports back, and then ask.
       be silent. **Not covered by a test** — same as the shooting list in 1b, and
       the same reason: it is a list for a person, and what it asserts about the
       app was checked by reading the routes rather than by running them.
-- [ ] **R5** — Fix the first thing R2–R4 report. The recorder first: a WebM the
-      phone cannot play back is the failure that path was designed around and has
-      never been observed.
+- [x] **R5** — `recordingType` asks the decoder now. It took two arguments'
+      worth of change and no device: R2 had already found it. The ordering in
+      `RECORDING_TYPES` is a guess about decodability and it was the entire
+      reasoning, so the first container the encoder accepted was returned
+      whatever the browser thought of reading it back. A readable container now
+      beats a higher-ranked unreadable one, and a browser that records only what
+      it cannot open gets **no button** rather than a bad file — the designed
+      fallback, not a broken path. **A silent decoder is not a refusal**: with no
+      `canPlayType` to ask, the choosing falls back to encoder support alone,
+      because deleting a working button for want of a reading is constraint 2's
+      defect wearing a different coat. `playbackQuery` moved into `record.ts` so
+      the recording path does not import the diagnostic that reports on it.
+      `deadEnd` changed meaning with the fix and says so in the type. 20 tests
+      across the two files; verified at `?check`, both columns printed.
 - [ ] **R6** — Fix the second.
 - [ ] **R7** — Fix the third, or if the device came back clean, pin the three
       paths that were riskiest with tests that would fail if a browser update

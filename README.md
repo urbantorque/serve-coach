@@ -232,17 +232,26 @@ the history sheet, and it says what this particular browser will record, what it
 will open, whether the camera and the offline download are there, and how much
 room the browser has given it. It makes no request and stores nothing.
 
-It exists because the recording path chooses a container by an ordering that
-assumes what a browser can decode, and never asks. That assumption held on every
-browser it was written against and cannot be checked from here — so on the one
-where it is wrong, the player serves, the file lands, and nothing can open it.
-The check asks both questions of the same browser and says when the answers
-disagree. It also asks about HEVC, which is the same failure arriving through the
+It exists because the recording path used to choose a container by an ordering
+that assumed what a browser can decode, and never asked. The ordering is a good
+guess and it was the whole of the reasoning: whatever the encoder accepted first
+was handed back. On any browser where the guess is wrong, the player serves, the
+file lands, and nothing opens it — which is the exact failure the ordering exists
+to avoid, surviving inside it. Printing the two columns beside each other is what
+made that visible, so they are still printed beside each other.
+
+**The recorder now asks both questions.** A container this browser will not play
+back is not the container it records in, whatever the ranking says. Where there
+is no `canPlayType` to ask, the answer falls back to encoder support alone —
+absence of evidence must not delete a working button, which is the same rule the
+analysis path follows when a threshold cannot be read. A browser that records
+only what it cannot open gets no record button and says so, because a control
+that produces a file the app then refuses is worse than no control, and the file
+picker is a first-class path rather than a degraded one.
+
+The check also asks about HEVC, which is the same failure arriving through the
 file picker instead: Chrome on Windows answers no, which is why an iPhone clip
 that plays perfectly in the camera roll cannot be read.
-
-Nothing there is a fix. It reports; where it reports something that ought not to
-be true, that is a defect with its own name.
 
 `COURT-CHECK.md` is the twenty-minute list that uses it: nine steps in order,
 each saying what it proves, ending in what to send back. The first three are

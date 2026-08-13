@@ -43,37 +43,39 @@ export default function DeviceCheck() {
   if (!report) return <p className="sheet-note">Asking this phone about itself…</p>
 
   const { recording, decode, camera, storage, hardware, offline } = report
-  const verdict = recording.chosen && !recording.deadEnd ? YES : NO
+  const verdict = recording.chosen ? YES : NO
 
   return (
     <section className="devcheck">
       <p className={`devcheck-verdict devcheck-verdict--${verdict.tone}`}>
         <Icon name={verdict.name} size={15} />
         <span>
-          {!recording.chosen
-            ? 'This browser will not record. Film with your camera app and pick the video — that path is unaffected.'
+          {recording.chosen
+            ? 'This phone can record a serve and read it back.'
             : recording.deadEnd
-              ? 'This browser records a file it cannot then open. Film with your camera app until that is fixed.'
-              : 'This phone can record a serve and read it back.'}
+              ? 'This browser only records files it cannot open, so there is no record button. Film with your camera app.'
+              : 'This browser will not record. Film with your camera app and pick the video — that path is unaffected.'}
         </span>
       </p>
 
       <h3 className="block-title">Recording in the app</h3>
-      {recording.chosen ? (
-        <Row label="Records" value={recording.chosen.replace('video/', '')} tone="ok" />
-      ) : (
-        <Row label="Records" value="nothing" tone="bad" />
-      )}
-      {recording.chosen && (
+      <Row
+        label="Will record"
+        value={recording.chosen?.replace('video/', '') ?? 'nothing'}
+        tone={recording.chosen ? 'ok' : 'bad'}
+      />
+      {/* Both columns for every container, because the decision above is only
+          believable beside the evidence it was made from — and printing them
+          next to each other is what showed the recorder was never asking the
+          second question at all. */}
+      {recording.containers.map((c) => (
         <Row
-          label="Plays that back"
-          value={said(recording.containers.find((c) => c.type === recording.chosen)?.plays ?? 'no')}
-          tone={recording.deadEnd ? 'bad' : 'ok'}
+          key={c.type}
+          label={c.type.replace('video/', '')}
+          value={`records ${c.records ? 'yes' : 'no'} · opens ${said(c.plays)}`}
+          tone={c.records && c.plays === 'no' ? 'bad' : undefined}
         />
-      )}
-      {recording.playable && (
-        <Row label="Could have used" value={recording.playable.replace('video/', '')} tone="bad" />
-      )}
+      ))}
 
       <h3 className="block-title">Opening a file you filmed elsewhere</h3>
       {decode.map((d) => (

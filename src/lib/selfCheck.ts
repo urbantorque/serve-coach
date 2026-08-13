@@ -24,7 +24,7 @@
  * back is the case this was built to catch — that is a defect for its own round,
  * not something to paper over at the point of measurement.
  */
-import { RECORDING_TYPES, recordingType } from './framing/record'
+import { RECORDING_TYPES, playbackQuery, recordingType } from './framing/record'
 import { previewSupported } from './framing/access'
 
 /**
@@ -61,41 +61,17 @@ export interface RecordingVerdict {
   chosen?: string
   containers: ContainerVerdict[]
   /**
-   * The chosen container is one this browser will not play back.
+   * This browser will encode, and nothing it encodes can be read back here.
    *
-   * This is the failure the whole recording path was designed around, arriving
-   * from the direction nobody could test: the player serves, the file lands, and
-   * the analyser cannot open it. `recordingType()` orders its list by what is
-   * *likely* decodable and never asks — so on any browser where the likelihood
-   * is wrong, this flag is the only thing that says so.
+   * Not the same flag it started as. It first meant "the app is about to record
+   * something unreadable", because `recordingType()` chose by an ordering that
+   * assumed decodability and never asked. That is now asked at the point of
+   * choosing, so the app cannot pick an unreadable container — and what is left
+   * is the browser where *every* recordable container is unreadable. The
+   * consequence is no record button, which is the designed fallback rather than
+   * a broken file, and the panel says so in those terms.
    */
   deadEnd: boolean
-  /**
-   * A container this browser both records and plays, when the chosen one is a
-   * dead end. Absent when the chosen one is fine, and absent when there is no
-   * such container at all — which are different answers and read differently.
-   */
-  playable?: string
-}
-
-/**
- * The `canPlayType` query for a `MediaRecorder` mime type.
- *
- * The two APIs disagree about syntax for the same container. `MediaRecorder`
- * takes `video/mp4;codecs=avc1`; `canPlayType` wants the codec quoted, and on
- * H.264 it wants a full profile string before it will answer anything better
- * than `'maybe'` — a bare `avc1` is a family, not a codec, and browsers say so.
- * `avc1.42E01E` is baseline profile at level 3.0, which is what a phone encoder
- * produces and what every decoder in this app's range opens.
- *
- * A type with no codecs parameter is passed through: the browser is being asked
- * about the container alone, and `'maybe'` is the honest answer to that.
- */
-export function playbackQuery(type: string): string {
-  const [container, codecs] = type.split(';codecs=')
-  if (!codecs) return container
-  const profile = codecs === 'avc1' ? 'avc1.42E01E' : codecs
-  return `${container}; codecs="${profile}"`
 }
 
 /** `canPlayType`'s three answers, named. */
@@ -115,6 +91,12 @@ export function playback(decoder: DecoderProbe | undefined, query: string): Play
 /**
  * Whether this browser can record something it will also read back.
  *
+ * Reports the two questions separately for every container, and then what
+ * `recordingType` does with them — so the panel shows the evidence beside the
+ * decision rather than only the decision. That separation is what made the
+ * original defect visible: the decision looked right until the two columns were
+ * printed next to each other.
+ *
  * `'maybe'` counts as playable. It is what Safari says about almost everything,
  * including files it plays perfectly, so treating it as a refusal would report a
  * dead end on the one browser where the recording path matters most.
@@ -133,15 +115,11 @@ export function recordingVerdict(
     return { type, records, plays: playback(decoder, playbackQuery(type)) }
   })
 
-  const chosen = recordingType(recorder)
-  if (!chosen) return { containers, deadEnd: false }
-
-  const it = containers.find((c) => c.type === chosen)
-  const deadEnd = it?.plays === 'no'
-  const playable = deadEnd
-    ? containers.find((c) => c.records && c.plays !== 'no')?.type
-    : undefined
-  return { chosen, containers, deadEnd, playable }
+  const chosen = recordingType(recorder, decoder)
+  // A browser with no `MediaRecorder` at all is not a dead end, it is the file
+  // picker — which is a first-class path, not a degraded one.
+  const deadEnd = !chosen && containers.some((c) => c.records)
+  return { chosen, containers, deadEnd }
 }
 
 /**
@@ -295,7 +273,7 @@ export function deviceReportText(r: DeviceReport): string {
   const lines = [
     'serve-coach device check',
     `records ${chosen ?? 'nothing'}${chosen ? ` plays ${plays ?? 'no'}` : ''}`,
-    r.recording.deadEnd ? `DEAD END playable ${r.recording.playable ?? 'none'}` : '',
+    r.recording.deadEnd ? 'DEAD END records nothing playable' : '',
     ...r.recording.containers.map(
       (c) => `  ${c.type} record ${c.records ? 'yes' : 'no'} play ${c.plays}`,
     ),
