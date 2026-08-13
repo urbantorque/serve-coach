@@ -244,6 +244,12 @@ that plays perfectly in the camera roll cannot be read.
 Nothing there is a fix. It reports; where it reports something that ought not to
 be true, that is a defect with its own name.
 
+`COURT-CHECK.md` is the twenty-minute list that uses it: nine steps in order,
+each saying what it proves, ending in what to send back. The first three are
+worth doing without a racket — they cover what this browser will record and
+whether the app really works with the network off, which are the two things most
+likely to be silently wrong.
+
 The whole thing is also one block of text, always on screen and always
 selectable, with a copy button as an accelerator rather than as the only way
 out — `navigator.clipboard` is refused often enough on a phone that a button

@@ -63,9 +63,18 @@ reports back, and then ask.
       the copy button is an accelerator, because `navigator.clipboard` is
       refused often enough on a phone that a button as the only route strands
       somebody. 19 tests. Verified rendered at `?check`.
-- [ ] **R4** — The court protocol. Deliverable: exactly what to film, tap and
-      report, in order, each step naming what it proves — same shape as
-      `fixtures/README.md`, and short enough to do in twenty minutes.
+- [x] **R4** — `COURT-CHECK.md`. Nine steps, ordered so each is only meaningful
+      if the one before it worked, each naming what it proves, ending in what to
+      send back and what not to (the clips — nothing here needs them). Writing it
+      caught one thing the brief would have shipped wrong: a basket **recorded in
+      the app** lands on the glance and is never swept, so a step saying "film a
+      basket and read the comparison" describes a screen that route does not
+      reach. The comparison is one tap further on, from the report's
+      `onCheckConsistency`. Steps 1, 2 and 9 are carved out as a three-minute
+      version needing no racket, since they cover the two failures most likely to
+      be silent. **Not covered by a test** — same as the shooting list in 1b, and
+      the same reason: it is a list for a person, and what it asserts about the
+      app was checked by reading the routes rather than by running them.
 - [ ] **R5** — Fix the first thing R2–R4 report. The recorder first: a WebM the
       phone cannot play back is the failure that path was designed around and has
       never been observed.
