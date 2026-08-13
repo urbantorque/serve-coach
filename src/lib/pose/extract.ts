@@ -208,18 +208,33 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
  * third of a second is far wider than any of that, so this only ever fires on a
  * seek that genuinely did not happen. Which is the case worth catching: `waitFor`
  * resolves rather than rejects on its timeout, so a seek the browser never
- * completed returns here looking exactly like one that did, and the frame is
- * then filed with the timestamp that was *asked for* and the landmarks of
- * whatever was still on screen. Nothing downstream can tell — a swing assembled
- * from frames out of order is a swing, just not the one that was filmed.
+ * completed returns here looking exactly like one that did — see `seekTo`'s own
+ * return for how that case is told apart from an ordinary one now.
  */
 const SEEK_TOLERANCE = 0.25
 
-/** Move the playhead, and say whether it actually arrived. */
-async function seekTo(video: HTMLVideoElement, t: number): Promise<boolean> {
+/**
+ * Move the playhead, and say where it actually arrived — not `false` and not
+ * the time that was asked for.
+ *
+ * R9 in NEXT.md: a phone does not record frames at a perfectly even interval,
+ * and asking a decoder to seek to an exact instant does not make it land
+ * there — `currentTime` after a real seek routinely sits a few milliseconds
+ * either side of `target`, snapped to whichever frame the container actually
+ * has. Every caller used to file the sample under the time it *asked for*
+ * rather than the time it *got*, on the reasoning that the gap was too small
+ * to matter — which was true for an isolated reading and false for anything
+ * that differentiates: `rateOf` in `kinematics.ts` divides by the difference
+ * between two consecutive timestamps, and a few milliseconds of fictional
+ * precision in the numerator's neighbours is a few milliseconds of real error
+ * in every velocity built from them. `video.currentTime` is read anyway, to
+ * decide whether the seek is within tolerance — handing it back costs nothing
+ * and turns every downstream `t` from a request into a measurement.
+ */
+async function seekTo(video: HTMLVideoElement, t: number): Promise<number | false> {
   // Nudge off the exact end: seeking to `duration` never fires `seeked` in Safari.
   const target = Math.min(Math.max(t, 0), Math.max(0, video.duration - 0.02))
-  if (Math.abs(video.currentTime - target) < 1e-4) return true
+  if (Math.abs(video.currentTime - target) < 1e-4) return video.currentTime
   const seeked = waitFor(video, 'seeked')
   video.currentTime = target
   await seeked
@@ -240,7 +255,7 @@ async function seekTo(video: HTMLVideoElement, t: number): Promise<boolean> {
       })
     })
   }
-  return Math.abs(video.currentTime - target) <= SEEK_TOLERANCE
+  return Math.abs(video.currentTime - target) <= SEEK_TOLERANCE ? video.currentTime : false
 }
 
 export async function loadVideo(video: HTMLVideoElement, src: string): Promise<void> {
@@ -335,13 +350,14 @@ export async function scanForServes(
     if (signal?.aborted) throw new Cancelled()
     // A seek that never landed would put this reach reading at a moment the
     // player was somewhere else, and a scan is nothing but a ranking of those.
-    if (!(await seekTo(video, t))) return
+    const at = await seekTo(video, t)
+    if (at === false) return
     const res = landmarker.detectForVideo(video, nextVideoTimestamp(landmarker))
     const image = res.landmarks?.[0]
     if (image) {
       // Image y grows downwards, so negate it. Only y is compared here, so no
       // aspect correction is needed.
-      samples.push({ t, height: -Math.min(image[15].y, image[16].y) })
+      samples.push({ t: at, height: -Math.min(image[15].y, image[16].y) })
     }
   }
 
@@ -453,8 +469,13 @@ export async function extractFrames(
     // another moment, and the swing is then measured out of order. A missing
     // sample is already an ordinary outcome here — `detect` returns null on any
     // frame the model found nobody in — so dropping it costs nothing new.
-    const landed = await seekTo(video, t)
-    samples.push({ t, pose: landed ? detect() : null })
+    //
+    // Filed under the time the seek actually reached, not the evenly-spaced
+    // time it was asked for — see `seekTo`. `rateOf` and every other
+    // derivative in `kinematics.ts` reads this array's own gaps, so a fictional
+    // even spacing here is fictional precision in every velocity built from it.
+    const at = await seekTo(video, t)
+    samples.push({ t: at === false ? t : at, pose: at === false ? null : detect() })
     onProgress({ phase: 'tracking', ratio: (i + 1) / count })
   }
 
@@ -495,14 +516,15 @@ export async function preflight(
     // Spread across the middle of the clip: the very start and end are often a
     // hand reaching for the phone.
     const t = video.duration * (0.12 + (0.76 * i) / Math.max(1, n - 1))
-    if (!(await seekTo(video, t))) continue
+    const at = await seekTo(video, t)
+    if (at === false) continue
     const res = landmarker.detectForVideo(video, nextVideoTimestamp(landmarker))
     const image = res.landmarks?.[0]
     const world = res.worldLandmarks?.[0]
     if (!image || !world) continue
     out.push({
       index: out.length,
-      t,
+      t: at,
       image: image.map((l) => toImageLandmark(l, aspect)),
       world: world.map(toLandmark),
       visibility: 0,
@@ -557,10 +579,14 @@ export async function readBitmaps<T>(
     // the whole window still to capture, seek by seek, against a report nobody
     // was going to see.
     if (signal?.aborted) break
-    if (!(await seekTo(video, t))) continue
+    const at = await seekTo(video, t)
+    if (at === false) continue
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
     const frame = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    out.push(read(frame, previous, t))
+    // The time the seek actually reached, not the one asked for — the ball's
+    // flight is fitted against these, and a curve fitted through fictionally
+    // even timestamps is a curve fitted to the wrong gravity. See `seekTo`.
+    out.push(read(frame, previous, at))
     previous = frame
   }
   return out
@@ -594,7 +620,7 @@ export async function captureThumbnails(
     // that disagrees with itself — and these are the part of a serve that
     // outlives the clip. The report already draws a placeholder for a missing
     // still, because older saved reports have their stills stripped.
-    if (!(await seekTo(video, times[i]))) {
+    if ((await seekTo(video, times[i])) === false) {
       out.push('')
       continue
     }

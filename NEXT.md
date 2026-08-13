@@ -52,9 +52,40 @@ synthetic rig can produce.
       `too_blurry`, sometimes as `too_few_frames` when the frozen wrist also
       confuses where the drop and contact keyframes land; both are the same
       honest outcome and the test accepts either rather than asserting one.
-- [ ] **R9** — Are frames assumed evenly spaced? Real clips drop frames and
-      phones record variable frame timing. Deliverable: the assumption located,
-      and either defended in prose or removed in code.
+- [x] **R9** — Every derivative in `kinematics.ts` — `rateOf`, `sampleRadius`,
+      `frameRadius`, `refinedPeakTime` — already reads real per-sample gaps
+      rather than assuming a fixed frame rate; that half of the assumption was
+      already defended, at length, in prose already in the file. What was not
+      defended: `extractFrames`, `scanForServes`, `preflight` and `readBitmaps`
+      all requested an evenly-spaced grid of times from the video and then
+      **filed the sample under the time they asked for**, not the time
+      `video.currentTime` actually landed at after the seek. `seekTo`'s own
+      docstring already named the failure case where a seek times out; it did
+      not name the ordinary case, where a seek succeeds within tolerance but a
+      few milliseconds off target — which is not rare, it is what a decoder
+      snapping to its nearest real frame does on every seek. So every one of
+      those carefully dt-aware functions downstream was computing exact
+      derivatives from admittedly-inexact numbers.
+
+      Fixed at the source: `seekTo` now returns the achieved
+      `video.currentTime` (or `false` on genuine failure) instead of a bare
+      boolean, and all five callers file that instead of the request. One real
+      bug caught fixing it: three call sites used `!(await seekTo(...))` to
+      detect failure, which reads a returned `0` — landing exactly on the first
+      frame of a clip — as falsy and therefore as a failure. All now compare
+      `=== false` explicitly.
+
+      Verified live rather than assumed: the Node suite cannot reach this code
+      at all — the synthetic rig builds `Frame[]` directly and has never gone
+      through a `<video>` element — and the real browser tooling in this
+      environment cannot run timer- or compositor-driven code while its pane is
+      not displayed (the same limit the court trip already recorded, now
+      costing a different kind of check). Worked around with a fake
+      `HTMLVideoElement` driven by microtasks instead of timers — outside that
+      throttling entirely — that returns a deliberately jittered
+      `currentTime` on every seek. Before this fix that harness's output was a
+      perfectly even grid regardless of the jitter fed in; after it, the
+      recorded timestamps carry the jitter, exactly as they should.
 - [ ] **R10** — What does bad light do? Low contrast lowers landmark visibility
       before it lowers accuracy. Deliverable: the visibility signal traced into
       `confidence.ts`, and a clip filmed at dusk degrading rather than lying.

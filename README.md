@@ -430,6 +430,18 @@ ends of a pronation measurement into each other and report an ordinary serve as
 a pushed contact. A test now reads the same serve at 24, 30, 50 and 120 fps and
 fails if the verdict moves.
 
+**A requested sampling time and an achieved one are not the same number.**
+Every derivative in `kinematics.ts` already divided by the real gap between two
+samples rather than assuming a fixed rate — that half of "frames are not evenly
+spaced" was already handled. The other half was not: `extractFrames` asked the
+video to seek to an evenly-spaced grid of times and then recorded the sample
+under the time it *asked for*, not the time `video.currentTime` actually landed
+at. A decoder does not seek to an exact instant, it snaps to the nearest real
+frame — a few milliseconds off target on an ordinary seek, not only on the rare
+one that times out — so every one of those careful per-sample derivatives was
+computing an exact answer from an admittedly inexact input. `pose/extract.ts`
+now files every sample under where the seek actually landed.
+
 **The diagnosis is data, and only data.** `analysis/diagnose.ts` returns numbers,
 booleans and enums: signals, named flaws with the band they missed, severity,
 and which flaw caused which. No sentence is composed anywhere in that path — a
