@@ -15,8 +15,20 @@ import type { PhaseId } from '../lib/analysis/types'
  * for the second caller would have been two components drifting apart over one
  * grid.
  *
- * The left column is always the better of the two. Both callers order them that
- * way, and the caption colour says so.
+ * The left column is always the better of the two, for a caller that has an
+ * actual "better" to claim — the caption colour says so, and `leftIsBetter`
+ * says it again for whoever cannot see colour.
+ *
+ * Not every caller can honestly make that claim. The basket comparison can:
+ * `leftCaption`/`rightCaption` are built from `pair.best`/`pair.worst`, so
+ * left is the higher score by construction. "Then, and now" cannot — it
+ * orders by date, not by score, because the whole point is showing what
+ * changed over six weeks whichever direction it went. The colour rule below
+ * is written for the caller that can make the claim and applies to both, so
+ * a player whose serve has gone backwards still sees the older, worse one
+ * tinted as if it were the good one. Known, not fixed here: fixing the
+ * colour is a rendering change this round's "not a pixel" rule forbids: see
+ * `NEXT.md`, R21.
  */
 export interface PairPosition {
   id: PhaseId
@@ -30,9 +42,23 @@ interface Props {
   leftCaption: string
   rightCaption: string
   positions: PairPosition[]
+  /**
+   * Whether the left column is actually the better serve — absent where
+   * there is no such claim to make (see the caveat above). Adds nothing to
+   * what is on screen either way: this only feeds a screen-reader-only
+   * label, so a caller with nothing honest to say says nothing rather than
+   * defaulting to a guess.
+   */
+  leftIsBetter?: boolean
 }
 
-export default function FramePair({ heading, leftCaption, rightCaption, positions }: Props) {
+export default function FramePair({
+  heading,
+  leftCaption,
+  rightCaption,
+  positions,
+  leftIsBetter,
+}: Props) {
   return (
     <div className="pair-frames">
       <span className="t-overline consistency-label">{heading}</span>
@@ -46,11 +72,17 @@ export default function FramePair({ heading, leftCaption, rightCaption, position
                     and the serve, and there is nothing in the picture a sentence
                     can carry that the readouts above do not. */}
                 {p.left ? <img src={p.left} alt="" loading="lazy" /> : <span className="pair-missing" />}
-                <figcaption>{leftCaption}</figcaption>
+                <figcaption>
+                  {leftCaption}
+                  {leftIsBetter === true && <span className="sr-only"> — the better serve</span>}
+                </figcaption>
               </figure>
               <figure>
                 {p.right ? <img src={p.right} alt="" loading="lazy" /> : <span className="pair-missing" />}
-                <figcaption>{rightCaption}</figcaption>
+                <figcaption>
+                  {rightCaption}
+                  {leftIsBetter === true && <span className="sr-only"> — the worse serve</span>}
+                </figcaption>
               </figure>
             </div>
           </li>

@@ -143,6 +143,20 @@ export default function DeviceCheck() {
         <Icon name="share" size={17} />
         {copied === 'done' ? 'Copied' : 'Copy this'}
       </button>
+      {/* The button's own label already says the outcome, which is enough for
+          anyone looking at it — but nothing told anyone listening. The same
+          gap `role="status" aria-live="polite"` closes elsewhere in this app
+          (`Analyzing`, `FramingCheck`, the player's phase caption) was open
+          here: a screen reader user who pressed the button had no way to
+          know it worked short of finding the label again. Visually hidden
+          because the visible copy is unchanged either way. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {copied === 'done'
+          ? 'Copied to clipboard.'
+          : copied === 'failed'
+            ? 'Could not copy automatically. Select the text above and copy it by hand.'
+            : ''}
+      </p>
       {copied === 'failed' && (
         <p className="storage-outcome">Select the text above and copy it by hand.</p>
       )}

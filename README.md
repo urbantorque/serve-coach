@@ -701,6 +701,50 @@ in `PosePlayer.tsx` or `skeleton.ts` changed; this round's deliverable is the
 proof that what is there already holds, pinned so a future change that
 reintroduces per-segment strokes fails a test instead of a phone.
 
+**Accessibility is fixed by subtraction and addition, never by touching a
+pixel.** Phase 3's close-out audited the four surfaces added since the last
+pass — `Glance`, `FramePair`, the target dial, `DeviceCheck` — against the
+standard the rest of the app already meets: the global `:focus-visible`
+ring, the blanket `prefers-reduced-motion` reset in `tokens.css`, and the
+`role="status" aria-live="polite"` pattern `Analyzing`/`FramingCheck`/the
+player's caption already use for an outcome nobody would otherwise hear.
+Three real gaps closed, all through attributes with no rendered footprint.
+`Glance`'s lead score — the first thing on the screen, deliberately unlabelled
+so a caption is not a second sentence under the ring — read as a bare "68"
+to a screen reader with nothing nearby saying what it counted; wrapped in
+`role="img"` with `aria-label={\`Score ${score} out of 100\`}`, which
+collapses the ring to one accessible node instead of removing the visible
+label the design deliberately does not have. `FramePair`'s best-against-worst
+comparison carried that claim in colour alone — `figure:first-child`'s green
+caption — so a colour-blind or screen-reader reading of "#1" beside "#3" said
+nothing about which was which; a new `leftIsBetter` prop feeds a
+`.sr-only` " — the better serve" / " — the worse serve" pair, passed `true`
+only by `ConsistencyPanel`, whose `leftCaption`/`rightCaption` are built from
+`pair.best`/`pair.worst` and can honestly claim it. `DeviceCheck`'s copy
+button changed its own visible label on success or failure and told nobody
+listening; a `sr-only` `role="status" aria-live="polite"` region now says the
+same outcome in words, matching the pattern already established elsewhere
+rather than inventing a new one.
+
+Found and not fixed, because fixing it is a rendering change and this round's
+own rule was zero of those: the same `figure:first-child` colour rule
+`FramePair` shares with the then/now comparison in `App.tsx` assumes left is
+always the better serve, which is only true by construction for the basket
+caller. "Then, and now" orders by date, not by score — a player whose serve
+has gone backwards over six weeks still sees the older, worse one tinted as
+if it were the good one. Named in `FramePair.tsx`'s own doc comment and in
+`NEXT.md`'s R21 entry for a future round that is allowed to move a pixel.
+
+The target dial — the joint-angle callout drawn on the keyframe strip —
+turned out to already meet the standard, measured rather than assumed:
+every value it draws has a textual twin in the fundamentals list below it
+(`MetricBar`'s own readout and "Aim for" line), its accent colour
+(`PALETTE.active`, the app's one lime accent) computes to roughly 9.7:1
+against the plate it sits on even assuming the worst-case background a
+translucent plate could be composited over, and its redraws were already
+proven flat against clip length by R20. Nothing to fix without moving a
+pixel that was not already fixed.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

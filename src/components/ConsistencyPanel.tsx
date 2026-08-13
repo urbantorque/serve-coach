@@ -139,6 +139,7 @@ function PairedFrames({ pair }: { pair: ServePairFrames }) {
       heading="The same moments, both serves"
       leftCaption={`#${pair.best}`}
       rightCaption={`#${pair.worst}`}
+      leftIsBetter
       positions={pair.positions.map((p) => ({
         id: p.id,
         label: p.label,

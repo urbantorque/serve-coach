@@ -63,8 +63,17 @@ export default function Glance({ analysis, onRecordAnother, onOpenReport, onBack
         <section className="glance-body">
           {/* The number the report leads with, at the size the report gives it.
               Somebody glancing at a phone propped on a fence is reading this
-              from further away than they read anything else in the app. */}
-          <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={132} />
+              from further away than they read anything else in the app.
+
+              No visible label, on purpose — this ring is the whole screen's
+              first sentence and a caption under it would be a second one. A
+              screen reader gets no such context from size or position, so
+              `role="img"` collapses the ring to one node with the sentence a
+              sighted glance already reads, rather than a bare "68" landing
+              ahead of the headline with nothing to say what it counts. */}
+          <div role="img" aria-label={`Score ${analysis.overall} out of 100`}>
+            <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={132} />
+          </div>
 
           {first ? (
             <>
