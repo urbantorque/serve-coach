@@ -21,9 +21,49 @@ phase's entries and drops the working notes underneath them.
 
 ## Phase 5 — Security, privacy, QA, freeze (R29–35)
 
-- [ ] **R29** — Egress audit. Every request the running app makes after load,
-      enumerated and justified or removed. Deliverable: a test that fails when a
-      new one appears.
+- [x] **R29** — Re-read `LOOP.md`'s constraint 7 before assuming it needed
+      enforcing rather than checking: "no network call after load... the
+      one load-time fetch is the pose model and the WASM runtime" was a
+      claim in prose, asserted nowhere in the test suite. Grepped the whole
+      tree for every syntactic way a browser starts a request rather than
+      trusting memory of what the codebase does: two real call sites,
+      `poseEngine.ts`'s `fetch(MODEL_URL)` and `reportCard.ts`'s
+      `new Image()`. Traced further than the grep: `MODEL_URL`/`WASM_DIR`
+      are `BASE_URL`-relative, same-origin paths, never a third-party host;
+      the WASM runtime's own fetch lives inside `@mediapipe/tasks-vision`'s
+      library code rather than this app's, so it was traced by hand into
+      `node_modules` and confirmed to target the same same-origin path
+      Emscripten's own loader was handed, not a Google-hosted one. The
+      `Image()` call only ever loads a `data:` URI already in memory — never
+      a request at all. Also checked and clean: `index.html` and
+      `vite.config.ts`'s PWA/service-worker configuration precache only the
+      app's own same-origin build output, no analytics SDKs in
+      `package.json`, no `sendBeacon`/`WebSocket`/`EventSource` anywhere.
+
+      `lib/__tests__/egress.test.ts`: scans every `.ts`/`.tsx` file under
+      `src` (66 of them, tests excluded) for `fetch`, `XMLHttpRequest`,
+      `sendBeacon`, `WebSocket`, `EventSource` and `new Image()`, and
+      asserts the result is exactly the two named, justified sites above —
+      a third check reads `index.html` for an external URL, since a remote
+      font or an analytics tag there is egress no `.ts` scan would ever see.
+      Text-matched on purpose, not parsed: a regex over source text can
+      over-match a comment that merely mentions one of these names, so the
+      allow list is checked against what the scan actually found rather
+      than assumed correct, and a second check catches the opposite
+      failure — an allowed site quietly removed, leaving a stale exception.
+
+      No `@types/node` in this project. `fs`/`path`/`process.cwd` needed
+      hand declarations, the same trade `harness.ts` already makes for
+      `process.exit` — and `fs`/`path` specifically needed `@ts-expect-error`
+      rather than a fresh `declare module`, because TypeScript's bundler
+      resolution already recognises those names as real, typeless modules,
+      so declaring them again reads as augmenting something that exists
+      rather than describing something new.
+
+      Verified the test has teeth, not just that it passes: dropped a
+      temporary `fetch('https://example.com')` into an unrelated file,
+      confirmed the suite failed with the exact file and pattern named,
+      reverted it, confirmed green again.
 - [ ] **R30** — What does an export contain that a player would not expect to
       hand somebody? Deliverable: the contents stated in the UI at the moment of
       export.

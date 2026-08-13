@@ -908,6 +908,38 @@ announcements, `Glance`'s score label, the basket card's canvas text,
 templates, the guide-first sheet's titles and button labels — no coach
 jargon anywhere, nothing reusing a word the app already owns.
 
+**Zero egress was a comment; now it is a test.** `LOOP.md`'s constraint 7
+says the policy in prose — no network call after load beyond the pose model
+and the WASM runtime, no analytics, no remote logging — and nothing had
+ever checked it. `lib/__tests__/egress.test.ts` scans every `.ts`/`.tsx`
+file under `src` (66 of them) for every syntactic way a browser starts a
+request — `fetch`, `XMLHttpRequest`, `sendBeacon`, `WebSocket`,
+`EventSource`, `new Image()` — and asserts the result is exactly two named,
+justified call sites: `poseEngine.ts`'s one `fetch` for the pose model
+(same-origin, once per session, behind a singleton guard — the WASM runtime
+beside it is fetched the same way from inside MediaPipe's own library code,
+traced by hand into `node_modules` to confirm it targets the same
+same-origin path rather than a Google-hosted one), and `reportCard.ts`'s
+`new Image()`, which only ever loads a `data:` URI already held in memory
+and so never reaches the network stack at all. A third check reads
+`index.html` itself for an external URL, since a remote font or an
+analytics tag there would be egress none of the TypeScript scan could see.
+Text-matched rather than parsed on purpose — over-matching a comment that
+merely mentions one of these names is the failure mode to court, not the
+one to fear, and the allow list is checked against what the scan actually
+found rather than assumed. Verified with a canary: a temporary `fetch(...)`
+call dropped into an unrelated file failed the test immediately, with the
+exact file and pattern named, then was reverted.
+
+No `@types/node` in this project, and this test needed `fs`, `path` and
+`process.cwd` — the same trade `harness.ts` already makes for
+`process.exit`, hand-declared rather than pulling in a dependency for three
+calls. `fs`/`path` needed `@ts-expect-error` rather than a `declare module`:
+TypeScript's bundler resolution already recognises those names as real,
+typeless modules, so declaring them fresh reads as augmenting something
+that exists rather than describing something new, and augmentation of a
+module with no prior declaration is itself an error.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm
