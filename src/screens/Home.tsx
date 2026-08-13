@@ -228,7 +228,27 @@ export default function Home({
             <Icon name="film" size={19} />
             Analyse a serve
           </button>
-          {coarse && (
+          {/* Two different routes share this one label on purpose. Both end
+              with a serve recorded on this device — the question is only
+              whether the phone's own camera app gets there blind or the live
+              preview gets there with a running framing verdict on screen the
+              whole time, the thing this app can do that a camera app never
+              will. Wherever the preview can run, "Record now" opens that one:
+              a player who taps the button that says what they want to do
+              should not have to separately discover the better way to do it.
+              The blind hand-off stays the button's job only where the preview
+              cannot start at all, which `previewSupported` already knows
+              before either ever renders. */}
+          {coarse && canPreview && (
+            <button
+              className="btn btn--ghost btn--big"
+              onClick={() => (needsHandedness ? onGuideThen('check') : setChecking(true))}
+            >
+              <Icon name="camera" size={19} />
+              Record now
+            </button>
+          )}
+          {coarse && !canPreview && (
             <button
               className="btn btn--ghost btn--big"
               onClick={() => (needsHandedness ? onGuideThen('record') : recordRef.current?.click())}
@@ -280,8 +300,14 @@ export default function Home({
           — is decided by the framing and knowable before the serve. Until this
           existed the earliest anyone could learn it was half a minute after
           they had finished filming. Offered rather than imposed: it sits below
-          both ways in, and both still work without ever opening it. */}
-      {canPreview && (
+          both ways in, and both still work without ever opening it.
+
+          Desktop only. On a phone this is what "Record now" above already
+          opens — a second control here would be the same destination twice,
+          one of them mislabelled as a mere preview. A laptop has no "Record
+          now" at all, coarse-pointer-gated as it is, so this strap stays its
+          only way to the live check. */}
+      {canPreview && !coarse && (
         <button
           className="strap"
           onClick={() => (needsHandedness ? onGuideThen('check') : setChecking(true))}

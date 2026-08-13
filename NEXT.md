@@ -136,9 +136,49 @@ phase's entries and drops the working notes underneath them.
       handedness question still render together exactly as R16 left them.
       No new copy beyond the one conditional sheet title; no new colour, no
       restyled surface, per constraint 3.
-- [ ] **R18** — Can a player find the on-court record route at all? It is the
-      best feature in the app and it hides behind a screen most people read as a
-      file picker. Deliverable: discoverability, without a tour.
+- [x] **R18** — Walked the home screen live as a stranger, coarse pointer,
+      `localStorage` cleared, rather than assuming a gap from memory — R15's
+      audit had looked closely at this same screen and not flagged this.
+      Read the DOM's own layout order and computed styles rather than judging
+      from source: on a phone, "Analyse a serve" (primary) and "Record now"
+      (ghost, equally sized) sit at the very top, both reading as "hand me a
+      video" — one a file browser, one the phone's own blind camera app. The
+      actual best feature, `FramingCheck`'s live verdict on angle and tilt
+      while aiming plus a record button of its own, sat fourth of five
+      controls, styled identically to two purely informational straps, and
+      its own copy ("Point the phone at your spot and see what the coach can
+      read") never once said the word record. A player who wants to record
+      now has an obviously-labelled button already on screen for exactly
+      that, and it is the worse one — the better route not hidden by
+      position so much as by every signal on screen agreeing it is optional.
+
+      Fixed by removing the choice rather than re-labelling it. Where a live
+      preview can start at all (`previewSupported()`, checked once before
+      either button renders), "Record now" now opens `FramingCheck` directly
+      — real-time coaching, then its own record button — instead of handing
+      off blind. The separate "Check your framing first" strap, now the same
+      destination on a phone, does not also render there; it stays exactly
+      as it was on desktop, which never had a "Record now" button to fold
+      into and still needs its own way to the same check. The blind
+      hand-off — `capture="environment"` straight to the OS camera app —
+      is now the fallback for the one case that still needs it: a browser
+      that cannot start a live preview at all, where `FramingCheck`'s own
+      denial screen already points back at that same camera app and the file
+      picker, unchanged from before this round.
+
+      Verified live in both configurations: with a live preview available,
+      confirmed exactly one "Record now" appears (not two), that tapping it
+      through a fresh first run correctly asks for a hand then opens the
+      framing checker — not the hidden file input, confirmed by instrumenting
+      `HTMLInputElement.prototype.click` and finding it never fires — and
+      that `localStorage` records `seenFilmingGuide`/`handedness` exactly as
+      R16/R17 left them. Reset to a desktop viewport and confirmed the strap
+      is untouched: no "Record now" button renders at all there, coarse-only
+      as it always was, and "Check your framing first" still opens the same
+      sheet it did before this round. No new colour, no restyled surface —
+      the promoted button reuses the exact `btn--ghost btn--big` classes
+      "Record now" already had; the change is which handler is behind the
+      same label, decided by a condition already computed on every render.
 - [ ] **R19** — How many taps from "that is my fault" to "I did the drill"?
       Deliverable: the count, and one tap removed if there is one to remove.
 - [ ] **R20** — Does the timeline hold 60 fps on a long clip with the overlay

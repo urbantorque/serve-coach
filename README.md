@@ -635,6 +635,29 @@ sheet marks `seenFilmingGuide` on its own close, and the interstitial it
 shares with the first run reads that flag itself to decide whether `FilmingGuide`
 renders inside it this time, always asking the hand regardless.
 
+**"Record now" is two different technical routes to the same promise, and
+most phones only need to know about the better one.** The live preview in
+`FramingCheck.tsx` — a real-time verdict on angle, tilt and framing while the
+phone is being aimed, with a record button of its own once the shot is right
+— is the thing an operating system's camera app cannot do, because nothing in
+it has ever seen this engine. It used to be reachable only from a strap below
+two buttons that both read as "hand me a file," worded as a mere preview
+rather than as a way to actually record. A player standing on a court who
+wants to record now had an obviously-labelled button for exactly that already
+on screen, and it was the blind one: `capture="environment"` on a hidden file
+input, straight to the phone's own camera app, no feedback until the analysis
+came back thirty seconds later. Both routes still exist — the preview can
+fail to start on a denied permission or an unsupported browser, and
+`FramingCheck` already has a message for that, pointing back at the camera
+app and the file picker exactly as before — but which one answers to "Record
+now" is decided once, by `previewSupported()`, before either button ever
+renders. Where the preview can run, "Record now" opens it; the blind hand-off
+is now the fallback's job alone, not a second, competing "Record now" a
+player has to choose between with nothing on screen to say why. Desktop is
+untouched: `coarse` gates the promoted button out entirely there, and "Check
+your framing first" stays a strap, the only route in since a laptop never had
+the blind button at all.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm
