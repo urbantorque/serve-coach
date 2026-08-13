@@ -5,245 +5,207 @@ not anybody's memory, is the source of truth for what is done.
 
 Status marks: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 
-Take the topmost slice that is neither done nor blocked. One slice per
-iteration — do not start a second because the first turned out small. If a slice
-proves bigger than one iteration, split it here into named sub-slices, do the
+Take the topmost round that is neither done nor blocked. One round per
+iteration — do not start a second because the first turned out small. If a round
+proves bigger than one iteration, split it here into named sub-rounds, do the
 first, and leave the rest. Never leave half-built code behind a flag.
 
----
+Each entry is written as a **question with a deliverable**. Several will have the
+answer "already true"; that answer, pinned by a test that would fail if it
+stopped being true, is a finished round. Inventing a change to make a round feel
+productive is the failure mode this phrasing exists to prevent.
 
-## Theme 1 — Ground truth, and the signals it unlocks
-
-`RECORDED` in `src/lib/analysis/__tests__/fixtures/index.ts` is empty: 0 of
-`MINIMUM_RECORDED = 6`. Six signals are measured and never spoken to the player
-(`legs_peak_ms`, `chain_span_ms`, `wrist_peak_ms`, `elbow_peak_ms` in
-`UNCALIBRATED`; `hip_lead_ms`, `pronation_deg` in `UNDER_RESOLVED`), and
-hip–shoulder separation and shoulder tilt are computed from world-space `z`,
-unvalidated against any real frame.
-
-An agent cannot film tennis serves. A synthetic entry in `RECORDED` is a `fail`
-in `fixtureGate` by design, and hand-written fixture JSON is worse — it turns
-the suite green against reality that does not exist. Build everything around the
-footage except the footage, then stop.
-
-- [x] **1a** — Fixture capture and labelling. `src/dev/exportFixture.ts` now
-      asks for the description and writes nothing without one, carries
-      `_engineUnits` so a labeller knows which unit each measurement is compared
-      in, and prints `draftGaps` — the remaining work, derived from
-      `validateFixtureSchema` rather than restated. `labelProblem` in
-      `groundTruth.ts` is the one definition of "described", read by both the
-      export and the gate.
-- [x] **1b** — The shooting list. `fixtures/README.md` now carries the six clips
-      that clear the gate, in order, each with what it proves and why no two
-      prove the same thing — plus the rows beyond the six that the gate cannot
-      read, and the warning not to mirror a clip to fake a left-hander.
-- [x] **1f** — The gate names a non-serve fixture as unlabelled, forever. Found
-      while writing 1b, which now tells people to film rally and practice-swing
-      clips. `spreadGaps` in `fixtures/index.ts` filters on
-      `!f.expect.handedness || !f.expect.view`, and a `rejected: true` fixture
-      has neither by construction — `buildRejectedDraft` writes
-      `expect: { rejected: true }` and nothing else, and `validateFixture`
-      returns before it would ever compare them. So a refusal clip counts
-      towards `MINIMUM_RECORDED` and then fails the spread check permanently,
-      for a label it is not meant to carry. Count the spread over serve fixtures
-      only; keep refusals counting towards the minimum, since they are real
-      footage proving a real behaviour.
-- [x] **1c** — `replay-fixture.mjs` already printed the per-measurement diff for
-      one clip. It now takes many, and prints a row per measurement across all
-      of them: `n`, the span of engine-minus-label, the median, and how much of
-      the allowance the worst clip needed. It reports a spread and never
-      proposes a band.
-- [x] **1d** — `chain.span_ratio` is computed, divided by `contact − ready`
-      (`metrics.ts`'s `totalTime`, not a second definition), and stays in
-      `UNCALIBRATED` with the three things that would move it to `SIGNALS`
-      written out. **The 0.092 / 0.088 / 0.092 figure in this ledger and in
-      `UNCALIBRATED.chain_span_ms` does not reproduce.** Measured: span 99 / 114
-      / 174 ms across tempos 1.1 / 1.35 / 1.7 s at 50 fps, ratio 0.1010 / 0.1000
-      / 0.1225 — a 58% spread becoming 21%, not 5%. The sweep is printed by
-      `depth.test.ts` on every run so it cannot age the same way.
-- [x] **1e** — Stopped here. Everything in Theme 1 that does not need a camera
-      is done.
-- [!] **1g** — **blocked: needs real footage.** `RECORDED` is still empty and
-      nothing an agent can do changes that. Six clips clear the gate and the
-      order is in `fixtures/README.md`: right-handed side-on at 30 fps, the same
-      serve in slow motion, the same player front-on, a **left-hander** side-on
-      at 30 fps, that left-hander at 60 fps from a second angle, and one
-      right-hander side-on with the feet deliberately out of frame. The
-      left-handed pair is the hard one and cannot be faked by mirroring a clip
-      — that is what a front camera does and the app already treats it as an
-      artifact. Until those exist: hip–shoulder separation and shoulder tilt are
-      unvalidated against anything real, `NOISE_FLOOR` has no measurement behind
-      it, and every entry in `UNCALIBRATED` stays there.
-
-## Theme 2 — The basket, promoted to the main event
-
-`buildConsistency` and `ConsistencyPanel` are good and reachable only through an
-`onCheckConsistency` action after a single-serve report. The README argues the
-gap between best and worst serve beats the average for a club player; the
-product does not behave as though it believes that.
-
-- [x] **2a** — A clip with more than one serve now sweeps automatically:
-      `openClip` in `App.tsx` runs the single serve with `landOn: 'sweep'` (so
-      the report does not flash for two frames before the progress screen
-      replaces it) and goes straight into `compareServes`. Single-serve clips
-      are untouched. The serve chips were already the drill-down.
-      **Departed from the brief on one point, deliberately.** The answer to the
-      question was "report opens with consistency at the top", and the full
-      panel is not at the top — commit `740a9d8` moved it below the focus card
-      because the one instruction the report exists to deliver was arriving two
-      phone screens down, under a picker and a stack of spread charts, and
-      [[two-to-four-drills-not-one]] says the ranked fix is the point of the
-      report. What is at the top is `consistencyHeadline` as one sentence beside
-      the serve picker, which says which element moved without displacing the
-      fix. Say the word and the whole panel moves up.
-- [x] **2b-i** — Best-serve versus worst-serve, in words. `buildGap` in
-      `consistency.ts` names both serves by their number in the clip, picked on
-      the `overall` the chips already show, and ranks every measurement by how
-      far apart the two were as a multiple of its own band. `ConsistencyPanel`
-      prints the three biggest that read back as *different words* through
-      `anatomy.ts` — two serves that differ by real degrees and both read "arm
-      dead straight" are not a difference a player can act on.
-- [x] **2b-ii-a** — `skipThumbnails` was three unrelated things behind one name:
-      the framing preflight, the ball pass (a whole second pass over the video
-      per serve) and the six stills. So the only way to get stills out of a
-      swept serve was to also pay for ball tracking, which is why swept serves
-      have none — not a decision anybody took about stills. Now
-      `skipFramingCheck`, `skipBall` and `skipThumbnails`. The sweep still sets
-      all three: stills are ~50 seeks across a basket and nothing keeps them
-      yet, so turning them on belongs with the thing that pairs them.
-- [x] **2b-ii-b** — The paired strip. Stills are back on for the sweep (~6 seeks
-      a serve, no ball pass), `pairStills` pulls the two named serves' frames
-      out at the last moment the swept analyses exist, and the strip renders six
-      positions two-up. Held in App state and never on the analysis, so nothing
-      reaches storage; a re-opened report degrades to the words, which is 2d's
-      requirement met by construction. `?demo=basket` draws stand-in tiles so
-      the layout is reachable without filming.
-- [x] **2c** — `findPracticeFocus` now carries `repeatability`, read off
-      `buildConsistencyTrend().recurring` rather than re-derived, so the two
-      screens cannot disagree about which element wanders. `repeatabilityNote`
-      says it as one sentence under the fix — a second thing to groove when it
-      is a different measurement, a stronger reason when it is the same one, and
-      nothing at all for a history with no baskets in it.
-- [x] **2d** — Met by construction rather than by pruning: the paired stills
-      never enter storage, so every re-opened report is the degraded case. What
-      was missing was the sentence saying so — a player who watched the strip
-      yesterday and finds words today reads silence as a bug.
-      `?demo=basket&nostills` reaches that branch.
-
-## Theme 3 — Closing the practice loop
-
-`Session = Omit<Analysis, 'frames'>` — storage holds only what the camera
-measured, nothing the player did. `practice.ts` therefore cannot tell "stuck
-despite drilling" from "never tried it", and renders both as one badge.
-
-- [x] **3a** — A player-side record, in its own IndexedDB store rather than on
-      the report. **Departed from "beside the analysis" for a reason worth
-      keeping**: correcting the handedness, changing the serve type or tapping
-      another serve all call `saveSession` with a fresh `Analysis`, which
-      carries no player-side anything — a field on the row would be erased by
-      the most ordinary thing a player does on the report screen, and
-      preserving it would mean reading a row of base64 stills back before every
-      save. `Session` also stays `Omit<Analysis, 'frames'>` exactly, which is a
-      distinction the type has been making all along. DB version 2, upgrade
-      verified against a real v1 database with a report already in it.
-      `normalisePracticeLog` rejects rather than repairs; backup carries the
-      logs on the same newer-wins merge, per log, and an import that loses one
-      never fails the reports.
-- [x] **3b** — Four sentences where there was one: drilled and moving, drilled
-      and not moving ("take this one to a coach" — the right answer when the
-      player has done the work and the measurement has not answered), never
-      logged, and *no records at all*, which stays distinct because the app not
-      having been asked to keep any is not evidence about the player.
-      `MEANINGFUL_DELTA` still gates every claim of progress. Verified end to
-      end in the browser against a seeded history: tap → IndexedDB → sentence
-      flips → undo → sentence flips back.
-- [x] **3c** — No gamification, honoured rather than implemented: a ghost
-      button, no streak, no badge, no congratulation, and the count shown only
-      so the player can see what the sentence counts and spot an accidental
-      tap. An app that celebrates the tap is asking to be tapped, which fills
-      the record with drills nobody did and makes the evidence worthless.
-      Caught one copy defect the voice lint structurally cannot: "drilled it 1
-      times" passed every check in the build and reached a real screen.
-
-## Theme 4 — Capture on court, not from the camera roll
-
-`FramingCheck` is a live viewfinder that borrows every threshold from
-`framingIssues` / `blockingFramingIssue` and admits it cannot tell a leaning
-player from a tilted phone. Filming still hands off to the phone camera app, so
-the loop is: film, walk over, pick the file, wait, read.
-
-- [x] **4a** — Recording off the stream the viewfinder already holds, never a
-      second `getUserMedia`. `lib/framing/record.ts` decides what this browser
-      will record *and then decode* — MP4 first, because a WebM recording is a
-      file Safari cannot play back — and the button does not appear at all
-      where that answer is nothing. The file picker and the OS camera are both
-      untouched. **Not verified on a device**: the Browser pane blocks camera
-      access, so what was checked is the refusal path (correct cue, and no
-      record button on it) and the eleven unit tests behind the choosing.
-      Nothing in this repo has yet recorded a frame.
-- [x] **4b** — **Nothing to build, and the reason is worth keeping.** The brief
-      assumed a long recording costs more to analyse. It does not: `planScan`
-      spends a fixed budget however long the clip is, and extraction covers only
-      a couple of seconds around the serve, so a ninety-second recording costs
-      the same locate as a five-second one. Trimming the file would mean
-      re-encoding — expensive, lossy — to save bytes in a file that is never
-      stored. The detector already does what trimming was for.
-- [x] **4c** — `screens/Glance.tsx`. One number, one line, two buttons, and a
-      recorded basket is glanced at rather than swept, because twenty-five
-      seconds of sweep while somebody stands on a baseline is the opposite of
-      what this route is for. Runs no analysis of its own — same `Analysis`,
-      same `causalPlan` the report ranks with, so there is no second opinion
-      about the serve. A refused clip gets the refusal and **no score**.
-      Verified via `?demo=glance` and `?demo=glance-refused`.
-- [x] **4d** — Done inside 4a rather than after it. The pose loop stops dead
-      while recording: the player has stopped aiming and started serving, so the
-      verdict has no reader, and it is the worst moment in the app to spend
-      thermal headroom — a hardware encoder is on the same stream and the
-      analysis that needs the GPU is thirty seconds away. `MAX_POSE_DUTY` caps
-      the model against wall clock and cannot know that half of wall clock is
-      too much while something else has the device. The recorder is also torn
-      down on unmount, and capped at `MAX_RECORDING_SECONDS` because
-      `MediaRecorder` accumulates chunks in memory until stopped.
-
-## Theme 5 — Showing the correction
-
-The ghost is deliberately narrow — rigid translation, legs undrawn, nothing
-below `SOFT_MEASUREMENT`, trophy ghost withdrawn because a translation cannot
-express a joint angle. That restraint stands. The hole it left is that knee bend
-and shoulder tilt have no picture at all.
-
-- [x] **5a** — A dial in the callout plate, **not** a wedge at the joint, and
-      the difference is the point. The arc at the joint is a locator: it is
-      drawn between two limb directions in image space while the number beside
-      it is `jointAngle` of the *world* landmarks, and those differ by exactly
-      the projection `geometry.ts` refuses to reason about — side-on, a real 20°
-      of shoulder tilt reads as 60°+. Shading a band across that arc would turn
-      a pointer into a measurement. So the band is drawn where the number lives:
-      a small sweep, target shaded, reading marked, claiming nothing about the
-      pixels behind it. Bands come off the metric the report prints, and only
-      for measurements at or above `SOFT_MEASUREMENT`. Two tests pin it: a dial
-      appears only for a banded metric, and the strokes at the joint do not move
-      with the band. **Not seen rendered** — a captured still needs a real video
-      and `?demo=live` cannot record one in this pane.
-- [x] **5b** — Then against now, in the progress sheet, on the same
-      `FramePair` 2b's strip was refactored into — one grid, two callers. The
-      pair is chosen from summaries and then *fetched*, because
-      `listSummaries` strips stills by design, so nothing in App state has ever
-      held an image; which two reports to compare is knowable from the
-      summaries, whether the pictures survive is not. Bounded by `KEEP_STILLS`,
-      same serve type, same rubric era, and at least a day apart so one trip to
-      the court is not printed as progress. Verified against a seeded history:
-      "Then, and now", Jul 4 against Aug 12, six rows, twelve images.
-- [x] **5c** — The dial reaches the share card automatically and by design: it
-      is drawn into the still at capture time, so a shared image carries the
-      same evidence the report does rather than a quieter version of it. Both
-      paired comparisons are deliberately **omitted**, with the reason written
-      into `reportCard.ts` — that card is one serve, and a pair is a statement
-      about a set of them that cannot be read without the dates or serve numbers
-      giving it meaning.
+Note entries **delta only** — what this round settled that the previous one did
+not. The README carries the standing description; this file carries the moves.
 
 ---
 
-## Log
+## Phase 1 — Device truth (R1–8)
 
-- Programme written down (`LOOP.md`), ledger opened. Nothing implemented yet.
+The recorder in `lib/framing/record.ts`, the glance screen and the target dial
+all shipped and **none of them has run on a phone**. The preview pane blocks
+camera access, so what was verified was the refusal path and the unit tests
+behind the choosing. An agent cannot hold a phone; it can build the thing that
+reports back, and then ask.
+
+- [x] **R1** — Programme written down, ledger opened. `LOOP.md` now carries the
+      forty-round brief ordered by evidence gap rather than build order, the ten
+      review lenses as questions rather than as spawned agents, the
+      retry-and-revert rule, and two constraints the previous brief did not
+      state: the 500 MB mobile-memory ceiling, and that twenty-five words is a
+      cap on every new line rather than an average. The five-theme programme it
+      replaces is compressed to the foot of this file with **1g** kept in full,
+      since no round below closes it. Baseline recorded green before the first
+      edit: typecheck, lint, 19 test files passing.
+- [ ] **R2** — A self-check route the user opens on their own phone: what this
+      browser will record, what it will decode, what storage it granted, what the
+      pose model cost. Deliverable: the answers `record.ts` and `access.ts`
+      already compute, made visible on the device that computes them. No network,
+      no upload.
+- [ ] **R3** — Make that report handable back without a screenshot of a wall of
+      text. Deliverable: one copyable block, no personal data in it, and a test
+      on what it is allowed to contain.
+- [ ] **R4** — The court protocol. Deliverable: exactly what to film, tap and
+      report, in order, each step naming what it proves — same shape as
+      `fixtures/README.md`, and short enough to do in twenty minutes.
+- [ ] **R5** — Fix the first thing R2–R4 report. The recorder first: a WebM the
+      phone cannot play back is the failure that path was designed around and has
+      never been observed.
+- [ ] **R6** — Fix the second.
+- [ ] **R7** — Fix the third, or if the device came back clean, pin the three
+      paths that were riskiest with tests that would fail if a browser update
+      broke them.
+- [ ] **R8** — Phase 1 close-out. README synced, dead code purged, ledger
+      compressed to deltas.
+
+## Phase 2 — Hostile footage (R9–16)
+
+The engine is honest about what it cannot see. The open question is whether it
+notices the specific ways amateur footage goes wrong, or only the ways the
+synthetic rig can produce.
+
+- [ ] **R9** — What does a limb hidden for half a second do to the report?
+      `kalman.ts` holds a landmark through blur; occlusion is a different
+      failure, and MediaPipe answers it by guessing rather than by declining.
+      Deliverable: occlusion driven in the rig, and confidence that falls.
+- [ ] **R10** — Are frames assumed evenly spaced? Real clips drop frames and
+      phones record variable frame timing. Deliverable: the assumption located,
+      and either defended in prose or removed in code.
+- [ ] **R11** — What does bad light do? Low contrast lowers landmark visibility
+      before it lowers accuracy. Deliverable: the visibility signal traced into
+      `confidence.ts`, and a clip filmed at dusk degrading rather than lying.
+- [ ] **R12** — How often is the ball missed, and how often is something else
+      found? Deliverable: false-positive and false-negative figures on the rig,
+      printed by the suite so they cannot age silently.
+- [ ] **R13** — Does the multi-body hand-off check cover the sweep, or only the
+      single serve? A basket filmed at a club has other people in it by
+      definition. Deliverable: the check where the sweep can see it.
+- [ ] **R14** — Does handedness and camera-angle detection survive noise, or only
+      clean landmarks? Deliverable: both driven through the ensemble.
+- [ ] **R15** — Rotation metadata and portrait clips. `axes.ts` assumes the
+      sensor told the truth about which way was up. Deliverable: the assumption
+      tested against a clip where it did not.
+- [ ] **R16** — Phase 2 close-out. README synced, the ensemble's standing
+      warnings re-read, ledger compressed.
+
+## Phase 3 — Cost: memory, heat, frames (R17–24)
+
+Constraint 8 is currently an assertion nobody has checked, and so are 60 fps and
+the thermal budget. This is also where the state machine hiding in `App.tsx`
+gets a name.
+
+- [ ] **R17** — What is the peak resident memory of one analysis? Decode, pose,
+      the frame buffer, the six stills and the canvas all coexist. Deliverable: a
+      measurement.
+- [ ] **R18** — Bound the pipeline to it. Deliverable: a test that fails when the
+      bound is exceeded.
+- [ ] **R19** — Is the heap flat across ten consecutive analyses? Object URLs,
+      canvases, the landmarker, `MediaRecorder` chunks, the paired stills.
+      Deliverable: the leak, or the proof there is none.
+- [ ] **R20** — Does the timeline hold 60 fps on a long clip with the overlay
+      drawing? Deliverable: the frame budget measured, worst offender fixed.
+- [ ] **R21** — What does one stored report cost, and does the pruning ladder
+      fire? Stills are JPEG at 0.72; `KEEP_STILLS = 20`,
+      `KEEP_STILLS_UNDER_PRESSURE = 3`. Deliverable: the real byte cost, and a
+      test that drives the pressure path rather than trusting it.
+- [ ] **R22** — What happens when the browser refuses a write? Quota exceeded
+      mid-save, an import larger than the quota, a device that never grants
+      persistence. Deliverable: each path ends somewhere a player can act.
+- [ ] **R23** — Where does App state actually live? `App.tsx` carries 19 hooks
+      across ~1,100 lines and `view`, `sweep`, `pair` and `thenNow` are stages of
+      one machine. Deliverable: the machine made explicit, or the reason it stays
+      implicit written beside the code — plus a test on whichever transitions can
+      strand a screen.
+- [ ] **R24** — Phase 3 close-out.
+
+## Phase 4 — The stranger and the coach (R25–32)
+
+- [ ] **R25** — What does a genuine first run look like today? There is a
+      `guide-first` sheet and a `firstRunPickRef`; nobody has walked the whole
+      path as a stranger. Deliverable: the walk written down, gaps named, no
+      code.
+- [ ] **R26** — Build the worst of those gaps. Assembled from `primitives.tsx`
+      and existing tokens — constraint 3 is not negotiable for onboarding.
+- [ ] **R27** — Build the second worst.
+- [ ] **R28** — Can a player find the on-court record route at all? It is the
+      best feature in the app and it hides behind a screen most people read as a
+      file picker. Deliverable: discoverability, without a tour.
+- [ ] **R29** — How many taps from "that is my fault" to "I did the drill"?
+      Deliverable: the count, and one tap removed if there is one to remove.
+- [ ] **R30** — The share card is one serve; a coach wants the basket.
+      Deliverable: an export a coach can read without the app, or the reasoned
+      refusal written into `reportCard.ts` the way 5c's was.
+- [ ] **R31** — Does one-tap share actually work everywhere? `navigator.share`
+      with files is refused by more browsers than accept it. Deliverable: the
+      fallbacks tested rather than assumed.
+- [ ] **R32** — Copy pass over every line added in Phases 1–4, against the
+      twenty-five-word cap and the coach jargon the lint cannot see. Plus phase
+      close-out.
+
+## Phase 5 — Honesty audit and freeze (R33–40)
+
+- [ ] **R33** — Egress audit. Every request the running app makes after load,
+      enumerated and justified or removed. Deliverable: a test that fails when a
+      new one appears.
+- [ ] **R34** — What does an export contain that a player would not expect to
+      hand somebody? Deliverable: the contents stated in the UI at the moment of
+      export.
+- [ ] **R35** — Stress the ingestion: a thirty-minute clip, a one-frame clip, a
+      rotated clip, 4K, and a file that is not a video at all. Deliverable: five
+      answers a player can act on, none of them a stack trace.
+- [ ] **R36** — Re-read `UNDER_RESOLVED` and `UNCALIBRATED`. Deliverable: per
+      signal, the exact evidence that would move it — or the statement that none
+      exists and it stays withdrawn.
+- [ ] **R37** — Restate the fixture ask with whatever Phase 1's court protocol
+      taught. `RECORDED` is 0 of `MINIMUM_RECORDED = 6` and no round above closes
+      it.
+- [ ] **R38** — DRY and dead-code purge across the whole tree, not one phase.
+- [ ] **R39** — README full sync. It is the deliverable; read it end to end
+      against the code and fix every drift.
+- [ ] **R40** — Freeze. Final green run recorded, the open gaps stated plainly,
+      the loop stopped. Do not start an R41.
+
+---
+
+## The previous programme — the five themes, completed
+
+Ran to completion on this branch across 36 commits. The outcomes are in
+`README.md`; the full ledger, including the reasoning behind each departure from
+the brief, is in git history at `4e552d0`. In brief:
+
+- **Theme 1 — ground truth.** The fixture export asks for a description and
+  writes nothing without one; `fixtures/README.md` is a shooting list of six
+  clips; `replay-fixture.mjs` reports a spread across many clips and never
+  proposes a band; `chain.span_ratio` is computed and stays uncalibrated because
+  the 5% figure the old brief quoted does not reproduce — it is 21%.
+- **Theme 2 — the basket.** A multi-serve clip sweeps automatically and lands on
+  consistency; best against worst is named, said in words, and paired as stills
+  that never enter storage.
+- **Theme 3 — the practice loop.** A player-side drill record in its own store,
+  surviving re-analysis, export and import; four sentences where there was one;
+  no streaks.
+- **Theme 4 — capture on court.** Recording off the viewfinder's own stream where
+  the browser can read it back, the pose loop stopped while recording, and a
+  glance screen for somebody still holding a basket. **Never verified on a real
+  device** — the preview pane blocks camera access. Phase 1 above exists to
+  close that.
+- **Theme 5 — showing the correction.** A dial in the callout plate rather than a
+  wedge at the joint, because the arc is a locator and the number is world-space;
+  then-against-now on the shared `FramePair`; the dial reaches the share card and
+  the pairs deliberately do not.
+
+The one slice still open, kept in full because nothing in the forty rounds
+closes it:
+
+- [!] **1g** — **blocked: needs real footage.** `RECORDED` in
+      `src/lib/analysis/__tests__/fixtures/index.ts` is still empty, 0 of
+      `MINIMUM_RECORDED = 6`, and nothing an agent can do changes that. Six clips
+      clear the gate and the order is in `fixtures/README.md`: right-handed
+      side-on at 30 fps, the same serve in slow motion, the same player front-on,
+      a **left-hander** side-on at 30 fps, that left-hander at 60 fps from a
+      second angle, and one right-hander side-on with the feet deliberately out
+      of frame. The left-handed pair is the hard one and cannot be faked by
+      mirroring a clip — that is what a front camera does and the app already
+      treats it as an artifact. Until those exist: hip–shoulder separation and
+      shoulder tilt are unvalidated against anything real, `NOISE_FLOOR` has no
+      measurement behind it, and every entry in `UNCALIBRATED` stays there.
