@@ -593,6 +593,20 @@ that plainly was one, with filming advice that could not fix it. It now checks
 the other arm before rejecting, and says which hand it actually saw. The usual
 cause is a front-facing camera mirroring the clip.
 
+**Handedness reads a gap in time, which is why noise does not touch it.** Which
+arm holds the racket is decided by which one peaks *later* — the tossing arm
+early, the racket arm at contact — and that gap, measured in seconds, is wide
+enough that ordinary tracking jitter has never once closed it in testing: swept
+across sixty realisations of poor-light noise, zero flipped. Camera-angle
+detection shares the same landmarks and is not nearly so settled: it recovers
+the angle from a shoulder span, and the arithmetic that does it grows far more
+sensitive to noise the more face-on the camera stands. A clip too face-on to
+read depth from is still almost never confidently read as one that can be, but
+a clip only a couple of degrees inside the readable range is over-hedged as
+unreadable more often than not — a real cost in lost readings, measured and
+tracked rather than fixed, because the two fixes tried each helped one camera
+angle and made another worse.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

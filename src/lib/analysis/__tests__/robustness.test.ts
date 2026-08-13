@@ -19,7 +19,7 @@
  */
 import { assessQuality, blockingFramingIssue, pickFocus, rescore } from '../analyze'
 import { readWindow, samplingRateFor } from '../../pose/extract'
-import { assessSpatial } from '../spatial'
+import { assessSpatial, DEPTH_YAW_RANGE } from '../spatial'
 import {
   SOFT_MEASUREMENT,
   metricConfidence,
@@ -1209,6 +1209,94 @@ check('agreeing with the stated hand says nothing', () => {
     !q.warnings.some((w) => w.includes('looks')),
     `warned about a hand it agreed with: ${q.warnings.join(' / ')}`,
   )
+})
+
+/**
+ * R13 in NEXT.md: every check above reads `buildServe({}, FPS)` — clean
+ * landmarks, `noise: 0` by the rig's own default. None of them says whether
+ * the hand survives a track that jitters. It does: `detectHandedness` reads
+ * which arm's peak comes *later in time*, and the toss-arm-vs-racket-arm gap
+ * this rig produces is wide enough in seconds that per-landmark centroid
+ * noise, which moves a peak by at most a frame or two, has never once closed
+ * it in this ensemble.
+ */
+check('handedness survives realistic tracking noise', () => {
+  const trials = 60
+  let flips = 0
+  for (let i = 0; i < trials; i++) {
+    const frames = buildServe({ noise: POOR_NOISE, seed: 4000 + i * 7919 }, FPS)
+    const skel = detectServe(frames, FPS)
+    if (skel.detectedRacket !== 'right') flips++
+  }
+  note(`${flips}/${trials} flipped hand at poor-light noise (${POOR_NOISE})`)
+  assert(flips === 0, `handedness flipped under noise ${flips}/${trials} times`)
+})
+
+/* ------------------------------------------------------------ camera angle */
+
+heading('Camera angle under noise')
+
+/**
+ * The other half of R13. `estimateYaw` in `spatial.ts` divides a measured
+ * shoulder span by a fixed ratio and takes `acos` of it — and `acos`'s
+ * derivative diverges as its argument approaches 1, which is exactly what a
+ * near-face-on camera (low yaw) produces. The same centroid noise that never
+ * troubles handedness is, near this one boundary, amplified rather than
+ * absorbed.
+ *
+ * Two different questions, and they get two different answers. Constraint 1
+ * cares about one of them: a camera angle the app cannot actually read depth
+ * from must never be confidently read as one it can.
+ */
+check('an angle clearly too face-on for depth is (almost) never read as readable', () => {
+  // The dangerous direction. A camera this close to face-on has a foreshortened
+  // shoulder line the model is guessing at, and confidently trusting hip-
+  // shoulder separation or shoulder tilt off it is the exact failure this
+  // codebase is built to avoid.
+  const trials = 100
+  let wronglyReliable = 0
+  for (let i = 0; i < trials; i++) {
+    const frames = buildServe({ cameraYaw: 14, noise: POOR_NOISE, seed: 5000 + i * 7919 }, FPS)
+    const skel = detectServe(frames, FPS)
+    const spatial = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+    if (!spatial.depth_unreliable) wronglyReliable++
+  }
+  note(`14° camera (below the ${DEPTH_YAW_RANGE[0]}° floor), poor-light noise: ${wronglyReliable}/${trials} wrongly read reliable`)
+  within(wronglyReliable / trials, 0, 0.1, 'false-reliable rate on a genuinely unreadable angle')
+})
+
+check('an angle just inside the readable range is often over-hedged as unreliable under noise', () => {
+  // The safe direction, and a real cost rather than a danger: a player who
+  // filmed at a perfectly servable angle loses the coil reading anyway, more
+  // often than not, this close to the boundary. Pinned rather than accepted
+  // silently — nothing here can currently say whether the trade is worth
+  // moving `DEPTH_YAW_RANGE` for: the two attempts tried while measuring this
+  // (widening the averaging window, raising the floor) each helped one angle
+  // and hurt another, which is why neither shipped. A number this large
+  // should not be able to drift further without somebody noticing it did.
+  const trials = 100
+  let overHedged = 0
+  for (let i = 0; i < trials; i++) {
+    const frames = buildServe({ cameraYaw: 20, noise: TYPICAL_NOISE, seed: 6000 + i * 7919 }, FPS)
+    const skel = detectServe(frames, FPS)
+    const spatial = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+    if (spatial.depth_unreliable) overHedged++
+  }
+  note(`20° camera (2° inside the reliable range), typical noise: ${overHedged}/${trials} over-hedged as unreliable`)
+  within(overHedged / trials, 0.3, 1, 'the over-hedging rate this close to the boundary — a ratchet, not a target')
+})
+
+check('an angle well clear of either boundary is essentially never mis-hedged', () => {
+  const trials = 60
+  let wrong = 0
+  for (let i = 0; i < trials; i++) {
+    const frames = buildServe({ cameraYaw: 45, noise: POOR_NOISE, seed: 8000 + i * 7919 }, FPS)
+    const skel = detectServe(frames, FPS)
+    const spatial = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+    if (spatial.depth_unreliable) wrong++
+  }
+  note(`45° camera (mid-range), poor-light noise: ${wrong}/${trials} wrongly hedged`)
+  within(wrong / trials, 0, 0.1, 'mis-hedging rate in the middle of the readable range')
 })
 
 /**

@@ -172,8 +172,33 @@ synthetic rig can produce.
       the running app's own React and its real dev-server module graph, with
       `possibleHandoff` set both ways. `true` renders the warning verbatim;
       `false` renders nothing. The real component, not a description of it.
-- [ ] **R13** — Does handedness and camera-angle detection survive noise, or only
-      clean landmarks? Deliverable: both driven through the ensemble.
+- [x] **R13** — Handedness: robust, and now pinned rather than assumed. Every
+      existing check read `buildServe({}, FPS)` — clean landmarks, noise off
+      by the rig's own default — so nothing had actually driven a track that
+      jitters through it. Swept at poor-light noise, 60 trials: **0 flips**.
+      `detectHandedness` reads which arm's peak comes later *in time*, and the
+      gap this rig produces between the toss arm and the racket arm is wide
+      enough in seconds that per-landmark centroid noise, which moves a peak
+      by at most a frame or two, has never once closed it.
+
+      Camera-angle detection is a genuinely different answer depending which
+      direction is asked. `estimateYaw` divides a measured shoulder span and
+      takes `acos` of it, and `acos`'s derivative diverges as its argument
+      nears 1 — exactly what a near-face-on camera produces — so the same
+      noise handedness shrugs off is *amplified* near that one boundary. The
+      dangerous direction — a camera too face-on to read depth from,
+      confidently read as one that can be — stays small: **7/100** at 14°
+      under poor-light noise, **0/100** on the symmetric side-on boundary at
+      any angle tested. The costly-but-safe direction is not small: a camera
+      angle 2° *inside* the nominally readable range was over-hedged as
+      unreadable in **77/100** trials at ordinary noise. Two fixes were tried
+      and neither shipped — widening `estimateYaw`'s averaging window helped
+      at 25° and made 20–22° worse; raising `DEPTH_YAW_RANGE`'s floor to
+      relocate the boundary just moved the same fragility to wherever the new
+      line landed. Both are measured and pinned as ensembles rather than
+      silently fixed or silently accepted, so neither number can drift further
+      without the suite saying so — and a real fix, if one exists, has an
+      honest baseline to be judged against.
 - [ ] **R14** — Rotation metadata and portrait clips. `axes.ts` assumes the
       sensor told the truth about which way was up. Deliverable: the assumption
       tested against a clip where it did not. **Phase close-out.**
