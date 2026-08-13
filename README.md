@@ -865,6 +865,29 @@ entirely until then. Fifteen tests in `lib/__tests__/progress.test.ts`
 pin the boundary, the flat case, the regression case and the guard against
 measuring across a recalibration.
 
+**"Then, and now" is not two sheets deep — it is one tap and about one
+scroll, measured rather than taken on the round's own word.** The premise
+this round opened with turned out to be wrong, the same way a live walk has
+found a wrong premise before (R18 on "Record now", R20 on the frame budget):
+`onShowProgress` has exactly one caller, `Home.tsx`'s own progress card, and
+tapping it opens `sheet === 'progress'` directly — one `<Sheet>`, not two.
+Measured on a 375×812 viewport with two seeded sessions ten days apart: the
+"Then, and now" heading sits 686px into a sheet whose own visible height is
+634px — 1.08 screens of scrolling past the hero score and the practice
+card, not a second sheet behind a second tap. Reachability, as asked for, is
+already good, and forcing a change to a path that already works would have
+been the failure `LOOP.md` names explicitly — inventing a change to make a
+round feel productive.
+
+What is worth noting instead: R26, landed one round before this one, already
+gives the exact "here is what changed" signal this round was reaching for,
+for free and at zero taps. `sixWeekMilestone`'s sentence sits on the same
+home-screen card that opens this sheet, stating the first-serve-to-now
+comparison in words before anyone has tapped anything — the teaser this
+round might otherwise have had to build now already exists, built for a
+different stated reason (a non-gamified milestone) that happens to answer
+this one too.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

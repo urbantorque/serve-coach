@@ -216,8 +216,31 @@ phase's entries and drops the working notes underneath them.
       writes (no real footage to film one with), confirmed the sentence
       renders correctly with real numbers and disappears cleanly on a
       two-serve, two-day history that has not earned one yet.
-- [ ] **R27** — What brings somebody back on Thursday? "Then, and now" exists and
-      is two sheets deep. Deliverable: reachability measured, not a notification.
+- [x] **R27** — Read `App.tsx`'s progress sheet before trusting the round's own
+      "two sheets deep" — and it was wrong. `onShowProgress` has exactly one
+      caller: `Home.tsx`'s progress card, and tapping it opens
+      `sheet === 'progress'` directly. One sheet, one tap, not two.
+
+      Measured rather than guessed, the way this programme has caught a
+      wrong premise before (R18's "Record now", R20's frame budget): two
+      sessions seeded ten days apart via direct `saveSession` calls (with
+      placeholder still images stitched onto the phases — `FramePair`'s
+      positions filter out any pair missing a thumbnail, and the synthetic
+      rig draws none by default), the progress card tapped on a 375×812
+      viewport, and the "Then, and now" heading's offset measured against
+      the sheet's own scrollable height: 686px into a body whose visible
+      height is 634px — 1.08 screens of scrolling past the hero score and
+      the practice card, never a second tap or a second sheet.
+
+      No change made. Forcing one onto a path that measures as already
+      reachable is exactly the failure `LOOP.md` names by name — "inventing
+      a change to make a round feel productive... the same thing as feature
+      bloat, arriving one plausible improvement at a time." Noted instead:
+      R26, landed one round earlier, already puts the substance of a
+      then-and-now comparison — the first serve's score against the current
+      one, in words — directly on the home screen's progress card, at zero
+      taps, for a different stated reason. The "give somebody a reason to
+      open the app" job this round was reaching for was already done.
 - [ ] **R28** — Copy pass over every line added in Phases 1–4, against the
       twenty-five-word cap and the coach jargon the lint cannot see. **Phase
       close-out.**
