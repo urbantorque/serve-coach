@@ -22,7 +22,8 @@ import {
   type PackedFrames,
 } from '../groundTruth'
 import { buildServe } from '../syntheticServe'
-import { buildRejectedDraft } from '../../../dev/exportFixture'
+import { buildFixtureDraft, buildRejectedDraft, draftGaps } from '../../../dev/exportFixture'
+import { sampleAnalysis } from '../../../dev/sampleAnalysis'
 import { MINIMUM_RECORDED, RECORDED, fixtureGate } from './fixtures'
 import { assert, check, fail, heading, note, report, warn } from './harness'
 
@@ -48,6 +49,16 @@ const good = (): Fixture => ({
     keyframes: { contact: FRAMES.t[Math.floor(FRAMES.count * 0.6)] },
   },
 })
+
+/**
+ * A description good enough for the gate, used wherever the label is not the
+ * point.
+ *
+ * Up here rather than beside the export checks because `check` runs its body
+ * immediately, so a const declared below the first check that reads it is read
+ * before it exists.
+ */
+const DESCRIBED = 'Adult male, right handed, side-on, 50 fps, iPhone 13'
 
 /** The paths of every schema issue raised, for asserting on. */
 const faults = (f: unknown) => validateFixtureSchema(f).map((i) => i.where)
@@ -158,10 +169,98 @@ check('the draft the app exports cannot pass as ground truth', () => {
   // refused until they have done the labelling. If this ever goes green the
   // export and the validator have drifted apart and an app dump can pad the
   // recorded count.
-  const draft = buildRejectedDraft({ frames: buildServe({}, FPS), fps: FPS }, 'clip.mov', 'no swing')
+  //
+  // Described, so the refusal cannot be coming from the label. A draft with a
+  // placeholder description would fail this for a reason that has nothing to do
+  // with the flag the check is named after.
+  const draft = buildRejectedDraft({ frames: buildServe({}, FPS), fps: FPS }, 'clip.mov', 'no swing', DESCRIBED)
   const found = validateFixtureSchema(draft)
   assert(found.length > 0, 'a straight-from-the-app draft was accepted as a fixture')
   assert(found.some((i) => i.where === '_UNVERIFIED'), 'the unverified flag went unnoticed')
+})
+
+/* -------------------------------------------------------- the export tool */
+
+heading('Fixture export — what the labeller is handed')
+
+/** Did this throw, and did it complain about the right thing? */
+const refuses = (what: string, fn: () => unknown) => {
+  let message: string | undefined
+  try {
+    fn()
+  } catch (err) {
+    message = (err as Error).message
+  }
+  assert(message !== undefined, `${what}: no refusal`)
+  assert(/label/i.test(message ?? ''), `${what}: refused for the wrong reason — ${message}`)
+}
+
+check('a draft cannot be built without a description', () => {
+  // The placeholder used to be the default value of this field, so the commonest
+  // way to produce an unlabelled fixture was to do nothing at all. Both drafts
+  // are checked because the refusal path is one function and a caller that
+  // stopped calling it would show up on only one of them.
+  const analysis = sampleAnalysis()
+  refuses('empty label', () => buildFixtureDraft(analysis, '   '))
+  refuses('placeholder label', () => buildFixtureDraft(analysis, 'TODO: describe this clip'))
+  refuses('empty label, refusal draft', () =>
+    buildRejectedDraft({ frames: buildServe({}, FPS), fps: FPS }, 'clip.mov', 'no swing', ''),
+  )
+})
+
+check('the export and the gate agree on what counts as described', () => {
+  // Two opinions about this is the drift that matters: an export that accepts
+  // what the suite rejects sends somebody back to the court for nothing. Driven
+  // through both entry points rather than by comparing the two implementations,
+  // because there is only meant to be one.
+  const analysis = sampleAnalysis()
+  for (const label of ['TODO: describe this clip', 'todo', '']) {
+    const built = (() => {
+      try {
+        return buildFixtureDraft(analysis, label)
+      } catch {
+        return undefined
+      }
+    })()
+    const gateWouldRefuse = validateFixtureSchema({ ...good(), label }).some((i) => i.where === 'label')
+    assert(
+      (built === undefined) === gateWouldRefuse,
+      `"${label}": export ${built ? 'accepted' : 'refused'} it, the gate would ${gateWouldRefuse ? 'refuse' : 'accept'} it`,
+    )
+  }
+})
+
+check('every measurement in the draft says what unit it wants', () => {
+  // `expect.metrics` is diffed in the metric's own unit and the tolerance is
+  // chosen by that unit, so a value entered in the wrong one is out by a factor
+  // rather than by a little. The labeller has a tape measure and a protractor
+  // and no way to know which of the two this engine wanted — unless the draft
+  // says, next to the id, for every id.
+  const draft = buildFixtureDraft(sampleAnalysis(), DESCRIBED)
+  const ids = Object.keys(draft._engineMetrics)
+  assert(ids.length > 0, 'the sample analysis produced no measurements to describe')
+  const silent = ids.filter((id) => !draft._engineUnits[id])
+  assert(silent.length === 0, `no unit given for ${silent.join(', ')}`)
+})
+
+check('the gaps list says everything the gate would say', () => {
+  // The list exists to spare a round trip through the suite, which it only does
+  // while it is complete. Derived from the validator rather than written out,
+  // so this is really a check that the derivation was not replaced by a
+  // hand-maintained copy at some later date.
+  const draft = buildFixtureDraft(sampleAnalysis(), DESCRIBED)
+  const gaps = draftGaps(draft)
+  for (const issue of validateFixtureSchema(draft)) {
+    assert(
+      gaps.some((g) => g.includes(issue.problem)),
+      `the gate objects to ${issue.where} and the gaps list does not mention it`,
+    )
+  }
+  // The three the schema cannot see. A corrected keyframe looks exactly like an
+  // untouched one, and an empty `expect.metrics` looks exactly like a decision.
+  for (const owed of ['expect.keyframes', 'expect.handedness', 'expect.metrics']) {
+    assert(gaps.some((g) => g.startsWith(owed)), `the gaps list never asks for ${owed}`)
+  }
 })
 
 /* ---------------------------------------------------- copied engine output */

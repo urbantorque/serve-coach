@@ -304,6 +304,37 @@ const KEYFRAME_SLACK_FRAMES = 1
 const MAX_TOLERANCE_MULTIPLE = 3
 
 /**
+ * What is wrong with a fixture's description, or nothing.
+ *
+ * Split out of `validateFixtureSchema` and exported so the export tool can
+ * refuse a placeholder at the moment somebody is typing it, rather than three
+ * steps later. The old sequence was: export a draft labelled "TODO: describe
+ * this clip", label everything else, add it to RECORDED, run the suite, and only
+ * then read that the description was never written. By then the suite is red and
+ * reads like a code failure.
+ *
+ * One function rather than the same regex in both places. An export tool with
+ * its own opinion of what counts as described is a second gate that drifts from
+ * the first, and the drift is silent in the direction that matters: the export
+ * accepting something the suite will reject.
+ *
+ * Deliberately not a quality bar. It catches nothing and the placeholder, and
+ * says nothing about whether "adult male, side-on" is a better description than
+ * "me". A bar on length or vocabulary here would be a number nobody derived
+ * from anything, applied to prose, which is how a check ends up rejecting
+ * honest labels for their wording.
+ */
+export function labelProblem(label: string): string | undefined {
+  const s = label.trim()
+  if (!s) return 'missing — say who, which camera angle, which frame rate, which phone'
+  // The export writes "TODO: describe this clip". A fixture nobody described is
+  // a fixture nobody can tell the coverage gap from, and coverage across hands,
+  // frame rates and angles is the entire point of MINIMUM_RECORDED.
+  if (/\bTODO\b/i.test(s)) return 'still the exported placeholder — describe the clip'
+  return undefined
+}
+
+/**
  * Read a fixture file the way the suite has to: assuming nothing.
  *
  * Every rule here is a specific way the fixture pipeline has produced, or would
@@ -329,14 +360,11 @@ export function validateFixtureSchema(input: unknown): FixtureSchemaIssue[] {
 
   const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
   if (!str(f.id)) bad('id', 'missing — needed to name the check in the suite output', true)
-  if (!str(f.label)) {
-    bad('label', 'missing — say who, which camera angle, which frame rate, which phone', true)
-  } else if (/\bTODO\b/i.test(str(f.label))) {
-    // The export writes "TODO: describe this clip". A fixture nobody described
-    // is a fixture nobody can tell the coverage gap from, and coverage across
-    // hands, frame rates and angles is the entire point of MINIMUM_RECORDED.
-    bad('label', 'still the exported placeholder — describe the clip')
-  }
+  const labelFault = labelProblem(str(f.label))
+  // Fatal only when there is no label at all. A placeholder is a labelling
+  // fault: the file would run, and running it would produce a tick nobody can
+  // attribute to a clip.
+  if (labelFault) bad('label', labelFault, !str(f.label))
   if (f.source !== 'recorded' && f.source !== 'synthetic') {
     bad('source', `must be "recorded" or "synthetic", got ${JSON.stringify(f.source)}`, true)
   }

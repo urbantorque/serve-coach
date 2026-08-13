@@ -26,10 +26,13 @@ in `fixtureGate` by design, and hand-written fixture JSON is worse — it turns
 the suite green against reality that does not exist. Build everything around the
 footage except the footage, then stop.
 
-- [ ] **1a** — Fixture capture and labelling. Extend `src/dev/exportFixture.ts`
-      so the draft carries every field `analysis/groundTruth.ts` validates,
-      prompts for the prose `label`, and refuses to emit a draft still
-      containing `TODO`.
+- [x] **1a** — Fixture capture and labelling. `src/dev/exportFixture.ts` now
+      asks for the description and writes nothing without one, carries
+      `_engineUnits` so a labeller knows which unit each measurement is compared
+      in, and prints `draftGaps` — the remaining work, derived from
+      `validateFixtureSchema` rather than restated. `labelProblem` in
+      `groundTruth.ts` is the one definition of "described", read by both the
+      export and the gate.
 - [ ] **1b** — The shooting list. Rewrite
       `src/lib/analysis/__tests__/fixtures/README.md` as a checklist that can be
       taken to a court: which clips satisfy `SPREAD` (both hands, two views, two

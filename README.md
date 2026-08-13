@@ -522,8 +522,20 @@ which are fixed and now have regression tests:
 clips, hand-labelled, stored as the pose output rather than the video — a few
 hundred kilobytes instead of a few hundred megabytes, and hermetic, so a
 regression can only come from the analysis code. Dev builds have a **Save as
-test fixture** button on every report that produces a labelling draft. The
-folder is currently empty, and the suite says so loudly: hip–shoulder separation
+test fixture** button on every report that produces a labelling draft.
+
+The draft is built to fail, and it says how. It asks for a description before it
+will write a file at all — the placeholder used to be the default value of that
+field, so the commonest way to produce an unlabelled fixture was to do nothing,
+and the validator only said so three steps later once the file was already in
+`RECORDED` and the suite was red for what read like a code fault. It writes the
+unit each measurement wants beside the measurement, because `expect.metrics` is
+compared in the engine's own units and a labeller holding a tape measure has no
+way to know that contact height is counted in the player's own standing heights.
+And it prints what is left to do, derived from the validator rather than written
+out, so a rule added to the gate appears in the list the same day.
+
+The folder is currently empty, and the suite says so loudly: hip–shoulder separation
 and shoulder tilt are computed almost entirely from world-space `z`, which the
 rig models as exact and MediaPipe emphatically does not, so those two are
 unvalidated against anything real until it is not.
