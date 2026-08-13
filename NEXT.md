@@ -89,12 +89,31 @@ reports back, and then ask.
       the recording path does not import the diagnostic that reports on it.
       `deadEnd` changed meaning with the fix and says so in the type. 20 tests
       across the two files; verified at `?check`, both columns printed.
-- [ ] **R6** — Fix the second.
-- [ ] **R7** — Fix the third, or if the device came back clean, pin the three
-      paths that were riskiest with tests that would fail if a browser update
-      broke them.
-- [ ] **R8** — Phase 1 close-out. README synced, dead code purged, ledger
-      compressed to deltas.
+- [!] **R6** — **blocked: needs the court trip.** R2–R4 turned up exactly one
+      code defect between them and R5 fixed it. Two candidates were chased down
+      and both came back clean rather than fixable: the glance already says
+      "6 serves in that clip — this is number 6", so a basket recorded in-app
+      does not pass off one serve as the lot; and `?demo=live` mounts the player
+      but captures no stills, so the **target dial still has not been seen drawn
+      on a real frame** — which is what Theme 5's note said and remains true. The
+      next finding has to come from `COURT-CHECK.md` step 4 onwards.
+- [!] **R7** — **blocked: needs the court trip.** Same reason. Held for whatever
+      step 5 or 6 reports.
+- [x] **R8** — Phase 1 close-out. A production build was run for the first time
+      this programme and caught a README sentence that a build listing disproves
+      in one glance: "all are dev-only and are not in the production bundle" was
+      true of the `?demo` **routes** and false of the rig behind them, because
+      `dev/sampleAnalysis.ts` is also what the home screen's **See an example
+      report** is built from and ships as a 6.7 kB chunk. The shipped code was
+      right; the sentence was wrong. `playsBack` and `DECODE_PROBES` were
+      exported with no caller outside their own files and are not any more.
+      `?demo=glance` and `?demo=glance-refused` were missing from the README's
+      list of demo routes.
+
+      **Phase 1 stands at five done, two blocked.** Everything reachable without
+      a phone is finished: the check exists, it is pasteable, it found one real
+      defect and that defect is fixed, and the twenty-minute list is written.
+      R6 and R7 are held for `COURT-CHECK.md`.
 
 ## Phase 2 — Hostile footage (R9–16)
 

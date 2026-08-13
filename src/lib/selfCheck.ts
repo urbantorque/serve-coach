@@ -132,7 +132,7 @@ export function recordingVerdict(
  * be opened. `analyze.ts` already names that codec when a decode fails; this
  * asks the same question before anybody has filmed anything.
  */
-export const DECODE_PROBES = [
+const DECODE_PROBES = [
   { label: 'MP4, H.264', type: 'video/mp4; codecs="avc1.42E01E"' },
   { label: 'MP4, HEVC — what an iPhone records', type: 'video/mp4; codecs="hvc1"' },
   { label: 'WebM, VP9', type: 'video/webm; codecs="vp9"' },

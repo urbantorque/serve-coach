@@ -153,7 +153,7 @@ export function playbackQuery(type: string): string {
  * Whether a `<video>` on this browser will play back what `MediaRecorder` would
  * write.
  */
-export function playsBack(
+function playsBack(
   decoder: { canPlayType?: (t: string) => string } | undefined,
   type: string,
 ): boolean {

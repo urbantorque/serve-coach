@@ -708,9 +708,16 @@ rig models as exact and MediaPipe emphatically does not, so those two are
 unvalidated against anything real until it is not.
 
 During development, `?demo` renders a report from a simulated serve,
-`?demo=live` also mounts the player, and `?demo=basket` shows the consistency
-comparison — so the UI can be worked on without filming anything. All are
-dev-only and are not in the production bundle.
+`?demo=live` also mounts the player, `?demo=basket` shows the consistency
+comparison, and `?demo=glance` and `?demo=glance-refused` show the two halves of
+the on-court screen — so the UI can be worked on without filming anything. **The
+routes** are dev-only and are compiled out of a production build.
+
+The rig behind them is not, and should not be: `dev/sampleAnalysis.ts` is also
+what the home screen's **See an example report** is built from, so it ships as a
+6.7 kB chunk that is fetched only when somebody presses that button. The line
+that used to sit here said all of it was absent from the production bundle,
+which a build listing disproves in one glance.
 
 **A re-analysis is a correction, not a new serve.** Telling the app it read the
 wrong hand, or flicking between the serves in one clip, re-runs the pipeline —
