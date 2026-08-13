@@ -179,8 +179,42 @@ phase's entries and drops the working notes underneath them.
       the promoted button reuses the exact `btn--ghost btn--big` classes
       "Record now" already had; the change is which handler is behind the
       same label, decided by a condition already computed on every render.
-- [ ] **R19** — How many taps from "that is my fault" to "I did the drill"?
-      Deliverable: the count, and one tap removed if there is one to remove.
+- [x] **R19** — Traced the path by reading `Report.tsx` and `App.tsx` rather
+      than guessing, then confirmed live with seeded sessions rather than
+      trusting the trace alone. The count from a fresh report: three taps,
+      across two screens the report itself never mentions. `onLogDrill` lives
+      only on `PracticeCard`, and the only place that ever rendered was the
+      progress sheet — back to home (1), tap "Your form" (2, and absent
+      entirely below two comparable sessions), scroll, tap "I did this drill"
+      (3). A player reading "Work on this next" on the report they just
+      filmed had no way to know a logging control existed anywhere, let alone
+      where.
+
+      One tap removed — three of them, in fact, all at once, by removing the
+      screen change rather than shortening the route to it. `practice`,
+      `logDrill` and `undoDrill` were already sitting at the top of
+      `App.tsx`, already computed from the whole session history rather than
+      from whichever report happens to be open, already exactly what the
+      progress sheet's card was built on. `Report.tsx` now takes the same
+      three as props and renders the same `PracticeCard` component,
+      unmodified, directly under "Work on this next" — a season-long focus
+      beside a single serve's causal fix, deliberately not merged into one,
+      because `practice` and `plan[0]` can honestly name different
+      measurements and conflating them would mean logging a drill against a
+      metric id the practice tracker was never asked about. Wired at both
+      `<Report>` call sites, a fresh analysis and a reopened saved one alike,
+      since `practice` does not care which report is on screen.
+
+      Verified live, not by inspection: two sample sessions saved directly
+      through `saveSession` (deterministic synthetic dials, so both share the
+      same weakest measurement — the exact condition `findPracticeFocus`
+      requires), reloaded, opened a saved report, and found "Practise this"
+      rendered immediately under the fix with "I did this drill" live —
+      tapped it, watched the count and the headline both update in place, hit
+      "Undo the last one", watched both revert. Confirmed the progress
+      sheet's own copy of the same card is untouched and reads the same
+      state. No new markup, no new CSS: the same component, unmodified, in
+      one more place.
 - [ ] **R20** — Does the timeline hold 60 fps on a long clip with the overlay
       drawing? Deliverable: the frame budget measured, worst offender fixed.
 - [ ] **R21** — Keyboard, focus, contrast and reduced motion across the surfaces

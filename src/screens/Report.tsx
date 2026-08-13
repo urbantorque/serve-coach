@@ -3,6 +3,7 @@ import ConsistencyPanel from '../components/ConsistencyPanel'
 import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
 import PosePlayer from '../components/PosePlayer'
+import PracticeCard from '../components/PracticeCard'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
@@ -10,6 +11,7 @@ import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
+import type { PracticeFocus } from '../lib/practice'
 import type { ServeType } from '../lib/storage/prefs'
 import { deltasAgainst, scoringVersionOf } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
@@ -89,6 +91,22 @@ interface Props {
    * to avoid, just aimed at the player's history instead of at their serve.
    */
   saveWarning?: string
+  /**
+   * The season-long thing worth practising, computed across sessions rather
+   * than from this one — see `findPracticeFocus`. A different question from
+   * "Work on this next" above, which is this serve's own causal read, and the
+   * two can legitimately name different measurements.
+   *
+   * Used to be reachable only from the progress sheet: back to the home
+   * screen, into "Your form", then down to the card — three taps and two
+   * screens away from the exact moment a player has just read what to fix.
+   * Rendered here too, unmodified, so logging it costs the one tap it should.
+   */
+  practice?: PracticeFocus
+  /** Record that the drill on `practice` was done. Absent where nothing can store it. */
+  onLogDrill?: () => void
+  /** Take back the most recent one. */
+  onUndoDrill?: () => void
 }
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -109,6 +127,9 @@ export default function Report({
   statedTier,
   servePair,
   saveWarning,
+  practice,
+  onLogDrill,
+  onUndoDrill,
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
@@ -503,6 +524,17 @@ export default function Report({
           </>
         )}
       </section>
+
+      {/* The season-long focus, not this serve's own. See `Props.practice` —
+          absent for anyone without two comparable sessions yet, exactly the
+          condition the progress sheet's copy of this card already applies. */}
+      {practice && (
+        <PracticeCard
+          focus={practice}
+          onLogDrill={onLogDrill}
+          onUndoDrill={practice.drilled ? onUndoDrill : undefined}
+        />
+      )}
 
       {/*
        * Comparing the serves in the clip, and the caveats on how it was read.

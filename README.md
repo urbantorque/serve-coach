@@ -658,6 +658,26 @@ untouched: `coarse` gates the promoted button out entirely there, and "Check
 your framing first" stays a strap, the only route in since a laptop never had
 the blind button at all.
 
+**Logging a drill used to cost three taps and a screen the report never
+mentioned; now it costs one, on the screen that names the fault.** "I did
+this drill" lived only on `PracticeCard`, and `PracticeCard` rendered only
+inside the progress sheet — reachable from a fresh report by backing out to
+the home screen, tapping "Your form" (itself only offered once two serves
+exist), and scrolling down. Nothing on the report a player has just read said
+this control existed anywhere. The fix carries no new logic: `practice`,
+`logDrill` and `undoDrill` were already computed once at the top of `App.tsx`
+from the full session history, already stable across renders via
+`practiceRef`, already exactly what the progress sheet's card used. `Report`
+now takes the same three as props and renders the same `PracticeCard`,
+unmodified, right after "Work on this next" — its own per-serve causal fix,
+a different question from the season-long one `practice` tracks, which is why
+the two sit stacked rather than merged. Both call sites get it, a fresh
+analysis and a reopened saved one alike, since `practice` is computed from
+history rather than from whichever report happens to be open. Absent exactly
+where the progress sheet's copy was already absent — a player with fewer than
+two comparable sessions has nothing to log yet, which is a real fact about a
+first serve and not a gap this round invented one to fill.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

@@ -1116,6 +1116,9 @@ export default function App() {
             }
             servePair={pair}
             saveWarning={saveWarning}
+            practice={practice}
+            onLogDrill={logDrill}
+            onUndoDrill={practice?.drilled ? undoDrill : undefined}
           />
         )}
 
@@ -1126,6 +1129,9 @@ export default function App() {
             previous={priorTo(view.session.createdAt, typeOf(view.session))}
             onBack={goHome}
             onAnalyzeAnother={goHome}
+            practice={practice}
+            onLogDrill={logDrill}
+            onUndoDrill={practice?.drilled ? undoDrill : undefined}
           />
         )}
 
