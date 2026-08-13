@@ -98,10 +98,11 @@ export interface FixtureGate {
  *   easiest route to six clips there is. See `SPREAD` for which axes can be
  *   checked and which three are prose the gate deliberately does not parse.
  *
- * A recorded fixture that leaves `expect.handedness` or `expect.view` off is
+ * A recorded *serve* that leaves `expect.handedness` or `expect.view` off is
  * named rather than ignored. Unlabelled, it cannot be counted towards a spread,
  * and the difference between "we have no left-handed footage" and "nobody wrote
- * down which hand" is the difference this gate exists to keep visible.
+ * down which hand" is the difference this gate exists to keep visible. A
+ * refusal clip is exempt and `spreadGaps` says why.
  *
  * Only `source: 'recorded'` fixtures count. A synthetic one in this list would
  * move the tally without adding a single frame of reality, which is precisely
@@ -183,7 +184,35 @@ export function fixtureGate(
 function spreadGaps(recorded: readonly Fixture[]): string[] {
   const gaps: string[] = []
 
-  const unlabelled = recorded.filter((f) => !f.expect.handedness || !f.expect.view)
+  /*
+   * Refusal clips are counted, and are not part of the spread.
+   *
+   * A `rejected: true` fixture asserts that the engine turns a rally, a practice
+   * swing or somebody standing still away. It has no handedness and no view by
+   * construction — `buildRejectedDraft` writes `expect: { rejected: true }` and
+   * nothing else, `validateFixture` returns before it would compare either, and
+   * "which hand held the racket" is not a question a clip of somebody standing
+   * still has an answer to.
+   *
+   * Read as part of the spread it was therefore named as unlabelled every time
+   * the gate ran, permanently, for a field it is not meant to carry — and the
+   * fixtures README now sends people out to film exactly these clips. They still
+   * count towards MINIMUM_RECORDED, because they are real footage proving a real
+   * behaviour and refusing a genuine serve is a complaint this project has
+   * already had. They just do not tell anyone which camera angles were covered.
+   */
+  const serves = recorded.filter((f) => f.expect.rejected !== true)
+  if (serves.length === 0) {
+    // Every distinct count below would be zero and would report three gaps
+    // about missing hands and views, which reads as a labelling problem rather
+    // than as what it is.
+    return [
+      `all ${recorded.length} recorded clips are refusals — the spread is counted over serves, ` +
+        'and there are none',
+    ]
+  }
+
+  const unlabelled = serves.filter((f) => !f.expect.handedness || !f.expect.view)
   if (unlabelled.length) {
     gaps.push(
       `${unlabelled.map((f) => f.id).join(', ')}: no handedness or view labelled — ` +
@@ -192,7 +221,7 @@ function spreadGaps(recorded: readonly Fixture[]): string[] {
   }
 
   const distinct = <T>(pick: (f: Fixture) => T | undefined) =>
-    new Set(recorded.map(pick).filter((v): v is T => v !== undefined)).size
+    new Set(serves.map(pick).filter((v): v is T => v !== undefined)).size
 
   const hands = distinct((f) => f.expect.handedness)
   if (hands < SPREAD.hands) {

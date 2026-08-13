@@ -566,6 +566,39 @@ check('an unlabelled clip is named, not counted towards the spread', () => {
   )
 })
 
+check('a refusal clip is counted without being asked which hand it served with', () => {
+  // The fixtures README sends people out to film a rally, a practice swing and
+  // somebody standing still. Every one of those comes back as `rejected: true`
+  // with no handedness and no view — there is no answer to give — and the spread
+  // check used to name it as unlabelled every time it ran, forever, for a field
+  // it is not meant to carry.
+  const set = spread()
+  set[0] = { ...set[0], id: 'rally', expect: { rejected: true } }
+  const gate = fixtureGate([...set, stub('extra-serve')], 6)
+  assert(
+    !gate.lines.some((l) => l.includes('rally')),
+    `the refusal clip was named as unlabelled: ${gate.lines.join(' ')}`,
+  )
+  assert(gate.counted === 7, `a refusal clip stopped counting towards the minimum: ${gate.counted}`)
+})
+
+check('a set of nothing but refusals is not a spread', () => {
+  // The other half of the same decision. Refusals count towards the minimum, so
+  // six of them reach the spread check with no serve in the set at all — and
+  // three lines about missing hands and views would read as a labelling problem
+  // rather than as six clips of nobody serving.
+  const set = Array.from({ length: 6 }, (_, i) => ({
+    ...stub(`refusal-${i}`),
+    expect: { rejected: true },
+  }))
+  const gate = fixtureGate(set, 6)
+  assert(gate.level === 'fail', 'six clips of nobody serving satisfied the gate')
+  assert(
+    gate.lines.some((l) => /refusals/.test(l)),
+    `the gate did not say the set has no serves in it: ${gate.lines.join(' ')}`,
+  )
+})
+
 check('a synthetic fixture does not count towards the minimum', () => {
   // Otherwise the cheapest route to a quiet gate is six calls to the rig, and
   // the tally would say "validated against reality" about the rig validating

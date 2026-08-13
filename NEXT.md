@@ -37,7 +37,7 @@ footage except the footage, then stop.
       that clear the gate, in order, each with what it proves and why no two
       prove the same thing — plus the rows beyond the six that the gate cannot
       read, and the warning not to mirror a clip to fake a left-hander.
-- [ ] **1f** — The gate names a non-serve fixture as unlabelled, forever. Found
+- [x] **1f** — The gate names a non-serve fixture as unlabelled, forever. Found
       while writing 1b, which now tells people to film rally and practice-swing
       clips. `spreadGaps` in `fixtures/index.ts` filters on
       `!f.expect.handedness || !f.expect.view`, and a `rejected: true` fixture

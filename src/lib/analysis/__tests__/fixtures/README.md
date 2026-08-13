@@ -138,6 +138,12 @@ and frame rate — because those are structured fields it can read. Player build
 framing and lighting live in the `label` prose, and nothing checks them; the
 count being quiet is not a claim that those are covered.
 
+A `rejected: true` clip counts towards the minimum and is not part of the
+spread. It has no handedness and no view, because a clip of somebody standing
+still has no answer to give, and being asked for one is not a gap anybody can
+close by filming. A set of nothing but refusals still fails, and says so in
+those words rather than as three complaints about missing labels.
+
 The other thing the gate cannot see: a fixture that widened its own `tolerance`
 until nothing could fail it. The schema check refuses an allowance more than
 three times the default for that unit, which is the "do not widen `tolerance`"
