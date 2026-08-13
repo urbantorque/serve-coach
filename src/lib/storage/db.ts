@@ -117,7 +117,7 @@ function tx<T>(
 }
 
 /** Reports kept in full. Beyond this the oldest are dropped entirely. */
-const MAX_SESSIONS = 60
+export const MAX_SESSIONS = 60
 /** Reports that keep their keyframe stills. Older ones keep only their numbers. */
 export const KEEP_STILLS = 20
 
@@ -139,9 +139,36 @@ const stripStills = (s: Session): Session => ({
 type PruneLevel = 'routine' | 'stills' | 'hard'
 
 /** Reports that keep their stills once the disk has actually pushed back. */
-const KEEP_STILLS_UNDER_PRESSURE = 3
+export const KEEP_STILLS_UNDER_PRESSURE = 3
 /** Reports kept in full once stripping every recoverable image was not enough. */
-const KEEP_ALL_UNDER_PRESSURE = 25
+export const KEEP_ALL_UNDER_PRESSURE = 25
+
+/**
+ * Which of the store's keys `prune` would delete outright, and which it would
+ * strip stills from, at a given level — the ladder's arithmetic with the
+ * IndexedDB calls taken out.
+ *
+ * Split out so the ladder can be driven by a test without a live IndexedDB:
+ * `prune` itself needs a browser, `planPrune` needs an array. `orderedOldestFirst`
+ * is exactly what the `createdAt` index hands back, so a caller reading real
+ * keys and a test handing in a fabricated run of them exercise the identical
+ * arithmetic.
+ */
+export function planPrune(
+  orderedOldestFirst: readonly IDBValidKey[],
+  level: PruneLevel,
+): { toDelete: IDBValidKey[]; toStrip: IDBValidKey[] } {
+  const keepStills = level === 'routine' ? KEEP_STILLS : KEEP_STILLS_UNDER_PRESSURE
+  const keepAll = level === 'hard' ? KEEP_ALL_UNDER_PRESSURE : MAX_SESSIONS
+  const n = orderedOldestFirst.length
+  return {
+    toDelete: orderedOldestFirst.slice(0, Math.max(0, n - keepAll)),
+    // Only the band between the two limits: everything past `keepAll` is
+    // already in `toDelete`, and everything within `keepStills` of the end
+    // keeps its images.
+    toStrip: orderedOldestFirst.slice(Math.max(0, n - keepAll), Math.max(0, n - keepStills)),
+  }
+}
 
 /**
  * Keep history bounded without throwing away what makes it useful.
@@ -153,9 +180,6 @@ const KEEP_ALL_UNDER_PRESSURE = 25
  * whole reports oldest-first would do.
  */
 async function prune(level: PruneLevel = 'routine'): Promise<void> {
-  const keepStills = level === 'routine' ? KEEP_STILLS : KEEP_STILLS_UNDER_PRESSURE
-  const keepAll = level === 'hard' ? KEEP_ALL_UNDER_PRESSURE : MAX_SESSIONS
-
   /*
    * Oldest first, as keys alone.
    *
@@ -179,7 +203,9 @@ async function prune(level: PruneLevel = 'routine'): Promise<void> {
 
   if (level !== 'routine') await dropUnreadable()
 
-  for (const doomed of ordered.slice(0, Math.max(0, ordered.length - keepAll))) {
+  const { toDelete, toStrip } = planPrune(ordered, level)
+
+  for (const doomed of toDelete) {
     await safely(() => tx('readwrite', (store) => store.delete(doomed)), undefined)
   }
 
@@ -199,11 +225,7 @@ async function prune(level: PruneLevel = 'routine'): Promise<void> {
    *
    * Freeing less than hoped for is survivable. Not getting to the retry is not.
    */
-  const banded = ordered.slice(
-    Math.max(0, ordered.length - keepAll),
-    Math.max(0, ordered.length - keepStills),
-  )
-  for (const key of banded) {
+  for (const key of toStrip) {
     await safely(async () => {
       const row = await tx<unknown>('readonly', (store) => store.get(key) as IDBRequest<unknown>)
       const s = normalise(row)

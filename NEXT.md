@@ -78,10 +78,29 @@ where the state machine hiding in `App.tsx` gets a name.
       waiting on. `MediaRecorder` chunks are a local array dropped when the
       recording function returns, which is inspection rather than measurement —
       nothing in this repo can record one to check.
-- [ ] **R5** — What does one stored report actually cost? Stills are JPEG at
-      0.72; `KEEP_STILLS = 20`, `KEEP_STILLS_UNDER_PRESSURE = 3`. Deliverable:
-      the real byte cost, and a test that drives the pressure ladder rather than
-      trusting it.
+- [x] **R5** — Measured, not guessed: six real JPEGs at `captureThumbnails`'
+      actual 420 px width and quality 0.72, drawn with the skeleton and callouts
+      the real path draws, come to **27–80 KB each depending on the clip's
+      aspect ratio** (landscape 420×236 the cheap end, portrait 420×747 the
+      costly one) — a 3× spread the fixed 48,000-character stand-in in
+      `footprint.test.ts` never claimed to capture, and that comment said 640 px
+      wide, which nothing in the code has ever produced; both are fixed. One
+      stored report is six of those plus about 15 KB of everything else a
+      `Session` carries — **179–494 KB**, stills nearly all of it, matching the
+      README's long-standing claim. At `KEEP_STILLS = 20` and
+      `MAX_SESSIONS = 60`, a full history is 20 reports with stills plus 40 at
+      ~15 KB apiece: **4.2–10.5 MB**, mostly landscape-vs-portrait rather than
+      anything the app controls.
+
+      The pressure ladder itself was asserted, not driven — `prune`'s selection
+      arithmetic was inline in a function that needs a live IndexedDB, which this
+      suite does not have. Pulled out as `planPrune`, a pure function of an
+      ordered key list and a level, and driven in
+      `storage/__tests__/db.test.ts`: routine pruning at every boundary,
+      `stills`-level pressure stripping images without deleting a single report,
+      `hard`-level pressure deleting down to `KEEP_ALL_UNDER_PRESSURE`, and a
+      thin history losing nothing even under hard pressure. `prune` itself is
+      unchanged behaviour, calling the extracted function instead of inlining it.
 - [ ] **R6** — What happens when the browser refuses a write? Quota exceeded
       mid-save, an import larger than the quota, a device that never grants
       persistence. Deliverable: each path ends somewhere a player can act.

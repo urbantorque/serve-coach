@@ -801,6 +801,21 @@ numbers survive much longer, which is the opposite of deleting whole reports
 oldest-first. If the browser refuses a write because storage is full, the app
 frees space and retries rather than silently losing the serve you just recorded.
 
+**What one stored report actually costs.** Measured rather than guessed: a real
+keyframe still — JPEG at quality 0.72, 420 px wide, with the tracked skeleton and
+callouts drawn onto it, the shape `captureThumbnails` actually writes — runs
+27–80 KB depending on the clip's aspect ratio, cheapest on a landscape clip and
+costliest on a portrait one. A stored report is six of those plus roughly 15 KB
+of everything else a `Session` carries, so one report is **179–494 KB**, stills
+still nearly all of it. `KEEP_STILLS = 20` reports keep theirs; the rest, up to
+`MAX_SESSIONS = 60`, keep only their numbers at about 15 KB each — so a full
+history is **4.2–10.5 MB**, and which end of that a player lands on is decided
+by their camera orientation, not by anything the app does. The pressure ladder
+that enforces those two limits — routine pruning after every save, then
+stripping stills across the whole history, then deleting the oldest reports
+outright — is driven by a test now rather than trusted: `storage/db.test.ts`
+exercises `planPrune`'s selection at every boundary the three levels create.
+
 ## Privacy
 
 The video is read from a local object URL, decoded in the page, and never sent

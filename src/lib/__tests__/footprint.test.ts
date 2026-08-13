@@ -89,9 +89,12 @@ const WORST_SERVE_FRAMES = 120
 /**
  * A keyframe still, at the size the extractor writes them.
  *
- * Base64 of a JPEG at quality 0.72, 640 px wide — the shape `keyframeStills`
- * produces. Length rather than content is the whole of the cost, so the string
- * is filled rather than encoded.
+ * Base64 of a JPEG at quality 0.72, 420 px wide — `captureThumbnails`' own
+ * default, and what `analyze.ts` calls it with. Length rather than content is
+ * the whole of the cost, so the string is filled rather than encoded. A real
+ * still at this width measures 27–80 KB depending on the clip's aspect ratio —
+ * see the R5 note in `NEXT.md` — so this is a mid-range stand-in, not a worst
+ * case; `stillBytes` counts whatever length actually arrives.
  */
 const STILL = 'data:image/jpeg;base64,' + 'A'.repeat(48_000)
 
