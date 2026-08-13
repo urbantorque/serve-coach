@@ -68,9 +68,43 @@ phase's entries and drops the working notes underneath them.
       `HTMLAnchorElement.download` triggered with the correct
       `basket-2026-08-14.png` name → `Saved`) with `.click()` instrumented
       rather than trusting the state names alone. Full suite green.
-- [ ] **R23** — Does one-tap share actually work everywhere? `navigator.share`
-      with files is refused by more browsers than accept it. Deliverable: the
-      fallbacks tested rather than assumed.
+- [x] **R23** — Read `shareBlob` (added in R22) before assuming it already
+      handled every refusal, and found it had never been asked "what if the
+      capability check itself is unreliable" — the exact question
+      `record.ts`'s `recordingType` already asks about `isTypeSupported` and
+      `canPlayType`, applied nowhere in the sharing path. Two real gaps, both
+      the same shape: `nav.canShare?.({...})` sat outside the `try`, so a
+      browser whose `canShare` throws would have propagated an unhandled
+      rejection out of the whole share flow instead of falling back to a
+      download; and a browser with `share` but no `canShare` — an older or
+      partial implementation — was refused a share attempt entirely, the
+      identical mistake `recordingType` already guards against for a
+      `canPlayType` that is absent rather than negative. Neither was a
+      hypothetical: this is precisely how "refused by more browsers than
+      accept it" happens in practice — not one missing API, several
+      partially-present ones each closing the door a different way.
+
+      Fixed by extracting the decision into `attemptShare`, injected with a
+      `ShareNavigator` the same way `recordingType` is injected with a fake
+      `MediaRecorder`/`<video>`, so the choosing can be tested without a
+      browser to really share into. A throwing or absent capability check
+      now reads as "try it", never as a hard no, on both counts; the
+      existing try/catch around the real `share()` call is what actually
+      decides shared, cancelled or fallen-through — unchanged, because it
+      was already reading `AbortError` correctly.
+
+      Eight tests in the new `share/__tests__/reportCard.test.ts` drive
+      every combination a fake `navigator` can produce: no `share` at all;
+      `canShare` saying no without `share` ever being called; `share`
+      present with no `canShare` tried anyway; a throwing `canShare` tried
+      anyway; a clean share; a dismissal read as cancelled, not failed; a
+      real failure read as failed, not cancelled; and a closed-set pin on
+      the four possible outcomes so a fifth cannot get added without this
+      file noticing. Verified live as well, not only in Node: both share
+      buttons (`Report.tsx`'s and R22's basket one) driven end to end
+      through the refactored code with `HTMLAnchorElement.prototype.click`
+      instrumented, confirming the real download names still land correctly
+      after the extraction.
 - [ ] **R24** — Is export and import a thing a non-technical player can do?
       Deliverable: the path walked, and the worst step fixed.
 - [ ] **R25** — Is a session a thing the app knows about? Reports are keyed per

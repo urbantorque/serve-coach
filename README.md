@@ -779,6 +779,29 @@ basket rather than trusting the layout math. Stacked instead: each value on
 its own line, sized to the full card width, so nothing about the layout
 depends on how long a given fault's readout happens to be.
 
+**Sharing a file is not one question, it is four, and only two of the
+answers were being asked.** `navigator.share` existing was already treated
+as "try it" through a `canShare` check and a try/catch — but `canShare`
+existing was never questioned, and neither was what to do when it did not.
+`attemptShare` (`reportCard.ts`) pulls the decision out where it can
+actually be tested, the same move `record.ts`'s `recordingType` already
+made for a `MediaRecorder` that exists without recording anything readable.
+Two real gaps closed by asking the same "what if the capability check
+itself is unreliable" question this codebase already asks everywhere else:
+a `canShare` that throws used to propagate as an unhandled rejection out of
+the whole share flow instead of falling back to a download, and a browser
+with `share` but no `canShare` — an older or partial implementation — was
+refused a share attempt entirely for lacking a check newer than the
+capability itself, the identical mistake `recordingType` already guards
+against for a missing `canPlayType`. Both fixed the same way: a throwing or
+absent capability check reads as "try it", never as a hard no, and the
+existing try/catch around `share()` itself is what actually decides
+success, cancellation or fallback. Eight tests in
+`share/__tests__/reportCard.test.ts` drive every combination with a fake
+`navigator` — no browser, no OS share sheet, needed to exercise a decision
+that was previously only ever run for real, once, by whichever browser
+happened to be open.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

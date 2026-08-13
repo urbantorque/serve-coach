@@ -367,6 +367,68 @@ const dateStamp = (createdAt: number) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/** What `navigator` looks like to the sharing decision below, and nothing more. */
+export interface ShareNavigator {
+  canShare?: (data: { files?: File[] }) => boolean
+  share?: (data: { files?: File[]; title?: string }) => Promise<void>
+}
+
+/**
+ * Whether this browser should be asked to share a file at all, and what
+ * happened if it was.
+ *
+ * Injected rather than read off `navigator` directly, so the decision can be
+ * tested here — no browser to actually hand a file to. The same shape of
+ * problem `record.ts`'s `recordingType` already solved: `navigator.share`
+ * existing is not the same question as whether it will take *this* file, the
+ * same gap between "the API exists" and "the API will do the thing" that
+ * container support is.
+ *
+ * `canShare` gets asked first where a browser has it, because `share()`
+ * itself throwing is a worse way to find out a file was never shareable.
+ * Where a browser has `share` but not `canShare` — an older or partial
+ * implementation — this tries anyway rather than refusing: the same
+ * "absence of evidence must not remove a working control" rule
+ * `recordingType` applies to a missing `canPlayType`. A `canShare` that
+ * itself throws is read the same way, not as a hard no — a capability check
+ * throwing is a browser being asked something it does not understand, not
+ * proof of the thing it was asked about.
+ *
+ * `'not-attempted'` and `'failed'` are kept apart from the caller's point of
+ * view — both fall through to a download — but stay distinguishable here in
+ * case a future caller wants to know whether the browser was ever asked.
+ */
+export async function attemptShare(
+  nav: ShareNavigator | undefined,
+  file: File,
+  title: string,
+): Promise<'shared' | 'cancelled' | 'not-attempted' | 'failed'> {
+  if (typeof nav?.share !== 'function') return 'not-attempted'
+
+  if (typeof nav.canShare === 'function') {
+    let canShareFiles: boolean
+    try {
+      canShareFiles = nav.canShare({ files: [file] })
+    } catch {
+      canShareFiles = true
+    }
+    if (!canShareFiles) return 'not-attempted'
+  }
+
+  try {
+    await nav.share({ files: [file], title })
+    return 'shared'
+  } catch (err) {
+    // Backing out of the share sheet is a decision, not a failure, and the
+    // browser says which it was: a dismissal rejects with `AbortError`. This
+    // used to fall through to the download either way, so a player who opened
+    // the sheet and thought better of it got the file written to their phone
+    // anyway — the one outcome they had just declined. Anything else really is
+    // the share machinery failing, and the download is the right answer to it.
+    return (err as Error)?.name === 'AbortError' ? 'cancelled' : 'failed'
+  }
+}
+
 /**
  * Hand a rendered card to the OS share sheet where there is one, otherwise
  * download it. Both paths are local; nothing is sent anywhere by the app
@@ -379,26 +441,8 @@ async function shareBlob(
   title: string,
 ): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
   const file = new File([blob], name, { type: 'image/png' })
-
-  const nav = navigator as Navigator & {
-    canShare?: (data: { files?: File[] }) => boolean
-    share?: (data: { files?: File[]; title?: string }) => Promise<void>
-  }
-
-  if (nav.canShare?.({ files: [file] }) && nav.share) {
-    try {
-      await nav.share({ files: [file], title })
-      return 'shared'
-    } catch (err) {
-      // Backing out of the share sheet is a decision, not a failure, and the
-      // browser says which it was: a dismissal rejects with `AbortError`. This
-      // used to fall through to the download either way, so a player who opened
-      // the sheet and thought better of it got the file written to their phone
-      // anyway — the one outcome they had just declined. Anything else really is
-      // the share machinery failing, and the download is the right answer to it.
-      if ((err as Error)?.name === 'AbortError') return 'cancelled'
-    }
-  }
+  const outcome = await attemptShare(navigator as ShareNavigator, file, title)
+  if (outcome === 'shared' || outcome === 'cancelled') return outcome
 
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
