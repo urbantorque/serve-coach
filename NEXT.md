@@ -103,12 +103,19 @@ product does not behave as though it believes that.
       prints the three biggest that read back as *different words* through
       `anatomy.ts` — two serves that differ by real degrees and both read "arm
       dead straight" are not a difference a player can act on.
-- [ ] **2b-ii** — The stills. **The brief's premise was wrong**: the sweep runs
-      with `skipThumbnails: true`, so swept serves carry no keyframe images at
-      all and only the serve on screen has them. Pairing the six positions
-      therefore needs the two named serves re-analysed through the normal path
-      (which does capture stills and does cache them), on an explicit tap, at
-      roughly two video passes. Degrade to 2b-i when they cannot be produced.
+- [x] **2b-ii-a** — `skipThumbnails` was three unrelated things behind one name:
+      the framing preflight, the ball pass (a whole second pass over the video
+      per serve) and the six stills. So the only way to get stills out of a
+      swept serve was to also pay for ball tracking, which is why swept serves
+      have none — not a decision anybody took about stills. Now
+      `skipFramingCheck`, `skipBall` and `skipThumbnails`. The sweep still sets
+      all three: stills are ~50 seeks across a basket and nothing keeps them
+      yet, so turning them on belongs with the thing that pairs them.
+- [ ] **2b-ii-b** — The paired strip. Turn stills back on for the sweep, hold
+      the swept analyses in memory (not storage — the report already drops
+      stills first under `KEEP_STILLS`), and pair the best serve's six frames
+      against the worst serve's. Degrade to 2b-i wherever the images cannot be
+      produced, which includes every re-opened saved report.
 - [ ] **2c** — Route the consistency result into the practice focus, so
       `practice.ts` can say "your toss is fine on average and moves more than
       anything else you do".

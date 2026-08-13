@@ -80,7 +80,30 @@ export interface AnalyzeOptions {
   handedness?: 'right' | 'left'
   /** Which serve in the clip to analyse. Defaults to the last one found. */
   serveIndex?: number
-  /** Skip the keyframe stills. Worth six seeks when sweeping a whole basket. */
+  /**
+   * Three things a basket sweep leaves out, as three options.
+   *
+   * They were one flag called `skipThumbnails`, and it was true of a third of
+   * what it did. Set on the sweep, it also turned off the framing preflight and
+   * the ball pass — so the only way to get keyframe stills out of a swept serve
+   * was to also pay for a second pass over the video to find the ball, which is
+   * the most expensive optional thing in here. That is why the serves in a
+   * basket have no stills, and it is not a decision anybody took about stills.
+   *
+   * The costs are nothing like each other and neither is the case for skipping
+   * them, so they are named separately:
+   *
+   *   · `skipFramingCheck` — a handful of sampled frames. Skipped in a sweep
+   *     because the clip already came through the check once, on the serve the
+   *     sweep was launched from, and refusing serve four of a clip already
+   *     being reported on would be the app arguing with itself.
+   *   · `skipBall` — a whole second pass over the video, per serve. This is the
+   *     expensive one, and the comparison only uses measurements every serve
+   *     shares, which the two ball readings are not.
+   *   · `skipThumbnails` — six seeks. Genuinely six seeks.
+   */
+  skipFramingCheck?: boolean
+  skipBall?: boolean
   skipThumbnails?: boolean
   /** Serve times already located, so the clip is not scanned again per serve. */
   knownServeTimes?: number[]
@@ -292,6 +315,17 @@ export async function analyzeAllServes(
         {
           ...opts,
           serveIndex,
+          // All three, which is what this call has always done — the split above
+          // is about being able to say so, not about changing it yet.
+          //
+          // Stills stay off until something keeps them. They are six seeks a
+          // serve, roughly fifty across a basket, and every one of those images
+          // is currently built and dropped on the floor: `buildConsistency`
+          // reduces the swept analyses to numbers and nothing holds the
+          // originals. Turning them on belongs in the same change as the thing
+          // that pairs the best serve's six frames against the worst serve's.
+          skipFramingCheck: true,
+          skipBall: true,
           skipThumbnails: true,
           knownServeTimes,
           onProgress: (p) =>
@@ -1207,7 +1241,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   // Check the framing before spending half a minute measuring it. Skipped when
   // sweeping a basket, where the clip has already been through this once.
-  if (!opts.skipThumbnails) {
+  if (!opts.skipFramingCheck) {
     onProgress({ step: 'reading', ratio: 0.5, detail: 'Checking the framing' })
     const sample = await preflight(video, landmarker, { signal })
     const issue = blockingFramingIssue(framingIssues(sample))
@@ -1332,7 +1366,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // so the shoulder exclusion line has to be drawn in the same space.
   let ball: BallFlight | undefined
   let outbound: OutboundBall | undefined
-  if (!opts.skipThumbnails) {
+  if (!opts.skipBall) {
     onProgress({ step: 'measuring', ratio: 0.4, detail: 'Looking for the ball' })
     ball = await findBall(video, extracted.frames, skel, signal)
     // Only worth the seeks once the toss has been found, and not merely because
