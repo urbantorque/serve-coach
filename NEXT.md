@@ -19,126 +19,6 @@ phase's entries and drops the working notes underneath them.
 
 ---
 
-## Phase 1 — Performance, storage, architecture health (R1–7)
-
-Constraint 8 — no component over ~500 MB on a phone — is an assertion nobody has
-checked, and so is every claim about what a stored report costs. This is also
-where the state machine hiding in `App.tsx` gets a name.
-
-- [x] **R1** — Ledger re-cut from forty rounds to thirty-five, against the six
-      pillars. The eight rounds already banked are carried, not redone: the
-      device-truth phase's five landed rounds are compressed into the record at
-      the foot of this file, and its two court-trip blocks are carried forward
-      whole. Phases re-led — what was Phase 3 leads now, because memory and
-      storage are the oldest unchecked assertions in the repo.
-- [x] **R2** — `lib/footprint.ts`, with the constants **measured on every run**
-      rather than asserted: the test allocates the real shapes and reads the
-      heap, and fails on a two-fold move either way. Worst single serve **1.4 MB**
-      (1.1 frames, 0.3 stills), a swept basket of eight **10.9 MB**, canvases
-      negligible because the ball pass runs 256 px wide and the stills 420, both
-      scaled down — 4K footage does not enlarge them. A landmark costs **120
-      bytes to hold 32 bytes of numbers**, because V8 boxes each double; that one
-      constant is most of the total.
-
-      Two findings worth keeping. **The memory and storage budgets have opposite
-      shapes** — in memory the frames dominate, in storage there are no frames at
-      all, so a test asserting the README's "stills are nearly all of it" against
-      an in-memory report fails, correctly. And **the answer is bounded on one
-      side only**: the JavaScript half is ~50× under the ceiling, and everything
-      that could breach it is in `UNSEEN` — the decoded video, the WASM heap, the
-      GPU copies. None of those is reachable from script, so they are named
-      rather than estimated. R3 has to bound what it can and say so.
-- [x] **R3** — Bounded, and the bound is computed from the live constants rather
-      than copied from them, so **raising either is what turns it red**. Both had
-      to be given names first: `MAX_FINE_FRAMES` was module-private in
-      `extract.ts` and the serve cap was a default argument on `peakCandidates`
-      with no name at all — so the product of the two, which is the biggest thing
-      the app ever holds, was written down in one place and understood in none.
-      Worst case the constants allow: **10.9 MB**, budget 64 MB, headroom 5.9×.
-      Two tests drive the failure rather than describing it — a serve cap of 64,
-      and eight times the frames — and one asserts the headroom stays between 2×
-      and 20×, because a budget just above today's figure gets raised without
-      thought on the first honest change and a budget a hundred times above it
-      never fires. **The budget is explicitly not the 500 MB ceiling divided by
-      something**: nobody has measured a phone and three of the largest things in
-      an analysis are unreachable from script, so a split would be arithmetic
-      dressed as evidence. If a device reading ever exists it becomes the smaller
-      of the two and that reasoning gets deleted rather than qualified.
-- [x] **R4** — Flat, on the ten consecutive real analyses this repo can produce
-      without real footage: a blank clip pushed through `analyzeServe` ten times
-      in a running browser, using the pipeline's own decoder, object URLs and
-      landmarker — `src/dev/leakProbe.ts`. The JS heap oscillated in a 0.66 MB
-      band across the ten runs with no upward trend (24.3 → 22.1 MB on the first
-      run as start-up buffers freed, then 22.1–22.8 MB for the rest). The
-      analysis cache's LRU bound was already covered by `robustness.test.ts`. Two
-      of the four named suspects — `captureThumbnails` and `findBall`, the other
-      two canvas users in the pipeline — never run on a clip with no player in
-      it, so this does not cover them; that needs a clip a serve can be found in,
-      which is the same block the fixture shoot and the court trip are already
-      waiting on. `MediaRecorder` chunks are a local array dropped when the
-      recording function returns, which is inspection rather than measurement —
-      nothing in this repo can record one to check.
-- [x] **R5** — Measured, not guessed: six real JPEGs at `captureThumbnails`'
-      actual 420 px width and quality 0.72, drawn with the skeleton and callouts
-      the real path draws, come to **27–80 KB each depending on the clip's
-      aspect ratio** (landscape 420×236 the cheap end, portrait 420×747 the
-      costly one) — a 3× spread the fixed 48,000-character stand-in in
-      `footprint.test.ts` never claimed to capture, and that comment said 640 px
-      wide, which nothing in the code has ever produced; both are fixed. One
-      stored report is six of those plus about 15 KB of everything else a
-      `Session` carries — **179–494 KB**, stills nearly all of it, matching the
-      README's long-standing claim. At `KEEP_STILLS = 20` and
-      `MAX_SESSIONS = 60`, a full history is 20 reports with stills plus 40 at
-      ~15 KB apiece: **4.2–10.5 MB**, mostly landscape-vs-portrait rather than
-      anything the app controls.
-
-      The pressure ladder itself was asserted, not driven — `prune`'s selection
-      arithmetic was inline in a function that needs a live IndexedDB, which this
-      suite does not have. Pulled out as `planPrune`, a pure function of an
-      ordered key list and a level, and driven in
-      `storage/__tests__/db.test.ts`: routine pruning at every boundary,
-      `stills`-level pressure stripping images without deleting a single report,
-      `hard`-level pressure deleting down to `KEEP_ALL_UNDER_PRESSURE`, and a
-      thin history losing nothing even under hard pressure. `prune` itself is
-      unchanged behaviour, calling the extracted function instead of inlining it.
-- [x] **R6** — Two of the three paths did not end anywhere a player could act,
-      and both were the same root cause. `saveSession` already retries through
-      its own pressure ladder before giving up, but a caller could not tell its
-      *fallback* from its *success*: every call site read
-      `safely(() => saveSession(x), undefined)`, and `saveSession` returns
-      `void` — so the sentinel for "could not save" and the value for "saved
-      fine" were literally the same `undefined`. A report that survived every
-      retry and still would not fit vanished exactly like one that saved,
-      silently, and the player found out only when it was missing from their
-      history. `App.tsx` now calls a `trySave` that awaits the real promise and
-      sets a warning on catch; `Report.tsx` renders it in the existing
-      `.storage-warn` style, no new CSS. The import path had the same shape:
-      `importBackup`'s loop had no try/catch around `saveSession`, so one report
-      that would not fit aborted the whole import and silently dropped every row
-      after it — worse than the single-save case, because a partial import used
-      to look identical to a failed one. Caught per row now, counted as
-      `failed` rather than `skipped` because the two need different advice, and
-      `StoragePanel` says so.
-
-      The third path — persistence never granted — was already handled:
-      `requestPersistence`/`isPersisted` are asked and shown honestly, with the
-      iOS home-screen nudge. Nothing to fix there; pinned by reading the
-      existing code rather than by a new test, since it was already correct.
-
-      Not independently verified: a live `QuotaExceededError` could not be
-      forced from script in this environment — `indexedDB.open` is cached
-      module-private state in `db.ts`, and mutating an ES module's live export
-      binding from outside the module silently no-ops rather than taking hold.
-      Checked by typecheck, lint, the full suite, and a careful trace of the
-      exact code path rather than a live repro — the same limit as the court
-      trip and the fixture shoot, arriving somewhere new.
-- [ ] **R7** — Where does App state live? 19 hooks across ~1,100 lines, and
-      `view`, `sweep`, `pair` and `thenNow` are stages of one machine.
-      Deliverable: the machine made explicit, or the reason it stays implicit
-      written beside the code, plus a test on whichever transitions can strand a
-      screen. **Phase close-out**: README synced, dead code purged, entries
-      compressed.
-
 ## Phase 2 — Core logic and reliability (R8–14)
 
 The engine is honest about what it cannot see. The open question is whether it
@@ -257,6 +137,27 @@ synthetic rig can produce.
       `UNCALIBRATED` stays there.
 
 ## The record
+
+**Phase 1 — performance, storage, architecture health**, seven rounds landed,
+ledger in git at `e8579f2`. Every constant governing the biggest allocation the
+app ever holds — sampled frames per serve, serves per basket, the heap budget —
+was measured or given a name it never had (`footprint.ts`, `MAX_FINE_FRAMES`),
+with the budget computed from those constants rather than copied from them so
+raising either turns a test red. The JS heap held flat across ten consecutive
+real analyses, on the clip this repo can produce without real footage
+(`leakProbe.ts`); two canvas users only a found serve would reach stay open
+against the same missing-footage block as the fixture shoot and the court trip.
+A stored report's real byte cost was measured rather than guessed — 27–80 KB a
+still depending on aspect ratio, not the flat 48,000-character stand-in the
+tests had used — and the three-level pressure ladder that bounds history size
+went from asserted to driven (`planPrune`, `storage/db.test.ts`). The most
+concrete find: a report that survived every retry and still could not be saved
+used to vanish exactly like one that had, because `void` was the fallback
+value for both "saved" and "silently didn't" — fixed in `App.tsx` and
+`importBackup` alike. And the implicit state machine in `App.tsx` stayed
+implicit, on the finding that its four satellite pieces are each scoped to one
+screen already; every transition is now a table on `View` instead of a
+reducer nothing needed.
 
 **The five themes**, completed across 36 commits; outcomes in `README.md`, full
 ledger in git at `4e552d0`. Ground truth and the fixture gate; the basket

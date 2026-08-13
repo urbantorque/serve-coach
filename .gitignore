@@ -16,3 +16,8 @@ dist-ssr
 # The pose model alone is 9 MB and the WASM runtime another 19 MB.
 public/models/
 public/wasm/
+
+# A pointer for a self-resuming agent loop to find its place across sessions —
+# NEXT.md is still the one source of truth for what is done, this just avoids
+# re-deriving "where was I" from git log every time. Not part of the programme.
+.agent_state/

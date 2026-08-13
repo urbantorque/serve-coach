@@ -49,6 +49,53 @@ import Glance from './screens/Glance'
 import Home, { type OfflineWarmup } from './screens/Home'
 import Report from './screens/Report'
 
+/**
+ * The screen, and the four fellow-travellers that are stages of the same
+ * machine without being part of this type: `sweep` (the basket comparison
+ * filling in), `pair` (the best-vs-worst stills), `thenNow` (the progress
+ * sheet's paired report) and the refs below (`urlRef`, `lastFileRef`,
+ * `serveTimesRef`, `abortRef`). R7 asked whether that machine should be made
+ * explicit — a reducer, a single tagged state. It stays implicit: every one of
+ * those four is scoped to exactly the screens that read it (`sweep` only
+ * `analyzing`, `pair` and `thenNow` only `report`), so a single combined state
+ * would carry fields most screens never touch rather than removing anything —
+ * and every transition below was walked by hand for a screen it could strand
+ * and none was found. What follows is that walk, written down rather than
+ * repeated: not runtime-enforced, but this is every legal move, and a change
+ * that adds one belongs here too.
+ *
+ * `home` → `analyzing`: `run`, `compareServes` (a fresh `openClip`, or an
+ *   already-open report launching the comparison sweep).
+ * `analyzing` → `report` | `glance` | `error` | `saved`: `run`'s success path,
+ *   its two failure branches, and `compareServes`'s three exits (measured,
+ *   stopped-with-nothing-yet, stopped-with-some).
+ * `report` ⇄ `report`: re-scoring, re-diagnosing, switching serves, flipping
+ *   handedness, or a cache hit — all same-kind. Re-scoring, re-diagnosing and a
+ *   cache hit reuse the existing `videoUrl` outright — no seek, no decoder
+ *   rebuild, arithmetic or a map lookup on data already in memory. A correction
+ *   `recall` has not seen before still goes through `run`, which revokes the
+ *   old object URL and mints a new one from the same `File` — a fresh decoder,
+ *   because there is no cheaper way to read a clip again.
+ * `report` → `analyzing`: `onCheckConsistency`, into `compareServes`.
+ * `glance` → `report`: `onOpenReport`, no re-analysis — the same object, a
+ *   fuller screen for it.
+ * `glance` | `report` | `error` | `saved` → `home`: `goHome`, `cancel`
+ *   (`analyzing` too, via the cancel button).
+ * `home` → `saved`: `openSaved`, `showExample`.
+ * Only `home` and `report` ever call `run` — `openClip` and a correction — so
+ * `analyzing`'s `error` landing is always reached by way of one of those two.
+ *
+ * `sweep` lives only while `view.kind === 'analyzing'` and a comparison is
+ * running; it is always cleared (`undefined` or a fresh one) at every entrance
+ * to `analyzing`, and `compareServes`'s `finally` clears it again unless a
+ * newer sweep has already taken its place — the `abortRef.current === controller`
+ * check that guards every async continuation in this file.
+ * `pair` lives only while `view.kind === 'report'`; `run` clears it at every
+ * entry, because it does not ride on the analysis the way the report itself
+ * does — see the field's own comment.
+ * `thenNow` lives only while the progress sheet is open, fetched and cleared by
+ * the `useEffect` keyed on `sheet`.
+ */
 type View =
   | { kind: 'home' }
   | { kind: 'analyzing'; fileName: string }
