@@ -959,6 +959,61 @@ where it belongs — that part is instructions for after the decision, not
 a fact that should shape it. No new UI, no new colour: the same
 `sheet-note` class, split and reordered.
 
+**A non-video file used to be confidently misdiagnosed as HEVC.** Stress
+testing the five named cases — a thirty-minute clip, a one-frame clip, a
+rotated clip, 4K, and a file that is not a video at all — found that four
+were already handled, three of them provably so:
+
+- **A one-frame clip** refuses with "That clip is too short to read." —
+  `frames.length < 8` in `phases.ts`, already pinned by
+  `engine.test.ts`'s `rejects a clip too short to read`.
+- **A thirty-minute clip** never gets read in full regardless of size:
+  `readWindow` in `extract.ts` bounds the densely-sampled span to
+  `FALLBACK_SPAN` (5 s) once a clip runs past `SINGLE_PASS_SECONDS`, already
+  covered by `robustness.test.ts`'s existing cases at up to 30 s, and
+  `analyze.ts` prints an on-report warning past `LONG_CLIP_SECONDS` naming
+  the actual cost ("Long clip, so most of the wait went on finding the
+  serves. Trim to the serves before you upload.").
+- **4K** cannot enlarge the canvases pose detection or the keyframe stills
+  are drawn into: `readBitmaps`/`captureThumbnails` in `extract.ts` both
+  cap canvas width (256px, 420px) regardless of `video.videoWidth`, so a
+  4K source is scaled down before a pixel is read, not after.
+- **A rotated clip** — container rotation metadata — is corrected by the
+  browser's own `<video>` decoder before this app ever sees a pixel, a web
+  platform guarantee rather than something to build against. Camera *tilt*,
+  a different and real concern, already has its own measured, tested
+  refusal path from Phase 2's roll-correction work.
+
+None of the four above could be re-verified against a genuine 30-minute,
+4K or rotated file in an environment with no camera and no real footage —
+stated plainly rather than claimed: this is a reading of the code and its
+existing tests, not a fresh live reproduction, for these three.
+
+**The fifth was not already handled, and was live-verified.** A plain
+text file renamed to look like a video — `type: 'text/plain'` — reached
+`describeDecodeFailure` in `extract.ts`, which reads one `MediaError` code
+for two different situations (a real video this browser cannot decode, and
+a file that was never a video) and, on a browser reporting no HEVC support,
+guessed the first for both: "This browser cannot play that video... it is
+most likely HEVC", with hints about an iPhone camera setting that had
+nothing to do with the actual file. Confidently wrong, not merely
+unhelpful, and on exactly the browsers most likely to lack HEVC support —
+most non-Safari ones — and so most likely to hit this path. Fixed with
+`looksLikeNonVideo` (`extract.ts`), checked in `App.tsx`'s `run()` before
+the decoder is ever asked: a container MIME type the browser has already
+positively named as something other than video or audio is caught early,
+with an honest message. A real HEVC `.mov`/`.mp4` is untouched — the check
+reads the container type, not the codec — and an empty type or an
+`audio/*` one is deliberately left alone, so a browser declining to guess
+is not read as a refusal and an audio-only file still gets `loadVideo`'s
+own more specific "There is no picture in that file." Pulled out as a pure
+function specifically so this could be pinned by a test rather than a live
+walk each time: four checks in the new `lib/pose/__tests__/extract.test.ts`
+(the first this file has ever had), and live-verified against a text file,
+an image file, a garbage-content-but-correctly-typed `video/mp4`, and an
+empty-type file — the last two confirming the fix touches only what it
+should.
+
 **The animation loop runs only while the clip is moving.** It used to run for as
 long as the report was on screen — sixty redraws a second of a paused picture
 that had not changed, which on a phone shows up as the handset getting warm

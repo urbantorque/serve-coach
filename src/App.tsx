@@ -26,7 +26,7 @@ import {
   type NotAServeError,
 } from './lib/analysis/types'
 import { SERVE_TYPES } from './lib/analysis/coaching'
-import { Cancelled } from './lib/pose/extract'
+import { Cancelled, looksLikeNonVideo } from './lib/pose/extract'
 import { isCachedOffline, loadEngine } from './lib/pose/poseEngine'
 import {
   deleteSession,
@@ -596,6 +596,21 @@ export default function App() {
           hints: [
             'Trim the clip to just the serve — three to five seconds is all it needs.',
             'Most phones let you trim in the photo library before sharing.',
+          ],
+        })
+        return
+      }
+
+      // Caught before the decoder is asked to explain a failure it did not
+      // have — see `looksLikeNonVideo` for why this cannot be left to
+      // `describeDecodeFailure` alone, on a browser with no HEVC support.
+      if (looksLikeNonVideo(file.type)) {
+        setView({
+          kind: 'error',
+          title: 'That does not look like a video',
+          hints: [
+            'Pick a video clip from your camera roll rather than a photo or a document.',
+            'MP4 and MOV clips from a phone camera work best.',
           ],
         })
         return

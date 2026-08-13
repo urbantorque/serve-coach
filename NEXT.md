@@ -95,9 +95,48 @@ phase's entries and drops the working notes underneath them.
       above the buttons, and export itself still works end to end
       (`serve-coach-2026-08-14.json`, `HTMLAnchorElement.prototype.click`
       instrumented to confirm) with the reorder in place.
-- [ ] **R31** — Stress the ingestion: a thirty-minute clip, a one-frame clip, a
-      rotated clip, 4K, and a file that is not a video at all. Deliverable: five
-      answers a player can act on, none of them a stack trace.
+- [x] **R31** — Traced the real ingestion path (`App.tsx`'s `run()` into
+      `analyzeServe`, `extract.ts`, `phases.ts`) before assuming any of the
+      five named cases was actually broken. Four were already handled, and
+      honestly split between what could be re-verified here and what could
+      only be read: a one-frame clip refuses with "too short to read"
+      (`frames.length < 8`, already pinned by `engine.test.ts`); a
+      thirty-minute clip is never read past `readWindow`'s bounded span
+      regardless of length, already covered up to 30 s by
+      `robustness.test.ts` and warned about on the report past
+      `LONG_CLIP_SECONDS`; 4K cannot enlarge the pose or thumbnail canvases,
+      both capped in `extract.ts` independent of source resolution; a
+      rotated clip's container metadata is corrected by the browser's own
+      decoder before a pixel reaches this app, a platform guarantee rather
+      than app logic, with camera *tilt* — the real, different concern —
+      already measured and tested from Phase 2. None of the three
+      resolution/duration/rotation cases could be reproduced against a
+      genuine file in an environment with no camera and no real footage;
+      said plainly rather than claimed otherwise.
+
+      The fifth was not already handled. A plain text file renamed to look
+      like a video reached `describeDecodeFailure`, which conflates "a real
+      video this browser cannot decode" with "never a video at all" under
+      one `MediaError` code, and on a browser reporting no HEVC support
+      guessed HEVC for both — "This browser cannot play that video... most
+      likely HEVC", with hints about an iPhone setting irrelevant to the
+      actual file. Confidently wrong, not merely unhelpful, and on exactly
+      the browsers — most non-Safari ones — most likely to hit it.
+
+      Fixed with `looksLikeNonVideo(type)` in `extract.ts`, checked in
+      `App.tsx`'s `run()` before the decoder is asked to explain a failure
+      it did not have. Reads the container MIME type, not the codec, so a
+      real HEVC file is untouched; leaves an empty type or `audio/*` alone
+      on purpose, so a browser declining to guess is not read as a refusal
+      and an audio-only file still reaches `loadVideo`'s own more specific
+      answer. Pulled out as a pure function specifically so this could be
+      pinned rather than left to a live walk each time: four checks in the
+      new `lib/pose/__tests__/extract.test.ts`, this file's first. Verified
+      live against a text file, an image file, a garbage-content but
+      correctly-typed `video/mp4` (confirmed to reach the existing HEVC
+      guess unchanged), and an empty-type file (confirmed to fall through
+      unchanged) — the last two proving the fix touches only what it
+      should.
 - [ ] **R32** — Re-read `UNDER_RESOLVED` and `UNCALIBRATED`. Deliverable: per
       signal, the exact evidence that would move it — or the statement that none
       exists and it stays withdrawn.
