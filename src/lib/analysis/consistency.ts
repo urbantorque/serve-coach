@@ -2,6 +2,49 @@ import { clamp, mean, statusOf } from './geometry'
 import type { Analysis, Metric, PhaseId, Status } from './types'
 import { cue } from './voice'
 
+/**
+ * How far a basket's tallest and shortest reading may sit apart, as a
+ * fraction of the smaller one, before the serves in it stop looking like one
+ * body.
+ *
+ * `maxTrackingJump`/`IMPLAUSIBLE_JUMP` in `geometry.ts` catches a hand-off
+ * *inside* one serve's own window — a mid-swing switch to somebody standing
+ * nearby. It has nothing to say about the sweep: each serve is extracted and
+ * tracked as its own window, ready to finish, so a coach who serves once in
+ * the middle of a basket produces a serve that is internally consistent from
+ * its own first frame to its own last — nothing jumps, because the wrong body
+ * was there the whole time. R12 in `NEXT.md`.
+ *
+ * `scale.bodyHeight` is the signal: the same camera position and the same
+ * person should read the same standing height, within measurement noise, from
+ * one serve to the next in one filming session. A different person reads a
+ * different one, roughly in proportion to how different they actually stand —
+ * a coach 15 cm taller than the player is about 8% more of the frame.
+ *
+ * No real basket with a genuine hand-off in it exists to calibrate this
+ * against — the same block the fixture shoot is waiting on. Set generously
+ * rather than tightly for that reason: a threshold that flagged ordinary
+ * session noise would train players to ignore the warning, which is worse
+ * than missing a genuine switch to someone close to the player's own height.
+ */
+export const IMPLAUSIBLE_HEIGHT_SPREAD = 0.18
+
+/**
+ * Whether the serves being compared look like they came from more than one
+ * body, judged the only way a sweep can: by how much their standing height
+ * disagrees.
+ *
+ * Exported separately from `buildConsistency` so it can be driven on its own
+ * — the height reading is the whole of what it looks at, and a caller
+ * checking that should not have to build seventeen fundamentals to do it.
+ */
+export function possibleHandoff(analyses: readonly Pick<Analysis, 'scale'>[]): boolean {
+  const heights = analyses.map((a) => a.scale?.bodyHeight).filter((h): h is number => (h ?? 0) > 1e-6)
+  if (heights.length < 2) return false
+  const spread = Math.max(...heights) - Math.min(...heights)
+  return spread / Math.min(...heights) > IMPLAUSIBLE_HEIGHT_SPREAD
+}
+
 export interface MetricSpread {
   id: string
   label: string
@@ -151,6 +194,15 @@ export interface Consistency {
    * unclear; nothing finished looking at them either.
    */
   skipped: number
+  /**
+   * The standing heights measured across these serves disagree by more than
+   * one body, filmed from one camera, plausibly does — see `possibleHandoff`.
+   * A caveat on the whole comparison rather than a refusal: the measurements
+   * are not wrong about whichever serves they came from, and the spread below
+   * may still be real. What it may not be is a comparison of the same person
+   * against themselves.
+   */
+  possibleHandoff: boolean
 }
 
 /**
@@ -259,6 +311,7 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
     score,
     status: statusOf(score),
     skipped: Math.max(0, attempted - analyses.length),
+    possibleHandoff: possibleHandoff(analyses),
   }
 }
 

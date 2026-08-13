@@ -543,6 +543,16 @@ motion, the app says so and halves the confidence — not another weighted term,
 because no amount of good light and frame rate makes a report built from two
 bodies trustworthy.
 
+**That check cannot see a hand-off between serves, only inside one.** A
+basket is measured one serve at a time, each read from its own window, ready
+to finish — so a coach who serves once in the middle of it produces a serve
+with nothing to jump *from*, and the comparison happily lines their numbers up
+against the player's own. What a fixed camera can still say is whether the
+serves agree on whose body it was filming: standing height should hold
+steady, filmed from one spot in one session, and a serve that reads clearly
+taller or shorter than the rest gets a note on the comparison rather than a
+silent blend of two people's serves.
+
 **The scale reference avoids extremes of noisy data.** Every height in the report
 is a ratio against the player's standing height, so a bias in that one number
 bends all of them at once. Taking the highest head position and the lowest foot

@@ -183,6 +183,17 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair }: Pr
         </p>
       )}
 
+      {/* The standing heights across these serves disagree by more than one
+          camera position and one body plausibly does — someone else may have
+          served in this clip. Not a refusal: each serve's own numbers still
+          stand, only the comparison between them is in doubt. */}
+      {c.possibleHandoff && (
+        <p className="note">
+          These serves don't measure as the same height. If someone else served in this clip,
+          the comparison below is two people, not your consistency.
+        </p>
+      )}
+
       <div className="consistency-scores">
         <span className="t-overline consistency-label">Overall, serve by serve</span>
         <div className="consistency-chips">

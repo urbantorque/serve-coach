@@ -141,9 +141,37 @@ synthetic rig can produce.
       search is now immune to coincidence: two objects that happened to share
       both a curvature and a near-linear width would still pass, and nothing
       that reads only position can rule that out.
-- [ ] **R12** — Does the multi-body hand-off check cover the sweep, or only the
-      single serve? A basket filmed at a club has other people in it by
-      definition. Deliverable: the check where the sweep can see it.
+- [x] **R12** — Only the single serve. `maxTrackingJump`/`IMPLAUSIBLE_JUMP`
+      reads one serve's own frames, ready to finish, for a body that jumps
+      mid-window — a coach who serves once in the middle of a basket produces
+      a serve with nothing to jump *from*: each serve in a sweep is extracted
+      and tracked as its own internally-consistent window, so the existing
+      check has nothing to say about whether serve two is the same person as
+      serve one. `buildConsistency` confirmed the gap directly: it reads only
+      `fundamentals` and `overall` off each analysis, never `scale`, so two
+      different people's measurements were compared exactly like one player's
+      good and bad days.
+
+      `possibleHandoff` in `consistency.ts` is the check placed where the
+      sweep can actually see it: whether the serves being compared agree on
+      standing height, the one signal a fixed camera and a consistent body
+      should hold steady across a basket. Set generously (18%) rather than
+      tightly — no real basket with a genuine hand-off exists to calibrate
+      against, the same block the fixture shoot is already waiting on, and a
+      threshold that fired on ordinary session noise would train players to
+      ignore it. Surfaced as a caveat on the comparison, not a refusal: each
+      serve's own numbers stand regardless, only the claim that they describe
+      one player's consistency is in doubt. A report with no height reading at
+      all — older saves, hand-assembled analyses — is not flagged; absence is
+      not evidence of a mismatch.
+
+      `?demo=basket` builds its clip through the same `sampleClip`
+      canvas/timer path R4's leak probe used, and this environment's preview
+      pane does not run timers while it is not displayed — so the panel was
+      verified a different way: `ConsistencyPanel` rendered directly against
+      the running app's own React and its real dev-server module graph, with
+      `possibleHandoff` set both ways. `true` renders the warning verbatim;
+      `false` renders nothing. The real component, not a description of it.
 - [ ] **R13** — Does handedness and camera-angle detection survive noise, or only
       clean landmarks? Deliverable: both driven through the ensemble.
 - [ ] **R14** — Rotation metadata and portrait clips. `axes.ts` assumes the

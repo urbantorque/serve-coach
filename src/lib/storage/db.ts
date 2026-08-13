@@ -520,6 +520,10 @@ function usableConsistency(raw: unknown): Session['consistency'] {
     metrics,
     weakest: ranked[0],
     steadiest: ranked[ranked.length - 1],
+    // Absent from every report saved before R12, and false is the honest
+    // default for those: nothing flagged a mismatch because nothing looked,
+    // not because a look found none.
+    possibleHandoff: c.possibleHandoff ?? false,
   }
 }
 

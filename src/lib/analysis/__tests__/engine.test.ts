@@ -1284,6 +1284,51 @@ check('a basket with no pictures in it pairs nothing rather than empty boxes', (
   assert(pairStills(analyses, c.gap!) === undefined, 'paired a basket that has no pictures')
 })
 
+/*
+ * R12 in NEXT.md: `maxTrackingJump`/`IMPLAUSIBLE_JUMP` catches a hand-off
+ * inside one serve's own window. It has nothing to say about the sweep — each
+ * serve is tracked as its own internally-consistent window, so a coach who
+ * serves once mid-basket produces a serve with nothing to jump *from*.
+ * `possibleHandoff` is the check the sweep needed instead: not motion inside
+ * a serve, but whether the serves agree on whose body they measured.
+ */
+function withHeight(heights: number[]) {
+  return heights.map((h) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: 70,
+      scale: { bodyHeight: h, groundY: 0.95 },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+}
+
+check('the same body filmed several times is not flagged as a hand-off', () => {
+  // A body height noisy by a percent or two between serves is ordinary
+  // measurement variation, not a different person.
+  const c = buildConsistency(withHeight([0.54, 0.545, 0.538, 0.541]), 4)!
+  assert(!c.possibleHandoff, 'ordinary session noise was read as a hand-off')
+})
+
+check('a clearly different standing height is flagged as a possible hand-off', () => {
+  // One serve reading a fifth taller than the rest — a coach, or a much
+  // taller player — with nothing else about the clip changing.
+  const c = buildConsistency(withHeight([0.54, 0.545, 0.65, 0.538]), 4)!
+  assert(c.possibleHandoff, 'a clearly different standing height was not flagged')
+})
+
+check('a report with no height reading at all is not flagged by default', () => {
+  // Older or hand-assembled analyses may carry no scale at all; absence is not
+  // evidence of a mismatch, and flagging it would train players to ignore a
+  // warning that fires on every basket built without a camera.
+  const noScale = [0, 1].map(() => {
+    const { fundamentals } = run()
+    return { fundamentals, overall: 70 } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  const c = buildConsistency(noScale, 2)!
+  assert(!c.possibleHandoff, 'a basket with no height reading at all was flagged as a hand-off')
+})
+
 /* --------------------------------------------------- sweeping a basket ---- */
 
 /*
