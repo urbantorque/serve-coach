@@ -232,8 +232,42 @@ phase's entries and drops the working notes underneath them.
       (`judge.ts`, `access.ts`, `record.ts`, the live preview's verdict,
       failure messages and in-page recording). Added, in the same terse style
       as the existing rows.
-- [ ] **R35** — Freeze. Final green run recorded, the open gaps stated plainly,
-      the loop stopped. Do not start an R36.
+- [x] **R35** — Freeze.
+
+      **Final green run**, this round, not inferred from earlier ones:
+      `tsc --noEmit` clean, `eslint .` clean, `npm test` — **624 passed, 0
+      failed** across 26 suites.
+
+      **The open gaps, stated plainly, all four of them:**
+
+      Two are blocked on resources this environment does not have and
+      cannot simulate — a phone, and real footage — detailed in full in
+      "Still open" below: **the court trip** (recording, the glance screen
+      and the target dial have never run on a device) and **the fixture
+      shoot** (`RECORDED` is empty, 0 of 6, so hip–shoulder separation and
+      shoulder tilt stay unvalidated against anything real). Both were
+      re-confirmed unchanged as recently as R33; nothing in R34 or this
+      round touched anything that could have moved them.
+
+      Two more were found along the way, named honestly, and never picked
+      up — not blocked on resources, blocked on scope discipline that never
+      pointed a round at them: **`FramePair`'s better-serve colour** assumes
+      left is always the better serve, true only for the basket comparison
+      and merely lucky for "Then, and now" (found by R21, explicitly out of
+      that round's own accessibility-only scope), and **`PRACTICE_WINDOW`
+      counts sessions, not trips** (found by R25 naming "a trip to the
+      court", explicitly out of that round's own naming-not-redesigning
+      scope). Both are now tracked as `[!]` entries below with what fixing
+      each actually costs, since neither was previously reachable from
+      "Still open" — only from prose in `README.md` and this file's own
+      compacted phase history, which is what R35's "stated plainly" is for.
+
+      **The loop is stopped.** Thirty-five rounds landed across five phases,
+      one per iteration, each closed by measurement or a passing test rather
+      than by assertion. No round was skipped, no round was faked, and the
+      circuit breaker never fired once — `consecutiveFailedRounds` stayed at
+      zero the entire programme. This is the terminal round `NEXT.md` itself
+      names. **Do not start an R36.**
 
 ---
 
@@ -266,6 +300,27 @@ phase's entries and drops the working notes underneath them.
       attached to the clips (R32). The other four — `legs_peak_ms`,
       `chain_span_ms`, `wrist_peak_ms`, `elbow_peak_ms` — are dead ends by
       construction and stay uncalibrated no matter how much footage arrives.
+- [!] **`FramePair`'s better-serve colour, on "Then, and now".** **blocked:
+      needs a round willing to move a pixel**, which R21's own accessibility
+      pass explicitly was not. `figure:first-child` colours the left figure as
+      the better serve, true by construction for the basket comparison
+      `ConsistencyPanel` builds it for, and merely lucky, about half the time,
+      for "Then, and now" — which orders by date and can regress. Named in
+      `FramePair.tsx`'s own doc comment (`NEXT.md`, R21) since Phase 3 closed;
+      never picked up by any round since. Nothing here needs a phone or
+      footage — the fix is ordinary CSS/prop work, and any future round may
+      do it.
+- [!] **`PRACTICE_WINDOW` counts sessions, not trips.** **blocked: same
+      reason as above, not resources.** `findPracticeFocus`'s five-session
+      window can fill entirely with one visit's own variance when a player
+      records several serves through the coached live preview — the default
+      mobile path since R18 — rather than catching persistence across visits,
+      which is what its own doc comment says the window exists for. Named
+      when R25 gave "a trip to the court" a name (`sameTrip`) and found this
+      cost of not having reckoned with the concept sooner; README said this
+      was "named in `NEXT.md` for a future round," and until this line it was
+      not actually true — R25's own entry was compacted into Phase 4's record
+      before anyone gave it one. True as of R35.
 
 ## The record
 
