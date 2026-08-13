@@ -136,10 +136,19 @@ product does not behave as though it believes that.
 measured, nothing the player did. `practice.ts` therefore cannot tell "stuck
 despite drilling" from "never tried it", and renders both as one badge.
 
-- [ ] **3a** — A player-side record beside the analysis: drill assigned, marked
-      done, when. Survives `normalise` in `storage/db.ts`, exports and imports
-      through `storage/backup.ts` on the same newer-wins merge, counts towards
-      nothing when absent.
+- [x] **3a** — A player-side record, in its own IndexedDB store rather than on
+      the report. **Departed from "beside the analysis" for a reason worth
+      keeping**: correcting the handedness, changing the serve type or tapping
+      another serve all call `saveSession` with a fresh `Analysis`, which
+      carries no player-side anything — a field on the row would be erased by
+      the most ordinary thing a player does on the report screen, and
+      preserving it would mean reading a row of base64 stills back before every
+      save. `Session` also stays `Omit<Analysis, 'frames'>` exactly, which is a
+      distinction the type has been making all along. DB version 2, upgrade
+      verified against a real v1 database with a report already in it.
+      `normalisePracticeLog` rejects rather than repairs; backup carries the
+      logs on the same newer-wins merge, per log, and an import that loses one
+      never fails the reports.
 - [ ] **3b** — `PracticeCard` earns a sharper sentence from it: drilled and
       moving, drilled and not moving, assigned and never logged.
       `MEANINGFUL_DELTA = 3` still gates any claim of progress.

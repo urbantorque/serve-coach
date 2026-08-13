@@ -10,8 +10,32 @@ import { LEGACY_SCORING_VERSION, SCORING_VERSION, type Analysis } from '../analy
 export type Session = Omit<Analysis, 'frames'>
 
 const DB_NAME = 'serve-coach'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const STORE = 'sessions'
+
+/**
+ * What the player did, as opposed to what the camera measured.
+ *
+ * A second store rather than a field on a report, for three reasons that all
+ * point the same way.
+ *
+ * It has to outlive the report it was assigned from. Correcting the handedness,
+ * changing the serve type or flicking to another serve all re-run the pipeline
+ * and call `saveSession` with a fresh `Analysis` — which carries no player-side
+ * anything — so a field on the row would be silently erased by the most ordinary
+ * thing a player does on the report screen. Preserving it would mean reading the
+ * row back before every save, and nearly all of a row is base64 keyframe images:
+ * the exact cost the routine prune was rewritten to stop paying.
+ *
+ * It has a different lifetime. Reports are pruned to sixty and lose their stills
+ * at twenty; a record of having done a drill is a few dozen bytes and there is
+ * no reason for it to die with the report that suggested it.
+ *
+ * And `Session` stays `Omit<Analysis, 'frames'>` exactly. What the camera
+ * measured and what the player says they did are different kinds of claim, and
+ * the type has been saying so.
+ */
+const PRACTICE_STORE = 'practice'
 
 let dbPromise: Promise<IDBDatabase> | null = null
 
@@ -24,6 +48,13 @@ function open(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORE)) {
         const store = db.createObjectStore(STORE, { keyPath: 'id' })
         store.createIndex('createdAt', 'createdAt')
+      }
+      // Guarded on existence rather than on the version being upgraded from,
+      // so a database at any earlier version — including one this app has never
+      // seen because the player restored a profile — arrives with both stores.
+      if (!db.objectStoreNames.contains(PRACTICE_STORE)) {
+        const store = db.createObjectStore(PRACTICE_STORE, { keyPath: 'id' })
+        store.createIndex('doneAt', 'doneAt')
       }
     }
     req.onsuccess = () => {
@@ -57,12 +88,16 @@ function open(): Promise<IDBDatabase> {
   return attempt
 }
 
-function tx<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+function tx<T>(
+  mode: IDBTransactionMode,
+  run: (store: IDBObjectStore) => IDBRequest<T>,
+  storeName: string = STORE,
+): Promise<T> {
   return open().then(
     (db) =>
       new Promise<T>((resolve, reject) => {
-        const t = db.transaction(STORE, mode)
-        const req = run(t.objectStore(STORE))
+        const t = db.transaction(storeName, mode)
+        const req = run(t.objectStore(storeName))
         const fail = () => reject(t.error ?? req.error ?? new Error('Local storage write failed'))
         if (mode === 'readonly') {
           req.onsuccess = () => resolve(req.result)
@@ -523,6 +558,88 @@ export async function deleteSession(id: string): Promise<void> {
 
 export async function clearSessions(): Promise<void> {
   await tx('readwrite', (s) => s.clear())
+}
+
+/* ------------------------------------------------------ what the player did */
+
+/**
+ * One drill, assigned by the practice card and marked done by the player.
+ *
+ * The only thing in this database the camera did not produce, and the gap it
+ * fills is a specific one: `findPracticeFocus` can see that a measurement has
+ * not moved in five sessions and cannot tell whether the player drilled it and
+ * it did not work, or never drilled it at all. Those are opposite situations
+ * and they render as the same badge.
+ *
+ * `drill` is the drill's name as it stood when it was assigned. A drill renamed
+ * in a later version would otherwise silently re-label what somebody did last
+ * month, and the whole value of this record is that it says what actually
+ * happened.
+ */
+export interface PracticeLog {
+  id: string
+  /** The measurement the drill was for, matching `PracticeFocus.metricId`. */
+  metricId: string
+  drill: string
+  assignedAt: number
+  doneAt: number
+}
+
+/**
+ * A stored log, or nothing.
+ *
+ * Same contract as `normalise`: anything readable is kept, anything that would
+ * make a caller throw is dropped. Nothing here has a sensible default — a log
+ * with no measurement on it cannot be counted towards any measurement, and an
+ * undated one cannot be placed in a window — so this repairs nothing and only
+ * rejects.
+ */
+export function normalisePracticeLog(raw: unknown): PracticeLog | undefined {
+  if (typeof raw !== 'object' || raw === null) return undefined
+  const l = raw as Partial<PracticeLog>
+  if (
+    typeof l.id !== 'string' ||
+    typeof l.metricId !== 'string' ||
+    !l.metricId ||
+    typeof l.doneAt !== 'number' ||
+    !Number.isFinite(l.doneAt)
+  ) {
+    return undefined
+  }
+  return {
+    id: l.id,
+    metricId: l.metricId,
+    drill: typeof l.drill === 'string' ? l.drill : '',
+    // An older writer, or a hand-edited backup, may not have recorded when it
+    // was handed out. The moment it was done is the one every reader uses.
+    assignedAt: typeof l.assignedAt === 'number' ? l.assignedAt : l.doneAt,
+    doneAt: l.doneAt,
+  }
+}
+
+export async function listPracticeLogs(): Promise<PracticeLog[]> {
+  const rows = await tx<unknown[]>(
+    'readonly',
+    (s) => s.getAll() as IDBRequest<unknown[]>,
+    PRACTICE_STORE,
+  )
+  return rows
+    .map(normalisePracticeLog)
+    .filter((l): l is PracticeLog => l !== undefined)
+    .sort((a, b) => b.doneAt - a.doneAt)
+}
+
+export async function logPractice(log: PracticeLog): Promise<void> {
+  await tx('readwrite', (s) => s.put(log), PRACTICE_STORE)
+}
+
+/** Undo. A tap on a phone is easy to make by accident and hard to take back. */
+export async function unlogPractice(id: string): Promise<void> {
+  await tx('readwrite', (s) => s.delete(id), PRACTICE_STORE)
+}
+
+export async function clearPracticeLogs(): Promise<void> {
+  await tx('readwrite', (s) => s.clear(), PRACTICE_STORE)
 }
 
 /** Storage is best-effort: history is a convenience, never a blocker. */

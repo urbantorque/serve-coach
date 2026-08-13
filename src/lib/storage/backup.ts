@@ -15,7 +15,18 @@
  * new phone — and it keeps the privacy promise intact, because the player is the
  * one who moves the file.
  */
-import { listSessions, normalise, pruneSessions, saveSession, type Session } from './db'
+import {
+  listPracticeLogs,
+  listSessions,
+  logPractice,
+  normalise,
+  normalisePracticeLog,
+  pruneSessions,
+  safely,
+  saveSession,
+  type PracticeLog,
+  type Session,
+} from './db'
 import type { Analysis } from '../analysis/types'
 
 const FORMAT = 'serve-coach-backup'
@@ -26,6 +37,17 @@ export interface Backup {
   version: number
   exportedAt: number
   sessions: Session[]
+  /**
+   * What the player did about the reports, when there is any.
+   *
+   * Optional, and the reader treats a missing list as an empty one, because
+   * every backup written before this existed has no such key — and a restore
+   * that refused those would strand the histories most worth carrying to a new
+   * phone. `version` is deliberately not bumped for the same reason: nothing
+   * about the old shape became unreadable, it gained a field no old reader
+   * looks at and no new reader requires.
+   */
+  practice?: PracticeLog[]
 }
 
 /**
@@ -93,6 +115,7 @@ export async function buildBackup(): Promise<Backup> {
     version: VERSION,
     exportedAt: Date.now(),
     sessions: await listSessions(),
+    practice: await listPracticeLogs(),
   }
 }
 
@@ -118,6 +141,9 @@ export interface ImportResult {
   added: number
   updated: number
   skipped: number
+  /** Drill records brought in. Counted apart from reports — they are not serves. */
+  logs: number
+  skippedLogs: number
 }
 
 /**
@@ -145,7 +171,7 @@ export async function importBackup(text: string): Promise<ImportResult> {
   }
 
   const existing = new Map((await listSessions()).map((s) => [s.id, s]))
-  const result: ImportResult = { added: 0, updated: 0, skipped: 0 }
+  const result: ImportResult = { added: 0, updated: 0, skipped: 0, logs: 0, skippedLogs: 0 }
 
   for (const raw of backup.sessions) {
     const session = normalise(raw)
@@ -170,6 +196,40 @@ export async function importBackup(text: string): Promise<ImportResult> {
     await saveSession(session as Analysis, false)
     if (here) result.updated++
     else result.added++
+  }
+
+  /*
+   * The player's own records, merged on the same terms.
+   *
+   * Newer wins, per log rather than per file: two phones can each hold drills
+   * the other never saw, and a restore that replaced the list would delete
+   * whichever side was not in the file. `doneAt` is the comparison because it is
+   * the moment the log is about — `assignedAt` can be older on the newer record
+   * when a drill sat on the card for a week.
+   *
+   * Failures here do not fail the import. The reports are the history; a drill
+   * tick is a note beside them, and losing one must never be the reason somebody
+   * cannot restore their serves.
+   */
+  const logs = Array.isArray(backup.practice) ? backup.practice : []
+  if (logs.length) {
+    await safely(async () => {
+      const here = new Map((await listPracticeLogs()).map((l) => [l.id, l]))
+      for (const raw of logs) {
+        const log = normalisePracticeLog(raw)
+        if (!log) {
+          result.skippedLogs++
+          continue
+        }
+        const mine = here.get(log.id)
+        if (mine && mine.doneAt >= log.doneAt) {
+          result.skippedLogs++
+          continue
+        }
+        await logPractice(log)
+        result.logs++
+      }
+    }, undefined)
   }
 
   // Once, over the store the import actually left behind.

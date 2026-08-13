@@ -265,6 +265,7 @@ Everything is in `src/lib`:
 | `analysis/consistency.ts` | compares the same measurements across a basket |
 | `practice.ts` | finds the weakness that persists across sessions |
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
+| `storage/db.ts` | the reports, and separately the drills the player says they did |
 | `analysis/phases.ts` | finds the six keyframes |
 | `analysis/metrics.ts` | turns landmarks into measurements |
 | `analysis/coaching.ts` | target bands, serve types, every line of coaching copy, one drill per fault |
@@ -622,6 +623,18 @@ reports" escape hatch, because a blank page caused by bad stored data would
 otherwise recur on every load with no way for the user to clear it.
 
 ---
+
+**What the player did is stored apart from what the camera measured.** A report
+is the camera's record and nothing in it is a claim about the person holding the
+phone. A drill marked as done is the opposite, and it lives in its own store for
+three reasons that agree: correcting the handedness or tapping another serve
+re-runs the pipeline and files a fresh report, which would erase a field sitting
+on that row; preserving it instead would mean reading a row of keyframe images
+back before every save, which is the cost the pruning was rewritten to stop
+paying; and a note that somebody did a drill in March has no reason to be deleted
+when the report that suggested it is pruned. It rides along in an export, merged
+newer-wins per record so two phones each keep what the other never saw, and a
+history with none of it behaves exactly as it always did.
 
 **History is bounded, numbers before pictures.** Nearly all of a stored report's
 size is its six keyframe stills, and those are the part nobody revisits after a

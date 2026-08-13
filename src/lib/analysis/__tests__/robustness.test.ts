@@ -30,7 +30,7 @@ import { diagnose } from '../diagnose'
 import { assessResilience } from '../triage'
 import { cueIssues } from '../voice'
 import { cacheSize, forgetAll, recall, remember } from '../../analysisCache'
-import { normalise, type Session } from '../../storage/db'
+import { normalise, normalisePracticeLog, type Session } from '../../storage/db'
 import { MEANINGFUL_DELTA, buildProgress, deltasAgainst } from '../../progress'
 import { findPracticeFocus, practiceHeadline } from '../../practice'
 import { statusOf } from '../geometry'
@@ -759,6 +759,39 @@ check('reports saved before the stamp existed are the old rubric, not the new on
 
   const progress = buildProgress([scoredUnder(2 * 86_400_000, 80, 2), scoredUnder(1 * 86_400_000, 50)])!
   assert(progress.overallDelta === undefined, 'compared a fresh report against an unstamped one')
+})
+
+/* ------------------------------------------------ what the player did ---- */
+
+check('a drill record with nothing identifying it is dropped, not repaired', () => {
+  // Everything else in storage is repaired towards something renderable, because
+  // a missing label can be filled in and a broken report takes the app down.
+  // Nothing here has a sensible default: a log with no measurement on it cannot
+  // be counted towards any measurement, and an undated one cannot be placed in
+  // any window. Guessing either would put a drill somebody never did into the
+  // evidence for whether their drilling is working.
+  const good = { id: 'x', metricId: 'dropDepth', drill: 'Let the racket fall', assignedAt: 1, doneAt: 2 }
+  assert(normalisePracticeLog(good)?.metricId === 'dropDepth', 'rejected a complete record')
+
+  for (const [what, bad] of [
+    ['no id', { ...good, id: undefined }],
+    ['no measurement', { ...good, metricId: undefined }],
+    ['an empty measurement', { ...good, metricId: '' }],
+    ['no date', { ...good, doneAt: undefined }],
+    ['an unreadable date', { ...good, doneAt: Number.NaN }],
+    ['not an object', 'a drill'],
+  ] as const) {
+    assert(normalisePracticeLog(bad) === undefined, `kept a record with ${what}`)
+  }
+})
+
+check('a record from before it was stamped is dated by when it was done', () => {
+  // `assignedAt` arrived with the field; a hand-edited backup or an older writer
+  // may not have it. The moment it was done is the one every reader uses, so
+  // falling back to it keeps the record countable rather than dropping it.
+  const l = normalisePracticeLog({ id: 'x', metricId: 'kneeBend', doneAt: 5 })!
+  assert(l.assignedAt === 5, `dated it ${l.assignedAt}`)
+  assert(l.drill === '', 'invented a drill name')
 })
 
 check('an unbroken history still compares exactly as it always did', () => {

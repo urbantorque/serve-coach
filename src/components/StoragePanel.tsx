@@ -59,6 +59,9 @@ export default function StoragePanel({ count, onImported }: Props) {
         r.added ? `${r.added} added` : '',
         r.updated ? `${r.updated} updated` : '',
         r.skipped ? `${r.skipped} already up to date` : '',
+        // Counted apart from the reports, because they are not serves and a
+        // player reading "nine added" wants that to be nine serves.
+        r.logs ? `${r.logs} ${r.logs === 1 ? 'drill' : 'drills'}` : '',
       ].filter(Boolean)
       setOutcome(parts.length ? parts.join(', ') + '.' : 'Nothing new in that file.')
       onImported()
