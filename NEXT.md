@@ -197,8 +197,41 @@ phase's entries and drops the working notes underneath them.
       arrives. Footage would also settle `UNDER_RESOLVED.pronation_deg`, at
       known rotation angles — a connection the bullet did not draw before.
       Corrected below.
-- [ ] **R34** — DRY and dead-code purge across the whole tree, then README end to
-      end against the code. It is the deliverable, not an afterthought.
+- [x] **R34** — A systematic sweep, not a quick pass: extracted all 454
+      top-level exports outside `__tests__` and grepped the whole tree for
+      references to each, checked every module for whether anything ever
+      imports it, then read README.md end to end (1342 lines) and cross-
+      checked every verifiable claim — file references, test counts, exported
+      constants, byte figures — against current source.
+
+      Two real duplicates and one dead type, all found by that sweep and
+      nothing else: `Series` in `kinematics.ts` was declared and never used
+      anywhere, not even in its own file — removed. `tiers.ts` redefined
+      `lerp` and `progress.ts` redefined `mean`, both identical to the
+      versions already exported from `geometry.ts`, which `progress.ts`
+      already imports from for `statusOf` — both now import the shared
+      version instead, and `clampTier` was simplified to call the shared
+      `clamp` rather than repeat its own `Math.min(Math.max(...))`. Everything
+      else the sweep turned up was a false positive on inspection: `leakProbe.ts`
+      looks unreferenced by static import because it is loaded with a dynamic
+      `import()` from the devtools console by design, exactly as its own doc
+      comment says.
+
+      README's claims mostly held up under direct re-checking rather than
+      being waved through: the egress test's "66 source files" is still
+      exactly what `egress.test.ts` prints today (a raw file count is 95, but
+      that includes `__tests__`, which the claim and the test both exclude);
+      `KEEP_STILLS`/`MAX_SESSIONS` are still 20/60; `progress.test.ts` still
+      has exactly fifteen `check()` calls; the footprint budget's "roughly six
+      times today's worst case" still matches `footprint.ts`'s own comment.
+      The one real gap: the "Everything is in `src/lib`" file table never grew
+      rows for five files that thirty rounds of work made central enough to
+      discuss at length in the prose right below it — `progress.ts`
+      (trend/then-and-now/milestone), `analysis/axes.ts` (which body axis
+      image x actually measured) and the three-file `framing/` subsystem
+      (`judge.ts`, `access.ts`, `record.ts`, the live preview's verdict,
+      failure messages and in-page recording). Added, in the same terse style
+      as the existing rows.
 - [ ] **R35** — Freeze. Final green run recorded, the open gaps stated plainly,
       the loop stopped. Do not start an R36.
 

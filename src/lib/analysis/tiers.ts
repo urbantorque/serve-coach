@@ -21,6 +21,8 @@
  * from the serve itself when the player has not said.
  */
 
+import { clamp, lerp } from './geometry'
+
 /** Which direction on this axis is better, which decides how a band is read. */
 export type Direction = 'higher' | 'lower' | 'band'
 
@@ -606,7 +608,7 @@ const ANCHORS = [3, 5, 7, 9] as const
 export const MIN_TIER = 1
 export const MAX_TIER = 10
 
-export const clampTier = (t: number) => Math.min(MAX_TIER, Math.max(MIN_TIER, t))
+export const clampTier = (t: number) => clamp(t, MIN_TIER, MAX_TIER)
 
 /**
  * The tier this player is being coached towards: exactly one above their own.
@@ -616,8 +618,6 @@ export const clampTier = (t: number) => Math.min(MAX_TIER, Math.max(MIN_TIER, t)
  * handed an invented eleventh rung.
  */
 export const nextTier = (current: number) => clampTier(Math.floor(clampTier(current)) + 1)
-
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
 /**
  * The acceptable band for one signal at one tier.

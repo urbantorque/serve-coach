@@ -1,5 +1,5 @@
 import { FUNDAMENTALS } from './analysis/coaching'
-import { statusOf } from './analysis/geometry'
+import { mean, statusOf } from './analysis/geometry'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
@@ -139,8 +139,6 @@ export function dominantType(sessions: Session[]): ServeType {
   }
   return best
 }
-
-const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0)
 
 /**
  * Turn saved reports into something that answers "am I actually getting better?"

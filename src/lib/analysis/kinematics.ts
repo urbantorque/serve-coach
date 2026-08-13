@@ -23,13 +23,6 @@
 import { LM, clamp, type Side, sided } from './geometry'
 import type { Frame, Landmark } from './types'
 
-/** A sampled signal and the times its samples were taken at. */
-export interface Series {
-  values: Float32Array
-  /** Seconds, shared across every series built from the same frames. */
-  t: Float32Array
-}
-
 const DEG = 180 / Math.PI
 
 export const timeline = (frames: Frame[]): Float32Array => {

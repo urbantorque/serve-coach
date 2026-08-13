@@ -373,10 +373,14 @@ Everything is in `src/lib`:
 | `pose/poseEngine.ts` | loads the model and WASM; owns the per-landmarker video clock |
 | `pose/extract.ts` | samples the video and runs detection |
 | `pose/skeleton.ts` | draws the tracked body — shared by the player and the stills |
+| `framing/judge.ts` | the live framing verdict, before the player has filmed anything |
+| `framing/access.ts` | why a live camera preview failed to start, and what to say about it |
+| `framing/record.ts` | records off the viewfinder's own stream, and picks the container |
 | `share/reportCard.ts` | renders a report as one shareable image |
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
 | `practice.ts` | finds the weakness that persists across sessions |
+| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone |
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
 | `storage/db.ts` | the reports, and separately the drills the player says they did |
 | `analysis/phases.ts` | finds the six keyframes |
@@ -395,6 +399,7 @@ Everything is in `src/lib`:
 | `analysis/voice.ts` | the house style as code: strips filler, caps length, lints the copy |
 | `analysis/confidence.ts` | how far to trust each measurement, and why |
 | `analysis/geometry.ts` | angles, smoothing, scoring curve |
+| `analysis/axes.ts` | which body axis the camera's image x actually measured |
 | `analysis/racket.ts` | where the racket is, inferred from the hand |
 | `analysis/groundTruth.ts` | fixture format and validator for real labelled clips |
 | `vision/ballTrack.ts` | finds the tossed ball in the pixels |
