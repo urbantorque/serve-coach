@@ -36,7 +36,15 @@ export default function SeasonShareButton({ records }: Props) {
   }
 
   return (
-    <button className="btn btn--ghost btn--full" onClick={() => void share()} disabled={sharing === 'working'}>
+    // `aria-live` so "Preparing…"/"Saved" reaches a screen reader as the
+    // button's own text changes under it — see ConsistencyPanel's own share
+    // button for the same reasoning; this one mirrors it.
+    <button
+      className="btn btn--ghost btn--full"
+      onClick={() => void share()}
+      disabled={sharing === 'working'}
+      aria-live="polite"
+    >
       <Icon name={sharing === 'done' ? 'check' : 'share'} size={17} />
       {sharing === 'working' ? 'Preparing…' : sharing === 'done' ? 'Saved' : 'Share your season'}
     </button>

@@ -830,10 +830,14 @@ export default function Report({
           <Icon name="camera" size={18} />
           Analyse another serve
         </button>
+        {/* `aria-live` so "Preparing…"/"Saved" reaches a screen reader as
+            the button's own text changes under it — see ConsistencyPanel's
+            own share button for the same reasoning. */}
         <button
           className="btn btn--ghost btn--full"
           onClick={() => void share()}
           disabled={sharing === 'working'}
+          aria-live="polite"
         >
           <Icon name={sharing === 'done' ? 'check' : 'share'} size={17} />
           {sharing === 'working'

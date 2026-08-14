@@ -94,3 +94,10 @@ in `git log`.
   order the sheet already lists them, and nothing else — no invented
   season score. Appears once there are at least two records to share. See
   `renderSeasonCard` in `src/lib/share/reportCard.ts`.
+- **Fixed: the three "Preparing…" / "Saved" share buttons went silent for
+  screen readers.** Sighted players watch the button's own label change
+  while a report, basket or season card is prepared; a screen reader had
+  no reason to say the same thing out loud, since nothing marked those
+  words as worth announcing. All three share buttons now carry
+  `aria-live="polite"`, so the same state a sighted player sees reaches
+  an assistive-technology user too.

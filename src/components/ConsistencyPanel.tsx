@@ -305,10 +305,16 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
           a still. So the card this renders needs nothing this screen might
           not have, which is the whole reason it exists: a coach at the net
           reads what this basket did without opening the app. */}
+      {/* `aria-live` so "Preparing…"/"Saved" reaches a screen reader as the
+          button's own text changes under it — a plain button gives no such
+          announcement on its own, and this state is exactly the kind of
+          thing a sighted player already sees change without re-reading the
+          whole button. */}
       <button
         className="btn btn--ghost btn--full"
         onClick={() => void share()}
         disabled={sharing === 'working'}
+        aria-live="polite"
       >
         <Icon name={sharing === 'done' ? 'check' : 'share'} size={17} />
         {sharing === 'working' ? 'Preparing…' : sharing === 'done' ? 'Saved' : 'Share this basket'}
