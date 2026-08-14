@@ -1498,28 +1498,27 @@ export default function App() {
               </span>
             </div>
 
-            {/* The one fact this whole "every serve so far" sheet was missing:
-                the home card already says it in passing, but the screen built
-                specifically to look back across the whole history had nothing
-                to say about showing up at all. */}
-            {streak && <p className="progress-foot">{streak}</p>}
-
-            {/* The durable half of the same fact — see `longestStreakLine`.
-                A current streak resets to zero the moment a gap runs long;
-                this is the one number in the cluster that a slump cannot
-                take away. */}
-            {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
-
-            {/* Grouped with the streak rather than given its own chart-anchored
-                section, the same way the streak itself needed none: both are
-                facts about the whole journey rather than about form, which is
-                what the rest of this sheet (the trend, the delta bars, the
-                repeatability chart) is otherwise entirely about. */}
-            {bestSpeed && <p className="progress-foot">{bestHandSpeedEverLine(bestSpeed, prefs.heightCm)}</p>}
-
-            {/* The third fact in the same cluster, for the same reason: a
-                whole-journey record rather than a form measurement. */}
-            {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
+            {/* Four facts about the whole journey rather than about form —
+                which is what the rest of this sheet (the trend, the delta
+                bars, the repeatability chart) is otherwise entirely about.
+                Each was added incrementally and reasoned, on its own, not to
+                need its own heading — but read together, with all of them
+                present, four unlabelled sentences in a row stopped reading
+                as a group and started reading as a wall of text. This gives
+                them the same overline every sibling section on this sheet
+                already has, and nothing else changes: same lines, same
+                order, same conditions. Guarded on the whole cluster so a
+                player short of every record never sees a heading over
+                nothing. */}
+            {(streak || longestStreakText || bestSpeed || sheetBestScore) && (
+              <section className="block">
+                <h3 className="block-title">Your records</h3>
+                {streak && <p className="progress-foot">{streak}</p>}
+                {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
+                {bestSpeed && <p className="progress-foot">{bestHandSpeedEverLine(bestSpeed, prefs.heightCm)}</p>}
+                {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
+              </section>
+            )}
 
             {/* Every record this sheet already shows, in one image — see
                 `renderSeasonCard`. Placed with the records it shares rather

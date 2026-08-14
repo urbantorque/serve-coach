@@ -6,6 +6,12 @@ in `git log`.
 
 ## 2026-08-15
 
+- **Your records, labelled.** The streak, longest run, best hand speed and
+  best score lines on "Every serve so far" now sit under their own "Your
+  records" heading, the same way every other section on that sheet
+  already announces itself. The four lines and their order haven't
+  changed — with all of them present at once they'd started reading as
+  one unbroken paragraph instead of four distinct facts.
 - **Your longest run, not just the one you're on.** "Every serve so far"
   and "Share your season" now also name the longest streak of trips
   you've ever kept — "Your longest run was 7 trips in a row." — sitting
