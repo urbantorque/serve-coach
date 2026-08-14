@@ -738,6 +738,19 @@ export function bestHandSpeedLine(record: BestHandSpeed, heightCm: number | unde
     : `Your fastest hand speed so far is ${show(record.speed)} ${unit}, set ${shortDate(record.createdAt)}.`
 }
 
+/**
+ * The hand-speed record stated plainly, for `bestGapEverLine`'s reason: the
+ * progress sheet has no single report on screen to ask "did *this* one set
+ * it", so `bestHandSpeedLine`'s two-branch question has nothing to compare
+ * against here.
+ */
+export function bestHandSpeedEverLine(record: BestHandSpeed, heightCm: number | undefined): string {
+  const height = isPlausibleHeight(heightCm) ? heightCm : undefined
+  const show = (v: number) => (height ? Math.round(speedInKmh(v, height)).toString() : v.toFixed(1))
+  const unit = height ? 'km/h' : 'body heights/sec'
+  return `Your fastest hand speed yet was ${show(record.speed)} ${unit}, set ${shortDate(record.createdAt)}.`
+}
+
 export const MEANINGFUL_DELTA = 3
 
 export const deltaStatus = (delta: number): Status | 'flat' =>

@@ -20,6 +20,7 @@ import {
   bestGapEverLine,
   bestGapLine,
   bestHandSpeed,
+  bestHandSpeedEverLine,
   bestHandSpeedLine,
   buildConsistencyTrend,
   buildProgress,
@@ -369,6 +370,22 @@ check('states the record plainly, in bestGapEverLine\'s own phrasing rather than
 check('dates the record the same way bestGapLine does', () => {
   const line = bestGapEverLine({ gap: 6, createdAt: DAY })
   assert(line.includes('set '), `no date attached: "${line}"`)
+})
+
+heading('The hand-speed record, stated with no report on screen to compare it against')
+
+check('states the record plainly, dated, in house units with no height on file', () => {
+  const line = bestHandSpeedEverLine({ speed: 4.5, createdAt: DAY }, undefined)
+  assert(line.includes('4.5'), `the speed itself did not appear: "${line}"`)
+  assert(line.includes('body heights/sec'), `no height on file should keep house units: "${line}"`)
+  assert(line.includes('set '), `no date attached: "${line}"`)
+  assert(!line.includes('yet —'), `used bestHandSpeedLine's per-report phrasing: "${line}"`)
+})
+
+check('converts to km/h with a stated height, same as bestHandSpeedLine', () => {
+  const line = bestHandSpeedEverLine({ speed: 4.5, createdAt: DAY }, 178)
+  assert(line.includes('km/h'), `a stated height did not switch the unit: "${line}"`)
+  assert(!line.includes('body heights'), `house units still appeared alongside a stated height: "${line}"`)
 })
 
 report()

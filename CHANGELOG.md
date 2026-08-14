@@ -41,3 +41,8 @@ in `git log`.
   line the home card already shows; the tightest-gap sentence sits under
   the "How repeatable, over time" chart it's read straight off. See the new
   `bestGapEverLine` in `src/lib/progress.ts`.
+- **The fastest hand speed joins the other two records there too.** Grouped
+  with the streak rather than given its own chart — both are facts about
+  the whole journey, not about form, which is what the rest of that screen
+  is otherwise entirely about. See `bestHandSpeedEverLine` in
+  `src/lib/progress.ts`.

@@ -12,6 +12,7 @@ import {
   bestConsistencyGap,
   bestGapEverLine,
   bestHandSpeed,
+  bestHandSpeedEverLine,
   buildConsistencyTrend,
   buildProgress,
   shortDate,
@@ -1444,6 +1445,13 @@ export default function App() {
                 specifically to look back across the whole history had nothing
                 to say about showing up at all. */}
             {streak && <p className="progress-foot">{streak}</p>}
+
+            {/* Grouped with the streak rather than given its own chart-anchored
+                section, the same way the streak itself needed none: both are
+                facts about the whole journey rather than about form, which is
+                what the rest of this sheet (the trend, the delta bars, the
+                repeatability chart) is otherwise entirely about. */}
+            {bestSpeed && <p className="progress-foot">{bestHandSpeedEverLine(bestSpeed, prefs.heightCm)}</p>}
 
             {/* Said out loud rather than left as a gap in the chart. Somebody who
                 has filmed twenty serves and sees eleven plotted will assume the
