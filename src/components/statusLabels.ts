@@ -43,3 +43,35 @@ export function readQuality(confidence: number): string {
 
 /** Below this the read is hedged on screen rather than stated flat. */
 export const SOFT_READ = 0.6
+
+/**
+ * Which of two paired serves may be shown as the better one — or neither.
+ *
+ * `FramePair` draws two serves side by side for two different callers, and only
+ * one of them has a "better" to claim. The basket comparison does:
+ * `ConsistencyPanel` builds its captions from `pair.best` and `pair.worst`, so
+ * left is the higher score by construction. "Then, and now" does not: it orders
+ * by date, because the whole point is showing what changed over six weeks
+ * whichever direction it went, and a player whose serve has gone backwards has
+ * their *worse* serve on the left.
+ *
+ * The component has said exactly this since it was written — `leftIsBetter` is
+ * optional, and the screen-reader text is emitted only for the caller that
+ * passes it. The stylesheet did not: `.pair-shots figure:first-child figcaption`
+ * carried the accent unconditionally, so the progress sheet tinted the older,
+ * worse serve as the good one about half the time, on the one screen built to
+ * show somebody whether they are improving. Named in `FramePair.tsx` and in
+ * `NEXT.md` since Phase 3 and left for a round allowed to move a pixel.
+ *
+ * So the claim now travels as a class rather than as a position, and this is
+ * the function that decides it. Absent means neither caption is accented, which
+ * is the case that was wrong; `false` accents the right-hand one, because a
+ * boolean that is read in only one of its two states is a boolean waiting to be
+ * misread by its next caller.
+ */
+export type PairRankModifier = '' | 'pair-shots--better-left' | 'pair-shots--better-right'
+
+export function pairRankModifier(leftIsBetter?: boolean): PairRankModifier {
+  if (leftIsBetter === undefined) return ''
+  return leftIsBetter ? 'pair-shots--better-left' : 'pair-shots--better-right'
+}

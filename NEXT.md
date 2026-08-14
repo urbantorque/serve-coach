@@ -330,6 +330,62 @@ had never been written down anywhere.
       the court trip below. What is closed is a defect that was reachable by
       reading, which is the weakest tool available for this file.
 
+- [x] **R37** — `FramePair`'s better-serve colour, carried since Phase 3 as
+      **blocked: needs a round willing to move a pixel**. This is that round.
+
+      `.pair-shots figure:first-child figcaption { color: var(--good) }` in
+      `report.css` accented the left caption by *position*, with nothing about
+      whether a ranking had been claimed. True by construction for the basket
+      comparison, where `ConsistencyPanel` builds the captions from
+      `pair.best`/`pair.worst`. Merely lucky, about half the time, for "Then,
+      and now" — which orders by date because the whole point is showing what
+      changed whichever direction it went. A player whose serve had gone
+      backwards over six weeks was shown their older, worse serve tinted as the
+      good one, on the one screen built to tell them whether they are improving.
+
+      Worth being plain about what was and was not already right: the component
+      has honoured this since it was written. `leftIsBetter` was optional and
+      the screen-reader text was emitted only for the caller that passes it, so
+      the accessible reading was correct throughout and only the colour lied.
+      That is the reverse of the usual shape and it is why R21 could find the
+      defect while auditing accessibility and still not be allowed to fix it.
+
+      Fixed by making the claim travel as a class rather than as a position.
+      `pairRankModifier` in `components/statusLabels.ts` — which exists for
+      exactly this, a plain module beside the components so a value and a
+      component never share a fast-refresh boundary — maps the claim onto
+      `pair-shots--better-left` / `pair-shots--better-right`, or to the empty
+      string where there is no claim. The CSS gates on those two. `false` is
+      handled rather than ignored: a boolean read in only one of its two states
+      is one waiting to be misread by its next caller, which is how this
+      survived in the first place. The screen-reader text follows the same rule,
+      so the two halves of the claim can no longer disagree.
+
+      No new colour, no new token, no layout change — `--good` was already the
+      accent this used, and the selector is the only thing that moved.
+
+      `components/__tests__/framePair.test.ts`, a new directory the runner
+      already discovers: three checks on the mapping, and two that read
+      `report.css` off disk. The disk checks are the point. The defect lived in
+      a stylesheet, so a suite that only ever looked at TypeScript would have
+      stayed green for the whole time this was wrong — the same trade
+      `egress.test.ts` makes, and made here for the same reason. One asserts no
+      rule accents a caption by position alone; the other that both modifiers
+      are styled, since gating only the left one is the same defect with the
+      sides swapped.
+
+      Verified the disk checks have teeth: restored the original selector in a
+      scratch copy, confirmed both went red, restored, confirmed green.
+
+      Verified live at `?demo=basket` rather than by reading the CSS. The ranked
+      caller is unchanged — `pair-shots pair-shots--better-left`, left caption
+      computes to `rgb(205, 249, 74)` (`--good`), right to `rgb(152, 162, 179)`,
+      both screen-reader labels present. Stripping the modifier to reproduce
+      exactly what "Then, and now" renders puts *both* captions on
+      `rgb(152, 162, 179)` — neither claimed as better, which is the fix. No
+      console errors. A screenshot was not possible for the reason the court
+      trip below already records: the pane does not composite.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the
@@ -359,16 +415,6 @@ had never been written down anywhere.
       attached to the clips (R32). The other four — `legs_peak_ms`,
       `chain_span_ms`, `wrist_peak_ms`, `elbow_peak_ms` — are dead ends by
       construction and stay uncalibrated no matter how much footage arrives.
-- [!] **`FramePair`'s better-serve colour, on "Then, and now".** **blocked:
-      needs a round willing to move a pixel**, which R21's own accessibility
-      pass explicitly was not. `figure:first-child` colours the left figure as
-      the better serve, true by construction for the basket comparison
-      `ConsistencyPanel` builds it for, and merely lucky, about half the time,
-      for "Then, and now" — which orders by date and can regress. Named in
-      `FramePair.tsx`'s own doc comment (`NEXT.md`, R21) since Phase 3 closed;
-      never picked up by any round since. Nothing here needs a phone or
-      footage — the fix is ordinary CSS/prop work, and any future round may
-      do it.
 - [!] **`PRACTICE_WINDOW` counts sessions, not trips.** **blocked: same
       reason as above, not resources.** `findPracticeFocus`'s five-session
       window can fill entirely with one visit's own variance when a player

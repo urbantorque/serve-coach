@@ -435,8 +435,17 @@
 }
 
 /* The better serve's number carries the accent, matching the readout above it,
-   so the two halves of this block agree about which serve is the good one. */
-.pair-shots figure:first-child figcaption {
+   so the two halves of this block agree about which serve is the good one.
+
+   Gated on the modifier rather than on position. This used to select
+   `figure:first-child` unconditionally, which is true by construction for the
+   basket comparison and merely lucky, about half the time, for "Then, and now"
+   — that one orders by date and can regress, so a player whose serve had gone
+   backwards was shown their older, worse serve tinted as the good one. The
+   claim now comes from the caller, through `pairRankModifier`; a caller with no
+   claim to make emits no modifier and neither caption is accented. */
+.pair-shots--better-left figure:first-child figcaption,
+.pair-shots--better-right figure:last-child figcaption {
   color: var(--good);
 }
 

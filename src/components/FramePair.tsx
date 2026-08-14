@@ -1,4 +1,5 @@
 import type { PhaseId } from '../lib/analysis/types'
+import { pairRankModifier } from './statusLabels'
 
 /**
  * Two serves, the same six positions, side by side.
@@ -15,20 +16,20 @@ import type { PhaseId } from '../lib/analysis/types'
  * for the second caller would have been two components drifting apart over one
  * grid.
  *
- * The left column is always the better of the two, for a caller that has an
- * actual "better" to claim — the caption colour says so, and `leftIsBetter`
- * says it again for whoever cannot see colour.
+ * `leftIsBetter` is the whole of the ranking claim, and it drives both halves
+ * of how that claim is made: the caption colour, through `pairRankModifier`,
+ * and the screen-reader text beside it for whoever cannot see colour. A caller
+ * that passes nothing gets neither.
  *
- * Not every caller can honestly make that claim. The basket comparison can:
- * `leftCaption`/`rightCaption` are built from `pair.best`/`pair.worst`, so
- * left is the higher score by construction. "Then, and now" cannot — it
- * orders by date, not by score, because the whole point is showing what
- * changed over six weeks whichever direction it went. The colour rule below
- * is written for the caller that can make the claim and applies to both, so
- * a player whose serve has gone backwards still sees the older, worse one
- * tinted as if it were the good one. Known, not fixed here: fixing the
- * colour is a rendering change this round's "not a pixel" rule forbids: see
- * `NEXT.md`, R21.
+ * That symmetry is new and it is the point. Not every caller can honestly make
+ * the claim: the basket comparison can, since `leftCaption`/`rightCaption` are
+ * built from `pair.best`/`pair.worst` and left is the higher score by
+ * construction, but "Then, and now" cannot — it orders by date, because the
+ * whole point is showing what changed over six weeks whichever direction it
+ * went. The component always honoured that. The stylesheet did not: it accented
+ * the first figure unconditionally, so a player whose serve had gone backwards
+ * saw their older, worse serve tinted as the good one. See `pairRankModifier`
+ * for the fix and `NEXT.md` R37 for how long it sat there.
  */
 export interface PairPosition {
   id: PhaseId
@@ -43,11 +44,12 @@ interface Props {
   rightCaption: string
   positions: PairPosition[]
   /**
-   * Whether the left column is actually the better serve — absent where
-   * there is no such claim to make (see the caveat above). Adds nothing to
-   * what is on screen either way: this only feeds a screen-reader-only
-   * label, so a caller with nothing honest to say says nothing rather than
-   * defaulting to a guess.
+   * Which of the two is the better serve, or nothing where there is no such
+   * claim to make (see the note above).
+   *
+   * Absent is a real answer and not a missing one: it means neither caption is
+   * accented and neither carries the screen-reader label, so a caller with
+   * nothing honest to say says nothing rather than defaulting to a guess.
    */
   leftIsBetter?: boolean
 }
@@ -66,7 +68,7 @@ export default function FramePair({
         {positions.map((p) => (
           <li key={p.id}>
             <span className="pair-label">{p.label}</span>
-            <div className="pair-shots">
+            <div className={`pair-shots ${pairRankModifier(leftIsBetter)}`.trimEnd()}>
               <figure>
                 {/* Decorative: the caption beside it already names the position
                     and the serve, and there is nothing in the picture a sentence
@@ -74,14 +76,22 @@ export default function FramePair({
                 {p.left ? <img src={p.left} alt="" loading="lazy" /> : <span className="pair-missing" />}
                 <figcaption>
                   {leftCaption}
-                  {leftIsBetter === true && <span className="sr-only"> — the better serve</span>}
+                  {leftIsBetter !== undefined && (
+                    <span className="sr-only">
+                      {leftIsBetter ? ' — the better serve' : ' — the worse serve'}
+                    </span>
+                  )}
                 </figcaption>
               </figure>
               <figure>
                 {p.right ? <img src={p.right} alt="" loading="lazy" /> : <span className="pair-missing" />}
                 <figcaption>
                   {rightCaption}
-                  {leftIsBetter === true && <span className="sr-only"> — the worse serve</span>}
+                  {leftIsBetter !== undefined && (
+                    <span className="sr-only">
+                      {leftIsBetter ? ' — the worse serve' : ' — the better serve'}
+                    </span>
+                  )}
                 </figcaption>
               </figure>
             </div>
