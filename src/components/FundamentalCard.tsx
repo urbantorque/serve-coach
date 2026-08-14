@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Fundamental, Metric } from '../lib/analysis/types'
+import TargetShape from './TargetShape'
 import { DeltaChip } from './Trend'
 import { Cue, Icon, MetricBar, ScoreRing } from './primitives'
 import { STATUS_LABEL } from './statusLabels'
@@ -86,6 +87,15 @@ export default function FundamentalCard({
                     <span className="metric-aim-value">{m.target}</span>
                   </p>
                 )}
+                {/* And the same target as a shape, where there is a construction
+                    for one. Directly under the phrase it illustrates, because
+                    the two are one claim: `TargetShape` draws the player's own
+                    number and the middle of the band, and `targetOf` reads the
+                    phrase above off that same midpoint. It withholds itself on
+                    every test the line above it does and on two more — a soft
+                    measurement and a measurement with no plane to draw in — so
+                    there is nothing to gate here. */}
+                <TargetShape metric={m} />
                 <p className="metric-insight">
                   <Cue text={m.insight} />
                 </p>

@@ -96,8 +96,17 @@ export function jointAngle(a: Landmark, b: Landmark, c: Landmark): number {
 
 const DEG = 180 / Math.PI
 
-/** Bearing of a directed segment in the ground plane, radians about world up. */
-const groundYaw = (a: Landmark, b: Landmark) => Math.atan2(b.z - a.z, b.x - a.x)
+/**
+ * Bearing of a directed segment in the ground plane, radians about world up.
+ *
+ * Exported for `targetShape.ts`, which draws the coil as a plan view and then
+ * has to prove the picture measures back to the number printed under it. That
+ * proof is only worth anything if it runs through this function rather than
+ * through a second copy of `atan2` written next to the drawing — two copies of a
+ * bearing is exactly how a diagram and a caption end up disagreeing about which
+ * way somebody turned.
+ */
+export const groundYaw = (a: Landmark, b: Landmark) => Math.atan2(b.z - a.z, b.x - a.x)
 
 /**
  * Wrap to (-90, 90]: the angle between two *lines*.
@@ -107,7 +116,7 @@ const groundYaw = (a: Landmark, b: Landmark) => Math.atan2(b.z - a.z, b.x - a.x)
  * turn a small coil into an enormous one whenever the tracker swapped which
  * shoulder it thought was which.
  */
-function wrapHalfTurn(deg: number): number {
+export function wrapHalfTurn(deg: number): number {
   return ((((deg % 180) + 270) % 180) - 90)
 }
 

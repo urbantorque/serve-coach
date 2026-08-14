@@ -325,6 +325,223 @@
 }
 
 /* ============================================================================
+   Target shape — the band drawn as a body, under the phrase it illustrates
+
+   Two rules carry the whole meaning of this picture and neither is decoration:
+   the player's own shape is solid and in their badge's colour, and the target is
+   dashed and dim. That is the only thing separating a measurement from a
+   correction on a drawing where both are pale lines over the same card — the
+   same distinction `drawGhost` makes on the video overlay, kept identical here
+   so the two read as one voice.
+   ========================================================================= */
+
+.tshape {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline-soft);
+}
+
+/* Height fixed, width from the viewBox — which is the figure's own bounding box,
+   so a leg comes out tall and narrow and a plan view of the shoulders comes out
+   wide and flat, each filling what it is given. Sized by height rather than by
+   width so every figure down a card is the same size to the eye.
+
+   `max-width` is the guard for the one shape that is much wider than it is tall:
+   without it a plan view would push the words beside it off a narrow phone. */
+.tshape-canvas {
+  flex: none;
+  height: 84px;
+  width: auto;
+  max-width: 146px;
+  overflow: visible;
+}
+
+/* A whole standing body needs more than a pair of bones does. Same width cap,
+   so the row does not change shape from one measurement to the next. */
+.tshape-canvas--height {
+  height: 126px;
+}
+
+/* The band as a strip, for the family measured straight up from the court. Not
+   the accent: the accent means "the thing being judged", and a lime wash behind
+   a third of the picture would drown the one line it is reserved for. */
+.tshape-band {
+  fill: rgba(238, 242, 246, 0.07);
+}
+
+/* Every stroke here is `non-scaling-stroke`, and it is not a nicety. The viewBox
+   is the figure's own bounding box, so one unit is a very different number of
+   pixels for a plan view of the shoulders than for a whole standing body — and a
+   width given in user units would come out hairline on one figure and a slab on
+   the next. Declared in px for the same reason: these are device pixels. */
+
+/* Anything that does not move with the number — the court, the trunk, the
+   horizontal a tilt is read against. Drawn once for both figures. */
+.tshape-ref {
+  fill: none;
+  stroke: var(--fg-faint);
+  stroke-width: 1.1px;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+}
+
+.tshape-target {
+  fill: none;
+  stroke: var(--fg-muted);
+  stroke-width: 1.8px;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 4 3.2;
+}
+
+.tshape-target-dot {
+  fill: var(--fg-muted);
+  opacity: 0.7;
+}
+
+.tshape-you {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 2.6px;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tshape-you-dot {
+  fill: var(--lime);
+}
+
+/* The badge's own colour, so the figure and the tag above it agree about how
+   bad this is. Four statuses, four tokens, and no fifth meaning invented here. */
+.tshape-you--great,
+.tshape-you--good,
+.tshape-you--fair,
+.tshape-you--work {
+  stroke: var(--metric-tone);
+}
+
+.tshape-you-dot--great,
+.tshape-you-dot--good,
+.tshape-you-dot--fair,
+.tshape-you-dot--work {
+  fill: var(--metric-tone);
+}
+
+.tshape-you--great,
+.tshape-you-dot--great {
+  --metric-tone: var(--great);
+}
+
+.tshape-you--good,
+.tshape-you-dot--good {
+  --metric-tone: var(--good);
+}
+
+.tshape-you--fair,
+.tshape-you-dot--fair {
+  --metric-tone: var(--fair);
+}
+
+.tshape-you--work,
+.tshape-you-dot--work {
+  --metric-tone: var(--work);
+}
+
+.tshape-key {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: var(--lh-tight);
+}
+
+.tshape-key-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+}
+
+.tshape-swatch {
+  flex: none;
+  width: 12px;
+  height: 0;
+  align-self: center;
+  border-top: 2px solid var(--fg-muted);
+}
+
+.tshape-swatch--you {
+  border-top-color: var(--lime);
+}
+
+.tshape-swatch--target {
+  border-top-style: dashed;
+}
+
+.tshape-key-label {
+  flex: none;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.tshape-key-value {
+  min-width: 0;
+  font-weight: var(--wt-label);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+/* The viewpoint, always shown. A diagram whose viewpoint is not stated invites
+   the reader to assume it is the camera's, and for the plan view of the coil
+   that assumption is wrong by ninety degrees. */
+.tshape-view {
+  margin-top: 2px;
+  font-size: 10.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+  text-wrap: pretty;
+}
+
+/* Narrow phones: the figure goes above the key rather than shrinking to
+   illegibility beside it. */
+@media (max-width: 400px) {
+  .tshape {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Still sized by height — the width follows the figure, as everywhere else.
+     Stacked there is room to make it bigger, and this is the screen the app is
+     mostly read on. */
+  .tshape-canvas {
+    height: 104px;
+    max-width: 100%;
+  }
+
+  .tshape-canvas--height {
+    height: 152px;
+  }
+
+  .tshape-key {
+    align-self: stretch;
+  }
+}
+
+/* ============================================================================
    Report footer
    ========================================================================= */
 

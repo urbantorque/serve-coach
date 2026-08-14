@@ -3,6 +3,7 @@ import type { BallFlight, TossFlight } from '../vision/ballTrack'
 import type { DetectorCoverage } from '../vision/detector'
 import type { Consistency } from './consistency'
 import type { Diagnosis } from './diagnose'
+import type { HandSpeed } from './power'
 import type { Triage as TriageResult } from './triage'
 
 /** A single pose landmark. */
@@ -328,6 +329,24 @@ export interface Analysis {
    * argued with before any prose is written around them.
    */
   outbound?: OutboundBall
+  /**
+   * How fast the hand was travelling through the strike.
+   *
+   * The report's other outcome number, and the one that usually survives. The
+   * ball needs about 200 Hz of effective sampling to resolve at all — see
+   * `OutboundBall` — so `outbound.flight` is absent on nearly every phone clip,
+   * while this is a straight-line fit through wrist positions the pose model
+   * already produced and is present whenever the swing was filmed at all.
+   *
+   * Absent rather than zeroed when it could not be read: too few samples through
+   * the strike, a wrist the tracker lost, or a camera angle at which the depth
+   * axis has collapsed towards the lens. Small enough to keep on a saved report
+   * — two numbers and a count — so a season of them can be compared, which is
+   * the only reference this app has for what a speed means.
+   *
+   * NOT SCORED, and there is no band anywhere for it. See `power.ts`.
+   */
+  power?: HandSpeed
   /**
    * Which serve this was judged as. Stored because the target bands differ, so a
    * score is only meaningful alongside the serve it was scored against — and the

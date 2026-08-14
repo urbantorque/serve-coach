@@ -2,6 +2,7 @@ import { readoutOf } from '../analysis/anatomy'
 import { SOFT_MEASUREMENT } from '../analysis/confidence'
 import { LM, jointAngle, type Side, sided } from '../analysis/geometry'
 import { smoothedRacket } from '../analysis/racket'
+import { boundsOf, figureOf, type Figure } from '../analysis/targetShape'
 import type { Frame, Metric, PhaseId } from '../analysis/types'
 
 export type Limb = ReturnType<typeof sided>
@@ -190,8 +191,17 @@ export const ANNOTATIONS: Partial<
  * and reading another, and would rightly stop believing both.
  *
  * WHAT THAT RULES OUT, which is most of the report. A target can only be drawn
- * where the measurement lives in the plane the canvas draws in. Three of the
- * app's five areas fail that outright:
+ * ON THE BODY where the measurement lives in the plane the canvas draws in.
+ * Three of the app's five areas fail that outright:
+ *
+ * (Every one of the three is now drawn — as a small figure beside the reading
+ * rather than over the player, in the plane the number is actually measured in.
+ * That is `analysis/targetShape.ts`, and it is a different mechanism answering a
+ * different question: not "where should this body have been in this photograph",
+ * which is what everything below refuses, but "what does forty degrees look
+ * like". Nothing under this line is superseded. A diagram beside the picture
+ * claims nothing about the pixels; a crisp outline over somebody's own shoulder
+ * claims everything, and the refusals stand exactly as written.)
  *
  *   - `shoulderTilt` is world-space by construction, and `geometry.ts` already
  *     spells out why: side-on, the shoulder line points nearly at the camera,
@@ -835,7 +845,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       annotation.label,
       scale * (o.calloutScale ?? 1),
       o.rect.dw,
-      band && { value, band },
+      band && { metric: annotation.metric, value, band },
     )
   }
 }
@@ -1026,64 +1036,131 @@ const GHOST_OVERLINE = 'AIM FOR'
  * straight onto footage is legible right up until the frame it is not.
  */
 /**
- * The target band beside the reading, as a dial rather than as a wedge on the
- * body.
+ * The target band beside the reading, drawn as the body part it is about.
  *
- * IT IS NOT DRAWN AT THE JOINT, and that is the whole decision. The arc at the
- * joint is a locator — its own doc comment says so — because it is drawn between
- * two limb directions in image space while the number beside it is
- * `jointAngle` of the *world* landmarks. Those are different quantities: the
- * projection is exactly what `geometry.ts` refuses to reason about for shoulder
- * tilt, where a real 20° reads as 60°+ side-on. Shading a band across that arc
- * would turn a pointer into a measurement, and a picture asserts far more than
- * the sentence beside it — the same reason the trophy ghost was withdrawn.
+ * IT IS NOT DRAWN AT THE JOINT, and that is the whole decision. The arc on the
+ * body is a locator — its own doc comment says so — because it is drawn between
+ * two limb directions in image space while the number beside it is `jointAngle`
+ * of the *world* landmarks. Those are different quantities: the projection is
+ * exactly what `geometry.ts` refuses to reason about for shoulder tilt, where a
+ * real 20° reads as 60°+ side-on. Shading a band across that arc would turn a
+ * pointer into a measurement, and a picture asserts far more than the sentence
+ * beside it — the same reason the trophy ghost was withdrawn.
  *
- * So the band is drawn in the space the number lives in: a small fixed sweep
- * where 0 and 180 are the ends of what a joint can do, the target shaded, the
- * reading marked. It is a chart, and a chart claims nothing about the pixels
- * behind it.
+ * So the band is drawn in the space the number lives in, off to one side, where
+ * it claims nothing about the pixels behind it. WHAT CHANGED is what gets drawn
+ * there. It used to be a 180° arc with the band shaded and the reading ticked —
+ * an honest chart, and one nobody can put their body into. A player reading
+ * "athletic load" beside an arc still has to convert a fraction of a sweep into
+ * a knee. Now it is the limb itself: the two bones either side of the joint at
+ * the angle that was measured, and the same pair dashed at the middle of the
+ * band. Same footprint, same claim, same refusal to touch the body — and the
+ * difference between the two figures is a leg bending, which is the thing the
+ * card is asking for.
+ *
+ * `targetShape.ts` owns the construction and proves it re-measures to the
+ * number on the plate. Anything it will not draw falls through to no diagram at
+ * all rather than to an invented one.
  */
-function drawDial(
+function drawShapeDial(
   ctx: CanvasRenderingContext2D,
+  metric: string,
   cx: number,
   cy: number,
-  r: number,
+  half: number,
   value: number,
   band: [number, number],
   scale: number,
 ): void {
-  // Half a turn, opening rightwards, so a bigger angle reads as a more open
-  // dial — the same direction a straightening limb moves.
-  const START = Math.PI * 0.75
-  const SWEEP = Math.PI * 1.5
-  const at = (deg: number) => START + (Math.max(0, Math.min(180, deg)) / 180) * SWEEP
+  const yours = figureOf(metric, value)
+  const theirs = figureOf(metric, (band[0] + band[1]) / 2)
+  if (!yours || !theirs) return
 
-  ctx.lineCap = 'butt'
+  /*
+   * One fit across both figures, and both edges of the band.
+   *
+   * Scaled apart, a 20° bend and a 50° one each fill the box and come out
+   * looking alike — which removes precisely the difference this exists to show.
+   * The edges are in the fit too so that widening a band cannot resize the pair,
+   * which is what keeps `drawing.test.ts`'s "the dial never claims the arc on
+   * the body is the measurement" honest: the stroke count and the geometry of
+   * the tracked body are both untouched by what the band says.
+   */
+  const box = boundsOf([yours, theirs, ...[band[0], band[1]]
+    .map((v) => figureOf(metric, v))
+    .filter((f): f is Figure => !!f)])
+  const w = Math.max(1e-6, box.max.x - box.min.x)
+  const h = Math.max(1e-6, box.max.y - box.min.y)
+  const fit = Math.min((half * 2) / w, (half * 2) / h)
+  const at = (p: { x: number; y: number }) => ({
+    x: cx + (p.x - (box.min.x + box.max.x) / 2) * fit,
+    y: cy + (p.y - (box.min.y + box.max.y) / 2) * fit,
+  })
 
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, START, START + SWEEP)
+  const trace = (lines: { x: number; y: number }[][]) => {
+    ctx.beginPath()
+    for (const line of lines) {
+      line.forEach((p, i) => {
+        const q = at(p)
+        if (i) ctx.lineTo(q.x, q.y)
+        else ctx.moveTo(q.x, q.y)
+      })
+    }
+  }
+
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+
+  // Whatever does not move with the number, in the quietest ink and drawn once.
+  if (theirs.reference.length) {
+    ctx.setLineDash([])
+    trace(theirs.reference)
+    ctx.strokeStyle = PALETTE.under
+    ctx.lineWidth = 3 * scale
+    ctx.stroke()
+    ctx.strokeStyle = PALETTE.ghostZone
+    ctx.lineWidth = 1.2 * scale
+    ctx.stroke()
+  }
+
+  // The target, underneath and dashed. Dashed and dim is the only thing
+  // separating a target from a measurement here, exactly as in `drawGhost`, and
+  // the dash is set and cleared inside this function for the same reason it is
+  // there: a caller that forgot would draw two equally confident limbs, one of
+  // them fictional.
+  ctx.setLineDash([3.2 * scale, 2.6 * scale])
+  trace(theirs.lines)
+  ctx.strokeStyle = PALETTE.under
+  ctx.lineWidth = 3.6 * scale
+  ctx.stroke()
+  ctx.strokeStyle = PALETTE.ghost
+  ctx.lineWidth = 1.6 * scale
+  ctx.stroke()
+  ctx.setLineDash([])
+
+  // What the player did, on top and solid, in the accent the callout beside it
+  // is already set in.
+  trace(yours.lines)
   ctx.strokeStyle = PALETTE.under
   ctx.lineWidth = 4.2 * scale
   ctx.stroke()
-
-  // The band as an arc segment, because the target is a range. A single mark
-  // would claim a precision `ideal` does not have.
-  const lo = Math.min(band[0], band[1])
-  const hi = Math.max(band[0], band[1])
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, at(lo), at(hi))
-  ctx.strokeStyle = PALETTE.leader
-  ctx.lineWidth = 4.2 * scale
+  ctx.strokeStyle = PALETTE.active
+  ctx.lineWidth = 2 * scale
   ctx.stroke()
 
-  // Where the player actually was, across the full width of the track so it
-  // reads over the band rather than beside it.
-  const a = at(value)
+  // The joint the reading was taken at, so the figure has an anchor the eye can
+  // find at filmstrip size.
+  const dot = Math.max(1.4, 1.7 * scale)
   ctx.beginPath()
-  ctx.moveTo(cx + Math.cos(a) * (r - 4.4 * scale), cy + Math.sin(a) * (r - 4.4 * scale))
-  ctx.lineTo(cx + Math.cos(a) * (r + 4.4 * scale), cy + Math.sin(a) * (r + 4.4 * scale))
-  ctx.strokeStyle = PALETTE.active
-  ctx.lineWidth = 2.4 * scale
+  for (const p of yours.joints) {
+    const q = at(p)
+    ctx.moveTo(q.x + dot, q.y)
+    ctx.arc(q.x, q.y, dot, 0, Math.PI * 2)
+  }
+  ctx.fillStyle = PALETTE.active
+  ctx.fill()
+  ctx.strokeStyle = PALETTE.under
+  ctx.lineWidth = 1.2 * scale
   ctx.stroke()
 }
 
@@ -1106,7 +1183,7 @@ function drawAngle(
    * a hedge in the copy cannot catch up with a diagram somebody has already
    * believed.
    */
-  judged?: { value: number; band: [number, number] },
+  judged?: { metric: string; value: number; band: [number, number] },
 ) {
   const a1 = Math.atan2(a.y - b.y, a.x - b.x)
   const a2 = Math.atan2(c.y - b.y, c.x - b.x)
@@ -1148,10 +1225,16 @@ function drawAngle(
   // narrow puts the label back on bare video.
   const labelSize = 9.5 * scale
   ctx.font = `500 ${labelSize}px ${UI_FONT}`
-  // The dial sits inside the plate, so the plate has to grow by exactly its
+  // The figure sits inside the plate, so the plate has to grow by exactly its
   // width plus its gap — computed here rather than guessed, or a long body
-  // position and a dial end up sharing the same pixels.
-  const dialR = 11 * scale
+  // position and a limb end up sharing the same pixels.
+  //
+  // Half again the radius of the arc it replaces. An arc reads at any size
+  // because it is one curve against a track; two bones at forty degrees to two
+  // other bones is a comparison, and a comparison needs room. Measured on the
+  // rig through `drawing.test.ts`: at the arc's old radius, a target a full
+  // forty degrees from the reading separated from it by about five pixels.
+  const dialR = 15 * scale
   const dialGap = judged ? dialR * 2 + 10 * scale : 0
   const w = Math.max(valueW, ctx.measureText(label.toUpperCase()).width) + 22 * scale + dialGap
   const h = 38 * scale
@@ -1186,7 +1269,16 @@ function drawAngle(
   ctx.fillText(label.toUpperCase(), textX, ly + 9 * scale)
 
   if (judged) {
-    drawDial(ctx, lx - w / 2 + 11 * scale + dialR, ly, dialR, judged.value, judged.band, scale)
+    drawShapeDial(
+      ctx,
+      judged.metric,
+      lx - w / 2 + 11 * scale + dialR,
+      ly,
+      dialR,
+      judged.value,
+      judged.band,
+      scale,
+    )
   }
 }
 

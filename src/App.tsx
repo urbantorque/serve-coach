@@ -284,6 +284,20 @@ export default function App() {
     setSheet('guide-first')
   }, [])
 
+  /**
+   * Remember how tall the player is, or forget it.
+   *
+   * The one preference that changes a number rather than a target: it is what
+   * turns a speed in standing heights per second into km/h, and without it the
+   * app declines to guess — see `Prefs.heightCm`. Clearing it is a first-class
+   * outcome, which is why `undefined` is passed through rather than ignored: a
+   * player who typed a digit wrong must be able to take the number back off
+   * their report rather than being stuck with a converted speed built on it.
+   */
+  const setHeight = useCallback((heightCm: number | undefined) => {
+    setPrefs(writePrefs({ heightCm }))
+  }, [])
+
   /** Mark the guide as seen and continue to whichever intent opened it. */
   const finishFirstRunGuide = useCallback(() => {
     setPrefs(writePrefs({ seenFilmingGuide: true }))
@@ -1161,6 +1175,8 @@ export default function App() {
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}
+            heightCm={prefs.heightCm}
+            onSetHeight={setHeight}
           />
         )}
 
@@ -1174,6 +1190,11 @@ export default function App() {
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}
+            // Offered on a reopened report too. The height is a fact about the
+            // player rather than about the clip, so it converts a speed measured
+            // weeks ago exactly as well as one measured this morning.
+            heightCm={prefs.heightCm}
+            onSetHeight={setHeight}
           />
         )}
 

@@ -203,6 +203,102 @@ check('the dial never claims the arc on the body is the measurement', () => {
   )
 })
 
+check('the diagram in the plate is a limb, and it is the one being judged', () => {
+  /*
+   * What replaced the arc, and the reason it is worth a test of its own.
+   *
+   * The dial used to be a 180° sweep with the band shaded and the reading
+   * ticked. Honest, and useless to the person reading it: a club player has to
+   * convert a fraction of a sweep into a knee before it tells them anything.
+   * `targetShape.ts` now supplies the two bones either side of the joint at the
+   * angle that was measured, and the same pair dashed at the middle of the band.
+   *
+   * Two things have to hold for that to be an improvement rather than
+   * decoration. The drawing has to MOVE with the measurement — a figure that
+   * looked the same at every knee angle would be an arc with extra steps — and
+   * the target half has to stay dashed, which is the only thing separating it
+   * from a second, equally confident limb the player never produced.
+   */
+  const drawn = drawOnce({ annotation: 'trophy', bands: { kneeBend: [30, 60] } })
+  const bare = drawOnce({ annotation: 'trophy' })
+
+  // The dashed strokes are the target limb. Nothing else on a keyframe still is
+  // dashed — the ghost is not passed here — so their presence is the diagram's.
+  const dashed = drawn.strokes.filter((s) => s.dashed)
+  assert(dashed.length > 0, 'the target limb was drawn solid, so it reads as a second measurement')
+  assert(
+    bare.strokes.filter((s) => s.dashed).length === 0,
+    'something was already drawing dashed without a band, so this check proves nothing',
+  )
+
+  /*
+   * And the two limbs disagree by as much as the two numbers do.
+   *
+   * This is the claim the whole diagram rests on, and it is NOT the same as
+   * "the drawing changes when the band changes". Both figures are fitted into
+   * one box together — they have to be, or a 20° bend and a 50° one each fill
+   * their own box and come out looking alike — and a shared fit normalises away
+   * the absolute size. What survives it, and what a player actually reads, is
+   * the GAP between the solid limb and the dashed one.
+   *
+   * So: park the same serve against three bands. Asked for what it already
+   * does, the two limbs should land on top of each other; asked for something
+   * far away, they should separate. The rig's trophy knee sits near 47°.
+   *
+   * The pairing leans on draw order, which `drawShapeDial` fixes deliberately —
+   * the target goes down first and dashed, the player's own on top and solid, so
+   * the body is never underneath its own correction. The two segments after the
+   * last dashed one are therefore the solid limb.
+   */
+  const gapAgainst = (band: [number, number]) => {
+    const s = drawOnce({ annotation: 'trophy', bands: { kneeBend: band } }).strokes
+    const last = s.map((x) => x.dashed).lastIndexOf(true)
+    assert(last >= 1 && last + 2 < s.length, 'the plate did not draw a dashed pair and a solid pair')
+    const target = [s[last - 1], s[last]]
+    const yours = [s[last + 1], s[last + 2]]
+    assert(!yours[0].dashed && !yours[1].dashed, 'the player’s own limb came out dashed')
+    /*
+     * The two FREE ends, which is where an angle shows.
+     *
+     * `lines` is `[[a, b], [b, c]]` with `b` the joint, so `b` is the same point
+     * in both figures by construction — they share an origin. Averaging it in
+     * would halve every reading for no reason and quietly make the diagram look
+     * half as expressive as it is.
+     */
+    const ends = (pair: typeof yours): [number, number][] => [pair[0].from, pair[1].to]
+    const [ay, cy] = ends(yours)
+    const [at, ct] = ends(target)
+    // Measured against the drawn bone rather than in pixels: both figures are
+    // fitted into the plate together, so the absolute size is whatever the box
+    // was, and "a third of a thigh apart" is a claim that survives a change of
+    // plate size while "eight pixels apart" is not.
+    const bone = Math.hypot(yours[0].to[0] - yours[0].from[0], yours[0].to[1] - yours[0].from[1])
+    return (
+      (Math.hypot(ay[0] - at[0], ay[1] - at[1]) + Math.hypot(cy[0] - ct[0], cy[1] - ct[1])) /
+      2 /
+      Math.max(1e-6, bone)
+    )
+  }
+
+  const asIs = gapAgainst([44, 50])
+  const straighter = gapAgainst([2, 6])
+  const deeper = gapAgainst([82, 88])
+  assert(
+    asIs < 0.06,
+    `a target the player is already at drew a limb ${(asIs * 100).toFixed(0)}% of a bone from ` +
+      'their own, so the picture invents a correction on a serve that needs none',
+  )
+  assert(
+    straighter > 0.3 && deeper > 0.3,
+    `a target far from the reading separated by only ${(Math.min(straighter, deeper) * 100).toFixed(0)}% ` +
+      'of a bone, so the plate is not showing the difference it exists for',
+  )
+  note(
+    `  measured ~47°: the target limb sits ${(asIs * 100).toFixed(0)}% of a bone away for a band ` +
+      `at 47, ${(straighter * 100).toFixed(0)}% for one at 4 and ${(deeper * 100).toFixed(0)}% for one at 85`,
+  )
+})
+
 check('the racket is drawn when the hand is visible', () => {
   const withRacket = drawOnce().strokes.length
   const withoutBodyHeight = drawOnce({ bodyHeight: undefined }).strokes.length

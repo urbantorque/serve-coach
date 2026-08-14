@@ -10,7 +10,9 @@
  * editing it is visibly editing something a user can reach.
  */
 import { pickFocus } from '../lib/analysis/analyze'
+import { imageXSplitFrom } from '../lib/analysis/axes'
 import { measure } from '../lib/analysis/metrics'
+import { readHandSpeed } from '../lib/analysis/power'
 import { buildPhases, detectServe } from '../lib/analysis/phases'
 import { statusOf, weightedScore } from '../lib/analysis/geometry'
 import { diagnose } from '../lib/analysis/diagnose'
@@ -102,6 +104,19 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
   // `too_blurry` is measuring. Nothing here says "reject"; the resilience pass
   // decides that on its own.
   refused: { noise: 0.05, dropout: 0.35 },
+  // A recognisable club serve: legs nearly straight, trunk barely coiled,
+  // shoulders flat, arm folded at contact and the ball met below full reach.
+  // Every one of those lands outside its band, which is the only state in which
+  // `TargetShape` draws anything at all — a clean serve correctly shows no
+  // target figures, so the demo that exercises them has to be a faulty one.
+  shapes: {
+    trophyKneeAngle: 166,
+    shoulderYaw: 62,
+    hipYaw: 58,
+    shoulderTilt: 5,
+    contactReach: 1.16,
+    tossElbow: 138,
+  },
 }
 
 /** A basket of serves with a wandering contact height, for the comparison UI. */
@@ -170,6 +185,13 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): 
     focus: causalFocus(verdict) ?? pickFocus(fundamentals),
     diagnosis,
     triage: verdict,
+    // Measured for real, like the diagnosis above and for the same reason: a
+    // harness that fakes a number cannot show anybody the panel that renders it.
+    // The camera angle is read off the rig's own geometry rather than assumed
+    // side-on — `assessResilience` already produced it a few lines up, and the
+    // whole point of `readOutboundFlight`'s rescue was that assuming 90° makes a
+    // speed agree with itself at exactly one framing.
+    power: readHandSpeed(frames, skel, imageXSplitFrom(assessResilience(frames, skel).spatial)),
     frames,
     window: { start: frames[0].t, end: frames[frames.length - 1].t },
     serves: { count: 1, index: 0 },

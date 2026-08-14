@@ -48,6 +48,7 @@ import {
 import { diagnose } from './diagnose'
 import { capturedSamples } from './kalman'
 import { measure } from './metrics'
+import { readHandSpeed, timebaseTrust } from './power'
 import {
   NOTABLE_ROLL,
   assessSpatial,
@@ -711,21 +712,26 @@ const FRAME_ADVANCED = 0.5
  * not be looked at at all, which is a different thing from having looked and
  * found nothing, and only one of the two is worth telling a player about.
  *
- * WHAT NOBODY READS, stated here because it is the honest cost of this pass and
- * because a reader deserves to find it before they go looking for the card.
+ * WHAT THIS COSTS, and who reads it. 3 video seeks on ordinary footage and 12
+ * on footage fast enough to measure, per analysed clip, on top of the 40–55 the
+ * toss already spends.
  *
- * Nothing consumes `Analysis.outbound`. There is no metric row, no insight, no
- * copy, no overlay and no drill; the field is measured, stored and never shown.
- * That costs 3 video seeks on ordinary footage and 12 on footage fast enough to
- * measure, per analysed clip, on top of the 40–55 the toss already spends. It
- * is the same shape of decision as `Diagnosis.chain` and as `pancake_contact` —
- * measured, kept, not named — with one difference worth being plain about: the
- * chain is free once the frames are in hand and this is not. It is kept because
- * the coverage counts are the first evidence this app has of how often the
- * outbound ball is filmable at all, and that question has to be answered before
- * anyone writes a card. A card needs the `MIN_EVIDENCE` gate the handoff asks
- * for and copy that passes `voice.ts`; neither exists yet, and inventing them
- * here would be the wrong order.
+ * For most of this field's life nobody read it: measured, stored, never shown,
+ * the same shape of decision as `Diagnosis.chain` and `pancake_contact`, with
+ * one difference worth having been plain about — the chain is free once the
+ * frames are in hand and this is not. What it was kept for was the coverage
+ * counts, which are the first evidence this app has of how often the outbound
+ * ball is filmable at all, and that question had to be answered before anyone
+ * wrote a card. The two things a card was said to need were "the `MIN_EVIDENCE`
+ * gate the handoff asks for and copy that passes `voice.ts`".
+ *
+ * Both now exist. `power.ts` owns the gate — `MIN_SPEED_EVIDENCE`, set at
+ * `flaws.ts`'s own `MIN_EVIDENCE` rather than at a second number beside it — and
+ * `PowerPanel` owns the words, including what to say on the ordinary clip where
+ * the ball never resolved, which is what `coverage` was collected for. The
+ * reading itself is untouched: still `readOutboundFlight`, still in standing
+ * heights per second, still carrying `speedConfidence`. Nothing about how it is
+ * measured changed when it started being shown, which is the right order.
  *
  * TWO THINGS DELIBERATELY NOT ATTEMPTED, recorded at the site rather than in
  * `tiers.ts UNDER_RESOLVED`, which the handoff asked for and which cannot hold
@@ -947,16 +953,16 @@ async function findOutbound(
    *     is roughly half the error, in logs. It is a hedge against this fault,
    *     not a measure of it.
    */
-  const expectedGravity = (9.81 * bodyHeight) / 1.78
-  const fittedGravity = 2 * ball.coefficients[2]
-  const clockRatio = fittedGravity > 0 ? Math.sqrt(expectedGravity / fittedGravity) : 0
-  const timebaseTrust = Math.max(0, 1 - Math.min(1, Math.abs(clockRatio - 1)))
+  // The arithmetic itself moved to `power.ts` when the report gained a second
+  // speed to price. One clock check, two callers; written twice it would be
+  // tested once.
+  const clock = timebaseTrust(ball, bodyHeight)
 
   const launchAngleConfidence = track.fitConfidence * read.axisConfidence
   return {
     flight: {
       speed,
-      speedConfidence: launchAngleConfidence * timebaseTrust,
+      speedConfidence: launchAngleConfidence * clock,
       launchAngle_deg,
       launchAngleConfidence,
     },
@@ -1669,6 +1675,25 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     },
   })
 
+  /*
+   * How fast the hand was going through the strike.
+   *
+   * Free: a straight-line fit through three to six wrist positions already in
+   * memory, no seeks and no second pass. `resilience.spatial` is the same camera
+   * reading the outbound ball's speed is divided by, so the two speeds on the
+   * report cannot disagree about which way the camera was pointing — and `ball`
+   * is handed over because the toss's own curvature is the only witness this app
+   * has that the clip's seconds are seconds.
+   *
+   * The levelled `frames`, not `extracted.frames`. Every measurement on the
+   * report lives in the levelled space and a speed is no different: on a clip
+   * filmed with the phone cocked, image y is not up, and a hand travelling
+   * straight up the court would have its travel split across both axes. The
+   * magnitude survives a rotation, but only if both components come from the
+   * same space as the camera reading they are divided by.
+   */
+  const power = readHandSpeed(frames, skel, imageXSplitFrom(resilience.spatial), ball)
+
   // Named breakdowns, on the same landmarks and keyframes the measurements
   // used. A second pass over data already in memory rather than a second pass
   // over the video — it costs about a millisecond, which is why it is not
@@ -1765,6 +1790,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     ball,
     tossFlight,
     outbound,
+    power,
     serveType,
     // Stamped here, where the scores are produced, rather than on the way into
     // storage. A report spends its whole first life on screen unsaved — the
