@@ -8,6 +8,7 @@ import {
 } from '../lib/analysis/power'
 import type { Analysis } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
+import { bestHandSpeedLine, type BestHandSpeed } from '../lib/progress'
 import { Icon } from './primitives'
 
 /**
@@ -56,9 +57,15 @@ interface Props {
   heightCm?: number
   /** Remember a height. Absent where nothing can store one. */
   onSetHeight?: (cm: number | undefined) => void
+  /**
+   * The fastest hand speed measured across every session — see
+   * `bestHandSpeed`. Absent below two usable readings, same as every other
+   * cross-session record this app states.
+   */
+  bestSpeed?: BestHandSpeed
 }
 
-export default function PowerPanel({ analysis, heightCm, onSetHeight }: Props) {
+export default function PowerPanel({ analysis, heightCm, onSetHeight, bestSpeed }: Props) {
   const [asking, setAsking] = useState(false)
   const [draft, setDraft] = useState(() => (isPlausibleHeight(heightCm) ? String(heightCm) : ''))
 
@@ -142,6 +149,13 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight }: Props) {
               {hand.confidence < 0.65 && ' · read roughly'}
             </span>
           </div>
+
+          {/* A fact about the whole history, not this one swing — see
+              `bestHandSpeed`. Ungameable the same way the trip streak and
+              the tightest gap are: the only way to move this number is to
+              swing an actually faster hand through an actually readable
+              clip. */}
+          {bestSpeed && <p className="power-sub">{bestHandSpeedLine(bestSpeed, heightCm, analysis.createdAt)}</p>}
         </div>
       )}
 

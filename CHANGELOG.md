@@ -26,3 +26,12 @@ in `git log`.
   it's absent on screen — no card grows a blank gap for a record that
   doesn't exist yet. See `renderReportCard`/`renderBasketCard` in
   `src/lib/share/reportCard.ts`.
+- **Fastest hand speed, tracked across every session.** The "How fast you
+  served" panel now names your fastest measured hand speed ever, alongside
+  this serve's own reading — "Your fastest hand speed yet — 5.0 body
+  heights/sec." on the session that set it, "…so far is 5.0 body
+  heights/sec, set 15 Aug." on any other, in km/h once you've told the app
+  your height. Built from the measured hand speed only, never the estimated
+  ball-speed band — the one number `power.ts` already keeps on every saved
+  report so a season of them can be compared. See `bestHandSpeed`/
+  `bestHandSpeedLine` in `src/lib/progress.ts`.

@@ -8,7 +8,16 @@ import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
-import { bestConsistencyGap, buildConsistencyTrend, buildProgress, shortDate, streakLine, thenAndNow, typeOf } from './lib/progress'
+import {
+  bestConsistencyGap,
+  bestHandSpeed,
+  buildConsistencyTrend,
+  buildProgress,
+  shortDate,
+  streakLine,
+  thenAndNow,
+  typeOf,
+} from './lib/progress'
 import {
   analyzeAllServes,
   analyzeServe,
@@ -433,6 +442,9 @@ export default function App() {
   // showing up at all, across every serve type, the same choice `Home.tsx`
   // already makes with its own copy of this same call.
   const streak = useMemo(() => streakLine(sessions), [sessions])
+  // Not type-restricted either — a hand speed is a raw physical measurement
+  // with no target band to compare against, the same reason `streak` isn't.
+  const bestSpeed = useMemo(() => bestHandSpeed(sessions), [sessions])
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
     [sessions, drillLogs],
@@ -1193,6 +1205,7 @@ export default function App() {
             servePair={pair}
             bestGap={bestGapFor(typeOf(view.analysis))}
             streak={streak}
+            bestSpeed={bestSpeed}
             saveWarning={saveWarning}
             practice={practice}
             onLogDrill={logDrill}
@@ -1211,6 +1224,7 @@ export default function App() {
             onAnalyzeAnother={goHome}
             bestGap={bestGapFor(typeOf(view.session))}
             streak={streak}
+            bestSpeed={bestSpeed}
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}

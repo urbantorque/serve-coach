@@ -18,6 +18,8 @@ import {
   STREAK_GAP_MS,
   bestConsistencyGap,
   bestGapLine,
+  bestHandSpeed,
+  bestHandSpeedLine,
   buildConsistencyTrend,
   buildProgress,
   sameTrip,
@@ -25,6 +27,7 @@ import {
   thenAndNow,
   tripStreak,
 } from '../progress'
+import { MIN_SPEED_EVIDENCE } from '../analysis/power'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 import type { Session } from '../storage/db'
 
@@ -295,6 +298,62 @@ check('a different, older basket on screen reads as "so far", dated, not as curr
   const line = bestGapLine(record, 0)
   assert(!line.includes('yet'), `an old basket was still credited with the record: "${line}"`)
   assert(line.includes('so far'), `an old basket did not read as "so far": "${line}"`)
+})
+
+heading('The fastest hand ever measured, not the hand it was estimated from')
+
+/** A saved report carrying a hand-speed reading, thin but shaped like the real thing. */
+function powerServe(createdAt: number, id: string, speed: number, confidence = 0.9): Session {
+  return {
+    ...savedServe(createdAt, id),
+    power: { speed, confidence, samples: 5 },
+  } as unknown as Session
+}
+
+check('one reading has nothing to be a record against', () => {
+  assert(bestHandSpeed([powerServe(0, 'a', 4)]) === undefined, 'a single reading produced a record')
+})
+
+check('a reading below the evidence gate is not eligible, the same bar PowerPanel itself uses', () => {
+  const sessions = [powerServe(0, 'a', 4, MIN_SPEED_EVIDENCE - 0.01), powerServe(DAY, 'b', 3, 0.9)]
+  const record = bestHandSpeed(sessions)
+  // Only 'b' clears the gate, and one eligible reading is not a record either.
+  assert(record === undefined, 'a reading nobody was ever shown was counted towards a record')
+})
+
+check('the fastest reading wins, not the most recent', () => {
+  const sessions = [
+    powerServe(0, 'a', 3.2),
+    powerServe(DAY, 'b', 4.5), // the actual fastest
+    powerServe(2 * DAY, 'c', 3.8), // most recent, but not the fastest
+  ]
+  const record = bestHandSpeed(sessions)
+  assert(record !== undefined, 'three readings produced no record at all')
+  assert(record!.speed === 4.5, `wrong reading won: ${record!.speed}`)
+  assert(record!.createdAt === DAY, 'the record was not attributed to the session that actually set it')
+})
+
+heading('The hand-speed record is decided by what is on screen, not by what is newest')
+
+check('the session that set the record reads as current, by its own createdAt', () => {
+  const record = { speed: 4.5, createdAt: DAY }
+  const line = bestHandSpeedLine(record, undefined, DAY)
+  assert(line.includes('yet'), `the record session was not read as current: "${line}"`)
+  assert(line.includes('body heights/sec'), `no height on file should keep house units: "${line}"`)
+})
+
+check('a different, older session on screen reads as "so far", dated, not as current', () => {
+  const record = { speed: 4.5, createdAt: DAY }
+  const line = bestHandSpeedLine(record, undefined, 0)
+  assert(!line.includes('yet'), `an old session was still credited with the record: "${line}"`)
+  assert(line.includes('so far'), `an old session did not read as "so far": "${line}"`)
+})
+
+check('a stated height converts the record to km/h, the same as PowerPanel', () => {
+  const record = { speed: 4.5, createdAt: DAY }
+  const line = bestHandSpeedLine(record, 178, DAY)
+  assert(line.includes('km/h'), `a stated height did not switch the unit: "${line}"`)
+  assert(!line.includes('body heights'), `house units still appeared alongside a stated height: "${line}"`)
 })
 
 report()

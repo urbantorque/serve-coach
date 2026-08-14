@@ -14,7 +14,7 @@ import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consi
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { PracticeFocus } from '../lib/practice'
 import type { ServeType } from '../lib/storage/prefs'
-import { deltasAgainst, scoringVersionOf, type BestGap } from '../lib/progress'
+import { deltasAgainst, scoringVersionOf, type BestGap, type BestHandSpeed } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
 import { SCORING_VERSION, type Analysis, type PhaseId, type Status } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
@@ -95,6 +95,8 @@ interface Props {
    * carried onto the share card `share()` below builds, unmodified.
    */
   streak?: string
+  /** The fastest hand speed measured across every session — see `bestHandSpeed`. */
+  bestSpeed?: BestHandSpeed
   /**
    * The report on screen could not be written to storage.
    *
@@ -152,6 +154,7 @@ export default function Report({
   servePair,
   bestGap,
   streak,
+  bestSpeed,
   saveWarning,
   practice,
   onLogDrill,
@@ -565,7 +568,7 @@ export default function Report({
        * shown to nobody. `PowerPanel` renders nothing at all when neither
        * reading cleared its evidence gate, which is the common case.
        */}
-      <PowerPanel analysis={analysis} heightCm={heightCm} onSetHeight={onSetHeight} />
+      <PowerPanel analysis={analysis} heightCm={heightCm} onSetHeight={onSetHeight} bestSpeed={bestSpeed} />
 
       {/* The season-long focus, not this serve's own. See `Props.practice` —
           absent for anyone without two comparable sessions yet, exactly the

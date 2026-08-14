@@ -1,5 +1,6 @@
 import { FUNDAMENTALS } from './analysis/coaching'
 import { mean, statusOf } from './analysis/geometry'
+import { MIN_SPEED_EVIDENCE, isPlausibleHeight, speedInKmh } from './analysis/power'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
@@ -660,6 +661,63 @@ export function streakLine(sessions: Session[], now: number = Date.now()): strin
   const n = tripStreak(sessions, now)
   if (n < 2) return undefined
   return `${n} trips to the court in a row, roughly weekly.`
+}
+
+/**
+ * The fastest hand speed measured across every session, in house units
+ * (standing heights per second) — `power.ts`'s own doc comment on
+ * `Analysis.power` names this as the one number "kept on a saved report...
+ * so a season of them can be compared, which is the only reference this
+ * app has for what a speed means", so this is the record that comment was
+ * describing, given a place to live.
+ *
+ * Not the estimated ball-speed band, and not the rare measured-ball
+ * reading — both sit at a different tier of `PowerPanel`'s own hierarchy
+ * and neither is present on every session the way the hand speed is, so a
+ * "best" built by mixing them would compare different quantities across
+ * different sessions, the kind of comparison `typeOf`/`currentRubricEra`
+ * already refuse to make elsewhere in this file.
+ *
+ * Gated the same way `PowerPanel` gates a reading for display at all —
+ * `confidence >= MIN_SPEED_EVIDENCE` — so a record is never built from a
+ * number the player was never actually shown. Not serve-type-restricted,
+ * unlike `bestGapFor`: a serve's speed is a raw physical measurement with
+ * no target band to compare against, the same reason `tripStreak` counts
+ * across every type rather than one.
+ */
+export interface BestHandSpeed {
+  /** Standing heights per second — the house unit `power.ts` itself uses. */
+  speed: number
+  createdAt: number
+}
+
+export function bestHandSpeed(sessions: Session[]): BestHandSpeed | undefined {
+  const usable = sessions.filter(
+    (s) =>
+      typeof s.power?.speed === 'number' &&
+      Number.isFinite(s.power.speed) &&
+      s.power.speed > 0 &&
+      typeof s.power?.confidence === 'number' &&
+      s.power.confidence >= MIN_SPEED_EVIDENCE,
+  )
+  if (usable.length < 2) return undefined
+  const best = usable.reduce((a, b) => (b.power!.speed > a.power!.speed ? b : a))
+  return { speed: best.power!.speed, createdAt: best.createdAt }
+}
+
+/**
+ * The sentence a hand-speed record becomes, in whichever unit the app is
+ * entitled to use today — the same rule `PowerPanel`'s own `show`/`unit`
+ * apply, repeated here rather than imported because this produces a
+ * sentence and that produces JSX.
+ */
+export function bestHandSpeedLine(record: BestHandSpeed, heightCm: number | undefined, viewedAt: number): string {
+  const height = isPlausibleHeight(heightCm) ? heightCm : undefined
+  const show = (v: number) => (height ? Math.round(speedInKmh(v, height)).toString() : v.toFixed(1))
+  const unit = height ? 'km/h' : 'body heights/sec'
+  return record.createdAt === viewedAt
+    ? `Your fastest hand speed yet — ${show(record.speed)} ${unit}.`
+    : `Your fastest hand speed so far is ${show(record.speed)} ${unit}, set ${shortDate(record.createdAt)}.`
 }
 
 export const MEANINGFUL_DELTA = 3
