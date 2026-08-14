@@ -610,6 +610,52 @@ had never been written down anywhere.
       console and all of them returned correctly, and `?demo=` still renders a
       full report. It is the same block the court trip already records.
 
+- [x] **R42** — `storage/backup.ts` had no tests at all, on the one path in the
+      app that moves a player's entire record between devices. 260 lines, nine
+      exports, zero imports from any test file. It has already produced one real
+      defect — Phase 1's "a save that failed looked exactly like one that
+      succeeded" — and the closest thing to coverage since was R30 driving one
+      export by hand in a browser, which is a walk-through rather than a test.
+
+      What made it untestable was the database under it rather than the logic,
+      which is ordinary. `BackupStore` names that dependency and injects it,
+      defaulting to the real `db.ts` so nothing that does not pass a store
+      changes — the same trade `recordingType` makes for its two capability
+      probes, and the reason `access.ts` and `record.ts` exist at all. The store
+      in the test is a `Map`. Everything checked is the real `importBackup`
+      running against it, not a reimplementation of the merge.
+
+      `backupFileName` extracted while there: three lines of local-date stamping
+      inside a function that also builds a Blob and clicks an anchor, so the one
+      part of it checkable without a browser could not be. Same defect
+      `recordingFileName` already avoids — an evening export west of Greenwich
+      stamped with tomorrow, on the only thing telling two exports apart.
+
+      `storage/__tests__/backup.test.ts`, twenty checks, every one of them about
+      *losing* something, because that is the only thing that matters here. A
+      restore that adds nothing is an annoyance; one that silently drops four
+      reports, rolls a phone back, or abandons every row after the first failure
+      is the reason somebody stops trusting the app with their history. Three
+      refusals of files that are not backups; newer-wins in both directions plus
+      the same-age no-op that makes re-importing safe; a rejected clip never
+      re-entering the record; a damaged row skipped without costing the readable
+      rows beside it; the Phase 1 defect from the other side — one row that will
+      not fit leaves the other three landing, and is counted `failed` rather
+      than `skipped`, which are opposite messages to a player; drill records
+      merged per record so two phones can each keep what the other never saw; a
+      pre-drill-record backup still restoring; one prune for the whole import;
+      and a full round trip through a serialised file.
+
+      Verified the teeth in two passes rather than one, and the second pass
+      found a gap in how this ledger has been checking them. Removing the
+      newer-wins guard turned exactly two checks red, as expected. Removing the
+      per-row `catch` printed no `✗` at all — because `importBackup` then throws
+      out through a top-level `await`, which kills the file before the harness
+      can report anything. The suite still fails, on the runner's non-zero exit,
+      exactly as `run-tests.mjs` says it does. Worth recording because several
+      rounds in this phase confirmed "green" by grepping the output for `✗`,
+      which is blind to a file that dies. `npm test`'s exit code is the check.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the

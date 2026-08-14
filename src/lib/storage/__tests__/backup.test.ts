@@ -1,0 +1,367 @@
+/**
+ * Carrying a training history to a new phone, and what a restore is allowed to
+ * do to the one already there.
+ *
+ * This module had no tests at all until now, on the one path in the app that
+ * moves a player's entire record between devices. It has already produced one
+ * real defect — a save that failed after every retry looked exactly like one
+ * that had succeeded, fixed in Phase 1 in `App.tsx` and `importBackup` alike —
+ * and the closest thing to coverage since was one hand-driven export in a
+ * browser during R30, which is a walk-through rather than a test.
+ *
+ * What made it untestable was not the logic, which is ordinary, but the
+ * database underneath it. `BackupStore` is that dependency named and injected,
+ * the same trade `recordingType` makes for its two capability probes, and the
+ * store below is a plain Map. Everything checked here is the real
+ * `importBackup` running against it — not a reimplementation of the merge.
+ *
+ * The rules being pinned are all rules about *losing* something, because that
+ * is the only thing that matters here. A restore that adds nothing is an
+ * annoyance; a restore that silently drops four reports, rolls a phone back to
+ * an older state, or abandons every row after the first failure is the reason
+ * somebody stops trusting the app with their history.
+ */
+import {
+  backupFileName,
+  buildBackup,
+  importBackup,
+  type BackupStore,
+} from '../backup'
+import type { PracticeLog, Session } from '../db'
+import type { Analysis } from '../../analysis/types'
+import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
+
+/** A report as it appears in a backup file. */
+function session(id: string, createdAt: number, overall = 60, extra: Partial<Session> = {}): Session {
+  return {
+    id,
+    createdAt,
+    overall,
+    overallStatus: 'fair',
+    serveType: 'flat',
+    fundamentals: [
+      {
+        id: 'swing',
+        label: 'Swing',
+        score: overall,
+        metrics: [{ id: 'dropDepth', label: 'Racket drop', score: overall }],
+      },
+    ],
+    ...extra,
+  } as unknown as Session
+}
+
+const log = (id: string, doneAt: number, metricId = 'dropDepth'): PracticeLog => ({
+  id,
+  metricId,
+  drill: 'Wall drops',
+  assignedAt: doneAt,
+  doneAt,
+})
+
+/**
+ * The database, as a Map.
+ *
+ * `refuse` names ids the store will not accept however many times it is asked,
+ * standing in for a phone that is genuinely out of room after `saveSession`'s
+ * own pressure ladder has already run and given up.
+ */
+function memoryStore(opts: { sessions?: Session[]; logs?: PracticeLog[]; refuse?: string[] } = {}) {
+  const sessions = new Map((opts.sessions ?? []).map((s) => [s.id, s]))
+  const logs = new Map((opts.logs ?? []).map((l) => [l.id, l]))
+  const refuse = new Set(opts.refuse ?? [])
+  let prunes = 0
+
+  const store: BackupStore = {
+    listSessions: async () => [...sessions.values()].sort((a, b) => b.createdAt - a.createdAt),
+    saveSession: async (analysis: Analysis) => {
+      if (refuse.has(analysis.id)) throw new Error('QuotaExceededError')
+      sessions.set(analysis.id, analysis as unknown as Session)
+    },
+    listPracticeLogs: async () => [...logs.values()].sort((a, b) => b.doneAt - a.doneAt),
+    logPractice: async (l: PracticeLog) => {
+      logs.set(l.id, l)
+    },
+    pruneSessions: async () => {
+      prunes++
+    },
+  }
+  return { store, sessions, logs, prunes: () => prunes }
+}
+
+const fileOf = (sessions: Session[], practice?: PracticeLog[]) =>
+  JSON.stringify({
+    format: 'serve-coach-backup',
+    version: 1,
+    exportedAt: 1_700_000_000_000,
+    sessions,
+    ...(practice ? { practice } : {}),
+  })
+
+/* ------------------------------------------------------- refusing a bad file */
+
+heading('What is not a backup')
+
+check('a file that is not JSON is refused by name, not by stack trace', async () => {
+  const { store } = memoryStore()
+  let message = ''
+  try {
+    await importBackup('not json at all {', store)
+  } catch (err) {
+    message = (err as Error).message
+  }
+  // The player picked the wrong file. The sentence has to tell them which one
+  // to pick instead, which is the whole difference between this and a throw.
+  assert(/\.json file the app exported/.test(message), `unhelpful refusal: "${message}"`)
+})
+
+check('valid JSON that is not ours is refused', async () => {
+  const { store } = memoryStore()
+  let message = ''
+  try {
+    await importBackup(JSON.stringify({ hello: 'world' }), store)
+  } catch (err) {
+    message = (err as Error).message
+  }
+  assert(/Serve Coach backup/.test(message), `unhelpful refusal: "${message}"`)
+})
+
+check('our format with no sessions array is refused rather than half-read', async () => {
+  const { store } = memoryStore()
+  let threw = false
+  try {
+    await importBackup(JSON.stringify({ format: 'serve-coach-backup', version: 1 }), store)
+  } catch {
+    threw = true
+  }
+  assert(threw, 'a backup with no sessions key was accepted')
+})
+
+/* ------------------------------------------------------------- the merge itself */
+
+heading('Merging a backup onto a phone that has kept training')
+
+const onto = [session('a', 3_000, 60), session('b', 2_000, 55)]
+
+const fresh = await (async () => {
+  const m = memoryStore()
+  const result = await importBackup(fileOf([session('c', 5_000, 70)]), m.store)
+  return { result, m }
+})()
+
+check('a report the phone has never seen is added', async () => {
+  assert(fresh.result.added === 1, `added ${fresh.result.added}, expected 1`)
+  assert(fresh.m.sessions.has('c'), 'the new report is not in the store')
+})
+
+const older = await (async () => {
+  const m = memoryStore({ sessions: onto })
+  // Same id, older than what is here. Importing an old backup onto a phone that
+  // has kept training must not roll it back — this is the case the whole
+  // newer-wins rule exists for.
+  const result = await importBackup(fileOf([session('a', 1_000, 20)]), m.store)
+  return { result, m }
+})()
+
+check('an older copy of a report already here does not roll the phone back', () => {
+  assert(older.result.skipped === 1, `skipped ${older.result.skipped}, expected 1`)
+  assert(older.result.updated === 0, 'an older report overwrote a newer one')
+  assert(
+    older.m.sessions.get('a')!.overall === 60,
+    `the phone's own report was replaced: overall is now ${older.m.sessions.get('a')!.overall}`,
+  )
+})
+
+const newer = await (async () => {
+  const m = memoryStore({ sessions: onto })
+  const result = await importBackup(fileOf([session('a', 9_000, 88)]), m.store)
+  return { result, m }
+})()
+
+check('a newer copy of a report already here replaces it, and counts as updated', () => {
+  assert(newer.result.updated === 1, `updated ${newer.result.updated}, expected 1`)
+  assert(newer.result.added === 0, 'an update was counted as an addition')
+  assert(newer.m.sessions.get('a')!.overall === 88, 'the newer report did not land')
+})
+
+check('a report identical in age is left alone rather than rewritten', () => {
+  // `>=`, not `>`. Re-importing the same file twice must be a no-op, because
+  // that is what somebody does when they are not sure the first one worked.
+  assert(older.result.added === 0 && older.result.updated === 0, 'a same-age import wrote')
+})
+
+/* ------------------------------------------------- what must never get through */
+
+heading('What a restore refuses to put back')
+
+const rejected = await (async () => {
+  const m = memoryStore()
+  const result = await importBackup(
+    fileOf([
+      session('ok', 4_000, 70),
+      session('bad', 5_000, 70, { triage: { status: 'rejected' } } as Partial<Session>),
+    ]),
+    m.store,
+  )
+  return { result, m }
+})()
+
+check('a clip the engine refused never re-enters the record', () => {
+  // `saveSession` drops these on the way in, so counting one as added would tell
+  // the player two serves arrived and then show them one.
+  assert(!rejected.m.sessions.has('bad'), 'a rejected clip was restored into the history')
+  assert(rejected.result.added === 1, `added ${rejected.result.added}, expected only the good one`)
+  assert(rejected.result.skipped === 1, `skipped ${rejected.result.skipped}, expected the refusal`)
+})
+
+const damaged = await (async () => {
+  const m = memoryStore()
+  const result = await importBackup(
+    fileOf([
+      session('good', 4_000, 70),
+      { id: 'no-fundamentals', createdAt: 5_000, overall: 70 } as unknown as Session,
+      null as unknown as Session,
+    ]),
+    m.store,
+  )
+  return { result, m }
+})()
+
+check('a truncated or hand-edited row is skipped, and the rest still land', () => {
+  // `normalise` is the same gate storage reads through, and this is exactly the
+  // case it exists for. The important half is the second one: one unreadable
+  // row must not cost the player the readable ones beside it.
+  assert(damaged.m.sessions.has('good'), 'a good report was lost beside a damaged one')
+  assert(damaged.result.added === 1, `added ${damaged.result.added}, expected 1`)
+  assert(damaged.result.skipped === 2, `skipped ${damaged.result.skipped}, expected 2`)
+})
+
+const refused = await (async () => {
+  const m = memoryStore({ refuse: ['second'] })
+  const result = await importBackup(
+    fileOf([
+      session('first', 1_000),
+      session('second', 2_000),
+      session('third', 3_000),
+      session('fourth', 4_000),
+    ]),
+    m.store,
+  )
+  return { result, m }
+})()
+
+check('one row that will not fit does not abandon every row after it', () => {
+  // The Phase 1 defect, from the other side. Unguarded, a throw here lost every
+  // remaining row in the file *and* the tally already reached, so the player was
+  // told nothing at all had happened.
+  note(`${refused.result.added} added, ${refused.result.failed} failed`)
+  assert(refused.result.added === 3, `added ${refused.result.added} of the 3 that could fit`)
+  assert(refused.m.sessions.has('fourth'), 'rows after the failure were abandoned')
+})
+
+check('a row that would not fit is counted as failed, not as skipped', () => {
+  // They mean opposite things to a player. Skipped is "nothing would have
+  // changed"; failed is "this might work once you free some space", and only one
+  // of those is worth acting on.
+  assert(refused.result.failed === 1, `failed ${refused.result.failed}, expected 1`)
+  assert(refused.result.skipped === 0, `a full disk was reported as ${refused.result.skipped} skipped`)
+})
+
+/* ------------------------------------------------------------- drill records */
+
+heading('The drills the player says they did')
+
+const drills = await (async () => {
+  const m = memoryStore({ logs: [log('kept', 5_000), log('stale', 1_000)] })
+  const result = await importBackup(
+    fileOf(
+      [session('s', 9_000)],
+      [log('kept', 2_000), log('stale', 8_000), log('new', 4_000), { id: 'junk' } as unknown as PracticeLog],
+    ),
+    m.store,
+  )
+  return { result, m }
+})()
+
+check('drill records merge per record, newer winning, rather than replacing the list', () => {
+  // Two phones can each hold drills the other never saw. A restore that replaced
+  // the list would delete whichever side was not in the file.
+  assert(drills.m.logs.get('kept')!.doneAt === 5_000, "the phone's newer drill record was overwritten")
+  assert(drills.m.logs.get('stale')!.doneAt === 8_000, "the file's newer drill record did not land")
+  assert(drills.m.logs.has('new'), 'a drill record only the file had was lost')
+})
+
+check('an unidentifiable drill record is dropped without failing the import', () => {
+  assert(drills.result.skippedLogs === 2, `skippedLogs ${drills.result.skippedLogs}, expected 2`)
+  assert(drills.result.logs === 2, `logs ${drills.result.logs}, expected 2`)
+})
+
+check('drill records are counted apart from reports — they are not serves', () => {
+  assert(drills.result.added === 1, `added ${drills.result.added}, expected the one report`)
+})
+
+const noLogs = await (async () => {
+  const m = memoryStore()
+  // Every backup written before drill records existed has no `practice` key, and
+  // refusing those would strand exactly the histories most worth carrying.
+  const result = await importBackup(fileOf([session('s', 1_000)]), m.store)
+  return { result, m }
+})()
+
+check('a backup from before drill records existed still restores', () => {
+  assert(noLogs.result.added === 1, 'an older backup format was refused')
+  assert(noLogs.result.logs === 0 && noLogs.result.skippedLogs === 0, 'invented drill records')
+})
+
+/* -------------------------------------------------------------- housekeeping */
+
+heading('After the merge')
+
+check('the store is pruned once, over what the import actually left behind', async () => {
+  const m = memoryStore()
+  await importBackup(fileOf([session('a', 1), session('b', 2), session('c', 3)]), m.store)
+  // Once, not per row: pruning per report would re-read the whole store on every
+  // row of the file.
+  assert(m.prunes() === 1, `pruned ${m.prunes()} times for a three-report import`)
+})
+
+check('an export carries both the reports and the drill records', async () => {
+  const m = memoryStore({ sessions: onto, logs: [log('x', 1_000)] })
+  const backup = await buildBackup(m.store)
+  assert(backup.format === 'serve-coach-backup', 'the format tag is missing')
+  assert(backup.sessions.length === 2, `exported ${backup.sessions.length} reports, expected 2`)
+  assert(backup.practice?.length === 1, 'the drill records were left out of the export')
+})
+
+check('a round trip through a file changes nothing', async () => {
+  // The claim the whole feature rests on: what comes off one phone is what lands
+  // on the next one.
+  const from = memoryStore({ sessions: onto, logs: [log('x', 1_000)] })
+  const backup = await buildBackup(from.store)
+  const to = memoryStore()
+  const result = await importBackup(JSON.stringify(backup), to.store)
+  assert(result.added === 2, `${result.added} of 2 reports survived the round trip`)
+  assert(result.logs === 1, `${result.logs} of 1 drill records survived the round trip`)
+  for (const id of ['a', 'b']) assert(to.sessions.has(id), `report ${id} did not arrive`)
+})
+
+heading('What the file is called')
+
+check('the stamp is local time, not UTC', () => {
+  // Same defect `recordingFileName` avoids: an evening west of Greenwich stamped
+  // with tomorrow's date, on the only thing telling two exports apart.
+  const at = new Date(2026, 0, 2, 23, 30, 0)
+  assert(
+    backupFileName(at) === 'serve-coach-2026-01-02.json',
+    `stamped ${backupFileName(at)} for a local 2 January`,
+  )
+})
+
+check('months and days are padded, so the names sort', () => {
+  assert(
+    backupFileName(new Date(2026, 8, 5)) === 'serve-coach-2026-09-05.json',
+    `unpadded: ${backupFileName(new Date(2026, 8, 5))}`,
+  )
+})
+
+report()

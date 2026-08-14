@@ -109,14 +109,59 @@ export const isIOS = (): boolean => {
   }
 }
 
-export async function buildBackup(): Promise<Backup> {
+/**
+ * The storage an import reads and writes through.
+ *
+ * Named and injected for the same reason `recordingType` takes its two probes:
+ * everything interesting about a restore is the merge — which side wins, what
+ * is quietly dropped, what happens when one row will not fit — and none of it
+ * needs IndexedDB to be interesting. Left implicit, the whole of this module
+ * was reachable only from a browser with a database in it, which is to say it
+ * was never tested at all, on the one code path that carries a player's entire
+ * history to a new phone.
+ *
+ * The default is the real database, so nothing that does not pass a store
+ * changes behaviour.
+ */
+export interface BackupStore {
+  listSessions(): Promise<Session[]>
+  saveSession(analysis: Analysis, prune?: boolean): Promise<void>
+  listPracticeLogs(): Promise<PracticeLog[]>
+  logPractice(log: PracticeLog): Promise<void>
+  pruneSessions(): Promise<void>
+}
+
+const REAL_STORE: BackupStore = {
+  listSessions,
+  saveSession,
+  listPracticeLogs,
+  logPractice,
+  pruneSessions,
+}
+
+export async function buildBackup(store: BackupStore = REAL_STORE): Promise<Backup> {
   return {
     format: FORMAT,
     version: VERSION,
     exportedAt: Date.now(),
-    sessions: await listSessions(),
-    practice: await listPracticeLogs(),
+    sessions: await store.listSessions(),
+    practice: await store.listPracticeLogs(),
   }
+}
+
+/**
+ * What an exported file is called.
+ *
+ * Local date rather than `toISOString`, which is UTC: an evening export west of
+ * Greenwich would otherwise be stamped with tomorrow's date, and the stamp is
+ * the only thing telling two exports apart in a downloads folder. The same
+ * defect `recordingFileName` avoids, extracted here for the same reason — it
+ * was three lines inside a function that also touches the DOM, so the one part
+ * of it that can be checked without a browser could not be.
+ */
+export function backupFileName(at: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `serve-coach-${at.getFullYear()}-${p(at.getMonth() + 1)}-${p(at.getDate())}.json`
 }
 
 /** Hand the history to the player as a file. */
@@ -126,11 +171,7 @@ export async function downloadBackup(): Promise<number> {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  // Local date — toISOString is UTC, and an evening export west of Greenwich
-  // would be stamped with tomorrow's date.
-  const d = new Date(backup.exportedAt)
-  const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  a.download = `serve-coach-${stamp}.json`
+  a.download = backupFileName(new Date(backup.exportedAt))
   a.click()
   // Revoking immediately can cancel the download in some browsers.
   setTimeout(() => URL.revokeObjectURL(url), 1000)
@@ -167,7 +208,10 @@ export interface ImportResult {
  * A report already present wins if it is the newer of the two, so importing an
  * old backup onto a phone that has kept training does not roll it back.
  */
-export async function importBackup(text: string): Promise<ImportResult> {
+export async function importBackup(
+  text: string,
+  store: BackupStore = REAL_STORE,
+): Promise<ImportResult> {
   let parsed: unknown
   try {
     parsed = JSON.parse(text)
@@ -180,7 +224,7 @@ export async function importBackup(text: string): Promise<ImportResult> {
     throw new Error('That does not look like a Serve Coach backup.')
   }
 
-  const existing = new Map((await listSessions()).map((s) => [s.id, s]))
+  const existing = new Map((await store.listSessions()).map((s) => [s.id, s]))
   const result: ImportResult = { added: 0, updated: 0, skipped: 0, failed: 0, logs: 0, skippedLogs: 0 }
 
   for (const raw of backup.sessions) {
@@ -211,7 +255,7 @@ export async function importBackup(text: string): Promise<ImportResult> {
     // honest attempt: `saveSession` already strips stills and deletes old
     // reports before giving up, and that ladder ran again for this row alone.
     try {
-      await saveSession(session as Analysis, false)
+      await store.saveSession(session as Analysis, false)
       if (here) result.updated++
       else result.added++
     } catch {
@@ -235,7 +279,7 @@ export async function importBackup(text: string): Promise<ImportResult> {
   const logs = Array.isArray(backup.practice) ? backup.practice : []
   if (logs.length) {
     await safely(async () => {
-      const here = new Map((await listPracticeLogs()).map((l) => [l.id, l]))
+      const here = new Map((await store.listPracticeLogs()).map((l) => [l.id, l]))
       for (const raw of logs) {
         const log = normalisePracticeLog(raw)
         if (!log) {
@@ -247,14 +291,14 @@ export async function importBackup(text: string): Promise<ImportResult> {
           result.skippedLogs++
           continue
         }
-        await logPractice(log)
+        await store.logPractice(log)
         result.logs++
       }
     }, undefined)
   }
 
   // Once, over the store the import actually left behind.
-  await pruneSessions()
+  await store.pruneSessions()
 
   return result
 }
