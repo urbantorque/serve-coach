@@ -16,6 +16,8 @@
 import {
   MIN_THEN_AND_NOW_GAP_MS,
   STREAK_GAP_MS,
+  bestConsistencyGap,
+  buildConsistencyTrend,
   buildProgress,
   sameTrip,
   sixWeekMilestone,
@@ -218,6 +220,63 @@ check('session order does not matter', () => {
     tripStreak(forward, 5 * DAY) === tripStreak(backward, 5 * DAY),
     'passing the same two trips in reverse order changed the streak',
   )
+})
+
+heading('The tightest gap swept, not the latest one')
+
+/** A basket's worth of a report, thin but shaped like the real thing. */
+function basketServe(createdAt: number, id: string, overallScores: number[]): Session {
+  return {
+    id,
+    createdAt,
+    overall: Math.max(...overallScores),
+    serveType: 'flat',
+    fundamentals: [],
+    consistency: {
+      serves: overallScores.length,
+      overallScores,
+      serveNumbers: overallScores.map((_, i) => i + 1),
+      metrics: [],
+      score: 70,
+    },
+  } as unknown as Session
+}
+
+check('one basket has nothing to be a record against', () => {
+  const trend = buildConsistencyTrend([basketServe(0, 'a', [60, 75])])
+  assert(bestConsistencyGap(trend) === undefined, 'a single basket produced a record')
+})
+
+check('the smallest gap across every basket wins, not the most recent', () => {
+  const sessions = [
+    basketServe(0, 'a', [50, 80]), // gap 30
+    basketServe(DAY, 'b', [60, 68]), // gap 8 — the actual best
+    basketServe(2 * DAY, 'c', [55, 79]), // gap 24, most recent
+  ]
+  const trend = buildConsistencyTrend(sessions)
+  const record = bestConsistencyGap(trend)
+  assert(record !== undefined, 'three baskets produced no record at all')
+  assert(record!.gap === 8, `wrong basket won: gap ${record!.gap}, expected 8`)
+  assert(!record!.current, 'the most recent basket was credited with a record it did not set')
+})
+
+check('sweeping a new tightest basket is reported as current', () => {
+  const sessions = [basketServe(0, 'a', [50, 80]), basketServe(DAY, 'b', [63, 66])]
+  const trend = buildConsistencyTrend(sessions)
+  const record = bestConsistencyGap(trend)
+  assert(record?.gap === 3, `wrong gap: ${record?.gap}`)
+  assert(record?.current === true, 'the basket that just set the record was not marked current')
+})
+
+check('a tie keeps the earlier basket as the record, not the newer one', () => {
+  // reduce's own left-to-right fold keeps the first minimum it sees, which is
+  // the honest answer for a tie: the record was set the first time that gap
+  // was reached, not re-set every time it is matched again.
+  const sessions = [basketServe(0, 'a', [60, 70]), basketServe(DAY, 'b', [55, 65])]
+  const trend = buildConsistencyTrend(sessions)
+  const record = bestConsistencyGap(trend)
+  assert(record?.createdAt === 0, 'a tied gap moved the record to the later basket')
+  assert(record?.current === false, 'a tied, older basket was credited to the current one')
 })
 
 report()

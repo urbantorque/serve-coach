@@ -392,7 +392,7 @@ Everything is in `src/lib`:
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
 | `practice.ts` | finds the weakness that persists across trips to the court |
-| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, the trip streak, and what counts as one trip |
+| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, the trip streak, the best consistency gap swept, and what counts as one trip |
 | `screenFlow.ts` | every legal move between screens, as data a test can walk — describes `App.tsx`, never drives it |
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
 | `storage/db.ts` | the reports, and separately the drills the player says they did |

@@ -595,6 +595,35 @@ export function tripStreak(
 }
 
 /**
+ * The tightest gap between a player's best and worst serve, across every
+ * basket they've swept — and whether the basket that just finished is the
+ * one that set it.
+ *
+ * A different superlative from `progress.best`, which is a score; this is a
+ * spread, and a smaller one is the improvement. Ungameable the same way
+ * `tripStreak` is: `ConsistencyPoint.gap` only exists once a basket has gone
+ * through the sweep and come back with at least two readable serves
+ * (`buildConsistencyTrend`'s own gate), so the only way to move this number
+ * is to actually serve a tighter basket, never to reopen an old report.
+ *
+ * `undefined` below two baskets, for the same reason `sixWeekMilestone` is
+ * silent on a single report — one basket's gap is just that basket's, not a
+ * record yet.
+ */
+export interface BestGap {
+  gap: number
+  createdAt: number
+  /** Whether the basket the trend's own `latest` point came from is the one that set it. */
+  current: boolean
+}
+
+export function bestConsistencyGap(trend: ConsistencyTrend | undefined): BestGap | undefined {
+  if (!trend || trend.points.length < 2) return undefined
+  const best = trend.points.reduce((a, b) => (b.gap < a.gap ? b : a))
+  return { gap: best.gap, createdAt: best.createdAt, current: best.id === trend.latest.id }
+}
+
+/**
  * The sentence a streak becomes, or nothing where a number would say more
  * than it should.
  *
