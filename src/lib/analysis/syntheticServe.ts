@@ -197,6 +197,33 @@ export interface ServeDials {
    * tilt measurement is not.
    */
   depthBias: number
+  /**
+   * Total lateral camera drift across the whole clip, in the same frame
+   * units as `noise` — the handheld counterpart to `depthBias`.
+   *
+   * `depthBias` gives every landmark a shared offset re-rolled *per frame*,
+   * because a network guessing depth infers it for the whole body at once,
+   * on every frame independently. This gives every landmark a shared offset
+   * that grows smoothly across the *whole clip* instead, because a hand
+   * holding a phone does not re-aim randomly frame to frame — it drifts, in
+   * one direction, the way a grip settles or an arm tires over three seconds
+   * of filming. `noise` cannot stand in for this any more than it can for
+   * `depthBias`, and for the same reason: independent per-landmark jitter
+   * mostly cancels in a difference of two angles read at one instant, while a
+   * shared drift does not cancel at all — it carries the whole skeleton the
+   * same way, frame after frame, which a hip-shoulder separation or a
+   * toss-height reading has no way to tell apart from the player actually
+   * having moved.
+   *
+   * A straight line rather than a wobble with a frequency to tune: the
+   * dominant real case named in this app's own brief is somebody's arm
+   * settling in one direction over a few seconds, not a shake, and a linear
+   * drift is enough to ask the question this dial exists for — can a
+   * measurement taken as a *difference of two frames* survive the reference
+   * frame itself moving between them. Zero by default, so the clean rig and
+   * every existing expectation in the suite are untouched.
+   */
+  cameraPan: number
   /** Chance per frame that a limb is partly lost, as happens behind the body. */
   dropout: number
   /**
@@ -283,6 +310,7 @@ export const CLEAN_SERVE: ServeDials = {
   // calibration turns them up deliberately.
   depthNoise: 1,
   depthBias: 0,
+  cameraPan: 0,
   dropout: 0,
   occlusionSeconds: 0,
   lightLevel: 1,
@@ -589,6 +617,12 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // infers it for the whole body at once.
     const frameDepthBias = d.depthBias ? ((rand() + rand()) / 2 - 0.5) * 2 * d.depthBias : 0
     const zJitter = () => jitter() * d.depthNoise + frameDepthBias
+    // A straight line across the whole clip, centred on zero so `cameraPan`
+    // reads as the total drift end to end rather than the drift from some
+    // arbitrary start. `Math.max(1, count - 1)` only guards a one-frame clip,
+    // which no real dial combination produces — `count` follows `preroll` +
+    // `postroll` + `motionSeconds`, all positive, at whatever `fps` is passed.
+    const pan = d.cameraPan * (i / Math.max(1, count - 1) - 0.5)
 
     const image = world.map((p) => {
       // Rotate about the vertical axis so the camera can sit anywhere from
@@ -596,7 +630,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       const x = p.x * Math.cos(cam) - p.z * Math.sin(cam)
       const heightAboveGround = hipHeight - p.y
       return lm(
-        0.5 + x * SCALE + jitter(),
+        0.5 + x * SCALE + jitter() + pan,
         GROUND_Y - heightAboveGround * SCALE + jitter(),
         p.z + zJitter(),
       )

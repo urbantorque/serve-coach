@@ -1496,6 +1496,84 @@ check('a hand the app is sure of leaves the two readings alone', () => {
   }
 })
 
+heading('A camera that drifts across the clip')
+
+/**
+ * `cameraPan` in `syntheticServe.ts` — added to give this rig a failure mode
+ * `noise` cannot stand in for: a hand holding a phone drifting smoothly in
+ * one direction over the clip, rather than jittering independently frame to
+ * frame. `forwardDirection` in `metrics.ts` decides which way the swing
+ * travelled by fitting a slope to the wrist's image-x across a window, and a
+ * slope is exactly what a linear pan adds — so `contactAhead`, the one
+ * reading built on that sign, is where this dial's effect should actually
+ * show up first, not in the jitter-driven checks above.
+ *
+ * NOT a claim about how much a real handheld phone drifts in three seconds
+ * — nothing has calibrated that yet, the same honestly-unfinished state
+ * `UNCALIBRATED` already tracks for other signals. These values were found
+ * by sweeping the dial against this one synthetic serve until each named
+ * behaviour appeared, which is enough to prove the mechanism reaches the
+ * report at all; it is not evidence that 0.8 (80% of the frame) is a
+ * realistic pan, and the comments below say so at each value used.
+ */
+function pannedServe(cameraPan: number) {
+  const frames = buildServe({ cameraPan }, 50)
+  const skel = detectServe(frames, 50)
+  const fundamentals = measure(frames, skel, true)
+  const all = fundamentals.flatMap((f) => f.metrics)
+  const value = (id: string) => all.find((m) => m.id === id)?.value
+  return { contactAhead: value('contactAhead'), contactHeight: value('contactHeight'), dropDepth: value('dropDepth') }
+}
+
+check('the dial moves the wrist by exactly the pan dialled, centred on zero', () => {
+  const clean = buildServe({}, 50)
+  const panned = buildServe({ cameraPan: 0.1 }, 50)
+  const first = panned[0].image[LM.rightWrist].x - clean[0].image[LM.rightWrist].x
+  const last = panned[panned.length - 1].image[LM.rightWrist].x - clean[panned.length - 1].image[LM.rightWrist].x
+  near(first, -0.05, 1e-9, 'the pan at the first frame')
+  near(last, 0.05, 1e-9, 'the pan at the last frame')
+  near(last - first, 0.1, 1e-9, 'the total span across the clip')
+})
+
+check('a small pan leaves a confidently-signed reading untouched', () => {
+  const clean = pannedServe(0)
+  // A tenth of the frame, generous next to `noise`'s documented 0.5-1.5% —
+  // the real swing's own forward travel dominates a pan this small.
+  const small = pannedServe(0.1)
+  assert(small.contactAhead !== undefined, 'a small pan alone made a clean reading uncertain')
+  near(small.contactAhead!, clean.contactAhead!, 1e-6, 'contactAhead under a small pan')
+})
+
+check('a large enough pan can make a real sign genuinely uncertain, and the app says so rather than guessing', () => {
+  // Found by sweeping the dial: at this value the pan's own slope roughly
+  // cancels the swing's real forward travel, and `forwardDirection`'s 6%-of-
+  // body-height certainty floor correctly refuses to call a coin flip a
+  // direction — the honest answer, not a defect.
+  const uncertain = pannedServe(0.4)
+  assert(uncertain.contactAhead === undefined, 'a camera drift that erased the real forward travel still reported a sign')
+})
+
+check('past that, a large pan reads the swing travelling the wrong way', () => {
+  // Four fifths of the frame — not proposed as realistic, only as proof the
+  // failure this dial exists to name is reachable at all: past the point
+  // where the pan's own slope dominates the wrist's real one, the sign it
+  // hands to `contactAhead` is confidently the opposite of the truth.
+  const clean = pannedServe(0)
+  const reversed = pannedServe(0.8)
+  assert(clean.contactAhead! > 0, 'the clean baseline was not the positive case this check assumes')
+  assert(reversed.contactAhead! < 0, `a large pan did not flip the sign: ${reversed.contactAhead}`)
+  near(Math.abs(reversed.contactAhead!), Math.abs(clean.contactAhead!), 1e-6, 'the flipped magnitude')
+})
+
+check('vertical measurements never move, at any pan — the failure is horizontal only', () => {
+  const clean = pannedServe(0)
+  for (const pan of [0.1, 0.4, 0.8]) {
+    const p = pannedServe(pan)
+    near(p.contactHeight!, clean.contactHeight!, 1e-9, `contactHeight at pan ${pan}`)
+    near(p.dropDepth!, clean.dropDepth!, 1e-9, `dropDepth at pan ${pan}`)
+  }
+})
+
 /* ------------------------------------------------------ per-metric confidence */
 
 heading('Knowing which measurements to trust')
