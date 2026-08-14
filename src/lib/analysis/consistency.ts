@@ -136,13 +136,34 @@ export interface ServePairFrames {
  * serve's trophy beside the other's racket drop on the day that stops being
  * true.
  */
-export function pairStills(analyses: Analysis[], gap: ServeGap): ServePairFrames | undefined {
+/**
+ * The two serves a gap names, best first, or nothing when either is missing.
+ *
+ * Split out of `pairStills` because a second caller needs the same lookup for a
+ * different reason: the sweep no longer captures keyframe stills for every
+ * serve it measures — it captured thirty-six and showed twelve — so something
+ * has to say *which* two are worth going back to the video for, before the
+ * pictures exist. That question and "pair up the pictures" have to agree about
+ * which serves they mean, and they agree by being one function.
+ *
+ * Matched on the serve's own number in the clip rather than on position in the
+ * array, for the same reason `serveNumbers` exists: a sweep skips serves it
+ * could not read and covers only the last few of a long basket, so the third
+ * entry is routinely not the third serve.
+ */
+export function servesInGap(analyses: Analysis[], gap: ServeGap): [Analysis, Analysis] | undefined {
   const at = (serveNumber: number) =>
     analyses.find((a, i) => ((a.serves?.index ?? i) + 1) === serveNumber)
 
   const best = at(gap.best)
   const worst = at(gap.worst)
-  if (!best || !worst) return undefined
+  return best && worst ? [best, worst] : undefined
+}
+
+export function pairStills(analyses: Analysis[], gap: ServeGap): ServePairFrames | undefined {
+  const found = servesInGap(analyses, gap)
+  if (!found) return undefined
+  const [best, worst] = found
 
   const positions = best.phases
     .map((p) => ({

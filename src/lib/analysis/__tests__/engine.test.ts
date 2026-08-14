@@ -16,7 +16,7 @@ import {
   pickFocus,
   sweepServes,
   sweepWindow,
-  type Sweep,
+  type SweepRun,
   type SweepServe,
 } from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
@@ -1349,8 +1349,8 @@ const measuredServe = (index: number, count: number, overall = 70) => {
   return { fundamentals, overall, serves: { count, index } } as unknown as Analysis
 }
 
-interface SweepRun {
-  result: Sweep
+interface SweepProbe {
+  result: SweepRun
   /** Serve indexes handed to `measure`, in order — what the video work costs. */
   asked: number[]
   /** Every serve streamed out, in order. */
@@ -1375,7 +1375,7 @@ async function sweepOf(opts: {
   stopAfter?: number
   stopDuring?: number
   stopBefore?: boolean
-}): Promise<SweepRun> {
+}): Promise<SweepProbe> {
   const controller = new AbortController()
   const asked: number[] = []
   const streamed: SweepServe[] = []

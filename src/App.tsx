@@ -837,11 +837,18 @@ export default function App() {
         // "finished early".
         if (abortRef.current !== controller) return
 
-        // What the sweep actually read to a conclusion — not how many serves are
-        // in the clip, and not how many it set out to measure. Either of those
-        // would report serves nothing finished looking at as ones too unclear
-        // to read: the ones past the cap, or the ones the player stopped.
-        const result = buildConsistency(swept.serves, swept.attempted)
+        // Read off the sweep rather than computed here. It used to be this
+        // screen's job, and it moved into `analyzeAllServes` when the sweep
+        // stopped capturing keyframe stills for every serve: which two serves
+        // are worth pictures *is* this calculation, and it has to be made while
+        // the video element is still open, which is in there and not out here.
+        //
+        // It is still the same rule about what counts — what the sweep actually
+        // read to a conclusion, not how many serves are in the clip and not how
+        // many it set out to measure. Either of those would report serves
+        // nothing finished looking at as ones too unclear to read: the ones past
+        // the cap, or the ones the player stopped.
+        const result = swept.consistency
 
         if (!result) {
           // Stopped before there were two serves to compare. Nothing failed and
@@ -877,11 +884,14 @@ export default function App() {
         // says how many that was, and claims nothing about the ones it never
         // reached. Throwing four measured serves away because a fifth was never
         // started would be the dishonest half of that trade, not the safe one.
-        // Built here and not inside `buildConsistency`, because this is the last
-        // moment the swept analyses exist: that call reduces them to numbers and
-        // nothing else holds the originals. The stills go no further than the
-        // screen.
-        setPair(result.gap ? pairStills(swept.serves, result.gap) : undefined)
+        //
+        // The paired stills arrive with the sweep now rather than being built
+        // here. They have to: only the two serves the comparison names have any
+        // stills at all, and going back to the video for them needs a decoder
+        // that this screen no longer has by the time it gets here. Absent on a
+        // sweep the player stopped, which is deliberate — see `analyzeAllServes`.
+        // They still go no further than the screen.
+        setPair(swept.pair)
 
         const measured: Analysis = { ...analysis, consistency: result }
         remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)

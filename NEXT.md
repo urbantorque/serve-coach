@@ -535,6 +535,81 @@ had never been written down anywhere.
       be brittle and would not have caught this one — the defect was not that a
       number existed, but that it disagreed with a refusal fifteen files away.
 
+## Phase 7 — what the sweep spends, and what nothing was watching (R41–)
+
+- [x] **R41** — The sweep captured thirty-six keyframe stills to show twelve.
+
+      `MAX_CONSISTENCY_SERVES` is 6 and every swept serve captured its six
+      stills; `pairStills` reads the two serves `ServeGap` names. The other four
+      serves' stills were seeked to, decoded, drawn, JPEG-encoded and dropped —
+      twenty-four wasted seeks on the most expensive path in the app, and since
+      R18 the automatic one for any picked multi-serve clip.
+
+      Not a subtle bug and not a new one: `AnalyzeOptions` had already split
+      `skipThumbnails` out from `skipFramingCheck` and `skipBall` precisely so
+      the stills could be kept independently, and the comment explaining that
+      split argued for keeping them — "they are what lets the best serve in the
+      basket be shown beside the worst one as pictures rather than as two
+      sentences". True of two serves, and it bought them for six.
+
+      Fixed by moving when they are captured rather than whether. The sweep now
+      sets `skipThumbnails: true` like the other two, and `analyzeAllServes`
+      captures stills afterwards for exactly the serves the comparison names.
+      Same twelve pictures on screen, a third of the seeks.
+
+      That forced three smaller things, each worth naming because each removes a
+      duplicate rather than adding a path:
+
+        · `buildConsistency` moved from `App.tsx` into `analyzeAllServes`.
+          Deciding which two serves are worth going back for *is* that
+          calculation, and it has to happen while the video element is still
+          open — which is inside that function and nowhere else. `Sweep` now
+          carries `consistency` and `pair`; `compareServes` reads them instead
+          of recomputing. One computation, one owner, the `sweepWindow` rule.
+        · `keyframeOverlay` and `bandsFor`, lifted out of `runAnalysis`. There
+          are now two moments a still is drawn at, with entirely different
+          things in scope, and they would otherwise have been two copies of one
+          drawing call — the shape `readOutboundFlight` had to be rescued from,
+          a formula written twice, tested once, agreeing at exactly one camera
+          angle.
+        · `rawSpaceOf`, which is the pair of transforms `PosePlayer` has done
+          since it was written, given a name. A still is unrotated video pixels
+          and everything on an `Analysis` is levelled, so a still captured after
+          the fact has to rotate back or the skeleton sits off the body by
+          exactly the roll that was corrected. That failure would read as a
+          tracking bug rather than a plumbing one.
+
+      `SweepRun` was split from `Sweep` for the same honesty reason the rest of
+      this file works to: `sweepServes` is the loop, has no decoder, and is in
+      no position to promise a `consistency`.
+
+      `__tests__/sweepStills.test.ts`, eleven checks. The comparison names
+      exactly two serves at basket sizes 2, 4 and 6; it finds them by their
+      number in the clip rather than their array position, which is the case a
+      sweep that skipped a serve produces routinely; one serve costs one seek
+      per keyframe; **a pair costs 12 seeks where the sweep used to spend 36**,
+      stated as arithmetic over `MAX_CONSISTENCY_SERVES` rather than as a
+      remembered number; the four unpaired serves end with no thumbnail on any
+      phase; the strip built afterwards has both sides of every row populated,
+      which is the end-to-end claim; and `rawSpaceOf` is identity without tilt
+      and genuinely rotates with it.
+
+      WHAT IS NOT COVERED, and it is the wiring rather than the arithmetic: that
+      `analyzeAllServes` really passes `skipThumbnails: true` down per serve
+      needs a decoder, a landmarker and a real clip. Read, not run.
+
+      LIVE VERIFICATION WAS NOT POSSIBLE THIS TIME, said plainly rather than
+      skipped. `?demo=basket` is the only route to the paired strip and it
+      depends on `sampleClip`, which records a canvas — and the pane reports
+      `document.hidden`, which throttles that recorder. Earlier in the same
+      session it still limped through, returning 1.06 s of film for a 3 s
+      request; by the end of it `sampleClip` no longer resolved at all inside
+      twenty seconds. Checked that this is the environment and not the change:
+      the diff touches neither `sampleClip`, `sampleAnalysis.ts` nor the canvas
+      path, every other piece of the demo route was driven by hand in the
+      console and all of them returned correctly, and `?demo=` still renders a
+      full report. It is the same block the court trip already records.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the

@@ -38,6 +38,13 @@ import {
   statusOf,
   weightedScore,
 } from './geometry'
+import {
+  buildConsistency,
+  pairStills,
+  servesInGap,
+  type Consistency,
+  type ServePairFrames,
+} from './consistency'
 import { diagnose } from './diagnose'
 import { capturedSamples } from './kalman'
 import { measure } from './metrics'
@@ -46,6 +53,7 @@ import {
   assessSpatial,
   levelFrames,
   levelPivot,
+  unlevelFrames,
   type Spatial,
   type Tilt,
 } from './spatial'
@@ -184,7 +192,16 @@ export interface SweepServe {
   analysis?: Analysis
 }
 
-export interface Sweep {
+/**
+ * What the sweep loop itself produces: serves, and how it ended.
+ *
+ * Separate from `Sweep` because `sweepServes` is only the loop — it has no
+ * video, no decoder and no opinion about the comparison, which is exactly why
+ * it was split out and is the one part of this file a test can drive. Claiming
+ * to return a `Sweep` would have it promising a `consistency` it is in no
+ * position to compute.
+ */
+export interface SweepRun {
   /** Every serve that was measured, in the order they were hit. */
   serves: Analysis[]
   /**
@@ -198,6 +215,36 @@ export interface Sweep {
   attempted: number
   /** Whether the player stopped it early. */
   cancelled: boolean
+}
+
+/** The loop's result, plus what only a function holding the video can add. */
+export interface Sweep extends SweepRun {
+  /**
+   * The comparison those serves came to, computed by the sweep rather than by
+   * the caller.
+   *
+   * It used to be the caller's job, and it moved when the sweep stopped
+   * capturing keyframe stills for every serve: deciding which two serves are
+   * worth going back to the video for *is* this calculation, and it has to
+   * happen while the video element is still open, which is inside
+   * `analyzeAllServes` and nowhere else. Two places computing it from the same
+   * serves would be `sweepWindow`'s problem again — a number derived twice,
+   * drifting once.
+   *
+   * `undefined` when fewer than two serves were read, which is not an error;
+   * see `buildConsistency`.
+   */
+  consistency: Consistency | undefined
+  /**
+   * The best serve's keyframes beside the worst serve's, when there are two to
+   * compare and the stills could be captured.
+   *
+   * Only those two serves have stills at all — see `captureServeStills`. The
+   * other four in a full basket are measured, compared, and never pictured,
+   * which is what they already were: the sweep captured thirty-six stills and
+   * `pairStills` showed twelve of them.
+   */
+  pair: ServePairFrames | undefined
 }
 
 export interface SweepOptions {
@@ -232,7 +279,7 @@ export interface SweepOptions {
 export async function sweepServes(
   opts: SweepOptions,
   measure: (serveIndex: number, position: number, total: number) => Promise<Analysis>,
-): Promise<Sweep> {
+): Promise<SweepRun> {
   const { first, total } = sweepWindow(opts.count)
   const serves: Analysis[] = []
   let attempted = 0
@@ -310,22 +357,32 @@ export async function analyzeAllServes(
     const knownServeTimes = opts.knownServeTimes ?? (await locateServes(opts, video))
     if (knownServeTimes?.length) opts.onServesLocated?.(knownServeTimes)
 
-    return await sweepServes(opts, (serveIndex, position, total) =>
+    const swept = await sweepServes(opts, (serveIndex, position, total) =>
       analyzeServe(
         {
           ...opts,
           serveIndex,
-          // The two that cost real time, and not the stills.
-          //
-          // The preflight is a check this clip already passed on the serve the
-          // sweep was launched from, and the ball is a whole second pass over
-          // the video per serve for two measurements the comparison does not
-          // use. The stills are six seeks, they are what lets the best serve in
-          // the basket be shown beside the worst one as pictures rather than as
-          // two sentences, and until these three had separate names there was no
-          // way to keep them without buying the ball pass as well.
+          /*
+           * All three skipped, and the third one is new.
+           *
+           * The preflight is a check this clip already passed on the serve the
+           * sweep was launched from. The ball is a whole second pass over the
+           * video per serve, for two measurements the comparison does not use.
+           *
+           * The stills used to be kept, on the reasoning that they are what
+           * lets the best serve be shown beside the worst as pictures rather
+           * than as two sentences. True, and it bought them for every serve to
+           * show them for two: six seeks and six JPEG encodes each, thirty-six
+           * across a full basket, of which `pairStills` reads twelve. The other
+           * twenty-four were decoded, drawn, encoded and dropped.
+           *
+           * So they are skipped here and captured below, once the comparison
+           * has said which two serves it names. Same twelve pictures on screen,
+           * a third of the seeks.
+           */
           skipFramingCheck: true,
           skipBall: true,
+          skipThumbnails: true,
           knownServeTimes,
           onProgress: (p) =>
             opts.onProgress?.({
@@ -336,12 +393,43 @@ export async function analyzeAllServes(
         video,
       ),
     )
+
+    /*
+     * The comparison, and then pictures for the two serves it named.
+     *
+     * Computed here rather than by the caller because this is the last moment
+     * the video is open — the `finally` below detaches it — and going back for
+     * a still needs a decoder. It is also the only place that can be sure the
+     * serves and the comparison agree about which is which.
+     *
+     * A cancelled sweep gets no stills. The player has stopped this and is
+     * looking at a report already; spending twelve more seeks to decorate a
+     * comparison they interrupted is the cost this whole change exists to stop
+     * paying. `buildConsistency` still runs, so a stopped sweep is still
+     * compared and still filed — see `sweepServes`, which is careful that four
+     * measured serves out of six remain worth having.
+     */
+    const consistency = buildConsistency(swept.serves, swept.attempted)
+    let pair: ServePairFrames | undefined
+    if (consistency?.gap && !opts.signal?.aborted) {
+      opts.onProgress?.({ step: 'measuring', ratio: 0.9, detail: 'Capturing your key frames' })
+      const named = servesInGap(swept.serves, consistency.gap)
+      if (named) {
+        const aspect = video.videoWidth / Math.max(1, video.videoHeight)
+        for (const serve of named) {
+          await captureServeStills(video, serve, aspect, opts.signal)
+        }
+        pair = pairStills(swept.serves, consistency.gap)
+      }
+    }
+
+    return { ...swept, consistency, pair }
   } catch (err) {
     // Cancelled while locating the serves, before any of them was measured.
     // There is nothing to hand back, but there is also nothing wrong — the
     // player asked for it to stop and it stopped.
     if (!isCancelled(err)) throw err
-    return { serves: [], attempted: 0, cancelled: true }
+    return { serves: [], attempted: 0, cancelled: true, consistency: undefined, pair: undefined }
   } finally {
     // Runs on every exit, cancellation included. Leaving the source attached
     // holds a hardware decoder session open for a clip nobody is reading.
@@ -1188,6 +1276,148 @@ export function rediagnose(analysis: Analysis, tier: number | undefined): Analys
 }
 
 /**
+ * Which measurements have earned a target dial on their keyframe still.
+ *
+ * The band is the one the report prints, taken straight off the metric, so the
+ * picture and the caption cannot disagree — the rule `drawGhost` states at
+ * length and the reason the trophy ghost was withdrawn.
+ *
+ * Hedged measurements are left out. Anything under `SOFT_MEASUREMENT` is marked
+ * approximate on the card and barred from the headline, and a diagram is more
+ * convincing than either of those: a player who has seen a dial does not un-see
+ * it because a sentence nearby said "about". Absent values are excluded by
+ * construction, since a metric that could not be computed is not in
+ * `fundamentals`.
+ *
+ * Lifted out of `runAnalysis` when the sweep gained a second place that needs
+ * it: a serve whose stills are captured after the fact has only its finished
+ * `fundamentals` to work from, and re-deriving this rule there would be two
+ * copies of a judgement about what the app is confident enough to draw.
+ */
+export function bandsFor(fundamentals: Fundamental[]): Record<string, [number, number]> {
+  const bands: Record<string, [number, number]> = {}
+  for (const area of fundamentals) {
+    for (const m of area.metrics) {
+      if ((m.confidence ?? 1) >= SOFT_MEASUREMENT && m.ideal) bands[m.id] = m.ideal
+    }
+  }
+  return bands
+}
+
+/**
+ * The overlay every keyframe still carries, as one definition.
+ *
+ * The stills outlive the clip, so they carry the tracking with them — a bare
+ * frame is far less use weeks later than one showing the tracked body and the
+ * angle it was judged on. There are now two moments this is drawn at: during an
+ * ordinary analysis, from the values still in hand, and after a basket sweep,
+ * for the two serves the comparison turned out to name. Those two have entirely
+ * different things in scope and would have been two copies of one drawing call,
+ * which is the shape `readOutboundFlight` already had to be rescued from — a
+ * formula written twice, tested once, agreeing at exactly one camera angle.
+ *
+ * BOTH `frames` AND `ball` MUST BE IN RAW PIXEL SPACE. A still is unrotated
+ * video pixels, and a levelled skeleton drawn over them sits off the body by
+ * exactly the roll that was corrected. Inside `runAnalysis` that is free —
+ * `extracted.frames` is never levelled and `rawBall` is named for it. From a
+ * finished `Analysis` it is not: everything stored there lives in the levelled
+ * space, and `rawSpaceOf` is the inverse.
+ */
+export function keyframeOverlay(opts: {
+  /** Sampled frames in RAW pixel space — not the levelled ones. */
+  frames: Frame[]
+  /** The tossed flight in RAW pixel space, when there was one. */
+  ball: BallFlight | undefined
+  phases: Analysis['phases']
+  aspect: number
+  racket: 'right' | 'left'
+  bodyHeight: number
+  bands: Record<string, [number, number]>
+}): (ctx: CanvasRenderingContext2D, index: number, size: { w: number; h: number }) => void {
+  const { frames, ball, phases, aspect, racket, bodyHeight, bands } = opts
+  return (ctx, i, size) => {
+    drawSkeleton(ctx, {
+      frame: frames[phases[i].frame],
+      aspect,
+      rect: fitContain(size.w, size.h, aspect),
+      racket,
+      annotation: phases[i].id,
+      bands,
+      calloutScale: 1.7,
+      bodyHeight,
+      sequence: { frames, index: phases[i].frame },
+      ball: ballMarkerAt(ball, phases[i].t),
+    })
+  }
+}
+
+/**
+ * A finished report's frames and ball, rotated back into raw video pixels.
+ *
+ * Everything an `Analysis` stores lives in the levelled space, because that is
+ * the space it was all measured in. Anything drawing over the actual video has
+ * to undo that, and `PosePlayer` has done exactly this since it was written —
+ * this is that pair of transforms given a name, so the still capture and the
+ * player cannot drift into disagreeing about which space a picture is in.
+ *
+ * A clip that needed no correction has no `tilt`, and then both are already raw
+ * and are handed straight back.
+ */
+export function rawSpaceOf(
+  analysis: Pick<Analysis, 'frames' | 'ball' | 'tilt'>,
+  aspect: number,
+): { frames: Frame[]; ball: BallFlight | undefined } {
+  const { tilt } = analysis
+  if (!tilt) return { frames: analysis.frames, ball: analysis.ball }
+  return {
+    frames: unlevelFrames(analysis.frames, tilt),
+    ball: analysis.ball
+      ? levelFlight(analysis.ball, -tilt.roll_deg, { cx: tilt.cx, cy: tilt.cy }, aspect)
+      : undefined,
+  }
+}
+
+/**
+ * Fill in one already-measured serve's keyframe stills, from its report alone.
+ *
+ * The sweep's half of `keyframeOverlay`. It takes a finished `Analysis` rather
+ * than the pile of locals `runAnalysis` has, because by the time the comparison
+ * knows which two serves are worth pictures, every one of those locals is gone
+ * — the analyses are all that is left.
+ *
+ * Mutates `analysis.phases[].thumbnail` in place, which is what `pairStills`
+ * then reads. Deliberately: the alternative is a second parallel array of
+ * stills that has to be matched back up by keyframe id, which is the pairing
+ * bug `pairStills` already guards against, reintroduced one layer down.
+ */
+export async function captureServeStills(
+  video: HTMLVideoElement,
+  analysis: Analysis,
+  aspect: number,
+  signal?: AbortSignal,
+): Promise<void> {
+  const { frames, ball } = rawSpaceOf(analysis, aspect)
+  const thumbs = await captureThumbnails(
+    video,
+    analysis.phases.map((p) => p.t),
+    keyframeOverlay({
+      frames,
+      ball,
+      phases: analysis.phases,
+      aspect,
+      racket: analysis.handedness,
+      bodyHeight: analysis.scale?.bodyHeight ?? 0,
+      bands: bandsFor(analysis.fundamentals),
+    }),
+    undefined,
+    signal,
+  )
+  analysis.phases.forEach((p, i) => {
+    p.thumbnail = thumbs[i]
+  })
+}
+
+/**
  * Full pipeline: load the model, sample the video, find the serve, measure it.
  *
  * Everything here runs on the device. The video is never uploaded, and after
@@ -1429,50 +1659,26 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   const phases = buildPhases(frames, skel.keys)
 
-  /*
-   * Which measurements have earned a target dial on their keyframe still.
-   *
-   * The band is the one the report prints, taken straight off the metric, so
-   * the picture and the caption cannot disagree — the rule `drawGhost` states
-   * at length and the reason the trophy ghost was withdrawn.
-   *
-   * Hedged measurements are left out. Anything under `SOFT_MEASUREMENT` is
-   * marked approximate on the card and barred from the headline, and a diagram
-   * is more convincing than either of those: a player who has seen a dial does
-   * not un-see it because a sentence nearby said "about". Absent values are
-   * excluded by construction, since a metric that could not be computed is not
-   * in `fundamentals`.
-   */
-  const bands: Record<string, [number, number]> = {}
-  for (const area of fundamentals) {
-    for (const m of area.metrics) {
-      if ((m.confidence ?? 1) >= SOFT_MEASUREMENT && m.ideal) bands[m.id] = m.ideal
-    }
-  }
+  const bands = bandsFor(fundamentals)
 
   if (!opts.skipThumbnails) {
     onProgress({ step: 'measuring', ratio: 0.8, detail: 'Capturing your key frames' })
     const thumbs = await captureThumbnails(
       video,
       phases.map((p) => p.t),
-      (ctx, i, size) => {
-        // The stills outlive the clip, so they carry the tracking with them.
-        // Drawn from the raw frames and the raw flight: the still is unrotated
-        // pixels, and a levelled skeleton over them would sit off the body by
-        // exactly the roll that was corrected.
-        drawSkeleton(ctx, {
-          frame: extracted.frames[phases[i].frame],
-          aspect,
-          rect: fitContain(size.w, size.h, aspect),
-          racket: skel.racket,
-          annotation: phases[i].id,
-          bands,
-          calloutScale: 1.7,
-          bodyHeight: skel.bodyHeight,
-          sequence: { frames: extracted.frames, index: phases[i].frame },
-          ball: ballMarkerAt(rawBall, phases[i].t),
-        })
-      },
+      keyframeOverlay({
+        // Raw pixel space on both counts — see `keyframeOverlay`. In here that
+        // is simply what these two variables already are: `extracted.frames` is
+        // never levelled (`frames` is the reassigned one) and `rawBall` says so
+        // in its name.
+        frames: extracted.frames,
+        ball: rawBall,
+        phases,
+        aspect,
+        racket: skel.racket,
+        bodyHeight: skel.bodyHeight,
+        bands,
+      }),
       // Positional `undefined` so `maxWidth` keeps its default — restating 420
       // here would be two places to change the day it moves.
       undefined,
