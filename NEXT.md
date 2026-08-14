@@ -752,6 +752,47 @@ had never been written down anywhere.
       which is right: offline has to keep working, and precaching happens in the
       background after install rather than in front of the first paint.
 
+- [x] **R45** — Every refusal a clip can hit before a single frame is read had
+      no test. `describeDecodeFailure`'s four branches and `loadVideo`'s two
+      early refusals were reachable only from a browser holding a broken file,
+      so the one thing standing between a player and a dead end — the hint text
+      — was never checked.
+
+      Worth a round rather than filed as tidying, because of what these
+      sentences do. The clip plays perfectly in the camera roll, so "this video
+      could not be decoded" reads as the app being broken and has no action in
+      it. The whole function exists to convert that into a thirty-second fix,
+      and its central move is a *guess*: on a browser reporting no HEVC decoder
+      it attributes both `MEDIA_ERR_DECODE` and `MEDIA_ERR_SRC_NOT_SUPPORTED`
+      to High Efficiency, because that is overwhelmingly the cause and the
+      advice is actionable. R31 already found the cost of that guess escaping
+      its guard, and fixed it from the other side with `looksLikeNonVideo`.
+
+      Nine checks, driven against a stubbed decoder and a stubbed `MediaError`
+      whose codes are the spec's rather than invented — a stub numbering them
+      differently would let every branch pass while agreeing with no browser.
+      Every code, on both kinds of browser, produces a non-empty message and at
+      least one non-blank hint; a browser without HEVC gets the format named,
+      the Settings path, *and* the share-to-yourself escape for a clip already
+      filmed, which the setting cannot help; a browser that decodes HEVC is
+      never told its clip is probably HEVC, on any code; the two remaining
+      failures stay told apart, since "re-export it" and "wait for iCloud to
+      finish" are different actions; and a failure carrying no code at all —
+      reachable, because `waitFor` resolves on its timeout rather than
+      rejecting — still offers something concrete.
+
+      `loadVideo`'s own three outcomes too: an ordinary clip is not refused, a
+      clip with `NaN` or zero duration is refused rather than measured, and an
+      audio-only file gets "There is no picture in that file" — which is the
+      specific answer `looksLikeNonVideo` deliberately steps aside for by
+      returning false on `audio/*`. The no-length refusal's advice is checked on
+      both browsers, because the same failure means different things on each and
+      only one of them should be sent to an iPhone camera setting.
+
+      Verified the teeth: dropped the `!supportsHEVC()` guard so the guess
+      became unconditional — the exact confidently-wrong failure R31 fixed the
+      other half of — and two checks went red.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the

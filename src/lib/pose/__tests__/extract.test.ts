@@ -14,7 +14,12 @@
  * trade `drawing.test.ts` already makes for the overlay — and counting seeks
  * is the whole of R39's claim.
  */
-import { captureThumbnails, looksLikeNonVideo } from '../extract'
+import {
+  captureThumbnails,
+  describeDecodeFailure,
+  loadVideo,
+  looksLikeNonVideo,
+} from '../extract'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
 
 heading('Whether a declared type already rules out a video')
@@ -185,6 +190,195 @@ check('where the stop lands is what decides how much was kept', () => {
   assert(
     uninterrupted.seeks > stoppedAtThird.seeks,
     'stopping saved no seeks at all against running to the end',
+  )
+})
+
+/* ------------------------------------------- what a refused clip is told */
+
+/**
+ * The four `MediaError` codes, by the names the spec gives them.
+ *
+ * Declared here because Node has no `MediaError`, and the module under test
+ * reads it as a global. Values are the spec's, not invented: a stub numbering
+ * them differently would let the branches pass while agreeing with nothing a
+ * browser actually reports.
+ */
+const MEDIA_ERR = { ABORTED: 1, NETWORK: 2, DECODE: 3, SRC_NOT_SUPPORTED: 4 } as const
+
+/**
+ * A browser that does or does not have an HEVC decoder.
+ *
+ * `supportsHEVC` asks a throwaway `<video>` element, so this is the whole of
+ * what has to be faked to drive both sides of the branch that matters most —
+ * and it is the branch that matters most because the clip in question looks
+ * perfect in the player's camera roll.
+ */
+function withDecoder<T>(hevc: boolean, fn: () => T): T {
+  const previousDoc = (globalThis as { document?: unknown }).document
+  const previousErr = (globalThis as { MediaError?: unknown }).MediaError
+  ;(globalThis as { document?: unknown }).document = {
+    createElement: () => ({
+      canPlayType: (type: string) => (hevc && /hvc1|hev1/.test(type) ? 'probably' : ''),
+    }),
+  }
+  ;(globalThis as { MediaError?: unknown }).MediaError = {
+    MEDIA_ERR_ABORTED: MEDIA_ERR.ABORTED,
+    MEDIA_ERR_NETWORK: MEDIA_ERR.NETWORK,
+    MEDIA_ERR_DECODE: MEDIA_ERR.DECODE,
+    MEDIA_ERR_SRC_NOT_SUPPORTED: MEDIA_ERR.SRC_NOT_SUPPORTED,
+  }
+  try {
+    return fn()
+  } finally {
+    ;(globalThis as { document?: unknown }).document = previousDoc
+    ;(globalThis as { MediaError?: unknown }).MediaError = previousErr
+  }
+}
+
+const failed = (code: number | undefined, hevc: boolean) =>
+  withDecoder(hevc, () =>
+    describeDecodeFailure({ error: code === undefined ? null : { code } } as unknown as HTMLVideoElement),
+  )
+
+heading('What a clip the browser cannot open is told to do about it')
+
+check('every refusal carries something the player can actually do', () => {
+  // The point of this whole function. "This video could not be decoded" is a
+  // sentence with no action in it, and the clip plays fine in their camera roll,
+  // so it reads as the app being broken.
+  for (const hevc of [true, false]) {
+    for (const code of [undefined, MEDIA_ERR.ABORTED, MEDIA_ERR.NETWORK, MEDIA_ERR.DECODE, MEDIA_ERR.SRC_NOT_SUPPORTED]) {
+      const err = failed(code, hevc)
+      assert(err.message.trim().length > 0, `code ${code} produced no message`)
+      assert(err.hints.length > 0, `code ${code} (hevc ${hevc}) produced no hints`)
+      assert(
+        err.hints.every((h) => h.trim().length > 0),
+        `code ${code} (hevc ${hevc}) produced a blank hint`,
+      )
+    }
+  }
+})
+
+check('a browser with no HEVC decoder is told about High Efficiency and the setting that changes it', () => {
+  // The case this exists for: an iPhone on its default setting writes HEVC,
+  // Safari plays it, Chrome on Windows often will not. Naming the codec and the
+  // Settings path turns a dead end into a thirty-second fix.
+  for (const code of [MEDIA_ERR.DECODE, MEDIA_ERR.SRC_NOT_SUPPORTED]) {
+    const err = failed(code, false)
+    const all = err.hints.join(' ')
+    assert(/High Efficiency/.test(all), `code ${code} did not name the format`)
+    assert(/Settings › Camera › Formats/.test(all), `code ${code} did not give the fix`)
+    // The escape hatch for a clip already filmed, which the setting cannot help.
+    assert(/WhatsApp|email/.test(all), `code ${code} left an existing clip with nowhere to go`)
+  }
+})
+
+check('a browser that can play HEVC is never told its clip is probably HEVC', () => {
+  // The guess is deliberate and it is only defensible where the browser has
+  // just admitted it has no decoder. Made on a browser that does, it is
+  // confidently wrong about a file whose real problem is something else.
+  for (const code of [MEDIA_ERR.DECODE, MEDIA_ERR.SRC_NOT_SUPPORTED, MEDIA_ERR.NETWORK, undefined]) {
+    const all = failed(code, true).hints.join(' ')
+    assert(!/High Efficiency/.test(all), `code ${code} guessed HEVC at a browser that decodes it`)
+  }
+})
+
+check('the two decodable-browser failures are told apart, not merged', () => {
+  // A file that is not a video and a file that died part way through decoding
+  // need different actions — re-export it, versus wait for iCloud to finish
+  // downloading it — and only one of them is about the file being incomplete.
+  const unsupported = failed(MEDIA_ERR.SRC_NOT_SUPPORTED, true)
+  const decode = failed(MEDIA_ERR.DECODE, true)
+  assert(unsupported.message !== decode.message, 'both failures produced the same sentence')
+  assert(
+    /incomplete|iCloud|Google Photos/.test(decode.hints.join(' ')),
+    'a part-way decode failure did not mention an unfinished download',
+  )
+})
+
+check('a failure with no code at all still says something useful', () => {
+  // `video.error` can be null when the wait timed out rather than errored —
+  // `waitFor` resolves on its timeout, so this path is reachable.
+  const err = failed(undefined, true)
+  assert(err.hints.length >= 2, 'the fallback refusal has fewer than two hints')
+  assert(/trimming|MP4|MOV/i.test(err.hints.join(' ')), 'the fallback offers nothing concrete')
+})
+
+/* ------------------------------------------------ refusals before any frame */
+
+/** A `<video>` that has already finished loading, one way or another. */
+function loadedVideo(over: Partial<Record<string, unknown>>): HTMLVideoElement {
+  return {
+    src: '',
+    muted: false,
+    playsInline: false,
+    preload: '',
+    // Past both waits in `loadVideo`, so the checks are what is being exercised
+    // rather than the event plumbing.
+    readyState: 2,
+    error: null,
+    duration: 5,
+    videoWidth: 640,
+    videoHeight: 480,
+    ...over,
+  } as unknown as HTMLVideoElement
+}
+
+async function refusalFrom(video: HTMLVideoElement, hevc: boolean): Promise<Error | undefined> {
+  const previousDoc = (globalThis as { document?: unknown }).document
+  ;(globalThis as { document?: unknown }).document = {
+    createElement: () => ({
+      canPlayType: (type: string) => (hevc && /hvc1|hev1/.test(type) ? 'probably' : ''),
+    }),
+  }
+  try {
+    await loadVideo(video, 'blob:whatever')
+    return undefined
+  } catch (err) {
+    return err as Error
+  } finally {
+    ;(globalThis as { document?: unknown }).document = previousDoc
+  }
+}
+
+const noLength = await refusalFrom(loadedVideo({ duration: NaN }), true)
+const noLengthNoHevc = await refusalFrom(loadedVideo({ duration: NaN }), false)
+const zeroLength = await refusalFrom(loadedVideo({ duration: 0 }), true)
+const noPicture = await refusalFrom(loadedVideo({ videoWidth: 0 }), true)
+const fine = await refusalFrom(loadedVideo({}), true)
+
+heading('Refusals the decoder reaches before a single frame is read')
+
+check('a readable clip is not refused', () => {
+  assert(fine === undefined, `a perfectly ordinary clip was refused: ${fine?.message}`)
+})
+
+check('a clip with no readable length is refused rather than measured', () => {
+  // Both shapes of it. `NaN` is the common one — a container the browser parsed
+  // but could not size — and zero is what a still-downloading file reports.
+  assert(noLength !== undefined, 'a clip with NaN duration was accepted')
+  assert(zeroLength !== undefined, 'a clip with zero duration was accepted')
+  assert(/no readable length/.test(noLength!.message), `unexpected: "${noLength!.message}"`)
+})
+
+check('the no-length advice changes with whether the browser has HEVC', () => {
+  // The same failure means different things on the two browsers, and only one
+  // of them should be sent to the iPhone camera setting.
+  const withHevc = (noLength as unknown as { hints: string[] }).hints.join(' ')
+  const without = (noLengthNoHevc as unknown as { hints: string[] }).hints.join(' ')
+  assert(!/HEVC/.test(withHevc), 'a browser that decodes HEVC was told its clip was HEVC')
+  assert(/HEVC/.test(without), 'a browser with no HEVC decoder was not told the likely cause')
+  note('no-length refusal names HEVC only where the browser cannot decode it')
+})
+
+check('an audio-only file gets the specific answer, not a guess about the codec', () => {
+  // This is the answer `looksLikeNonVideo` deliberately steps aside for: it
+  // returns false for `audio/*` precisely so the decoder can say this instead.
+  assert(noPicture !== undefined, 'a file with no video track was accepted')
+  assert(/no picture in that file/.test(noPicture!.message), `unexpected: "${noPicture!.message}"`)
+  assert(
+    /audio recording/.test((noPicture as unknown as { hints: string[] }).hints.join(' ')),
+    'the no-picture refusal does not mention the likeliest cause',
   )
 })
 
