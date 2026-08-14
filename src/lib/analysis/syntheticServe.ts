@@ -224,6 +224,30 @@ export interface ServeDials {
    * every existing expectation in the suite are untouched.
    */
   cameraPan: number
+  /**
+   * Total fractional change in apparent size across the whole clip — the
+   * handheld counterpart to `cameraPan` for a camera that moves along its
+   * own optical axis (a dolly, or someone stepping back) instead of across
+   * it. 0.1 means the player reads 10% taller in the last frame than the
+   * first.
+   *
+   * Every height this app reports is a fraction of `bodyHeight`, and
+   * `bodyHeight` is measured once, from the stance window before the toss —
+   * see `detectServe`'s own comment on why a median taken there, not
+   * re-measured through the swing. A zoom drifting the apparent size AFTER
+   * that window is exactly the case that assumption cannot see happen: the
+   * calibration was correct when it was taken, and everything downstream of
+   * it is being asked about a body that has since changed size in the
+   * frame without changing size in the world.
+   *
+   * Applied from 1.0 at the first frame — true to the stance calibration,
+   * which this dial does not disturb — ramping linearly to `1 + cameraZoom`
+   * by the last one, around the player's own ground anchor rather than the
+   * frame centre, so a pure zoom is not conflated with `cameraPan`'s
+   * lateral drift. Zero by default, so the clean rig and every existing
+   * expectation in the suite are untouched.
+   */
+  cameraZoom: number
   /** Chance per frame that a limb is partly lost, as happens behind the body. */
   dropout: number
   /**
@@ -311,6 +335,7 @@ export const CLEAN_SERVE: ServeDials = {
   depthNoise: 1,
   depthBias: 0,
   cameraPan: 0,
+  cameraZoom: 0,
   dropout: 0,
   occlusionSeconds: 0,
   lightLevel: 1,
@@ -623,15 +648,25 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // which no real dial combination produces — `count` follows `preroll` +
     // `postroll` + `motionSeconds`, all positive, at whatever `fps` is passed.
     const pan = d.cameraPan * (i / Math.max(1, count - 1) - 0.5)
+    // 1.0 at the first frame, true to the stance calibration `cameraZoom`'s
+    // own doc comment describes — ramping linearly across the clip rather
+    // than centred like `pan`, because the thing under test is a
+    // calibration taken early drifting out of date, not a symmetric wobble.
+    const zoom = 1 + d.cameraZoom * (i / Math.max(1, count - 1))
 
     const image = world.map((p) => {
       // Rotate about the vertical axis so the camera can sit anywhere from
       // side-on to face-on, then drop z.
       const x = p.x * Math.cos(cam) - p.z * Math.sin(cam)
       const heightAboveGround = hipHeight - p.y
+      const rawX = 0.5 + x * SCALE
+      const rawY = GROUND_Y - heightAboveGround * SCALE
+      // Scaled about the player's own ground anchor, not the frame centre —
+      // a pan-like image-position shift would otherwise ride along with
+      // the zoom and confound the two dials' own separate questions.
       return lm(
-        0.5 + x * SCALE + jitter() + pan,
-        GROUND_Y - heightAboveGround * SCALE + jitter(),
+        0.5 + (rawX - 0.5) * zoom + jitter() + pan,
+        GROUND_Y + (rawY - GROUND_Y) * zoom + jitter(),
         p.z + zJitter(),
       )
     })

@@ -1574,6 +1574,86 @@ check('vertical measurements never move, at any pan — the failure is horizonta
   }
 })
 
+heading('A camera that zooms across the clip')
+
+/**
+ * `cameraZoom` in `syntheticServe.ts` — a different failure from `cameraPan`
+ * above, and a more consequential one. Every height this app reports is a
+ * fraction of `bodyHeight`, and `bodyHeight` is measured once, from the
+ * stance window before the toss (`phases.ts`'s own comment on why a median
+ * taken there rather than re-measured through the swing). A phone that
+ * drifts closer to or further from the player after that window — a dolly,
+ * or someone stepping back reflexively — changes the player's apparent size
+ * for every frame after the one `bodyHeight` was calibrated against, and
+ * nothing downstream re-checks the calibration.
+ *
+ * Unlike `cameraPan`, which mostly produced refusals (`contactAhead`
+ * declining to guess), this produces a CONFIDENT WRONG NUMBER — the exact
+ * failure LOOP.md's own founding rule warns against — because nothing in
+ * the pipeline compares the apparent size at contact against the apparent
+ * size at calibration. Found by sweeping the dial against this one
+ * synthetic serve, the same honesty `cameraPan`'s own comment holds: these
+ * values are not a claim about how much a real handheld phone drifts in
+ * three seconds, only proof the mechanism reaches the report, and reaches
+ * it at values a real handheld clip could plausibly produce.
+ */
+function zoomedServe(cameraZoom: number) {
+  const frames = buildServe({ cameraZoom }, 32)
+  const skel = detectServe(frames, 32)
+  const fundamentals = measure(frames, skel, true)
+  const all = fundamentals.flatMap((f) => f.metrics)
+  const metric = (id: string) => all.find((m) => m.id === id)
+  return {
+    bodyHeight: skel.bodyHeight,
+    contactHeight: metric('contactHeight')?.value,
+    contactStatus: metric('contactHeight')?.status,
+    kneeBend: metric('kneeBend')?.value,
+  }
+}
+
+check('the dial leaves the first frame at true scale and grows the apparent size linearly from there', () => {
+  const clean = buildServe({}, 32)
+  const zoomed = buildServe({ cameraZoom: 0.2 }, 32)
+  const groundAnchor = 0.95 // GROUND_Y in syntheticServe.ts
+  const heightAbove = (frame: typeof clean[number]) => groundAnchor - frame.image[LM.rightWrist].y
+  near(heightAbove(zoomed[0]), heightAbove(clean[0]), 1e-6, 'apparent size at the first frame, true to the stance calibration')
+  const lastFrac = heightAbove(zoomed[zoomed.length - 1]) / heightAbove(clean[clean.length - 1])
+  near(lastFrac, 1.2, 1e-6, 'apparent size at the last frame, scaled by 1 + cameraZoom')
+})
+
+check('height-normalised readings inflate with the zoom; angle readings do not move at all', () => {
+  const clean = zoomedServe(0)
+  // A fifth of the frame by the end of the clip — a phone that visibly
+  // drifts closer over one serve, not an extreme dial value.
+  const zoomed = zoomedServe(0.2)
+  assert(
+    zoomed.contactHeight! > clean.contactHeight! * 1.05,
+    `a 20% zoom drift did not meaningfully inflate contactHeight: ${clean.contactHeight} -> ${zoomed.contactHeight}`,
+  )
+  // Angles are scale-invariant by construction — the one class of
+  // measurement this failure mode cannot touch, whatever the zoom.
+  near(zoomed.kneeBend!, clean.kneeBend!, 1e-6, 'kneeBend under a 20% zoom drift')
+})
+
+check('a realistic-looking zoom is enough to flip a fundamental\'s status band', () => {
+  // Swept against this rig: 15% apparent growth over one serve — a phone
+  // drifting closer during the swing, well short of the 80%-of-frame pan
+  // needed to flip `contactAhead`'s sign above — already moves contactHeight
+  // from a fair reading into a good one, on a serve whose technique has not
+  // changed at all.
+  const clean = zoomedServe(0)
+  const zoomed = zoomedServe(0.15)
+  note(`contactHeight status: clean=${clean.contactStatus} (${clean.contactHeight?.toFixed(3)}), zoomed=${zoomed.contactStatus} (${zoomed.contactHeight?.toFixed(3)})`)
+  assert(
+    zoomed.contactHeight! > clean.contactHeight!,
+    `expected the zoomed reading to read higher, got ${zoomed.contactHeight} vs clean ${clean.contactHeight}`,
+  )
+  assert(
+    zoomed.contactStatus !== clean.contactStatus,
+    `a 15% zoom drift did not move contactHeight's status band at all: stayed ${clean.contactStatus}`,
+  )
+})
+
 /* ------------------------------------------------------ per-metric confidence */
 
 heading('Knowing which measurements to trust')
