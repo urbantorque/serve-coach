@@ -1405,4 +1405,76 @@ check('the launch angle is read against the camera angle, not against image x', 
   )
 })
 
+heading('A ball briefly occluded mid-flight, not just absent throughout')
+
+/**
+ * `trackOutbound`'s own design already answers this without a line of new
+ * code: it seeds a velocity from every candidate in the pool in turn and
+ * keeps whichever seed the most other candidates agree with, so nothing in
+ * it assumes the surviving detections are contiguous — a robust fit over
+ * whichever frames happen to have seen the ball, not a running sum that
+ * would notice a hole.
+ *
+ * The existing "too few frames produces nothing rather than a slope" check
+ * above already asks a related but different question: a camera that ran
+ * uniformly slower throughout. This asks the one the racket follow-through
+ * or the server's own body actually produces — a real detection on either
+ * side of a gap, not a thinner clip end to end. Read, not assumed: `struckBase`
+ * still renders real bitmaps through the real blob detector, and the frames
+ * dropped below are real detections removed after the fact, not a fixture
+ * built to already be gap-shaped.
+ */
+check('a contiguous mid-flight occlusion costs nothing a same-sized uniform reduction would not', () => {
+  const m = outboundDetections(struckBase)
+  const opts = { anchor: anchorFor(m.contact), aspect: ASPECT, bodyHeight: struckBase.bodyHeight }
+  const clean = trackOutbound(m.perFrame, opts)
+  assert(clean !== undefined, 'the rig could not even fit its own clean clip')
+
+  // Three frames out of the middle -- the racket follow-through or the
+  // server's own body crossing in front of the ball for an instant.
+  const mid = Math.floor(m.perFrame.length / 2)
+  const occluded = m.perFrame.filter((_, i) => !(i >= mid - 1 && i <= mid + 1))
+  const occludedTrack = trackOutbound(occluded, opts)
+  assert(
+    occludedTrack !== undefined,
+    `a 3-frame mid-flight gap alone lost the fit (${m.perFrame.length} down to ${occluded.length} frames)`,
+  )
+  assert(occluded.length < m.perFrame.length, 'dropping frames did not actually remove any detections')
+
+  // Compared against the same clip read clean, not against a truth value —
+  // the point under test is that the gap costs nothing beyond what fewer
+  // samples always costs, which the clean fit is the honest baseline for.
+  const cleanRead = readAt(clean!)
+  const occludedRead = readAt(occludedTrack!)
+  note(
+    `clean: ${cleanRead.speed.toFixed(2)} body heights/s, conf ${clean!.fitConfidence.toFixed(2)} ` +
+      `(${clean!.samples.length} samples); occluded: ${occludedRead.speed.toFixed(2)}, ` +
+      `conf ${occludedTrack!.fitConfidence.toFixed(2)} (${occludedTrack!.samples.length} samples)`,
+  )
+  within(
+    Math.abs(occludedRead.speed / cleanRead.speed - 1),
+    0,
+    0.05,
+    'speed drift from a mid-flight occlusion, against the same clip read clean',
+  )
+})
+
+check('occlusion severe enough to strand exactly the sample floor still fits, split across the gap', () => {
+  const m = outboundDetections(struckBase)
+  // Keep only the first two and the last few detections, whatever clears
+  // OUTBOUND_MIN_SAMPLES -- an occlusion spanning most of the window, split
+  // across its two edges rather than one contiguous chunk in the middle.
+  const edges = m.perFrame.filter((_, i) => i < 2 || i >= m.perFrame.length - 3)
+  const track = trackOutbound(edges, {
+    anchor: anchorFor(m.contact),
+    aspect: ASPECT,
+    bodyHeight: struckBase.bodyHeight,
+  })
+  note(`${edges.length} of ${m.perFrame.length} frames survive, split across a wide middle gap`)
+  assert(
+    track !== undefined,
+    `a severe split occlusion (${edges.length} of ${m.perFrame.length} frames, both ends) lost the fit entirely`,
+  )
+})
+
 report()
