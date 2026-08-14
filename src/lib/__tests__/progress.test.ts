@@ -29,6 +29,8 @@ import {
   bestOverallScoreLine,
   buildConsistencyTrend,
   buildProgress,
+  longestStreak,
+  longestStreakLine,
   sameTrip,
   sixWeekMilestone,
   thenAndNow,
@@ -231,6 +233,64 @@ check('session order does not matter', () => {
     tripStreak(forward, 5 * DAY) === tripStreak(backward, 5 * DAY),
     'passing the same two trips in reverse order changed the streak',
   )
+})
+
+heading('The longest streak ever, not just the one still standing')
+
+check('no history has no longest streak', () => {
+  assert(longestStreak([]) === 0, 'an empty history produced a nonzero longest streak')
+})
+
+check('a run that has since lapsed is still the longest streak, unlike tripStreak itself', () => {
+  const sessions = [savedServe(0, 'a'), savedServe(5 * DAY, 'b'), savedServe(11 * DAY, 'c')]
+  const longAfter = 11 * DAY + STREAK_GAP_MS + 30 * DAY
+  assert(tripStreak(sessions, longAfter) === 0, 'the fixture itself is not lapsed, this check is invalid')
+  assert(
+    longestStreak(sessions) === 3,
+    `a lapsed three-trip run was not remembered as the longest streak: ${longestStreak(sessions)}`,
+  )
+})
+
+check('an earlier, longer run beats a shorter run still in progress', () => {
+  // Three trips chained, a wide gap, then only two more — the longest run
+  // is the first three, not the two nearest "now".
+  const wideGap = STREAK_GAP_MS + DAY
+  const sessions = [
+    savedServe(0, 'a'),
+    savedServe(5 * DAY, 'b'),
+    savedServe(10 * DAY, 'c'),
+    savedServe(10 * DAY + wideGap, 'd'),
+    savedServe(10 * DAY + wideGap + 5 * DAY, 'e'),
+  ]
+  assert(
+    longestStreak(sessions) === 3,
+    `an earlier three-trip run was not picked over a later two-trip one: ${longestStreak(sessions)}`,
+  )
+})
+
+check('a single trip is a longest streak of one', () => {
+  assert(longestStreak([savedServe(0)]) === 1, 'a single trip produced no longest streak')
+})
+
+check('the current streak reads "yet" exactly when it equals the longest one', () => {
+  const sessions = [savedServe(0, 'a'), savedServe(5 * DAY, 'b'), savedServe(11 * DAY, 'c')]
+  const line = longestStreakLine(sessions, 11 * DAY)
+  assert(line !== undefined, 'a real three-trip longest streak produced no line')
+  assert(line!.includes('yet'), `a streak currently at its own record did not read as current: "${line}"`)
+  assert(line!.includes('3'), `the streak length itself did not appear: "${line}"`)
+})
+
+check('a lapsed record reads "was", not "yet", once the current streak has fallen behind it', () => {
+  const sessions = [savedServe(0, 'a'), savedServe(5 * DAY, 'b'), savedServe(11 * DAY, 'c')]
+  const longAfter = 11 * DAY + STREAK_GAP_MS + 30 * DAY
+  const line = longestStreakLine(sessions, longAfter)
+  assert(line !== undefined, 'a lapsed three-trip record produced no line')
+  assert(!line!.includes('yet'), `a lapsed record still read as current: "${line}"`)
+  assert(line!.includes('was'), `a lapsed record did not read as a past fact: "${line}"`)
+})
+
+check('a single trip has nothing to be a streak record against yet', () => {
+  assert(longestStreakLine([savedServe(0)], 0) === undefined, 'a single trip produced a longest-streak line')
 })
 
 heading('The tightest gap swept, not the latest one')

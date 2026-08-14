@@ -596,6 +596,49 @@ export function tripStreak(
 }
 
 /**
+ * The longest run of trips ever kept, not just the one still standing —
+ * `tripStreak`'s all-time counterpart, the same "durable fact, not a live
+ * one" distinction `bestConsistencyGap`/`bestHandSpeed`/`bestOverallScore`
+ * already draw against their own per-report readings. A current streak
+ * resets to zero the moment a gap runs long; this never does, which is
+ * exactly what makes it worth stating on its own during a slump rather
+ * than only while the streak itself is intact.
+ *
+ * Walked across the whole history rather than read off `tripStreak` at
+ * every point in time: the same trip boundaries, counted for the longest
+ * unbroken run anywhere in them, not only the run touching `now`.
+ */
+export function longestStreak(sessions: Session[], gapMs = STREAK_GAP_MS): number {
+  if (sessions.length === 0) return 0
+  const trips = tripsOf(sessions, MIN_THEN_AND_NOW_GAP_MS)
+  const tripEnd = (trip: Session[]) => trip[trip.length - 1].createdAt
+  let longest = 1
+  let current = 1
+  for (let i = 1; i < trips.length; i++) {
+    const gap = trips[i][0].createdAt - tripEnd(trips[i - 1])
+    current = gap > gapMs ? 1 : current + 1
+    longest = Math.max(longest, current)
+  }
+  return longest
+}
+
+/**
+ * The longest-streak record in words — `yet` when the player is currently
+ * living it, the same framing `bestGapLine` uses for whichever basket set
+ * its own record, plainly stated otherwise, including once a record run
+ * has long since lapsed and `tripStreak` itself has fallen back to zero.
+ * Silent below two trips, the same floor `tripStreak`'s own line holds.
+ */
+export function longestStreakLine(sessions: Session[], now: number = Date.now()): string | undefined {
+  const longest = longestStreak(sessions)
+  if (longest < 2) return undefined
+  const current = tripStreak(sessions, now)
+  return current === longest
+    ? `Your longest run yet — ${longest} trips in a row.`
+    : `Your longest run was ${longest} trips in a row.`
+}
+
+/**
  * The tightest gap between a player's best and worst serve, across every
  * basket they've swept — and whether the basket that just finished is the
  * one that set it.

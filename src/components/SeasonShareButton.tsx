@@ -21,7 +21,13 @@ export default function SeasonShareButton({ records }: Props) {
   const sharedTimer = useRef<ReturnType<typeof setTimeout>>()
   useEffect(() => () => clearTimeout(sharedTimer.current), [])
 
-  const count = [records.streak, records.bestScore, records.bestSpeed, records.bestGap].filter(Boolean).length
+  const count = [
+    records.streak,
+    records.longestStreak,
+    records.bestScore,
+    records.bestSpeed,
+    records.bestGap,
+  ].filter(Boolean).length
   if (count < 2) return null
 
   const share = async () => {

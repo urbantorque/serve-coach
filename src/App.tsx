@@ -20,6 +20,7 @@ import {
   buildProgress,
   gapDeltaFor,
   gapDeltaLine,
+  longestStreakLine,
   shortDate,
   sixWeekMilestone,
   streakLine,
@@ -454,6 +455,9 @@ export default function App() {
   // showing up at all, across every serve type, the same choice `Home.tsx`
   // already makes with its own copy of this same call.
   const streak = useMemo(() => streakLine(sessions), [sessions])
+  // Not type-restricted either, the same reason `streak` isn't — a run of
+  // trips is about showing up, across every serve type.
+  const longestStreakText = useMemo(() => longestStreakLine(sessions), [sessions])
   // Not type-restricted either — a hand speed is a raw physical measurement
   // with no target band to compare against, the same reason `streak` isn't.
   const bestSpeed = useMemo(() => bestHandSpeed(sessions), [sessions])
@@ -530,11 +534,12 @@ export default function App() {
   const seasonRecords = useMemo(
     () => ({
       streak,
+      longestStreak: longestStreakText,
       bestScore: sheetBestScore && bestOverallScoreEverLine(sheetBestScore),
       bestSpeed: bestSpeed && bestHandSpeedEverLine(bestSpeed, prefs.heightCm),
       bestGap: sheetBestGap && bestGapEverLine(sheetBestGap),
     }),
-    [streak, sheetBestScore, bestSpeed, sheetBestGap, prefs.heightCm],
+    [streak, longestStreakText, sheetBestScore, bestSpeed, sheetBestGap, prefs.heightCm],
   )
 
   /**
@@ -1498,6 +1503,12 @@ export default function App() {
                 specifically to look back across the whole history had nothing
                 to say about showing up at all. */}
             {streak && <p className="progress-foot">{streak}</p>}
+
+            {/* The durable half of the same fact — see `longestStreakLine`.
+                A current streak resets to zero the moment a gap runs long;
+                this is the one number in the cluster that a slump cannot
+                take away. */}
+            {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
 
             {/* Grouped with the streak rather than given its own chart-anchored
                 section, the same way the streak itself needed none: both are

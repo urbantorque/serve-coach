@@ -813,6 +813,7 @@ export async function shareBasketCard(
  */
 export interface SeasonRecords {
   streak?: string
+  longestStreak?: string
   bestScore?: string
   bestSpeed?: string
   bestGap?: string
@@ -831,18 +832,22 @@ export interface SeasonRecords {
  * No score ring, unlike every other card: there is no single number a
  * season reduces to without inventing one. Each record is its own row
  * instead, in the same order the progress sheet already renders them in —
- * `streak`, `bestScore`, `bestSpeed`, `bestGap` — so the card says nothing
- * the screen it was shared from does not already say, and in the same
- * order a player would find it in.
+ * `streak`, `longestStreak`, `bestSpeed`, `bestScore`, `bestGap` — so the
+ * card says nothing the screen it was shared from does not already say,
+ * and in the same order a player would find it in.
  *
  * `undefined` with nothing to show, the same floor `renderBasketCard`
  * holds for a basket with no gap yet — a card with zero rows is not a
  * smaller card, it is a blank one.
  */
 export async function renderSeasonCard(records: SeasonRecords, asOf: number): Promise<Blob | undefined> {
-  const rows = [records.streak, records.bestScore, records.bestSpeed, records.bestGap].filter(
-    (line): line is string => Boolean(line),
-  )
+  const rows = [
+    records.streak,
+    records.longestStreak,
+    records.bestSpeed,
+    records.bestScore,
+    records.bestGap,
+  ].filter((line): line is string => Boolean(line))
   if (rows.length === 0) return undefined
 
   const W = 1080

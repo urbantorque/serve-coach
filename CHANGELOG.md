@@ -101,3 +101,11 @@ in `git log`.
   words as worth announcing. All three share buttons now carry
   `aria-live="polite"`, so the same state a sighted player sees reaches
   an assistive-technology user too.
+- **Your longest run, not just the one you're on.** "Every serve so far"
+  and "Share your season" now also name the longest streak of trips
+  you've ever kept — "Your longest run was 7 trips in a row." — sitting
+  right beside the current streak. The current streak resets to zero the
+  moment a gap runs long; this one doesn't, so it stays worth knowing
+  even mid-slump. Ungameable the same way every record on this screen
+  is: only moves by actually getting on court. See `longestStreakLine`
+  in `src/lib/progress.ts`.
