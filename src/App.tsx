@@ -15,6 +15,7 @@ import {
   bestHandSpeedEverLine,
   buildConsistencyTrend,
   buildProgress,
+  gapDeltaLine,
   shortDate,
   sixWeekMilestone,
   streakLine,
@@ -510,6 +511,7 @@ export default function App() {
   // type — one trend, one record, the same reason `spread` itself is keyed
   // to `form.serveType` rather than recomputed per section.
   const sheetBestGap = useMemo(() => bestConsistencyGap(spread), [spread])
+  const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread) : undefined), [spread])
 
   /**
    * The tightest best-vs-worst gap swept, for whichever serve type is on
@@ -1524,6 +1526,9 @@ export default function App() {
                     thing the player is meant to be tracking. */}
                 <h3 className="block-title">How repeatable, over time</h3>
                 <GapTrend points={spread.points} />
+                {/* buildConsistencyTrend has computed this since it was
+                    written; the chart above never said it in words. */}
+                {sheetGapDelta && <p className="sheet-note">{sheetGapDelta}</p>}
                 {spread.recurring && (
                   <p className="sheet-note">
                     {spread.recurring.label} has been your least repeatable part in{' '}

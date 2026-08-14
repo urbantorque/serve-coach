@@ -55,3 +55,8 @@ in `git log`.
   around the slash; the fastest-hand-speed record right beneath it printed
   "body heights/sec" without. Both now read the same way, everywhere a
   speed is shown. See `formatSpeed` in `src/lib/analysis/power.ts`.
+- **"How repeatable, over time" now says how your last basket compared.**
+  The chart already carried this — the gap between your best and worst
+  serve shrinking or widening since the basket before — it just never said
+  so in words. "25 points tighter than your last basket," or wider, right
+  under the chart. See `gapDeltaLine` in `src/lib/progress.ts`.

@@ -18,6 +18,7 @@ import {
   STREAK_GAP_MS,
   bestConsistencyGap,
   bestGapEverLine,
+  gapDeltaLine,
   bestGapLine,
   bestHandSpeed,
   bestHandSpeedEverLine,
@@ -370,6 +371,37 @@ check('states the record plainly, in bestGapEverLine\'s own phrasing rather than
 check('dates the record the same way bestGapLine does', () => {
   const line = bestGapEverLine({ gap: 6, createdAt: DAY })
   assert(line.includes('set '), `no date attached: "${line}"`)
+})
+
+heading('How the most recent basket compared to the one before it')
+
+check('a shrinking gap — an improvement — reads as "tighter", not as a bad-direction number', () => {
+  const sessions = [basketServe(0, 'a', [50, 80]), basketServe(DAY, 'b', [60, 65])] // gap 30 -> gap 5
+  const trend = buildConsistencyTrend(sessions)!
+  const line = gapDeltaLine(trend)
+  assert(line !== undefined, 'a real, non-noise change produced nothing')
+  assert(line!.includes('tighter'), `a shrinking gap did not read as an improvement: "${line}"`)
+  assert(line!.includes('25'), `wrong magnitude: "${line}"`)
+})
+
+check('a widening gap reads as "wider"', () => {
+  const sessions = [basketServe(0, 'a', [60, 65]), basketServe(DAY, 'b', [50, 80])] // gap 5 -> gap 30
+  const trend = buildConsistencyTrend(sessions)!
+  const line = gapDeltaLine(trend)
+  assert(line !== undefined, 'a real, non-noise change produced nothing')
+  assert(line!.includes('wider'), `a widening gap did not read as a regression: "${line}"`)
+  assert(line!.includes('25'), `wrong magnitude: "${line}"`)
+})
+
+check('a noise-level change says nothing, the same floor every other delta in this file uses', () => {
+  const sessions = [basketServe(0, 'a', [60, 65]), basketServe(DAY, 'b', [61, 65])] // gap 5 -> gap 4
+  const trend = buildConsistencyTrend(sessions)!
+  assert(gapDeltaLine(trend) === undefined, 'a one-point change was read as a real one')
+})
+
+check('one basket has nothing to compare against, same as bestConsistencyGap', () => {
+  const trend = buildConsistencyTrend([basketServe(0, 'a', [60, 75])])!
+  assert(gapDeltaLine(trend) === undefined, 'a single basket produced a comparison')
 })
 
 heading('The hand-speed record, stated with no report on screen to compare it against')

@@ -667,6 +667,33 @@ export function bestGapEverLine(record: BestGap): string {
 }
 
 /**
+ * How the most recent basket's gap compared to the one before it, in words —
+ * `buildConsistencyTrend` has computed `gapDelta` since it was written and
+ * nothing has ever said it aloud.
+ *
+ * Silent below `MEANINGFUL_DELTA`, the same noise floor every other score-
+ * point comparison in this file already uses. Reusing it here is not a new
+ * number: `gapDelta` is a difference of two differences of overall scores,
+ * the same point scale `MEANINGFUL_DELTA` was calibrated against, so the
+ * existing threshold is being asked a second question, not invented for
+ * this one.
+ *
+ * Negative is the improvement — a shrinking gap — the opposite sign
+ * convention from every other delta in this app, where positive is always
+ * the good direction. Said in words rather than handed to `DeltaChip`,
+ * which assumes that convention and would show a real improvement as the
+ * "down and bad" colour without a flip nobody reading the component call
+ * site would notice was missing.
+ */
+export function gapDeltaLine(trend: ConsistencyTrend): string | undefined {
+  const { gapDelta } = trend
+  if (gapDelta === undefined || Math.abs(gapDelta) < MEANINGFUL_DELTA) return undefined
+  return gapDelta < 0
+    ? `${Math.abs(gapDelta)} points tighter than your last basket.`
+    : `${gapDelta} points wider than your last basket.`
+}
+
+/**
  * The sentence a streak becomes, or nothing where a number would say more
  * than it should.
  *
