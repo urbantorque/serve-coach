@@ -17,6 +17,7 @@ import {
   MIN_THEN_AND_NOW_GAP_MS,
   STREAK_GAP_MS,
   bestConsistencyGap,
+  bestGapLine,
   buildConsistencyTrend,
   buildProgress,
   sameTrip,
@@ -257,15 +258,7 @@ check('the smallest gap across every basket wins, not the most recent', () => {
   const record = bestConsistencyGap(trend)
   assert(record !== undefined, 'three baskets produced no record at all')
   assert(record!.gap === 8, `wrong basket won: gap ${record!.gap}, expected 8`)
-  assert(!record!.current, 'the most recent basket was credited with a record it did not set')
-})
-
-check('sweeping a new tightest basket is reported as current', () => {
-  const sessions = [basketServe(0, 'a', [50, 80]), basketServe(DAY, 'b', [63, 66])]
-  const trend = buildConsistencyTrend(sessions)
-  const record = bestConsistencyGap(trend)
-  assert(record?.gap === 3, `wrong gap: ${record?.gap}`)
-  assert(record?.current === true, 'the basket that just set the record was not marked current')
+  assert(record!.createdAt === DAY, 'the record was not attributed to the basket that actually set it')
 })
 
 check('a tie keeps the earlier basket as the record, not the newer one', () => {
@@ -276,7 +269,32 @@ check('a tie keeps the earlier basket as the record, not the newer one', () => {
   const trend = buildConsistencyTrend(sessions)
   const record = bestConsistencyGap(trend)
   assert(record?.createdAt === 0, 'a tied gap moved the record to the later basket')
-  assert(record?.current === false, 'a tied, older basket was credited to the current one')
+})
+
+heading('The record is decided by what is on screen, not by what is newest')
+
+/**
+ * The first version of `bestGapLine` took a `current` flag computed inside
+ * `bestConsistencyGap` itself, against the trend's own most recent point —
+ * which answers "is the record held by my latest basket", not "is the
+ * record held by the basket I am looking at right now". Those agree exactly
+ * until somebody reopens an old report, which live-testing this in the
+ * browser did immediately: an old, wide-gap basket still read "your
+ * tightest gap yet". `bestGapLine` now takes the viewed basket's own
+ * `createdAt` and compares directly, so the two questions cannot be
+ * conflated again.
+ */
+check('the basket that set the record reads as current, by its own createdAt', () => {
+  const record = { gap: 3, createdAt: DAY }
+  const line = bestGapLine(record, DAY)
+  assert(line.includes('yet'), `the record basket was not read as current: "${line}"`)
+})
+
+check('a different, older basket on screen reads as "so far", dated, not as current', () => {
+  const record = { gap: 3, createdAt: DAY }
+  const line = bestGapLine(record, 0)
+  assert(!line.includes('yet'), `an old basket was still credited with the record: "${line}"`)
+  assert(line.includes('so far'), `an old basket did not read as "so far": "${line}"`)
 })
 
 report()

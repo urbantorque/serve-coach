@@ -8,7 +8,7 @@ import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
-import { buildConsistencyTrend, buildProgress, shortDate, thenAndNow, typeOf } from './lib/progress'
+import { bestConsistencyGap, buildConsistencyTrend, buildProgress, shortDate, thenAndNow, typeOf } from './lib/progress'
 import {
   analyzeAllServes,
   analyzeServe,
@@ -481,6 +481,22 @@ export default function App() {
   const spread = useMemo(
     () => (form ? buildConsistencyTrend(sessions, form.serveType) : undefined),
     [sessions, form],
+  )
+
+  /**
+   * The tightest best-vs-worst gap swept, for whichever serve type is on
+   * screen — see `bestConsistencyGap`.
+   *
+   * Deliberately not read off `spread` above, which is pinned to the
+   * dominant type for the progress sheet's own two blocks. A report open on
+   * a kick serve while the player mostly films flat ones would otherwise show
+   * a flat-serve record under a kick-serve basket with nothing on screen
+   * saying so — the same confidently-wrong-type mismatch `priorTo` below
+   * already guards against for a score delta.
+   */
+  const bestGapFor = useCallback(
+    (serveType: ServeType) => bestConsistencyGap(buildConsistencyTrend(sessions, serveType)),
+    [sessions],
   )
 
   /**
@@ -1171,6 +1187,7 @@ export default function App() {
                 : undefined
             }
             servePair={pair}
+            bestGap={bestGapFor(typeOf(view.analysis))}
             saveWarning={saveWarning}
             practice={practice}
             onLogDrill={logDrill}
@@ -1187,6 +1204,7 @@ export default function App() {
             previous={priorTo(view.session.createdAt, typeOf(view.session))}
             onBack={goHome}
             onAnalyzeAnother={goHome}
+            bestGap={bestGapFor(typeOf(view.session))}
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}

@@ -10,6 +10,7 @@ import {
   type ServePairFrames,
 } from '../lib/analysis/consistency'
 import { shareBasketCard } from '../lib/share/reportCard'
+import { bestGapLine, type BestGap } from '../lib/progress'
 
 /**
  * How far each measurement travelled across the basket.
@@ -160,9 +161,17 @@ interface Props {
   pair?: ServePairFrames
   /** When the clip this basket came from was filmed — stamped on the shared card. */
   createdAt: number
+  /**
+   * The tightest best-vs-worst gap swept across every basket — see
+   * `bestConsistencyGap`. Absent below two baskets, same as every other
+   * cross-session record this app states. Whether *this* basket is the one
+   * that set it is decided by `bestGapLine` against `createdAt` below, not
+   * carried on this value.
+   */
+  bestGap?: BestGap
 }
 
-export default function ConsistencyPanel({ consistency: c, onDismiss, pair, createdAt }: Props) {
+export default function ConsistencyPanel({ consistency: c, onDismiss, pair, createdAt, bestGap }: Props) {
   const [sharing, setSharing] = useState<'idle' | 'working' | 'done'>('idle')
   const sharedTimer = useRef<ReturnType<typeof setTimeout>>()
   useEffect(() => () => clearTimeout(sharedTimer.current), [])
@@ -232,6 +241,12 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
       </div>
 
       {c.gap && <BestAgainstWorst gap={c.gap} />}
+
+      {/* A fact about the whole history, not this basket alone — see
+          `bestConsistencyGap`. Ungameable the same way the home screen's
+          trip streak is: the only way to move this number is to sweep an
+          actually tighter basket. */}
+      {bestGap && <p className="consistency-foot">{bestGapLine(bestGap, createdAt)}</p>}
 
       {/* Only when the pictures describe the two serves the words just named.
           A pair left over from a comparison whose gap has since been recomputed

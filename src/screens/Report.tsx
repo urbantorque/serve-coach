@@ -14,7 +14,7 @@ import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consi
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { PracticeFocus } from '../lib/practice'
 import type { ServeType } from '../lib/storage/prefs'
-import { deltasAgainst, scoringVersionOf } from '../lib/progress'
+import { deltasAgainst, scoringVersionOf, type BestGap } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
 import { SCORING_VERSION, type Analysis, type PhaseId, type Status } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
@@ -84,6 +84,13 @@ interface Props {
    */
   servePair?: ServePairFrames
   /**
+   * The tightest best-vs-worst gap swept across every basket — see
+   * `bestConsistencyGap`. Computed across sessions in `App.tsx`, the same
+   * way `practice` below is, and handed to `ConsistencyPanel` unmodified,
+   * which decides whether this specific report set it against `createdAt`.
+   */
+  bestGap?: BestGap
+  /**
    * The report on screen could not be written to storage.
    *
    * Storage is best-effort — see `db.ts` — so a save failure never blocks this
@@ -138,6 +145,7 @@ export default function Report({
   onPickTier,
   statedTier,
   servePair,
+  bestGap,
   saveWarning,
   practice,
   onLogDrill,
@@ -598,6 +606,7 @@ export default function Report({
           onDismiss={() => setHidSpreads(true)}
           pair={servePair}
           createdAt={analysis.createdAt}
+          bestGap={bestGap}
         />
       )}
 

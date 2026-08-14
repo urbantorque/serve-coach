@@ -613,14 +613,38 @@ export function tripStreak(
 export interface BestGap {
   gap: number
   createdAt: number
-  /** Whether the basket the trend's own `latest` point came from is the one that set it. */
-  current: boolean
 }
 
 export function bestConsistencyGap(trend: ConsistencyTrend | undefined): BestGap | undefined {
   if (!trend || trend.points.length < 2) return undefined
   const best = trend.points.reduce((a, b) => (b.gap < a.gap ? b : a))
-  return { gap: best.gap, createdAt: best.createdAt, current: best.id === trend.latest.id }
+  return { gap: best.gap, createdAt: best.createdAt }
+}
+
+/**
+ * The sentence a tightest-gap record becomes.
+ *
+ * States the fact rather than congratulating it, the same restraint
+ * `sixWeekMilestone` holds: "your tightest yet" lets a smaller number speak
+ * for itself, which is a different sentence from telling somebody they did
+ * well.
+ *
+ * `viewedAt` is the `createdAt` of whichever basket is actually on screen,
+ * not "the most recent basket in the whole history" — those are different
+ * baskets the moment somebody reopens an old report. The first version of
+ * this compared the record against the trend's own latest point regardless
+ * of which report was open, which told a player looking at an old, wide
+ * basket that it was their tightest "yet" — confident nonsense caught by
+ * actually opening two different reports rather than by reasoning about the
+ * code. Dated when the basket on screen is not the record, using the same
+ * `shortDate` the then-and-now pair already stamps its two columns with, so
+ * a record from three weeks ago and one set just now do not read as the
+ * same claim.
+ */
+export function bestGapLine(record: BestGap, viewedAt: number): string {
+  return record.createdAt === viewedAt
+    ? `Your tightest gap yet — ${record.gap} points between your best serve and your worst.`
+    : `Your tightest gap so far is ${record.gap} points, set ${shortDate(record.createdAt)}.`
 }
 
 /**
