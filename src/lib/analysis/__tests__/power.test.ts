@@ -27,6 +27,7 @@ import { LM } from '../geometry'
 import { detectServe } from '../phases'
 import {
   MIN_SPEED_EVIDENCE,
+  estimateBallSpeed,
   isPlausibleHeight,
   readHandSpeed,
   speedInKmh,
@@ -439,6 +440,118 @@ check('a clip with a toss fit is priced by it rather than by the blanket dock', 
       `one (${bare.confidence.toFixed(3)}) — so checking does not pay and nobody will`,
   )
   note(`  unwitnessed ${bare.confidence.toFixed(3)} · verified ${withBall.confidence.toFixed(3)}`)
+})
+
+heading('The serve speed, which is worked out rather than seen')
+
+check('the estimate is always a band and never a number', () => {
+  /*
+   * The one structural promise, and it is the whole reason this is allowed to
+   * exist at all.
+   *
+   * Everything else in this app is measured. This is two multiplications on top
+   * of a measurement — racket head speed from hand speed, then ball speed from
+   * racket head speed — and neither factor is known for a particular player on a
+   * particular swing. A single figure would claim a precision the model has not
+   * got, in the one place a player is most likely to repeat it to somebody at
+   * their club. So it comes out as a range, the range is ordered, and the middle
+   * of it is never outside it.
+   */
+  for (const conf of [0.45, 0.6, 0.75, 0.9, 1]) {
+    const e = estimateBallSpeed({ speed: 7.8, confidence: conf, samples: 8 })!
+    assert(e !== undefined, `no estimate at confidence ${conf}`)
+    assert(e.low < e.mid && e.mid < e.high, `the band is not ordered at confidence ${conf}`)
+    assert(e.low > 0, `the bottom of the band is not a speed at confidence ${conf}`)
+    near((e.low + e.high) / 2, e.mid, 1e-9, 'the middle of the band')
+    near((e.high - e.low) / 2 / e.mid, e.spread, 1e-9, 'the stated half-width')
+  }
+})
+
+check('a doubtful reading produces a wider band, and a clean one never a point', () => {
+  /*
+   * Where the width comes from, and the half of it that cannot be removed.
+   *
+   * A soft clip should widen the answer — that is the honest use of the
+   * confidence already computed above. But a perfect clip must NOT collapse the
+   * band, because the reading being certain says nothing about how fast the
+   * racket head was going relative to the hand, and that is where most of the
+   * width lives. A model spread that vanished with a good camera would be the
+   * app claiming that filming better tells it something about a player's wrist.
+   */
+  const widths = [1, 0.9, 0.75, 0.6, 0.45].map((confidence) => ({
+    confidence,
+    e: estimateBallSpeed({ speed: 7.8, confidence, samples: 8 })!,
+  }))
+  for (let i = 1; i < widths.length; i++) {
+    assert(
+      widths[i].e.spread > widths[i - 1].e.spread,
+      `confidence ${widths[i].confidence} was no wider than ${widths[i - 1].confidence}`,
+    )
+  }
+  const perfect = widths[0].e
+  assert(
+    perfect.spread > 0.1,
+    `a flawless reading collapsed the band to ±${(perfect.spread * 100).toFixed(0)}%, which claims ` +
+      'the camera knows something about the player’s wrist',
+  )
+  for (const w of widths) {
+    note(`  confidence ${w.confidence}: ±${(w.e.spread * 100).toFixed(0)}%`)
+  }
+})
+
+check('the estimate lands where a serve of that hand speed actually lands', () => {
+  /*
+   * The sanity check that stops the chain being arithmetic nobody sanity-read.
+   *
+   * The rig's clean serve measures a hand at about 7.8 standing heights per
+   * second, which for a 1.83 m player is roughly 51 km/h. The two factors put
+   * the ball somewhere in the low hundreds, and that has to come out looking
+   * like a club first serve rather than like a junior's second or a tour
+   * player's — because if it does not, one of the constants is wrong in a way no
+   * amount of internal consistency would show.
+   */
+  const { frames, skel } = serve()
+  const read = readHandSpeed(frames, skel, SIDE_ON)!
+  const e = estimateBallSpeed(read)!
+  const kmh = (v: number) => speedInKmh(v, 183)
+
+  within(kmh(e.low), 90, 130, 'the bottom of the estimated band for the rig’s clean serve')
+  within(kmh(e.high), 130, 175, 'the top of the estimated band for the rig’s clean serve')
+  note(
+    `  hand ${kmh(read.speed).toFixed(0)} km/h → serve ${kmh(e.low).toFixed(0)}–${kmh(e.high).toFixed(0)} km/h ` +
+      `(±${(e.spread * 100).toFixed(0)}%)`,
+  )
+
+  // And it scales, because it is a multiplication. A serve hit half as hard has
+  // to come back half as fast, or the chain has an offset in it that nobody put
+  // there on purpose.
+  const half = estimateBallSpeed({ ...read, speed: read.speed / 2 })!
+  near(half.mid, e.mid / 2, 1e-9, 'half the hand speed')
+})
+
+check('nothing that was not a reading is multiplied up into a serve', () => {
+  /*
+   * The refusal that matters most here. Every gate upstream exists to stop a
+   * number nobody measured reaching the player, and this function multiplies by
+   * two and a half — so a refusal leaking through it arrives larger than it
+   * started.
+   */
+  assert(estimateBallSpeed(undefined) === undefined, 'a missing reading became a serve speed')
+  for (const bad of [0, -1, NaN, Infinity]) {
+    assert(
+      estimateBallSpeed({ speed: bad, confidence: 1, samples: 8 }) === undefined,
+      `a hand speed of ${bad} became a serve speed`,
+    )
+  }
+  assert(
+    estimateBallSpeed({ speed: 7.8, confidence: MIN_SPEED_EVIDENCE - 0.01, samples: 8 }) ===
+      undefined,
+    'a reading below the evidence gate was still multiplied up',
+  )
+  assert(
+    estimateBallSpeed({ speed: 7.8, confidence: MIN_SPEED_EVIDENCE, samples: 8 }) !== undefined,
+    'the estimate refuses at the gate itself rather than below it',
+  )
 })
 
 check('km/h is the player’s own height and nothing else', () => {

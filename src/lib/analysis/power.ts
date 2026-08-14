@@ -369,6 +369,119 @@ function fit(points: { t: number; v: number }[]): { slope: number; residual: num
   return { slope, residual: residual / n }
 }
 
+/* ------------------------------------------------------- the estimated serve
+ *
+ * What a radar gun would have read, inferred from the hand.
+ *
+ * This is the only number in the app that is MODELLED rather than measured, and
+ * it is here because it is the one a player came for. The hand speed above is
+ * the honest measurement and it is not the question anybody asks; "how fast do
+ * I serve" is. So the chain from one to the other is written out in full below,
+ * with its uncertainty attached, and the answer is always a RANGE. Never a
+ * point. A single number here would be the app claiming a precision that the
+ * two factors underneath it do not have, in the one place a player is most
+ * likely to repeat it to somebody.
+ *
+ * IT IS NOT A RADAR GUN AND MUST NEVER BE PRESENTED AS ONE. A radar gun
+ * measures the ball. This measures a wrist and multiplies. Where the app has
+ * actually seen the ball — `Analysis.outbound.flight`, which resolves on fast
+ * enough footage — that reading is the real one and this is not shown at all.
+ */
+
+/**
+ * Racket head speed at impact, as a multiple of the hand's speed.
+ *
+ * The hand is not what hits the ball. At contact the forearm and racket are
+ * rotating about the hand as well as travelling with it, so the head — roughly
+ * 0.55 m beyond the grip — is moving considerably faster than the wrist. The
+ * serve literature that decomposes racket head speed at impact puts internal
+ * rotation of the upper arm and wrist flexion together at the majority of it,
+ * with typical high-performance figures of 30–35 m/s at the head against 15–18
+ * m/s at the hand.
+ *
+ * The spread is real and it is mostly about the player rather than the model.
+ * A serve with a full racket drop and hard pronation turns the head over fast
+ * and lands near the top of this; an arm-only push with a stiff wrist barely
+ * rotates at all and lands near the bottom. That is exactly the difference the
+ * rest of this report is about, which is why it cannot be narrowed here — the
+ * app would have to measure the racket to know, and `racket.ts` states plainly
+ * why it will not.
+ */
+const HAND_TO_HEAD = { centre: 1.8, spread: 0.2 }
+
+/**
+ * Ball speed off the strings, as a multiple of racket head speed.
+ *
+ * `1 + ACOR`, the apparent coefficient of restitution at the impact point, for
+ * a ball that is very nearly at rest relative to a racket that is not. ACOR for
+ * a hand-held racket near the middle of the strings runs about 0.35–0.5, lower
+ * out towards the tip and higher down at the throat, so the gain sits around
+ * 1.4 and moves by a few percent with where on the strings the ball was struck.
+ *
+ * Much the tighter of the two factors — it is a property of a racket and a ball
+ * rather than of a swing — which is why the spread below is a quarter of the
+ * one above it. Nearly all the width of the estimate comes from not knowing how
+ * fast the racket head was going, and none of it from the strings.
+ */
+const IMPACT_GAIN = { centre: 1.42, spread: 0.05 }
+
+/**
+ * How much of the reading's own doubt reaches the width of the estimate.
+ *
+ * `HandSpeed.confidence` already prices the camera angle, the frame rate, the
+ * tracker and the clock. A reading at 0.85 has little left to say; one at 0.5
+ * has a great deal. Scaled rather than used raw so that a perfectly confident
+ * reading still carries the model's own spread and nothing narrower — the two
+ * are different doubts and a clean clip removes only one of them.
+ */
+const READING_SLACK = 0.4
+
+/** A serve speed, as the band it could honestly be. Standing heights per second. */
+export interface BallSpeedEstimate {
+  /** The middle of the band. Shown only inside the range, never on its own. */
+  mid: number
+  low: number
+  high: number
+  /**
+   * The relative half-width, so a caller can say how wide it is without
+   * subtracting. 0.2 is "give or take a fifth".
+   */
+  spread: number
+}
+
+/**
+ * What the ball probably left at, from how fast the hand was going.
+ *
+ * Two multiplications and an error bar. The two factors are combined in
+ * quadrature rather than at their extremes: taking the worst of both at once
+ * assumes a player with no wrist AND a ball off the frame, which is a bound
+ * rather than an estimate and would print a range too wide to mean anything.
+ * The reading's own doubt joins them the same way.
+ *
+ * `undefined` for anything that is not a usable hand speed, so a caller cannot
+ * accidentally multiply a refusal up into a serve.
+ */
+export function estimateBallSpeed(hand: HandSpeed | undefined): BallSpeedEstimate | undefined {
+  if (!hand || !Number.isFinite(hand.speed) || hand.speed <= 0) return undefined
+  if (!(hand.confidence >= MIN_SPEED_EVIDENCE)) return undefined
+
+  const mid = hand.speed * HAND_TO_HEAD.centre * IMPACT_GAIN.centre
+
+  // Relative spreads, added in quadrature. `HAND_TO_HEAD` dominates: at the
+  // numbers above it contributes 11% against the strings' 3.5%.
+  const fromSwing = HAND_TO_HEAD.spread / HAND_TO_HEAD.centre
+  const fromStrings = IMPACT_GAIN.spread / IMPACT_GAIN.centre
+  const fromReading = (1 - clamp(hand.confidence, 0, 1)) * READING_SLACK
+  const spread = Math.hypot(fromSwing, fromStrings, fromReading)
+
+  return {
+    mid,
+    low: mid * (1 - spread),
+    high: mid * (1 + spread),
+    spread,
+  }
+}
+
 /**
  * A house-unit speed as km/h, against a stated standing height.
  *

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   HEIGHT_CM_RANGE,
   MIN_SPEED_EVIDENCE,
+  estimateBallSpeed,
   isPlausibleHeight,
   speedInKmh,
 } from '../lib/analysis/power'
@@ -10,20 +11,37 @@ import type { Session } from '../lib/storage/db'
 import { Icon } from './primitives'
 
 /**
- * How hard the serve was actually hit.
+ * How fast the serve went.
  *
  * The rest of the report is shapes judged against bands. This is the only part
- * of it that looks at what those shapes produced, and until now the app measured
- * one of these two numbers on every clip and showed it to nobody — see the note
- * at the head of `findOutbound`, which records that deferral and names what a
- * card would need before it could exist. This is that card.
+ * that looks at what those shapes produced, and for most of the app's life it
+ * measured one of these numbers on every clip and showed it to nobody — see the
+ * note at the head of `findOutbound`, which records that deferral and names what
+ * a card would need before it could exist.
  *
- * NOTHING HERE IS SCORED, and the absence is deliberate rather than
- * unfinished. There is no band, no badge, no ring and no drill: a band would be
- * this app asserting how fast a club player's hand ought to move, and there is
- * nothing in the repo that could stand behind such a number. What a speed is
- * good for is watching it move across a player's own sessions, and that
- * comparison needs no external cohort at all.
+ * THREE NUMBERS, IN ORDER OF HOW MUCH THEY ARE WORTH, and the panel shows the
+ * best one it has:
+ *
+ *   1. The ball, measured off the pixels after contact. A real reading of the
+ *      thing a radar gun points at. Absent on nearly every phone clip — the ball
+ *      is in shot for 25–50 ms — so this is the rare case.
+ *   2. The serve speed ESTIMATED from the hand, as a range. Modelled, not
+ *      measured: two multiplications with their uncertainty attached, spelled
+ *      out in `power.ts`. Shown as a band and never as a single figure, because
+ *      a single figure would claim a precision the model has not got in the one
+ *      place a player is most likely to repeat it to somebody.
+ *   3. The hand itself, which is what was actually measured, kept underneath so
+ *      the estimate is never the only thing on screen. A player who wants to
+ *      know what the app really saw can see it.
+ *
+ * WHEN THE BALL WAS SEEN, THE ESTIMATE IS NOT SHOWN. Two serve speeds side by
+ * side, one measured and one inferred, invites the reader to average them or to
+ * pick the flattering one. The measurement wins outright.
+ *
+ * NOTHING HERE IS SCORED. There is no band, no badge, no ring and no drill: a
+ * band would be this app asserting how fast a club player ought to serve, and
+ * nothing in the repo could stand behind such a number. What a speed is for is
+ * watching it move across a player's own sessions.
  *
  * THE UNIT IS STANDING HEIGHTS PER SECOND until the player says how tall they
  * are, which is the rule `OutboundFlightReading.speed` sets out and the reason
@@ -46,6 +64,9 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight }: Props) {
 
   const hand = usable(analysis.power?.speed, analysis.power?.confidence)
   const ball = usable(analysis.outbound?.flight?.speed, analysis.outbound?.flight?.speedConfidence)
+  // Only where the ball itself was not resolved — see the header. A measured
+  // speed beside an inferred one is an invitation to pick whichever is kinder.
+  const estimate = ball ? undefined : estimateBallSpeed(analysis.power)
   // The window was looked at and the ball was not in it — which is the ordinary
   // outcome and worth saying, because "no reading" and "your camera is too slow
   // for this" are different facts and only one of them is actionable.
@@ -54,10 +75,10 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight }: Props) {
 
   if (!hand && !ball) return null
 
-  const speed = (v: number) =>
-    height
-      ? { value: Math.round(speedInKmh(v, height)).toString(), unit: 'km/h' }
-      : { value: v.toFixed(1), unit: 'body heights / sec' }
+  /** One speed, in whichever unit the app is entitled to use today. */
+  const show = (v: number) =>
+    height ? Math.round(speedInKmh(v, height)).toString() : v.toFixed(1)
+  const unit = height ? 'km/h' : 'body heights / sec'
 
   const save = () => {
     const cm = Number(draft)
@@ -66,32 +87,63 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight }: Props) {
   }
 
   return (
-    <section className="block power" aria-label="How hard you hit it">
-      <h2 className="block-title">How hard you hit it</h2>
+    <section className="block power" aria-label="How fast you served">
+      <h2 className="block-title">How fast you served</h2>
 
-      <div className="power-rows">
-        {hand && (
-          <Reading
-            label="Hand through the swing"
-            {...speed(hand.speed)}
-            // The frame count, not a bar. Three frames and eleven are different
-            // claims about the same number, and somebody filming at 30 fps
-            // deserves to know which of the two they are reading. The wording
-            // tracks what `readHandSpeed` actually does — the fastest short
-            // stretch of the forward swing, not a reading taken at contact.
-            note={`The fastest stretch of your swing, across ${analysis.power!.samples} frames`}
-            soft={hand.confidence < 0.65}
-          />
-        )}
-        {ball && (
-          <Reading
-            label="Ball off the strings"
-            {...speed(ball.speed)}
-            note="Measured from the ball itself, in the frames after contact"
-            soft={ball.confidence < 0.65}
-          />
-        )}
-      </div>
+      {ball && (
+        <div className="power-headline">
+          <span className="power-label">Ball off the strings</span>
+          <span className="power-big">
+            {show(ball.speed)}
+            <em className="power-unit">{unit}</em>
+          </span>
+          <span className="power-sub">
+            Measured from the ball itself, in the frames after contact
+            {ball.confidence < 0.65 && ' · read roughly'}
+          </span>
+        </div>
+      )}
+
+      {estimate && (
+        <div className="power-headline power-headline--estimate">
+          <span className="power-label">Serve speed, estimated</span>
+          {/* A range, always. The two numbers are separated by an en dash and a
+              real element rather than run together in one string, so a screen
+              reader says "112 to 149" instead of a subtraction. */}
+          <span className="power-big">
+            {show(estimate.low)}
+            <span className="power-to" aria-hidden="true">
+              –
+            </span>
+            <span className="sr-only"> to </span>
+            {show(estimate.high)}
+            <em className="power-unit">{unit}</em>
+          </span>
+          <span className="power-sub">
+            Worked out from your hand speed, not measured off the ball — so it is a band, not a
+            number. Give or take {Math.round(estimate.spread * 100)}%.
+          </span>
+        </div>
+      )}
+
+      {hand && (
+        <div className="power-rows">
+          <div className={`power-row${hand.confidence < 0.65 ? ' power-row--soft' : ''}`}>
+            <span className="power-label">Hand through the swing — measured</span>
+            <span className="power-value">
+              {show(hand.speed)}
+              <em className="power-unit">{unit}</em>
+            </span>
+            {/* The frame count, not a bar. Three frames and eleven are different
+                claims about the same number, and somebody filming at 30 fps
+                deserves to know which of the two they are reading. */}
+            <span className="power-sub">
+              The fastest stretch of your swing, across {analysis.power!.samples} frames
+              {hand.confidence < 0.65 && ' · read roughly'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {!ball && looked && looked.read > 0 && (
         <p className="power-miss">
@@ -100,7 +152,7 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight }: Props) {
             I looked at {looked.read} {looked.read === 1 ? 'frame' : 'frames'} after contact and
             could not find the ball in {looked.read === looked.found ? 'any' : 'enough'} of them.
             The ball is only in shot for a few hundredths of a second, so most phones never catch
-            it. Film in slow motion if you want that number.
+            it. Film in slow motion and I can measure it instead of working it out.
           </span>
         </p>
       )}
@@ -143,17 +195,24 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight }: Props) {
       )}
 
       {/* The caveats, in full and under the numbers rather than behind a tap.
-          Every reading here is a lower bound and one of them is not the racket,
-          and somebody comparing these against a radar gun at their club needs to
-          know that before they conclude the app is wrong about them. Written to
-          fit whichever readings actually resolved: a paragraph starting "both"
-          above a single number is the page disagreeing with itself. */}
+          Somebody comparing this against the radar gun at their club needs to
+          know what it is before they conclude the app is wrong about them — and
+          what it is depends on which reading they are looking at. */}
       <p className="power-note">
-        {hand && ball ? 'Both are' : 'This is'} the speed <em>towards the net</em>, and read
-        {hand && ball ? '' : 's'} low if you filmed from a corner rather than side on.
-        {hand && ' The hand figure is your wrist, not the racket head — the racket travels faster.'}{' '}
-        Use {hand && ball ? 'these' : 'this'} to watch your own serve change, never to compare
-        against anyone else.
+        {estimate ? (
+          <>
+            This is <em>not a radar gun</em>. I measured your hand and worked the rest out from how
+            a racket and strings behave, so a big wrist snap lands high in the band and an arm-only
+            push lands low. It also reads low if you filmed from a corner rather than side on. Use
+            it to watch your own serve change, never to compare against anyone else.
+          </>
+        ) : (
+          <>
+            This is the speed <em>towards the net</em>, and reads low if you filmed from a corner
+            rather than side on. Use it to watch your own serve change, never to compare against
+            anyone else.
+          </>
+        )}
       </p>
     </section>
   )
@@ -163,7 +222,7 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight }: Props) {
  * A reading is shown only where there is enough evidence for one.
  *
  * `MIN_SPEED_EVIDENCE` is the gate `findOutbound` asked for, and it applies to
- * both speeds identically — a hedge in the caption cannot catch up with a number
+ * every speed identically — a hedge in the caption cannot catch up with a number
  * somebody has already read and remembered.
  */
 function usable(
@@ -173,34 +232,4 @@ function usable(
   if (typeof speed !== 'number' || !Number.isFinite(speed) || speed <= 0) return undefined
   const c = typeof confidence === 'number' && Number.isFinite(confidence) ? confidence : 0
   return c >= MIN_SPEED_EVIDENCE ? { speed, confidence: c } : undefined
-}
-
-function Reading({
-  label,
-  value,
-  unit,
-  note,
-  soft,
-}: {
-  label: string
-  value: string
-  unit: string
-  note: string
-  soft: boolean
-}) {
-  return (
-    <div className={`power-row${soft ? ' power-row--soft' : ''}`}>
-      <span className="power-label">{label}</span>
-      <span className="power-value">
-        {value}
-        <em className="power-unit">{unit}</em>
-      </span>
-      <span className="power-sub">
-        {note}
-        {/* Said out loud rather than shaded, because the number above it is the
-            same size either way and nobody reads a tint as a caveat. */}
-        {soft && ' · read roughly'}
-      </span>
-    </div>
-  )
 }

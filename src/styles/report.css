@@ -1240,6 +1240,53 @@
    ought to move and the app does not invent one. See `power.ts`.
    ========================================================================= */
 
+/* The best reading the clip supported, given the room to be read at arm's
+   length. Only ever one of these: a measured ball speed, or a modelled band —
+   never both, because two serve speeds side by side invite the reader to pick
+   the kinder one. */
+.power-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: var(--r-md);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+/* Dashed, exactly as the target figure's dashed limb is dashed and for the same
+   reason: this is the one number on the page that was worked out rather than
+   seen, and the border is what says so before the caption gets a chance to. */
+.power-headline--estimate {
+  border-style: dashed;
+}
+
+/* Sized off the viewport with a floor and a ceiling, because the widest thing
+   this can hold is a three-digit range — "154 – 200 km/h" — and a fixed 40px
+   overflows a 375px phone at that. `flex-wrap` is the backstop for the case the
+   clamp still cannot fit: the unit drops to its own line rather than the number
+   running off the card. */
+.power-big {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 7px;
+  font-size: clamp(28px, 8.5vw, 40px);
+  font-weight: var(--wt-title);
+  letter-spacing: var(--tr-display);
+  line-height: 1.05;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The dash between the ends of the range. Narrower gaps than the flex row gives
+   the rest, so "112 – 149" reads as one quantity rather than as two. */
+.power-to {
+  margin: 0 -2px;
+  color: var(--fg-faint);
+  font-weight: var(--wt-label);
+}
+
 .power-rows {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
