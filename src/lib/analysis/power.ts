@@ -45,7 +45,7 @@
  * genuinely has: them, last week.
  */
 import { imageXSplit, readImageX, type ImageXSplit } from './axes'
-import { LM, clamp, sided } from './geometry'
+import { clamp, sided } from './geometry'
 import type { Skeleton } from './phases'
 import type { BallFlight } from '../vision/ballTrack'
 import type { Frame } from './types'
@@ -539,6 +539,3 @@ export function formatSpeed(
  * agree with its own test at exactly one camera angle.
  */
 export const splitAtYaw = (yawDeg: number): ImageXSplit => imageXSplit(yawDeg)
-
-/** The landmark every hand speed is read from, named once. */
-export const HAND_LANDMARKS = { left: LM.leftWrist, right: LM.rightWrist } as const
