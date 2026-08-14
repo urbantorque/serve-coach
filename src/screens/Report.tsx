@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import ConsistencyPanel from '../components/ConsistencyPanel'
 import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
@@ -8,6 +8,7 @@ import PracticeCard from '../components/PracticeCard'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
+import { useShareState } from '../components/useShareState'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
@@ -234,31 +235,13 @@ export default function Report({
     () => deltasAgainst(analysis.fundamentals, previous, rubric),
     [analysis.fundamentals, previous, rubric],
   )
-  const [sharing, setSharing] = useState<'idle' | 'working' | 'done'>('idle')
-
-  // The "Saved" confirmation clears itself after a couple of seconds, and the
-  // report is very often gone before then — sharing is the last thing a player
-  // does on this screen. Held so it can be cancelled, rather than left to fire
-  // into a component that no longer exists.
-  const sharedTimer = useRef<ReturnType<typeof setTimeout>>()
-  useEffect(() => () => clearTimeout(sharedTimer.current), [])
-
-  const share = async () => {
-    setSharing('working')
-    const outcome = await shareReportCard(
-      analysis,
-      streak,
-      bestScore && bestOverallScoreLine(bestScore, analysis.createdAt),
-    )
-    // Nothing happened when the player backed out of the share sheet, so the
-    // button says nothing happened rather than claiming the card was saved.
-    const done = outcome === 'shared' || outcome === 'downloaded'
-    setSharing(done ? 'done' : 'idle')
-    if (done) {
-      clearTimeout(sharedTimer.current)
-      sharedTimer.current = setTimeout(() => setSharing('idle'), 2500)
-    }
-  }
+  // "Nothing happened" when the player backs out of the share sheet is
+  // handled inside `useShareState` itself (cancelled/failed both read as
+  // idle, only shared/downloaded count as done) — the button says nothing
+  // happened rather than claiming the card was saved.
+  const { sharing, trigger: share } = useShareState(() =>
+    shareReportCard(analysis, streak, bestScore && bestOverallScoreLine(bestScore, analysis.createdAt)),
+  )
 
   const goToPhase = (phase: PhaseId) => {
     setSeek((prev) => ({ phase, n: (prev?.n ?? 0) + 1 }))

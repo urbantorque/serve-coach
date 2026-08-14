@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
 import { Icon } from './primitives'
+import { useShareState } from './useShareState'
 import { shareSeasonCard, type SeasonRecords } from '../lib/share/reportCard'
 
 interface Props {
@@ -17,9 +17,7 @@ interface Props {
  * shares a nearly-blank image is worse than no button.
  */
 export default function SeasonShareButton({ records }: Props) {
-  const [sharing, setSharing] = useState<'idle' | 'working' | 'done'>('idle')
-  const sharedTimer = useRef<ReturnType<typeof setTimeout>>()
-  useEffect(() => () => clearTimeout(sharedTimer.current), [])
+  const { sharing, trigger: share } = useShareState(() => shareSeasonCard(records, Date.now()))
 
   const count = [
     records.streak,
@@ -29,17 +27,6 @@ export default function SeasonShareButton({ records }: Props) {
     records.bestGap,
   ].filter(Boolean).length
   if (count < 2) return null
-
-  const share = async () => {
-    setSharing('working')
-    const outcome = await shareSeasonCard(records, Date.now())
-    const done = outcome === 'shared' || outcome === 'downloaded'
-    setSharing(done ? 'done' : 'idle')
-    if (done) {
-      clearTimeout(sharedTimer.current)
-      sharedTimer.current = setTimeout(() => setSharing('idle'), 2500)
-    }
-  }
 
   return (
     // `aria-live` so "Preparing…"/"Saved" reaches a screen reader as the

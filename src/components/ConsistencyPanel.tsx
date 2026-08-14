@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
 import FramePair from './FramePair'
 import { Icon } from './primitives'
+import { useShareState } from './useShareState'
 import { readoutOf } from '../lib/analysis/anatomy'
 import {
   consistencyHeadline,
@@ -180,21 +180,10 @@ interface Props {
 }
 
 export default function ConsistencyPanel({ consistency: c, onDismiss, pair, createdAt, bestGap, gapDelta }: Props) {
-  const [sharing, setSharing] = useState<'idle' | 'working' | 'done'>('idle')
-  const sharedTimer = useRef<ReturnType<typeof setTimeout>>()
-  useEffect(() => () => clearTimeout(sharedTimer.current), [])
   const gapDeltaText = gapDeltaLine(gapDelta)
-
-  const share = async () => {
-    setSharing('working')
-    const outcome = await shareBasketCard(c, createdAt, bestGap && bestGapLine(bestGap, createdAt), gapDeltaText)
-    const done = outcome === 'shared' || outcome === 'downloaded'
-    setSharing(done ? 'done' : 'idle')
-    if (done) {
-      clearTimeout(sharedTimer.current)
-      sharedTimer.current = setTimeout(() => setSharing('idle'), 2500)
-    }
-  }
+  const { sharing, trigger: share } = useShareState(() =>
+    shareBasketCard(c, createdAt, bestGap && bestGapLine(bestGap, createdAt), gapDeltaText),
+  )
 
   return (
     /*
