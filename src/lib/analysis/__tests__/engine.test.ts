@@ -209,16 +209,70 @@ check('rejects a clip too short to read', () => {
 })
 
 /**
+ * A clean right-handed clip with the tossing (left) wrist's own motion flattened
+ * to a small sway, so the racket arm's real swing survives untouched on the other
+ * landmark. Forcing `forceRacket` to the now-flattened side reproduces exactly
+ * what a wrong stated hand — or a mirrored front-camera clip — looks like from
+ * `detectServe`'s side: the labelled "racket" arm never clears the swing floor,
+ * and the unlabelled one plainly did.
+ */
+function wrongHandedClip(): Frame[] {
+  const base = buildServe({}, FPS)
+  return base.map((f) => {
+    const image = f.image.slice()
+    image[LM.leftWrist] = { ...image[LM.leftWrist], y: 0.6 + Math.sin(f.t * 3) * 0.02 }
+    return { ...f, image }
+  })
+}
+
+check('rejects a clip stated as the wrong hand, and names the right one', () => {
+  let err: unknown
+  try {
+    detectServe(wrongHandedClip(), FPS, 'left')
+  } catch (e) {
+    err = e
+  }
+  assert(err instanceof NotAServeError, 'a wrong-handed clip did not throw NotAServeError')
+  if (err instanceof NotAServeError) {
+    assert(err.suggestedHand === 'right', `suggested ${err.suggestedHand}, not the hand that actually swung`)
+  }
+})
+
+/**
+ * Both wrists frozen at a constant image position — no sway, no swing, nothing
+ * for `argMaxIn`/`argMinIn` to find a peak in. `noSwing` above still has enough
+ * wobble for a keyframe search to land somewhere, so it fails on amplitude
+ * (`swing < 0.5`) rather than collapsing every keyframe onto `ready`. This is the
+ * one degenerate case beyond even that: `orderKeys` clamps every later keyframe
+ * to at least the one before it, so with nothing to distinguish, contact === ready.
+ */
+function frozenClip(n = 15): Frame[] {
+  const base = buildServe({ noSwing: true }, FPS).slice(0, n)
+  return base.map((f, i) => {
+    const image = f.image.slice()
+    image[LM.leftWrist] = { ...image[LM.leftWrist], y: 0.6, x: -0.18 }
+    image[LM.rightWrist] = { ...image[LM.rightWrist], y: 0.6, x: 0.2 }
+    return { ...f, index: i, t: i / FPS, image }
+  })
+}
+
+check('rejects a clip with nothing in it to find a moment in', () => {
+  let threw = false
+  try {
+    detectServe(frozenClip(), FPS)
+  } catch (err) {
+    threw = err instanceof NotAServeError
+  }
+  assert(threw, 'a perfectly flat clip was accepted')
+})
+
+/**
  * `NotAServeError`'s message and hints are thrown inline rather than read out of
  * a table, so `copy.test.ts`'s `everyCue()` sweep never sees them — a whole
  * category of player-facing copy, shown at the exact moment someone's first clip
  * fails, that nothing had ever run past the same editor the coaching database is
  * held to. `blockingFramingIssue`'s three branches are cheap to call directly;
- * `detectServe`'s too-short and no-swing refusals are exercised by the two checks
- * above. Not covered here: the wrong-handed mismatch and the "no serve found in
- * window" refusal, both in phases.ts, which have no existing trigger in this
- * suite for either behaviour or copy — a narrower gap left for later rather than
- * built from scratch in this pass.
+ * every `detectServe` refusal is exercised by the four checks above.
  */
 check('every clip-refusal message and hint passes the house-voice editor', () => {
   const cases: [string, NotAServeError][] = [
@@ -238,6 +292,8 @@ check('every clip-refusal message and hint passes the house-voice editor', () =>
   const thrown: [string, () => void][] = [
     ['no swing', () => detectServe(buildServe({ noSwing: true }, FPS), FPS)],
     ['too short', () => detectServe(buildServe({}, FPS).slice(0, 5), FPS)],
+    ['wrong hand', () => detectServe(wrongHandedClip(), FPS, 'left')],
+    ['frozen', () => detectServe(frozenClip(), FPS)],
   ]
   for (const [label, run] of thrown) {
     try {
