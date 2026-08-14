@@ -8,7 +8,12 @@ import {
   readFraming,
   type FramingVerdict,
 } from '../lib/framing/judge'
-import { MAX_RECORDING_SECONDS, recordingFileName, recordingType } from '../lib/framing/record'
+import {
+  MAX_RECORDING_SECONDS,
+  recordingFileName,
+  recordingOutcome,
+  recordingType,
+} from '../lib/framing/record'
 import { loadEngine, nextVideoTimestamp } from '../lib/pose/poseEngine'
 import type { Frame } from '../lib/analysis/types'
 
@@ -129,6 +134,17 @@ export default function FramingCheck({ onRecorded }: Props) {
    */
   const recordingRef = useRef(false)
   const [recording, setRecording] = useState(false)
+  /**
+   * Whether the preview is still running, in a place the recorder's callbacks
+   * can read it.
+   *
+   * They are built in `toggleRecording`, outside the effect that owns the
+   * stream, and `onstop` fires *after* that effect has been torn down — which is
+   * the whole difficulty `recordingOutcome` exists to settle. The effect's own
+   * `live` is a local and cannot be read from there; this is the same fact,
+   * hoisted somewhere both can see it.
+   */
+  const liveRef = useRef(true)
 
   /**
    * Which container this browser will record, decided once.
@@ -147,9 +163,15 @@ export default function FramingCheck({ onRecorded }: Props) {
     let stream: MediaStream | null = null
     let frame = 0
     let live = true
+    // Re-armed at every entry rather than only at the `useRef`, so a second
+    // opening of the sheet — or React's development double-invoke, which runs
+    // the cleanup between two mounts — does not inherit a `false` from the run
+    // before it and refuse to hand over a recording nobody abandoned.
+    liveRef.current = true
 
     const stop = () => {
       live = false
+      liveRef.current = false
       cancelAnimationFrame(frame)
       // A recorder still running when the sheet closes holds the encoder open
       // and keeps accumulating chunks for a clip nobody will ever be handed.
@@ -363,7 +385,12 @@ export default function FramingCheck({ onRecorded }: Props) {
       recorderRef.current = null
       recordingRef.current = false
       setRecording(false)
-      if (!chunks.length) return
+      // Stopped by the button, or stopped by the sheet closing underneath it?
+      // The recorder cannot say, and the two mean opposite things — see
+      // `recordingOutcome`, which is where that is reasoned about and tested.
+      if (recordingOutcome({ previewLive: liveRef.current, chunks: chunks.length }) !== 'analyse') {
+        return
+      }
       const file = new File([new Blob(chunks, { type })], recordingFileName(type, new Date()), {
         type,
       })

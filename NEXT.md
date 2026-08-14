@@ -271,6 +271,65 @@ phase's entries and drops the working notes underneath them.
 
 ---
 
+## Phase 6 — the defects that were blocked on nothing (R36–38)
+
+Three defects, none of them needing a phone or a frame of real footage. Two
+had been sitting in "Still open" below since Phase 3 and Phase 4, both marked
+**blocked: needs a round willing to move a pixel** rather than blocked on a
+resource. The third was found by reading `FramingCheck.tsx` during a sweep and
+had never been written down anywhere.
+
+- [x] **R36** — Read `FramingCheck.tsx`'s recorder lifecycle end to end before
+      assuming the teardown was correct, and it was not. `MediaRecorder.onstop`
+      fires once the encoder has flushed, which is after whatever asked it to
+      stop — and two things ask. One is the player pressing "Stop and analyse".
+      The other is the effect cleanup, which *must* stop a running recorder or
+      the encoder accumulates chunks for a clip nobody will be handed.
+
+      Both reached the same callback, and the callback could not tell them
+      apart: it built a `File` from whatever chunks existed and called
+      `onRecorded`. So closing the viewfinder mid-recording handed the clip to
+      `openClip(file, true)`, and the screen jumped from a camera to a progress
+      bar and spent a full analysis on a recording the player had just
+      abandoned. Traced every route out of that sheet rather than assuming one:
+      `Sheet` in `primitives.tsx` calls `onClose` from the close button, from
+      Escape, and from a tap on the backdrop — and a backdrop tap on a phone
+      held at arm's length on a baseline is the easiest of the three to do by
+      accident. All three land in `Home.tsx`'s `setChecking(false)`, which
+      unmounts the component, which runs the cleanup.
+
+      A second fault sat underneath it and is closed by the same change: the
+      cleanup releases the camera tracks immediately after asking the recorder
+      to stop, so the final chunk of an abandoned recording may well be short.
+      A clip that is discarded cannot be truncated into anything, which is why
+      the decision is taken before a `File` is built rather than after.
+
+      Fixed by naming the decision rather than adding a flag to the callback:
+      `recordingOutcome({ previewLive, chunks })` in `framing/record.ts`, whose
+      header already argues that the component cannot be tested here and the
+      decisions can — the same split `access.ts` and `recordingType` already
+      make. `FramingCheck` gains `liveRef`, which is the effect's own `live` in
+      a place the recorder's callbacks can read it, since those are built in
+      `toggleRecording` outside that scope and fire after it is gone. Re-armed
+      at every effect entry rather than only at the `useRef`, so React's
+      development double-invoke — mount, cleanup, mount — does not leave a
+      remounted preview refusing to hand over a recording nobody abandoned.
+
+      `framing/__tests__/record.test.ts`: four checks. The button path hands
+      over; the sheet-closing path discards however much was recorded; an
+      encoder that produced nothing is discarded either way; and the separation
+      is liveness rather than length, checked at 1, 5 and 200 chunks — because
+      the tempting wrong fix here is a length threshold, which would discard a
+      short deliberate recording and keep a long abandoned one.
+
+      Verified the tests have teeth rather than that they pass: dropped
+      `previewLive` from the condition in a scratch copy, confirmed exactly the
+      two checks that name it went red, restored, confirmed green.
+
+      Still not verified on a device, and this changes nothing about that — see
+      the court trip below. What is closed is a defect that was reachable by
+      reading, which is the weakest tool available for this file.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the

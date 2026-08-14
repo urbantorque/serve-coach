@@ -168,6 +168,48 @@ function playsBack(
 }
 
 /**
+ * What to do with a recording that has just stopped.
+ *
+ * `MediaRecorder.onstop` fires once the encoder has flushed, which is some time
+ * after whatever asked it to stop — and two very different things ask. One is
+ * the player pressing "Stop and analyse", which is them handing the clip over.
+ * The other is the viewfinder being torn down, because `FramingCheck`'s cleanup
+ * must stop a running recorder or the encoder keeps accumulating chunks for a
+ * clip nobody will ever be given.
+ *
+ * Nothing on the recorder itself tells those apart, and until this existed
+ * nothing tried: both reached the same callback, and both handed the file to
+ * `onRecorded`. Closing the sheet mid-recording therefore started a full
+ * analysis — the screen jumped to a progress bar and spent half a minute of
+ * pose detection on a recording the player had just abandoned. Every way out of
+ * that sheet reached it: the close button, Escape, and a tap on the backdrop,
+ * which on a phone held at arm's length on a baseline is the easiest of the
+ * three to do by accident.
+ *
+ * So the two are told apart here rather than in the callback. `previewLive` is
+ * the preview's own liveness at the moment the encoder finished: still live
+ * means the button stopped it, gone means the sheet closed underneath it. It
+ * also settles the ordering worry that comes with tearing a recorder down —
+ * the cleanup releases the camera tracks immediately after asking the recorder
+ * to stop, so the final chunk may well be short. A clip that is being discarded
+ * cannot be truncated into anything, which is the reason to decide this before
+ * a `File` is built rather than after.
+ *
+ * `chunks` is the older, simpler half of the same question and belongs with it:
+ * an encoder that produced nothing has no file to give whoever asked, and
+ * `new Blob([])` would travel all the way to `analyzeServe` as a zero-byte
+ * video before coming back as a message about camera formats.
+ */
+export function recordingOutcome(opts: {
+  /** Whether the preview this was recorded off is still running. */
+  previewLive: boolean
+  /** How many chunks the encoder actually produced. */
+  chunks: number
+}): 'analyse' | 'discard' {
+  return opts.previewLive && opts.chunks > 0 ? 'analyse' : 'discard'
+}
+
+/**
  * The file name a recording is handed to the rest of the app under.
  *
  * The extension has to match the container, because everything downstream reads

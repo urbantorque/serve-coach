@@ -13,6 +13,7 @@ import {
   RECORDING_TYPES,
   playbackQuery,
   recordingFileName,
+  recordingOutcome,
   recordingType,
 } from '../record'
 import { assert, check, heading, report } from '../../analysis/__tests__/harness'
@@ -155,6 +156,52 @@ check('the stamp is local time, not UTC', () => {
     recordingFileName('video/mp4', at).includes('2026-01-02'),
     `stamped ${recordingFileName('video/mp4', at)} for a local 2 January`,
   )
+})
+
+heading('Whether a stopped recording is the player handing it over')
+
+check('the button stopping it hands the clip to the analyser', () => {
+  // The ordinary path, and the only one that should reach `onRecorded`: the
+  // preview is still running because the sheet is still open, and the player
+  // pressed "Stop and analyse".
+  assert(
+    recordingOutcome({ previewLive: true, chunks: 3 }) === 'analyse',
+    'a recording the player stopped was thrown away',
+  )
+})
+
+check('the sheet closing underneath it discards, however much was recorded', () => {
+  // The defect this exists to close. `FramingCheck`'s cleanup has to stop a
+  // running recorder, and `onstop` then fires with a full set of chunks that
+  // looks identical to a deliberate stop — so closing the viewfinder mid-serve
+  // used to start half a minute of analysis on a clip the player had abandoned.
+  // Every way out of that sheet reached it, the backdrop tap included.
+  assert(
+    recordingOutcome({ previewLive: false, chunks: 40 }) === 'discard',
+    'an abandoned recording was handed over for analysis anyway',
+  )
+})
+
+check('an encoder that produced nothing is discarded either way', () => {
+  // Older than the case above and kept with it: `new Blob([])` reaches
+  // `analyzeServe` as a zero-byte video and comes back, several seconds later,
+  // as a message about camera formats.
+  assert(recordingOutcome({ previewLive: true, chunks: 0 }) === 'discard', 'handed over no film')
+  assert(recordingOutcome({ previewLive: false, chunks: 0 }) === 'discard', 'handed over no film')
+})
+
+check('liveness is what separates the two, not the amount of film', () => {
+  // Stated as the property rather than as two examples, because the tempting
+  // wrong fix is a length threshold — "a real serve is at least N chunks" —
+  // which would discard a short deliberate recording and keep a long abandoned
+  // one. The question is who stopped it.
+  for (const chunks of [1, 5, 200]) {
+    assert(
+      recordingOutcome({ previewLive: true, chunks }) === 'analyse' &&
+        recordingOutcome({ previewLive: false, chunks }) === 'discard',
+      `${chunks} chunks was judged on its length rather than on who stopped it`,
+    )
+  }
 })
 
 heading('The backstop')
