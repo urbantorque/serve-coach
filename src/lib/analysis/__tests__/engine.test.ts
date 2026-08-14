@@ -13,6 +13,7 @@ import { sessionKeyFor } from '../../storage/sessionKey'
 import {
   MAX_CONSISTENCY_SERVES,
   assessQuality,
+  blockingFramingIssue,
   pickFocus,
   sweepServes,
   sweepWindow,
@@ -38,6 +39,7 @@ import {
   type Status,
 } from '../types'
 import { CLEAN_SERVE, U, buildServe, type ServeDials } from '../syntheticServe'
+import { cueIssues } from '../voice'
 import { assert, check, near, note, report, within } from './harness'
 
 /** Declared up here because checks run top to bottom as the module executes. */
@@ -204,6 +206,53 @@ check('rejects a clip too short to read', () => {
     threw = err instanceof NotAServeError
   }
   assert(threw, 'a 5-frame clip was accepted')
+})
+
+/**
+ * `NotAServeError`'s message and hints are thrown inline rather than read out of
+ * a table, so `copy.test.ts`'s `everyCue()` sweep never sees them — a whole
+ * category of player-facing copy, shown at the exact moment someone's first clip
+ * fails, that nothing had ever run past the same editor the coaching database is
+ * held to. `blockingFramingIssue`'s three branches are cheap to call directly;
+ * `detectServe`'s too-short and no-swing refusals are exercised by the two checks
+ * above. Not covered here: the wrong-handed mismatch and the "no serve found in
+ * window" refusal, both in phases.ts, which have no existing trigger in this
+ * suite for either behaviour or copy — a narrower gap left for later rather than
+ * built from scratch in this pass.
+ */
+check('every clip-refusal message and hint passes the house-voice editor', () => {
+  const cases: [string, NotAServeError][] = [
+    ['no player visible', blockingFramingIssue(['nobody-visible'])!],
+    ['body does not fit', blockingFramingIssue(['feet-cropped', 'head-cropped'])!],
+    ['hands unseen, not far', blockingFramingIssue(['hands-unseen'])!],
+    ['hands unseen, too far', blockingFramingIssue(['hands-unseen', 'too-far-away'])!],
+  ]
+  for (const [label, err] of cases) {
+    assert(err !== undefined, `${label}: blockingFramingIssue returned nothing`)
+    for (const line of [err.message, ...err.hints]) {
+      const issues = cueIssues(line)
+      assert(issues.length === 0, `${label} failed the editor: ${issues.join('; ')}\n        "${line}"`)
+    }
+  }
+
+  const thrown: [string, () => void][] = [
+    ['no swing', () => detectServe(buildServe({ noSwing: true }, FPS), FPS)],
+    ['too short', () => detectServe(buildServe({}, FPS).slice(0, 5), FPS)],
+  ]
+  for (const [label, run] of thrown) {
+    try {
+      run()
+      assert(false, `${label}: expected a NotAServeError`)
+    } catch (err) {
+      assert(err instanceof NotAServeError, `${label}: threw something other than NotAServeError`)
+      if (err instanceof NotAServeError) {
+        for (const line of [err.message, ...err.hints]) {
+          const issues = cueIssues(line)
+          assert(issues.length === 0, `${label} failed the editor: ${issues.join('; ')}\n        "${line}"`)
+        }
+      }
+    }
+  }
 })
 
 /* ------------------------------------------------------ serves in one clip */

@@ -221,7 +221,7 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
     ])
   }
 
-  return new UnreadableVideoError('That video could not be read.', [
+  return new UnreadableVideoError('That video would not read.', [
     'Try trimming it in your photo library and picking it again.',
     'MP4 or MOV clips from a phone camera work best.',
   ])

@@ -6,6 +6,14 @@ in `git log`.
 
 ## 2026-08-15
 
+- **Fixed: a few clip-refusal messages read passively.** "Every swing
+  measurement is read off your racket hand…", "Long clips are scanned
+  for the serve first…" and "That video could not be read." all named
+  the passive voice this app's own coaching copy is never allowed —
+  found by finally running these refusal messages, which live outside
+  the coaching database, past the same editor. Now "…comes off your
+  racket hand", "This app scans long clips…" and "That video would not
+  read." Same meaning, same length, active voice throughout.
 - **Your records, labelled.** The streak, longest run, best hand speed and
   best score lines on "Every serve so far" now sit under their own "Your
   records" heading, the same way every other section on that sheet

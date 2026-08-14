@@ -20,6 +20,7 @@ import {
   loadVideo,
   looksLikeNonVideo,
 } from '../extract'
+import { cueIssues } from '../../analysis/voice'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
 
 heading('Whether a declared type already rules out a video')
@@ -255,6 +256,24 @@ check('every refusal carries something the player can actually do', () => {
         err.hints.every((h) => h.trim().length > 0),
         `code ${code} (hevc ${hevc}) produced a blank hint`,
       )
+    }
+  }
+})
+
+/**
+ * `describeDecodeFailure`'s messages and hints are thrown as a `UnreadableVideoError`
+ * rather than read out of a table, so `copy.test.ts`'s `everyCue()` sweep — built to
+ * walk `coaching.ts`'s data-driven copy — never sees them. Nothing else in the
+ * codebase ran them past the same editor until this check.
+ */
+check('every decode-failure message and hint passes the house-voice editor', () => {
+  for (const hevc of [true, false]) {
+    for (const code of [undefined, MEDIA_ERR.ABORTED, MEDIA_ERR.NETWORK, MEDIA_ERR.DECODE, MEDIA_ERR.SRC_NOT_SUPPORTED]) {
+      const err = failed(code, hevc)
+      for (const line of [err.message, ...err.hints]) {
+        const issues = cueIssues(line)
+        assert(issues.length === 0, `code ${code} (hevc ${hevc}) failed the editor: ${issues.join('; ')}\n        "${line}"`)
+      }
     }
   }
 })

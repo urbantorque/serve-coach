@@ -544,7 +544,7 @@ export function blockingFramingIssue(issues: string[]): NotAServeError | undefin
         : 'I could not see your racket hand.',
       [
         'Move the phone to about four metres, so your body fills the frame height.',
-        'Every swing measurement is read off your racket hand, so it has to be visible.',
+        'Every swing measurement comes off your racket hand, so it has to be visible.',
       ],
     )
   }
@@ -1562,7 +1562,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         if (err instanceof NotAServeError && !located) {
           const missed = new NotAServeError('I could not find a serve in that clip.', [
             'Trim the video to a single serve and try again.',
-            'Long clips are scanned for the serve first, and nothing in this one stood out.',
+            'This app scans long clips for the serve first, and nothing in this one stood out.',
             'Filming from the side or behind, four metres back, makes the swing easier to pick out.',
           ])
           if (opts.captureOnFailure) missed.capture = { frames, fps }
