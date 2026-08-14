@@ -389,6 +389,77 @@ check('an object rising the whole time is rejected', () => {
   )
 })
 
+/**
+ * Every distractor above moves. A spare ball left sitting on the court while
+ * a basket is filmed does not — and `findCandidates`' own score is `0.55 ×
+ * colour + 0.45 × motion`, not motion alone, so a genuinely still ball can
+ * still clear the threshold on colour: a stationary, unblurred disc renders
+ * more crisply than the real, moving one and was measured scoring HIGHER in
+ * a live sweep (65 against 51 for the genuine toss, same frame, same
+ * clip) — colour, not motion, decided which one `trackBall`'s pool saw
+ * first.
+ *
+ * Swept live (scratchpad/stationaryDecoySweep.ts, the real render + detector
+ * pipeline, before writing anything here) across decoy heights and both a
+ * near and a far x position. Two outcomes, not one: a decoy resting near
+ * court level — the literal reading of "a spare ball on the court" — never
+ * moved the fit at all, at any x. A decoy floating at a height the toss
+ * itself passes through (a ball propped at head height, on a fence, in a
+ * neighbouring court) is a different case: at the one or two instants the
+ * true arc's height matches the decoy's, the decoy — scoring higher — is
+ * the candidate `trackBall` picks for that frame, and if the decoy sits far
+ * enough from the real ball's own path in x, that one substituted frame is
+ * enough to trip `X_CONSISTENCY_BAND`'s "not the same object" guard and the
+ * whole toss is discarded, not one frame of it.
+ *
+ * That is the honest failure mode, not a silent wrong number: a rejection,
+ * the same "nothing" a fully lost ball already produces, never a corrupted
+ * apex. This pins the current, safe-but-imperfect behaviour — both the case
+ * that is fine and the case that fails closed — as a regression floor. A
+ * real fix (excluding the one contaminated frame and re-checking, rather
+ * than discarding on any contamination) is real work on a safety gate this
+ * whole feature leans on, tracked separately rather than rushed here.
+ */
+heading('A stationary ball-like object already in frame')
+
+check('a spare ball resting near court level does not disturb the fit', () => {
+  const clean = trackBall(
+    candidatesFor(tossFrames({ apexT: 0.45, apexY: 0.16, gravity: GRAVITY, x0: 0.45, driftX: 0.05 })),
+    { expectedGravity: GRAVITY },
+  )!
+  for (const decoyX of [0.15, 0.75]) {
+    const shots = tossFrames({
+      apexT: 0.45,
+      apexY: 0.16,
+      gravity: GRAVITY,
+      x0: 0.45,
+      driftX: 0.05,
+      extra: () => [{ x: decoyX, y: 0.58, r: 0.012, colour: BALL }],
+    })
+    const flight = trackBall(candidatesFor(shots), { expectedGravity: GRAVITY })
+    assert(flight !== undefined, `a resting-on-court decoy at x=${decoyX} lost the toss`)
+    near(flight!.apex.y, clean.apex.y, 0.005, `apex height with a resting decoy at x=${decoyX}`)
+  }
+})
+
+check('a decoy far off the ball\'s own path, at a height the arc actually crosses, fails closed rather than reporting a corrupted apex', () => {
+  const shots = tossFrames({
+    apexT: 0.45,
+    apexY: 0.16,
+    gravity: GRAVITY,
+    x0: 0.45,
+    driftX: 0.05,
+    // Just past the apex height, and well off the real ball's own x path
+    // (which never leaves roughly 0.45-0.49) — the exact condition the live
+    // sweep found breaks the fit.
+    extra: () => [{ x: 0.75, y: 0.17, r: 0.012, colour: BALL }],
+  })
+  const flight = trackBall(candidatesFor(shots), { expectedGravity: GRAVITY })
+  // The important assertion is what it is NOT: not a flight with the decoy's
+  // x baked into an apex the player would read as their own toss.
+  assert(flight === undefined, 'a far-off decoy at a crossed height was reported as a toss instead of rejected')
+})
+
 check('the real ball is picked out from among distractors', () => {
   // Two decoys moving in straight lines alongside the genuine toss: someone
   // else's ball rolling along a fence line, a bird.
