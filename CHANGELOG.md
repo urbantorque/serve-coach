@@ -85,3 +85,12 @@ in `git log`.
   stacked above the streak line, the same way the basket card already
   stacks its own two records. See `bestOverallScoreEverLine` in
   `src/lib/progress.ts`.
+- **Share your whole season, not just one report.** "Every serve so far"
+  now has its own "Share your season" button, next to the trip streak,
+  tightest-gap, fastest-hand-speed and best-score lines it already shows —
+  every existing card was scoped to one report or one basket, so a coach
+  or a parent asked "how's it going" had only a single day's numbers to
+  hand over. The new card carries all four records together, in the same
+  order the sheet already lists them, and nothing else — no invented
+  season score. Appears once there are at least two records to share. See
+  `renderSeasonCard` in `src/lib/share/reportCard.ts`.

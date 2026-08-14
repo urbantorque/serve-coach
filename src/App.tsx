@@ -4,6 +4,7 @@ import HandednessPicker from './components/HandednessPicker'
 import StoragePanel from './components/StoragePanel'
 import DeviceCheck from './components/DeviceCheck'
 import PracticeCard from './components/PracticeCard'
+import SeasonShareButton from './components/SeasonShareButton'
 import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
@@ -522,6 +523,19 @@ export default function App() {
     [sessions, form],
   )
   const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread.gapDelta) : undefined), [spread])
+  // The same four facts this sheet already renders, worded the same way,
+  // handed to the season share button as plain strings rather than raw
+  // records — so the card can never say anything the screen it was shared
+  // from does not already say.
+  const seasonRecords = useMemo(
+    () => ({
+      streak,
+      bestScore: sheetBestScore && bestOverallScoreEverLine(sheetBestScore),
+      bestSpeed: bestSpeed && bestHandSpeedEverLine(bestSpeed, prefs.heightCm),
+      bestGap: sheetBestGap && bestGapEverLine(sheetBestGap),
+    }),
+    [streak, sheetBestScore, bestSpeed, sheetBestGap, prefs.heightCm],
+  )
 
   /**
    * The tightest best-vs-worst gap swept, for whichever serve type is on
@@ -1495,6 +1509,12 @@ export default function App() {
             {/* The third fact in the same cluster, for the same reason: a
                 whole-journey record rather than a form measurement. */}
             {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
+
+            {/* Every record this sheet already shows, in one image — see
+                `renderSeasonCard`. Placed with the records it shares rather
+                than at the bottom of the sheet with the table, so the
+                button sits next to the exact facts it is about. */}
+            <SeasonShareButton records={seasonRecords} />
 
             {/* Said out loud rather than left as a gap in the chart. Somebody who
                 has filmed twenty serves and sees eleven plotted will assume the

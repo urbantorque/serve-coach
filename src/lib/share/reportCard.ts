@@ -803,3 +803,135 @@ export async function shareBasketCard(
   if (!blob) return 'failed'
   return shareBlob(blob, `basket-${dateStamp(createdAt)}.png`, 'My basket')
 }
+
+/**
+ * The four cross-session records, already worded by their own `*EverLine`
+ * functions — see `bestGapEverLine`/`bestHandSpeedEverLine`/
+ * `bestOverallScoreEverLine`/`streakLine` in `progress.ts`. Every field
+ * optional for the same reason each already is on its own screen: a player
+ * with one trip, or one basket, has none of these yet.
+ */
+export interface SeasonRecords {
+  streak?: string
+  bestScore?: string
+  bestSpeed?: string
+  bestGap?: string
+}
+
+/**
+ * Draw every cross-session record together as a single shareable image.
+ *
+ * Every other card here is scoped to one report or one basket, with at most
+ * one or two of these four riding along as a secondary line. Nothing draws
+ * the whole season on its own — a coach or a parent asked "how's it going"
+ * has only a single day's report to hand over, never the four facts that
+ * only move by actually getting on court, which the progress sheet already
+ * groups together in one place but never lets leave the app.
+ *
+ * No score ring, unlike every other card: there is no single number a
+ * season reduces to without inventing one. Each record is its own row
+ * instead, in the same order the progress sheet already renders them in —
+ * `streak`, `bestScore`, `bestSpeed`, `bestGap` — so the card says nothing
+ * the screen it was shared from does not already say, and in the same
+ * order a player would find it in.
+ *
+ * `undefined` with nothing to show, the same floor `renderBasketCard`
+ * holds for a basket with no gap yet — a card with zero rows is not a
+ * smaller card, it is a blank one.
+ */
+export async function renderSeasonCard(records: SeasonRecords, asOf: number): Promise<Blob | undefined> {
+  const rows = [records.streak, records.bestScore, records.bestSpeed, records.bestGap].filter(
+    (line): line is string => Boolean(line),
+  )
+  if (rows.length === 0) return undefined
+
+  const W = 1080
+  const PAD = 64
+  const ROW_GAP = 18
+  const ROW_PAD_Y = 28
+
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return undefined
+
+  /* --- layout, measured before the canvas is sized ------------------------ */
+  const titleY = PAD + 108
+  const rowsY = titleY + 56
+  const rowTextFont = font(560, 22)
+  const rowMaxWidth = W - PAD * 2 - 48
+
+  ctx.font = rowTextFont
+  const rowLines = rows.map((line) => layoutLines(ctx, line, rowMaxWidth))
+  const rowHeights = rowLines.map((lines) => ROW_PAD_Y * 2 + lines.length * 30)
+  const rowsH = rowHeights.reduce((s, h) => s + h, 0) + ROW_GAP * (rows.length - 1)
+
+  const H = rowsY + rowsH + 74
+  canvas.height = H
+
+  ctx.fillStyle = INK
+  ctx.fillRect(0, 0, W, H)
+
+  const glow = ctx.createRadialGradient(W / 2, -140, 40, W / 2, -140, 760)
+  glow.addColorStop(0, 'rgba(205,249,74,0.16)')
+  glow.addColorStop(1, 'rgba(205,249,74,0)')
+  ctx.fillStyle = glow
+  ctx.fillRect(0, 0, W, rowsY)
+
+  /* --- header -------------------------------------------------------------- */
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = LIME
+  ctx.beginPath()
+  ctx.arc(PAD + 9, PAD + 14, 9, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.font = font(640, 24)
+  ctx.fillStyle = FG
+  ctx.fillText('Serve Coach', PAD + 30, PAD + 22)
+
+  ctx.font = font(500, 20)
+  ctx.fillStyle = FAINT
+  ctx.textAlign = 'right'
+  ctx.fillText(
+    new Date(asOf).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }),
+    W - PAD,
+    PAD + 22,
+  )
+  ctx.textAlign = 'left'
+
+  /* --- title ----------------------------------------------------------------- */
+  ctx.font = font(700, 16)
+  ctx.fillStyle = LIME
+  ctx.fillText('YOUR SEASON SO FAR', PAD, titleY)
+
+  /* --- one row per record ---------------------------------------------------- */
+  let y = rowsY
+  rowLines.forEach((lines, i) => {
+    const h = rowHeights[i]
+    ctx.fillStyle = INK_2
+    roundRect(ctx, PAD, y, W - PAD * 2, h, 16)
+    ctx.fill()
+
+    ctx.font = rowTextFont
+    ctx.fillStyle = FG
+    drawLines(ctx, lines, PAD + 24, y + ROW_PAD_Y + 18, 30)
+
+    y += h + ROW_GAP
+  })
+
+  ctx.font = font(400, 15)
+  ctx.fillStyle = FAINT
+  ctx.textAlign = 'center'
+  ctx.fillText('Measured on device · nothing was uploaded', W / 2, H - 22)
+  ctx.textAlign = 'left'
+
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
+}
+
+export async function shareSeasonCard(
+  records: SeasonRecords,
+  asOf: number,
+): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+  const blob = await renderSeasonCard(records, asOf)
+  if (!blob) return 'failed'
+  return shareBlob(blob, `season-${dateStamp(asOf)}.png`, 'My season')
+}
