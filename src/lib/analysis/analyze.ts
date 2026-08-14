@@ -23,7 +23,7 @@ import {
   type OutboundTrack,
 } from '../vision/ballTrack'
 import { imageXSplitFrom, readImageX, type ImageXSplit } from './axes'
-import { loadEngine, type EngineProgress } from '../pose/poseEngine'
+import { isCachedOffline, loadEngine, type EngineProgress } from '../pose/poseEngine'
 import { drawSkeleton, fitContain } from '../pose/skeleton'
 import { FUNDAMENTALS } from './coaching'
 import { SOFT_MEASUREMENT } from './confidence'
@@ -327,10 +327,17 @@ export async function sweepServes(
  * the app was also the control that threw every completed measurement away.
  * Four serves out of six still answers the question they asked.
  *
- * How long that is in seconds, nobody here knows: nothing in this tree times a
- * sweep, the only sweeps ever run were against a fake `measure` that returns
- * immediately, and a figure invented for a comment would be a number nobody
- * measured. It is one full analysis pass per serve, and that is the honest unit.
+ * How long that is in seconds, this tree no longer has to guess. Every pass
+ * now records what it cost on `Analysis.cost` — see that field, and R46 in
+ * `NEXT.md` for why "half a minute" was never a measurement. A sweep is one
+ * pass per serve, so a basket's cost is the sum of its serves' own recorded
+ * numbers rather than a figure invented for a comment.
+ *
+ * What is still unmeasured is what those numbers are *on a phone*, which no
+ * amount of arithmetic here supplies: the only sweeps ever run in this repo
+ * were against a fake `measure` that returns immediately. `COURT-CHECK.md`
+ * step 8 is where that is answered, and it can now be answered by reading a
+ * field rather than by holding a stopwatch.
  */
 export async function analyzeAllServes(
   opts: AnalyzeOptions & SweepOptions,
@@ -1449,8 +1456,26 @@ export async function analyzeServe(
   }
 }
 
+/**
+ * Wall clock, where there is one.
+ *
+ * `performance.now` in a browser; `Date.now` in the test runner, which has the
+ * same shape and worse resolution than this needs. The same fallback
+ * `diagnose.ts` already makes for the same reason.
+ */
+const clock = () =>
+  typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now()
+
 async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promise<Analysis> {
   const { videoUrl, fileName, onProgress = () => {}, signal } = opts
+
+  const startedAt = clock()
+  // Asked before `loadEngine`, because afterwards the answer is always yes. A
+  // first analysis on a cold cache pays a 19 MB download inside the measured
+  // span, and a number that folded that in would be reporting the network.
+  const coldEngine = !(await isCachedOffline())
 
   const landmarker = await loadEngine((p: EngineProgress) => {
     onProgress({
@@ -1711,6 +1736,10 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   return {
     id: `serve-${Date.now().toString(36)}`,
     createdAt: Date.now(),
+    // What this pass actually took, rather than what a comment guessed — see
+    // `Analysis.cost`. Rounded to the millisecond: nothing reads it at finer
+    // resolution and a long float in every stored report is noise.
+    cost: { ms: Math.round(clock() - startedAt), coldEngine },
     video: {
       name: fileName,
       durationMs: video.duration * 1000,

@@ -235,7 +235,17 @@ attached, because there is no room here for the caveats the report carries.
 
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
-the same stream thirty seconds before the analysis needs the GPU.
+the same stream shortly before the analysis needs the GPU.
+
+A note on durations in this document, and in the source. "Half a minute" for an
+analysis pass has been this codebase's figure since the MVP baseline commit and
+appears in roughly seventeen files, justifying real decisions — why the framing
+preflight is worth two seconds, why a rescore is arithmetic rather than a
+re-read. **It was never measured.** Every pass now records what it actually cost
+on `Analysis.cost`, which rides into an exported backup, so `COURT-CHECK.md`
+step 8 can answer it from a phone by reading a field. Until those numbers come
+back, read every duration in this repo as an estimate from before anything timed
+itself.
 
 **What this phone can do.** Open the app at `?check`, or tap it at the foot of
 the history sheet, and it says what this particular browser will record, what it
@@ -654,7 +664,7 @@ rather than as a way to actually record. A player standing on a court who
 wants to record now had an obviously-labelled button for exactly that already
 on screen, and it was the blind one: `capture="environment"` on a hidden file
 input, straight to the phone's own camera app, no feedback until the analysis
-came back thirty seconds later. Both routes still exist — the preview can
+came back — an estimated half a minute, see the note above. Both routes still exist — the preview can
 fail to start on a denied permission or an unsupported browser, and
 `FramingCheck` already has a message for that, pointing back at the camera
 app and the file picker exactly as before — but which one answers to "Record

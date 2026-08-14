@@ -345,6 +345,29 @@ check('a round trip through a file changes nothing', async () => {
   for (const id of ['a', 'b']) assert(to.sessions.has(id), `report ${id} did not arrive`)
 })
 
+heading('What a court trip can read back off a phone')
+
+check('an analysis keeps what it cost, all the way into an exported file', async () => {
+  // `COURT-CHECK.md` step 8 now says to read `cost` out of an exported backup
+  // rather than to hold a stopwatch, which only works if the field survives
+  // both `saveSession`'s spread and `normalise`'s. Neither whitelists fields,
+  // and this is what says so — the instruction is worthless the day one of them
+  // starts to.
+  const timed = session('t', 1_000, 60, {
+    cost: { ms: 24_310, coldEngine: false },
+  } as Partial<Session>)
+  const from = memoryStore({ sessions: [timed] })
+  const backup = await buildBackup(from.store)
+  const to = memoryStore()
+  await importBackup(JSON.stringify(backup), to.store)
+
+  const landed = to.sessions.get('t') as Session & { cost?: { ms: number; coldEngine: boolean } }
+  assert(landed !== undefined, 'the timed report did not survive the round trip')
+  assert(landed.cost?.ms === 24_310, `cost.ms came back as ${landed.cost?.ms}`)
+  assert(landed.cost?.coldEngine === false, 'coldEngine did not survive')
+  note('cost survives export and import, so a phone can report its own timings')
+})
+
 heading('What the file is called')
 
 check('the stamp is local time, not UTC', () => {

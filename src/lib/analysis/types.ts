@@ -365,6 +365,43 @@ export interface Analysis {
    */
   diagnosis?: Diagnosis
   /**
+   * What this analysis actually cost, in wall-clock milliseconds.
+   *
+   * MEASURED, WHICH IS THE POINT. "Half a minute" has been this codebase's
+   * figure for a pipeline pass since the MVP baseline commit, and it appears in
+   * roughly a dozen files justifying real decisions — why the framing preflight
+   * is worth two seconds, why a rescore is arithmetic rather than a re-read,
+   * why the live viewfinder must not heat the phone before an analysis. Nothing
+   * ever timed it. `Diagnosis.cost.ms` times the diagnostic pass, which is the
+   * cheap pure-computation part; the expensive half is the seeking and the pose
+   * detection, and that was the half nobody measured.
+   *
+   * Two `performance.now()` calls, so this is free in the sense
+   * `analyze.ts` uses when it declines to keep something expensive nobody
+   * reads: the objection there is to a measurement that costs seeks, and this
+   * costs none.
+   *
+   * It rides on the report and therefore reaches an exported fixture and a
+   * backup file, which is how a phone on a court can hand back a real number
+   * without anybody holding a stopwatch — see `COURT-CHECK.md` step 8.
+   *
+   * Optional because every report filed before this existed has none, and
+   * because the dev fixtures assemble an `Analysis` by hand.
+   */
+  cost?: {
+    /** Wall clock from the first frame read to the finished report. */
+    ms: number
+    /**
+     * Whether the pose engine had to be fetched during this pass.
+     *
+     * A first analysis on a cold cache pays a 19 MB download inside the same
+     * span, and reporting that as the pipeline's cost would overstate it by an
+     * amount that depends entirely on the network. Kept beside the number so a
+     * reader can tell the two apart rather than averaging them together.
+     */
+    coldEngine: boolean
+  }
+  /**
    * The single thing to work on, or the reason this clip could not be read.
    *
    * The collapsed form of `diagnosis`: one flaw, one drill identifier, and how

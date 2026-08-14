@@ -93,14 +93,20 @@ file gets there on its own, and is the other half worth trying.
 Proves the sweep, the consistency panel, and the best-against-worst picture strip
 on footage that was not synthesised.
 
-**Time it, with a stopwatch, and write the number down.** This is the only step
-on this list that produces a figure nothing else in the project can. Nothing in
-the tree times a sweep — `analyzeAllServes` says so itself, and the only sweeps
-ever run were against a fake `measure` that returns immediately — so how long
-the most expensive thing this app does actually takes is unknown, on the path a
-picked multi-serve clip now enters automatically. Two numbers are worth having:
-one full pass on a single serve, and the whole basket. Note whether the phone
-gets warm, and whether you would have waited.
+**Bring back the timings.** This is the only step on this list that produces a
+figure nothing else in the project can: how long the most expensive thing this
+app does actually takes, on a phone, on the path a picked multi-serve clip now
+enters automatically.
+
+You do not need a stopwatch. Every analysis now records what it cost —
+`Analysis.cost.ms`, with `coldEngine` saying whether the 19 MB model download
+happened inside that span. It rides on the stored report, so the way to read it
+off a phone is **Your serves → Export**, then open the `.json` and look at
+`cost` on each entry.
+
+Do it twice: once on a single serve, and once after sweeping a basket, since a
+sweep is one pass per serve and the sum is what a player actually waits for.
+Note whether the phone gets warm, and whether you would have waited.
 
 ---
 

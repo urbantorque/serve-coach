@@ -206,7 +206,14 @@ export function nextVideoTimestamp(landmarker: PoseLandmarker): number {
  * none.
  */
 export async function isCachedOffline(): Promise<boolean> {
-  if (!('caches' in window)) return false
+  // `globalThis`, not `window`, and outside no try block by accident: this line
+  // used to sit above the `catch` below while naming a global that does not
+  // exist off the main thread or in the test runner, so the one caller that
+  // ever reached it from Node would have taken a ReferenceError rather than the
+  // `false` every other failure here returns. Nothing reached it until
+  // `runAnalysis` began asking whether the engine was cold; found then rather
+  // than by a crash, and fixed at the source rather than guarded at the call.
+  if (!('caches' in globalThis)) return false
   try {
     const [model, simd, nosimd] = await Promise.all([
       caches.match(MODEL_URL),

@@ -793,6 +793,67 @@ had never been written down anywhere.
       became unconditional — the exact confidently-wrong failure R31 fixed the
       other half of — and two checks went red.
 
+- [x] **R46** — "Half a minute" for an analysis pass, audited and then replaced
+      with a measurement rather than with a caveat.
+
+      R40 fixed two documents asserting a sweep duration the engine explicitly
+      refuses to state, and left the wider question open: whether the "half a
+      minute" figure those numbers were inconsistent with is itself measured.
+      Traced it rather than guessed — `git log -S` puts it in `da2cc90`, the MVP
+      baseline, *before* the twenty-five-round polish pass. It has been an
+      estimate the whole time, and it now appears in seventeen files justifying
+      real decisions: why the framing preflight is worth two seconds, why a
+      rescore is arithmetic rather than a re-read, why the viewfinder must not
+      heat the phone beforehand.
+
+      Also established that nothing times the pipeline, and — the useful half —
+      that `diagnose.ts` has timed *itself* all along, reporting `cost.ms`. So
+      the app measured its cheap pure-computation pass and not the expensive
+      video one. The mechanism and the precedent were both already here.
+
+      `Analysis.cost` is that gap closed: `{ ms, coldEngine }`, two
+      `performance.now()` calls, no seeks. `coldEngine` is asked *before*
+      `loadEngine` because afterwards the answer is always yes, and a first
+      analysis on a cold cache pays a 19 MB download inside the measured span —
+      folding that in would report the network rather than the pipeline. This
+      is free in exactly the sense the `outbound` note uses when it declines to
+      keep an expensive thing nobody reads: that objection is to seeks, and
+      there are none here.
+
+      It has a real consumer, which is why it is kept rather than logged.
+      `Analysis.cost` rides into a stored report and therefore into an exported
+      backup, so `COURT-CHECK.md` step 8 no longer asks for a stopwatch — it
+      says to sweep a basket, export, and read `cost` per entry. Pinned by a
+      check in `backup.test.ts` that the field survives both `saveSession`'s
+      spread and `normalise`'s, because that instruction is worthless the day
+      either starts whitelisting fields.
+
+      A LATENT BUG FELL OUT OF ADDING THE CALLER, which is the part worth
+      recording. `isCachedOffline` opened with `if (!('caches' in window))` —
+      *outside* the try block that catches everything else in it. In any context
+      with no `window`, that is a `ReferenceError` rather than the `false` every
+      other failure there returns, and nothing had ever reached it from one
+      until `runAnalysis` began asking whether the engine was cold. Reproduced
+      the throw in Node directly before changing anything, fixed at the source
+      with `globalThis`, and confirmed the browser answer is unchanged.
+
+      THE SEVENTEEN COMMENTS ARE NOT REWRITTEN, deliberately. A consistent
+      estimate is a different problem from R40's two contradictory ones, and
+      replacing seventeen prose figures with a second unmeasured phrasing would
+      be churn that needs its own re-verification. What is stated instead, once
+      and where a reader will find it: `Analysis.cost`'s own doc names the
+      provenance, and `README.md` — the one document that claims to be accurate
+      — now carries a note saying every duration in the repo is an estimate from
+      before anything timed itself, and where the real numbers will come from.
+      A future round sweeps them when step 8 comes back with figures.
+
+      NOT VERIFIED END TO END, said plainly. The cost field could not be watched
+      being populated: it is assembled at the end of a successful `runAnalysis`,
+      and this environment cannot produce a clip with a player in it — an empty
+      blob is refused at `loadVideo` long before. What was checked live is that
+      the pipeline still runs and still refuses correctly with the new `await`
+      in front of it, and that `isCachedOffline` still answers in a browser.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the
