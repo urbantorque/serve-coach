@@ -67,3 +67,13 @@ in `git log`.
   different question from either of those. Carries onto "Share this
   basket" too, the same way the all-time record already does. See
   `gapDeltaFor` in `src/lib/progress.ts`.
+- **A personal-best record for your single highest-scoring serve.** Every
+  report now names the best score any one serve of that type has ever
+  earned — "Your best serve yet — 68." on the report that set it, "Your
+  best serve so far scored 68, set 14 Aug." on any other — sitting under
+  the score ring, beside the "vs your last serve" comparison. Scoped to
+  the serve type on screen, the same rule the tightest-gap record already
+  follows, since a flat serve and a kick serve are scored against
+  different target bands. Ungameable like every other record on this
+  screen: only moves by actually serving a higher score. See
+  `bestOverallScore`/`bestOverallScoreLine` in `src/lib/progress.ts`.

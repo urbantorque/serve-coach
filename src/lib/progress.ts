@@ -797,6 +797,40 @@ export function bestHandSpeedEverLine(record: BestHandSpeed, heightCm: number | 
   return `Your fastest hand speed yet was ${value} ${unit}, set ${shortDate(record.createdAt)}.`
 }
 
+/**
+ * The single highest score any one serve has earned, for a given serve type.
+ *
+ * Scoped by type for the same reason `bestConsistencyGap` is: the
+ * fundamentals are judged against a different target band per serve type
+ * (`coaching.ts`'s `SERVE_TYPES`), so a 90 on a kick serve and a 90 on a flat
+ * one are graded against different rubrics, not the same claim twice.
+ *
+ * `undefined` below two reports of the type, the same floor every other
+ * cross-session record in this file holds — one score is just that score,
+ * not a record yet.
+ */
+export interface BestScore {
+  score: number
+  createdAt: number
+}
+
+export function bestOverallScore(sessions: Session[], serveType: ServeType): BestScore | undefined {
+  const usable = sessions.filter((s) => typeOf(s) === serveType)
+  if (usable.length < 2) return undefined
+  const best = usable.reduce((a, b) => (b.overall > a.overall ? b : a))
+  return { score: best.overall, createdAt: best.createdAt }
+}
+
+/**
+ * The sentence a best-score record becomes, matching `bestGapLine`'s own
+ * restraint — the number is left to say whether it was good, not told to.
+ */
+export function bestOverallScoreLine(record: BestScore, viewedAt: number): string {
+  return record.createdAt === viewedAt
+    ? `Your best serve yet — ${record.score}.`
+    : `Your best serve so far scored ${record.score}, set ${shortDate(record.createdAt)}.`
+}
+
 export const MEANINGFUL_DELTA = 3
 
 export const deltaStatus = (delta: number): Status | 'flat' =>

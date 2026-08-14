@@ -14,7 +14,14 @@ import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consi
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { PracticeFocus } from '../lib/practice'
 import type { ServeType } from '../lib/storage/prefs'
-import { deltasAgainst, scoringVersionOf, type BestGap, type BestHandSpeed } from '../lib/progress'
+import {
+  bestOverallScoreLine,
+  deltasAgainst,
+  scoringVersionOf,
+  type BestGap,
+  type BestHandSpeed,
+  type BestScore,
+} from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
 import { SCORING_VERSION, type Analysis, type PhaseId, type Status } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
@@ -98,6 +105,13 @@ interface Props {
    */
   basketGapDelta?: number
   /**
+   * The single highest score any one serve of this type has earned — see
+   * `bestOverallScore`. A different record from `bestGap` above: that is
+   * about repeatability across a basket, this is about the one best serve
+   * this report's own `analysis.overall` is compared against.
+   */
+  bestScore?: BestScore
+  /**
    * The trip streak line, already worded by `streakLine` in `App.tsx` —
    * carried onto the share card `share()` below builds, unmodified.
    */
@@ -161,6 +175,7 @@ export default function Report({
   servePair,
   bestGap,
   basketGapDelta,
+  bestScore,
   streak,
   bestSpeed,
   saveWarning,
@@ -418,6 +433,11 @@ export default function Report({
               The scoring changed between these two serves, so this one starts a fresh run.
             </span>
           ))}
+        {/* A fact about the whole history, not this one serve — the same
+            reason `bestGap`/`bestSpeed` below sit apart from the numbers they
+            are records among. Ungameable the same way: the only way to move
+            it is to actually serve a higher score. */}
+        {bestScore && <p>{bestOverallScoreLine(bestScore, analysis.createdAt)}</p>}
         <h1>{verdict.title}</h1>
         <p>{verdict.sub}</p>
       </section>

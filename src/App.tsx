@@ -13,6 +13,7 @@ import {
   bestGapEverLine,
   bestHandSpeed,
   bestHandSpeedEverLine,
+  bestOverallScore,
   buildConsistencyTrend,
   buildProgress,
   gapDeltaFor,
@@ -527,6 +528,17 @@ export default function App() {
    */
   const bestGapFor = useCallback(
     (serveType: ServeType) => bestConsistencyGap(buildConsistencyTrend(sessions, serveType)),
+    [sessions],
+  )
+  /**
+   * The single highest score any one serve of this type has earned — see
+   * `bestOverallScore`. Same reasoning as `bestGapFor`: recomputed per
+   * viewed type rather than pinned to the sheet's dominant one, so a report
+   * open on a type the player rarely films still shows its own record and
+   * not a mismatched one.
+   */
+  const bestScoreFor = useCallback(
+    (serveType: ServeType) => bestOverallScore(sessions, serveType),
     [sessions],
   )
   // Same reasoning as bestGapFor: recomputed for whichever type is actually
@@ -1227,6 +1239,7 @@ export default function App() {
             servePair={pair}
             bestGap={bestGapFor(typeOf(view.analysis))}
             basketGapDelta={gapDeltaForView(view.analysis.id, typeOf(view.analysis))}
+            bestScore={bestScoreFor(typeOf(view.analysis))}
             streak={streak}
             bestSpeed={bestSpeed}
             saveWarning={saveWarning}
@@ -1247,6 +1260,7 @@ export default function App() {
             onAnalyzeAnother={goHome}
             bestGap={bestGapFor(typeOf(view.session))}
             basketGapDelta={gapDeltaForView(view.session.id, typeOf(view.session))}
+            bestScore={bestScoreFor(typeOf(view.session))}
             streak={streak}
             bestSpeed={bestSpeed}
             practice={practice}

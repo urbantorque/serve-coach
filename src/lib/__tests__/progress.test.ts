@@ -24,6 +24,8 @@ import {
   bestHandSpeed,
   bestHandSpeedEverLine,
   bestHandSpeedLine,
+  bestOverallScore,
+  bestOverallScoreLine,
   buildConsistencyTrend,
   buildProgress,
   sameTrip,
@@ -453,6 +455,49 @@ check('converts to km/h with a stated height, same as bestHandSpeedLine', () => 
   const line = bestHandSpeedEverLine({ speed: 4.5, createdAt: DAY }, 178)
   assert(line.includes('km/h'), `a stated height did not switch the unit: "${line}"`)
   assert(!line.includes('body heights'), `house units still appeared alongside a stated height: "${line}"`)
+})
+
+heading('The single highest score any one serve of a type has earned')
+
+check('the highest-scoring session of the matching type sets the record', () => {
+  const sessions = [
+    basketServe(0, 'a', [60, 70]), // overall 70
+    basketServe(DAY, 'b', [85, 90]), // overall 90
+    basketServe(DAY * 2, 'c', [40, 50]), // overall 50
+  ]
+  const record = bestOverallScore(sessions, 'flat')
+  assert(record !== undefined, 'no record produced across three same-type sessions')
+  assert(record!.score === 90, `wrong score picked as the record: ${record!.score}`)
+  assert(record!.createdAt === DAY, 'the record was not attributed to the session that actually set it')
+})
+
+check('a higher-scoring session of a different serve type is not counted, the same rubric guard bestConsistencyGap uses', () => {
+  const flatA = basketServe(0, 'a', [60, 70])
+  const flatB = basketServe(DAY, 'b', [55, 65])
+  const kick = { ...basketServe(DAY * 2, 'c', [95, 99]), serveType: 'kick' } as Session
+  const record = bestOverallScore([flatA, flatB, kick], 'flat')
+  assert(record !== undefined, 'two flat sessions produced no record at all')
+  assert(
+    record!.score === 70,
+    `a kick-serve score (99) leaked into the flat-serve record: got ${record!.score}`,
+  )
+})
+
+check('one session of the type has nothing to be a record against yet', () => {
+  const record = bestOverallScore([basketServe(0, 'a', [60, 75])], 'flat')
+  assert(record === undefined, 'a single session produced a record')
+})
+
+check('the session on screen reads as current when it set the record, by its own createdAt', () => {
+  const line = bestOverallScoreLine({ score: 88, createdAt: DAY }, DAY)
+  assert(line.includes('yet'), `the record-setting session was not read as current: "${line}"`)
+  assert(line.includes('88'), `the score itself did not appear: "${line}"`)
+})
+
+check('a different session on screen reads as "so far", dated, not as current', () => {
+  const line = bestOverallScoreLine({ score: 88, createdAt: DAY }, 0)
+  assert(!line.includes('yet'), `a non-record session was still credited with the record: "${line}"`)
+  assert(line.includes('so far'), `a non-record session did not read as "so far": "${line}"`)
 })
 
 report()
