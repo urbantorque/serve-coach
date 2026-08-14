@@ -1677,6 +1677,111 @@ check('past the visibility floor the clip is refused, not quietly reported at lo
   assert(dark.reason === 'body_not_visible', `a clip below the visibility floor was not refused: ${dark.reason}`)
 })
 
+heading('A racket arm silhouetted by backlight')
+
+/**
+ * `lightLevel` dims every landmark at once and `dropout` only ever picks a
+ * leg (`syntheticServe.ts`'s own dropout branch reaches for `leftKnee`,
+ * `leftAnkle` or their right-side pair, never an arm) — so the one landmark
+ * this app leans on hardest, the racket wrist, has never had a test where
+ * its own visibility drops while the rest of the body stays fully lit. That
+ * is exactly what a player serving into low winter sun produces: an
+ * overexposed sky behind an outstretched arm, silhouetting the racket hand
+ * while the legs and torso, lit from the side, still track cleanly.
+ *
+ * No change to the shared rig for this: `confidence.ts`'s own `LANDMARKS`
+ * registry already says which landmarks each measurement reads, so the
+ * question is only whether that registry is actually wired to a clip whose
+ * degradation is not uniform — and it can be answered by mutating the wrist,
+ * elbow and shoulder this rig always builds as the racket side (`syntheticServe.ts`
+ * is documented as "a parametric right-handed serve") after `buildServe`
+ * hands back clean frames, the same way `syntheticServe.ts`'s own `dropout`
+ * branch mutates a landmark's visibility in place.
+ */
+function backlitArmServe(armVisibility: number) {
+  const frames = buildServe({}, FPS)
+  for (const f of frames) {
+    for (const k of [LM.rightShoulder, LM.rightElbow, LM.rightWrist]) {
+      f.image[k] = { ...f.image[k], visibility: armVisibility }
+    }
+  }
+  const skel = detectServe(frames, FPS)
+  const resilience = assessResilience(frames, skel)
+  const quality = assessQuality(frames, skel, FPS, resilience.blur)
+  const fundamentals = measure(frames, skel, quality.view === 'side', {
+    confidence: {
+      frames,
+      skel,
+      swingSamples: quality.swingSamples,
+      view: quality.view,
+      depthUnreliable: resilience.spatial.depth_unreliable,
+      blur: resilience.blur,
+    },
+  })
+  return { resilience, fundamentals, reason: rejectionFor(resilience) }
+}
+
+check('a fully silhouetted racket arm is refused, and named for the arm rather than the frame', () => {
+  // Written expecting no refusal at all, on the premise that dimming three of
+  // the ten landmarks `keyVisibility` averages could not reach the whole-clip
+  // floor — true of `body_not_visible`, and wrong about the clip regardless:
+  // `blurOf` (kalman.ts) folds "how much of the racket wrist's own track was
+  // actually seen" into the same figure as jitter, specifically because a
+  // limb the tracker admits it cannot see and a limb smeared past recognition
+  // cost the swing reading the same thing. At full silhouette the wrist's own
+  // `seen` figure collapses to 0.15 and `blurOf`'s unseen term alone clears
+  // `LIMITS.blur` — which is `too_blurry`, not `body_not_visible`, and that is
+  // the right answer: `verdict.ts`'s `too_blurry` copy is already titled "Your
+  // racket arm blurred out" and already says "film in brighter light" before
+  // it says anything about holding the phone steady, which is honest advice
+  // for a silhouette and not only for a shutter smear. Nothing to fix here —
+  // this pins the behaviour the wrong-premise version of this test would have
+  // been the only thing exercising.
+  const backlit = backlitArmServe(0.15)
+  assert(backlit.reason === 'too_blurry', `a fully silhouetted racket arm was not refused as too_blurry: ${backlit.reason}`)
+})
+
+check('short of a full silhouette, confidence softens only the measurements that read the racket arm', () => {
+  // A haze rather than a silhouette — visible but harder to trust, the zone
+  // `litServe`'s dusk case exists to cover for the whole body. 0.5 keeps
+  // `blurOf`'s unseen term under `LIMITS.blur` (0.45 against a 0.75 ceiling),
+  // so this is confidence softening on an accepted clip, not the refusal
+  // above measured a second way.
+  const clean = backlitArmServe(1)
+  const hazy = backlitArmServe(0.5)
+  assert(hazy.reason === undefined, `a hazy racket arm alone was refused: ${hazy.reason}`)
+
+  const conf = (r: ReturnType<typeof backlitArmServe>, id: string) =>
+    r.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === id)!.confidence
+
+  // dropDepth and contactHeight are read straight off the racket wrist
+  // (confidence.ts's own LANDMARKS registry) and have to soften.
+  for (const id of ['dropDepth', 'contactHeight']) {
+    const c = conf(clean, id)
+    const h = conf(hazy, id)
+    assert(h < c, `${id}: a hazy racket arm did not soften it (clean ${c.toFixed(2)}, hazy ${h.toFixed(2)})`)
+    note(`${id}: ${c.toFixed(2)} clean, ${h.toFixed(2)} with the racket arm hazy`)
+  }
+
+  // kneeBend reads only hip/knee/ankle landmarks, all still fully lit here —
+  // the failure this test is actually built to catch is a clip-level
+  // visibility number leaking into every measurement's confidence regardless
+  // of which landmarks it was read from.
+  const kneeClean = conf(clean, 'kneeBend')
+  const kneeHazy = conf(hazy, 'kneeBend')
+  near(kneeHazy, kneeClean, 1e-6, 'kneeBend confidence with a hazy racket arm')
+})
+
+check('the wrist position itself is untouched — only what the app is willing to say about it', () => {
+  const clean = backlitArmServe(1)
+  const hazy = backlitArmServe(0.5)
+  const value = (r: ReturnType<typeof backlitArmServe>, id: string) =>
+    r.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === id)!.value
+  for (const id of ['dropDepth', 'contactHeight']) {
+    near(value(hazy, id), value(clean, id), 1e-6, `${id} with a hazy racket arm`)
+  }
+})
+
 /* ------------------------------------------- saying which thing went wrong */
 
 heading('Naming the right culprit for a soft measurement')
