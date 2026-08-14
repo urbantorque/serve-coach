@@ -18,6 +18,7 @@ import {
   STREAK_GAP_MS,
   bestConsistencyGap,
   bestGapEverLine,
+  gapDeltaFor,
   gapDeltaLine,
   bestGapLine,
   bestHandSpeed,
@@ -378,7 +379,7 @@ heading('How the most recent basket compared to the one before it')
 check('a shrinking gap — an improvement — reads as "tighter", not as a bad-direction number', () => {
   const sessions = [basketServe(0, 'a', [50, 80]), basketServe(DAY, 'b', [60, 65])] // gap 30 -> gap 5
   const trend = buildConsistencyTrend(sessions)!
-  const line = gapDeltaLine(trend)
+  const line = gapDeltaLine(trend.gapDelta)
   assert(line !== undefined, 'a real, non-noise change produced nothing')
   assert(line!.includes('tighter'), `a shrinking gap did not read as an improvement: "${line}"`)
   assert(line!.includes('25'), `wrong magnitude: "${line}"`)
@@ -387,7 +388,7 @@ check('a shrinking gap — an improvement — reads as "tighter", not as a bad-d
 check('a widening gap reads as "wider"', () => {
   const sessions = [basketServe(0, 'a', [60, 65]), basketServe(DAY, 'b', [50, 80])] // gap 5 -> gap 30
   const trend = buildConsistencyTrend(sessions)!
-  const line = gapDeltaLine(trend)
+  const line = gapDeltaLine(trend.gapDelta)
   assert(line !== undefined, 'a real, non-noise change produced nothing')
   assert(line!.includes('wider'), `a widening gap did not read as a regression: "${line}"`)
   assert(line!.includes('25'), `wrong magnitude: "${line}"`)
@@ -396,12 +397,46 @@ check('a widening gap reads as "wider"', () => {
 check('a noise-level change says nothing, the same floor every other delta in this file uses', () => {
   const sessions = [basketServe(0, 'a', [60, 65]), basketServe(DAY, 'b', [61, 65])] // gap 5 -> gap 4
   const trend = buildConsistencyTrend(sessions)!
-  assert(gapDeltaLine(trend) === undefined, 'a one-point change was read as a real one')
+  assert(gapDeltaLine(trend.gapDelta) === undefined, 'a one-point change was read as a real one')
 })
 
 check('one basket has nothing to compare against, same as bestConsistencyGap', () => {
   const trend = buildConsistencyTrend([basketServe(0, 'a', [60, 75])])!
-  assert(gapDeltaLine(trend) === undefined, 'a single basket produced a comparison')
+  assert(gapDeltaLine(trend.gapDelta) === undefined, 'a single basket produced a comparison')
+})
+
+heading('The same delta, asked about a specific basket instead of only the latest one')
+
+check('the latest basket in the trend matches what gapDelta already carries', () => {
+  const sessions = [basketServe(0, 'a', [50, 80]), basketServe(DAY, 'b', [60, 65])] // gap 30 -> gap 5
+  const trend = buildConsistencyTrend(sessions)!
+  assert(gapDeltaFor(trend, 'b') === trend.gapDelta, 'gapDeltaFor(latest) disagreed with trend.gapDelta')
+})
+
+check('an older basket compares against the one right before it, not the latest', () => {
+  const sessions = [
+    basketServe(0, 'a', [50, 80]), // gap 30
+    basketServe(DAY, 'b', [60, 65]), // gap 5
+    basketServe(DAY * 2, 'c', [55, 90]), // gap 35
+  ]
+  const trend = buildConsistencyTrend(sessions)!
+  assert(gapDeltaFor(trend, 'b') === -25, `expected b's own delta (5 - 30), got ${gapDeltaFor(trend, 'b')}`)
+})
+
+check('the first basket in the run has nothing before it to compare against', () => {
+  const sessions = [basketServe(0, 'a', [50, 80]), basketServe(DAY, 'b', [60, 65])]
+  const trend = buildConsistencyTrend(sessions)!
+  assert(gapDeltaFor(trend, 'a') === undefined, 'the first basket produced a comparison')
+})
+
+check('a basket not in the trend at all produces nothing, rather than a wrong number', () => {
+  const sessions = [basketServe(0, 'a', [50, 80]), basketServe(DAY, 'b', [60, 65])]
+  const trend = buildConsistencyTrend(sessions)!
+  assert(gapDeltaFor(trend, 'nope') === undefined, 'an unknown id produced a comparison')
+})
+
+check('no trend at all — the serve type has no history yet — produces nothing', () => {
+  assert(gapDeltaFor(undefined, 'a') === undefined, 'a missing trend produced a comparison')
 })
 
 heading('The hand-speed record, stated with no report on screen to compare it against')

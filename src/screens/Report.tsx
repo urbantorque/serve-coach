@@ -91,6 +91,13 @@ interface Props {
    */
   bestGap?: BestGap
   /**
+   * How this basket's own gap compared to the one right before it — a
+   * different question from `bestGap` above, which is the all-time record.
+   * The raw number from `gapDeltaFor` in `App.tsx`; `ConsistencyPanel` turns
+   * it into a sentence itself, the same split `bestGap`/`bestGapLine` use.
+   */
+  basketGapDelta?: number
+  /**
    * The trip streak line, already worded by `streakLine` in `App.tsx` —
    * carried onto the share card `share()` below builds, unmodified.
    */
@@ -153,6 +160,7 @@ export default function Report({
   statedTier,
   servePair,
   bestGap,
+  basketGapDelta,
   streak,
   bestSpeed,
   saveWarning,
@@ -616,6 +624,7 @@ export default function Report({
           pair={servePair}
           createdAt={analysis.createdAt}
           bestGap={bestGap}
+          gapDelta={basketGapDelta}
         />
       )}
 

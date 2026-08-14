@@ -684,13 +684,36 @@ export function bestGapEverLine(record: BestGap): string {
  * which assumes that convention and would show a real improvement as the
  * "down and bad" colour without a flip nobody reading the component call
  * site would notice was missing.
+ *
+ * Takes the delta itself rather than a `ConsistencyTrend`, so the same
+ * sentence can serve two different questions: `trend.gapDelta` for "how did
+ * the most recent basket in the whole history compare", and `gapDeltaFor`
+ * below for "how did *this* basket compare", which are the same number only
+ * when the basket on screen happens to be the newest one.
  */
-export function gapDeltaLine(trend: ConsistencyTrend): string | undefined {
-  const { gapDelta } = trend
-  if (gapDelta === undefined || Math.abs(gapDelta) < MEANINGFUL_DELTA) return undefined
-  return gapDelta < 0
-    ? `${Math.abs(gapDelta)} points tighter than your last basket.`
-    : `${gapDelta} points wider than your last basket.`
+export function gapDeltaLine(delta: number | undefined): string | undefined {
+  if (delta === undefined || Math.abs(delta) < MEANINGFUL_DELTA) return undefined
+  return delta < 0
+    ? `${Math.abs(delta)} points tighter than your last basket.`
+    : `${delta} points wider than your last basket.`
+}
+
+/**
+ * How a specific basket's gap compared to the one right before it — the
+ * question `ConsistencyPanel` actually has, for whichever basket is open,
+ * not the trend's own fixed "latest vs previous" snapshot `gapDelta` is.
+ *
+ * `undefined` for a basket not in the trend at all (a different serve type,
+ * or one dropped by `currentRubricEra`) and for the first basket in the era,
+ * which has nothing before it to compare against — the same "nothing to be
+ * a record against" floor every other cross-basket comparison in this file
+ * already holds.
+ */
+export function gapDeltaFor(trend: ConsistencyTrend | undefined, viewedId: string): number | undefined {
+  if (!trend) return undefined
+  const i = trend.points.findIndex((p) => p.id === viewedId)
+  if (i <= 0) return undefined
+  return trend.points[i].gap - trend.points[i - 1].gap
 }
 
 /**

@@ -10,7 +10,7 @@ import {
   type ServePairFrames,
 } from '../lib/analysis/consistency'
 import { shareBasketCard } from '../lib/share/reportCard'
-import { bestGapLine, type BestGap } from '../lib/progress'
+import { bestGapLine, gapDeltaLine, type BestGap } from '../lib/progress'
 
 /**
  * How far each measurement travelled across the basket.
@@ -169,16 +169,25 @@ interface Props {
    * carried on this value.
    */
   bestGap?: BestGap
+  /**
+   * How this basket's own gap compared to the one right before it — see
+   * `gapDeltaFor`. A different question from `bestGap`: that is the
+   * all-time record, this is "since last time". `undefined` for the first
+   * basket in the current run, the same floor every cross-basket
+   * comparison in this app holds.
+   */
+  gapDelta?: number
 }
 
-export default function ConsistencyPanel({ consistency: c, onDismiss, pair, createdAt, bestGap }: Props) {
+export default function ConsistencyPanel({ consistency: c, onDismiss, pair, createdAt, bestGap, gapDelta }: Props) {
   const [sharing, setSharing] = useState<'idle' | 'working' | 'done'>('idle')
   const sharedTimer = useRef<ReturnType<typeof setTimeout>>()
   useEffect(() => () => clearTimeout(sharedTimer.current), [])
+  const gapDeltaText = gapDeltaLine(gapDelta)
 
   const share = async () => {
     setSharing('working')
-    const outcome = await shareBasketCard(c, createdAt, bestGap && bestGapLine(bestGap, createdAt))
+    const outcome = await shareBasketCard(c, createdAt, bestGap && bestGapLine(bestGap, createdAt), gapDeltaText)
     const done = outcome === 'shared' || outcome === 'downloaded'
     setSharing(done ? 'done' : 'idle')
     if (done) {
@@ -241,6 +250,10 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
       </div>
 
       {c.gap && <BestAgainstWorst gap={c.gap} />}
+
+      {/* Since last time, not the all-time record below — see `gapDeltaFor`.
+          Absent for the first basket in the current run. */}
+      {gapDeltaText && <p className="consistency-foot">{gapDeltaText}</p>}
 
       {/* A fact about the whole history, not this basket alone — see
           `bestConsistencyGap`. Ungameable the same way the home screen's

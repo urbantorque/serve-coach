@@ -15,6 +15,7 @@ import {
   bestHandSpeedEverLine,
   buildConsistencyTrend,
   buildProgress,
+  gapDeltaFor,
   gapDeltaLine,
   shortDate,
   sixWeekMilestone,
@@ -511,7 +512,7 @@ export default function App() {
   // type — one trend, one record, the same reason `spread` itself is keyed
   // to `form.serveType` rather than recomputed per section.
   const sheetBestGap = useMemo(() => bestConsistencyGap(spread), [spread])
-  const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread) : undefined), [spread])
+  const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread.gapDelta) : undefined), [spread])
 
   /**
    * The tightest best-vs-worst gap swept, for whichever serve type is on
@@ -526,6 +527,13 @@ export default function App() {
    */
   const bestGapFor = useCallback(
     (serveType: ServeType) => bestConsistencyGap(buildConsistencyTrend(sessions, serveType)),
+    [sessions],
+  )
+  // Same reasoning as bestGapFor: recomputed for whichever type is actually
+  // on screen rather than read off `spread`, which is pinned to the
+  // dominant type for the progress sheet's own purposes.
+  const gapDeltaForView = useCallback(
+    (id: string, serveType: ServeType) => gapDeltaFor(buildConsistencyTrend(sessions, serveType), id),
     [sessions],
   )
 
@@ -1218,6 +1226,7 @@ export default function App() {
             }
             servePair={pair}
             bestGap={bestGapFor(typeOf(view.analysis))}
+            basketGapDelta={gapDeltaForView(view.analysis.id, typeOf(view.analysis))}
             streak={streak}
             bestSpeed={bestSpeed}
             saveWarning={saveWarning}
@@ -1237,6 +1246,7 @@ export default function App() {
             onBack={goHome}
             onAnalyzeAnother={goHome}
             bestGap={bestGapFor(typeOf(view.session))}
+            basketGapDelta={gapDeltaForView(view.session.id, typeOf(view.session))}
             streak={streak}
             bestSpeed={bestSpeed}
             practice={practice}

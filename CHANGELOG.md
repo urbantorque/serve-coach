@@ -60,3 +60,10 @@ in `git log`.
   serve shrinking or widening since the basket before — it just never said
   so in words. "25 points tighter than your last basket," or wider, right
   under the chart. See `gapDeltaLine` in `src/lib/progress.ts`.
+- **A single basket's report says the same thing about itself.** Opening
+  any basket now shows how its own gap compared to the one right before
+  it — "6 points tighter than your last basket" — sitting between the
+  best-against-worst comparison and the all-time tightest-gap record, a
+  different question from either of those. Carries onto "Share this
+  basket" too, the same way the all-time record already does. See
+  `gapDeltaFor` in `src/lib/progress.ts`.

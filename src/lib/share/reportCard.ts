@@ -518,6 +518,12 @@ export async function renderBasketCard(
    * below two baskets, same as the trend it is read from.
    */
   bestGap?: string,
+  /**
+   * How this basket's own gap compared to the one right before it, already
+   * worded by `gapDeltaLine`. A different question from `bestGap` — see
+   * `ConsistencyPanel`'s own prop of the same name.
+   */
+  gapDelta?: string,
 ): Promise<Blob | undefined> {
   const c = consistency
   const W = 1080
@@ -569,7 +575,8 @@ export async function renderBasketCard(
   const notableH = notables.length ? notables.length * 92 + 20 : 0
 
   const BEST_GAP_H = bestGap ? 34 : 0
-  const H = notableY + notableH + 90 + BEST_GAP_H
+  const GAP_DELTA_H = gapDelta ? 34 : 0
+  const H = notableY + notableH + 90 + BEST_GAP_H + GAP_DELTA_H
   canvas.height = H
 
   ctx.fillStyle = INK
@@ -737,12 +744,23 @@ export async function renderBasketCard(
   /* --- footer -------------------------------------------------------------- */
   // Above the caption rather than beside the score, for the same reason
   // `renderReportCard` places the trip streak above its drill box: a fact
-  // about the whole history, not about this one basket.
+  // about the whole history, not about this one basket. Since-last-time sits
+  // above the all-time record, the same top-to-bottom order `ConsistencyPanel`
+  // renders the two facts in on screen.
+  let footerY = H - 22 - (bestGap ? 34 : 0) - (gapDelta ? 34 : 0)
+  if (gapDelta) {
+    ctx.font = font(560, 16)
+    ctx.fillStyle = MUTED
+    ctx.textAlign = 'center'
+    ctx.fillText(gapDelta, W / 2, footerY)
+    ctx.textAlign = 'left'
+    footerY += 34
+  }
   if (bestGap) {
     ctx.font = font(560, 16)
     ctx.fillStyle = LIME
     ctx.textAlign = 'center'
-    ctx.fillText(bestGap, W / 2, H - 56)
+    ctx.fillText(bestGap, W / 2, footerY)
     ctx.textAlign = 'left'
   }
 
@@ -759,8 +777,9 @@ export async function shareBasketCard(
   consistency: Consistency,
   createdAt: number,
   bestGap?: string,
+  gapDelta?: string,
 ): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
-  const blob = await renderBasketCard(consistency, createdAt, bestGap)
+  const blob = await renderBasketCard(consistency, createdAt, bestGap, gapDelta)
   if (!blob) return 'failed'
   return shareBlob(blob, `basket-${dateStamp(createdAt)}.png`, 'My basket')
 }
