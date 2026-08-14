@@ -16,6 +16,7 @@ import {
   buildConsistencyTrend,
   buildProgress,
   shortDate,
+  sixWeekMilestone,
   streakLine,
   thenAndNow,
   typeOf,
@@ -440,6 +441,10 @@ export default function App() {
   }, [])
 
   const form = useMemo(() => buildProgress(sessions), [sessions])
+  // Read straight off `form`, the same object Home.tsx's own copy of this
+  // call is read off — a fact about the score trend this sheet already
+  // draws, not a second question about the history.
+  const sheetMilestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
   // Not type-restricted, unlike `bestGapFor` below — a streak is about
   // showing up at all, across every serve type, the same choice `Home.tsx`
   // already makes with its own copy of this same call.
@@ -1488,6 +1493,12 @@ export default function App() {
             <section className="block">
               <h3 className="block-title">Overall score by session</h3>
               <ScoreTrend points={form.points} />
+              {/* The sentence the chart above never states in words: `form`
+                  already carries everything `sixWeekMilestone` needs, and
+                  the home card already shows this same sentence — this
+                  screen, built specifically to look back across a whole
+                  history, had the chart but not the reading of it. */}
+              {sheetMilestone && <p className="sheet-note">{sheetMilestone}</p>}
             </section>
 
             {form.areaDeltas.length > 0 && (

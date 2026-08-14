@@ -46,3 +46,7 @@ in `git log`.
   the whole journey, not about form, which is what the rest of that screen
   is otherwise entirely about. See `bestHandSpeedEverLine` in
   `src/lib/progress.ts`.
+- **The six-week milestone reads onto "Every serve so far" too.** The
+  score-by-session chart there already had the shape of this fact; it just
+  never stated it in words, the way the home card already does. Same
+  sentence, same rule, both places.
