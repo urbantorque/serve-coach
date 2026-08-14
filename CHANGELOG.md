@@ -35,3 +35,9 @@ in `git log`.
   ball-speed band — the one number `power.ts` already keeps on every saved
   report so a season of them can be compared. See `bestHandSpeed`/
   `bestHandSpeedLine` in `src/lib/progress.ts`.
+- **The trip streak and the tightest gap now show up on "Every serve so
+  far".** That screen already tracks your whole history — it just never
+  mentioned either record. The streak sits under the hero score, the same
+  line the home card already shows; the tightest-gap sentence sits under
+  the "How repeatable, over time" chart it's read straight off. See the new
+  `bestGapEverLine` in `src/lib/progress.ts`.

@@ -649,6 +649,24 @@ export function bestGapLine(record: BestGap, viewedAt: number): string {
 }
 
 /**
+ * The tightest-gap record stated plainly, for a view with no single basket
+ * on screen to compare it against.
+ *
+ * `bestGapLine` answers "did *this* basket set the record", which only
+ * means something on `ConsistencyPanel`, where one basket is what's open.
+ * The progress sheet — "Every serve so far" — is the opposite kind of
+ * screen on purpose: an aggregate across the whole history, with no single
+ * basket to be the "current" one. Forcing `bestGapLine`'s two-branch
+ * question onto a screen with no current basket would need a fake
+ * `viewedAt` no real basket has, so this is a second, simpler sentence
+ * instead — always the record, plainly, the same register
+ * `sixWeekMilestone` already uses on the same sheet.
+ */
+export function bestGapEverLine(record: BestGap): string {
+  return `Your tightest gap yet was ${record.gap} points, set ${shortDate(record.createdAt)}.`
+}
+
+/**
  * The sentence a streak becomes, or nothing where a number would say more
  * than it should.
  *

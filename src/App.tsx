@@ -10,6 +10,7 @@ import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import {
   bestConsistencyGap,
+  bestGapEverLine,
   bestHandSpeed,
   buildConsistencyTrend,
   buildProgress,
@@ -498,6 +499,11 @@ export default function App() {
     () => (form ? buildConsistencyTrend(sessions, form.serveType) : undefined),
     [sessions, form],
   )
+  // Read off the same trend the "How repeatable, over time" section already
+  // draws, rather than a second call to bestGapFor keyed to a different
+  // type — one trend, one record, the same reason `spread` itself is keyed
+  // to `form.serveType` rather than recomputed per section.
+  const sheetBestGap = useMemo(() => bestConsistencyGap(spread), [spread])
 
   /**
    * The tightest best-vs-worst gap swept, for whichever serve type is on
@@ -1433,6 +1439,12 @@ export default function App() {
               </span>
             </div>
 
+            {/* The one fact this whole "every serve so far" sheet was missing:
+                the home card already says it in passing, but the screen built
+                specifically to look back across the whole history had nothing
+                to say about showing up at all. */}
+            {streak && <p className="progress-foot">{streak}</p>}
+
             {/* Said out loud rather than left as a gap in the chart. Somebody who
                 has filmed twenty serves and sees eleven plotted will assume the
                 app lost the rest. */}
@@ -1499,6 +1511,10 @@ export default function App() {
                     {spread.recurring.sessions} of these. That is the one to practise most.
                   </p>
                 )}
+                {/* Read straight off the trend this section already draws —
+                    one number this chart's own shape already contains, not a
+                    second computation that could disagree with it. */}
+                {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}
               </section>
             )}
 

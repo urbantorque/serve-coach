@@ -17,6 +17,7 @@ import {
   MIN_THEN_AND_NOW_GAP_MS,
   STREAK_GAP_MS,
   bestConsistencyGap,
+  bestGapEverLine,
   bestGapLine,
   bestHandSpeed,
   bestHandSpeedLine,
@@ -354,6 +355,20 @@ check('a stated height converts the record to km/h, the same as PowerPanel', () 
   const line = bestHandSpeedLine(record, 178, DAY)
   assert(line.includes('km/h'), `a stated height did not switch the unit: "${line}"`)
   assert(!line.includes('body heights'), `house units still appeared alongside a stated height: "${line}"`)
+})
+
+heading('The tightest gap, stated with no basket on screen to compare it against')
+
+check('states the record plainly, in bestGapEverLine\'s own phrasing rather than bestGapLine\'s per-basket one', () => {
+  const line = bestGapEverLine({ gap: 6, createdAt: DAY })
+  assert(line.includes('6'), `the gap itself did not appear: "${line}"`)
+  assert(line.includes('was 6 points'), `not the aggregate phrasing this function owns: "${line}"`)
+  assert(!line.includes('between your best serve'), `used bestGapLine's per-basket phrasing instead: "${line}"`)
+})
+
+check('dates the record the same way bestGapLine does', () => {
+  const line = bestGapEverLine({ gap: 6, createdAt: DAY })
+  assert(line.includes('set '), `no date attached: "${line}"`)
 })
 
 report()
