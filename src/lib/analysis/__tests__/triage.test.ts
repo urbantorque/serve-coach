@@ -87,6 +87,38 @@ check('correcting the roll restores the heights it distorted', () => {
   note(`contact height error ${before.toFixed(3)} tilted, ${after.toFixed(3)} levelled`)
 })
 
+/**
+ * The gap between a gentle tilt (levelled and moved on, tested above at 12°)
+ * and a severe one (refused outright, tested below from 30°): every angle in
+ * between is levelled and trusted, and nothing had checked whether the
+ * correction actually holds up all the way to that boundary rather than
+ * quietly degrading as the tilt grows. It does, when measured the way a real
+ * clip is: `analyze.ts` re-detects the skeleton, ground and contact frame from
+ * the levelled frames rather than reusing the tilted clip's own — recomputing
+ * both sides of the height measurement in the corrected space keeps a global
+ * offset from surviving into the reading, which is exactly what a stale
+ * ground reference would let through.
+ */
+check('the correction holds all the way to the refusal boundary, not just at a gentle tilt', () => {
+  const level = buildServe({}, FPS)
+  const cleanSkel = detectServe(level, FPS)
+  const contactHeightOf = (fs: typeof level, skel: typeof cleanSkel) =>
+    (skel.groundY - fs[skel.keys.contact].image[16].y) / skel.bodyHeight
+  const baseline = contactHeightOf(level, cleanSkel)
+
+  for (const deg of [6, 10, 14, 17]) {
+    const tilted = rollFrames(level, deg)
+    const tiltedSkel = detectServe(tilted, FPS)
+    const spatial = assessSpatial(tilted, tiltedSkel.keys.ready, tiltedSkel.bodyHeight)
+    assert(rejectionFor(assessResilience(tilted, tiltedSkel)) === undefined, `${deg}° was refused, not a gap case`)
+
+    const levelled = levelFrames(tilted, spatial.roll_deg)
+    const levelledSkel = detectServe(levelled, FPS)
+    const corrected = Math.abs(contactHeightOf(levelled, levelledSkel) - baseline)
+    assert(corrected < 0.005, `${deg}° of roll left ${corrected.toFixed(4)} of contact-height error after levelling`)
+  }
+})
+
 check('a small tilt is left alone rather than rotated on a noisy estimate', () => {
   const frames = buildServe({}, FPS)
   assert(
