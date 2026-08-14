@@ -1452,25 +1452,35 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   if (!opts.skipThumbnails) {
     onProgress({ step: 'measuring', ratio: 0.8, detail: 'Capturing your key frames' })
-    const thumbs = await captureThumbnails(video, phases.map((p) => p.t), (ctx, i, size) => {
-      // The stills outlive the clip, so they carry the tracking with them.
-      // Drawn from the raw frames and the raw flight: the still is unrotated
-      // pixels, and a levelled skeleton over them would sit off the body by
-      // exactly the roll that was corrected.
-      drawSkeleton(ctx, {
-        frame: extracted.frames[phases[i].frame],
-        aspect,
-        rect: fitContain(size.w, size.h, aspect),
-        racket: skel.racket,
-        annotation: phases[i].id,
-        bands,
-        calloutScale: 1.7,
-        bodyHeight: skel.bodyHeight,
-        sequence: { frames: extracted.frames, index: phases[i].frame },
-        ball: ballMarkerAt(rawBall, phases[i].t),
-      })
-    })
+    const thumbs = await captureThumbnails(
+      video,
+      phases.map((p) => p.t),
+      (ctx, i, size) => {
+        // The stills outlive the clip, so they carry the tracking with them.
+        // Drawn from the raw frames and the raw flight: the still is unrotated
+        // pixels, and a levelled skeleton over them would sit off the body by
+        // exactly the roll that was corrected.
+        drawSkeleton(ctx, {
+          frame: extracted.frames[phases[i].frame],
+          aspect,
+          rect: fitContain(size.w, size.h, aspect),
+          racket: skel.racket,
+          annotation: phases[i].id,
+          bands,
+          calloutScale: 1.7,
+          bodyHeight: skel.bodyHeight,
+          sequence: { frames: extracted.frames, index: phases[i].frame },
+          ball: ballMarkerAt(rawBall, phases[i].t),
+        })
+      },
+      // Positional `undefined` so `maxWidth` keeps its default — restating 420
+      // here would be two places to change the day it moves.
+      undefined,
+      signal,
+    )
     phases.forEach((p, i) => {
+      // Short when the player stopped part way through — see `captureThumbnails`.
+      // The measurement is already complete either way; these are the pictures.
       p.thumbnail = thumbs[i]
     })
   }

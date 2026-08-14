@@ -448,6 +448,47 @@ had never been written down anywhere.
       practice section's prose, and R25's own paragraph, which claimed this was
       named for a future round. It is that round.
 
+- [x] **R39** — `captureThumbnails` was the one pass in the pipeline taking no
+      `AbortSignal`. Found by sweeping every cancellation point in the tree
+      rather than by a report: `extractFrames` checks per frame, `readBitmaps`
+      checks per frame, `scanForServes` checks per sample, and this one checked
+      never. Pressing stop therefore left six seeks and six JPEG encodes still
+      to run against a report nobody was going to see.
+
+      Ordinary rather than rare, which is what makes it worth a round. The sweep
+      does *not* set `skipThumbnails` — only `skipFramingCheck` and `skipBall`,
+      deliberately, since the stills are what let the best serve in a basket be
+      shown beside the worst as pictures — so every swept serve captures six,
+      and stopping a sweep is a first-class thing the UI offers a button for.
+
+      Returns short rather than throwing `Cancelled`, and the two are not
+      interchangeable here. By the time this runs the serve is fully measured
+      and the stills are decoration on top of it; `sweepServes` drops a
+      `Cancelled` serve without counting it, correctly, since stopping is not a
+      verdict on a serve nobody finished reading. Throwing from here would
+      therefore discard a complete measurement in order to save six seeks —
+      the expensive half of the trade, and the same mistake the sweep's own
+      "four serves out of six still answers the question" reasoning rejects. A
+      short array leaves the later phases with no thumbnail, which the report
+      already draws for, because the storage prune strips stills from older
+      reports and that state has always been reachable.
+
+      `pose/__tests__/extract.test.ts` gains a recording stub for the video and
+      the canvas — the same trade `drawing.test.ts` makes for the overlay,
+      counting seeks rather than inspecting pixels, because the number of seeks
+      is the whole of the claim. Four checks: an uninterrupted run captures all
+      six; a run stopped at the second frame seeks twice and encodes twice; the
+      stills taken before the stop survive and are real data URIs; and stopping
+      one frame later keeps exactly one more, stated as the relationship so a
+      change that shifts both by one is still caught.
+
+      The captures are awaited at the top level and asserted afterwards rather
+      than inside `check`, which is synchronous and would record a pass before
+      any assertion ran — the shape `engine.test.ts` already uses for the sweep.
+
+      Verified the teeth: removed the guard in a scratch copy, confirmed three
+      of the four checks went red, restored, confirmed green.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the

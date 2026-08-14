@@ -626,12 +626,29 @@ export async function readBitmaps<T>(
  * encoded, so the caller can draw over it — the stills are the only part of a
  * serve that outlives the session, and a bare frame is far less use weeks later
  * than one showing the tracked body and the angle it was judged on.
+ *
+ * STOPS SEEKING WHEN CANCELLED, AND DOES NOT THROW. This was the one pass in
+ * the pipeline that took no signal at all, so pressing stop left six seeks and
+ * six JPEG encodes still to run against a report nobody was going to see — and
+ * the sweep is where that bites, because stopping it is an ordinary thing to do
+ * and every swept serve captures its stills.
+ *
+ * Returning short rather than throwing `Cancelled` is the whole point, and the
+ * two are not interchangeable here. By the time this runs the serve is fully
+ * measured; the stills are decoration on top of it. `sweepServes` drops a
+ * `Cancelled` serve without counting it — correctly, since stopping is not a
+ * verdict on a serve nobody finished reading — so throwing from here would
+ * discard a complete measurement in order to save six seeks, which is the
+ * expensive half of the trade rather than the cheap one. A short array leaves
+ * the later phases with no thumbnail, which is a state the report already draws
+ * for, since older saved reports have had theirs stripped by the prune.
  */
 export async function captureThumbnails(
   video: HTMLVideoElement,
   times: number[],
   decorate?: (ctx: CanvasRenderingContext2D, index: number, size: { w: number; h: number }) => void,
   maxWidth = 420,
+  signal?: AbortSignal,
 ): Promise<string[]> {
   const scale = Math.min(1, maxWidth / Math.max(1, video.videoWidth))
   const canvas = document.createElement('canvas')
@@ -642,6 +659,10 @@ export async function captureThumbnails(
 
   const out: string[] = []
   for (let i = 0; i < times.length; i++) {
+    // Checked per frame rather than once at the top, for the same reason
+    // `readBitmaps` does it: the cost being saved is the remaining seeks, and
+    // they are spent one at a time.
+    if (signal?.aborted) break
     // No still rather than the wrong one. A frame captioned "contact" showing
     // the trophy position, with the contact skeleton drawn over it, is a picture
     // that disagrees with itself — and these are the part of a serve that
