@@ -386,6 +386,68 @@ had never been written down anywhere.
       console errors. A screenshot was not possible for the reason the court
       trip below already records: the pane does not composite.
 
+- [x] **R38** — `PRACTICE_WINDOW` counts trips now, not reports. Carried since
+      R25 as **blocked: same reason as above, not resources**.
+
+      The window's own doc comment has always said it exists to catch what is
+      *still* wrong on the next visit, and it counted reports — so five of them
+      could be one afternoon. That stopped being the unlucky case and became the
+      ordinary one when R18 made the coached live preview the default way in on
+      a phone: record, glance, record. A player filming five serves in one
+      basket had a window holding one visit's own variance, and the headline
+      grown from it — "you have drilled your racket drop twice and it has not
+      moved. Take this one to a coach" — was reading ten minutes of tennis.
+
+      `tripsOf` in `progress.ts`, beside `sameTrip` and built out of it. Chained
+      rather than measured from the first serve of a trip, so a long afternoon
+      is one visit however long it runs; the flip side, that filming every
+      twenty hours for a week is also one trip, is a property of any gap rule
+      rather than a fault in this one and is named at the function. It copies
+      before sorting: `listSummaries` hands one array to several readers and the
+      trend chart is holding it.
+
+      Both reasons R25 gave for not doing this then turned out not to hold, and
+      it is worth recording which, because they are why it sat for two phases.
+
+        · "Redefining what the window counts changes
+          `PracticeFocus.sessionsConsidered`'s meaning everywhere it is
+          printed." It does not. That field counted *serves* before and counts
+          serves now — "across your last 7 flat serves" is as true of two trips
+          as "across your last 5" was of five reports. Checked against the copy
+          rather than assumed: `practiceHeadline` reads it in four sentences and
+          every one of them still parses.
+        · The unstated one, found by writing the test: a first-visit player
+          could have lost the card entirely. Windowing by trips with a
+          two-*trip* floor would say nothing to somebody who filmed a basket
+          this afternoon, which is paying for the fix with the first day. The
+          floor stays two comparable serves. One trip is all the history there
+          is, so the window is that trip, and the card appears exactly as it
+          always did.
+
+      One real cost, named at the call site rather than papered over: `eligible`
+      now requires a metric in every serve of every trip rather than in each of
+      five, so a measurement needing a side-on view drops out more readily on a
+      mixed-angle history. That is the existing rule meeting more evidence, not
+      a new rule — it was written to refuse averaging over an uneven number of
+      readings, and it still does exactly that.
+
+      `robustness.test.ts`: five checks beside the existing practice ones. Three
+      on `tripsOf` — the cut, the chaining, and that it does not sort the
+      caller's array underneath it — and two on the window, one per direction:
+      a bad first visit followed by six good serves in one sitting stays in the
+      window (7 serves considered, average below the recent visit's), and a
+      player on their first visit still gets advice.
+
+      Verified the teeth: restored `.slice(-windowSize)` over sessions in a
+      scratch copy and confirmed exactly one check went red — the one written
+      for the defect — with every pre-existing practice check still green,
+      which is the evidence that the old contract is intact rather than merely
+      that the new one holds.
+
+      `README.md` updated in three places: the file table for both modules, the
+      practice section's prose, and R25's own paragraph, which claimed this was
+      named for a future round. It is that round.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the
@@ -415,17 +477,9 @@ had never been written down anywhere.
       attached to the clips (R32). The other four — `legs_peak_ms`,
       `chain_span_ms`, `wrist_peak_ms`, `elbow_peak_ms` — are dead ends by
       construction and stay uncalibrated no matter how much footage arrives.
-- [!] **`PRACTICE_WINDOW` counts sessions, not trips.** **blocked: same
-      reason as above, not resources.** `findPracticeFocus`'s five-session
-      window can fill entirely with one visit's own variance when a player
-      records several serves through the coached live preview — the default
-      mobile path since R18 — rather than catching persistence across visits,
-      which is what its own doc comment says the window exists for. Named
-      when R25 gave "a trip to the court" a name (`sameTrip`) and found this
-      cost of not having reckoned with the concept sooner; README said this
-      was "named in `NEXT.md` for a future round," and until this line it was
-      not actually true — R25's own entry was compacted into Phase 4's record
-      before anyone gave it one. True as of R35.
+Everything left below is blocked on a resource this repo does not have — a
+phone, or real footage. Nothing remains that is blocked only on somebody
+choosing to do it.
 
 ## The record
 

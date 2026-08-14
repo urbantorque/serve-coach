@@ -513,6 +513,39 @@ export function sameTrip(a: Session, b: Session, gapMs = MIN_THEN_AND_NOW_GAP_MS
   return Math.abs(a.createdAt - b.createdAt) < gapMs
 }
 
+/**
+ * A history cut into trips to the court, oldest trip first and oldest serve
+ * first inside each.
+ *
+ * `sameTrip` answers this for two reports. Everything that wants to reason
+ * about a *run* of them wants this instead, and until `findPracticeFocus`
+ * needed it there was nothing that did — `thenAndNow` only ever compares two.
+ *
+ * Chained rather than measured from the first serve of the trip: a report is on
+ * the same trip as the one before it if the gap to *that* report is under the
+ * threshold. So a player filming every few hours through a long afternoon is on
+ * one trip however long the afternoon runs, which is the right answer, and a
+ * player filming every twenty hours for a week is also on one trip, which is a
+ * known property of any gap rule rather than a bug in this one. There is no
+ * clock in a `Session` that would do better — `createdAt` is when the report
+ * was filed, and nothing records where anybody was standing.
+ *
+ * Never mutates the input: `listSummaries` hands the same array to several
+ * readers, and a sort in place here would reorder a list the trend chart is
+ * holding.
+ */
+export function tripsOf(sessions: Session[], gapMs = MIN_THEN_AND_NOW_GAP_MS): Session[][] {
+  const ordered = [...sessions].sort((a, b) => a.createdAt - b.createdAt)
+  const trips: Session[][] = []
+  for (const session of ordered) {
+    const current = trips[trips.length - 1]
+    const previous = current?.[current.length - 1]
+    if (current && previous && sameTrip(previous, session, gapMs)) current.push(session)
+    else trips.push([session])
+  }
+  return trips
+}
+
 export const MEANINGFUL_DELTA = 3
 
 export const deltaStatus = (delta: number): Status | 'flat' =>

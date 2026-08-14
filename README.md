@@ -295,14 +295,16 @@ half a comparison shared without its dates or serve numbers is a picture of two
 serves with nothing saying which is which.
 
 **What to practise.** Any single report picks the weakest thing in that serve,
-which on a given day might just be the serve you happened to film. Across
-sessions the app looks for the thing that is *still* wrong — ranked by lowest
+which on a given day might just be the serve you happened to film. Across trips
+to the court the app looks for the thing that is *still* wrong — ranked by lowest
 average rather than by whoever lost the most recent report — and says whether it
-is actually moving. Being told to work on the same thing forever, with no sense
+is actually moving. Trips rather than reports is what makes that a claim about
+weeks: five reports can all be one afternoon, and one afternoon's variance is
+not persistence. Being told to work on the same thing forever, with no sense
 of whether it is working, is the fastest way to stop bothering.
 
 **"Stuck" and "never tried it" are different answers.** A measurement flat across
-five sessions means one thing if the player has been drilling it and something
+five trips means one thing if the player has been drilling it and something
 else entirely if they have not, and nothing in the record could tell those apart
 — so the card said the same thing to both. There is now one tap to say the drill
 was done, and four sentences where there was one: drilled and moving, drilled and
@@ -379,8 +381,8 @@ Everything is in `src/lib`:
 | `share/reportCard.ts` | renders a report as one shareable image |
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
-| `practice.ts` | finds the weakness that persists across sessions |
-| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone |
+| `practice.ts` | finds the weakness that persists across trips to the court |
+| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, and what counts as one trip |
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
 | `storage/db.ts` | the reports, and separately the drills the player says they did |
 | `analysis/phases.ts` | finds the six keyframes |
@@ -839,15 +841,21 @@ difference between `clipIdOf` (extracted because two callers, `progress.ts`
 and `consistency.ts`, both already needed to collapse by clip) and a `Trip`
 row (which nothing yet asks for). Naming the concept surfaced a real, if
 separate, cost of not having reckoned with it sooner: `findPracticeFocus`'s
-`PRACTICE_WINDOW = 5` counts sessions, not trips, so a player who records
+`PRACTICE_WINDOW = 5` counted sessions, not trips, so a player who records
 several serves in one sitting through the coached live preview — the
-default mobile path since R18 — can fill that entire window with one
+default mobile path since R18 — could fill that entire window with one
 visit's own variance rather than the cross-visit persistence the feature's
 own doc comment says it exists to catch. Named in `NEXT.md` for a future
-round rather than fixed here: redefining what the window counts changes
-`PracticeFocus.sessionsConsidered`'s meaning everywhere it is printed, and
-this round asked whether the concept existed, not to redesign the
-recommendation it was found inside.
+round rather than fixed there, and closed by R38: `tripsOf` in `progress.ts`
+cuts a history into visits by chaining the same `sameTrip` threshold, and
+the window takes the last five of those and every serve on them. The two
+things that made it look like a redesign both turned out not to be.
+`PracticeFocus.sessionsConsidered` did not change meaning — it counts serves
+either way, and "across your last 7 flat serves" is as true of two trips as
+"across your last 5" was of five reports. And a player on their first visit
+still gets the card: one trip is all the history there is, so the window is
+that trip and the floor stays two comparable serves. What changed is only
+that one visit can no longer crowd out the four before it.
 
 **A milestone that cannot be produced by a tap.** `PracticeCard`'s drill
 button has always been "deliberately not a streak, a badge or a

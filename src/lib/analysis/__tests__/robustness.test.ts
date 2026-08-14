@@ -31,7 +31,7 @@ import { assessResilience, rejectionFor, LIMITS } from '../triage'
 import { cueIssues } from '../voice'
 import { cacheSize, forgetAll, recall, remember } from '../../analysisCache'
 import { normalise, normalisePracticeLog, type Session } from '../../storage/db'
-import { MEANINGFUL_DELTA, buildProgress, deltasAgainst } from '../../progress'
+import { MEANINGFUL_DELTA, buildProgress, deltasAgainst, tripsOf } from '../../progress'
 import { findPracticeFocus, practiceHeadline } from '../../practice'
 import { statusOf } from '../geometry'
 import { DEFAULT_TOLERANCE, framingIssues, packFrames, unpackFrames, validateFixture, type Fixture } from '../groundTruth'
@@ -664,6 +664,77 @@ check('advice about a serve you are not currently filming says which serve it is
   const headline = practiceHeadline(focus!)
   note(headline)
   assert(/flat serves/.test(headline), `the headline does not name the serve: "${headline}"`)
+})
+
+heading('The practice window counts trips to the court, not reports')
+
+check('serves filed minutes apart are one trip; a day apart starts another', () => {
+  const day = 86_400_000
+  const trips = tripsOf([
+    savedServe(1 * day, 50, 'flat'),
+    savedServe(1 * day + 60_000, 50, 'flat'),
+    savedServe(1 * day + 120_000, 50, 'flat'),
+    savedServe(9 * day, 50, 'flat'),
+  ])
+  assert(trips.length === 2, `cut one afternoon and one later visit into ${trips.length} trips`)
+  assert(trips[0].length === 3, `the afternoon held ${trips[0].length} serves, expected 3`)
+  assert(trips[1].length === 1, `the later visit held ${trips[1].length} serves, expected 1`)
+})
+
+check('a long afternoon chains into one trip rather than splitting on the clock', () => {
+  // Each report is well inside a day of the one before it, so it is the same
+  // visit however long the whole run is. A rule measured from the first serve
+  // instead would cut this in half at an arbitrary point.
+  const hour = 3_600_000
+  const trips = tripsOf([0, 10, 20, 30].map((h) => savedServe(h * hour, 50, 'flat')))
+  assert(trips.length === 1, `split one long afternoon into ${trips.length} trips`)
+})
+
+check('trips come back oldest first, without reordering the caller’s array', () => {
+  // `listSummaries` hands the same array to the trend chart and to this; a sort
+  // in place would reorder a list somebody else is holding.
+  const day = 86_400_000
+  const given = [savedServe(9 * day, 50, 'flat'), savedServe(1 * day, 50, 'flat')]
+  const trips = tripsOf(given)
+  assert(trips[0][0].createdAt < trips[1][0].createdAt, 'trips came back newest first')
+  assert(given[0].createdAt === 9 * day, 'the caller’s array was sorted underneath it')
+})
+
+check('one visit cannot crowd the earlier ones out of the window', () => {
+  // The defect. Racket drop was terrible on the first visit and has been fine
+  // ever since — but the most recent visit alone holds six serves, so a window
+  // of five *reports* saw nothing but that visit and reported the measurement
+  // as healthy. A window of five *trips* still has the bad day in it.
+  const day = 86_400_000
+  const sessions = [
+    savedServe(1 * day, 45, 'flat', 20),
+    ...[0, 1, 2, 3, 4, 5].map((i) => savedServe(30 * day + i * 60_000, 80, 'flat', 90)),
+  ]
+  const focus = findPracticeFocus(sessions)
+  assert(focus !== undefined, 'said nothing about seven flat serves')
+  note(`across ${focus!.sessionsConsidered} serves, average ${focus!.average}`)
+  assert(
+    focus!.sessionsConsidered === 7,
+    `looked across ${focus!.sessionsConsidered} serves, expected all 7 — two trips' worth`,
+  )
+  assert(
+    focus!.average < 90,
+    `averaged ${focus!.average}, so the first visit's racket drop was outside the window`,
+  )
+})
+
+check('a player on their first visit still gets advice', () => {
+  // The guard against over-correcting. One trip is all the history there is, so
+  // the window is that trip — the floor stays two comparable serves, exactly as
+  // before. Withholding the card until somebody has come back twice would be
+  // paying for this fix with the first afternoon.
+  const sessions = [0, 1, 2].map((i) => savedServe(i * 60_000, 50, 'flat', 30 + i))
+  const focus = findPracticeFocus(sessions)
+  assert(focus !== undefined, 'said nothing to a player who filmed three serves in one basket')
+  assert(
+    focus!.sessionsConsidered === 3,
+    `looked across ${focus!.sessionsConsidered} of the 3 serves in the basket`,
+  )
 })
 
 check('a single serve of any kind still says nothing', () => {

@@ -2,7 +2,14 @@ import { FUNDAMENTALS, METRICS } from './analysis/coaching'
 import { mean } from './analysis/geometry'
 import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
-import { MEANINGFUL_DELTA, buildConsistencyTrend, currentRubricEra, dominantType, typeOf } from './progress'
+import {
+  MEANINGFUL_DELTA,
+  buildConsistencyTrend,
+  currentRubricEra,
+  dominantType,
+  tripsOf,
+  typeOf,
+} from './progress'
 import type { PracticeLog, Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
 
@@ -75,7 +82,22 @@ const SERVE_WORD: Record<ServeType, string> = {
   slice: 'slice',
 }
 
-/** How many recent sessions a practice recommendation looks across. */
+/**
+ * How many recent trips to the court a practice recommendation looks across.
+ *
+ * TRIPS, NOT SESSIONS, and it counted sessions until R38. The difference is the
+ * whole point of having a window: this advice is about what is *still* wrong on
+ * the next visit, and five sessions could be filled entirely by one afternoon.
+ * That became the ordinary case rather than the unlucky one when R18 made the
+ * coached live preview the default way in on a phone — record, glance, record —
+ * so a player who films five serves in one basket had a window holding one
+ * visit's own variance, and was told a measurement "has not moved in 5
+ * sessions" on the strength of five serves hit ten minutes apart. The headline
+ * that grows out of that window sends somebody to a coach.
+ *
+ * Five stays the number. A window of five trips spanning a month is what the
+ * doc comment below has always described.
+ */
 export const PRACTICE_WINDOW = 5
 
 /**
@@ -84,10 +106,13 @@ export const PRACTICE_WINDOW = 5
  * A single report picks the weakest thing in that serve, which on any given day
  * might just be the serve you happened to film. What a coach notices is the
  * thing that is *still* wrong three weeks later. So this ranks by the lowest
- * average across recent sessions rather than by whoever lost the most recent
- * report, and then says whether it is actually moving — because being told to
- * work on the same thing forever, with no sense of whether it is working, is the
- * fastest way to stop bothering.
+ * average across recent *trips to the court* rather than by whoever lost the
+ * most recent report, and then says whether it is actually moving — because
+ * being told to work on the same thing forever, with no sense of whether it is
+ * working, is the fastest way to stop bothering.
+ *
+ * Trips rather than reports is what makes "still wrong three weeks later" a
+ * claim about three weeks. See `PRACTICE_WINDOW`.
  *
  * Only metrics present in every session considered are eligible: one that
  * appears intermittently (contact depth needs a side-on view) would otherwise
@@ -95,6 +120,7 @@ export const PRACTICE_WINDOW = 5
  */
 export function findPracticeFocus(
   sessions: Session[],
+  /** How many trips to the court to look across — see `PRACTICE_WINDOW`. */
   windowSize = PRACTICE_WINDOW,
   serveType?: ServeType,
   /**
@@ -134,10 +160,30 @@ export function findPracticeFocus(
    * so the app changes its mind about what to work on for a reason that has
    * nothing to do with the serve.
    *
-   * Trimmed before the window rather than after, so five sessions are counted
-   * from the era rather than the era being whatever survives five sessions.
+   * Trimmed before the window rather than after, so five trips are counted
+   * from the era rather than the era being whatever survives five trips.
    */
-  const recent = currentRubricEra(sameServe).slice(-windowSize)
+  /*
+   * The last `windowSize` trips to the court, flattened back into serves.
+   *
+   * Every serve on those trips counts, not the last `windowSize` serves — see
+   * `PRACTICE_WINDOW`. Two consequences worth naming rather than discovering:
+   *
+   *   · A player on their first visit still gets advice. One trip is all the
+   *     history there is, so the window is that trip and the floor below stays
+   *     what it always was — two comparable serves. Nothing here withholds the
+   *     card until somebody has come back twice; it only stops one visit
+   *     crowding out the four before it.
+   *   · The `eligible` filter below gets stricter, because a metric now has to
+   *     appear in every serve of every trip in the window rather than in each
+   *     of five. That is the existing rule meeting more evidence, not a new
+   *     one: a measurement that needs a side-on view and did not get one is
+   *     exactly what it was written to exclude, and averaging it over an uneven
+   *     number of readings is the thing it refuses to do.
+   */
+  const recent = tripsOf(currentRubricEra(sameServe))
+    .slice(-windowSize)
+    .flat()
 
   // Fewer than two comparable serves says nothing worth saying — the same answer
   // a player gets on their first day, which is honest: after a recalibration the
