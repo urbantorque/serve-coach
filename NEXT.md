@@ -489,6 +489,52 @@ had never been written down anywhere.
       Verified the teeth: removed the guard in a scratch copy, confirmed three
       of the four checks went red, restored, confirmed green.
 
+- [x] **R40** — A number nobody measured, asserted in two places, contradicting
+      the module that refuses to assert it.
+
+      Found while trying to answer "how long does a sweep take" without a phone,
+      and worth recording that the attempt failed first: `sampleClip` can be
+      pushed through the real pipeline — that is what `leakProbe.ts` does — but
+      it draws no player, so `detectServe` refuses every clip before the
+      thumbnail and ball passes run, and the pane this repo develops against
+      reports `document.hidden`, which throttles the canvas recorder badly
+      enough that a clip asked to be 3 s came back 1.06 s. A figure produced
+      from that would have been about this pane, not about a phone. So no
+      figure was produced.
+
+      What the attempt did find is that the repo already contains one.
+      `analyzeAllServes` states plainly that "nothing in this tree times a
+      sweep... a figure invented for a comment would be a number nobody
+      measured. It is one full analysis pass per serve, and that is the honest
+      unit." `App.tsx`'s `openClip` then said "twenty-five seconds on a full
+      basket", and `COURT-CHECK.md` step 8 repeated it. The module doing the
+      work refused the number; two callers stated it anyway.
+
+      It is also internally inconsistent, which is what raises it from untidy
+      prose to constraint 1. A single pipeline pass is described as "half a
+      minute" in roughly ten places across this codebase, and six of those
+      cannot come to twenty-five seconds. A sweep is cheaper per serve than a
+      full pass — it skips the framing check and the ball — but the extraction
+      dominates and is unchanged, so nothing accounts for a factor of seven.
+
+      Both sites now carry the honest unit instead, and `COURT-CHECK.md` step 8
+      is promoted from "watch how long it takes" to timing it with a stopwatch
+      and writing two numbers down, since that trip is the only thing that can
+      settle it and the sweep is now the automatic path for a picked
+      multi-serve clip.
+
+      Deliberately not fixed, and named here instead: whether "half a minute"
+      for a single pass is itself measured. It may well be, from a phase this
+      ledger has compacted; it appears in ten files as a settled shared figure,
+      and rewriting all of it on a suspicion would be inventing a second
+      unmeasured claim to replace the first. The two sites fixed here are the
+      ones that directly contradict an explicit refusal in the same repo. Step
+      8's first number answers the rest.
+
+      Doc-only, so no test. A source scan forbidding durations in prose would
+      be brittle and would not have caught this one — the defect was not that a
+      number existed, but that it disagreed with a refusal fifteen files away.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the
@@ -502,6 +548,14 @@ had never been written down anywhere.
       real video anywhere in it either (checked directly — zero `.mp4`/`.mov`/
       `.webm`/`.mkv` outside `node_modules`), so there is nothing left to try
       without a phone. Unchanged since R25.
+
+      R40 added one thing to it. Step 8 now asks for a stopwatch and two
+      numbers — one full pass, one whole basket — because nothing in this tree
+      times a sweep and it is now the automatic path for a picked multi-serve
+      clip. R40 tried to produce that figure here and could not: the synthetic
+      clip has no player in it, and the pane throttles the recorder badly
+      enough that three seconds of requested film came back as one. That is the
+      last thing on this list that looked like it might not need a device.
 - [!] **The fixture shoot** — **blocked: needs real footage.** `RECORDED` in
       `src/lib/analysis/__tests__/fixtures/index.ts` is empty, 0 of
       `MINIMUM_RECORDED = 6`. Six clips clear the gate and the order is in

@@ -946,11 +946,20 @@ export default function App() {
       /*
        * A basket recorded on court is still glanced at, not swept.
        *
-       * The sweep is a video pass per serve — twenty-five seconds on a full
-       * basket — and spending that while somebody is standing on a baseline is
-       * the opposite of what this route is for. The comparison is for sitting
-       * down with the clip afterwards, and the button for it is still on the
-       * report one tap away.
+       * The sweep is a video pass per serve, up to `MAX_CONSISTENCY_SERVES` of
+       * them, and spending that while somebody is standing on a baseline is the
+       * opposite of what this route is for. The comparison is for sitting down
+       * with the clip afterwards, and the button for it is still on the report
+       * one tap away.
+       *
+       * That used to read "twenty-five seconds on a full basket", which was a
+       * number nobody had measured — `analyzeAllServes` says so in as many
+       * words, and it was the module actually doing the work. It was also not
+       * consistent with the rest of this codebase's own arithmetic: a single
+       * pipeline pass is described as about half a minute in half a dozen
+       * places, and six of those cannot come to twenty-five seconds. The honest
+       * unit is a pass per serve; what a pass costs on a phone is step 8 of
+       * `COURT-CHECK.md` and has never been run.
        */
       if (!glance && analysis.serves.count > 1 && lastFileRef.current && urlRef.current) {
         await compareServes(analysis)

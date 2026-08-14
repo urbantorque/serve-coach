@@ -86,13 +86,21 @@ the full report and press the button that offers to compare them.**
 
 A clip recorded in the app lands on the glance even when it holds six serves —
 that is deliberate, because measuring them all is a video pass each and nobody
-standing on a baseline wants to wait twenty-five seconds. So the comparison is
-one tap further on, from the report. Filming with the camera app and picking the
+standing on a baseline wants to wait for six of them. So the comparison is one
+tap further on, from the report. Filming with the camera app and picking the
 file gets there on its own, and is the other half worth trying.
 
 Proves the sweep, the consistency panel, and the best-against-worst picture strip
-on footage that was not synthesised. Watch how long it takes and whether the
-phone gets warm.
+on footage that was not synthesised.
+
+**Time it, with a stopwatch, and write the number down.** This is the only step
+on this list that produces a figure nothing else in the project can. Nothing in
+the tree times a sweep — `analyzeAllServes` says so itself, and the only sweeps
+ever run were against a fake `measure` that returns immediately — so how long
+the most expensive thing this app does actually takes is unknown, on the path a
+picked multi-serve clip now enters automatically. Two numbers are worth having:
+one full pass on a single serve, and the whole basket. Note whether the phone
+gets warm, and whether you would have waited.
 
 ---
 
