@@ -131,6 +131,13 @@ export async function renderReportCard(
    * inventing a shorter one for the smaller canvas.
    */
   streak?: string,
+  /**
+   * The best-score record line, already worded by `bestOverallScoreLine` —
+   * see the progress sheet's own `sheetBestScore`. Grouped with `streak`
+   * above rather than beside the score ring, the same "whole journey, not
+   * this one serve" reasoning that groups the two on the progress sheet.
+   */
+  bestScore?: string,
 ): Promise<Blob | undefined> {
   const W = 1080
   const PAD = 64
@@ -172,10 +179,11 @@ export async function renderReportCard(
   const barY = chipY + 48
   const HEADER = barY + 74 + 36
 
-  // A fixed strip above the drill box, only when there is a streak to show —
-  // an absent streak must not leave a blank gap on the card.
+  // A fixed strip above the drill box for each of the two optional records —
+  // absent, either must not leave a blank gap on the card.
   const STREAK_H = streak ? 34 : 0
-  const H = HEADER + stripH + 260 + STREAK_H
+  const BEST_SCORE_H = bestScore ? 34 : 0
+  const H = HEADER + stripH + 260 + STREAK_H + BEST_SCORE_H
   canvas.height = H
 
   ctx.fillStyle = INK
@@ -354,14 +362,25 @@ export async function renderReportCard(
   const footY = H - 150
 
   // Above the drill box rather than beside the score, the same reasoning
-  // `sixWeekMilestone`'s home-card placement uses: this is a fact about
-  // practice, not about this one serve, so it does not compete with the
-  // ring for the card's one big number.
+  // `sixWeekMilestone`'s home-card placement uses: these are facts about
+  // the whole journey, not about this one serve, so neither competes with
+  // the ring for the card's one big number. `streak` keeps the exact slot
+  // it always has, so a card with no `bestScore` draws pixel-identical to
+  // before; `bestScore` stacks above it only when both are present.
+  let recordY = footY - 14
   if (streak) {
     ctx.font = font(560, 16)
     ctx.fillStyle = LIME
     ctx.textAlign = 'center'
-    ctx.fillText(streak, W / 2, footY - 14)
+    ctx.fillText(streak, W / 2, recordY)
+    ctx.textAlign = 'left'
+    recordY -= 34
+  }
+  if (bestScore) {
+    ctx.font = font(560, 16)
+    ctx.fillStyle = LIME
+    ctx.textAlign = 'center'
+    ctx.fillText(bestScore, W / 2, recordY)
     ctx.textAlign = 'left'
   }
 
@@ -481,8 +500,9 @@ async function shareBlob(
 export async function shareReportCard(
   report: Report,
   streak?: string,
+  bestScore?: string,
 ): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
-  const blob = await renderReportCard(report, streak)
+  const blob = await renderReportCard(report, streak, bestScore)
   if (!blob) return 'failed'
   return shareBlob(blob, `serve-${dateStamp(report.createdAt)}.png`, 'My serve')
 }

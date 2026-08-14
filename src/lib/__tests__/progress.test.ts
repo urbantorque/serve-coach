@@ -25,6 +25,7 @@ import {
   bestHandSpeedEverLine,
   bestHandSpeedLine,
   bestOverallScore,
+  bestOverallScoreEverLine,
   bestOverallScoreLine,
   buildConsistencyTrend,
   buildProgress,
@@ -498,6 +499,15 @@ check('a different session on screen reads as "so far", dated, not as current', 
   const line = bestOverallScoreLine({ score: 88, createdAt: DAY }, 0)
   assert(!line.includes('yet'), `a non-record session was still credited with the record: "${line}"`)
   assert(line.includes('so far'), `a non-record session did not read as "so far": "${line}"`)
+})
+
+heading('The best-score record, stated with no report on screen to compare it against')
+
+check('states the record plainly, dated, in bestOverallScoreEverLine\'s own phrasing', () => {
+  const line = bestOverallScoreEverLine({ score: 88, createdAt: DAY })
+  assert(line.includes('88'), `the score itself did not appear: "${line}"`)
+  assert(line.includes('set '), `no date attached: "${line}"`)
+  assert(!line.includes('yet —'), `used bestOverallScoreLine's per-report phrasing: "${line}"`)
 })
 
 report()

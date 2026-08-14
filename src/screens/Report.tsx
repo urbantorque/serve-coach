@@ -245,7 +245,11 @@ export default function Report({
 
   const share = async () => {
     setSharing('working')
-    const outcome = await shareReportCard(analysis, streak)
+    const outcome = await shareReportCard(
+      analysis,
+      streak,
+      bestScore && bestOverallScoreLine(bestScore, analysis.createdAt),
+    )
     // Nothing happened when the player backed out of the share sheet, so the
     // button says nothing happened rather than claiming the card was saved.
     const done = outcome === 'shared' || outcome === 'downloaded'

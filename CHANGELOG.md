@@ -77,3 +77,11 @@ in `git log`.
   different target bands. Ungameable like every other record on this
   screen: only moves by actually serving a higher score. See
   `bestOverallScore`/`bestOverallScoreLine` in `src/lib/progress.ts`.
+- **The best-score record reads onto "Every serve so far" and the report
+  share card too.** The aggregate sheet groups it with the trip streak and
+  the fastest-hand-speed record, the same "whole journey, not this one
+  serve" cluster those two already sit in — "Your best serve yet scored
+  68, set 14 Aug." "Save or share this report" carries the same sentence,
+  stacked above the streak line, the same way the basket card already
+  stacks its own two records. See `bestOverallScoreEverLine` in
+  `src/lib/progress.ts`.

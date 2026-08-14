@@ -831,6 +831,16 @@ export function bestOverallScoreLine(record: BestScore, viewedAt: number): strin
     : `Your best serve so far scored ${record.score}, set ${shortDate(record.createdAt)}.`
 }
 
+/**
+ * The best-score record stated plainly, for `bestGapEverLine`'s reason: the
+ * progress sheet has no single report on screen to ask "did *this* one set
+ * it", so `bestOverallScoreLine`'s two-branch question has nothing to
+ * compare against here.
+ */
+export function bestOverallScoreEverLine(record: BestScore): string {
+  return `Your best serve yet scored ${record.score}, set ${shortDate(record.createdAt)}.`
+}
+
 export const MEANINGFUL_DELTA = 3
 
 export const deltaStatus = (delta: number): Status | 'flat' =>

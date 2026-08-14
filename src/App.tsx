@@ -14,6 +14,7 @@ import {
   bestHandSpeed,
   bestHandSpeedEverLine,
   bestOverallScore,
+  bestOverallScoreEverLine,
   buildConsistencyTrend,
   buildProgress,
   gapDeltaFor,
@@ -513,6 +514,13 @@ export default function App() {
   // type — one trend, one record, the same reason `spread` itself is keyed
   // to `form.serveType` rather than recomputed per section.
   const sheetBestGap = useMemo(() => bestConsistencyGap(spread), [spread])
+  // Same reasoning as `sheetBestGap`: keyed to the sheet's own dominant type
+  // rather than recomputed per section, since `form` already pinned that
+  // choice for the rest of this sheet.
+  const sheetBestScore = useMemo(
+    () => (form ? bestOverallScore(sessions, form.serveType) : undefined),
+    [sessions, form],
+  )
   const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread.gapDelta) : undefined), [spread])
 
   /**
@@ -1483,6 +1491,10 @@ export default function App() {
                 what the rest of this sheet (the trend, the delta bars, the
                 repeatability chart) is otherwise entirely about. */}
             {bestSpeed && <p className="progress-foot">{bestHandSpeedEverLine(bestSpeed, prefs.heightCm)}</p>}
+
+            {/* The third fact in the same cluster, for the same reason: a
+                whole-journey record rather than a form measurement. */}
+            {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
 
             {/* Said out loud rather than left as a gap in the chart. Somebody who
                 has filmed twenty serves and sees eleven plotted will assume the
