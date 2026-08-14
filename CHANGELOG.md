@@ -6,6 +6,12 @@ in `git log`.
 
 ## 2026-08-15
 
+- **The offline download's progress now reaches a screen reader.** Tapping
+  "Download now to use offline" updates the button's own text every network
+  chunk, which a screen reader was never told about — nothing announced
+  until the download finished or failed. A quiet second copy of the same
+  news, rounded to the nearest ten percent so it reads as progress rather
+  than noise, now sits next to the button.
 - **Fixed: a few clip-refusal messages read passively.** "Every swing
   measurement is read off your racket hand…", "Long clips are scanned
   for the serve first…" and "That video could not be read." all named

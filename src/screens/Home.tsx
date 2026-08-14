@@ -467,6 +467,23 @@ export default function Home({
                     : 'Download now to use offline · 19 MB'}
           </button>
         )}
+        {/* A second, quieter copy of the same news for a screen reader.
+            `onProgress` below fires once a network chunk, tens of times over a
+            19 MB download — wiring the button's own precise percentage to
+            `aria-live` would announce every single one. Rounded to the nearest
+            ten, the text in this region only changes ten times across the
+            whole download, which is a progress update rather than noise. */}
+        {warming && (
+          <p className="sr-only" role="status" aria-live="polite">
+            {warming.stage === 'downloading'
+              ? `Downloading the coach, ${Math.floor((warming.ratio ?? 0) * 10) * 10} percent.`
+              : warming.stage === 'starting'
+                ? 'Setting up the coach.'
+                : warming.stage === 'failed'
+                  ? 'Download failed.'
+                  : 'Downloaded, but this browser will not keep it.'}
+          </p>
+        )}
         <p>
           Your video is read on this device and never uploaded. Analysis runs entirely in your
           browser, on a court with no signal just as well as at home.
