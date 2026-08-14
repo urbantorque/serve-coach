@@ -91,6 +91,11 @@ interface Props {
    */
   bestGap?: BestGap
   /**
+   * The trip streak line, already worded by `streakLine` in `App.tsx` —
+   * carried onto the share card `share()` below builds, unmodified.
+   */
+  streak?: string
+  /**
    * The report on screen could not be written to storage.
    *
    * Storage is best-effort — see `db.ts` — so a save failure never blocks this
@@ -146,6 +151,7 @@ export default function Report({
   statedTier,
   servePair,
   bestGap,
+  streak,
   saveWarning,
   practice,
   onLogDrill,
@@ -213,7 +219,7 @@ export default function Report({
 
   const share = async () => {
     setSharing('working')
-    const outcome = await shareReportCard(analysis)
+    const outcome = await shareReportCard(analysis, streak)
     // Nothing happened when the player backed out of the share sheet, so the
     // button says nothing happened rather than claiming the card was saved.
     const done = outcome === 'shared' || outcome === 'downloaded'

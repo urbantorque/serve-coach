@@ -19,3 +19,10 @@ in `git log`.
   points, set 15 Aug." on any other. Ungameable like the streak: only moves
   by actually sweeping a tighter basket. See `bestConsistencyGap`/
   `bestGapLine` in `src/lib/progress.ts`.
+- **Both records now travel onto the share card.** "Save or share this
+  report" and "Share this basket" carry the same trip-streak and
+  tightest-gap sentences the two screens already show, in the card's lime
+  accent above the drill box / footer. Absent from the image exactly when
+  it's absent on screen — no card grows a blank gap for a record that
+  doesn't exist yet. See `renderReportCard`/`renderBasketCard` in
+  `src/lib/share/reportCard.ts`.

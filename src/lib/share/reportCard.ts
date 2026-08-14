@@ -122,7 +122,16 @@ const loadImage = (src: string) =>
  * them, is a picture of two serves with nothing saying which is which. The
  * report holds both, and the report is where they mean something.
  */
-export async function renderReportCard(report: Report): Promise<Blob | undefined> {
+export async function renderReportCard(
+  report: Report,
+  /**
+   * The trip streak line, already worded by `streakLine` — a plain sentence,
+   * not a badge asset. Absent below two trips, the same restraint the home
+   * card holds; this card just carries the same sentence rather than
+   * inventing a shorter one for the smaller canvas.
+   */
+  streak?: string,
+): Promise<Blob | undefined> {
   const W = 1080
   const PAD = 64
   const stills = report.phases.filter((p) => p.thumbnail)
@@ -163,7 +172,10 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
   const barY = chipY + 48
   const HEADER = barY + 74 + 36
 
-  const H = HEADER + stripH + 260
+  // A fixed strip above the drill box, only when there is a streak to show —
+  // an absent streak must not leave a blank gap on the card.
+  const STREAK_H = streak ? 34 : 0
+  const H = HEADER + stripH + 260 + STREAK_H
   canvas.height = H
 
   ctx.fillStyle = INK
@@ -340,6 +352,19 @@ export async function renderReportCard(report: Report): Promise<Blob | undefined
 
   /* --- footer ----------------------------------------------------------- */
   const footY = H - 150
+
+  // Above the drill box rather than beside the score, the same reasoning
+  // `sixWeekMilestone`'s home-card placement uses: this is a fact about
+  // practice, not about this one serve, so it does not compete with the
+  // ring for the card's one big number.
+  if (streak) {
+    ctx.font = font(560, 16)
+    ctx.fillStyle = LIME
+    ctx.textAlign = 'center'
+    ctx.fillText(streak, W / 2, footY - 14)
+    ctx.textAlign = 'left'
+  }
+
   ctx.fillStyle = INK_2
   roundRect(ctx, PAD, footY, W - PAD * 2, 100, 18)
   ctx.fill()
@@ -455,8 +480,9 @@ async function shareBlob(
 
 export async function shareReportCard(
   report: Report,
+  streak?: string,
 ): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
-  const blob = await renderReportCard(report)
+  const blob = await renderReportCard(report, streak)
   if (!blob) return 'failed'
   return shareBlob(blob, `serve-${dateStamp(report.createdAt)}.png`, 'My serve')
 }
@@ -487,6 +513,11 @@ export async function shareReportCard(
 export async function renderBasketCard(
   consistency: Consistency,
   createdAt: number,
+  /**
+   * The tightest-gap record line, already worded by `bestGapLine`. Absent
+   * below two baskets, same as the trend it is read from.
+   */
+  bestGap?: string,
 ): Promise<Blob | undefined> {
   const c = consistency
   const W = 1080
@@ -537,7 +568,8 @@ export async function renderBasketCard(
   )
   const notableH = notables.length ? notables.length * 92 + 20 : 0
 
-  const H = notableY + notableH + 90
+  const BEST_GAP_H = bestGap ? 34 : 0
+  const H = notableY + notableH + 90 + BEST_GAP_H
   canvas.height = H
 
   ctx.fillStyle = INK
@@ -703,6 +735,17 @@ export async function renderBasketCard(
   }
 
   /* --- footer -------------------------------------------------------------- */
+  // Above the caption rather than beside the score, for the same reason
+  // `renderReportCard` places the trip streak above its drill box: a fact
+  // about the whole history, not about this one basket.
+  if (bestGap) {
+    ctx.font = font(560, 16)
+    ctx.fillStyle = LIME
+    ctx.textAlign = 'center'
+    ctx.fillText(bestGap, W / 2, H - 56)
+    ctx.textAlign = 'left'
+  }
+
   ctx.font = font(400, 15)
   ctx.fillStyle = FAINT
   ctx.textAlign = 'center'
@@ -715,8 +758,9 @@ export async function renderBasketCard(
 export async function shareBasketCard(
   consistency: Consistency,
   createdAt: number,
+  bestGap?: string,
 ): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
-  const blob = await renderBasketCard(consistency, createdAt)
+  const blob = await renderBasketCard(consistency, createdAt, bestGap)
   if (!blob) return 'failed'
   return shareBlob(blob, `basket-${dateStamp(createdAt)}.png`, 'My basket')
 }

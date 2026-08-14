@@ -8,7 +8,7 @@ import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
-import { bestConsistencyGap, buildConsistencyTrend, buildProgress, shortDate, thenAndNow, typeOf } from './lib/progress'
+import { bestConsistencyGap, buildConsistencyTrend, buildProgress, shortDate, streakLine, thenAndNow, typeOf } from './lib/progress'
 import {
   analyzeAllServes,
   analyzeServe,
@@ -429,6 +429,10 @@ export default function App() {
   }, [])
 
   const form = useMemo(() => buildProgress(sessions), [sessions])
+  // Not type-restricted, unlike `bestGapFor` below — a streak is about
+  // showing up at all, across every serve type, the same choice `Home.tsx`
+  // already makes with its own copy of this same call.
+  const streak = useMemo(() => streakLine(sessions), [sessions])
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
     [sessions, drillLogs],
@@ -1188,6 +1192,7 @@ export default function App() {
             }
             servePair={pair}
             bestGap={bestGapFor(typeOf(view.analysis))}
+            streak={streak}
             saveWarning={saveWarning}
             practice={practice}
             onLogDrill={logDrill}
@@ -1205,6 +1210,7 @@ export default function App() {
             onBack={goHome}
             onAnalyzeAnother={goHome}
             bestGap={bestGapFor(typeOf(view.session))}
+            streak={streak}
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}
