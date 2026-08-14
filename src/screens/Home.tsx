@@ -4,7 +4,7 @@ import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing, Sheet } from '../components/primitives'
 import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
-import { buildProgress, currentRubricEra, sixWeekMilestone } from '../lib/progress'
+import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 
 interface Props {
@@ -102,6 +102,7 @@ export default function Home({
   const recent = sessions.slice(0, 3)
   const progress = useMemo(() => buildProgress(sessions), [sessions])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
+  const streak = useMemo(() => streakLine(sessions), [sessions])
   const practice = useMemo(() => findPracticeFocus(sessions), [sessions])
   // `best` is era-only by construction, so a count taken over all of `points`
   // puts the two halves of one sentence on different sets of serves: after a
@@ -375,6 +376,14 @@ export default function Home({
               same way whichever direction the number moved: nothing here
               can be produced by a tap, so nothing here is a badge for one. */}
           {milestone && <span className="progress-foot tnum">{milestone}</span>}
+
+          {/* A fact about attendance, counted the same way `sixWeekMilestone`
+              insists a fact has to be: nothing here can be produced by a tap,
+              only by a clip that went all the way through analysis — see
+              `tripStreak`. Silent below two trips for the same reason the
+              milestone above is silent before six real weeks: a number this
+              small reads as the app inventing a reason to congratulate. */}
+          {streak && <span className="progress-foot tnum">{streak}</span>}
 
           {/* The one actionable thing the app knows, on the first screen rather
               than two taps inside it. */}

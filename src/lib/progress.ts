@@ -546,6 +546,69 @@ export function tripsOf(sessions: Session[], gapMs = MIN_THEN_AND_NOW_GAP_MS): S
   return trips
 }
 
+/**
+ * How long a gap between trips still counts as "kept the streak".
+ *
+ * Nine days rather than seven: a player whose week runs Tuesday one week and
+ * Thursday the next has not broken a habit, and a strict calendar week would
+ * tell them they had. Loose enough to absorb a day or two of drift, tight
+ * enough that a streak still means roughly weekly.
+ */
+export const STREAK_GAP_MS = 9 * 24 * 60 * 60 * 1000
+
+/**
+ * How many trips to the court in a row have landed within `STREAK_GAP_MS` of
+ * the one before, counting back from the most recent — and zero once the
+ * most recent trip itself has fallen outside that window, because a streak
+ * that never resets is a lifetime count wearing a different word.
+ *
+ * A trip, not a tap. `tripsOf`'s unit only exists once a clip has gone all
+ * the way through pose landmarking and come back with a score, so nobody
+ * inflates this by opening the app — only by filming a serve, which is the
+ * behaviour retention is actually meant to reward. `sixWeekMilestone` and the
+ * drill button on `PracticeCard` both turned down a version of this feature
+ * that a tap could produce; this is the version they left on the table, and
+ * it survives the same objection because a tap cannot fake it.
+ *
+ * `now` is a parameter rather than `Date.now()` read inline, for the same
+ * reason `BackupStore` takes its database as one: a streak is "as of when",
+ * and a test should be able to say when without waiting for a clock.
+ */
+export function tripStreak(
+  sessions: Session[],
+  now: number = Date.now(),
+  gapMs = STREAK_GAP_MS,
+): number {
+  if (sessions.length === 0) return 0
+  const trips = tripsOf(sessions, MIN_THEN_AND_NOW_GAP_MS)
+  const tripEnd = (trip: Session[]) => trip[trip.length - 1].createdAt
+  const latest = trips[trips.length - 1]
+  if (now - tripEnd(latest) > gapMs) return 0
+
+  let streak = 1
+  for (let i = trips.length - 1; i > 0; i--) {
+    const gap = trips[i][0].createdAt - tripEnd(trips[i - 1])
+    if (gap > gapMs) break
+    streak++
+  }
+  return streak
+}
+
+/**
+ * The sentence a streak becomes, or nothing where a number would say more
+ * than it should.
+ *
+ * Silent below two, and not just below one: a streak of one trip is what
+ * `sixWeekMilestone`'s "first serve" already implicitly says, and printing
+ * "1 trip in a row" the moment somebody's history stops being empty reads as
+ * the app congratulating a null result.
+ */
+export function streakLine(sessions: Session[], now: number = Date.now()): string | undefined {
+  const n = tripStreak(sessions, now)
+  if (n < 2) return undefined
+  return `${n} trips to the court in a row, roughly weekly.`
+}
+
 export const MEANINGFUL_DELTA = 3
 
 export const deltaStatus = (delta: number): Status | 'flat' =>

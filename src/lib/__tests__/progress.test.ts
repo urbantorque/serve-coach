@@ -13,7 +13,15 @@
  * stretch that went backwards exactly as plainly as one that improved, or it
  * is a badge with the shape sanded off rather than a fact.
  */
-import { MIN_THEN_AND_NOW_GAP_MS, buildProgress, sameTrip, sixWeekMilestone, thenAndNow } from '../progress'
+import {
+  MIN_THEN_AND_NOW_GAP_MS,
+  STREAK_GAP_MS,
+  buildProgress,
+  sameTrip,
+  sixWeekMilestone,
+  thenAndNow,
+  tripStreak,
+} from '../progress'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 import type { Session } from '../storage/db'
 
@@ -157,6 +165,58 @@ check('a recalibration cannot be quietly used as the "before"', () => {
   assert(
     sixWeekMilestone(progress) === undefined,
     'measured six weeks of practice across a rubric change instead of refusing to',
+  )
+})
+
+heading('A trip streak, not a tap streak')
+
+check('no history is a streak of nothing', () => {
+  assert(tripStreak([], 0) === 0, 'an empty history produced a nonzero streak')
+})
+
+check('a first-ever trip counts as a streak of one', () => {
+  const sessions = [savedServe(0)]
+  assert(tripStreak(sessions, 0) === 1, 'a single recent trip was not counted at all')
+})
+
+check('a lapsed streak reads as zero, not as whatever it once reached', () => {
+  const sessions = [savedServe(0, 'a'), savedServe(3 * DAY, 'b')]
+  const now = 3 * DAY + STREAK_GAP_MS + 1
+  assert(tripStreak(sessions, now) === 0, 'a streak past its own window still reported a count')
+})
+
+check('trips well inside the window chain into one streak', () => {
+  const sessions = [savedServe(0, 'a'), savedServe(5 * DAY, 'b'), savedServe(11 * DAY, 'c')]
+  assert(tripStreak(sessions, 11 * DAY) === 3, 'three trips each within nine days of the last did not chain')
+})
+
+check('one wide gap caps the streak at the run since it', () => {
+  // Same three trips, but the first gap now exceeds STREAK_GAP_MS — only the
+  // two trips after it should count, not the one stranded on the far side.
+  const wideGap = STREAK_GAP_MS + DAY
+  const sessions = [savedServe(0, 'a'), savedServe(wideGap, 'b'), savedServe(wideGap + 5 * DAY, 'c')]
+  assert(
+    tripStreak(sessions, wideGap + 5 * DAY) === 2,
+    'a gap wider than the window still chained across it',
+  )
+})
+
+check('multiple serves on one trip are one trip, not one per serve', () => {
+  const sessions = [savedServe(0, 'a'), savedServe(20 * 60 * 1000, 'b'), savedServe(40 * 60 * 1000, 'c')]
+  assert(tripStreak(sessions, 40 * 60 * 1000) === 1, 'one afternoon of serves counted as more than one trip')
+})
+
+check('exactly the boundary gap still counts as kept', () => {
+  const sessions = [savedServe(0, 'a'), savedServe(STREAK_GAP_MS, 'b')]
+  assert(tripStreak(sessions, STREAK_GAP_MS) === 2, 'a gap of exactly the window broke the streak')
+})
+
+check('session order does not matter', () => {
+  const forward = [savedServe(0, 'a'), savedServe(5 * DAY, 'b')]
+  const backward = [savedServe(5 * DAY, 'b'), savedServe(0, 'a')]
+  assert(
+    tripStreak(forward, 5 * DAY) === tripStreak(backward, 5 * DAY),
+    'passing the same two trips in reverse order changed the streak',
   )
 })
 
