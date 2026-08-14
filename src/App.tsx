@@ -64,26 +64,34 @@ import Report from './screens/Report'
  * repeated: not runtime-enforced, but this is every legal move, and a change
  * that adds one belongs here too.
  *
- * `home` → `analyzing`: `run`, `compareServes` (a fresh `openClip`, or an
- *   already-open report launching the comparison sweep).
- * `analyzing` → `report` | `glance` | `error` | `saved`: `run`'s success path,
- *   its two failure branches, and `compareServes`'s three exits (measured,
- *   stopped-with-nothing-yet, stopped-with-some).
- * `report` ⇄ `report`: re-scoring, re-diagnosing, switching serves, flipping
+ * THE TABLE ITSELF NOW LIVES IN `lib/screenFlow.ts`, as data, and a test walks
+ * it: nothing is stranded, nothing is unreachable, and no screen exists here
+ * that is missing there. It is not a reducer and `App.tsx` does not import it —
+ * R7's argument against routing transitions through one still stands. What
+ * changed is only that the table is checkable, because this one was written by
+ * hand and was wrong in two places, in opposite directions:
+ *
+ *   · It claimed `analyzing` → `saved`. Nothing does that; `saved` is only ever
+ *     reached from `home`.
+ *   · It omitted `home` → `error` and `report` → `error`. `run` refuses an
+ *     oversized file and a non-video by declared type *before* it sets
+ *     `analyzing`, and returns — so the error screen is reachable without the
+ *     analysing screen ever being shown.
+ *
+ * Neither was a bug in the app. Both were a map disagreeing with the ground,
+ * which is what a table nothing executes eventually becomes.
+ *
+ * What is worth keeping here is the reasoning the table cannot carry:
+ *
+ * `report` ⇄ `report` is re-scoring, re-diagnosing, switching serves, flipping
  *   handedness, or a cache hit — all same-kind. Re-scoring, re-diagnosing and a
  *   cache hit reuse the existing `videoUrl` outright — no seek, no decoder
  *   rebuild, arithmetic or a map lookup on data already in memory. A correction
  *   `recall` has not seen before still goes through `run`, which revokes the
  *   old object URL and mints a new one from the same `File` — a fresh decoder,
  *   because there is no cheaper way to read a clip again.
- * `report` → `analyzing`: `onCheckConsistency`, into `compareServes`.
- * `glance` → `report`: `onOpenReport`, no re-analysis — the same object, a
- *   fuller screen for it.
- * `glance` | `report` | `error` | `saved` → `home`: `goHome`, `cancel`
- *   (`analyzing` too, via the cancel button).
- * `home` → `saved`: `openSaved`, `showExample`.
- * Only `home` and `report` ever call `run` — `openClip` and a correction — so
- * `analyzing`'s `error` landing is always reached by way of one of those two.
+ * `glance` → `report` does no re-analysis — the same object, a fuller screen.
+ * Only `home` and `report` ever call `run` — `openClip` and a correction.
  *
  * `sweep` lives only while `view.kind === 'analyzing'` and a comparison is
  * running; it is always cleared (`undefined` or a fresh one) at every entrance

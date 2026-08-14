@@ -656,6 +656,60 @@ had never been written down anywhere.
       rounds in this phase confirmed "green" by grepping the output for `✗`,
       which is blind to a file that dies. `npm test`'s exit code is the check.
 
+- [x] **R43** — `App.tsx`'s state-machine table was prose, and the prose was
+      wrong twice.
+
+      R7 looked at the implicit machine in that file and decided against a
+      reducer, correctly and not reopened here: the four satellite pieces of
+      state are each scoped to the screens that read them, so a combined state
+      would carry fields most screens never touch. What it wrote instead was
+      "every transition below was walked by hand for a screen it could strand
+      and none was found", and then the table — a load-bearing claim about
+      twenty-one `setView` call sites that nothing executed.
+
+      Transcribing it into `lib/screenFlow.ts` from the *calls* rather than from
+      the comment found both errors immediately, and they point opposite ways:
+
+        · It claimed `analyzing` → `saved`. Nothing does that. `saved` is set in
+          three places — `showExample`, `openSaved`, the dev `?demo` branch —
+          and all three are reachable only from `home`, because the history
+          sheet's opener is a prop only `Home` is given. A listed exit no code
+          can take is the more dangerous of the two: it is exactly the entry a
+          later reader trusts when deciding whether some new state needs
+          clearing on the way through.
+        · It omitted `home` → `error` and `report` → `error`. `run` refuses a
+          file over `MAX_BYTES` and one whose declared type is not a video, and
+          both `return` immediately after setting `error` — before `analyzing`
+          is ever set. The prose said the error landing "is always reached by way
+          of one of those two", which is true of the *caller* and reads as a
+          claim about the *route*.
+
+      Neither was a bug in the app. Both were a map disagreeing with the ground,
+      which is what a table nothing executes eventually becomes.
+
+      `screenFlow.ts` is deliberately inert: `App.tsx` does not import it, no
+      `setView` is routed through it, and its own header says that if it ever
+      starts deciding transitions rather than describing them, R7's argument has
+      been quietly reversed. It is the table in a form a test can walk.
+
+      `lib/__tests__/screenFlow.test.ts`, nine checks. Two are the graph
+      properties R7's walk was actually claiming — nothing stranded, nothing
+      unreachable. Two read `App.tsx` off disk in both directions, so a screen
+      added there without arriving here fails, and so does a screen invented
+      here that the file does not have; without those the table is just a second
+      thing to remember, which is what the comment already was. Two more pin the
+      corrections, including a source check that `run` really does set `error`
+      twice before it first sets `analyzing`. And one states which screens are
+      terminal — `saved` and `error`, both "look at this, then start again" —
+      as a reading rather than a rule, so a third appearing gets a second look.
+
+      Verified the teeth by restoring both of R7's errors in a scratch copy:
+      exactly the two checks written for them went red, and the suite failed.
+
+      The comment in `App.tsx` keeps what the table cannot carry — why a
+      `report` ⇄ `report` move costs no decoder rebuild, why `glance` → `report`
+      re-analyses nothing — and hands the enumeration over.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the
