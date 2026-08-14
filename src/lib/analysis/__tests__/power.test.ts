@@ -28,6 +28,7 @@ import { detectServe } from '../phases'
 import {
   MIN_SPEED_EVIDENCE,
   estimateBallSpeed,
+  formatSpeed,
   isPlausibleHeight,
   readHandSpeed,
   speedInKmh,
@@ -573,6 +574,33 @@ check('km/h is the player’s own height and nothing else', () => {
   for (const ok of [110, 145, 178, 230]) {
     assert(isPlausibleHeight(ok), `${ok} cm was refused as a standing height`)
   }
+})
+
+heading('One speed, one spelling, for every caller')
+
+/**
+ * `PowerPanel` and `progress.ts`'s two hand-speed record sentences each had
+ * their own copy of this decision, and the copies drifted — one printed
+ * "body heights / sec" with spaces around the slash, the others without.
+ * `formatSpeed` exists so there is exactly one string to get right.
+ */
+check('house units without a height, exactly one decimal place', () => {
+  const { value, unit } = formatSpeed(4.567, undefined)
+  assert(value === '4.6', `not one decimal place: "${value}"`)
+  assert(unit === 'body heights/sec', `wrong spelling: "${unit}"`)
+})
+
+check('km/h, rounded to a whole number, once a height is on file', () => {
+  const { value, unit } = formatSpeed(4, 178)
+  assert(unit === 'km/h', `did not switch units: "${unit}"`)
+  near(Number(value), speedInKmh(4, 178), 0.5, 'the converted value')
+})
+
+check('an implausible height is treated the same as no height at all', () => {
+  const withNone = formatSpeed(4, undefined)
+  const withBad = formatSpeed(4, 400)
+  assert(withBad.unit === withNone.unit, 'an implausible height still switched to km/h')
+  assert(withBad.value === withNone.value, 'an implausible height still changed the number')
 })
 
 report()

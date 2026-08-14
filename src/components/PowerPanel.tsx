@@ -3,8 +3,8 @@ import {
   HEIGHT_CM_RANGE,
   MIN_SPEED_EVIDENCE,
   estimateBallSpeed,
+  formatSpeed,
   isPlausibleHeight,
-  speedInKmh,
 } from '../lib/analysis/power'
 import type { Analysis } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
@@ -78,14 +78,17 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight, bestSpeed 
   // outcome and worth saying, because "no reading" and "your camera is too slow
   // for this" are different facts and only one of them is actionable.
   const looked = analysis.outbound?.coverage
-  const height = isPlausibleHeight(heightCm) ? heightCm : undefined
 
   if (!hand && !ball) return null
 
-  /** One speed, in whichever unit the app is entitled to use today. */
-  const show = (v: number) =>
-    height ? Math.round(speedInKmh(v, height)).toString() : v.toFixed(1)
-  const unit = height ? 'km/h' : 'body heights / sec'
+  /**
+   * One speed, in whichever unit the app is entitled to use today —
+   * `formatSpeed` (`power.ts`) decides that once, for every caller. `unit`
+   * never depends on the value passed in, only on whether a height is on
+   * file, so reading it off an arbitrary call is exact, not approximate.
+   */
+  const show = (v: number) => formatSpeed(v, heightCm).value
+  const { unit } = formatSpeed(0, heightCm)
 
   const save = () => {
     const cm = Number(draft)
@@ -202,7 +205,9 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight, bestSpeed 
           ) : (
             <button className="btn btn--ghost btn--full" onClick={() => setAsking(true)}>
               <Icon name="target" size={16} />
-              {height ? `Measured against ${height} cm — change` : 'Tell me your height for km/h'}
+              {isPlausibleHeight(heightCm)
+                ? `Measured against ${heightCm} cm — change`
+                : 'Tell me your height for km/h'}
             </button>
           )}
         </div>

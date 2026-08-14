@@ -507,6 +507,29 @@ export const isPlausibleHeight = (cm: number | undefined): cm is number =>
   cm <= HEIGHT_CM_RANGE[1]
 
 /**
+ * A speed for display, in whichever unit the app is entitled to use today —
+ * km/h once a player has said how tall they are, house units until then.
+ *
+ * Pulled out after three independent copies of this same decision drifted:
+ * `PowerPanel` printed "body heights / sec", with spaces around the slash,
+ * while `progress.ts`'s two hand-speed record sentences printed "body
+ * heights/sec" without — the same claim rendered two ways on the same
+ * screen, one a few lines under the other. Not a shape two functions
+ * happen to share; the same logic, copied, that had already gone out of
+ * sync once. One function, every caller, one spelling.
+ */
+export function formatSpeed(
+  bodyHeightsPerSecond: number,
+  heightCm: number | undefined,
+): { value: string; unit: string } {
+  const height = isPlausibleHeight(heightCm) ? heightCm : undefined
+  return {
+    value: height ? Math.round(speedInKmh(bodyHeightsPerSecond, height)).toString() : bodyHeightsPerSecond.toFixed(1),
+    unit: height ? 'km/h' : 'body heights/sec',
+  }
+}
+
+/**
  * A split for a clip whose camera angle was never measured.
  *
  * Only for callers that have a yaw and no `Spatial` — the consistency sweep and

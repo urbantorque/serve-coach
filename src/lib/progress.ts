@@ -1,6 +1,6 @@
 import { FUNDAMENTALS } from './analysis/coaching'
 import { mean, statusOf } from './analysis/geometry'
-import { MIN_SPEED_EVIDENCE, isPlausibleHeight, speedInKmh } from './analysis/power'
+import { MIN_SPEED_EVIDENCE, formatSpeed } from './analysis/power'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
@@ -725,17 +725,15 @@ export function bestHandSpeed(sessions: Session[]): BestHandSpeed | undefined {
 
 /**
  * The sentence a hand-speed record becomes, in whichever unit the app is
- * entitled to use today — the same rule `PowerPanel`'s own `show`/`unit`
- * apply, repeated here rather than imported because this produces a
- * sentence and that produces JSX.
+ * entitled to use today — `formatSpeed` (`power.ts`) decides that once,
+ * for every caller, after `PowerPanel` and this function's own two-copy
+ * history drifted on the unit's spelling.
  */
 export function bestHandSpeedLine(record: BestHandSpeed, heightCm: number | undefined, viewedAt: number): string {
-  const height = isPlausibleHeight(heightCm) ? heightCm : undefined
-  const show = (v: number) => (height ? Math.round(speedInKmh(v, height)).toString() : v.toFixed(1))
-  const unit = height ? 'km/h' : 'body heights/sec'
+  const { value, unit } = formatSpeed(record.speed, heightCm)
   return record.createdAt === viewedAt
-    ? `Your fastest hand speed yet — ${show(record.speed)} ${unit}.`
-    : `Your fastest hand speed so far is ${show(record.speed)} ${unit}, set ${shortDate(record.createdAt)}.`
+    ? `Your fastest hand speed yet — ${value} ${unit}.`
+    : `Your fastest hand speed so far is ${value} ${unit}, set ${shortDate(record.createdAt)}.`
 }
 
 /**
@@ -745,10 +743,8 @@ export function bestHandSpeedLine(record: BestHandSpeed, heightCm: number | unde
  * against here.
  */
 export function bestHandSpeedEverLine(record: BestHandSpeed, heightCm: number | undefined): string {
-  const height = isPlausibleHeight(heightCm) ? heightCm : undefined
-  const show = (v: number) => (height ? Math.round(speedInKmh(v, height)).toString() : v.toFixed(1))
-  const unit = height ? 'km/h' : 'body heights/sec'
-  return `Your fastest hand speed yet was ${show(record.speed)} ${unit}, set ${shortDate(record.createdAt)}.`
+  const { value, unit } = formatSpeed(record.speed, heightCm)
+  return `Your fastest hand speed yet was ${value} ${unit}, set ${shortDate(record.createdAt)}.`
 }
 
 export const MEANINGFUL_DELTA = 3

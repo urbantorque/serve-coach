@@ -50,3 +50,8 @@ in `git log`.
   score-by-session chart there already had the shape of this fact; it just
   never stated it in words, the way the home card already does. Same
   sentence, same rule, both places.
+- **Fixed: the speed unit was spelled two different ways on the same
+  screen.** "How fast you served" printed "body heights / sec" with spaces
+  around the slash; the fastest-hand-speed record right beneath it printed
+  "body heights/sec" without. Both now read the same way, everywhere a
+  speed is shown. See `formatSpeed` in `src/lib/analysis/power.ts`.
