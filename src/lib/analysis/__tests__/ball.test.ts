@@ -24,6 +24,13 @@ import { readOutboundFlight } from '../analyze'
 import { imageXSplit } from '../axes'
 import { assert, check, heading, near, note, report, within } from './harness'
 
+// 240×426 is not an arbitrary canvas size: at 0.563 it is a real portrait
+// phone aspect (9:16 is 0.5625), not the square or landscape shape it might
+// look like at a glance. Every ball-tracking check in this file — occlusion,
+// the stationary-decoy audit, the outbound-flight fits below — already runs
+// against this ratio, via `ASPECT` further down. Worth stating plainly so a
+// future audit does not re-open "was this ever tested against a realistic
+// phone aspect" assuming the answer is no.
 const W = 240
 const H = 426
 
