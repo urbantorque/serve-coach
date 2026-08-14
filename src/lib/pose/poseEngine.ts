@@ -1,4 +1,18 @@
-import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
+/*
+ * Types only. The library itself is fetched when an engine is first wanted —
+ * see `visionRuntime` below.
+ */
+import type { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
+
+/**
+ * What `FilesetResolver.forVisionTasks` hands back.
+ *
+ * The library declares `WasmFileset` but does not export it, so it is named
+ * here as the awaited return of the one call that produces it — which is what
+ * `create` used to say inline, back when the resolver was a value in scope
+ * rather than a type.
+ */
+type WasmFileset = Awaited<ReturnType<(typeof FilesetResolver)['forVisionTasks']>>
 
 /**
  * Where the model and the wasm runtime live, relative to wherever the app is served.
@@ -66,11 +80,29 @@ async function downloadModel(onProgress: (p: EngineProgress) => void): Promise<U
   return out
 }
 
+/**
+ * The MediaPipe library, fetched the first time an engine is actually wanted.
+ *
+ * Static, this was a third of the app's JavaScript sitting in the entry chunk:
+ * the shell could not paint until the whole vision library had been downloaded
+ * and parsed, on a phone, at a court. Nothing on the home screen needs it —
+ * `isCachedOffline` asks the Cache API, `enginePaths` is two strings, and
+ * `nextVideoTimestamp` only uses `PoseLandmarker` as a WeakMap key, which is a
+ * type. The first thing that genuinely needs the library is an analysis or the
+ * live viewfinder, and both of those are already about to fetch 19 MB of model
+ * and runtime, against which this is rounding error.
+ *
+ * The browser caches the module after the first call, so the repeated `import`
+ * below costs one promise resolution per analysis rather than a second fetch.
+ */
+const visionRuntime = () => import('@mediapipe/tasks-vision')
+
 async function create(
   buffer: Uint8Array,
-  fileset: Awaited<ReturnType<typeof FilesetResolver.forVisionTasks>>,
+  fileset: WasmFileset,
   delegate: 'GPU' | 'CPU',
 ) {
+  const { PoseLandmarker } = await visionRuntime()
   return PoseLandmarker.createFromOptions(fileset, {
     baseOptions: {
       // A copy per attempt: the task runner takes ownership of the buffer it is
@@ -100,9 +132,12 @@ export function loadEngine(onProgress: (p: EngineProgress) => void = () => {}): 
 
   pending = (async () => {
     try {
+      // The library and the model in parallel, since neither waits on the
+      // other — and the model is 9 MB against a few hundred kilobytes, so the
+      // library is off the critical path either way.
       const [buffer, fileset] = await Promise.all([
         downloadModel(onProgress),
-        FilesetResolver.forVisionTasks(WASM_DIR),
+        visionRuntime().then((v) => v.FilesetResolver.forVisionTasks(WASM_DIR)),
       ])
       onProgress({ stage: 'starting' })
 

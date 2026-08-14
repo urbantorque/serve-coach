@@ -710,6 +710,48 @@ had never been written down anywhere.
       `report` ⇄ `report` move costs no decoder rebuild, why `glance` → `report`
       re-analyses nothing — and hands the enumeration over.
 
+- [x] **R44** — The whole MediaPipe vision library sat in the entry chunk, so
+      the app shell could not paint until it had downloaded and parsed.
+
+      Measured before and after rather than asserted:
+
+          before   index 505.34 kB  (165.99 kB gzip), one chunk
+          after    index 373.01 kB  (125.69 kB gzip)
+                 + vision 138.83 kB ( 41.55 kB gzip), fetched on demand
+
+      132 kB raw and 40 kB gzip off the critical path, a quarter of what had to
+      arrive before anything rendered. Confirmed it is genuinely deferred and
+      not merely renamed: `dist/index.html` carries one module script and no
+      `modulepreload` for the vision chunk.
+
+      Nothing on the home screen ever needed it, which is what made this
+      available. `isCachedOffline` asks the Cache API, `enginePaths` is two
+      strings, and `nextVideoTimestamp` uses `PoseLandmarker` only as a WeakMap
+      key — a type, erased at build. The first thing that genuinely needs the
+      library is an analysis or the live viewfinder, and both are already about
+      to fetch 19 MB of model and runtime, against which 139 kB is rounding
+      error. The import is a plain `import()` in `poseEngine.ts`; the browser
+      caches the module, so the repeated call costs a promise resolution rather
+      than a second fetch.
+
+      One type had to be named by hand. `create` described its fileset argument
+      as `Awaited<ReturnType<typeof FilesetResolver.forVisionTasks>>`, which is
+      a query on a *value* and stops working the moment the import is
+      type-only — and the library declares `WasmFileset` without exporting it.
+      Same expression, moved to a named type, so the dependency on an
+      unexported name stays visible rather than being inlined at a call site.
+
+      Verified at runtime, because a dynamic import that fails to resolve is
+      exactly the defect a build-size table cannot see. Driven live in the dev
+      server: `enginePaths` and `isCachedOffline` both answer with no MediaPipe
+      loaded at all; `loadEngine` then reports all three progress stages,
+      returns an object with a working `detectForVideo`, and lands on the GPU
+      delegate. No console errors.
+
+      The service worker still precaches it — 17 entries, 612 KiB against 606 —
+      which is right: offline has to keep working, and precaching happens in the
+      background after install rather than in front of the first paint.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the
