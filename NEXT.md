@@ -854,6 +854,67 @@ had never been written down anywhere.
       the pipeline still runs and still refuses correctly with the new `await`
       in front of it, and that `isCachedOffline` still answers in a browser.
 
+- [x] **R47** — The untested screen layer, which turned out to be two functions
+      rather than fifteen files.
+
+      The round opened on the premise that fifteen components and screens have
+      no coverage, including `Report.tsx` at 774 lines and `PosePlayer.tsx` at
+      771, and that a real bug had already been found in one of them by reading
+      (R36). Surveying before extracting corrected that premise, and the
+      correction is the finding:
+
+          file             lines   own top-level fns   imports from lib
+          Report.tsx         774          1                  10
+          PosePlayer.tsx     771          0                   7
+          Home.tsx           488          1                   4
+          FramingCheck.tsx   505          0                   3
+
+      The big files are JSX over decisions that already live in tested modules —
+      `refusalFor` and `injuryNotes` in `verdict.ts`, `deltasAgainst` in
+      `progress.ts`, `drawSkeleton` and `ghostFor` in `skeleton.ts`,
+      `recordingType` in `record.ts`, `readQuality` in `statusLabels.ts`. This
+      codebase has been doing the extraction all along; that is what those
+      modules are. "Fifteen untested files" counted files rather than logic and
+      overstated the risk accordingly.
+
+      Two genuine exceptions, both now extracted and both worth having found:
+
+        · `chartGeometry`, out of `Trend.tsx` into `components/trendGeometry.ts`.
+          A hundred lines of path building behind the one thing on the progress
+          sheet a player reads as evidence. A dot in the wrong place is not a
+          cosmetic bug — it is the app asserting something about somebody's
+          serve that did not happen, and the rubric-break logic exists precisely
+          because a line drawn across a recalibration reads as a climb the
+          player did not make. Fourteen checks: points inside the viewBox, a
+          higher score drawn higher, a lone point centred rather than dividing
+          by zero into a NaN that would empty the chart, one run per rubric, the
+          break rule halfway between the two serves rather than on either, only
+          the superseded run drawn as background, no fill under a run of one,
+          and the label clamped inside a box both charts let overflow.
+        · `nearestFrameIndex`, out of `PosePlayer.tsx` into `analysis/geometry.ts`.
+          A binary search with a nearest-neighbour tie-break, and the player
+          reasons at length about the case where it goes wrong: the browser
+          snaps `currentTime` to a decoded frame boundary, so on a clip whose
+          boundaries sit off the pose cadence it lands on the *neighbour* of the
+          frame a keyframe was measured at, and the symptom is a callout that
+          silently fails to draw. Ten checks, including that the answer never
+          leaves the array across the whole range, and that a snapped playhead
+          is never more than one sample from where it was measured — the failure
+          bounded rather than denied.
+
+      `strokeOf` stayed with the component on purpose: it is a choice about ink,
+      and `trendGeometry.ts` deliberately knows nothing about how the paths it
+      builds are painted.
+
+      ONE TEST WAS WRONG AND THE CODE WAS RIGHT, which is worth recording since
+      the reverse is what this phase keeps finding. The bridged-gap check
+      asserted that a moment mid-gap takes the earlier edge; it went red, and
+      the reason was that the moment chosen sat at the *exact* midpoint of a
+      third-of-a-second hole, where there is no nearer edge. The tie-break is
+      `<` rather than `<=`, so the later frame wins, consistently. Kept as its
+      own named check rather than quietly moved off the boundary — an exact tie
+      is a real case on a bridged gap, and now it is a decided one.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the

@@ -7,6 +7,16 @@ import {
   type ConsistencyPoint,
   type TrendPoint,
 } from '../lib/progress'
+import { VB_W, chartGeometry, labelX } from './trendGeometry'
+
+/**
+ * The colour of a run: the old rubric is drawn as background, not as series.
+ *
+ * Stays here rather than moving with the geometry — it is a choice about ink,
+ * and `trendGeometry.ts` deliberately knows nothing about how the paths it
+ * builds are painted.
+ */
+const strokeOf = (stale: boolean) => (stale ? 'var(--fg-faint)' : 'var(--lime)')
 
 /* ============================================================ delta chip === */
 
@@ -44,86 +54,9 @@ export function DeltaChip({ delta, compact = false }: { delta?: number; compact?
 
 /* ============================================================== sparkline === */
 
-const VB_W = 320
-
-/** A run of points scored the same way, and the path that joins them. */
-interface Segment {
-  /** Indices into the full `points` array — the ends of this run, inclusive. */
-  from: number
-  to: number
-  line: string
-  /** Absent on a run of one: there is nothing to fill under a single point. */
-  area?: string
-  /** Scored under an older rubric than the player's latest serve. */
-  stale: boolean
-}
-
-/** The colour of a run: the old rubric is drawn as background, not as series. */
-const strokeOf = (stale: boolean) => (stale ? 'var(--fg-faint)' : 'var(--lime)')
-
-/**
- * Half the width of the break label at the 9px `.chart-axis` size, in viewBox
- * units. Both charts set `overflow: visible`, so a label centred on a break near
- * either edge does not clip — it hangs outside the chart and over whatever sits
- * beside it. Clamping to this keeps the words inside the box; the couple of
- * units it slides off the rule cost nothing, since the rule is the thing being
- * labelled and it is the only one on screen.
- */
-const BREAK_LABEL_HALF = 34
-
-const labelX = (at: number) => Math.min(VB_W - BREAK_LABEL_HALF, Math.max(BREAK_LABEL_HALF, at))
-
-/**
- * Shared path builder: maps scores onto a 0–100 y-axis inside the viewBox, as
- * one path per run of points that share a rubric rather than one path over all
- * of them.
- *
- * A recalibration moves a saved score with the player having done nothing —
- * a recreational serve scored in the forties before the last change scores in
- * the seventies after it — and a saved report keeps no frames, so the old
- * numbers can never be brought onto the new scale. A segment joining those two
- * dots draws the recalibration as a climb, directly beside a delta chip that has
- * correctly refused to report any change at all. Of the two the player believes
- * the line, so the line has to stop.
- */
-function geometry(points: TrendPoint[], w: number, h: number, pad: number) {
-  const n = points.length
-  const x = (i: number) => (n === 1 ? w / 2 : pad + (i * (w - pad * 2)) / (n - 1))
-  const y = (v: number) => h - pad - (v / 100) * (h - pad * 2)
-  const floor = (h - pad).toFixed(1)
-  // Judged against the newest rubric rather than the oldest: that is the one the
-  // player's last serve was scored under, and the one every figure printed
-  // beside the chart is talking about.
-  const current = points[n - 1]?.scoringVersion
-
-  const segments: Segment[] = []
-  let start = 0
-  for (let i = 1; i <= n; i++) {
-    if (i < n && points[i].scoringVersion === points[i - 1].scoringVersion) continue
-    const line = points
-      .slice(start, i)
-      .map((p, k) => `${k === 0 ? 'M' : 'L'}${x(start + k).toFixed(1)},${y(p.overall).toFixed(1)}`)
-      .join(' ')
-    segments.push({
-      from: start,
-      to: i - 1,
-      line,
-      area: i - start > 1 ? `${line} L${x(i - 1).toFixed(1)},${floor} L${x(start).toFixed(1)},${floor} Z` : undefined,
-      stale: points[start].scoringVersion !== current,
-    })
-    start = i
-  }
-
-  // Halfway between the two points either side. Sitting the break on one of them
-  // would read as that particular serve being the odd one, when what changed
-  // happened between the two and to neither.
-  const breaks = segments.slice(1).map((s) => (x(s.from - 1) + x(s.from)) / 2)
-  return { x, y, segments, breaks }
-}
-
 export function Sparkline({ points }: { points: TrendPoint[] }) {
   const h = 44
-  const g = useMemo(() => geometry(points, VB_W, h, 6), [points])
+  const g = useMemo(() => chartGeometry(points, VB_W, h, 6), [points])
   if (points.length < 2) return null
   const last = points.length - 1
   const broken = g.breaks.length > 0
@@ -207,7 +140,7 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
   const [hover, setHover] = useState<number>()
   const h = 150
   const pad = 16
-  const g = useMemo(() => geometry(points, VB_W, h, pad), [points])
+  const g = useMemo(() => chartGeometry(points, VB_W, h, pad), [points])
 
   if (points.length < 2) return null
 

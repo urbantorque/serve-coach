@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ballMarkerAt } from '../lib/analysis/analyze'
+import { nearestFrameIndex } from '../lib/analysis/geometry'
 import { unlevelFrames } from '../lib/analysis/spatial'
 import type { Analysis, Frame, PhaseId } from '../lib/analysis/types'
 import { levelFlight } from '../lib/vision/ballTrack'
@@ -126,20 +127,9 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     phases,
   ])
 
-  const frameAt = useCallback(
-    (t: number): number => {
-      let lo = 0
-      let hi = frames.length - 1
-      while (lo < hi) {
-        const mid = (lo + hi) >> 1
-        if (frames[mid].t < t) lo = mid + 1
-        else hi = mid
-      }
-      if (lo > 0 && Math.abs(frames[lo - 1].t - t) < Math.abs(frames[lo].t - t)) return lo - 1
-      return lo
-    },
-    [frames],
-  )
+  // The search itself lives in `geometry.ts`, where it can be tested — see
+  // `nearestFrameIndex` for why nearest beats next-lowest here.
+  const frameAt = useCallback((t: number): number => nearestFrameIndex(frames, t), [frames])
 
   /* ------------------------------------------------------------- drawing --- */
 

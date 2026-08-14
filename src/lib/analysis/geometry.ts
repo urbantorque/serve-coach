@@ -649,3 +649,37 @@ export function keyVisibility(f: Frame): number {
   ]
   return mean(keys.map((k) => f.image[k]?.visibility ?? 0))
 }
+
+/**
+ * The sampled frame nearest a moment in the clip, by time.
+ *
+ * Lived inside `PosePlayer` as a `useCallback`, which put a binary search and a
+ * nearest-neighbour tie-break somewhere no test could reach — and this one has
+ * a documented failure mode that the player itself reasons about at length: the
+ * browser snaps `currentTime` to a decoded frame boundary, so on a clip whose
+ * boundaries sit more than half a sample off the pose cadence, the frame it
+ * lands on is the *neighbour* of the one a keyframe was measured at. Whether
+ * that is a near miss or a wild one depends entirely on the rounding here.
+ *
+ * Nearest rather than next-lowest, deliberately. The overlay is drawn against
+ * whatever this returns, and picking the earlier frame every time would bias
+ * the whole overlay half a sample behind the video — visible as a skeleton
+ * trailing the body rather than sitting on it.
+ *
+ * `frames` must be sorted by `t`, which `bridgeDetectionGaps` guarantees: it
+ * builds its output in sample order and compacts, so gaps widen the spacing but
+ * never reorder it. Returns 0 for an empty array — no frame is the right answer
+ * and there is no index for it, and every caller here indexes into the same
+ * array and gets `undefined`, which they all already handle.
+ */
+export function nearestFrameIndex(frames: { t: number }[], t: number): number {
+  let lo = 0
+  let hi = frames.length - 1
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1
+    if (frames[mid].t < t) lo = mid + 1
+    else hi = mid
+  }
+  if (lo > 0 && Math.abs(frames[lo - 1].t - t) < Math.abs(frames[lo].t - t)) return lo - 1
+  return lo
+}
