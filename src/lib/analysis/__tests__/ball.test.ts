@@ -262,6 +262,41 @@ check('a ball lost for several frames is still tracked', () => {
   near(flight!.apex.y, 0.16, 0.03, 'apex height across a gap')
 })
 
+/**
+ * Cycle 20 (this session's own record) put trackOutbound through its own
+ * "stranded right at the inlier floor, split across both edges of a wide
+ * gap" case and found it robust. That case has no sibling here for
+ * trackBall — the check above only tries one contiguous gap size, never one
+ * split across both edges of the toss, and never right at the floor itself.
+ * The two functions are different fits (a line through two seed points here
+ * a quadratic through three) over a different kind of occlusion candidate —
+ * the racket-drop follow-through crossing the frame mid-toss, or a toss that
+ * climbed behind the server's own head for a moment — so the answer was
+ * read off a live sweep before writing this, not assumed to transfer.
+ */
+check('an occlusion split across both edges, right at the inlier floor, still fits — and just below it, safely reports nothing', () => {
+  const shots = tossFrames({ apexT: 0.45, apexY: 0.16, gravity: GRAVITY, x0: 0.45, driftX: 0.05 })
+  const edges = (each: number) => shots.filter((_, i) => i < each || i >= shots.length - each)
+
+  // One candidate per surviving frame on this clean a toss, so four
+  // detections (two at each end) sits one below trackBall's own default
+  // minInliers of 5.
+  const below = trackBall(candidatesFor(edges(2)), { expectedGravity: GRAVITY })
+  assert(below === undefined, 'a 4-detection edge-split occlusion, below the inlier floor, still reported a flight')
+
+  const above = trackBall(candidatesFor(edges(3)), { expectedGravity: GRAVITY })
+  assert(above !== undefined, 'a 6-detection edge-split occlusion, one detection over the floor, lost the fit entirely')
+  near(above!.apex.y, 0.16, 0.01, 'apex height from an edge-split occlusion')
+  near(above!.apex.t, 0.45, 0.02, 'apex time from an edge-split occlusion')
+  // Six detections spanning the whole window is real evidence, not none — the
+  // gate should not treat a hole through the middle as though nothing had
+  // been seen at all.
+  within(above!.confidence, 0.45, 1, 'confidence must still clear the toss floor analyze.ts uses')
+  note(
+    `edge-split (3 each end): apex y=${above!.apex.y.toFixed(4)} t=${above!.apex.t.toFixed(4)} conf=${above!.confidence.toFixed(2)}`,
+  )
+})
+
 check('slow motion is tracked as well as normal speed', () => {
   for (const fps of [30, 60, 120]) {
     const shots = tossFrames({
