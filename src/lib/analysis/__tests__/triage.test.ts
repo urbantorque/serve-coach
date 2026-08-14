@@ -30,6 +30,7 @@ import {
   type Resilience,
 } from '../triage'
 import { buildServe, type ServeDials } from '../syntheticServe'
+import { NotAServeError } from '../types'
 import { assert, check, heading, near, note, report } from './harness'
 
 const FPS = 50
@@ -149,6 +150,47 @@ check('a severely rotated clip is refused, not measured through a 25° clamp', (
       reason !== undefined,
       `a clip rotated ${deg}° was not refused — spatial confidence ${resilience.spatial.confidence}`,
     )
+  }
+})
+
+/**
+ * The check above borrows its keyframes from the level clip rather than
+ * detecting them from the tilted one, which is not what `analyze.ts` actually
+ * does on a real clip: its first pass calls `detectServe` on the raw, still-
+ * tilted frames, and only reaches `assessSpatial`/`rejectionFor` if that first
+ * call succeeds. This simulates that real sequence end to end and found a
+ * genuine, precisely-bounded gap: `detectServe` on its own succeeds cleanly
+ * all the way to 100° (confirmed by sweep, comfortably past where the second
+ * check above already proves 30-89° gets the correct camera_unusable refusal
+ * once assessSpatial runs), but somewhere between 100° and 110° it starts
+ * throwing on the first pass instead -- via the ordinary swing-amplitude
+ * check in `assertPlausible`, which was never designed to characterise a tilt
+ * this severe. Past that point, including the full 180° inversion a phone
+ * mounted upside down would produce, a player is told "That does not look
+ * like a serve" rather than anything about their camera angle -- true that
+ * the clip was refused (it fails safe; no numbers are ever shown), false as
+ * to why, which sends a player who filmed a real service motion looking for
+ * the wrong fix. Not corrected here: closing the gap properly means teaching
+ * the pipeline to estimate roll before it has a full skeleton to measure
+ * `keys.ready` from, which is a real change to `analyze.ts`'s own detect ->
+ * assess -> level sequence rather than a one-line fix, and this suite's own
+ * standing rule is to decline a change to calibrated pipeline sequencing
+ * rather than force one through un-investigated. What is pinned instead is
+ * the guarantee that already holds: every angle in the gap still fails
+ * safely, with a real NotAServeError and never a crash or invented numbers.
+ */
+check('past the point detectServe fails on its own, it still fails safely rather than crashing', () => {
+  for (const deg of [110, 135, 165, 179, 180, 181]) {
+    const level = buildServe({}, FPS)
+    const tilted = rollFrames(level, deg)
+    let threw: unknown
+    try {
+      detectServe(tilted, FPS)
+      threw = undefined
+    } catch (err) {
+      threw = err
+    }
+    assert(threw instanceof NotAServeError, `${deg}° did not fail safely: ${threw}`)
   }
 })
 
