@@ -518,13 +518,24 @@ export const isPlausibleHeight = (cm: number | undefined): cm is number =>
  * happen to share; the same logic, copied, that had already gone out of
  * sync once. One function, every caller, one spelling.
  */
+/**
+ * One decimal place, in whatever the reader's own locale writes one as.
+ *
+ * `toFixed` always returns a period, which is a fact about JavaScript rather
+ * than about the reader — every date in this app already defers to the
+ * browser's own locale (`toLocaleDateString(undefined, ...)`), and the one
+ * number shown with a fraction is the one place that hadn't caught up.
+ */
+const oneDecimal = (n: number) =>
+  new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n)
+
 export function formatSpeed(
   bodyHeightsPerSecond: number,
   heightCm: number | undefined,
 ): { value: string; unit: string } {
   const height = isPlausibleHeight(heightCm) ? heightCm : undefined
   return {
-    value: height ? Math.round(speedInKmh(bodyHeightsPerSecond, height)).toString() : bodyHeightsPerSecond.toFixed(1),
+    value: height ? Math.round(speedInKmh(bodyHeightsPerSecond, height)).toString() : oneDecimal(bodyHeightsPerSecond),
     unit: height ? 'km/h' : 'body heights/sec',
   }
 }

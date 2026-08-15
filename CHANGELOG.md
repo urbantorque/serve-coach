@@ -6,6 +6,12 @@ in `git log`.
 
 ## 2026-08-15
 
+- **Fixed: the hand-speed reading always used a period, even where your
+  phone doesn't.** Every date in this app already reads in your own
+  locale's format; the one number shown with a decimal place ("4.1 body
+  heights/sec") didn't, because it went through a JavaScript method that
+  always writes a period regardless of locale. It now reads in whatever
+  your own language and region write a decimal point as.
 - **Fixed: an invalid height silently vanished instead of saying why.**
   Entering a height outside the plausible range (or mistyping one) for the
   km/h speed conversion used to close the box and quietly discard it —
