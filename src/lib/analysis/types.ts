@@ -1,9 +1,7 @@
 import type { ServeType } from '../storage/prefs'
 import type { BallFlight, TossFlight } from '../vision/ballTrack'
-import type { DetectorCoverage } from '../vision/detector'
 import type { Consistency } from './consistency'
 import type { Diagnosis } from './diagnose'
-import type { HandSpeed } from './power'
 import type { Triage as TriageResult } from './triage'
 
 /** A single pose landmark. */
@@ -156,121 +154,6 @@ export interface VideoMeta {
   height: number
 }
 
-/**
- * What the ball did after it was hit.
- *
- * The outcome variable, and the reason it is worth the seeks: a club player is
- * told to change their technique on the strength of angles measured off their
- * body, and nothing in the report has so far checked what any of it produced.
- *
- * Present rarely, and the rarity is the honest part. The ball is in shot for
- * 25–55 ms after contact at the framing this app recommends, so ordinary 30 fps
- * video contains one or two frames of it and this is absent. See `coverage`
- * below and the header of `trackOutbound`.
- *
- * Speed and angle come from one straight-line fit through one set of frames, so
- * there is one `coverage` and two confidences. They are not interchangeable
- * numbers: the angle is a ratio of two image displacements and needs no scale at
- * all, while the speed is divided by the player's measured standing height and
- * inherits everything that is uncertain about the camera's distance and angle.
- * The angle is therefore always the better-founded of the two, and a consumer
- * that shows only one should show that one.
- *
- * WHERE THE SERVE LANDED IS NOT HERE, AND IS NOT COMING FROM THIS. In or out,
- * and T or body or wide, are the two things a player would ask for first, and
- * both are answers about the court rather than about the ball: they need the
- * service box located in the image, which means detecting court lines. This app
- * deliberately does not — see the header of `spatial.ts` for the argument, which
- * is that lines on real footage are worn, wet, shadowed, cropped or out of shot,
- * and precision that cannot be validated is not precision. Nothing here is a
- * step towards placement and nothing downstream should present it as one: the
- * ball is out of frame 33 ms after contact, roughly a tenth of the way to the
- * net, so even a perfect launch vector would be extrapolating the other nine
- * tenths through spin and drag this app cannot see. "This needs court lines" is
- * the whole answer, and it is a different piece of work.
- *
- * On the camera, two effects and only one of them is corrected. Roll is, and has
- * to be — measured at eight degrees of roll for eight degrees of launch angle,
- * in a quantity whose interesting range is about ten. Pitch is not measured
- * anywhere in this app and does not need to be: it rotates the camera about an
- * axis running along the ball's travel, so it cannot turn the ball's direction
- * in the image, and 15 degrees of it moved the angle 0.22 degrees.
- */
-export interface OutboundBall {
-  /**
-   * The two numbers, or nothing at all.
-   *
-   * Optional as a group rather than one by one, because they come from one
-   * straight-line fit: there is no clip on which the speed was measured and the
-   * angle was not. Absent is the ordinary case and carries no stand-in value of
-   * any kind — `coverage` below is what says why.
-   */
-  flight?: OutboundFlightReading
-  /**
-   * How much of the post-contact window was actually filmed and detected.
-   *
-   * Present even when `flight` is not, which is the whole reason this wrapper
-   * exists. `asked` minus `read` is film that does not exist — the clip was shot
-   * at a lower frame rate than the window was sampled at and the repeats were
-   * dropped, or the decoder refused the seek outright. `asked` is counted off
-   * the list of instants before any of them is requested, so a refused seek
-   * cannot vanish from both counts and leave the coverage looking perfect.
-   * `read` minus `found` is film that exists with no ball
-   * resolved in it, which is motion blur or a busy background. The two want
-   * opposite advice from a coach, and without both counts a report can only say
-   * "no reading" and leave the player to guess.
-   */
-  coverage: DetectorCoverage
-}
-
-export interface OutboundFlightReading {
-  /**
-   * How fast the ball left, in the player's own body heights per second.
-   *
-   * NOT km/h, and the omission is the point. Turning this into a real-world
-   * speed means one multiplication — by 1.78 m, the standing height every
-   * measurement in this app is scaled against — and that number is an
-   * assumption about the player, not a measurement of them. For an adult it is
-   * within a few percent. For a twelve-year-old at 1.45 m it is 23% high, and a
-   * 23% error is the difference between a serve that is honestly quick for a
-   * junior and a claim that they hit harder than they do. Every other height in
-   * this report is stated in body heights for the same reason, so this is the
-   * house unit rather than a dodge.
-   *
-   * A lower bound in one direction and a mixed reading in another. The ball's
-   * travel is taken as running along the player's depth axis and read back
-   * through `axes.ts` at the measured camera yaw; a serve hit wide carries real
-   * lateral travel that no single image-x reading can separate out, and that is
-   * what `speedConfidence` is mostly about.
-   */
-  speed: number
-  /**
-   * 0–1. The straight-line fit's own quality times what the camera angle is
-   * worth, on the same scale as every other confidence on this report.
-   */
-  speedConfidence: number
-  /**
-   * Degrees from horizontal, positive upwards. A flat first serve leaves a
-   * couple of degrees below horizontal; a kick serve leaves above it.
-   *
-   * Measured with the phone's measured roll rotated out, so a phone held
-   * crooked does not become a launch angle. Every degree of roll is a degree of
-   * angle, one for one, so this is removed at any size rather than past the
-   * threshold the pose frames are re-detected at — what is left is the roll
-   * estimator's own error of a degree or two, which `launchAngleConfidence`
-   * prices through `roll_confidence`.
-   *
-   * Free of the player's height and the camera's distance, which cancel between
-   * the two image displacements. NOT free of the camera's angle: the horizontal
-   * is divided by the depth gain at the measured yaw before the arctangent, so
-   * a corner camera reads a flatter angle than a side-on one would for the same
-   * ball. That is the other half of what `launchAngleConfidence` carries.
-   */
-  launchAngle_deg: number
-  /** 0–1, and always at least `speedConfidence` — see the note above. */
-  launchAngleConfidence: number
-}
-
 export interface Analysis {
   id: string
   createdAt: number
@@ -319,34 +202,6 @@ export interface Analysis {
    * still complete without it, the toss area just has one less thing to draw.
    */
   tossFlight?: TossFlight
-  /**
-   * What the ball did after contact, on the rare clips that filmed it.
-   *
-   * Absent on almost every clip, and absent is the correct reading rather than a
-   * failure — see `OutboundBall`. Nothing scores off it yet: it is a measurement
-   * looking for a card, and wiring it into one is `metrics.ts`/`coaching.ts`
-   * work. Landed here first so the measurement and its coverage exist to be
-   * argued with before any prose is written around them.
-   */
-  outbound?: OutboundBall
-  /**
-   * How fast the hand was travelling through the strike.
-   *
-   * The report's other outcome number, and the one that usually survives. The
-   * ball needs about 200 Hz of effective sampling to resolve at all — see
-   * `OutboundBall` — so `outbound.flight` is absent on nearly every phone clip,
-   * while this is a straight-line fit through wrist positions the pose model
-   * already produced and is present whenever the swing was filmed at all.
-   *
-   * Absent rather than zeroed when it could not be read: too few samples through
-   * the strike, a wrist the tracker lost, or a camera angle at which the depth
-   * axis has collapsed towards the lens. Small enough to keep on a saved report
-   * — two numbers and a count — so a season of them can be compared, which is
-   * the only reference this app has for what a speed means.
-   *
-   * NOT SCORED, and there is no band anywhere for it. See `power.ts`.
-   */
-  power?: HandSpeed
   /**
    * Which serve this was judged as. Stored because the target bands differ, so a
    * score is only meaningful alongside the serve it was scored against — and the

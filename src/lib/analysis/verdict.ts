@@ -24,6 +24,7 @@
  * and sentence ceiling as the rest of the copy database. The tests lint it.
  */
 import { DRILLS } from './coaching'
+import type { FaultMove, MoveVerdict } from './carryForward'
 import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
 import type { BodyAxis } from './axes'
@@ -442,6 +443,80 @@ export function tierLabel(triage: Triage | undefined): string | undefined {
   return `Marked as ${rungName(triage.tier.current)}, aiming one step above it`
 }
 
+/* --------------------------------------------------- did the last one move -- */
+
+/**
+ * The second half of the sentence: which way the fault went.
+ *
+ * Four states rather than three, because "gone" and "closer" are different
+ * news and a player who fixed something deserves to be told they fixed it.
+ * "Wider" is here for the same reason `sixWeekMilestone` reports a regression
+ * as plainly as an improvement — a screen that only speaks on good news is the
+ * same lie with the shape sanded off, and a player who has just made their
+ * serve worse is the one person on this court who most needs to know.
+ *
+ * Deliberately vague about size. `FaultMove` carries the two misses and a
+ * caller could subtract them, but the glance is read between serves with a ball
+ * in the other hand, and a number there would be the raw readout the report
+ * exists to translate. `voice.ts` bans one on screen outright.
+ */
+const MOVE_COPY: Record<MoveVerdict, string> = {
+  cleared: 'Not on this one.',
+  closer: 'Closer this time.',
+  same: 'Still there.',
+  wider: 'Further out this time.',
+}
+
+/**
+ * The same four, for when the fault is already the heading above this line.
+ *
+ * A player rarely fixes a racket drop in one serve, so the common case by a
+ * wide margin is that the earlier serve's fault is also this serve's — and
+ * repeating the title under a heading that already says it reads as a stutter,
+ * not as progress. These say which way it went and name the comparison instead
+ * of the fault. `cleared` cannot reach here by construction and is written out
+ * anyway: a table with a hole in it is one refactor away from a crash.
+ */
+const MOVE_AGAIN_COPY: Record<MoveVerdict, string> = {
+  cleared: 'Gone since your last serve.',
+  closer: 'Closer than your last serve.',
+  same: 'No change from your last serve.',
+  wider: 'Further out than your last serve.',
+}
+
+/**
+ * What the last serve was told, and whether this one did it.
+ *
+ * The fault named is always the EARLIER serve's, never this one's. A glance
+ * showing the new serve's worst fault beside "closer this time" would be two
+ * different faults in one sentence, and the player would read the verdict as
+ * being about the fault they can see rather than the one they were working on.
+ *
+ * Built out of `FLAW_COPY[…].title`, which is the same phrase the report heads
+ * that fault with, so the two screens cannot end up calling one fault two
+ * things. The axis variants are deliberately not consulted: this is a reminder
+ * of a sentence the player already read, and re-deriving which axis it was
+ * would risk reminding them of a different one.
+ *
+ * `alreadyNamed` is the caller saying the heading directly above already
+ * carries this exact fault — see `MOVE_AGAIN_COPY`. It is passed rather than
+ * worked out here because only the screen knows what it drew.
+ */
+export function faultMoveLine(move: FaultMove, alreadyNamed = false): string | undefined {
+  if (alreadyNamed) return cue(MOVE_AGAIN_COPY[move.verdict])
+  const title = FLAW_COPY[move.flaw]?.title
+  if (!title) return undefined
+  return cue(`Last serve: ${lowerFirst(title)}. ${MOVE_COPY[move.verdict]}`)
+}
+
+/**
+ * The titles are written to open a card, so they start with a capital. Dropped
+ * into the middle of a sentence they need it back off — except where the word
+ * carries its own, which today is nothing in the table and tomorrow might be.
+ */
+const lowerFirst = (s: string): string =>
+  /^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s
+
 /* ------------------------------------------------------------ for the lint -- */
 
 /**
@@ -471,6 +546,22 @@ export function everyVerdictCue(): { where: string; text: string }[] {
   }
   for (const [flag, copy] of Object.entries(INJURIES)) {
     out.push({ where: `injury.${flag}`, text: copy.body })
+  }
+  /*
+   * The carry-forward line is assembled rather than stored, so linting
+   * `MOVE_COPY` on its own would check half a sentence and miss the half that
+   * can actually break the ceiling. Every flaw against every verdict is forty
+   * strings, which is cheap, and it is the only way the lint sees the joined
+   * form a player reads.
+   */
+  for (const flaw of Object.keys(FLAW_COPY) as FlawId[]) {
+    for (const verdict of Object.keys(MOVE_COPY) as MoveVerdict[]) {
+      const move: FaultMove = { flaw, signal: '', before: 0, after: 0, floor: 0, verdict }
+      for (const again of [false, true]) {
+        const text = faultMoveLine(move, again)
+        if (text) out.push({ where: `move.${flaw}.${verdict}${again ? '.again' : ''}`, text })
+      }
+    }
   }
   return out
 }

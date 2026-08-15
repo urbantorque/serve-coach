@@ -243,6 +243,33 @@
   text-wrap: pretty;
 }
 
+/* Whether the last serve's fault moved. A result, not an instruction, so it
+   sits on the same plate the report gives its own asides rather than borrowing
+   the coaching line's weight — existing tokens throughout, no new colour. The
+   icon is the app's own check/info pair, the same two it already uses to tell
+   a good outcome from one worth a second look. */
+.glance-move {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  padding: 9px 12px;
+  max-width: 30ch;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-align: left;
+  text-wrap: pretty;
+}
+
+.glance-move svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--fg-faint);
+}
+
 .glance-serves {
   margin: 0;
   font-size: 12.5px;

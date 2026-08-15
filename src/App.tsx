@@ -12,9 +12,8 @@ import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import {
   bestConsistencyGap,
   bestGapEverLine,
-  bestHandSpeed,
-  bestHandSpeedEverLine,
   bestOverallScore,
+  faultMoveOnTrip,
   bestOverallScoreEverLine,
   buildConsistencyTrend,
   buildProgress,
@@ -36,6 +35,7 @@ import {
   type AnalyzeProgress,
 } from './lib/analysis/analyze'
 import { forgetAll, recall, remember } from './lib/analysisCache'
+import type { FaultMove } from './lib/analysis/carryForward'
 import { buildConsistency, pairStills, type ServePairFrames } from './lib/analysis/consistency'
 import {
   hintsOf,
@@ -134,7 +134,15 @@ type View =
    * phone. A file picked from the camera roll is somebody sitting down with
    * their serve, and the report is the right screen for that.
    */
-  | { kind: 'glance'; analysis: Analysis; videoUrl: string }
+  /**
+   * `move` is the demo route's only way in. Every real glance computes it from
+   * the session list at the render site — see `faultMoveOnTrip` — because the
+   * comparison depends on what is in storage, and this screen is reachable in
+   * production only by recording a serve on a phone. `?demo=glance-move`
+   * supplies one directly, for the same reason `?demo=glance-refused` exists:
+   * the branch would otherwise never be looked at.
+   */
+  | { kind: 'glance'; analysis: Analysis; videoUrl: string; move?: FaultMove }
   | { kind: 'saved'; session: Session }
   | { kind: 'error'; title: string; hints: string[]; capture?: FailedCapture; fileName?: string }
 
@@ -302,20 +310,6 @@ export default function App() {
     setSheet('guide-first')
   }, [])
 
-  /**
-   * Remember how tall the player is, or forget it.
-   *
-   * The one preference that changes a number rather than a target: it is what
-   * turns a speed in standing heights per second into km/h, and without it the
-   * app declines to guess — see `Prefs.heightCm`. Clearing it is a first-class
-   * outcome, which is why `undefined` is passed through rather than ignored: a
-   * player who typed a digit wrong must be able to take the number back off
-   * their report rather than being stuck with a converted speed built on it.
-   */
-  const setHeight = useCallback((heightCm: number | undefined) => {
-    setPrefs(writePrefs({ heightCm }))
-  }, [])
-
   /** Mark the guide as seen and continue to whichever intent opened it. */
   const finishFirstRunGuide = useCallback(() => {
     setPrefs(writePrefs({ seenFilmingGuide: true }))
@@ -458,9 +452,6 @@ export default function App() {
   // Not type-restricted either, the same reason `streak` isn't — a run of
   // trips is about showing up, across every serve type.
   const longestStreakText = useMemo(() => longestStreakLine(sessions), [sessions])
-  // Not type-restricted either — a hand speed is a raw physical measurement
-  // with no target band to compare against, the same reason `streak` isn't.
-  const bestSpeed = useMemo(() => bestHandSpeed(sessions), [sessions])
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
     [sessions, drillLogs],
@@ -527,7 +518,7 @@ export default function App() {
     [sessions, form],
   )
   const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread.gapDelta) : undefined), [spread])
-  // The same four facts this sheet already renders, worded the same way,
+  // The same facts this sheet already renders, worded the same way,
   // handed to the season share button as plain strings rather than raw
   // records — so the card can never say anything the screen it was shared
   // from does not already say.
@@ -536,10 +527,9 @@ export default function App() {
       streak,
       longestStreak: longestStreakText,
       bestScore: sheetBestScore && bestOverallScoreEverLine(sheetBestScore),
-      bestSpeed: bestSpeed && bestHandSpeedEverLine(bestSpeed, prefs.heightCm),
       bestGap: sheetBestGap && bestGapEverLine(sheetBestGap),
     }),
-    [streak, longestStreakText, sheetBestScore, bestSpeed, sheetBestGap, prefs.heightCm],
+    [streak, longestStreakText, sheetBestScore, sheetBestGap],
   )
 
   /**
@@ -660,6 +650,31 @@ export default function App() {
           // a clip the engine threw out, which is the branch that must never
           // show a score.
           setView({ kind: 'glance', analysis, videoUrl: '' })
+        } else if (demo?.startsWith('glance-move')) {
+          // The carry-forward line, on each of its four verdicts —
+          // `?demo=glance-move`, or `-cleared`/`-same`/`-wider`.
+          //
+          // Three of them point at the sample serve's own primary flaw, which
+          // is the ordinary case and the one that draws the short repeat form:
+          // the heading above already names the fault. `cleared` points at a
+          // different one on purpose, because that is the only shape it has in
+          // production — `faultMove` returns it when the later serve no longer
+          // detects the fault, so it cannot also be that serve's headline.
+          const verdict = (demo.split('glance-move-')[1] ?? 'closer') as FaultMove['verdict']
+          const flaw = analysis.triage?.primary_flaw
+          setView({
+            kind: 'glance',
+            analysis,
+            videoUrl: '',
+            move: flaw && {
+              flaw: verdict === 'cleared' ? 'toss_height' : flaw.flaw,
+              signal: flaw.signal,
+              before: 0.1,
+              after: verdict === 'cleared' ? 0 : 0.061,
+              floor: 0.012,
+              verdict,
+            },
+          })
         } else if (demo === 'glance-refused') {
           setView({
             kind: 'glance',
@@ -1167,6 +1182,13 @@ export default function App() {
         {view.kind === 'glance' && (
           <Glance
             analysis={view.analysis}
+            // Whether the fault the previous serve on this trip was told about
+            // actually moved — see `faultMove`. Computed here rather than in
+            // the screen because it needs the session list, which the glance
+            // has no business holding; recomputed per render because it is two
+            // array walks over a list already in memory and the screen it
+            // feeds is only ever mounted one at a time.
+            move={view.move ?? faultMoveOnTrip(sessions, view.analysis)}
             onBack={goHome}
             // Home owns the viewfinder sheet, so going back and reopening it is
             // the honest route — and it releases this clip's object URL on the
@@ -1268,13 +1290,10 @@ export default function App() {
             basketGapDelta={gapDeltaForView(view.analysis.id, typeOf(view.analysis))}
             bestScore={bestScoreFor(typeOf(view.analysis))}
             streak={streak}
-            bestSpeed={bestSpeed}
             saveWarning={saveWarning}
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}
-            heightCm={prefs.heightCm}
-            onSetHeight={setHeight}
           />
         )}
 
@@ -1289,15 +1308,9 @@ export default function App() {
             basketGapDelta={gapDeltaForView(view.session.id, typeOf(view.session))}
             bestScore={bestScoreFor(typeOf(view.session))}
             streak={streak}
-            bestSpeed={bestSpeed}
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}
-            // Offered on a reopened report too. The height is a fact about the
-            // player rather than about the clip, so it converts a speed measured
-            // weeks ago exactly as well as one measured this morning.
-            heightCm={prefs.heightCm}
-            onSetHeight={setHeight}
           />
         )}
 
@@ -1498,24 +1511,23 @@ export default function App() {
               </span>
             </div>
 
-            {/* Four facts about the whole journey rather than about form —
+            {/* Facts about the whole journey rather than about form —
                 which is what the rest of this sheet (the trend, the delta
                 bars, the repeatability chart) is otherwise entirely about.
                 Each was added incrementally and reasoned, on its own, not to
                 need its own heading — but read together, with all of them
-                present, four unlabelled sentences in a row stopped reading
+                present, several unlabelled sentences in a row stopped reading
                 as a group and started reading as a wall of text. This gives
                 them the same overline every sibling section on this sheet
                 already has, and nothing else changes: same lines, same
                 order, same conditions. Guarded on the whole cluster so a
                 player short of every record never sees a heading over
                 nothing. */}
-            {(streak || longestStreakText || bestSpeed || sheetBestScore) && (
+            {(streak || longestStreakText || sheetBestScore) && (
               <section className="block">
                 <h3 className="block-title">Your records</h3>
                 {streak && <p className="progress-foot">{streak}</p>}
                 {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
-                {bestSpeed && <p className="progress-foot">{bestHandSpeedEverLine(bestSpeed, prefs.heightCm)}</p>}
                 {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
               </section>
             )}

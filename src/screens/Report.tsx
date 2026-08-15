@@ -3,7 +3,6 @@ import ConsistencyPanel from '../components/ConsistencyPanel'
 import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
 import PosePlayer from '../components/PosePlayer'
-import PowerPanel from '../components/PowerPanel'
 import PracticeCard from '../components/PracticeCard'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
@@ -20,7 +19,6 @@ import {
   deltasAgainst,
   scoringVersionOf,
   type BestGap,
-  type BestHandSpeed,
   type BestScore,
 } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
@@ -117,8 +115,6 @@ interface Props {
    * carried onto the share card `share()` below builds, unmodified.
    */
   streak?: string
-  /** The fastest hand speed measured across every session — see `bestHandSpeed`. */
-  bestSpeed?: BestHandSpeed
   /**
    * The report on screen could not be written to storage.
    *
@@ -144,17 +140,6 @@ interface Props {
   onLogDrill?: () => void
   /** Take back the most recent one. */
   onUndoDrill?: () => void
-  /**
-   * The player's standing height, if they have ever stated one.
-   *
-   * The only thing that turns the two speeds on this page from body heights per
-   * second into km/h — see `Prefs.heightCm` for why the app will not assume one.
-   * A preference rather than something read off the report, because it is a fact
-   * about the player and not about this clip.
-   */
-  heightCm?: number
-  /** Remember a height. Absent where nothing can store one. */
-  onSetHeight?: (cm: number | undefined) => void
 }
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -178,13 +163,10 @@ export default function Report({
   basketGapDelta,
   bestScore,
   streak,
-  bestSpeed,
   saveWarning,
   practice,
   onLogDrill,
   onUndoDrill,
-  heightCm,
-  onSetHeight,
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
@@ -421,9 +403,9 @@ export default function Report({
             </span>
           ))}
         {/* A fact about the whole history, not this one serve — the same
-            reason `bestGap`/`bestSpeed` below sit apart from the numbers they
-            are records among. Ungameable the same way: the only way to move
-            it is to actually serve a higher score. */}
+            reason `bestGap` below sits apart from the numbers it is a record
+            among. Ungameable the same way: the only way to move it is to
+            actually serve a higher score. */}
         {bestScore && <p>{bestOverallScoreLine(bestScore, analysis.createdAt)}</p>}
         <h1>{verdict.title}</h1>
         <p>{verdict.sub}</p>
@@ -570,20 +552,6 @@ export default function Report({
           </>
         )}
       </section>
-
-      {/*
-       * What the serve produced, under what to fix about it.
-       *
-       * Below the plan on purpose: a speed is the most interesting number on
-       * this page and it is not an instruction, so it goes after the one thing
-       * the report exists to deliver rather than above it. Above everything
-       * else, though, because it is the only part of the report that looks at
-       * the outcome rather than at the shape — and because the ball speed here
-       * has been measured on every clip since `findOutbound` was written and
-       * shown to nobody. `PowerPanel` renders nothing at all when neither
-       * reading cleared its evidence gate, which is the common case.
-       */}
-      <PowerPanel analysis={analysis} heightCm={heightCm} onSetHeight={onSetHeight} bestSpeed={bestSpeed} />
 
       {/* The season-long focus, not this serve's own. See `Props.practice` —
           absent for anyone without two comparable sessions yet, exactly the

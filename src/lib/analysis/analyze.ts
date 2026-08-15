@@ -13,16 +13,11 @@ import {
   findCandidates,
   flightHeightAt,
   flightXAt,
-  frameChange,
   levelFlight,
-  levelOutbound,
   summariseToss,
   trackBall,
-  trackOutbound,
   type BallFlight,
-  type OutboundTrack,
 } from '../vision/ballTrack'
-import { imageXSplitFrom, readImageX, type ImageXSplit } from './axes'
 import { isCachedOffline, loadEngine, type EngineProgress } from '../pose/poseEngine'
 import { drawSkeleton, fitContain } from '../pose/skeleton'
 import { FUNDAMENTALS } from './coaching'
@@ -48,14 +43,12 @@ import {
 import { diagnose } from './diagnose'
 import { capturedSamples } from './kalman'
 import { measure } from './metrics'
-import { readHandSpeed, timebaseTrust } from './power'
 import {
   NOTABLE_ROLL,
   assessSpatial,
   levelFrames,
   levelPivot,
   unlevelFrames,
-  type Spatial,
   type Tilt,
 } from './spatial'
 import { assessResilience, triage } from './triage'
@@ -68,7 +61,6 @@ import {
   type Analysis,
   type Frame,
   type Fundamental,
-  type OutboundBall,
   type Quality,
 } from './types'
 
@@ -108,7 +100,7 @@ export interface AnalyzeOptions {
    *     being reported on would be the app arguing with itself.
    *   · `skipBall` — a whole second pass over the video, per serve. This is the
    *     expensive one, and the comparison only uses measurements every serve
-   *     shares, which the two ball readings are not.
+   *     shares, which the toss reading is not.
    *   · `skipThumbnails` — six seeks. Genuinely six seeks.
    */
   skipFramingCheck?: boolean
@@ -622,405 +614,6 @@ async function findBall(
   return flight
 }
 
-/**
- * How many instants a second the post-contact window is sampled at.
- *
- * Set by how long the ball is in shot, which is the binding constraint and not
- * a tuning choice: measured in `ball.test.ts` at the framing this app
- * recommends, a 120 km/h serve is out of frame 33 ms after contact, 160 km/h in
- * 25 ms. Five detections inside 25 ms needs 200 samples a second, so 240 is the
- * first ordinary phone rate that clears it — and it clears it by very little.
- *
- * Nothing forces the clip to contain 240 frames a second, and most do not.
- * `readBitmaps` will happily seek to a time between two frames and hand back the
- * one before it, so on 30 fps footage seven of every eight of these instants are
- * the same picture stamped with a different clock. Those are dropped by
- * `frameChange` rather than fitted — see `FRAME_ADVANCED`.
- *
- * Worth naming the clip this cannot serve, because it is the one a player told
- * to "use slow motion" is most likely to hand over. A phone's slow-motion export
- * is often *conformed*: 240 fps of capture written out as 30 fps of playback
- * over eight times the duration. Its file frame rate is 30, so this grid finds
- * repeats, and the eight times more film it contains is not reachable at this
- * spacing. Such a clip never gets here at all — its toss falls at a sixty-fourth
- * of the gravity the player's image scale implies, which `trackBall` rejects out
- * of hand, so `ball` is undefined and this is never called. That is an existing
- * limit of the toss tracker rather than one introduced here, but the two
- * interact, and the interaction is what makes the seconds below trustworthy.
- */
-const OUTBOUND_GRID_HZ = 240
-
-/**
- * How many of those instants are asked for on a clip that can answer.
- *
- * Twelve, which at the rate above is 50 ms of clip — a little longer than the
- * 33 ms window the measurement says exists at club pace, so the tail is covered
- * for a slower serve without paying for time the ball is certainly gone.
- *
- * Stated as seeks rather than milliseconds, because seeks are what it costs and
- * they are the expensive half of this pipeline. A fixed budget, not a function
- * of the clip: a longer clip does not buy more post-contact frames, because the
- * ball is not in shot for longer.
- */
-const OUTBOUND_SEEK_BUDGET = 12
-
-/**
- * How many are asked for before deciding whether the rest are worth it.
- *
- * Almost every clip this runs on cannot answer, so paying the full budget on all
- * of them is paying twelve seeks to learn what three can tell you. Three, and
- * not two: the first read has no frame before it to compare against, so it says
- * nothing about the film's rate — it takes two comparisons to tell a 120 fps
- * clip (every other instant advances) from a 60 fps one (every fourth does).
- *
- * The cost of the whole feature, honestly stated, is therefore three video seeks
- * on ordinary footage and twelve on footage shot fast enough to measure — on top
- * of the 40–55 the toss window already spends, and inside a pass that is skipped
- * entirely when sweeping a basket.
- */
-const OUTBOUND_PROBE_SEEKS = 3
-
-/**
- * Mean absolute channel difference, 0–255, below which two frames are the same
- * picture and the second is discarded.
- *
- * A re-decode of one frame is bit-identical and scores exactly 0; any real frame
- * interval moves sensor noise across the whole picture as well as a fast-moving
- * player and ball. Half a level sits far above the first and far below the
- * second, and the asymmetry is deliberate — dropping a real frame costs a sample
- * and usually a refusal, while keeping a repeat puts the ball in two places at
- * once and fits a slope to the difference.
- */
-const FRAME_ADVANCED = 0.5
-
-/**
- * Track the ball after it is hit, or return nothing.
- *
- * A separate window from `findBall` and a separate pass, which is worth
- * justifying because `detector.ts` argues at length for one shared pass over the
- * video and this is not that. The two windows do not overlap — one ends at
- * contact, the other starts there — so nothing is decoded twice, and they want
- * grids an order of magnitude apart: the toss is sampled on the pose grid at up
- * to 32 Hz, and 32 Hz over the post-contact window is one frame. Unioning them
- * would mean sampling the whole toss at 240 Hz, which is 200 wasted seeks. The
- * shared pass is the right answer for two detectors looking at the *same*
- * frames; these two look at adjacent ones.
- *
- * Almost always comes back with the coverage counts and no flight. That is the
- * shape of the problem and not a bug — see `OutboundBall` and the header of
- * `trackOutbound`. `undefined` is reserved for the case where the window could
- * not be looked at at all, which is a different thing from having looked and
- * found nothing, and only one of the two is worth telling a player about.
- *
- * WHAT THIS COSTS, and who reads it. 3 video seeks on ordinary footage and 12
- * on footage fast enough to measure, per analysed clip, on top of the 40–55 the
- * toss already spends.
- *
- * For most of this field's life nobody read it: measured, stored, never shown,
- * the same shape of decision as `Diagnosis.chain` and `pancake_contact`, with
- * one difference worth having been plain about — the chain is free once the
- * frames are in hand and this is not. What it was kept for was the coverage
- * counts, which are the first evidence this app has of how often the outbound
- * ball is filmable at all, and that question had to be answered before anyone
- * wrote a card. The two things a card was said to need were "the `MIN_EVIDENCE`
- * gate the handoff asks for and copy that passes `voice.ts`".
- *
- * Both now exist. `power.ts` owns the gate — `MIN_SPEED_EVIDENCE`, set at
- * `flaws.ts`'s own `MIN_EVIDENCE` rather than at a second number beside it — and
- * `PowerPanel` owns the words, including what to say on the ordinary clip where
- * the ball never resolved, which is what `coverage` was collected for. The
- * reading itself is untouched: still `readOutboundFlight`, still in standing
- * heights per second, still carrying `speedConfidence`. Nothing about how it is
- * measured changed when it started being shown, which is the right order.
- *
- * TWO THINGS DELIBERATELY NOT ATTEMPTED, recorded at the site rather than in
- * `tiers.ts UNDER_RESOLVED`, which the handoff asked for and which cannot hold
- * them: that table is keyed by graded signals the repeatability ensemble
- * produces, and `depth.test.ts` fails any key it does not measure. A decision
- * about something never measured has no home there.
- *
- *   - SERVE PLACEMENT. In or out, and T versus body versus wide, need court
- *     lines. Finding them means a Hough transform over frames of worn, wet,
- *     shadowed or half-cropped courts, and `spatial.ts` already argues at length
- *     why this app does not do that. Not attempted, and not a gap to fill later
- *     without footage.
- *   - THE BALL BELOW ~200 Hz OF EFFECTIVE SAMPLING. Not a tuning limit: the ball
- *     is in shot for 25–50 ms at club speeds, and `ball.test.ts` resolves 0 of 1
- *     frames at 30 Hz, 0 of 2 at 60, 0 of 4 at 120 and 8 of 8 at 240. Five
- *     samples inside 25 ms is 200 a second. Most clips will therefore never
- *     produce a flight, and that is the measurement rather than a failure of it.
- */
-async function findOutbound(
-  video: HTMLVideoElement,
-  frames: Frame[],
-  skel: Skeleton,
-  /** The tossed flight, in raw pixels — this runs on raw pixels too. */
-  ball: BallFlight,
-  spatial: Spatial,
-  aspect: number,
-  /**
-   * The phone's roll, in degrees, as measured in the RAW pixel space this pass
-   * reads — not the correction that was applied to the pose frames.
-   *
-   * The two differ below `NOTABLE_ROLL`, which is the whole reason this argument
-   * changed shape. See the note at the `levelOutbound` call.
-   */
-  roll_deg: number,
-  signal?: AbortSignal,
-): Promise<OutboundBall | undefined> {
-  const { keys, bodyHeight } = skel
-  if (!(bodyHeight > 0) || !(aspect > 0)) return undefined
-
-  const contactT = frames[keys.contact]?.t
-  if (!Number.isFinite(contactT)) return undefined
-
-  // Where the toss fit says the ball was when it was struck. The outbound line
-  // has to start here, which is the only thing distinguishing the ball from the
-  // racket, the hand and the follow-through — all of which are moving fast in
-  // the same corner of the frame at the same moment.
-  const anchor = {
-    t: contactT,
-    x: flightXAt(ball, contactT),
-    y: flightHeightAt(ball, contactT),
-  }
-
-  const duration = video.duration
-  const times: number[] = []
-  for (let i = 1; i <= OUTBOUND_SEEK_BUDGET; i++) {
-    const t = contactT + i / OUTBOUND_GRID_HZ
-    // A clip that stops a tenth of a second after the strike is ordinary. Asking
-    // for time that was never filmed is a seek that cannot succeed.
-    if (Number.isFinite(duration) && t >= duration) break
-    times.push(t)
-  }
-  // Nothing to look at. The clip stopped within a couple of frames of the
-  // strike, so there is no window rather than an empty one.
-  if (times.length < OUTBOUND_PROBE_SEEKS) return undefined
-
-  // The shoulder line at contact, which is the highest it gets — the player is
-  // fully extended. Everything below it is excluded, which is most of the
-  // racket's follow-through as well as the player and the court.
-  const at = frames[keys.contact]
-  const belowY = Math.min(1, Math.min(at.image[LM.leftShoulder].y, at.image[LM.rightShoulder].y) + 0.05)
-
-  type Read = { t: number; candidates: ReturnType<typeof findCandidates>; change: number }
-  const readAt = async (want: number[]): Promise<Read[] | undefined> => {
-    try {
-      return await readBitmaps(
-        video,
-        want,
-        (frame, previous, t) => ({
-          t,
-          candidates: findCandidates(frame, previous, { belowY }),
-          change: frameChange(frame, previous),
-        }),
-        { signal },
-      )
-    } catch {
-      return undefined
-    }
-  }
-
-  // Instants the video actually advanced for. The first read of a call has no
-  // frame before it, and `frameChange` reports that as fully changed rather than
-  // as a repeat, so it is always kept.
-  const advancedOnly = (reads: Read[]) => reads.filter((r) => r.change >= FRAME_ADVANCED)
-  const withBall = (reads: Read[]) => reads.filter((r) => r.candidates.length > 0).length
-
-  /*
-   * What was asked for, counted before anything is asked.
-   *
-   * `coverage.asked` used to be `probe.length` — the number of entries
-   * `readBitmaps` handed BACK. It pushes an entry only when `seekTo` succeeds,
-   * so a failed seek was invisible in `asked` and in `read` alike, and a clip
-   * where half the seeks failed reported `asked === read`: perfect coverage of
-   * a window it had barely looked at. That erased the exact distinction
-   * `DetectorCoverage` was written in the same breath to guarantee — "a detector
-   * dividing hits by `asked` blames itself for frames the decoder never handed
-   * over".
-   *
-   * So the two slices are counted here, off `times`, and the reads are compared
-   * against them. `asked` minus `read` now covers both ways an instant can fail
-   * to be film — the seek was refused, or it returned the frame before it for
-   * the seventh time — which is one bucket rather than two because the advice is
-   * the same either way: the clip does not have frames at this rate.
-   */
-  const probeTimes = times.slice(0, OUTBOUND_PROBE_SEEKS)
-  const restTimes = times.slice(OUTBOUND_PROBE_SEEKS)
-
-  const probe = await readAt(probeTimes)
-  if (!probe || signal?.aborted) return undefined
-  const probeAdvanced = advancedOnly(probe)
-
-  // Two of the three, meaning at least one of the two comparisons saw new film.
-  // That is the line between a clip shot at half this grid's rate, which can
-  // still supply enough frames to fit, and one shot at a quarter of it or less,
-  // which cannot supply any. Stopping here is what keeps the usual cost of this
-  // feature at three seeks instead of twelve — see `OUTBOUND_PROBE_SEEKS`.
-  if (probeAdvanced.length < 2) {
-    // Counted rather than written off as nought. A frame the ball was found in
-    // is a frame the ball was found in, and reporting otherwise would say the
-    // detector failed on a clip where only the frame rate did.
-    return {
-      coverage: {
-        asked: probeTimes.length,
-        read: probeAdvanced.length,
-        found: withBall(probeAdvanced),
-      },
-    }
-  }
-
-  const rest = restTimes.length > 0 ? await readAt(restTimes) : []
-  if (!rest || signal?.aborted) return undefined
-
-  // The first frame of the second call has no `previous`, so it is kept
-  // unconditionally and its candidates were found on colour alone. Both are
-  // acceptable: an optic-yellow ball clears the detector's threshold on colour
-  // without the motion term, and a wrongly kept repeat here costs one sample of
-  // a line that is checked against the toss anyway.
-  const advanced = [...probeAdvanced, ...advancedOnly(rest)]
-
-  const coverage = {
-    asked: probeTimes.length + restTimes.length,
-    read: advanced.length,
-    found: withBall(advanced),
-  }
-
-  const raw = trackOutbound(advanced, { anchor, aspect, bodyHeight })
-  if (!raw) return { coverage }
-
-  /*
-   * Levelled by the roll that was MEASURED, not by the roll that was applied
-   * elsewhere, and always rather than only past a threshold.
-   *
-   * The launch angle is measured against image horizontal, and on a clip filmed
-   * with the phone cocked in somebody's hand image horizontal is not the court.
-   * The mapping is exactly one to one — a rotation is linear, and `ball.test.ts`
-   * pins 8° of roll onto 8.00° of angle — so every degree of roll left in is a
-   * degree of error out.
-   *
-   * This used to take the correction the pose frames got, which `analyze` only
-   * applies past `NOTABLE_ROLL` = 4° because re-detecting the keyframes is not
-   * worth it below that. Below 4° it handed over nothing and the track was left
-   * unrotated, so a clip rolled 3.9° carried 3.9° of pure systematic into a
-   * quantity whose true value is about -5°: the same flat serve read -1.1° on a
-   * clip rolled one way and -8.9° rolled the other. That was 18× the 0.221° of
-   * pitch error the same pass measured and then argued was too small to correct,
-   * and nothing priced it — `launchAngleConfidence` carries how well the roll
-   * was *measured*, which says nothing about a correction that was never made.
-   *
-   * A threshold that is right for "is it worth re-running the detector" is not
-   * right for "is it worth rotating one velocity vector", and the second costs
-   * two multiplications. So the measured angle is always removed.
-   *
-   * What is left afterwards is the estimator's own error rather than the phone's
-   * roll, and that is the honest residual: `spatial.ts` reads roll off the
-   * player's standing axis and puts it at a degree or two, and warns that a
-   * player leaning two degrees looks exactly like a phone held two degrees off.
-   * Removing a measured 2° is better than leaving 4° in, and it is worse than a
-   * spirit level. `horizontal.confidence` carries `roll_confidence`, which is
-   * now what it always claimed to be: the doubt in a correction that happened.
-   */
-  const track = levelOutbound(raw, roll_deg, aspect)
-
-  const read = readOutboundFlight(track, imageXSplitFrom(spatial), aspect, bodyHeight)
-  if (!read) return { coverage }
-  const { speed, launchAngle_deg } = read
-
-  /*
-   * A speed is per second and an angle is not, so only the speed depends on the
-   * clip's clock being the world's clock. The toss is the one witness to that:
-   * its fitted curvature is gravity at the image scale the player's own height
-   * implies, so the ratio of the two says how far the clip's seconds are from
-   * seconds. A toss that fitted at the expected curvature costs nothing here.
-   *
-   * What it charges, stated as arithmetic rather than as a slogan, because the
-   * slogan was wrong. Two different faults arrive at this ratio and they do not
-   * arrive the same size:
-   *
-   *   - A STRETCHED CLOCK. Both the fitted curvature and the reported speed are
-   *     per second squared and per second, so a clip whose seconds run 30% slow
-   *     fits gravity 30% off and reads the speed 30% off. Here the dock and the
-   *     error do match: fitted 30% low docks 19.5%, 30% high docks 12.3%. The
-   *     asymmetry is the square root, not a policy.
-   *   - A MIS-MEASURED STANDING HEIGHT. This does NOT scale by the same factor,
-   *     and the comment here used to claim it did. `fittedGravity` is a property
-   *     of the pixels and does not move; only `expectedGravity` is proportional
-   *     to `bodyHeight`. So a height over-measured by a factor k moves the ratio
-   *     by sqrt(k) while it moves the reported speed, which is divided by that
-   *     same height, by 1/k. A height 20% high reads the speed 17% low and docks
-   *     9.5%; 44% high reads it 31% low and docks 20%. The dock is real and it
-   *     is roughly half the error, in logs. It is a hedge against this fault,
-   *     not a measure of it.
-   */
-  // The arithmetic itself moved to `power.ts` when the report gained a second
-  // speed to price. One clock check, two callers; written twice it would be
-  // tested once.
-  const clock = timebaseTrust(ball, bodyHeight)
-
-  const launchAngleConfidence = track.fitConfidence * read.axisConfidence
-  return {
-    flight: {
-      speed,
-      speedConfidence: launchAngleConfidence * clock,
-      launchAngle_deg,
-      launchAngleConfidence,
-    },
-    coverage,
-  }
-}
-
-/**
- * A fitted outbound track, read as a speed and a launch angle.
- *
- * Exported for one reason, and it is not reuse: there is exactly one caller in
- * the app. It is that `ball.test.ts` was validating a reimplementation of this
- * arithmetic rather than this arithmetic. Its three headline figures — the
- * -5.30° launch angle, the 0.221° pitch bound and the 8.00° roll result — were
- * all computed as `atan2(-vy, |vx * aspect|)`, with no depth gain in the
- * denominator. That agrees with what ships at exactly one camera angle, 90°,
- * which happens to be the only geometry the rig renders. At the 45° corner
- * camera the shipped angle is flatter by a factor of 1.41 and at the 18° floor
- * by 3.2, so the accuracy of the shipped function was never the thing measured.
- * Two copies of one formula, one of them tested. Now there is one.
- *
- * `undefined` when the camera angle cannot support the question at all — see
- * the refusal below, which is the only refusal in here.
- */
-export function readOutboundFlight(
-  track: OutboundTrack,
-  split: ImageXSplit,
-  aspect: number,
-  bodyHeight: number,
-): { speed: number; launchAngle_deg: number; axisConfidence: number } | undefined {
-  // What image x means at this camera angle, from the one module that owns that
-  // conversion. The ball's travel is taken as running along the player's depth
-  // axis — a serve goes towards the net, and at contact the player is facing it
-  // — which is an approximation a wide serve breaks: that has real travel across
-  // the body too, and a single image-x reading cannot be split into both. The
-  // confidence `readImageX` hands back is exactly the share of the reading that
-  // is honestly the depth axis, so the doubt is carried rather than hidden.
-  //
-  // Refuses outright below 18 degrees of yaw, which is the bottom of
-  // `DEPTH_YAW_RANGE`: the depth axis has collapsed towards the lens, its gain
-  // is sin(18°) = 0.309 and still falling, and dividing by it multiplies
-  // centroid jitter by 3.2 and calls the answer a serve speed. (The 11.5x figure
-  // in `axes.ts` is the other end of the same trade — it is the LATERAL gain at
-  // 85 degrees, cos(85°) = 0.087 — and does not describe this refusal.)
-  const horizontal = readImageX(track.velocity.x * aspect, 'depth', split)
-  if (horizontal.value === null || horizontal.confidence <= 0 || !(bodyHeight > 0)) return undefined
-
-  return {
-    speed: Math.hypot(horizontal.value, track.velocity.y) / bodyHeight,
-    // Positive upwards, so a flat serve reads slightly negative and a kick serve
-    // positive. Image y grows downwards, hence the negation; the horizontal is
-    // taken unsigned because yaw comes from an `acos` and carries no sign — see
-    // the header of `axes.ts`.
-    launchAngle_deg: (Math.atan2(-track.velocity.y, Math.abs(horizontal.value)) * 180) / Math.PI,
-    axisConfidence: horizontal.confidence,
-  }
-}
-
 const isCancelled = (err: unknown) =>
   typeof err === 'object' && err !== null && (err as Error).name === 'Cancelled'
 
@@ -1325,9 +918,9 @@ export function bandsFor(fundamentals: Fundamental[]): Record<string, [number, n
  * angle it was judged on. There are now two moments this is drawn at: during an
  * ordinary analysis, from the values still in hand, and after a basket sweep,
  * for the two serves the comparison turned out to name. Those two have entirely
- * different things in scope and would have been two copies of one drawing call,
- * which is the shape `readOutboundFlight` already had to be rescued from — a
- * formula written twice, tested once, agreeing at exactly one camera angle.
+ * different things in scope and would have been two copies of one drawing call
+ * — a formula written twice and tested once, which is the shape this file has
+ * had to be rescued from before.
  *
  * BOTH `frames` AND `ball` MUST BE IN RAW PIXEL SPACE. A still is unrotated
  * video pixels, and a levelled skeleton drawn over them sits off the body by
@@ -1625,35 +1218,13 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // Tracked against the *raw* frames — the ball is found in unrotated pixels,
   // so the shoulder exclusion line has to be drawn in the same space.
   let ball: BallFlight | undefined
-  let outbound: OutboundBall | undefined
   if (!opts.skipBall) {
     onProgress({ step: 'measuring', ratio: 0.4, detail: 'Looking for the ball' })
     ball = await findBall(video, extracted.frames, skel, signal)
-    // Only worth the seeks once the toss has been found, and not merely because
-    // the toss supplies the anchor. The toss fit is also the only evidence this
-    // app has that the clip's seconds are seconds — its curvature had to match
-    // gravity at the player's own image scale to be accepted at all — and a
-    // speed measured against an unverified clock is a number nobody measured.
-    if (ball) {
-      outbound = await findOutbound(
-        video,
-        extracted.frames,
-        skel,
-        ball,
-        resilience.spatial,
-        aspect,
-        // `tilt`, not `applied`: this pass reads raw pixels, and `tilt` is the
-        // roll measured in that same raw space, whether or not it was large
-        // enough for the pose frames to be rotated by it.
-        tilt.roll_deg,
-        signal,
-      )
-    }
   }
 
   // What the pixels saw, kept for drawing over them; `ball` itself moves into
-  // the levelled space every measurement lives in. `outbound` was levelled
-  // inside `findOutbound`, where the raw track was still in scope.
+  // the levelled space every measurement lives in.
   const rawBall = ball
   if (ball && applied) {
     ball = levelFlight(ball, applied.roll_deg, { cx: applied.cx, cy: applied.cy }, aspect)
@@ -1674,25 +1245,6 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       blur: resilience.blur,
     },
   })
-
-  /*
-   * How fast the hand was going through the strike.
-   *
-   * Free: a straight-line fit through three to six wrist positions already in
-   * memory, no seeks and no second pass. `resilience.spatial` is the same camera
-   * reading the outbound ball's speed is divided by, so the two speeds on the
-   * report cannot disagree about which way the camera was pointing — and `ball`
-   * is handed over because the toss's own curvature is the only witness this app
-   * has that the clip's seconds are seconds.
-   *
-   * The levelled `frames`, not `extracted.frames`. Every measurement on the
-   * report lives in the levelled space and a speed is no different: on a clip
-   * filmed with the phone cocked, image y is not up, and a hand travelling
-   * straight up the court would have its travel split across both axes. The
-   * magnitude survives a rotation, but only if both components come from the
-   * same space as the camera reading they are divided by.
-   */
-  const power = readHandSpeed(frames, skel, imageXSplitFrom(resilience.spatial), ball)
 
   // Named breakdowns, on the same landmarks and keyframes the measurements
   // used. A second pass over data already in memory rather than a second pass
@@ -1789,8 +1341,6 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     tilt: applied,
     ball,
     tossFlight,
-    outbound,
-    power,
     serveType,
     // Stamped here, where the scores are produced, rather than on the way into
     // storage. A report spends its whole first life on screen unsaved — the

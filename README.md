@@ -233,6 +233,29 @@ its own and ranks nothing differently — it is the same report with less of it 
 at once — and a clip the engine could not read gets the refusal with no score
 attached, because there is no room here for the caveats the report carries.
 
+**And it remembers the serve before it.** Every glance used to be amnesiac:
+serve four was told about its worst fault with no idea that serve three had been
+told the same thing, so a player doing exactly what the app asked got the
+identical sentence back and no sign that anything had changed. The glance now
+carries one extra line saying whether the *previous* serve's named fault moved —
+"closer than your last serve", "still there", "not on this one". The report is
+the wrong place for that: it is read afterwards, and by then the basket is over.
+
+What counts as a move is `NOISE_FLOOR` (`analysis/tiers.ts`) and not a threshold
+of its own — the same measured figures `flaws.ts` reads to decide a fault is real
+rather than a re-roll of the tracker's noise. A change smaller than that is
+reported as no change. The consequence is deliberate: on `hip_lead_ms`, whose
+floor is 85 ms, almost every honest improvement will read as "no change yet",
+which is the truth about what a phone can see. `analysis/carryForward.ts`
+compares `FlawFinding.miss` — how far outside its band the signal landed, in the
+signal's own units — rather than the score, which moves with twenty other
+measurements at once, and it refuses outright when the serve type or the target
+tier changed between the two serves, when either reading is under the evidence
+bar, or when the later clip could not take the reading at all. Every refusal is
+silence, because this screen has no room for a caveat. Nothing is stored, counted
+or rewarded: it is one observation about two serves, and it goes when the trip
+does. `?demo=glance-move`, and `-cleared`/`-same`/`-wider`, show the four states.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.
@@ -391,8 +414,9 @@ Everything is in `src/lib`:
 | `share/reportCard.ts` | renders a report as one shareable image |
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
+| `analysis/carryForward.ts` | whether the fault the last serve was told about actually moved on this one |
 | `practice.ts` | finds the weakness that persists across trips to the court |
-| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, the trip streak, the best consistency gap swept, the fastest hand speed measured, and what counts as one trip |
+| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, the trip streak, the best consistency gap swept, the best score, and what counts as one trip |
 | `screenFlow.ts` | every legal move between screens, as data a test can walk — describes `App.tsx`, never drives it |
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
 | `storage/db.ts` | the reports, and separately the drills the player says they did |
@@ -936,7 +960,7 @@ jargon anywhere, nothing reusing a word the app already owns.
 says the policy in prose — no network call after load beyond the pose model
 and the WASM runtime, no analytics, no remote logging — and nothing had
 ever checked it. `lib/__tests__/egress.test.ts` scans every `.ts`/`.tsx`
-file under `src` (66 of them) for every syntactic way a browser starts a
+file under `src` (72 of them) for every syntactic way a browser starts a
 request — `fetch`, `XMLHttpRequest`, `sendBeacon`, `WebSocket`,
 `EventSource`, `new Image()` — and asserts the result is exactly two named,
 justified call sites: `poseEngine.ts`'s one `fetch` for the pose model
@@ -1244,9 +1268,10 @@ shoot and the court trip are already waiting on.
 
 During development, `?demo` renders a report from a simulated serve,
 `?demo=live` also mounts the player, `?demo=basket` shows the consistency
-comparison, and `?demo=glance` and `?demo=glance-refused` show the two halves of
-the on-court screen — so the UI can be worked on without filming anything. **The
-routes** are dev-only and are compiled out of a production build.
+comparison, and `?demo=glance`, `?demo=glance-refused` and `?demo=glance-move`
+(plus `-cleared`, `-same`, `-wider`) show the on-court screen's branches — so the
+UI can be worked on without filming anything. **The routes** are dev-only and are
+compiled out of a production build.
 
 The rig behind them is not, and should not be: `dev/sampleAnalysis.ts` is also
 what the home screen's **See an example report** is built from, so it ships as a

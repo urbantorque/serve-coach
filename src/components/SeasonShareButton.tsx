@@ -23,7 +23,6 @@ export default function SeasonShareButton({ records }: Props) {
     records.streak,
     records.longestStreak,
     records.bestScore,
-    records.bestSpeed,
     records.bestGap,
   ].filter(Boolean).length
   if (count < 2) return null

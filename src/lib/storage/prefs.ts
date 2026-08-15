@@ -29,23 +29,6 @@ export interface Prefs {
    * analysis because a rating changes over a season, not over a session.
    */
   tier?: number
-  /**
-   * The player's standing height in centimetres, if they have said.
-   *
-   * The one thing standing between a speed in the house unit and a speed in
-   * km/h. Every height on this report is a multiple of standing height because
-   * that is what survives a change of camera, and `OutboundFlightReading.speed`
-   * refuses to convert on its own for a stated reason: the multiplication needs
-   * a height, and assuming 1.78 m reads a 1.45 m junior 23% fast. Supplied by
-   * the player it is not an assumption any more, so the conversion becomes
-   * honest and the app does it.
-   *
-   * Optional and stays optional. Nothing is scored against it, nothing is
-   * hidden without it, and it never leaves the device — it lives beside
-   * handedness in `localStorage` for the same reason: a few dozen bytes that
-   * answer a question worth asking once.
-   */
-  heightCm?: number
   /** Whether the filming guide has been shown unprompted. */
   seenFilmingGuide: boolean
   /** Whether persistent storage has been requested from the browser. */

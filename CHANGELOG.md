@@ -6,6 +6,27 @@ in `git log`.
 
 ## 2026-08-15
 
+- **The between-serves screen now remembers your last serve.** Record, glance,
+  record — and until now every glance forgot the one before it, so you could do
+  exactly what the app asked and get the identical sentence back with nothing
+  saying whether it worked. It now carries one extra line about the *previous*
+  serve's fault: "closer than your last serve", "still there", "not on this
+  one", or "further out than your last serve". It appears only within one trip
+  to the court, only when both serves measured the same thing the same way, and
+  only when the change is bigger than the wobble the camera itself introduces —
+  so "no change yet" is a real answer and not a shrug. Nothing is scored,
+  counted or awarded for it.
+- **Serve speed is gone, all of it.** The "How fast you served" panel, the
+  estimated serve-speed band, the measured hand speed, the rare measured
+  ball-off-the-strings reading, the fastest-hand-speed record on "Every
+  serve so far" and on the season share card, and the height question that
+  turned any of it into km/h — removed. The estimate was two multiplications
+  on top of a wrist, and a wrist is not a ball; the measured readings needed
+  footage almost nobody films. A number that wide is not worth the room it
+  took on the page. Everything the report says about the *shape* of your
+  serve is untouched, and so is the toss tracking — the toss is still found
+  in the pixels and still scores toss height and whether you hit at the peak.
+  Reports saved before today keep their stored speed; nothing reads it.
 - **A printed report is now readable.** This app has always been dark by
   design, and most browsers strip a page's own background when printing —
   which left a printed report as near-white text on paper that was already

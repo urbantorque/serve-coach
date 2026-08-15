@@ -278,9 +278,9 @@ check('a levelled clip is rotated back before anything is drawn on it', () => {
 
 check('the overlay refuses nothing it is handed — one definition, two callers', () => {
   // `keyframeOverlay` is the shape that stops the analysis path and the sweep
-  // path becoming two copies of one drawing call, which is what
-  // `readOutboundFlight` had to be rescued from: a formula written twice,
-  // tested once, agreeing at exactly one camera angle.
+  // path becoming two copies of one drawing call — a formula written twice and
+  // tested once, which is a failure this engine has had to be rescued from
+  // before.
   const serve = basket[0]
   const decorate = keyframeOverlay({
     frames: serve.frames,

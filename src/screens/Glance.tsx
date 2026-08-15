@@ -1,5 +1,6 @@
 import { Cue, Icon, ScoreRing } from '../components/primitives'
-import { causalPlan, refusalFor } from '../lib/analysis/verdict'
+import { causalPlan, faultMoveLine, refusalFor } from '../lib/analysis/verdict'
+import type { FaultMove } from '../lib/analysis/carryForward'
 import type { Analysis } from '../lib/analysis/types'
 
 /**
@@ -29,12 +30,38 @@ interface Props {
   onRecordAnother?: () => void
   onOpenReport: () => void
   onBack: () => void
+  /**
+   * Whether the fault the previous serve on this trip was told about moved.
+   *
+   * Absent on the first serve of a trip, and absent far more often than not
+   * after that — see `faultMove`, which refuses every comparison it cannot
+   * stand behind rather than hedging one. The screen must render identically
+   * without it, which is what it did before this existed.
+   */
+  move?: FaultMove
 }
 
-export default function Glance({ analysis, onRecordAnother, onOpenReport, onBack }: Props) {
+export default function Glance({ analysis, onRecordAnother, onOpenReport, onBack, move }: Props) {
   const refusal = refusalFor(analysis.triage)
   const plan = causalPlan(analysis.triage, analysis.diagnosis)
   const first = plan[0]
+  /*
+   * Does the heading this screen is about to draw already name this fault?
+   *
+   * Compared against `primary_flaw`, which `causalPlan` guarantees is what its
+   * first entry was built from — and on the flaw id rather than on the rendered
+   * title, since `focusFor` heads a signal past the top of its band differently
+   * from one under the bottom, and a heading is not an identity.
+   *
+   * Not gated on there being a heading at all. A serve that cleared the fault
+   * and named nothing new is the best news this screen ever carries, and it is
+   * exactly the case where "Nothing stood out" alone would fail to connect the
+   * result to the work — `primary_flaw` is absent there, so the full form with
+   * the fault named is what gets built.
+   */
+  const moveLine = move
+    ? faultMoveLine(move, move.flaw === analysis.triage?.primary_flaw?.flaw)
+    : undefined
 
   return (
     <div className="screen glance">
@@ -87,6 +114,19 @@ export default function Glance({ analysis, onRecordAnother, onOpenReport, onBack
                plan that is empty; here it is the whole message, and it is a
                good one to receive between serves. */
             <p className="glance-why">Nothing stood out on that one. Hit another.</p>
+          )}
+
+          {/* Whether the last serve's fault moved — see `faultMove`.
+              Under the fix rather than over it, because this screen's job is
+              still to say what to do next and a result is not an instruction.
+              Its own class so it reads as a different kind of sentence from
+              the coaching above it, assembled from existing tokens; nothing
+              here restyles anything the screen already had. */}
+          {moveLine && (
+            <p className="glance-move">
+              <Icon name={move?.verdict === 'wider' ? 'info' : 'check'} size={15} />
+              <span>{moveLine}</span>
+            </p>
           )}
 
           {/* Said here rather than left for the report, because this screen
