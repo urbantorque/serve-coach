@@ -157,6 +157,36 @@ body::before {
     radial-gradient(80% 50% at 100% 100%, rgba(80, 130, 255, 0.05), transparent 70%);
 }
 
+/*
+ * Every colour above is chosen for a screen, and most browsers strip a
+ * page's own background by default when printing (Chrome and Firefox both
+ * ship "background graphics" off) -- so a player who prints a report gets
+ * near-white text with nothing dark left behind it, on paper that is
+ * already white. Nothing in this file has ever set out to be readable with
+ * the ink washed out from under it, which is what printing does whether or
+ * not this rule exists; this just stops it being illegible instead of
+ * merely undecorated. Only `.btn`/`.icon-btn` go with it -- this codebase's
+ * own consistent naming for an actual control, as opposed to `.fcard-head`
+ * and the like, which are content wrapped in a button element for its
+ * click target and would vanish along with real navigation chrome under a
+ * blanket `button` selector.
+ */
+@media print {
+  body {
+    color: #0a0c10;
+    background: #ffffff;
+  }
+
+  body::before {
+    display: none;
+  }
+
+  .btn,
+  .icon-btn {
+    display: none !important;
+  }
+}
+
 img,
 video,
 canvas,

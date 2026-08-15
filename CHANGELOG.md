@@ -6,6 +6,11 @@ in `git log`.
 
 ## 2026-08-15
 
+- **A printed report is now readable.** This app has always been dark by
+  design, and most browsers strip a page's own background when printing —
+  which left a printed report as near-white text on paper that was already
+  white. Printing now switches to dark text on a white page and drops the
+  buttons, which do nothing once they're on paper.
 - **Fixed: the hand-speed reading always used a period, even where your
   phone doesn't.** Every date in this app already reads in your own
   locale's format; the one number shown with a decimal place ("4.1 body
