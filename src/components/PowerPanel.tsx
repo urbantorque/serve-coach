@@ -68,6 +68,17 @@ interface Props {
 export default function PowerPanel({ analysis, heightCm, onSetHeight, bestSpeed }: Props) {
   const [asking, setAsking] = useState(false)
   const [draft, setDraft] = useState(() => (isPlausibleHeight(heightCm) ? String(heightCm) : ''))
+  /**
+   * Why the last save didn't take.
+   *
+   * `save` used to close the form either way, discarding an implausible
+   * number in silence — the one honest thing it did was never show a wrong
+   * km/h, but a player who fat-fingered "17" for "175" saw their answer
+   * vanish with no explanation, and a player who already had a real height
+   * on file could lose it to the same typo. Kept open with a reason instead:
+   * only an explicitly empty field counts as "forget my height."
+   */
+  const [error, setError] = useState<string | null>(null)
 
   const hand = usable(analysis.power?.speed, analysis.power?.confidence)
   const ball = usable(analysis.outbound?.flight?.speed, analysis.outbound?.flight?.speedConfidence)
@@ -91,9 +102,21 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight, bestSpeed 
   const { unit } = formatSpeed(0, heightCm)
 
   const save = () => {
-    const cm = Number(draft)
-    onSetHeight?.(isPlausibleHeight(cm) ? cm : undefined)
+    const trimmed = draft.trim()
+    if (trimmed === '') {
+      onSetHeight?.(undefined)
+      setAsking(false)
+      setError(null)
+      return
+    }
+    const cm = Number(trimmed)
+    if (!isPlausibleHeight(cm)) {
+      setError(`That doesn't look like a height — try somewhere between ${HEIGHT_CM_RANGE[0]} and ${HEIGHT_CM_RANGE[1]} cm.`)
+      return
+    }
+    onSetHeight?.(cm)
     setAsking(false)
+    setError(null)
   }
 
   return (
@@ -193,14 +216,24 @@ export default function PowerPanel({ analysis, heightCm, onSetHeight, bestSpeed 
                   min={HEIGHT_CM_RANGE[0]}
                   max={HEIGHT_CM_RANGE[1]}
                   value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
+                  onChange={(e) => {
+                    setDraft(e.target.value)
+                    setError(null)
+                  }}
                   onKeyDown={(e) => e.key === 'Enter' && save()}
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? 'power-height-error' : undefined}
                   autoFocus
                 />
                 <button className="btn btn--primary power-height-save" onClick={save}>
                   Save
                 </button>
               </div>
+              {error && (
+                <p className="power-height-error" id="power-height-error" role="alert">
+                  {error}
+                </p>
+              )}
             </>
           ) : (
             <button className="btn btn--ghost btn--full" onClick={() => setAsking(true)}>

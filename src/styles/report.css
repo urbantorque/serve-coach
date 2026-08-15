@@ -1402,3 +1402,13 @@
 .power-height-save {
   flex: none;
 }
+
+.power-height-error {
+  margin-top: 9px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}

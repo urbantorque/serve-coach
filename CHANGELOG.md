@@ -6,6 +6,12 @@ in `git log`.
 
 ## 2026-08-15
 
+- **Fixed: an invalid height silently vanished instead of saying why.**
+  Entering a height outside the plausible range (or mistyping one) for the
+  km/h speed conversion used to close the box and quietly discard it —
+  including wiping out an already-saved height with a garbage resubmission.
+  It now stays open with a plain reason ("try somewhere between 110 and 230
+  cm") until you either fix it or clear the field on purpose.
 - **The offline download's progress now reaches a screen reader.** Tapping
   "Download now to use offline" updates the button's own text every network
   chunk, which a screen reader was never told about — nothing announced
