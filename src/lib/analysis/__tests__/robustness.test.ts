@@ -495,6 +495,19 @@ check('a clip with nobody serving produces no candidates to refine', () => {
   assert(planRefinement([], 80).length === 0, 'scheduled refinement with no candidates')
 })
 
+check('a long clip with nobody serving is reported as no serves, not a false one', () => {
+  // findServes is the terminal call scanForServes hands back as `times` — a
+  // long clip nobody ever swings in (camera left running while packing up,
+  // a whole idle basket) must come back empty here exactly as it already does
+  // from peakCandidates above, or extract.ts's readWindow reads `times.length`
+  // as "found it" and never falls back to the honest "I could not find a
+  // serve in that clip" refusal extract.ts's own FALLBACK_SPAN comment
+  // describes — it instead reports the clip's noisiest resting instant as a
+  // located serve, which is the extreme-clip-duration audit's finding.
+  const flat: ReachSample[] = Array.from({ length: 420 }, (_, i) => ({ t: i * 1.43, height: -0.5 }))
+  assert(findServes(flat).length === 0, 'reported a serve in a clip of somebody standing still')
+})
+
 check('refinement windows around adjacent serves are not paid for twice', () => {
   // Two serves 1.7s apart — just outside MIN_SERVE_GAP — have overlapping
   // windows. Sampling the shared frames once is the difference between the

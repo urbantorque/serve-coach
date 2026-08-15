@@ -115,6 +115,29 @@ export function planRefinement(
  */
 export const MAX_SERVES = 8
 
+/**
+ * How high a peak must rise above the clip's own resting height to be worth
+ * calling out, rather than a raised hand at rest — a quarter of the way from
+ * resting to the highest reach in the clip. A serve clears that comfortably; a
+ * hand at the hip does not come near it. `null` when the clip has no real
+ * spread at all (nobody ever reached for anything), which callers take as "no
+ * peak in this clip is real."
+ *
+ * Shared by `peakCandidates` and `findServes` because it is the same question
+ * asked twice — "is there really a peak here" — and this session's own
+ * extreme-duration audit found the two functions had drifted to different
+ * answers: `peakCandidates` already required it, `findServes` did not, so a
+ * long clip where nobody ever swings could still have `findServes` return a
+ * clip's noisiest resting moment as if it were a located serve.
+ */
+function restingFloor(samples: ReachSample[]): number | null {
+  const heights = samples.map((s) => s.height).sort((a, b) => a - b)
+  const middle = heights[heights.length >> 1]
+  const highest = heights[heights.length - 1]
+  if (highest - middle < 1e-6) return null
+  return middle + (highest - middle) * 0.25
+}
+
 export function peakCandidates(samples: ReachSample[], count = MAX_SERVES): number[] {
   if (!samples.length) return []
 
@@ -123,13 +146,8 @@ export function peakCandidates(samples: ReachSample[], count = MAX_SERVES): numb
   // happened to sort first once the real peaks run out — on a clip with four
   // serves and eight slots, half the refinement budget went on footage of
   // somebody standing still.
-  const heights = samples.map((s) => s.height).sort((a, b) => a - b)
-  const middle = heights[heights.length >> 1]
-  const highest = heights[heights.length - 1]
-  // A quarter of the way from resting to the highest reach in the clip. A serve
-  // clears that comfortably; a hand at the hip does not come near it.
-  const floor = middle + (highest - middle) * 0.25
-  if (highest - middle < 1e-6) return []
+  const floor = restingFloor(samples)
+  if (floor === null) return []
 
   const picked: number[] = []
   for (const s of [...samples].sort((a, b) => b.height - a.height)) {
@@ -162,9 +180,22 @@ export interface ReachSample {
  * swing, a ball toss or a wave, and is left out.
  *
  * Kept free of any video or MediaPipe dependency so it can be tested directly.
+ *
+ * Requires a peak to clear `restingFloor` as well as sit within
+ * `REACH_TOLERANCE` of the best sample — without it, a clip nobody ever
+ * swings in (camera left running, a whole idle basket) has no real peak at
+ * all, and this function used to hand back its noisiest resting instant as a
+ * "located" serve instead of reporting that nothing stood out. That silently
+ * traded the extraction pipeline's honest "I could not find a serve in that
+ * clip" refusal for the far less useful "that does not look like a serve" —
+ * technically not wrong, but blaming the swing for what was actually the scan
+ * finding nothing to aim at.
  */
 export function findServes(samples: ReachSample[]): number[] {
   if (!samples.length) return []
+
+  const floor = restingFloor(samples)
+  if (floor === null) return []
 
   const ranked = [...samples].sort((a, b) => b.height - a.height)
   const bestHeight = ranked[0].height
@@ -172,6 +203,7 @@ export function findServes(samples: ReachSample[]): number[] {
 
   for (const s of ranked) {
     if (s.height < bestHeight - REACH_TOLERANCE) break
+    if (s.height < floor) break
     if (picked.some((t) => Math.abs(t - s.t) < MIN_SERVE_GAP)) continue
     picked.push(s.t)
   }
