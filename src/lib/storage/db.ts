@@ -1,4 +1,8 @@
 import { readoutOf, targetOf } from '../analysis/anatomy'
+// The table the screens index by `serveType`. Imported rather than restated as
+// a list of three names, so a fourth serve type cannot be readable on the
+// report and unreadable on the way out of storage.
+import { SERVE_TYPES } from '../analysis/coaching'
 import { LEGACY_SCORING_VERSION, SCORING_VERSION, type Analysis } from '../analysis/types'
 
 /**
@@ -383,11 +387,18 @@ export function normalise(raw: unknown): Session | undefined {
     .filter((f): f is Session['fundamentals'][number] => typeof f?.id === 'string')
     .map((f) => ({
       ...f,
-      label: f.label ?? f.id,
+      // `text(…)` rather than `?? ''` on every one of these, and the difference
+      // is the whole reason the shape fuzz in `render.test.ts` exists. `??`
+      // catches an absent field and waves a wrong-typed one straight through,
+      // so a hand-edited backup carrying `headline: 0` reached `Cue`, which
+      // splits it, and took the report down. Absent and wrong-typed are the same
+      // situation to every consumer here: the field is not usable and a default
+      // has to stand in.
+      label: text(f.label, f.id),
       score: typeof f.score === 'number' ? f.score : 0,
-      status: f.status ?? 'fair',
-      blurb: f.blurb ?? '',
-      headline: f.headline ?? '',
+      status: status(f.status),
+      blurb: text(f.blurb, ''),
+      headline: text(f.headline, ''),
       // Reports filed before the app spoke in body positions carry numbers and
       // no readout, and the card would render a blank where the position goes.
       // The ladder is a pure function of the value, so it can be filled in now
@@ -409,7 +420,10 @@ export function normalise(raw: unknown): Session | undefined {
   return {
     ...(s as Session),
     fundamentals,
-    overallStatus: s.overallStatus ?? 'fair',
+    // `VERDICT[analysis.overallStatus]` in `Report` is an unguarded index into a
+    // four-key table, so a status this build has never heard of is a blank
+    // screen rather than a wrong word.
+    overallStatus: status(s.overallStatus),
     // Element-checked, not just array-checked: a null slipped in by a
     // hand-edited backup would throw in every consumer that reaches for
     // `p.thumbnail`.
@@ -420,8 +434,11 @@ export function normalise(raw: unknown): Session | undefined {
     window: s.window ?? { start: 0, end: 0 },
     scale: s.scale ?? { bodyHeight: 0, groundY: 0 },
     // Everything filed before serve types existed was scored against the flat
-    // bands, which is exactly what 'flat' means.
-    serveType: s.serveType ?? 'flat',
+    // bands, which is exactly what 'flat' means. Checked for membership rather
+    // than for presence, against the very table the report indexes — three
+    // screens do `SERVE_TYPES[analysis.serveType].label` with no guard, so an
+    // unknown name is not a mislabelled report, it is no report at all.
+    serveType: s.serveType && s.serveType in SERVE_TYPES ? s.serveType : 'flat',
     // Same reasoning, and the same trap in a costlier place: a report saved
     // before the stamp existed was scored under the original rubric, so it is
     // the old version rather than an unknown one. Type-checked rather than
@@ -430,18 +447,26 @@ export function normalise(raw: unknown): Session | undefined {
     scoringVersion:
       typeof s.scoringVersion === 'number' ? s.scoringVersion : LEGACY_SCORING_VERSION,
     video: s.video ?? { name: 'Your serve', durationMs: 0, width: 0, height: 0 },
-    handedness: s.handedness ?? 'right',
-    quality: s.quality ?? {
-      confidence: 0.5,
-      warnings: [],
-      view: 'angled',
-      sampledFps: 30,
-      swingSamples: 0,
-    },
+    handedness: s.handedness === 'left' ? 'left' : 'right',
+    quality: usableQuality(s.quality),
     focus: s.focus ?? {
       title: 'Keep filming',
       why: 'This report was saved by an older version of the app, so some detail is missing.',
       drill: { name: '', how: '', reps: '' },
+    },
+    /*
+     * The triage block, with any unreadable injury flag dropped.
+     *
+     * `injuryNotes` destructures `{ flag, severity }` off every entry, so one
+     * null in the list is the report gone. It already skips a flag this build
+     * has no copy for — the case it was written against, a row from a newer
+     * version — and that guard cannot fire on an entry that is not an object.
+     */
+    triage: s.triage && {
+      ...s.triage,
+      injury_risk: Array.isArray(s.triage.injury_risk)
+        ? s.triage.injury_risk.filter((i) => typeof i?.flag === 'string')
+        : [],
     },
     // Dropped rather than repaired when it is the wrong shape. Every other field
     // here is load-bearing and worth defaulting; the spreads are an extra a
@@ -450,6 +475,55 @@ export function normalise(raw: unknown): Session | undefined {
     // component the ErrorBoundary can only replace with a blank screen.
     consistency: usableConsistency(s.consistency),
     diagnosis: withChain(s.diagnosis),
+  }
+}
+
+/* ------------------------------------------------------------ field repairs */
+
+/**
+ * A stored string, or a stand-in.
+ *
+ * The workhorse of the repairs above, and it exists because `??` is the wrong
+ * operator for this job in a way that is easy to miss: it asks "was this
+ * written down" when every consumer is asking "can I use this". A backup
+ * carrying `label: 0` answers yes to the first and no to the second, and the
+ * screens find out by calling `.toLowerCase()` on a number.
+ */
+const text = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback)
+
+/**
+ * The four badges, as the only values `statusOf` can produce.
+ *
+ * A list rather than an import from `geometry.ts`, which owns the thresholds
+ * but exports no roster of the outcomes. Kept next to its one use and named so
+ * that a fifth badge added there fails the type here rather than reaching a
+ * table lookup on screen.
+ */
+const STATUSES: readonly Session['overallStatus'][] = ['great', 'good', 'fair', 'work']
+
+const status = (v: unknown): Session['overallStatus'] =>
+  STATUSES.includes(v as Session['overallStatus']) ? (v as Session['overallStatus']) : 'fair'
+
+/**
+ * How the clip was read, repaired field by field rather than replaced whole.
+ *
+ * The report reaches through every one of these unguarded — `warnings.length`,
+ * `view` into a three-way ternary, `confidence` into a comparison — and a
+ * caveat block is not worth losing a whole report over, so this defaults rather
+ * than drops. A wrong `view` becomes "angled" for the same reason an absent one
+ * does: it is the honest middle answer, and it is what a report written before
+ * view detection existed already gets.
+ */
+function usableQuality(raw: unknown): Session['quality'] {
+  const q = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<Session['quality']>
+  const view = q.view === 'side' || q.view === 'front-back' ? q.view : 'angled'
+  const num = (v: unknown, fallback: number) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback)
+  return {
+    confidence: num(q.confidence, 0.5),
+    warnings: Array.isArray(q.warnings) ? q.warnings.filter((w) => typeof w === 'string') : [],
+    view,
+    sampledFps: num(q.sampledFps, 30),
+    swingSamples: num(q.swingSamples, 0),
   }
 }
 
@@ -470,10 +544,24 @@ export function normalise(raw: unknown): Session | undefined {
  */
 function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
   if (!d) return d
-  if (d.chain && typeof d.chain === 'object') return d
+  /*
+   * The flaw list, element-checked, before anything else.
+   *
+   * `causalPlan` and `causalFocus` both walk it reading `.detected`,
+   * `.severity` and `.flaw` off each entry with no guard — correctly, since
+   * every list this app writes is full of real findings. One null in it, from a
+   * hand-edited backup or a half-written row, is the plan gone and the report
+   * with it. Filtered rather than dropped whole: a diagnosis with four good
+   * flaws and one bad entry still has four things worth saying.
+   */
+  const flaws = Array.isArray(d.flaws)
+    ? d.flaws.filter((f) => typeof f?.flaw === 'string')
+    : []
+  if (d.chain && typeof d.chain === 'object') return { ...d, flaws }
   const missing = { ms: null, confidence: 0 }
   return {
     ...d,
+    flaws,
     chain: {
       legs: { ...missing },
       hips: { ...missing },
@@ -504,6 +592,10 @@ function usableConsistency(raw: unknown): Session['consistency'] {
   const metrics = c.metrics.filter(
     (m) =>
       typeof m?.id === 'string' &&
+      // `consistencyHeadline` lowercases this and the panel prints it as the
+      // row's name; the same row is also `weakest`, which two screens name in
+      // a sentence. A row with no readable label has nothing to be called.
+      typeof m.label === 'string' &&
       Array.isArray(m.values) &&
       Array.isArray(m.ideal) &&
       Array.isArray(m.range),
@@ -520,10 +612,62 @@ function usableConsistency(raw: unknown): Session['consistency'] {
     metrics,
     weakest: ranked[0],
     steadiest: ranked[ranked.length - 1],
+    /*
+     * The serve numbers, or an empty list — never a missing one.
+     *
+     * This block's whole contract is that the panel and the trend cannot be
+     * handed something they will throw on, and `serveNumbers` was the one field
+     * in it that nothing checked. Both readers index it directly and then fall
+     * back per element (`c.serveNumbers[i] ?? i + 1` in `ConsistencyPanel` and
+     * in `renderBasketCard`), so a *short* list is already survivable and an
+     * absent one is a `TypeError` on the first chip — a blank screen behind the
+     * ErrorBoundary, from a report that otherwise reads perfectly. Nothing this
+     * app has ever written lacks it, which is exactly why it went unnoticed:
+     * the case is a hand-edited backup or a row from a build that predates the
+     * field, and those are the rows this function exists for.
+     *
+     * Empty rather than rebuilt as `1..n`, so the fallback that decides the
+     * numbering stays in one place instead of two that could disagree.
+     */
+    serveNumbers:
+      Array.isArray(c.serveNumbers) && c.serveNumbers.every((n) => typeof n === 'number')
+        ? c.serveNumbers
+        : [],
+    /*
+     * The best-against-worst block, or nothing.
+     *
+     * Same reasoning as `metrics` above and the same treatment: dropped rather
+     * than repaired. `BestAgainstWorst` walks `differences` and prints all four
+     * numbers, so half a gap is a crash, and there is no honest way to invent
+     * the missing half — which serve was the good one is a claim about serves
+     * this row no longer carries. The panel already draws without a gap, since
+     * `buildGap` returns nothing when every serve scored the same.
+     */
+    gap: usableGap(c.gap),
     // Absent from every report saved before R12, and false is the honest
     // default for those: nothing flagged a mismatch because nothing looked,
     // not because a look found none.
     possibleHandoff: c.possibleHandoff ?? false,
+  }
+}
+
+/** The best-against-worst block, if it carries everything the panel prints. */
+function usableGap(raw: unknown): NonNullable<Session['consistency']>['gap'] {
+  if (typeof raw !== 'object' || raw === null) return undefined
+  const g = raw as Partial<NonNullable<NonNullable<Session['consistency']>['gap']>>
+  const numbered =
+    typeof g.best === 'number' &&
+    typeof g.worst === 'number' &&
+    typeof g.bestScore === 'number' &&
+    typeof g.worstScore === 'number'
+  if (!numbered || !Array.isArray(g.differences)) return undefined
+  return {
+    ...(g as NonNullable<NonNullable<Session['consistency']>['gap']>),
+    // Element-checked for the same reason `phases` is: one null in the list
+    // throws inside the `readoutOf` map rather than at the top level.
+    differences: g.differences.filter(
+      (d) => typeof d?.id === 'string' && typeof d.bestValue === 'number' && typeof d.worstValue === 'number',
+    ),
   }
 }
 

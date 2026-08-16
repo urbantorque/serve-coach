@@ -4,6 +4,28 @@ Player-visible changes, newest first. This file starts on 2026-08-15 — it does
 not retroactively document the commits before it, which speak for themselves
 in `git log`.
 
+## 2026-08-16
+
+- **Fixed: a stored report from another version could blank the whole app, in
+  seven more ways than the one already found.** A report is read back out of
+  storage through a repair step whose job is to make sure nothing downstream can
+  crash on it. It was checking whether each field was *present* and not whether
+  it was *usable* — so a backup carrying a number where a word belongs, or a
+  serve type this version has never heard of, went straight through and took the
+  screen down. Every field a report carries is now checked by kind, and the
+  suite mutates each one of them in turn and draws the result, which is how the
+  seven were found.
+- **Fixed: a saved basket from another version could blank the whole app.**
+  Opening a stored comparison that was missing the serve numbers — a
+  report restored from a hand-edited backup, or written by a build from
+  before those numbers existed — took the entire screen down to "Something
+  in the app broke", from a report that was otherwise perfectly readable.
+  The read-back repair that exists to stop exactly this had never been
+  taught to check that field, nor the best-against-worst block beside it.
+  Both are now repaired or dropped on the way out of storage: a missing
+  list falls back to numbering the serves as they appear, and half a
+  best-against-worst block is left out rather than half-drawn.
+
 ## 2026-08-15
 
 - **The between-serves screen now remembers your last serve.** Record, glance,
