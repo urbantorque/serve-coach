@@ -100,7 +100,15 @@ export function fitToClip(analysis: Analysis, duration: number): Analysis {
 export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
   // A spine folding well past the absolute limit, plus a tray grip rotated hard
   // through the ball: the lumbar flag and the wrist flag together.
-  injury: { spineLean: 34, palmToSky: 80, trophyForearmDrop: 0.4 },
+  //
+  // The forearm drop is 0.25 rather than 0.4, and the difference is anatomy
+  // rather than taste. Past about 0.3 that dial stops laying the arm over and
+  // starts lengthening the forearm — at 0.4 it is 1.40× the upper arm, where a
+  // real one is about 0.8 (see its KNOWN LIMIT in `syntheticServe.ts`). At 0.25
+  // the wrist flag is raised on 20 of 24 noise realisations, which is exactly
+  // the rate 0.4 managed, so the demo poses an arm that exists and earns the
+  // same flag at the same rate rather than reaching it by stretching.
+  injury: { spineLean: 34, palmToSky: 80, trophyForearmDrop: 0.25 },
   // Heavy tracker noise smears the racket hand through the swing, which is what
   // `too_blurry` is measuring. Nothing here says "reject"; the resilience pass
   // decides that on its own.

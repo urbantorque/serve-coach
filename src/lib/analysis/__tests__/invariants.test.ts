@@ -14,6 +14,7 @@
  */
 import { detectServe } from '../phases'
 import { measure } from '../metrics'
+import { sided } from '../geometry'
 import { DRIFT_BUDGET, TRANSFORMS, budgetFor, decimate, driftBetween, rescale } from '../invariants'
 import { buildServe, CLEAN_SERVE, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
@@ -175,5 +176,53 @@ check('every transform returns different frames from the ones it was given', () 
 
 note(`drift budget: ${DRIFT_BUDGET * 100}% of a measurement's own target band`)
 note('a convention with an argument, not a measurement — see CORPUS.md')
+
+heading('The rig has to pose a body somebody has')
+
+/**
+ * `trophyForearmDrop` moves the hand and nothing puts the forearm back, so past
+ * about 0.3 it stops laying the arm over and starts stretching it — 1.40× the
+ * upper arm at 0.4, 3.35× at 0.8, where a real forearm is about 0.8×. Every
+ * measurement read off the racket arm at that dial is then a measurement of an
+ * arm nobody has.
+ *
+ * Pinned rather than fixed. Fixing it means re-deriving the shape the dial makes
+ * so the segments hold their length, which changes every `palm_to_sky_deg`
+ * reading the suite has ever taken and every band set against them. What is
+ * cheap and worth having now is the bound itself, stated once, so a future dial
+ * turned up to make a fault "more extreme" fails here instead of quietly
+ * lengthening a forearm and being believed.
+ */
+const forearmRatioAt = (drop: number): number => {
+  const frames = buildServe({ noise: 0, depthNoise: 0, depthBias: 0, trophyForearmDrop: drop, seed: 7000 }, 50)
+  const skel = detectServe(frames, 50)
+  const f = frames[skel.keys.trophy]
+  const S = sided(skel.racket)
+  const span = (a: number, b: number) =>
+    Math.hypot(
+      f.world[a].x - f.world[b].x,
+      f.world[a].y - f.world[b].y,
+      f.world[a].z - f.world[b].z,
+    )
+  return span(S.elbow, S.wrist) / span(S.shoulder, S.elbow)
+}
+
+check('the trophy drop every caller uses keeps the forearm shorter than the upper arm', () => {
+  // A real forearm is about 0.8 of the upper arm. One that is longer is the
+  // dial stretching rather than rotating, and 1.0 is a generous bound on that.
+  for (const drop of [0, 0.15, 0.25, 0.3]) {
+    const ratio = forearmRatioAt(drop)
+    assert(ratio < 1, `at ${drop} the forearm is ${ratio.toFixed(2)}× the upper arm`)
+  }
+})
+
+check('and past that the dial is measurably stretching, not rotating', () => {
+  // The other half, so the bound above reads as a measured boundary rather than
+  // as a number somebody liked. If this ever stops being true the dial has been
+  // rebuilt, and the limit documented on it needs rewriting rather than trusting.
+  const stretched = forearmRatioAt(0.8)
+  assert(stretched > 2, `at 0.8 the forearm was ${stretched.toFixed(2)}× the upper arm, expected the documented 3.35×`)
+  note(`0.4 → ${forearmRatioAt(0.4).toFixed(2)}×, 0.8 → ${stretched.toFixed(2)}×`)
+})
 
 report()

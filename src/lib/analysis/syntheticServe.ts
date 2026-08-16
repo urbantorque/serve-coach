@@ -143,6 +143,35 @@ export interface ServeDials {
    * laid over towards horizontal. This drops the hand towards shoulder height
    * and pushes it out to the side, which is the shape a player carrying a tray
    * actually makes.
+   *
+   * KNOWN LIMIT: it moves the hand, and nothing puts the forearm back. Past
+   * about 0.3 the elbow-to-wrist distance starts growing rather than the arm
+   * rotating, measured on the clean rig at the trophy frame:
+   *
+   * ```
+   * dial   forearm(m)  upper arm(m)  ratio
+   * 0.00       0.272        0.321      0.85   ← a real forearm is about 0.8
+   * 0.20       0.268        0.313      0.86
+   * 0.30       0.288        0.301      0.96
+   * 0.40       0.420        0.301      1.40
+   * 0.80       1.007        0.300      3.35
+   * ```
+   *
+   * So a dial above ~0.3 poses a body nobody has, and any measurement read off
+   * the racket arm there is a measurement of that. It does not invalidate what
+   * the dial is used for — `palm_to_sky_deg` is read from the palm normal and
+   * the flags built on it are still earned — but it does mean the dial cannot be
+   * turned up to make a fault "more extreme", and `invariants.test.ts` pins the
+   * bound so a future dial past it fails rather than quietly stretching an arm.
+   *
+   * IT IS NOT A ROTATION, and that is the gap worth naming. Nothing in this rig
+   * rotates the humerus about its own axis, so shoulder external rotation — the
+   * thing a serve's racket drop is actually made of — cannot be varied here at
+   * all. A sweep for it reads the angle exactly on a clean rig (0.0° deviation
+   * across 24 seeds) and at 9.5° under the modelled camera at plausible poses,
+   * which is the same order as `palm_to_sky_deg`'s 6.8°; what stops the question
+   * being answerable is not the camera but the absence of a dial. See
+   * `external-rotation-feasibility` in the backlog.
    */
   trophyForearmDrop: number
   /** Degrees the palm rotates about the forearm through contact — the snap. */
