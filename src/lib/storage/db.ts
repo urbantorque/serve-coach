@@ -557,11 +557,26 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
   const flaws = Array.isArray(d.flaws)
     ? d.flaws.filter((f) => typeof f?.flaw === 'string')
     : []
-  if (d.chain && typeof d.chain === 'object') return { ...d, flaws }
+  /*
+   * External rotation, filled in the same way and for the same reason.
+   *
+   * Added a build after the chain and absent from everything saved before it,
+   * so it needs its own guard rather than riding on the chain's — a report from
+   * the build in between has a chain and no rotation, and the early return
+   * below would hand that one straight back. `deg: null` at zero confidence is
+   * the literal truth (nothing looked) and `lever: 0` says which refusal it was.
+   */
+  const externalRotation =
+    d.externalRotation && typeof d.externalRotation === 'object'
+      ? d.externalRotation
+      : { deg: null, confidence: 0, lever: 0 }
+
+  if (d.chain && typeof d.chain === 'object') return { ...d, flaws, externalRotation }
   const missing = { ms: null, confidence: 0 }
   return {
     ...d,
     flaws,
+    externalRotation,
     chain: {
       legs: { ...missing },
       hips: { ...missing },

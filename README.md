@@ -368,6 +368,24 @@ copy all have to come from somewhere, and the 19.7° offset at zero and the 0.8
 gain are properties of the reference frame rather than of a shoulder. Both need
 real footage before a player is told anything in degrees.
 
+**And it is now taken on every serve.** `Diagnosis.externalRotation` carries the
+angle, the visibility it was read at, and its *lever* — how much of the forearm
+actually sat across the upper arm's axis. That third number is the one that
+decides whether the angle exists: a forearm folded almost along the humerus has
+nothing perpendicular to rotate, so its direction round the axis is whatever the
+noise says. Below a quarter of the forearm's length the reading is refused
+outright, which is also the correct answer to "how externally rotated is a
+straight arm" — the question does not apply.
+
+It sits beside `chain` and on identical terms: **data only**, never in
+`signals`, so it cannot vote on a tier, pair into an injury flag or become an
+instruction. `UNCALIBRATED` in `tiers.ts` records why, and `depth.test.ts`
+enforces the pair — a measurement the ensemble produces with no entry, or an
+entry nothing produces, both fail the build. Adding the angle made that check go
+red first time, which is the check working. The ensemble now derives the
+deviation itself rather than trusting a number written in a comment, and gets
+**9.4°**, reproducing the sweep.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.

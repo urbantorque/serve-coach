@@ -66,7 +66,7 @@ import {
   SEEDS,
   chainDeviations,
   deviations,
-  flattenChain,
+  flattenUngraded,
   floorVerdicts,
   namedOn,
   realise,
@@ -128,7 +128,7 @@ function readOnce(dials: Partial<ServeDials>): Read | undefined {
     // Flattened by the shared helper rather than here, so this suite and
     // `realise` cannot end up disagreeing about which links a realisation
     // produced — the same argument that moved the ensemble into that file.
-    chain: flattenChain(diagnosis.chain),
+    chain: flattenUngraded(diagnosis),
     bySignal: Object.fromEntries(
       diagnosis.flaws.map((f) => [
         f.signal,
@@ -443,6 +443,19 @@ check('the chain read from the picture plane holds still where the one read from
       note(
         `  ${d.id.padEnd(17)} image x,y   deviation ${d.sd.toFixed(4)}      ` +
           `range ${d.range.toFixed(4)}   n=${d.n}   (dimensionless)`,
+      )
+      continue
+    }
+    // Degrees, for the same reason the ratio above is not milliseconds: this bag
+    // is every ungraded measurement rather than only the chain, and the chain is
+    // the only part of it measured in time. Nothing here asserts against it —
+    // SEEN and INFERRED are explicit lists — but a line reading "9.4 ms" about
+    // an angle is a wrong number in a file whose whole job is deriving right
+    // ones, and it would be quoted somewhere eventually.
+    if (d.id === 'external_rotation_deg') {
+      note(
+        `  ${d.id.padEnd(17)} world x,y,z deviation ${d.sd.toFixed(1).padStart(5)}°   ` +
+          `range ${d.range.toFixed(0).padStart(4)}°  n=${d.n}   (not graded — see UNCALIBRATED)`,
       )
       continue
     }
@@ -885,12 +898,16 @@ if (underResolved.length) {
       `\n  \x1b[33m⚠ Measured well, graded not at all:\x1b[0m` +
         links
           .map((d) => {
-            // One of these is a ratio. Printed to one decimal place with "ms"
-            // after it, the span ratio reported a deviation of 0.0 ms — a
+            // Not all of these are timings any more, and the unit has to follow
+            // the quantity. The span ratio is dimensionless — printed to one
+            // decimal with "ms" after it, it reported a deviation of 0.0 ms, a
             // quantity that never moves, said about the one entry here whose
-            // whole reason for existing is that it is dimensionless.
+            // whole reason for existing is that it is dimensionless. External
+            // rotation is degrees, and "9.4 ms" about an angle is the same class
+            // of wrong number in the same sentence.
+            const unit = d.id.endsWith('_deg') ? '°' : ' ms'
             const dimensionless = d.id.endsWith('_ratio')
-            const dev = dimensionless ? d.sd.toFixed(4) : `${d.sd.toFixed(1)} ms`
+            const dev = dimensionless ? d.sd.toFixed(4) : `${d.sd.toFixed(1)}${unit}`
             return `\n  \x1b[2m· ${d.id}: deviation ${dev}. ${UNCALIBRATED[d.id]}\x1b[0m`
           })
           .join('') +

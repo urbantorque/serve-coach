@@ -85,6 +85,34 @@ export interface Diagnosis {
    * left for that reader to discover.
    */
   chain: ChainTiming
+  /**
+   * How far the racket shoulder is externally rotated at the trophy.
+   *
+   * DATA ONLY, on exactly the same terms as `chain` above and for the same
+   * reasons: nothing grades it, no flaw is named from it, it never reaches
+   * `signals`, so it cannot vote on a tier, pair into an injury flag or become
+   * an instruction. `UNCALIBRATED` in `tiers.ts` carries why.
+   *
+   * It is here because it is the joint angle a racket drop is actually made of,
+   * and until now the engine only ever approximated it —
+   * `shoulder_load_no_drop` pairs drop depth against contact height rather than
+   * reading a rotation. The rig can now pose one (`trophyExternalRotation`), and
+   * a sweep against the ensemble every `NOISE_FLOOR` came from puts the
+   * deviation flat at 9.4–11.8° across a 48° span, which is gradeable territory.
+   *
+   * What is NOT settled is the zero. The angle is read against the trunk's up
+   * vector, which is a choice, and that choice is why a neutral arm reads 19.7°
+   * rather than 0° and why the reading tracks a real rotation at a gain of about
+   * 0.8. A band set on the absolute today would be a band set on an arbitrary
+   * reference frame. So it is measured, stored, and said to nobody.
+   *
+   * `null` when the trophy arm was not seen well enough, and — separately —
+   * when the forearm lies too close to the upper arm's own axis for its
+   * direction around that axis to mean anything. That second refusal is not
+   * defensiveness: it is the one geometry this measure genuinely cannot do, and
+   * without it a nearly-straight arm returns a confident angle made of noise.
+   */
+  externalRotation: ExternalRotation
   flaws: FlawFinding[]
   /** What the pass cost, so a slow device can be seen rather than guessed at. */
   cost: { frames: number; series: number; ms: number }
@@ -107,6 +135,36 @@ export interface Diagnosis {
 export interface ChainLink {
   ms: number | null
   confidence: number
+}
+
+/**
+ * The racket shoulder's external rotation at the trophy, and how much of the arm
+ * the camera actually saw.
+ *
+ * Same shape as `ChainLink` on purpose — a nullable measurement beside the
+ * confidence it was read at — because it is the same kind of thing: a number the
+ * engine takes and does not grade.
+ */
+export interface ExternalRotation {
+  /**
+   * Degrees, measured as the forearm's rotation about the shoulder→elbow axis,
+   * against the trunk's up projected onto the same plane. Larger is laid further
+   * back. `null` where it could not be read, never a zero — a zero here would be
+   * a neutral shoulder, and a shoulder nobody measured is not neutral.
+   */
+  deg: number | null
+  /** Mean visibility of the four landmarks it is built from, 0–1. */
+  confidence: number
+  /**
+   * How much of the forearm was actually perpendicular to the upper arm, 0–1.
+   *
+   * The conditioning of the reading, kept rather than thrown away, because it is
+   * what decides whether the angle means anything: an arm folded straight has
+   * almost nothing perpendicular to rotate, so its direction round the axis is
+   * whatever the noise says. Below `MIN_ROTATION_LEVER` the angle is refused,
+   * and this number is why.
+   */
+  lever: number
 }
 
 /**
@@ -552,6 +610,9 @@ export function diagnose(
     }
   }
 
+  /* --- external rotation, measured and not named ------------------------ */
+  const externalRotation = readExternalRotation(at(keys.trophy), R)
+
   /* --- the toss --------------------------------------------------------- */
   const liftFrom = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
   // Drift along image x, then along the body axis image x turns out to be. This
@@ -751,6 +812,7 @@ export function diagnose(
       confidence: round2(sequenceConfidence),
     },
     chain,
+    externalRotation,
     flaws,
     cost: {
       frames: frames.length,
@@ -839,4 +901,73 @@ function roundAll(signals: Record<string, number>): Record<string, number> {
     out[k] = Math.abs(v) >= 10 ? Math.round(v) : Math.round(v * 1000) / 1000
   }
   return out
+}
+
+/**
+ * How much of the forearm has to sit across the upper arm's axis before its
+ * rotation about that axis is a measurement rather than a coin toss.
+ *
+ * A quarter of the forearm's length. Not a comfort threshold: below it the
+ * quantity being measured genuinely stops existing, because the direction of a
+ * vector that is almost entirely along the axis it is being measured around is
+ * decided by whatever noise is left over. Measured on the rig, an arm folded to
+ * a 0.1 lever swings tens of degrees between two noise realisations of one
+ * identical serve, and an arm at 0.9 barely moves.
+ *
+ * The number this refusal protects is the one the whole reading is for. A serve
+ * with the racket dropped behind the back has a lever near 1; a straight arm at
+ * contact has one near 0, which is the correct answer to "how externally rotated
+ * is a straight arm" — the question does not apply.
+ */
+export const MIN_ROTATION_LEVER = 0.25
+
+/**
+ * Read external rotation off one frame.
+ *
+ * Rotation OF THE FOREARM ABOUT THE UPPER ARM, which is what external rotation
+ * physically is — not elbow flexion, which is a different angle a serve can
+ * change without rotating anything, and which the arm-extension measurements
+ * already carry.
+ *
+ * The forearm is projected onto the plane perpendicular to the shoulder→elbow
+ * axis and its angle read against the trunk's own up vector projected onto the
+ * same plane, so raising or lowering the whole arm does not move the reading.
+ * Unsigned, on purpose: a signed form wraps at ±180° the moment the forearm lays
+ * back past the reference plane, and a wrapped reading looks exactly like a
+ * measurement that fell apart.
+ */
+function readExternalRotation(f: Frame, R: ReturnType<typeof sided>): ExternalRotation {
+  const L = f.world
+  const parts = [L[R.shoulder], L[R.elbow], L[R.wrist], L[R.hip]]
+  const confidence = round2(mean(parts.map((p) => p?.visibility ?? 0)))
+  const none: ExternalRotation = { deg: null, confidence, lever: 0 }
+  if (parts.some((p) => !p)) return none
+
+  const [sh, el, wr, hip] = parts
+  const ax = { x: el.x - sh.x, y: el.y - sh.y, z: el.z - sh.z }
+  const axN = Math.hypot(ax.x, ax.y, ax.z)
+  if (axN < 1e-6) return none
+  const u = { x: ax.x / axN, y: ax.y / axN, z: ax.z / axN }
+
+  const across = (vx: number, vy: number, vz: number) => {
+    const d = u.x * vx + u.y * vy + u.z * vz
+    return { x: vx - u.x * d, y: vy - u.y * d, z: vz - u.z * d }
+  }
+
+  const foreLen = Math.hypot(wr.x - el.x, wr.y - el.y, wr.z - el.z)
+  const fore = across(wr.x - el.x, wr.y - el.y, wr.z - el.z)
+  const foreN = Math.hypot(fore.x, fore.y, fore.z)
+  const lever = foreLen > 1e-6 ? round2(foreN / foreLen) : 0
+
+  const up = across(sh.x - hip.x, sh.y - hip.y, sh.z - hip.z)
+  const upN = Math.hypot(up.x, up.y, up.z)
+
+  // Both refusals return the lever they were refused at, so a reader can see
+  // which one happened: a body nobody saw comes back at 0, an arm folded too
+  // straight comes back at whatever it actually had.
+  if (confidence < MIN_EVIDENCE || upN < 1e-6) return { deg: null, confidence, lever }
+  if (lever < MIN_ROTATION_LEVER) return { deg: null, confidence, lever }
+
+  const cos = clamp((fore.x * up.x + fore.y * up.y + fore.z * up.z) / (foreN * upN), -1, 1)
+  return { deg: Math.round((Math.acos(cos) * 180) / Math.PI), confidence, lever }
 }

@@ -102,7 +102,9 @@ export const SEEDS = seeds(24)
 export interface Realisation {
   signals: Record<string, number>
   /**
-   * The chain's per-link peak times, flattened to the same shape as `signals`.
+   * Every measurement the engine takes and does not grade, flattened to the
+   * same shape as `signals` — the chain's per-link peak times, and the trophy
+   * external rotation beside them. See `flattenUngraded`.
    *
    * Kept separate from `signals` rather than merged into it, which is the whole
    * reason this field exists. `signals` is what the engine grades, infers a tier
@@ -111,8 +113,12 @@ export interface Realisation {
    * ensemble unable to tell a graded number from an ungraded one — and the
    * ungraded ones are ungraded on purpose, recorded in `UNCALIBRATED`.
    *
-   * Links the engine dropped are absent rather than zero, exactly as in
+   * Anything the engine dropped is absent rather than zero, exactly as in
    * `signals`, so `deviations` counts them the same way.
+   *
+   * Still named `chain` because the chain was all there was when it was written
+   * and every reader of this file knows it by that name; what it holds is the
+   * ungraded set, which is what `depth.test.ts` actually checks it against.
    */
   chain: Record<string, number>
   /** The flaws the engine named to the player on this realisation. */
@@ -158,7 +164,7 @@ export function realise(
     const d = diagnose(frames, skel, { tier })
     out.push({
       signals: d.signals,
-      chain: flattenChain(d.chain),
+      chain: flattenUngraded(d),
       named: new Set(d.flaws.filter((f) => f.detected).map((f) => f.flaw)),
       bySignal: Object.fromEntries(
         d.flaws.map((f) => [f.signal, { detected: f.detected, miss: f.miss, confidence: f.confidence }]),
@@ -177,6 +183,29 @@ export function realise(
  * halve it. Same rule `realise` already applies to a whole unreadable clip, and
  * the same rule `metrics.ts` applies to a value it could not compute.
  */
+/**
+ * Every measurement the engine takes and deliberately does not grade, flat.
+ *
+ * The chain was the only such measurement when `flattenChain` was written, so
+ * the bag was named after it. `Diagnosis.externalRotation` is the second, on
+ * exactly the same terms, and it has to arrive through the same door: the
+ * "declared uncalibrated ⟺ actually produced" check in `depth.test.ts` walks
+ * this bag, so a measurement that skipped it would be an ungraded number nothing
+ * held to account, which is the one thing that check exists to prevent.
+ *
+ * Takes the whole `Diagnosis` rather than a field, because what belongs in here
+ * is a property of the measurement's *status* — ungraded — and not of where it
+ * happens to be stored.
+ */
+export function flattenUngraded(d: Diagnosis): Record<string, number> {
+  const out = flattenChain(d.chain)
+  // Dropped rather than zeroed when the arm could not be read, the same rule
+  // every link above follows: an angle nobody measured is not a neutral one.
+  const deg = d.externalRotation?.deg
+  if (typeof deg === 'number' && Number.isFinite(deg)) out.external_rotation_deg = deg
+  return out
+}
+
 export function flattenChain(chain: Diagnosis['chain']): Record<string, number> {
   const out: Record<string, number> = {}
   for (const [link, v] of Object.entries(chain)) {

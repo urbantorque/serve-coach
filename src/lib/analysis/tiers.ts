@@ -417,6 +417,38 @@ export const UNDER_RESOLVED: Record<string, string> = {
  */
 export const UNCALIBRATED: Record<string, string> = {
   /*
+   * Shoulder external rotation at the trophy — the joint angle a racket drop is
+   * actually made of, and the first entry here whose problem is not resolution.
+   *
+   * It is repeatable enough to grade. Swept against the ensemble every floor in
+   * this file came from, with a rig dial that genuinely rotates the humerus
+   * (`trophyExternalRotation`), the deviation is flat at 9.4–11.8° across a 48°
+   * span — it does not blow up at any part of the range. A floor set the way
+   * every other one here was, 1.5 × the deviation, would be 15°, leaving 3.15
+   * usable steps. `palm_to_sky_deg` is graded at a floor of 11; `hip_lead_ms` is
+   * `UNDER_RESOLVED` at 85. On repeatability alone this belongs in the bands.
+   *
+   * WHAT STOPS IT IS THE ZERO. The angle is read against the trunk's up vector
+   * projected onto the plane across the humerus, and that reference is a choice
+   * rather than an anatomy. It is why a neutral arm reads 19.7° instead of 0°,
+   * and why a 60° rotation reads as 48° of change — a gain of about 0.8. Both
+   * are properties of the frame the measurement is taken in. A band placed on
+   * the absolute number today would be a band placed on that choice, and the
+   * first real clip that disagreed with the rig about where zero sits would move
+   * every player across it at once.
+   *
+   * So: measured, returned in `Diagnosis.externalRotation`, kept out of
+   * `signals`, and graded by nothing. The two things that would change this are
+   * a second reference frame agreeing with this one about a *change* (a signal
+   * can be graded on its delta while its absolute is arbitrary), and real
+   * footage. Neither exists yet.
+   */
+  external_rotation_deg:
+    'measured and not named: 9.4–11.8° deviation over a 48° span, which is ' +
+    'gradeable, but read against a chosen reference frame that puts a neutral ' +
+    'arm at 19.7° and scales a real rotation by 0.8 — the repeatability is ' +
+    'there and the zero is not.',
+  /*
    * Peak leg drive: the fastest the hips rose in the frame.
    *
    * The most proximal link the camera can see, and the only one that needs no
