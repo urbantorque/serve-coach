@@ -6,6 +6,18 @@ in `git log`.
 
 ## 2026-08-16
 
+- **Your progress sheet now tells you which joint warning keeps coming back.**
+  The app has always flagged mechanics that risk a wrist, a shoulder or a lower
+  back on the serve they happened on. But nobody hurts a wrist on one serve, and
+  a warning read once and gone by the next clip is a warning people dismiss.
+  Every flag your reports have ever carried is now counted across your recent
+  trips to the court, and any that keeps recurring is stated at the top of the
+  sheet: "Your lower back has folded under the swing on 3 of your last 6 trips."
+  Counted in trips rather than serves, so one rough afternoon counts once
+  however many serves you filmed on it, and it goes quiet once you have stopped
+  doing it. The number it compares against only counts trips that could actually
+  have answered — a clip the app refused, or one where it never got a clean look
+  at that part of you, is not counted as a good day.
 - **Fixed: a stored report from another version could blank the whole app, in
   seven more ways than the one already found.** A report is read back out of
   storage through a repair step whose job is to make sure nothing downstream can

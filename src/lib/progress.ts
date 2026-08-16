@@ -6,6 +6,7 @@ import {
 } from './analysis/carryForward'
 import { FUNDAMENTALS } from './analysis/coaching'
 import { mean, statusOf } from './analysis/geometry'
+import { recurringStrain, type StrainRecord } from './analysis/strain'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
@@ -580,6 +581,28 @@ export function tripsOf(sessions: Session[], gapMs = MIN_THEN_AND_NOW_GAP_MS): S
     else trips.push([session])
   }
   return trips
+}
+
+/**
+ * Which joint warnings keep coming back, across this player's recent trips.
+ *
+ * The join between `recurringStrain`, which counts flags and knows nothing about
+ * when anybody went to the court, and `tripsOf`, which is the threshold this
+ * file owns — the same split `faultMoveOnTrip` above uses, and for the same
+ * reason: the analysis layer does not import the history layer.
+ *
+ * Not confined to a serve type or a rubric era, unlike every record in this
+ * file. Those confinements exist because a score is only comparable against the
+ * bands it was graded under, and a re-scored history would otherwise produce a
+ * record nothing can beat. A joint has the same range on a kick serve as on a
+ * flat one, `injuriesIn` reads its flags against absolute limits for exactly
+ * that reason, and a back that folded under the old rubric folded.
+ */
+export function recurringStrainOf(
+  sessions: Session[],
+  gapMs = MIN_THEN_AND_NOW_GAP_MS,
+): StrainRecord[] {
+  return recurringStrain(tripsOf(sessions, gapMs))
 }
 
 /**

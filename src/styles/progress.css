@@ -58,6 +58,32 @@
   color: var(--fg-faint);
 }
 
+/*
+ * The one line on this sheet that is about a joint rather than a score.
+ *
+ * Every other sentence here — the records, the milestone, the chart notes — is
+ * `--fg-faint` at 11.5px, which is the right weight for a footnote under a chart
+ * and the wrong one for the only thing on the screen that is about somebody's
+ * back. Written first at `.progress-foot` and looked at: it rendered as the
+ * smallest, faintest text on a sheet full of numbers, which is where a warning
+ * goes to be scrolled past.
+ *
+ * A new class rather than a retune of an existing one, and assembled from tokens
+ * that already exist: `--fg` and the same `--work` rule the report's injury
+ * block already runs down its left edge, so the two surfaces read as one subject
+ * without this becoming a second copy of that card. It is deliberately not that
+ * card — no icon, no title, no tinted panel. The card explains mechanics on the
+ * serve they happened on; this is a count.
+ */
+.strain-line {
+  margin-top: 10px;
+  padding-left: 11px;
+  border-left: 2px solid var(--work);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
 .progress-practice {
   display: flex;
   align-items: center;

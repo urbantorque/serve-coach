@@ -424,16 +424,46 @@ export function triage(diagnosis: Diagnosis, resilience: Resilience): Triage {
  * every rating, and a wrist being driven past it does not become acceptable
  * because the player is a beginner.
  */
+/**
+ * The raw signals each flag is read from.
+ *
+ * Exported because "this clip did not raise the flag" and "this clip could not
+ * see the joint" are different facts, and anything counting flags across a
+ * history has to tell them apart — a silhouetted shoulder is not a healthy one.
+ * `injuriesIn` reads this table for its own guards rather than repeating the
+ * list inline, so the two answers can never drift apart: whatever a flag is
+ * measured from is, by construction, what a reader is told it needs.
+ */
+export const INJURY_INPUTS: Record<InjuryFlag, readonly string[]> = {
+  wrist_strain_forced_pronation: ['palm_to_sky_deg', 'pronation_deg'],
+  lumbar_load_posture_collapse: ['spine_lean_deg'],
+  shoulder_load_no_drop: ['drop_depth_ratio', 'contact_height_ratio'],
+}
+
+/**
+ * Whether a clip could have raised this flag at all.
+ *
+ * Takes the signal bag rather than a `Diagnosis` so a caller holding a report
+ * read back out of storage can ask without reassembling one.
+ */
+export function injuryInputsRead(
+  signals: Record<string, number> | undefined,
+  flag: InjuryFlag,
+): boolean {
+  if (!signals) return false
+  return INJURY_INPUTS[flag].every((id) => Number.isFinite(signals[id]))
+}
+
 function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
   const out: { flag: InjuryFlag; severity: Severity }[] = []
   const sig = (id: string) => d.signals[id] ?? Number.NaN
-  const has = (id: string) => Number.isFinite(d.signals[id])
+  const has = (flag: InjuryFlag) => injuryInputsRead(d.signals, flag)
 
   // A tray grip that is nevertheless being rotated hard through the ball. The
   // forearm starts at the end of its range instead of the beginning, so the
   // rotation has to come from the wrist joint itself — which is where club
   // players pick up the wrist and elbow pain they blame on their strings.
-  if (has('palm_to_sky_deg') && has('pronation_deg')) {
+  if (has('wrist_strain_forced_pronation')) {
     if (sig('palm_to_sky_deg') >= 45 && sig('pronation_deg') >= 45) {
       out.push({
         flag: 'wrist_strain_forced_pronation',
@@ -443,7 +473,7 @@ function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
   }
 
   // A spine folding sideways under load, a hundred times a session.
-  if (has('spine_lean_deg') && sig('spine_lean_deg') >= 22) {
+  if (has('lumbar_load_posture_collapse') && sig('spine_lean_deg') >= 22) {
     out.push({
       flag: 'lumbar_load_posture_collapse',
       severity: sig('spine_lean_deg') >= 30 ? 'high' : 'medium',
@@ -452,7 +482,7 @@ function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
 
   // Reaching for a high contact with no external rotation to get there: the
   // shoulder makes up the difference at the end of its own range.
-  if (has('drop_depth_ratio') && has('contact_height_ratio')) {
+  if (has('shoulder_load_no_drop')) {
     if (sig('drop_depth_ratio') <= 0.1 && sig('contact_height_ratio') >= 1.3) {
       out.push({ flag: 'shoulder_load_no_drop', severity: 'medium' })
     }

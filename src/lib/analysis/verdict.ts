@@ -35,6 +35,7 @@ import {
   type RejectReason,
   type Triage,
 } from './triage'
+import { STRAIN_WINDOW, type StrainRecord } from './strain'
 import { SEVERITY_RANK, rungName, type Severity } from './tiers'
 import type { Analysis, Drill } from './types'
 import { cue } from './voice'
@@ -170,6 +171,40 @@ export function injuryNotes(triage: Triage | undefined): InjuryNote[] {
       title: INJURIES[flag].title,
       body: cue(INJURIES[flag].body),
     }))
+}
+
+/**
+ * What each flag has been doing, said in the past tense across trips.
+ *
+ * Deliberately not the report's own `body`. That one explains the mechanics to
+ * somebody looking at the serve it happened on, in the present tense, and
+ * reprinting it under a count would be the same paragraph twice with a number
+ * bolted on. This is the other half of the sentence a count needs: the subject
+ * and the verb, so the reader knows which body part the number is about without
+ * having to go and reopen a report from three weeks ago.
+ */
+const RECURRING: Record<InjuryFlag, string> = {
+  wrist_strain_forced_pronation: 'Your wrist has turned hard through the ball',
+  lumbar_load_posture_collapse: 'Your lower back has folded under the swing',
+  shoulder_load_no_drop: 'Your shoulder has covered a high reach',
+}
+
+/**
+ * One sentence for a joint warning that keeps recurring, or nothing.
+ *
+ * States the count and stops. No advice, because the report that raised each of
+ * those flags already carried the mechanics and the fix, and no adjective,
+ * because "worryingly" or "repeatedly" would be this app editorialising over a
+ * number that is already the strongest thing it can honestly say.
+ *
+ * `undefined` for a flag this build has no words for, the same reason
+ * `injuryNotes` filters: a report restored from a backup can name a flag a
+ * newer version invented.
+ */
+export function strainLine(record: Pick<StrainRecord, 'flag' | 'trips' | 'of'>): string | undefined {
+  const subject = RECURRING[record.flag]
+  if (!subject) return undefined
+  return cue(`${subject} on ${record.trips} of your last ${record.of} trips.`)
 }
 
 /* ------------------------------------------------------------ the one job -- */
@@ -546,6 +581,16 @@ export function everyVerdictCue(): { where: string; text: string }[] {
   }
   for (const [flag, copy] of Object.entries(INJURIES)) {
     out.push({ where: `injury.${flag}`, text: copy.body })
+  }
+  /*
+   * The recurrence line is assembled from a subject and a count, so linting the
+   * subject alone would check the half that cannot break the ceiling. Linted at
+   * `STRAIN_WINDOW` rather than at a number chosen here, so widening the window
+   * to something that spells longer is caught by the editor rather than shipped.
+   */
+  for (const flag of Object.keys(RECURRING) as InjuryFlag[]) {
+    const text = strainLine({ flag, trips: STRAIN_WINDOW, of: STRAIN_WINDOW })
+    if (text) out.push({ where: `strain.${flag}`, text })
   }
   /*
    * The carry-forward line is assembled rather than stored, so linting

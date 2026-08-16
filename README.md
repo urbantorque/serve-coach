@@ -256,6 +256,32 @@ silence, because this screen has no room for a caveat. Nothing is stored, counte
 or rewarded: it is one observation about two serves, and it goes when the trip
 does. `?demo=glance-move`, and `-cleared`/`-same`/`-wider`, show the four states.
 
+**A joint warning that keeps coming back is counted, and the denominator is the
+hard part.** `triage` has always raised injury flags on the serve in front of it
+and the report has always printed them, but a wrist is not hurt by one serve, and
+every flag the app ever raised was already sitting in storage unread. The
+progress sheet now leads with any that recur: "Your lower back has folded under
+the swing on 3 of your last 6 trips."
+
+Counted in trips rather than serves (`analysis/strain.ts`, joined to `tripsOf` by
+`recurringStrainOf` in `progress.ts`) — nine flagged serves in one afternoon are
+one bad afternoon, not nine pieces of evidence. Two trips is the floor, because
+one occurrence is the report's own job; six answerable trips is the window; and a
+pattern last raised more than one trip ago goes silent rather than following
+somebody around after they have fixed it.
+
+The denominator only counts trips that could have answered *for that flag*. A
+refused clip raises no flags and neither does one whose spine was never visible,
+so counting either as a clean trip would manufacture good news about somebody's
+back — constraint 1 inverted and pointed at the one subject where being wrong
+costs a joint. Readability is decided by `INJURY_INPUTS`/`injuryInputsRead` in
+`triage.ts`, the same table `injuriesIn` guards itself with, so the two answers
+cannot drift apart. Unlike every record in `progress.ts` this is confined by
+neither serve type nor rubric era: a joint has the same range on a kick serve as
+on a flat one, which is why `injuriesIn` reads against absolute limits in the
+first place. `?demo=history` seeds three sore trips of eight, each earning its
+flag through `injuriesIn` rather than having it written on.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.
@@ -415,8 +441,9 @@ Everything is in `src/lib`:
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
 | `analysis/carryForward.ts` | whether the fault the last serve was told about actually moved on this one |
+| `analysis/strain.ts` | which joint warnings keep recurring across recent trips, and over how many that could have answered |
 | `practice.ts` | finds the weakness that persists across trips to the court |
-| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, the trip streak, the best consistency gap swept, the best score, and what counts as one trip |
+| `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, the trip streak, the best consistency gap swept, the best score, the recurring-strain join, and what counts as one trip |
 | `screenFlow.ts` | every legal move between screens, as data a test can walk — describes `App.tsx`, never drives it |
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
 | `storage/db.ts` | the reports, and separately the drills the player says they did |

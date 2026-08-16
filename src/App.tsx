@@ -10,6 +10,7 @@ import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
+import { strainLine } from './lib/analysis/verdict'
 import {
   bestConsistencyGap,
   bestGapEverLine,
@@ -21,6 +22,7 @@ import {
   gapDeltaFor,
   gapDeltaLine,
   longestStreakLine,
+  recurringStrainOf,
   shortDate,
   sixWeekMilestone,
   streakLine,
@@ -473,6 +475,9 @@ export default function App() {
   // Not type-restricted either, the same reason `streak` isn't — a run of
   // trips is about showing up, across every serve type.
   const longestStreakText = useMemo(() => longestStreakLine(sessions), [sessions])
+  // Not type-restricted and not era-restricted — see `recurringStrainOf`. A
+  // joint has the same range whatever the serve was aiming at.
+  const strain = useMemo(() => recurringStrainOf(sessions), [sessions])
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
     [sessions, drillLogs],
@@ -1594,6 +1599,31 @@ export default function App() {
                 <DeltaChip delta={form.overallDelta} />
               </span>
             </div>
+
+            {/* Above the records rather than below them, and above the charts,
+                because it is the one thing on this sheet that is about the
+                player's body rather than their score — and because a warning
+                filed underneath a celebration reads as a footnote to it.
+
+                Plain sentences in the same block furniture every other section
+                here uses, not the report's `.injury` card. That card carries an
+                icon, a title and the mechanics because it is explaining a fault
+                on the serve in front of you; this is a count, the explanation
+                already happened on each of those reports, and reproducing the
+                card would restate three paragraphs to add one number. */}
+            {strain.length > 0 && (
+              <section className="block">
+                <h3 className="block-title">What keeps coming back</h3>
+                {strain.map((record) => {
+                  const line = strainLine(record)
+                  return line ? (
+                    <p key={record.flag} className="strain-line">
+                      {line}
+                    </p>
+                  ) : null
+                })}
+              </section>
+            )}
 
             {/* Facts about the whole journey rather than about form —
                 which is what the rest of this sheet (the trend, the delta
