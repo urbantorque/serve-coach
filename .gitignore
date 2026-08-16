@@ -21,3 +21,8 @@ public/wasm/
 # NEXT.md is still the one source of truth for what is done, this just avoids
 # re-deriving "where was I" from git log every time. Not part of the programme.
 .agent_state/
+
+# Footage handed to the corpus ingest. Clips never enter the repo — see
+# CORPUS.md: what is committable is the landmark dump, not the video.
+clips/
+*.corpus.json

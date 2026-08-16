@@ -3,6 +3,7 @@ import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
 import StoragePanel from './components/StoragePanel'
 import DeviceCheck from './components/DeviceCheck'
+import CorpusIngest from './components/CorpusIngest'
 import PracticeCard from './components/PracticeCard'
 import SeasonShareButton from './components/SeasonShareButton'
 import FramePair, { type PairPosition } from './components/FramePair'
@@ -215,7 +216,7 @@ export default function App() {
   const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
   const [sessions, setSessions] = useState<Session[]>([])
   const [sheet, setSheet] = useState<
-    'guide' | 'guide-first' | 'history' | 'progress' | 'check' | null
+    'guide' | 'guide-first' | 'history' | 'progress' | 'check' | 'corpus' | null
   >(null)
   /** Bumped to ask the home screen to open its viewfinder. See Home's `openFraming`. */
   const [framingNonce, setFramingNonce] = useState(0)
@@ -619,6 +620,14 @@ export default function App() {
     // navigation path because that is what can be handed to somebody standing
     // on a baseline.
     if (new URLSearchParams(location.search).has('check')) setSheet('check')
+
+    // `?corpus` turns a folder of clips into landmark dumps — see CORPUS.md.
+    // Dev only, unlike `?check`: it is a tool for building the engine, not for
+    // a player standing on a baseline, and it has no business in the bundle a
+    // player downloads.
+    if (import.meta.env.DEV && new URLSearchParams(location.search).has('corpus')) {
+      setSheet('corpus')
+    }
 
     // Dev-only: `?demo` renders a report from a simulated serve, so the UI can
     // be worked on without filming one. Dynamically imported so it is not in
@@ -1562,6 +1571,14 @@ export default function App() {
       <Sheet open={sheet === 'check'} onClose={() => setSheet(null)} title="What this phone can do">
         <DeviceCheck />
       </Sheet>
+
+      {/* Dev only. The import is dynamic so neither the ingest nor the pipeline
+          it drives reaches the production bundle. */}
+      {import.meta.env.DEV && sheet === 'corpus' && (
+        <Sheet open onClose={() => setSheet(null)} title="Build a corpus">
+          <CorpusIngest />
+        </Sheet>
+      )}
 
       {/* Not "Your form" — the home card already owns that name for the average
           of the last three serves, and this sheet is the whole history behind
