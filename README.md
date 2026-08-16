@@ -279,8 +279,25 @@ costs a joint. Readability is decided by `INJURY_INPUTS`/`injuryInputsRead` in
 cannot drift apart. Unlike every record in `progress.ts` this is confined by
 neither serve type nor rubric era: a joint has the same range on a kick serve as
 on a flat one, which is why `injuriesIn` reads against absolute limits in the
-first place. `?demo=history` seeds three sore trips of eight, each earning its
-flag through `injuriesIn` rather than having it written on.
+first place.
+
+**And it says when one has stopped.** `clearedStrain` reads the same count the
+other way: a pattern that was recurring and has not been raised for three
+answerable trips reads "Your wrist has stopped turning hard through the ball on
+your last 5 trips", with the same rule in `--great` instead of `--work`. The
+floor is three rather than two, and the asymmetry against the warning is
+deliberate — the cost of a premature warning is a player checking their back, and
+the cost of a premature all-clear is a player no longer watching something they
+still do, so the threshold that ends a warning is harder to reach than the one
+that starts it. It is bounded by `STRAIN_WINDOW` at the far end too, so the
+subject closes rather than becoming furniture, and it can only be said about a
+pattern `recurringStrain` would itself have reported at the time it was last
+raised. Refused trips clear nothing: a run with nothing measured in it is not
+evidence of a fix. The block's heading follows what it holds — "What keeps coming
+back" while anything is live, "What has stopped" when only the cleared lines
+remain. `?demo=history` seeds both at once: a back on three of the last six
+trips, and a wrist stopped five trips ago, each earning its flag through
+`injuriesIn` rather than having it written on.
 
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on

@@ -6,7 +6,12 @@ import {
 } from './analysis/carryForward'
 import { FUNDAMENTALS } from './analysis/coaching'
 import { mean, statusOf } from './analysis/geometry'
-import { recurringStrain, type StrainRecord } from './analysis/strain'
+import {
+  clearedStrain,
+  recurringStrain,
+  type StrainCleared,
+  type StrainRecord,
+} from './analysis/strain'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
@@ -603,6 +608,21 @@ export function recurringStrainOf(
   gapMs = MIN_THEN_AND_NOW_GAP_MS,
 ): StrainRecord[] {
   return recurringStrain(tripsOf(sessions, gapMs))
+}
+
+/**
+ * Which of those warnings have stopped. The same join, the other direction.
+ *
+ * Separate from `recurringStrainOf` rather than one call returning both, because
+ * the two answers are drawn differently and rendered under different conditions,
+ * and a caller wanting only the warning should not have to compute the rest.
+ * `tripsOf` is cheap and both memoise on the same `sessions` reference.
+ */
+export function clearedStrainOf(
+  sessions: Session[],
+  gapMs = MIN_THEN_AND_NOW_GAP_MS,
+): StrainCleared[] {
+  return clearedStrain(tripsOf(sessions, gapMs))
 }
 
 /**

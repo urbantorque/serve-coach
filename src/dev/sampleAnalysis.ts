@@ -205,27 +205,34 @@ export function sampleHistory(now = Date.now()): {
   /**
    * Trips, oldest first: how many days back, and what was hit on each.
    *
-   * `sore` folds the spine past `injuriesIn`'s absolute limit on one serve of
-   * that trip, which is what `recurringStrain` counts. Three of the last six
-   * answerable trips carry it, including the most recent — the shape the "what
-   * keeps coming back" block exists for, and one no clean history can reach.
+   * `sore` folds the spine or turns the wrist past `injuriesIn`'s absolute
+   * limits on one serve of that trip, which is what `strain.ts` counts. The two
+   * are placed to produce both halves of that block at once, which is the state
+   * worth being able to look at and one no clean history reaches:
+   *
+   *   · **`back` on three of the last six answerable trips, including the most
+   *     recent** — a live pattern, so `recurringStrain` speaks.
+   *   · **`wrist` on the second and third trips and never since** — five clean
+   *     trips, inside `STRAIN_WINDOW` and past `CLEARED_TRIPS`, so
+   *     `clearedStrain` speaks about the same history in the other direction.
+   *
    * Deliberately one serve per sore trip rather than all of them, because a trip
    * counting once however many of its serves were flagged is the property most
    * worth being able to see on a screen.
    */
   const trips: {
     daysAgo: number
-    serves: { reach: number; kick?: boolean; basket?: boolean; sore?: boolean }[]
+    serves: { reach: number; kick?: boolean; basket?: boolean; sore?: 'back' | 'wrist' }[]
   }[] = [
     { daysAgo: 77, serves: [{ reach: 1.11 }, { reach: 1.14, basket: true }, { reach: 1.1 }] },
-    { daysAgo: 69, serves: [{ reach: 1.13 }, { reach: 1.15 }] },
-    { daysAgo: 61, serves: [{ reach: 1.12 }, { reach: 1.16 }, { reach: 1.13 }] },
+    { daysAgo: 69, serves: [{ reach: 1.13 }, { reach: 1.15, sore: 'wrist' }] },
+    { daysAgo: 61, serves: [{ reach: 1.12 }, { reach: 1.16 }, { reach: 1.13, sore: 'wrist' }] },
     // The recalibration lands here — everything from this trip on is rubric 2.
     { daysAgo: 47, serves: [{ reach: 1.18, basket: true }, { reach: 1.15 }, { reach: 1.17 }] },
-    { daysAgo: 39, serves: [{ reach: 1.2 }, { reach: 1.19, kick: true }, { reach: 1.21, sore: true }] },
+    { daysAgo: 39, serves: [{ reach: 1.2 }, { reach: 1.19, kick: true }, { reach: 1.21, sore: 'back' }] },
     { daysAgo: 25, serves: [{ reach: 1.24, basket: true }, { reach: 1.22 }] },
-    { daysAgo: 12, serves: [{ reach: 1.27, sore: true }, { reach: 1.25, kick: true }, { reach: 1.26 }] },
-    { daysAgo: 3, serves: [{ reach: 1.31, basket: true }, { reach: 1.29 }, { reach: 1.3, sore: true }] },
+    { daysAgo: 12, serves: [{ reach: 1.27, sore: 'back' }, { reach: 1.25, kick: true }, { reach: 1.26 }] },
+    { daysAgo: 3, serves: [{ reach: 1.31, basket: true }, { reach: 1.29 }, { reach: 1.3, sore: 'back' }] },
   ]
 
   const sessions: Session[] = []
@@ -235,12 +242,19 @@ export function sampleHistory(now = Date.now()): {
     for (const [i, serve] of trip.serves.entries()) {
       // Minutes apart inside a trip, which is what `sameTrip` is measuring.
       const createdAt = now - trip.daysAgo * DAY + i * 11 * 60 * 1000
-      // The same dial `?demo=injury` uses, so the flag is earned through
-      // `injuriesIn` here too rather than written onto the report.
-      const a = sampleAnalysis({
-        contactReach: serve.reach,
-        ...(serve.sore ? { spineLean: DEMO_DIALS.injury.spineLean } : {}),
-      })
+      // The same dials `?demo=injury` uses, split by joint, so each flag is
+      // earned through `injuriesIn` here too rather than written onto the
+      // report. `injury` sets both at once; this history needs them apart.
+      const sore =
+        serve.sore === 'back'
+          ? { spineLean: DEMO_DIALS.injury.spineLean }
+          : serve.sore === 'wrist'
+            ? {
+                palmToSky: DEMO_DIALS.injury.palmToSky,
+                trophyForearmDrop: DEMO_DIALS.injury.trophyForearmDrop,
+              }
+            : {}
+      const a = sampleAnalysis({ contactReach: serve.reach, ...sore })
       const { frames: _f, ...rest } = a
       void _f
 

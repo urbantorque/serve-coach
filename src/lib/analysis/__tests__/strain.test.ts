@@ -13,9 +13,16 @@
  * The rest is about silence: below the floor, past the window, and once a
  * pattern has stopped, this says nothing at all.
  */
-import { MIN_STRAIN_TRIPS, STRAIN_WINDOW, recurringStrain, type StrainSource } from '../strain'
+import {
+  CLEARED_TRIPS,
+  MIN_STRAIN_TRIPS,
+  STRAIN_WINDOW,
+  clearedStrain,
+  recurringStrain,
+  type StrainSource,
+} from '../strain'
 import { INJURY_INPUTS, injuryInputsRead, type InjuryFlag } from '../triage'
-import { strainLine } from '../verdict'
+import { strainClearedLine, strainLine } from '../verdict'
 import { MAX_WORDS, cueIssues, wordCount } from '../voice'
 import { assert, check, heading, note, report } from './harness'
 
@@ -266,6 +273,91 @@ check('the sentence states the count it was given', () => {
 check('a flag this build has no words for produces no sentence', () => {
   const line = strainLine({ flag: 'a_flag_from_the_future' as InjuryFlag, trips: 2, of: 3 })
   assert(line === undefined, `a restored report named an unknown flag and got "${line}"`)
+})
+
+heading('A pattern that has stopped')
+
+const clearedBack = (trips: StrainSource[][]) => clearedStrain(trips).find((r) => r.flag === BACK)
+
+check('a pattern with three clean trips behind it is reported as stopped', () => {
+  const found = clearedBack(tripsWhere([true, true, false, false, false]))
+  assert(found !== undefined, 'a real pattern followed by three clean trips should be reported')
+  assert(found!.since === 3, `since was ${found!.since}, expected 3`)
+  assert(found!.was === 2, `was ${found!.was}, expected the 2 trips it was raised on`)
+})
+
+check('the bar to say it stopped is higher than the bar to warn', () => {
+  // Two clean trips is not enough. The asymmetry is the point: the cost of a
+  // premature warning is a player checking their back; the cost of a premature
+  // all-clear is a player no longer watching something they still do.
+  assert(clearedBack(tripsWhere([true, true, false, false])) === undefined, 'two clean trips is not cleared')
+  assert(CLEARED_TRIPS > MIN_STRAIN_TRIPS, 'the clearing floor must be harder to reach than the warning floor')
+})
+
+check('a live pattern is never also reported as stopped', () => {
+  const trips = tripsWhere([true, true, false])
+  assert(backIn(trips) !== undefined, 'this should still be a live warning')
+  assert(clearedBack(trips) === undefined, 'and must not simultaneously read as cleared')
+})
+
+check('nothing that was never a pattern can be cleared', () => {
+  // One occurrence, then a long clean run. The report said it at the time; this
+  // block has nothing to close.
+  assert(clearedBack(tripsWhere([true, false, false, false])) === undefined, 'one occurrence is not a pattern')
+})
+
+check('a player who never raised the flag hears nothing', () => {
+  assert(clearedStrain(tripsWhere([false, false, false, false, false])).length === 0, 'expected silence')
+  assert(clearedStrain([]).length === 0, 'an empty history clears nothing')
+})
+
+check('the subject closes once it is far enough behind', () => {
+  const long = [true, true, ...Array(STRAIN_WINDOW + 1).fill(false)]
+  assert(clearedBack(tripsWhere(long)) === undefined, 'past the window it stops being news')
+  const edge = [true, true, ...Array(STRAIN_WINDOW).fill(false)]
+  assert(clearedBack(tripsWhere(edge))?.since === STRAIN_WINDOW, 'the last trip inside the window still speaks')
+})
+
+check('trips that could not answer neither clear a pattern nor count as clean', () => {
+  // Three refused trips after two flagged ones. Nothing was measured, so
+  // nothing has stopped — reading those as a clean run would be the denominator
+  // bug wearing the opposite sign.
+  const trips: StrainSource[][] = [
+    [serve([BACK])],
+    [serve([BACK])],
+    [serve([], { status: 'rejected' })],
+    [serve([], { status: 'rejected' })],
+    [serve([], { status: 'rejected' })],
+  ]
+  assert(clearedBack(trips) === undefined, 'refusals are not evidence of a fix')
+})
+
+check('one flag can be live while another is cleared', () => {
+  const trips: StrainSource[][] = [
+    [serve([WRIST])],
+    [serve([WRIST])],
+    [serve([BACK])],
+    [serve([])],
+    [serve([BACK])],
+  ]
+  assert(backIn(trips)?.trips === 2, 'the back is still live')
+  assert(clearedStrain(trips).find((r) => r.flag === WRIST)?.since === 3, 'the wrist has stopped')
+  assert(clearedStrain(trips).find((r) => r.flag === BACK) === undefined, 'the back is not cleared')
+})
+
+check('the stopped sentence fits the editor and states its run', () => {
+  for (const flag of Object.keys(INJURY_INPUTS) as InjuryFlag[]) {
+    const line = strainClearedLine({ flag, since: STRAIN_WINDOW })
+    assert(line !== undefined, `${flag} has no cleared sentence`)
+    assert(cueIssues(line!).length === 0, `${flag}: ${cueIssues(line!).join('; ')}`)
+    assert(wordCount(line!) <= MAX_WORDS, `${flag} runs to ${wordCount(line!)} words`)
+  }
+  const back = strainClearedLine({ flag: BACK, since: 4 })
+  assert(back!.includes('your last 4 trips'), `read "${back}"`)
+})
+
+check('an unknown flag produces no cleared sentence either', () => {
+  assert(strainClearedLine({ flag: 'a_flag_from_the_future' as InjuryFlag, since: 3 }) === undefined, 'expected nothing')
 })
 
 report()

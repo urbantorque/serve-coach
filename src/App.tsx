@@ -10,7 +10,7 @@ import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
-import { strainLine } from './lib/analysis/verdict'
+import { strainClearedLine, strainLine } from './lib/analysis/verdict'
 import {
   bestConsistencyGap,
   bestGapEverLine,
@@ -21,6 +21,7 @@ import {
   buildProgress,
   gapDeltaFor,
   gapDeltaLine,
+  clearedStrainOf,
   longestStreakLine,
   recurringStrainOf,
   shortDate,
@@ -478,6 +479,8 @@ export default function App() {
   // Not type-restricted and not era-restricted — see `recurringStrainOf`. A
   // joint has the same range whatever the serve was aiming at.
   const strain = useMemo(() => recurringStrainOf(sessions), [sessions])
+  // The same count read the other way: what was recurring and has stopped.
+  const strainCleared = useMemo(() => clearedStrainOf(sessions), [sessions])
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
     [sessions, drillLogs],
@@ -1611,13 +1614,29 @@ export default function App() {
                 on the serve in front of you; this is a count, the explanation
                 already happened on each of those reports, and reproducing the
                 card would restate three paragraphs to add one number. */}
-            {strain.length > 0 && (
+            {(strain.length > 0 || strainCleared.length > 0) && (
               <section className="block">
-                <h3 className="block-title">What keeps coming back</h3>
+                {/* Named for what the block actually contains. A player with
+                    nothing recurring and one thing fixed should not read a
+                    heading about things coming back, and a player with both
+                    gets the heading for the half that needs acting on — the
+                    warnings lead, the cleared lines read as the counterpoint
+                    underneath rather than softening them. */}
+                <h3 className="block-title">
+                  {strain.length > 0 ? 'What keeps coming back' : 'What has stopped'}
+                </h3>
                 {strain.map((record) => {
                   const line = strainLine(record)
                   return line ? (
                     <p key={record.flag} className="strain-line">
+                      {line}
+                    </p>
+                  ) : null
+                })}
+                {strainCleared.map((record) => {
+                  const line = strainClearedLine(record)
+                  return line ? (
+                    <p key={record.flag} className="strain-line strain-line--clear">
                       {line}
                     </p>
                   ) : null

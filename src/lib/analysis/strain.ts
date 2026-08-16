@@ -142,6 +142,77 @@ export function recurringStrain(trips: readonly (readonly StrainSource[])[]): St
   )
 }
 
+/**
+ * How many answerable trips clean before a pattern is called stopped.
+ *
+ * Three rather than one, and the asymmetry against `MIN_STRAIN_TRIPS` is
+ * deliberate rather than sloppy: two trips is enough evidence to warn somebody
+ * about a joint, because the cost of a warning that turns out to be a coincidence
+ * is that they check their back. Two clean trips is not enough to tell them they
+ * have fixed it, because the cost of that being a coincidence is that they stop
+ * watching something they are still doing. The threshold that ends a warning has
+ * to be harder to reach than the one that starts it.
+ */
+export const CLEARED_TRIPS = 3
+
+export interface StrainCleared {
+  flag: InjuryFlag
+  /** Answerable trips since it was last raised. Always at least `CLEARED_TRIPS`. */
+  since: number
+  /** Trips it was being raised on, in the window before it stopped. */
+  was: number
+}
+
+/**
+ * Joint warnings that were recurring and have stopped.
+ *
+ * The other half of `recurringStrain`, and the reason it is worth building: that
+ * function goes quiet the moment a pattern stops, so a player who did the work
+ * and fixed their back fold got exactly nothing back for it. An app that notices
+ * the problem and never notices the fix is an app that only ever tells somebody
+ * off, and this is the one part of the sheet where that matters most.
+ *
+ * NOT A REWARD, AND NOT FOR A TAP. It is the same count the warning was made of,
+ * read the other way round, off the same analysed serves. Nothing here can be
+ * earned by pressing anything, and it says nothing about a joint being healthy —
+ * only that a mechanic the app was watching has not been seen for three trips.
+ *
+ * SAYS IT, THEN STOPS SAYING IT. A line that stays up forever becomes furniture,
+ * and a player who fixed something two seasons ago does not need it on every
+ * screen. Bounded by `STRAIN_WINDOW`, the same figure that bounds the warning, so
+ * the subject closes on both sides at the same distance.
+ *
+ * The pattern has to have been real. Reported only where `recurringStrain` would
+ * itself have reported it at the time it was last raised — the same window, the
+ * same floor, the same per-flag denominator — so nothing can be "cleared" that
+ * was never a pattern in the first place.
+ */
+export function clearedStrain(trips: readonly (readonly StrainSource[])[]): StrainCleared[] {
+  const out: StrainCleared[] = []
+
+  for (const flag of Object.keys(INJURY_INPUTS) as InjuryFlag[]) {
+    const answerable = trips.filter((trip) => trip.some((s) => couldRaise(s, flag)))
+    const raised = answerable.map((trip) => worstOn(trip, flag) !== undefined)
+
+    const last = raised.lastIndexOf(true)
+    if (last < 0) continue
+
+    const since = raised.length - 1 - last
+    if (since < CLEARED_TRIPS || since > STRAIN_WINDOW) continue
+
+    // What the warning would have said on the day it was last raised: the same
+    // window, ending there rather than at today.
+    const was = raised.slice(0, last + 1).slice(-STRAIN_WINDOW).filter(Boolean).length
+    if (was < MIN_STRAIN_TRIPS) continue
+
+    out.push({ flag, since, was })
+  }
+
+  // Longest clean first: the strongest evidence leads, the same way the loudest
+  // count leads in `recurringStrain`.
+  return out.sort((a, b) => b.since - a.since)
+}
+
 /** Whether one serve was measured well enough to have raised this flag. */
 function couldRaise(s: StrainSource, flag: InjuryFlag): boolean {
   if (s.triage?.status !== 'ok') return false

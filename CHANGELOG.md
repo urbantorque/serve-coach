@@ -18,6 +18,12 @@ in `git log`.
   doing it. The number it compares against only counts trips that could actually
   have answered — a clip the app refused, or one where it never got a clean look
   at that part of you, is not counted as a good day.
+- **And it now tells you when you have stopped doing it.** The same count read
+  the other way: a warning that was recurring and has not appeared for three
+  trips reads "Your wrist has stopped turning hard through the ball on your last
+  5 trips." Three clean trips rather than two, because two is enough evidence to
+  ask you to watch something and not enough to tell you it is fixed. It says it
+  for a few trips and then stops, rather than sitting on your screen forever.
 - **Fixed: a stored report from another version could blank the whole app, in
   seven more ways than the one already found.** A report is read back out of
   storage through a repair step whose job is to make sure nothing downstream can

@@ -84,6 +84,15 @@
   color: var(--fg);
 }
 
+/* The same line for a pattern that has stopped. One token swapped — `--great`
+   is what this app already colours a measurement that is where it should be —
+   and nothing else, because a warning and its resolution being the same shape
+   is the point: it is the same count, read the other way round. No tint, no
+   badge and no glyph; the sentence is the whole thing. */
+.strain-line--clear {
+  border-left-color: var(--great);
+}
+
 .progress-practice {
   display: flex;
   align-items: center;

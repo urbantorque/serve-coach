@@ -35,7 +35,7 @@ import {
   type RejectReason,
   type Triage,
 } from './triage'
-import { STRAIN_WINDOW, type StrainRecord } from './strain'
+import { STRAIN_WINDOW, type StrainCleared, type StrainRecord } from './strain'
 import { SEVERITY_RANK, rungName, type Severity } from './tiers'
 import type { Analysis, Drill } from './types'
 import { cue } from './voice'
@@ -205,6 +205,36 @@ export function strainLine(record: Pick<StrainRecord, 'flag' | 'trips' | 'of'>):
   const subject = RECURRING[record.flag]
   if (!subject) return undefined
   return cue(`${subject} on ${record.trips} of your last ${record.of} trips.`)
+}
+
+/**
+ * The same mechanic, said as a thing that has stopped happening.
+ *
+ * Written out rather than negated from `RECURRING`, because "your lower back has
+ * not folded" is a sentence about the fold and this one has to be about the back
+ * holding. Each says what the body is doing now, in the same plain register as
+ * the warning it replaces, and none of them congratulates anybody: the app
+ * reports what it counted and the player can decide how pleased to be.
+ */
+const CLEARED: Record<InjuryFlag, string> = {
+  wrist_strain_forced_pronation: 'Your wrist has stopped turning hard through the ball',
+  lumbar_load_posture_collapse: 'Your lower back has held straight under the swing',
+  shoulder_load_no_drop: 'Your racket has fallen behind you before you reach',
+}
+
+/**
+ * One sentence for a joint warning that has stopped, or nothing.
+ *
+ * States the run of clean trips and stops, for the same reason `strainLine`
+ * states the count and stops. It is deliberately not a milestone, a badge or a
+ * congratulation — `clearedStrain` is a count of analysed serves, and dressing it
+ * up as an award would make the one honest thing on this block look like the
+ * rest of the internet.
+ */
+export function strainClearedLine(record: Pick<StrainCleared, 'flag' | 'since'>): string | undefined {
+  const subject = CLEARED[record.flag]
+  if (!subject) return undefined
+  return cue(`${subject} on your last ${record.since} trips.`)
 }
 
 /* ------------------------------------------------------------ the one job -- */
@@ -591,6 +621,10 @@ export function everyVerdictCue(): { where: string; text: string }[] {
   for (const flag of Object.keys(RECURRING) as InjuryFlag[]) {
     const text = strainLine({ flag, trips: STRAIN_WINDOW, of: STRAIN_WINDOW })
     if (text) out.push({ where: `strain.${flag}`, text })
+  }
+  for (const flag of Object.keys(CLEARED) as InjuryFlag[]) {
+    const text = strainClearedLine({ flag, since: STRAIN_WINDOW })
+    if (text) out.push({ where: `cleared.${flag}`, text })
   }
   /*
    * The carry-forward line is assembled rather than stored, so linting
