@@ -299,6 +299,19 @@ remain. `?demo=history` seeds both at once: a back on three of the last six
 trips, and a wrist stopped five trips ago, each earning its flag through
 `injuriesIn` rather than having it written on.
 
+**The injury card on the report carries its own history.** A warning read once is
+a warning dismissed, and the card is the one moment somebody is actually reading
+about that joint — so where there is a history behind it, it ends with "Also on 2
+of your 6 trips before this one." `strainBehind` counts trips *strictly before*
+this serve's own: counting the viewed serve's trip would make the sentence depend
+on whether the report had reached storage yet, and counting forward from it would
+have a reopened report claim a history it did not have when it was filed — the
+mistake `bestGapLine` was shipped with and redesigned out of. One prior trip is
+enough, because the serve being read about is itself the second, which is the
+same `MIN_STRAIN_TRIPS` floor counted from the other end. It takes the card's own
+body voice rather than a style of its own: written first as a dimmer caveat and
+looked at, which made the strongest fact on the card the quietest thing on it.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.

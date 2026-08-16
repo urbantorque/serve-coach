@@ -12,6 +12,7 @@ import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
+import type { InjuryFlag } from '../lib/analysis/triage'
 import type { PracticeFocus } from '../lib/practice'
 import type { ServeType } from '../lib/storage/prefs'
 import {
@@ -116,6 +117,16 @@ interface Props {
    */
   streak?: string
   /**
+   * Per injury flag, what it did on the trips before this serve — see
+   * `strainBehindOf`. A warning read once is a warning dismissed, and this card
+   * is the one moment a player is actually reading about that joint.
+   *
+   * Sentences rather than counts, and computed for this report's own date rather
+   * than for today, so a reopened report cannot start claiming a history it did
+   * not have when it was filed.
+   */
+  strainBehind?: Partial<Record<InjuryFlag, string>>
+  /**
    * The report on screen could not be written to storage.
    *
    * Storage is best-effort — see `db.ts` — so a save failure never blocks this
@@ -163,6 +174,7 @@ export default function Report({
   basketGapDelta,
   bestScore,
   streak,
+  strainBehind,
   saveWarning,
   practice,
   onLogDrill,
@@ -284,6 +296,19 @@ export default function Report({
             <p>
               <Cue text={n.body} />
             </p>
+            {/* The history behind this card, where there is one. Inside the
+                card rather than under it, because it is the same subject: the
+                count is only meaningful attached to the mechanics the body
+                has just described. Absent on a first occurrence, which is
+                most of them.
+
+                Deliberately no style of its own — it takes `.injury-text p`,
+                the card's own body voice. Written first as a dimmer caveat and
+                looked at: demoting the count made the strongest fact on the
+                card the quietest thing on it, and this is not a footnote to the
+                warning, it is the warning's evidence. The class is left as a
+                name for the element, not as a hook for a rule. */}
+            {strainBehind?.[n.flag] && <p className="injury-behind">{strainBehind[n.flag]}</p>}
           </div>
         </div>
       ))}

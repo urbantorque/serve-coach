@@ -9,9 +9,11 @@ import { mean, statusOf } from './analysis/geometry'
 import {
   clearedStrain,
   recurringStrain,
+  strainBehind,
   type StrainCleared,
   type StrainRecord,
 } from './analysis/strain'
+import { INJURY_INPUTS, type InjuryFlag } from './analysis/triage'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
@@ -608,6 +610,39 @@ export function recurringStrainOf(
   gapMs = MIN_THEN_AND_NOW_GAP_MS,
 ): StrainRecord[] {
   return recurringStrain(tripsOf(sessions, gapMs))
+}
+
+/**
+ * What each joint warning did on the trips before one particular serve.
+ *
+ * The join `Report.tsx` needs: a map from flag to the sentence that goes under
+ * its card, keyed so the screen never has to know what a trip is. Cut at the
+ * viewed serve's own trip rather than at today, so a report reopened next month
+ * still says what was true when it was filed — the same correctness `bestGapLine`
+ * had to be redesigned to get, and the reason this takes `at` rather than
+ * reading `Date.now()`.
+ *
+ * Excludes the viewed serve's whole trip, not just the serve: `strainBehind`
+ * counts what came before, and a second serve from the same afternoon is the
+ * same afternoon.
+ */
+export function strainBehindOf(
+  sessions: Session[],
+  at: number,
+  gapMs = MIN_THEN_AND_NOW_GAP_MS,
+): Partial<Record<InjuryFlag, { trips: number; of: number }>> {
+  const trips = tripsOf(sessions, gapMs)
+  // Every trip that finished before the viewed serve's own began. A trip is
+  // "before" when its newest serve is, which is what `tripsOf`'s own chaining
+  // makes true of every serve in it.
+  const before = trips.filter((trip) => trip.every((s) => !sameTrip(s, { createdAt: at }, gapMs) && s.createdAt < at))
+
+  const out: Partial<Record<InjuryFlag, { trips: number; of: number }>> = {}
+  for (const flag of Object.keys(INJURY_INPUTS) as InjuryFlag[]) {
+    const found = strainBehind(before, flag)
+    if (found) out[flag] = found
+  }
+  return out
 }
 
 /**

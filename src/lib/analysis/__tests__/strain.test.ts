@@ -19,10 +19,11 @@ import {
   STRAIN_WINDOW,
   clearedStrain,
   recurringStrain,
+  strainBehind,
   type StrainSource,
 } from '../strain'
 import { INJURY_INPUTS, injuryInputsRead, type InjuryFlag } from '../triage'
-import { strainClearedLine, strainLine } from '../verdict'
+import { strainBehindLine, strainClearedLine, strainLine } from '../verdict'
 import { MAX_WORDS, cueIssues, wordCount } from '../voice'
 import { assert, check, heading, note, report } from './harness'
 
@@ -358,6 +359,50 @@ check('the stopped sentence fits the editor and states its run', () => {
 
 check('an unknown flag produces no cleared sentence either', () => {
   assert(strainClearedLine({ flag: 'a_flag_from_the_future' as InjuryFlag, since: 3 }) === undefined, 'expected nothing')
+})
+
+heading('The history behind one report')
+
+check('one prior trip is enough, because this serve is the second', () => {
+  const found = strainBehind(tripsWhere([true]), BACK)
+  assert(found?.trips === 1, `counted ${found?.trips}, expected 1`)
+  assert(found?.of === 1, `denominator was ${found?.of}, expected 1`)
+})
+
+check('a first occurrence says nothing', () => {
+  assert(strainBehind(tripsWhere([false, false]), BACK) === undefined, 'nothing behind it')
+  assert(strainBehind([], BACK) === undefined, 'no history at all')
+})
+
+check('the denominator behind a report counts only answerable trips', () => {
+  const trips: StrainSource[][] = [
+    [serve([BACK])],
+    [serve([], { status: 'rejected' })],
+    [serve([], { status: 'rejected' })],
+    [serve([BACK])],
+  ]
+  const found = strainBehind(trips, BACK)
+  assert(found?.trips === 2 && found?.of === 2, `read ${found?.trips} of ${found?.of}, expected 2 of 2`)
+})
+
+check('it looks back exactly as far as the sheet does', () => {
+  const found = strainBehind(tripsWhere([true, ...Array(STRAIN_WINDOW).fill(false)]), BACK)
+  assert(found === undefined, 'a flag older than the window is not behind this serve')
+})
+
+check('the sentence is plain, fits the editor, and gets its plural right', () => {
+  const one = strainBehindLine({ trips: 1, of: 1 })
+  assert(one === 'Also on 1 of your 1 trip before this one.', `read "${one}"`)
+  const many = strainBehindLine({ trips: 2, of: 5 })
+  assert(many === 'Also on 2 of your 5 trips before this one.', `read "${many}"`)
+  for (const text of [one!, many!]) {
+    assert(cueIssues(text).length === 0, cueIssues(text).join('; '))
+    assert(wordCount(text) <= MAX_WORDS, `runs to ${wordCount(text)} words`)
+  }
+})
+
+check('nothing counted produces no sentence', () => {
+  assert(strainBehindLine({ trips: 0, of: 4 }) === undefined, 'expected nothing')
 })
 
 report()

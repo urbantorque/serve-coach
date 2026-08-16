@@ -10,7 +10,8 @@ import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
-import { strainClearedLine, strainLine } from './lib/analysis/verdict'
+import type { InjuryFlag } from './lib/analysis/triage'
+import { strainBehindLine, strainClearedLine, strainLine } from './lib/analysis/verdict'
 import {
   bestConsistencyGap,
   bestGapEverLine,
@@ -25,6 +26,7 @@ import {
   longestStreakLine,
   recurringStrainOf,
   shortDate,
+  strainBehindOf,
   sixWeekMilestone,
   streakLine,
   thenAndNow,
@@ -590,6 +592,23 @@ export default function App() {
    * open on a type the player rarely films still shows its own record and
    * not a mismatched one.
    */
+  /**
+   * What each joint warning did on the trips before the report being read —
+   * see `strainBehindOf`. Keyed to the viewed report's own date rather than to
+   * today, and turned into sentences here so `Report.tsx` never has to know
+   * what a trip is, matching how `streak` is already handed down.
+   */
+  const strainBehindFor = useCallback(
+    (at: number) => {
+      const out: Partial<Record<InjuryFlag, string>> = {}
+      for (const [flag, record] of Object.entries(strainBehindOf(sessions, at))) {
+        const line = record && strainBehindLine(record)
+        if (line) out[flag as InjuryFlag] = line
+      }
+      return out
+    },
+    [sessions],
+  )
   const bestScoreFor = useCallback(
     (serveType: ServeType) => bestOverallScore(sessions, serveType),
     [sessions],
@@ -1374,6 +1393,7 @@ export default function App() {
             basketGapDelta={gapDeltaForView(view.analysis.id, typeOf(view.analysis))}
             bestScore={bestScoreFor(typeOf(view.analysis))}
             streak={streak}
+            strainBehind={strainBehindFor(view.analysis.createdAt)}
             saveWarning={saveWarning}
             practice={practice}
             onLogDrill={logDrill}
@@ -1392,6 +1412,7 @@ export default function App() {
             basketGapDelta={gapDeltaForView(view.session.id, typeOf(view.session))}
             bestScore={bestScoreFor(typeOf(view.session))}
             streak={streak}
+            strainBehind={strainBehindFor(view.session.createdAt)}
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}

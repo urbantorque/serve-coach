@@ -24,6 +24,13 @@ in `git log`.
   5 trips." Three clean trips rather than two, because two is enough evidence to
   ask you to watch something and not enough to tell you it is fixed. It says it
   for a few trips and then stops, rather than sitting on your screen forever.
+- **An injury warning on a report now tells you whether you have seen it
+  before.** The card that explains what your back or your wrist is doing ends
+  with "Also on 2 of your 6 trips before this one" where there is a history
+  behind it — the difference between a warning you note and one you act on, at
+  the moment you are actually reading it. It counts the trips before this serve
+  only, so reopening an old report tells you what was true when you filed it
+  rather than what is true today.
 - **Fixed: a stored report from another version could blank the whole app, in
   seven more ways than the one already found.** A report is read back out of
   storage through a repair step whose job is to make sure nothing downstream can

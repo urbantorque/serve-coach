@@ -106,18 +106,13 @@ export function recurringStrain(trips: readonly (readonly StrainSource[])[]): St
   const out: StrainRecord[] = []
 
   for (const flag of flags) {
-    // Only the trips that could have answered for THIS flag, newest first. A
-    // window counted before this filter would be six trips of which two were
-    // silhouettes, and the sentence would then be about a denominator that
-    // included them.
-    const answerable = trips.filter((trip) => trip.some((s) => couldRaise(s, flag))).slice(-STRAIN_WINDOW)
+    const answerable = answerableFor(trips, flag).slice(-STRAIN_WINDOW)
     if (answerable.length < MIN_STRAIN_TRIPS) continue
 
     let seen = 0
     let severity: Severity | undefined
     let lastIndex = -1
-    answerable.forEach((trip, i) => {
-      const worst = worstOn(trip, flag)
+    answerable.forEach((worst, i) => {
       if (!worst) return
       seen++
       lastIndex = i
@@ -191,8 +186,7 @@ export function clearedStrain(trips: readonly (readonly StrainSource[])[]): Stra
   const out: StrainCleared[] = []
 
   for (const flag of Object.keys(INJURY_INPUTS) as InjuryFlag[]) {
-    const answerable = trips.filter((trip) => trip.some((s) => couldRaise(s, flag)))
-    const raised = answerable.map((trip) => worstOn(trip, flag) !== undefined)
+    const raised = answerableFor(trips, flag).map((worst) => worst !== undefined)
 
     const last = raised.lastIndexOf(true)
     if (last < 0) continue
@@ -211,6 +205,56 @@ export function clearedStrain(trips: readonly (readonly StrainSource[])[]): Stra
   // Longest clean first: the strongest evidence leads, the same way the loudest
   // count leads in `recurringStrain`.
   return out.sort((a, b) => b.since - a.since)
+}
+
+/**
+ * What one flag did on the history behind a single serve.
+ *
+ * The report already carries the flag for the serve in front of you, in full,
+ * with the mechanics. What it cannot see is that the same flag was raised on two
+ * of the trips before this one — which is the difference between a warning
+ * somebody notes and a warning somebody acts on, delivered at the one moment
+ * they are actually reading about their shoulder.
+ *
+ * TRIPS STRICTLY BEFORE, and that is not a detail. Counting the viewed serve's
+ * own trip would make the sentence depend on whether the report had been written
+ * to storage yet, so the same serve would say different things on the glance and
+ * on a reopen. Counting backwards from the serve also makes a reopened report
+ * say what was true when it was filed, rather than what is true today — the
+ * mistake `bestGapLine` was shipped with and had to be redesigned out of.
+ *
+ * `undefined` where the history cannot support the sentence: no answerable trips
+ * behind it, or the flag never raised on any of them. One prior trip is enough,
+ * because the serve being read about is itself the second — the same
+ * `MIN_STRAIN_TRIPS` floor the sheet applies, counted from the other end.
+ */
+export function strainBehind(
+  before: readonly (readonly StrainSource[])[],
+  flag: InjuryFlag,
+): { trips: number; of: number } | undefined {
+  const answerable = answerableFor(before, flag).slice(-STRAIN_WINDOW)
+  const seen = answerable.filter(Boolean).length
+  if (seen < 1) return undefined
+  return { trips: seen, of: answerable.length }
+}
+
+/**
+ * One entry per trip that could have answered for this flag, oldest first,
+ * holding the worst severity it was raised at there or `undefined` for a trip
+ * that could see it and did not.
+ *
+ * The shared spine of all three readings above. Extracting it is what keeps the
+ * denominator honest in one place rather than in three: every caller filters
+ * trips by whether the flag was *readable* before asking whether it was *raised*,
+ * because those are different facts and the whole module turns on the difference.
+ */
+function answerableFor(
+  trips: readonly (readonly StrainSource[])[],
+  flag: InjuryFlag,
+): (Severity | undefined)[] {
+  return trips
+    .filter((trip) => trip.some((s) => couldRaise(s, flag)))
+    .map((trip) => worstOn(trip, flag))
 }
 
 /** Whether one serve was measured well enough to have raised this flag. */

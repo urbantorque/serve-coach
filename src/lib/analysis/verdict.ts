@@ -237,6 +237,24 @@ export function strainClearedLine(record: Pick<StrainCleared, 'flag' | 'since'>)
   return cue(`${subject} on your last ${record.since} trips.`)
 }
 
+/**
+ * The history behind one injury card, in a clause.
+ *
+ * Sits under the card's own body, which has just explained the mechanics on this
+ * serve, so it opens with "Also" and does not name the body part again. Says
+ * what it counted and nothing else: no "again", which would be the app tutting,
+ * and no advice, because the card above it already carries the fix.
+ *
+ * Flag-independent, unlike `strainLine` and `strainClearedLine` — the card it
+ * appears on has already named the joint, so there is no subject to look up and
+ * nothing for an unknown flag to break.
+ */
+export function strainBehindLine(record: { trips: number; of: number }): string | undefined {
+  if (record.trips < 1 || record.of < 1) return undefined
+  const trips = record.of === 1 ? 'trip' : 'trips'
+  return cue(`Also on ${record.trips} of your ${record.of} ${trips} before this one.`)
+}
+
 /* ------------------------------------------------------------ the one job -- */
 
 /**
@@ -625,6 +643,11 @@ export function everyVerdictCue(): { where: string; text: string }[] {
   for (const flag of Object.keys(CLEARED) as InjuryFlag[]) {
     const text = strainClearedLine({ flag, since: STRAIN_WINDOW })
     if (text) out.push({ where: `cleared.${flag}`, text })
+  }
+  // Both the singular and the plural form, since they are different sentences.
+  for (const of of [1, STRAIN_WINDOW]) {
+    const text = strainBehindLine({ trips: 1, of })
+    if (text) out.push({ where: `behind.${of}`, text })
   }
   /*
    * The carry-forward line is assembled rather than stored, so linting
