@@ -817,8 +817,25 @@ export function streakLine(sessions: Session[], now: number = Date.now()): strin
  * (`coaching.ts`'s `SERVE_TYPES`), so a 90 on a kick serve and a 90 on a flat
  * one are graded against different rubrics, not the same claim twice.
  *
- * `undefined` below two reports of the type, the same floor every other
- * cross-session record in this file holds — one score is just that score,
+ * AND SCOPED BY RUBRIC ERA, which it was not. Every other cross-session figure
+ * in this file already refuses to reach across a recalibration — `buildProgress`
+ * confines its own `best` to `era`, `buildConsistencyTrend` confines its points,
+ * `thenAndNow` confines its pair — and this one walked the whole history. The
+ * consequence was on screen in two places at once: the home card prints
+ * `progress.best`, which is era-confined, and the report prints
+ * `bestOverallScoreLine` off this, which was not. A player whose top score was
+ * set under the old rubric therefore saw "best 72" on the home screen and "your
+ * best serve so far scored 88" on the report, two numbers for one fact,
+ * disagreeing — which is exactly the reading this app treats as a bug rather
+ * than as a rounding difference. It is also a record nothing can ever beat,
+ * because the scores that could beat it are on a different scale.
+ *
+ * `sessions` is sorted before `currentRubricEra` sees it: that function scans
+ * from the newest backwards and is documented as requiring time order, and
+ * `listSummaries` hands back newest first.
+ *
+ * `undefined` below two reports of the type *in the era*, the same floor every
+ * other cross-session record in this file holds — one score is just that score,
  * not a record yet.
  */
 export interface BestScore {
@@ -827,8 +844,13 @@ export interface BestScore {
 }
 
 export function bestOverallScore(sessions: Session[], serveType: ServeType): BestScore | undefined {
-  const usable = sessions.filter((s) => typeOf(s) === serveType)
+  const usable = currentRubricEra(
+    sessions.filter((s) => typeOf(s) === serveType).sort((a, b) => a.createdAt - b.createdAt),
+  )
   if (usable.length < 2) return undefined
+  // Ties go to the earlier report, which the oldest-first order above makes
+  // true rather than accidental: the record was set the first time it was hit,
+  // and `bestOverallScoreLine` prints that date.
   const best = usable.reduce((a, b) => (b.overall > a.overall ? b : a))
   return { score: best.overall, createdAt: best.createdAt }
 }

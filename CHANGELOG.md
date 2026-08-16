@@ -15,6 +15,7 @@ in `git log`.
   screen down. Every field a report carries is now checked by kind, and the
   suite mutates each one of them in turn and draws the result, which is how the
   seven were found.
+- **Fixed: your form card and your report could disagree about your best serve.**
 - **Your settings now travel with your history.** Exporting and importing carried
   your reports and your logged drills and left behind the three things that say
   who you are — which hand you serve with, your rating, and which serve you were
@@ -42,6 +43,15 @@ in `git log`.
   Both are now repaired or dropped on the way out of storage: a missing
   list falls back to numbering the serves as they appear, and half a
   best-against-worst block is left out rather than half-drawn.
+- **Fixed: your "best serve" could come from before the scoring changed.**
+  When the marking is recalibrated, old reports keep the numbers they were
+  given — they have no video left to re-score — so the app is careful
+  everywhere else not to compare across that line. The record on the report
+  and on "Every serve so far" was the one place that did. A player whose top
+  score predated a recalibration saw one figure on the home card and a
+  higher, different one on the report, and the higher one could never be
+  beaten because nothing scored since is on the same scale. Both screens now
+  read the same record, from the current marking only.
 - **Fixed: the download counter always used a period, even where your phone
   doesn't.** "Downloading the coach · 4.5 MB of 19.0 MB" is the only number
   the app shows with a decimal place, and it is on the first screen a first

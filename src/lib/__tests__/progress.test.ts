@@ -473,6 +473,44 @@ check('one session of the type has nothing to be a record against yet', () => {
   assert(record === undefined, 'a single session produced a record')
 })
 
+check('a higher score from before a recalibration is not this rubric\'s record', () => {
+  // The failure this pins: the home card reads `progress.best`, which is
+  // confined to the era, and the report read this, which was not — so one
+  // history printed two different "best" figures on two screens.
+  const old = { ...basketServe(0, 'a', [88, 88]), scoringVersion: 1 } as Session
+  const now = [
+    { ...basketServe(DAY, 'b', [60, 70]), scoringVersion: 2 } as Session,
+    { ...basketServe(DAY * 2, 'c', [72, 72]), scoringVersion: 2 } as Session,
+  ]
+  const record = bestOverallScore([old, ...now], 'flat')
+  assert(record !== undefined, 'two same-rubric sessions produced no record at all')
+  assert(
+    record!.score === 72,
+    `an old-rubric score (88) was reported as the current record: got ${record!.score}`,
+  )
+})
+
+check('one report in the current era has nothing to be a record against either', () => {
+  const old = { ...basketServe(0, 'a', [88, 88]), scoringVersion: 1 } as Session
+  const fresh = { ...basketServe(DAY, 'b', [70, 70]), scoringVersion: 2 } as Session
+  assert(
+    bestOverallScore([old, fresh], 'flat') === undefined,
+    'a single post-recalibration report was credited with a record',
+  )
+})
+
+check('the record survives a history handed over newest first', () => {
+  // `listSummaries` hands back newest first and `currentRubricEra` requires
+  // time order, so the sort inside `bestOverallScore` is load-bearing.
+  const newestFirst = [
+    { ...basketServe(DAY * 2, 'c', [72, 72]), scoringVersion: 2 } as Session,
+    { ...basketServe(DAY, 'b', [60, 70]), scoringVersion: 2 } as Session,
+    { ...basketServe(0, 'a', [88, 88]), scoringVersion: 1 } as Session,
+  ]
+  const record = bestOverallScore(newestFirst, 'flat')
+  assert(record?.score === 72, `newest-first input produced ${record?.score}, expected 72`)
+})
+
 check('the session on screen reads as current when it set the record, by its own createdAt', () => {
   const line = bestOverallScoreLine({ score: 88, createdAt: DAY }, DAY)
   assert(line.includes('yet'), `the record-setting session was not read as current: "${line}"`)
