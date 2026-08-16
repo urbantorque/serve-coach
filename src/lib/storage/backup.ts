@@ -27,6 +27,8 @@ import {
   type PracticeLog,
   type Session,
 } from './db'
+import { SERVE_TYPES } from '../analysis/coaching'
+import { DEFAULTS, readPrefs, writePrefs, type Prefs } from './prefs'
 import type { Analysis } from '../analysis/types'
 
 const FORMAT = 'serve-coach-backup'
@@ -48,6 +50,42 @@ export interface Backup {
    * looks at and no new reader requires.
    */
   practice?: PracticeLog[]
+  /**
+   * Who the player is, as opposed to what they have filmed.
+   *
+   * THREE FIELDS, NOT THE WHOLE OF `Prefs`, and the split is the point. A backup
+   * carried the reports and the drill records and left these behind entirely, so
+   * a history restored onto a new phone arrived judged against different target
+   * bands than it was built with: `tier` moves every band the diagnostic pass
+   * uses, and it reverts to unstated on a fresh install — the app then estimates
+   * a rung from the next serve, and the trend the player is looking at was
+   * scored against a rung they had chosen. Handedness was the visible half of
+   * the same gap: the panel promises the file moves a history to a new phone,
+   * and the new phone opens by asking which hand they serve with.
+   *
+   * `seenFilmingGuide` and `askedToPersist` are deliberately absent. Both are
+   * facts about *this install* rather than about the player — whether this
+   * browser has shown the guide, whether this origin has asked for persistent
+   * storage — and restoring them onto a fresh phone would silently skip the
+   * first-run guide and suppress the persistence request on exactly the device
+   * where both matter most.
+   *
+   * Optional, and `version` is not bumped, for the reason `practice` gives above
+   * its own field: nothing about the old shape became unreadable.
+   */
+  prefs?: Pick<Prefs, 'handedness' | 'tier' | 'serveType'>
+}
+
+/**
+ * The preferences a backup carries, pulled out of the whole set.
+ *
+ * A function rather than a spread at the call site so that the export and the
+ * restore cannot disagree about which three travel — the failure this whole
+ * field is fixing is two places holding different ideas about what moves with a
+ * player.
+ */
+export function portablePrefs(p: Prefs): Backup['prefs'] {
+  return { handedness: p.handedness, tier: p.tier, serveType: p.serveType }
 }
 
 /**
@@ -129,6 +167,17 @@ export interface BackupStore {
   listPracticeLogs(): Promise<PracticeLog[]>
   logPractice(log: PracticeLog): Promise<void>
   pruneSessions(): Promise<void>
+  /**
+   * The two halves of preferences, on the same seam as the rest.
+   *
+   * `readPrefs`/`writePrefs` read `localStorage` directly and are safe to call
+   * anywhere in a browser — but the point of this interface is that the whole
+   * file can be driven without one, and prefs are now part of what a backup
+   * carries. Left off, every test of the export would have to provide a
+   * `localStorage` shim to exercise a field it does not care about.
+   */
+  readPrefs(): Prefs
+  writePrefs(patch: Partial<Prefs>): Prefs
 }
 
 const REAL_STORE: BackupStore = {
@@ -137,6 +186,8 @@ const REAL_STORE: BackupStore = {
   listPracticeLogs,
   logPractice,
   pruneSessions,
+  readPrefs,
+  writePrefs,
 }
 
 export async function buildBackup(store: BackupStore = REAL_STORE): Promise<Backup> {
@@ -146,6 +197,9 @@ export async function buildBackup(store: BackupStore = REAL_STORE): Promise<Back
     exportedAt: Date.now(),
     sessions: await store.listSessions(),
     practice: await store.listPracticeLogs(),
+    // Read through the store like everything else here, so a test can drive the
+    // whole file without a `localStorage`.
+    prefs: portablePrefs(store.readPrefs()),
   }
 }
 
@@ -195,6 +249,14 @@ export interface ImportResult {
   /** Drill records brought in. Counted apart from reports — they are not serves. */
   logs: number
   skippedLogs: number
+  /**
+   * Whether the file filled in a preference this device did not have.
+   *
+   * A boolean rather than a count: the three that travel are one fact about the
+   * player, and "2 preferences restored" is a number nobody can act on. What
+   * the panel needs to know is whether to say anything at all.
+   */
+  prefs?: boolean
 }
 
 /**
@@ -293,6 +355,62 @@ export async function importBackup(
         }
         await store.logPractice(log)
         result.logs++
+      }
+    }, undefined)
+  }
+
+  /*
+   * Who the player is, restored only where this device has no answer of its own.
+   *
+   * FILLED IN, NEVER OVERWRITTEN, and that is the whole design. The common case
+   * is a fresh install on a new phone, where every one of these is unset and the
+   * file is the only thing that knows them — that is the gap this closes. The
+   * other case is a player importing a file into a phone they already use, and
+   * there the local answer is the newer statement of who they are: a file
+   * exported in March must not silently move somebody back to a rung they have
+   * since climbed off, or flip the hand they corrected last week.
+   *
+   * `serveType` is the weakest of the three and is treated identically rather
+   * than specially — it is what they were last working on, and the report offers
+   * it as three chips one tap apart, so getting it wrong costs a tap and getting
+   * it right saves one.
+   *
+   * Best-effort, like the drill records above: `localStorage` throws outright in
+   * a Safari private window, and a preference that cannot be written must never
+   * be the reason a history fails to restore.
+   */
+  const prefs = backup.prefs
+  if (prefs && typeof prefs === 'object') {
+    await safely(async () => {
+      const here = store.readPrefs()
+      const patch: Partial<Prefs> = {}
+      if (!here.handedness && (prefs.handedness === 'left' || prefs.handedness === 'right')) {
+        patch.handedness = prefs.handedness
+      }
+      if (here.tier === undefined && typeof prefs.tier === 'number' && Number.isFinite(prefs.tier)) {
+        patch.tier = prefs.tier
+      }
+      /*
+       * `serveType` always has a value, so "has this device answered" cannot be
+       * read off its presence. The default is the answer nobody chose.
+       *
+       * Checked for membership in `SERVE_TYPES` as well, not merely for being
+       * different from the default — the same rule `normalise` applies to the
+       * field on a stored report, and for the same reason: three screens index
+       * that table with no guard, so a hand-edited `"banana"` is not a
+       * mislabelled preference, it is a blank report the next time one opens.
+       */
+      if (
+        here.serveType === DEFAULTS.serveType &&
+        prefs.serveType &&
+        prefs.serveType !== DEFAULTS.serveType &&
+        prefs.serveType in SERVE_TYPES
+      ) {
+        patch.serveType = prefs.serveType
+      }
+      if (Object.keys(patch).length) {
+        store.writePrefs(patch)
+        result.prefs = true
       }
     }, undefined)
   }

@@ -15,6 +15,14 @@ in `git log`.
   screen down. Every field a report carries is now checked by kind, and the
   suite mutates each one of them in turn and draws the result, which is how the
   seven were found.
+- **Your settings now travel with your history.** Exporting and importing carried
+  your reports and your logged drills and left behind the three things that say
+  who you are — which hand you serve with, your rating, and which serve you were
+  working on. On a new phone the app then asked for the hand again and quietly
+  re-estimated the rating, which moves every target band your restored history
+  was judged against. They now travel in the file, and a restore only fills in
+  what the new phone has no answer for: importing an old backup can never roll
+  back a hand you corrected last week or a rating you have climbed past.
 - **Fixed: a saved basket from another version could blank the whole app.**
   Opening a stored comparison that was missing the serve numbers — a
   report restored from a hand-edited backup, or written by a build from

@@ -27,6 +27,7 @@ import {
   importBackup,
   type BackupStore,
 } from '../backup'
+import { DEFAULTS, type Prefs } from '../prefs'
 import type { PracticeLog, Session } from '../db'
 import type { Analysis } from '../../analysis/types'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
@@ -66,10 +67,21 @@ const log = (id: string, doneAt: number, metricId = 'dropDepth'): PracticeLog =>
  * standing in for a phone that is genuinely out of room after `saveSession`'s
  * own pressure ladder has already run and given up.
  */
-function memoryStore(opts: { sessions?: Session[]; logs?: PracticeLog[]; refuse?: string[] } = {}) {
+function memoryStore(
+  opts: {
+    sessions?: Session[]
+    logs?: PracticeLog[]
+    refuse?: string[]
+    /** What this device already knows about the player, before any import. */
+    prefs?: Partial<Prefs>
+    /** Make every preference write throw, as a private window does. */
+    prefsReadOnly?: boolean
+  } = {},
+) {
   const sessions = new Map((opts.sessions ?? []).map((s) => [s.id, s]))
   const logs = new Map((opts.logs ?? []).map((l) => [l.id, l]))
   const refuse = new Set(opts.refuse ?? [])
+  let prefs: Prefs = { ...DEFAULTS, ...opts.prefs }
   let prunes = 0
 
   const store: BackupStore = {
@@ -85,8 +97,14 @@ function memoryStore(opts: { sessions?: Session[]; logs?: PracticeLog[]; refuse?
     pruneSessions: async () => {
       prunes++
     },
+    readPrefs: () => ({ ...prefs }),
+    writePrefs: (patch: Partial<Prefs>) => {
+      if (opts.prefsReadOnly) throw new Error('storage denied')
+      prefs = { ...prefs, ...patch }
+      return { ...prefs }
+    },
   }
-  return { store, sessions, logs, prunes: () => prunes }
+  return { store, sessions, logs, prunes: () => prunes, prefs: () => prefs }
 }
 
 const fileOf = (sessions: Session[], practice?: PracticeLog[]) =>
@@ -385,6 +403,111 @@ check('months and days are padded, so the names sort', () => {
     backupFileName(new Date(2026, 8, 5)) === 'serve-coach-2026-09-05.json',
     `unpadded: ${backupFileName(new Date(2026, 8, 5))}`,
   )
+})
+
+/* ------------------------------------------------- who the player is, moved */
+
+heading('What a file says about the player, and what the phone already knows')
+
+/** A backup file carrying preferences alongside its reports. */
+const fileWithPrefs = (prefs: Partial<Prefs>) =>
+  JSON.stringify({
+    format: 'serve-coach-backup',
+    version: 1,
+    exportedAt: 1_700_000_000_000,
+    sessions: [session('p', 5_000, 70)],
+    prefs,
+  })
+
+await check('an export carries the three that describe the player', async () => {
+  const { store } = memoryStore({ prefs: { handedness: 'left', tier: 4, serveType: 'kick' } })
+  const backup = await buildBackup(store)
+  assert(backup.prefs?.handedness === 'left', 'the hand did not travel')
+  assert(backup.prefs?.tier === 4, 'the rating did not travel')
+  assert(backup.prefs?.serveType === 'kick', 'the serve type did not travel')
+})
+
+await check('an export carries nothing about this install', async () => {
+  const { store } = memoryStore({ prefs: { seenFilmingGuide: true, askedToPersist: true } })
+  const backup = await buildBackup(store)
+  const keys = Object.keys(backup.prefs ?? {})
+  assert(
+    !keys.includes('seenFilmingGuide') && !keys.includes('askedToPersist'),
+    `an install-local flag was exported: ${keys.join(', ')}`,
+  )
+})
+
+await check('a fresh phone takes the hand and the rating from the file', async () => {
+  // The case this whole field exists for: a new device, where nothing local
+  // knows any of this and the file is the only thing that does.
+  const m = memoryStore()
+  const result = await importBackup(fileWithPrefs({ handedness: 'left', tier: 4 }), m.store)
+  assert(m.prefs().handedness === 'left', 'a fresh phone did not take the hand')
+  assert(m.prefs().tier === 4, 'a fresh phone did not take the rating — every band moves with it')
+  assert(result.prefs === true, 'the restore did not report that it filled anything in')
+})
+
+await check('a phone that already knows the player is not overwritten by an old file', async () => {
+  // The other half. A file exported in March must not move somebody back to a
+  // rung they have since climbed off, or flip a hand they corrected last week.
+  const m = memoryStore({ prefs: { handedness: 'right', tier: 5 } })
+  const result = await importBackup(fileWithPrefs({ handedness: 'left', tier: 2 }), m.store)
+  assert(m.prefs().handedness === 'right', 'an imported file overwrote the hand this phone had set')
+  assert(m.prefs().tier === 5, 'an imported file rolled the rating backwards')
+  assert(!result.prefs, 'the restore claimed to have filled something in when it had not')
+})
+
+check('a rating of zero is a stated rating, not an absent one', () => {
+  // `tier` is a number and the bottom rung is a legitimate answer, so a
+  // presence check written with `||` or `!here.tier` would treat somebody on the
+  // lowest rung as never having said.
+  const m = memoryStore({ prefs: { tier: 0 } })
+  assert(m.store.readPrefs().tier === 0, 'the fixture itself lost the zero')
+  return importBackup(fileWithPrefs({ tier: 4 }), m.store).then(() => {
+    assert(m.prefs().tier === 0, 'a stated rung of zero was treated as unstated and overwritten')
+  })
+})
+
+await check('a serve type nobody chose is filled in; one they chose is not', async () => {
+  const untouched = memoryStore()
+  await importBackup(fileWithPrefs({ serveType: 'kick' }), untouched.store)
+  assert(untouched.prefs().serveType === 'kick', 'the default serve type was not filled in')
+
+  const chosen = memoryStore({ prefs: { serveType: 'slice' } })
+  await importBackup(fileWithPrefs({ serveType: 'kick' }), chosen.store)
+  assert(chosen.prefs().serveType === 'slice', 'a chosen serve type was overwritten')
+})
+
+await check('a backup written before preferences travelled still restores', async () => {
+  const m = memoryStore()
+  const result = await importBackup(fileOf([session('p', 5_000, 70)]), m.store)
+  assert(result.added === 1, 'an older backup lost its reports')
+  assert(!result.prefs, 'a file with no preferences claimed to have restored some')
+})
+
+await check('preferences that cannot be written do not fail the restore', async () => {
+  // A Safari private window throws on every `localStorage` write. The reports
+  // are the history; a preference is a note beside them.
+  const m = memoryStore({ prefsReadOnly: true })
+  const result = await importBackup(fileWithPrefs({ handedness: 'left' }), m.store)
+  assert(result.added === 1, 'a denied preference write cost the player their reports')
+  assert(!result.prefs, 'a failed write was reported as a restore')
+})
+
+await check('junk where the preferences should be is ignored rather than written', async () => {
+  const m = memoryStore()
+  const file = JSON.stringify({
+    format: 'serve-coach-backup',
+    version: 1,
+    exportedAt: 1,
+    sessions: [session('p', 5_000, 70)],
+    prefs: { handedness: 'sideways', tier: 'four', serveType: 'banana' },
+  })
+  const result = await importBackup(file, m.store)
+  assert(result.added === 1, 'a hand-edited preferences block cost the player their reports')
+  assert(m.prefs().handedness === undefined, `"sideways" was written as a hand`)
+  assert(m.prefs().tier === undefined, '"four" was written as a rating')
+  assert(m.prefs().serveType === 'flat', '"banana" was written as a serve type')
 })
 
 report()
