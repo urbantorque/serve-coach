@@ -216,6 +216,78 @@ check('the trophy drop every caller uses keeps the forearm shorter than the uppe
   }
 })
 
+/** Elbow→wrist and shoulder→elbow at the trophy, on a clean rig. */
+function armAt(dials: Partial<ServeDials>): { forearm: number; upper: number; wrist: [number, number, number] } {
+  const frames = buildServe({ noise: 0, depthNoise: 0, depthBias: 0, seed: 7000, ...dials }, 50)
+  const skel = detectServe(frames, 50)
+  const f = frames[skel.keys.trophy]
+  const S = sided(skel.racket)
+  const span = (a: number, b: number) =>
+    Math.hypot(f.world[a].x - f.world[b].x, f.world[a].y - f.world[b].y, f.world[a].z - f.world[b].z)
+  const w = f.world[S.wrist]
+  return { forearm: span(S.elbow, S.wrist), upper: span(S.shoulder, S.elbow), wrist: [w.x, w.y, w.z] }
+}
+
+check('external rotation is an exact no-op at zero', () => {
+  /*
+   * The whole safety argument for adding the dial. Every band in `tiers.ts` was
+   * set against the numbers this rig produced before it existed, so the default
+   * path has to be the same arithmetic and not merely a similar arm — a rotation
+   * applied at zero degrees is not promised to return its input in floating
+   * point, which is why the dial is skipped rather than applied.
+   */
+  const before = armAt({})
+  const zero = armAt({ trophyExternalRotation: 0 })
+  assert(
+    before.wrist.every((v, i) => Object.is(v, zero.wrist[i])),
+    `the wrist moved at zero: ${JSON.stringify(before.wrist)} → ${JSON.stringify(zero.wrist)}`,
+  )
+})
+
+check('external rotation moves the arm without lengthening it', () => {
+  // The property `trophyForearmDrop` does not have, and the reason this dial
+  // exists: the elbow lies on the axis being rotated about, so both segments
+  // are preserved exactly rather than approximately.
+  const base = armAt({})
+  for (const deg of [15, 30, 45, 60]) {
+    const turned = armAt({ trophyExternalRotation: deg })
+    assert(
+      Math.abs(turned.forearm - base.forearm) < 1e-9,
+      `at ${deg}° the forearm went ${base.forearm.toFixed(6)} → ${turned.forearm.toFixed(6)}`,
+    )
+    assert(
+      Math.abs(turned.upper - base.upper) < 1e-9,
+      `at ${deg}° the upper arm went ${base.upper.toFixed(6)} → ${turned.upper.toFixed(6)}`,
+    )
+    const moved = Math.hypot(
+      turned.wrist[0] - base.wrist[0],
+      turned.wrist[1] - base.wrist[1],
+      turned.wrist[2] - base.wrist[2],
+    )
+    assert(moved > 0.01, `at ${deg}° the wrist barely moved (${moved.toFixed(4)} m) — the dial did nothing`)
+  }
+})
+
+check('the rotation is gone again by the racket drop', () => {
+  // Weighted to the trophy on purpose. A rotation still held at the drop or
+  // through contact would be modelling a different fault, and `dropDepth` and
+  // `pronation` already own those parts of the swing — a dial that quietly moved
+  // them would make every sweep of this angle a sweep of three things.
+  const clean = buildServe({ noise: 0, depthNoise: 0, depthBias: 0, seed: 7000 }, 50)
+  const turned = buildServe(
+    { noise: 0, depthNoise: 0, depthBias: 0, seed: 7000, trophyExternalRotation: 45 },
+    50,
+  )
+  const skel = detectServe(clean, 50)
+  const at = (fs: typeof clean, i: number) => fs[i].world[sided(skel.racket).wrist]
+  const apart = (i: number) =>
+    Math.hypot(at(clean, i).x - at(turned, i).x, at(clean, i).y - at(turned, i).y, at(clean, i).z - at(turned, i).z)
+
+  assert(apart(skel.keys.trophy) > 0.01, 'the trophy frame did not move at all')
+  assert(apart(skel.keys.contact) < 1e-9, `contact moved by ${apart(skel.keys.contact).toFixed(6)} m`)
+  note(`trophy moved ${apart(skel.keys.trophy).toFixed(3)} m, contact ${apart(skel.keys.contact).toFixed(6)} m`)
+})
+
 check('and past that the dial is measurably stretching, not rotating', () => {
   // The other half, so the bound above reads as a measured boundary rather than
   // as a number somebody liked. If this ever stops being true the dial has been

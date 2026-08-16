@@ -164,16 +164,69 @@ export interface ServeDials {
    * turned up to make a fault "more extreme", and `invariants.test.ts` pins the
    * bound so a future dial past it fails rather than quietly stretching an arm.
    *
-   * IT IS NOT A ROTATION, and that is the gap worth naming. Nothing in this rig
-   * rotates the humerus about its own axis, so shoulder external rotation — the
-   * thing a serve's racket drop is actually made of — cannot be varied here at
-   * all. A sweep for it reads the angle exactly on a clean rig (0.0° deviation
-   * across 24 seeds) and at 9.5° under the modelled camera at plausible poses,
-   * which is the same order as `palm_to_sky_deg`'s 6.8°; what stops the question
-   * being answerable is not the camera but the absence of a dial. See
-   * `external-rotation-feasibility` in the backlog.
+   * IT IS NOT A ROTATION, and confusing it for one produced a wrong answer once
+   * already. Sweeping this dial to ask whether a phone can read shoulder
+   * external rotation measured a forearm getting longer, and the deviation that
+   * came back — exploding past 0.4 — was the arm straightening out, not a camera
+   * failing. `trophyExternalRotation` is the dial for that question and answers
+   * it differently; see its own comment.
    */
   trophyForearmDrop: number
+  /**
+   * External rotation of the racket shoulder at the trophy, in degrees.
+   *
+   * The one thing this rig could not pose, and the reason a whole investigation
+   * into whether a phone can read external rotation had no question to ask: the
+   * dial above moves the *hand*, and moving a hand outward past the arm's reach
+   * lengthens the forearm rather than rotating anything. That is why it is
+   * bounded, and why the bound is pinned in `invariants.test.ts`.
+   *
+   * This one is a rotation and cannot stretch anything, by construction. The
+   * wrist is rotated about the shoulder→elbow axis — the humerus' own long axis,
+   * which is what external rotation physically is — and the elbow lies *on* that
+   * axis, so the elbow-to-wrist distance is preserved exactly rather than
+   * approximately. Positive lays the racket back behind the arm, which is the
+   * direction a real serve loads in. Zero is an exact no-op: nothing is applied,
+   * so every reading the suite has ever taken is untouched.
+   *
+   * Weighted to the trophy and back to nothing by the drop, because that is
+   * where the load lives — a rotation held through contact would be modelling a
+   * different fault, and the swing already has `pronation` for what the forearm
+   * does on the way through.
+   *
+   * WHAT IT ANSWERED. Swept the day it was added, against the same ensemble
+   * every `NOISE_FLOOR` figure was derived from — `DEPTH_AWARE`, 24 seeds, at
+   * the trophy, reading the forearm's rotation about this same humeral axis
+   * against the trunk's up:
+   *
+   * ```
+   * dial   measured°   sd°      dial   measured°   sd°   (depth error removed)
+   *    0        19.7   9.5         0        14.9   2.9
+   *   15        31.9   9.4        15        29.3   2.6
+   *   30        43.9   9.8        30        43.8   2.7
+   *   45        55.9  10.6        45        58.3   2.9
+   *   60        67.9  11.8        60        72.9   3.4
+   * ```
+   *
+   * Deviation is flat at ~10° across the whole range rather than exploding, the
+   * reading tracks the dial at a gain of about 0.8, and the span is 48°. A floor
+   * set the way every other one was — 1.5 × the deviation — would be 15°, which
+   * leaves **3.15 usable steps**. For scale, `palm_to_sky_deg`'s floor is 11 and
+   * the engine grades it; `hip_lead_ms`'s is 85 and it is `UNDER_RESOLVED`. So
+   * external rotation sits on the gradeable side, and the earlier conclusion
+   * that it did not was an artefact of sweeping `trophyForearmDrop` — a stretched
+   * arm, not a rotated one.
+   *
+   * NOT GRADED YET, AND DELIBERATELY SO. No signal computes it, no band judges it
+   * and no flag pairs it. A floor is the *first* number a graded signal needs,
+   * not the last: bands per tier, a place in the hierarchy and copy all have to
+   * come from somewhere, and inventing them off a synthetic rig is the thing this
+   * codebase treats as a defect. The offset at zero (19.7°, the arm's own resting
+   * rotation in this reference frame) and the 0.8 gain are also properties of the
+   * frame rather than of a shoulder, and both need real footage before anything
+   * is said to a player about degrees.
+   */
+  trophyExternalRotation: number
   /** Degrees the palm rotates about the forearm through contact — the snap. */
   pronation: number
   /**
@@ -353,6 +406,7 @@ export const CLEAN_SERVE: ServeDials = {
   cameraYaw: 82,
   palmToSky: 6,
   trophyForearmDrop: 0,
+  trophyExternalRotation: 0,
   pronation: 95,
   hipLead: 0.07,
   spineLean: 4,
@@ -634,6 +688,42 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     world[LM.leftWrist] = lm(tossWrist.x, tossWrist.y, tossWrist.z)
     world[LM.rightElbow] = solveElbow(rSh, world[LM.rightWrist], 1)
     world[LM.leftElbow] = solveElbow(lSh, world[LM.leftWrist], -1, rad(180 - d.tossElbow))
+
+    /*
+     * External rotation, applied after the elbow is solved and before the hand
+     * is placed.
+     *
+     * Order is the whole trick. Rotating the wrist first would move the target
+     * `solveElbow` places the elbow against, which is how a rotation turns into
+     * a different arm; rotating it after means the shoulder and the elbow are
+     * both already fixed, the axis between them is the humerus, and the elbow
+     * sits on that axis — so the rotation cannot change a single segment length.
+     * `placeHand` reads elbow→wrist afterwards, so the hand follows the forearm
+     * round without needing to know this happened.
+     *
+     * Skipped entirely at zero rather than applied as a zero-degree rotation, so
+     * the default path is byte-identical to what it was before this dial
+     * existed — floating point does not promise that a rotation by 0 returns the
+     * same numbers, and every band in `tiers.ts` was set against those numbers.
+     */
+    if (d.trophyExternalRotation !== 0) {
+      const weight = track(
+        [
+          [U.toss, 0],
+          [U.trophy, 1],
+          [U.drop, 0],
+        ],
+        u,
+      )
+      if (weight !== 0) {
+        world[LM.rightWrist] = rotateAboutAxis(
+          world[LM.rightWrist],
+          rSh,
+          world[LM.rightElbow],
+          rad(d.trophyExternalRotation) * weight,
+        )
+      }
+    }
     // Fill the face landmarks the app never reads, so indices are safe.
     for (let k = 0; k < 33; k++) if (!world[k]) world[k] = lm(0, NOSE_DROP, 0)
     for (const k of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) world[k] = lm(0, NOSE_DROP, 0.04)
@@ -733,6 +823,50 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
   }
 
   return frames
+}
+
+/**
+ * Rotate a point about the axis running through two others — Rodrigues.
+ *
+ * Written out rather than pulled from `geometry.ts`, which has no rotation in
+ * it: that module measures angles off landmarks the tracker produced, and this
+ * one poses landmarks a tracker would have seen. A rotation living there would
+ * be the engine owning a way to move a body.
+ *
+ * Distance from `a` and from `b` is preserved exactly, because both lie on the
+ * axis — which is the property `trophyExternalRotation` is built on, and the one
+ * `trophyForearmDrop` does not have.
+ */
+function rotateAboutAxis(p: Landmark, a: Landmark, b: Landmark, theta: number): Landmark {
+  const ax = b.x - a.x
+  const ay = b.y - a.y
+  const az = b.z - a.z
+  const n = Math.hypot(ax, ay, az)
+  if (n < 1e-9) return p
+
+  const kx = ax / n
+  const ky = ay / n
+  const kz = az / n
+
+  // Relative to a point on the axis, so the rotation is about the line rather
+  // than about a parallel line through the origin.
+  const vx = p.x - a.x
+  const vy = p.y - a.y
+  const vz = p.z - a.z
+
+  const c = Math.cos(theta)
+  const s = Math.sin(theta)
+  const dot = kx * vx + ky * vy + kz * vz
+  const cx = ky * vz - kz * vy
+  const cy = kz * vx - kx * vz
+  const cz = kx * vy - ky * vx
+
+  return {
+    x: a.x + vx * c + cx * s + kx * dot * (1 - c),
+    y: a.y + vy * c + cy * s + ky * dot * (1 - c),
+    z: a.z + vz * c + cz * s + kz * dot * (1 - c),
+    visibility: p.visibility,
+  }
 }
 
 /**

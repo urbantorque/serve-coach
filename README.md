@@ -332,29 +332,41 @@ way. It reuses `.glance-move`'s box with a `--work` rule down the side rather
 than shrinking the report's injury card, and the whole screen still fits a phone
 without scrolling. `?demo=glance-strain`.
 
-**Shoulder external rotation is not measured, and the reason is the rig rather
-than the camera.** It is the joint angle a serve's racket drop is actually made
-of, so it was swept properly before being declined. Read at the trophy as the
-forearm's rotation about the humeral axis — against the trunk's up, so raising or
-lowering the whole arm does not move it — it comes back **exact on a clean rig**
-(0.0° deviation across 24 seeds) and at **9.5° under the camera the floors were
-set against**, which is the same order as `palm_to_sky_deg`'s 6.8°. Removing the
-depth error entirely only takes it to 2.9°, so depth is not what stops this.
+**Shoulder external rotation can be read, at about 10° of deviation — and the
+first attempt to check that was wrong.** It is the joint angle a serve's racket
+drop is actually made of, and the engine only ever approximated it:
+`shoulder_load_no_drop` pairs drop depth against contact height rather than
+reading a rotation.
 
-What stops it is that **nothing in `syntheticServe.ts` rotates the humerus**.
-`trophyForearmDrop` is a hand translation in metres, not a rotation, and past
-about 0.3 it stops laying the arm over and starts lengthening the forearm — 1.40×
-the upper arm at 0.4 and 3.35× at 0.8, where a real forearm is about 0.8×. So the
-sweep past that point measures a body nobody has, and there is no dial that can
-vary external rotation to derive a floor from or demonstrate separation with. The
-honest position is therefore "not yet, and here is exactly what it needs": either
-a rig dial that rotates the segment while holding its length, or the fixture
-shoot. Two things came out of it that were worth shipping on their own — the
-bound is documented on the dial and pinned in `invariants.test.ts`, so a future
-dial turned up to make a fault "more extreme" fails instead of quietly stretching
-an arm, and `DEMO_DIALS.injury` moved from 0.4 to 0.25, which raises the wrist
-flag on 20 of 24 noise realisations — exactly the rate 0.4 managed — while posing
-an arm that exists.
+The first sweep used `trophyForearmDrop`, concluded the angle was ungradeable,
+and was measuring the wrong thing. That dial is a **hand translation in metres,
+not a rotation** — past about 0.3 it stops laying the arm over and starts
+lengthening the forearm, to 1.40× the upper arm at 0.4 and 3.35× at 0.8 where a
+real one is about 0.8×. The deviation that "exploded" was an arm straightening
+out, not a camera failing. The bound is now documented on that dial and pinned in
+`invariants.test.ts`, so a future dial turned up to make a fault "more extreme"
+fails instead of quietly stretching an arm, and `DEMO_DIALS.injury` moved from
+0.4 to 0.25 — which raises the wrist flag on 20 of 24 noise realisations, exactly
+the rate 0.4 managed, while posing an arm that exists.
+
+`trophyExternalRotation` is the dial that actually asks the question. It rotates
+the wrist about the shoulder→elbow axis *after* the elbow is solved, so the elbow
+lies on the axis and no segment length can change — the property the other dial
+does not have — weighted to the trophy and gone again by the drop, and an exact
+no-op at zero so every band ever set against this rig's numbers is untouched.
+
+Swept against the same ensemble every `NOISE_FLOOR` figure came from, the reading
+tracks the dial at a gain of about 0.8 over a 48° span, with deviation **flat at
+9.4–11.8°** rather than exploding. A floor set the way every other one was —
+1.5× the deviation — would be **15°, leaving 3.15 usable steps**. For scale,
+`palm_to_sky_deg`'s floor is 11 and the engine grades it; `hip_lead_ms`'s is 85
+and it is `UNDER_RESOLVED`. So this sits on the gradeable side.
+
+Nothing computes it yet, and that is deliberate. A floor is the first number a
+graded signal needs, not the last — bands per tier, a place in the hierarchy and
+copy all have to come from somewhere, and the 19.7° offset at zero and the 0.8
+gain are properties of the reference frame rather than of a shoulder. Both need
+real footage before a player is told anything in degrees.
 
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
