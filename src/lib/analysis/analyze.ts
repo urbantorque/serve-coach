@@ -64,6 +64,18 @@ import {
   type Quality,
 } from './types'
 
+/**
+ * Wall clock, where there is one.
+ *
+ * `performance.now` in a browser; `Date.now` in the test runner, which has the
+ * same shape and worse resolution than this needs. The same fallback
+ * `diagnose.ts` already makes for the same reason.
+ */
+const clock = () =>
+  typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now()
+
 export type Step = 'engine' | 'reading' | 'scanning' | 'tracking' | 'measuring' | 'done'
 
 export interface AnalyzeProgress {
@@ -614,6 +626,49 @@ async function findBall(
   return flight
 }
 
+/**
+ * How often progress is allowed to reach the screen, in milliseconds.
+ *
+ * Ten times a second, which is faster than anybody reads a percentage and far
+ * slower than the pipeline reports one. A long clip's locating scan calls
+ * `onProgress` up to `SCAN_BUDGET` times and the tracking pass once per sampled
+ * frame — around 540 in total — and in this app every one of those is a React
+ * render of the whole tree, on the same thread that is running the pose model
+ * between them. The renders are cheap individually; competing with the model for
+ * a phone's main thread is not, and it is the same argument `MAX_POSE_DUTY`
+ * makes in `FramingCheck` about the live preview.
+ */
+const PROGRESS_INTERVAL_MS = 100
+
+/**
+ * Rate-limit progress without ever losing the part that matters.
+ *
+ * A plain throttle would be wrong here in two ways, and both are the difference
+ * between a smooth bar and a stuck one. The final call — `{ step: 'done' }` — is
+ * the one that must always land, or the screen keeps the last percentage it
+ * happened to be shown. And a change of *step* is not a finer-grained update of
+ * the same thing, it is a new sentence on screen ("Finding the serve" →
+ * "Tracking your body"), so it goes through immediately whatever the clock says.
+ *
+ * Everything else is dropped rather than queued: a progress report is only about
+ * now, and a backlog of them delivered late is worse than none.
+ */
+export function throttleProgress(
+  to: (p: AnalyzeProgress) => void,
+  intervalMs = PROGRESS_INTERVAL_MS,
+  now: () => number = clock,
+): (p: AnalyzeProgress) => void {
+  let last = -Infinity
+  let lastStep: Step | undefined
+  return (p) => {
+    const t = now()
+    if (p.step === lastStep && p.step !== 'done' && t - last < intervalMs) return
+    lastStep = p.step
+    last = t
+    to(p)
+  }
+}
+
 const isCancelled = (err: unknown) =>
   typeof err === 'object' && err !== null && (err as Error).name === 'Cancelled'
 
@@ -1055,17 +1110,6 @@ export async function analyzeServe(
   }
 }
 
-/**
- * Wall clock, where there is one.
- *
- * `performance.now` in a browser; `Date.now` in the test runner, which has the
- * same shape and worse resolution than this needs. The same fallback
- * `diagnose.ts` already makes for the same reason.
- */
-const clock = () =>
-  typeof performance !== 'undefined' && typeof performance.now === 'function'
-    ? performance.now()
-    : Date.now()
 
 async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promise<Analysis> {
   const { videoUrl, fileName, onProgress = () => {}, signal } = opts

@@ -28,6 +28,10 @@ in `git log`.
   through reading a serve, or several minutes into comparing a whole basket,
   which threw all of it away with no message. Updates are now held until you are
   back on the home screen with nothing running, where a reload costs nothing.
+- **The analysing screen no longer competes with the coach for the phone.**
+  Progress was reported to the screen once per tracked frame — several hundred
+  redraws per serve, on the same thread doing the pose detection. It now updates
+  ten times a second, which is faster than anyone reads a percentage.
 - **Fixed: a saved basket from another version could blank the whole app.**
   Opening a stored comparison that was missing the serve numbers — a
   report restored from a hand-edited backup, or written by a build from

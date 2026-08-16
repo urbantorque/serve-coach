@@ -32,6 +32,7 @@ import {
   rediagnose,
   rescore,
   sweepWindow,
+  throttleProgress,
   type AnalyzeProgress,
 } from './lib/analysis/analyze'
 import { forgetAll, recall, remember } from './lib/analysisCache'
@@ -848,7 +849,10 @@ export default function App() {
           // report and a refusal never reaches one.
           captureOnFailure: import.meta.env.DEV,
           signal: controller.signal,
-          onProgress: setProgress,
+          // Rate-limited on the way to the screen. Every one of these is a
+          // render of the whole app, and the pipeline reports hundreds of them
+          // per pass on the same thread the pose model is running on.
+          onProgress: throttleProgress(setProgress),
         })
         if (controller.signal.aborted) return
 
@@ -970,7 +974,7 @@ export default function App() {
           serveType: analysis.serveType,
           count: analysis.serves.count,
           signal: controller.signal,
-          onProgress: setProgress,
+          onProgress: throttleProgress(setProgress),
           // Each serve as it is measured, so a run of full analysis passes is
           // visible while it happens instead of arriving all at once at the end.
           onServe: ({ number, analysis: serve }) =>
