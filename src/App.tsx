@@ -357,7 +357,25 @@ export default function App() {
     positions: PairPosition[]
   }>()
 
+  /**
+   * A seeded history, held in place of the real one. `?demo=history`, dev only.
+   *
+   * A ref rather than a branch at every read site: `refreshSessions` is the one
+   * door into `sessions` and `drillLogs`, and it is called again on every save,
+   * every delete and every trip back to the home screen — so a seed that only
+   * set state once would survive until the first navigation and then vanish,
+   * which is worse than not having it. Nothing writes to storage, deliberately:
+   * a dev's own history is real data and fifteen fabricated reports in it is a
+   * mess somebody has to clean up by hand.
+   */
+  const demoHistory = useRef<{ sessions: Session[]; practice: PracticeLog[] }>()
+
   const refreshSessions = useCallback(() => {
+    if (demoHistory.current) {
+      setSessions(demoHistory.current.sessions)
+      setDrillLogs(demoHistory.current.practice)
+      return
+    }
     void safely(listSummaries, []).then(setSessions)
     // `undefined` on failure rather than `[]`, and the difference is the whole
     // point of the field it feeds: an empty list is "nothing has been logged"
@@ -469,10 +487,17 @@ export default function App() {
 
     let live = true
     void (async () => {
-      const [then, now] = await Promise.all([
-        safely(() => getSession(pick.then.id), undefined),
-        safely(() => getSession(pick.now.id), undefined),
-      ])
+      // A seeded history is not in storage — see `demoHistory` — so the fetch
+      // that exists to prove the stills are really still there has nothing to
+      // find. The summaries are the whole report in that case, images included,
+      // which is exactly the state the fetch is looking for.
+      const seeded = demoHistory.current !== undefined
+      const [then, now] = seeded
+        ? [pick.then, pick.now]
+        : await Promise.all([
+            safely(() => getSession(pick.then.id), undefined),
+            safely(() => getSession(pick.now.id), undefined),
+          ])
       if (!live || !then || !now) return
 
       // Paired by keyframe id, never by index, for the reason `pairStills` gives:
@@ -600,7 +625,23 @@ export default function App() {
     // the production bundle.
     const demo = import.meta.env.DEV && new URLSearchParams(location.search).get('demo')
     if (demo !== null && demo !== false) {
-      void import('./dev/sampleAnalysis').then(async ({ sampleAnalysis, sampleBasket, sampleClip, fitToClip, DEMO_DIALS }) => {
+      void import('./dev/sampleAnalysis').then(async ({ sampleAnalysis, sampleBasket, sampleClip, sampleHistory, fitToClip, DEMO_DIALS }) => {
+        /*
+         * A season of practice, on the home screen, going nowhere else.
+         *
+         * Handled before `sampleAnalysis` is called at all, because this route
+         * is not about a report: it seeds the history and then leaves the app
+         * exactly where it starts, so the screens that only exist across many
+         * serves — the form card, "Every serve so far", the trend, the
+         * repeatability chart, "Then, and now", the records, the practice card
+         * — can be opened by hand. See `sampleHistory` for what is in it and
+         * which branch each part is there to reach.
+         */
+        if (demo === 'history') {
+          demoHistory.current = sampleHistory()
+          refreshSessions()
+          return
+        }
         // The two screens that are otherwise unreachable without going out and
         // filming a bad serve: the injury banner, which needs a spine folding
         // under load, and the refusal, which needs a clip the engine throws out.

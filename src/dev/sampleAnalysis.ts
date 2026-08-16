@@ -17,6 +17,9 @@ import { diagnose } from '../lib/analysis/diagnose'
 import { assessResilience, triage } from '../lib/analysis/triage'
 import { causalFocus } from '../lib/analysis/verdict'
 import { FUNDAMENTALS } from '../lib/analysis/coaching'
+import { buildConsistency } from '../lib/analysis/consistency'
+import { findPracticeFocus } from '../lib/practice'
+import { KEEP_STILLS, type PracticeLog, type Session } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
 import { buildServe, type ServeDials } from '../lib/analysis/syntheticServe'
 
@@ -130,6 +133,163 @@ export function sampleBasket(): Analysis[] {
     a.serves = { count: 5, index: indices[i] }
     return a
   })
+}
+
+/**
+ * A stand-in keyframe still.
+ *
+ * The rig has no camera, so a seeded history would be the one thing `?demo`
+ * cannot show pictures for — and "Then, and now" is *entirely* pictures. The
+ * right count, the right aspect and the right labels, obviously not a body.
+ */
+function placeholderStill(label: string): string {
+  const canvas = document.createElement('canvas')
+  canvas.width = 150
+  canvas.height = 200
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+  ctx.fillStyle = '#151a24'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.strokeStyle = '#232a38'
+  ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1)
+  ctx.fillStyle = '#7b8799'
+  ctx.font = '13px system-ui, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText(label, canvas.width / 2, canvas.height / 2)
+  return canvas.toDataURL('image/png')
+}
+
+/**
+ * A season of practice, so the six screens that need one can be looked at.
+ *
+ * THE PROBLEM THIS SOLVES. `?demo` builds one report, and a third of this app is
+ * about what happens across many: the trend chart, the delta bars, the
+ * repeatability trend, "Your records", "Then, and now", the six-week milestone,
+ * the practice card's improving/stuck/slipping verdicts and the streak lines.
+ * Every one of those needs a history spanning weeks, which until now could only
+ * be produced by going out and filming for weeks. So they shipped unwalked —
+ * and two of the defects found on 2026-08-16 lived in exactly that gap, one of
+ * them a disagreement between the home card and the report that is only visible
+ * with both on screen and a recalibration in the history.
+ *
+ * WHAT IS DELIBERATELY IN IT. Each of these turns on a branch that is otherwise
+ * unreachable, and none of them is decoration:
+ *
+ *   · **Eight trips over eleven weeks**, chained so `tripsOf` cuts them where
+ *     intended — past `MILESTONE_SPAN_MS`, so `sixWeekMilestone` speaks, and
+ *     inside `STREAK_GAP_MS`, so the streak and longest-run lines do.
+ *   · **A rubric break** three trips in. `currentRubricEra` should cut the
+ *     records, the rolling average and the practice window at it while the
+ *     chart still draws the older points behind a rule.
+ *   · **Two kick serves** among the flat ones, so the "showing your flat serves
+ *     only" aside appears with a real count behind it.
+ *   · **Baskets on four of the trips**, so the repeatability trend has more than
+ *     one point and `recurring` can name an element that came last twice.
+ *   · **Keyframe stills on the newest reports only**, which is what `KEEP_STILLS`
+ *     leaves behind — so "Then, and now" picks its pair the way it will in life
+ *     rather than always finding pictures.
+ *   · **A drill logged twice against the weakest measurement**, which is the
+ *     branch `practiceHeadline` splits "stuck" on.
+ *
+ * WHAT IT IS NOT. Not fixtures, not stored, and not evidence about anything:
+ * every serve in here is the synthetic rig with its dials moved, so the numbers
+ * are the rig's numbers. It exists to make screens reachable, not to validate
+ * them.
+ */
+export function sampleHistory(now = Date.now()): {
+  sessions: Session[]
+  practice: PracticeLog[]
+} {
+  const DAY = 24 * 60 * 60 * 1000
+
+  /** Trips, oldest first: how many days back, and what was hit on each. */
+  const trips: { daysAgo: number; serves: { reach: number; kick?: boolean; basket?: boolean }[] }[] = [
+    { daysAgo: 77, serves: [{ reach: 1.11 }, { reach: 1.14, basket: true }, { reach: 1.1 }] },
+    { daysAgo: 69, serves: [{ reach: 1.13 }, { reach: 1.15 }] },
+    { daysAgo: 61, serves: [{ reach: 1.12 }, { reach: 1.16 }, { reach: 1.13 }] },
+    // The recalibration lands here — everything from this trip on is rubric 2.
+    { daysAgo: 47, serves: [{ reach: 1.18, basket: true }, { reach: 1.15 }, { reach: 1.17 }] },
+    { daysAgo: 39, serves: [{ reach: 1.2 }, { reach: 1.19, kick: true }, { reach: 1.21 }] },
+    { daysAgo: 25, serves: [{ reach: 1.24, basket: true }, { reach: 1.22 }] },
+    { daysAgo: 12, serves: [{ reach: 1.27 }, { reach: 1.25, kick: true }, { reach: 1.26 }] },
+    { daysAgo: 3, serves: [{ reach: 1.31, basket: true }, { reach: 1.29 }, { reach: 1.3 }] },
+  ]
+
+  const sessions: Session[] = []
+  let n = 0
+
+  for (const [t, trip] of trips.entries()) {
+    for (const [i, serve] of trip.serves.entries()) {
+      // Minutes apart inside a trip, which is what `sameTrip` is measuring.
+      const createdAt = now - trip.daysAgo * DAY + i * 11 * 60 * 1000
+      const a = sampleAnalysis({ contactReach: serve.reach })
+      const { frames: _f, ...rest } = a
+      void _f
+
+      const session = {
+        ...rest,
+        // The real key shape, so `clipIdOf` collapses a re-swept basket the way
+        // it does in life.
+        id: `serve-demo${n}-0`,
+        createdAt,
+        serveType: serve.kick ? ('kick' as const) : ('flat' as const),
+        scoringVersion: t < 3 ? 1 : 2,
+      } as Session
+
+      if (serve.basket) {
+        const basket = sampleBasket().map((b, k) => ({
+          ...b,
+          // Widening early, tightening later: the gap trend is the one chart
+          // whose improvement is a number going down.
+          overall: Math.round(b.overall + (8 - t) * (k % 2 ? 1.4 : -1.4)),
+        }))
+        session.consistency = buildConsistency(basket, 5)
+      }
+
+      sessions.push(session)
+      n++
+    }
+  }
+
+  // `listSummaries` hands back newest first, and several readers say out loud
+  // that they must not depend on that — so the demo supplies it that way and
+  // any that quietly does will show it here.
+  sessions.reverse()
+
+  /*
+   * Stills on the newest `KEEP_STILLS`, which is the prune's own rule applied
+   * rather than a guess at how many is realistic.
+   *
+   * It matters to more than one screen. "Then, and now" chooses its pair by
+   * counting back exactly this far and then *fetching* to see whether the
+   * pictures really survived, so a seed that gave stills to everything would
+   * make that screen appear on terms no real history ever meets, and a seed
+   * that gave them to too few would make it never appear at all — which is what
+   * happened on the first attempt at this list.
+   */
+  sessions.forEach((s, i) => {
+    if (i < KEEP_STILLS) {
+      s.phases = s.phases.map((p) => ({ ...p, thumbnail: placeholderStill(p.label) }))
+    }
+  })
+
+  /*
+   * Two drills logged against whatever the card is actually going to name.
+   *
+   * Asked of `findPracticeFocus` rather than guessed at: `drilled` only reaches
+   * a sentence when the logs and the focus agree on a measurement id, so a
+   * hard-coded id here would silently produce the never-logged branch instead
+   * of the drilled one, which is the pair this seed exists to show.
+   */
+  const focus = findPracticeFocus(sessions)
+  const practice: PracticeLog[] = focus
+    ? [
+        { id: `${focus.metricId}-a`, metricId: focus.metricId, drill: focus.drill.name, assignedAt: now - 20 * DAY, doneAt: now - 20 * DAY },
+        { id: `${focus.metricId}-b`, metricId: focus.metricId, drill: focus.drill.name, assignedAt: now - 6 * DAY, doneAt: now - 6 * DAY },
+      ]
+    : []
+
+  return { sessions, practice }
 }
 
 export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): Analysis {
