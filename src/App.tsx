@@ -1532,7 +1532,7 @@ export default function App() {
             <div className="progress-summary">
               <span className="progress-hero tnum">{form.latest.overall}</span>
               <span className="progress-unit">
-                latest {SERVE_TYPES[form.serveType].label.split(' ')[0].toLowerCase()} serve
+                latest {SERVE_TYPES[form.serveType].word} serve
                 <DeltaChip delta={form.overallDelta} />
               </span>
             </div>
@@ -1569,7 +1569,7 @@ export default function App() {
                 app lost the rest. */}
             {form.setAside > 0 && (
               <p className="progress-aside">
-                Showing your {SERVE_TYPES[form.serveType].label.toLowerCase()} serves only.{' '}
+                Showing your {SERVE_TYPES[form.serveType].word} serves only.{' '}
                 {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored
                 against different targets, so mixing them in would look like a change in form.
               </p>

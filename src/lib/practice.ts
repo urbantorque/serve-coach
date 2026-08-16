@@ -1,4 +1,4 @@
-import { FUNDAMENTALS, METRICS } from './analysis/coaching'
+import { FUNDAMENTALS, METRICS, SERVE_TYPES } from './analysis/coaching'
 import { mean } from './analysis/geometry'
 import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
@@ -75,12 +75,15 @@ export interface PracticeFocus {
   drilled?: number
 }
 
-/** How to refer to each serve in a sentence. */
-const SERVE_WORD: Record<ServeType, string> = {
-  flat: 'flat',
-  kick: 'kick',
-  slice: 'slice',
-}
+/**
+ * How to refer to each serve in a sentence.
+ *
+ * Read off `SERVE_TYPES` rather than restated here, which it was. Two tables
+ * naming one thing is how "Showing your flat / first serve serves only" reached
+ * a screen: this file had the right word and `App.tsx`, which had no way to know
+ * that, sliced the chip label instead.
+ */
+const SERVE_WORD = (type: ServeType): string => SERVE_TYPES[type].word
 
 /**
  * How many recent trips to the court a practice recommendation looks across.
@@ -321,7 +324,7 @@ const times = (n: number): string =>
 
 /** The line at the top of the practice card. */
 export function practiceHeadline(f: PracticeFocus): string {
-  const across = `across your last ${f.sessionsConsidered} ${SERVE_WORD[f.serveType]} serves`
+  const across = `across your last ${f.sessionsConsidered} ${SERVE_WORD(f.serveType)} serves`
   const it = f.label.toLowerCase()
 
   if (f.verdict === 'improving') {
@@ -356,7 +359,7 @@ export function practiceHeadline(f: PracticeFocus): string {
     return cue(`Your ${it} has lost ${f.timesWeakest} serves and no drill is logged against it. Start there.`)
   }
   if (f.timesWeakest >= Math.ceil(f.sessionsConsidered / 2)) {
-    return cue(`Your ${it} lost ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD[f.serveType]} serves and has not shifted. Spend your time here.`)
+    return cue(`Your ${it} lost ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD(f.serveType)} serves and has not shifted. Spend your time here.`)
   }
   return cue(`Your ${it} scores lowest ${across} and has not moved. Spend your time here.`)
 }

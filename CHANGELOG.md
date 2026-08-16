@@ -16,6 +16,8 @@ in `git log`.
   suite mutates each one of them in turn and draws the result, which is how the
   seven were found.
 - **Fixed: your form card and your report could disagree about your best serve.**
+- **Fixed: "Showing your flat / first serve serves only."** The progress sheet
+  built that sentence out of the chip label, which already ends in "serve".
 - **Your settings now travel with your history.** Exporting and importing carried
   your reports and your logged drills and left behind the three things that say
   who you are — which hand you serve with, your rating, and which serve you were

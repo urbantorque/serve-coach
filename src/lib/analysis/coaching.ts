@@ -846,7 +846,26 @@ export const DRILLS: Record<string, Drill> = {
  * differences there would be pretending to a precision this does not have.
  */
 export interface ServeTypeCopy {
+  /**
+   * The name on a chip, where it stands alone and can afford both halves.
+   *
+   * NOT FOR USE INSIDE A SENTENCE — that is what `word` below is for, and the
+   * distinction is not pedantry. "Flat / first serve" dropped into "showing
+   * your … serves only" reads "showing your flat / first serve serves only",
+   * which shipped, and the sibling line one section above it dodged the same
+   * fault only by taking `label.split(' ')[0]` — a trick that works on these
+   * three names and on no principle.
+   */
   label: string
+  /**
+   * The same serve, as one word, for the middle of a sentence.
+   *
+   * Here rather than beside its readers because there were two of those and
+   * they had already disagreed: `practice.ts` carried its own `SERVE_WORD`
+   * table while `App.tsx` sliced the label. One name for a thing, in the file
+   * that owns the thing.
+   */
+  word: string
   /** Shown next to the score so the player knows what they are being judged as. */
   blurb: string
   overrides: Record<string, [number, number]>
@@ -870,11 +889,13 @@ export interface ServeTypeCopy {
 export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
   flat: {
     label: 'Flat / first serve',
+    word: 'flat',
     blurb: 'Judged as a first serve hit through the ball.',
     overrides: {},
   },
   kick: {
     label: 'Kick / topspin',
+    word: 'kick',
     blurb: 'Judged as a kick serve, so contact belongs over your head.',
     overrides: {
       // The racket travels up the back of the ball, so contact sits much closer
@@ -967,6 +988,7 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
   },
   slice: {
     label: 'Slice',
+    word: 'slice',
     blurb: 'Judged as a slice serve, so contact belongs in front and out to the side.',
     overrides: {
       // Nothing moves, and both of the bands that used to be moved are worth
