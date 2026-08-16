@@ -120,8 +120,41 @@ check('a history already inside KEEP_ALL_UNDER_PRESSURE loses no reports even un
 
 check('an empty store plans nothing at any level', () => {
   for (const level of ['routine', 'stills', 'hard'] as const) {
-    const { toDelete, toStrip } = planPrune([], level)
-    assert(toDelete.length === 0 && toStrip.length === 0, `${level} planned work against zero rows`)
+    const { toDelete, toStrip, toDowngrade } = planPrune([], level)
+    assert(
+      toDelete.length === 0 && toStrip.length === 0 && toDowngrade.length === 0,
+      `${level} planned work against zero rows`,
+    )
+  }
+})
+
+check('routine pruning never takes a stored swing off a report', () => {
+  /*
+   * The rung's whole shape. A track is 21 kB against 24–48 kB of photographs on
+   * the same report and it is the thing that survives them — taking it off
+   * everything past `KEEP_STILLS` would cost a player the replay on reports
+   * nowhere near a quota problem, and hand them a second horizon to learn on top
+   * of the one the pictures already have.
+   */
+  const { toStrip, toDowngrade } = planPrune(keys(MAX_SESSIONS), 'routine')
+  assert(toStrip.length > 0, 'the fixture did not reach the stills limit, so this proves nothing')
+  assert(toDowngrade.length === 0, `routine pruning downgraded ${toDowngrade.length} tracks`)
+})
+
+check('under pressure the swing goes with the pictures, on the same band', () => {
+  /*
+   * One limit rather than a third constant to keep in agreement with the other
+   * two. Checked as identity with `toStrip` rather than by recomputing the
+   * arithmetic, which would only restate `planPrune` back at itself.
+   */
+  for (const level of ['stills', 'hard'] as const) {
+    const { toStrip, toDowngrade } = planPrune(keys(MAX_SESSIONS), level)
+    assert(toDowngrade.length === toStrip.length, `${level}: ${toDowngrade.length} downgraded, ${toStrip.length} stripped`)
+    assert(
+      toDowngrade.every((k, i) => k === toStrip[i]),
+      `${level} downgraded a different band from the one it stripped`,
+    )
+    assert(toDowngrade.length > 0, `${level} found nothing to downgrade at a full store`)
   }
 })
 

@@ -8,6 +8,7 @@ import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
+import { filmstripPoses } from '../lib/storage/poseTrack'
 import { useShareState } from '../components/useShareState'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
@@ -230,6 +231,11 @@ export default function Report({
     () => deltasAgainst(analysis.fundamentals, previous, rubric),
     [analysis.fundamentals, previous, rubric],
   )
+  // The filmstrip's bodies, from whichever form this report is carrying — a
+  // stored swing, or the six keyframes a quota-pruned one was left with. Memoed
+  // because lifting six rows out of a track on every render would repeat the
+  // whole map per keystroke on any state this screen holds.
+  const stripPoses = useMemo(() => filmstripPoses(analysis), [analysis])
   // "Nothing happened" when the player backs out of the share sheet is
   // handled inside `useShareState` itself (cancelled/failed both read as
   // idle, only shared/downloaded count as done) — the button says nothing
@@ -748,7 +754,7 @@ export default function Report({
                      body the tracker saw is drawn instead, from the poses the
                      report still carries. `PoseStill` falls back to the same
                      placeholder when there is no row either. */
-                  <PoseStill poses={analysis.poses} index={i} racket={analysis.handedness} label={p.label} />
+                  <PoseStill poses={stripPoses} index={i} racket={analysis.handedness} label={p.label} />
                 )}
                 <span className="strip-caption">
                   <strong>{p.label}</strong>
@@ -760,7 +766,7 @@ export default function Report({
                 {p.thumbnail ? (
                   <img src={p.thumbnail} alt={p.label} loading="lazy" />
                 ) : (
-                  <PoseStill poses={analysis.poses} index={i} racket={analysis.handedness} label={p.label} />
+                  <PoseStill poses={stripPoses} index={i} racket={analysis.handedness} label={p.label} />
                 )}
                 <figcaption className="strip-caption">
                   <strong>{p.label}</strong>

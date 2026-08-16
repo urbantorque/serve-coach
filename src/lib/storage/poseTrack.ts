@@ -13,12 +13,14 @@
  * and a photograph is a hundred thousand pixels of court, sky and fence that
  * nothing ever reads. `footprint.test.ts` measures both.
  *
- * WHY ONLY THE KEYFRAMES. The whole swing at this precision is 21.5 kB, which is
- * still cheaper than the stills, and storing it would make a saved serve
- * replayable as motion — that is the larger idea this format is deliberately
- * shaped to grow into. It is not this change. Six poses fix the blank filmstrip,
- * which is a defect on screen today, and a format that ships with a reader is
- * worth more than one that ships with a plan.
+ * AND NOW THE WHOLE SWING, WHICH IS THE SAME ROWS. `swingTrack` below stores
+ * every frame between `ready` and `finish` in exactly this encoding, so the six
+ * keyframes are rows of it rather than a second copy — `keyframesFromTrack`
+ * lifts them out byte for byte, which is what lets a report carry one or the
+ * other and never both. 21.3 kB against 2.7, and against 24–48 kB of
+ * photographs. What it buys that six poses cannot is motion: a saved serve has
+ * no video left, so a track is the only way an old report replays rather than
+ * merely illustrating itself.
  *
  * THREE DECIMALS, AND IT IS A MEASUREMENT. Landmarks are normalised to the
  * frame, so the rounding step is a thousandth of the frame — at most half a
@@ -32,7 +34,7 @@
  * that carries no image of anybody — which is a privacy property worth having on
  * the thing that outlives the pictures.
  */
-import type { Frame, Landmark, Phase } from '../analysis/types'
+import type { Analysis, Frame, Landmark, Phase } from '../analysis/types'
 
 /** Decimals kept for a normalised landmark coordinate. */
 export const POSE_PRECISION = 3
@@ -132,10 +134,166 @@ export function readKeyframePoses(v: unknown): KeyframePoses | undefined {
   if (typeof raw.aspect !== 'number' || !(raw.aspect > 0)) return undefined
   if (!Array.isArray(raw.rows)) return undefined
 
-  const rows = raw.rows.map((r) =>
-    Array.isArray(r) && r.length > 0 && r.length % STRIDE === 0 && r.every((n) => typeof n === 'number')
-      ? (r as number[])
-      : null,
-  )
+  const rows = raw.rows.map(readRow)
   return rows.some(Boolean) ? { aspect: raw.aspect, rows } : undefined
+}
+
+/** One stored row, or `null` if nothing about it can be trusted. */
+const readRow = (r: unknown): number[] | null =>
+  Array.isArray(r) && r.length > 0 && r.length % STRIDE === 0 && r.every((n) => typeof n === 'number')
+    ? (r as number[])
+    : null
+
+/* --------------------------------------------------------------- the swing */
+
+/**
+ * The whole swing, in the same rows.
+ *
+ * WHY THIS IS NOT A SECOND THING BESIDE THE KEYFRAMES. A row here is encoded
+ * exactly as a keyframe row is — same landmarks, same decimals, same stride — so
+ * the six keyframe rows can be lifted back out of a track byte for byte. That is
+ * measured rather than asserted (`footprint.test.ts`, "What a stored track would
+ * do to the prune ladder"), and it is the whole reason this ships: a report
+ * stores a track *instead of* its poses, and `keyframesFromTrack` produces the
+ * poses on demand. Storing both would be paying twice for the same six rows.
+ *
+ * WHAT IT COSTS AND WHERE IT SITS IN THE LADDER. 21.3 kB for a serve, against
+ * 2.7 kB for the six poses it replaces and 24–48 kB for the photographs it
+ * outlives. So it is kept on every report the ladder keeps — there is no routine
+ * rung and no second horizon for a player to learn — and the quota levels
+ * downgrade it to its own keyframes rather than deleting it. Stripping a still
+ * leaves nothing behind; this is the only thing in a stored report that can get
+ * smaller twice.
+ *
+ * THE SPAN IS `ready` TO `finish`, which is the cheapest span that can still
+ * draw the filmstrip: every keyframe falls inside it, checked across six rigs
+ * rather than taken from the detector's ordering on faith.
+ */
+export interface SwingTrack {
+  /** As `KeyframePoses.aspect` — `drawSkeleton` needs it and a stored report has no video. */
+  aspect: number
+  /** The clip frame `rows[0]` came from, so a `Phase.frame` can index straight in. */
+  from: number
+  /**
+   * Seconds into the clip, one per row.
+   *
+   * Kept parallel rather than pushed onto the front of each row, which would
+   * have been fewer bytes to reason about and would have cost the property above:
+   * a row that starts with a timestamp is no longer the same row a keyframe
+   * stores. Sampling is not evenly spaced — `seekTo` files a frame under the time
+   * the seek actually reached — so a replay that assumed a fixed step would drift.
+   */
+  times: number[]
+  /**
+   * One row per frame in `from..from + rows.length - 1`, `null` where the tracker
+   * saw nothing.
+   *
+   * Null-preserving rather than compacted, and that is load-bearing: every reader
+   * here finds a frame by subtracting `from`, so a row dropped in the middle
+   * would silently shift every later frame and draw the trophy under the caption
+   * reading Contact.
+   */
+  rows: (number[] | null)[]
+}
+
+/**
+ * Encode the swing between two frames.
+ *
+ * `undefined` when the span is empty or nothing in it was tracked, so a caller
+ * stores no field rather than an empty one — the same contract `keyframePoses`
+ * has.
+ */
+export function swingTrack(
+  frames: readonly Frame[],
+  from: number,
+  to: number,
+  aspect: number,
+): SwingTrack | undefined {
+  if (!frames.length || !(aspect > 0)) return undefined
+  const first = Math.max(0, Math.round(from))
+  const last = Math.min(frames.length - 1, Math.round(to))
+  if (!(last >= first)) return undefined
+
+  let any = false
+  const times: number[] = []
+  const rows: (number[] | null)[] = []
+  for (let i = first; i <= last; i++) {
+    const f = frames[i]
+    times.push(round(f?.t ?? 0, 3))
+    if (!f?.image?.length) {
+      rows.push(null)
+      continue
+    }
+    any = true
+    const row: number[] = []
+    for (const lm of f.image) {
+      row.push(
+        round(lm.x, POSE_PRECISION),
+        round(lm.y, POSE_PRECISION),
+        round(lm.visibility, VISIBILITY_PRECISION),
+      )
+    }
+    rows.push(row)
+  }
+
+  return any ? { aspect: round(aspect, 4), from: first, times, rows } : undefined
+}
+
+/**
+ * The six keyframes, taken back out of a track.
+ *
+ * This is the prune ladder's downgrade and the report's own reader in one
+ * function, which is deliberate: if the two ever diverged, a pruned report would
+ * draw a different filmstrip from the same serve before it was pruned.
+ *
+ * Positional against `phases`, exactly as `keyframePoses` is, and a phase whose
+ * frame falls outside the stored span produces `null` rather than the nearest
+ * row — a body drawn under the wrong caption is worse than a grey box, because
+ * it still looks like a serve.
+ */
+export function keyframesFromTrack(
+  track: SwingTrack | undefined,
+  phases: readonly Pick<Phase, 'frame'>[],
+): KeyframePoses | undefined {
+  if (!track || !phases.length) return undefined
+  const rows = phases.map((p) => track.rows[p.frame - track.from] ?? null)
+  return rows.some(Boolean) ? { aspect: track.aspect, rows } : undefined
+}
+
+/**
+ * The six poses a report should draw, from whichever form it is carrying.
+ *
+ * One function because there are three states in a real store and a screen must
+ * not have to know which it is holding: a fresh or recent report has a track, a
+ * report pruned under quota pressure has the keyframes the downgrade left it,
+ * and a report written before either existed has nothing. The track is preferred
+ * where both are somehow present, since it is the form the other is derived from.
+ */
+export function filmstripPoses(
+  a: Pick<Analysis, 'poses' | 'track' | 'phases'>,
+): KeyframePoses | undefined {
+  return keyframesFromTrack(a.track, a.phases) ?? a.poses
+}
+
+/**
+ * A stored track reshaped so nothing downstream throws on it.
+ *
+ * Same door `readKeyframePoses` is, for the same reason — reports outlive the
+ * code that wrote them. `times` is repaired to the row count rather than refused
+ * with it: a missing timestamp costs a replay its spacing, and a row is worth
+ * drawing without one.
+ */
+export function readSwingTrack(v: unknown): SwingTrack | undefined {
+  if (!v || typeof v !== 'object') return undefined
+  const raw = v as { aspect?: unknown; from?: unknown; times?: unknown; rows?: unknown }
+  if (typeof raw.aspect !== 'number' || !(raw.aspect > 0)) return undefined
+  if (typeof raw.from !== 'number' || !Number.isFinite(raw.from) || raw.from < 0) return undefined
+  if (!Array.isArray(raw.rows)) return undefined
+
+  const rows = raw.rows.map(readRow)
+  if (!rows.some(Boolean)) return undefined
+
+  const stored = Array.isArray(raw.times) ? raw.times : []
+  const times = rows.map((_, i) => (typeof stored[i] === 'number' ? (stored[i] as number) : 0))
+  return { aspect: raw.aspect, from: Math.round(raw.from), times, rows }
 }

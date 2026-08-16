@@ -1,4 +1,4 @@
-import { readKeyframePoses } from './poseTrack'
+import { keyframesFromTrack, readKeyframePoses, readSwingTrack } from './poseTrack'
 import { readoutOf, targetOf } from '../analysis/anatomy'
 // The table the screens index by `serveType`. Imported rather than restated as
 // a list of three names, so a fourth serve type cannot be readable on the
@@ -135,6 +135,26 @@ const stripStills = (s: Session): Session => ({
 })
 
 /**
+ * A stored swing traded for the six keyframes inside it.
+ *
+ * The one rung the stills never had. Stripping a photograph leaves nothing
+ * behind, so once the images are gone the ladder's only remaining move is
+ * deleting whole reports — a player out of room loses serves rather than
+ * pictures. A track is the only thing in a stored report that can get smaller
+ * twice: 21 kB becomes the 2.7 kB of keyframes it already contained, the
+ * filmstrip is unchanged, and only the replay is lost.
+ *
+ * Lossless with respect to everything on screen, and that is measured rather
+ * than claimed — `footprint.test.ts` checks the rows come back byte for byte.
+ */
+const downgradeTrack = (s: Session): Session => {
+  if (!s.track) return s
+  const { track: _t, ...rest } = s
+  const poses = keyframesFromTrack(s.track, s.phases)
+  return poses ? { ...rest, poses } : rest
+}
+
+/**
  * How hard to work to make room.
  *
  * `routine` runs after every save and must be nearly free. The other two are
@@ -162,16 +182,35 @@ export const KEEP_ALL_UNDER_PRESSURE = 25
 export function planPrune(
   orderedOldestFirst: readonly IDBValidKey[],
   level: PruneLevel,
-): { toDelete: IDBValidKey[]; toStrip: IDBValidKey[] } {
+): { toDelete: IDBValidKey[]; toStrip: IDBValidKey[]; toDowngrade: IDBValidKey[] } {
   const keepStills = level === 'routine' ? KEEP_STILLS : KEEP_STILLS_UNDER_PRESSURE
   const keepAll = level === 'hard' ? KEEP_ALL_UNDER_PRESSURE : MAX_SESSIONS
   const n = orderedOldestFirst.length
+  const toStrip = orderedOldestFirst.slice(
+    Math.max(0, n - keepAll),
+    Math.max(0, n - keepStills),
+  )
   return {
     toDelete: orderedOldestFirst.slice(0, Math.max(0, n - keepAll)),
     // Only the band between the two limits: everything past `keepAll` is
     // already in `toDelete`, and everything within `keepStills` of the end
     // keeps its images.
-    toStrip: orderedOldestFirst.slice(Math.max(0, n - keepAll), Math.max(0, n - keepStills)),
+    toStrip,
+    /*
+     * The swing track goes only once the disk has actually pushed back.
+     *
+     * A track is 21 kB against the 24–48 kB of photographs on the same report,
+     * and it is the only thing here that survives them — so taking it off
+     * everything past `KEEP_STILLS` would cost a player the replay on reports
+     * that are nowhere near a quota problem, and give them a second horizon to
+     * learn on top of the one the pictures already have. Routine pruning
+     * therefore leaves it alone entirely.
+     *
+     * Under pressure it is the same band as the stills rather than a band of its
+     * own, deliberately: one limit, one decision, and no third constant to keep
+     * in agreement with the other two.
+     */
+    toDowngrade: level === 'routine' ? [] : toStrip,
   }
 }
 
@@ -208,7 +247,8 @@ async function prune(level: PruneLevel = 'routine'): Promise<void> {
 
   if (level !== 'routine') await dropUnreadable()
 
-  const { toDelete, toStrip } = planPrune(ordered, level)
+  const { toDelete, toStrip, toDowngrade } = planPrune(ordered, level)
+  const downgrading = new Set(toDowngrade.map(String))
 
   for (const doomed of toDelete) {
     await safely(() => tx('readwrite', (store) => store.delete(doomed)), undefined)
@@ -234,8 +274,13 @@ async function prune(level: PruneLevel = 'routine'): Promise<void> {
     await safely(async () => {
       const row = await tx<unknown>('readonly', (store) => store.get(key) as IDBRequest<unknown>)
       const s = normalise(row)
-      if (!s || !s.phases.some((p) => p.thumbnail)) return
-      await tx('readwrite', (store) => store.put(stripStills(s)))
+      if (!s) return
+      const wantsDowngrade = downgrading.has(String(key)) && !!s.track
+      // Nothing to free is not the same as a free write: a `put` rewrites a
+      // whole record, and this loop's other caller is already out of room.
+      if (!s.phases.some((p) => p.thumbnail) && !wantsDowngrade) return
+      const stripped = stripStills(s)
+      await tx('readwrite', (store) => store.put(wantsDowngrade ? downgradeTrack(stripped) : stripped))
     }, undefined)
   }
 }
@@ -488,6 +533,13 @@ export function normalise(raw: unknown): Session | undefined {
      * always drawn.
      */
     poses: readKeyframePoses(s.poses),
+    /*
+     * Same door, same reason. A report carries one or the other and never both:
+     * fresh ones store the track, and the ladder's downgrade turns it back into
+     * `poses` under quota pressure, so both fields are the ordinary state of
+     * some report in a real store.
+     */
+    track: readSwingTrack(s.track),
   }
 }
 

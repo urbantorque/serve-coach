@@ -3,7 +3,7 @@ import type { BallFlight, TossFlight } from '../vision/ballTrack'
 import type { Consistency } from './consistency'
 import type { Diagnosis } from './diagnose'
 import type { Triage as TriageResult } from './triage'
-import type { KeyframePoses } from '../storage/poseTrack'
+import type { KeyframePoses, SwingTrack } from '../storage/poseTrack'
 
 /** A single pose landmark. */
 export interface Landmark {
@@ -181,6 +181,16 @@ export interface Analysis {
    * than empty ones.
    */
   poses?: KeyframePoses
+  /**
+   * The whole swing as a tracked body — see `storage/poseTrack.ts`.
+   *
+   * Written instead of `poses`, never beside it: a track's rows are encoded
+   * exactly as a keyframe's are, so `keyframesFromTrack` produces the six for
+   * free and storing both would pay twice for the same rows. `poses` stays on
+   * this type because reports written before tracks existed carry it, and
+   * because the prune ladder's downgrade turns a track back into one.
+   */
+  track?: SwingTrack
   frames: Frame[]
   window: { start: number; end: number }
   /** Serves found in the clip, and which one this report is about. */

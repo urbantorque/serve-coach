@@ -18,7 +18,7 @@ import { assessResilience, triage } from '../lib/analysis/triage'
 import { causalFocus } from '../lib/analysis/verdict'
 import { FUNDAMENTALS } from '../lib/analysis/coaching'
 import { buildConsistency } from '../lib/analysis/consistency'
-import { keyframePoses } from '../lib/storage/poseTrack'
+import { swingTrack } from '../lib/storage/poseTrack'
 import { findPracticeFocus } from '../lib/practice'
 import { KEEP_STILLS, type PracticeLog, type Session } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
@@ -395,7 +395,7 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): 
     triage: verdict,
     // The same call `analyze` makes, so the demo shows the branch a pruned
     // report reaches rather than a rig-only shortcut around it.
-    poses: keyframePoses(frames, phases, SAMPLE_VIDEO.width / SAMPLE_VIDEO.height),
+    track: swingTrack(frames, phases[0].frame, phases[phases.length - 1].frame, SAMPLE_VIDEO.width / SAMPLE_VIDEO.height),
     frames,
     window: { start: frames[0].t, end: frames[frames.length - 1].t },
     serves: { count: 1, index: 0 },

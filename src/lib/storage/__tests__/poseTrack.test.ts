@@ -9,11 +9,20 @@
  * just a wrong body nothing reports. So most of what follows is about position
  * and about junk, rather than about the encoding being small.
  */
-import { keyframePoses, poseFrameAt, readKeyframePoses, POSE_PRECISION } from '../poseTrack'
+import {
+  filmstripPoses,
+  keyframePoses,
+  keyframesFromTrack,
+  poseFrameAt,
+  readKeyframePoses,
+  readSwingTrack,
+  swingTrack,
+  POSE_PRECISION,
+} from '../poseTrack'
 import { buildServe } from '../../analysis/syntheticServe'
 import { detectServe } from '../../analysis/phases'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
-import type { Frame, Phase } from '../../analysis/types'
+import type { Analysis, Frame, Phase } from '../../analysis/types'
 
 const frames: Frame[] = buildServe({ noise: 0.006, seed: 7000 }, 30)
 const skel = detectServe(frames, 30)
@@ -140,6 +149,127 @@ check('six poses are far cheaper than the six pictures they stand in for', () =>
   // that or it is not worth surviving the prune the pictures do not.
   assert(kb < 4, `six poses came to ${kb.toFixed(1)} kB — the argument for keeping them was 15–30× cheaper`)
   note(`six keyframe poses: ${kb.toFixed(2)} kB, against 24–48 kB of stills`)
+})
+
+heading('The whole swing, and the keyframes still inside it')
+
+const bytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).length
+
+check('the six keyframes come back out of a track byte for byte', () => {
+  /*
+   * The property the whole design rests on, checked against both real functions
+   * rather than against a restatement of either. A track is stored *instead of*
+   * the poses, so if this ever stopped holding, a report would draw one filmstrip
+   * before the prune ladder downgraded it and a different one afterwards.
+   */
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)
+  assert(track !== undefined, 'a clean serve produced no track')
+  const lifted = keyframesFromTrack(track, phases)
+  const stored = keyframePoses(frames, phases, ASPECT)
+  assert(
+    JSON.stringify(lifted) === JSON.stringify(stored),
+    'the keyframes lifted out of a track are not the ones the report would have stored',
+  )
+  note(`track ${(bytes(track) / 1024).toFixed(1)} kB carries the ${(bytes(stored) / 1024).toFixed(1)} kB of keyframes inside it`)
+})
+
+check('a frame the tracker lost keeps its place, so later keyframes still line up', () => {
+  /*
+   * Rows are found by subtracting `from`, so a lost frame has to become a `null`
+   * row rather than be left out. Dropping it would shift every later frame by
+   * one and caption the drop as the contact — silently, because the picture
+   * still looks like a serve.
+   *
+   * The hole is put between two keyframes on purpose: if the encoder compacted,
+   * every phase after it would move and this would fail on five of six rows.
+   */
+  const holed = frames.map((f) => ({ ...f }))
+  const hole = K.trophy + 1
+  assert(!phases.some((p) => p.frame === hole), 'the hole landed on a keyframe — pick another frame')
+  holed[hole] = { ...holed[hole], image: [] }
+
+  const track = swingTrack(holed, K.ready, K.finish, ASPECT)!
+  assert(track.rows[hole - track.from] === null, 'the lost frame was compacted away rather than kept as a hole')
+  assert(
+    JSON.stringify(keyframesFromTrack(track, phases)) ===
+      JSON.stringify(keyframePoses(holed, phases, ASPECT)),
+    'a hole in the track moved the keyframes off their own frames',
+  )
+})
+
+check('a keyframe outside the stored span produces no row, not the nearest one', () => {
+  // A track spans the swing, not the clip. Anything asked for outside it has to
+  // come back absent — the alternative is a body drawn under a caption it never
+  // belonged to, which is the one failure worse than a grey box.
+  const track = swingTrack(frames, K.trophy, K.contact, ASPECT)!
+  const lifted = keyframesFromTrack(track, phases)!
+  assert(lifted.rows[0] === null, 'a keyframe before the span was given a row')
+  assert(lifted.rows[5] === null, 'a keyframe after the span was given a row')
+  assert(lifted.rows[2] !== null, 'a keyframe inside the span lost its row')
+})
+
+check('times are one per row and read off the frames, not stepped', () => {
+  /*
+   * Sampling is not evenly spaced — `seekTo` files a frame under the time the
+   * seek actually reached — so a replay built on a fixed step would drift. Kept
+   * parallel to the rows rather than inside them, which is what leaves a row
+   * identical to a keyframe row.
+   */
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  assert(track.times.length === track.rows.length, 'one timestamp per row is not what was written')
+  for (let i = 0; i < track.rows.length; i++) {
+    const t = frames[track.from + i].t
+    assert(Math.abs(track.times[i] - t) <= 0.001, `time ${i} is not the frame's own`)
+  }
+  assert(
+    track.times.every((t, i) => i === 0 || t >= track.times[i - 1]),
+    'the timestamps do not run forwards',
+  )
+})
+
+check('nothing worth drawing produces no track at all', () => {
+  const blank = frames.slice(K.ready, K.finish + 1).map((f) => ({ ...f, image: [] }))
+  assert(swingTrack(blank, 0, blank.length - 1, ASPECT) === undefined, 'a track of empty rows was written')
+  assert(swingTrack(frames, K.ready, K.finish, 0) === undefined, 'an aspect of zero produced a track')
+  assert(swingTrack(frames, K.finish, K.ready, ASPECT) === undefined, 'a backwards span produced a track')
+  assert(swingTrack([], 0, 5, ASPECT) === undefined, 'no frames produced a track')
+})
+
+check('junk is refused on the way back out of storage', () => {
+  const good = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  assert(readSwingTrack(JSON.parse(JSON.stringify(good))) !== undefined, 'a real track was refused')
+  assert(readSwingTrack(undefined) === undefined, 'nothing read as a track')
+  assert(readSwingTrack({ ...good, aspect: 0 }) === undefined, 'an aspect of zero survived the door')
+  assert(readSwingTrack({ ...good, from: -1 }) === undefined, 'a negative offset survived the door')
+  assert(readSwingTrack({ ...good, rows: 'rows' }) === undefined, 'rows that are not an array survived')
+  assert(readSwingTrack({ ...good, rows: [[1, 2], null] }) === undefined, 'a track of only junk rows survived')
+  // A missing timestamp costs a replay its spacing; a row is still worth drawing
+  // without one, so `times` is repaired to the row count rather than refused with it.
+  const short = readSwingTrack({ ...good, times: [] })!
+  assert(short.times.length === short.rows.length, 'a short times array was not repaired to the rows')
+})
+
+check('the report reads whichever form it is carrying', () => {
+  /*
+   * Three real states in a real store: a fresh report with a track, one the quota
+   * ladder downgraded to keyframes, and one written before either existed. The
+   * screen must not have to know which it is holding.
+   */
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)
+  const poses = keyframePoses(frames, phases, ASPECT)
+  const shell = { phases } as unknown as Analysis
+  assert(
+    JSON.stringify(filmstripPoses({ ...shell, track, poses: undefined })) === JSON.stringify(poses),
+    'a report carrying only a track drew nothing',
+  )
+  assert(
+    JSON.stringify(filmstripPoses({ ...shell, track: undefined, poses })) === JSON.stringify(poses),
+    'a downgraded report drew nothing',
+  )
+  assert(
+    filmstripPoses({ ...shell, track: undefined, poses: undefined }) === undefined,
+    'a report with neither form invented one',
+  )
 })
 
 report()

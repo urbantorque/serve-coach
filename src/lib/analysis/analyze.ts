@@ -52,7 +52,7 @@ import {
   type Tilt,
 } from './spatial'
 import { assessResilience, triage } from './triage'
-import { keyframePoses } from '../storage/poseTrack'
+import { swingTrack } from '../storage/poseTrack'
 import { causalFocus } from './verdict'
 import { cue } from './voice'
 import { buildPhases, detectServe, type Skeleton } from './phases'
@@ -1407,10 +1407,17 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     // which on a serve with a short toss is the contact height — the symptom —
     // and sends the player away to reach for a ball that was never up there.
     focus: causalFocus(verdict) ?? pickFocus(fundamentals),
-    // The keyframes as a body, so a report whose stills get pruned still has
+    // The swing as a body, so a report whose stills get pruned still has
     // something to show — see `poseTrack.ts`. Built here rather than at save
-    // time because this is where the frames are.
-    poses: keyframePoses(frames, phases, video.videoWidth / video.videoHeight),
+    // time because this is where the frames are. The six keyframes are not
+    // stored beside it: they are rows of it, and `keyframesFromTrack` lifts
+    // them out unchanged.
+    track: swingTrack(
+      frames,
+      skel.keys.ready,
+      skel.keys.finish,
+      video.videoWidth / video.videoHeight,
+    ),
     frames,
     window,
     serves,
