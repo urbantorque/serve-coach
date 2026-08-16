@@ -404,6 +404,25 @@ differed is partly a change in posture. All three are pinned in `depth.test.ts`
 on a clean rig with one seed, because each is a systematic rather than a noise
 question.
 
+**And the confound turns out to be arithmetic rather than a model.** Swept across
+a grid of four rotations by four leans, the shift lean causes is **15.0, 15.0,
+16.0 and 15.0°** at rotations of 0, 20, 40 and 60 — a spread of one degree across
+the whole range. The two quantities are separable, so `ER_LEAN_SENSITIVITY`
+(0.5° of reading per degree of lean) is a number rather than a fitted
+relationship, and subtracting it recovers the upright reading to within two
+degrees — a budget made of 1.0° of integer rounding on two readings plus 0.25° of
+coefficient residual, not a tolerance chosen to pass.
+
+Nothing subtracts it in `diagnose`. The engine returns what it measured; a
+corrected number that silently differs from the geometry is the kind of confident
+adjustment this codebase does not make in the data layer, and the coefficient is
+rig-derived — good enough to decide whether a comparison is worth making, not
+good enough to change a reading nobody can check. `signals.spine_lean_deg` is on
+the same diagnosis, so any consumer holding two serves has both halves. What the
+constant is *for* is bounding a delta: two serves whose lean differs by ten
+degrees carry five degrees of false rotation change between them, a third of this
+reading's own floor, before the shoulder has done anything.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.

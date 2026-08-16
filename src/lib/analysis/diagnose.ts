@@ -922,6 +922,37 @@ function roundAll(signals: Record<string, number>): Record<string, number> {
 export const MIN_ROTATION_LEVER = 0.25
 
 /**
+ * Degrees of external-rotation reading injected by one degree of spine lean.
+ *
+ * The reading is taken against the trunk's up vector, so leaning the trunk moves
+ * the reference and the number follows even though the shoulder has not rotated.
+ * `depth.test.ts` measures 15.1° of shift across 30° of lean; this is that,
+ * per degree.
+ *
+ * IT IS ADDITIVE, WHICH IS THE WHOLE REASON IT IS A NUMBER AND NOT A MODEL. Swept
+ * across a grid of four rotations by four leans, the shift lean causes is 15.0,
+ * 15.0, 16.0 and 15.0° at rotations of 0, 20, 40 and 60 — a spread of one degree
+ * across the entire range. The two quantities are separable, so a consumer can
+ * subtract this and be left with the rotation, rather than needing a model of how
+ * the two interact.
+ *
+ * NOTHING SUBTRACTS IT HERE, and that is deliberate. `Diagnosis` returns what was
+ * measured; a corrected number that silently differs from the geometry is exactly
+ * the kind of confident adjustment this codebase does not make in the data layer.
+ * The correction is also rig-derived — it assumes this rig's spine bends the way a
+ * spine does — which is fine for deciding whether a comparison is worth making and
+ * not fine for changing a reading nobody can check. `signals.spine_lean_deg`
+ * carries the lean on the same diagnosis, so any consumer holding two serves has
+ * both halves.
+ *
+ * What it is FOR: bounding a delta. Two serves whose lean differs by L degrees
+ * carry `0.5 × L` degrees of false rotation change between them, which against
+ * this reading's own ~15° deviation says a lean difference of ten degrees spends
+ * a third of the floor before the shoulder has done anything.
+ */
+export const ER_LEAN_SENSITIVITY = 0.5
+
+/**
  * Read external rotation off one frame.
  *
  * Rotation OF THE FOREARM ABOUT THE UPPER ARM, which is what external rotation
