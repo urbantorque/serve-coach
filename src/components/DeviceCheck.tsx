@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { isCachedOffline } from '../lib/pose/poseEngine'
 import { deviceReportText, readDeviceReport, type DeviceReport, type Playback } from '../lib/selfCheck'
+import { coldTimingLine, timingLine, timingsOf } from '../lib/analysis/timings'
+import { listSummaries, safely, type Session } from '../lib/storage/db'
 import { Icon } from './primitives'
 
 /**
@@ -35,15 +37,28 @@ const tone = (p: Playback) => (p === 'no' ? ('bad' as const) : ('ok' as const))
 export default function DeviceCheck() {
   const [report, setReport] = useState<DeviceReport>()
   const [copied, setCopied] = useState<'done' | 'failed'>()
+  /*
+   * The stored history, for its timings alone.
+   *
+   * Read here rather than passed in: this sheet is reachable from two places
+   * (the history sheet and `?check`) and the second one opens straight onto it
+   * with no App state to hand anything down. Summaries, so no keyframe image is
+   * deserialised to read a millisecond count off the row beside it.
+   */
+  const [history, setHistory] = useState<Session[]>([])
 
   useEffect(() => {
     void readDeviceReport(isCachedOffline).then(setReport)
+    void safely(listSummaries, []).then(setHistory)
   }, [])
 
   if (!report) return <p className="sheet-note">Asking this phone about itself…</p>
 
   const { recording, decode, camera, storage, hardware, offline } = report
   const verdict = recording.chosen ? YES : NO
+  const timings = timingsOf(history)
+  const timing = timingLine(timings)
+  const coldTiming = coldTimingLine(timings)
 
   return (
     <section className="devcheck">
@@ -119,6 +134,28 @@ export default function DeviceCheck() {
         label="Memory"
         value={hardware.memoryGb === undefined ? 'not reported' : `about ${hardware.memoryGb} GB`}
       />
+
+      {/*
+        * What a serve actually costs on this phone.
+        *
+        * Every report has recorded its own wall clock since `Analysis.cost`
+        * was added and nothing has ever read one — so the figure this whole
+        * codebase reasons with ("about half a minute") has never been checked
+        * against a device. It is here rather than on the report because it is
+        * a fact about the phone, which is what this sheet is, and because a
+        * player looking at their serve has no use for it.
+        *
+        * Absent below three warm passes, and the cold start is a separate line
+        * — see `timingsOf` for why an average across the two would be a
+        * reading about somebody's signal rather than about their handset.
+        */}
+      {timing && (
+        <>
+          <h3 className="block-title">What a serve costs here</h3>
+          <Row label="Reading one serve" value={timing} />
+          {coldTiming && <Row label="First run" value={coldTiming} />}
+        </>
+      )}
 
       <p className="sheet-note">
         Nothing here is sent anywhere. It is read from your browser, shown to you, and forgotten

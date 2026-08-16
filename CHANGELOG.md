@@ -35,6 +35,9 @@ in `git log`.
   Progress was reported to the screen once per tracked frame — several hundred
   redraws per serve, on the same thread doing the pose detection. It now updates
   ten times a second, which is faster than anyone reads a percentage.
+- **"What this phone can do" now says what a serve actually costs on it.** Every
+  report has quietly recorded how long its own analysis took since that was
+  added, and nothing had ever read one.
 - **Fixed: a saved basket from another version could blank the whole app.**
   Opening a stored comparison that was missing the serve numbers — a
   report restored from a hand-edited backup, or written by a build from
