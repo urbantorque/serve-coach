@@ -27,6 +27,8 @@ import {
   UNSEEN,
 } from '../footprint'
 import { MAX_FINE_FRAMES } from '../pose/extract'
+import { buildServe } from '../analysis/syntheticServe'
+import { detectServe } from '../analysis/phases'
 import { MAX_SERVES } from '../analysis/serves'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
@@ -186,6 +188,95 @@ check('raising either constant is what the budget is watching', () => {
     worstCase(MAX_FINE_FRAMES * 8, MAX_SERVES, STILL.length).total > HEAP_BUDGET_BYTES,
     'eight times the frames did not breach the budget',
   )
+})
+
+heading('What a stored pose track would cost, and at what precision')
+
+/*
+ * The gate on storing a serve as motion rather than as six photographs.
+ *
+ * A saved report drops its frames and keeps six base64 JPEGs, so "best against
+ * latest" can only ever be two stills. Storing the track instead would make it
+ * two skeletons — but only if a track is cheaper than the pictures it sits
+ * beside, and that turns entirely on how it is encoded. Nothing is stored yet;
+ * these checks exist so the encoding decision is a measurement rather than an
+ * assumption, and so a future writer cannot quietly ship the naive form.
+ */
+/** A track's JSON size, in bytes, for one encoding. */
+const sizeOf = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).length
+
+/*
+ * Real landmarks from the rig, not a stand-in.
+ *
+ * The first draft invented plausible-looking coordinates and measured 24.6 kB
+ * against the rig's own 21.5 — because how many digits a rounded number needs
+ * depends entirely on where it lands, and inventing the distribution invents the
+ * answer. A byte count taken off made-up bytes is not a measurement.
+ */
+const swingFrames = (() => {
+  const frames = buildServe({ noise: 0.006, seed: 7000 }, 30)
+  const skel = detectServe(frames, 30)
+  return frames.slice(skel.keys.ready, skel.keys.finish + 1)
+})()
+
+const sampleFrame = (i: number) => swingFrames[i % swingFrames.length].image
+
+const TYPICAL_SWING_FRAMES = swingFrames.length
+
+check('the naive encoding is the one that kills the feature', () => {
+  /*
+   * Whole landmark objects, every axis, full float precision. This is what
+   * `JSON.stringify(frames)` produces and what anybody would write first.
+   * Measured on the rig it came to 278 kB for one serve — several times the
+   * report it would be attached to — and the point of pinning it is that the
+   * gap between this and the drawable form is the entire design decision.
+   */
+  const naive = Array.from({ length: TYPICAL_SWING_FRAMES }, (_, i) => ({
+    t: i / 30,
+    image: sampleFrame(i),
+    world: swingFrames[i % swingFrames.length].world,
+  }))
+  const kb = sizeOf(naive) / 1024
+  assert(kb > 100, `the naive form is now only ${kb.toFixed(1)} kB — re-read the encoding argument`)
+  note(`naive whole-frame JSON: ${kb.toFixed(0)} kB for one serve`)
+})
+
+check('and the drawable encoding costs less than the stills it would sit beside', () => {
+  /*
+   * Image landmarks only, three decimals, flat arrays. Image rather than world
+   * because the use is drawing a skeleton; three decimals because of the check
+   * below; flat because the keys are two thirds of the bytes in the object form.
+   *
+   * A report keeps six keyframe JPEGs at roughly 4–8 kB of base64 each, so the
+   * pictures on one report are 24–48 kB. A track that fits under that is not a
+   * new storage problem, it is a cheaper one.
+   */
+  const round = (v: number, p: number) => Math.round(v * 10 ** p) / 10 ** p
+  const drawable = Array.from({ length: TYPICAL_SWING_FRAMES }, (_, i) => [
+    round(i / 30, 3),
+    ...sampleFrame(i).flatMap((p) => [round(p.x, 3), round(p.y, 3), round(p.visibility, 2)]),
+  ])
+  const kb = sizeOf(drawable) / 1024
+  assert(kb < 24, `the drawable form is now ${kb.toFixed(1)} kB, past the low end of what six stills cost`)
+  note(`drawable track: ${kb.toFixed(1)} kB for one serve, against 24–48 kB of stills`)
+})
+
+check('three decimals is under a pixel on a phone', () => {
+  /*
+   * The precision decision, checked rather than chosen. Landmarks are normalised
+   * to the frame, so a rounding step of 0.001 is a thousandth of the frame's
+   * width — and the question is whether that is visible in the one thing the
+   * track is for, which is drawing a body.
+   *
+   * 1080 is the tallest a phone clip here realistically is. If a future encoding
+   * drops to two decimals to save bytes this goes red, which is the point: that
+   * would be eleven pixels and a visibly wrong elbow.
+   */
+  const TALLEST = 1080
+  const step = 0.001
+  const worstPixels = (step / 2) * TALLEST
+  assert(worstPixels < 1, `three decimals is ${worstPixels.toFixed(2)} px at ${TALLEST}p`)
+  note(`3dp rounding is at most ${worstPixels.toFixed(2)} px at ${TALLEST}p; 2dp would be ${((0.01 / 2) * TALLEST).toFixed(0)} px`)
 })
 
 report()

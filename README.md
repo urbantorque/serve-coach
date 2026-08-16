@@ -423,6 +423,26 @@ constant is *for* is bounding a delta: two serves whose lean differs by ten
 degrees carry five degrees of false rotation change between them, a third of this
 reading's own floor, before the shoulder has done anything.
 
+**Storing a serve as motion is affordable, but only one way of doing it is.** A
+saved report drops its frames and keeps six keyframe JPEGs, so "best against
+latest" can only ever be two photographs. Storing the pose track instead would
+make it two skeletons — and whether that is possible turns entirely on the
+encoding, measured off real rig frames in `footprint.test.ts`:
+
+| encoding | one serve |
+| --- | --- |
+| whole frames, as `JSON.stringify` produces them | **277 kB** |
+| image landmarks only, three decimals, flat arrays | **21.5 kB** |
+
+The six stills already on a report cost 24–48 kB, so the drawable form is not a
+new storage problem — it is a cheaper one. The naive form is several times the
+report it would attach to. Three decimals is the precision decision and it is
+checked rather than chosen: on normalised coordinates that is at most **0.54 px
+at 1080p**, where two decimals would be five pixels and a visibly wrong elbow.
+
+Nothing stores a track yet. These are the numbers a writer would need, pinned so
+the encoding cannot quietly regress to the form that kills the feature.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.
