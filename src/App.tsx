@@ -11,7 +11,12 @@ import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './compon
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import type { InjuryFlag } from './lib/analysis/triage'
-import { strainBehindLine, strainClearedLine, strainLine } from './lib/analysis/verdict'
+import {
+  strainBehindLine,
+  strainClearedLine,
+  strainGlanceLine,
+  strainLine,
+} from './lib/analysis/verdict'
 import {
   bestConsistencyGap,
   bestGapEverLine,
@@ -24,6 +29,7 @@ import {
   gapDeltaLine,
   clearedStrainOf,
   longestStreakLine,
+  glanceStrain,
   recurringStrainOf,
   shortDate,
   strainBehindOf,
@@ -598,6 +604,18 @@ export default function App() {
    * today, and turned into sentences here so `Report.tsx` never has to know
    * what a trip is, matching how `streak` is already handed down.
    */
+  /**
+   * The glance's own one-line form of the same warning — see `glanceStrain`.
+   * Worded here rather than in the screen for the same reason `streak` is:
+   * `Glance.tsx` takes sentences, never records.
+   */
+  const glanceStrainLine = useCallback(
+    (current: Pick<Session, 'triage'>) => {
+      const record = glanceStrain(sessions, current)
+      return record && strainGlanceLine(record)
+    },
+    [sessions],
+  )
   const strainBehindFor = useCallback(
     (at: number) => {
       const out: Partial<Record<InjuryFlag, string>> = {}
@@ -729,6 +747,25 @@ export default function App() {
           // a clip the engine threw out, which is the branch that must never
           // show a score.
           setView({ kind: 'glance', analysis, videoUrl: '' })
+        } else if (demo === 'glance-strain') {
+          /*
+           * The recurring joint warning, on the screen it exists for.
+           *
+           * Needs two things at once that no other demo route produces: a
+           * seeded history carrying the same flag on earlier trips, and a
+           * serve in front of the player that raises it again. So it seeds
+           * `sampleHistory` — whose sore trips are dialled for exactly this —
+           * and then glances at a freshly dialled sore serve rather than the
+           * clean sample one. Both halves earn their flag through
+           * `injuriesIn`; nothing here writes a warning onto a report.
+           */
+          demoHistory.current = sampleHistory()
+          refreshSessions()
+          setView({
+            kind: 'glance',
+            analysis: sampleAnalysis({ spineLean: DEMO_DIALS.injury.spineLean }),
+            videoUrl: '',
+          })
         } else if (demo?.startsWith('glance-move')) {
           // The carry-forward line, on each of its four verdicts —
           // `?demo=glance-move`, or `-cleared`/`-same`/`-wider`.
@@ -1292,6 +1329,10 @@ export default function App() {
             // array walks over a list already in memory and the screen it
             // feeds is only ever mounted one at a time.
             move={view.move ?? faultMoveOnTrip(sessions, view.analysis)}
+            // The one recurring joint warning this serve raised — see
+            // `glanceStrain`. Same reasoning as `move` above: it needs the
+            // session list, which this screen has no business holding.
+            strain={glanceStrainLine(view.analysis)}
             onBack={goHome}
             // Home owns the viewfinder sheet, so going back and reopening it is
             // the honest route — and it releases this clip's object URL on the

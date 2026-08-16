@@ -26,6 +26,7 @@ import {
   bestOverallScoreLine,
   buildConsistencyTrend,
   buildProgress,
+  glanceStrain,
   longestStreak,
   longestStreakLine,
   sameTrip,
@@ -33,6 +34,9 @@ import {
   thenAndNow,
   tripStreak,
 } from '../progress'
+import { strainGlanceLine, strainLine } from '../analysis/verdict'
+import { cueIssues, wordCount } from '../analysis/voice'
+import type { InjuryFlag } from '../analysis/triage'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 import type { Session } from '../storage/db'
 
@@ -530,6 +534,80 @@ check('states the record plainly, dated, in bestOverallScoreEverLine\'s own phra
   assert(line.includes('88'), `the score itself did not appear: "${line}"`)
   assert(line.includes('set '), `no date attached: "${line}"`)
   assert(!line.includes('yet —'), `used bestOverallScoreLine's per-report phrasing: "${line}"`)
+})
+
+heading('The one warning worth saying on a court')
+
+/** A saved report carrying injury flags and the signals they are read from. */
+function flagged(createdAt: number, flags: InjuryFlag[], status: 'ok' | 'rejected' = 'ok'): Session {
+  return {
+    ...savedServe(createdAt),
+    triage: {
+      status,
+      injury_risk: flags.map((flag) => ({ flag, severity: 'medium' as const })),
+    },
+    diagnosis: {
+      signals: {
+        palm_to_sky_deg: 10,
+        pronation_deg: 10,
+        spine_lean_deg: 5,
+        drop_depth_ratio: 0.2,
+        contact_height_ratio: 1.2,
+      },
+    },
+  } as unknown as Session
+}
+
+const BACK: InjuryFlag = 'lumbar_load_posture_collapse'
+const WRIST: InjuryFlag = 'wrist_strain_forced_pronation'
+const now = Date.UTC(2026, 7, 16)
+
+check('a live pattern the serve just raised is worth saying', () => {
+  const history = [flagged(now - 2 * WEEK, [BACK]), flagged(now - WEEK, [BACK])]
+  const found = glanceStrain(history, history[1])
+  assert(found?.flag === BACK, `expected the back, got ${found?.flag}`)
+  assert(found?.trips === 2, `counted ${found?.trips}, expected 2`)
+})
+
+check('a pattern the serve in front of you did not raise stays quiet', () => {
+  // The back is a live pattern, but this serve's back was fine. Saying it here
+  // would be a non-sequitur between serves, which is what the second gate is
+  // for — the sheet is where a player goes to be told about their season.
+  const history = [flagged(now - 2 * WEEK, [BACK]), flagged(now - WEEK, [BACK]), flagged(now, [])]
+  assert(glanceStrain(history, history[2]) === undefined, 'expected silence')
+})
+
+check('a first occurrence is the report’s job, here too', () => {
+  const history = [flagged(now - WEEK, []), flagged(now, [BACK])]
+  assert(glanceStrain(history, history[1]) === undefined, 'one trip is not a pattern')
+})
+
+check('a refused clip says nothing, because it raised nothing', () => {
+  const history = [flagged(now - 2 * WEEK, [BACK]), flagged(now - WEEK, [BACK])]
+  assert(glanceStrain(history, flagged(now, [], 'rejected')) === undefined, 'expected silence')
+  assert(glanceStrain(history, {} as Session) === undefined, 'a report with no triage says nothing')
+})
+
+check('one warning, never a list, and it is the worst-recurring one', () => {
+  const history = [
+    flagged(now - 3 * WEEK, [BACK, WRIST]),
+    flagged(now - 2 * WEEK, [BACK]),
+    flagged(now - WEEK, [BACK, WRIST]),
+  ]
+  const found = glanceStrain(history, history[2])
+  assert(found?.flag === BACK, `expected the flag on three trips, got ${found?.flag}`)
+})
+
+check('the court sentence is the shortest of the three, and passes the editor', () => {
+  const line = strainGlanceLine({ flag: BACK, trips: 3, of: 6 })
+  assert(line === 'That is your lower back on 3 of your last 6 trips.', `read "${line}"`)
+  assert(cueIssues(line!).length === 0, cueIssues(line!).join('; '))
+  const long = strainLine({ flag: BACK, trips: 3, of: 6 })
+  assert(wordCount(line!) < wordCount(long!), 'the glance form must be shorter than the sheet form')
+  assert(
+    strainGlanceLine({ flag: 'a_flag_from_the_future' as InjuryFlag, trips: 2, of: 3 }) === undefined,
+    'an unknown flag says nothing',
+  )
 })
 
 report()

@@ -613,6 +613,32 @@ export function recurringStrainOf(
 }
 
 /**
+ * The one recurring warning worth saying on the glance, or nothing.
+ *
+ * Gated twice, and both gates matter. It has to be a live recurring pattern —
+ * `recurringStrain`'s own floor, window and per-flag denominator — AND the serve
+ * just hit has to have raised it. The second gate is what keeps this from being
+ * a nag: a warning about a back that did not fold on the serve in front of
+ * somebody is a non-sequitur between serves, and the glance is the one screen
+ * where a sentence nobody asked for costs a serve not hit.
+ *
+ * One flag, never a list. `recurringStrain` already sorts worst-recurring first,
+ * and a second warning on this screen would be the report arriving in pieces.
+ *
+ * Silent on a refused clip for free: `triage` returns an empty `injury_risk` on
+ * anything it rejects, so `raised` is empty and there is nothing to match.
+ */
+export function glanceStrain(
+  sessions: Session[],
+  current: Pick<Session, 'triage'>,
+  gapMs = MIN_THEN_AND_NOW_GAP_MS,
+): StrainRecord | undefined {
+  const raised = new Set((current.triage?.injury_risk ?? []).map((r) => r.flag))
+  if (raised.size === 0) return undefined
+  return recurringStrainOf(sessions, gapMs).find((r) => raised.has(r.flag))
+}
+
+/**
  * What each joint warning did on the trips before one particular serve.
  *
  * The join `Report.tsx` needs: a map from flag to the sentence that goes under

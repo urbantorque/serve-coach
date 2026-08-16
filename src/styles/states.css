@@ -270,6 +270,29 @@
   color: var(--fg-faint);
 }
 
+/*
+ * A recurring joint warning, in the same box as the line above it.
+ *
+ * Deliberately the same shape rather than a smaller copy of the report's injury
+ * card: this screen is read from a fence at arm's length, between serves, and a
+ * second kind of panel on it would be a second thing to parse. What changes is a
+ * rule down the side and the glyph's colour, both `--work` — the colour the
+ * report already gives this subject — so it is unmistakably not the coaching
+ * sentence underneath it while costing no extra reading.
+ *
+ * The text stays `--fg-muted` like its sibling. Setting it in `--work` too was
+ * tried and read as an alarm; the count is a fact, and the rule already says
+ * which kind of fact it is.
+ */
+.glance-strain {
+  border-left: 2px solid var(--work);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+
+.glance-strain svg {
+  color: var(--work);
+}
+
 .glance-serves {
   margin: 0;
   font-size: 12.5px;

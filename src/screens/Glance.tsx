@@ -39,9 +39,29 @@ interface Props {
    * without it, which is what it did before this existed.
    */
   move?: FaultMove
+  /**
+   * A joint warning this serve raised that keeps recurring — see `glanceStrain`.
+   *
+   * The one thing on this screen that is not about the next serve. Everything
+   * else here answers "what do I do differently now"; this answers "how many
+   * more of these should I hit today", which is a question only somebody
+   * standing on a court with a basket can act on, and the report — read
+   * afterwards, sitting down — is too late for.
+   *
+   * Absent almost always: it takes a live recurring pattern AND this serve
+   * raising the same flag. The screen must render identically without it.
+   */
+  strain?: string
 }
 
-export default function Glance({ analysis, onRecordAnother, onOpenReport, onBack, move }: Props) {
+export default function Glance({
+  analysis,
+  onRecordAnother,
+  onOpenReport,
+  onBack,
+  move,
+  strain,
+}: Props) {
   const refusal = refusalFor(analysis.triage)
   const plan = causalPlan(analysis.triage, analysis.diagnosis)
   const first = plan[0]
@@ -101,6 +121,26 @@ export default function Glance({ analysis, onRecordAnother, onOpenReport, onBack
           <div role="img" aria-label={`Score ${analysis.overall} out of 100`}>
             <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={132} />
           </div>
+
+          {/* Above the fix, not under it, and it is the only thing on this
+              screen that outranks the instruction. Everything below answers
+              "what do I change on the next one"; this answers "how many more
+              of these should I hit", and a sentence about a joint filed
+              underneath a technique cue reads as a footnote to it — the same
+              reading that put this block at the top of the progress sheet.
+
+              The report's `.injury` card is deliberately not reused. That card
+              is three paragraphs and a title, which is a screen to be read, and
+              this screen exists because reading one means the next serve does
+              not get hit. Same box as `.glance-move`, same tokens, one rule
+              down the side in the colour the report already gives this
+              subject. */}
+          {strain && (
+            <p className="glance-move glance-strain">
+              <Icon name="warn" size={15} />
+              <span>{strain}</span>
+            </p>
+          )}
 
           {first ? (
             <>

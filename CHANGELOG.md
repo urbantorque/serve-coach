@@ -31,6 +31,14 @@ in `git log`.
   the moment you are actually reading it. It counts the trips before this serve
   only, so reopening an old report tells you what was true when you filed it
   rather than what is true today.
+- **The between-serves screen now warns you while you can still do something
+  about it.** A report is read sitting down, after the basket is finished. If
+  the serve you just hit folded your back and your back has folded on three of
+  your last six trips, the glance says so: "That is your lower back on 3 of your
+  last 6 trips." It is the only line on that screen that is not about your next
+  serve — it is about how many more to hit today. It only appears when the serve
+  in front of you raised the warning and it is already a pattern, so it cannot
+  become something that nags you between every serve.
 - **Fixed: a stored report from another version could blank the whole app, in
   seven more ways than the one already found.** A report is read back out of
   storage through a repair step whose job is to make sure nothing downstream can

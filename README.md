@@ -312,6 +312,26 @@ same `MIN_STRAIN_TRIPS` floor counted from the other end. It takes the card's ow
 body voice rather than a style of its own: written first as a dimmer caveat and
 looked at, which made the strongest fact on the card the quietest thing on it.
 
+**And the glance carries it onto the court.** The report is read afterwards,
+sitting down, by which time the basket is over — so the one screen where a joint
+warning can still change what happens is the between-serves glance, and it now
+shows one: "That is your lower back on 3 of your last 6 trips." It is the only
+thing on that screen not about the next serve. Everything else there answers
+"what do I change now"; this answers "how many more of these should I hit
+today", which only somebody holding a basket can act on.
+
+Gated twice (`glanceStrain` in `progress.ts`): it must be a live recurring
+pattern by `recurringStrain`'s own floor and window, **and** the serve just hit
+must have raised that same flag. The second gate is what keeps it from nagging —
+a warning about a back that did not fold on the serve in front of somebody is a
+non-sequitur between serves, and this screen is the one where a sentence nobody
+asked for costs a serve not hit. One flag, never a list. Silent on a refused clip
+for free, since `triage` returns an empty `injury_risk` on anything it rejects.
+The sentence is the shortest of the three forms and a test asserts it stays that
+way. It reuses `.glance-move`'s box with a `--work` rule down the side rather
+than shrinking the report's injury card, and the whole screen still fits a phone
+without scrolling. `?demo=glance-strain`.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.

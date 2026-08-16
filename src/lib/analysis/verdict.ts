@@ -238,6 +238,41 @@ export function strainClearedLine(record: Pick<StrainCleared, 'flag' | 'since'>)
 }
 
 /**
+ * The joint each flag is about, named plainly and on its own.
+ *
+ * `INJURIES[flag].title` is an instruction — "Watch your lower back" — and this
+ * is a noun phrase, so it cannot be derived from that one by cutting a word off
+ * the front. Kept beside the titles rather than beside the caller that needs it,
+ * so all the words this module can say about a flag are in one place and adding
+ * a fourth flag fails in one file.
+ */
+const JOINT: Record<InjuryFlag, string> = {
+  wrist_strain_forced_pronation: 'your wrist',
+  lumbar_load_posture_collapse: 'your lower back',
+  shoulder_load_no_drop: 'your shoulder',
+}
+
+/**
+ * The warning as it reaches somebody standing on a baseline with a basket.
+ *
+ * The shortest form in the file, because the glance has less room than any other
+ * screen and every word here is a word somebody reads instead of hitting the
+ * next serve. It names the joint, ties it to the serve just hit — "that is" —
+ * and gives the count, and nothing else: no mechanics, because the report
+ * carries them, and no instruction, because this is not a fault to fix on the
+ * next serve, it is a reason to stop after twenty rather than after eighty.
+ *
+ * `undefined` for a flag this build has no words for, like every other line.
+ */
+export function strainGlanceLine(
+  record: Pick<StrainRecord, 'flag' | 'trips' | 'of'>,
+): string | undefined {
+  const joint = JOINT[record.flag]
+  if (!joint) return undefined
+  return cue(`That is ${joint} on ${record.trips} of your last ${record.of} trips.`)
+}
+
+/**
  * The history behind one injury card, in a clause.
  *
  * Sits under the card's own body, which has just explained the mechanics on this
@@ -648,6 +683,10 @@ export function everyVerdictCue(): { where: string; text: string }[] {
   for (const of of [1, STRAIN_WINDOW]) {
     const text = strainBehindLine({ trips: 1, of })
     if (text) out.push({ where: `behind.${of}`, text })
+  }
+  for (const flag of Object.keys(JOINT) as InjuryFlag[]) {
+    const text = strainGlanceLine({ flag, trips: STRAIN_WINDOW, of: STRAIN_WINDOW })
+    if (text) out.push({ where: `glance.${flag}`, text })
   }
   /*
    * The carry-forward line is assembled rather than stored, so linting
