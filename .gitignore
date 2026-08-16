@@ -26,3 +26,7 @@ public/wasm/
 # CORPUS.md: what is committable is the landmark dump, not the video.
 clips/
 *.corpus.json
+
+# Page snapshots and screenshots dropped by playwright-cli wherever it is run.
+# Scratch from driving a browser, never an input to anything.
+.playwright-cli/
