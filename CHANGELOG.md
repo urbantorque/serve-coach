@@ -42,6 +42,11 @@ in `git log`.
   Both are now repaired or dropped on the way out of storage: a missing
   list falls back to numbering the serves as they appear, and half a
   best-against-worst block is left out rather than half-drawn.
+- **Fixed: the download counter always used a period, even where your phone
+  doesn't.** "Downloading the coach · 4.5 MB of 19.0 MB" is the only number
+  the app shows with a decimal place, and it is on the first screen a first
+  run ever reaches. It now reads in whatever your own language and region
+  write a decimal point as, like every date already does.
 
 ## 2026-08-15
 

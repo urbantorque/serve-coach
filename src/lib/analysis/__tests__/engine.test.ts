@@ -14,6 +14,7 @@ import {
   MAX_CONSISTENCY_SERVES,
   assessQuality,
   blockingFramingIssue,
+  megabytes,
   pickFocus,
   sweepServes,
   sweepWindow,
@@ -2304,6 +2305,41 @@ check('only looks at the most recent sessions', () => {
 check('carries the latest advice for the chosen measurement', () => {
   const f = findPracticeFocus(persistentWeakness([42, 45, 41]))
   assert(f!.fix === 'fix dropDepth', `expected the metric's own fix, got ${f!.fix}`)
+})
+
+/* ------------------------------------------- the download counter, in words */
+
+check('the megabyte counter reads in the reader own locale, not always a period', () => {
+  // A locale that writes a comma decimal, asked directly. `toFixed` cannot
+  // produce this answer whatever the reader's phone is set to, which is the
+  // whole of the defect: this string is the analysing screen's status line on a
+  // first run, and it is the only fraction the app puts in front of anybody.
+  const german = new Intl.NumberFormat('de-DE', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(4.5)
+  if (german !== '4,5') {
+    note('this runtime has no de-DE data; only the shape is checked')
+  } else {
+    assert(
+      megabytes(4.5e6).includes(new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }).format(4.5)),
+      `megabytes did not defer to the runtime locale: "${megabytes(4.5e6)}"`,
+    )
+  }
+})
+
+check('the megabyte counter keeps the shape the status line was written around', () => {
+  assert(megabytes(19e6).endsWith(' MB'), `lost the unit: "${megabytes(19e6)}"`)
+  assert(megabytes(19e6).startsWith('19'), `lost the whole part: "${megabytes(19e6)}"`)
+  // One decimal, always — a counter that switched between "4 MB" and "4.5 MB"
+  // as it climbed would jitter its own width on every chunk.
+  assert(
+    /^\d+\D\d MB$/.test(megabytes(4e6)),
+    `a round number lost its decimal place: "${megabytes(4e6)}"`,
+  )
 })
 
 /* -------------------------------------------------------------------- report */

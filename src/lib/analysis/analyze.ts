@@ -147,7 +147,28 @@ export interface AnalyzeOptions {
   captureOnFailure?: boolean
 }
 
-const bytes = (n: number) => `${(n / 1e6).toFixed(1)} MB`
+/**
+ * A byte count as megabytes, in whatever the reader's own locale writes a
+ * decimal point as.
+ *
+ * This is the one number the app shows a player with a fraction in it — it goes
+ * straight into the analysing screen's own status line, "Downloading the coach ·
+ * 4.5 MB of 19.0 MB" — and it was written with `toFixed`, which always returns a
+ * period. That is a fact about JavaScript rather than about the reader: every
+ * date in this app already defers to the browser (`toLocaleDateString(undefined,
+ * …)`), and the hand-speed reading was moved onto `Intl.NumberFormat` for
+ * exactly this reason before the speed panel was withdrawn. This one was missed
+ * because it does not look like a measurement — but a player in France reading
+ * "4.5 MB" where their phone writes "4,5" is the same small wrongness, on the
+ * first screen a first run ever shows.
+ *
+ * Exported so the suite can read it without a browser; nothing else calls it.
+ */
+export const megabytes = (n: number): string =>
+  `${new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(n / 1e6)} MB`
 
 /** Sweeping more than this many serves costs more time than the answer is worth. */
 export const MAX_CONSISTENCY_SERVES = 6
@@ -1126,7 +1147,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       ratio: p.ratio ?? (p.stage === 'starting' ? 0.97 : 0),
       detail:
         p.stage === 'downloading' && p.totalBytes
-          ? `Downloading the coach · ${bytes(p.loadedBytes ?? 0)} of ${bytes(p.totalBytes)}`
+          ? `Downloading the coach · ${megabytes(p.loadedBytes ?? 0)} of ${megabytes(p.totalBytes)}`
           : p.stage === 'starting'
             ? 'Warming up the pose engine'
             : 'Loading the pose engine',
