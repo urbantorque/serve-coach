@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { registerSW } from 'virtual:pwa-register'
+import { watchForUpdates } from './lib/updates'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 /*
@@ -22,7 +22,10 @@ import './styles/fundamentals.css'
 import './styles/states.css'
 import './styles/guide.css'
 
-registerSW({ immediate: true })
+// A new version is discovered here and taken later, at a moment that costs
+// nothing — see `lib/updates.ts` for why this app cannot reload on its own
+// schedule.
+watchForUpdates()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

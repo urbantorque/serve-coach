@@ -71,7 +71,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt', not 'autoUpdate' — the app decides when to take a new
+      // version, because 'whenever it lands' can be mid-sweep. The prompt is
+      // never shown to anybody: `lib/updates.ts` applies it on the home screen.
+      registerType: 'prompt',
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Serve Coach — Tennis Serve Analysis',

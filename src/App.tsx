@@ -62,6 +62,7 @@ import {
 import { requestPersistence } from './lib/storage/backup'
 import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage/prefs'
 import { sessionKeyFor } from './lib/storage/sessionKey'
+import { applyWhenIdle, onUpdateWaiting } from './lib/updates'
 import Analyzing, { type SweepProgress } from './screens/Analyzing'
 import Glance from './screens/Glance'
 import Home, { type OfflineWarmup } from './screens/Home'
@@ -692,6 +693,27 @@ export default function App() {
       })
     }
   }, [refreshSessions])
+
+  /*
+   * Take a waiting version the moment nothing would be lost by it.
+   *
+   * The home screen with no clip open is the only state where a reload costs
+   * the player nothing: everything else on the way through this app is either
+   * work in flight (an analysis, a sweep) or work that only exists in memory (a
+   * report and its object URL, the paired stills, a glance between serves). A
+   * reload through any of those throws it away with no message.
+   *
+   * Checked on every view change *and* on the update arriving, because either
+   * can be the later of the two — the app can be sitting on the home screen
+   * when a deploy lands, or be mid-sweep when it lands and reach home minutes
+   * later. `applyWhenIdle` re-asks the predicate at the moment of acting rather
+   * than trusting this render's answer.
+   */
+  useEffect(() => {
+    const idle = () => view.kind === 'home' && !urlRef.current && !sweep
+    applyWhenIdle(idle)
+    return onUpdateWaiting(() => applyWhenIdle(idle))
+  }, [view.kind, sweep])
 
   const releaseVideo = useCallback(() => {
     if (urlRef.current) {

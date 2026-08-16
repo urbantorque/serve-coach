@@ -23,6 +23,11 @@ in `git log`.
   was judged against. They now travel in the file, and a restore only fills in
   what the new phone has no answer for: importing an old backup can never roll
   back a hand you corrected last week or a rating you have climbed past.
+- **An app update can no longer interrupt an analysis.** A new version used to
+  take over and reload the page the moment it arrived — including part way
+  through reading a serve, or several minutes into comparing a whole basket,
+  which threw all of it away with no message. Updates are now held until you are
+  back on the home screen with nothing running, where a reload costs nothing.
 - **Fixed: a saved basket from another version could blank the whole app.**
   Opening a stored comparison that was missing the serve numbers — a
   report restored from a hand-edited backup, or written by a build from
