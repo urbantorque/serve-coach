@@ -7,6 +7,7 @@ import PracticeCard from '../components/PracticeCard'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
+import PoseStill from '../components/PoseStill'
 import { useShareState } from '../components/useShareState'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
@@ -726,7 +727,9 @@ export default function Report({
       <section className="block">
         <h2 className="block-title">Six moments in your serve</h2>
         <div className="strip">
-          {analysis.phases.map((p) =>
+          {/* `i` is the row `keyframePoses` wrote — position in this same array,
+              so a drawn keyframe can never be captioned as a different one. */}
+          {analysis.phases.map((p, i) =>
             // A clickable <figure> is invisible to a keyboard. When these seek
             // the video they have to be real buttons; when there is no video to
             // seek they stay plain figures rather than advertising an action
@@ -741,7 +744,11 @@ export default function Report({
                 {p.thumbnail ? (
                   <img src={p.thumbnail} alt="" loading="lazy" />
                 ) : (
-                  <div className="strip-placeholder" />
+                  /* The photograph is gone — pruned past `KEEP_STILLS` — so the
+                     body the tracker saw is drawn instead, from the poses the
+                     report still carries. `PoseStill` falls back to the same
+                     placeholder when there is no row either. */
+                  <PoseStill poses={analysis.poses} index={i} racket={analysis.handedness} label={p.label} />
                 )}
                 <span className="strip-caption">
                   <strong>{p.label}</strong>
@@ -753,7 +760,7 @@ export default function Report({
                 {p.thumbnail ? (
                   <img src={p.thumbnail} alt={p.label} loading="lazy" />
                 ) : (
-                  <div className="strip-placeholder" />
+                  <PoseStill poses={analysis.poses} index={i} racket={analysis.handedness} label={p.label} />
                 )}
                 <figcaption className="strip-caption">
                   <strong>{p.label}</strong>

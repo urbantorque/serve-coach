@@ -4,6 +4,21 @@ Player-visible changes, newest first. This file starts on 2026-08-15 — it does
 not retroactively document the commits before it, which speak for themselves
 in `git log`.
 
+## 2026-08-17
+
+- **Old reports no longer lose their pictures.** Your last twenty serves keep
+  their keyframe photographs; past that the app has always dropped them, because
+  six photos are nearly the whole weight of a saved report. So a serve from two
+  months ago showed six grey boxes — the numbers survived and the pictures did
+  not, which is the one thing you wanted to look back at. Every report now also
+  keeps the six keyframes as the *body the tracker saw*, which costs about 2.7 kB
+  against 24–48 kB for the photographs, so it survives when they cannot. Open an
+  older report and you get your ready position, trophy, racket drop and contact
+  drawn as a skeleton instead of a blank. It is deliberately not made to look
+  like a photograph: it shows what was measured, and nothing about the light, the
+  court or your grip. It also means the part of a report that outlives the rest
+  carries no image of anybody.
+
 ## 2026-08-16
 
 - **Your progress sheet now tells you which joint warning keeps coming back.**

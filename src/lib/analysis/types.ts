@@ -3,6 +3,7 @@ import type { BallFlight, TossFlight } from '../vision/ballTrack'
 import type { Consistency } from './consistency'
 import type { Diagnosis } from './diagnose'
 import type { Triage as TriageResult } from './triage'
+import type { KeyframePoses } from '../storage/poseTrack'
 
 /** A single pose landmark. */
 export interface Landmark {
@@ -166,6 +167,20 @@ export interface Analysis {
   overallStatus: Status
   /** The single thing to work on next. */
   focus: { title: string; why: string; drill: Drill }
+  /**
+   * The six keyframes as a tracked body — see `storage/poseTrack.ts`.
+   *
+   * Carried on `Analysis` rather than added when a report is saved, because
+   * `Session` is `Omit<Analysis, 'frames'>` exactly and that discipline is worth
+   * more than the redundancy: a live analysis has its frames and does not need
+   * this, but making the save path build it would put the one field that has to
+   * survive pruning behind a code path that runs once.
+   *
+   * Optional because every report written before it existed has none, and
+   * because a clip whose keyframes could not be read produces no rows rather
+   * than empty ones.
+   */
+  poses?: KeyframePoses
   frames: Frame[]
   window: { start: number; end: number }
   /** Serves found in the clip, and which one this report is about. */

@@ -318,7 +318,13 @@
   cursor: pointer;
 }
 
+/* The drawn keyframe takes the same box as the photograph it stands in for, so
+   a report whose stills have been pruned has the same layout as one that still
+   has them — the strip does not reflow as a history ages. Listed alongside the
+   two it replaces rather than given its own rule, because "same box" is the
+   whole requirement and a second rule would be a second chance to drift. */
 .strip-item img,
+.strip-pose,
 .strip-placeholder {
   width: 100%;
   aspect-ratio: 3 / 4;

@@ -1,3 +1,4 @@
+import { readKeyframePoses } from './poseTrack'
 import { readoutOf, targetOf } from '../analysis/anatomy'
 // The table the screens index by `serveType`. Imported rather than restated as
 // a list of three names, so a fourth serve type cannot be readable on the
@@ -475,6 +476,18 @@ export function normalise(raw: unknown): Session | undefined {
     // component the ErrorBoundary can only replace with a blank screen.
     consistency: usableConsistency(s.consistency),
     diagnosis: withChain(s.diagnosis),
+    /*
+     * Dropped rather than repaired, like the spreads above and for a sharper
+     * version of the same reason: this one is read straight into a drawing loop.
+     * A row of the wrong length or a value that is not a number produces a canvas
+     * full of `NaN` rather than an exception, so there is no boundary to catch it
+     * — the picture is simply wrong and nothing says so.
+     *
+     * Absent on every report written before poses existed, which is the ordinary
+     * case and not an error: the filmstrip falls back to the placeholder it has
+     * always drawn.
+     */
+    poses: readKeyframePoses(s.poses),
   }
 }
 

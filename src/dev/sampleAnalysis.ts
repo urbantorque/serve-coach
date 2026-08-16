@@ -18,6 +18,7 @@ import { assessResilience, triage } from '../lib/analysis/triage'
 import { causalFocus } from '../lib/analysis/verdict'
 import { FUNDAMENTALS } from '../lib/analysis/coaching'
 import { buildConsistency } from '../lib/analysis/consistency'
+import { keyframePoses } from '../lib/storage/poseTrack'
 import { findPracticeFocus } from '../lib/practice'
 import { KEEP_STILLS, type PracticeLog, type Session } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
@@ -127,6 +128,15 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
     tossElbow: 138,
   },
 }
+
+/**
+ * The clip the rig pretends it filmed.
+ *
+ * Named rather than inlined because two things now read it: the report renders
+ * its dimensions, and `keyframePoses` needs its aspect. Two literals would be
+ * two chances for a drawn skeleton to be stretched against the report it sits on.
+ */
+const SAMPLE_VIDEO = { name: 'sample.mp4', durationMs: 3000, width: 720, height: 720 }
 
 /** A basket of serves with a wandering contact height, for the comparison UI. */
 export function sampleBasket(): Analysis[] {
@@ -362,7 +372,7 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): 
     serveType: 'flat',
     // Square: the rig builds image coordinates in a space where x and y already
     // share a unit, which is what an aspect of 1 means to the player.
-    video: { name: 'sample.mp4', durationMs: 3000, width: 720, height: 720 },
+    video: SAMPLE_VIDEO,
     handedness: skel.racket,
     quality: {
       confidence: 0.86,
@@ -383,6 +393,9 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): 
     focus: causalFocus(verdict) ?? pickFocus(fundamentals),
     diagnosis,
     triage: verdict,
+    // The same call `analyze` makes, so the demo shows the branch a pruned
+    // report reaches rather than a rig-only shortcut around it.
+    poses: keyframePoses(frames, phases, SAMPLE_VIDEO.width / SAMPLE_VIDEO.height),
     frames,
     window: { start: frames[0].t, end: frames[frames.length - 1].t },
     serves: { count: 1, index: 0 },

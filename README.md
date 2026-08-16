@@ -440,6 +440,36 @@ report it would attach to. Three decimals is the precision decision and it is
 checked rather than chosen: on normalised coordinates that is at most **0.54 px
 at 1080p**, where two decimals would be five pixels and a visibly wrong elbow.
 
+**The six keyframes are now kept as a body, and the blank filmstrip is fixed.**
+`Analysis.poses` (`storage/poseTrack.ts`) carries one row per keyframe — image
+landmarks only, three decimals, flat arrays — at about **2.7 kB** against the
+24–48 kB the six JPEGs cost. That is why it survives the prune the photographs do
+not: past `KEEP_STILLS` a report used to render six grey boxes, and it now draws
+what the tracker actually saw, through the same `drawSkeleton` the player and the
+live stills use.
+
+Deliberately not a replacement photograph. It shows the measured body on the
+report's own background — no court, no fence, no light, no grip — so nobody who
+has seen both can mistake one for the other, because they carry different
+information. It is also the only part of a report that outlives the rest, and it
+contains no image of anybody, which is a privacy property worth having on exactly
+that part.
+
+Rows are positional: `keyframePoses` writes one per entry of the report's own
+`phases` array and the filmstrip reads it back by the same index, because a row
+that lined up with the wrong keyframe would caption a trophy position as a
+contact — confidently mislabelled, which is worse than a grey box. Both doors are
+guarded: `readKeyframePoses` drops malformed rows on the way out of storage, and
+`poseFrameAt` refuses a wrong-length row on the way into the drawing loop, since a
+live analysis reaches the report without a round trip through storage. Nothing
+that did not survive is invented — a rebuilt frame has no world landmarks and no
+timestamp, so nothing downstream can read a joint angle off a body with no depth.
+
+Only the keyframes, not the whole swing. The full track is 21.5 kB and would make
+a saved serve replayable as motion, which is what this format is shaped to grow
+into; six poses fix a defect that is on screen today, and a format that ships
+with a reader is worth more than one that ships with a plan.
+
 Nothing stores a track yet. These are the numbers a writer would need, pinned so
 the encoding cannot quietly regress to the form that kills the feature.
 

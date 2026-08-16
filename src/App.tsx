@@ -731,6 +731,21 @@ export default function App() {
             // purpose, because it is the branch nobody would otherwise look at
             // and the one where a silent blank reads as a bug.
             const noStills = new URLSearchParams(location.search).has('nostills')
+            if (!noStills) {
+              /*
+               * The report's own keyframes, not only the basket's.
+               *
+               * `nostills` reads as "this report has lost its pictures", and the
+               * comment above says so — but it only ever governed the paired
+               * strip, so the filmstrip on this screen showed placeholders
+               * either way and the flag toggled half of what it claimed. That
+               * went unnoticed while a missing still drew a grey box in both
+               * states; it stops being invisible now that one of those states
+               * draws the tracked body instead, which is the branch the flag
+               * exists to let somebody look at.
+               */
+              for (const p of fitted.phases) p.thumbnail = p.thumbnail ?? placeholderStill(p.label)
+            }
             if (fitted.consistency?.gap && !noStills) {
               const { gap } = fitted.consistency
               for (const a of basket) {
