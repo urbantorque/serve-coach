@@ -386,6 +386,24 @@ red first time, which is the check working. The ensemble now derives the
 deviation itself rather than trusting a number written in a comment, and gets
 **9.4°**, reproducing the sweep.
 
+**A band on the absolute is now ruled out, not pending.** The reference frame was
+checked against a second one — the shoulder line — rather than argued about, and
+the three results point different ways. On a clean rig **both frames report 14.4°
+for every 15° of real rotation, identically, at every step**: two independent
+references seeing the same change means the change belongs to the arm and not to
+the frame, so a band on a *delta* is defensible in principle. (The gain is 0.96
+here; the 0.8 seen under the modelled camera is the unsigned angle biasing
+towards the middle of its range under noise, not the geometry moving.) But the
+same arm reads **44.5° against the trunk and 149.1° against the shoulder line** —
+there is no zero to put a band around. And switching frames does not fix it, it
+moves it: 30° of spine lean shifts the trunk frame **15.1°**, a whole noise
+floor, while 30° of shoulder tilt shifts the shoulder frame **35.3°**, most of
+the signal. Spine lean is not hypothetical here — it is the signal the lumbar
+injury flag is read from, so a delta measured across two serves whose posture
+differed is partly a change in posture. All three are pinned in `depth.test.ts`
+on a clean rig with one seed, because each is a systematic rather than a noise
+question.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.

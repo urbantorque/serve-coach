@@ -428,26 +428,44 @@ export const UNCALIBRATED: Record<string, string> = {
    * usable steps. `palm_to_sky_deg` is graded at a floor of 11; `hip_lead_ms` is
    * `UNDER_RESOLVED` at 85. On repeatability alone this belongs in the bands.
    *
-   * WHAT STOPS IT IS THE ZERO. The angle is read against the trunk's up vector
-   * projected onto the plane across the humerus, and that reference is a choice
-   * rather than an anatomy. It is why a neutral arm reads 19.7° instead of 0°,
-   * and why a 60° rotation reads as 48° of change — a gain of about 0.8. Both
-   * are properties of the frame the measurement is taken in. A band placed on
-   * the absolute number today would be a band placed on that choice, and the
-   * first real clip that disagreed with the rig about where zero sits would move
-   * every player across it at once.
+   * WHAT STOPS IT IS THE ZERO, AND THEN THE POSTURE. The angle is read against
+   * the trunk's up vector projected onto the plane across the humerus, and that
+   * reference is a choice rather than an anatomy.
+   *
+   * That choice was checked against a second one — the shoulder line — rather
+   * than argued about, and the result is in `depth.test.ts` under "what a band
+   * could and could not rest on". Three findings, and they point in different
+   * directions:
+   *
+   *   · **The change is real.** On a clean rig both frames report 14.4° for
+   *     every 15° dialled, identically, at every step — a gain of 0.96. Two
+   *     independent references seeing the same change means the change belongs
+   *     to the arm and not to the frame. (Under the modelled camera the apparent
+   *     gain falls to 0.8, which is the unsigned angle biasing towards the
+   *     middle of its range under noise, not the geometry moving.)
+   *   · **The absolute is not.** The same arm reads 44.5° in one frame and
+   *     149.1° in the other. There is no zero to put a band around.
+   *   · **And switching frames is not the fix.** Each is confounded by a
+   *     different posture: 30° of spine lean moves the trunk frame 15.1°, and
+   *     30° of shoulder tilt moves the shoulder frame 35.3°. The trunk frame is
+   *     the better of the two and is still moved by a whole noise floor by a
+   *     posture that is not a shoulder rotation — and spine lean is not
+   *     hypothetical, it is the signal the lumbar injury flag is read from.
    *
    * So: measured, returned in `Diagnosis.externalRotation`, kept out of
-   * `signals`, and graded by nothing. The two things that would change this are
-   * a second reference frame agreeing with this one about a *change* (a signal
-   * can be graded on its delta while its absolute is arbitrary), and real
-   * footage. Neither exists yet.
+   * `signals`, and graded by nothing. A band on the absolute is ruled out rather
+   * than pending. A band on a *delta* is defensible in principle and still needs
+   * two things — posture held roughly still between the two serves being
+   * compared, and real footage to say whether the lever refusal leaves enough
+   * readings to compare at all.
    */
   external_rotation_deg:
     'measured and not named: 9.4–11.8° deviation over a 48° span, which is ' +
-    'gradeable, but read against a chosen reference frame that puts a neutral ' +
-    'arm at 19.7° and scales a real rotation by 0.8 — the repeatability is ' +
-    'there and the zero is not.',
+    'gradeable, but read against a chosen reference frame with no zero — the ' +
+    'same arm reads 44.5° against the trunk and 149.1° against the shoulder ' +
+    'line. Both frames agree exactly about a CHANGE (14.4° per 15° dialled) and ' +
+    'both are confounded by posture: 30° of spine lean moves the trunk frame ' +
+    '15.1°. Delta gradeable in principle, absolute ruled out.',
   /*
    * Peak leg drive: the fastest the hips rose in the frame.
    *

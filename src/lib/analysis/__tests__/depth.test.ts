@@ -978,4 +978,118 @@ check('a fault below its floor is reported as no fault at all, severity included
   assert(only.severity === 'none', `a hidden fault kept severity "${only.severity}"`)
 })
 
+heading('External rotation: what a band could and could not rest on')
+
+/*
+ * The reading `diagnose` takes is an angle against the trunk's up vector, and
+ * that reference is a choice rather than an anatomy. `UNCALIBRATED` says the
+ * repeatability is there and the zero is not; these checks are where that
+ * sentence comes from, so it cannot rot into a claim nobody can reproduce.
+ *
+ * Run on a clean rig with one seed rather than the noise ensemble, on purpose.
+ * Everything asked here is a SYSTEMATIC — does a different reference frame see
+ * the same change, does a posture that is not external rotation move the
+ * reading — and a systematic is a property of the geometry, not of the camera.
+ * The ensemble already answers the noise question and takes a minute to do it.
+ */
+const REF_CLEAN: Partial<ServeDials> = { noise: 0, depthNoise: 0, depthBias: 0, seed: 7000 }
+
+/** The same rotation, read against a second reference: the shoulder line. */
+function rotationAgainst(dials: Partial<ServeDials>, ref: 'trunk' | 'shoulders'): number {
+  const frames = buildServe({ ...REF_CLEAN, ...dials }, FPS)
+  const skel = detectServe(frames, FPS)
+  const f = frames[skel.keys.trophy]
+  const side = skel.racket
+  const L = f.world
+  const S = {
+    shoulder: side === 'left' ? LM.leftShoulder : LM.rightShoulder,
+    elbow: side === 'left' ? LM.leftElbow : LM.rightElbow,
+    wrist: side === 'left' ? LM.leftWrist : LM.rightWrist,
+    hip: side === 'left' ? LM.leftHip : LM.rightHip,
+  }
+  const other = side === 'left' ? LM.rightShoulder : LM.leftShoulder
+  const sub = (a: (typeof L)[number], b: (typeof L)[number]) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z })
+  const dot3 = (a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }) =>
+    a.x * b.x + a.y * b.y + a.z * b.z
+  const len3 = (v: { x: number; y: number; z: number }) => Math.hypot(v.x, v.y, v.z)
+
+  const axis = sub(L[S.elbow], L[S.shoulder])
+  const n = len3(axis)
+  const u = { x: axis.x / n, y: axis.y / n, z: axis.z / n }
+  const across = (v: { x: number; y: number; z: number }) => {
+    const d = dot3(u, v)
+    return { x: v.x - u.x * d, y: v.y - u.y * d, z: v.z - u.z * d }
+  }
+  const fore = across(sub(L[S.wrist], L[S.elbow]))
+  const base = across(ref === 'trunk' ? sub(L[S.shoulder], L[S.hip]) : sub(L[S.shoulder], L[other]))
+  const cos = Math.min(1, Math.max(-1, dot3(fore, base) / (len3(fore) * len3(base))))
+  return (Math.acos(cos) * 180) / Math.PI
+}
+
+check('two independent reference frames see the same change', () => {
+  /*
+   * The finding a band on a DELTA would rest on. Neither frame has a true zero
+   * — they disagree about the same arm by about a hundred degrees — but if both
+   * report the same change for the same rotation, the change is a property of
+   * the arm rather than of the frame that was picked.
+   */
+  const steps = [0, 15, 30, 45, 60]
+  const trunk = steps.map((deg) => rotationAgainst({ trophyExternalRotation: deg }, 'trunk'))
+  const shoulders = steps.map((deg) => rotationAgainst({ trophyExternalRotation: deg }, 'shoulders'))
+
+  const dTrunk = trunk.slice(1).map((v, i) => v - trunk[i])
+  const dShoulders = shoulders.slice(1).map((v, i) => v - shoulders[i])
+  for (let i = 0; i < dTrunk.length; i++) {
+    assert(
+      Math.abs(dTrunk[i] - dShoulders[i]) < 0.5,
+      `step ${i + 1}: trunk saw ${dTrunk[i].toFixed(1)}°, shoulders saw ${dShoulders[i].toFixed(1)}°`,
+    )
+  }
+  // And each step really is a step, so agreeing about nothing cannot pass.
+  for (const d of dTrunk) assert(d > 10, `a 15° rotation only moved the reading ${d.toFixed(1)}°`)
+  note(`per 15° dialled: ${dTrunk.map((d) => d.toFixed(1)).join(', ')}° in both frames`)
+})
+
+check('and disagree completely about the absolute', () => {
+  // The other half, and the reason nothing grades the absolute. If these ever
+  // converge, the zero has stopped being arbitrary and UNCALIBRATED wants
+  // re-reading rather than trusting.
+  const trunk = rotationAgainst({ trophyExternalRotation: 30 }, 'trunk')
+  const shoulders = rotationAgainst({ trophyExternalRotation: 30 }, 'shoulders')
+  assert(
+    Math.abs(trunk - shoulders) > 60,
+    `the two frames now agree to ${Math.abs(trunk - shoulders).toFixed(1)}° about one arm`,
+  )
+  note(`one arm, two frames: ${trunk.toFixed(1)}° and ${shoulders.toFixed(1)}°`)
+})
+
+check('both frames are moved by a posture that is not external rotation', () => {
+  /*
+   * The finding that stops "just pick the other frame" being the fix. Each
+   * frame is confounded by a different posture, and switching moves the problem
+   * rather than solving it — the shoulder line is wrecked by shoulder tilt far
+   * worse than the trunk is by spine lean.
+   *
+   * It also bounds what a delta is worth: a change measured between two serves
+   * whose posture differs is partly a change in posture. Spine lean is not a
+   * hypothetical here — it is the signal the lumbar injury flag is read from.
+   */
+  const held = { trophyExternalRotation: 30 }
+  const leanSpan =
+    rotationAgainst({ ...held, spineLean: 30 }, 'trunk') - rotationAgainst({ ...held, spineLean: 0 }, 'trunk')
+  const tiltSpan =
+    rotationAgainst({ ...held, shoulderTilt: 35 }, 'shoulders') -
+    rotationAgainst({ ...held, shoulderTilt: 5 }, 'shoulders')
+
+  assert(Math.abs(leanSpan) > 8, `spine lean moved the trunk frame only ${leanSpan.toFixed(1)}° — re-read UNCALIBRATED`)
+  assert(
+    Math.abs(tiltSpan) > Math.abs(leanSpan),
+    `the shoulder frame is no longer the worse of the two: lean ${leanSpan.toFixed(1)}°, tilt ${tiltSpan.toFixed(1)}°`,
+  )
+  note(
+    `30° of spine lean moves the trunk frame ${leanSpan.toFixed(1)}°; ` +
+      `30° of shoulder tilt moves the shoulder frame ${tiltSpan.toFixed(1)}°`,
+  )
+})
+
 report()
