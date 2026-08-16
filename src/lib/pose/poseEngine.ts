@@ -166,6 +166,24 @@ export function loadEngine(onProgress: (p: EngineProgress) => void = () => {}): 
 export const engineDelegate = () => usingDelegate
 
 /**
+ * Whether the engine is already built and sitting in memory.
+ *
+ * A cheaper, stricter question than `isCachedOffline` below, and it answers the
+ * one thing a caller timing a pass actually wants to know: an engine already
+ * resident cannot download anything, so no pass after the first can be cold.
+ * `isCachedOffline` has to ask the Cache API three times, and every `caches.match`
+ * walks every cache the origin owns — including the service worker's precache —
+ * which is real work to establish something already known. A basket sweep runs
+ * the pipeline once per serve, so that was up to six triple lookups per sweep for
+ * a boolean that could only be false.
+ *
+ * Deliberately not a substitute for `isCachedOffline`, which answers the
+ * different and durable question the offline badge is about: whether the assets
+ * survive a reload. This one is about this session only.
+ */
+export const engineResident = (): boolean => landmarker !== null
+
+/**
  * The resolved asset paths, so a test can check them without a bundler.
  *
  * Exposed deliberately: these are the two URLs the app cannot start without, and

@@ -47,6 +47,10 @@ in `git log`.
   the app shows with a decimal place, and it is on the first screen a first
   run ever reaches. It now reads in whatever your own language and region
   write a decimal point as, like every date already does.
+- **A basket is a little quicker.** Comparing the serves in one clip asked
+  the browser's storage whether the coach was already downloaded once per
+  serve, up to six times, to answer a question that could not change after
+  the first. It now asks only when there is something to find out.
 
 ## 2026-08-15
 

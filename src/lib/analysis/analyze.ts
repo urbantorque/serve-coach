@@ -18,7 +18,7 @@ import {
   trackBall,
   type BallFlight,
 } from '../vision/ballTrack'
-import { isCachedOffline, loadEngine, type EngineProgress } from '../pose/poseEngine'
+import { engineResident, isCachedOffline, loadEngine, type EngineProgress } from '../pose/poseEngine'
 import { drawSkeleton, fitContain } from '../pose/skeleton'
 import { FUNDAMENTALS } from './coaching'
 import { SOFT_MEASUREMENT } from './confidence'
@@ -1139,7 +1139,14 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // Asked before `loadEngine`, because afterwards the answer is always yes. A
   // first analysis on a cold cache pays a 19 MB download inside the measured
   // span, and a number that folded that in would be reporting the network.
-  const coldEngine = !(await isCachedOffline())
+  //
+  // The resident check short-circuits it, and is not a second opinion about the
+  // same thing: an engine already built in memory cannot download anything, so
+  // the answer is settled without asking. It matters because this runs once per
+  // serve and a basket sweep is up to six of them — see `engineResident`, which
+  // is a field read against three `caches.match` calls over every cache the
+  // origin owns.
+  const coldEngine = !engineResident() && !(await isCachedOffline())
 
   const landmarker = await loadEngine((p: EngineProgress) => {
     onProgress({
