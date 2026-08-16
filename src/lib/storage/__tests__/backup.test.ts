@@ -102,7 +102,7 @@ const fileOf = (sessions: Session[], practice?: PracticeLog[]) =>
 
 heading('What is not a backup')
 
-check('a file that is not JSON is refused by name, not by stack trace', async () => {
+await check('a file that is not JSON is refused by name, not by stack trace', async () => {
   const { store } = memoryStore()
   let message = ''
   try {
@@ -115,7 +115,7 @@ check('a file that is not JSON is refused by name, not by stack trace', async ()
   assert(/\.json file the app exported/.test(message), `unhelpful refusal: "${message}"`)
 })
 
-check('valid JSON that is not ours is refused', async () => {
+await check('valid JSON that is not ours is refused', async () => {
   const { store } = memoryStore()
   let message = ''
   try {
@@ -126,7 +126,7 @@ check('valid JSON that is not ours is refused', async () => {
   assert(/Serve Coach backup/.test(message), `unhelpful refusal: "${message}"`)
 })
 
-check('our format with no sessions array is refused rather than half-read', async () => {
+await check('our format with no sessions array is refused rather than half-read', async () => {
   const { store } = memoryStore()
   let threw = false
   try {
@@ -149,7 +149,7 @@ const fresh = await (async () => {
   return { result, m }
 })()
 
-check('a report the phone has never seen is added', async () => {
+await check('a report the phone has never seen is added', async () => {
   assert(fresh.result.added === 1, `added ${fresh.result.added}, expected 1`)
   assert(fresh.m.sessions.has('c'), 'the new report is not in the store')
 })
@@ -317,7 +317,7 @@ check('a backup from before drill records existed still restores', () => {
 
 heading('After the merge')
 
-check('the store is pruned once, over what the import actually left behind', async () => {
+await check('the store is pruned once, over what the import actually left behind', async () => {
   const m = memoryStore()
   await importBackup(fileOf([session('a', 1), session('b', 2), session('c', 3)]), m.store)
   // Once, not per row: pruning per report would re-read the whole store on every
@@ -325,7 +325,7 @@ check('the store is pruned once, over what the import actually left behind', asy
   assert(m.prunes() === 1, `pruned ${m.prunes()} times for a three-report import`)
 })
 
-check('an export carries both the reports and the drill records', async () => {
+await check('an export carries both the reports and the drill records', async () => {
   const m = memoryStore({ sessions: onto, logs: [log('x', 1_000)] })
   const backup = await buildBackup(m.store)
   assert(backup.format === 'serve-coach-backup', 'the format tag is missing')
@@ -333,7 +333,7 @@ check('an export carries both the reports and the drill records', async () => {
   assert(backup.practice?.length === 1, 'the drill records were left out of the export')
 })
 
-check('a round trip through a file changes nothing', async () => {
+await check('a round trip through a file changes nothing', async () => {
   // The claim the whole feature rests on: what comes off one phone is what lands
   // on the next one.
   const from = memoryStore({ sessions: onto, logs: [log('x', 1_000)] })
@@ -347,7 +347,7 @@ check('a round trip through a file changes nothing', async () => {
 
 heading('What a court trip can read back off a phone')
 
-check('an analysis keeps what it cost, all the way into an exported file', async () => {
+await check('an analysis keeps what it cost, all the way into an exported file', async () => {
   // `COURT-CHECK.md` step 8 now says to read `cost` out of an exported backup
   // rather than to hold a stopwatch, which only works if the field survives
   // both `saveSession`'s spread and `normalise`'s. Neither whitelists fields,

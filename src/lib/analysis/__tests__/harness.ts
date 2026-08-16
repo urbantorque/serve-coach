@@ -13,15 +13,68 @@ declare const process: { exit(code: number): never }
 let passed = 0
 const failures: string[] = []
 
-export function check(name: string, fn: () => void) {
+/**
+ * Checks that have started and not finished — see `check` and `report`.
+ *
+ * A count rather than a list of promises, because nothing waits on them: the
+ * point is only to know whether `report()` is being asked to print a tally that
+ * is not final yet.
+ */
+let outstanding = 0
+
+const pass = (name: string) => {
+  passed++
+  console.log(`  \x1b[32m✓\x1b[0m ${name}`)
+}
+
+const failed = (name: string, err: unknown) => {
+  const message = (err as Error)?.message ?? String(err)
+  failures.push(`${name}\n      ${message}`)
+  console.log(`  \x1b[31m✗\x1b[0m ${name}\n      \x1b[31m${message}\x1b[0m`)
+}
+
+/**
+ * One check, run now.
+ *
+ * ASYNC CALLBACKS ARE SUPPORTED AND MUST BE AWAITED, and until now neither half
+ * of that was true. A failing assertion inside an `async` callback never reached
+ * the `catch` here: it surfaced as an unhandled rejection, which kills the
+ * process mid-file. The check was never tallied, every check after it in that
+ * file never ran, and the output blamed whatever line the stack pointed at. The
+ * suite exits non-zero either way, which is exactly why it went unnoticed for so
+ * long — from CI a broken file and a failing check look identical, and to
+ * whoever has to fix it they look nothing alike.
+ *
+ * Twenty checks across `backup.test.ts` and `useShareState.test.ts` were sitting
+ * on that, all passing, none of them able to report a failure.
+ *
+ * So a returned promise is now handled: the tally waits for it, and the call
+ * site is expected to `await check(...)`. Forgetting that is not silent either —
+ * `report()` fails the run if anything is still outstanding when it prints,
+ * because a tally that omits a check is the same lie in a quieter form.
+ */
+export function check(name: string, fn: () => void | Promise<void>): void | Promise<void> {
+  let returned: unknown
   try {
-    fn()
-    passed++
-    console.log(`  \x1b[32m✓\x1b[0m ${name}`)
+    returned = fn()
   } catch (err) {
-    failures.push(`${name}\n      ${(err as Error).message}`)
-    console.log(`  \x1b[31m✗\x1b[0m ${name}\n      \x1b[31m${(err as Error).message}\x1b[0m`)
+    failed(name, err)
+    return
   }
+  if (returned && typeof (returned as PromiseLike<unknown>).then === 'function') {
+    outstanding++
+    return (returned as Promise<void>).then(
+      () => {
+        outstanding--
+        pass(name)
+      },
+      (err) => {
+        outstanding--
+        failed(name, err)
+      },
+    )
+  }
+  pass(name)
 }
 
 /**
@@ -77,6 +130,18 @@ export function note(line: string) {
 
 /** Print the tally and exit non-zero if anything failed. Call once, at the end. */
 export function report() {
+  // A tally printed while a check is still running is not a tally. Loud rather
+  // than awaited, because the fix is one keyword at the call site and silently
+  // waiting here would let a file's checks finish in an order nobody wrote.
+  if (outstanding > 0) {
+    failed(
+      'the tally was printed before every check had finished',
+      new Error(
+        `${outstanding} async check${outstanding === 1 ? '' : 's'} still running — ` +
+          'an async check must be awaited: `await check(...)`.',
+      ),
+    )
+  }
   console.log(
     `\n${failures.length ? '\x1b[31m' : '\x1b[32m'}${passed} passed, ${failures.length} failed\x1b[0m\n`,
   )

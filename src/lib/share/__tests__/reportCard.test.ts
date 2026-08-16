@@ -18,7 +18,7 @@ const FILE = {} as File
 
 heading('Whether to ask this browser to share at all')
 
-check('a browser with no share function is not asked', async () => {
+await check('a browser with no share function is not asked', async () => {
   assert(
     (await attemptShare(undefined, FILE, 'x')) === 'not-attempted',
     'asked a browser with no navigator.share',
@@ -29,7 +29,7 @@ check('a browser with no share function is not asked', async () => {
   )
 })
 
-check('canShare saying no is respected without ever calling share', async () => {
+await check('canShare saying no is respected without ever calling share', async () => {
   let shareCalled = false
   const nav: ShareNavigator = {
     canShare: () => false,
@@ -41,7 +41,7 @@ check('canShare saying no is respected without ever calling share', async () => 
   assert(!shareCalled, 'called share() after canShare said no')
 })
 
-check('a browser with share but no canShare is tried anyway', async () => {
+await check('a browser with share but no canShare is tried anyway', async () => {
   // The same rule `recordingType` applies to a missing `canPlayType`:
   // absence of the newer capability check must not remove a working control.
   let called: unknown
@@ -57,7 +57,7 @@ check('a browser with share but no canShare is tried anyway', async () => {
   )
 })
 
-check('a canShare that throws is read as "try it", not as a refusal', async () => {
+await check('a canShare that throws is read as "try it", not as a refusal', async () => {
   // A capability check throwing is a browser being asked something it does
   // not understand, not proof of the thing it was asked about — the same
   // move `recordingType` makes for a `isTypeSupported` that throws.
@@ -76,12 +76,12 @@ check('a canShare that throws is read as "try it", not as a refusal', async () =
 
 heading('What a real share sheet says back')
 
-check('sharing that succeeds reports shared', async () => {
+await check('sharing that succeeds reports shared', async () => {
   const nav: ShareNavigator = { canShare: () => true, share: async () => undefined }
   assert((await attemptShare(nav, FILE, 'x')) === 'shared', 'a clean share() was not reported as shared')
 })
 
-check('backing out of the share sheet is cancelled, not failed', async () => {
+await check('backing out of the share sheet is cancelled, not failed', async () => {
   // The browser says which it was: a dismissal rejects with AbortError.
   // Read as anything else, a player who opened the sheet and thought better
   // of it would fall through to a download they never asked for.
@@ -95,7 +95,7 @@ check('backing out of the share sheet is cancelled, not failed', async () => {
   assert((await attemptShare(nav, FILE, 'x')) === 'cancelled', 'a dismissal was not read as cancelled')
 })
 
-check('a share that fails for any other reason is failed, not cancelled', async () => {
+await check('a share that fails for any other reason is failed, not cancelled', async () => {
   const nav: ShareNavigator = {
     canShare: () => true,
     share: async () => {
