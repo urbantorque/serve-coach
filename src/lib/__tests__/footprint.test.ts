@@ -28,8 +28,15 @@ import {
 } from '../footprint'
 import { MAX_FINE_FRAMES } from '../pose/extract'
 import { buildServe } from '../analysis/syntheticServe'
-import { detectServe } from '../analysis/phases'
+import { buildPhases, detectServe } from '../analysis/phases'
 import { MAX_SERVES } from '../analysis/serves'
+import {
+  KEEP_ALL_UNDER_PRESSURE,
+  KEEP_STILLS,
+  MAX_SESSIONS,
+} from '../storage/db'
+import { keyframePoses } from '../storage/poseTrack'
+import type { Frame } from '../analysis/types'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
 declare const process: { memoryUsage(): { heapUsed: number } }
@@ -277,6 +284,181 @@ check('three decimals is under a pixel on a phone', () => {
   const worstPixels = (step / 2) * TALLEST
   assert(worstPixels < 1, `three decimals is ${worstPixels.toFixed(2)} px at ${TALLEST}p`)
   note(`3dp rounding is at most ${worstPixels.toFixed(2)} px at ${TALLEST}p; 2dp would be ${((0.01 / 2) * TALLEST).toFixed(0)} px`)
+})
+
+heading('What a stored track would do to the prune ladder')
+
+/*
+ * THE GATE THE TRACK IS ACTUALLY BLOCKED ON, and it is not the encoding.
+ *
+ * The checks above settled what a track costs. What they did not settle is
+ * where it sits in the ladder that bounds a player's history: sixty reports at
+ * 21 kB is 1.3 MB nothing currently strips, where the six keyframe poses a
+ * report keeps today are 160 kB for the same sixty. The stills have a rung —
+ * `planPrune` takes them off everything past `KEEP_STILLS` — and a track needs
+ * to join one, be given its own, or be refused.
+ *
+ * The measurement below is what makes that a decision rather than a preference,
+ * and the load-bearing finding is the second check: the six keyframe rows can be
+ * lifted back out of a track EXACTLY, byte for byte, as the same values
+ * `keyframePoses` writes today. That means a track is not a second thing stored
+ * beside the poses — it is a superset of them, and the ladder gains a rung the
+ * stills never had. Stripping a still leaves nothing behind. Downgrading a track
+ * leaves the filmstrip intact.
+ *
+ * Nothing is stored yet. These exist so the writer arrives into a decided ladder
+ * instead of deciding one on the way past.
+ */
+
+/** The swing as one flat row per frame — the drawable encoding, spanning `from`. */
+function swingTrack(source: readonly Frame[], from: number, to: number, aspect: number) {
+  const round3 = (v: number, p: number) => Math.round(v * 10 ** p) / 10 ** p
+  const rows: number[][] = []
+  for (let i = from; i <= to; i++) {
+    const f = source[i]
+    if (!f?.image?.length) continue
+    const row: number[] = []
+    for (const lm of f.image) {
+      row.push(round3(lm.x, 3), round3(lm.y, 3), round3(lm.visibility, 2))
+    }
+    rows.push(row)
+  }
+  return { aspect: round3(aspect, 4), from, rows }
+}
+
+/*
+ * The whole clip rather than `swingFrames`, which is already sliced to the
+ * window: this section needs the frame numbers a `Phase` actually carries, and
+ * those index the clip.
+ */
+const RIG_ASPECT = 16 / 9
+const rigFrames = buildServe({ noise: 0.006, seed: 7000 }, 30)
+const rigSkeleton = detectServe(rigFrames, 30)
+const rigPhases = buildPhases(rigFrames, rigSkeleton.keys)
+const rigPoses = keyframePoses(rigFrames, rigPhases, RIG_ASPECT)
+const rigTrack = swingTrack(rigFrames, rigSkeleton.keys.ready, rigSkeleton.keys.finish, RIG_ASPECT)
+
+check('the swing window holds every keyframe, so a track can always draw the filmstrip', () => {
+  /*
+   * Structural rather than lucky, which is why this runs six rigs and not one.
+   * A track spanning `ready` to `finish` is the cheapest span that could carry
+   * the swing; if a keyframe ever sat outside it, the downgrade below would
+   * produce a filmstrip with a hole in it and the whole rung would need a wider
+   * span. `buildPhases` reads its frames straight off `Keyframes`, so this is
+   * really a claim about the detector's own ordering — worth stating here
+   * because it is this rung that depends on it.
+   */
+  for (const seed of [7000, 11, 202, 3131, 44444, 909]) {
+    const f = buildServe({ noise: 0.006, seed }, 30)
+    const skel = detectServe(f, 30)
+    const outside = buildPhases(f, skel.keys).filter(
+      (p) => p.frame < skel.keys.ready || p.frame > skel.keys.finish,
+    )
+    assert(
+      outside.length === 0,
+      `seed ${seed}: ${outside.map((p) => p.id).join(', ')} fell outside ready..finish`,
+    )
+  }
+})
+
+check('keyframes lifted out of a track are the same bytes the report stores today', () => {
+  /*
+   * THE FINDING THE RUNG RESTS ON. Both forms round the same landmarks to the
+   * same decimals, so a row taken from the track at a phase's own frame is not
+   * merely close to the stored one — it is identical, and a downgrade is
+   * therefore lossless with respect to everything on screen today.
+   *
+   * Compared against the real `keyframePoses` rather than a second copy of its
+   * arithmetic, because a reimplementation agreeing with itself would prove
+   * nothing. If either side ever changes its rounding this goes red, which is
+   * exactly when the rung stops being free.
+   */
+  assert(rigPoses !== undefined, 'the rig produced no keyframe poses to compare against')
+  const downgraded = {
+    aspect: rigTrack.aspect,
+    rows: rigPhases.map((p) => rigTrack.rows[p.frame - rigTrack.from] ?? null),
+  }
+  assert(
+    JSON.stringify(downgraded) === JSON.stringify(rigPoses),
+    'a track does not reproduce the stored keyframes — the downgrade is lossy',
+  )
+  note(`downgrade: ${(sizeOf(rigTrack) / 1024).toFixed(1)} kB of track becomes ${(sizeOf(rigPoses) / 1024).toFixed(1)} kB of keyframes, unchanged`)
+})
+
+const RIG_TRACK_BYTES = sizeOf(rigTrack)
+const RIG_POSES_BYTES = sizeOf(rigPoses)
+/** A still at the high end of what one has been measured at, times six. */
+const STILLS_PER_REPORT = 6 * 8 * 1024
+
+check('the pressure ladder gains a rung that beats deleting a report', () => {
+  /*
+   * The gap this closes is real and is in `planPrune` today. Once the quota
+   * levels have taken the stills down to `KEEP_STILLS_UNDER_PRESSURE`, there is
+   * nothing left to free except whole reports — the ladder steps straight from
+   * "every image is gone" to "your history is shorter", and a player who is out
+   * of room loses serves rather than pictures.
+   *
+   * A track downgrade sits between the two. It is the only thing in a stored
+   * report that can get smaller twice.
+   */
+  const freedByDowngrade = KEEP_ALL_UNDER_PRESSURE * (RIG_TRACK_BYTES - RIG_POSES_BYTES)
+  // What the step it replaces costs: the oldest report, images and all.
+  const freedByDeletingOne = STILLS_PER_REPORT + RIG_TRACK_BYTES
+  assert(
+    freedByDowngrade > freedByDeletingOne,
+    `downgrading frees ${(freedByDowngrade / 1024).toFixed(0)} kB, less than the ${(freedByDeletingOne / 1024).toFixed(0)} kB of deleting one report — the rung is not worth having`,
+  )
+  note(`downgrading ${KEEP_ALL_UNDER_PRESSURE} tracks frees ${(freedByDowngrade / 1024).toFixed(0)} kB before a single report is deleted`)
+})
+
+/**
+ * The whole store at its limits, with a track on every report the ladder keeps.
+ *
+ * A RATCHET, and the same kind `HEAP_BUDGET_BYTES` is: nobody here has measured
+ * a phone's IndexedDB quota, so this cannot be "the device limit, divided". It
+ * fails on a change in kind — a longer history, a wider span than the swing, a
+ * second landmark set per row.
+ *
+ * SET TIGHTER THAN THE FIRST DRAFT, and by the canary below rather than by
+ * taste. At twice the worst case it caught nothing: the stills are capped at
+ * `KEEP_STILLS`, so doubling the history only doubles the track half, and 3.6 MB
+ * sat comfortably under a 4.5 MB line. A third above the measured worst case is
+ * what actually makes the two checks below disagree, and it is still an order of
+ * magnitude clear of the seed-to-seed spread in the track figure itself (21.3 to
+ * 21.8 kB across six rigs).
+ */
+const STORE_RATCHET_BYTES = 3e6
+
+const storeWorstCase = (sessions: number, trackBytes: number) =>
+  Math.min(sessions, KEEP_STILLS) * STILLS_PER_REPORT + sessions * trackBytes
+
+check('a track on every kept report stays inside the store ratchet', () => {
+  const today = storeWorstCase(MAX_SESSIONS, RIG_POSES_BYTES)
+  const withTracks = storeWorstCase(MAX_SESSIONS, RIG_TRACK_BYTES)
+  assert(
+    withTracks < STORE_RATCHET_BYTES,
+    `a full history with tracks is ${mb(withTracks)} MB, past the ${mb(STORE_RATCHET_BYTES)} MB ratchet`,
+  )
+  note(
+    `full history: ${mb(today)} MB today, ${mb(withTracks)} MB with a track on each of ${MAX_SESSIONS} — stills ${mb(KEEP_STILLS * STILLS_PER_REPORT)} MB of it`,
+  )
+  note(`per report the track costs ${((RIG_TRACK_BYTES - RIG_POSES_BYTES) / 1024).toFixed(1)} kB more than the six poses it replaces, and ${(STILLS_PER_REPORT / 1024).toFixed(0)} kB less than the photographs it outlives`)
+})
+
+check('and a longer history is what would breach it', () => {
+  /*
+   * The teeth. `MAX_SESSIONS` is the one constant here a future round is likely
+   * to want raised, and the point of the ratchet is that raising it has to be
+   * argued rather than typed.
+   */
+  assert(
+    storeWorstCase(MAX_SESSIONS * 2, RIG_TRACK_BYTES) > STORE_RATCHET_BYTES,
+    'twice the history did not breach the ratchet — it is set too loose to catch anything',
+  )
+  assert(
+    storeWorstCase(MAX_SESSIONS, RIG_TRACK_BYTES * 4) > STORE_RATCHET_BYTES,
+    'a track four times as wide did not breach the ratchet',
+  )
 })
 
 report()
