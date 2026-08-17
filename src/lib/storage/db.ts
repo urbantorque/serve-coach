@@ -636,12 +636,25 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
       ? d.externalRotation
       : { deg: null, confidence: 0, lever: 0 }
 
-  if (d.chain && typeof d.chain === 'object') return { ...d, flaws, externalRotation }
+  /*
+   * Same guard again for the landing, and it needs its own rather than riding
+   * on the chain check for the reason the rotation above does: the three
+   * arrived in different builds, so a stored report can carry any combination
+   * of them. `offset: null` at zero confidence is the literal truth — nothing
+   * looked — and `anklesSeen: 0` says the feet are why.
+   */
+  const landing =
+    d.landing && typeof d.landing === 'object'
+      ? d.landing
+      : { offset: null, confidence: 0, anklesSeen: 0 }
+
+  if (d.chain && typeof d.chain === 'object') return { ...d, flaws, externalRotation, landing }
   const missing = { ms: null, confidence: 0 }
   return {
     ...d,
     flaws,
     externalRotation,
+    landing,
     chain: {
       legs: { ...missing },
       hips: { ...missing },

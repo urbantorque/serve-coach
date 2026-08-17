@@ -676,6 +676,50 @@ export const UNCALIBRATED: Record<string, string> = {
     'and not all of it — 58% spread becomes 21% — and no band exists either way',
 
   /*
+   * The landing, and the first reading in this engine taken past contact.
+   *
+   * Better conditioned than most of what this engine grades, which is what makes
+   * writing it down here rather than banding it a decision instead of a default.
+   * Read off image x — coordinates the camera measured, not depth a network
+   * inferred — a square landing reads 0.0035 ± 0.0028 body heights and a 0.12 m
+   * one reads 0.0657 ± 0.0045, converged at 240 seeds and stable to the fourth
+   * decimal from 24 upwards. That is a separation of about fourteen deviations.
+   * Compare `hip_lead_ms`, which sits near one at its floor.
+   *
+   * Note the zero is 0.0035 rather than 0.0000: the reading is a magnitude, so
+   * noise about a true zero folds positive instead of cancelling. Anything built
+   * on this calibrates against that floor — see `LandingBalance.offset`.
+   *
+   * SO WHY IS IT NOT GRADED. Two reasons, and the first is the ordinary one this
+   * whole record exists for: nothing in this repo knows what this number should
+   * be for a club player. Zero is finishing square over your feet, and a serve
+   * hit with real intent finishes travelling — a professional lands well across
+   * their front foot on purpose. Without a value that separates driving through
+   * the shot from falling over, a band would be four invented numbers.
+   *
+   * The second is specific and worse, and it is the reason this is not merely
+   * awaiting a band. The rig poses a landing as a symmetric lateral shift over
+   * two feet that stay planted, because that is what `landingLean` builds. A
+   * real collapse is over the FRONT foot, with the back leg trailing and doing
+   * something this rig has no way to express. So the reading is validated
+   * against a model of the fault rather than against the fault — a weaker claim
+   * than the chain links can make, since they at least measure a quantity the
+   * rig varies honestly. The deviation above is real and the gain above is real;
+   * what is unproven is that a real collapsed landing produces this shape at all.
+   * Only footage settles that, and `fixtures/README.md` is where that story
+   * continues.
+   *
+   * Unsigned deliberately, and `LandingBalance.offset` carries why: which way
+   * image x points depends on which side the camera stood, so a sign would be a
+   * fact about the filming. Nothing here knows which direction is worse anyway.
+   */
+  landing_offset_ratio:
+    'measured and not named: well conditioned — 0.0035 square against 0.0657 ' +
+    'landed, on a 0.0045 deviation — but nothing knows what a club player should ' +
+    'read, and the rig poses a symmetric shift where a real collapse is over the ' +
+    'front foot, so it is validated against a model of the fault rather than the fault',
+
+  /*
    * Peak racket-hand speed, and peak elbow speed, as moments in the serve.
    *
    * Two links rather than two entries, because the decision is one decision.

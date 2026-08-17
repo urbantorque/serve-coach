@@ -37,7 +37,7 @@ import {
 } from './kinematics'
 import { evaluateFlaws, MIN_EVIDENCE, type FlawFinding, type SignalReading } from './flaws'
 import { inferTier, nextTier, clampTier } from './tiers'
-import type { Skeleton } from './phases'
+import { ANKLES_SEEN_FLOOR, type Skeleton } from './phases'
 import type { Frame } from './types'
 import type { BallFlight } from '../vision/ballTrack'
 
@@ -113,6 +113,25 @@ export interface Diagnosis {
    * without it a nearly-straight arm returns a confident angle made of noise.
    */
   externalRotation: ExternalRotation
+  /**
+   * How far the body finished across its own feet, half a second after contact.
+   *
+   * DATA ONLY, on exactly the same terms as `chain` and `externalRotation`:
+   * nothing grades it, no flaw is named from it, it never reaches `signals`.
+   * `UNCALIBRATED` in `tiers.ts` carries why at length.
+   *
+   * THE FIRST THING IN THIS ENGINE THAT READS PAST CONTACT. Every other window
+   * ends at the ball, which meant the whole tail of the swing was observed and
+   * measured by nobody — and a serve that lands collapsed sideways loads the
+   * same lower back the lumbar flag watches, plus the front knee, entirely after
+   * the ball has gone.
+   *
+   * `null` when the landing could not be read, never a zero: a zero here is a
+   * player who finished square, and a player nobody could see did not finish
+   * square. Two refusals, and the second is the one that will fire in life — a
+   * clip framed to show a racket often does not show a foot.
+   */
+  landing: LandingBalance
   flaws: FlawFinding[]
   /** What the pass cost, so a slow device can be seen rather than guessed at. */
   cost: { frames: number; series: number; ms: number }
@@ -165,6 +184,55 @@ export interface ExternalRotation {
    * and this number is why.
    */
   lever: number
+}
+
+/**
+ * Where the body finished relative to its own feet, and whether the feet were
+ * in shot to say.
+ *
+ * Same shape as `ChainLink` and `ExternalRotation` for the same reason: a
+ * nullable measurement beside the confidence it was read at, which the engine
+ * takes and does not grade.
+ */
+export interface LandingBalance {
+  /**
+   * Distance from the hip centre to the ankle centre along image x at the
+   * finish, as a share of body height. Small is finishing over your feet.
+   *
+   * SMALL RATHER THAN ZERO, and the difference is a property of the reading
+   * rather than of the player: this is a magnitude, so landmark noise about a
+   * true zero folds into a positive number instead of cancelling. A serve that
+   * finishes dead square reads 0.0035 on the depth-aware ensemble, not 0.0000,
+   * and that floor is stable — 0.0035 to 0.0040 across every ensemble size from
+   * 24 seeds to 240. Anything ever built on this has to treat 0.0035 as its
+   * zero. It is not subtracted here, because the engine returns what it measured
+   * and a correction that made a clean landing read zero would be hiding the
+   * one number a reader needs to calibrate against.
+   *
+   * UNSIGNED, on the same principle `externalRotation` is. A signed form would
+   * say which way the body fell, and which way image x points depends on which
+   * side of the player the camera was — so the sign would be a fact about the
+   * filming rather than the serve. Nothing here knows which direction is worse
+   * anyway, and a number carrying a direction nobody can interpret invites being
+   * read as one.
+   *
+   * A share of body height rather than pixels, because that is the only ruler in
+   * this engine that survives a player standing further from the phone.
+   */
+  offset: number | null
+  /** Mean visibility of the four landmarks it is built from, 0–1. */
+  confidence: number
+  /**
+   * How well the two ankles were seen at the finish, 0–1.
+   *
+   * Kept rather than folded into `confidence`, because it is the refusal that
+   * decides this reading in practice and a reader needs to see which one fired.
+   * A foot outside the frame is not a foot the tracker declines to place — it is
+   * one it places near the edge of the picture and flags unseen, so the offset
+   * that results is perfectly finite and wrong. `ANKLES_SEEN_FLOOR` in
+   * `phases.ts` is the same bar the ground line is held to, for the same reason.
+   */
+  anklesSeen: number
 }
 
 /**
@@ -698,6 +766,8 @@ export function diagnose(
 
   /* --- external rotation, measured and not named ------------------------ */
   const externalRotation = readExternalRotation(at(keys.trophy), R)
+  // The first reading in this engine taken past contact. See LandingBalance.
+  const landing = readLandingBalance(at(keys.finish), bodyHeight)
 
   /* --- the toss --------------------------------------------------------- */
   const liftFrom = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
@@ -899,6 +969,7 @@ export function diagnose(
     },
     chain,
     externalRotation,
+    landing,
     flaws,
     cost: {
       frames: frames.length,
@@ -980,6 +1051,7 @@ function offLineDrift(
 }
 
 const round2 = (v: number) => Math.round(v * 100) / 100
+const round3 = (v: number) => Math.round(v * 1000) / 1000
 
 function roundAll(signals: Record<string, number>): Record<string, number> {
   const out: Record<string, number> = {}
@@ -1053,6 +1125,45 @@ export const ER_LEAN_SENSITIVITY = 0.5
  * back past the reference plane, and a wrapped reading looks exactly like a
  * measurement that fell apart.
  */
+/**
+ * How far the body finished across its own feet, read at the finish keyframe.
+ *
+ * IMAGE X, NOT WORLD. The whole reason this reading is worth having is the
+ * finding the chain work established: coordinates the camera measured hold still
+ * where ones a network inferred in depth do not. Through the whole pass on the
+ * depth-aware ensemble, converged at 240 seeds, a square landing reads
+ * 0.0035 ± 0.0028 and a 0.12 m one reads 0.0657 ± 0.0045 — a separation of about
+ * fourteen deviations, and stable to the fourth decimal from 24 seeds upwards.
+ * Better conditioned than anything the trunk pair ever managed, and for the
+ * reason the chain work established rather than by luck.
+ *
+ * Read at one frame rather than averaged over a window, because unlike every
+ * keyframe `steadyWorld` smooths across, this one is not an extremum of its own
+ * motion — the body is still travelling at the finish, so a window either side
+ * would average away part of the very thing being measured.
+ */
+function readLandingBalance(f: Frame, bodyHeight: number): LandingBalance {
+  const L = f.image
+  const parts = [L[LM.leftHip], L[LM.rightHip], L[LM.leftAnkle], L[LM.rightAnkle]]
+  const confidence = round2(mean(parts.map((p) => p?.visibility ?? 0)))
+  const anklesSeen = round2(
+    Math.min(L[LM.leftAnkle]?.visibility ?? 0, L[LM.rightAnkle]?.visibility ?? 0),
+  )
+  const none: LandingBalance = { offset: null, confidence, anklesSeen }
+  if (parts.some((p) => !p) || !(bodyHeight > 1e-6)) return none
+
+  // The evidence bar every other reading uses, and then the one this reading
+  // needs on its own account: a clip framed to show a racket often does not show
+  // a foot, and an unseen foot is placed near the edge of the picture rather
+  // than omitted, so nothing downstream would notice it was invented.
+  if (confidence < MIN_EVIDENCE) return none
+  if (anklesSeen < ANKLES_SEEN_FLOOR) return none
+
+  const hipX = (L[LM.leftHip].x + L[LM.rightHip].x) / 2
+  const ankleX = (L[LM.leftAnkle].x + L[LM.rightAnkle].x) / 2
+  return { offset: round3(Math.abs(hipX - ankleX) / bodyHeight), confidence, anklesSeen }
+}
+
 function readExternalRotation(f: Frame, R: ReturnType<typeof sided>): ExternalRotation {
   const L = f.world
   const parts = [L[R.shoulder], L[R.elbow], L[R.wrist], L[R.hip]]

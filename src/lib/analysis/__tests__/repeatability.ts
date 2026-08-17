@@ -206,6 +206,11 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   // every link above follows: an angle nobody measured is not a neutral one.
   const deg = d.externalRotation?.deg
   if (typeof deg === 'number' && Number.isFinite(deg)) out.external_rotation_deg = deg
+  // The third, and the first read past contact. Dimensionless like
+  // `chain_span_ratio` and unlike everything else in this bag, which every
+  // consumer that prints it has to know — see the print sites in `depth.test.ts`.
+  const offset = d.landing?.offset
+  if (typeof offset === 'number' && Number.isFinite(offset)) out.landing_offset_ratio = offset
   return out
 }
 

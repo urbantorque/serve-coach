@@ -485,6 +485,16 @@ check('the chain read from the picture plane holds still where the one read from
     // SEEN and INFERRED are explicit lists — but a line reading "9.4 ms" about
     // an angle is a wrong number in a file whose whole job is deriving right
     // ones, and it would be quoted somewhere eventually.
+    // Dimensionless, and read from image x rather than world z — so both halves
+    // of the default line below would be wrong about it. The same trap the
+    // rotation entry above was written for, one reading later.
+    if (d.id === 'landing_offset_ratio') {
+      note(
+        `  ${d.id.padEnd(17)} image x     deviation ${d.sd.toFixed(4)}      ` +
+          `range ${d.range.toFixed(4)}   n=${d.n}   (body heights — not graded, see UNCALIBRATED)`,
+      )
+      continue
+    }
     if (d.id === 'external_rotation_deg') {
       note(
         `  ${d.id.padEnd(17)} world x,y,z deviation ${d.sd.toFixed(1).padStart(5)}°   ` +
@@ -576,6 +586,75 @@ check('the keyframes land at the same moment whatever the phone films at', () =>
         'the frame rate rather than the serve. phases.ts smooths over a radius counted in samples.',
     )
   }
+})
+
+check('the landing is read from the picture plane and tracks what the rig posed', () => {
+  /*
+   * The first reading in this engine taken past contact, held to the two tests
+   * every ungraded measurement here has to pass: it has to hold still under
+   * noise, and it has to MOVE when the fault appears. Repeatability alone is not
+   * evidence — a number that holds still and never moves is a constant with a
+   * units label, which is the trap `UNCALIBRATED` records against the chain.
+   */
+  const at = (landingLean: number) => {
+    const xs: number[] = []
+    for (const seed of SEEDS) {
+      const frames = buildServe({ ...DEPTH_AWARE, seed, landingLean }, FPS)
+      let skel
+      try {
+        skel = detectServe(frames, FPS)
+      } catch {
+        continue
+      }
+      const v = diagnose(frames, skel, { tier: 5 }).landing.offset
+      if (typeof v === 'number') xs.push(v)
+    }
+    const mu = xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
+    const sd = Math.sqrt(xs.reduce((a, b) => a + (b - mu) ** 2, 0) / Math.max(1, xs.length))
+    return { mu, sd, n: xs.length }
+  }
+
+  const square = at(0)
+  const collapsed = at(0.12)
+  assert(square.n === SEEDS.length, `the landing was refused on ${SEEDS.length - square.n} clean clips`)
+  note(
+    `  square ${square.mu.toFixed(4)} ± ${square.sd.toFixed(4)}, ` +
+      `0.12 m landing ${collapsed.mu.toFixed(4)} ± ${collapsed.sd.toFixed(4)} body heights`,
+  )
+
+  assert(square.mu < 0.01, `a serve landing square reads ${square.mu.toFixed(4)}, which is not square`)
+  // Moves by far more than it wanders. The margin is wide because the claim is
+  // "this responds", not "this responds by exactly 0.065".
+  assert(
+    collapsed.mu - square.mu > 4 * Math.max(square.sd, collapsed.sd),
+    `a dialled landing moved the reading ${(collapsed.mu - square.mu).toFixed(4)} against a ` +
+      `deviation of ${Math.max(square.sd, collapsed.sd).toFixed(4)} — it does not respond to the fault`,
+  )
+})
+
+check('a landing nobody could see is refused rather than invented', () => {
+  /*
+   * The refusal that will fire in life. A clip framed to show a racket often
+   * does not show a foot, and — the part that makes a finiteness check useless —
+   * an out-of-frame ankle is not omitted by the tracker, it is PLACED near the
+   * edge of the picture and flagged unseen. So the offset that results is a
+   * perfectly ordinary number computed from a landmark nobody saw.
+   */
+  const frames = buildServe({ ...DEPTH_AWARE, seed: SEEDS[0], landingLean: 0.12 }, FPS)
+  const skel = detectServe(frames, FPS)
+  assert(typeof diagnose(frames, skel, { tier: 5 }).landing.offset === 'number', 'the clean case did not read')
+
+  // Feet flagged unseen and moved, exactly as a foot out of shot arrives.
+  const blinded = frames.map((f) => ({
+    ...f,
+    image: f.image.map((p, i) =>
+      i === LM.leftAnkle || i === LM.rightAnkle ? { ...p, x: 0.02, visibility: 0.05 } : p,
+    ),
+  }))
+  const out = diagnose(blinded, skel, { tier: 5 }).landing
+  assert(out.offset === null, `an unseen foot produced an offset of ${out.offset}`)
+  assert(out.anklesSeen < 0.5, `the refusal did not report why: anklesSeen ${out.anklesSeen}`)
+  note(`  feet unseen: offset ${out.offset}, anklesSeen ${out.anklesSeen}`)
 })
 
 check('more frames make the trunk timing better, not worse', () => {
