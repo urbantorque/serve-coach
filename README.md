@@ -794,6 +794,23 @@ sampling faster re-reads the same decoded frames at ~55 ms apiece and learns
 nothing. Slow-motion footage still gets more samples through the swing, because
 it spreads the same motion over more seconds of file.
 
+**And spending that budget unevenly cannot help, because of where it binds.** The
+obvious improvement is to thicken the sampling around contact and thin the
+lead-in, where nothing but the ready pose is measured. It is not buildable, and
+the reason is a clean anti-correlation rather than a difficulty. The budget binds
+only on a span wider than `MAX_FINE_FRAMES / FINE_FPS`, 3.75 s — which is the
+5-second blind fallback (24 fps) and a single-pass clip at its longest
+(26.7 fps). A located window spans 2.7 s and spends 86 of its 120 frames, capped
+by the frame rate rather than by the budget. And the contact time is known in
+exactly the one case with frames to spare: the blind fallback is by definition
+the window where the scan found nothing to aim at, and a clip short enough to be
+read in one pass is never scanned at all. There is nothing to weight around in
+either window that would benefit. Had they overlapped, the ceiling was 5.33
+samples through the swing against the fallback's 4.00 — one sample, on the path
+that most often ends in "I could not find a serve in that clip". Pinned in
+`robustness.test.ts` by a check written to go red if a located window ever starts
+binding the budget, which is the condition that would make it worth revisiting.
+
 **The report's focus ranks over every measurement, not over the areas.** An area
 score is an average, so the weakest area is not reliably where the worst fault
 lives — a player with rigid legs could otherwise be told to work on their tempo

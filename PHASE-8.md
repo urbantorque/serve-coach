@@ -111,6 +111,15 @@ values and would need re-deriving. Not smuggled into this round.
 
 ## R44b — Spend the frame budget where the serve is fastest, where it binds
 
+> **Refused as R48 on 2026-08-17, and the paragraph below about contact being
+> known before the fine read is the reason.** It is true of the located window,
+> which spends 86 of its 120 frames and is capped by `FINE_FPS`, not by the
+> budget. The two windows that do bind the budget — the blind fallback and a
+> single-pass clip — both reach `readWindow` with an empty `times`, so there is
+> no contact time to centre a weighted schedule on. The two conditions
+> anti-correlate exactly. See `NEXT.md` R48 for the table and the check that
+> pins it.
+
 **The salvageable half of R44 as written.** The budget is not the constraint on
 the recommended window, and it is on two others: the 5 s blind fallback (24 fps)
 and a short single-pass clip (up to 26.7 fps). A weighted schedule buys real

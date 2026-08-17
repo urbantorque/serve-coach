@@ -18,8 +18,14 @@ const SINGLE_PASS_SECONDS = 4.5
  * Slow-motion footage still gets more samples through the swing, because it
  * spreads the same motion over more seconds of file. Sub-frame timing is
  * recovered analytically instead — see refineExtremum in phases.ts.
+ *
+ * Exported for the same reason `MAX_FINE_FRAMES` is: the two together decide
+ * which of them binds, and `MAX_FINE_FRAMES / FINE_FPS` is the span either side
+ * of which a different one does. A test that wants to say where the budget
+ * starts binding has to say it in those terms rather than in the number 32,
+ * which would go stale the moment either constant moved.
  */
-const FINE_FPS = 32
+export const FINE_FPS = 32
 /**
  * The most frames one serve is ever extracted at.
  *

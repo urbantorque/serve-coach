@@ -18,7 +18,7 @@
  * goes red even though every accuracy test still passes.
  */
 import { assessQuality, blockingFramingIssue, pickFocus, rescore } from '../analyze'
-import { readWindow, samplingRateFor } from '../../pose/extract'
+import { FINE_FPS, MAX_FINE_FRAMES, readWindow, samplingRateFor } from '../../pose/extract'
 import { assessSpatial, DEPTH_YAW_RANGE } from '../spatial'
 import {
   SOFT_MEASUREMENT,
@@ -2408,6 +2408,62 @@ check('a short clip is read whole, not guessed at', () => {
   const w = readWindow(3.5, [], -1)
   assert(w.located, 'a clip read whole was reported as a guess')
   assert(w.start === 0 && w.end === 3.5, `did not read the whole short clip: ${w.start}-${w.end}`)
+})
+
+check('the frame budget binds only on windows with no contact time to aim at', () => {
+  // R48 proposed spending the budget unevenly — thick around contact, thin
+  // through the lead-in where nothing but the ready pose is measured — on the
+  // two windows where the budget really is the constraint. Its mechanism was
+  // that contact is already known before the fine read, since `readWindow`
+  // centres a located window on `times[index]`. That is true, and it is true of
+  // the one window that does not need it.
+  //
+  // The budget binds exactly when the span exceeds `MAX_FINE_FRAMES / FINE_FPS`;
+  // below that, `FINE_FPS` caps the rate and frames go unspent. Stated in those
+  // two constants rather than in 3.75, so the crossover moves when they do.
+  const CROSSOVER = MAX_FINE_FRAMES / FINE_FPS
+
+  // A located serve: the only window that knows where contact is, and it sits
+  // under the crossover with budget to spare.
+  const located = readWindow(30, [10, 20], -1)
+  const locatedSpan = located.end - located.start
+  assert(locatedSpan < CROSSOVER, `a located window spans ${locatedSpan}, past the crossover`)
+  assert(
+    samplingRateFor(locatedSpan) === FINE_FPS,
+    'a located window is no longer capped by FINE_FPS, so the budget now binds where contact is known',
+  )
+
+  // The two that bind, and neither was given a serve time.
+  for (const [name, duration] of [
+    ['the blind fallback', 18.7],
+    ['a single-pass clip at its longest', 4.5],
+  ] as const) {
+    const w = readWindow(duration, [], -1)
+    const span = w.end - w.start
+    assert(span > CROSSOVER, `${name} spans ${span}, so the budget does not bind after all`)
+    assert(samplingRateFor(span) < FINE_FPS, `${name} is capped by FINE_FPS, not by the budget`)
+  }
+
+  // And a short clip ignores any serve times it is handed, so `located: true`
+  // there does not mean contact is known — which is the distinction R48's
+  // premise elided. `extractServe` never even scans one.
+  const short = readWindow(4.5, [2.0], -1)
+  assert(short.located, 'a clip read whole was reported as a guess')
+  assert(
+    short.start === 0 && short.end === 4.5,
+    `a short clip aimed at a serve time it should have ignored: ${short.start}-${short.end}`,
+  )
+
+  // What the round could have bought, if the two had ever overlapped: the
+  // ceiling is FINE_FPS through a swing that is about a sixth of a second.
+  const SWING = 1 / 6
+  const ceiling = SWING * FINE_FPS
+  const fallback = SWING * samplingRateFor(readWindow(18.7, [], -1).end - readWindow(18.7, [], -1).start)
+  assert(ceiling - fallback < 1.5, 'the gain grew past a sample and a half — R48 may be worth reopening')
+  note(
+    `swing samples: located ${(SWING * samplingRateFor(locatedSpan)).toFixed(2)} (contact known), ` +
+      `fallback ${fallback.toFixed(2)} (contact unknown), ceiling ${ceiling.toFixed(2)}`,
+  )
 })
 
 check('hands the tracker never finds are spotted', () => {

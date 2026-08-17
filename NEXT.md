@@ -966,16 +966,55 @@ and are not: R50 puts deltas on `Consistency`, which is the basket; R50b puts on
 on the glance through `carryForward`, which is between serves on court. Same
 family, different surface, different refusals.
 
-- [ ] **R48** — Spend the frame budget where the serve is fastest, where it
-      actually binds. Not the recommended window, where `samplingRateFor` returns
-      `min(32, 44.4)` and `FINE_FPS` binds — that was R44's disproven premise.
-      The two windows where the budget really is the constraint: the 5 s blind
-      fallback at 24 fps, and a short single-pass clip at up to 26.7 fps. Replace
-      the even schedule in `extract.ts` (`const t = start + (span * i) / (count - 1)`)
-      with a weighted one thickening around contact, which `readWindow` already
-      knows before the fine read. **May not claim a quadrupling** — the ceiling is
-      `FINE_FPS` and the honest figure through a 0.16 s swing is about four
-      samples against today's four.
+- [x] **R48** — Refused, and measuring the premise is what refused it. The round
+      asked for a weighted sampling schedule on the two windows where the frame
+      budget really binds. Its mechanism was that contact is already known before
+      the fine read, since `readWindow` centres a located window on
+      `times[index]`. That is true, and it is true of the one window that does
+      not need it.
+
+      **The budget binds and the contact time is known in disjoint cases, and
+      they do not merely fail to overlap — they anti-correlate exactly:**
+
+          window                              span   rate    budget   contact
+          located serve (LEAD_IN + LEAD_OUT)  2.70   32.00   spare    known
+          blind fallback (scan found none)    5.00   24.00   BINDS    unknown
+          single pass, at its longest         4.50   26.67   BINDS    unknown
+          single pass, 3.0 s                  3.00   32.00   spare    unknown
+
+      The crossover is `MAX_FINE_FRAMES / FINE_FPS` = 3.75 s. A located window
+      spans 2.7 and spends 86 of its 120 frames; the two that spend all 120 are
+      the blind fallback, whose defining property is that the scan found nothing
+      to aim at, and a single-pass clip, which `extractServe` never scans at all
+      — `times` is forced to `[]` for anything under `SINGLE_PASS_SECONDS`
+      regardless of what a caller passes. There is nothing to weight around in
+      either.
+
+      **A subtlety that made the premise look right:** `located: true` does not
+      mean the contact time is known. A short clip read whole reports
+      `located: true` and has no serve time behind it. The flag means "this
+      window was not a blind guess", which is a different claim.
+
+      **What it could ever have bought, had they overlapped:** the ceiling is
+      `FINE_FPS` through a swing of about a sixth of a second, so 5.33 samples
+      against the fallback's 4.00. A gain of 1.33 samples — and the fallback is
+      the path that ends in "I could not find a serve in that clip" more often
+      than any other, since `!located` drives its own refusal in `analyze.ts`.
+      Spending engineering there to buy one sample on the clips most likely to be
+      refused is the wrong end of the app.
+
+      One check in `robustness.test.ts` pins the anti-correlation, stated in
+      `MAX_FINE_FRAMES` and `FINE_FPS` rather than in 3.75 so the crossover moves
+      when they do — **and it is written to go red exactly when this round
+      becomes worth reopening.** `FINE_FPS` is now exported for it, on the same
+      argument `MAX_FINE_FRAMES` already carries.
+
+      Canary run, and reported rather than claimed: widening `LEAD_OUT` from 0.8
+      to 1.9 pushes a located window to 3.80 and turns this check red with "a
+      located window spans 3.799999999999997, past the crossover". It also turns
+      `a located serve is still read exactly where it was found` red, for the
+      different and correct reason that the window moved off the serve. Two
+      checks, one of them mine, neither over-broad.
 - [ ] **R49** — The ghost: today's swing drawn over your best one. Round two of
       `f8816b0`, whose commit body ends "round two is the build", and round two of
       the backlog's `track-ghost-compare`, whose round one landed at cycle 109.
