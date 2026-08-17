@@ -1481,7 +1481,55 @@ family, different surface, different refusals.
           from the gate. `fixtures/README.md` has the order; nothing in the app
           does.
 
-- [ ] **R69** — Nothing lints the copy that lives in a component. `copy.test.ts`
+- [~] **R69** — Split: build the gate, then fix what it finds. Rewriting the home
+      screen's hero paragraph is a product decision and does not belong in the
+      round that built a lint.
+
+        · **R69·1 — [x] the gate.** `lib/__tests__/jsxCopy.test.ts` walks every
+          `.tsx` under `src`, pulls the text between tags, and runs it through
+          `cueIssues` — the same editor `copy.test.ts` applies to six data
+          tables and has never applied to a component. **Ninety-six readable
+          lines across twenty-five components. Fifteen fail.**
+
+          **Text-matched, not parsed, and the allow list is checked against what
+          the scan found** rather than assumed correct — `egress.test.ts`'s trade,
+          for `egress.test.ts`'s reason. A regex cannot tell a sentence from a
+          label, so it over-matches, and the answer is to write down every match
+          with a verdict rather than tune the pattern until the output looks
+          tidy. A tuned regex is a gate nobody can audit. What the pattern
+          *cannot* see is named at the function: anything interpolated, because
+          it skips braces entirely — which is most of `statusLabels.ts`, reached
+          by `copy.test.ts` through its own functions instead.
+
+          Seven of the fifteen are the lint being wrong and each says how: two
+          chart labels where a leading "Overall" reads as a preamble in a
+          sentence and does not in a heading; two lines on the dev-only `?corpus`
+          screen; two privacy statements where **the passive is the claim** — an
+          active rewrite needs a subject and the whole promise is that there is
+          no "we" doing the keeping; and R30's export warning, where "not just
+          numbers" is a hedge carrying the meaning and dropping it inverts the
+          sentence.
+
+          **Eight are real and unfixed**, listed with their measured fault so
+          fixing one is a diff against a number: a filler "just" in the filming
+          guide, 30 words in `FramingCheck`, a passive in `HandednessPicker`, 26
+          words in `StoragePanel`, 28 on the home hero, 28 more on the home
+          privacy line, a passive in `Report`, and 26 words under the replay.
+
+          **AND ONE OF THEM CONTRADICTS THE LEDGER.** R28 recorded tightening
+          `StoragePanel`'s "To carry it to a new phone" line to fit the cap it
+          was auditing everything else against. It measures **26**. Whether it
+          drifted afterwards or was never under is not knowable from what is
+          written down; what is knowable is that a phase close-out claimed a fix
+          that does not hold, and nothing could have told anybody, because no
+          gate has ever read that file.
+
+          Canaried by putting a deliberately awful line into `StoragePanel`: the
+          gate names the line, its word count and all three of its faults, so the
+          failure message is the fix.
+
+        · **R69·2 — the eight.** Each is a copy decision rather than a lint pass.
+          The two on the home screen are the most-read paragraphs in the app. `copy.test.ts`
       is named as one of three critics in executable form, and it walks `METRICS`,
       `SERVE_TYPES`, `FUNDAMENTALS`, `AXIS_COPY`, `DRILLS` and `everyVerdictCue()`
       — every one of them a data table. **Every sentence written straight into

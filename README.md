@@ -1533,6 +1533,36 @@ siblings. For comparison on the same panel: `.spread-detail` and the headline
 paragraph both measure 6.89:1, and `.spread-label` 15.77:1. Raising the token is
 a decision about every surface using it, not one this round is entitled to make.
 
+**The editor now reads the components too, and found eight lines it had never
+seen.** `copy.test.ts` is one of three critics this repo keeps in executable
+form, and it walks six data tables. Every sentence written straight into JSX was
+unchecked — ninety-six of them across twenty-five components, of which fifteen
+fail the house voice. Seven are the lint being wrong and each says how: two chart
+labels where a leading "Overall" reads as a preamble in a sentence and does not
+in a heading, two lines on the dev-only corpus screen, two privacy statements
+where the passive *is* the claim (an active rewrite needs a subject, and the
+whole promise is that there is no "we" doing the keeping), and the export warning
+where "not just numbers" is a hedge carrying the meaning.
+
+Eight are real: a filler "just", two passives, and five lines running 26 to 30
+words against a cap of 25. They are frozen at their current wording rather than
+rewritten in the same round, because two of them are the most-read paragraphs in
+the app and that is a copy decision rather than a lint pass.
+
+The scan is text-matched rather than parsed, and its allow list is checked
+against what the scan actually found — the trade `egress.test.ts` makes, for the
+same reason. A regex cannot tell a sentence from a label, so the answer is to
+write down every match with a verdict rather than tune the pattern until the
+output looks tidy. What it cannot see is written at the function: anything
+interpolated, since it skips braces entirely.
+
+One of the eight contradicts this project's own record. R28, a phase close-out,
+reported tightening the storage panel's transfer line to fit the cap it was
+auditing everything else against. It measures 26 words. Whether it drifted since
+or was never under is not recoverable — what is recoverable is that a close-out
+claimed a fix that does not hold, and nothing could have said so, because no gate
+had ever read that file.
+
 **Fixing what makes a number ungradable does not make it gradable.** The chain's
 span is measured in milliseconds and therefore grades tempo: the same serve
 served slowly has a longer chain, so a band in milliseconds would mark a

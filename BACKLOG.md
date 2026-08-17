@@ -76,10 +76,11 @@ The translation from a number to a cue somebody can act on.
       stats screen. The trap is the claim — no correlation over six points.
 - [ ] **C4 · R57** — The drills as a week, built from the 2–4 ranked drills the
       report already produces. No streak, no badge, no congratulation.
-- [ ] **C0 · R69** — Nothing lints the copy that lives in a component. Six data
-      tables are walked; every sentence written straight into JSX is unchecked.
-      Found by auditing three lines by hand at the first consolidation. *Head of
-      this cycle.*
+- [x] **C0 · R69·1** — The gate for copy that lives in a component. 96 lines,
+      25 components, 15 failing — seven the lint being wrong, eight real. *(Round
+      9 — and one of the eight contradicts R28's own close-out.)*
+- [ ] **C0b · R69·2** — Fix the eight. Each is a copy decision, and two of them
+      are the most-read paragraphs in the app. *Head of this cycle.*
 - [ ] **C5 · audit 6** — A copy line that has drifted over the twenty-five word
       cap since it was written. R28 found its own phase had drifted; it drifts.
 

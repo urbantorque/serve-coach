@@ -44,6 +44,49 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 9 · Cycle C — pedagogical coaching and UI · `C0 · R69·1`
+
+**Orchestrator.** The head of Cycle C since round 6 promoted it there, and it had
+grown teeth in the meantime: I had added four JSX lines across three rounds and
+nothing watched any of them. Lead builder: Pedagogical UX & Skill Architect, with
+Release Architect on the allow-list shape. Column served: *Do I believe it* —
+copy that has drifted is the app saying something nobody checked.
+
+**Premise measured before designing.** Ran the scan first, read all fifteen
+failing lines in full, and only then decided the shape. That order matters: had I
+designed the gate first I would have tuned the regex until the output looked
+clean, which is the failure the file's own header now argues against.
+
+**The split.** Building a lint and rewriting eight lines of player-facing copy —
+two of them the most-read paragraphs in the app — are different jobs with
+different risks. The gate lands now, because it stops drift from this moment on;
+the eight are R69·2.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Every one of the fifteen is written down with a verdict and a reason, including the seven where the lint is wrong. Nothing was tuned away |
+| Performance | pass | Test-only; a directory walk over 25 files |
+| Privacy | pass | Nothing shipped changed |
+| Architecture | pass | `egress.test.ts`'s exact shape, including the check for the opposite failure — a stale exemption outliving the line it excused. What the pattern cannot see is named rather than left implicit |
+| Product | pass | No player-facing change. The eight it names are queued, not quietly rewritten |
+
+**A finding against the ledger.** R28 — a phase close-out — recorded tightening
+`StoragePanel`'s "To carry it to a new phone" line to fit the cap it was auditing
+everything else against. It measures **26 words**. Whether it drifted afterwards
+or was never under is not recoverable from what is written down. What is
+recoverable is that a close-out claimed a fix that does not hold, and nothing
+could have contradicted it, because no gate had ever read that file. That is the
+argument for this round in one line.
+
+**Gate.** typecheck clean · lint clean · **1063 checks passed, 0 failed, exit 0**
+(+5). Canaried by putting a deliberately awful line into a component: the gate
+names the line, its word count and all three faults. No browser verification:
+nothing player-visible changed.
+
+---
+
 ### Round 8 · Cycle B — biomechanics and fault detection · `B1b · R50·2`
 
 **Orchestrator.** Second entry through round 2's machinery, which is what the
