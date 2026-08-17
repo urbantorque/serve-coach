@@ -14,6 +14,7 @@
  */
 import { detectServe } from '../phases'
 import { measure } from '../metrics'
+import { diagnose } from '../diagnose'
 import { LM, jointAngle, sided } from '../geometry'
 import { DRIFT_BUDGET, TRANSFORMS, budgetFor, decimate, driftBetween, rescale } from '../invariants'
 import { buildServe, CLEAN_SERVE, type ServeDials } from '../syntheticServe'
@@ -445,6 +446,64 @@ check('a trailing back foot is an exact no-op at zero drag', () => {
     a.ankle.every((v, i) => Object.is(v, b.ankle[i])) && Object.is(a.kneeAngle, b.kneeAngle),
     'dialling the drag to zero changed the leg',
   )
+})
+
+check('the landing dials are invisible to everything that existed before them', () => {
+  /*
+   * The claim the whole design rests on, asked downstream instead of at the
+   * landmarks.
+   *
+   * The check above asserts every landmark is bit-identical at and before
+   * contact, which is necessary and is not the thing anyone actually cares
+   * about. What matters is that no KEYFRAME moves, no SIGNAL moves, no
+   * MEASUREMENT moves and no FLAW appears or disappears — because every band in
+   * `tiers.ts` and every expectation in this suite was set against a rig that
+   * could not pose a landing, and a dial that shifted any of them would have
+   * quietly re-baselined the engine.
+   *
+   * Compared as whole serialised objects rather than field by field: the point
+   * is that NOTHING moved, and a check that listed which fields to compare would
+   * be blind to exactly the field somebody adds later.
+   */
+  const base = { noise: 0, depthNoise: 0, depthBias: 0, seed: 7000 }
+  const read = (dials: Partial<ServeDials>) => {
+    const frames = buildServe({ ...base, ...dials }, 50)
+    const skel = detectServe(frames, 50)
+    const d = diagnose(frames, skel, { tier: 5 })
+    return {
+      keys: JSON.stringify(skel.keys),
+      signals: JSON.stringify(d.signals),
+      metrics: JSON.stringify(measure(frames, skel, true).flatMap((f) => f.metrics.map((m) => [m.id, m.value]))),
+      flaws: JSON.stringify(d.flaws.filter((f) => f.detected).map((f) => f.flaw)),
+      landing: d.landing.offset,
+    }
+  }
+
+  const clean = read({})
+  const cases: [string, Partial<ServeDials>][] = [
+    ['a landing', { landingLean: 0.12 }],
+    ['a landing past what the leg can reach', { landingLean: 0.6 }],
+    ['a trailing back foot alone', { landingBackFootDrag: 1 }],
+    ['both together', { landingLean: 0.12, landingBackFootDrag: 1 }],
+  ]
+  for (const [what, dials] of cases) {
+    const got = read(dials)
+    for (const field of ['keys', 'signals', 'metrics', 'flaws'] as const) {
+      assert(
+        got[field] === clean[field],
+        `${what} moved the ${field} — the landing is leaking into what the engine reads before contact`,
+      )
+    }
+  }
+
+  // And the dial is not simply doing nothing, which is how the assertions above
+  // would pass on a rig that had quietly stopped posing a landing at all.
+  const landed = read({ landingLean: 0.12 }).landing
+  assert(
+    typeof landed === 'number' && typeof clean.landing === 'number' && landed > clean.landing + 0.03,
+    `the only reading that should move went ${clean.landing} → ${landed}`,
+  )
+  note(`  every keyframe, signal, metric and flaw held; landing alone moved ${clean.landing} → ${landed}`)
 })
 
 check('the landing is clamped where the leg runs out rather than stretching', () => {
