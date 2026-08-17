@@ -43,6 +43,52 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 68 · consolidation gate
+
+**Orchestrator.** Sixth cycle since `loop-green-12`. Number diff, boot, tag.
+
+**299 figures then, 308 now: three removed, twelve added — and one of the
+removals is the point of the whole block.**
+
+**Removed:**
+- `0.0715`, `0.0818` — R59's rows, re-anchored from 45° because R80b's band now
+  silences the axis there
+- **`0.52`** — the misattribution confidence. **A sideways toss reported as a
+  detected forwards fault at the corner. It is gone because the defect is
+  fixed.**
+
+**Added:** F6's landing baselines (`0.0643 / 0.0482 / 0.0321` both-ankle against
+`0.1142` three times front-ankle, `0.0499` at square, `0.0000`, and the `2.00×`
+against `1.00×` that names the contamination), plus R59's replacement rows
+(`0.0339`, `0.0747`).
+
+**No engine reading moved.** Every figure that left did so because a round
+removed the thing that produced it.
+
+**Gate.** typecheck clean · lint clean · production build clean (671.32 KiB
+precache) · **1217 checks, 0 failed, exit 0**.
+
+**Boot smoke** on a restarted server: report renders, five area cards, headline
+intact.
+
+Tag: `loop-green-13`.
+
+**What this block was: the loop reading its own ledger and finding it wrong.**
+Five of six rounds were audits, and four found something shipped:
+
+- **63** — three copy defects in sentences no gate could see, including a line
+  27 words against a 25 cap and *"Your hitting the ball at its peak scores fine"*
+- **64** — the bundle measured but never pinned, and my own unit error
+- **65** — the privacy footer on every share card, passive, in the one sentence
+  that is a promise
+- **66** — a blocked item whose blocker was **wrong twice and stale for
+  fifty-three rounds**, hiding a landing baseline contaminated 2.00× by the back
+  foot
+- **67** — the fix for 60's finding, **refused by its own derivation** and shipped
+  as something else
+
+---
+
 ### Round 67 · Cycle A — the engine · `A6b · R80b`
 
 **Orchestrator.** The fix round 60 queued: a floor on the axis share, so the app
