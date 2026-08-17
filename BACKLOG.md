@@ -115,8 +115,9 @@ Kinetic chain, trophy metrics, what the body actually did.
 - [x] **B5 · R52** — **Refused, and blocked on the rig rather than on the idea.**
       The trough reads easily — lowest planar speed between trophy and drop over
       the serve's own peak — and it is confounded by tempo *in the fault's own
-      direction*: **0.0795 at a 0.95 s motion down to 0.0344 at 1.85 s, 2.3× with
-      no hitch posed**, monotonic. A slower serve reads as a deeper trough, so the
+      direction*: **0.2081 at a 0.95 s motion down to 0.0749 at 1.85 s, 2.8× with
+      no hitch posed**, monotonic — restated at the engine's own smoothing by R84.
+      The original 2.3× was measured at a radius the engine does not use. A slower serve reads as a deeper trough, so the
       reading cannot tell "stopped" from "unhurried". And the rig cannot pose a
       hitch, so separation is *unmeasured* rather than disproved.
 - [x] **B5b · R52·1** — `trophyHitchSeconds`: the clock stops at the trophy and
