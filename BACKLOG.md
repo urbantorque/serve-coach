@@ -43,8 +43,11 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
 - [x] **A4b · R61·2** — `planSharedPass` built. Union window, one grid, per-detector
       coverage, and a drop-never-readmit rule for detectors the grid is too slow for.
       Split `pose/rate.ts` out so the DOM-free vision layer can share the rate.
-- [ ] **A4c · R61·3** — The outbound detector, as a streak rather than a disc,
-      refusing above the speed where the frames run out. Never in mph.
+- [x] **A4c · R61·3** — The outbound detector, as a streak. `vision/outbound.ts`:
+      second moments give each blurred region a heading, so one frame carries a
+      direction where a disc carries only a position. **The refusal is keyed to
+      frames counted, never to the speed** — gate on the estimate and a bad enough
+      estimate reads as slow and authorises itself. Nothing in mph, checked.
 - [x] **A5 · audit 8** — Windows in `phases.ts` sized in file seconds. *(Round
       33 — right about one of four. The finish keyframe drifts 32% as a share of
       the motion; the three search windows are correctly in seconds.)*

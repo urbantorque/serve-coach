@@ -43,6 +43,65 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 46 · Cycle A — the engine · `A4c · R61·3`
+
+**Orchestrator.** The outbound ball, built on the pass round 39 laid down. Lead
+builder: Pose Engineer. Column: *Would I trust it.*
+
+**Why a new detector and not the old one pointed at a new window.**
+`findCandidates` grows a blob and scores it on roundness. R61·1 measured how
+wrong that is after contact: a struck ball smears about **1.50 m across the
+frame** in one exposure — not a disc, far past `maxRadius`, thrown out by the
+roundness score before anything else looks at it.
+
+**So the smear is the measurement.** Second moments give each region its
+principal axes: the long one is where the ball went during that exposure, which
+means **one frame carries a heading** where a disc carries only a position. That
+is the whole reason this is worth building at the speeds where the disc dies.
+Measured on drawn bitmaps: a disc reads **1.00** elongation, a 60-px smear reads
+**18.94**, and a line drawn at 30° reads back at **30.0**.
+
+**The round's one hard part, and it is the refusal.** R61·3 asks for a refusal
+"above the speed where the frames run out". **A refusal keyed to that speed is
+one the estimate authorises for itself**: the readings that fail hardest come
+from the fewest frames, so a bad enough estimate reads as slow and passes. The
+failure is silent and always in the same direction.
+
+So the gate is on **frames actually counted**. Three is the least that can
+disagree with a straight line — two always fit one — and R61·1 puts a strong
+serve at 3.9 frames against 8.0 at club speed. That refuses the fastest serves
+and passes the ones this app is for, which is the right way round.
+
+**Two refusals, told apart.** Found-and-disagreeing is a scene with two fast
+things in it, which no better camera fixes. Never-found is a ball too fast for
+the frame rate, which a slower swing or a higher rate would.
+
+**A canary disproved one of my own comments.** I claimed the hypothesis search
+was needed because a median-first filter "lets two false streaks drag the middle
+off the ball". Swapped one for the other: **suite stayed green**. At eight frames
+or fewer with one dominant cluster the median lands inside it and the two agree —
+no separating case could be constructed at this scale. The code stays; the claim
+is now the narrower true one, and the finding is recorded where the claim was.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Nothing in mph, and that is a check rather than a comment: a speed needs a scale, and the only scale here is a body height at the baseline against a ball flying into an uncalibrated plane |
+| Honesty | pass | The frame count travels with a stated reading, not only with a refusal — it is the caveat, and a caller may be stricter |
+| Architecture | pass | `findCandidates` untouched. It is load-bearing for the toss on every clip; refactoring it to share a mask with a detector that has never seen footage is the wrong order |
+| Performance | pass | One green channel, one iterative flood fill — recursion blows the stack on a smear crossing a quarter of the frame |
+
+**Gate.** typecheck clean · lint clean · **1188 checks, 0 failed, exit 0** (+11).
+Canaried three ways: the floor, the difference threshold, and the agreement rule
+— the third failing to redden, which became the correction above.
+
+**What this does not prove.** Every check runs on drawn bitmaps. They prove the
+geometry; they prove nothing about whether a real ball against a real sky
+produces a region at all. `RECORDED` is 0 of 6.
+
+---
+
 ### Round 45 · Cycle F — QA and edge cases · `F7 · audit 9`
 
 **Orchestrator.** Cycle F's head item `F3` needs real footage and cannot move
