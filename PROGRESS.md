@@ -44,6 +44,56 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 13 · Cycle A — CV/ML engine · `A3 · R60·1`
+
+**Orchestrator.** Third block opens on Cycle A's head. Lead builder:
+Biomechanics & CV Specialist. Column served: *Do I believe it*.
+
+**The premise check killed the round as written, and found a second round stuck
+on the same sentence.** R60 wants to read stance from ankle separation over time.
+`syntheticServe.ts` places every ankle directly below its own hip and leaves it
+there until the landing — one stance, 0.180 m, no dial. Nothing to sweep. And
+R64 has been blocked since it was written on the identical fact: it cannot say
+how much the front ankle's baseline varies between players, because the baseline
+*is* the stance. One dial unblocks both, which is what turned "refuse R60" into
+"build the dial first".
+
+**A load-bearing module, declared, with the number diff run before the commit**
+rather than deferred to the block boundary — `UNATTENDED-LOOP.md`'s rule for
+`syntheticServe.ts`'s neighbours and this file is the rig they all stand on.
+Every reported reading is **bit-identical**; only wall-clock and a 0.04% heap
+figure moved. Asserted on landmark values rather than on a derived reading,
+because a measurement agreeing to four decimals would hide precisely the drift
+the skip-at-zero rule exists to prevent.
+
+**My first check was wrong and the rig was right.** Summing |Δx| + |Δz| reported
+a platform stance "varying" by 5.7 cm on a rig whose feet never move — the hip
+line yaws, the ankles sit below the hips, and a per-axis sum turns a rotation
+into a width. `hypot` in the ground plane is what the question means. Recorded
+because it looked like a rig defect and was a metric defect, which is the
+direction of error R44 warns about.
+
+**And the tally hazard again, third time this session.** The `sed` that inserted
+these checks put them *after* `robustness.test.ts`'s `report()`, recreating the
+exact defect round 2 found in `copy.test.ts`. Caught by grepping for `^report()`
+before running. **R66 is worth more than its queue position** — three near-misses
+in thirteen rounds, none of them caught by a gate.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Number diff bit-identical, run before commit. The dial's own limits are stated: 1.0 closes the gap entirely, further than a real pinpoint goes, and nobody here knows the distribution |
+| Performance | pass | One `track()` call and one conditional per leg per frame, skipped entirely at the default |
+| Privacy | pass | Rig only |
+| Architecture | pass | Skip-at-zero, matching `landingShift` and `trophyExternalRotation`. `solveKnee` re-run after the move, so thigh and shin still add up. Canaried to three checks, with the bit-identical one correctly staying green |
+| Product | pass | Not a product round; it unblocks two |
+
+**Gate.** typecheck clean · lint clean · **1073 checks passed, 0 failed, exit 0**
+(+4).
+
+---
+
 ### Round 12 · Cycle F — the second consolidation gate
 
 **1 · Full gate.** typecheck clean · lint clean · **1069 checks, 0 failed,

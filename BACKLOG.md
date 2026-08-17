@@ -31,8 +31,11 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
       fixtures (R59); the bound does not. *(Round 7 — the gate spends nothing on
       noise from 60° up, and the estimator is best conditioned exactly where this
       app is used.)*
-- [ ] **A3 · R60** — Platform against pinpoint, from ankle separation over time.
-      A context reading like serve type, never a graded fault. R51 needs it.
+- [x] **A3 · R60·1** — Give the rig a stance at all: `pinpointSlide`, ramping to
+      the trophy. *(Round 13 — the rig could not build a pinpoint stance, which
+      blocked R60 and R64 on one sentence. Bit-identical at zero.)*
+- [ ] **A3b · R60·2** — The stance detector, swept against the new dial. A
+      context reading like serve type, never a graded fault. R51 needs it.
 - [ ] **A4 · R61** — Ball speed off the strings. `planSharedPass` in
       `detector.ts` throws; build W7 only, never W6, never in mph. Spike first.
 - [ ] **A5 · audit 8** — Windows in `phases.ts` still sized in file seconds

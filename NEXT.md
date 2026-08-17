@@ -1661,14 +1661,53 @@ family, different surface, different refusals.
       recurring strain line, and what the player was asked to work on. Every one
       already survives a reopened report without a clip. Ranked below R54 because
       it recombines shipped parts and the replay may be the better artifact.
-- [ ] **R60** — Platform against pinpoint. The app has no idea which stance it is
-      looking at, and the two want different leg-drive advice and different
-      balance at the finish. Readable from ankle separation over time — the back
-      foot sliding up to the front is a large, slow, unambiguous motion along the
-      axis the camera sees best. **A context reading like serve type, not a graded
-      signal**: nothing here is a fault. Its value is deciding which of two
-      correct drills is the right one, and R51 needs it to interpret what it
-      measures.
+- [~] **R60** — Split, because the premise check found the rig cannot produce
+      the thing the round wants to detect.
+
+        · **R60·1 — [x] give the rig a stance.** Every serve `syntheticServe.ts`
+          has ever built stands with each ankle directly below its own hip and
+          leaves it there until the landing — one stance, `2 × HALF_HIP` = 0.180 m
+          wide, with no dial. So there was nothing to sweep a stance detector
+          against, and **R64 is stuck on the same sentence**: it wants the landing
+          read off the front ankle and cannot say how much that ankle's baseline
+          varies between players, because the baseline *is* the stance. One dial
+          unblocks both.
+
+          `pinpointSlide` brings the back ankle towards the front one along the
+          hip line, ramping from `ready` and finished by the trophy — because
+          that is when it happens, and a slide still running through the drop
+          would be a different motion no detector reading separation over time
+          should be asked to name. Zero is the platform stance the rig has always
+          built. At 0.8 the stance closes from 0.180 m to 0.036 m, which is 80%
+          of the gap, as dialled.
+
+          **A change to a load-bearing module, declared, with the number diff run
+          before committing rather than at the block boundary.** Every reported
+          reading is **bit-identical** to the pre-dial tree — only wall-clock
+          timings and a 0.04% heap figure differ. That is the skip-at-zero rule
+          working: the dial is not applied at zero rather than applied as a
+          no-op, because floating point does not promise a zero-sized transform
+          returns its input and every band in `tiers.ts` was set against the
+          untouched path. Asserted on landmark values directly, not on a derived
+          reading, since a measurement agreeing to four decimals would hide
+          exactly the drift the rule exists to prevent.
+
+          **The first draft of the check was wrong and the rig was right.**
+          Summing |Δx| + |Δz| reported a platform stance "varying" by 5.7 cm on a
+          rig whose feet never move — the hip line yaws through the serve, the
+          ankles sit below the hips, and a per-axis sum turns a rotation into a
+          width. `hypot` in the ground plane is what "how far apart are the feet"
+          means. Worth recording because the failure looked like a rig bug and
+          was a metric bug, which is the same direction of error R44 warns about.
+
+          Canaried by making the dial a no-op: three checks red, the fourth —
+          bit-identical at zero — correctly still green.
+
+        · **R60·2 — the detector.** Read the stance from ankle separation over
+          time and sweep it against the dial. **A context reading like serve
+          type, never a graded fault**: nothing here is wrong, and its value is
+          deciding which of two correct drills applies. R51 needs it.
+
 - [ ] **R61** — Ball speed off the strings. `planSharedPass` in `detector.ts:273`
       throws "the detector contract exists, the pass does not"; the shared-grid
       design is written and the implementation is absent. **Build W7 only.** The

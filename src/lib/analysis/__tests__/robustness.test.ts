@@ -2553,4 +2553,120 @@ for (const fixture of RECORDED) {
   })
 }
 
+
+/* ------------------------------------------- platform against pinpoint -------- */
+
+heading('The stance the rig could not build')
+
+/**
+ * `pinpointSlide`, added by R60·1 because R60 and R64 were both stuck on the
+ * same missing dial.
+ *
+ * Every serve this rig has ever built stands with each ankle directly below its
+ * own hip and leaves them there until the landing — one stance, `HALF_HIP` wide.
+ * R60 wants to read stance from ankle separation over time and had nothing to
+ * sweep; R64 wants the landing read off the front ankle and could not say how
+ * much that ankle's baseline varies between players, because the baseline *is*
+ * the stance.
+ *
+ * The checks below are the two halves that have to hold together. At zero it
+ * must be **bit-identical** to a rig with no dial, or every band in `tiers.ts`
+ * moves under it. Away from zero it must actually narrow the stance, and narrow
+ * it *before the legs load*, or it is a no-op that passed the first check by
+ * doing nothing at all.
+ */
+/**
+ * How far apart the feet are, in the ground plane.
+ *
+ * `hypot` rather than the two axes summed, and the first draft of this check got
+ * it wrong: the hip line yaws through the serve, the ankles sit below the hips,
+ * so a per-axis sum reports a stance that "varies" by 5.7 cm on a rig whose feet
+ * never move. That was the metric turning a rotation into a width. A Euclidean
+ * distance in the ground plane is invariant to the yaw and is what "how far
+ * apart are the feet" actually means.
+ */
+const ankleGap = (f: Frame) =>
+  Math.hypot(
+    f.world[LM.leftAnkle].x - f.world[LM.rightAnkle].x,
+    f.world[LM.leftAnkle].z - f.world[LM.rightAnkle].z,
+  )
+
+check('a platform stance is bit-identical to a rig that never had the dial', () => {
+  /*
+   * Landmark values, not a derived reading. A measurement agreeing to four
+   * decimals would hide exactly the floating-point drift the skip-at-zero rule
+   * exists to prevent, and `tiers.ts` bands were set against the untouched path.
+   */
+  const withDial = buildServe({ pinpointSlide: 0, seed: 4242 }, 50)
+  const plain = buildServe({ seed: 4242 }, 50)
+  assert(withDial.length === plain.length, 'the two rigs produced different frame counts')
+  for (let i = 0; i < plain.length; i++) {
+    for (const lm of [LM.leftAnkle, LM.rightAnkle, LM.leftKnee, LM.rightKnee]) {
+      const a = withDial[i].world[lm]
+      const b = plain[i].world[lm]
+      assert(
+        a.x === b.x && a.y === b.y && a.z === b.z,
+        `frame ${i}, landmark ${lm}: dialling zero moved the leg`,
+      )
+    }
+  }
+})
+
+check('a pinpoint stance narrows, and a platform stance does not', () => {
+  const platform = buildServe({ seed: 4242 }, 50)
+  const pinpoint = buildServe({ pinpointSlide: 0.8, seed: 4242 }, 50)
+
+  const flat = platform.map(ankleGap)
+  assert(
+    Math.max(...flat) - Math.min(...flat) < 1e-9,
+    `a platform stance varied by ${(Math.max(...flat) - Math.min(...flat)).toFixed(5)} m before the landing`,
+  )
+
+  const narrowing = pinpoint.map(ankleGap)
+  const startGap = narrowing[0]
+  const endGap = Math.min(...narrowing)
+  note(`  stance closes from ${startGap.toFixed(3)} m to ${endGap.toFixed(3)} m at 0.8`)
+  assert(
+    endGap < startGap * 0.4,
+    `dialled to 0.8 the stance only closed from ${startGap.toFixed(3)} to ${endGap.toFixed(3)}`,
+  )
+})
+
+check('the slide is finished before the legs load, not during the swing', () => {
+  /*
+   * The timing is the measurable part. A pinpoint server brings the back foot up
+   * while the toss is going up and is standing on a narrow base by the time the
+   * legs drive — so a detector reading separation over time reads a ramp that is
+   * over before the trophy. A slide still running through the drop would be a
+   * different motion and no detector should be asked to name it.
+   */
+  const frames = buildServe({ pinpointSlide: 0.8, seed: 4242 }, 50)
+  const skel = detectServe(frames, 50)
+  const gaps = frames.map(ankleGap)
+  const atTrophy = gaps[skel.keys.trophy]
+  const atContact = gaps[skel.keys.contact]
+  assert(
+    Math.abs(atTrophy - atContact) < 0.01,
+    `the stance was still moving after the trophy: ${atTrophy.toFixed(3)} m against ${atContact.toFixed(3)} m at contact`,
+  )
+  assert(atTrophy < gaps[0] * 0.4, 'the slide had not finished by the trophy')
+})
+
+check('the front foot stays where it was — only the back one travels', () => {
+  // A dial that moved both feet would narrow the stance and shift the player,
+  // and every height in the report is measured against a body that is meant to
+  // be standing still. The back foot on a right-handed serve is the right one.
+  const platform = buildServe({ seed: 4242 }, 50)
+  const pinpoint = buildServe({ pinpointSlide: 0.8, seed: 4242 }, 50)
+  const i = Math.floor(platform.length * 0.5)
+  const front = [platform[i].world[LM.leftAnkle], pinpoint[i].world[LM.leftAnkle]]
+  assert(
+    front[0].x === front[1].x && front[0].z === front[1].z,
+    'the front foot moved when the back one slid up',
+  )
+  const back = [platform[i].world[LM.rightAnkle], pinpoint[i].world[LM.rightAnkle]]
+  assert(back[0].z !== back[1].z || back[0].x !== back[1].x, 'the back foot did not move at all')
+})
+
+
 report()

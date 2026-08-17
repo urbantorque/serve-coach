@@ -289,6 +289,38 @@ export interface ServeDials {
    * where, which is the whole point of being able to sweep it.
    */
   landingBackFootDrag: number
+  /**
+   * How far the BACK foot slides up to the front one before contact, 0–1.
+   *
+   * PLATFORM AGAINST PINPOINT, WHICH THIS RIG COULD NOT PRODUCE. Every serve it
+   * has ever built stands with each ankle directly below its own hip and leaves
+   * them there until the landing — one stance, `HALF_HIP` wide, with no way to
+   * vary it. Two rounds are stuck on that: R60 wants to read stance from ankle
+   * separation over time and had nothing to sweep, and R64 wants to switch the
+   * landing reading to the front ankle and could not say how much the front
+   * ankle's own baseline varies between players, because the baseline *is* the
+   * stance.
+   *
+   * Zero is a platform stance: both feet where they have always been, and
+   * bit-identical to a rig with no dial at all — see the skip below, which is
+   * the same rule `landingShift` and `trophyExternalRotation` already follow.
+   * One brings the back ankle all the way to the front one, which is further
+   * than any real pinpoint goes; a club pinpoint closes most of the gap and not
+   * all of it, and nobody here knows the distribution, which is the whole point
+   * of a dial rather than a second constant.
+   *
+   * THE TIMING IS THE MEASURABLE PART and it is why this ramps rather than
+   * switching. The slide happens during the wind-up and is finished before the
+   * legs drive, so ankle separation falls from its standing value to its
+   * narrowest somewhere between `ready` and the trophy. A detector reading
+   * separation over time is reading that ramp; a detector reading one frame is
+   * reading a stance width it has no baseline for.
+   *
+   * A right-handed serve lands on the LEFT foot, so the back foot is the RIGHT
+   * one — the same handedness this rig builds throughout and the same foot
+   * `landingBackFootDrag` names.
+   */
+  pinpointSlide: number
   /** Someone standing around with the racket down — used to test rejection. */
   noSwing: boolean
   /**
@@ -466,6 +498,7 @@ export const CLEAN_SERVE: ServeDials = {
   landingLean: 0,
   // Both feet planted, which is what the landing did before this dial existed.
   landingBackFootDrag: 0,
+  pinpointSlide: 0,
   noSwing: false,
   noise: 0,
   // Both default to the rig's previous behaviour — depth exactly as good as the
@@ -653,6 +686,24 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       ],
       u,
     )
+    /*
+     * How much of the slide has happened by now, 0 at `ready` and 1 by the
+     * trophy — and flat at 1 from there on.
+     *
+     * Finished before the trophy rather than before contact, because that is
+     * when it happens: a pinpoint server brings the back foot up while the toss
+     * is going up, and is standing on a narrow base by the time the legs load.
+     * A slide still running through the drop would be a different motion, and
+     * one no detector reading separation over time should be asked to name.
+     */
+    const slideRamp = track(
+      [
+        [U.ready, 0],
+        [U.trophy, 1],
+        [1.35, 1],
+      ],
+      u,
+    )
     for (const side of ['left', 'right'] as const) {
       const hipI = side === 'left' ? LM.leftHip : LM.rightHip
       const kneeI = side === 'left' ? LM.leftKnee : LM.rightKnee
@@ -662,6 +713,38 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       const h = world[hipI]
       let knee = lm(h.x, h.y + THIGH * Math.cos(half), h.z + THIGH * Math.sin(half))
       let ankle = lm(knee.x, knee.y + SHIN * Math.cos(half), knee.z - SHIN * Math.sin(half))
+
+      /*
+       * The back foot sliding up to the front one, before anything else touches
+       * the leg.
+       *
+       * Applied to the ankle's own x, across the hip line, so it narrows the
+       * stance rather than moving the player: the front foot does not move at
+       * all, and the back one closes the gap. Done before the landing shift
+       * because the two are sequential in life — you finish arriving before you
+       * start leaving — and because the landing's own reach clamp has to be
+       * computed against wherever this left the foot, not against where it
+       * would have been.
+       *
+       * `solveKnee` afterwards for the reason the landing calls it: a foot moved
+       * without re-solving the knee leaves a thigh and a shin that no longer add
+       * up, which is the rig telling a lie rather than refusing.
+       *
+       * Skipped rather than applied at zero. Floating point does not promise a
+       * zero-sized transform returns its input, and every band in `tiers.ts` was
+       * set against the numbers the untouched path produces — so a platform
+       * stance has to be bit-identical to a rig with no dial, not merely close.
+       */
+      if (d.pinpointSlide !== 0 && side === 'right') {
+        const front = side === 'right' ? world[LM.leftHip] : world[LM.rightHip]
+        // The gap to close, along the hip line: from this ankle to where the
+        // front ankle stands, which is directly below the front hip.
+        const gapX = front.x - ankle.x
+        const gapZ = front.z - ankle.z
+        const closed = clamp(d.pinpointSlide, 0, 1) * slideRamp
+        ankle = lm(ankle.x + gapX * closed, ankle.y, ankle.z + gapZ * closed)
+        knee = solveKnee(h, ankle)
+      }
 
       /*
        * Skipped rather than applied at zero, which is the rule this rig already
