@@ -674,7 +674,6 @@ check('the output is still raw data, with no prose anywhere in it', () => {
   )
 })
 
-report()
 
 /* ---------------------------------------------------------------- helpers */
 
@@ -727,3 +726,5 @@ function range(lo: number, hi: number): number[] {
 function mean(xs: number[]): number {
   return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0
 }
+
+report()

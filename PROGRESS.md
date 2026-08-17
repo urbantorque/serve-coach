@@ -44,6 +44,45 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 18 · Cycle F — QA and edge cases · `F0 · R66`
+
+**Orchestrator.** Taken before the consolidation rather than after, and the
+consolidation shifts to round 19. The reason: three near-misses since round 2,
+one of them mine in round 13, none caught by a gate — and this protects the very
+suite the consolidation leans on. A departure from the sixth-is-consolidation
+rule, recorded rather than quietly taken.
+
+**It found a fourth instance on its first run, and that one is not mine.**
+`triage.test.ts` tallied at line 677 with a helpers section below it. Nothing
+was broken — an interface is erased, four function declarations are hoisted — so
+it was a true positive against the rule and a false one against the defect.
+
+**The rule stays the strict one, deliberately.** "No `check(` after the tally"
+would be precise and would have passed `triage.test.ts` as it stood. But a
+helpers section under a tally is exactly the shape that invites somebody to
+append a check into a dead zone, and "nothing goes after `report()`" is a rule a
+person can follow without thinking about hoisting. The tally moved; the rule did
+not soften.
+
+**A source scan rather than a harness change.** Making `report()` idempotent or
+registering an exit hook would fix the symptom invisibly — a file with a stray
+mid-file tally would go green and stay wrong. The position *is* the invariant.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The one file it flagged is described as a true positive against the rule and a false one against the defect, rather than counted as a fourth bug |
+| Performance | pass | Test-only; 46 files read once |
+| Privacy | pass | Nothing shipped |
+| Architecture | pass | The scan checks its own pattern against strings — indented, commented, awaited, and a trailing comment correctly not executable — because a scan that stopped matching would report every file clean and look like a clean repo. Canaried both ways |
+| Product | pass | Not a product round |
+
+**Gate.** typecheck clean · lint clean · **1086 checks passed, 0 failed, exit 0**
+(+4).
+
+---
+
 ### Round 17 · Cycle E — data management and export · `E5 · audit 4` (R70)
 
 **Orchestrator.** Took the audit item over `E4 · R58`, and the reason is worth

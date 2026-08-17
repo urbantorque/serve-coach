@@ -143,9 +143,9 @@ Storage, backup, and the files a player is handed.
 
 Tests with teeth, refusals, and the things that only break on somebody's phone.
 
-- [ ] **F0 · R66** — A tally that does not cover its own file. R50·1 fixed the
-      one instance in `copy.test.ts`; this is the static guard that catches the
-      next one. *Takes the head of this cycle — it is a defect, not a feature.*
+- [x] **F0 · R66** — A tally that does not cover its own file. *(Round 18 — the
+      guard found a fourth instance on its first run, in `triage.test.ts`, and
+      that one predates this session.)*
 - [ ] **F1 · R65** — `triage.quality` has no stored-shape guard, and R49·1 found
       it. Needs a decision R49·1 had no business making: there is no honest
       default for a missing `confidence`, so the fitting pattern is `consistency`'s

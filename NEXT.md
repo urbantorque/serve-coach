@@ -1400,17 +1400,34 @@ family, different surface, different refusals.
       to be compared against: **19 bytes for the camera flag, 71 for one delta.**
       Inside the noise, and now countable.
 
-- [ ] **R66** — A tally that does not cover its own file. R50·1 found
-      `copy.test.ts` calling `report()` mid-file and fixed that one instance; a
-      sweep at the time found no other file with checks below its tally, which is
-      exactly the state a static guard is for, because the next file to grow past
-      its `report()` will be silent about it too. Assert, over every `*.test.ts`
-      under `src`, that `report()` is the last statement — the same source-scan
-      trade `egress.test.ts` and `framePair.test.ts` already make, and made here
-      for the same reason: the defect lived in a position, and no suite that only
-      reads exports would ever see it. **What it may not do:** parse. A regex over
-      source text is the right tool and the allow list has to be checked against
-      what the scan found, as `egress.test.ts` does, rather than assumed correct.
+- [x] **R66** — A tally that does not cover its own file.
+
+      `lib/__tests__/tallies.test.ts` walks all 46 suites and holds two rules:
+      exactly one `report()` per file, and nothing executable after it.
+
+      **It found a fourth instance on its first run, and that one predates this
+      session.** `triage.test.ts` tallied at line 677 with a helpers section
+      below. Nothing was broken — an interface is erased and four function
+      declarations are hoisted — so it was a true positive against the rule and
+      a false one against the defect. The tally moved to the end anyway, and
+      **the rule stays the strict one rather than the precise one** ("no
+      `check(` after the tally"): a helpers section under a tally is exactly the
+      shape that invites somebody to append a check into a dead zone, and
+      "nothing goes after `report()`" is a rule a person can follow without
+      thinking about hoisting.
+
+      **A source scan rather than a harness change, deliberately.** Making
+      `report()` idempotent or registering an exit hook would fix the symptom
+      invisibly — a file with a stray mid-file tally would go green and stay
+      wrong. The position *is* the invariant, so the position is checked.
+
+      Canaried both ways: a second tally reddens both checks, a check appended
+      after the tally reddens the second. And the scan checks its own pattern
+      against strings — an indented call, a commented one, an awaited one, and a
+      trailing comment that is correctly not executable — because a scan whose
+      pattern quietly stopped matching would report every file clean and look
+      exactly like a repo with nothing wrong in it.
+
 - [ ] **R50b** — Did the racket lay back further than your last serve. The
       backlog's `er-delta-on-the-glance`, and a different surface from R50: the
       glance, between serves, through `carryForward`, which already compares two
