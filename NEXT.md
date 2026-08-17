@@ -2220,3 +2220,39 @@ deleting a working button.
       **Not reached by `everyVerdictCue()`**, which walks the flaw tables, so the
       copy is checked directly — R69's finding applied while writing rather than
       afterwards.
+
+- [~] **R53** — Split. The round offers two routes to knowing which kind of serve
+      it is looking at, and **one of them is not available**.
+
+        · **R53·1 — [x] inference is refused, by two independent routes.**
+
+          **The trap first, because the measurement looks like the opposite.**
+          Dial the rig to a plausible second serve — lower reach, deeper knee
+          bend, slower tempo — and the engine separates it from a first at
+          **18.2 standard deviations** on contact height. That number is
+          meaningless: the separation is the separation that was dialled. The rig
+          was told the two differ in exactly those quantities by exactly those
+          amounts, and the engine reading them back proves only that it can read
+          its own inputs. The control is in the same check — `chain_span_ratio`,
+          which nobody dialled, separates at **1.1 sd**.
+
+          To know whether contact height separates a real first serve from a real
+          second, by how much, and whether one player's second overlaps another's
+          first, takes footage of both from the same player. `RECORDED` is empty.
+
+          **The other route is worse.** "Serves arrive in pairs" is a fact about
+          how people practise, not about a clip. Some players hit six firsts;
+          some alternate; some hit ten seconds because that is what they came to
+          work on. Numbering by position would invent the one field every
+          partitioned spread then rests on, silently.
+
+          Pinned as a check rather than written down and deleted, because the 18 sd
+          figure is reproducible and misleading and somebody will measure it
+          again. The check asserts the circularity itself — the dialled reading
+          separates, the undialled one does not — and goes red if an undialled
+          reading ever starts separating, which is exactly when R53 is worth
+          reopening.
+
+        · **R53·2 — the tap.** One tap on the glance, stored on the report, and
+          the spreads partitioned by it. The only honest route, and it needs a
+          stored field and a write path rather than a measurement.

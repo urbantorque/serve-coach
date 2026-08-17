@@ -2541,4 +2541,80 @@ check('the megabyte counter keeps the shape the status line was written around',
 
 /* -------------------------------------------------------------------- report */
 
+
+/* -------------------------------------- first serve against second ---------- */
+
+console.log('\n\x1b[1mWhy a basket cannot tell a first serve from a second\x1b[0m')
+
+/**
+ * R53 offers two ways to know which kind of serve it is looking at: a tap from
+ * the player, or inference within a basket. This is the check that inference is
+ * not available, by two independent routes — and a guard against the very
+ * measurement that looks like it says otherwise.
+ *
+ * **THE TRAP, WHICH IS WORTH THE WHOLE COMMENT.** Dial the rig to a plausible
+ * second serve — lower reach, deeper knee bend, slower tempo — and the engine
+ * separates it from a first at eighteen standard deviations on contact height
+ * and twelve on knee bend. That number is meaningless. **The separation is the
+ * separation that was dialled.** The rig was told the two serves differ in
+ * exactly those quantities by exactly those amounts, and the engine reading them
+ * back proves only that it can read its own inputs.
+ *
+ * To know whether contact height separates a real first serve from a real second
+ * — and by how much, and whether one player's second overlaps another's first —
+ * takes footage of both from the same player. That is the fixture shoot, and
+ * `RECORDED` is empty.
+ *
+ * THE OTHER ROUTE IS WORSE. "Serves arrive in pairs" is a fact about how people
+ * practise, not about a clip. Some players hit six firsts. Some alternate. Some
+ * hit ten seconds because that is what they came to work on. Numbering by
+ * position in the basket would be inventing the one field the partition rests on,
+ * and every spread built on it would carry that invention silently.
+ *
+ * So the tap is the only honest route, and R53 ships as a tap or not at all.
+ */
+check('the rig separates a dialled second serve, and that proves nothing', () => {
+  /*
+   * Kept as a check rather than deleted, because the number is genuinely
+   * reproducible and genuinely misleading, and somebody will measure it again.
+   * What it asserts is the circularity: the readings that separate are exactly
+   * the ones the dials move, and the one that was NOT dialled does not separate.
+   */
+  const seeds = [11, 202, 3131, 7000, 44444, 909]
+  const readAt = (dials: Partial<ServeDials>) => {
+    const height: number[] = []
+    const span: number[] = []
+    for (const seed of seeds) {
+      const frames = buildServe({ ...dials, seed, noise: 0.006 }, FPS)
+      const skel = detectServe(frames, FPS)
+      const f = measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
+      const h = f.flatMap((x) => x.metrics).find((m) => m.id === 'contactHeight')?.value
+      const r = diagnose(frames, skel).chain?.span_ratio
+      if (typeof h === 'number') height.push(h)
+      if (typeof r === 'number' && Number.isFinite(r)) span.push(r)
+    }
+    return { height, span }
+  }
+  const sep = (a: number[], b: number[]) => {
+    const m = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length
+    const sd = (xs: number[]) => Math.sqrt(m(xs.map((x) => (x - m(xs)) ** 2)))
+    return Math.abs(m(a) - m(b)) / Math.sqrt((sd(a) ** 2 + sd(b) ** 2) / 2)
+  }
+
+  const first = readAt({ motionSeconds: 1.35, contactReach: 1.38, trophyKneeAngle: 133 })
+  const second = readAt({ motionSeconds: 1.6, contactReach: 1.28, trophyKneeAngle: 120 })
+
+  const dialled = sep(first.height, second.height)
+  const notDialled = sep(first.span, second.span)
+  note(`  contact height (dialled) separates at ${dialled.toFixed(1)} sd`)
+  note(`  chain span ratio (not dialled) separates at ${notDialled.toFixed(1)} sd`)
+
+  assert(dialled > 5, `the engine could not read a dial it was given: ${dialled.toFixed(1)} sd`)
+  assert(
+    notDialled < 3,
+    `a reading nobody dialled separates the two at ${notDialled.toFixed(1)} sd — ` +
+      'if that holds up it is a real signal and R53 is worth reopening',
+  )
+})
+
 report()

@@ -43,6 +43,37 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 22 · Cycle C — pedagogical coaching and UI · `C2 · R53·1`
+
+**Orchestrator.** Lead builder: Product Expansion Lead, with Honesty leading the
+read. Column: *Do I believe it*.
+
+**I nearly published the wrong conclusion from my own probe.** Dialling a
+plausible second serve and measuring gave 18.2 sd of separation on contact
+height, which reads as "inference works". It is circular: the rig was told the
+two serves differ in exactly that quantity by exactly that amount. The control —
+`chain_span_ratio`, which nobody dialled — separates at 1.1 sd, and that is the
+number that means something.
+
+**Kept as a check rather than deleted.** The 18 sd figure is reproducible and
+misleading, and somebody will measure it again. The check asserts the circularity
+directly and goes red if an *undialled* reading ever starts separating, which is
+precisely when the round is worth reopening.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The round's own "or infer it within a basket" is refused by two independent routes, and the seductive measurement is preserved with its refutation attached rather than dropped |
+| Performance | pass | Test-only |
+| Privacy | pass | Nothing shipped |
+| Architecture | pass | Nothing built on an unverified premise. R53·2 named as the only honest route |
+| Product | pass | Product wanted the partition; Honesty says the field it rests on cannot be inferred. Precedence call, recorded |
+
+**Gate.** typecheck clean · lint clean · **1100 checks, 0 failed, exit 0** (+1).
+
+---
+
 ### Round 21 · Cycle B — biomechanics and fault detection · `B2 · R50b`
 
 **Orchestrator.** Lead builder: Biomechanics & CV Specialist. Column: *Do I

@@ -77,8 +77,11 @@ The translation from a number to a cue somebody can act on.
 - [x] **C1 · R49·3** — Draw the ghost: the older track dashed under the newer in
       `TrackPlayer`, nothing below the hips. *(Round 3 — and the round's own
       "same-session case first" rule turned out not to apply to this surface.)*
-- [ ] **C2 · R53** — First serve against second serve. One tap on the glance, or
-      inferred within a basket. Pure product on existing readings.
+- [x] **C2 · R53·1** — Inference refused: the rig's 18 sd separation is the one
+      that was dialled, and "serves arrive in pairs" is a fact about practice
+      with no fixtures. *(Round 22.)*
+- [ ] **C2b · R53·2** — The tap. One tap on the glance, stored, and the spreads
+      partitioned by it. The only honest route.
 - [ ] **C3 · R56** — Did it go in: in, long, net, wide. One tap, no score, no
       stats screen. The trap is the claim — no correlation over six points.
 - [ ] **C4 · R57** — The drills as a week, built from the 2–4 ranked drills the
