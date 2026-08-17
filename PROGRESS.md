@@ -43,6 +43,47 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 56 · consolidation gate
+
+**Orchestrator.** Sixth cycle since `loop-green-10`. Number diff, boot, tag.
+
+**271 figures then, 285 now: 18 removed, 32 added — and every one is
+accounted for.** This is the first gate in the loop where figures *moved* rather
+than only appeared, and that was the point of the block.
+
+**The 18 removed and 18 of the added are R72** (round 53), the finish keyframe
+moving from half a second after contact to one swing after it. That cost was
+attached to the work since round 33 and paid deliberately, diffed against the
+tree before it:
+
+    0.0030×3 → 0.0032×3   0.0040 → 0.0042   0.0050 → 0.0055   0.020 → 0.040
+    0.0652 → 0.0643   0.066 → 0.064   0.118×2 → 0.116×2   0.435 → 0.353/0.366
+    0.44×2 → 0.38×2   0.500×4 → 0.440/0.460×2   0.92 → 0.91
+
+**The other 14 are new measurements, not movements.** Round 52's two pinned
+floors and their evidence — 0.0457 and 0.0444 grounded, 0.1433 jumping, 0.0035
+and 0.0042 landing — and round 54's five trough readings across four tempo rungs:
+0.0795, 0.0613, 0.0490, 0.0401, 0.0344 at 0.95, 1.15, 1.35 and 1.85 seconds.
+
+**Zero unexplained.** Every figure that moved is one round's stated cost; every
+figure that appeared is one round's stated finding.
+
+**Gate.** typecheck clean · lint clean · production build clean (671.14 KiB
+precache) · **1198 checks, 0 failed, exit 0**.
+
+**Boot smoke** on a restarted server: home renders both straps — "Head up hold"
+above "How to film it" — and the server logs are clean.
+
+Tag: `loop-green-11`.
+
+**What the last six rounds were.** Two refusals with arithmetic (`R57`, `R52`),
+one dead feature wired twenty rounds late (`R76`), one audit that found two gates
+with no teeth (`F4`), one engine change that paid its stated cost (`R72`), and
+one placement that was the real content of a refused feature (`R57b`). Three of
+the six were the loop correcting its own earlier rounds.
+
+---
+
 ### Round 55 · Cycle C — coaching and UI · `C4b · R57b`
 
 **Orchestrator.** The successor round 48 left behind. Lead builder: Coaching
