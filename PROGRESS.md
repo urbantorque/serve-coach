@@ -1463,9 +1463,9 @@ The loop is designed to be picked up cold, and everything a fresh session needs
 is on disk:
 
 1. **`BACKLOG.md`** — the six focus cycles with every task's status. The next
-   round is the head of the next cycle in rotation. Rounds 1–21 ran
-   A·B·C·D·E·F; round 21 was Cycle B, so **round 22 is Cycle C**, head item
-   `C2 · R53`.
+   round is the head of the next cycle in rotation. Round 34 was Cycle B, so
+   **round 35 is Cycle C**, head item `C2c · R53·2b` — the tap on the glance and
+   the partitioned spreads, whose store landed in round 29.
 2. **`NEXT.md`** — what each round settled, and why. The source of truth for
    status; `BACKLOG.md` is a view over it.
 3. **This file** — how each round ran: the critic's citations, the canaries, the
@@ -1473,11 +1473,11 @@ is on disk:
 4. **`.agent_state/cycle_summary.json`** — `unattendedLoop.session_2026_08_17`
    carries the three consolidation records.
 
-**Last green:** `loop-green-4`, plus rounds 20 and 21 on top of it. Tree clean,
-1099 checks, exit 0.
+**Last green:** `loop-green-6`, plus rounds 33 and 34 on top of it. Tree clean,
+1138 checks, exit 0.
 
-**The next consolidation is due at round 25** (blocks run in sixes; the third
-gate ran at 19 after a one-round shift).
+**The next consolidation is due at round 38** (blocks run in sixes; gates have run
+at 6, 12, 19, 25 and 32).
 
 **Standing hazards a fresh session should know, all learned the hard way here:**
 
@@ -1488,5 +1488,8 @@ gate ran at 19 after a one-round shift).
   source disagree, `grep` settles it — that has been true three times.
 - **`report()` must be the last statement in a test file.** Now guarded by
   `tallies.test.ts`, after four instances.
-- **This repo has no git remote.** Twenty-one rounds and five tags exist on one
+- **Never use `git checkout --` on an uncommitted file.** It cost a round twice
+  (3 and 5) and a shell parse error is the only reason it did not cost a third
+  (31). Canary with `Edit` both ways instead.
+- **This repo has no git remote.** Thirty-four rounds and seven tags exist on one
   disk, and the loop does hard resets. Nothing in the loop can fix this.
