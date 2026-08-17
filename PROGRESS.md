@@ -43,6 +43,52 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 58 · Cycle E — data and export · `E8 · R79` (new)
+
+**Orchestrator.** Both Cycle E rows are blocked, so the Orchestrator generates
+one. `egress.test.ts` closes constraint 7 on the axis it usually means — every
+syntactic way a browser starts a request, enumerated and closed — and it says
+nothing about the export, because **that egress is not the app's. It is the
+player's**, and it is the one sanctioned way anything ever leaves the phone.
+
+**Which makes what the file contains a promise of the same kind.**
+`StoragePanel` tells them in as many words: *"An export is one file holding your
+scores and real photos of you serving, not just numbers."* That sentence is
+correct today. Nothing was making it stay correct.
+
+**And there is a worked example already in the history.** R74 added the tag store
+to the file — which serve it was, where it landed — and **did not revisit that
+sentence**. It happens to still be true. Nothing asked. The next field might be a
+device identifier or a timestamp trail, and the sentence would go on saying
+"scores and photos" while the file said more.
+
+**So every top-level key has a ruling in the player's terms**, not the
+codebase's: *"every report: the scores, the measurements, and the six keyframe
+photographs of them serving"*, *"which drills they ticked off and when"*, *"what
+they tapped about their own serves"*. Seven keys, seven rulings, one marked
+personal.
+
+**Driven through `buildBackup`, not read off `Backup`**, and that distinction is
+the round's other half. A type can be right while the builder is wrong — and the
+builder *was* wrong for twenty rounds: the tag store existed, the type could have
+declared it, and `buildBackup` did not write it, so a player moving phones
+silently lost every tap they had made.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The canary's failure message says what to do: add a ruling, *and re-read the sentence in StoragePanel that tells them what is in the file* |
+| Privacy | pass | The "still pictures of a person" check is asserted rather than assumed, because it is the claim the player acts on before pressing export — and if reports ever stop carrying stills, the right response is to soften the warning, not delete the check |
+| Architecture | pass | Stale-ruling half included, the lesson `jsxCopy.test.ts` had to grow and `reachable.test.ts` inherited |
+| Performance | pass | One `buildBackup` against a Map at suite time |
+
+**Gate.** typecheck clean · lint clean · **1203 checks, 0 failed, exit 0** (+4).
+Canaried by adding a `deviceId` to the export — reddened alone, with the
+instruction attached.
+
+---
+
 ### Round 57 · Cycle D — performance and architecture · `D7 · R78` (new)
 
 **Orchestrator.** Both Cycle D rows are blocked, so the Orchestrator generates

@@ -231,6 +231,14 @@ Storage, backup, and the files a player is handed.
       `TripShareButton` on `SeasonShareButton`'s pattern; hidden on a trip of one,
       where best and worst are the same report. The reachability gate now covers
       share entry points, with imports stripped — its canary passed until they were.
+- [x] **E8 · R79** — Every key the export writes, ruled on in the player's own
+      terms. `egress.test.ts` closes constraint 7 on the axis it usually means —
+      no network call — and says nothing about the one file that legitimately
+      leaves, because that egress is the *player's*. `StoragePanel` promises "your
+      scores and real photos of you serving"; nothing made that stay true. **R74
+      added a store to the file and never revisited the sentence.** Driven through
+      `buildBackup` rather than read off the type, because it was the builder that
+      was wrong for twenty rounds, not the type.
 - [x] **E5 · audit 4** — A `README.md` claim with no test behind it. *(Round 17 —
       "about 15 KB" for a pruned report. It is 31.3 kB: the swing track was
       written after that sentence and is kept on every report.)*
