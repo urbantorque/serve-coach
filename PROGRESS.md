@@ -3485,10 +3485,16 @@ is on disk:
 4. **`.agent_state/cycle_summary.json`** — `unattendedLoop.session_2026_08_17`
    carries the three consolidation records.
 
-**Last green:** `loop-green-14` at round 74. Tree clean, **1221 checks**, exit 0.
+**Last green:** `loop-green-15` at round 75 — the last round of the loop. Tree
+clean, **1223 checks**, exit 0.
 
 **The next consolidation is due at round 80** (blocks run in sixes; gates have run
 at 6, 12, 19, 25, 32, 38, 44, 50, 56, 62, 68 and 74).
+
+**And this line caught itself within a minute of being written.** Round 75 added
+the check, tagged `loop-green-15`, and the suite went red on the tag it had just
+finished correcting — which is the shortest possible demonstration that the
+section needed a gate rather than a proofread.
 
 **This handover was 36 rounds stale when round 75 found it**, which is the defect
 this session found four other times — a recorded statement that quietly stopped
