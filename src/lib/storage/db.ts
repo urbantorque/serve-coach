@@ -409,6 +409,34 @@ export async function saveSession(
  * readable is repaired with sensible defaults, and only a report missing the
  * parts that carry actual meaning is dropped.
  */
+/**
+ * A stored landing, brought up to the shape the engine now returns.
+ *
+ * THE OFFSET IS DROPPED WHENEVER THE WINDOW IS MISSING, and that is the whole
+ * point rather than caution. `secondsAfterContact` arrived with the refusal that
+ * needs it: before it existed, a clip that stopped as the ball left reported an
+ * offset of exactly zero at full confidence -- a body that had not landed yet,
+ * read as one that finished square. A stored reading with no window on it is one
+ * of those or is indistinguishable from one, and nothing here can tell which.
+ *
+ * So it is refused rather than repaired. Keeping the number and defaulting the
+ * window to zero would be worse than either: a reading that says it was taken at
+ * contact, which the current engine would never produce, sitting beside an offset
+ * that looks perfectly ordinary.
+ */
+function readLanding(v: unknown): NonNullable<Analysis['diagnosis']>['landing'] {
+  const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+  const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
+  const after = num(o.secondsAfterContact)
+  const offset = num(o.offset)
+  return {
+    offset: after === undefined || offset === undefined ? null : offset,
+    confidence: num(o.confidence) ?? 0,
+    secondsAfterContact: after ?? 0,
+    anklesSeen: num(o.anklesSeen) ?? 0,
+  }
+}
+
 export function normalise(raw: unknown): Session | undefined {
   if (typeof raw !== 'object' || raw === null) return undefined
   const s = raw as Partial<Session> & Record<string, unknown>
@@ -642,11 +670,16 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
    * arrived in different builds, so a stored report can carry any combination
    * of them. `offset: null` at zero confidence is the literal truth — nothing
    * looked — and `anklesSeen: 0` says the feet are why.
+   *
+   * READ FIELD BY FIELD rather than passed through when present, which is the
+   * part the first version of this guard missed. A guard that only handles the
+   * object being ABSENT is no guard at all against the thing that actually
+   * happens here: the object being present in an older SHAPE. `landing` shipped
+   * with three fields and gained `secondsAfterContact` a few rounds later, and
+   * a report stored in between came back through here untouched — carrying a
+   * field the type declares as a required number and storage does not have.
    */
-  const landing =
-    d.landing && typeof d.landing === 'object'
-      ? d.landing
-      : { offset: null, confidence: 0, secondsAfterContact: 0, anklesSeen: 0 }
+  const landing = readLanding(d.landing)
 
   if (d.chain && typeof d.chain === 'object') return { ...d, flaws, externalRotation, landing }
   const missing = { ms: null, confidence: 0 }

@@ -269,4 +269,66 @@ check('a report with no comparison at all still reads', () => {
   assert(s!.consistency === undefined, 'a comparison was invented for a report that had none')
 })
 
+heading('A landing stored by an older build')
+
+/** A stored report carrying whatever diagnosis it is handed. */
+const storedWithDiagnosis = (diagnosis: unknown): unknown => ({
+  id: 'serve-abc-0',
+  createdAt: 1,
+  overall: 70,
+  overallStatus: 'good',
+  fundamentals: [{ id: 'toss', metrics: [{ id: 'tossPeakHeight', score: 70 }] }],
+  diagnosis,
+})
+
+check('a landing from before the window field is refused rather than carried forward', () => {
+  /*
+   * The failure this guard exists for, and the one its first version missed. It
+   * handled the landing block being ABSENT and passed it through untouched when
+   * PRESENT — which is no guard at all against what actually happens as a schema
+   * grows: the block arriving in an older shape.
+   *
+   * `landing` shipped with three fields and gained `secondsAfterContact` a few
+   * rounds later, alongside the refusal that needs it. A report stored in
+   * between therefore carries an offset computed with no temporal refusal at
+   * all — possibly one of the confident zeros that refusal was added to stop, a
+   * clip that ended before the player landed reading as one who finished
+   * square. There is no way to tell from the stored row which it is.
+   *
+   * So the offset is dropped rather than repaired. Keeping it and defaulting the
+   * window to zero would be the worst of the three options: a reading claiming
+   * it was taken at the instant of contact, which the current engine would never
+   * produce, sitting beside a number that looks entirely ordinary.
+   */
+  const old = normalise(
+    storedWithDiagnosis({ landing: { offset: 0, confidence: 1, anklesSeen: 1 } }),
+  )
+  const landing = old?.diagnosis?.landing
+  assert(landing !== undefined, 'the landing block was dropped entirely')
+  assert(
+    typeof landing!.secondsAfterContact === 'number',
+    'a field the type declares as required came back undefined',
+  )
+  assert(
+    landing!.offset === null,
+    `an offset with no window on it was carried forward as ${landing!.offset} — it was measured ` +
+      'before the refusal that would have rejected it, and nothing can tell whether it should have',
+  )
+  // The two fields that are still meaningful are kept, so the refusal stays
+  // legible rather than looking like a report nobody ever looked at.
+  assert(landing!.anklesSeen === 1 && landing!.confidence === 1, 'the readable fields were discarded too')
+})
+
+check('a landing written by this build survives the read intact', () => {
+  // The other direction, so the guard cannot pass by refusing everything.
+  const fresh = normalise(
+    storedWithDiagnosis({
+      landing: { offset: 0.066, confidence: 1, secondsAfterContact: 0.44, anklesSeen: 1 },
+    }),
+  )
+  const landing = fresh?.diagnosis?.landing
+  assert(landing?.offset === 0.066, `a current reading came back as ${landing?.offset}`)
+  assert(landing?.secondsAfterContact === 0.44, 'the window was not preserved')
+})
+
 report()
