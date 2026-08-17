@@ -265,6 +265,37 @@ export function measure(
   const R = sided(skel.racket)
   const T = sided(skel.toss)
 
+  /*
+   * NOTHING HERE READS PAST CONTACT, and that is a gap rather than a decision.
+   *
+   * Every window below ends at `keys.contact`. `keys.finish` exists, the
+   * detector places it, the filmstrip draws it — and no measurement in this file
+   * or in `strain.ts` ever looks at it. So the whole tail of the swing is
+   * observed and unmeasured, which matters because a serve that lands off
+   * balance loads the same lower back the lumbar flag already watches and the
+   * front knee besides, and all of it happens after the ball has gone.
+   *
+   * Audited rather than assumed, and the reason it stays a gap is the rig. In
+   * `syntheticServe.ts` both legs are placed as one symmetric function of a
+   * single knee-bend dial — each ankle hangs directly under its own hip at every
+   * instant — so the rig has no landing in it, collapsed or otherwise. A signal
+   * built against it would read a constant and hold beautifully still under
+   * noise, which is precisely the shape this engine has already learned to
+   * distrust: a number that does not move when the fault appears is a constant
+   * with a units label.
+   *
+   * The second half is that the rig also cannot say whether a phone would SEE a
+   * landing. It has no framing or crop dial and always frames the whole body, so
+   * a sweep of "is the foot in shot" is structurally incapable of coming out any
+   * way but yes. The app already carries the concept for real footage —
+   * `anklesSeen` in `analyze.ts`, `ANKLES_SEEN_FLOOR` in `phases.ts`, and the
+   * note there that a foot outside the frame is placed near the picture edge and
+   * flagged unseen rather than omitted — so a landing reading would have a
+   * refusal ready and nothing to validate it against.
+   *
+   * Anyone picking this up starts by giving the rig a landing, not by writing a
+   * measurement.
+   */
   const at = (i: number) => frames[clamp(i, 0, frames.length - 1)]
   const fToss = at(keys.toss)
   const fTrophy = at(keys.trophy)
