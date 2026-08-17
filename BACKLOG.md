@@ -99,9 +99,11 @@ Where state lives, what it costs, what it does to a warm phone.
       path; residual 0.38 kB gzip against the pre-R59 baseline. The framing half
       moved, not the validator half, because its own doc argued for staying with
       the fixtures and coverage follows imports.)*
-- [ ] **D1 · R54 spike** — Measure what a canvas recorder costs on this browser
-      before any of R54 is built, and gate on `?check` the way the record button
-      already does. Constraint 8 says guilty until measured.
+- [x] **D1 · R54·1 spike** — *(Round 16 — the gate the round names did not
+      exist: `?check` asked about camera recording, and the replay needs
+      `canvas.captureStream`. Capability now probed; cost still needs a phone.)*
+- [!] **D1b · R54·2** — Build the replay share. Blocked on the court trip: the
+      pane throttles canvas recording, so the cost cannot be measured here.
 - [ ] **D2 · R55 spike** — The profiles migration, not the feature: every stored
       report predates profiles and must land under one default player with no
       prompt. Produces the split plan.

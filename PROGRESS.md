@@ -44,6 +44,48 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 16 · Cycle D — performance and architecture · `D1 · R54·1`
+
+**Orchestrator.** A spike, which the round asks for by name. Lead builder:
+Release Architect. Column served: *Does it work on my clip at all*.
+
+**The gate the round names did not exist.** R54 says to gate on `?check` "the way
+the record button already does". That gate answers a question about *camera*
+recording; the replay is a canvas, and `captureStream` is a different API that
+`MediaRecorder` support says nothing about. A browser could pass every check in
+`selfCheck.ts` and hand the player a button that produces nothing.
+
+**Two halves, not one.** Whether `captureStream` exists, and whether it yields a
+stream with a video track — because an API that exists and returns an empty
+stream looks capable to any check that stops at `typeof`, and that is the failure
+worth catching.
+
+**The cost is still unmeasurable here, and R54 stays gated.** Constraint 8 is
+about cost. Confirmed live in one call: `captureStream` present, one video track,
+**and `document.hidden` true** — the throttle R40 and R41 both hit, in the same
+reading that proves the capability. What changed is that the question now has
+somewhere to put its answer.
+
+**The vocabulary guard caught my own line.** `REPORT_VOCABULARY` walks the pasted
+block and failed on `canvastrack` the moment it was written. Two words added
+deliberately. That is the list working, and it is the second time this session a
+gate I did not write has caught me.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Capability and cost kept apart. The round is left `[~]` and its second half `[!]` on the court trip rather than marked done |
+| Performance | pass | One unattached canvas, asked at 0 fps — a stream that produces frames on demand rather than continuously |
+| Privacy | pass | The pasted block still contains only its fixed vocabulary, proved by the guard that rejected the line first |
+| Architecture | pass | Probe injected rather than reaching for `document`, so it is testable in Node — the trade `recordingType` already makes |
+| Product | pass | One line on a panel behind a URL |
+
+**Gate.** typecheck clean · lint clean · **1081 checks passed, 0 failed, exit 0**
+(+5).
+
+---
+
 ### Round 15 · Cycle C — pedagogical coaching and UI · `C0b · R69·2`
 
 **Orchestrator.** The eight the gate found. Lead builder: Pedagogical UX & Skill

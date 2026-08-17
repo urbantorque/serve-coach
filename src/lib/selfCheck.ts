@@ -74,6 +74,61 @@ export interface RecordingVerdict {
   deadEnd: boolean
 }
 
+/**
+ * Whether this browser can record a CANVAS, which is a different question from
+ * whether it can record a camera.
+ *
+ * WHY IT NEEDED ASKING SEPARATELY. `RecordingVerdict` above is entirely about
+ * `MediaRecorder` and the containers it will encode, and it is answered from a
+ * camera stream. R54 wants to record the replay — a body drawn to a canvas, with
+ * no camera involved and no image of any person in it — and that goes through
+ * `HTMLCanvasElement.captureStream()`, an API `MediaRecorder` support says
+ * nothing about. A browser can have every container in `RECORDING_TYPES` and no
+ * `captureStream` at all, and the app would have found out by handing the player
+ * a share button that produces nothing.
+ *
+ * WHAT THIS DOES NOT ANSWER, and it is the larger half. Constraint 8 says
+ * anything touching a canvas is guilty until measured, and this measures
+ * capability rather than cost. Whether a canvas recorder on a warm phone is
+ * affordable cannot be measured here at all: `?demo` already fails on it, because
+ * the pane reports `document.hidden` and throttles exactly this path — R40 asked
+ * a canvas for three seconds of film and got 1.06, and R41 found it stopped
+ * resolving entirely. So R54 stays gated, and what it is gated on is now a
+ * reading the court trip can bring back rather than a question nobody had asked.
+ */
+export interface CanvasRecordVerdict {
+  /** `captureStream` exists on a canvas here. */
+  api: boolean
+  /** It returned a stream carrying at least one live video track. */
+  track: boolean
+}
+
+/**
+ * Ask a canvas for a stream, and refuse to conclude anything from a throw.
+ *
+ * Takes the canvas rather than making one, for the reason `recordingType` takes
+ * its two probes: this file is tested in Node, and a function that reached for
+ * `document` could not be. A caller with no DOM passes nothing and gets two
+ * falses, which is the honest answer for a place with no canvas in it.
+ *
+ * A throw reads as "no" rather than propagating. Every other probe in this file
+ * makes the same trade, and it is the right one here twice over: a browser that
+ * throws from a capability check has answered the question, and this runs inside
+ * a panel a player opened to find out what their phone does.
+ */
+export function canvasRecordVerdict(canvas?: {
+  captureStream?: (fps?: number) => { getVideoTracks?: () => unknown[] }
+}): CanvasRecordVerdict {
+  if (typeof canvas?.captureStream !== 'function') return { api: false, track: false }
+  try {
+    const stream = canvas.captureStream(0)
+    const tracks = stream?.getVideoTracks?.() ?? []
+    return { api: true, track: tracks.length > 0 }
+  } catch {
+    return { api: true, track: false }
+  }
+}
+
 /** `canPlayType`'s three answers, named. */
 export function playback(decoder: DecoderProbe | undefined, query: string): Playback {
   if (typeof decoder?.canPlayType !== 'function') return 'no'
@@ -228,6 +283,8 @@ export function hardwareVerdict(
 
 export interface DeviceReport {
   recording: RecordingVerdict
+  /** Whether the replay could be recorded here — a different API from the above. */
+  canvasRecord: CanvasRecordVerdict
   decode: DecodeVerdict[]
   camera: {
     /** `getUserMedia` exists — which it does not at all over plain http. */
@@ -279,6 +336,9 @@ export function deviceReportText(r: DeviceReport): string {
     ),
     ...DECODE_PROBES.map((p, i) => `  opens ${p.type} ${r.decode[i]?.plays ?? 'no'}`),
     `camera ${r.camera.api ? 'yes' : 'no'} secure ${r.camera.secure ? 'yes' : 'no'}`,
+    // The replay's own recording path. Separate from `records` above because it
+    // is a separate API — see `canvasRecordVerdict`.
+    `canvas ${r.canvasRecord.api ? 'yes' : 'no'} track ${r.canvasRecord.track ? 'yes' : 'no'}`,
     `offline ${r.offline ? 'yes' : 'no'}`,
     `storage ${r.storage.usedMb ?? '?'} of ${r.storage.quotaMb ?? '?'} MB persisted ${
       r.storage.persisted === undefined ? '?' : r.storage.persisted ? 'yes' : 'no'
@@ -308,6 +368,11 @@ export const REPORT_VOCABULARY: readonly string[] = [
   'yes',
   'maybe',
   'no',
+  // The replay's own recording path — two fixed labels, no values of their own.
+  // Added deliberately: the guard that made this necessary caught the line the
+  // moment it was written, which is the whole reason the list is a list.
+  'canvas',
+  'track',
 ]
 
 export async function readDeviceReport(offline: () => Promise<boolean>): Promise<DeviceReport> {
@@ -316,6 +381,14 @@ export async function readDeviceReport(offline: () => Promise<boolean>): Promise
     recording: recordingVerdict(
       typeof MediaRecorder === 'undefined' ? undefined : MediaRecorder,
       video ?? undefined,
+    ),
+    // A canvas made only to be asked a question and dropped. Never attached, so
+    // it costs one element and no pixels — `canvasRecordVerdict` passes 0 fps,
+    // which asks for a stream that produces frames only on demand.
+    canvasRecord: canvasRecordVerdict(
+      typeof document === 'undefined'
+        ? undefined
+        : (document.createElement('canvas') as unknown as Parameters<typeof canvasRecordVerdict>[0]),
     ),
     decode: decodeVerdicts(video ?? undefined),
     camera: {

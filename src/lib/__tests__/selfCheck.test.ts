@@ -11,6 +11,7 @@
  * `isTypeSupported`, and something with `canPlayType`. That is the whole surface.
  */
 import {
+  canvasRecordVerdict,
   decodeVerdicts,
   deviceReportText,
   hardwareVerdict,
@@ -154,6 +155,7 @@ heading('What the player is invited to paste')
  */
 const full: DeviceReport = {
   recording: recordingVerdict(records('video/webm;codecs=vp9'), plays(MP4)),
+  canvasRecord: { api: true, track: true },
   decode: decodeVerdicts(plays(MP4)),
   camera: { api: true, secure: true },
   storage: { quotaMb: 2945, usedMb: 41, persisted: false },
@@ -239,6 +241,80 @@ check('the same phone twice produces the same block', () => {
 
 check('a dead end is stated in the block, not only coloured on the screen', () => {
   assert(deviceReportText(full).includes('DEAD END'), 'the pasted block hid the failure')
+})
+
+
+/* ------------------------------------- recording the replay, not the camera -- */
+
+heading('Whether this browser could record the replay at all')
+
+/**
+ * R54's gate, and the spike that found it was not the gate anybody had.
+ *
+ * `recordingVerdict` above answers "will `MediaRecorder` encode a container this
+ * browser can also read back", from a camera stream. R54 wants to record the
+ * replay — a body drawn to a canvas, containing no image of any person, which is
+ * the rare share that is safe by construction — and that goes through
+ * `HTMLCanvasElement.captureStream()`. **`MediaRecorder` support says nothing
+ * about whether that exists.** A browser could pass every check in this file and
+ * still hand the player a share button that produces nothing.
+ *
+ * What this cannot answer is the cost, and constraint 8 is about cost: a canvas
+ * recorder on a warm phone is guilty until measured. It cannot be measured here
+ * — the pane reports `document.hidden` and throttles this exact path, which is
+ * what R40 and R41 both ran into. So the capability is now a reading `?check`
+ * brings back from a real phone, and the cost stays an open question with a
+ * place to put its answer.
+ */
+check('a browser with no captureStream is reported as having none', () => {
+  assert(
+    canvasRecordVerdict(undefined).api === false,
+    'a missing canvas was reported as capable',
+  )
+  assert(
+    canvasRecordVerdict({}).api === false,
+    'a canvas with no captureStream was reported as capable',
+  )
+})
+
+check('a stream with no video track is not a recordable canvas', () => {
+  /*
+   * The case that would otherwise read as a pass. `captureStream` existing is
+   * not the same as it yielding something `MediaRecorder` can consume, and a
+   * browser that returns an empty stream would look capable to any check that
+   * stopped at `typeof`.
+   */
+  const empty = canvasRecordVerdict({ captureStream: () => ({ getVideoTracks: () => [] }) })
+  assert(empty.api, 'the API was reported missing when it is present')
+  assert(!empty.track, 'an empty stream was reported as a usable track')
+})
+
+check('a working canvas reports both halves', () => {
+  const ok = canvasRecordVerdict({ captureStream: () => ({ getVideoTracks: () => [{}] }) })
+  assert(ok.api && ok.track, `a working canvas came back ${JSON.stringify(ok)}`)
+})
+
+check('a canvas that throws has answered the question, not broken the panel', () => {
+  // Same trade every probe in this file makes. This runs inside a panel somebody
+  // opened to find out what their phone does; it may not be the thing that
+  // stops the panel rendering.
+  const threw = canvasRecordVerdict({
+    captureStream: () => {
+      throw new Error('not allowed')
+    },
+  })
+  assert(threw.api && !threw.track, `a throwing canvas came back ${JSON.stringify(threw)}`)
+})
+
+check('the report says the canvas answer in the fixed vocabulary', () => {
+  /*
+   * The line joins a block of text the player is invited to paste to somebody,
+   * so it faces the same rule as every other field: `REPORT_VOCABULARY` is
+   * walked by the check below and a field carrying a file name, a serve or a
+   * phone into that text is what it exists to stop.
+   */
+  const text = deviceReportText(full)
+  assert(/canvas (yes|no) track (yes|no)/.test(text), `no canvas line in the report:\n${text}`)
 })
 
 report()

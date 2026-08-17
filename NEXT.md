@@ -1691,7 +1691,46 @@ family, different surface, different refusals.
       the glance, or infer it within a basket where serves arrive in pairs, and
       partition the spreads `consistency.ts` already computes. **Pure product on
       existing readings: no new measurement, no new refusal.**
-- [ ] **R54** — Share the replay as motion. `reportCard.ts` renders one still,
+- [~] **R54** — Spiked. The gate the round asks for did not exist, and the cost
+      it is gated on still cannot be measured here.
+
+        · **R54·1 — [x] the spike, and what it found.** R54 says to "gate on
+          `?check` the way the record button already does". `?check` gates on
+          `recordingVerdict`, which asks whether `MediaRecorder` will encode a
+          container this browser can read back — **answered from a camera
+          stream**. The replay is a body drawn to a canvas, and that goes through
+          `HTMLCanvasElement.captureStream()`, an API `MediaRecorder` support
+          says nothing about. A browser could pass every check in `selfCheck.ts`
+          and hand the player a share button that produces nothing.
+
+          `canvasRecordVerdict` asks it, in two halves rather than one: whether
+          `captureStream` exists, and whether it yields a stream carrying a video
+          track. The second is the one a `typeof` check would miss — an API that
+          exists and returns an empty stream looks capable and is not. A throw
+          reads as "no track" rather than propagating, the same trade every probe
+          in that file makes, and doubly right in a panel somebody opened to find
+          out what their phone does.
+
+          Confirmed live: `captureStream` present, one video track. **And
+          `document.hidden` is `true` in the same breath**, which is the whole
+          reason the other half is still open.
+
+          **THE COST IS STILL UNMEASURABLE HERE AND R54 STAYS GATED.** Constraint
+          8 is about cost, not capability: a canvas recorder on a warm phone is
+          guilty until measured. The pane throttles exactly this path — R40 asked
+          a canvas for three seconds of film and got 1.06, R41 found it stopped
+          resolving at all. What changed is that the question now has a place to
+          put its answer: `?check` reports it, so the court trip brings back a
+          reading rather than nobody having asked.
+
+          The new line was caught by `REPORT_VOCABULARY`'s own guard the moment
+          it was written — two words added deliberately, which is the list doing
+          its job rather than a nuisance.
+
+        · **R54·2 — build it, once a phone has answered.** Blocked on the court
+          trip, not on code.
+
+- [ ] **R54 (as written)** — Share the replay as motion. `reportCard.ts` renders one still,
       the app's only egress and the one thing a player actually sends somebody.
       `TrackPlayer` draws a moving body to a canvas and `recordingType`/
       `selfCheck.ts` already know which containers this browser will produce
