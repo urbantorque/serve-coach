@@ -43,6 +43,37 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 30 · Cycle D — performance and architecture · `D2 · R55·1`
+
+**Orchestrator.** The spike R55 asks for. Lead builder: Release Architect.
+Column: *Do I believe it*.
+
+**The check caught me on its first run, which is the finding.** I enumerated the
+history consumers by hand from a grep and got nine. There are thirteen — it found
+`streakLine`, `longestStreakLine`, `glanceStrain` and `clearedStrainOf`. If a
+careful count misses a third of them, a careful patch will too, and the failure
+mode is one player's serves on another player's chart. So the filter goes at the
+source, not at thirteen call sites.
+
+**A finding that was invisible one round ago.** `saveSession(analysis)` takes an
+`Analysis` and nothing else, so a `profileId` on the row is erased by every
+re-run — precisely the defect R53·2a solved for tags in round 29. Putting the two
+side by side is what made it visible; neither round alone would have.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The count is stated as a correction of my own estimate, not as a clean number. The where-it-lives decision is named as R55·2's to take, not pre-empted |
+| Performance | pass | Test-only |
+| Privacy | pass | Nothing built. The leak this prevents is between players on one phone, which is the privacy shape a squad or a family actually has |
+| Architecture | pass | Both directions guarded — a fourteenth consumer fails, and a name that stops reading a history fails too, which is `egress.test.ts`'s own allow-list discipline |
+| Product | pass | Nothing shipped |
+
+**Gate.** typecheck clean · lint clean · **1124 checks, 0 failed, exit 0** (+2).
+
+---
+
 ### Round 29 · Cycle C — pedagogical coaching and UI · `C2b · R53·2a`
 
 **Orchestrator.** Lead builder: Release Architect. Column: *Is it worth opening

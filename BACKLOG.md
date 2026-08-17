@@ -116,9 +116,11 @@ Where state lives, what it costs, what it does to a warm phone.
       `canvas.captureStream`. Capability now probed; cost still needs a phone.)*
 - [!] **D1b · R54·2** — Build the replay share. Blocked on the court trip: the
       pane throttles canvas recording, so the cost cannot be measured here.
-- [ ] **D2 · R55 spike** — The profiles migration, not the feature: every stored
-      report predates profiles and must land under one default player with no
-      prompt. Produces the split plan.
+- [x] **D2 · R55·1 spike** — *(Round 30 — thirteen functions read the whole
+      history, four of which I missed by hand; and a profileId on the row is
+      erased by every re-run, the defect R53·2a solved one round earlier.)*
+- [ ] **D2b · R55·2** — The feature, once the where-does-it-live decision is
+      taken. The switch is offered by `possibleHandoff`, not a settings screen.
 - [x] **D4 · R67** — The stored byte cost of a report, re-measured against
       `footprint.test.ts` after Phase 8's new fields. A report that grew and
       nobody noticed is the failure this budget exists to catch. *(Round 4 — the

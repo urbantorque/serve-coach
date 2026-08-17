@@ -2484,3 +2484,40 @@ deleting a working button.
 
         · **R53·2b — the tap, and the partition.** One tap on the glance, and
           `consistency.ts`'s spreads split by it.
+
+- [~] **R55** — Spiked. Two findings, and the second was invisible until R53·2a
+      landed the round before.
+
+        · **R55·1 — [x] the spike.**
+
+          **THIRTEEN FUNCTIONS READ THE WHOLE HISTORY**, and the count is the
+          finding rather than the number. I enumerated them by hand from a grep
+          and got nine; the check found four more on its first run —
+          `streakLine`, `longestStreakLine`, `glanceStrain`, `clearedStrainOf`.
+          Every one silently assumes a single player, and every one is a place a
+          squad-mate's serves leak into somebody else's trend. **If a careful
+          count misses a third of them, a careful patch will too.**
+
+          So the filter goes at the source — `sessions` in `App.tsx` becomes the
+          active profile's — not at thirteen call sites. One place to get right,
+          and a fourteenth consumer inherits it instead of having to remember.
+          The check counts them, so the day that number grows without the filter
+          moving, somebody finds out.
+
+          **AND THE PROFILE CANNOT LIVE ON THE ROW.** `saveSession(analysis)`
+          takes an `Analysis` and nothing else, so a `profileId` field is erased
+          by every re-run — a handedness correction, a serve-type change,
+          flicking to another serve. That is exactly the defect R53·2a solved for
+          tags one round earlier, and it was invisible until the two were put
+          side by side. Either `saveSession` grows a parameter, or
+          whose-serve-this-is joins `serveTags` — a decision R55·2 must take
+          before a line of the feature is written.
+
+          The migration itself is unchanged and still the easy half: every stored
+          report predates profiles and lands under one default player, which is a
+          `normalise` default like every other.
+
+        · **R55·2 — the feature**, once that decision is taken. `possibleHandoff`
+          and `IMPLAUSIBLE_HEIGHT_SPREAD` already detect the body changing and do
+          nothing with it; the switch is offered there rather than in a settings
+          screen nobody opens.

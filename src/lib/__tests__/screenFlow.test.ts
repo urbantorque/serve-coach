@@ -156,4 +156,82 @@ check('the fixture export is reachable without a dev build', () => {
   )
 })
 
+
+/* ------------------------------------------- what profiles would have to touch */
+
+heading('Every place a history is read, which is what R55 has to get right')
+
+/**
+ * R55's spike. The round says "the migration is the hard part, not the feature",
+ * and this is the migration measured rather than estimated.
+ *
+ * **THIRTEEN FUNCTIONS**, and the count is the finding. I enumerated them by
+ * hand from a grep and got nine; this check found four more on its first run —
+ * `streakLine`, `longestStreakLine`, `glanceStrain` and `clearedStrainOf`.
+ * Every one silently assumes a single player, and every one is a place a
+ * squad-mate's serves leak into somebody else's trend. If a careful count misses
+ * a third of them, a careful patch will too.
+ *
+ * **SO THE FILTER GOES AT THE SOURCE, NOT THE CALL SITES.** One place to get
+ * right rather than twelve, and a thirteenth consumer added later inherits it
+ * instead of having to remember. This check counts them, so the day that number
+ * grows without the filter moving, somebody finds out.
+ *
+ * **AND THE PROFILE CANNOT LIVE ON THE ROW**, which is the finding this spike
+ * exists for. `saveSession(analysis)` takes an `Analysis` and nothing else, so a
+ * `profileId` field is erased by every re-run — a handedness correction, a
+ * serve-type change, flicking to another serve — exactly the defect R53·2a just
+ * solved for tags, and for exactly the same reason. Either `saveSession` grows a
+ * parameter, or whose-serve-this-is joins `serveTags`. That is a decision R55·1
+ * has to make before a line of the feature is written, and it was invisible
+ * until the two were put side by side.
+ */
+const HISTORY_CONSUMERS = [
+  'bestOverallScore',
+  'buildConsistencyTrend',
+  'buildProgress',
+  'clearedStrainOf',
+  'faultMoveOnTrip',
+  'findPracticeFocus',
+  'glanceStrain',
+  'longestStreakLine',
+  'recurringStrainOf',
+  'rotationMoveOnTrip',
+  'strainBehindOf',
+  'streakLine',
+  'thenAndNow',
+]
+
+check('every function that reads a whole history is on the list R55 must cover', () => {
+  /*
+   * Read off `App.tsx` rather than remembered, the same trade the screen table
+   * above makes. A tenth consumer added without a profile filter is the failure
+   * this counts — and it is a failure that shows up as one player's numbers on
+   * another player's chart, which nothing else here would catch.
+   */
+  const found = new Set<string>()
+  for (const m of APP.matchAll(/\b([a-zA-Z]+)\(sessions\b/g)) found.add(m[1])
+  const missing = [...found].filter((f) => !HISTORY_CONSUMERS.includes(f))
+  assert(
+    missing.length === 0,
+    `${missing.length} function(s) read the whole history and are not on R55's list:\n` +
+      missing.map((m) => `      ${m}(sessions…)`).join('\n') +
+      '\n      Add them to HISTORY_CONSUMERS, and to whatever R55 filters.',
+  )
+  note(`  ${found.size} functions read the whole history in App.tsx`)
+})
+
+check('the list has not gone stale in the other direction', () => {
+  // The opposite failure, and the one `egress.test.ts` guards on its own allow
+  // list: a consumer removed leaves a stale name here, and the next reader
+  // trusts a list describing an app that no longer exists.
+  const found = new Set<string>()
+  for (const m of APP.matchAll(/\b([a-zA-Z]+)\(sessions\b/g)) found.add(m[1])
+  const gone = HISTORY_CONSUMERS.filter((f) => !found.has(f))
+  assert(
+    gone.length === 0,
+    `${gone.length} name(s) on R55's list no longer read a history: ${gone.join(', ')}`,
+  )
+})
+
 report()
