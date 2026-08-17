@@ -36,6 +36,43 @@
  */
 import type { Analysis, Frame, Landmark, Phase } from '../analysis/types'
 
+/**
+ * WHAT IT WOULD TAKE TO DRAW TWO OF THESE ON TOP OF EACH OTHER.
+ *
+ * The obvious thing to build from stored tracks is a ghost — today's swing over
+ * your best one — and the obvious objection is that everything about the filming
+ * is stored along with the player. A track is levelled image space, so how far
+ * away the phone stood, where in the frame you stood, and what angle it watched
+ * from all ride along with the body.
+ *
+ * Measured on the rig, same seed and same motion with only the camera moved, so
+ * every difference below is filming and none of it is the player. Gaps are the
+ * worst single drawn landmark, in body heights, which is the metric an eye
+ * actually uses — a mean across twelve landmarks dilutes a fault living in one
+ * limb, and reading the mean first made this look far worse than it is.
+ *
+ *   - NORMALISE and distance and framing simply go away. Translating to the hip
+ *     centre and scaling by shoulder-to-ankle takes a ±15% zoom from 0.083 to
+ *     0.0009 body heights and a pan of 0.08 of the frame to exactly zero.
+ *   - ANGLE does not go away and cannot, because it is a projection change
+ *     rather than a similarity transform. It costs about 0.0072 body heights per
+ *     degree of yaw difference, dead linear from 5° to 25°.
+ *   - THE FLOOR is 0.0341 — two noise realisations of one identical serve. Five
+ *     degrees of camera costs 0.0352, which is the same thing, and that is why a
+ *     gate belongs at five: past it the camera starts adding more than the
+ *     tracker already does.
+ *   - AGAINST REAL FAULTS, which is what makes the gate affordable: no racket
+ *     drop reads 0.2862, a low contact 0.2978, a collapsed spine 0.2266. Six to
+ *     nine times the floor, and three times what ten degrees of camera costs.
+ *
+ * AND ONE THING A GHOST CANNOT SHOW, which matters because it is exactly what
+ * somebody would reach for it to show: leg drive. Taking the trophy knee from
+ * 133° to 166° — no load at all — moves the worst landmark 0.0387 against a
+ * 0.0341 floor. A player told to watch their legs against a ghost would be
+ * watching noise. Say so wherever it ends up on screen, rather than letting them
+ * find it out.
+ */
+
 /** Decimals kept for a normalised landmark coordinate. */
 export const POSE_PRECISION = 3
 /** Decimals kept for visibility, which only ever gates drawing. */
