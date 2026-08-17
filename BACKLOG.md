@@ -355,7 +355,14 @@ Tests with teeth, refusals, and the things that only break on somebody's phone.
 - [x] **F2 · R62** — Court lines, refused. *(Round 26 — 5.9 m of frame against
       8.23 m of singles court, derived from a constant the app already
       enforces.)*
-- [ ] **F3 · audit 1** — A refusal path nobody has counted on real footage.
+- [x] **F3 · audit 1** — **Sixteen refusal values across four unions, all sixteen
+      exercised** — and now gated, so a new one added without a check is caught. A
+      refusal is the app's most careful sentence and the one path where being wrong
+      is silent: a refusal that never fires looks exactly like a refusal that is not
+      needed, which is what `axes.ts`'s tie-drop was for the whole loop. The
+      real-footage half of this audit stays open and is named as such: `RECORDED`
+      is 0 of 6, and **no refusal in this app has ever fired on a clip a camera
+      actually took**.
 - [x] **F4 · audit 10** — Eight load-bearing constants flipped one at a time.
       Six had teeth (`MIN_EVIDENCE` 4 red, `SOFT_MEASUREMENT` 11, height spread 3,
       yaw tolerance 2, swing-sample limit 1, word cap 1). **Two reddened nothing

@@ -43,6 +43,54 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 73 · Cycle F — QA and edge cases · `F3 · audit 1`
+
+**Orchestrator.** A refusal path nobody has counted. The real-footage half is
+blocked and not this loop's to unblock — but *whether each refusal has ever been
+produced at all* is countable now.
+
+**Why it matters more than it sounds.** A refusal is the app's most careful
+sentence: it fires when the engine has decided it cannot stand behind a reading.
+It is also **the one path where being wrong is silent** — a refusal that never
+fires looks exactly like a refusal that is not needed. `axes.ts`'s tie-drop was
+in that state for the entire loop, described in three comments and unreachable,
+until round 60 measured what it cost.
+
+**Sixteen refusal values across four unions** — the triage rejections, the
+pairing refusals, the detector declines, the outbound ones. **All sixteen are
+produced by at least one check.** Now gated, so a new one added without a check
+is caught.
+
+**And the list is held to the source**, because a hand-written list of enum
+values goes stale the first time somebody adds one — which is exactly how
+`too_few_frames` came to mean two different things in two unions, found by a
+bundle probe rather than by anything watching.
+
+**The scan over-matches and the matches are written down rather than tuned away**
+— `jsxCopy.test.ts`'s trade. Three tokens are excluded with reasons:
+`injury_risk` (the app still reports the serve), `suppressed_count` (a count the
+report prints), and `yaw_measured` (the affirmative twin of `yaw_unmeasured`,
+sitting on the same line). Plus the stale-exclusion half, so those three lines
+cannot become prose about tokens that are gone.
+
+**What stays open, stated plainly: no refusal in this app has ever fired on a
+clip a camera actually took.** `RECORDED` is 0 of 6. Counting that is audit 1's
+other half and it needs a court.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The audit's blocked half is named rather than quietly dropped, and the countable half is answered with a number |
+| Architecture | pass | Both halves the lists in this repo have needed: exercised, and not fallen behind the source |
+| Product | pass | Nothing user-facing; refusals are what stand between a player and a confident wrong reading |
+| Performance | pass | One pass over the suite and four source files |
+
+**Gate.** typecheck clean · lint clean · **1221 checks, 0 failed, exit 0** (+2).
+Canaried by dropping a value from the list — flagged by name.
+
+---
+
 ### Round 72 · Cycle E — data and export · `E10 · R85` (new)
 
 **Orchestrator.** Cycle E's rows are blocked, so the Orchestrator generates —

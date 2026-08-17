@@ -231,6 +231,138 @@ check('every share entry point has a control that presses it', () => {
   )
 })
 
+/* ------------------ every refusal, exercised at least once (F3) ------------ */
+
+/**
+ * A refusal nobody has ever made the app produce.
+ *
+ * AUDIT 1 ASKED FOR ONE "nobody has counted on real footage", and the real-footage
+ * half stays blocked — `RECORDED` is 0 of 6, and it is not this loop's to unblock.
+ * What is countable here is whether each refusal has been produced *at all*.
+ *
+ * It matters more than it sounds. A refusal is the app's most careful sentence:
+ * it fires when the engine has decided it cannot stand behind a reading, and it
+ * is the one path where being wrong is silent — a refusal that never fires looks
+ * exactly like a refusal that is not needed. This repo has already shipped four
+ * things that were never reached: a tap prop, a history filter, a share card, and
+ * a tie-drop written as an exact float equality that could not fire at all.
+ *
+ * Twelve refusal values across four unions: the triage rejections, the pairing
+ * refusals, the detector declines and the outbound ones. All twelve are produced
+ * by at least one check today. This keeps that true.
+ *
+ * WHAT IT DOES NOT CLAIM. That the refusal is *right*, or that its copy is good —
+ * `copy.test.ts` reads the triage refusals and nothing reads the rest, because
+ * the rest carry no player-facing sentence yet. And not that any of them has ever
+ * fired on a clip a camera actually took. That is audit 1's other half and it
+ * stays open.
+ */
+const REFUSALS: readonly string[] = [
+  // triage — the four the player can actually be shown today
+  'body_not_visible',
+  'too_few_frames',
+  'too_blurry',
+  'camera_unusable',
+  // trackPair — the ghost's seven
+  'no_track',
+  'yaw_unmeasured',
+  'camera_moved',
+  'rubric_changed',
+  'serve_type_changed',
+  'no_contact',
+  'no_scale',
+  // the shared pixel pass, and the outbound detector
+  'window_empty',
+  'too_slow',
+  'no_streaks',
+  'disagreed',
+  'too_few_streaks',
+]
+
+check('every refusal the app can produce is produced by at least one check', () => {
+  const testFiles = (dir: string, out: string[] = []): string[] => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name)
+      if (e.isDirectory()) testFiles(full, out)
+      else if (e.name.endsWith('.test.ts')) out.push(full)
+    }
+    return out
+  }
+  const suite = testFiles(root).map((f) => blankComments(fs.readFileSync(f, 'utf8')))
+
+  const unexercised = REFUSALS.filter((r) => !suite.some((body) => body.includes(r)))
+  note(`${REFUSALS.length} refusal values, ${REFUSALS.length - unexercised.length} exercised`)
+  assert(
+    unexercised.length === 0,
+    `never produced by any check: ${unexercised.join(', ')}. A refusal that never fires looks ` +
+      'exactly like a refusal that is not needed.',
+  )
+})
+
+check('the refusal list has not fallen behind the unions it tracks', () => {
+  /*
+   * The half every list in this repo has had to grow. A hand-written list of
+   * enum values goes stale the first time somebody adds one — which is how
+   * `too_few_frames` came to mean two different things in two unions, found by a
+   * bundle probe rather than by anything watching.
+   *
+   * Counted against the source rather than trusted: every quoted lowercase
+   * identifier in the four union declarations must be in the list above.
+   */
+  const sources = [
+    'lib/analysis/triage.ts',
+    'lib/trackPair.ts',
+    'lib/vision/detector.ts',
+    'lib/vision/outbound.ts',
+  ].map((f) => fs.readFileSync(path.join(root, f), 'utf8'))
+
+  const declared = new Set<string>()
+  for (const src of sources) {
+    // Line-based rather than one regex over the file: a union spans several
+    // lines and the refusal values are the quoted snake_case tokens on lines
+    // that name a refusal at all. Simpler to read, and it survived escaping,
+    // which the regex version did not.
+    for (const line of blankComments(src).split(String.fromCharCode(10))) {
+      if (!/refusal|reason|REJECTIONS|^ {2}.[a-z_]+.,$/.test(line)) continue
+      for (const q of line.match(/.([a-z][a-z_]{3,}).,?/g) ?? []) {
+        const v = q.replace(/[^a-z_]/g, "")
+        if (v.includes(String.fromCharCode(95))) declared.add(v)
+      }
+    }
+  }
+  /*
+   * Snake_case tokens the scan picks up that are not refusals, each with a
+   * reason — the trade `jsxCopy.test.ts` and `cardCopy.test.ts` both make:
+   * over-match, and write down every match with a verdict, rather than tune a
+   * regex until the output looks tidy. A tuned regex is a gate nobody can audit.
+   */
+  const NOT_REFUSALS = [
+    // A triage field, not a reason to throw a clip out: the app still reports
+    // the serve and adds a warning about a joint.
+    'injury_risk',
+    // How many faults the plan held back, which the report prints as a count.
+    'suppressed_count',
+    // The affirmative side of `yaw_unmeasured` — a field saying the angle WAS
+    // recovered, sitting on the same line as the refusal that says it was not.
+    'yaw_measured',
+  ]
+  const missing = [...declared].filter((d) => !REFUSALS.includes(d) && !NOT_REFUSALS.includes(d))
+  note(`${declared.size} refusal values found in the unions`)
+  assert(declared.size >= 10, `only ${declared.size} refusal values found — the scan may have broken`)
+  assert(
+    missing.length === 0,
+    `these exist in the source and are not in this file's list: ${missing.join(', ')}`,
+  )
+  // And the exclusions must still be found, or they are three lines of prose
+  // about tokens that are no longer there — the stale-ruling half every list in
+  // this repo has had to grow.
+  const goneExclusions = NOT_REFUSALS.filter((n) => !declared.has(n))
+  assert(
+    goneExclusions.length === 0,
+    `these exclusions no longer match anything: ${goneExclusions.join(', ')}`,
+  )
+})
+
 /* -------------------- series a test builds for itself (R84) --------------- */
 
 /**
