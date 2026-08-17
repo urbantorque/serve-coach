@@ -230,8 +230,19 @@ Tests with teeth, refusals, and the things that only break on somebody's phone.
       8.23 m of singles court, derived from a constant the app already
       enforces.)*
 - [ ] **F3 · audit 1** — A refusal path nobody has counted on real footage.
-- [ ] **F4 · audit 10** — An existing test re-run against its own canary, to
-      check it still has teeth.
+- [x] **F4 · audit 10** — Eight load-bearing constants flipped one at a time.
+      Six had teeth (`MIN_EVIDENCE` 4 red, `SOFT_MEASUREMENT` 11, height spread 3,
+      yaw tolerance 2, swing-sample limit 1, word cap 1). **Two reddened nothing
+      at a tenfold change**: `LEG_DRIVE_FLOOR` and `LANDING_SQUARE_FLOOR`, both
+      with derivations recorded in their own comments and no gate behind them.
+      Both now pinned against the rig — 0 red → 1 red each.
+- [ ] **F4b · R77b** — Re-derive `LANDING_SQUARE_FLOOR`. A square landing reads
+      **0.0045 on ten seeds against a stated 0.0035** — 29% above, where the
+      leg-drive floor beside it lands within 3%. Not corrected here: the constant
+      calibrates `LANDING_SQUARE_DEVIATION` and the delta noise in
+      `consistency.ts`, so moving it off ten seeds inside a round about test teeth
+      is the unmeasured change this repo keeps catching. Needs the full ensemble
+      and a number diff.
 - [ ] **F5 · audit 3** — A number in `tiers.ts` whose band was set against the
       synthetic rig only.
 - [ ] **F6 · audit 7** — The oldest `[!]` item, re-read to see whether it is

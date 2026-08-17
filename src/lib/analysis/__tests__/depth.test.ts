@@ -48,7 +48,7 @@
  * caught them, which is the only useful form of that lesson.
  */
 import { LM } from '../geometry'
-import { ER_LEAN_SENSITIVITY, diagnose } from '../diagnose'
+import { ER_LEAN_SENSITIVITY, LANDING_SQUARE_FLOOR, LEG_DRIVE_FLOOR, diagnose } from '../diagnose'
 import { measure } from '../metrics'
 import { detectServe } from '../phases'
 import { assessSpatial } from '../spatial'
@@ -1896,6 +1896,98 @@ check('a delta between two serves is bounded by both terms, not by either alone'
     `an equal-tempo bound of ${atEqualTempo.toFixed(4)} is not usable against a reading near 0.107`,
   )
   assert(perSecond > 0, 'the tempo term came out at or below zero, so there is nothing to bound')
+})
+
+/* ============= two floors that were derived and never enforced (R77) ======= */
+
+/**
+ * `LEG_DRIVE_FLOOR` and `LANDING_SQUARE_FLOOR`, checked against the rig.
+ *
+ * FOUND BY CANARYING THE SUITE RATHER THAN THE CODE. Round 52's audit flipped
+ * eight load-bearing constants one at a time and counted what went red.
+ * `MIN_EVIDENCE` reddened four checks, `SOFT_MEASUREMENT` eleven, the swing-sample
+ * limit one, the yaw tolerance two, the height spread three, the word cap one.
+ * **These two reddened nothing at a tenfold change.**
+ *
+ * Both carry a derivation in their own comment — one is what a player who never
+ * leaves the ground still reads from straightening alone, the other is where a
+ * square landing sits rather than zero — and both are exported for a test to
+ * name. Neither was named in an assertion that could fail. A derived number with
+ * a recorded derivation and no gate is the shape this repo has been caught by
+ * twice: a figure nobody can re-run, and a figure that quietly stopped being
+ * true.
+ *
+ * Both are rig-measurable, which is why this is a round rather than a note.
+ */
+check('a player who never leaves the ground reads the leg-drive floor', () => {
+  /*
+   * The floor is not zero and the comment says why: straightening out of the
+   * trophy lifts the hips even with both feet down. So the claim is that a
+   * grounded serve reads *at* the floor rather than below it — and that a real
+   * jump clears it, or the floor would be swallowing the measurement.
+   */
+  const grounded = realise({ contactHipHeight: 0.95 }, 5, SEEDS.slice(0, 10))
+    .map((r) => r.chain.leg_drive_rise_ratio)
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+  assert(grounded.length > 5, `only ${grounded.length} grounded clips read a rise`)
+  const mean = grounded.reduce((a, b) => a + b, 0) / grounded.length
+  note(`grounded rise ${mean.toFixed(4)} against a floor of ${LEG_DRIVE_FLOOR}`)
+  assert(
+    Math.abs(mean - LEG_DRIVE_FLOOR) < LEG_DRIVE_FLOOR * 0.6,
+    `a grounded serve reads ${mean.toFixed(4)}, and the floor says ${LEG_DRIVE_FLOOR}`,
+  )
+
+  const jumping = realise({ contactHipHeight: 1.12 }, 5, SEEDS.slice(0, 10))
+    .map((r) => r.chain.leg_drive_rise_ratio)
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+  const jumpMean = jumping.reduce((a, b) => a + b, 0) / jumping.length
+  assert(
+    jumpMean > LEG_DRIVE_FLOOR * 2,
+    `a jump reads ${jumpMean.toFixed(4)}, barely over a floor of ${LEG_DRIVE_FLOOR} — ` +
+      'the floor is swallowing the measurement',
+  )
+  note(`a jump reads ${jumpMean.toFixed(4)}, ${(jumpMean / LEG_DRIVE_FLOOR).toFixed(1)}× the floor`)
+})
+
+check('a square landing reads the landing floor, rather than zero', () => {
+  /*
+   * The reading is a magnitude, so landmark noise about a true zero folds
+   * positive instead of cancelling — which is the whole reason this constant
+   * exists rather than a comparison against 0. Dialled square, it should land
+   * on the floor; leaned, it should clear it, or the floor is the measurement.
+   */
+  const square = realise({ landingLean: 0 }, 5, SEEDS.slice(0, 10))
+    .map((r) => r.chain.landing_offset_ratio)
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+  assert(square.length > 5, `only ${square.length} square landings read an offset`)
+  const mean = square.reduce((a, b) => a + b, 0) / square.length
+  const gap = mean / LANDING_SQUARE_FLOOR - 1
+  note(
+    `square landing ${mean.toFixed(4)} against a floor of ${LANDING_SQUARE_FLOOR} — ` +
+      `${(gap * 100).toFixed(0)}% above it`,
+  )
+  /*
+   * AND IT IS 29% ABOVE, WHICH IS THE FINDING RATHER THAN A PASS.
+   *
+   * The grounded leg-drive floor beside this one lands within 3% of its stated
+   * value. This one does not, on ten seeds of the same ensemble. Either the
+   * constant was derived on a different seed count or something under it has
+   * moved since R50·2 set it, and there is no way to tell from here which —
+   * R50·2's own derivation is a sentence rather than a reproducible call.
+   *
+   * NOT WIDENED AND NOT SILENTLY CORRECTED. Changing 0.0035 to 0.0045 moves
+   * every bound built on it — `LANDING_SQUARE_DEVIATION` and the delta noise in
+   * `consistency.ts` both calibrate against this floor — and doing that off ten
+   * seeds, inside a round about test teeth, is exactly the unmeasured change
+   * this repo keeps catching. Recorded as `R77b` with the numbers.
+   *
+   * The band is 60% so it holds the finding rather than hiding it: the note
+   * prints the gap every run, and a drift past 60% breaks rather than widening.
+   */
+  assert(
+    Math.abs(gap) < 0.6,
+    `a square landing reads ${mean.toFixed(4)}, and the floor says ${LANDING_SQUARE_FLOOR}`,
+  )
 })
 
 report()

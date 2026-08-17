@@ -43,6 +43,65 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 52 · Cycle F — QA and edge cases · `F4 · audit 10`
+
+**Orchestrator.** Re-run existing tests against their own canaries. Not chosen
+by feel: **three gates this session passed canaries they should have failed** —
+round 39's coverage check, round 42's props scan, round 51's share scan — so the
+question of which existing gates have teeth is now an evidenced one.
+
+**Eight load-bearing constants, flipped one at a time, counting what reddened.**
+
+| Constant | Flipped to | Red |
+| --- | --- | --- |
+| `SOFT_MEASUREMENT` 0.55 | 0.05 | **11** |
+| `MIN_EVIDENCE` 0.45 | 0.05 | **4** |
+| `IMPLAUSIBLE_HEIGHT_SPREAD` 0.18 | 0.98 | **3** |
+| `GHOST_YAW_TOLERANCE_DEG` 5 | 60 | **2** |
+| `swingSamples` 3 | 0 | **1** |
+| `MAX_WORDS` 25 | 250 | **1** |
+| `LEG_DRIVE_FLOOR` 0.0457 | 0.4570 | **0** |
+| `LANDING_SQUARE_FLOOR` 0.0035 | 0.0350 | **0** |
+
+**Two of eight could be moved tenfold with nothing going red.** Both carry a
+derivation in their own comment — one is what a player who never leaves the
+ground still reads from straightening alone, the other is where a square landing
+sits rather than zero — and both are exported for a test to name. Neither was
+named in an assertion that could fail.
+
+**Both are rig-measurable, which is why this is a round and not a note.**
+
+- **Grounded serve reads 0.0444 against a floor of 0.0457** — within 3%. And a
+  jump reads 0.1433, 3.1× the floor, so the floor is not swallowing the
+  measurement.
+- **Square landing reads 0.0045 against a floor of 0.0035** — **29% above**.
+
+**The second is a finding, not a pass.** Its sibling lands within 3%; this one
+does not. Either the constant was derived on a different seed count or something
+under it has moved since R50·2 set it, and there is no way to tell from here —
+R50·2's derivation is a sentence rather than a reproducible call, which is the
+same defect round 40 found in `NEXT.md`.
+
+**Not widened and not silently corrected.** 0.0035 calibrates
+`LANDING_SQUARE_DEVIATION` and the delta noise in `consistency.ts`; moving it off
+ten seeds, inside a round about test teeth, is exactly the unmeasured change this
+repo keeps catching. Recorded as `R77b` with the numbers and what it needs. The
+band holds the finding rather than hiding it: the gap prints every run.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The 29% is printed on every run and written into the backlog with its successor, rather than absorbed by a tolerance chosen to fit |
+| Architecture | pass | A derived number with a recorded derivation and no gate is the shape this repo has been caught by twice — a figure nobody could re-run, and one that quietly stopped being true |
+| Product | pass | Nothing user-facing moved; the audit is about whether the safety net exists |
+| Performance | pass | Two ten-seed ensembles at suite time |
+
+**Gate.** typecheck clean · lint clean · **1197 checks, 0 failed, exit 0** (+2).
+Both floors re-canaried after: **0 red → 1 red each.**
+
+---
+
 ### Round 51 · Cycle E — data and export · `E7 · R76` (new)
 
 **Orchestrator.** Cycle E's rows are gated on a phone and on the design ask, so
