@@ -24,7 +24,7 @@ import {
 } from '../coaching'
 import type { BodyAxis } from '../axes'
 import { MAX_SENTENCES, MAX_WORDS, command, cueIssues, plain, wordCount } from '../voice'
-import { VERDICT_TABLES, causalFocus, everyVerdictCue, refusalFor } from '../verdict'
+import { VERDICT_TABLES, causalFocus, everyVerdictCue, refusalFor, rotationMoveLine } from '../verdict'
 import { FLAWS, type FlawId } from '../flaws'
 import { FLAW_DRILL, FLAW_DRILL_BY_AXIS, drillIdFor } from '../triage'
 import { uncalibratedLine } from '../../../components/statusLabels'
@@ -1199,4 +1199,36 @@ check('a reading with no line of its own prints nothing rather than something ge
  *
  * A tally belongs at the end of the file it is a tally of. Nothing may follow it.
  */
+
+check('the racket lay-back line says a direction, grades nothing, and carries no figure', () => {
+  /*
+   * R50b's line, and it is not reached by `everyVerdictCue()` — that walks the
+   * flaw tables, and this takes a `RotationMove`. Checked directly for the same
+   * reason `uncalibratedLine` is: a sentence nothing walks is a sentence nothing
+   * lints, which is the finding R69 was built on.
+   *
+   * BOTH DIRECTIONS ARE CHECKED, and neither may be graded. Laying the racket
+   * back further is usually good and is not always; nothing in this engine knows
+   * what the number should be for a club player, which is why the reading sits
+   * in `UNCALIBRATED` at all. A line that praised one direction would be the app
+   * grading a reading it has decided it cannot grade — and would be the
+   * speaks-only-on-good-news shape this codebase has rejected twice.
+   */
+  for (const delta of [24, -24]) {
+    const text = rotationMoveLine({ delta, bound: 17 })
+    const issues = cueIssues(text)
+    assert(issues.length === 0, `${issues.join('; ')}\n        "${text}"`)
+    assert(!/\d+(\.\d+)?\s*(°|deg|degrees)/.test(text), `a figure reached the glance: "${text}"`)
+    assert(
+      !/good|better|worse|well done|nice|improve|should/i.test(text),
+      `the line grades a reading nothing grades: "${text}"`,
+    )
+  }
+  // And they must actually differ, or the direction is not being reported.
+  assert(
+    rotationMoveLine({ delta: 24, bound: 17 }) !== rotationMoveLine({ delta: -24, bound: 17 }),
+    'both directions produce the same sentence, so the change has no direction on screen',
+  )
+})
+
 report()

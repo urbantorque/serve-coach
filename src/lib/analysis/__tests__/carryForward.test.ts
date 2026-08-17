@@ -13,7 +13,7 @@
  * checks follow them automatically, which is the whole point of not writing a
  * second threshold beside them.
  */
-import { faultMove, previousOnTrip, type ComparableServe } from '../carryForward'
+import { faultMove, previousOnTrip, rotationMove, type ComparableServe } from '../carryForward'
 import { faultMoveLine } from '../verdict'
 import { MIN_EVIDENCE, type FlawFinding, type FlawId } from '../flaws'
 import { NOISE_FLOOR } from '../tiers'
@@ -252,6 +252,105 @@ check('the four verdicts read as four different pieces of news', () => {
   )
   assert(new Set(lines).size === 4, `two verdicts produced the same sentence: ${lines.join(' | ')}`)
   for (const l of lines) assert(l.trim().length > 0, 'a verdict produced an empty line')
+})
+
+
+/* ----------------------------------------- the racket, between two serves --- */
+
+heading('Whether the racket laid back further than last time')
+
+/**
+ * R50b. The same reading `Consistency.uncalibrated` reports across a basket,
+ * on the surface where a player can still act on it — between serves, on court.
+ *
+ * The floor is the point of these checks. Two readings differ with their
+ * deviations in quadrature, so it is `√2 × 11.8` ≈ **16.7°**, and that refuses
+ * most comparisons. R50b said so in advance and said it must not be softened;
+ * these hold it there.
+ */
+function rotServe(opts: {
+  deg?: number | null
+  lean?: number | null
+  type?: 'flat' | 'kick'
+  status?: 'ok' | 'rejected'
+}): ComparableServe {
+  return {
+    id: `r-${opts.deg}-${opts.lean}`,
+    createdAt: 1,
+    serveType: opts.type ?? 'flat',
+    triage: { schema: 1, status: opts.status ?? 'ok' } as unknown as ComparableServe['triage'],
+    diagnosis: {
+      externalRotation: { deg: opts.deg ?? null, confidence: 0.9, lever: 0.8 },
+      signals: opts.lean === null || opts.lean === undefined ? {} : { spine_lean_deg: opts.lean },
+    } as unknown as Diagnosis,
+  }
+}
+
+check('a change past the floor is reported, with the floor it cleared', () => {
+  // 20° apart at equal lean, against a ~16.7° floor.
+  const m = rotationMove(rotServe({ deg: 40, lean: 10 }), rotServe({ deg: 60, lean: 10 }))
+  assert(!!m, 'a 20° change at equal posture was not reported')
+  assert(Math.abs(m!.delta - 20) < 1e-9, `reported a delta of ${m!.delta}`)
+  assert(
+    Math.abs(m!.bound - Math.SQRT2 * 11.8) < 1e-6,
+    `reported a bound of ${m!.bound?.toFixed(2)}, not √2 × 11.8`,
+  )
+})
+
+check('most comparisons are refused, and that is the reading rather than a fault', () => {
+  // 12° is a real change to a coach's eye and is inside this reading's own noise.
+  assert(
+    !rotationMove(rotServe({ deg: 40, lean: 10 }), rotServe({ deg: 52, lean: 10 })),
+    'a change inside the floor was reported',
+  )
+})
+
+check('it reports less lay-back as readily as more', () => {
+  /*
+   * The direction has to survive. A screen that only ever said "further" would
+   * be a milestone that speaks on good news, which is the shape this codebase
+   * has rejected twice.
+   */
+  const m = rotationMove(rotServe({ deg: 60, lean: 10 }), rotServe({ deg: 40, lean: 10 }))
+  assert(!!m && m.delta < 0, `a 20° reduction came back as ${m?.delta}`)
+})
+
+check('a posture change big enough to explain it is refused', () => {
+  // 20° of lay-back against 40° of lean difference: the lean alone buys 20°.
+  assert(
+    !rotationMove(rotServe({ deg: 40, lean: 5 }), rotServe({ deg: 60, lean: 45 })),
+    'a change a lean could account for was reported anyway',
+  )
+})
+
+check('an arm too folded to read drops out rather than reading as no change', () => {
+  // `readExternalRotation` returns null below MIN_ROTATION_LEVER. A null read as
+  // zero would report a 40° collapse on a serve nobody measured.
+  assert(
+    !rotationMove(rotServe({ deg: null, lean: 10 }), rotServe({ deg: 40, lean: 10 })),
+    'an unreadable trophy arm was compared anyway',
+  )
+})
+
+check('without both leans there is no bound, so there is no comparison', () => {
+  assert(
+    !rotationMove(rotServe({ deg: 40, lean: 10 }), rotServe({ deg: 70, lean: null })),
+    'a delta was reported with nothing to bound it',
+  )
+})
+
+check('a kick against a flat is not a comparison, on this surface either', () => {
+  assert(
+    !rotationMove(rotServe({ deg: 40, lean: 10, type: 'flat' }), rotServe({ deg: 70, lean: 10, type: 'kick' })),
+    'two different serves were compared',
+  )
+})
+
+check('a clip the engine rejected has nothing to compare', () => {
+  assert(
+    !rotationMove(rotServe({ deg: 40, lean: 10 }), rotServe({ deg: 70, lean: 10, status: 'rejected' })),
+    'a rejected clip was compared',
+  )
 })
 
 report()

@@ -1,8 +1,10 @@
 import {
   faultMove,
+  rotationMove,
   previousOnTrip,
   type ComparableServe,
   type FaultMove,
+  type RotationMove,
 } from './analysis/carryForward'
 import { FUNDAMENTALS } from './analysis/coaching'
 import { mean, statusOf } from './analysis/geometry'
@@ -555,6 +557,24 @@ export function faultMoveOnTrip(
 ): FaultMove | undefined {
   const previous = previousOnTrip(history, current, sameTrip)
   return previous ? faultMove(previous, current) : undefined
+}
+
+/**
+ * The same join for the racket's lay-back — see `rotationMove`.
+ *
+ * A second function rather than a second return value, because the two ask
+ * genuinely different questions and refuse for different reasons: one follows
+ * the fault the player was told about, the other a reading nothing grades. A
+ * trip where the named fault held still while the racket moved is exactly the
+ * case worth seeing, and one function returning both would invite a caller to
+ * treat them as a pair.
+ */
+export function rotationMoveOnTrip(
+  history: Session[],
+  current: ComparableServe,
+): RotationMove | undefined {
+  const previous = previousOnTrip(history, current, sameTrip)
+  return previous ? rotationMove(previous, current) : undefined
 }
 
 /**

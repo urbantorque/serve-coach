@@ -43,6 +43,41 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 21 · Cycle B — biomechanics and fault detection · `B2 · R50b`
+
+**Orchestrator.** Lead builder: Biomechanics & CV Specialist. Column: *Do I
+believe it*.
+
+**The round's own figure was right this time**, which is worth saying after two
+siblings whose stated bounds were the wrong number. R50b estimated "about 15°"
+from the 1.5 × deviation convention — a single-reading convention — and the delta
+arithmetic gives √2 × 11.8 ≈ 16.7°. Close. The estimate was good judgement rather
+than a category error.
+
+**A second function, not a second field.** `rotationMove` sits beside `faultMove`
+rather than inside it: they refuse for different reasons, and a trip where the
+named fault held still while the racket moved is exactly the case worth seeing.
+One function returning both would invite a caller to treat them as a pair.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Neither direction graded — a check holds the two lines differ, so a screen that only spoke on good news fails. Refuses most comparisons, as the round required |
+| Performance | pass | Two field reads and a `hypot` per glance |
+| Privacy | pass | Nothing new stored or sent |
+| Architecture | pass | Both refusals inherited, not re-implemented. `ER_DEVIATION_DEG` exported from prose so the bound is computed rather than retyped. The trip join stays in `progress.ts`, so `analysis/` still never imports it |
+| Product | pass | One line on an existing screen, absent far more often than present |
+
+**Copy.** Not reached by `everyVerdictCue()` — that walks the flaw tables — so it
+is checked directly. R69's finding applied while writing rather than after.
+
+**Gate.** typecheck clean · lint clean · **1099 checks, 0 failed, exit 0** (+9).
+Canaried by setting the floor to 1°: two red, both written for it. Not verified
+live — the glance needs a live analysis, the same block as rounds 5 and 11.
+
+---
+
 
 ### Round 20 · Cycle A — CV/ML engine · `A3b · R60·2`
 

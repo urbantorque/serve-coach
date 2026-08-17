@@ -24,7 +24,7 @@
  * and sentence ceiling as the rest of the copy database. The tests lint it.
  */
 import { DRILLS } from './coaching'
-import type { FaultMove, MoveVerdict } from './carryForward'
+import type { FaultMove, MoveVerdict, RotationMove } from './carryForward'
 import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
 import type { BodyAxis } from './axes'
@@ -713,3 +713,25 @@ export const VERDICT_TABLES = {
   injuries: INJURIES,
   refusals: REFUSALS,
 } as const
+
+/**
+ * The racket's lay-back, between this serve and the last one on the trip.
+ *
+ * NO FIGURE, for the reason `uncalibratedLine` gives on the report: `voice.ts`
+ * refuses a line carrying degrees, the usual escape is `readoutOf`, and it is
+ * shut — `external_rotation_deg` has no ladder in `anatomy.ts` and cannot be
+ * given one, because a ladder is a set of absolute stops and this reading has no
+ * zero. So the direction ships and the magnitude does not. `rotationMove` has
+ * already proved the change is bigger than both the noise and the posture that
+ * could fake it, which licenses "further" and nothing past it.
+ *
+ * NEITHER DIRECTION IS GRADED. Laying the racket back further is usually good
+ * and is not always: nothing in this engine knows what this number should be for
+ * a club player, which is why it sits in `UNCALIBRATED` at all. Both lines say
+ * what changed and stop.
+ */
+export function rotationMoveLine(move: RotationMove): string {
+  return move.delta > 0
+    ? cue('Your racket laid back further than on your last serve.')
+    : cue('Your racket laid back less than on your last serve.')
+}

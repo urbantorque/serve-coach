@@ -57,8 +57,9 @@ Kinetic chain, trophy metrics, what the body actually did.
 - [~] **B1c · R50·3** — Chain span ratio delta. *(Round 14 — premise cycle: the
       register's 21% is the total spread, not the tempo term. Decomposed to 6%
       noise plus 0.0102 per second, so the bound is 0.0092 at equal tempo.)*
-- [ ] **B2 · R50b** — Did the racket lay back further than your last serve, on
-      the glance, through `carryForward`. Refuses most comparisons by design.
+- [x] **B2 · R50b** — Did the racket lay back further than your last serve, on
+      the glance. *(Round 21 — floor of 16.7°, and the round's own estimate of
+      "about 15°" was right, unlike its two siblings.)*
 - [ ] **B3 · R50c** — A trunk-sequence delta between two serves filmed from one
       spot. Needs A2's answer for its same-spot refusal.
 - [ ] **B4 · R51** — Leg drive measured rather than timed: hip-centre rise in

@@ -1,6 +1,6 @@
 import { Cue, Icon, ScoreRing } from '../components/primitives'
-import { causalPlan, faultMoveLine, refusalFor } from '../lib/analysis/verdict'
-import type { FaultMove } from '../lib/analysis/carryForward'
+import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/analysis/verdict'
+import type { FaultMove, RotationMove } from '../lib/analysis/carryForward'
 import type { Analysis } from '../lib/analysis/types'
 
 /**
@@ -40,6 +40,12 @@ interface Props {
    */
   move?: FaultMove
   /**
+   * How the racket's lay-back moved against the last serve on this trip — see
+   * `rotationMove`. Refuses far more often than `move` above, because its floor
+   * is roughly 17° and that is what one camera can see of a shoulder.
+   */
+  rotation?: RotationMove
+  /**
    * A joint warning this serve raised that keeps recurring — see `glanceStrain`.
    *
    * The one thing on this screen that is not about the next serve. Everything
@@ -60,6 +66,7 @@ export default function Glance({
   onOpenReport,
   onBack,
   move,
+  rotation,
   strain,
 }: Props) {
   const refusal = refusalFor(analysis.triage)
@@ -82,6 +89,15 @@ export default function Glance({
   const moveLine = move
     ? faultMoveLine(move, move.flaw === analysis.triage?.primary_flaw?.flaw)
     : undefined
+  /*
+   * The racket's lay-back against the last serve — R50b, and a different
+   * question from the one above. `faultMove` follows the fault the player was
+   * told about; this follows a reading nothing grades, and it refuses far more
+   * often. Independent on purpose: neither silences the other, and a trip where
+   * the named fault held still while the racket moved is exactly the case worth
+   * seeing.
+   */
+  const rotationLine = rotation ? rotationMoveLine(rotation) : undefined
 
   return (
     <div className="screen glance">
@@ -166,6 +182,17 @@ export default function Glance({
             <p className="glance-move">
               <Icon name={move?.verdict === 'wider' ? 'info' : 'check'} size={15} />
               <span>{moveLine}</span>
+            </p>
+          )}
+
+          {/* The racket against the last serve. Same class, same shape, and the
+              neutral icon in both directions on purpose: nothing grades this
+              reading, so laying back further is not a tick and less is not a
+              warning. */}
+          {rotationLine && (
+            <p className="glance-move">
+              <Icon name="info" size={15} />
+              <span>{rotationLine}</span>
             </p>
           )}
 

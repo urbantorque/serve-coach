@@ -1203,6 +1203,21 @@ export const LANDING_SQUARE_DEVIATION = 0.0028
 export const LANDING_WIDE_DEVIATION = 0.0045
 
 /**
+ * Deviation of the external-rotation reading, the worse end of its measured range.
+ *
+ * `UNCALIBRATED.external_rotation_deg` records it as "flat at 9.4–11.8° across a
+ * 48° span" — flat being the useful half, since a deviation that grew with the
+ * reading could not be turned into a bound at all. The pessimistic end is
+ * exported because a consumer bounding a delta wants the worst case on at least
+ * one side of it.
+ *
+ * In prose until now, like the landing figures above and for the same reason:
+ * arithmetic on a number nobody can import is arithmetic on a number somebody
+ * retyped. Naming it changes nothing — nothing in this file reads it.
+ */
+export const ER_DEVIATION_DEG = 11.8
+
+/**
  * Read external rotation off one frame.
  *
  * Rotation OF THE FOREARM ABOUT THE UPPER ARM, which is what external rotation

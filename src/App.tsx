@@ -22,6 +22,7 @@ import {
   bestGapEverLine,
   bestOverallScore,
   faultMoveOnTrip,
+  rotationMoveOnTrip,
   bestOverallScoreEverLine,
   buildConsistencyTrend,
   buildProgress,
@@ -1360,6 +1361,7 @@ export default function App() {
             // array walks over a list already in memory and the screen it
             // feeds is only ever mounted one at a time.
             move={view.move ?? faultMoveOnTrip(sessions, view.analysis)}
+            rotation={rotationMoveOnTrip(sessions, view.analysis)}
             // The one recurring joint warning this serve raised — see
             // `glanceStrain`. Same reasoning as `move` above: it needs the
             // session list, which this screen has no business holding.

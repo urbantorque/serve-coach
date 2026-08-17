@@ -2182,3 +2182,41 @@ deleting a working button.
       **R51 loses its interpreter.** It wanted this to decide which of two correct
       leg-drive drills applies. It will have to ship without knowing the stance,
       or say that it cannot tell.
+
+- [x] **R50b** — The racket's lay-back, on the glance, between serves.
+
+      `rotationMove` in `carryForward.ts`, joined to the trip by
+      `rotationMoveOnTrip` in `progress.ts` — the same split `faultMove` already
+      makes, so the analysis layer never imports the one that owns `sameTrip`.
+
+      **A second function rather than a second field on `FaultMove`.** The two
+      ask different questions and refuse for different reasons: one follows the
+      fault the player was told about, the other a reading nothing grades. A trip
+      where the named fault held still while the racket moved is exactly the case
+      worth seeing, and one function returning both would invite a caller to
+      treat them as a pair.
+
+      **The floor is `√2 × 11.8` ≈ 16.7°, and R50b's estimate was right.** The
+      round said "about 15°", from the 1.5 × deviation convention every graded
+      floor in `tiers.ts` uses — a convention for a *single* reading against a
+      band. Two readings differ with their deviations in quadrature, which is the
+      arithmetic that belongs to a delta, and the two land close. Worth recording
+      because R50·2 and R50·3 both had the stated figure wrong in the same family
+      and this one did not.
+
+      It refuses most comparisons, which the round said in advance and said must
+      not be softened. `ER_DEVIATION_DEG` exported from `diagnose.ts`, prose until
+      now, same treatment as the landing figures in R50·2.
+
+      Both refusals inherited rather than re-implemented: a null `deg` already
+      covers the lever, and `signals` already drops a lean below `MIN_EVIDENCE`.
+
+      The line grades neither direction — laying back further is usually good and
+      is not always, and nothing here knows what the number should be for a club
+      player. Both directions are linted, and a check holds that they differ, so
+      a screen that only spoke on good news would fail. Neutral icon both ways
+      for the same reason.
+
+      **Not reached by `everyVerdictCue()`**, which walks the flaw tables, so the
+      copy is checked directly — R69's finding applied while writing rather than
+      afterwards.

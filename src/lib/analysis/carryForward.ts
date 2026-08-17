@@ -46,6 +46,7 @@
 import type { FlawFinding, FlawId } from './flaws'
 import { MIN_EVIDENCE } from './flaws'
 import { NOISE_FLOOR } from './tiers'
+import { ER_DEVIATION_DEG, ER_LEAN_SENSITIVITY } from './diagnose'
 import type { Diagnosis } from './diagnose'
 import type { Triage } from './triage'
 import type { ServeType } from '../storage/prefs'
@@ -188,4 +189,81 @@ export function faultMove(
 function findingFor(diagnosis: Diagnosis | undefined, flaw: FlawId): FlawFinding | undefined {
   const f = (diagnosis?.flaws ?? []).find((x) => x.flaw === flaw)
   return f && Number.isFinite(f.miss) ? f : undefined
+}
+
+/* ------------------------------------------- the racket, between two serves -- */
+
+/**
+ * The noise on a difference between two external-rotation readings.
+ *
+ * Two independent readings differ with their deviations in quadrature, so this
+ * is `√2 × ER_DEVIATION_DEG` ≈ **16.7°**. R50b estimated "about 15°", from the
+ * 1.5 × deviation convention every graded floor in `tiers.ts` uses — and that
+ * convention is for a *single* reading against a band. The two land close enough
+ * that the round's instinct was right; the arithmetic here is the one that
+ * belongs to a delta.
+ *
+ * It is a large floor and the round says so plainly: it will refuse most
+ * comparisons. That is the truth about what one camera can see of a shoulder,
+ * not a failure, and it must not be softened.
+ */
+const ER_DELTA_NOISE_DEG = Math.SQRT2 * ER_DEVIATION_DEG
+
+/** Which way the racket's lay-back went between two serves on one trip. */
+export interface RotationMove {
+  /** Degrees further laid back on the newer serve. Negative is less. */
+  delta: number
+  /** Everything that could have produced that change without the shoulder moving. */
+  bound: number
+}
+
+/**
+ * Did the racket lay back further than on the last serve.
+ *
+ * A DIFFERENT SURFACE FROM `Consistency.uncalibrated`, AND DELIBERATELY SO. That
+ * one compares the extremes of a basket, after the fact, on a report. This is
+ * the glance — between serves, on court, while the player can still do something
+ * about it — and it compares this serve against the one before it on the same
+ * trip rather than against the best or worst of a set.
+ *
+ * TWO REFUSALS ON TOP OF THE ONES THIS FILE ALREADY MAKES, both inherited rather
+ * than re-implemented:
+ *
+ *   · A trophy arm too folded to read. `readExternalRotation` returns a null
+ *     `deg` below `MIN_ROTATION_LEVER`, so a serve whose arm was straight never
+ *     arrives here. A second lever threshold in this file would be one more
+ *     thing to keep in step.
+ *   · A posture difference big enough to explain the change. The angle is read
+ *     against the trunk's up vector, so leaning moves the reference without the
+ *     shoulder rotating; `ER_LEAN_SENSITIVITY` measures that at 0.5° per degree
+ *     and is additive, which is what makes a bound possible rather than a model.
+ *     Both leans or neither — `signals` already drops a reading below
+ *     `MIN_EVIDENCE`, so a badly seen trunk is absent rather than wrong.
+ *
+ * Refused, never hedged. This is one line on a screen that is complete without
+ * it, and a comparison qualified into meaninglessness is worse than none.
+ */
+export function rotationMove(
+  previous: ComparableServe,
+  current: ComparableServe,
+): RotationMove | undefined {
+  if (previous.triage?.status !== 'ok' || current.triage?.status !== 'ok') return undefined
+  // Same default this file already applies in `faultMove`, not a second import:
+  // a report written before serve types existed was scored against the flat bands.
+  if ((previous.serveType ?? 'flat') !== (current.serveType ?? 'flat')) return undefined
+
+  const before = previous.diagnosis?.externalRotation?.deg
+  const after = current.diagnosis?.externalRotation?.deg
+  if (typeof before !== 'number' || typeof after !== 'number') return undefined
+  if (!Number.isFinite(before) || !Number.isFinite(after)) return undefined
+
+  const leanBefore = previous.diagnosis?.signals?.spine_lean_deg
+  const leanAfter = current.diagnosis?.signals?.spine_lean_deg
+  if (typeof leanBefore !== 'number' || typeof leanAfter !== 'number') return undefined
+
+  const delta = after - before
+  const bound = Math.hypot(ER_DELTA_NOISE_DEG, ER_LEAN_SENSITIVITY * Math.abs(leanAfter - leanBefore))
+  if (!(Math.abs(delta) > bound)) return undefined
+
+  return { delta, bound }
 }
