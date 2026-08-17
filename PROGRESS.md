@@ -44,6 +44,48 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 14 · Cycle B — biomechanics and fault detection · `B1c · R50·3`
+
+**Orchestrator.** The third and last entry through round 2's machinery — except
+it isn't yet, because the premise did not survive checking. Lead builder:
+Biomechanics & CV Specialist. Column served: *Do I believe it*.
+
+**A read-only cycle, which the protocol names as a complete one.** No production
+code. The round's stated bound — "the residual 21% tempo-dependence is the
+bound's whole content" — rests on a figure carried by both `tiers.ts` and
+`README.md`, and that figure is the *total* spread across a tempo sweep with
+seed noise folded in. Right for the question the register asks; wrong for
+bounding a difference.
+
+**The second time in this block that a round's own bound was the wrong number,
+and the same shape both times.** R50·2 was told to bound with 0.0035, which is
+where a square landing sits rather than how far a reading wanders. R50·3 is told
+to bound with 21%, which is where the whole distribution sits rather than what a
+tempo difference causes. A delta is a difference between two readings, and the
+figures these entries carry are about the readings themselves.
+
+**What the measurement gives R50·3 to build on:** 6% noise, flat across tempo —
+which is what makes the two terms separable — plus a mean moving 0.0102 per
+second of tempo difference. Bound `hypot(√2 × 0.0065, 0.0102 × |Δt|)` = 0.0092
+at equal tempo, 8.6% of a reading near 0.107. A 21% bound would have refused
+every comparison there is.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The register is **not** corrected: its 21% is accurate for what it claims, and the entry is about bandability rather than deltas. What was missing was the decomposition, and it now lives where the sweep lives |
+| Performance | pass | Test-only; 36 rig builds in a suite that already runs 240-seed ensembles |
+| Privacy | pass | Nothing shipped |
+| Architecture | pass | One check is written to fail **in both directions** — if the mean's movement approaches 21% this finding is wrong, and if it drops under 2% the division has removed the dependence entirely, which is a better finding and should not pass silently as this one |
+| Product | pass | Nothing a player sees |
+
+**Gate.** typecheck clean · lint clean · **1076 checks passed, 0 failed, exit 0**
+(+3). No canary: nothing was fixed, so there is nothing to revert. The teeth are
+the two-sided assertion above.
+
+---
+
 ### Round 13 · Cycle A — CV/ML engine · `A3 · R60·1`
 
 **Orchestrator.** Third block opens on Cycle A's head. Lead builder:

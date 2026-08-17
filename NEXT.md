@@ -1319,10 +1319,48 @@ family, different surface, different refusals.
           `lost`, `off balance` and `collapsed` are all asserted against in
           `copy.test.ts`, because the tempting sentence is the graded one.
 
-        · **R50·3 — chain span ratio delta**, bounded by the tempo difference and
-          refused when that bound eats it. The residual 21% tempo-dependence is
-          the bound's whole content, so this one needs `motionSeconds` on both
-          serves and refuses without it.
+        · **R50·3 — premise measured, and the round's own number is the wrong
+          one.** No production code this cycle: a round whose premise is
+          unverified starts read-only, and this one's premise was a figure that
+          means something else.
+
+          The round says "the residual 21% tempo-dependence is the bound's whole
+          content". `UNCALIBRATED.chain_span_ratio` and `README.md` both carry
+          that 21%, and it is the *total* spread of the reading across a tempo
+          sweep with seed-to-seed noise folded in. That is the right figure for
+          the question the register asks — is this scale-free enough to band —
+          and the wrong one for bounding a delta, **for exactly the reason 0.0035
+          was wrong in R50·2**. Two rounds in the same family, both finding the
+          headline figure is not the figure a difference needs.
+
+          Measured across twelve seeds at each of the same three tempos the
+          register swept:
+
+              tempo    mean     sd      sd/mean
+              1.10 s   0.1036   0.0065    6.3%
+              1.35 s   0.1065   0.0060    5.6%
+              1.70 s   0.1097   0.0070    6.4%
+
+          Two terms, not one. **Noise at about 6% of the reading, flat across
+          tempo** — which is what makes them separable at all — and a **mean that
+          moves 5.7% across the whole 0.6 s range**, about 0.0102 per second of
+          tempo difference. So a delta carries
+          `hypot(√2 × 0.0065, 0.0102 × |Δt|)`: **0.0092 at equal tempo**, 8.6% of
+          a reading near 0.107, growing only as the two serves' tempos diverge.
+          Usable — a bound at 21% would have refused every comparison, and refused
+          it mostly for a reason that is not tempo.
+
+          Three checks in `depth.test.ts` pin the decomposition, including one
+          written to go red **in both directions**: if the mean's movement ever
+          approaches 21% the finding here is wrong, and if it falls under 2% the
+          division has removed the dependence entirely, which is a different and
+          better finding. R50·3 builds on these numbers rather than on the
+          register's.
+
+          **`UNCALIBRATED.chain_span_ratio` is not corrected**, deliberately. Its
+          21% is accurate for what it claims and the entry is about bandability,
+          not about deltas. What was missing is the decomposition, and that is now
+          in `depth.test.ts` where the sweep lives.
 
 - [x] **R67** — The store ratchet was counting pictures and tracks, and a report
       is not made of pictures and tracks.

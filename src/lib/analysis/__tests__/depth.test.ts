@@ -1540,4 +1540,137 @@ check('and subtracting it recovers the rotation the arm actually had', () => {
   }
 })
 
+
+/* --------------------------------- what a chain-ratio delta would cost -------- */
+
+heading('Splitting the chain ratio spread into the two things it is made of')
+
+/**
+ * R50·3's premise, measured — and it is not the number the register carries.
+ *
+ * `UNCALIBRATED.chain_span_ratio` says the division "removes most of the tempo
+ * dependence and not all of it — 58% spread becomes 21%", and `README.md` repeats
+ * it. That figure is the *total* spread of the reading across a tempo sweep, with
+ * seed-to-seed noise folded into it. It is the right number for the question the
+ * register asks, which is whether the quantity is scale-free enough to band.
+ *
+ * IT IS THE WRONG NUMBER TO BOUND A DELTA WITH, for the same reason 0.0035 was
+ * the wrong number for the landing (R50·2). A delta between two of one player's
+ * serves is confounded by two independent things — how far the reading wanders
+ * between takes, and how far the mean shifts when the tempo differs — and they
+ * add in quadrature rather than being one figure. Bounding with 21% would refuse
+ * essentially every comparison and refuse it for a reason that is mostly not
+ * about tempo at all.
+ *
+ * Measured here across twelve seeds at each of the same three tempos the
+ * register swept:
+ *
+ *     tempo    mean     sd      sd/mean
+ *     1.10 s   0.1036   0.0065    6.3%
+ *     1.35 s   0.1065   0.0060    5.6%
+ *     1.70 s   0.1097   0.0070    6.4%
+ *
+ * So the two terms are **noise at about 6% of the reading, flat across tempo**,
+ * and a **mean that moves 5.7% across the whole 0.6 s range** — about 0.0102 per
+ * second of tempo difference. A delta between two serves therefore carries
+ * `hypot(√2 × 0.0065, 0.0102 × |Δt|)`, which at equal tempo is 0.0092 — 8.6% of
+ * the reading — and grows only as the two serves' tempos diverge.
+ *
+ * NOTHING IS BUILT ON THIS YET. R50·3 is the round that would, and this is its
+ * premise cycle: the numbers written down, no production code, so that the round
+ * which uses them starts from a measurement rather than from a figure that meant
+ * something else.
+ */
+const RATIO_TEMPOS = [1.1, 1.35, 1.7] as const
+const RATIO_SEEDS = [11, 202, 3131, 7000, 44444, 909, 1234, 5678, 8642, 31337, 606, 777]
+
+function ratioEnsemble(motionSeconds: number): number[] {
+  const out: number[] = []
+  for (const seed of RATIO_SEEDS) {
+    const frames = buildServe({ motionSeconds, seed, noise: 0.006 }, FPS)
+    const skel = detectServe(frames, FPS)
+    const r = diagnose(frames, skel).chain?.span_ratio
+    if (typeof r === 'number' && Number.isFinite(r)) out.push(r)
+  }
+  return out
+}
+
+const meanOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
+const sdOf = (xs: number[]) => {
+  const m = meanOf(xs)
+  return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length)
+}
+
+const RATIO_STATS = RATIO_TEMPOS.map((t) => {
+  const xs = ratioEnsemble(t)
+  return { t, mean: meanOf(xs), sd: sdOf(xs), n: xs.length }
+})
+
+for (const s of RATIO_STATS) {
+  note(
+    `  ${s.t}s: mean ${s.mean.toFixed(4)}, sd ${s.sd.toFixed(4)} ` +
+      `(${((100 * s.sd) / Math.abs(s.mean)).toFixed(1)}% of the reading), n=${s.n}`,
+  )
+}
+
+check('the reading wanders about a sixteenth of itself between takes, at every tempo', () => {
+  // Flat across tempo is the part that makes a bound possible: a noise term that
+  // itself depended on tempo could not be separated from the tempo term.
+  for (const s of RATIO_STATS) {
+    assert(s.n === RATIO_SEEDS.length, `${s.t}s: only ${s.n} of ${RATIO_SEEDS.length} seeds read at all`)
+    const relative = s.sd / Math.abs(s.mean)
+    assert(
+      relative > 0.03 && relative < 0.1,
+      `${s.t}s: noise is ${(100 * relative).toFixed(1)}% of the reading, outside the 3–10% this was measured at`,
+    )
+  }
+})
+
+check('the tempo term is far smaller than the register total, which is the finding', () => {
+  /*
+   * The check that would go red if somebody read the 21% as a tempo sensitivity
+   * and built a bound on it. Stated as the movement of the MEAN, which is the
+   * only part of that figure a tempo difference actually causes.
+   */
+  const means = RATIO_STATS.map((s) => s.mean)
+  const spread = (Math.max(...means) - Math.min(...means)) / Math.abs(meanOf(means))
+  note(`  the mean moves ${(100 * spread).toFixed(1)}% across ${RATIO_TEMPOS[0]}–${RATIO_TEMPOS[2]}s`)
+  assert(
+    spread < 0.12,
+    `the mean moves ${(100 * spread).toFixed(1)}% across the tempo range — at or near the 21% ` +
+      'the register states, so that figure IS the tempo term after all and this finding is wrong',
+  )
+  assert(
+    spread > 0.02,
+    `the mean moves only ${(100 * spread).toFixed(1)}% — the division has removed the tempo ` +
+      'dependence entirely, which is a different and better finding than the one recorded',
+  )
+})
+
+check('a delta between two serves is bounded by both terms, not by either alone', () => {
+  /*
+   * The arithmetic R50·3 will use, asserted here so the round that builds it
+   * starts from something checked. Two independent readings differ with their
+   * deviations in quadrature; the tempo term is the mean's own movement per
+   * second, applied to however far apart the two serves' tempos are.
+   */
+  const noise = meanOf(RATIO_STATS.map((s) => s.sd))
+  const perSecond =
+    (Math.max(...RATIO_STATS.map((s) => s.mean)) - Math.min(...RATIO_STATS.map((s) => s.mean))) /
+    (RATIO_TEMPOS[2] - RATIO_TEMPOS[0])
+  const atEqualTempo = Math.SQRT2 * noise
+  note(
+    `  bound at equal tempo ${atEqualTempo.toFixed(4)}, ` +
+      `plus ${perSecond.toFixed(4)} per second of tempo difference`,
+  )
+  // Big enough to refuse noise, small enough to admit a real change: the reading
+  // itself sits near 0.107, so a bound past a fifth of that would refuse
+  // everything and there would be no entry worth building.
+  assert(
+    atEqualTempo > 0.005 && atEqualTempo < 0.02,
+    `an equal-tempo bound of ${atEqualTempo.toFixed(4)} is not usable against a reading near 0.107`,
+  )
+  assert(perSecond > 0, 'the tempo term came out at or below zero, so there is nothing to bound')
+})
+
 report()
