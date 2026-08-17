@@ -11,6 +11,8 @@ import {
   KEEP_STILLS,
   KEEP_STILLS_UNDER_PRESSURE,
   MAX_SESSIONS,
+  normaliseServeTag,
+  tagsById,
   normalise,
   planPrune,
 } from '../db'
@@ -605,6 +607,66 @@ check('an injury flag that is not an object is dropped, and the rest kept', () =
     }),
   )
   assert(s?.triage?.injury_risk.length === 1, `kept ${s?.triage?.injury_risk.length} flags, expected 1`)
+})
+
+
+/* ------------------------------------------- what the player says it was ---- */
+
+heading('A player-side tag, and what it refuses')
+
+/**
+ * R53·2's storage. The reading half was refused in R53·1 — a basket cannot be
+ * told apart by position or by measurement — so a tap is the only route, and a
+ * tap needs somewhere to live that `saveSession` will not erase.
+ *
+ * `normaliseServeTag` is not exported; it is reached through the shape it lets
+ * through, which is the same way `usableConsistency` is tested above.
+ */
+const wholeTag = () => ({ id: 'serve-abc', serveNumber: 2, taggedAt: 1_800_000_000_000 })
+
+check('a complete tag survives the read', () => {
+  const t = normaliseServeTag(wholeTag())
+  assert(t?.serveNumber === 2, `a complete tag came back as ${JSON.stringify(t)}`)
+})
+
+check('a serve number that is not one or two is refused, not clamped', () => {
+  /*
+   * Checked against its two legal values rather than for being a number. A 3
+   * would partition a basket into a bucket no screen draws, and clamping it to 2
+   * would be the app deciding what the player meant.
+   */
+  for (const n of [0, 3, 1.5, -1, '1']) {
+    assert(
+      normaliseServeTag({ ...wholeTag(), serveNumber: n }) === undefined,
+      `a serve number of ${JSON.stringify(n)} was accepted`,
+    )
+  }
+})
+
+check('a tag with no report to belong to is refused', () => {
+  assert(normaliseServeTag({ ...wholeTag(), id: '' }) === undefined, 'an empty id was accepted')
+  const { id: _drop, ...noId } = wholeTag()
+  void _drop
+  assert(normaliseServeTag(noId) === undefined, 'a tag with no id was accepted')
+})
+
+check('a tag with no moment is refused rather than stamped with now', () => {
+  // Stamping it would invent a fact about when somebody said something, which is
+  // the one thing this record is for.
+  assert(
+    normaliseServeTag({ ...wholeTag(), taggedAt: undefined }) === undefined,
+    'a tag with no moment was given one',
+  )
+})
+
+check('the lookup is by report id, and a repeated tag is the later one', () => {
+  const map = tagsById([
+    { id: 'a', serveNumber: 1, taggedAt: 1 },
+    { id: 'b', serveNumber: 2, taggedAt: 2 },
+    { id: 'a', serveNumber: 2, taggedAt: 3 },
+  ])
+  assert(map.size === 2, `built a map of ${map.size}, expected 2`)
+  assert(map.get('a')?.serveNumber === 2, 'an earlier tag won over a later one')
 })
 
 report()

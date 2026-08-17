@@ -43,6 +43,41 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 29 · Cycle C — pedagogical coaching and UI · `C2b · R53·2a`
+
+**Orchestrator.** Lead builder: Release Architect. Column: *Is it worth opening
+again*.
+
+**The storage decision is the round, and `db.ts` had already made the argument.**
+`saveSession` is called with a fresh `Analysis` after every re-run — a handedness
+correction, a serve-type change, flicking to another serve in the clip — so a
+field on the row is erased by the most ordinary thing anybody does on the report
+screen. That is the second time this reasoning has decided a design, after the
+practice log.
+
+**A DB version bump that needed no new upgrade logic.** The existing handler adds
+stores by existence rather than by the version being upgraded from, and its
+comment says it was written for exactly this. It worked untouched.
+
+**Named for what it holds.** R56 will need to know whether a serve went in — the
+same kind of claim, the player's, about one serve, outliving the report. Two
+stores for one idea would be two upgrade paths and two normalisers.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | No inference — R53·1 settled that. `serveNumber` refused rather than clamped, since clamping is the app deciding what somebody meant |
+| Performance | pass | One store, one row per tagged serve. `tagsById` is a `Map` because every consumer asks per-serve and a linear scan over sixty reports looks free until it is inside a render |
+| Privacy | pass | Local, same as everything else. Nothing new leaves |
+| Architecture | pass | Lifetime deliberately the report's, unlike the practice log's — a tag about a dropped serve is not worth its row. The normaliser is exported and the comment says why: no DOM-free public door exists, so a private repair would be an untested one |
+| Product | pass | No surface yet. The tap is R53·2b |
+
+**Gate.** typecheck clean · lint clean · **1122 checks, 0 failed, exit 0** (+5).
+Canaried to one.
+
+---
+
 ### Round 28 · Cycle B — biomechanics and fault detection · `B4 · R51·1`
 
 **Orchestrator.** Lead builder: Biomechanics & CV Specialist. Column: *Do I

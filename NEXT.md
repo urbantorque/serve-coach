@@ -2446,3 +2446,41 @@ deleting a working button.
         · **R51·2 — knee extension**, if it can be justified on its own terms.
           Not from image y. **R60·2 refused its interpreter**, so whatever ships
           cannot name the stance and must say so rather than imply one.
+
+- [~] **R53·2** — Split again: where a player-side fact lives, then the tap.
+
+        · **R53·2a — [x] the store.** `saveSession` is called with a fresh
+          `Analysis` after every re-run — a handedness correction, a serve-type
+          change, flicking to another serve in the clip — so **a field on the row
+          is erased by the most ordinary thing anybody does on the report
+          screen**. `db.ts` has argued that at length since `PRACTICE_STORE` was
+          added; this is the second time it decides a design.
+
+          `serveTags`, keyed by the report's own id, at `DB_VERSION = 3`. The
+          existing upgrade handler already adds stores by existence rather than
+          by version, so a database at 2 gains it and a fresh install gets all
+          three at once — that guard was written for exactly this and did not
+          need touching.
+
+          **Named for what it holds, not for today's field.** R56 will need to
+          know whether a serve went in; that is the same kind of claim — the
+          player's, about one serve, outliving the report — and two stores for
+          one idea would be two upgrade paths and two normalisers.
+
+          **Its lifetime is deliberately the report's**, unlike the practice
+          log's. A tag about a serve the prune ladder has dropped is not worth
+          the row it sits in; a record of having done a drill is about the player
+          rather than about one clip.
+
+          `serveNumber` is 1 or 2 and refused otherwise — not clamped, since a 3
+          would partition a basket into a bucket no screen draws and clamping is
+          the app deciding what somebody meant. And no inference: R53·1 settled
+          that.
+
+          The normaliser is **exported**, unlike every other repair in the file,
+          and the comment says why: the others are reachable through `normalise`,
+          and this one's only public path needs a live IndexedDB. An unexported
+          repair here would be an untested one.
+
+        · **R53·2b — the tap, and the partition.** One tap on the glance, and
+          `consistency.ts`'s spreads split by it.

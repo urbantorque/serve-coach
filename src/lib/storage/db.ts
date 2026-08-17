@@ -15,7 +15,7 @@ import { LEGACY_SCORING_VERSION, SCORING_VERSION, type Analysis } from '../analy
 export type Session = Omit<Analysis, 'frames'>
 
 const DB_NAME = 'serve-coach'
-const DB_VERSION = 2
+const DB_VERSION = 3
 const STORE = 'sessions'
 
 /**
@@ -42,6 +42,33 @@ const STORE = 'sessions'
  */
 const PRACTICE_STORE = 'practice'
 
+/**
+ * What the player says about a serve, as opposed to what the camera measured.
+ *
+ * A third store for the reason `PRACTICE_STORE` above is a second one, and the
+ * argument is worth restating because it is what decides this cannot be a field
+ * on the report. Correcting the handedness, changing the serve type or flicking
+ * to another serve in the clip all re-run the pipeline and call `saveSession`
+ * with a fresh `Analysis` — which carries nothing player-side — so a field on
+ * the row is silently erased by the most ordinary thing anybody does on the
+ * report screen. Preserving it would mean reading the row back before every
+ * save, and nearly all of a row is base64 keyframe images: the exact cost the
+ * routine prune was rewritten to stop paying.
+ *
+ * NAMED FOR WHAT IT HOLDS, not for the one field it holds today. R53·2 needs to
+ * know whether a serve was a first or a second; R56 will need to know whether it
+ * went in. Both are the same kind of claim — the player's, about one serve,
+ * outliving the report — and two stores for one idea would be two upgrade paths
+ * and two normalisers.
+ *
+ * KEYED BY THE REPORT'S OWN ID, so a tag dies with the report the prune ladder
+ * drops. Deliberate, and the opposite of the practice log's lifetime: a tag
+ * about a serve nobody can look at any more is not worth the row it sits in,
+ * where a record of having done a drill is about the player rather than about
+ * one clip.
+ */
+const TAG_STORE = 'serveTags'
+
 let dbPromise: Promise<IDBDatabase> | null = null
 
 function open(): Promise<IDBDatabase> {
@@ -60,6 +87,11 @@ function open(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(PRACTICE_STORE)) {
         const store = db.createObjectStore(PRACTICE_STORE, { keyPath: 'id' })
         store.createIndex('doneAt', 'doneAt')
+      }
+      // Same existence guard, same reason. A database at version 2 gains this
+      // one; a fresh install gets all three in a single upgrade.
+      if (!db.objectStoreNames.contains(TAG_STORE)) {
+        db.createObjectStore(TAG_STORE, { keyPath: 'id' })
       }
     }
     req.onsuccess = () => {
@@ -1107,3 +1139,77 @@ function usableTriage(raw: Analysis['triage']): Analysis['triage'] {
       : [],
   }
 }
+
+/* ------------------------------------------------ what the player says it was */
+
+/**
+ * One player-side fact about one serve.
+ *
+ * `serveNumber` is `1` or `2` and nothing else — no `undefined` third state, and
+ * no inference. R53·1 established that a basket cannot be told apart by
+ * position or by measurement: the 18 sd separation the rig shows is the
+ * separation that was dialled, and "serves arrive in pairs" is a fact about how
+ * people practise rather than about a clip. So this is a tap or it is absent,
+ * and absent means nobody said.
+ */
+export interface ServeTag {
+  /** The report's own id. */
+  id: string
+  serveNumber: 1 | 2
+  /** When the player said so — not when the serve was hit. */
+  taggedAt: number
+}
+
+/**
+ * A stored tag, or nothing.
+ *
+ * Same door every other stored shape in this file has, for the same reason:
+ * these outlive the code that wrote them. `serveNumber` is checked against its
+ * two legal values rather than for being a number, because a 3 here would
+ * partition a basket into a bucket no screen draws.
+ */
+/*
+ * EXPORTED, UNLIKE THE REPAIRS ABOVE, and what can reach it is the difference.
+ * `usableConsistency` and its neighbours stay private because `normalise` is a
+ * public door onto them — a test hands it a stored row and reads what comes
+ * back. This has no such door: the only public path is `listServeTags`, which
+ * needs a live IndexedDB, and the suite runs in Node. An unexported repair here
+ * would be an untested one.
+ */
+export function normaliseServeTag(raw: unknown): ServeTag | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const t = raw as Partial<ServeTag>
+  if (typeof t.id !== 'string' || !t.id) return undefined
+  if (t.serveNumber !== 1 && t.serveNumber !== 2) return undefined
+  if (typeof t.taggedAt !== 'number' || !Number.isFinite(t.taggedAt)) return undefined
+  return { id: t.id, serveNumber: t.serveNumber, taggedAt: t.taggedAt }
+}
+
+export async function listServeTags(): Promise<ServeTag[]> {
+  const rows = await tx<unknown[]>('readonly', (s) => s.getAll() as IDBRequest<unknown[]>, TAG_STORE)
+  return rows.map(normaliseServeTag).filter((t): t is ServeTag => t !== undefined)
+}
+
+export async function tagServe(tag: ServeTag): Promise<void> {
+  await tx('readwrite', (s) => s.put(tag), TAG_STORE)
+}
+
+/** Untag. A tap on a phone is easy to make by accident — the practice log's rule. */
+export async function untagServe(id: string): Promise<void> {
+  await tx('readwrite', (s) => s.delete(id), TAG_STORE)
+}
+
+export async function clearServeTags(): Promise<void> {
+  await tx('readwrite', (s) => s.clear(), TAG_STORE)
+}
+
+/**
+ * The tags, by report id, for a screen holding a history.
+ *
+ * A `Map` rather than a list because every consumer asks "what did they say
+ * about this one" — partitioning a basket, labelling a chip — and a linear scan
+ * per serve over a sixty-report history is the shape that looks free until it is
+ * inside a render.
+ */
+export const tagsById = (tags: readonly ServeTag[]): Map<string, ServeTag> =>
+  new Map(tags.map((t) => [t.id, t]))
