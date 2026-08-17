@@ -239,6 +239,35 @@ export interface ServeDials {
   hipLead: number
   /** Sideways collapse of the spine by contact, in degrees. */
   spineLean: number
+  /**
+   * How far the hips travel sideways over the planted feet AFTER contact, in
+   * metres. The landing, which nothing in this rig could pose before it.
+   *
+   * A serve finishes on the front foot, and a serve that finishes badly falls
+   * across it — which loads the same lower back `spineLean` is about and the
+   * front knee besides. All of it happens after the ball has gone, in the span
+   * between contact and finish that `metrics.ts` measures nothing in.
+   *
+   * SEPARATE FROM `spineLean`, and the distinction is the point rather than a
+   * detail. That one slides the shoulder girdle across a hip line whose feet
+   * stay under it, and it is finished by contact. This one leaves the girdle
+   * alone and moves the whole body across feet that have already planted, and it
+   * does not begin until contact. One is a spine bending during the swing; this
+   * is a body falling after it. A rig that could only pose the first would score
+   * a collapsed landing as a clean serve.
+   *
+   * Weighted entirely after contact — `track` clamps below its first key, so
+   * every frame at or before contact is untouched however this is dialled, and
+   * every measurement in the engine reads a window ending at contact. That is
+   * what lets this land without moving a single existing expectation.
+   *
+   * Metres of hip travel rather than an angle, because the leg it is limited by
+   * is a length: the ankle starts directly below its hip and can be carried
+   * sideways only until the leg is straight. Clamped there, and the clamp is
+   * about 0.17 m on the landing's own knee bend — past that a bigger number
+   * would silently stop meaning anything.
+   */
+  landingLean: number
   /** Someone standing around with the racket down — used to test rejection. */
   noSwing: boolean
   /**
@@ -410,6 +439,10 @@ export const CLEAN_SERVE: ServeDials = {
   pronation: 95,
   hipLead: 0.07,
   spineLean: 4,
+  // Zero rather than a token amount, for the reason `tossWobbleLateral` gives
+  // above: the clean rig has to keep the serve every existing expectation was
+  // written against. A serve landing dead square is not a claim about players.
+  landingLean: 0,
   noSwing: false,
   noise: 0,
   // Both default to the rig's previous behaviour — depth exactly as good as the
@@ -577,6 +610,26 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // Legs: bend splits evenly between hip and ankle, which is enough for the
     // knee angle to come out as dialled.
     const half = rad(kneeBend / 2)
+    /*
+     * The landing, and it is nothing at all until the ball has gone.
+     *
+     * `track` clamps below its first key, so this is exactly zero for every
+     * frame at or before contact whatever the dial says — which is what lets a
+     * landing be posed without moving one existing expectation, since every
+     * measurement in the engine reads a window ending at contact.
+     *
+     * The hips are this frame's origin, so hips travelling over planted feet is
+     * the feet travelling the other way. Done from that end deliberately: moving
+     * the origin would drag the whole upper body with it and turn a landing into
+     * a translation of the entire player.
+     */
+    const landingShift = track(
+      [
+        [U.contact, 0],
+        [1.35, d.landingLean],
+      ],
+      u,
+    )
     for (const side of ['left', 'right'] as const) {
       const hipI = side === 'left' ? LM.leftHip : LM.rightHip
       const kneeI = side === 'left' ? LM.leftKnee : LM.rightKnee
@@ -584,8 +637,30 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       const heelI = side === 'left' ? LM.leftHeel : LM.rightHeel
       const toeI = side === 'left' ? LM.leftToe : LM.rightToe
       const h = world[hipI]
-      const knee = lm(h.x, h.y + THIGH * Math.cos(half), h.z + THIGH * Math.sin(half))
-      const ankle = lm(knee.x, knee.y + SHIN * Math.cos(half), knee.z - SHIN * Math.sin(half))
+      let knee = lm(h.x, h.y + THIGH * Math.cos(half), h.z + THIGH * Math.sin(half))
+      let ankle = lm(knee.x, knee.y + SHIN * Math.cos(half), knee.z - SHIN * Math.sin(half))
+
+      /*
+       * Skipped rather than applied at zero, which is the rule this rig already
+       * follows for `trophyExternalRotation` and for the same reason: floating
+       * point does not promise that a zero-sized transform returns its input,
+       * and every band in `tiers.ts` was set against the numbers the untouched
+       * path produces. A landing dialled to nothing has to be bit-identical to
+       * no landing at all, not merely close.
+       */
+      if (landingShift !== 0) {
+        // Clamped to what the leg can reach. The ankle starts directly below its
+        // hip, so it can be carried sideways only until the leg is straight —
+        // about 0.17 m on the landing's own knee bend. Past that the leg would
+        // be over-extended and the solver would quietly shorten the segment
+        // instead, which is a rig telling a lie rather than refusing.
+        const drop = Math.abs(ankle.y - h.y)
+        const room = Math.sqrt(Math.max(0, (THIGH + SHIN - 1e-3) ** 2 - drop * drop))
+        const shift = clamp(landingShift, -room, room)
+        ankle = lm(ankle.x - acrossHips.x * shift, ankle.y, ankle.z - acrossHips.z * shift)
+        knee = solveKnee(h, ankle)
+      }
+
       world[kneeI] = knee
       world[ankleI] = ankle
       world[heelI] = lm(ankle.x, ankle.y + 0.03, ankle.z - 0.04)
@@ -867,6 +942,61 @@ function rotateAboutAxis(p: Landmark, a: Landmark, b: Landmark, theta: number): 
     z: a.z + vz * c + cz * s + kz * dot * (1 - c),
     visibility: p.visibility,
   }
+}
+
+/**
+ * Place a knee on a hip→ankle segment, keeping both leg segments honest.
+ *
+ * The same law of cosines `solveElbow` uses, written separately rather than
+ * generalising that one, because it hard-codes `UPPER_ARM` and `FOREARM` and a
+ * shared solver taking four arguments would be read at every call site to work
+ * out which limb it was about. Cycle 91 made the same call for its rotation
+ * helper: local beats general when the general version is one parameter away
+ * from being unreadable.
+ *
+ * EXACT AT REST, and this is what makes it safe to introduce. With `THIGH` equal
+ * to `SHIN` the rig's own leg puts the ankle directly below the hip, so this
+ * solver returns the same knee the straightforward placement does — the bulge
+ * comes out as `THIGH · sin(half)` either way. It is still not called at rest:
+ * the two are equal in arithmetic and not in floating point, and every band in
+ * `tiers.ts` was set against the numbers the existing path produces. See the
+ * guard at the call site.
+ *
+ * The knee bulges towards +z, which is the direction the rig's own leg bends and
+ * so the direction a knee in front of a player points.
+ */
+function solveKnee(hip: Landmark, ankle: Landmark): Landmark {
+  const dx = ankle.x - hip.x
+  const dy = ankle.y - hip.y
+  const dz = ankle.z - hip.z
+  const span = Math.hypot(dx, dy, dz)
+  const reach = Math.min(span, THIGH + SHIN - 1e-3)
+  const a = (THIGH ** 2 - SHIN ** 2 + reach ** 2) / (2 * Math.max(reach, 1e-4))
+  const h = Math.sqrt(Math.max(0, THIGH ** 2 - a * a))
+
+  const ux = dx / Math.max(span, 1e-6)
+  const uy = dy / Math.max(span, 1e-6)
+  const uz = dz / Math.max(span, 1e-6)
+
+  // +z with its component along the leg removed, which is the perpendicular a
+  // forward-pointing knee sits on. A leg lying exactly along z would leave this
+  // with no length, and cannot happen here — the rig's legs are within a few
+  // degrees of vertical — but it falls back rather than dividing by nothing.
+  let px = -ux * uz
+  let py = -uy * uz
+  let pz = 1 - uz * uz
+  const plen = Math.hypot(px, py, pz)
+  if (plen < 1e-6) {
+    px = 0
+    py = 0
+    pz = 1
+  } else {
+    px /= plen
+    py /= plen
+    pz /= plen
+  }
+
+  return lm(hip.x + ux * a + px * h, hip.y + uy * a + py * h, hip.z + uz * a + pz * h)
 }
 
 /**

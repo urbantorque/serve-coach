@@ -14,7 +14,7 @@
  */
 import { detectServe } from '../phases'
 import { measure } from '../metrics'
-import { sided } from '../geometry'
+import { LM, jointAngle, sided } from '../geometry'
 import { DRIFT_BUDGET, TRANSFORMS, budgetFor, decimate, driftBetween, rescale } from '../invariants'
 import { buildServe, CLEAN_SERVE, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
@@ -295,6 +295,120 @@ check('and past that the dial is measurably stretching, not rotating', () => {
   const stretched = forearmRatioAt(0.8)
   assert(stretched > 2, `at 0.8 the forearm was ${stretched.toFixed(2)}× the upper arm, expected the documented 3.35×`)
   note(`0.4 → ${forearmRatioAt(0.4).toFixed(2)}×, 0.8 → ${stretched.toFixed(2)}×`)
+})
+
+heading('The landing')
+
+/** A leg's two segments, and where its ankle is, at a named frame. */
+function legAt(dials: Partial<ServeDials>, at: 'contact' | 'finish') {
+  const frames = buildServe({ noise: 0, depthNoise: 0, depthBias: 0, seed: 7000, ...dials }, 50)
+  const skel = detectServe(frames, 50)
+  const f = frames[at === 'contact' ? skel.keys.contact : skel.keys.finish]
+  const span = (a: number, b: number) =>
+    Math.hypot(f.world[a].x - f.world[b].x, f.world[a].y - f.world[b].y, f.world[a].z - f.world[b].z)
+  const a = f.world[LM.leftAnkle]
+  return {
+    thigh: span(LM.leftHip, LM.leftKnee),
+    shin: span(LM.leftKnee, LM.leftAnkle),
+    ankle: [a.x, a.y, a.z] as [number, number, number],
+    kneeAngle: jointAngle(f.world[LM.leftHip], f.world[LM.leftKnee], f.world[LM.leftAnkle]),
+  }
+}
+
+check('the landing is an exact no-op at zero', () => {
+  /*
+   * The safety argument for adding the dial, and the same one
+   * `trophyExternalRotation` had to make. Every band in `tiers.ts` was set
+   * against the numbers this rig produced before the landing existed, so a
+   * landing dialled to nothing has to be the same arithmetic rather than a
+   * similar leg — which is why the call site skips it instead of applying a
+   * zero-sized shift and trusting floating point to return its input.
+   */
+  const before = legAt({}, 'finish')
+  const zero = legAt({ landingLean: 0 }, 'finish')
+  assert(
+    before.ankle.every((v, i) => Object.is(v, zero.ankle[i])),
+    `the ankle moved at zero: ${JSON.stringify(before.ankle)} → ${JSON.stringify(zero.ankle)}`,
+  )
+  assert(Object.is(before.kneeAngle, zero.kneeAngle), 'the knee angle moved at zero')
+})
+
+check('the landing moves the body without lengthening a leg', () => {
+  // The property the solver exists for: the knee is re-placed from the hip and
+  // the ankle by the law of cosines, so both segments survive a shift that moves
+  // the ankle a long way. A rig that stretched a shin to reach would report a
+  // fault nobody has.
+  const base = legAt({}, 'finish')
+  for (const metres of [0.04, 0.08, 0.12, 0.16]) {
+    const landed = legAt({ landingLean: metres }, 'finish')
+    assert(
+      Math.abs(landed.thigh - base.thigh) < 1e-9,
+      `at ${metres} m the thigh went ${base.thigh.toFixed(9)} → ${landed.thigh.toFixed(9)}`,
+    )
+    assert(
+      Math.abs(landed.shin - base.shin) < 1e-9,
+      `at ${metres} m the shin went ${base.shin.toFixed(9)} → ${landed.shin.toFixed(9)}`,
+    )
+    const moved = Math.hypot(
+      landed.ankle[0] - base.ankle[0],
+      landed.ankle[1] - base.ankle[1],
+      landed.ankle[2] - base.ankle[2],
+    )
+    assert(moved > 0.01, `at ${metres} m the ankle barely moved (${moved.toFixed(4)} m) — the dial did nothing`)
+  }
+  note(`thigh and shin hold to 1e-9 across 0.04–0.16 m of landing`)
+})
+
+check('nothing at or before contact knows the landing happened', () => {
+  /*
+   * The claim that lets this dial land without moving one existing expectation.
+   * Every measurement in the engine reads a window ending at contact, and the
+   * landing track clamps to zero below its first key — so a serve dialled to
+   * collapse has to be bit-identical to a clean one everywhere the engine looks.
+   *
+   * Asserted on the whole body rather than on the leg, because the failure this
+   * is guarding against is the landing leaking upwards through the hip origin.
+   */
+  const clean = buildServe({ noise: 0, depthNoise: 0, depthBias: 0, seed: 7000 }, 50)
+  const landed = buildServe(
+    { noise: 0, depthNoise: 0, depthBias: 0, seed: 7000, landingLean: 0.12 },
+    50,
+  )
+  const skel = detectServe(clean, 50)
+  let worst = 0
+  for (let i = 0; i <= skel.keys.contact; i++) {
+    for (let k = 0; k < clean[i].world.length; k++) {
+      const a = clean[i].world[k]
+      const b = landed[i].world[k]
+      worst = Math.max(worst, Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z))
+    }
+  }
+  assert(worst === 0, `a landmark moved ${worst.toFixed(9)} m at or before contact`)
+
+  // And it does move afterwards, so the check above is a boundary rather than a
+  // dial that does nothing at all.
+  const after = detectServe(landed, 50)
+  const ca = clean[after.keys.finish].world[LM.leftAnkle]
+  const la = landed[after.keys.finish].world[LM.leftAnkle]
+  const moved = Math.hypot(ca.x - la.x, ca.y - la.y, ca.z - la.z)
+  assert(moved > 0.01, `the ankle moved only ${moved.toFixed(4)} m by the finish`)
+  note(`contact identical to 0 m, ankle ${moved.toFixed(3)} m across by the finish`)
+})
+
+check('the landing is clamped where the leg runs out rather than stretching', () => {
+  // Asked for far more travel than a leg has, and the documented behaviour is a
+  // clamp. The alternative is the solver quietly shortening a segment to reach,
+  // which is a rig telling a lie rather than refusing — the one failure mode
+  // this whole dial was written to avoid.
+  const far = legAt({ landingLean: 0.6 }, 'finish')
+  const base = legAt({}, 'finish')
+  assert(
+    Math.abs(far.thigh - base.thigh) < 1e-9 && Math.abs(far.shin - base.shin) < 1e-9,
+    `an over-asked landing stretched the leg: thigh ${far.thigh.toFixed(6)}, shin ${far.shin.toFixed(6)}`,
+  )
+  // Straight, or as near as the clamp's own margin allows.
+  assert(far.kneeAngle > 170, `the clamped leg is not straight (knee ${far.kneeAngle.toFixed(1)}°)`)
+  note(`0.6 m asked, leg clamped straight at ${far.kneeAngle.toFixed(1)}° with segments intact`)
 })
 
 report()
