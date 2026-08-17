@@ -2722,12 +2722,21 @@ check('the three search windows are windows, and seconds suit them', () => {
   assert(t(k.toss) - t(k.ready) > 0, 'the ready keyframe is not before the toss')
 })
 
-check('the finish keyframe holds still in seconds and drifts as a share of the serve', () => {
+check('the finish keyframe holds still as a share of the serve, and drifts in seconds', () => {
   /*
-   * THE FINDING. Both halves asserted, because either alone is unremarkable: a
-   * fixed second offset is fine if the serves are the same length, and a drifting
-   * share is fine if that is what somebody chose. Together they say the landing
-   * is read at a different point of two players' motions.
+   * THE FINDING, INVERTED — R72 fixed it, and this check's own failure message
+   * asked to be told: "so this audit finding has been fixed or has gone away,
+   * and the entry should say so".
+   *
+   * It used to assert both halves of the defect, because either alone is
+   * unremarkable: a fixed second offset is fine if the serves are the same
+   * length, and a drifting share is fine if somebody chose it. Together they
+   * said the landing was read at a different point of two players' motions.
+   *
+   * Now both halves are asserted the other way round, and the same logic
+   * applies: the share holding is only meaningful beside the seconds moving,
+   * because a placement that did not vary in seconds at all would mean the
+   * tempo dial had stopped working rather than that the fix had landed.
    */
   const at = (motionSeconds: number) => {
     const secs: number[] = []
@@ -2752,13 +2761,15 @@ check('the finish keyframe holds still in seconds and drifts as a share of the s
   note(`  1.7s serve: ${slow.sec.toFixed(3)}s after contact, ${slow.share.toFixed(3)} of the motion`)
 
   assert(
-    Math.abs(fast.sec - slow.sec) < 0.06,
-    `the offset is not fixed in seconds after all: ${fast.sec.toFixed(3)} against ${slow.sec.toFixed(3)}`,
+    Math.abs(fast.share - slow.share) < 0.08,
+    `the share still drifts with tempo: ${fast.share.toFixed(3)} against ${slow.share.toFixed(3)}, ` +
+      'so the landing is still read at a different point of two motions',
   )
   assert(
-    fast.share - slow.share > 0.08,
-    `the share no longer drifts with tempo — ${fast.share.toFixed(3)} against ${slow.share.toFixed(3)} — ` +
-      'so this audit finding has been fixed or has gone away, and the entry should say so',
+    Math.abs(fast.sec - slow.sec) > 0.03,
+    `the placement no longer varies in seconds at all — ${fast.sec.toFixed(3)} against ` +
+      `${slow.sec.toFixed(3)} — which means the tempo dial stopped working rather than that ` +
+      'the share is tracking it',
   )
 })
 

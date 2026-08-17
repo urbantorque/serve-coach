@@ -43,6 +43,57 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 53 · Cycle A — the engine · `A5b · R72`
+
+**Orchestrator.** Move the finish keyframe to a share of the serve. R44's
+warning has been attached to this since round 33: moving a placement in
+`phases.ts` re-derives every noise floor built on it.
+
+**The defect, measured.** Fixed at half a second, contact→finish held at
+0.42–0.44 s while trophy→contact ran **0.320 s on a quick motion and 0.600 s on
+a slow one**. The same instant is **1.31 swings after contact for one player and
+0.73 for another** — two people's landings read at different points of their own
+follow-throughs, then compared as though they were the same moment.
+
+**One swing after contact**, in seconds, through the clock.
+
+**And the first version was wrong in exactly the way this file exists to
+prevent.** I wrote `contact + (contact - trophy)` — a count of *frames* — with a
+comment claiming it "needs no clock". A frame index is not a time on a clip
+whose samples did not arrive evenly, which is the whole reason `clockOf` exists.
+The "keyframes land at the same real times when a third of the frames are lost"
+check caught it at **60 ms of drift** on the bursty fixture.
+
+**Two existing checks pinned the old behaviour and both were rewritten, not
+satisfied.** One of them is round 33's own finding, which asserted the defect —
+and its failure message had asked for exactly this: *"so this audit finding has
+been fixed or has gone away, and the entry should say so"*. It now asserts the
+inverse, both halves, for the same reason it asserted both before: a share
+holding is only meaningful beside seconds moving, or the tempo dial has stopped
+working rather than the fix having landed.
+
+**Number diff: 19 figures moved, 19 replaced, none lost.** That is R44's stated
+cost, paid deliberately.
+
+**And the one calibration that can be checked moved the right way.** Round 52
+found a square landing reading 0.0045 against a stated floor of 0.0035 — 29%
+above. After this change it reads **0.0042, 20% above**. The placement was part
+of why that floor looked stale, and `R77b` gets cheaper rather than harder.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The 19 moved figures are listed rather than summarised, and the change was diffed against the tree before it, not asserted to be safe |
+| Architecture | pass | R33 refuted three quarters of the audit that produced this; only the placement moved, and the three search windows stayed in seconds where they belong |
+| Product | pass | Nothing on screen changed wording. What changed is that two players' landings are now read at the same point of their own serves |
+| Performance | pass | One subtraction and one clock walk, at keyframe time |
+
+**Gate.** typecheck clean · lint clean · production build clean · **1197 checks,
+0 failed, exit 0**.
+
+---
+
 ### Round 52 · Cycle F — QA and edge cases · `F4 · audit 10`
 
 **Orchestrator.** Re-run existing tests against their own canaries. Not chosen

@@ -93,11 +93,22 @@ check('keyframes land at the same real times when a third of the frames are lost
   }
 })
 
-check('the finish stays half a second after contact however many frames are lost', () => {
-  // The sharpest form of the same bug, because this keyframe is not searched for
-  // at all — it is contact plus a fixed span, so whatever the span is measuring
-  // is exactly what comes out. In index space it read 0.71 s on a clip missing
-  // 30% of its frames and 0.83 s on one missing 40%.
+check('the finish holds its distance from contact however many frames are lost', () => {
+  /*
+   * The sharpest form of the same bug, because this keyframe is not searched for
+   * at all — it is contact plus a span, so whatever the span is measuring is
+   * exactly what comes out. In index space it read 0.71 s on a clip missing 30%
+   * of its frames and 0.83 s on one missing 40%.
+   *
+   * R72 CHANGED WHAT THE SPAN IS, NOT WHETHER IT IS TIMED. It was half a second;
+   * it is now one swing — trophy to contact, measured in seconds and placed
+   * through the clock. So the band moves to where one swing of this fixture
+   * actually lands, and the property under test is unchanged and is the only one
+   * that ever mattered here: dropping frames must not move it.
+   *
+   * The first version of R72 measured the swing in frame indices and this check
+   * caught it, at 60 ms of drift on the bursty clip.
+   */
   const full = padded(buildServe({}, FPS), 1.2, 1.0, FPS)
   for (const [label, keep] of [
     ['complete', () => true],
@@ -109,7 +120,7 @@ check('the finish stays half a second after contact however many frames are lost
     const keys = detectServe(frames, FPS).keys
     const held = frames[keys.finish].t - frames[keys.contact].t
     note(`${label}: ${frames.length} of ${full.length} frames, finish at contact + ${held.toFixed(3)}s`)
-    within(held, 0.45, 0.5, `${label}: finish after contact`)
+    within(held, 0.40, 0.47, `${label}: finish after contact`)
   }
 })
 

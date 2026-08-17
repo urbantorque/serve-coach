@@ -51,8 +51,13 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
 - [x] **A5 · audit 8** — Windows in `phases.ts` sized in file seconds. *(Round
       33 — right about one of four. The finish keyframe drifts 32% as a share of
       the motion; the three search windows are correctly in seconds.)*
-- [ ] **A5b · R72** — Move the finish keyframe to a share of the serve. Needs a
-      number diff and a re-derivation of the landing calibration — R44's warning.
+- [x] **A5b · R72** — The finish keyframe is one swing after contact, measured in
+      seconds and placed through the clock. Fixed, it held at 0.42–0.44 s while the
+      swing ran 0.320–0.600 s: **the same instant was 1.31 swings after contact for
+      one player and 0.73 for another.** Number-diffed — 19 figures moved, which is
+      the cost R44 named — and the one calibration that can be checked moved the
+      right way: a square landing reads **20% above its floor, down from 29%**.
+      Round 33's finding, pinned as a check, now asserts the opposite.
 
 ## Cycle B — Biomechanics and fault detection
 

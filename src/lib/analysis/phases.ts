@@ -438,7 +438,39 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   const drop = sharpen(racketPostureSharp, argMinIn(racketPosture, trophy, beforeContact))
 
   const ready = findReady(toss, tossPosture, clock.at(toss, -2.0))
-  const finish = clock.at(contact, 0.5)
+  /*
+   * The finish, as a share of this player's own swing rather than half a second.
+   *
+   * R71's audit called out four windows in this file as sized in file seconds
+   * and R33 refuted three of them: `ready`, `toss` and `trophy` are *search*
+   * windows, which only have to be generous, and narrowing them by tempo would
+   * make a fast serve harder to find for no gain.
+   *
+   * THIS ONE IS A PLACEMENT, NOT A WINDOW, and it decides where the landing gets
+   * read. Fixed, it lands at very nearly the same clock time on every clip while
+   * the swing it follows does not: measured on the rig, contact→finish holds at
+   * 0.42–0.44 s while trophy→contact runs 0.320 s on a quick motion and 0.600 s
+   * on a slow one. **The same instant is 1.31 swings after contact for one
+   * player and 0.73 for another** — so two people's landings are read at
+   * different points of their own follow-throughs, and the reading is compared
+   * across them as though it were the same moment.
+   *
+   * One swing after contact, which is a coincidence worth stating rather than
+   * hiding: at the rig's default motion the old fixed offset and this share land
+   * on the same frame, so nothing about a default clip moves. That is not why
+   * the number was chosen — it is what makes the change auditable, the same
+   * discipline `pinpointSlide` shipped under.
+   *
+   * MEASURED IN SECONDS AND PLACED THROUGH THE CLOCK, and the first version of
+   * this was not. `contact - trophy` is a count of *frames*, and the whole
+   * reason `clockOf` exists is that a frame index is not a time on a clip whose
+   * samples did not arrive evenly — a third of the frames dropped, and the same
+   * count spans half again as much serve. The existing "keyframes land at the
+   * same real times when a third of the frames are lost" check caught it at
+   * 60 ms of drift on the bursty fixture, which is what that check is for.
+   */
+  const swingSeconds = frames[contact].t - frames[trophy].t
+  const finish = clock.at(contact, swingSeconds)
 
   const keys = orderKeys({ ready, toss, trophy, drop, contact, finish }, frames.length)
 
