@@ -81,6 +81,14 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
       wrong one. Number-diffed: nothing moved but the defect's own figure
       disappearing. R59's and R80's checks both closed, as their messages asked.
 
+- [x] **A7 · R86** — The handover, held to disk. `PROGRESS.md`'s "Resuming this
+      loop" was **36 rounds stale**: next round 39 against a real 76, tag
+      `loop-green-8` against `loop-green-14`, 1152 checks against 1221. The same
+      defect as the four stale figures this session found — a recorded statement
+      that quietly stopped being true — and the worst place for it, because a cold
+      session cannot spot that it is wrong. Two facts now checked against `git` and
+      against the suites themselves; the prose is not, and the file says so.
+
 ## Cycle B — Biomechanics and fault detection
 
 Kinetic chain, trophy metrics, what the body actually did.

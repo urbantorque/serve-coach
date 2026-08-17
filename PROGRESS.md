@@ -43,6 +43,66 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 75 · Cycle A — the engine · `A7 · R86` (new)
+
+**Orchestrator.** The last round of the loop. Every lettered row in Cycle A is
+closed, so the Orchestrator generates — and the most useful thing left is the one
+document a cold session reads first.
+
+**`PROGRESS.md`'s "Resuming this loop" was 36 rounds stale.** It said the next
+round was 39, the last tag was `loop-green-8`, and the suite stood at 1152
+checks. The truth: **76, `loop-green-14`, 1221.**
+
+**That is the defect this session found four other times** — a 315 ms jump nobody
+could reproduce, a landing floor 29% out, a tempo confound measured at the wrong
+radius, a register deviation 47% off. A recorded statement that quietly stopped
+being true.
+
+**And this is the worst place for it.** Every other stale figure was read by
+somebody with context, who could notice. The handover is read by somebody with
+none — which is the entire reason they are reading it.
+
+**Refreshed, and now checked.** The two facts a resuming session *acts* on: the
+tag it number-diffs against, and the check count it expects green. Read from the
+file, compared to `git` and to the suites themselves.
+
+**Tags sorted numerically, not lexically** — `loop-green-14` sorts before
+`loop-green-8` as a string, and that failure would look like a checked handover
+pointing six gates back.
+
+**The band is 15%, not equality, and the reason is honest**: a `check` inside a
+loop runs many times and the scan counts the call site once, so the declared
+count is a floor. 36 rounds of drift was 69 checks; anything that far out is what
+this catches.
+
+**What it does not check, stated in the file: the prose.** Whether the pointer is
+right, whether the hazards are still hazards. None of that is mechanically
+decidable, and a gate implying it read the whole handover would be worse than one
+that reads two lines.
+
+**Three standing findings added to the handover for whoever comes next:**
+- *Take the constant, not the number* — R52·1 and R52·2 reached opposite
+  conclusions from a borrowed smoothing radius.
+- *A canary that stays green is a finding, not a relief* — four gates this
+  session passed canaries they should have failed, and every time the fix was the
+  gate.
+- Add `|kB` to the number-diff filter now that the bundle gate prints sizes.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The round's subject is the loop's own record being wrong, and it fixes the record rather than the report of it |
+| Architecture | pass | Scope admitted: two lines, not the prose, and the file says which |
+| Product | pass | Nothing user-facing — this is what makes the next 75 rounds possible |
+| Performance | pass | One git call and one pass over the suites |
+
+**Gate.** typecheck clean · lint clean · **1223 checks, 0 failed, exit 0** (+2).
+Canaried by restoring the stale tag and count — reddened with the exact sentence
+the staleness would have caused.
+
+---
+
 ### Round 74 · consolidation gate
 
 **Orchestrator.** Sixth cycle since `loop-green-13`. Number diff, boot, tag.
@@ -3413,9 +3473,11 @@ The loop is designed to be picked up cold, and everything a fresh session needs
 is on disk:
 
 1. **`BACKLOG.md`** — the six focus cycles with every task's status. The next
-   round is the head of the next cycle in rotation. Round 38 was the gate, so
-   **round 39 is Cycle A** — the engine. Head items `A4b · R61·2` (build
-   `planSharedPass`) and `A5b · R72`.
+   round is the head of the next cycle in rotation. Round 74 was the gate, so
+   **round 76 is Cycle B**. Every lettered row in A, B, C, D, E and F is now
+   closed or blocked; the open ones are `B5d · R52·3` (the hitch needs its own
+   series at its own derived radius), `C4b`, `R64` (unblocked and justified,
+   costs a landing re-derivation), and the audit rotation.
 2. **`NEXT.md`** — what each round settled, and why. The source of truth for
    status; `BACKLOG.md` is a view over it.
 3. **This file** — how each round ran: the critic's citations, the canaries, the
@@ -3423,18 +3485,35 @@ is on disk:
 4. **`.agent_state/cycle_summary.json`** — `unattendedLoop.session_2026_08_17`
    carries the three consolidation records.
 
-**Last green:** `loop-green-8` at round 38. Tree clean, 1152 checks, exit 0.
+**Last green:** `loop-green-14` at round 74. Tree clean, **1221 checks**, exit 0.
 
-**The next consolidation is due at round 44** (blocks run in sixes; gates have run
-at 6, 12, 19, 25, 32 and 38).
+**The next consolidation is due at round 80** (blocks run in sixes; gates have run
+at 6, 12, 19, 25, 32, 38, 44, 50, 56, 62, 68 and 74).
+
+**This handover was 36 rounds stale when round 75 found it**, which is the defect
+this session found four other times — a recorded statement that quietly stopped
+being true. It is now checked: `handover.test.ts` holds the tag and the check
+count above against `git` and against the suite's own tally.
 
 **The gate's number diff excludes instrument readings.** Filter the suite output
 through `grep -vE "ms( \(informational\))?$|bytes|noise floor"` before extracting
 figures. Those lines measure the machine and move run to run; round 38 found five
 gates had been diffing that noise and calling it clean. Everything left — 249
 figures — is a reading of the serve and must not move without a round saying why.
-The comparison worktree needs a junction to the main `node_modules`, or its suite
-cannot start and the diff silently compares one number against 271.
+Add `|kB` to that filter now that `bundle.test.ts` prints sizes. The comparison
+worktree needs a junction to the main `node_modules`, or its suite cannot start
+and the diff silently compares one number against the whole set.
+
+**Take the constant, not the number.** R52·1 and R52·2 reached opposite
+conclusions about one reading because the checks smoothed at a radius the engine
+does not use. `reachable.test.ts` gates it now. The same rule caught four stale
+figures this session — a 315 ms jump nobody could reproduce, a landing floor 29%
+out, a tempo confound at the wrong radius, and a register deviation 47% off.
+
+**A canary that stays green is a finding, not a relief.** Four gates this session
+passed canaries they should have failed: a comment containing the prop's name, an
+import counted as a call, a coverage check too weak to see per-detector counts,
+and a published reading nothing read. In every case the fix was the gate.
 
 **Standing hazard: never use `git checkout --` for a canary.** It has destroyed a
 round's work twice (rounds 3 and 5) and came within a shell parse error of a
