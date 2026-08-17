@@ -112,7 +112,6 @@ Where state lives, what it costs, what it does to a warm phone.
 - [ ] **D2 · R55 spike** — The profiles migration, not the feature: every stored
       report predates profiles and must land under one default player with no
       prompt. Produces the split plan.
-- [ ] **D3 · audit 5** — A stored-data shape that predates its current writer.
 - [x] **D4 · R67** — The stored byte cost of a report, re-measured against
       `footprint.test.ts` after Phase 8's new fields. A report that grew and
       nobody noticed is the failure this budget exists to catch. *(Round 4 — the
@@ -151,10 +150,12 @@ Tests with teeth, refusals, and the things that only break on somebody's phone.
 - [x] **F0 · R66** — A tally that does not cover its own file. *(Round 18 — the
       guard found a fourth instance on its first run, in `triage.test.ts`, and
       that one predates this session.)*
-- [ ] **F1 · R65** — `triage.quality` has no stored-shape guard, and R49·1 found
-      it. Needs a decision R49·1 had no business making: there is no honest
-      default for a missing `confidence`, so the fitting pattern is `consistency`'s
-      — dropped rather than repaired.
+- [x] **F1 · R65** — `triage.quality` has a stored-shape guard. *(Round 23 —
+      and the entry's stated consumers do not exist; the first version broke the
+      restore path and an existing check caught it.)*
+- [x] **D3 · audit 5** — A stored-data shape that predates its current writer.
+      *(Round 23 — the answer was R65, already named. Done rather than
+      duplicated.)*
 - [ ] **F2 · R62** — Court lines, listed to be refused rather than built. The
       finished round is a README line recording the cost.
 - [ ] **F3 · audit 1** — A refusal path nobody has counted on real footage.

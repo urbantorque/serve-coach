@@ -198,11 +198,11 @@ check('the camera angle is recovered from the shoulder line', () => {
   const sideOn = pipeline({ cameraYaw: 88 })
   const angled = pipeline({ cameraYaw: 45 })
   assert(
-    sideOn.result.quality.yaw_deg > angled.result.quality.yaw_deg,
-    `side-on read as ${sideOn.result.quality.yaw_deg}°, angled as ${angled.result.quality.yaw_deg}°`,
+    sideOn.result.quality!.yaw_deg > angled.result.quality!.yaw_deg,
+    `side-on read as ${sideOn.result.quality!.yaw_deg}°, angled as ${angled.result.quality!.yaw_deg}°`,
   )
-  assert(sideOn.result.quality.depth_unreliable, 'a dead side-on camera claimed to see depth')
-  assert(!angled.result.quality.depth_unreliable, 'a three-quarter view was called unreadable')
+  assert(sideOn.result.quality!.depth_unreliable, 'a dead side-on camera claimed to see depth')
+  assert(!angled.result.quality!.depth_unreliable, 'a three-quarter view was called unreadable')
 })
 
 /* ============================================================ blur math === */
@@ -501,7 +501,7 @@ heading('Clips as they actually arrive')
 check('a phone-rate clip is still read', () => {
   const { result } = pipeline({}, PHONE_FPS)
   assert(result.status === 'ok', `a 30 fps clip was refused as ${result.reason}`)
-  note(`${result.quality.swing_samples} swing samples at ${PHONE_FPS} fps`)
+  note(`${result.quality!.swing_samples} swing samples at ${PHONE_FPS} fps`)
 })
 
 check('the same serve gets the same verdict at every frame rate', () => {
@@ -600,8 +600,8 @@ check('a shaky, low-light, phone-rate clip does not crash and reports honestly',
     assert(Boolean(result.reason), 'refused with no reason')
     note(`refused: ${result.reason}`)
   } else {
-    note(`read at confidence ${result.quality.confidence}`)
-    assert(result.quality.confidence <= 1, 'confidence ran past its own scale')
+    note(`read at confidence ${result.quality!.confidence}`)
+    assert(result.quality!.confidence <= 1, 'confidence ran past its own scale')
   }
 })
 
@@ -623,7 +623,7 @@ check('nothing in the ensemble of bad clips throws', () => {
           'a refusal came back with no reason',
         )
         if (result.status === 'rejected') refused++
-        else if (result.quality.confidence < 0.7) hedged++
+        else if (result.quality!.confidence < 0.7) hedged++
       }
     }
   }
@@ -641,8 +641,8 @@ check('nothing in the ensemble of bad clips throws', () => {
 })
 
 check('confidence falls as the clip gets worse', () => {
-  const good = pipeline({}).result.quality.confidence
-  const rough = pipeline({ noise: 0.012, dropout: 0.2, seed: 31 }, PHONE_FPS).result.quality.confidence
+  const good = pipeline({}).result.quality!.confidence
+  const rough = pipeline({ noise: 0.012, dropout: 0.2, seed: 31 }, PHONE_FPS).result.quality!.confidence
   assert(rough < good, `a rough clip scored ${rough} against a clean ${good}`)
   note(`confidence ${good} clean, ${rough} scrappy`)
 })

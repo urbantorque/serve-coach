@@ -577,34 +577,7 @@ export function normalise(raw: unknown): Session | undefined {
       why: 'This report was saved by an older version of the app, so some detail is missing.',
       drill: { name: '', how: '', reps: '' },
     },
-    /*
-     * The triage block, with any unreadable injury flag dropped.
-     *
-     * `injuryNotes` destructures `{ flag, severity }` off every entry, so one
-     * null in the list is the report gone. It already skips a flag this build
-     * has no copy for — the case it was written against, a row from a newer
-     * version — and that guard cannot fire on an entry that is not an object.
-     */
-    triage: s.triage && {
-      ...s.triage,
-      /*
-       * `yaw_measured` is younger than the block it sits on, so every report
-       * filed before it has a `quality` without one. Absent reads as false, and
-       * the direction matters: the field exists so a comparison can refuse a
-       * pair whose camera angle was never actually read, and defaulting a row we
-       * know nothing about to `true` would wave through exactly the pairs it was
-       * added to stop. A serve that really was measured and predates the field
-       * loses a comparison it could have had, which is the cheap side of the
-       * trade and the one this codebase takes everywhere else.
-       */
-      quality: s.triage.quality && {
-        ...s.triage.quality,
-        yaw_measured: s.triage.quality.yaw_measured === true,
-      },
-      injury_risk: Array.isArray(s.triage.injury_risk)
-        ? s.triage.injury_risk.filter((i) => typeof i?.flag === 'string')
-        : [],
-    },
+    triage: usableTriage(s.triage),
     // Dropped rather than repaired when it is the wrong shape. Every other field
     // here is load-bearing and worth defaulting; the spreads are an extra a
     // report is complete without, and the panel that draws them reaches through
@@ -1061,5 +1034,76 @@ export async function safely<T>(op: () => Promise<T>, fallback: T): Promise<T> {
     return await op()
   } catch {
     return fallback
+  }
+}
+
+/**
+ * The triage block, shaped so nothing downstream reads a field that is not there.
+ *
+ * R65, and **its stated premise turned out to be wrong**, which is worth having
+ * in the file rather than only in the ledger. That entry said "the consumers in
+ * `verdict.ts` read those without asking". There are none: a sweep for readers
+ * of `triage.quality` outside tests finds exactly one, `pairTracks`, and it
+ * guards its own reads.
+ *
+ * SO WHY BUILD THE GUARD. Because `pairTracks` had to write that defence itself,
+ * in R49·1, precisely because there was none here — and the next consumer would
+ * write a third. That is how `withChain` ended up with separate guards for the
+ * chain, the rotation and the landing: each arrived, found no shape check, and
+ * added its own. One at the door is cheaper than one per reader, and a reader
+ * that forgets is a blank screen behind the ErrorBoundary.
+ *
+ * `pairTracks` KEEPS ITS OWN, and that is not redundancy. `Pairable` accepts a
+ * live `Analysis`, which never passes through this function at all, so the local
+ * check is the only one on that path.
+ *
+ * DROPPED RATHER THAN REPAIRED, which is the decision R49·1 declined to make and
+ * left named. There is no honest default for a missing `confidence`: inventing
+ * 0.9 manufactures a measurement, and 0 refuses every clip that was fine. The
+ * whole block goes instead — and `triage` is optional on `Analysis`, so a report
+ * without one is a state every pre-triage report already reaches. What is lost is
+ * the verdict and the primary flaw; what is not lost is the scores, the
+ * filmstrip, the trend and the practice card.
+ *
+ * The five fields are the shape as shipped. `yaw_measured` is deliberately not
+ * among them — it is younger than the block and absent on every report filed
+ * before it, so requiring it would drop most of a real history. It is repaired to
+ * `false` instead, for the reason R49·1 gives: a comparison must refuse a pair
+ * whose camera angle was never read, and defaulting an unknown row to `true`
+ * waves through exactly what the field was added to stop.
+ */
+function usableTriage(raw: Analysis['triage']): Analysis['triage'] {
+  if (!raw || typeof raw !== 'object') return undefined
+  const q = raw.quality as Partial<NonNullable<Analysis['triage']>['quality']> | undefined
+  const shaped =
+    !!q &&
+    typeof q.confidence === 'number' &&
+    typeof q.blur === 'number' &&
+    typeof q.roll_deg === 'number' &&
+    typeof q.yaw_deg === 'number' &&
+    typeof q.swing_samples === 'number'
+  return {
+    ...raw,
+    /*
+     * The BLOCK is dropped, not the triage, and an existing check is what taught
+     * me the difference. Dropping the whole triage lost `status`, and
+     * `importBackup` refuses to restore a clip the engine rejected by reading
+     * exactly that — so a rejected row came back into a history that had refused
+     * it. A rejected clip legitimately has readings nobody took; the rejection is
+     * the one thing about it that must survive.
+     */
+    quality: shaped
+      ? { ...(raw.quality as NonNullable<typeof raw.quality>), yaw_measured: q?.yaw_measured === true }
+      : undefined,
+    /*
+     * Any unreadable injury flag dropped. `injuryNotes` destructures
+     * `{ flag, severity }` off every entry, so one null in the list is the
+     * report gone. It already skips a flag this build has no copy for — the case
+     * it was written against, a row from a newer version — and that guard cannot
+     * fire on an entry that is not an object.
+     */
+    injury_risk: Array.isArray(raw.injury_risk)
+      ? raw.injury_risk.filter((i) => typeof i?.flag === 'string')
+      : [],
   }
 }

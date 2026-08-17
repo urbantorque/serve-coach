@@ -362,7 +362,7 @@ check('a quality block stored before yaw_measured does not come back claiming on
   )
   assert(back?.triage !== undefined, 'a triage block from an older build was dropped entirely')
   assert(
-    back!.triage!.quality.yaw_measured === false,
+    back!.triage!.quality!.yaw_measured === false,
     'a report stored before yaw_measured existed came back claiming its yaw was measured',
   )
   // And nothing else in the block moved on the way through.
@@ -384,7 +384,7 @@ check('a quality block stored before yaw_measured does not come back claiming on
     }),
   )
   assert(
-    fresh!.triage!.quality.yaw_measured === true,
+    fresh!.triage!.quality!.yaw_measured === true,
     'a measured yaw was downgraded on the way out of storage',
   )
 })
@@ -520,6 +520,91 @@ check('a landing written by this build survives the read intact', () => {
   const landing = fresh?.diagnosis?.landing
   assert(landing?.offset === 0.066, `a current reading came back as ${landing?.offset}`)
   assert(landing?.secondsAfterContact === 0.44, 'the window was not preserved')
+})
+
+
+/* -------------------------------------------- the triage block, on the way out */
+
+heading('A triage block whose shape predates its readers')
+
+/** A stored report carrying a triage block, with one part of it replaced. */
+const storedTriage = (triage: unknown) => ({
+  id: 'serve-t',
+  createdAt: 1,
+  overall: 70,
+  overallStatus: 'good',
+  fundamentals: [{ id: 'toss', metrics: [{ id: 'tossPeakHeight', score: 70 }] }],
+  triage,
+})
+
+const wholeQuality = () => ({
+  confidence: 0.8,
+  blur: 0.1,
+  roll_deg: 0,
+  yaw_deg: 82,
+  yaw_measured: true,
+  swing_samples: 8,
+  depth_unreliable: false,
+})
+
+check('a complete triage block survives the read unchanged', () => {
+  const s = normalise(storedTriage({ schema: 1, status: 'ok', quality: wholeQuality(), injury_risk: [] }))
+  assert(s?.triage?.quality?.yaw_deg === 82, 'a complete quality block was dropped')
+  assert(s?.triage?.quality?.yaw_measured === true, 'a measured angle came back unmeasured')
+})
+
+check('a quality block short of a field is dropped, and the verdict is not', () => {
+  /*
+   * R65's decision, and the half it left named rather than made: there is no
+   * honest default for a missing `confidence`. Inventing 0.9 manufactures a
+   * measurement and 0 refuses a clip that was fine, so the block goes.
+   *
+   * The verdict stays, and the next check is why.
+   */
+  const { confidence: _c, ...short } = wholeQuality()
+  void _c
+  const s = normalise(storedTriage({ schema: 1, status: 'ok', quality: short, injury_risk: [] }))
+  assert(s?.triage !== undefined, 'the whole triage went with a malformed quality block')
+  assert(s?.triage?.quality === undefined, 'a quality block missing its confidence survived')
+  assert(s?.triage?.status === 'ok', 'the verdict was lost with the block')
+})
+
+check('a rejected clip keeps its rejection even when the block is unreadable', () => {
+  /*
+   * THE REGRESSION THIS GUARD CAUSED AND AN EXISTING CHECK CAUGHT. The first
+   * version dropped the whole triage, and `importBackup` refuses to restore a
+   * clip the engine rejected by reading `status` — so a rejected row came back
+   * into a history that had refused it.
+   *
+   * A rejected clip legitimately has readings nobody took: it was refused before
+   * they could be. The rejection is the one thing about it that must survive,
+   * which is why the block is what drops.
+   */
+  const s = normalise(
+    storedTriage({ schema: 1, status: 'rejected', reason: 'no_serve_found', quality: null }),
+  )
+  assert(s?.triage?.status === 'rejected', 'a rejected clip lost its rejection')
+  assert(s?.triage?.quality === undefined, 'an unreadable block survived on a rejected clip')
+})
+
+check('an angle nobody measured reads as unmeasured, whatever the row says', () => {
+  // R49·1's rule, now applied inside the shape guard rather than beside it.
+  const missing = { ...wholeQuality() } as Record<string, unknown>
+  delete missing.yaw_measured
+  const s = normalise(storedTriage({ schema: 1, status: 'ok', quality: missing, injury_risk: [] }))
+  assert(s?.triage?.quality?.yaw_measured === false, 'an absent flag defaulted to measured')
+})
+
+check('an injury flag that is not an object is dropped, and the rest kept', () => {
+  const s = normalise(
+    storedTriage({
+      schema: 1,
+      status: 'ok',
+      quality: wholeQuality(),
+      injury_risk: [null, { flag: 'wrist_strain_forced_pronation', severity: 'high' }],
+    }),
+  )
+  assert(s?.triage?.injury_risk.length === 1, `kept ${s?.triage?.injury_risk.length} flags, expected 1`)
 })
 
 report()

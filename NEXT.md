@@ -2256,3 +2256,42 @@ deleting a working button.
         · **R53·2 — the tap.** One tap on the glance, stored on the report, and
           the spreads partitioned by it. The only honest route, and it needs a
           stored field and a write path rather than a measurement.
+
+- [x] **R65** — `triage.quality` has a stored-shape guard, and **the entry's own
+      premise was wrong**.
+
+      R65 said "the consumers in `verdict.ts` read those without asking". There
+      are none. A sweep for readers of `triage.quality` outside tests finds
+      exactly one — `pairTracks`, added by R49·1 — and it guards its own reads.
+      Seventh time this session the ledger has been wrong about something, and
+      the fourth where the round-as-written rested on it.
+
+      **Built anyway, and the reason is the shape of the file it went into.**
+      `pairTracks` had to write that defence itself *because* there was none
+      here, and the next consumer would write a third. That is precisely how
+      `withChain` ended up with three separate guards — the chain, the rotation
+      and the landing each arrived, found no shape check, and added their own.
+      One at the door is cheaper than one per reader, and a reader that forgets
+      is a blank screen behind the ErrorBoundary. `pairTracks` keeps its own,
+      which is not redundancy: `Pairable` accepts a live `Analysis`, which never
+      passes through `normalise`.
+
+      **THE FIRST VERSION BROKE SOMETHING AND AN EXISTING CHECK CAUGHT IT.**
+      Dropping the whole triage lost `status`, and `importBackup` refuses to
+      restore a clip the engine rejected by reading exactly that — so a rejected
+      row came back into a history that had refused it. A rejected clip
+      legitimately has readings nobody took; the rejection is the one thing about
+      it that must survive. So `Triage.quality` is now optional and the **block**
+      is what drops, not the verdict.
+
+      That is also the decision R49·1 declined to make and left named: there is
+      no honest default for a missing `confidence` — 0.9 manufactures a
+      measurement, 0 refuses a clip that was fine — so the block goes and the
+      scores, filmstrip, trend and practice card do not.
+
+      `yaw_measured` is deliberately not in the required shape: it is younger
+      than the block, absent on every report filed before it, and requiring it
+      would drop most of a real history. Repaired to `false` inside the guard
+      instead, for R49·1's reason.
+
+      Five checks in `db.test.ts`, canaried to one.

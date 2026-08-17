@@ -43,6 +43,45 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 23 · Cycle D — performance and architecture · `D3 · audit 5` → R65
+
+**Orchestrator.** Audit 5 asks for a stored-data shape that predates its writer.
+The answer was already named — R65 — so the round did it rather than
+rediscovering it. Lead builder: Release Architect. Column: *Does it work on my
+clip at all*.
+
+**R65's stated premise is wrong, and that is the seventh time this session.** It
+said "the consumers in `verdict.ts` read those without asking". A sweep finds no
+such consumers: exactly one reader of `triage.quality` exists outside tests, and
+it guards itself.
+
+**Built anyway, and the file's own history is the argument.** `withChain` has
+three separate guards because the chain, the rotation and the landing each
+arrived, found no shape check, and wrote their own. `pairTracks` wrote a fourth
+in R49·1. One guard at the door is cheaper than one per reader.
+
+**My first version broke the restore path, and an existing check caught it.**
+Dropping the whole triage lost `status`, which `importBackup` reads to refuse a
+clip the engine rejected — so a rejected row came back into a history that had
+refused it. A rejected clip legitimately has readings nobody took; the rejection
+must survive. `Triage.quality` is now optional and the **block** drops, not the
+verdict. Fourth time this session a gate I did not write has caught me.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The entry's false premise is recorded in the code, not only the ledger. Dropped rather than repaired — no honest default exists for a missing `confidence` |
+| Performance | pass | Five `typeof` checks per row on read |
+| Privacy | pass | Nothing shipped changes |
+| Architecture | pass | `pairTracks` keeps its own guard, and that is not redundancy: `Pairable` accepts a live `Analysis` that never passes through `normalise`. `yaw_measured` deliberately excluded from the required shape — it is younger than the block, so requiring it would drop most of a real history |
+| Product | pass | A corrupted row loses its verdict and keeps its scores, filmstrip, trend and practice card |
+
+**Gate.** typecheck clean · lint clean · **1105 checks, 0 failed, exit 0** (+5).
+Canaried to one check.
+
+---
+
 ### Round 22 · Cycle C — pedagogical coaching and UI · `C2 · R53·1`
 
 **Orchestrator.** Lead builder: Product Expansion Lead, with Honesty leading the

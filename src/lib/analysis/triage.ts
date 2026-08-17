@@ -143,7 +143,18 @@ export interface Triage {
   schema: 1
   status: 'ok' | 'rejected'
   reason?: RejectReason
-  quality: {
+  /**
+   * How well the clip could be read. **Optional because storage may drop it.**
+   *
+   * Always written by `triage()`. `normalise` drops the whole block when its
+   * five-field shape is wrong, rather than repairing it — there is no honest
+   * default for a missing `confidence`, since inventing 0.9 manufactures a
+   * measurement and 0 refuses a clip that was fine. The verdict and the primary
+   * flaw survive that, which is why the block is dropped and the triage is not:
+   * a rejected clip legitimately has readings nobody took, and losing the
+   * rejection would put it back into a history that refused it.
+   */
+  quality?: {
     confidence: number
     blur: number
     roll_deg: number
