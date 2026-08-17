@@ -43,6 +43,48 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 31 · Cycle E — data management and export · `E4b · R58·2`
+
+**Orchestrator.** Draws what round 24 decided. Lead builder: Modular UI
+Developer. Column: *Is it worth opening again*.
+
+**The split paid off exactly where it was supposed to.** This function computes
+nothing — it draws `tripSummary` — so the only thing a drawing round could still
+get wrong is turning a refusal back into a number on the way to the canvas. That
+is what the checks are about, and the canary confirms: defaulting the gap to 0
+reddens precisely the check that says a trip nobody swept draws no repeatability
+row.
+
+**No new token, and this surface has the least claim on one** — it exists to be
+screenshotted into a message thread, where the app's own palette is the only
+thing carrying its identity.
+
+**A near-miss worth recording.** A shell quoting error aborted a command line
+that ended in `git checkout -- src/lib/share/reportCard.ts`. The abort is the
+only reason the round survived; that call would have discarded it, and it would
+have been the third time this session. I have stopped using `git checkout --` for
+canaries — `Edit` both ways instead, which is what the rest of this round used.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The absent row is absent, asserted both ways. "1 serve filmed", not "1 serves" — the kind of thing nobody notices until it is in somebody's thread |
+| Performance | pass | One detached canvas, measured before the height is set, as both existing cards do |
+| Privacy | pass | No image of any person, asserted rather than assumed. A coach's card travels further than a report does |
+| Architecture | pass | Every token already existed. The variable height falls out of two fields that are routinely absent, which is the shape the content decided |
+| Product | pass | The strongest artefact this app can hand somebody who is not the player |
+
+**Verification, and its limit.** Six checks against a recording context. **Not
+verified in a browser** — the pane will not composite, and unlike the ghost there
+is no on-screen canvas to sample: the card renders to a detached canvas and goes
+straight to a Blob. The stub is evidence about what is drawn, not about how it
+looks.
+
+**Gate.** typecheck clean · lint clean · **1130 checks, 0 failed, exit 0** (+6).
+
+---
+
 ### Round 30 · Cycle D — performance and architecture · `D2 · R55·1`
 
 **Orchestrator.** The spike R55 asks for. Lead builder: Release Architect.

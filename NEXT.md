@@ -2324,7 +2324,7 @@ deleting a working button.
 
       Five checks in `db.test.ts`, canaried to one.
 
-- [~] **R58** — Split: what a coach's card says, then drawing it.
+- [x] **R58** — Split: what a coach's card says, then drawing it. Both landed.
 
         · **R58·1 — [x] the content.** `tripSummary` in `progress.ts`, which owns
           trips. Pure, no canvas — the same split R49 took for the ghost, and for
@@ -2521,3 +2521,37 @@ deleting a working button.
           and `IMPLAUSIBLE_HEIGHT_SPREAD` already detect the body changing and do
           nothing with it; the switch is offered there rather than in a settings
           screen nobody opens.
+
+- [x] **R58·2** — The coach's card, drawn. `renderTripCard`/`shareTripCard`.
+
+      Draws `tripSummary` and computes nothing, which is what the R58·1 split was
+      for: a layout argument and a truth argument in one function is how a card
+      ends up asserting something the report behind it never said.
+
+      **The refusal had to survive into pixels, and that is what the checks are
+      about.** A trip nobody swept draws **no repeatability row at all** — not a
+      row reading "0 apart", which would say the player was perfectly repeatable
+      on a trip nobody measured repeatability on, in an image that travels
+      further than any report does. Canaried by defaulting it to 0: exactly that
+      check reddens.
+
+      Every token is one `reportCard.ts` already had — no new colour, no new size
+      ramp. This surface has less claim on one than most, since it exists to be
+      screenshotted into a message thread.
+
+      **No image of anybody**, like the basket card and for the same reason: a
+      coach's card goes further than a report does, and the promise is that
+      pictures of somebody serving stay on their phone. Asserted rather than
+      assumed.
+
+      Six checks against a recording context — the `drawing.test.ts` trade. What
+      is asserted is the text, because the text is the whole claim; where it sits
+      is layout and this file has no opinion about it. Including that one serve
+      reads "1 serve filmed" rather than "1 serves", which is the kind of thing
+      nobody notices until it is in somebody's thread.
+
+      **Not verified in a browser.** The pane will not composite, so a screenshot
+      is impossible, and unlike R49·3 there is no canvas on screen to sample —
+      the card is rendered to a detached canvas and handed straight to a Blob.
+      The recording stub is the whole of the evidence, and it is evidence about
+      what is drawn rather than about how it looks.

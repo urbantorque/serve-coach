@@ -11,7 +11,7 @@
  * it" was the claim this round opened with; every check below is one of the
  * refusals actually tested rather than assumed.
  */
-import { attemptShare, type ShareNavigator } from '../reportCard'
+import { attemptShare, renderTripCard, type ShareNavigator } from '../reportCard'
 import { assert, check, heading, report } from '../../analysis/__tests__/harness'
 
 const FILE = {} as File
@@ -117,6 +117,135 @@ check('every outcome that is not shared or cancelled falls through to a download
   assert(fallsThrough('not-attempted') && fallsThrough('failed'), 'the fallback set drifted')
   assert(!fallsThrough('shared') && !fallsThrough('cancelled'), 'the fallback set drifted')
   assert(outcomes.length === 4, 'a new outcome was added without updating this pin')
+})
+
+
+/* ------------------------------------------------- what the trip card draws -- */
+
+heading('A trip card, and the refusal it has to carry into pixels')
+
+/**
+ * R58·2. The content was decided in R58·1 and this only draws it — so what these
+ * checks are for is the one thing a drawing round can still get wrong: turning a
+ * refusal back into a number on the way to the canvas.
+ *
+ * A recording context rather than a real one, the same trade `drawing.test.ts`
+ * makes for the overlay. What is asserted is the text drawn, because the text is
+ * the whole of the claim; where it sits is a layout question and this file has
+ * no opinion about it.
+ */
+function recordingCanvas() {
+  const texts: string[] = []
+  const ctx = {
+    fillStyle: '',
+    font: '',
+    textAlign: 'left',
+    fillRect() {},
+    beginPath() {},
+    moveTo() {},
+    lineTo() {},
+    arcTo() {},
+    closePath() {},
+    fill() {},
+    stroke() {},
+    fillText(t: string) {
+      texts.push(String(t))
+    },
+    measureText: (t: string) => ({ width: String(t).length * 14 }),
+  }
+  const canvas = {
+    width: 0,
+    height: 0,
+    getContext: () => ctx,
+    toBlob: (cb: (b: unknown) => void) => cb({ size: 1 }),
+  }
+  return { canvas, texts }
+}
+
+/** Stand in for `document.createElement('canvas')` for one call. */
+async function drawTrip(trip: Parameters<typeof renderTripCard>[0], strain?: string) {
+  const { canvas, texts } = recordingCanvas()
+  const doc = globalThis as unknown as { document?: { createElement: (t: string) => unknown } }
+  const had = doc.document
+  doc.document = { createElement: () => canvas }
+  try {
+    await renderTripCard(trip, strain)
+  } finally {
+    doc.document = had
+  }
+  return texts
+}
+
+const TRIP = {
+  from: 1_800_000_000_000,
+  serves: 4,
+  best: { id: 'a', overall: 74 },
+  worst: { id: 'b', overall: 61 },
+  focus: 'Racket stops short behind you',
+  strain: [],
+}
+
+await check('the card says how many serves, and both ends of the trip', async () => {
+  const texts = await drawTrip(TRIP)
+  const all = texts.join(' | ')
+  assert(/4 serves filmed/.test(all), `no serve count on the card:\n      ${all}`)
+  assert(texts.includes('74'), 'the best serve is not on the card')
+  assert(texts.includes('61'), 'the toughest serve is not on the card')
+  assert(/Racket stops short/.test(all), 'what they left working on is not on the card')
+})
+
+await check('one serve is a serve, not "1 serves"', async () => {
+  // The kind of thing nobody notices until it is in somebody's message thread.
+  const texts = await drawTrip({ ...TRIP, serves: 1 })
+  assert(/1 serve filmed/.test(texts.join(' | ')), 'the card said "1 serves"')
+})
+
+await check('a trip nobody swept draws no repeatability row at all', async () => {
+  /*
+   * **THE CHECK THIS ROUND EXISTS FOR.** R58·1 refuses a repeatability reading
+   * when nothing on the trip was swept, because a spread across separate clips
+   * compares serves the app never compared. A row reading "0 apart" would say
+   * the player was perfectly repeatable on a trip nobody measured — and it would
+   * say it in an image that travels further than any report does.
+   */
+  const texts = await drawTrip({ ...TRIP, tightestGap: undefined })
+  const all = texts.join(' | ')
+  assert(!/Tightest basket/.test(all), `a repeatability row was drawn with nothing behind it:\n      ${all}`)
+  assert(!/0 apart/.test(all), 'a gap of zero reached the card')
+})
+
+await check('a trip that was swept says so, with the number', async () => {
+  const texts = await drawTrip({ ...TRIP, tightestGap: 6 })
+  const all = texts.join(' | ')
+  assert(/Tightest basket/.test(all), 'a swept trip drew no repeatability row')
+  assert(/6 apart/.test(all), `the gap did not reach the card:\n      ${all}`)
+})
+
+await check('a trip with nothing to say about a joint says nothing about one', async () => {
+  const texts = await drawTrip(TRIP)
+  assert(texts.length > 0, 'the card drew nothing at all')
+  const withStrain = await drawTrip(TRIP, 'Your shoulder has flagged on three of your last four trips.')
+  assert(
+    withStrain.join(' | ').includes('shoulder'),
+    'a strain line was passed and did not reach the card',
+  )
+  assert(
+    withStrain.length > texts.length,
+    'the card is identical with and without a strain line',
+  )
+})
+
+await check('no image of anybody reaches a card that travels', async () => {
+  /*
+   * The basket card carries no stills either, and for the same reason: a coach's
+   * card goes further than a report ever does, and the promise is that pictures
+   * of somebody serving stay on their phone. Asserted on the drawing calls —
+   * this stub records no `drawImage`, and would throw on one.
+   */
+  const texts = await drawTrip({ ...TRIP, tightestGap: 6 })
+  for (const t of texts) {
+    assert(!/data:image|base64/.test(t), `something image-shaped reached the card: ${t.slice(0, 40)}`)
+  }
 })
 
 report()

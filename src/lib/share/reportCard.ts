@@ -5,6 +5,7 @@ import type { Analysis } from '../analysis/types'
 import { plain } from '../analysis/voice'
 import { SOFT_READ, readQuality } from '../../components/statusLabels'
 import type { Session } from '../storage/db'
+import type { TripSummary } from '../progress'
 
 type Report = Analysis | Session
 
@@ -937,4 +938,129 @@ export async function shareSeasonCard(
   const blob = await renderSeasonCard(records, asOf)
   if (!blob) return 'failed'
   return shareBlob(blob, `season-${dateStamp(asOf)}.png`, 'My season')
+}
+
+/* ------------------------------------------------------- a trip, for a coach */
+
+/**
+ * One trip to the court, as an image somebody can send their coach.
+ *
+ * R58·2. Its content was decided in R58·1 — `tripSummary` in `progress.ts` —
+ * and this only draws it. Nothing here computes anything about a serve, which
+ * is the whole reason the split was worth taking: a layout argument and a truth
+ * argument in one function is how a card ends up asserting something the report
+ * behind it never said.
+ *
+ * EVERY TOKEN IS ONE THIS FILE ALREADY HAD. No new colour, no new size ramp —
+ * constraint 3, and this surface has less claim on a new one than most, since it
+ * exists to be screenshotted into a message thread.
+ *
+ * WHAT IT DELIBERATELY DOES NOT DRAW: any image of a person. The basket card
+ * carries no stills either, and for the same reason — a coach's card travels
+ * further than a report ever does, and the one thing this app promises is that
+ * pictures of somebody serving stay on their phone. Numbers and words only.
+ */
+export async function renderTripCard(
+  trip: TripSummary,
+  /** The recurring-strain line, already worded by the caller. Absent is normal. */
+  strainLine?: string,
+): Promise<Blob | undefined> {
+  const W = 1080
+  const PAD = 64
+
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return undefined
+
+  /*
+   * Measured before the height is set, exactly as the other two cards do. A
+   * canvas resize clears it, so every wrap has to be known first — and the card
+   * is variable-height by construction, because the strain line and the
+   * repeatability reading are both routinely absent.
+   */
+  ctx.font = font(400, 30)
+  const focusLines = trip.focus ? layoutLines(ctx, trip.focus, W - PAD * 2) : []
+  const strainLines = strainLine ? layoutLines(ctx, plain(strainLine), W - PAD * 2) : []
+
+  const bodyTop = 300
+  const rowH = 92
+  const rows = trip.tightestGap === undefined ? 2 : 3
+  const focusTop = bodyTop + rows * rowH + 28
+  const strainTop = focusTop + focusLines.length * 42 + (focusLines.length ? 36 : 0)
+  const H = strainTop + strainLines.length * 42 + (strainLines.length ? 28 : 0) + PAD
+
+  canvas.height = H
+  ctx.fillStyle = INK
+  ctx.fillRect(0, 0, W, H)
+
+  /* --- the heading ------------------------------------------------------- */
+  ctx.fillStyle = FAINT
+  ctx.font = font(700, 24)
+  ctx.fillText('ONE TRIP TO THE COURT', PAD, 96)
+
+  ctx.fillStyle = FG
+  ctx.font = font(700, 64)
+  ctx.fillText(dateStamp(trip.from), PAD, 176)
+
+  ctx.fillStyle = MUTED
+  ctx.font = font(400, 30)
+  ctx.fillText(`${trip.serves} ${trip.serves === 1 ? 'serve' : 'serves'} filmed`, PAD, 228)
+
+  /* --- the rows ---------------------------------------------------------- */
+  const row = (i: number, label: string, value: string, accent = FG) => {
+    const y = bodyTop + i * rowH
+    ctx.fillStyle = INK_2
+    roundRect(ctx, PAD, y, W - PAD * 2, rowH - 16, 18)
+    ctx.fill()
+    ctx.fillStyle = MUTED
+    ctx.font = font(400, 26)
+    ctx.fillText(label, PAD + 28, y + 34)
+    ctx.fillStyle = accent
+    ctx.font = font(700, 34)
+    ctx.textAlign = 'right'
+    ctx.fillText(value, W - PAD - 28, y + 36)
+    ctx.textAlign = 'left'
+  }
+
+  row(0, 'Best serve', String(trip.best.overall), LIME)
+  row(1, 'Toughest serve', String(trip.worst.overall))
+  /*
+   * Absent rather than zero when nothing on the trip was swept — R58·1's
+   * refusal, carried through to the pixels. A row reading "0" would say the
+   * player was perfectly repeatable on a trip nobody measured repeatability on,
+   * which is the confident nonsense the whole split exists to keep out of an
+   * image that travels.
+   */
+  if (trip.tightestGap !== undefined) {
+    row(2, 'Tightest basket', `${trip.tightestGap} apart`)
+  }
+
+  /* --- what they left with ----------------------------------------------- */
+  if (focusLines.length) {
+    ctx.fillStyle = FAINT
+    ctx.font = font(700, 22)
+    ctx.fillText('WORKING ON', PAD, focusTop - 14)
+    ctx.fillStyle = FG
+    ctx.font = font(400, 30)
+    drawLines(ctx, focusLines, PAD, focusTop + 24, 42)
+  }
+
+  if (strainLines.length) {
+    ctx.fillStyle = MUTED
+    ctx.font = font(400, 28)
+    drawLines(ctx, strainLines, PAD, strainTop + 22, 42)
+  }
+
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
+}
+
+/** The trip card, handed to the share sheet. */
+export async function shareTripCard(
+  trip: TripSummary,
+  strainLine?: string,
+): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+  const blob = await renderTripCard(trip, strainLine)
+  if (!blob) return 'failed'
+  return shareBlob(blob, `trip-${dateStamp(trip.from)}.png`, 'My trip')
 }

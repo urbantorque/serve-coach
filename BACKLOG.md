@@ -150,8 +150,8 @@ Storage, backup, and the files a player is handed.
 - [x] **E4 · R58·1** — A trip, in one card, for a coach: the content, as data.
       *(Round 24 — and a trip nobody swept gets no repeatability reading rather
       than one invented from separate clips.)*
-- [ ] **E4b · R58·2** — Draw it. ~260 lines of canvas, verified by pixel
-      sampling since the pane will not composite.
+- [x] **E4b · R58·2** — Draw it. *(Round 31 — and the refusal survives into the
+      pixels: a trip nobody swept draws no repeatability row at all.)*
 - [x] **E5 · audit 4** — A `README.md` claim with no test behind it. *(Round 17 —
       "about 15 KB" for a pruned report. It is 31.3 kB: the swing track was
       written after that sentence and is kept on every report.)*
