@@ -24,6 +24,38 @@ anything real.
    rest of this page, generated rather than remembered.
 4. Move the file into this folder.
 
+### The button works — checked, not assumed
+
+This whole path is dev-only, so the suite is the only thing standing between it
+and quiet rot, and the cost of finding it broken would be paid at the worst
+possible moment: by whoever has finally gone out and filmed a serve.
+
+So it was driven end to end on 2026-08-17, with the synthetic rig standing in for
+a clip. `buildFixtureDraft` produced a 103 kB draft carrying all eleven expected
+keys; `draftGaps` and `validateFixtureSchema` both refused it and named the same
+thirteen things; `replay-fixture.mjs` printed the diff, said *Not a valid fixture
+yet* because every answer in it is still the engine's own, and exited 1 as its
+own docstring promises. Nothing was broken and nothing needed fixing.
+
+`fixtures.test.ts` already guards the same path from the other side, with around
+twenty checks built straight on `buildFixtureDraft` — including that the draft
+the app exports cannot pass as ground truth, and that `draftGaps` says
+everything the gate would say. Between the two, this is about as un-rotted as a
+dev-only path gets.
+
+To re-run the end-to-end check without a clip, build a draft from the rig and
+hand it straight to the replay tool:
+
+```bash
+node scripts/replay-fixture.mjs <your-draft>.fixture.json
+```
+
+What remains is the one thing no amount of tooling can do for itself: somebody
+has to film a serve. Five separate threads are waiting on the first real clip —
+the external-rotation lever, the trunk-lead delta, the ghost's camera-angle
+gate, the landing's stance baseline, and the racket-lay-back delta on the
+glance. None of them are blocked on code.
+
 ## Labelling one
 
 The downloaded file has the engine's own answers pre-filled in `expect` and a
