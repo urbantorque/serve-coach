@@ -368,14 +368,38 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   // whose exact moment matters.
   const racketHeightSharp = heightSeries(frames, R.wrist, 1)
   const racketPostureSharp = posture(frames, R.wrist, R.shoulder, 1).map((v) => -v)
+  const tossPostureSharp = posture(frames, T.wrist, T.shoulder, 1)
 
   const contact = sharpen(racketHeightSharp, argMaxIn(racketHeight, 0, frames.length - 1))
 
   const clock = clockOf(frames, fps)
   const beforeContact = Math.max(0, contact - 1)
 
-  // Toss: tossing arm at full stretch above its shoulder, searched back from contact.
-  const toss = argMaxIn(tossPosture, clock.at(contact, -2.0), beforeContact)
+  /*
+   * Toss: tossing arm at full stretch above its shoulder, searched back from
+   * contact — and then sharpened, for the reason contact and the drop are.
+   *
+   * It was the one keyframe of the six found on a hard-smoothed series with
+   * nothing pulling it back onto the real peak, and it was measurably the one
+   * that moved with the frame rate: its mean landed at 1.0333 / 1.0175 /
+   * 1.0056 s across 30 / 50 / 120 fps, a 27.8 ms spread, monotonically earlier
+   * the more frames there were. Every other keyframe sat inside 12.5 ms and
+   * contact inside 0.7.
+   *
+   * The mechanism is the one `sharpen` already exists to undo, and reading it
+   * off the frame rate is what made it visible: a radius counted in SAMPLES
+   * spans 167 ms of clip at 30 fps and 42 ms at 120, and a smooth that wide
+   * drags an asymmetric peak — the tossing arm rises fast and settles slowly —
+   * further at the coarser rate. So the drag is a function of the phone rather
+   * than of the serve.
+   *
+   * Worth stating because it refines the rule the suite carries from the trunk
+   * pair: a sample-counted window over a POSITION is safe from the noise
+   * amplification a derivative suffers, and is not safe from a frame-rate
+   * dependent BIAS where the feature it is smoothing is asymmetric. Noise and
+   * bias fail differently, and only one of them shows up in a deviation.
+   */
+  const toss = sharpen(tossPostureSharp, argMaxIn(tossPosture, clock.at(contact, -2.0), beforeContact))
 
   // Trophy: deepest leg load. Both knees averaged so a side-on view — where the
   // far leg is often occluded — still reads sensibly. Found from the knees

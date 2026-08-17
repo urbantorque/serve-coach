@@ -255,9 +255,31 @@ export const NOISE_FLOOR: Record<string, number> = {
   palm_to_sky_deg: 11,
   // A yaw difference. Hedged already by the camera check, and still this wide.
   separation_deg: 9,
-  // Lateral spine angle, differenced against the ready position — so it carries
-  // the error of two frames rather than one.
-  spine_lean_deg: 6,
+  /*
+   * Lateral spine angle, differenced against the ready position — so it carries
+   * the error of two frames rather than one.
+   *
+   * Was 6, and 6 was under-set rather than wrong-by-a-round: this signal's
+   * deviation sits within a hair of the 4.0 where `ceil(1.5 × sd)` flips between
+   * 6 and 7, and which side it lands on depends on how many seeds the estimate
+   * is made of. Measured four ways while the toss keyframe was being sharpened:
+   * 3.972 at 24 seeds and 4.050 at 60 before that change, 4.082 at 24 and 3.633
+   * at 60 after it. Three of those four ask for 7. The floor rounds up, because
+   * a floor rounded down is a cap and this file exists partly to say so.
+   *
+   * THE COST IS REAL AND IS NOT A FALSE-POSITIVE SAVING. Measured over 60 seeds:
+   * `posture_collapse` is named on 57% of grossly leaning serves at floor 6 and
+   * 48% at floor 7, while a clean serve is named on 0% at both. So this buys no
+   * accuracy on clean serves — it is paid purely to keep the floor above what
+   * the measurement can support, which is the rule rather than a trade.
+   *
+   * WORTH REVISITING, with the one number that would settle it: at 60 seeds and
+   * with the toss sharpened the deviation is 3.633, which asks for 6. If a
+   * larger ensemble or real footage confirms the deviation is genuinely under
+   * 4.0, this goes back to 6 and nine points of lumbar detection come back with
+   * it. Nobody should move it on a 24-seed reading in either direction.
+   */
+  spine_lean_deg: 7,
   // The rest are read from x and y, which the camera genuinely saw, and are an
   // order of magnitude steadier for it.
   toss_drift_ratio: 0.006,

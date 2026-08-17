@@ -6,6 +6,28 @@ in `git log`.
 
 ## 2026-08-17
 
+- **Your toss moment is pinned more precisely, and the same on any phone.** The
+  app picks six moments out of your serve, and it finds each one by smoothing
+  out the tracking wobble first. The toss was the only one of the six with
+  nothing to pull it back onto the true peak afterwards — so the smoothing left
+  it slightly late, and *how* late depended on how many frames a second your
+  phone films at. On a 30 fps phone it landed about 28 milliseconds further from
+  where it does on a 120 fps one. Now it is pulled back the same way the contact
+  and racket-drop moments already were, which cuts that gap to 17 ms and, as a
+  knock-on, tightens your "ready" moment from 10 ms to under 4. In practice this
+  means the Toss photo in your six moments sits a touch closer to full stretch,
+  and two people filming the same serve on different phones get the same answer.
+- **Honest note: one back-posture warning now fires a little less often.** While
+  checking the above, the app's own guard caught that the sideways-lean reading
+  was being graded slightly more finely than its own steadiness supports. The
+  rule in this app is that a measurement never gets graded finer than it can
+  actually be measured, so the bar moved up to where the measurement puts it.
+  The cost is stated rather than buried: on test serves with a badly collapsing
+  lean, the warning is now raised on 48% of them instead of 57%. It still never
+  fires on a clean serve. This is the app declining to make a call it cannot
+  back rather than an improvement, and if a bigger set of test serves shows the
+  reading is steadier than it currently looks, the bar comes back down and those
+  cases come back with it.
 - **The app is better at spotting when your arm leads your legs — and it has
   stopped getting it wrong on good serves.** A serve is meant to fire from the
   ground up: legs, then hips, then trunk, then the arm. When the arm goes first

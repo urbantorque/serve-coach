@@ -517,22 +517,30 @@ check('the keyframes land at the same moment whatever the phone films at', () =>
    * multiple of 1/fps and comparing two of those measures the grid rather than
    * the detector.
    *
-   * THE ANSWER IS THAT IT HOLDS, with one exception recorded rather than
-   * asserted away. Measured across 30 / 50 / 120 fps the mean keyframe time
-   * moves by 0.7 ms at contact, 3.1 at the trophy, 8.3 at the finish, 9.7 at
-   * ready and 12.5 at the drop. Contact — the instant every timing in the chain
-   * is stated relative to — is the steadiest of the six, which is the reassuring
-   * way round.
+   * THE ANSWER IS THAT IT HOLDS. Measured across 30 / 50 / 120 fps the mean
+   * keyframe time moves by 0.7 ms at contact, 3.1 at the trophy, 3.6 at ready,
+   * 8.3 at the finish, 12.5 at the drop and 17.0 at the toss. Contact — the
+   * instant every timing in the chain is stated relative to — is the steadiest
+   * of the six, which is the reassuring way round.
    *
-   * The toss moves 27.8 ms, and monotonically earlier the more frames there are
-   * (1.0333 / 1.0175 / 1.0056 s). That is not noise and it has a plausible
-   * mechanism: a threshold crossing found by scanning for the first sample past
-   * it fires later when the samples are further apart. It is left as a measured
-   * fact rather than chased, because nothing downstream shows it — the signals
-   * read at or from the toss are `toss_drift_ratio` and `elbow_lift_ratio`, and
-   * their deviations are 0.00 and 0.01 and do not rise with frame rate. The
-   * bound below is set to catch a keyframe coming loose, not to pin the toss
-   * where it currently sits.
+   * The toss was the outlier and was fixed rather than recorded. It moved
+   * 27.8 ms, monotonically earlier the more frames there were, because it was
+   * the one keyframe of the six found on a hard-smoothed series with nothing
+   * pulling it back onto the real peak — a radius counted in SAMPLES spans
+   * 167 ms of clip at 30 fps and 42 at 120, and a smooth that wide drags an
+   * asymmetric peak further at the coarser rate. Sharpening it the way contact
+   * and the drop already were took it to 17.0 and took `ready`, which is walked
+   * back from it, from 9.7 to 3.6. See the note on `toss` in `phases.ts`.
+   *
+   * The refinement that came out of it, which is the part worth carrying: a
+   * sample-counted window over a POSITION is safe from the noise amplification a
+   * derivative suffers, and is NOT safe from a frame-rate dependent bias where
+   * the feature being smoothed is asymmetric. Noise and bias fail differently
+   * and only one of them appears in a deviation, which is why the check below
+   * compares means across frame rates rather than spreads within one.
+   *
+   * The bound is set to catch a keyframe coming loose, not to pin any of them
+   * where they currently sit.
    */
   const KEYFRAMES = ['ready', 'toss', 'trophy', 'drop', 'contact', 'finish'] as const
   const RATES = [30, 50, 120]
