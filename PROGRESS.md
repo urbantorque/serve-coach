@@ -43,6 +43,49 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 57 · Cycle D — performance and architecture · `D7 · R78` (new)
+
+**Orchestrator.** Both Cycle D rows are blocked, so the Orchestrator generates
+one — and the obvious candidate was six rounds old and mine. R76 shipped
+`TripShareButton` calling `tripsOf(sessions)` and `tripSummary(trip, sessions)`
+straight in its body, no memo, on a sheet that also draws a chart.
+
+**The honest number is that it did not matter for speed.** Timed at the
+sixty-report cap the prune ladder holds: **0.016 ms, 0.1% of a 60 FPS frame.**
+
+**The defect was identity, not milliseconds.** Both functions allocate —
+`tripsOf` copies the history and sorts it into fresh arrays — so `summary` was a
+new object on every render and nothing downstream could have memoised against it
+either. One `useMemo` fixes it.
+
+**The reason this is a check and not a one-line commit** is that the mandate
+names 60 FPS, and 60 FPS is a budget: 16.7 ms for everything a frame does. A
+history walk is cheap, and "cheap" is not a number — a walk that is 0.1% of a
+frame at sixty reports is a different fact from one that is 40%, and only one of
+them can be stated.
+
+**Bounded on shape as well as time.** 60 reports cost **4.4× what 15 do**, which
+is linear. Timing alone would look safe on any small cap; the growth check is
+what would catch a walk going quadratic behind it.
+
+**Canaried with a cubic scan** inside `tripsOf`: the per-walk cost went 0.016 →
+0.291 ms and the growth to **20.5×**, reddening the check. Which also shows the
+budget assert alone would have passed at 1.7% of a frame — the growth half is
+carrying it.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The measurement refutes the round's own motivation and the entry says so. A performance round that found 0.1% has to report 0.1% |
+| Performance | pass | The actual fix is memoisation for identity stability, and it is described as that rather than as a speed-up |
+| Architecture | pass | The growth bound is the durable half; the absolute timing is machine-dependent and generously bounded on purpose |
+| Product | pass | Nothing on screen changed |
+
+**Gate.** typecheck clean · lint clean · **1199 checks, 0 failed, exit 0** (+1).
+
+---
+
 ### Round 56 · consolidation gate
 
 **Orchestrator.** Sixth cycle since `loop-green-10`. Number diff, boot, tag.

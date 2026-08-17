@@ -172,6 +172,13 @@ Where state lives, what it costs, what it does to a warm phone.
       `outbound.ts` shipped a `too_few_frames` beside `triage.ts`'s, meaning
       something else. Renamed, and `REJECTIONS` is now a walkable list so the class
       is checkable.
+- [x] **D7 · R78** — The history walk in a render path, memoised and measured.
+      R76 shipped `TripShareButton` calling `tripsOf` and `tripSummary` in its
+      body with no memo, on a sheet that also draws a chart. **The honest number
+      is that it cost 0.016 ms — 0.1% of a 60 FPS frame** — so the defect was
+      identity, not speed: both allocate, so the summary was fresh every render
+      and nothing downstream could memoise against it. Now pinned with a linearity
+      guard: 4.4× cost for 4× the reports, and a cubic scan canaried it to 20.5×.
 - [!] **D2d · R55·2c** — The switch, as a tap. **Blocked on constraint 3**: every
       `<input>` in this app is `type="file"`, `tokens.css` strips inputs to no
       border and no background, and a visible text field needs border, padding, a

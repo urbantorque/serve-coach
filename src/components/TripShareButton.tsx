@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Icon } from './primitives'
 import { useShareState } from './useShareState'
 import { shareTripCard } from '../lib/share/reportCard'
@@ -36,13 +37,21 @@ export default function TripShareButton({ sessions, strainLine }: Props) {
   /*
    * The most recent trip, which is the only one worth offering.
    *
+   * MEMOISED, AND IT WAS NOT WHEN THIS SHIPPED SIX ROUNDS AGO. `tripsOf` copies
+   * the whole history and sorts it; `tripSummary` walks it again. Both ran on
+   * every render of a sheet that also draws a chart — and worse, both allocate,
+   * so `summary` was a fresh identity on every render and nothing downstream
+   * could have memoised against it. Measured at the sixty-report cap.
+   *
    * `tripsOf` returns them oldest-first, so the last is the one the player has
    * just come home from — and a button offering to share a trip from three weeks
    * ago is a button nobody meant to press.
    */
-  const trips = tripsOf(sessions)
-  const trip = trips[trips.length - 1]
-  const summary = trip ? tripSummary(trip, sessions) : undefined
+  const summary = useMemo(() => {
+    const trips = tripsOf(sessions)
+    const trip = trips[trips.length - 1]
+    return trip ? tripSummary(trip, sessions) : undefined
+  }, [sessions])
 
   const { sharing, trigger: share } = useShareState(() =>
     summary ? shareTripCard(summary, strainLine) : Promise.resolve('failed' as const),

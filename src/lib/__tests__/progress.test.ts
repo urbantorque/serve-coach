@@ -15,6 +15,7 @@
  */
 import {
   tripSummary,
+  tripsOf,
   MIN_THEN_AND_NOW_GAP_MS,
   STREAK_GAP_MS,
   bestConsistencyGap,
@@ -38,8 +39,10 @@ import {
 import { strainGlanceLine, strainLine } from '../analysis/verdict'
 import { cueIssues, wordCount } from '../analysis/voice'
 import type { InjuryFlag } from '../analysis/triage'
-import { assert, check, heading, report } from '../analysis/__tests__/harness'
+import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 import type { Session } from '../storage/db'
+
+declare const process: { hrtime: { bigint(): bigint } }
 
 const DAY = 24 * 60 * 60 * 1000
 const WEEK = 7 * DAY
@@ -718,6 +721,66 @@ check('every field on the card survives a report with no clip left', () => {
   assert(s.tightestGap === 6, 'the repeatability reading did not survive')
   assert(s.focus === 'Racket stops short', 'the instruction did not survive')
   assert(typeof s.from === 'number', 'the date did not survive')
+})
+
+/* ================================ what a render of the progress sheet costs = */
+
+/**
+ * Walking the whole history, at the cap, timed.
+ *
+ * WHY THIS EXISTS. R76 shipped `TripShareButton` calling `tripsOf(sessions)` and
+ * `tripSummary(trip, sessions)` straight in its body — no memo — on a sheet that
+ * also draws a chart. `tripsOf` copies the history and sorts it, `tripSummary`
+ * walks it again, and both allocate, so the summary was a fresh identity on
+ * every render and nothing downstream could have memoised against it either.
+ *
+ * The fix is one `useMemo`. The reason this is a check rather than a one-line
+ * commit is that the mandate names 60 FPS, and 60 FPS is a budget — 16.7 ms for
+ * everything a frame does. A history walk is cheap; "cheap" is not a number, and
+ * a walk that is 3% of a frame at sixty reports is a different fact from one
+ * that is 40%.
+ *
+ * Timed rather than asserted, and bounded well under the frame: the point is to
+ * catch a walk that becomes quadratic, not to police microseconds.
+ */
+heading('What one render of the progress sheet pays to read the history')
+
+const FRAME_MS = 1000 / 60
+
+check('a full history walks in a small fraction of a frame', () => {
+  // The cap the prune ladder holds the history to, which is the worst case a
+  // real device ever renders — see `MAX_SESSIONS`.
+  const full = Array.from({ length: 60 }, (_, i) => savedServe(i * 20 * 60 * 1000, `s${i}`, 60 + (i % 20)))
+  const now = () => Number(process.hrtime.bigint() / 1000n) / 1000
+
+  // Warm, so the first call's compile does not become the measurement.
+  for (let i = 0; i < 20; i++) tripSummary(tripsOf(full)[0], full)
+
+  const started = now()
+  const rounds = 200
+  for (let i = 0; i < rounds; i++) {
+    const trips = tripsOf(full)
+    const last = trips[trips.length - 1]
+    tripSummary(last, full)
+  }
+  const per = (now() - started) / rounds
+  note(`${per.toFixed(3)}ms per walk of 60 reports — ${((per / FRAME_MS) * 100).toFixed(1)}% of a 60 FPS frame`)
+
+  assert(
+    per < FRAME_MS / 4,
+    `one history walk costs ${per.toFixed(3)}ms against a ${FRAME_MS.toFixed(1)}ms frame — ` +
+      'something in tripsOf or tripSummary has gone superlinear',
+  )
+  // And the shape, not just the time: 60 reports must not cost more than four
+  // times what 15 do, or the walk is quadratic and the timing above only looks
+  // safe because the cap is small.
+  const quarter = full.slice(0, 15)
+  const t0 = now()
+  for (let i = 0; i < rounds; i++) tripSummary(tripsOf(quarter)[0], quarter)
+  const perQuarter = (now() - t0) / rounds
+  const growth = per / Math.max(perQuarter, 1e-6)
+  note(`${growth.toFixed(1)}× the cost for 4× the reports`)
+  assert(growth < 8, `60 reports cost ${growth.toFixed(1)}× what 15 do, which is worse than linear`)
 })
 
 report()
