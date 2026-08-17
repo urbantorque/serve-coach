@@ -73,6 +73,7 @@ function serve(
       blur: 0,
       roll_deg: 0,
       yaw_deg: 90,
+      yaw_measured: true,
       swing_samples: 8,
       depth_unreliable: false,
     },

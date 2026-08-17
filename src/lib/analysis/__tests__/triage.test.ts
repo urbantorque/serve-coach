@@ -691,6 +691,7 @@ function base(over: BaseOver = {}): Resilience {
     spatial: {
       roll_deg: 0,
       yaw_deg: 60,
+      yaw_measured: true,
       depth_unreliable: false,
       confidence: over.spatial ?? 1,
       // With `depth_unreliable` false these two are the same number by

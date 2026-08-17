@@ -1015,26 +1015,46 @@ family, different surface, different refusals.
       `a located serve is still read exactly where it was found` red, for the
       different and correct reason that the window moved off the serve. Two
       checks, one of them mine, neither over-broad.
-- [ ] **R49** — The ghost: today's swing drawn over your best one. Round two of
-      `f8816b0`, whose commit body ends "round two is the build", and round two of
-      the backlog's `track-ghost-compare`, whose round one landed at cycle 109.
-      Everything needed exists: `Analysis.track` is stored, `replayFrom`/
-      `trackFrameAt` read it, `TrackPlayer` draws it, `ghostFor` in `skeleton.ts`
-      already draws a dashed body, `estimateYaw` is the gate. Align at contact,
-      normalise to hip centre, scale by shoulder-to-ankle, draw the older track
-      dashed under the newer.
+- [~] **R49** — Split, because the yaw gate turned out to need a number the
+      stored report could not honestly supply. Sub-rounds:
 
-      **Three refusals, all already measured.** Draw nothing below the hips —
-      removing the leg load entirely moves the worst drawn landmark 0.0387
-      against a 0.0341 floor, so a player told to watch their legs is watching
-      noise. Refuse a yaw difference over 5°, silently, because it is not a
-      similarity transform and normalisation leaves it bit-identical. Refuse
-      across a rubric or serve-type change; `comparisons.test.ts` is where that
-      rule lives and this is a tenth entry in it.
+        · **R49·1 — [x] tell an unread camera angle apart from one that reads 45.**
+          The gate's whole job is refusing a pair whose camera moved, and
+          `estimateYaw` returns 45 from two failure exits while 45 is also a real
+          corner-on reading. Two clips that both failed to measure would differ
+          by 0° and sail through a 5° gate — the confident-nonsense failure
+          arriving *through* the guard written to prevent it.
 
-      **Build the same-session case first.** Two serves from one basket share a
-      camera by construction, so the gate is satisfied for free and the feature
-      ships whatever R49b's answer turns out to be.
+          `Spatial.yaw_measured` labels the fallback, and rides onto the stored
+          report via `triage.quality`, which is where a comparison between two
+          saved serves has to read it: `Session` is `Omit<Analysis, 'frames'>`,
+          so nothing can recompute it later. `normalise` repairs a row stored
+          before the field to `false`, never `true` — a serve that really was
+          measured and predates the field loses a comparison it could have had,
+          which is the cheap side of that trade.
+
+          No reading moved: `yaw_deg` is identical in both cases and every band
+          set against it is untouched. Two checks, both canaried to one failure
+          each — flipping the repair to default true reddens only the storage
+          check, and making the fallback claim `measured` reddens only the
+          engine check.
+
+          Worth recording that the codebase already knew about this sentinel in
+          two places and correctly declined to care, because for `axes.ts` and
+          `diagnose.ts` the answer genuinely is the same either way. R49 is the
+          first consumer for which it is not, which is what earned the field.
+
+        · **R49·2 — the pairing rule.** Given two stored serves, decide whether
+          they may be drawn together and produce the aligned geometry: align at
+          contact, normalise to hip centre, scale by shoulder-to-ankle. Refuse
+          when either lacks a track, when either yaw is unmeasured, when the two
+          yaws differ by more than 5°, and across a rubric or serve-type change.
+          Pure and testable in Node, no drawing. A tenth entry in
+          `comparisons.test.ts`.
+
+        · **R49·3 — draw it.** The older track dashed under the newer in
+          `TrackPlayer`, nothing below the hips. Needs the browser.
+
 - [ ] **R49b** — How often two clips from one trip agree on camera angle within
       5°. The backlog's `ghost-yaw-agreement-in-life`, and the open question R49
       names and defers. Shared with R50c, which wants something tighter still —
@@ -1180,6 +1200,48 @@ family, different surface, different refusals.
       to forgive (a phone at the baseline sees almost no court), and it would
       arrive with no calibration and no fixtures. The finished round is a README
       line recording the cost so the next person does not rediscover it.
+
+- [ ] **R65** — `triage.quality` has no stored-shape guard, and R49·1 found it.
+      The check in `db.test.ts` that reads a block's expected fields off the
+      engine covers `chain`, `landing` and `externalRotation` — the three
+      measured-and-never-shown blocks that shipped broken twice for exactly this
+      reason. `triage.quality` is a fourth of the same kind and was never added:
+      `normalise` repairs `yaw_measured` and passes every other field through
+      untouched, so a row arriving without `confidence`, `blur`, `roll_deg`,
+      `yaw_deg` or `swing_samples` comes back still missing it, and the consumers
+      in `verdict.ts` read those without asking.
+
+      **Not fixed in R49·1 on purpose** — the repair needs a decision that round
+      had no business making. There is no honest default for a missing
+      `confidence`: inventing 0.9 manufactures a measurement and 0 refuses every
+      clip. The pattern that fits is the one `consistency` already uses in the
+      same function — dropped rather than repaired when the shape is wrong — and
+      that is a change to what a malformed report does, which deserves its own
+      round. Only the five-field shape is reachable today; the rest is a row
+      corrupted in place or written by a build that does not exist yet, which is
+      the same argument `9f34238` already made for guarding anyway.
+
+      **The round as written, which R49·2 and R49·3 carry out between them.**
+      Today's swing drawn over your best one. Round two of
+      `f8816b0`, whose commit body ends "round two is the build", and round two of
+      the backlog's `track-ghost-compare`, whose round one landed at cycle 109.
+      Everything needed exists: `Analysis.track` is stored, `replayFrom`/
+      `trackFrameAt` read it, `TrackPlayer` draws it, `ghostFor` in `skeleton.ts`
+      already draws a dashed body, `estimateYaw` is the gate. Align at contact,
+      normalise to hip centre, scale by shoulder-to-ankle, draw the older track
+      dashed under the newer.
+
+      **Three refusals, all already measured.** Draw nothing below the hips —
+      removing the leg load entirely moves the worst drawn landmark 0.0387
+      against a 0.0341 floor, so a player told to watch their legs is watching
+      noise. Refuse a yaw difference over 5°, silently, because it is not a
+      similarity transform and normalisation leaves it bit-identical. Refuse
+      across a rubric or serve-type change; `comparisons.test.ts` is where that
+      rule lives and this is a tenth entry in it.
+
+      **Build the same-session case first.** Two serves from one basket share a
+      camera by construction, so the gate is satisfied for free and the feature
+      ships whatever R49b's answer turns out to be.
 
 **Blocked behind R59, and not startable before it:**
 

@@ -386,6 +386,28 @@ red first time, which is the check working. The ensemble now derives the
 deviation itself rather than trusting a number written in a comment, and gets
 **9.4°**, reproducing the sweep.
 
+**A camera angle that could not be read is now told apart from one that reads
+45°.** `estimateYaw` returns 45 from two failure exits — no body height to divide
+a shoulder span by, and no frame offering two shoulders — and 45 is also what a
+camera standing at the corner genuinely measures. Two places in the engine
+already conflate the two and are right to: `axes.ts` gives image x to no axis
+either way, and `diagnose.ts` records that the same tie deletes three timings.
+For them the answer really is the same on both readings.
+
+It is not the same for anything comparing two serves. Two clips filmed at a true
+45° agree that the camera did not move between them; two clips whose yaw could
+not be read agree on nothing at all, and their difference is zero for the one
+reason a gate must never accept. Same number, opposite verdicts. So
+`Spatial.yaw_measured` labels the fallback rather than leaving it to be inferred,
+and it rides onto the stored report through `triage.quality` — where a comparison
+between two saved serves has to read it, the frames being long gone by then.
+
+**No reading moved.** `yaw_deg` is unchanged in both cases, deliberately, so
+every band derived against it stays exactly where it was. A report stored before
+the field existed reads as *not* measured rather than as measured: the field
+exists to refuse a pair whose angle was never read, and defaulting an unknown row
+the other way would wave through precisely the pairs it was added to stop.
+
 **A band on the absolute is now ruled out, not pending.** The reference frame was
 checked against a second one — the shoulder line — rather than argued about, and
 the three results point different ways. On a clean rig **both frames report 14.4°
@@ -511,8 +533,13 @@ a saved serve replayable as motion, which is what this format is shaped to grow
 into; six poses fix a defect that is on screen today, and a format that ships
 with a reader is worth more than one that ships with a plan.
 
-Nothing stores a track yet. These are the numbers a writer would need, pinned so
-the encoding cannot quietly regress to the form that kills the feature.
+**And it did grow into it.** `swingTrack` writes the whole swing on every
+analysis (`analyze.ts`), `readSwingTrack` reads it back through `normalise`, and
+`replayFrom`/`trackFrameAt` turn it into the instants `TrackPlayer` draws — so a
+saved serve replays as motion rather than as six photographs. `poses` stays on
+the type for reports written before tracks existed, and because the prune
+ladder's downgrade turns a track back into one. The paragraph above described the
+numbers a writer would need; the writer exists.
 
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on

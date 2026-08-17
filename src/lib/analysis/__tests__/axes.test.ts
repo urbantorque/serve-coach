@@ -17,6 +17,7 @@ import { buildServe, type ServeDials } from '../syntheticServe'
 import { assessResilience, triage } from '../triage'
 import { causalFocus } from '../verdict'
 import { imageXSplit, imageXSplitFrom, readImageX } from '../axes'
+import { LM } from '../geometry'
 import { assert, check, heading, near, note, report, within } from './harness'
 
 const FPS = 50
@@ -370,6 +371,58 @@ check('the two do not swap', () => {
     depthAxis.verdict.primary_flaw?.axis === 'depth' &&
       lateralAxis.verdict.primary_flaw?.axis === 'lateral',
     'the axes came back swapped',
+  )
+})
+
+heading('A camera angle that could not be read, told apart from one that reads 45')
+
+check('the fallback yaw is labelled rather than left to look like a measurement', () => {
+  /*
+   * `estimateYaw` returns 45 from two failure exits, and 45 is also what a
+   * camera standing at the corner genuinely measures. Two consumers already
+   * conflate them and are right to: `axes.ts` gives image x to no axis either
+   * way, and `diagnose.ts` records that the same tie deletes three timings.
+   *
+   * A comparison between two serves cannot. Two clips at a true 45 agree the
+   * camera did not move; two clips whose yaw was never read agree on nothing,
+   * and their difference is zero for the one reason a gate must never accept.
+   * This asserts the two are now distinguishable, and that separating them
+   * moved no number.
+   */
+  const frames = buildServe({ cameraYaw: 45, seed: 4500 }, FPS)
+  const skel = detectServe(frames, FPS)
+
+  const real = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+  assert(real.yaw_measured, 'a serve the rig filmed from 45° came back as unmeasurable')
+
+  // Exit one: nothing to divide the shoulder span by.
+  const noHeight = assessSpatial(frames, skel.keys.ready, 0)
+  assert(!noHeight.yaw_measured, 'a yaw taken with no body height claimed to be measured')
+  assert(noHeight.yaw_deg === 45, `the fallback stopped being 45: ${noHeight.yaw_deg}`)
+
+  // Exit two: no frame in the window offered two shoulders. Landmarks are
+  // removed rather than dimmed, which is the condition `estimateYaw`'s own
+  // `if (!l || !r) continue` guard is written against.
+  const noShoulders = frames.map((f) => ({
+    ...f,
+    image: f.image.map((l, i) =>
+      i === LM.leftShoulder || i === LM.rightShoulder ? undefined : l,
+    ) as unknown as typeof f.image,
+  }))
+  const unseen = assessSpatial(noShoulders, skel.keys.ready, skel.bodyHeight)
+  assert(!unseen.yaw_measured, 'a yaw taken with no shoulders in frame claimed to be measured')
+  assert(unseen.yaw_deg === 45, `the fallback stopped being 45: ${unseen.yaw_deg}`)
+
+  // The whole point of labelling rather than re-deriving: the reading itself is
+  // untouched, so every band set against it stays where it was.
+  const measured45 = real.yaw_deg
+  assert(
+    Math.abs(measured45 - noHeight.yaw_deg) <= 2,
+    `a real 45 and the fallback are no longer the same number: ${measured45} vs ${noHeight.yaw_deg}`,
+  )
+  note(
+    `real 45° reads ${measured45}° measured=${real.yaw_measured}; ` +
+      `both fallbacks read 45° measured=false`,
   )
 })
 

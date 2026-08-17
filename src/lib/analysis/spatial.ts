@@ -40,6 +40,28 @@ export interface Spatial {
    * side-on, 0 is dead front or back.
    */
   yaw_deg: number
+  /**
+   * Whether `yaw_deg` was measured at all, or is the fallback standing in for
+   * one that could not be.
+   *
+   * `estimateYaw` returns 45 when there is no body height to divide by and when
+   * no frame offered two shoulders — and 45 is also an ordinary reading, from a
+   * camera standing at the corner. Two places already know this and correctly
+   * decline to care: `axes.ts` calls no axis the owner of image x either way,
+   * and `diagnose.ts` records that the same tie deletes three timings. Both are
+   * right, because for them the answer really is the same either way.
+   *
+   * It is not the same for anything comparing two clips. Two serves both filmed
+   * at a true 45° agree that the camera did not move between them; two serves
+   * whose yaw could not be read agree on nothing at all, and their difference is
+   * zero for the one reason that must never pass a gate. Same number, opposite
+   * verdicts — so the fallback is now labelled rather than inferred.
+   *
+   * Nothing consumes it yet in a way that moves a reading: `yaw_deg` is
+   * unchanged in both cases, deliberately, so every band derived against it
+   * stays exactly where it was.
+   */
+  yaw_measured: boolean
   /** True when the camera angle collapses the depth axis it would need. */
   depth_unreliable: boolean
   /** 0–1. How much of the spatial geometry is usable at all. */
@@ -87,7 +109,7 @@ export function assessSpatial(frames: Frame[], readyIndex: number, bodyHeight: n
   const roll = estimateRoll(frames, readyIndex)
   const yaw = estimateYaw(frames, readyIndex, bodyHeight)
 
-  const depth_unreliable = yaw < DEPTH_YAW_RANGE[0] || yaw > DEPTH_YAW_RANGE[1]
+  const depth_unreliable = yaw.deg < DEPTH_YAW_RANGE[0] || yaw.deg > DEPTH_YAW_RANGE[1]
 
   // Roll is corrected rather than merely reported, so it costs confidence only
   // once it is large enough that the correction itself is working from a noisy
@@ -98,7 +120,8 @@ export function assessSpatial(frames: Frame[], readyIndex: number, bodyHeight: n
 
   return {
     roll_deg: Math.round(roll * 10) / 10,
-    yaw_deg: Math.round(yaw),
+    yaw_deg: Math.round(yaw.deg),
+    yaw_measured: yaw.measured,
     depth_unreliable,
     confidence: Math.round(rollCost * yawCost * 100) / 100,
     roll_confidence: Math.round(rollCost * 100) / 100,
@@ -148,9 +171,21 @@ function estimateRoll(frames: Frame[], readyIndex: number): number {
   return clamp(median(angles), -25, 25)
 }
 
-/** Camera angle from the foreshortening of the shoulder line. */
-function estimateYaw(frames: Frame[], readyIndex: number, bodyHeight: number): number {
-  if (!(bodyHeight > 0)) return 45
+/**
+ * Camera angle from the foreshortening of the shoulder line.
+ *
+ * Returns whether it managed it as well as what it got. The two failure exits
+ * below both hand back 45, which is a real angle a camera can stand at, and
+ * `Spatial.yaw_measured` exists so a caller that cannot treat those two the same
+ * is able to tell them apart. See that field for why the callers that can treat
+ * them the same are also right to.
+ */
+function estimateYaw(
+  frames: Frame[],
+  readyIndex: number,
+  bodyHeight: number,
+): { deg: number; measured: boolean } {
+  if (!(bodyHeight > 0)) return { deg: 45, measured: false }
   const lo = Math.max(0, Math.min(readyIndex, frames.length - 1) - 6)
   const hi = Math.max(0, Math.min(readyIndex, frames.length - 1))
 
@@ -162,10 +197,10 @@ function estimateYaw(frames: Frame[], readyIndex: number, bodyHeight: number): n
     if (!l || !r) continue
     spans.push(Math.hypot(r.x - l.x, r.y - l.y) / bodyHeight)
   }
-  if (!spans.length) return 45
+  if (!spans.length) return { deg: 45, measured: false }
 
   const projected = clamp(median(spans) / SHOULDER_SPAN_RATIO, 0, 1)
-  return (Math.acos(projected) * 180) / Math.PI
+  return { deg: (Math.acos(projected) * 180) / Math.PI, measured: true }
 }
 
 /**

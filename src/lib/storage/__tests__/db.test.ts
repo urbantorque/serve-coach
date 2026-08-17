@@ -284,6 +284,70 @@ const storedWithDiagnosis = (diagnosis: unknown): unknown => ({
   diagnosis,
 })
 
+/** The same, carrying whatever triage it is handed. */
+const storedWithTriage = (triage: unknown): unknown => ({
+  id: 'serve-abc-0',
+  createdAt: 1,
+  overall: 70,
+  overallStatus: 'good',
+  fundamentals: [{ id: 'toss', metrics: [{ id: 'tossPeakHeight', score: 70 }] }],
+  triage,
+})
+
+check('a quality block stored before yaw_measured does not come back claiming one', () => {
+  /*
+   * The one older shape of `triage.quality` that actually exists in the wild:
+   * the five fields it shipped with, before this round added a sixth. Every
+   * report filed until now carries exactly that row.
+   *
+   * The direction of the repair is the whole of the check. `yaw_measured` exists
+   * so a comparison between two serves can refuse a pair whose camera angle was
+   * never read — and 45 is both the fallback and a real corner-on reading, so a
+   * row that defaulted to `true` would present an unread angle as a measured
+   * one and wave through the exact pairs the field was added to stop. Absent
+   * reads as false. A serve that really was measured and predates the field
+   * loses a comparison it could have had, which is the cheap side.
+   */
+  const legacy = {
+    confidence: 0.9,
+    blur: 0.1,
+    roll_deg: 0,
+    yaw_deg: 45,
+    swing_samples: 8,
+    depth_unreliable: false,
+  }
+  const back = normalise(
+    storedWithTriage({ schema: 1, status: 'ok', quality: legacy, injury_risk: [], suppressed_count: 0 }),
+  )
+  assert(back?.triage !== undefined, 'a triage block from an older build was dropped entirely')
+  assert(
+    back!.triage!.quality.yaw_measured === false,
+    'a report stored before yaw_measured existed came back claiming its yaw was measured',
+  )
+  // And nothing else in the block moved on the way through.
+  for (const [key, value] of Object.entries(legacy)) {
+    assert(
+      (back!.triage!.quality as unknown as Record<string, unknown>)[key] === value,
+      `repairing yaw_measured also changed quality.${key}`,
+    )
+  }
+
+  // A fresh block is left exactly as the engine made it.
+  const fresh = normalise(
+    storedWithTriage({
+      schema: 1,
+      status: 'ok',
+      quality: { ...legacy, yaw_measured: true },
+      injury_risk: [],
+      suppressed_count: 0,
+    }),
+  )
+  assert(
+    fresh!.triage!.quality.yaw_measured === true,
+    'a measured yaw was downgraded on the way out of storage',
+  )
+})
+
 check('a landing from before the window field is refused rather than carried forward', () => {
   /*
    * The failure this guard exists for, and the one its first version missed. It

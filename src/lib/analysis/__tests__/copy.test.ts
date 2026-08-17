@@ -1103,6 +1103,7 @@ check('a refused clip is never handed a fault to work on', () => {
       blur: 0.9,
       roll_deg: 0,
       yaw_deg: 80,
+      yaw_measured: true,
       swing_samples: 4,
       depth_unreliable: false,
     },

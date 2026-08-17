@@ -587,6 +587,20 @@ export function normalise(raw: unknown): Session | undefined {
      */
     triage: s.triage && {
       ...s.triage,
+      /*
+       * `yaw_measured` is younger than the block it sits on, so every report
+       * filed before it has a `quality` without one. Absent reads as false, and
+       * the direction matters: the field exists so a comparison can refuse a
+       * pair whose camera angle was never actually read, and defaulting a row we
+       * know nothing about to `true` would wave through exactly the pairs it was
+       * added to stop. A serve that really was measured and predates the field
+       * loses a comparison it could have had, which is the cheap side of the
+       * trade and the one this codebase takes everywhere else.
+       */
+      quality: s.triage.quality && {
+        ...s.triage.quality,
+        yaw_measured: s.triage.quality.yaw_measured === true,
+      },
       injury_risk: Array.isArray(s.triage.injury_risk)
         ? s.triage.injury_risk.filter((i) => typeof i?.flag === 'string')
         : [],

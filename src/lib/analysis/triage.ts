@@ -148,6 +148,15 @@ export interface Triage {
     blur: number
     roll_deg: number
     yaw_deg: number
+    /**
+     * Whether `yaw_deg` above was measured, or is the 45 that stands in for a
+     * reading that could not be taken. See `Spatial.yaw_measured`.
+     *
+     * On the stored block because the thing that needs it is a comparison
+     * between two saved serves, and by then the frames it would be recomputed
+     * from are long gone — `Session` is `Omit<Analysis, 'frames'>`.
+     */
+    yaw_measured: boolean
     swing_samples: number
     depth_unreliable: boolean
   }
@@ -340,6 +349,7 @@ export function triage(diagnosis: Diagnosis, resilience: Resilience): Triage {
     blur: round2(resilience.blur),
     roll_deg: resilience.spatial.roll_deg,
     yaw_deg: resilience.spatial.yaw_deg,
+    yaw_measured: resilience.spatial.yaw_measured,
     swing_samples: resilience.swingSamples,
     depth_unreliable: resilience.spatial.depth_unreliable,
   }
