@@ -43,6 +43,58 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 51 · Cycle E — data and export · `E7 · R76` (new)
+
+**Orchestrator.** Cycle E's rows are gated on a phone and on the design ask, so
+the Orchestrator generates one — and after rounds 41 and 42 the obvious question
+is whether anything else was built and never reachable. Round 49's wide scan had
+flagged the share path; that was worth checking rather than assuming.
+
+**It was true, and it is the biggest one yet.** `shareTripCard` and
+`renderTripCard` were built at R58·2, drawn, and checked down to *"a trip nobody
+swept draws no repeatability row"* — and **nothing has ever called them**. Twenty
+rounds. Unlike the tap prop and the history filter before it, this is a whole
+user-facing artifact: the card a coach would want, that no control could produce.
+
+**Wired as `TripShareButton`**, mirroring `SeasonShareButton` exactly — a tiny
+self-contained button rather than more `App.tsx`, because the sharing state and
+one handler are the whole thing. The most recent trip only: `tripsOf` returns
+them oldest-first, and a button offering a trip from three weeks ago is one
+nobody meant to press.
+
+**Hidden on a trip of one**, and that is not tidiness. A trip card is a spread, a
+best, a worst and a repeatability line; with one serve the best and the worst are
+the same report and the spread is zero — a card that looks like a summary and is
+a single serve wearing one. `SeasonShareButton` makes the same judgement at two
+records.
+
+**The gate now covers the class it missed.** Round 42 refused the wide "any
+unused export" version at 116 of 483 and narrowed to props, which was right — and
+this slipped between the two. A `share*` function is judgeable for the same
+reason a prop is: it is a contract between two files, and it exists to be
+pressed. A `render*` may reasonably be internal; an entry point may not.
+
+**And its canary passed until imports were stripped.** Unwiring the handler while
+leaving `import { shareTripCard }` at the top left the check green — an import
+names a function without pressing it, and a component that imports a share and
+never calls it is precisely the state being caught. Same lesson as round 42's
+comment blanking, one line further down: a search for a name finds every mention,
+and only some mentions are uses.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Product | pass | Verified on screen: "Share this trip" renders beside "Share your season" on the progress sheet |
+| Honesty | pass | The gate's own canary was run and failed, and the fix was the gate rather than the canary |
+| Architecture | pass | Zero new CSS, zero new share logic — the card and its refusals were already written and checked |
+| Performance | pass | `tripsOf` over a list already in memory, once per render of a sheet mounted alone |
+
+**Gate.** typecheck clean · lint clean · **1195 checks, 0 failed, exit 0** (+1).
+Canaried twice: once green and once red, which is the round.
+
+---
+
 ### Round 50 · consolidation gate
 
 **Orchestrator.** Sixth cycle since `loop-green-9`. Number diff, boot, tag.

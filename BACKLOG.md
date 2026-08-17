@@ -202,6 +202,13 @@ Storage, backup, and the files a player is handed.
       drill record and silently lost the one part of the history the camera did
       not produce. Read last, after the prune, so an orphaned tag is refused
       rather than stored about a serve nobody can open.
+- [x] **E7 · R76** — The trip card, made pressable. `shareTripCard` and
+      `renderTripCard` were built at R58·2, checked down to "a trip nobody swept
+      draws no repeatability row", and **no control in the app could produce one**
+      — twenty rounds invisible, and the third dead feature this session. Wired as
+      `TripShareButton` on `SeasonShareButton`'s pattern; hidden on a trip of one,
+      where best and worst are the same report. The reachability gate now covers
+      share entry points, with imports stripped — its canary passed until they were.
 - [x] **E5 · audit 4** — A `README.md` claim with no test behind it. *(Round 17 —
       "about 15 KB" for a pruned report. It is 31.3 kB: the swing track was
       written after that sentence and is kept on every report.)*

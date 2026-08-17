@@ -6,6 +6,7 @@ import DeviceCheck from './components/DeviceCheck'
 import CorpusIngest from './components/CorpusIngest'
 import PracticeCard from './components/PracticeCard'
 import SeasonShareButton from './components/SeasonShareButton'
+import TripShareButton from './components/TripShareButton'
 import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
@@ -1820,6 +1821,11 @@ export default function App() {
                 than at the bottom of the sheet with the table, so the
                 button sits next to the exact facts it is about. */}
             <SeasonShareButton records={seasonRecords} />
+            {/* The last trip, as one image. Beside the season card rather than
+                on the report, because a trip is a run of serves and the report
+                is one — and because this is where the spread and the strain
+                line the card draws are already on screen. */}
+            <TripShareButton sessions={sessions} strainLine={strain.map(strainLine).find(Boolean) ?? undefined} />
 
             {/* Said out loud rather than left as a gap in the chart. Somebody who
                 has filmed twenty serves and sees eleven plotted will assume the

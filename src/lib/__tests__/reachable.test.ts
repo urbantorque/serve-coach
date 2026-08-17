@@ -172,6 +172,65 @@ check('no ruling has outlived the prop it ruled on', () => {
   assert(stale.length === 0, `passed now, so these rulings should go: ${stale.map((r) => r.prop).join(', ')}`)
 })
 
+/* ------------------------------------------- share entry points (R76) */
+
+/**
+ * A `share*` function exists to be pressed. One with no caller is a card
+ * nobody can produce.
+ *
+ * THE CLASS THIS FILE MISSED. Round 42 refused the wide "any unused export"
+ * gate at 116 of 483 and narrowed to props, which was right — and this slipped
+ * between the two. `shareTripCard` and `renderTripCard` were built in R58·2,
+ * checked down to "a trip nobody swept draws no repeatability row", and no
+ * control in the app could produce one. Twenty rounds invisible, and unlike the
+ * two props before it this was a whole user-facing artifact.
+ *
+ * Judgeable for the same reason props are: this is a contract between two files.
+ * A render function may reasonably be internal — `renderTripCard` is called by
+ * `shareTripCard` — but a `share*` is the entry point itself, and there is no
+ * reason for one that nothing invokes.
+ */
+const SHARE = /^export async function (share\w+)/gm
+
+check('every share entry point has a control that presses it', () => {
+  const lib = path.join(root, 'lib')
+  const sources = (dir: string, out: string[] = []): string[] => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name)
+      if (e.isDirectory()) {
+        if (e.name !== '__tests__') sources(full, out)
+      } else if (e.name.endsWith('.ts')) out.push(full)
+    }
+    return out
+  }
+  const shareFns: { name: string; file: string }[] = []
+  for (const f of sources(lib)) {
+    const body = blankComments(fs.readFileSync(f, 'utf8'))
+    for (const m of body.matchAll(SHARE)) shareFns.push({ name: m[1], file: f })
+  }
+  assert(shareFns.length >= 3, `only ${shareFns.length} share entry points found`)
+
+  /*
+   * IMPORTS STRIPPED, AND THE CANARY IS WHY. Unwiring the handler while leaving
+   * `import { shareTripCard }` at the top of the file left this green — an
+   * import names a function without pressing it, and a component that imports a
+   * share and never calls it is exactly the state this check exists to catch.
+   *
+   * Same lesson as the comment blanking above, one line further down: a search
+   * for a name finds every mention of it, and only some mentions are uses.
+   */
+  const withoutImports = (s: string) => s.replace(/^import[\s\S]*?from\s+'[^']+'/gm, '')
+  const pressed = shareFns.filter((s) =>
+    files.some((f) => new RegExp(`\\b${s.name}\\b`).test(withoutImports(code.get(f)!))),
+  )
+  const unpressed = shareFns.filter((s) => !pressed.includes(s))
+  note(`${shareFns.length} share entry points, ${pressed.length} with a control`)
+  assert(
+    unpressed.length === 0,
+    `built and never pressable: ${unpressed.map((u) => u.name).join(', ')}`,
+  )
+})
+
 check('the scan can still see a props block at all', () => {
   /*
    * The check that keeps the two above honest. A regex that stopped matching
