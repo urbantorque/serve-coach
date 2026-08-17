@@ -247,6 +247,15 @@ Where state lives, what it costs, what it does to a warm phone.
       watched it. Reads `dist` and **fails rather than skips** when it is absent.
       Found a unit mismatch on the way: the first version divided by 1024 while
       Vite prints decimal kB, so every future comparison would have been 2.4% off.
+- [x] **D9 · R84** — **Two rounds reasoned about a quantity the app does not
+      compute, and the suite still held their numbers.** R52·1 and R52·2 reached
+      opposite conclusions from one argument: the checks called
+      `planarSpeedSeries(..., 2)` where the engine calls it with
+      `sampleRadius(t, CHAIN_WINDOW_SECONDS)`. Both remaining radius-2 checks moved
+      to the engine's own radius — R52's tempo confound restates from 2.3× to
+      **2.8×**, and R52·1's superseded separation check is deleted rather than left
+      contradicting R52·2. Gated: no test may build one of these series at a
+      literal radius. Take the constant, not the number.
 - [!] **D2d · R55·2c** — The switch, as a tap. **Blocked on constraint 3**: every
       `<input>` in this app is `type="file"`, `tokens.css` strips inputs to no
       border and no background, and a visible text field needs border, padding, a

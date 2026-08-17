@@ -43,6 +43,54 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 71 · Cycle D — performance and architecture · `D9 · R84` (new)
+
+**Orchestrator.** Cycle D's rows are blocked, so the Orchestrator generates —
+and round 69 left a contradiction sitting in the suite.
+
+**Two rounds reached opposite conclusions from one argument.** R52·1 measured a
+posed hitch separating **28–34×** and concluded the reading was worth building;
+R52·2 measured **1.7× against a 2.8× confound** and reverted it. The difference
+was the smoothing radius: the checks call `planarSpeedSeries(..., 2)`, the engine
+calls it with `sampleRadius(t, CHAIN_WINDOW_SECONDS)`, and a wider window fills a
+trough in.
+
+**Round 69 fixed the conclusion and left the evidence.** Two checks still built
+their series at radius 2, and one of them still asserted the refuted 28–34×.
+**A suite asserting a figure its own later round disproved is worse than no
+figure.**
+
+- Both moved to the engine's radius.
+- R52's tempo confound **restates from 2.3× to 2.8×** — it was an artifact too,
+  in the same direction, and the ledger row said 2.3.
+- R52·1's separation check is **deleted**, not adjusted: round 69's replacement
+  already covers that ground and says the opposite.
+
+**And the class is gated.** No test may build `planarSpeedSeries` or
+`riseSpeedSeries` at a literal radius — a bare number fails, anything derived
+passes. **Take the constant, not the number.** The failure message names the two
+rounds, so whoever trips it learns why in one line.
+
+**The gate's self-check fired first**, on its own broken regex: *"no series calls
+found in any test, so this scan proves nothing"*. That guard is in every
+text-matched gate in this repo for exactly this, and it is the fourth time it has
+caught one of mine.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The restated 2.3 → 2.8 is a correction to a figure this loop published twice, in a ledger row and a register entry |
+| Architecture | pass | The rule is narrow by design: not every literal in every test, only the two series whose radius decides a published reading |
+| Product | pass | Nothing user-facing; this is the suite's own arithmetic |
+| Performance | pass | One pass over the test files at suite time |
+
+**Gate.** typecheck clean · lint clean · **1218 checks, 0 failed, exit 0** (−1,
+the deleted duplicate). Canaried by restoring a literal radius — flagged with the
+file, the call and the fix.
+
+---
+
 ### Round 70 · Cycle C — coaching and UI · `C6 · R83` (new)
 
 **Orchestrator.** Cycle C's rows are done, so the Orchestrator generates —

@@ -231,6 +231,61 @@ check('every share entry point has a control that presses it', () => {
   )
 })
 
+/* -------------------- series a test builds for itself (R84) --------------- */
+
+/**
+ * A test that builds one of the engine's series must use the engine's radius.
+ *
+ * WHY. R52·1 measured a posed hitch separating 28–34× from a flowing serve and
+ * concluded the reading was worth building. R52·2 built it, and the separation
+ * came out at 1.7× against a 2.8× confound — **the opposite conclusion**. The
+ * difference was one argument: the checks called
+ * `planarSpeedSeries(..., 2)` while the engine calls it with
+ * `sampleRadius(t, CHAIN_WINDOW_SECONDS)`, which is wider, and a wider window
+ * fills a trough in.
+ *
+ * Two rounds reasoned about a quantity the app does not compute, and a canary
+ * that did not fire is what surfaced it. So: no hard-coded radius on a series
+ * the engine also builds. Take the constant, not the number.
+ *
+ * Narrow on purpose, like the props scan beside it. This does not police every
+ * literal in every test — it names the two series functions whose radius decides
+ * a published reading, and requires their callers to derive it.
+ */
+const SERIES_CALL = /\b(planarSpeedSeries|riseSpeedSeries)\(([^)]*)\)/g
+
+check('no test builds an engine series at a radius it made up', () => {
+  const testFiles = (dir: string, out: string[] = []): string[] => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name)
+      if (e.isDirectory()) testFiles(full, out)
+      else if (e.name.endsWith('.test.ts')) out.push(full)
+    }
+    return out
+  }
+
+  const offenders: string[] = []
+  let calls = 0
+  for (const f of testFiles(root)) {
+    const body = blankComments(fs.readFileSync(f, 'utf8'))
+    for (const m of body.matchAll(SERIES_CALL)) {
+      calls++
+      const last = m[2].split(',').pop()!.trim()
+      // A bare number is the defect. Anything derived — `sampleRadius(...)`, a
+      // named constant, a variable read off the engine — is the fix.
+      if (/^[0-9]+$/.test(last)) offenders.push(`${f.slice(root.length + 1)}: ${m[0]}`)
+    }
+  }
+  assert(calls > 0, 'no series calls found in any test, so this scan proves nothing')
+  note(`${calls} series calls across the suite, ${offenders.length} with a literal radius`)
+  assert(
+    offenders.length === 0,
+    `these pick their own smoothing rather than the engine's: ${offenders.join('; ')}. ` +
+      'R52·1 and R52·2 reached opposite conclusions from exactly this — use ' +
+      'sampleRadius(timeline(frames), CHAIN_WINDOW_SECONDS).',
+  )
+})
+
 check('the scan can still see a props block at all', () => {
   /*
    * The check that keeps the two above honest. A regex that stopped matching

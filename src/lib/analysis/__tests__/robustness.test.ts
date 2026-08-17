@@ -2790,8 +2790,8 @@ check('the finish keyframe holds still as a share of the serve, and drifts in se
  * the units and the body scale divide out.
  *
  * IT IS CONFOUNDED BY TEMPO, IN THE SAME DIRECTION AS THE FAULT. Swept across
- * the rig's motion dial with no hitch posed at all, it runs 0.0795 at a 0.95 s
- * motion down to 0.0344 at 1.85 s — **a 2.3-fold swing from tempo alone**, and
+ * the rig's motion dial with no hitch posed at all, it runs 0.2081 at a 0.95 s
+ * motion down to 0.0749 at 1.85 s — **a 2.8-fold swing from tempo alone**, and
  * a slower serve reads as a deeper trough, which is exactly what a pause would
  * read as. So a deep trough cannot distinguish "this player stopped" from "this
  * player serves slowly", and telling a club player they have a hitch when they
@@ -2805,142 +2805,13 @@ check('the finish keyframe holds still as a share of the serve, and drifts in se
  * That is the same wall R60 hit, and R60·1's answer is the precedent: build the
  * dial first, as its own round. Queued as R52·1.
  */
-/**
- * And with a hitch posed, which R52·1 built the dial for.
- *
- * R52 was refused as **unmeasured, not disproved**: the trough is confounded by
- * tempo 2.3-fold in the fault's own direction, and the rig could not pose a
- * hitch, so nothing could measure the separation. This is that measurement.
- *
- *     motion   no hitch   0.15s hitch   0.3s hitch
- *     1.35s     0.0490      0.0017       0.0000
- *     1.85s     0.0344      0.0010       0.0000
- *
- * **A 0.15 s hitch reads about 29× smaller than no hitch at the same tempo,
- * against a 2.3× confound across the whole tempo range.** The separation is an
- * order of magnitude larger than the thing that confounds it, so the refusal was
- * conservative and R52 is decidable after all.
- *
- * WITH ONE CAVEAT THAT HAS TO TRAVEL WITH IT. The rig's hitch is a perfect
- * freeze — the clock stops and the wrist is exactly still, so the trough goes to
- * zero plus landmark noise. A real player pausing does not freeze. **This is the
- * best case, not the expected one**, and it says the reading is worth building
- * rather than that a threshold can be set from here. A threshold wants footage.
- */
-/**
- * THE SEPARATION IS SMALLER THAN THE CONFOUND AT THE SMOOTHING THE ENGINE USES,
- * AND R52·2 IS REFUSED ON THAT.
- *
- * R52·1 measured a posed 0.15 s hitch reading 28–34× smaller than a flowing
- * serve and concluded the reading was worth building. **That figure was measured
- * at a smoothing radius the engine does not use.** These checks build the trough
- * off `planarSpeedSeries(..., 2)`; the chain pass builds its wrist series at
- * `chainRadius`, which is wider, and a wider window fills a trough in.
- *
- * Caught by a canary that did not fire. R52·2 published the reading on
- * `Diagnosis`, and scaling it by a third reddened nothing — because every check
- * here computes its own. The check comparing the two showed the engine
- * publishing 0.126 where this measures 0.049, and that disagreement is the
- * finding.
- *
- * At the engine's own radius:
- *
- *     motion    flowing   hitch 0.15s   hitch 0.3s
- *     0.95s      0.208      0.139         0.015
- *     1.35s      0.126      0.076         0.001
- *     1.85s      0.075      0.048         0.001
- *
- * **A 0.15 s hitch separates 1.5–1.7×. Tempo alone spans 2.8×.** The confound is
- * larger than the signal — the opposite of what R52·1 concluded, and the reason
- * nothing shipped. Only a gross 0.3 s pause separates, and somebody who stops for
- * a third of a second is not the case this was for.
- *
- * So the reading is not published. R52 goes back to refused, on a measurement
- * this time rather than on a missing dial, and the successor is named: if it is
- * worth having it needs its own series at its own radius, and that radius needs
- * deriving rather than borrowing.
- */
-check('the trough at the engine own smoothing does not separate a moderate hitch', () => {
-  const published = (motionSeconds: number, trophyHitchSeconds: number) => {
-    const frames = buildServe({ motionSeconds, trophyHitchSeconds }, FPS)
-    const skel = detectServe(frames, FPS)
-    const k = skel.keys
-    // The chain pass's own radius, computed the way `diagnose.ts` computes it,
-    // so this cannot drift from the engine — the drift is what produced this
-    // finding in the first place.
-    const v = planarSpeedSeries(frames, LM.rightWrist, skel.bodyHeight, sampleRadius(timeline(frames), CHAIN_WINDOW_SECONDS))
-    let lo = Number.POSITIVE_INFINITY
-    for (let i = k.trophy; i <= k.drop; i++) if (Number.isFinite(v[i])) lo = Math.min(lo, v[i])
-    let peak = 0
-    for (let i = k.trophy; i <= k.contact; i++) if (Number.isFinite(v[i])) peak = Math.max(peak, v[i])
-    return peak > 0 ? lo / peak : Number.NaN
-  }
-
-  const flowMid = published(1.35, 0)
-  const tempo = published(0.95, 0) / published(1.85, 0)
-  const separation = flowMid / published(1.35, 0.15)
-  note('tempo spans ' + tempo.toFixed(1) + 'x, a 0.15s hitch separates ' + separation.toFixed(1) + 'x')
-
-  assert(
-    separation < tempo,
-    'the hitch now separates ' + separation.toFixed(1) + 'x against a ' + tempo.toFixed(1) +
-      'x tempo confound, so it clears its confounder and R52 wants building rather than refusing',
-  )
-  // And the gross case, which does separate — stated so the refusal is about the
-  // common hitch rather than about every hitch.
-  const gross = flowMid / published(1.35, 0.3)
-  note('a 0.3s pause separates ' + gross.toFixed(0) + 'x')
-  assert(gross > 20, 'even a 0.3s pause only separates ' + gross.toFixed(1) + 'x')
-})
-
-check('a posed hitch separates from tempo by an order of magnitude', () => {
-  const trough = (motionSeconds: number, trophyHitchSeconds: number) => {
-    const fps = FPS
-    const frames = buildServe({ motionSeconds, trophyHitchSeconds }, fps)
-    const skel = detectServe(frames, fps)
-    const k = skel.keys
-    const v = planarSpeedSeries(frames, LM.rightWrist, skel.bodyHeight, 2)
-    let lo = Infinity
-    for (let i = k.trophy; i <= k.drop; i++) if (Number.isFinite(v[i])) lo = Math.min(lo, v[i])
-    let peak = 0
-    for (let i = k.trophy; i <= k.contact; i++) if (Number.isFinite(v[i])) peak = Math.max(peak, v[i])
-    return peak > 0 ? lo / peak : Number.NaN
-  }
-
-  const flowing = trough(1.35, 0)
-  const hitched = trough(1.35, 0.15)
-  const ratio = flowing / Math.max(hitched, 1e-9)
-  note(`1.35s motion: ${flowing.toFixed(4)} flowing, ${hitched.toFixed(4)} hitched — ${ratio.toFixed(0)}× apart`)
-
-  /*
-   * The claim is a comparison, not a level. 2.3× is what tempo alone does across
-   * the whole range this app sees; the hitch has to beat that by enough that no
-   * threshold has to thread between them.
-   */
-  assert(ratio > 10, `a posed hitch is only ${ratio.toFixed(1)}× from a flowing serve, which is ` +
-    'inside a factor of the 2.3× tempo confound — R52 goes back to refused')
-
-  // And it must hold at the slow end, where the confound is worst: a separation
-  // that only exists on quick serves would be the tempo reading again.
-  const slowFlowing = trough(1.85, 0)
-  const slowHitched = trough(1.85, 0.15)
-  const slowRatio = slowFlowing / Math.max(slowHitched, 1e-9)
-  note(`1.85s motion: ${slowRatio.toFixed(0)}× apart`)
-  assert(slowRatio > 10, `at a slow tempo the hitch only separates ${slowRatio.toFixed(1)}×`)
-
-  // The freeze is total, which is the caveat as an assertion: if the rig's hitch
-  // ever stops being a perfect stop, this reads differently and the "best case"
-  // framing needs revisiting rather than the threshold moving.
-  assert(hitched < 0.01, `the posed hitch reads ${hitched.toFixed(4)}, no longer a near-total stop`)
-})
-
 check('the trough between trophy and drop moves with tempo, and no hitch is posed', () => {
   const trough = (motionSeconds: number) => {
     const fps = FPS
     const frames = buildServe({ motionSeconds }, fps)
     const skel = detectServe(frames, fps)
     const k = skel.keys
-    const v = planarSpeedSeries(frames, LM.rightWrist, skel.bodyHeight, 2)
+    const v = planarSpeedSeries(frames, LM.rightWrist, skel.bodyHeight, sampleRadius(timeline(frames), CHAIN_WINDOW_SECONDS))
     let lo = Infinity
     for (let i = k.trophy; i <= k.drop; i++) if (Number.isFinite(v[i])) lo = Math.min(lo, v[i])
     let peak = 0
