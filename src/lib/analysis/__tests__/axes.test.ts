@@ -19,6 +19,7 @@ import { assessResilience, triage } from '../triage'
 import { causalFocus } from '../verdict'
 import { imageXSplit, imageXSplitFrom, readImageX } from '../axes'
 import { LM } from '../geometry'
+import { MIN_FRAME_HEIGHT_SHARE } from '../framingIssues'
 import { assert, check, heading, near, note, report, within } from './harness'
 
 const FPS = 50
@@ -637,6 +638,83 @@ check('and it is genuinely readable face-on, which is why this is withdrawn rath
     shallow.mean > 8 * shallow.sd,
     `even at 30° the stance is only ${(shallow.mean / shallow.sd).toFixed(1)}× its noise, ` +
       'so the withdrawal is about the measurement rather than about the camera',
+  )
+})
+
+
+/* ----------------------------------------------- court lines, and their cost -- */
+
+heading('How much court a phone filming a serve can actually see')
+
+/**
+ * R62, which `PHASE-8.md` lists **to be refused rather than built**. The
+ * finished round is the cost written down, and this is the arithmetic behind it
+ * so nobody has to rediscover it.
+ *
+ * COURT LINES ARE THE ENABLER FOR THE THREE THINGS EVERY PLAYER ASKS FOR — foot
+ * faults, placement, and where the ball landed. That is exactly why it needs a
+ * refusal with a number rather than a shrug.
+ *
+ * **THE FRAME DOES NOT CONTAIN THE COURT.** The app asks for a player filling a
+ * useful share of the frame — `framingIssues` refuses below
+ * `MIN_FRAME_HEIGHT_SHARE`, and the rig builds its 1.8 m player at 0.54 of frame
+ * height, which is what good framing looks like. Invert that and the frame spans
+ * 1.8 / 0.54 ≈ 3.3 m vertically at the player's distance, so a 16:9 landscape
+ * frame is about **5.9 m wide** there.
+ *
+ * A singles court is 8.23 m between the sidelines and a doubles court 10.97 m.
+ * So at the framing this app is built around, **the sidelines are not in shot**
+ * — not one of them and the far one by a wide margin. Only at
+ * `MIN_FRAME_HEIGHT_SHARE` itself, the point one step above "too far away", does
+ * the visible width reach the court at all, and that is the framing where the
+ * pose readings the whole report is made of are already degraded.
+ *
+ * THE COST, FOR SCALE. `vision/ballTrack.ts` and `vision/detector.ts` are 1,237
+ * lines between them and took a programme of their own; a line detector is that
+ * again, with no calibration, no fixtures, and a homography to estimate from
+ * lines that are mostly outside the picture. It would then fail on exactly the
+ * amateur footage this app is built to forgive.
+ *
+ * WHAT WOULD CHANGE IT: a camera further back, which costs the pose readings, or
+ * a second device. Not smoothing, not a better model — the lines are not faint,
+ * they are absent.
+ */
+const COURT_SINGLES_WIDTH_M = 8.23
+const COURT_DOUBLES_WIDTH_M = 10.97
+/** A 1.8 m player at the rig's own scale — what well-framed footage looks like. */
+const PLAYER_M = 1.8
+const PLAYER_SHARE_OF_FRAME = 0.54
+
+check('at the framing this app asks for, the singles sidelines are out of shot', () => {
+  const frameHeightM = PLAYER_M / PLAYER_SHARE_OF_FRAME
+  const frameWidthM = frameHeightM * (16 / 9)
+  note(`  a 16:9 frame spans ${frameWidthM.toFixed(1)} m at the player, against ${COURT_SINGLES_WIDTH_M} m of singles court`)
+  assert(
+    frameWidthM < COURT_SINGLES_WIDTH_M,
+    `the frame spans ${frameWidthM.toFixed(1)} m and the singles court is ${COURT_SINGLES_WIDTH_M} — ` +
+      'the lines are in shot after all, and R62 deserves re-reading',
+  )
+})
+
+check('even the loosest framing the app accepts barely reaches the doubles court', () => {
+  /*
+   * The other end, and it is the one that makes the refusal honest rather than
+   * convenient. At `MIN_FRAME_HEIGHT_SHARE` the frame is much wider — but that
+   * is one step above `too-far-away`, where the tracker is working from a player
+   * a few hundred pixels tall, and every reading the report is built from is
+   * already soft. Buying court lines by filming from there means paying for them
+   * with the serve.
+   */
+  const frameWidthM = (PLAYER_M / MIN_FRAME_HEIGHT_SHARE) * (16 / 9)
+  note(`  at the ${MIN_FRAME_HEIGHT_SHARE} floor the frame spans ${frameWidthM.toFixed(1)} m`)
+  assert(
+    frameWidthM < COURT_DOUBLES_WIDTH_M * 1.1,
+    `even the loosest accepted framing spans ${frameWidthM.toFixed(1)} m, comfortably past the court — ` +
+      'the geometry argument in R62 no longer holds',
+  )
+  assert(
+    frameWidthM > COURT_SINGLES_WIDTH_M,
+    'the loosest framing does not even reach the singles court, which makes the refusal stronger than stated',
   )
 })
 

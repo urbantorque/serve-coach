@@ -43,6 +43,40 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 26 · Cycle F — QA and edge cases · `F2 · R62`
+
+**Orchestrator.** The one round `PHASE-8.md` lists to be refused rather than
+built. Lead builder: Biomechanics & CV Specialist. Column: *Do I believe it*.
+
+**Refused with arithmetic, not instinct.** Court lines enable the three things
+every player asks for, so "too hard" is not an answer anybody will accept or
+remember. Derived from a constant the app already enforces: a well-framed 1.8 m
+player at 0.54 of frame height puts a 16:9 frame at **5.9 m** wide at the
+player's distance, against **8.23 m** of singles court. The sidelines are not in
+shot.
+
+**Both ends checked, and the second is what makes it honest.** At the framing
+floor the frame reaches 10.7 m — wide enough. That is one step above "too far
+away", where every pose reading the report is made of is already soft, so court
+lines bought from there are paid for with the serve. The check is written to go
+red if the loosest accepted framing ever stops reaching the court, which would
+make the refusal *stronger* than stated — a refusal that only fails in the
+direction that flatters it is not a check.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | A number, derived from `MIN_FRAME_HEIGHT_SHARE` and the rig's own scale, rather than an assertion. What would change it is named as a camera or a second device, explicitly not smoothing — the lines are absent, not faint |
+| Performance | pass | Nothing built |
+| Privacy | pass | Nothing built |
+| Architecture | pass | The derivation lives in `axes.test.ts`, beside the other camera-geometry findings, so it is re-run rather than remembered |
+| Product | pass | Product would want this most of anything in the ladder, and Honesty says the pixels are not there. Recorded in `PHASE-8.md`'s refusal list, `NEXT.md` and `README.md` |
+
+**Gate.** typecheck clean · lint clean · **1114 checks, 0 failed, exit 0** (+2).
+
+---
+
 ### Round 25 — the fourth consolidation gate
 
 **1 · Full gate.** typecheck clean · lint clean · **1112 checks, 0 failed,

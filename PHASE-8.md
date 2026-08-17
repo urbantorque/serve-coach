@@ -428,6 +428,16 @@ rediscover the cost.
 - **Re-deriving `NOISE_FLOOR` from real footage.** Blocked on R55, which is why
   R55 is in the list at all.
 - **Anything that sends a clip anywhere.** Constraint 7.
+- **Court lines.** Refused in round 26 with the arithmetic rather than the
+  instinct. At the framing this app asks for — a 1.8 m player at 0.54 of frame
+  height, which is what good footage looks like — a 16:9 frame spans about
+  **5.9 m** at the player's distance, against **8.23 m** of singles court. The
+  sidelines are not in shot, and the far one is not close. Only at
+  `MIN_FRAME_HEIGHT_SHARE` itself, one step above "too far away", does the
+  visible width reach the court, and that is the framing where every pose reading
+  the report is made of is already soft. Buying court lines by filming from there
+  means paying for them with the serve. `axes.test.ts` carries the derivation and
+  goes red if either end of it stops holding.
 - **Restyling any of it.** Constraint 3. Two redesigns were built and rejected;
   every round above assembles from `primitives.tsx` or says in its commit body
   that no token fits.

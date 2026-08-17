@@ -160,8 +160,9 @@ Tests with teeth, refusals, and the things that only break on somebody's phone.
 - [x] **D3 · audit 5** — A stored-data shape that predates its current writer.
       *(Round 23 — the answer was R65, already named. Done rather than
       duplicated.)*
-- [ ] **F2 · R62** — Court lines, listed to be refused rather than built. The
-      finished round is a README line recording the cost.
+- [x] **F2 · R62** — Court lines, refused. *(Round 26 — 5.9 m of frame against
+      8.23 m of singles court, derived from a constant the app already
+      enforces.)*
 - [ ] **F3 · audit 1** — A refusal path nobody has counted on real footage.
 - [ ] **F4 · audit 10** — An existing test re-run against its own canary, to
       check it still has teeth.

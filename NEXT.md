@@ -1847,7 +1847,35 @@ family, different surface, different refusals.
       would have to be trustworthy. **Never in mph**: a speed in body heights per
       second is what was measured; mph is a claim about a court distance nobody
       surveyed. Too big for one cycle — spike first.
-- [ ] **R62** — Court lines, listed to be refused rather than built. The enabler
+- [x] **R62** — Court lines, refused with the arithmetic rather than the instinct.
+
+      The enabler for the three things every player asks for — foot faults,
+      placement, where the ball landed — which is exactly why it needed a number
+      rather than a shrug.
+
+      **The frame does not contain the court.** The app asks for a player filling
+      a useful share of the frame; the rig builds its 1.8 m player at 0.54 of
+      frame height, which is what good footage looks like. Invert it and the
+      frame spans 3.3 m vertically at the player's distance, so a 16:9 landscape
+      frame is about **5.9 m wide** there — against **8.23 m** of singles court.
+      The sidelines are not in shot and the far one is not close.
+
+      Only at `MIN_FRAME_HEIGHT_SHARE` itself, one step above "too far away",
+      does the visible width reach the court at 10.7 m. That is the framing where
+      every pose reading the report is built from is already soft, so buying
+      court lines by filming from there means paying for them with the serve.
+
+      For scale: `ballTrack.ts` and `detector.ts` are 1,237 lines between them
+      and took a programme of their own. A line detector is that again, with no
+      calibration, no fixtures, and a homography to estimate from lines mostly
+      outside the picture.
+
+      **What would change it:** a camera further back, which costs the pose
+      readings, or a second device. Not smoothing and not a better model — the
+      lines are not faint, they are absent. Two checks in `axes.test.ts` hold
+      both ends of the derivation, and the second is written to go red if the
+      loosest accepted framing ever stops reaching the court, which would make
+      the refusal stronger than stated rather than weaker. The enabler
       for foot faults, placement and where the ball landed — the three things
       every player asks for. Ranked last honestly: a vision project the size of
       the ball tracker, it fails on exactly the amateur footage this app is built

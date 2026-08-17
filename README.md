@@ -590,6 +590,21 @@ serve type — which is the case the yaw gate was written for, and the case wher
 how often two clips from one trip agree on camera angle is still an open
 question.
 
+**Court lines are refused, and the arithmetic is why.** They are the enabler for
+the three things every player asks for — foot faults, placement, where the ball
+landed — so the refusal is stated with a number. The app asks for a player
+filling a useful share of the frame, and at what good footage looks like — a
+1.8 m player at 0.54 of frame height — a 16:9 frame spans about **5.9 m** at the
+player's distance. A singles court is 8.23 m between the sidelines. They are not
+in shot.
+
+Only at the framing floor, one step above "too far away", does the visible width
+reach the court at 10.7 m, and that is where every pose reading the report is
+built from is already soft — so buying court lines by filming from there means
+paying for them with the serve. What would change it is a camera further back or
+a second device, and not smoothing or a better model: the lines are not faint,
+they are absent.
+
 **The stance is one the camera cannot see, and the round said the opposite.** R60
 proposed reading platform against pinpoint from ankle separation over time, on
 the grounds that the back foot sliding up is a large, slow motion along the axis
