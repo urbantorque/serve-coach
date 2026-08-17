@@ -615,6 +615,40 @@ export const UNCALIBRATED: Record<string, string> = {
     'identical at 45° and 82° — and nothing here knows what a club player rise ' +
     'should be. Zero is 0.0457, not 0: straightening lifts the hips too.',
 
+  /*
+   * How much of the trophy's knee bend was spent by contact.
+   *
+   * The other half of R51's pair: `leg_drive_rise_ratio` is how much of the load
+   * became upward motion, this is how much load there was to spend. Knee bend at
+   * the trophy is graded; nothing measured what happened to it.
+   *
+   * IT TRACKS ITS DIAL, which is the test `legs_peak_ms` below failed and the
+   * one every uncalibrated reading has to pass before it ships. Dialling the
+   * trophy knee angle from 118° to 158° — bent to nearly straight — moves the
+   * extension 51.7 → 42.6 → 33.1 → 26.2 → 16.1: monotonic across all five rungs,
+   * a 35.6° reading span against a 40° dial span, a slope of 0.89.
+   *
+   * A DEPTH READING, and that is the caveat rather than a footnote. A joint
+   * angle cannot be had from one axis, so unlike the rise beside it this leans on
+   * MediaPipe's inferred z. The rig reports it identical to two decimals at 30°,
+   * 45°, 60° and 82° — and R50c's round established what that is worth: world
+   * coordinates do not rotate when the camera does, so rig invariance here is a
+   * property of the rig and not evidence about a phone. What can be said is that
+   * its deviation is 5.9° across the twenty-four-seed ensemble, against 9.4° for
+   * `external_rotation_deg` and 20.2° for `pronation_deg` on the same clips: the
+   * best-conditioned depth reading in the engine, on much the largest structure.
+   *
+   * NOT NAMED, for the usual reason and one of its own. A delta carries √2 × 5.9
+   * = 8.3° against a 35.6° working span, which is resolvable — but nothing here
+   * knows what a club player *should* straighten. A tour serve and a good club
+   * serve are not ordered by this number, and a player who bends less has less
+   * to spend rather than a fault.
+   */
+  knee_extension_deg:
+    'measured and not named: tracks its dial 0.89 to one across five rungs, ' +
+    'deviation 5.9° against a 35.6° span — the best-conditioned depth reading here. ' +
+    'Nothing knows what a club player should straighten, and bending less is not a fault.',
+
   legs_peak_ms:
     'measured and not named: 7.5 ms deviation, camera-invariant, and it times ' +
     'the leg drive without measuring it — the same peak whether the player drives or not',

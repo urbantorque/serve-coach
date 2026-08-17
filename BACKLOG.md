@@ -78,8 +78,13 @@ Kinetic chain, trophy metrics, what the body actually did.
 - [x] **B4 · R51·1** — Leg drive measured rather than timed: hip-centre rise in
       body heights. *(Round 28 — tracks its dial near 1:1, identical at 45° and
       82°. Ships into `UNCALIBRATED`.)*
-- [ ] **B4b · R51·2** — Knee extension, if it can be justified on its own terms.
-      Not from image y, and it cannot name the stance — R60·2 refused that.
+- [x] **B4b · R51·2** — Knee extension ships into `UNCALIBRATED`. Tracks its dial
+      **0.89 to one across five rungs** (118°→51.7 … 158°→16.1, monotonic),
+      deviation **5.9° against a 35.6° span** — the best-conditioned depth reading
+      in the engine, against 9.4° for external rotation and 20.2° for pronation.
+      World coordinates, not image y. Claims nothing about camera angle: the rig's
+      invariance is a rig property, per R50c. Also fixed the chain audit printing
+      a degree reading labelled `ms`.
 - [ ] **B5 · R52** — A pause between the trophy and the drop, as a trough in
       racket-hand planar speed. Sweep against `motionSeconds` first; an
       `UNDER_RESOLVED` entry saying it cannot be told from a slow serve is the

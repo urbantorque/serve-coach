@@ -520,9 +520,20 @@ check('the chain read from the picture plane holds still where the one read from
       )
       continue
     }
+    /*
+     * The unit off the id, not hard-coded to `ms`.
+     *
+     * This table printed `knee_extension_deg ... deviation 5.9 ms` the moment
+     * that reading arrived — a degree measurement wearing milliseconds, in the
+     * audit whose whole job is to say what each number is. Every id in this bag
+     * carries its unit in its own name, so the label comes off the name rather
+     * than off an assumption about what a chain link is; the assumption was true
+     * only while everything here was a timing.
+     */
+    const unit = d.id.endsWith('_deg') ? '°' : d.id.endsWith('_ratio') ? '  ' : 'ms'
     note(
       `  ${d.id.padEnd(17)} ${SEEN.includes(d.id) ? 'image x,y ' : 'world z   '} ` +
-        `deviation ${d.sd.toFixed(1).padStart(5)} ms   range ${d.range.toFixed(0).padStart(4)}   n=${d.n}`,
+        `deviation ${d.sd.toFixed(1).padStart(5)} ${unit}   range ${d.range.toFixed(0).padStart(4)}   n=${d.n}`,
     )
   }
 })
@@ -1248,6 +1259,111 @@ check('the two depth readings are marked soft when the camera cannot see depth',
     headOn!.tiltConfidence < SOFT_MEASUREMENT,
     `tilt kept ${headOn!.tiltConfidence.toFixed(2)} confidence on a face-on clip`,
   )
+})
+
+/* ================================ the other half of the leg-drive pair (R51·2) */
+
+/**
+ * Knee extension: how much of the trophy's bend was spent by contact.
+ *
+ * Pinned rather than recorded in prose, which is the difference between this and
+ * its sibling. `leg_drive_rise_ratio` says "tracks its dial near one-to-one" in
+ * `UNCALIBRATED` and nothing checks that it still does — a claim measured once at
+ * R51·1 and left to age, which is the shape of defect round 40 found in `NEXT.md`
+ * and round 45 refused to repeat with a copied hex.
+ */
+const KNEE_SEEDS = SEEDS.slice(0, 10)
+
+const extensionAt = (trophyKneeAngle: number, cameraYaw = 45) => {
+  const v = realise({ trophyKneeAngle, cameraYaw }, 5, KNEE_SEEDS)
+    .map((r) => r.chain.knee_extension_deg)
+    .filter((x): x is number => typeof x === 'number' && Number.isFinite(x))
+  const mean = v.reduce((a, b) => a + b, 0) / (v.length || 1)
+  const sd = Math.sqrt(v.reduce((a, b) => a + (b - mean) ** 2, 0) / (v.length || 1))
+  return { mean, sd, n: v.length }
+}
+
+check('knee extension tracks the bend it was given, across the whole range', () => {
+  /*
+   * The test `legs_peak_ms` failed and every uncalibrated reading has to pass
+   * before it ships: does the number move when the thing it claims to measure
+   * moves? A timing that reads the same whether the player drives or not is not
+   * a measurement of driving.
+   *
+   * Monotonic across all five rungs rather than just at the ends, because a
+   * reading that is right at the extremes and flat in the middle is a reading
+   * that separates nothing for the players in the middle — which is everybody
+   * this app is for.
+   */
+  const rungs = [118, 128, 138, 148, 158].map((dial) => ({ dial, ...extensionAt(dial) }))
+  assert(
+    rungs.every((r) => r.n === KNEE_SEEDS.length),
+    'the rig lost clips at some knee angles, so these rungs are not comparable',
+  )
+  note(rungs.map((r) => `${r.dial}°→${r.mean.toFixed(1)}`).join(', '))
+
+  for (let i = 1; i < rungs.length; i++) {
+    assert(
+      rungs[i].mean < rungs[i - 1].mean,
+      `a straighter trophy gave more extension at ${rungs[i].dial}°: ` +
+        `${rungs[i].mean.toFixed(1)} against ${rungs[i - 1].mean.toFixed(1)}`,
+    )
+  }
+  /*
+   * Magnitudes, because the sign is the wrong question. The dial is the trophy
+   * knee *angle*, so a bigger dial is a straighter leg and less to spend — the
+   * relationship is negative by construction, and it is the monotonic loop above
+   * that establishes the direction. What "one to one" asks is whether a degree
+   * of bend buys a degree of extension.
+   */
+  const dialSpan = Math.abs(rungs[0].dial - rungs[rungs.length - 1].dial)
+  const readSpan = Math.abs(rungs[0].mean - rungs[rungs.length - 1].mean)
+  const slope = readSpan / dialSpan
+  note(`slope ${slope.toFixed(2)} — ${readSpan.toFixed(1)}° of reading per ${dialSpan}° of dial`)
+  assert(slope > 0.7 && slope < 1.15, `slope is ${slope.toFixed(2)}, no longer near one-to-one`)
+})
+
+check('its deviation is stated against the span it has to work across', () => {
+  /*
+   * A deviation alone says nothing. 5.9° is excellent for a depth reading and
+   * useless if the whole range were 8° wide — the ratio is the claim, and it is
+   * what licenses shipping this as a delta between two of the player's own
+   * serves under R50's rule.
+   */
+  const worst = Math.max(...[118, 138, 158].map((d) => extensionAt(d).sd))
+  const span = extensionAt(118).mean - extensionAt(158).mean
+  const deltaNoise = Math.SQRT2 * worst
+  note(`deviation ${worst.toFixed(1)}°, delta noise ${deltaNoise.toFixed(1)}° against a ${span.toFixed(1)}° span`)
+  assert(deltaNoise < span / 3, `a delta carries ${deltaNoise.toFixed(1)}° against a ${span.toFixed(1)}° span`)
+  assert(worst < 9.4, `${worst.toFixed(1)}° is no longer better than external rotation's 9.4°`)
+})
+
+check('the rig says nothing about the camera here, and the entry admits it', () => {
+  /*
+   * R50c'S FINDING, APPLIED BEFORE IT COULD BE MISREAD. This reads identical at
+   * every camera angle — and that is a fact about the rig, not about a phone:
+   * world coordinates do not rotate when the camera does, so a world-derived
+   * reading is invariant here by construction. Round 40 established exactly this
+   * and it would have been very easy to report as robustness.
+   *
+   * Checked both ways: the invariance is real, and `UNCALIBRATED` says what it
+   * is worth.
+   */
+  const yaws = [30, 45, 60, 82].map((y) => extensionAt(133, y).mean)
+  const spread = Math.max(...yaws) - Math.min(...yaws)
+  assert(spread < 1e-9, `the reading moved ${spread.toFixed(3)}° across camera yaw`)
+  /*
+   * And the entry has to carry the caveat, not just this comment. A future
+   * reader meets `UNCALIBRATED.knee_extension_deg` long before they meet this
+   * file, and an entry that said "identical at every angle" without saying what
+   * that is worth would be the overclaim in the place people actually read.
+   */
+  const entry = UNCALIBRATED.knee_extension_deg ?? ''
+  assert(
+    !/camera|angle|yaw|invariant/i.test(entry),
+    `the entry claims something about camera angle: "${entry}"`,
+  )
+  note('identical at 30°, 45°, 60° and 82° — a rig property, per R50c, so unclaimed')
 })
 
 /* ============================== how tight a same-spot gate has to be (R50c) = */

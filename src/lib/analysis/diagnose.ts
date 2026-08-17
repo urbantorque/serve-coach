@@ -14,7 +14,7 @@
  * call, and the returned object holds numbers only — never a frame, never a
  * landmark, nothing that would pin the clip in memory behind a saved report.
  */
-import { LM, clamp, mean, sided, trunkCoilReading } from './geometry'
+import { LM, clamp, jointAngle, mean, sided, trunkCoilReading } from './geometry'
 import { imageXSplitFrom, readImageX } from './axes'
 import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED } from './confidence'
 import { assessSpatial } from './spatial'
@@ -1408,6 +1408,24 @@ export interface LegDrive {
    * not stand still.
    */
   rise: number | null
+  /**
+   * How much of the trophy's knee bend was straightened by contact, in degrees.
+   *
+   * The other half of the pair R51 asks for: `rise` is how much of the load
+   * became upward motion, this is how much load there was to spend. Knee bend at
+   * the trophy is already graded; nothing measured what happened to it.
+   *
+   * **World coordinates, not image y, which is what R51·2 required.** A joint
+   * angle is not available from one axis, and the projected version is
+   * confounded by camera yaw in the way R60·2 refused the stance for. It is
+   * therefore a depth reading, with everything that implies — see
+   * `UNCALIBRATED.knee_extension_deg` for what the sweep says about resolving it.
+   *
+   * Both legs averaged, as the trophy metric already does. `null` where either
+   * keyframe's knees could not be seen — never a zero, since a zero here is a
+   * player who never straightened.
+   */
+  extensionDeg: number | null
   /** Mean visibility of the two hip landmarks across the two keyframes, 0–1. */
   confidence: number
 }
@@ -1436,8 +1454,32 @@ function readLegDrive(trophy: Frame, contact: Frame, bodyHeight: number): LegDri
   const mid = (f: Frame) => (f.image[LM.leftHip]?.y + f.image[LM.rightHip]?.y) / 2
   const a = mid(trophy)
   const b = mid(contact)
-  if (!(bodyHeight > 1e-6) || !Number.isFinite(a) || !Number.isFinite(b)) {
-    return { rise: null, confidence }
+  /*
+   * The knee angle at one frame, both legs averaged, from world coordinates.
+   *
+   * `steadyWorld` is deliberately not used, for the reason the rise gives above:
+   * these two frames are endpoints of a span, and smoothing either into its
+   * neighbours blunts the very difference being measured.
+   */
+  const knees = (f: Frame): number | null => {
+    const legs = [
+      [LM.leftHip, LM.leftKnee, LM.leftAnkle],
+      [LM.rightHip, LM.rightKnee, LM.rightAnkle],
+    ] as const
+    const seenLegs = legs.filter((l) => l.every((lm) => (f.world[lm]?.visibility ?? 0) > 0))
+    if (!seenLegs.length) return null
+    const angles = seenLegs.map(([h, k, an]) => jointAngle(f.world[h], f.world[k], f.world[an]))
+    return angles.reduce((x, y) => x + y, 0) / angles.length
   }
-  return { rise: (a - b) / bodyHeight, confidence }
+  const kneeTrophy = knees(trophy)
+  const kneeContact = knees(contact)
+  const extensionDeg =
+    kneeTrophy === null || kneeContact === null || !Number.isFinite(kneeTrophy - kneeContact)
+      ? null
+      : kneeContact - kneeTrophy
+
+  if (!(bodyHeight > 1e-6) || !Number.isFinite(a) || !Number.isFinite(b)) {
+    return { rise: null, extensionDeg, confidence }
+  }
+  return { rise: (a - b) / bodyHeight, extensionDeg, confidence }
 }

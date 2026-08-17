@@ -216,6 +216,13 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   // angle the app accepts. Dimensionless like the two above it.
   const rise = d.legDrive?.rise
   if (typeof rise === 'number' && Number.isFinite(rise)) out.leg_drive_rise_ratio = rise
+  // The fifth, and unlike the one above it this one is a depth reading: a joint
+  // angle cannot be had from a single axis. It arrives through this door for the
+  // reason every other measurement does — the "declared uncalibrated ⟺ actually
+  // produced" check walks this bag, so a number that skipped it would be an
+  // ungraded reading nothing held to account.
+  const ext = d.legDrive?.extensionDeg
+  if (typeof ext === 'number' && Number.isFinite(ext)) out.knee_extension_deg = ext
   return out
 }
 

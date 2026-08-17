@@ -43,6 +43,65 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 47 · Cycle B — biomechanics · `B4b · R51·2`
+
+**Orchestrator.** The other half of R51's pair. `leg_drive_rise_ratio` is how
+much of the load became upward motion; nothing measured how much load there was
+to spend. Lead builder: Biomechanist. Column: *Would I trust it.*
+
+**"Not from image y" was already satisfied.** `kneeBend` at the trophy reads
+through `steadyAngle`, which is `steadyWorld` underneath — a joint angle cannot
+be had from one axis. So the round's real question was never the source. It was
+whether a depth reading of this thing can be resolved at all, which is what
+R60·2 refused the stance over.
+
+**Measured, and it ships.**
+
+- **Tracks its dial 0.89 to one.** 118° → 51.7, 128° → 42.6, 138° → 33.1,
+  148° → 26.2, 158° → 16.1. Monotonic across all five rungs, not just the ends —
+  a reading right at the extremes and flat in the middle separates nobody in the
+  middle, which is everyone this app is for. This is the test `legs_peak_ms`
+  failed.
+- **Deviation 5.9° against a 35.6° span.** The best-conditioned depth reading in
+  the engine: 9.4° for `external_rotation_deg` and 20.2° for `pronation_deg` on
+  the same clips. A delta carries 8.3°, under a third of the span, which is what
+  licenses it as a between-serves reading under R50's rule.
+
+**And it claims nothing about the camera, which took R50c to know.** It reads
+identical to two decimals at 30°, 45°, 60° and 82° — and round 40 established
+exactly what that is worth: world coordinates do not rotate when the camera does,
+so rig invariance here is a property of the rig. It would have been very easy to
+report as robustness. A check now reads the `UNCALIBRATED` entry and **fails if
+it mentions camera angle at all**, because a future reader meets that string long
+before they meet the test.
+
+**Two of my own errors, both caught by the checks as written.** The slope came
+out −0.89 because the dial is an *angle* — a bigger dial is a straighter leg — so
+the relationship is negative by construction and the monotonic loop is what
+establishes direction. And the reading arrived declared through the wrong door
+until it was wired into `flattenUngraded`; the "declared uncalibrated ⟺ actually
+produced" gate then refused it until `UNCALIBRATED` had an entry.
+
+**A defect in the audit itself.** The chain table printed
+`knee_extension_deg ... deviation 5.9 ms` — a degree measurement wearing
+milliseconds, in the printout whose whole job is to say what each number is. The
+unit now comes off the id, which every reading in that bag already carries; the
+`ms` was an assumption that held only while everything there was a timing.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Not named, and the entry says why twice over: nothing knows what a club player should straighten, and bending less is having less to spend rather than a fault |
+| Honesty | pass | The camera claim is refused in the one place people read, and checked |
+| Architecture | pass | Pinned rather than recorded in prose — its sibling's "tracks its dial near one-to-one" has never been checked since R51·1 measured it |
+| Performance | pass | Two frames, two joint angles, no new pass |
+
+**Gate.** typecheck clean · lint clean · **1191 checks, 0 failed, exit 0** (+3).
+Canaried by scaling the extension to 0.4× — the tracking check reddened alone.
+
+---
+
 ### Round 46 · Cycle A — the engine · `A4c · R61·3`
 
 **Orchestrator.** The outbound ball, built on the pass round 39 laid down. Lead
