@@ -268,6 +268,27 @@ export interface ServeDials {
    * would silently stop meaning anything.
    */
   landingLean: number
+  /**
+   * How much the BACK foot follows the hips instead of staying planted, 0–1.
+   *
+   * The asymmetry `landingLean` on its own cannot express, and the reason it
+   * matters is that `Diagnosis.landing` reads the ankle CENTRE. With both feet
+   * planted that midpoint is a fixed reference and the reading is purely how far
+   * the body travelled. Let the back foot travel too and the midpoint travels
+   * with it, so the same collapse reads smaller — the measurement would be
+   * quietly reporting the trailing leg as well as the fall.
+   *
+   * A right-handed serve lands on the LEFT foot, so the back foot here is the
+   * right one; this rig builds right-handed serves throughout, which is stated
+   * at the top of the file.
+   *
+   * Zero is both feet planted, which is what `landingLean` did alone and what
+   * every expectation written against it assumes. One is a back foot that
+   * travels exactly as far as the hips do — a leg swinging fully through rather
+   * than resisting. Real landings sit somewhere between, and nobody here knows
+   * where, which is the whole point of being able to sweep it.
+   */
+  landingBackFootDrag: number
   /** Someone standing around with the racket down — used to test rejection. */
   noSwing: boolean
   /**
@@ -443,6 +464,8 @@ export const CLEAN_SERVE: ServeDials = {
   // above: the clean rig has to keep the serve every existing expectation was
   // written against. A serve landing dead square is not a claim about players.
   landingLean: 0,
+  // Both feet planted, which is what the landing did before this dial existed.
+  landingBackFootDrag: 0,
   noSwing: false,
   noise: 0,
   // Both default to the rig's previous behaviour — depth exactly as good as the
@@ -656,7 +679,17 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
         // instead, which is a rig telling a lie rather than refusing.
         const drop = Math.abs(ankle.y - h.y)
         const room = Math.sqrt(Math.max(0, (THIGH + SHIN - 1e-3) ** 2 - drop * drop))
-        const shift = clamp(landingShift, -room, room)
+        /*
+         * The back foot travels with the hips by , the
+         * front foot stays planted. A right-handed serve lands on the left,
+         * so the right leg is the trailing one -- see the dial.
+         *
+         * Subtracting the drag from this side own shift is what makes it
+         * follow: the shift is how far the ankle moves AGAINST the hips, so a
+         * foot that keeps pace with them moves not at all relative to them.
+         */
+        const follows = side === 'right' ? d.landingBackFootDrag : 0
+        const shift = clamp(landingShift * (1 - follows), -room, room)
         ankle = lm(ankle.x - acrossHips.x * shift, ankle.y, ankle.z - acrossHips.z * shift)
         knee = solveKnee(h, ankle)
       }

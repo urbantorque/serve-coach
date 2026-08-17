@@ -698,16 +698,32 @@ export const UNCALIBRATED: Record<string, string> = {
    * the shot from falling over, a band would be four invented numbers.
    *
    * The second is specific and worse, and it is the reason this is not merely
-   * awaiting a band. The rig poses a landing as a symmetric lateral shift over
-   * two feet that stay planted, because that is what `landingLean` builds. A
-   * real collapse is over the FRONT foot, with the back leg trailing and doing
-   * something this rig has no way to express. So the reading is validated
-   * against a model of the fault rather than against the fault — a weaker claim
-   * than the chain links can make, since they at least measure a quantity the
-   * rig varies honestly. The deviation above is real and the gain above is real;
-   * what is unproven is that a real collapsed landing produces this shape at all.
-   * Only footage settles that, and `fixtures/README.md` is where that story
-   * continues.
+   * awaiting a band: the reading is contaminated by the trailing leg, and the
+   * size of it is now measured rather than suspected.
+   *
+   * `landing.offset` uses the ankle CENTRE, so that midpoint is only a fixed
+   * reference while both feet stay planted. `landingBackFootDrag` in the rig
+   * lets the back foot travel with the hips instead, which is what a leg
+   * swinging through actually does, and the same 0.12 m collapse then reads:
+   *
+   *     back foot planted (drag 0)     0.0655
+   *     half following   (drag 0.5)    0.0490
+   *     fully following  (drag 1)      0.0326
+   *
+   * Half the fall, gone, depending on something that is not the fall. A number
+   * that good-looking — fourteen deviations of separation — reporting half of
+   * what happened is exactly the shape `pancake_contact` was retired for.
+   *
+   * READING THE FRONT ANKLE ALONE IS IMMUNE, and was measured rather than
+   * assumed: 0.1155 at every drag setting, against a 0.0498 baseline, so the
+   * same 0.0657 of separation with none of the contamination. It was NOT taken,
+   * and the reason is the rule this file keeps relearning. That baseline is the
+   * stance — how far the front foot sits from the hip centre — and stance width
+   * is a constant in this rig (`HALF_HIP`) with no dial on it. So switching
+   * would trade a confound that has been measured for one that this rig is
+   * structurally incapable of measuring, which is how `hip_lead_ms` ended up
+   * with a camera-angle sweep that could only ever come out flat. When footage
+   * exists, measure the stance spread first and then switch; not before.
    *
    * Unsigned deliberately, and `LandingBalance.offset` carries why: which way
    * image x points depends on which side the camera stood, so a sign would be a

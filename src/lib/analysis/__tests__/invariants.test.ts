@@ -395,6 +395,58 @@ check('nothing at or before contact knows the landing happened', () => {
   note(`contact identical to 0 m, ankle ${moved.toFixed(3)} m across by the finish`)
 })
 
+check('the back foot can trail without the front foot noticing', () => {
+  /*
+   * The asymmetry `landingLean` alone cannot pose, and the reason it was needed:
+   * `Diagnosis.landing` reads the ankle CENTRE, which is only a fixed reference
+   * while both feet stay planted. A back foot that travels with the hips moves
+   * that midpoint, so the same collapse reads smaller — and nothing in the rig
+   * could produce that clip to find out by how much.
+   *
+   * Both halves are asserted, because a dial that moved both feet would look
+   * identical in the reading it was built to stress.
+   */
+  const planted = buildServe({ noise: 0, depthNoise: 0, depthBias: 0, seed: 7000, landingLean: 0.12 }, 50)
+  const trailing = buildServe(
+    { noise: 0, depthNoise: 0, depthBias: 0, seed: 7000, landingLean: 0.12, landingBackFootDrag: 1 },
+    50,
+  )
+  const skel = detectServe(planted, 50)
+  const at = (fs: typeof planted, lm: number) => fs[skel.keys.finish].world[lm]
+  const gap = (lm: number) =>
+    Math.hypot(
+      at(planted, lm).x - at(trailing, lm).x,
+      at(planted, lm).y - at(trailing, lm).y,
+      at(planted, lm).z - at(trailing, lm).z,
+    )
+
+  // A right-handed serve lands on the left, so the right leg is the trailing one.
+  assert(gap(LM.leftAnkle) < 1e-9, `the front foot moved ${gap(LM.leftAnkle).toFixed(6)} m when only the back leg was dialled`)
+  assert(gap(LM.rightAnkle) > 0.05, `the back foot moved only ${gap(LM.rightAnkle).toFixed(4)} m at full drag`)
+  note(`  front foot fixed, back foot ${gap(LM.rightAnkle).toFixed(3)} m across at full drag`)
+
+  // And the segments survive it, since the knee is re-solved on this side too.
+  const span = (fs: typeof planted, a: number, b: number) =>
+    Math.hypot(at(fs, a).x - at(fs, b).x, at(fs, a).y - at(fs, b).y, at(fs, a).z - at(fs, b).z)
+  assert(
+    Math.abs(span(trailing, LM.rightHip, LM.rightKnee) - span(planted, LM.rightHip, LM.rightKnee)) < 1e-9 &&
+      Math.abs(span(trailing, LM.rightKnee, LM.rightAnkle) - span(planted, LM.rightKnee, LM.rightAnkle)) < 1e-9,
+    'the trailing leg stretched',
+  )
+})
+
+check('a trailing back foot is an exact no-op at zero drag', () => {
+  // Same rule as every other dial here: the default path has to be the same
+  // arithmetic, not a similar leg, because the landing's own numbers were
+  // measured against it.
+  const a = legAt({ landingLean: 0.12 }, 'finish')
+  const b = legAt({ landingLean: 0.12, landingBackFootDrag: 0 }, 'finish')
+  assert(
+    a.ankle.every((v, i) => Object.is(v, b.ankle[i])) && Object.is(a.kneeAngle, b.kneeAngle),
+    'dialling the drag to zero changed the leg',
+  )
+})
+
 check('the landing is clamped where the leg runs out rather than stretching', () => {
   // Asked for far more travel than a leg has, and the documented behaviour is a
   // clamp. The alternative is the solver quietly shortening a segment to reach,
