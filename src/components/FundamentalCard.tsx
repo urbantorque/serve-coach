@@ -11,7 +11,6 @@ interface Props {
   delta?: number
   /** Jump the video to the keyframe this area is measured on. */
   onSeek?: (phase: Fundamental['phase']) => void
-  defaultOpen?: boolean
 }
 
 /**
@@ -33,9 +32,22 @@ export default function FundamentalCard({
   fundamental: f,
   delta,
   onSeek,
-  defaultOpen = false,
 }: Props) {
-  const [open, setOpen] = useState(defaultOpen)
+  /*
+   * Closed, always, and not a prop.
+   *
+   * `defaultOpen` was removed from the report a while back for the reason
+   * written beside the call site: the array order is hard-coded in `measure()`,
+   * so opening the first card always opened the toss — the largest of the five
+   * — under a ranked plan that had just told the player their problem was
+   * somewhere else. The prop outlived that decision by several rounds and the
+   * reachability gate found it, which is the first thing that gate found.
+   *
+   * Deleted rather than left optional. A door back to a rejected behaviour is
+   * one `defaultOpen={i === 0}` away from being walked through again by
+   * somebody who never reads the comment saying not to.
+   */
+  const [open, setOpen] = useState(false)
 
   return (
     <section className={`fcard fcard--${f.status}${open ? ' is-open' : ''}`}>

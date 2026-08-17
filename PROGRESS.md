@@ -43,6 +43,68 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 42 · Cycle D — architecture · `D5 · R73` (new)
+
+**Orchestrator.** Cycle D's head item is `D2d · R55·2c`, the profile switch.
+Sized first, and it is blocked: **every `<input>` in this app is `type="file"`**,
+`tokens.css` strips inputs to no border and no background, and a visible text
+field needs border, padding, a focus ring and a placeholder colour. That is new
+CSS, which constraint 3 forbids without a design ask. Recorded and left blocked.
+
+**So the round takes what round 41 uncovered instead.** `onTagServe` was
+invisible for three rounds. Auditing for the same shape found `forProfile`,
+`profilesIn` and `DEFAULT_PROFILE` called nowhere but a test. Two in seven
+rounds, both found by hand at a consolidation — which is not a thing anybody
+keeps doing.
+
+**The wide version was built first, and refused on measurement.** "Any export
+with no shipping caller" flags **116 of 483 exports**, because this codebase
+deliberately exports constants so a test can name them rather than copy the
+number — an argument written out in `FINE_FPS`, `MAX_FINE_FRAMES`, `KEEP_STILLS`
+and a dozen more. A gate needing a 116-row allow list is a list nobody prunes.
+
+**Narrowed to the shape the defect had.** A prop is a contract between two
+files: one declares it, one passes it, and there is no reason for the first
+without the second. Optional only — a required prop nobody passes is a compile
+error and `tsc` already owns it. 45 props across 25 components.
+
+**The gate's first finding was its own regex.** `name={` flagged `leftIsBetter`,
+which `ConsistencyPanel` passes as a bare boolean shorthand. A gate whose first
+finding is itself is a gate everyone learns to ignore.
+
+**Its second was the canary failing.** Unwiring `onTagServe` left it green — the
+comment beside the wiring says the words "nothing ever passed `onTagServe`", and
+a search that counts prose about a prop as a use of it cannot catch a prop that
+is only ever talked about. Comments are blanked before matching now. That canary
+is the only reason this file works.
+
+**Its third was real.** `defaultOpen` on `FundamentalCard`, deleted. The report
+stopped passing it rounds ago for a reason written beside the call site — the
+array order is hard-coded, so opening the first card always opened the toss
+under a plan saying the problem was elsewhere. Deleted rather than left
+optional: a door back to a rejected behaviour is one `defaultOpen={i === 0}`
+away from being walked through by somebody who never reads the comment.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Architecture | pass | A mechanism whose only caller is a test has a green suite and no user. It reads as done in `NEXT.md`, counts in the tally, and the feature does not exist — the most expensive failure this loop can have, because nothing goes red |
+| Honesty | pass | The wide gate was refused with its own number rather than tuned until the output looked tidy |
+| Product | pass | Verified live: five area cards, none open, unchanged |
+| Performance | pass | 25 files read once at suite time |
+
+**Gate.** typecheck clean · lint clean · **1166 checks, 0 failed, exit 0** (+3).
+
+**Departure, and a mistake worth recording.** I ran `npx prettier --write` on
+`FundamentalCard.tsx`. **This repo has no prettier config**, so it applied
+prettier's defaults — semicolons, double quotes, an 80-column wrap — and
+reformatted 54 lines of a file I had two lines to change in. Lint passed, which
+is why it would have been committed. Undone by hand; the file now differs from
+`HEAD` by exactly the intended deletions. **Do not run prettier in this repo.**
+
+---
+
 ### Round 41 · Cycle C — coaching and UI · `C3 · R56`
 
 **Orchestrator.** Where the serve landed, in one tap. Lead builder: Coaching

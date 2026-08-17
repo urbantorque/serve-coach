@@ -134,7 +134,14 @@ Where state lives, what it costs, what it does to a warm phone.
       92 cm of re-propping crosses its threshold, so across sessions it flags one
       player as two. Guarded by two checks, because R55·2a made a `Session`
       structurally acceptable to it.
-- [ ] **D2d · R55·2c** — The switch, as a tap. Needs the app's first text input.
+- [!] **D2d · R55·2c** — The switch, as a tap. **Blocked on constraint 3**: every
+      `<input>` in this app is `type="file"`, `tokens.css` strips inputs to no
+      border and no background, and a visible text field needs border, padding, a
+      focus ring and a placeholder colour. That is new CSS, and it needs asking
+      for rather than assuming.
+- [x] **D5 · R73** — A gate for optional props nothing passes. Found `defaultOpen`
+      on `FundamentalCard` on its first honest run. The wider "any unused export"
+      version was built, measured at 116 of 483, and refused.
 - [x] **D4 · R67** — The stored byte cost of a report, re-measured against
       `footprint.test.ts` after Phase 8's new fields. A report that grew and
       nobody noticed is the failure this budget exists to catch. *(Round 4 — the
