@@ -425,6 +425,30 @@ export async function saveSession(
  * that looks perfectly ordinary.
  */
 /**
+ * A stored external rotation, brought up to the shape the engine now returns.
+ *
+ * No build ever wrote a shorter version of this one -- `lever` shipped with the
+ * rotation itself -- which is why an earlier round checked its history and
+ * cleared it. That was the right answer to the wrong question. History says no
+ * OLD report is missing a field; it says nothing about a row corrupted in place,
+ * hand-edited in a backup, or written by a build that does not exist yet. The
+ * guard either promises the declared shape or it does not, and this one did not.
+ *
+ * Repaired rather than refused, like the chain and unlike the landing: `deg` is
+ * nullable by design, so a rotation nobody stored is one nobody measured, which
+ * is the same thing this engine would say today.
+ */
+function readRotation(v: unknown): NonNullable<Analysis['diagnosis']>['externalRotation'] {
+  const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+  const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : null)
+  return {
+    deg: num(o.deg),
+    confidence: num(o.confidence) ?? 0,
+    lever: num(o.lever) ?? 0,
+  }
+}
+
+/**
  * A stored kinetic chain, brought up to the shape the engine now returns.
  *
  * Every link is nullable by design and a missing one is the honest absence, so
@@ -684,10 +708,7 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
    * below would hand that one straight back. `deg: null` at zero confidence is
    * the literal truth (nothing looked) and `lever: 0` says which refusal it was.
    */
-  const externalRotation =
-    d.externalRotation && typeof d.externalRotation === 'object'
-      ? d.externalRotation
-      : { deg: null, confidence: 0, lever: 0 }
+  const externalRotation = readRotation(d.externalRotation)
 
   /*
    * Same guard again for the landing, and it needs its own rather than riding

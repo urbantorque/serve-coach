@@ -14,6 +14,9 @@ import {
   normalise,
   planPrune,
 } from '../db'
+import { buildServe } from '../../analysis/syntheticServe'
+import { detectServe } from '../../analysis/phases'
+import { diagnose } from '../../analysis/diagnose'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
 
 /** `n` fabricated keys, oldest first — all `planPrune` reads is the order. */
@@ -346,6 +349,60 @@ check('a chain from before span_ratio comes back with the field, not without it'
   // The measurement that WAS stored is untouched — this is a repair, not a purge.
   assert(chain!.span_ms === 120, `span_ms was altered to ${chain!.span_ms}`)
   assert(chain!.wrist.ms === -100, 'a stored link lost its reading')
+})
+
+check('every ungraded block comes back with the shape this build produces', () => {
+  /*
+   * The generalisation of the two bugs above, and the check that would have
+   * caught both before they were written.
+   *
+   * `render.test.ts` already fuzzes a stored row hard — every path knocked out
+   * four ways, asserting `normalise` either drops the row or hands back one that
+   * draws. That is a thorough guard against the wrong contract for these three.
+   * `chain`, `landing` and `externalRotation` are measured-and-never-shown, so
+   * knocking a field out of them cannot break a render and the fuzz passes
+   * whatever the shape is. Precisely the blocks nothing renders are the ones no
+   * render test can protect.
+   *
+   * SO THE EXPECTED SHAPE IS TAKEN FROM THE ENGINE rather than written down
+   * here. A hand-kept list of field names would need updating by the same person
+   * who forgot to update the guard, which is how both of these shipped. Reading
+   * `Object.keys` off a diagnosis this build just produced means a field added
+   * tomorrow is covered tomorrow, with nothing to remember.
+   */
+  const frames = buildServe({ seed: 7000 }, 50)
+  const skel = detectServe(frames, 50)
+  const fresh = diagnose(frames, skel, { tier: 5 })
+  const blocks = ['chain', 'landing', 'externalRotation'] as const
+
+  const missing: string[] = []
+  for (const block of blocks) {
+    const current = fresh[block] as unknown as Record<string, unknown>
+    const expected = Object.keys(current)
+    assert(expected.length > 0, `${block} produced no fields to compare against`)
+
+    // Every earlier shape this block could have been stored in: each of its
+    // fields, absent. One of these is the exact row that shipped broken twice.
+    for (const dropped of expected) {
+      const older = { ...current }
+      delete older[dropped]
+      const back = normalise(storedWithDiagnosis({ ...fresh, [block]: older }))
+      const got = back?.diagnosis?.[block] as unknown as Record<string, unknown> | undefined
+      if (!got) {
+        missing.push(`${block} was dropped entirely when ${dropped} was absent`)
+        continue
+      }
+      for (const key of expected) {
+        if (!(key in got)) missing.push(`${block}.${key} absent after ${dropped} was absent`)
+      }
+    }
+  }
+
+  note(`  ${blocks.map((b) => `${b}: ${Object.keys(fresh[b] as object).length} fields`).join(', ')}`)
+  assert(
+    missing.length === 0,
+    `a stored block came back missing a field the engine declares:\n      ${missing.slice(0, 8).join('\n      ')}`,
+  )
 })
 
 check('a landing written by this build survives the read intact', () => {
