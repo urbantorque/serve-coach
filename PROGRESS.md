@@ -43,6 +43,48 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 34 · Cycle B — biomechanics and fault detection · `B1c · R50·3`
+
+**Orchestrator.** Closes R50, three entries and twenty rounds after it opened.
+Lead builder: Biomechanics & CV Specialist. Column: *Do I believe it*.
+
+**The only one of the three whose bound is not a constant.** External rotation's
+confounder is posture and landing's is noise; both give a fixed floor. This one's
+is tempo, which *varies between the two serves being compared*, so the bound is
+computed per pair. That is what makes it a third entry rather than a copy of the
+first two.
+
+**No new stored field, and that was worth checking for.** `motionSeconds` lives
+inside `diagnose` and is never kept — but `phases` carries `t` on every keyframe
+and is stored, so the tempo is `contact.t − ready.t` from any report the prune
+ladder has left. Round 17 measured what a stored report costs and round 24
+checked what survives pruning; the cheapest field is the one nobody stores.
+
+**A fixture error of mine, caught by arithmetic.** My first tempo-widening
+fixture used a delta of 0.013 against a bound of 0.0123 — the right side of the
+line by 0.0007, so the check failed and the code was correct. Rewritten to
+straddle the two bounds deliberately at 0.011: past the equal-tempo floor,
+inside what a 0.8 s gap buys. A comfortably large delta would pass both and prove
+nothing about the tempo term.
+
+**And a check went red for the right reason.** The unmapped-identifier check used
+`chain_span_ratio` as its example, and this round mapped it. Repointed at
+`leg_drive_rise_ratio`, which round 28 measured and deliberately did not surface.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Built on round 14's measured decomposition, not the register's 21% — which is the total spread and would have refused every comparison for a reason that is mostly not tempo |
+| Performance | pass | Two field reads and a `hypot` per basket. No new stored bytes |
+| Privacy | pass | Nothing new leaves the device |
+| Architecture | pass | Third entry through one mechanism. The copy check names "chain" explicitly because `voice.ts` catches lab jargon and not coach jargon — constraint 4's known gap |
+| Product | pass | One more line on a panel that already renders a list |
+
+**Gate.** typecheck clean · lint clean · **1138 checks, 0 failed, exit 0** (+6).
+
+---
+
 ### Round 33 · Cycle A — CV/ML engine · `A5 · audit 8` (R71)
 
 **Orchestrator.** Lead builder: Biomechanics & CV Specialist. Column: *Do I

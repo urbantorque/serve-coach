@@ -1244,6 +1244,20 @@ export const LANDING_WIDE_DEVIATION = 0.0045
  */
 export const ER_DEVIATION_DEG = 11.8
 
+/* ------------------------------------- what a chain-ratio reading is worth -- *
+ *
+ * Measured in R50·3's premise cycle, across twelve seeds at each of the three
+ * tempos the register itself swept. The register's own 21% is the TOTAL spread
+ * with seed noise folded in — right for asking whether the quantity is bandable,
+ * wrong for bounding a difference between two readings. These are the two terms
+ * that figure is made of.
+ */
+
+/** Deviation of the ratio between takes, flat across tempo — which is what makes the terms separable. */
+export const CHAIN_RATIO_DEVIATION = 0.0065
+/** How far the mean moves per second of tempo difference: 5.7% across a 0.6 s range. */
+export const CHAIN_RATIO_PER_SECOND = 0.0102
+
 /**
  * Read external rotation off one frame.
  *

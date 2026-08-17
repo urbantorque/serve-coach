@@ -102,6 +102,19 @@ export function uncalibratedLine(id: string, from: number, to: number): string |
     return `Your hitting shoulder laid back further on serve ${to} than on serve ${from}.`
   }
   /*
+   * The chain ratio, as a direction and no more.
+   *
+   * A larger ratio means more of the serve passed between the legs firing and
+   * the arm arriving, so "later" is the honest word — and it is graded in
+   * neither direction. A tour sequence is not simply later or earlier than a
+   * club one, and nothing here knows what the number should be, which is why the
+   * reading is in `UNCALIBRATED` at all. "The chain" is coach jargon and banned
+   * by constraint 4; this says legs and arm.
+   */
+  if (id === 'chain_span_ratio') {
+    return `Your arm followed your legs later on serve ${to} than on serve ${from}.`
+  }
+  /*
    * "Further across your feet", and not a word about falling.
    *
    * `LandingBalance.offset` is unsigned, so the app does not know which way the

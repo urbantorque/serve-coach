@@ -2617,4 +2617,114 @@ check('the rig separates a dialled second serve, and that proves nothing', () =>
   )
 })
 
+
+/* --------------------------------- the chain ratio, between two serves ------ */
+
+console.log('\n\x1b[1mThe sequence, as a change between two of your own serves\x1b[0m')
+
+/**
+ * R50·3, on the bound its own premise cycle measured rather than the one the
+ * round stated. The register's 21% is the total spread with seed noise in it;
+ * these are the two terms it is made of, in quadrature.
+ *
+ * The tempo comes from the stored `phases` rather than a new field — `motionSeconds`
+ * is `contact.t − ready.t`, and both are on every stored report.
+ */
+function ratioBasket(serves: { ratio: number | null; seconds: number }[]) {
+  const analyses = serves.map((s, i) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: 70,
+      serves: { count: serves.length, index: i },
+      phases: [
+        { id: 'ready', t: 0 },
+        { id: 'contact', t: s.seconds },
+      ],
+      diagnosis: { chain: { span_ratio: s.ratio } },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  return buildConsistency(analyses, serves.length)!
+}
+
+const ratioDelta = (c: ReturnType<typeof ratioBasket>) =>
+  c.uncalibrated?.find((d) => d.id === 'chain_span_ratio')
+
+check('a sequence change past both terms is reported', () => {
+  // 0.04 apart at identical tempo, against a ~0.0092 floor.
+  const d = ratioDelta(ratioBasket([
+    { ratio: 0.09, seconds: 1.35 },
+    { ratio: 0.13, seconds: 1.35 },
+  ]))
+  assert(!!d, 'a 0.04 change at equal tempo was not reported')
+  assert(
+    Math.abs(d!.bound - Math.SQRT2 * 0.0065) < 1e-9,
+    `at equal tempo the bound came back ${d!.bound}`,
+  )
+})
+
+check('a change inside the noise on a difference is refused', () => {
+  assert(
+    !ratioDelta(ratioBasket([
+      { ratio: 0.100, seconds: 1.35 },
+      { ratio: 0.108, seconds: 1.35 },
+    ])),
+    'a change smaller than the noise on a difference was reported',
+  )
+})
+
+check('a tempo difference widens the bound, and can eat the change', () => {
+  /*
+   * The half that makes this entry different from its two siblings: its bound
+   * is not a constant. Two serves a second apart in tempo carry 0.0102 of false
+   * change before the sequence has done anything, so the same delta that passes
+   * at equal tempo is refused across one.
+   */
+  const same = ratioDelta(ratioBasket([
+    { ratio: 0.100, seconds: 1.35 },
+    { ratio: 0.111, seconds: 1.35 },
+  ]))
+  // 0.011 sits between the two bounds: past 0.0092 at equal tempo, inside the
+  // 0.0123 that a 0.8 s gap buys. Chosen to straddle them rather than to be
+  // comfortably large, since a comfortable delta would pass both and prove
+  // nothing about the tempo term.
+  assert(!!same, 'a 0.011 change at equal tempo was refused')
+
+  const apart = ratioDelta(ratioBasket([
+    { ratio: 0.100, seconds: 1.10 },
+    { ratio: 0.111, seconds: 1.90 },
+  ]))
+  assert(!apart, 'the same change across a 0.8 s tempo gap was reported anyway')
+})
+
+check('without both tempos there is no bound, so there is no comparison', () => {
+  // `motionSecondsOf` returns nothing when a keyframe is missing, which a pruned
+  // or hand-edited report can be.
+  const analyses = [0, 1].map((i) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: 70,
+      serves: { count: 2, index: i },
+      phases: i === 0 ? [{ id: 'ready', t: 0 }, { id: 'contact', t: 1.35 }] : [{ id: 'contact', t: 1.35 }],
+      diagnosis: { chain: { span_ratio: i === 0 ? 0.09 : 0.15 } },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  const c = buildConsistency(analyses, 2)!
+  assert(
+    !c.uncalibrated?.find((d) => d.id === 'chain_span_ratio'),
+    'a delta was reported with no tempo to bound it',
+  )
+})
+
+check('a serve with no ratio drops out rather than reading as zero', () => {
+  const d = ratioDelta(ratioBasket([
+    { ratio: null, seconds: 1.35 },
+    { ratio: 0.09, seconds: 1.35 },
+    { ratio: 0.14, seconds: 1.35 },
+  ]))
+  assert(!!d, 'two readable serves beside one unreadable one produced nothing')
+  assert(d!.from === 2 && d!.to === 3, `named serves ${d!.from} and ${d!.to}, not 2 and 3`)
+})
+
 report()

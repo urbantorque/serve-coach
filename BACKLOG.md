@@ -60,9 +60,9 @@ Kinetic chain, trophy metrics, what the body actually did.
 - [x] **B1b · R50·2** — Landing balance delta. *(Round 8 — and the round's own
       bound was the wrong number: 0.0035 is where a square landing sits, not how
       far a reading of it wanders. Bounded on the two deviations in quadrature.)*
-- [~] **B1c · R50·3** — Chain span ratio delta. *(Round 14 — premise cycle: the
-      register's 21% is the total spread, not the tempo term. Decomposed to 6%
-      noise plus 0.0102 per second, so the bound is 0.0092 at equal tempo.)*
+- [x] **B1c · R50·3** — Chain span ratio delta. *(Rounds 14 and 34 — the only
+      one of the three whose bound varies per pair, and it needed no new stored
+      field: the tempo is recoverable from the stored keyframes.)*
 - [x] **B2 · R50b** — Did the racket lay back further than your last serve, on
       the glance. *(Round 21 — floor of 16.7°, and the round's own estimate of
       "about 15°" was right, unlike its two siblings.)*

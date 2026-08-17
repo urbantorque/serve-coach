@@ -2,6 +2,8 @@ import {
   ER_LEAN_SENSITIVITY,
   LANDING_SQUARE_DEVIATION,
   LANDING_WIDE_DEVIATION,
+  CHAIN_RATIO_DEVIATION,
+  CHAIN_RATIO_PER_SECOND,
 } from './diagnose'
 import { clamp, mean, statusOf } from './geometry'
 import type { Analysis, Metric, PhaseId, Status } from './types'
@@ -406,6 +408,7 @@ function uncalibratedDeltas(
   const found = [
     externalRotationDelta(analyses, serveNumbers),
     landingBalanceDelta(analyses, serveNumbers),
+    chainRatioDelta(analyses, serveNumbers),
   ].filter((d): d is UncalibratedDelta => !!d)
   return found.length ? found : undefined
 }
@@ -618,4 +621,75 @@ export function consistencyHeadline(c: Consistency): string {
     return cue(`Your motion repeats well across ${c.serves} serves. ${c.weakest.label} drifts.`)
   }
   return cue(`Your ${c.weakest.label.toLowerCase()} changes serve to serve. Groove that one thing before anything else.`)
+}
+
+/**
+ * How long the serve took, from a stored report.
+ *
+ * `motionSeconds` is computed inside `diagnose` and never kept — but `phases`
+ * carries `t` on every keyframe and is stored, so the tempo is recoverable
+ * without a new field on the row. Worth doing rather than adding one: R67
+ * measured what a stored report costs and R58·1 checked what survives the prune
+ * ladder, and the cheapest field is the one nobody stores.
+ *
+ * `undefined` when either keyframe is missing, which a pruned or hand-edited
+ * report can be.
+ */
+function motionSecondsOf(a: Analysis): number | undefined {
+  const ready = a.phases?.find((p) => p.id === 'ready')?.t
+  const contact = a.phases?.find((p) => p.id === 'contact')?.t
+  if (typeof ready !== 'number' || typeof contact !== 'number') return undefined
+  const span = contact - ready
+  return span > 0 ? span : undefined
+}
+
+/**
+ * How much later the arm followed the legs on one serve than on another.
+ *
+ * THE CONFOUNDER IS TEMPO, AND ONLY PARTLY. `chain_span_ratio` exists because
+ * the raw span grades tempo — the same serve served slowly has a longer chain —
+ * and dividing by the motion's own duration removes most of that dependence and
+ * not all of it. What is left is 0.0102 per second of tempo difference, measured
+ * in R50·3's premise cycle.
+ *
+ * **THE ROUND'S OWN 21% IS THE WRONG NUMBER AND THIS IS WHY.** That figure is
+ * the register's, and it is the *total* spread of the reading across a tempo
+ * sweep with seed noise folded in — the right answer to "is this bandable" and
+ * the wrong one for a difference. Bounding with it would refuse every comparison
+ * there is, and refuse it mostly for a reason that is not tempo. The two terms
+ * add in quadrature: 0.0092 at equal tempo, growing as the two serves diverge.
+ *
+ * REFUSED WITHOUT BOTH TEMPOS. The bound cannot be computed without them, and a
+ * delta with no bound is a number nobody can say is not the clock.
+ */
+const chainRatioBound = (deltaSeconds: number) =>
+  Math.hypot(Math.SQRT2 * CHAIN_RATIO_DEVIATION, CHAIN_RATIO_PER_SECOND * Math.abs(deltaSeconds))
+
+function chainRatioDelta(
+  analyses: Analysis[],
+  serveNumbers: number[],
+): UncalibratedDelta | undefined {
+  const read: { serve: number; ratio: number; seconds: number }[] = []
+  analyses.forEach((a, i) => {
+    const ratio = a.diagnosis?.chain?.span_ratio
+    const seconds = motionSecondsOf(a)
+    if (typeof ratio === 'number' && Number.isFinite(ratio) && seconds !== undefined) {
+      read.push({ serve: serveNumbers[i] ?? i + 1, ratio, seconds })
+    }
+  })
+  if (read.length < MIN_COMPARABLE_SERVES) return undefined
+
+  let low = read[0]
+  let high = read[0]
+  for (const r of read) {
+    if (r.ratio < low.ratio) low = r
+    if (r.ratio > high.ratio) high = r
+  }
+  if (low.serve === high.serve) return undefined
+
+  const delta = high.ratio - low.ratio
+  const bound = chainRatioBound(high.seconds - low.seconds)
+  if (!(delta > bound)) return undefined
+
+  return { id: 'chain_span_ratio', from: low.serve, to: high.serve, delta, bound }
 }

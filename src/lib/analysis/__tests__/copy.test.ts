@@ -1176,8 +1176,12 @@ check('the landing delta line describes a body position and grades nothing', () 
 })
 
 check('a reading with no line of its own prints nothing rather than something generic', () => {
+  // `leg_drive_rise_ratio` is the live case: measured in R51·1, in the register,
+  // and deliberately not surfaced yet. This check used to name `chain_span_ratio`
+  // and went red the moment R50·3 gave that one a line — which is the check
+  // working, and the reason it now names something still genuinely unmapped.
   assert(
-    uncalibratedLine('chain_span_ratio', 1, 2) === undefined,
+    uncalibratedLine('leg_drive_rise_ratio', 1, 2) === undefined,
     'an unmapped identifier was given a sentence anyway',
   )
 })
@@ -1229,6 +1233,28 @@ check('the racket lay-back line says a direction, grades nothing, and carries no
     rotationMoveLine({ delta: 24, bound: 17 }) !== rotationMoveLine({ delta: -24, bound: 17 }),
     'both directions produce the same sentence, so the change has no direction on screen',
   )
+})
+
+
+check('the sequence delta line names legs and arm, and grades neither direction', () => {
+  /*
+   * "The chain" is coach jargon and banned by constraint 4 — `voice.ts` does not
+   * catch it, which is exactly why this check names it. The line says legs and
+   * arm, which is the same fact in words a player owns.
+   *
+   * And neither direction is graded: a tour sequence is not simply later or
+   * earlier than a club one, and nothing here knows what the number should be.
+   */
+  const text = uncalibratedLine('chain_span_ratio', 1, 4)
+  assert(text !== undefined, 'the sequence identifier produced no line')
+  const issues = cueIssues(text!)
+  assert(issues.length === 0, `${issues.join('; ')}\n        "${text}"`)
+  assert(!/\bchain\b/i.test(text!), `coach jargon reached the panel: "${text}"`)
+  assert(
+    !/good|better|worse|should|too (late|early)/i.test(text!),
+    `the line grades a reading nothing grades: "${text}"`,
+  )
+  assert(/serve 4/.test(text!) && /serve 1/.test(text!), `the two serves are not named: "${text}"`)
 })
 
 report()

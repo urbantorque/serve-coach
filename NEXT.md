@@ -1205,7 +1205,7 @@ family, different surface, different refusals.
       jump between 50° and 55° is the reason. The table above says a 5° gate is
       affordable; it says nothing about a tighter one, and at 60° the worst
       spread is already 5.0.
-- [~] **R50** — Use the uncalibrated register the one way it is honest: as a
+- [x] **R50** — Use the uncalibrated register the one way it is honest: as a
       delta between two of the player's own serves, on `Consistency`, as data
       rather than as a graded signal. **Split**, because three readings with three
       different confounders is three rounds wearing one number, and the first of
@@ -2595,3 +2595,29 @@ deleting a working button.
       Both halves pinned, and the second check is written to go red if the drift
       ever stops — which would mean this was fixed or went away, and the entry
       should then say so.
+
+- [x] **R50·3** — The chain span ratio delta, on the bound its own premise cycle
+      measured rather than the one the round stated. **R50 is complete.**
+
+      `hypot(√2 × 0.0065, 0.0102 × |Δt|)` — 0.0092 at equal tempo, widening as
+      the two serves' tempos diverge. **The only one of the three whose bound is
+      not a constant**, which is what makes it a third entry rather than a copy:
+      the confounder is a quantity that varies between the two serves being
+      compared, so the bound has to be computed per pair.
+
+      **No new stored field.** `motionSeconds` lives inside `diagnose` and is
+      never kept, but `phases` carries `t` on every keyframe and is stored — so
+      the tempo is `contact.t − ready.t`, recoverable from any report the prune
+      ladder has left. R67 measured what a stored report costs and R58·1 checked
+      what survives pruning; the cheapest field is the one nobody stores.
+
+      The copy says **legs and arm**, because "the chain" is coach jargon and
+      constraint 4 bans it — and `voice.ts` does not catch coach jargon, which is
+      why the check names it explicitly. Neither direction graded: a tour
+      sequence is not simply later or earlier than a club one.
+
+      **A check went red for the right reason.** `a reading with no line of its
+      own prints nothing` used `chain_span_ratio` as its example of an unmapped
+      identifier, and this round mapped it. Repointed at
+      `leg_drive_rise_ratio` — measured in R51·1, in the register, deliberately
+      not surfaced — so it names something still genuinely unmapped.
