@@ -43,6 +43,44 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 33 · Cycle A — CV/ML engine · `A5 · audit 8` (R71)
+
+**Orchestrator.** Lead builder: Biomechanics & CV Specialist. Column: *Do I
+believe it*.
+
+**The audit is right about one of four, and saying so is half the round.** Read
+as "four things to fix", it would produce three changes that make the engine
+worse: `toss`, `ready` and `trophy` are *search windows*, which only have to be
+generous, and a share would narrow a fast serve's window for no reason.
+
+**The fourth is a placement, not a window,** and it decides where the landing is
+read. Fixed at ~0.42 s after contact, which is **0.435 of the motion on a fast
+serve and 0.295 on a slow one** — so two players' landings are read at different
+points of their own follow-throughs.
+
+**And it is exactly the half R44 left.** That round made the landing *refusal* a
+share of the serve and left the *placement* in seconds. One question, two units,
+and neither half wrong on its own.
+
+**Recorded rather than fixed, on R44's own authority.** Its warning is that
+moving a window in `phases.ts` re-derives every noise floor built on it — and
+this one would move `landing.offset` on every clip, invalidating the calibration
+R50·2's bound rests on. Queued as R72 with that cost attached.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Three quarters of the audit item refuted rather than acted on. The finding is a measured 32% drift, not an assertion that seconds are wrong |
+| Performance | pass | Test-only |
+| Privacy | pass | Nothing shipped |
+| Architecture | pass | Not fixed here, because the fix needs a number diff and a re-derivation — the exact discipline R44 wrote its warning for. The second check goes red if the drift stops, so a later fix updates this entry rather than leaving it stale |
+| Product | pass | Nothing a player sees |
+
+**Gate.** typecheck clean · lint clean · **1132 checks, 0 failed, exit 0** (+2).
+
+---
+
 ### Round 32 — the fifth consolidation gate
 
 **1 · Full gate.** typecheck clean · lint clean · **1130 checks, 0 failed,

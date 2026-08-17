@@ -2669,4 +2669,97 @@ check('the front foot stays where it was — only the back one travels', () => {
 })
 
 
+
+/* --------------------------------- where the landing is read, and when ------- */
+
+heading('The one window R44 left in seconds, measured')
+
+/**
+ * Audit rotation item 8: windows in `phases.ts` still sized in file seconds
+ * rather than shares of the serve. R44 fixed the landing floor and left the rest.
+ *
+ * **THREE OF THE FOUR ARE FINE AND THE AUDIT IS WRONG ABOUT THEM.** `toss`
+ * searches back 2.0 s from contact, `ready` 2.0 s from the toss, `trophy` 0.2 s
+ * before it. Those are *search windows* — they have to be generous and nothing
+ * else, and a share would make a fast serve's window narrower for no reason.
+ * Seconds are the right unit for "look back far enough".
+ *
+ * **THE FOURTH IS NOT A WINDOW, IT IS A PLACEMENT.** `finish = contact + 0.5 s`
+ * decides *where the landing is measured*, and `LandingBalance.offset` is the
+ * reading taken there. Measured across the tempo range this rig sweeps:
+ *
+ *     motion   after contact   as a share of the serve
+ *     1.10 s      0.420 s              0.435
+ *     1.35 s      0.440 s              0.386
+ *     1.70 s      0.420 s              0.295
+ *
+ * The keyframe holds still in seconds and **moves 32% as a share of the motion**.
+ * So a slow server's landing is read earlier in their own follow-through than a
+ * fast server's, and the two numbers are not quite the same measurement.
+ *
+ * **AND IT IS EXACTLY THE HALF R44 LEFT.** That round made the landing *refusal*
+ * a share — `MIN_LANDING_SHARE = 0.258`, "refuse a landing by the serve's own
+ * clock instead of by three tenths of a second" — and left the *placement* in
+ * seconds. One question, two units.
+ *
+ * **RECORDED RATHER THAN FIXED, and R44 is why.** `phases.ts` is load-bearing
+ * and that round's own warning is that moving one window re-derives every noise
+ * floor built on it. Changing this placement would move `landing.offset` on
+ * every clip and invalidate the 0.0035-square / 0.0657-wide calibration R50·2's
+ * bound is built on. That is a round with a number diff and a re-derivation in
+ * it, not a line changed in passing.
+ */
+check('the three search windows are windows, and seconds suit them', () => {
+  /*
+   * Stated so the audit item cannot be re-read as "four things to fix". A search
+   * window only has to be wide enough to contain what it is looking for, and a
+   * share would shrink a fast serve's window for no reason at all.
+   */
+  const frames = buildServe({ motionSeconds: 1.35, seed: 4242, noise: 0.006 }, FPS)
+  const k = detectServe(frames, FPS).keys
+  const t = (i: number) => frames[i].t
+  assert(t(k.contact) - t(k.ready) < 2.0, 'the whole motion no longer fits inside the 2 s search window')
+  assert(t(k.toss) - t(k.ready) > 0, 'the ready keyframe is not before the toss')
+})
+
+check('the finish keyframe holds still in seconds and drifts as a share of the serve', () => {
+  /*
+   * THE FINDING. Both halves asserted, because either alone is unremarkable: a
+   * fixed second offset is fine if the serves are the same length, and a drifting
+   * share is fine if that is what somebody chose. Together they say the landing
+   * is read at a different point of two players' motions.
+   */
+  const at = (motionSeconds: number) => {
+    const secs: number[] = []
+    const shares: number[] = []
+    for (const seed of [11, 202, 3131, 7000, 44444, 909]) {
+      const frames = buildServe({ motionSeconds, seed, noise: 0.006 }, FPS)
+      const k = detectServe(frames, FPS).keys
+      const t = (i: number) => frames[i].t
+      const motion = t(k.contact) - t(k.ready)
+      if (motion > 0) {
+        secs.push(t(k.finish) - t(k.contact))
+        shares.push((t(k.finish) - t(k.contact)) / motion)
+      }
+    }
+    const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
+    return { sec: mean(secs), share: mean(shares) }
+  }
+
+  const fast = at(1.1)
+  const slow = at(1.7)
+  note(`  1.1s serve: ${fast.sec.toFixed(3)}s after contact, ${fast.share.toFixed(3)} of the motion`)
+  note(`  1.7s serve: ${slow.sec.toFixed(3)}s after contact, ${slow.share.toFixed(3)} of the motion`)
+
+  assert(
+    Math.abs(fast.sec - slow.sec) < 0.06,
+    `the offset is not fixed in seconds after all: ${fast.sec.toFixed(3)} against ${slow.sec.toFixed(3)}`,
+  )
+  assert(
+    fast.share - slow.share > 0.08,
+    `the share no longer drifts with tempo — ${fast.share.toFixed(3)} against ${slow.share.toFixed(3)} — ` +
+      'so this audit finding has been fixed or has gone away, and the entry should say so',
+  )
+})
+
 report()

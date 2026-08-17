@@ -2555,3 +2555,43 @@ deleting a working button.
       the card is rendered to a detached canvas and handed straight to a Blob.
       The recording stub is the whole of the evidence, and it is evidence about
       what is drawn rather than about how it looks.
+
+- [x] **R71** — Audit rotation item 8: windows in `phases.ts` still sized in file
+      seconds. **The audit is right about one of four and wrong about three.**
+
+      `toss` searches back 2.0 s from contact, `ready` 2.0 s from the toss,
+      `trophy` 0.2 s before it. Those are **search windows** — they have to be
+      generous and nothing else, and a share would narrow a fast serve's window
+      for no reason. Seconds are the right unit for "look back far enough", and
+      saying so is half the round: an audit item read as "four things to fix"
+      would produce three changes that make the engine worse.
+
+      **The fourth is not a window, it is a placement.** `finish = contact + 0.5 s`
+      decides *where the landing is read*, and `LandingBalance.offset` is that
+      reading. Across the tempo range the rig sweeps:
+
+          motion   after contact   as a share of the serve
+          1.10 s      0.420 s              0.435
+          1.35 s      0.440 s              0.386
+          1.70 s      0.420 s              0.295
+
+      Fixed in seconds, **drifting 32% as a share of the motion**. A slow
+      server's landing is read earlier in their own follow-through than a fast
+      server's, so the two are not quite the same measurement.
+
+      **It is precisely the half R44 left.** That round made the landing
+      *refusal* a share of the serve — `MIN_LANDING_SHARE = 0.258`, its commit
+      titled "refuse a landing by the serve's own clock instead of by three
+      tenths of a second" — and left the *placement* in seconds. One question,
+      two units.
+
+      **RECORDED RATHER THAN FIXED, and R44 is the authority for that.**
+      `phases.ts` is load-bearing and R44's own warning is that moving one window
+      re-derives every noise floor built on it. Changing this placement moves
+      `landing.offset` on every clip and invalidates the 0.0035-square /
+      0.0657-wide calibration that R50·2's bound rests on. That is a round with a
+      number diff and a re-derivation in it, not a line changed in passing.
+
+      Both halves pinned, and the second check is written to go red if the drift
+      ever stops — which would mean this was fixed or went away, and the entry
+      should then say so.

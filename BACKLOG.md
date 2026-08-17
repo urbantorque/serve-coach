@@ -43,9 +43,11 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
 - [ ] **A4b · R61·2** — Build `planSharedPass`. Infrastructure; it throws today.
 - [ ] **A4c · R61·3** — The outbound detector, as a streak rather than a disc,
       refusing above the speed where the frames run out. Never in mph.
-- [ ] **A5 · audit 8** — Windows in `phases.ts` still sized in file seconds
-      rather than shares of the serve. R44 fixed the landing floor and left the
-      rest.
+- [x] **A5 · audit 8** — Windows in `phases.ts` sized in file seconds. *(Round
+      33 — right about one of four. The finish keyframe drifts 32% as a share of
+      the motion; the three search windows are correctly in seconds.)*
+- [ ] **A5b · R72** — Move the finish keyframe to a share of the serve. Needs a
+      number diff and a re-derivation of the landing calibration — R44's warning.
 
 ## Cycle B — Biomechanics and fault detection
 
