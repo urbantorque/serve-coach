@@ -43,6 +43,56 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 61 · Cycle B — biomechanics · `B5b · R52·1`
+
+**Orchestrator.** Build the instrument round 54's refusal was blocked on. R60·1's
+precedent exactly: the rig could not pose a pinpoint stance, and building that
+dial was its own round.
+
+**`trophyHitchSeconds`** — the motion clock stops at the trophy for that long.
+
+**It lengthens the motion rather than compressing the swing**, which is the one
+real design decision. Holding the trophy and squeezing what follows into the same
+span would make a hitch *imply* a faster swing, and then any reading that
+separated hitch from tempo might be reading the swing instead of the pause. A
+player who stops takes longer; the serve after the pause is the serve they were
+going to hit.
+
+**Bit-identical at zero** — the warp is skipped, not applied as an identity.
+Verified rather than claimed: 1205 checks, nothing moved.
+
+**And it reverses round 54's refusal, in the conservative direction.**
+
+    motion    no hitch    0.15s hitch    0.3s hitch
+    1.35s      0.0490       0.0017        0.0000
+    1.85s      0.0344       0.0010        0.0000
+
+**28× apart at 1.35 s, 34× at 1.85 s — against a tempo confound of 2.3×.** The
+separation is an order of magnitude clear of the thing that confounds it. Round
+54 recorded the refusal as *"unmeasured, not disproved"*, and that phrasing is
+what let this round overturn it cleanly rather than contradict it.
+
+**One caveat travels with the result, as an assertion rather than a footnote.**
+The rig's hitch is a *perfect* freeze — the clock stops, the wrist is exactly
+still, the trough goes to zero plus landmark noise. A real player pausing does
+not freeze. **This is the best case, not the expected one.** It says the reading
+is worth building; it does not say a threshold can be set from here. That wants
+footage.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The caveat is a check — if the rig's hitch stops being a total stop, the "best case" framing is what needs revisiting, not the threshold |
+| Architecture | pass | Bit-identical at zero, the discipline `pinpointSlide` shipped under, and verified rather than asserted |
+| Honesty | pass | The separation is claimed as a comparison against the confound, not as a level: 2.3× is what tempo does, and the hitch has to beat it by enough that no threshold has to thread between them |
+| Product | pass | Nothing shipped. `R52·2` is the build, and it now has a measured reason to exist |
+
+**Gate.** typecheck clean · lint clean · **1206 checks, 0 failed, exit 0** (+1).
+Canaried by softening the freeze to 90% — the separation check reddened alone.
+
+---
+
 ### Round 60 · Cycle A — the engine · `A6 · R80` (new)
 
 **Orchestrator.** Cycle A's rows are done, so the Orchestrator generates — and

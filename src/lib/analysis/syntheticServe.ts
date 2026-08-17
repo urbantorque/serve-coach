@@ -321,6 +321,28 @@ export interface ServeDials {
    * `landingBackFootDrag` names.
    */
   pinpointSlide: number
+  /**
+   * A pause at the trophy, in seconds — the hitch.
+   *
+   * The player who reaches the trophy, stops, and swings from a standstill. R52
+   * calls it one of the most common club faults and one of the most visible on
+   * video, and the rhythm group cannot see it. **R52 could not be decided
+   * because this dial did not exist**: the trough it proposed reading is
+   * confounded by tempo 2.3-fold, and with no way to pose a hitch the rig could
+   * measure the confound and not the separation. R60·1's precedent — the stance
+   * refusal was blocked on a missing dial too, and building it was its own round.
+   *
+   * IT LENGTHENS THE MOTION RATHER THAN COMPRESSING THE SWING, which is the
+   * whole design decision. Holding the trophy and squeezing what follows into
+   * the same span would make a hitch imply a faster swing, and then any reading
+   * that separated hitch from tempo might be reading the swing rather than the
+   * pause. A player who stops takes longer; the serve after the pause is the
+   * serve they were going to hit.
+   *
+   * Zero is bit-identical to no dial at all — the warp is skipped, not applied
+   * with a zero, the same discipline `pinpointSlide` shipped under.
+   */
+  trophyHitchSeconds: number
   /** Someone standing around with the racket down — used to test rejection. */
   noSwing: boolean
   /**
@@ -496,6 +518,9 @@ export const CLEAN_SERVE: ServeDials = {
   // above: the clean rig has to keep the serve every existing expectation was
   // written against. A serve landing dead square is not a claim about players.
   landingLean: 0,
+  // No hitch. A serve that flows through the trophy is what the whole rig was
+  // written against.
+  trophyHitchSeconds: 0,
   // Both feet planted, which is what the landing did before this dial existed.
   landingBackFootDrag: 0,
   pinpointSlide: 0,
@@ -555,7 +580,26 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
   // A little lead-in and follow-through around the measured motion.
   const preroll = 0.35
   const postroll = 0.45
-  const total = preroll + d.motionSeconds + postroll
+  /*
+   * The hitch, as a share of the motion, and the warp that applies it.
+   *
+   * `hold` is where the clock stops: at `U.trophy`, for `h` of a motion. The
+   * motion itself is longer by exactly that, so everything before the trophy is
+   * untouched and everything after happens later rather than faster.
+   *
+   * Skipped entirely at zero rather than applied as an identity, so a rig built
+   * with no hitch is bit-identical to one built before this dial existed.
+   */
+  const hitch = Math.max(0, d.trophyHitchSeconds)
+  const motion = d.motionSeconds + hitch
+  const h = hitch / Math.max(1e-6, motion)
+  const warp = (u: number): number => {
+    if (h <= 0) return u
+    if (u <= U.trophy) return u
+    if (u <= U.trophy + h) return U.trophy
+    return u - h
+  }
+  const total = preroll + motion + postroll
   const count = Math.round(total * fps)
   const frames: Frame[] = []
   // Captured the first frame `u` enters the occlusion window, then held for
@@ -563,11 +607,12 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
   let frozenWrist: { x: number; y: number; z: number } | undefined
   const occlusionEnd = U.drop + d.occlusionSeconds / Math.max(1e-6, d.motionSeconds)
 
+
   const kneeBendDeg = 180 - d.trophyKneeAngle
 
   for (let i = 0; i < count; i++) {
     const t = i / fps
-    const u = (t - preroll) / d.motionSeconds
+    const u = warp((t - preroll) / motion)
 
     /* --- trunk ---------------------------------------------------------- */
     const hipHeight = track(

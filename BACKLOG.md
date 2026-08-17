@@ -112,9 +112,16 @@ Kinetic chain, trophy metrics, what the body actually did.
       no hitch posed**, monotonic. A slower serve reads as a deeper trough, so the
       reading cannot tell "stopped" from "unhurried". And the rig cannot pose a
       hitch, so separation is *unmeasured* rather than disproved.
-- [ ] **B5b · R52·1** — A hitch dial for the rig, so R52 can be decided either
-      way. R60·1's precedent exactly: the rig could not pose a pinpoint stance, and
-      building the dial was its own round.
+- [x] **B5b · R52·1** — `trophyHitchSeconds`: the clock stops at the trophy and
+      the motion is **longer** by exactly that, so a hitch does not imply a faster
+      swing. Bit-identical at zero. **And it reverses R52's refusal in the
+      conservative direction**: a 0.15 s hitch reads **28–34× smaller** than a
+      flowing serve at the same tempo, against a 2.3× tempo confound. Caveat that
+      travels with it — the rig's hitch is a *perfect* freeze, so this is the best
+      case, not the expected one. A threshold still wants footage.
+- [ ] **B5c · R52·2** — Build the hitch reading. Unblocked by R52·1, and the
+      separation is an order of magnitude clear of the confound. The threshold is
+      the open question and it is not settable from a posed freeze.
 
 ## Cycle C — Pedagogical coaching and UI
 

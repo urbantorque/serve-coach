@@ -2805,6 +2805,69 @@ check('the finish keyframe holds still as a share of the serve, and drifts in se
  * That is the same wall R60 hit, and R60·1's answer is the precedent: build the
  * dial first, as its own round. Queued as R52·1.
  */
+/**
+ * And with a hitch posed, which R52·1 built the dial for.
+ *
+ * R52 was refused as **unmeasured, not disproved**: the trough is confounded by
+ * tempo 2.3-fold in the fault's own direction, and the rig could not pose a
+ * hitch, so nothing could measure the separation. This is that measurement.
+ *
+ *     motion   no hitch   0.15s hitch   0.3s hitch
+ *     1.35s     0.0490      0.0017       0.0000
+ *     1.85s     0.0344      0.0010       0.0000
+ *
+ * **A 0.15 s hitch reads about 29× smaller than no hitch at the same tempo,
+ * against a 2.3× confound across the whole tempo range.** The separation is an
+ * order of magnitude larger than the thing that confounds it, so the refusal was
+ * conservative and R52 is decidable after all.
+ *
+ * WITH ONE CAVEAT THAT HAS TO TRAVEL WITH IT. The rig's hitch is a perfect
+ * freeze — the clock stops and the wrist is exactly still, so the trough goes to
+ * zero plus landmark noise. A real player pausing does not freeze. **This is the
+ * best case, not the expected one**, and it says the reading is worth building
+ * rather than that a threshold can be set from here. A threshold wants footage.
+ */
+check('a posed hitch separates from tempo by an order of magnitude', () => {
+  const trough = (motionSeconds: number, trophyHitchSeconds: number) => {
+    const fps = FPS
+    const frames = buildServe({ motionSeconds, trophyHitchSeconds }, fps)
+    const skel = detectServe(frames, fps)
+    const k = skel.keys
+    const v = planarSpeedSeries(frames, LM.rightWrist, skel.bodyHeight, 2)
+    let lo = Infinity
+    for (let i = k.trophy; i <= k.drop; i++) if (Number.isFinite(v[i])) lo = Math.min(lo, v[i])
+    let peak = 0
+    for (let i = k.trophy; i <= k.contact; i++) if (Number.isFinite(v[i])) peak = Math.max(peak, v[i])
+    return peak > 0 ? lo / peak : Number.NaN
+  }
+
+  const flowing = trough(1.35, 0)
+  const hitched = trough(1.35, 0.15)
+  const ratio = flowing / Math.max(hitched, 1e-9)
+  note(`1.35s motion: ${flowing.toFixed(4)} flowing, ${hitched.toFixed(4)} hitched — ${ratio.toFixed(0)}× apart`)
+
+  /*
+   * The claim is a comparison, not a level. 2.3× is what tempo alone does across
+   * the whole range this app sees; the hitch has to beat that by enough that no
+   * threshold has to thread between them.
+   */
+  assert(ratio > 10, `a posed hitch is only ${ratio.toFixed(1)}× from a flowing serve, which is ` +
+    'inside a factor of the 2.3× tempo confound — R52 goes back to refused')
+
+  // And it must hold at the slow end, where the confound is worst: a separation
+  // that only exists on quick serves would be the tempo reading again.
+  const slowFlowing = trough(1.85, 0)
+  const slowHitched = trough(1.85, 0.15)
+  const slowRatio = slowFlowing / Math.max(slowHitched, 1e-9)
+  note(`1.85s motion: ${slowRatio.toFixed(0)}× apart`)
+  assert(slowRatio > 10, `at a slow tempo the hitch only separates ${slowRatio.toFixed(1)}×`)
+
+  // The freeze is total, which is the caveat as an assertion: if the rig's hitch
+  // ever stops being a perfect stop, this reads differently and the "best case"
+  // framing needs revisiting rather than the threshold moving.
+  assert(hitched < 0.01, `the posed hitch reads ${hitched.toFixed(4)}, no longer a near-total stop`)
+})
+
 check('the trough between trophy and drop moves with tempo, and no hitch is posed', () => {
   const trough = (motionSeconds: number) => {
     const fps = FPS
