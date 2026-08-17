@@ -499,6 +499,77 @@ check('the chain read from the picture plane holds still where the one read from
   }
 })
 
+check('the keyframes land at the same moment whatever the phone films at', () => {
+  /*
+   * The detector, swept across frame rate — which nothing did until the trunk
+   * defect made it obvious that nothing had.
+   *
+   * This matters more than any one signal. Every measurement in the engine is
+   * read at a keyframe or across a span between two, so a detector that put
+   * contact somewhere else at 120 fps than at 30 would move every number in the
+   * report at once, and it would do it as a systematic that no deviation over
+   * noise could see. `phases.ts` smooths its height and posture series over a
+   * radius counted in SAMPLES, which is the shape the trunk pair had, so the
+   * question was open rather than rhetorical.
+   *
+   * Means over the ensemble, not single clips: a keyframe index is quantised to
+   * whatever the frame spacing is, so one clip's contact can only ever land on a
+   * multiple of 1/fps and comparing two of those measures the grid rather than
+   * the detector.
+   *
+   * THE ANSWER IS THAT IT HOLDS, with one exception recorded rather than
+   * asserted away. Measured across 30 / 50 / 120 fps the mean keyframe time
+   * moves by 0.7 ms at contact, 3.1 at the trophy, 8.3 at the finish, 9.7 at
+   * ready and 12.5 at the drop. Contact — the instant every timing in the chain
+   * is stated relative to — is the steadiest of the six, which is the reassuring
+   * way round.
+   *
+   * The toss moves 27.8 ms, and monotonically earlier the more frames there are
+   * (1.0333 / 1.0175 / 1.0056 s). That is not noise and it has a plausible
+   * mechanism: a threshold crossing found by scanning for the first sample past
+   * it fires later when the samples are further apart. It is left as a measured
+   * fact rather than chased, because nothing downstream shows it — the signals
+   * read at or from the toss are `toss_drift_ratio` and `elbow_lift_ratio`, and
+   * their deviations are 0.00 and 0.01 and do not rise with frame rate. The
+   * bound below is set to catch a keyframe coming loose, not to pin the toss
+   * where it currently sits.
+   */
+  const KEYFRAMES = ['ready', 'toss', 'trophy', 'drop', 'contact', 'finish'] as const
+  const RATES = [30, 50, 120]
+
+  const meanTimes = RATES.map((fps) => {
+    const acc: Record<string, number[]> = {}
+    for (const seed of SEEDS) {
+      const frames = buildServe({ ...DEPTH_AWARE, seed }, fps)
+      let skel
+      try {
+        skel = detectServe(frames, fps)
+      } catch {
+        continue
+      }
+      for (const k of KEYFRAMES) (acc[k] ||= []).push(frames[skel.keys[k]].t)
+    }
+    return acc
+  })
+
+  for (const k of KEYFRAMES) {
+    const means = meanTimes.map((acc) => {
+      const xs = acc[k] ?? []
+      assert(xs.length > 0, `the detector never found ${k} at one of the three frame rates`)
+      return xs.reduce((a, b) => a + b, 0) / xs.length
+    })
+    const spreadMs = (Math.max(...means) - Math.min(...means)) * 1000
+    note(`  ${k.padEnd(8)} ${means.map((m) => m.toFixed(4)).join(' / ')} s   spread ${spreadMs.toFixed(1)} ms`)
+    // 40 ms is over a frame at 30 fps and under the 27.8 the toss already moves,
+    // so it fails when a keyframe comes loose rather than when one drifts.
+    assert(
+      spreadMs < 40,
+      `${k} lands ${spreadMs.toFixed(1)} ms apart across 30/50/120 fps — the detector is reading ` +
+        'the frame rate rather than the serve. phases.ts smooths over a radius counted in samples.',
+    )
+  }
+})
+
 check('more frames make the trunk timing better, not worse', () => {
   /*
    * The defect `UNDER_RESOLVED.hip_lead_ms` named for several rounds, as a
@@ -523,15 +594,52 @@ check('more frames make the trunk timing better, not worse', () => {
    * question about the shape of three numbers rather than about the value of
    * one, and the suite has to stay runnable.
    */
-  const sd = (fps: number) => {
-    const d = deviations(realise({}, 5, SEEDS, fps)).find((r) => r.id === 'hip_lead_ms')
-    assert(d !== undefined, `no hip_lead_ms reading at ${fps} fps`)
-    return d!.sd
+  /*
+   * EVERY signal, not only the one that was broken, because the same three
+   * `realise` calls answer the general question and the specific one at the same
+   * cost. The audit that followed the fix swept all of them and found no second
+   * instance: the worst ratio was `contact_height_ratio` at 1.12, on a signal
+   * whose deviation is 0.01 either way.
+   *
+   * The engine does still hold several radii counted in samples —
+   * `metrics.ts`'s toss-drift smooth, `phases.ts`'s detector defaults,
+   * `steadyWorld`'s frame or two — and they are measured here rather than
+   * assumed harmless. They are harmless for a reason worth stating, because it
+   * is what tells a dangerous one from a safe one: those smooth POSITIONS, where
+   * landmark noise is symmetric and averaging cancels it. The trunk defect was a
+   * DERIVATIVE with a frame-counted smooth on each side of it, and
+   * differentiating multiplies noise by the frame rate before any of it is
+   * averaged away. A sample-counted window either side of a derivative is the
+   * shape to go looking for; a sample-counted window over a position is not.
+   */
+  const at = (fps: number) => new Map(deviations(realise({}, 5, SEEDS, fps)).map((d) => [d.id, d.sd]))
+  const [slowAll, ordinaryAll, fastAll] = [at(30), at(50), at(120)]
+
+  const lead = (m: Map<string, number>) => {
+    const v = m.get('hip_lead_ms')
+    assert(v !== undefined, 'no hip_lead_ms reading at one of the three frame rates')
+    return v!
   }
-  const [slow, ordinary, fast] = [sd(30), sd(50), sd(120)]
+  const [slow, ordinary, fast] = [lead(slowAll), lead(ordinaryAll), lead(fastAll)]
   note(
     `  hip_lead_ms deviation — 30 fps ${slow.toFixed(1)}, 50 fps ${ordinary.toFixed(1)}, ` +
       `120 fps ${fast.toFixed(1)} ms`,
+  )
+
+  const risen: string[] = []
+  for (const [id, mid] of ordinaryAll) {
+    const high = fastAll.get(id)
+    if (high === undefined || mid <= 0) continue
+    // Half again, the same margin the trunk assertion below uses. The defect it
+    // is looking for was a factor of two, so this is not a fine judgement.
+    if (high > mid * 1.5) risen.push(`${id} ${mid.toFixed(2)} -> ${high.toFixed(2)}`)
+  }
+  note(`  ${ordinaryAll.size} signals swept across 30/50/120 fps; ${risen.length} deviate worse at 120`)
+  assert(
+    risen.length === 0,
+    `these signals get noisier the more frames they are given: ${risen.join(', ')} — that is the ` +
+      'signature of a smoothing window counted in samples sitting either side of a derivative. ' +
+      'See TRUNK_WINDOW_SECONDS in diagnose.ts for the one that had it.',
   )
   assert(
     fast < ordinary * 1.5,
