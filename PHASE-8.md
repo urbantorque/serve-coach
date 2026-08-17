@@ -1,7 +1,21 @@
-# Phase 8 — proposed. Fifteen rounds, ranked.
+# Phase 8 — activated. Fifteen rounds, ranked.
 
-Not yet part of the programme. `NEXT.md` is the ledger; this is a proposal for
-what goes in it next. Append it there to activate.
+**Activated into `NEXT.md` on 2026-08-17, and renumbered R48–R62 on the way in.**
+The numbers below collided: R44–R47 were already spent in Phase 7 on the
+MediaPipe entry chunk, the pre-frame refusals, the "half a minute" audit and the
+screen layer. `NEXT.md` carries the mapping table and is the ledger. This file
+stays the derivation and the spec — every round here was written after reading
+the engine, and names the file it plugs into and the claim it may not make. Read
+the round here before starting it; record the outcome there.
+
+Two changes made at activation, both recorded in `NEXT.md`: **R55 was promoted**
+ahead of the product band, because it is the only round that unblocks real
+footage; and **two rounds were added from `feature_backlog.json`** (R50b, R50c)
+which are adjacent to R46 rather than duplicates of it — R46 puts deltas on the
+basket, those put them on the glance.
+
+R44 below is done and keeps its number, because it landed in `9079deb` before
+this activation rather than through it.
 
 Every round below was written after reading the engine rather than after reading
 `README.md`, and each one names the file it plugs into and the claim it is not

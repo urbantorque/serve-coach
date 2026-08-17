@@ -915,6 +915,252 @@ had never been written down anywhere.
       own named check rather than quietly moved off the boundary — an exact tie
       is a real case on a bridged gap, and now it is a decided one.
 
+## Phase 8 — the measurements nobody is told about (R48–R64)
+
+Activated from `PHASE-8.md`, which asked to be appended here and never was. That
+file stays the derivation — every round below was written after reading the
+engine, and it names the file it plugs into and the claim it is not allowed to
+make. Read it before starting a round; these entries are the ledger, not the spec.
+
+**Renumbered on activation, because the numbers collided.** `PHASE-8.md` proposes
+R44–R58 and R44–R47 were already spent in Phase 7 on entirely different work —
+the MediaPipe entry chunk, the pre-frame refusals, the "half a minute" audit and
+the screen layer. Two rounds sharing a number in one ledger is the confidently
+mislabelled failure this repo refuses everywhere else, so Phase 8 continues the
+sequence instead. The mapping, once, so nobody has to reconstruct it:
+
+      PHASE-8.md   here    what it is
+      R44          done    the serve's own clock — landed already, see below
+      R44b         R48     spend the frame budget where the swing is fastest
+      R45          R49     the ghost: today's swing over your best one
+      R46          R50     use the uncalibrated register the one honest way
+      R47          R51     leg drive, measured rather than timed
+      R48          R52     a pause between the trophy and the drop
+      R49          R53     first serve against second serve
+      R50          R54     share the replay as motion
+      R51          R55     more than one player on one phone
+      R52          R56     did it go in
+      R53          R57     the drills as a week, not as a footnote
+      R54          R58     a trip, in one card, for a coach
+      R55          R59     make the fixture shoot something a user does by accident
+      R56          R60     platform against pinpoint
+      R57          R61     ball speed off the strings
+      R58          R62     court lines — listed to be refused, not built
+
+`PHASE-8.md`'s **R44 is already done** and is not renumbered, because it landed
+before this activation: the landing floor became a share of the serve
+(`MIN_LANDING_SHARE = 0.258`) in `9079deb`. It was run by the unattended loop
+against `feature_backlog.json` rather than against this file, which is why no
+entry for it appears in Phase 7 above. Recorded here so the ledger stops
+disagreeing with the tree.
+
+**R59 is promoted** out of its ranked position to run directly after R52, ahead
+of the whole product band. It is the only round that unblocks real footage, and
+real footage is what `groundTruth.ts`, hip–shoulder separation, shoulder tilt,
+`UNDER_RESOLVED.pronation_deg` and `chain_span_ratio` are all waiting on. Work
+that unblocks a person with a phone outranks work that does not.
+
+**Two rounds below come from `feature_backlog.json` rather than from
+`PHASE-8.md`** — R50b and R50c. They were nearly merged into R50 as duplicates
+and are not: R50 puts deltas on `Consistency`, which is the basket; R50b puts one
+on the glance through `carryForward`, which is between serves on court. Same
+family, different surface, different refusals.
+
+- [ ] **R48** — Spend the frame budget where the serve is fastest, where it
+      actually binds. Not the recommended window, where `samplingRateFor` returns
+      `min(32, 44.4)` and `FINE_FPS` binds — that was R44's disproven premise.
+      The two windows where the budget really is the constraint: the 5 s blind
+      fallback at 24 fps, and a short single-pass clip at up to 26.7 fps. Replace
+      the even schedule in `extract.ts` (`const t = start + (span * i) / (count - 1)`)
+      with a weighted one thickening around contact, which `readWindow` already
+      knows before the fine read. **May not claim a quadrupling** — the ceiling is
+      `FINE_FPS` and the honest figure through a 0.16 s swing is about four
+      samples against today's four.
+- [ ] **R49** — The ghost: today's swing drawn over your best one. Round two of
+      `f8816b0`, whose commit body ends "round two is the build", and round two of
+      the backlog's `track-ghost-compare`, whose round one landed at cycle 109.
+      Everything needed exists: `Analysis.track` is stored, `replayFrom`/
+      `trackFrameAt` read it, `TrackPlayer` draws it, `ghostFor` in `skeleton.ts`
+      already draws a dashed body, `estimateYaw` is the gate. Align at contact,
+      normalise to hip centre, scale by shoulder-to-ankle, draw the older track
+      dashed under the newer.
+
+      **Three refusals, all already measured.** Draw nothing below the hips —
+      removing the leg load entirely moves the worst drawn landmark 0.0387
+      against a 0.0341 floor, so a player told to watch their legs is watching
+      noise. Refuse a yaw difference over 5°, silently, because it is not a
+      similarity transform and normalisation leaves it bit-identical. Refuse
+      across a rubric or serve-type change; `comparisons.test.ts` is where that
+      rule lives and this is a tenth entry in it.
+
+      **Build the same-session case first.** Two serves from one basket share a
+      camera by construction, so the gate is satisfied for free and the feature
+      ships whatever R49b's answer turns out to be.
+- [ ] **R49b** — How often two clips from one trip agree on camera angle within
+      5°. The backlog's `ghost-yaw-agreement-in-life`, and the open question R49
+      names and defers. Shared with R50c, which wants something tighter still —
+      cycle 105 found a 315 ms branch jump between 50° and 55°. **Nobody knows
+      the answer, because it is a fact about how people film and there are no
+      fixtures.** Blocked behind R59 for the real answer; what can be done first
+      is bounding it from `estimateYaw` in `spatial.ts`.
+- [ ] **R50** — Use the uncalibrated register the one way it is honest: as a
+      delta between two of the player's own serves, on `Consistency`, as data
+      rather than as a graded signal. External rotation delta, bounded by
+      `ER_LEAN_SENSITIVITY` (0.5°/° of lean) against `signals.spine_lean_deg`,
+      refused when the bound exceeds the delta. Landing balance delta, calibrated
+      against the written-down 0.0035 floor. Chain span ratio delta, bounded by
+      the tempo difference and refused when that bound eats it.
+
+      **What it must not say: any sentence containing a target.** "Your shoulder
+      laid back 18° further on serve 4 than on serve 1" is a fact about two
+      serves. "18° further than it should" is four invented numbers and the thing
+      this register exists to prevent. No entry leaves `UNCALIBRATED`; each gains
+      a line saying a delta is reported and an absolute still is not.
+- [ ] **R50b** — Did the racket lay back further than your last serve. The
+      backlog's `er-delta-on-the-glance`, and a different surface from R50: the
+      glance, between serves, through `carryForward`, which already compares two
+      serves on one trip and already says nothing rather than hedging. Two extra
+      refusals on top of its existing ones — the lever below `MIN_ROTATION_LEVER`
+      on either serve, and a spine-lean difference large enough that
+      `ER_LEAN_SENSITIVITY` says the change is mostly posture. **The floor is
+      about 15°, so it will refuse most comparisons.** That is the truth about
+      what a phone can see, not a failure, and it must not be softened.
+- [ ] **R50c** — A trunk-sequence delta between two serves filmed from one spot.
+      The backlog's `trunk-lead-delta-same-spot`. The width-derived trunk lead has
+      an absolute belonging to the camera and a change that does not: 178–204 ms
+      of separation at every yaw from 40° up against a dialled 190, deviation
+      25–31 ms against the incumbent 40–54. Same `carryForward` shape, with one
+      refusal that has no precedent yet — the two clips must have been filmed from
+      the same spot, which is R49b's question and tighter here than the ghost's 5°.
+- [ ] **R51** — Leg drive, measured rather than timed.
+      `UNCALIBRATED.legs_peak_ms` says it in its own words: it "times the leg
+      drive without measuring it — the same peak whether the player drives or
+      not". Measure hip-centre vertical rise from trophy to contact in body
+      heights, plus knee extension rate across the same span, **read from image y
+      alone** — vertical for every camera the app accepts, and per that entry its
+      mean does not move at all from 20° to 88° of yaw. Completes the pair with
+      knee bend at the trophy, which is already graded: how far the legs loaded,
+      and how much became upward motion. **Ships into `UNCALIBRATED` first**, with
+      a rig sweep proving the reading tracks the dial — exactly what
+      `legs_peak_ms` failed. Needs R60 to interpret what it measures.
+- [ ] **R52** — A pause between the trophy and the drop. The rhythm group cannot
+      see a hitch — the player who reaches the trophy, stops, and swings from a
+      standstill, one of the most common club faults and one of the most visible
+      on video. Read it as a trough in racket-hand planar speed off
+      `kinematics.ts`, which already produces the series; planar speed off image x
+      and y touches no inferred depth, the property that makes `chain_span_ms` the
+      best-conditioned timing in the engine. **Sweep against `motionSeconds`
+      first** — a slow deliberate serve is not a hitch, and a detector that cannot
+      tell them apart is worse than none. If it cannot separate them on the rig,
+      an `UNDER_RESOLVED` entry saying so is the finished round.
+- [ ] **R59** — *(promoted here, ahead of the product band)* Make the fixture
+      shoot something a user does by accident. **Unblocks the two items this file
+      has been stuck on since R25**, and with them `groundTruth.ts`, hip–shoulder
+      separation, shoulder tilt, `UNDER_RESOLVED.pronation_deg` and
+      `chain_span_ratio`. `RECORDED` is empty, 0 of `MINIMUM_RECORDED = 6`;
+      `dev/exportFixture.ts` exists but lives behind a dev build; the six clips
+      are listed in `fixtures/README.md` and every one is a normal serve filmed
+      normally, bar a left-hander and one clip with the feet deliberately
+      cropped. Make the export a first-class path with the checklist attached, so
+      whoever holds the phone produces the set in one session without reading the
+      repo. **Does not break the egress rule** — the player saves a file and
+      decides what to do with it, exactly as the share card works.
+- [ ] **R53** — First serve against second serve. The app knows flat, kick and
+      slice; it does not know first from second, and for a club player the gap
+      between the two is usually a bigger problem than either — a second serve is
+      a different motion, not a slower first, and the player who patty-cakes it is
+      doing something the app currently averages away. Tag a serve with one tap on
+      the glance, or infer it within a basket where serves arrive in pairs, and
+      partition the spreads `consistency.ts` already computes. **Pure product on
+      existing readings: no new measurement, no new refusal.**
+- [ ] **R54** — Share the replay as motion. `reportCard.ts` renders one still,
+      the app's only egress and the one thing a player actually sends somebody.
+      `TrackPlayer` draws a moving body to a canvas and `recordingType`/
+      `selfCheck.ts` already know which containers this browser will produce
+      *and* play back. A three-second replay with the fault's keyframe held is the
+      strongest thing this app could hand somebody, and it contains **no image of
+      any person** — the rare share that is safe by construction. **Constraint 8
+      is the risk**: a canvas recorder on a warm phone is guilty until measured,
+      so gate on `?check` the way the record button already does. Too big for one
+      cycle — spike first.
+- [ ] **R55** — More than one player on one phone. `consistency.ts` already
+      carries `possibleHandoff` and `IMPLAUSIBLE_HEIGHT_SPREAD`: the app can
+      detect the body changed and does nothing with it, while every trend,
+      streak, practice focus and injury count silently assumes one player. Named
+      profiles in `db.ts` keyed into `Session`, with the existing handoff detector
+      offering the switch rather than a settings screen nobody opens. Makes the
+      app usable by a coach with a squad or two people in a family, at no cost to
+      the privacy model. **The migration is the hard part, not the feature**:
+      every stored report predates profiles and must land under one default
+      player without a prompt, proved by a test that loads a pre-profiles record.
+      Too big for one cycle — spike first.
+- [ ] **R56** — Did it go in. One tap on the glance: in, long, net, wide. Nothing
+      else — no score, no stats screen, no service box. The missing link between
+      technique and the only outcome a player cares about, at no vision cost, and
+      it makes every existing record in `progress.ts` more valuable
+      retroactively. **The trap is the claim**: "your toss drifts more on the
+      serves you miss" is a correlation over six data points and this codebase
+      does not say things like that.
+- [ ] **R57** — The drills as a week, not as a footnote. Thirteen drills in
+      `coaching.ts` are only ever seen attached to a fault. `PracticeCard` records
+      that a drill was done and `sixWeekMilestone` spans a training block; what is
+      missing is the middle — a page saying what to do at the next practice, built
+      from the 2–4 ranked drills the report already produces. **No streak, no
+      badge, no congratulation**, which is `PracticeCard`'s existing restraint and
+      exists because an app that celebrates the tap fills its own record with
+      drills nobody did.
+- [ ] **R58** — A trip, in one card, for a coach. `renderBasketCard` shares one
+      basket; a coach wants the trip — the spread, the best and worst serve, the
+      recurring strain line, and what the player was asked to work on. Every one
+      already survives a reopened report without a clip. Ranked below R54 because
+      it recombines shipped parts and the replay may be the better artifact.
+- [ ] **R60** — Platform against pinpoint. The app has no idea which stance it is
+      looking at, and the two want different leg-drive advice and different
+      balance at the finish. Readable from ankle separation over time — the back
+      foot sliding up to the front is a large, slow, unambiguous motion along the
+      axis the camera sees best. **A context reading like serve type, not a graded
+      signal**: nothing here is a fault. Its value is deciding which of two
+      correct drills is the right one, and R51 needs it to interpret what it
+      measures.
+- [ ] **R61** — Ball speed off the strings. `planSharedPass` in `detector.ts:273`
+      throws "the detector contract exists, the pass does not"; the shared-grid
+      design is written and the implementation is absent. **Build W7 only.** The
+      ball is real pixels, already tracked, and its speed off the strings is the
+      first thing in this app that would describe the *result* of the technique
+      rather than the technique. **Do not build W6 as a measurement** —
+      `racket.ts` says in its own header that the racket estimate "deliberately
+      does not feed any measurement", because hand landmarks are the least
+      reliable part of the pose output and are worst exactly where a racket number
+      would have to be trustworthy. **Never in mph**: a speed in body heights per
+      second is what was measured; mph is a claim about a court distance nobody
+      surveyed. Too big for one cycle — spike first.
+- [ ] **R62** — Court lines, listed to be refused rather than built. The enabler
+      for foot faults, placement and where the ball landed — the three things
+      every player asks for. Ranked last honestly: a vision project the size of
+      the ball tracker, it fails on exactly the amateur footage this app is built
+      to forgive (a phone at the baseline sees almost no court), and it would
+      arrive with no calibration and no fixtures. The finished round is a README
+      line recording the cost so the next person does not rediscover it.
+
+**Blocked behind R59, and not startable before it:**
+
+- [!] **R63** — Check how often the external-rotation lever refusal fires on real
+      footage. The backlog's `er-lever-on-real-clips`. `MIN_ROTATION_LEVER` is
+      0.25, set from a rig whose trophy arm is comfortably folded and whose lever
+      sits near 1. A real club trophy is straighter, so the refusal could fire far
+      more often in life than in the ensemble — in which case the reading exists
+      on paper and almost never in practice. Cheap once fixtures exist: log the
+      lever distribution across the corpus before anything grades the angle.
+- [!] **R64** — Switch the landing reading to the front ankle, once stance width
+      is known. The backlog's `landing-front-ankle-after-fixtures`. Cycle 110
+      measured that the shipped reading loses up to half the collapse to a
+      trailing back leg and that the front ankle alone is immune — 0.1155 at every
+      back-foot drag setting, the same 0.0657 of separation, no contamination. The
+      only thing stopping the switch is that the front-ankle baseline is 0.0498
+      rather than ~0, and that baseline is the stance. Stance width is `HALF_HIP`,
+      a rig constant with no dial, so the rig cannot say how much it varies
+      between players.
+
 ## Still open, and not closed by anything above
 
 - [!] **The court trip** — **blocked: needs a phone.** Recording off the
