@@ -44,6 +44,48 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 19 — the third consolidation gate
+
+Shifted from 18 so R66 could land first, which was the right order: this gate
+leans on the test suite, and R66 is what proves the suite counts itself.
+
+**1 · Full gate.** typecheck clean · lint clean · **1086 checks, 0 failed,
+exit 0** (+17 across the block).
+
+**2 · Number diff against `loop-green-3`.** **No engine reading moved** —
+including across round 13's change to `syntheticServe.ts`, the module every
+other test stands on. That was already proved per-round; this confirms it across
+the block. Everything that did move:
+
+| Moved | Why |
+| --- | --- |
+| Six new notes | Rounds 13, 14, 17, 18. Intended |
+| Copy gate `15 failing / 8 real` → `7 / 0` | Round 15. This *is* the deliverable |
+| frame `7415 → 7414` bytes | Heap noise, 0.01% |
+| stroke timings | Wall clock |
+
+**3 · Boot smoke, with the server restarted first — now standard.** Round 15
+proved the pane can serve a **stale transform through a hard reload**, which
+would have made a smoke test pass on old code. Restarting is cheap; being wrong
+about what shipped is not. Fresh tab: report renders end to end, round 15's
+corrected copy is live, clean console.
+
+**4 · Copy audit.** Mechanical. 97 lines, 7 failing, all seven exempt with a
+reason, **zero real** — against 15 and 8 at the last gate.
+
+**5 · Ledger compression.** Still not done, same reasoning: Phase 8 is
+mid-flight and later rounds cite these entries by name.
+
+**6 · Tag.** `loop-green-4`. Push still impossible — no remote, no upstream.
+
+**What this block was.** Six rounds, four of which found something wrong that
+nobody had asked about: the rig could not build a stance (13), the round's bound
+was the wrong number (14), a README figure had doubled underneath a sentence
+(17), and a suite had been half-unenforced since before this session (18). The
+two that did not — 15 and 16 — closed debts the earlier blocks opened.
+
+---
+
 ### Round 18 · Cycle F — QA and edge cases · `F0 · R66`
 
 **Orchestrator.** Taken before the consolidation rather than after, and the
