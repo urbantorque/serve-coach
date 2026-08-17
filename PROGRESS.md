@@ -1627,9 +1627,9 @@ The loop is designed to be picked up cold, and everything a fresh session needs
 is on disk:
 
 1. **`BACKLOG.md`** — the six focus cycles with every task's status. The next
-   round is the head of the next cycle in rotation. Round 34 was Cycle B, so
-   **round 36 is Cycle D**, head item `D2b · R55·2` — profiles, once the
-   where-does-the-profile-live decision from round 30 is taken.
+   round is the head of the next cycle in rotation. Round 38 was the gate, so
+   **round 39 is Cycle A** — the engine. Head items `A4b · R61·2` (build
+   `planSharedPass`) and `A5b · R72`.
 2. **`NEXT.md`** — what each round settled, and why. The source of truth for
    status; `BACKLOG.md` is a view over it.
 3. **This file** — how each round ran: the critic's citations, the canaries, the
@@ -1637,11 +1637,22 @@ is on disk:
 4. **`.agent_state/cycle_summary.json`** — `unattendedLoop.session_2026_08_17`
    carries the three consolidation records.
 
-**Last green:** `loop-green-6`, plus rounds 33–35 on top of it. Tree clean,
-1143 checks, exit 0.
+**Last green:** `loop-green-8` at round 38. Tree clean, 1152 checks, exit 0.
 
-**The next consolidation is due at round 38** (blocks run in sixes; gates have run
-at 6, 12, 19, 25 and 32).
+**The next consolidation is due at round 44** (blocks run in sixes; gates have run
+at 6, 12, 19, 25, 32 and 38).
+
+**The gate's number diff excludes instrument readings.** Filter the suite output
+through `grep -vE "ms( \(informational\))?$|bytes|noise floor"` before extracting
+figures. Those lines measure the machine and move run to run; round 38 found five
+gates had been diffing that noise and calling it clean. Everything left — 249
+figures — is a reading of the serve and must not move without a round saying why.
+The comparison worktree needs a junction to the main `node_modules`, or its suite
+cannot start and the diff silently compares one number against 271.
+
+**Standing hazard: never use `git checkout --` for a canary.** It has destroyed a
+round's work twice (rounds 3 and 5) and came within a shell parse error of a
+third (round 31). Canary with the `Edit` tool in both directions.
 
 **Standing hazards a fresh session should know, all learned the hard way here:**
 
