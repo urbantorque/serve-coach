@@ -206,9 +206,12 @@ Tests with teeth, refusals, and the things that only break on somebody's phone.
       synthetic rig only.
 - [ ] **F6 · audit 7** — The oldest `[!]` item, re-read to see whether it is
       still blocked.
-- [ ] **F7 · audit 9** — The contrast ratio of a token pair on a surface a player
-      reads outdoors. Measure and record the number; a token that fails is a
-      finding, not a change.
+- [x] **F7 · audit 9** — Contrast measured across eleven pairs, parsed from
+      `tokens.css` rather than copied. **Every pair clears WCAG AA; body text is
+      17.40:1, past AAA.** The finding is the margin: `--fg-faint` on a card is
+      4.87:1 against a 4.5 floor — 8% of headroom, on the faintest text, on the
+      surface most of the report is drawn on. Nothing changed; the margin is now
+      checked, so a token nudged two points darker cannot eat it silently.
 
 ---
 

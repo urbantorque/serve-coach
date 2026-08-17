@@ -43,6 +43,50 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 45 · Cycle F — QA and edge cases · `F7 · audit 9`
+
+**Orchestrator.** Cycle F's head item `F3` needs real footage and cannot move
+here. Takes `F7` instead: contrast on the surfaces a player reads outdoors, on a
+phone propped against a fence, from further away than they read anything else.
+
+**Every other lint in this repo checks what the app says. Nothing checked
+whether it can be seen.**
+
+**Eleven pairs, parsed from `tokens.css` rather than copied**, so a token that
+moves moves the measurement with it — a copied hex is a recorded number wearing
+a derivation's clothes, which is the defect round 40 found in `NEXT.md` itself.
+
+**Every pair clears WCAG AA.** Body text is **17.40:1**, past the 7.0 AAA floor,
+which is the one pair worth holding above AA: it carries the report, the plan,
+the cue and the refusal.
+
+**The finding is the margin, not a failure.** `--fg-faint` on a card is
+**4.87:1 against a 4.5 floor — 8% of headroom**, on the palette's faintest text,
+on the surface most of the report is drawn on. Nothing changed: it passes, and
+constraint 3 makes the colour somebody else's to move. What it gained is a check
+on the margin itself, computed as whichever pair comes out narrowest rather than
+hard-coded — a gate reporting only pass/fail goes green to green until the day
+it does not.
+
+**Translucent tints composited before measuring.** Every status tint is
+`rgba(..., 0.14)`; measuring one uncomposited reports the contrast of a colour
+nobody ever sees, which is a wrong number that looks like a right one.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | A failing token is recorded with its number, not repaired. The audit was asked for a finding and constraint 3 forbids the fix |
+| Product | pass | This app is used in daylight, at distance, by somebody holding a basket. Legibility is a correctness concern here in the way it is not in a desk app |
+| Architecture | pass | Parsed, not restated. The sheet is the source |
+| Performance | pass | One file read at suite time |
+
+**Gate.** typecheck clean · lint clean · **1177 checks, 0 failed, exit 0** (+6).
+Canaried by darkening `--fg-faint` two points — 4.87 fell to 4.07 and both the
+floor check and the margin check reddened, nothing else.
+
+---
+
 ### Round 44 · consolidation gate
 
 **Orchestrator.** Sixth cycle since `loop-green-8`. Number diff, boot, tag.
