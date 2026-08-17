@@ -40,7 +40,9 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
 - [x] **A4 · R61·1 spike** — *(Round 27 — 3.9 frames at a strong serve against
       8.0 at club speed, and a 1.50 m smear against a disc detector. Not a
       refusal; a shape the build must fit.)*
-- [ ] **A4b · R61·2** — Build `planSharedPass`. Infrastructure; it throws today.
+- [x] **A4b · R61·2** — `planSharedPass` built. Union window, one grid, per-detector
+      coverage, and a drop-never-readmit rule for detectors the grid is too slow for.
+      Split `pose/rate.ts` out so the DOM-free vision layer can share the rate.
 - [ ] **A4c · R61·3** — The outbound detector, as a streak rather than a disc,
       refusing above the speed where the frames run out. Never in mph.
 - [x] **A5 · audit 8** — Windows in `phases.ts` sized in file seconds. *(Round

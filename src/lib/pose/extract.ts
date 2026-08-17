@@ -9,33 +9,14 @@ import {
 import { bridgeDetectionGaps, type PoseSample } from '../analysis/kalman'
 import { UnreadableVideoError, type Frame, type Landmark } from '../analysis/types'
 import { nextVideoTimestamp } from './poseEngine'
+import { FINE_FPS, MAX_FINE_FRAMES, samplingRateFor } from './rate'
+
+// Re-exported so every existing importer keeps reading them from here. They
+// live in `rate.ts` now so the DOM-free vision layer can share the one grid.
+export { FINE_FPS, MAX_FINE_FRAMES, samplingRateFor }
 
 /** Clips this short are sampled in one pass; longer ones get a locating scan. */
 const SINGLE_PASS_SECONDS = 4.5
-/**
- * Phone video is almost universally 30 fps, so sampling faster than this
- * re-reads the same decoded frames at roughly 55 ms a piece and learns nothing.
- * Slow-motion footage still gets more samples through the swing, because it
- * spreads the same motion over more seconds of file. Sub-frame timing is
- * recovered analytically instead — see refineExtremum in phases.ts.
- *
- * Exported for the same reason `MAX_FINE_FRAMES` is: the two together decide
- * which of them binds, and `MAX_FINE_FRAMES / FINE_FPS` is the span either side
- * of which a different one does. A test that wants to say where the budget
- * starts binding has to say it in those terms rather than in the number 32,
- * which would go stale the moment either constant moved.
- */
-export const FINE_FPS = 32
-/**
- * The most frames one serve is ever extracted at.
- *
- * Exported because it is half of the resident cost of an analysis — `frames` is
- * the largest thing an `Analysis` holds in memory — and `footprint.ts` bounds
- * that cost against this rather than against a number copied out of it. Raising
- * it raises the memory budget, and the budget test is where that has to be
- * argued for.
- */
-export const MAX_FINE_FRAMES = 120
 /** How much of the clip around contact is worth sampling densely. */
 const LEAD_IN = 1.9
 const LEAD_OUT = 0.8
@@ -107,9 +88,6 @@ export function readWindow(duration: number, times: number[], serveIndex: number
     located: false,
   }
 }
-
-/** Samples per second a window of this length will be read at. */
-export const samplingRateFor = (span: number) => Math.min(FINE_FPS, MAX_FINE_FRAMES / Math.max(0.2, span))
 
 export interface ExtractProgress {
   phase: 'scanning' | 'tracking'

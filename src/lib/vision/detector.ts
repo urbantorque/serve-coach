@@ -20,6 +20,11 @@
  * knowing about the other.
  */
 
+// From `rate.ts`, not `extract.ts`: this file promises DOM-free above, and
+// `extract.ts` reaches for `document`. Same three numbers either way — the
+// split exists so the shared pass and the pose pass cannot pick different ones.
+import { samplingRateFor } from '../pose/rate'
+
 import type { Bitmap } from './ballTrack'
 import type { PhaseId } from '../analysis/types'
 
@@ -270,21 +275,180 @@ export interface SharedPassPlan {
 }
 
 /**
- * Build the plan. Not implemented — W6 and W7 fill this in.
+ * Why a detector was left out of a plan, when it was.
  *
- * It throws rather than returning an empty or best-guess plan, and that is
- * deliberate in a codebase that will not state a number it did not measure. A
- * stub returning `{ window: { start: 0, end: 0 }, times: [] }` is a plan that
- * type-checks, runs, reads nothing, and hands every detector a reading of full
- * confidence over zero frames. Whoever wired it up would see a report, not a
- * failure. Throwing means the first person to call this finds out on the first
- * call, which is the only cheap moment to find out.
+ * Named rather than dropped silently, because the caller has to be able to tell
+ * "this pass did not look" from "this pass looked and found nothing" — those
+ * are different sentences to a player, and the second one is a fault report.
+ */
+export type DetectorDeclined = {
+  id: DetectorId
+  reason: 'window_empty' | 'too_slow'
+  /** The grid this detector would have been run on. */
+  hz: number
+  /** What it said it needed. */
+  minHz: number
+}
+
+/** A plan, plus everything that did not make it in. */
+export interface SharedPass extends SharedPassPlan {
+  members: DetectorId[]
+  declined: DetectorDeclined[]
+}
+
+/**
+ * Build the plan.
+ *
+ * Still throws when it cannot make one, and the reasons in the previous version
+ * of this comment stand: a plan returning `{ times: [] }` type-checks, runs,
+ * reads nothing, and hands every detector full confidence over zero frames.
+ *
+ * THE PART THAT IS NOT OBVIOUS: dropping a detector for being too slow can make
+ * the pass fast enough to have kept it. The grid rate comes from
+ * `samplingRateFor(span)`, the span is the union of the surviving windows, and
+ * the union shrinks when a member leaves — so a ball detector reaching a second
+ * past contact can be the reason the racket detector was refused, and removing
+ * the ball detector raises the rate past what the racket one asked for.
+ *
+ * This drops and does not reconsider. Re-admitting is the same step run
+ * backwards: the re-admitted window widens the span, lowers the rate, and can
+ * refuse the detector that was already in — so the membership of the pass would
+ * depend on which order the drops happened in. A plan whose contents depend on
+ * iteration order is not a plan anyone can reason about, and the cost of the
+ * conservative rule is that a detector is occasionally refused on a grid that
+ * the final pass beats. That refusal is honest: it is refused against the pass
+ * it was actually offered.
+ *
+ * Only ever dropping is also what makes this terminate. Each round removes at
+ * least one member or stops, so it runs at most as many times as there are
+ * detectors.
  */
 export function planSharedPass(
-  _detectors: readonly FrameDetector<unknown, unknown>[],
-  _anchors: WindowAnchors,
-): SharedPassPlan {
-  throw new Error(
-    'planSharedPass is not built yet: the detector contract exists, the pass does not. See W6 (racket head) and W7 (ball past contact).',
-  )
+  detectors: readonly FrameDetector<unknown, unknown>[],
+  anchors: WindowAnchors,
+): SharedPass {
+  if (detectors.length === 0) {
+    throw new Error('planSharedPass was asked for a pass over no detectors')
+  }
+  const seen = new Set<DetectorId>()
+  for (const d of detectors) {
+    if (seen.has(d.id)) {
+      // The collision `DETECTOR_IDS` was written to make loud. Two members
+      // under one id do not error anywhere downstream — the second simply
+      // overwrites the first's per-frame product, and a ball flight fitted to
+      // racket-head centroids still fits, because a racket head also travels
+      // on something like a parabola.
+      throw new Error(`planSharedPass was handed two detectors called ${d.id}`)
+    }
+    seen.add(d.id)
+  }
+
+  const clamp = (t: Seconds) => Math.min(Math.max(t, 0), anchors.duration)
+  const windows = new Map<DetectorId, TimeWindow>()
+  const declined: DetectorDeclined[] = []
+  let members = detectors.filter((d) => {
+    const w = d.window(anchors)
+    const start = clamp(w.start)
+    const end = clamp(w.end)
+    if (!(end > start)) {
+      // A window clamped out of existence — the post-contact ball on a clip
+      // that stops at the strike. Not an error: it is the ordinary result of
+      // filming a serve and lowering the phone.
+      declined.push({ id: d.id, reason: 'window_empty', hz: 0, minHz: d.minHz })
+      return false
+    }
+    windows.set(d.id, { start, end })
+    return true
+  })
+
+  let hz = 0
+  let window: TimeWindow | undefined
+  while (!window) {
+    if (members.length === 0) {
+      throw new Error(
+        `planSharedPass has no detector left to plan for: ${declined
+          .map((d) => `${d.id} (${d.reason})`)
+          .join(', ')}`,
+      )
+    }
+    const start = Math.min(...members.map((d) => windows.get(d.id)!.start))
+    const end = Math.max(...members.map((d) => windows.get(d.id)!.end))
+    hz = samplingRateFor(end - start)
+    const tooSlow = members.filter((d) => d.minHz > hz)
+    if (tooSlow.length === 0) {
+      window = { start, end }
+      continue
+    }
+    // Every member that cannot be served, in one round rather than the worst
+    // one first — same reason as above. Dropping one at a time makes the
+    // survivors depend on the comparison used to pick the worst.
+    for (const d of tooSlow) declined.push({ id: d.id, reason: 'too_slow', hz, minHz: d.minHz })
+    const gone = new Set(tooSlow.map((d) => d.id))
+    members = members.filter((d) => !gone.has(d.id))
+  }
+
+  /*
+   * The grid. Built from the rate rather than handed in, so there is exactly
+   * one place in the app that turns a span into instants — `readWindow` does
+   * the same arithmetic for the pose pass, and two of them drifting apart is
+   * the mismatch `Seconds` exists to prevent.
+   *
+   * Inclusive of the last instant when it lands on the end, because the
+   * racket-head window ends at contact and contact is the frame that matters
+   * most in it.
+   */
+  const step = 1 / hz
+  const times: Seconds[] = []
+  for (let t = window.start; t < window.end - 1e-9; t += step) times.push(t)
+  /*
+   * And the end, always, even when the last stride fell short of it. The span
+   * is not a whole number of steps in general, so the final interval is
+   * shorter than the rest — which is the right way round: the racket-head
+   * window ends at contact, and losing contact to a rounding remainder would
+   * drop the one frame the window exists for.
+   */
+  if (times[times.length - 1] !== window.end) times.push(window.end)
+
+  const contains = (id: DetectorId, t: Seconds) => {
+    const w = windows.get(id)!
+    return t >= w.start - 1e-9 && t <= w.end + 1e-9
+  }
+
+  const read: SharedPassPlan['read'] = (frame, previous, t) => {
+    const by: Partial<Record<DetectorId, unknown>> = {}
+    for (const d of members) {
+      if (!contains(d.id, t)) continue
+      by[d.id] = d.read(frame, previous, t)
+    }
+    return { t, by }
+  }
+
+  const harvest: SharedPassPlan['harvest'] = (reads) => {
+    const out: Partial<Record<DetectorId, DetectorReading<unknown>>> = {}
+    for (const d of members) {
+      /*
+       * `asked` counts the grid, not the reads: the instants inside this
+       * detector's own window that the pass put to the video. `read` counts
+       * what came back. The gap between them is the footage, and it is the
+       * distinction `DetectorCoverage` was written three counts wide for.
+       */
+      const asked = times.filter((t) => contains(d.id, t)).length
+      const mine = reads.filter((r) => d.id in r.by)
+      /*
+       * A miss is `undefined` from the fold, and that is the one convention
+       * this function adds to the contract. The pass cannot otherwise know
+       * `found` — every fold returns something per frame — and passing a zero
+       * would be the stand-in value this file refuses everywhere else. A
+       * detector that means something different by `found` overrides it in
+       * `finish`, which is handed the frames and can count them however it
+       * likes.
+       */
+      const kept = mine.map((r) => r.by[d.id])
+      const found = kept.filter((v) => v !== undefined).length
+      out[d.id] = d.finish(kept, { asked, read: mine.length, found })
+    }
+    return out
+  }
+
+  return { window, times, read, harvest, members: members.map((d) => d.id), declined }
 }

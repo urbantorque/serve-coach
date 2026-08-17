@@ -43,6 +43,64 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 39 · Cycle A — the engine · `A4b · R61·2`
+
+**Orchestrator.** `planSharedPass` has thrown by design since the contract was
+written. Builds it. Lead builder: Pose Engineer. Column: *Does it work at all.*
+
+**The part that is not three lines.** Dropping a detector for being too slow can
+make the pass fast enough to have kept it. The rate is `samplingRateFor(span)`,
+the span is the union of surviving windows, and the union *shrinks* when a member
+leaves — so a ball detector reaching a second past contact is the reason the
+racket detector gets refused, and removing it raises the rate past what the
+racket asked for.
+
+**Drops, never re-admits**, and the argument is that re-admitting is the same
+step backwards: the re-admitted window widens the span, lowers the rate, and can
+refuse whoever was already in. Membership would then depend on the order the
+drops happened in. The cost is a detector occasionally refused on a grid the
+final pass beats — refused against the pass it was actually offered, which is
+honest. It is also what makes the loop terminate: each round removes at least one
+member or stops.
+
+**A miss is `undefined` from the fold** — the one convention this adds to the
+contract. The pass cannot otherwise know `found`, and a zero would be the
+stand-in value this file refuses everywhere else.
+
+**Two of my own checks failed first, and both were right to.** The grid stopped a
+rounding remainder short of `window.end` — which is contact, the frame the
+racket window exists for. And the `window_empty` case could not be reached
+through the existing `ballFlight` stand-in at all: it opens at the *toss*, so it
+never collapses, while the detector W7 will actually write starts at contact.
+`WindowAnchors`' own comment says so. The stand-in has been wrong since it was
+written, and only building the planner surfaced it.
+
+**A canary found a check too weak to be worth having.** Replacing per-detector
+`asked` with the whole grid stayed green: the racket window is a third of the
+union, so "read is less than asked" held while `asked` was wrong by two and a
+half times — a detector blaming itself for frames its window never contained.
+The check now asserts the count, not an inequality.
+
+**`pose/rate.ts` split out.** `detector.ts` promises DOM-free in its own header
+and `detector.test.ts` warns in line 33 that importing `extract.ts` "would pull
+`document.createElement` into a Node bundle" — and the first version of this
+round did exactly that. The rate now lives in a file with no imports; `extract.ts`
+re-exports all three, so no existing importer changed.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | A declined detector is named with a reason and the grid it was refused on, so a caller can tell "did not look" from "looked and found nothing" — different sentences to a player, and the second is a fault report |
+| Performance | pass | This is the performance item: one seek instead of two over windows that overlap heavily. `harvest` is O(frames × members) with members ≤ 2 |
+| Architecture | pass | One rate authority, and the DOM-free promise kept rather than quietly spent |
+| Product | pass | Nothing user-facing yet by design — W6 and W7 are the detectors |
+
+**Gate.** typecheck clean · lint clean · **1157 checks, 0 failed, exit 0** (+5).
+Canaried three ways; the third failed to go red and became a better check.
+
+---
+
 ### Round 38 · consolidation gate — and the gate was measuring itself
 
 **Orchestrator.** Sixth cycle since `loop-green-7`. Number diff, boot, tag.
