@@ -43,6 +43,55 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 48 · Cycle C — coaching and UI · `C4 · R57`
+
+**Orchestrator.** The drills as a week. Lead builder: Coaching Voice. Column:
+*Would I use it between serves.*
+
+**Refused: the page it asks for already exists, twice.**
+
+R57's premise is that the thirteen drills in `coaching.ts` "are only ever seen
+attached to a fault", and that what is missing is a session built from the 2–4
+ranked drills. **The plan is that session.** `causalPlan` orders it causally and
+caps it at four. `Report.tsx` renders it as a numbered queue whose own comment
+says *"these are not four equal options to choose between, they are a queue"* —
+the first drill's full method, every later rung's name and reps.
+
+On the fixture it comes out as: **"1. Baseline drop toss — 20 tosses · 2. Let
+the racket fall — 20 serves · 3. Slow sink hold — 3 sets of 8."** That is a
+practice session, in order, with doses. The progress sheet renders the recurring
+focus the same way, with its how and its reps.
+
+**A third surface would restate two** — more screen, no new information, which
+is the padding the mandate names as slop.
+
+**What R57 was reaching for is placement, not content.** Neither rendering is
+reachable without opening a screen you read sitting down: the report says in its
+own header that it is the wrong screen for somebody holding a basket, and the
+practice card lives on the progress sheet. Recorded as `R57b`, with the test it
+has to pass — whether it says anything the report does not already say in the
+same words.
+
+**Two checks, so the premise cannot become true after the fact.** Every rung
+carries a drill with a method and a dose; no two rungs share a drill. A ranked
+item with a diagnosis and nothing to do is a queue entry a player cannot act on,
+and a repeated drill hides that the second fault has no distinct answer.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Product | pass | The refusal is the product decision. An app that renders the same three drills on a third screen has more surface and no more help |
+| Honesty | pass | Evidenced against the rendered output, not against my memory of it — the fixture's own queue is quoted in the ledger |
+| Architecture | pass | The round leaves behind a smaller successor with a stated test, rather than a vague "revisit" |
+| Performance | pass | Nothing shipped to a render path |
+
+**Gate.** typecheck clean · lint clean · **1193 checks, 0 failed, exit 0** (+2).
+Canaried by duplicating the plan's first rung — the new dedup check reddened
+alongside the existing "nothing is listed twice", which is the right pair.
+
+---
+
 ### Round 47 · Cycle B — biomechanics · `B4b · R51·2`
 
 **Orchestrator.** The other half of R51's pair. `leg_drive_rise_ratio` is how

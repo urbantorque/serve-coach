@@ -107,8 +107,15 @@ The translation from a number to a cue somebody can act on.
 - [x] **C3 · R56** — Did it go in. Four chips on the glance, stored on the tag row
       beside the serve number, and nothing said back. Found the round-35 tap block
       had never been wired into App, so it had never rendered.
-- [ ] **C4 · R57** — The drills as a week, built from the 2–4 ranked drills the
-      report already produces. No streak, no badge, no congratulation.
+- [x] **C4 · R57** — **Refused: the page already exists, twice.** The ranked plan
+      *is* the session — causal order, capped at four, rendered as a numbered queue
+      with the first drill's method and every later rung's name and reps
+      ("1. Baseline drop toss — 20 tosses · 2. Let the racket fall — 20 serves ·
+      3. Slow sink hold — 3 sets of 8"). The progress sheet renders the recurring
+      one the same way. A third surface restates two. Two checks now pin what makes
+      the plan a session: every rung has a drill with a dose, and none repeat.
+- [ ] **C4b · R57b** — The last plan, without opening the report. Placement, not
+      content — and it must not become a third rendering of the same words.
 - [x] **C0 · R69·1** — The gate for copy that lives in a component. 96 lines,
       25 components, 15 failing — seven the lint being wrong, eight real. *(Round
       9 — and one of the eight contradicts R28's own close-out.)*

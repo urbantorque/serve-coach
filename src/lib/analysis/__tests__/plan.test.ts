@@ -159,4 +159,47 @@ check('a rejected clip is told nothing is being held back', () => {
   )
 })
 
+/* ------------------------------------------ the plan IS the session (R57) */
+
+check('every ranked item carries a drill somebody could go and do', () => {
+  /*
+   * R57 ASKED FOR A PAGE THAT ALREADY EXISTS, AND THIS IS THE CHECK THAT KEEPS
+   * IT EXISTING.
+   *
+   * The round's premise was that the thirteen drills in `coaching.ts` "are only
+   * ever seen attached to a fault", and that what is missing is a session plan
+   * built from the 2–4 ranked drills. But the plan is that session: causal
+   * order, capped at four, and `Report.tsx` renders it as a numbered queue whose
+   * own comment says "these are not four equal options to choose between, they
+   * are a queue" — with the first drill's full method and every later one's name
+   * and reps. The recurring focus gets the same treatment on the progress sheet.
+   *
+   * So a third surface would restate two. What R57 was actually reaching for is
+   * placement — none of it is reachable without opening a screen you read
+   * sitting down — and that is recorded as its successor rather than solved by
+   * rendering the same drills a third time.
+   *
+   * The property worth protecting is the one that makes the plan a session at
+   * all: every rung has something to *do*, not just something that is wrong. A
+   * ranked item with a diagnosis and no drill is a queue entry a player cannot
+   * act on, and it would make R57's premise true after the fact.
+   */
+  const { plan } = pipeline(MESSY)
+  assert(plan.length > 1, 'the fixture stopped producing a multi-item plan, so this proves nothing')
+  for (const [i, item] of plan.entries()) {
+    assert(Boolean(item.drill?.name), `rung ${i + 1} (${item.title}) has no drill`)
+    assert(Boolean(item.drill?.reps), `rung ${i + 1} (${item.drill?.name}) says nothing about how much`)
+    assert(Boolean(item.drill?.how), `rung ${i + 1} (${item.drill?.name}) says nothing about how`)
+  }
+  note(plan.map((p, i) => `${i + 1}. ${p.drill.name} — ${p.drill.reps}`).join(' · '))
+})
+
+check('the queue does not repeat a drill, which would read as one long instruction', () => {
+  // Two rungs sharing a drill is a session that says "do this, then do this" —
+  // and worse, it hides that the second fault has no distinct answer.
+  const { plan } = pipeline(MESSY)
+  const names = plan.map((p) => p.drill.name)
+  assert(new Set(names).size === names.length, `the plan repeats a drill: ${names.join(', ')}`)
+})
+
 report()

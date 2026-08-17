@@ -1800,7 +1800,39 @@ family, different surface, different refusals.
       retroactively. **The trap is the claim**: "your toss drifts more on the
       serves you miss" is a correlation over six data points and this codebase
       does not say things like that.
-- [ ] **R57** — The drills as a week, not as a footnote. Thirteen drills in
+- [x] **R57** — **REFUSED AS WRITTEN: the page it asks for already exists, twice.**
+
+      The premise was that the thirteen drills in `coaching.ts` "are only ever
+      seen attached to a fault" and that what is missing is a session built from
+      the 2–4 ranked drills. The plan *is* that session. `causalPlan` orders it
+      causally and caps it at four; `Report.tsx` renders it as a numbered queue
+      whose own comment says "these are not four equal options to choose between,
+      they are a queue", with the first drill's full method and every later
+      rung's name and reps. On the fixture it prints: *1. Baseline drop toss —
+      20 tosses · 2. Let the racket fall — 20 serves · 3. Slow sink hold — 3 sets
+      of 8.* That is a session plan. The progress sheet renders the recurring
+      focus the same way, with its how and its reps.
+
+      **A third surface would restate two**, which is the padding the mandate
+      calls slop: more screen, no new information.
+
+      **What R57 was reaching for is placement, not content.** Neither rendering
+      is reachable without opening a screen you read sitting down — the report is
+      explicitly the wrong screen for somebody holding a basket, and the practice
+      card lives on the progress sheet. Successor below.
+
+      Two checks pin the property that makes the plan a session at all: every
+      rung carries a drill with a method and a dose, and no two rungs share one.
+      A ranked item with a diagnosis and no drill is a queue entry nobody can act
+      on — and it would make R57's premise true after the fact.
+
+- [ ] **R57b** — The last plan, without opening the report. The drills exist and
+      are ordered; what does not exist is a way to see them at the fence or
+      before leaving the house. Small, and it must not become a third rendering:
+      the test is whether it says anything the report does not already say in
+      the same words.
+
+- [ ] **R57-old** — The drills as a week, not as a footnote. Thirteen drills in
       `coaching.ts` are only ever seen attached to a fault. `PracticeCard` records
       that a drill was done and `sixWeekMilestone` spans a training block; what is
       missing is the middle — a page saying what to do at the next practice, built
