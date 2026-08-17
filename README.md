@@ -1,3 +1,4 @@
+| `fixturePlan.ts` | the six clips the fixture shoot needs, in order — bound by a test to the three axes the gate actually counts |
 | `analysis/framingIssues.ts` | is this clip framed well enough to measure, and the thresholds that decide — split out of `groundTruth.ts` so the fixture schema is not weight on every first paint |
 # Serve Coach
 

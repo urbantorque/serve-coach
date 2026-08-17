@@ -44,6 +44,53 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 11 · Cycle E — data management and export · `E1b · R59·2`
+
+**Orchestrator.** Closes R59, the promoted round — the only one that unblocks
+real footage. Lead builder: Product Expansion Lead, with the Release Architect on
+the binding to the gate. Column served: *work that unblocks me is worth more than
+work that doesn't*.
+
+**The round as written could not be built, and saying so is half the round.** The
+stub asked for a checklist reading off `RECORDED` to show which clip is *next*.
+`RECORDED` is a build-time list of files committed to the repo; a phone on a
+court cannot see it and never will. A progress bar there would be the app
+claiming to know something it cannot. So what ships is the shoot list itself, in
+order, with the app claiming to know nothing about where anybody is on it.
+
+**The real content is the binding.** `fixtures/index.ts` does not ask for six
+clips — it asks for six spanning three axes. A list that satisfied somebody's
+sense of thoroughness and not those axes would cost a person an afternoon of
+somebody else's tennis and come back refused. The test runs the list through
+`MINIMUM_RECORDED` and the gate's own `SPREAD`, so the two cannot drift.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Refused to build the progress view the round asked for, rather than approximating it. The list claims nothing about what has been filmed |
+| Performance | pass | Six objects, behind a query string. Entry chunk unmeasured this round and unlikely to have moved; round 10's figures stand |
+| Privacy | pass | Nothing new leaves the device |
+| Architecture | pass | Order and spread asserted from the plan's side against the gate's own constants, not against a copy. Canaried to two checks, both about the left-hander axis |
+| Product | pass | The list is on the screen where somebody has just filmed a clip, which is the moment they are deciding what to film next |
+
+**Copy, and the seam between the two lint gates.** Every line faces `cueIssues`
+and the 25-word cap. These lines are interpolated into JSX, so R69·1's scanner is
+blind to them by design — they are linted at the source instead, which is the
+same division `copy.test.ts` and R69·1 already draw. The one static line I added
+to `Report.tsx` *was* picked up by the scanner and passed: 97 readable lines now
+against 96, still 15 failing.
+
+**Browser verification: partial, same block as round 5.** The list sits inside
+the same `fixtureExport && isLive` guard as the save button, and `isLive` needs a
+clip with a player in it, which this environment cannot produce. **Neither the
+button nor the list has been watched appearing.**
+
+**Gate.** typecheck clean · lint clean · **1069 checks passed, 0 failed, exit 0**
+(+6).
+
+---
+
 ### Round 10 · Cycle D — performance and architecture · `D0 · R68`
 
 **Orchestrator.** Debt round 5 incurred and priced, paid in the very next D

@@ -11,6 +11,7 @@ import PoseStill from '../components/PoseStill'
 import TrackPlayer from '../components/TrackPlayer'
 import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
 import { pairTracks } from '../lib/trackPair'
+import { FIXTURE_PLAN } from '../lib/fixturePlan'
 import { useShareState } from '../components/useShareState'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
@@ -876,6 +877,26 @@ export default function Report({
       */}
       {fixtureExport && isLive(analysis) && (
         <>
+          {/*
+            The six clips, so the shoot is not a thing you do by reading the
+            repo — which is the whole of R59 and the half R59·1 left out.
+
+            NOT A PROGRESS BAR, and it must not become one. Which clips are
+            already committed is a fact about a git repository; a phone standing
+            on a court cannot see it and never will. So this is a list to work
+            down, and the app claims to know nothing about where anybody is on it.
+
+            `.note` again, as with the gaps above: no new class, no new CSS, and a
+            surface no ordinary player reaches is the last place to spend design.
+          */}
+          <p className="note">
+            Six clips clear the gate. Film them in this order — the first one matters most.
+          </p>
+          {FIXTURE_PLAN.map((clip) => (
+            <p className="note" key={clip.n}>
+              {clip.n}. {clip.what} {clip.why}
+            </p>
+          ))}
           <button
             className="btn btn--ghost btn--full"
             onClick={() =>

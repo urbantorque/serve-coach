@@ -1410,7 +1410,7 @@ family, different surface, different refusals.
       first** — a slow deliberate serve is not a hitch, and a detector that cannot
       tell them apart is worse than none. If it cannot separate them on the rig,
       an `UNDER_RESOLVED` entry saying so is the finished round.
-- [~] **R59** — *(promoted here, ahead of the product band)* Split, because
+- [x] **R59** — *(promoted here, ahead of the product band)* Split, because
       "reachable on a phone" and "knows which of the six clips is next" are two
       different jobs and the first is what actually unblocks anybody.
 
@@ -1476,10 +1476,41 @@ family, different surface, different refusals.
           same block R41 recorded — `sampleClip` no longer resolves in this pane.
           The button has not been watched appearing.
 
-        · **R59·2 — the checklist.** Which of the six clips is next, on that same
-          screen, read off `RECORDED` and the coverage axes so it cannot drift
-          from the gate. `fixtures/README.md` has the order; nothing in the app
-          does.
+        · **R59·2 — [x] the checklist, and it is not the one the round asked
+          for.** The stub said to read it off `RECORDED` so it shows which clip is
+          *next*. That cannot be built and should not be faked: `RECORDED` is a
+          build-time list of files committed to the repo, and a phone standing on
+          a court has no idea what is in it and never will. A progress bar there
+          would be the app claiming to see something it cannot.
+
+          So what ships is the shoot list itself, in order, as `lib/fixturePlan.ts`
+          — six clips with what to film and what each settles, on the same screen
+          as the save button. The list to work down, with the app claiming to
+          know nothing about where anybody is on it.
+
+          **What binds it to the gate is the round's real content.**
+          `fixtures/index.ts` does not ask for six clips; it asks for six clips
+          spanning three axes — both hands, two views, two frame rates. A list
+          that satisfied somebody's sense of thoroughness and not those axes
+          would send a person out with a phone, take an afternoon of somebody
+          else's tennis, and come back with a set the suite still refuses.
+          `fixturePlan.test.ts` runs the list through `MINIMUM_RECORDED` and the
+          gate's own three axes, so the two cannot drift. Canaried by making both
+          left-handed clips right-handed: two checks red, the spread and the
+          "asked for early enough", which are two distinct properties of one fact.
+
+          Order is checked too, because it is the thing a list can get wrong
+          while still looking right: the everyday case first, since if that
+          disagrees nothing after it matters; the deliberate feet-cropped failure
+          last, since it is the clip you want least if you only get one; and the
+          first left-hander no later than fourth, because it needs a second
+          person and is the axis `SPREAD` cannot be satisfied without.
+
+          Every line faces `cueIssues` and the 25-word cap. A shoot list written
+          in lab register is one more reason not to go to the court — and these
+          lines are interpolated into JSX, so R69·1's scanner cannot see them.
+          They are linted at the source instead, which is the same division
+          `copy.test.ts` and R69·1 already draw between them.
 
 - [~] **R69** — Split: build the gate, then fix what it finds. Rewriting the home
       screen's hero paragraph is a product decision and does not belong in the

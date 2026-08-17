@@ -114,10 +114,11 @@ Storage, backup, and the files a player is handed.
       the production bundle, and what is still missing shown on screen instead of
       in a console. *(Round 5 — costs 2.31 kB gzip on the critical path, measured,
       and queued for removal as R68.)*
-- [ ] **E1b · R59·2** — The checklist: which of the six clips is next, read off
-      `RECORDED` so it cannot drift from the gate.
-- [ ] **E1c · R59** — *(the round as a whole)* Make the fixture shoot something a
-      user does by accident.
+- [x] **E1b · R59·2** — The shoot list, in order, bound to the gate's three axes
+      by a test. *(Round 11 — and "which is next" cannot be built: a phone cannot
+      see what is committed to the repo.)*
+- [x] **E1c · R59** — *(the round as a whole)* Make the fixture shoot something a
+      user does by accident. *(Rounds 5 and 11.)*
       *Promoted ahead of the product band:* it is the only round that unblocks
       real footage, and real footage is what `groundTruth.ts`, hip–shoulder
       separation, shoulder tilt, `UNDER_RESOLVED.pronation_deg` and
