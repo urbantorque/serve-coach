@@ -331,8 +331,13 @@ Tests with teeth, refusals, and the things that only break on somebody's phone.
       both. Not repaired — nothing here has ever filmed a lateral wobble, so a
       second band would be invented — but pinned, and the constant's comment now
       carries the numbers.
-- [ ] **F6 · audit 7** — The oldest `[!]` item, re-read to see whether it is
-      still blocked.
+- [x] **F6 · audit 7** — **R64's blocker was wrong twice and had been for
+      fifty-three rounds.** The rig grew the stance dial it says is missing at
+      R60·1, and it never needed one: the front foot is named by handedness. The
+      measurement then found the current both-ankle baseline is *contaminated* —
+      one lean reads **2.00× differently** as the back foot slides up, while the
+      front ankle is flat. R64 is unblocked and justified; switching still costs a
+      re-derivation of the landing floor.
 - [x] **F7 · audit 9** — Contrast measured across eleven pairs, parsed from
       `tokens.css` rather than copied. **Every pair clears WCAG AA; body text is
       17.40:1, past AAA.** The finding is the margin: `--fg-faint` on a card is
@@ -346,8 +351,24 @@ Tests with teeth, refusals, and the things that only break on somebody's phone.
 
 - [!] **R63** — The external-rotation lever refusal on real footage. Blocked
       behind E1.
-- [!] **R64** — The landing reading switched to the front ankle. Blocked behind
-      E1: the front-ankle baseline is the stance, and the rig has no stance dial.
+- [ ] **R64** — **UNBLOCKED BY F6, and its blocker was wrong twice.** It read
+      "the front-ankle baseline is the stance, and the rig has no stance dial".
+      The rig grew one at R60·1 (`pinpointSlide`, `landingBackFootDrag`) — and it
+      never needed one: **the front foot is named by handedness**, not measured. A
+      right-handed serve lands on the left foot. R60·2 refused *measuring* the
+      stance from a side-on camera, and the blocker conflated that refusal with a
+      question handedness already answers.
+
+      Measured, and the current baseline is contaminated rather than merely
+      arbitrary: one dialled 0.12 m lean reads **0.0643 / 0.0482 / 0.0321** as the
+      back foot slides up — **2.00× from a stance change with nothing to do with
+      balance** — while the front ankle reads 0.1142 flat, 1.00×.
+
+      Not switched: it moves every landing reading and re-derives
+      `LANDING_SQUARE_FLOOR`, `LANDING_SQUARE_DEVIATION` and the delta bound built
+      on them. R44's rule — the cost R72 paid deliberately and R80b is waiting on.
+      Pinned in `depth.test.ts` so it cannot go back to being blocked for a reason
+      that stopped being true.
 - [!] **The court trip** — needs a phone. `COURT-CHECK.md` is the list.
 - [!] **The fixture shoot** — needs real footage. `RECORDED` is 0 of 6.
 

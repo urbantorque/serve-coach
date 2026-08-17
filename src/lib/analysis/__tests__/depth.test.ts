@@ -1898,6 +1898,90 @@ check('a delta between two serves is bounded by both terms, not by either alone'
   assert(perSecond > 0, 'the tempo term came out at or below zero, so there is nothing to bound')
 })
 
+/* ====== the landing baseline, and a blocker that was stale twice (F6) ====== */
+
+/**
+ * The landing offset is measured from both ankles, and the back foot moves.
+ *
+ * FOUND BY RE-READING THE BLOCKED LIST, which is what audit 7 asks for. R64 —
+ * switch the landing reading to the front ankle — was recorded as blocked with
+ * the reason "the front-ankle baseline is the stance, and the rig has no stance
+ * dial". **Both halves of that are now wrong.**
+ *
+ *   · The rig grew a stance dial at R60·1: `pinpointSlide`, plus
+ *     `landingBackFootDrag` beside it.
+ *   · And it never needed one. The front foot is named by *handedness*, not
+ *     measured — a right-handed serve lands on the left foot. R60·2 refused
+ *     *measuring* the stance from a side-on camera, and the blocker conflated
+ *     that refusal with a question handedness already answers.
+ *
+ * MEASURED, AND THE CURRENT BASELINE IS WORSE THAN STALE — it is contaminated.
+ * One dialled 0.12 m lean, with the back foot sliding up:
+ *
+ *     back-foot drag   both ankles   front ankle
+ *          0.0           0.0643        0.1142
+ *          0.5           0.0482        0.1142
+ *          1.0           0.0321        0.1142
+ *
+ * **The same lean reads half as much when the back foot slides up.** Nothing
+ * about the player's balance changed; the midpoint they are measured against
+ * moved. The front ankle is flat to four decimals across the whole range.
+ *
+ * And at zero lean the two differ in kind: both-ankle reads exactly 0.0000,
+ * because the hips sit between the ankles by construction, while the front ankle
+ * reads 0.0499 — half a stance width. That is not a defect, it is why
+ * `LANDING_SQUARE_FLOOR` exists as a concept; switching would need a different
+ * number for it.
+ *
+ * NOT SWITCHED HERE. It moves every landing reading in the app and re-derives
+ * `LANDING_SQUARE_FLOOR`, `LANDING_SQUARE_DEVIATION` and the delta bound built on
+ * them — R44's rule, the same cost R72 paid deliberately and R80b is waiting on.
+ * R64 is unblocked and justified; it is not free. Pinned so it cannot go back to
+ * being blocked for a reason that stopped being true.
+ */
+check('the landing baseline moves with the back foot, and the front ankle does not', () => {
+  const read = (landingLean: number, landingBackFootDrag: number) => {
+    const frames = buildServe({ landingLean, landingBackFootDrag, seed: 11 }, FPS)
+    const skel = detectServe(frames, FPS)
+    const L = frames[skel.keys.finish].image
+    const hipX = (L[LM.leftHip].x + L[LM.rightHip].x) / 2
+    return {
+      both: Math.abs(hipX - (L[LM.leftAnkle].x + L[LM.rightAnkle].x) / 2) / skel.bodyHeight,
+      // A right-handed serve lands on the LEFT foot — handedness, not a
+      // measurement of the stance. That is the half of the blocker that was
+      // never true rather than merely stale.
+      front: Math.abs(hipX - L[LM.leftAnkle].x) / skel.bodyHeight,
+    }
+  }
+
+  const rows = [0, 0.5, 1].map((drag) => ({ drag, ...read(0.12, drag) }))
+  note(rows.map((r) => `drag ${r.drag}: both ${r.both.toFixed(4)}, front ${r.front.toFixed(4)}`).join(' · '))
+
+  const bothSpread = Math.max(...rows.map((r) => r.both)) / Math.min(...rows.map((r) => r.both))
+  const frontSpread = Math.max(...rows.map((r) => r.front)) / Math.min(...rows.map((r) => r.front))
+  note(`one lean, three stances: both-ankle varies ${bothSpread.toFixed(2)}×, front-ankle ${frontSpread.toFixed(2)}×`)
+
+  assert(
+    bothSpread > 1.5,
+    `the both-ankle baseline now varies only ${bothSpread.toFixed(2)}× with the back foot, so the ` +
+      'contamination this finding rests on has gone and R64 wants re-deciding',
+  )
+  assert(
+    frontSpread < 1.01,
+    `the front ankle varies ${frontSpread.toFixed(3)}× with the back foot, so it is not the clean ` +
+      'baseline this finding claims',
+  )
+  // And the two are not interchangeable at square, which is why switching costs
+  // a re-derivation rather than a rename.
+  const square = read(0, 0)
+  assert(
+    square.both < 0.001 && square.front > 0.02,
+    `a square landing reads both=${square.both.toFixed(4)} front=${square.front.toFixed(4)} — ` +
+      'the baselines no longer differ at zero, so the floor may not need re-deriving after all',
+  )
+  note(`square landing: both ${square.both.toFixed(4)}, front ${square.front.toFixed(4)} (half a stance)`)
+})
+
 /* ========== the tie the toss axis goes quiet at, which never happens (R80) == */
 
 /**

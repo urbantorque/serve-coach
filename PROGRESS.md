@@ -43,6 +43,59 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 66 · Cycle F — QA and edge cases · `F6 · audit 7`
+
+**Orchestrator.** Re-read the oldest blocked item and ask whether it is still
+blocked. Round 61 had just unblocked one by building the instrument it wanted,
+so the question is whether the rest of the list is stale too.
+
+**R64's blocker was wrong twice, and had been for fifty-three rounds.** It read:
+*"the front-ankle baseline is the stance, and the rig has no stance dial."*
+
+1. **The rig grew one at R60·1** — `pinpointSlide`, with `landingBackFootDrag`
+   beside it. Round 13 built exactly the thing round 13's sibling was blocked on.
+2. **And it never needed one.** The front foot is named by **handedness**, not
+   measured: a right-handed serve lands on the left foot. R60·2 refused
+   *measuring* the stance from a side-on camera, and the blocker conflated that
+   refusal with a question handedness already answers.
+
+**Then the measurement found something better than "unblocked".** The current
+baseline is the midpoint of both ankles, and the back foot moves:
+
+    back-foot drag   both ankles   front ankle
+         0.0           0.0643        0.1142
+         0.5           0.0482        0.1142
+         1.0           0.0321        0.1142
+
+**One dialled lean, three stances, and the reading halves — 2.00×.** Nothing
+about the player's balance changed; the point they are measured against moved.
+The front ankle is flat to four decimals, 1.00×.
+
+**And the two differ in kind at square**, which is why switching is not a rename:
+both-ankle reads exactly 0.0000 because the hips sit between the ankles by
+construction, while the front ankle reads 0.0499 — half a stance width. That is
+what `LANDING_SQUARE_FLOOR` is for, and it would need a different number.
+
+**Not switched.** It moves every landing reading and re-derives the floor, the
+deviation and the delta bound built on them — R44's rule, the cost R72 paid
+deliberately and `R80b` is queued behind. R64 is unblocked and *justified*; it is
+not free.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | An item was sitting in a blocked list for a reason that had stopped being true, and half of it was never true. That is what audit 7 exists to find |
+| Architecture | pass | Pinned so it cannot go back to being blocked for the same stale reason — the check fails in both directions |
+| Product | pass | A player who slides their back foot up was being told their landing improved. Nothing about their balance changed |
+| Performance | pass | Six rig builds at suite time |
+
+**Gate.** typecheck clean · lint clean · **1217 checks, 0 failed, exit 0** (+1).
+Canaried by pointing the "front" reading at the midpoint — it went to 2.000× and
+reddened.
+
+---
+
 ### Round 65 · Cycle E — data and export · `E9 · R82` (new)
 
 **Orchestrator.** Cycle E's rows are blocked, so the Orchestrator generates —
