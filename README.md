@@ -590,6 +590,24 @@ serve type — which is the case the yaw gate was written for, and the case wher
 how often two clips from one trip agree on camera angle is still an open
 question.
 
+**The stance is one the camera cannot see, and the round said the opposite.** R60
+proposed reading platform against pinpoint from ankle separation over time, on
+the grounds that the back foot sliding up is a large, slow motion along the axis
+the camera sees best. It is along the axis a side-on camera sees worst: a serve
+stance is apart along the player's depth axis, and image x is 99% depth at 82°.
+Measured at `ready` in image units, eight seeds per angle, the separation reads
+0.0407 at 30°, 0.0301 at 45°, 0.0175 at 60° and **0.0050 at 82°** — against a
+noise floor of 0.0030 that does not move, because jitter is a fraction of the
+frame and does not care where the camera stands. Side-on the stance is smaller
+than twice its own noise.
+
+It is genuinely readable face-on, at seven to ten times its noise, and that is
+not a route: the app asks for side-on because face-on loses the depth readings
+the rest of the report is made of, and that trade has nothing to do with feet. So
+the reading is refused rather than hedged, and what would move it is a second
+camera or a foot-contact model — not smoothing, which is where a rebuild would
+otherwise start, because the signal is not noisy but absent.
+
 **And the gate is affordable, which was not obvious.** The worry about refusing
 a camera difference over 5° is that the *reading* might wander further than that
 between two takes of an identical camera — in which case the ghost never appears

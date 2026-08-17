@@ -351,6 +351,7 @@ export const NOISE_FLOOR: Record<string, number> = {
  * figures — see the caveat above `NOISE_FLOOR`.
  */
 export const UNDER_RESOLVED: Record<string, string> = {
+
   /*
    * Kept, at an honest floor, because it still tells a gross fault from none.
    *

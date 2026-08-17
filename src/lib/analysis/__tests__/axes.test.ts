@@ -540,4 +540,104 @@ check('face-on, it does not, and that is the acos and not the app', () => {
   )
 })
 
+
+/* ------------------------------------------- the stance, and where it goes -- */
+
+heading('Why the stance cannot be read from the footage this app asks for')
+
+/**
+ * R60's premise, measured — and it is exactly backwards.
+ *
+ * The round proposed reading platform against pinpoint from ankle separation
+ * over time, because "the back foot sliding up to the front is a large, slow,
+ * unambiguous motion along the axis the camera sees best". It is large, slow and
+ * unambiguous. It is along the axis a side-on camera sees **worst**: a serve
+ * stance is apart along the player's own depth axis, and this very file has
+ * established that at 82° image x is 99% depth and 14% lateral.
+ *
+ * So the stance projects onto almost nothing, and the noise floor does not move
+ * with it — landmark jitter does not care where the camera is. The signal walks
+ * down into a floor that stays put.
+ *
+ * This is the check that would go red if that ever stopped being true, which is
+ * the only circumstance under which the round is worth reopening.
+ */
+const STANCE_SEEDS = [11, 202, 3131, 7000, 44444, 909, 1234, 5678]
+
+const ankleGapImage = (f: { image: { x: number; y: number }[] }) =>
+  Math.hypot(
+    f.image[LM.leftAnkle].x - f.image[LM.rightAnkle].x,
+    f.image[LM.leftAnkle].y - f.image[LM.rightAnkle].y,
+  )
+
+function stanceAt(cameraYaw: number): { mean: number; sd: number } {
+  const gaps: number[] = []
+  for (const seed of STANCE_SEEDS) {
+    const frames = buildServe({ cameraYaw, seed, noise: 0.006 }, FPS)
+    const skel = detectServe(frames, FPS)
+    gaps.push(ankleGapImage(frames[skel.keys.ready]))
+  }
+  const mean = gaps.reduce((a, b) => a + b, 0) / gaps.length
+  return { mean, sd: Math.sqrt(gaps.reduce((a, b) => a + (b - mean) ** 2, 0) / gaps.length) }
+}
+
+check('the stance walks into the noise as the camera goes side-on', () => {
+  const shallow = stanceAt(30)
+  const sideOn = stanceAt(82)
+  note(
+    `  30°: ${shallow.mean.toFixed(4)} ± ${shallow.sd.toFixed(4)} ` +
+      `(${((100 * shallow.sd) / shallow.mean).toFixed(0)}%)  ·  ` +
+      `82°: ${sideOn.mean.toFixed(4)} ± ${sideOn.sd.toFixed(4)} ` +
+      `(${((100 * sideOn.sd) / sideOn.mean).toFixed(0)}%)`,
+  )
+  // The collapse itself. Two of the three checks here could be satisfied by a
+  // rig that simply produced a small stance everywhere; this one cannot.
+  assert(
+    sideOn.mean < shallow.mean / 4,
+    `the stance reads ${sideOn.mean.toFixed(4)} side-on against ${shallow.mean.toFixed(4)} at 30° — ` +
+      'it no longer collapses, so R60 is worth reopening',
+  )
+})
+
+check('the noise floor does not collapse with it, which is the whole problem', () => {
+  /*
+   * If the floor fell with the signal the ratio would survive and a detector
+   * would still work. It does not: jitter is a fraction of the frame and has
+   * nothing to do with where the camera stands.
+   */
+  const shallow = stanceAt(30)
+  const sideOn = stanceAt(82)
+  assert(
+    Math.abs(sideOn.sd - shallow.sd) < shallow.sd * 0.5,
+    `the floor moved from ${shallow.sd.toFixed(4)} to ${sideOn.sd.toFixed(4)} — ` +
+      'if it now tracks the signal, the ratio may be usable after all',
+  )
+})
+
+check('side-on, the stance is smaller than twice its own noise', () => {
+  // The sentence `UNDER_RESOLVED.stance_narrowing_ratio` rests on, as arithmetic.
+  const sideOn = stanceAt(82)
+  assert(
+    sideOn.mean < 2 * sideOn.sd,
+    `side-on the stance reads ${sideOn.mean.toFixed(4)} against a floor of ${sideOn.sd.toFixed(4)} — ` +
+      'that is now a signal, and the withdrawal should be revisited',
+  )
+})
+
+check('and it is genuinely readable face-on, which is why this is withdrawn rather than impossible', () => {
+  /*
+   * The half that makes this an honest withdrawal instead of a dead end. The
+   * measurement exists; the app just cannot ask for the footage it needs.
+   * `DEPTH_YAW_RANGE` accepts 18–78° because face-on loses the depth readings
+   * the rest of the report is made of, and that trade has nothing to do with
+   * feet — so a reading available only there is one the app cannot offer.
+   */
+  const shallow = stanceAt(30)
+  assert(
+    shallow.mean > 8 * shallow.sd,
+    `even at 30° the stance is only ${(shallow.mean / shallow.sd).toFixed(1)}× its noise, ` +
+      'so the withdrawal is about the measurement rather than about the camera',
+  )
+})
+
 report()

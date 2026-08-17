@@ -2131,3 +2131,54 @@ deleting a working button.
       finds this paragraph rather than leaving it stale a second time.
 
       Canaried by dropping the track from the sum: exactly one check red.
+
+- [x] **R60·2** — Refused, and the measurement is why. Nothing shipped into the
+      engine.
+
+      **The round's premise is exactly backwards.** R60 proposed reading platform
+      against pinpoint from ankle separation over time, because "the back foot
+      sliding up to the front is a large, slow, unambiguous motion along the axis
+      the camera sees best". It is large, slow and unambiguous. It is along the
+      axis a side-on camera sees **worst**: a serve stance is apart along the
+      player's own depth axis, and `axes.ts` has established since it was written
+      that at 82° image x is 99% depth and 14% lateral.
+
+      Measured on the rig, using the dial R60·1 built for it — separation at
+      `ready`, in image units, eight seeds each:
+
+          camera yaw   gap      noise    noise as a share
+             30°       0.0407   0.0030         7%
+             45°       0.0301   0.0030        10%
+             60°       0.0175   0.0030        17%
+             82°       0.0050   0.0030        59%
+
+      **The noise floor is flat and the signal walks into it.** Jitter is a
+      fraction of the frame and does not care where the camera stands. Side-on,
+      the stance is smaller than twice its own noise, and the first sweep of a
+      narrowed-to-standing ratio built on that denominator returned a mean of
+      12.0 with a deviation of 14.8 — not a weak reading, a meaningless one.
+
+      **Readable face-on, and that is not a route.** At 30–45° the signal is seven
+      to ten times its noise and a detector would work. `DEPTH_YAW_RANGE` accepts
+      18–78° precisely because face-on loses the depth readings the rest of the
+      report is made of, and that trade has nothing to do with feet. A reading
+      available only on footage the app discourages is not one it can offer.
+
+      **NOT PUT IN `UNDER_RESOLVED`, and a guard I did not write is why.** The
+      first version of this round added it there, and `depth.test.ts`'s check
+      that no floor is set below what its own repeatability asks for rejected it:
+      that register is for readings the engine *computes* and cannot grade, and
+      nothing computes this one. The check was right and the entry was a
+      mislabelling. The refusal lives here and in four checks in `axes.test.ts`
+      instead — including one asserting the signal *is* readable at 30°, so this
+      stays an honest withdrawal rather than reading as an impossibility.
+
+      **What would move it: nothing about smoothing or windows**, which is worth
+      saying because that is where a rebuild would start. The signal is not noisy,
+      it is absent — projected away by the camera position before any tracker
+      sees it. It would take a second camera, or a foot-contact model inferring
+      the stance from something other than the gap between two ankles.
+
+      **R51 loses its interpreter.** It wanted this to decide which of two correct
+      leg-drive drills applies. It will have to ship without knowing the stance,
+      or say that it cannot tell.

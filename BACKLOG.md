@@ -34,8 +34,9 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
 - [x] **A3 · R60·1** — Give the rig a stance at all: `pinpointSlide`, ramping to
       the trophy. *(Round 13 — the rig could not build a pinpoint stance, which
       blocked R60 and R64 on one sentence. Bit-identical at zero.)*
-- [ ] **A3b · R60·2** — The stance detector, swept against the new dial. A
-      context reading like serve type, never a graded fault. R51 needs it.
+- [x] **A3b · R60·2** — Refused. *(Round 20 — the stance is a depth quantity and
+      a side-on camera cannot see it: 0.0050 against a flat 0.0030 floor. The
+      round said "the axis the camera sees best"; it is the worst.)*
 - [ ] **A4 · R61** — Ball speed off the strings. `planSharedPass` in
       `detector.ts` throws; build W7 only, never W6, never in mph. Spike first.
 - [ ] **A5 · audit 8** — Windows in `phases.ts` still sized in file seconds

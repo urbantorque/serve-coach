@@ -44,6 +44,44 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 20 · Cycle A — CV/ML engine · `A3b · R60·2`
+
+**Orchestrator.** Fourth block opens on the detector round 13 built the rig for.
+Lead builder: Biomechanics & CV Specialist. Column served: *Do I believe it*.
+
+**Refused, and the measurement is the round.** R60 says the slide is "a large,
+slow, unambiguous motion along the axis the camera sees best". It is along the
+axis a side-on camera sees **worst** — the stance is a depth quantity, and this
+repo established at 82° image x is 99% depth. Side-on the separation reads 0.0050
+against a flat 0.0030 noise floor. The first ratio built on that denominator came
+back 12.0 ± 14.8: not a weak reading, a meaningless one.
+
+**Round 13 was not wasted by this.** The dial is what made the refusal
+measurable rather than arguable, and R64 still needs it for the front-ankle
+baseline. A rig capability outlives the round that asked for it.
+
+**A guard I did not write caught a mislabelling.** The first version put this in
+`UNDER_RESOLVED`, and `depth.test.ts`'s check that no floor sits below its own
+repeatability rejected it — that register is for readings the engine *computes*
+and cannot grade, and nothing computes this one. The check was right. Third time
+this session a gate I did not write has caught me, after the tally guard and the
+report vocabulary.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | One of the four checks asserts the signal **is** readable at 30°, so this reads as a withdrawal rather than an impossibility. And what would move it is named as a second camera, not smoothing — because the signal is absent rather than noisy, and smoothing is where a rebuild would otherwise start |
+| Performance | pass | Nothing shipped into the engine |
+| Privacy | pass | Nothing shipped |
+| Architecture | pass | The refusal lives in `NEXT.md`, `README.md` and four checks. Nothing was added to a register that would have mislabelled it |
+| Product | pass | R51 loses its interpreter and is told so: it will ship without knowing the stance, or say it cannot tell |
+
+**Gate.** typecheck clean · lint clean · **1090 checks passed, 0 failed, exit 0**
+(+4).
+
+---
+
 ### Round 19 — the third consolidation gate
 
 Shifted from 18 so R66 could land first, which was the right order: this gate
