@@ -37,6 +37,7 @@ import { statusOf } from '../geometry'
 import { DEFAULT_TOLERANCE, packFrames, unpackFrames, validateFixture, type Fixture } from '../groundTruth'
 import { framingIssues } from '../framingIssues'
 import { IMPLAUSIBLE_JUMP, LM, MIN_OPENING_SWEEP_DEG, maxTrackingJump, median, trunkCoil } from '../geometry'
+import { planarSpeedSeries } from '../kinematics'
 import { measure } from '../metrics'
 import {
   MIN_SERVE_GAP,
@@ -2770,6 +2771,75 @@ check('the finish keyframe holds still as a share of the serve, and drifts in se
     `the placement no longer varies in seconds at all — ${fast.sec.toFixed(3)} against ` +
       `${slow.sec.toFixed(3)} — which means the tempo dial stopped working rather than that ` +
       'the share is tracking it',
+  )
+})
+
+/* ======================= the hitch, and why it cannot be read yet (R52) ==== */
+
+/**
+ * A pause between the trophy and the drop, measured — and refused.
+ *
+ * R52 wants the hitch: the player who reaches the trophy, stops, and swings
+ * from a standstill. One of the most common club faults and one of the most
+ * visible on video, and the rhythm group cannot see it. The round proposes
+ * reading it as a trough in racket-hand planar speed, which `kinematics.ts`
+ * already produces.
+ *
+ * THE READING EXISTS. The trough is there and it is easy to take: the lowest
+ * planar speed between the trophy and the drop, over the serve's own peak, so
+ * the units and the body scale divide out.
+ *
+ * IT IS CONFOUNDED BY TEMPO, IN THE SAME DIRECTION AS THE FAULT. Swept across
+ * the rig's motion dial with no hitch posed at all, it runs 0.0795 at a 0.95 s
+ * motion down to 0.0344 at 1.85 s — **a 2.3-fold swing from tempo alone**, and
+ * a slower serve reads as a deeper trough, which is exactly what a pause would
+ * read as. So a deep trough cannot distinguish "this player stopped" from "this
+ * player serves slowly", and telling a club player they have a hitch when they
+ * are simply unhurried is the confident nonsense constraint 1 exists to stop.
+ *
+ * AND NOTHING HERE CAN SHOW OTHERWISE, WHICH IS THE OTHER HALF. The rig has no
+ * hitch dial — no way to pose a serve that pauses — so this measures the
+ * confound and cannot measure the separation. Claiming the reading fails would
+ * be as unfounded as claiming it works.
+ *
+ * That is the same wall R60 hit, and R60·1's answer is the precedent: build the
+ * dial first, as its own round. Queued as R52·1.
+ */
+check('the trough between trophy and drop moves with tempo, and no hitch is posed', () => {
+  const trough = (motionSeconds: number) => {
+    const fps = FPS
+    const frames = buildServe({ motionSeconds }, fps)
+    const skel = detectServe(frames, fps)
+    const k = skel.keys
+    const v = planarSpeedSeries(frames, LM.rightWrist, skel.bodyHeight, 2)
+    let lo = Infinity
+    for (let i = k.trophy; i <= k.drop; i++) if (Number.isFinite(v[i])) lo = Math.min(lo, v[i])
+    let peak = 0
+    for (let i = k.trophy; i <= k.contact; i++) if (Number.isFinite(v[i])) peak = Math.max(peak, v[i])
+    return peak > 0 ? lo / peak : Number.NaN
+  }
+
+  const rungs = [0.95, 1.15, 1.35, 1.6, 1.85].map((m) => ({ m, r: trough(m) }))
+  assert(rungs.every((x) => Number.isFinite(x.r)), 'the rig could not produce a trough at every tempo')
+  note(rungs.map((x) => `${x.m}s→${x.r.toFixed(4)}`).join(', '))
+
+  /*
+   * Monotonic, which is what makes it a confound rather than noise: every step
+   * slower is a deeper trough. Noise would wander.
+   */
+  for (let i = 1; i < rungs.length; i++) {
+    assert(
+      rungs[i].r < rungs[i - 1].r,
+      `the trough stopped deepening with tempo at ${rungs[i].m}s — the confound this refusal ` +
+        'rests on has changed, and R52 wants re-deciding',
+    )
+  }
+  const swing = rungs[0].r / rungs[rungs.length - 1].r
+  note(`${swing.toFixed(1)}× from tempo alone, with no hitch posed`)
+  assert(
+    swing > 1.8,
+    `tempo now moves the trough only ${swing.toFixed(1)}×, so the confound may have gone and ` +
+      'R52 is worth measuring again',
   )
 })
 

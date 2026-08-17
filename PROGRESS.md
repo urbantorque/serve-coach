@@ -43,6 +43,54 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 54 · Cycle B — biomechanics · `B5 · R52`
+
+**Orchestrator.** The hitch: reaching the trophy, stopping, and swinging from a
+standstill. One of the most common club faults and one of the most visible on
+video, and the rhythm group cannot see it. The backlog stated the round's own
+shape — sweep against `motionSeconds` first, and a refusal is a finished round.
+
+**The reading exists and is easy to take**: lowest planar speed between trophy
+and drop, over the serve's own peak, so units and body scale divide out.
+
+**It is confounded by tempo, in the fault's own direction.** Swept across the
+motion dial with **no hitch posed at all**:
+
+    0.95s → 0.0795   1.15s → 0.0613   1.35s → 0.0490   1.6s → 0.0401   1.85s → 0.0344
+
+**2.3× from tempo alone, monotonic.** A slower serve reads as a deeper trough —
+exactly what a pause would read as. Telling a club player they have a hitch when
+they are simply unhurried is the confident nonsense constraint 1 exists to stop.
+
+**And nothing here can show otherwise, which is the other half of the honest
+answer.** The rig has no hitch dial, so this measures the confound and cannot
+measure the separation. Claiming the reading fails would be as unfounded as
+claiming it works. Recorded as **unmeasured, not disproved.**
+
+**Blocked on the rig, not on the idea** — R60's wall, and R60·1's answer is the
+precedent: the rig could not pose a pinpoint stance either, and building the dial
+was its own round. Queued as `R52·1`.
+
+**A gate corrected where the refusal belongs.** I first wrote it into
+`UNDER_RESOLVED`, and the "no floor is quietly set below what its own
+repeatability asks for" check refused it: *"trophy_drop_trough_ratio is declared
+under-resolved but this ensemble resolves it"*. That register is for readings the
+engine **takes** and cannot resolve. This is one it does not take. The check
+taught me the register's contract; the entry came back out.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Both halves stated. The confound is measured; the separation is not, and the entry says which is which rather than letting a refusal imply evidence it does not have |
+| Architecture | pass | The numbers live in a check that fails in both directions — if the confound shrinks below 1.8× or stops being monotonic, R52 gets re-decided rather than staying refused by inertia |
+| Product | pass | Nothing shipped, and that is the outcome: a hitch cue on this evidence would fire on every unhurried club player |
+| Performance | pass | Five rig builds at suite time |
+
+**Gate.** typecheck clean · lint clean · **1198 checks, 0 failed, exit 0** (+1).
+
+---
+
 ### Round 53 · Cycle A — the engine · `A5b · R72`
 
 **Orchestrator.** Move the finish keyframe to a share of the serve. R44's

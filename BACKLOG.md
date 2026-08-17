@@ -90,10 +90,16 @@ Kinetic chain, trophy metrics, what the body actually did.
       World coordinates, not image y. Claims nothing about camera angle: the rig's
       invariance is a rig property, per R50c. Also fixed the chain audit printing
       a degree reading labelled `ms`.
-- [ ] **B5 · R52** — A pause between the trophy and the drop, as a trough in
-      racket-hand planar speed. Sweep against `motionSeconds` first; an
-      `UNDER_RESOLVED` entry saying it cannot be told from a slow serve is the
-      finished round.
+- [x] **B5 · R52** — **Refused, and blocked on the rig rather than on the idea.**
+      The trough reads easily — lowest planar speed between trophy and drop over
+      the serve's own peak — and it is confounded by tempo *in the fault's own
+      direction*: **0.0795 at a 0.95 s motion down to 0.0344 at 1.85 s, 2.3× with
+      no hitch posed**, monotonic. A slower serve reads as a deeper trough, so the
+      reading cannot tell "stopped" from "unhurried". And the rig cannot pose a
+      hitch, so separation is *unmeasured* rather than disproved.
+- [ ] **B5b · R52·1** — A hitch dial for the rig, so R52 can be decided either
+      way. R60·1's precedent exactly: the rig could not pose a pinpoint stance, and
+      building the dial was its own round.
 
 ## Cycle C — Pedagogical coaching and UI
 
