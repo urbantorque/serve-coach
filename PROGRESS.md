@@ -43,6 +43,45 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 37 · Cycle E — data management · `D2c · R55·2b`
+
+**Orchestrator.** Cycle E's head items are gated on a phone, so the round takes
+the item round 36 unblocked: the profile switch, offered by the hand-off
+detector. Lead builder: Release Architect. Column: *Would I trust it.*
+
+**Refused, and the mechanism is the part that fails.** `possibleHandoff` reads
+standing height as a fraction of the frame. That is a body only because the
+camera held still — the function's own doc comment has said *the same camera
+position* since it was written. Across two sessions the phone moved.
+
+**The arithmetic.** Same player, camera at six metres and then five: the body
+reads 6/5 taller, `spread / min` = 0.20, threshold 0.18. The boundary sits at
+6 / 1.18 = 5.08 m. **Ninety-two centimetres of re-propping a phone on a fence
+flags one player as two.** Fed a history it would cry hand-off on most sessions.
+
+**And round 36 made it compile.** A stored `Session` now satisfies
+`Pick<Analysis, 'scale'>[]` structurally, so `possibleHandoff(history)` would
+pass the typechecker silently. The type cannot state this contract, so two
+checks do.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Offering to move somebody's serves under another player on a signal that fires on a camera move is constraint 1 exactly. `trackPair.ts` refuses `camera_moved`/`no_scale` for this reason with a similarity transform to lean on; this has nothing |
+| Architecture | pass | The hazard is newly created and load-bearing: the guard is checks, not a comment, because the compiler stopped being able to catch it three rounds ago |
+| Product | pass | The within-clip note is untouched and still right. No profile assignment could fix what it reports — a basket with two people in it is one report holding two people's serves |
+| Performance | pass | No engine path changed |
+
+**Gate.** typecheck clean · lint clean · **1151 checks, 0 failed, exit 0** (+2).
+Canaried: both bounds moved to a camera that barely shifted, exactly the two
+intended checks went red, suite exit 1.
+
+**Left behind.** `R55·2c` — the switch as a tap, which is where R53·1 landed on
+the same question. Wants the app's first text input; size it before starting.
+
+---
+
 ### Round 36 · Cycle D — performance and architecture · `D2b · R55·2a`
 
 **Orchestrator.** Takes the decision round 30 left open, then does the migration

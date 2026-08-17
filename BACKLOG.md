@@ -125,7 +125,11 @@ Where state lives, what it costs, what it does to a warm phone.
 - [x] **D2b · R55·2a** — The migration, and the decision: the profile lives on
       the row, supplied by `saveSession`. *(Round 36 — one default, no prompt,
       and one filter rather than thirteen.)*
-- [ ] **D2c · R55·2b** — The switch, offered by `possibleHandoff`.
+- [x] **D2c · R55·2b** — Refused. `possibleHandoff` is camera-position-bound:
+      92 cm of re-propping crosses its threshold, so across sessions it flags one
+      player as two. Guarded by two checks, because R55·2a made a `Session`
+      structurally acceptable to it.
+- [ ] **D2d · R55·2c** — The switch, as a tap. Needs the app's first text input.
 - [x] **D4 · R67** — The stored byte cost of a report, re-measured against
       `footprint.test.ts` after Phase 8's new fields. A report that grew and
       nobody noticed is the failure this budget exists to catch. *(Round 4 — the

@@ -44,6 +44,26 @@ export const IMPLAUSIBLE_HEIGHT_SPREAD = 0.18
  * Exported separately from `buildConsistency` so it can be driven on its own
  * — the height reading is the whole of what it looks at, and a caller
  * checking that should not have to build seventeen fundamentals to do it.
+ *
+ * ONE CLIP ONLY. NOT A CROSS-SESSION CHECK, AND THE SIGNATURE CANNOT SAY SO.
+ * The whole reading rests on the sentence four paragraphs up — *the same
+ * camera position* — because standing height here is a fraction of the frame
+ * and nothing in this app converts that to a person. Move the phone closer and
+ * the same body reads taller by the same ratio as the distance, so the 0.18
+ * threshold is crossed by a camera move of a little under a metre on a six
+ * metre shot: 6 / 1.18 is 5.08. Nobody re-props a phone on a fence a week
+ * later to within ninety centimetres.
+ *
+ * Which makes this the wrong hook for a profile switch, and R55·2b proposed it
+ * as exactly that. Fed two sessions of one player it would report a hand-off
+ * on most of them, and offering to file somebody's serves under another player
+ * on that evidence is the confident nonsense constraint 1 exists to stop.
+ * `trackPair.ts` refuses `camera_moved` and `no_scale` for this same reason
+ * and has a similarity transform at contact to lean on; this has nothing.
+ *
+ * The parameter type is `Pick<Analysis, 'scale'>[]`, which a stored `Session`
+ * now satisfies structurally, so the compiler will not catch the mistake. The
+ * checks below are the guard.
  */
 export function possibleHandoff(analyses: readonly Pick<Analysis, 'scale'>[]): boolean {
   const heights = analyses.map((a) => a.scale?.bodyHeight).filter((h): h is number => (h ?? 0) > 1e-6)

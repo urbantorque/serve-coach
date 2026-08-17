@@ -2702,7 +2702,36 @@ deleting a working button.
 
           Six checks, canaried to two.
 
-        · **R55·2b — the switch.** Offered by `possibleHandoff`, which already
-          detects the body changing and does nothing with it, rather than a
-          settings screen nobody opens. Names join `serveTags`' store — a name is
-          a thing the player said.
+        · **R55·2b — the switch. [x] REFUSED AS WRITTEN, and the mechanism is
+          the part that fails.** Proposed offering it from `possibleHandoff`,
+          "which already detects the body changing", rather than a settings
+          screen nobody opens. It detects nothing of the sort across sessions.
+
+          Standing height there is a fraction of the frame, and the reading is
+          only a body because the camera held still — the doc comment has said
+          *the same camera position* since it was written. Across two sessions
+          the phone moved. Same player, camera six metres away and then five,
+          and the body reads a fifth taller: `spread / min` is 0.20 against a
+          threshold of 0.18. The boundary is 6 / 1.18 = 5.08 m, so **92 cm of
+          re-propping a phone on a fence flags one player as two.** Fed a
+          history it would report a hand-off on most sessions, and offering to
+          move somebody's serves to another player on that evidence is exactly
+          the confident nonsense constraint 1 exists to stop. `trackPair.ts`
+          refuses `camera_moved` and `no_scale` over this and has a similarity
+          transform at contact to lean on; this has nothing.
+
+          Worse after R55·2a than before it: a stored `Session` now satisfies
+          `Pick<Analysis, 'scale'>[]` structurally, so the compiler would accept
+          `possibleHandoff(history)` without a word. Two checks in
+          `engine.test.ts` and a contract paragraph on the function are the
+          guard, since the type cannot be one.
+
+          The within-clip note stays exactly as it is. It is right there, and no
+          profile assignment could fix what it reports anyway: a basket with two
+          people in it is one report containing two people's serves.
+
+        · **R55·2c — the switch, as a tap.** Which is what is left once the
+          measurement route is shut, and it is the same conclusion R53·1 reached
+          about which serve a serve was: no inference the app is entitled to, so
+          ask. Wants a name, so it wants the text input this app has never had —
+          size it before starting.

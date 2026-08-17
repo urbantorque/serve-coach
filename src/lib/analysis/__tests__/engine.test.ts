@@ -22,7 +22,13 @@ import {
   type SweepServe,
 } from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
-import { MIN_COMPARABLE_SERVES, buildConsistency, pairStills, splitByServeNumber } from '../consistency'
+import {
+  IMPLAUSIBLE_HEIGHT_SPREAD,
+  MIN_COMPARABLE_SERVES,
+  buildConsistency,
+  pairStills,
+  splitByServeNumber,
+} from '../consistency'
 import { Cancelled } from '../../pose/extract'
 import { diagnose } from '../diagnose'
 import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
@@ -1433,6 +1439,29 @@ check('a report with no height reading at all is not flagged by default', () => 
   })
   const c = buildConsistency(noScale, 2)!
   assert(!c.possibleHandoff, 'a basket with no height reading at all was flagged as a hand-off')
+})
+
+/*
+ * And the limit, which is a check rather than a comment because round 36 made
+ * a stored `Session` structurally satisfy this function's parameter type. The
+ * compiler will hand it a history without complaint; these say what happens.
+ */
+check('the same player with the phone moved reads as a hand-off', () => {
+  // One body, two sessions, camera six metres away and then five. Standing
+  // height is a fraction of the frame, so it scales with 6/5 — a fifth taller,
+  // from a change nobody would notice making.
+  const c = buildConsistency(withHeight([0.54, 0.54 * (6 / 5)]), 2)!
+  assert(c.possibleHandoff, 'the arithmetic this limit rests on has moved')
+})
+
+check('a camera move under a metre is enough to cross the threshold', () => {
+  // Which is the number that makes it useless across sessions: at 6/1.18 =
+  // 5.08 m the ratio is exactly the threshold, so 92 cm of re-propping does
+  // it. Asserted either side, because a limit stated to one digit and checked
+  // in one direction is a limit nobody has actually pinned down.
+  const ratio = 6 / 5.08
+  assert(ratio - 1 > IMPLAUSIBLE_HEIGHT_SPREAD, 'a 92 cm camera move no longer crosses the threshold')
+  assert(6 / 5.1 - 1 < ratio - 1, 'the boundary is not where the refusal says it is')
 })
 
 /* ------------------------------------------- the ungraded deltas ---------- */
