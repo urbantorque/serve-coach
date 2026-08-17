@@ -43,6 +43,55 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 63 · Cycle C — coaching and UI · `C5 · audit 6`
+
+**Orchestrator.** Find a copy line that has drifted over the twenty-five word cap
+since it was written. **The answer is not a line — it is a gap, with three
+defects sitting in it.**
+
+**The gap.** This repo has two copy gates and they cover different halves:
+`copy.test.ts` walks six data tables plus `everyVerdictCue()`, and
+`jsxCopy.test.ts` walks every sentence written straight into a component. Between
+them sits a third kind — **a function that assembles a sentence at runtime from
+parts**, which is in no table and in no JSX. `faultMoveLine`, `practiceHeadline`
+and `repeatabilityNote` are all that kind, all three are rendered, and none was
+ever read by an editor.
+
+**Defect one, on the first run.** *"Groove it once this is fixed."* — passive
+voice, on the practice card.
+
+**Defect two is the one the audit actually asked for, and it is worse.** The same
+sentence interpolates `r.label`, and `METRICS`'s longest label is **"Hitting the
+ball at its peak" — six words** against the two in "Racket drop". At that label
+the shipped line ran **twenty-seven words against a twenty-five cap**, and
+nothing had ever counted them. Every fixture anybody had written used a two-word
+label, so it was invisible.
+
+**Defect three came out of the canary.** Reverting to the old wording printed
+*"**Your** hitting the ball at its peak scores fine but varies most"* — the
+template assumed labels were noun phrases, and that one is a verb phrase. Not a
+sentence. The label leads now, in its own capitalisation, which reads correctly
+either way.
+
+**All three fixed. 22 words at the worst label**, and the check reads the longest
+label off `METRICS` rather than pasting one, so a longer label added later fails
+here rather than on somebody's phone.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The audit's stated target was one drifted line; what it found was the reason lines can drift unseen, and both are reported |
+| Product | pass | "Your hitting the ball at its peak scores fine" is exactly the slop the mandate forbids, and it was shipped |
+| Architecture | pass | The worst case is derived from the table, not chosen — the two-word fixture is precisely what hid this |
+| Performance | pass | Thirty-three assembled sentences at suite time |
+
+**Gate.** typecheck clean · lint clean · **1208 checks, 0 failed, exit 0** (+2).
+Canaried three ways: passive clause restored, line lengthened, possessive
+restored — each reddening the right check.
+
+---
+
 ### Round 62 · consolidation gate
 
 **Orchestrator.** Sixth cycle since `loop-green-11`. Number diff, boot, tag.

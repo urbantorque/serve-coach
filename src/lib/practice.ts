@@ -300,14 +300,48 @@ export function findPracticeFocus(
 export function repeatabilityNote(f: PracticeFocus): string {
   const r = f.repeatability
   if (!r) return ''
-  const baskets = `${r.sessions} of your baskets`
+  const baskets = `${r.sessions} baskets`
 
   if (r.same) {
     // The same measurement failing both tests. Worth saying plainly: it is the
     // strongest case this app can make for spending a session on one thing.
     return cue(`It also moves more than anything else you do, in ${baskets}. Both point the same way.`)
   }
-  return cue(`Your ${r.label.toLowerCase()} scores fine and moves more than anything else you do, in ${baskets}. Groove it once this is fixed.`)
+  /*
+   * Rewritten twice by C5's audit, and the second time is the real finding.
+   *
+   * It read "…moves more than anything else you do, in N of your baskets. Groove
+   * it once this is fixed." The passive clause was the first catch. The second
+   * was worse: **the sentence was already over the twenty-five word cap in
+   * production**, because `r.label` is interpolated and the longest real label is
+   * "Hitting the ball at its peak" — six words against the two in "Racket drop".
+   * At that label the old line ran twenty-seven words and nothing had ever
+   * counted them.
+   *
+   * Caught because nothing was reading it at all. This function assembles its
+   * sentence at runtime from parts, so it is in no table for `copy.test.ts` and
+   * in no component for `jsxCopy.test.ts`. That gap is what the audit turned up;
+   * the over-cap line is what was sitting in it.
+   *
+   * So it is shorter, active, and points at the other thing plainly rather than
+   * saying "this" — which could have meant the measurement the sentence has just
+   * been about. Checked against the longest label the app can produce, not a
+   * convenient one.
+   */
+  /*
+   * NO POSSESSIVE IN FRONT OF THE LABEL, and the canary is what showed why.
+   *
+   * It read "Your ${label} …". `METRICS` labels are not all noun phrases — the
+   * longest is "Hitting the ball at its peak" — so a player whose least steady
+   * element is that one was reading **"Your hitting the ball at its peak scores
+   * fine"**, which is not a sentence. Two words of the label made it invisible in
+   * every fixture anybody had tried.
+   *
+   * The label leads instead, in its own capitalisation, which reads correctly
+   * either way: "Racket drop scores fine…" and "Hitting the ball at its peak
+   * scores fine…".
+   */
+  return cue(`${r.label} scores fine but varies most, across ${baskets}. Groove it after you fix the one above.`)
 }
 
 /**

@@ -159,8 +159,17 @@ The translation from a number to a cue somebody can act on.
 - [x] **C0b · R69·2** — Fix the eight. *(Round 15 — nothing in a component fails
       the editor now except the seven where the lint is wrong. R24's three
       transfer methods kept: the fix was a full stop, not a deletion.)*
-- [ ] **C5 · audit 6** — A copy line that has drifted over the twenty-five word
-      cap since it was written. R28 found its own phase had drifted; it drifts.
+- [x] **C5 · audit 6** — **The answer was a gap, and two shipped defects sitting
+      in it.** Two copy gates exist and cover different halves — tables, and
+      sentences written into JSX. Between them: functions that *assemble* a
+      sentence at runtime, in no table and no component. Three of those are
+      rendered and none was linted. Driving them found (1) passive voice on the
+      practice card, and (2) the same line **twenty-seven words against a 25 cap**
+      whenever `r.label` is the six-word "Hitting the ball at its peak" — invisible
+      to every fixture, which all used two-word labels. The canary then found (3)
+      "**Your** hitting the ball at its peak scores fine", which is not a sentence.
+      All three fixed; the check now drives the longest label `METRICS` holds,
+      read off the table rather than pasted.
 
 ## Cycle D — Performance and architecture
 

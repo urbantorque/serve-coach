@@ -37,6 +37,8 @@ import {
   tripStreak,
 } from '../progress'
 import { strainGlanceLine, strainLine } from '../analysis/verdict'
+import { practiceHeadline, repeatabilityNote, type PracticeFocus } from '../practice'
+import { METRICS } from '../analysis/coaching'
 import { cueIssues, wordCount } from '../analysis/voice'
 import type { InjuryFlag } from '../analysis/triage'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
@@ -781,6 +783,110 @@ check('a full history walks in a small fraction of a frame', () => {
   const growth = per / Math.max(perQuarter, 1e-6)
   note(`${growth.toFixed(1)}× the cost for 4× the reports`)
   assert(growth < 8, `60 reports cost ${growth.toFixed(1)}× what 15 do, which is worse than linear`)
+})
+
+/* ============ the sentences no editor was reading (C5 · audit 6) =========== */
+
+/**
+ * Three producers of player-facing prose that nothing lints.
+ *
+ * THE AUDIT ASKED FOR A LINE THAT HAS DRIFTED OVER THE CAP SINCE IT WAS WRITTEN.
+ * The answer is not a line — it is a gap. This repo has two copy gates and they
+ * cover different halves: `copy.test.ts` walks six data tables plus
+ * `everyVerdictCue()`, and `jsxCopy.test.ts` walks every sentence written
+ * straight into a component. Between them sits a third kind: a function that
+ * *assembles* a sentence at runtime from parts, which is in no table and in no
+ * JSX.
+ *
+ * `faultMoveLine`, `practiceHeadline` and `repeatabilityNote` are all that kind,
+ * and all three are rendered — the first on the glance between serves, the other
+ * two on the practice card. `engine.test.ts` lints the framing errors and the
+ * refusals the same way; these were simply never reached.
+ *
+ * So the audit's finding is the gap, and this is the gate for it: every branch
+ * of all three, driven and read by the same editor everything else answers to.
+ */
+heading('Sentences assembled at runtime, which no gate was reading')
+
+const focusFor = (over: Partial<PracticeFocus>): PracticeFocus =>
+  ({
+    metricId: 'dropDepth',
+    label: 'Racket drop',
+    fundamentalId: 'swing',
+    fundamentalLabel: 'Swing',
+    drill: { name: 'Let the racket fall', how: 'Swing slowly.', reps: '20 serves' },
+    scores: [50, 55, 60],
+    average: 55,
+    timesWeakest: 3,
+    sessionsConsidered: 3,
+    verdict: 'improving',
+    serveType: 'flat',
+    ...over,
+  }) as unknown as PracticeFocus
+
+check('every practice headline answers to the editor', () => {
+  const lines: string[] = []
+  for (const verdict of ['improving', 'stuck', 'slipping'] as const) {
+    for (const sessionsConsidered of [2, 3, 5]) {
+      for (const serveType of ['flat', 'slice', 'kick'] as const) {
+        lines.push(practiceHeadline(focusFor({ verdict, sessionsConsidered, serveType })))
+      }
+    }
+  }
+  assert(lines.length === 27, `built ${lines.length} headlines, expected 27`)
+  for (const line of lines) {
+    const issues = cueIssues(line)
+    assert(issues.length === 0, `"${line}" fails the editor: ${issues.join('; ')}`)
+    assert(wordCount(line) <= 25, `"${line}" is ${wordCount(line)} words, over the cap`)
+  }
+  note(`${lines.length} headlines, longest ${Math.max(...lines.map(wordCount))} words`)
+})
+
+check('every repeatability note answers to the editor', () => {
+  const lines: string[] = []
+  /*
+   * DRIVEN WITH THE LONGEST LABEL THE APP CAN PRODUCE, not a convenient one, and
+   * that is the half that found the real defect. With "Racket drop" — two words —
+   * the sentence fitted and the check passed. `METRICS` also contains "Hitting
+   * the ball at its peak", which is six, and `r.label` is interpolated straight
+   * in: **the shipped line ran twenty-seven words against a twenty-five cap and
+   * nothing had ever counted it.**
+   *
+   * Read off `METRICS` rather than pasted, so a label added longer than this one
+   * fails here rather than on somebody's phone.
+   */
+  const labels = Object.values(METRICS).map((m) => m.label)
+  const longest = labels.reduce((a, b) => (wordCount(b) > wordCount(a) ? b : a))
+  note(`longest metric label: "${longest}" (${wordCount(longest)} words) of ${labels.length}`)
+  for (const same of [true, false]) {
+    for (const sessions of [2, 3, 4]) {
+      const line = repeatabilityNote(
+        focusFor({ repeatability: { id: 'x', label: longest, sessions, same } }),
+      )
+      if (line) lines.push(line)
+    }
+  }
+  assert(lines.length > 0, 'no repeatability note was produced, so this checks nothing')
+  for (const line of lines) {
+    const issues = cueIssues(line)
+    assert(issues.length === 0, `"${line}" fails the editor: ${issues.join('; ')}`)
+    assert(wordCount(line) <= 25, `"${line}" is ${wordCount(line)} words, over the cap`)
+  }
+  /*
+   * And no possessive in front of the label, which the canary exposed. `METRICS`
+   * labels are not all noun phrases — "Hitting the ball at its peak" is a verb
+   * phrase — so "Your ${label} scores fine" produced "Your hitting the ball at
+   * its peak scores fine", which is not a sentence. Two-word fixtures hid it.
+   */
+  for (const line of lines) {
+    assert(
+      !/\bYour \w+ing\b/i.test(line),
+      `"${line}" puts a possessive in front of a verb phrase`,
+    )
+  }
+  // And the empty case is empty rather than a sentence about nothing.
+  assert(repeatabilityNote(focusFor({})) === '', 'a focus with no repeatability produced a note')
+  note(`${lines.length} notes, longest ${Math.max(...lines.map(wordCount))} words`)
 })
 
 report()
