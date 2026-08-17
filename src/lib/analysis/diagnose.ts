@@ -448,7 +448,7 @@ const DEPTH_DOMINATES = 1.3
  * averaging one link's peak into its neighbour's, which is the one failure that
  * would make the chain look *more* ordered than it is.
  */
-const CHAIN_WINDOW_SECONDS = 0.09
+export const CHAIN_WINDOW_SECONDS = 0.09
 
 /**
  * The smoothing window the TRUNK PAIR is measured through, as a radius in

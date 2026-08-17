@@ -43,6 +43,64 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 69 · Cycle B — biomechanics · `B5c · R52·2`
+
+**Orchestrator.** Build the hitch reading, unblocked by round 61. Lead builder:
+Biomechanist. Column: *Would I trust it.*
+
+**Built, measured, reverted — and round 61's own figure was the error.**
+
+R52·1 measured a posed 0.15 s hitch reading **28–34× smaller** than a flowing
+serve and concluded the reading was worth building. **That figure was measured at
+a smoothing radius the engine does not use.** The checks build the trough off
+`planarSpeedSeries(..., 2)`; the chain pass builds its wrist series at
+`sampleRadius(t, CHAIN_WINDOW_SECONDS)`, which is wider — and a wider window
+fills a trough in.
+
+**At the engine's own radius:**
+
+    motion    flowing   hitch 0.15s   hitch 0.3s
+    0.95s      0.208      0.139         0.015
+    1.35s      0.126      0.076         0.001
+    1.85s      0.075      0.048         0.001
+
+**A 0.15 s hitch separates 1.7×. Tempo alone spans 2.8×. The confound is larger
+than the signal** — the opposite of what round 61 concluded. Only a gross 0.3 s
+pause separates, at 120×, and somebody who stops for a third of a second is not
+the case this feature was for.
+
+**Caught by a canary that did not fire.** The round published `trophyTrough` on
+`Diagnosis`, and scaling it by a third reddened **nothing** — because every
+existing check computes its own trough and never reads the shipped one. That is
+round 52's finding a third time, on a reading I had just added. The check
+comparing the two showed the engine publishing **0.126** where the suite measured
+**0.049**, and that disagreement is the whole finding.
+
+**Nothing published.** R52 goes back to refused — this time on a measurement
+rather than a missing dial. `R52·3` is named with the reason: if the hitch is
+worth having it needs its own series at its own radius, **and that radius needs
+deriving rather than borrowing**, because borrowing one is exactly what failed.
+
+**Two defects fixed on the way out.** The chain audit was printing the new ratio
+as `deviation 0.0, range 0` — a rule about a *kind* of reading written as a rule
+about one id, which is the same defect round 47 fixed for units and left for
+precision. Both now come off the id's suffix. And the check now derives the
+radius from `CHAIN_WINDOW_SECONDS` itself rather than replicating the formula —
+the drift that produced this finding.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The round's own predecessor was wrong and this says so with the arithmetic. Shipping on 28–34× would have put a hitch cue on every unhurried club player |
+| Architecture | pass | The check reads the engine's constant rather than copying its formula, because copying it is what went wrong |
+| Product | pass | Nothing shipped, which is the outcome — a reading whose confound exceeds its signal cannot carry a cue |
+| Performance | pass | The reverted reading cost one array walk; the revert costs nothing |
+
+**Gate.** typecheck clean · lint clean · **1218 checks, 0 failed, exit 0** (+1).
+
+---
+
 ### Round 68 · consolidation gate
 
 **Orchestrator.** Sixth cycle since `loop-green-12`. Number diff, boot, tag.

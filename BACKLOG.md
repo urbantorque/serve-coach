@@ -126,9 +126,23 @@ Kinetic chain, trophy metrics, what the body actually did.
       flowing serve at the same tempo, against a 2.3× tempo confound. Caveat that
       travels with it — the rig's hitch is a *perfect* freeze, so this is the best
       case, not the expected one. A threshold still wants footage.
-- [ ] **B5c · R52·2** — Build the hitch reading. Unblocked by R52·1, and the
-      separation is an order of magnitude clear of the confound. The threshold is
-      the open question and it is not settable from a posed freeze.
+- [x] **B5c · R52·2** — **Built, measured, and reverted. R52·1's separation was
+      an artifact of the wrong smoothing radius.** That round measured 28–34× using
+      `planarSpeedSeries(..., 2)`; the engine builds its wrist series at
+      `sampleRadius(t, CHAIN_WINDOW_SECONDS)`, which is wider, and a wider window
+      fills a trough in. At the engine's own radius a 0.15 s hitch separates
+      **1.7×** against a **2.8×** tempo confound — **the confound is larger than
+      the signal.** Only a gross 0.3 s pause separates (120×), and somebody who
+      stops for a third of a second is not the case this was for. Nothing
+      published.
+
+      **Caught by a canary that did not fire**: scaling the published reading by a
+      third reddened nothing, because every existing check computed its own
+      trough. The check comparing the two found the engine publishing 0.126 where
+      the suite measured 0.049.
+- [ ] **B5d · R52·3** — If the hitch is worth having, it needs its own series at
+      its own radius — and that radius needs deriving, not borrowing. The reason
+      R52·2 failed is that it borrowed one.
 
 ## Cycle C — Pedagogical coaching and UI
 

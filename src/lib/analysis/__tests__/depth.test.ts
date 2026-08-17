@@ -476,7 +476,21 @@ check('the chain read from the picture plane holds still where the one read from
     // The ratio is dimensionless and every other row here is milliseconds. It
     // printed as "0.0 ms, range 0" under this format, which reads as a quantity
     // that does not move rather than as one measured in the wrong unit.
-    if (d.id === 'chain_span_ratio') {
+    /*
+     * ANY ratio, not just this one, and it was hard-coded to this one.
+     *
+     * R51·2 fixed the *unit* on this table — a degree reading was printing as
+     * "5.9 ms" — and left the *precision* keyed to a single id. So when
+     * `trophy_drop_trough_ratio` arrived it printed "deviation 0.0, range 0",
+     * which reads as a quantity that never moves. Its real deviation is 0.0273,
+     * against values around 0.03–0.08. The same defect twice, in the same table,
+     * for the same reason: a rule about a *kind* of reading written as a rule
+     * about one reading.
+     *
+     * Both now come off the id's own suffix, which every reading in this bag
+     * already carries.
+     */
+    if (d.id.endsWith('_ratio')) {
       note(
         `  ${d.id.padEnd(17)} image x,y   deviation ${d.sd.toFixed(4)}      ` +
           `range ${d.range.toFixed(4)}   n=${d.n}   (dimensionless)`,

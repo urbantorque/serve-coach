@@ -26,7 +26,7 @@ import {
   softnessReason,
   type ConfidenceContext,
 } from '../confidence'
-import { diagnose } from '../diagnose'
+import { CHAIN_WINDOW_SECONDS, diagnose } from '../diagnose'
 import { assessResilience, rejectionFor, LIMITS } from '../triage'
 import { cueIssues } from '../voice'
 import { cacheSize, forgetAll, recall, remember } from '../../analysisCache'
@@ -37,7 +37,7 @@ import { statusOf } from '../geometry'
 import { DEFAULT_TOLERANCE, packFrames, unpackFrames, validateFixture, type Fixture } from '../groundTruth'
 import { framingIssues } from '../framingIssues'
 import { IMPLAUSIBLE_JUMP, LM, MIN_OPENING_SWEEP_DEG, maxTrackingJump, median, trunkCoil } from '../geometry'
-import { planarSpeedSeries } from '../kinematics'
+import { planarSpeedSeries, sampleRadius, timeline } from '../kinematics'
 import { measure } from '../metrics'
 import {
   MIN_SERVE_GAP,
@@ -2827,6 +2827,72 @@ check('the finish keyframe holds still as a share of the serve, and drifts in se
  * best case, not the expected one**, and it says the reading is worth building
  * rather than that a threshold can be set from here. A threshold wants footage.
  */
+/**
+ * THE SEPARATION IS SMALLER THAN THE CONFOUND AT THE SMOOTHING THE ENGINE USES,
+ * AND R52·2 IS REFUSED ON THAT.
+ *
+ * R52·1 measured a posed 0.15 s hitch reading 28–34× smaller than a flowing
+ * serve and concluded the reading was worth building. **That figure was measured
+ * at a smoothing radius the engine does not use.** These checks build the trough
+ * off `planarSpeedSeries(..., 2)`; the chain pass builds its wrist series at
+ * `chainRadius`, which is wider, and a wider window fills a trough in.
+ *
+ * Caught by a canary that did not fire. R52·2 published the reading on
+ * `Diagnosis`, and scaling it by a third reddened nothing — because every check
+ * here computes its own. The check comparing the two showed the engine
+ * publishing 0.126 where this measures 0.049, and that disagreement is the
+ * finding.
+ *
+ * At the engine's own radius:
+ *
+ *     motion    flowing   hitch 0.15s   hitch 0.3s
+ *     0.95s      0.208      0.139         0.015
+ *     1.35s      0.126      0.076         0.001
+ *     1.85s      0.075      0.048         0.001
+ *
+ * **A 0.15 s hitch separates 1.5–1.7×. Tempo alone spans 2.8×.** The confound is
+ * larger than the signal — the opposite of what R52·1 concluded, and the reason
+ * nothing shipped. Only a gross 0.3 s pause separates, and somebody who stops for
+ * a third of a second is not the case this was for.
+ *
+ * So the reading is not published. R52 goes back to refused, on a measurement
+ * this time rather than on a missing dial, and the successor is named: if it is
+ * worth having it needs its own series at its own radius, and that radius needs
+ * deriving rather than borrowing.
+ */
+check('the trough at the engine own smoothing does not separate a moderate hitch', () => {
+  const published = (motionSeconds: number, trophyHitchSeconds: number) => {
+    const frames = buildServe({ motionSeconds, trophyHitchSeconds }, FPS)
+    const skel = detectServe(frames, FPS)
+    const k = skel.keys
+    // The chain pass's own radius, computed the way `diagnose.ts` computes it,
+    // so this cannot drift from the engine — the drift is what produced this
+    // finding in the first place.
+    const v = planarSpeedSeries(frames, LM.rightWrist, skel.bodyHeight, sampleRadius(timeline(frames), CHAIN_WINDOW_SECONDS))
+    let lo = Number.POSITIVE_INFINITY
+    for (let i = k.trophy; i <= k.drop; i++) if (Number.isFinite(v[i])) lo = Math.min(lo, v[i])
+    let peak = 0
+    for (let i = k.trophy; i <= k.contact; i++) if (Number.isFinite(v[i])) peak = Math.max(peak, v[i])
+    return peak > 0 ? lo / peak : Number.NaN
+  }
+
+  const flowMid = published(1.35, 0)
+  const tempo = published(0.95, 0) / published(1.85, 0)
+  const separation = flowMid / published(1.35, 0.15)
+  note('tempo spans ' + tempo.toFixed(1) + 'x, a 0.15s hitch separates ' + separation.toFixed(1) + 'x')
+
+  assert(
+    separation < tempo,
+    'the hitch now separates ' + separation.toFixed(1) + 'x against a ' + tempo.toFixed(1) +
+      'x tempo confound, so it clears its confounder and R52 wants building rather than refusing',
+  )
+  // And the gross case, which does separate — stated so the refusal is about the
+  // common hitch rather than about every hitch.
+  const gross = flowMid / published(1.35, 0.3)
+  note('a 0.3s pause separates ' + gross.toFixed(0) + 'x')
+  assert(gross > 20, 'even a 0.3s pause only separates ' + gross.toFixed(1) + 'x')
+})
+
 check('a posed hitch separates from tempo by an order of magnitude', () => {
   const trough = (motionSeconds: number, trophyHitchSeconds: number) => {
     const fps = FPS
