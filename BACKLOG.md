@@ -68,8 +68,10 @@ Kinetic chain, trophy metrics, what the body actually did.
 - [x] **B2 · R50b** — Did the racket lay back further than your last serve, on
       the glance. *(Round 21 — floor of 16.7°, and the round's own estimate of
       "about 15°" was right, unlike its two siblings.)*
-- [ ] **B3 · R50c** — A trunk-sequence delta between two serves filmed from one
-      spot. Needs A2's answer for its same-spot refusal.
+- [x] **B3 · R50c** — Refused. The trunk lead is exactly invariant to camera yaw
+      (58.199 ms at 4° and at 75°), so a same-spot gate buys nothing at any
+      tightness. The real floor is a delta noise of 74 ms against a 76 ms noise
+      floor — 97% of it, before the two serves have differed by anything.
 - [x] **B4 · R51·1** — Leg drive measured rather than timed: hip-centre rise in
       body heights. *(Round 28 — tracks its dial near 1:1, identical at 45° and
       82°. Ships into `UNCALIBRATED`.)*

@@ -1250,6 +1250,97 @@ check('the two depth readings are marked soft when the camera cannot see depth',
   )
 })
 
+/* ============================== how tight a same-spot gate has to be (R50c) = */
+
+/**
+ * R50c wants a trunk-sequence delta between two serves filmed from one spot,
+ * and it has been blocked on one number: how tight "one spot" has to be.
+ * `NEXT.md` answers with "cycle 105's 315 ms branch jump between 50° and 55°",
+ * a figure that appears nowhere in this tree and cannot be re-run — the defect
+ * `repeatability.ts`' own header names. So it got measured, and the measurement
+ * says the question does not apply.
+ *
+ * `hip_lead_ms` IS EXACTLY INVARIANT TO CAMERA YAW. Not approximately: 58.199 ms
+ * at 4° and 58.199 at 75°, every seed, every angle between. It is the difference
+ * of two peak times read from world landmarks, and the rig builds those from the
+ * serve rather than from the lens — world coordinates do not rotate when the
+ * camera does, which is what makes them world coordinates.
+ *
+ * The dial is not being dropped. `cameraYaw: 4` moves the depth confidences in
+ * the check above from usable to soft, on the same realisations. It reaches
+ * everything projected. It cannot reach this, because this never looks.
+ *
+ * SO A SAME-SPOT GATE ON THE TRUNK LEAD BUYS NOTHING AT ANY TIGHTNESS, and
+ * R50c's stated premise — that the trunk lead has "an absolute belonging to the
+ * camera and a change that does not" — is false for the quantity the engine
+ * actually computes. What is true of it instead is worse and already recorded:
+ * `UNDER_RESOLVED.hip_lead_ms` puts the seed deviation at about 50 ms against a
+ * 76 ms floor, and this ensemble reads 52. A delta between two serves inherits
+ * both spreads, so it starts at roughly 74 ms of noise before the camera is
+ * mentioned. That, not the camera position, is what R50c has to answer.
+ *
+ * Pinned rather than written down, because "invariant" is a claim that decays
+ * silently: the day someone rebuilds the trunk peaks out of projected width —
+ * which is what R50c proposes — this check goes red and says so, which is
+ * exactly when somebody needs to be told.
+ */
+const SPOT_YAWS = [4, 45, 50, 55, 60, 75] as const
+/** Twelve rather than twenty-four: six yaws of a full ensemble is the budget. */
+const SPOT_SEEDS = SEEDS.slice(0, 12)
+
+check('the trunk lead does not move when the camera does, so a spot gate buys nothing', () => {
+  const rows = SPOT_YAWS.map((yaw) => {
+    const reads = realise({ cameraYaw: yaw }, 5, SPOT_SEEDS)
+      .map((r) => r.signals.hip_lead_ms)
+      .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+    const mean = reads.reduce((a, b) => a + b, 0) / (reads.length || 1)
+    const sd = Math.sqrt(reads.reduce((a, b) => a + (b - mean) ** 2, 0) / (reads.length || 1))
+    return { yaw, mean, sd, n: reads.length }
+  })
+  assert(
+    rows.every((r) => r.n === SPOT_SEEDS.length),
+    'the rig lost clips at some yaws, so the rows below are not comparable',
+  )
+  note(rows.map((r) => `${r.yaw}°: ${r.mean.toFixed(3)}`).join(', '))
+
+  const spread = Math.max(...rows.map((r) => r.mean)) - Math.min(...rows.map((r) => r.mean))
+  assert(
+    spread < 1e-9,
+    `the trunk lead moved ${spread.toFixed(3)} ms across camera yaw — it is read from world ` +
+      'landmarks, which do not rotate with the lens, so any movement here is a defect and not a sensitivity',
+  )
+
+  /*
+   * And the number R50c actually has to clear, stated on the same run so it
+   * cannot be transcribed and left to age. Two serves differenced carry both
+   * spreads, hence the quadrature.
+   */
+  const sd = rows[0].sd
+  const deltaNoise = Math.SQRT2 * sd
+  note(
+    `spot gate: irrelevant. The floor that matters is a delta noise of ${deltaNoise.toFixed(0)} ms, ` +
+      `from a per-serve spread of ${sd.toFixed(0)}, against a ${NOISE_FLOOR.hip_lead_ms} ms noise ` +
+      `floor — ${((deltaNoise / NOISE_FLOOR.hip_lead_ms) * 100).toFixed(0)}% of it`,
+  )
+  /*
+   * 74 against 76 is not a pass. The floor is what one serve's reading has to
+   * clear to be worth grading, and a delta arrives carrying 97% of it before
+   * the two serves have differed by anything at all. `NOISE_FLOOR`'s own rule
+   * is one and a half deviations; this is one and a half deviations of noise
+   * with no room left for a signal.
+   *
+   * Asserted as a band rather than a direction so it reddens both ways: if the
+   * trunk pair gets quieter this stops holding and R50c unblocks, which is
+   * news, and if it gets noisier the margin recorded here is stale.
+   */
+  assert(
+    deltaNoise > NOISE_FLOOR.hip_lead_ms * 0.8 && deltaNoise < NOISE_FLOOR.hip_lead_ms * 1.2,
+    `a trunk-lead delta carries ${deltaNoise.toFixed(0)} ms of noise against a ` +
+      `${NOISE_FLOOR.hip_lead_ms} ms floor — that ratio has moved, so R50c and this refusal ` +
+      'both want re-deriving',
+  )
+})
+
 /* ================================================== what is still missing == */
 
 const underResolved = floorVerdicts(deep.reads).filter((v) => v.underResolved)

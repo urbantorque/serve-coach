@@ -43,6 +43,56 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 40 · Cycle B — biomechanics · `B3 · R50c`
+
+**Orchestrator.** R50c has been blocked for the whole loop on one number: how
+tight "filmed from the same spot" has to be. Lead builder: Biomechanist.
+Column: *Would I trust it.*
+
+**The blocker was a figure nobody can re-run.** `NEXT.md` cites "cycle 105's
+315 ms branch jump between 50° and 55°". It appears nowhere in the tree — the
+exact defect `repeatability.ts`' own header names, a recorded number wearing a
+derivation's clothes. So the round measured it.
+
+**And the question does not apply.** `hip_lead_ms` is *exactly* invariant to
+camera yaw: **58.199 ms at 4° and 58.199 at 75°**, twelve seeds, every angle
+between. It is the difference of two peak times read from world landmarks, and
+world coordinates do not rotate when the camera does.
+
+**The dial is not being dropped**, which is the check that made this believable
+rather than suspicious: `cameraYaw: 4` moves the depth confidences from usable
+to soft on the same realisations, in the check immediately above. It reaches
+everything projected. It cannot reach this, because this never looks.
+
+**So the round's premise is false.** R50c says the trunk lead "has an absolute
+belonging to the camera and a change that does not". For the quantity the engine
+actually computes, neither half is about the camera at all.
+
+**What blocks it is worse, and was already on file.** A delta carries both
+serves' spreads — 52 ms each here, 74 ms in quadrature — against a 76 ms
+`NOISE_FLOOR` entry. **97% of the floor before the two serves have differed by
+anything.** One and a half deviations of noise with no room for a signal. R50c
+is a resolution problem, not a same-spot problem.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | A delta whose noise is 97% of the floor would have produced a sentence about the player's sequencing that was almost entirely about the tracker. That is constraint 1 |
+| Architecture | pass | Pinned, not written down — "invariant" decays silently, and the day someone rebuilds the trunk peaks out of projected width this goes red and says why |
+| Performance | pass | Six yaws × twelve seeds; the existing ensemble, no new rig |
+| Product | pass | Nothing shipped, and that is the outcome. A same-spot refusal would have been a refusal spent on something the measurement cannot see |
+
+**Gate.** typecheck clean · lint clean · **1158 checks, 0 failed, exit 0** (+1).
+Canaried twice — 5 ms injected into one yaw's mean, and the quadrature widened
+to 2× — both landing on exactly this check and nothing else.
+
+**Departure.** The assertion is a band (0.8–1.2 × floor) rather than a
+direction, so it reddens in both directions: quieter unblocks R50c and is news;
+noisier makes the recorded margin stale.
+
+---
+
 ### Round 39 · Cycle A — the engine · `A4b · R61·2`
 
 **Orchestrator.** `planSharedPass` has thrown by design since the contract was

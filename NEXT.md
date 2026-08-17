@@ -1437,13 +1437,38 @@ family, different surface, different refusals.
       `ER_LEAN_SENSITIVITY` says the change is mostly posture. **The floor is
       about 15°, so it will refuse most comparisons.** That is the truth about
       what a phone can see, not a failure, and it must not be softened.
-- [ ] **R50c** — A trunk-sequence delta between two serves filmed from one spot.
-      The backlog's `trunk-lead-delta-same-spot`. The width-derived trunk lead has
-      an absolute belonging to the camera and a change that does not: 178–204 ms
-      of separation at every yaw from 40° up against a dialled 190, deviation
-      25–31 ms against the incumbent 40–54. Same `carryForward` shape, with one
-      refusal that has no precedent yet — the two clips must have been filmed from
-      the same spot, which is R49b's question and tighter here than the ghost's 5°.
+- [x] **R50c** — REFUSED, and the blocker turned out not to be the blocker.
+      Was: a trunk-sequence delta between two serves filmed from one spot.
+      The backlog's `trunk-lead-delta-same-spot`, with one refusal that had no
+      precedent: the two clips must have been filmed from the same spot, tighter
+      than the ghost's 5°, "and cycle 105's 315 ms branch jump between 50° and
+      55° is the reason".
+
+      **That figure appears nowhere in this tree and cannot be re-run**, which is
+      the defect `repeatability.ts`' own header names. Measured instead, and the
+      question does not apply: `hip_lead_ms` is **exactly** invariant to camera
+      yaw — 58.199 ms at 4° and 58.199 at 75°, twelve seeds, every angle between.
+      It is the difference of two peak times read from world landmarks, and world
+      coordinates do not rotate when the camera does.
+
+      The dial is not being dropped: `cameraYaw: 4` moves the depth confidences
+      from usable to soft on the same realisations, in the check above this one.
+      It reaches everything projected. It cannot reach this, because this never
+      looks. **So a same-spot gate buys nothing at any tightness**, and the
+      round's stated premise — an absolute belonging to the camera and a change
+      that does not — is false for the quantity the engine computes.
+
+      **What blocks it is worse and was already on file.** A delta carries both
+      serves' spreads: 52 ms each here, so 74 ms in quadrature, against a 76 ms
+      `NOISE_FLOOR` entry. **97% of the floor before the two serves have differed
+      by anything at all** — one and a half deviations of noise with no room left
+      for a signal. R50c is not a same-spot problem; it is a resolution problem,
+      and the trunk pair has to get quieter before any of it is worth building.
+
+      Pinned rather than written down, and asserted as a band so it reddens both
+      ways: quieter unblocks R50c and is news, noisier makes this margin stale.
+      The day someone rebuilds the trunk peaks out of projected width — which is
+      what this round proposed — the invariance check goes red and says so.
 - [ ] **R51** — Leg drive, measured rather than timed.
       `UNCALIBRATED.legs_peak_ms` says it in its own words: it "times the leg
       drive without measuring it — the same peak whether the player drives or
