@@ -1,3 +1,4 @@
+| `analysis/framingIssues.ts` | is this clip framed well enough to measure, and the thresholds that decide — split out of `groundTruth.ts` so the fixture schema is not weight on every first paint |
 # Serve Coach
 
 Frame-by-frame tennis serve analysis that runs entirely on your device.

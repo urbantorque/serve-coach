@@ -7,7 +7,7 @@ import {
   scanForServes,
   type ExtractProgress,
 } from '../pose/extract'
-import { framingIssues } from './groundTruth'
+import { framingIssues } from './framingIssues'
 import type { ServeType } from '../storage/prefs'
 import {
   findCandidates,

@@ -1549,25 +1549,38 @@ family, different surface, different refusals.
       entry saying so, plus a hand-maintained list of the files whose JSX copy is
       linted, which is worth more than nothing and less than a scan.
 
-- [ ] **R68** — Take the validator half of `groundTruth.ts` back out of the entry
-      chunk. R59·1 measured it in: 6.41 kB raw, 2.31 kB gzip, carried by every
-      player to serve a path behind `?fixture`. The shape is a split —
-      `framingIssues` is what the running app needs and `packFrames`,
-      `validateFixtureSchema` and `labelProblem` are what only the fixture tools
-      need — and the measurement to beat is `415.28 kB / 139.53 gzip` against a
-      pre-R59 `408.87 / 137.22`. **What it may not do:** move `framingIssues`,
-      which `analyze.ts` calls on every clip and `judge.ts` on every preview
-      frame. The saving is in what leaves, not in what moves. **Unblocks the two items this file
-      has been stuck on since R25**, and with them `groundTruth.ts`, hip–shoulder
-      separation, shoulder tilt, `UNDER_RESOLVED.pronation_deg` and
-      `chain_span_ratio`. `RECORDED` is empty, 0 of `MINIMUM_RECORDED = 6`;
-      `dev/exportFixture.ts` exists but lives behind a dev build; the six clips
-      are listed in `fixtures/README.md` and every one is a normal serve filmed
-      normally, bar a left-hander and one clip with the feet deliberately
-      cropped. Make the export a first-class path with the checklist attached, so
-      whoever holds the phone produces the set in one session without reading the
-      repo. **Does not break the egress rule** — the player saves a file and
-      decides what to do with it, exactly as the share card works.
+- [x] **R68** — Paid, five rounds after it was incurred, and measured at both
+      ends.
+
+      **Split the other way round from the obvious one.** The tempting move is to
+      pull `framingIssues` out, since it is the one thing the running app needs
+      from an eight-hundred-line fixture module. Its own doc comment argues
+      against exactly that: it sits beside the fixture machinery so that whatever
+      real footage that suite grows covers it, rather than becoming a separate
+      heuristic nobody validates. That argument still stands — and it survives
+      the split, because coverage follows imports rather than file boundaries,
+      and `robustness.test.ts` and `judge.test.ts` import it exactly as before.
+
+      So the *framing* half moved and `groundTruth.ts` kept its name and its
+      subject: `analysis/framingIssues.ts` is the check plus its four thresholds,
+      124 lines; `groundTruth.ts` is the fixture schema, 802. The running app
+      imports the first, the fixture tools import the second, and neither pulls
+      the other.
+
+          before R59·1   index 408.87 kB (137.22 gzip), no fixture chunk
+          after  R59·1   index 415.28 kB (139.53 gzip) + 2.86 kB on demand
+          after  R68     index 410.07 kB (137.60 gzip) + 8.55 kB on demand
+
+      **5.21 kB raw and 1.93 kB gzip off the critical path**, and the validator
+      half is now in the chunk that actually uses it — which is why that chunk
+      tripled. Residual against the pre-R59 baseline: **1.20 kB raw, 0.38 kB
+      gzip**, down from 2.31, and it is the button, the note and the dynamic
+      import's own plumbing. That is the honest price of the fixture path being
+      reachable from a phone, and it is now small enough to stop arguing about.
+
+      No test lost or gained — 1063 both sides — which is the check that the
+      split moved code and not behaviour.
+
 - [ ] **R53** — First serve against second serve. The app knows flat, kick and
       slice; it does not know first from second, and for a club player the gap
       between the two is usually a bigger problem than either — a second serve is

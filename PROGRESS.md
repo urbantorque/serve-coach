@@ -44,6 +44,53 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 10 · Cycle D — performance and architecture · `D0 · R68`
+
+**Orchestrator.** Debt round 5 incurred and priced, paid in the very next D
+cycle. A refactor, so it gets its own cycle with its own green tree —
+`LOOP.md`'s rule, and the reason this was not folded into round 5. Lead builder:
+Release Architect. Column served: *Does it work on my clip at all* — first paint
+is the first thing anybody experiences.
+
+**Split the opposite way to the obvious one, and the code said why.** The
+tempting move is to pull `framingIssues` out, since it is the one thing the
+running app needs from an 800-line fixture module. Its own doc comment argues
+against exactly that: it lives beside the fixture machinery so whatever real
+footage that suite grows covers it. Reading that before cutting is what changed
+the plan — the *framing* half moved instead, and `groundTruth.ts` kept both its
+name and its subject. The doc's argument survives intact, because coverage
+follows imports rather than file boundaries, and both suites that exercise it
+import it exactly as before.
+
+**Measured at both ends, which is the only reason this is a round rather than
+tidying.**
+
+| | entry raw | entry gzip | fixture chunk |
+| --- | --- | --- | --- |
+| before R59·1 | 408.87 kB | 137.22 kB | none |
+| after R59·1 | 415.28 | 139.53 | 2.86 kB |
+| after R68 | **410.07** | **137.60** | **8.55 kB** |
+
+The lazy chunk tripled, which is the point: the validator half now lives where it
+is used. Residual against the pre-R59 baseline is **1.20 kB raw, 0.38 kB gzip**,
+down from 2.31 — the button, the note, and the dynamic import's own plumbing.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Both figures measured by building, before and after. The residual is stated rather than rounded to nothing |
+| Performance | pass | 1.93 kB gzip off first paint. This is the critic's own round |
+| Privacy | pass | `egress.test.ts` green with one more file in its scan |
+| Architecture | pass | Behaviour unchanged: **1063 checks both sides**, which is the check that this moved code and not logic. New file has its README row |
+| Product | pass | Nothing a player sees changed |
+
+**Gate.** typecheck clean · lint clean · **1063 checks passed, 0 failed, exit 0**
+(unchanged, deliberately). No canary: a refactor's canary is the check count and
+the number diff, and both are flat.
+
+---
+
 ### Round 9 · Cycle C — pedagogical coaching and UI · `C0 · R69·1`
 
 **Orchestrator.** The head of Cycle C since round 6 promoted it there, and it had

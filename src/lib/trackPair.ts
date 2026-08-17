@@ -39,7 +39,7 @@
  * where it was.
  */
 import { LM, dist2d, midpoint, nearestFrameIndex } from './analysis/geometry'
-import { VISIBLE_FLOOR } from './analysis/groundTruth'
+import { VISIBLE_FLOOR } from './analysis/framingIssues'
 import type { Analysis, Landmark } from './analysis/types'
 import { scoringVersionOf, typeOf } from './progress'
 import { replayFrom, trackFrameAt, type SwingTrack } from './storage/poseTrack'

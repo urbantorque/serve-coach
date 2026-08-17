@@ -88,9 +88,11 @@ The translation from a number to a cue somebody can act on.
 
 Where state lives, what it costs, what it does to a warm phone.
 
-- [ ] **D0 · R68** — Take the validator half of `groundTruth.ts` back out of the
-      entry chunk. R59·1 measured it in at 6.41 kB raw / 2.31 kB gzip, carried by
-      every player to serve a path behind a query string. *Head of this cycle.*
+- [x] **D0 · R68** — Take the validator half of `groundTruth.ts` back out of the
+      entry chunk. *(Round 10 — 5.21 kB raw and 1.93 kB gzip off the critical
+      path; residual 0.38 kB gzip against the pre-R59 baseline. The framing half
+      moved, not the validator half, because its own doc argued for staying with
+      the fixtures and coverage follows imports.)*
 - [ ] **D1 · R54 spike** — Measure what a canvas recorder costs on this browser
       before any of R54 is built, and gate on `?check` the way the record button
       already does. Constraint 8 says guilty until measured.

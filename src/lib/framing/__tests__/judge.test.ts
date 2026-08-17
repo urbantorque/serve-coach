@@ -18,7 +18,7 @@
  */
 import { blockingFramingIssue } from '../../analysis/analyze'
 import { LM } from '../../analysis/geometry'
-import { framingIssues } from '../../analysis/groundTruth'
+import { framingIssues } from '../../analysis/framingIssues'
 import { DEPTH_YAW_RANGE, NOTABLE_ROLL, levelPivot, unlevelFrames } from '../../analysis/spatial'
 import { buildServe } from '../../analysis/syntheticServe'
 import type { Frame } from '../../analysis/types'
