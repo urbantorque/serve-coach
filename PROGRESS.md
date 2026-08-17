@@ -43,6 +43,37 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 25 — the fourth consolidation gate
+
+**1 · Full gate.** typecheck clean · lint clean · **1112 checks, 0 failed,
+exit 0** (+22 across the block).
+
+**2 · Number diff against `loop-green-4`.** **No engine reading moved** —
+including across round 23's change to `normalise` and to the `Triage` type, which
+made `quality` optional. Everything that did: two new notes (rounds 20 and 22),
+the per-frame heap figure by 0.09%, and wall-clock timings.
+
+**3 · Boot smoke.** Server restarted first, fresh tab, report renders end to end,
+clean console.
+
+**4 · Copy audit.** 97 lines, 7 failing, all exempt with a reason, **zero real**.
+
+**5 · Ledger compression.** Not done — Phase 8 still mid-flight, entries already
+delta-only and cross-referenced.
+
+**6 · Tag.** `loop-green-5`. Push still impossible: no remote.
+
+**What this block was.** Six rounds, and **five of them refused or corrected
+something** rather than adding a feature: the stance detector refused on a
+measurement (20), the racket delta shipped with the round's own floor confirmed
+rather than corrected (21), basket inference refused with its seductive
+counter-evidence preserved (22), a stored-shape guard built on a premise that
+turned out false — and breaking the restore path on the way (23), and a coach's
+card whose content was decided before its pixels (24). The engine gained one new
+reading in six rounds. That is the ratio a maturing codebase should have.
+
+---
+
 ### Round 24 · Cycle E — data management and export · `E4 · R58·1`
 
 **Orchestrator.** The round I deferred in 17 for want of room, taken as the half
