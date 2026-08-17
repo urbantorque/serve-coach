@@ -210,6 +210,15 @@ Where state lives, what it costs, what it does to a warm phone.
       identity, not speed: both allocate, so the summary was fresh every render
       and nothing downstream could memoise against it. Now pinned with a linearity
       guard: 4.4× cost for 4× the reports, and a cubic scan canaried it to 20.5×.
+- [x] **D8 · R81** — The bundle, pinned rather than measured. R75 wrote 416.90 kB
+      raw / 139.09 gzip into a backlog row; three rounds added components and
+      nobody looked again — **the exact shape F4 found twice**, a measured number
+      with no gate behind it. Now a ratchet: entry 419.71 raw / 139.88 gzip against
+      440 / 145, the pose runtime held in its own chunk at 41.43 against 45, both
+      dev routes checked as split, and the stylesheet watched because nothing else
+      watched it. Reads `dist` and **fails rather than skips** when it is absent.
+      Found a unit mismatch on the way: the first version divided by 1024 while
+      Vite prints decimal kB, so every future comparison would have been 2.4% off.
 - [!] **D2d · R55·2c** — The switch, as a tap. **Blocked on constraint 3**: every
       `<input>` in this app is `type="file"`, `tokens.css` strips inputs to no
       border and no background, and a visible text field needs border, padding, a

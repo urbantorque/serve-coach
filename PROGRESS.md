@@ -43,6 +43,59 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 64 · Cycle D — performance and architecture · `D8 · R81` (new)
+
+**Orchestrator.** Cycle D's rows are blocked, so the Orchestrator generates.
+Round 49 measured the entry chunk and wrote the numbers into a backlog row.
+Three rounds then added components — a share button, a home strap, a memo — and
+nobody looked again.
+
+**That is the exact shape round 52 found twice.** `LEG_DRIVE_FLOOR` and
+`LANDING_SQUARE_FLOOR` could both be moved tenfold with nothing going red,
+because their derivations lived in comments. A measured number with no gate
+behind it is a number that stops being true quietly.
+
+**So the bundle is a ratchet now**, not a note:
+
+| | measured | budget |
+| --- | --- | --- |
+| entry, gzip | 139.88 kB | 145 |
+| entry, raw | 419.71 kB | 440 |
+| pose runtime, gzip | 41.43 kB | 45 |
+| stylesheet, gzip | 10.24 kB | 14 |
+
+Plus the two properties that matter more than the bytes: **the pose runtime is
+still its own chunk**, and **both dev routes are still split off**. R68 spent a
+whole round taking 1.93 kB gzip off this path; a MediaPipe bundle folded back in
+would put forty times that on it and the app would still work, so nothing else
+would notice.
+
+**It reads `dist` and fails rather than skips when it is missing.** A check that
+quietly passes when it cannot see is worse than no check — `tallies.test.ts`
+exists because this repo shipped one, and round 52 found two more.
+
+**A unit mismatch, caught by comparing against the build output.** The first
+version divided by 1024 and read **409.87** where Vite printed **419.71** for the
+same file. Vite prints decimal kB, and the budgets were read off Vite — so every
+future comparison would have been 2.4% off, and nobody would have noticed until
+somebody raised a budget against a figure that did not match the terminal beside
+it.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Performance | pass | This app is opened on a phone at a fence line. The entry chunk is what stands between the player and the viewfinder, and the 9 MB model behind it is cached where this is not |
+| Honesty | pass | The failure message says what to do and what it costs: take something off the path, or raise the budget and say in the commit what the player is now waiting for |
+| Architecture | pass | The split checks are named by chunk, not by size, because the property is the split |
+| Product | pass | Nothing user-facing changed |
+
+**Gate.** typecheck clean · lint clean · production build clean · **1212 checks,
+0 failed, exit 0** (+4). Canaried twice — budget tightened to 130, and a missing
+chunk named — each reddening its own check.
+
+---
+
 ### Round 63 · Cycle C — coaching and UI · `C5 · audit 6`
 
 **Orchestrator.** Find a copy line that has drifted over the twenty-five word cap
