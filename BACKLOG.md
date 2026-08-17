@@ -59,6 +59,21 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
       right way: a square landing reads **20% above its floor, down from 29%**.
       Round 33's finding, pinned as a check, now asserts the opposite.
 
+- [x] **A6 · R80** — The toss-axis tie-drop **has never fired**. `axes.ts` sets
+      `dominant` with an exact equality on 45, argued as "where sin and cos cross,
+      so this is an equality test" — true, and it makes the null case one float
+      value `estimateYaw` will never return. Measured end to end: at 45° a purely
+      lateral wobble is reported as a **forwards-and-back fault, detected, at 0.52
+      confidence** — seven hundredths above `MIN_EVIDENCE`, and `diagnose.ts` says
+      a fault named on the wrong axis "costs the player the practice session they
+      spend on it". At 82° the app reads **0.99 confident while missing the fault
+      entirely**: `share` answers how much of image x is this axis, not how much of
+      the toss was seen.
+- [ ] **A6b · R80b** — The share floor. Silences the toss verdict across a band of
+      near-corner clips, so it needs a derivation and a number diff — R44's rule.
+      Both R59's and R80's checks go red when it lands, by design: they are
+      findings to close, not behaviour to keep.
+
 ## Cycle B — Biomechanics and fault detection
 
 Kinetic chain, trophy metrics, what the body actually did.
