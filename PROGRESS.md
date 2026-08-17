@@ -43,6 +43,51 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 65 · Cycle E — data and export · `E9 · R82` (new)
+
+**Orchestrator.** Cycle E's rows are blocked, so the Orchestrator generates —
+and round 63 pointed straight at this. C5 found that the two copy gates cover
+tables and JSX, and that a third kind of copy sits between them. **The share card
+is the same gap in a worse place.**
+
+**Forty-four `fillText` calls, and no gate had ever read one of them.**
+
+**Why that matters more here than anywhere else.** Everything else this app
+writes is read by the player, alone, on their own phone, and corrected on the
+next report. A share card is a PNG that goes to a coach, a partner, a group chat.
+**It is the only copy in this app that cannot be taken back.**
+
+**And the first run found the worst possible line.** The privacy footer, printed
+on *every* card: *"Measured on device · nothing was uploaded"* — passive, in the
+one sentence that is a promise rather than a description. Every other privacy
+line in the app is active and says the same thing: `Home.tsx` has "Your video
+stays on this device and never leaves it", `FramingCheck.tsx` has "Your video
+never leaves the device".
+
+Now **"Measured on your phone · the video never left it"**, and the check tests
+the three surfaces for *agreement* rather than for exact words — three places
+saying this must not drift into three different claims.
+
+**Partial coverage, stated.** Fifteen of the forty-four drawn strings are
+literals a regex can see; the rest are built from variables at draw time. A gate
+implying it read all forty-four would be worse than one saying it reads fifteen —
+the admission `jsxCopy.test.ts` makes about interpolated JSX, made here too.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The failure message says what is at stake: this is a PNG in somebody else's chat |
+| Privacy | pass | The one sentence the app's whole promise rests on was the one nobody had read, and it is now checked for agreement across all three places it appears |
+| Architecture | pass | Coverage admitted at 15 of 44, and the scan self-checks that it can still see the file |
+| Product | pass | Shorter, active, and the same words the rest of the app uses |
+
+**Gate.** typecheck clean · lint clean · **1216 checks, 0 failed, exit 0** (+4).
+Canaried by restoring the passive footer — both the editor check and the
+agreement check reddened.
+
+---
+
 ### Round 64 · Cycle D — performance and architecture · `D8 · R81` (new)
 
 **Orchestrator.** Cycle D's rows are blocked, so the Orchestrator generates.

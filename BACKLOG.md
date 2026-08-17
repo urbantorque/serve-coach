@@ -279,6 +279,16 @@ Storage, backup, and the files a player is handed.
       added a store to the file and never revisited the sentence.** Driven through
       `buildBackup` rather than read off the type, because it was the builder that
       was wrong for twenty rounds, not the type.
+- [x] **E9 · R82** — The share card's copy, read for the first time. C5 found the
+      gap; this is the same gap in a worse place — **forty-four `fillText` calls and
+      no gate had ever read one.** Everything else the app writes is read by the
+      player alone and corrected on the next report; a card is a PNG in somebody
+      else's chat. First run found the privacy footer, on **every** card, reading
+      "Measured on device · nothing was uploaded" — passive, in the one sentence
+      that is a promise rather than a description, while `Home.tsx` and
+      `FramingCheck.tsx` both say it actively. Now "Measured on your phone · the
+      video never left it", and the three surfaces are checked for agreement.
+      Coverage stated as partial: 15 of 44 are literals a regex can see.
 - [x] **E5 · audit 4** — A `README.md` claim with no test behind it. *(Round 17 —
       "about 15 KB" for a pruned report. It is 31.3 kB: the swing track was
       written after that sentence and is kept on every report.)*

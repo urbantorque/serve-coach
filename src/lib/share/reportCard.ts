@@ -399,7 +399,7 @@ export async function renderReportCard(
   ctx.font = font(400, 15)
   ctx.fillStyle = FAINT
   ctx.textAlign = 'center'
-  ctx.fillText('Measured on device · nothing was uploaded', W / 2, H - 22)
+  ctx.fillText('Measured on your phone · the video never left it', W / 2, H - 22)
   ctx.textAlign = 'left'
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
@@ -788,7 +788,7 @@ export async function renderBasketCard(
   ctx.font = font(400, 15)
   ctx.fillStyle = FAINT
   ctx.textAlign = 'center'
-  ctx.fillText('Measured on device · nothing was uploaded', W / 2, H - 22)
+  ctx.fillText('Measured on your phone · the video never left it', W / 2, H - 22)
   ctx.textAlign = 'left'
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
@@ -925,7 +925,7 @@ export async function renderSeasonCard(records: SeasonRecords, asOf: number): Pr
   ctx.font = font(400, 15)
   ctx.fillStyle = FAINT
   ctx.textAlign = 'center'
-  ctx.fillText('Measured on device · nothing was uploaded', W / 2, H - 22)
+  ctx.fillText('Measured on your phone · the video never left it', W / 2, H - 22)
   ctx.textAlign = 'left'
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
