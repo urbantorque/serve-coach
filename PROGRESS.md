@@ -43,6 +43,47 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 36 · Cycle D — performance and architecture · `D2b · R55·2a`
+
+**Orchestrator.** Takes the decision round 30 left open, then does the migration
+R55 itself calls the hard part. Lead builder: Release Architect. Column: *Does it
+work on my clip at all*.
+
+**The decision.** The profile lives on the stored row, supplied by
+`saveSession`. Not in `serveTags` — that store is written by a tap after the
+fact, and a profile must be known at save time or a re-run files the same serve
+under nobody. Not on `Analysis` — a live analysis is of a clip, and which history
+it joins is a storage question.
+
+**Which breaks an identity this file defended twice**, and the argument for it
+survives: `Session = Omit<Analysis, 'frames'>` was defended on the grounds that
+what the camera measured and what the player says are different claims. A profile
+is neither. It is whose row this is, like `id` and `createdAt`, both of which
+have always sat on `Analysis` without anybody calling them measurements.
+
+**Defaulted rather than refused, and the contrast with round 23 is the point.**
+`triage.quality` is *dropped* when malformed because there is no honest default
+for a missing confidence. A missing profile is different in kind: it is a report
+from before the question was asked, and there is exactly one honest answer.
+
+**One filter, not thirteen** — round 30's finding as code, with its own check
+already in place to catch a fourteenth consumer.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | A restored report keeps its own profile rather than being reassigned to whoever is active — the rule the scoring stamp already follows, and a restore that reassigned would move somebody else's serves into this history |
+| Performance | pass | One string per row. `forProfile` is a filter over a list already in memory |
+| Privacy | pass | This *is* a privacy feature: it stops one player's serves reaching another's trend on a shared phone |
+| Architecture | pass | `profilesIn` derives from the reports rather than a store — a profile with no serves is a name and nothing else, and a list that can hold one needs pruning, renaming and an empty state nothing asked for |
+| Product | pass | No UI, and none needed to ship: everything files under one player until R55·2b makes it vary |
+
+**Gate.** typecheck clean · lint clean · **1149 checks, 0 failed, exit 0** (+6).
+Canaried to two.
+
+---
+
 ### Round 35 · Cycle C — pedagogical coaching and UI · `C2c · R53·2b`
 
 **Orchestrator.** Closes R53. Lead builder: Pedagogical UX & Skill Architect

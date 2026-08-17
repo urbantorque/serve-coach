@@ -12,7 +12,46 @@ import { LEGACY_SCORING_VERSION, SCORING_VERSION, type Analysis } from '../analy
  * keeping clips would put hundreds of megabytes of video on the device for no
  * benefit. Nothing here ever leaves the phone.
  */
-export type Session = Omit<Analysis, 'frames'>
+export type Session = Omit<Analysis, 'frames'> & {
+  /**
+   * Whose report this is.
+   *
+   * **THIS BREAKS `Session = Omit<Analysis, 'frames'>` EXACTLY, AND THAT
+   * IDENTITY WAS DEFENDED TWICE.** The argument for it — here and at
+   * `PRACTICE_STORE` — is that what the camera measured and what the player says
+   * are different kinds of claim, and the type was saying so. That argument
+   * still stands and this is not a counter-example to it: a profile is not a
+   * claim about the serve at all. It is whose row this is, which is the same
+   * kind of thing as `id` and `createdAt`, and both of those have always sat on
+   * `Analysis` without anybody calling them measurements.
+   *
+   * **WHY NOT ON `Analysis`.** A live analysis is of a clip. Which player's
+   * history it joins is a storage question, and the analysis is the same
+   * analysis either way — so the field belongs to the row rather than to the
+   * reading, and `saveSession` is what supplies it.
+   *
+   * **WHY NOT IN `serveTags`.** That store is written by a tap, after the fact.
+   * A profile has to be known at save time or a fresh report is unassigned until
+   * somebody touches it, and a re-run — a handedness correction, a serve-type
+   * change — would file the same serve under nobody. R55·1 named this as the
+   * decision to take before any of the feature; this is it, taken.
+   *
+   * Optional because every report predates it. `normalise` lands those under
+   * `DEFAULT_PROFILE` with no prompt, which is the migration R55 calls the hard
+   * part — and it is a default like every other in this file.
+   */
+  profileId?: string
+}
+
+/**
+ * Where every report filed before profiles existed lands.
+ *
+ * One default player, no prompt, no migration screen. A player who has never
+ * heard of profiles keeps a history that behaves exactly as it did, and a coach
+ * who adds a second profile finds their own serves already gathered under the
+ * first rather than scattered.
+ */
+export const DEFAULT_PROFILE = 'me'
 
 const DB_NAME = 'serve-coach'
 const DB_VERSION = 3
@@ -359,6 +398,14 @@ export async function saveSession(
    * then sixty full reads of sixty reports. The caller prunes once at the end.
    */
   bound = true,
+  /**
+   * Whose report this is.
+   *
+   * Defaulted rather than required, so every existing caller keeps working and
+   * a build with no profile UI files everything under one player — which is the
+   * state this ships in. R55·2b is what makes it vary.
+   */
+  profileId: string = DEFAULT_PROFILE,
 ): Promise<void> {
   /*
    * A clip the engine refused never enters the record.
@@ -392,6 +439,15 @@ export async function saveSession(
     // those as current would put an old-rubric score onto the new trend line —
     // the exact fabricated gain the stamp exists to prevent.
     scoringVersion: rest.scoringVersion ?? SCORING_VERSION,
+    /*
+     * Whose report this is, supplied by the caller rather than read off the
+     * analysis — see `Session.profileId`. Kept rather than overwritten when the
+     * row already carries one, for the reason the stamp above is: `importBackup`
+     * restores old reports through here, and reassigning a restored report to
+     * whoever happens to be active would move somebody else's serves into this
+     * player's history on a restore.
+     */
+    profileId: (rest as Partial<Session>).profileId ?? profileId,
   }
 
   try {
@@ -574,6 +630,20 @@ export function normalise(raw: unknown): Session | undefined {
 
   return {
     ...(s as Session),
+    /*
+     * The migration, and it is one line because it had to be.
+     *
+     * Every report filed before profiles existed has no `profileId`, and lands
+     * under one default player with no prompt — which is what R55 asks for and
+     * what makes this safe to ship before any UI exists. A player who never
+     * touches profiles keeps a history that behaves exactly as it did.
+     *
+     * Defaulted rather than refused, unlike `triage.quality` above, and the
+     * difference is what an absent value means. A missing confidence is a
+     * measurement nobody took; a missing profile is a report from before the
+     * question was asked, and there is exactly one honest answer to it.
+     */
+    profileId: typeof s.profileId === 'string' && s.profileId ? s.profileId : DEFAULT_PROFILE,
     fundamentals,
     // `VERDICT[analysis.overallStatus]` in `Report` is an unguarded index into a
     // four-key table, so a status this build has never heard of is a blank
@@ -1213,3 +1283,44 @@ export async function clearServeTags(): Promise<void> {
  */
 export const tagsById = (tags: readonly ServeTag[]): Map<string, ServeTag> =>
   new Map(tags.map((t) => [t.id, t]))
+
+/**
+ * One player's reports, out of a whole history.
+ *
+ * **THE FILTER GOES HERE AND NOWHERE ELSE**, which is R55·1's finding turned
+ * into code. Thirteen functions in `App.tsx` read a whole history and every one
+ * of them silently assumes a single player — and I enumerated them by hand and
+ * got nine, which is the argument: if a careful count misses a third of them, a
+ * careful patch will too. So the list handed to all thirteen is filtered once,
+ * at the source, and a fourteenth consumer inherits it rather than having to
+ * remember.
+ *
+ * `screenFlow.test.ts` counts those thirteen and fails when the number moves, so
+ * a new consumer arriving without this filter in front of it is caught.
+ *
+ * Reports with no profile are `DEFAULT_PROFILE`'s by the time they get here —
+ * `normalise` sees to that — so this needs no fallback of its own. A second one
+ * would be a second place for the default to be decided, which is how two halves
+ * of a guard come to disagree about what an absent value means.
+ */
+export const forProfile = (sessions: readonly Session[], profileId: string): Session[] =>
+  sessions.filter((s) => s.profileId === profileId)
+
+/**
+ * Every profile that has a report under it, oldest first by their first serve.
+ *
+ * Derived from the reports rather than kept in a store of its own, and that is
+ * deliberate for the same reason a tag dies with its report: a profile with no
+ * serves under it is a name and nothing else, and a list that can contain one is
+ * a list that needs pruning, renaming and an empty state. When R55·2b adds
+ * names, they join `serveTags`' store — a name is a thing the player said.
+ */
+export function profilesIn(sessions: readonly Session[]): string[] {
+  const first = new Map<string, number>()
+  for (const s of sessions) {
+    const id = s.profileId ?? DEFAULT_PROFILE
+    const at = first.get(id)
+    if (at === undefined || s.createdAt < at) first.set(id, s.createdAt)
+  }
+  return [...first.entries()].sort((a, b) => a[1] - b[1]).map(([id]) => id)
+}

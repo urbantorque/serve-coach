@@ -11,6 +11,10 @@ import {
   KEEP_STILLS,
   KEEP_STILLS_UNDER_PRESSURE,
   MAX_SESSIONS,
+  type Session,
+  DEFAULT_PROFILE,
+  forProfile,
+  profilesIn,
   normaliseServeTag,
   tagsById,
   normalise,
@@ -667,6 +671,83 @@ check('the lookup is by report id, and a repeated tag is the later one', () => {
   ])
   assert(map.size === 2, `built a map of ${map.size}, expected 2`)
   assert(map.get('a')?.serveNumber === 2, 'an earlier tag won over a later one')
+})
+
+
+/* --------------------------------------------------- whose report this is --- */
+
+heading('Profiles, and the migration R55 calls the hard part')
+
+const profiled = (id: string | undefined, createdAt: number) =>
+  ({ id: `p-${id}-${createdAt}`, createdAt, profileId: id, overall: 70 }) as unknown as Session
+
+check('a report filed before profiles lands under one default player, with no prompt', () => {
+  /*
+   * The migration, and the whole of it. A player who has never heard of profiles
+   * keeps a history that behaves exactly as it did; a coach who adds a second
+   * profile finds their own serves already gathered under the first rather than
+   * scattered across nothing.
+   */
+  const s = normalise({
+    id: 'old',
+    createdAt: 1,
+    overall: 70,
+    overallStatus: 'good',
+    fundamentals: [{ id: 'toss', metrics: [{ id: 'tossPeakHeight', score: 70 }] }],
+  })
+  assert(s?.profileId === DEFAULT_PROFILE, `an unprofiled report came back as ${s?.profileId}`)
+})
+
+check('a report that already names a profile keeps it', () => {
+  const s = normalise({
+    id: 'theirs',
+    createdAt: 1,
+    overall: 70,
+    overallStatus: 'good',
+    profileId: 'squad-2',
+    fundamentals: [{ id: 'toss', metrics: [{ id: 'tossPeakHeight', score: 70 }] }],
+  })
+  assert(s?.profileId === 'squad-2', `a named profile came back as ${s?.profileId}`)
+})
+
+check('an empty profile is not a profile', () => {
+  // A hand-edited backup, or a writer that stamped a blank. Reading it as a real
+  // profile would give one player a history nobody can select.
+  const s = normalise({
+    id: 'blank',
+    createdAt: 1,
+    overall: 70,
+    overallStatus: 'good',
+    profileId: '',
+    fundamentals: [{ id: 'toss', metrics: [{ id: 'tossPeakHeight', score: 70 }] }],
+  })
+  assert(s?.profileId === DEFAULT_PROFILE, `a blank profile came back as ${JSON.stringify(s?.profileId)}`)
+})
+
+check('the filter keeps one player and nobody else', () => {
+  const all = [profiled('me', 3), profiled('coach', 2), profiled('me', 1)]
+  const mine = forProfile(all, 'me')
+  assert(mine.length === 2, `kept ${mine.length} of 3`)
+  assert(mine.every((s) => s.profileId === 'me'), 'somebody else reached the filtered list')
+})
+
+check('a profile with no reports is not a profile', () => {
+  /*
+   * Derived from the reports rather than kept in a store, for the same reason a
+   * tag dies with its report: a profile with no serves under it is a name and
+   * nothing else, and a list that can contain one needs pruning, renaming and an
+   * empty state that nothing has asked for.
+   */
+  const found = profilesIn([profiled('me', 2), profiled('coach', 1), profiled('me', 3)])
+  assert(found.length === 2, `found ${found.length} profiles, expected 2`)
+  assert(found[0] === 'coach', `oldest-first ordering gave ${found[0]} first`)
+})
+
+check('an unprofiled report is counted under the default, not as its own player', () => {
+  // The two halves have to agree: `normalise` defaults, and anything reading raw
+  // rows has to default the same way or a migrated history splits in two.
+  const found = profilesIn([profiled(undefined, 1), profiled('me', 2)])
+  assert(found.length === 1 && found[0] === DEFAULT_PROFILE, `found ${JSON.stringify(found)}`)
 })
 
 report()

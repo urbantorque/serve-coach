@@ -2657,3 +2657,52 @@ deleting a working button.
       Five checks, including that splitting genuinely tightens a spread built
       from two different motions: if it did not, the partition would be doing
       nothing.
+
+- [~] **R55·2** — Split. The migration first, the switch second — R55's own
+      "the migration is the hard part, not the feature".
+
+        · **R55·2a — [x] the migration, and the decision R55·1 left.**
+
+          **Where the profile lives, decided.** On the stored row, supplied by
+          `saveSession`. Not in `serveTags`, because that store is written by a
+          tap after the fact and a profile has to be known at save time — a fresh
+          report would be unassigned until somebody touched it, and a re-run
+          would file the same serve under nobody. Not on `Analysis`, because a
+          live analysis is of a *clip* and which history it joins is a storage
+          question.
+
+          **This breaks `Session = Omit<Analysis, 'frames'>` exactly**, an
+          identity defended twice in `db.ts`. The argument for it still stands
+          and this is not a counter-example: a profile is not a claim about the
+          serve. It is whose row this is — the same kind of thing as `id` and
+          `createdAt`, both of which have always sat on `Analysis` without
+          anybody calling them measurements.
+
+          **The migration is one line and had to be.** Every report predating
+          profiles lands under `DEFAULT_PROFILE` in `normalise`, no prompt, no
+          screen. Defaulted rather than refused, unlike `triage.quality` — and
+          the difference is what an absent value means: a missing confidence is a
+          measurement nobody took, a missing profile is a report from before the
+          question was asked, and there is exactly one honest answer to that.
+
+          A restored report **keeps its own profile** rather than being reassigned
+          to whoever is active — the same rule the scoring stamp already follows,
+          and for the same reason: a restore that reassigned would move somebody
+          else's serves into this player's history.
+
+          **`forProfile` is the one filter**, which is R55·1's finding as code:
+          thirteen consumers, and a hand count got nine. `screenFlow.test.ts`
+          counts them and fails when the number moves, so a fourteenth arriving
+          without the filter in front of it is caught.
+
+          `profilesIn` derives the list from the reports rather than a store —
+          a profile with no serves under it is a name and nothing else, and a
+          list that can hold one needs pruning, renaming and an empty state
+          nothing has asked for.
+
+          Six checks, canaried to two.
+
+        · **R55·2b — the switch.** Offered by `possibleHandoff`, which already
+          detects the body changing and does nothing with it, rather than a
+          settings screen nobody opens. Names join `serveTags`' store — a name is
+          a thing the player said.

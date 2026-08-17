@@ -122,8 +122,10 @@ Where state lives, what it costs, what it does to a warm phone.
 - [x] **D2 · R55·1 spike** — *(Round 30 — thirteen functions read the whole
       history, four of which I missed by hand; and a profileId on the row is
       erased by every re-run, the defect R53·2a solved one round earlier.)*
-- [ ] **D2b · R55·2** — The feature, once the where-does-it-live decision is
-      taken. The switch is offered by `possibleHandoff`, not a settings screen.
+- [x] **D2b · R55·2a** — The migration, and the decision: the profile lives on
+      the row, supplied by `saveSession`. *(Round 36 — one default, no prompt,
+      and one filter rather than thirteen.)*
+- [ ] **D2c · R55·2b** — The switch, offered by `possibleHandoff`.
 - [x] **D4 · R67** — The stored byte cost of a report, re-measured against
       `footprint.test.ts` after Phase 8's new fields. A report that grew and
       nobody noticed is the failure this budget exists to catch. *(Round 4 — the
