@@ -42,7 +42,7 @@ in `git log`.
   of frames rather than a fixed amount of *time*, so on a phone filming at 120
   frames a second it was looking at a quarter as much of the serve, and reading
   noise. Fixed: it now smooths over 150 milliseconds whatever your phone films
-  at. On the test serves it catches 92% of badly ordered serves instead of 78%,
+  at. On the test serves it catches 95% of badly ordered serves instead of 78%,
   it names more of the borderline ones, and it no longer flags a clean serve at
   all. Filming at a high frame rate now helps this reading rather than hurting
   it. It is still the least certain number the app produces, and it still says

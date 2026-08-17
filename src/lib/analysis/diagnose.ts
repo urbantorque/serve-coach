@@ -375,6 +375,23 @@ const CHAIN_WINDOW_SECONDS = 0.09
  * window can smooth away and which is why these two are still far behind the
  * links read off the picture plane.
  *
+ * CONFIRMED AT A HUNDRED AND TWENTY SEEDS, which is a check this constant asked
+ * for and then nearly failed to get. It was chosen on sixty, on the reasoning
+ * that twenty-four was too few — and a later round found a case where sixty was
+ * also too few, `spine_lean_deg` reading 3.633 at sixty against 4.48 at both a
+ * hundred and twenty and two hundred and forty. So the question was reopened
+ * against this constant's own evidence:
+ *
+ *     radius     30 fps    50 fps    120 fps
+ *     0.09 s      56.37     59.87      51.00
+ *     0.15 s      51.01     49.16      41.95
+ *
+ * Unanimous again, and that is the point rather than the margins. This constant
+ * was never chosen on one number landing near a boundary — it was chosen on
+ * three frame-rate columns all pointing the same way, which is a far more robust
+ * shape than a single deviation crossing a flip point, and it is why this
+ * survived the recheck when the spine floor did not.
+ *
  * A HUNDRED AND FIFTY, and the twenty-four-seed ensemble the rest of this engine
  * is tuned on could not have chosen it. Swept at 24 seeds the deviation reads
  * 45.4 / 47.2 / 55.5 at 0.09 against 34.5 / 52.5 / 32.5 at 0.12 and

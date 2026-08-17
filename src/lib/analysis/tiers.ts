@@ -223,7 +223,26 @@ export const NOISE_FLOOR: Record<string, number> = {
   // Two peak-finds on a smoothed derivative, differenced. Still the least
   // repeatable number in the engine: the peak can land a frame either side on a
   // noisy realisation, and at 50 fps that alone is 20 ms per side. The deviation
-  // is 50.1 ms at sixty seeds, so 1.5× is 75.15, which rounds up to 76.
+  // is 49.1 ms on a converged ensemble, so 1.5× is 73.6, which rounds up to 74.
+  //
+  // AND IT IS 76 ANYWAY, deliberately, which is two milliseconds of margin over
+  // what the measurement asks for. The 76 came from a sixty-seed reading of
+  // 50.1; adding draws settled it lower — 49.163 at 120 seeds and 49.076 at 240,
+  // agreeing to within 0.09 — so the honest thing was to ask whether the floor
+  // should follow it down. Measured at 120 seeds, it should not:
+  //
+  //                serve          floor 76    floor 74
+  //   clean (hips lead 70 ms)        0.0%        0.8%
+  //   mild arming (-20 ms)          28.3%       28.3%
+  //   real arming (-60 ms)          58.3%       60.8%
+  //   gross arming (-120 ms)        95.0%       95.0%
+  //
+  // Two and a half points on real arming, bought with a false positive on a
+  // clean serve. This engine is allowed to miss a fault and is not allowed to
+  // invent one, which is the same call that stopped it at 76 rather than 70 when
+  // the floor first moved. A floor above what repeatability asks for is the
+  // direction the guard permits for a signal declared in `UNDER_RESOLVED`, and
+  // this one is — so the margin is recorded here rather than smuggled.
   //
   // Was 85, from a deviation of 67.3, before the trunk pair was moved onto a
   // smoothing window measured in seconds rather than samples — see
@@ -387,6 +406,12 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * Zero against ninety-two is a better detector than two against seventy-eight
    * on both ends at once, which is rare enough here to say plainly. Every rate
    * improved and none was traded for another.
+   *
+   * The last column above is a sixty-seed reading and the final state of it is
+   * slightly better than that: re-measured at a hundred and twenty seeds it is
+   * 0.0 / 28.3 / 58.3 / 95.0. The shape of the finding does not change and the
+   * decision rested on it rather than on the third decimal, but these are the
+   * figures to quote.
    *
    * The floor stopped at 76 rather than going lower, and the reason is the
    * column that is not in the table: at floor 70 the mild and gross rates barely
