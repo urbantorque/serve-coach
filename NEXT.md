@@ -1401,6 +1401,26 @@ family, different surface, different refusals.
           from the gate. `fixtures/README.md` has the order; nothing in the app
           does.
 
+- [ ] **R69** — Nothing lints the copy that lives in a component. `copy.test.ts`
+      is named as one of three critics in executable form, and it walks `METRICS`,
+      `SERVE_TYPES`, `FUNDAMENTALS`, `AXIS_COPY`, `DRILLS` and `everyVerdictCue()`
+      — every one of them a data table. **Every sentence written straight into
+      JSX is unchecked**, and there are dozens: the refusal notes, the player
+      notes under both replays, the storage panel's export warning, the handoff
+      caveat, the "those pictures need the clip" line. R28 found a phase's copy
+      had drifted over the cap inside the tables that *are* linted; outside them
+      there is no gate at all. Found by auditing three new lines by hand at the
+      first consolidation, which is not a thing anybody will keep doing.
+
+      The shape is a source scan over `src/**/*.tsx` for string literals inside
+      JSX text positions, handed to `cueIssues`. **What it may not do:** parse
+      TypeScript. A regex over source text will over-match — a `className`, an
+      `aria-label`, a URL — so the allow list has to be checked against what the
+      scan actually found, exactly as `egress.test.ts` does, rather than assumed
+      correct. **The honest outcome if it cannot separate prose from markup**: an
+      entry saying so, plus a hand-maintained list of the files whose JSX copy is
+      linted, which is worth more than nothing and less than a scan.
+
 - [ ] **R68** — Take the validator half of `groundTruth.ts` back out of the entry
       chunk. R59·1 measured it in: 6.41 kB raw, 2.31 kB gzip, carried by every
       player to serve a path behind `?fixture`. The shape is a split —

@@ -44,6 +44,66 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 6 · Cycle F — the consolidation gate
+
+No feature work. Release Architect leads. This is the cycle that compares the app
+against its own past rather than against one round's intent.
+
+**1 · Full gate.** typecheck clean · lint clean · **1051 checks, 0 failed,
+exit 0**.
+
+**2 · Number diff — the point of the exercise.** Every figure the suite reports
+was captured at HEAD and again at the session baseline `e5d6954`, through a git
+worktree so the working tree was never touched, and diffed. **No engine reading
+moved.** Nothing in `tiers.ts`, no band, no deviation, no noise floor, no
+biomechanical figure. What did move, all of it accounted for:
+
+| Moved | Why |
+| --- | --- |
+| `84 → 85` source files scanned by the egress test | `trackPair.ts`, round 1. Intended |
+| `full history 1.1/2.3 MB → 1.8/2.9 MB` | Round 4 counting whole reports. This *is* R67 |
+| two new notes — words per report, Phase 8's stored fields | Round 4. Intended |
+| frame `7457 → 7417` bytes, landmark `119.4 → 119.1` | Heap measurement noise, 0.25%. That check is a ratchet, not an accuracy check, and says so |
+| stroke and frame timings | Wall clock on a shared machine |
+
+**3 · Boot smoke.** Fresh tab, dev server, saved report opened: score 68, three
+blocks, five fundamental cards, the replay canvas present, no error boundary,
+**console clean**.
+
+**4 · Copy audit.** Three player-facing lines were added this session. All three
+clean against `cueIssues`, at 13, 16 and 11 words against a cap of 25.
+
+And auditing them turned up a gap worth a round. **Nothing lints the copy that
+lives in a component.** `copy.test.ts` walks six data tables and every sentence
+written straight into JSX is unchecked — the refusal notes, both player notes
+under the replays, the storage panel's export warning, the handoff caveat. R28
+found drift *inside* the linted tables; outside them there is no gate at all.
+Queued as **R69**.
+
+**5 · Ledger compression — deliberately not done, with the reason.** The
+protocol asks for cycle records compressed to their deltas. These entries were
+written today, they are already delta-only, and later rounds cite them by name:
+R59·1 rests on R44's chunk finding, R67 on R49·1's and R50·1's stored fields,
+R49·3 on R47's extraction rule. Compression belongs at the phase close-out, and
+Phase 8 is mid-flight. Performing it here would be ceremony that costs
+information.
+
+**6 · Tag, and the push that cannot happen.** `loop-green-2` tagged.
+`git push --follow-tags` **did not run and cannot**: this repo has no remote and
+no upstream — `git remote` is empty. `UNATTENDED-LOOP.md` asks for the push and
+gives a good reason for it (eight hours of unattended commits on one local
+branch, with hard resets in the loop, is one bad command from gone). That
+protection is not available here. The tags are still the rollback points, and
+this session has already twice proved the risk is real: two `git checkout --`
+calls reverted uncommitted work in rounds 3 and 5.
+
+**A finding for whoever reads this:** if this work matters, the branch wants a
+remote. Nothing in the loop can create one.
+
+**Gate.** No new code. **1051 checks passed, 0 failed, exit 0.**
+
+---
+
 ### Round 5 · Cycle E — data management and export · `E1 · R59·1`
 
 **Orchestrator.** The promoted round — the only one that unblocks real footage,
