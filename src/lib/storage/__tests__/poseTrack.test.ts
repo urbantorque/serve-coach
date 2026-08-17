@@ -23,6 +23,8 @@ import {
   POSE_PRECISION,
   REPLAY_ASSUMED_STEP,
 } from '../poseTrack'
+import { SkeletonSmoother } from '../../pose/smoothing'
+import { LM } from '../../analysis/geometry'
 import { buildServe } from '../../analysis/syntheticServe'
 import { detectServe } from '../../analysis/phases'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
@@ -420,6 +422,86 @@ check('a keyframe with no row of its own gets no control rather than its neighbo
   ] as Pick<Phase, 'id' | 'frame'>[])
   assert(outside.size === 0, 'a phase outside the stored swing was mapped into it')
   assert(phaseSamples(undefined, track, namedPhases).size === 0, 'no replay produced marks anyway')
+})
+
+check('the replay clock can drive the smoother even when the stored times cannot', () => {
+  /*
+   * A bug found by reading, and the worst shape one can have: it looked like it
+   * was working.
+   *
+   * `SkeletonSmoother` reads discontinuity off the times it is handed, and
+   * treats two equal times as a repaint — same instant, same pose, return the
+   * cached one. That is right. But `readSwingTrack` repairs a missing timestamp
+   * to zero rather than dropping the row, which is the right trade for a
+   * filmstrip, so a track whose times did not survive has EVERY row at t = 0.
+   * Feed those to the smoother and every `dt` is zero, every frame is a repaint,
+   * and it returns its first pose forever — while the scrubber advances, the
+   * counter counts and the captions change. A replay with a frozen body.
+   *
+   * `replayFrom` already had to solve this for playback, counting the samples
+   * out at `REPLAY_ASSUMED_STEP` when the stored times were unusable. So the
+   * fix was to draw against the replay's clock rather than the row's own
+   * timestamp, and this is what holds that: whatever `replayFrom` returns has to
+   * be usable as a clock, on a healthy track and a repaired one alike.
+   */
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  const wristTravel = (t: typeof track) => {
+    const replay = replayFrom(t)!
+    const smoother = new SkeletonSmoother()
+    let moved = 0
+    let prev: { x: number; y: number } | undefined
+    for (const s of replay.samples) {
+      const f = trackFrameAt(t, s.row)!
+      // The replay's own clock, which is what `TrackPlayer` draws against.
+      const out = smoother.frame(f.image, s.at)
+      const w = out[LM.rightWrist]
+      if (prev) moved += Math.hypot(w.x - prev.x, w.y - prev.y)
+      prev = { x: w.x, y: w.y }
+    }
+    return moved
+  }
+
+  const healthy = wristTravel(track)
+  const repaired = wristTravel({ ...track, times: track.times.map(() => 0) })
+  note(`  drawn wrist travels ${healthy.toFixed(3)} on real times, ${repaired.toFixed(3)} on repaired ones`)
+  assert(healthy > 0.5, `a healthy track drew a body that barely moved (${healthy.toFixed(4)})`)
+  assert(
+    repaired > 0.5,
+    `a track whose timestamps were repaired to zero drew a body that moved ${repaired.toFixed(4)} — ` +
+      'the smoother is being fed the stored time rather than the replay clock, so every frame ' +
+      'reads as a repaint and the body freezes while the scrubber runs',
+  )
+
+  /*
+   * And the trap itself, pinned so it stays discoverable.
+   *
+   * This suite is pure Node with no DOM, so it cannot reach into `TrackPlayer`
+   * and assert which clock that component passes — someone could revert it to
+   * the row's own timestamp and everything above would still pass. What can be
+   * held is the fact that made the bug: on a repaired track the stored time
+   * freezes the drawing completely. Anybody who reads this check knows why the
+   * player draws against `replay.samples[i].at`, which is the next best thing to
+   * a test that would stop them changing it.
+   */
+  const naive = (() => {
+    const zeroed = { ...track, times: track.times.map(() => 0) }
+    const smoother = new SkeletonSmoother()
+    let moved = 0
+    let prev: { x: number; y: number } | undefined
+    for (const s of replayFrom(zeroed)!.samples) {
+      const f = trackFrameAt(zeroed, s.row)!
+      const w = smoother.frame(f.image, f.t)[LM.rightWrist] // the stored time — the bug
+      if (prev) moved += Math.hypot(w.x - prev.x, w.y - prev.y)
+      prev = { x: w.x, y: w.y }
+    }
+    return moved
+  })()
+  assert(
+    naive === 0,
+    `the stored-time trap no longer freezes the body (${naive.toFixed(4)}) — either the smoother's ` +
+      'repaint rule changed or readSwingTrack stopped repairing missing times to zero, and the ' +
+      'comment in TrackPlayer explaining which clock it draws against now describes nothing',
+  )
 })
 
 note(

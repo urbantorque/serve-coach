@@ -6,6 +6,16 @@ in `git log`.
 
 ## 2026-08-17
 
+- **Fixed: a replayed serve could sit perfectly still while its scrubber ran.**
+  When a report plays an old serve back as a moving body, the app steadies the
+  drawing using each frame's own timestamp. If those timestamps had not survived
+  in storage — a case the app already handles for the *timing* of the replay, so
+  it plays at a sensible speed — the steadying step read every frame as the same
+  instant and kept redrawing the first one. The result was a replay that looked
+  like it was working from every angle except the one that mattered: the slider
+  moved, the frame counter counted, the captions changed, and the body did not
+  move at all. It now steadies against the replay's own clock, which the app
+  always has, so the swing plays whether the stored timestamps survived or not.
 - **Your toss moment is pinned more precisely, and the same on any phone.** The
   app picks six moments out of your serve, and it finds each one by smoothing
   out the tracking wobble first. The toss was the only one of the six with

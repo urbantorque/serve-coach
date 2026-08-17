@@ -179,7 +179,29 @@ export default function TrackPlayer({ track, replay, phases, racket }: Props) {
     const f = frames[cursor]
     if (!f) return
 
-    const renderFrame: Frame = { ...f, image: smootherRef.current!.frame(f.image, f.t) }
+    /*
+     * Smoothed against the REPLAY's clock, not the frame's stored timestamp.
+     *
+     * `SkeletonSmoother` reads discontinuity off the times it is handed: equal
+     * times are a repaint and return the cached pose, a backwards jump or a gap
+     * over half a second is a cut and snaps to the raw landmarks. That contract
+     * is exactly right and it is why the stored time cannot be the thing fed to
+     * it. `readSwingTrack` repairs a missing timestamp to zero rather than
+     * dropping the row — the right trade for a filmstrip — so a track whose
+     * times did not survive has every row at t = 0, every `dt` at zero, and the
+     * smoother correctly returns its first pose forever. The scrubber advanced,
+     * the counter counted, the captions changed, and the body sat still: a
+     * replay that looked like it was working.
+     *
+     * `replay.samples[i].at` is the one clock that is always usable, because
+     * `replayFrom` already had to solve this for playback — measured where the
+     * timestamps were trustworthy and counted out at `REPLAY_ASSUMED_STEP`
+     * where they were not. It differs from the stored time by a constant when
+     * both exist, so every `dt` is identical and nothing changes on a healthy
+     * track; where the stored time is unusable this is the only one left.
+     */
+    const shownAt = replay.samples[cursor]?.at ?? 0
+    const renderFrame: Frame = { ...f, image: smootherRef.current!.frame(f.image, shownAt) }
     drawSkeleton(ctx, {
       frame: renderFrame,
       aspect: track.aspect,
@@ -195,7 +217,7 @@ export default function TrackPlayer({ track, replay, phases, racket }: Props) {
       // `ready` to `finish` and nothing before it exists to trail from.
       trail: { frames, from: 0, to: cursor },
     })
-  }, [cursor, frames, racket, track.aspect])
+  }, [cursor, frames, racket, track.aspect, replay])
 
   const drawRef = useRef(draw)
   drawRef.current = draw
