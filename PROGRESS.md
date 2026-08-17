@@ -44,6 +44,46 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 7 · Cycle A — CV/ML engine · `A2 · R49b`
+
+**Orchestrator.** Second block opens where the first left a question: round 3
+shipped the ghost across sessions, and nobody knew whether its camera gate would
+ever let anything through. Lead builder: Biomechanics & CV Specialist. Column
+served: *Do I believe it*.
+
+**A read-only round that produced a number, not a feature.** No production code
+changed. The deliverable is a bound the ledger did not have and two checks that
+hold it.
+
+**What it answers, and what it does not.** It answers the floor — two clips from
+the *same dialled angle*, differing only by tracker noise — because the rig can
+be asked that. It does not answer how often two clips from one real trip agree,
+because that is a fact about how people film and there are still no fixtures.
+Both halves said plainly rather than the first presented as the second.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The saturation finding was volunteered, not buried: past ~82° the reading stops tracking the dial, which is fine for a gate on a difference and would not be fine for grading an absolute. Nothing grades it |
+| Performance | pass | Test-only. 12 seeds × 4 angles of rig build, in a suite that already runs six-seed ensembles |
+| Privacy | pass | Nothing shipped changed |
+| Architecture | pass | Written in `GHOST_YAW_TOLERANCE_DEG`, not in 5, so the gate and the estimator are coupled to the evidence. Both sides asserted — side-on must agree completely, face-on must not — so a change that flattened the curve goes red rather than passing quietly |
+| Product | pass | Not a product round |
+
+**A near miss worth recording.** The edit that added these checks consumed the
+file's `report()` call, so `axes.test.ts` would have run twenty-one checks and
+tallied none of them — the exact defect round 2 found in `copy.test.ts`, one
+round after queueing R66 to catch it. What caught it here was `tsc` flagging the
+now-unused import, which is luck rather than a gate. R66 is worth more than its
+place in the queue suggests.
+
+**Gate.** typecheck clean · lint clean · **1053 checks passed, 0 failed, exit 0**
+(+2). Canaried by tightening the gate to 1°, which reddens exactly the side-on
+check. No browser verification: nothing player-visible changed.
+
+---
+
 ### Round 6 · Cycle F — the consolidation gate
 
 No feature work. Release Architect leads. This is the cycle that compares the app

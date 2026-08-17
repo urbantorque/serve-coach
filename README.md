@@ -588,6 +588,23 @@ serve type — which is the case the yaw gate was written for, and the case wher
 how often two clips from one trip agree on camera angle is still an open
 question.
 
+**And the gate is affordable, which was not obvious.** The worry about refusing
+a camera difference over 5° is that the *reading* might wander further than that
+between two takes of an identical camera — in which case the ghost never appears
+for anybody. Twelve seeds at each of six dialled angles say otherwise: from 60°
+up, every pair of takes agrees inside the gate (spread 5.0, 5.0 and 3.0 degrees
+at 60, 75 and 82), so the whole budget stays available for the camera actually
+moving. At 30° only 83% of pairs agree, and that is structure rather than luck —
+the reading is `acos(span / SHOULDER_SPAN_RATIO)`, whose derivative is unbounded
+face-on and smallest side-on, so the estimator is best conditioned exactly where
+this app is used. How often two clips *from one trip* agree is still unknown,
+because that is a fact about how people film and there are no fixtures yet.
+
+One limit came out of the same sweep and is worth knowing: the reading saturates.
+75° reads 78.0, 82° reads 84.3, and 88° reads only 85.1, so past roughly 82 it
+stops tracking the camera. That is fine for a gate on the difference between two
+readings and would not be fine for grading the absolute. Nothing grades it.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.

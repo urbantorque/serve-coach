@@ -11,6 +11,7 @@
  * the picture at all.
  */
 import { assessSpatial, DEPTH_YAW_RANGE } from '../spatial'
+import { GHOST_YAW_TOLERANCE_DEG } from '../../trackPair'
 import { diagnose } from '../diagnose'
 import { detectServe } from '../phases'
 import { buildServe, type ServeDials } from '../syntheticServe'
@@ -423,6 +424,119 @@ check('the fallback yaw is labelled rather than left to look like a measurement'
   note(
     `real 45° reads ${measured45}° measured=${real.yaw_measured}; ` +
       `both fallbacks read 45° measured=false`,
+  )
+})
+
+/* ------------------------------- what the ghost's camera gate spends on noise -- */
+
+heading('Two clips filmed from the same spot, and how far apart they read')
+
+/**
+ * R49b, bounded from `estimateYaw` — the half of the question that can be
+ * answered without footage.
+ *
+ * THE QUESTION THE GATE RAISES. `pairTracks` refuses to draw two saved serves
+ * together when their camera angles differ by more than
+ * `GHOST_YAW_TOLERANCE_DEG`, which is 5 because past five the camera contributes
+ * more than the tracker already does. The obvious worry is that the gate is dead
+ * on arrival: if the *reading* wanders more than five degrees between two takes
+ * of the identical camera, the gate refuses everything and the ghost never
+ * appears for anybody, whatever people actually do with their phones.
+ *
+ * How often two clips **from one trip** agree is a fact about how people film
+ * and there are no fixtures, so it stays open. What the rig can settle is the
+ * floor underneath it: two clips filmed from the *same dialled angle*, differing
+ * only by tracker noise. Anything the gate spends there is unavailable for the
+ * camera genuinely moving.
+ *
+ * THE ANSWER, AND IT IS THE GOOD ONE. Twelve seeds at each angle:
+ *
+ *     dial   mean read   deviation   worst spread   pairs within 5°
+ *       30      29.0        2.77         11.00           83%
+ *       45      46.4        1.80          7.00           94%
+ *       60      62.3        1.43          5.00          100%
+ *       75      78.0        1.29          5.00          100%
+ *       82      84.3        1.03          3.00          100%
+ *       88      85.1        1.11          4.00          100%
+ *
+ * From 60° up, every pair of takes agrees inside the gate. The app asks for
+ * side-on footage, so the whole five-degree budget is available for the camera.
+ *
+ * WHY IT IMPROVES WITH ANGLE, WHICH IS STRUCTURE RATHER THAN LUCK. The reading
+ * is `acos(span / SHOULDER_SPAN_RATIO)`, and `d(acos p)/dp` is `-1/√(1-p²)`:
+ * unbounded as the projected span approaches its full width — face-on — and at
+ * its smallest when the span approaches zero, which is side-on. The estimator is
+ * best conditioned exactly where this app is used.
+ *
+ * AND ONE LIMIT WORTH WRITING DOWN. The mean saturates: 75° reads 78.0, 82°
+ * reads 84.3, and 88° reads only 85.1. Past roughly 82 the reading stops
+ * tracking the dial. That is fine for a gate on a *difference* between two
+ * readings and would not be fine for anything grading the absolute — which is
+ * the same shape of finding `UNCALIBRATED.external_rotation_deg` already
+ * carries, arrived at from a different direction.
+ */
+const YAW_SEEDS = [11, 202, 3131, 7000, 44444, 909, 1234, 5678, 8642, 31337, 606, 777]
+
+/** Every yaw the rig reads at one dialled angle, one per seed. */
+function yawEnsemble(cameraYaw: number): number[] {
+  const read: number[] = []
+  for (const seed of YAW_SEEDS) {
+    const frames = buildServe({ cameraYaw, seed, noise: 0.006 }, FPS)
+    const skel = detectServe(frames, FPS)
+    const s = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+    if (s.yaw_measured) read.push(s.yaw_deg)
+  }
+  return read
+}
+
+/** How many pairs of takes land inside the gate, as a share of all pairs. */
+function agreementWithin(read: number[], tolerance: number): number {
+  let within = 0
+  let pairs = 0
+  for (let i = 0; i < read.length; i++) {
+    for (let j = i + 1; j < read.length; j++) {
+      pairs++
+      if (Math.abs(read[i] - read[j]) <= tolerance) within++
+    }
+  }
+  return pairs ? within / pairs : 0
+}
+
+check('on the side-on footage this app asks for, the gate spends nothing on noise', () => {
+  /*
+   * Stated in `GHOST_YAW_TOLERANCE_DEG` rather than in 5, so this goes red if
+   * either the gate or the estimator moves — which is exactly when the question
+   * is worth re-opening. Three angles rather than one, because a single dial is
+   * one seed's worth of evidence about a claim that spans a range.
+   */
+  for (const dial of [60, 75, 82]) {
+    const read = yawEnsemble(dial)
+    assert(read.length === YAW_SEEDS.length, `${dial}°: only ${read.length} of ${YAW_SEEDS.length} takes read at all`)
+    const agree = agreementWithin(read, GHOST_YAW_TOLERANCE_DEG)
+    const spread = Math.max(...read) - Math.min(...read)
+    note(`  ${dial}° dialled: reads ${(read.reduce((a, b) => a + b, 0) / read.length).toFixed(1)}, spread ${spread.toFixed(1)}, ${(agree * 100).toFixed(0)}% of pairs inside the gate`)
+    assert(
+      agree === 1,
+      `${dial}°: only ${(agree * 100).toFixed(0)}% of takes from one camera agree inside a ` +
+        `${GHOST_YAW_TOLERANCE_DEG}° gate — the gate is spending its budget on the tracker`,
+    )
+  }
+})
+
+check('face-on, it does not, and that is the acos and not the app', () => {
+  /*
+   * The other half, and it has to be asserted or the check above reads as a
+   * claim about the estimator everywhere rather than about the range this app
+   * films in. A face-on clip is already refused for depth (`DEPTH_YAW_RANGE`),
+   * so this costs the ghost nothing today — it is here so that a future round
+   * widening what counts as readable finds out what it is buying.
+   */
+  const read = yawEnsemble(30)
+  const agree = agreementWithin(read, GHOST_YAW_TOLERANCE_DEG)
+  note(`  30° dialled: ${(agree * 100).toFixed(0)}% of pairs inside the gate`)
+  assert(
+    agree < 1,
+    'the estimator is now as steady face-on as side-on — the acos argument above no longer holds',
   )
 })
 

@@ -1158,13 +1158,53 @@ family, different surface, different refusals.
           before continuing. `UNATTENDED-LOOP.md` says stash before reset for
           exactly this reason and the rule was not followed.
 
-- [ ] **R49b** — How often two clips from one trip agree on camera angle within
-      5°. The backlog's `ghost-yaw-agreement-in-life`, and the open question R49
-      names and defers. Shared with R50c, which wants something tighter still —
-      cycle 105 found a 315 ms branch jump between 50° and 55°. **Nobody knows
-      the answer, because it is a fact about how people film and there are no
-      fixtures.** Blocked behind R59 for the real answer; what can be done first
-      is bounding it from `estimateYaw` in `spatial.ts`.
+- [x] **R49b** — Bounded from `estimateYaw`, which is the half that needed no
+      footage. The half that does — how often two clips *from one trip* agree —
+      is still open and still behind R59, because it is a fact about how people
+      film.
+
+      **The worry was that the gate is dead on arrival.** If the reading wanders
+      more than 5° between two takes of an identical camera, `pairTracks` refuses
+      everything and the ghost never appears for anybody, whatever people do with
+      their phones. Twelve seeds at each of six dialled angles say it does not:
+
+          dial   mean read   deviation   worst spread   pairs within 5°
+            30      29.0        2.77         11.00           83%
+            45      46.4        1.80          7.00           94%
+            60      62.3        1.43          5.00          100%
+            75      78.0        1.29          5.00          100%
+            82      84.3        1.03          3.00          100%
+            88      85.1        1.11          4.00          100%
+
+      From 60° up every pair of takes agrees inside the gate, and this app asks
+      for side-on footage — so the whole five-degree budget is available for the
+      camera actually moving rather than being spent on the tracker.
+
+      **It improves with angle for a structural reason, not by luck.** The
+      reading is `acos(span / SHOULDER_SPAN_RATIO)` and `d(acos p)/dp` is
+      `-1/√(1-p²)`: unbounded as the projected span approaches full width, which
+      is face-on, and smallest as it approaches zero, which is side-on. The
+      estimator is best conditioned exactly where the app is used. Pinned from
+      both sides — side-on must agree completely, face-on must not — so a change
+      that flattened the curve goes red rather than passing quietly.
+
+      **One limit worth writing down.** The mean saturates: 75° reads 78.0, 82°
+      reads 84.3, 88° reads only 85.1. Past roughly 82 the reading stops tracking
+      the dial. Fine for a gate on a difference between two readings, not fine
+      for anything grading the absolute — the same shape of finding
+      `UNCALIBRATED.external_rotation_deg` carries, reached from a different
+      direction. **Nothing grades this absolute today**; recorded so nothing
+      starts.
+
+      Stated in `GHOST_YAW_TOLERANCE_DEG` rather than in 5, so the checks go red
+      if either the gate or the estimator moves — canaried by tightening the gate
+      to 1°, which reddens exactly the side-on check.
+
+      **R50c still needs more than this.** It wants two clips filmed from the
+      same *spot*, tighter than the ghost's 5°, and cycle 105's 315 ms branch
+      jump between 50° and 55° is the reason. The table above says a 5° gate is
+      affordable; it says nothing about a tighter one, and at 60° the worst
+      spread is already 5.0.
 - [~] **R50** — Use the uncalibrated register the one way it is honest: as a
       delta between two of the player's own serves, on `Consistency`, as data
       rather than as a graded signal. **Split**, because three readings with three

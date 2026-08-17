@@ -26,9 +26,11 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
       normalise to hip centre, scale by shoulder-to-ankle. Refuse a missing
       track, an unmeasured yaw, a yaw gap over 5°, a rubric or serve-type change.
       Pure, no drawing. *(Round 1 — `lib/trackPair.ts`.)*
-- [ ] **A2 · R49b** — Bound how often two clips from one trip agree on camera
+- [x] **A2 · R49b** — Bound how often two clips from one trip agree on camera
       angle within 5°, from `estimateYaw` in `spatial.ts`. The real answer needs
-      fixtures (R59); the bound does not.
+      fixtures (R59); the bound does not. *(Round 7 — the gate spends nothing on
+      noise from 60° up, and the estimator is best conditioned exactly where this
+      app is used.)*
 - [ ] **A3 · R60** — Platform against pinpoint, from ankle separation over time.
       A context reading like serve type, never a graded fault. R51 needs it.
 - [ ] **A4 · R61** — Ball speed off the strings. `planSharedPass` in
