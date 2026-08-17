@@ -180,6 +180,13 @@ The translation from a number to a cue somebody can act on.
 - [x] **C0b · R69·2** — Fix the eight. *(Round 15 — nothing in a component fails
       the editor now except the seven where the lint is wrong. R24's three
       transfer methods kept: the fix was a full stop, not a deletion.)*
+- [x] **C6 · R83** — The third runtime-assembled producer C5 named, read at last.
+      `faultMoveLine` interpolates a flaw title into a fixed frame — the same shape
+      as the practice-card line that ran 27 words against a 25 cap — and was
+      checked only for structure. Driven across **every flaw × every verdict ×
+      both forms, 80 sentences**, off `FLAWS` rather than a pasted list, because a
+      pasted short one is exactly what hid C5's defect. **All 80 clean, longest 12
+      words.** The gap C5 opened is now fully closed.
 - [x] **C5 · audit 6** — **The answer was a gap, and two shipped defects sitting
       in it.** Two copy gates exist and cover different halves — tables, and
       sentences written into JSX. Between them: functions that *assemble* a
