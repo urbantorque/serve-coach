@@ -424,6 +424,31 @@ export async function saveSession(
  * contact, which the current engine would never produce, sitting beside an offset
  * that looks perfectly ordinary.
  */
+/**
+ * A stored kinetic chain, brought up to the shape the engine now returns.
+ *
+ * Every link is nullable by design and a missing one is the honest absence, so
+ * unlike the landing there is nothing here to refuse: a link nobody stored is a
+ * link nobody measured, which is the same thing the engine would say today.
+ */
+function readChain(v: unknown): NonNullable<Analysis['diagnosis']>['chain'] {
+  const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+  const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : null)
+  const link = (x: unknown) => {
+    const l = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
+    return { ms: num(l.ms), confidence: num(l.confidence) ?? 0 }
+  }
+  return {
+    legs: link(o.legs),
+    hips: link(o.hips),
+    shoulders: link(o.shoulders),
+    elbow: link(o.elbow),
+    wrist: link(o.wrist),
+    span_ms: num(o.span_ms),
+    span_ratio: num(o.span_ratio),
+  }
+}
+
 function readLanding(v: unknown): NonNullable<Analysis['diagnosis']>['landing'] {
   const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
   const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
@@ -681,7 +706,26 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
    */
   const landing = readLanding(d.landing)
 
-  if (d.chain && typeof d.chain === 'object') return { ...d, flaws, externalRotation, landing }
+  /*
+   * And the chain read field by field for the same reason the landing is, which
+   * this guard missed for exactly as long.
+   *
+   * `span_ratio` arrived one build after the rest of the chain, so a report
+   * stored in between has every link and a `span_ms` and no ratio at all — and
+   * the early return below handed it straight back, carrying a field the type
+   * declares as `number | null` and storage does not have. Same hole, one field
+   * over: presence was checked and shape was not.
+   *
+   * Repaired rather than dropped, unlike the landing's offset, and the
+   * difference is worth stating. That one had to be refused because it was
+   * computed before a refusal that might have rejected it, so its value was in
+   * doubt. Nothing about `span_ms` changed when the ratio was added — it is the
+   * same measurement, and a missing ratio is a derived number nobody has, which
+   * is precisely what `null` means here.
+   */
+  if (d.chain && typeof d.chain === 'object') {
+    return { ...d, flaws, externalRotation, landing, chain: readChain(d.chain) }
+  }
   const missing = { ms: null, confidence: 0 }
   return {
     ...d,

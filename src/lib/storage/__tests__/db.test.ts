@@ -319,6 +319,35 @@ check('a landing from before the window field is refused rather than carried for
   assert(landing!.anklesSeen === 1 && landing!.confidence === 1, 'the readable fields were discarded too')
 })
 
+check('a chain from before span_ratio comes back with the field, not without it', () => {
+  /*
+   * The same hole as the landing's, one field over, and it had been there just
+   * as long. `span_ratio` arrived a build after the rest of the chain, so a
+   * report stored in between has every link, a `span_ms`, and no ratio — and the
+   * guard checked only that the chain block was present before handing it back.
+   *
+   * Repaired rather than refused, which is the difference from the landing. That
+   * offset had to be dropped because it was computed before a refusal that might
+   * have rejected it, so the value itself was in doubt. Nothing about `span_ms`
+   * changed when the ratio was added: it is the same measurement, and a ratio
+   * nobody stored is a derived number nobody has, which is what `null` means on
+   * every other field here.
+   */
+  const link = { ms: -100, confidence: 1 }
+  const old = normalise(
+    storedWithDiagnosis({
+      chain: { legs: link, hips: link, shoulders: link, elbow: link, wrist: link, span_ms: 120 },
+    }),
+  )
+  const chain = old?.diagnosis?.chain
+  assert(chain !== undefined, 'the chain block was dropped entirely')
+  assert('span_ratio' in chain!, 'a field the type declares came back absent from the object')
+  assert(chain!.span_ratio === null, `a ratio nobody stored came back as ${chain!.span_ratio}`)
+  // The measurement that WAS stored is untouched — this is a repair, not a purge.
+  assert(chain!.span_ms === 120, `span_ms was altered to ${chain!.span_ms}`)
+  assert(chain!.wrist.ms === -100, 'a stored link lost its reading')
+})
+
 check('a landing written by this build survives the read intact', () => {
   // The other direction, so the guard cannot pass by refusing everything.
   const fresh = normalise(
