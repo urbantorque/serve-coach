@@ -43,6 +43,53 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 74 · consolidation gate
+
+**Orchestrator.** Sixth cycle since `loop-green-13`. Number diff, boot, tag.
+
+**308 figures then, 307 now: ten removed, nine added — and this is the first
+gate where the removals are the point.**
+
+**Removed, all artifacts:**
+- `0.0795 0.0613 0.0490 0.0490 0.0401 0.0344` — R52's tempo sweep, measured at a
+  smoothing radius the engine does not use
+- `0.0017`, `1.35`, `1.85` — R52·1's separation check, deleted because R52·2
+  disproved it
+- `0.004` — the leg-drive deviation the register stated and the ensemble
+  contradicted
+
+**Added, the corrections:**
+- `0.2081 0.1621 0.1261 0.0995 0.0749` — the same sweep at the engine's own radius
+- `0.006`, `0.006`, `0.0059` — the corrected deviation, stated and measured
+- `5.8718` — the knee extension's measured deviation, now held against its entry
+
+**Net minus one, because a check that asserted a refuted figure went.**
+
+**Gate.** typecheck clean · lint clean · production build clean (671.32 KiB
+precache) · **1221 checks, 0 failed, exit 0**.
+
+**Boot smoke** on the running server: home renders both straps.
+
+Tag: `loop-green-14`.
+
+**What this block was: the loop auditing its own arithmetic.** Six rounds, and
+five of them found something the loop itself had published:
+
+- **69** — R52·1's separation was measured at the wrong radius; the reading was
+  built, measured, and reverted
+- **70** — the third copy producer, read at last, and clean
+- **71** — two checks still held the artifact figures; 2.3× restated to **2.8×**
+- **72** — the register quotes deviations and nothing checked them; **0.004
+  against a measured 0.0059**
+- **73** — sixteen refusals, all exercised, now gated
+
+**Four of the loop's own recorded figures have now been found stale**: a 315 ms
+jump nobody could reproduce, a landing floor 29% out, a tempo confound at the
+wrong radius, and a deviation 47% off. Every one was written down confidently at
+the time.
+
+---
+
 ### Round 73 · Cycle F — QA and edge cases · `F3 · audit 1`
 
 **Orchestrator.** A refusal path nobody has counted. The real-footage half is
