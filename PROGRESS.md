@@ -43,6 +43,59 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 60 · Cycle A — the engine · `A6 · R80` (new)
+
+**Orchestrator.** Cycle A's rows are done, so the Orchestrator generates — and
+round 59 left the obvious question. It measured the toss reading collapsing
+seven-fold on the axis a side-on camera cannot see. **What does the app do with
+that, end to end?**
+
+**Worse than going quiet.** One 0.10 m wobble on the lateral axis alone:
+
+    yaw    axis named   detected   confidence   value
+    30°      lateral      true        0.76       0.0870
+    45°      depth        TRUE        0.52       0.0850
+    60°      depth        false       0.78       0.0490
+    82°      depth        false       0.99       0.0110
+
+**At 45° a sideways toss is reported as a forwards-and-back fault** — detected,
+drilled, at 0.52 confidence, seven hundredths above `MIN_EVIDENCE`. `diagnose.ts`
+states the cost in its own words: a fault named on the wrong axis *"costs the
+player the practice session they spend on it"*.
+
+**The guard meant to prevent exactly this cannot fire.** `axes.ts` sets
+`dominant: yawDeg > 45 ? 'depth' : yawDeg < 45 ? 'lateral' : null` and argues
+that "45 is not a threshold here — it is where sin and cos cross... so this is an
+equality test, not a judgement call". **The mathematics is right and the
+consequence is that the null case is one float value.** `estimateYaw` returns a
+measurement. **The tie-drop described in three separate comments has never once
+happened.**
+
+**And the confidence does not stand in for it**, because `share` answers a
+different question: how much of *image x* is this axis, not how much of the
+*toss* was seen. At 82° the app reads **0.99** — it knows perfectly which axis
+image x carries — while being blind to the other. **It is most confident exactly
+where it sees least.**
+
+**Not fixed here.** A share floor is the fix and it silences the toss verdict
+across a band of near-corner clips, so it needs a derivation and a number diff —
+R44's rule, and the same reason round 59 left its band alone. Queued as `R80b`.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | This is the sharpest constraint-1 case the loop has found: not a missed fault but a *confidently misattributed* one, with a drill attached |
+| Architecture | pass | Three comments describe a behaviour the code cannot produce; the one in `axes.ts` now says so with the measurement |
+| Product | pass | Nothing changed on screen — the alternative was guessing a floor that silences real clips |
+| Honesty | pass | Both checks fail when the fix lands, and both messages say to **close the finding**, not widen the check |
+
+**Gate.** typecheck clean · lint clean · **1205 checks, 0 failed, exit 0** (+1).
+Canaried by widening the tie to 39–51° — this check and round 59's both reddened,
+which is the intended coupling.
+
+---
+
 ### Round 59 · Cycle F — QA and edge cases · `F5 · audit 3`
 
 **Orchestrator.** Find a number in `tiers.ts` whose band was set against the

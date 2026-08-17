@@ -1898,6 +1898,87 @@ check('a delta between two serves is bounded by both terms, not by either alone'
   assert(perSecond > 0, 'the tempo term came out at or below zero, so there is nothing to bound')
 })
 
+/* ========== the tie the toss axis goes quiet at, which never happens (R80) == */
+
+/**
+ * A lateral toss wobble, named and drilled as a forwards-and-back one.
+ *
+ * R59 measured the toss reading collapsing seven-fold on the axis a side-on
+ * camera cannot see. This is what the app does with that, end to end, and it is
+ * worse than a quiet reading.
+ *
+ * Dial one 0.10 m wobble onto the lateral axis alone and read the flaw:
+ *
+ *     yaw   axis named   detected   confidence   value
+ *     30°     lateral      true        0.76       0.0870
+ *     45°     depth        TRUE        0.52       0.0850
+ *     60°     depth        false       0.78       0.0490
+ *     82°     depth        false       0.99       0.0110
+ *
+ * **AT 45° A SIDEWAYS TOSS IS REPORTED AS A FORWARDS-AND-BACK FAULT**, detected,
+ * at 0.52 confidence — seven hundredths above `MIN_EVIDENCE`. `diagnose.ts` says
+ * exactly what that costs, in its own words: the fault "is stated as 'your toss
+ * drifts sideways' and answered with a drill that constrains one axis, and a
+ * fault named on the wrong axis costs the player the practice session they spend
+ * on it".
+ *
+ * THE GUARD MEANT TO PREVENT THIS CANNOT FIRE. `axes.ts` sets
+ * `dominant: yawDeg > 45 ? 'depth' : yawDeg < 45 ? 'lateral' : null` and argues
+ * that "45 is not a threshold here — it is where sin and cos cross... so this is
+ * an equality test, not a judgement call". The mathematics is right and the
+ * consequence is that the null case is one float value. `estimateYaw` returns a
+ * measurement; it will not return 45.0000000 twice in a lifetime. **The tie-drop
+ * described in three comments has never once happened.**
+ *
+ * And the confidence does not stand in for it, because `share` answers a
+ * different question: how much of *image x* is this axis, not how much of the
+ * *toss* was seen. At 82° the app is 0.99 confident — it knows perfectly well
+ * which axis image x carries — while being blind to the other one. It is most
+ * confident exactly where it sees least.
+ *
+ * NOT FIXED HERE. A share floor is the fix and it silences the toss verdict on a
+ * band of near-corner clips, so it needs a derivation and a number diff — R44's
+ * rule, and the same reason R59 left its band alone. Queued as R80b. Pinned so
+ * the next person meets the 0.52 before they widen anything.
+ */
+check('at the corner a sideways toss is named and drilled as a forwards one', () => {
+  const named = (cameraYaw: number, tossWobbleLateral: number, tossWobble: number) => {
+    const fps = FPS
+    const frames = buildServe({ cameraYaw, tossWobble, tossWobbleLateral, seed: 11 }, fps)
+    const skel = detectServe(frames, fps)
+    const d = diagnose(frames, skel, { tier: 5 })
+    const f = d.flaws.find((x) => x.signal === 'toss_drift_ratio')
+    return { axis: f?.axis, detected: f?.detected ?? false, confidence: f?.confidence ?? 0 }
+  }
+
+  const corner = named(45, 0.1, 0)
+  note(`45° lateral-only: axis=${corner.axis}, detected=${corner.detected}, conf=${corner.confidence.toFixed(2)}`)
+  assert(
+    corner.axis === 'depth' && corner.detected,
+    'the corner case no longer names a lateral wobble as a depth fault — the tie-drop may have ' +
+      'been widened, which is R80b, and this finding wants closing rather than keeping',
+  )
+  assert(
+    corner.confidence < 0.6,
+    `the corner reading now carries ${corner.confidence.toFixed(2)} confidence, so the coin-flip ` +
+      'attribution is being stated more firmly than it was, not less',
+  )
+
+  /*
+   * And the other end, which is the half that makes the confidence figure damning
+   * rather than merely low: side-on the app is *more* confident, not less, while
+   * missing the fault entirely.
+   */
+  const sideOn = named(82, 0.1, 0)
+  note(`82° lateral-only: axis=${sideOn.axis}, detected=${sideOn.detected}, conf=${sideOn.confidence.toFixed(2)}`)
+  assert(
+    !sideOn.detected && sideOn.confidence > corner.confidence,
+    `side-on reads ${sideOn.confidence.toFixed(2)} against the corner's ${corner.confidence.toFixed(2)} — ` +
+      'the confidence no longer rises as the app goes blind, so it may have started describing ' +
+      'coverage rather than axis attribution',
+  )
+})
+
 /* ============= what a shared band costs the axis nobody can see (F5) ======= */
 
 /**

@@ -212,6 +212,24 @@ export function imageXSplit(yawDeg: number, spatialConfidence = 1): ImageXSplit 
     // told image x was across the body. 45 is not a threshold here — it is
     // where sin and cos cross, the one angle at which image x is exactly half
     // of each — so this is an equality test, not a judgement call.
+    //
+    // WHICH MEANS THE NULL CASE HAS NEVER HAPPENED, and R80 measured what that
+    // costs. `estimateYaw` returns a measurement; it will not return 45.0000000.
+    // So the tie-drop that this comment and two more in `diagnose.ts` describe
+    // fires on exactly one float value and never in practice — and at 45.1° the
+    // app commits to an axis on a coin flip. Dial a purely lateral toss wobble at
+    // 45° and it is reported as a forwards-and-back fault, detected, at 0.52
+    // confidence, seven hundredths above `MIN_EVIDENCE`.
+    //
+    // The confidence does not stand in for the guard either, because `share`
+    // answers how much of *image x* is this axis, not how much of the *toss* was
+    // seen. Side-on the app reads 0.99 — it knows perfectly which axis image x
+    // carries — while being blind to the other one. It is most confident exactly
+    // where it sees least.
+    //
+    // The fix is a share floor, and it silences the toss verdict across a band of
+    // near-corner clips, so it needs a derivation and a number diff rather than a
+    // guess. R80b. Pinned in `depth.test.ts` meanwhile.
     dominant: yawDeg > 45 ? 'depth' : yawDeg < 45 ? 'lateral' : null,
     framing: depthReadable && lateralReadable ? 'both_axes' : depthReadable ? 'depth_only' : 'lateral_only',
     spatial_confidence: conf,
