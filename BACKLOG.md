@@ -69,10 +69,17 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
       spend on it". At 82° the app reads **0.99 confident while missing the fault
       entirely**: `share` answers how much of image x is this axis, not how much of
       the toss was seen.
-- [ ] **A6b · R80b** — The share floor. Silences the toss verdict across a band of
-      near-corner clips, so it needs a derivation and a number diff — R44's rule.
-      Both R59's and R80's checks go red when it lands, by design: they are
-      findings to close, not behaviour to keep.
+- [x] **A6b · R80b** — **The share floor was refused by its own derivation, and
+      shipped as a yaw band instead.** Driving one wobble per axis and reading
+      which fault the engine names: misattribution happens at 35, 40, 45 and 50,
+      and stops at 30 and 55. **0.67 of dominant share is safe at 55° and unsafe
+      at 35°** — share is symmetric about 45 and the two axes are not, which is
+      F5's seven-fold collapse showing up again. So `AXIS_BAND = [32, 53]`, drawn
+      from where misattribution actually stops rather than from a threshold on a
+      symmetric quantity. **Cost stated: no toss axis is named across 21° of the
+      60° the app accepts** — a corner clip gets no toss verdict instead of a
+      wrong one. Number-diffed: nothing moved but the defect's own figure
+      disappearing. R59's and R80's checks both closed, as their messages asked.
 
 ## Cycle B — Biomechanics and fault detection
 

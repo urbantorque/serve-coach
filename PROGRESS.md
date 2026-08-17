@@ -43,6 +43,64 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 67 · Cycle A — the engine · `A6b · R80b`
+
+**Orchestrator.** The fix round 60 queued: a floor on the axis share, so the app
+stops naming an axis it cannot tell apart. R44's rule attached — derivation and
+number diff.
+
+**And the derivation refused the fix as specified.** Driving one 0.10 m wobble
+onto each axis in turn and reading which fault the engine names:
+
+    yaw   dominant share   a cross-axis wobble is…
+    20°       0.88          not detected       ✓
+    30°       0.75          not detected       ✓
+    35°       0.67          DETECTED, misnamed ✗
+    45°       0.50          DETECTED, misnamed ✗
+    50°       0.59          DETECTED, misnamed ✗
+    55°       0.67          not detected       ✓
+
+**0.67 of share is safe at 55° and unsafe at 35°.** A share floor cannot express
+that. Share is symmetric about 45 and **the two axes are not** — F5 measured the
+depth reading holding near 0.083 at every angle while the lateral one collapses
+from 0.0755 to 0.0101. Same share, different readings, so the same floor buys
+different protection on each side.
+
+**So it ships as a band on the angle**, drawn from where misattribution actually
+stops — bad at 35 and 50, clean at 30 and 55 — placed just inside the clean
+neighbours. `AXIS_BAND = [32, 53]`. Not centred on 45 and not symmetric, because
+the evidence is not.
+
+**The cost is stated rather than hidden: no toss axis is named across 21° of the
+60° this app accepts.** A player filming from a corner now gets no toss verdict
+instead of a wrong one. `diagnose.ts` already dropped the signal when `dominant`
+is null, and the report already dropped its own row on the same tie — **that path
+existed and had never once run.**
+
+**Number diff: four figures out, three in, and no engine reading moved.** Two are
+rows I re-anchored away from the band; the third is **`0.52` disappearing** — the
+misattribution confidence itself, gone.
+
+**Both earlier findings closed, exactly as their own messages asked.** R80's
+check failed with *"this finding wants closing rather than keeping"* and now
+asserts the fix; R59's lost its 45° row and says why. The band's edges are
+checked too, because a band that only silences its middle is narrower than the
+one the measurement asked for.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The proposed fix was refused by its own derivation and the refusal is the finding. A share floor would have looked right and protected one side |
+| Honesty | pass | The silence is priced in the entry: 21° of 60°, and what the player gets instead |
+| Architecture | pass | The null path existed in three files and had never run. This is the first time the app goes quiet about a toss axis |
+| Product | pass | No verdict beats a wrong verdict with a drill attached — `diagnose.ts` says the cost is the practice session |
+
+**Gate.** typecheck clean · lint clean · production build clean · **1217 checks,
+0 failed, exit 0**.
+
+---
+
 ### Round 66 · Cycle F — QA and edge cases · `F6 · audit 7`
 
 **Orchestrator.** Re-read the oldest blocked item and ask whether it is still

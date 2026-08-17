@@ -230,7 +230,7 @@ export function imageXSplit(yawDeg: number, spatialConfidence = 1): ImageXSplit 
     // The fix is a share floor, and it silences the toss verdict across a band of
     // near-corner clips, so it needs a derivation and a number diff rather than a
     // guess. R80b. Pinned in `depth.test.ts` meanwhile.
-    dominant: yawDeg > 45 ? 'depth' : yawDeg < 45 ? 'lateral' : null,
+    dominant: yawDeg > AXIS_BAND[1] ? 'depth' : yawDeg < AXIS_BAND[0] ? 'lateral' : null,
     framing: depthReadable && lateralReadable ? 'both_axes' : depthReadable ? 'depth_only' : 'lateral_only',
     spatial_confidence: conf,
   }
@@ -266,6 +266,43 @@ export function imageXSplitFrom(spatial: Spatial): ImageXSplit {
  * confidence and the evidence gates downstream decide whether that is enough to
  * tell the player anything.
  */
+/**
+ * The yaw band where no axis is named at all.
+ *
+ * R80 found the old guard — an exact equality on 45 — could never fire, and
+ * measured what that cost: a purely sideways toss wobble at 45° comes back as a
+ * detected forwards-and-back fault, drilled, at 0.52 confidence.
+ *
+ * **R80b PROPOSED A SHARE FLOOR AND THE MEASUREMENT REFUSED IT.** Driving one
+ * 0.10 m wobble on each axis in turn and reading which fault the engine names:
+ *
+ *     yaw   dominant share   a cross-axis wobble is…
+ *     20°       0.88          not detected      ✓
+ *     30°       0.75          not detected      ✓
+ *     35°       0.67          DETECTED, misnamed ✗
+ *     45°       0.50          DETECTED, misnamed ✗
+ *     50°       0.59          DETECTED, misnamed ✗
+ *     55°       0.67          not detected      ✓
+ *
+ * **0.67 of share is safe at 55° and unsafe at 35°.** A share floor cannot
+ * express that, because share is symmetric about 45 and the two axes are not:
+ * F5 measured the depth reading holding near 0.083 across every angle while the
+ * lateral one collapses from 0.0755 to 0.0101. Same share, different readings,
+ * so the same floor buys different protection on each side.
+ *
+ * So it is a band on the angle, derived from where misattribution actually
+ * stops — bad at 35 and 50, clean at 30 and 55 — placed just inside the clean
+ * neighbours on each side. Not centred on 45 and not symmetric, because the
+ * evidence is not.
+ *
+ * The cost is stated rather than hidden: **no toss axis is named across 21° of
+ * the 60° this app accepts**, so a player filming from a corner gets no toss
+ * verdict instead of a wrong one. `diagnose.ts` already drops the signal when
+ * `dominant` is null and the report drops its own row on the same tie, so both
+ * halves of the app go quiet together — that path existed and had never run.
+ */
+export const AXIS_BAND: [number, number] = [32, 53]
+
 export function readImageX(dxImage: number, axis: BodyAxis, split: ImageXSplit): AxisReading {
   const a = axis === 'depth' ? split.depth : split.lateral
   if (!a.readable || !Number.isFinite(dxImage)) return { value: null, confidence: 0 }

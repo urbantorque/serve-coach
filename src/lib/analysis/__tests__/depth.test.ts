@@ -2035,18 +2035,33 @@ check('at the corner a sideways toss is named and drilled as a forwards one', ()
     return { axis: f?.axis, detected: f?.detected ?? false, confidence: f?.confidence ?? 0 }
   }
 
+  /*
+   * CLOSED BY R80b, WHICH IS WHAT THIS CHECK ASKED FOR. It used to assert the
+   * defect — that a sideways wobble at 45° came back as a detected
+   * forwards-and-back fault at 0.52 confidence — and its failure message said
+   * "this finding wants closing rather than keeping". The band landed; it is
+   * closed, and it now asserts the fix.
+   *
+   * Nothing is named across the band at all, which is the whole point: no axis
+   * beats a coin flip in there, so the app says nothing rather than something.
+   */
   const corner = named(45, 0.1, 0)
-  note(`45° lateral-only: axis=${corner.axis}, detected=${corner.detected}, conf=${corner.confidence.toFixed(2)}`)
+  note(`45° lateral-only: axis=${corner.axis ?? 'none'}, detected=${corner.detected}`)
   assert(
-    corner.axis === 'depth' && corner.detected,
-    'the corner case no longer names a lateral wobble as a depth fault — the tie-drop may have ' +
-      'been widened, which is R80b, and this finding wants closing rather than keeping',
+    corner.axis === undefined && !corner.detected,
+    `the corner still names an axis (${corner.axis}) and detects=${corner.detected} — the band ` +
+      'is no longer covering 45°, where neither axis beats a coin flip',
   )
-  assert(
-    corner.confidence < 0.6,
-    `the corner reading now carries ${corner.confidence.toFixed(2)} confidence, so the coin-flip ` +
-      'attribution is being stated more firmly than it was, not less',
-  )
+  // And both edges of the band, because a band that only silences its middle is
+  // a narrower band than the one the measurement asked for.
+  for (const yaw of [35, 50]) {
+    const edge = named(yaw, 0.1, 0)
+    assert(
+      !edge.detected,
+      `at ${yaw}° a sideways wobble is still detected as ${edge.axis} — misattribution was ` +
+        'measured here, and the band was drawn to cover it',
+    )
+  }
 
   /*
    * And the other end, which is the half that makes the confidence figure damning
@@ -2113,7 +2128,14 @@ check('one toss wobble reads seven times smaller on the axis a side-on camera ca
     return { mean: v.reduce((a, b) => a + b, 0) / (v.length || 1), n: v.length }
   }
 
-  const rows = [30, 45, 60, 82].map((yaw) => ({
+  /*
+   * 30 and 60 rather than 30, 45, 60, 82 — R80b's band silences the toss axis
+   * between 32° and 53°, so the rig returns no reading at 45 and this row cannot
+   * be built there. That is the band working, not the finding going away: the
+   * seven-fold collapse is measured on the angles the app still names an axis
+   * at, which is the only place it can cost anybody anything.
+   */
+  const rows = [20, 30, 60, 82].map((yaw) => ({
     yaw,
     depth: read({ cameraYaw: yaw, tossWobble: 0.1, tossWobbleLateral: 0 }),
     lateral: read({ cameraYaw: yaw, tossWobble: 0, tossWobbleLateral: 0.1 }),
