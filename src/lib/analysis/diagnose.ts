@@ -128,8 +128,13 @@ export interface Diagnosis {
    *
    * `null` when the landing could not be read, never a zero: a zero here is a
    * player who finished square, and a player nobody could see did not finish
-   * square. Two refusals, and the second is the one that will fire in life — a
-   * clip framed to show a racket often does not show a foot.
+   * square. THREE refusals — the landmarks unseen, the feet out of shot, and the
+   * clip having ended before the landing happened. The last two are the ones
+   * that will fire in life: a clip framed to show a racket often does not show a
+   * foot, and a player who stops recording as the ball leaves never filmed the
+   * landing at all. That third one was missing when this field first shipped,
+   * and a truncated clip reported a confident zero — the exact sentence above,
+   * violated by its own author.
    */
   landing: LandingBalance
   flaws: FlawFinding[]
@@ -222,6 +227,16 @@ export interface LandingBalance {
   offset: number | null
   /** Mean visibility of the four landmarks it is built from, 0–1. */
   confidence: number
+  /**
+   * How long after contact the finish keyframe actually landed, in seconds.
+   *
+   * Kept for the reason `ExternalRotation.lever` is kept: it is a refusal this
+   * reading makes on its own account, and a reader has to be able to see which
+   * one fired. `keys.finish` is *meant* to be half a second past contact, but
+   * `clockOf.at` clamps to the last frame, so a clip the player stopped
+   * recording early puts the finish wherever the footage ran out.
+   */
+  secondsAfterContact: number
   /**
    * How well the two ankles were seen at the finish, 0–1.
    *
@@ -767,7 +782,11 @@ export function diagnose(
   /* --- external rotation, measured and not named ------------------------ */
   const externalRotation = readExternalRotation(at(keys.trophy), R)
   // The first reading in this engine taken past contact. See LandingBalance.
-  const landing = readLandingBalance(at(keys.finish), bodyHeight)
+  const landing = readLandingBalance(
+    at(keys.finish),
+    bodyHeight,
+    at(keys.finish).t - contactT,
+  )
 
   /* --- the toss --------------------------------------------------------- */
   const liftFrom = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
@@ -1053,6 +1072,14 @@ function offLineDrift(
 const round2 = (v: number) => Math.round(v * 100) / 100
 const round3 = (v: number) => Math.round(v * 1000) / 1000
 
+/**
+ * How long after contact a finish has to be before a landing can be read from it.
+ *
+ * See the refusal in `readLandingBalance` for the derivation. Under this the
+ * reading loses most of the fall and at the extreme reports a confident zero.
+ */
+const MIN_LANDING_SECONDS = 0.3
+
 function roundAll(signals: Record<string, number>): Record<string, number> {
   const out: Record<string, number> = {}
   for (const [k, v] of Object.entries(signals)) {
@@ -1142,14 +1169,15 @@ export const ER_LEAN_SENSITIVITY = 0.5
  * motion — the body is still travelling at the finish, so a window either side
  * would average away part of the very thing being measured.
  */
-function readLandingBalance(f: Frame, bodyHeight: number): LandingBalance {
+function readLandingBalance(f: Frame, bodyHeight: number, secondsAfterContact: number): LandingBalance {
   const L = f.image
   const parts = [L[LM.leftHip], L[LM.rightHip], L[LM.leftAnkle], L[LM.rightAnkle]]
   const confidence = round2(mean(parts.map((p) => p?.visibility ?? 0)))
   const anklesSeen = round2(
     Math.min(L[LM.leftAnkle]?.visibility ?? 0, L[LM.rightAnkle]?.visibility ?? 0),
   )
-  const none: LandingBalance = { offset: null, confidence, anklesSeen }
+  const after = round2(secondsAfterContact)
+  const none: LandingBalance = { offset: null, confidence, secondsAfterContact: after, anklesSeen }
   if (parts.some((p) => !p) || !(bodyHeight > 1e-6)) return none
 
   // The evidence bar every other reading uses, and then the one this reading
@@ -1159,9 +1187,38 @@ function readLandingBalance(f: Frame, bodyHeight: number): LandingBalance {
   if (confidence < MIN_EVIDENCE) return none
   if (anklesSeen < ANKLES_SEEN_FLOOR) return none
 
+  /*
+   * And the refusal that has nothing to do with what the camera saw: whether the
+   * landing had happened yet.
+   *
+   * `keys.finish` is meant to be half a second past contact, but `clockOf.at`
+   * clamps to the last frame — so a player who stopped recording as the ball
+   * left gets a "finish" that is barely past contact, on a body still travelling
+   * upward. Both refusals above pass cleanly there, because the feet really are
+   * in shot; what is missing is the landing.
+   *
+   * Measured on a dialled 0.12 m collapse, cutting the same clip shorter and
+   * shorter, this reads 0.066 at +0.44 s, 0.046 at +0.30, 0.014 at +0.15, and
+   * then 0.000 at +0.06 and +0.02 — a confident zero at full confidence, which
+   * is exactly the sentence `LandingBalance.offset` forbids: a zero here is a
+   * player who finished square, and a clip that ended is not a player who
+   * finished square.
+   *
+   * The floor is 0.3 s because that is where the reading still carries most of
+   * the fall — about 70% of its settled value — and below it it collapses fast.
+   * It is deliberately under the 0.44 s an untruncated clip gives, so ordinary
+   * footage is not refused for being ordinary.
+   */
+  if (!(after >= MIN_LANDING_SECONDS)) return none
+
   const hipX = (L[LM.leftHip].x + L[LM.rightHip].x) / 2
   const ankleX = (L[LM.leftAnkle].x + L[LM.rightAnkle].x) / 2
-  return { offset: round3(Math.abs(hipX - ankleX) / bodyHeight), confidence, anklesSeen }
+  return {
+    offset: round3(Math.abs(hipX - ankleX) / bodyHeight),
+    confidence,
+    secondsAfterContact: after,
+    anklesSeen,
+  }
 }
 
 function readExternalRotation(f: Frame, R: ReturnType<typeof sided>): ExternalRotation {

@@ -646,7 +646,7 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
   const landing =
     d.landing && typeof d.landing === 'object'
       ? d.landing
-      : { offset: null, confidence: 0, anklesSeen: 0 }
+      : { offset: null, confidence: 0, secondsAfterContact: 0, anklesSeen: 0 }
 
   if (d.chain && typeof d.chain === 'object') return { ...d, flaws, externalRotation, landing }
   const missing = { ms: null, confidence: 0 }

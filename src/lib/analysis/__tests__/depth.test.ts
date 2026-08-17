@@ -632,6 +632,47 @@ check('the landing is read from the picture plane and tracks what the rig posed'
   )
 })
 
+check('a clip that ended before the landing is refused, not reported as square', () => {
+  /*
+   * The refusal that has nothing to do with what the camera saw.
+   *
+   * `keys.finish` is meant to be half a second past contact, but `clockOf.at`
+   * clamps to the last frame — so a player who stopped recording as the ball
+   * left gets a "finish" barely past contact, on a body still travelling. The
+   * other two refusals both pass cleanly there: the feet really are in shot.
+   *
+   * Before `MIN_LANDING_SECONDS` this reported an offset of exactly 0 at a
+   * confidence of 1 — "finished perfectly square, and we are certain" — from a
+   * clip that simply stopped. `LandingBalance.offset` forbids that in its own
+   * first sentence, which is what makes it worth a check rather than a comment.
+   */
+  const full = buildServe({ ...DEPTH_AWARE, seed: SEEDS[0], landingLean: 0.12 }, FPS)
+  const contactT = full[detectServe(full, FPS).keys.contact].t
+  const readAt = (afterContact: number) => {
+    const cut = full.filter((f) => f.t <= contactT + afterContact)
+    const skel = detectServe(cut, FPS)
+    return diagnose(cut, skel, { tier: 5 }).landing
+  }
+
+  const whole = readAt(0.5)
+  assert(typeof whole.offset === 'number', 'an untruncated clip was refused')
+  assert(whole.secondsAfterContact >= 0.3, `an untruncated finish landed at +${whole.secondsAfterContact}s`)
+
+  for (const cut of [0.15, 0.06, 0.02]) {
+    const short = readAt(cut)
+    assert(
+      short.offset === null,
+      `a clip ending +${cut}s after contact reported ${short.offset} — a body that has not landed ` +
+        'yet read as one that finished square',
+    )
+    // The feet were visible the whole time; it is the landing that is missing,
+    // and the returned window is what says so.
+    assert(short.anklesSeen >= 0.5, 'the wrong refusal fired — this is about time, not visibility')
+    assert(short.secondsAfterContact < 0.3, `the refusal reported +${short.secondsAfterContact}s`)
+  }
+  note(`  untruncated +${whole.secondsAfterContact}s reads ${whole.offset}; +0.15s and shorter refuse`)
+})
+
 check('a landing nobody could see is refused rather than invented', () => {
   /*
    * The refusal that will fire in life. A clip framed to show a racket often
