@@ -1015,7 +1015,7 @@ family, different surface, different refusals.
       `a located serve is still read exactly where it was found` red, for the
       different and correct reason that the window moved off the serve. Two
       checks, one of them mine, neither over-broad.
-- [~] **R49** — Split, because the yaw gate turned out to need a number the
+- [x] **R49** — Split, because the yaw gate turned out to need a number the
       stored report could not honestly supply. Sub-rounds:
 
         · **R49·1 — [x] tell an unread camera angle apart from one that reads 45.**
@@ -1243,6 +1243,44 @@ family, different surface, different refusals.
           refused when that bound eats it. The residual 21% tempo-dependence is
           the bound's whole content, so this one needs `motionSeconds` on both
           serves and refuses without it.
+
+- [x] **R67** — The store ratchet was counting pictures and tracks, and a report
+      is not made of pictures and tracks.
+
+      `storeWorstCase` in `footprint.test.ts` was stills plus track, full stop.
+      That was a fair scope while those were the only two things anybody was
+      adding — and it meant **three consecutive rounds put fields into a stored
+      report without any number in the storage gate being able to move.**
+      `yaw_measured` (R49·1) and `Consistency.uncalibrated` (R50·1) are both
+      invisible to it, and so is everything a report has always carried:
+      seventeen measurements with a headline, a blurb and a drill apiece, six
+      captioned phases, the diagnosis, the triage block.
+
+      Measured off the same rig the track figures come from: **9.2 kB of
+      measurements and copy, 0.8 kB of captions** — a tenth of a report's own
+      track, on every report the store keeps. Multiplied by `sessions` rather
+      than by `min(sessions, KEEP_STILLS)`, because the prune ladder strips
+      pictures and downgrades tracks and there is nothing in it that strips the
+      words.
+
+      **What that did to the ratchet is the finding.** `STORE_RATCHET_BYTES` was
+      set "a third above the measured worst case" and the worst case undercounted
+      by 0.6 MB. Counted whole, a full history is 2.9 MB against a 3.0 MB line —
+      **1.03× of headroom, not 1.33×.** Left alone it would have fired on the
+      next stored boolean and told nobody anything, which is the same uselessness
+      as a line set too loose, arriving from the other side.
+
+      Re-derived to 3.9e6 at the same third the comment always claimed. The
+      policy did not move; the measurement it rests on was wrong. Both canaries
+      still fire at the new line — twice the history breaches it, and a track
+      four times as wide breaches it — and zeroing the new term reddens the
+      headroom check *and* the breach canary, which is the evidence that the
+      ratchet and the measurement are now coupled rather than merely both
+      present.
+
+      Phase 8's own additions, for the record and so the next field has something
+      to be compared against: **19 bytes for the camera flag, 71 for one delta.**
+      Inside the noise, and now countable.
 
 - [ ] **R66** — A tally that does not cover its own file. R50·1 found
       `copy.test.ts` calling `report()` mid-file and fixed that one instance; a

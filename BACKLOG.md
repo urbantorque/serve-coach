@@ -87,9 +87,11 @@ Where state lives, what it costs, what it does to a warm phone.
       report predates profiles and must land under one default player with no
       prompt. Produces the split plan.
 - [ ] **D3 · audit 5** — A stored-data shape that predates its current writer.
-- [ ] **D4** — The stored byte cost of a report, re-measured against
+- [x] **D4 · R67** — The stored byte cost of a report, re-measured against
       `footprint.test.ts` after Phase 8's new fields. A report that grew and
-      nobody noticed is the failure this budget exists to catch.
+      nobody noticed is the failure this budget exists to catch. *(Round 4 — the
+      gate was counting pictures and tracks and nothing else; the ratchet had
+      1.03× of headroom, not the third it claimed.)*
 
 ## Cycle E — Data management and export
 

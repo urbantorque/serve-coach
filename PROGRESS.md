@@ -44,6 +44,46 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 4 · Cycle D — performance and architecture · `D4 · R67`
+
+**Orchestrator.** A hardening round, and the portfolio rule wanted one: rounds 1
+to 3 were engine, measurement and player-visible. Picked over `D1 · R54 spike`
+because three consecutive rounds had added fields to stored reports and the
+storage gate had not been asked about any of them. Lead builder: Release
+Architect. Column served: *Does it work on my clip at all* — a store that
+silently outgrows its budget is a player losing serves.
+
+**What it found.** `storeWorstCase` counted stills plus track and nothing else,
+so the gate was blind to everything else a report carries — and blind by
+construction, not by accident, since nothing it multiplied had anything to do
+with the words. The correction is one term. What the term revealed is the round:
+the ratchet claimed a third of headroom and had 1.03×.
+
+**The judgement call, stated plainly.** Raising a threshold is the move this
+codebase distrusts most, and `LOOP.md` constraint 2 names it as a defect rather
+than a fix. This is the exception the rule leaves room for and it is worth being
+explicit about why: the number was not raised to admit something that was
+failing. It was re-derived from a corrected measurement, at the policy the
+comment already stated, and it is *still a gate* — both canaries fire at the new
+line, and zeroing the new term reddens the headroom check and the breach canary
+together. Had the ratchet been left at 3.0 MB it would have gone red on the next
+stored boolean, which is a gate that reports nothing.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Every figure measured off the rig, none estimated. 19 bytes for the camera flag and 71 for one delta are stated so the next field has something to be compared against |
+| Performance | pass | This *is* the performance critic's own instrument, and it now sees a third of a report it could not see before |
+| Privacy | pass | Test-only; nothing shipped changes |
+| Architecture | pass | One term added to one function, declared beside the two constants it sits with — a `const` read before its initialiser comes back `NaN` here rather than throwing, which is how a budget check stops being one |
+| Product | pass | Not a product round |
+
+**Gate.** typecheck clean · lint clean · **1048 checks passed, 0 failed, exit 0**
+(+3). No browser verification: nothing player-visible changed.
+
+---
+
 ### Round 3 · Cycle C — pedagogical coaching and UI · `C1 · R49·3`
 
 **Orchestrator.** Head of Cycle C, and it closes the feature R49·1 and R49·2

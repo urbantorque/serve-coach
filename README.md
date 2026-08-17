@@ -1722,6 +1722,24 @@ today's worst case, not the device ceiling divided by something: nobody has
 measured a phone, and three of the largest things in an analysis are unreachable
 from script, so a split would be arithmetic dressed as evidence.
 
+**The store's own ratchet was counting pictures and tracks, and a report is not
+made of those.** It came to stills plus swing track and nothing else, which was a
+fair scope while those were the only two things being added — and it meant three
+rounds in a row could put fields into a stored report with no number in the
+storage gate able to move. Measured on the rig: the rest of a report is **9.2 kB
+of measurements and copy plus 0.8 kB of captions**, on every report the store
+keeps, because the prune ladder strips pictures and downgrades tracks and there
+is nothing in it that strips the words.
+
+Counted whole, a full history is 2.9 MB — against a ratchet set at 3.0 MB "a
+third above the measured worst case". That left **1.03× of headroom, not 1.33×**,
+so the line would have fired on the next stored boolean and told nobody anything,
+which is the same uselessness as a line set too loose arriving from the other
+side. The ratchet is re-derived to 3.9 MB at the same third it always claimed:
+the policy did not move, the measurement it rested on was wrong. Both its
+canaries still fire, and zeroing the new term reddens the headroom check and the
+breach canary together.
+
 **History is bounded, numbers before pictures.** Nearly all of a stored report's
 size is its six keyframe stills, and those are the part nobody revisits after a
 few weeks — while the measurements are what the trend chart and the practice

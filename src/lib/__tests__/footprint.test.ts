@@ -30,6 +30,7 @@ import { MAX_FINE_FRAMES } from '../pose/extract'
 import { buildServe } from '../analysis/syntheticServe'
 import { buildPhases, detectServe } from '../analysis/phases'
 import { MAX_SERVES } from '../analysis/serves'
+import { measure } from '../analysis/metrics'
 import {
   KEEP_ALL_UNDER_PRESSURE,
   KEEP_STILLS,
@@ -390,6 +391,21 @@ const RIG_POSES_BYTES = sizeOf(rigPoses)
 /** A still at the high end of what one has been measured at, times six. */
 const STILLS_PER_REPORT = 6 * 8 * 1024
 
+/*
+ * Everything a stored report carries that is neither a picture nor a track.
+ *
+ * Declared beside the other two rather than beside the checks that discuss it,
+ * because `storeWorstCase` below reads all three and a constant defined after
+ * its first use reads back as `NaN` rather than as an error — which is how a
+ * budget check silently stops being one.
+ */
+const rigSideView = rigSkeleton.shoulderWidth / rigSkeleton.bodyHeight < 0.1
+const rigFundamentals = measure(rigFrames, rigSkeleton, rigSideView)
+const RIG_WORDS_BYTES = sizeOf(rigFundamentals)
+/** The captions and labels, without the pictures the ratchet already counts. */
+const RIG_PHASES_BYTES = sizeOf(rigPhases.map((p) => ({ ...p, thumbnail: '' })))
+const RIG_REST_BYTES = RIG_WORDS_BYTES + RIG_PHASES_BYTES
+
 check('the pressure ladder gains a rung that beats deleting a report', () => {
   /*
    * The gap this closes is real and is in `planPrune` today. Once the quota
@@ -426,11 +442,37 @@ check('the pressure ladder gains a rung that beats deleting a report', () => {
  * what actually makes the two checks below disagree, and it is still an order of
  * magnitude clear of the seed-to-seed spread in the track figure itself (21.3 to
  * 21.8 kB across six rigs).
+ *
+ * RE-DERIVED ONCE, when `storeWorstCase` started counting the whole report
+ * rather than its pictures and its track. The policy did not change and the
+ * number did: at 3e6 against the corrected worst case the headroom was 1.03×,
+ * not the third stated above, so the line would have fired on the next stored
+ * boolean and told nobody anything. A threshold calibrated against an
+ * undercount is not a threshold anybody may leave alone. The two checks below
+ * are what prove it is still a gate rather than a line drawn under today.
  */
-const STORE_RATCHET_BYTES = 3e6
+const STORE_RATCHET_BYTES = 3.9e6
 
+/**
+ * What a full history costs, counted whole.
+ *
+ * THE `+ RIG_REST_BYTES` TERM IS THE CORRECTION THIS ROUND MADE. This used to be
+ * stills plus track and nothing else, which was a fair scope while those were
+ * the only two things anybody was adding — and it meant three consecutive rounds
+ * could put fields into a stored report without any number here moving. A stored
+ * `Session` is `Omit<Analysis, 'frames'>`: seventeen measurements each carrying a
+ * headline, a blurb and a drill, six captioned phases, a diagnosis, a triage
+ * block, and now a comparison block with ungraded deltas on it.
+ *
+ * Multiplied by `sessions` rather than by `min(sessions, KEEP_STILLS)`, and the
+ * difference is the point: the prune ladder strips pictures and downgrades
+ * tracks, and there is nothing in it that strips the words. They are on every
+ * report the store keeps, forever.
+ */
 const storeWorstCase = (sessions: number, trackBytes: number) =>
-  Math.min(sessions, KEEP_STILLS) * STILLS_PER_REPORT + sessions * trackBytes
+  Math.min(sessions, KEEP_STILLS) * STILLS_PER_REPORT +
+  sessions * trackBytes +
+  sessions * RIG_REST_BYTES
 
 check('a track on every kept report stays inside the store ratchet', () => {
   const today = storeWorstCase(MAX_SESSIONS, RIG_POSES_BYTES)
@@ -443,6 +485,89 @@ check('a track on every kept report stays inside the store ratchet', () => {
     `full history: ${mb(today)} MB today, ${mb(withTracks)} MB with a track on each of ${MAX_SESSIONS} — stills ${mb(KEEP_STILLS * STILLS_PER_REPORT)} MB of it`,
   )
   note(`per report the track costs ${((RIG_TRACK_BYTES - RIG_POSES_BYTES) / 1024).toFixed(1)} kB more than the six poses it replaces, and ${(STILLS_PER_REPORT / 1024).toFixed(0)} kB less than the photographs it outlives`)
+})
+
+/* ------------------------------------------- and everything that is not a picture -- */
+
+heading('What the ratchet was not counting')
+
+/*
+ * THE GAP THIS ROUND FOUND. `storeWorstCase` above is stills plus track and
+ * nothing else, which was a reasonable scope when those two were the only things
+ * anybody was adding — and it means the store gate has never seen the rest of a
+ * report at all. A stored `Session` is `Omit<Analysis, 'frames'>`: seventeen
+ * measurements each carrying a headline, a blurb and a drill, six captioned
+ * phases, a diagnosis, a triage block, and now a comparison block with ungraded
+ * deltas on it. Three rounds in a row have added stored fields (`yaw_measured`,
+ * `Consistency.uncalibrated`) and not one of them could have moved a number
+ * here.
+ *
+ * Measured rather than estimated, off the same rig the track figures come from.
+ */
+note(
+  `the words on one report: ${(RIG_WORDS_BYTES / 1024).toFixed(1)} kB of measurements and copy, ` +
+    `${(RIG_PHASES_BYTES / 1024).toFixed(1)} kB of captions`,
+)
+
+check('the words on a report are worth counting, and were not being counted', () => {
+  /*
+   * Not a defect in the ratchet's arithmetic — a gap in its scope, stated as a
+   * number so nobody has to guess at it again. The claim is only that this is
+   * large enough to matter beside the track it sits next to; whether it breaches
+   * anything is the next check's question.
+   */
+  const words = RIG_WORDS_BYTES + RIG_PHASES_BYTES
+  assert(
+    words > RIG_TRACK_BYTES / 4,
+    `the rest of a report is ${(words / 1024).toFixed(1)} kB against a ${(RIG_TRACK_BYTES / 1024).toFixed(1)} kB track — ` +
+      'small enough that leaving it out of the ratchet costs nothing, which was not true when this was written',
+  )
+})
+
+check('the ratchet keeps the headroom its own comment claims for it', () => {
+  /*
+   * THE FINDING, AND IT IS THE REASON THIS ROUND WAS WORTH RUNNING. The ratchet
+   * was set "a third above the measured worst case" — and that worst case was
+   * stills plus track, which is not what a report costs. Counted whole it comes
+   * to 2.9 MB against a 3.0 MB line: **1.03× of headroom, not 1.33×.**
+   *
+   * The number that moved is the measurement, not the policy. `STORE_RATCHET_
+   * BYTES` is re-derived from the corrected worst case at the same third it
+   * always claimed, which is the opposite of loosening a threshold to admit
+   * something — the threshold was calibrated against an undercount, and left
+   * alone it would have fired on the next stored boolean and told nobody
+   * anything. The two canaries below are what prove it is still a gate.
+   */
+  const headroom = STORE_RATCHET_BYTES / storeWorstCase(MAX_SESSIONS, RIG_TRACK_BYTES)
+  assert(
+    headroom > 1.2 && headroom < 1.5,
+    `the ratchet now sits at ${headroom.toFixed(2)}× the whole-report worst case, ` +
+      'not the third its own comment claims — re-derive it or change the comment',
+  )
+  note(
+    `full history counted whole: ${mb(storeWorstCase(MAX_SESSIONS, RIG_TRACK_BYTES))} MB against ` +
+      `the ${mb(STORE_RATCHET_BYTES)} MB ratchet — ${headroom.toFixed(2)}× headroom, ` +
+      `and the words are ${mb(MAX_SESSIONS * (RIG_WORDS_BYTES + RIG_PHASES_BYTES))} MB of it`,
+  )
+})
+
+check('the fields Phase 8 added are inside the noise, and here is the number', () => {
+  /*
+   * The question this round opened with. `yaw_measured` is one boolean on
+   * `triage.quality`; `Consistency.uncalibrated` is a short list of five-number
+   * objects, written only on a basket where a delta cleared its bound. Both are
+   * arithmetic rather than measurement, and both are stated here so that the
+   * next field added has somewhere to be compared against.
+   */
+  const yawMeasured = sizeOf({ yaw_measured: true }) - sizeOf({})
+  const oneDelta = sizeOf({ id: 'external_rotation_deg', from: 1, to: 4, delta: 18.4, bound: 2.1 })
+  const added = yawMeasured + oneDelta
+  note(`Phase 8's stored fields: ${yawMeasured} bytes for the camera flag, ${oneDelta} for one delta`)
+  assert(
+    added * MAX_SESSIONS < RIG_TRACK_BYTES,
+    `${added} bytes a report over ${MAX_SESSIONS} reports is ${(added * MAX_SESSIONS / 1024).toFixed(1)} kB — ` +
+      'past a single track, which is no longer a rounding error',
+  )
 })
 
 check('and a longer history is what would breach it', () => {
