@@ -66,7 +66,48 @@ note(`one landmark: ${landmarkBytes.toFixed(1)} bytes (constant says ${BYTES_PER
 
 const wholeFrameBytes = perItem(20_000, (i) => blankFrame(i))
 const overhead = wholeFrameBytes - 2 * LANDMARKS_PER_FRAME * landmarkBytes
-note(`one frame: ${wholeFrameBytes.toFixed(0)} bytes, of which ${overhead.toFixed(0)} is not landmarks`)
+/*
+ * Which came out NEGATIVE, and printed that way for as long as this file has
+ * existed: "of which -457 is not landmarks". A frame cannot hold less than
+ * nothing besides its landmarks, so the note was reporting measurement noise in
+ * the voice of a composition.
+ *
+ * The two readings are taken at different `n` — 200,000 landmarks against
+ * 20,000 frames — with no collector between them, so they carry different
+ * amounts of heap noise and their difference carries both. Measured across
+ * runs it wanders either side of zero by a few per cent of the frame, which is
+ * the same finding said properly: the box around the landmarks is too small for
+ * this instrument to see.
+ *
+ * So the share is always printed, and the byte figure only when it clears the
+ * noise. `SEEN` is 5% because that is the observed spread of the difference,
+ * and a bound set under what the instrument wobbles by would be a bound that
+ * reports the wobble.
+ */
+const SEEN = 0.05
+const overheadShare = overhead / wholeFrameBytes
+note(
+  overheadShare > SEEN
+    ? `one frame: ${wholeFrameBytes.toFixed(0)} bytes, of which ${overhead.toFixed(0)} is not landmarks`
+    : `one frame: ${wholeFrameBytes.toFixed(0)} bytes, landmarks and nothing this can measure — ` +
+        `the rest reads ${(overheadShare * 100).toFixed(0)}% against a ${SEEN * 100}% noise floor`,
+)
+
+check('the frame is never reported as holding less than nothing', () => {
+  // The defect this note carried, as a check: whatever the arithmetic does on
+  // a noisy heap, the sentence must not claim a negative composition.
+  assert(
+    overheadShare <= SEEN || overhead > 0,
+    `a frame was reported as ${overhead.toFixed(0)} bytes of non-landmark content`,
+  )
+  // And the noise floor has to be a floor for something. If the difference ever
+  // settles well outside it in either direction, the instrument got better or
+  // the frame changed shape, and this note needs rewriting rather than widening.
+  assert(
+    Math.abs(overheadShare) < 0.5,
+    `the frame and its landmarks disagree by ${(overheadShare * 100).toFixed(0)}%, which is not noise`,
+  )
+})
 
 check('a landmark costs about what the constant says', () => {
   // A ratchet, not an accuracy check. Two-fold either way is a change in the

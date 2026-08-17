@@ -43,6 +43,50 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 38 · consolidation gate — and the gate was measuring itself
+
+**Orchestrator.** Sixth cycle since `loop-green-7`. Number diff, boot, tag.
+
+**The diff came back dirty, and the second diff is why it matters.** Eight
+figures moved against `loop-green-7`. Re-running the *current* suite twice moved
+eight figures too. **The suite is not deterministic, so five gates have been
+diffing against a moving target** — and a genuine eight-reading regression would
+have been indistinguishable from this noise.
+
+**Two sources, and only one of them is noise.** Four are wall-clock milliseconds
+from the frame-budget checks: those measure this machine, not the serve, and
+belong out of the diff by definition. The fifth is a defect.
+
+**A frame reported as holding less than nothing.** `footprint.test.ts` printed
+`one frame: 7414 bytes, of which -457 is not landmarks` — a negative
+composition, and it has printed one for as long as the file has existed. The two
+`perItem` readings are taken at different `n` (200,000 landmarks against 20,000
+frames) with no collector between them, so their difference carries both lots of
+heap noise and wanders either side of zero by about 6%. The finding is real and
+was being said backwards: the box around the landmarks is too small to see.
+
+Now the share always prints and the byte figure only clears a stated 5% floor —
+5% because that is the observed spread, and a bound under what the instrument
+wobbles by reports the wobble. Plus a check that the sentence can never again
+claim a negative composition, and a second bound at 50% so a frame that really
+does change shape breaks the note rather than widening it.
+
+**Gate.** typecheck clean · lint clean · production build clean (665.96 KiB
+precache, 18 entries) · **1152 checks, 0 failed, exit 0**.
+
+**Number diff, instrument readings excluded:** 249 figures, **byte-identical to
+`loop-green-7`**. No engine reading has moved in six rounds — across the profile
+migration, a `Session` type change and two new checks.
+
+**Standing rule added.** The gate's diff excludes lines matching
+`ms( \(informational\))?$|bytes|noise floor`. Those are readings of the machine.
+Everything else is a reading of the serve and must not move without a round
+saying why.
+
+Tag: `loop-green-8`.
+
+---
+
 ### Round 37 · Cycle E — data management · `D2c · R55·2b`
 
 **Orchestrator.** Cycle E's head items are gated on a phone, so the round takes
