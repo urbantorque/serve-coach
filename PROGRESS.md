@@ -43,6 +43,42 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 44 · consolidation gate
+
+**Orchestrator.** Sixth cycle since `loop-green-8`. Number diff, boot, tag.
+
+**Number diff, instrument readings excluded** — the filter round 38 established,
+because five earlier gates had been diffing wall-clock milliseconds and calling
+it clean.
+
+**249 figures at `loop-green-8`, 255 now. Six additions, zero movements, zero
+removals.** All six are `58.199` — the trunk-lead invariance round 40 printed at
+six camera yaws. Every pre-existing figure is byte-identical.
+
+That is what this gate is supposed to look like. Across six rounds it covered the
+shared pixel pass, a refusal that changed no engine path, an outcome tap and its
+storage, a props gate that deleted a component prop, and the backup carrying a
+new store — **and nothing the engine reports about a serve moved**.
+
+**Gate.** typecheck clean · lint clean · production build clean (668.04 KiB
+precache, 18 entries) · **1171 checks, 0 failed, exit 0**.
+
+**Boot smoke**, on a restarted dev server — round 15's rule, because the pane
+served a stale transform through a hard reload once. `?demo=glance`: score ring
+reads "Score 68 out of 100", headline "The racket stops short behind you", all
+six taps present. Server logs clean.
+
+Tag: `loop-green-9`.
+
+**Where the loop stands at 44 of 75.** Six focus areas, and the shape of what is
+left is worth naming: Cycle A has two rounds of real engine work queued
+(`A4c · R61·3`, `A5b · R72`), B has two, C has two, D and E are down to items
+blocked on a phone or on a design ask, F has its audit rotation. The blocked five
+have not moved and cannot move here — they need a court, a phone, or somebody to
+say yes to a text input.
+
+---
+
 ### Round 43 · Cycle E — data and export · `E6 · R74` (new)
 
 **Orchestrator.** Cycle E is dry: `E2` is gated on a phone, `E3` on the design
