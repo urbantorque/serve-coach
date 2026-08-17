@@ -1154,6 +1154,27 @@ check('the ungraded delta line says a direction and never a figure', () => {
   assert(/serve 4/.test(text!) && /serve 1/.test(text!), `the two serves are not named: "${text}"`)
 })
 
+check('the landing delta line describes a body position and grades nothing', () => {
+  /*
+   * The trap this catches is one adjective. `LandingBalance.offset` is unsigned,
+   * so the app does not know which way the body went, and ungraded, so it does
+   * not know that going further was worse — a serve hit with real intent
+   * finishes travelling. "Fell", "lost", "off balance" would each be the app
+   * grading the one reading it has decided it cannot grade.
+   */
+  const text = uncalibratedLine('landing_offset_ratio', 2, 5)
+  assert(text !== undefined, 'the landing identifier produced no line')
+  const issues = cueIssues(text!)
+  assert(issues.length === 0, `
+        ""`)
+  assert(!/d+(.d+)?s*(°|deg)/.test(text!), `a figure reached the panel: ""`)
+  assert(
+    !/fell|falling|lost|off balance|unbalanced|collaps/i.test(text!),
+    `the line grades a reading nothing grades: ""`,
+  )
+  assert(/serve 5/.test(text!) && /serve 2/.test(text!), `the two serves are not named: ""`)
+})
+
 check('a reading with no line of its own prints nothing rather than something generic', () => {
   assert(
     uncalibratedLine('chain_span_ratio', 1, 2) === undefined,

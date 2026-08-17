@@ -1177,6 +1177,31 @@ export const MIN_ROTATION_LEVER = 0.25
  */
 export const ER_LEAN_SENSITIVITY = 0.5
 
+/* ------------------------------------------- what a landing reading is worth --
+ *
+ * The three numbers `LandingBalance.offset` and `UNCALIBRATED.landing_offset`
+ * have both carried in prose since they were measured, converged at 240 seeds
+ * and stable to the fourth decimal from 24 upwards. Exported here rather than
+ * left in two comments because a consumer bounding a *delta* has to do
+ * arithmetic on them, and arithmetic on a number nobody can import is arithmetic
+ * on a number somebody retyped.
+ *
+ * No behaviour changes by naming them: nothing in this file reads them, and the
+ * readings they describe are produced exactly as before.
+ */
+
+/**
+ * What a square landing reads, rather than zero.
+ *
+ * The reading is a magnitude, so landmark noise about a true zero folds positive
+ * instead of cancelling. Anything built on this calibrates against this floor.
+ */
+export const LANDING_SQUARE_FLOOR = 0.0035
+/** Deviation of that square reading across the depth-aware ensemble. */
+export const LANDING_SQUARE_DEVIATION = 0.0028
+/** Deviation of a 0.12 m landing, which reads 0.0657 — the wider of the two. */
+export const LANDING_WIDE_DEVIATION = 0.0045
+
 /**
  * Read external rotation off one frame.
  *

@@ -1,4 +1,8 @@
-import { ER_LEAN_SENSITIVITY } from './diagnose'
+import {
+  ER_LEAN_SENSITIVITY,
+  LANDING_SQUARE_DEVIATION,
+  LANDING_WIDE_DEVIATION,
+} from './diagnose'
 import { clamp, mean, statusOf } from './geometry'
 import type { Analysis, Metric, PhaseId, Status } from './types'
 import { cue } from './voice'
@@ -399,10 +403,88 @@ function uncalibratedDeltas(
   analyses: Analysis[],
   serveNumbers: number[],
 ): UncalibratedDelta[] | undefined {
-  const found = [externalRotationDelta(analyses, serveNumbers)].filter(
-    (d): d is UncalibratedDelta => !!d,
-  )
+  const found = [
+    externalRotationDelta(analyses, serveNumbers),
+    landingBalanceDelta(analyses, serveNumbers),
+  ].filter((d): d is UncalibratedDelta => !!d)
   return found.length ? found : undefined
+}
+
+/**
+ * The noise on the *difference* between two landing readings.
+ *
+ * NOT THE FLOOR, AND THE DISTINCTION IS THE ROUND. R50 asked for this delta
+ * "calibrated against the written-down 0.0035 floor", and 0.0035 is the wrong
+ * number to bound a difference with: it is where a square landing *sits*, not
+ * how far a reading of it wanders. Two independent readings differ with the
+ * deviations added in quadrature, and the honest bound uses both measured
+ * deviations rather than the smaller one — 0.0028 for a square landing, 0.0045
+ * for a wide one, so a comparison spanning the range gets the wider figure on
+ * one side of it.
+ *
+ * Worked, that is about 0.0053 body heights, against a 0.0035-to-0.0657 range.
+ * So the smallest change this can report is roughly a twelfth of the full span
+ * it is drawn from — which is a real limit and is why the entry refuses often.
+ *
+ * Computed rather than written down, so the day either deviation is re-measured
+ * this follows instead of disagreeing with its own source.
+ */
+const LANDING_DELTA_NOISE = Math.hypot(LANDING_SQUARE_DEVIATION, LANDING_WIDE_DEVIATION)
+
+/**
+ * How much further across their own feet the player finished on one serve than
+ * on another.
+ *
+ * THE CONFOUNDER IS THE READING ITSELF, which is what makes this different in
+ * kind from the external-rotation delta above. There the change could be faked
+ * by a posture the app can also see, so the bound is arithmetic on a second
+ * measurement. Here nothing fakes it — the reading is off image x, which is what
+ * the camera actually measured rather than depth a network inferred, and it is
+ * the best-conditioned thing in this register. What can fake it is noise, so the
+ * bound is the noise.
+ *
+ * AND IT MAY NOT SAY WHICH WAY. `LandingBalance.offset` is unsigned on purpose,
+ * because which way image x points depends on which side of the player the
+ * camera stood, so a sign would be a fact about the filming. That carries
+ * straight through: this reports that one landing was further across the feet
+ * than another, and never which direction either fell.
+ *
+ * NO EXTRA REFUSALS. `readLandingBalance` already returns `null` on all three of
+ * its own — landmarks unseen, feet out of shot, and a clip that ended before the
+ * landing happened — so a serve nobody could read never reaches this list, the
+ * same inheritance `externalRotationDelta` makes from the lever.
+ */
+function landingBalanceDelta(
+  analyses: Analysis[],
+  serveNumbers: number[],
+): UncalibratedDelta | undefined {
+  const read: { serve: number; offset: number }[] = []
+  analyses.forEach((a, i) => {
+    const offset = a.diagnosis?.landing?.offset
+    if (typeof offset === 'number' && Number.isFinite(offset)) {
+      read.push({ serve: serveNumbers[i] ?? i + 1, offset })
+    }
+  })
+  if (read.length < MIN_COMPARABLE_SERVES) return undefined
+
+  let low = read[0]
+  let high = read[0]
+  for (const r of read) {
+    if (r.offset < low.offset) low = r
+    if (r.offset > high.offset) high = r
+  }
+  if (low.serve === high.serve) return undefined
+
+  const delta = high.offset - low.offset
+  if (!(delta > LANDING_DELTA_NOISE)) return undefined
+
+  return {
+    id: 'landing_offset_ratio',
+    from: low.serve,
+    to: high.serve,
+    delta,
+    bound: LANDING_DELTA_NOISE,
+  }
 }
 
 /**

@@ -47,8 +47,9 @@ Kinetic chain, trophy metrics, what the body actually did.
       between two of the player's own serves, on `Consistency`, as data. No
       sentence containing a target. External rotation, bounded against posture.
       *(Round 2 — the machinery, the storage guard and the panel line.)*
-- [ ] **B1b · R50·2** — Landing balance delta, against the 0.0035 floor. Same
-      machinery, one new entry.
+- [x] **B1b · R50·2** — Landing balance delta. *(Round 8 — and the round's own
+      bound was the wrong number: 0.0035 is where a square landing sits, not how
+      far a reading of it wanders. Bounded on the two deviations in quadrature.)*
 - [ ] **B1c · R50·3** — Chain span ratio delta, bounded by the tempo difference.
 - [ ] **B2 · R50b** — Did the racket lay back further than your last serve, on
       the glance, through `carryForward`. Refuses most comparisons by design.

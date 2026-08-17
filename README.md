@@ -1496,6 +1496,25 @@ than hedged, and the bound is stored beside the delta because it is the entire
 licence for printing it — a stored row that no longer clears its own bound is
 dropped on the way back out.
 
+The landing is the second entry, and its bound is a different kind of thing.
+Nothing can fake a landing offset the way posture fakes a shoulder rotation — it
+is read off image x, what the camera measured rather than depth a network
+inferred, and it is the best-conditioned reading in the register. What can fake
+it is noise, so the bound is the noise: the two measured deviations in
+quadrature, `hypot(0.0028, 0.0045)` ≈ 0.0053 body heights. **Not the 0.0035
+floor**, which is where a square landing sits rather than how far a reading of it
+wanders — two landings 0.0045 apart look real against that floor and are barely
+one deviation of a difference. Against a measured span of 0.0035 to 0.0657 the
+bound is about a twelfth of the range, so this entry refuses often. That is the
+truth about the reading.
+
+Its sentence grades nothing, and one adjective is the whole risk. `offset` is
+unsigned, so the app does not know which way the body went, and ungraded, so it
+does not know that further was worse — a serve hit with intent finishes
+travelling, and a professional lands well across their front foot on purpose. So
+it says the player finished further across their feet on one serve than another,
+and "fell", "lost", "off balance" and "collapsed" are each asserted against.
+
 **And the sentence says a direction, not a figure.** The obvious line is "your
 shoulder laid back 18° further on serve 4 than on serve 1", which is honest and
 which `voice.ts` refuses: no line may carry a raw measurement, because a readout

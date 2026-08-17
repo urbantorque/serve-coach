@@ -44,6 +44,43 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 8 · Cycle B — biomechanics and fault detection · `B1b · R50·2`
+
+**Orchestrator.** Second entry through round 2's machinery, which is what the
+split was for. Lead builder: Biomechanics & CV Specialist. Column served: *Do I
+believe it*.
+
+**The round's own bound was wrong, and that is the round.** R50 asked for this
+"calibrated against the written-down 0.0035 floor", and so did the sub-round stub
+I wrote in round 2. 0.0035 is where a square landing *sits* — the reading is a
+magnitude, so noise about a true zero folds positive instead of cancelling — and
+it says nothing about how far a reading wanders. A delta is a difference between
+two readings, so the bound is the two measured deviations in quadrature: about
+0.0053. The check that pins it uses the case that exposes the error — two
+readings 0.0045 apart, which look real against a floor of 0.0035 and are barely
+one deviation of a difference.
+
+**A load-bearing module changed, declared.** Three deviation figures moved from
+prose in `diagnose.ts` into named exports. Constants only: nothing in that file
+reads them, no reading moved, and the consolidation number diff will say so.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | No target. The bound is computed from the two exported deviations rather than retyped, so a re-measurement carries through. The line grades nothing — `fell`, `lost`, `off balance`, `collapsed` all asserted against, because `offset` is unsigned and ungraded and a professional lands across their front foot on purpose |
+| Performance | pass | One optional five-number entry, written only when a delta clears its bound, which is a twelfth of the reading's measured range — so rarely. `footprint.test.ts` green, and round 4 made it able to see this |
+| Privacy | pass | Nothing new leaves the device |
+| Architecture | pass | Second entry through one mechanism, not a copy of it. The two bounds are of different kinds — a second measurement against noise — and a check holds that neither refusal silences the other |
+| Product | pass | One more `.note` line on an existing panel |
+
+**Gate.** typecheck clean · lint clean · **1058 checks passed, 0 failed, exit 0**
+(+5). Canaried by replacing the bound with 0.001, which reddens exactly the two
+checks written for it. No browser verification: the surface is round 2's, already
+verified live, and this adds a row to a list it already renders.
+
+---
+
 ### Round 7 · Cycle A — CV/ML engine · `A2 · R49b`
 
 **Orchestrator.** Second block opens where the first left a question: round 3

@@ -1545,6 +1545,93 @@ check('a basket with no diagnosis at all carries no deltas field', () => {
   )
 })
 
+/**
+ * A basket carrying landing readings and nothing else the deltas look at.
+ *
+ * Separate from `deltaBasket` rather than a flag on it, because the two entries
+ * refuse for entirely different reasons — one is bounded by a second measurement
+ * and one by its own noise — and a fixture that could produce both at once would
+ * make a check that meant to name one silently pass on the other.
+ */
+function landingBasket(offsets: (number | null)[]) {
+  const analyses = offsets.map((offset, i) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: 70,
+      serves: { count: offsets.length, index: i },
+      diagnosis: { landing: { offset, confidence: 0.9, secondsAfterContact: 0.5 } },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  return buildConsistency(analyses, offsets.length)!
+}
+
+const landingDelta = (c: ReturnType<typeof landingBasket>) =>
+  c.uncalibrated?.find((d) => d.id === 'landing_offset_ratio')
+
+check('a landing change bigger than the reading own noise is reported', () => {
+  // 0.0035 square against 0.0657 at 0.12 m is the measured range; this spans
+  // most of it, and is an order of magnitude past the ~0.0053 difference noise.
+  const d = landingDelta(landingBasket([0.0035, 0.0501]))
+  assert(!!d, 'a change across most of the measured range was not reported')
+  assert(d!.from === 1 && d!.to === 2, `named serves ${d!.from} and ${d!.to}, not 1 and 2`)
+  assert(Math.abs(d!.bound - Math.hypot(0.0028, 0.0045)) < 1e-9, `bound came back ${d!.bound}`)
+})
+
+check('a landing change inside the noise on a difference is refused', () => {
+  /*
+   * The case the round exists to refuse, and the reason 0.0035 is the wrong
+   * number to bound with. Two readings 0.0045 apart look like a real change
+   * against a floor of 0.0035 and are barely one deviation of the difference
+   * between two readings — which is what a delta is.
+   */
+  assert(
+    !landingDelta(landingBasket([0.0035, 0.0080])),
+    'a change smaller than the noise on a difference was reported anyway',
+  )
+})
+
+check('a landing nobody could read drops out rather than counting as square', () => {
+  /*
+   * `readLandingBalance` returns null on all three of its own refusals — the
+   * landmarks unseen, the feet out of shot, and a clip that ended before the
+   * landing. A null read as zero would be the app reporting a perfectly square
+   * finish for a serve it never saw the end of, which is the exact failure that
+   * field's own doc comment was written about.
+   */
+  const d = landingDelta(landingBasket([null, 0.0035, 0.0501]))
+  assert(!!d, 'two readable landings beside one unreadable one produced nothing')
+  assert(d!.from === 2 && d!.to === 3, `named serves ${d!.from} and ${d!.to}, not 2 and 3`)
+})
+
+check('the two ungraded deltas are independent, and both can appear at once', () => {
+  // A basket carrying both readings gets both lines. The check that matters is
+  // that neither entry's refusal silences the other — they are bounded by
+  // different things and have no business agreeing.
+  const analyses = [
+    { deg: 40, lean: 10, offset: 0.0035 },
+    { deg: 58, lean: 14, offset: 0.0501 },
+  ].map((s, i) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: 70,
+      serves: { count: 2, index: i },
+      diagnosis: {
+        externalRotation: { deg: s.deg, confidence: 0.9, lever: 0.8 },
+        signals: { spine_lean_deg: s.lean },
+        landing: { offset: s.offset, confidence: 0.9, secondsAfterContact: 0.5 },
+      },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  const c = buildConsistency(analyses, 2)!
+  const ids = (c.uncalibrated ?? []).map((d) => d.id).sort()
+  assert(
+    JSON.stringify(ids) === JSON.stringify(['external_rotation_deg', 'landing_offset_ratio']),
+    `got ${JSON.stringify(ids)}, expected both entries`,
+  )
+})
+
 /* --------------------------------------------------- sweeping a basket ---- */
 
 /*

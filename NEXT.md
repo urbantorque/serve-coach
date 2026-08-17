@@ -1275,10 +1275,50 @@ family, different surface, different refusals.
           Contrast measured on the rendered element: **4.87:1 at 11.5px**, the
           quietest text on the panel. A finding, in `README.md`, not a change.
 
-        · **R50·2 — landing balance delta**, against the written-down 0.0035
-          floor. Same machinery; the bound is the floor rather than a confounder,
-          since `landing.offset` is a magnitude and its zero is 0.0035 rather
-          than 0.0000. `LandingBalance` already carries its own three refusals.
+        · **R50·2 — [x] landing balance delta.** Second entry through the same
+          machinery: same shape, same storage guard, same refusal-rather-than-
+          hedge rule, one new `uncalibratedLine` case.
+
+          **THE ROUND'S OWN BOUND WAS THE WRONG NUMBER, and both the ledger and
+          this entry said 0.0035.** That is where a square landing *sits* — the
+          reading is a magnitude, so noise about a true zero folds positive
+          instead of cancelling — and it is not how far a reading of it wanders.
+          A delta is a difference between two readings, so the bound is the two
+          measured deviations in quadrature: `hypot(0.0028, 0.0045)`, about
+          0.0053 body heights, using the wider figure on one side so a comparison
+          spanning the range gets the pessimistic reading. Against a measured
+          0.0035-to-0.0657 span that is roughly a twelfth of the whole range, so
+          this entry refuses often, which is the truth about the reading rather
+          than a fault in the bound. Pinned by a check on the exact arithmetic:
+          two readings 0.0045 apart look real against a floor of 0.0035 and are
+          barely one deviation of a difference.
+
+          The three deviation figures moved from prose into named exports on
+          `diagnose.ts` — `LANDING_SQUARE_FLOOR`, `LANDING_SQUARE_DEVIATION`,
+          `LANDING_WIDE_DEVIATION`. Declared as a change to a load-bearing module
+          and it is constants only: nothing in that file reads them and no
+          reading moved. The bound is computed from them rather than written
+          down, so a re-measurement carries through instead of leaving two
+          numbers to disagree.
+
+          **The confounder is of a different kind from R50·1's**, which is the
+          only reason this is a second entry rather than a copy. External
+          rotation can be faked by a posture the app can also see, so its bound
+          is arithmetic on a second measurement. Nothing fakes a landing offset —
+          it is read off image x, what the camera measured rather than depth a
+          network inferred, and it is the best-conditioned reading in the
+          register. What can fake it is noise, so the bound is the noise. A check
+          holds that neither entry's refusal silences the other.
+
+          **The copy grades nothing, and one adjective is the whole risk.**
+          "You finished further across your feet on serve 5 than on serve 2" —
+          thirteen words. `offset` is unsigned, so the app does not know which
+          way the body went, and ungraded, so it does not know that further was
+          worse: a serve hit with real intent finishes travelling, and a
+          professional lands well across their front foot on purpose. `fell`,
+          `lost`, `off balance` and `collapsed` are all asserted against in
+          `copy.test.ts`, because the tempting sentence is the graded one.
+
         · **R50·3 — chain span ratio delta**, bounded by the tempo difference and
           refused when that bound eats it. The residual 21% tempo-dependence is
           the bound's whole content, so this one needs `motionSeconds` on both

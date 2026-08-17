@@ -101,5 +101,17 @@ export function uncalibratedLine(id: string, from: number, to: number): string |
   if (id === 'external_rotation_deg') {
     return `Your hitting shoulder laid back further on serve ${to} than on serve ${from}.`
   }
+  /*
+   * "Further across your feet", and not a word about falling.
+   *
+   * `LandingBalance.offset` is unsigned, so the app does not know which way the
+   * body went, and it is ungraded, so it does not know whether going further was
+   * worse. A serve hit with real intent finishes travelling — a professional
+   * lands well across their front foot on purpose — and "you fell further" would
+   * be the app grading the one reading it has decided it cannot grade.
+   */
+  if (id === 'landing_offset_ratio') {
+    return `You finished further across your feet on serve ${to} than on serve ${from}.`
+  }
   return undefined
 }
