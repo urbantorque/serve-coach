@@ -137,6 +137,31 @@ export interface Diagnosis {
    * violated by its own author.
    */
   landing: LandingBalance
+  /**
+   * How far the hip centre rose between the trophy and contact, in body heights.
+   *
+   * DATA ONLY, on the same terms as `chain`, `externalRotation` and `landing`:
+   * nothing grades it, no flaw is named from it, it never reaches `signals`.
+   *
+   * THE HALF `legs_peak_ms` COULD NOT MEASURE. That entry times the leg drive
+   * and says nothing about its size — the same peak whether the player drives or
+   * not — which is why it is uncalibrated and why no amount of footage would
+   * rescue it. This is the amplitude, and it completes the pair with knee bend
+   * at the trophy, which is already graded: how far the legs loaded, and how
+   * much of that became upward motion.
+   *
+   * READ FROM IMAGE Y ALONE, which is what makes it worth having. Vertical is
+   * vertical for every camera this app accepts, and the rig confirms it: swept
+   * against `contactHipHeight` the reading is **identical to four decimals at
+   * 45° and at 82°**. Nothing else in this engine is that indifferent to where
+   * the phone stood.
+   *
+   * ITS ZERO IS 0.0457, NOT ZERO, and anything built on this has to know that.
+   * A player who never leaves the ground still rises: they straighten out of the
+   * trophy knee bend, and the hips travel with them. Same shape as
+   * `LandingBalance.offset`, whose zero is 0.0035 for a different reason.
+   */
+  legDrive: LegDrive
   flaws: FlawFinding[]
   /** What the pass cost, so a slow device can be seen rather than guessed at. */
   cost: { frames: number; series: number; ms: number }
@@ -787,6 +812,7 @@ export function diagnose(
   /* --- external rotation, measured and not named ------------------------ */
   const externalRotation = readExternalRotation(at(keys.trophy), R)
   // The first reading in this engine taken past contact. See LandingBalance.
+  const legDrive = readLegDrive(at(keys.trophy), at(keys.contact), bodyHeight)
   const landing = readLandingBalance(
     at(keys.finish),
     bodyHeight,
@@ -994,6 +1020,7 @@ export function diagnose(
     },
     chain,
     externalRotation,
+    legDrive,
     landing,
     flaws,
     cost: {
@@ -1349,4 +1376,54 @@ function readExternalRotation(f: Frame, R: ReturnType<typeof sided>): ExternalRo
 
   const cos = clamp((fore.x * up.x + fore.y * up.y + fore.z * up.z) / (foreN * upN), -1, 1)
   return { deg: Math.round((Math.acos(cos) * 180) / Math.PI), confidence, lever }
+}
+
+/**
+ * How much of the leg load became upward motion.
+ *
+ * Same shape as `ChainLink`, `ExternalRotation` and `LandingBalance` for the same
+ * reason: a nullable measurement beside the confidence it was read at, which the
+ * engine takes and does not grade.
+ */
+export interface LegDrive {
+  /**
+   * Hip-centre rise from the trophy to contact, as a share of standing height.
+   *
+   * `null` where either keyframe's hips could not be seen — never a zero, since
+   * a zero here is a player who did not rise and a player nobody could see did
+   * not stand still.
+   */
+  rise: number | null
+  /** Mean visibility of the two hip landmarks across the two keyframes, 0–1. */
+  confidence: number
+}
+
+/** What a player who never leaves the ground still reads, from straightening alone. */
+export const LEG_DRIVE_FLOOR = 0.0457
+
+/**
+ * Read the rise between two keyframes.
+ *
+ * Image y, negated because image y grows downwards — a sign error here would
+ * report the drive at the moment the player was sinking into the trophy, which
+ * is the mistake `riseSpeedSeries` already documents at length.
+ *
+ * Two frames rather than a window, deliberately. `steadyWorld` smooths the
+ * keyframes it reads because they are extrema of their own motion; these two are
+ * endpoints of a span, and averaging either into its neighbours would blunt the
+ * very difference being measured — the same argument `readLandingBalance` makes
+ * for reading the finish at one frame.
+ */
+function readLegDrive(trophy: Frame, contact: Frame, bodyHeight: number): LegDrive {
+  const pair = [LM.leftHip, LM.rightHip]
+  const seen = [trophy, contact].flatMap((f) => pair.map((lm) => f.image[lm]?.visibility ?? 0))
+  const confidence = seen.reduce((a, b) => a + b, 0) / seen.length
+
+  const mid = (f: Frame) => (f.image[LM.leftHip]?.y + f.image[LM.rightHip]?.y) / 2
+  const a = mid(trophy)
+  const b = mid(contact)
+  if (!(bodyHeight > 1e-6) || !Number.isFinite(a) || !Number.isFinite(b)) {
+    return { rise: null, confidence }
+  }
+  return { rise: (a - b) / bodyHeight, confidence }
 }

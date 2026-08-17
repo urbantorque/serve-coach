@@ -66,9 +66,11 @@ Kinetic chain, trophy metrics, what the body actually did.
       "about 15°" was right, unlike its two siblings.)*
 - [ ] **B3 · R50c** — A trunk-sequence delta between two serves filmed from one
       spot. Needs A2's answer for its same-spot refusal.
-- [ ] **B4 · R51** — Leg drive measured rather than timed: hip-centre rise in
-      body heights plus knee extension rate, read from image y alone. Ships into
-      `UNCALIBRATED` with a rig sweep proving it tracks the dial.
+- [x] **B4 · R51·1** — Leg drive measured rather than timed: hip-centre rise in
+      body heights. *(Round 28 — tracks its dial near 1:1, identical at 45° and
+      82°. Ships into `UNCALIBRATED`.)*
+- [ ] **B4b · R51·2** — Knee extension, if it can be justified on its own terms.
+      Not from image y, and it cannot name the stance — R60·2 refused that.
 - [ ] **B5 · R52** — A pause between the trophy and the drop, as a trough in
       racket-hand planar speed. Sweep against `motionSeconds` first; an
       `UNDER_RESOLVED` entry saying it cannot be told from a slow serve is the

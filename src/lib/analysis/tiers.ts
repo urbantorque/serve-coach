@@ -578,6 +578,43 @@ export const UNCALIBRATED: Record<string, string> = {
    * what a club player's number should be, and the rig cannot be asked, because
    * every one of its tracks hangs off a single normalised phase schedule.
    */
+  /*
+   * Peak leg drive's missing half, and the reason that entry stays where it is.
+   *
+   * `legs_peak_ms` times the drive and cannot measure it. This measures it: hip
+   * centre rise from the trophy to contact, in body heights, read from image y.
+   *
+   * IT TRACKS THE DIAL, WHICH IS WHAT `legs_peak_ms` FAILED. Swept against
+   * `contactHipHeight` across eight seeds:
+   *
+   *     dialled hip height   rise     deviation
+   *          0.95 (planted)  0.0457     0.0037
+   *          1.02            0.0866     0.0038
+   *          1.10            0.1333     0.0039
+   *          1.18            0.1786     0.0051
+   *
+   * Near one-to-one in body heights, deviation flat, and about ten deviations
+   * between adjacent steps. **Identical to four decimals at 45° and 82°** — the
+   * most camera-indifferent reading in this engine, because vertical is vertical
+   * for every camera the app accepts.
+   *
+   * SO WHY IS IT HERE. The ordinary reason this register exists: nothing in this
+   * repo knows what a club player's rise should be. A tour serve leaves the
+   * ground and a good club serve often does not, and neither is a fault. The rig
+   * cannot be asked — its dial is a number somebody chose — and there is no
+   * footage. Being well conditioned is what a quantity needs *before* a band
+   * could exist; it is not a band.
+   *
+   * AND ITS ZERO IS 0.0457. A player who never leaves the ground still rises,
+   * because they straighten out of the trophy knee bend and the hips travel with
+   * them. Anything built on this calibrates against that floor — the same
+   * warning `LandingBalance.offset` carries for a different reason.
+   */
+  leg_drive_rise_ratio:
+    'measured and not named: tracks its dial near one-to-one, deviation 0.004, ' +
+    'identical at 45° and 82° — and nothing here knows what a club player rise ' +
+    'should be. Zero is 0.0457, not 0: straightening lifts the hips too.',
+
   legs_peak_ms:
     'measured and not named: 7.5 ms deviation, camera-invariant, and it times ' +
     'the leg drive without measuring it — the same peak whether the player drives or not',

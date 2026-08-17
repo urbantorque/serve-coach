@@ -367,7 +367,11 @@ heading('The kinetic chain, and what its provenance costs')
  * `elbow` and `wrist` are planar speeds off image x and y; `hips` and
  * `shoulders` are yaw angles recovered from MediaPipe's world z.
  */
-const SEEN = ['legs_peak_ms', 'elbow_peak_ms', 'wrist_peak_ms', 'chain_span_ms']
+// `leg_drive_rise_ratio` is here for the strongest reason of any of them: it is the hip
+// centre in image y, and vertical is vertical at every camera angle the app
+// accepts — measured identical to four decimals at 45° and 82°. Labelling it
+// "world z" in the printed audit would contradict the one claim it makes.
+const SEEN = ['legs_peak_ms', 'elbow_peak_ms', 'wrist_peak_ms', 'chain_span_ms', 'leg_drive_rise_ratio']
 const INFERRED = ['hips_peak_ms', 'shoulders_peak_ms']
 
 /**
@@ -488,6 +492,20 @@ check('the chain read from the picture plane holds still where the one read from
     // Dimensionless, and read from image x rather than world z — so both halves
     // of the default line below would be wrong about it. The same trap the
     // rotation entry above was written for, one reading later.
+    /*
+     * Image y and dimensionless, so both halves of the default line would be
+     * wrong about it — and one of them would be wrong about the only thing this
+     * reading claims. Third entry in this bag to need its own line, which makes
+     * it a pattern rather than an exception: the chain is the only part measured
+     * in time, and everything that has joined it since is something else.
+     */
+    if (d.id === 'leg_drive_rise_ratio') {
+      note(
+        `  ${d.id.padEnd(17)} image y     deviation ${d.sd.toFixed(4)}      ` +
+          `range ${d.range.toFixed(4)}   n=${d.n}   (body heights — not graded, see UNCALIBRATED)`,
+      )
+      continue
+    }
     if (d.id === 'landing_offset_ratio') {
       note(
         `  ${d.id.padEnd(17)} image x     deviation ${d.sd.toFixed(4)}      ` +

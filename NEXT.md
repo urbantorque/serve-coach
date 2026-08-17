@@ -2398,3 +2398,51 @@ deleting a working button.
           refusal keyed to the very quantity being measured, and needs care: the
           honest form is to report the frame count alongside, and say nothing
           below a floor. **Never in mph**, per the round.
+
+- [~] **R51** — Leg drive measured rather than timed. Half built: the amplitude
+      ships, the knee-extension half is refused as written.
+
+        · **R51·1 — [x] the rise.** `Diagnosis.legDrive.rise` — hip-centre rise
+          from trophy to contact, in body heights, read from image y.
+
+          **It tracks its dial, which is exactly what `legs_peak_ms` failed.**
+          Eight seeds at each of four settings of `contactHipHeight`:
+
+              dialled hip height   rise     deviation
+                   0.95 (planted)  0.0457     0.0037
+                   1.02            0.0866     0.0038
+                   1.10            0.1333     0.0039
+                   1.18            0.1786     0.0051
+
+          Near one-to-one in body heights, deviation flat, ten deviations between
+          adjacent steps. **Identical to four decimals at 45° and at 82°** — the
+          most camera-indifferent reading in the engine, because vertical is
+          vertical for every camera the app accepts.
+
+          **Ships into `UNCALIBRATED`** for the ordinary reason: nothing here
+          knows what a club player's rise should be. A tour serve leaves the
+          ground and a good club serve often does not, and neither is a fault.
+          Its zero is **0.0457, not 0** — a planted player still rises,
+          straightening out of the trophy bend — and anything built on it
+          calibrates against that, the same warning `LandingBalance.offset`
+          carries for a different reason.
+
+          **THE KNEE-EXTENSION HALF IS REFUSED AS WRITTEN.** R51 asks for it
+          "read from image y alone", and a knee angle is not an image-y quantity
+          — it is an angle between three points, camera-dependent in the image
+          plane and needing world landmarks to be otherwise. The round's own
+          justification for the reading (camera-invariance from image y) does not
+          extend to it, so it would need its own, and it does not have one.
+
+          **Two gates I did not write caught this round.** The register's
+          producer check refused an entry nothing produced, and the printed
+          provenance audit would have labelled an image-y reading "world z" and
+          printed a dimensionless one in milliseconds — the wrong-unit trap that
+          file's own comments were written about after it happened once. Fixed by
+          naming the reading `leg_drive_rise_ratio`, since this codebase already
+          carries units in id suffixes and `landing_offset_ratio` is the
+          precedent. A rename beat a special case.
+
+        · **R51·2 — knee extension**, if it can be justified on its own terms.
+          Not from image y. **R60·2 refused its interpreter**, so whatever ships
+          cannot name the stance and must say so rather than imply one.

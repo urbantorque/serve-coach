@@ -43,6 +43,45 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 28 · Cycle B — biomechanics and fault detection · `B4 · R51·1`
+
+**Orchestrator.** Lead builder: Biomechanics & CV Specialist. Column: *Do I
+believe it*. The engine's first new reading in nine rounds.
+
+**It does what `legs_peak_ms` could not.** That entry times the leg drive and
+cannot measure it — the same peak whether the player drives or not — which is
+why no amount of footage would rescue it. This is the amplitude, and swept
+against `contactHipHeight` it tracks near one-to-one with a flat deviation and
+ten deviations between adjacent steps. **Identical to four decimals at 45° and
+82°.** Nothing else in the engine is that indifferent to the camera.
+
+**Half the round refused.** R51 asks for knee extension "read from image y
+alone", and a knee angle is not an image-y quantity — it is an angle between
+three points, camera-dependent in the image plane. The round's own justification
+for the reading does not extend to it, so it would need its own and has none.
+
+**Two gates I did not write caught this round** — fifth and sixth this session.
+The register's producer check refused an entry nothing produced. Then the printed
+provenance audit would have labelled an image-y reading "world z" and printed a
+dimensionless one in milliseconds — the exact wrong-unit trap that file's
+comments were written about after it happened once before. Fixed by renaming to
+`leg_drive_rise_ratio`: this codebase carries units in id suffixes and
+`landing_offset_ratio` is the precedent, so a rename beat a special case.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Ships into `UNCALIBRATED`, with the sweep in the entry. Its zero is 0.0457 and that is stated, since a planted player still rises. Half the round refused rather than stretched |
+| Performance | pass | Two frames, four landmarks. No window, no smoothing pass |
+| Privacy | pass | Nothing new leaves the device |
+| Architecture | pass | Read at two keyframes rather than smoothed windows, for `readLandingBalance`'s reason: these are endpoints of a span and averaging would blunt the difference being measured |
+| Product | pass | Not surfaced. It completes the pair with knee bend at the trophy — how far the legs loaded, and how much became upward motion — and a surface is a later round |
+
+**Gate.** typecheck clean · lint clean · **1117 checks, 0 failed, exit 0**.
+
+---
+
 ### Round 27 · Cycle A — CV/ML engine · `A4 · R61·1`
 
 **Orchestrator.** The spike R61 asks for by name. Lead builder: Biomechanics &

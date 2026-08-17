@@ -211,6 +211,11 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   // consumer that prints it has to know — see the print sites in `depth.test.ts`.
   const offset = d.landing?.offset
   if (typeof offset === 'number' && Number.isFinite(offset)) out.landing_offset_ratio = offset
+  // The fourth, and the only one in this bag that is indifferent to where the
+  // camera stood — it is read from image y, and vertical is vertical at every
+  // angle the app accepts. Dimensionless like the two above it.
+  const rise = d.legDrive?.rise
+  if (typeof rise === 'number' && Number.isFinite(rise)) out.leg_drive_rise_ratio = rise
   return out
 }
 
