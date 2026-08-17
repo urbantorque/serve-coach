@@ -43,6 +43,49 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 70 · Cycle C — coaching and UI · `C6 · R83` (new)
+
+**Orchestrator.** Cycle C's rows are done, so the Orchestrator generates —
+finishing what round 63 started. C5 named **three** functions that assemble a
+player-facing sentence at runtime, and therefore sit in no table for
+`copy.test.ts` and no component for `jsxCopy.test.ts`. It linted two and found
+three shipped defects. **`faultMoveLine` is the third.**
+
+**Same shape as the one that was broken.** The fresh form is
+`Last serve: ${lowerFirst(title)}. ${MOVE_COPY[verdict]}` — a flaw title
+interpolated into a fixed frame, exactly like the metric label that pushed the
+practice-card line to 27 words against a 25 cap. And the longest title in
+`FLAW_COPY` is nine words.
+
+**It was checked, but only for structure** — that the repeat form is shorter
+than the fresh one, that it still says what it compares against. Never read.
+
+**Driven across every flaw × every verdict × both forms: 80 sentences**, off
+`FLAWS` rather than a pasted list — because a pasted short list is precisely what
+hid C5's defect.
+
+**All 80 clean. Longest 12 words:** *"Last serve: palm turned up under the
+racket. Not on this one."*
+
+**Which is the honest result and worth stating plainly.** Two of the three
+producers were broken and one was fine. The gap was real either way — none of the
+three had ever been read — and it is now closed.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The round found nothing wrong and says so. A gate that only counts when it fires is a gate nobody writes the third time |
+| Architecture | pass | Driven off `FLAWS`, so a flaw added with a longer title fails here rather than on the glance between somebody's serves |
+| Product | pass | This is the sentence a player reads standing on a court holding a basket — the one screen where there is no room for a caveat |
+| Performance | pass | Eighty string builds at suite time |
+
+**Gate.** typecheck clean · lint clean · **1219 checks, 0 failed, exit 0** (+1).
+Canaried by lengthening one verdict line into a passive — it reddened with the
+flaw, the verdict and the form named.
+
+---
+
 ### Round 69 · Cycle B — biomechanics · `B5c · R52·2`
 
 **Orchestrator.** Build the hitch reading, unblocked by round 61. Lead builder:

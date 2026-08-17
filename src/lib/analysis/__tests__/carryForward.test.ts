@@ -15,6 +15,9 @@
  */
 import { faultMove, previousOnTrip, rotationMove, type ComparableServe } from '../carryForward'
 import { faultMoveLine } from '../verdict'
+import { FLAWS } from '../flaws'
+import type { FaultMove } from '../carryForward'
+import { cueIssues, wordCount } from '../voice'
 import { MIN_EVIDENCE, type FlawFinding, type FlawId } from '../flaws'
 import { NOISE_FLOOR } from '../tiers'
 import type { Diagnosis } from '../diagnose'
@@ -350,6 +353,56 @@ check('a clip the engine rejected has nothing to compare', () => {
   assert(
     !rotationMove(rotServe({ deg: 40, lean: 10 }), rotServe({ deg: 70, lean: 10, status: 'rejected' })),
     'a rejected clip was compared',
+  )
+})
+
+/* ============= the third producer C5 found and did not read (R83) ========= */
+
+/**
+ * `faultMoveLine`, through the editor, for every flaw and every verdict.
+ *
+ * C5's audit named three functions that assemble a player-facing sentence at
+ * runtime and are therefore in no table for `copy.test.ts` and no component for
+ * `jsxCopy.test.ts`. It linted two of them and found three shipped defects,
+ * including a line that ran 27 words against a 25 cap whenever a six-word metric
+ * label was interpolated into it.
+ *
+ * **This is the third, and it has the same shape.** The fresh form is
+ * `Last serve: ${lowerFirst(title)}. ${MOVE_COPY[verdict]}` — a flaw title
+ * interpolated into a fixed frame — and the longest flaw title in `FLAW_COPY` is
+ * nine words. It is checked here for structure (fresh longer than repeat, the
+ * repeat still says what it compares against) and has never been read.
+ *
+ * Driven across every flaw × every verdict × both forms, off `FLAWS` rather than
+ * a pasted list, because a pasted short one is exactly what hid C5's defect.
+ */
+const MOVE_VERDICTS = ['cleared', 'closer', 'same', 'wider'] as const
+
+check('every fault-move sentence answers to the editor, for every flaw', () => {
+  const lines: { text: string; flaw: string; verdict: string; form: string }[] = []
+  for (const spec of FLAWS) {
+    for (const verdict of MOVE_VERDICTS) {
+      for (const again of [false, true]) {
+        const text = faultMoveLine({ flaw: spec.flaw, verdict, miss: 0.1, signal: spec.signal, before: 1, after: 1, floor: 0 } as FaultMove, again)
+        if (text) lines.push({ text, flaw: spec.flaw, verdict, form: again ? 'repeat' : 'fresh' })
+      }
+    }
+  }
+  assert(lines.length >= FLAWS.length * 4, `built only ${lines.length} sentences from ${FLAWS.length} flaws`)
+
+  for (const l of lines) {
+    const issues = cueIssues(l.text)
+    assert(
+      issues.length === 0,
+      `${l.flaw}/${l.verdict}/${l.form}: "${l.text}" fails the editor: ${issues.join('; ')}`,
+    )
+  }
+  const longest = lines.reduce((a, b) => (wordCount(b.text) > wordCount(a.text) ? b : a))
+  note(`${lines.length} sentences, longest ${wordCount(longest.text)} words: "${longest.text}"`)
+  assert(
+    wordCount(longest.text) <= 25,
+    `"${longest.text}" is ${wordCount(longest.text)} words, over the cap — and it is assembled, ` +
+      'so no table and no component gate could ever have seen it',
   )
 })
 
