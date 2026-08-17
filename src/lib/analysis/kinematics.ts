@@ -273,6 +273,34 @@ export function peakTimeInside(
  * seconds — see `TRUNK_WINDOW_SECONDS` in `diagnose.ts`. A better filter closed
  * some of that gap and could not close the rest, which is the argument.)
  *
+ * SO WHY IS THE TRUNK NOT READ OFF THE PICTURE PLANE TOO? It is the obvious
+ * question to ask here, it was tried, and the answer is a geometry rather than
+ * an omission. A hip line's yaw and its apparent WIDTH in image x are the same
+ * fact seen two ways — square to the camera is widest, side-on is narrowest — so
+ * `acos(width / widest seen)` recovers an angle from pixels the sensor really
+ * measured. Measured over sixty seeds at 50 fps it works, up to a point: the
+ * lead between the two lines tracks the rig's arming dial at gain 1.03 against
+ * world z's 0.93, and its deviation is 25–31 ms against 40–54.
+ *
+ * And its ABSOLUTE is unusable, which is the half that matters, because
+ * `arming_the_ball` grades whether the lead is negative rather than how much it
+ * changed. `acos` folds the angle into 0–180° and throws the sign away, so where
+ * a trunk rotates through square-on the recovered series has a kink instead of a
+ * zero crossing, and the rate of it has a spurious extremum exactly there. Which
+ * side of the fold the peak lands on depends on where the camera puts the
+ * player's yaw range. Swept on a clean serve, the lead reads +143 ms at 25° of
+ * camera yaw, −124 across the whole band from 40° to 50°, +190 at 55° and +156
+ * at 70° — a 315 ms jump between two neighbouring angles — while breaking down
+ * altogether at 36°, where its deviation is 84 ms on a clean serve and 181 on an
+ * armed one.
+ *
+ * The separation between a clean serve and a grossly armed one survives all of
+ * that: 178 to 204 ms at every angle from 40° up, against a dialled 190. So this
+ * is the same shape as the external-rotation finding — the CHANGE is honest and
+ * the ABSOLUTE belongs to the camera — and a comparison between two serves
+ * filmed from one spot is the only thing it could ever support. Nothing here
+ * builds that, and it is not built until something needs it.
+ *
  * Deliberately NOT rescaled through `axes.ts`, and this is the one surprise in
  * the file. Image x carries the player's front/back axis with gain sin(yaw) and
  * their across-body axis with gain cos(yaw), so the obvious move is to divide
