@@ -839,6 +839,18 @@ function usableConsistency(raw: unknown): Session['consistency'] {
         ? c.serveNumbers
         : [],
     /*
+     * Dropped whole rather than repaired, which is this block's own rule for
+     * anything a report is complete without.
+     *
+     * There is no honest repair available. A row missing `bound` cannot have one
+     * invented — the bound is the entire licence for printing the delta, and a
+     * zero would licence everything. A row missing `delta` has nothing to say.
+     * And the field is absent on every report that predates it and on most that
+     * do not, since these deltas refuse readily by design, so a reader that
+     * cannot cope with its absence is broken already.
+     */
+    uncalibrated: usableDeltas(c.uncalibrated),
+    /*
      * The best-against-worst block, or nothing.
      *
      * Same reasoning as `metrics` above and the same treatment: dropped rather
@@ -857,6 +869,32 @@ function usableConsistency(raw: unknown): Session['consistency'] {
 }
 
 /** The best-against-worst block, if it carries everything the panel prints. */
+/**
+ * The ungraded deltas, element-checked, or nothing.
+ *
+ * Every field is required because every field is load-bearing: `id` decides
+ * which reading is being talked about, `from` and `to` name the two serves the
+ * player is being pointed at, `delta` is the change, and `bound` is the only
+ * reason any of it may be shown. A row short of one of those is not half a
+ * delta, it is a claim with its evidence missing.
+ */
+function usableDeltas(raw: unknown): NonNullable<Session['consistency']>['uncalibrated'] {
+  if (!Array.isArray(raw)) return undefined
+  const kept = raw.filter(
+    (d) =>
+      typeof d?.id === 'string' &&
+      typeof d.from === 'number' &&
+      typeof d.to === 'number' &&
+      typeof d.delta === 'number' &&
+      typeof d.bound === 'number' &&
+      // The rule the writer applied, re-applied on the way back out. A row that
+      // no longer clears its own bound was either corrupted or written by a
+      // build with a laxer rule, and neither earns a line on the panel.
+      d.delta > d.bound,
+  )
+  return kept.length ? kept : undefined
+}
+
 function usableGap(raw: unknown): NonNullable<Session['consistency']>['gap'] {
   if (typeof raw !== 'object' || raw === null) return undefined
   const g = raw as Partial<NonNullable<NonNullable<Session['consistency']>['gap']>>

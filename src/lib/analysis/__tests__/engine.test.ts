@@ -1435,6 +1435,116 @@ check('a report with no height reading at all is not flagged by default', () => 
   assert(!c.possibleHandoff, 'a basket with no height reading at all was flagged as a hand-off')
 })
 
+/* ------------------------------------------- the ungraded deltas ---------- */
+
+console.log('\n\x1b[1mA reading with no band, said as a change between two serves\x1b[0m')
+
+/**
+ * A basket assembled by hand with the two fields the delta reads.
+ *
+ * Hand-built rather than swept, and that is the point: the rig cannot dial spine
+ * lean and shoulder rotation independently per serve, and what is under test is
+ * the *rule* — when a change is licensed and when posture could have faked it —
+ * not whether the engine measures either well. That question is `depth.test.ts`'s
+ * and is already answered there.
+ */
+function deltaBasket(serves: ({ deg: number | null; lean?: number } | null)[]) {
+  const analyses = serves.map((s, i) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: 70,
+      serves: { count: serves.length, index: i },
+      diagnosis: s && {
+        externalRotation: { deg: s.deg, confidence: 0.9, lever: 0.8 },
+        signals: s.lean === undefined ? {} : { spine_lean_deg: s.lean },
+      },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  return buildConsistency(analyses, serves.length)!
+}
+
+const erDelta = (c: ReturnType<typeof deltaBasket>) =>
+  c.uncalibrated?.find((d) => d.id === 'external_rotation_deg')
+
+check('a change bigger than the posture that could fake it is reported', () => {
+  // 18° apart, and the lean differs by 4° — which buys 2° at 0.5°/°.
+  const d = erDelta(deltaBasket([{ deg: 40, lean: 10 }, { deg: 58, lean: 14 }]))
+  assert(!!d, 'an 18° change against a 2° bound was not reported')
+  assert(d!.from === 1 && d!.to === 2, `named serves ${d!.from} and ${d!.to}, not 1 and 2`)
+  assert(Math.abs(d!.delta - 18) < 1e-9, `reported a delta of ${d!.delta}`)
+  assert(Math.abs(d!.bound - 2) < 1e-9, `reported a bound of ${d!.bound}`)
+})
+
+check('a change posture alone could account for is refused, not hedged', () => {
+  // 6° apart with 30° of lean difference: the bound is 15°, which eats it.
+  assert(
+    !erDelta(deltaBasket([{ deg: 40, lean: 5 }, { deg: 46, lean: 35 }])),
+    'a change smaller than its own confounder was reported anyway',
+  )
+})
+
+check('a change exactly equal to its bound is refused', () => {
+  // The boundary, because `>` and `>=` differ on exactly this input and nothing
+  // sampling the middle of the range would ever see the difference.
+  assert(
+    !erDelta(deltaBasket([{ deg: 40, lean: 10 }, { deg: 50, lean: 30 }])),
+    'a change exactly the size of its bound was reported',
+  )
+})
+
+check('the extremes are named, not the first and last serves', () => {
+  const d = erDelta(
+    deltaBasket([
+      { deg: 50, lean: 10 },
+      { deg: 38, lean: 10 },
+      { deg: 62, lean: 10 },
+      { deg: 51, lean: 10 },
+    ]),
+  )
+  assert(!!d, 'no delta from four readable serves')
+  assert(d!.from === 2 && d!.to === 3, `named serves ${d!.from} and ${d!.to}, not 2 and 3`)
+})
+
+check('a serve whose trophy arm was too folded to read drops out of the comparison', () => {
+  /*
+   * `readExternalRotation` returns a null `deg` below `MIN_ROTATION_LEVER`, so
+   * the refusal that already exists is the one that has to apply here — a second
+   * lever threshold in `consistency.ts` would be one more thing to keep in step.
+   */
+  const d = erDelta(
+    deltaBasket([{ deg: null, lean: 10 }, { deg: 40, lean: 10 }, { deg: 55, lean: 10 }]),
+  )
+  assert(!!d, 'two readable serves beside one unreadable one produced nothing')
+  assert(d!.from === 2 && d!.to === 3, `named serves ${d!.from} and ${d!.to}, not 2 and 3`)
+})
+
+check('a serve with no lean reading is not compared at all', () => {
+  // Without the lean there is no bound, and without a bound the delta is a
+  // number nobody can say is not posture. `signals` omits a reading below
+  // `MIN_EVIDENCE`, so this is the ordinary shape of a poorly seen trunk.
+  assert(
+    !erDelta(deltaBasket([{ deg: 40 }, { deg: 62 }])),
+    'a delta was reported with nothing to bound it',
+  )
+})
+
+check('one readable serve is not a comparison', () => {
+  assert(
+    !erDelta(deltaBasket([{ deg: 40, lean: 10 }, { deg: null, lean: 10 }])),
+    'a single reading was reported as a change',
+  )
+})
+
+check('a basket with no diagnosis at all carries no deltas field', () => {
+  // The ordinary case for every report the app has ever written before this,
+  // and for every hand-assembled basket in this file.
+  assert(
+    deltaBasket([null, null]).uncalibrated === undefined,
+    'an empty list was stored where no field should be',
+  )
+})
+
 /* --------------------------------------------------- sweeping a basket ---- */
 
 /*

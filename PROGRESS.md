@@ -44,6 +44,72 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 2 · Cycle B — biomechanics and fault detection · `B1 · R50·1`
+
+**Orchestrator.** R50 as written is three readings with three different
+confounders. Split into R50·1/·2/·3 in `NEXT.md` before building, per the
+"bigger than one iteration" rule — the first sub-round carries the machinery,
+the storage guard and the surface, so the other two are one entry each. Lead
+builder: Biomechanics & CV Specialist. Column served: *Do I believe it*.
+
+**Premise verified before building** (Phase 2). Three things had to be true and
+all three were, on record rather than assumed: `buildConsistency` already
+receives whole `Analysis` objects, so `diagnosis.externalRotation` and
+`signals.spine_lean_deg` are in scope; `ER_LEAN_SENSITIVITY` is an exported
+constant with its additivity measured across a 4×4 sweep; and `signals` is
+already gated on `MIN_EVIDENCE`, so a badly seen trunk is absent rather than
+wrong. No spike cycle needed.
+
+**Builder.** See `NEXT.md`. One precedence call and one defect, both below.
+
+**Precedence call — Honesty over Product.** The round's own model sentence
+carries a figure in degrees, which `voice.ts` refuses and `readoutOf` cannot
+rescue, because the reading has no ladder and cannot be given one. Product wanted
+the magnitude; the copy gate is mechanical and Honesty outranks Product. The
+direction shipped, the magnitude did not, and `NEXT.md` records it as a
+departure rather than as a design choice.
+
+**Defect found mid-round, and fixed rather than filed.** `copy.test.ts` called
+`report()` two thirds of the way up itself, and the harness exits non-zero only
+when it has failures to print — so eight checks below the tally printed crosses
+into a file that still exited 0. Proved with a deliberate `assert(false)`, not
+inferred. My two new copy checks were landing in that dead zone, so fixing it
+was a precondition of this round having teeth rather than a side quest. A sweep
+of every other test file found no second instance; the static guard against the
+next one is queued as **R66**, at the head of Cycle F.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | No target anywhere; `delta > bound` refuses outright rather than hedging, canaried. No entry leaves `UNCALIBRATED`. The line carries no figure — `copy.test.ts` asserts both the lint and the absence of degrees |
+| Performance | pass | One optional array of five numbers per stored report, written only when a delta clears its bound — which is the minority case by design. `footprint.test.ts` green |
+| Privacy | pass | No new egress surface; nothing added to the share path |
+| Architecture | pass | `consistency.ts` extended, not a new module. Storage guard follows `usableGap`'s existing shape. Copy lives in `statusLabels.ts`, the plain module beside the components, so no fast-refresh boundary is crossed. Three canaries, intended checks only |
+| Product | pass | One line on an existing panel, no new tap, no new screen, reusing `consistency-foot` alongside its two siblings |
+
+**Browser verification.** `?demo=basket` still hangs on `sampleClip`, exactly as
+R41 recorded — console clean, no error, the demo simply never resolves. Verified
+through the real path instead: a report written straight into IndexedDB and
+reopened from the history sheet, so `normalise` → `usableDeltas` →
+`ConsistencyPanel` all ran on real DOM. The line renders between the serve chips
+and the spread rows. No console errors. The probe row was deleted afterwards and
+the store confirmed back to its single `demo` row. **Screenshot not possible** —
+the pane does not composite, which is the environment defect already on record.
+
+**Measurement raised as a finding.** `.consistency-foot` renders
+`rgb(123, 135, 153)` on `rgb(20, 24, 34)` — **4.87:1 at 11.5px**, the quietest
+text on a panel a player reads at a court in sun. It passes AA by 0.37 and sits
+under AAA's 7:1. Same panel for comparison: `.spread-detail` 6.89:1,
+`.spread-label` 15.77:1. Not changed — it is the class the two existing basket
+findings already use, and raising the token is a decision about every surface
+using it. In `README.md` as a finding.
+
+**Gate.** typecheck clean · lint clean · **1036 checks passed, 0 failed, exit 0**
+(+14).
+
+---
+
 ### Round 1 · Cycle A — CV/ML engine · `A1 · R49·2`
 
 **Orchestrator.** Tree confirmed clean and green before anything was picked:

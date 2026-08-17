@@ -27,6 +27,7 @@ import { MAX_SENTENCES, MAX_WORDS, command, cueIssues, plain, wordCount } from '
 import { VERDICT_TABLES, causalFocus, everyVerdictCue, refusalFor } from '../verdict'
 import { FLAWS, type FlawId } from '../flaws'
 import { FLAW_DRILL, FLAW_DRILL_BY_AXIS, drillIdFor } from '../triage'
+import { uncalibratedLine } from '../../../components/statusLabels'
 import { assert, check, report } from './harness'
 import type { ServeType } from '../../storage/prefs'
 
@@ -1001,8 +1002,6 @@ check('no two measurements share a drill name by accident', () => {
   }
 })
 
-report()
-
 /* ===================================================== the verdict layer == */
 
 console.log('\n\x1b[1mFrom identifier to sentence\x1b[0m')
@@ -1127,3 +1126,56 @@ check('the verdict layer writes nothing an editor would cut', () => {
     )
   }
 })
+
+check('the ungraded delta line says a direction and never a figure', () => {
+  /*
+   * This is the line R50 nearly shipped with a number in it. Its own brief
+   * proposed "laid back 18° further", which is an honest sentence and one
+   * `voice.ts` refuses: `MATH` fails any line carrying degrees, on the standing
+   * rule that a readout speaks in body language. The usual escape is
+   * `readoutOf`, and it is shut — `external_rotation_deg` has no ladder in
+   * `anatomy.ts` and cannot be given one, because a ladder is a set of absolute
+   * stops and this reading is in `UNCALIBRATED` precisely for having no zero.
+   *
+   * So the check is on both halves: the sentence passes the same lint every
+   * coaching line passes, and it contains no figure for anyone to read as a
+   * target. A future round that puts the magnitude back has to move this.
+   */
+  const text = uncalibratedLine('external_rotation_deg', 1, 4)
+  assert(text !== undefined, 'the one identifier this maps produced no line')
+  const issues = cueIssues(text!)
+  assert(issues.length === 0, `${issues.join('; ')}\n        "${text}"`)
+  assert(
+    !/\d+(\.\d+)?\s*(°|deg|degrees)/.test(text!),
+    `a figure in degrees reached the panel: "${text}"`,
+  )
+  // Serve numbers are the exception and have to be there: a change with no
+  // serves attached is not a fact about two serves, it is an assertion.
+  assert(/serve 4/.test(text!) && /serve 1/.test(text!), `the two serves are not named: "${text}"`)
+})
+
+check('a reading with no line of its own prints nothing rather than something generic', () => {
+  assert(
+    uncalibratedLine('chain_span_ratio', 1, 2) === undefined,
+    'an unmapped identifier was given a sentence anyway',
+  )
+})
+
+/*
+ * ONE TALLY, AND IT COVERS THE WHOLE FILE.
+ *
+ * This used to sit two thirds of the way up, above the verdict-layer section,
+ * and everything below it was unenforced: `report()` calls `process.exit(1)`
+ * only when it has failures to print, so a check that failed after it printed
+ * its red cross and the file still exited 0. Proved rather than reasoned about —
+ * a deliberate `assert(false)` dropped into the verdict section printed one
+ * cross and the file exited 0.
+ *
+ * Eight checks sat in that dead zone, including every check that the flaw table,
+ * the drill table and the copy table agree with one another. `LOOP.md` names
+ * this file as one of the three critics in executable form, and a third of it
+ * was decorative.
+ *
+ * A tally belongs at the end of the file it is a tally of. Nothing may follow it.
+ */
+report()

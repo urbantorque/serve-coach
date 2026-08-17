@@ -41,9 +41,13 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
 
 Kinetic chain, trophy metrics, what the body actually did.
 
-- [ ] **B1 · R50** — The uncalibrated register used the one honest way: a delta
+- [x] **B1 · R50·1** — The uncalibrated register used the one honest way: a delta
       between two of the player's own serves, on `Consistency`, as data. No
-      sentence containing a target.
+      sentence containing a target. External rotation, bounded against posture.
+      *(Round 2 — the machinery, the storage guard and the panel line.)*
+- [ ] **B1b · R50·2** — Landing balance delta, against the 0.0035 floor. Same
+      machinery, one new entry.
+- [ ] **B1c · R50·3** — Chain span ratio delta, bounded by the tempo difference.
 - [ ] **B2 · R50b** — Did the racket lay back further than your last serve, on
       the glance, through `carryForward`. Refuses most comparisons by design.
 - [ ] **B3 · R50c** — A trunk-sequence delta between two serves filmed from one
@@ -105,6 +109,9 @@ Storage, backup, and the files a player is handed.
 
 Tests with teeth, refusals, and the things that only break on somebody's phone.
 
+- [ ] **F0 · R66** — A tally that does not cover its own file. R50·1 fixed the
+      one instance in `copy.test.ts`; this is the static guard that catches the
+      next one. *Takes the head of this cycle — it is a defect, not a feature.*
 - [ ] **F1 · R65** — `triage.quality` has no stored-shape guard, and R49·1 found
       it. Needs a decision R49·1 had no business making: there is no honest
       default for a missing `confidence`, so the fitting pattern is `consistency`'s

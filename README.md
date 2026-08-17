@@ -1449,6 +1449,37 @@ second: the wrist link holds to 0.5 ms across the noise ensemble where trunk
 rotation read from world *z* moves 53 ms, and not one of the five names a flaw,
 because nothing here can say what a good one looks like.
 
+**There is one honest use of that register, and the report now makes it.** A
+number with no band is still a number, and the difference between two of one
+player's own serves needs no band at all — it needs only that the change is
+bigger than whatever else could have caused it. `Consistency.uncalibrated`
+carries those: `external_rotation_deg` is the first, bounded against posture by
+`ER_LEAN_SENSITIVITY`, which measures 0.5° of false rotation per degree of spine
+lean and is *additive* (15.0, 15.0, 16.0, 15.0° across four rotations by four
+leans), so two serves whose lean differs by L carry 0.5 × L degrees of change
+the shoulder never made. Anything at or under that is refused outright rather
+than hedged, and the bound is stored beside the delta because it is the entire
+licence for printing it — a stored row that no longer clears its own bound is
+dropped on the way back out.
+
+**And the sentence says a direction, not a figure.** The obvious line is "your
+shoulder laid back 18° further on serve 4 than on serve 1", which is honest and
+which `voice.ts` refuses: no line may carry a raw measurement, because a readout
+speaks in body language. The usual escape is `readoutOf`, and it is shut here —
+a ladder in `anatomy.ts` is a set of absolute stops, and this reading is in
+`UNCALIBRATED` precisely because it has no zero to put stops around. So the
+direction ships and the magnitude does not, which is a smaller claim than the
+round wanted and the largest one the app is entitled to make.
+
+**A finding, not a change: `consistency-foot` is the quietest text on a panel
+read at a court in sun.** Measured live on the rendered report — `rgb(123, 135,
+153)` on `rgb(20, 24, 34)`, **4.87:1 at 11.5px**. It passes AA by 0.37 and sits
+well under AAA's 7:1, and it is the class the two existing basket findings
+already use, so the new line joined them rather than shouting over its own
+siblings. For comparison on the same panel: `.spread-detail` and the headline
+paragraph both measure 6.89:1, and `.spread-label` 15.77:1. Raising the token is
+a decision about every surface using it, not one this round is entitled to make.
+
 **Fixing what makes a number ungradable does not make it gradable.** The chain's
 span is measured in milliseconds and therefore grades tempo: the same serve
 served slowly has a longer chain, so a band in milliseconds would mark a

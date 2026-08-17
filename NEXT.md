@@ -1108,19 +1108,96 @@ family, different surface, different refusals.
       the answer, because it is a fact about how people film and there are no
       fixtures.** Blocked behind R59 for the real answer; what can be done first
       is bounding it from `estimateYaw` in `spatial.ts`.
-- [ ] **R50** — Use the uncalibrated register the one way it is honest: as a
+- [~] **R50** — Use the uncalibrated register the one way it is honest: as a
       delta between two of the player's own serves, on `Consistency`, as data
-      rather than as a graded signal. External rotation delta, bounded by
-      `ER_LEAN_SENSITIVITY` (0.5°/° of lean) against `signals.spine_lean_deg`,
-      refused when the bound exceeds the delta. Landing balance delta, calibrated
-      against the written-down 0.0035 floor. Chain span ratio delta, bounded by
-      the tempo difference and refused when that bound eats it.
+      rather than as a graded signal. **Split**, because three readings with three
+      different confounders is three rounds wearing one number, and the first of
+      them had to build the machinery, the storage guard and the surface as well.
 
-      **What it must not say: any sentence containing a target.** "Your shoulder
-      laid back 18° further on serve 4 than on serve 1" is a fact about two
-      serves. "18° further than it should" is four invented numbers and the thing
-      this register exists to prevent. No entry leaves `UNCALIBRATED`; each gains
-      a line saying a delta is reported and an absolute still is not.
+      **What none of them may say: any sentence containing a target.** "Your
+      shoulder laid back 18° further on serve 4 than on serve 1" is a fact about
+      two serves. "18° further than it should" is four invented numbers and the
+      thing this register exists to prevent. No entry leaves `UNCALIBRATED`; each
+      gains a line saying a delta is reported and an absolute still is not.
+
+        · **R50·1 — [x] external rotation, and the machinery.**
+          `Consistency.uncalibrated` is a list of `UncalibratedDelta`, keyed by
+          the `UNCALIBRATED` identifier itself so a reading withdrawn there and a
+          surface still printing it cannot drift apart. Each carries the two
+          serve numbers, the change, and **the bound that licensed it** — stored
+          rather than consumed, because it is the whole permission, and
+          `usableDeltas` in `db.ts` re-applies the writer's own `delta > bound`
+          rule on the way back out. A row that no longer clears its bound is
+          dropped whole; there is no honest repair, since inventing a zero bound
+          would licence every change ever measured.
+
+          The extremes of the basket are named, not the first and last serves —
+          the largest true change is the one worth reporting, and the bound is
+          what stops that being a noise-maximising choice. No second lever
+          threshold: `readExternalRotation` already returns a null `deg` below
+          `MIN_ROTATION_LEVER`, and `signals` already omits a lean below
+          `MIN_EVIDENCE`, so both existing refusals are inherited rather than
+          copied. Both halves or neither — without the lean there is no bound,
+          and without a bound the delta is a number nobody can say is not posture.
+
+          **DEPARTURE, and it is the round's own example sentence.** R50 proposed
+          "laid back 18° further on serve 4 than on serve 1" as the model of an
+          honest line. It is honest and `voice.ts` refuses it: `MATH` fails any
+          line carrying a figure in degrees. The usual escape is `readoutOf` and
+          it is shut — `external_rotation_deg` has no ladder in `anatomy.ts` and
+          cannot be given one, because a ladder is a set of absolute stops and
+          this reading is in `UNCALIBRATED` precisely for having no zero. So
+          `uncalibratedLine` ships the direction and not the magnitude: "Your
+          hitting shoulder laid back further on serve 4 than on serve 1." Thirteen
+          words, no figure, no target. Precedence call: the copy gate is
+          mechanical and outranks the round's phrasing.
+
+          **A DEFECT FOUND WHILE PLACING THE COPY CHECK, fixed here because the
+          new checks landed in it.** `copy.test.ts` called `report()` two thirds
+          of the way up the file, and `report()` exits non-zero only when it has
+          failures to print — so the eight checks below it printed crosses and
+          the file still exited 0. Proved rather than reasoned about: a
+          deliberate `assert(false)` in the verdict section printed one cross and
+          exited 0. Eight checks were decorative, including every check that the
+          flaw table, the drill table and the copy table agree. `LOOP.md` names
+          this file as one of three critics in executable form. The tally moved to
+          the end; a static guard against its return is **R66**.
+
+          Twelve checks — eight in `engine.test.ts` on the rule, four in
+          `db.test.ts` on the stored shape, two in `copy.test.ts` on the line.
+          Canaried three times, one intended failure each: dropping the bound
+          rule in the writer, dropping it in the reader, and putting a degree
+          figure back in the sentence.
+
+          Verified live rather than read. `?demo=basket` still hangs on
+          `sampleClip` exactly as R41 recorded, so the panel was driven through
+          its real path instead — a report written straight into IndexedDB,
+          reopened from the history, so `normalise` → `usableDeltas` →
+          `ConsistencyPanel` all ran. The line renders between the serve chips
+          and the spread rows, console clean, and the probe row was deleted after.
+          Contrast measured on the rendered element: **4.87:1 at 11.5px**, the
+          quietest text on the panel. A finding, in `README.md`, not a change.
+
+        · **R50·2 — landing balance delta**, against the written-down 0.0035
+          floor. Same machinery; the bound is the floor rather than a confounder,
+          since `landing.offset` is a magnitude and its zero is 0.0035 rather
+          than 0.0000. `LandingBalance` already carries its own three refusals.
+        · **R50·3 — chain span ratio delta**, bounded by the tempo difference and
+          refused when that bound eats it. The residual 21% tempo-dependence is
+          the bound's whole content, so this one needs `motionSeconds` on both
+          serves and refuses without it.
+
+- [ ] **R66** — A tally that does not cover its own file. R50·1 found
+      `copy.test.ts` calling `report()` mid-file and fixed that one instance; a
+      sweep at the time found no other file with checks below its tally, which is
+      exactly the state a static guard is for, because the next file to grow past
+      its `report()` will be silent about it too. Assert, over every `*.test.ts`
+      under `src`, that `report()` is the last statement — the same source-scan
+      trade `egress.test.ts` and `framePair.test.ts` already make, and made here
+      for the same reason: the defect lived in a position, and no suite that only
+      reads exports would ever see it. **What it may not do:** parse. A regex over
+      source text is the right tool and the allow list has to be checked against
+      what the scan found, as `egress.test.ts` does, rather than assumed correct.
 - [ ] **R50b** — Did the racket lay back further than your last serve. The
       backlog's `er-delta-on-the-glance`, and a different surface from R50: the
       glance, between serves, through `carryForward`, which already compares two

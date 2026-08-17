@@ -231,6 +231,47 @@ check('serve numbers that are not numbers are dropped rather than printed', () =
   assert(s!.consistency!.serveNumbers.length === 0, 'non-numeric serve numbers survived the read')
 })
 
+/* -------------------------------------------- the ungraded deltas, stored -- */
+
+/** One delta as this app writes it: a change with the bound that licensed it. */
+const wholeDelta = () => ({ id: 'external_rotation_deg', from: 1, to: 4, delta: 18, bound: 2 })
+
+check('an ungraded delta survives the read with its bound attached', () => {
+  const s = normalise(storedBasket({ ...wholeConsistency(), uncalibrated: [wholeDelta()] }))
+  const d = s!.consistency!.uncalibrated?.[0]
+  assert(!!d, 'a complete delta was dropped')
+  assert(d!.bound === 2, `the bound came back as ${d!.bound}`)
+})
+
+check('a delta missing its bound is dropped, because the bound is the licence', () => {
+  // There is no honest repair. A zero bound would licence every change ever
+  // measured, which is the failure the whole `UNCALIBRATED` register exists for.
+  const { bound: _b, ...noBound } = wholeDelta()
+  void _b
+  const s = normalise(storedBasket({ ...wholeConsistency(), uncalibrated: [noBound] }))
+  assert(s?.consistency !== undefined, 'the whole comparison went with an unusable delta')
+  assert(s!.consistency!.uncalibrated === undefined, 'a delta with no bound survived the read')
+})
+
+check('a delta that no longer clears its own bound is dropped', () => {
+  // Reachable from a corrupted row or a build with a laxer rule, and the writer
+  // is not the only place that rule may live — a reader that trusts the row is
+  // one edited backup away from printing a change that is posture.
+  const s = normalise(
+    storedBasket({ ...wholeConsistency(), uncalibrated: [{ ...wholeDelta(), delta: 1 }] }),
+  )
+  assert(s!.consistency!.uncalibrated === undefined, 'a delta smaller than its bound survived')
+})
+
+check('a report written before the deltas existed reads back without the field', () => {
+  const s = normalise(storedBasket(wholeConsistency()))
+  assert(s?.consistency !== undefined, 'a pre-deltas comparison block was dropped')
+  assert(
+    s!.consistency!.uncalibrated === undefined,
+    'an empty list was invented where the field was simply never written',
+  )
+})
+
 check('half a gap is dropped, because half a gap is a crash', () => {
   const { differences: _d, ...half } = wholeConsistency().gap
   void _d

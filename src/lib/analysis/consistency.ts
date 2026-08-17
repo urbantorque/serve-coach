@@ -1,3 +1,4 @@
+import { ER_LEAN_SENSITIVITY } from './diagnose'
 import { clamp, mean, statusOf } from './geometry'
 import type { Analysis, Metric, PhaseId, Status } from './types'
 import { cue } from './voice'
@@ -224,6 +225,53 @@ export interface Consistency {
    * against themselves.
    */
   possibleHandoff: boolean
+  /**
+   * Readings the engine measures and no band grades, said as a change between
+   * two of this player's own serves. Absent when nothing cleared its confounder.
+   */
+  uncalibrated?: UncalibratedDelta[]
+}
+
+/**
+ * A change between two of the player's own serves, from a reading in
+ * `UNCALIBRATED`.
+ *
+ * WHY THIS IS THE ONLY HONEST USE OF THAT REGISTER. Every entry in it is a
+ * measurement with no band behind it — repeatable enough to compare, with
+ * nothing to compare it *to*. `external_rotation_deg` is the sharp case: the
+ * same arm reads 44.5° against the trunk and 149.1° against the shoulder line,
+ * so there is no zero to hang a target on, and both frames nonetheless agree
+ * exactly about a change (14.4° per 15° dialled). A delta between two of one
+ * player's serves is a fact. The same number against a target is four invented
+ * numbers, and this type exists so the first can ship without the second.
+ *
+ * NUMBERS, NEVER A SENTENCE, for the reason `diagnose.ts` composes none. What is
+ * printed from this is decided by whatever is doing the printing.
+ */
+export interface UncalibratedDelta {
+  /**
+   * The `UNCALIBRATED` key in `tiers.ts` this came from.
+   *
+   * The key rather than a label, so a reading withdrawn from that register and a
+   * surface still printing it cannot drift apart silently.
+   */
+  id: string
+  /** One-based serve number in the clip that read lowest. */
+  from: number
+  /** One-based serve number that read highest. Never the same serve as `from`. */
+  to: number
+  /** `to` minus `from`, in the reading's own unit. Positive by construction. */
+  delta: number
+  /**
+   * How much of `delta` the reading's named confounder could account for, in the
+   * same unit.
+   *
+   * Carried rather than consumed here, because it is the whole reason the delta
+   * may be shown at all: an entry only exists when `delta` exceeds this, and a
+   * consumer that wants to know by how much can subtract. A future round that
+   * softens the rule has to move a number a test is watching.
+   */
+  bound: number
 }
 
 /**
@@ -333,7 +381,89 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
     status: statusOf(score),
     skipped: Math.max(0, attempted - analyses.length),
     possibleHandoff: possibleHandoff(analyses),
+    uncalibrated: uncalibratedDeltas(analyses, serveNumbers),
   }
+}
+
+/* ------------------------------------------------------ uncalibrated deltas */
+
+/**
+ * Every ungraded reading that changed across this basket by more than its own
+ * confounder could explain.
+ *
+ * `undefined` rather than an empty array when nothing survives, so a stored
+ * report carries no field at all in the ordinary case — which is the ordinary
+ * case, because these refuse readily and are meant to.
+ */
+function uncalibratedDeltas(
+  analyses: Analysis[],
+  serveNumbers: number[],
+): UncalibratedDelta[] | undefined {
+  const found = [externalRotationDelta(analyses, serveNumbers)].filter(
+    (d): d is UncalibratedDelta => !!d,
+  )
+  return found.length ? found : undefined
+}
+
+/**
+ * How much further the racket laid back on one serve than on another.
+ *
+ * THE CONFOUNDER IS POSTURE, AND IT IS ARITHMETIC. The angle is read against the
+ * trunk's up vector, so leaning the trunk moves the reference and the reading
+ * follows without the shoulder having rotated at all. `ER_LEAN_SENSITIVITY`
+ * measures that at 0.5° per degree of lean and — this is what makes a bound
+ * possible rather than a model — it is *additive*: swept across four rotations
+ * by four leans the shift is 15.0, 15.0, 16.0 and 15.0°, a spread of one degree
+ * across the whole range. So two serves whose lean differs by L carry 0.5 × L
+ * degrees of false change between them, and anything at or under that is posture
+ * wearing a shoulder's clothes.
+ *
+ * REFUSED, NOT HEDGED, when the bound eats the delta. This is an extra line on a
+ * panel that is complete without it; a comparison qualified into meaninglessness
+ * is worse than no comparison, and the register it comes from exists precisely
+ * to stop numbers being asserted past what is behind them.
+ *
+ * NO LEVER RULE HERE, deliberately: `readExternalRotation` already returns a null
+ * `deg` below `MIN_ROTATION_LEVER`, so a serve whose trophy arm was too folded to
+ * read never reaches this list. A second copy of that threshold would be one more
+ * thing to keep in step.
+ */
+function externalRotationDelta(
+  analyses: Analysis[],
+  serveNumbers: number[],
+): UncalibratedDelta | undefined {
+  const read: { serve: number; deg: number; lean: number }[] = []
+  analyses.forEach((a, i) => {
+    const deg = a.diagnosis?.externalRotation?.deg
+    const lean = a.diagnosis?.signals?.spine_lean_deg
+    /*
+     * Both halves or neither: without the lean there is no bound, and without a
+     * bound the delta is a number nobody can say is not posture.
+     *
+     * `signals` is already gated on `MIN_EVIDENCE`, so a lean the tracker could
+     * not see well enough is absent here rather than present and wrong — which
+     * means this refusal inherits that bar instead of setting a second one.
+     */
+    if (typeof deg === 'number' && Number.isFinite(deg) &&
+        typeof lean === 'number' && Number.isFinite(lean)) {
+      read.push({ serve: serveNumbers[i] ?? i + 1, deg, lean })
+    }
+  })
+  if (read.length < MIN_COMPARABLE_SERVES) return undefined
+
+  let low = read[0]
+  let high = read[0]
+  for (const r of read) {
+    if (r.deg < low.deg) low = r
+    if (r.deg > high.deg) high = r
+  }
+  if (low.serve === high.serve) return undefined
+
+  const delta = high.deg - low.deg
+  const bound = ER_LEAN_SENSITIVITY * Math.abs(high.lean - low.lean)
+  if (!(delta > bound)) return undefined
+
+  return { id: 'external_rotation_deg', from: low.serve, to: high.serve, delta, bound }
 }
 
 /**

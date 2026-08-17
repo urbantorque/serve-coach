@@ -75,3 +75,31 @@ export function pairRankModifier(leftIsBetter?: boolean): PairRankModifier {
   if (leftIsBetter === undefined) return ''
   return leftIsBetter ? 'pair-shots--better-left' : 'pair-shots--better-right'
 }
+
+/**
+ * One ungraded reading, said as a change between two serves.
+ *
+ * NO NUMBER IN IT, AND THAT IS THE ROUND'S ONE DEPARTURE FROM ITS OWN BRIEF.
+ * R50 proposed "your shoulder laid back 18° further on serve 4 than on serve 1"
+ * as the model of an honest sentence, and it is honest — but `voice.ts`'s `MATH`
+ * rule fails any line carrying a figure in degrees, on the standing rule that a
+ * readout says it in body language. The usual escape is `readoutOf`, and it is
+ * shut here: `external_rotation_deg` has no ladder in `anatomy.ts` and cannot be
+ * given one, because a ladder is a set of absolute stops and the whole reason
+ * this reading is in `UNCALIBRATED` is that it has no zero to put stops around.
+ *
+ * So the direction ships and the magnitude does not. That is a smaller claim
+ * than the round wanted and it is the largest one the app is entitled to make:
+ * `uncalibratedDeltas` has already proved the change is bigger than the posture
+ * that could fake it, which licenses "further" and nothing past it.
+ *
+ * `undefined` for an identifier this does not know, so a reading added to
+ * `UNCALIBRATED` and pushed onto `Consistency` without a line here prints
+ * nothing rather than something generic.
+ */
+export function uncalibratedLine(id: string, from: number, to: number): string | undefined {
+  if (id === 'external_rotation_deg') {
+    return `Your hitting shoulder laid back further on serve ${to} than on serve ${from}.`
+  }
+  return undefined
+}

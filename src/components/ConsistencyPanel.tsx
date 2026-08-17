@@ -1,5 +1,6 @@
 import FramePair from './FramePair'
 import { Icon } from './primitives'
+import { uncalibratedLine } from './statusLabels'
 import { useShareState } from './useShareState'
 import { readoutOf } from '../lib/analysis/anatomy'
 import {
@@ -239,6 +240,20 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
       </div>
 
       {c.gap && <BestAgainstWorst gap={c.gap} />}
+
+      {/* Readings the engine measures and nothing grades, said only as a change
+          between two of these serves — never against a target, because there is
+          no target to say them against. `uncalibratedDeltas` has already refused
+          any whose confounder could account for the change, so a line here is a
+          difference the phone could see and posture cannot explain. */}
+      {c.uncalibrated?.map((d) => {
+        const line = uncalibratedLine(d.id, d.from, d.to)
+        return line ? (
+          <p key={d.id} className="consistency-foot">
+            {line}
+          </p>
+        ) : null
+      })}
 
       {/* Since last time, not the all-time record below — see `gapDeltaFor`.
           Absent for the first basket in the current run. */}
