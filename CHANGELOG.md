@@ -6,6 +6,22 @@ in `git log`.
 
 ## 2026-08-17
 
+- **Fixed: on a slow serve, the app could report how you landed from a moment
+  before you had landed.** The app reads one thing after the ball has gone — how
+  far across your own feet you finished — and it will not read it from a clip
+  that stopped too soon, because a body still travelling is not a body that
+  finished square. The rule for "too soon" was three tenths of a second, worked
+  out by watching that reading fall apart on one serve. But three tenths of a
+  second is a different part of a slow serve than it is of a quick one, and it is
+  a much smaller part of a slow-motion clip, where the same movement is spread
+  over several times as many seconds of video. On those clips the app was reading
+  your landing about a twentieth of the way through your finish and reporting it
+  with full confidence. The rule is now measured against how long your serve
+  actually took, so it means the same thing however fast you serve and whatever
+  your phone films at. On an ordinary clip nothing changes — the new rule works
+  out to the same three tenths of a second on the serve it was derived from. On a
+  very slow serve, or a slow-motion clip, the app now says nothing about your
+  landing rather than saying something it cannot see.
 - **Fixed: a replayed serve could sit perfectly still while its scrubber ran.**
   When a report plays an old serve back as a moving body, the app steadies the
   drawing using each frame's own timestamp. If those timestamps had not survived

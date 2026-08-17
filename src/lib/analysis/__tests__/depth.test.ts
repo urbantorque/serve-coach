@@ -673,6 +673,60 @@ check('a clip that ended before the landing is refused, not reported as square',
   note(`  untruncated +${whole.secondsAfterContact}s reads ${whole.offset}; +0.15s and shorter refuse`)
 })
 
+check('the landing floor is a share of the serve, not a number of seconds', () => {
+  /*
+   * The same refusal, asked at a second tempo.
+   *
+   * `MIN_LANDING_SECONDS` was 0.3 s, derived by cutting one 1.35 s serve shorter
+   * and shorter — so it described that serve's clock and was applied to every
+   * other one. Two ordinary clips have a different clock: a deliberate server,
+   * and a time-stretched slow-motion file, which is the filming this app itself
+   * recommends. Both push the identical fall further down the clock, and a fixed
+   * floor then admits a finish that has fallen a fraction as far.
+   *
+   * Two claims here, and the first is the one that makes the second safe.
+   */
+  const readAt = (motionSeconds: number) => {
+    const frames = buildServe({ ...DEPTH_AWARE, seed: SEEDS[0], landingLean: 0.12, motionSeconds }, FPS)
+    const skel = detectServe(frames, FPS)
+    const motion = frames[skel.keys.contact].t - frames[skel.keys.ready].t
+    return { landing: diagnose(frames, skel, { tier: 5 }).landing, motion }
+  }
+
+  // 1. The ordinary serve is untouched. The share was set from what the code
+  //    divides by — ready to contact measures 1.16 s on a 1.35 s dial, because
+  //    `findReady` starts 12% up from rest — so the floor it produces here is
+  //    the 0.30 s the derivation arrived at, not the 0.222 the dial implies.
+  const ordinary = readAt(1.35)
+  assert(typeof ordinary.landing.offset === 'number', 'the serve the floor was derived on was refused')
+  const floor = 0.258 * ordinary.motion
+  assert(
+    Math.abs(floor - 0.3) < 0.01,
+    `the share puts the ordinary floor at ${floor.toFixed(3)}s, not the 0.30s it was derived as`,
+  )
+
+  // 2. A serve twice as long, whose finish sits at the same +0.4s of file, is
+  //    refused — because that is now a fifth of the fall rather than a third.
+  //    Under the fixed floor it read a confident number.
+  const slow = readAt(2.7)
+  assert(
+    slow.landing.secondsAfterContact >= 0.3,
+    `the stretched case did not reach the old floor (+${slow.landing.secondsAfterContact}s), so it ` +
+      'proves nothing about which floor is in force',
+  )
+  assert(
+    slow.landing.offset === null,
+    `a serve of ${slow.motion.toFixed(2)}s read a landing at +${slow.landing.secondsAfterContact}s — ` +
+      `${((slow.landing.secondsAfterContact / slow.motion) * 100).toFixed(0)}% of the way through its own ` +
+      'fall, which the derivation measured as most of the reading already gone',
+  )
+  assert(slow.landing.anklesSeen >= 0.5, 'the wrong refusal fired — this is about tempo, not visibility')
+  note(
+    `  1.35s dial reads at +${ordinary.landing.secondsAfterContact}s of a ${ordinary.motion.toFixed(2)}s motion; ` +
+      `2.7s dial refuses the same +${slow.landing.secondsAfterContact}s of a ${slow.motion.toFixed(2)}s one`,
+  )
+})
+
 check('a landing nobody could see is refused rather than invented', () => {
   /*
    * The refusal that will fire in life. A clip framed to show a racket often

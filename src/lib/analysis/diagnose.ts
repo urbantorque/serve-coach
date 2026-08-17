@@ -765,15 +765,20 @@ export function diagnose(
     span_ms: null,
     span_ratio: null,
   }
+  /*
+   * How long this serve took, ready to contact — `metrics.ts`'s `totalTime` in
+   * seconds, computed once here because two readings below divide by it.
+   *
+   * A clip where those two land on one frame is not a serve, and a ratio against
+   * a duration of zero is an infinity that would travel a long way before
+   * anything noticed.
+   */
+  const motionSeconds = contactT - at(keys.ready).t
+
   // Differenced from the links themselves rather than recomputed, so a span can
   // never exist for a link that was dropped.
   if (chain.legs.ms !== null && chain.wrist.ms !== null) {
     chain.span_ms = chain.wrist.ms - chain.legs.ms
-    // Ready to contact, which is `metrics.ts`'s `totalTime` in seconds. A clip
-    // where those two land on one frame is not a serve, and a ratio against a
-    // duration of zero is an infinity that would travel a long way before
-    // anything noticed.
-    const motionSeconds = contactT - at(keys.ready).t
     if (motionSeconds > 0) {
       chain.span_ratio = Number((chain.span_ms / (motionSeconds * 1000)).toFixed(4))
     }
@@ -786,6 +791,7 @@ export function diagnose(
     at(keys.finish),
     bodyHeight,
     at(keys.finish).t - contactT,
+    motionSeconds,
   )
 
   /* --- the toss --------------------------------------------------------- */
@@ -1073,12 +1079,46 @@ const round2 = (v: number) => Math.round(v * 100) / 100
 const round3 = (v: number) => Math.round(v * 1000) / 1000
 
 /**
- * How long after contact a finish has to be before a landing can be read from it.
+ * How far past contact a finish has to be before a landing can be read from it,
+ * as a share of the serve's own length rather than as a number of seconds.
  *
  * See the refusal in `readLandingBalance` for the derivation. Under this the
  * reading loses most of the fall and at the extreme reports a confident zero.
+ *
+ * 0.258 OF THE MOTION IS 0.30 s ON THE SERVE IT WAS DERIVED FROM. The
+ * derivation was run on the rig's default serve and written down in that serve's
+ * seconds, which made it a threshold about one tempo — and there are two
+ * ordinary ways a clip has another. A deliberate server takes 1.7 s ready to
+ * contact where a quick one takes 1.1, a spread this repo's own sweeps already
+ * dial; and a time-stretched slow-motion file spreads the same serve over
+ * several times as many file seconds, which is the filming the app itself
+ * recommends. Both make a fixed 0.3 s a different fraction of the fall, and both
+ * err the same direction: on any serve slower than the derivation's, the guard
+ * admits a finish that has fallen less than the one the derivation accepted. At
+ * four times stretched it admits +0.30 s, which is 5.5% of that motion, on a
+ * body that has barely left the ball.
+ *
+ * THE DENOMINATOR IS WHAT THE CODE MEASURES, NOT WHAT THE RIG DIALS, and the
+ * difference is a fifth of the answer. The rig's default motion is 1.35 s, but
+ * `findReady` places ready 12% of the way up from rest rather than at the first
+ * instant of movement, so `contactT - ready.t` on that same serve reads 1.16 s.
+ * Dividing by the dial would have given 0.222 and quietly loosened the guard on
+ * every ordinary clip while claiming to leave it alone. Measured across the
+ * twenty-four-seed ensemble it is 1.167 / 1.160 / 1.150 s at 30 / 50 / 120 fps,
+ * with zero spread across seeds — so 0.258 reproduces the 0.30 s floor to within
+ * a millisecond, and does so without depending on the frame rate.
  */
-const MIN_LANDING_SECONDS = 0.3
+const MIN_LANDING_SHARE = 0.258
+
+/**
+ * The motion this share is measured against when the serve's own length cannot
+ * be read — a `keys.ready` that landed on or after contact.
+ *
+ * The figure above, so the fallback is the old fixed threshold rather than a new
+ * number: 0.258 × 1.16 is 0.30 s. A clip that cannot say how long its serve took
+ * gets exactly the guard it got before any of this.
+ */
+const FALLBACK_MOTION_SECONDS = 1.16
 
 function roundAll(signals: Record<string, number>): Record<string, number> {
   const out: Record<string, number> = {}
@@ -1169,7 +1209,12 @@ export const ER_LEAN_SENSITIVITY = 0.5
  * motion — the body is still travelling at the finish, so a window either side
  * would average away part of the very thing being measured.
  */
-function readLandingBalance(f: Frame, bodyHeight: number, secondsAfterContact: number): LandingBalance {
+function readLandingBalance(
+  f: Frame,
+  bodyHeight: number,
+  secondsAfterContact: number,
+  motionSeconds: number,
+): LandingBalance {
   const L = f.image
   const parts = [L[LM.leftHip], L[LM.rightHip], L[LM.leftAnkle], L[LM.rightAnkle]]
   const confidence = round2(mean(parts.map((p) => p?.visibility ?? 0)))
@@ -1204,12 +1249,21 @@ function readLandingBalance(f: Frame, bodyHeight: number, secondsAfterContact: n
    * player who finished square, and a clip that ended is not a player who
    * finished square.
    *
-   * The floor is 0.3 s because that is where the reading still carries most of
-   * the fall — about 70% of its settled value — and below it it collapses fast.
-   * It is deliberately under the 0.44 s an untruncated clip gives, so ordinary
-   * footage is not refused for being ordinary.
+   * The floor is where the reading still carries most of the fall — about 70% of
+   * its settled value — and below it it collapses fast. It is deliberately under
+   * the +0.44 s an untruncated clip gives, so ordinary footage is not refused
+   * for being ordinary.
+   *
+   * IN SHARES OF THE MOTION, NOT SECONDS. Every figure above was measured on one
+   * 1.35 s serve, so "0.30 s" is that serve's 0.222 and nothing more general —
+   * see `MIN_LANDING_SHARE`. A slower serve, or the same serve in a
+   * time-stretched slow-motion file, put the identical fall further down the
+   * clock, and a fixed-seconds floor then admitted a finish that had fallen a
+   * fraction as far. The share reproduces the derivation at 1.35 s exactly and
+   * holds its meaning either side of it.
    */
-  if (!(after >= MIN_LANDING_SECONDS)) return none
+  const against = motionSeconds > 0 ? motionSeconds : FALLBACK_MOTION_SECONDS
+  if (!(after >= MIN_LANDING_SHARE * against)) return none
 
   const hipX = (L[LM.leftHip].x + L[LM.rightHip].x) / 2
   const ankleX = (L[LM.leftAnkle].x + L[LM.rightAnkle].x) / 2

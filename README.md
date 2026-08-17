@@ -404,6 +404,47 @@ differed is partly a change in posture. All three are pinned in `depth.test.ts`
 on a clean rig with one seed, because each is a systematic rather than a noise
 question.
 
+**The landing is refused by the serve's own clock, not by a number of seconds.**
+The reading taken past contact has a floor under it: a finish too close to the
+ball has not landed yet, and before that floor existed it reported a confident
+zero — "finished perfectly square, and we are certain" — from a clip that simply
+stopped. The floor was derived by cutting one serve shorter and shorter and
+watching the reading collapse, and it was written down as **0.3 seconds**, which
+is what that serve's clock happened to call it.
+
+Two ordinary clips have another clock. A deliberate server takes 1.7 s from ready
+to contact where a quick one takes 1.1 — a spread this repo's own sweeps already
+dial — and a time-stretched slow-motion file spreads the same serve over several
+times as many seconds of file, which is the filming this document recommends four
+sections above. Both push the identical fall further down the clock, and both err
+the same way: the floor admitted a finish that had fallen a fraction as far as
+the one the derivation accepted. At four times stretched it admitted a finish
+**5.5% of the way through the motion** and called what it found there a landing.
+
+So the floor is now a share of the serve — 0.258 of ready-to-contact — and the
+denominator is what the code measures rather than what the rig dials. Those are
+not the same number and the gap is a fifth of the answer: the rig's default
+motion is 1.35 s, but `findReady` starts 12% up from rest, so `contactT - ready.t`
+on that same serve reads **1.16 s**, and it reads 1.167 / 1.160 / 1.150 s at
+30 / 50 / 120 fps with no spread across seeds. Dividing by the dial would have
+given 0.222 and quietly loosened the guard on every ordinary clip while claiming
+to leave it alone. 0.258 reproduces the 0.30 s floor to within a millisecond, so
+nothing filmed at an ordinary tempo moves at all, and a serve slower than about
+2.2 s now refuses where it used to answer.
+
+**Which is the honest answer rather than the complete one.** The refusal is
+correct and the reading is still missing on those clips, because `keys.finish` is
+itself placed a fixed 0.5 s past contact — so on a stretched clip the app is now
+declining to read a landing rather than misreading one. Every phase window in
+`phases.ts` is a fixed number of file seconds, and swept against the rig from 1×
+to 8× stretched the damage is ordered: **contact never moves** (error ≤ 0.02 s at
+every stretch, because it is found by search rather than by offset), **ready
+starts drifting at 1.5×** (0.35 s, reaching 2.35 s at 4×), and **toss holds until
+3× and then goes** (0.07 s at 3×, 0.76 s at 4×, 3.03 s at 6×, where the trophy
+collapses onto it). Recorded here rather than fixed, because sizing those windows
+by the serve's own length is a change to the most load-bearing file in the engine
+and every noise floor in `tiers.ts` was derived against their current values.
+
 **And the confound turns out to be arithmetic rather than a model.** Swept across
 a grid of four rotations by four leans, the shift lean causes is **15.0, 15.0,
 16.0 and 15.0°** at rotations of 0, 20, 40 and 60 — a spread of one degree across
