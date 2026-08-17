@@ -44,6 +44,7 @@ import {
 import { findPracticeFocus } from '../practice'
 import { KEEP_STILLS, type Session } from '../storage/db'
 import type { ServeType } from '../storage/prefs'
+import { pairTracks, type Pairable } from '../trackPair'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 
 const DAY = 24 * 60 * 60 * 1000
@@ -260,6 +261,51 @@ check('the longest run counts a trip whatever kind of serve was hit', () => {
     longestStreak(withKick) >= longestStreak(CLEAN),
     'a kick-serve trip was not counted towards the longest run',
   )
+})
+
+/* ------------------------------------------------------------------ the tenth */
+
+heading('And the tenth figure, which is a picture')
+
+/**
+ * The tenth, and the first that is a picture rather than a number.
+ *
+ * `pairTracks` draws one saved swing over another, so it carries the same two
+ * rules as everything above — and it cannot be written in the `GUARDED` shape,
+ * because it does not read a history. It reads two reports. The equivalent of
+ * "the answer did not move" for a function that answers yes or no is that the
+ * clean pair is allowed and each contaminated one is refused *by name*, which is
+ * the stronger claim: a guard that fired for the wrong reason would pass a check
+ * that only asked whether something was refused.
+ *
+ * Its own geometry lives in `trackPair.test.ts`. What is asserted here is only
+ * that the two cross-session rules reach it, which is this file's whole subject.
+ */
+function pairable(opts: { type?: ServeType; rubric?: number } = {}): Pairable {
+  const body = Array.from({ length: 33 }, (_, i) => [0.4 + (i % 3) * 0.05, 0.2 + i * 0.02, 0.9])
+  const rows = [0, 1, 2].map(() => body.flat())
+  return {
+    track: { aspect: 1, from: 4, times: [0, 0.033, 0.066], rows },
+    phases: [{ id: 'contact', label: 'Contact', caption: '', frame: 5, t: 0, thumbnail: '' }],
+    serveType: opts.type ?? 'flat',
+    scoringVersion: opts.rubric ?? 2,
+    triage: { quality: { yaw_deg: 40, yaw_measured: true } },
+  } as unknown as Pairable
+}
+
+check('pairTracks — draws two comparable serves together at all', () => {
+  const r = pairTracks(pairable(), pairable())
+  assert(r.ok, `two comparable serves were refused: ${r.ok ? '' : r.refusal}`)
+})
+
+check('pairTracks — refuses a serve from before the last recalibration', () => {
+  const r = pairTracks(pairable({ rubric: 2 }), pairable({ rubric: 1 }))
+  assert(!r.ok && r.refusal === 'rubric_changed', `allowed, or refused for the wrong reason`)
+})
+
+check('pairTracks — refuses a serve of another type', () => {
+  const r = pairTracks(pairable({ type: 'flat' }), pairable({ type: 'kick' }))
+  assert(!r.ok && r.refusal === 'serve_type_changed', `allowed, or refused for the wrong reason`)
 })
 
 report()

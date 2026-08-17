@@ -1044,13 +1044,59 @@ family, different surface, different refusals.
           `diagnose.ts` the answer genuinely is the same either way. R49 is the
           first consumer for which it is not, which is what earned the field.
 
-        · **R49·2 — the pairing rule.** Given two stored serves, decide whether
-          they may be drawn together and produce the aligned geometry: align at
-          contact, normalise to hip centre, scale by shoulder-to-ankle. Refuse
-          when either lacks a track, when either yaw is unmeasured, when the two
-          yaws differ by more than 5°, and across a rubric or serve-type change.
-          Pure and testable in Node, no drawing. A tenth entry in
-          `comparisons.test.ts`.
+        · **R49·2 — [x] the pairing rule.** `pairTracks` in `lib/trackPair.ts`,
+          a new file rather than an extension, because `poseTrack.ts` is imported
+          by `db.ts` and this needs `progress.ts`'s `typeOf`/`scoringVersionOf` —
+          which would have closed a cycle through storage to answer a question
+          about geometry.
+
+          The transform is taken **once, at contact, and held**, which the round
+          did not say and which is the only reading of it that is not wrong:
+          re-deriving it per frame subtracts the body's own motion along with the
+          camera's, and the hip centre rising between the trophy and contact *is*
+          the leg drive. Aspect is folded in at the same point, since a track
+          stores x in frame widths and a portrait clip and a landscape one
+          disagree about what an x of 0.1 is worth — without it a pair from two
+          phones lines up nowhere. Residual after zoom, pan and orientation:
+          **0.00039 of a shoulder-to-ankle**, which is stored-precision
+          quantisation rather than surviving camera, about a ninetieth of the
+          0.0341 floor.
+
+          Two refusals beyond the five the round named, both of which fall out of
+          the geometry being impossible rather than being new policy:
+          `no_contact` when contact is outside the stored span, and `no_scale`
+          when hips, shoulders or ankles are below `VISIBLE_FLOOR` at contact —
+          the cropped-feet case `fixtures/README.md` deliberately shoots. All
+          seven are enums, never sentences, and every one is silent: this is an
+          extra picture on a report that is complete without one.
+
+          **Nothing below the hips is returned at all**, rather than returned for
+          the drawing layer to skip. The measured argument was already in
+          `poseTrack.ts` — no leg load whatever moves the worst landmark 0.0387
+          against a 0.0341 floor — and a rule enforced in the data cannot be
+          forgotten by R49·3. The ankles are still read, for the scale.
+
+          One defect found and closed here rather than left for R65: a row
+          claiming `yaw_measured` with no `yaw_deg` behind it — reachable because
+          `triage.quality` still has no stored-shape guard — made the gap `NaN`,
+          which refuses as `camera_moved`. The right outcome under the wrong
+          name, and a wrong name is what the next reader trusts.
+
+          Seventeen checks in `lib/__tests__/trackPair.test.ts` plus three in
+          `comparisons.test.ts`, which is the tenth-figure entry the round asked
+          for and the first there that is a picture rather than a number.
+          Canaried three times, one red check each and nothing else: dropping the
+          aspect fold-in, tightening the yaw gate from `<=` to `<`, and removing
+          the finite-yaw guard.
+
+          **Considered and not added: a handedness refusal.** A left-handed serve
+          drawn under a right-handed one is confusing, but it is not a false
+          claim, and profiles do not exist yet (R55) so the app cannot know it is
+          looking at two people. R49·3 is where that decision belongs, with a
+          screen to hang it on.
+
+          No production caller until R49·3 draws it, which is what the split is
+          for — not behind a flag, and covered end to end.
 
         · **R49·3 — draw it.** The older track dashed under the newer in
           `TrackPlayer`, nothing below the hips. Needs the browser.

@@ -541,6 +541,36 @@ the type for reports written before tracks existed, and because the prune
 ladder's downgrade turns a track back into one. The paragraph above described the
 numbers a writer would need; the writer exists.
 
+**Two saved swings, drawn on top of each other.** `pairTracks` (`trackPair.ts`)
+answers the question `poseTrack.ts`'s header worked out on the rig: what is left
+on screen once the filming is taken out. Translating to the hip centre and
+scaling by shoulder-to-ankle removes distance and framing — a ±15% zoom drops
+from 0.083 body heights to 0.0009, a pan to exactly zero — and the transform is
+taken once, at contact, rather than per frame, because the hip centre rising
+between the trophy and contact *is* the leg drive and a per-frame version would
+subtract it.
+
+What it cannot remove is camera angle, which is a projection change rather than a
+similarity transform, at about 0.0072 body heights per degree. Two noise
+realisations of one identical serve sit 0.0341 apart and five degrees of camera
+costs 0.0352 — the same thing — so five degrees is the gate, and past it the
+phone is contributing more than the tracker. The other refusals are the two
+cross-session rules everything else in the app already carries (one rubric, one
+serve type), an unmeasured camera angle on either side (`Spatial.yaw_measured`,
+which exists for exactly this), a contact that was never tracked, and a body
+whose hips, shoulders or ankles were out of frame at contact.
+
+Nothing below the hips is returned at all. Taking the trophy knee from 133° to
+166° — no leg load whatever — moves the worst drawn landmark 0.0387 against that
+0.0341 floor, so a player told to watch their legs against a ghost would be
+watching noise. The ankles are still read, because a shoulder-to-ankle length is
+a measurement; a drawn foot would be a claim about where it was.
+
+Every refusal is an enum rather than a sentence, and every one is silent. This is
+an extra picture on a report that is complete without one, so a screen explaining
+at length why it will not show a comparison nobody asked for is worse than one
+that simply does not offer it.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.
@@ -704,6 +734,7 @@ Everything is in `src/lib`:
 | `practice.ts` | finds the weakness that persists across trips to the court |
 | `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, the trip streak, the best consistency gap swept, the best score, the recurring-strain join, and what counts as one trip |
 | `screenFlow.ts` | every legal move between screens, as data a test can walk — describes `App.tsx`, never drives it |
+| `trackPair.ts` | whether two saved swings may be drawn on top of each other, and where the older one goes |
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
 | `storage/db.ts` | the reports, and separately the drills the player says they did |
 | `analysis/phases.ts` | finds the six keyframes |
