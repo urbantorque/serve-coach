@@ -8,7 +8,8 @@ import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
-import { filmstripPoses } from '../lib/storage/poseTrack'
+import TrackPlayer from '../components/TrackPlayer'
+import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
 import { useShareState } from '../components/useShareState'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
@@ -236,6 +237,11 @@ export default function Report({
   // because lifting six rows out of a track on every render would repeat the
   // whole map per keystroke on any state this screen holds.
   const stripPoses = useMemo(() => filmstripPoses(analysis), [analysis])
+  // Whether this report can move at all, decided here rather than inside the
+  // player: the section, its heading and the note under it are only worth
+  // rendering if there is a swing to play, and two independent answers to that
+  // question is one more than the page can be sure agree.
+  const replay = useMemo(() => replayFrom(analysis.track), [analysis.track])
   // "Nothing happened" when the player backs out of the share sheet is
   // handled inside `useShareState` itself (cancelled/failed both read as
   // idle, only shared/downloaded count as done) — the button says nothing
@@ -727,6 +733,29 @@ export default function Report({
         <section className="block" ref={playerRef}>
           <h2 className="block-title">Your serve, frame by frame</h2>
           <PosePlayer videoUrl={videoUrl!} analysis={analysis as Analysis} seek={seek} />
+        </section>
+      )}
+
+      {/* The same slot, for a report whose clip is gone. Never both: `live`
+          means there is a video to draw over, and where there is one the
+          photograph wins — a replay is what a report has instead, not a second
+          opinion beside it. */}
+      {!live && replay && analysis.track && (
+        <section className="block">
+          <h2 className="block-title">Your serve, played back</h2>
+          <TrackPlayer
+            track={analysis.track}
+            replay={replay}
+            phases={analysis.phases}
+            racket={analysis.handedness}
+          />
+          {/* Says what it is before a player decides it is a broken video.
+              Two sentences, and the first one is the good news: the clip is
+              gone because it was never kept, which is the promise on the tin. */}
+          <p className="player-note">
+            Your clip never left your phone, so there is no footage to replay. This is the
+            body we tracked, moving at the speed you filmed it.
+          </p>
         </section>
       )}
 

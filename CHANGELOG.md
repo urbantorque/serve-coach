@@ -6,6 +6,21 @@ in `git log`.
 
 ## 2026-08-17
 
+- **An old serve moves again, even though its video is long gone.** Your clip is
+  read on your phone and never stored — that is the promise the whole app is
+  built on, and the price of it was that a report you opened two months later
+  could be read and could not be watched. Every report now keeps the whole swing
+  as the body the tracker saw, and a report whose clip has gone gets a player
+  under "Your serve, played back": play, pause, step a frame at a time, jump
+  straight to your trophy position or your contact, at full, half or quarter
+  speed. It runs at the speed you filmed it — the timing comes off the clip's own
+  frames rather than an assumed frame rate, so a swing filmed unevenly plays back
+  unevenly, and a serve is never shown quicker than it happened. It is
+  deliberately not a video: no court, no light, no ball. The ball flight was
+  measured in pixels the stored swing does not carry, so drawing one would be
+  inventing an arc. What moves is exactly what the numbers on that report were
+  read from. And if storage ever gets tight, the app gives up the moving swing
+  and keeps the six still bodies before it deletes any of your history.
 - **Old reports no longer lose their pictures.** Your last twenty serves keep
   their keyframe photographs; past that the app has always dropped them, because
   six photos are nearly the whole weight of a saved report. So a serve from two

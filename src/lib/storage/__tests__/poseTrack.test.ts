@@ -13,11 +13,15 @@ import {
   filmstripPoses,
   keyframePoses,
   keyframesFromTrack,
+  phaseSamples,
   poseFrameAt,
   readKeyframePoses,
   readSwingTrack,
+  replayFrom,
   swingTrack,
+  trackFrameAt,
   POSE_PRECISION,
+  REPLAY_ASSUMED_STEP,
 } from '../poseTrack'
 import { buildServe } from '../../analysis/syntheticServe'
 import { detectServe } from '../../analysis/phases'
@@ -271,5 +275,155 @@ check('the report reads whichever form it is carrying', () => {
     'a report with neither form invented one',
   )
 })
+
+heading('Playing a stored swing back as motion')
+
+/** The report's own phases, with the ids `phaseSamples` keys on. */
+const namedPhases = (['ready', 'toss', 'trophy', 'drop', 'contact', 'finish'] as const).map(
+  (id, i) => ({ id, frame: phases[i].frame }),
+) as Pick<Phase, 'id' | 'frame'>[]
+
+check('a replay is the tracked rows, timed by the sampler rather than a guess', () => {
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  const replay = replayFrom(track)!
+  assert(replay.samples.length === track.rows.length, 'a clean swing lost samples')
+  assert(!replay.assumedSpacing, 'a swing with real timestamps was replayed at an assumed cadence')
+  assert(replay.samples[0].at === 0, 'the replay does not start at zero')
+  /*
+   * Relative to the first sample, not to the clip. There is no clip left to be
+   * absolute against — the video is gone, and an elapsed time counted from a
+   * walk-up nobody can watch is a number with nothing behind it.
+   */
+  const span = frames[K.finish].t - frames[K.ready].t
+  assert(Math.abs(replay.duration - span) <= 0.002, `duration ${replay.duration} is not the swing's own`)
+  assert(
+    replay.samples.every((s, i) => i === 0 || s.at >= replay.samples[i - 1].at),
+    'the replay does not run forwards',
+  )
+})
+
+check('a frame the tracker lost is not a sample, and takes its time with it', () => {
+  /*
+   * A row with no body cannot be drawn, and blanking the canvas for an instant
+   * reads as the app faulting rather than as a gap in what a phone could see.
+   * Dropping the sample leaves its time out of the sequence too, so the swing
+   * simply holds still for exactly as long as the tracking was missing.
+   */
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  const holed = { ...track, rows: track.rows.map((r, i) => (i === 4 || i === 5 ? null : r)) }
+  const replay = replayFrom(holed)!
+  assert(replay.samples.length === track.rows.length - 2, 'a lost frame was replayed as a sample')
+  assert(
+    replay.samples.every((s) => holed.rows[s.row] !== null),
+    'a sample points at a row with no body in it',
+  )
+  const gap = replay.samples[4].at - replay.samples[3].at
+  const step = replay.samples[2].at - replay.samples[1].at
+  assert(gap > step * 2, `the two-frame hole replayed as a ${gap.toFixed(3)}s step, the same as any other`)
+})
+
+check('one pose is not motion', () => {
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  const single = { ...track, rows: track.rows.map((r, i) => (i === 3 ? r : null)) }
+  assert(replayFrom(single) === undefined, 'a single pose was offered as a replay')
+  assert(replayFrom(undefined) === undefined, 'nothing was offered as a replay')
+})
+
+check('timestamps that cannot be trusted fall back to a cadence, and say so', () => {
+  /*
+   * `readSwingTrack` repairs a missing timestamp to zero rather than refusing
+   * the row it belongs to, which is the right trade for a filmstrip and the
+   * wrong one for a clock: a run of zeroes would play a whole swing in an
+   * instant. The fallback is never faster than life — a serve shown quicker
+   * than it happened is the one error that makes a player misjudge their timing.
+   */
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  const repaired = replayFrom({ ...track, times: track.times.map(() => 0) })!
+  assert(repaired.assumedSpacing, 'a run of zeroed timestamps was treated as measured')
+  assert(
+    Math.abs(repaired.samples[1].at - REPLAY_ASSUMED_STEP) <= 0.001,
+    'the assumed cadence is not the constant it is documented as',
+  )
+  assert(repaired.duration > 0, 'a repaired replay has no duration to loop over')
+
+  const backwards = track.times.slice()
+  backwards[6] = backwards[5] - 0.5
+  const jumbled = replayFrom({ ...track, times: backwards })!
+  assert(jumbled.assumedSpacing, 'timestamps that run backwards were played as measured')
+
+  const real = replayFrom(track)!
+  assert(!real.assumedSpacing, 'the real thing was mistaken for a repair')
+})
+
+check('a row rebuilds as the frame it came from, carrying its own clip index and time', () => {
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  for (const row of [0, 7, track.rows.length - 1]) {
+    const rebuilt = trackFrameAt(track, row)!
+    const source = frames[track.from + row]
+    assert(rebuilt.index === track.from + row, `row ${row} rebuilt under the wrong clip frame`)
+    assert(Math.abs(rebuilt.t - source.t) <= 0.001, `row ${row} rebuilt with the wrong time`)
+    const step = 10 ** -POSE_PRECISION
+    for (let k = 0; k < source.image.length; k++) {
+      assert(
+        Math.abs(rebuilt.image[k].x - source.image[k].x) <= step &&
+          Math.abs(rebuilt.image[k].y - source.image[k].y) <= step,
+        `row ${row}, landmark ${k} is not the frame it came from`,
+      )
+    }
+  }
+  assert(trackFrameAt(track, -1) === undefined, 'a row before the track rebuilt as a body')
+  assert(trackFrameAt(track, 9999) === undefined, 'a row past the track rebuilt as a body')
+  assert(trackFrameAt(undefined, 0) === undefined, 'no track rebuilt as a body')
+})
+
+check('a keyframe lands on its own sample, and the replay draws what the strip draws', () => {
+  /*
+   * The alignment check, aimed at the player instead of the strip. The pill
+   * reading Contact parks the replay somewhere and the caption names it, so a
+   * pill that stopped one frame early would caption the wrong instant with a
+   * picture that still looks entirely like a serve.
+   *
+   * Asserted against `keyframesFromTrack` rather than against the phase index,
+   * so the two readers of the same track are held to each other: whatever the
+   * filmstrip draws for Contact is what the replay must park on for Contact.
+   */
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  const replay = replayFrom(track)!
+  const marks = phaseSamples(replay, track, namedPhases)
+  const strip = keyframesFromTrack(track, namedPhases)!
+
+  assert(marks.size === namedPhases.length, `${marks.size} of six keyframes are reachable in a clean swing`)
+  for (const [i, p] of namedPhases.entries()) {
+    const sample = replay.samples[marks.get(p.id)!]
+    const fromReplay = trackFrameAt(track, sample.row)!
+    const fromStrip = poseFrameAt(strip, i)!
+    assert(
+      JSON.stringify(fromReplay.image) === JSON.stringify(fromStrip.image),
+      `the replay parks ${p.id} on a different body from the one the filmstrip draws`,
+    )
+  }
+})
+
+check('a keyframe with no row of its own gets no control rather than its neighbour', () => {
+  const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
+  const contactRow = K.contact - track.from
+  const holed = { ...track, rows: track.rows.map((r, i) => (i === contactRow ? null : r)) }
+  const marks = phaseSamples(replayFrom(holed)!, holed, namedPhases)
+  assert(!marks.has('contact'), 'a keyframe the tracker lost was mapped to a neighbouring frame')
+  assert(marks.has('trophy') && marks.has('finish'), 'one lost keyframe took the others with it')
+
+  // And a phase pointing outside the stored span — a downgraded or truncated
+  // track — is absent for the same reason rather than clamped to an end.
+  const outside = phaseSamples(replayFrom(track)!, track, [
+    { id: 'ready', frame: track.from - 3 },
+    { id: 'contact', frame: 99999 },
+  ] as Pick<Phase, 'id' | 'frame'>[])
+  assert(outside.size === 0, 'a phase outside the stored swing was mapped into it')
+  assert(phaseSamples(undefined, track, namedPhases).size === 0, 'no replay produced marks anyway')
+})
+
+note(
+  `A stored swing replays as ${replayFrom(swingTrack(frames, K.ready, K.finish, ASPECT))!.samples.length} samples over ${replayFrom(swingTrack(frames, K.ready, K.finish, ASPECT))!.duration.toFixed(2)}s`,
+)
 
 report()

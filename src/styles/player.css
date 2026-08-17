@@ -18,6 +18,53 @@
   max-height: 68svh;
 }
 
+/*
+ * A drawn body is not a video, and the surface says so before the picture does.
+ *
+ * The stage above is black because a photograph fills it edge to edge. A replay
+ * has no photograph — it is the tracked body on `--ink-2`, the same surface the
+ * six keyframe bodies sit on in the strip below, so the two read as the same
+ * kind of drawing and neither reads as footage. Black here would have made an
+ * empty first paint look like a video that failed to load.
+ */
+.player-stage--pose {
+  background: var(--ink-2);
+}
+
+/*
+ * The play badge, out of the body's way.
+ *
+ * Over a video, dead centre is right: footage fills the frame, so there is
+ * nowhere the badge can sit that is not on top of something, and the middle is
+ * where a hand goes looking for it. A tracked body is a thin figure on an empty
+ * surface, and the middle is the one place it is guaranteed to be — measured
+ * across a whole swing it stays inside the middle fifth of the width, so a
+ * centred badge covers the chest and the racket arm at every keyframe worth
+ * parking on. At the trophy that is the entire reason to park there.
+ *
+ * Cornered instead, and smaller. A standing body reaches the bottom of the box
+ * and the top of it, never a corner, so this is the one spot that is empty in
+ * any framing rather than just in the clip it was checked against. It still
+ * says the picture moves, and the full-size play button is directly below.
+ */
+.player-stage--pose .player-scrim {
+  place-items: end;
+  padding: 10px;
+}
+
+.player-stage--pose .player-play {
+  width: 46px;
+  height: 46px;
+}
+
+/* Sits under the controls the way `.levelled-note` sits under the picker: the
+   one line explaining why this report shows a drawing instead of a clip. */
+.player-note {
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
 .player-stage video,
 .player-stage canvas {
   position: absolute;

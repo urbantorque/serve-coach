@@ -101,23 +101,36 @@ export function keyframePoses(
  *
  * A `Frame` is more than landmarks — it has an index, a timestamp, a visibility
  * and a world track — and none of that survives, so the parts that are not
- * stored come back as the honest absence rather than as plausible values. `t` is
- * zero because nothing seeks a stored report, `world` is empty because no world
- * landmarks were kept, and anything that wanted those has to notice they are
- * missing rather than read a fabricated number.
+ * stored come back as the honest absence rather than as plausible values.
+ * `world` is empty because no world landmarks were kept, and anything that
+ * wanted those has to notice they are missing rather than read a fabricated
+ * number.
+ */
+function frameFromRow(row: number[], index: number, t: number): Frame {
+  const image: Landmark[] = []
+  for (let i = 0; i < row.length; i += STRIDE) {
+    image.push({ x: row[i], y: row[i + 1], z: 0, visibility: row[i + 2] })
+  }
+  return { index, t, image, world: [], visibility: 1 }
+}
+
+/** A row that could not have come out of this encoder. */
+const drawable = (row: unknown): row is number[] =>
+  Array.isArray(row) && row.length > 0 && row.length % STRIDE === 0
+
+/**
+ * One keyframe, as a drawable frame.
+ *
+ * `t` is zero because a keyframe pose carries no time of its own — the stills it
+ * stands in for are looked at, not played. `SwingTrack` does keep times, and
+ * `trackFrameAt` below returns them.
  *
  * `undefined` for a row that was never captured or is the wrong length, which is
  * also the guard against a row written by a build that used a different stride.
  */
 export function poseFrameAt(poses: KeyframePoses | undefined, index: number): Frame | undefined {
   const row = poses?.rows?.[index]
-  if (!row || row.length === 0 || row.length % STRIDE !== 0) return undefined
-
-  const image: Landmark[] = []
-  for (let i = 0; i < row.length; i += STRIDE) {
-    image.push({ x: row[i], y: row[i + 1], z: 0, visibility: row[i + 2] })
-  }
-  return { index, t: 0, image, world: [], visibility: 1 }
+  return drawable(row) ? frameFromRow(row, index, 0) : undefined
 }
 
 /**
@@ -296,4 +309,131 @@ export function readSwingTrack(v: unknown): SwingTrack | undefined {
   const stored = Array.isArray(raw.times) ? raw.times : []
   const times = rows.map((_, i) => (typeof stored[i] === 'number' ? (stored[i] as number) : 0))
   return { aspect: raw.aspect, from: Math.round(raw.from), times, rows }
+}
+
+/* ---------------------------------------------------------------- playback */
+
+/**
+ * The cadence a replay falls back to when the stored times cannot be trusted.
+ *
+ * `readSwingTrack` repairs a missing timestamp to zero rather than refusing the
+ * row it belongs to, which is the right trade for a filmstrip and the wrong one
+ * for a clock: a run of zeroes would play a whole swing in an instant. Thirty a
+ * second is the low end of what a phone films at, so an assumed replay runs at
+ * or slower than life and never faster — a serve shown quicker than it happened
+ * is the one error that would make a player misjudge their own timing.
+ */
+export const REPLAY_ASSUMED_STEP = 1 / 30
+
+/** One drawable instant of a replay. */
+export interface ReplaySample {
+  /** Index into `SwingTrack.rows`; add `from` for the clip's own frame number. */
+  row: number
+  /**
+   * Seconds from the start of the replay, not from the start of the clip.
+   *
+   * Relative because there is no clip left to be absolute against: the video a
+   * stored report was made from is long gone, and an elapsed time counted from
+   * a walk-up nobody can watch is a number with nothing behind it.
+   */
+  at: number
+}
+
+export interface Replay {
+  samples: ReplaySample[]
+  /** Total seconds, so a caller can loop without re-reading the last sample. */
+  duration: number
+  /**
+   * True when the stored times were unusable and `at` is `REPLAY_ASSUMED_STEP`
+   * counted out rather than measured. Nothing on screen states a duration, so
+   * this changes pacing and not a printed number — but a caller that ever wants
+   * to print one has to be able to see the difference first.
+   */
+  assumedSpacing: boolean
+}
+
+/**
+ * A stored swing, as the instants a replay can actually draw.
+ *
+ * ONLY TRACKED ROWS. A row the tracker lost is not a sample: there is no body
+ * to draw at it, and blanking the canvas for a frame reads as the app faulting
+ * rather than as a gap in what a phone could see. Dropping it instead leaves its
+ * time out of the sequence too, so the swing simply holds still for exactly as
+ * long as the tracking was missing — which is the honest picture of the gap.
+ *
+ * `undefined` below two samples, because one pose is not motion. A report in
+ * that state has a filmstrip and no replay, which is the same answer as a report
+ * with no track at all rather than a player that shows one frame forever.
+ */
+export function replayFrom(track: SwingTrack | undefined): Replay | undefined {
+  if (!track) return undefined
+
+  const rows: number[] = []
+  for (let i = 0; i < track.rows.length; i++) if (drawable(track.rows[i])) rows.push(i)
+  if (rows.length < 2) return undefined
+
+  const times = rows.map((r) => track.times[r])
+  /*
+   * Monotonic and non-degenerate, or not used at all. `seekTo` files a frame
+   * under the time the seek actually reached, so real sampling is uneven — that
+   * is the whole reason the times are stored — but it is never backwards, and a
+   * span of zero is the repaired-to-zero case above rather than a fast serve.
+   */
+  const measured =
+    times.every((t) => typeof t === 'number' && Number.isFinite(t)) &&
+    times.every((t, i) => i === 0 || t >= times[i - 1]) &&
+    times[times.length - 1] > times[0]
+
+  const samples = rows.map((row, i) => ({
+    row,
+    at: measured ? round(times[i] - times[0], 3) : round(i * REPLAY_ASSUMED_STEP, 3),
+  }))
+  return {
+    samples,
+    duration: samples[samples.length - 1].at,
+    assumedSpacing: !measured,
+  }
+}
+
+/**
+ * One row of a stored swing, as a drawable frame.
+ *
+ * Takes a row index rather than a clip frame — every reader here subtracts
+ * `from` once and works in row space after that, and a function that accepted
+ * both would eventually be handed the wrong one.
+ *
+ * Unlike `poseFrameAt` this carries the real `index` and `t`, because a track
+ * knows both: the clip frame is `from + row`, and the time is what the sampler
+ * recorded rather than a step somebody assumed.
+ */
+export function trackFrameAt(track: SwingTrack | undefined, row: number): Frame | undefined {
+  const r = track?.rows?.[row]
+  if (!drawable(r)) return undefined
+  return frameFromRow(r, track!.from + row, track!.times[row] ?? 0)
+}
+
+/**
+ * Where each keyframe sits in a replay's samples, by name.
+ *
+ * EXACT OR ABSENT, and this is the same rule `keyframesFromTrack` follows for
+ * the same reason: a phase whose own row was never tracked gets no entry rather
+ * than the nearest one. The player parks on these and captions what it parks on,
+ * so a nearest-row fallback would eventually caption the trophy as the contact —
+ * and the picture would still look like a serve, which is what makes it the
+ * error nobody catches.
+ */
+export function phaseSamples(
+  replay: Replay | undefined,
+  track: SwingTrack | undefined,
+  phases: readonly Pick<Phase, 'id' | 'frame'>[],
+): Map<string, number> {
+  const found = new Map<string, number>()
+  if (!replay || !track) return found
+  const byRow = new Map<number, number>()
+  replay.samples.forEach((s, i) => byRow.set(s.row, i))
+  for (const p of phases) {
+    const i = byRow.get(p.frame - track.from)
+    if (i !== undefined) found.set(p.id, i)
+  }
+  return found
 }
