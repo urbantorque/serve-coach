@@ -43,6 +43,47 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 62 · consolidation gate
+
+**Orchestrator.** Sixth cycle since `loop-green-11`. Number diff, boot, tag.
+
+**285 figures then, 300 now. Fifteen added, ZERO removed, zero moved.** After a
+block whose previous gate had eighteen figures move, nothing in the engine
+shifted at all — including through a new rig dial, which is the change most able
+to move everything.
+
+**Every addition is one round's finding:**
+
+- **R78** (57): `0.016` — the history walk, 0.1% of a 60 FPS frame
+- **F5** (59): `0.0519 0.0818 0.0841 0.0831` depth and `0.0755 0.0715 0.0429
+  0.0101` lateral — the seven-fold axis collapse
+- **R80** (60): `0.52` and `0.99` — a sideways toss named as a forwards fault at
+  the corner, and the app at its most confident where it sees least
+- **R52·1** (61): `0.0017` hitched against `0.0490` flowing, at `1.35` and `1.85`
+
+**And the rig dial moved nothing**, which is the claim round 61 made and this is
+where it is checked across the whole suite rather than in one file:
+`trophyHitchSeconds` is skipped at zero rather than applied as an identity, so a
+serve built without a hitch is the serve the rig built before the dial existed.
+
+**Gate.** typecheck clean · lint clean · production build clean (671.32 KiB
+precache) · **1206 checks, 0 failed, exit 0**.
+
+**Boot smoke** on a restarted server: report renders, five area cards, headline
+"The racket stops short behind you", drill "Let the racket fall".
+
+Tag: `loop-green-12`.
+
+**What this block was.** Four of the six rounds were the loop auditing itself and
+finding something real: a walk that cost a tenth of a per cent (57), an export
+whose contents nothing held to its promise (58), a band spanning two axes seven-
+fold apart (59), and a guard that has never once fired (60). The fifth built the
+instrument a refusal was blocked on and found the refusal conservative (61).
+**None of them was a feature, and the app is more honest than it was six rounds
+ago.**
+
+---
+
 ### Round 61 · Cycle B — biomechanics · `B5b · R52·1`
 
 **Orchestrator.** Build the instrument round 54's refusal was blocked on. R60·1's
