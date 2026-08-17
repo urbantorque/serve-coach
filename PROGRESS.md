@@ -43,6 +43,41 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 27 · Cycle A — CV/ML engine · `A4 · R61·1`
+
+**Orchestrator.** The spike R61 asks for by name. Lead builder: Biomechanics &
+CV Specialist. Column: *Do I believe it*.
+
+**Two numbers, both derivable without building anything.** How much ball there
+is — 8.0 frames at club speed, **3.9 at a strong serve**, at 30 fps — and how
+blurred it is: a **1.50 m smear** in one exposure against a 5.9 m frame. Both
+fall out of R62's frame-width figure from the round before, which is the first
+time this session one round's measurement has directly paid for the next.
+
+**The shape is the finding, not the count.** Frames fall as the serve gets
+faster, so a speed reading would be least precise exactly where a player cares
+most. And the tracker looks for a compact disc — `min(R,G) − B` over a blob —
+which a streak across a quarter of the frame is not. The toss works because a
+tossed ball is nearly stationary at its apex.
+
+**Not a refusal.** Eight frames at club speed is a usable fit and club players
+are who this app is for. What this is is a set of constraints the build has to be
+shaped around rather than discover, which is what a spike is for.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | "Film it at 60" is answered before anybody suggests it: 7.9 frames and still 13% smear. And the round is left `[~]`, not refused — the numbers do not support a refusal |
+| Performance | pass | Nothing built |
+| Privacy | pass | Nothing built |
+| Architecture | pass | Split three ways with the infrastructure separated from the detector, since `planSharedPass` is needed by W6 and W7 alike and is the only ordinary engineering in it |
+| Product | pass | The one reading that would describe the *result* of the technique rather than the technique. Not promised, and not refused |
+
+**Gate.** typecheck clean · lint clean · **1117 checks, 0 failed, exit 0** (+3).
+
+---
+
 ### Round 26 · Cycle F — QA and edge cases · `F2 · R62`
 
 **Orchestrator.** The one round `PHASE-8.md` lists to be refused rather than

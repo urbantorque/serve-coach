@@ -935,4 +935,90 @@ check('a single randomly-moving object — a bird, a second ball, a reflection �
   within(rate, 0, 0.05, 'the false-positive rate on one non-parabolic mover')
 })
 
+
+/* -------------------------------------- the ball after contact, and its cost -- */
+
+heading('How many frames of outbound ball a phone actually gets')
+
+/**
+ * R61's spike. The round says build W7 — the ball past contact — and never W6,
+ * and never in mph. Before any of that: **how much ball is there to measure?**
+ *
+ * `planSharedPass` throws by design, so nothing has ever run this window. The
+ * two numbers that decide whether it is worth building are both derivable from
+ * things this repo already knows, and neither needs the pass to exist.
+ *
+ * **HOW LONG THE BALL IS IN SHOT.** R62 established the frame spans about 5.9 m
+ * at the player's distance on well-framed footage. A ball leaving at speed
+ * crosses that in `width / speed` seconds, which at 30 fps is a handful of
+ * frames — and the count falls as the serve gets faster, so the hardest serves
+ * to measure are the ones a player most wants measured.
+ *
+ * **HOW BLURRED IT IS.** A phone's exposure at 30 fps is at most 1/30 s and
+ * usually shorter, but the ball still smears: distance travelled during the
+ * exposure is `speed / fps` metres, which for a fast serve is a large fraction
+ * of the frame. The tracker's whole detection model is a compact yellow-green
+ * blob — `ballTrack.ts` scores `min(R,G) − B` over a disc — and a streak is not
+ * a disc. The toss works because a tossed ball is nearly stationary at its apex;
+ * an outbound ball never is.
+ *
+ * NOTHING IS BUILT HERE. This is the spike R61 asks for, and its output is the
+ * split plan in `NEXT.md` plus these two numbers so the next round starts from
+ * them rather than from optimism.
+ */
+const FRAME_WIDTH_M = 5.9
+const CLUB_SERVE_MS = 22
+const STRONG_SERVE_MS = 45
+
+const framesInShot = (speedMs: number, fps: number) => (FRAME_WIDTH_M / speedMs) * fps
+const blurMetres = (speedMs: number, fps: number) => speedMs / fps
+
+check('a club serve gives a handful of frames, and a fast one barely any', () => {
+  const club = framesInShot(CLUB_SERVE_MS, 30)
+  const strong = framesInShot(STRONG_SERVE_MS, 30)
+  note(`  at 30 fps: ${club.toFixed(1)} frames at ${CLUB_SERVE_MS} m/s, ${strong.toFixed(1)} at ${STRONG_SERVE_MS}`)
+  /*
+   * The shape that matters is the direction, not the exact count: the faster the
+   * serve, the less of it there is to measure. A speed reading whose precision
+   * falls as the quantity rises is one that will be worst exactly where a player
+   * cares most.
+   */
+  assert(strong < club, 'a faster serve did not give fewer frames, so the arithmetic is wrong')
+  assert(
+    strong < 5,
+    `a strong serve gives ${strong.toFixed(1)} frames at 30 fps — enough that the sampling ` +
+      'objection in R61 no longer stands on its own',
+  )
+})
+
+check('the ball is a streak rather than a disc, which is what the tracker looks for', () => {
+  /*
+   * `ballTrack.ts` finds the ball as a compact yellow-green blob and scores it
+   * `min(R,G) − B` over a disc. That works for the toss because a tossed ball is
+   * nearly stationary at its apex. An outbound ball smears across a large
+   * fraction of the frame within one exposure, and a streak scores poorly on a
+   * disc detector however yellow it is.
+   */
+  const club = blurMetres(CLUB_SERVE_MS, 30)
+  const strong = blurMetres(STRONG_SERVE_MS, 30)
+  note(`  smear in one frame: ${club.toFixed(2)} m club, ${strong.toFixed(2)} m strong — frame is ${FRAME_WIDTH_M} m`)
+  assert(
+    strong / FRAME_WIDTH_M > 0.15,
+    `a strong serve smears ${((100 * strong) / FRAME_WIDTH_M).toFixed(0)}% of the frame per exposure — ` +
+      'if that has fallen, the disc detector may reach the outbound ball after all',
+  )
+})
+
+check('sixty frames a second helps, and does not solve it', () => {
+  // Worth stating because "film it at 60" is the first thing anybody suggests.
+  const at60 = framesInShot(STRONG_SERVE_MS, 60)
+  const smear60 = blurMetres(STRONG_SERVE_MS, 60)
+  note(`  at 60 fps: ${at60.toFixed(1)} frames, ${smear60.toFixed(2)} m of smear`)
+  assert(at60 > framesInShot(STRONG_SERVE_MS, 30), '60 fps did not give more frames')
+  assert(
+    smear60 / FRAME_WIDTH_M > 0.08,
+    'the smear at 60 fps is now small enough that the detector objection weakens',
+  )
+})
+
 report()

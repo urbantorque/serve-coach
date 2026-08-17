@@ -37,8 +37,12 @@ Pose tracking stability, kinematics, temporal smoothing, the frame budget.
 - [x] **A3b · R60·2** — Refused. *(Round 20 — the stance is a depth quantity and
       a side-on camera cannot see it: 0.0050 against a flat 0.0030 floor. The
       round said "the axis the camera sees best"; it is the worst.)*
-- [ ] **A4 · R61** — Ball speed off the strings. `planSharedPass` in
-      `detector.ts` throws; build W7 only, never W6, never in mph. Spike first.
+- [x] **A4 · R61·1 spike** — *(Round 27 — 3.9 frames at a strong serve against
+      8.0 at club speed, and a 1.50 m smear against a disc detector. Not a
+      refusal; a shape the build must fit.)*
+- [ ] **A4b · R61·2** — Build `planSharedPass`. Infrastructure; it throws today.
+- [ ] **A4c · R61·3** — The outbound detector, as a streak rather than a disc,
+      refusing above the speed where the frames run out. Never in mph.
 - [ ] **A5 · audit 8** — Windows in `phases.ts` still sized in file seconds
       rather than shares of the serve. R44 fixed the landing floor and left the
       rest.

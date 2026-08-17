@@ -2359,3 +2359,42 @@ deleting a working button.
         · **R58·2 — draw it.** `renderBasketCard` is the shape to follow, ~260
           lines of canvas. Needs the browser, and the pane will not composite a
           screenshot — so verification is pixel sampling, as R49·3 did.
+
+- [~] **R61** — Spiked, and the spike produced a three-way split rather than a
+      go-ahead.
+
+        · **R61·1 — [x] the spike.** Two numbers decide whether W7 is worth
+          building, and both were derivable without the pass existing.
+
+          **How much ball there is.** R62 established the frame spans ~5.9 m at
+          the player on well-framed footage. At 30 fps that is **8.0 frames** at
+          a club 22 m/s and **3.9** at a strong 45 — and the count *falls as the
+          serve gets faster*. A reading whose precision drops as the quantity
+          rises is worst exactly where a player cares most, and that shape is the
+          finding rather than the raw count.
+
+          **How blurred it is.** The ball travels `speed / fps` in one exposure:
+          **0.73 m club, 1.50 m strong** — a quarter of the frame. `ballTrack.ts`
+          finds the ball as a compact yellow-green blob scored `min(R,G) − B`
+          over a **disc**, and a streak is not a disc. The toss works because a
+          tossed ball is nearly stationary at its apex; an outbound ball never is.
+
+          Sixty frames a second helps and does not solve it: 7.9 frames, and
+          0.75 m of smear still 13% of the frame. Worth stating because "film it
+          at 60" is the first thing anybody suggests.
+
+          **NOT A REFUSAL.** Eight frames at club speed is a usable fit, and club
+          speed is who this app is for. What it is is a set of constraints the
+          build has to be shaped around rather than discover.
+
+        · **R61·2 — build `planSharedPass`.** Infrastructure, and the thing that
+          throws today. Needed by W6 and W7 alike, and it is the only part of
+          this that is ordinary engineering.
+
+        · **R61·3 — the outbound detector, as a streak.** The existing disc model
+          will not find a ball smeared across a quarter of the frame, so this is
+          a new detector rather than the tracker pointed at a new window. **It
+          must refuse above the speed where the frames run out** — which is a
+          refusal keyed to the very quantity being measured, and needs care: the
+          honest form is to report the frame count alongside, and say nothing
+          below a floor. **Never in mph**, per the round.
