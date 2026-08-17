@@ -128,11 +128,28 @@ export function drillIdFor(flaw: FlawId, axis?: BodyAxis): string {
 
 /* --------------------------------------------------------------- refusal -- */
 
-export type RejectReason =
-  | 'body_not_visible'
-  | 'too_few_frames'
-  | 'too_blurry'
-  | 'camera_unusable'
+/**
+ * Every reason this app throws a clip out, as a list a test can walk.
+ *
+ * A frozen array with the type derived from it, rather than a bare union — the
+ * argument `DETECTOR_IDS` makes in `detector.ts`, arrived at here from the other
+ * direction. A union cannot be enumerated at runtime, so nothing could check
+ * that a refusal added elsewhere in the app does not collide with one of these.
+ *
+ * Round 49 found that it had: the outbound detector shipped a
+ * `'too_few_frames'` meaning "too few streaks agreed" beside this one, which
+ * means "the clip had too few swing samples". Two enums with one value are
+ * indistinguishable the moment they meet in a log or a reason-to-sentence map,
+ * and the types cannot help — they are separate unions that never touch.
+ */
+export const REJECTIONS = [
+  'body_not_visible',
+  'too_few_frames',
+  'too_blurry',
+  'camera_unusable',
+] as const
+
+export type RejectReason = (typeof REJECTIONS)[number]
 
 export type InjuryFlag =
   | 'wrist_strain_forced_pronation'

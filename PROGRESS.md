@@ -43,6 +43,58 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 49 · Cycle D — performance and architecture · `D6 · R75` (new)
+
+**Orchestrator.** Cycle D's two open rows are blocked — `D1b` on a phone, `D2d`
+on the design ask round 42 recorded — so the Orchestrator generates one. Four
+rounds have added modules since the bundle was last measured at round 10.
+
+**Measured.** Entry chunk **416.90 kB raw / 139.09 kB gzip**. MediaPipe
+138.83/41.55 in its own chunk, CSS 54.19/10.35, the demo and fixture routes
+split out at 8.63 and 8.55.
+
+**And the staged detectors cost the critical path nothing.** `planSharedPass`
+and `outbound.ts` both exist with no caller — deliberately, and round 42 ruled
+them so. The question Cycle D has to ask is whether that costs anything, and it
+does not: neither module's literals appear in the entry chunk.
+
+**Probed by string literal, not by symbol name**, which is the part worth
+keeping. The first probe grepped for `MIN_ELONGATION`, `planSharedPass` and four
+others and returned zero across the board — a clean-looking result that proves
+nothing, because those names are minified away before they reach `dist`. Refusal
+enums survive as literals.
+
+**Which is how the round found a real defect.** `too_few_frames` came back
+**present** in the entry chunk. It was not from the new detector: `triage.ts`
+has owned that reason since long before, meaning *the clip had too few swing
+samples*. Round 46 shipped one beside it meaning *too few streaks agreed*.
+
+Two enums with one value are indistinguishable the moment they meet — in a log,
+a share card, a map from reason to sentence — and the types cannot help, because
+they are separate unions that never touch. It is constraint 4's "never reuse a
+word the app owns", in the machine-readable half of the app rather than in the
+copy.
+
+Renamed to `too_few_streaks`. And `RejectReason` was a bare union, so **nothing
+could have checked this**: it is now derived from a frozen `REJECTIONS` array —
+the argument `DETECTOR_IDS` makes in `detector.ts`, arrived at here from the
+other direction.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Architecture | pass | The union became a list for the reason `detector.ts` already gives: the failure is mundane and total, and nothing throws |
+| Honesty | pass | The first probe's clean result was refused rather than reported — a gate that cannot see is worse than no gate |
+| Performance | pass | Staged code confirmed off the critical path, which is what licenses building ahead of a caller at all |
+| Product | pass | Nothing user-facing moved; bundle byte-identical after the rename |
+
+**Gate.** typecheck clean · lint clean · production build clean · **1194 checks,
+0 failed, exit 0** (+1). Canaried by restoring the colliding name — the new
+check reddened alone.
+
+---
+
 ### Round 48 · Cycle C — coaching and UI · `C4 · R57`
 
 **Orchestrator.** The drills as a week. Lead builder: Coaching Voice. Column:

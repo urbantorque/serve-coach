@@ -98,7 +98,7 @@ export interface Outbound {
   /** Streaks that agreed. Reported always — it is the caveat and the refusal. */
   frames: number
   /** Why nothing was stated, when nothing was. */
-  refusal?: 'too_few_frames' | 'no_streaks' | 'disagreed'
+  refusal?: 'too_few_streaks' | 'no_streaks' | 'disagreed'
 }
 
 /* ------------------------------------------------------------- the pixels */
@@ -280,7 +280,7 @@ export function readOutbound(perFrame: readonly Streak[][]): Outbound {
      */
     return {
       frames: agreeing.length,
-      refusal: best.length >= OUTBOUND_FLOOR ? 'disagreed' : 'too_few_frames',
+      refusal: best.length >= OUTBOUND_FLOOR ? 'disagreed' : 'too_few_streaks',
     }
   }
 

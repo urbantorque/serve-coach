@@ -20,6 +20,7 @@ import {
   readOutbound,
   type Streak,
 } from '../../vision/outbound'
+import { REJECTIONS } from '../triage'
 import type { Bitmap } from '../../vision/ballTrack'
 import { assert, check, heading, note, report } from './harness'
 
@@ -132,7 +133,7 @@ check('the refusal is keyed to frames counted, never to the angle it read', () =
    */
   const r = readOutbound([[streak(14)], [streak(15)]])
   assert(r.launchDeg === undefined, `stated ${r.launchDeg}° from two frames`)
-  assert(r.refusal === 'too_few_frames', `refused as ${r.refusal}`)
+  assert(r.refusal === 'too_few_streaks', `refused as ${r.refusal}`)
   assert(r.frames === 2, `reported ${r.frames} frames`)
   assert(OUTBOUND_FLOOR === 3, 'the floor moved without this reasoning being revisited')
 })
@@ -213,6 +214,36 @@ check('nothing here is stated in miles per hour', () => {
   const r = readOutbound([[streak(20)], [streak(21)], [streak(19)]])
   const keys = Object.keys(r).join(' ')
   assert(!/speed|mph|kmh|velocity/i.test(keys), `the reading carries a speed: ${keys}`)
+})
+
+/* -------------------------------------- and the word it is allowed to use */
+
+check('an outbound refusal is not a word another refusal already owns', () => {
+  /*
+   * FOUND BY A BUNDLE PROBE, NOT BY READING. Round 49 grepped the built entry
+   * chunk for this module's string literals — to confirm a detector with no
+   * caller costs the critical path nothing — and `too_few_frames` came back
+   * present. It was not this module's: `triage.ts` has owned that reason since
+   * long before, meaning "the clip had too few swing samples". This one meant
+   * "too few streaks agreed", which is a different subject entirely.
+   *
+   * Two enums with one value are indistinguishable the moment they meet — in a
+   * log, a share card, a map from reason to sentence — and nothing about the
+   * types stops it, because they are separate unions that never touch. It is
+   * constraint 4's "never reuse a word the app owns", in the machine-readable
+   * half of the app rather than in the copy.
+   *
+   * Read off `REJECTIONS` rather than restated, so a reason added there and
+   * duplicated here goes red.
+   */
+  const mine: string[] = ['too_few_streaks', 'no_streaks', 'disagreed']
+  const theirs = new Set<string>(REJECTIONS as readonly string[])
+  const clash = mine.filter((m) => theirs.has(m))
+  assert(clash.length === 0, `these refusals already mean something else: ${clash.join(', ')}`)
+  // And the check has to be able to see the other list at all, or it passes by
+  // measuring nothing — the failure mode of every text-matched gate here.
+  assert(theirs.size > 3, `only ${theirs.size} triage reasons found to compare against`)
+  note(`${mine.length} outbound refusals against ${theirs.size} triage reasons, no overlap`)
 })
 
 report()
