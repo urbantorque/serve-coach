@@ -2295,3 +2295,39 @@ deleting a working button.
       instead, for R49·1's reason.
 
       Five checks in `db.test.ts`, canaried to one.
+
+- [~] **R58** — Split: what a coach's card says, then drawing it.
+
+        · **R58·1 — [x] the content.** `tripSummary` in `progress.ts`, which owns
+          trips. Pure, no canvas — the same split R49 took for the ghost, and for
+          the same reason: what is honest to say about a trip is the hard part,
+          and a decision taken inside a draw call is one nobody can test.
+
+          **A trip, not a basket, and that is the whole difference from
+          `renderBasketCard`.** `Consistency` is one clip swept; this is every
+          report filed within one visit, which is what somebody means when they
+          say how it went on Tuesday. Nothing assembled trip-level content before.
+
+          **The refusal is the repeatability reading.** A trip nobody swept gets
+          none rather than one built from the spread of separate clips — that
+          would be comparing serves the app never compared, filmed minutes apart
+          with a camera that may have moved between them. Canaried: defaulting it
+          to 0 reddens exactly that check.
+
+          The instruction is the **last** report's, not the most common: a trip
+          whose fault changed partway through is one where the earlier advice was
+          superseded, and on a two-serve trip "most common" is a coin toss.
+          Strain is gated twice — recurring across trips *and* raised on this one
+          — because a warning that has been quiet since March has no business on
+          Tuesday's card.
+
+          **R58's own claim checked rather than assumed:** every field survives a
+          report with no clip left. The fixture carries no frames, no video, no
+          thumbnails and no track — the state the prune ladder leaves — and the
+          summary is complete anyway. That is what makes this a card at all: a
+          coach reads it days later on a phone that threw the video away the
+          moment it finished with it.
+
+        · **R58·2 — draw it.** `renderBasketCard` is the shape to follow, ~260
+          lines of canvas. Needs the browser, and the pane will not composite a
+          screenshot — so verification is pixel sampling, as R49·3 did.

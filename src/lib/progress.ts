@@ -1015,3 +1015,107 @@ export { statusOf }
  */
 export const shortDate = (t: number): string =>
   new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+
+/* ------------------------------------------------ a trip, for somebody else -- */
+
+/**
+ * What one trip to the court amounted to, from stored reports only.
+ *
+ * R58's content, decided separately from R58's drawing — the same split R49 took
+ * for the ghost, and for the same reason: what is honest to say about a trip is
+ * the hard part, and a decision taken inside a canvas call is a decision nobody
+ * can test.
+ *
+ * **EVERY FIELD SURVIVES A REOPENED REPORT WITH NO CLIP**, which R58 claims and
+ * which is checked here rather than assumed. That is the whole reason this can
+ * be a card at all: a coach is shown it days later, on a phone that threw the
+ * video away the moment it finished reading it.
+ *
+ * A TRIP, NOT A BASKET, and that is the difference from `renderBasketCard`.
+ * `Consistency` is one clip swept; this is every report filed within one visit,
+ * which is what somebody means when they say how it went on Tuesday.
+ */
+export interface TripSummary {
+  /** When the trip started — its oldest report. */
+  from: number
+  /** Reports filed on it. Never fewer than one. */
+  serves: number
+  /** Best and worst overall on the trip, and which serve each was. */
+  best: { id: string; overall: number }
+  worst: { id: string; overall: number }
+  /**
+   * The tightest best-against-worst gap any basket on this trip managed.
+   *
+   * Absent when nothing on the trip was swept — a trip of single serves has no
+   * repeatability reading at all, and inventing one from the spread of separate
+   * clips would be comparing serves the app never compared.
+   */
+  tightestGap?: number
+  /**
+   * What the player was asked to work on, taken from the trip's LAST report.
+   *
+   * The last rather than the most common, because that is the instruction they
+   * left with. A trip whose fault changed partway through is a trip where the
+   * earlier advice was superseded, and averaging the two would produce a
+   * sentence nobody was ever given.
+   */
+  focus?: string
+  /** Joint warnings that recur across trips and were raised on this one. */
+  strain: StrainRecord[]
+}
+
+/**
+ * Summarise one trip.
+ *
+ * `trip` must be the reports of a single visit — `tripsOf` produces them. Takes
+ * the whole history too, because the strain reading is a fact about trips
+ * *plural*: a warning is only worth showing when it keeps coming back, and one
+ * trip cannot know that about itself.
+ *
+ * `undefined` for an empty trip, which is not a state `tripsOf` produces and is
+ * the honest answer if a caller assembles one by hand.
+ */
+export function tripSummary(trip: Session[], history: Session[]): TripSummary | undefined {
+  if (trip.length === 0) return undefined
+  const byTime = [...trip].sort((a, b) => a.createdAt - b.createdAt)
+
+  let best = byTime[0]
+  let worst = byTime[0]
+  for (const s of byTime) {
+    if (s.overall > best.overall) best = s
+    if (s.overall < worst.overall) worst = s
+  }
+
+  /*
+   * The tightest gap on the trip, out of whatever was actually swept.
+   *
+   * Read off each report's own stored `consistency`, not recomputed: the spread
+   * across a basket is a comparison the app made at the time, between serves
+   * from one clip. Assembling one here across separate clips would compare
+   * serves nothing ever compared, on a trip where the camera may have moved
+   * between them.
+   */
+  const gaps = byTime
+    .map((s) => s.consistency?.gap)
+    .filter((g): g is NonNullable<typeof g> => !!g)
+    .map((g) => Math.abs(g.bestScore - g.worstScore))
+
+  /*
+   * The strain reading is the one field that needs more than this trip, and it
+   * is filtered to what this trip actually raised — a warning that recurs across
+   * a season but was silent on Tuesday has no business on Tuesday's card.
+   */
+  const raised = new Set(
+    byTime.flatMap((s) => (s.triage?.injury_risk ?? []).map((i) => i.flag)),
+  )
+
+  return {
+    from: byTime[0].createdAt,
+    serves: byTime.length,
+    best: { id: best.id, overall: best.overall },
+    worst: { id: worst.id, overall: worst.overall },
+    tightestGap: gaps.length ? Math.min(...gaps) : undefined,
+    focus: byTime[byTime.length - 1].focus?.title,
+    strain: recurringStrainOf(history).filter((r) => raised.has(r.flag)),
+  }
+}

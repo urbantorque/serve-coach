@@ -43,6 +43,42 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 24 · Cycle E — data management and export · `E4 · R58·1`
+
+**Orchestrator.** The round I deferred in 17 for want of room, taken as the half
+that fits: the content, not the canvas. Lead builder: Product Expansion Lead.
+Column: *Is it worth opening again*.
+
+**Nothing assembled trip-level content before.** `renderBasketCard` shares one
+swept clip; R58 asks for a *trip*, which is every report filed within one visit.
+That distinction is the round.
+
+**The refusal is the interesting field.** A trip nobody swept gets no
+repeatability reading, rather than one built from the spread across separate
+clips — that would compare serves the app never compared, filmed minutes apart
+with a camera that may have moved. Canaried by defaulting it to 0: exactly that
+check reddens.
+
+**A fixture error, mine, caught by the check.** The survives-without-a-clip test
+put the focus on the first report and the rule takes the last. The rule is right
+— a trip whose fault changed partway through is one where the earlier advice was
+superseded — and the fixture was unrealistic, since every real report carries a
+focus. Fixed the fixture.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | R58's own claim — every field survives a reopened report — checked against a fixture with no frames, video, thumbnails or track, which is what the prune ladder leaves |
+| Performance | pass | One pass over a trip's reports; no canvas, no decoder |
+| Privacy | pass | Reads stored reports only. Nothing new leaves the device |
+| Architecture | pass | Lives in `progress.ts`, which owns trips, rather than in the share module that will draw it. Strain gated twice — recurring across trips *and* raised on this one |
+| Product | pass | The content decided before the pixels, so the drawing round argues about layout rather than about truth |
+
+**Gate.** typecheck clean · lint clean · **1112 checks, 0 failed, exit 0** (+7).
+
+---
+
 ### Round 23 · Cycle D — performance and architecture · `D3 · audit 5` → R65
 
 **Orchestrator.** Audit 5 asks for a stored-data shape that predates its writer.

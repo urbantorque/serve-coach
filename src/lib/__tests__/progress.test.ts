@@ -14,6 +14,7 @@
  * is a badge with the shape sanded off rather than a fact.
  */
 import {
+  tripSummary,
   MIN_THEN_AND_NOW_GAP_MS,
   STREAK_GAP_MS,
   bestConsistencyGap,
@@ -608,6 +609,115 @@ check('the court sentence is the shortest of the three, and passes the editor', 
     strainGlanceLine({ flag: 'a_flag_from_the_future' as InjuryFlag, trips: 2, of: 3 }) === undefined,
     'an unknown flag says nothing',
   )
+})
+
+
+/* ------------------------------------------------- a trip, for somebody else */
+
+heading('One trip to the court, summarised for a coach')
+
+/**
+ * R58's content, checked against the claim the round rests on: that every field
+ * survives a reopened report with no clip. A coach is shown this days later, on
+ * a phone that threw the video away as soon as it had read it.
+ */
+function tripServe(
+  daysAgo: number,
+  overall: number,
+  extra: Partial<Session> = {},
+): Session {
+  return {
+    id: `t-${daysAgo}-${overall}`,
+    createdAt: 1_800_000_000_000 - daysAgo * 24 * 60 * 60 * 1000,
+    overall,
+    overallStatus: 'good',
+    serveType: 'flat',
+    scoringVersion: 2,
+    phases: [],
+    fundamentals: [],
+    ...extra,
+  } as unknown as Session
+}
+
+check('a trip names its best and worst serve, and counts what was filed', () => {
+  const trip = [tripServe(1, 64), tripServe(1, 71), tripServe(1, 58)]
+  const s = tripSummary(trip, trip)
+  assert(!!s, 'a three-serve trip produced no summary')
+  assert(s!.serves === 3, `counted ${s!.serves} serves`)
+  assert(s!.best.overall === 71, `named ${s!.best.overall} as the best`)
+  assert(s!.worst.overall === 58, `named ${s!.worst.overall} as the worst`)
+})
+
+check('the instruction is the one they left with, not the most common one', () => {
+  /*
+   * A trip whose fault changed partway through is one where the earlier advice
+   * was superseded. Taking the most common would produce a sentence nobody was
+   * ever given — and on a two-serve trip it would be a coin toss.
+   */
+  const older = tripServe(1, 64, { focus: { title: 'Toss drifts behind you' } as never })
+  const newer = tripServe(0, 66, { focus: { title: 'Racket stops short' } as never })
+  const s = tripSummary([older, newer], [older, newer])
+  assert(s!.focus === 'Racket stops short', `left with "${s!.focus}"`)
+})
+
+check('a trip nobody swept has no repeatability reading, rather than one invented', () => {
+  /*
+   * The refusal that matters. A spread across separate clips is a comparison the
+   * app never made, between serves filmed minutes apart with a camera that may
+   * have moved. `Consistency` is one clip swept, and if there is none there is
+   * nothing to report.
+   */
+  const trip = [tripServe(1, 64), tripServe(1, 71)]
+  assert(tripSummary(trip, trip)!.tightestGap === undefined, 'a gap was invented from separate clips')
+})
+
+check('the tightest swept basket on the trip is the one reported', () => {
+  const wide = tripServe(1, 64, {
+    consistency: { gap: { best: 2, worst: 5, bestScore: 80, worstScore: 55 } } as never,
+  })
+  const tight = tripServe(1, 70, {
+    consistency: { gap: { best: 1, worst: 3, bestScore: 74, worstScore: 68 } } as never,
+  })
+  const s = tripSummary([wide, tight], [wide, tight])
+  assert(s!.tightestGap === 6, `reported a gap of ${s!.tightestGap}, expected the tighter 6`)
+})
+
+check('a warning that recurs across the season but was silent today is not on today card', () => {
+  /*
+   * Both gates, and the second is the one worth having. A strain reading is a
+   * fact about trips plural — one trip cannot know a warning keeps coming back —
+   * but a card for Tuesday may only carry what Tuesday actually raised.
+   */
+  const quiet = tripServe(1, 64)
+  const s = tripSummary([quiet], [quiet])
+  assert(s!.strain.length === 0, 'a warning this trip never raised reached its card')
+})
+
+check('an empty trip summarises to nothing rather than to zeroes', () => {
+  assert(tripSummary([], []) === undefined, 'an empty trip produced a summary')
+})
+
+check('every field on the card survives a report with no clip left', () => {
+  /*
+   * THE CLAIM R58 RESTS ON, checked rather than assumed. The fixtures above
+   * carry no `frames`, no `video`, no thumbnails and no track — the state a
+   * report reaches after the prune ladder has taken everything it can — and the
+   * summary is complete anyway.
+   */
+  // Both carry a focus, because every real report does — a fixture that omits
+  // one would be testing a shape the app cannot produce.
+  const trip = [
+    tripServe(1, 64, { focus: { title: 'Toss drifts behind you' } as never }),
+    tripServe(1, 71, {
+      focus: { title: 'Racket stops short' } as never,
+      consistency: { gap: { best: 1, worst: 3, bestScore: 74, worstScore: 68 } } as never,
+    }),
+  ]
+  const s = tripSummary(trip, trip)!
+  assert(s.serves === 2 && s.best.overall === 71, 'the basics did not survive')
+  assert(s.tightestGap === 6, 'the repeatability reading did not survive')
+  assert(s.focus === 'Racket stops short', 'the instruction did not survive')
+  assert(typeof s.from === 'number', 'the date did not survive')
 })
 
 report()
