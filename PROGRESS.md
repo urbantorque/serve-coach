@@ -43,6 +43,59 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 43 · Cycle E — data and export · `E6 · R74` (new)
+
+**Orchestrator.** Cycle E is dry: `E2` is gated on a phone, `E3` on the design
+ask round 42 recorded, everything else is done. Per the loop's own rule the
+Orchestrator generates one — and the obvious question for this focus is what the
+export path missed while other cycles added stored fields.
+
+**It missed the whole tag store.** `serveTags` arrived in R53·2a and gained
+outcomes in R56, and **neither round came back to `backup.ts`**. A player moving
+to a new phone kept every report and every drill record and silently lost every
+tap they had made — which serve it was, where it landed. The one part of the
+history the camera did not produce.
+
+`profileId` survives for free: it rides on the `Session` row, which is exactly
+the argument round 36 made for putting it there.
+
+**Read last, after the pruning, and that ordering is the round.** A tag is keyed
+by a report id and `restoreBackup` prunes as it goes, so a backup from a full
+phone restored onto a fuller one carries tags for serves that no longer exist by
+the time they are read. Checked against what is actually in the database rather
+than against the backup's own session list — the two differ precisely in the
+case that matters. An orphan is refused rather than stored, which is the
+lifetime `TAG_STORE` was keyed by report id to get.
+
+**Optional, no version bump**, on the pattern `practice` set and for its stated
+reason: every file written before this round has no such key, and refusing those
+would strand the histories most worth carrying.
+
+**The counts are surfaced, and the skips deliberately are not.** Round 42's
+lesson applied on the spot: a result field nothing reads is the same defect in a
+smaller box. `12 taps skipped` beside a successful restore reads as a loss the
+player should act on, when the serves those taps described are gone too.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | A restore that quietly drops what the player typed is the reason somebody stops trusting an app with their history — this file's own header says so |
+| Architecture | pass | Newest tap wins, the rule the practice log already sets, and for the same reason: a tag is the player correcting the record |
+| Product | pass | Failures never fail the import. Losing a tap must never be why somebody cannot restore their serves |
+| Performance | pass | One extra `getAll` on export, one on import |
+
+**Gate.** typecheck clean · lint clean · production build clean · **1171 checks,
+0 failed, exit 0** (+5). Canaried twice — the orphan guard and the export half —
+each reddening exactly one check.
+
+**Caught by a gate I did not write.** All five new checks are async and I wrote
+them without `await`; the harness refused the tally with "5 async checks still
+running". That guard is round 18's, built after `copy.test.ts` was found printing
+red crosses into a file that exited 0.
+
+---
+
 ### Round 42 · Cycle D — architecture · `D5 · R73` (new)
 
 **Orchestrator.** Cycle D's head item is `D2d · R55·2c`, the profile switch.

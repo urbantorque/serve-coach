@@ -17,14 +17,18 @@
  */
 import {
   listPracticeLogs,
+  listServeTags,
   listSessions,
   logPractice,
   normalise,
   normalisePracticeLog,
+  normaliseServeTag,
   pruneSessions,
   safely,
   saveSession,
+  tagServe,
   type PracticeLog,
+  type ServeTag,
   type Session,
 } from './db'
 import { SERVE_TYPES } from '../analysis/coaching'
@@ -74,6 +78,25 @@ export interface Backup {
    * its own field: nothing about the old shape became unreadable.
    */
   prefs?: Pick<Prefs, 'handedness' | 'tier' | 'serveType'>
+  /**
+   * What the player said about individual serves — which serve it was, and
+   * where it landed.
+   *
+   * MISSING UNTIL NOW, AND THAT WAS DATA LOSS THIS FILE PROMISES NOT TO HAVE.
+   * The tag store arrived in R53·2a and gained outcomes in R56, and neither
+   * round came back here. A player who moved to a new phone kept every report
+   * and every drill record and silently lost every tap they had made about
+   * their own serves — the one part of the history the camera did not produce.
+   *
+   * Optional and no version bump, for the reason `practice` gives above.
+   *
+   * Keyed by report id, which makes this the one carried list whose rows can be
+   * orphaned by the restore itself: `restoreBackup` prunes as it goes, so a tag
+   * can arrive for a report that has just been dropped. See the restore, which
+   * refuses those rather than storing a tag about a serve nobody can look at —
+   * the same lifetime rule `TAG_STORE` states in `db.ts`.
+   */
+  tags?: ServeTag[]
 }
 
 /**
@@ -166,6 +189,8 @@ export interface BackupStore {
   saveSession(analysis: Analysis, prune?: boolean): Promise<void>
   listPracticeLogs(): Promise<PracticeLog[]>
   logPractice(log: PracticeLog): Promise<void>
+  listServeTags(): Promise<ServeTag[]>
+  tagServe(tag: ServeTag): Promise<void>
   pruneSessions(): Promise<void>
   /**
    * The two halves of preferences, on the same seam as the rest.
@@ -185,6 +210,8 @@ const REAL_STORE: BackupStore = {
   saveSession,
   listPracticeLogs,
   logPractice,
+  listServeTags,
+  tagServe,
   pruneSessions,
   readPrefs,
   writePrefs,
@@ -197,6 +224,7 @@ export async function buildBackup(store: BackupStore = REAL_STORE): Promise<Back
     exportedAt: Date.now(),
     sessions: await store.listSessions(),
     practice: await store.listPracticeLogs(),
+    tags: await store.listServeTags(),
     // Read through the store like everything else here, so a test can drive the
     // whole file without a `localStorage`.
     prefs: portablePrefs(store.readPrefs()),
@@ -250,6 +278,17 @@ export interface ImportResult {
   logs: number
   skippedLogs: number
   /**
+   * Taps brought in, and taps left behind.
+   *
+   * Counted apart from the drill records for the same reason those are counted
+   * apart from reports: they are a different kind of claim, and a restore that
+   * added sixty reports and dropped forty tags should be able to say so. Most
+   * of the skips will be orphans — tags for reports the prune dropped on the
+   * way in — which is a normal outcome rather than a failure.
+   */
+  tags: number
+  skippedTags: number
+  /**
    * Whether the file filled in a preference this device did not have.
    *
    * A boolean rather than a count: the three that travel are one fact about the
@@ -287,7 +326,16 @@ export async function importBackup(
   }
 
   const existing = new Map((await store.listSessions()).map((s) => [s.id, s]))
-  const result: ImportResult = { added: 0, updated: 0, skipped: 0, failed: 0, logs: 0, skippedLogs: 0 }
+  const result: ImportResult = {
+    added: 0,
+    updated: 0,
+    skipped: 0,
+    failed: 0,
+    logs: 0,
+    skippedLogs: 0,
+    tags: 0,
+    skippedTags: 0,
+  }
 
   for (const raw of backup.sessions) {
     const session = normalise(raw)
@@ -355,6 +403,50 @@ export async function importBackup(
         }
         await store.logPractice(log)
         result.logs++
+      }
+    }, undefined)
+  }
+
+  /*
+   * And what the player said about individual serves.
+   *
+   * Last, and after the pruning, which is not tidiness — it is the only order
+   * that can tell an orphan from a survivor. A tag is keyed by a report id, and
+   * `restoreBackup` prunes as it goes, so a backup written on a phone with
+   * sixty reports restored onto one that already had fifty carries tags for
+   * serves that no longer exist by the time this runs. Storing those would fill
+   * the tag store with rows about serves nobody can open, which is exactly the
+   * lifetime `TAG_STORE` was keyed by report id to avoid.
+   *
+   * Checked against what is actually in the database rather than against the
+   * backup's own session list, because the two differ precisely in the case
+   * that matters.
+   *
+   * Failures do not fail the import, for the reason the practice log gives:
+   * the reports are the history, and losing a tap must never be why somebody
+   * cannot restore their serves.
+   */
+  const tags = Array.isArray(backup.tags) ? backup.tags : []
+  if (tags.length) {
+    await safely(async () => {
+      const live = new Set((await store.listSessions()).map((s) => s.id))
+      const here = new Map((await store.listServeTags()).map((t) => [t.id, t]))
+      for (const raw of tags) {
+        const tag = normaliseServeTag(raw)
+        if (!tag || !live.has(tag.id)) {
+          result.skippedTags++
+          continue
+        }
+        // Newest tap wins, the rule the practice log already sets — and it is
+        // the right one here too: a tag is the player correcting the record,
+        // so the later correction is the one they meant.
+        const mine = here.get(tag.id)
+        if (mine && mine.taggedAt >= tag.taggedAt) {
+          result.skippedTags++
+          continue
+        }
+        await store.tagServe(tag)
+        result.tags++
       }
     }, undefined)
   }

@@ -173,6 +173,12 @@ Storage, backup, and the files a player is handed.
       than one invented from separate clips.)*
 - [x] **E4b · R58·2** — Draw it. *(Round 31 — and the refusal survives into the
       pixels: a trip nobody swept draws no repeatability row at all.)*
+- [x] **E6 · R74** — The taps, in the backup file. They were never carried: the
+      tag store arrived in R53·2a, gained outcomes in R56, and neither round came
+      back to `backup.ts`. A player moving phones kept every report and every
+      drill record and silently lost the one part of the history the camera did
+      not produce. Read last, after the prune, so an orphaned tag is refused
+      rather than stored about a serve nobody can open.
 - [x] **E5 · audit 4** — A `README.md` claim with no test behind it. *(Round 17 —
       "about 15 KB" for a pruned report. It is 31.3 kB: the swing track was
       written after that sentence and is kept on every report.)*

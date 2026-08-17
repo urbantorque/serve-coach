@@ -62,6 +62,15 @@ export default function StoragePanel({ count, onImported }: Props) {
         // Counted apart from the reports, because they are not serves and a
         // player reading "nine added" wants that to be nine serves.
         r.logs ? `${r.logs} ${r.logs === 1 ? 'drill' : 'drills'}` : '',
+        // Same rule again for the taps: a player reading "nine added" wants
+        // that to be nine serves, not seven serves and two things they tapped.
+        //
+        // The skipped ones are deliberately not shown. Most are tags for
+        // reports the prune dropped on the way in, which is a normal outcome
+        // rather than something to act on — and "12 taps skipped" beside a
+        // successful restore reads as a loss the player is expected to do
+        // something about, when the serves those taps described are gone too.
+        r.tags ? `${r.tags} ${r.tags === 1 ? 'tap' : 'taps'}` : '',
       ].filter(Boolean)
       setOutcome(
         (parts.length ? parts.join(', ') + '.' : 'Nothing new in that file.') +

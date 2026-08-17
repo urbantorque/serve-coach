@@ -28,7 +28,7 @@ import {
   type BackupStore,
 } from '../backup'
 import { DEFAULTS, type Prefs } from '../prefs'
-import type { PracticeLog, Session } from '../db'
+import type { PracticeLog, ServeTag, Session } from '../db'
 import type { Analysis } from '../../analysis/types'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
 
@@ -71,6 +71,8 @@ function memoryStore(
   opts: {
     sessions?: Session[]
     logs?: PracticeLog[]
+    /** What the player had already said about their own serves, before any import. */
+    tags?: ServeTag[]
     refuse?: string[]
     /** What this device already knows about the player, before any import. */
     prefs?: Partial<Prefs>
@@ -80,6 +82,7 @@ function memoryStore(
 ) {
   const sessions = new Map((opts.sessions ?? []).map((s) => [s.id, s]))
   const logs = new Map((opts.logs ?? []).map((l) => [l.id, l]))
+  const tags = new Map((opts.tags ?? []).map((t) => [t.id, t]))
   const refuse = new Set(opts.refuse ?? [])
   let prefs: Prefs = { ...DEFAULTS, ...opts.prefs }
   let prunes = 0
@@ -89,6 +92,10 @@ function memoryStore(
     saveSession: async (analysis: Analysis) => {
       if (refuse.has(analysis.id)) throw new Error('QuotaExceededError')
       sessions.set(analysis.id, analysis as unknown as Session)
+    },
+    listServeTags: async () => [...tags.values()],
+    tagServe: async (t: ServeTag) => {
+      tags.set(t.id, t)
     },
     listPracticeLogs: async () => [...logs.values()].sort((a, b) => b.doneAt - a.doneAt),
     logPractice: async (l: PracticeLog) => {
@@ -508,6 +515,122 @@ await check('junk where the preferences should be is ignored rather than written
   assert(m.prefs().handedness === undefined, `"sideways" was written as a hand`)
   assert(m.prefs().tier === undefined, '"four" was written as a rating')
   assert(m.prefs().serveType === 'flat', '"banana" was written as a serve type')
+})
+
+/* ------------------------------- what the player said about their own serves */
+
+heading('The taps, which the file did not carry until R74')
+
+const tag = (id: string, taggedAt: number, extra: Partial<ServeTag> = {}): ServeTag => ({
+  id,
+  serveNumber: 2,
+  taggedAt,
+  ...extra,
+})
+
+await check('a tap survives the round trip', async () => {
+  /*
+   * The defect this round fixed. Two rounds added to the tag store — R53·2a
+   * created it, R56 gave it outcomes — and neither came back here, so a player
+   * moving to a new phone kept every report and every drill record and silently
+   * lost the one part of the history the camera did not produce.
+   */
+  const from = memoryStore({
+    sessions: [session('a', 1_000)],
+    tags: [tag('a', 500, { outcome: 'net' })],
+  })
+  return buildBackup(from.store).then(async (b) => {
+    assert(b.tags?.length === 1, `the export carried ${b.tags?.length ?? 0} taps`)
+    const to = memoryStore({ sessions: [session('a', 1_000)] })
+    const r = await importBackup(JSON.stringify(b), to.store)
+    assert(r.tags === 1, `${r.tags} taps restored, ${r.skippedTags} skipped`)
+    const landed = (await to.store.listServeTags())[0]
+    assert(landed?.outcome === 'net', `the outcome did not survive: ${JSON.stringify(landed)}`)
+    assert(landed?.serveNumber === 2, 'which serve it was did not survive')
+  })
+})
+
+await check('a tap for a report that did not survive the prune is dropped', async () => {
+  /*
+   * The reason the tags are read last, after the pruning, rather than beside
+   * the sessions. A tag is keyed by a report id and `restoreBackup` prunes as it
+   * goes, so a backup from a full phone restored onto a fuller one carries tags
+   * for serves that no longer exist by the time they are read. Storing those
+   * fills the tag store with rows about serves nobody can open, which is the
+   * lifetime `TAG_STORE` was keyed by report id to avoid.
+   */
+  const to = memoryStore()
+  const file = JSON.stringify({
+    format: 'serve-coach-backup',
+    version: 1,
+    exportedAt: 1,
+    sessions: [session('kept', 2_000)],
+    tags: [tag('kept', 100), tag('gone', 100)],
+  })
+  return importBackup(file, to.store).then(async (r) => {
+    assert(r.tags === 1, `${r.tags} taps stored, expected the one with a report`)
+    assert(r.skippedTags === 1, `${r.skippedTags} skipped, expected the orphan`)
+    const ids = (await to.store.listServeTags()).map((t) => t.id)
+    assert(!ids.includes('gone'), 'a tap was stored about a serve nobody can open')
+  })
+})
+
+await check('the newer tap wins, in both directions', async () => {
+  // The practice log's rule, and it is the right one here too: a tag is the
+  // player correcting the record, so the later correction is the one they meant.
+  const to = memoryStore({ sessions: [session('a', 1_000)], tags: [tag('a', 900, { outcome: 'in' })] })
+  const file = (taggedAt: number, outcome: 'in' | 'long') =>
+    JSON.stringify({
+      format: 'serve-coach-backup',
+      version: 1,
+      exportedAt: 1,
+      sessions: [session('a', 1_000)],
+      tags: [tag('a', taggedAt, { outcome })],
+    })
+  return importBackup(file(800, 'long'), to.store)
+    .then(async (older) => {
+      assert(older.skippedTags === 1, 'an older tap overwrote a newer one')
+      assert((await to.store.listServeTags())[0].outcome === 'in', 'the newer tap was replaced')
+      return importBackup(file(1_500, 'long'), to.store)
+    })
+    .then(async (newer) => {
+      assert(newer.tags === 1, 'a newer tap was refused')
+      assert((await to.store.listServeTags())[0].outcome === 'long', 'the newer tap did not land')
+    })
+})
+
+await check('a file written before taps existed still restores', async () => {
+  // The whole reason the field is optional and the version did not move. Every
+  // backup taken before this round has no such key, and refusing those would
+  // strand the histories most worth carrying to a new phone.
+  const to = memoryStore()
+  const file = JSON.stringify({
+    format: 'serve-coach-backup',
+    version: 1,
+    exportedAt: 1,
+    sessions: [session('a', 1_000)],
+  })
+  return importBackup(file, to.store).then((r) => {
+    assert(r.added === 1, 'a backup with no tags key lost its reports')
+    assert(r.tags === 0 && r.skippedTags === 0, 'a missing list was counted as something')
+  })
+})
+
+await check('a malformed tap costs that tap and nothing else', async () => {
+  // The rule the whole restore path follows: losing a tap must never be why
+  // somebody cannot restore their serves.
+  const to = memoryStore()
+  const file = JSON.stringify({
+    format: 'serve-coach-backup',
+    version: 1,
+    exportedAt: 1,
+    sessions: [session('a', 1_000), session('b', 2_000)],
+    tags: [{ id: 'a', taggedAt: 'yesterday' }, tag('b', 100)],
+  })
+  return importBackup(file, to.store).then((r) => {
+    assert(r.added === 2, `a bad tap cost the player ${2 - r.added} reports`)
+    assert(r.tags === 1 && r.skippedTags === 1, `${r.tags} stored, ${r.skippedTags} skipped`)
+  })
 })
 
 report()
