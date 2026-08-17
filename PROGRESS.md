@@ -44,6 +44,52 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 12 · Cycle F — the second consolidation gate
+
+**1 · Full gate.** typecheck clean · lint clean · **1069 checks, 0 failed,
+exit 0** (+18 across the block).
+
+**2 · Number diff against `loop-green-2`.** Through a worktree again, so the
+working tree was never touched. **No engine reading moved.** Everything that did:
+
+| Moved | Why |
+| --- | --- |
+| Four new yaw-ensemble notes | Round 7. Intended |
+| Two new copy-scan notes | Round 9. Intended |
+| One new shoot-list note | Round 11. Intended |
+| `85 → 87` source files scanned | `framingIssues.ts` and `fixturePlan.ts`. Intended |
+| frame `7413 → 7420` bytes | Heap noise, 0.09% |
+| stroke and frame timings | Wall clock |
+
+**3 · Boot smoke, and it very nearly passed dishonestly.** The long-lived dev
+server's console carried `does not provide an export named 'framingIssues'` —
+round 10's split. Restarting the server did not clear it, which made it look
+current rather than stale. What settled it was `grep`: nothing imports either
+symbol from `groundTruth` any more, so the source is correct and the buffer is
+retained per tab across restarts. Confirmed on a genuinely fresh tab — report
+renders end to end, **clean console**, no error boundary.
+
+Worth recording because this is the second consolidation in a row where a stale
+console nearly cost a wrong conclusion, in both directions: round 3 nearly
+reported a real error that was not one, and this nearly dismissed one that might
+have been. **The check that resolved both was reading the source, not the
+console.**
+
+**4 · Copy audit — mechanical this time.** Block one audited three lines by hand
+and said that was not a thing anybody would keep doing. R69·1 now walks all 25
+components: 97 readable lines, 15 failing, all fifteen ruled on, 8 real and
+queued. That is the difference one block made to this step.
+
+**5 · Ledger compression.** Not done, same reasoning as block one: Phase 8 is
+mid-flight, the entries are already delta-only, and later rounds cite them by
+name — R68 rests on R59·1's measurement, R59·2 on R69·1's scanner boundary,
+R50·2 on R50·1's machinery. Compression belongs at the phase close-out.
+
+**6 · Tag.** `loop-green-3`. The push is still impossible: no remote, no
+upstream. Twelve rounds and four tags exist on one disk.
+
+---
+
 ### Round 11 · Cycle E — data management and export · `E1b · R59·2`
 
 **Orchestrator.** Closes R59, the promoted round — the only one that unblocks
