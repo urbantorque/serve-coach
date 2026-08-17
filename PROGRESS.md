@@ -43,6 +43,39 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 32 — the fifth consolidation gate
+
+**1 · Full gate.** typecheck clean · lint clean · **1130 checks, 0 failed,
+exit 0** (+18 across the block).
+
+**2 · Number diff against `loop-green-5`.** **No existing engine reading moved.**
+Round 28 added one — `leg_drive_rise_ratio` — and it appears as new lines rather
+than as a change to anything, which is the right shape for an addition and worth
+checking rather than assuming. Otherwise four new notes (26, 27, 28, 30), heap
+and wall-clock noise.
+
+**3 · Boot smoke.** Server restarted, fresh tab, report renders end to end, clean
+console.
+
+**4 · Copy audit.** Zero real.
+
+**5 · Ledger compression.** Not done. Same reasoning, and it is now worth naming
+as a standing decision rather than restating each block: Phase 8 is mid-flight,
+the entries are delta-only, and rounds cite each other by number across blocks —
+26 paid for 27, and 29 made 30's second finding visible.
+
+**6 · Tag.** `loop-green-6`. Push still impossible: no remote.
+
+**What this block was.** Two refusals with arithmetic behind them (court lines,
+and the stance from the block before), two spikes that changed what their rounds
+would build (the ball's frame count, the profiles migration), one new engine
+reading, one storage decision, and a coach's card built content-first. **Three of
+the six were rounds where the deliverable was a number that stopped something
+being built** — which is the same ratio as block four and looks like the steady
+state of a codebase this far along.
+
+---
+
 ### Round 31 · Cycle E — data management and export · `E4b · R58·2`
 
 **Orchestrator.** Draws what round 24 decided. Lead builder: Modular UI
