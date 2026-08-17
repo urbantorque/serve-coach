@@ -245,7 +245,7 @@ What counts as a move is `NOISE_FLOOR` (`analysis/tiers.ts`) and not a threshold
 of its own — the same measured figures `flaws.ts` reads to decide a fault is real
 rather than a re-roll of the tracker's noise. A change smaller than that is
 reported as no change. The consequence is deliberate: on `hip_lead_ms`, whose
-floor is 85 ms, almost every honest improvement will read as "no change yet",
+floor is 76 ms, almost every honest improvement will read as "no change yet",
 which is the truth about what a phone can see. `analysis/carryForward.ts`
 compares `FlawFinding.miss` — how far outside its band the signal landed, in the
 signal's own units — rather than the score, which moves with twenty other

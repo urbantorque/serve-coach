@@ -220,12 +220,18 @@ export const SIGNALS: Record<string, SignalSpec> = {
  * camera. Re-derive them the moment there is footage.
  */
 export const NOISE_FLOOR: Record<string, number> = {
-  // Two peak-finds on a smoothed derivative, differenced. Easily the least
+  // Two peak-finds on a smoothed derivative, differenced. Still the least
   // repeatable number in the engine: the peak can land a frame either side on a
   // noisy realisation, and at 50 fps that alone is 20 ms per side. The deviation
-  // is 56.6 ms — over three frames at a phone's frame rate — so 1.5× is 85.
-  // Was 45, clipped to `seriousMiss`. See `UNDER_RESOLVED.hip_lead_ms`.
-  hip_lead_ms: 85,
+  // is 50.1 ms at sixty seeds, so 1.5× is 75.15, which rounds up to 76.
+  //
+  // Was 85, from a deviation of 67.3, before the trunk pair was moved onto a
+  // smoothing window measured in seconds rather than samples — see
+  // `TRUNK_WINDOW_SECONDS` in `diagnose.ts` for why that was the defect and what
+  // it was worth. Was 45 before that, clipped to `seriousMiss`. Both moves are
+  // in `UNDER_RESOLVED.hip_lead_ms`, which is also where the detector's rates at
+  // each floor are, because a floor is only worth what it does to those.
+  hip_lead_ms: 76,
   // Forearm rotation between two sampled instants, from the palm normal — a
   // 3D orientation recovered from landmarks the network placed in depth, on the
   // smallest structure in the skeleton. The deviation is 20.2°, so 1.5 × that is
@@ -293,18 +299,21 @@ export const UNDER_RESOLVED: Record<string, string> = {
   /*
    * Kept, at an honest floor, because it still tells a gross fault from none.
    *
-   * Deviation 56.6 ms against a 45 ms serious miss. On the ensemble serve — a
-   * clean one, hips genuinely leading by 70 ms — the reading ran from -49 ms to
-   * +180 ms, and the old clipped floor of 45 named `arming_the_ball` at *high*
-   * severity on 12% of realisations. Twelve percent of players with a
-   * well-sequenced serve being told their shoulders fire first, as the one
-   * thing the report asks them to fix.
+   * Deviation 50.1 ms against a 45 ms serious miss — 56.6 when this entry was
+   * first written, and the difference is the filter rather than the tracker; see
+   * the re-derivation below. On the ensemble serve — a clean one, hips genuinely
+   * leading by 70 ms — the reading ran from -49 ms to +180 ms, and the old
+   * clipped floor of 45 named `arming_the_ball` at *high* severity on 12% of
+   * realisations. Twelve percent of players with a well-sequenced serve being
+   * told their shoulders fire first, as the one thing the report asks them to
+   * fix.
    *
    * Neither of the other two options looked open, and the evidence for each is
    * a different strength, so they are stated separately.
    *
    * No camera-angle gate was found, and this rig cannot find one. Swept from 25°
-   * to 88° of yaw the deviation is 56.6 ms, flat. That flatness is a property of
+   * to 88° of yaw the deviation is 49.9 ms, flat — and flat to the decimal at
+   * every one of 25, 45, 70 and 88, which is the tell rather than a comfort. That flatness is a property of
    * the rig, not a finding about cameras: `syntheticServe.ts` adds its depth
    * error to the *world* landmarks in the player's own frame, and `cameraYaw`
    * only ever builds the image projection, while `hip_lead_ms` is derived from
@@ -314,28 +323,47 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * check would have to be justified against real footage, where MediaPipe's
    * depth error genuinely does depend on how much of the player it can see.
    *
-   * More frames make it worse rather than better — 110.6 ms at 120 fps against
-   * 45.4 at 30 — which is a measurement of the engine and stands on its own. The
-   * peak-finder's smoothing in `diagnose.ts` is a fixed three *samples*, so its
-   * span in time shrinks as the frame rate rises: 3 samples is 100 ms of clip at
-   * 30 fps and 25 ms at 120, and it is applied twice, which widens the effective
-   * window beyond either. That is the signature of a derivative locking onto
-   * noise, not of a resolution limit a better phone would fix — a time-based
-   * window, as `palmNormalAt` in `kinematics.ts` already uses, is where anyone
-   * trying to recover this signal should start.
+   * More frames used to make it worse rather than better — 110.6 ms at 120 fps
+   * against 45.4 at 30 — which was a measurement of the engine and stood on its
+   * own. The peak-finder's smoothing in `diagnose.ts` was a fixed three
+   * *samples*, so its span in time shrank as the frame rate rose: 3 samples is
+   * 100 ms of clip at 30 fps and 25 ms at 120, and it is applied twice, which
+   * widens the effective window beyond either. That is the signature of a
+   * derivative locking onto noise, not of a resolution limit a better phone
+   * would fix — and this entry named a time-based window, as `palmNormalAt` in
+   * `kinematics.ts` already uses, as where anyone trying to recover this signal
+   * should start.
    *
-   * So the floor went to where the measurement puts it, 85 ms, and the detector
-   * was measured at both:
+   * THAT HAS SINCE BEEN DONE, and it was the right diagnosis. `TRUNK_WINDOW_SECONDS`
+   * in `diagnose.ts` carries the derivation and the sweep; the short version is
+   * that the deviation at sixty seeds went 57.9 / 67.3 / 110.0 ms across
+   * 30 / 50 / 120 fps to 43.3 / 50.1 / 35.6, so frame rate is no longer the axis
+   * this signal lives or dies on. The floor followed the measurement down, 85 to
+   * 76, and the detector was measured at every floor it has ever had:
    *
-   *              serve            floor 45     floor 85
-   *   clean (hips lead 70 ms)        12%           2%
-   *   mild arming (-20 ms)           43%          22%
-   *   real arming (-60 ms)           68%          50%
-   *   gross arming (-120 ms)         93%          78%
+   *                              three samples        0.15 s window
+   *              serve         floor 45  floor 85   floor 85  floor 76
+   *   clean (hips lead 70 ms)     12%       2%         0%        0%
+   *   mild arming (-20 ms)        43%      22%        20%       30%
+   *   real arming (-60 ms)        68%      50%        50%       57%
+   *   gross arming (-120 ms)      93%      78%        92%       92%
    *
-   * Two percent against seventy-eight is a detector. Half of the players who
-   * genuinely arm the ball now hear nothing, which is the trade: this engine is
-   * allowed to miss a fault and is not allowed to invent one.
+   * Zero against ninety-two is a better detector than two against seventy-eight
+   * on both ends at once, which is rare enough here to say plainly. Every rate
+   * improved and none was traded for another.
+   *
+   * The floor stopped at 76 rather than going lower, and the reason is the
+   * column that is not in the table: at floor 70 the mild and gross rates barely
+   * move (30% and 93%) while a clean serve is named on 2% again. Buying three
+   * points on real arming with a false positive is the wrong way round — this
+   * engine is allowed to miss a fault and is not allowed to invent one.
+   *
+   * What is still true: this remains the least repeatable number in the engine,
+   * it is still UNDER_RESOLVED rather than solved, and 43% of players who
+   * genuinely arm the ball still hear nothing. What changed is that the part of
+   * that owed to the filter has been paid off, and what is left is the depth
+   * error on world z, which no window can smooth away. Anyone trying to take
+   * this further should be looking at the provenance, not the smoothing.
    *
    * One honest consequence, since the floor now sits above `seriousMiss`: every
    * `arming_the_ball` finding comes back at severity 'high', because any miss
@@ -344,8 +372,9 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * rather than a defect — the only misses it can resolve are gross ones.
    */
   hip_lead_ms:
-    'kept: floor raised to the measured 85 ms, which names only gross arming — ' +
-    '2% of clean serves against 78% of grossly armed ones',
+    'kept: smoothing moved to a time-based window, floor followed the ' +
+    'measurement 85 -> 76 ms — 0% of clean serves against 92% of grossly ' +
+    'armed ones, and 57% of genuinely armed ones against 50% before',
 
   /*
    * Not named. `pancake_contact` is measured and never reported to a player.
@@ -497,7 +526,7 @@ export const UNCALIBRATED: Record<string, string> = {
    * Easily the best-conditioned timing this engine produces. Both ends are read
    * from the picture plane — the hips rising in image y, the hand's planar speed
    * off image x and y — so neither touches MediaPipe's inferred depth. Across the
-   * twenty-four-seed ensemble its deviation is 7.8 ms, against 56.6 for
+   * twenty-four-seed ensemble its deviation is 7.8 ms, against 49.9 for
    * `hip_lead_ms` measured on the same clips; across camera angles from 20° to
    * 88° its mean moves 0.7 ms; across 30, 50 and 120 fps it reads 123.2, 119.8
    * and 117.9 ms. By every test this repo applies to repeatability it is the strongest
@@ -791,7 +820,10 @@ export function severityOf(signal: string, value: number, band: [number, number]
  * one flaw. Measured, when `hip_lead_ms`'s floor moved from 45 to 85: a serve
  * whose shoulders fire 30 ms *early* went from rating 4 to rating 9, the same
  * rung as a clean 70 ms lead, because 85 ms of slack is wider than the whole
- * 42 ms ladder that signal is graded on. That is not forgiveness, it is a signal
+ * 42 ms ladder that signal is graded on. The floor has since come down to 76,
+ * which does not change the conclusion — 76 is still wider than that ladder —
+ * and is why the exclusion below is stated against the rung rather than against
+ * a particular floor. That is not forgiveness, it is a signal
  * with nothing left to say voting anyway.
  */
 /**
@@ -801,7 +833,7 @@ export function severityOf(signal: string, value: number, band: [number, number]
  * this cannot tell rung 5 from rung 6 — whichever rung it reports is the noise
  * talking — so `inferTier` drops it rather than averaging it in, the same way
  * `metrics.ts` drops a value it could not compute instead of defaulting one.
- * Currently that excludes `hip_lead_ms` (85 ms floor against a 7 ms rung) and
+ * Currently that excludes `hip_lead_ms` (76 ms floor against a 7 ms rung) and
  * `separation_deg` (9° against 2.8°), leaving the two signals read from x and y,
  * which the camera genuinely saw. Both excluded signals are still measured, still
  * shown and still graded for flaws; what they no longer do is guess a rating.

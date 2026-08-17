@@ -175,9 +175,11 @@ export interface ExternalRotation {
  * camera measured. `hips` and `shoulders` are yaw angles recovered from
  * MediaPipe's inferred world z. Filming one identical synthetic serve
  * twenty-four times moves the first group by 0.5 to 7.5 ms and the second by
- * 27.6 and 53.3. The derivation is in `__tests__/depth.test.ts`; the point is
- * no ordering claim resting on the trunk pair can be resolved and the ones
- * resting on the image plane have no band to be resolved against.
+ * 13.0 and 46.0 — and `hip_lead_ms`, the difference of that second pair and the
+ * only thing graded out of it, by 49.9. The derivation is in
+ * `__tests__/depth.test.ts`; the point is that no ordering claim resting on the
+ * trunk pair can be resolved finely and the ones resting on the image plane have
+ * no band to be resolved against.
  */
 export interface ChainTiming {
   legs: ChainLink
@@ -291,14 +293,20 @@ const DEPTH_DOMINATES = 1.3
  * Given in time rather than in samples, which is the defect `UNDER_RESOLVED`
  * names against `hip_lead_ms` and points at as the first thing to try: three
  * samples is 100 ms of clip at 30 fps and 25 ms at 120, so a timing taken
- * through one is partly a fact about the phone. The proof is in this pass's own
- * output, because the two trunk links still use the old fixed three and the
- * three new ones use this. Across 30 / 50 / 120 fps on one identical serve the
- * fixed-sample pair deviate 42.2 / 53.3 / 98.1 ms and 20.0 / 27.6 / 38.8 —
- * worse the more frames they are given, which is the signature of a derivative
- * locking onto noise — while the leg, elbow and wrist links deviate
- * 5.3 / 7.5 / 4.8, 1.1 / 0.7 / 2.5 and 0.6 / 0.5 / 2.3. Flat, and an order of
- * magnitude down at the legs and two at the hand.
+ * through one is partly a fact about the phone.
+ *
+ * The proof used to be in this pass's own output, because the two trunk links
+ * still used the old fixed three while the three new ones used this: across
+ * 30 / 50 / 120 fps on one identical serve the fixed-sample pair deviated
+ * 42.2 / 53.3 / 98.1 ms and 20.0 / 27.6 / 38.8 — worse the more frames they
+ * were given — while the leg, elbow and wrist links deviated 5.3 / 7.5 / 4.8,
+ * 1.1 / 0.7 / 2.5 and 0.6 / 0.5 / 2.3. Flat, and an order of magnitude down at
+ * the legs and two at the hand.
+ *
+ * That comparison is gone, because the trunk pair now has a time-based window
+ * too — a wider one, for reasons that are its own: see `TRUNK_WINDOW_SECONDS`.
+ * The three links here are unchanged to the decimal by that work, which is the
+ * check that it touched only what it meant to.
  *
  * HOW TO REPRODUCE ANY NUMBER BELOW, because a provenance nobody can re-run is
  * a recorded number wearing a derivation's clothes — the defect this file was
@@ -333,6 +341,67 @@ const DEPTH_DOMINATES = 1.3
  * would make the chain look *more* ordered than it is.
  */
 const CHAIN_WINDOW_SECONDS = 0.09
+
+/**
+ * The smoothing window the TRUNK PAIR is measured through, as a radius in
+ * seconds — hip yaw and shoulder yaw, and so `hip_lead_ms` and `arming_the_ball`.
+ *
+ * Separate from `CHAIN_WINDOW_SECONDS` above rather than shared with it, because
+ * the two groups fail differently and were tuned against different evidence. The
+ * three image-plane links are already conditioned to within a couple of
+ * milliseconds and 90 ms was chosen for them with its own costs written down;
+ * these two are recovered from MediaPipe's inferred world z, which is an order
+ * of magnitude noisier, and they want a wider window for it. One constant would
+ * have had to be wrong for one of the pairs.
+ *
+ * WHAT THIS FIXED. The window was three SAMPLES, applied twice, so its span in
+ * time shrank as the frame rate rose — 100 ms of clip at 30 fps, 25 ms at 120 —
+ * and the signal got *worse* the more frames it was given, which is the
+ * signature of a derivative locking onto noise rather than a resolution limit a
+ * better phone would fix. `UNDER_RESOLVED.hip_lead_ms` named that defect and
+ * named this as the change to try. It was the right diagnosis. Deviation of
+ * `hip_lead_ms` over one identical serve, 60 seeds, `realise({}, 5, seeds(60),
+ * fps)`:
+ *
+ *     window            30 fps    50 fps    120 fps
+ *     three samples      57.9      67.3      110.0
+ *     0.09 s             57.9      64.6       49.1
+ *     0.15 s             43.3      50.1       35.6
+ *
+ * The 30 fps column is the check that the mechanism is understood rather than
+ * merely improved: at 30 fps a 90 ms radius rounds to three samples, so that row
+ * must be identical to the baseline, and it is. Frame rate is no longer the
+ * dominant axis — what is left over is the depth error on world z, which no
+ * window can smooth away and which is why these two are still far behind the
+ * links read off the picture plane.
+ *
+ * A HUNDRED AND FIFTY, and the twenty-four-seed ensemble the rest of this engine
+ * is tuned on could not have chosen it. Swept at 24 seeds the deviation reads
+ * 45.4 / 47.2 / 55.5 at 0.09 against 34.5 / 52.5 / 32.5 at 0.12 and
+ * 34.5 / 49.9 / 42.4 at 0.15 — non-monotonic, no column agreeing with another,
+ * which is what an estimator of a standard deviation looks like when it is
+ * itself made of 24 draws. At 60 seeds the three columns agree and 0.15 wins
+ * every one of them. This is the one figure in this file taken at sixty rather
+ * than twenty-four, and the reason is written here rather than left to be
+ * rediscovered by the next person who re-runs the cheap sweep and gets a
+ * different answer.
+ *
+ * NOT WIDENED PAST THIS, and the danger is specific. A radius of 150 ms spans
+ * 300 ms against roughly 400 ms of trophy-to-contact, so the hip and shoulder
+ * peaks are already being asked not to average into one another — and two peaks
+ * blurred together would shrink the lead between them, which reads as a serve
+ * being *better* sequenced than it is. That is the one failure mode here that
+ * would be invisible in a deviation and harmful on a court. It is checked rather
+ * than assumed: the detector still separates the whole arming dial, 0% named on
+ * a clean serve against 92% on a grossly armed one, and the rates rise
+ * monotonically through the two in between. See `UNDER_RESOLVED.hip_lead_ms` for
+ * that table.
+ *
+ * Reproduced the same way `CHAIN_WINDOW_SECONDS` is: by setting this constant to
+ * the value in question, re-running, and putting it back. No test-only override,
+ * for the reason that note gives — a production door held open for a table.
+ */
+const TRUNK_WINDOW_SECONDS = 0.15
 
 /**
  * How far either side of the swing the chain's peaks are looked for, in seconds.
@@ -378,25 +447,18 @@ export function diagnose(
   // the same clean serve — a player told they were arming the ball because of
   // which frame the tracker happened to be having trouble with.
   //
-  // Known limit, and the next thing to try if anyone wants `hip_lead_ms` back.
-  // The window is three SAMPLES, so what it spans in time shrinks as the frame
-  // rate rises: 100 ms of clip at 30 fps, 25 ms at 120, and applied twice. The
-  // signal gets *worse* with more frames for exactly that reason — its deviation
-  // over one identical serve is 45.4 ms at 30 fps, 56.6 at 50 and 110.6 at 120,
-  // from `realise({}, 5, SEEDS, fps)` in `__tests__/repeatability.ts`. That
-  // fourth argument was hard-coded until the frame rate became the thing the
-  // table was about; the three figures were correct and the file they cited
-  // could not produce them. That is why `NOISE_FLOOR` has to
-  // hold it at 85 ms, and why `tiers.ts` UNDER_RESOLVED can only claim it tells
-  // gross arming from none. A time-based window, as `palmNormalAt` in
-  // `kinematics.ts` already uses, is the change that might bring the floor down.
+  // The window is `TRUNK_WINDOW_SECONDS`, in time rather than in samples. It
+  // used to be a fixed three samples, which is the defect the whole of that
+  // constant's note is about — and which is why `hip_lead_ms` spent this long
+  // under a floor that could only tell gross arming from none.
+  const trunkRadius = sampleRadius(t, TRUNK_WINDOW_SECONDS)
   const hipRate = smoothF32(
-    rateOf(smoothF32(yawSeries(frames, LM.leftHip, LM.rightHip), 3), t),
-    3,
+    rateOf(smoothF32(yawSeries(frames, LM.leftHip, LM.rightHip), trunkRadius), t),
+    trunkRadius,
   )
   const shoulderRate = smoothF32(
-    rateOf(smoothF32(yawSeries(frames, LM.leftShoulder, LM.rightShoulder), 3), t),
-    3,
+    rateOf(smoothF32(yawSeries(frames, LM.leftShoulder, LM.rightShoulder), trunkRadius), t),
+    trunkRadius,
   )
 
   // From a little before the trophy — the lower body starts unwinding while the
@@ -476,14 +538,21 @@ export function diagnose(
    *
    *     link        read from        deviation    band it would be graded on
    *     legs        image y             7.5 ms    none — see UNCALIBRATED
-   *     hips        world z            53.3 ms    hip_lead_ms, seriousMiss 45
-   *     shoulders   world z            27.6 ms    hip_lead_ms, seriousMiss 45
+   *     hips        world z            46.0 ms    hip_lead_ms, floor 76
+   *     shoulders   world z            13.0 ms    hip_lead_ms, floor 76
    *     elbow       image x, y          0.7 ms    none — see UNCALIBRATED
    *     wrist       image x, y          0.5 ms    none — see UNCALIBRATED
    *
    * Two orders of magnitude between the two provenances, on the same clip, from
    * the same tracker, in the same pass. That is the finding, and it is why the
    * three new links are built the way they are rather than as five more yaws.
+   *
+   * The trunk pair reads better here than it did when this table was written —
+   * 53.3 and 27.6 — because it has since been moved onto a time-based smoothing
+   * window of its own (`TRUNK_WINDOW_SECONDS`). The gap between the provenances
+   * narrowed and did not close, and the three image-plane figures did not move
+   * at all, which is what says the remaining distance belongs to world z rather
+   * than to how either group was filtered.
    *
    * It buys no new flaw, and the honesty of that is the other half of the work.
    * A repeatable measurement is necessary and nowhere near sufficient: a number

@@ -256,11 +256,16 @@ check('a cause is only named when it was itself detected', () => {
 
 check('root causes are listed ahead of the symptoms they explain', () => {
   // The hip lead is dialled to -90 ms rather than the -50 this used to use.
-  // `hip_lead_ms`'s floor is now the 85 ms its own repeatability asks for, and a
-  // 50 ms dial reads as a miss of 79 — under the floor, so `arming_the_ball` is
-  // correctly not named and the pair under test never both fire. The ordering
-  // being checked is unrelated to the size of the fault, so the honest fix is to
-  // dial a fault this engine can actually resolve.
+  // `hip_lead_ms`'s floor is the one its own repeatability asks for, and a 50 ms
+  // dial reads as a miss of 79 — which was under the 85 ms floor of the day, so
+  // `arming_the_ball` was correctly not named and the pair under test never both
+  // fired. The ordering being checked is unrelated to the size of the fault, so
+  // the honest fix was to dial a fault this engine can actually resolve.
+  //
+  // The floor has since come down to 76 and a 50 ms dial would now clear it, by
+  // three milliseconds. -90 is kept anyway: a fixture sitting that close to a
+  // floor is one re-derivation away from testing the floor instead of the
+  // ordering it is here for.
   const { diagnosis } = run({ shoulderYaw: 60, hipYaw: 56, hipLead: -0.09 }, 5)
   const order = diagnosis.flaws.filter((f) => f.detected).map((f) => f.flaw)
   const cause = order.indexOf('early_shoulder_rotation')

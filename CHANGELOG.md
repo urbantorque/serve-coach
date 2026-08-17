@@ -6,6 +6,24 @@ in `git log`.
 
 ## 2026-08-17
 
+- **The app is better at spotting when your arm leads your legs — and it has
+  stopped getting it wrong on good serves.** A serve is meant to fire from the
+  ground up: legs, then hips, then trunk, then the arm. When the arm goes first
+  it has to supply what the legs did not, and that is one of the ways a serving
+  shoulder gets hurt over a season. The app has always looked for it, and has
+  been too cautious to say much: it caught about three-quarters of the worst
+  cases, and on one clean serve in fifty it told a well-sequenced player their
+  shoulders fired first. The reason turned out to be a mistake in how the app
+  smoothed the movement before reading it — it was smoothing over a fixed number
+  of frames rather than a fixed amount of *time*, so on a phone filming at 120
+  frames a second it was looking at a quarter as much of the serve, and reading
+  noise. Fixed: it now smooths over 150 milliseconds whatever your phone films
+  at. On the test serves it catches 92% of badly ordered serves instead of 78%,
+  it names more of the borderline ones, and it no longer flags a clean serve at
+  all. Filming at a high frame rate now helps this reading rather than hurting
+  it. It is still the least certain number the app produces, and it still says
+  nothing when it is unsure — about four in ten genuinely early shoulders go
+  unmentioned, which is the honest trade for never inventing one.
 - **An old serve moves again, even though its video is long gone.** Your clip is
   read on your phone and never stored — that is the promise the whole app is
   built on, and the price of it was that a report you opened two months later

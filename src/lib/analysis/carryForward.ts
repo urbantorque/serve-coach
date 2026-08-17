@@ -24,7 +24,7 @@
  * than it is the same reading twice. A second threshold beside it with a
  * different value would be two houses' opinions about one question, and the
  * house that measured it wins. The consequence is deliberate and worth stating:
- * on `hip_lead_ms`, whose floor is 85 ms, this will call almost every honest
+ * on `hip_lead_ms`, whose floor is 76 ms, this will call almost every honest
  * improvement "no change yet" — which is the truth about what a phone can see,
  * not a failure of this module.
  *

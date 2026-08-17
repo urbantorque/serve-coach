@@ -266,9 +266,12 @@ export function peakTimeInside(
  * Built from image x and image y — the two coordinates the camera genuinely
  * measured — rather than from the world landmarks, and that is the whole point
  * of it. A trunk yaw is recovered from MediaPipe's inferred z and its peak moves
- * 53.3 ms across noise realisations of one identical serve; a wrist's planar
+ * 46.0 ms across noise realisations of one identical serve; a wrist's planar
  * speed peak, on the same realisations, moves 0.5 ms. Two orders of magnitude,
- * from reading a quantity the sensor saw instead of one a network guessed.
+ * from reading a quantity the sensor saw instead of one a network guessed. (The
+ * hip yaw read 53.3 until the trunk pair got a smoothing window measured in
+ * seconds — see `TRUNK_WINDOW_SECONDS` in `diagnose.ts`. A better filter closed
+ * some of that gap and could not close the rest, which is the argument.)
  *
  * Deliberately NOT rescaled through `axes.ts`, and this is the one surprise in
  * the file. Image x carries the player's front/back axis with gain sin(yaw) and

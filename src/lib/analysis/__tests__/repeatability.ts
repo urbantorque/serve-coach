@@ -34,9 +34,12 @@ import type { FlawId } from '../flaws'
  * The frame rate the ensemble is filmed at by default — an ordinary phone's.
  *
  * A default and not a constant, because half of what this file is cited for is
- * how a signal behaves as the frame rate CHANGES: `hip_lead_ms` deviates
- * 45.4 ms at 30 fps, 56.6 at 50 and 110.6 at 120, and `CHAIN_WINDOW_SECONDS`
- * exists because of that table. This used to be hard-coded into `realise`, so
+ * how a signal behaves as the frame rate CHANGES: `hip_lead_ms` used to deviate
+ * 45.4 ms at 30 fps, 56.6 at 50 and 110.6 at 120 — worse the more frames it was
+ * given — and both `CHAIN_WINDOW_SECONDS` and `TRUNK_WINDOW_SECONDS` exist
+ * because of that table. With the second of those in place the same sweep at
+ * sixty seeds reads 43.3 / 50.1 / 35.6, which is the point: the slope was the
+ * filter, not the phone. This used to be hard-coded into `realise`, so
  * every one of those figures was a recorded number pointing at a file that
  * could not produce it — the same defect `seeds` was parameterised to remove,
  * reintroduced along the other axis. Pass `fps` to `realise` to reproduce them.

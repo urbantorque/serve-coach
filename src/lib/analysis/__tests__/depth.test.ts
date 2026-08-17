@@ -300,7 +300,8 @@ check('the sequencing detector that was kept still tells a gross fault from none
   /*
    * What earns `arming_the_ball` its place, stated as the measurement rather
    * than as an opinion. `hip_lead_ms` is under-resolved and the decision taken
-   * was to keep it at an honest 85 ms floor, on the grounds that it still
+   * was to keep it at an honest floor — 85 ms then, 76 now that the trunk pair
+   * is smoothed over a window measured in seconds — on the grounds that it still
    * separates a grossly armed serve from a clean one. If that stops being true
    * the flaw has to go, and this is what would say so.
    *
@@ -388,18 +389,34 @@ const GRADED_END: Record<string, string> = {
  * the finding it was built to establish.
  *
  * Measured, not chosen: at 50 fps on the depth-aware ensemble the image-plane
- * links come in at 0.5 to 7.8 ms and the two trunk yaws at 27.6 and 53.3 — the
- * figures the table this check prints reports on the same run, which is where
- * they have to come from. (They read 0.4 to 6.7, 27.0 and 53.0 until someone
- * checked them against that table: the same numbers the suite was printing in
- * the line below, transcribed once and left to age.) The bounds sit at roughly
- * double and roughly half, so ordinary drift does not trip them and a change
- * that collapsed the gap — someone rebuilding a planar speed out of world
- * coordinates, say — fails here rather than quietly halving the only argument
- * this work rests on.
+ * links come in at 0.5 to 7.8 ms — the figures the table this check prints
+ * reports on the same run, which is where they have to come from. (They read
+ * 0.4 to 6.7 until someone checked them against that table: the same numbers the
+ * suite was printing in the line below, transcribed once and left to age.) The
+ * ceiling sits at roughly double, so ordinary drift does not trip it and a
+ * change that collapsed the gap — someone rebuilding a planar speed out of world
+ * coordinates, say — fails here rather than quietly halving the argument this
+ * work rests on.
+ *
+ * THE INFERRED FLOOR WAS RE-DERIVED, exactly as the message under it demanded.
+ * It was 15 ms against trunk yaws of 27.6 and 53.3, and it fired when the
+ * shoulder link came down to 13.0 — not because depth got better, but because
+ * the trunk pair was moved onto a smoothing window measured in seconds rather
+ * than samples (`TRUNK_WINDOW_SECONDS` in `diagnose.ts`). A filter change is
+ * precisely the thing that floor could not tell apart from a provenance change,
+ * so a per-link floor is the wrong shape for the claim and lowering it to 12
+ * would have been the fudge its own comment warns about.
+ *
+ * What survives, and is what this work actually rests on, is the graded end:
+ * `hip_lead_ms` is the only quantity anything grades out of world z, and it
+ * still moves 50.1 ms at sixty seeds against 7.8 for the worst thing the camera
+ * saw. So the floor is asserted there instead — one number, the one with a band
+ * behind it, rather than two intermediates that a better filter is allowed to
+ * improve. The individual links are still printed below, because the shoulder
+ * yaw narrowing to 13.0 while the hip yaw stayed at 46.0 is worth seeing.
  */
 const SEEN_CEILING = 15
-const INFERRED_FLOOR = 15
+const GRADED_INFERRED_FLOOR = 25
 
 check('the chain read from the picture plane holds still where the one read from depth does not', () => {
   /*
@@ -426,14 +443,30 @@ check('the chain read from the picture plane holds still where the one read from
       `${id} is read from the picture plane and still moved ${d.sd.toFixed(1)} ms`,
     )
   }
-  for (const id of INFERRED) {
-    const d = byId.get(id)!
-    assert(
-      d.sd >= INFERRED_FLOOR,
-      `${id} now moves only ${d.sd.toFixed(1)} ms — if depth got this good, ` +
-        'UNDER_RESOLVED.hip_lead_ms and the whole chain argument want re-deriving',
-    )
-  }
+  /*
+   * The graded end, rather than each intermediate. See `GRADED_INFERRED_FLOOR`:
+   * a per-link floor could not tell "depth got better" from "the filter got
+   * better", and the second of those has already happened once and is allowed to
+   * happen again. `hip_lead_ms` is the difference of the two trunk peaks and the
+   * only thing the engine grades out of world z, so it is where the claim lives.
+   */
+  const lead = deviations(deep.reads).find((d) => d.id === 'hip_lead_ms')
+  assert(lead !== undefined, 'the ensemble produced no reading for hip_lead_ms')
+  assert(
+    lead!.sd >= GRADED_INFERRED_FLOOR,
+    `hip_lead_ms now moves only ${lead!.sd.toFixed(1)} ms — if depth got this good, ` +
+      'UNDER_RESOLVED.hip_lead_ms and the whole chain argument want re-deriving',
+  )
+  const worstSeen = Math.max(...SEEN.map((id) => byId.get(id)!.sd))
+  assert(
+    lead!.sd > worstSeen * 2,
+    `hip_lead_ms moves ${lead!.sd.toFixed(1)} ms against ${worstSeen.toFixed(1)} for the worst ` +
+      'thing the camera saw — the two provenances have converged and the chain argument wants re-deriving',
+  )
+  note(
+    `  hip_lead_ms       world z     deviation ${lead!.sd.toFixed(1).padStart(5)} ms   ` +
+      `against ${worstSeen.toFixed(1)} ms for the worst image-plane link`,
+  )
 
   for (const d of chainDeviations(deep.reads)) {
     // The ratio is dimensionless and every other row here is milliseconds. It
@@ -464,6 +497,52 @@ check('the chain read from the picture plane holds still where the one read from
         `deviation ${d.sd.toFixed(1).padStart(5)} ms   range ${d.range.toFixed(0).padStart(4)}   n=${d.n}`,
     )
   }
+})
+
+check('more frames make the trunk timing better, not worse', () => {
+  /*
+   * The defect `UNDER_RESOLVED.hip_lead_ms` named for several rounds, as a
+   * regression test now that it is fixed.
+   *
+   * The smoothing window was three SAMPLES applied twice, so what it spanned in
+   * time shrank as the frame rate rose — 100 ms of clip at 30 fps, 25 ms at 120
+   * — and `hip_lead_ms` deviated 45.4 / 56.6 / 110.6 ms across 30 / 50 / 120.
+   * A signal that degrades when handed more evidence is not near a resolution
+   * limit, it is a derivative locking onto noise, and no better phone would have
+   * helped. `TRUNK_WINDOW_SECONDS` in `diagnose.ts` states it in seconds
+   * instead.
+   *
+   * ASSERTED AS A SHAPE, not as three numbers. What matters is that the 120 fps
+   * reading is no longer the worst of the three by a factor of two — that is the
+   * signature, and it is what would come back if anyone put a sample count in
+   * that constant's place. The exact figures move with the ensemble and are
+   * recorded where they are derived rather than pinned here, where a rounding
+   * change would fail this check for no reason anybody could act on.
+   *
+   * Twenty-four seeds, not the sixty the constant was chosen on: this asks a
+   * question about the shape of three numbers rather than about the value of
+   * one, and the suite has to stay runnable.
+   */
+  const sd = (fps: number) => {
+    const d = deviations(realise({}, 5, SEEDS, fps)).find((r) => r.id === 'hip_lead_ms')
+    assert(d !== undefined, `no hip_lead_ms reading at ${fps} fps`)
+    return d!.sd
+  }
+  const [slow, ordinary, fast] = [sd(30), sd(50), sd(120)]
+  note(
+    `  hip_lead_ms deviation — 30 fps ${slow.toFixed(1)}, 50 fps ${ordinary.toFixed(1)}, ` +
+      `120 fps ${fast.toFixed(1)} ms`,
+  )
+  assert(
+    fast < ordinary * 1.5,
+    `120 fps deviates ${fast.toFixed(1)} ms against ${ordinary.toFixed(1)} at 50 — the trunk ` +
+      'smoothing is spanning less time the more frames it is given, which is what a window ' +
+      'counted in samples does. See TRUNK_WINDOW_SECONDS in diagnose.ts.',
+  )
+  assert(
+    fast < 110,
+    `120 fps deviates ${fast.toFixed(1)} ms, at or past the 110.6 the sample-counted window gave`,
+  )
 })
 
 check('every chain link is measured and none of them grades anybody', () => {
@@ -809,7 +888,9 @@ check('a signal too coarse to tell one rung from the next does not rate a player
    * back as fresh accusations what it saved on the one flaw. The floor raise this
    * round measured out as: a serve whose shoulders fire 30 ms early rated 9, the
    * same rung as a clean 70 ms lead, because 85 ms of slack is twice the whole
-   * 42 ms ladder that signal is graded on.
+   * 42 ms ladder that signal is graded on. The floor is 76 now and the sum is
+   * the same shape — still wider than that ladder — which is why the exclusion
+   * is written against the rung rather than against whichever floor is current.
    *
    * So `hip_lead_ms` no longer votes on a rating. The two assertions are the two
    * halves of that: it cannot promote, and it cannot pretend to rate on its own.
