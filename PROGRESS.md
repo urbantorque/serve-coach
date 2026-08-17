@@ -43,6 +43,43 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 50 · consolidation gate
+
+**Orchestrator.** Sixth cycle since `loop-green-9`. Number diff, boot, tag.
+
+**255 figures then, 271 now. Sixteen additions, zero removals, zero movements.**
+Every addition is traceable to a round that measured something new:
+
+- **11 contrast ratios** (round 45) — 17.40, 16.07, 15.77, 12.11, 11.22, 10.17,
+  7.69, 7.60, 6.97, 6.89, and 4.87 twice, the narrowest margin in the palette
+- **1.00 and 18.94** (round 46) — a disc against a smear, which is the whole
+  argument for the outbound detector existing
+- **0.89 twice** (round 47) — the knee-extension slope against its dial
+
+**Nothing the engine reports about a serve has moved in twelve rounds**, across
+two tags, a new detector, a new uncalibrated reading, a storage field, a store
+added to the backup, and a component prop deleted.
+
+**Gate.** typecheck clean · lint clean · production build clean (668.40 KiB
+precache) · **1194 checks, 0 failed, exit 0**.
+
+**Boot smoke** on a restarted server: five area cards, none open — the
+`defaultOpen` deletion from round 42 still behaving — first drill "Let the racket
+fall", 20 serves. Server logs clean.
+
+Tag: `loop-green-10`.
+
+**Fifty rounds in, what the loop has actually been for.** Twenty-three of the
+fifty delivered a correction or a refusal rather than a feature — the round as
+written, or the ledger it came from, was wrong. Six of those were premises that
+did not survive being measured: a same-spot gate for a camera-invariant reading,
+a hand-off detector fed sessions it cannot compare, a page that already existed
+twice, a 315 ms figure nobody could re-run. And four defects were found not by
+looking for them but by a gate written for something else — a props scan, a
+bundle probe, a tally guard, a restore-path check.
+
+---
+
 ### Round 49 · Cycle D — performance and architecture · `D6 · R75` (new)
 
 **Orchestrator.** Cycle D's two open rows are blocked — `D1b` on a phone, `D2d`
