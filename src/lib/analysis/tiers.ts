@@ -259,25 +259,39 @@ export const NOISE_FLOOR: Record<string, number> = {
    * Lateral spine angle, differenced against the ready position — so it carries
    * the error of two frames rather than one.
    *
-   * Was 6, and 6 was under-set rather than wrong-by-a-round: this signal's
-   * deviation sits within a hair of the 4.0 where `ceil(1.5 × sd)` flips between
-   * 6 and 7, and which side it lands on depends on how many seeds the estimate
-   * is made of. Measured four ways while the toss keyframe was being sharpened:
-   * 3.972 at 24 seeds and 4.050 at 60 before that change, 4.082 at 24 and 3.633
-   * at 60 after it. Three of those four ask for 7. The floor rounds up, because
-   * a floor rounded down is a cap and this file exists partly to say so.
+   * Was 6, and 6 was under-set: this signal is graded on a band finer than the
+   * measurement supports at 6, and 7 is where its own repeatability puts it.
    *
-   * THE COST IS REAL AND IS NOT A FALSE-POSITIVE SAVING. Measured over 60 seeds:
-   * `posture_collapse` is named on 57% of grossly leaning serves at floor 6 and
-   * 48% at floor 7, while a clean serve is named on 0% at both. So this buys no
-   * accuracy on clean serves — it is paid purely to keep the floor above what
-   * the measurement can support, which is the rule rather than a trade.
+   * SETTLED ON A CONVERGING ENSEMBLE, after four estimates disagreed. The
+   * deviation sits near the 4.0 where `ceil(1.5 × sd)` flips between 6 and 7, so
+   * the answer was decided by adding draws until it stopped moving. Nested seed
+   * sets, each row containing the one above it:
    *
-   * WORTH REVISITING, with the one number that would settle it: at 60 seeds and
-   * with the toss sharpened the deviation is 3.633, which asks for 6. If a
-   * larger ensemble or real footage confirms the deviation is genuinely under
-   * 4.0, this goes back to 6 and nine points of lumbar detection come back with
-   * it. Nobody should move it on a 24-seed reading in either direction.
+   *      n      sd     asks for
+   *     24    4.082        7
+   *     60    3.633        6
+   *    120    4.488        7
+   *    240    4.477        7
+   *
+   * 120 and 240 agree to within 0.011, which is the convergence; the 60 was the
+   * outlier, not the 24. So 7 is not a conservative overshoot — it is exactly
+   * `ceil(1.5 × 4.477)`, and the floor rounds up in any case, because a floor
+   * rounded down is a cap and this file exists partly to say so.
+   *
+   * THE COST IS REAL AND IS NOT A FALSE-POSITIVE SAVING. At 240 seeds
+   * `posture_collapse` is named on 42.1% of grossly leaning serves and 1.3% of
+   * genuinely leaning ones, against 0.0% of clean ones — and at floor 6 the
+   * gross rate was 57% on the 60-seed ensemble. Roughly nine to fifteen points
+   * of lumbar detection, bought with no accuracy on clean serves at all. It is
+   * paid purely to keep the floor above what the measurement can support, which
+   * is this file's rule rather than a trade it chose.
+   *
+   * NOT WORTH REVISITING ON THE RIG. The number that would have earned those
+   * points back is the one measured above and it came back the other way. What
+   * could still move this is real footage — the deviation here is a property of
+   * the modelled depth error, and `fixtures/README.md` is where that story
+   * continues. Nobody should move it on a 24-seed reading in either direction,
+   * and 60 is now known not to be enough either.
    */
   spine_lean_deg: 7,
   // The rest are read from x and y, which the camera genuinely saw, and are an

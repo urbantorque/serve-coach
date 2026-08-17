@@ -23,11 +23,13 @@ in `git log`.
   rule in this app is that a measurement never gets graded finer than it can
   actually be measured, so the bar moved up to where the measurement puts it.
   The cost is stated rather than buried: on test serves with a badly collapsing
-  lean, the warning is now raised on 48% of them instead of 57%. It still never
-  fires on a clean serve. This is the app declining to make a call it cannot
-  back rather than an improvement, and if a bigger set of test serves shows the
-  reading is steadier than it currently looks, the bar comes back down and those
-  cases come back with it.
+  lean, the warning is now raised on about 42% of them instead of 57%. It still
+  never fires on a clean serve. This is the app declining to make a call it
+  cannot back rather than an improvement. We then re-ran the check on ten times
+  as many test serves to see whether the old, more sensitive bar could be
+  justified after all, and it could not — the reading is slightly less steady
+  than the smaller test suggested, not more. So the bar stays where it is, and
+  the app is now grading your lower back at a resolution it can genuinely see.
 - **The app is better at spotting when your arm leads your legs — and it has
   stopped getting it wrong on good serves.** A serve is meant to fire from the
   ground up: legs, then hips, then trunk, then the arm. When the arm goes first
