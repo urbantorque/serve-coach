@@ -43,6 +43,46 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 55 · Cycle C — coaching and UI · `C4b · R57b`
+
+**Orchestrator.** The successor round 48 left behind. Lead builder: Coaching
+Voice. Column: *Would I use it between serves.*
+
+**Round 48 refused the page and named what was actually missing.** The ranked
+plan already *is* a session — causal order, capped at four, with methods and
+doses — and the progress sheet renders the recurring one the same way. What
+neither does is be reachable: the report says in its own header that it is the
+wrong screen for somebody holding a basket, and the practice card is two taps
+away on the progress sheet.
+
+**So this is one line and a way in.** The last drill's name, and the report it
+came from. On the home screen, above the filming guide.
+
+**One drill, never the queue**, which is the test round 48 set: it must not say
+anything the report already says in the same words. A queue here would be the
+refused page in a smaller box. The name is a reminder; the method, the dose and
+the order stay where they are — and the tap goes to them.
+
+**It walks past refused clips.** `sessions[0]` would blank on one bad film, so a
+player who filmed into the sun on Tuesday would lose the reminder they were given
+last week. It stops at the newest report that actually named something.
+
+**Zero new CSS.** `.strap` is the shape immediately below it — icon, title,
+subtitle, chevron — and already a button that goes somewhere.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Product | pass | Verified end to end: the strap reads "Head up hold — Last time you were working on this", and tapping it opens the report on that same drill |
+| Honesty | pass | No second opinion — `focus` is the ranked plan's first rung as it was saved, not recomputed here |
+| Architecture | pass | A walk over a list already in memory, memoised on it |
+| Product | pass | Seven words under the cap, no jargon, and the copy gate scans it because it lives in JSX |
+
+**Gate.** typecheck clean · lint clean · **1198 checks, 0 failed, exit 0**.
+
+---
+
 ### Round 54 · Cycle B — biomechanics · `B5 · R52`
 
 **Orchestrator.** The hitch: reaching the trophy, stopping, and swinging from a

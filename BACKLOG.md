@@ -125,8 +125,12 @@ The translation from a number to a cue somebody can act on.
       3. Slow sink hold — 3 sets of 8"). The progress sheet renders the recurring
       one the same way. A third surface restates two. Two checks now pin what makes
       the plan a session: every rung has a drill with a dose, and none repeat.
-- [ ] **C4b · R57b** — The last plan, without opening the report. Placement, not
-      content — and it must not become a third rendering of the same words.
+- [x] **C4b · R57b** — One strap on the home screen: the last drill's name and a
+      way into the report it came from. **One drill, never the queue** — the test
+      round 48 set was that it must not say anything the report already says in the
+      same words, and a queue here would be the refused page in a smaller box.
+      Walks past refused clips, so one bad film does not blank last week's
+      reminder. Zero new CSS: `.strap` is the shape already below it.
 - [x] **C0 · R69·1** — The gate for copy that lives in a component. 96 lines,
       25 components, 15 failing — seven the lint being wrong, eight real. *(Round
       9 — and one of the eight contradicts R28's own close-out.)*

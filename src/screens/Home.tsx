@@ -100,6 +100,25 @@ export default function Home({
   const pickRef = useRef<HTMLInputElement>(null)
   const recordRef = useRef<HTMLInputElement>(null)
   const recent = sessions.slice(0, 3)
+  /*
+   * The newest report that actually named something to work on.
+   *
+   * Newest-first, and it walks rather than taking `sessions[0]`: a refused clip
+   * has no focus, and one bad clip must not blank a reminder the player was
+   * given last week. It stops at the first report that has one, which is the
+   * last thing they were actually told.
+   *
+   * `focus` is on every stored report — it is the ranked plan's first rung,
+   * saved with the row — so this costs a walk over a list already in memory and
+   * no second opinion about what the plan was.
+   */
+  const lastPlan = useMemo(() => {
+    for (const session of sessions) {
+      const drill = session.focus?.drill?.name
+      if (drill) return { drill, session }
+    }
+    return undefined
+  }, [sessions])
   const progress = useMemo(() => buildProgress(sessions), [sessions])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
   const streak = useMemo(() => streakLine(sessions), [sessions])
@@ -285,6 +304,41 @@ export default function Home({
           </p>
         )}
       </div>
+
+      {/*
+        What you were last asked to work on, without opening the report.
+        R57b — placement, not content.
+        
+        R57 asked for the drills as a page and was refused: the ranked plan on
+        the report already IS that session, in causal order with doses, and the
+        progress sheet renders the recurring one the same way. A third rendering
+        would be more screen and no more help.
+        
+        WHAT WAS ACTUALLY MISSING IS THAT NEITHER IS REACHABLE FROM HERE. The
+        report says in its own header that it is the wrong screen for somebody
+        holding a basket, and the practice card lives two taps away on the
+        progress sheet. So this is one line and a way in — the drill's name, and
+        the report it came from.
+        
+        ONE DRILL, NOT THE QUEUE, and that is the test round 48 set: it must not
+        say anything the report already says in the same words. A queue here
+        would be the refused page in a smaller box. The name is a reminder; the
+        method, the dose and the order stay where they are.
+        
+        Nothing new in the stylesheet: `.strap` is the shape immediately below
+        this — icon, title, subtitle, chevron — and it is already a button that
+        goes somewhere.
+      */}
+      {lastPlan && (
+        <button className="strap" onClick={() => onOpen(lastPlan.session)}>
+          <Icon name="target" size={17} />
+          <span>
+            <strong>{lastPlan.drill}</strong>
+            Last time you were working on this.
+          </span>
+          <Icon name="chevron" size={16} />
+        </button>
+      )}
 
       <button className="strap" onClick={onShowGuide}>
         <Icon name="info" size={17} />
