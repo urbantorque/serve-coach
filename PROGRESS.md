@@ -43,6 +43,57 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 59 · Cycle F — QA and edge cases · `F5 · audit 3`
+
+**Orchestrator.** Find a number in `tiers.ts` whose band was set against the
+synthetic rig only. `toss_drift_ratio` announces itself: its own comment marks it
+**PROVISIONAL** and says the lateral case "has never been calibrated against
+anything", estimating the corner-camera divisor at "about 1.4".
+
+**The rig can now be asked directly**, because `tossWobble` and
+`tossWobbleLateral` differ in nothing but the axis they move — a dial added
+precisely so a test could ask this. One physical wobble of 0.10 m onto each in
+turn:
+
+    yaw     depth axis    lateral axis
+    30°       0.0519        0.0755
+    45°       0.0818        0.0715
+    60°       0.0841        0.0429
+    82°       0.0831        0.0101
+
+**The depth axis holds. The lateral axis collapses seven-fold — and worst at
+82°, which is the angle the filming guide tells people to stand at.** Side-on,
+motion across the shoulders points nearly at the lens. That is geometry, not a
+defect in the estimator, and it is exactly what R60·2 refused the stance over.
+
+**What it means for the band.** One set of anchors covers whichever axis
+`axes.ts` laid across image x, on the stated argument that "a hand wandering 3%
+of standing height wandered that far whichever way it went". **That argument is
+about the player and it is sound. It is not about the measurement, and the
+measurement disagrees with itself seven-fold.** A player whose toss wanders
+sideways at the recommended angle is graded on a seventh of the truth.
+
+**Not repaired, on R44's reasoning.** There is no honest target to re-derive
+against: nothing in this repo has ever filmed a lateral toss wobble, so a second
+band would be a number invented to fill a column. Pinned instead, in both places
+— the check, and the constant's own comment, which is where the next person
+looks.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The audit asked for a rig-only band and got one whose real problem is worse than its marker said — reported at the size measured, not the size expected |
+| Architecture | pass | The check asserts both halves: the lateral collapse *and* the depth axis holding, because if both collapsed this would be the rig losing the toss rather than the camera losing an axis |
+| Product | pass | Nothing changed on screen, and that is right — the alternative was inventing a band |
+| Performance | pass | Eight ensembles at suite time |
+
+**Gate.** typecheck clean · lint clean · **1204 checks, 0 failed, exit 0** (+1).
+Canaried by dialling depth into the lateral case — the collapse read 0.4× and
+the check reddened.
+
+---
+
 ### Round 58 · Cycle E — data and export · `E8 · R79` (new)
 
 **Orchestrator.** Both Cycle E rows are blocked, so the Orchestrator generates

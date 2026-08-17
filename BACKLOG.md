@@ -273,8 +273,14 @@ Tests with teeth, refusals, and the things that only break on somebody's phone.
       `consistency.ts`, so moving it off ten seeds inside a round about test teeth
       is the unmeasured change this repo keeps catching. Needs the full ensemble
       and a number diff.
-- [ ] **F5 · audit 3** — A number in `tiers.ts` whose band was set against the
-      synthetic rig only.
+- [x] **F5 · audit 3** — `toss_drift_ratio`, and the finding is worse than the
+      marker. One physical 0.10 m wobble dialled onto each axis in turn: the depth
+      axis reads 0.0519 / 0.0818 / 0.0841 / 0.0831 at 30 / 45 / 60 / 82° of yaw,
+      the lateral axis 0.0755 / 0.0715 / 0.0429 / **0.0101**. **A seven-fold
+      collapse, worst at the angle the filming guide recommends.** One band spans
+      both. Not repaired — nothing here has ever filmed a lateral wobble, so a
+      second band would be invented — but pinned, and the constant's comment now
+      carries the numbers.
 - [ ] **F6 · audit 7** — The oldest `[!]` item, re-read to see whether it is
       still blocked.
 - [x] **F7 · audit 9** — Contrast measured across eleven pairs, parsed from

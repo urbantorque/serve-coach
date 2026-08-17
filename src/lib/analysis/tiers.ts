@@ -110,8 +110,23 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // reaches about 1.4, and the lateral case has never been calibrated against
     // anything — no footage in this repo drove that axis until the rig grew a
     // dial for it. Same band either way, on the argument that a hand wandering
-    // 3% of standing height wandered that far whichever way it went. PROVISIONAL
-    // for the lateral axis; re-derive it the first time there is face-on footage.
+    // 3% of standing height wandered that far whichever way it went.
+    //
+    // PROVISIONAL, AND F5 MEASURED HOW PROVISIONAL. One physical wobble of
+    // 0.10 m, dialled onto each axis in turn: the depth axis reads 0.0519 /
+    // 0.0818 / 0.0841 / 0.0831 at 30 / 45 / 60 / 82° of yaw, and the lateral
+    // axis reads 0.0755 / 0.0715 / 0.0429 / 0.0101. **The lateral axis collapses
+    // about seven-fold, worst at 82° — which is the angle the filming guide
+    // tells people to stand at.** Side-on, motion across the shoulders points
+    // nearly at the lens; that is geometry, and it is what R60·2 refused the
+    // stance over.
+    //
+    // So the shared-band argument is sound about the player and wrong about the
+    // measurement: a toss that wanders sideways at the recommended angle is
+    // graded on a seventh of the truth. Not repaired, because there is no honest
+    // target to re-derive against — nothing here has ever filmed a lateral
+    // wobble, and a second band would be a number invented to fill a column.
+    // Pinned in `depth.test.ts` so a change that fixes it goes red.
     anchors: { 3: [0, 0.09], 5: [0, 0.07], 7: [0, 0.05], 9: [0, 0.038] },
     seriousMiss: 0.05,
   },

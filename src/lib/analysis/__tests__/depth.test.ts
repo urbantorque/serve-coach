@@ -1898,6 +1898,89 @@ check('a delta between two serves is bounded by both terms, not by either alone'
   assert(perSecond > 0, 'the tempo term came out at or below zero, so there is nothing to bound')
 })
 
+/* ============= what a shared band costs the axis nobody can see (F5) ======= */
+
+/**
+ * `toss_drift_ratio` is one band over two axes, and they are not comparable.
+ *
+ * FOUND BY THE AUDIT ROTATION: a number in `tiers.ts` whose band was set against
+ * the rig only. Its own comment marks it **PROVISIONAL** and says the lateral
+ * case "has never been calibrated against anything — no footage in this repo
+ * drove that axis until the rig grew a dial for it", and estimates the corner
+ * camera divisor at "about 1.4".
+ *
+ * The rig can now be asked directly, because `tossWobble` and
+ * `tossWobbleLateral` differ in nothing but the axis they move. Dial one
+ * physical wobble of 0.10 m onto each in turn and read the signal:
+ *
+ *     yaw    depth axis   lateral axis
+ *     30°      0.0519       0.0755
+ *     45°      0.0818       0.0715
+ *     60°      0.0841       0.0429
+ *     82°      0.0831       0.0101
+ *
+ * THE DEPTH AXIS HOLDS AND THE LATERAL AXIS COLLAPSES — 0.0755 to 0.0101, a
+ * factor of about seven, and the collapse is worst at 82°, which is **the angle
+ * the filming guide tells people to stand at**. Side-on, motion across the
+ * shoulders points nearly at the lens; that is geometry rather than a defect in
+ * the estimator, and it is the same finding R60·2 refused the stance over.
+ *
+ * WHAT IT MEANS FOR THE BAND. `SIGNALS.toss_drift_ratio` applies one set of
+ * anchors whichever axis `axes.ts` laid across image x, on the stated argument
+ * that "a hand wandering 3% of standing height wandered that far whichever way
+ * it went". That argument is about the player and it is sound; it is not about
+ * the measurement, and the measurement disagrees with itself by seven-fold. A
+ * player whose toss wanders sideways at the recommended angle is graded on a
+ * reading of a seventh of the truth.
+ *
+ * NOT REPAIRED HERE, and the reason is R44's: there is no honest target to
+ * re-derive against. Nothing in this repo has ever filmed a lateral toss wobble,
+ * so a second band would be a number invented to fill a column. Pinned instead —
+ * so the next round that reaches for this signal meets the seven-fold before it
+ * writes a sentence, and so a change that fixed it goes red rather than passing
+ * quietly.
+ */
+check('one toss wobble reads seven times smaller on the axis a side-on camera cannot see', () => {
+  const read = (dials: Record<string, number>) => {
+    const v = realise(dials, 5, SEEDS.slice(0, 8))
+      .map((r) => r.signals.toss_drift_ratio)
+      .filter((x): x is number => typeof x === 'number' && Number.isFinite(x))
+    return { mean: v.reduce((a, b) => a + b, 0) / (v.length || 1), n: v.length }
+  }
+
+  const rows = [30, 45, 60, 82].map((yaw) => ({
+    yaw,
+    depth: read({ cameraYaw: yaw, tossWobble: 0.1, tossWobbleLateral: 0 }),
+    lateral: read({ cameraYaw: yaw, tossWobble: 0, tossWobbleLateral: 0.1 }),
+  }))
+  assert(
+    rows.every((r) => r.depth.n >= 6 && r.lateral.n >= 6),
+    'the rig lost too many clips for these rows to be comparable',
+  )
+  note(rows.map((r) => `${r.yaw}°: depth ${r.depth.mean.toFixed(4)}, lateral ${r.lateral.mean.toFixed(4)}`).join(' · '))
+
+  const sideOn = rows[rows.length - 1]
+  const corner = rows[0]
+  const collapse = corner.lateral.mean / sideOn.lateral.mean
+  note(`lateral collapses ${collapse.toFixed(1)}× from ${corner.yaw}° to ${sideOn.yaw}°`)
+
+  assert(
+    collapse > 4,
+    `the lateral axis now only collapses ${collapse.toFixed(1)}× — the geometry this finding ` +
+      'rests on has changed, and the shared band wants re-deciding',
+  )
+  /*
+   * And the depth axis holding is the other half: if both collapsed, this would
+   * be the rig losing the toss rather than the camera losing an axis, and the
+   * finding would be about the fixture instead of about the band.
+   */
+  assert(
+    sideOn.depth.mean > sideOn.lateral.mean * 4,
+    `side-on, depth reads ${sideOn.depth.mean.toFixed(4)} and lateral ${sideOn.lateral.mean.toFixed(4)} — ` +
+      'the two axes no longer disagree, so one band over both may now be honest',
+  )
+})
+
 /* ============= two floors that were derived and never enforced (R77) ======= */
 
 /**
