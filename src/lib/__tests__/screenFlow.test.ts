@@ -135,4 +135,25 @@ check('nothing reaches the saved screen from analyzing', () => {
   )
 })
 
+check('the fixture export is reachable without a dev build', () => {
+  /*
+   * R59 moved this path into the production bundle behind `?fixture`, and a dev
+   * build cannot check that: `import.meta.env.DEV` is true here, so the flag is
+   * masked and the button appears either way. What can be checked is the source,
+   * which is the same disk-reading trade this file already makes for the screen
+   * table and `framePair.test.ts` makes for a stylesheet.
+   *
+   * The regression this catches is one line: somebody tidying `FIXTURE_EXPORT`
+   * back to `import.meta.env.DEV` alone, which would silently strand five
+   * threads that are waiting on somebody with a phone — and would look like a
+   * cleanup in the diff.
+   */
+  const gate = APP.match(/const FIXTURE_EXPORT =[\s\S]{0,200}/)?.[0] ?? ''
+  assert(gate.length > 0, 'FIXTURE_EXPORT is gone from App.tsx entirely')
+  assert(
+    /has\('fixture'\)/.test(gate),
+    `the fixture export no longer reads ?fixture, so it is dev-only again:\n      ${gate.slice(0, 120)}`,
+  )
+})
+
 report()

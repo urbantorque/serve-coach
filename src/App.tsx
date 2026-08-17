@@ -188,6 +188,22 @@ function placeholderStill(label: string): string {
   return canvas.toDataURL('image/png')
 }
 
+/**
+ * Whether this session may turn a report into a ground-truth fixture.
+ *
+ * `?fixture`, in the production bundle, for the reason `?check` is: five threads
+ * in `NEXT.md` are blocked on somebody filming a real serve, that somebody is
+ * standing on a court holding a phone, and a path that only runs in a dev build
+ * cannot be run there. A dev build keeps it without the query string, since that
+ * is where the labelling actually gets finished.
+ *
+ * Read once, at module scope, because the query string cannot change without a
+ * navigation and a second reader is how a screen and its router come to disagree
+ * about which mode the app is in.
+ */
+const FIXTURE_EXPORT =
+  import.meta.env.DEV || new URLSearchParams(location.search).has('fixture')
+
 export default function App() {
   const [view, setView] = useState<View>({ kind: 'home' })
   const [progress, setProgress] = useState<AnalyzeProgress>({ step: 'engine', ratio: 0 })
@@ -1379,6 +1395,7 @@ export default function App() {
             analysis={view.analysis}
             videoUrl={view.videoUrl}
             previous={priorTo(view.analysis.createdAt, typeOf(view.analysis))}
+            fixtureExport={FIXTURE_EXPORT}
             onBack={goHome}
             onAnalyzeAnother={goHome}
             onFlipHandedness={
@@ -1462,6 +1479,7 @@ export default function App() {
             key={view.session.id}
             analysis={view.session}
             previous={priorTo(view.session.createdAt, typeOf(view.session))}
+            fixtureExport={FIXTURE_EXPORT}
             onBack={goHome}
             onAnalyzeAnother={goHome}
             bestGap={bestGapFor(typeOf(view.session))}

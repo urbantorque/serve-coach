@@ -1330,8 +1330,86 @@ family, different surface, different refusals.
       first** — a slow deliberate serve is not a hitch, and a detector that cannot
       tell them apart is worse than none. If it cannot separate them on the rig,
       an `UNDER_RESOLVED` entry saying so is the finished round.
-- [ ] **R59** — *(promoted here, ahead of the product band)* Make the fixture
-      shoot something a user does by accident. **Unblocks the two items this file
+- [~] **R59** — *(promoted here, ahead of the product band)* Split, because
+      "reachable on a phone" and "knows which of the six clips is next" are two
+      different jobs and the first is what actually unblocks anybody.
+
+        · **R59·1 — [x] reachable without a dev build.** The export was behind
+          `import.meta.env.DEV` and everything about it assumed a desk: a console
+          for the list of what was still missing, a dev server to run at all.
+          `?fixture` is the door `?check` already uses, for the reason that one
+          gives in its own comment — a path that only runs in a dev build cannot
+          be run on the phone that matters — and it stays behind a query string
+          so no ordinary player meets it. `FIXTURE_EXPORT` is read once at module
+          scope in `App.tsx` and passed to `Report`, so `location.search` keeps
+          one reader.
+
+          `downloadFixture` now **returns** what it saved and what is still
+          missing rather than only printing it. The console print stays, because
+          from a desk it is genuinely the better place to read a dozen lines
+          from; the screen gets the same list, in the validator's own wording, so
+          what the app says and what the suite will say cannot drift. Rendered as
+          `.note` lines — no new class and no new CSS, since a list of caveats
+          about a file is exactly what that class already carries here.
+
+          **THE COST, MEASURED RATHER THAN WAVED THROUGH, and it is on the
+          critical path.** Before: entry 408.87 kB (137.22 gzip), no fixture
+          chunk at all — the `DEV` guard eliminated it. After: entry **415.28 kB
+          (139.53 gzip)** plus a 2.86 kB chunk fetched on demand. **+6.41 kB raw,
+          +2.31 kB gzip on every player's first paint.**
+
+          The cause is not the button. `groundTruth.ts` was already half in the
+          entry chunk through `analyze.ts` and `judge.ts`, which both import
+          `framingIssues`; `exportFixture.ts` imports `packFrames`,
+          `validateFixtureSchema` and `labelProblem` from the same module, and
+          Rollup puts a module shared between the entry and a lazy chunk into the
+          entry. So the validator half of `groundTruth` is now weight every
+          player carries to serve a path behind a query string. Checked that
+          `trackPair.ts`'s `VISIBLE_FLOOR` import is *not* the cause — breaking
+          that edge leaves the figure at 415.28 kB exactly.
+
+          Paid rather than refused, on the grounds that 2.31 kB gzip is 1.7% of
+          the critical path against five threads that are otherwise permanently
+          stuck, and **queued for removal as R68** rather than left as a fact
+          nobody wrote down. Splitting `groundTruth.ts` is a refactor and
+          `LOOP.md` says a refactor is its own cycle.
+
+          Two checks in `fixtures.test.ts` are the ones that made this safe to
+          ship outside a dev build: a draft carries **no image of anybody at any
+          depth** — searched over the serialised form rather than over known
+          field names, because the failure being guarded against is a new field
+          nobody thought to check — and the only thing a fixture says about a
+          person is what the labeller typed. R30 found the opposite shape in the
+          backup path and found it after the fact.
+
+          A third reads `App.tsx` off disk, because a dev build cannot check this
+          gate at all: `import.meta.env.DEV` is true there, so the flag is masked
+          and the button appears either way. The regression it catches is one
+          line — somebody tidying `FIXTURE_EXPORT` back to `DEV` alone, which
+          would look like a cleanup in the diff and silently re-strand five
+          threads. Canaried to exactly that one check.
+
+          **Live verification is partial and the missing half is named.** The
+          negative case ran: on a saved report the button is correctly absent,
+          because `isLive` is false with no frames. The positive case needs a
+          live analysis, which needs a clip with a player in it, which is the
+          same block R41 recorded — `sampleClip` no longer resolves in this pane.
+          The button has not been watched appearing.
+
+        · **R59·2 — the checklist.** Which of the six clips is next, on that same
+          screen, read off `RECORDED` and the coverage axes so it cannot drift
+          from the gate. `fixtures/README.md` has the order; nothing in the app
+          does.
+
+- [ ] **R68** — Take the validator half of `groundTruth.ts` back out of the entry
+      chunk. R59·1 measured it in: 6.41 kB raw, 2.31 kB gzip, carried by every
+      player to serve a path behind `?fixture`. The shape is a split —
+      `framingIssues` is what the running app needs and `packFrames`,
+      `validateFixtureSchema` and `labelProblem` are what only the fixture tools
+      need — and the measurement to beat is `415.28 kB / 139.53 gzip` against a
+      pre-R59 `408.87 / 137.22`. **What it may not do:** move `framingIssues`,
+      which `analyze.ts` calls on every clip and `judge.ts` on every preview
+      frame. The saving is in what leaves, not in what moves. **Unblocks the two items this file
       has been stuck on since R25**, and with them `groundTruth.ts`, hip–shoulder
       separation, shoulder tilt, `UNDER_RESOLVED.pronation_deg` and
       `chain_span_ratio`. `RECORDED` is empty, 0 of `MINIMUM_RECORDED = 6`;

@@ -155,6 +155,15 @@ interface Props {
   onLogDrill?: () => void
   /** Take back the most recent one. */
   onUndoDrill?: () => void
+  /**
+   * Whether this session may turn a report into a ground-truth fixture.
+   *
+   * Decided in `App.tsx` from the query string, and passed rather than read here,
+   * so `location.search` has exactly one reader. Two places asking the same
+   * question of the URL is how a screen and its router come to disagree about
+   * which mode the app is in.
+   */
+  fixtureExport?: boolean
 }
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -183,9 +192,19 @@ export default function Report({
   practice,
   onLogDrill,
   onUndoDrill,
+  fixtureExport,
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
+  /**
+   * The last fixture saved from this report, and what it is still missing.
+   *
+   * Typed structurally rather than imported from `dev/exportFixture`, so the
+   * screen does not pull that module into the entry chunk to name its return
+   * value — the dynamic import is the whole reason the fixture machinery is not
+   * weight every player pays for.
+   */
+  const [saved, setSaved] = useState<{ file: string; gaps: string[] }>()
   const [pickingLevel, setPickingLevel] = useState(false)
   /*
    * Hiding the spreads, not deleting them.
@@ -839,17 +858,61 @@ export default function Report({
         </div>
       </section>
 
-      {/* Dev-only: turn this analysis into a ground-truth test fixture. The
-          import is dynamic so none of it reaches the production bundle. */}
-      {import.meta.env.DEV && isLive(analysis) && (
-        <button
-          className="btn btn--ghost btn--full"
-          onClick={() =>
-            void import('../dev/exportFixture').then((m) => m.downloadFixture(analysis as Analysis))
-          }
-        >
-          Save as test fixture
-        </button>
+      {/*
+        Turn this analysis into a ground-truth test fixture.
+
+        REACHABLE ON A PHONE NOW, which is the whole of R59. It used to be behind
+        `import.meta.env.DEV`, and everything about it assumed a desk: a console
+        for the list of what was still missing, a dev server to run at all. Five
+        threads in this ledger are blocked on somebody filming a serve, and that
+        somebody is standing on a court. `?fixture` is the same door `?check`
+        already uses, for the reason that one gives — a path that only runs in a
+        dev build cannot be run on the phone that matters — and it stays behind a
+        query string so no ordinary player ever meets it.
+
+        The import is still dynamic, so the fixture machinery is a chunk fetched
+        on demand rather than weight in the entry bundle. That is R44's finding
+        applied to a second module.
+      */}
+      {fixtureExport && isLive(analysis) && (
+        <>
+          <button
+            className="btn btn--ghost btn--full"
+            onClick={() =>
+              void import('../dev/exportFixture').then((m) =>
+                setSaved(m.downloadFixture(analysis as Analysis)),
+              )
+            }
+          >
+            Save as test fixture
+          </button>
+          {/*
+            On screen and not only in the console, because whoever just filmed
+            the serve is holding a phone.
+
+            `.note` and nothing else — no new class and no new CSS. This is a
+            list of caveats about a file, which is exactly what that class
+            already carries elsewhere on this screen, and a bare `<ul>` here
+            would have needed styling invented for a surface no player reaches.
+            Every line is the validator's own wording, so what this says and what
+            the suite says about the same file cannot drift apart.
+          */}
+          {saved && (
+            <>
+              <p className="note">
+                Saved {saved.file}.{' '}
+                {saved.gaps.length === 0
+                  ? 'Nothing left to fill in.'
+                  : `${saved.gaps.length} things left before it counts as ground truth.`}
+              </p>
+              {saved.gaps.map((gap) => (
+                <p className="note" key={gap}>
+                  {gap}
+                </p>
+              ))}
+            </>
+          )}
+        </>
       )}
 
       <section className="block">

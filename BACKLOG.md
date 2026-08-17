@@ -80,6 +80,9 @@ The translation from a number to a cue somebody can act on.
 
 Where state lives, what it costs, what it does to a warm phone.
 
+- [ ] **D0 · R68** — Take the validator half of `groundTruth.ts` back out of the
+      entry chunk. R59·1 measured it in at 6.41 kB raw / 2.31 kB gzip, carried by
+      every player to serve a path behind a query string. *Head of this cycle.*
 - [ ] **D1 · R54 spike** — Measure what a canvas recorder costs on this browser
       before any of R54 is built, and gate on `?check` the way the record button
       already does. Constraint 8 says guilty until measured.
@@ -97,7 +100,14 @@ Where state lives, what it costs, what it does to a warm phone.
 
 Storage, backup, and the files a player is handed.
 
-- [ ] **E1 · R59** — Make the fixture shoot something a user does by accident.
+- [x] **E1 · R59·1** — The fixture export, reachable on a phone: `?fixture` in
+      the production bundle, and what is still missing shown on screen instead of
+      in a console. *(Round 5 — costs 2.31 kB gzip on the critical path, measured,
+      and queued for removal as R68.)*
+- [ ] **E1b · R59·2** — The checklist: which of the six clips is next, read off
+      `RECORDED` so it cannot drift from the gate.
+- [ ] **E1c · R59** — *(the round as a whole)* Make the fixture shoot something a
+      user does by accident.
       *Promoted ahead of the product band:* it is the only round that unblocks
       real footage, and real footage is what `groundTruth.ts`, hip–shoulder
       separation, shoulder tilt, `UNDER_RESOLVED.pronation_deg` and

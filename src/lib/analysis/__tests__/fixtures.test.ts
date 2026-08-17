@@ -640,4 +640,68 @@ if (gate.level === 'fail') {
   note(`${gate.counted} recorded fixtures, minimum ${MINIMUM_RECORDED}`)
 }
 
+/* ---------------------------------- what leaves the phone in a fixture file -- */
+
+heading('What a fixture file carries off the device')
+
+/**
+ * THE CHECK THAT MADE THE EXPORT SAFE TO SHIP OUTSIDE A DEV BUILD.
+ *
+ * R59 moved this path into the production bundle behind `?fixture`, because five
+ * threads in `NEXT.md` are blocked on somebody filming a real serve and that
+ * somebody is standing on a court with a phone. The moment it stopped being
+ * dev-only, what the file contains stopped being a developer's problem and
+ * became the player's.
+ *
+ * The answer is the same one `poseTrack.ts` already banks on: a draft is
+ * landmarks and numbers, and there is no image of anybody in it. That is a
+ * property worth a test rather than a paragraph, because the tempting future
+ * change — attach the keyframe stills so a labeller can scrub without the clip —
+ * would be an entirely reasonable-sounding idea that quietly turns a numbers
+ * file into a photo album of whoever was on court. R30 found exactly that shape
+ * in the backup path, and found it after the fact.
+ */
+check('a fixture draft carries no image of anybody, at any depth', () => {
+  const draft = buildFixtureDraft(sampleAnalysis(), 'Adult male, right handed, side-on, 30 fps, iPhone 13')
+  const serialised = JSON.stringify(draft)
+  /*
+   * Searched over the serialised form rather than over known field names,
+   * because the failure being guarded against is a *new* field nobody thought
+   * to check. A base64 image announces itself however it is nested.
+   */
+  for (const marker of ['data:image', 'data:video', 'base64']) {
+    assert(
+      !serialised.includes(marker),
+      `a fixture draft carries "${marker}" — it is no longer numbers only`,
+    )
+  }
+  // And the positive half, so a draft that carried nothing at all could not pass
+  // the check above by being empty.
+  assert(draft.frames.count > 0, 'the draft carried no tracked frames to begin with')
+})
+
+check('the only thing a fixture says about a person is what they typed', () => {
+  /*
+   * The label asks who is serving, and it should — a fixture nobody can place in
+   * the coverage table is not ground truth. What matters is that this is the
+   * *only* place a person's name can get into the file, so somebody who writes
+   * "adult male" rather than a name has genuinely written an anonymous fixture.
+   *
+   * `notes` and `id` are the two other free-text fields, and both are checked
+   * here rather than trusted: `id` is a slug of the video's own filename, which
+   * a phone often names after nothing at all but which a person may well have
+   * renamed, and that is worth knowing rather than discovering.
+   */
+  const draft = buildFixtureDraft(sampleAnalysis(), 'Adult male, right handed, side-on, 30 fps, iPhone 13')
+  assert(draft.label === 'Adult male, right handed, side-on, 30 fps, iPhone 13', 'the label was rewritten')
+  assert(
+    !/\d{4}-\d{2}-\d{2}T/.test(draft.label),
+    'a timestamp reached the label, which the labeller did not type',
+  )
+  assert(
+    (draft.notes ?? '').includes('Captured') && (draft.notes ?? '').includes('sampled at'),
+    'the notes stopped being the engine describing the clip',
+  )
+})
+
 report()

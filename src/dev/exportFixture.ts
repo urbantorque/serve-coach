@@ -255,13 +255,25 @@ function askForLabel(): string | undefined {
 }
 
 /**
- * Print what the labeller still has to do, next to the file they just saved.
+ * What was saved, and what is still standing between it and ground truth.
  *
- * The console rather than a modal: it is a list of a dozen lines that has to be
- * readable beside an open editor, and it is the same list the suite will print
- * if they skip it.
+ * RETURNED RATHER THAN PRINTED, AND THAT IS THIS ROUND'S WHOLE POINT. This used
+ * to go to `console.info` and nowhere else, which was defensible while the
+ * button was dev-only: a list of a dozen lines wants to be readable beside an
+ * open editor. It stopped being defensible the moment the path had to work for
+ * somebody standing on a court holding a phone, because a phone has no console.
+ * The list still goes to the console as well — it is genuinely the better place
+ * to read it from a desk — and the caller now gets it too and decides where it
+ * goes on screen.
  */
-function announce(draft: Draft | RejectedDraft): void {
+export interface FixtureSaved {
+  /** The file the browser was handed, so the screen can name it. */
+  file: string
+  /** Everything the gate would still refuse it for, in the validator's words. */
+  gaps: string[]
+}
+
+function announce(draft: Draft | RejectedDraft): FixtureSaved {
   const gaps = draftGaps(draft)
   console.info(
     `%c${draft.id}.fixture.json saved — ${gaps.length} things left before it is ground truth`,
@@ -269,15 +281,22 @@ function announce(draft: Draft | RejectedDraft): void {
   )
   for (const gap of gaps) console.info(`  · ${gap}`)
   console.info('  See src/lib/analysis/__tests__/fixtures/README.md')
+  return { file: `${draft.id}.fixture.json`, gaps }
 }
 
-/** Hand the draft to the browser as a download. */
-export function downloadFixture(analysis: Analysis): void {
+/**
+ * Hand the draft to the browser as a download.
+ *
+ * `undefined` when the labeller cancelled, which is not a failure — it is the
+ * refusal `askForLabel` exists to make easy, and a screen that reported
+ * something anyway would be reporting a file that does not exist.
+ */
+export function downloadFixture(analysis: Analysis): FixtureSaved | undefined {
   const label = askForLabel()
-  if (label === undefined) return
+  if (label === undefined) return undefined
   const draft = buildFixtureDraft(analysis, label)
   save(draft)
-  announce(draft)
+  return announce(draft)
 }
 
 /** The same for a refusal, which never produced an analysis to export. */
@@ -285,10 +304,10 @@ export function downloadRejectedFixture(
   capture: FailedCapture,
   fileName: string,
   reason: string,
-): void {
+): FixtureSaved | undefined {
   const label = askForLabel()
-  if (label === undefined) return
+  if (label === undefined) return undefined
   const draft = buildRejectedDraft(capture, fileName, reason, label)
   save(draft)
-  announce(draft)
+  return announce(draft)
 }

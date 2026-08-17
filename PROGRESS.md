@@ -44,6 +44,52 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 5 · Cycle E — data management and export · `E1 · R59·1`
+
+**Orchestrator.** The promoted round — the only one that unblocks real footage,
+and five threads in `NEXT.md` wait on it. Split before building: "reachable on a
+phone" and "knows which clip is next" are different jobs and the first is what
+actually unblocks anybody. Lead builder: Release Architect, with Privacy reading
+it hardest. Column served: *work that unblocks me is worth more than work that
+doesn't*.
+
+**Premise verified.** The export really is behind `import.meta.env.DEV`, really
+does prompt with `window.prompt`, and really does print what is still missing to
+the console. Everything about it assumed a desk. Nothing needed rewriting for a
+wrong premise this time.
+
+**Critic.** PASS, with Performance pricing it rather than passing it quietly.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The on-screen list is `draftGaps`' own output, so the app and the suite cannot disagree about the same file |
+| Performance | **pass, priced** | Entry 408.87 → **415.28 kB** (137.22 → 139.53 gzip), plus a 2.86 kB on-demand chunk. Cause measured, not guessed: `groundTruth.ts` was already half in the entry via `analyze.ts`/`judge.ts`, and Rollup hoists a module shared with a lazy chunk. `trackPair.ts`'s import ruled out — breaking that edge leaves 415.28 exactly. Queued as R68 |
+| Privacy | pass | A draft carries no image at any depth, now asserted over the serialised form rather than over known field names. The only personal content is what the labeller typed, and the file is saved locally — the same model as the share card |
+| Architecture | pass | No new module, no new CSS class. `location.search` keeps one reader. The gate is pinned by a source check because a dev build cannot test it |
+| Product | pass | Behind a query string; no ordinary player meets it |
+
+**The judgement call.** 2.31 kB gzip on every player's first paint is a real cost
+and R44 fought hard for 40 kB of the same. Paid because it is 1.7% of the
+critical path against five threads that are otherwise permanently stuck, and
+because it is now a number in the ledger with a round attached rather than a
+fact nobody wrote down.
+
+**Departure, and the second time this session.** A `git checkout --` used to undo
+a canary reverted `App.tsx`'s whole round-5 change. Caught, re-applied, green.
+Same rule broken as in round 3 and the same rule that exists to prevent it: stash
+before any reset. Noted here rather than quietly fixed, because twice is a habit
+rather than a slip.
+
+**Browser verification, partial and said so.** The negative case ran — no button
+on a saved report, because `isLive` is false with no frames. The positive case
+needs a live analysis, which needs a clip with a player in it, which is R41's
+standing block. **The button has not been watched appearing.**
+
+**Gate.** typecheck clean · lint clean · **1051 checks passed, 0 failed, exit 0**
+(+3).
+
+---
+
 ### Round 4 · Cycle D — performance and architecture · `D4 · R67`
 
 **Orchestrator.** A hardening round, and the portfolio rule wanted one: rounds 1
