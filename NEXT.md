@@ -1098,8 +1098,65 @@ family, different surface, different refusals.
           No production caller until R49·3 draws it, which is what the split is
           for — not behind a flag, and covered end to end.
 
-        · **R49·3 — draw it.** The older track dashed under the newer in
-          `TrackPlayer`, nothing below the hips. Needs the browser.
+        · **R49·3 — [x] draw it.** `drawPairedGhost` in `pose/skeleton.ts`,
+          reusing `GHOST_BONES` and `PALETTE.ghost` — no new colour, and the same
+          ink for the same reason that palette entry already gives: it is "the
+          same player somewhere they were not", which describes a target pose and
+          another of your own serves equally well. Dashed and dim is the whole
+          distinction from a tracked body, so both halves are set inside the
+          function rather than trusted to a caller, and the dash is put back
+          before anything tracked is drawn — the failure that would otherwise
+          dash the player's own body and pass every check written about the ghost.
+
+          **THE ROUND'S SEQUENCING RULE IS WRONG, and finding that is most of the
+          round.** R49 says to build the same-session case first, because two
+          serves from one basket share a camera by construction and satisfy the
+          5° gate for free. That case cannot reach this surface: `TrackPlayer`
+          renders only where there is no video (`!live` in `Report.tsx`), and a
+          basket always has one — the live `PosePlayer` wins. The pair this
+          screen can actually hold is `previous`, which was already on
+          `Report`'s props for the deltas. So the ghost ships across sessions,
+          which is precisely the case the yaw gate was written for and the case
+          R49b is an open question about. Nothing was built for the basket.
+
+          `pairedLookup` extracted to `trackPair.ts` rather than left as a
+          `useCallback` — R47's finding about this layer, applied while the code
+          was being written instead of afterwards. It holds three decisions worth
+          testing: contact alignment comes off the pair rather than being
+          recomputed; nearest rather than last-started, which is the *opposite*
+          of how the tracked body is chosen and deliberately so, since the two
+          serves share no clock; and nothing at all outside the older swing's
+          span, because clamping to its last pose would freeze a body mid-air for
+          the rest of the replay.
+
+          Nine checks — four on the lookup in `trackPair.test.ts`, five on the
+          drawing in `drawing.test.ts`. The recording canvas stub gained
+          `passes`, recording the style at rasterise time, because `strokes`
+          records `strokeStyle` at `lineTo` time and every two-pass stroke in
+          that file colours its path *after* building it: fine for geometry,
+          useless for ink, and nothing had ever checked a colour before.
+          Canaried twice — dropping the dash reset reddens four checks, all four
+          because they are all defined in terms of dashedness and leaving it on
+          genuinely breaks all four claims; dropping the null-landmark guard
+          reddens exactly one.
+
+          Verified live, and the negative case first: the seeded report predates
+          `yaw_measured`, so `normalise` repairs it to `false` and the pair was
+          refused as `yaw_unmeasured` with nothing on screen — R49·1's guard
+          firing in life. With two reports that both carry a measured angle, the
+          note appears and the ghost paints. Proved by subtraction rather than by
+          looking: the same report sampled with and without a serve behind it
+          differs by **120 dim pixels spanning canvas rows 328–640**, on a 734px
+          canvas whose hip line sits at 490 and whose ankles sit at 683. The ink
+          below the hip line is the displaced *arm* the probe gave the older
+          serve, and it stops well short of the ankles. Console clean on a fresh
+          tab; the probe rows were removed and the store put back as found.
+
+          **DEPARTURE:** a `git checkout --` run to undo a canary reverted this
+          round's whole `skeleton.ts` change, because the file was tracked and
+          the module was not yet committed. Re-applied and re-verified green
+          before continuing. `UNATTENDED-LOOP.md` says stash before reset for
+          exactly this reason and the rule was not followed.
 
 - [ ] **R49b** — How often two clips from one trip agree on camera angle within
       5°. The backlog's `ghost-yaw-agreement-in-life`, and the open question R49

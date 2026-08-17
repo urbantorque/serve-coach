@@ -44,6 +44,54 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 3 · Cycle C — pedagogical coaching and UI · `C1 · R49·3`
+
+**Orchestrator.** Head of Cycle C, and it closes the feature R49·1 and R49·2
+built the halves of. Lead builder: Modular UI Developer, with the Biomechanics &
+CV Specialist reading the drawing rule. Column served: *Can I see it*.
+
+**Premise checked, and it did not hold.** The round says to build the
+same-session basket case first. `TrackPlayer` renders only under `!live`, and a
+basket always has a clip, so that case is unreachable on this surface. The pair
+this screen can hold is `previous`, already on its props. Recorded in `NEXT.md`
+and `README.md` rather than quietly built the other way.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | No new claim: no zone, no gap line, no leader. Legs never arrive — enforced in `pairTracks`, and the drawing only skips nulls. The refusal path was watched firing in life on a pre-`yaw_measured` row |
+| Performance | pass | `pairedLookup` builds its search array once in a closure; the alternative allocated ~50 objects per painted frame. Eight bones and one arc added to a frame the R20 measurement already found bucketed |
+| Privacy | pass | Nothing added to the share path; the track carries no image of anybody, which is the property `poseTrack.ts` already records |
+| Architecture | pass | No new colour, no new token, `GHOST_BONES` reused. The lookup extracted out of a `useCallback` where no test could reach it — R47's finding applied while writing rather than after. Two canaries |
+| Product | pass | One dashed body and one sentence, on a screen that already existed. No new tap |
+
+**Departure, recorded rather than tidied away.** A `git checkout --` used to undo
+a canary reverted this round's entire `skeleton.ts` change, because the file was
+tracked and the new code was not yet committed. Caught immediately, re-applied,
+re-verified green. `UNATTENDED-LOOP.md`'s rule is to stash before any reset, and
+it exists for precisely this.
+
+**Browser verification.** Both directions. Refused first — the seeded report
+predates `yaw_measured`, so it repairs to `false` and the pair was refused
+silently, which is R49·1's guard working in life. Then accepted, with two
+reports carrying measured angles: the note renders and the ghost paints. Proved
+by subtraction rather than by eye, since the pane will not composite a
+screenshot — the same report sampled with and without a serve behind it differs
+by **120 dim pixels over canvas rows 328–640**, on a 734px canvas with its hip
+line at 490 and ankles at 683. The ink past the hip line is the arm the probe
+deliberately displaced on the older serve, and it stops well short of the ankles.
+
+Console clean, checked on a fresh tab after finding stale HMR errors in the old
+one from a mid-refactor moment — worth naming, because a stale console is the
+easiest way to talk yourself out of a real error or into a fake one. Probe rows
+deleted and the store put back to the single seeded report it started with.
+
+**Gate.** typecheck clean · lint clean · **1045 checks passed, 0 failed, exit 0**
+(+9).
+
+---
+
 ### Round 2 · Cycle B — biomechanics and fault detection · `B1 · R50·1`
 
 **Orchestrator.** R50 as written is three readings with three different

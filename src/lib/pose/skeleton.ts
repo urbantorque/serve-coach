@@ -532,6 +532,22 @@ export interface SkeletonOptions {
    * `ghostFor`, which owns every reason not to, rather than assembling one here.
    */
   ghost?: Ghost
+  /**
+   * Another of this player's own serves, already aligned onto this one.
+   *
+   * Indexed exactly as `Frame.image`, with `null` for every landmark this app
+   * will not draw — which is everything below the hips, and is decided in
+   * `lib/trackPair.ts` rather than here. That module owns every reason not to
+   * produce one at all: a camera that moved, a rubric change, a contact nobody
+   * tracked. Passing one is a claim that two saved serves are genuinely
+   * comparable, and this file is in no position to check that.
+   *
+   * Never passed alongside `ghost`. They are the same ink saying two different
+   * things — one is where you were not, the other is where you should have been
+   * — and they live on different screens for that reason: this on `TrackPlayer`,
+   * which has no video, and `ghost` on `PosePlayer`, which does.
+   */
+  paired?: readonly ({ x: number; y: number } | null)[]
 }
 
 /**
@@ -559,6 +575,12 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   // answer to "where should you have been".
   // Drawn from the ghost's own record of where the measured hand was, not from
   // this frame's — see `Ghost.from`.
+  // The other serve goes down before the target does and long before the tracked
+  // body, for the same reason: whatever the player actually did is the thing on
+  // top. These two never arrive together — see `SkeletonOptions.paired` — and the
+  // order is fixed anyway rather than left to whichever check ran first.
+  if (o.paired) drawPairedGhost(ctx, o.paired, rect, aspect, scale)
+
   if (o.ghost) drawGhost(ctx, o.ghost, rect, aspect, scale)
 
   if (o.trail && o.trail.to > o.trail.from + 1) {
@@ -897,6 +919,87 @@ function roundRectPath(
  * bodies, equally confident, one of them fictional. It is also cleared before
  * returning, because this draws first and every tracked limb after it is solid.
  */
+/**
+ * Another of this player's serves, dashed under the one they are watching.
+ *
+ * SAME INK AS THE TARGET GHOST, AND THAT IS DELIBERATE. `PALETTE.ghost` exists
+ * for "the same player somewhere they were not", which describes both. Dashed
+ * and dim is the whole distinction from a tracked body, so both halves are set
+ * here rather than trusted to a caller — the same rule `drawGhost` follows, for
+ * the same reason.
+ *
+ * NOTHING BELOW THE HIPS ARRIVES, and this function does not decide that. A
+ * landmark that is `null` is simply skipped, so a bone with either end missing
+ * is not drawn and the picture ends at the hip line. The measured argument for
+ * that lives in `poseTrack.ts` — removing the leg load entirely moves the worst
+ * landmark 0.0387 against a 0.0341 noise floor, so legs drawn here would be
+ * inviting a player to watch noise — and it is enforced in the data by
+ * `pairTracks` rather than in this loop, which is why this only has to skip.
+ *
+ * NO ZONE, NO GAP LINE, NO LABEL. Those three belong to `drawGhost` because a
+ * target is a claim about where a hand should have been, and this is not a claim
+ * at all — it is the player's own body on another day. Drawing a leader from one
+ * to the other would invent a direction the app has not earned.
+ */
+function drawPairedGhost(
+  ctx: CanvasRenderingContext2D,
+  image: readonly ({ x: number; y: number } | null)[],
+  rect: DrawRect,
+  aspect: number,
+  scale: number,
+): void {
+  const { ox, oy, dw, dh } = rect
+  const at = (p: { x: number; y: number }) => ({
+    x: ox + (p.x / aspect) * dw,
+    y: oy + p.y * dh,
+  })
+
+  ctx.setLineDash([6 * scale, 5 * scale])
+  ctx.lineCap = 'butt'
+  ctx.lineJoin = 'round'
+
+  const stroke = () => {
+    ctx.strokeStyle = PALETTE.under
+    ctx.lineWidth = 4.4 * scale
+    ctx.stroke()
+    ctx.strokeStyle = PALETTE.ghost
+    ctx.lineWidth = 2 * scale
+    ctx.stroke()
+  }
+
+  let drawn = 0
+  ctx.beginPath()
+  for (const [a, b] of GHOST_BONES) {
+    const p = image[a]
+    const q = image[b]
+    if (!p || !q) continue
+    const from = at(p)
+    const to = at(q)
+    ctx.moveTo(from.x, from.y)
+    ctx.lineTo(to.x, to.y)
+    drawn++
+  }
+  // Nothing drawn is not a blank stroke — an empty path still costs two passes,
+  // and a body with no bones is not a body a player should be shown at all.
+  if (drawn) stroke()
+
+  const nose = image[LM.nose]
+  const left = image[LM.leftShoulder]
+  const right = image[LM.rightShoulder]
+  if (nose && left && right) {
+    // Sized off the shoulder span exactly as the target ghost's head is, so two
+    // dashed bodies on one screen could never be told apart by their heads.
+    const head = at(nose)
+    const span = Math.abs(at(left).x - at(right).x)
+    const headR = Math.max(9 * scale, span * 0.42, 11)
+    ctx.beginPath()
+    ctx.arc(head.x, head.y - headR * 0.25, headR, 0, Math.PI * 2)
+    stroke()
+  }
+
+  ctx.setLineDash([])
+}
+
 function drawGhost(
   ctx: CanvasRenderingContext2D,
   g: Ghost,

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { drawSkeleton, fitContain } from '../lib/pose/skeleton'
 import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { phaseSamples, trackFrameAt, type Replay, type SwingTrack } from '../lib/storage/poseTrack'
+import { pairedLookup, type TrackPair } from '../lib/trackPair'
 import type { Frame, Phase, PhaseId } from '../lib/analysis/types'
 import { Icon } from './primitives'
 
@@ -26,6 +27,16 @@ interface Props {
   replay: Replay
   phases: readonly Phase[]
   racket: 'left' | 'right'
+  /**
+   * Another of this player's saved serves, aligned onto this one by
+   * `pairTracks`.
+   *
+   * Absent most of the time and that is the design: the pairing refuses a camera
+   * that moved, a rubric change, a serve of another type and a contact nobody
+   * tracked, silently in every case. A player who is not offered this comparison
+   * is not told why, because the report is complete without it.
+   */
+  paired?: TrackPair
 }
 
 /**
@@ -56,7 +67,7 @@ interface Props {
  * video underneath it is the raw recording; here there is no video, and levelled
  * image space is the only space in the room. A stored track is already in it.
  */
-export default function TrackPlayer({ track, replay, phases, racket }: Props) {
+export default function TrackPlayer({ track, replay, phases, racket, paired }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -125,6 +136,17 @@ export default function TrackPlayer({ track, replay, phases, racket }: Props) {
 
   /** Which sample each keyframe is, by name — exact rows only. */
   const marks = useMemo(() => phaseSamples(replay, track, phases), [replay, track, phases])
+
+  /**
+   * Where the other serve was, at an instant of this one.
+   *
+   * The whole decision lives in `pairedLookup` — contact alignment, nearest
+   * rather than last-started, and nothing at all outside the other swing's span
+   * — because a rule inside a `useCallback` is a rule no test can reach, which
+   * is the finding R47 made about this screen layer generally. Memoised because
+   * it builds its search array once and is then called on every painted frame.
+   */
+  const pairedAt = useMemo(() => (paired ? pairedLookup(paired) : undefined), [paired])
 
   /**
    * The sample showing at a moment in the replay.
@@ -216,8 +238,9 @@ export default function TrackPlayer({ track, replay, phases, racket }: Props) {
       // From the first sample, which is the swing's start — the track spans
       // `ready` to `finish` and nothing before it exists to trail from.
       trail: { frames, from: 0, to: cursor },
+      paired: pairedAt?.(shownAt),
     })
-  }, [cursor, frames, racket, track.aspect, replay])
+  }, [cursor, frames, racket, track.aspect, replay, pairedAt])
 
   const drawRef = useRef(draw)
   drawRef.current = draw

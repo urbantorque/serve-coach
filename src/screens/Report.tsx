@@ -10,6 +10,7 @@ import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
 import TrackPlayer from '../components/TrackPlayer'
 import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
+import { pairTracks } from '../lib/trackPair'
 import { useShareState } from '../components/useShareState'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
@@ -242,6 +243,28 @@ export default function Report({
   // rendering if there is a swing to play, and two independent answers to that
   // question is one more than the page can be sure agree.
   const replay = useMemo(() => replayFrom(analysis.track), [analysis.track])
+  /*
+   * The last serve, drawn under this one — when the two may honestly be drawn
+   * together at all.
+   *
+   * `previous` is already here, for the deltas, and it is the only second serve
+   * this screen ever holds. Worth saying plainly, because R49 assumed otherwise:
+   * the round's own sequencing note says to build the same-session case first,
+   * since two serves from one basket share a camera by construction and satisfy
+   * the 5° gate for free. That case cannot reach this player. `TrackPlayer`
+   * renders only when there is no video (`!live`), and a basket always has one —
+   * so the ghost's home is here, across sessions, which is precisely the case
+   * the yaw gate was written for and the case R49b is an open question about.
+   *
+   * Refusals are silent and there are seven of them, all inside `pairTracks`.
+   * Nothing on this screen explains them: an extra picture that does not appear
+   * is not a failure a player needs an account of.
+   */
+  const ghost = useMemo(() => {
+    if (!previous) return undefined
+    const paired = pairTracks(analysis, previous)
+    return paired.ok ? paired.pair : undefined
+  }, [analysis, previous])
   // "Nothing happened" when the player backs out of the share sheet is
   // handled inside `useShareState` itself (cancelled/failed both read as
   // idle, only shared/downloaded count as done) — the button says nothing
@@ -748,6 +771,7 @@ export default function Report({
             replay={replay}
             phases={analysis.phases}
             racket={analysis.handedness}
+            paired={ghost}
           />
           {/* Says what it is before a player decides it is a broken video.
               Two sentences, and the first one is the good news: the clip is
@@ -756,6 +780,14 @@ export default function Report({
             Your clip never left your phone, so there is no footage to replay. This is the
             body we tracked, moving at the speed you filmed it.
           </p>
+          {/* Only when there is a second body on screen. Silence otherwise —
+              `pairTracks` refuses most pairs and none of its reasons is the
+              player's fault or the player's problem. */}
+          {ghost && (
+            <p className="player-note">
+              The dashed body is your last serve, lined up at the moment you hit the ball.
+            </p>
+          )}
         </section>
       )}
 

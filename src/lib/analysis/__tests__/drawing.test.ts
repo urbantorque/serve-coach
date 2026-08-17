@@ -32,6 +32,8 @@ function recordingContext() {
    */
   let strokeCalls = 0
   let pathsBegun = 0
+  /** One entry per rasterised path — see `stroke()` below for why. */
+  const passes: { style: string; dashed: boolean }[] = []
 
   const ctx = {
     strokeStyle: '',
@@ -74,6 +76,18 @@ function recordingContext() {
     },
     stroke() {
       strokeCalls++
+      /*
+       * The style at the moment the path is rasterised, which is not the style
+       * when its segments were appended.
+       *
+       * `strokes` above records `strokeStyle` at `lineTo` time, and for anything
+       * that builds a whole path and then colours it — the ghosts do, and so does
+       * every two-pass dark-edge stroke in the file — that is the *previous*
+       * element's colour, or the empty string on the first path of a frame. Fine
+       * for asserting geometry, useless for asserting ink, and the difference
+       * only shows up when something actually checks a colour.
+       */
+      passes.push({ style: String(ctx.strokeStyle), dashed: dash.length > 0 })
     },
     fill() {},
     // The callout draws its plate as a solid rectangle now — text on bare
@@ -88,7 +102,7 @@ function recordingContext() {
     measureText: (t: string) => ({ width: String(t).length * 7 }),
   }
 
-  return { ctx, strokes, arcs, texts, calls: () => ({ strokeCalls, pathsBegun }) }
+  return { ctx, strokes, arcs, texts, passes, calls: () => ({ strokeCalls, pathsBegun }) }
 }
 
 const W = 480
@@ -97,7 +111,7 @@ const H = 640
 function drawOnce(options: Partial<Parameters<typeof drawSkeleton>[1]> = {}) {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
-  const { ctx, strokes, arcs, texts, calls } = recordingContext()
+  const { ctx, strokes, arcs, texts, passes, calls } = recordingContext()
   drawSkeleton(ctx as unknown as CanvasRenderingContext2D, {
     frame: frames[skel.keys.trophy],
     aspect: 1,
@@ -107,7 +121,7 @@ function drawOnce(options: Partial<Parameters<typeof drawSkeleton>[1]> = {}) {
     sequence: { frames, index: skel.keys.trophy },
     ...options,
   })
-  return { strokes, arcs, texts, frames, skel, calls: calls() }
+  return { strokes, arcs, texts, passes, frames, skel, calls: calls() }
 }
 
 const finite = (n: number) => Number.isFinite(n)
@@ -462,6 +476,116 @@ check('a full overlay — trail, ghost, racket and flight together — costs the
   assert(
     long.strokeCalls === short.strokeCalls,
     `the combined overlay's strokes scaled with frame count instead of staying bucketed: ${short.strokeCalls} at ${short.frameCount} frames, ${long.strokeCalls} at ${long.frameCount}`,
+  )
+})
+
+/* ------------------------------------------------- the other serve, dashed -- */
+
+heading('Another of your own serves, drawn under this one')
+
+/**
+ * A paired body as `pairTracks` hands one over: every landmark above the hips
+ * populated, every one below it `null`.
+ *
+ * Built by hand rather than by running the pairing, because what is under test
+ * here is what the *drawing* does with the holes. Whether the holes are in the
+ * right places is `trackPair.test.ts`'s question and is answered there.
+ */
+function pairedBody(): ({ x: number; y: number } | null)[] {
+  const below = new Set<number>([
+    LM.leftKnee, LM.rightKnee, LM.leftAnkle, LM.rightAnkle,
+    LM.leftHeel, LM.rightHeel, LM.leftToe, LM.rightToe,
+  ])
+  return Array.from({ length: 33 }, (_, i) =>
+    below.has(i) ? null : { x: 0.4 + (i % 5) * 0.03, y: 0.15 + (i % 7) * 0.04 },
+  )
+}
+
+check('the other serve is drawn dashed, so it can never read as a tracked body', () => {
+  const { strokes, passes } = drawOnce({ paired: pairedBody() })
+  assert(strokes.some((s) => s.dashed), 'the paired body drew no dashed line at all')
+
+  /*
+   * Both halves of the distinction, and both are load-bearing. `PALETTE.ghost`
+   * is `neutral` held back, so a *solid* line of it is exactly what a
+   * lightly-tracked limb looks like — dashed is what stops a player reading
+   * their own last serve as a measurement of this one. Read off `passes` rather
+   * than `strokes`, because the colour is set after the path is built.
+   */
+  const dashed = passes.filter((p) => p.dashed)
+  assert(dashed.length > 0, 'nothing was rasterised while the dash was on')
+  for (const p of dashed) {
+    assert(
+      /rgba\(238, 242, 246, 0\.38\)|rgba\(0, 0, 0, 0\.45\)/.test(p.style),
+      `a dashed path was rasterised in ${p.style || '(no colour set)'}, not the ghost's own ink`,
+    )
+  }
+  // The accent is the answer to "which arm am I meant to be watching", and a
+  // second body wearing any of it would take that answer away.
+  assert(
+    !dashed.some((p) => /205, 249, 74/.test(p.style)),
+    'the other serve was drawn in the accent',
+  )
+})
+
+check('nothing is drawn below the hips, however the caller filled the array', () => {
+  const { strokes, arcs } = drawOnce({ paired: pairedBody() })
+  const plain = drawOnce()
+  /*
+   * The check that matters, and it is a count rather than a coordinate: the
+   * ghost's bone list stops at the hip line, so adding a paired body may add
+   * exactly the torso, the two arms and one head — eight bones and one arc — and
+   * nothing knee-shaped. A leg drawn here would be inviting a player to watch
+   * noise, per the 0.0387-against-0.0341 measurement in `poseTrack.ts`.
+   */
+  const added = strokes.filter((s) => s.dashed).length
+  assert(added === 8, `the paired body drew ${added} bones, not the eight above the hips`)
+  assert(
+    arcs.length === plain.arcs.length + 1,
+    `the paired body drew ${arcs.length - plain.arcs.length} arcs, not the one head`,
+  )
+})
+
+check('a body with holes above the hips drops those bones and keeps the rest', () => {
+  // Reachable: `pairTracks` returns the whole array and a caller could hand over
+  // a body from a track that lost a wrist. A bone with one end missing must not
+  // be drawn to a null and must not take its neighbours with it.
+  const holed = pairedBody()
+  holed[LM.leftWrist] = null
+  const { strokes } = drawOnce({ paired: holed })
+  const dashed = strokes.filter((s) => s.dashed)
+  assert(dashed.length === 7, `losing one wrist cost ${8 - dashed.length} bones, not one`)
+  for (const s of dashed) {
+    assert(
+      finite(s.from[0]) && finite(s.from[1]) && finite(s.to[0]) && finite(s.to[1]),
+      `a bone was drawn to a missing landmark: ${JSON.stringify(s)}`,
+    )
+  }
+})
+
+check('the dash is put back before anything tracked is drawn', () => {
+  /*
+   * The failure this catches is silent and total: `setLineDash` is context
+   * state, so leaving it on would draw the player's own body dashed as well —
+   * the one thing the ghost's whole treatment exists to prevent — and every
+   * check above would still pass, because they only ever look at the dashed
+   * strokes.
+   */
+  const { strokes } = drawOnce({ paired: pairedBody() })
+  const solid = strokes.filter((s) => !s.dashed)
+  assert(solid.length > 0, 'every line on the frame came out dashed')
+  const plain = drawOnce()
+  assert(
+    solid.length === plain.strokes.filter((s) => !s.dashed).length,
+    `the tracked body lost ${plain.strokes.filter((s) => !s.dashed).length - solid.length} solid lines to the ghost`,
+  )
+})
+
+check('no paired body means no extra drawing at all', () => {
+  const { strokes } = drawOnce()
+  assert(
+    strokes.every((s) => !s.dashed),
+    'something drew dashed on a report with no second serve to compare against',
   )
 })
 

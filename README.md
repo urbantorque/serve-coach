@@ -571,6 +571,23 @@ an extra picture on a report that is complete without one, so a screen explainin
 at length why it will not show a comparison nobody asked for is worse than one
 that simply does not offer it.
 
+**And it is drawn.** `drawPairedGhost` puts the older swing under the newer one
+in `TrackPlayer`, dashed, in `PALETTE.ghost` — the ink that already existed for
+"the same player somewhere they were not", which describes a target pose and
+another of your own serves equally well. No new colour. Dashed and dim is the
+whole distinction from a tracked body, so a solid line of that colour would read
+as a second measurement, and the dash is restored before anything tracked is
+drawn.
+
+**Where it lives is not where the round expected.** The plan was to build the
+same-session case first, since two serves from one basket share a camera and
+clear the 5° gate for free. That case never reaches this player: `TrackPlayer`
+renders only when there is no video, and a basket always has one. The comparison
+this screen can actually make is against `previous` — the last report of the same
+serve type — which is the case the yaw gate was written for, and the case where
+how often two clips from one trip agree on camera angle is still an open
+question.
+
 The pose model stops while recording. The player has stopped aiming and started
 serving, so there is no verdict left to read, and a hardware encoder is running on
 the same stream shortly before the analysis needs the GPU.

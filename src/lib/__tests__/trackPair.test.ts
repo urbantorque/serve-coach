@@ -23,7 +23,7 @@
 import { LM } from '../analysis/geometry'
 import type { Landmark, Phase, PhaseId } from '../analysis/types'
 import { swingTrack, type SwingTrack } from '../storage/poseTrack'
-import { GHOST_YAW_TOLERANCE_DEG, pairTracks, type Pairable } from '../trackPair'
+import { GHOST_YAW_TOLERANCE_DEG, pairTracks, pairedLookup, type Pairable } from '../trackPair'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 
 /* ------------------------------------------------------------------- a body */
@@ -363,6 +363,58 @@ check('the refusal is symmetric — the angle gate does not care which serve is 
     !wide.ok && !other.ok && wide.refusal === other.refusal,
     'swapping the two serves changed the answer',
   )
+})
+
+/* ------------------------------------------------------------- the lookup */
+
+heading('And where the older serve is at an instant of the newer one')
+
+/**
+ * A pair with a clock worth searching: contact a third of a second into the
+ * newer replay, the older swing running from a fifth of a second before contact
+ * to a fifth after, in tenths.
+ */
+const clockPair = () => ({
+  contactAt: 0.3,
+  yawGap: 0,
+  samples: [-0.2, -0.1, 0, 0.1, 0.2].map((fromContact, i) => ({
+    fromContact,
+    image: [{ x: i, y: i }],
+  })),
+})
+
+check('contact on this serve draws contact on the other one', () => {
+  const at = pairedLookup(clockPair())
+  const image = at(0.3)
+  assert(!!image, 'nothing was drawn at the aligned instant')
+  // Sample index 2 is `fromContact: 0`.
+  assert(image![0]!.x === 2, `drew sample ${image![0]!.x} at contact, not 2`)
+})
+
+check('the offset is the pairing own, not the raw replay clock', () => {
+  // A tenth after contact on this serve is a tenth after contact on the other,
+  // which is sample 3 — the check that would fail if the subtraction were
+  // dropped or done at the call site against a different number.
+  const image = pairedLookup(clockPair())(0.4)
+  assert(image?.[0]?.x === 3, `drew sample ${image?.[0]?.x} a tenth past contact, not 3`)
+})
+
+check('an instant between two samples takes the nearer one, not the earlier', () => {
+  const at = pairedLookup(clockPair())
+  // 0.04 past contact: nearer to sample 2 (0) than sample 3 (0.1).
+  assert(at(0.34)?.[0]?.x === 2, 'a moment just past contact snapped forward')
+  // 0.06 past: nearer to sample 3.
+  assert(at(0.36)?.[0]?.x === 3, 'a moment nearer the next sample took the earlier one')
+})
+
+check('before the other swing started, and after it ended, nothing is drawn', () => {
+  const at = pairedLookup(clockPair())
+  assert(at(0.09) === undefined, 'a body was drawn before the other serve began')
+  assert(at(0.51) === undefined, 'a body was left frozen after the other serve ended')
+  // The two ends themselves are inside it — a swing that ends exactly here has
+  // a pose here, and refusing it would blank the last frame of every pair.
+  assert(at(0.1) !== undefined, 'the first instant of the other swing drew nothing')
+  assert(at(0.5) !== undefined, 'the last instant of the other swing drew nothing')
 })
 
 report()

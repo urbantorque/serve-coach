@@ -38,7 +38,7 @@
  * a shoulder-to-ankle length is a measurement, and a drawn foot is a claim about
  * where it was.
  */
-import { LM, dist2d, midpoint } from './analysis/geometry'
+import { LM, dist2d, midpoint, nearestFrameIndex } from './analysis/geometry'
 import { VISIBLE_FLOOR } from './analysis/groundTruth'
 import type { Analysis, Landmark } from './analysis/types'
 import { scoringVersionOf, typeOf } from './progress'
@@ -287,4 +287,48 @@ export function pairTracks(newer: Pairable, older: Pairable): PairResult {
   }
 
   return { ok: true, pair: { samples, contactAt, yawGap } }
+}
+
+/**
+ * Where the older serve was, at a given instant of the newer one's replay.
+ *
+ * `t` is on the newer replay's own clock — seconds from the start of its swing —
+ * and `contactAt` is what turns that into the older serve's contact-relative one.
+ * Subtracting here rather than at the call site is the point: the alignment and
+ * the lookup are the same decision, and a component that did the arithmetic
+ * itself could drift from the pairing that produced the numbers.
+ *
+ * NEAREST, NOT LAST-STARTED, and that is the opposite of how the tracked body is
+ * chosen. `TrackPlayer` holds a tracked sample on screen until the next one
+ * begins, because holding still over a gap is the honest picture of tracking
+ * that was missing. This is a different serve on a different clock whose samples
+ * line up with the newer one's nowhere at all, so nearest is simply the closest
+ * thing to the truth — and biasing to the earlier sample would drag the whole
+ * ghost half a frame behind the body it is drawn under.
+ *
+ * `undefined` OUTSIDE THE OLDER SWING'S SPAN. Two serves rarely run the same
+ * length, so the shorter one ends first, and clamping to its last pose would
+ * leave a body frozen mid-air for the rest of the replay — which reads as the
+ * app having lost the track rather than as that swing being over.
+ */
+/**
+ * A LOOKUP RATHER THAN A LOOKUP FUNCTION CALL, because this runs per painted
+ * frame. `nearestFrameIndex` wants an array of `{ t }` and the samples carry
+ * `fromContact`; building that array inside the lookup would allocate fifty
+ * objects sixty times a second to draw one body, which is the same trade
+ * `TrackPlayer` already makes for its decoded frames. Built once, in a closure,
+ * and the caller memoises the closure.
+ */
+export function pairedLookup(pair: TrackPair): (t: number) => PairedSample['image'] | undefined {
+  const { samples } = pair
+  const times = samples.map((s) => ({ t: s.fromContact }))
+  const first = times[0]?.t
+  const last = times[times.length - 1]?.t
+
+  return (t: number) => {
+    if (!times.length) return undefined
+    const want = t - pair.contactAt
+    if (want < first || want > last) return undefined
+    return samples[nearestFrameIndex(times, want)]?.image
+  }
 }

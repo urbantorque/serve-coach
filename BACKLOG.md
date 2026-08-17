@@ -64,8 +64,9 @@ Kinetic chain, trophy metrics, what the body actually did.
 
 The translation from a number to a cue somebody can act on.
 
-- [ ] **C1 · R49·3** — Draw the ghost: the older track dashed under the newer in
-      `TrackPlayer`, nothing below the hips. Needs the browser.
+- [x] **C1 · R49·3** — Draw the ghost: the older track dashed under the newer in
+      `TrackPlayer`, nothing below the hips. *(Round 3 — and the round's own
+      "same-session case first" rule turned out not to apply to this surface.)*
 - [ ] **C2 · R53** — First serve against second serve. One tap on the glance, or
       inferred within a basket. Pure product on existing readings.
 - [ ] **C3 · R56** — Did it go in: in, long, net, wide. One tap, no score, no
