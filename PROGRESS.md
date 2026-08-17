@@ -988,3 +988,39 @@ number has drifted. Queued as `E5 · audit 4`.
 **Gate.** typecheck clean · lint clean · **1022 checks passed, 0 failed, exit 0**
 (+18). Browser verification not required: nothing player-visible changed, and
 R49·3 is the round that draws.
+
+---
+
+## Resuming this loop
+
+The loop is designed to be picked up cold, and everything a fresh session needs
+is on disk:
+
+1. **`BACKLOG.md`** — the six focus cycles with every task's status. The next
+   round is the head of the next cycle in rotation. Rounds 1–21 ran
+   A·B·C·D·E·F; round 21 was Cycle B, so **round 22 is Cycle C**, head item
+   `C2 · R53`.
+2. **`NEXT.md`** — what each round settled, and why. The source of truth for
+   status; `BACKLOG.md` is a view over it.
+3. **This file** — how each round ran: the critic's citations, the canaries, the
+   departures, the things that were verified live and the things that were not.
+4. **`.agent_state/cycle_summary.json`** — `unattendedLoop.session_2026_08_17`
+   carries the three consolidation records.
+
+**Last green:** `loop-green-4`, plus rounds 20 and 21 on top of it. Tree clean,
+1099 checks, exit 0.
+
+**The next consolidation is due at round 25** (blocks run in sixes; the third
+gate ran at 19 after a one-round shift).
+
+**Standing hazards a fresh session should know, all learned the hard way here:**
+
+- **`git checkout --` on an uncommitted file discards the round.** It happened
+  twice, in rounds 3 and 5. Stash first, always.
+- **The preview pane can serve a stale transform through a hard reload.** Round
+  15. Restart the dev server before any boot smoke, and when the pane and the
+  source disagree, `grep` settles it — that has been true three times.
+- **`report()` must be the last statement in a test file.** Now guarded by
+  `tallies.test.ts`, after four instances.
+- **This repo has no git remote.** Twenty-one rounds and five tags exist on one
+  disk, and the loop does hard resets. Nothing in the loop can fix this.
