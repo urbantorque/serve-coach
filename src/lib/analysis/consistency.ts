@@ -693,3 +693,63 @@ function chainRatioDelta(
 
   return { id: 'chain_span_ratio', from: low.serve, to: high.serve, delta, bound }
 }
+
+/* ------------------------------------------- first serves against second ---- */
+
+/**
+ * A basket's spreads, split by what the player said each serve was.
+ *
+ * WHY THIS IS WORTH HAVING. A club player's second serve is a different motion,
+ * not a slower first — and a basket of both, averaged together, reports a spread
+ * that is mostly the difference between two intentions. The player who patty-cakes
+ * their second is doing something the app currently averages away.
+ *
+ * **IT PARTITIONS, IT DOES NOT INFER.** R53·1 refused inference by two
+ * independent routes, and this only ever reads a tag somebody typed. A serve
+ * nobody tagged is in neither bucket rather than guessed into one, which is why
+ * the counts below routinely fail to add up to the basket — and that is the
+ * honest state, not a rounding error.
+ *
+ * **REFUSED BELOW `MIN_COMPARABLE_SERVES` ON EITHER SIDE.** One serve has no
+ * spread — `max − min` over a single reading is zero, which would score a
+ * perfect 100 off a sample containing no repetition. That is
+ * `buildConsistency`'s own floor, applied per bucket rather than to the basket,
+ * because a basket of six with five firsts and one second has a comparison on
+ * one side and none on the other.
+ */
+export interface SplitConsistency {
+  first?: Consistency
+  second?: Consistency
+  /** Serves in the basket the player never said anything about. */
+  untagged: number
+}
+
+/**
+ * Split a basket by tag.
+ *
+ * Takes the analyses again rather than a built `Consistency`, because a spread
+ * cannot be re-split after the fact: `max`, `min` and the score are computed
+ * across whatever went in, and there is no way back from an average to the
+ * readings under it. So each side is built by the same function on its own
+ * subset, and the two are `Consistency` objects every existing reader already
+ * knows how to draw.
+ */
+export function splitByServeNumber(
+  analyses: Analysis[],
+  serveNumberOf: (a: Analysis) => 1 | 2 | undefined,
+): SplitConsistency {
+  const firsts: Analysis[] = []
+  const seconds: Analysis[] = []
+  let untagged = 0
+  for (const a of analyses) {
+    const n = serveNumberOf(a)
+    if (n === 1) firsts.push(a)
+    else if (n === 2) seconds.push(a)
+    else untagged++
+  }
+  return {
+    first: firsts.length >= MIN_COMPARABLE_SERVES ? buildConsistency(firsts, firsts.length) : undefined,
+    second: seconds.length >= MIN_COMPARABLE_SERVES ? buildConsistency(seconds, seconds.length) : undefined,
+    untagged,
+  }
+}

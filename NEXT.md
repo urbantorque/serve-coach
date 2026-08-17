@@ -2249,7 +2249,7 @@ deleting a working button.
       copy is checked directly — R69's finding applied while writing rather than
       afterwards.
 
-- [~] **R53** — Split. The round offers two routes to knowing which kind of serve
+- [x] **R53** — Split. The round offers two routes to knowing which kind of serve
       it is looking at, and **one of them is not available**.
 
         · **R53·1 — [x] inference is refused, by two independent routes.**
@@ -2621,3 +2621,39 @@ deleting a working button.
       identifier, and this round mapped it. Repointed at
       `leg_drive_rise_ratio` — measured in R51·1, in the register, deliberately
       not surfaced — so it names something still genuinely unmapped.
+
+- [x] **R53·2b** — The tap, and the partition. **R53 is complete**, and it ships
+      as a tap or not at all — which is what R53·1 concluded.
+
+      **The tap sits on the glance**, because that is the moment: the player is
+      on the court having just hit the thing. Untagged is the default and needs
+      no button; tapping the one already chosen clears it, which is the undo
+      `unlogPractice` already establishes for a tap that is easy to make by
+      accident on a phone held at arm's length.
+
+      **Zero new CSS**, constraint 3 taken literally rather than argued with.
+      `.glance-actions` is this screen's own button layout and `t-overline` is
+      the label class the score row uses. Two stacked full-width ghost buttons is
+      not the tightest layout for a two-way choice — a two-across row would need
+      a class this stylesheet does not have — and at arm's length the bigger
+      targets are the better trade anyway. `aria-pressed` carries the state
+      rather than colour alone, R21's gap closed while writing rather than in a
+      later pass.
+
+      **`splitByServeNumber` partitions and never infers.** A serve nobody tagged
+      is in neither bucket and is counted as untagged, so the two sides routinely
+      fail to add up to the basket — the honest state rather than a rounding
+      error. Each side is built by `buildConsistency` on its own subset, because
+      a spread cannot be re-split after the fact: `max`, `min` and the score are
+      computed across whatever went in and there is no way back from an average
+      to the readings under it.
+
+      `MIN_COMPARABLE_SERVES` applied **per bucket**, not to the basket. One
+      serve on a side has a spread of zero, which would score a perfect 100 off a
+      sample containing no repetition — the exact reason that floor exists — and
+      a basket of six with five firsts and one second has a comparison on one
+      side and none on the other.
+
+      Five checks, including that splitting genuinely tightens a spread built
+      from two different motions: if it did not, the partition would be doing
+      nothing.

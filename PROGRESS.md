@@ -43,6 +43,46 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 35 · Cycle C — pedagogical coaching and UI · `C2c · R53·2b`
+
+**Orchestrator.** Closes R53. Lead builder: Pedagogical UX & Skill Architect
+with the Modular UI Developer on the layout. Column: *Is it worth opening again*.
+
+**Zero new CSS, and it cost something.** Two stacked full-width buttons is not
+the tightest layout for a two-way choice; a two-across row would look better and
+would need a class this stylesheet does not have. Constraint 3 says assemble from
+what exists, so that is what shipped — and at arm's length on a court the bigger
+targets are the better trade anyway, which is the honest version of the argument
+rather than a consolation.
+
+**The partition never infers, which is R53·1 carried through.** An untagged serve
+is in neither bucket and is counted, so the two sides routinely fail to add up to
+the basket. That is the honest state, and a check names it so nobody later
+"fixes" the arithmetic.
+
+**`MIN_COMPARABLE_SERVES` per bucket, not per basket.** One serve on a side has a
+spread of zero, which would score a perfect 100 off a sample with no repetition —
+exactly what that floor exists to prevent. A basket of six with five firsts and
+one second has a comparison on one side and none on the other, and says so.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Nothing inferred. Each side is rebuilt from its own readings rather than re-split from an average, because there is no way back from a mean to what went into it |
+| Performance | pass | One pass over a basket; each side rebuilt only when it has two serves |
+| Privacy | pass | The tag is local, in the store round 29 built |
+| Architecture | pass | No new CSS class. `aria-pressed` carries state rather than colour — R21's gap closed while writing rather than in a later pass |
+| Product | pass | The tap is on the glance because that is the moment. Tapping the chosen one clears it, the undo the practice log already establishes |
+
+**Verification.** The copy gate sees the new lines — 98 readable, still zero real
+failures. **The tap itself has not been driven**: the glance needs a live
+analysis, the same block as rounds 5, 11 and 21.
+
+**Gate.** typecheck clean · lint clean · **1143 checks, 0 failed, exit 0** (+5).
+
+---
+
 ### Round 34 · Cycle B — biomechanics and fault detection · `B1c · R50·3`
 
 **Orchestrator.** Closes R50, three entries and twenty rounds after it opened.
@@ -1464,8 +1504,8 @@ is on disk:
 
 1. **`BACKLOG.md`** — the six focus cycles with every task's status. The next
    round is the head of the next cycle in rotation. Round 34 was Cycle B, so
-   **round 35 is Cycle C**, head item `C2c · R53·2b` — the tap on the glance and
-   the partitioned spreads, whose store landed in round 29.
+   **round 36 is Cycle D**, head item `D2b · R55·2` — profiles, once the
+   where-does-the-profile-live decision from round 30 is taken.
 2. **`NEXT.md`** — what each round settled, and why. The source of truth for
    status; `BACKLOG.md` is a view over it.
 3. **This file** — how each round ran: the critic's citations, the canaries, the
@@ -1473,8 +1513,8 @@ is on disk:
 4. **`.agent_state/cycle_summary.json`** — `unattendedLoop.session_2026_08_17`
    carries the three consolidation records.
 
-**Last green:** `loop-green-6`, plus rounds 33 and 34 on top of it. Tree clean,
-1138 checks, exit 0.
+**Last green:** `loop-green-6`, plus rounds 33–35 on top of it. Tree clean,
+1143 checks, exit 0.
 
 **The next consolidation is due at round 38** (blocks run in sixes; gates have run
 at 6, 12, 19, 25 and 32).

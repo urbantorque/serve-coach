@@ -22,7 +22,7 @@ import {
   type SweepServe,
 } from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
-import { MIN_COMPARABLE_SERVES, buildConsistency, pairStills } from '../consistency'
+import { MIN_COMPARABLE_SERVES, buildConsistency, pairStills, splitByServeNumber } from '../consistency'
 import { Cancelled } from '../../pose/extract'
 import { diagnose } from '../diagnose'
 import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
@@ -2725,6 +2725,93 @@ check('a serve with no ratio drops out rather than reading as zero', () => {
   ]))
   assert(!!d, 'two readable serves beside one unreadable one produced nothing')
   assert(d!.from === 2 && d!.to === 3, `named serves ${d!.from} and ${d!.to}, not 2 and 3`)
+})
+
+
+/* ------------------------------- first serves against second, partitioned --- */
+
+console.log('\n\x1b[1mA basket split by what the player said each serve was\x1b[0m')
+
+/**
+ * R53·2b's half of the round. The tap is the only route to this — R53·1 refused
+ * inference — so everything here is about reading a tag and never guessing one.
+ */
+function tagged(serves: (1 | 2 | undefined)[]) {
+  const analyses = serves.map((_, i) => {
+    const { fundamentals } = run()
+    return {
+      fundamentals,
+      overall: 70,
+      serves: { count: serves.length, index: i },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  return splitByServeNumber(analyses, (a) => serves[(a.serves?.index ?? 0)])
+}
+
+check('a basket of both is split, and each side is its own comparison', () => {
+  const s = tagged([1, 1, 2, 2])
+  assert(s.first?.serves === 2, `the first-serve side has ${s.first?.serves} serves`)
+  assert(s.second?.serves === 2, `the second-serve side has ${s.second?.serves} serves`)
+  assert(s.untagged === 0, `${s.untagged} serves were untagged in a fully tagged basket`)
+})
+
+check('a serve nobody tagged is in neither bucket, and is counted', () => {
+  /*
+   * The refusal that carries R53·1 through to here. An untagged serve is not
+   * guessed into a side — it is named as untagged, so the counts routinely fail
+   * to add up to the basket and that is the honest state rather than a bug.
+   */
+  const s = tagged([1, 1, undefined, undefined, 2, 2])
+  assert(s.untagged === 2, `counted ${s.untagged} untagged, expected 2`)
+  assert(s.first?.serves === 2 && s.second?.serves === 2, 'an untagged serve reached a bucket')
+})
+
+check('one serve on a side is no comparison, and gets none', () => {
+  /*
+   * `buildConsistency`'s own floor, applied per bucket. One reading has a spread
+   * of zero, which would score a perfect 100 off a sample containing no
+   * repetition — the exact reason that floor exists.
+   */
+  const s = tagged([1, 2, 2, 2])
+  assert(s.first === undefined, 'a single first serve was given a spread')
+  assert(s.second?.serves === 3, `the second-serve side has ${s.second?.serves} serves`)
+})
+
+check('a basket nobody tagged at all splits into nothing, not into empty halves', () => {
+  const s = tagged([undefined, undefined, undefined])
+  assert(s.first === undefined && s.second === undefined, 'an untagged basket produced a comparison')
+  assert(s.untagged === 3, `counted ${s.untagged} untagged of 3`)
+})
+
+check('each side is scored on its own serves, not on the basket', () => {
+  /*
+   * The point of the whole feature: a spread over both kinds is mostly the
+   * difference between two intentions. Checked by giving the two sides genuinely
+   * different motions and asserting the split scores differ from the combined
+   * one — if they matched, the partition would be doing nothing.
+   */
+  const dials: Partial<ServeDials>[] = [
+    { contactReach: 1.38 },
+    { contactReach: 1.38 },
+    { contactReach: 1.20 },
+    { contactReach: 1.20 },
+  ]
+  const analyses = dials.map((d, i) => {
+    const { fundamentals } = run(d)
+    return {
+      fundamentals,
+      overall: 70,
+      serves: { count: 4, index: i },
+    } as unknown as Parameters<typeof buildConsistency>[0][number]
+  })
+  const whole = buildConsistency(analyses, 4)!
+  const split = splitByServeNumber(analyses, (a) => ((a.serves?.index ?? 0) < 2 ? 1 : 2))
+  const wholeContact = whole.metrics.find((m) => m.id === 'contactHeight')!
+  const firstContact = split.first!.metrics.find((m) => m.id === 'contactHeight')!
+  assert(
+    firstContact.spread < wholeContact.spread / 2,
+    `splitting did not tighten the spread: ${firstContact.spread.toFixed(4)} against ${wholeContact.spread.toFixed(4)}`,
+  )
 })
 
 report()

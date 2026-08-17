@@ -90,7 +90,8 @@ The translation from a number to a cue somebody can act on.
       with no fixtures. *(Round 22.)*
 - [x] **C2b · R53·2a** — Where a player-side fact lives: a third store, keyed
       by report id. *(Round 29 — a field on the row is erased by every re-run.)*
-- [ ] **C2c · R53·2b** — The tap on the glance, and the spreads partitioned.
+- [x] **C2c · R53·2b** — The tap on the glance, and the spreads partitioned.
+      *(Round 35 — zero new CSS, and the partition never infers.)*
 - [ ] **C3 · R56** — Did it go in: in, long, net, wide. One tap, no score, no
       stats screen. The trap is the claim — no correlation over six points.
 - [ ] **C4 · R57** — The drills as a week, built from the 2–4 ranked drills the

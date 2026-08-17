@@ -29,6 +29,16 @@ interface Props {
   /** Straight back to the viewfinder, which is the point of this screen. */
   onRecordAnother?: () => void
   onOpenReport: () => void
+  /**
+   * Say which serve this was, or take it back by passing nothing.
+   *
+   * Absent where nothing can store it, the same rule `onLogDrill` follows on the
+   * report — and the screen renders identically without it, which is the test
+   * every optional prop on this file has had to pass since `move` was added.
+   */
+  onTagServe?: (n: 1 | 2 | undefined) => void
+  /** What the player has already said about this serve, if anything. */
+  serveNumber?: 1 | 2
   onBack: () => void
   /**
    * Whether the fault the previous serve on this trip was told about moved.
@@ -64,6 +74,8 @@ export default function Glance({
   analysis,
   onRecordAnother,
   onOpenReport,
+  onTagServe,
+  serveNumber,
   onBack,
   move,
   rotation,
@@ -205,6 +217,48 @@ export default function Glance({
             </p>
           )}
         </section>
+      )}
+
+      {/*
+        Which serve it was, in one tap.
+
+        R53·1 refused inference by two independent routes — the rig's 18 sd
+        separation is the one that was dialled, and "serves arrive in pairs" is a
+        fact about how people practise rather than about a clip — so a tap is the
+        only honest route, and this is the moment for it: the player is on the
+        court having just hit the thing.
+
+        NO THIRD STATE ON SCREEN. Untagged is the default and needs no button;
+        tapping the one already chosen clears it, which is the undo `unlogPractice`
+        already establishes for a tap that is easy to make by accident on a phone
+        held at arm's length.
+
+        ZERO NEW CSS, which is constraint 3 taken literally rather than argued
+        with. `.glance-actions` is this screen's own button layout — a flex
+        column with the gap already chosen — and `t-overline` is the label class
+        the score row uses. Two stacked ghost buttons is not the tightest layout
+        anybody could draw for a two-way choice, and a two-across row would need
+        a class this stylesheet does not have. On a phone held at arm's length,
+        full-width targets are the better trade anyway.
+
+        `aria-pressed` carries the state rather than colour alone — the gap R21
+        closed elsewhere in this app, applied here while writing rather than in a
+        later accessibility pass.
+      */}
+      {onTagServe && (
+        <div className="glance-actions">
+          <span className="t-overline">Which serve was it?</span>
+          {([1, 2] as const).map((n) => (
+            <button
+              key={n}
+              className="btn btn--ghost btn--full"
+              aria-pressed={serveNumber === n}
+              onClick={() => onTagServe(serveNumber === n ? undefined : n)}
+            >
+              {n === 1 ? 'First serve' : 'Second serve'}
+            </button>
+          ))}
+        </div>
       )}
 
       <footer className="glance-actions">
