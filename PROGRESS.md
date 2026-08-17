@@ -44,6 +44,57 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 15 · Cycle C — pedagogical coaching and UI · `C0b · R69·2`
+
+**Orchestrator.** The eight the gate found. Lead builder: Pedagogical UX & Skill
+Architect. Column served: *Do I believe it*.
+
+**One fix was a trap and the gate would have accepted the wrong answer.**
+`StoragePanel`'s transfer line is 26 words because R24 deliberately put three
+concrete methods in it — email, AirDrop, a cloud drive — after finding the panel
+promised a file would carry a history to a new phone and never said how. Cutting
+those to make a word count would have been this round undoing a previous one to
+please a lint, and the lint would have gone green. The fix is a full stop where
+an em dash was: two sentences, 24 words, all three methods intact.
+
+**The home privacy line lost a hedge and a passive together**, and the passive
+mattered: "Your video is read on this device" has the same shape as the two
+privacy lines the gate *exempts*, where an active rewrite would need a subject
+and the whole promise is that there is nobody doing it. This one is different —
+the video is the subject, so "stays on this device and never leaves it" is
+active without inventing a "we". `HandednessPicker` is the same distinction from
+the other side: there **is** an actor, so "which arm the app measures" is honest.
+
+**A third staleness incident, and the worst.** The pane served a stale transform
+of `Report.tsx` **through a hard reload** — the old sentence rendered on a fresh
+tab after `location.reload(true)`, with the file on disk definitively changed.
+Only a dev-server restart cleared it. Rounds 3 and 12 were stale consoles, a
+nuisance; this was stale content, and trusting it would have had me record fixed
+copy as unfixed and hunt a bug that did not exist. **When the pane and the source
+disagree, the source is right** — `grep` has now settled this three times.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | No line lost a fact to gain a word. The storage methods, the privacy promise and the replay's explanation all survive intact |
+| Performance | pass | Copy only |
+| Privacy | pass | The privacy lines say the same thing more plainly. Nothing about behaviour changed |
+| Architecture | pass | Each ruling came out of the table as its line stopped failing, so the "no stale ruling" check proved the fixes landed. The `known` verdict stays in the type — a table that can only say "exempt" exempts everything |
+| Product | pass | Four screens read better and none says less |
+
+**Browser verification.** Home hero and privacy line confirmed live; the replay
+note confirmed after the server restart above. `FilmingGuide`, `FramingCheck`,
+`HandednessPicker` and `StoragePanel` sit behind sheets and were **not** driven —
+their text is asserted by the gate rather than watched, and that is the weaker of
+the two. Console clean on a fresh tab.
+
+**Gate.** typecheck clean · lint clean · **1076 checks passed, 0 failed, exit 0**
+(unchanged — this round fixed copy rather than adding checks, and the gate going
+from "8 real" to "0 real" is the evidence).
+
+---
+
 ### Round 14 · Cycle B — biomechanics and fault detection · `B1c · R50·3`
 
 **Orchestrator.** The third and last entry through round 2's machinery — except

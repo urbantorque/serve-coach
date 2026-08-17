@@ -84,8 +84,9 @@ The translation from a number to a cue somebody can act on.
 - [x] **C0 · R69·1** — The gate for copy that lives in a component. 96 lines,
       25 components, 15 failing — seven the lint being wrong, eight real. *(Round
       9 — and one of the eight contradicts R28's own close-out.)*
-- [ ] **C0b · R69·2** — Fix the eight. Each is a copy decision, and two of them
-      are the most-read paragraphs in the app. *Head of this cycle.*
+- [x] **C0b · R69·2** — Fix the eight. *(Round 15 — nothing in a component fails
+      the editor now except the seven where the lint is wrong. R24's three
+      transfer methods kept: the fix was a full stop, not a deletion.)*
 - [ ] **C5 · audit 6** — A copy line that has drifted over the twenty-five word
       cap since it was written. R28 found its own phase had drifted; it drifts.
 

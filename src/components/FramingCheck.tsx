@@ -431,8 +431,8 @@ export default function FramingCheck({ onRecorded }: Props) {
           <Cue text={PREVIEW_BLOCK_CUE[block]} />
         </p>
         <p className="framer-foot">
-          Filming with your own camera app and picking the video works exactly the same. The
-          framing gets checked on the clip either way — this only moves that check earlier.
+          Filming with your own camera app works the same. Either way the framing gets checked
+          on the clip; this moves that check earlier.
         </p>
       </div>
     )

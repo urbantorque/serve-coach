@@ -1546,10 +1546,12 @@ where the passive *is* the claim (an active rewrite needs a subject, and the
 whole promise is that there is no "we" doing the keeping), and the export warning
 where "not just numbers" is a hedge carrying the meaning.
 
-Eight are real: a filler "just", two passives, and five lines running 26 to 30
-words against a cap of 25. They are frozen at their current wording rather than
-rewritten in the same round, because two of them are the most-read paragraphs in
-the app and that is a copy decision rather than a lint pass.
+Eight were real: a filler "just", two passives, and five lines running 26 to 30
+words against a cap of 25. All eight are fixed, and none lost a fact to gain a
+word — the storage panel's transfer line is 24 words with all three of R24's
+transfer methods still in it, because the fix was a full stop where an em dash
+was rather than a deletion. Cutting them would have been one round undoing
+another to please a lint, and the lint would have gone green.
 
 The scan is text-matched rather than parsed, and its allow list is checked
 against what the scan actually found — the trade `egress.test.ts` makes, for the

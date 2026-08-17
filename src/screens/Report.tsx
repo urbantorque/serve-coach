@@ -626,7 +626,7 @@ export default function Report({
                 clip. Left unsaid, the control looked like it had failed. */}
             {!isLive(analysis) && (
               <p className="levelled-note">
-                This report was saved without its footage, so its verdict stays as it is.
+                This report has no footage behind it, so its verdict stays as it is.
                 The level applies from your next clip on.
               </p>
             )}
@@ -797,8 +797,8 @@ export default function Report({
               Two sentences, and the first one is the good news: the clip is
               gone because it was never kept, which is the promise on the tin. */}
           <p className="player-note">
-            Your clip never left your phone, so there is no footage to replay. This is the
-            body we tracked, moving at the speed you filmed it.
+            Your clip never left your phone, so there is nothing to replay. This is the
+            tracked body, moving at the speed you filmed.
           </p>
           {/* Only when there is a second body on screen. Silence otherwise —
               `pairTracks` refuses most pairs and none of its reasons is the

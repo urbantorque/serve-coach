@@ -205,7 +205,7 @@ export default function Home({
         </h1>
         <p>
           Film one serve. Get the toss, the load, the swing and the contact measured frame by
-          frame — with the fix for whatever is costing you the most.
+          frame — with the fix that matters most.
         </p>
       </section>
 
@@ -485,8 +485,8 @@ export default function Home({
           </p>
         )}
         <p>
-          Your video is read on this device and never uploaded. Analysis runs entirely in your
-          browser, on a court with no signal just as well as at home.
+          Your video stays on this device and never leaves it. Everything runs in your
+          browser, with or without a signal.
         </p>
       </footer>
 

@@ -24,15 +24,16 @@
  *   · `exempt` — the lint is wrong about this line. It is a label rather than a
  *     cue, or a dev-only surface no player reaches, or a passive that is doing
  *     real work. Each says which.
- *   · `known` — the lint is right and the line has not been fixed. **Eight of
- *     them.** Listed with their measured fault so that fixing one is a diff
- *     against a number, and queued as R69·2 rather than folded into the round
- *     that built the gate: rewriting the home screen's hero paragraph is a
- *     product decision, not a lint pass.
+ *   · `known` — the lint is right and the line has not been fixed. **There are
+ *     none left.** R69·1 shipped this gate with eight, listed with their measured
+ *     faults; R69·2 fixed all eight, and each ruling came out of the table as its
+ *     line stopped failing. The verdict stays in the type because the next scan
+ *     that finds something real will want it, and because a table that can only
+ *     express "exempt" is a table that exempts everything.
  *
- * WHAT THIS CATCHES TODAY. A *new* line that fails. That is the whole point and
- * it works from the moment this lands: the eight are frozen at exactly their
- * current wording, so touching one without fixing it turns this red too.
+ * WHAT THIS CATCHES TODAY. A *new* line that fails. Nothing in a component is
+ * over the cap, passive, hedged or preambled except the seven below, and every
+ * one of those says why the lint is wrong about it.
  */
 // @ts-expect-error - node's fs, and this project carries no @types/node
 import fsUntyped from 'fs'
@@ -143,47 +144,6 @@ const RULINGS: Ruling[] = [
     verdict: 'exempt',
     why: '"not just numbers" — the hedge carries the meaning, and dropping it inverts the sentence. R30 wrote this line to be read before the Export button.',
   },
-  /* -------------------------------------------------------------- known -- */
-  {
-    text: 'A front or back view still works',
-    verdict: 'known',
-    why: 'Hedging: "You just lose one reading". The "just" is filler and the sentence is better without it.',
-  },
-  {
-    text: 'Filming with your own camera app and picking the video',
-    verdict: 'known',
-    why: '30 words against a cap of 25, on the screen that explains why the live framing check exists at all.',
-  },
-  {
-    text: 'This decides which arm is measured',
-    verdict: 'known',
-    why: 'Passive: "is measured". An active form exists — the app measures it — and does not need a "we".',
-  },
-  {
-    text: 'To carry it to a new phone',
-    verdict: 'known',
-    why: '26 words. **R28 recorded tightening this exact line to fit the cap it was auditing everything else against, and it does not fit.** Whether it drifted since or was never under is not knowable from the ledger; the number is 26.',
-  },
-  {
-    text: 'Film one serve. Get the toss, the load',
-    verdict: 'known',
-    why: '28 words on the home screen hero. The most-read paragraph in the app, and rewriting it is a product decision rather than a lint pass.',
-  },
-  {
-    text: 'Your video is read on this device and never uploaded',
-    verdict: 'known',
-    why: '28 words, plus a hedge and a passive. The passive half has the same defence as the exempt privacy lines above; the length does not.',
-  },
-  {
-    text: 'This report was saved without its footage',
-    verdict: 'known',
-    why: 'Passive: "was saved". Reachable and rewritable.',
-  },
-  {
-    text: 'Your clip never left your phone, so there is no footage',
-    verdict: 'known',
-    why: '26 words under the replay. Two sentences doing two jobs, so it splits cleanly.',
-  },
 ]
 
 heading('Copy written straight into a component')
@@ -193,7 +153,10 @@ const ALL = FILES.flatMap((f) => jsxText(fs.readFileSync(f, 'utf8')))
 const FAILING = ALL.filter((t) => cueIssues(t).length > 0)
 
 note(`${FILES.length} components, ${ALL.length} readable lines, ${FAILING.length} failing the editor`)
-note(`  ${RULINGS.filter((r) => r.verdict === 'known').length} are real and unfixed — R69·2`)
+note(
+  `  ${RULINGS.filter((r) => r.verdict === 'exempt').length} ruled exempt with a reason, ` +
+    `${RULINGS.filter((r) => r.verdict === 'known').length} real and unfixed`,
+)
 
 check('the scan is finding something to scan', () => {
   // A scan that matched nothing would pass every check below while proving

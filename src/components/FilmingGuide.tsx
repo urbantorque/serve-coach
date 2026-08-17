@@ -57,7 +57,7 @@ export default function FilmingGuide() {
       </div>
 
       <p className="guide-note">
-        A front or back view still works. You just lose one reading: how far in front of you the
+        A front or back view still works. You lose one reading: how far in front of you the
         ball is hit.
       </p>
     </div>

@@ -160,8 +160,8 @@ export default function StoragePanel({ count, onImported }: Props) {
       {outcome && <p className="storage-outcome">{outcome}</p>}
 
       <p className="sheet-note">
-        To carry it to a new phone, send the file to yourself — email, AirDrop, a cloud drive —
-        then tap Import from a file there.
+        To move it to a new phone, send the file to yourself — email, AirDrop, a cloud drive.
+        Then tap Import from a file there.
       </p>
     </section>
   )

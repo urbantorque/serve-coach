@@ -1550,7 +1550,7 @@ family, different surface, different refusals.
           They are linted at the source instead, which is the same division
           `copy.test.ts` and R69·1 already draw between them.
 
-- [~] **R69** — Split: build the gate, then fix what it finds. Rewriting the home
+- [x] **R69** — Split: build the gate, then fix what it finds. Rewriting the home
       screen's hero paragraph is a product decision and does not belong in the
       round that built a lint.
 
@@ -1597,8 +1597,41 @@ family, different surface, different refusals.
           gate names the line, its word count and all three of its faults, so the
           failure message is the fix.
 
-        · **R69·2 — the eight.** Each is a copy decision rather than a lint pass.
-          The two on the home screen are the most-read paragraphs in the app. `copy.test.ts`
+        · **R69·2 — [x] the eight, fixed.** Nothing in a component is now over
+          the cap, passive, hedged or preambled except the seven where the lint
+          is wrong, and every one of those says why.
+
+          What changed, and each keeps what it was for:
+
+            · The filming guide loses a filler "just".
+            · `FramingCheck` 30 → 20 words, and "gets checked" survives because
+              it is not the passive the lint means.
+            · `HandednessPicker` reads "which arm the app measures" — active
+              without inventing a "we", which is the trap the exempt privacy
+              lines fall into and this one does not, because there *is* an
+              actor here.
+            · `StoragePanel` 26 → 24, **keeping R24's three transfer methods**.
+              The fix is a full stop where an em dash was, not a deletion: R24
+              added email, AirDrop and a cloud drive deliberately, and cutting
+              them to make a word count would have been this round undoing a
+              previous one to please a lint.
+            · The home hero 28 → 23: "the fix that matters most".
+            · The home privacy line 28 → 20, losing a hedge and a passive at
+              once: "Your video stays on this device and never leaves it."
+            · `Report`'s saved-report note drops "was saved".
+            · The replay note 26 → 23.
+
+          **A THIRD STALENESS INCIDENT, AND THE WORST SO FAR.** The pane served a
+          stale transform of `Report.tsx` **through a hard reload** — the old
+          sentence rendered on a fresh tab after `location.reload(true)`, with
+          the file on disk definitively changed. Only restarting the dev server
+          cleared it. Rounds 3 and 12 were stale *consoles*, which is a nuisance;
+          this was stale *content*, and had I trusted it I would have recorded
+          fixed copy as unfixed and gone looking for a bug that was not there.
+
+          **The rule this session has now earned three times over: when the pane
+          and the source disagree, the source is right.** `grep` settled all
+          three. `copy.test.ts`
       is named as one of three critics in executable form, and it walks `METRICS`,
       `SERVE_TYPES`, `FUNDAMENTALS`, `AXIS_COPY`, `DRILLS` and `everyVerdictCue()`
       — every one of them a data table. **Every sentence written straight into
