@@ -1,6 +1,7 @@
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/analysis/verdict'
 import type { FaultMove, RotationMove } from '../lib/analysis/carryForward'
+import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
 
 /**
@@ -39,6 +40,16 @@ interface Props {
   onTagServe?: (n: 1 | 2 | undefined) => void
   /** What the player has already said about this serve, if anything. */
   serveNumber?: 1 | 2
+  /**
+   * Say where it landed, or take it back by passing nothing.
+   *
+   * Independent of `onTagServe` above — a player taps one, the other, or far
+   * more often neither, and one tap must never clear the other. That rule lives
+   * in `withServeTag`, not here.
+   */
+  onTagOutcome?: (o: ServeOutcome | undefined) => void
+  /** Where the player has already said it landed, if they said. */
+  outcome?: ServeOutcome
   onBack: () => void
   /**
    * Whether the fault the previous serve on this trip was told about moved.
@@ -70,12 +81,28 @@ interface Props {
   strain?: string
 }
 
+/**
+ * The four outcomes as the player would say them.
+ *
+ * Sentence case and one word each, because these are chips in a row and not
+ * sentences. 'In' rather than 'Went in' for the same reason the serve-number
+ * buttons say 'First serve' and not 'It was a first serve'.
+ */
+const OUTCOME_LABEL: Record<ServeOutcome, string> = {
+  in: 'In',
+  long: 'Long',
+  net: 'Net',
+  wide: 'Wide',
+}
+
 export default function Glance({
   analysis,
   onRecordAnother,
   onOpenReport,
   onTagServe,
   serveNumber,
+  onTagOutcome,
+  outcome,
   onBack,
   move,
   rotation,
@@ -258,6 +285,47 @@ export default function Glance({
               {n === 1 ? 'First serve' : 'Second serve'}
             </button>
           ))}
+        </div>
+      )}
+
+      {/*
+        Where it landed, in one tap. R56.
+
+        CHIPS, NOT FOUR MORE FULL-WIDTH BUTTONS. Two stacked ghost buttons was
+        the right trade for a two-way choice; four would be most of a phone
+        screen, on the one screen in this app that exists because reading takes
+        time the next serve needs. `.chip--button` already carries a 44px tap
+        target and is built for wrapping rows — its own comment says so — and
+        `.reading-chips` is three properties of flex wrap. Borrowed from the
+        report rather than copied into a new class, which is constraint 3 taken
+        as written: nothing new, and no restyle of what was borrowed.
+
+        THE APP DOES NOT SEE THE COURT AND NEVER CLAIMS TO. There is no service
+        box here, no line, no judgement — four words a player would use, stored
+        exactly as tapped. "Wide" is safe beside the fault line above it, which
+        renders as "Further out this time": `wider` is an enum and never
+        reaches the screen. The heading is what keeps the two apart.
+
+        AND NOTHING IS SAID BACK. R56 names the trap in its own words — "your
+        toss drifts more on the serves you miss" is a correlation over six
+        points — so this round stores the tap and draws nothing from it. The
+        claim is a later round's problem and it starts blocked.
+      */}
+      {onTagOutcome && (
+        <div className="glance-actions">
+          <span className="t-overline">Where did it land?</span>
+          <div className="reading-chips">
+            {SERVE_OUTCOMES.map((o) => (
+              <button
+                key={o}
+                className="chip chip--button"
+                aria-pressed={outcome === o}
+                onClick={() => onTagOutcome(outcome === o ? undefined : o)}
+              >
+                {OUTCOME_LABEL[o]}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

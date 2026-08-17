@@ -96,8 +96,9 @@ The translation from a number to a cue somebody can act on.
       by report id. *(Round 29 — a field on the row is erased by every re-run.)*
 - [x] **C2c · R53·2b** — The tap on the glance, and the spreads partitioned.
       *(Round 35 — zero new CSS, and the partition never infers.)*
-- [ ] **C3 · R56** — Did it go in: in, long, net, wide. One tap, no score, no
-      stats screen. The trap is the claim — no correlation over six points.
+- [x] **C3 · R56** — Did it go in. Four chips on the glance, stored on the tag row
+      beside the serve number, and nothing said back. Found the round-35 tap block
+      had never been wired into App, so it had never rendered.
 - [ ] **C4 · R57** — The drills as a week, built from the 2–4 ranked drills the
       report already produces. No streak, no badge, no congratulation.
 - [x] **C0 · R69·1** — The gate for copy that lives in a component. 96 lines,

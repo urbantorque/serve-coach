@@ -1222,12 +1222,65 @@ function usableTriage(raw: Analysis['triage']): Analysis['triage'] {
  * people practise rather than about a clip. So this is a tap or it is absent,
  * and absent means nobody said.
  */
+/**
+ * Where the serve finished, in the four words a player would use.
+ *
+ * Four and no more. There is no service box in this app and no attempt at one:
+ * "wide" here is what the player says it was, not a judgement about a line the
+ * camera never saw. A fifth value — "let", "fault", a score — would be the
+ * start of a stats screen, and R56 is explicit that this is not that.
+ */
+export const SERVE_OUTCOMES = ['in', 'long', 'net', 'wide'] as const
+export type ServeOutcome = (typeof SERVE_OUTCOMES)[number]
+
+/**
+ * What the player said about one serve, after the fact.
+ *
+ * BOTH FIELDS OPTIONAL, AND THAT IS THE SHAPE THE FEATURE NEEDED. A player taps
+ * "second serve" and not where it went, or the reverse, and far more often
+ * neither. One row per report carrying two independent facts means a tap on one
+ * must not clear the other — see `withServeTag`, which is where that lives.
+ *
+ * A row with neither is not a tag. `normaliseServeTag` refuses it rather than
+ * storing an empty record, because a store that accumulates rows saying nothing
+ * is a store whose count means nothing.
+ */
 export interface ServeTag {
   /** The report's own id. */
   id: string
-  serveNumber: 1 | 2
+  serveNumber?: 1 | 2
+  /** Where it finished, if the player said. Never inferred — nothing sees the court. */
+  outcome?: ServeOutcome
   /** When the player said so — not when the serve was hit. */
   taggedAt: number
+}
+
+/**
+ * The row to store after one tap, or `undefined` meaning delete this row.
+ *
+ * Pure, and separate from `tagServe` for the reason every repair in this file is
+ * separate: the suite runs in Node and cannot open IndexedDB, so the merge rule
+ * is only testable if it is not inside the transaction. The caller already holds
+ * the existing tag — `tagsById` is on screen for other reasons — so this costs
+ * no extra read.
+ *
+ * `undefined` in the patch means "take it back", which is the undo a phone tap
+ * needs and the rule `unlogPractice` already set. Distinguished from an absent
+ * key: `{ outcome: undefined }` clears the outcome, `{}` leaves it alone.
+ */
+export function withServeTag(
+  existing: ServeTag | undefined,
+  id: string,
+  patch: Partial<Pick<ServeTag, 'serveNumber' | 'outcome'>>,
+  now: number,
+): ServeTag | undefined {
+  const serveNumber = 'serveNumber' in patch ? patch.serveNumber : existing?.serveNumber
+  const outcome = 'outcome' in patch ? patch.outcome : existing?.outcome
+  // Nothing left to say. Delete rather than store a row that only carries a
+  // timestamp — the store's own count is what tells a later screen whether the
+  // player uses this at all.
+  if (serveNumber === undefined && outcome === undefined) return undefined
+  return { id, serveNumber, outcome, taggedAt: now }
 }
 
 /**
@@ -1250,9 +1303,23 @@ export function normaliseServeTag(raw: unknown): ServeTag | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const t = raw as Partial<ServeTag>
   if (typeof t.id !== 'string' || !t.id) return undefined
-  if (t.serveNumber !== 1 && t.serveNumber !== 2) return undefined
   if (typeof t.taggedAt !== 'number' || !Number.isFinite(t.taggedAt)) return undefined
-  return { id: t.id, serveNumber: t.serveNumber, taggedAt: t.taggedAt }
+  /*
+   * Each field dropped on its own rather than the row refused, which is the
+   * rule round 23 settled on `triage.quality`: a malformed part costs the part,
+   * not the verdict. A 3 in `serveNumber` would partition a basket into a
+   * bucket no screen draws, and an outcome outside the four would render as
+   * nothing — but neither is a reason to lose the other field.
+   */
+  const serveNumber = t.serveNumber === 1 || t.serveNumber === 2 ? t.serveNumber : undefined
+  const outcome = SERVE_OUTCOMES.includes(t.outcome as ServeOutcome)
+    ? (t.outcome as ServeOutcome)
+    : undefined
+  // And a row that survived with nothing on it is not a tag, by the same rule
+  // `withServeTag` deletes on: an empty row is a claim that the player said
+  // something, and they did not.
+  if (serveNumber === undefined && outcome === undefined) return undefined
+  return { id: t.id, serveNumber, outcome, taggedAt: t.taggedAt }
 }
 
 export async function listServeTags(): Promise<ServeTag[]> {

@@ -65,12 +65,18 @@ import {
   getSession,
   KEEP_STILLS,
   listPracticeLogs,
+  listServeTags,
   listSummaries,
   logPractice,
   safely,
   saveSession,
   unlogPractice,
   type PracticeLog,
+  tagServe,
+  tagsById,
+  untagServe,
+  withServeTag,
+  type ServeTag,
   type Session,
 } from './lib/storage/db'
 import { requestPersistence } from './lib/storage/backup'
@@ -243,6 +249,15 @@ export default function App() {
    */
   const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
   const [sessions, setSessions] = useState<Session[]>([])
+  /*
+   * What the player has said about their own serves, by report id.
+   *
+   * Held here rather than fetched by the glance, for the reason every other
+   * store-backed list on this screen is: a component that fetches on mount
+   * refetches on every remount, and the glance is remounted on every serve of a
+   * basket. Loaded once beside the sessions and refreshed by the same call.
+   */
+  const [serveTags, setServeTags] = useState<ServeTag[]>([])
   const [sheet, setSheet] = useState<
     'guide' | 'guide-first' | 'history' | 'progress' | 'check' | 'corpus' | null
   >(null)
@@ -399,6 +414,27 @@ export default function App() {
    */
   const demoHistory = useRef<{ sessions: Session[]; practice: PracticeLog[] }>()
 
+  /*
+   * One tap, applied to the row that holds both of them.
+   *
+   * Optimistic in the same shape the rest of this file is: the merge is pure
+   * and the local list is updated from its result, so the screen answers the
+   * tap immediately and a failed write leaves the list and the store agreeing
+   * on the next refresh rather than the screen showing a tag that was never
+   * stored.
+   */
+  const applyServeTag = useCallback(
+    async (id: string, patch: Partial<Pick<ServeTag, 'serveNumber' | 'outcome'>>) => {
+      let next: ServeTag | undefined
+      setServeTags((tags) => {
+        next = withServeTag(tags.find((t) => t.id === id), id, patch, Date.now())
+        const rest = tags.filter((t) => t.id !== id)
+        return next ? [...rest, next] : rest
+      })
+      await safely(() => (next ? tagServe(next) : untagServe(id)), undefined)
+    },
+    [],
+  )
   const refreshSessions = useCallback(() => {
     if (demoHistory.current) {
       setSessions(demoHistory.current.sessions)
@@ -406,6 +442,7 @@ export default function App() {
       return
     }
     void safely(listSummaries, []).then(setSessions)
+    void safely(listServeTags, []).then(setServeTags)
     // `undefined` on failure rather than `[]`, and the difference is the whole
     // point of the field it feeds: an empty list is "nothing has been logged"
     // and a missing one is "this app cannot say", and the card says different
@@ -1377,6 +1414,22 @@ export default function App() {
             onOpenReport={() =>
               setView({ kind: 'report', analysis: view.analysis, videoUrl: view.videoUrl })
             }
+            /*
+             * The two taps, and they were unreachable until now.
+             *
+             * The serve-number block shipped with its screen three rounds ago
+             * and nothing ever passed `onTagServe`, so it has never rendered in
+             * the running app — found while wiring the outcome tap beside it,
+             * which would have shipped the same way.
+             *
+             * One row carries both facts and one tap must not clear the other,
+             * which is what `withServeTag` is for. A row left saying nothing is
+             * deleted rather than stored.
+             */
+            serveNumber={tagsById(serveTags).get(view.analysis.id)?.serveNumber}
+            outcome={tagsById(serveTags).get(view.analysis.id)?.outcome}
+            onTagServe={(n) => void applyServeTag(view.analysis.id, { serveNumber: n })}
+            onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
           />
         )}
 

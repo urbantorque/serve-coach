@@ -1793,7 +1793,7 @@ family, different surface, different refusals.
       every stored report predates profiles and must land under one default
       player without a prompt, proved by a test that loads a pre-profiles record.
       Too big for one cycle — spike first.
-- [ ] **R56** — Did it go in. One tap on the glance: in, long, net, wide. Nothing
+- [x] **R56** — Did it go in. One tap on the glance: in, long, net, wide. Nothing
       else — no score, no stats screen, no service box. The missing link between
       technique and the only outcome a player cares about, at no vision cost, and
       it makes every existing record in `progress.ts` more valuable

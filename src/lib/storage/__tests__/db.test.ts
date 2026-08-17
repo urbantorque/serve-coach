@@ -16,6 +16,7 @@ import {
   forProfile,
   profilesIn,
   normaliseServeTag,
+  withServeTag,
   tagsById,
   normalise,
   planPrune,
@@ -645,6 +646,75 @@ check('a serve number that is not one or two is refused, not clamped', () => {
       `a serve number of ${JSON.stringify(n)} was accepted`,
     )
   }
+})
+
+/* ------------------------------------- where it landed, and the merge (R56) */
+
+check('a bad serve number costs the field, not the outcome beside it', () => {
+  /*
+   * The check above still passes, and it passes for a reason worth stating: its
+   * fixture carries no outcome, so dropping the bad field leaves a row saying
+   * nothing and the row goes. Add an outcome and the rule that actually applies
+   * shows — round 23's, on `triage.quality`: a malformed part costs the part,
+   * not the verdict. Losing where the serve landed because the player's other
+   * tap was corrupt would be the storage deciding what they meant.
+   */
+  const t = normaliseServeTag({ ...wholeTag(), serveNumber: 3, outcome: 'net' })
+  assert(t?.outcome === 'net', `the outcome did not survive a bad serve number: ${JSON.stringify(t)}`)
+  assert(t?.serveNumber === undefined, 'a serve number of 3 was kept')
+})
+
+check('an outcome outside the four is dropped, and never guessed at', () => {
+  for (const o of ['ace', 'out', 'IN', 1, '', null]) {
+    const t = normaliseServeTag({ ...wholeTag(), outcome: o })
+    assert(t?.outcome === undefined, `an outcome of ${JSON.stringify(o)} was accepted`)
+    assert(t?.serveNumber === 2, `a bad outcome cost the serve number: ${JSON.stringify(t)}`)
+  }
+})
+
+check('a row that says nothing is not a tag', () => {
+  // A stored row carrying only a timestamp is a claim that the player said
+  // something. They did not, and the store's own count is what tells a later
+  // screen whether this feature is used at all.
+  const { serveNumber: _n, ...bare } = wholeTag()
+  void _n
+  assert(normaliseServeTag(bare) === undefined, 'a row with neither fact was stored as a tag')
+})
+
+check('one tap never clears the other', () => {
+  /*
+   * The whole reason `withServeTag` is a pure function rather than a line
+   * inside the transaction: two independent facts on one row, and the failure
+   * is silent — the player taps where it landed and their "second serve" is
+   * gone, with nothing on screen to say so.
+   */
+  const first = withServeTag(undefined, 'serve-abc', { serveNumber: 2 }, 10)
+  assert(first?.serveNumber === 2 && first?.outcome === undefined, 'the first tap did not store')
+  const second = withServeTag(first, 'serve-abc', { outcome: 'wide' }, 20)
+  assert(second?.serveNumber === 2, 'tagging the outcome cleared which serve it was')
+  assert(second?.outcome === 'wide', 'the outcome did not store')
+  assert(second?.taggedAt === 20, 'the moment was not moved to the newer tap')
+})
+
+check('taking one tap back leaves the other, and taking both back deletes the row', () => {
+  const both = withServeTag(
+    withServeTag(undefined, 'serve-abc', { serveNumber: 1 }, 10),
+    'serve-abc',
+    { outcome: 'net' },
+    20,
+  )
+  // An explicit `undefined` is the undo — distinguished from an absent key,
+  // which is the difference that makes one call able to do both.
+  const cleared = withServeTag(both, 'serve-abc', { serveNumber: undefined }, 30)
+  assert(cleared?.outcome === 'net', 'untagging the serve number took the outcome with it')
+  assert(cleared?.serveNumber === undefined, 'the serve number did not clear')
+  const empty = withServeTag(cleared, 'serve-abc', { outcome: undefined }, 40)
+  assert(empty === undefined, 'a row with nothing left on it was kept')
+  const untouched = withServeTag(both, 'serve-abc', {}, 50)
+  assert(
+    untouched?.serveNumber === 1 && untouched?.outcome === 'net',
+    'an empty patch changed something',
+  )
 })
 
 check('a tag with no report to belong to is refused', () => {

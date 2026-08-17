@@ -43,6 +43,66 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 41 · Cycle C — coaching and UI · `C3 · R56`
+
+**Orchestrator.** Where the serve landed, in one tap. Lead builder: Coaching
+Voice. Column: *Would I use it between serves.*
+
+**And it found the last round's feature had never rendered.** `onTagServe`
+shipped with round 35 — the block, the `aria-pressed`, the zero-new-CSS
+argument — and nothing ever passed it. Grepping for the prop before adding one
+beside it returned exactly one file: the screen that declares it. Three rounds
+of dead UI, and the outcome tap would have shipped the same way.
+
+So the round wires both. That is arguably two backlog rows in one, and the
+alternative was shipping a second unreachable block to keep the row count tidy.
+
+**One row, two independent facts, and the failure is silent.** A player taps
+where it landed and their "second serve" is gone, with nothing on screen to say
+so. `withServeTag` is a pure merge — outside the transaction, because the suite
+runs in Node and a rule inside IndexedDB is a rule nothing checks. An explicit
+`undefined` is the undo; an absent key leaves the field alone; a row left saying
+nothing is deleted rather than stored, because a store that accumulates empty
+rows is a store whose count means nothing.
+
+**Malformed costs the field, not the row** — round 23's rule on `triage.quality`,
+applied here. The existing "a 3 is refused, not clamped" check still passes, and
+it passes for a reason worth writing down: its fixture carries no outcome, so
+dropping the bad field empties the row anyway. Add an outcome and the real rule
+shows.
+
+**Chips, not four more full-width buttons.** Two stacked ghosts was right for a
+two-way choice; four would be most of a phone screen, on the screen that exists
+because reading costs a serve. `.chip--button` already carries a 44px target and
+says in its own comment it is built for wrapping rows.
+
+**"Wide" checked against constraint 4 before it was written.** The fault line
+above it uses `wider` — but that renders as "Further out this time", so the word
+never reaches the player twice. The heading keeps the two apart.
+
+**Nothing is said back**, which is R56's own trap: "your toss drifts more on the
+serves you miss" is a correlation over six points. The tap stores and draws
+nothing.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | Four words the player says, stored as tapped. No service box, no line, no judgement — the app never sees the court and does not pretend to |
+| Product | pass | Verified on screen rather than argued: both taps held at once (`Second serve=true`, `Wide=true`), which is the exact failure the merge exists to stop |
+| Performance | pass | Four chips on one row at 375px, `scrollWidth` 375 against `innerWidth` 375 — no overflow, 44px targets on all four |
+| Architecture | pass | The merge is pure and tested; the transaction is unchanged |
+
+**Gate.** typecheck clean · lint clean · production build clean · **1163 checks,
+0 failed, exit 0** (+5). Canaried both merge branches separately; each reddened
+only the checks that cover it.
+
+**Verified live**, on a restarted dev server: `?demo=glance` at 375×812, both
+blocks rendering, `aria-pressed` correct on both after two taps, server logs
+clean.
+
+---
+
 ### Round 40 · Cycle B — biomechanics · `B3 · R50c`
 
 **Orchestrator.** R50c has been blocked for the whole loop on one number: how
