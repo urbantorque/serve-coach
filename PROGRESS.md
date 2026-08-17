@@ -43,6 +43,50 @@ on coaching copy, which this repo already enforces mechanically in
 ---
 
 ## Rounds
+### Round 72 · Cycle E — data and export · `E10 · R85` (new)
+
+**Orchestrator.** Cycle E's rows are blocked, so the Orchestrator generates —
+and round 71 pointed at this. It found a figure **this loop published twice** —
+a 2.3× tempo confound, in a backlog row and a register entry — measured at a
+smoothing radius the engine does not use.
+
+**`UNCALIBRATED` quotes deviations, and nothing checked them.** The register is
+what a future round reads before it builds anything; `tiers.ts` carries 228
+numeric figures.
+
+**Two entries state a deviation the ensemble also measures**, so those two can be
+held to it. Read out of the entry string rather than pasted — an entry edited to
+a new number is compared at the new number — and matched at the precision the
+entry claims, because "5.9" claims one decimal and "0.004" claims three.
+
+**Scope stated: two of the register's entries, not all of them.** Most describe
+sweeps this suite does not run, and a gate implying it read them all would be
+worse than one saying it reads two.
+
+**First run: `leg_drive_rise_ratio` says deviation 0.004 and the ensemble
+measures 0.0059 — 47% off.** `knee_extension_deg` says 5.9 and measures 5.8718,
+which rounds true.
+
+**The fourth stale recorded figure this loop has found**, and the entry now says
+so beside the correction: a 315 ms branch jump that appeared nowhere in the tree
+(R50c), a landing floor 29% out (F4), a tempo confound at the wrong radius (R84),
+and this. Nothing between R51·1 and now was about the leg drive. **A recorded
+figure simply stopped being true.**
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The register is read by rounds that have not been written yet. A number in it that stopped being true is a derivation nobody can re-run, which this repo names as its own recurring defect |
+| Architecture | pass | Precision taken from the claim rather than imposed, so the check fails on drift and not on rounding |
+| Product | pass | Nothing user-facing; this is the ledger's own integrity |
+| Performance | pass | One regex over two strings against an ensemble already computed |
+
+**Gate.** typecheck clean · lint clean · **1219 checks, 0 failed, exit 0** (+1).
+Canaried by restoring 0.004 — reddened alone.
+
+---
+
 ### Round 71 · Cycle D — performance and architecture · `D9 · R84` (new)
 
 **Orchestrator.** Cycle D's rows are blocked, so the Orchestrator generates —

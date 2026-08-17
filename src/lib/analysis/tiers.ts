@@ -626,7 +626,13 @@ export const UNCALIBRATED: Record<string, string> = {
    * warning `LandingBalance.offset` carries for a different reason.
    */
   leg_drive_rise_ratio:
-    'measured and not named: tracks its dial near one-to-one, deviation 0.004, ' +
+    // Was 0.004, from R51·1, and it had drifted to 0.0059 by the time R85 built
+    // the check that compares this entry against the ensemble. Nothing between
+    // the two rounds was about the leg drive; a recorded figure simply stopped
+    // being true, which is the fourth time this loop has found one — after a
+    // 315 ms jump that was never reproducible, a landing floor 29% off, and a
+    // tempo confound measured at the wrong smoothing radius.
+    'measured and not named: tracks its dial near one-to-one, deviation 0.006, ' +
     'identical at 45° and 82° — and nothing here knows what a club player rise ' +
     'should be. Zero is 0.0457, not 0: straightening lifts the hips too.',
 

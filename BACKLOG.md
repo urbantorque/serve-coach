@@ -317,6 +317,14 @@ Storage, backup, and the files a player is handed.
       added a store to the file and never revisited the sentence.** Driven through
       `buildBackup` rather than read off the type, because it was the builder that
       was wrong for twenty rounds, not the type.
+- [x] **E10 · R85** — **The register quotes deviations and nothing checked them.**
+      R84 had just found a figure this loop published twice, measured at the wrong
+      smoothing radius. Two `UNCALIBRATED` entries state a deviation the ensemble
+      also measures, so those two are now held to it, read out of the entry string
+      rather than pasted and compared at the precision the entry claims. **First
+      run: `leg_drive_rise_ratio` says 0.004 and the ensemble measures 0.0059 —
+      47% off.** The fourth stale recorded figure this loop has found, after a
+      315 ms jump nobody could reproduce, a landing floor 29% out, and R84's.
 - [x] **E9 · R82** — The share card's copy, read for the first time. C5 found the
       gap; this is the same gap in a worse place — **forty-four `fillText` calls and
       no gate had ever read one.** Everything else the app writes is read by the

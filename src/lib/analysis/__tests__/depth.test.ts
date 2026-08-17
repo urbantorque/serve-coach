@@ -1912,6 +1912,61 @@ check('a delta between two serves is bounded by both terms, not by either alone'
   assert(perSecond > 0, 'the tempo term came out at or below zero, so there is nothing to bound')
 })
 
+/* ======= the figures the register states, against the ones it measures ===== */
+
+/**
+ * `UNCALIBRATED` quotes deviations. Nothing checked that they were still true.
+ *
+ * WHY THIS EXISTS. R84 found a figure this loop published twice — a 2.3× tempo
+ * confound, in a ledger row and a register entry — measured at a smoothing
+ * radius the engine does not use. The real number is 2.8×. That is the third
+ * time a recorded figure has turned out to be a derivation nobody could re-run:
+ * R50c's "315 ms branch jump" appeared nowhere in the tree, R77b's landing floor
+ * sat 29% off, and now this.
+ *
+ * Two entries state a deviation the ensemble also measures, so those two can be
+ * held to it. This does not check every figure in the register — most describe
+ * sweeps this suite does not run — and saying which two is the honest scope.
+ *
+ * Read out of the entry string rather than pasted, so an entry edited to a new
+ * number is compared at the new number and an entry that drops its figure fails
+ * the coverage check below rather than silently passing.
+ */
+check('the deviations UNCALIBRATED states are the ones the ensemble measures', () => {
+  const stated = (id: string): number | undefined => {
+    const m = /deviation ([0-9.]+)/.exec(UNCALIBRATED[id] ?? '')
+    return m ? Number(m[1]) : undefined
+  }
+  const measured = new Map(chainDeviations(deep.reads).map((d) => [d.id, d.sd]))
+
+  const rows = ['leg_drive_rise_ratio', 'knee_extension_deg'].map((id) => ({
+    id,
+    stated: stated(id),
+    measured: measured.get(id),
+  }))
+  assert(
+    rows.every((r) => r.stated !== undefined && r.measured !== undefined),
+    `an entry stopped stating its deviation, or the ensemble stopped measuring it: ${JSON.stringify(rows)}`,
+  )
+  note(rows.map((r) => `${r.id}: says ${r.stated}, measures ${r.measured!.toFixed(4)}`).join(' · '))
+
+  for (const r of rows) {
+    /*
+     * Compared at the precision the entry states, because that is the claim it
+     * makes. "5.9" claims one decimal and must match at one; "0.004" claims
+     * three and must match at three. Holding a one-decimal figure to four would
+     * fail on rounding rather than on drift.
+     */
+    const places = (String(r.stated).split('.')[1] ?? '').length
+    const rounded = Number(r.measured!.toFixed(places))
+    assert(
+      rounded === r.stated,
+      `UNCALIBRATED.${r.id} says deviation ${r.stated} and the ensemble measures ${rounded} — ` +
+        'one of them is stale, and the entry is what a future round will read',
+    )
+  }
+})
+
 /* ====== the landing baseline, and a blocker that was stale twice (F6) ====== */
 
 /**
