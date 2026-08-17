@@ -44,6 +44,41 @@ on coaching copy, which this repo already enforces mechanically in
 
 ## Rounds
 
+### Round 17 · Cycle E — data management and export · `E5 · audit 4` (R70)
+
+**Orchestrator.** Took the audit item over `E4 · R58`, and the reason is worth
+stating plainly rather than dressed up: R58 is a new canvas share card, and I did
+not have the room to build one properly. Starting it would have risked exactly
+the half-landed surface the protocol warns about. **The product column goes
+unfilled in this block**, which the portfolio rule asks me to say out loud.
+
+**What the audit found.** `README.md`: older reports "keep only their numbers at
+about 15 KB each". Measured: **31.3 kB** — 21.3 of swing track, 10.0 of
+measurements and captions. Roughly double, on the number the same sentence
+multiplies by forty, so the full-history range was understated as well.
+
+**Nobody was careless, and that is the interesting part.** The figure was true
+when written; the swing track came afterwards and is kept on every report the
+ladder keeps. This is how a document goes wrong — not by being written badly but
+by the code moving underneath a sentence nothing was checking. `footprint.test.ts`
+is full of byte figures and every one is its own constant; none had ever been
+asked to agree with the prose.
+
+**Critic.** PASS.
+
+| Critic | Verdict | Cited |
+| --- | --- | --- |
+| Honesty | pass | The README now carries the correction *and* why it drifted, rather than quietly showing the new number |
+| Performance | pass | Test-only |
+| Privacy | pass | Nothing shipped |
+| Architecture | pass | Pinned as a range, not a figure — the claim is that prose and measurement stay in the same neighbourhood. A second assertion holds the track as the larger half, so a round that stops storing tracks finds this paragraph instead of leaving it stale twice |
+| Product | pass | Not a product round, and the column it should have served is named as unfilled |
+
+**Gate.** typecheck clean · lint clean · **1082 checks passed, 0 failed, exit 0**
+(+1). Canaried by dropping the track from the sum: exactly one check red.
+
+---
+
 ### Round 16 · Cycle D — performance and architecture · `D1 · R54·1`
 
 **Orchestrator.** A spike, which the round asks for by name. Lead builder:

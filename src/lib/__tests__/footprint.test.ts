@@ -570,6 +570,44 @@ check('the fields Phase 8 added are inside the noise, and here is the number', (
   )
 })
 
+check('a report with no pictures left costs what README.md says it costs', () => {
+  /*
+   * AUDIT 4 — a README claim with nothing behind it, and it was wrong.
+   *
+   * `README.md` describes the prune ladder as leaving older reports keeping
+   * "only their numbers at about 15 KB each". That sentence was true when it was
+   * written and the swing track was written after it: 21.3 kB, kept on **every**
+   * report the ladder keeps, downgraded to 2.7 kB of keyframes only under quota
+   * pressure. So a numbers-only report is the track plus the words, and the
+   * words alone measure 10.0 kB.
+   *
+   * Roughly double the stated figure, on the number that multiplies by forty in
+   * the same paragraph's full-history estimate. Nothing could have caught it:
+   * the figures in this file are its own constants and had never been asked to
+   * agree with the prose.
+   *
+   * Pinned as a range rather than a figure, because the point is that the README
+   * and the measurement stay in the same neighbourhood — not that a rig byte
+   * count is exact to the kilobyte.
+   */
+  const numbersOnly = RIG_TRACK_BYTES + RIG_REST_BYTES
+  note(
+    `a pruned report keeps ${(numbersOnly / 1024).toFixed(1)} kB — ` +
+      `${(RIG_TRACK_BYTES / 1024).toFixed(1)} of track and ${(RIG_REST_BYTES / 1024).toFixed(1)} of words`,
+  )
+  assert(
+    numbersOnly > 25 * 1024 && numbersOnly < 40 * 1024,
+    `a pruned report is ${(numbersOnly / 1024).toFixed(1)} kB, outside the 25–40 kB README.md now states`,
+  )
+  // And the half that makes it worth having: the track is most of it, so a
+  // future round that stops storing tracks changes this paragraph rather than
+  // quietly leaving it stale a second time.
+  assert(
+    RIG_TRACK_BYTES > RIG_REST_BYTES,
+    'the words now outweigh the track, so the README paragraph is describing the wrong thing again',
+  )
+})
+
 check('and a longer history is what would breach it', () => {
   /*
    * The teeth. `MAX_SESSIONS` is the one constant here a future round is likely

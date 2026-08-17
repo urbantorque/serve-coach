@@ -1822,12 +1822,21 @@ frees space and retries rather than silently losing the serve you just recorded.
 keyframe still — JPEG at quality 0.72, 420 px wide, with the tracked skeleton and
 callouts drawn onto it, the shape `captureThumbnails` actually writes — runs
 27–80 KB depending on the clip's aspect ratio, cheapest on a landscape clip and
-costliest on a portrait one. A stored report is six of those plus roughly 15 KB
-of everything else a `Session` carries, so one report is **179–494 KB**, stills
-still nearly all of it. `KEEP_STILLS = 20` reports keep theirs; the rest, up to
-`MAX_SESSIONS = 60`, keep only their numbers at about 15 KB each — so a full
-history is **4.2–10.5 MB**, and which end of that a player lands on is decided
-by their camera orientation, not by anything the app does. The pressure ladder
+costliest on a portrait one. A stored report is six of those plus **31.3 KB** of
+everything else a `Session` carries — 21.3 KB of swing track and 10.0 KB of
+measurements and captions — so one report is **193–511 KB**, stills still nearly
+all of it. `KEEP_STILLS = 20` reports keep theirs; the rest, up to
+`MAX_SESSIONS = 60`, keep only their numbers at 31.3 KB each — so a full history
+is **5.1–11.5 MB**, and which end of that a player lands on is decided by their
+camera orientation, not by anything the app does.
+
+That paragraph said 15 KB until an audit measured it. The figure was true when it
+was written and the swing track was written afterwards: 21.3 KB, kept on every
+report the ladder keeps and downgraded to 2.7 KB of keyframes only under quota
+pressure. So the per-report cost had roughly doubled, on the number the same
+sentence multiplies by forty. Nothing could have caught it, because the byte
+figures in `footprint.test.ts` are its own constants and had never been asked to
+agree with this prose. They are now. The pressure ladder
 that enforces those two limits — routine pruning after every save, then
 stripping stills across the whole history, then deleting the oldest reports
 outright — is driven by a test now rather than trusted: `storage/db.test.ts`

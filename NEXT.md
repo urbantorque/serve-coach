@@ -2090,3 +2090,27 @@ and never asked the decoder, so a browser where that guess is wrong would have
 handed the player a file nothing could open. It asks now; a readable container
 beats a higher-ranked unreadable one; a silent decoder falls back rather than
 deleting a working button.
+
+- [x] **R70** — Audit rotation item 4: a `README.md` claim with no test behind it.
+
+      **"the rest, up to `MAX_SESSIONS = 60`, keep only their numbers at about
+      15 KB each".** Measured: **31.3 kB** — 21.3 of swing track and 10.0 of
+      measurements and captions. Roughly double, on the number that same
+      sentence multiplies by forty, so the stated full-history range was
+      understated too: 5.1–11.5 MB rather than 4.2–10.5.
+
+      **Nobody was careless.** The figure was true when it was written; the swing
+      track was written afterwards and is kept on *every* report the ladder
+      keeps, downgraded to 2.7 kB of keyframes only under quota pressure. This is
+      the ordinary way a document goes wrong — not by being written badly but by
+      the code moving underneath a sentence nothing was checking.
+
+      And nothing could have caught it. `footprint.test.ts` is full of byte
+      figures and every one of them is its own constant; none had ever been asked
+      to agree with the prose. The new check asks, as a range rather than a
+      figure — the claim is that the two stay in the same neighbourhood, not that
+      a rig byte count is exact to the kilobyte — plus a second assertion that
+      the track is still the larger half, so a round that stops storing tracks
+      finds this paragraph rather than leaving it stale a second time.
+
+      Canaried by dropping the track from the sum: exactly one check red.

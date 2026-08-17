@@ -135,7 +135,9 @@ Storage, backup, and the files a player is handed.
       person — the rare share that is safe by construction. Gated on D1.
 - [ ] **E3 · R55** — More than one player on one phone. Gated on D2.
 - [ ] **E4 · R58** — A trip, in one card, for a coach. Recombines shipped parts.
-- [ ] **E5 · audit 4** — A `README.md` claim with no test behind it.
+- [x] **E5 · audit 4** — A `README.md` claim with no test behind it. *(Round 17 —
+      "about 15 KB" for a pruned report. It is 31.3 kB: the swing track was
+      written after that sentence and is kept on every report.)*
 
 ## Cycle F — QA and edge cases
 
