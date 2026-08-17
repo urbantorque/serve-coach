@@ -149,6 +149,14 @@ Where state lives, what it costs, what it does to a warm phone.
       92 cm of re-propping crosses its threshold, so across sessions it flags one
       player as two. Guarded by two checks, because R55·2a made a `Session`
       structurally acceptable to it.
+- [x] **D6 · R75** — Bundle probed after four rounds of new modules. Entry chunk
+      **416.90 kB raw / 139.09 kB gzip**, MediaPipe 138.83/41.55, CSS 54.19/10.35 —
+      and the two staged detectors cost the critical path **nothing**, confirmed by
+      grepping the built chunk for their string literals rather than their symbol
+      names, which minify away. The probe found a refusal-name collision instead:
+      `outbound.ts` shipped a `too_few_frames` beside `triage.ts`'s, meaning
+      something else. Renamed, and `REJECTIONS` is now a walkable list so the class
+      is checkable.
 - [!] **D2d · R55·2c** — The switch, as a tap. **Blocked on constraint 3**: every
       `<input>` in this app is `type="file"`, `tokens.css` strips inputs to no
       border and no background, and a visible text field needs border, padding, a
