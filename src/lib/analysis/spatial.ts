@@ -256,22 +256,35 @@ export function unlevelFrames(frames: Frame[], tilt: Tilt): Frame[] {
   return rotateFrames(frames, (tilt.roll_deg * Math.PI) / 180, tilt)
 }
 
+/**
+ * Rotate one point the same way `rotateFrames` rotates `Frame.image` points —
+ * exported so anything else living in image-landmark space (x already
+ * pre-multiplied by aspect, same as every `Frame.image` entry) can be carried
+ * through a roll correction without a second copy of this arithmetic. The
+ * racket boxes in `analyze.ts` and `PosePlayer.tsx` are the first callers
+ * beyond `rotateFrames` itself; a ball flight is not, because `BallFlight.x`
+ * is width-normalised rather than aspect-premultiplied — see `levelFlight` in
+ * `ballTrack.ts`, which stays its own function for exactly that reason.
+ */
+export function rotateImagePoint(
+  p: { x: number; y: number },
+  theta: number,
+  pivot: { cx: number; cy: number },
+): { x: number; y: number } {
+  const cos = Math.cos(theta)
+  const sin = Math.sin(theta)
+  const dx = p.x - pivot.cx
+  const dy = p.y - pivot.cy
+  return { x: pivot.cx + dx * cos - dy * sin, y: pivot.cy + dx * sin + dy * cos }
+}
+
 function rotateFrames(frames: Frame[], theta: number, pivot: { cx: number; cy: number }): Frame[] {
   const cos = Math.cos(theta)
   const sin = Math.sin(theta)
-  const { cx, cy } = pivot
 
   return frames.map((f) => ({
     ...f,
-    image: f.image.map((p) => {
-      const dx = p.x - cx
-      const dy = p.y - cy
-      return {
-        ...p,
-        x: cx + dx * cos - dy * sin,
-        y: cy + dx * sin + dy * cos,
-      }
-    }),
+    image: f.image.map((p) => ({ ...p, ...rotateImagePoint(p, theta, pivot) })),
     world: f.world.map((p) => ({
       ...p,
       x: p.x * cos - p.y * sin,

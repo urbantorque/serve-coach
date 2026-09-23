@@ -1,7 +1,7 @@
 import { readoutOf } from '../analysis/anatomy'
 import { SOFT_MEASUREMENT } from '../analysis/confidence'
 import { LM, jointAngle, type Side, sided } from '../analysis/geometry'
-import { smoothedRacket } from '../analysis/racket'
+import { racketToDraw, smoothedRacket, type RacketEstimate } from '../analysis/racket'
 import { boundsOf, figureOf, type Figure } from '../analysis/targetShape'
 import type { Frame, Metric, PhaseId } from '../analysis/types'
 
@@ -516,6 +516,14 @@ export interface SkeletonOptions {
   bodyHeight?: number
   /** All tracked frames and where we are in them, so the racket can be steadied. */
   sequence?: { frames: Frame[]; index: number }
+  /**
+   * A real racket box, keyed by frame index, where the object detector in
+   * `analyze.ts` caught one — trophy to contact only, see `findRacketBoxes`.
+   * Preferred over `smoothedRacket`'s wrist-and-knuckles guess whenever the
+   * current frame has an entry, because it is grounded in something actually
+   * seen rather than extrapolated from the hand.
+   */
+  racketBoxes?: Map<number, RacketEstimate>
   /** The tracked ball, drawn as a marker plus its flight path. */
   ball?: { x: number; y: number; path?: { x: number; y: number }[] }
   /**
@@ -687,10 +695,12 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   // when the knuckles are lost — a racket swinging off at a guessed angle is
   // worse than no racket at all.
   if (o.bodyHeight && o.bodyHeight > 0) {
-    const est = o.sequence
-      ? smoothedRacket(o.sequence.frames, o.sequence.index, o.racket, o.bodyHeight)
-      : undefined
-    if (est && est.confidence >= 0.5) {
+    const sequence = o.sequence
+    const bodyHeight = o.bodyHeight
+    const est = racketToDraw(o.racketBoxes?.get(sequence?.index ?? -1), () =>
+      sequence ? smoothedRacket(sequence.frames, sequence.index, o.racket, bodyHeight) : undefined,
+    )
+    if (est) {
       const grip = { x: ox + (est.grip.x / aspect) * dw, y: oy + est.grip.y * dh }
       const head = { x: ox + (est.head.x / aspect) * dw, y: oy + est.head.y * dh }
       const dx = head.x - grip.x

@@ -1,5 +1,3 @@
-| `fixturePlan.ts` | the six clips the fixture shoot needs, in order — bound by a test to the three axes the gate actually counts |
-| `analysis/framingIssues.ts` | is this clip framed well enough to measure, and the thresholds that decide — split out of `groundTruth.ts` so the fixture schema is not weight on every first paint |
 # Serve Coach
 
 Frame-by-frame tennis serve analysis that runs entirely on your device.
@@ -29,7 +27,7 @@ npm run dev
 ```
 
 The first `dev` or `build` vendors what the app needs to run offline: it
-downloads the pose model once (~9 MB), copies the MediaPipe WASM runtime out of
+downloads the pose model (~9 MB) and the racket detector (~4.6 MB) once, copies the MediaPipe WASM runtime out of
 `node_modules` into `public/`, and generates the app icons. That step is
 `npm run setup:assets` if you want it on its own — re-running is safe, it skips
 whatever is already there. It is the only time the project touches the network.
@@ -47,7 +45,7 @@ npm run build
 To use it at the court, build and host `dist/` on any static host over HTTPS,
 open it on your phone, and add it to your home screen. Tap **Download now to
 use offline** on the home screen while you still have signal — that fetches the
-19 MB of pose model and WASM runtime and caches them. After that the app works
+24 MB of pose model, racket model and WASM runtime and caches them. After that the app works
 with the network switched off entirely, including in aeroplane mode on a court
 with no signal. Running an analysis fetches the same assets, so the badge also
 turns itself green the first time you use the app for real; the button exists
@@ -790,6 +788,7 @@ Everything is in `src/lib`:
 | File | Responsibility |
 | --- | --- |
 | `pose/poseEngine.ts` | loads the model and WASM; owns the per-landmarker video clock |
+| `vision/objectEngine.ts` | loads the COCO object detector for the racket; mirrors `poseEngine.ts`, draw-only, feeds no score |
 | `pose/extract.ts` | samples the video and runs detection |
 | `pose/skeleton.ts` | draws the tracked body — shared by the player and the stills |
 | `framing/judge.ts` | the live framing verdict, before the player has filmed anything |
@@ -825,6 +824,8 @@ Everything is in `src/lib`:
 | `analysis/axes.ts` | which body axis the camera's image x actually measured |
 | `analysis/racket.ts` | where the racket is, inferred from the hand |
 | `analysis/groundTruth.ts` | fixture format and validator for real labelled clips |
+| `analysis/framingIssues.ts` | is this clip framed well enough to measure, and the thresholds that decide — split out of `groundTruth.ts` so the fixture schema is not weight on every first paint |
+| `fixturePlan.ts` | the six clips the fixture shoot needs, in order — bound by a test to the three axes the gate actually counts |
 | `vision/ballTrack.ts` | finds the tossed ball in the pixels |
 | `storage/backup.ts` | persistence, export and import of the history |
 | `selfCheck.ts` | what this browser will record, open, store and show, asked on the device |

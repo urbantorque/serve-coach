@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ballMarkerAt } from '../lib/analysis/analyze'
 import { nearestFrameIndex } from '../lib/analysis/geometry'
-import { unlevelFrames } from '../lib/analysis/spatial'
+import { rotateImagePoint, unlevelFrames } from '../lib/analysis/spatial'
+import type { RacketEstimate } from '../lib/analysis/racket'
 import type { Analysis, Frame, PhaseId } from '../lib/analysis/types'
 import { levelFlight } from '../lib/vision/ballTrack'
 import { type Ghost, drawSkeleton, fitContain, ghostFor } from '../lib/pose/skeleton'
@@ -82,6 +83,32 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
         : analysis.ball,
     [analysis.ball, analysis.tilt, aspect],
   )
+
+  /**
+   * The detected racket, back in the same raw pixel space `drawFrames` and
+   * `drawBall` are in — see `Analysis.racketBoxes` for why it is stored
+   * levelled, and `rotateImagePoint` for the transform, shared with
+   * `analyze.ts` so a roll correction cannot be applied one way going in and
+   * a different way coming back out. A `Map` here, not the stored array, so
+   * `skeleton.ts` can look a frame up rather than scan for it on every paint.
+   */
+  const drawRacketBoxes = useMemo(() => {
+    const boxes = analysis.racketBoxes
+    if (!boxes?.length) return undefined
+    if (!analysis.tilt) return new Map(boxes.map((b) => [b.frame, b.estimate]))
+    const theta = (analysis.tilt.roll_deg * Math.PI) / 180
+    const pivot = { cx: analysis.tilt.cx, cy: analysis.tilt.cy }
+    return new Map<number, RacketEstimate>(
+      boxes.map((b) => [
+        b.frame,
+        {
+          ...b.estimate,
+          grip: rotateImagePoint(b.estimate.grip, theta, pivot),
+          head: rotateImagePoint(b.estimate.head, theta, pivot),
+        },
+      ]),
+    )
+  }, [analysis.racketBoxes, analysis.tilt])
 
   /**
    * The target pose for each keyframe that has an honest one, worked out once.
@@ -196,10 +223,11 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
       annotation: onKeyframe ? activePhase : undefined,
       bodyHeight: analysis.scale?.bodyHeight,
       sequence: { frames: drawFrames, index: idx },
+      racketBoxes: drawRacketBoxes,
       ball: ballMarkerAt(drawBall, t),
       ghost,
     })
-  }, [activePhase, drawBall, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start])
+  }, [activePhase, drawBall, drawRacketBoxes, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start])
 
   /**
    * The latest `draw`, reachable from effects that must not re-run when it changes.

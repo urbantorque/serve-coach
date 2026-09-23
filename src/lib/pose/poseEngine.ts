@@ -89,8 +89,9 @@ async function downloadModel(onProgress: (p: EngineProgress) => void): Promise<U
  * `isCachedOffline` asks the Cache API, `enginePaths` is two strings, and
  * `nextVideoTimestamp` only uses `PoseLandmarker` as a WeakMap key, which is a
  * type. The first thing that genuinely needs the library is an analysis or the
- * live viewfinder, and both of those are already about to fetch 19 MB of model
- * and runtime, against which this is rounding error.
+ * live viewfinder, and both of those are already about to fetch 19 MB of this
+ * engine's own model and runtime, against which this is rounding error —
+ * before an analysis's own second engine, `objectEngine.ts`, adds its own.
  *
  * The browser caches the module after the first call, so the repeated `import`
  * below costs one promise resolution per analysis rather than a second fetch.

@@ -19,7 +19,15 @@ import {
   type BallFlight,
 } from '../vision/ballTrack'
 import { engineResident, isCachedOffline, loadEngine, type EngineProgress } from '../pose/poseEngine'
+import {
+  detectRacket,
+  isObjectModelCached,
+  loadObjectEngine,
+  nextObjectTimestamp,
+  objectEngineResident,
+} from '../vision/objectEngine'
 import { drawSkeleton, fitContain } from '../pose/skeleton'
+import { racketFromBox, type DetectedBox, type RacketEstimate } from './racket'
 import { FUNDAMENTALS } from './coaching'
 import { SOFT_MEASUREMENT } from './confidence'
 import {
@@ -48,6 +56,7 @@ import {
   assessSpatial,
   levelFrames,
   levelPivot,
+  rotateImagePoint,
   unlevelFrames,
   type Tilt,
 } from './spatial'
@@ -115,10 +124,14 @@ export interface AnalyzeOptions {
    *     expensive one, and the comparison only uses measurements every serve
    *     shares, which the toss reading is not.
    *   · `skipThumbnails` — six seeks. Genuinely six seeks.
+   *   · `skipRacketBoxes` — a third pass, shorter than the ball's (trophy to
+   *     contact only) but the same shape of cost for the same reason: a sweep
+   *     comparison never draws the racket, so there is nothing to spend it on.
    */
   skipFramingCheck?: boolean
   skipBall?: boolean
   skipThumbnails?: boolean
+  skipRacketBoxes?: boolean
   /** Serve times already located, so the clip is not scanned again per serve. */
   knownServeTimes?: number[]
   /**
@@ -417,6 +430,7 @@ export async function analyzeAllServes(
           skipFramingCheck: true,
           skipBall: true,
           skipThumbnails: true,
+          skipRacketBoxes: true,
           knownServeTimes,
           onProgress: (p) =>
             opts.onProgress?.({
@@ -646,6 +660,108 @@ async function findBall(
   // somewhere near the player rather than a passing bird.
   if (!flight || flight.confidence < 0.45) return undefined
   return flight
+}
+
+/**
+ * Find the racket in the pixels, over the one window it is worth the cost:
+ * trophy to contact — the `racket_head` window `detector.ts` reserved for
+ * this, and exactly where `estimateRacket`'s wrist-and-knuckles guess in
+ * `racket.ts` is worst, because the hand is behind the back and foreshortened
+ * at just the angle that guess already refuses to trust.
+ *
+ * Same shape as `findBall` above: a second pass over the video, best-effort,
+ * an empty array on a clip where the object model never caught the racket at
+ * all rather than an error. Excluded from a basket sweep for the same reason
+ * `skipBall` is — a whole pass per serve, spent on a drawing that a sweep
+ * comparison never shows.
+ *
+ * What comes back feeds nothing scored. See the note at the top of
+ * `racket.ts` for why: a single EfficientDet-Lite pass with no footage behind
+ * it yet is not a measurement, it is a better guess than the wrist alone —
+ * good enough to draw, not yet good enough to grade a player on.
+ */
+async function findRacketBoxes(
+  video: HTMLVideoElement,
+  frames: Frame[],
+  skel: Skeleton,
+  aspect: number,
+  signal?: AbortSignal,
+): Promise<{ frame: number; estimate: RacketEstimate }[]> {
+  const { keys, racket, bodyHeight } = skel
+  const from = Math.max(0, keys.trophy)
+  const to = Math.min(frames.length - 1, keys.contact + 1)
+  if (to - from < 2 || !(bodyHeight > 0)) return []
+
+  let engine: Awaited<ReturnType<typeof loadObjectEngine>>
+  try {
+    engine = await loadObjectEngine()
+  } catch {
+    // No detector, no boxes — the wrist estimate in `racket.ts` is still
+    // there to draw with, so this degrades the same way a missed ball does:
+    // two fewer things drawn, not a broken report.
+    return []
+  }
+  if (signal?.aborted) return []
+
+  const times = frames.slice(from, to + 1).map((f) => f.t)
+  const wristLM = racket === 'left' ? LM.leftWrist : LM.rightWrist
+
+  let perFrame: { t: number; box: DetectedBox | undefined }[]
+  try {
+    perFrame = await readBitmaps(
+      video,
+      times,
+      (frame, _previous, t) => {
+        const detections = detectRacket(engine, frame, nextObjectTimestamp(engine))
+        // Highest score wins. `racketFromBox` still refuses a box the wrist
+        // is nowhere near, so a doubles partner's racket surviving to here
+        // costs nothing further down.
+        const best = detections.sort((a, b) => b.score - a.score)[0]
+        // `detectRacket` hands back plain width/height fractions; every other
+        // point in this pipeline — `Frame.image`, the wrist this is about to
+        // be compared against — carries x pre-multiplied by `aspect` (see
+        // `SkeletonOptions.aspect`). Converted here, once, rather than inside
+        // `racketFromBox`, which stays agnostic about *why* two points share
+        // a coordinate space and only asks that they do.
+        return {
+          t,
+          box: best && {
+            x: best.box.x * aspect,
+            y: best.box.y,
+            width: best.box.width * aspect,
+            height: best.box.height,
+            score: best.score,
+          },
+        }
+      },
+      { signal },
+    )
+  } catch {
+    return []
+  }
+  if (signal?.aborted || !perFrame.length) return []
+
+  // `readBitmaps` reports the instant it actually reached, not the one asked
+  // for — see its own comment — so frames are matched back by nearest time
+  // rather than assumed to line up positionally with the request.
+  const out: { frame: number; estimate: RacketEstimate }[] = []
+  for (const { t, box } of perFrame) {
+    if (!box) continue
+    let frameIndex = from
+    let bestDist = Infinity
+    for (let i = from; i <= to; i++) {
+      const d = Math.abs(frames[i].t - t)
+      if (d < bestDist) {
+        bestDist = d
+        frameIndex = i
+      }
+    }
+    const wrist = frames[frameIndex].image[wristLM]
+    if (!wrist) continue
+    const estimate = racketFromBox(box, wrist)
+    if (estimate) out.push({ frame: frameIndex, estimate })
+  }
+  return out
 }
 
 /**
@@ -1138,7 +1254,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   const startedAt = clock()
   // Asked before `loadEngine`, because afterwards the answer is always yes. A
-  // first analysis on a cold cache pays a 19 MB download inside the measured
+  // first analysis on a cold cache pays a 24 MB download inside the measured
   // span, and a number that folded that in would be reporting the network.
   //
   // The resident check short-circuits it, and is not a second opinion about the
@@ -1147,7 +1263,11 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // serve and a basket sweep is up to six of them — see `engineResident`, which
   // is a field read against three `caches.match` calls over every cache the
   // origin owns.
-  const coldEngine = !engineResident() && !(await isCachedOffline())
+  // Reassigned, not a second field, once the racket-box pass below knows
+  // whether the object engine was also cold this run — `cost.coldEngine`
+  // means "did this pass pay for a model download", and it is one boolean
+  // either way, whichever engine the download was for.
+  let coldEngine = !engineResident() && !(await isCachedOffline())
 
   const landmarker = await loadEngine((p: EngineProgress) => {
     onProgress({
@@ -1303,6 +1423,38 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     ball = levelFlight(ball, applied.roll_deg, { cx: applied.cx, cy: applied.cy }, aspect)
   }
 
+  // Same shape as the ball above: found in raw pixels, so it is skipped when
+  // sweeping a basket and rotated into the levelled space afterwards — the
+  // live overlay draws `sequence.frames`, which is levelled, and a racket
+  // rotated one way while the wrist it is meant to sit beside rotated the
+  // other would swing off the hand by the roll angle.
+  let racketBoxes: { frame: number; estimate: RacketEstimate }[] = []
+  if (!opts.skipRacketBoxes) {
+    // Same reasoning as `coldEngine` above, checked here rather than up front
+    // with it: this pass can be skipped entirely (a sweep, `skipRacketBoxes`),
+    // and a check that ran regardless would report a download this run never
+    // made.
+    coldEngine = coldEngine || (!objectEngineResident() && !(await isObjectModelCached()))
+    onProgress({ step: 'measuring', ratio: 0.45, detail: 'Looking for the racket' })
+    racketBoxes = await findRacketBoxes(video, extracted.frames, skel, aspect, signal)
+    if (applied) {
+      // Grip and head are aspect-premultiplied landmark points by the time
+      // they reach here (see the conversion inside `findRacketBoxes`), so
+      // this is the same rotation `levelFrames` applies to every other image
+      // landmark — `rotateImagePoint`, not `levelFlight`'s aspect-aware one.
+      const theta = (-applied.roll_deg * Math.PI) / 180
+      const pivot = { cx: applied.cx, cy: applied.cy }
+      racketBoxes = racketBoxes.map(({ frame, estimate }) => ({
+        frame,
+        estimate: {
+          ...estimate,
+          grip: rotateImagePoint(estimate.grip, theta, pivot),
+          head: rotateImagePoint(estimate.head, theta, pivot),
+        },
+      }))
+    }
+  }
+
   onProgress({ step: 'measuring', ratio: 0.55, detail: 'Measuring the fundamentals' })
   const serveType = opts.serveType ?? 'flat'
   const fundamentals = measure(frames, skel, quality.view === 'side', {
@@ -1424,6 +1576,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     scale: { bodyHeight: skel.bodyHeight, groundY: skel.groundY },
     tilt: applied,
     ball,
+    racketBoxes,
     tossFlight,
     serveType,
     // Stamped here, where the scores are produced, rather than on the way into

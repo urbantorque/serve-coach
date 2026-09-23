@@ -2,6 +2,7 @@ import type { ServeType } from '../storage/prefs'
 import type { BallFlight, TossFlight } from '../vision/ballTrack'
 import type { Consistency } from './consistency'
 import type { Diagnosis } from './diagnose'
+import type { RacketEstimate } from './racket'
 import type { Triage as TriageResult } from './triage'
 import type { KeyframePoses, SwingTrack } from '../storage/poseTrack'
 
@@ -219,6 +220,17 @@ export interface Analysis {
    */
   ball?: BallFlight
   /**
+   * The racket, where an EfficientDet-Lite pass over the trophy-to-contact
+   * window actually found one in the pixels — a plain array rather than a
+   * `Map` because this is stored the same way `ball` is, and a `Map` does not
+   * survive a round trip through `JSON.stringify`. Empty on a clip the
+   * detector never caught a racket in, or one with `skipRacketBoxes` set; the
+   * wrist-and-knuckles guess in `racket.ts` still draws either way. Lives in
+   * the same levelled space as `ball` when `tilt` is present, for the same
+   * reason: `frame` indexes are into `frames` below, which is levelled.
+   */
+  racketBoxes?: { frame: number; estimate: RacketEstimate }[]
+  /**
    * The toss, boiled down to three points — release, apex, and where the ball
    * had fallen to by contact — and the two ratios that come from them, in the
    * same body-height units as every other measurement here. A component can
@@ -291,12 +303,15 @@ export interface Analysis {
     /** Wall clock from the first frame read to the finished report. */
     ms: number
     /**
-     * Whether the pose engine had to be fetched during this pass.
+     * Whether either engine — pose or object detection — had to be fetched
+     * during this pass.
      *
-     * A first analysis on a cold cache pays a 19 MB download inside the same
+     * A first analysis on a cold cache pays a 24 MB download inside the same
      * span, and reporting that as the pipeline's cost would overstate it by an
      * amount that depends entirely on the network. Kept beside the number so a
-     * reader can tell the two apart rather than averaging them together.
+     * reader can tell the two apart rather than averaging them together. One
+     * boolean rather than one per engine: `timings.ts` only ever asks "was
+     * this pass warm," never which download made it cold.
      */
     coldEngine: boolean
   }

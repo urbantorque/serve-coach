@@ -90,6 +90,15 @@ const ALLOWED: (Site & { why: string })[] = [
       "MediaPipe's own library code rather than this file, against the same same-origin path.",
   },
   {
+    file: 'lib/vision/objectEngine.ts',
+    pattern: 'fetch',
+    why:
+      'The same shape of load-time fetch as `poseEngine.ts`, for the object-detection model ' +
+      "that finds the racket — this app's own origin, `BASE_URL`-relative, once per session " +
+      'behind the same kind of singleton guard, vendored by the same `fetch-assets.mjs` that ' +
+      'vendors the pose model. A second engine, not a second exception to the policy.',
+  },
+  {
     file: 'lib/share/reportCard.ts',
     pattern: 'Image()',
     why:

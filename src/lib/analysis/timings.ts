@@ -20,7 +20,7 @@
  * this repo has ever touched.
  *
  * WHAT IT REFUSES TO SAY. No average across a cold and a warm engine. A first
- * analysis on an empty cache pays a 19 MB download inside the measured span,
+ * analysis on an empty cache pays a 24 MB download inside the measured span,
  * which is a reading about the network rather than about the phone, and
  * `cost.coldEngine` is stored precisely so the two can be told apart. They are
  * reported as two figures or not at all — an average over both is the kind of
@@ -45,7 +45,7 @@ export interface Timings {
   /**
    * Cold passes, counted and kept apart.
    *
-   * Never folded into the figures above: a cold pass includes a 19 MB download,
+   * Never folded into the figures above: a cold pass includes a 24 MB download,
    * so its duration is a reading about somebody's signal at a court.
    */
   cold: number
@@ -106,5 +106,5 @@ export function timingLine(t: Timings | undefined): string | undefined {
 /** And the cold-start line, kept separate for the reason `Timings.cold` gives. */
 export function coldTimingLine(t: Timings | undefined): string | undefined {
   if (!t?.coldMedianMs) return undefined
-  return `${seconds(t.coldMedianMs)} on a cold start, which includes the 19 MB download`
+  return `${seconds(t.coldMedianMs)} on a cold start, which includes the 24 MB download`
 }

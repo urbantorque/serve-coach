@@ -35,7 +35,7 @@ check('three warm passes produce a median and a range', () => {
 })
 
 check('a cold start never enters the warm figures', () => {
-  // A cold pass includes a 19 MB download, so folding it in would report
+  // A cold pass includes a 24 MB download, so folding it in would report
   // somebody's signal as a property of their phone.
   const t = timingsOf([at(18_000), at(19_000), at(20_000), at(90_000, true)])
   assert(t!.n === 3, `a cold pass was counted as warm: n=${t!.n}`)
@@ -56,7 +56,7 @@ check('three cold starts get their own figure, said as its own thing', () => {
   ])
   assert(t!.coldMedianMs === 90_000, `cold median was ${t!.coldMedianMs}`)
   const line = coldTimingLine(t)!
-  assert(/19 MB/.test(line), `the cold line does not say what is in it: "${line}"`)
+  assert(/24 MB/.test(line), `the cold line does not say what is in it: "${line}"`)
 })
 
 check('reports with no cost on them are simply not counted', () => {

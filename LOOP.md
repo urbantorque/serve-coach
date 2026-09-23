@@ -65,7 +65,7 @@ Do not leave half-built code behind a flag.
 
 7. **Nothing leaves the device.** No network call after load, no analytics, no
    account, no remote logging. The only egress is the player pressing share on a
-   rendered image. The one load-time fetch is the pose model and the WASM
+   rendered image. The one load-time fetch is the pose and racket models and the WASM
    runtime, and `scripts/fetch-assets.mjs` is the only other network access in
    the project.
 

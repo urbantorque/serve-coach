@@ -1,6 +1,7 @@
 /**
  * Vendors everything the app needs to run with the network switched off:
  *   public/models/pose_landmarker_full.task  — downloaded once from Google
+ *   public/models/efficientdet_lite0.tflite  — same, for the racket detector
  *   public/wasm/*                            — copied out of node_modules
  *   public/icon-*.png, public/favicon.png    — generated here, no image deps
  *
@@ -21,27 +22,49 @@ const MODEL = {
   minBytes: 5_000_000,
 }
 
+/**
+ * EfficientDet-Lite0, int8, trained on COCO — Apache-2.0 like the rest of
+ * MediaPipe. Chosen over an Ultralytics YOLO export specifically because YOLO
+ * weights are AGPL-3.0: shipping one in a hosted app would carry the AGPL's
+ * network-use copyleft, which is a business decision this script has no
+ * business making silently. This model, this way, needs nobody's sign-off.
+ */
+const OBJECT_MODEL = {
+  url: 'https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite',
+  dest: path.join(pub, 'models', 'efficientdet_lite0.tflite'),
+  minBytes: 3_000_000,
+}
+
 const log = (...a) => console.log('  ', ...a)
 
-async function vendorModel() {
-  if (fs.existsSync(MODEL.dest) && fs.statSync(MODEL.dest).size > MODEL.minBytes) {
-    log('model already vendored →', path.relative(root, MODEL.dest))
+/**
+ * Shared by both models — the two differ only in name, url, dest and expected
+ * size, and duplicating the download/verify/atomic-rename logic per model is
+ * exactly the kind of copy that drifts the day one of them gets a retry policy
+ * the other doesn't.
+ */
+async function vendor(name, { url, dest, minBytes }) {
+  if (fs.existsSync(dest) && fs.statSync(dest).size > minBytes) {
+    log(`${name} already vendored →`, path.relative(root, dest))
     return
   }
-  log('downloading pose model (~9 MB, one time only)…')
-  const res = await fetch(MODEL.url)
-  if (!res.ok) throw new Error(`model download failed: HTTP ${res.status}`)
+  log(`downloading ${name} (~${(minBytes / 1e6).toFixed(0)} MB, one time only)…`)
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`${name} download failed: HTTP ${res.status}`)
   const buf = Buffer.from(await res.arrayBuffer())
-  if (buf.length < MODEL.minBytes) throw new Error(`model download truncated (${buf.length} bytes)`)
-  fs.mkdirSync(path.dirname(MODEL.dest), { recursive: true })
+  if (buf.length < minBytes) throw new Error(`${name} download truncated (${buf.length} bytes)`)
+  fs.mkdirSync(path.dirname(dest), { recursive: true })
   // Written to a temp name and renamed, so a build killed mid-write can never
   // leave a truncated file at the real path — the size check above would then
   // accept it forever and every build would ship a corrupt model.
-  const tmp = `${MODEL.dest}.tmp`
+  const tmp = `${dest}.tmp`
   fs.writeFileSync(tmp, buf)
-  fs.renameSync(tmp, MODEL.dest)
-  log(`model saved — ${(buf.length / 1e6).toFixed(1)} MB, sha256 ${createHash('sha256').update(buf).digest('hex').slice(0, 12)}`)
+  fs.renameSync(tmp, dest)
+  log(`${name} saved — ${(buf.length / 1e6).toFixed(1)} MB, sha256 ${createHash('sha256').update(buf).digest('hex').slice(0, 12)}`)
 }
+
+const vendorModel = () => vendor('pose model', MODEL)
+const vendorObjectModel = () => vendor('object model', OBJECT_MODEL)
 
 function vendorWasm() {
   const src = path.join(root, 'node_modules', '@mediapipe', 'tasks-vision', 'wasm')
@@ -218,4 +241,5 @@ console.log('\nServe Coach — vendoring offline assets\n')
 generateIcons()
 vendorWasm()
 await vendorModel()
+await vendorObjectModel()
 console.log('\nDone. The app now runs with no network at all.\n')

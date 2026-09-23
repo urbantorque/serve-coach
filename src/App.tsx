@@ -61,6 +61,7 @@ import {
 import { SERVE_TYPES } from './lib/analysis/coaching'
 import { Cancelled, looksLikeNonVideo } from './lib/pose/extract'
 import { isCachedOffline, loadEngine } from './lib/pose/poseEngine'
+import { isObjectModelCached, loadObjectEngine } from './lib/vision/objectEngine'
 import {
   deleteSession,
   getSession,
@@ -321,12 +322,26 @@ export default function App() {
   }, [])
 
   /**
-   * Fetch the pose engine now rather than during the first analysis.
+   * Whether the *whole* offline footprint is in the cache — the pose model
+   * and its WASM runtime, and the object model the racket detector needs.
+   * Two separate cache checks because the two engines vendor into separate
+   * `caches.match` entries; the WASM runtime is not checked twice, since both
+   * engines load it from the same URL and `isCachedOffline` already covers
+   * it (see the note on `isObjectModelCached`).
+   */
+  const checkOfflineReady = useCallback(
+    () => Promise.all([isCachedOffline(), isObjectModelCached()]).then(([pose, object]) => pose && object),
+    [],
+  )
+
+  /**
+   * Fetch both engines now rather than during the first analysis.
    *
-   * The same `loadEngine` every analysis calls, so this is a warm-up and not a
-   * second download path: whatever it caches is what the next analysis skips.
-   * The cache is re-read afterwards rather than assumed, because a browser that
-   * declined to store 19 MB should leave the badge saying so.
+   * The same `loadEngine`/`loadObjectEngine` every analysis calls, so this is
+   * a warm-up and not a second download path: whatever it caches is what the
+   * next analysis skips. The cache is re-read afterwards rather than assumed,
+   * because a browser that declined to store 24 MB should leave the badge
+   * saying so.
    */
   const makeOffline = useCallback(async () => {
     setWarming({ stage: 'downloading', ratio: 0 })
@@ -335,18 +350,25 @@ export default function App() {
         if (p.stage === 'downloading') setWarming({ stage: 'downloading', ratio: p.ratio })
         else if (p.stage === 'starting') setWarming({ stage: 'starting' })
       })
+      // Sequential, not `Promise.all`, so the progress bar reads as one
+      // download finishing after another rather than two competing ratios
+      // fighting over the same number.
+      await loadObjectEngine((p) => {
+        if (p.stage === 'downloading') setWarming({ stage: 'downloading', ratio: p.ratio })
+        else if (p.stage === 'starting') setWarming({ stage: 'starting' })
+      })
     } catch {
       setWarming({ stage: 'failed' })
       return
     }
     // Downloading and keeping are separate questions, and only the cache
-    // answers the second one. A browser that will not store 19 MB — an iOS
-    // private window, service workers turned off — has just loaded an engine
-    // this session can use and will have nothing after a reload.
-    const cached = await isCachedOffline()
+    // answers the second one. A browser that will not store the download —
+    // an iOS private window, service workers turned off — has just loaded
+    // both engines for this session and will have nothing after a reload.
+    const cached = await checkOfflineReady()
     setOfflineReady(cached)
     setWarming(cached ? undefined : { stage: 'unkept' })
-  }, [])
+  }, [checkOfflineReady])
 
   /**
    * Open the guide, remembering which of the three reasons for opening it
@@ -712,7 +734,7 @@ export default function App() {
 
   useEffect(() => {
     refreshSessions()
-    void isCachedOffline().then(setOfflineReady)
+    void checkOfflineReady().then(setOfflineReady)
 
     // `?check` opens the device report. Deliberately NOT dev-only, unlike
     // `?demo` below: its whole purpose is to be run on a phone, and a dev build
@@ -877,7 +899,7 @@ export default function App() {
         }
       })
     }
-  }, [refreshSessions])
+  }, [refreshSessions, checkOfflineReady])
 
   /*
    * Take a waiting version the moment nothing would be lost by it.
@@ -1061,7 +1083,7 @@ export default function App() {
         // so flicking between the serves in the clip is still instant; it just
         // never becomes part of the record.
         void trySave(analysis)
-        void isCachedOffline().then(setOfflineReady)
+        void checkOfflineReady().then(setOfflineReady)
 
         // Ask the browser not to evict the history, once, at the first moment
         // there is a history to lose. Asking on first load would be asking
@@ -1116,6 +1138,7 @@ export default function App() {
       prefs.serveType,
       prefs.tier,
       prefs.askedToPersist,
+      checkOfflineReady,
     ],
   )
 
