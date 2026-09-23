@@ -69,7 +69,7 @@ import { assessResilience, triage } from './triage'
 import { swingTrack } from '../storage/poseTrack'
 import { causalFocus } from './verdict'
 import { cue } from './voice'
-import { buildPhases, detectServe, type Skeleton } from './phases'
+import { buildPhases, detectServe, looksSlowedDown, type Skeleton } from './phases'
 import {
   NotAServeError,
   SCORING_VERSION,
@@ -1481,6 +1481,11 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // still costs a few hundred video seeks, and the player has no way to know that
   // the length of their clip is why they waited. Said once, on the report, rather
   // than as a blocking complaint about a clip that worked perfectly well.
+  // Said once, plainly, beside the timings it hedges — see `looksSlowedDown`.
+  if (looksSlowedDown(frames, skel)) {
+    quality.warnings.push(cue('This clip looks like slow motion, so I show the timings but do not score them.'))
+  }
+
   if (video.duration > LONG_CLIP_SECONDS) {
     quality.warnings.push(
       cue('Long clip, so most of the wait went on finding the serves. Trim to the serves before you upload.'),

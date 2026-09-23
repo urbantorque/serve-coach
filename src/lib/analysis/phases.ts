@@ -242,6 +242,36 @@ export function refineExtremum(series: number[], times: number[], i: number): nu
   return Math.min(tc, Math.max(tb, t))
 }
 
+/**
+ * Past these, a clip is almost certainly slow motion played back stretched.
+ *
+ * Every timing in the app is read in the file's own seconds, and a phone's
+ * slow-motion export stretches them: a 4× clip reads a 150 ms swing as 600 ms
+ * and coaches a perfectly good rhythm as a crawl. Nothing in the container can
+ * be trusted to say so across phones, so the motion itself is the test. A
+ * real drop to contact runs about 100–250 ms (the app's own band tops out at
+ * 230, and the rig's clean serve is 148); a real motion from ready to contact
+ * about 0.9–1.8 s. Both past the floors below, together, is not a slow player
+ * — it is a slowed clip. A 2× clip of a quick serve slips under; 2.5× and up is
+ * caught.
+ */
+export const SLOW_MOTION_SWING_MS = 320
+export const SLOW_MOTION_MOTION_MS = 2600
+
+/**
+ * Whether this serve was filmed in slow motion and played back stretched.
+ *
+ * When the drop collapsed onto the trophy there is no drop-to-contact to
+ * read — the "swing" is then trophy to contact, which is legitimately long —
+ * so the motion's length alone decides.
+ */
+export function looksSlowedDown(frames: Frame[], skel: Skeleton): boolean {
+  const motion = (skel.times.contact - frames[skel.keys.ready].t) * 1000
+  if (!(motion >= SLOW_MOTION_MOTION_MS)) return false
+  if (skel.derivation.dropOnTrophy) return true
+  return (skel.times.contact - skel.times.drop) * 1000 >= SLOW_MOTION_SWING_MS
+}
+
 function sharpen(series: number[], idx: number, radius = 2): number {
   const lo = Math.max(0, idx - radius)
   const hi = Math.min(series.length - 1, idx + radius)

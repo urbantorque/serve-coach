@@ -180,13 +180,13 @@ ledger.
 - [x] **E5** Real timestamps to MediaPipe's VIDEO mode.
 - [x] **E6** Knee-bend band re-anchored to the 27-study meta-analysis
       (35–62° → 35–80°); the first cited band in the app.
-- [~] **E7** RTMPose-s re-reads the swing (toss → contact), all-or-nothing
+- [x] **E7** RTMPose-s re-reads the swing (toss → contact), all-or-nothing
       inside a 6 s budget, arms/knees/ankles only. Benchmark on the same crop:
       elbows 2.35% → 1.59% of height, wrists 2.02% → 1.72%. Offline download
       24 → 57 MB.
 - [ ] **E8** Read the real frame rate (MP4 `stts`) and sample the swing at the
       source rate on high-frame-rate files.
-- [ ] **E9** Slow-motion time-stretch: detect and rescale, or hedge timing.
+- [x] **E9** Slow motion detected from the motion itself (drop→contact ≥ 320 ms with a ≥ 2.6 s motion); timings hedged and said so, ratios still scored. Rescaling left until a stretch factor can be measured rather than assumed.
 - [ ] **E10** Ball tracker on a native-resolution crop above the tossing
       shoulder instead of a 256-px whole frame.
 - [ ] **E11** Cite or re-derive the other 20 card bands (contact height needs a

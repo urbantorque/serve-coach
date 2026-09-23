@@ -33,7 +33,7 @@ import { Cancelled } from '../../pose/extract'
 import { diagnose } from '../diagnose'
 import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
 import { measure } from '../metrics'
-import { detectServe, refineExtremum, type Skeleton } from '../phases'
+import { detectServe, looksSlowedDown, refineExtremum, type Skeleton } from '../phases'
 import { findServes } from '../serves'
 import type { BallFlight } from '../../vision/ballTrack'
 import type { ServeType } from '../../storage/prefs'
@@ -957,6 +957,28 @@ check('drop-to-contact at 30 fps is no longer read a full sample long', () => {
   const bias = errors.reduce((a, b) => a + b, 0) / errors.length
   note(`drop→contact at 30 fps: bias ${bias.toFixed(1)} ms over ${errors.length} phases (truth ${truth.toFixed(0)} ms)`)
   within(bias, -20, 20, 'drop→contact bias at 30 fps')
+})
+
+check('a slow-motion clip hedges its timings instead of coaching a slow rhythm', () => {
+  const read = (motionSeconds: number) => {
+    const frames = buildServe({ motionSeconds }, 60)
+    const skel = detectServe(frames, 60)
+    const all = measure(frames, skel, true, {
+      confidence: { frames, skel, swingSamples: 8, view: 'side' },
+    }).flatMap((f) => f.metrics)
+    return { slowed: looksSlowedDown(frames, skel), m: (id: string) => all.find((x) => x.id === id)! }
+  }
+  const real = read(1.35)
+  const slowPlayer = read(2.2)
+  const stretched = read(1.35 * 3)
+  assert(!real.slowed, 'a clean serve was taken for slow motion')
+  assert(!slowPlayer.slowed, 'a genuinely slow player was taken for slow motion')
+  assert(stretched.slowed, 'a 3× slow-motion clip was read as a real-time serve')
+  for (const id of ['dropToContact', 'totalTime']) {
+    assert(stretched.m(id).confidence < 0.55, `${id} was scored on a stretched clock (${stretched.m(id).confidence.toFixed(2)})`)
+    assert(real.m(id).confidence >= 0.55, `${id} was hedged on a real-time clip`)
+  }
+  assert(stretched.m('loadRatio').confidence >= 0.55, 'a share of the motion, which a stretch does not change, was hedged')
 })
 
 check('measurements hold up when the camera moves round', () => {

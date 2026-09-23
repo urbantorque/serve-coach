@@ -17,7 +17,7 @@
  */
 import { imageXSplitFrom, readImageX } from './axes'
 import { LM, clamp, mean, type Side, sided, trunkCoilReading } from './geometry'
-import type { Skeleton } from './phases'
+import { looksSlowedDown, type Skeleton } from './phases'
 import { assessSpatial } from './spatial'
 import type { Frame, Metric } from './types'
 import { cue } from './voice'
@@ -54,6 +54,7 @@ type Dependency =
   | 'handedness'
   | 'trunkSweep'
   | 'imageXAxis'
+  | 'realTime'
 
 const DEPENDENCIES: Record<string, Dependency[]> = {
   // Toss
@@ -100,7 +101,7 @@ const DEPENDENCIES: Record<string, Dependency[]> = {
   // Swing
   dropDepth: ['scale'],
   elbowAtDrop: [],
-  dropToContact: ['swingTiming'],
+  dropToContact: ['swingTiming', 'realTime'],
   // Empty, and worth spelling out rather than leaving as an absence, because
   // the emptiness is the point of the measurement.
   //
@@ -129,7 +130,9 @@ const DEPENDENCIES: Record<string, Dependency[]> = {
   bodyExtension: ['scale', 'trophy'],
   contactAhead: ['scale', 'depth'],
   // Rhythm
-  totalTime: [],
+  // In the file's own seconds, which slow motion stretches. `loadRatio` below
+  // is a share of the motion and survives a stretch, so it carries no such cost.
+  totalTime: ['realTime'],
   loadRatio: ['trophy'],
   syncAtRelease: ['scale'],
 }
@@ -296,6 +299,12 @@ export interface ConfidenceContext {
 export const DEPTH_COLLAPSED = 0.35
 
 /**
+ * What a timing is worth on a clip that looks slowed down: well under
+ * `SOFT_MEASUREMENT`, so it is shown hedged and can never become the fix.
+ */
+export const SLOWED_TIMING = 0.3
+
+/**
  * What a coil reading is worth when the uncoiling sweep could not be resolved.
  *
  * Sitting alongside `DEPTH_COLLAPSED` rather than below it because it is the
@@ -399,6 +408,11 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
       // The arm fallback puts the trophy in a sensible place, but a place found
       // from a different cue than the one the measurement assumes.
       c *= 0.7
+    }
+    if (dep === 'realTime' && looksSlowedDown(ctx.frames, skel)) {
+      // A slowed clip's timings are real numbers about a stretched clock. Shown
+      // hedged, never scored as the player's rhythm — see `looksSlowedDown`.
+      c *= SLOWED_TIMING
     }
     if (dep === 'swingTiming') {
       // Four samples across a ~150 ms window leaves ±30 ms of quantisation on a
