@@ -55,6 +55,74 @@ export interface BallFlight {
   confidence: number
 }
 
+/* ------------------------------------------------------------------ region */
+
+/** A rectangle of the source video, in its own pixels. */
+export interface PixelRegion {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+/** How wide the ball's search region is, in the player's own body heights. */
+export const TOSS_REGION_WIDTH = 1.4
+
+/**
+ * Where to look for the ball: a band above the shoulders, centred on the
+ * tossing hand, read at the video's own resolution.
+ *
+ * The whole frame used to be shrunk to 256 px wide and searched. A player
+ * filmed from the fence in landscape is ~215 px tall in a 1280-wide frame; at a
+ * fifth of the resolution their ball is 3 px across and the detector is
+ * guessing. The ball only ever flies in a narrow column above the tossing hand
+ * — a toss that drifts half a body height sideways is a toss the report
+ * already calls out — so the same pixel budget spent on that column reads the
+ * ball at every pixel the phone recorded.
+ *
+ * `undefined` when the column would be most of the frame anyway (a player
+ * filling a portrait frame), so the caller reads the whole frame as before.
+ */
+export function tossRegion(opts: {
+  /** Tossing hand at release, source pixels. */
+  handX: number
+  /** The line below which the ball is never looked for, source pixels. */
+  floorY: number
+  bodyHeightPx: number
+  frameWidth: number
+  frameHeight: number
+}): PixelRegion | undefined {
+  const { handX, floorY, bodyHeightPx, frameWidth, frameHeight } = opts
+  const w = Math.min(frameWidth, TOSS_REGION_WIDTH * bodyHeightPx)
+  const h = Math.min(frameHeight, floorY)
+  if (!(w > 0) || !(h >= 8) || w >= frameWidth * 0.9) return undefined
+  const x = Math.min(frameWidth - w, Math.max(0, handX - w / 2))
+  return { x, y: 0, w, h }
+}
+
+/** A candidate found in a region, back in whole-frame 0–1 units. */
+export function candidateToFrame(
+  c: BallCandidate,
+  region: PixelRegion,
+  frameWidth: number,
+  frameHeight: number,
+): BallCandidate {
+  return {
+    ...c,
+    x: (region.x + c.x * region.w) / frameWidth,
+    y: (region.y + c.y * region.h) / frameHeight,
+    r: (c.r * region.h) / frameHeight,
+  }
+}
+
+/**
+ * `findCandidates`' size limits, which are fractions of the image it is handed,
+ * restated for a region so a ball is held to the same size in the frame.
+ */
+export function radiusLimitsIn(region: PixelRegion, frameHeight: number, minRadius = 0.004, maxRadius = 0.045) {
+  return { minRadius: (minRadius * frameHeight) / region.h, maxRadius: (maxRadius * frameHeight) / region.h }
+}
+
 /* --------------------------------------------------------------- detection */
 
 /**

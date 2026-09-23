@@ -456,3 +456,31 @@ Caveat, stated rather than hidden: hips differ by convention between
 MediaPipe and COCO-style labels, so hip error favours RTMPose for a reason
 that is not accuracy. The arm joints — the ones the serve is measured from —
 share a convention, and that is where the gain is largest.
+
+---
+
+## 8 · What was executed, with no footage from the owner
+
+Every change below is measured against open data or the rig, carried by a
+check that fails if it regresses, and committed on `roadmap/market-ready`.
+
+| Change | Evidence | Where |
+| --- | --- | --- |
+| **Object detector on CPU.** On the GPU delegate EfficientDet-Lite0 loaded and returned *nothing*, every frame, so racket boxes were always empty on a phone with a GPU | 8 people on CPU, 0 on GPU, same frame | `vision/objectEngine.ts` |
+| **Player crop.** The pose model reads a square round the server instead of the whole frame | Benchmark: frames with no pose 101 → 8 of 500; wrist error 2.89% → 2.02%, elbow 3.67% → 2.35% of height | `pose/playerCrop.ts` |
+| **Sub-frame timing** (`refineExtremum`, tent fit). A parabola was tried first and was worse | Rig, 16 noisy seeds: drop→contact bias at 30 fps +31 → +10 ms, RMS 35 → 14 ms; at 24 fps +45 → +15 | `analysis/phases.ts` |
+| **Real timestamps** to MediaPipe's VIDEO mode, with a clean break between passes | Unit checks; on real clips same keyframes, knee reading moved 2.8° on one | `pose/poseEngine.ts` |
+| **Knee band re-anchored** 35–62° → 35–80° to the 27-study meta-analysis | A textbook ~66° load is no longer told to bend less | `analysis/coaching.ts` |
+| **RTMPose-s re-reads the swing**, joint by joint above a measured score of 0.5, all-or-nothing in a 6 s budget | Benchmark on the same crop: elbows 2.35% → 1.59%, wrists 2.02% → 1.72%; score threshold measured on 1,019 labelled joints | `pose/rtmpose.ts`, `pose/refineEngine.ts` |
+| **Slow motion hedged**, detected from the motion itself | Rig: clean and genuinely slow serves untouched, 3× stretch caught; ratios stay scored | `analysis/phases.ts`, `confidence.ts` |
+| **Ball read in a column** above the tossing hand at native resolution | Pixel test: a distant player's ball placed within 0.5 px, against 3.5 px from the 256-px frame | `vision/ballTrack.ts` |
+| **Coach-jargon lint** and four live violations fixed; every runtime headline linted | Copy suite | `analysis/voice.ts` |
+
+**Still open, and why.** Reading the file's real frame rate and sampling the
+swing at the source rate (E8) — the tent fit took most of the timing error
+out at 30 fps, and the rest needs container parsing tested on real phone
+files. Rescaling slow motion rather than hedging it needs a stretch factor
+that can be measured, not assumed. Twenty card bands still want a citation or
+a derivation; contact height needs a definition first (it reads the wrist,
+the literature reads the ball). And the one thing no open dataset replaces:
+a labelled clip from the side-on angle the app actually asks for.

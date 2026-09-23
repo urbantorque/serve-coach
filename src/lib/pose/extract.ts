@@ -719,13 +719,19 @@ export async function readBitmaps<T>(
   video: HTMLVideoElement,
   times: number[],
   read: (frame: ImageData, previous: ImageData | undefined, t: number) => T,
-  opts: { signal?: AbortSignal; maxWidth?: number } = {},
+  opts: {
+    signal?: AbortSignal
+    maxWidth?: number
+    /** Read only this rectangle of the source, in its pixels — see `tossRegion`. */
+    region?: { x: number; y: number; w: number; h: number }
+  } = {},
 ): Promise<T[]> {
   const { signal, maxWidth = 256 } = opts
-  const scale = Math.min(1, maxWidth / Math.max(1, video.videoWidth))
+  const region = opts.region ?? { x: 0, y: 0, w: video.videoWidth, h: video.videoHeight }
+  const scale = Math.min(1, maxWidth / Math.max(1, region.w))
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(video.videoWidth * scale))
-  canvas.height = Math.max(1, Math.round(video.videoHeight * scale))
+  canvas.width = Math.max(1, Math.round(region.w * scale))
+  canvas.height = Math.max(1, Math.round(region.h * scale))
   // `willReadFrequently` keeps the canvas on the CPU; without it every
   // getImageData stalls on a GPU readback, which is most of the cost here.
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
@@ -740,7 +746,7 @@ export async function readBitmaps<T>(
     if (signal?.aborted) break
     const at = await seekTo(video, t)
     if (at === false) continue
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    ctx.drawImage(video, region.x, region.y, region.w, region.h, 0, 0, canvas.width, canvas.height)
     const frame = ctx.getImageData(0, 0, canvas.width, canvas.height)
     // The time the seek actually reached, not the one asked for — the ball's
     // flight is fitted against these, and a curve fitted through fictionally

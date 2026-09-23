@@ -187,7 +187,7 @@ ledger.
 - [ ] **E8** Read the real frame rate (MP4 `stts`) and sample the swing at the
       source rate on high-frame-rate files.
 - [x] **E9** Slow motion detected from the motion itself (drop→contact ≥ 320 ms with a ≥ 2.6 s motion); timings hedged and said so, ratios still scored. Rescaling left until a stretch factor can be measured rather than assumed.
-- [ ] **E10** Ball tracker on a native-resolution crop above the tossing
+- [x] **E10** Ball tracker on a native-resolution crop above the tossing
       shoulder instead of a 256-px whole frame.
 - [ ] **E11** Cite or re-derive the other 20 card bands (contact height needs a
       definition first: wrist, not ball).

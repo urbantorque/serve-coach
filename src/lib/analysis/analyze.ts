@@ -13,11 +13,14 @@ import {
 import { framingIssues } from './framingIssues'
 import type { ServeType } from '../storage/prefs'
 import {
+  candidateToFrame,
   findCandidates,
   flightHeightAt,
   flightXAt,
   levelFlight,
+  radiusLimitsIn,
   summariseToss,
+  tossRegion,
   trackBall,
   type BallFlight,
 } from '../vision/ballTrack'
@@ -43,6 +46,7 @@ import {
   maxTrackingJump,
   mean,
   median,
+  sided,
   statusOf,
   weightedScore,
 } from './geometry'
@@ -684,14 +688,42 @@ async function findBall(
   // Detected as the pixels arrive rather than after all of them have. The
   // candidates for a frame are a few numbers; the frame itself is half a
   // megabyte, and the window is dozens of frames long.
+  //
+  // And only the column above the tossing hand, at the video's own resolution,
+  // where that is a real saving — see `tossRegion`. Frame units throughout:
+  // the image landmarks are in frame heights, so one factor makes pixels.
+  const W = video.videoWidth
+  const H = video.videoHeight
+  const hand = frames[keys.toss].image[sided(skel.toss).wrist]
+  const region = tossRegion({
+    handX: hand.x * H,
+    floorY: belowY * H,
+    bodyHeightPx: bodyHeight * H,
+    frameWidth: W,
+    frameHeight: H,
+  })
   let perFrame: { t: number; candidates: ReturnType<typeof findCandidates> }[]
   try {
-    perFrame = await readBitmaps(
-      video,
-      times,
-      (frame, previous, t) => ({ t, candidates: findCandidates(frame, previous, { belowY }) }),
-      { signal },
-    )
+    perFrame = region
+      ? await readBitmaps(
+          video,
+          times,
+          (frame, previous, t) => ({
+            t,
+            candidates: findCandidates(frame, previous, { belowY: 1, ...radiusLimitsIn(region, H) }).map((c) =>
+              candidateToFrame(c, region, W, H),
+            ),
+          }),
+          // The column at up to 384 px wide: for a distant player that is every
+          // pixel of it, and a portrait close-up never gets a region at all.
+          { signal, region, maxWidth: 384 },
+        )
+      : await readBitmaps(
+          video,
+          times,
+          (frame, previous, t) => ({ t, candidates: findCandidates(frame, previous, { belowY }) }),
+          { signal },
+        )
   } catch {
     return undefined
   }
