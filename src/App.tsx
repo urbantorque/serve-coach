@@ -11,6 +11,7 @@ import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { useBackLayer } from './components/useBackLayer'
+import { useWakeLock } from './components/useWakeLock'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import type { InjuryFlag } from './lib/analysis/triage'
 import {
@@ -1421,6 +1422,9 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [view.kind])
+
+  // A locked screen stalls the analysis; see `useWakeLock`.
+  useWakeLock(view.kind === 'analyzing')
 
   useBackLayer(view.kind !== 'home', () => {
     if (view.kind === 'analyzing') {

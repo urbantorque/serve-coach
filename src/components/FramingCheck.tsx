@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useWakeLock } from './useWakeLock'
 import { Cue, Icon } from './primitives'
 import { PREVIEW_BLOCK_CUE, previewBlockFor, previewSupported, type PreviewBlock } from '../lib/framing/access'
 import {
@@ -112,6 +113,9 @@ interface Props {
 
 export default function FramingCheck({ onRecorded }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  // Mounted only while the viewfinder is open, and that is a phone propped on
+  // a fence while its owner walks to the baseline — the screen must not lock.
+  useWakeLock(true)
   const [block, setBlock] = useState<PreviewBlock | null>(null)
   /** Download progress for the pose model, 0–1, while it is still arriving. */
   const [warming, setWarming] = useState<number | null>(null)
