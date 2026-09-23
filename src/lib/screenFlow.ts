@@ -30,7 +30,7 @@
  * fails if one is missing here, so a new screen cannot be added without
  * arriving in this table.
  */
-export const SCREENS = ['home', 'analyzing', 'report', 'glance', 'saved', 'error'] as const
+export const SCREENS = ['home', 'analyzing', 'report', 'glance', 'saved', 'error', 'progress'] as const
 
 export type Screen = (typeof SCREENS)[number]
 
@@ -74,6 +74,7 @@ export const MOVES: Record<Screen, Move[]> = {
     { to: 'error', via: 'run (too large, or not a video)' },
     { to: 'saved', via: 'openSaved' },
     { to: 'saved', via: 'showExample' },
+    { to: 'progress', via: 'onShowProgress' },
   ],
   analyzing: [
     { to: 'report', via: 'run (success)' },
@@ -100,6 +101,8 @@ export const MOVES: Record<Screen, Move[]> = {
   ],
   saved: [{ to: 'home', via: 'goHome / onAnalyzeAnother' }],
   error: [{ to: 'home', via: 'goHome' }],
+  // Was a sheet over home until it outgrew one; see `screens/Progress.tsx`.
+  progress: [{ to: 'home', via: 'goHome' }],
 }
 
 /** Every screen reachable from `start`, including `start` itself. */

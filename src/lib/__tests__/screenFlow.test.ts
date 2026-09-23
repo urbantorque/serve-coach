@@ -26,6 +26,11 @@ const fs: { readFileSync: (path: string, encoding: 'utf8') => string } = fsUntyp
 const path: { join: (...parts: string[]) => string } = pathUntyped
 
 const APP = fs.readFileSync(path.join(process.cwd(), 'src', 'App.tsx'), 'utf8')
+/**
+ * Where a whole history is read. `App.tsx`, and the progress screen, which took
+ * its selectors with it when it stopped being a sheet over home.
+ */
+const HISTORY_READERS = APP + fs.readFileSync(path.join(process.cwd(), 'src', 'screens', 'Progress.tsx'), 'utf8')
 
 heading('Nowhere the player can get stuck')
 
@@ -49,12 +54,13 @@ check('every screen is reachable from home', () => {
 check('no screen can only be left by going home', () => {
   // Not a rule, a reading. `saved` and `error` are deliberately terminal — both
   // are "look at this, then start again" — so this states which those are
-  // rather than asserting there are none, and a third appearing is worth a
-  // second look rather than an automatic failure.
+  // rather than asserting there are none, and a new one appearing is worth a
+  // second look rather than an automatic failure. `progress` had that look
+  // when it stopped being a sheet: it is read, then left, like a saved report.
   const terminal = SCREENS.filter((s) => MOVES[s].every((m) => m.to === 'home'))
   note(`terminal screens: ${terminal.join(', ') || 'none'}`)
   assert(
-    terminal.length === 2 && terminal.includes('saved') && terminal.includes('error'),
+    terminal.length === 3 && ['saved', 'error', 'progress'].every((s) => terminal.includes(s as never)),
     `terminal screens changed: ${terminal.join(', ')}`,
   )
 })
@@ -210,7 +216,7 @@ check('every function that reads a whole history is on the list R55 must cover',
    * another player's chart, which nothing else here would catch.
    */
   const found = new Set<string>()
-  for (const m of APP.matchAll(/\b([a-zA-Z]+)\(sessions\b/g)) found.add(m[1])
+  for (const m of HISTORY_READERS.matchAll(/\b([a-zA-Z]+)\(sessions\b/g)) found.add(m[1])
   const missing = [...found].filter((f) => !HISTORY_CONSUMERS.includes(f))
   assert(
     missing.length === 0,
@@ -226,7 +232,7 @@ check('the list has not gone stale in the other direction', () => {
   // list: a consumer removed leaves a stale name here, and the next reader
   // trusts a list describing an app that no longer exists.
   const found = new Set<string>()
-  for (const m of APP.matchAll(/\b([a-zA-Z]+)\(sessions\b/g)) found.add(m[1])
+  for (const m of HISTORY_READERS.matchAll(/\b([a-zA-Z]+)\(sessions\b/g)) found.add(m[1])
   const gone = HISTORY_CONSUMERS.filter((f) => !found.has(f))
   assert(
     gone.length === 0,

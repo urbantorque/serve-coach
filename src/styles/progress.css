@@ -482,3 +482,26 @@
   color: var(--fg-faint);
   margin-top: -4px;
 }
+
+/* ============================================================================
+   Every serve so far, as a screen
+   The body keeps its `.progress-sheet` rules from when it was a sheet; the
+   screen adds the report's frame around it and nothing else.
+   ========================================================================= */
+
+.progress-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Balances the back arrow so the title sits centred, as on the report. */
+.topbar-spacer {
+  width: 40px;
+  height: 40px;
+  flex: none;
+}
+
+.progress-empty {
+  padding-top: 20vh;
+}

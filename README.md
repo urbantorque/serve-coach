@@ -1318,6 +1318,16 @@ entirely until then. Fifteen tests in `lib/__tests__/progress.test.ts`
 pin the boundary, the flat case, the regression case and the guard against
 measuring across a recalibration.
 
+**The progress sheet is now a screen, `screens/Progress.tsx`.** It held a
+hero score, the strain lines, the records, two share cards, the practice
+card, the then-and-now pictures, three charts and a table inside a panel
+capped at 88% of the viewport, with a grip that promised a glance. It now
+has the report's frame — a page, a back arrow, the phone's back gesture —
+and takes its selectors with it, so `App.tsx` no longer computes eleven of
+them on every render for a sheet that was usually closed. The paragraph
+below is kept as the record of the round it describes; "sheet" there is
+this screen.
+
 **"Then, and now" is not two sheets deep — it is one tap and about one
 scroll, measured rather than taken on the round's own word.** The premise
 this round opened with turned out to be wrong, the same way a live walk has

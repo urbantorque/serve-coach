@@ -4,11 +4,6 @@ import HandednessPicker from './components/HandednessPicker'
 import StoragePanel from './components/StoragePanel'
 import DeviceCheck from './components/DeviceCheck'
 import CorpusIngest from './components/CorpusIngest'
-import PracticeCard from './components/PracticeCard'
-import SeasonShareButton from './components/SeasonShareButton'
-import TripShareButton from './components/TripShareButton'
-import FramePair, { type PairPosition } from './components/FramePair'
-import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { useBackLayer } from './components/useBackLayer'
 import { useWakeLock } from './components/useWakeLock'
@@ -16,30 +11,18 @@ import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import type { InjuryFlag } from './lib/analysis/triage'
 import {
   strainBehindLine,
-  strainClearedLine,
   strainGlanceLine,
-  strainLine,
 } from './lib/analysis/verdict'
 import {
   bestConsistencyGap,
-  bestGapEverLine,
   bestOverallScore,
   faultMoveOnTrip,
   rotationMoveOnTrip,
-  bestOverallScoreEverLine,
   buildConsistencyTrend,
-  buildProgress,
   gapDeltaFor,
-  gapDeltaLine,
-  clearedStrainOf,
-  longestStreakLine,
   glanceStrain,
-  recurringStrainOf,
-  shortDate,
   strainBehindOf,
-  sixWeekMilestone,
   streakLine,
-  thenAndNow,
   typeOf,
 } from './lib/progress'
 import {
@@ -60,14 +43,12 @@ import {
   type FailedCapture,
   type NotAServeError,
 } from './lib/analysis/types'
-import { SERVE_TYPES } from './lib/analysis/coaching'
 import { Cancelled, looksLikeNonVideo } from './lib/pose/extract'
 import { isCachedOffline, loadEngine } from './lib/pose/poseEngine'
 import { isObjectModelCached, loadObjectEngine } from './lib/vision/objectEngine'
 import {
   deleteSession,
   getSession,
-  KEEP_STILLS,
   listPracticeLogs,
   listServeTags,
   listSummaries,
@@ -91,16 +72,18 @@ import Analyzing, { type SweepProgress } from './screens/Analyzing'
 import Glance from './screens/Glance'
 import Home, { type OfflineWarmup } from './screens/Home'
 import Report from './screens/Report'
+import Progress from './screens/Progress'
 
 /**
- * The screen, and the four fellow-travellers that are stages of the same
- * machine without being part of this type: `sweep` (the basket comparison
- * filling in), `pair` (the best-vs-worst stills), `thenNow` (the progress
- * sheet's paired report) and the refs below (`urlRef`, `lastFileRef`,
- * `serveTimesRef`, `abortRef`). R7 asked whether that machine should be made
+ * The screen, and the fellow-travellers that are stages of the same machine
+ * without being part of this type: `sweep` (the basket comparison filling
+ * in), `pair` (the best-vs-worst stills) and the refs below (`urlRef`,
+ * `lastFileRef`, `serveTimesRef`, `abortRef`). The progress screen's
+ * paired report used to be a third; it moved into `screens/Progress.tsx` with
+ * the screen. R7 asked whether that machine should be made
  * explicit — a reducer, a single tagged state. It stays implicit: every one of
- * those four is scoped to exactly the screens that read it (`sweep` only
- * `analyzing`, `pair` and `thenNow` only `report`), so a single combined state
+ * them is scoped to exactly the screens that read it (`sweep` only
+ * `analyzing`, `pair` only `report`), so a single combined state
  * would carry fields most screens never touch rather than removing anything —
  * and every transition below was walked by hand for a screen it could strand
  * and none was found. What follows is that walk, written down rather than
@@ -144,8 +127,6 @@ import Report from './screens/Report'
  * `pair` lives only while `view.kind === 'report'`; `run` clears it at every
  * entry, because it does not ride on the analysis the way the report itself
  * does — see the field's own comment.
- * `thenNow` lives only while the progress sheet is open, fetched and cleared by
- * the `useEffect` keyed on `sheet`.
  */
 type View =
   | { kind: 'home' }
@@ -177,6 +158,8 @@ type View =
    */
   | { kind: 'saved'; session: Session; example?: boolean }
   | { kind: 'error'; title: string; hints: string[]; capture?: FailedCapture; fileName?: string }
+  /** Every serve so far — see `screens/Progress.tsx`. A screen, not a sheet. */
+  | { kind: 'progress' }
 
 const MAX_BYTES = 400 * 1024 * 1024
 
@@ -280,7 +263,7 @@ export default function App() {
    */
   const [serveTags, setServeTags] = useState<ServeTag[]>([])
   const [sheet, setSheet] = useState<
-    'guide' | 'guide-first' | 'history' | 'settings' | 'progress' | 'check' | 'corpus' | null
+    'guide' | 'guide-first' | 'history' | 'settings' | 'check' | 'corpus' | null
   >(null)
   /** Bumped to ask the home screen to open its viewfinder. See Home's `openFraming`. */
   const [framingNonce, setFramingNonce] = useState(0)
@@ -425,26 +408,6 @@ export default function App() {
   const practiceRef = useRef<PracticeFocus | undefined>(undefined)
 
   /**
-   * The oldest serve that still has pictures, beside the newest, once both have
-   * been fetched.
-   *
-   * Fetched rather than read off `sessions`, because `listSummaries` strips the
-   * stills on the way out — that is its whole purpose — so the summaries this
-   * app holds in state have never had an image in them. Which two reports are
-   * worth comparing is decided from the summaries; whether the pictures are
-   * really still there is settled by asking for them.
-   *
-   * Only while the progress sheet is open. Two full reports is twelve base64
-   * images, and holding them for a screen nobody has opened is the cost
-   * `listSummaries` exists to avoid, paid somewhere else.
-   */
-  const [thenNow, setThenNow] = useState<{
-    then: Session
-    now: Session
-    positions: PairPosition[]
-  }>()
-
-  /**
    * A seeded history, held in place of the real one. `?demo=history`, dev only.
    *
    * A ref rather than a branch at every read site: `refreshSessions` is the one
@@ -576,116 +539,25 @@ export default function App() {
     })
   }, [])
 
-  const form = useMemo(() => buildProgress(sessions), [sessions])
-  // Read straight off `form`, the same object Home.tsx's own copy of this
-  // call is read off — a fact about the score trend this sheet already
-  // draws, not a second question about the history.
-  const sheetMilestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
   // Not type-restricted, unlike `bestGapFor` below — a streak is about
   // showing up at all, across every serve type, the same choice `Home.tsx`
   // already makes with its own copy of this same call.
   const streak = useMemo(() => streakLine(sessions), [sessions])
-  // Not type-restricted either, the same reason `streak` isn't — a run of
-  // trips is about showing up, across every serve type.
-  const longestStreakText = useMemo(() => longestStreakLine(sessions), [sessions])
-  // Not type-restricted and not era-restricted — see `recurringStrainOf`. A
-  // joint has the same range whatever the serve was aiming at.
-  const strain = useMemo(() => recurringStrainOf(sessions), [sessions])
-  // The same count read the other way: what was recurring and has stopped.
-  const strainCleared = useMemo(() => clearedStrainOf(sessions), [sessions])
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
     [sessions, drillLogs],
   )
 
-  useEffect(() => {
-    if (sheet !== 'progress') {
-      setThenNow(undefined)
-      return
-    }
-    const pick = thenAndNow(sessions, KEEP_STILLS)
-    if (!pick) return
-
-    let live = true
-    void (async () => {
-      // A seeded history is not in storage — see `demoHistory` — so the fetch
-      // that exists to prove the stills are really still there has nothing to
-      // find. The summaries are the whole report in that case, images included,
-      // which is exactly the state the fetch is looking for.
-      const seeded = demoHistory.current !== undefined
-      const [then, now] = seeded
-        ? [pick.then, pick.now]
-        : await Promise.all([
-            safely(() => getSession(pick.then.id), undefined),
-            safely(() => getSession(pick.now.id), undefined),
-          ])
-      if (!live || !then || !now) return
-
-      // Paired by keyframe id, never by index, for the reason `pairStills` gives:
-      // one serve's trophy beside the other's racket drop is a comparison
-      // nothing in the picture would admit to.
-      const positions: PairPosition[] = then.phases
-        .map((p) => ({
-          id: p.id,
-          label: p.label,
-          left: p.thumbnail,
-          right: now.phases.find((q) => q.id === p.id)?.thumbnail,
-        }))
-        // Both sides, not either: a row with one picture in it is a comparison
-        // with nothing to compare, and the prune takes a report's stills all at
-        // once rather than a frame at a time.
-        .filter((p) => p.left && p.right)
-
-      if (positions.length) setThenNow({ then, now, positions })
-    })()
-
-    return () => {
-      live = false
-    }
-  }, [sheet, sessions])
   // Read by `logDrill`, which is declared above this and would otherwise have to
   // be redefined every time the focus changes — and it is handed to a button
   // that must not be replaced under the player's finger.
   practiceRef.current = practice
-  // Keyed to whatever serve type the form chart settled on, so the two blocks in
-  // the sheet cannot end up describing different halves of the history.
-  const spread = useMemo(
-    () => (form ? buildConsistencyTrend(sessions, form.serveType) : undefined),
-    [sessions, form],
-  )
-  // Read off the same trend the "How repeatable, over time" section already
-  // draws, rather than a second call to bestGapFor keyed to a different
-  // type — one trend, one record, the same reason `spread` itself is keyed
-  // to `form.serveType` rather than recomputed per section.
-  const sheetBestGap = useMemo(() => bestConsistencyGap(spread), [spread])
-  // Same reasoning as `sheetBestGap`: keyed to the sheet's own dominant type
-  // rather than recomputed per section, since `form` already pinned that
-  // choice for the rest of this sheet.
-  const sheetBestScore = useMemo(
-    () => (form ? bestOverallScore(sessions, form.serveType) : undefined),
-    [sessions, form],
-  )
-  const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread.gapDelta) : undefined), [spread])
-  // The same facts this sheet already renders, worded the same way,
-  // handed to the season share button as plain strings rather than raw
-  // records — so the card can never say anything the screen it was shared
-  // from does not already say.
-  const seasonRecords = useMemo(
-    () => ({
-      streak,
-      longestStreak: longestStreakText,
-      bestScore: sheetBestScore && bestOverallScoreEverLine(sheetBestScore),
-      bestGap: sheetBestGap && bestGapEverLine(sheetBestGap),
-    }),
-    [streak, longestStreakText, sheetBestScore, sheetBestGap],
-  )
-
   /**
    * The tightest best-vs-worst gap swept, for whichever serve type is on
    * screen — see `bestConsistencyGap`.
    *
    * Deliberately not read off `spread` above, which is pinned to the
-   * dominant type for the progress sheet's own two blocks. A report open on
+   * dominant type for the progress screen's own two blocks. A report open on
    * a kick serve while the player mostly films flat ones would otherwise show
    * a flat-serve record under a kick-serve basket with nothing on screen
    * saying so — the same confidently-wrong-type mismatch `priorTo` below
@@ -737,7 +609,7 @@ export default function App() {
   )
   // Same reasoning as bestGapFor: recomputed for whichever type is actually
   // on screen rather than read off `spread`, which is pinned to the
-  // dominant type for the progress sheet's own purposes.
+  // dominant type for the progress screen's own purposes.
   const gapDeltaForView = useCallback(
     (id: string, serveType: ServeType) => gapDeltaFor(buildConsistencyTrend(sessions, serveType), id),
     [sessions],
@@ -1485,7 +1357,7 @@ export default function App() {
             onShowGuide={() => setSheet('guide')}
             onShowHistory={() => setSheet('history')}
             onShowSettings={() => setSheet('settings')}
-            onShowProgress={() => setSheet('progress')}
+            onShowProgress={() => setView({ kind: 'progress' })}
             needsHandedness={!prefs.handedness}
             onGuideThen={onGuideThen}
             onShowExample={() => void showExample()}
@@ -1641,6 +1513,17 @@ export default function App() {
             practice={practice}
             onLogDrill={logDrill}
             onUndoDrill={practice?.drilled ? undoDrill : undefined}
+          />
+        )}
+
+        {view.kind === 'progress' && (
+          <Progress
+            sessions={sessions}
+            practice={practice}
+            onLogDrill={logDrill}
+            onUndoDrill={undoDrill}
+            seeded={demoHistory.current !== undefined}
+            onBack={goHome}
           />
         )}
 
@@ -1887,187 +1770,6 @@ export default function App() {
         </Sheet>
       )}
 
-      {/* Not "Your form" — the home card already owns that name for the average
-          of the last three serves, and this sheet is the whole history behind
-          it. Two panels titled the same thing showing different numbers is the
-          one thing a player will read as a bug. */}
-      <Sheet open={sheet === 'progress'} onClose={() => setSheet(null)} title="Every serve so far">
-        {form && form.points.length > 1 ? (
-          <div className="progress-sheet">
-            <div className="progress-summary">
-              <span className="progress-hero tnum">{form.latest.overall}</span>
-              <span className="progress-unit">
-                latest {SERVE_TYPES[form.serveType].word} serve
-                <DeltaChip delta={form.overallDelta} />
-              </span>
-            </div>
-
-            {/* Above the records rather than below them, and above the charts,
-                because it is the one thing on this sheet that is about the
-                player's body rather than their score — and because a warning
-                filed underneath a celebration reads as a footnote to it.
-
-                Plain sentences in the same block furniture every other section
-                here uses, not the report's `.injury` card. That card carries an
-                icon, a title and the mechanics because it is explaining a fault
-                on the serve in front of you; this is a count, the explanation
-                already happened on each of those reports, and reproducing the
-                card would restate three paragraphs to add one number. */}
-            {(strain.length > 0 || strainCleared.length > 0) && (
-              <section className="block">
-                {/* Named for what the block actually contains. A player with
-                    nothing recurring and one thing fixed should not read a
-                    heading about things coming back, and a player with both
-                    gets the heading for the half that needs acting on — the
-                    warnings lead, the cleared lines read as the counterpoint
-                    underneath rather than softening them. */}
-                <h3 className="block-title">
-                  {strain.length > 0 ? 'What keeps coming back' : 'What has stopped'}
-                </h3>
-                {strain.map((record) => {
-                  const line = strainLine(record)
-                  return line ? (
-                    <p key={record.flag} className="strain-line">
-                      {line}
-                    </p>
-                  ) : null
-                })}
-                {strainCleared.map((record) => {
-                  const line = strainClearedLine(record)
-                  return line ? (
-                    <p key={record.flag} className="strain-line strain-line--clear">
-                      {line}
-                    </p>
-                  ) : null
-                })}
-              </section>
-            )}
-
-            {/* Facts about the whole journey rather than about form —
-                which is what the rest of this sheet (the trend, the delta
-                bars, the repeatability chart) is otherwise entirely about.
-                Each was added incrementally and reasoned, on its own, not to
-                need its own heading — but read together, with all of them
-                present, several unlabelled sentences in a row stopped reading
-                as a group and started reading as a wall of text. This gives
-                them the same overline every sibling section on this sheet
-                already has, and nothing else changes: same lines, same
-                order, same conditions. Guarded on the whole cluster so a
-                player short of every record never sees a heading over
-                nothing. */}
-            {(streak || longestStreakText || sheetBestScore) && (
-              <section className="block">
-                <h3 className="block-title">Your records</h3>
-                {streak && <p className="progress-foot">{streak}</p>}
-                {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
-                {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
-              </section>
-            )}
-
-            {/* Every record this sheet already shows, in one image — see
-                `renderSeasonCard`. Placed with the records it shares rather
-                than at the bottom of the sheet with the table, so the
-                button sits next to the exact facts it is about. */}
-            <SeasonShareButton records={seasonRecords} />
-            {/* The last trip, as one image. Beside the season card rather than
-                on the report, because a trip is a run of serves and the report
-                is one — and because this is where the spread and the strain
-                line the card draws are already on screen. */}
-            <TripShareButton sessions={sessions} strainLine={strain.map(strainLine).find(Boolean) ?? undefined} />
-
-            {/* Said out loud rather than left as a gap in the chart. Somebody who
-                has filmed twenty serves and sees eleven plotted will assume the
-                app lost the rest. */}
-            {form.setAside > 0 && (
-              <p className="progress-aside">
-                Showing your {SERVE_TYPES[form.serveType].word} serves only.{' '}
-                {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored
-                against different targets, so mixing them in would look like a change in form.
-              </p>
-            )}
-
-            {practice && (
-              <PracticeCard
-                focus={practice}
-                onLogDrill={logDrill}
-                onUndoDrill={practice.drilled ? undoDrill : undefined}
-              />
-            )}
-
-            {/* Then against now. A chart says the number went from 58 to 66; it
-                cannot show that the racket now falls behind the back where it
-                used to stop at the shoulder, which is the thing somebody wants
-                after six weeks of the same drill. */}
-            {thenNow && (
-              <FramePair
-                heading="Then, and now"
-                leftCaption={shortDate(thenNow.then.createdAt)}
-                rightCaption={shortDate(thenNow.now.createdAt)}
-                positions={thenNow.positions}
-              />
-            )}
-
-            <section className="block">
-              <h3 className="block-title">Overall score by session</h3>
-              <ScoreTrend points={form.points} />
-              {/* The sentence the chart above never states in words: `form`
-                  already carries everything `sixWeekMilestone` needs, and
-                  the home card already shows this same sentence — this
-                  screen, built specifically to look back across a whole
-                  history, had the chart but not the reading of it. */}
-              {sheetMilestone && <p className="sheet-note">{sheetMilestone}</p>}
-            </section>
-
-            {form.areaDeltas.length > 0 && (
-              <section className="block">
-                <h3 className="block-title">Change since your last serve</h3>
-                <DeltaBars deltas={form.areaDeltas} />
-              </section>
-            )}
-
-            {/* The long loop: not whether one serve scored higher, but whether
-                the serves are converging on each other. Only appears once the
-                sweep has been run on more than one clip, because a single
-                basket is a reading rather than a trend. */}
-            {spread && spread.points.length > 1 && (
-              <section className="block">
-                {/* No summary chip on the head. The rows already show the
-                    direction, and a chip here would be one more number in a
-                    sheet that already carries the hero score, its own chip, a
-                    sparkline and a value per fundamental. */}
-                {/* "Repeatable" is the one word this app uses for the idea, on
-                    the report and here. It was "gap" in this heading and
-                    "steadier" in the chart's own note — three names for one
-                    thing the player is meant to be tracking. */}
-                <h3 className="block-title">How repeatable, over time</h3>
-                <GapTrend points={spread.points} />
-                {/* buildConsistencyTrend has computed this since it was
-                    written; the chart above never said it in words. */}
-                {sheetGapDelta && <p className="sheet-note">{sheetGapDelta}</p>}
-                {spread.recurring && (
-                  <p className="sheet-note">
-                    {spread.recurring.label} has been your least repeatable part in{' '}
-                    {spread.recurring.sessions} of these. That is the one to practise most.
-                  </p>
-                )}
-                {/* Read straight off the trend this section already draws —
-                    one number this chart's own shape already contains, not a
-                    second computation that could disagree with it. */}
-                {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}
-              </section>
-            )}
-
-            <details className="progress-table">
-              <summary>See the numbers as a table</summary>
-              <TrendTable points={form.points} />
-            </details>
-          </div>
-        ) : (
-          <p className="sheet-empty">
-            Analyse two serves and this will show whether your changes are working.
-          </p>
-        )}
-      </Sheet>
     </div>
   )
 }
