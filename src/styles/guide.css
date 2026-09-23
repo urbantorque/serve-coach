@@ -219,3 +219,29 @@
     max-height: 82svh;
   }
 }
+
+/* ----------------------------------------------------------- placement diagram
+   An instruction drawn, not decoration: it answers the one rule players read
+   wrong. Same panel surface as the "worth avoiding" block. */
+
+.guide-diagram {
+  width: 100%;
+  height: auto;
+  padding: 10px 6px 4px;
+  border-radius: var(--r-md);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+.guide-diagram-label {
+  font-family: var(--font);
+  font-size: 10.5px;
+  font-weight: var(--wt-label);
+  letter-spacing: 0.02em;
+  fill: var(--fg-faint);
+}
+
+.guide-diagram-label--strong {
+  fill: var(--fg);
+  font-weight: var(--wt-key);
+}
