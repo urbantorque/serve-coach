@@ -45,16 +45,18 @@ declare const process: { cwd(): string }
 /**
  * What the entry chunk may cost, gzipped, in kB.
  *
- * 145 against a measured 140.06 — about 3.5% of headroom, which is a few rounds
- * of ordinary work and not a redesign. Gzip rather than raw because gzip is what
+ * 130 against a measured 124.64, after the report and progress screens were
+ * split off the entry chunk (it had crept to 142 of the old 145). The same
+ * few-rounds headroom as before, taken down with the chunk so the split cannot
+ * be quietly spent. Gzip rather than raw because gzip is what
  * crosses the network and therefore what the player waits for; the raw figure is
  * carried alongside because it is what the phone has to parse, and on a mid-range
  * Android that is the half you feel.
  */
-const ENTRY_GZIP_BUDGET_KB = 145
+const ENTRY_GZIP_BUDGET_KB = 130
 
-/** And the parse cost, which gzip hides. 440 against a measured 419.71. */
-const ENTRY_RAW_BUDGET_KB = 440
+/** And the parse cost, which gzip hides. 385 against a measured 367.09. */
+const ENTRY_RAW_BUDGET_KB = 385
 
 /**
  * The pose runtime, in its own chunk and on its own budget.

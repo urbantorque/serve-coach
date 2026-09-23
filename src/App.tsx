@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
 import StoragePanel from './components/StoragePanel'
@@ -71,8 +71,22 @@ import { applyWhenIdle, onUpdateWaiting } from './lib/updates'
 import Analyzing, { type SweepProgress } from './screens/Analyzing'
 import Glance from './screens/Glance'
 import Home, { type OfflineWarmup } from './screens/Home'
-import Report from './screens/Report'
-import Progress from './screens/Progress'
+/*
+ * Split off the entry chunk. The progress screen, with its charts, share cards
+ * and then-and-now pictures, is opened by a returning player a few times a
+ * season; the entry chunk is parsed on every cold open, on a phone, often
+ * without signal. The service worker precaches every built chunk, so offline
+ * this costs nothing but a microtask.
+ */
+const Progress = lazy(() => import('./screens/Progress'))
+/*
+ * The report too, which is the larger half: the player, the fundamentals, the
+ * comparison panel and the share-card renderer. Nothing on the first screen
+ * needs it, and `run` starts fetching it the moment an analysis begins, so it
+ * has half a minute to arrive before the report is drawn.
+ */
+const loadReport = () => import('./screens/Report')
+const Report = lazy(loadReport)
 
 /**
  * The screen, and the fellow-travellers that are stages of the same machine
@@ -775,6 +789,7 @@ export default function App() {
       // sweep stopped a moment ago would otherwise leave its serve rows under
       // the progress bar of an unrelated clip.
       setSweep(undefined)
+      void loadReport()
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
 
       try {
@@ -912,6 +927,7 @@ export default function App() {
       const { first, total } = sweepWindow(analysis.serves.count)
       setSweep({ total, firstNumber: first + 1, done: [] })
       setProgress({ step: 'engine', ratio: 0, detail: 'Comparing your serves' })
+      void loadReport()
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
 
       try {
@@ -1190,254 +1206,256 @@ export default function App() {
   return (
     <div className="app">
       <main className="shell">
-        {view.kind === 'home' && (
-          <Home
-            sessions={sessions}
-            offlineReady={offlineReady}
-            sessionsLoaded={sessionsLoaded}
-            onPick={(f) => void openClip(f)}
-            onRecorded={(f) => void openClip(f, true)}
-            openFraming={framingNonce}
-            onOpen={openSaved}
-            onShowGuide={() => setSheet('guide')}
-            onShowHistory={() => setSheet('history')}
-            onShowSettings={() => setSheet('settings')}
-            onShowProgress={() => setView({ kind: 'progress' })}
-            needsHandedness={!prefs.handedness}
-            onGuideThen={onGuideThen}
-            onShowExample={() => void showExample()}
-            onMakeOffline={() => void makeOffline()}
-            warming={warming}
-          />
-        )}
+        <Suspense fallback={null}>
+          {view.kind === 'home' && (
+            <Home
+              sessions={sessions}
+              offlineReady={offlineReady}
+              sessionsLoaded={sessionsLoaded}
+              onPick={(f) => void openClip(f)}
+              onRecorded={(f) => void openClip(f, true)}
+              openFraming={framingNonce}
+              onOpen={openSaved}
+              onShowGuide={() => setSheet('guide')}
+              onShowHistory={() => setSheet('history')}
+              onShowSettings={() => setSheet('settings')}
+              onShowProgress={() => setView({ kind: 'progress' })}
+              needsHandedness={!prefs.handedness}
+              onGuideThen={onGuideThen}
+              onShowExample={() => void showExample()}
+              onMakeOffline={() => void makeOffline()}
+              warming={warming}
+            />
+          )}
 
-        {view.kind === 'analyzing' && (
-          <Analyzing
-            progress={progress}
-            fileName={view.fileName}
-            sweep={sweep}
-            onCancel={sweep ? stopSweep : cancel}
-          />
-        )}
+          {view.kind === 'analyzing' && (
+            <Analyzing
+              progress={progress}
+              fileName={view.fileName}
+              sweep={sweep}
+              onCancel={sweep ? stopSweep : cancel}
+            />
+          )}
 
-        {view.kind === 'glance' && (
-          <Glance
-            analysis={view.analysis}
-            // Whether the fault the previous serve on this trip was told about
-            // actually moved — see `faultMove`. Computed here rather than in
-            // the screen because it needs the session list, which the glance
-            // has no business holding; recomputed per render because it is two
-            // array walks over a list already in memory and the screen it
-            // feeds is only ever mounted one at a time.
-            move={view.move ?? faultMoveOnTrip(sessions, view.analysis)}
-            rotation={rotationMoveOnTrip(sessions, view.analysis)}
-            // The one recurring joint warning this serve raised — see
-            // `glanceStrain`. Same reasoning as `move` above: it needs the
-            // session list, which this screen has no business holding.
-            strain={glanceStrainLine(view.analysis)}
-            onBack={goHome}
-            // Home owns the viewfinder sheet, so going back and reopening it is
-            // the honest route — and it releases this clip's object URL on the
-            // way, which a second recording would otherwise leak.
-            onRecordAnother={() => {
-              goHome()
-              setFramingNonce((n) => n + 1)
-            }}
-            onOpenReport={() =>
-              setView({ kind: 'report', analysis: view.analysis, videoUrl: view.videoUrl })
-            }
-            /*
-             * The two taps, and they were unreachable until now.
-             *
-             * The serve-number block shipped with its screen three rounds ago
-             * and nothing ever passed `onTagServe`, so it has never rendered in
-             * the running app — found while wiring the outcome tap beside it,
-             * which would have shipped the same way.
-             *
-             * One row carries both facts and one tap must not clear the other,
-             * which is what `withServeTag` is for. A row left saying nothing is
-             * deleted rather than stored.
-             */
-            serveNumber={tagsById(serveTags).get(view.analysis.id)?.serveNumber}
-            outcome={tagsById(serveTags).get(view.analysis.id)?.outcome}
-            onTagServe={(n) => void applyServeTag(view.analysis.id, { serveNumber: n })}
-            onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
-          />
-        )}
-
-        {view.kind === 'report' && (
-          <Report
-            /*
-             * Keyed, so the report's own state cannot outlive the report.
-             *
-             * Two things in there are decisions about one specific serve: having
-             * chosen to see the numbers off a clip that was refused, and having
-             * hidden the spreads. Switching serves inside a basket is a cache
-             * hit, which swaps the analysis without passing through the
-             * analysing screen — so without a key the component is never
-             * remounted, and serve three's override silently applies to serve
-             * two's refusal.
-             */
-            key={view.analysis.id}
-            analysis={view.analysis}
-            videoUrl={view.videoUrl}
-            previous={priorTo(view.analysis.createdAt, typeOf(view.analysis))}
-            fixtureExport={FIXTURE_EXPORT}
-            onBack={goHome}
-            onAnalyzeAnother={goHome}
-            onFlipHandedness={
-              lastFileRef.current
-                ? () => {
-                    // Correcting the badge is the player stating which hand they
-                    // serve with, so it is remembered rather than being asked
-                    // again on the next clip.
-                    const flipped = view.analysis.handedness === 'right' ? 'left' : 'right'
-                    setPrefs(writePrefs({ handedness: flipped }))
-                    void run(lastFileRef.current!, flipped, view.analysis.serves.index)
-                  }
-                : undefined
-            }
-            onPickServe={
-              lastFileRef.current
-                ? (i) => void run(lastFileRef.current!, view.analysis.handedness, i)
-                : undefined
-            }
-            onPickServeType={(serveType) => {
-              // Remembered, because a player working on their kick serve is
-              // going to film several of them in a row.
-              setPrefs(writePrefs({ serveType }))
-              // The serve type moves target bands and nothing measured, so this
-              // is arithmetic on frames already in memory rather than another
-              // pass over the video. Instant, where re-running would be half a
-              // minute to arrive at the same numbers.
-              const rescored = rescore(view.analysis, serveType)
-              if (rescored) {
-                remember(
-                  { sessionKey: rescored.id, handedness: rescored.handedness },
-                  rescored,
-                )
-                setView({ kind: 'report', analysis: rescored, videoUrl: view.videoUrl })
-                void trySave(rescored)
-              } else if (lastFileRef.current) {
-                void run(
-                  lastFileRef.current,
-                  view.analysis.handedness,
-                  view.analysis.serves.index,
-                  serveType,
-                )
+          {view.kind === 'glance' && (
+            <Glance
+              analysis={view.analysis}
+              // Whether the fault the previous serve on this trip was told about
+              // actually moved — see `faultMove`. Computed here rather than in
+              // the screen because it needs the session list, which the glance
+              // has no business holding; recomputed per render because it is two
+              // array walks over a list already in memory and the screen it
+              // feeds is only ever mounted one at a time.
+              move={view.move ?? faultMoveOnTrip(sessions, view.analysis)}
+              rotation={rotationMoveOnTrip(sessions, view.analysis)}
+              // The one recurring joint warning this serve raised — see
+              // `glanceStrain`. Same reasoning as `move` above: it needs the
+              // session list, which this screen has no business holding.
+              strain={glanceStrainLine(view.analysis)}
+              onBack={goHome}
+              // Home owns the viewfinder sheet, so going back and reopening it is
+              // the honest route — and it releases this clip's object URL on the
+              // way, which a second recording would otherwise leak.
+              onRecordAnother={() => {
+                goHome()
+                setFramingNonce((n) => n + 1)
+              }}
+              onOpenReport={() =>
+                setView({ kind: 'report', analysis: view.analysis, videoUrl: view.videoUrl })
               }
-            }}
-            statedTier={prefs.tier}
-            onPickTier={(tier) => {
-              // Remembered for the next clip, and applied to this one without
-              // touching the video: the tier moves which band every signal is
-              // judged against and nothing that was measured, so re-reading the
-              // clip would spend half a minute arriving at the same landmarks.
-              setPrefs(writePrefs({ tier }))
-              const rejudged = rediagnose(view.analysis, tier)
-              if (!rejudged) return
-              remember(
-                { sessionKey: rejudged.id, handedness: rejudged.handedness },
-                rejudged,
-              )
-              setView({ kind: 'report', analysis: rejudged, videoUrl: view.videoUrl })
-              void trySave(rejudged)
-            }}
-            onCheckConsistency={
-              lastFileRef.current && view.analysis.serves.count > 1
-                ? () => void compareServes(view.analysis)
-                : undefined
-            }
-            servePair={pair}
-            bestGap={bestGapFor(typeOf(view.analysis))}
-            basketGapDelta={gapDeltaForView(view.analysis.id, typeOf(view.analysis))}
-            bestScore={bestScoreFor(typeOf(view.analysis))}
-            streak={streak}
-            strainBehind={strainBehindFor(view.analysis.createdAt)}
-            saveWarning={saveWarning}
-            practice={practice}
-            onLogDrill={logDrill}
-            onUndoDrill={practice?.drilled ? undoDrill : undefined}
-          />
-        )}
+              /*
+               * The two taps, and they were unreachable until now.
+               *
+               * The serve-number block shipped with its screen three rounds ago
+               * and nothing ever passed `onTagServe`, so it has never rendered in
+               * the running app — found while wiring the outcome tap beside it,
+               * which would have shipped the same way.
+               *
+               * One row carries both facts and one tap must not clear the other,
+               * which is what `withServeTag` is for. A row left saying nothing is
+               * deleted rather than stored.
+               */
+              serveNumber={tagsById(serveTags).get(view.analysis.id)?.serveNumber}
+              outcome={tagsById(serveTags).get(view.analysis.id)?.outcome}
+              onTagServe={(n) => void applyServeTag(view.analysis.id, { serveNumber: n })}
+              onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
+            />
+          )}
 
-        {view.kind === 'progress' && (
-          <Progress
-            sessions={sessions}
-            practice={practice}
-            onLogDrill={logDrill}
-            onUndoDrill={undoDrill}
-            seeded={demoHistory.current !== undefined}
-            onBack={goHome}
-          />
-        )}
+          {view.kind === 'report' && (
+            <Report
+              /*
+               * Keyed, so the report's own state cannot outlive the report.
+               *
+               * Two things in there are decisions about one specific serve: having
+               * chosen to see the numbers off a clip that was refused, and having
+               * hidden the spreads. Switching serves inside a basket is a cache
+               * hit, which swaps the analysis without passing through the
+               * analysing screen — so without a key the component is never
+               * remounted, and serve three's override silently applies to serve
+               * two's refusal.
+               */
+              key={view.analysis.id}
+              analysis={view.analysis}
+              videoUrl={view.videoUrl}
+              previous={priorTo(view.analysis.createdAt, typeOf(view.analysis))}
+              fixtureExport={FIXTURE_EXPORT}
+              onBack={goHome}
+              onAnalyzeAnother={goHome}
+              onFlipHandedness={
+                lastFileRef.current
+                  ? () => {
+                      // Correcting the badge is the player stating which hand they
+                      // serve with, so it is remembered rather than being asked
+                      // again on the next clip.
+                      const flipped = view.analysis.handedness === 'right' ? 'left' : 'right'
+                      setPrefs(writePrefs({ handedness: flipped }))
+                      void run(lastFileRef.current!, flipped, view.analysis.serves.index)
+                    }
+                  : undefined
+              }
+              onPickServe={
+                lastFileRef.current
+                  ? (i) => void run(lastFileRef.current!, view.analysis.handedness, i)
+                  : undefined
+              }
+              onPickServeType={(serveType) => {
+                // Remembered, because a player working on their kick serve is
+                // going to film several of them in a row.
+                setPrefs(writePrefs({ serveType }))
+                // The serve type moves target bands and nothing measured, so this
+                // is arithmetic on frames already in memory rather than another
+                // pass over the video. Instant, where re-running would be half a
+                // minute to arrive at the same numbers.
+                const rescored = rescore(view.analysis, serveType)
+                if (rescored) {
+                  remember(
+                    { sessionKey: rescored.id, handedness: rescored.handedness },
+                    rescored,
+                  )
+                  setView({ kind: 'report', analysis: rescored, videoUrl: view.videoUrl })
+                  void trySave(rescored)
+                } else if (lastFileRef.current) {
+                  void run(
+                    lastFileRef.current,
+                    view.analysis.handedness,
+                    view.analysis.serves.index,
+                    serveType,
+                  )
+                }
+              }}
+              statedTier={prefs.tier}
+              onPickTier={(tier) => {
+                // Remembered for the next clip, and applied to this one without
+                // touching the video: the tier moves which band every signal is
+                // judged against and nothing that was measured, so re-reading the
+                // clip would spend half a minute arriving at the same landmarks.
+                setPrefs(writePrefs({ tier }))
+                const rejudged = rediagnose(view.analysis, tier)
+                if (!rejudged) return
+                remember(
+                  { sessionKey: rejudged.id, handedness: rejudged.handedness },
+                  rejudged,
+                )
+                setView({ kind: 'report', analysis: rejudged, videoUrl: view.videoUrl })
+                void trySave(rejudged)
+              }}
+              onCheckConsistency={
+                lastFileRef.current && view.analysis.serves.count > 1
+                  ? () => void compareServes(view.analysis)
+                  : undefined
+              }
+              servePair={pair}
+              bestGap={bestGapFor(typeOf(view.analysis))}
+              basketGapDelta={gapDeltaForView(view.analysis.id, typeOf(view.analysis))}
+              bestScore={bestScoreFor(typeOf(view.analysis))}
+              streak={streak}
+              strainBehind={strainBehindFor(view.analysis.createdAt)}
+              saveWarning={saveWarning}
+              practice={practice}
+              onLogDrill={logDrill}
+              onUndoDrill={practice?.drilled ? undoDrill : undefined}
+            />
+          )}
 
-        {view.kind === 'saved' && view.example && (
-          <Report
-            key={view.session.id}
-            analysis={view.session}
-            example
-            onBack={goHome}
-            onAnalyzeAnother={goHome}
-          />
-        )}
+          {view.kind === 'progress' && (
+            <Progress
+              sessions={sessions}
+              practice={practice}
+              onLogDrill={logDrill}
+              onUndoDrill={undoDrill}
+              seeded={demoHistory.current !== undefined}
+              onBack={goHome}
+            />
+          )}
 
-        {view.kind === 'saved' && !view.example && (
-          <Report
-            key={view.session.id}
-            analysis={view.session}
-            previous={priorTo(view.session.createdAt, typeOf(view.session))}
-            fixtureExport={FIXTURE_EXPORT}
-            onBack={goHome}
-            onAnalyzeAnother={goHome}
-            bestGap={bestGapFor(typeOf(view.session))}
-            basketGapDelta={gapDeltaForView(view.session.id, typeOf(view.session))}
-            bestScore={bestScoreFor(typeOf(view.session))}
-            streak={streak}
-            strainBehind={strainBehindFor(view.session.createdAt)}
-            practice={practice}
-            onLogDrill={logDrill}
-            onUndoDrill={practice?.drilled ? undoDrill : undefined}
-          />
-        )}
+          {view.kind === 'saved' && view.example && (
+            <Report
+              key={view.session.id}
+              analysis={view.session}
+              example
+              onBack={goHome}
+              onAnalyzeAnother={goHome}
+            />
+          )}
 
-        {view.kind === 'error' && (
-          <div className="screen empty">
-            <div className="empty-inner">
-              <span className="empty-mark">
-                <Icon name="warn" size={26} />
-              </span>
-              <h1>{view.title}</h1>
-              <ul className="empty-hints">
-                {view.hints.map((h) => (
-                  <li key={h}>{h}</li>
-                ))}
-              </ul>
-              <button className="btn btn--primary btn--full" onClick={goHome}>
-                Try another video
-              </button>
-              <button className="btn btn--ghost btn--full" onClick={() => setSheet('guide')}>
-                How to film it
-              </button>
-              {/* Dev-only: file this refusal as a ground-truth fixture. The
-                  import is dynamic so none of it reaches the production bundle. */}
-              {import.meta.env.DEV && view.capture && (
-                <button
-                  className="btn btn--ghost btn--full"
-                  onClick={() => {
-                    const { capture, fileName, title } = view
-                    if (!capture) return
-                    void import('./dev/exportFixture').then((m) =>
-                      m.downloadRejectedFixture(capture, fileName ?? 'refused-clip', title),
-                    )
-                  }}
-                >
-                  Save refusal as test fixture
+          {view.kind === 'saved' && !view.example && (
+            <Report
+              key={view.session.id}
+              analysis={view.session}
+              previous={priorTo(view.session.createdAt, typeOf(view.session))}
+              fixtureExport={FIXTURE_EXPORT}
+              onBack={goHome}
+              onAnalyzeAnother={goHome}
+              bestGap={bestGapFor(typeOf(view.session))}
+              basketGapDelta={gapDeltaForView(view.session.id, typeOf(view.session))}
+              bestScore={bestScoreFor(typeOf(view.session))}
+              streak={streak}
+              strainBehind={strainBehindFor(view.session.createdAt)}
+              practice={practice}
+              onLogDrill={logDrill}
+              onUndoDrill={practice?.drilled ? undoDrill : undefined}
+            />
+          )}
+
+          {view.kind === 'error' && (
+            <div className="screen empty">
+              <div className="empty-inner">
+                <span className="empty-mark">
+                  <Icon name="warn" size={26} />
+                </span>
+                <h1>{view.title}</h1>
+                <ul className="empty-hints">
+                  {view.hints.map((h) => (
+                    <li key={h}>{h}</li>
+                  ))}
+                </ul>
+                <button className="btn btn--primary btn--full" onClick={goHome}>
+                  Try another video
                 </button>
-              )}
+                <button className="btn btn--ghost btn--full" onClick={() => setSheet('guide')}>
+                  How to film it
+                </button>
+                {/* Dev-only: file this refusal as a ground-truth fixture. The
+                    import is dynamic so none of it reaches the production bundle. */}
+                {import.meta.env.DEV && view.capture && (
+                  <button
+                    className="btn btn--ghost btn--full"
+                    onClick={() => {
+                      const { capture, fileName, title } = view
+                      if (!capture) return
+                      void import('./dev/exportFixture').then((m) =>
+                        m.downloadRejectedFixture(capture, fileName ?? 'refused-clip', title),
+                      )
+                    }}
+                  >
+                    Save refusal as test fixture
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </Suspense>
       </main>
 
       <Sheet
