@@ -187,6 +187,9 @@ interface SheetProps {
   children: ReactNode
 }
 
+/** How long a closing sheet stays on screen; matches `.is-leaving` in `states.css`. */
+const SHEET_EXIT_MS = 200
+
 const FOCUSABLE = [
   'a[href]',
   'button:not([disabled])',
@@ -265,10 +268,39 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
     }
   }, [open])
 
-  if (!open) return null
+  /*
+   * Kept on screen for one short exit after `open` goes false.
+   *
+   * The sheet slid up on the way in and vanished in a single frame on the way
+   * out, which made closing read as something breaking rather than something
+   * put away. `leaving` holds the last render for `SHEET_EXIT_MS` under an
+   * exit class; the backdrop stops taking taps at once, so nothing behind it
+   * waits on the animation. Reduced motion collapses the animation in
+   * `tokens.css` and the sheet is simply gone when the timer fires.
+   */
+  const [leaving, setLeaving] = useState(false)
+  const wasOpen = useRef(open)
+  useEffect(() => {
+    if (open) {
+      wasOpen.current = true
+      setLeaving(false)
+      return
+    }
+    if (!wasOpen.current) return
+    wasOpen.current = false
+    setLeaving(true)
+    const t = setTimeout(() => setLeaving(false), SHEET_EXIT_MS)
+    return () => clearTimeout(t)
+  }, [open])
+
+  if (!open && !leaving) return null
 
   return (
-    <div className="sheet-backdrop" onClick={onClose}>
+    <div
+      className={open ? 'sheet-backdrop' : 'sheet-backdrop is-leaving'}
+      onClick={open ? onClose : undefined}
+      aria-hidden={open ? undefined : true}
+    >
       <div
         className="sheet"
         ref={panel}

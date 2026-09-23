@@ -133,6 +133,25 @@
   from { transform: translateY(28px); }
 }
 
+/* The way out, the way in reversed and quicker: put away, not thrown. The
+   200ms is SHEET_EXIT_MS in primitives.tsx, which unmounts after it. */
+.sheet-backdrop.is-leaving {
+  pointer-events: none;
+  animation: fade-out 200ms var(--ease) forwards;
+}
+
+.sheet-backdrop.is-leaving .sheet {
+  animation: slide-down 200ms var(--ease) forwards;
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes slide-down {
+  to { transform: translateY(36px); }
+}
+
 .sheet-grip {
   width: 38px;
   height: 4px;
