@@ -436,7 +436,7 @@ export async function scanForServes(
     const at = await seekTo(video, t)
     if (at === false) return
     input.draw?.()
-    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker))
+    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker, video.currentTime))
     const image = res.landmarks?.[0]?.map((l) => input.back(toLandmark(l)))
     if (image) {
       // Image y grows downwards, so negate it. Only y is compared here, so no
@@ -523,7 +523,7 @@ export async function extractFrames(
   let input = poseInput(video, undefined)
   const detect = (): { image: Landmark[]; world: Landmark[] } | null => {
     input.draw?.()
-    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker))
+    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker, video.currentTime))
     const image = res.landmarks?.[0]
     const world = res.worldLandmarks?.[0]
     if (!image || !world) return null
@@ -625,7 +625,7 @@ export async function preflight(
     const at = await seekTo(video, t)
     if (at === false) continue
     input.draw?.()
-    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker))
+    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker, video.currentTime))
     const image = res.landmarks?.[0]
     const world = res.worldLandmarks?.[0]
     if (!image || !world) continue

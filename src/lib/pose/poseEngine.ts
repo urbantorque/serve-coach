@@ -205,12 +205,57 @@ export const enginePaths = () => ({ model: MODEL_URL, wasm: WASM_DIR })
  * duplicated module, a second caller) restarts it from zero and the graph
  * throws. A WeakMap ties the invariant to the object that enforces it.
  */
-const clocks = new WeakMap<PoseLandmarker, number>()
+const clocks = new WeakMap<PoseLandmarker, VideoClock>()
 
-export function nextVideoTimestamp(landmarker: PoseLandmarker): number {
-  const next = (clocks.get(landmarker) ?? 0) + 33
-  clocks.set(landmarker, next)
-  return next
+/**
+ * The timestamp to hand the graph for one frame.
+ *
+ * It used to be the last one plus 33 ms, whatever the frame actually was. In
+ * VIDEO mode MediaPipe carries each frame's region and its landmark filtering
+ * into the next on the strength of that number, so the 12 fps scan (83 ms
+ * apart), the fine pass (~31 ms apart) and the jump between one pass and the
+ * next were all told they were 33 ms apart. Given the frame's media time, it
+ * now says when the frame really was; given none — the live viewfinder — it
+ * keeps the fixed step.
+ *
+ * A frame earlier than the last one (a new pass seeking back) cannot be
+ * stamped with its own time, since the graph rejects that; the clock is moved
+ * on so the frame lands `CLOCK_BREAK_MS` after the last, a gap the tracker
+ * reads as a new stretch of video rather than as a joint that teleported.
+ */
+export const CLOCK_BREAK_MS = 1000
+
+export interface VideoClock {
+  /** Added to media time; grows at every backwards step. */
+  offset: number
+  last: number
+  /** The last integer handed out. */
+  stamped?: number
+}
+
+export function advanceClock(clock: VideoClock, mediaSeconds?: number): number {
+  let next: number
+  if (mediaSeconds === undefined || !Number.isFinite(mediaSeconds)) {
+    next = clock.last + 33
+  } else {
+    next = clock.offset + mediaSeconds * 1000
+    if (next <= clock.last) {
+      clock.offset += clock.last + CLOCK_BREAK_MS - next
+      next = clock.last + CLOCK_BREAK_MS
+    }
+  }
+  // Whole milliseconds, strictly increasing: two frames under half a
+  // millisecond apart would otherwise round to the same stamp.
+  const stamp = Math.max(Math.round(next), (clock.stamped ?? 0) + 1)
+  clock.last = next
+  clock.stamped = stamp
+  return stamp
+}
+
+export function nextVideoTimestamp(landmarker: PoseLandmarker, mediaSeconds?: number): number {
+  let clock = clocks.get(landmarker)
+  if (!clock) clocks.set(landmarker, (clock = { offset: 0, last: 0 }))
+  return advanceClock(clock, mediaSeconds)
 }
 
 /**
