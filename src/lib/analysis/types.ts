@@ -314,6 +314,13 @@ export interface Analysis {
      * this pass warm," never which download made it cold.
      */
     coldEngine: boolean
+    /**
+     * Whether the pose model read a crop round the server rather than the
+     * whole frame — see `pose/playerCrop.ts`. Absent on reports filed before
+     * the crop existed. Kept with the cost because it is the same kind of
+     * fact: how this pass read the clip, for whoever is reading the export.
+     */
+    cropped?: boolean
   }
   /**
    * The single thing to work on, or the reason this clip could not be read.

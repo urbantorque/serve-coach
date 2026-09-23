@@ -9,6 +9,7 @@ import {
 import { bridgeDetectionGaps, type PoseSample } from '../analysis/kalman'
 import { UnreadableVideoError, type Frame, type Landmark } from '../analysis/types'
 import { nextVideoTimestamp } from './poseEngine'
+import { choosePlayerCrop, uncrop, type Crop, type PersonBox } from './playerCrop'
 import { FINE_FPS, MAX_FINE_FRAMES, samplingRateFor } from './rate'
 
 // Re-exported so every existing importer keeps reading them from here. They
@@ -342,6 +343,71 @@ const toImageLandmark = (l: RawLandmark, aspect: number): Landmark => ({
 })
 
 /**
+ * Finds the people in the current video frame. Supplied by `analyze.ts`, which
+ * owns the object detector, so this module keeps no dependency on it; absent,
+ * or failing, the pose model reads the whole frame as it always did.
+ */
+export type FindPeople = (video: HTMLVideoElement) => PersonBox[]
+
+/** How many frames of a window the detector looks at to place the crop. */
+const CROP_SIGHTINGS = 5
+
+/** The square the crop is drawn into: past the pose model's 256 px region, never smaller. */
+const CROP_PIXELS = 512
+
+/**
+ * The square round the server for one stretch of the clip, or nothing.
+ *
+ * A handful of seeks and one detector call each — well under a second — against
+ * a pass that seeks a hundred times. Any failure from the detector abandons the
+ * crop rather than the analysis: see `playerCrop.ts` for why declining is safe.
+ */
+async function findCrop(
+  video: HTMLVideoElement,
+  people: FindPeople | undefined,
+  start: number,
+  end: number,
+  check: () => void,
+): Promise<Crop | undefined> {
+  if (!people) return undefined
+  const sightings: PersonBox[][] = []
+  for (let k = 0; k < CROP_SIGHTINGS; k++) {
+    check()
+    const at = await seekTo(video, start + ((end - start) * (k + 0.5)) / CROP_SIGHTINGS)
+    if (at === false) continue
+    try {
+      sightings.push(people(video))
+    } catch {
+      return undefined
+    }
+  }
+  return choosePlayerCrop(sightings, video.videoWidth, video.videoHeight)
+}
+
+/**
+ * What the pose model is handed for the current frame: the video itself, or
+ * the crop drawn into a square canvas, with the way back to frame coordinates.
+ */
+function poseInput(video: HTMLVideoElement, crop: Crop | undefined) {
+  if (!crop) return { source: video as HTMLVideoElement | HTMLCanvasElement, back: <L extends Landmark>(l: L) => l }
+  const canvas = document.createElement('canvas')
+  canvas.width = CROP_PIXELS
+  canvas.height = CROP_PIXELS
+  const ctx = canvas.getContext('2d')!
+  const w = video.videoWidth
+  const h = video.videoHeight
+  return {
+    source: canvas as HTMLVideoElement | HTMLCanvasElement,
+    draw: () => {
+      ctx.fillStyle = '#000'
+      ctx.fillRect(0, 0, CROP_PIXELS, CROP_PIXELS)
+      ctx.drawImage(video, crop.x, crop.y, crop.side, crop.side, 0, 0, CROP_PIXELS, CROP_PIXELS)
+    },
+    back: <L extends Landmark>(l: L) => uncrop(l, crop, w, h),
+  }
+}
+
+/**
  * Coarse pass over the whole clip to find where each serve happens.
  *
  * Cheap by design — a low sample rate is plenty to spot the peaks in hand
@@ -351,10 +417,16 @@ const toImageLandmark = (l: RawLandmark, aspect: number): Landmark => ({
 export async function scanForServes(
   video: HTMLVideoElement,
   landmarker: PoseLandmarker,
-  opts: { onProgress?: (ratio: number) => void; signal?: AbortSignal } = {},
+  opts: { onProgress?: (ratio: number) => void; signal?: AbortSignal; people?: FindPeople } = {},
 ): Promise<number[]> {
   const { onProgress = () => {}, signal } = opts
   const samples: ReachSample[] = []
+  // One crop for the whole clip. A player who changes sides between serves
+  // gives sightings that disagree, and `choosePlayerCrop` then declines.
+  const crop = await findCrop(video, opts.people, 0, video.duration, () => {
+    if (signal?.aborted) throw new Cancelled()
+  })
+  const input = poseInput(video, crop)
 
   /** Read the highest either hand gets at one moment. */
   const sampleAt = async (t: number) => {
@@ -363,8 +435,9 @@ export async function scanForServes(
     // player was somewhere else, and a scan is nothing but a ranking of those.
     const at = await seekTo(video, t)
     if (at === false) return
-    const res = landmarker.detectForVideo(video, nextVideoTimestamp(landmarker))
-    const image = res.landmarks?.[0]
+    input.draw?.()
+    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker))
+    const image = res.landmarks?.[0]?.map((l) => input.back(toLandmark(l)))
     if (image) {
       // Image y grows downwards, so negate it. Only y is compared here, so no
       // aspect correction is needed.
@@ -416,6 +489,8 @@ export async function extractFrames(
     serveIndex?: number
     /** Serve times already found by `scanForServes`, to skip scanning again. */
     knownServeTimes?: number[]
+    /** Where the people are, for pointing the pose model at the server. */
+    people?: FindPeople
   } = {},
 ): Promise<{
   frames: Frame[]
@@ -433,6 +508,8 @@ export async function extractFrames(
    * them a second time. Empty for a clip short enough to skip the scan.
    */
   times: number[]
+  /** The square the pose model read, in source pixels, or none for the whole frame. */
+  crop?: Crop
 }> {
   const { onProgress = () => {}, signal, serveIndex = -1, knownServeTimes: known } = opts
   const duration = video.duration
@@ -442,13 +519,19 @@ export async function extractFrames(
     if (signal?.aborted) throw new Cancelled()
   }
 
+  // Set once the window is known, below; the scan above reads its own.
+  let input = poseInput(video, undefined)
   const detect = (): { image: Landmark[]; world: Landmark[] } | null => {
-    const res = landmarker.detectForVideo(video, nextVideoTimestamp(landmarker))
+    input.draw?.()
+    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker))
     const image = res.landmarks?.[0]
     const world = res.worldLandmarks?.[0]
     if (!image || !world) return null
     return {
-      image: image.map((l) => toImageLandmark(l, aspect)),
+      // Back to whole-frame coordinates first, so the aspect correction and
+      // everything after it read a cropped frame exactly as an uncropped one.
+      image: image.map((l) => toImageLandmark(input.back(toLandmark(l)), aspect)),
+      // World landmarks are metres about the hips; a crop does not move them.
       world: world.map(toLandmark),
     }
   }
@@ -463,9 +546,13 @@ export async function extractFrames(
         (await scanForServes(video, landmarker, {
           signal,
           onProgress: (ratio) => onProgress({ phase: 'scanning', ratio }),
+          people: opts.people,
         })))
 
   const { start, end, serves, located } = readWindow(duration, times, serveIndex)
+
+  const crop = await findCrop(video, opts.people, start, end, check)
+  input = poseInput(video, crop)
 
   const span = Math.max(0.2, end - start)
   const fps = samplingRateFor(span)
@@ -499,7 +586,7 @@ export async function extractFrames(
   // see `clockOf` in phases.ts.
   const frames = bridgeDetectionGaps(samples)
 
-  return { frames, fps, window: { start, end }, serves, located, times }
+  return { frames, fps, window: { start, end }, serves, located, times, crop }
 }
 
 /**
@@ -516,11 +603,19 @@ export async function extractFrames(
 export async function preflight(
   video: HTMLVideoElement,
   landmarker: PoseLandmarker,
-  opts: { samples?: number; signal?: AbortSignal } = {},
+  opts: { samples?: number; signal?: AbortSignal; people?: FindPeople } = {},
 ): Promise<Frame[]> {
   const n = opts.samples ?? 6
   const aspect = video.videoWidth / Math.max(1, video.videoHeight)
   const out: Frame[] = []
+  // Pointed at the server like the passes after it, so a distant player is not
+  // refused as "nobody in frame" by the one check meant to spare them a wasted
+  // half-minute. The landmarks come back in whole-frame coordinates, so "too
+  // far away" is still judged on the player's true size in the frame.
+  const crop = await findCrop(video, opts.people, video.duration * 0.12, video.duration * 0.88, () => {
+    if (opts.signal?.aborted) throw new Cancelled()
+  })
+  const input = poseInput(video, crop)
 
   for (let i = 0; i < n; i++) {
     if (opts.signal?.aborted) throw new Cancelled()
@@ -529,14 +624,15 @@ export async function preflight(
     const t = video.duration * (0.12 + (0.76 * i) / Math.max(1, n - 1))
     const at = await seekTo(video, t)
     if (at === false) continue
-    const res = landmarker.detectForVideo(video, nextVideoTimestamp(landmarker))
+    input.draw?.()
+    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker))
     const image = res.landmarks?.[0]
     const world = res.worldLandmarks?.[0]
     if (!image || !world) continue
     out.push({
       index: out.length,
       t: at,
-      image: image.map((l) => toImageLandmark(l, aspect)),
+      image: image.map((l) => toImageLandmark(input.back(toLandmark(l)), aspect)),
       world: world.map(toLandmark),
       visibility: 0,
     })

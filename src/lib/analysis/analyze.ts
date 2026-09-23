@@ -6,6 +6,7 @@ import {
   preflight,
   scanForServes,
   type ExtractProgress,
+  type FindPeople,
 } from '../pose/extract'
 import { framingIssues } from './framingIssues'
 import type { ServeType } from '../storage/prefs'
@@ -23,6 +24,7 @@ import {
   detectRacket,
   isObjectModelCached,
   loadObjectEngine,
+  detectPeople,
   nextObjectTimestamp,
   objectEngineResident,
 } from '../vision/objectEngine'
@@ -132,6 +134,12 @@ export interface AnalyzeOptions {
   skipBall?: boolean
   skipThumbnails?: boolean
   skipRacketBoxes?: boolean
+  /**
+   * Read whole frames, as before the player crop existed. For the clip
+   * benchmark's before-and-after, and a switch to reach for if a crop is ever
+   * found doing harm; nothing in the app sets it.
+   */
+  skipPlayerCrop?: boolean
   /** Serve times already located, so the clip is not scanned again per serve. */
   knownServeTimes?: number[]
   /**
@@ -486,6 +494,20 @@ export async function analyzeAllServes(
   }
 }
 
+/**
+ * The object detector, as the pose passes use it: to find where the server is
+ * so the pose model can be pointed there (`pose/playerCrop.ts`). `undefined`
+ * when it will not load — the pose model then reads whole frames, as before.
+ */
+async function peopleFinder(): Promise<FindPeople | undefined> {
+  try {
+    const det = await loadObjectEngine()
+    return (video) => detectPeople(det, video)
+  } catch {
+    return undefined
+  }
+}
+
 /** One scan of the clip. Borrows the caller's element when given one. */
 async function locateServes(
   opts: AnalyzeOptions,
@@ -499,6 +521,7 @@ async function locateServes(
     opts.onProgress?.({ step: 'scanning', ratio: 0, detail: 'Finding every serve' })
     return await scanForServes(video, landmarker, {
       signal: opts.signal,
+      people: opts.skipPlayerCrop ? undefined : await peopleFinder(),
       onProgress: (ratio) =>
         opts.onProgress?.({ step: 'scanning', ratio, detail: 'Finding every serve' }),
     })
@@ -1283,13 +1306,16 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   })
 
   onProgress({ step: 'reading', ratio: 0, detail: 'Reading your video' })
-  await loadVideo(video, videoUrl)
+  const [people] = await Promise.all([
+    opts.skipPlayerCrop ? undefined : peopleFinder(),
+    loadVideo(video, videoUrl),
+  ])
 
   // Check the framing before spending half a minute measuring it. Skipped when
   // sweeping a basket, where the clip has already been through this once.
   if (!opts.skipFramingCheck) {
     onProgress({ step: 'reading', ratio: 0.5, detail: 'Checking the framing' })
-    const sample = await preflight(video, landmarker, { signal })
+    const sample = await preflight(video, landmarker, { signal, people })
     const issue = blockingFramingIssue(framingIssues(sample))
     if (issue) throw issue
   }
@@ -1298,6 +1324,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     signal,
     serveIndex: opts.serveIndex,
     knownServeTimes: opts.knownServeTimes,
+    people,
     onProgress: (p: ExtractProgress) =>
       onProgress({
         step: p.phase === 'scanning' ? 'scanning' : 'tracking',
@@ -1541,7 +1568,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     // What this pass actually took, rather than what a comment guessed — see
     // `Analysis.cost`. Rounded to the millisecond: nothing reads it at finer
     // resolution and a long float in every stored report is noise.
-    cost: { ms: Math.round(clock() - startedAt), coldEngine },
+    cost: { ms: Math.round(clock() - startedAt), coldEngine, cropped: extracted.crop !== undefined },
     video: {
       name: fileName,
       durationMs: video.duration * 1000,

@@ -790,6 +790,7 @@ Everything is in `src/lib`:
 | `pose/poseEngine.ts` | loads the model and WASM; owns the per-landmarker video clock |
 | `vision/objectEngine.ts` | loads the COCO object detector for the racket; mirrors `poseEngine.ts`, draw-only, feeds no score |
 | `pose/extract.ts` | samples the video and runs detection |
+| `pose/playerCrop.ts` | points the pose model at the server: one padded square per read window from the object detector's tallest person, or the whole frame when the player is already big enough or cannot be found |
 | `pose/skeleton.ts` | draws the tracked body — shared by the player and the stills |
 | `framing/judge.ts` | the live framing verdict, before the player has filmed anything |
 | `framing/access.ts` | why a live camera preview failed to start, and what to say about it |

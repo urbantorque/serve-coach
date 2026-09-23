@@ -7,6 +7,7 @@
  * download of the library itself.
  */
 import type { FilesetResolver, ObjectDetector } from '@mediapipe/tasks-vision'
+import type { PersonBox } from '../pose/playerCrop'
 
 type WasmFileset = Awaited<ReturnType<(typeof FilesetResolver)['forVisionTasks']>>
 
@@ -30,6 +31,7 @@ const MODEL_URL = `${BASE}models/efficientdet_lite0.tflite`
  * with `===` fails loudly on a rename instead, at the point of use.
  */
 export const RACKET_CATEGORY = 'tennis racket'
+export const PERSON_CATEGORY = 'person'
 
 export type EngineStage = 'idle' | 'downloading' | 'starting' | 'ready' | 'failed'
 
@@ -117,11 +119,15 @@ export function loadObjectEngine(
       ])
       onProgress({ stage: 'starting' })
 
-      try {
-        detector = await create(buffer, fileset, 'GPU')
-      } catch {
-        detector = await create(buffer, fileset, 'CPU')
-      }
+      // CPU only. The GPU delegate loads this int8 model without complaint and
+      // then returns no detections at all — measured on the pose benchmark's
+      // frames, where the same frame gave eight people on CPU and nothing on
+      // GPU, with or without a category allowlist. The fallback this replaced
+      // only caught a delegate that failed to load, so on any phone with a
+      // working GPU the racket boxes were silently always empty. Lite0 is
+      // built for CPU inference and runs on a handful of frames, not all of
+      // them.
+      detector = await create(buffer, fileset, 'CPU')
 
       onProgress({ stage: 'ready' })
       return detector
@@ -170,6 +176,22 @@ export function nextObjectTimestamp(det: ObjectDetector): number {
   const next = (clocks.get(det) ?? 0) + 33
   clocks.set(det, next)
   return next
+}
+
+/**
+ * Everybody in one video frame, in the frame's own pixels — for choosing
+ * where the pose model looks (`pose/playerCrop.ts`). Pixels rather than 0–1,
+ * because the crop is drawn from the video in pixels.
+ */
+export function detectPeople(det: ObjectDetector, video: HTMLVideoElement): PersonBox[] {
+  const result = det.detectForVideo(video, nextObjectTimestamp(det))
+  const out: PersonBox[] = []
+  for (const d of result.detections) {
+    if (d.categories[0]?.categoryName !== PERSON_CATEGORY || !d.boundingBox) continue
+    const bb = d.boundingBox
+    out.push({ x: bb.originX, y: bb.originY, width: bb.width, height: bb.height, score: d.categories[0].score })
+  }
+  return out
 }
 
 /** One detection, in 0–1 image coordinates — MediaPipe hands back pixels. */
