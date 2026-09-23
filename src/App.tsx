@@ -279,7 +279,7 @@ export default function App() {
    */
   const [serveTags, setServeTags] = useState<ServeTag[]>([])
   const [sheet, setSheet] = useState<
-    'guide' | 'guide-first' | 'history' | 'progress' | 'check' | 'corpus' | null
+    'guide' | 'guide-first' | 'history' | 'settings' | 'progress' | 'check' | 'corpus' | null
   >(null)
   /** Bumped to ask the home screen to open its viewfinder. See Home's `openFraming`. */
   const [framingNonce, setFramingNonce] = useState(0)
@@ -1431,9 +1431,39 @@ export default function App() {
     goHome()
   })
 
-  const remove = async (id: string) => {
-    await safely(() => deleteSession(id), undefined)
-    refreshSessions()
+  /**
+   * A delete that can be taken back for a few seconds.
+   *
+   * The trash icon sat beside every row with no confirmation, so one mis-tap
+   * lost a serve for good. The row disappears at once and the delete itself
+   * waits: a second delete, the sheet closing, or the timer running out
+   * commits it, and "Undo" in between simply forgets it was asked for. Held
+   * rather than re-saved on undo, because `saveSession` takes a full analysis
+   * and a stored report no longer is one.
+   */
+  const [pendingDelete, setPendingDelete] = useState<string>()
+  const pendingTimer = useRef<ReturnType<typeof setTimeout>>()
+  const commitDelete = useCallback(
+    (id: string | undefined) => {
+      clearTimeout(pendingTimer.current)
+      setPendingDelete(undefined)
+      if (!id) return
+      void safely(() => deleteSession(id), undefined).then(refreshSessions)
+    },
+    [refreshSessions],
+  )
+  const remove = (id: string) => {
+    commitDelete(pendingDelete)
+    setPendingDelete(id)
+    pendingTimer.current = setTimeout(() => commitDelete(id), 5000)
+  }
+  const undoDelete = () => {
+    clearTimeout(pendingTimer.current)
+    setPendingDelete(undefined)
+  }
+  const closeHistory = () => {
+    commitDelete(pendingDelete)
+    setSheet(null)
   }
 
   return (
@@ -1450,6 +1480,7 @@ export default function App() {
             onOpen={openSaved}
             onShowGuide={() => setSheet('guide')}
             onShowHistory={() => setSheet('history')}
+            onShowSettings={() => setSheet('settings')}
             onShowProgress={() => setSheet('progress')}
             needsHandedness={!prefs.handedness}
             onGuideThen={onGuideThen}
@@ -1761,12 +1792,21 @@ export default function App() {
         }}
       />
 
-      <Sheet open={sheet === 'history'} onClose={() => setSheet(null)} title="Your serves">
-        {sessions.length === 0 ? (
+      <Sheet open={sheet === 'history'} onClose={closeHistory} title="Your serves">
+        {pendingDelete && (
+          <p className="storage-note undo-row" role="status">
+            <Icon name="trash" size={15} />
+            <span>Serve deleted.</span>
+            <button className="levelled-btn" onClick={undoDelete}>
+              Undo
+            </button>
+          </p>
+        )}
+        {sessions.filter((s) => s.id !== pendingDelete).length === 0 ? (
           <p className="sheet-empty">No serves analysed yet.</p>
         ) : (
           <ul className="history">
-            {sessions.map((s) => (
+            {sessions.filter((s) => s.id !== pendingDelete).map((s) => (
               <li key={s.id}>
                 {/* Literally the same row Home draws — same `.recent` rules,
                     same ring. A past serve was two objects in this app, which
@@ -1794,7 +1834,7 @@ export default function App() {
                 </button>
                 <button
                   className="icon-btn icon-btn--quiet"
-                  onClick={() => void remove(s.id)}
+                  onClick={() => remove(s.id)}
                   aria-label={`Delete serve from ${new Date(s.createdAt).toLocaleDateString()}`}
                 >
                   <Icon name="trash" size={17} />
@@ -1806,10 +1846,25 @@ export default function App() {
         <p className="sheet-note">
           Reports are kept on this device only. The video itself is never saved.
         </p>
+        <button className="btn btn--ghost btn--full history-backup" onClick={() => setSheet('settings')}>
+          <Icon name="upload" size={17} />
+          Back up or restore
+        </button>
+      </Sheet>
+
+      {/*
+       * The choices that used to be trapped elsewhere. Handedness could only be
+       * changed by re-running a report, the backup sat at the foot of the
+       * history list, and the device check — a diagnostic for a court trip,
+       * not for playing — sat in that same list as though it were a feature.
+       */}
+      <Sheet open={sheet === 'settings'} onClose={() => setSheet(null)} title="Settings">
+        <HandednessPicker
+          value={prefs.handedness}
+          onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
+        />
         <StoragePanel count={sessions.length} onImported={refreshSessions} />
-        {/* Under storage rather than on the home screen. Nothing here helps
-            anybody analyse a serve, and a diagnostic on the path to the thing
-            the app is for is a diagnostic somebody has to step over. */}
+        <h3 className="t-overline settings-head">This phone</h3>
         <button className="btn btn--ghost btn--full" onClick={() => setSheet('check')}>
           <Icon name="info" size={17} />
           What this phone can do

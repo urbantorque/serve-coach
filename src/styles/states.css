@@ -307,3 +307,31 @@
   gap: 9px;
   padding-top: 20px;
 }
+
+/* ============================================================================
+   Settings sheet and the history sheet's undo — existing tokens only
+   ========================================================================= */
+
+.settings-head {
+  margin-top: 26px;
+}
+
+.history-backup {
+  margin-top: 14px;
+}
+
+/* The deleted row's place, for five seconds. Same surface as the storage
+   notes; the lime word is the one affordance on it. */
+.undo-row {
+  align-items: center;
+  margin: 0 0 12px;
+}
+
+.undo-row .icon {
+  flex: none;
+  color: var(--fg-faint);
+}
+
+.undo-row span {
+  flex: 1;
+}

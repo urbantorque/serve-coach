@@ -345,6 +345,13 @@ const PATHS: Record<string, ReactNode> = {
       <circle cx="12" cy="12" r="0.6" fill="currentColor" />
     </>
   ),
+  settings: (
+    <>
+      <path d="M4.5 7h9M17.5 7h2M4.5 17h2M10.5 17h9" />
+      <circle cx="15.5" cy="7" r="2" />
+      <circle cx="8.5" cy="17" r="2" />
+    </>
+  ),
   info: (
     <>
       <circle cx="12" cy="12" r="8.5" />

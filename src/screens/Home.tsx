@@ -32,6 +32,8 @@ interface Props {
   onOpen: (session: Session) => void
   onShowGuide: () => void
   onShowHistory: () => void
+  /** Hand, backup and the device check — see the settings sheet in `App.tsx`. */
+  onShowSettings: () => void
   onShowProgress: () => void
   /**
    * True until the player has stated which hand holds the racket.
@@ -94,6 +96,7 @@ export default function Home({
   onOpen,
   onShowGuide,
   onShowHistory,
+  onShowSettings,
   onShowProgress,
   needsHandedness,
   onGuideThen,
@@ -207,17 +210,17 @@ export default function Home({
           <span className="brand-dot" />
           Serve Coach
         </span>
-        {/* Shown even with nothing saved. Restoring a backup onto a new phone is
-            exactly the moment the history is empty, and hiding the only way in
-            until there is something to see locks that player out of the one
-            thing they came here to do. */}
-        <button
-          className="icon-btn"
-          onClick={onShowHistory}
-          aria-label={sessions.length > 0 ? 'Your serves' : 'Your serves and backups'}
-        >
-          <Icon name="clock" />
-        </button>
+        <span className="home-top-actions">
+          <button className="icon-btn" onClick={onShowHistory} aria-label="Your serves">
+            <Icon name="clock" />
+          </button>
+          {/* Shown even with nothing saved. Restoring a backup onto a new phone
+              is exactly the moment the history is empty, and the backup lives
+              here now rather than at the foot of the history list. */}
+          <button className="icon-btn" onClick={onShowSettings} aria-label="Settings and backups">
+            <Icon name="settings" />
+          </button>
+        </span>
       </header>
 
       <section className="home-hero">
