@@ -9,7 +9,10 @@ import type { Session } from '../lib/storage/db'
 
 interface Props {
   sessions: Session[]
-  offlineReady: boolean
+  /** `undefined` while the cache is still being asked. */
+  offlineReady: boolean | undefined
+  /** Whether storage has answered; until then `sessions` being empty means nothing. */
+  sessionsLoaded: boolean
   onPick: (file: File) => void
   /**
    * A clip recorded inside the app, which is a different claim from a picked
@@ -84,6 +87,7 @@ const coarsePointer = () =>
 export default function Home({
   sessions,
   offlineReady,
+  sessionsLoaded,
   onPick,
   onRecorded,
   openFraming = 0,
@@ -381,7 +385,7 @@ export default function Home({
           the only thing the app can currently show them is a file picker. An
           example report is the difference between understanding what this does
           and having to go and film something to find out. */}
-      {sessions.length === 0 && (
+      {sessionsLoaded && sessions.length === 0 && (
         <button className="strap strap--quiet" onClick={onShowExample}>
           <Icon name="target" size={17} />
           <span>
@@ -494,7 +498,14 @@ export default function Home({
       )}
 
       <footer className="home-foot">
-        {offlineReady ? (
+        {offlineReady === undefined ? (
+          // Space held, nothing said: the badge height is reserved so the
+          // footer does not jump when the cache answers a moment later.
+          <span className="badge" aria-hidden="true" style={{ visibility: 'hidden' }}>
+            <Icon name="offline" size={15} />
+            Checking
+          </span>
+        ) : offlineReady ? (
           <span className="badge badge--on">
             <Icon name="check" size={15} />
             Ready to use offline

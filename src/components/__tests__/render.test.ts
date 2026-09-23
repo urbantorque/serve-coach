@@ -185,6 +185,7 @@ check('the home screen renders with no history at all', () => {
     createElement(Home, {
       sessions: [],
       offlineReady: false,
+      sessionsLoaded: true,
       onPick: noop,
       onOpen: noop,
       onShowGuide: noop,
@@ -197,6 +198,28 @@ check('the home screen renders with no history at all', () => {
     }),
   )
   assert(out.includes('Analyse a serve'), 'the first-run home screen lost its one button')
+  assert(out.includes('See an example report'), 'a first-time player lost the example report')
+})
+
+check('before storage answers, a returning player is not invited to see an example', () => {
+  const out = html(
+    createElement(Home, {
+      sessions: [],
+      offlineReady: undefined,
+      sessionsLoaded: false,
+      onPick: noop,
+      onOpen: noop,
+      onShowGuide: noop,
+      onShowHistory: noop,
+      onShowProgress: noop,
+      onGuideThen: noop,
+      onShowExample: noop,
+      needsHandedness: false,
+      onMakeOffline: noop,
+    }),
+  )
+  assert(!out.includes('See an example report'), 'the first-run strap flashed before the history loaded')
+  assert(!out.includes('Download now'), 'the offline badge offered a download before the cache was asked')
 })
 
 check('the home screen renders with a history behind it', () => {
@@ -208,6 +231,7 @@ check('the home screen renders with a history behind it', () => {
     createElement(Home, {
       sessions: history,
       offlineReady: true,
+      sessionsLoaded: true,
       onPick: noop,
       onOpen: noop,
       onShowGuide: noop,

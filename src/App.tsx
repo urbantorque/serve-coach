@@ -252,6 +252,16 @@ export default function App() {
    */
   const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
   const [sessions, setSessions] = useState<Session[]>([])
+  /**
+   * Whether storage has answered yet.
+   *
+   * `sessions` starts empty and a returning player's list arrives a beat later,
+   * so without this the home screen spent that beat telling somebody with sixty
+   * serves that they had none — an example-report invitation that flashed and
+   * vanished on every cold open. Home holds its first-run straps until this is
+   * true.
+   */
+  const [sessionsLoaded, setSessionsLoaded] = useState(false)
   /*
    * What the player has said about their own serves, by report id.
    *
@@ -278,7 +288,8 @@ export default function App() {
    * all — seeing R15 in `NEXT.md` for how that surfaced.
    */
   const [firstRunIntent, setFirstRunIntent] = useState<'pick' | 'record' | 'check'>('pick')
-  const [offlineReady, setOfflineReady] = useState(false)
+  /** `undefined` until the cache has been asked, so the badge does not flash "Download now" at a player who already has. */
+  const [offlineReady, setOfflineReady] = useState<boolean>()
   const [warming, setWarming] = useState<OfflineWarmup>()
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
   /**
@@ -463,9 +474,16 @@ export default function App() {
     if (demoHistory.current) {
       setSessions(demoHistory.current.sessions)
       setDrillLogs(demoHistory.current.practice)
+      setSessionsLoaded(true)
       return
     }
-    void safely(listSummaries, []).then(setSessions)
+    void safely(listSummaries, []).then((list) => {
+      // A read started before `?demo=history` seeded itself can land after
+      // it, and used to replace the season with the empty real store.
+      if (demoHistory.current) return
+      setSessions(list)
+      setSessionsLoaded(true)
+    })
     void safely(listServeTags, []).then(setServeTags)
     // `undefined` on failure rather than `[]`, and the difference is the whole
     // point of the field it feeds: an empty list is "nothing has been logged"
@@ -1407,6 +1425,7 @@ export default function App() {
           <Home
             sessions={sessions}
             offlineReady={offlineReady}
+            sessionsLoaded={sessionsLoaded}
             onPick={(f) => void openClip(f)}
             onRecorded={(f) => void openClip(f, true)}
             openFraming={framingNonce}
