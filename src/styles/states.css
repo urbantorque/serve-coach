@@ -184,6 +184,8 @@
 
 .sheet-body {
   overflow-y: auto;
+  /* A fling past the end of the sheet stops at the sheet, not the page. */
+  overscroll-behavior: contain;
   padding: 4px 20px calc(28px + var(--safe-bottom));
   -webkit-overflow-scrolling: touch;
 }

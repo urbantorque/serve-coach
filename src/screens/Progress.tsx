@@ -179,9 +179,9 @@ export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, 
                   gets the heading for the half that needs acting on — the
                   warnings lead, the cleared lines read as the counterpoint
                   underneath rather than softening them. */}
-              <h3 className="block-title">
+              <h2 className="block-title">
                 {strain.length > 0 ? 'What keeps coming back' : 'What has stopped'}
-              </h3>
+              </h2>
               {strain.map((record) => {
                 const line = strainLine(record)
                 return line ? (
@@ -215,7 +215,7 @@ export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, 
               nothing. */}
           {(streak || longestStreakText || sheetBestScore) && (
             <section className="block">
-              <h3 className="block-title">Your records</h3>
+              <h2 className="block-title">Your records</h2>
               {streak && <p className="progress-foot">{streak}</p>}
               {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
               {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
@@ -266,7 +266,7 @@ export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, 
           )}
 
           <section className="block">
-            <h3 className="block-title">Overall score by session</h3>
+            <h2 className="block-title">Overall score by session</h2>
             <ScoreTrend points={form.points} />
             {/* The sentence the chart above never states in words: `form`
                 already carries everything `sixWeekMilestone` needs, and
@@ -278,7 +278,7 @@ export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, 
 
           {form.areaDeltas.length > 0 && (
             <section className="block">
-              <h3 className="block-title">Change since your last serve</h3>
+              <h2 className="block-title">Change since your last serve</h2>
               <DeltaBars deltas={form.areaDeltas} />
             </section>
           )}
@@ -297,7 +297,7 @@ export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, 
                   the report and here. It was "gap" in this heading and
                   "steadier" in the chart's own note — three names for one
                   thing the player is meant to be tracking. */}
-              <h3 className="block-title">How repeatable, over time</h3>
+              <h2 className="block-title">How repeatable, over time</h2>
               <GapTrend points={spread.points} />
               {/* buildConsistencyTrend has computed this since it was
                   written; the chart above never said it in words. */}

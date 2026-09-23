@@ -224,6 +224,8 @@ textarea {
 button {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  /* No double-tap-to-zoom wait on a control: a tap is a tap. */
+  touch-action: manipulation;
 }
 
 button:disabled {
