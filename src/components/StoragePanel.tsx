@@ -143,7 +143,11 @@ export default function StoragePanel({ count, onImported }: Props) {
           disabled={busy !== null || count === 0}
         >
           <Icon name="share" size={17} />
-          {busy === 'export' ? 'Saving…' : `Export ${count || 'no'} ${count === 1 ? 'serve' : 'serves'}`}
+          {busy === 'export'
+            ? 'Saving…'
+            : count === 0
+              ? 'Nothing to export yet'
+              : `Export ${count} ${count === 1 ? 'serve' : 'serves'}`}
         </button>
         <button
           className="btn btn--ghost btn--full"
