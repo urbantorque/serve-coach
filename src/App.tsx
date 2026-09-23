@@ -10,6 +10,7 @@ import TripShareButton from './components/TripShareButton'
 import FramePair, { type PairPosition } from './components/FramePair'
 import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from './components/Trend'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
+import { useBackLayer } from './components/useBackLayer'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import type { InjuryFlag } from './lib/analysis/triage'
 import {
@@ -1375,6 +1376,24 @@ export default function App() {
     setView({ kind: 'home' })
     refreshSessions()
   }
+
+  /*
+   * Back from any screen but home comes home, the way the on-screen back
+   * arrow does. Analysing is the exception with two meanings: a single serve
+   * has nothing to show yet, so back cancels it; a basket sweep was launched
+   * from a report and every serve it has finished is real, so back stops it
+   * and keeps them — the same split as the analysing screen's own button.
+   * Sheets carry their own layer in `Sheet`, so one open over a screen closes
+   * first.
+   */
+  useBackLayer(view.kind !== 'home', () => {
+    if (view.kind === 'analyzing') {
+      if (sweep) stopSweep()
+      else cancel()
+      return
+    }
+    goHome()
+  })
 
   const remove = async (id: string) => {
     await safely(() => deleteSession(id), undefined)

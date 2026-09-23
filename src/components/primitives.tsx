@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Status } from '../lib/analysis/types'
+import { useBackLayer } from './useBackLayer'
 
 /* ------------------------------------------------------------------ ScoreRing */
 
@@ -207,6 +208,8 @@ const FOCUSABLE = [
  */
 export function Sheet({ open, onClose, title, children }: SheetProps) {
   const panel = useRef<HTMLDivElement>(null)
+  // The phone's back gesture closes the sheet rather than the app.
+  useBackLayer(open, onClose)
 
   // Reached through a ref so the trap effect depends only on `open`. Every
   // caller passes an inline arrow, and an effect keyed on that identity tears

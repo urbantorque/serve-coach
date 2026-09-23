@@ -802,6 +802,7 @@ Everything is in `src/lib`:
 | `practice.ts` | finds the weakness that persists across trips to the court |
 | `progress.ts` | the trend view, the then-and-now comparison, the six-week milestone, the trip streak, the best consistency gap swept, the best score, the recurring-strain join, and what counts as one trip |
 | `screenFlow.ts` | every legal move between screens, as data a test can walk — describes `App.tsx`, never drives it |
+| `backStack.ts` | the phone's back gesture: one history entry per open screen or sheet, so back closes the top one instead of the app. `components/useBackLayer.ts` is its hook |
 | `trackPair.ts` | whether two saved swings may be drawn on top of each other, and where the older one goes |
 | `storage/sessionKey.ts` | one stored report per serve, not per analysis run |
 | `storage/db.ts` | the reports, and separately the drills the player says they did |
