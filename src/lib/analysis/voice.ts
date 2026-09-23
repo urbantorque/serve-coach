@@ -54,6 +54,16 @@ const FILLER =
 const JARGON =
   /\b(metric|parameter|coordinate|multiplier|algorithm|optimi[sz]e|leverage|utili[sz]e|robust|holistic|actionable|data point|kinematic|telemetry)\b/i
 
+/**
+ * Coach vocabulary: the images a coach uses and a player who hits twice a
+ * month cannot picture. `LOOP.md` has named these since the rule was written,
+ * and until this pattern existed nothing enforced it — "Steep cartwheel" was
+ * on screen as a readout tag and "is the brake" as an area headline, both
+ * passing every check above.
+ */
+const COACH_JARGON =
+  /\b(windmill\w*|cartwheel\w*|back[- ]?scratch\w*|kinetic chain|the chain|head speed|the brake)\b/i
+
 /** Passive construction, close enough for copy this short. */
 const PASSIVE =
   /\b(is|are|was|were|be|been|being)\s+(\w+ed|shown|taken|seen|given|held|kept|made|done|found|read)\b/i
@@ -172,6 +182,9 @@ export function cueIssues(text: string): string[] {
 
   const jargon = s.match(JARGON)
   if (jargon) issues.push(`tech jargon: ${jargon[0]}`)
+
+  const coach = s.match(COACH_JARGON)
+  if (coach) issues.push(`coach jargon: ${coach[0]}`)
 
   const passive = s.match(PASSIVE)
   if (passive) issues.push(`passive voice: ${passive[0]}`)

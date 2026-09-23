@@ -29,6 +29,7 @@ import { FLAWS, type FlawId } from '../flaws'
 import { FLAW_DRILL, FLAW_DRILL_BY_AXIS, drillIdFor } from '../triage'
 import { uncalibratedLine } from '../../../components/statusLabels'
 import { assert, check, report } from './harness'
+import { DEMO_DIALS, sampleAnalysis } from '../../../dev/sampleAnalysis'
 import type { ServeType } from '../../storage/prefs'
 
 console.log('\n\x1b[1mThe house voice\x1b[0m')
@@ -289,7 +290,7 @@ const CLAIMED: Record<string, Claimed> = {
     insight: {
       low: ['Struck at the peak'],
       ok: ['Struck at the peak', 'Struck near the peak'],
-      high: ['Struck on the way down', 'Struck well after the drop'],
+      high: ['Struck on the way down', 'Struck well past the peak'],
     },
     aim: { high: 'Struck at the peak' },
   },
@@ -321,7 +322,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Hips lead the chest', high: 'Hips lead the chest' },
   },
   shoulderTilt: {
-    stamp: '55cccbbd',
+    stamp: '731bd272',
     insight: {
       low: [
         'Tossing shoulder under the ball',
@@ -335,8 +336,8 @@ const CLAIMED: Record<string, Claimed> = {
       // level" was claimed here too while the slice band reached down into it,
       // which is how 11.9 degrees came back praised under a readout calling the
       // shoulders level — the claim covering for the band rather than checking it.
-      ok: ['Hitting shoulder under the ball', 'Steep cartwheel'],
-      high: ['Hitting shoulder under the ball', 'Steep cartwheel'],
+      ok: ['Hitting shoulder under the ball', 'Hitting shoulder far below'],
+      high: ['Hitting shoulder under the ball', 'Hitting shoulder far below'],
     },
     aim: { low: 'Hitting shoulder under the ball', high: 'Hitting shoulder under the ball' },
   },
@@ -519,7 +520,7 @@ const CLAIMED: Record<string, Claimed> = {
   },
 
   'kick.shoulderTilt': {
-    stamp: '0f84abf5',
+    stamp: 'aa740cb6',
     insight: {
       // Every rung below the kick band, and the top one is the point: a shoulder
       // the ladder calls under the ball is still short of what a kick asks for.
@@ -533,7 +534,7 @@ const CLAIMED: Record<string, Claimed> = {
     },
     // Which is why the order underneath cannot be the flat one. It aims a rung
     // higher than the flat fix does, at the only position this card praises.
-    aim: { low: 'Steep cartwheel' },
+    aim: { low: 'Hitting shoulder far below' },
   },
 }
 
@@ -1255,6 +1256,20 @@ check('the sequence delta line names legs and arm, and grades neither direction'
     `the line grades a reading nothing grades: "${text}"`,
   )
   assert(/serve 4/.test(text!) && /serve 1/.test(text!), `the two serves are not named: "${text}"`)
+})
+
+check('every area headline, assembled at runtime, passes the editor', () => {
+  // Built from a template around a metric label in `headlineFor`, so no line
+  // of the copy database ever contained them, and "Contact height is the
+  // brake" reached the screen past every check in this file.
+  const failures: string[] = []
+  for (const dials of [{}, ...Object.values(DEMO_DIALS)]) {
+    for (const f of sampleAnalysis(dials).fundamentals) {
+      const issues = cueIssues(f.headline)
+      if (f.headline && issues.length) failures.push(`${f.id}: "${f.headline}" — ${issues.join('; ')}`)
+    }
+  }
+  assert(failures.length === 0, failures.join('\n'))
 })
 
 report()

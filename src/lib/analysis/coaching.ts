@@ -321,7 +321,7 @@ export const METRICS: Record<string, MetricCopy> = {
       high: 'A **steep tilt**, so the racket travels sharply upward.',
     },
     fix: {
-      low: '**Drop the hitting shoulder** under the ball and lift the tossing one. Cartwheel the shoulders, never spin them.',
+      low: '**Lower the hitting shoulder** under the ball and raise the tossing one. Tilt the shoulders, never spin them.',
       high: '**Tilt from the shoulders**, not the lower back. Arching moves contact behind you.',
     },
     drill: {
@@ -637,7 +637,7 @@ export const METRICS: Record<string, MetricCopy> = {
   },
   loadRatio: {
     id: 'loadRatio',
-    label: 'Explosive phase',
+    label: 'Time from trophy to contact',
     unit: '%',
     phase: 'trophy',
     weight: 0.8,
@@ -973,7 +973,7 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
         // — so a kick at eighteen was told to start doing what the same card had
         // just said it was doing. A kick short of its band wants more of that
         // drop, not the beginning of it.
-        low: '**Cartwheel further** so the hitting shoulder finishes well under the ball. Tilt from the shoulders, never the lower back.',
+        low: '**Tilt further** so the hitting shoulder finishes well under the ball. Bend at the shoulders, never the lower back.',
       },
     },
     drill: {

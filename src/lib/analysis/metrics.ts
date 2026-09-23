@@ -627,6 +627,11 @@ export function measure(
  * a whole is weak. An area scoring in the seventies is badged "Solid", and
  * opening it with "your legs stay straight" reads as the card arguing with its
  * own badge — so a decent area names the weak link instead of scolding.
+ *
+ * Both templates read as plain English around a metric label. They used to be
+ * "Sharpen explosive phase next" and "Contact height is the brake": a verb
+ * with no article in front of a noun phrase, and a coaching image the voice
+ * lint cannot see.
  */
 function headlineFor(metrics: Metric[], label: string, areaScore: number): string {
   const weakest = [...metrics].sort((a, b) => a.score - b.score)[0]
@@ -634,7 +639,7 @@ function headlineFor(metrics: Metric[], label: string, areaScore: number): strin
   const area = label.toLowerCase()
   const weak = weakest.label.toLowerCase()
   if (weakest.score >= 85) return cue(`Your ${area} holds up. Leave it alone.`)
-  if (weakest.score >= 70) return cue(`Solid ${area}. Sharpen ${weak} next.`)
-  if (areaScore >= 70) return cue(`Decent ${area}. ${weakest.label} is the brake.`)
+  if (weakest.score >= 70) return cue(`Solid ${area}. Next to work on: ${weak}.`)
+  if (areaScore >= 70) return cue(`Decent ${area}. ${weakest.label} is holding it back.`)
   return weakest.insight
 }

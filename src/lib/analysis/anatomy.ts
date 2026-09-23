@@ -70,7 +70,7 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 0.03, tag: 'Struck at the peak' },
     { under: 0.09, tag: 'Struck near the peak' },
     { under: 0.2, tag: 'Struck on the way down' },
-    { under: Infinity, tag: 'Struck well after the drop' },
+    { under: Infinity, tag: 'Struck well past the peak' },
   ],
 
   /* ---------------------------------------------------------------- loading */
@@ -99,7 +99,7 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 7, tag: 'Shoulders level' },
     { under: 14, tag: 'Shoulders near level' },
     { under: 32, tag: 'Hitting shoulder under the ball' },
-    { under: Infinity, tag: 'Steep cartwheel' },
+    { under: Infinity, tag: 'Hitting shoulder far below' },
   ],
   legDrive: [
     { under: 0.04, tag: 'No push off the court' },
