@@ -1683,6 +1683,20 @@ tested from 30° to 89°.
 
 ---
 
+**The swing is timed between samples, with a fit that respects its shape.**
+Contact, the drop and the toss are peaks, and every timing on the report —
+drop to contact, motion length, the share after the trophy — is a difference
+between two of them. Read as whole samples on a ±1-sample smoothed series,
+drop to contact came out **+31 ms long at 30 fps and +45 ms at 24** on the rig
+(16 seeds, typical landmark noise): smoothing drags a lopsided peak toward its
+slow side, and contact rises fast and falls slowly. `refineExtremum` in
+`phases.ts` times each peak where the rising line through the two samples
+before it crosses the falling line through the two after — exact for a peak
+with two different slopes. A parabola was tried first and was worse, because it
+assumes symmetry. Same rig and noise: +10 ms at 30 fps, +15 at 24, +5 at 60;
+RMS 35 → 14 ms at 30 fps. Positional readings still use the sampled frame,
+which is an observation rather than an interpolation.
+
 ## Testing
 
 ```bash

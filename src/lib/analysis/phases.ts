@@ -94,6 +94,13 @@ export interface Skeleton {
   detectedRacket: Side
   detectionConfidence: number
   /**
+   * When the three peak-defined events happened, between samples — see
+   * `refineExtremum`. Every timing measurement reads these; everything
+   * positional still reads the sampled frame at `keys`, which is a real
+   * observation where an interpolated pose would not be.
+   */
+  times: { toss: number; drop: number; contact: number }
+  /**
    * How the things everything else is built on were actually arrived at, and —
    * for the drop — whether the event was ever there to arrive at.
    *
@@ -199,6 +206,42 @@ function findReady(tossIdx: number, tossHeight: number[], limit: number): number
  * in a small neighbourhood recovers the true position without reopening the
  * door to noise. Pass a series whose maximum is the event.
  */
+/**
+ * The moment of a peak, between samples.
+ *
+ * `pose/rate.ts` has long said sub-frame timing "is recovered analytically —
+ * see refineExtremum", and nothing of that name existed: every keyframe was an
+ * integer sample on a series smoothed over ±1 sample. On the rig that put
+ * drop-to-contact **+31 ms long at 30 fps, +45 ms at 24** (16 seeds, landmark
+ * noise 0.008), on a band 120 ms wide — the smoothing drags each peak toward
+ * its slow side, and contact is about as lopsided as a peak gets: the wrist
+ * arrives fast and falls away slowly.
+ *
+ * A parabola through the top three samples was tried first and made it worse
+ * (+37 ms): it assumes a symmetric peak, so it slides the same way. This is a
+ * tent instead — the rising line through the two samples before the peak, the
+ * falling line through the two after, and the moment they cross — which is
+ * exact for a peak whose two sides have different slopes. Same rig, same
+ * noise: **+10 ms at 30 fps, +15 at 24, +5 at 60**, RMS 35 → 14 ms at 30 fps.
+ *
+ * Fitted on real timestamps (the samples are filed at the time each seek
+ * actually reached), held between the two neighbouring samples, and the
+ * sample's own time returned wherever a side is not rising or falling as a
+ * peak's must — an edge, a plateau, noise on a flank.
+ */
+export function refineExtremum(series: number[], times: number[], i: number): number {
+  const at = times[i]
+  if (i < 2 || i > series.length - 3) return at
+  const [ta, tb, tc, td] = [times[i - 2], times[i - 1], times[i + 1], times[i + 2]]
+  const [ya, yb, yc, yd] = [series[i - 2], series[i - 1], series[i + 1], series[i + 2]]
+  if (![ya, yb, yc, yd].every(Number.isFinite) || !(ta < tb && tb < at && at < tc && tc < td)) return at
+  const rise = (yb - ya) / (tb - ta)
+  const fall = (yd - yc) / (td - tc)
+  if (!(rise > 0) || !(fall < 0)) return at
+  const t = (yc - yb + rise * tb - fall * tc) / (rise - fall)
+  return Math.min(tc, Math.max(tb, t))
+}
+
 function sharpen(series: number[], idx: number, radius = 2): number {
   const lo = Math.max(0, idx - radius)
   const hi = Math.min(series.length - 1, idx + radius)
@@ -563,10 +606,18 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
     stated: forceRacket !== undefined,
   })
 
+  const ts = frames.map((f) => f.t)
+  const times = {
+    toss: refineExtremum(tossPostureSharp, ts, keys.toss),
+    drop: refineExtremum(racketPostureSharp, ts, keys.drop),
+    contact: refineExtremum(racketHeightSharp, ts, keys.contact),
+  }
+
   return {
     racket,
     toss: tossSide,
     keys,
+    times,
     bodyHeight,
     groundY,
     shoulderWidth: Math.max(shoulderWidth, bodyHeight * 0.04),
@@ -683,7 +734,11 @@ const PHASE_COPY: Record<PhaseId, { label: string; caption: string }> = {
   finish: { label: 'Finish', caption: 'Swing across the body, landing inside the court' },
 }
 
-export function buildPhases(frames: Frame[], keys: Keyframes): Phase[] {
+export function buildPhases(
+  frames: Frame[],
+  keys: Keyframes,
+  times?: Partial<Record<PhaseId, number>>,
+): Phase[] {
   return (Object.keys(PHASE_COPY) as PhaseId[]).map((id) => {
     const frame = keys[id as keyof Keyframes]
     return {
@@ -691,7 +746,7 @@ export function buildPhases(frames: Frame[], keys: Keyframes): Phase[] {
       label: PHASE_COPY[id].label,
       caption: PHASE_COPY[id].caption,
       frame,
-      t: frames[frame].t,
+      t: times?.[id] ?? frames[frame].t,
     }
   })
 }

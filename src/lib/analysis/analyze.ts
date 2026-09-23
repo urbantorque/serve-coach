@@ -1511,7 +1511,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // about which one it is.
   const verdict = triage(diagnosis, resilience)
 
-  const phases = buildPhases(frames, skel.keys)
+  const phases = buildPhases(frames, skel.keys, skel.times)
 
   const bands = bandsFor(fundamentals)
 

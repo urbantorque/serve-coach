@@ -423,7 +423,8 @@ export function measure(
   /* ---------------------------------------------------------------- swing */
   values.dropDepth = (fDrop.image[R.wrist].y - fDrop.image[R.shoulder].y) / bodyHeight
   values.elbowAtDrop = steadyAngle(frames, keys.drop, R.shoulder, R.elbow, R.wrist)
-  values.dropToContact = Math.max(0, (fContact.t - fDrop.t) * 1000)
+  // Between samples, not between frames — see `refineExtremum`.
+  values.dropToContact = Math.max(0, (skel.times.contact - skel.times.drop) * 1000)
 
   // How much of the swing the racket hand spends hanging under its own elbow.
   //
@@ -521,10 +522,10 @@ export function measure(
   }
 
   /* --------------------------------------------------------------- rhythm */
-  values.totalTime = (fContact.t - at(keys.ready).t) * 1000
+  values.totalTime = (skel.times.contact - at(keys.ready).t) * 1000
   {
-    const total = Math.max(1e-3, fContact.t - at(keys.ready).t)
-    values.loadRatio = ((fContact.t - fTrophy.t) / total) * 100
+    const total = Math.max(1e-3, skel.times.contact - at(keys.ready).t)
+    values.loadRatio = ((skel.times.contact - fTrophy.t) / total) * 100
   }
   values.syncAtRelease = (fToss.image[R.shoulder].y - fToss.image[R.wrist].y) / bodyHeight
 

@@ -33,7 +33,7 @@ import { Cancelled } from '../../pose/extract'
 import { diagnose } from '../diagnose'
 import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
 import { measure } from '../metrics'
-import { detectServe, type Skeleton } from '../phases'
+import { detectServe, refineExtremum, type Skeleton } from '../phases'
 import { findServes } from '../serves'
 import type { BallFlight } from '../../vision/ballTrack'
 import type { ServeType } from '../../storage/prefs'
@@ -920,6 +920,43 @@ check('swing timing survives a change of frame rate', () => {
     Math.max(...vals) - Math.min(...vals) < 34,
     `drop→contact spread ${Math.round(Math.max(...vals) - Math.min(...vals))} ms across frame rates: ${vals.map(Math.round).join(', ')}`,
   )
+})
+
+check('a lopsided peak is timed where its two sides cross, not at the nearest sample', () => {
+  // Rises at 3 per second to a peak at t = 1.013, falls at 1 per second — the
+  // shape contact has. Sampled every 30 ms, the highest sample sits at 1.02.
+  const peak = 1.013
+  const times = [0.93, 0.96, 0.99, 1.02, 1.05, 1.08]
+  const series = times.map((t) => (t <= peak ? 3 * (t - peak) : -(t - peak)))
+  const i = series.indexOf(Math.max(...series))
+  near(refineExtremum(series, times, i), peak, 1e-9, 'tent apex')
+})
+
+check('a peak with nothing to fit on is left at its sample', () => {
+  const times = [0, 0.03, 0.06, 0.09, 0.12]
+  assert(refineExtremum([1, 2, 3, 2, 1], times, 0) === 0, 'an edge was moved')
+  assert(refineExtremum([1, 2, 2, 2, 1], times, 2) === 0.06, 'a plateau was moved')
+  assert(refineExtremum([3, 2, 3, 2, 1], times, 2) === 0.06, 'a flank that was not rising was fitted')
+})
+
+check('drop-to-contact at 30 fps is no longer read a full sample long', () => {
+  // Built finely, then read at 30 fps from ten different starting phases —
+  // the grid a real clip lands on is arbitrary. Before `refineExtremum` this
+  // read +31 ms long on average; the bound is what the tent fit earns.
+  const HI = 2400
+  const fine = buildServe({}, HI)
+  const truthSkel = detectServe(fine, HI)
+  const truth = (fine[truthSkel.keys.contact].t - fine[truthSkel.keys.drop].t) * 1000
+  const step = HI / 30
+  const errors: number[] = []
+  for (let k = 0; k < step; k += 8) {
+    const frames = fine.filter((_, i) => i % step === k).map((f, i) => ({ ...f, index: i }))
+    const skel = detectServe(frames, 30)
+    errors.push(metric(measure(frames, skel, true), 'dropToContact').value - truth)
+  }
+  const bias = errors.reduce((a, b) => a + b, 0) / errors.length
+  note(`drop→contact at 30 fps: bias ${bias.toFixed(1)} ms over ${errors.length} phases (truth ${truth.toFixed(0)} ms)`)
+  within(bias, -20, 20, 'drop→contact bias at 30 fps')
 })
 
 check('measurements hold up when the camera moves round', () => {
