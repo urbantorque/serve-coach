@@ -630,6 +630,12 @@ export default function App() {
     // on a baseline.
     if (new URLSearchParams(location.search).has('check')) setSheet('check')
 
+    // The installed icon's long-press shortcuts — see `shortcuts` in
+    // vite.config.ts. Production, unlike `?demo`: a shortcut is a way in.
+    const opening = new URLSearchParams(location.search).get('open')
+    if (opening === 'progress') setView({ kind: 'progress' })
+    if (opening === 'guide') setSheet('guide')
+
     // `?corpus` turns a folder of clips into landmark dumps — see CORPUS.md.
     // Dev only, unlike `?check`: it is a tool for building the engine, not for
     // a player standing on a baseline, and it has no business in the bundle a

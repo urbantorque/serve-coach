@@ -91,11 +91,21 @@ export default defineConfig({
         // since only an installed app is exempt from the seven-day clearance.
         start_url: base,
         scope: base,
+        // A stable identity, so a future change to start_url is an update to
+        // this install rather than a second app beside it.
+        id: base,
         categories: ['sports', 'health', 'education'],
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+        // Long-press on the installed icon. Only destinations that need no
+        // gesture to open: a file picker cannot be opened without a tap, so
+        // "Analyse a serve" is not one of them. `?open=` is read in App.tsx.
+        shortcuts: [
+          { name: 'Your progress', short_name: 'Progress', url: `${base}?open=progress`, icons: [{ src: 'icon-192.png', sizes: '192x192' }] },
+          { name: 'How to film your serve', short_name: 'How to film', url: `${base}?open=guide`, icons: [{ src: 'icon-192.png', sizes: '192x192' }] },
         ],
       },
       workbox: {

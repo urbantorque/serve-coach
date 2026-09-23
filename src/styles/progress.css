@@ -503,5 +503,8 @@
 }
 
 .progress-empty {
-  padding-top: 20vh;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16vh;
 }

@@ -321,9 +321,18 @@ export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, 
           </details>
         </div>
       ) : (
-        <p className="sheet-empty progress-empty">
-          Analyse two serves and this will show whether your changes are working.
-        </p>
+        // Reachable with nothing to show now — the installed icon's shortcut
+        // opens this screen directly — so it says what fills it and offers
+        // the way there, rather than a sentence with nothing to press.
+        <div className="progress-empty">
+          <p className="sheet-empty">
+            Analyse two serves and this will show whether your changes are working.
+          </p>
+          <button className="btn btn--primary btn--full" onClick={onBack}>
+            <Icon name="film" size={18} />
+            Analyse a serve
+          </button>
+        </div>
       )}
     </div>
   )
