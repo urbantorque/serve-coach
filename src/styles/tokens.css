@@ -53,6 +53,22 @@
   --work: #ff7a6b;
   --work-dim: rgba(255, 122, 107, 0.14);
 
+  /*
+   * Text set on a status wash. Named rather than repeated: these were five bare
+   * hex values across the report's notes and banners, each a status hue
+   * lifted toward white so it reads on its own -dim ground. Same values as
+   * before, now with a name a new surface can reach for instead of a sixth.
+   * Status borders are not tokens — they are the status colour at an alpha,
+   * written as color-mix() at the point of use.
+   */
+  --fair-ink: #f0d5a8;
+  --fair-ink-bright: #ffe6bd;
+  --work-ink: #ffe4df;
+  --work-ink-soft: #f7d2cb;
+
+  /* The darkest layer: behind a sheet, over a video frame. Below --ink. */
+  --scrim: #040609;
+
   /* --- geometry ----------------------------------------------------------- */
   --r-xs: 8px;
   --r-sm: 12px;

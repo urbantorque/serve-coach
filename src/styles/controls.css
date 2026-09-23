@@ -177,7 +177,7 @@
 
 .chip--warn {
   color: var(--fair);
-  border-color: rgba(255, 182, 72, 0.3);
+  border-color: color-mix(in srgb, var(--fair) 30%, transparent);
   background: var(--fair-dim);
 }
 
@@ -193,7 +193,7 @@
 
 .chip--toggle.is-on {
   background: var(--lime-glow);
-  border-color: rgba(205, 249, 74, 0.42);
+  border-color: color-mix(in srgb, var(--lime) 42%, transparent);
   color: var(--lime);
 }
 

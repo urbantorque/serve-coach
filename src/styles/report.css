@@ -543,10 +543,10 @@
   padding: 12px 14px;
   border-radius: var(--r-sm);
   background: var(--fair-dim);
-  border: 1px solid rgba(255, 182, 72, 0.2);
+  border: 1px solid color-mix(in srgb, var(--fair) 20%, transparent);
   font-size: 12.5px;
   line-height: var(--lh-snug);
-  color: #f0d5a8;
+  color: var(--fair-ink);
   text-wrap: pretty;
 }
 
@@ -660,7 +660,7 @@
   gap: 9px;
   padding: 18px 18px 19px;
   background: color-mix(in srgb, var(--work) 16%, var(--ink-1));
-  border: 1px solid rgba(255, 122, 107, 0.45);
+  border: 1px solid color-mix(in srgb, var(--work) 45%, transparent);
   border-left: 5px solid var(--work);
   border-radius: 0 var(--r-sm) var(--r-sm) 0;
 }
@@ -668,7 +668,7 @@
 .injury--high {
   background: color-mix(in srgb, var(--work) 26%, var(--ink-1));
   border-color: var(--work);
-  box-shadow: inset 0 0 0 1px rgba(255, 122, 107, 0.3);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--work) 30%, transparent);
 }
 
 /* The word doing the work a warning glyph used to. It takes the block's own
@@ -690,7 +690,7 @@
   font-weight: var(--wt-title);
   line-height: var(--lh-tight);
   letter-spacing: var(--tr-title);
-  color: #ffe4df;
+  color: var(--work-ink);
 }
 
 .injury-text p {
@@ -698,7 +698,7 @@
   max-width: var(--measure);
   font-size: 14px;
   line-height: var(--lh-snug);
-  color: #f7d2cb;
+  color: var(--work-ink-soft);
   text-wrap: pretty;
 }
 
@@ -774,10 +774,10 @@
   padding: 12px 14px;
   border-radius: var(--r-sm);
   background: var(--fair-dim);
-  border: 1px solid rgba(255, 182, 72, 0.24);
+  border: 1px solid color-mix(in srgb, var(--fair) 24%, transparent);
   font-size: 12.5px;
   line-height: var(--lh-snug);
-  color: #f0d5a8;
+  color: var(--fair-ink);
   text-wrap: pretty;
 }
 
@@ -788,7 +788,7 @@
 }
 
 .unreliable strong {
-  color: #ffe6bd;
+  color: var(--fair-ink-bright);
 }
 
 /* ============================================================================
@@ -800,9 +800,9 @@
   padding: 22px;
   border-radius: var(--r-lg);
   background:
-    linear-gradient(158deg, rgba(205, 249, 74, 0.11), rgba(205, 249, 74, 0.02) 55%),
+    linear-gradient(158deg, color-mix(in srgb, var(--lime) 11%, transparent), color-mix(in srgb, var(--lime) 2%, transparent) 55%),
     var(--ink-2);
-  border: 1px solid rgba(205, 249, 74, 0.24);
+  border: 1px solid color-mix(in srgb, var(--lime) 24%, transparent);
   overflow: hidden;
 }
 
@@ -851,7 +851,7 @@
   margin-top: 20px;
   padding: 16px 17px 17px;
   border-radius: var(--r-md);
-  background: rgba(10, 12, 16, 0.55);
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
   border: 1px solid var(--hairline);
 }
 

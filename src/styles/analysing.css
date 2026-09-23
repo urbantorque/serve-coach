@@ -194,7 +194,7 @@
 }
 
 .step.is-done .step-mark {
-  border-color: rgba(95, 227, 161, 0.4);
+  border-color: color-mix(in srgb, var(--great) 40%, transparent);
   background: var(--great-dim);
 }
 

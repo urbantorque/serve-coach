@@ -106,7 +106,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(4, 6, 9, 0.66);
+  background: color-mix(in srgb, var(--scrim) 66%, transparent);
   backdrop-filter: blur(6px);
   animation: fade var(--base) var(--ease) both;
 }

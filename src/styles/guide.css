@@ -143,7 +143,7 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: rgba(4, 6, 9, 0.72);
+  background: color-mix(in srgb, var(--scrim) 72%, transparent);
   color: var(--fg);
 }
 

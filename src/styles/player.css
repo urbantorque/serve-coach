@@ -92,7 +92,7 @@
   width: 62px;
   height: 62px;
   border-radius: 50%;
-  background: rgba(10, 12, 16, 0.62);
+  background: color-mix(in srgb, var(--ink) 62%, transparent);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
