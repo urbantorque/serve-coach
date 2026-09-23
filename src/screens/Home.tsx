@@ -58,7 +58,7 @@ interface Props {
   /**
    * Fetch the pose engine now, so the app works at a court with no signal.
    *
-   * Until this existed the 24 MB of models and runtime were only ever fetched
+   * Until this existed the 57 MB of models and runtime were only ever fetched
    * during an analysis, so the one thing a player could not do was get ready.
    * They installed the app at home, read the badge, drove to a court and found
    * the app could not start — at the exact moment the promise on this screen
@@ -516,7 +516,7 @@ export default function Home({
         ) : (
           // A button rather than a label, because the label was describing
           // something the player had no way to make happen. Downloading is
-          // opt-in and the size is on it: 24 MB is real money on a metered
+          // opt-in and the size is on it: 57 MB is real money on a metered
           // connection, and the honest place to say so is before the tap.
           <button
             className="badge"
@@ -532,12 +532,12 @@ export default function Home({
                   ? 'Download failed. Tap to try again'
                   : warming?.stage === 'unkept'
                     ? 'Downloaded, but this browser will not keep it'
-                    : 'Download now to use offline · 24 MB'}
+                    : 'Download now to use offline · 57 MB'}
           </button>
         )}
         {/* A second, quieter copy of the same news for a screen reader.
             `onProgress` below fires once a network chunk, tens of times over a
-            24 MB download — wiring the button's own precise percentage to
+            57 MB download — wiring the button's own precise percentage to
             `aria-live` would announce every single one. Rounded to the nearest
             ten, the text in this region only changes ten times across the
             whole download, which is a progress update rather than noise. */}

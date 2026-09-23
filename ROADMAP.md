@@ -158,3 +158,36 @@ report and progress: zero console errors. It found two defects — a focus
 ring drawn round every sheet panel, and "Export no serves" — both fixed. A
 web-interface-guidelines pass found three more (heading levels, overscroll
 chaining, touch-action), fixed.
+
+---
+
+## Engine programme (2026-09-23, second run) — free data only, no filming
+
+The owner asked for the engine work to proceed with no footage from them and
+only free models and data. `ANALYSIS-REVIEW.md` is the reasoning; this is the
+ledger.
+
+- [x] **E1** Real-footage evidence without a camera: the CC BY *Tennis Player
+      Actions* dataset (500 labelled smartphone serve frames) behind
+      `npm run setup:bench` and a dev-only `bench.html`; five openly licensed
+      Commons serve clips behind `clipbench.html`. Nothing of either ships.
+- [x] **E2** The object detector returned nothing on the GPU delegate — the
+      racket boxes were always empty on a phone with a GPU. CPU now.
+- [x] **E3** The player crop: the pose model reads a square round the server.
+      Benchmark: frames with no pose 101 → 8 of 500, arm error −⅓.
+- [x] **E4** `refineExtremum` (tent fit): drop-to-contact bias at 30 fps
+      +31 → +10 ms, RMS 35 → 14 ms, on noisy rig serves.
+- [x] **E5** Real timestamps to MediaPipe's VIDEO mode.
+- [x] **E6** Knee-bend band re-anchored to the 27-study meta-analysis
+      (35–62° → 35–80°); the first cited band in the app.
+- [~] **E7** RTMPose-s re-reads the swing (toss → contact), all-or-nothing
+      inside a 6 s budget, arms/knees/ankles only. Benchmark on the same crop:
+      elbows 2.35% → 1.59% of height, wrists 2.02% → 1.72%. Offline download
+      24 → 57 MB.
+- [ ] **E8** Read the real frame rate (MP4 `stts`) and sample the swing at the
+      source rate on high-frame-rate files.
+- [ ] **E9** Slow-motion time-stretch: detect and rescale, or hedge timing.
+- [ ] **E10** Ball tracker on a native-resolution crop above the tossing
+      shoulder instead of a 256-px whole frame.
+- [ ] **E11** Cite or re-derive the other 20 card bands (contact height needs a
+      definition first: wrist, not ball).

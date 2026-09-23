@@ -34,3 +34,5 @@ clips/
 # Open benchmark datasets, fetched by `npm run setup:bench` (scripts/fetch-bench.mjs).
 # Licensed data we use but do not redistribute; dev-only, never in dist/.
 bench-data/
+
+public/ort/

@@ -2,13 +2,15 @@
  * Vendors everything the app needs to run with the network switched off:
  *   public/models/pose_landmarker_full.task  — downloaded once from Google
  *   public/models/efficientdet_lite0.tflite  — same, for the racket detector
+ *   public/models/rtmpose-s.onnx             — RTMPose-s, unzipped from OpenMMLab
+ *   public/ort/*                             — ONNX Runtime's WASM build, copied
  *   public/wasm/*                            — copied out of node_modules
  *   public/icon-*.png, public/favicon.png    — generated here, no image deps
  *
  * Run once after `npm install`. Safe to re-run; it skips work already done.
  */
 import { createHash } from 'node:crypto'
-import { deflateSync } from 'node:zlib'
+import { deflateSync, inflateRawSync } from 'node:zlib'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -33,6 +35,20 @@ const OBJECT_MODEL = {
   url: 'https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite',
   dest: path.join(pub, 'models', 'efficientdet_lite0.tflite'),
   minBytes: 3_000_000,
+}
+
+/**
+ * RTMPose-s (body7, 256×192, SimCC), Apache-2.0 like the rest of MMPose —
+ * OpenMMLab's own ONNX export. It re-reads the swing window only: on the pose
+ * benchmark (ANALYSIS-REVIEW.md §7, 500 labelled serve frames) it cut elbow
+ * error from 2.35% to 1.59% of body height over MediaPipe on the same crop.
+ * Published as a zip; the one file needed is pulled out of it below.
+ */
+const REFINE_MODEL = {
+  url: 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/onnx_sdk/rtmpose-s_simcc-body7_pt-body7_420e-256x192-acd4a1ef_20230504.zip',
+  entry: 'end2end.onnx',
+  dest: path.join(pub, 'models', 'rtmpose-s.onnx'),
+  minBytes: 15_000_000,
 }
 
 const log = (...a) => console.log('  ', ...a)
@@ -61,6 +77,70 @@ async function vendor(name, { url, dest, minBytes }) {
   fs.writeFileSync(tmp, buf)
   fs.renameSync(tmp, dest)
   log(`${name} saved — ${(buf.length / 1e6).toFixed(1)} MB, sha256 ${createHash('sha256').update(buf).digest('hex').slice(0, 12)}`)
+}
+
+/**
+ * One file out of a zip, with nothing but zlib: the central directory at the
+ * end names every entry and where its local header sits, and the data after
+ * that header is raw deflate (method 8) or stored (method 0).
+ */
+function unzipEntry(zip, suffix) {
+  let eocd = zip.length - 22
+  while (eocd >= 0 && zip.readUInt32LE(eocd) !== 0x06054b50) eocd--
+  if (eocd < 0) throw new Error('not a zip: no end of central directory')
+  let at = zip.readUInt32LE(eocd + 16)
+  const entries = zip.readUInt16LE(eocd + 10)
+  for (let n = 0; n < entries; n++) {
+    const method = zip.readUInt16LE(at + 10)
+    const size = zip.readUInt32LE(at + 20)
+    const nameLen = zip.readUInt16LE(at + 28)
+    const extraLen = zip.readUInt16LE(at + 30)
+    const commentLen = zip.readUInt16LE(at + 32)
+    const local = zip.readUInt32LE(at + 42)
+    const name = zip.toString('utf8', at + 46, at + 46 + nameLen)
+    if (name.endsWith(suffix)) {
+      const start = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28)
+      const data = zip.subarray(start, start + size)
+      if (method === 0) return data
+      if (method === 8) return inflateRawSync(data)
+      throw new Error(`${name}: unsupported zip method ${method}`)
+    }
+    at += 46 + nameLen + extraLen + commentLen
+  }
+  throw new Error(`no entry ending ${suffix} in the zip`)
+}
+
+async function vendorRefineModel() {
+  const { url, entry, dest, minBytes } = REFINE_MODEL
+  if (fs.existsSync(dest) && fs.statSync(dest).size > minBytes) {
+    log('refinement model already vendored →', path.relative(root, dest))
+    return
+  }
+  log('downloading refinement model (~20 MB zip, one time only)…')
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`refinement model download failed: HTTP ${res.status}`)
+  const onnx = unzipEntry(Buffer.from(await res.arrayBuffer()), entry)
+  if (onnx.length < minBytes) throw new Error(`refinement model truncated (${onnx.length} bytes)`)
+  fs.mkdirSync(path.dirname(dest), { recursive: true })
+  const tmp = `${dest}.tmp`
+  fs.writeFileSync(tmp, onnx)
+  fs.renameSync(tmp, dest)
+  log(`refinement model saved — ${(onnx.length / 1e6).toFixed(1)} MB, sha256 ${createHash('sha256').update(onnx).digest('hex').slice(0, 12)}`)
+}
+
+/**
+ * ONNX Runtime's plain WASM build — the CPU backend only. The WebGPU build is
+ * twice the size, and the refinement runs on thirty-odd frames.
+ */
+function vendorOrt() {
+  const src = path.join(root, 'node_modules', 'onnxruntime-web', 'dist')
+  const dest = path.join(pub, 'ort')
+  if (!fs.existsSync(src)) throw new Error('onnxruntime-web not installed — run npm install first')
+  fs.mkdirSync(dest, { recursive: true })
+  for (const f of ['ort-wasm-simd-threaded.wasm', 'ort-wasm-simd-threaded.mjs']) {
+    fs.copyFileSync(path.join(src, f), path.join(dest, f))
+  }
+  log('copied ONNX Runtime wasm → public/ort')
 }
 
 const vendorModel = () => vendor('pose model', MODEL)
@@ -242,4 +322,6 @@ generateIcons()
 vendorWasm()
 await vendorModel()
 await vendorObjectModel()
+vendorOrt()
+await vendorRefineModel()
 console.log('\nDone. The app now runs with no network at all.\n')

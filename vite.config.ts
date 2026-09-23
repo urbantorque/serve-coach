@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { defineConfig } from 'vite'
+import { existsSync, readFileSync } from 'node:fs'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -12,6 +12,11 @@ import { VitePWA } from 'vite-plugin-pwa'
  */
 const engineVersion: string = JSON.parse(
   readFileSync(new URL('./node_modules/@mediapipe/tasks-vision/package.json', import.meta.url), 'utf8'),
+).version
+
+/** The same, for the ONNX Runtime the swing refinement runs on (`public/ort/`). */
+const ortVersion: string = JSON.parse(
+  readFileSync(new URL('./node_modules/onnxruntime-web/package.json', import.meta.url), 'utf8'),
 ).version
 
 /**
@@ -41,7 +46,7 @@ function normaliseBase(raw: string): string {
 /** For building regexes out of a path that may contain regex metacharacters. */
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-const enginePathPrefixes = [`${base}models/`, `${base}wasm/`]
+const enginePathPrefixes = [`${base}models/`, `${base}wasm/`, `${base}ort/`]
 
 /*
  * The engine-asset route, as a RegExp rather than a predicate.
@@ -60,15 +65,44 @@ const enginePathPrefixes = [`${base}models/`, `${base}wasm/`]
  * requires a match at index 0 for cross-origin requests. These are our own
  * assets on our own origin.
  */
-const ENGINE_ASSET_RE = new RegExp(`${escapeRegExp(base)}(models|wasm)/`)
+const ENGINE_ASSET_RE = new RegExp(`${escapeRegExp(base)}(models|wasm|ort)/`)
 
 // The pose model and wasm runtime are ~19 MB combined. Precaching them would
 // block the install on a big silent download, so the shell is precached and the
 // heavy assets are cached on first use (see lib/pose/poseEngine.ts, which warms
 // them with a progress bar the user can watch).
+/**
+ * Dev server only: hand `public/ort/` over untouched.
+ *
+ * ONNX Runtime loads its WASM glue with a dynamic `import()` of
+ * `/ort/ort-wasm-simd-threaded.mjs`. Vite's dev server treats any import of a
+ * file under `public/` as an error ("cannot be imported from JavaScript") and
+ * the swing refinement silently never ran in development. A production build
+ * serves `public/` as plain files and needs nothing — this middleware is
+ * registered for `serve` only, and runs ahead of Vite's own.
+ */
+function serveOrtRaw(): Plugin {
+  return {
+    name: 'serve-coach:ort-raw',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = req.url?.split('?')[0] ?? ''
+        const m = /^\/ort\/([\w.-]+\.(mjs|wasm))$/.exec(path.startsWith(base) ? '/' + path.slice(base.length) : path)
+        if (!m) return next()
+        const file = new URL(`./public/ort/${m[1]}`, import.meta.url)
+        if (!existsSync(file)) return next()
+        res.setHeader('Content-Type', m[2] === 'wasm' ? 'application/wasm' : 'text/javascript')
+        res.end(readFileSync(file))
+      })
+    },
+  }
+}
+
 export default defineConfig({
   base,
   plugins: [
+    serveOrtRaw(),
     react(),
     VitePWA({
       // 'prompt', not 'autoUpdate' — the app decides when to take a new
@@ -111,7 +145,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
         // never precache the model or wasm — they are runtime-cached instead
-        globIgnores: ['**/models/**', '**/wasm/**'],
+        globIgnores: ['**/models/**', '**/wasm/**', '**/ort/**'],
         navigateFallbackDenylist: enginePathPrefixes.map(
           (p) => new RegExp(`^${escapeRegExp(p)}`),
         ),
@@ -120,7 +154,7 @@ export default defineConfig({
             urlPattern: ENGINE_ASSET_RE,
             handler: 'CacheFirst',
             options: {
-              cacheName: `serve-coach-pose-engine-${engineVersion}`,
+              cacheName: `serve-coach-pose-engine-${engineVersion}-ort-${ortVersion}`,
               /*
                * No `maxAgeSeconds`. There was a one-year limit here, which
                * quietly un-installed offline support: an app opened regularly

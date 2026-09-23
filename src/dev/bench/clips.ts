@@ -32,7 +32,8 @@ const log = (s: string) => {
 
 interface Row {
   clip: string
-  mode: 'whole frame' | 'player crop'
+  mode: 'before' | 'after'
+  refined?: number
   outcome: string
   cropped?: boolean
   tracked?: string
@@ -56,6 +57,7 @@ function describe(a: Analysis): Omit<Row, 'clip' | 'mode' | 'ms'> {
   return {
     outcome: a.triage?.status === 'rejected' ? `refused: ${a.triage.reason}` : 'measured',
     cropped: a.cost?.cropped,
+    refined: a.cost?.refined,
     tracked: `${a.frames.length}/${expected}`,
     contact: contact ? contact.t.toFixed(2) : undefined,
     overall: a.overall,
@@ -72,14 +74,17 @@ function describe(a: Analysis): Omit<Row, 'clip' | 'mode' | 'ms'> {
 async function run() {
   const rows: Row[] = []
   for (const clip of CLIPS) {
-    for (const mode of ['whole frame', 'player crop'] as const) {
+    // Before: MediaPipe on whole frames, as the app read clips until now.
+    // After: the player crop and RTMPose's second read of the swing.
+    for (const mode of ['before', 'after'] as const) {
       const t0 = performance.now()
       let row: Row
       try {
         const a = await analyzeServe({
           videoUrl: `/bench-data/clips/${clip}`,
           fileName: clip,
-          skipPlayerCrop: mode === 'whole frame',
+          skipPlayerCrop: mode === 'before',
+          skipPoseRefine: mode === 'before',
           skipThumbnails: true,
         })
         row = { clip, mode, ...describe(a), ms: performance.now() - t0 }
@@ -92,11 +97,11 @@ async function run() {
   }
   ;(window as unknown as { __clips: Row[] }).__clips = rows
   document.getElementById('table')!.innerHTML =
-    '<table><tr><th>clip</th><th>mode</th><th>outcome</th><th>crop</th><th>tracked</th><th>contact s</th><th>overall</th><th>focus</th><th>metrics</th><th>ms</th></tr>' +
+    '<table><tr><th>clip</th><th>mode</th><th>outcome</th><th>crop</th><th>refined</th><th>tracked</th><th>contact s</th><th>overall</th><th>focus</th><th>metrics</th><th>ms</th></tr>' +
     rows
       .map(
         (r) =>
-          `<tr><td>${r.clip}</td><td>${r.mode}</td><td>${r.outcome}</td><td>${r.cropped ?? ''}</td><td>${r.tracked ?? ''}</td><td>${r.contact ?? ''}</td><td>${r.overall ?? ''}</td><td>${r.focus ?? ''}</td><td>${r.metrics ? JSON.stringify(r.metrics) : ''}</td><td>${r.ms.toFixed(0)}</td></tr>`,
+          `<tr><td>${r.clip}</td><td>${r.mode}</td><td>${r.outcome}</td><td>${r.cropped ?? ''}</td><td>${r.refined ?? ''}</td><td>${r.tracked ?? ''}</td><td>${r.contact ?? ''}</td><td>${r.overall ?? ''}</td><td>${r.focus ?? ''}</td><td>${r.metrics ? JSON.stringify(r.metrics) : ''}</td><td>${r.ms.toFixed(0)}</td></tr>`,
       )
       .join('') +
     '</table>'

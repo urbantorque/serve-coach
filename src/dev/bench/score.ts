@@ -200,69 +200,8 @@ export function summarise(
 
 /* ---------------------------------------------------------------- RTMPose maths */
 
-/** RTMPose's input, width × height. */
-export const RTM_INPUT = { w: 192, h: 256 }
-/** SimCC bins per input pixel. */
-export const RTM_SPLIT = 2
-
-/**
- * The crop RTMPose reads, from a person box: padded 1.25×, then widened or
- * heightened to the model's 3:4 — `TopDownGetBboxCenterScale` in its own
- * deploy pipeline, without the rotation it never uses at inference.
- */
-export function rtmCrop(box: [number, number, number, number]): { x: number; y: number; w: number; h: number } {
-  const [bx, by, bw, bh] = box
-  const cx = bx + bw / 2
-  const cy = by + bh / 2
-  let w = bw * 1.25
-  let h = bh * 1.25
-  const aspect = RTM_INPUT.w / RTM_INPUT.h
-  if (w > h * aspect) h = w / aspect
-  else w = h * aspect
-  return { x: cx - w / 2, y: cy - h / 2, w, h }
-}
-
-/**
- * Decode SimCC: each joint's x and y are the argmax of its own 1-D
- * distribution, in input pixels × `RTM_SPLIT`; mapped back through the crop.
- */
-export function decodeSimcc(
-  simccX: Float32Array,
-  simccY: Float32Array,
-  joints: number,
-  crop: { x: number; y: number; w: number; h: number },
-): { points: Pt[]; scores: number[] } {
-  const binsX = simccX.length / joints
-  const binsY = simccY.length / joints
-  const points: Pt[] = []
-  const scores: number[] = []
-  for (let j = 0; j < joints; j++) {
-    let bx = 0
-    let vx = -Infinity
-    for (let i = 0; i < binsX; i++) {
-      const v = simccX[j * binsX + i]
-      if (v > vx) {
-        vx = v
-        bx = i
-      }
-    }
-    let by = 0
-    let vy = -Infinity
-    for (let i = 0; i < binsY; i++) {
-      const v = simccY[j * binsY + i]
-      if (v > vy) {
-        vy = v
-        by = i
-      }
-    }
-    points.push({
-      x: crop.x + (bx / RTM_SPLIT / RTM_INPUT.w) * crop.w,
-      y: crop.y + (by / RTM_SPLIT / RTM_INPUT.h) * crop.h,
-    })
-    scores.push(Math.min(vx, vy))
-  }
-  return { points, scores }
-}
+// The app's own implementation, so the benchmark measures exactly what ships.
+export { RTM_INPUT, RTM_SPLIT, decodeSimcc, rtmCrop } from '../../lib/pose/rtmpose'
 
 /** The tight box around a set of points, for handing one model's find to another. */
 export function boxOf(points: Pt[]): [number, number, number, number] {

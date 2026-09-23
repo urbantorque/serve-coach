@@ -46,6 +46,7 @@ import {
 import { Cancelled, looksLikeNonVideo } from './lib/pose/extract'
 import { isCachedOffline, loadEngine } from './lib/pose/poseEngine'
 import { isObjectModelCached, loadObjectEngine } from './lib/vision/objectEngine'
+import { isRefineModelCached, loadRefineEngine } from './lib/pose/refineEngine'
 import {
   deleteSession,
   getSession,
@@ -321,7 +322,10 @@ export default function App() {
    * it (see the note on `isObjectModelCached`).
    */
   const checkOfflineReady = useCallback(
-    () => Promise.all([isCachedOffline(), isObjectModelCached()]).then(([pose, object]) => pose && object),
+    () =>
+      Promise.all([isCachedOffline(), isObjectModelCached(), isRefineModelCached()]).then(
+        ([pose, object, refine]) => pose && object && refine,
+      ),
     [],
   )
 
@@ -331,7 +335,7 @@ export default function App() {
    * The same `loadEngine`/`loadObjectEngine` every analysis calls, so this is
    * a warm-up and not a second download path: whatever it caches is what the
    * next analysis skips. The cache is re-read afterwards rather than assumed,
-   * because a browser that declined to store 24 MB should leave the badge
+   * because a browser that declined to store 57 MB should leave the badge
    * saying so.
    */
   const makeOffline = useCallback(async () => {
@@ -348,6 +352,10 @@ export default function App() {
         if (p.stage === 'downloading') setWarming({ stage: 'downloading', ratio: p.ratio })
         else if (p.stage === 'starting') setWarming({ stage: 'starting' })
       })
+      // The swing refinement, last and largest. No byte progress of its own:
+      // it reports as setting up, which is what the player needs to know.
+      setWarming({ stage: 'starting' })
+      await loadRefineEngine()
     } catch {
       setWarming({ stage: 'failed' })
       return

@@ -7,6 +7,8 @@ import {
   scanForServes,
   type ExtractProgress,
   type FindPeople,
+  type ReadPose,
+  refineSwing,
 } from '../pose/extract'
 import { framingIssues } from './framingIssues'
 import type { ServeType } from '../storage/prefs'
@@ -28,6 +30,7 @@ import {
   nextObjectTimestamp,
   objectEngineResident,
 } from '../vision/objectEngine'
+import { isRefineModelCached, loadRefineEngine, readPose, refineEngineResident } from '../pose/refineEngine'
 import { drawSkeleton, fitContain } from '../pose/skeleton'
 import { racketFromBox, type DetectedBox, type RacketEstimate } from './racket'
 import { FUNDAMENTALS } from './coaching'
@@ -140,6 +143,12 @@ export interface AnalyzeOptions {
    * found doing harm; nothing in the app sets it.
    */
   skipPlayerCrop?: boolean
+  /**
+   * Leave the swing as MediaPipe read it, without RTMPose's second read.
+   * Set by the basket sweep, which reads every serve and cannot afford a
+   * second model per serve; also the clip benchmark's before-and-after.
+   */
+  skipPoseRefine?: boolean
   /** Serve times already located, so the clip is not scanned again per serve. */
   knownServeTimes?: number[]
   /**
@@ -439,6 +448,7 @@ export async function analyzeAllServes(
           skipBall: true,
           skipThumbnails: true,
           skipRacketBoxes: true,
+          skipPoseRefine: true,
           knownServeTimes,
           onProgress: (p) =>
             opts.onProgress?.({
@@ -503,6 +513,20 @@ async function peopleFinder(): Promise<FindPeople | undefined> {
   try {
     const det = await loadObjectEngine()
     return (video) => detectPeople(det, video)
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * RTMPose, as the swing refinement uses it — see `pose/refineEngine.ts`.
+ * `undefined` when it will not load: MediaPipe's read of the swing stands.
+ */
+async function poseReader(): Promise<ReadPose | undefined> {
+  try {
+    const sess = await loadRefineEngine()
+    const canvas = document.createElement('canvas')
+    return (video, box) => readPose(sess, video, box, canvas)
   } catch {
     return undefined
   }
@@ -1277,7 +1301,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   const startedAt = clock()
   // Asked before `loadEngine`, because afterwards the answer is always yes. A
-  // first analysis on a cold cache pays a 24 MB download inside the measured
+  // first analysis on a cold cache pays a 57 MB download inside the measured
   // span, and a number that folded that in would be reporting the network.
   //
   // The resident check short-circuits it, and is not a second opinion about the
@@ -1388,6 +1412,36 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   }
 
   let skel = detect()
+
+  /*
+   * A second, sharper read of the swing, before anything is levelled or
+   * measured.
+   *
+   * RTMPose re-reads the frames from just before the toss to just after
+   * contact — where every timing and most heights are taken — and its joints
+   * replace MediaPipe's where it is confident (`pose/rtmpose.ts`). On the pose
+   * benchmark that cut elbow error by a third over the same crop. Then the
+   * keyframes are found again, because they were found on the old wrist path.
+   * Here rather than later because the frames are still in the video's own
+   * pixels: levelling rotates them, and the model reads pixels.
+   */
+  let refined = 0
+  if (!opts.skipPoseRefine) {
+    // Same reasoning as the racket pass's check below: asked only when this
+    // pass runs, so a sweep that skips it never reports a download it did not make.
+    coldEngine = coldEngine || (!refineEngineResident() && !(await isRefineModelCached()))
+    const read = await poseReader()
+    if (read) {
+      onProgress({ step: 'measuring', ratio: 0.3, detail: 'Sharpening the swing' })
+      const pass = await refineSwing(video, frames, skel.keys.toss - 2, skel.keys.contact + 3, read, { signal })
+      if (pass.refined) {
+        frames = pass.frames
+        for (const f of frames) f.visibility = keyVisibility(f)
+        skel = detect()
+        refined = pass.refined
+      }
+    }
+  }
 
   // A phone held at an angle tilts every height and depth in the clip while
   // leaving the pose tracking looking perfectly healthy. The player's own
@@ -1568,7 +1622,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     // What this pass actually took, rather than what a comment guessed — see
     // `Analysis.cost`. Rounded to the millisecond: nothing reads it at finer
     // resolution and a long float in every stored report is noise.
-    cost: { ms: Math.round(clock() - startedAt), coldEngine, cropped: extracted.crop !== undefined },
+    cost: { ms: Math.round(clock() - startedAt), coldEngine, cropped: extracted.crop !== undefined, refined },
     video: {
       name: fileName,
       durationMs: video.duration * 1000,

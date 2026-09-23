@@ -99,6 +99,15 @@ const ALLOWED: (Site & { why: string })[] = [
       'vendors the pose model. A second engine, not a second exception to the policy.',
   },
   {
+    file: 'lib/pose/refineEngine.ts',
+    pattern: 'fetch',
+    why:
+      'The third engine, the same shape again: RTMPose-s, the swing refinement, from ' +
+      "this app's own origin (`BASE_URL`-relative), once per session behind a singleton, " +
+      'vendored by `fetch-assets.mjs` and cached by the service worker with the others. ' +
+      'Its ONNX Runtime WASM is loaded from the same origin, `public/ort/`.',
+  },
+  {
     file: 'lib/share/reportCard.ts',
     pattern: 'Image()',
     why:

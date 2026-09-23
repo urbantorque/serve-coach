@@ -306,7 +306,7 @@ export interface Analysis {
      * Whether either engine — pose or object detection — had to be fetched
      * during this pass.
      *
-     * A first analysis on a cold cache pays a 24 MB download inside the same
+     * A first analysis on a cold cache pays a 57 MB download inside the same
      * span, and reporting that as the pipeline's cost would overstate it by an
      * amount that depends entirely on the network. Kept beside the number so a
      * reader can tell the two apart rather than averaging them together. One
@@ -321,6 +321,11 @@ export interface Analysis {
      * fact: how this pass read the clip, for whoever is reading the export.
      */
     cropped?: boolean
+    /**
+     * How many frames of the swing RTMPose re-read (`pose/refineEngine.ts`),
+     * or 0 when it did not run or gave up inside its time budget.
+     */
+    refined?: number
   }
   /**
    * The single thing to work on, or the reason this clip could not be read.

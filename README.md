@@ -45,7 +45,7 @@ npm run build
 To use it at the court, build and host `dist/` on any static host over HTTPS,
 open it on your phone, and add it to your home screen. Tap **Download now to
 use offline** on the home screen while you still have signal — that fetches the
-24 MB of pose model, racket model and WASM runtime and caches them. After that the app works
+57 MB of pose model, racket model, swing-refinement model and both WASM runtimes and caches them. After that the app works
 with the network switched off entirely, including in aeroplane mode on a court
 with no signal. Running an analysis fetches the same assets, so the badge also
 turns itself green the first time you use the app for real; the button exists
@@ -791,6 +791,8 @@ Everything is in `src/lib`:
 | `vision/objectEngine.ts` | loads the COCO object detector for the racket; mirrors `poseEngine.ts`, draw-only, feeds no score |
 | `pose/extract.ts` | samples the video and runs detection |
 | `pose/playerCrop.ts` | points the pose model at the server: one padded square per read window from the object detector's tallest person, or the whole frame when the player is already big enough or cannot be found |
+| `pose/rtmpose.ts` | RTMPose's crop and SimCC decode, and how its joints are folded into a MediaPipe frame — arms, knees and ankles only, hand and foot points carried along, hips and world landmarks left alone |
+| `pose/refineEngine.ts` | loads RTMPose-s on ONNX Runtime's WASM backend and reads one pose inside a box; the swing refinement's engine |
 | `pose/skeleton.ts` | draws the tracked body — shared by the player and the stills |
 | `framing/judge.ts` | the live framing verdict, before the player has filmed anything |
 | `framing/access.ts` | why a live camera preview failed to start, and what to say about it |

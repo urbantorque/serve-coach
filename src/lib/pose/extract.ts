@@ -10,6 +10,7 @@ import { bridgeDetectionGaps, type PoseSample } from '../analysis/kalman'
 import { UnreadableVideoError, type Frame, type Landmark } from '../analysis/types'
 import { nextVideoTimestamp } from './poseEngine'
 import { choosePlayerCrop, uncrop, type Crop, type PersonBox } from './playerCrop'
+import { boxFromFrame, refineFrame, type Pt } from './rtmpose'
 import { FINE_FPS, MAX_FINE_FRAMES, samplingRateFor } from './rate'
 
 // Re-exported so every existing importer keeps reading them from here. They
@@ -587,6 +588,57 @@ export async function extractFrames(
   const frames = bridgeDetectionGaps(samples)
 
   return { frames, fps, window: { start, end }, serves, located, times, crop }
+}
+
+/** Reads a pose inside a box of the current video frame — RTMPose, from `refineEngine.ts`. */
+export type ReadPose = (
+  video: HTMLVideoElement,
+  box: [number, number, number, number],
+) => Promise<{ points: Pt[]; scores: number[] }>
+
+/**
+ * Wall-clock the swing refinement may spend. Past it the pass is abandoned
+ * whole — see `refineSwing`.
+ */
+export const REFINE_BUDGET_MS = 6000
+
+/**
+ * RTMPose's second read of the frames from `from` to `to`, folded in joint by
+ * joint (see `rtmpose.ts`), or the frames untouched.
+ *
+ * ALL OR NOTHING. A window read half by one model and half by the other would
+ * put a seam in the wrist path exactly where contact and the drop are timed —
+ * the two models place a joint a percent or two of body height apart — so a
+ * pass that runs out of time, or projects that it will from its first frames,
+ * hands back the frames it was given and reports nothing refined. The budget
+ * is what keeps a slow phone's analysis the length it was before this existed.
+ */
+export async function refineSwing(
+  video: HTMLVideoElement,
+  frames: Frame[],
+  from: number,
+  to: number,
+  read: ReadPose,
+  opts: { signal?: AbortSignal; budgetMs?: number } = {},
+): Promise<{ frames: Frame[]; refined: number }> {
+  const budget = opts.budgetMs ?? REFINE_BUDGET_MS
+  const lo = Math.max(0, from)
+  const hi = Math.min(frames.length - 1, to)
+  const total = hi - lo + 1
+  if (total < 1) return { frames, refined: 0 }
+  const out = frames.slice()
+  const started = performance.now()
+  for (let i = lo; i <= hi; i++) {
+    if (opts.signal?.aborted) throw new Cancelled()
+    const spent = performance.now() - started
+    const done = i - lo
+    if (spent > budget || (done >= 3 && (spent / done) * total > budget)) return { frames, refined: 0 }
+    const at = await seekTo(video, frames[i].t)
+    if (at === false) return { frames, refined: 0 }
+    const { points, scores } = await read(video, boxFromFrame(frames[i], video.videoHeight))
+    out[i] = refineFrame(frames[i], points, scores, video.videoHeight)
+  }
+  return { frames: out, refined: total }
 }
 
 /**

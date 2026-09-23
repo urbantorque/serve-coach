@@ -23,7 +23,7 @@ know what four you got.
 
 **1 — Open the app and tap `Download now to use offline`. Wait for it to finish.**
 
-Proves the 24 MB of model and runtime cache. Everything after step 6 depends on
+Proves the 57 MB of model and runtime cache. Everything after step 6 depends on
 it.
 
 **2 — Open the app at `?check`. Read the first line. Tap `Copy this` and paste it
@@ -99,7 +99,7 @@ app does actually takes, on a phone, on the path a picked multi-serve clip now
 enters automatically.
 
 You do not need a stopwatch. Every analysis now records what it cost —
-`Analysis.cost.ms`, with `coldEngine` saying whether the 24 MB of model downloads
+`Analysis.cost.ms`, with `coldEngine` saying whether the 57 MB of model downloads
 happened inside that span. It rides on the stored report, so the way to read it
 off a phone is **Your serves → Export**, then open the `.json` and look at
 `cost` on each entry.
