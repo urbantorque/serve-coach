@@ -1,7 +1,8 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/primitives'
 import type { AnalyzeProgress, Step } from '../lib/analysis/analyze'
 import { MIN_COMPARABLE_SERVES } from '../lib/analysis/consistency'
+import { clipLabel } from '../lib/clipLabel'
 
 const STEPS: { id: Step; label: string }[] = [
   { id: 'engine', label: 'Loading the coach' },
@@ -11,13 +12,34 @@ const STEPS: { id: Step; label: string }[] = [
   { id: 'measuring', label: 'Measuring the fundamentals' },
 ]
 
-/** Rotating notes, so a slow first run on a phone still feels like progress. */
+/**
+ * Rotating notes, so a slow first run on a phone still feels like progress.
+ *
+ * They were indexed by step, so on a long "Tracking your body" the same line
+ * sat on screen for most of the wait and the rotation the comment promised
+ * never happened. They now turn on a timer (`ASIDE_MS`), and the step no
+ * longer decides which one shows.
+ */
 const ASIDES = [
   'Everything runs on your device. Nothing is uploaded.',
   'The racket hand’s highest point marks contact.',
   'The lowest point of your bend is what gets measured.',
   'Your hips and shoulders are tracked as they turn.',
+  'Filming side-on, four or five metres away, gives the sharpest read.',
+  'Every height counts against your own body, not in metres.',
 ]
+
+const ASIDE_MS = 6000
+
+/** An index that moves on every `ms`, for as long as the screen is up. */
+function useTicker(count: number, ms: number): number {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setI((n) => (n + 1) % count), ms)
+    return () => clearInterval(t)
+  }, [count, ms])
+  return i
+}
 
 /**
  * A basket sweep filling in, one serve at a time.
@@ -61,6 +83,7 @@ interface Props {
 }
 
 export default function Analyzing({ progress, fileName, sweep, onCancel }: Props) {
+  const aside = useTicker(ASIDES.length, ASIDE_MS)
   // 'done' is past the end of the list, so every step reads as complete —
   // findIndex would return −1 and light step one under a full bar.
   const activeIndex =
@@ -122,7 +145,7 @@ export default function Analyzing({ progress, fileName, sweep, onCancel }: Props
         </div>
 
         <h1>{sweep ? 'Comparing your serves' : 'Reading your serve'}</h1>
-        <p className="analyzing-file">{fileName}</p>
+        <p className="analyzing-file">{clipLabel(fileName)}</p>
 
         <div
           className="progress"
@@ -195,10 +218,10 @@ export default function Analyzing({ progress, fileName, sweep, onCancel }: Props
               ))}
         </ul>
 
-        <p className="analyzing-aside">
+        <p className="analyzing-aside" key={sweep ? 'sweep' : aside}>
           {sweep
             ? 'Each serve is read on its own, then the spread across them is compared.'
-            : ASIDES[activeIndex % ASIDES.length]}
+            : ASIDES[aside]}
         </p>
 
         {/* What stopping actually does, said before they press it. Two serves
