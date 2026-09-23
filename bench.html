@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Dev-only pose benchmark. Not part of the app: the production build bundles
+  index.html alone. See src/dev/bench/main.ts and scripts/fetch-bench.mjs.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Serve Coach · pose benchmark</title>
+    <style>
+      body { font: 13px/1.5 ui-monospace, monospace; background: #0a0c10; color: #eef2f6; padding: 20px; }
+      table { border-collapse: collapse; margin: 16px 0; }
+      th, td { border: 1px solid #232a38; padding: 4px 8px; text-align: right; }
+      th:first-child { text-align: left; }
+      pre { color: #98a2b3; }
+    </style>
+  </head>
+  <body>
+    <h1>Pose benchmark: labelled serve frames</h1>
+    <div id="table"></div>
+    <pre id="out"></pre>
+    <script type="module" src="/src/dev/bench/main.ts"></script>
+  </body>
+</html>

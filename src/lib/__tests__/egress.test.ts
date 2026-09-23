@@ -106,6 +106,22 @@ const ALLOWED: (Site & { why: string })[] = [
       'shared report card. A `data:` source never reaches the network stack at all — this is ' +
       'on the list so a future change that swaps in a real URL here has to touch this file too.',
   },
+  {
+    file: 'dev/bench/main.ts',
+    pattern: 'fetch',
+    why:
+      'The dev-only pose benchmark, reached through `bench.html`, which the production build ' +
+      'never bundles (Vite builds `index.html` alone). Reads the labelled dataset from ' +
+      '`bench-data/` on the dev server — same origin, fetched to disk beforehand by ' +
+      '`npm run setup:bench`. Not part of the app a player downloads.',
+  },
+  {
+    file: 'dev/bench/main.ts',
+    pattern: 'Image()',
+    why:
+      'The same dev-only benchmark, decoding the dataset frames from the dev server. Same ' +
+      'origin, never in the production bundle.',
+  },
 ]
 
 heading('Every request the running app can make')

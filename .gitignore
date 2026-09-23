@@ -30,3 +30,7 @@ clips/
 # Page snapshots and screenshots dropped by playwright-cli wherever it is run.
 # Scratch from driving a browser, never an input to anything.
 .playwright-cli/
+
+# Open benchmark datasets, fetched by `npm run setup:bench` (scripts/fetch-bench.mjs).
+# Licensed data we use but do not redistribute; dev-only, never in dist/.
+bench-data/
