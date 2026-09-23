@@ -239,8 +239,22 @@ export const METRICS: Record<string, MetricCopy> = {
     unit: '°',
     phase: 'trophy',
     weight: 1.1,
-    ideal: [35, 62],
-    range: [0, 90],
+    /*
+     * Anchored to published serves rather than to the rig. A meta-analysis of
+     * 27 serve studies puts knee flexion at the trophy at 64.5 ± 9.7° for the
+     * front knee and 67.4 ± 16.4° for the back (Frontiers in Sports and Active
+     * Living, 2024, doi:10.3389/fspor.2024.1432030), and names knee flexion one
+     * of the two least variable serve measurements — the most dependable band
+     * there is to coach against. This reads the mean of both knees.
+     *
+     * The band used to stop at 62° and tell anything deeper to "trim the
+     * bend": a textbook advanced load, ~66°, was scored out of band and told
+     * to bend less. The floor stays where a club player's load starts to do
+     * work; the ceiling is ~1.5 SD past the published means, so the fix below
+     * is kept for a squat that genuinely stalls the drive.
+     */
+    ideal: [35, 80],
+    range: [0, 110],
     decimals: 0,
     insight: {
       low: 'Your legs stay **straight**, so the serve runs on arm alone.',
