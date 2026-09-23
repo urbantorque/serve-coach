@@ -167,7 +167,14 @@ type View =
    * the branch would otherwise never be looked at.
    */
   | { kind: 'glance'; analysis: Analysis; videoUrl: string; move?: FaultMove }
-  | { kind: 'saved'; session: Session }
+  /**
+   * `example` marks the simulated serve from "See an example report". It
+   * renders with none of the player's own history attached — no deltas
+   * against their last serve, no streak, no drill to log — because every one
+   * of those would be a real record compared with, or written from, a serve
+   * nobody hit.
+   */
+  | { kind: 'saved'; session: Session; example?: boolean }
   | { kind: 'error'; title: string; hints: string[]; capture?: FailedCapture; fileName?: string }
 
 const MAX_BYTES = 400 * 1024 * 1024
@@ -330,7 +337,7 @@ export default function App() {
     const { sampleAnalysis } = await import('./dev/sampleAnalysis')
     const { frames: _f, ...session } = sampleAnalysis()
     void _f
-    setView({ kind: 'saved', session })
+    setView({ kind: 'saved', session, example: true })
   }, [])
 
   /**
@@ -1404,6 +1411,17 @@ export default function App() {
    * Sheets carry their own layer in `Sheet`, so one open over a screen closes
    * first.
    */
+  /*
+   * A new screen starts at its top. The shell is one scrolling document, so
+   * without this a report opened from halfway down the home screen opened
+   * halfway down itself — past its own score, and on the example, past the
+   * banner saying it was one. Keyed on the kind alone: re-scoring a report
+   * swaps the analysis in place and must leave the player where they were.
+   */
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [view.kind])
+
   useBackLayer(view.kind !== 'home', () => {
     if (view.kind === 'analyzing') {
       if (sweep) stopSweep()
@@ -1591,7 +1609,17 @@ export default function App() {
           />
         )}
 
-        {view.kind === 'saved' && (
+        {view.kind === 'saved' && view.example && (
+          <Report
+            key={view.session.id}
+            analysis={view.session}
+            example
+            onBack={goHome}
+            onAnalyzeAnother={goHome}
+          />
+        )}
+
+        {view.kind === 'saved' && !view.example && (
           <Report
             key={view.session.id}
             analysis={view.session}

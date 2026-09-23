@@ -1230,3 +1230,35 @@
   line-height: 1.55;
   color: var(--fg-faint);
 }
+
+/* ============================================================================
+   Example banner — the sample report says what it is, above the fold
+   Assembled from existing tokens: the storage note's surface, and the lime
+   accent as the rule because this is an affordance (film your own), not a
+   warning — the score colours stay reserved for scores.
+   ========================================================================= */
+
+.example-banner {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--lime);
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.example-banner strong {
+  color: var(--fg);
+  font-weight: var(--wt-key);
+}
+
+.example-banner .icon {
+  flex: none;
+  color: var(--lime);
+  margin-top: 1px;
+}

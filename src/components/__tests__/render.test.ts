@@ -96,6 +96,20 @@ check('the report renders from a reopened one, with no frames behind it', () => 
   )
 })
 
+check('the example report says it is one, and cannot be shared as a real serve', () => {
+  const out = html(
+    createElement(Report, {
+      analysis: stored(sampleAnalysis()),
+      example: true,
+      onBack: noop,
+      onAnalyzeAnother: noop,
+    }),
+  )
+  assert(out.includes('This is an example.'), 'the example lost its label')
+  assert(!out.includes('Save or share this report'), 'a simulated serve can be shared as if it were real')
+  assert(!out.includes('Measured on this device'), 'the example claims to have been measured on this device')
+})
+
 check('a report carrying a basket renders its comparison', () => {
   const out = html(
     createElement(Report, { analysis: basket(), onBack: noop, onAnalyzeAnother: noop }),

@@ -165,6 +165,16 @@ interface Props {
    * which mode the app is in.
    */
   fixtureExport?: boolean
+  /**
+   * This is the example report, built from the simulated serve, not the
+   * player's own.
+   *
+   * It used to render exactly like a saved serve: dated today, "measured on
+   * this device", with a share button that would put a simulated serve on a
+   * card under the player's name. The flag relabels the page and removes the
+   * one action that would pass it off as real.
+   */
+  example?: boolean
 }
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -194,6 +204,7 @@ export default function Report({
   onLogDrill,
   onUndoDrill,
   fixtureExport,
+  example,
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
@@ -377,11 +388,13 @@ export default function Report({
         <Icon name="back" />
       </button>
       <span className="t-overline topbar-title">
-        {new Date(analysis.createdAt).toLocaleDateString(undefined, {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-        })}
+        {example
+          ? 'Example report'
+          : new Date(analysis.createdAt).toLocaleDateString(undefined, {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            })}
       </span>
       <button className="icon-btn" onClick={onAnalyzeAnother} aria-label="Analyse another serve">
         <Icon name="camera" />
@@ -431,6 +444,16 @@ export default function Report({
     <div className="screen report">
       {topbar}
       {injuryBlock}
+
+      {example && (
+        <p className="example-banner">
+          <Icon name="info" size={16} />
+          <span>
+            <strong>This is an example.</strong> It comes from a simulated serve, so you can see
+            what a report looks like before you film your own.
+          </span>
+        </p>
+      )}
 
       {saveWarning && (
         <p className="storage-warn">
@@ -684,7 +707,7 @@ export default function Report({
         />
       )}
 
-      {analysis.quality.warnings.length > 0 && (
+      {!example && analysis.quality.warnings.length > 0 && (
         <section className="notes">
           {analysis.quality.warnings.map((w) => (
             <p key={w} className="note">
@@ -962,28 +985,33 @@ export default function Report({
       <footer className="report-foot">
         <button className="btn btn--primary btn--full" onClick={onAnalyzeAnother}>
           <Icon name="camera" size={18} />
-          Analyse another serve
+          {example ? 'Analyse your own serve' : 'Analyse another serve'}
         </button>
         {/* `aria-live` so "Preparing…"/"Saved" reaches a screen reader as
             the button's own text changes under it — see ConsistencyPanel's
-            own share button for the same reasoning. */}
-        <button
-          className="btn btn--ghost btn--full"
-          onClick={() => void share()}
-          disabled={sharing === 'working'}
-          aria-live="polite"
-        >
-          <Icon name={sharing === 'done' ? 'check' : 'share'} size={17} />
-          {sharing === 'working'
-            ? 'Preparing…'
-            : sharing === 'done'
-              ? 'Saved'
-              : 'Save or share this report'}
-        </button>
+            own share button for the same reasoning. Not on the example: a
+            simulated serve on a share card reads as the sender's own. */}
+        {!example && (
+          <button
+            className="btn btn--ghost btn--full"
+            onClick={() => void share()}
+            disabled={sharing === 'working'}
+            aria-live="polite"
+          >
+            <Icon name={sharing === 'done' ? 'check' : 'share'} size={17} />
+            {sharing === 'working'
+              ? 'Preparing…'
+              : sharing === 'done'
+                ? 'Saved'
+                : 'Save or share this report'}
+          </button>
+        )}
         <p className="fineprint">
-          {isLive(analysis)
-            ? `Measured on this device from ${analysis.frames.length} tracked frames. Nothing was uploaded.`
-            : 'Measured on this device. Nothing was uploaded, and the video itself was never saved.'}
+          {example
+            ? 'Built from a simulated serve. Nothing on this page was measured from a video.'
+            : isLive(analysis)
+              ? `Measured on this device from ${analysis.frames.length} tracked frames. Nothing was uploaded.`
+              : 'Measured on this device. Nothing was uploaded, and the video itself was never saved.'}
         </p>
       </footer>
     </div>
