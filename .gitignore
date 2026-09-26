@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+tools/**/node_modules/
+
+# Build and test output
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+
+# MediaPipe wasm runtime is copied from node_modules by `npm run copy:mediapipe` (postinstall)
+app/public/mediapipe/
+
+# Capacitor native platforms are generated on macOS (`npx cap add ios`)
+app/ios/App/App/public/
+
+# Secrets and local env
+.env*
+*.local
+
+# Synthetic ground-truth media is regenerated, never committed
+validation/synthetic/**/*.mp4
+validation/synthetic/**/*.webm
+validation/synthetic/**/*.wav
+
+# Logs
+*.log
+logs/
+
+# Playwright
+test-results/
+playwright-report/
+.playwright-cli/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.sw?
+
+# Claude Code local state
+.claude/*.lock
+.claude/settings.local.json

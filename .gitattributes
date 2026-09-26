@@ -1,0 +1,14 @@
+# Keep LF in the repo and working tree (Windows dev now, macOS/Xcode later).
+* text=auto eol=lf
+
+# Binary assets
+*.task binary
+*.tflite binary
+*.wasm binary
+*.png binary
+*.jpg binary
+*.mp4 binary
+*.mov binary
+*.webm binary
+*.wav binary
+*.pdf binary
