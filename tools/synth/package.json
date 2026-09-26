@@ -1,0 +1,41 @@
+{
+  "name": "serve-synth",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Synthetic tennis-serve video generator with exact ground truth for validating the Serve Coach analysis engine.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "generate": "tsx src/cli.ts",
+    "quick": "tsx src/cli.ts --quick",
+    "all": "tsx src/cli.ts --all",
+    "list": "tsx src/cli.ts --list",
+    "truth-only": "tsx src/cli.ts --all --truth-only",
+    "audit": "tsx src/audit.ts",
+    "verify": "tsx src/verify.ts",
+    "feasibility": "tsx src/feasibility/run.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@types/ws": "8.18.1",
+    "esbuild": "0.28.2",
+    "ffmpeg-static": "5.3.0",
+    "playwright": "1.63.0",
+    "three": "0.186.1",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.0",
+    "@types/three": "0.186.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "5.0.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "ffmpeg-static@5.3.0": true
+  }
+}

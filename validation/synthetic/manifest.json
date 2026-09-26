@@ -1,0 +1,6733 @@
+{
+ "format": "serve-synth-manifest/1",
+ "updatedAt": "2026-09-26T20:13:09.696Z",
+ "note": "Synthetic serve clips with exact ground truth (tools/synth). Paths are relative to this file. groups = scenario ids usable with `--scenario`.",
+ "groups": [
+  {
+   "id": "quick",
+   "description": "Three short, low-resolution clips for CI (side 60 fps with WebM, rear 30 fps left-hander, 240 fps slow motion re-timed to 30 fps)"
+  },
+  {
+   "id": "baseline",
+   "description": "Reference: side 5 m, 60 fps, 1080x1920 portrait, main lens, bright, 1.80 m right-hander, 5 serves (one clip per serve, plus a VP9 WebM of serve 1)"
+  },
+  {
+   "id": "fps-sweep",
+   "description": "30/60/120/240 fps of the same five serves (one 240 fps render, decimated)"
+  },
+  {
+   "id": "crf-sweep",
+   "description": "H.264 CRF 18/28/36 of the baseline serves (baseline itself is CRF 20)"
+  },
+  {
+   "id": "slomo",
+   "description": "240 fps capture re-timed to 30 fps media (1 real s = 8 media s, timeScale 0.125), serves 1-2"
+  },
+  {
+   "id": "view-sweep",
+   "description": "Rear and front-45 views (side is the baseline)"
+  },
+  {
+   "id": "distance-sweep",
+   "description": "Side view at 4, 7 and 12 m (5 m is the baseline)"
+  },
+  {
+   "id": "lighting-sweep",
+   "description": "Overcast, dusk (60 fps) and night under floodlights with 100 Hz flicker (240 fps)"
+  },
+  {
+   "id": "shake",
+   "description": "Handheld camera shake"
+  },
+  {
+   "id": "toss-out-of-frame",
+   "description": "Landscape, close and low: the toss apex leaves the top of the frame"
+  },
+  {
+   "id": "left-handed",
+   "description": "Left-handed player (mirrored model)"
+  },
+  {
+   "id": "height-sweep",
+   "description": "1.60 m and 1.95 m players (toss and landing scale with height)"
+  },
+  {
+   "id": "beginner",
+   "description": "Beginner profile: high variability, little knee bend"
+  },
+  {
+   "id": "advanced",
+   "description": "Advanced profile: deep knee bend, jump, consistent toss, foot-up stance"
+  },
+  {
+   "id": "session",
+   "description": "One continuous multi-serve session clip: 8 serves, alternating sides, pauses, pre-serve ball bounces, distant distractor hits"
+  }
+ ],
+ "clips": [
+  {
+   "id": "advanced-s1",
+   "job": "advanced-s1",
+   "groups": [
+    "advanced"
+   ],
+   "tags": [
+    "advanced"
+   ],
+   "description": "Advanced profile (1.85 m, foot-up stance) (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/advanced-s1/advanced-s1.mp4",
+    "truth": "clips/advanced-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1476407,
+    "truth": 877821
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 286,
+    "durationMediaS": 4.766667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "advanced",
+    "heightM": 1.85,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:09:33.875Z"
+  },
+  {
+   "id": "advanced-s2",
+   "job": "advanced-s2",
+   "groups": [
+    "advanced"
+   ],
+   "tags": [
+    "advanced"
+   ],
+   "description": "Advanced profile (1.85 m, foot-up stance) (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/advanced-s2/advanced-s2.mp4",
+    "truth": "clips/advanced-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1464295,
+    "truth": 868120
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 283,
+    "durationMediaS": 4.716667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "advanced",
+    "heightM": 1.85,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:09:33.613Z"
+  },
+  {
+   "id": "advanced-s3",
+   "job": "advanced-s3",
+   "groups": [
+    "advanced"
+   ],
+   "tags": [
+    "advanced"
+   ],
+   "description": "Advanced profile (1.85 m, foot-up stance) (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/advanced-s3/advanced-s3.mp4",
+    "truth": "clips/advanced-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1473511,
+    "truth": 862401
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 281,
+    "durationMediaS": 4.683333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "advanced",
+    "heightM": 1.85,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:09:55.005Z"
+  },
+  {
+   "id": "advanced-s4",
+   "job": "advanced-s4",
+   "groups": [
+    "advanced"
+   ],
+   "tags": [
+    "advanced"
+   ],
+   "description": "Advanced profile (1.85 m, foot-up stance) (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/advanced-s4/advanced-s4.mp4",
+    "truth": "clips/advanced-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1455003,
+    "truth": 849933
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 280,
+    "durationMediaS": 4.666667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "advanced",
+    "heightM": 1.85,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:09:55.243Z"
+  },
+  {
+   "id": "advanced-s5",
+   "job": "advanced-s5",
+   "groups": [
+    "advanced"
+   ],
+   "tags": [
+    "advanced"
+   ],
+   "description": "Advanced profile (1.85 m, foot-up stance) (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/advanced-s5/advanced-s5.mp4",
+    "truth": "clips/advanced-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1475721,
+    "truth": 860909
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 284,
+    "durationMediaS": 4.733333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "advanced",
+    "heightM": 1.85,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:10:16.524Z"
+  },
+  {
+   "id": "apexout-s1",
+   "job": "apexout-s1",
+   "groups": [
+    "toss-out-of-frame"
+   ],
+   "tags": [
+    "toss-out-of-frame",
+    "landscape"
+   ],
+   "description": "Landscape at 4.5 m, camera 1.0 m high aimed at 1.3 m: the toss apex leaves the top of the frame (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/apexout-s1/apexout-s1.mp4",
+    "truth": "clips/apexout-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1312821,
+    "truth": 889223
+   },
+   "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4.5,
+    "heightM": 1,
+    "orientation": "landscape",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     false
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:04:04.784Z"
+  },
+  {
+   "id": "apexout-s2",
+   "job": "apexout-s2",
+   "groups": [
+    "toss-out-of-frame"
+   ],
+   "tags": [
+    "toss-out-of-frame",
+    "landscape"
+   ],
+   "description": "Landscape at 4.5 m, camera 1.0 m high aimed at 1.3 m: the toss apex leaves the top of the frame (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/apexout-s2/apexout-s2.mp4",
+    "truth": "clips/apexout-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1307495,
+    "truth": 864860
+   },
+   "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4.5,
+    "heightM": 1,
+    "orientation": "landscape",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     false
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:04:26.046Z"
+  },
+  {
+   "id": "apexout-s3",
+   "job": "apexout-s3",
+   "groups": [
+    "toss-out-of-frame"
+   ],
+   "tags": [
+    "toss-out-of-frame",
+    "landscape"
+   ],
+   "description": "Landscape at 4.5 m, camera 1.0 m high aimed at 1.3 m: the toss apex leaves the top of the frame (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/apexout-s3/apexout-s3.mp4",
+    "truth": "clips/apexout-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1282346,
+    "truth": 852790
+   },
+   "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4.5,
+    "heightM": 1,
+    "orientation": "landscape",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     false
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:04:26.879Z"
+  },
+  {
+   "id": "apexout-s4",
+   "job": "apexout-s4",
+   "groups": [
+    "toss-out-of-frame"
+   ],
+   "tags": [
+    "toss-out-of-frame",
+    "landscape"
+   ],
+   "description": "Landscape at 4.5 m, camera 1.0 m high aimed at 1.3 m: the toss apex leaves the top of the frame (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/apexout-s4/apexout-s4.mp4",
+    "truth": "clips/apexout-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1260148,
+    "truth": 834744
+   },
+   "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4.5,
+    "heightM": 1,
+    "orientation": "landscape",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     false
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:04:46.299Z"
+  },
+  {
+   "id": "apexout-s5",
+   "job": "apexout-s5",
+   "groups": [
+    "toss-out-of-frame"
+   ],
+   "tags": [
+    "toss-out-of-frame",
+    "landscape"
+   ],
+   "description": "Landscape at 4.5 m, camera 1.0 m high aimed at 1.3 m: the toss apex leaves the top of the frame (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/apexout-s5/apexout-s5.mp4",
+    "truth": "clips/apexout-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1256452,
+    "truth": 836654
+   },
+   "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4.5,
+    "heightM": 1,
+    "orientation": "landscape",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     false
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:04:47.286Z"
+  },
+  {
+   "id": "baseline-s1",
+   "job": "base240-s1",
+   "groups": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep"
+   ],
+   "tags": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep",
+    "fps-60",
+    "crf-20"
+   ],
+   "description": "Baseline serve 1, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/baseline-s1/baseline-s1.mp4",
+    "webm": "clips/baseline-s1/baseline-s1.webm",
+    "truth": "clips/baseline-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1411505,
+    "webm": 1787057,
+    "truth": 888739
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:22.442Z"
+  },
+  {
+   "id": "baseline-s2",
+   "job": "base240-s2",
+   "groups": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep"
+   ],
+   "tags": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep",
+    "fps-60",
+    "crf-20"
+   ],
+   "description": "Baseline serve 2, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/baseline-s2/baseline-s2.mp4",
+    "truth": "clips/baseline-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1406414,
+    "truth": 864692
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:36.348Z"
+  },
+  {
+   "id": "baseline-s3",
+   "job": "base240-s3",
+   "groups": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep"
+   ],
+   "tags": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep",
+    "fps-60",
+    "crf-20"
+   ],
+   "description": "Baseline serve 3, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/baseline-s3/baseline-s3.mp4",
+    "truth": "clips/baseline-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1397430,
+    "truth": 852112
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:41.161Z"
+  },
+  {
+   "id": "baseline-s4",
+   "job": "base240-s4",
+   "groups": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep"
+   ],
+   "tags": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep",
+    "fps-60",
+    "crf-20"
+   ],
+   "description": "Baseline serve 4, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/baseline-s4/baseline-s4.mp4",
+    "truth": "clips/baseline-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1382460,
+    "truth": 834142
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:40.127Z"
+  },
+  {
+   "id": "baseline-s5",
+   "job": "base240-s5",
+   "groups": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep"
+   ],
+   "tags": [
+    "baseline",
+    "fps-sweep",
+    "crf-sweep",
+    "fps-60",
+    "crf-20"
+   ],
+   "description": "Baseline serve 5, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/baseline-s5/baseline-s5.mp4",
+    "truth": "clips/baseline-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1390209,
+    "truth": 837057
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:48.668Z"
+  },
+  {
+   "id": "beginner-s1",
+   "job": "beginner-s1",
+   "groups": [
+    "beginner"
+   ],
+   "tags": [
+    "beginner"
+   ],
+   "description": "Beginner profile (1.75 m) (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/beginner-s1/beginner-s1.mp4",
+    "truth": "clips/beginner-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1426101,
+    "truth": 885960
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 288,
+    "durationMediaS": 4.8,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "beginner",
+    "heightM": 1.75,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:08:12.173Z"
+  },
+  {
+   "id": "beginner-s2",
+   "job": "beginner-s2",
+   "groups": [
+    "beginner"
+   ],
+   "tags": [
+    "beginner"
+   ],
+   "description": "Beginner profile (1.75 m) (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/beginner-s2/beginner-s2.mp4",
+    "truth": "clips/beginner-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1417552,
+    "truth": 867589
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "beginner",
+    "heightM": 1.75,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:08:40.285Z"
+  },
+  {
+   "id": "beginner-s3",
+   "job": "beginner-s3",
+   "groups": [
+    "beginner"
+   ],
+   "tags": [
+    "beginner"
+   ],
+   "description": "Beginner profile (1.75 m) (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/beginner-s3/beginner-s3.mp4",
+    "truth": "clips/beginner-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1409934,
+    "truth": 826197
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 269,
+    "durationMediaS": 4.483333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "beginner",
+    "heightM": 1.75,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:08:40.669Z"
+  },
+  {
+   "id": "beginner-s4",
+   "job": "beginner-s4",
+   "groups": [
+    "beginner"
+   ],
+   "tags": [
+    "beginner"
+   ],
+   "description": "Beginner profile (1.75 m) (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/beginner-s4/beginner-s4.mp4",
+    "truth": "clips/beginner-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1414918,
+    "truth": 850029
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 280,
+    "durationMediaS": 4.666667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "beginner",
+    "heightM": 1.75,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:09:10.924Z"
+  },
+  {
+   "id": "beginner-s5",
+   "job": "beginner-s5",
+   "groups": [
+    "beginner"
+   ],
+   "tags": [
+    "beginner"
+   ],
+   "description": "Beginner profile (1.75 m) (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/beginner-s5/beginner-s5.mp4",
+    "truth": "clips/beginner-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1440434,
+    "truth": 880139
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "beginner",
+    "heightM": 1.75,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:09:11.276Z"
+  },
+  {
+   "id": "crf18-s1",
+   "job": "base240-s1",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-18"
+   ],
+   "description": "Baseline serve 1, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf18-s1/crf18-s1.mp4",
+    "truth": "clips/crf18-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 2283573,
+    "truth": 888552
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 18
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:22.824Z"
+  },
+  {
+   "id": "crf18-s2",
+   "job": "base240-s2",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-18"
+   ],
+   "description": "Baseline serve 2, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf18-s2/crf18-s2.mp4",
+    "truth": "clips/crf18-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 2245822,
+    "truth": 864631
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 18
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:36.602Z"
+  },
+  {
+   "id": "crf18-s3",
+   "job": "base240-s3",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-18"
+   ],
+   "description": "Baseline serve 3, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf18-s3/crf18-s3.mp4",
+    "truth": "clips/crf18-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 2212170,
+    "truth": 852051
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 18
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:41.427Z"
+  },
+  {
+   "id": "crf18-s4",
+   "job": "base240-s4",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-18"
+   ],
+   "description": "Baseline serve 4, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf18-s4/crf18-s4.mp4",
+    "truth": "clips/crf18-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 2187027,
+    "truth": 834081
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 18
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:40.424Z"
+  },
+  {
+   "id": "crf18-s5",
+   "job": "base240-s5",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-18"
+   ],
+   "description": "Baseline serve 5, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf18-s5/crf18-s5.mp4",
+    "truth": "clips/crf18-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 2172909,
+    "truth": 836996
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 18
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:48.913Z"
+  },
+  {
+   "id": "crf28-s1",
+   "job": "base240-s1",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-28"
+   ],
+   "description": "Baseline serve 1, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf28-s1/crf28-s1.mp4",
+    "truth": "clips/crf28-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 510454,
+    "truth": 888552
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 28
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:22.845Z"
+  },
+  {
+   "id": "crf28-s2",
+   "job": "base240-s2",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-28"
+   ],
+   "description": "Baseline serve 2, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf28-s2/crf28-s2.mp4",
+    "truth": "clips/crf28-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 508703,
+    "truth": 864631
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 28
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:36.619Z"
+  },
+  {
+   "id": "crf28-s3",
+   "job": "base240-s3",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-28"
+   ],
+   "description": "Baseline serve 3, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf28-s3/crf28-s3.mp4",
+    "truth": "clips/crf28-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 500113,
+    "truth": 852051
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 28
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:41.444Z"
+  },
+  {
+   "id": "crf28-s4",
+   "job": "base240-s4",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-28"
+   ],
+   "description": "Baseline serve 4, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf28-s4/crf28-s4.mp4",
+    "truth": "clips/crf28-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 495889,
+    "truth": 834081
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 28
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:40.441Z"
+  },
+  {
+   "id": "crf28-s5",
+   "job": "base240-s5",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-28"
+   ],
+   "description": "Baseline serve 5, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf28-s5/crf28-s5.mp4",
+    "truth": "clips/crf28-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 495020,
+    "truth": 836996
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 28
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:48.927Z"
+  },
+  {
+   "id": "crf36-s1",
+   "job": "base240-s1",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-36"
+   ],
+   "description": "Baseline serve 1, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf36-s1/crf36-s1.mp4",
+    "truth": "clips/crf36-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 274738,
+    "truth": 888552
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 36
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:22.864Z"
+  },
+  {
+   "id": "crf36-s2",
+   "job": "base240-s2",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-36"
+   ],
+   "description": "Baseline serve 2, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf36-s2/crf36-s2.mp4",
+    "truth": "clips/crf36-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 274578,
+    "truth": 864631
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 36
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:36.637Z"
+  },
+  {
+   "id": "crf36-s3",
+   "job": "base240-s3",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-36"
+   ],
+   "description": "Baseline serve 3, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf36-s3/crf36-s3.mp4",
+    "truth": "clips/crf36-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 268476,
+    "truth": 852051
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 36
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:41.457Z"
+  },
+  {
+   "id": "crf36-s4",
+   "job": "base240-s4",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-36"
+   ],
+   "description": "Baseline serve 4, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf36-s4/crf36-s4.mp4",
+    "truth": "clips/crf36-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 266487,
+    "truth": 834081
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 36
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:40.460Z"
+  },
+  {
+   "id": "crf36-s5",
+   "job": "base240-s5",
+   "groups": [
+    "crf-sweep"
+   ],
+   "tags": [
+    "crf-sweep",
+    "crf-36"
+   ],
+   "description": "Baseline serve 5, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/crf36-s5/crf36-s5.mp4",
+    "truth": "clips/crf36-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 266634,
+    "truth": 836996
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 36
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:48.942Z"
+  },
+  {
+   "id": "dist4-s1",
+   "job": "dist4-s1",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-4m"
+   ],
+   "description": "Side view at 4 m (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/dist4-s1/dist4-s1.mp4",
+    "truth": "clips/dist4-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1543962,
+    "truth": 887783
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:49:27.770Z"
+  },
+  {
+   "id": "dist4-s2",
+   "job": "dist4-s2",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-4m"
+   ],
+   "description": "Side view at 4 m (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/dist4-s2/dist4-s2.mp4",
+    "truth": "clips/dist4-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1523504,
+    "truth": 863656
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:49:44.854Z"
+  },
+  {
+   "id": "dist4-s3",
+   "job": "dist4-s3",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-4m"
+   ],
+   "description": "Side view at 4 m (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/dist4-s3/dist4-s3.mp4",
+    "truth": "clips/dist4-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1495108,
+    "truth": 851750
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:49:51.702Z"
+  },
+  {
+   "id": "dist4-s4",
+   "job": "dist4-s4",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-4m"
+   ],
+   "description": "Side view at 4 m (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/dist4-s4/dist4-s4.mp4",
+    "truth": "clips/dist4-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1494396,
+    "truth": 834043
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:50:08.445Z"
+  },
+  {
+   "id": "dist4-s5",
+   "job": "dist4-s5",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-4m"
+   ],
+   "description": "Side view at 4 m (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/dist4-s5/dist4-s5.mp4",
+    "truth": "clips/dist4-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1488578,
+    "truth": 835937
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 4,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:50:16.438Z"
+  },
+  {
+   "id": "dist7-s1",
+   "job": "dist7-s1",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-7m"
+   ],
+   "description": "Side view at 7 m (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/dist7-s1/dist7-s1.mp4",
+    "truth": "clips/dist7-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1290637,
+    "truth": 888814
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 7,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:50:39.631Z"
+  },
+  {
+   "id": "dist7-s2",
+   "job": "dist7-s2",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-7m"
+   ],
+   "description": "Side view at 7 m (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/dist7-s2/dist7-s2.mp4",
+    "truth": "clips/dist7-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1295790,
+    "truth": 864266
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 7,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:50:44.608Z"
+  },
+  {
+   "id": "dist7-s3",
+   "job": "dist7-s3",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-7m"
+   ],
+   "description": "Side view at 7 m (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/dist7-s3/dist7-s3.mp4",
+    "truth": "clips/dist7-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1275565,
+    "truth": 852031
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 7,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:51:05.870Z"
+  },
+  {
+   "id": "dist7-s4",
+   "job": "dist7-s4",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-7m"
+   ],
+   "description": "Side view at 7 m (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/dist7-s4/dist7-s4.mp4",
+    "truth": "clips/dist7-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1275673,
+    "truth": 834730
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 7,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:51:09.585Z"
+  },
+  {
+   "id": "dist7-s5",
+   "job": "dist7-s5",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-7m"
+   ],
+   "description": "Side view at 7 m (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/dist7-s5/dist7-s5.mp4",
+    "truth": "clips/dist7-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1263128,
+    "truth": 837819
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 7,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:51:36.403Z"
+  },
+  {
+   "id": "dist12-s1",
+   "job": "dist12-s1",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-12m"
+   ],
+   "description": "Side view at 12 m (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/dist12-s1/dist12-s1.mp4",
+    "truth": "clips/dist12-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1171229,
+    "truth": 889849
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 12,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:51:38.618Z"
+  },
+  {
+   "id": "dist12-s2",
+   "job": "dist12-s2",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-12m"
+   ],
+   "description": "Side view at 12 m (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/dist12-s2/dist12-s2.mp4",
+    "truth": "clips/dist12-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1183136,
+    "truth": 865862
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 12,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:52:06.324Z"
+  },
+  {
+   "id": "dist12-s3",
+   "job": "dist12-s3",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-12m"
+   ],
+   "description": "Side view at 12 m (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/dist12-s3/dist12-s3.mp4",
+    "truth": "clips/dist12-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1142920,
+    "truth": 853359
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 12,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:52:06.604Z"
+  },
+  {
+   "id": "dist12-s4",
+   "job": "dist12-s4",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-12m"
+   ],
+   "description": "Side view at 12 m (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/dist12-s4/dist12-s4.mp4",
+    "truth": "clips/dist12-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1131575,
+    "truth": 835025
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 12,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:52:50.802Z"
+  },
+  {
+   "id": "dist12-s5",
+   "job": "dist12-s5",
+   "groups": [
+    "distance-sweep"
+   ],
+   "tags": [
+    "distance-sweep",
+    "distance-12m"
+   ],
+   "description": "Side view at 12 m (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/dist12-s5/dist12-s5.mp4",
+    "truth": "clips/dist12-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1135696,
+    "truth": 838112
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 12,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:52:50.446Z"
+  },
+  {
+   "id": "dusk-s1",
+   "job": "dusk-s1",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-dusk"
+   ],
+   "description": "Dusk: low warm sun, 1/60 s shutter (heavy motion blur), strong sensor noise (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/dusk-s1/dusk-s1.mp4",
+    "truth": "clips/dusk-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 18178103,
+    "truth": 888555
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "dusk",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:54:51.530Z"
+  },
+  {
+   "id": "dusk-s2",
+   "job": "dusk-s2",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-dusk"
+   ],
+   "description": "Dusk: low warm sun, 1/60 s shutter (heavy motion blur), strong sensor noise (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/dusk-s2/dusk-s2.mp4",
+    "truth": "clips/dusk-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 17746020,
+    "truth": 864625
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "dusk",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:55:38.929Z"
+  },
+  {
+   "id": "dusk-s3",
+   "job": "dusk-s3",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-dusk"
+   ],
+   "description": "Dusk: low warm sun, 1/60 s shutter (heavy motion blur), strong sensor noise (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/dusk-s3/dusk-s3.mp4",
+    "truth": "clips/dusk-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 17942556,
+    "truth": 852044
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "dusk",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:55:40.841Z"
+  },
+  {
+   "id": "dusk-s4",
+   "job": "dusk-s4",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-dusk"
+   ],
+   "description": "Dusk: low warm sun, 1/60 s shutter (heavy motion blur), strong sensor noise (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/dusk-s4/dusk-s4.mp4",
+    "truth": "clips/dusk-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 16340792,
+    "truth": 834097
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "dusk",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:56:21.522Z"
+  },
+  {
+   "id": "dusk-s5",
+   "job": "dusk-s5",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-dusk"
+   ],
+   "description": "Dusk: low warm sun, 1/60 s shutter (heavy motion blur), strong sensor noise (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/dusk-s5/dusk-s5.mp4",
+    "truth": "clips/dusk-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 16534144,
+    "truth": 837007
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "dusk",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:56:22.253Z"
+  },
+  {
+   "id": "fps30-s1",
+   "job": "base240-s1",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-30"
+   ],
+   "description": "Baseline serve 1, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps30-s1/fps30-s1.mp4",
+    "truth": "clips/fps30-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1891504,
+    "truth": 448997
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "captureFps": 30,
+    "timeScale": 1,
+    "frameCount": 145,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:22.457Z"
+  },
+  {
+   "id": "fps30-s2",
+   "job": "base240-s2",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-30"
+   ],
+   "description": "Baseline serve 2, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps30-s2/fps30-s2.mp4",
+    "truth": "clips/fps30-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1873009,
+    "truth": 436988
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "captureFps": 30,
+    "timeScale": 1,
+    "frameCount": 141,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:36.361Z"
+  },
+  {
+   "id": "fps30-s3",
+   "job": "base240-s3",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-30"
+   ],
+   "description": "Baseline serve 3, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps30-s3/fps30-s3.mp4",
+    "truth": "clips/fps30-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1826785,
+    "truth": 430665
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "captureFps": 30,
+    "timeScale": 1,
+    "frameCount": 139,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:41.173Z"
+  },
+  {
+   "id": "fps30-s4",
+   "job": "base240-s4",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-30"
+   ],
+   "description": "Baseline serve 4, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps30-s4/fps30-s4.mp4",
+    "truth": "clips/fps30-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1815350,
+    "truth": 423318
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "captureFps": 30,
+    "timeScale": 1,
+    "frameCount": 138,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:40.139Z"
+  },
+  {
+   "id": "fps30-s5",
+   "job": "base240-s5",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-30"
+   ],
+   "description": "Baseline serve 5, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps30-s5/fps30-s5.mp4",
+    "truth": "clips/fps30-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1821875,
+    "truth": 423226
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "captureFps": 30,
+    "timeScale": 1,
+    "frameCount": 138,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:48.679Z"
+  },
+  {
+   "id": "fps120-s1",
+   "job": "base240-s1",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-120"
+   ],
+   "description": "Baseline serve 1, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps120-s1/fps120-s1.mp4",
+    "truth": "clips/fps120-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1342286,
+    "truth": 1764901
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 120,
+    "captureFps": 120,
+    "timeScale": 1,
+    "frameCount": 579,
+    "durationMediaS": 4.825,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:22.559Z"
+  },
+  {
+   "id": "fps120-s2",
+   "job": "base240-s2",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-120"
+   ],
+   "description": "Baseline serve 2, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps120-s2/fps120-s2.mp4",
+    "truth": "clips/fps120-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1333727,
+    "truth": 1720115
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 120,
+    "captureFps": 120,
+    "timeScale": 1,
+    "frameCount": 564,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:36.437Z"
+  },
+  {
+   "id": "fps120-s3",
+   "job": "base240-s3",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-120"
+   ],
+   "description": "Baseline serve 3, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps120-s3/fps120-s3.mp4",
+    "truth": "clips/fps120-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1307120,
+    "truth": 1691748
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 120,
+    "captureFps": 120,
+    "timeScale": 1,
+    "frameCount": 555,
+    "durationMediaS": 4.625,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:41.259Z"
+  },
+  {
+   "id": "fps120-s4",
+   "job": "base240-s4",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-120"
+   ],
+   "description": "Baseline serve 4, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps120-s4/fps120-s4.mp4",
+    "truth": "clips/fps120-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1294067,
+    "truth": 1655801
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 120,
+    "captureFps": 120,
+    "timeScale": 1,
+    "frameCount": 549,
+    "durationMediaS": 4.575,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:40.219Z"
+  },
+  {
+   "id": "fps120-s5",
+   "job": "base240-s5",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-120"
+   ],
+   "description": "Baseline serve 5, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps120-s5/fps120-s5.mp4",
+    "truth": "clips/fps120-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1312405,
+    "truth": 1661628
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 120,
+    "captureFps": 120,
+    "timeScale": 1,
+    "frameCount": 551,
+    "durationMediaS": 4.591667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:48.755Z"
+  },
+  {
+   "id": "fps240-s1",
+   "job": "base240-s1",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-240"
+   ],
+   "description": "Baseline serve 1, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps240-s1/fps240-s1.mp4",
+    "truth": "clips/fps240-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1774572,
+    "truth": 3520730
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1158,
+    "durationMediaS": 4.825,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:22.806Z"
+  },
+  {
+   "id": "fps240-s2",
+   "job": "base240-s2",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-240"
+   ],
+   "description": "Baseline serve 2, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps240-s2/fps240-s2.mp4",
+    "truth": "clips/fps240-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1757969,
+    "truth": 3431256
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1128,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:36.585Z"
+  },
+  {
+   "id": "fps240-s3",
+   "job": "base240-s3",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-240"
+   ],
+   "description": "Baseline serve 3, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps240-s3/fps240-s3.mp4",
+    "truth": "clips/fps240-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1719067,
+    "truth": 3371741
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1109,
+    "durationMediaS": 4.620833,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:41.414Z"
+  },
+  {
+   "id": "fps240-s4",
+   "job": "base240-s4",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-240"
+   ],
+   "description": "Baseline serve 4, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps240-s4/fps240-s4.mp4",
+    "truth": "clips/fps240-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1698962,
+    "truth": 3302806
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1098,
+    "durationMediaS": 4.575,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:45:40.405Z"
+  },
+  {
+   "id": "fps240-s5",
+   "job": "base240-s5",
+   "groups": [
+    "fps-sweep"
+   ],
+   "tags": [
+    "fps-sweep",
+    "fps-240"
+   ],
+   "description": "Baseline serve 5, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/fps240-s5/fps240-s5.mp4",
+    "truth": "clips/fps240-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1712639,
+    "truth": 3311638
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1101,
+    "durationMediaS": 4.5875,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:48.897Z"
+  },
+  {
+   "id": "front45-s1",
+   "job": "front45-s1",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-front45"
+   ],
+   "description": "Front-45 view from inside the court on the chest side, 5 m away (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/front45-s1/front45-s1.mp4",
+    "truth": "clips/front45-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1479660,
+    "truth": 887505
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "front45",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:48:27.157Z"
+  },
+  {
+   "id": "front45-s2",
+   "job": "front45-s2",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-front45"
+   ],
+   "description": "Front-45 view from inside the court on the chest side, 5 m away (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/front45-s2/front45-s2.mp4",
+    "truth": "clips/front45-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1473274,
+    "truth": 863233
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "front45",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:48:34.742Z"
+  },
+  {
+   "id": "front45-s3",
+   "job": "front45-s3",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-front45"
+   ],
+   "description": "Front-45 view from inside the court on the chest side, 5 m away (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/front45-s3/front45-s3.mp4",
+    "truth": "clips/front45-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1461166,
+    "truth": 851024
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "front45",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:48:51.696Z"
+  },
+  {
+   "id": "front45-s4",
+   "job": "front45-s4",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-front45"
+   ],
+   "description": "Front-45 view from inside the court on the chest side, 5 m away (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/front45-s4/front45-s4.mp4",
+    "truth": "clips/front45-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1467820,
+    "truth": 832195
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "front45",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:49:00.278Z"
+  },
+  {
+   "id": "front45-s5",
+   "job": "front45-s5",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-front45"
+   ],
+   "description": "Front-45 view from inside the court on the chest side, 5 m away (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/front45-s5/front45-s5.mp4",
+    "truth": "clips/front45-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1471235,
+    "truth": 836010
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "front45",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:49:19.006Z"
+  },
+  {
+   "id": "h160-s1",
+   "job": "h160-s1",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.60"
+   ],
+   "description": "1.60 m player (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/h160-s1/h160-s1.mp4",
+    "truth": "clips/h160-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1409446,
+    "truth": 880611
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 287,
+    "durationMediaS": 4.783333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.6,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:05:53.320Z"
+  },
+  {
+   "id": "h160-s2",
+   "job": "h160-s2",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.60"
+   ],
+   "description": "1.60 m player (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/h160-s2/h160-s2.mp4",
+    "truth": "clips/h160-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1399585,
+    "truth": 856222
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 279,
+    "durationMediaS": 4.65,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.6,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:06:16.704Z"
+  },
+  {
+   "id": "h160-s3",
+   "job": "h160-s3",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.60"
+   ],
+   "description": "1.60 m player (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/h160-s3/h160-s3.mp4",
+    "truth": "clips/h160-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1378593,
+    "truth": 841522
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 274,
+    "durationMediaS": 4.566667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.6,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:06:16.449Z"
+  },
+  {
+   "id": "h160-s4",
+   "job": "h160-s4",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.60"
+   ],
+   "description": "1.60 m player (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/h160-s4/h160-s4.mp4",
+    "truth": "clips/h160-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1378222,
+    "truth": 822751
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 271,
+    "durationMediaS": 4.516667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.6,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:06:37.797Z"
+  },
+  {
+   "id": "h160-s5",
+   "job": "h160-s5",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.60"
+   ],
+   "description": "1.60 m player (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/h160-s5/h160-s5.mp4",
+    "truth": "clips/h160-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1378082,
+    "truth": 825968
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 272,
+    "durationMediaS": 4.533333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.6,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:06:38.042Z"
+  },
+  {
+   "id": "h195-s1",
+   "job": "h195-s1",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.95"
+   ],
+   "description": "1.95 m player (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/h195-s1/h195-s1.mp4",
+    "truth": "clips/h195-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1505916,
+    "truth": 899114
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 294,
+    "durationMediaS": 4.9,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.95,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:07:04.929Z"
+  },
+  {
+   "id": "h195-s2",
+   "job": "h195-s2",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.95"
+   ],
+   "description": "1.95 m player (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/h195-s2/h195-s2.mp4",
+    "truth": "clips/h195-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1477099,
+    "truth": 872907
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 285,
+    "durationMediaS": 4.75,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.95,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:07:05.291Z"
+  },
+  {
+   "id": "h195-s3",
+   "job": "h195-s3",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.95"
+   ],
+   "description": "1.95 m player (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/h195-s3/h195-s3.mp4",
+    "truth": "clips/h195-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1447675,
+    "truth": 857964
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 280,
+    "durationMediaS": 4.666667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.95,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:07:35.084Z"
+  },
+  {
+   "id": "h195-s4",
+   "job": "h195-s4",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.95"
+   ],
+   "description": "1.95 m player (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/h195-s4/h195-s4.mp4",
+    "truth": "clips/h195-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1443484,
+    "truth": 842500
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.95,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:07:34.536Z"
+  },
+  {
+   "id": "h195-s5",
+   "job": "h195-s5",
+   "groups": [
+    "height-sweep"
+   ],
+   "tags": [
+    "height-sweep",
+    "height-1.95"
+   ],
+   "description": "1.95 m player (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/h195-s5/h195-s5.mp4",
+    "truth": "clips/h195-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1449785,
+    "truth": 842029
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.95,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:08:11.740Z"
+  },
+  {
+   "id": "lefty-s1",
+   "job": "lefty-s1",
+   "groups": [
+    "left-handed"
+   ],
+   "tags": [
+    "left-handed"
+   ],
+   "description": "Left-handed 1.80 m intermediate, side view from the chest side (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/lefty-s1/lefty-s1.mp4",
+    "truth": "clips/lefty-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1289741,
+    "truth": 889816
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "left"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:05:08.371Z"
+  },
+  {
+   "id": "lefty-s2",
+   "job": "lefty-s2",
+   "groups": [
+    "left-handed"
+   ],
+   "tags": [
+    "left-handed"
+   ],
+   "description": "Left-handed 1.80 m intermediate, side view from the chest side (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/lefty-s2/lefty-s2.mp4",
+    "truth": "clips/lefty-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1267641,
+    "truth": 865413
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "left"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:05:08.646Z"
+  },
+  {
+   "id": "lefty-s3",
+   "job": "lefty-s3",
+   "groups": [
+    "left-handed"
+   ],
+   "tags": [
+    "left-handed"
+   ],
+   "description": "Left-handed 1.80 m intermediate, side view from the chest side (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/lefty-s3/lefty-s3.mp4",
+    "truth": "clips/lefty-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1258914,
+    "truth": 853691
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "left"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:05:29.945Z"
+  },
+  {
+   "id": "lefty-s4",
+   "job": "lefty-s4",
+   "groups": [
+    "left-handed"
+   ],
+   "tags": [
+    "left-handed"
+   ],
+   "description": "Left-handed 1.80 m intermediate, side view from the chest side (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/lefty-s4/lefty-s4.mp4",
+    "truth": "clips/lefty-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1264031,
+    "truth": 834970
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "left"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:05:29.602Z"
+  },
+  {
+   "id": "lefty-s5",
+   "job": "lefty-s5",
+   "groups": [
+    "left-handed"
+   ],
+   "tags": [
+    "left-handed"
+   ],
+   "description": "Left-handed 1.80 m intermediate, side view from the chest side (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/lefty-s5/lefty-s5.mp4",
+    "truth": "clips/lefty-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1259443,
+    "truth": 837791
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "left"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:05:52.935Z"
+  },
+  {
+   "id": "night240-s1",
+   "job": "night240-s1",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-night",
+    "flicker-100hz",
+    "fps-240"
+   ],
+   "description": "Night under floodlights with 100 Hz mains flicker, 240 fps, 1/240 s shutter (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/night240-s1/night240-s1.mp4",
+    "truth": "clips/night240-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 21420153,
+    "truth": 3520755
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1158,
+    "durationMediaS": 4.825,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "night (100 Hz flicker)",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:58:49.944Z"
+  },
+  {
+   "id": "night240-s2",
+   "job": "night240-s2",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-night",
+    "flicker-100hz",
+    "fps-240"
+   ],
+   "description": "Night under floodlights with 100 Hz mains flicker, 240 fps, 1/240 s shutter (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/night240-s2/night240-s2.mp4",
+    "truth": "clips/night240-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 20672673,
+    "truth": 3431295
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1128,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "night (100 Hz flicker)",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:58:48.461Z"
+  },
+  {
+   "id": "night240-s3",
+   "job": "night240-s3",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-night",
+    "flicker-100hz",
+    "fps-240"
+   ],
+   "description": "Night under floodlights with 100 Hz mains flicker, 240 fps, 1/240 s shutter (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/night240-s3/night240-s3.mp4",
+    "truth": "clips/night240-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 20782516,
+    "truth": 3371789
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1109,
+    "durationMediaS": 4.620833,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "night (100 Hz flicker)",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:01:34.811Z"
+  },
+  {
+   "id": "night240-s4",
+   "job": "night240-s4",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-night",
+    "flicker-100hz",
+    "fps-240"
+   ],
+   "description": "Night under floodlights with 100 Hz mains flicker, 240 fps, 1/240 s shutter (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/night240-s4/night240-s4.mp4",
+    "truth": "clips/night240-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 20776015,
+    "truth": 3302884
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1098,
+    "durationMediaS": 4.575,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "night (100 Hz flicker)",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:01:35.182Z"
+  },
+  {
+   "id": "night240-s5",
+   "job": "night240-s5",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-night",
+    "flicker-100hz",
+    "fps-240"
+   ],
+   "description": "Night under floodlights with 100 Hz mains flicker, 240 fps, 1/240 s shutter (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/night240-s5/night240-s5.mp4",
+    "truth": "clips/night240-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 20929917,
+    "truth": 3311707
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "frameCount": 1101,
+    "durationMediaS": 4.5875,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "night (100 Hz flicker)",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:03:34.337Z"
+  },
+  {
+   "id": "overcast-s1",
+   "job": "overcast-s1",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-overcast"
+   ],
+   "description": "Overcast sky, 1/250 s shutter (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/overcast-s1/overcast-s1.mp4",
+    "truth": "clips/overcast-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1467385,
+    "truth": 888510
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "overcast",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:53:29.569Z"
+  },
+  {
+   "id": "overcast-s2",
+   "job": "overcast-s2",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-overcast"
+   ],
+   "description": "Overcast sky, 1/250 s shutter (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/overcast-s2/overcast-s2.mp4",
+    "truth": "clips/overcast-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1449372,
+    "truth": 864589
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "overcast",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:53:29.266Z"
+  },
+  {
+   "id": "overcast-s3",
+   "job": "overcast-s3",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-overcast"
+   ],
+   "description": "Overcast sky, 1/250 s shutter (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/overcast-s3/overcast-s3.mp4",
+    "truth": "clips/overcast-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1426272,
+    "truth": 852009
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "overcast",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:54:03.682Z"
+  },
+  {
+   "id": "overcast-s4",
+   "job": "overcast-s4",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-overcast"
+   ],
+   "description": "Overcast sky, 1/250 s shutter (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/overcast-s4/overcast-s4.mp4",
+    "truth": "clips/overcast-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1386107,
+    "truth": 834060
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "overcast",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:54:03.416Z"
+  },
+  {
+   "id": "overcast-s5",
+   "job": "overcast-s5",
+   "groups": [
+    "lighting-sweep"
+   ],
+   "tags": [
+    "lighting-sweep",
+    "lighting-overcast"
+   ],
+   "description": "Overcast sky, 1/250 s shutter (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/overcast-s5/overcast-s5.mp4",
+    "truth": "clips/overcast-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1387555,
+    "truth": 836951
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "overcast",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:54:47.865Z"
+  },
+  {
+   "id": "quick-rear30-lefty",
+   "job": "quick-rear30-lefty",
+   "groups": [
+    "quick",
+    "left-handed"
+   ],
+   "tags": [
+    "quick",
+    "view-rear",
+    "fps-30",
+    "left-handed"
+   ],
+   "description": "CI: rear 5 m, 30 fps, 540x960, left-handed, one serve",
+   "files": {
+    "mp4": "clips/quick-rear30-lefty/quick-rear30-lefty.mp4",
+    "truth": "clips/quick-rear30-lefty/truth.json"
+   },
+   "bytes": {
+    "mp4": 447277,
+    "truth": 437119
+   },
+   "video": {
+    "width": 540,
+    "height": 960,
+    "fps": 30,
+    "captureFps": 30,
+    "timeScale": 1,
+    "frameCount": 141,
+    "durationMediaS": 4.7,
+    "crf": 23
+   },
+   "camera": {
+    "view": "rear",
+    "distanceM": 5,
+    "heightM": 1.5,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "left"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     true
+    ]
+   },
+   "generatedAt": "2026-09-26T19:34:12.889Z"
+  },
+  {
+   "id": "quick-side60",
+   "job": "quick-side60",
+   "groups": [
+    "quick"
+   ],
+   "tags": [
+    "quick",
+    "view-side",
+    "fps-60"
+   ],
+   "description": "CI: side 5 m, 60 fps, 540x960, one serve",
+   "files": {
+    "mp4": "clips/quick-side60/quick-side60.mp4",
+    "webm": "clips/quick-side60/quick-side60.webm",
+    "truth": "clips/quick-side60/truth.json"
+   },
+   "bytes": {
+    "mp4": 374338,
+    "webm": 545081,
+    "truth": 888612
+   },
+   "video": {
+    "width": 540,
+    "height": 960,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 23
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:34:17.831Z"
+  },
+  {
+   "id": "quick-slomo",
+   "job": "quick-slomo",
+   "groups": [
+    "quick",
+    "slomo"
+   ],
+   "tags": [
+    "quick",
+    "slomo",
+    "fps-240",
+    "media-30",
+    "time-scale-0.125"
+   ],
+   "description": "CI: 240 fps capture of toss to bounce, re-timed to 30 fps media (timeScale 0.125), 540x960",
+   "files": {
+    "mp4": "clips/quick-slomo/quick-slomo.mp4",
+    "truth": "clips/quick-slomo/truth.json"
+   },
+   "bytes": {
+    "mp4": 1316096,
+    "truth": 1482533
+   },
+   "video": {
+    "width": 540,
+    "height": 960,
+    "fps": 30,
+    "captureFps": 240,
+    "timeScale": 0.125,
+    "frameCount": 486,
+    "durationMediaS": 16.2,
+    "crf": 23
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:34:51.846Z"
+  },
+  {
+   "id": "rear-s1",
+   "job": "rear-s1",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-rear"
+   ],
+   "description": "Rear view from behind the server, 5 m back, camera 1.5 m high (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/rear-s1/rear-s1.mp4",
+    "truth": "clips/rear-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1506904,
+    "truth": 888654
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "rear",
+    "distanceM": 5,
+    "heightM": 1.5,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     true
+    ]
+   },
+   "generatedAt": "2026-09-26T19:46:24.024Z"
+  },
+  {
+   "id": "rear-s2",
+   "job": "rear-s2",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-rear"
+   ],
+   "description": "Rear view from behind the server, 5 m back, camera 1.5 m high (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/rear-s2/rear-s2.mp4",
+    "truth": "clips/rear-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1502389,
+    "truth": 863911
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "rear",
+    "distanceM": 5,
+    "heightM": 1.5,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     true
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:00.554Z"
+  },
+  {
+   "id": "rear-s3",
+   "job": "rear-s3",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-rear"
+   ],
+   "description": "Rear view from behind the server, 5 m back, camera 1.5 m high (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/rear-s3/rear-s3.mp4",
+    "truth": "clips/rear-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1511006,
+    "truth": 852024
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "rear",
+    "distanceM": 5,
+    "heightM": 1.5,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     true
+    ]
+   },
+   "generatedAt": "2026-09-26T19:47:35.556Z"
+  },
+  {
+   "id": "rear-s4",
+   "job": "rear-s4",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-rear"
+   ],
+   "description": "Rear view from behind the server, 5 m back, camera 1.5 m high (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/rear-s4/rear-s4.mp4",
+    "truth": "clips/rear-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 1481672,
+    "truth": 834067
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "rear",
+    "distanceM": 5,
+    "heightM": 1.5,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     true
+    ]
+   },
+   "generatedAt": "2026-09-26T19:48:02.955Z"
+  },
+  {
+   "id": "rear-s5",
+   "job": "rear-s5",
+   "groups": [
+    "view-sweep"
+   ],
+   "tags": [
+    "view-sweep",
+    "view-rear"
+   ],
+   "description": "Rear view from behind the server, 5 m back, camera 1.5 m high (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/rear-s5/rear-s5.mp4",
+    "truth": "clips/rear-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 1501291,
+    "truth": 837002
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "rear",
+    "distanceM": 5,
+    "heightM": 1.5,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     true
+    ]
+   },
+   "generatedAt": "2026-09-26T19:48:11.435Z"
+  },
+  {
+   "id": "session",
+   "job": "session",
+   "groups": [
+    "session"
+   ],
+   "tags": [
+    "session",
+    "multi-serve"
+   ],
+   "description": "Session: 8 serves alternating deuce/ad with 1-3 pre-serve bounces, varied pauses and walking between points, distant hits from other courts",
+   "files": {
+    "mp4": "clips/session/session.mp4",
+    "truth": "clips/session/truth.json"
+   },
+   "bytes": {
+    "mp4": 20011515,
+    "truth": 17004312
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 4411,
+    "durationMediaS": 73.516667,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 6,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 8,
+   "flags": {
+    "tossApexInFrame": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "contactInFrame": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "bounceInFrame": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:13:09.685Z"
+  },
+  {
+   "id": "shake-s1",
+   "job": "shake-s1",
+   "groups": [
+    "shake"
+   ],
+   "tags": [
+    "shake"
+   ],
+   "description": "Handheld: 0.5 deg / 1 cm shake (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/shake-s1/shake-s1.mp4",
+    "truth": "clips/shake-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 3037168,
+    "truth": 932051
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": true
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:02:02.119Z"
+  },
+  {
+   "id": "shake-s2",
+   "job": "shake-s2",
+   "groups": [
+    "shake"
+   ],
+   "tags": [
+    "shake"
+   ],
+   "description": "Handheld: 0.5 deg / 1 cm shake (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/shake-s2/shake-s2.mp4",
+    "truth": "clips/shake-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 2999752,
+    "truth": 906688
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": true
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:02:31.949Z"
+  },
+  {
+   "id": "shake-s3",
+   "job": "shake-s3",
+   "groups": [
+    "shake"
+   ],
+   "tags": [
+    "shake"
+   ],
+   "description": "Handheld: 0.5 deg / 1 cm shake (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/shake-s3/shake-s3.mp4",
+    "truth": "clips/shake-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 2948822,
+    "truth": 893780
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": true
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:02:59.782Z"
+  },
+  {
+   "id": "shake-s4",
+   "job": "shake-s4",
+   "groups": [
+    "shake"
+   ],
+   "tags": [
+    "shake"
+   ],
+   "description": "Handheld: 0.5 deg / 1 cm shake (serve 4 of 5)",
+   "files": {
+    "mp4": "clips/shake-s4/shake-s4.mp4",
+    "truth": "clips/shake-s4/truth.json"
+   },
+   "bytes": {
+    "mp4": 2947097,
+    "truth": 875469
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 275,
+    "durationMediaS": 4.583333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": true
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:03:36.868Z"
+  },
+  {
+   "id": "shake-s5",
+   "job": "shake-s5",
+   "groups": [
+    "shake"
+   ],
+   "tags": [
+    "shake"
+   ],
+   "description": "Handheld: 0.5 deg / 1 cm shake (serve 5 of 5)",
+   "files": {
+    "mp4": "clips/shake-s5/shake-s5.mp4",
+    "truth": "clips/shake-s5/truth.json"
+   },
+   "bytes": {
+    "mp4": 2950977,
+    "truth": 878224
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 276,
+    "durationMediaS": 4.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": true
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T20:04:03.578Z"
+  },
+  {
+   "id": "slomo-s1",
+   "job": "base240-s1",
+   "groups": [
+    "slomo"
+   ],
+   "tags": [
+    "slomo",
+    "fps-240",
+    "media-30",
+    "time-scale-0.125"
+   ],
+   "description": "Baseline serve 1, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/slomo-s1/slomo-s1.mp4",
+    "truth": "clips/slomo-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 14389916,
+    "truth": 3520741
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "captureFps": 240,
+    "timeScale": 0.125,
+    "frameCount": 1158,
+    "durationMediaS": 38.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:22.924Z"
+  },
+  {
+   "id": "slomo-s2",
+   "job": "base240-s2",
+   "groups": [
+    "slomo"
+   ],
+   "tags": [
+    "slomo",
+    "fps-240",
+    "media-30",
+    "time-scale-0.125"
+   ],
+   "description": "Baseline serve 2, rendered at 240 fps and decimated / re-timed into the baseline, fps, CRF and slow-motion clips",
+   "files": {
+    "mp4": "clips/slomo-s2/slomo-s2.mp4",
+    "truth": "clips/slomo-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 14071603,
+    "truth": 3431264
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "captureFps": 240,
+    "timeScale": 0.125,
+    "frameCount": 1128,
+    "durationMediaS": 37.6,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 5,
+    "heightM": 1.2,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T19:40:36.683Z"
+  }
+ ]
+}
