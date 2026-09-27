@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import type { AudioOnset } from '../types.ts'
-import { analyseBall, ballSetupFromPoses, createBallFrameDetector, soundDelayEstimateS, suggestTimeBase } from './analyse.ts'
+import { analyseBall, apexPerspectiveSigmaS, ballSetupFromPoses, createBallFrameDetector, soundDelayEstimateS, suggestTimeBase, tossHeightMetric } from './analyse.ts'
 import { createRng } from './random.ts'
 import { BALL_RADIUS_M } from './scale.ts'
 import { SPEED_OF_SOUND_MPS } from './speed.ts'
@@ -61,14 +61,14 @@ describe('analyseBall', () => {
       apexErr.push(a.events.tossApex!.tReal - s.truth.apexTime)
       expect(a.events.tossRelease!.method).toMatch(/^ball-/)
       expect(a.timeBase.status).toBe('consistent')
-      const height = a.metrics.find((m) => m.id === 'ball.tossApexHeightM')!
+      const height = a.metrics.find((m) => m.id === 'toss-apex-height')!
       expect(height.status).toBe('estimated')
       expect(height.uncertainty!.low).toBeLessThanOrEqual(s.truth.apexPos.y)
       expect(height.uncertainty!.high).toBeGreaterThanOrEqual(s.truth.apexPos.y)
-      const aboveHead = a.metrics.find((m) => m.id === 'ball.tossApexAboveHeadM')!
+      const aboveHead = tossHeightMetric('above-head-check', 'above the head', a.toss, setup, 'head')
       expect(aboveHead.uncertainty!.low).toBeLessThanOrEqual(s.truth.apexPos.y - s.statureM)
       expect(aboveHead.uncertainty!.high).toBeGreaterThanOrEqual(s.truth.apexPos.y - s.statureM)
-      const speed = a.metrics.find((m) => m.id === 'ball.serveSpeedKmh')!
+      const speed = a.metrics.find((m) => m.id === 'speed-experimental')!
       expect(speed.status).toBe('unavailable')
       expect(speed.value).toBeNull()
       expect(speed.unavailableReason).toBeTruthy()
@@ -83,7 +83,7 @@ describe('analyseBall', () => {
     const s = makeTossScenario({ fps: 240, seed: 77, timeScale: 1 / slowFactor })
     const media = (t: number) => t * slowFactor
     const setup = setupFor(s, media)
-    const before = analyseBall(s.frames, { setup, captureFps: 30, timeBaseKnown: false })
+    const before = analyseBall(s.frames, { setup, captureFps: 30, timeBaseKnown: false, cameraView: 'side', targetTag: 'T' })
     expect(before.timeBase).toMatchObject({ status: 'apply-correction', timeScale: 0.125 })
     expect(before.speedFromTrack.status).toBe('unavailable')
     expect(before.speedFromTrack.status === 'unavailable' && before.speedFromTrack.reason).toMatch(/8x slow motion/)
@@ -96,7 +96,7 @@ describe('analyseBall', () => {
     expect(Math.abs(apexErr)).toBeLessThan(0.002)
   })
 
-  it('240 fps side view with sound: contact from audio, track speed and flight-time speed ranges cover the truth', () => {
+  it('240 fps side view with sound: contact from audio, track speed range covers the truth, no flight-time speed from the side', () => {
     const fps = 240
     const aspect = 16 / 9
     const s = makeTossScenario({ fps, seed: 11, aspect, noiseRadii: 0.3, missRate: 0.05, falsePerFrame: 0.5 })
@@ -116,14 +116,10 @@ describe('analyseBall', () => {
       rng,
     ).map((f, i) => ({ ...f, frameIndex: 20000 + i }))
     const frames = [...s.frames.filter((f) => f.tReal <= s.params.contactTime), ...outgoing]
-    // Landing: first time the centre reaches ball-radius height; path length along the way.
+    // Landing: first time the centre reaches ball-radius height (the bounce sound is heard).
     let landT = 0
-    let path = 0
-    for (let t = 0.0005, prev = flight(0).p; t < 1; t += 0.0005) {
-      const p = flight(t).p
-      path += Math.hypot(p.x - prev.x, p.y - prev.y, p.z - prev.z)
-      prev = p
-      if (p.y <= BALL_RADIUS_M) {
+    for (let t = 0.0005; t < 1; t += 0.0005) {
+      if (flight(t).p.y <= BALL_RADIUS_M) {
         landT = t
         break
       }
@@ -131,30 +127,36 @@ describe('analyseBall', () => {
     const land = flight(landT).p
     const cameraPos = s.camera.position
     const heard = (t: number, p: Vec3) => t + Math.hypot(p.x - cameraPos.x, p.y - cameraPos.y, p.z - cameraPos.z) / SPEED_OF_SOUND_MPS
+    // Labels as the video layer's heuristic gave them on the rendered corpus: the racket pop
+    // 'unknown', a quieter landing footstep 'contact'. The loudest transient must still win.
     const onsets: AudioOnset[] = [
-      { tReal: heard(s.params.contactTime, contact), strength: 30, sharpness: 0.9, kind: 'contact' },
+      { tReal: heard(s.params.contactTime, contact), strength: 30, sharpness: 0.42, kind: 'unknown' },
+      { tReal: heard(s.params.contactTime, contact) + 0.14, strength: 11, sharpness: 1, kind: 'contact' },
       { tReal: heard(s.params.contactTime + landT, land), strength: 18, sharpness: 0.6, kind: 'bounce' },
     ]
     const setup = setupFor(s)
-    const a = analyseBall(frames, { setup, captureFps: fps, timeBaseKnown: true, cameraView: 'side', onsets })
+    const a = analyseBall(frames, { setup, captureFps: fps, timeBaseKnown: true, cameraView: 'side', onsets, targetTag: 'T' })
     expect(a.tracker.outgoing).not.toBeNull()
     expect(a.events.contact?.method).toBe('ball-track-intersection')
     expect(Math.abs(a.events.contact!.tReal - s.params.contactTime)).toBeLessThan(0.003)
     expect(Math.abs(a.tracker.outgoing!.contactTReal - s.params.contactTime)).toBeLessThan(0.02)
     const trueSpeedKmh = Math.hypot(v0.x, v0.y, v0.z) * 3.6
-    const trackSpeed = a.metrics.find((m) => m.id === 'ball.serveSpeedKmh')!
+    const trackSpeed = a.metrics.find((m) => m.id === 'speed-experimental')!
     expect(trackSpeed.status).toBe('experimental')
     expect(trackSpeed.uncertainty!.low).toBeLessThanOrEqual(trueSpeedKmh)
     expect(trackSpeed.uncertainty!.high).toBeGreaterThanOrEqual(trueSpeedKmh)
-    const avgKmh = (path / landT) * 3.6
-    const audioSpeed = a.metrics.find((m) => m.id === 'ball.serveSpeedAverageAudioKmh')!
-    expect(audioSpeed.status).toBe('experimental')
-    expect(audioSpeed.uncertainty!.low).toBeLessThanOrEqual(avgKmh)
-    expect(audioSpeed.uncertainty!.high).toBeGreaterThanOrEqual(avgKmh)
+    expect(trackSpeed.value).toBe(`${trackSpeed.uncertainty!.low}–${trackSpeed.uncertainty!.high}`)
+    // D4: the bounce sound is heard, but the side view never uses flight time.
+    const audioSpeed = a.metrics.find((m) => m.id === 'speed-average-rear')!
+    expect(audioSpeed.status).toBe('unavailable')
+    expect(audioSpeed.unavailableReason).toMatch(/bounce not in view/)
+    expect(a.averageSpeedRear.status).toBe('unavailable')
+    // Without the target tag the side-view range is refused.
+    const untagged = analyseBall(frames, { setup, captureFps: fps, timeBaseKnown: true, cameraView: 'side', onsets })
+    expect(untagged.speedFromTrack.status).toBe('unavailable')
     console.info(
       `[ball-accuracy] analyseBall 240 fps with sound: launch ${trueSpeedKmh.toFixed(0)} km/h, track range ${trackSpeed.uncertainty!.low.toFixed(0)}-${trackSpeed.uncertainty!.high.toFixed(0)} km/h; ` +
-        `flight average ${avgKmh.toFixed(0)} km/h, audio range ${audioSpeed.uncertainty!.low.toFixed(0)}-${audioSpeed.uncertainty!.high.toFixed(0)} km/h; ` +
-        `contact seed from audio ${((a.tracker.outgoing!.contactTReal - s.params.contactTime) * 1000).toFixed(1)} ms vs truth, measured contact ${((a.events.contact!.tReal - s.params.contactTime) * 1000).toFixed(2)} ms`,
+                `contact seed from audio ${((a.tracker.outgoing!.contactTReal - s.params.contactTime) * 1000).toFixed(1)} ms vs truth, measured contact ${((a.events.contact!.tReal - s.params.contactTime) * 1000).toFixed(2)} ms`,
     )
   })
 
@@ -193,6 +195,17 @@ describe('helpers', () => {
     const base = { status: 'ok' as const, timeScaleFactor: 0.5, low: 0.47, high: 0.53, plausible: false }
     expect(suggestTimeBase({ ...base, nearestStandard: { factor: 0.5, label: '2x', consistent: true } })).toMatchObject({ status: 'apply-correction', timeScale: 0.5, captureFpsFactor: 2 })
     expect(suggestTimeBase({ ...base, timeScaleFactor: 0.7, nearestStandard: { factor: 0.5, label: '2x', consistent: false } }).status).toBe('inconclusive')
+  })
+
+  it('apex perspective term applies to rear and front views only', () => {
+    const scale = { unitsPerM: 0.15, relSigma: 0.03, basis: '' }
+    expect(apexPerspectiveSigmaS(0.2, scale, 9 / 16, 'side')).toBe(0)
+    expect(apexPerspectiveSigmaS(0.2, scale, 9 / 16, undefined)).toBe(0)
+    const rear = apexPerspectiveSigmaS(0.2, scale, 9 / 16, 'rear')
+    // 2 m above the camera, 4.8 m away, 0.5 m/s along the axis: about 21 ms.
+    expect(rear).toBeGreaterThan(0.015)
+    expect(rear).toBeLessThan(0.03)
+    expect(apexPerspectiveSigmaS(0.2, null, 9 / 16, 'front45')).toBeCloseTo(0.015)
   })
 
   it('sound delay estimate is bounded', () => {

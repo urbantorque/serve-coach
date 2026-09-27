@@ -33,6 +33,13 @@ export interface BallCandidate {
   /** Streak orientation (radians, image axes, x right / y down); undefined direction sign. */
   streakAngleRad: number
   areaPx: number
+  /**
+   * Share of the blob's footprint (disc plus streak capsule) that is ball-coloured at full
+   * resolution (colour-seam rejection; about 0.6-1 for a ball, see refineAtFullResolution).
+   */
+  supportRatio: number
+  /** As supportRatio, counting plain ball-coloured pixels only (no un-mixing). */
+  plainSupportRatio: number
 }
 
 export interface DetectorOptions {
@@ -59,6 +66,17 @@ export interface DetectorOptions {
   maxStreakRatio?: number
   minScore?: number
   maxCandidates?: number
+  /** Scale the background by the frame's illumination gain before differencing (flicker). Default true. */
+  compensateIllumination?: boolean
+  /**
+   * Plain-colour support gate: the score is multiplied by
+   * smoothstep(plainSupportLow, plainSupportHigh, plainSupportRatio). Off by default; use it
+   * while the ball is slow and sharp (the toss), never for the outgoing ball, whose blurred
+   * pixels are rarely plain ball colour. createBallFrameDetector applies TOSS_PLAIN_SUPPORT_GATE
+   * inside the toss band.
+   */
+  plainSupportLow?: number
+  plainSupportHigh?: number
 }
 
 export interface DetectorFrame {
@@ -75,7 +93,20 @@ const DEFAULTS = {
   maxStreakRatio: 8,
   minScore: 0.12,
   maxCandidates: 8,
+  plainSupportLow: -1,
+  plainSupportHigh: 0,
+  compensateIllumination: true,
 }
+
+/** Blobs checked at full resolution per frame, as a multiple of maxCandidates. */
+const SUPPORT_CHECK_FACTOR = 3
+
+/**
+ * Plain-colour support gate for the toss phase. On the rendered corpus (20 clips) true toss
+ * candidates had plain support >= 0.36 (5th percentile per clip) and colour-seam candidates a
+ * median of 0.00, so this ramp removes seams without touching the ball.
+ */
+export const TOSS_PLAIN_SUPPORT_GATE = { plainSupportLow: 0.05, plainSupportHigh: 0.2 }
 
 /** Frame reduced to float RGB planes on a coarse grid. */
 export interface GridFrame {
@@ -187,8 +218,32 @@ export interface MotionMaps {
 }
 
 /**
- * Motion likelihood from the mean absolute channel difference to the running background,
- * plus the un-mixed colour of moving pixels (see unmixedColourLikelihood).
+ * Robust global illumination gain of the frame over the running background: the median of
+ * (r + g + b) ratios over a sparse sample of reasonably bright cells, clamped to 0.5-2.
+ * Floodlights on 50 Hz mains flicker at 100 Hz, so at 120-240 fps successive frames differ
+ * in brightness by up to tens of percent everywhere they light; without this, every lit
+ * yellow-green surface (trees, fences) reads as moving. Moving objects cover too little of
+ * the frame to move the median. Returns 1 when too few cells are bright enough.
+ */
+export function illuminationGain(grid: GridFrame, background: GridFrame, step = 4, minLevelSum = 60): number {
+  const ratios: number[] = []
+  for (let y = 0; y < grid.height; y += step) {
+    for (let x = (y / step) % 2 ? step >> 1 : 0; x < grid.width; x += step) {
+      const i = y * grid.width + x
+      const b = background.r[i] + background.g[i] + background.b[i]
+      if (b < minLevelSum) continue
+      ratios.push((grid.r[i] + grid.g[i] + grid.b[i]) / b)
+    }
+  }
+  if (ratios.length < 50) return 1
+  ratios.sort((a, b) => a - b)
+  return clamp(ratios[ratios.length >> 1], 0.5, 2)
+}
+
+/**
+ * Motion likelihood from the mean absolute channel difference to the running background
+ * (scaled by the illumination gain, see illuminationGain), plus the un-mixed colour of
+ * moving pixels (see unmixedColourLikelihood).
  * Ghost suppression: where the ball has just left, the background still holds ball colour
  * and the difference is large; those cells are discounted when the current pixel is
  * clearly less ball-coloured than the background. (A ball hovering at the apex keeps
@@ -202,23 +257,25 @@ export function motionMaps(
   model: ColourModel,
   lowLevels: number,
   highLevels: number,
+  gain = 1,
 ): MotionMaps {
   const motion = new Float32Array(grid.width * grid.height)
   const effective = colour.slice()
   for (let y = rect.y0; y < rect.y1; y++) {
     for (let x = rect.x0; x < rect.x1; x++) {
       const i = y * grid.width + x
-      const diff =
-        (Math.abs(grid.r[i] - background.r[i]) + Math.abs(grid.g[i] - background.g[i]) + Math.abs(grid.b[i] - background.b[i])) /
-        3
+      const bgR = gain * background.r[i]
+      const bgG = gain * background.g[i]
+      const bgB = gain * background.b[i]
+      const diff = (Math.abs(grid.r[i] - bgR) + Math.abs(grid.g[i] - bgG) + Math.abs(grid.b[i] - bgB)) / 3
       const m = smoothstep(lowLevels, highLevels, diff)
       if (m <= 0) continue
       if (colour[i] < 0.9 && diff >= highLevels / 2) {
-        const unmixed = unmixedColourLikelihood(grid.r[i], grid.g[i], grid.b[i], background.r[i], background.g[i], background.b[i], model)
+        const unmixed = unmixedColourLikelihood(grid.r[i], grid.g[i], grid.b[i], bgR, bgG, bgB, model)
         if (unmixed > effective[i]) effective[i] = unmixed
       }
       if (effective[i] <= 0) continue
-      const backgroundColour = ballColourLikelihood(background.r[i], background.g[i], background.b[i], model)
+      const backgroundColour = ballColourLikelihood(Math.min(255, bgR), Math.min(255, bgG), Math.min(255, bgB), model)
       motion[i] = m * smoothstep(-0.35, -0.1, effective[i] - backgroundColour)
     }
   }
@@ -264,11 +321,20 @@ interface ScoringContext {
   image: ImageDataLike
   grid: GridFrame
   motion: Float32Array | null
+  /** Running background (grid resolution), for un-mixing moving full-resolution pixels. */
+  background: GridFrame | null
+  /** Illumination gain of this frame over the background (see illuminationGain). */
+  backgroundGain: number
+  /** Mean channel difference from the background above which a pixel is un-mixed. */
+  unmixMinLevels: number
   expectedRadiusPx: number | null
   model: ColourModel
   motionFloor: number
   maxStreakRatio: number
   sizePrior: SizePrior
+  /** Plain support ramp (see DetectorOptions.plainSupportLow / plainSupportHigh). */
+  plainSupportLow: number
+  plainSupportHigh: number
 }
 
 /**
@@ -332,16 +398,29 @@ function scoreBlob(stats: BlobStats, ctx: ScoringContext): ScoredBlob | null {
       streakLengthNorm: streakPx / ctx.image.height,
       streakAngleRad: shape.angleRad,
       areaPx: stats.area * f * f,
+      supportRatio: Number.NaN,
+      plainSupportRatio: Number.NaN,
     },
   }
 }
 
 /**
- * Full-resolution likelihood-weighted centroid inside the blob's bounding box (plus one
- * cell). Weights are (likelihood - 0.15)+ so blurred edges contribute symmetrically.
+ * Full-resolution pass over the blob's bounding box (plus one cell):
+ *  - centroid: likelihood-weighted, weights (likelihood - 0.15)+ so blurred edges contribute
+ *    symmetrically;
+ *  - support: pixels that are ball-coloured at full resolution (plain colour, or un-mixed
+ *    against the background for moving pixels, >= 0.5) over the footprint the blob implies
+ *    (disc plus streak capsule). A real ball fills most of its footprint. Box-averaging at the
+ *    grid scale can make yellow-green out of two other colours (tan skin over green foliage or
+ *    a green windscreen); at full resolution that is only a 1-2 px seam, so its support is low.
  */
-function refineCentroid(stats: BlobStats, cellCx: number, cellCy: number, ctx: ScoringContext): { x: number; y: number } {
-  const { image, grid } = ctx
+function refineAtFullResolution(
+  stats: BlobStats,
+  cellCx: number,
+  cellCy: number,
+  ctx: ScoringContext,
+): { x: number; y: number; support: number; plainSupport: number } {
+  const { image, grid, background } = ctx
   const f = grid.factor
   const x0 = Math.max(0, (stats.minX - 1) * f)
   const y0 = Math.max(0, (stats.minY - 1) * f)
@@ -350,16 +429,31 @@ function refineCentroid(stats: BlobStats, cellCx: number, cellCy: number, ctx: S
   let sw = 0
   let sx = 0
   let sy = 0
+  let ballPixels = 0
+  let plainPixels = 0
   for (let y = y0; y < y1; y++) {
     const cellY = Math.min(grid.height - 1, Math.floor(y / f))
     for (let x = x0; x < x1; x++) {
       const p = (y * image.width + x) * 4
-      let l = ballColourLikelihood(image.data[p], image.data[p + 1], image.data[p + 2], ctx.model)
-      if (l <= 0.15) continue
-      if (ctx.motion) {
-        const cellX = Math.min(grid.width - 1, Math.floor(x / f))
-        l *= ctx.motionFloor + (1 - ctx.motionFloor) * ctx.motion[cellY * grid.width + cellX]
+      const r = image.data[p]
+      const g = image.data[p + 1]
+      const b = image.data[p + 2]
+      const cellX = Math.min(grid.width - 1, Math.floor(x / f))
+      const cell = cellY * grid.width + cellX
+      let l = ballColourLikelihood(r, g, b, ctx.model)
+      let effective = l
+      if (effective < 0.5 && background) {
+        const k = ctx.backgroundGain
+        const bgR = k * background.r[cell]
+        const bgG = k * background.g[cell]
+        const bgB = k * background.b[cell]
+        const diff = (Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB)) / 3
+        if (diff >= ctx.unmixMinLevels) effective = Math.max(effective, unmixedColourLikelihood(r, g, b, bgR, bgG, bgB, ctx.model))
       }
+      if (effective >= 0.5) ballPixels++
+      if (l >= 0.5) plainPixels++
+      if (l <= 0.15) continue
+      if (ctx.motion) l *= ctx.motionFloor + (1 - ctx.motionFloor) * ctx.motion[cell]
       const w = l - 0.15
       if (w <= 0) continue
       sw += w
@@ -367,8 +461,13 @@ function refineCentroid(stats: BlobStats, cellCx: number, cellCy: number, ctx: S
       sy += w * (y + 0.5)
     }
   }
-  if (sw < 0.5) return { x: cellCx * f, y: cellCy * f }
-  return { x: sx / sw, y: sy / sw }
+  const shape = blobShape(stats)
+  const radiusPx = Math.max(shape.radius * f, 1)
+  const footprint = Math.PI * radiusPx * radiusPx + 2 * radiusPx * shape.streakLength * f
+  const support = ballPixels / footprint
+  const plainSupport = plainPixels / footprint
+  if (sw < 0.5) return { x: cellCx * f, y: cellCy * f, support, plainSupport }
+  return { x: sx / sw, y: sy / sw, support, plainSupport }
 }
 
 /**
@@ -394,7 +493,10 @@ export class BallDetector {
   }
 
   /** Candidates sorted by descending score. Per-frame ROI / expected radius may be overridden. */
-  detect(frame: DetectorFrame, overrides: Pick<DetectorOptions, 'roi' | 'expectedRadiusNorm' | 'sizePrior'> = {}): BallCandidate[] {
+  detect(
+    frame: DetectorFrame,
+    overrides: Pick<DetectorOptions, 'roi' | 'expectedRadiusNorm' | 'sizePrior' | 'plainSupportLow' | 'plainSupportHigh'> = {},
+  ): BallCandidate[] {
     const opts = { ...DEFAULTS, ...this.options, ...overrides }
     const model = opts.colourModel ?? DEFAULT_COLOUR_MODEL
     const image = frame.image
@@ -411,9 +513,10 @@ export class BallDetector {
     const rect = roiToCells(opts.roi, grid)
     const inOrder = frame.tReal > this.lastTReal
     const pixelColour = colourLikelihoodMap(grid, rect, model)
+    const gain = this.background && inOrder && opts.compensateIllumination ? illuminationGain(grid, this.background) : 1
     const maps =
       this.background && inOrder
-        ? motionMaps(grid, this.background, pixelColour, rect, model, opts.motionLowLevels, opts.motionHighLevels)
+        ? motionMaps(grid, this.background, pixelColour, rect, model, opts.motionLowLevels, opts.motionHighLevels, gain)
         : null
     const colour = maps ? maps.colour : pixelColour
     const motion = maps ? dilateMax3x3(maps.motion, grid.width, rect) : null
@@ -430,23 +533,34 @@ export class BallDetector {
       image,
       grid,
       motion,
+      background: maps ? this.background : null,
+      backgroundGain: gain,
+      unmixMinLevels: opts.motionHighLevels / 2,
       expectedRadiusPx,
       model,
       motionFloor: opts.motionFloor,
       maxStreakRatio: opts.maxStreakRatio,
       sizePrior: opts.sizePrior ?? DEFAULT_SIZE_PRIOR,
+      plainSupportLow: opts.plainSupportLow,
+      plainSupportHigh: opts.plainSupportHigh,
     }
-    // Score every blob on coarse moments, then refine only the kept ones at full resolution.
+    // Score every blob on coarse moments; the best few are checked and refined at full
+    // resolution, where the support term joins the score.
     const scored: ScoredBlob[] = []
     for (const stats of blobs) {
       const blob = scoreBlob(stats, ctx)
       if (blob && blob.candidate.score >= opts.minScore) scored.push(blob)
     }
     scored.sort((a, b) => b.candidate.score - a.candidate.score)
-    const candidates = scored.slice(0, opts.maxCandidates).map((blob): BallCandidate => {
-      const refined = refineCentroid(blob.stats, blob.cellCx, blob.cellCy, ctx)
-      return { ...blob.candidate, x: refined.x / image.width, y: refined.y / image.height }
-    })
+    const candidates: BallCandidate[] = []
+    for (const blob of scored.slice(0, SUPPORT_CHECK_FACTOR * opts.maxCandidates)) {
+      const refined = refineAtFullResolution(blob.stats, blob.cellCx, blob.cellCy, ctx)
+      const score = blob.candidate.score * smoothstep(ctx.plainSupportLow, ctx.plainSupportHigh, refined.plainSupport)
+      if (score < opts.minScore) continue
+      candidates.push({ ...blob.candidate, x: refined.x / image.width, y: refined.y / image.height, score, supportRatio: refined.support, plainSupportRatio: refined.plainSupport })
+    }
+    candidates.sort((a, b) => b.score - a.score)
+    candidates.splice(opts.maxCandidates)
 
     if (!this.background || !inOrder) {
       this.background = cloneGrid(grid)

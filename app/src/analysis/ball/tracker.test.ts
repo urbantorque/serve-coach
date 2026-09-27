@@ -140,3 +140,89 @@ describe('trackBall: outgoing ball', () => {
     expect(Math.abs(early.outgoing!.contactFromTracks!.tReal - s.params.contactTime)).toBeLessThan(0.003)
   })
 })
+
+describe('trackBall: physical plausibility of the toss', () => {
+  /**
+   * Side view, 60 fps. The ball is held still, then lowered in the hand (accelerating down at
+   * 0.45 g for 0.6 s: 36 detections that fit the falling half of a parabola), raised again and
+   * tossed so high that only 20 rising and 4 falling frames are in view (as in apexout).
+   */
+  function handLowerThenTossFrames(seed: number) {
+    const radius = 0.01
+    const g = 9.81 * (radius / BALL_RADIUS_M)
+    const lowered = 0.55 + 0.5 * 0.45 * g * 0.36
+    const release = 1.8
+    const v = Math.sqrt(2 * g * 0.8)
+    const path = (t: number) => {
+      if (t < 0.9) return { x: 0.5, y: 0.55 }
+      if (t < 1.5) return { x: 0.5, y: 0.55 + 0.5 * 0.45 * g * (t - 0.9) ** 2 }
+      if (t < release) {
+        // Hand drive: quadratic from the low point to the release point, reaching the ball's
+        // launch velocity at release (the ball leaves the hand smoothly).
+        const T = release - 1.5
+        const c = (-v * T - (0.5 - lowered)) / (T * T)
+        const b = -v - 2 * c * T
+        const tau = t - 1.5
+        return { x: 0.5, y: lowered + b * tau + c * tau * tau }
+      }
+      const tau = t - release
+      return { x: 0.5 + 0.02 * tau, y: 0.5 - v * tau + 0.5 * g * tau * tau }
+    }
+    const rng = createRng(seed)
+    const frames = candidatesFromTruth(
+      frameTimes(60, 0, release + 1.2),
+      (t) => ({ ...path(t), radiusNorm: radius }),
+      9 / 16,
+      { sigmaNorm: 0.3 * radius, missRate: 0.05, falsePerFrame: 0.3 },
+      rng,
+    )
+    return { frames, radius, g, release }
+  }
+
+  it('rejects the ball lowered in the hand and finds the toss (rise check, gravity band)', () => {
+    for (let seed = 1; seed <= 5; seed++) {
+      const { frames, radius, g, release } = handLowerThenTossFrames(seed)
+      for (const bands of [undefined, [[0.6 * g, 1.5 * g]] as [number, number][]]) {
+        const result = trackBall(frames, { aspect: 9 / 16, expectedRadiusNorm: radius, accelerationBandsNorm: bands })
+        expect(result.toss?.track.kind).toBe('toss')
+        const first = result.toss!.track.observations.find((o) => o.source === 'detected')!
+        expect(first.tReal).toBeGreaterThan(release - 0.35)
+        // Nothing from the held or lowering phase (before the drive starts at 1.5 s).
+        expect(result.toss!.track.observations.every((o) => o.tReal >= 1.45)).toBe(true)
+      }
+    }
+  })
+})
+
+describe('trackBall: side-view outgoing limits', () => {
+  it('rejects a steep, slow limb seam through the contact point; keeps the fast, level ball', () => {
+    const fps = 60
+    const aspect = 9 / 16
+    const s = makeTossScenario({ fps, seed: 31, aspect, noiseRadii: 0.3 })
+    const before = s.frames.filter((f) => f.tReal <= s.params.contactTime)
+    const contact = project(s.camera, s.truth.positionAt(s.params.contactTime))
+    const g = 9.81 * s.unitsPerM
+    const times = frameTimes(fps, s.params.contactTime + 0.004, s.params.contactTime + 0.12, 0)
+    const at = (t: number, vx: number, vy: number) => ({ x: contact.x + (vx * (t - s.params.contactTime)) / aspect, y: contact.y + vy * (t - s.params.contactTime) })
+    // Seam: 2.2 frame heights/s (about 15 m/s here) at 67 deg below horizontal. Ball: 38 m/s, 4 deg down.
+    const seamV = { vx: 0.86, vy: 2.03 }
+    const ballV = { vx: 38 * s.unitsPerM, vy: 38 * s.unitsPerM * Math.tan((4 * Math.PI) / 180) }
+    const frame = (i: number, t: number, withBall: boolean) => ({
+      frameIndex: 50000 + i,
+      tReal: t,
+      candidates: [
+        { ...at(t, seamV.vx, seamV.vy), radiusNorm: s.radiusNorm, score: 0.7 },
+        ...(withBall && i < 2 ? [{ ...at(t, ballV.vx, ballV.vy), radiusNorm: s.radiusNorm, score: 0.7 }] : []),
+      ],
+    })
+    const limits = { outgoingMaxElevationDeg: 30, minOutgoingSpeedNormPerS: 17 * s.unitsPerM }
+    const base = { aspect, expectedRadiusNorm: s.radiusNorm, contactTReal: s.params.contactTime, accelerationBandsNorm: [[0.6 * g, 1.5 * g]] as [number, number][] }
+    const seamOnly = [...before, ...times.map((t, i) => frame(i, t, false))]
+    expect(trackBall(seamOnly, base).outgoing).not.toBeNull()
+    expect(trackBall(seamOnly, { ...base, ...limits }).outgoing).toBeNull()
+    const withBall = [...before, ...times.map((t, i) => frame(i, t, true))]
+    const kept = trackBall(withBall, { ...base, ...limits }).outgoing
+    expect(kept).not.toBeNull()
+    expect(Math.abs(kept!.initialVelocity.vy / kept!.initialVelocity.vx)).toBeLessThan(0.2)
+  })
+})

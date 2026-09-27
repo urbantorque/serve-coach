@@ -5,6 +5,7 @@
  * target 'locate' (ROI localisation) go to an IMAGE-mode landmarker (see LocatorSlot).
  */
 import { LandmarkerHandle, LocatorSlot } from './mediapipeCore.ts'
+import { installSameOriginFetchGuard, type FetchGuardScope } from './workerNetworkGuard.ts'
 import type { FromPoseWorker, ToPoseWorker } from './workerProtocol.ts'
 
 /** The subset of DedicatedWorkerGlobalScope used here (the app's tsconfig uses the DOM lib). */
@@ -14,6 +15,13 @@ interface WorkerScope {
 }
 
 const scope = globalThis as unknown as WorkerScope
+
+// tasks-vision's usage logging (odml.pa.googleapis.com) must never leave the device (D8). The
+// page CSP reaches this worker through its blob: bootstrap; this guard covers browsers that do not
+// pass the policy on. Everything the landmarker needs is same-origin.
+installSameOriginFetchGuard(globalThis as unknown as FetchGuardScope, {
+  onBlocked: (url) => console.warn(`[privacy] pose worker: blocked a cross-origin request to ${url}`),
+})
 let handle: LandmarkerHandle | null = null
 let locator: LocatorSlot | null = null
 let queue: Promise<void> = Promise.resolve()

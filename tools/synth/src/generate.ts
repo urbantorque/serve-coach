@@ -17,7 +17,7 @@ export interface ClipRecord {
   files: { mp4: string; webm?: string; truth: string }
   bytes: { mp4: number; webm?: number; truth: number }
   video: { width: number; height: number; fps: number; captureFps: number; timeScale: number; frameCount: number; durationMediaS: number; crf: number }
-  camera: { view: string; distanceM: number; heightM: number; orientation: string; focal35mmEquivMm: number; shake: boolean }
+  camera: { view: string; distanceM: number; heightM: number; orientation: string; focal35mmEquivMm: number; shake: boolean; anchor?: string; lookAtHeightM?: number }
   lighting: string
   player: { profile: string; heightM: number; handedness: string }
   serves: number
@@ -208,6 +208,8 @@ function clipRecord(b: BuiltScenario, o: OutputPlan, truth: Record<string, unkno
       orientation: sc.video.orientation,
       focal35mmEquivMm: sc.camera.focal35mmEquivMm,
       shake: !!sc.camera.shake,
+      anchor: sc.camera.anchor ?? 'stance',
+      lookAtHeightM: sc.camera.lookAtHeightM ?? 1.45,
     },
     lighting: sc.look.lighting + (b.setup.look.flickerAmplitude > 0 ? ' (100 Hz flicker)' : ''),
     player: { profile: b.profile.id, heightM: b.profile.heightM, handedness: b.profile.handedness },

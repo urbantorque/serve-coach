@@ -24,6 +24,8 @@ import { type FrameStream, type PoseImage, type PoseInputFrame, type PoseSource,
 import { type FrameSize, type PixelRect, type RoiOptions, RoiController, cropCandidateToFrame, isFullFrame } from './roi.ts'
 import { ServerTracker, type PoseCandidate, type TrackDecision, type TrackerOptions } from './tracking.ts'
 import type { FromPoseWorker, ToPoseWorker } from './workerProtocol.ts'
+// URL of the worker bundle (Vite builds it as its own ES-module chunk); see createPoseWorker().
+import poseWorkerUrl from './pose.worker.ts?worker&url'
 
 export type RoiMode = 'auto' | 'off'
 
@@ -210,6 +212,7 @@ type WithoutId<T> = T extends unknown ? Omit<T, 'id'> : never
 class WorkerBackend implements Backend {
   readonly where = 'worker' as const
   private readonly worker: Worker
+  private readonly bootstrapUrl: string
   private nextId = 1
   private readonly pending = new Map<number, { resolve: (m: FromPoseWorker) => void; reject: (e: Error) => void }>()
 
@@ -217,7 +220,9 @@ class WorkerBackend implements Backend {
     private readonly transferOwnership: boolean,
     private readonly initTimeoutMs: number,
   ) {
-    this.worker = new Worker(new URL('./pose.worker.ts', import.meta.url), { type: 'module', name: 'pose-landmarker' })
+    const { worker, bootstrapUrl } = createPoseWorker()
+    this.worker = worker
+    this.bootstrapUrl = bootstrapUrl
     this.worker.onmessage = (event: MessageEvent<FromPoseWorker>) => {
       const entry = this.pending.get(event.data.id)
       if (!entry) return
@@ -284,8 +289,26 @@ class WorkerBackend implements Backend {
       // The worker is terminated below either way.
     }
     this.worker.terminate()
+    URL.revokeObjectURL(this.bootstrapUrl)
     this.failAll(new Error('pose worker closed'))
   }
+}
+
+/**
+ * Starts pose.worker.ts through a one-line blob: module that imports it. A worker created from
+ * a same-origin URL takes its Content-Security-Policy from its own HTTP response, which has none
+ * on a static host or the Vite dev server, so the page's meta CSP would not apply and
+ * tasks-vision's usage logging (POST https://odml.pa.googleapis.com/v1/log, sent from the
+ * worker when a landmarker closes and every 60 s) went out. Measured in headless Edge 154 on
+ * 2026-09-27 (tools/validate/smoke.mjs). A blob: worker inherits the creating page's policy
+ * (policy-container inheritance for local-scheme URLs), so connect-src 'self' covers it; the
+ * page CSP must allow `worker-src blob:`. pose.worker.ts also installs a same-origin fetch guard
+ * (workerNetworkGuard.ts) for browsers that do not inherit the policy.
+ */
+function createPoseWorker(): { worker: Worker; bootstrapUrl: string } {
+  const scriptUrl = absoluteUrl(poseWorkerUrl)
+  const bootstrapUrl = URL.createObjectURL(new Blob([`import ${JSON.stringify(scriptUrl)};\n`], { type: 'text/javascript' }))
+  return { worker: new Worker(bootstrapUrl, { type: 'module', name: 'pose-landmarker' }), bootstrapUrl }
 }
 
 function workerSupported(): boolean {

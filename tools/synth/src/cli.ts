@@ -8,12 +8,13 @@
  *
  * Options: --jobs N (parallel render jobs, default 2), --force (re-render existing clips),
  * --out DIR (default validation/synthetic), --channel msedge|chrome,
- * --truth-only (rewrite truth.json and the manifest for clips already on disk without rendering;
+ * --truth-only (rewrite truth.json, truth-extra.json and the manifest for clips already on disk without rendering;
  * valid only while the motion, camera and render code are unchanged since the videos were encoded).
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { augmentCorpus } from './augmentTruth.ts'
 import { clipFiles, jobComplete, rebuildTruth, runJob, type ClipRecord } from './generate.ts'
 import { loadManifest, upsertManifest } from './manifest.ts'
 import { RenderService } from './render/service.ts'
@@ -112,6 +113,7 @@ async function main(): Promise<void> {
       }
     }
     upsertManifest(args.out, records)
+    augmentCorpus(args.out, { ids: records.map((x) => x.id), log: () => {} })
     listStatus(args.out)
     return
   }
@@ -128,6 +130,7 @@ async function main(): Promise<void> {
   const tmpDir = join(TOOL, '.cache', 'tmp')
   const svc = await RenderService.start({ channel: args.channel })
   const failures: { job: string; error: string }[] = []
+  const rendered: string[] = []
   let manifestChain = Promise.resolve()
   const t0 = performance.now()
   try {
@@ -138,6 +141,7 @@ async function main(): Promise<void> {
         console.log(`[${next}/${todo.length}] ${sc.id}: ${sc.description}`)
         try {
           const records: ClipRecord[] = await runJob(svc, sc, { outRoot: args.out, tmpDir, log: (s) => console.log(s), generator })
+          rendered.push(...records.map((x) => x.id))
           manifestChain = manifestChain.then(() => void upsertManifest(args.out, records))
           await manifestChain
         } catch (e) {
@@ -150,6 +154,11 @@ async function main(): Promise<void> {
     await Promise.all(Array.from({ length: Math.min(args.jobs, todo.length) }, worker))
   } finally {
     await svc.close()
+  }
+  if (rendered.length) {
+    // Derived truth (truth-extra.json, truth-series.json) for the clips just written.
+    const aug = augmentCorpus(args.out, { ids: rendered, log: () => {} })
+    console.log(`truth-extra.json written for ${aug.written.length} clip(s)${aug.failed.length ? `; failed: ${aug.failed.map((f) => `${f.id} (${f.error})`).join(', ')}` : ''}`)
   }
   console.log(`\nFinished in ${((performance.now() - t0) / 60000).toFixed(1)} min with ${failures.length} failure(s).`)
   for (const f of failures) console.log(`  ${f.job}: ${f.error.split('\n')[0]}`)

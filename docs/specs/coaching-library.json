@@ -2,9 +2,11 @@
   {
     "id": "toss-height-steady",
     "faultId": "toss-height-inconsistent",
+    "itemType": "focus",
     "title": "Steady toss height",
-    "whyItMatters": "When the toss peaks at a different height each time, your swing has to re-time itself on every serve. Experienced servers keep toss height steadier than any other part of the toss.",
-    "evidenceTier": "research-backed",
+    "whyItMatters": "When the toss peaks at a different height each time, your swing has to re-time itself on every serve. Coaches work on this first, and experienced servers keep toss height steadier than any other part of the toss.",
+    "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "toss-height-spread",
@@ -12,25 +14,36 @@
       ],
       "kind": "spread",
       "chainStage": 2,
-      "minUsableServes": 10,
+      "minUsableServes": 12,
       "minFps": 30,
       "thresholds": {
         "unit": "cm",
         "direction": "above",
-        "measurementErrorDefault": 3,
+        "measurementErrorDefault": 4,
+        "boundLevel": 0.9,
+        "minDetectedShare": 0.8,
         "byLevel": {
           "utr-1-3": {
-            "fire": 20,
-            "resolved": 12
+            "fireLowerBound": 15,
+            "possibleAbove": 20,
+            "resolved": 15,
+            "resolvedRelativeReduction": 0.3
           },
           "utr-4-7": {
-            "fire": 14,
-            "resolved": 10
+            "fireLowerBound": 15,
+            "possibleAbove": 20,
+            "resolved": 15,
+            "resolvedRelativeReduction": 0.3
           }
-        }
+        },
+        "relative": {
+          "ratioToBest": 1.5,
+          "minServesBothSessions": 20
+        },
+        "note": "gap-ranges §7.1 F3: 'likely' when the one-sided 90% lower bound of the true SD is at least 15 cm with n >= 12 and >= 80% of the stratum's serves detected. The default error of 4 cm includes about 3 cm of sideways-drift contamination (D1). Same values at both levels."
       },
-      "rule": "Per stratum with n >= 10 usable serves: s = SD of toss apex height (cm) (1.4826 x MAD when n < 15); sigma = sqrt(max(0, s^2 - e^2)) with e from METRICS.md, else measurementErrorDefault; confidence = F_chi2(n-1)((n-1) x sigma^2 / T^2) x meanConf where T = fire threshold for the level. Eligible when confidence >= 0.70 and sigma / T >= 1.1.",
-      "resolvedWhen": "sigma <= resolved threshold for the level in a matched session, or a 'Clear improvement' verdict against the experiment baseline.",
+      "rule": "Per stratum with n >= 12 usable serves and a detected share >= 0.80: s = sample SD (n >= 15) or 1.4826 x MAD (n < 15); df = n - 1 for the SD or 0.37 x (n - 1) for the MAD; e from METRICS, else measurementErrorDefault. sigmaHat = sqrt(max(0, s^2 - e^2)); lower bound sigmaL = sqrt(max(0, s^2 x df / chi2_0.90(df) - e^2)); P(sigma > T) = F_chi2(df)(df x s^2 / (T^2 + e^2)). Fire when sigmaL >= fireLowerBound; confidence = P x meanConf, eligible when >= 0.70. Relative path: sigmaHat >= 1.5 x the player's best matched-session spread, with n >= 20 in both sessions. A sigmaHat above possibleAbove without the bound is 'possible': listed under Also noticed, never coached.",
+      "resolvedWhen": "sigmaHat <= 15 cm, or >= 30% below the experiment baseline, in a later matched session. 'Worked' needs verdict clearly-better, or the resolved value in two consecutive matched re-tests.",
       "linkedOutcomes": [
         "net",
         "long"
@@ -43,25 +56,35 @@
         "toss-height-spread",
         "toss-apex-height"
       ],
-      "overlay": "apex-scatter"
+      "overlay": "apex-scatter",
+      "viewNote": "From the side, a little of this spread comes from tosses drifting sideways, so your true up-and-down spread may be a few centimetres smaller."
     },
     "cues": {
       "analogy": "Lift it like an elevator.",
-      "outcome": "Peak it at the same fence line."
+      "outcome": "Every toss peaks at the same spot."
     },
     "drill": {
-      "name": "Fence-line toss ladder",
+      "name": "Same-peak serves",
       "minutes": 8,
-      "setup": "Stand in your usual serving spot with a basket. Pick a fixed line in the background, such as a fence rail, windbreak seam or band on a light pole, about a racquet's length above your full reach. Put a towel or racquet cover about half a metre inside the baseline, slightly to your hitting side.",
+      "tossOnlyReps": 5,
+      "setup": "Stand in your usual serving spot with a basket. There is no height to aim for: the goal is the same peak each time. If a friend is there, they can call 'same' or 'different' for each peak; indoors, a roof beam can help you see it.",
       "steps": [
-        "Toss 5 balls without swinging and watch where each one peaks against your line.",
+        "Make 5 tosses, taking the racquet back as you toss each one, then catch the ball or let it drop.",
         "Serve 20 balls at a comfortable pace, swinging at every toss, even the imperfect ones.",
-        "Keep a count of the tosses that peaked on your line, within about a ball's height.",
+        "After each serve, note whether you had to wait for the ball or chase it, and count the ones where you did neither.",
         "Finish with 10 serves alternating T and wide, without counting."
       ],
-      "successCriterion": "14 of 20 tosses peak on your line.",
+      "successCriterion": "15 of 20 serves where you neither waited for the toss nor chased it. Your next recorded block shows the spread.",
       "progression": "Call 'T' or 'wide' out loud as the ball rises and serve there, keeping the same peak.",
-      "regression": "Start with the racquet already up behind you and serve from the service line, tossing a little lower."
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
+      "regression": "Start with the racquet already up behind you and serve from the service line with a smooth, unhurried toss."
     },
     "contraindications": [],
     "comfortNotes": {},
@@ -76,9 +99,10 @@
     ],
     "sources": [
       "research 03 [S29]",
-      "research 03 [S28]",
       "research 06 [S8]",
       "research 03 [S25]",
+      "gap-ranges §7.1",
+      "gap-audit [A8]",
       "research 04 [S14]",
       "research 04 [S67]",
       "research 04 [S49]"
@@ -87,9 +111,11 @@
   {
     "id": "toss-spot-steady",
     "faultId": "toss-forward-inconsistent",
+    "itemType": "focus",
     "title": "Same toss spot",
-    "whyItMatters": "A toss that lands in a different spot each time drags your contact point around with it. Skilled servers vary this a little on purpose, so we only flag it when the spread is large.",
+    "whyItMatters": "A toss that lands in a different spot each time drags your contact point around with it. Experienced servers vary this a little on purpose, so we only flag it when the spread is large.",
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "toss-forward-spread",
@@ -97,25 +123,36 @@
       ],
       "kind": "spread",
       "chainStage": 2,
-      "minUsableServes": 10,
+      "minUsableServes": 12,
       "minFps": 30,
       "thresholds": {
         "unit": "cm",
         "direction": "above",
         "measurementErrorDefault": 7,
+        "boundLevel": 0.9,
+        "minDetectedShare": 0.8,
         "byLevel": {
           "utr-1-3": {
-            "fire": 25,
-            "resolved": 15
+            "fireLowerBound": 18,
+            "possibleAbove": 25,
+            "resolved": 20,
+            "resolvedRelativeReduction": 0.3
           },
           "utr-4-7": {
-            "fire": 18,
-            "resolved": 12
+            "fireLowerBound": 18,
+            "possibleAbove": 25,
+            "resolved": 20,
+            "resolvedRelativeReduction": 0.3
           }
-        }
+        },
+        "relative": {
+          "ratioToBest": 1.5,
+          "minServesBothSessions": 20
+        },
+        "note": "gap-ranges §7.1 F3: forward/back bound of 18 cm; typical recreational band 10-25 cm. Same values at both levels."
       },
-      "rule": "Per stratum with n >= 10 usable serves: s = SD of toss-forward (cm) (1.4826 x MAD when n < 15); sigma = sqrt(max(0, s^2 - e^2)) with e from METRICS.md, else measurementErrorDefault; confidence = F_chi2(n-1)((n-1) x sigma^2 / T^2) x meanConf where T = fire threshold for the level. Eligible when confidence >= 0.70 and sigma / T >= 1.1. Never pool intended types: targets and serve types legitimately move the toss.",
-      "resolvedWhen": "sigma <= resolved threshold for the level in a matched session, or a 'Clear improvement' verdict.",
+      "rule": "As toss-height-steady, on toss-forward: per stratum with n >= 12 usable serves and a detected share >= 0.80, fire when the one-sided 90% lower bound of the noise-corrected SD is >= 18 cm; confidence = F_chi2(df)(df x s^2 / (T^2 + e^2)) x meanConf, eligible when >= 0.70. Relative path: sigmaHat >= 1.5 x the player's best matched-session spread, n >= 20 in both. Never pool intended types: targets and serve types legitimately move the toss.",
+      "resolvedWhen": "sigmaHat <= 20 cm, or >= 30% below the experiment baseline, in a later matched session; or verdict clearly-better.",
       "linkedOutcomes": [
         "long",
         "net"
@@ -137,15 +174,24 @@
     "drill": {
       "name": "Towel-drop check",
       "minutes": 8,
-      "setup": "Put a towel about half a metre inside the baseline, slightly to your hitting side, where your ideal toss would land if you let it drop.",
+      "tossOnlyReps": 4,
+      "setup": "Put a towel about half a metre inside the baseline, slightly to your hitting side, where your toss would land if you let it drop.",
       "steps": [
-        "Before each set, toss once without swinging and note where the ball lands against the towel.",
+        "Before each set of 5 serves, make one check toss: take the racquet back as you toss, then let the ball drop and note where it lands against the towel.",
         "Serve 4 sets of 5 at a comfortable pace, swinging at every toss.",
         "If a check toss misses the towel, change where you let go of the ball, not your swing.",
         "Finish with 10 serves alternating deuce and ad courts."
       ],
       "successCriterion": "3 of 4 check tosses land on the towel.",
       "progression": "Swap the towel for a racquet cover and add a target in the service box.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
       "regression": "Use two towels side by side as a bigger target and serve from the service line."
     },
     "contraindications": [],
@@ -161,6 +207,8 @@
     "sources": [
       "research 03 [S29]",
       "research 03 [S20]",
+      "gap-ranges §7.1",
+      "gap-audit [A8]",
       "research 04 [S14]",
       "research 04 [S67]",
       "research 04 [S49]"
@@ -169,13 +217,16 @@
   {
     "id": "toss-in-front",
     "faultId": "toss-behind",
+    "itemType": "focus",
     "title": "Toss in front",
-    "whyItMatters": "A toss that drifts over or behind your head makes you arch back to reach it, and those serves often sail long or drop into the net. Coaches place the toss slightly in front so your body can move up and into the court.",
+    "whyItMatters": "A toss that drifts over or behind your head makes you lean back to reach it, and those serves often sail long or drop into the net. Coaches place the toss in front, never behind the baseline, so your body can move up and into the court.",
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "toss-forward",
-        "contact-forward"
+        "contact-forward",
+        "landing-distance"
       ],
       "kind": "per-serve",
       "chainStage": 2,
@@ -190,14 +241,14 @@
             "resolved": 20
           },
           "kick": {
-            "fire": -30,
-            "resolved": -15
+            "fire": -15,
+            "resolved": 0
           }
         },
-        "note": "default resolved value = lower edge of the metrics.json toss-forward targetBand (20-60 cm, flat and slice first serves)"
+        "note": "Default resolved value = lower edge of the metrics.json toss-forward target band (20-60 cm, flat and slice first serves). The kick row allows only for the flat-to-kick offset: a kick toss is resolved at or inside the baseline, never behind it (gap-audit [A6])."
       },
-      "rule": "Per serve: clear when the upper bound of toss-forward is below the fire value for its intended type (kick uses the kick row; flat, slice and untagged use default). With k clear of n usable: confidence = P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf; eligible when >= 0.70. contact-forward is shown as corroborating evidence only.",
-      "resolvedWhen": "Session mean toss-forward >= the resolved value for the intended type in a matched session.",
+      "rule": "Per serve: clear when the upper bound of toss-forward is below the fire value for its intended type (kick uses the kick row; flat, slice and untagged use default). With k clear of n usable: confidence = P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf; eligible when >= 0.70. contact-forward is corroborating evidence only. landing-distance is an experimental trend line only, shown with the experimental toggle on, and never a trigger.",
+      "resolvedWhen": "Session mean toss-forward >= the resolved value for the intended type (kick: >= 0 cm, at or inside the baseline) in a later matched session, or verdict clearly-better.",
       "linkedOutcomes": [
         "long",
         "net"
@@ -219,16 +270,26 @@
     "drill": {
       "name": "One-step-in toss",
       "minutes": 8,
+      "tossOnlyReps": 5,
       "setup": "Place a towel one small step inside the baseline, in line with your front foot.",
       "steps": [
-        "Toss 5 balls without swinging; each should land on or past the towel.",
+        "Make 2 check tosses, taking the racquet back as you toss, and let each drop: it should land on or past the towel.",
         "Serve 20 balls at a comfortable pace, letting your body follow the ball into the court.",
-        "After every 5 serves, let one toss drop to check it still lands on or past the towel.",
+        "After serves 5, 10 and 15, make one more check toss the same way, with the racquet going back.",
         "Finish with 10 serves to alternating targets."
       ],
       "successCriterion": "4 of 5 check tosses land on or past the towel.",
+      "note": "On kick serves the toss sits above your head, but never behind the baseline.",
       "progression": "Serve from the baseline to T and wide targets without changing where the toss would land.",
-      "regression": "Serve from the service line with your feet side by side and a slightly lower toss."
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
+      "regression": "Serve from the service line with your feet side by side."
     },
     "contraindications": [],
     "comfortNotes": {
@@ -246,17 +307,19 @@
     "sources": [
       "research 03 [S1]",
       "research 03 [S35]",
+      "gap-audit [A6]",
       "research 04 [S14]",
-      "research 04 [S7]",
       "research 04 [S49]"
     ]
   },
   {
     "id": "toss-within-reach",
     "faultId": "toss-too-far-forward",
+    "itemType": "focus",
     "title": "Toss within reach",
-    "whyItMatters": "When the toss is well out in front, you end up reaching forward instead of up, and contact comes lower. Hitting from a tall position gives the ball more room over the net.",
+    "whyItMatters": "When the toss is well out in front, you end up reaching forward instead of up, so contact comes lower and serves can drop into the net or sail long. Coaches keep the toss in front but within reach, so you can hit up at full stretch.",
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "toss-forward",
@@ -275,13 +338,14 @@
             "resolved": 60
           }
         },
-        "corroboration": "session mean contact-height-ratio < 1.40, or net share of misses >= 0.6 with >= 6 misses",
-        "note": "0.40 x height is about 70 cm for a 1.75 m player; resolved 60 cm = upper edge of the metrics.json toss-forward targetBand"
+        "corroboration": "session mean contact-height-ratio < 1.40, or a net or long share of misses >= 0.6 with >= 6 misses",
+        "note": "0.40 x height is about 70 cm for a 1.75 m player; resolved 60 cm = upper edge of the metrics.json toss-forward target band. Long misses corroborate because a toss far into the court can open the racquet face (gap-audit [A6], [A47])."
       },
       "rule": "Per serve: clear when the lower bound of toss-forward is above 0.40 x standing height. Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70 and the corroboration condition holds.",
-      "resolvedWhen": "Session mean toss-forward <= 60 cm in a matched session.",
+      "resolvedWhen": "Session mean toss-forward <= 60 cm in a later matched session, or verdict clearly-better.",
       "linkedOutcomes": [
-        "net"
+        "net",
+        "long"
       ]
     },
     "evidence": {
@@ -298,17 +362,26 @@
       "outcome": "Unhit tosses land one step in."
     },
     "drill": {
-      "name": "Tall-contact toss",
+      "name": "Within-reach toss",
       "minutes": 8,
+      "tossOnlyReps": 5,
       "setup": "Place a towel about a shoe-length inside the baseline, in line with your front foot.",
       "steps": [
-        "Toss 5 balls without swinging; they should land within a racquet-length of the towel.",
+        "Make 5 check tosses, taking the racquet back as you toss, and let each drop: it should land within a racquet-length of the towel.",
         "Serve 20 balls at a comfortable pace, reaching up to the ball rather than out after it.",
-        "Hold your landing still for a count of one after every serve.",
+        "Count the serves where you hit up at full stretch rather than chasing forward.",
         "Finish with 10 serves to alternating targets."
       ],
-      "successCriterion": "4 of 5 check tosses land within a racquet-length of the towel, and you hold 15 of 20 landings without stumbling forward.",
-      "progression": "Keep the same toss and add your leg drive, landing about a step inside the court.",
+      "successCriterion": "4 of 5 check tosses land within a racquet-length of the towel, and 15 of 20 serves feel like reaching up, not chasing forward.",
+      "progression": "Keep the same toss and rise quickly into the ball, aiming at a target in each box.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
       "regression": "Serve from the service line at half pace with your feet side by side."
     },
     "contraindications": [],
@@ -321,7 +394,8 @@
       "utr-4-7"
     ],
     "sources": [
-      "research 04 [S8]",
+      "gap-audit [A6]",
+      "gap-audit [A47]",
       "research 05 [S50]",
       "research 03 [S6]",
       "research 04 [S49]"
@@ -330,31 +404,51 @@
   {
     "id": "toss-to-reach-height",
     "faultId": "toss-too-high",
-    "title": "Toss to your reach",
-    "whyItMatters": "A very high toss is falling fast by the time you hit it, so small timing errors turn into big misses. In studies, skilled servers let the ball drop only about 55 to 75 cm before contact.",
+    "itemType": "focus",
+    "title": "Toss so you don't wait",
+    "whyItMatters": "When the toss goes much higher than you need, you end up waiting for it at the top, and the wait can break the flow of your swing. Coaches differ on toss height, so we don't set one: we look for waiting and track your own drop from peak to contact.",
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "toss-drop",
-        "rhythm-release-to-contact"
+        "rhythm-release-to-contact",
+        "trophy-pause",
+        "contact-height-ratio"
       ],
-      "kind": "per-serve",
+      "kind": "composite",
       "chainStage": 2,
-      "minUsableServes": 6,
+      "minUsableServes": 8,
       "minFps": 30,
       "thresholds": {
         "unit": "cm",
         "direction": "above",
-        "byServeType": {
-          "default": {
-            "fire": 100,
-            "resolved": 85
+        "bySex": {
+          "male": {
+            "highEdge": 100,
+            "likelyAbove": 120
+          },
+          "female": {
+            "highEdge": 125,
+            "likelyAbove": 145
+          },
+          "not-given": {
+            "highEdge": 125,
+            "likelyAbove": 145
           }
         },
-        "note": "fire value = metrics.json toss-drop coachingFlag"
+        "coSignals": {
+          "releaseToContactAboveMs": 1150,
+          "trophyPauseAboveMs": 500,
+          "trophyToContactAboveMs": 550,
+          "contactRatioBelowOwnBest": 0.04
+        },
+        "possibleNeedsCoSignals": 1,
+        "likelyNeedsCoSignals": 2,
+        "note": "gap-ranges §7.2 F4. Never trigger on the drop alone: in junior men and competitive women the drop did not differ between serves that went in and serves that faulted. trophy-pause is experimental, so that co-signal counts only with the experimental toggle on; trophyToContactAboveMs applies once METRICS provides that time. No toss height is prescribed anywhere (gap-audit §5 T5)."
       },
-      "rule": "Per serve: clear when the lower bound of toss-drop is above 100 cm. Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. rhythm-release-to-contact is context only. A small drop is never flagged on its own.",
-      "resolvedWhen": "Session median toss-drop <= 85 cm in a matched session.",
+      "rule": "Session level, per stratum with >= 8 serves: high band when the one-sided 90% lower bound of the median toss-drop (METRICS bootstrap) is above highEdge for the player's sex (not-given uses the female row). Co-signals on session medians: release to contact > 1150 ms; trophy-pause > 500 ms (experimental toggle on only) or trophy-to-contact > 550 ms when METRICS provides it; contact-height-ratio >= 0.04 below the player's best matched median. 'Possible' (severity moderate, copy says 'may') = high band plus >= 1 co-signal; 'likely' (severity major) = median drop above likelyAbove plus >= 2 co-signals. confidence = P(median drop > highEdge) x meanConf, eligible when >= 0.70. A high drop with no co-signal is shown as the player's drop band, never as a fault.",
+      "resolvedWhen": "In a later matched session, no co-signal on most serves, or the median drop back inside the typical band for the player's sex (<= highEdge); or verdict clearly-better.",
       "linkedOutcomes": [
         "net",
         "long"
@@ -370,27 +464,34 @@
       "overlay": "toss-arc"
     },
     "cues": {
-      "analogy": "Hit it while it's floating.",
-      "outcome": "Peak just above your reach."
+      "analogy": "Toss so you never have to wait.",
+      "outcome": "Keep your drop inside your own band."
     },
     "drill": {
-      "name": "Reach-height tempo serves",
+      "name": "No-wait serves",
       "minutes": 7,
-      "setup": "Pick a background line, such as a fence rail or windbreak seam, about 30 cm above the top of your racquet at full reach.",
+      "tossOnlyReps": 3,
+      "setup": "Stand in your usual serving spot with a basket. Toss at whatever height feels natural: there is no height to aim for, and the app tracks your drop from peak to contact.",
       "steps": [
-        "Toss 3 balls without swinging so they peak at that line.",
-        "Serve 20 balls counting out loud: '1' as you toss, '2' as the racquet drops behind you, '3' as you hit.",
-        "Swing on '3' without waiting for the ball to fall.",
-        "Finish with 10 serves to alternating targets, counting silently."
+        "Make 3 tosses, taking the racquet back as you toss, and catch each ball at full stretch without waiting for it.",
+        "Serve 20 balls at about 70% effort, starting up to the ball without stopping at the top.",
+        "Count the serves where you didn't have to wait for the ball.",
+        "Finish with 10 serves to alternating targets."
       ],
-      "successCriterion": "15 of 20 swings start on '3' with the toss peaking at your line.",
-      "progression": "Add your normal leg drive and aim at a target in each box.",
-      "regression": "Start with the racquet already up behind you and serve from the service line."
+      "successCriterion": "15 of 20 serves with no wait at the top.",
+      "progression": "Full pace with a target in each box, still with no wait at the top.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
+      "regression": "Serve from the service line with a smooth, unhurried toss and no stop at the top."
     },
     "contraindications": [],
-    "comfortNotes": {
-      "knee": "Keep both feet on the ground; no jump."
-    },
+    "comfortNotes": {},
     "goalsServed": [
       "first-serves-in",
       "second-serve-reliability",
@@ -401,71 +502,108 @@
       "utr-4-7"
     ],
     "sources": [
+      "gap-ranges §7.2",
+      "gap-ranges [N1]",
+      "gap-ranges [N2]",
+      "gap-ranges [N9]",
       "research 03 [S27]",
       "research 03 [S28]",
-      "research 04 [S68]",
-      "research 04 [S2]"
+      "gap-audit [A1]",
+      "gap-audit [A4]",
+      "gap-audit [A46]",
+      "research 04 [S68]"
     ]
   },
   {
     "id": "legs-spring",
     "faultId": "legs-quiet",
-    "title": "Spring from your legs",
-    "whyItMatters": "Your legs are a big part of your serve's power, even as a beginner. When players' knees were braced nearly straight in a study, serve speed dropped by about 15 to 17 percent at every level.",
-    "evidenceTier": "research-backed",
+    "itemType": "focus",
+    "title": "Quick rise from your legs",
+    "whyItMatters": "When your legs stay quiet or stall at the bottom, your arm has to find all the pace and contact tends to come lower. In a lab study, bracing the knees nearly straight cut serve speed by about 15 to 17 percent, and in professionals how much they rose, not how deep they bent, went with a higher contact point.",
+    "evidenceTier": "coach-recommended",
+    "tierByPath": {
+      "relative": "coach-recommended",
+      "population": "experimental"
+    },
+    "view": "side",
     "detection": {
       "metricIds": [
-        "knee-bend-band",
-        "landing-distance",
-        "contact-height-ratio"
+        "leg-drive",
+        "drive-time",
+        "landing-distance"
       ],
-      "kind": "band",
+      "kind": "relative",
       "chainStage": 3,
-      "minUsableServes": 6,
+      "minUsableServes": 8,
       "minFps": 30,
       "thresholds": {
-        "unit": "band",
-        "reading": "loading",
-        "target": "low",
-        "clearBandConfidence": 0.7,
-        "resolvedMaxShare": 0.3
+        "unit": "% of height",
+        "direction": "below",
+        "relative": {
+          "dropBelowBestPct": 3,
+          "probability": 0.9,
+          "minPriorMatchedSessions": 3,
+          "resolvedWithinBestPct": 1.5
+        },
+        "population": {
+          "fireUpperBoundPct": 7,
+          "resolvedMedianPct": 9,
+          "note": "Provisional and experimental [Our inference]: about the professional CoM-rise mean minus 2.5 SD (15.8 +/- 3.4% of height, 22 male professionals, gap-geometry [G8]). Hip rise is not CoM rise and recreational values are unmeasured. The professional figure is context, never a target."
+        },
+        "coSignal": {
+          "metricId": "drive-time",
+          "longerThanBestMs": 80,
+          "effect": "raises severity to major"
+        }
       },
-      "rule": "Per serve: clear when knee-bend-band is 'low' with band probability >= 0.7 (a band reported as 'unclear' never counts). Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. Never fires on 'typical' or 'high': deeper is not better. landing-distance and contact-height-ratio are context only.",
-      "resolvedWhen": "knee-bend-band is 'low' on <= 30% of usable serves in a matched session.",
+      "rule": "Relative path (tier coach-recommended): needs >= 3 earlier matched sessions each with >= 8 usable serves. Fires when P(this session's median leg-drive is at least 3% of height below the player's best matched median) >= 0.9, using the METRICS §4.4 between-session SE; severity major when drive-time is also >= 80 ms longer than the player's best median. Population path (tier experimental; experimental toggle on only): per serve, clear when the upper bound of leg-drive is below 7% of height; confidence = P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf, eligible when >= 0.70. Never fires on loading depth or the deep-bend flag, which are descriptive only (D5). landing-distance is an experimental trend line only, never a trigger.",
+      "resolvedWhen": "Relative path: median leg-drive within 1.5% of height of the player's best in a later matched session. Population path: median >= 9% of height. Or verdict clearly-better.",
       "linkedOutcomes": []
     },
     "evidence": {
       "keyFramePhase": "loading",
       "compareTo": "best-serve",
       "statIds": [
-        "knee-bend-band",
-        "landing-distance"
+        "leg-drive",
+        "drive-time"
       ],
-      "overlay": "hip-path"
+      "overlay": "hip-rise"
     },
     "cues": {
-      "analogy": "Sit on a high stool, then spring.",
-      "outcome": "Push the court away."
+      "analogy": "Short crouch, quick rise, like a jack-in-the-box.",
+      "outcome": "Meet the ball at your highest reach."
     },
     "drill": {
-      "name": "Sit-and-spring serves",
+      "name": "Quick-rise serves",
       "minutes": 8,
-      "setup": "Stand in your usual serving spot with a basket. Serve at a comfortable, easy pace throughout.",
+      "tossOnlyReps": 0,
+      "setup": "Stand in your usual serving spot with a basket. Keep whatever bend feels natural: the aim is to rise quickly, not to go lower.",
       "steps": [
-        "Do 5 shadow serves: as the racquet goes up, sit down a little as if onto a high stool, then spring up towards the ball.",
-        "Serve 20 balls at about 70% effort with the same sit-then-spring.",
-        "After every 5 serves, check that you landed on or inside the baseline.",
+        "Do 5 shadow serves: a short crouch as the racquet climbs, then rise quickly and reach up high, with no stop at the bottom.",
+        "Serve 20 balls at about 70% effort, rising into the ball in one quick movement.",
+        "Count the serves where nothing stalled at the bottom.",
         "Finish with 10 serves at normal effort to alternating targets."
       ],
-      "successCriterion": "15 of 20 serves land you on or inside the baseline.",
-      "progression": "Back-leg serves: balance on your back leg through the toss and serve, 3 sets of 8 mixed with normal serves.",
-      "regression": "Shadow swings with a small, comfortable bend, then 10 serves from the service line."
+      "successCriterion": "15 of 20 serves with no stall at the bottom.",
+      "progression": "Back-leg serves: balance on your back leg through the toss and serve, 3 sets of 8 mixed with normal serves. Coaches differ on this drill, so skip it if it feels unbalanced.",
+      "progressionGate": {
+        "levels": [
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [
+          "knee",
+          "back"
+        ],
+        "label": "coaches-differ"
+      },
+      "progressionAlt": "Quick-rise serves at full pace, with a target in each box.",
+      "regression": "Shadow swings with a short, quick rise, then 10 easy serves from the service line."
     },
     "contraindications": [
       "knee"
     ],
     "comfortNotes": {
-      "back": "Keep the bend small and the effort easy."
+      "back": "Keep the effort easy; no back-leg serves."
     },
     "goalsServed": [
       "more-pace",
@@ -477,23 +615,26 @@
     ],
     "sources": [
       "research 03 [S7]",
-      "research 03 [S6]",
-      "research 03 [S3]",
       "research 03 [S48]",
-      "research 04 [S14]",
-      "research 04 [S16]",
-      "research 04 [S68]"
+      "gap-geometry [G8]",
+      "gap-geometry [G7]",
+      "gap-audit [A10]",
+      "gap-audit [A46]",
+      "research 03 [S51]",
+      "research 04 [S16]"
     ]
   },
   {
     "id": "shoulder-tilt",
-    "faultId": "trunk-tilt-low",
+    "faultId": "shoulder-tilt-low",
+    "itemType": "focus",
     "title": "Tilt to hit up",
-    "whyItMatters": "Tilting so your hitting shoulder rises above your tossing shoulder sets up an upward swing. Without that tilt, the swing tends to travel across the ball, which costs height over the net and spin.",
-    "evidenceTier": "coach-recommended",
+    "whyItMatters": "As you load, your front shoulder sits higher than your hitting shoulder, which lets the hitting side swing up to the ball. Coaches look for this tilt because, without it, the swing tends to flatten out, which costs height over the net.",
+    "evidenceTier": "experimental",
+    "view": "side",
     "detection": {
       "metricIds": [
-        "trunk-tilt-band"
+        "shoulder-tilt-trophy"
       ],
       "kind": "band",
       "chainStage": 3,
@@ -504,10 +645,11 @@
         "reading": "trophy",
         "target": "low",
         "clearBandConfidence": 0.7,
-        "resolvedMaxShare": 0.3
+        "resolvedMaxShare": 0.3,
+        "note": "The band is player-relative and owned by METRICS (D5). Coaching sets no degree cut points and never compares the band with published trunk angles. An experimental population band is used only if METRICS publishes one."
       },
-      "rule": "Per serve: clear when the trophy reading of trunk-tilt-band is 'low' with band probability >= 0.7 (a band reported as 'unclear' never counts). Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70.",
-      "resolvedWhen": "Trophy reading is 'low' on <= 30% of usable serves in a matched session.",
+      "rule": "Requires METRICS to emit the player-relative shoulder-tilt-trophy band (the player's reference must exist; angles on rectified keypoints only). Per serve: clear when the band is 'low' with band probability >= 0.7 (a band reported as 'unclear' never counts). Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. Effective tier experimental: runs only with the experimental toggle on.",
+      "resolvedWhen": "Band 'low' on <= 30% of usable serves in a later matched session, or verdict clearly-better.",
       "linkedOutcomes": [
         "net"
       ]
@@ -516,27 +658,36 @@
       "keyFramePhase": "loading",
       "compareTo": "best-serve",
       "statIds": [
-        "trunk-tilt-band"
+        "shoulder-tilt-trophy"
       ],
-      "overlay": "trunk-line"
+      "overlay": "shoulder-line"
     },
     "cues": {
       "analogy": "Front shoulder up, like a see-saw.",
-      "outcome": "Swing up at the ball, not across."
+      "outcome": "Swing up at the ball."
     },
     "drill": {
-      "name": "Point-and-tilt serves",
+      "name": "See-saw serves",
       "minutes": 8,
-      "setup": "Stand in your usual serving spot with a basket.",
+      "tossOnlyReps": 0,
+      "setup": "Stand in your usual serving spot with a basket. Put a towel in the back half of the service box you're serving to.",
       "steps": [
-        "Do 5 slow shadow serves: as you toss, let your tossing arm point up at the ball so your front shoulder rises above your back shoulder.",
-        "Serve 20 balls at about 70% effort, keeping the tossing arm pointing up at the ball as you load.",
-        "Count the serves that clear the net by a racquet-length or more.",
+        "Do 5 slow shadow serves: at the top, feel your front shoulder higher than your hitting shoulder, like a see-saw tipped up at the front, then let it tip over as you swing up.",
+        "Serve 20 balls at about 70% effort, swinging up to the ball and aiming deep towards the towel.",
+        "Count the serves that land in the back half of the box.",
         "Finish with 10 serves to alternating targets."
       ],
-      "successCriterion": "14 of 20 serves clear the net by a racquet-length or more.",
-      "progression": "Add a target deep in the box and keep the tilt at full pace.",
-      "regression": "Shadow swings holding the ball up at full reach in your tossing hand, then 10 serves from the service line."
+      "successCriterion": "12 of 20 serves land in the back half of the box.",
+      "progression": "Add a deep target in each box and keep the see-saw at full pace.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
+      "regression": "Shadow swings from the trophy position with the see-saw tipped up at the front, then 10 easy serves from the service line."
     },
     "contraindications": [
       "back"
@@ -551,92 +702,20 @@
       "utr-4-7"
     ],
     "sources": [
-      "research 03 [S2]",
-      "research 03 [S4]",
-      "research 03 [S31]",
-      "research 04 [S8]"
-    ]
-  },
-  {
-    "id": "lift-not-arch",
-    "faultId": "trunk-arch-high",
-    "title": "Lift, don't arch",
-    "whyItMatters": "A deep backward arch is hard to repeat and asks your lower back to do work your legs could do. Coaches get the lift from the legs and a toss slightly into the court instead.",
-    "evidenceTier": "coach-recommended",
-    "detection": {
-      "metricIds": [
-        "trunk-tilt-band",
-        "toss-forward"
-      ],
-      "kind": "band",
-      "chainStage": 3,
-      "minUsableServes": 6,
-      "minFps": 30,
-      "thresholds": {
-        "unit": "band",
-        "reading": "trophy",
-        "target": "high",
-        "clearBandConfidence": 0.7,
-        "resolvedMaxShare": 0.3
-      },
-      "rule": "Per serve: clear when the trophy reading of trunk-tilt-band is 'high' with band probability >= 0.7 (a band reported as 'unclear' never counts). Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. toss-forward is corroborating evidence only.",
-      "resolvedWhen": "Trophy reading is 'high' on <= 30% of usable serves in a matched session.",
-      "linkedOutcomes": [
-        "long"
-      ]
-    },
-    "evidence": {
-      "keyFramePhase": "loading",
-      "compareTo": "best-serve",
-      "statIds": [
-        "trunk-tilt-band",
-        "toss-forward"
-      ],
-      "overlay": "trunk-line"
-    },
-    "cues": {
-      "analogy": "Be a spring, not a banana.",
-      "outcome": "Toss forward; let your legs lift."
-    },
-    "drill": {
-      "name": "Stacked serves",
-      "minutes": 8,
-      "setup": "Place a towel one small step inside the baseline, in line with your front foot. Use flat or slice serves only for this drill.",
-      "steps": [
-        "Toss 5 balls without swinging so they would land on the towel, in front rather than over your head.",
-        "Serve 20 balls at about 70% effort, getting your height by pushing up with your legs rather than bending back.",
-        "Count the serves that go in.",
-        "Finish with 10 serves to alternating targets."
-      ],
-      "successCriterion": "4 of 5 check tosses land on the towel and 12 of 20 serves go in.",
-      "progression": "Bring back kick second serves, keeping the toss slightly in front and the lift coming from your legs.",
-      "regression": "Serve from the service line with your feet side by side and the toss clearly in front."
-    },
-    "contraindications": [],
-    "comfortNotes": {
-      "back": "Flat or slice serves only, at about 70% effort."
-    },
-    "goalsServed": [
-      "first-serves-in",
-      "less-effort"
-    ],
-    "levels": [
-      "utr-1-3",
-      "utr-4-7"
-    ],
-    "sources": [
-      "research 03 [S36]",
-      "research 03 [S15]",
       "research 03 [S1]",
-      "research 04 [S7]"
+      "gap-geometry [G4]",
+      "research 03 [S2]",
+      "gap-audit [A15]"
     ]
   },
   {
     "id": "steady-rhythm",
     "faultId": "rhythm-inconsistent",
+    "itemType": "focus",
     "title": "Same rhythm every serve",
-    "whyItMatters": "When the time from toss to hit changes a lot, it is hard to meet the ball in the same place. Skilled servers keep this timing remarkably steady, even when their toss varies.",
-    "evidenceTier": "research-backed",
+    "whyItMatters": "When the time from toss to hit changes a lot from serve to serve, it is hard to meet the ball in the same place. Coaches treat a steady rhythm as the result of a toss-first, flowing motion, and elite servers keep this timing steady even when their toss varies.",
+    "evidenceTier": "experimental",
+    "view": "side",
     "detection": {
       "metricIds": [
         "rhythm-spread",
@@ -644,25 +723,36 @@
       ],
       "kind": "spread",
       "chainStage": 3,
-      "minUsableServes": 10,
+      "minUsableServes": 12,
       "minFps": 60,
       "thresholds": {
         "unit": "ms",
         "direction": "above",
         "measurementErrorDefaultFrames": 1.2,
+        "boundLevel": 0.9,
+        "minDetectedShare": 0.8,
         "byLevel": {
           "utr-1-3": {
-            "fire": 150,
-            "resolved": 100
+            "fireLowerBound": 90,
+            "possibleAbove": 90,
+            "resolved": 80,
+            "resolvedRelativeReduction": 0.3
           },
           "utr-4-7": {
-            "fire": 120,
-            "resolved": 80
+            "fireLowerBound": 90,
+            "possibleAbove": 90,
+            "resolved": 80,
+            "resolvedRelativeReduction": 0.3
           }
-        }
+        },
+        "relative": {
+          "ratioToBest": 1.5,
+          "minServesBothSessions": 20
+        },
+        "note": "gap-ranges §7.4: variable > 90 ms; the derived recreational within-player SD is about 45-55 ms. The player-relative rule runs first. Experimental tier: the thresholds lack population data."
       },
-      "rule": "Per stratum with n >= 10 usable serves: s = SD of rhythm-release-to-contact (ms), at >= 60 fps (1.4826 x MAD when n < 15); sigma = sqrt(max(0, s^2 - e^2)) with e = 1.2 frame durations unless METRICS.md reports otherwise; confidence = F_chi2(n-1)((n-1) x sigma^2 / T^2) x meanConf where T = fire threshold for the level. Eligible when confidence >= 0.70 and sigma / T >= 1.1.",
-      "resolvedWhen": "sigma <= resolved threshold for the level in a matched session, or a 'Clear improvement' verdict.",
+      "rule": "Relative path first: sigmaHat >= 1.5 x the player's best matched-session rhythm spread, with n >= 20 in both. Absolute path, per stratum with n >= 12 usable serves at >= 60 fps and a detected share >= 0.80: s = SD (n >= 15) or 1.4826 x MAD (n < 15) of rhythm-release-to-contact; df = n - 1 or 0.37 x (n - 1); e = the METRICS per-serve timing error, else 1.2 frame durations; fire when the one-sided 90% lower bound sqrt(max(0, s^2 x df / chi2_0.90(df) - e^2)) >= 90 ms; confidence = F_chi2(df)(df x s^2 / (T^2 + e^2)) x meanConf, eligible when >= 0.70. Effective tier experimental: runs only with the experimental toggle on.",
+      "resolvedWhen": "sigmaHat <= 80 ms, or >= 30% below the experiment baseline, in a later matched session with the same fpsClass; or verdict clearly-better.",
       "linkedOutcomes": [
         "net",
         "long"
@@ -678,22 +768,35 @@
       "overlay": "timing-strip"
     },
     "cues": {
-      "analogy": "Same song, same tempo.",
-      "outcome": "Say 1-2-3, hit on 3."
+      "analogy": "Toss first, racquet follows, never stop.",
+      "outcome": "Keep your toss-to-hit time steady."
     },
     "drill": {
-      "name": "1-2-3 rhythm serves",
+      "name": "Lag-rhythm serves",
       "minutes": 7,
-      "setup": "Stand in your usual serving spot with a basket.",
+      "tossOnlyReps": 0,
+      "setup": "Stand in your usual serving spot with a basket. Start each serve with the racquet down.",
       "steps": [
-        "Say '1' as you toss, '2' as the racquet drops behind you and '3' as you hit, out loud and evenly spaced.",
-        "Serve 20 balls this way at about 70% effort.",
-        "Notice any serve where you had to wait or rush between '2' and '3'.",
-        "Finish with 10 serves to alternating targets, counting silently."
+        "Do 5 shadow serves: the tossing arm goes up first, and the racquet follows it up and keeps moving, with no stop at the top.",
+        "Serve 20 balls at about 70% effort with the same toss-first, racquet-follows rhythm.",
+        "After each serve, ask whether it felt like the same rhythm as the one before, and count the ones that did.",
+        "Finish with 10 serves to alternating targets."
       ],
-      "successCriterion": "16 of 20 serves hit on an even '3'.",
-      "progression": "Keep the same count at full pace, mixing first and second serves.",
-      "regression": "Count from the trophy position, '1' as you toss and '2' as you hit, from the service line."
+      "successCriterion": "15 of 20 serves feel like the same rhythm as the one before.",
+      "optionalAid": {
+        "text": "If it helps, say 'toss ... and hit' in your own time. Don't space it evenly: the hit comes quickly once the racquet reaches the top.",
+        "basis": "our-inference"
+      },
+      "progression": "Keep the same rhythm at full pace, mixing first and second serves.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
+      "regression": "From the service line, toss first and let the racquet follow the ball up without stopping, at an easy pace."
     },
     "contraindications": [],
     "comfortNotes": {},
@@ -708,18 +811,22 @@
     ],
     "sources": [
       "research 03 [S24]",
-      "research 03 [S30]",
-      "research 03 [S33]",
       "research 03 [S27]",
-      "research 04 [S2]"
+      "gap-ranges [N3]",
+      "gap-ranges §7.4",
+      "gap-audit [A16]",
+      "gap-audit [A17]",
+      "gap-audit [A55]"
     ]
   },
   {
     "id": "flowing-motion",
     "faultId": "trophy-pause-long",
+    "itemType": "focus",
     "title": "Keep it flowing",
-    "whyItMatters": "A long stop at the top lets the stretch in your muscles fade before you swing. Coaches prefer one smooth motion with only a brief pause.",
+    "whyItMatters": "Coaches find that a long stop at the top makes the swing start again from a standstill. They prefer one smooth motion, with the racquet still moving as the ball starts to fall.",
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "trophy-pause",
@@ -738,10 +845,10 @@
             "resolved": 350
           }
         },
-        "note": "fire value = metrics.json trophy-pause coachingFlag; trophy-pause is experimental by default, so this item runs only with the experimental toggle on until the metric is validated"
+        "note": "Fire value = the metrics.json trophy-pause coaching flag, an extrapolation: no trophy pause has been measured in recreational adults (gap-ranges §4.1). The lab finding (about 20% lower internal-rotation speed after a 1.5 s pause, research 03 [S2]) belongs in 'How we know'. trophy-pause is experimental by default, so this item runs only with the experimental toggle on until the metric is validated."
       },
       "rule": "Per serve: clear when the lower bound of trophy-pause is above 500 ms. Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. Needs trophy-pause at >= 60 fps; while that metric is experimental, the effective tier is experimental.",
-      "resolvedWhen": "Session median trophy-pause <= 350 ms in a matched session with the same fpsClass.",
+      "resolvedWhen": "Session median trophy-pause <= 350 ms in a later matched session with the same fpsClass, or verdict clearly-better.",
       "linkedOutcomes": []
     },
     "evidence": {
@@ -760,16 +867,25 @@
     "drill": {
       "name": "Toss-and-go serves",
       "minutes": 7,
+      "tossOnlyReps": 0,
       "setup": "Stand in your usual serving spot with a basket.",
       "steps": [
-        "Do 5 shadow serves with no stop at the top, letting the racquet keep moving like a wave.",
+        "Do 5 shadow serves with no stop at the top, the racquet moving like a wave.",
         "Serve 20 balls at about 70% effort, starting the upward swing as the ball reaches its peak.",
-        "After each serve, ask yourself whether anything stopped; count the ones that flowed.",
+        "Count the serves where nothing stopped at the top.",
         "Finish with 10 serves to alternating targets."
       ],
       "successCriterion": "15 of 20 serves with no noticeable stop at the top.",
       "progression": "Full pace with a target in each box, keeping the flow.",
-      "regression": "Start with the racquet already up behind you, toss, and swing as soon as the ball peaks, from the service line."
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
+      "regression": "Lag rhythm from the service line: start with the racquet down, toss first, and let the racquet follow the ball up without stopping."
     },
     "contraindications": [],
     "comfortNotes": {},
@@ -783,24 +899,28 @@
     ],
     "sources": [
       "research 03 [S2]",
-      "research 04 [S2]",
-      "research 04 [S9]",
+      "gap-ranges §4.1",
+      "gap-audit [A20]",
+      "gap-audit [A47]",
+      "gap-audit [A16]",
       "research 04 [S62]"
     ]
   },
   {
     "id": "reach-up",
     "faultId": "contact-low",
+    "itemType": "focus",
     "title": "Hit at full reach",
-    "whyItMatters": "Hitting the ball higher gives it a better line over the net and down into the box. In studies, better servers made contact higher relative to their height, and contact height tracked serve speed.",
-    "evidenceTier": "research-backed",
+    "whyItMatters": "When contact comes below your full reach, the ball has a narrower path over the net and down into the box. A higher contact point gives the ball a bigger window over the net, and coaches aim for full reach.",
+    "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "contact-height-ratio"
       ],
       "kind": "per-serve",
       "chainStage": 6,
-      "minUsableServes": 6,
+      "minUsableServes": 8,
       "minFps": 30,
       "thresholds": {
         "unit": "ratio",
@@ -809,11 +929,30 @@
           "default": {
             "fire": 1.38,
             "resolved": 1.4
+          },
+          "kickOrSecondServe": {
+            "fire": 1.35,
+            "resolved": 1.37
           }
-        }
+        },
+        "relative": {
+          "fallBelowBest": 0.04,
+          "probability": 0.9,
+          "minPriorMatchedSessions": 3,
+          "resolvedWithinBest": 0.02
+        },
+        "absoluteRuleOffIf": {
+          "comfort": [
+            "shoulder"
+          ],
+          "ageBands": [
+            "60-plus"
+          ]
+        },
+        "note": "gap-ranges §7.3: low edge 1.38 (1.35 for kick and second serves). The between-player SD is as large as the gap between levels, so the relative rule is preferred. For players aged 60 or over, or with a shoulder comfort setting, only the relative rule runs."
       },
-      "rule": "Per serve: clear when the upper bound of contact-height-ratio is below 1.38. Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. Personal rule: a drop of >= 0.04 from the player's baseline with P >= 0.9 raises a minor 'slipped' flag.",
-      "resolvedWhen": "Session median contact-height-ratio >= 1.40 in a matched session.",
+      "rule": "Per serve: clear when the upper bound of contact-height-ratio (including systematic scale error, METRICS §1.2) is below the fire value for the serve (a kick-tagged serve or any second serve uses kickOrSecondServe). Needs >= 8 usable serves. Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. Relative rule (>= 3 earlier matched sessions): fires when P(the session median is at least 0.04 below the player's best matched median) >= 0.9. With a shoulder comfort setting or age band 60-plus, the absolute rule is off and only the relative rule runs.",
+      "resolvedWhen": "Session mean contact-height-ratio >= the resolved value for the serve, or (relative rule) back within 0.02 of the player's best, in a later matched session; or verdict clearly-better.",
       "linkedOutcomes": [
         "net"
       ]
@@ -828,11 +967,12 @@
     },
     "cues": {
       "analogy": "High-five the ball at the top.",
-      "outcome": "Hit at the peak of your reach."
+      "outcome": "Contact at full stretch, every serve."
     },
     "drill": {
       "name": "Reach-and-tap",
       "minutes": 9,
+      "tossOnlyReps": 0,
       "setup": "Stand at the service line with a basket. Pick a target area deep in the opposite service box.",
       "steps": [
         "Toss and tap the ball gently into the box with your arm at full stretch, 10 times.",
@@ -840,7 +980,15 @@
         "Finish with 10 serves alternating T and wide."
       ],
       "successCriterion": "8 of 10 taps land in the box, then 8 of 15 baseline serves go in.",
-      "progression": "Add your leg drive so contact feels higher still, at full pace.",
+      "progression": "Rise quickly into the ball so contact feels higher still, at full pace.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
       "regression": "Stay at the service line for all the balls; any ball that lands in the box counts."
     },
     "contraindications": [],
@@ -858,18 +1006,20 @@
     "sources": [
       "research 03 [S6]",
       "research 03 [S7]",
-      "research 03 [S28]",
       "research 03 [S29]",
       "research 05 [S50]",
-      "research 04 [S2]"
+      "gap-ranges §7.3",
+      "gap-audit [A23]"
     ]
   },
   {
     "id": "contact-in-front",
     "faultId": "contact-behind",
+    "itemType": "focus",
     "title": "Contact in front",
-    "whyItMatters": "Contact behind your head makes the swing go up and back rather than up and forward, which costs control. Coaches look for contact slightly in front on first serves, with kick serves a little further back.",
+    "whyItMatters": "Contact behind your head makes the swing go up and back rather than up and forward, which costs control. Coaches look for contact up and in front on first serves, with kick serves a little further back but still in front of your front foot.",
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "contact-forward",
@@ -888,13 +1038,14 @@
             "resolved": 10
           },
           "kick": {
-            "fire": -20,
-            "resolved": -10
+            "fire": -10,
+            "resolved": 5
           }
-        }
+        },
+        "note": "The kick row allows only for the flat-to-kick offset (kick contact about 17 cm further back than flat in elite adolescents, research 03 [S35]). Kick contact is still resolved in front of the front toe, never behind it."
       },
       "rule": "Per serve: clear when the upper bound of contact-forward is below the fire value for its intended type. Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. Runs even when toss-forward is unavailable (apex out of frame); when toss-in-front is also eligible, stage order picks the toss item.",
-      "resolvedWhen": "Session mean contact-forward >= the resolved value for the intended type in a matched session.",
+      "resolvedWhen": "Session mean contact-forward >= the resolved value for the intended type (kick: >= +5 cm) in a later matched session, or verdict clearly-better.",
       "linkedOutcomes": [
         "long",
         "net"
@@ -910,21 +1061,30 @@
       "overlay": "contact-vs-toe"
     },
     "cues": {
-      "analogy": "Meet it in front of your cap.",
+      "analogy": "Reach up through a window ahead.",
       "outcome": "Contact over the baseline, not behind."
     },
     "drill": {
-      "name": "Brim check",
+      "name": "Up-and-in-front check",
       "minutes": 8,
-      "setup": "Wear a cap if you have one. Stand in your usual serving spot with a basket.",
+      "tossOnlyReps": 5,
+      "setup": "Stand in your usual serving spot with a basket.",
       "steps": [
-        "Toss and reach up with the racquet without hitting; the ball should fall in front of your front foot.",
-        "Serve 20 balls at a comfortable pace, meeting the ball before it drops past the brim of your cap.",
-        "After every 5 serves, repeat one reach-and-drop check.",
+        "Make one check: toss, reach up with the racquet at full stretch without hitting, and let the ball drop. It should land in front of your front foot.",
+        "Serve 20 balls at a comfortable pace, meeting the ball at full reach, up and in front of your front foot.",
+        "After serves 5, 10, 15 and 20, repeat the check, reaching up with the racquet each time.",
         "Finish with 10 serves to alternating targets."
       ],
-      "successCriterion": "All 4 checks drop in front of your front foot, and 12 of 20 serves go in.",
+      "successCriterion": "4 of 5 checks land in front of your front foot, and 12 of 20 serves go in.",
       "progression": "Hit first serves to the T with the same contact point, then slice serves wide.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
       "regression": "Serve from the service line, flat or gentle slice only."
     },
     "contraindications": [],
@@ -940,163 +1100,21 @@
     "sources": [
       "research 03 [S35]",
       "research 03 [S1]",
-      "research 04 [S5]",
+      "gap-audit [A6]",
       "research 04 [S49]"
-    ]
-  },
-  {
-    "id": "stay-tall",
-    "faultId": "trunk-fold-at-contact",
-    "title": "Stay tall through the hit",
-    "whyItMatters": "Folding forward at contact pulls the racquet down through the ball, so serves dip into the net. Staying tall through the hit keeps the swing moving up and out.",
-    "evidenceTier": "coach-recommended",
-    "detection": {
-      "metricIds": [
-        "trunk-tilt-band",
-        "contact-height-ratio"
-      ],
-      "kind": "band",
-      "chainStage": 6,
-      "minUsableServes": 6,
-      "minFps": 30,
-      "thresholds": {
-        "unit": "band",
-        "reading": "contact",
-        "target": "fold",
-        "clearBandConfidence": 0.7,
-        "resolvedMaxShare": 0.3
-      },
-      "rule": "Requires the contact reading of trunk-tilt-band (upright / fold); disabled if METRICS.md does not provide it. Per serve: clear when the contact reading is 'fold' with band probability >= 0.7 (a band reported as 'unclear' never counts). Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70.",
-      "resolvedWhen": "Contact reading is 'fold' on <= 30% of usable serves in a matched session.",
-      "linkedOutcomes": [
-        "net"
-      ]
-    },
-    "evidence": {
-      "keyFramePhase": "contact",
-      "compareTo": "best-serve",
-      "statIds": [
-        "trunk-tilt-band",
-        "contact-height-ratio"
-      ],
-      "overlay": "trunk-line"
-    },
-    "cues": {
-      "analogy": "Tall like a lighthouse through the hit.",
-      "outcome": "Hit up, then land tall."
-    },
-    "drill": {
-      "name": "Behind-the-baseline serves",
-      "minutes": 7,
-      "setup": "Stand one to two metres behind the baseline with a basket.",
-      "steps": [
-        "Serve 20 balls from there at about 70% effort, staying tall through the hit so you have to hit up to reach the box.",
-        "Count how many land in.",
-        "Step up to the baseline and finish with 10 serves to alternating targets, keeping the same tall finish."
-      ],
-      "successCriterion": "12 of 20 serves from behind the baseline land in the box.",
-      "progression": "Aim for the deep half of the box from behind the baseline.",
-      "regression": "From the service line, try to make the ball's first and second bounces as far apart as possible."
-    },
-    "contraindications": [],
-    "comfortNotes": {
-      "back": "Keep the effort at about 70%."
-    },
-    "goalsServed": [
-      "first-serves-in"
-    ],
-    "levels": [
-      "utr-1-3",
-      "utr-4-7"
-    ],
-    "sources": [
-      "research 04 [S8]",
-      "research 04 [S72]",
-      "research 04 [S49]",
-      "research 03 [S23]"
-    ]
-  },
-  {
-    "id": "land-into-court",
-    "faultId": "landing-behind",
-    "title": "Land into the court",
-    "whyItMatters": "Landing behind where your front foot started usually means your body is moving away from the serve. Coaches want you moving up and into the court as you hit, which helps you reach higher and stay balanced for the next shot.",
-    "evidenceTier": "coach-recommended",
-    "detection": {
-      "metricIds": [
-        "landing-distance"
-      ],
-      "kind": "per-serve",
-      "chainStage": 8,
-      "minUsableServes": 6,
-      "minFps": 30,
-      "thresholds": {
-        "unit": "cm",
-        "direction": "below",
-        "byServeType": {
-          "default": {
-            "fire": -10,
-            "resolved": 0
-          }
-        },
-        "note": "landing-distance is measured from where the front toe started (metrics.json), not from the baseline"
-      },
-      "rule": "Per serve: clear when the upper bound of landing-distance is below -10 cm (landing behind where the front toe started). Eligible when P(p > 0.5 | Beta(k+1, n-k+1)) x meanConf >= 0.70. If landing-distance is experimental at runtime, the item runs only with the experimental toggle on and carries the experimental tier.",
-      "resolvedWhen": "Session mean landing-distance >= 0 cm in a matched session.",
-      "linkedOutcomes": []
-    },
-    "evidence": {
-      "keyFramePhase": "landing",
-      "compareTo": "best-serve",
-      "statIds": [
-        "landing-distance"
-      ],
-      "overlay": "landing-marks"
-    },
-    "cues": {
-      "analogy": "Follow the ball through a doorway.",
-      "outcome": "Land inside the baseline, balanced."
-    },
-    "drill": {
-      "name": "Serve and freeze",
-      "minutes": 8,
-      "setup": "Stand in your usual serving spot with a basket.",
-      "steps": [
-        "Serve 20 balls at about 70% effort, letting your body follow the ball so you land on or inside the baseline.",
-        "Hold each landing still for 2 seconds before stepping back.",
-        "Finish with 10 serves at normal pace to alternating targets."
-      ],
-      "successCriterion": "15 of 20 landings on or inside the baseline, held still for 2 seconds.",
-      "progression": "Add a small jump, foot-up or foot-back as you prefer, with a controlled landing about a step inside.",
-      "regression": "Feet side by side, no jump: step into the court with your back foot after each serve."
-    },
-    "contraindications": [
-      "knee"
-    ],
-    "comfortNotes": {},
-    "goalsServed": [
-      "more-pace",
-      "first-serves-in"
-    ],
-    "levels": [
-      "utr-1-3",
-      "utr-4-7"
-    ],
-    "sources": [
-      "research 03 [S1]",
-      "research 04 [S33]",
-      "research 04 [S16]"
     ]
   },
   {
     "id": "second-serve-margin",
     "faultId": "second-serve-unreliable",
+    "itemType": "focus",
     "title": "A second serve with margin",
     "whyItMatters": "A second serve's job is to go in, and spin is what lets you swing freely and still land it. Coaches build it from a sideways swing path and a higher arc over the net.",
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
-        "second-serve-in-rate",
+        "serve-in-rate",
         "double-faults",
         "serve-type-mix"
       ],
@@ -1111,10 +1129,10 @@
         "posteriorProb": 0.8,
         "resolvedRate": 0.8,
         "resolvedMinServes": 20,
-        "note": "0.70 is just below the vendor-reported recreational match-play second-serve in-rate of about 71% (research 01 [S7], Vendor claim); practice conditions are easier than matches"
+        "note": "serve-in-rate is read within the second-serve stratum (serve number 2). 0.70 is just below the vendor-reported recreational match-play second-serve in-rate of about 71% (research 01 [S7], Vendor claim); practice conditions are easier than matches."
       },
-      "rule": "Second serves only (player-entered serve number 2, from per-serve tags or a tally). With k in of n >= 10: P = P(p < 0.70 | Beta(k+1, n-k+1)); fires when P >= 0.8; confidence = P x tagCoverage, eligible when >= 0.70.",
-      "resolvedWhen": "Second-serve in-rate >= 0.80 over >= 20 second serves pooled from matched sessions.",
+      "rule": "Second serves only (player-entered serve number 2, from per-serve tags or a tally), using serve-in-rate within the second-serve stratum. With k in of n >= 10: P = P(p < 0.70 | Beta(k+1, n-k+1)); fires when P >= 0.8; confidence = P x tagCoverage, eligible when >= 0.70.",
+      "resolvedWhen": "Second-serve in-rate >= 0.80 over >= 20 second serves pooled from later matched sessions (METRICS §4.5 pooling), or verdict clearly-better.",
       "linkedOutcomes": [
         "double-fault"
       ]
@@ -1123,10 +1141,11 @@
       "keyFramePhase": "contact",
       "compareTo": "previous-session",
       "statIds": [
-        "second-serve-in-rate",
+        "serve-in-rate",
         "serve-type-mix"
       ],
-      "overlay": "outcome-tally"
+      "overlay": "outcome-tally",
+      "viewNote": "From the side we can see your toss and contact; grip and swing direction are easier to see from behind, so the optional rear view helps with second serves."
     },
     "cues": {
       "analogy": "Paint a rainbow over the net.",
@@ -1135,20 +1154,31 @@
     "drill": {
       "name": "Spin ladder",
       "minutes": 10,
+      "tossOnlyReps": 0,
       "setup": "Stand at the service line with a basket.",
       "steps": [
         "Do 10 slow shadow swings that brush up and across the ball rather than straight through it.",
-        "Serve 8 balls from the service line with a high arc and a visible curve or kick.",
+        "Serve 8 balls from the service line with a high arc and a visible curve.",
         "Move back to halfway, then to the baseline, only when 6 of 8 land in from your current spot.",
         "Finish with 10 second serves from the baseline, alternating deuce and ad."
       ],
-      "successCriterion": "6 of 8 serves land in from the baseline with a visible curve or kick.",
-      "progression": "Aim your second serves at the backhand side of the box.",
-      "regression": "Stay at the service line or halfway, slice only; any ball that lands in the box counts."
+      "successCriterion": "6 of 8 serves land in from the baseline with a visible curve.",
+      "progression": "Add kick second serves: toss above your head but never behind the baseline, brush up the back of the ball, and aim at the backhand side of the box.",
+      "progressionGate": {
+        "levels": [
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [
+          "back"
+        ],
+        "label": null
+      },
+      "progressionAlt": "Aim slice second serves at the backhand side of the box.",
+      "regression": "Stay at the service line or halfway; any ball that lands in the box counts."
     },
     "contraindications": [],
     "comfortNotes": {
-      "back": "Slice, not kick.",
+      "back": "Slice only; no kick.",
       "shoulder": "Slice at about 70% effort, 20 serves at most.",
       "elbow": "Slice at about 70% effort, 20 serves at most."
     },
@@ -1164,21 +1194,23 @@
       "research 03 [S19]",
       "research 03 [S20]",
       "research 03 [S15]",
-      "research 04 [S2]",
-      "research 01 [S7]"
+      "gap-audit [A33]",
+      "research 01 [S7]",
+      "research 10 M7"
     ]
   },
   {
     "id": "clear-the-net",
     "faultId": "net-miss-pattern",
+    "itemType": "focus",
     "title": "Clear the net",
-    "whyItMatters": "Most of your misses are going into the net. In studies, serves that netted differed from good serves mainly in the angle the ball left the racquet, so aiming higher over the net is the simplest first change.",
+    "whyItMatters": "Most of your misses are going into the net, and often enough to cost you points. Serves that netted differed from good serves mainly in the angle the ball left the racquet, so aiming a little higher over the net is the simplest first change.",
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "serve-in-rate",
-        "first-serve-in-rate",
-        "second-serve-in-rate"
+        "first-serve-in-rate"
       ],
       "kind": "outcome",
       "chainStage": 6,
@@ -1190,11 +1222,16 @@
         "fireShareAbove": 0.5,
         "posteriorProb": 0.8,
         "minMisses": 6,
+        "realProblem": {
+          "missTypeShareOfServesAtLeast": 0.25,
+          "orFirstServeInRateBelow": 0.5,
+          "inRateProbability": 0.8
+        },
         "resolvedShare": 0.4,
         "resolvedMinMisses": 10
       },
-      "rule": "Per serve number (first and second evaluated separately), from player-entered miss types. With m >= 6 misses of which j are net: P = P(share > 0.5 | Beta(j+1, m-j+1)); fires when P >= 0.8; confidence = P x tagCoverage, eligible when >= 0.70. minUsableServes here counts misses.",
-      "resolvedWhen": "Net share of misses <= 0.40 over >= 10 misses pooled from matched sessions.",
+      "rule": "Per serve number (first and second evaluated separately), from player-entered miss types. With m >= 6 misses of which j are net: P = P(share > 0.5 | Beta(j+1, m-j+1)); fires when P >= 0.8 and missing is a real problem: net misses >= 25% of the stratum's serves, or (first serves) P(in-rate < 0.5 | Beta(k+1, n-k+1)) >= 0.8. confidence = P x tagCoverage, eligible when >= 0.70. minUsableServes here counts misses.",
+      "resolvedWhen": "Net share of misses <= 0.40 over >= 10 misses pooled from later matched sessions.",
       "linkedOutcomes": [
         "net"
       ]
@@ -1209,20 +1246,31 @@
       "overlay": "outcome-tally"
     },
     "cues": {
-      "analogy": "Throw the racquet up at the ball.",
-      "outcome": "Clear the net by a racquet."
+      "analogy": "Aim through a window above the net.",
+      "outcome": "A racquet-head over the tape, deep.",
+      "outcomeSecondServe": "A racquet-length over, dropping in."
     },
     "drill": {
       "name": "Net-clearance window",
       "minutes": 7,
-      "setup": "From your serving spot, pick a mark on the far fence or background that sits about a racquet-length above the middle of the net.",
+      "tossOnlyReps": 0,
+      "setup": "Put a towel about a metre inside the service line in the box you're serving to. Picture a window above the net: about a racquet-head over the tape for first serves, and about a racquet-length for spin second serves.",
       "steps": [
-        "Serve 20 balls at about 70% effort, sending each one over the net through that window.",
-        "Count how many clear the net by at least a racquet-length.",
+        "Serve 20 balls at about 70% effort, sending each one through your window and down towards the towel.",
+        "Count the serves that clear the net and land in.",
         "Finish with 10 serves to alternating targets."
       ],
-      "successCriterion": "14 of 20 serves clear the net with room to spare.",
+      "successCriterion": "12 of 20 serves clear the net and land in the box.",
+      "note": "Why the first-serve window is small: without spin, a serve at about 120 km/h that clears the net by much more than about 45 cm usually lands long (about 70 cm at 100 km/h, about 30 cm at 140 km/h). Spin lets second serves clear higher and still drop in.",
       "progression": "Serve from one metre behind the baseline through the same window.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
       "regression": "Serve from the service line, aiming at the deep half of the box."
     },
     "contraindications": [],
@@ -1239,20 +1287,34 @@
       "research 03 [S23]",
       "research 04 [S72]",
       "research 04 [S48]",
-      "research 04 [S49]"
+      "research 04 [S49]",
+      "gap-audit [A47]"
     ]
   },
   {
     "id": "bring-it-down",
     "faultId": "long-miss-pattern",
+    "itemType": "focus",
     "title": "Bring long serves down",
-    "whyItMatters": "Most of your misses are going long, so the ball has enough height but not enough drop. Coaches bring it down with a little more spin and contact slightly further in front.",
+    "whyItMatters": "Most of your misses are going long, so the ball has enough height but not enough drop. Coaches bring it down with a little more spin and a target about a metre inside the service line.",
+    "whyItMattersVariants": [
+      {
+        "id": "tossFar",
+        "when": "session mean toss-forward > 60 cm (checked first)",
+        "text": "Most of your misses are going long, and your toss is well out into the court, which can open up the racquet face. Coaches bring it down with a little more spin and a toss that stays within reach."
+      },
+      {
+        "id": "contactShort",
+        "when": "otherwise, session mean contact-forward < 15 cm (kick: < 0 cm)",
+        "text": "Most of your misses are going long, and your contact point is close to your body. Coaches bring it down with a little more spin and contact slightly further in front."
+      }
+    ],
     "evidenceTier": "coach-recommended",
+    "view": "side",
     "detection": {
       "metricIds": [
         "serve-in-rate",
-        "first-serve-in-rate",
-        "second-serve-in-rate"
+        "first-serve-in-rate"
       ],
       "kind": "outcome",
       "chainStage": 6,
@@ -1264,11 +1326,16 @@
         "fireShareAbove": 0.5,
         "posteriorProb": 0.8,
         "minMisses": 6,
+        "realProblem": {
+          "missTypeShareOfServesAtLeast": 0.25,
+          "orFirstServeInRateBelow": 0.5,
+          "inRateProbability": 0.8
+        },
         "resolvedShare": 0.4,
         "resolvedMinMisses": 10
       },
-      "rule": "Per serve number (first and second evaluated separately), from player-entered miss types. With m >= 6 misses of which j are long: P = P(share > 0.5 | Beta(j+1, m-j+1)); fires when P >= 0.8; confidence = P x tagCoverage, eligible when >= 0.70. minUsableServes here counts misses.",
-      "resolvedWhen": "Long share of misses <= 0.40 over >= 10 misses pooled from matched sessions.",
+      "rule": "Per serve number (first and second evaluated separately), from player-entered miss types. With m >= 6 misses of which j are long: P = P(share > 0.5 | Beta(j+1, m-j+1)); fires when P >= 0.8 and missing is a real problem: long misses >= 25% of the stratum's serves, or (first serves) P(in-rate < 0.5 | Beta(k+1, n-k+1)) >= 0.8. confidence = P x tagCoverage, eligible when >= 0.70. minUsableServes here counts misses. The whyItMatters variant is chosen from toss-forward and contact-forward; 'further in front' is said only when contact is short.",
+      "resolvedWhen": "Long share of misses <= 0.40 over >= 10 misses pooled from later matched sessions.",
       "linkedOutcomes": [
         "long"
       ]
@@ -1289,20 +1356,29 @@
     "drill": {
       "name": "Drop-into-the-box",
       "minutes": 8,
+      "tossOnlyReps": 0,
       "setup": "Place a towel about a metre inside the service line in the box you are serving to.",
       "steps": [
         "Serve 5 balls at half pace, feeling the ball curve or dip down towards the towel.",
-        "Serve 20 balls at about 70% effort, aiming to land short of the service line with a little slice or topspin.",
+        "Serve 20 balls at about 70% effort, aiming to land short of the service line with a little slice.",
         "Count the serves that land in and the ones that go long.",
         "Finish with 10 serves to alternating targets."
       ],
       "successCriterion": "14 of 20 serves land in, with no more than 3 long.",
       "progression": "Move the towel to the T or the wide corner at the same depth.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
       "regression": "Serve from the service line; any ball that lands in the box counts."
     },
     "contraindications": [],
     "comfortNotes": {
-      "back": "Use slice rather than kick for the spin."
+      "back": "Slice only; no kick."
     },
     "goalsServed": [
       "first-serves-in",
@@ -1315,15 +1391,19 @@
     "sources": [
       "research 04 [S69]",
       "research 03 [S19]",
-      "research 03 [S35]"
+      "research 03 [S35]",
+      "gap-audit [A6]",
+      "gap-audit [A47]"
     ]
   },
   {
     "id": "keep-going",
     "faultId": "none",
+    "itemType": "keep-going",
     "title": "Keep building",
     "whyItMatters": "Nothing stands out as a clear problem this session, so the best move is to build on what's working. Mixing targets and sides keeps practice closer to match play.",
     "evidenceTier": "coach-recommended",
+    "view": "any",
     "detection": {
       "metricIds": [
         "capture-quality",
@@ -1355,7 +1435,8 @@
     "drill": {
       "name": "Target ladder",
       "minutes": 8,
-      "setup": "Put one towel at the T and one in the wide corner of the box you are serving to. Serve at a comfortable pace, with no jumping.",
+      "tossOnlyReps": 0,
+      "setup": "Put one towel at the T and one in the wide corner of the box you are serving to. Serve at a comfortable pace.",
       "steps": [
         "From the deuce court, serve 5 to the T, then 5 wide.",
         "Repeat from the ad court.",
@@ -1363,6 +1444,14 @@
       ],
       "successCriterion": "14 of 20 serves land in, with 4 landing within a racquet-length of a towel.",
       "progression": "Call the target out loud as the ball rises.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
       "regression": "Use the whole half of the box as the target."
     },
     "contraindications": [],
@@ -1381,6 +1470,80 @@
       "research 04 [S52]",
       "research 04 [S51]",
       "research 04 [S49]"
+    ]
+  },
+  {
+    "id": "warm-up-routine",
+    "faultId": null,
+    "itemType": "routine",
+    "title": "Serve warm-up",
+    "whyItMatters": "Your first few serves are rarely your best if they are also your hardest. Coaches build from easy to firm over a few minutes, so the serve feels grooved before it counts.",
+    "evidenceTier": "coach-recommended",
+    "view": "any",
+    "detection": {
+      "metricIds": [
+        "serve-count"
+      ],
+      "kind": "routine",
+      "chainStage": null,
+      "minUsableServes": 0,
+      "minFps": 0,
+      "thresholds": {},
+      "rule": "Not detected. Offered before recorded and drill sessions and on the match-day card (COACHING §7.9, §11.1). Its 10 serves count towards the session budget and weekly load. No hard serves before it.",
+      "resolvedWhen": "Not applicable.",
+      "linkedOutcomes": []
+    },
+    "evidence": {
+      "keyFramePhase": null,
+      "compareTo": "none",
+      "statIds": [],
+      "overlay": "none"
+    },
+    "cues": {
+      "analogy": "Easy first, then build.",
+      "outcome": "Ten serves, easy to firm."
+    },
+    "drill": {
+      "name": "Build-up serves",
+      "minutes": 5,
+      "tossOnlyReps": 0,
+      "setup": "After a few minutes of easy movement or rallying, stand at the baseline with a few balls. No hard serves before this routine.",
+      "steps": [
+        "Do 3 shadow swings, slow to medium, saying your cue.",
+        "Serve 4 balls at about half effort to big targets, alternating deuce and ad.",
+        "Serve 3 balls at about two-thirds effort with your cue in mind.",
+        "Serve 3 second serves at about 80% effort, then stop."
+      ],
+      "successCriterion": "All 10 serves done, each group a little firmer than the last.",
+      "progression": "Not applicable: the routine stays the same.",
+      "progressionGate": {
+        "levels": [
+          "utr-1-3",
+          "utr-4-7"
+        ],
+        "excludeIfComfort": [],
+        "label": null
+      },
+      "regression": "With a shoulder or elbow comfort setting, stop after the half-effort serves."
+    },
+    "contraindications": [],
+    "comfortNotes": {
+      "shoulder": "Stop after the half-effort serves.",
+      "elbow": "Stop after the half-effort serves.",
+      "back": "Slice only; no kick."
+    },
+    "goalsServed": [
+      "first-serves-in",
+      "more-pace",
+      "second-serve-reliability",
+      "less-effort"
+    ],
+    "levels": [
+      "utr-1-3",
+      "utr-4-7"
+    ],
+    "sources": [
+      "research 10 M10"
     ]
   }
 ]

@@ -13,7 +13,7 @@
  */
 import type { BallObservation, BallTrack } from '../types.ts'
 import { fitLine, median } from './fit.ts'
-import { applyHomography, homographyJacobian, type Mat3, type Point2 } from './homography.ts'
+import { applyHomography, COURT, homographyJacobian, type Mat3, type Point2 } from './homography.ts'
 
 export interface BounceEstimate {
   status: 'experimental'
@@ -153,6 +153,11 @@ export function mapBounceToCourt(
   const court = applyHomography(imageToCourt, bounce.groundContact)
   const J = homographyJacobian(imageToCourt, bounce.groundContact)
   if (!court || !J) return { status: 'unavailable', reason: 'bounce point is on or beyond the horizon of the court calibration' }
+  // A located bounce off the court is not a serve bounce (clutter picked up by the track, or a
+  // wrong court tap); refuse it rather than report a position.
+  if (court.y < -2 || court.y > COURT.lengthM + 6 || Math.abs(court.x) > COURT.doublesHalfWidthM + 4) {
+    return { status: 'unavailable', reason: `bounce maps off the court (${court.x.toFixed(1)}, ${court.y.toFixed(1)} m): not a ball bounce, or the court tap is wrong` }
+  }
   const sx = bounce.positionSigmaNorm / aspect
   const sy = bounce.positionSigmaNorm
   return {

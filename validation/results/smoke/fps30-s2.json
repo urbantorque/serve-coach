@@ -1,0 +1,733 @@
+{
+ "clip": "fps30-s2",
+ "set": "fps-sweep",
+ "wallS": 23.077,
+ "result": {
+  "version": 1,
+  "ok": true,
+  "clipUrl": "/__synthetic/clips/fps30-s2/fps30-s2.mp4",
+  "truthUrl": "/__synthetic/clips/fps30-s2/truth.json",
+  "startedAt": "2026-09-26T23:41:11.676Z",
+  "environment": {
+   "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
+   "hardwareConcurrency": 8,
+   "devicePixelRatio": 1
+  },
+  "inputs": {
+   "view": "side",
+   "playerHeightM": 1.8,
+   "handedness": "right",
+   "targetTag": "wide",
+   "servedFrom": "deuce",
+   "source": {
+    "view": "truth",
+    "playerHeightM": "truth",
+    "handedness": "truth",
+    "targetTag": "truth",
+    "servedFrom": "truth"
+   }
+  },
+  "meta": {
+   "probe": {
+    "fileName": "video",
+    "mimeType": "video/mp4",
+    "codec": "avc1.640028",
+    "durationMediaS": 4.7,
+    "width": 1080,
+    "height": 1920,
+    "rotationDeg": 0,
+    "hasAudio": true,
+    "nominalFps": 30,
+    "captureFps": 30,
+    "timeScale": 1,
+    "fpsSource": "timestamps",
+    "isVariableFrameRate": false,
+    "frameCount": 141
+   },
+   "final": {
+    "fileName": "video",
+    "mimeType": "video/mp4",
+    "codec": "avc1.640028",
+    "durationMediaS": 4.7,
+    "width": 1080,
+    "height": 1920,
+    "rotationDeg": 0,
+    "hasAudio": true,
+    "nominalFps": 30,
+    "captureFps": 30,
+    "timeScale": 1,
+    "fpsSource": "timestamps",
+    "isVariableFrameRate": false,
+    "frameCount": 141
+   },
+   "timeBase": {
+    "kind": "normal",
+    "status": "unknown",
+    "captureFps": 30,
+    "timeScale": 1,
+    "fpsSource": "timestamps",
+    "evidence": [],
+    "warnings": []
+   },
+   "decodePath": "webcodecs",
+   "decodePathReason": "WebCodecs supports avc1.640028.",
+   "container": "mp4",
+   "codec": "avc1.640028",
+   "probeWarnings": [],
+   "decode": {
+    "pose": {
+     "path": "webcodecs",
+     "requested": 141,
+     "yielded": 141,
+     "missingIndices": [],
+     "samplesFed": 141,
+     "elapsedMs": 6990.2,
+     "notes": []
+    },
+    "ball": [
+     {
+      "path": "webcodecs",
+      "requested": 141,
+      "yielded": 141,
+      "missingIndices": [],
+      "samplesFed": 141,
+      "elapsedMs": 12788,
+      "notes": []
+     }
+    ]
+   }
+  },
+  "timings": {
+   "fetchMs": 22.80000001192093,
+   "probeMs": 23.899999976158142,
+   "audioDecodeMs": 32.20000001788139,
+   "onsetsMs": 51.5,
+   "poseInitMs": 713.4000000059605,
+   "posePassMs": 7024.5,
+   "poseDecodeMs": 113.99999982118607,
+   "poseCleanMs": 19,
+   "ballPassMs": 12788.199999988079,
+   "ballDecodeMs": 3684.0000001192093,
+   "ballDetectMs": 9072.499999910593,
+   "ballAnalyseMs": 100.90000000596046,
+   "scoreMs": 8.100000023841858,
+   "totalMs": 20802.20000001788
+  },
+  "scores": {
+   "clipId": "fps30-s2",
+   "frames": {
+    "truth": 141,
+    "probe": 141,
+    "decodedPose": 141,
+    "missingPose": 0,
+    "decodedBall": 141,
+    "match": true
+   },
+   "timeBase": {
+    "truth": {
+     "fps": 30,
+     "captureFps": 30,
+     "timeScale": 1
+    },
+    "probe": {
+     "nominalFps": 30,
+     "captureFps": 30,
+     "timeScale": 1,
+     "status": "unknown",
+     "kind": "normal"
+    },
+    "fpsErrorPct": 0,
+    "probeTimeScaleMatches": true,
+    "final": {
+     "captureFps": 30,
+     "timeScale": 1,
+     "source": "timestamps",
+     "matchesTruth": true
+    }
+   },
+   "pose": {
+    "staturePx": 524.1037326179346,
+    "raw": {
+     "frames": 141,
+     "detected": 141,
+     "detectionRate": 1,
+     "onTargetRate": 0.6028368794326241,
+     "meanErrorBH": 0.11272229900778882,
+     "medianErrorBH": 0.03647039747607785,
+     "p90ErrorBH": 0.24717194367170198,
+     "pck": 0.609338061465721,
+     "mirroredRate": 0.40425531914893614,
+     "meanErrorBHMirrorTolerant": 0.02704073078606818,
+     "wristWindowErrorBH": 0.08425811062842875,
+     "wristWindowDetected": 6,
+     "wristWindowFrames": 6
+    },
+    "clean": {
+     "frames": 141,
+     "detected": 141,
+     "detectionRate": 1,
+     "onTargetRate": 0.5886524822695035,
+     "meanErrorBH": 0.11328682179782734,
+     "medianErrorBH": 0.037549845866848654,
+     "p90ErrorBH": 0.2470752019851541,
+     "pck": 0.6040189125295509,
+     "mirroredRate": 0.41134751773049644,
+     "meanErrorBHMirrorTolerant": 0.027472080903010322,
+     "wristWindowErrorBH": 0.020043146258226615,
+     "wristWindowDetected": 6,
+     "wristWindowFrames": 6
+    }
+   },
+   "ball": {
+    "passes": [
+     {
+      "label": "initial",
+      "detection": {
+       "frames": 141,
+       "tossFrames": 28,
+       "flightFrames": 1,
+       "recallToss": 0.9642857142857143,
+       "recallFlight": 1,
+       "top1RecallToss": 0.9642857142857143,
+       "precision": 0.5851851851851851,
+       "top1Precision": 0.6638655462184874,
+       "falsePerFrame": 0.3971631205673759,
+       "errorMedianPx": 0.24701037387110059,
+       "errorP95Px": 0.7582226176998066,
+       "flightErrorMedianPx": 0.36081699294796876,
+       "support": {
+        "trueP5": 0.4782,
+        "trueP50": 0.574,
+        "falseP50": 0.5215000000000001,
+        "falseP95": 0.67425,
+        "nTrue": 79,
+        "nFalse": 56
+       }
+      },
+      "toss": {
+       "found": true,
+       "kind": "toss",
+       "status": "ok",
+       "trackPrecision": 1,
+       "coverage": 0.9642857142857143,
+       "apexErrorMs": 0.186312812950451,
+       "apexZ": 0.11178768777027098,
+       "releaseErrorMs": 99.94233333333801,
+       "contactErrorMs": null,
+       "apexHeight": {
+        "valueM": 3.300130289148063,
+        "truthM": 3.3281,
+        "errorM": -0.027969710851937002,
+        "covered": true,
+        "status": "estimated"
+       }
+      },
+      "gravity": {
+       "status": "ok",
+       "factor": 0.9836788321709518,
+       "low": 0.9343131114809882,
+       "high": 1.0356528587374931,
+       "expected": 1,
+       "covered": true,
+       "suggestion": "consistent",
+       "suggestedTimeScale": 1
+      },
+      "outgoing": {
+       "found": false,
+       "detections": 0,
+       "precision": null
+      },
+      "speed": {
+       "status": "unavailable",
+       "truthKmh": 148.91,
+       "covered": null,
+       "reason": "the ball was not tracked after contact"
+      },
+      "contactFromAudioErrorMs": 1.1093644723785268
+     }
+    ],
+    "finalPass": 0
+   },
+   "audio": {
+    "status": "ok",
+    "usable": true,
+    "onsets": 3,
+    "events": [
+     {
+      "kind": "contact",
+      "arrivalTMedia": 2.653425,
+      "onset": {
+       "errorMediaMs": 0.0750000000002693,
+       "errorRealMs": 0.0750000000002693,
+       "kind": "unknown",
+       "strength": 32.98
+      }
+     },
+     {
+      "kind": "footstep",
+      "arrivalTMedia": 2.814854,
+      "onset": {
+       "errorMediaMs": 1.5420000000001544,
+       "errorRealMs": 1.5420000000001544,
+       "kind": "contact",
+       "strength": 11.46
+      }
+     },
+     {
+      "kind": "footstep",
+      "arrivalTMedia": 3.113741,
+      "onset": null
+     },
+     {
+      "kind": "bounce",
+      "arrivalTMedia": 3.202214,
+      "onset": {
+       "errorMediaMs": 1.0779999999996903,
+       "errorRealMs": 1.0779999999996903,
+       "kind": "bounce",
+       "strength": 19.73
+      }
+     },
+     {
+      "kind": "bounce-secondary",
+      "arrivalTMedia": 4.30109,
+      "onset": null
+     }
+    ],
+    "contact": {
+     "truthArrivalTMedia": 2.653425,
+     "nearestErrorMediaMs": 0.0750000000002693,
+     "nearestErrorRealMs": 0.0750000000002693,
+     "nearestKind": "unknown",
+     "strongestIsContact": true,
+     "labelledContact": false
+    }
+   }
+  },
+  "pose": {
+   "options": {
+    "model": "full",
+    "delegate": "auto",
+    "roi": "auto",
+    "useWorker": "auto"
+   },
+   "stats": {
+    "backend": "worker",
+    "init": {
+     "delegate": "GPU",
+     "model": "full",
+     "runningMode": "VIDEO",
+     "initMs": 253.5,
+     "warmupMs": 411.90000000596046
+    },
+    "frames": 141,
+    "framesWithPerson": 141,
+    "framesWithMultiplePeople": 0,
+    "framesLost": 0,
+    "reacquisitions": 0,
+    "detectErrors": [],
+    "inference": {
+     "count": 141,
+     "meanMs": 43.10921985777557,
+     "medianMs": 42,
+     "p95Ms": 54.099999994039536,
+     "maxMs": 62.099999994039536
+    },
+    "roundTrip": {
+     "count": 141,
+     "meanMs": 85.73971631256401,
+     "medianMs": 84.2999999821186,
+     "p95Ms": 100.5,
+     "maxMs": 109.69999998807907
+    },
+    "prepare": {
+     "count": 141,
+     "meanMs": 9.240425533648079,
+     "medianMs": 8.900000005960464,
+     "p95Ms": 11.900000005960464,
+     "maxMs": 15.199999988079071
+    },
+    "roi": {
+     "mode": "auto",
+     "framesCropped": 141,
+     "framesSkipped": 0,
+     "localisations": 1,
+     "localisationsFound": 1,
+     "localiserRuns": 5,
+     "localiseMs": {
+      "count": 1,
+      "meanMs": 873.8999999761581,
+      "medianMs": 873.8999999761581,
+      "p95Ms": 873.8999999761581,
+      "maxMs": 873.8999999761581
+     },
+     "locatorSetupMs": 598.2000000178814,
+     "meanCropSideFraction": 0.8490740740740714
+    }
+   },
+   "cleanReport": {
+    "bodyHeightHU": 0.28001604689764537,
+    "bodyHeightSource": "setup-estimate",
+    "swapsCorrected": [
+     {
+      "frameIndex": 78,
+      "group": "arms"
+     }
+    ],
+    "swapsUnresolved": [
+     {
+      "group": "arms",
+      "startFrame": 53,
+      "endFrame": 58,
+      "reason": "tie"
+     },
+     {
+      "group": "legs",
+      "startFrame": 0,
+      "endFrame": 89,
+      "reason": "long-minority"
+     }
+    ],
+    "outliersRejected": [
+     {
+      "frameIndex": 53,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 53,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 53,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 53,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 53,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 53,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 53,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 53,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 53,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 54,
+      "landmark": 32
+     }
+    ],
+    "interpolatedSamples": 26,
+    "framesWithoutPose": 0
+   },
+   "frames": 141
+  },
+  "audio": {
+   "status": "ok",
+   "timing": {
+    "usable": true,
+    "reason": "Real-time audio track."
+   },
+   "onsets": [
+    {
+     "tMedia": 2.6535,
+     "tReal": 2.6535,
+     "strength": 32.98,
+     "sharpness": 0.419,
+     "kind": "unknown",
+     "riseTimeMs": 0.042,
+     "hfRatio": 0.253,
+     "peakDbfs": -20.03
+    },
+    {
+     "tMedia": 2.816396,
+     "tReal": 2.816396,
+     "strength": 11.46,
+     "sharpness": 0.835,
+     "kind": "contact",
+     "riseTimeMs": 3.354,
+     "hfRatio": 0.826,
+     "peakDbfs": -41.28
+    },
+    {
+     "tMedia": 3.203292,
+     "tReal": 3.203292,
+     "strength": 19.73,
+     "sharpness": 0.276,
+     "kind": "bounce",
+     "riseTimeMs": 2.063,
+     "hfRatio": 0.051,
+     "peakDbfs": -31.49
+    }
+   ],
+   "decodeMethod": "webcodecs",
+   "sampleRate": 48000,
+   "durationS": 4.7147,
+   "startTimeS": 0
+  },
+  "ball": {
+   "finalPass": 0,
+   "passes": [
+    {
+     "label": "initial",
+     "metaTimeScale": 1,
+     "captureFps": 30,
+     "timeBaseKnown": false,
+     "tossRoiUntilTReal": 2.6395303644723787,
+     "audioUsed": true,
+     "contactOnset": {
+      "tReal": 2.6535,
+      "kind": "unknown",
+      "strength": 32.98
+     },
+     "contactFromAudioTReal": 2.6395303644723787,
+     "frames": 141,
+     "candidatesTotal": 135,
+     "setup": {
+      "expectedRadiusNorm": 0.005033824939055393,
+      "tossRoi": null,
+      "scale": {
+       "unitsPerM": 0.15026343101657888,
+       "relSigma": 0.032396890227720916,
+       "basis": "player height 1.80 m (entered) vs stature in frame"
+      },
+      "body": {
+       "heightNorm": 0.270474175829842,
+       "relSigma": 0.030092499006014756,
+       "groundY": 0.7391733290559716,
+       "headTopY": 0.46887902375255697
+      },
+      "notes": []
+     },
+     "tracks": [
+      {
+       "id": 1,
+       "kind": "toss",
+       "observations": 30,
+       "detected": 29
+      }
+     ],
+     "tossTrack": {
+      "id": 1,
+      "kind": "toss",
+      "observations": 30,
+      "detected": 29
+     },
+     "outgoingTrack": null,
+     "toss": {
+      "status": "ok",
+      "release": {
+       "tReal": 1.8033333333333381,
+       "frameIndex": 55,
+       "uncertaintyS": 0.05500000000000127,
+       "x": 0.5873957280425114,
+       "y": 0.399045619924714,
+       "confidence": 0.7,
+       "method": "ball-hinge-fit"
+      },
+      "apex": {
+       "tReal": 2.2706703128129506,
+       "frameIndex": 68,
+       "uncertaintyS": 0.001666666666666661,
+       "x": 0.6076460610959479,
+       "y": 0.24328442900684905,
+       "yUncertaintyNorm": 0.00006567248444011114,
+       "bracketed": true,
+       "gravityPrior": false,
+       "aboveFrame": false,
+       "confidence": 1,
+       "method": "ball-apex-fit"
+      },
+      "heights": {
+       "riseAboveReleaseNorm": 0.15576119091786494
+      },
+      "fit": {
+       "a": 0.7131796862280018,
+       "b": -3.2387918824383575,
+       "c": 3.920398717423024,
+       "rmse": 0.00020798545404148683,
+       "tStart": 1.8333333333333333,
+       "tEnd": 2.6333333333333333,
+       "detections": 25
+      },
+      "gravity": {
+       "status": "ok",
+       "timeScaleFactor": 0.9836788321709518,
+       "timeScaleSigma": 0.025323746467859034,
+       "low": 0.9343131114809882,
+       "high": 1.0356528587374931,
+       "captureFpsFactor": 1.0165919681254378,
+       "plausible": true,
+       "nearestStandard": {
+        "factor": 1,
+        "label": "real time",
+        "consistent": true
+       },
+       "apparentGravityMps2": 9.492391880088444
+      },
+      "confidence": 1
+     },
+     "events": {
+      "tossRelease": {
+       "frameIndex": 55,
+       "tReal": 1.8033333333333381,
+       "uncertaintyS": 0.05500000000000127,
+       "confidence": 0.7,
+       "method": "ball-hinge-fit"
+      },
+      "tossApex": {
+       "frameIndex": 68,
+       "tReal": 2.2706703128129506,
+       "uncertaintyS": 0.001666666666666661,
+       "confidence": 1,
+       "method": "ball-apex-fit"
+      }
+     },
+     "timeBase": {
+      "status": "consistent",
+      "timeScale": 1,
+      "captureFpsFactor": 1,
+      "basis": "toss falls at g in real time: implied factor 0.984 (0.934-1.036)"
+     },
+     "speedFromTrack": {
+      "status": "unavailable",
+      "reason": "the ball was not tracked after contact",
+      "unlockHint": "Film side-on at 120 or 240 fps with the ball path inside the frame."
+     },
+     "averageSpeedRear": {
+      "status": "unavailable",
+      "reason": "bounce not in view: from the side the bounce is outside the frame and its distance is unknown (about +-20% error), so flight time is never used",
+      "unlockHint": "Add the optional rear (outcomes) view with the service boxes visible."
+     },
+     "bounce": {
+      "status": "unavailable",
+      "reason": "bounce is only located in the rear (outcomes) view"
+     },
+     "placement": {
+      "status": "unavailable",
+      "reason": "bounce is only located in the rear (outcomes) view"
+     },
+     "metrics": [
+      {
+       "id": "toss-apex-height",
+       "value": 3.300130289148063,
+       "unit": "m",
+       "status": "estimated",
+       "uncertainty": {
+        "kind": "range",
+        "low": 2.9052534202723477,
+        "high": 3.6950071580237784
+       },
+       "confidence": 1,
+       "basis": "ball-apex fit (25 detections) vs floor from pose; scale from player height 1.80 m (entered) vs stature in frame; a toss nearer the camera than the body reads high"
+      },
+      {
+       "id": "speed-experimental",
+       "value": null,
+       "unit": "km/h",
+       "status": "unavailable",
+       "confidence": 0,
+       "basis": "ball track just after contact (side view)",
+       "unavailableReason": "the ball was not tracked after contact",
+       "unlockHint": "Film side-on at 120 or 240 fps with the ball path inside the frame."
+      },
+      {
+       "id": "speed-average-rear",
+       "value": null,
+       "unit": "km/h",
+       "status": "unavailable",
+       "confidence": 0,
+       "basis": "contact to the bounce located in the rear view",
+       "unavailableReason": "bounce not in view: from the side the bounce is outside the frame and its distance is unknown (about +-20% error), so flight time is never used",
+       "unlockHint": "Add the optional rear (outcomes) view with the service boxes visible."
+      },
+      {
+       "id": "spin",
+       "value": null,
+       "unit": "rpm",
+       "status": "unavailable",
+       "confidence": 0,
+       "basis": "ball spin",
+       "unavailableReason": "a phone video cannot resolve the ball’s spin: the ball is only a few pixels wide and its seams cannot be followed from frame to frame",
+       "unlockHint": "Not available from phone video."
+      }
+     ]
+    }
+   ]
+  },
+  "cspViolations": [],
+  "notes": []
+ },
+ "privacy": {
+  "externalRequests": [],
+  "consoleMessages": [
+   "warning: W0926 23:41:12.105999 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+   "warning: W0926 23:41:12.848999 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+   "warning: W0926 23:41:13.243000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+   "warning: W0926 23:41:13.486000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+   "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log",
+   "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+  ]
+ }
+}

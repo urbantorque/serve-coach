@@ -1,7 +1,7 @@
 # PRODUCT.md: Serve Coach product spec and rationale (v1)
 
-- **Status:** v1 product specification, written 27 September 2026, in Australian English.
-- **Owner:** product. **Binding inputs:** `docs/DECISIONS.md` (D1–D10) and `docs/research/10-segment-decision.md`.
+- **Status:** v1 product specification, written 27 September 2026 and revised the same day after the DECISIONS revision (see the revision log at the end), in Australian English.
+- **Owner:** product. **Binding inputs:** `docs/DECISIONS.md` (D1–D11, with D1, D4 and D5 revised on 27 Sep 2026 and D11 added) and `docs/research/10-segment-decision.md`. The 27 Sep gap studies in `docs/research/gaps/` supply the numbers behind the revised decisions: side-view geometry (framing, tilt, what the side view can and cannot see), recreational reference ranges (provisional bands, plausibility bounds, capture envelope), Australian segment evidence, and the Intuitive Tennis and Kovacs primary content.
 - **Read with:**
   - `docs/specs/METRICS.md` and `metrics.json`: metric definitions, labels, rounding and verdict rules.
   - `docs/specs/COACHING.md` and `coaching-library.json`: faults, cues, drills, priority, pain screen and the experiment loop.
@@ -29,17 +29,21 @@
   - **[Regulation]:** a law or platform rule.
   - **[Our inference]:** our own reasoning, including every target and threshold here that cites no source.
 
-  Research is cited as (research NN [Sx]), meaning source x in `docs/research/NN-*.md`. "Segment decision §n" means `docs/research/10-segment-decision.md`.
-- **Metric ids.** These are the shared ids and are used exactly as spelled:
+  Research is cited as (research NN [Sx]), meaning source x in `docs/research/NN-*.md`. "Segment decision §n" means `docs/research/10-segment-decision.md`. Gap studies are cited by short name: "gap geometry §n" (`gaps/side-view-geometry-contradictions.md`), "gap ranges §n" (`gaps/recreational-reference-ranges.md`), "gap segment §n" (`gaps/australian-segment-evidence.md`) and "gap Kovacs §n" (`gaps/intuitive-tennis-kovacs-primary-content.md`).
+- **Metric ids.** These are the canonical shared ids and are used exactly as spelled:
   - `serve-count`
   - toss: `toss-apex-height`, `toss-forward`, `toss-drop`, `toss-height-spread`, `toss-forward-spread`
   - contact: `contact-height-ratio`, `contact-forward`
   - rhythm: `rhythm-release-to-contact`, `rhythm-spread`, `trophy-pause`
-  - posture and landing: `knee-bend-band`, `trunk-tilt-band`, `landing-distance`
+  - leg drive and loading (side view): `leg-drive` (hip rise from the lowest point to contact, as % of height), `drive-time`, `loading-depth` (descriptive hip drop, never a "bend more" instruction), `deep-bend-flag` (experimental)
+  - posture bands: `shoulder-tilt-trophy` (side view, player-relative band); `knee-bend-band` and `shoulder-over-shoulder-contact` (**view from behind only**; the second is experimental)
+  - landing: `landing-distance`
   - `repeatability`
   - outcomes: `serve-in-rate`, `first-serve-in-rate`, `double-faults`, `placement-zone`, `serve-type-mix`
-  - speed and spin: `speed-experimental`, `speed-radar-entered`, `spin`
+  - speed and spin: `speed-experimental` (side view, ≥ 120 fps, target tag), `speed-average-rear` (view from behind, experimental), `speed-radar-entered`, `spin` (always unavailable)
   - `capture-quality`
+
+  **Removed:** `trunk-tilt-band`, replaced by `shoulder-tilt-trophy`. `knee-bend-band` is never a side-view metric (D1, D5).
 
   METRICS.md adds `second-serve-in-rate`, `contact-height-spread`, `retoss-count`, `toss-lateral`, `toss-lateral-spread`, `fatigue-flag` and `load-flag`. The match-log ids in §6.11 are proposals for METRICS.md to confirm.
 
@@ -48,17 +52,20 @@
 ## 0. Summary
 
 **The product.** Serve Coach is a calm serve coach on the phone for adult recreational players.
-- A player clips one phone to the side fence and serves a block of about 15.
+- A player stands one phone beside the court, side-on (by default upright on a tripod 1.3–1.6 m high, 7–8 m out from the centre mark, between courts or just outside the doubles alley), and serves a block of about 15.
 - On the phone, the app finds each serve and measures what the side view can credibly see:
   - toss height and forward placement, and how repeatable they are;
   - contact height;
   - rhythm;
+  - leg drive (how far the hips rise into the ball, and how quickly);
   - landing.
+
+  It says plainly what the side view cannot see: knee bend and shoulder tilt at contact need a view from behind (D1).
 - The player logs whether each serve went in.
 - The app picks **one** change, with one cue and one 5–10 minute drill.
 - The player practises it and records a matched re-test. The app then says honestly whether it worked.
 
-**Who it is for first.** "Comp-night regulars" (segment decision §1):
+**Who it is for first.** "Comp-night regulars" (D11; segment decision §1):
 - adults of about 30–55 who play a weekly night comp or pennant, at a UTR of about 3–7 or unrated;
 - their serve lets them down on match night: too few first serves in, and double faults in front of their team;
 - the launch starts in metro Melbourne.
@@ -67,18 +74,18 @@ The secondary segment is improving adults who book courts but do not play comp. 
 
 **The promise, in the player's words.**
 - "A toss you can trust, fewer double faults, and proof that what I practised made a difference."
-- We lead with toss consistency because it is what one side-on phone measures best (D1, D5). It is also where expert teaching locates most serve problems (research 04 [S14]) [Coaching interpretation].
+- We lead with toss consistency because it is what one side-on phone measures best (D1, D5). It is also where the Kovacs Institute locates most serve problems: a Kovacs Institute team post reports Dr Kovacs's observation that over 80% start at release or loading (research 04 [S14]; gap Kovacs §3) [Coaching interpretation]. That is a claim about where faults start, not evidence that fixing the toss fixes a second serve (§13 item 6).
 
 **What makes it different** [Our inference, from research 01 §13]:
 1. It is the only serve product we found that links mechanics to logged outcomes for the same serves. An example is "your serves that went in had the toss further forward". It then tests one change with a matched re-test.
 2. Every number carries an honesty label (measured, estimated, player-entered, experimental or unavailable) and its n (D2, D7).
-3. It is designed for one phone on a fence or short tripod, not an elevated rear camera.
+3. It is designed for one phone on a tripod beside the court (or at the side fence), not an elevated rear camera.
 4. It needs no account and uploads nothing: analysis runs on the phone (D8).
 5. It costs A$99.99 a year, one-third of SwingVision Pro (research 08 §6).
 
 **What it deliberately does not do in v1.**
-- No precise speed and no spin (D4).
-- No grip, racquet-path, racquet-drop or joint-angle numbers (D5).
+- No precise speed and no spin (D4). No speed from the sound of the bounce in the side view.
+- No grip, racquet-path, racquet-drop or joint-angle numbers (D5). No knee-bend band from the side view, and no comparison with published trunk angles (D5).
 - No composite "serve score" (research 09 §12).
 - No comparison with professionals.
 - No accounts, cloud or social features.
@@ -92,7 +99,7 @@ The full list is in §5.4.
 - **Free, "Serve Check":**
   - the first full loop (baseline, practice, re-test, verdict) free;
   - then 2 analysed practice days a month;
-  - every side-view measurement, with trends over the last 30 days;
+  - every measurement, from the side view and from the optional view from behind, with trends over the last 30 days;
   - safety, labels, export and deletion always free.
 - **Paid, "Serve Coach Plus":**
   - A$14.99 a month or A$99.99 a year, with a 7-day trial on the annual plan;
@@ -108,6 +115,8 @@ The full list is in §5.4.
 ## 1. Who it is for
 
 ### 1.1 Primary segment: comp-night regulars
+
+D11 fixes the segment: adults of about 30–55, UTR about 3–7, who play weekly night comp or pennant, starting in metro Melbourne; solo court-bookers are secondary; coaches are the lead channel, not a paying segment; juniors, masters-specific features and speed-seekers are deferred; the closed beta is 18+. The national pool of graded adult team players is about 35,000–60,000, of whom roughly 25,000–45,000 are likely to be UTR 3–7 (gap segment §1) [Our inference; medium confidence on the order of magnitude, low on the bounds].
 
 **Operational definition, computed at onboarding** (segment decision §2.1). A player is *in segment* when all four hold:
 1. They are 18 or over.
@@ -181,8 +190,8 @@ The argument, step by step:
 2. **Reliability starts at the toss, and the side view sees the toss well.**
    - Experienced servers stabilise the vertical dimension of the toss (research 03 [S29]) [Established].
    - Changing only the tossing-arm timing cut target accuracy from 87% to 17% and 10% in high-performance men (research 03 [S27]) [Established, small n].
-   - Kovacs puts "probably over 80%" of serve problems at the toss and loading stages (research 04 [S14]) [Coaching interpretation].
-   - Toss apex, forward placement and drop are exactly what D1's side view measures without court calibration.
+   - The Kovacs Institute puts "probably over 80%" of serve problems at the release and loading stages. The source is a Kovacs Institute team post reporting Dr Kovacs's observations, not his own writing (research 04 [S14]; gap Kovacs §3) [Coaching interpretation]. It says where faults tend to start; it is not evidence that a toss fix repairs a flat second serve.
+   - Toss apex, forward placement and drop are exactly what D1's side view measures without court calibration. Two honest limits: absolute toss height is `estimated`, because a toss 0.3 m nearer the camera than the body reads about 8–12 cm high; and side-view height spread includes about 2–4 cm of false spread per 10 cm of sideways toss spread (D1; gap geometry §6.7). The consistency copy says so.
 3. **Their incumbent option measures outcomes, not causes.**
    - SwingVision reports in/out, placement and average speed from an elevated rear camera (research 01 §3.2).
    - We found no toss or phase metrics in it; its blog tells players to *watch* for toss drift (research 01 §3.7).
@@ -202,7 +211,7 @@ The argument, step by step:
 **What could make this wrong** (segment decision §9 has the full list with cheap tests):
 - comp players rarely practise serves alone (test 1);
 - the link between mechanics and outcomes comes back null (test 4). It is a real possibility, because good and faulted serves had near-identical toss values in ranked juniors (research 03 [S28]);
-- the side view misses the real second-serve fix (test 5).
+- the side view misses the real second-serve fix (test 5), or D6's stage-first ranking keeps it from ever being chosen (§13 item 6).
 
 ---
 
@@ -210,7 +219,7 @@ The argument, step by step:
 
 ### 2.1 Positioning statement
 
-> For adult comp players whose serve lets them down on match night, **Serve Coach** is a serve coach on your phone. It shows what your toss and contact are really doing, picks the one change most worth practising, and tells you honestly whether it worked. Unlike tools that only count where your serves land, it reads your serve from one phone at the side fence, labels every number with how it was measured, and keeps everything on your phone.
+> For adult comp players whose serve lets them down on match night, **Serve Coach** is a serve coach on your phone. It shows what your toss and contact are really doing, picks the one change most worth practising, and tells you honestly whether it worked. Unlike tools that only count where your serves land, it reads your serve from one phone beside the court, side-on, labels every number with how it was measured, and keeps everything on your phone.
 
 **Lead lines** (App Store, onboarding, landing page) follow segment decision §7.2:
 - "A toss you can trust."
@@ -224,15 +233,15 @@ We never lead with speed, AI or accuracy claims.
 | | SwingVision (research 01 §3) | Serve Coach v1 |
 |---|---|---|
 | Core question | What happened: in/out, placement, average speed | Why it happened (toss, contact, rhythm), what to change, and whether the change worked |
-| Camera | One camera behind the baseline, at least about 1.5 m high (setup wording UNVERIFIED, research 01 §3.2) | One phone side-on at the fence, at chest-to-head height (D1; CAPTURE §2). An optional raised rear view unlocks toss drift and experimental outcomes |
-| Serve mechanics | None found (research 01 §3.7) | Toss apex, forward placement, drop and spread; contact height and forward position; rhythm; landing; knee and trunk bands with key frames |
-| Outcomes | Automatic, from the rear view | Player-tagged in the side view (D3), fast tagging or a tally. Experimental automatic suggestions from the rear view |
-| Speed | Average ball speed over the flight, which is not radar-comparable (research 01 [S5]) | `unavailable` by default. An experimental range only when its prerequisites hold (D4). Radar readings can be entered |
+| Camera | One camera behind the baseline, at least about 1.5 m high (setup wording UNVERIFIED, research 01 §3.2) | One phone beside the court, side-on, on the hitting-arm side. Default: upright (portrait), 7–8 m from the centre mark, 1.3–1.6 m high, level. Alternative: landscape at the side fence, 8.5–9.5 m out, 1.4–1.8 m high, 4K preferred. A framing rule, not a fixed distance, decides: the frame must reach at least 4.5 m above the court at the server (D1; CAPTURE §2). An optional raised view from behind unlocks toss drift, knee bend, shoulder tilt at contact and experimental outcomes |
+| Serve mechanics | None found (research 01 §3.7) | Toss apex, forward placement, drop and spread; contact height and forward position; rhythm; leg drive (hip rise and drive time); landing; shoulder tilt at the trophy position as a band with a key frame. From behind: toss left–right, a knee-bend band and (experimental) shoulder tilt at contact |
+| Outcomes | Automatic, from the rear view | Player-tagged in the side view (D3), fast tagging or a tally. Experimental suggested tags from the view from behind |
+| Speed | Average ball speed over the flight, which is not radar-comparable (research 01 [S5]) | `unavailable` by default. An experimental range only when its prerequisites hold (D4): near-contact speed from the side view at ≥ 120 fps with a target tag, or average speed to a bounce located in the view from behind. Never from sound alone. Radar readings can be entered |
 | Coaching | "AI Coaching" on Max; content UNVERIFIED (research 01 §3.3) | One focus, one cue and one drill per session, with evidence and a matched "Did it work?" (D6) |
 | Honesty | Vendor claims "within about 10%" for speed at a correct setup (research 01 [S6]) [Vendor claim] | Labels on every number, n, intervals, a validation note, and a public "How we measure" page |
 | Data | Cloud processing; one report of half a match lost during upload (research 01 [S1]) | On the device; no upload; export and deletion always free (D8) |
 | Price (AU, yearly) | A$149.99 / A$299.99 / A$499.99 (research 01 [S1]) | A$99.99, plus a A$39.99 season pass to test |
-| Free tier | 8 HD hours of recording a month since February 2026 (research 01 [S2]) | The first loop free, then 2 analysed practice days a month, with all side-view measurements |
+| Free tier | 8 HD hours of recording a month since February 2026 (research 01 [S2]) | The first loop free, then 2 analysed practice days a month, with every measurement from either view |
 
 **How we talk about SwingVision** [Our inference]:
 - Never by name in-app.
@@ -243,7 +252,7 @@ We never lead with speed, AI or accuracy claims.
 - serve-specific depth;
 - the mechanics-to-outcome loop;
 - visible honesty;
-- the fence-height setup;
+- the one-phone, side-on set-up beside the court;
 - price;
 - Australian channels.
 
@@ -275,6 +284,7 @@ We differentiate on four things:
 
 - Speed is not our game. Radar (Pocket Radar ±1 mph [Vendor claim]; research 01 [S46] validation) and sound-plus-video apps already exist.
 - We accept a radar reading as `speed-radar-entered` (player-entered). Paired readings become validation data (D4).
+- We never estimate speed from the sound of the bounce in the side view. The bounce is out of frame and its distance unknown, so the error is about ±20% (a 90% interval of −17% to +23%) even with a target tag (D4; gap geometry §7). Audio, when the player opts in, only times contact; it becomes timestamps on the phone and the sound is not kept.
 - If a UTR 5–7 player asks for speed, we show the radar-entry path and the experimental range rules. We do not show a guessed number (segment decision §9, test 12).
 
 ### 2.6 Claims we make and claims we never make
@@ -287,6 +297,7 @@ We differentiate on four things:
 | "Coaches recommend…" / "Research on skilled players links…" | "Proven to improve your serve" |
 | "If something hurts, stop and see a physio or GP" | "Prevents injury", "protects your shoulder", any diagnosis word |
 | "Speed isn't available from this view" | A km/h figure without its prerequisites and label |
+| "Knee bend needs a view from behind" | A knee angle or a "bend more" instruction from the side view; any trunk angle set against published values (48°, 25°) (D5) |
 | "Everything stays on this phone" | "Private" without saying what that means |
 
 These follow research 07 §8 on TGA and the ACL, App Store guideline 1.4.1 (research 09 §12), and COACHING §14.
@@ -315,7 +326,7 @@ These follow research 07 §8 on TGA and the ACL, App Store guideline 1.4.1 (rese
 | Question | Where | Metric ids | Label today | Minimum data before we answer (owner) |
 |---|---|---|---|---|
 | "What happened in this session?" | Session report headline | lead stratum metrics, `capture-quality` | estimated / measured | 5 measured serves for any observation (CAPTURE §5.3) |
-| "Is my toss becoming more consistent?" | Progress tile 1; report hero row | `toss-height-spread`, `toss-forward-spread` (rear: `toss-lateral-spread`) | estimated (target measured) | Spread shown as an "early read" from 8 serves; a trend verdict needs ≥ 3 matched sessions (METRICS §4.1, §4.6) |
+| "Is my toss becoming more consistent?" | Progress tile 1; report hero row | `toss-height-spread`, `toss-forward-spread` (view from behind: `toss-lateral-spread`, experimental today) | estimated (target measured) | Spread shown as an "early read" from 8 serves; a trend verdict needs ≥ 3 matched sessions (METRICS §4.1, §4.6) |
 | "Am I getting more first serves in?" | Progress tile 2; report outcome row | `first-serve-in-rate` | player-entered | Rate with a band from 10 serves. A verdict usually needs far more serves than one session: about 389 per period to detect 10 points (research 06 §7.1). We say so |
 | "Is my second serve safe?" | Progress tile 2 (goal-ordered); report | `second-serve-in-rate`, `double-faults` | player-entered | As above |
 | "Why did I miss?" | Signature insight card (report) | the METRICS §4.7 family: toss, contact, rhythm, landing | estimated + player-entered | ≥ 6 tagged ins and ≥ 6 tagged misses in one stratum; shown only when the 99% interval excludes 0 and the difference ≥ SWC (METRICS §4.7) |
@@ -323,7 +334,8 @@ These follow research 07 §8 on TGA and the ACL, App Store guideline 1.4.1 (rese
 | "Did this change improve my serve?" | "Did it work?" (Compare) | the focus item's primary metric | estimated | ≥ 8 included serves each side (METRICS §4.5). COACHING §12.3 asks for 12; see §12 |
 | "Did it show up on comp night?" | Progress tile 5 (season view) | proposed match-log ids (§6.11) | player-entered | Plotted by season week; **never pooled** with practice and **never given a verdict** (segment decision M6, §7.2) |
 | "How high do I hit?" / "Is my rhythm steady?" | Progress tile 4; report | `contact-height-ratio`, `rhythm-spread`, `rhythm-release-to-contact` | estimated | as METRICS §4.1 |
-| "How hard am I serving?" | Speed row | `speed-experimental`, `speed-radar-entered` | unavailable by default; experimental range only when prerequisites hold | D4; METRICS §3.22 |
+| "Am I using my legs?" | Report hero row; Progress tile 4 detail | `leg-drive`, `drive-time` (with `loading-depth` as a description) | estimated | Value from 5 measured serves; the low / typical / high band is against the player's own serves and needs 2 matched sessions (gap geometry §5) |
+| "How hard am I serving?" | Speed row | `speed-experimental` (side), `speed-average-rear` (from behind), `speed-radar-entered` | unavailable by default; experimental range only when prerequisites hold | D4; METRICS §3.22 |
 | "Am I doing too much?" | Today note; Progress detail | `load-flag`, `fatigue-flag` | measured / estimated | METRICS §4.8; COACHING §11 |
 
 ### 3.3 Questions v1 cannot answer, and what we say instead
@@ -331,11 +343,13 @@ These follow research 07 §8 on TGA and the ACL, App Store guideline 1.4.1 (rese
 | Question | What the player sees | Why |
 |---|---|---|
 | "How much spin?" | "Spin can't be measured from phone video." Always `unavailable` | D4; research 05 |
-| "How fast?" (no radar, or prerequisites unmet) | "Speed isn't available from this footage. Record at 120 fps or more, or enter a radar reading." | D4 |
-| "Is my grip right?" / "What's my swing path?" / "Racquet drop?" | Not offered. The double-fault focus says: "Grip and swing direction are best seen from behind." It offers the rear view as a video to watch, not a measurement | D5; COACHING §5.3; segment decision M7 |
+| "How fast?" (no radar, or prerequisites unmet) | "Speed isn't available from this footage. Record at 120 fps or more and tag your target, or enter a radar reading." | D4 |
+| "How much do I bend my knees?" (side view) | "Knee bend needs a view from behind. From the side your knees point at the camera. Here's how far your hips dropped and how much they rose into the ball." | D1, D5; from the side a deep bend usually reads as little or moderate (gap geometry §3) |
+| "Do I tilt shoulder over shoulder at contact?" (side view) | "Shoulder tilt at contact needs a view from behind." | D1, D5 (gap geometry §4) |
+| "Is my grip right?" / "What's my swing path?" / "Racquet drop?" | Not offered. The double-fault focus says: "Grip and swing direction are best seen from behind." It offers the view from behind as a video to watch, not a measurement | D5; COACHING §5.3; segment decision M7 |
 | "Where did my serves land?" (side view) | "Where serves land: add a view from behind" (unlock hint) | D1, D3 |
 | "Is my toss drifting left or right?" (side view) | "Left–right needs a view from behind" | METRICS §6 limitation 1 |
-| "How do I compare with pros or my level?" | Not offered. Comparisons are always with the player's own serves | COACHING P12, §8.1 |
+| "How do I compare with pros or my level?" / "Is my trunk angle right?" | Not offered. Comparisons are always with the player's own serves. Provisional club-player bands appear only as context on the info sheet (§4.4 rule 9), and no band is set against published trunk angles | COACHING P12, §8.1; D5 |
 
 ---
 
@@ -375,7 +389,7 @@ The safety gate always overrides it.
 | D10 place | Loop stages | What lives there |
 |---|---|---|
 | **Today** (tab 1, default) | Practise, Re-test, Compare | Focus card (cue, drill, log, re-test); last session headline; baseline progress; pre-match card on match nights; morning-after match log prompt; processing status; pain-pause card |
-| **Record** (tab 2) | Record | Templates (Re-test when due, Check-in, Second-serve check-in, Experiment, Both sides, Outcomes view); setup guide; live framing; recording; tally; import |
+| **Record** (tab 2) | Record | Templates (Re-test when due, Check-in, Second-serve check-in, Experiment, Both sides, View from behind); setup guide; live framing; recording; tally; import |
 | **Sessions** (tab 3) | Analyse, Understand | Session list → Session report → Serve detail → Compare (serve-level); Outcome tagging; the per-session "Did it work?" card |
 | **Progress** (tab 4) | Compare | Question tiles (toss consistency, first serves in or second serve, Did it work?, contact and rhythm, comp nights); trend detail; experiments; Compare sessions |
 | **Profile sheet** (avatar, top right) | none | Your serve (height, hand, level, goal, comp nights, season); comfort; coach; storage & privacy; how we measure and how we coach; experimental toggle; plan; export; sample data; about |
@@ -433,9 +447,14 @@ Profile sheet
 7. **Provisional stays out of headlines.** "Early read" values are never used in a headline (METRICS §4.1).
 8. **Colour is never the only signal.** Outcomes use shapes (● in, ▲ net, ✕ long or wide, ○ untagged). Verdicts use words. Nothing is signalled by red alone (research 09 §10).
 9. **Own serves only.** Comparisons are with the player's own serves, never with a professional or a population norm (COACHING §8.1). Reference bands, where shown, name their population and are labelled "context, not a target".
+   - The provisional recreational bands (gap ranges §7, UTR 1–7) may appear on the Metric info sheet as "Typical for club players (provisional)". They use words such as tight / typical / scattered, never good / bad, and a player's band label changes only when the estimate crosses an edge by more than the stated margin (hysteresis).
+   - `shoulder-tilt-trophy` and `leg-drive` bands are **player-relative**: low / typical / high against the player's own serves. Until 2 matched sessions exist, the band is the session's own spread and says so.
+   - No band is ever compared with published trunk angles (for example 48° or 25 ± 7°), because their definitions differ from any 2D angle (D5; gap geometry §4). Professional leg-drive values measure centre-of-mass rise, a different quantity from hip rise, so they are not shown either.
 10. **The paywall never interrupts safety, capture or a verdict.** It never blocks access to data the player already has, export or deletion (§10).
 11. **Sample data is always labelled.** A persistent "Sample data · synthetic player" banner appears. Sample data never enters Progress, experiments or exports by default (ARCHITECTURE §11).
 12. **Every number respects METRICS §4.9 display precision.** No figure shows more precision than half its 95% interval supports.
+13. **Say what this view cannot see.** A side-view report never shows a knee-bend band, a knee angle or shoulder tilt at contact. It shows "Needs a view from behind" instead (D1). Loading depth (hip drop) is a description, never a "bend more" instruction, and no screen asks for a bigger jump (D5; gap Kovacs §5 T1).
+14. **Statistics are never mixed across views** (D1). A side-view session and a view-from-behind session are never pooled or compared with each other.
 
 ---
 
@@ -443,37 +462,49 @@ Profile sheet
 
 ### 5.1 Capability status at launch
 
-This is the product's statement of what each metric is, not a report of what the build has implemented; the build report states that. "Today" is the highest label the engine may emit at validation level V1, which means synthetic validation only (METRICS §0, §1.3). **No v1 metric uses an external service at runtime.** There is no cloud AI, no analytics SDK and no CDN. MediaPipe models are bundled and its telemetry is blocked by the CSP (D8; ARCHITECTURE §9).
+This is the product's statement of what each metric is, not a report of what the build has implemented; the build report states that. "Today" is the highest label the engine may emit at validation level V1, which means synthetic validation only (METRICS §0, §1.3). METRICS.md owns the final labels; where this table and METRICS disagree, METRICS wins and §12.2 records the difference. **No v1 metric uses an external service at runtime.** There is no cloud AI, no analytics SDK and no CDN. MediaPipe models are bundled and its telemetry is blocked by the CSP (D8; ARCHITECTURE §9).
+
+"Side" is the D1 side view; "behind" is the optional raised view from behind the server (D1's second angle). Heights and angles are computed on tilt-corrected keypoints; when the phone's tilt is unknown (most imports), height and angle metrics are capped at `estimated` with the reason "tilt unknown" (D1; gap geometry §6.6).
 
 | Metric id | Player-facing name | Views | Label today | Target after validation | Where shown | Tier |
 |---|---|---|---|---|---|---|
-| `serve-count` | Serves | side, rear | measured | measured | Every report header | Free |
-| `capture-quality` | Capture quality | side, rear | measured | measured | Under every headline | Free |
-| `toss-height-spread` | Toss height consistency | side, rear | estimated | measured | **Hero 1** | Free |
+| `serve-count` | Serves | side, behind | measured | measured | Every report header | Free |
+| `capture-quality` | Capture quality | side, behind | measured | measured | Under every headline | Free |
+| `toss-height-spread` | Toss height consistency | side, behind | estimated | measured | **Hero 1**. The side-view copy says it includes a little sideways toss wobble (about 2–4 cm per 10 cm of sideways spread) unless the view from behind is recorded (D1) | Free |
 | `toss-forward-spread` | Toss front–back consistency | side | estimated | measured | **Hero 1** | Free |
-| `toss-apex-height` | Toss height | side, rear | estimated | estimated | Supporting | Free |
+| `toss-apex-height` | Toss height | side, behind | estimated | estimated | Supporting. Absolute height reads about 8–12 cm high when the toss is 0.3 m nearer the camera than the body (D1). A peak above the frame is fitted and labelled "peak estimated"; more than 0.5 m above the frame, it is unavailable (gap ranges §6.4) | Free |
 | `toss-forward` | Toss in front | side | estimated | estimated | Supporting | Free |
-| `toss-drop` | Ball drop before contact | side, rear | estimated | measured | Supporting | Free |
-| `contact-height-ratio` | Contact height | side, rear | estimated | estimated | **Hero 2** | Free |
+| `toss-drop` | Ball drop before contact | side, behind | estimated | measured | Supporting | Free |
+| `contact-height-ratio` | Contact height | side, behind | estimated | estimated | **Hero 2** | Free |
 | `contact-forward` | Contact in front | side | estimated | estimated | Supporting | Free |
-| `contact-height-spread` | Contact height consistency | side, rear | estimated | measured | Supporting | Free |
-| `rhythm-release-to-contact` | Toss-to-hit time | side, rear | estimated | measured | **Hero 3** | Free |
-| `rhythm-spread` | Rhythm consistency | side, rear | estimated | measured | **Hero 3** | Free |
-| `landing-distance` | Landing distance | side | estimated | estimated | **Hero 4** | Free |
-| `knee-bend-band` | Knee bend (hip drop) | side, rear | estimated (band only) | estimated | Band plus key frame | Free |
-| `trunk-tilt-band` | Trunk tilt at loading | side | estimated (band only) | estimated | Band plus key frame | Free |
-| `retoss-count` | Re-tosses | side, rear | estimated | measured | Detail | Free |
-| `trophy-pause` | Pause at the top | side, rear | experimental | estimated | Detail, toggle only | Free (toggle) |
-| `repeatability` | Serve shape repeatability | side, rear | experimental | experimental | Detail, toggle only; never a headline or a "score" | Free (toggle) |
-| `serve-in-rate`, `first-serve-in-rate`, `second-serve-in-rate` | Serves in / First serves in / Second serves in | side, rear | player-entered | player-entered (rear auto: experimental) | Outcome rows; Progress tile 2 | Free |
-| `double-faults` | Double faults | side, rear | player-entered | player-entered | Outcome row; Progress tile 2 | Free |
-| `serve-type-mix` | Serve types | side, rear | player-entered | player-entered | Block card; strata | Free |
-| `placement-zone` | Where serves land | side: player-entered target; rear: experimental | player-entered / experimental | as today | Rear report | Rear analysis: Plus |
-| `toss-lateral`, `toss-lateral-spread` | Toss left–right / its consistency | rear | experimental | estimated / measured | Rear report | Plus |
-| `speed-experimental` | Speed (experimental) | side (A), side or rear (B) | unavailable by default; experimental range only when prerequisites hold | experimental | Speed row, toggle only | Free (toggle) |
+| `contact-height-spread` | Contact height consistency | side, behind | estimated | measured | Supporting | Free |
+| `rhythm-release-to-contact` | Toss-to-hit time | side, behind | estimated | measured | **Hero 3** | Free |
+| `rhythm-spread` | Rhythm consistency | side, behind | estimated | measured | **Hero 3** | Free |
+| `landing-distance` | Landing distance | side | estimated | estimated | **Hero 4** (see §12.2 item 11 on its label) | Free |
+| `leg-drive` | Leg drive (hip rise) | side | estimated | estimated | **Hero 5**: hip rise from the lowest point to contact as % of height, with a player-relative band (low / typical / high) and the lowest-point and contact key frames (D5) | Free |
+| `drive-time` | Drive time | side | estimated | estimated | **Hero 5**, beside leg drive; player-relative trend only (about ±35–50 ms at 60 fps; gap geometry §5) | Free |
+| `loading-depth` | Hip drop | side | estimated | estimated | More measurements. Descriptive only; never the trigger for a "bend more" instruction (D5) | Free |
+| `deep-bend-flag` | Deep knee bend: yes / no | side | experimental | experimental | Detail, toggle only. Never "little bend" (about 14% of serves would be wrong on two levels; gap geometry §3.3) | Free (toggle) |
+| `shoulder-tilt-trophy` | Shoulder tilt at the trophy position | side | estimated (band only) | estimated | Band (low / typical / high against your own serves) plus the trophy key frame; never shown in degrees; never compared with published trunk angles (D5) | Free |
+| `knee-bend-band` | Knee bend | **behind only** | experimental (band only) | estimated | View-from-behind report: band on the knee nearer the camera plus key frame; toggle only while experimental. The side report shows "Needs a view from behind" | Free (toggle) |
+| `shoulder-over-shoulder-contact` | Shoulder tilt at contact | **behind only** | experimental (band only) | estimated | View-from-behind report, band plus contact key frame, toggle only | Free (toggle) |
+| `retoss-count` | Re-tosses | side, behind | estimated | measured | Detail ("2 tosses caught") | Free |
+| `trophy-pause` | Pause at the top | side, behind | experimental | estimated | Detail, toggle only | Free (toggle) |
+| `repeatability` | Serve shape repeatability | side, behind | experimental | experimental | Detail, toggle only; never a headline or a "score" | Free (toggle) |
+| `serve-in-rate`, `first-serve-in-rate`, `second-serve-in-rate` | Serves in / First serves in / Second serves in | side, behind | player-entered | player-entered | Outcome rows; Progress tile 2 | Free. Suggested tags from behind (experimental): Plus |
+| `double-faults` | Double faults | side, behind | player-entered | player-entered | Outcome row; Progress tile 2 | Free |
+| `serve-type-mix` | Serve types | side, behind | player-entered | player-entered | Block card; strata | Free |
+| `placement-zone` | Where serves land | side: player-entered target; behind: experimental suggestion | player-entered / experimental | as today | Outcome rows; view-from-behind report | Free (entered target). Suggested landing zones from behind: Plus |
+| `toss-lateral`, `toss-lateral-spread` | Toss left–right / its consistency | behind only | experimental | estimated / measured | View-from-behind report, toggle only while experimental | Free (toggle) |
+| `speed-experimental` | Speed near contact (experimental) | **side only** | unavailable by default. An experimental range only when all hold: 120 fps or more, clean ball detections just after contact, known height scale, and a target tag (T / body / wide) that bounds the ball's angle out of the image plane (D4) | experimental | Speed row, toggle only; names the quantity, rounded outward to 5 km/h, always a range | Free (toggle) |
+| `speed-average-rear` | Average speed to the bounce (experimental) | **behind only** | unavailable by default; experimental range when the bounce is located in video after the four-corner tap (D4) | experimental | Speed row in the view-from-behind report, toggle only; says "average", always a range | Free (toggle) |
 | `speed-radar-entered` | Radar speed (you logged) | any | player-entered | player-entered | Speed row; validation data | Free |
 | `spin` | Spin | none | unavailable | unavailable | Spin row, with a one-line reason | Free |
 | `fatigue-flag`, `load-flag` | Fatigue check / Serving volume check | any | estimated / measured | same | Today note; report note | Free |
+
+**Removed:** `trunk-tilt-band` (replaced by `shoulder-tilt-trophy`) and the side-view knee band. There is **no audio speed path in the side view**: audio, when opted in, only times contact, is turned into timestamps on the phone and is never kept (D4).
+
+**Plausibility bounds** (gap ranges §8; METRICS and ARCHITECTURE own the values). A serve with a physically implausible value, for example an apex above 5.5 m, release to contact under 0.40 s or over 1.60 s, or a contact ratio under 1.10 or over 1.75, is left out of the statistics, stays visible with a "not measured" chip and counts in "X of N measured". A value that is possible but outside every published human value (for example an apex above 4.6 m or a contact ratio above 1.62) keeps the serve, lowers its confidence and offers "Check this serve". A contact ratio above 1.62 also asks the player to confirm their entered height.
 
 ### 5.2 Free ("Serve Check") and Plus ("Serve Coach Plus")
 
@@ -486,7 +517,7 @@ This is the product's statement of what each metric is, not a report of what the
 |---|---|---|
 | Recording, import, replay | Unlimited recording and import. Annotated playback of every serve: skeleton, ball trail, phase timeline, key-frame strip | Same |
 | Analysed sessions | **First loop free:** one baseline analysis plus one matched re-test with its verdict. Then **2 analysed practice days per calendar month** (all blocks recorded on one day count once). Recordings over the limit are kept and queued, never lost | Unlimited |
-| Measurements | Every side-view metric in §5.1, with labels, n, intervals and capture quality | Same, plus rear "Outcomes view" analysis: toss left–right and experimental automatic outcome suggestions and landing zones |
+| Measurements | Every metric in §5.1 from either view: the side view, and the optional **view from behind** (toss left–right, knee bend, shoulder tilt at contact, average speed to the bounce), with labels, n, intervals and capture quality. Experimental rows follow the toggle | Same, plus **suggested outcome tags from behind**: in / net / long / wide and the landing zone pre-filled for the player to confirm (experimental) |
 | Experimental metrics | Toggle in Profile, off by default | Same |
 | Coaching | One current focus: cue (both registers), base drill, practice log, "Why this focus?", body check, "My coach's focus" | Adaptive progressions and regressions (COACHING §9.1, §12.2); unlimited experiments; a weekly "Did it work?" review |
 | "Did it work?" | Verdicts on every matched re-test inside the allowance, including the first loop | Unlimited |
@@ -497,9 +528,13 @@ This is the product's statement of what each metric is, not a report of what the
 | **Always free** | Body check, pain gate and referral cards; honesty labels; "How we measure"; export (JSON, CSV, clips); every deletion and retention control; capture tips; the sample session | none |
 
 **Where this deviates from research 08 §6, and why** [Our inference]:
-- **All side-view measurements are free** (research 08 kept some for Plus).
+- **All measurements are free, in both views** (research 08 kept some for Plus).
   - Any of them can be a focus's evidence.
   - Gating individual numbers would make the free coaching decision unexplainable.
+  - The revised D1 and D5 moved knee bend and shoulder-over-shoulder to the view from behind. Knee feedback was free when it was (wrongly) read from the side, so gating the view from behind would turn a geometry correction into a price rise.
+  - The view from behind also has a mechanics role: it is the only view that sees toss direction and tilt, which the Kovacs Institute's release and loading checkpoints use (gap Kovacs §4.1).
+  - Plus keeps the automation from behind: suggested outcome tags and landing zones. Tagging is a convenience, and the stored outcome is still the player's confirmed, player-entered value.
+  - A view-from-behind session counts as an analysed practice day like any other.
 - **The experimental toggle is free** (research 08 put experimental metrics in Plus).
   - Charging for unvalidated numbers conflicts with the honesty positioning.
 - **Match log entry is free** (segment decision §7.3 item 4).
@@ -513,7 +548,7 @@ This is the product's statement of what each metric is, not a report of what the
 | Area | PWA (v1 prototype, closed beta) | iOS app (Capacitor shell; D9) |
 |---|---|---|
 | Payments | No in-app purchase. **Everything is unlocked.** The paywall appears at its real moments as an honest fake door: it records intent, then says "Plus is free during the beta" (research 08 §8.3) | StoreKit in-app purchase only; no external links in Australia (research 07 §9–10) |
-| Capture | `getUserMedia` at a requested frame rate; exposure, lens and fps cannot be locked; 120/240 fps only through import (CAPTURE §9.12) | Native AVFoundation capture: fixed fps, locked exposure and focus, 50/100 fps at night where supported (CAPTURE §10) |
+| Capture | `getUserMedia` at a requested frame rate; exposure, lens and fps cannot be locked; 120/240 fps only through import (CAPTURE §9.12). Tilt comes from `DeviceOrientationEvent`, which needs a motion permission prompt on iOS | Native AVFoundation capture: fixed fps, locked exposure and focus, 1x lens, stabilisation off, portrait by default with landscape as the D1 alternative, 50/100 fps at night where supported; tilt from CoreMotion (CAPTURE §10) |
 | Background | Analysis needs the app open. Copy: "Keep Serve Coach open while it analyses. It takes about a minute." (ARCHITECTURE §5.8) | The same, plus local notifications for "Your session is ready" |
 | Notifications | None. Web push needs a server, which D8 rules out | Local notifications only, opt-in: analysis ready, re-test reminder, match-day card |
 | Storage | IndexedDB, with a persistence request and a nudge to add to the home screen (ARCHITECTURE §8.1) | Native files in the app sandbox |
@@ -524,11 +559,12 @@ This is the product's statement of what each metric is, not a report of what the
 |---|---|---|
 | Accounts, sign-in, cloud sync, backup | D8; keeps "Data Not Collected" possible (research 07 §9) | Proven retention, a privacy impact assessment, and in-app account deletion (App Store 5.1.1(v)) |
 | Cloud AI phrasing of coaching | D9: optional, off by default, not built in v1 (ARCHITECTURE §10) | Consent screen (5.1.2(i)), vendor terms, a 50-payload evaluation |
-| Precise speed; any spin figure | D4 | Radar-paired validation of method A at ≥ 120 fps |
+| Precise speed; any spin figure; speed from the bounce sound in the side view | D4; the side-view bounce is out of frame, about ±20% error (gap geometry §7) | Radar-paired validation of method A at ≥ 120 fps |
 | Grip, racquet path, racquet drop, pronation, external rotation, joint-angle numbers | D5; 2D arm-angle errors of about 12–14° (research 01 [S57]) | A racquet keypoint model and validation at 120–240 fps (COACHING §5.3) |
+| Knee bend and shoulder tilt at contact from the side view; forward lean at contact; any trunk angle compared with published values | D1, D5. From the side, 47–80% of serves would land in the wrong knee band, and the side view reads a true 48° shoulder tilt at contact as 69–84° (gap geometry §3–4) | Not planned from the side view. The view from behind covers knee bend and shoulder tilt at contact |
 | A composite "serve score" | Research 09 anti-pattern 2 | Not planned. `repeatability` stays an experimental detail |
 | Comparison with professionals or level norms | COACHING P12 | Not planned |
-| Automatic in/out from the side view | D3; the side view does not see the landing | The rear view (Plus, experimental) |
+| Automatic in/out from the side view | D3; the side view does not see the landing | Suggested tags from the view from behind (Plus, experimental) |
 | Match play tracking and scoring; points mode (first then second serve) | Different product; CAPTURE §5.4 | Later |
 | Coach dashboard, multi-student accounts, coach seats | D8 (no accounts) | After the beta, with the coach channel results |
 | Asynchronous expert review add-on (about A$29.99) | Phase 2 in research 08 §6; needs IAP and coach supply | Phase 2 test |
@@ -591,7 +627,7 @@ Standard states, which apply unless a screen says otherwise:
 
 **Permissions** are never asked here:
 - The camera is asked at the first Live framing, after a pre-alert with one **Continue** button (research 09 §8).
-- Motion (for the level) is asked at the first Live framing.
+- Motion (to read the phone's tilt, which the app measures and removes; D1) is asked at the first Live framing.
 - Local notifications (native only) are asked after the first analysis: "Want a note when your next session is ready?"
 
 **Events.** `onboarding_step_viewed`, `onboarding_completed`, `onboarding_exited_underage`.
@@ -658,7 +694,7 @@ Standard states, which apply unless a screen says otherwise:
 | **Second-serve check-in** (M3) | Warm up → 15 second serves from your usual side → tally → focus → drill | 15 | Suggested first when the goal is `second-serve-reliability` |
 | **Experiment (45–60 min)** | Warm up → Block A (15) → focus and drill 10 min → Block B (15, same stratum) → "Did it work?" | 30 | The verdict carries "Compared within one session; check again next time" (CAPTURE §5.5) |
 | **Both sides (45 min)** | Block A deuce (15) → Block B ad (15) | 30 | Strata are reported separately |
-| **Outcomes view** (rear; Plus; experimental) | Rear setup (CAPTURE §6) → court-corner tap → block | 15 | Its own session type; statistics are never mixed with the side view (D1) |
+| **View from behind** (optional) | Raised set-up behind the server with both service boxes in view (CAPTURE §6) → four-corner court tap → block | 15 | "Adds what the side can't see: toss left–right, knee bend and shoulder tilt at contact." Measurements are free (experimental ones follow the toggle); suggested outcome tags are Plus. Its own session type; statistics are never mixed with the side view (D1) |
 
 3. **Import a video** (§6.3.6).
 4. Links: **Setup guide** · **Filming at the courts** · **Frame rate: what each choice unlocks**.
@@ -676,10 +712,10 @@ Fields, all pre-filled from the template and the last block (CAPTURE §3.7):
 - **Side:** Deuce / Ad.
 - **Serves:** First / Second.
 - **Mostly:** Flat / Slice / Kick / Mixed. Optional; it becomes `serve-type-mix` intent (player-entered).
-- **Aiming at:** T / Body / Wide / Mixed. Optional; it becomes the `placement-zone` target (player-entered).
+- **Aiming at:** T / Body / Wide / Mixed. Optional; it becomes the `placement-zone` target (player-entered). A single target (not Mixed), for the block or per serve in tagging, is also a prerequisite for an experimental side-view speed range, because it bounds the ball's angle out of the image plane (D4).
 - **Wind:** Calm / Breezy / Windy.
-- **Frame rate:** 60 fps (recommended) / 30 / 120 / 240 / 25 or 50 under lights. Help copy comes from CAPTURE §3.3.
-- **Hit-sound timing:** off by default. Opt-in copy from CAPTURE §7.2.
+- **Frame rate:** 60 fps (recommended) / 30 / 120 / 240 / 25 or 50 under lights. Help copy comes from CAPTURE §3.3. 30 fps is accepted with less precise timing; anything speed-related needs 120 fps or more (D1).
+- **Hit-sound timing:** off by default. Opt-in copy from CAPTURE §7.2. It only times contact; the sound is turned into timestamps on the phone and never kept (D4).
 
 For a re-test, side, serve number, type and view are locked, with a note. Changing them breaks the match, so the button reads "Record a normal session instead".
 
@@ -696,25 +732,38 @@ The check takes one tap in the usual case [Our inference: target ≥ 90% of chec
 
 #### 6.3.4 Setup guide and live framing assistant
 
-**Setup guide** (CAPTURE §3.1–3.2 copy and diagrams A–C):
+**Setup guide** (CAPTURE §3.1–3.2 copy and diagrams A–C). The diagrams must show the revised D1 set-ups:
+- **Default, "Beside the court":** phone upright (portrait) on the hitting-arm side, on the baseline extension, 7–8 m from the centre mark (between courts or just outside the doubles alley), 1.3–1.6 m high, level, 1x lens, lens pointing along the baseline so the baseline runs into the centre of the screen. Portrait gives a frame top of about 5 m and about 450 px of player at 1080p [Our inference, D1].
+- **Alternative, "At the side fence":** landscape, 8.5–9.5 m from the centre mark, 1.4–1.8 m high, level or tilted up a few degrees; 4K preferred, because the player is only about 260–310 px tall at 1080p (gap geometry §6.5).
+- **Doubles serving spot:** serve from your singles spot while recording, or move the phone about 2 m further out (gap ranges §6.3).
+
+Flow:
 - On the first recording, the full six steps.
 - On later recordings, one condensed screen: the six steps as a checklist, the last-time tip, and the sun hint for the time of day (CAPTURE §3.4).
 - "Filming at the courts" (CAPTURE §7.1) shows once before the first recording and stays reachable from "?".
 
 **Live framing assistant** (CAPTURE §9, which owns the checks and thresholds):
 
-**Purpose.** Get to "Ready" with one instruction at a time, readable from the serving spot 7–9 m away.
+**Purpose.** Get to "Ready" with one instruction at a time, readable from the serving spot about 6–10 m away.
+
+**The framing rule it enforces** (D1; gap ranges §6; gap geometry §6.8). Placement follows a rule, not a fixed distance:
+- In the server's plane, the frame must reach from below the feet to at least **4.5 m** above the court. **4.7 m** is the target. **4.3 m** is accepted, in which case a toss peak above the frame is fitted and labelled "peak estimated".
+- The check works out the frame top from the standing player (standing height in pixels against the entered height), on tilt-corrected coordinates, with an allowance for the toss sitting about 0.3 m nearer the camera than the body.
+- **Below 4.3 m, Record is blocked** and the instruction is to move back or raise the phone.
+- **Tilt:** an upward tilt of 5° or less, read from the motion sensors, is allowed and removed in software. A larger tilt, or no tilt reading, gives "Level the phone". Uncorrected tilt is never used.
+- **Player size:** below about 250 px of standing height, suggest 4K (usually only landscape at the fence on the far court half).
+- After the first three serves, if any toss peak comes within 0.2 m of the top or leaves the frame: "Move the phone about 1 m back or raise it."
 
 **Primary content:**
 - the camera preview with the framing overlay (DESIGN.md);
-- a checklist rail with each check as a glyph plus a word (level, you in frame, toss room, room ahead, steady, frame rate, light);
+- a checklist rail with each check as a glyph plus a word (tilt, you in frame, toss room, room ahead, steady, player size, frame rate, light);
 - a big state.
 
 At the serving spot the screen switches to a full-bleed state: one large glyph and one to three words, such as "Ready", "Phone back 2 steps" or "Level the phone". An optional chime and spoken phrase accompany it (CAPTURE §9.7).
 
 **Practice toss** (recommended): "Stand tall for two seconds, then toss and catch." It checks toss headroom and ball visibility.
 
-**Primary action.** **Record**. Enabled only at "Ready". **Record anyway** sits in the overflow menu; its failing checks are stored and reported, and labels downgrade (CAPTURE §9.8).
+**Primary action.** **Record**. Enabled only at "Ready", so headroom below 4.3 m blocks it (D1). **Record anyway** sits in the overflow menu as an explicit override, as in ARCHITECTURE; its failing checks are stored and reported, and labels downgrade (CAPTURE §9.8). With headroom below 4.3 m, toss-peak metrics come out `estimated` ("peak estimated") or `unavailable`, never silently low. Whether D1's "blocks recording" should also remove this override is §12.2 item 12.
 
 **States.**
 
@@ -722,7 +771,7 @@ At the serving spot the screen switches to a full-bleed state: one large glyph a
 |---|---|
 | Camera permission not yet asked | Pre-alert: "Serve Coach uses the camera to record your serve. Video is analysed on this phone and isn't uploaded." **Continue** |
 | Camera permission denied | "Camera access is off. You can turn it on in Settings, or import a video you've already filmed." **Open Settings** / **Import a video** |
-| Motion permission denied | The level check is skipped, with a note: "We can't read the phone's level. Line it up by eye with the fence rail." |
+| Motion permission denied | The tilt check can't run: "We can't read the phone's tilt. Keep it level by eye, lined up with the net post or a fence post. Heights will be marked estimated." Height and angle metrics carry the reason "tilt unknown" |
 | Camera unavailable or in use | "The camera is busy. Close other camera apps and try again." |
 | Low storage | "About 1 GB free. That's enough for about 2 blocks at 60 fps." Warn below the CAPTURE §3.6 needs |
 | Hot phone (native) | CAPTURE §3.5 copy |
@@ -751,7 +800,7 @@ At the serving spot the screen switches to a full-bleed state: one large glyph a
 This is the CAPTURE §11 flow, which owns it:
 1. Probe summary card: "4:12 · 1080p · 60 fps · iPhone".
 2. Quick scan with a suggested view.
-3. Questions, asking only what the probe cannot answer: camera position; deuce, ad or both; first, second or mixed; a slow-motion question when needed.
+3. Questions, asking only what the probe cannot answer: camera position (side-on or from behind); deuce, ad or both; first, second or mixed; a slow-motion question when needed. The phone's tilt is usually unknown for imports, so height and angle metrics are capped at `estimated` with the reason "tilt unknown".
 4. Optional trim.
 5. Rights reminder on the first import only.
 
@@ -760,9 +809,9 @@ This is the CAPTURE §11 flow, which owns it:
 - **Duplicate import:** "You've already imported this video (Sat 26 Sep)." **Open that session** / **Import anyway**.
 - **Slow-motion time base unknown:** the CAPTURE §11.3 table decides what to ask and what to downgrade. Speed is never computed from an unproven time base.
 
-**Tier.** Recording and import are free. Rear "Outcomes view" analysis is Plus.
+**Tier.** Recording and import are free, in both views. Suggested outcome tags from the view from behind are Plus.
 
-**Events.** `record_template_selected`, `block_configured`, `body_check_completed` (result class only: `fine`, `sore` or `stop`; never regions or answers, §9.4), `setup_guide_viewed`, `framing_ready` (seconds to ready, failing check ids seen), `record_anyway_used`, `recording_started`, `recording_stopped`, `tally_entered`, `import_started`, `import_completed`.
+**Events.** `record_template_selected`, `block_configured`, `body_check_completed` (result class only: `fine`, `sore` or `stop`; never regions or answers, §9.4), `setup_guide_viewed`, `framing_ready` (seconds to ready, failing check ids seen, orientation, frame-top bucket, tilt bucket), `record_anyway_used`, `recording_started`, `recording_stopped`, `tally_entered`, `import_started`, `import_completed`.
 
 ### 6.4 Processing
 
@@ -845,10 +894,12 @@ This is the CAPTURE §11 flow, which owns it:
    - a sparkline of the last matched sessions (Free: last 30 days).
 
    Tapping a row opens the Metric info sheet (§6.14). Provisional values carry "early read".
-8. **More measurements** (collapsed): the remaining side-view metrics and bands with key-frame thumbnails. Experimental rows appear only with the toggle on, below a divider labelled "Experimental".
-9. **Not available from this view** rows:
-   - Speed: "—" with the lock glyph, "Needs 120 fps and clean ball tracking", and **Enter a radar reading**.
+8. **More measurements** (collapsed): the remaining metrics and bands for this view with key-frame thumbnails, for example hip drop (`loading-depth`, as a description: "Your hips dropped about 6% of your height before driving up" [placeholder number]) and shoulder tilt at the trophy position (a band with the trophy frame, never degrees). Experimental rows appear only with the toggle on, below a divider labelled "Experimental".
+9. **Not available from this view** rows (side view):
+   - Speed: "—" with the lock glyph, "Needs 120 fps, clean ball tracking and a target (T, body or wide)", and **Enter a radar reading**.
    - Spin: "—", "Spin can't be measured from phone video", **Why?**.
+   - Knee bend: "—", "Needs a view from behind. From the side your knees point at the camera."
+   - Shoulder tilt at contact: "—", "Needs a view from behind."
    - Where serves land: "Add a view from behind".
 10. **All serves strip:**
     - one dot per serve, shape-coded by outcome (● in, ▲ net, ✕ long or wide, ○ untagged);
@@ -864,8 +915,10 @@ This is the CAPTURE §11 flow, which owns it:
 |---|---|
 | `second-serve-reliability` | Toss consistency (`toss-height-spread`, `toss-forward-spread`) · Second serves in (`second-serve-in-rate`, k of n with band) · Double faults (tally) · Toss in front (`toss-forward`) · Rhythm consistency (`rhythm-spread`) |
 | `first-serves-in` | Toss consistency · First serves in (`first-serve-in-rate`) · Contact height (`contact-height-ratio`) · Rhythm consistency · Landing (`landing-distance`) |
-| `more-pace` | Toss consistency · Contact height · Knee bend band · Trunk tilt band · Landing |
+| `more-pace` | Toss consistency · Contact height · Leg drive (`leg-drive`, with `drive-time`) · Shoulder tilt at trophy (`shoulder-tilt-trophy`) · Landing |
 | `less-effort` | Rhythm consistency · Toss height consistency · Toss drop (`toss-drop`) · Contact height |
+
+In a view-from-behind session the rows are the same where the metric exists in that view, then toss left–right, knee bend and shoulder tilt at contact (experimental rows only with the toggle on).
 
 **Primary action**, in order of precedence:
 - **Tag serves**, if nothing is tagged and there is no tally;
@@ -902,7 +955,7 @@ This is the CAPTURE §11 flow, which owns it:
 **Primary content:**
 
 1. **Video player.**
-   - It opens on the **evidence frame** for the session's focus phase, not at 0:00: toss → apex; loading → trophy; contact → contact; landing → landing (COACHING §8.1).
+   - It opens on the **evidence frame** for the session's focus phase, not at 0:00: toss → apex; loading → trophy; drive → lowest hip point, paired with contact; contact → contact; landing → landing (COACHING §8.1).
    - The original aspect ratio is always kept.
 2. **Overlay chips**, one on at a time, with the focus overlay on by default:
    - **Skeleton:** low-confidence joints faded, zero-confidence joints hidden (research 09 pattern 16). No angle numbers anywhere (D5).
@@ -912,7 +965,7 @@ This is the CAPTURE §11 flow, which owns it:
 3. **Phase timeline:** the seven product phases (setup, toss, loading, drive, contact, landing, recovery) as tappable segments under the scrubber.
    - Tapping jumps to the phase's key frame.
    - The focus phase is marked with a glyph and a word, not colour alone.
-4. **Key-frame strip:** thumbnails for **Release**, **Apex**, **Trophy**, **Contact** and **Landing**, from `ServeEvents`.
+4. **Key-frame strip:** thumbnails for **Release**, **Apex**, **Trophy**, **Lowest point** (hips at their lowest, used by leg drive), **Contact** and **Landing**, from `ServeEvents`.
    - Setup and recovery are shown when detected.
    - An event with confidence < 0.5 shows "Not clear on this serve" instead of a frame (METRICS reason codes).
 5. **Transport:**
@@ -931,7 +984,7 @@ This is the CAPTURE §11 flow, which owns it:
    - exclusions with reasons (for example "Toss left the frame").
 7. **Compare** (the segment in the header): **Best serve** · **Last session** · **Before the experiment**.
    - **Side by side:** both clips phase-synced on contact, with one scrubber moving both.
-   - **Ghost:** the other serve overlaid, aligned on the contact frame and scaled by body height in pixels. It needs a fixed camera in both (research 09 §6.1).
+   - **Ghost:** the other serve overlaid, aligned on the contact frame and scaled by body height in pixels. It needs a fixed camera, the same view and the same orientation in both (research 09 §6.1).
    - "Best serve" follows COACHING §8.1. It is never a professional.
 
 **Primary action.** Play (or step) through the evidence. There is no other primary button, because the purpose is looking.
@@ -948,6 +1001,10 @@ This is the CAPTURE §11 flow, which owns it:
 |---|---|
 | Video deleted (retention) | "The video was deleted after 30 days. Key frames and stats are kept." The player becomes key-frame stepping with overlays on stored frames |
 | Low-confidence serve | Banner: "We couldn't see this serve clearly, so it isn't in your stats." Plus the reason and fix |
+| Implausible value (hard reject, gap ranges §8) | "Something on this serve didn't add up, so it isn't in your stats." The serve stays visible with a "not measured" chip and counts in "X of N measured" |
+| Unusual value (soft flag) | "Check this serve": the value stays, with lower confidence, and the player can mark it "Not a serve" |
+| Toss caught | "Toss caught: no hit." Counted as a re-toss, left out of contact and drop metrics |
+| Toss peak above the frame | "Your toss went above the picture. We estimated its peak." (`estimated`; unavailable when more than 0.5 m above the frame) |
 | Overlay unavailable (for example no ball track) | The chip is disabled with a reason: "Ball not tracked on this serve" |
 | Compare target missing | "No best serve yet: tag a few serves that went in." / "No earlier session from the same side." |
 | Decode error | "This video can't be played on this phone right now. Key frames are below." |
@@ -973,7 +1030,7 @@ This is the CAPTURE §11 flow, which owns it:
 1. The **serve card**: "Serve 7 of 15", with a 1.5 s loop from toss apex to just after contact, muted, to jog memory. When Reduce Motion is on, the contact key frame replaces the loop.
 2. **Four big buttons** in the thumb zone: **In** · **Net** · **Long** · **Wide**, plus a small **Not sure**. Tapping auto-advances to the next serve.
 3. **Serve number and side** are pre-set from the block and editable per serve through a small row above the buttons.
-4. **More** (collapsed): the intended type (Flat / Slice / Kick) and target (T / Body / Wide) for this serve.
+4. **More** (collapsed): the intended type (Flat / Slice / Kick) and target (T / Body / Wide) for this serve. A target tag is also what an experimental side-view speed range needs (D4).
 5. **Progress:** "7 of 15", with a strip of shapes filling in.
 6. **Undo**, top left, which steps back one serve.
 
@@ -984,7 +1041,7 @@ This is the CAPTURE §11 flow, which owns it:
 
 **Consistency with the tally.** When a tally exists and the per-serve tags disagree, show "Your tags say 9 in; your tally said 10. Which is right?" **Use tags** / **Use tally**.
 
-**Rear "Outcomes view"** (Plus, experimental):
+**Suggested tags from the view from behind** (Plus, experimental):
 - Buttons are pre-selected from the automatic suggestion, labelled "Suggested".
 - Confirming stores a player-entered outcome with provenance `auto-suggested` (CAPTURE §6.2).
 
@@ -995,7 +1052,7 @@ This is the CAPTURE §11 flow, which owns it:
 - **Completion:** "Tagged 15 serves." **See report**.
 - **Error:** none expected. Tags save per tap.
 
-**Tier.** Free.
+**Tier.** Free, except the suggested tags from behind (Plus).
 
 **Data.**
 - The `serve-in-rate` family and `double-faults` (player-entered).
@@ -1127,10 +1184,10 @@ Tapping a tile opens Trend detail.
 
 | Tile | Question | Metrics | Answer rules |
 |---|---|---|---|
-| 1 | **"Is my toss becoming more consistent?"** | `toss-height-spread`, `toss-forward-spread` (rear: `toss-lateral-spread`, Plus) | METRICS §4.6 trend verdict at ≥ 3 matched sessions; a comparison only at 2; "Building your baseline (1 of 2 sessions)" before that |
+| 1 | **"Is my toss becoming more consistent?"** | `toss-height-spread`, `toss-forward-spread` (view from behind: `toss-lateral-spread`, free, joining the tile only once it leaves `experimental`, rule 6) | METRICS §4.6 trend verdict at ≥ 3 matched sessions; a comparison only at 2; "Building your baseline (1 of 2 sessions)" before that. Side-view and view-from-behind sessions are separate strata |
 | 2 | **"Am I getting more first serves in?"** (or, first for the double-fault goal, **"Is my second serve safe?"**) | `first-serve-in-rate`; `second-serve-in-rate`, `double-faults` | Rolling pooled window of about 100 serves with a Wilson band (CAPTURE §5.1). Typical answer: "58% of your last 96 first serves (48–68%). About {N} more serves would show a 10-point change." The interval is the Wilson interval for 56 of 96; N comes from METRICS §4.5 and is often large. Process metrics lead (D7) |
 | 3 | **"Did it work?"** | Experiments | A list of active and finished experiments with verdict words and dates, for example "Steady toss height · 3 Oct → 10 Oct · Likely better" |
-| 4 | **"Contact and rhythm"** | `contact-height-ratio`, `rhythm-spread` (`rhythm-release-to-contact` in detail) | As tile 1 |
+| 4 | **"Contact, rhythm and legs"** | `contact-height-ratio`, `rhythm-spread`, `leg-drive` (`rhythm-release-to-contact` and `drive-time` in detail) | As tile 1. Leg drive is described against the player's own range, never against a population value |
 | 5 | **"Did it show up on comp night?"** (Plus) | Match log (§6.11) beside the focus metric | Two aligned rows by season week: "Practice: toss spread" and "Comp nights: double faults per service game (you logged)". **No verdict and no pooling**; the caption says "Your own record. Match numbers jump around a lot." |
 
 **Trend detail:**
@@ -1188,7 +1245,8 @@ Tapping a tile opens Trend detail.
 7. **Caveats, as they apply:**
    - "Compared within one session; check again next time" (Experiment template);
    - "Windy today" (block card);
-   - "Different frame rate: timing compared with care".
+   - "Different frame rate: timing compared with care";
+   - "Different set-up (upright beside the court v landscape at the fence): toss height compared with care", because the absolute toss bias depends on distance (ARCHITECTURE; D1). Spreads are still compared.
 8. **What next** (COACHING §12.5): the transition sentence and its button, for example "It worked. Your toss height is steadier. We'll keep an eye on it while you work on something new." → **See your next focus**.
 9. **Usefulness rating**, if not yet given.
 
@@ -1204,7 +1262,7 @@ Tapping a tile opens Trend detail.
 
 | State | Copy |
 |---|---|
-| Not comparable | "Not comparable yet: {reason}." Reasons use METRICS/COACHING matching rules: side, serve number, type, view, capture Limited, fewer than the minimum serves |
+| Not comparable | "Not comparable yet: {reason}." Reasons use METRICS/COACHING matching rules: side, serve number, type, view (side-on v from behind are never compared), capture Limited, fewer than the minimum serves |
 | Baseline deleted | "The baseline session was deleted, so this experiment can't be compared." **Start a new baseline** (ARCHITECTURE §8.3) |
 | Too early | "Too early to tell. About 20 more serves would settle it." **Record another re-test** |
 | First loop complete (free) | After the verdict and the next-step button, **once**: the Plus offer card (§6.15). The verdict itself is never behind the paywall |
@@ -1298,11 +1356,11 @@ Demo sessions sit in their own "Sample" group.
    - per-session list with sizes and **Delete video**;
    - **Delete all videos**;
    - **What leaves this phone**: "Nothing." (or the usage-counts line, if consented, with **Stop sharing**);
-   - **Hit-sound timing** (off by default; CAPTURE §7.2);
+   - **Hit-sound timing** (off by default; CAPTURE §7.2): "Times contact from the sound of the hit. We keep only the timings, never the sound." (D4);
    - **Delete everything** (§7.6).
 5. **How we measure:**
    - for every metric: the plain method, prerequisites, typical error (modelled until validated), the validation level in words, limitations and the reason codes it can show;
-   - global pages: "What we can't measure" (spin, precise speed, grip, racquet path, left–right from the side);
+   - global pages: "What we can't measure" (spin, precise speed, grip, racquet path; from the side: left–right, knee bend, and shoulder tilt or forward lean at contact; speed from the bounce sound) and "Setting up your phone" (the D1 framing rule, both set-ups, why tilt is measured and removed);
    - "Validation results": the latest `tools/validate` summary per metric (coverage, bias, MAE, limits of agreement), the scenario families tested and failure cases (ARCHITECTURE §12–13; METRICS §5).
 6. **How we coach:**
    - evidence tiers explained;
@@ -1311,6 +1369,8 @@ Demo sessions sit in their own "Sample" group.
    - sources with labels.
 
    Copy: "Cues and drills are coaching practice, not proven by trials for players like you." (COACHING §13)
+
+   Independence line (gap Kovacs §6): "Serve Coach is independent. It isn't affiliated with, sponsored by or endorsed by any coach or coaching business we cite. Names appear only to cite published coaching material." Coach names never appear in cues, drill names, features or App Store metadata. Attributions follow the verified source: the 80/20 view is cited to the Kovacs Institute (a team post reporting Dr Kovacs's observations), not to Dr Kovacs personally.
 7. **Experimental metrics:** a toggle, off by default. "Shows numbers we're still checking, like speed ranges. They're marked with a flask, never used for your focus, and may be wrong."
 8. **Plan:**
    - Free / Plus / Season pass;
@@ -1348,8 +1408,15 @@ Demo sessions sit in their own "Sample" group.
    - "Checked against a physical reference" (V3).
 5. **Your usual range** and the latest trend, when they exist.
 6. **How we get it:** two sentences.
-7. **Why it may be off here:** the reason codes behind any downgrade, with unlock hints (METRICS §1.3), for example "Move the phone back a step or raise it a little so the whole toss fits."
-8. **Context, not a target** (only for metrics with published references): the population named, for example "In ranked junior men, contact was about 148% of height (research 03 [S28])."
+7. **Why it may be off here:** the reason codes behind any downgrade, with unlock hints (METRICS §1.3). Examples:
+   - "Move the phone back a step or raise it a little so the whole toss fits."
+   - Tilt unknown: "We couldn't read the phone's tilt, so heights are marked estimated."
+   - Peak above the frame: "Your toss went above the picture on 3 serves. We estimated those peaks."
+   - Toss height consistency, side view: "From the side, a toss that wanders left or right looks a little like a change in height. A view from behind separates the two." (D1)
+8. **Context, not a target** (only for metrics with published references or provisional bands):
+   - the population named, for example "In ranked junior men, contact was about 148% of height (research 03 [S28]).";
+   - or the provisional club-player band from gap ranges §7, for example "Typical for club players (provisional): toss height spread 8–20 cm." [values provisional, ±50% on each edge until our own data exist];
+   - never for `shoulder-tilt-trophy`, `leg-drive`, `knee-bend-band` or `shoulder-over-shoulder-contact`: published trunk and leg values use different definitions (D5; §4.4 rule 9).
 9. **More in How we measure ›**
 
 **Primary action.** **Done**. When the value has an unlock hint: **How to fix this** (→ setup guide section).
@@ -1368,7 +1435,7 @@ Demo sessions sit in their own "Sample" group.
 |---|---|---|
 | **T1. First loop complete** (default; segment decision M9) | After the first "Did it work?" verdict and next-step button | An inline card below the verdict, shown once, plus a sheet on tap |
 | **T2. Allowance reached** | Starting a third analysed day in a calendar month | The processing "queued" state (§6.4) with **See Plus** |
-| **T3. Plus feature tapped** | Ghost compare, any-session compare, history beyond 30 days, season view, rear analysis, progression drill, coach progress summary | A sheet naming the feature |
+| **T3. Plus feature tapped** | Ghost compare, any-session compare, history beyond 30 days, season view, suggested tags from the view from behind, progression drill, coach progress summary | A sheet naming the feature |
 | **Test cell A** (research 08 OQ11) | After the first analysed report | An inline card at the report's end |
 
 **Never shown:**
@@ -1384,7 +1451,7 @@ Demo sessions sit in their own "Sample" group.
    - unlimited analysed sessions;
    - your full history and a season view of practice beside comp nights;
    - compare any two sessions, with ghost overlays;
-   - progressions, and the view from behind.
+   - progressions, and suggested outcome tags from the view from behind.
 3. **Plans**, shown equally clearly:
    - **Annual A$99.99** (about A$8.33 a month), with a 7-day free trial;
    - **Monthly A$14.99**.
@@ -1441,12 +1508,12 @@ Sample data never enters Progress or experiments, and **Remove sample data** is 
 2. **Body check:** "All good".
 3. **"Before you head out"** (first time only): battery, space, a mount, balls, warm-up.
 4. **Filming at the courts** (first time only).
-5. **Setup guide**, six steps with diagrams.
+5. **Setup guide**, six steps with diagrams: the default upright set-up beside the court, 7–8 m from the centre mark (§6.3.4).
 6. **Live framing.**
    - Camera permission pre-alert → system prompt.
-   - Motion permission.
+   - Motion permission (to read tilt).
    - One instruction at a time until "Ready".
-   - Practice toss: "Room above your toss: 4.4 m (needs 4.2)".
+   - Practice toss: "Room above your toss: 4.6 m (4.5 m wanted)". Below 4.3 m the step reads "Phone back 2 steps" and Record stays blocked (D1).
 7. **Record.** A 10 s countdown, then 15 serves, then **Stop**.
 8. **Saved summary → Tally:** "How many went in?" 9 of 15, 3 net, 2 long, 1 wide.
 9. **Tag each serve now?**
@@ -1461,7 +1528,7 @@ Sample data never enters Progress or experiments, and **Remove sample data** is 
 
 | Failure | Branch |
 |---|---|
-| Framing never reaches "Ready" | **Record anyway** is available. The report states the downgrade and the "Next time" tip |
+| Framing never reaches "Ready" | **Record anyway** is available (§6.3.4). The report states the downgrade and the "Next time" tip; with headroom below 4.3 m, toss peaks are `estimated` or `unavailable` |
 | Capture Limited | The capture-fix decision and no focus. Today: "Let's get a clean recording first. Here's the one thing to change." |
 | Fewer than 5 measured serves | The same capture-fix card |
 
@@ -1548,6 +1615,8 @@ If the clip is slow motion with an unproven time base:
 - speed is never computed;
 - the report says why in the capture line.
 
+For any import, the phone's tilt is usually unknown, so heights and angles carry "tilt unknown" and are capped at `estimated` (§5.1).
+
 ---
 
 ## 8. Copy and tone guide
@@ -1585,6 +1654,8 @@ This extends COACHING §14 (coaching content) and CAPTURE §3 (setup copy), whic
 | "See a physio or GP" | "Injury", "diagnosis", "treatment", "protect", "prevent" | TGA 14B; Apple 1.4.1 |
 | "On this phone" | "In the cloud", "secure" (unqualified) | D8 |
 | "Serve Coach" (the app) | "AI coach", "your AI" | Category scepticism (research 08 [S63]) |
+| "Your hips rose about 12% of your height into the ball", "short crouch, quick rise" | "Bend your knees more", "jump higher", a knee angle | D5; the side view can't see knee bend, and both coaching schools say depth isn't the goal (gap Kovacs §5 T1) |
+| "Needs a view from behind" | A guessed value from the wrong view | D1 |
 
 ### 8.3 Formatting numbers
 
@@ -1594,6 +1665,9 @@ This extends COACHING §14 (coaching content) and CAPTURE §3 (setup copy), whic
 - Estimated values are prefixed with "about" in sentences; the table shows the chip.
 - Experimental values are always a rounded range ("about 130–145 km/h") with the flask chip. They never appear in a sentence outside the experimental section.
 - Heights relative to body are shown as a percentage in sentences ("at about 146% of your height") and as "1.46×" in tables. The secondary cm value is shown only when height is entered.
+- Leg drive and hip drop are shown as a percentage of height ("hips rose about 12% of your height"); drive time in seconds ("0.38 s").
+- Posture bands are shown as words with a key frame, never as degrees: `shoulder-tilt-trophy` and `shoulder-over-shoulder-contact` as low / typical / high against your own serves; `knee-bend-band` (from behind) as little / moderate / deep (METRICS owns the edges).
+- Speed always names its quantity: "near-contact speed" (side view) or "average speed to the bounce" (from behind).
 
 ### 8.4 Examples by context
 
@@ -1608,9 +1682,12 @@ This extends COACHING §14 (coaching content) and CAPTURE §3 (setup copy), whic
 | Verdict, worse | "It dipped a little, which often happens mid-change. Let's make the drill a bit easier." | "Worse than before." |
 | Not comparable | "Not comparable yet: this session was ad court; your experiment is on the deuce court." | "Error: stratum mismatch." |
 | Serve-in reality | "58% of your last 96 first serves (48–68%). About {N} more serves would show a 10-point change." | "Your first serve % dropped from 60% to 53%." (from 15 serves) |
-| Speed unavailable | "Speed isn't available from this footage. Record at 120 fps or more, or enter a radar reading." | "Speed: 142.7 km/h" |
+| Speed unavailable | "Speed isn't available from this footage. Record at 120 fps or more and tag your target, or enter a radar reading." | "Speed: 142.7 km/h" |
+| Knee bend (side view) | "Knee bend needs a view from behind. From the side, your hips rose about 12% of your height into the ball." [placeholder number] | "Knee bend: 38°. Bend more." |
+| Leg drive | "Your hips rose a little less than your usual today (typical for you: 11–14%)." [placeholder numbers] | "Weak leg drive." / "Pros rise 16%." |
 | Spin | "Spin can't be measured from phone video." | "Spin: 2,300 rpm" |
 | Capture tip | "Your toss left the picture on 3 of 15 serves. Move the phone back a step." | "Bad framing detected." |
+| Tilt | "Level the phone. A small tilt up is fine; we measure it and take it out." | "Camera angle invalid." |
 | Night | "Court lights: timing will be a little less precise. Your toss and posture are fine." | "Low quality video." |
 | Empty state | "No sessions yet. Your first one takes about 30 minutes, warm-up included." | "Nothing here!" |
 | Allowance | "You've used this month's 2 free analysed days. It's saved; we'll analyse it on 1 November, or now with Plus." | "Upgrade now to continue!" |
@@ -1683,9 +1760,9 @@ These come from research 08 §8.1 and segment decision M14, and are instrumented
 | `block_configured` | Block card | side, serve number, type set (bool), fps requested, hit-sound (bool) |
 | `body_check_completed` | Every check | `fine` / `sore` / `stop` **only** (see §9.4) |
 | `setup_guide_viewed` | Guide | full / condensed |
-| `framing_ready` | "Ready" reached | seconds bucket, failing check ids seen, attempt number |
-| `record_anyway_used` | Overflow | failing check ids |
-| `recording_started` / `recording_stopped` | Record | template, fps delivered, duration bucket, night (bool) |
+| `framing_ready` | "Ready" reached | seconds bucket, failing check ids seen, attempt number, orientation, frame-top bucket, tilt bucket |
+| `record_anyway_used` | Overflow | failing check ids (including headroom below 4.3 m) |
+| `recording_started` / `recording_stopped` | Record | template, view (side / behind), orientation, fps delivered, duration bucket, night (bool) |
 | `tally_entered` | Tally | fields used |
 | `import_started` / `import_completed` | Import | slow-motion answer, time-base status |
 | `analysis_started` / `analysis_first_serve_ready` / `analysis_completed` / `analysis_cancelled` / `analysis_failed` / `analysis_queued_allowance` | Processing | duration bucket, serves detected and measured, capture class, fps class, device class, failure code |
@@ -1747,7 +1824,7 @@ The detail will live in `docs/MONETISATION.md`. This is the product-facing summa
 | **Proceeds** (Small Business Program, 15%, after GST) | A$77.26 a year; A$11.58 a month; A$30.90 per season pass | research 08 §3 |
 | **Season pass** (test) | **A$39.99**, non-renewing, 4 months, aligned with pennant and night-comp seasons | research 08 §6; segment decision M9 |
 | **Price cells** (test) | Annual A$79.99 and A$129.99 | research 08 §6 |
-| **Free tier** | The first loop free, then 2 analysed practice days a month; all side-view measurements; match log entry; safety, labels, export and deletion always free | §5.2 |
+| **Free tier** | The first loop free, then 2 analysed practice days a month; every measurement from either view; match log entry; safety, labels, export and deletion always free | §5.2 |
 | **When we ask** | Never before the first report. Default: at the first "Did it work?" (T1). Test cell: after the first report. Plus the allowance and feature triggers | segment decision M9; research 08 §5 implication 2, OQ11 |
 | **Coach channel** | A free coach view (export-based in v1); one free month for students through Apple offer codes; about A$20 per converted annual plan, paid off-platform | research 08 §6–7 |
 | **Unit cost** | About A$0.01 per active user a month fully on the device. A future optional cloud phrasing layer adds about A$0.006 per call on Haiku 4.5 | research 08 §4.6; ARCHITECTURE §10 |
@@ -1771,7 +1848,7 @@ The full checklist is research 07 §12. These items change product behaviour or 
 1. **Assume we are an APP entity.** Write an APP 1 privacy policy, including an automated-decision section ready for 10 December 2026, collection notices at the camera and comfort screens, and access, correction and breach processes (research 07 §1, §12 items 1–10) [Regulation].
 2. **Express consent before storing comfort or pain information** (APP 3.3). It stays local only and never goes to iCloud (5.1.3) (§6.1 O7; COACHING §10).
 3. **Recording indicator** whenever the camera records (2.5.14) (§6.3.5).
-4. **Purpose strings:** camera always; microphone only if hit-sound timing ships; PHPicker for imports (CAPTURE §10).
+4. **Purpose strings:** camera always; microphone only if hit-sound timing ships, used only for contact timestamps with no sound kept (D4); PHPicker for imports (CAPTURE §10). Reading tilt needs Safari's motion prompt in the PWA; whether native CoreMotion attitude needs a purpose string is for CAPTURE §10 to confirm (we believe it does not) [Our inference].
 5. **Adults-only closed beta.** The Children's Online Privacy Code decision is needed before public release (§1.4).
 6. **Clinician review** of the body-check, red-flag and referral copy. This is a release blocker.
 7. **No third-party SDKs.** App Privacy details and a privacy manifest are completed honestly, including the usage-counts decision (§9.4).
@@ -1794,8 +1871,11 @@ These follow segment decision §9, where each risk has a cheap test.
 | Comp players rarely practise serves alone | The pre-match card and lesson-homework framing work even with little solo practice. If the risk is confirmed, reposition through coaches (test 1) |
 | Tagging is too slow or unreliable | Misses-only and tally modes; measure the median time and tally/tag conflicts (§6.7) |
 | The mechanics-outcome insight comes back null | The card says "No clear difference", which is honest and useful. Process metrics lead Progress (D7) |
-| The side view misses the second-serve fix | The double-fault focus says what the side view can't see, and offers the rear view. Beta usefulness is measured on second-serve focuses (test 5) |
-| Toss leaves the frame (D1 geometry) | Live headroom check; CAPTURE's 1.5–1.9 m and 7–9 m guidance; the "Next time" tip (§13) |
+| The side view misses the second-serve fix | The double-fault focus says what the side view can't see, and offers the view from behind. Beta usefulness is measured on second-serve focuses (test 5). D6's stage-first ranking could also stop `second-serve-margin` ever being chosen for this segment; §13 item 6 proposes the fix |
+| Toss leaves the frame (D1 geometry) | The revised D1 framing rule: frame top at least 4.5 m in the server's plane (4.7 m target; 4.3 m accepted with a fitted, labelled peak), checked live from the standing player, with recording blocked below 4.3 m. Default set-up upright at 7–8 m from the centre mark, 1.3–1.6 m high (a frame top of about 5 m); fence alternative landscape at 8.5–9.5 m. Peaks up to 0.5 m above the frame are fitted with known gravity and labelled `estimated`. The "Next time" tip (gap ranges §6; gap geometry §6) |
+| Tilted phone distorts heights | Tilt of 5° or less is measured from the motion sensors and removed in software; uncorrected tilt is never used. An uncorrected 5° tilt would cost about 9 cm on the toss peak; a 1° error in the measured tilt costs at most about 1.6 cm (gap geometry §6.6). Phone pitch accuracy against a spirit level is UNVERIFIED and needs a device test |
+| Too few pixels on the player at the fence | Suggest 4K below about 250 px of standing height; portrait at 7–8 m gives about 450 px at 1080p (D1) |
+| Players miss knee feedback from the side | Say why ("your knees point at the camera"), show hip drop and hip rise instead, and offer the free view from behind for a knee-bend band (§5.2) |
 | Metrics unvalidated on real footage | Validation note everywhere; no accuracy claims; in-app annotation mode and radar booth collect ≥ 60 clips (test 6) |
 | Night capture quality | Flicker and lux checks, honest downgrade, a daylight nudge for baselines (M11) |
 | Coach conflict | "My coach's focus"; "Also noticed" wording; coach export |
@@ -1822,6 +1902,12 @@ Owners should reconcile these.
    - `settings.consents.usageCounts`;
    - a local `events` table.
 8. **The pre-match warm-up routine** (§6.8.4) is draft content. COACHING should own and confirm it (segment decision §7.3 item 2).
+9. **Canonical metric ids after the D1/D5 revision.** ARCHITECTURE already uses them. METRICS §0 and §3.14–3.15 (as read on 27 Sep, before its own revision) still define a side-view `knee-bend-band` "Knee bend (hip drop)" and `trunk-tilt-band`. METRICS and `metrics.json` should adopt `leg-drive`, `drive-time`, `loading-depth`, `deep-bend-flag`, `shoulder-tilt-trophy`, rear-only `knee-bend-band` and `shoulder-over-shoulder-contact`, and `speed-average-rear`, and remove `trunk-tilt-band`. This spec's §5.1 labels are provisional until METRICS confirms them.
+10. **Orientation.** CAPTURE §2 and the `cq.orientation` check (as read on 27 Sep) recommend landscape and warn on portrait. Revised D1 makes portrait at 7–8 m the default and landscape at the fence the alternative; ARCHITECTURE already follows D1. CAPTURE owns the change.
+11. **Landing-distance label.** Gap ranges §7.5 recommends `landing-distance` stay `experimental` until validated, because no study reports landing distance for any population. D5 makes it a hero, and experimental values stay out of headlines and Progress tiles (§4.4 rule 6). METRICS decides; if it goes experimental, the hero row shows landing only with the toggle on and it leaves the `first-serves-in` and `more-pace` above-the-fold rows.
+12. **"Record anyway" below 4.3 m.** D1 says the headroom check "blocks recording below 4.3 m". ARCHITECTURE blocks the Record button but keeps "Record anyway" as an override that stores the failing check. This spec follows ARCHITECTURE (§6.3.4) because §4.1 promises that "Record anyway" is always available; the product lead should confirm that reading of D1.
+13. **Naming the second angle.** CAPTURE §6 and other specs call it the "Outcomes view". The player-facing name is now **"View from behind"**, because it has a mechanics role as well (toss direction, knee bend, shoulder tilt at contact; gap Kovacs §4.1). Internal ids can stay `rear`.
+14. **Tier of the view from behind.** Its measurements are free (§5.2); only suggested outcome tags are Plus. Any spec that says "rear analysis: Plus" should follow this.
 
 ### 12.3 Open questions
 
@@ -1831,31 +1917,39 @@ Owners should reconcile these.
 4. Does the free allowance (2 analysed days a month) leave comp regulars feeling short-changed, or nudge them to Plus at the right time? Use beta interviews and fake-door intent by trigger.
 5. Should the experimental toggle stay free (§5.2 deviation)?
 6. Should match-log entry stay free (segment decision OQ3)?
+7. Can players at Australian clubs actually stand a phone 7–8 m out, between courts or just outside the doubles alley, without it being in the way of the next court? How often do they fall back to the fence set-up? Measure orientation and frame-top buckets in `framing_ready` (§9.3).
+8. Do players take up the free view from behind for knee bend, and does it change what they work on?
 
 ---
 
 ## 13. Decisions in DECISIONS.md this spec thinks are wrong or incomplete
 
-This spec follows D1–D10 as written. The flags below are for the product lead, and none has been applied unilaterally.
+This spec follows D1–D11 as revised on 27 Sep 2026. The flags below are for the product lead, and none has been applied unilaterally. Items 1 and 3(a) are resolved by that revision and kept for the record.
 
-1. **D1 camera geometry is wrong as written.**
-   - At 1.2–1.6 m high and 6–8 m from the centre mark, a level 1x phone often cuts off the toss. At 1.2 m and 6 m the frame top is about 3.45 m (26 mm lens) against typical elite apexes of 3.4–3.5 m (CAPTURE §2.2, §15; METRICS §7; ARCHITECTURE §17). "From the centre mark" also hides a 1–2 m difference between the deuce and ad serving spots.
-   - When the apex is lost, the hero toss metrics become unavailable, and coaching silently falls to later-stage items (COACHING §16 item 3).
-   - **Recommend:** 1.5–1.9 m high (up to 2.1 m on a fence), 7–9 m **from the serving spot**, with the live headroom check deciding.
+1. **D1 camera geometry. RESOLVED by the 27 Sep revision.**
+   - The original flag: at 1.2–1.6 m high and 6–8 m from the centre mark, a level 1x phone often cut off the toss (at 1.2 m and 6 m the frame top was only about 3.0–3.5 m), and "from the centre mark" hid a 1–2 m difference between the deuce and ad serving spots. When the apex was lost, the hero toss metrics became unavailable and coaching silently fell to later-stage items (COACHING §16 item 3).
+   - Revised D1 replaces the fixed geometry with a framing rule (frame top at least 4.5 m in the server's plane, 4.3 m accepted with a labelled estimated peak, 4.7 m target), a live headroom check that blocks recording below 4.3 m, a portrait default at 7–8 m from the centre mark and 1.3–1.6 m high, a landscape alternative at the side fence (8.5–9.5 m, 1.4–1.8 m, 4K preferred), and measured tilt of 5° or less removed in software. This spec now follows it (§0, §2, §5.1, §6.3.4, §12.1).
+   - Remaining detail for CAPTURE: the doubles serving spot on the camera-side half needs about 1.5–2 m more distance (gap geometry §6.4).
 2. **D2 conflates two things: how a number was produced, and how well the method has been checked.**
    - The segment decision (§7.2) says toss, contact and rhythm should carry the `experimental` state until real-footage validation passes. Under D2 and research 09, experimental values can never appear in headlines, focus explanations or verdicts.
    - Taken together, these rules would switch off the whole coaching loop until the real-footage study passes.
    - **Recommend:** add a second, always-visible axis: the **validation level** (V0–V3, METRICS §1.3), shown in words on every metric info sheet and as a report-footer note ("Checked on simulated serves, not yet on real courts"). Keep the provenance labels as METRICS caps them (V1 → `estimated`).
    - This keeps the brief's honesty requirement and lets the loop run.
 3. **D8 needs two amendments.**
-   - **(a) Audio:** make audio off by default, with opt-in hit-sound timing converted to timestamps on the phone and never stored (CAPTURE §15 item 2). D4's audio speed path currently implies recording sound, which surveillance-device laws make risky (research 06 §11; research 07 §7).
-   - **(b) Measurement:** "No upload in v1" makes the research 08 and segment decision M14 gates (activation, loop completion, W4) unmeasurable at beta and soft-launch scale.
+   - **(a) Audio. RESOLVED by the 27 Sep revision of D4.** The original flag asked for audio off by default, with opt-in hit-sound timing converted to timestamps on the phone and never stored, because D4's audio speed path implied recording sound, which surveillance-device laws make risky (research 06 §11; research 07 §7). Revised D4 removes audio flight-time speed from the side view, uses audio only to time contact, and keeps timestamps, not raw audio. Hit-sound timing stays opt-in and off by default (CAPTURE §7.2), which D4 permits. Whether on-device processing without storage counts as "recording" under each state's Act is still for the privacy review (gap geometry §7.5).
+   - **(b) Measurement (still open):** "No upload in v1" makes the research 08 and segment decision M14 gates (activation, loop completion, W4) unmeasurable at beta and soft-launch scale.
    - **Recommend:** allow **opt-in, counters-only usage data** (no video, pose, audio, free text, pain or identity), hosted in Australia, off by default, revocable in one tap (§9.4). Accept the App Privacy label consequence knowingly.
 4. **D7 should add frame-rate class and engine major version to matching** (ARCHITECTURE §17 flag 3). Timing spreads at 30 and 60 fps differ by construction. This is an addition, not a reversal.
 5. **D3 is right, but its signature insight rests on an untested assumption:** that players can recall per-serve outcomes they could not see on the video.
    - **Recommend:** keep the tally as a first-class path. Treat per-serve tagging as optional until the beta shows a median of ≤ 2 s per serve and low tally/tag conflict (segment decision §9 test 3).
+6. **D6's priority order can hide the launch segment's own problem** (new, 27 Sep; reviewer issue).
+   - D6 ranks earlier-chain faults before the biggest outcome gap, and the player's goal comes last. As COACHING §7.2 implements it, items sort by `chainStage` first. For the D11 segment, whose pain is double faults, a moderate stage 2–3 toss item therefore always outranks a major `second-serve-margin` item (stage 6) that matches the player's goal, even when the toss item shows no link to this player's misses.
+   - The justification is weaker than it looks. "Over 80% of serve issues start at release or loading" comes from a Kovacs Institute team post reporting Dr Kovacs's observations, not from his own writing (gap Kovacs §3). It is [Coaching interpretation] about where faults start, not evidence that fixing the toss fixes a flat second serve. Good and faulted serves had near-identical toss values in ranked juniors and competitive women (research 03 [S28]; gap ranges §2.3).
+   - **Recommend amending D6:** keep the safety gate and detection confidence first. Then apply stage order only when the upstream item has a positive personal outcome gap (the player's own tagged serves link it to misses, METRICS §4.7) or a severity at least equal to the downstream item's. Otherwise a major, goal-matched outcome item wins.
+   - **Test to add (COACHING and engine):** a D11 player with the `second-serve-reliability` goal, P(true second-serve in-rate < 0.70) ≥ 0.95 and a moderate toss spread gets `second-serve-margin` as the focus.
+   - Until the product lead decides, this spec follows D6 as written; COACHING §7.2 owns the rule.
 
-D4, D5, D6, D9 and D10 are sound for this segment. D10's four tabs absorb the segment's additions (match log, pre-match card, season view) without a fifth tab.
+D4 and D5 (both revised), D9, D10 and D11 are sound for this segment. D10's four tabs absorb the segment's additions (match log, pre-match card, season view) without a fifth tab.
 
 ---
 
@@ -1868,8 +1962,32 @@ All primary sources, access dates and fact-check logs are in the research files.
   - research 02 §2, §5, §6, §9–10 and implications ([S4], [S8], [S13], [S14], [S16], [S24], [S25], [S26], [S40]).
 - **Competitors and positioning:** research 01 §1, §3 ([S1], [S2], [S5], [S6], [S7], [S8]), §7 ([S28]–[S36]), §8 ([S46]), §10 ([S57]), §12–14.
 - **Biomechanics:** research 03 [S27], [S28], [S29] (toss and contact findings), §11 (injury context).
-- **Coaching:** research 04 [S14] (Kovacs 80/20), [S2], [S21] (offshore serve review prices), [S56], [S57], [S60] (video and feedback evidence).
+- **Coaching:** research 04 [S14] (the Kovacs Institute 80/20 post, by T. Patiño and the Ki team, reporting Dr Kovacs's observations; byline re-checked in gap Kovacs A57), [S2], [S21] (offshore serve review prices), [S56], [S57], [S60] (video and feedback evidence).
+- **Gap studies, 27 Sep 2026:**
+  - gap geometry §0–§8 (body orientation, knee and trunk projection, leg-drive proxies, framing and tilt, audio speed);
+  - gap ranges §0, §2–§3, §6–§8 (provisional recreational bands, capture envelope, apex fallback, plausibility bounds);
+  - gap segment §1–§2 (segment choice and sizing);
+  - gap Kovacs §1, §3, §4.1, §5–§6 (attributions, the rear view's mechanics role, active vs passive leg drive, referring to coaches).
 - **Capture and statistics:** research 06 §7.1 (serves needed for rate changes), research 09 §3–§13 (data states, improvement language, charts, playback, onboarding, IA, anti-patterns).
 - **Privacy, Apple and consumer law:** research 07 §1, §3, §8.1, §9–12.
 - **Monetisation:** research 08 §2–§8 ([S63] RevenueCat 2026 benchmarks).
-- **Specs:** METRICS.md (§0, §1.3–1.6, §4, §6–7), COACHING.md (§1–§16), CAPTURE.md (§0–§11, §15), ARCHITECTURE.md (§1, §5.8–5.12, §8–13, §17).
+- **Specs:** METRICS.md (§0, §1.3–1.6, §4, §6–7), COACHING.md (§1–§16), CAPTURE.md (§0–§11, §15), ARCHITECTURE.md (§1, §5.8–5.12, §8–13, §17; its 27 Sep metric-view table and canonical id list).
+
+---
+
+## Revision log (2026-09-27)
+
+**Decision-driven changes** (DECISIONS D1, D4, D5 revised; D11 added):
+- **Header:** binding inputs now D1–D11; gap studies added as numeric sources; canonical metric-id list (adds `leg-drive`, `drive-time`, `loading-depth`, `deep-bend-flag`, `shoulder-tilt-trophy`, `shoulder-over-shoulder-contact`, `speed-average-rear`; removes `trunk-tilt-band`; `knee-bend-band` view from behind only).
+- **D1 geometry:** §0, §2.1, §2.2 and §2.2's threat list now describe one phone beside the court, side-on (portrait at 7–8 m by default, landscape at the fence as the alternative). §6.3.4 states the framing rule (4.5 m minimum, 4.3 m accepted with a labelled estimated peak, 4.7 m target), live headroom check blocking Record below 4.3 m, measured tilt of 5° or less removed in software, the 250 px size check and the doubles-spot advice. Updated §6.1 permissions, §6.3.6 and §7.8 imports ("tilt unknown"), §7.2, §12.1 risks, and §9.3 events (orientation, frame-top and tilt buckets).
+- **D1 limits and bias:** knee bend and shoulder tilt at contact are "Needs a view from behind" (§3.3, §6.5 item 9, §4.4 rule 13). Toss-height bias (+8–12 cm) and false spread (2–4 cm per 10 cm sideways) stated in §1.5, §5.1 and §6.14. Views never mixed (rule 14).
+- **D4 speed:** no audio flight-time speed from the side view; side-view range needs 120 fps or more and a target tag; `speed-average-rear` added; audio only times contact, timestamps only (§2.2, §2.5, §3.3, §5.1, §5.4, §6.3.2, §6.13, §8.3–8.4, §11).
+- **D5 metrics:** leg drive is Hero 5 (`leg-drive` with `drive-time`); `loading-depth` descriptive only; `deep-bend-flag` experimental; `shoulder-tilt-trophy` as a player-relative band, never in degrees; no comparison with published trunk angles or professional centre-of-mass rise (§4.4 rule 9, §5.1, §6.6, §6.9 tile 4, §6.14, §8).
+- **Gap-study numbers:** provisional recreational bands as info-sheet context only (§4.4 rule 9, §6.14); plausibility bounds and "Check this serve" states (§5.1, §6.6); apex-above-frame fallback (§5.1, §6.6).
+- **D11:** segment definition and national pool size cited in §0 and §1.1.
+- **§13:** items 1 (D1 geometry) and 3(a) (audio) marked resolved; new item 6 on D6 ranking. **§12.2:** items 9–14 added (METRICS ids, CAPTURE orientation, landing-distance label, "Record anyway" below 4.3 m, naming, rear tier).
+
+**Reviewer issues:**
+1. **D6 ranking buries `second-serve-margin` for the D11 segment (major): ACCEPTED as a flag.** The problem is real for the launch segment, and the 80/20 attribution is confirmed wrong by gap Kovacs §3. PRODUCT cannot amend D6 or COACHING, so it re-attributes the claim to the Kovacs Institute (§0, §1.5, §6.13, §14) and adds §13 item 6 with the proposed D6 amendment and the unit test.
+2. **Stale ids, missing leg drive, knee feedback silently paid (major): ACCEPTED.** The id list and §5.1 now use the canonical ids, views, labels, tiers and hero placement; the `more-pace` order is Toss consistency · Contact height · Leg drive · Shoulder tilt at trophy · Landing. Tier decision: every measurement from the view from behind is **free** (experimental ones follow the free toggle); only suggested outcome tags are Plus (§5.2, §6.3.1, §6.7, §6.15). The template is renamed "View from behind".
+3. **Superseded geometry copy and open flags (minor): ACCEPTED for PRODUCT.** Copy rewritten for the portrait default, §12.1 uses the D1 framing rule, §13 flags 1 and 3(a) marked resolved, D11 added to the binding inputs. The ARCHITECTURE §17 and DESIGN §15 parts are outside this file; ARCHITECTURE already states revised D1, and the DESIGN §15 flag 7 removal is left to its reviser.

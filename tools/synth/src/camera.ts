@@ -121,6 +121,14 @@ export interface ViewSpec {
   rollDeg?: number
   /** 'chest': camera on the side the server's chest faces (sees the face); 'back': opposite side. */
   cameraSide?: 'chest' | 'back'
+  /**
+   * What `distanceM` is measured from. 'stance' (default): the first serve's front toe at toss
+   * release, with the camera aimed at that toe. 'centre-mark' (side view only; the DECISIONS D1
+   * set-up): the camera stands on the baseline extension (x = 0) `distanceM` from the centre mark,
+   * aimed along the baseline at the point above the centre mark (plus `lookAtForwardM`), so it does
+   * not follow the server's position. With lookAtHeightM = heightM the phone is level.
+   */
+  anchor?: 'stance' | 'centre-mark'
 }
 
 /**
@@ -135,6 +143,10 @@ export function placeCamera(spec: ViewSpec, stance: Vec3, chestSign: 1 | -1): Ex
   const lookZ = spec.lookAtHeightM ?? 1.45
   const fwd = spec.lookAtForwardM ?? 0
   const d = spec.distanceM
+  if ((spec.anchor ?? 'stance') === 'centre-mark') {
+    if (spec.view !== 'side') throw new Error(`camera anchor 'centre-mark' is only defined for the side view (got ${spec.view})`)
+    return lookAt([0, side * d, spec.heightM], [fwd, 0, lookZ], spec.rollDeg ?? 0)
+  }
   let pos: Vec3
   switch (spec.view) {
     case 'side':

@@ -44,3 +44,6 @@ Thumbs.db
 # Claude Code local state
 .claude/*.lock
 .claude/settings.local.json
+
+# Validation harness full dumps (per-frame landmarks and candidates; regenerate with tools/validate/smoke.mjs --full)
+validation/results/**/full/

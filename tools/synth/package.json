@@ -15,6 +15,7 @@
     "truth-only": "tsx src/cli.ts --all --truth-only",
     "audit": "tsx src/audit.ts",
     "verify": "tsx src/verify.ts",
+    "augment": "tsx src/augmentTruth.ts",
     "feasibility": "tsx src/feasibility/run.ts",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"

@@ -6,6 +6,9 @@
  * the video layer could not prove the capture rate (possible rendered slow motion), pass
  * timeBaseKnown = false: the tracker then allows slow-motion toss durations, and the
  * gravity check says whether a correction should be applied before re-running.
+ *
+ * Metric ids are the canonical ones (toss-apex-height, speed-experimental,
+ * speed-average-rear, spin). Audio is used only to time contact (D4).
  */
 import type {
   AudioOnset,
@@ -18,12 +21,15 @@ import type {
   PoseFrame,
   ServeEvents,
 } from '../types.ts'
+import { detectBounce, mapBounceToCourt, type BounceEstimate, type BounceUnavailable, type CourtPlacement } from './bounce.ts'
 import { clamp } from './colour.ts'
-import { BallDetector, BROAD_SIZE_PRIOR, type DetectorOptions } from './detector.ts'
+import { BallDetector, BROAD_SIZE_PRIOR, TOSS_PLAIN_SUPPORT_GATE, type DetectorOptions } from './detector.ts'
 import { median } from './fit.ts'
+import type { Mat3, ServeSide } from './homography.ts'
 import {
   bodyHeightFromPose,
   expectedBallRadiusNorm,
+  GRAVITY_MPS2,
   scaleFromBodyHeight,
   tossRegionFromPose,
   type BodyHeightEstimate,
@@ -36,7 +42,9 @@ import {
   SPEED_OF_SOUND_MPS,
   speedFromFlightTime,
   type FlightTimeSpeedEstimate,
+  type SpeedRange,
   type SpeedUnavailable,
+  type TargetTag,
   type TrackSpeedEstimate,
 } from './speed.ts'
 import { analyseToss, gravityAccelerationPrior, toEventEstimate, type GravityCheck, type TossAnalysis, type TossAnalysisOptions } from './toss.ts'
@@ -149,26 +157,42 @@ export function ballSetupFromPoses(poses: PoseFrame[], options: BallSetupOptions
 export interface BallFrameDetectorOptions {
   setup: Pick<BallSetup, 'expectedRadiusNorm' | 'tossRoi'>
   /**
-   * Search only the toss band for frames before this time (e.g. the contact onset from audio);
-   * later frames are searched whole so the outgoing ball is not cut off. Omit to never restrict.
+   * Search only the toss band, with the toss-phase plain-colour gate, before this time: the
+   * contact time with the sound delay removed
+   * (e.g. strongestTransient(onsets) minus soundDelayEstimateS). The band ends
+   * TOSS_ROI_END_MARGIN_S earlier still, so the first outgoing frames are searched whole even
+   * when the time is a little late. Omit to never restrict.
    */
   tossRoiUntilTReal?: number
   /**
-   * From this time on (default: tossRoiUntilTReal) the size prior is broadened: after contact
-   * the ball leaves the player's depth and, in a rear view, shrinks to a third within frames.
+   * From this time on (default: tossRoiUntilTReal, except in the side view) the size prior is
+   * broadened: after contact the ball leaves the player's depth and, in a rear view, shrinks
+   * to a third within frames.
    */
   broadSizeFromTReal?: number
+  /**
+   * Side view: the outgoing ball stays near the player's depth (it leaves the image plane at
+   * 0-24 deg), so the toss size prior is kept after contact. The broad prior there only adds
+   * sub-ball colour seams from the swinging arm.
+   */
+  cameraView?: CameraView
   detector?: DetectorOptions
 }
+
+/** The toss band ends this long before the given contact time (s). */
+export const TOSS_ROI_END_MARGIN_S = 0.02
 
 /** Stateful per-frame detector (owns the running background). Feed frames in time order. */
 export function createBallFrameDetector(options: BallFrameDetectorOptions): (frame: DecodedFrame) => FrameCandidates {
   const detector = new BallDetector({ expectedRadiusNorm: options.setup.expectedRadiusNorm, ...options.detector })
-  const broadFrom = options.broadSizeFromTReal ?? options.tossRoiUntilTReal
+  const roiUntil = options.tossRoiUntilTReal !== undefined ? options.tossRoiUntilTReal - TOSS_ROI_END_MARGIN_S : undefined
+  const broadFrom = options.broadSizeFromTReal ?? (options.cameraView === 'side' ? undefined : roiUntil)
   return (frame) => {
     const overrides: Parameters<BallDetector['detect']>[1] = {}
-    if (options.setup.tossRoi && options.tossRoiUntilTReal !== undefined && frame.tReal < options.tossRoiUntilTReal) {
-      overrides.roi = options.setup.tossRoi
+    if (roiUntil !== undefined && frame.tReal < roiUntil) {
+      // Toss phase: the ball is slow and sharp, so colour seams on the player are gated out.
+      Object.assign(overrides, TOSS_PLAIN_SUPPORT_GATE)
+      if (options.setup.tossRoi) overrides.roi = options.setup.tossRoi
     }
     if (broadFrom !== undefined && frame.tReal >= broadFrom) overrides.sizePrior = BROAD_SIZE_PRIOR
     const candidates = detector.detect({ image: frame.image, tReal: frame.tReal }, overrides)
@@ -221,9 +245,18 @@ export interface BallAnalysisOptions {
   contactTReal?: number
   /**
    * Audio onsets in the same time base, only when audio timing is usable (video layer
-   * assessAudioTiming). Used for the contact time (if not given) and flight-time speed.
+   * assessAudioTiming). Used only to time contact (D4); never for flight-time speed.
    */
   onsets?: AudioOnset[]
+  /** Player-entered intended target (D3). Required for the side-view speed range (D4). */
+  targetTag?: TargetTag | null
+  /** Side the serve was hit from (player-entered or from the session flow). */
+  servedFrom?: ServeSide
+  /**
+   * Rear view only: image -> court homography from the four-corner court tap (normalised image
+   * points in, court metres out; see homography.ts) and its reprojection RMS in metres.
+   */
+  courtCalibration?: { imageToCourt: Mat3; rmsM: number }
   seed?: number
 }
 
@@ -234,8 +267,14 @@ export interface BallAnalysis {
   /** Toss events, and contact measured where the outgoing path meets the toss path. */
   events: Pick<ServeEvents, 'tossRelease' | 'tossApex' | 'contact'>
   timeBase: TimeBaseSuggestion
+  /** Side view, near contact (speed-experimental). */
   speedFromTrack: TrackSpeedEstimate | SpeedUnavailable
-  speedFromFlightTime: FlightTimeSpeedEstimate | SpeedUnavailable
+  /** Rear view, contact to a bounce located in video (speed-average-rear). */
+  averageSpeedRear: FlightTimeSpeedEstimate | SpeedUnavailable
+  /** EXPERIMENTAL bounce on the outgoing track (rear view only). */
+  bounce: BounceEstimate | BounceUnavailable
+  /** EXPERIMENTAL court position of the bounce (rear view with a court calibration only). */
+  placement: CourtPlacement | BounceUnavailable
   metrics: MetricValue[]
 }
 
@@ -256,15 +295,83 @@ function nearestFrameIndex(frames: FrameCandidates[], t: number): number {
   return best?.frameIndex ?? -1
 }
 
-/** First onset of a kind inside [from, to] (timestamp base). */
-function firstOnset(onsets: AudioOnset[] | undefined, kind: AudioOnset['kind'], from: number, to: number): AudioOnset | undefined {
-  return onsets?.filter((o) => o.kind === kind && o.tReal >= from && o.tReal <= to).sort((a, b) => a.tReal - b.tReal)[0]
+/**
+ * The racket pop: the strongest transient inside [from, to] (timestamp base) that is not
+ * labelled a bounce. At serving distance the pop is the loudest sound of the serve by far
+ * (about 20 dB above footsteps on the synthetic corpus), whereas the video layer's
+ * contact / bounce label rests on a sharpness heuristic that is not validated (it labelled
+ * the pop "unknown" and a footstep "contact" on the synthetic clips).
+ */
+export function strongestTransient(onsets: AudioOnset[] | undefined, from = -Infinity, to = Infinity): AudioOnset | undefined {
+  return onsets?.filter((o) => o.kind !== 'bounce' && o.tReal >= from && o.tReal <= to).sort((a, b) => b.strength - a.strength)[0]
 }
+
+/**
+ * Toss acceleration must be gravity within these factors: scale (entered or assumed height,
+ * 1.2-5%), perspective (a rear camera sees the toss recede: about 0.85 on the corpus) and drag.
+ */
+const GRAVITY_BAND: [number, number] = [0.6, 1.5]
+/** Time scales an unverified time base may have (standard slow-motion ratios down to 1/8). */
+const UNKNOWN_TIME_SCALES = [1, 1 / 2, 1 / 4, 1 / 8]
+
+/** Allowed toss accelerations (frame heights per timestamp-second^2) for the tracker. */
+export function gravityBands(scale: PixelScale, timeBaseKnown: boolean): [number, number][] {
+  const g = GRAVITY_MPS2 * scale.unitsPerM
+  return (timeBaseKnown ? [1] : UNKNOWN_TIME_SCALES).map((s) => [GRAVITY_BAND[0] * g * s * s, GRAVITY_BAND[1] * g * s * s])
+}
+
+/** Slowest serve considered (m/s, about 72 km/h), times cos(24 deg) for the largest tag angle. */
+const MIN_SERVE_IN_PLANE_MPS = 17
+/** Largest launch direction from the image horizontal in the side view (deg): serve launch within about 15 deg, plus perspective and tilt. */
+const SIDE_OUTGOING_MAX_ELEVATION_DEG = 30
+
+/**
+ * Side view: the outgoing ball is fast and nearly horizontal in the image, whereas colour
+ * seams on the swinging arm near the contact point are slower and steep. Speed needs the
+ * scale; in an unverified time base it allows the slowest supported slow motion (1/8).
+ */
+export function sideViewOutgoingLimits(
+  scale: PixelScale | null,
+  timeBaseKnown: boolean,
+): { outgoingMaxElevationDeg: number; minOutgoingSpeedNormPerS?: number } {
+  const limits: { outgoingMaxElevationDeg: number; minOutgoingSpeedNormPerS?: number } = { outgoingMaxElevationDeg: SIDE_OUTGOING_MAX_ELEVATION_DEG }
+  if (scale) limits.minOutgoingSpeedNormPerS = MIN_SERVE_IN_PLANE_MPS * scale.unitsPerM * (timeBaseKnown ? 1 : MIN_UNKNOWN_TIME_SCALE)
+  return limits
+}
+
+/** Assumed 1-sigma of the toss speed along the camera axis in a rear or front view (m/s). */
+const TOSS_DEPTH_SPEED_SIGMA_MPS = 0.5
+
+/**
+ * Rear / front views: the toss also moves along the optical axis, so the image apex (where the
+ * image y velocity is zero) is shifted from the true apex by about
+ * (height above the camera) x (speed along the axis) / (distance x g). The axis speed is not
+ * observable in one view, so it enters as a 1-sigma term (0.5 m/s). On the rendered rear
+ * clip the apex error was -4.2 ms, about what this model gives for its 0.17 m/s toss.
+ * Zero for the side view, where the toss moves across the image.
+ */
+export function apexPerspectiveSigmaS(apexY: number, scale: PixelScale | null, aspect: number, view: CameraView | undefined): number {
+  if (view !== 'rear' && view !== 'front45') return 0
+  if (!scale || !(scale.unitsPerM > 0)) return 0.015
+  const distanceM = (MAIN_CAMERA_FOCAL_LONG_SIDE * Math.max(1, aspect)) / scale.unitsPerM
+  const heightAboveCameraM = Math.abs(0.5 - apexY) / scale.unitsPerM
+  return (heightAboveCameraM * TOSS_DEPTH_SPEED_SIGMA_MPS) / (distanceM * GRAVITY_MPS2)
+}
+
+/** 1-sigma of a contact time from pose/audio fusion or a sound onset (s). */
+const FUSED_CONTACT_SIGMA_S = 0.01
 
 export function analyseBall(frames: FrameCandidates[], options: BallAnalysisOptions): BallAnalysis {
   const { setup } = options
   const maxTossDurationS = options.timeBaseKnown ? MAX_TOSS_REAL_S : MAX_TOSS_REAL_S / MIN_UNKNOWN_TIME_SCALE
-  const trackerBase = { aspect: setup.aspect, expectedRadiusNorm: setup.expectedRadiusNorm, maxTossDurationS, seed: options.seed }
+  const trackerBase = {
+    aspect: setup.aspect,
+    expectedRadiusNorm: setup.expectedRadiusNorm,
+    maxTossDurationS,
+    seed: options.seed,
+    accelerationBandsNorm: setup.scale ? gravityBands(setup.scale, options.timeBaseKnown) : undefined,
+    ...(options.cameraView === 'side' ? sideViewOutgoingLimits(setup.scale, options.timeBaseKnown) : {}),
+  }
   // Gravity pins an apex beyond the observed arc, but only in a proven real-time base.
   const tossOptions: TossAnalysisOptions = {
     aspect: setup.aspect,
@@ -276,7 +383,7 @@ export function analyseBall(frames: FrameCandidates[], options: BallAnalysisOpti
   let toss = tracker.toss ? analyseToss(tracker.toss.track, tracker.toss.leadIn, tossOptions) : null
   let contactOnset: AudioOnset | undefined
   if (toss?.status === 'ok' && toss.apex) {
-    contactOnset = firstOnset(options.onsets, 'contact', toss.apex.tReal, toss.apex.tReal + 1.0)
+    contactOnset = strongestTransient(options.onsets, toss.apex.tReal + 0.05, toss.apex.tReal + 1.0)
   }
   // The pop reaches the phone after the ball left the strings; the tracker tolerates the
   // residual error of this estimate (contactSlackS).
@@ -292,7 +399,9 @@ export function analyseBall(frames: FrameCandidates[], options: BallAnalysisOpti
   const events: BallAnalysis['events'] = {}
   if (toss?.status === 'ok' && toss.release && toss.apex) {
     events.tossRelease = toEventEstimate(toss.release)
-    events.tossApex = toEventEstimate(toss.apex)
+    const apex = toEventEstimate(toss.apex)
+    const perspective = apexPerspectiveSigmaS(toss.apex.y, setup.scale, setup.aspect, options.cameraView)
+    events.tossApex = perspective > 0 ? { ...apex, uncertaintyS: Math.hypot(apex.uncertaintyS, perspective) } : apex
   }
   const measuredContact = tracker.outgoing?.contactFromTracks
   if (measuredContact) {
@@ -309,29 +418,56 @@ export function analyseBall(frames: FrameCandidates[], options: BallAnalysisOpti
     timeBase.status === 'apply-correction'
       ? `timestamps look like ${Math.round(1 / timeBase.timeScale!)}x slow motion; apply the time-scale correction and re-run`
       : 'the time base is not verified (possible slow motion) and the toss check could not confirm real time'
-  const speedFromTrack: TrackSpeedEstimate | SpeedUnavailable = !realTime
-    ? { status: 'unavailable', reason: slowMotionReason, unlockHint: 'Share the original slow-motion file, or enter the recording frame rate.' }
-    : !tracker.outgoing
-      ? { status: 'unavailable', reason: 'the ball was not tracked after contact', unlockHint: 'Film side-on at 120 or 240 fps with the ball path inside the frame.' }
-      : estimateServeSpeedFromTrack(tracker.outgoing.track, {
-          // The ball-path intersection is the best contact anchor when the toss was tracked too.
-          contactTReal: measuredContact?.tReal ?? tracker.outgoing.contactTReal,
-          captureFps: options.captureFps,
-          aspect: setup.aspect,
-          scale: setup.scale,
-          cameraView: options.cameraView,
-        })
+  const slowMotionHint = 'Share the original slow-motion file, or enter the recording frame rate.'
+  const speedFromTrack: TrackSpeedEstimate | SpeedUnavailable =
+    options.cameraView === 'side' && !realTime
+      ? { status: 'unavailable', reason: slowMotionReason, unlockHint: slowMotionHint }
+      : options.cameraView === 'side' && !tracker.outgoing
+        ? { status: 'unavailable', reason: 'the ball was not tracked after contact', unlockHint: 'Film side-on at 120 or 240 fps with the ball path inside the frame.' }
+        : estimateServeSpeedFromTrack(tracker.outgoing?.track ?? { id: 0, kind: 'outgoing', observations: [] }, {
+            // The ball-path intersection is the best contact anchor when the toss was tracked too.
+            contactTReal: measuredContact?.tReal ?? tracker.outgoing?.contactTReal ?? Number.NaN,
+            captureFps: options.captureFps,
+            aspect: setup.aspect,
+            scale: setup.scale,
+            cameraView: options.cameraView,
+            targetTag: options.targetTag,
+          })
 
-  let speedFromAudio: FlightTimeSpeedEstimate | SpeedUnavailable
-  const bounceOnset = contactOnset ? firstOnset(options.onsets, 'bounce', contactOnset.tReal + 0.2, contactOnset.tReal + 2.0) : undefined
-  if (!realTime) speedFromAudio = { status: 'unavailable', reason: slowMotionReason, unlockHint: 'Share the original file with sound.' }
-  else if (!contactOnset || !bounceOnset) {
-    speedFromAudio = {
-      status: 'unavailable',
-      reason: !contactOnset ? 'racket contact sound not found after the toss' : 'bounce sound not found 0.2-2.0 s after contact',
-      unlockHint: 'Record with sound on in a quiet setting, close enough to hear the bounce.',
-    }
-  } else speedFromAudio = speedFromFlightTime({ contactOnsetTReal: contactOnset.tReal, bounceOnsetTReal: bounceOnset.tReal })
+  // Rear (outcomes) view: bounce and placement from video, then average speed to the bounce.
+  const rear = options.cameraView === 'rear'
+  const bounce: BounceEstimate | BounceUnavailable = !rear
+    ? { status: 'unavailable', reason: 'bounce is only located in the rear (outcomes) view' }
+    : tracker.outgoing
+      ? detectBounce(tracker.outgoing.track)
+      : { status: 'unavailable', reason: 'the ball was not tracked after contact' }
+  const placement: CourtPlacement | BounceUnavailable =
+    bounce.status !== 'experimental'
+      ? { status: 'unavailable', reason: bounce.reason }
+      : options.courtCalibration
+        ? mapBounceToCourt(bounce, options.courtCalibration.imageToCourt, setup.aspect, options.courtCalibration.rmsM)
+        : { status: 'unavailable', reason: 'no court calibration (four-corner tap)' }
+  const rearContact = measuredContact
+    ? { tReal: measuredContact.tReal, sigma: measuredContact.uncertaintyS }
+    : contactTReal !== undefined
+      ? { tReal: contactTReal, sigma: FUSED_CONTACT_SIGMA_S }
+      : null
+  let averageSpeedRear: FlightTimeSpeedEstimate | SpeedUnavailable
+  if (rear && !realTime) averageSpeedRear = { status: 'unavailable', reason: slowMotionReason, unlockHint: slowMotionHint }
+  else if (rear && !rearContact) {
+    averageSpeedRear = { status: 'unavailable', reason: 'contact time not found', unlockHint: 'Keep the toss and the ball after contact in view.' }
+  } else {
+    averageSpeedRear = speedFromFlightTime({
+      cameraView: options.cameraView,
+      contactTReal: rearContact?.tReal ?? Number.NaN,
+      contactSigmaS: rearContact?.sigma,
+      bounce:
+        bounce.status === 'experimental' && placement.status === 'experimental'
+          ? { tReal: bounce.tReal, uncertaintyS: bounce.uncertaintyS, court: placement.court, sigmaXM: placement.sigmaXM, sigmaYM: placement.sigmaYM }
+          : null,
+      servedFrom: options.servedFrom,
+    })
+  }
 
   return {
     tracker,
@@ -340,12 +476,14 @@ export function analyseBall(frames: FrameCandidates[], options: BallAnalysisOpti
     events,
     timeBase,
     speedFromTrack,
-    speedFromFlightTime: speedFromAudio,
+    averageSpeedRear,
+    bounce,
+    placement,
     metrics: [
-      tossHeightMetric('ball.tossApexAboveHeadM', 'above the top of the head', toss, setup, 'head'),
-      tossHeightMetric('ball.tossApexHeightM', 'above the court', toss, setup, 'ground'),
+      tossHeightMetric('toss-apex-height', 'above the court', toss, setup, 'ground'),
       trackSpeedMetric(speedFromTrack),
-      flightTimeSpeedMetric(speedFromAudio),
+      flightTimeSpeedMetric(averageSpeedRear),
+      spinMetric(),
     ],
   }
 }
@@ -353,7 +491,8 @@ export function analyseBall(frames: FrameCandidates[], options: BallAnalysisOpti
 /**
  * Toss apex height in metres against a pose reference: 'estimated' (it rests on the player's
  * height and the ball staying near the player's plane), with a ~95% range from the apex fit,
- * the reference landmark, the scale and the depth assumption.
+ * the reference landmark, the scale and the depth assumption. The canonical metric is
+ * 'toss-apex-height' against the floor; the head reference is for internal use.
  */
 export function tossHeightMetric(
   id: string,
@@ -395,38 +534,60 @@ export function tossHeightMetric(
     confidence: toss.apex.confidence,
     basis:
       `ball-apex fit (${toss.fit?.detections ?? 0} detections${toss.apex.aboveFrame ? ', apex above the frame, extrapolated' : ''}) ` +
-      `vs ${reference === 'head' ? 'head top' : 'floor'} from pose; scale from ${scale.basis}`,
+      `vs ${reference === 'head' ? 'head top' : 'floor'} from pose; scale from ${scale.basis}; ` +
+      'a toss nearer the camera than the body reads high',
   }
 }
 
+/** Display value of a range-only speed: "150–170" (en dash); the numbers are in `uncertainty`. */
+function rangeLabel(range: SpeedRange): string {
+  return `${range.lowKmh}–${range.highKmh}`
+}
+
+/** speed-experimental: side view, launch speed just after contact, range only. */
 export function trackSpeedMetric(estimate: TrackSpeedEstimate | SpeedUnavailable): MetricValue {
-  const id = 'ball.serveSpeedKmh'
+  const id = 'speed-experimental'
   if (estimate.status === 'unavailable') {
-    return { id, value: null, unit: 'km/h', status: 'unavailable', confidence: 0, basis: 'ball track after contact', unavailableReason: estimate.reason, unlockHint: estimate.unlockHint }
+    return { id, value: null, unit: 'km/h', status: 'unavailable', confidence: 0, basis: 'ball track just after contact (side view)', unavailableReason: estimate.reason, unlockHint: estimate.unlockHint }
   }
   return {
     id,
-    value: estimate.valueKmh,
+    value: rangeLabel(estimate),
     unit: 'km/h',
     status: 'experimental',
     uncertainty: { kind: 'range', low: estimate.lowKmh, high: estimate.highKmh },
     confidence: estimate.confidence,
-    basis: estimate.basis,
+    basis: `launch speed range (peak, just after contact): ${estimate.basis}`,
   }
 }
 
+/** speed-average-rear: rear view, average speed from contact to the located bounce, range only. */
 export function flightTimeSpeedMetric(estimate: FlightTimeSpeedEstimate | SpeedUnavailable): MetricValue {
-  const id = 'ball.serveSpeedAverageAudioKmh'
+  const id = 'speed-average-rear'
   if (estimate.status === 'unavailable') {
-    return { id, value: null, unit: 'km/h', status: 'unavailable', confidence: 0, basis: 'contact and bounce sounds', unavailableReason: estimate.reason, unlockHint: estimate.unlockHint }
+    return { id, value: null, unit: 'km/h', status: 'unavailable', confidence: 0, basis: 'contact to the bounce located in the rear view', unavailableReason: estimate.reason, unlockHint: estimate.unlockHint }
   }
   return {
     id,
-    value: estimate.average.valueKmh,
+    value: rangeLabel(estimate),
     unit: 'km/h',
     status: 'experimental',
-    uncertainty: { kind: 'range', low: estimate.average.lowKmh, high: estimate.average.highKmh },
+    uncertainty: { kind: 'range', low: estimate.lowKmh, high: estimate.highKmh },
     confidence: estimate.confidence,
     basis: `average speed over the flight: ${estimate.basis}`,
+  }
+}
+
+/** spin: always unavailable (D4). */
+export function spinMetric(): MetricValue {
+  return {
+    id: 'spin',
+    value: null,
+    unit: 'rpm',
+    status: 'unavailable',
+    confidence: 0,
+    basis: 'ball spin',
+    unavailableReason: 'a phone video cannot resolve the ball’s spin: the ball is only a few pixels wide and its seams cannot be followed from frame to frame',
+    unlockHint: 'Not available from phone video.',
   }
 }

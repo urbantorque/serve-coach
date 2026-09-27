@@ -1,0 +1,3373 @@
+{
+ "clip": "night240-s3",
+ "set": "night240",
+ "wallS": 211.761,
+ "result": {
+  "version": 1,
+  "ok": true,
+  "clipUrl": "/__synthetic/clips/night240-s3/night240-s3.mp4",
+  "truthUrl": "/__synthetic/clips/night240-s3/truth.json",
+  "startedAt": "2026-09-27T00:13:57.959Z",
+  "environment": {
+   "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
+   "hardwareConcurrency": 8,
+   "devicePixelRatio": 1
+  },
+  "inputs": {
+   "view": "side",
+   "playerHeightM": 1.8,
+   "handedness": "right",
+   "targetTag": "body",
+   "servedFrom": "deuce",
+   "source": {
+    "view": "truth",
+    "playerHeightM": "truth",
+    "handedness": "truth",
+    "targetTag": "truth",
+    "servedFrom": "truth"
+   }
+  },
+  "meta": {
+   "probe": {
+    "fileName": "video",
+    "mimeType": "video/mp4",
+    "codec": "avc1.640034",
+    "durationMediaS": 4.621,
+    "width": 1080,
+    "height": 1920,
+    "rotationDeg": 0,
+    "hasAudio": true,
+    "nominalFps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "fpsSource": "timestamps",
+    "isVariableFrameRate": false,
+    "frameCount": 1109
+   },
+   "final": {
+    "fileName": "video",
+    "mimeType": "video/mp4",
+    "codec": "avc1.640034",
+    "durationMediaS": 4.621,
+    "width": 1080,
+    "height": 1920,
+    "rotationDeg": 0,
+    "hasAudio": true,
+    "nominalFps": 240,
+    "captureFps": 240,
+    "timeScale": 1,
+    "fpsSource": "timestamps",
+    "isVariableFrameRate": false,
+    "frameCount": 1109
+   },
+   "timeBase": {
+    "kind": "native-high-fps",
+    "status": "proven",
+    "captureFps": 240,
+    "timeScale": 1,
+    "fpsSource": "timestamps",
+    "evidence": [
+     "Container timestamps advance at 240.00 fps."
+    ],
+    "warnings": []
+   },
+   "decodePath": "webcodecs",
+   "decodePathReason": "WebCodecs supports avc1.640034.",
+   "container": "mp4",
+   "codec": "avc1.640034",
+   "probeWarnings": [],
+   "decode": {
+    "pose": {
+     "path": "webcodecs",
+     "requested": 1109,
+     "yielded": 1109,
+     "missingIndices": [],
+     "samplesFed": 1109,
+     "elapsedMs": 83536.4,
+     "notes": []
+    },
+    "ball": [
+     {
+      "path": "webcodecs",
+      "requested": 1109,
+      "yielded": 1109,
+      "missingIndices": [],
+      "samplesFed": 1109,
+      "elapsedMs": 115636.6,
+      "notes": []
+     }
+    ]
+   }
+  },
+  "timings": {
+   "fetchMs": 308.69999998807907,
+   "probeMs": 36.900000005960464,
+   "audioDecodeMs": 58.400000005960464,
+   "onsetsMs": 63.30000001192093,
+   "poseInitMs": 1450.300000011921,
+   "posePassMs": 83609.19999998808,
+   "poseDecodeMs": 1605.5999998152256,
+   "poseCleanMs": 240.69999998807907,
+   "ballPassMs": 115637.20000001788,
+   "ballDecodeMs": 19639.000000327826,
+   "ballDetectMs": 95778.19999966025,
+   "ballAnalyseMs": 2472.699999988079,
+   "scoreMs": 40.5,
+   "totalMs": 203998.59999999404
+  },
+  "scores": {
+   "clipId": "night240-s3",
+   "frames": {
+    "truth": 1109,
+    "probe": 1109,
+    "decodedPose": 1109,
+    "missingPose": 0,
+    "decodedBall": 1109,
+    "match": true
+   },
+   "timeBase": {
+    "truth": {
+     "fps": 240,
+     "captureFps": 240,
+     "timeScale": 1
+    },
+    "probe": {
+     "nominalFps": 240,
+     "captureFps": 240,
+     "timeScale": 1,
+     "status": "proven",
+     "kind": "native-high-fps"
+    },
+    "fpsErrorPct": 0,
+    "probeTimeScaleMatches": true,
+    "final": {
+     "captureFps": 240,
+     "timeScale": 1,
+     "source": "timestamps",
+     "matchesTruth": true
+    }
+   },
+   "pose": {
+    "staturePx": 524.1064899621515,
+    "raw": {
+     "frames": 1109,
+     "detected": 1109,
+     "detectionRate": 1,
+     "onTargetRate": 0.6447249774571686,
+     "meanErrorBH": 0.0974728045766628,
+     "medianErrorBH": 0.03031754681216497,
+     "p90ErrorBH": 0.24660864631209237,
+     "pck": 0.6504358280733393,
+     "mirroredRate": 0.3534715960324617,
+     "meanErrorBHMirrorTolerant": 0.02522465895934454,
+     "wristWindowErrorBH": 0.02232270999807895,
+     "wristWindowDetected": 48,
+     "wristWindowFrames": 48
+    },
+    "clean": {
+     "frames": 1109,
+     "detected": 1109,
+     "detectionRate": 1,
+     "onTargetRate": 0.6591523895401262,
+     "meanErrorBH": 0.0954894365326487,
+     "medianErrorBH": 0.029845784384036084,
+     "p90ErrorBH": 0.24643929440613255,
+     "pck": 0.6588518184550646,
+     "mirroredRate": 0.35166816952209196,
+     "meanErrorBHMirrorTolerant": 0.025264320717952083,
+     "wristWindowErrorBH": 0.022296385134164032,
+     "wristWindowDetected": 48,
+     "wristWindowFrames": 48
+    }
+   },
+   "ball": {
+    "passes": [
+     {
+      "label": "initial",
+      "detection": {
+       "frames": 1109,
+       "tossFrames": 219,
+       "flightFrames": 9,
+       "recallToss": 0.9908675799086758,
+       "recallFlight": 1,
+       "top1RecallToss": 0.9908675799086758,
+       "precision": 0.46437552388935455,
+       "top1Precision": 0.6707021791767555,
+       "falsePerFrame": 0.5761947700631199,
+       "errorMedianPx": 0.25450865604137146,
+       "errorP95Px": 1.3563406133221751,
+       "flightErrorMedianPx": 0.43405950744110383,
+       "support": {
+        "trueP5": 0.4063,
+        "trueP50": 0.584,
+        "falseP50": 0.314,
+        "falseP95": 0.5613000000000001,
+        "nTrue": 554,
+        "nFalse": 639
+       }
+      },
+      "toss": {
+       "found": true,
+       "kind": "toss",
+       "status": "ok",
+       "trackPrecision": 1,
+       "coverage": 0.9908675799086758,
+       "apexErrorMs": 0.3126314560324417,
+       "apexZ": 0.4605219212818023,
+       "releaseErrorMs": 6.926333333390877,
+       "contactErrorMs": -0.03221175439271917,
+       "apexHeight": {
+        "valueM": 3.35289315932636,
+        "truthM": 3.2806,
+        "errorM": 0.07229315932635982,
+        "covered": true,
+        "status": "estimated"
+       }
+      },
+      "gravity": {
+       "status": "ok",
+       "factor": 1.0059760275387626,
+       "low": 0.9554876414478893,
+       "high": 1.0591322420969913,
+       "expected": 1,
+       "covered": true,
+       "suggestion": "consistent",
+       "suggestedTimeScale": 1
+      },
+      "outgoing": {
+       "found": true,
+       "detections": 10,
+       "precision": 1
+      },
+      "speed": {
+       "status": "experimental",
+       "lowKmh": 100,
+       "highKmh": 190,
+       "truthKmh": 146.16,
+       "covered": true
+      },
+      "contactFromAudioErrorMs": 0.5681631093157335
+     }
+    ],
+    "finalPass": 0
+   },
+   "audio": {
+    "status": "ok",
+    "usable": true,
+    "onsets": 3,
+    "events": [
+     {
+      "kind": "contact",
+      "arrivalTMedia": 2.58581,
+      "onset": {
+       "errorMediaMs": 0.06500000000020378,
+       "errorRealMs": 0.06500000000020378,
+       "kind": "unknown",
+       "strength": 32.36
+      }
+     },
+     {
+      "kind": "footstep",
+      "arrivalTMedia": 2.735846,
+      "onset": null
+     },
+     {
+      "kind": "footstep",
+      "arrivalTMedia": 3.034729,
+      "onset": null
+     },
+     {
+      "kind": "bounce",
+      "arrivalTMedia": 3.139293,
+      "onset": {
+       "errorMediaMs": 0.7280000000000619,
+       "errorRealMs": 0.7280000000000619,
+       "kind": "bounce",
+       "strength": 20.28
+      }
+     },
+     {
+      "kind": "bounce-secondary",
+      "arrivalTMedia": 4.244236,
+      "onset": {
+       "errorMediaMs": 0.9100000000001884,
+       "errorRealMs": 0.9100000000001884,
+       "kind": "bounce",
+       "strength": 14
+      }
+     }
+    ],
+    "contact": {
+     "truthArrivalTMedia": 2.58581,
+     "nearestErrorMediaMs": 0.06500000000020378,
+     "nearestErrorRealMs": 0.06500000000020378,
+     "nearestKind": "unknown",
+     "strongestIsContact": true,
+     "labelledContact": false
+    }
+   }
+  },
+  "pose": {
+   "options": {
+    "model": "full",
+    "delegate": "auto",
+    "roi": "auto",
+    "useWorker": "auto"
+   },
+   "stats": {
+    "backend": "worker",
+    "init": {
+     "delegate": "GPU",
+     "model": "full",
+     "runningMode": "VIDEO",
+     "initMs": 632.1999999880791,
+     "warmupMs": 722.0999999940395
+    },
+    "frames": 1109,
+    "framesWithPerson": 1109,
+    "framesWithMultiplePeople": 0,
+    "framesLost": 0,
+    "reacquisitions": 0,
+    "detectErrors": [],
+    "inference": {
+     "count": 1109,
+     "meanMs": 72.95013525676255,
+     "medianMs": 67.5,
+     "p95Ms": 115.7999999821186,
+     "maxMs": 669.0999999940395
+    },
+    "roundTrip": {
+     "count": 1109,
+     "meanMs": 146.22010820620332,
+     "medianMs": 139,
+     "p95Ms": 230.69999998807907,
+     "maxMs": 840.9000000059605
+    },
+    "prepare": {
+     "count": 1109,
+     "meanMs": 15.60459873765519,
+     "medianMs": 13.100000023841858,
+     "p95Ms": 28.80000001192093,
+     "maxMs": 202
+    },
+    "roi": {
+     "mode": "auto",
+     "framesCropped": 1109,
+     "framesSkipped": 0,
+     "localisations": 1,
+     "localisationsFound": 1,
+     "localiserRuns": 5,
+     "localiseMs": {
+      "count": 1,
+      "meanMs": 1406.9000000059605,
+      "medianMs": 1406.9000000059605,
+      "p95Ms": 1406.9000000059605,
+      "maxMs": 1406.9000000059605
+     },
+     "locatorSetupMs": 961.7999999821186,
+     "meanCropSideFraction": 0.8416666666666736
+    }
+   },
+   "cleanReport": {
+    "bodyHeightHU": 0.2720434862425748,
+    "bodyHeightSource": "setup-estimate",
+    "swapsCorrected": [
+     {
+      "frameIndex": 219,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 219,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 220,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 220,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 221,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 221,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 222,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 222,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 223,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 224,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 232,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 241,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 241,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 247,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 252,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 255,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 256,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 257,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 258,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 259,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 260,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 261,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 262,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 263,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 264,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 265,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 265,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 389,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 391,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 391,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 393,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 393,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 394,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 395,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 397,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 398,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 399,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 400,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 401,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 402,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 403,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 404,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 405,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 406,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 407,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 408,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 409,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 410,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 411,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 412,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 414,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 414,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 432,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 434,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 436,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 436,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 438,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 438,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 447,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 447,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 463,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 465,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 476,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 476,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 478,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 478,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 481,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 481,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 489,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 490,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 507,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 507,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 512,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 531,
+      "group": "arms"
+     },
+     {
+      "frameIndex": 531,
+      "group": "legs"
+     },
+     {
+      "frameIndex": 536,
+      "group": "legs"
+     }
+    ],
+    "swapsUnresolved": [
+     {
+      "group": "arms",
+      "startFrame": 395,
+      "endFrame": 396,
+      "reason": "tie"
+     },
+     {
+      "group": "arms",
+      "startFrame": 433,
+      "endFrame": 434,
+      "reason": "tie"
+     },
+     {
+      "group": "arms",
+      "startFrame": 464,
+      "endFrame": 465,
+      "reason": "tie"
+     },
+     {
+      "group": "arms",
+      "startFrame": 511,
+      "endFrame": 514,
+      "reason": "tie"
+     },
+     {
+      "group": "arms",
+      "startFrame": 518,
+      "endFrame": 519,
+      "reason": "tie"
+     },
+     {
+      "group": "arms",
+      "startFrame": 520,
+      "endFrame": 523,
+      "reason": "tie"
+     },
+     {
+      "group": "legs",
+      "startFrame": 224,
+      "endFrame": 227,
+      "reason": "tie"
+     },
+     {
+      "group": "legs",
+      "startFrame": 515,
+      "endFrame": 516,
+      "reason": "tie"
+     }
+    ],
+    "outliersRejected": [
+     {
+      "frameIndex": 226,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 227,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 230,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 248,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 252,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 269,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 393,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 512,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 518,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 11
+     },
+     {
+      "frameIndex": 247,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 248,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 249,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 250,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 251,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 252,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 253,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 254,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 264,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 269,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 512,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 12
+     },
+     {
+      "frameIndex": 225,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 227,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 230,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 231,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 248,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 252,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 264,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 269,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 393,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 447,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 450,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 451,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 453,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 470,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 475,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 478,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 481,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 488,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 490,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 496,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 500,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 501,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 506,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 512,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 513,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 529,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 548,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 549,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 550,
+      "landmark": 13
+     },
+     {
+      "frameIndex": 249,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 250,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 251,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 252,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 253,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 254,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 264,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 269,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 271,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 490,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 512,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 592,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 593,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 699,
+      "landmark": 14
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 227,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 230,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 241,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 247,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 393,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 436,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 447,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 470,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 475,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 478,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 488,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 490,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 494,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 496,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 500,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 501,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 506,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 513,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 518,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 529,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 538,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 539,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 548,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 550,
+      "landmark": 15
+     },
+     {
+      "frameIndex": 247,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 389,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 453,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 455,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 512,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 577,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 578,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 579,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 580,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 697,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 698,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 701,
+      "landmark": 16
+     },
+     {
+      "frameIndex": 241,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 242,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 243,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 244,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 245,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 246,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 247,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 261,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 436,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 437,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 470,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 475,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 488,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 490,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 494,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 496,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 500,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 501,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 506,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 513,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 518,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 529,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 538,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 539,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 548,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 550,
+      "landmark": 17
+     },
+     {
+      "frameIndex": 389,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 512,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 578,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 579,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 697,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 698,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 701,
+      "landmark": 18
+     },
+     {
+      "frameIndex": 241,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 248,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 436,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 447,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 470,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 475,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 488,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 490,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 494,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 496,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 500,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 501,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 506,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 513,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 518,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 529,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 538,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 539,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 548,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 550,
+      "landmark": 19
+     },
+     {
+      "frameIndex": 389,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 512,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 577,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 578,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 579,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 580,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 697,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 698,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 701,
+      "landmark": 20
+     },
+     {
+      "frameIndex": 241,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 247,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 470,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 475,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 488,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 490,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 494,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 496,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 500,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 501,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 506,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 513,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 518,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 529,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 538,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 539,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 548,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 550,
+      "landmark": 21
+     },
+     {
+      "frameIndex": 389,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 394,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 395,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 453,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 455,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 510,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 512,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 534,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 535,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 537,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 546,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 577,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 578,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 579,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 580,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 697,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 698,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 701,
+      "landmark": 22
+     },
+     {
+      "frameIndex": 389,
+      "landmark": 23
+     },
+     {
+      "frameIndex": 389,
+      "landmark": 24
+     },
+     {
+      "frameIndex": 223,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 224,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 225,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 227,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 232,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 434,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 436,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 447,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 478,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 481,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 25
+     },
+     {
+      "frameIndex": 225,
+      "landmark": 26
+     },
+     {
+      "frameIndex": 230,
+      "landmark": 26
+     },
+     {
+      "frameIndex": 231,
+      "landmark": 26
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 26
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 26
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 26
+     },
+     {
+      "frameIndex": 224,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 227,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 536,
+      "landmark": 27
+     },
+     {
+      "frameIndex": 224,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 225,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 241,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 28
+     },
+     {
+      "frameIndex": 224,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 225,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 29
+     },
+     {
+      "frameIndex": 224,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 225,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 241,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 30
+     },
+     {
+      "frameIndex": 224,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 227,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 232,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 420,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 440,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 447,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 454,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 463,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 465,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 475,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 476,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 478,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 479,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 480,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 481,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 489,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 496,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 515,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 31
+     },
+     {
+      "frameIndex": 223,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 224,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 225,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 226,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 227,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 228,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 229,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 232,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 432,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 449,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 452,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 456,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 514,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 516,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 517,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 519,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 520,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 521,
+      "landmark": 32
+     },
+     {
+      "frameIndex": 524,
+      "landmark": 32
+     }
+    ],
+    "interpolatedSamples": 857,
+    "framesWithoutPose": 0
+   },
+   "frames": 1109
+  },
+  "audio": {
+   "status": "ok",
+   "timing": {
+    "usable": true,
+    "reason": "Real-time audio track."
+   },
+   "onsets": [
+    {
+     "tMedia": 2.585875,
+     "tReal": 2.585875,
+     "strength": 32.36,
+     "sharpness": 0.405,
+     "kind": "unknown",
+     "riseTimeMs": 0.042,
+     "hfRatio": 0.242,
+     "peakDbfs": -20.15
+    },
+    {
+     "tMedia": 3.140021,
+     "tReal": 3.140021,
+     "strength": 20.28,
+     "sharpness": 0.246,
+     "kind": "bounce",
+     "riseTimeMs": 2.479,
+     "hfRatio": 0.045,
+     "peakDbfs": -31.26
+    },
+    {
+     "tMedia": 4.245146,
+     "tReal": 4.245146,
+     "strength": 14,
+     "sharpness": 0.267,
+     "kind": "bounce",
+     "riseTimeMs": 2.188,
+     "hfRatio": 0.139,
+     "peakDbfs": -38.22
+    }
+   ],
+   "decodeMethod": "webcodecs",
+   "sampleRate": 48000,
+   "durationS": 4.6293,
+   "startTimeS": 0
+  },
+  "ball": {
+   "finalPass": 0,
+   "passes": [
+    {
+     "label": "initial",
+     "metaTimeScale": 1,
+     "captureFps": 240,
+     "timeBaseKnown": true,
+     "tossRoiUntilTReal": 2.5715191631093157,
+     "audioUsed": true,
+     "contactOnset": {
+      "tReal": 2.585875,
+      "kind": "unknown",
+      "strength": 32.36
+     },
+     "contactFromAudioTReal": 2.5715191631093157,
+     "frames": 1109,
+     "candidatesTotal": 1193,
+     "setup": {
+      "expectedRadiusNorm": 0.004898404756471343,
+      "tossRoi": null,
+      "scale": {
+       "unitsPerM": 0.14622103750660725,
+       "relSigma": 0.03241453216931658,
+       "basis": "player height 1.80 m (entered) vs stature in frame"
+      },
+      "body": {
+       "heightNorm": 0.26319786751189306,
+       "relSigma": 0.030111491091536123,
+       "groundY": 0.7375085526511226,
+       "headTopY": 0.47444808733214056
+      },
+      "notes": []
+     },
+     "tracks": [
+      {
+       "id": 1,
+       "kind": "toss",
+       "observations": 247,
+       "detected": 232
+      },
+      {
+       "id": 2,
+       "kind": "outgoing",
+       "observations": 10,
+       "detected": 10
+      }
+     ],
+     "tossTrack": {
+      "id": 1,
+      "kind": "toss",
+      "observations": 247,
+      "detected": 232
+     },
+     "outgoingTrack": {
+      "id": 2,
+      "kind": "outgoing",
+      "observations": 10,
+      "detected": 10
+     },
+     "toss": {
+      "status": "ok",
+      "release": {
+       "tReal": 1.668333333333391,
+       "frameIndex": 401,
+       "uncertaintyS": 0.025,
+       "x": 0.5329243147046793,
+       "y": 0.47162311947122604,
+       "confidence": 0.7,
+       "method": "ball-hinge-fit"
+      },
+      "apex": {
+       "tReal": 2.2243376314560326,
+       "frameIndex": 534,
+       "uncertaintyS": 0.0006788633539143437,
+       "x": 0.5583882940775546,
+       "y": 0.247245036245616,
+       "yUncertaintyNorm": 0.00005122502013102405,
+       "bracketed": true,
+       "gravityPrior": false,
+       "aboveFrame": false,
+       "confidence": 1,
+       "method": "ball-apex-fit"
+      },
+      "heights": {
+       "riseAboveReleaseNorm": 0.22437808322561004
+      },
+      "fit": {
+       "a": 0.7258119862611583,
+       "b": -3.2289018288050864,
+       "c": 3.838328959289795,
+       "rmse": 0.0005855132364495552,
+       "tStart": 1.6708333333333334,
+       "tEnd": 2.5708333333333333,
+       "detections": 215
+      },
+      "gravity": {
+       "status": "ok",
+       "timeScaleFactor": 1.0059760275387626,
+       "timeScaleSigma": 0.025899703590565804,
+       "low": 0.9554876414478893,
+       "high": 1.0591322420969913,
+       "captureFpsFactor": 0.9940594732129118,
+       "plausible": true,
+       "nearestStandard": {
+        "factor": 1,
+        "label": "real time",
+        "consistent": true
+       },
+       "apparentGravityMps2": 9.927600003909987
+      },
+      "confidence": 1
+     },
+     "events": {
+      "tossRelease": {
+       "frameIndex": 401,
+       "tReal": 1.668333333333391,
+       "uncertaintyS": 0.025,
+       "confidence": 0.7,
+       "method": "ball-hinge-fit"
+      },
+      "tossApex": {
+       "frameIndex": 534,
+       "tReal": 2.2243376314560326,
+       "uncertaintyS": 0.0006788633539143437,
+       "confidence": 1,
+       "method": "ball-apex-fit"
+      },
+      "contact": {
+       "frameIndex": 617,
+       "tReal": 2.5709187882456073,
+       "uncertaintyS": 0.002064942969354213,
+       "confidence": 0.8,
+       "method": "ball-track-intersection"
+      }
+     },
+     "timeBase": {
+      "status": "consistent",
+      "timeScale": 1,
+      "captureFpsFactor": 1,
+      "basis": "toss falls at g in real time: implied factor 1.006 (0.955-1.059)"
+     },
+     "speedFromTrack": {
+      "status": "experimental",
+      "quantity": "launch",
+      "lowKmh": 100,
+      "highKmh": 190,
+      "basis": "10 ball detections within 50 ms after contact at 240 fps; scale from player height 1.80 m (entered) vs stature in frame; target tag body: ball assumed 2-19 deg out of the image plane",
+      "confidence": 0.4125630949191058,
+      "detectionsUsed": 10,
+      "targetTag": "body",
+      "outOfPlaneDeg": [
+       2,
+       19
+      ],
+      "relSigma": 0.1249579367205961,
+      "errorTerms": {
+       "localisation": 0.00894689531400228,
+       "scale": 0.03241453216931658,
+       "timeBase": 0.003,
+       "perspective": 0.12031100164969588
+      }
+     },
+     "averageSpeedRear": {
+      "status": "unavailable",
+      "reason": "bounce not in view: from the side the bounce is outside the frame and its distance is unknown (about +-20% error), so flight time is never used",
+      "unlockHint": "Add the optional rear (outcomes) view with the service boxes visible."
+     },
+     "bounce": {
+      "status": "unavailable",
+      "reason": "bounce is only located in the rear (outcomes) view"
+     },
+     "placement": {
+      "status": "unavailable",
+      "reason": "bounce is only located in the rear (outcomes) view"
+     },
+     "metrics": [
+      {
+       "id": "toss-apex-height",
+       "value": 3.35289315932636,
+       "unit": "m",
+       "status": "estimated",
+       "uncertainty": {
+        "kind": "range",
+        "low": 2.9516913055205465,
+        "high": 3.7540950131321735
+       },
+       "confidence": 1,
+       "basis": "ball-apex fit (215 detections) vs floor from pose; scale from player height 1.80 m (entered) vs stature in frame; a toss nearer the camera than the body reads high"
+      },
+      {
+       "id": "speed-experimental",
+       "value": "100–190",
+       "unit": "km/h",
+       "status": "experimental",
+       "uncertainty": {
+        "kind": "range",
+        "low": 100,
+        "high": 190
+       },
+       "confidence": 0.4125630949191058,
+       "basis": "launch speed range (peak, just after contact): 10 ball detections within 50 ms after contact at 240 fps; scale from player height 1.80 m (entered) vs stature in frame; target tag body: ball assumed 2-19 deg out of the image plane"
+      },
+      {
+       "id": "speed-average-rear",
+       "value": null,
+       "unit": "km/h",
+       "status": "unavailable",
+       "confidence": 0,
+       "basis": "contact to the bounce located in the rear view",
+       "unavailableReason": "bounce not in view: from the side the bounce is outside the frame and its distance is unknown (about +-20% error), so flight time is never used",
+       "unlockHint": "Add the optional rear (outcomes) view with the service boxes visible."
+      },
+      {
+       "id": "spin",
+       "value": null,
+       "unit": "rpm",
+       "status": "unavailable",
+       "confidence": 0,
+       "basis": "ball spin",
+       "unavailableReason": "a phone video cannot resolve the ball’s spin: the ball is only a few pixels wide and its seams cannot be followed from frame to frame",
+       "unlockHint": "Not available from phone video."
+      }
+     ]
+    }
+   ]
+  },
+  "cspViolations": [],
+  "notes": []
+ },
+ "privacy": {
+  "externalRequests": [],
+  "consoleMessages": [
+   "warning: W0927 00:13:59.151000 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+   "warning: W0927 00:14:00.420999 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+   "warning: W0927 00:14:01.057999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+   "warning: W0927 00:14:01.428000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+   "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log",
+   "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+  ]
+ }
+}

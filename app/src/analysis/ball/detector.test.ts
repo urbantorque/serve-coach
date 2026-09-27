@@ -230,3 +230,43 @@ describe('BallDetector behaviour', () => {
     expect(grid.r[0]).toBeCloseTo((0 + 10 + 40 + 50) / 4)
   })
 })
+
+describe('BallDetector under floodlight flicker', () => {
+  /** 100 Hz flicker (50 Hz mains) sampled at 240 fps: every frame is scaled by 1 + 0.3 sin(2 pi 100 t). */
+  function flickerRun(compensateIllumination: boolean) {
+    const fps = 240
+    const scene = createScene({ width: W, height: H, seed: 21, upper: 'fence', lower: 'grass', horizonY: 0.45, lighting: LIGHTING.sun, noiseSigma: 3, distractors: true, playerX: 0.4 })
+    const detector = new BallDetector({ expectedRadiusNorm: 6 / H, compensateIllumination })
+    let found = 0
+    let falseCandidates = 0
+    const frames = 120
+    for (let f = 0; f < frames; f++) {
+      const t = 0.1 + f / fps
+      const ball = ballAt(tossPath, t, 1 / 480, 6)
+      const image = scene.render(ball, [], 2000 + f)
+      const k = 1 + 0.3 * Math.sin(2 * Math.PI * 100 * t)
+      for (let p = 0; p < image.data.length; p += 4) {
+        image.data[p] *= k
+        image.data[p + 1] *= k
+        image.data[p + 2] *= k
+      }
+      const candidates = detector.detect({ image, tReal: t })
+      if (f === 0) continue
+      const onBall = (c: { x: number; y: number }) => Math.hypot(c.x * W - ball.x, c.y * H - ball.y) < 6
+      if (candidates.some(onBall)) found++
+      falseCandidates += candidates.filter((c) => !onBall(c)).length
+    }
+    return { recall: found / (frames - 1), falsePerFrame: falseCandidates / (frames - 1) }
+  }
+
+  it('compensates the illumination gain so lit static yellow objects do not read as moving', { timeout: 60_000 }, () => {
+    const raw = flickerRun(false)
+    const compensated = flickerRun(true)
+    console.info(
+      `[ball-accuracy] detector 100 Hz flicker at 240 fps: recall ${raw.recall.toFixed(3)} -> ${compensated.recall.toFixed(3)}, ` +
+        `false/frame ${raw.falsePerFrame.toFixed(2)} -> ${compensated.falsePerFrame.toFixed(2)} (without -> with gain compensation)`,
+    )
+    expect(compensated.recall).toBeGreaterThanOrEqual(0.95)
+    expect(compensated.falsePerFrame).toBeLessThan(raw.falsePerFrame)
+  })
+})

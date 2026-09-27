@@ -1,114 +1,842 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "updated": "2026-09-27",
   "spec": "docs/specs/METRICS.md",
   "notes": [
-    "Twin of METRICS.md. Code reads ids, names, units, statuses, prerequisites, reference ranges and thresholds from here; algorithms live in METRICS.md.",
-    "statusDefault = the status the engine emits when all prerequisites hold and the metric has passed synthetic validation (V1). statusTarget = the status after real-footage validation passes.",
-    "validationLevel = the level actually achieved. All metrics are V0 until the first synthetic matrix run (METRICS.md section 5) passes; CI then promotes them to V1 through a reviewed change.",
-    "Emitted status = min(statusTarget, statusCeilingByValidationLevel[validationLevel]), then downgraded per value by the rules in METRICS.md section 3. Status order: unavailable < experimental < estimated < measured. player-entered is outside the ladder.",
-    "Experimental values are hidden unless the profile's experimental toggle is on, never appear in headlines, and are never cited by coaching text.",
-    "Heights are ball-centre heights. Ratios are of the player's standing height. Positive forward = into the court from the start toe (front toe at toss release)."
+    "Twin of METRICS.md. Code reads ids, names, units, statuses, prerequisites, reference ranges, plausibility bounds and thresholds from here; algorithms live in METRICS.md.",
+    "Revised 2026-09-27 for DECISIONS D1, D4, D5 and D11 (see the METRICS.md revision log). trunk-tilt-band is removed (replaced by shoulder-tilt-trophy); knee-bend-band is rear view only; the side-view audio flight-time speed method is removed.",
+    "statusDefault = the status the engine emits when all prerequisites hold and the metric has passed synthetic validation (V1) in that condition class. statusTarget = the status after real-footage validation passes.",
+    "validationLevel is stored per condition class (day, overcast, night-lights, flicker). All metrics are V0 until the first synthetic matrix run (METRICS.md section 5) passes; CI then promotes them through a reviewed change.",
+    "Emitted status = min(statusTarget, statusCeilingByValidationLevel[validationLevel[conditionClass]]), then the condition cap, then the per-value rules in METRICS.md section 3. Status order: unavailable < experimental < estimated < measured. player-entered is outside the ladder.",
+    "Experimental values are hidden unless the profile experimental toggle is on, never appear in headlines, and are never cited by coaching text.",
+    "Heights are ball-centre heights. Ratios are of the player standing height. Positive forward = into the court from the start toe (the geometric front toe at toss release). Roles (front foot, wrists, front shoulder, nearer knee) are geometric, never MediaPipe left/right labels.",
+    "Plausibility bounds are applied before aggregation regardless of confidence: hardReject excludes the value (IMPLAUSIBLE_VALUE, counted in N but not X); softFlag keeps it with confidence x 0.7 (CHECK_THIS_SERVE)."
   ],
   "enums": {
-    "status": ["measured", "estimated", "player-entered", "experimental", "unavailable"],
-    "evidenceTier": ["research-backed", "coach-recommended", "experimental", "n/a"],
-    "view": ["side", "rear"],
-    "band": ["low", "typical", "high", "unclear"],
-    "kind": ["per-serve", "session-spread", "count", "rate", "band", "distribution", "range", "flag", "session-index"]
+    "status": [
+      "measured",
+      "estimated",
+      "player-entered",
+      "experimental",
+      "unavailable"
+    ],
+    "evidenceTier": [
+      "research-backed",
+      "coach-recommended",
+      "experimental",
+      "n/a"
+    ],
+    "view": [
+      "side",
+      "rear"
+    ],
+    "setupClass": [
+      "portrait-near",
+      "landscape-fence",
+      "landscape-near",
+      "rear"
+    ],
+    "conditionClass": [
+      "day",
+      "overcast",
+      "night-lights",
+      "flicker"
+    ],
+    "band": [
+      "low",
+      "typical",
+      "high",
+      "unclear"
+    ],
+    "bandBasis": [
+      "population-provisional",
+      "player-relative",
+      "fixed-geometric"
+    ],
+    "kind": [
+      "per-serve",
+      "session-spread",
+      "count",
+      "rate",
+      "band",
+      "flag-per-serve",
+      "distribution",
+      "range",
+      "flag",
+      "session-index"
+    ],
+    "entryMode": [
+      "per-serve-tags",
+      "tally",
+      "match-log"
+    ],
+    "provenance": [
+      "engine",
+      "confirmed-by-you",
+      "from-your-tags",
+      "match-log"
+    ],
+    "profileSex": [
+      "female",
+      "male",
+      "not-given"
+    ],
+    "ageBand": [
+      "18-39",
+      "40-59",
+      "60+"
+    ],
+    "targetZone": [
+      "T",
+      "body",
+      "wide"
+    ]
   },
   "statusCeilingByValidationLevel": {
     "V0": "experimental",
     "V1": "estimated",
-    "V1-exceptions": { "serve-count": "measured" },
-    "V2": "measured for relative and timing metrics (kind session-spread, timing ids); estimated for absolute spatial metrics",
+    "V2": {
+      "timing": "measured",
+      "spatialAbsolute": "estimated",
+      "spatialSpread": "estimated",
+      "band": "estimated",
+      "note": "Timing = timingMetricIds. Spatial spreads (spatialSpreadIds) stay estimated until V3 (two-view triangulated SD within 20%), because V2 annotation shares the engine image geometry and cannot see the sideways leak."
+    },
     "V3": "statusTarget"
   },
-  "timingMetricIds": ["rhythm-release-to-contact", "rhythm-spread", "toss-drop", "trophy-pause"],
+  "serveCountConfirmed": {
+    "status": "measured",
+    "provenance": "confirmed-by-you",
+    "rule": "Once the player confirms the serve strip, the session count is emitted as measured; otherwise estimated until V2."
+  },
+  "timingMetricIds": [
+    "rhythm-release-to-contact",
+    "rhythm-spread",
+    "toss-drop",
+    "trophy-pause",
+    "drive-time"
+  ],
+  "spatialSpreadIds": [
+    "toss-height-spread",
+    "toss-forward-spread",
+    "toss-lateral-spread",
+    "contact-height-spread"
+  ],
+  "poseDerivedIds": [
+    "leg-drive",
+    "drive-time",
+    "loading-depth",
+    "deep-bend-flag",
+    "shoulder-tilt-trophy",
+    "landing-distance",
+    "trophy-pause",
+    "knee-bend-band",
+    "shoulder-over-shoulder-contact",
+    "repeatability"
+  ],
+  "conditionCap": {
+    "appliesTo": "poseDerivedIds",
+    "classes": [
+      "night-lights",
+      "flicker"
+    ],
+    "capStatus": "experimental",
+    "reasonCode": "CONDITION_NOT_VALIDATED",
+    "liftedWhen": "The metric reaches V1 in that condition class (S4 night-lights and flicker cells pass).",
+    "classification": "flicker when the flicker check warns; night-lights when the player tags under lights or the subject median luminance is below the initial night threshold set on S4 renders; overcast when the exposure check reports low daylight contrast; otherwise day."
+  },
+  "crossSetupComparableIds": [
+    "rhythm-release-to-contact",
+    "rhythm-spread",
+    "toss-drop",
+    "trophy-pause",
+    "drive-time"
+  ],
+  "fpsFloor": 30,
+  "errorModelPlanning": {
+    "note": "Planning values from the pose ROI evaluation (mean joint error 0.024-0.036 BH mirror-tolerant; hitting wrist 0.05-0.15 BH near contact). Replaced by validation/synthetic/<date>/noise.json (METRICS.md section 5.5).",
+    "bodyHeightRel": {
+      "sigmaPersistent": 0.025,
+      "sigmaSession": 0.015
+    },
+    "enteredHeightRel": 0.012,
+    "toePointBH": {
+      "perReading": 0.03,
+      "s0Window": 0.021,
+      "sessionBias": 0.015
+    },
+    "hipPointBH": {
+      "perJoint": 0.03,
+      "midHipPerReading": 0.02,
+      "postureBias": [
+        0.01,
+        0.02
+      ]
+    },
+    "shoulderLineDeg": 6,
+    "wristNearContactBH": 0.1,
+    "thresholdRule": "Every detection threshold >= 3 x the measured cleaned noise of the quantity it tests, with hysteresis where a state can flip. Speeds come from a local quadratic over 7-9 frames.",
+    "intervalCoverageGateV1": 0.93
+  },
+  "geometry": {
+    "intrinsicsDefault": {
+      "basis": "sensor long axis, mapped to the displayed orientation after rotation metadata; native intrinsics or videoFieldOfView when available",
+      "fovLongDeg": {
+        "26mm": 67.3,
+        "24mm": 71.6
+      },
+      "fLongUnits": {
+        "26mm": 0.751,
+        "24mm": 0.693
+      },
+      "fHU": "fLong x (long side / displayed height): portrait about 0.75, landscape 16:9 about 1.34",
+      "focalRelSigma": 0.05,
+      "unsupportedLenses": [
+        "0.5x"
+      ]
+    },
+    "tilt": {
+      "rectification": "K . R(pitch, roll) . K^-1 applied to every keypoint and ball centre before any height, distance or angle",
+      "maxPitchDeg": 5,
+      "maxPitchDegAfterTiltTest": 8,
+      "maxRollDeg": 5,
+      "maxYawDegForForwardMetrics": 15,
+      "yawTermAboveDeg": 10,
+      "pitchSources": [
+        "coremotion",
+        "device-orientation-event",
+        "background-verticals",
+        "toss-parabola-roll-only"
+      ],
+      "sensorSigmaDeg": {
+        "coremotion": 0.5,
+        "deviceOrientationEvent": 1
+      },
+      "imuMisalignmentSigmaDeg": 0.5,
+      "pitchUnknown": {
+        "reasonCode": "PITCH_UNKNOWN",
+        "status": "experimental",
+        "affects": [
+          "toss-apex-height",
+          "contact-height-ratio",
+          "toss-forward",
+          "contact-forward",
+          "landing-distance",
+          "shoulder-tilt-trophy",
+          "deep-bend-flag"
+        ],
+        "unaffected": [
+          "spreads",
+          "timing",
+          "toss-drop (physics path)",
+          "leg-drive",
+          "loading-depth"
+        ]
+      }
+    },
+    "setupClassRule": "portrait -> portrait-near; landscape with camera-to-server distance D >= 8.0 m -> landscape-fence; landscape with D < 8.0 m -> landscape-near; rear view -> rear",
+    "depthOffsetPriorsM": {
+      "note": "Toss or contact offset towards a chest-side camera (positive = nearer the camera). Back-side camera flips the sign. The prior sigma is player-persistent (sigma_p). With a proven time base and >= 5 bracketed tosses, a per-session estimate from toss gravity is combined with the prior: delta = D x (1 - s_body / s_grav).",
+      "tossApex": {
+        "flatSlice": {
+          "mean": 0.3,
+          "sd": 0.15
+        },
+        "kick": {
+          "mean": 0.1,
+          "sd": 0.2
+        },
+        "unknownType": {
+          "mean": 0.25,
+          "sd": 0.2
+        },
+        "rear": {
+          "mean": -0.3,
+          "sd": 0.2
+        }
+      },
+      "contact": {
+        "flatSlice": {
+          "mean": 0.3,
+          "sd": 0.15
+        },
+        "kick": {
+          "mean": 0,
+          "sd": 0.2
+        },
+        "unknownType": {
+          "mean": 0.25,
+          "sd": 0.2
+        }
+      },
+      "sidewaysScatterSdM": 0.15,
+      "disagreementReason": "SCALE_INCONSISTENT"
+    },
+    "apexRule": {
+      "bracketed": "normal",
+      "aboveFrameFitted": {
+        "condition": "exit and re-entry through the top edge, >= 3 detections per branch, gap <= 0.65 s, time base proven or physics-fixed",
+        "status": "estimated",
+        "reasonCode": "APEX_EXTRAPOLATED",
+        "countsTowardSpread": true,
+        "sigmaCm": {
+          "60fps_upTo0.3m": 2,
+          "30fps_upTo0.3m": 4,
+          "60fps_at0.5m": 2.6,
+          "30fps_at0.5m": 5
+        }
+      },
+      "rightCensored": {
+        "condition": "left through the top and not fittable",
+        "perServe": "unavailable",
+        "reasonCode": "APEX_OUT_OF_FRAME",
+        "aggregate": "censored at the frame top; > 10% censored -> spread \"at least X cm\" and median provisional; > 50% -> median unavailable"
+      },
+      "tooFewSamples": {
+        "condition": "< 3 detections on both sides",
+        "status": "unavailable",
+        "reasonCode": "BALL_NOT_TRACKED"
+      }
+    }
+  },
   "prerequisiteVocabulary": {
     "view:side": "Side view on the hitting-arm (chest) side or back side (D1)",
     "view:rear": "Rear view behind the server",
-    "fps>=25": "Real capture frame rate at least 25",
-    "fps>=30": "Real capture frame rate at least 30",
+    "fps>=30": "Real capture frame rate at least 30 (the single floor)",
     "fps>=60": "Real capture frame rate at least 60",
     "fps>=120": "Real capture frame rate at least 120",
     "timebase": "Time base proven, or fixed by the gravity check (section 2.9)",
+    "timebase:proven": "Time base proven (speed never uses a physics-fixed time base)",
+    "pitch": "Camera pitch known from sensors or estimated from background verticals (otherwise PITCH_UNKNOWN downgrades apply)",
+    "yaw<=15": "Residual camera yaw at most 15 degrees",
+    "roles:geometric": "Geometric roles assigned (front foot, tossing/hitting wrist, front shoulder, nearer knee); else ROLE_AMBIGUOUS",
     "event:tossRelease": "tossRelease found (confidence >= 0.5)",
-    "event:tossApex": "tossApex found, bracketed or above-frame-bracketed",
-    "event:trophy": "trophy found",
+    "event:tossApex": "tossApex bracketed or fitted above the frame (section 2.4.3)",
+    "event:trophy": "trophy found (pelvis-min or fallback)",
     "event:trophy-pelvis": "trophy found by the pelvis-min method (not the fallback)",
     "event:contact": "contact found by any method",
     "event:contact-ball": "contact found with a ball position (not wrist-only)",
     "event:landing": "landing found",
     "floor": "Floor row found (feet visible in setup)",
-    "startToe": "Start toe S0 found (front foot index visible at release)",
-    "bodyHeight": "Standing body height in frame found from upright setup frames",
-    "playerHeight": "Player's height entered in Profile (needed for cm, m and km/h)",
+    "startToe": "Start toe S0 found (geometric front foot index visible at release)",
+    "bodyHeight": "Standing body height in frame found from upright setup frames (vertical-extent criterion)",
+    "playerHeight": "Player height entered in Profile (needed for cm, m and km/h)",
+    "hips:visible": "Both hips visible (>= 0.5) through the loading and drive window",
+    "shoulders:visible": "Both shoulders visible (>= 0.5) at the key frame",
+    "frontLeg:visible": "Front-leg hip, knee and ankle visible (>= 0.5) at trophy",
+    "nearerKnee:visible": "Rear view: nearer-knee hip, knee and ankle visible (>= 0.6) at trophy",
+    "segmentLengths": "Standing thigh and shank lengths from >= 5 upright frames",
     "stability": "No CAMERA_MOVED in the block",
     "n>=5": "At least 5 included serves in the stratum",
     "n>=8": "At least 8 included serves in the stratum",
-    "n>=16": "At least 16 included serves in the stratum",
-    "audio": "Usable audio track (onset timestamps only are kept)",
+    "n>=12": "At least 12 included serves in the stratum",
+    "n>=16": "At least 16 included serves in the stratum and block",
+    "baseline:2-sessions": "Player-relative band reference: at least 2 matched sessions with >= 8 included serves each (else BASELINE_BUILDING)",
+    "block:single": "Computed within one recorded block, never across a drill or template-block boundary",
+    "history:28d-3sessions": "At least 28 days of history and at least 3 sessions",
+    "audio": "Usable audio (opt-in hit-sound timing; onset timestamps only are kept); used only to time contact, and in the rear view to refine a bounce already located in video",
     "entry:outcome": "Player tagged outcomes (in/net/long/wide)",
     "entry:serveNumber": "Serve number (1st/2nd) known",
-    "entry:pointPlay": "Point-play mode: 1st/2nd serves tagged in sequence",
+    "entry:targetZone": "Aimed target tagged T, body or wide for this serve (mixed or untagged fails: TARGET_NOT_TAGGED)",
+    "entry:secondServeBlock": "Block declared as second serves (every serve is a 2nd serve; sequence rule off)",
+    "entry:tally": "Session tally entered",
+    "entry:pointPlay": "Optional point-play mode (1st/2nd tagged in sequence); deferred in v1",
+    "entry:matchLog": "D11 match log entry (player-entered; never pooled with practice)",
     "calibration:court-4pt": "Four service-box corners tapped (rear view)",
+    "bounce:located": "Bounce detected in rear-view video and mapped through the court homography",
+    "bounce:coverage>=50%": "Bounces located on at least 50% of the serves that went in (session typical only)",
     "toggle:experimental": "Experimental metrics toggle on in Profile"
   },
   "reasonCodes": {
-    "VIEW_NOT_SUPPORTED": { "meaning": "This view cannot see the quantity", "unlockHint": "Film from the side, on your hitting-arm side, to see this." },
-    "VIEW_MISMATCH": { "meaning": "Detected view differs from the declared view", "unlockHint": "This clip doesn't look like the view you chose. Check where the phone is." },
-    "FPS_TOO_LOW": { "meaning": "Below the metric's minimum real frame rate", "unlockHint": "Record at 60 fps (120 fps or more for speed)." },
-    "TIME_BASE_UNKNOWN": { "meaning": "Possible rendered slow motion; gravity check could not fix it", "unlockHint": "Import the original slow-motion file, or record in the app." },
-    "FRAMES_DROPPED": { "meaning": "More than 10% of frames missing in the serve window", "unlockHint": "Close other apps while recording." },
-    "PLAYER_HEIGHT_MISSING": { "meaning": "A cm, m or km/h value needs the entered height", "unlockHint": "Add your height in Profile to see centimetres." },
-    "BODY_NOT_UPRIGHT": { "meaning": "No standing frames to measure body height", "unlockHint": "Stand tall for a second before each serve." },
-    "FEET_NOT_VISIBLE": { "meaning": "Foot landmarks missing or cut off", "unlockHint": "Keep your feet in the frame." },
-    "POSE_LOW_QUALITY": { "meaning": "Tracking quality below 0.5 where the metric needs it", "unlockHint": "Make sure you're the only person near your serving spot, with the light behind the camera." },
-    "OCCLUDED": { "meaning": "Needed landmark hidden at the event", "unlockHint": "Try the other side of the court so nothing blocks the view." },
-    "BALL_NOT_TRACKED": { "meaning": "Toss track missing or under 6 detections", "unlockHint": "Toss against sky, a fence or a plain windbreak; avoid trees behind you." },
-    "APEX_OUT_OF_FRAME": { "meaning": "Apex above the frame and not bracketed", "unlockHint": "Move the phone back a step or raise it a little so the whole toss fits." },
-    "RELEASE_NOT_FOUND": { "meaning": "Toss release not found", "unlockHint": "We couldn't see this moment clearly on this serve." },
-    "CONTACT_NOT_FOUND": { "meaning": "Contact (with ball position) not found", "unlockHint": "We couldn't see this moment clearly on this serve." },
-    "LANDING_NOT_FOUND": { "meaning": "Landing not found", "unlockHint": "We couldn't see this moment clearly on this serve." },
-    "NO_CONTACT": { "meaning": "Swing and miss", "unlockHint": "Swing and miss: not counted in contact stats." },
-    "AUDIO_UNAVAILABLE": { "meaning": "No audio track, or unusable audio", "unlockHint": "Speed from sound needs the clip's audio." },
-    "BOUNCE_NOT_HEARD": { "meaning": "No bounce onset in the expected window", "unlockHint": "The bounce was too quiet to hear." },
-    "NOT_ENTERED": { "meaning": "Player has not tagged outcomes or entries", "unlockHint": "Tag your serves (in, net, long, wide) in review." },
-    "NEEDS_CALIBRATION": { "meaning": "Rear auto outcomes need the four-corner tap", "unlockHint": "Tap the four corners of the service box." },
-    "CAMERA_MOVED": { "meaning": "Camera drift above threshold", "unlockHint": "Fix the phone firmly; it moved during recording." },
-    "CAMERA_TILTED": { "meaning": "Pitch or roll above 10 degrees and uncorrectable", "unlockHint": "Keep the phone level; the guide turns green." },
-    "SCALE_INCONSISTENT": { "meaning": "Gravity-based and body-based scales disagree by more than 15%", "unlockHint": "Check your height in Profile. If this was slow motion, import the original." },
-    "TOO_FEW_SERVES": { "meaning": "n below the minimum for this aggregate", "unlockHint": "Record at least {n} serves from one side." },
-    "RANGE_TOO_WIDE": { "meaning": "Speed range wider than 35% of its midpoint", "unlockHint": "This footage can't pin the speed down closely enough." },
-    "METHODS_DISAGREE": { "meaning": "The two speed methods do not overlap", "unlockHint": "Our two speed checks disagreed, so we're not showing either." },
-    "EXPERIMENTAL_HIDDEN": { "meaning": "Experimental toggle off", "unlockHint": "Turn on experimental metrics in Profile to see this." },
-    "VALIDATION_PENDING": { "meaning": "Status capped by validation level", "unlockHint": "" },
-    "NOT_MEASURABLE": { "meaning": "Physically impossible with phone video", "unlockHint": "Spin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the serve type you meant instead." },
-    "NOT_IMPLEMENTED": { "meaning": "Planned, not built in v1", "unlockHint": "Coming later." },
-    "LOW_LIGHT": { "meaning": "Exposure or backlight too poor for pose", "unlockHint": "Put the sun or court lights behind the camera." },
-    "FLICKER": { "meaning": "100 Hz light flicker detected", "unlockHint": "Under lights, record at 50 or 100 fps if your phone allows it." },
-    "MOTION_BLUR": { "meaning": "Ball streak longer than 3 diameters near contact", "unlockHint": "More light, or a shorter shutter in the app's recorder." },
-    "UNMATCHED": { "meaning": "Comparison is not like-for-like", "unlockHint": "Compare sessions from the same side, view and serve." }
+    "VIEW_NOT_SUPPORTED": {
+      "meaning": "This view cannot see the quantity",
+      "unlockHint": "Film from the side, on your hitting-arm side, to see this.",
+      "unlockHintRearOnly": "Add a phone behind you to see this."
+    },
+    "VIEW_MISMATCH": {
+      "meaning": "Detected view differs from the declared view",
+      "unlockHint": "This clip doesn't look like the view you chose. Check where the phone is."
+    },
+    "FPS_TOO_LOW": {
+      "meaning": "Below the metric's minimum real frame rate",
+      "unlockHint": "Record at 60 fps (120 fps or more for speed)."
+    },
+    "TIME_BASE_UNKNOWN": {
+      "meaning": "Possible rendered slow motion and the gravity check could not fix it; or a metric needing a proven time base has only a physics-fixed one",
+      "unlockHint": "Import the original slow-motion file, or record in the app."
+    },
+    "FRAMES_DROPPED": {
+      "meaning": "More than 10% of frames missing in the serve window",
+      "unlockHint": "Close other apps while recording."
+    },
+    "PLAYER_HEIGHT_MISSING": {
+      "meaning": "A cm, m or km/h value needs the entered height",
+      "unlockHint": "Add your height in Profile to see centimetres."
+    },
+    "BODY_NOT_UPRIGHT": {
+      "meaning": "No standing frames to measure body height",
+      "unlockHint": "Stand tall for a second before each serve."
+    },
+    "FEET_NOT_VISIBLE": {
+      "meaning": "Foot landmarks missing or cut off",
+      "unlockHint": "Keep your feet in the frame."
+    },
+    "POSE_LOW_QUALITY": {
+      "meaning": "Tracking quality below 0.5 where the metric needs it",
+      "unlockHint": "Make sure you're the only person near your serving spot, with the light behind the camera."
+    },
+    "OCCLUDED": {
+      "meaning": "Needed landmark hidden at the event",
+      "unlockHint": "Try the other side of the court so nothing blocks the view."
+    },
+    "ROLE_AMBIGUOUS": {
+      "meaning": "A geometric role (front foot, nearer knee, front shoulder) could not be assigned",
+      "unlockHint": "We couldn't tell your front foot from your back foot on this serve."
+    },
+    "BALL_NOT_TRACKED": {
+      "meaning": "Toss track missing or under 6 detections",
+      "unlockHint": "Toss against sky, a fence or a plain windbreak; avoid trees behind you."
+    },
+    "APEX_EXTRAPOLATED": {
+      "meaning": "Apex above the frame, fitted with gravity from both branches; kept as estimated with a wider interval",
+      "unlockHint": "Your toss went above the picture, so its height is estimated. Move the phone back a step to see it all."
+    },
+    "APEX_OUT_OF_FRAME": {
+      "meaning": "Apex left the frame and could not be fitted (one branch only, or out for more than 0.65 s); carried as censored",
+      "unlockHint": "Move the phone back a step or raise it a little so the whole toss fits."
+    },
+    "RELEASE_NOT_FOUND": {
+      "meaning": "Toss release not found",
+      "unlockHint": "We couldn't see this moment clearly on this serve."
+    },
+    "CONTACT_NOT_FOUND": {
+      "meaning": "Contact (with ball position) not found",
+      "unlockHint": "We couldn't see this moment clearly on this serve."
+    },
+    "LANDING_NOT_FOUND": {
+      "meaning": "Landing not found",
+      "unlockHint": "We couldn't see this moment clearly on this serve."
+    },
+    "NO_CONTACT": {
+      "meaning": "Swing and miss",
+      "unlockHint": "Swing and miss: not counted in contact stats."
+    },
+    "AUDIO_UNAVAILABLE": {
+      "meaning": "Hit-sound timing off (the default) or audio unusable; contact timed from video",
+      "unlockHint": "Optional: turn on 'Use the hit sound for timing' for sharper contact timing."
+    },
+    "NOT_ENTERED": {
+      "meaning": "Player has not tagged what this needs",
+      "unlockHint": "Tag your serves (in, net, long, wide) in review."
+    },
+    "TARGET_NOT_TAGGED": {
+      "meaning": "Launch speed needs the aimed target to bound the ball's angle out of the picture (D4)",
+      "unlockHint": "Tag where you aimed: T, body or wide."
+    },
+    "BOUNCE_NOT_LOCATED": {
+      "meaning": "Rear view: bounce not found in the video, or located on too few serves in the block",
+      "unlockHint": "Raise the rear phone so both service boxes are clear. 4K helps."
+    },
+    "NEEDS_CALIBRATION": {
+      "meaning": "Rear auto outcomes or rear speed need the four-corner tap",
+      "unlockHint": "Tap the four corners of the service box."
+    },
+    "CAMERA_MOVED": {
+      "meaning": "Camera drift above threshold",
+      "unlockHint": "Fix the phone firmly; it moved during recording."
+    },
+    "CAMERA_TILTED": {
+      "meaning": "Measured pitch or roll above 5 degrees (8 after the tilt test), or yaw above 15 degrees",
+      "unlockHint": "Keep the phone level; the guide turns green."
+    },
+    "PITCH_UNKNOWN": {
+      "meaning": "No pitch from sensors or background verticals; absolute heights, cm positions and angles are experimental",
+      "unlockHint": "Record in the app with motion access on, so we can level the picture."
+    },
+    "SCALE_INCONSISTENT": {
+      "meaning": "Gravity-based and body-based scales disagree by more than 15%, or the estimated toss depth disagrees with its prior by more than 3 sigma",
+      "unlockHint": "Check your height in Profile. If this was slow motion, import the original."
+    },
+    "IMPLAUSIBLE_VALUE": {
+      "meaning": "A hard plausibility bound failed; value excluded and counted as not measured",
+      "unlockHint": "This reading looked wrong, so we left it out."
+    },
+    "CHECK_THIS_SERVE": {
+      "meaning": "A soft plausibility bound failed; value kept with lower confidence",
+      "unlockHint": "This one looks unusual. Check this serve?"
+    },
+    "TOO_FEW_SERVES": {
+      "meaning": "n below the minimum for this aggregate",
+      "unlockHint": "Record at least {n} serves from one side."
+    },
+    "BASELINE_BUILDING": {
+      "meaning": "A player-relative band needs at least 2 matched sessions",
+      "unlockHint": "Building your range: {k} of 2 sessions from this set-up."
+    },
+    "RANGE_TOO_WIDE": {
+      "meaning": "Speed range wider than 35% of its midpoint",
+      "unlockHint": "This footage can't pin the speed down closely enough."
+    },
+    "EXPERIMENTAL_HIDDEN": {
+      "meaning": "Experimental toggle off",
+      "unlockHint": "Turn on experimental metrics in Profile to see this."
+    },
+    "CONDITION_NOT_VALIDATED": {
+      "meaning": "Metric not yet validated for this light condition class",
+      "unlockHint": "Checked in daylight only. Under lights this reading is experimental."
+    },
+    "VALIDATION_PENDING": {
+      "meaning": "Status capped by validation level",
+      "unlockHint": ""
+    },
+    "NOT_MEASURABLE": {
+      "meaning": "Physically impossible with phone video",
+      "unlockHint": "Spin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the serve type you meant instead."
+    },
+    "NOT_IMPLEMENTED": {
+      "meaning": "Planned, not built in v1",
+      "unlockHint": "Coming later."
+    },
+    "LOW_LIGHT": {
+      "meaning": "Exposure or backlight too poor for pose",
+      "unlockHint": "Put the sun or court lights behind the camera."
+    },
+    "FLICKER": {
+      "meaning": "100 Hz light flicker detected",
+      "unlockHint": "Under lights, record at 50 or 100 fps if your phone allows it."
+    },
+    "MOTION_BLUR": {
+      "meaning": "Ball streak longer than 3 diameters near contact",
+      "unlockHint": "More light, or a shorter shutter in the app's recorder."
+    },
+    "UNMATCHED": {
+      "meaning": "Comparison is not like-for-like",
+      "unlockHint": "Compare sessions from the same side, view, set-up and serve."
+    }
   },
+  "removedReasonCodes": [
+    "METHODS_DISAGREE",
+    "BOUNCE_NOT_HEARD"
+  ],
+  "removedMetricIds": [
+    "trunk-tilt-band"
+  ],
   "minN": {
-    "center": { "hide": 5, "provisionalBelow": 12 },
-    "spread": { "hide": 8, "provisionalBelow": 20 },
-    "rate": { "percentFrom": 10, "provisionalBelow": 30 },
-    "band": { "sessionBandFrom": 5, "provisionalBelow": 12 },
-    "trend": { "sessions": 3, "servesPerSession": 8 },
-    "didItWork": { "perSide": 8 }
+    "center": {
+      "hide": 5,
+      "provisionalBelow": 12
+    },
+    "spread": {
+      "hide": 8,
+      "provisionalBelow": 20,
+      "headlineFrom": 12
+    },
+    "rate": {
+      "percentFrom": 10,
+      "provisionalBelow": 30
+    },
+    "band": {
+      "sessionBandFrom": 5,
+      "provisionalBelow": 12
+    },
+    "playerRelativeReference": {
+      "sessions": 2,
+      "servesPerSession": 8
+    },
+    "trend": {
+      "sessions": 3,
+      "servesPerSession": 8,
+      "servesPerSessionSpreads": 12
+    },
+    "didItWork": {
+      "centrePerSide": 8,
+      "spreadPerSide": 12,
+      "ratePerSide": 10
+    },
+    "outcomeContrast": {
+      "perGroup": 10
+    }
   },
   "verdicts": {
     "not-comparable": "Not comparable yet: {reason}",
+    "at-measurement-limit": "At the limit of what we can measure",
     "clearly-better": "Clearly better",
     "likely-better": "Likely better. About {N} more serves to confirm",
     "no-clear-change": "About the same",
     "too-early": "Too early to tell. About {N} more serves would settle it",
     "likely-worse": "Likely worse. About {N} more serves to confirm",
     "clearly-worse": "Clearly worse",
+    "fromYourTagsSuffix": " (from your tags)",
+    "withinSessionCaveat": "Same-session comparison: warm-up and tiredness can explain part of the difference.",
+    "withinSessionStrongest": "likely",
     "nCap": 150,
-    "nCapText": "More than 150 serves; this difference is too small to confirm by counting. Watch toss spread and contact height instead."
+    "nCapText": "More than 150 serves; this difference is too small to confirm by counting. Watch toss spread and contact height instead.",
+    "eligibility": "Metric has a direction and emitted status measured or estimated on both sides in each side condition class; or a player-entered practice outcome rate with the same entry mode and serve number on both sides. Never experimental values, speed, bands, loading-depth, deep-bend-flag, drive-time, landing-distance, rear auto outcomes or the match log.",
+    "effectSE": "SE^2 = V1/n1 + V2/n2 + 2 sigma_s^2 + tau^2 (1/k1 + 1/k2); rates: Newcombe widened by tau_rate; spreads: stratified bootstrap of corrected variances, delta_rel = 1 - sqrt(Vc_follow / Vc_base)."
+  },
+  "looks": {
+    "max": 3,
+    "at": "after follow-up sessions 1, 2 and 3, or when the planned N is reached; the third look is final",
+    "z95": 2.29,
+    "z80": 1.65,
+    "basis": "Pocock constants for 3 equally spaced looks (our computation: two-sided alpha 0.05 and 0.20)"
+  },
+  "planning": {
+    "designEffect": "Delta_shrunk = Delta x 4 SWC^2 / (4 SWC^2 + SE^2) (sceptical prior N(0, (2 SWC)^2)); Delta_design = max(SWC, |Delta_shrunk|)",
+    "targetSEDirection": "Delta_design / (2.29 + 0.84)",
+    "targetSESame": "(SWC - |Delta_shrunk|) / 2.29",
+    "plannedFollowUpSessions": 3,
+    "roundTo": 5
+  },
+  "withinSessionMode": {
+    "se": "V1/n1 + V2/n2 (no sigma_s, no tau)",
+    "looks": 1,
+    "neverClearly": true
+  },
+  "plausibility": {
+    "enteredHeightM": {
+      "hardReject": [
+        1.3,
+        2.2
+      ],
+      "softFlag": [
+        1.45,
+        2.05
+      ],
+      "unit": "m",
+      "basis": "Adult range; ABS means 175.6 and 161.8 cm [N20]"
+    },
+    "releaseHeightRatio": {
+      "hardReject": [
+        0.45,
+        1.5
+      ],
+      "softFlag": [
+        0.65,
+        1.25
+      ],
+      "unit": "x stature",
+      "basis": "Published means 0.93-1.02"
+    },
+    "releaseToApexS": {
+      "hardReject": [
+        0.25,
+        0.85
+      ],
+      "softFlag": [
+        0.38,
+        0.72
+      ],
+      "unit": "s",
+      "basis": "Rise 0.3 m -> 0.25 s; 3.55 m -> 0.85 s"
+    },
+    "apexHeightM": {
+      "hardReject": {
+        "belowContactMinusM": 0.1,
+        "above": 5.5
+      },
+      "softFlag": {
+        "below": 2.4,
+        "above": 4.6,
+        "ratioBelow": 1.45,
+        "ratioAbove": 2.6
+      },
+      "unit": "m",
+      "basis": "An apex cannot be below a later point on the same flight"
+    },
+    "apexToContactSignedS": {
+      "hardReject": [
+        -0.15,
+        0.7
+      ],
+      "softFlag": [
+        0,
+        0.57
+      ],
+      "unit": "s",
+      "basis": "0.57 s -> 1.6 m drop"
+    },
+    "dropM": {
+      "hardReject": {
+        "above": 2.2
+      },
+      "softFlag": {
+        "below": 0.03,
+        "above": 1.6
+      },
+      "unit": "m",
+      "basis": "Largest per-player mean 1.41 m [N1]"
+    },
+    "releaseToContactS": {
+      "hardReject": [
+        0.4,
+        1.6
+      ],
+      "softFlag": [
+        0.6,
+        1.35
+      ],
+      "unit": "s",
+      "basis": "Physics 0.49-1.40 s"
+    },
+    "contactHeightRatio": {
+      "hardReject": [
+        1.1,
+        1.75
+      ],
+      "softFlag": [
+        1.3,
+        1.62
+      ],
+      "unit": "x stature",
+      "basis": "Published extremes 1.36-1.56; above 1.62 confirm entered height"
+    },
+    "contactForwardM": {
+      "hardReject": [
+        -0.8,
+        2
+      ],
+      "softFlag": [
+        -0.3,
+        1.2
+      ],
+      "unit": "m",
+      "basis": "Published means 0.1-0.8 m"
+    },
+    "tossForwardM": {
+      "hardReject": [
+        -0.8,
+        2
+      ],
+      "softFlag": [
+        -0.3,
+        1.2
+      ],
+      "unit": "m",
+      "basis": "Our inference: contact bounds applied to the toss"
+    },
+    "withinPlayerApexSdM": {
+      "hardReject": {
+        "above": 0.6
+      },
+      "softFlag": {
+        "above": 0.35
+      },
+      "unit": "m",
+      "basis": "Mixed strata, re-tosses or tracking swaps (session level)"
+    },
+    "withinPlayerRhythmSdS": {
+      "hardReject": {
+        "above": 0.3
+      },
+      "softFlag": {
+        "above": 0.15
+      },
+      "unit": "s",
+      "basis": "About 3 x the typical upper edge (session level)"
+    },
+    "landingM": {
+      "hardReject": [
+        -0.8,
+        2.5
+      ],
+      "softFlag": [
+        -0.3,
+        1.5
+      ],
+      "unit": "m",
+      "basis": "Physics (gap: ranges 7.5)"
+    },
+    "fittedGravityMps2": {
+      "hardReject": [
+        7,
+        13
+      ],
+      "softFlag": [
+        8.8,
+        10.8
+      ],
+      "unit": "m/s^2",
+      "basis": "Wrong slow-motion time base or entered height; per toss excludes timing and cm values; a session median outside the hard range triggers section 2.9 or SCALE_INCONSISTENT"
+    },
+    "legDrivePctHeight": {
+      "hardReject": [
+        -5,
+        40
+      ],
+      "softFlag": [
+        0,
+        30
+      ],
+      "unit": "% of height",
+      "basis": "Our inference; CoM rise 15.8 +/- 3.4% in professionals [G8]"
+    },
+    "driveTimeS": {
+      "hardReject": [
+        0.05,
+        1.2
+      ],
+      "softFlag": [
+        0.15,
+        0.8
+      ],
+      "unit": "s",
+      "basis": "Our inference; 0.26-0.40 s published [G7][G8]"
+    },
+    "loadingDepthPctHeight": {
+      "hardReject": [
+        -5,
+        30
+      ],
+      "softFlag": {
+        "above": 20
+      },
+      "unit": "% of height",
+      "basis": "Our inference; CoM drop 5.5 +/- 2.3% [G8]"
+    },
+    "launchSpeedKmh": {
+      "hardReject": [
+        40,
+        240
+      ],
+      "softFlag": [
+        60,
+        200
+      ],
+      "unit": "km/h (range midpoint)",
+      "basis": "Our inference"
+    },
+    "averageSpeedRearKmh": {
+      "hardReject": [
+        30,
+        200
+      ],
+      "softFlag": [
+        50,
+        170
+      ],
+      "unit": "km/h (range midpoint)",
+      "basis": "Our inference"
+    },
+    "caughtTosses": "retoss class: counted as tosses caught, excluded from contact and drop metrics, apex shown only as a separate figure, never in toss-height-spread",
+    "sessionBlockRule": "More than 20% hard rejects in a block makes the block statistics unavailable (IMPLAUSIBLE_VALUE)"
+  },
+  "provisionalBands": {
+    "version": "bands_v1_provisional",
+    "source": "research/gaps/recreational-reference-ranges.md section 7",
+    "evidenceTier": "experimental",
+    "rules": "Stratify (view, set-up, serve number, type, court side; sex for the drop); compute on the session median or corrected SD over >= 8 included serves (>= 12 for spreads in F3); hysteresis by the stated margin; words tight/typical/scattered, never good/bad; player-relative first.",
+    "adoption": {
+      "toss-height-spread": "adopted",
+      "toss-forward-spread": "adopted",
+      "toss-drop": "adopted (sex-specific; F4 needs co-signals)",
+      "contact-height-ratio": "adopted (kick/2nd low edge 1.35; ages 60+ or overhead discomfort player-relative only)",
+      "rhythm-release-to-contact": "adopted (descriptive only)",
+      "rhythm-spread": "adopted (descriptive only)",
+      "contact-forward": "adopted (descriptive D3 feature only)",
+      "landing-distance": "rejected for display (no literature; trend only)"
+    },
+    "triggerStatisticsOwner": "Engine computes; COACHING decides (D6). coaching-library.json thresholds should align (METRICS.md 4.10, 7 flag 9)."
   },
   "metrics": [
     {
@@ -117,19 +845,38 @@
       "question": "How many serves did I hit?",
       "kind": "count",
       "unit": "count",
-      "views": ["side", "rear"],
-      "statusDefault": "measured",
+      "views": [
+        "side",
+        "rear"
+      ],
+      "statusDefault": "estimated",
+      "statusWhenConfirmed": "measured",
       "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=25"],
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "fps>=30"
+      ],
       "referenceNote": "No reference needed. Volume feeds load-flag (research 03 [S43]).",
       "evidenceTier": "research-backed",
-      "aggregation": { "center": "sum", "spread": null, "ci": null, "poolAcrossStrata": true },
-      "display": { "rounding": 1, "example": "24 serves" },
+      "aggregation": {
+        "center": "sum",
+        "spread": null,
+        "ci": null,
+        "poolAcrossStrata": true
+      },
+      "display": {
+        "rounding": 1,
+        "example": "24 serves"
+      },
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "plans.length (serves with a swing)",
-        "syntheticThreshold": "precision and recall >= 99% across families; 100% on S0",
+        "syntheticTruth": "canonical['serve-count'] (serves whose contact lies in the clip)",
+        "syntheticThreshold": "precision and recall >= 99% across families including S11 mirrors; 100% on S0",
         "realMethod": "Two annotators count serves on >= 300 real serves",
         "realThreshold": "precision and recall >= 98% (research 05 section 10)"
       }
@@ -140,16 +887,34 @@
       "question": "How often did I catch a bad toss?",
       "kind": "count",
       "unit": "count",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=25"],
-      "referenceNote": "None.",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "fps>=30"
+      ],
+      "referenceNote": "None. Caught tosses are excluded from contact and drop metrics and from toss-height-spread.",
       "evidenceTier": "coach-recommended",
       "higherIsBetter": false,
-      "aggregation": { "center": "sum", "spread": null, "ci": null, "poolAcrossStrata": true },
-      "display": { "rounding": 1, "example": "2 re-tosses" },
+      "aggregation": {
+        "center": "sum",
+        "spread": null,
+        "ci": null,
+        "poolAcrossStrata": true
+      },
+      "display": {
+        "rounding": 1,
+        "example": "2 tosses caught"
+      },
       "heroRank": null,
       "addedBy": "METRICS.md",
       "validation": {
@@ -165,33 +930,119 @@
       "question": "How high do I toss?",
       "kind": "per-serve",
       "unit": "ratio-of-height",
-      "secondaryUnits": ["cm"],
-      "views": ["side", "rear"],
+      "secondaryUnits": [
+        "cm"
+      ],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=30", "event:tossApex", "floor", "bodyHeight"],
-      "prerequisitesForSecondary": { "cm": ["playerHeight"] },
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "fps>=30",
+        "event:tossApex",
+        "floor",
+        "bodyHeight",
+        "pitch"
+      ],
+      "prerequisitesForSecondary": {
+        "cm": [
+          "playerHeight"
+        ]
+      },
+      "reasonCodes": [
+        "APEX_EXTRAPOLATED",
+        "APEX_OUT_OF_FRAME",
+        "BALL_NOT_TRACKED",
+        "PITCH_UNKNOWN",
+        "SCALE_INCONSISTENT",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE",
+        "FEET_NOT_VISIBLE",
+        "BODY_NOT_UPRIGHT"
+      ],
       "referenceRange": {
-        "mean": 3.477, "sd": 0.24, "unit": "m",
+        "mean": 3.477,
+        "sd": 0.24,
+        "unit": "m",
         "population": "High-performance men, mean UTR about 10.7, n = 10",
         "source": "research 03 [S27]",
         "evidence": "Established"
       },
       "references": [
-        { "mean": 3.40, "sd": 0.24, "unit": "m", "population": "Nationally ranked junior men, 181 cm, n = 13 (about 1.88 x height, our arithmetic)", "source": "research 03 [S28]", "evidence": "Established" }
+        {
+          "mean": 3.4,
+          "sd": 0.24,
+          "unit": "m",
+          "population": "Nationally ranked junior men, 181 cm, n = 13 (about 1.88 x height)",
+          "source": "research 03 [S28]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 3.572,
+          "sd": 0.216,
+          "unit": "m",
+          "population": "Competitive women, serves in (about 2.1 x height)",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        },
+        {
+          "values": [
+            3.39,
+            3.82
+          ],
+          "unit": "m",
+          "population": "Two recreational women, serves in",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 2.98,
+          "unit": "m",
+          "population": "Experienced club men (about 1.68 x height)",
+          "source": "research 03 [S29]",
+          "evidence": "Established"
+        }
       ],
-      "referenceNote": "No published values for recreational players. Shown as context, never as a target.",
+      "referenceNote": "Recreational players are not systematically lower than elite players; women toss higher relative to stature. Context only, never a target.",
+      "depthCorrection": "ratio_corr = r_h + (ratio - r_h) x (1 - delta_hat / D); delta_hat from geometry.depthOffsetPriorsM.tossApex, combined with the per-session gravity estimate when available",
+      "plausibility": {
+        "ref": "apexHeightM"
+      },
       "evidenceTier": "research-backed",
-      "aggregation": { "center": "median", "spread": "see toss-height-spread", "ci": "bootstrap", "minN": 5 },
-      "swc": { "value": 5, "unit": "cm" },
-      "display": { "rounding": "0.01 ratio; 1 cm", "example": "about 3.3 m (1.9 x your height)" },
-      "uncertainty": "Random: fit + unseen lateral offset leak (sigma 0.15 m). Shared: floor row, body-height session part 0.8%, tilt. Persistent: body-height bias 1.8%, entered height 1.2%. 95% band about +/-15 cm.",
+      "aggregation": {
+        "center": "median",
+        "spread": "see toss-height-spread",
+        "ci": "order-statistic (n < 20) or bootstrap",
+        "minN": 5,
+        "reportsCensored": true
+      },
+      "swc": {
+        "value": 5,
+        "unit": "cm"
+      },
+      "tau": {
+        "value": 4,
+        "unit": "cm"
+      },
+      "verdictUse": "did-it-work",
+      "display": {
+        "rounding": "0.01 ratio; 1 cm",
+        "example": "about 3.3 m (1.9 x your height)"
+      },
+      "uncertainty": "Random: fit (+ extrapolation). Leak: sideways scatter 0.15 m. Shared: floor, body height 1.5%, pitch 0.5%/deg, focal. Persistent: body height 2.5%, entered height 1.2%, depth prior. 95% band about +/-23 cm against norms.",
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "plan.apex[z] / heightM",
-        "syntheticThreshold": "median |error| <= 2.5% of height; p95 <= 5% of height",
-        "realMethod": "V2 annotated apex frame and ball; V3 4 m calibration pole in the server's plane",
+        "syntheticTruth": "canonical['toss-apex-height'] (metrics.tossApexHeightM / player.heightM); toss offsets 0-0.4 m both signs",
+        "syntheticThreshold": "median |error| <= 2.5% of height; p95 <= 5%; 95% coverage >= 93%",
+        "realMethod": "V2 annotated apex frame and ball; V3 4 m calibration pole in the server plane",
         "realThreshold": "V2 MAE <= 3% of height; V3 MAE <= 10 cm, ICC(2,1) >= 0.75"
       }
     },
@@ -201,22 +1052,102 @@
       "question": "Is my toss in front of me?",
       "kind": "per-serve",
       "unit": "cm",
-      "views": ["side"],
+      "views": [
+        "side"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["view:side", "fps>=30", "event:tossApex", "startToe", "bodyHeight", "playerHeight"],
-      "referenceNote": "No measured values for recreational players. Coaching: toss into the court, in front of the front toe; drill target 30-50 cm in front (research 04 F3). Elite adolescents contacted flat serves about 17 cm further forward than kick serves (research 03 [S35]).",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:side",
+        "fps>=30",
+        "event:tossApex",
+        "startToe",
+        "roles:geometric",
+        "bodyHeight",
+        "playerHeight",
+        "pitch",
+        "yaw<=15"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "APEX_OUT_OF_FRAME",
+        "FEET_NOT_VISIBLE",
+        "ROLE_AMBIGUOUS",
+        "PITCH_UNKNOWN",
+        "CAMERA_TILTED",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
+      "references": [
+        {
+          "values": [
+            0.03,
+            0.04
+          ],
+          "unit": "m",
+          "population": "Recreational women",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 0.37,
+          "sd": 0.11,
+          "unit": "m",
+          "population": "Competitive women",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 0.49,
+          "sd": 0.04,
+          "unit": "m",
+          "population": "Professional women",
+          "source": "gap: ranges [N4]",
+          "evidence": "Established"
+        }
+      ],
+      "referenceNote": "Recreational players toss close to the baseline; forward placement separates levels better than height. Coaching: toss into the court; drill target 30-50 cm (research 04 F3). Flat contact about 17 cm further forward than kick (research 03 [S35]).",
       "evidenceTier": "coach-recommended",
-      "targetBand": { "low": 20, "high": 60, "unit": "cm", "appliesTo": "flat and slice first serves", "evidence": "Coaching interpretation" },
-      "aggregation": { "center": "mean", "spread": "see toss-forward-spread", "ci": "t", "minN": 5 },
-      "swc": { "value": 5, "unit": "cm" },
-      "display": { "rounding": "1 cm", "example": "about 35 cm in front of your front toe" },
-      "uncertainty": "Random: x-fit, toe jitter 0.01 BH, lateral-offset leak. Shared: scale 0.8%, toe landmark bias 0.015 BH. Persistent: scale. 95% band about +/-10 cm.",
+      "targetBand": {
+        "low": 20,
+        "high": 60,
+        "unit": "cm",
+        "appliesTo": "flat and slice first serves",
+        "evidence": "Coaching interpretation"
+      },
+      "plausibility": {
+        "ref": "tossForwardM"
+      },
+      "aggregation": {
+        "center": "mean",
+        "spread": "see toss-forward-spread",
+        "ci": "t",
+        "minN": 5
+      },
+      "swc": {
+        "value": 5,
+        "unit": "cm"
+      },
+      "tau": {
+        "value": 5,
+        "unit": "cm"
+      },
+      "verdictUse": "did-it-work",
+      "display": {
+        "rounding": "1 cm",
+        "example": "about 35 cm in front of your front toe"
+      },
+      "uncertainty": "Random: x-fit, S0 toe 0.021 BH. Leak: sideways scatter. Shared: scale 1.5%, toe bias 0.015 BH, yaw. Persistent: scale, depth prior. 95% band about +/-12 cm.",
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "plan.apex[x] - plan.frontToeAtRelease[x]",
-        "syntheticThreshold": "MAE <= 5 cm; p95 <= 10 cm",
+        "syntheticTruth": "canonical['toss-forward'] (plan.apex[x] - plan.frontToeAtRelease[x])",
+        "syntheticThreshold": "MAE <= 5 cm; p95 <= 10 cm; coverage >= 93%; S11 mirrors hold S0 thresholds",
         "realMethod": "V2 annotated apex and toe; V3 two-view triangulation",
         "realThreshold": "V2 MAE <= 6 cm; V3 MAE <= 8 cm"
       }
@@ -227,16 +1158,52 @@
       "question": "Does my toss drift left or right?",
       "kind": "per-serve",
       "unit": "cm",
-      "views": ["rear"],
+      "views": [
+        "rear"
+      ],
       "statusDefault": "experimental",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["view:rear", "fps>=30", "event:tossApex", "startToe", "bodyHeight", "playerHeight"],
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:rear",
+        "fps>=30",
+        "event:tossApex",
+        "startToe",
+        "bodyHeight",
+        "playerHeight",
+        "pitch"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "APEX_OUT_OF_FRAME",
+        "FEET_NOT_VISIBLE"
+      ],
       "referenceNote": "Coaching: about '1 o'clock' for a right-hander; a toss directly overhead is a coaching concern for the shoulder (research 03 [S1]).",
       "evidenceTier": "coach-recommended",
-      "aggregation": { "center": "mean", "spread": "see toss-lateral-spread", "ci": "t", "minN": 5 },
-      "swc": { "value": 5, "unit": "cm" },
-      "display": { "rounding": "1 cm", "example": "about 15 cm to your hitting side" },
+      "aggregation": {
+        "center": "mean",
+        "spread": "see toss-lateral-spread",
+        "ci": "t",
+        "minN": 5
+      },
+      "swc": {
+        "value": 5,
+        "unit": "cm"
+      },
+      "tau": {
+        "value": 5,
+        "unit": "cm"
+      },
+      "verdictUse": "none while experimental",
+      "display": {
+        "rounding": "1 cm",
+        "example": "about 15 cm to your hitting side"
+      },
       "heroRank": null,
       "addedBy": "METRICS.md",
       "validation": {
@@ -252,32 +1219,161 @@
       "question": "How far does the ball fall before I hit it?",
       "kind": "per-serve",
       "unit": "cm",
-      "secondaryUnits": ["ms"],
-      "views": ["side", "rear"],
+      "secondaryUnits": [
+        "ms"
+      ],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=30", "timebase", "event:tossApex", "event:contact-ball"],
+      "statusTargetCondition": "measured only for serves with sigma_dt <= 8 ms (120 fps, opt-in audio or ball-intersection); otherwise estimated at every level",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "fps>=30",
+        "timebase",
+        "event:tossApex",
+        "event:contact-ball"
+      ],
+      "reasonCodes": [
+        "APEX_EXTRAPOLATED",
+        "APEX_OUT_OF_FRAME",
+        "BALL_NOT_TRACKED",
+        "NO_CONTACT",
+        "SCALE_INCONSISTENT",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
       "referenceRange": {
-        "mean": 0.72, "sd": 0.19, "unit": "m",
+        "mean": 0.72,
+        "sd": 0.19,
+        "unit": "m",
         "population": "Nationally ranked junior men, n = 13",
         "source": "research 03 [S28]",
         "evidence": "Established"
       },
       "references": [
-        { "mean": 0.56, "unit": "m", "population": "High-performance men, n = 10", "source": "research 03 [S27]", "evidence": "Established" }
+        {
+          "mean": 0.56,
+          "unit": "m",
+          "population": "High-performance men, n = 10",
+          "source": "research 03 [S27]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 0.37,
+          "unit": "m",
+          "population": "Experienced club men",
+          "source": "research 03 [S29]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 0.82,
+          "unit": "m",
+          "population": "Professional women",
+          "source": "gap: ranges [N4]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 0.94,
+          "unit": "m",
+          "population": "Elite junior women",
+          "source": "gap: ranges [N5]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 1.14,
+          "sd": 0.18,
+          "unit": "m",
+          "population": "Competitive women",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        },
+        {
+          "values": [
+            0.82,
+            1.41
+          ],
+          "unit": "m",
+          "population": "Two recreational women",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        }
       ],
-      "referenceNote": "No recreational values. No direction is better. Coaching flag offered above 100 cm (beyond mean + 1.5 SD of the junior sample) [Our inference].",
-      "coachingFlag": { "above": 100, "unit": "cm", "evidence": "Our inference" },
+      "referenceNote": "Show both sexes. No direction is better. The drop is sex-dependent even at elite level; the earlier single 100 cm flag is withdrawn. Drop did not differ between serves in and faults in two samples.",
+      "provisionalBands": {
+        "male": {
+          "low": "< 0.30",
+          "typical": "0.30-1.00",
+          "high": "> 1.00",
+          "unit": "m"
+        },
+        "female": {
+          "low": "< 0.40",
+          "typical": "0.40-1.25",
+          "high": "> 1.25",
+          "unit": "m"
+        },
+        "notGiven": {
+          "low": "< 0.30",
+          "typical": "0.30-1.25",
+          "high": "> 1.25",
+          "unit": "m"
+        },
+        "edgeUncertainty": 0.15,
+        "selectedBy": "profile.sex (default not-given)"
+      },
+      "triggerStatistics": {
+        "f4Possible": "median drop in the high band AND >= 1 co-signal",
+        "f4Likely": "drop > 1.20 m (male) or > 1.45 m (female, not given) AND >= 2 co-signals",
+        "coSignals": [
+          "release-to-contact > 1.15 s",
+          "hitting-wrist high point to contact > 0.55 s (experimental) or trophy-pause > 500 ms",
+          "contact-height-ratio > 0.04 below the player best matched median"
+        ],
+        "never": "on the drop alone",
+        "observations": [
+          "contact on the rise (contact before the fitted apex)",
+          "very low toss (drop < 0.10 m)"
+        ]
+      },
+      "plausibility": {
+        "ref": [
+          "dropM",
+          "apexToContactSignedS"
+        ]
+      },
       "evidenceTier": "research-backed",
-      "aggregation": { "center": "median", "spread": null, "ci": "bootstrap", "minN": 5 },
-      "swc": { "value": 6, "unit": "cm" },
-      "display": { "rounding": "1 cm; 10 ms", "example": "about 60 cm drop (0.35 s)" },
-      "uncertainty": "Physics path: sigma = g * dt * sigma_dt (about 1.4 cm at 60 fps with audio). Image path used as a cross-check.",
-      "heroRank": null,
+      "aggregation": {
+        "center": "median",
+        "spread": null,
+        "ci": "order-statistic (n < 20) or bootstrap",
+        "minN": 5
+      },
+      "swc": {
+        "value": 6,
+        "unit": "cm"
+      },
+      "tau": {
+        "value": 5,
+        "unit": "cm"
+      },
+      "verdictUse": "did-it-work only with a targetBand from COACHING",
+      "display": {
+        "rounding": "1 cm; 10 ms",
+        "example": "about 60 cm drop (0.35 s)"
+      },
+      "uncertainty": "Physics path: sigma = g x dt x sigma_dt, per-serve sigma_dt (about 5 cm at 60 fps audio off, 1.4 cm with opt-in audio). Image path is a cross-check.",
+      "heroRank": 1,
       "validation": {
-        "syntheticTruth": "plan.apex[z] - plan.contact[z]; times.contactS - times.tossApexS",
-        "syntheticThreshold": "MAE <= 3 cm; time MAE <= 6 ms at 60 fps",
+        "syntheticTruth": "canonical['toss-drop'] (metrics.tossHeightAboveContactM; alt.timeS)",
+        "syntheticThreshold": "MAE <= 5 cm at 60 fps audio off, <= 3 cm at >= 120 fps; time MAE <= 13 ms at 60 fps; coverage >= 93%",
         "realMethod": "V2 annotated apex and contact frames; V3 240 fps reference camera",
         "realThreshold": "time MAE <= 1 frame"
       }
@@ -288,29 +1384,98 @@
       "question": "Is my toss becoming more consistent (height)?",
       "kind": "session-spread",
       "unit": "cm",
-      "views": ["side", "rear"],
       "statusDefault": "estimated",
-      "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["n>=8", "stability", "event:tossApex", "floor", "bodyHeight", "playerHeight"],
+      "statusTarget": "estimated",
+      "statusAfterV3": "measured",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "views": [
+        "side",
+        "rear"
+      ],
+      "prerequisites": [
+        "n>=8",
+        "stability",
+        "event:tossApex",
+        "floor",
+        "bodyHeight",
+        "playerHeight"
+      ],
+      "reasonCodes": [
+        "TOO_FEW_SERVES",
+        "CAMERA_MOVED",
+        "IMPLAUSIBLE_VALUE",
+        "APEX_OUT_OF_FRAME"
+      ],
       "referenceRange": {
-        "sd": 6.0, "unit": "cm",
+        "sd": 6,
+        "unit": "cm",
         "population": "Professional women, within-player SD at zenith (vertical), n = 8 players x 5 serves",
         "source": "research 06 [S8]",
         "evidence": "Established"
       },
-      "referenceNote": "Authors judged a perfectly repeatable toss too strict a demand. Experienced servers stabilise the vertical dimension most (research 03 [S29]). No recreational values. Side view: unseen lateral scatter leaks into apparent height (about 0.3 cm per cm at 7 m).",
+      "referenceNote": "Authors judged a perfectly repeatable toss too strict a demand. Experienced servers stabilise the vertical dimension most (research 03 [S29]). No within-player recreational values. Side view: sideways scatter leaks into apparent height (2.4-3.7 cm per 10 cm of scatter); it is reported, not subtracted.",
+      "requiredCopy": "Includes a small side-to-side component unless you add the rear view.",
+      "noiseCorrection": "SD = sqrt(max(SD_obs^2 - mean(sigma_r^2), 0)); sigma_r = tracking and timing noise only (never sigma_leak); CI from chi-square bounds of the observed SD transformed with sigma_r x 0.8-1.2",
+      "censoring": {
+        "upTo": 0.1,
+        "lowerBoundAbove": 0.1,
+        "medianUnavailableAbove": 0.5,
+        "text": "at least {X} cm"
+      },
+      "provisionalBands": {
+        "low": "< 8",
+        "typical": "8-20",
+        "high": "> 20",
+        "unit": "cm",
+        "labels": {
+          "low": "tight",
+          "typical": "typical",
+          "high": "scattered"
+        },
+        "edgeUncertainty": "50%"
+      },
+      "triggerStatistics": {
+        "f3Likely": "one-sided 90% lower bound of the corrected SD >= 15 cm, n >= 12, >= 80% of serves detected",
+        "f3Possible": "point estimate in the scattered band, bound not met",
+        "f3PlayerRelative": ">= 50% rise vs the player best matched session at n >= 20"
+      },
+      "plausibility": {
+        "ref": "withinPlayerApexSdM"
+      },
       "evidenceTier": "research-backed",
       "higherIsBetter": false,
-      "aggregation": { "center": "sd-noise-corrected", "spread": null, "ci": "chi-square", "minN": 8, "provisionalBelowN": 20 },
-      "swc": { "value": 0.15, "unit": "relative (log ratio 0.16)" },
-      "display": { "rounding": "0.5 cm", "example": "toss height spread 7 cm (early read)" },
+      "aggregation": {
+        "center": "sd-noise-corrected",
+        "spread": null,
+        "ci": "chi-square transformed (pooled within-session SD for multi-session baselines)",
+        "minN": 8,
+        "provisionalBelowN": 20,
+        "headlineFromN": 12
+      },
+      "swc": {
+        "value": 0.15,
+        "unit": "relative (corrected SD)"
+      },
+      "tau": {
+        "value": 0.15,
+        "unit": "log scale"
+      },
+      "verdictUse": "did-it-work (bootstrap of corrected variances)",
+      "display": {
+        "rounding": "0.5 cm",
+        "example": "toss height spread 7 cm (early read)"
+      },
       "heroRank": 1,
       "validation": {
-        "syntheticTruth": "SD of realised plan.apex[z] over the same serves",
-        "syntheticThreshold": "|error| <= max(1.5 cm, 15%) in >= 90% of 20-serve blocks; monotonic in sdScale",
-        "realMethod": "V2 test-retest (two 12-serve blocks); V3 two-view triangulated SD",
-        "realThreshold": "V2 typical error <= 25% of median spread; V3 within 20%"
+        "syntheticTruth": "canonical['toss-height-spread'] (SD of realised apex heights over the same serves)",
+        "syntheticThreshold": "|error| <= max(1.5 cm, 15%) in >= 90% of 20-serve blocks, leak reported separately; monotonic in sdScale; S12 censoring rule reproduces \"at least\"",
+        "realMethod": "V2 cross-day test-retest (sessions >= 2 days apart); V3 two-view triangulated SD",
+        "realThreshold": "V2 typical error <= 25% of median spread; V3 within 20% (then measured)"
       }
     },
     {
@@ -319,27 +1484,82 @@
       "question": "Is my toss landing in the same place front-to-back?",
       "kind": "session-spread",
       "unit": "cm",
-      "views": ["side"],
       "statusDefault": "estimated",
-      "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["view:side", "n>=8", "stability", "event:tossApex", "startToe", "playerHeight"],
+      "statusTarget": "estimated",
+      "statusAfterV3": "measured",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "views": [
+        "side"
+      ],
+      "prerequisites": [
+        "view:side",
+        "n>=8",
+        "stability",
+        "event:tossApex",
+        "startToe",
+        "roles:geometric",
+        "playerHeight"
+      ],
+      "reasonCodes": [
+        "TOO_FEW_SERVES",
+        "CAMERA_MOVED",
+        "VIEW_NOT_SUPPORTED"
+      ],
       "referenceRange": {
-        "sd": 7.2, "unit": "cm",
+        "sd": 7.2,
+        "unit": "cm",
         "population": "Professional women, within-player forward/back SD at zenith, n = 8 x 5",
         "source": "research 06 [S8]",
         "evidence": "Established"
       },
-      "referenceNote": "Experienced servers allow more forward-back variation than vertical (research 03 [S29]). No recreational values.",
+      "referenceNote": "Experienced servers allow more forward-back variation than vertical (research 03 [S29]). Contact-forward SDs 12-13 cm in hobby men, median 8 cm in competitive men (research 05 [S47]). Residual yaw leaks sideways scatter into forward spread (reported, not subtracted).",
+      "provisionalBands": {
+        "low": "< 10",
+        "typical": "10-25",
+        "high": "> 25",
+        "unit": "cm",
+        "labels": {
+          "low": "tight",
+          "typical": "typical",
+          "high": "scattered"
+        },
+        "edgeUncertainty": "50%"
+      },
+      "triggerStatistics": {
+        "f3Likely": "one-sided 90% lower bound of the corrected SD >= 18 cm, n >= 12, >= 80% detected"
+      },
       "evidenceTier": "coach-recommended",
       "higherIsBetter": false,
-      "aggregation": { "center": "sd-noise-corrected", "spread": null, "ci": "chi-square", "minN": 8, "provisionalBelowN": 20 },
-      "swc": { "value": 0.15, "unit": "relative (log ratio 0.16)" },
-      "display": { "rounding": "0.5 cm", "example": "front-back spread 9 cm" },
+      "aggregation": {
+        "center": "sd-noise-corrected",
+        "spread": null,
+        "ci": "chi-square transformed",
+        "minN": 8,
+        "provisionalBelowN": 20,
+        "headlineFromN": 12
+      },
+      "swc": {
+        "value": 0.15,
+        "unit": "relative (corrected SD)"
+      },
+      "tau": {
+        "value": 0.15,
+        "unit": "log scale"
+      },
+      "verdictUse": "did-it-work",
+      "display": {
+        "rounding": "0.5 cm",
+        "example": "front-back spread 9 cm"
+      },
       "heroRank": 1,
       "validation": {
-        "syntheticTruth": "SD of realised plan.apex[x] - frontToeAtRelease[x] over the same serves",
-        "syntheticThreshold": "|error| <= max(2 cm, 20%) in >= 90% of 20-serve blocks; monotonic in sdScale",
+        "syntheticTruth": "canonical['toss-forward-spread']",
+        "syntheticThreshold": "|error| <= max(2 cm, 20%) in >= 90% of 20-serve blocks; monotonic in sdScale; S11 mirrors within threshold",
         "realMethod": "As toss-height-spread",
         "realThreshold": "As toss-height-spread"
       }
@@ -350,22 +1570,62 @@
       "question": "Is my toss landing in the same place side to side?",
       "kind": "session-spread",
       "unit": "cm",
-      "views": ["rear"],
       "statusDefault": "experimental",
-      "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["view:rear", "n>=8", "stability", "event:tossApex", "startToe", "playerHeight"],
+      "statusTarget": "estimated",
+      "statusAfterV3": "measured",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "views": [
+        "rear"
+      ],
+      "prerequisites": [
+        "view:rear",
+        "n>=8",
+        "stability",
+        "event:tossApex",
+        "startToe",
+        "playerHeight",
+        "pitch"
+      ],
+      "reasonCodes": [
+        "TOO_FEW_SERVES",
+        "CAMERA_MOVED",
+        "VIEW_NOT_SUPPORTED"
+      ],
       "referenceRange": {
-        "sd": 6.6, "unit": "cm",
+        "sd": 6.6,
+        "unit": "cm",
         "population": "Professional women, within-player lateral SD at zenith, n = 8 x 5",
         "source": "research 06 [S8]",
         "evidence": "Established"
       },
+      "referenceNote": "Forward scatter leaks into lateral spread from behind (reported, not subtracted).",
       "evidenceTier": "coach-recommended",
       "higherIsBetter": false,
-      "aggregation": { "center": "sd-noise-corrected", "spread": null, "ci": "chi-square", "minN": 8, "provisionalBelowN": 20 },
-      "swc": { "value": 0.15, "unit": "relative (log ratio 0.16)" },
-      "display": { "rounding": "0.5 cm", "example": "side-to-side spread 8 cm" },
+      "aggregation": {
+        "center": "sd-noise-corrected",
+        "spread": null,
+        "ci": "chi-square transformed",
+        "minN": 8,
+        "provisionalBelowN": 20
+      },
+      "swc": {
+        "value": 0.15,
+        "unit": "relative (corrected SD)"
+      },
+      "tau": {
+        "value": 0.15,
+        "unit": "log scale"
+      },
+      "verdictUse": "none while experimental",
+      "display": {
+        "rounding": "0.5 cm",
+        "example": "side-to-side spread 8 cm"
+      },
       "heroRank": null,
       "addedBy": "METRICS.md",
       "validation": {
@@ -381,34 +1641,129 @@
       "question": "How high do I make contact?",
       "kind": "per-serve",
       "unit": "ratio-of-height",
-      "secondaryUnits": ["cm"],
-      "views": ["side", "rear"],
+      "secondaryUnits": [
+        "cm"
+      ],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=30", "event:contact-ball", "floor", "bodyHeight"],
-      "prerequisitesForSecondary": { "cm": ["playerHeight"] },
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "fps>=30",
+        "event:contact-ball",
+        "floor",
+        "bodyHeight",
+        "pitch"
+      ],
+      "prerequisitesForSecondary": {
+        "cm": [
+          "playerHeight"
+        ]
+      },
+      "reasonCodes": [
+        "CONTACT_NOT_FOUND",
+        "NO_CONTACT",
+        "PITCH_UNKNOWN",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
       "referenceRange": {
-        "low": 1.426, "high": 1.492, "unit": "ratio-of-height",
+        "low": 1.426,
+        "high": 1.492,
+        "unit": "ratio-of-height",
         "population": "Beginners (1.426) to elite (1.492) men, n = 32",
         "source": "research 03 [S6]",
         "evidence": "Established"
       },
       "references": [
-        { "low": 1.44, "high": 1.49, "unit": "ratio-of-height", "population": "Across levels", "source": "research 03 [S7]", "evidence": "Established" },
-        { "mean": 1.5, "unit": "ratio-of-height", "population": "Experienced players", "source": "research 03 [S29]", "evidence": "Established" }
+        {
+          "values": [
+            1.459,
+            1.484,
+            1.475
+          ],
+          "unit": "ratio-of-height",
+          "population": "ITN 9, ITN 5, ITN 2 men",
+          "source": "research 03 [S7]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 1.478,
+          "unit": "ratio-of-height",
+          "population": "Experienced men (players 1.41-1.54)",
+          "source": "research 03 [S29]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 1.44,
+          "unit": "ratio-of-height",
+          "population": "Competitive women; recreational women 1.39-1.56 (n = 2)",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        },
+        {
+          "low": 1.5,
+          "high": 1.55,
+          "unit": "ratio-of-height",
+          "population": "National, provincial and professional women",
+          "source": "gap: ranges [N4][N8]",
+          "evidence": "Established"
+        }
       ],
-      "referenceNote": "Direction of travel, not a target. Impact height correlates with serve speed (rho 0.75-0.78; research 03 [S28]). Recreational players about 13 cm lower in a weak case study (research 05 [S47]).",
+      "referenceNote": "Direction of travel, not a target. Between-player SD within a level is as large as the gap between levels. Impact height correlates with serve speed (rho 0.75-0.78; research 03 [S28]).",
+      "depthCorrection": "as toss-apex-height with geometry.depthOffsetPriorsM.contact",
+      "provisionalBands": {
+        "low": "< 1.38",
+        "typical": "1.38-1.54",
+        "high": "> 1.54",
+        "unit": "ratio-of-height",
+        "edgeUncertainty": 0.03,
+        "lowEdgeKickAndSecond": 1.35,
+        "checkEnteredHeightAbove": 1.62,
+        "playerRelativeOnly": "profile.ageBand 60+ or overhead shoulder discomfort noted"
+      },
+      "triggerStatistics": {
+        "f12Likely": "median < low edge AND one-sided 90% upper bound incl. sigma_s and sigma_p < 1.42, >= 8 serves",
+        "f12Possible": "median < low edge without the bound",
+        "f12PlayerRelative": "fall >= 0.04 vs the player best matched median"
+      },
+      "plausibility": {
+        "ref": "contactHeightRatio"
+      },
       "evidenceTier": "research-backed",
       "higherIsBetter": true,
-      "aggregation": { "center": "mean", "spread": "see contact-height-spread", "ci": "t-with-shared", "minN": 5 },
-      "swc": { "value": 0.015, "unit": "ratio-of-height" },
-      "display": { "rounding": "0.01 ratio; 1 cm", "example": "1.46 x your height (about 2.56 m)" },
-      "uncertainty": "Random: contact timing x ball speed (about 1.7 cm at 5 ms), fit, lateral leak (sigma 0.15 m). Body-height bias dominates absolute values (about 4.6 cm 1-sigma at 1.75 m) and cancels in the player's own comparisons.",
+      "aggregation": {
+        "center": "mean",
+        "spread": "see contact-height-spread",
+        "ci": "t-with-shared",
+        "minN": 5
+      },
+      "swc": {
+        "value": 0.015,
+        "unit": "ratio-of-height"
+      },
+      "tau": {
+        "value": 0.01,
+        "unit": "ratio-of-height"
+      },
+      "verdictUse": "did-it-work",
+      "display": {
+        "rounding": "0.01 ratio; 1 cm",
+        "example": "1.46 x your height (about 2.56 m)"
+      },
+      "uncertainty": "Random: contact timing x ball speed (about 4.4 cm at 60 fps audio off), fit. Leak: sideways scatter. Body-height bias dominates absolute values (about 6.4 cm 1-sigma at 1.75 m) and cancels in the player own comparisons.",
       "heroRank": 2,
       "validation": {
-        "syntheticTruth": "plan.contact[z] / heightM",
-        "syntheticThreshold": "MAE <= 0.02; p95 <= 0.04",
+        "syntheticTruth": "canonical['contact-height-ratio']",
+        "syntheticThreshold": "MAE <= 0.03 at 60 fps audio off, <= 0.02 at >= 120 fps; p95 <= 0.05; coverage >= 93%",
         "realMethod": "V2 annotated contact frame and ball; V3 pole or 240 fps reference",
         "realThreshold": "V2 MAE <= 0.025; V3 MAE <= 10 cm, ICC(2,1) >= 0.75"
       }
@@ -419,28 +1774,66 @@
       "question": "Do I hit the ball at the same height each time?",
       "kind": "session-spread",
       "unit": "cm",
-      "views": ["side", "rear"],
       "statusDefault": "estimated",
-      "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["n>=8", "stability", "event:contact-ball", "floor", "bodyHeight", "playerHeight"],
+      "statusTarget": "estimated",
+      "statusAfterV3": "measured",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "views": [
+        "side",
+        "rear"
+      ],
+      "prerequisites": [
+        "n>=8",
+        "stability",
+        "event:contact-ball",
+        "floor",
+        "bodyHeight",
+        "playerHeight"
+      ],
+      "reasonCodes": [
+        "TOO_FEW_SERVES",
+        "CAMERA_MOVED"
+      ],
       "referenceRange": {
-        "sd": 3.5, "unit": "cm",
+        "sd": 3.5,
+        "unit": "cm",
         "population": "Professional women, impact height within-player SD, n = 8 x 5",
         "source": "research 06 [S8]",
         "evidence": "Established"
       },
-      "referenceNote": "Lower impact-height variability strengthened the strength-to-speed link in juniors (research 03 [S28]).",
+      "referenceNote": "Hobby men 2.9-3.6 cm, competitive men median 4.1 cm (research 05 [S47]). At 60 fps audio off sigma_r (about 4.4 cm) is near plausible spreads, so the value is often nearMeasurementLimit.",
       "evidenceTier": "research-backed",
       "higherIsBetter": false,
-      "aggregation": { "center": "sd-noise-corrected", "spread": null, "ci": "chi-square", "minN": 8, "provisionalBelowN": 20 },
-      "swc": { "value": 0.15, "unit": "relative (log ratio 0.16)" },
-      "display": { "rounding": "0.5 cm", "example": "contact height spread 4 cm" },
+      "aggregation": {
+        "center": "sd-noise-corrected",
+        "spread": null,
+        "ci": "chi-square transformed",
+        "minN": 8,
+        "provisionalBelowN": 20
+      },
+      "swc": {
+        "value": 0.15,
+        "unit": "relative (corrected SD)"
+      },
+      "tau": {
+        "value": 0.15,
+        "unit": "log scale"
+      },
+      "verdictUse": "did-it-work",
+      "display": {
+        "rounding": "0.5 cm",
+        "example": "contact height spread 4 cm"
+      },
       "heroRank": null,
       "addedBy": "METRICS.md",
       "validation": {
-        "syntheticTruth": "SD of plan.contact[z] over the same serves",
-        "syntheticThreshold": "|error| <= max(1.2 cm, 15%); monotonic in sdScale",
+        "syntheticTruth": "SD of canonical['contact-height-ratio'] x height over the same serves",
+        "syntheticThreshold": "|error| <= max(1.2 cm, 15%) at >= 120 fps; nearMeasurementLimit flagged at 60 fps when truth SD < 1.4 sigma_r",
         "realMethod": "As toss-height-spread",
         "realThreshold": "As toss-height-spread"
       }
@@ -451,20 +1844,116 @@
       "question": "Am I hitting the ball out in front?",
       "kind": "per-serve",
       "unit": "cm",
-      "views": ["side"],
+      "views": [
+        "side"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["view:side", "fps>=30", "event:contact-ball", "startToe", "bodyHeight", "playerHeight"],
-      "referenceNote": "No numeric recreational or elite reference in our research. Flat contact about 17 cm further forward than kick in elite adolescents (research 03 [S35]). Coaching: contact in front and into the court (research 04 F6, F11).",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:side",
+        "fps>=30",
+        "event:contact-ball",
+        "startToe",
+        "roles:geometric",
+        "bodyHeight",
+        "playerHeight",
+        "pitch",
+        "yaw<=15"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "CONTACT_NOT_FOUND",
+        "ROLE_AMBIGUOUS",
+        "PITCH_UNKNOWN",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
+      "references": [
+        {
+          "mean": 0.18,
+          "unit": "m",
+          "population": "Amateurs",
+          "source": "research 03 [S61]",
+          "evidence": "Established"
+        },
+        {
+          "values": [
+            0.09,
+            0.11
+          ],
+          "unit": "m",
+          "population": "Recreational women",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 0.54,
+          "sd": 0.13,
+          "unit": "m",
+          "population": "Competitive women",
+          "source": "gap: ranges [N1]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 0.62,
+          "unit": "m",
+          "population": "Competitive men (hobby men 0.24 and 0.68)",
+          "source": "research 05 [S47]",
+          "evidence": "Established"
+        },
+        {
+          "values": [
+            0.61,
+            0.78
+          ],
+          "unit": "m",
+          "population": "Professional women and men",
+          "source": "gap: ranges [N4]",
+          "evidence": "Established"
+        }
+      ],
+      "referenceNote": "Flat contact about 17 cm further forward than kick (research 03 [S35]). Coaching: contact in front and into the court (research 04 F6, F11). No direction; read with toss-forward.",
+      "provisionalBands": {
+        "low": "< 15",
+        "typical": "15-70",
+        "high": "> 70",
+        "unit": "cm",
+        "kickShiftCm": -15,
+        "use": "descriptive D3 feature only; no standalone fault"
+      },
+      "plausibility": {
+        "ref": "contactForwardM"
+      },
       "evidenceTier": "coach-recommended",
-      "aggregation": { "center": "mean", "spread": "sd", "ci": "t", "minN": 5 },
-      "swc": { "value": 5, "unit": "cm" },
-      "display": { "rounding": "1 cm", "example": "about 40 cm in front of your front toe" },
+      "aggregation": {
+        "center": "mean",
+        "spread": "sd",
+        "ci": "t",
+        "minN": 5
+      },
+      "swc": {
+        "value": 5,
+        "unit": "cm"
+      },
+      "tau": {
+        "value": 5,
+        "unit": "cm"
+      },
+      "verdictUse": "did-it-work only with a targetBand from COACHING",
+      "display": {
+        "rounding": "1 cm",
+        "example": "about 40 cm in front of your front toe"
+      },
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "plan.contact[x] - frontToeAtRelease[x]",
-        "syntheticThreshold": "MAE <= 6 cm; p95 <= 12 cm",
+        "syntheticTruth": "canonical['contact-forward']",
+        "syntheticThreshold": "MAE <= 6 cm; p95 <= 12 cm; coverage >= 93%; S11 mirrors hold",
         "realMethod": "V2 annotation; V3 two-view triangulation",
         "realThreshold": "V2 MAE <= 6 cm; V3 MAE <= 10 cm"
       }
@@ -475,26 +1964,106 @@
       "question": "How long from toss to hit?",
       "kind": "per-serve",
       "unit": "ms",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=30", "timebase", "event:tossRelease", "event:contact"],
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "statusRules": {
+        "30fps-or-physics-timebase": "estimated even after V2",
+        "contact-wrist-only": "experimental",
+        "timebase-unknown": "unavailable"
+      },
+      "prerequisites": [
+        "fps>=30",
+        "timebase",
+        "event:tossRelease",
+        "event:contact"
+      ],
+      "reasonCodes": [
+        "TIME_BASE_UNKNOWN",
+        "RELEASE_NOT_FOUND",
+        "CONTACT_NOT_FOUND",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
       "referenceRange": {
-        "mean": 970, "sd": 100, "unit": "ms",
+        "mean": 970,
+        "sd": 100,
+        "unit": "ms",
         "population": "High-performance men, n = 10",
         "source": "research 03 [S27]",
         "evidence": "Established"
       },
-      "referenceNote": "No recreational values and no 'correct' tempo; any ideal is coaching interpretation (research 05 section 6.2).",
+      "references": [
+        {
+          "values": [
+            970,
+            910
+          ],
+          "unit": "ms",
+          "population": "Recreational young adults and adults over 60 (derived)",
+          "source": "gap: ranges [N3]",
+          "evidence": "Established"
+        }
+      ],
+      "referenceNote": "No correct tempo; any ideal is coaching interpretation (research 05 section 6.2). Physics predicts 0.77-1.21 s across non-elite toss geometries.",
+      "provisionalBands": {
+        "low": "< 800",
+        "typical": "800-1200",
+        "high": "> 1200",
+        "unit": "ms",
+        "labels": {
+          "low": "quick",
+          "typical": "typical",
+          "high": "unhurried"
+        },
+        "edgeUncertaintyMs": 50,
+        "use": "descriptive; F4 co-signal"
+      },
+      "plausibility": {
+        "ref": [
+          "releaseToContactS",
+          "releaseToApexS"
+        ]
+      },
       "evidenceTier": "research-backed",
-      "aggregation": { "center": "median", "spread": "see rhythm-spread", "ci": "bootstrap", "minN": 5 },
-      "swc": { "value": 30, "unit": "ms" },
-      "display": { "rounding": "10 ms", "example": "0.98 s from toss to hit" },
+      "aggregation": {
+        "center": "median",
+        "spread": "see rhythm-spread",
+        "ci": "order-statistic (n < 20) or bootstrap",
+        "minN": 5
+      },
+      "swc": {
+        "value": 30,
+        "unit": "ms"
+      },
+      "tau": {
+        "value": 30,
+        "unit": "ms"
+      },
+      "verdictUse": "did-it-work only with a targetBand from COACHING",
+      "crossSetupComparable": true,
+      "display": {
+        "rounding": "10 ms",
+        "example": "0.98 s from toss to hit"
+      },
+      "secondary": {
+        "loadingMs": "release to trophy",
+        "driveMs": "drive-time value"
+      },
+      "uncertainty": "sqrt(sigma_release^2 + sigma_contact^2): about 21 ms at 60 fps audio off.",
       "heroRank": 3,
       "validation": {
-        "syntheticTruth": "times.contactS - times.tossReleaseS",
-        "syntheticThreshold": "MAE <= 1 frame + 2 ms",
+        "syntheticTruth": "canonical['rhythm-release-to-contact'] (metrics.releaseToContactS)",
+        "syntheticThreshold": "MAE <= 1 frame + 5 ms (audio off); coverage >= 93%",
         "realMethod": "V2 annotated release and contact frames",
         "realThreshold": "MAE <= 1 frame"
       }
@@ -505,22 +2074,88 @@
       "question": "Is my rhythm the same every serve?",
       "kind": "session-spread",
       "unit": "ms",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=60", "timebase", "n>=8", "event:tossRelease", "event:contact"],
-      "referenceNote": "No numeric values. Elite women: variable toss but very consistent timing (research 03 [S24]). More variability went with lower speed and accuracy (research 03 [S30]). Experts rate rhythm reliably from 2D video (research 03 [S33]). At 30 fps the value is flagged near the measurement limit.",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "statusRules": {
+        "30-59fps": "nearMeasurementLimit flagged; never measured"
+      },
+      "prerequisites": [
+        "fps>=30",
+        "timebase",
+        "n>=8",
+        "event:tossRelease",
+        "event:contact"
+      ],
+      "reasonCodes": [
+        "TOO_FEW_SERVES",
+        "TIME_BASE_UNKNOWN",
+        "IMPLAUSIBLE_VALUE"
+      ],
+      "references": [
+        {
+          "low": 45,
+          "high": 55,
+          "unit": "ms",
+          "population": "Recreational players, within-player SD (derived, CV 5-6%)",
+          "source": "gap: ranges [N3]",
+          "evidence": "Established"
+        }
+      ],
+      "referenceNote": "Elite women: variable toss but very consistent timing (research 03 [S24]). More variability went with lower speed and accuracy (research 03 [S30]). Experts rate rhythm reliably from 2D video (research 03 [S33]).",
+      "provisionalBands": {
+        "low": "< 40",
+        "typical": "40-90",
+        "high": "> 90",
+        "unit": "ms",
+        "labels": {
+          "low": "tight",
+          "typical": "typical",
+          "high": "variable"
+        },
+        "edgeUncertaintyMs": 15
+      },
+      "plausibility": {
+        "ref": "withinPlayerRhythmSdS"
+      },
       "evidenceTier": "research-backed",
       "higherIsBetter": false,
-      "aggregation": { "center": "sd-noise-corrected", "spread": null, "ci": "chi-square", "minN": 8, "provisionalBelowN": 20 },
-      "swc": { "value": 0.15, "unit": "relative (log ratio 0.16)" },
-      "display": { "rounding": "5 ms", "example": "rhythm varies by 45 ms" },
+      "aggregation": {
+        "center": "sd-noise-corrected",
+        "spread": null,
+        "ci": "chi-square transformed",
+        "minN": 8,
+        "provisionalBelowN": 20,
+        "headlineFromN": 12
+      },
+      "swc": {
+        "value": 0.15,
+        "unit": "relative (corrected SD)"
+      },
+      "tau": {
+        "value": 0.15,
+        "unit": "log scale"
+      },
+      "verdictUse": "did-it-work",
+      "crossSetupComparable": true,
+      "display": {
+        "rounding": "5 ms",
+        "example": "rhythm varies by 45 ms"
+      },
       "heroRank": 3,
       "validation": {
-        "syntheticTruth": "SD of truth release-to-contact over the same serves",
-        "syntheticThreshold": "|error| <= max(10 ms, 20%) at 60 fps; monotonic in sdScale",
-        "realMethod": "V2 test-retest",
+        "syntheticTruth": "SD of canonical['rhythm-release-to-contact'] over the same serves",
+        "syntheticThreshold": "|error| <= max(10 ms, 20%) at 60 fps; nearMeasurementLimit flagged at 30 fps; monotonic in sdScale",
+        "realMethod": "V2 cross-day test-retest",
         "realThreshold": "typical error <= 25% of median spread"
       }
     },
@@ -530,91 +2165,636 @@
       "question": "Do I pause at the top?",
       "kind": "per-serve",
       "unit": "ms",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "experimental",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=60", "timebase", "event:trophy-pelvis", "toggle:experimental"],
-      "referenceNote": "No numeric reference. Internal-rotation speed about 20% higher with no pause than after a 1.5 s pause (research 03 [S2], lab mechanism); applying it to a trophy pause is coaching interpretation. Coaching flag above 500 ms [Our inference].",
-      "coachingFlag": { "above": 500, "unit": "ms", "evidence": "Our inference" },
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "fps>=60",
+        "timebase",
+        "event:trophy-pelvis",
+        "roles:geometric",
+        "toggle:experimental"
+      ],
+      "reasonCodes": [
+        "FPS_TOO_LOW",
+        "POSE_LOW_QUALITY",
+        "CONDITION_NOT_VALIDATED",
+        "EXPERIMENTAL_HIDDEN"
+      ],
+      "thresholds": {
+        "pelvisVerticalBHs": "max(0.15, 3 x measured smoothed-speed noise)",
+        "wristBHs": "max(0.6, 3 x measured smoothed-speed noise)",
+        "velocities": "local quadratic over 7-9 frames"
+      },
+      "referenceNote": "No numeric reference; no direct measurement in recreational adults. Internal-rotation speed about 20% higher with no pause than after a 1.5 s pause (research 03 [S2], lab mechanism).",
+      "coachingFlag": {
+        "above": 500,
+        "unit": "ms",
+        "evidence": "Our inference",
+        "use": "F4 co-signal"
+      },
       "evidenceTier": "coach-recommended",
       "higherIsBetter": false,
-      "aggregation": { "center": "median", "spread": "iqr", "ci": "bootstrap", "minN": 5 },
-      "swc": { "value": 80, "unit": "ms" },
-      "display": { "rounding": "10 ms", "example": "about 0.3 s pause" },
+      "aggregation": {
+        "center": "median",
+        "spread": "iqr",
+        "ci": "bootstrap",
+        "minN": 5
+      },
+      "swc": {
+        "value": 80,
+        "unit": "ms"
+      },
+      "tau": {
+        "value": 60,
+        "unit": "ms"
+      },
+      "verdictUse": "none while experimental",
+      "crossSetupComparable": true,
+      "display": {
+        "rounding": "10 ms",
+        "example": "about 0.3 s pause"
+      },
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "times.trophyEndS - times.trophyStartS",
-        "syntheticThreshold": "MAE <= 60 ms; Spearman >= 0.8 across profiles",
+        "syntheticTruth": "canonical['trophy-pause'] (times.trophyEndS - times.trophyStartS)",
+        "syntheticThreshold": "MAE <= 60 ms; Spearman >= 0.8 across profiles; with section 1.2 noise injected",
         "realMethod": "V2 two annotators mark trophy start and end",
         "realThreshold": "MAE <= 80 ms after inter-rater agreement is reported"
       }
     },
     {
-      "id": "knee-bend-band",
-      "name": "Knee bend (hip drop)",
+      "id": "leg-drive",
+      "name": "Leg drive (hip rise)",
       "question": "Am I using my legs?",
-      "kind": "band",
-      "unit": "band",
-      "bandLabels": { "low": "Little bend", "typical": "Moderate bend", "high": "Deep bend", "unclear": "Between two bands" },
-      "bandThresholds": { "unit": "deg knee-flexion equivalent", "low": "< 25", "typical": "25-55", "high": "> 55", "hipDropOverLegLength": { "low": "< 0.025", "typical": "0.025-0.117", "high": "> 0.117" }, "shankShareK": 0.4, "reportIfProbabilityAtLeast": 0.7 },
-      "views": ["side", "rear"],
-      "method": { "side": "hip drop (mid-hip) at maximum loading, normalised by standing leg length", "rear": "2D knee angle at trophy, hip drop as cross-check" },
+      "kind": "per-serve",
+      "unit": "% of height",
+      "secondaryUnits": [
+        "cm"
+      ],
+      "views": [
+        "side"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["fps>=30", "event:tossRelease", "event:contact", "bodyHeight"],
-      "referenceRange": {
-        "mean": 64.5, "sd": 9.7, "unit": "deg front knee at trophy",
-        "population": "National to professional players, pooled over 11 studies",
-        "source": "research 03 [S31]",
-        "evidence": "Established"
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
       },
-      "referenceNote": "Knee restriction to 10 deg cut ball speed about 15-17% at all levels (research 03 [S7]). Front knee > 15 deg recommended (research 03 [S1], coaching). Low knee flexion and arm load: conflicting evidence (research 03 [S3], [S9]). Degrees are never displayed (D5).",
+      "prerequisites": [
+        "view:side",
+        "fps>=30",
+        "event:tossRelease",
+        "event:contact",
+        "bodyHeight",
+        "hips:visible"
+      ],
+      "prerequisitesForSecondary": {
+        "cm": [
+          "playerHeight"
+        ]
+      },
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "OCCLUDED",
+        "CONTACT_NOT_FOUND",
+        "BASELINE_BUILDING",
+        "CONDITION_NOT_VALIDATED",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
+      "formula": "100 x (h_mid(t_contact) - h_mid(t_low)), h_mid = (y_floor - y_midhip) / H_HU on rectified coordinates; t_low = lowest mid-hip in [tossRelease, contact - 0.08 s] (raw minimum, used even when the trophy fell back)",
+      "secondary": {
+        "airborneAtContact": "yes/no, reliable",
+        "peakHipSpeedMps": "experimental: peak upward mid-hip speed between t_low and contact (local quadratic over 7-9 frames)"
+      },
+      "band": {
+        "basis": "player-relative",
+        "labels": {
+          "low": "Less drive than your usual",
+          "typical": "Your usual drive",
+          "high": "More drive than your usual"
+        },
+        "reference": "median of session medians over >= 2 matched sessions (>= 8 serves each); rolling last 6",
+        "typicalHalfWidth": "max(2% of height, 2 x SE)",
+        "hysteresis": "as shoulder-tilt-trophy",
+        "populationThresholds": null
+      },
+      "referenceNote": "The professional centre-of-mass rise 15.8 +/- 3.4% of height [G8] and 15-17.5% in national and provincial women [G9] are CoM rises, not mid-hip rises: never used as a band, target or comparison. Recreational hip rise is unverified. Coaching: a quick single rise, never \"jump\" or \"bend more\".",
+      "plausibility": {
+        "ref": "legDrivePctHeight"
+      },
       "evidenceTier": "research-backed",
-      "targetBand": { "low": "typical", "high": null, "evidence": "Coaching interpretation" },
-      "aggregation": { "center": "mode", "spread": "band shares", "ci": null, "minN": 5, "provisionalBelowN": 12 },
-      "swc": { "value": 8, "unit": "deg (underlying proxy)" },
-      "display": { "rounding": "words only", "example": "Moderate bend on 9 of 12 serves" },
+      "higherIsBetter": true,
+      "higherIsBetterNote": "direction of travel, never a target",
+      "aggregation": {
+        "center": "median",
+        "spread": null,
+        "ci": "order-statistic (n < 20) or bootstrap",
+        "minN": 8
+      },
+      "swc": {
+        "value": 2,
+        "unit": "% of height"
+      },
+      "tau": {
+        "value": 1.5,
+        "unit": "% of height"
+      },
+      "verdictUse": "did-it-work",
+      "display": {
+        "rounding": "1% of height; 1 cm",
+        "example": "your hips rose about 12% of your height (about 21 cm) from your lowest point to contact"
+      },
+      "uncertainty": "Per serve sigma_r = sqrt(2 sigma_hip^2 + (v_hip sigma_tc)^2), sigma_hip = 0.02 BH: about 3% of height; plus a posture-dependent persistent bias 1-2% (hips frontal at trophy, profile at contact). Session median at n = 12: about 1% random.",
+      "heroRank": 5,
+      "validation": {
+        "syntheticTruth": "canonical['leg-drive'] (legDrive.hipRisePctHeight)",
+        "syntheticThreshold": "per-serve MAE <= 2% of height at 60 fps with measured hip noise; coverage >= 93%; peakHipSpeedMps within +/-0.25 m/s at 60 fps; S11 mirrors unchanged",
+        "realMethod": "V2 annotated hip centres at lowest and contact frames; V3 two synchronised phones or IMUs",
+        "realThreshold": "V2 MAE <= 2.5% of height; V3 within 2% of height"
+      }
+    },
+    {
+      "id": "drive-time",
+      "name": "Drive time",
+      "question": "How quickly do I drive up to the ball?",
+      "kind": "per-serve",
+      "unit": "ms",
+      "views": [
+        "side"
+      ],
+      "statusDefault": "estimated",
+      "statusTarget": "estimated",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:side",
+        "fps>=30",
+        "timebase",
+        "event:trophy-pelvis",
+        "event:contact"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "POSE_LOW_QUALITY",
+        "TIME_BASE_UNKNOWN",
+        "CONDITION_NOT_VALIDATED",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
+      "formula": "(t_contact - t_trophy) x 1000, t_trophy = pelvis-min trophy (lowest mid-hip)",
+      "references": [
+        {
+          "mean": 400,
+          "sd": 70,
+          "unit": "ms",
+          "population": "Professionals, acceleration phase",
+          "source": "gap: geometry [G8]",
+          "evidence": "Established"
+        },
+        {
+          "mean": 380,
+          "sd": 80,
+          "unit": "ms",
+          "population": "ITN 3 players, CoM lowest to impact (leg-drive duration 260 +/- 70 ms)",
+          "source": "gap: geometry [G7]",
+          "evidence": "Established"
+        }
+      ],
+      "referenceNote": "Different event definitions; context only, never a target. Trend only: no direction, no Did it work? verdict.",
+      "plausibility": {
+        "ref": "driveTimeS"
+      },
+      "evidenceTier": "research-backed",
+      "aggregation": {
+        "center": "median",
+        "spread": null,
+        "ci": "order-statistic (n < 20) or bootstrap",
+        "minN": 5
+      },
+      "swc": {
+        "value": 60,
+        "unit": "ms",
+        "use": "trend classification only"
+      },
+      "tau": {
+        "value": 30,
+        "unit": "ms"
+      },
+      "verdictUse": "trend only (quicker / about the same / slower)",
+      "crossSetupComparable": true,
+      "display": {
+        "rounding": "10 ms",
+        "example": "0.38 s from your lowest point to contact"
+      },
+      "uncertainty": "sqrt(sigma_trophy^2 + sigma_contact^2): about 47 ms at 60 fps.",
+      "heroRank": 5,
+      "validation": {
+        "syntheticTruth": "canonical['drive-time'] (legDrive.driveTimeS)",
+        "syntheticThreshold": "MAE <= 50 ms at 60 fps; coverage >= 93%",
+        "realMethod": "V2 annotated lowest-hip and contact frames",
+        "realThreshold": "MAE <= 2 frames"
+      }
+    },
+    {
+      "id": "loading-depth",
+      "name": "Loading (hip dip)",
+      "question": "How far do my hips dip as I load?",
+      "kind": "per-serve",
+      "unit": "% of height",
+      "secondaryUnits": [
+        "cm"
+      ],
+      "views": [
+        "side"
+      ],
+      "statusDefault": "estimated",
+      "statusTarget": "estimated",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:side",
+        "fps>=30",
+        "event:tossRelease",
+        "event:contact",
+        "bodyHeight",
+        "hips:visible"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "OCCLUDED",
+        "CONDITION_NOT_VALIDATED",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
+      "formula": "100 x (h_mid(t_tossRelease) - h_mid(t_low)), t_low as leg-drive",
+      "descriptiveLevels": {
+        "small": "< 3% of height",
+        "clear": ">= 3% of height",
+        "labels": {
+          "small": "small dip",
+          "clear": "clear dip"
+        },
+        "reportedOn": "session median only, when P >= 0.7",
+        "maxLevels": 2
+      },
+      "secondary": {
+        "hipDipCount": "experimental: mid-hip local minima in [motionStart, contact - 0.08 s] with prominence >= 3 x measured cleaned mid-hip noise (initial 0.03 BH), >= 0.25 s apart (double knee bend pattern, F10)"
+      },
+      "descriptiveOnly": true,
+      "neverCoachingTriggerFor": "bend more",
+      "referenceNote": "CoM drop 5.5 +/- 2.3% of height in professionals, between-player CV 42%, not related to racket speed or impact height [G8]. Depth is not the goal (gap: coaches T1). No direction, targetBand, SWC, verdict or population band.",
+      "plausibility": {
+        "ref": "loadingDepthPctHeight"
+      },
+      "evidenceTier": "coach-recommended",
+      "aggregation": {
+        "center": "median",
+        "spread": null,
+        "ci": "order-statistic (n < 20) or bootstrap",
+        "minN": 5
+      },
+      "swc": null,
+      "tau": null,
+      "verdictUse": "none",
+      "display": {
+        "rounding": "1% of height",
+        "example": "clear dip: your hips dropped about 6% of your height as you loaded"
+      },
+      "uncertainty": "About 3% of height per serve; about 1% for a session median at n = 12.",
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "band of the realised front-knee flexion at times.trophyEndS",
-        "syntheticThreshold": ">= 90% agreement where truth is >= 5 deg from a cut point; 0 low/high swaps; unclear <= 25%",
-        "realMethod": "Two blinded coaches label three levels",
+        "syntheticTruth": "canonical['loading-depth'] (legDrive.loadingDepthPctHeight)",
+        "syntheticThreshold": "MAE <= 2% of height; two-level agreement >= 85% on session medians >= 1% from the cut; hipDipCount exact on >= 90% of double-dip renders",
+        "realMethod": "V2 annotated hip centres at release and lowest frames",
+        "realThreshold": "MAE <= 2.5% of height"
+      }
+    },
+    {
+      "id": "deep-bend-flag",
+      "name": "Deep bend (experimental)",
+      "question": "Did I bend deeply at the top?",
+      "kind": "flag-per-serve",
+      "unit": "yes/no",
+      "views": [
+        "side"
+      ],
+      "statusDefault": "experimental",
+      "statusTarget": "experimental",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:side",
+        "fps>=30",
+        "event:trophy",
+        "roles:geometric",
+        "frontLeg:visible",
+        "segmentLengths",
+        "pitch",
+        "toggle:experimental"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "ROLE_AMBIGUOUS",
+        "OCCLUDED",
+        "PITCH_UNKNOWN",
+        "EXPERIMENTAL_HIDDEN",
+        "NOT_IMPLEMENTED"
+      ],
+      "formula": "E4: theta = acos(min(1, e_thigh / L_thigh)) + acos(min(1, e_shank / L_shank)) for the geometric front leg at trophy (+/- 2 frames); vertical extents at the ankle depth; lengths from standing frames",
+      "rule": {
+        "yesIf": "theta >= 45 deg with probability >= 0.7",
+        "sigmaDeg": 11.5,
+        "showNo": false,
+        "neverSay": [
+          "little bend",
+          "no bend"
+        ]
+      },
+      "gateBeforeV1": "Re-simulate with the measured ROI noise; if two-level error > 15%, the flag is not built (NOT_IMPLEMENTED).",
+      "referenceNote": "About 14% of serves wrong on two levels under the gap noise model; cannot separate little from moderate (57% wrong at a true 10 deg). Never a \"bend more\" cue; may be mentioned next to leg-drive (deep bend, slow rise).",
+      "evidenceTier": "experimental",
+      "aggregation": {
+        "center": "share of yes",
+        "spread": null,
+        "ci": "wilson",
+        "minN": 5
+      },
+      "swc": null,
+      "tau": null,
+      "verdictUse": "none",
+      "display": {
+        "rounding": "words",
+        "example": "Deep bend: yes (experimental)"
+      },
+      "heroRank": null,
+      "validation": {
+        "syntheticTruth": "canonical['deep-bend-flag'] (front-knee 3D flexion at trophy >= 45; alt.frontKneeAtTrophy3DDeg)",
+        "syntheticThreshold": "two-level error <= 15% across knee azimuths 0-60 deg (gap test 1); false yes <= 10% on truths below 35 deg",
+        "realMethod": "V3 two synchronised phones or IMUs",
+        "realThreshold": "two-level agreement >= 85%"
+      }
+    },
+    {
+      "id": "shoulder-tilt-trophy",
+      "name": "Shoulder tilt at the top",
+      "question": "How much do my shoulders tilt at the top?",
+      "kind": "band",
+      "unit": "band",
+      "views": [
+        "side"
+      ],
+      "bandBasis": "player-relative",
+      "bandLabels": {
+        "low": "Less tilt than your usual",
+        "typical": "Your usual tilt",
+        "high": "More tilt than your usual",
+        "unclear": "Between two bands",
+        "building": "Building your range ({k} of 2 sessions)"
+      },
+      "bandRule": {
+        "angle": "phi = atan2(y_B - y_F, netDir x (x_F - x_B) x aspect) at trophy on rectified keypoints, median over +/- 2 frames; F = front shoulder (larger netDir.x); positive = front shoulder higher",
+        "reference": "median of session medians over >= 2 matched sessions (same stratum incl. setupClass and court side), >= 8 serves each; rolling last 6; s_p = pooled within-session SD",
+        "sessionTypicalHalfWidthDeg": "max(5, 2 x SE), SE = 1.25 s_p / sqrt(n)",
+        "perServeTypicalHalfWidthDeg": "max(8, 1.5 s_p)",
+        "hysteresisDeg": 2,
+        "reportIfProbabilityAtLeast": 0.7,
+        "sigmaDeg": 6,
+        "staysExperimentalIfMeasuredSigmaAboveDeg": 8
+      },
+      "secondary": {
+        "sideBendTrophy": "experimental, never displayed: 2D angle between shoulder line and hip line"
+      },
+      "statusDefault": "estimated",
+      "statusTarget": "estimated",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:side",
+        "fps>=30",
+        "event:trophy",
+        "roles:geometric",
+        "shoulders:visible",
+        "pitch",
+        "baseline:2-sessions"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "ROLE_AMBIGUOUS",
+        "OCCLUDED",
+        "PITCH_UNKNOWN",
+        "CAMERA_TILTED",
+        "BASELINE_BUILDING",
+        "CONDITION_NOT_VALIDATED"
+      ],
+      "referenceNote": "Replaces trunk-tilt-band. The shoulder line is 16-31 deg from the side image plane at trophy (projection +1 to +4 deg). No population degrees: never compared with 25 +/- 7.1 deg or 48 deg (D5). Possible upward shift of the front shoulder from the raised tossing arm (unverified) cancels player-relative. No targetBand; COACHING must not infer back load from it. Kovacs: shoulder and pelvis lateral rear tilt during loading (research 03 [S1]).",
+      "evidenceTier": "coach-recommended",
+      "aggregation": {
+        "center": "band",
+        "spread": "band shares",
+        "ci": null,
+        "minN": 5,
+        "provisionalBelowN": 12
+      },
+      "swc": null,
+      "tau": null,
+      "verdictUse": "none",
+      "display": {
+        "rounding": "words only",
+        "example": "Your usual tilt on 10 of 12 serves"
+      },
+      "heroRank": null,
+      "validation": {
+        "syntheticTruth": "canonical['shoulder-tilt-trophy'] (3D; alt.deg2D, alt.deg2DLevel)",
+        "syntheticThreshold": "rectified 2D within +/-4 deg of 3D on S0 (gap test 4); within 1 deg of the level render across the tilt family (gap test 3); band agreement >= 85% for injected +/-10 deg shifts; S11 mirrors keep the sign",
+        "realMethod": "Two blinded coaches label less / usual / more against the player earlier clips",
+        "realThreshold": ">= 80% agreement"
+      }
+    },
+    {
+      "id": "knee-bend-band",
+      "name": "Knee bend",
+      "question": "How much do my knees bend at the top?",
+      "kind": "band",
+      "unit": "band",
+      "views": [
+        "rear"
+      ],
+      "bandBasis": "fixed-geometric",
+      "bandLabels": {
+        "low": "Little bend",
+        "typical": "Moderate bend",
+        "high": "Deep bend",
+        "unclear": "Between two bands"
+      },
+      "bandThresholds": {
+        "unit": "deg 2D knee flexion of the nearer (back) knee at trophy, rear view, rectified",
+        "low": "< 20",
+        "typical": "20-45",
+        "high": ">= 45",
+        "sigmaDeg": 6.5,
+        "reportIfProbabilityAtLeast": 0.7
+      },
+      "method": {
+        "rear": "nearer knee (the leg whose ankle sits lower in the rectified image); never the front knee; ambiguous or visibility < 0.6 -> unclear"
+      },
+      "sideView": {
+        "status": "unavailable",
+        "reasonCode": "VIEW_NOT_SUPPORTED",
+        "unlockHint": "Add a phone behind you to see this.",
+        "why": "Knees point at the side camera at trophy; a raw 2D angle puts 47-80% of serves in the wrong band (gap: geometry 3.3)."
+      },
+      "statusDefault": "experimental",
+      "statusTarget": "estimated",
+      "statusTargetCondition": "only after V2 coach agreement",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:rear",
+        "fps>=30",
+        "event:trophy",
+        "pitch",
+        "roles:geometric",
+        "nearerKnee:visible"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "ROLE_AMBIGUOUS",
+        "OCCLUDED",
+        "CONDITION_NOT_VALIDATED"
+      ],
+      "referenceNote": "Knee restriction to 10 deg cut ball speed about 15-17% at all levels (research 03 [S7]). Low front-knee flexion and arm load: conflicting evidence (research 03 [S3], [S9]). The pooled front-knee 64.5 +/- 9.7 deg is not used (a different knee, 3D). Degrees are never displayed (D5). No targetBand: never a \"bend more\" target; may only support a leg-drive focus.",
+      "expectedError": "about 11-13% wrong band, 0% little/deep swaps (gap noise model); 21% with doubled noise",
+      "evidenceTier": "research-backed",
+      "aggregation": {
+        "center": "mode",
+        "spread": "band shares",
+        "ci": null,
+        "minN": 5,
+        "provisionalBelowN": 12
+      },
+      "swc": null,
+      "tau": null,
+      "verdictUse": "none",
+      "display": {
+        "rounding": "words only",
+        "example": "Moderate bend on 9 of 12 serves (rear view)"
+      },
+      "heroRank": null,
+      "validation": {
+        "syntheticTruth": "canonical['knee-bend-band'] (band of the back knee 3D flexion at trophy; alt.backKneeAtTrophy3DDeg)",
+        "syntheticThreshold": ">= 85% agreement where truth is >= 5 deg from a cut point; 0 little/deep swaps; unclear <= 25%; platform stance -> unclear; side view never bands",
+        "realMethod": "Two blinded coaches label three levels on rear clips",
         "realThreshold": ">= 80% agreement; Krippendorff alpha >= 0.7 between coaches"
       }
     },
     {
-      "id": "trunk-tilt-band",
-      "name": "Trunk tilt at loading",
-      "question": "How much do I tilt back as I load?",
+      "id": "shoulder-over-shoulder-contact",
+      "name": "Shoulder over shoulder at contact",
+      "question": "Do my shoulders tilt up into the hit?",
       "kind": "band",
       "unit": "band",
-      "bandLabels": { "low": "Upright", "typical": "Tilted", "high": "Big arch", "unclear": "Between two bands" },
-      "bandThresholds": { "unit": "deg lean away from the net at trophy (image plane)", "low": "< 10", "typical": "10-35", "high": "> 35", "sigmaDeg": 6, "reportIfProbabilityAtLeast": 0.7 },
-      "views": ["side"],
-      "statusDefault": "estimated",
-      "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["view:side", "fps>=30", "event:trophy"],
-      "referenceRange": {
-        "mean": 25.0, "sd": 7.1, "unit": "deg trunk inclination at trophy",
-        "population": "National to professional players, pooled over 6 studies (definitions vary)",
-        "source": "research 03 [S31]",
-        "evidence": "Established"
+      "views": [
+        "rear"
+      ],
+      "bandBasis": "player-relative",
+      "bandLabels": {
+        "low": "Less tilt than your usual",
+        "typical": "Your usual tilt",
+        "high": "More tilt than your usual",
+        "unclear": "Between two bands",
+        "building": "Building your range ({k} of 2 sessions)"
       },
-      "referenceNote": "Band cut points are our inference (about mean - 2 SD and mean + 1.5 SD). The high band feeds coaching's back-comfort logic, never a diagnosis.",
-      "evidenceTier": "research-backed",
-      "targetBand": { "low": "typical", "high": "typical", "evidence": "Our inference" },
-      "aggregation": { "center": "mode", "spread": "band shares", "ci": null, "minN": 5, "provisionalBelowN": 12 },
-      "swc": { "value": 4, "unit": "deg (underlying)" },
-      "display": { "rounding": "words only", "example": "Tilted on 10 of 12 serves" },
+      "bandRule": {
+        "angle": "phi_c = atan2(y_t - y_h, hitDir x (x_h - x_t) x aspect) at contact (+/- 1 frame), rectified rear coordinates; S_h = shoulder on the geometric hitting wrist side; positive = hitting shoulder higher",
+        "reference": "as shoulder-tilt-trophy, rear sessions",
+        "sigmaDeg": 6,
+        "hysteresisDeg": 2,
+        "reportIfProbabilityAtLeast": 0.7
+      },
+      "sideView": {
+        "status": "unavailable",
+        "reasonCode": "VIEW_NOT_SUPPORTED",
+        "why": "At contact the shoulder line is 65-84 deg out of the side plane; a true 48 deg reads 69-84 deg (gap: geometry 4.2)."
+      },
+      "statusDefault": "experimental",
+      "statusTarget": "experimental",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:rear",
+        "fps>=30",
+        "event:contact",
+        "roles:geometric",
+        "shoulders:visible",
+        "pitch",
+        "baseline:2-sessions"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "OCCLUDED",
+        "BASELINE_BUILDING",
+        "CONDITION_NOT_VALIDATED",
+        "EXPERIMENTAL_HIDDEN"
+      ],
+      "referenceNote": "Kovacs shoulder-over-shoulder (research 03 [S1]); the published 48 deg has an unresolved definition and is never compared; Reid et al. 3D side tilt at impact 41.7 +/- 7.8 (flat) and 33.4 +/- 10.2 deg (kick) is context only.",
+      "evidenceTier": "experimental",
+      "aggregation": {
+        "center": "band",
+        "spread": "band shares",
+        "ci": null,
+        "minN": 5,
+        "provisionalBelowN": 12
+      },
+      "swc": null,
+      "tau": null,
+      "verdictUse": "none",
+      "display": {
+        "rounding": "words only",
+        "example": "Your usual tilt at contact (rear view, experimental)"
+      },
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "truth mid-hip to mid-shoulder angle at times.trophyEndS, 3D and camera-projected",
-        "syntheticThreshold": ">= 85% agreement where truth is >= 4 deg from a cut point",
-        "realMethod": "Two blinded coaches label three levels",
-        "realThreshold": ">= 80% agreement"
+        "syntheticTruth": "canonical['shoulder-over-shoulder-contact'] (3D; alt.deg2DLevel)",
+        "syntheticThreshold": "rectified 2D within +/-4 deg of 3D (gap test 4); band agreement >= 85% for injected +/-10 deg shifts",
+        "realMethod": "V3 two-view check",
+        "realThreshold": "within 4 deg of the triangulated angle"
       }
     },
     {
@@ -623,23 +2803,78 @@
       "question": "Am I driving into the court?",
       "kind": "per-serve",
       "unit": "cm",
-      "secondaryUnits": ["cm-from-baseline (only with a baseline tap)"],
-      "views": ["side"],
+      "secondaryUnits": [
+        "% of height",
+        "cm-from-baseline (only with a baseline tap)"
+      ],
+      "views": [
+        "side"
+      ],
       "statusDefault": "estimated",
+      "statusDefaultCondition": "Experimental until V1 passes with measured foot-point noise and geometric foot identification (S11); then estimated for the player-relative displacement from S0 only.",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["view:side", "fps>=30", "event:landing", "startToe", "bodyHeight", "playerHeight"],
-      "referenceNote": "No established norms for recreational players (research 05 section 6.7). Measured from where the front toe started, not from the baseline. Coaching: landing behind the baseline suggests no forward drive (research 04 F9).",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:side",
+        "fps>=30",
+        "event:landing",
+        "startToe",
+        "roles:geometric",
+        "bodyHeight",
+        "playerHeight",
+        "pitch",
+        "yaw<=15"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "LANDING_NOT_FOUND",
+        "FEET_NOT_VISIBLE",
+        "ROLE_AMBIGUOUS",
+        "PITCH_UNKNOWN",
+        "CONDITION_NOT_VALIDATED",
+        "IMPLAUSIBLE_VALUE",
+        "CHECK_THIS_SERVE"
+      ],
+      "referenceNote": "No norms for any population (gap: ranges 5). Measured from where the front toe started, not from the baseline. Trend only; not a fault trigger (no \"<= 0 cm\" flag, not used for F18). Population bands rejected until the gap: ranges 9 reference set exists. Coaching: landing behind the baseline suggests no forward drive (research 04 F9).",
+      "trendOnly": true,
+      "faultTrigger": false,
+      "populationBands": null,
+      "plausibility": {
+        "ref": "landingM"
+      },
       "evidenceTier": "coach-recommended",
-      "aggregation": { "center": "mean", "spread": "sd", "ci": "t", "minN": 5 },
-      "swc": { "value": 8, "unit": "cm" },
-      "display": { "rounding": "1 cm", "example": "you land about 45 cm in front of where your front toe started" },
+      "aggregation": {
+        "center": "mean",
+        "spread": "sd",
+        "ci": "t",
+        "minN": 5
+      },
+      "swc": {
+        "value": 8,
+        "unit": "cm",
+        "use": "trend classification only"
+      },
+      "tau": {
+        "value": 8,
+        "unit": "cm"
+      },
+      "verdictUse": "trend only (further in / about the same / further back)",
+      "display": {
+        "rounding": "1 cm",
+        "example": "you land about 45 cm in front of where your front toe started"
+      },
+      "uncertainty": "Random: S0 toe 0.021 BH and landing toe about 0.021 BH, landing-foot identification. Shared: scale 1.5%, yaw. 95% band about +/-12 cm.",
       "heroRank": 4,
       "validation": {
-        "syntheticTruth": "landing-foot toe x at times.landingS - frontToeAtRelease[x]",
-        "syntheticThreshold": "MAE <= 8 cm; p95 <= 15 cm; landing time MAE <= 1 frame",
-        "realMethod": "V3 tape-measured chalk marks",
-        "realThreshold": "MAE <= 10 cm"
+        "syntheticTruth": "canonical['landing-distance'] (landing.fromStartToeM; alt.fromBaselineM)",
+        "syntheticThreshold": "with measured foot noise: MAE <= 8 cm; p95 <= 15 cm; coverage >= 93%; landing time MAE <= 1.5 frames; S11 whole and leg-only mirrors hold",
+        "realMethod": "V2 heel and toe annotation at release and landing; V3 tape-measured chalk marks",
+        "realThreshold": "V2 MAE <= 6 cm; V3 MAE <= 10 cm"
       }
     },
     {
@@ -648,22 +2883,69 @@
       "question": "How similar are my serves to each other?",
       "kind": "session-index",
       "unit": "index-0-100",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "experimental",
       "statusTarget": "experimental",
-      "validationLevel": "V0",
-      "prerequisites": ["n>=5", "stability", "event:tossRelease", "event:trophy", "event:contact", "toggle:experimental"],
-      "parameters": { "samples": { "releaseToTrophy": 20, "trophyToContact": 20, "afterContact": 10, "afterContactS": 0.25 }, "tauBH": 0.06 },
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "n>=5",
+        "stability",
+        "event:tossRelease",
+        "event:trophy",
+        "event:contact",
+        "roles:geometric",
+        "toggle:experimental"
+      ],
+      "reasonCodes": [
+        "TOO_FEW_SERVES",
+        "CAMERA_MOVED",
+        "EXPERIMENTAL_HIDDEN",
+        "CONDITION_NOT_VALIDATED"
+      ],
+      "parameters": {
+        "samples": {
+          "releaseToTrophy": 20,
+          "trophyToContact": 20,
+          "afterContact": 10,
+          "afterContactS": 0.25
+        },
+        "tauBH": 0.06,
+        "noise": "measured cleaned pose noise (section 5.5)"
+      },
       "referenceNote": "Our own composite; no external reference. More variable movement went with lower speed and accuracy (research 03 [S30]).",
       "evidenceTier": "experimental",
       "higherIsBetter": true,
-      "aggregation": { "center": "index", "spread": null, "ci": "bootstrap", "minN": 5 },
-      "swc": { "value": 5, "unit": "points" },
-      "display": { "rounding": 1, "example": "Repeatability 72 (experimental)" },
+      "aggregation": {
+        "center": "index",
+        "spread": null,
+        "ci": "bootstrap",
+        "minN": 5
+      },
+      "swc": {
+        "value": 5,
+        "unit": "points"
+      },
+      "tau": {
+        "value": 5,
+        "unit": "points"
+      },
+      "verdictUse": "none while experimental",
+      "display": {
+        "rounding": 1,
+        "example": "Repeatability 72 (experimental)"
+      },
       "heroRank": null,
       "validation": {
         "syntheticTruth": "ordering by sdScale",
-        "syntheticThreshold": "Spearman >= 0.9 vs sdScale per profile; seeds at equal sdScale within 5 points",
+        "syntheticThreshold": "Spearman >= 0.9 vs sdScale per profile with measured noise; seeds at equal sdScale within 5 points; S11 within 5 points",
         "realMethod": "Correlation with coach-rated consistency; test-retest",
         "realThreshold": "to be set after V2 pilot"
       }
@@ -674,19 +2956,62 @@
       "question": "How many serves went in?",
       "kind": "rate",
       "unit": "k-of-n",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "player-entered",
       "statusTarget": "player-entered",
       "statusAutoRear": "experimental",
-      "validationLevel": "V0",
-      "prerequisites": ["entry:outcome"],
-      "prerequisitesAutoRear": ["view:rear", "fps>=60", "calibration:court-4pt", "toggle:experimental"],
-      "referenceNote": "See first-serve-in-rate and second-serve-in-rate for level data.",
+      "entryModes": [
+        "per-serve-tags",
+        "tally",
+        "match-log"
+      ],
+      "neverPooledAcrossEntryModes": true,
+      "prerequisitesAutoRear": [
+        "view:rear",
+        "fps>=60",
+        "calibration:court-4pt",
+        "toggle:experimental"
+      ],
       "evidenceTier": "research-backed",
       "higherIsBetter": true,
-      "aggregation": { "center": "rate", "spread": null, "ci": "wilson", "percentFromN": 10, "provisionalBelowN": 30 },
-      "swc": { "value": 10, "unit": "percentage points" },
-      "display": { "rounding": "1%", "example": "14 of 24 in (likely 39-76%)" },
+      "aggregation": {
+        "center": "rate",
+        "spread": null,
+        "ci": "wilson",
+        "percentFromN": 10,
+        "provisionalBelowN": 30
+      },
+      "swc": {
+        "value": 10,
+        "unit": "percentage points"
+      },
+      "tau": {
+        "value": 5,
+        "unit": "percentage points"
+      },
+      "verdictUse": "did-it-work from your tags (same entry mode and serve number; not match log; not rear auto)",
+      "provenance": "from-your-tags",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "entry:outcome"
+      ],
+      "reasonCodes": [
+        "NOT_ENTERED",
+        "NEEDS_CALIBRATION"
+      ],
+      "referenceNote": "See first-serve-in-rate and second-serve-in-rate for level data.",
+      "display": {
+        "rounding": "1%",
+        "example": "14 of 24 in (likely 39-76%)"
+      },
       "heroRank": null,
       "validation": {
         "syntheticTruth": "n/a for player entry; rear auto: flight bounce vs service box",
@@ -701,24 +3026,71 @@
       "question": "Am I getting more first serves in?",
       "kind": "rate",
       "unit": "k-of-n",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "player-entered",
       "statusTarget": "player-entered",
       "statusAutoRear": "experimental",
-      "validationLevel": "V0",
-      "prerequisites": ["entry:outcome", "entry:serveNumber"],
+      "entryModes": [
+        "per-serve-tags",
+        "tally",
+        "match-log"
+      ],
+      "neverPooledAcrossEntryModes": true,
+      "prerequisitesAutoRear": [
+        "view:rear",
+        "fps>=60",
+        "calibration:court-4pt",
+        "toggle:experimental"
+      ],
+      "evidenceTier": "research-backed",
+      "higherIsBetter": true,
+      "aggregation": {
+        "center": "rate",
+        "spread": null,
+        "ci": "wilson",
+        "percentFromN": 10,
+        "provisionalBelowN": 30
+      },
+      "swc": {
+        "value": 10,
+        "unit": "percentage points"
+      },
+      "tau": {
+        "value": 5,
+        "unit": "percentage points"
+      },
+      "verdictUse": "did-it-work from your tags (same entry mode and serve number; not match log; not rear auto)",
+      "provenance": "from-your-tags",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "entry:outcome",
+        "entry:serveNumber"
+      ],
+      "reasonCodes": [
+        "NOT_ENTERED",
+        "NEEDS_CALIBRATION"
+      ],
       "referenceRange": {
-        "low": 53.3, "high": 55.8, "unit": "%",
+        "low": 53.3,
+        "high": 55.8,
+        "unit": "%",
         "population": "SwingVision users, NTRP 3.0-5.0, match play, combined genders, 250,000+ sessions",
         "source": "research 01 [S7]",
         "evidence": "Vendor claim"
       },
-      "referenceNote": "First-serve % barely moves with level, so it is a weak progress headline (research 09 section 4.1). Detecting a 10-point rise needs about 190 serves per side.",
-      "evidenceTier": "research-backed",
-      "higherIsBetter": true,
-      "aggregation": { "center": "rate", "spread": null, "ci": "wilson", "percentFromN": 10, "provisionalBelowN": 30 },
-      "swc": { "value": 10, "unit": "percentage points" },
-      "display": { "rounding": "1%", "example": "12 of 20 first serves in (likely 39-78%)" },
+      "referenceNote": "D11 headline outcome. First-serve % barely moves with level, so it is a weak progress headline (research 09 section 4.1). Detecting a 10-point rise needs about 480 serves per side at 80% power.",
+      "display": {
+        "rounding": "1%",
+        "example": "12 of 20 first serves in (likely 39-78%)"
+      },
       "heroRank": null,
       "validation": {
         "syntheticTruth": "n/a",
@@ -733,23 +3105,71 @@
       "question": "Is my second serve reliable?",
       "kind": "rate",
       "unit": "k-of-n",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "player-entered",
       "statusTarget": "player-entered",
       "statusAutoRear": "experimental",
-      "validationLevel": "V0",
-      "prerequisites": ["entry:outcome", "entry:serveNumber"],
+      "entryModes": [
+        "per-serve-tags",
+        "tally",
+        "match-log"
+      ],
+      "neverPooledAcrossEntryModes": true,
+      "prerequisitesAutoRear": [
+        "view:rear",
+        "fps>=60",
+        "calibration:court-4pt",
+        "toggle:experimental"
+      ],
+      "evidenceTier": "research-backed",
+      "higherIsBetter": true,
+      "aggregation": {
+        "center": "rate",
+        "spread": null,
+        "ci": "wilson",
+        "percentFromN": 10,
+        "provisionalBelowN": 30
+      },
+      "swc": {
+        "value": 10,
+        "unit": "percentage points"
+      },
+      "tau": {
+        "value": 5,
+        "unit": "percentage points"
+      },
+      "verdictUse": "did-it-work from your tags (same entry mode and serve number; not match log; not rear auto)",
+      "provenance": "from-your-tags",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "entry:outcome",
+        "entry:serveNumber"
+      ],
+      "reasonCodes": [
+        "NOT_ENTERED",
+        "NEEDS_CALIBRATION"
+      ],
       "referenceRange": {
-        "low": 70.4, "high": 70.9, "unit": "%",
+        "low": 70.4,
+        "high": 70.9,
+        "unit": "%",
         "population": "SwingVision users, NTRP 3.0-5.0, match play, combined genders",
         "source": "research 01 [S7]",
         "evidence": "Vendor claim"
       },
-      "evidenceTier": "research-backed",
-      "higherIsBetter": true,
-      "aggregation": { "center": "rate", "spread": null, "ci": "wilson", "percentFromN": 10, "provisionalBelowN": 30 },
-      "swc": { "value": 10, "unit": "percentage points" },
-      "display": { "rounding": "1%", "example": "9 of 12 second serves in" },
+      "referenceNote": "D11 headline outcome (a second serve they trust).",
+      "display": {
+        "rounding": "1%",
+        "example": "9 of 12 second serves in"
+      },
       "heroRank": null,
       "addedBy": "METRICS.md",
       "validation": {
@@ -765,24 +3185,68 @@
       "question": "How many double faults?",
       "kind": "count",
       "unit": "count",
-      "secondaryUnits": ["per-10-points"],
-      "views": ["side", "rear"],
+      "secondaryUnits": [
+        "per-10-second-serves",
+        "per-10-points"
+      ],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "player-entered",
       "statusTarget": "player-entered",
-      "validationLevel": "V0",
-      "prerequisites": ["entry:pointPlay"],
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [],
+      "prerequisitesAnyOf": [
+        "entry:secondServeBlock",
+        "entry:tally",
+        "entry:pointPlay",
+        "entry:matchLog"
+      ],
+      "reasonCodes": [
+        "NOT_ENTERED"
+      ],
+      "sources": {
+        "secondServeBlock": "default v1 path: every serve is a 2nd serve (sequence rule off); DF = faulted second serves; rate = DF / second serves x 10; no point play needed",
+        "tally": "DF entered directly, or derived from the tally second-serve faults",
+        "pointPlay": "optional, deferred in v1: a 2nd serve with a fault; rate per 10 points (points = 1st serves)",
+        "matchLog": "D11 match log count per match, provenance match-log, never pooled with practice, no verdicts"
+      },
       "referenceRange": {
-        "low": 3.21, "high": 3.71, "unit": "per match",
+        "low": 3.21,
+        "high": 3.71,
+        "unit": "per match",
         "population": "SwingVision users, NTRP 3.0-5.0, match play",
         "source": "research 01 [S7]",
         "evidence": "Vendor claim"
       },
-      "referenceNote": "Match play, not practice. A session tally may enter the count directly.",
+      "referenceNote": "D11 headline pain. Match play, not practice.",
       "evidenceTier": "research-backed",
       "higherIsBetter": false,
-      "aggregation": { "center": "sum", "spread": null, "ci": "wilson (DF / points)", "minN": 10 },
-      "swc": { "value": 1, "unit": "per 10 points" },
-      "display": { "rounding": 1, "example": "2 double faults in 20 points" },
+      "aggregation": {
+        "center": "sum",
+        "spread": null,
+        "ci": "wilson (DF / second serves, or DF / points)",
+        "minN": 10
+      },
+      "swc": {
+        "value": 1,
+        "unit": "per 10 second serves"
+      },
+      "tau": {
+        "value": 0.5,
+        "unit": "per 10 second serves"
+      },
+      "verdictUse": "did-it-work from your tags on the practice rate per second serve (same entry mode)",
+      "display": {
+        "rounding": 1,
+        "example": "3 double faults in 15 second serves"
+      },
       "heroRank": null,
       "validation": {
         "syntheticTruth": "n/a",
@@ -797,21 +3261,49 @@
       "question": "Where are my serves landing?",
       "kind": "distribution",
       "unit": "counts T/body/wide",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "player-entered",
       "statusTarget": "player-entered",
       "statusAutoRear": "experimental",
-      "validationLevel": "V0",
-      "prerequisites": ["entry:outcome"],
-      "prerequisitesAutoRear": ["view:rear", "fps>=60", "calibration:court-4pt", "toggle:experimental"],
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "entry:outcome"
+      ],
+      "prerequisitesAutoRear": [
+        "view:rear",
+        "fps>=60",
+        "calibration:court-4pt",
+        "toggle:experimental"
+      ],
+      "reasonCodes": [
+        "NOT_ENTERED",
+        "NEEDS_CALIBRATION"
+      ],
       "zoneDefinition": "Service box width (4.115 m) split into thirds; the third nearest the centre line is T [Our inference]. Too close to call when P(zone) < 0.8.",
+      "targetTagUse": "The per-serve target tag is also entry:targetZone for speed-experimental (D4).",
       "referenceNote": "No recreational reference. Placement, closeness to lines and speed classified professional aces with 87% accuracy (research 03 [S21]).",
       "evidenceTier": "research-backed",
-      "aggregation": { "center": "counts", "spread": null, "ci": "wilson (on-target rate)", "minN": 10 },
-      "display": { "rounding": 1, "example": "T 6, body 3, wide 4; 8 of 13 on target" },
+      "aggregation": {
+        "center": "counts",
+        "spread": null,
+        "ci": "wilson (on-target rate)",
+        "minN": 10
+      },
+      "display": {
+        "rounding": 1,
+        "example": "T 6, body 3, wide 4; 8 of 13 on target"
+      },
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "plan.flight bounce point",
+        "syntheticTruth": "canonical['placement-zone'] (alt.actual)",
         "syntheticThreshold": "rear auto zone agreement >= 90%",
         "realMethod": "Rear auto vs annotated video and observer",
         "realThreshold": ">= 90% zone agreement (research 05 section 11.3)"
@@ -823,19 +3315,37 @@
       "question": "Which serves did I practise?",
       "kind": "distribution",
       "unit": "counts flat/slice/kick/unknown",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "player-entered",
       "statusTarget": "player-entered",
-      "validationLevel": "V0",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
       "prerequisites": [],
-      "autoClassifier": { "status": "unavailable", "reasonCode": "NOT_IMPLEMENTED" },
-      "referenceNote": "None. Intended type is a stratum key.",
+      "autoClassifier": {
+        "status": "unavailable",
+        "reasonCode": "NOT_IMPLEMENTED"
+      },
+      "referenceNote": "None. Intended type is a stratum key and selects the depth-offset prior.",
       "evidenceTier": "coach-recommended",
-      "aggregation": { "center": "counts", "spread": null, "ci": null },
-      "display": { "rounding": 1, "example": "flat 8, slice 4, kick 0" },
+      "aggregation": {
+        "center": "counts",
+        "spread": null,
+        "ci": null
+      },
+      "display": {
+        "rounding": 1,
+        "example": "flat 8, slice 4, kick 0"
+      },
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "n/a",
+        "syntheticTruth": "canonical['serve-type-mix']",
         "syntheticThreshold": "n/a",
         "realMethod": "n/a",
         "realThreshold": "n/a"
@@ -843,45 +3353,183 @@
     },
     {
       "id": "speed-experimental",
-      "name": "Speed (experimental)",
-      "question": "Roughly how fast was that serve?",
+      "name": "Launch speed (experimental)",
+      "question": "Roughly how fast was that serve off the racket?",
       "kind": "range",
       "unit": "km/h range",
-      "views": ["side", "rear"],
+      "views": [
+        "side"
+      ],
+      "quantity": "launch-speed",
       "statusDefault": "unavailable",
       "statusWhenPrerequisitesHold": "experimental",
       "statusTarget": "experimental",
-      "validationLevel": "V0",
-      "prerequisites": ["timebase", "event:contact", "playerHeight", "toggle:experimental"],
-      "prerequisitesNote": "Common prerequisites; each method adds its own below.",
-      "methods": {
-        "A": {
-          "name": "Side-view outgoing track",
-          "quantity": "launch-speed",
-          "views": ["side"],
-          "prerequisites": ["view:side", "fps>=120", "timebase", "event:contact", "playerHeight", "toggle:experimental"],
-          "notes": ">= 3 clean outgoing detections 4-50 ms after contact; line-fit residual RMS <= 0.5 ball radius; out-of-plane angle 0-25 deg (0-15 deg when zone tagged and yaw check passes)."
-        },
-        "B": {
-          "name": "Audio flight time",
-          "quantity": "average-speed",
-          "views": ["side", "rear"],
-          "prerequisites": ["audio", "timebase", "event:contact", "entry:outcome", "playerHeight", "toggle:experimental"],
-          "notes": "Bounce onset 0.3-1.2 s after contact with SNR >= 10 dB; serve tagged in; sound-travel corrected; path 14-19 m."
-        }
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
       },
-      "displayGate": { "maxRelativeWidth": 0.35, "roundOutwardTo": 5, "reasonIfWider": "RANGE_TOO_WIDE", "reasonIfNoOverlap": "METHODS_DISAGREE" },
-      "referenceNote": "Context only: SwingVision average first-serve speed 96-120 km/h at NTRP 3.0-5.0 (research 01 [S7], vendor claim; average reads about 20% below radar, research 05 [S35]). Lab radar flat first serves: beginners 107, intermediates 149 km/h (research 03 [S7]). No 'Did it work?' verdicts on speed.",
+      "prerequisites": [
+        "view:side",
+        "fps>=120",
+        "timebase:proven",
+        "event:contact",
+        "playerHeight",
+        "entry:targetZone",
+        "toggle:experimental"
+      ],
+      "trackRequirements": ">= 3 clean outgoing detections (score >= 0.15) 4-50 ms after contact; straight-line residual within the engine gate",
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "FPS_TOO_LOW",
+        "TIME_BASE_UNKNOWN",
+        "TARGET_NOT_TAGGED",
+        "PLAYER_HEIGHT_MISSING",
+        "FLICKER",
+        "MOTION_BLUR",
+        "RANGE_TOO_WIDE",
+        "EXPERIMENTAL_HIDDEN",
+        "IMPLAUSIBLE_VALUE"
+      ],
+      "method": {
+        "name": "Side-view outgoing track (estimateServeSpeedFromTrack, ball/speed.ts)",
+        "outOfPlaneDegByTag": {
+          "T": [
+            0,
+            13
+          ],
+          "body": [
+            2,
+            19
+          ],
+          "wide": [
+            6,
+            24
+          ],
+          "source": "ball/speed.ts TARGET_TAG_OUT_OF_PLANE_DEG: gap zone centres about 2/9/15 +/- 4 deg widened for stance, zone spread and +/-2 deg camera aim (yaw allowance); a measured yaw shifts the band and narrows it by up to 2 deg"
+        },
+        "depthChangeAlongTrack": "signed: ball moves sin(psi) m per m travelled; with a chest-side camera away from it when serving from the court half nearer the camera (deuce for a right-hander) and towards it from the far half (ad); back-side camera flips; correction at the window mid-time over the tag psi band, band width in the range (engine flag: speed.ts treats it symmetrically)",
+        "contactDepthSigmaM": 0.3,
+        "dragLengthM": [
+          36,
+          55
+        ],
+        "audio": "never used for speed; audio only times contact"
+      },
+      "removedMethods": [
+        "B: audio flight time (removed 2026-09-27, D4: bounce out of frame, about +/-20% error)"
+      ],
+      "displayGate": {
+        "maxRelativeWidth": 0.35,
+        "roundOutwardTo": 5,
+        "reasonIfWider": "RANGE_TOO_WIDE"
+      },
+      "plausibility": {
+        "ref": "launchSpeedKmh"
+      },
+      "referenceNote": "Context only: SwingVision average first-serve speed 96-120 km/h at NTRP 3.0-5.0 (research 01 [S7], vendor claim; average reads about 20% below radar, research 05 [S35]). Lab radar flat first serves: beginners 107, intermediates 149 km/h (research 03 [S7]). Never combined with speed-average-rear. No Did it work? verdicts.",
       "evidenceTier": "research-backed",
       "higherIsBetter": true,
-      "aggregation": { "center": "median of per-serve midpoints", "spread": null, "ci": "shared relative error (2 sigma, not averaged) plus random / sqrt(n)" },
-      "display": { "rounding": "outward to 5 km/h", "example": "about 140-155 km/h (launch speed, experimental)" },
+      "aggregation": {
+        "center": "median of per-serve midpoints",
+        "spread": null,
+        "ci": "shared relative error (2 sigma, not averaged) plus random / sqrt(n)",
+        "strataSeparate": [
+          "courtSide"
+        ]
+      },
+      "verdictUse": "none",
+      "display": {
+        "rounding": "outward to 5 km/h",
+        "example": "about 140-155 km/h (launch speed, experimental)"
+      },
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "params.serveSpeedKmh (launch); plan.flight average",
-        "syntheticThreshold": "range coverage >= 90% (target 95%); median |midpoint error| <= 5%; A unavailable below 120 fps in 100%",
+        "syntheticTruth": "canonical['speed-experimental'] (metrics.ballSpeedAtContactKmh; alt.targetTag)",
+        "syntheticThreshold": "range coverage >= 90% (target 95%) separately on deuce and ad; median |midpoint error| <= 5%; unavailable in 100% below 120 fps, untagged or physics-fixed time base",
         "realMethod": "V3 radar (+/-1 mph class) behind the server in line with the serve; 200+ serves",
         "realThreshold": "MAE <= 5%; LoA within +/-10%; coverage >= 90% (research 05 section 11.3)"
+      }
+    },
+    {
+      "id": "speed-average-rear",
+      "name": "Average speed to the bounce (experimental)",
+      "question": "Roughly how fast was that serve over its flight?",
+      "kind": "range",
+      "unit": "km/h range",
+      "views": [
+        "rear"
+      ],
+      "quantity": "average-speed",
+      "statusDefault": "unavailable",
+      "statusWhenPrerequisitesHold": "experimental",
+      "statusTarget": "experimental",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "view:rear",
+        "fps>=60",
+        "timebase:proven",
+        "calibration:court-4pt",
+        "event:contact",
+        "bounce:located",
+        "toggle:experimental"
+      ],
+      "prerequisitesForSessionTypical": [
+        "bounce:coverage>=50%"
+      ],
+      "reasonCodes": [
+        "VIEW_NOT_SUPPORTED",
+        "NEEDS_CALIBRATION",
+        "BOUNCE_NOT_LOCATED",
+        "TIME_BASE_UNKNOWN",
+        "FPS_TOO_LOW",
+        "RANGE_TOO_WIDE",
+        "EXPERIMENTAL_HIDDEN",
+        "IMPLAUSIBLE_VALUE"
+      ],
+      "method": {
+        "name": "Contact to a bounce located in rear-view video (speedFromFlightTime, ball/speed.ts)",
+        "flightTime": "bounce time minus contact time, both from video; audio may refine each time only when an onset is within +/-2 sigma of the video time, after removing its own sound delay (bounce distance from the located bounce via the homography)",
+        "path": "chord from the contact region (server feet through the homography, contact height from the ratio x H_m when available) to the located bounce +/- 2 sigma, x arc factor 1.005-1.02",
+        "errorBudget": "about 2.6% median, 6.1% at the 90th percentile (bounce +/-0.3 m, onset 5 ms; gap: geometry 7.3)",
+        "resolution": "Ball about 4 px (1080p) to 7 px (4K) at the far service line, below the 8 px detection threshold: 4K recommended",
+        "sessionCoverageGate": "session typical unavailable (BOUNCE_NOT_LOCATED) when bounces are located on < 50% of serves that went in; per-serve ranges remain",
+        "audioOnly": "never: a bounce sound without a located bounce is refused"
+      },
+      "displayGate": {
+        "maxRelativeWidth": 0.35,
+        "roundOutwardTo": 5,
+        "reasonIfWider": "RANGE_TOO_WIDE",
+        "engineRefusesAboveHalfWidth": 0.25
+      },
+      "plausibility": {
+        "ref": "averageSpeedRearKmh"
+      },
+      "referenceNote": "Average speed reads about 20% below a radar peak (research 05 [S35]). SwingVision average first-serve speed 96-120 km/h at NTRP 3.0-5.0 (vendor claim). Never combined with speed-experimental (D1). No Did it work? verdicts.",
+      "evidenceTier": "research-backed",
+      "higherIsBetter": true,
+      "aggregation": {
+        "center": "median of per-serve midpoints",
+        "spread": null,
+        "ci": "shared relative error (2 sigma) plus random / sqrt(n)"
+      },
+      "verdictUse": "none",
+      "display": {
+        "rounding": "outward to 5 km/h",
+        "example": "about 115-125 km/h (average speed to the bounce, experimental)"
+      },
+      "heroRank": null,
+      "validation": {
+        "syntheticTruth": "canonical['speed-average-rear'] (metrics.avgSpeedContactToBouncePathKmh)",
+        "syntheticThreshold": "coverage >= 90%; median |midpoint error| <= 4%; located-bounce rate reported at 1080p and 4K; unavailable in 100% of side-view clips",
+        "realMethod": "V3 synchronised 240 fps second camera for contact and bounce times; radar logged for context",
+        "realThreshold": "coverage >= 90%; MAE <= 5%"
       }
     },
     {
@@ -890,17 +3538,43 @@
       "question": "What did my radar say?",
       "kind": "per-serve",
       "unit": "km/h",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "player-entered",
       "statusTarget": "player-entered",
-      "validationLevel": "V0",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
       "prerequisites": [],
-      "inputs": { "units": ["km/h", "mph"], "mphToKmh": 1.609, "device": ["pocket-radar", "other-radar", "other"] },
-      "referenceNote": "Pairs with speed-experimental become personal validation data.",
+      "inputs": {
+        "units": [
+          "km/h",
+          "mph"
+        ],
+        "mphToKmh": 1.609,
+        "device": [
+          "pocket-radar",
+          "other-radar",
+          "other"
+        ]
+      },
+      "referenceNote": "Pairs with speed-experimental (launch vs radar peak) become personal validation data; pairs with speed-average-rear are shown as average vs peak, not a containment check.",
       "evidenceTier": "n/a",
       "higherIsBetter": true,
-      "aggregation": { "center": "max and median", "spread": null, "ci": null },
-      "display": { "rounding": "1 km/h", "example": "You logged 142 km/h (radar)" },
+      "aggregation": {
+        "center": "max and median",
+        "spread": null,
+        "ci": null
+      },
+      "display": {
+        "rounding": "1 km/h",
+        "example": "You logged 142 km/h (radar)"
+      },
       "heroRank": null,
       "validation": {
         "syntheticTruth": "n/a",
@@ -919,11 +3593,19 @@
       "statusDefault": "unavailable",
       "statusTarget": "unavailable",
       "reasonCode": "NOT_MEASURABLE",
-      "validationLevel": "V0",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
       "prerequisites": [],
       "referenceNote": "Serve spin is about 1,000-5,000 rpm (research 05 [S43]); at 240 fps the ball turns 75-125 deg between frames; even Hawk-Eye estimates had an error SD of about 540 rpm (research 05 [S44]).",
       "evidenceTier": "research-backed",
-      "display": { "rounding": "n/a", "example": "Spin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the serve type you meant instead." },
+      "display": {
+        "rounding": "n/a",
+        "example": "Spin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the serve type you meant instead."
+      },
       "heroRank": null,
       "validation": {
         "syntheticTruth": "n/a",
@@ -938,22 +3620,103 @@
       "question": "Can I trust this session's numbers?",
       "kind": "flag",
       "unit": "good|usable|poor",
-      "displayLabels": { "good": "Good", "usable": "Fair", "poor": "Limited" },
-      "views": ["side", "rear"],
+      "displayLabels": {
+        "good": "Good",
+        "usable": "Fair",
+        "poor": "Limited"
+      },
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "measured",
       "statusTarget": "measured",
-      "validationLevel": "V0",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
       "prerequisites": [],
-      "checks": ["fps", "time-base", "frame-gaps", "subject-size", "framing", "toss-headroom", "ball-visibility", "exposure", "flicker", "blur", "stability", "level", "people", "pose", "segmentation", "scale", "audio", "view"],
-      "rules": { "good": "every serve passes (info items ignored)", "usable": "any warning and >= 70% of serves analysable", "poor": "a session-level block (view, time-base, fps) or < 50% of serves analysable" },
-      "referenceNote": "Adapted from research 06 section 14; thresholds are initial.",
+      "checks": [
+        "fps",
+        "time-base",
+        "frame-gaps",
+        "subject-size",
+        "framing",
+        "toss-headroom",
+        "ball-visibility",
+        "exposure",
+        "flicker",
+        "condition",
+        "blur",
+        "stability",
+        "level",
+        "roles",
+        "people",
+        "pose",
+        "segmentation",
+        "scale",
+        "plausibility",
+        "audio",
+        "view"
+      ],
+      "thresholds": {
+        "fps": {
+          "pass": ">= 60",
+          "warn": "30-59",
+          "block": "< 30"
+        },
+        "subjectSizePx1080": {
+          "pass": ">= 300",
+          "info": "250-299 (suggest 4K)",
+          "warn": "150-249 (pose metrics down one level)",
+          "block": "< 150"
+        },
+        "tossHeadroomLiveM": {
+          "pass": ">= 4.5",
+          "info": "4.3-4.5",
+          "blockRecording": "< 4.3",
+          "tossOffsetAllowanceM": 0.12
+        },
+        "level": {
+          "pass": "measured <= 5 deg, rectified",
+          "info": "estimated from background verticals",
+          "warn": "unknown (PITCH_UNKNOWN)",
+          "block": "> 5 deg (8 after the tilt test) or yaw > 15 deg"
+        },
+        "roles": {
+          "pass": "<= 10% ROLE_AMBIGUOUS",
+          "warn": "10-30%"
+        },
+        "plausibility": {
+          "pass": "0 hard rejects",
+          "warn": "1-2 per block",
+          "block": "> 20% of the block"
+        },
+        "audio": "off by default; info only"
+      },
+      "rules": {
+        "good": "every serve passes (info items ignored)",
+        "usable": "any warning and >= 70% of serves analysable",
+        "poor": "a session-level block (view, time-base, fps) or < 50% of serves analysable"
+      },
+      "referenceNote": "Adapted from research 06 section 14; thresholds are initial. CAPTURE section 8 owns how checks are computed live; METRICS owns the status mapping.",
       "evidenceTier": "n/a",
       "higherIsBetter": true,
-      "aggregation": { "center": "worst-case rules", "spread": null, "ci": null, "poolAcrossStrata": true },
-      "display": { "rounding": "words", "example": "Fair: toss left the frame on 3 of 12 serves" },
+      "aggregation": {
+        "center": "worst-case rules",
+        "spread": null,
+        "ci": null,
+        "poolAcrossStrata": true
+      },
+      "display": {
+        "rounding": "words",
+        "example": "Fair: toss left the frame on 3 of 12 serves"
+      },
       "heroRank": null,
       "validation": {
-        "syntheticTruth": "scenario tags",
+        "syntheticTruth": "extra truth captureQuality block and scenario tags",
         "syntheticThreshold": "each flag fires with >= 95% sensitivity in its trigger scenario; <= 5% false alarms on S0",
         "realMethod": "Flag review on V2 sessions",
         "realThreshold": "reported, no gate"
@@ -965,20 +3728,35 @@
       "question": "Did my serve drop off as I got tired?",
       "kind": "flag",
       "unit": "flag",
-      "views": ["side", "rear"],
+      "views": [
+        "side",
+        "rear"
+      ],
       "statusDefault": "estimated",
       "statusTarget": "estimated",
-      "validationLevel": "V0",
-      "prerequisites": ["n>=16", "event:contact-ball"],
-      "rule": "Theil-Sen slope of contact-height-ratio on serve order; predicted drop over the session >= 0.025 of height and one-sided 90% bootstrap bound of slope < 0. Confidence 0.6, or 0.8 if toss-height-spread in the last third >= 1.5 x the first third.",
-      "referenceNote": "After a 3-hour match, advanced players' impact height fell about 4 cm (2.65 to 2.61 m) (research 03 [S14]; research 05 [S50]).",
-      "evidenceTier": "research-backed",
-      "display": { "rounding": "words", "example": "Your contact point dropped in the last part of the session, which can be a sign of tiring. A shorter block next time?" },
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "n>=16",
+        "event:contact-ball",
+        "block:single"
+      ],
+      "rule": "Per block, never across a drill or template-block boundary. Theil-Sen slope of contact-height-ratio on serve order; predicted drop over the block >= 0.025 of height and one-sided 95% bootstrap bound of the slope < 0. Confidence 0.6, or 0.8 if toss-height-spread in the last third >= 1.5 x the first third.",
+      "referenceNote": "Context: after a 3-hour match, advanced players impact height fell about 4 cm (2.65 to 2.61 m) (research 03 [S14]; research 05 [S50]). A practice block is not a 3-hour match.",
+      "evidenceTier": "experimental",
+      "display": {
+        "rounding": "words",
+        "example": "Your contact point dropped in the last part of this block, which can be a sign of tiring. A shorter block next time?"
+      },
       "heroRank": null,
       "addedBy": "METRICS.md",
       "validation": {
         "syntheticTruth": "scenario with an injected linear contact-height decline",
-        "syntheticThreshold": "fires >= 90% when the decline >= 0.035 of height over 20 serves; <= 5% false alarms with no decline",
+        "syntheticThreshold": "fires >= 90% when the decline >= 0.035 of height over 20 serves; <= 5% false alarms with no decline; 0% across a drill boundary",
         "realMethod": "n/a in v1",
         "realThreshold": "n/a"
       }
@@ -989,20 +3767,34 @@
       "question": "Am I ramping up my serving too fast?",
       "kind": "flag",
       "unit": "flag",
-      "views": ["side", "rear"],
-      "statusDefault": "measured",
-      "statusTarget": "measured",
-      "validationLevel": "V0",
-      "prerequisites": [],
-      "rule": "Acute:chronic ratio (last 7 days / weekly mean of last 28 days) > 1.5 and >= 100 serves in the last 7 days. Counts from serve-count plus player-entered match serves.",
-      "referenceNote": "Ratio above 1.5 went with a hazard ratio of about 2.8 for new injury in adult high-performance players (research 03 [S43]); transfer to recreational players is our inference.",
-      "evidenceTier": "research-backed",
-      "display": { "rounding": "words", "example": "You've served a lot more this week than usual. Build up gradually." },
+      "views": [
+        "side",
+        "rear"
+      ],
+      "statusDefault": "estimated",
+      "statusTarget": "estimated",
+      "validationLevel": {
+        "day": "V0",
+        "overcast": "V0",
+        "night-lights": "V0",
+        "flicker": "V0"
+      },
+      "prerequisites": [
+        "history:28d-3sessions"
+      ],
+      "rule": "Uncoupled ratio: acute = serves in the last 7 days; chronic = weekly mean over days 8-35. Flag when ratio > 1.5 and acute >= 100 serves. Counts = serve-count plus player-entered match serves (match log); prompt for a match serve count in weeks with a logged comp match.",
+      "statusCopy": "based on the serves you filmed and logged",
+      "referenceNote": "Ratio above 1.5 went with a hazard ratio of about 2.8 for new injury in adult high-performance players (research 03 [S43]); the coupled ratio is contested; transfer to recreational players is our inference.",
+      "evidenceTier": "coach-recommended",
+      "display": {
+        "rounding": "words",
+        "example": "Based on the serves you filmed and logged, you've served a lot more this week than usual. Build up gradually."
+      },
       "heroRank": null,
       "addedBy": "METRICS.md",
       "validation": {
         "syntheticTruth": "n/a (arithmetic on counts)",
-        "syntheticThreshold": "unit tests",
+        "syntheticThreshold": "unit tests incl. < 28 days not computed",
         "realMethod": "n/a",
         "realThreshold": "n/a"
       }

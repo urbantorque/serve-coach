@@ -22,7 +22,8 @@ frames ──> PoseSource.estimate() ──> PoseFrame[] (raw) ──> cleanPose
 | `poseSource.ts` | `PoseSource` interface, `PoseInputFrame`, `PoseImage`, `collectPoseFrames`, `imageSize` |
 | `mediapipeSource.ts` | `MediaPipePoseSource`: worker/main-thread backends, pipelining, tracking, stats |
 | `mediapipeCore.ts` | `LandmarkerHandle`: tasks-vision creation, GPU->CPU fallback, warm-up, timestamp guard |
-| `pose.worker.ts`, `workerProtocol.ts` | Dedicated module worker and its message types |
+| `pose.worker.ts`, `workerProtocol.ts` | Dedicated module worker (started via a blob: bootstrap so the page CSP applies) and its message types |
+| `workerNetworkGuard.ts` | Same-origin `fetch` guard installed in the worker (blocks MediaPipe telemetry even without CSP) |
 | `tracking.ts` | `ServerTracker` / `trackServer`: pick and follow the server among up to 2 people; `peek()` |
 | `roi.ts` | ROI cropping (pure): crop -> frame landmark mapping, square crops, localisation tiles, `RoiController` |
 | `localise.ts` | `localisePeople`: full frame, then tiles, then a verification crop per candidate |
@@ -112,9 +113,23 @@ source.noiseEvents // every injected dropout / swap, for checking what cleaning 
 - **Score:** tasks-vision exposes no per-pose score, so `PoseFrame.score` is the mean
   visibility of the 12 core joints.
 - **Privacy:** tasks-vision 1.0.1 POSTs usage telemetry (task type, timings, no image data)
-  to `https://odml.pa.googleapis.com/v1/log`, confirmed in the smoke test. There is no
-  option to disable it. Blocking it (a CSP `connect-src 'self'`, or `--block-telemetry` in
-  the smoke runner) does not break inference; it only logs one `net::ERR_FAILED`.
+  to `https://odml.pa.googleapis.com/v1/log` with `fetch`, from the thread the landmarker runs
+  on (the worker), when a landmarker closes and every 60 s. There is no option to disable it.
+  - **A page CSP alone did not stop it.** A worker started from a same-origin URL takes its CSP
+    from its own HTTP response (none on the dev server or a static host), so with only the
+    `index.html` meta policy the worker's POST reached the network (headless Edge 154,
+    2026-09-27, `tools/validate/smoke.mjs`; the runner's router aborted it).
+  - **Fix:** `createPoseWorker()` starts `pose.worker.ts` through a one-line `blob:` module that
+    imports it. A blob: worker inherits the page's policy, so `connect-src 'self'` applies inside
+    the worker too (the page CSP needs `worker-src 'self' blob:`). Verified: an XHR to the
+    telemetry host from inside the running worker raises a `connect-src` violation and never
+    reaches the network.
+  - **Defence in depth:** `pose.worker.ts` installs `installSameOriginFetchGuard`
+    (`workerNetworkGuard.ts`), which refuses any cross-origin `fetch` in the worker and logs
+    `[privacy] pose worker: blocked a cross-origin request to ...`. It covers browsers that do not
+    pass the policy on to blob workers (WebKit / WKWebView behaviour is unverified). It compares
+    scheme and host, so `capacitor://localhost` works although its URL origin is opaque.
+  - Blocking the telemetry does not affect inference.
 
 ## Tracking the server (`tracking.ts`)
 

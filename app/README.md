@@ -15,3 +15,12 @@ free of React and DOM-only globals so it runs in Node (Vitest), Web Workers and 
 | `npm run copy:mediapipe` | Copy MediaPipe wasm into `public/mediapipe/wasm` (runs on postinstall) |
 
 Pose models live in `public/models/` (see `../docs/MODELS.md`).
+
+**Privacy.** `index.html` (and the dev-only `validation.html`) carry the app's Content-Security-Policy as the
+first `<head>` element: `connect-src 'self' blob: data:` keeps every request on the device, including
+MediaPipe's usage telemetry. Workers must be started from a `blob:` bootstrap so they inherit it (see
+`src/analysis/pose/README.md`, Privacy).
+
+**Validation.** `validation.html` (dev server only, not in the production build) runs the engine on one
+clip; `node ../tools/validate/smoke.mjs` runs it over the synthetic corpus in headless Edge and writes
+`../validation/results/smoke/SUMMARY.md`. See `src/validation/README.md`.

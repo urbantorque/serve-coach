@@ -39,6 +39,8 @@ export const GROUPS: ScenarioGroup[] = [
   { id: 'beginner', description: 'Beginner profile: high variability, little knee bend' },
   { id: 'advanced', description: 'Advanced profile: deep knee bend, jump, consistent toss, foot-up stance' },
   { id: 'session', description: 'One continuous multi-serve session clip: 8 serves, alternating sides, pauses, pre-serve ball bounces, distant distractor hits' },
+  { id: 'default75', description: 'DECISIONS D1 default set-up: portrait side view 7.5 m from the centre mark, level phone 1.4 m high, 60 fps (deuce serves 1-3)' },
+  { id: 'fence9', description: 'DECISIONS D1 alternative: landscape side view at the side fence, 9 m from the centre mark, level phone 1.6 m high, 1080p, 60 fps (deuce serves 1-3)' },
 ]
 
 type Partial2<T> = { [K in keyof T]?: T[K] extends object ? Partial<T[K]> : T[K] }
@@ -78,6 +80,32 @@ function perServe(prefix: string, groups: string[], description: string, over: P
       outputs: outputs ? outputs(k) : [{ id: `${prefix}-s${k + 1}`, tags: [...groups], crf: BASE_CRF }],
     }),
   )
+}
+
+/**
+ * The DECISIONS D1 (revised 2026-09-27) set-ups: camera on the hitting-arm (chest) side on the
+ * baseline extension, measured from the centre mark, level phone, 60 fps. Only the three deuce
+ * serves (T, wide, body), where the right-hander stands nearer the camera than the centre mark.
+ */
+function d1SetupJobs(): Scenario[] {
+  const deuce = [0, 1, 2]
+  const mk = (prefix: string, groups: string[], description: string, over: Partial2<Scenario>): Scenario[] =>
+    deuce.map((k) =>
+      baseScenario(`${prefix}-s${k + 1}`, `${description} (serve ${k + 1} of ${SERVE_COUNT})`, {
+        ...over,
+        serves: { pick: k },
+        outputs: [{ id: `${prefix}-s${k + 1}`, tags: [...groups], crf: BASE_CRF }],
+      }),
+    )
+  return [
+    ...mk('default75', ['default75', 'view-side', 'fps-60', 'level-camera', 'anchor-centre-mark'], 'D1 default: portrait side view 7.5 m from the centre mark, level phone 1.4 m high', {
+      camera: { view: 'side', distanceM: 7.5, heightM: 1.4, lookAtHeightM: 1.4, anchor: 'centre-mark' },
+    }),
+    ...mk('fence9', ['fence9', 'view-side', 'fps-60', 'landscape', 'level-camera', 'anchor-centre-mark'], 'D1 alternative: landscape side view at the fence, 9 m from the centre mark, level phone 1.6 m high', {
+      video: { orientation: 'landscape' },
+      camera: { view: 'side', distanceM: 9, heightM: 1.6, lookAtHeightM: 1.6, anchor: 'centre-mark' },
+    }),
+  ]
 }
 
 function baselineJobs(): Scenario[] {
@@ -145,6 +173,7 @@ export function corpus(): Scenario[] {
       outputs: [{ id: 'session', tags: ['session', 'multi-serve'], crf: BASE_CRF }],
     }),
   )
+  jobs.push(...d1SetupJobs())
   return jobs
 }
 

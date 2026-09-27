@@ -1,6 +1,6 @@
 {
  "format": "serve-synth-manifest/1",
- "updatedAt": "2026-09-26T20:13:09.696Z",
+ "updatedAt": "2026-09-26T21:59:42.058Z",
  "note": "Synthetic serve clips with exact ground truth (tools/synth). Paths are relative to this file. groups = scenario ids usable with `--scenario`.",
  "groups": [
   {
@@ -62,6 +62,14 @@
   {
    "id": "session",
    "description": "One continuous multi-serve session clip: 8 serves, alternating sides, pauses, pre-serve ball bounces, distant distractor hits"
+  },
+  {
+   "id": "default75",
+   "description": "DECISIONS D1 default set-up: portrait side view 7.5 m from the centre mark, level phone 1.4 m high, 60 fps (deuce serves 1-3)"
+  },
+  {
+   "id": "fence9",
+   "description": "DECISIONS D1 alternative: landscape side view at the side fence, 9 m from the centre mark, level phone 1.6 m high, 1080p, 60 fps (deuce serves 1-3)"
   }
  ],
  "clips": [
@@ -2078,6 +2086,192 @@
    "generatedAt": "2026-09-26T19:47:48.942Z"
   },
   {
+   "id": "default75-s1",
+   "job": "default75-s1",
+   "groups": [
+    "default75"
+   ],
+   "tags": [
+    "default75",
+    "view-side",
+    "fps-60",
+    "level-camera",
+    "anchor-centre-mark"
+   ],
+   "description": "D1 default: portrait side view 7.5 m from the centre mark, level phone 1.4 m high (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/default75-s1/default75-s1.mp4",
+    "truth": "clips/default75-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1344807,
+    "truth": 890603
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 7.5,
+    "heightM": 1.4,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false,
+    "anchor": "centre-mark",
+    "lookAtHeightM": 1.4
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T21:58:21.368Z"
+  },
+  {
+   "id": "default75-s2",
+   "job": "default75-s2",
+   "groups": [
+    "default75"
+   ],
+   "tags": [
+    "default75",
+    "view-side",
+    "fps-60",
+    "level-camera",
+    "anchor-centre-mark"
+   ],
+   "description": "D1 default: portrait side view 7.5 m from the centre mark, level phone 1.4 m high (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/default75-s2/default75-s2.mp4",
+    "truth": "clips/default75-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1335696,
+    "truth": 866373
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 7.5,
+    "heightM": 1.4,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false,
+    "anchor": "centre-mark",
+    "lookAtHeightM": 1.4
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T21:58:21.724Z"
+  },
+  {
+   "id": "default75-s3",
+   "job": "default75-s3",
+   "groups": [
+    "default75"
+   ],
+   "tags": [
+    "default75",
+    "view-side",
+    "fps-60",
+    "level-camera",
+    "anchor-centre-mark"
+   ],
+   "description": "D1 default: portrait side view 7.5 m from the centre mark, level phone 1.4 m high (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/default75-s3/default75-s3.mp4",
+    "truth": "clips/default75-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1338364,
+    "truth": 854237
+   },
+   "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 7.5,
+    "heightM": 1.4,
+    "orientation": "portrait",
+    "focal35mmEquivMm": 26,
+    "shake": false,
+    "anchor": "centre-mark",
+    "lookAtHeightM": 1.4
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T21:59:01.628Z"
+  },
+  {
    "id": "dist4-s1",
    "job": "dist4-s1",
    "groups": [
@@ -3216,6 +3410,195 @@
     ]
    },
    "generatedAt": "2026-09-26T19:56:22.253Z"
+  },
+  {
+   "id": "fence9-s1",
+   "job": "fence9-s1",
+   "groups": [
+    "fence9"
+   ],
+   "tags": [
+    "fence9",
+    "view-side",
+    "fps-60",
+    "landscape",
+    "level-camera",
+    "anchor-centre-mark"
+   ],
+   "description": "D1 alternative: landscape side view at the fence, 9 m from the centre mark, level phone 1.6 m high (serve 1 of 5)",
+   "files": {
+    "mp4": "clips/fence9-s1/fence9-s1.mp4",
+    "truth": "clips/fence9-s1/truth.json"
+   },
+   "bytes": {
+    "mp4": 1168477,
+    "truth": 890589
+   },
+   "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 290,
+    "durationMediaS": 4.833333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 9,
+    "heightM": 1.6,
+    "orientation": "landscape",
+    "focal35mmEquivMm": 26,
+    "shake": false,
+    "anchor": "centre-mark",
+    "lookAtHeightM": 1.6
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T21:59:01.944Z"
+  },
+  {
+   "id": "fence9-s2",
+   "job": "fence9-s2",
+   "groups": [
+    "fence9"
+   ],
+   "tags": [
+    "fence9",
+    "view-side",
+    "fps-60",
+    "landscape",
+    "level-camera",
+    "anchor-centre-mark"
+   ],
+   "description": "D1 alternative: landscape side view at the fence, 9 m from the centre mark, level phone 1.6 m high (serve 2 of 5)",
+   "files": {
+    "mp4": "clips/fence9-s2/fence9-s2.mp4",
+    "truth": "clips/fence9-s2/truth.json"
+   },
+   "bytes": {
+    "mp4": 1160762,
+    "truth": 866431
+   },
+   "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 282,
+    "durationMediaS": 4.7,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 9,
+    "heightM": 1.6,
+    "orientation": "landscape",
+    "focal35mmEquivMm": 26,
+    "shake": false,
+    "anchor": "centre-mark",
+    "lookAtHeightM": 1.6
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T21:59:42.036Z"
+  },
+  {
+   "id": "fence9-s3",
+   "job": "fence9-s3",
+   "groups": [
+    "fence9"
+   ],
+   "tags": [
+    "fence9",
+    "view-side",
+    "fps-60",
+    "landscape",
+    "level-camera",
+    "anchor-centre-mark"
+   ],
+   "description": "D1 alternative: landscape side view at the fence, 9 m from the centre mark, level phone 1.6 m high (serve 3 of 5)",
+   "files": {
+    "mp4": "clips/fence9-s3/fence9-s3.mp4",
+    "truth": "clips/fence9-s3/truth.json"
+   },
+   "bytes": {
+    "mp4": 1153489,
+    "truth": 854155
+   },
+   "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "captureFps": 60,
+    "timeScale": 1,
+    "frameCount": 278,
+    "durationMediaS": 4.633333,
+    "crf": 20
+   },
+   "camera": {
+    "view": "side",
+    "distanceM": 9,
+    "heightM": 1.6,
+    "orientation": "landscape",
+    "focal35mmEquivMm": 26,
+    "shake": false,
+    "anchor": "centre-mark",
+    "lookAtHeightM": 1.6
+   },
+   "lighting": "bright",
+   "player": {
+    "profile": "intermediate",
+    "heightM": 1.8,
+    "handedness": "right"
+   },
+   "serves": 1,
+   "flags": {
+    "tossApexInFrame": [
+     true
+    ],
+    "contactInFrame": [
+     true
+    ],
+    "bounceInFrame": [
+     false
+    ]
+   },
+   "generatedAt": "2026-09-26T21:59:41.882Z"
   },
   {
    "id": "fps30-s1",

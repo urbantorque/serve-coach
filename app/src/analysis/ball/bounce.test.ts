@@ -5,6 +5,7 @@ import { median, percentile } from './fit.ts'
 import { computeHomography, COURT_KEYPOINTS } from './homography.ts'
 import { createRng, gaussian, type Rng } from './random.ts'
 import { BALL_RADIUS_M } from './scale.ts'
+import { speedFromFlightTime } from './speed.ts'
 import { candidatesFromTruth, frameTimes, integrateFlight, project, type Camera, type Vec3 } from './testing/synthTrajectories.ts'
 import { trackBall } from './tracker.ts'
 
@@ -131,6 +132,64 @@ describe('detectBounce + court placement (EXPERIMENTAL, rear view)', () => {
       expect(median(placeErr)).toBeLessThan(fps >= 120 ? 0.35 : 0.6)
     })
   }
+
+  it('average speed from contact to the located bounce covers the truth (speed-average-rear)', { timeout: 60_000 }, () => {
+    const rng = createRng(4242)
+    let covered = 0
+    let found = 0
+    const widths: number[] = []
+    const trials = 20
+    for (let trial = 0; trial < trials; trial++) {
+      const truth = simulateServe(rng, 60)
+      const bounce = detectBounce(observe(truth, rng))
+      if (bounce.status !== 'experimental') continue
+      const calibration = calibrate(rng)
+      const placed = mapBounceToCourt(bounce, calibration.H, camera.aspect, calibration.rmsError)
+      if (placed.status !== 'experimental') continue
+      // Contact time from the ball tracks carries ~2 ms of error.
+      const contactT = 0.002 * gaussian(rng)
+      const est = speedFromFlightTime({
+        cameraView: 'rear',
+        contactTReal: contactT,
+        contactSigmaS: 0.003,
+        servedFrom: 'deuce',
+        bounce: { tReal: bounce.tReal, uncertaintyS: bounce.uncertaintyS, court: placed.court, sigmaXM: placed.sigmaXM, sigmaYM: placed.sigmaYM },
+      })
+      if (est.status !== 'experimental') continue
+      found++
+      let path = 0
+      for (let t = 0.0005, prev = truth.positionAt(0); t <= truth.bounceTime; t += 0.0005) {
+        const p = truth.positionAt(t)
+        path += Math.hypot(p.x - prev.x, p.y - prev.y, p.z - prev.z)
+        prev = p
+      }
+      const avgKmh = (path / truth.bounceTime) * 3.6
+      if (est.lowKmh <= avgKmh && est.highKmh >= avgKmh) covered++
+      widths.push(est.highKmh / est.lowKmh)
+    }
+    console.info(`[ball-accuracy] rear average speed from located bounce, 60 fps: ${covered}/${found} ranges cover the truth (${trials} serves), high/low median ${median(widths).toFixed(2)}`)
+    expect(found).toBeGreaterThanOrEqual(trials - 3)
+    expect(covered).toBeGreaterThanOrEqual(Math.floor(0.95 * found))
+  })
+
+  it('refuses a located bounce that maps off the court', () => {
+    const calibration = calibrate(createRng(3))
+    const farPoint = project(camera, { x: 0.5, y: 0, z: 110 })
+    const bounce = {
+      status: 'experimental' as const,
+      tReal: 1,
+      frameIndex: 1,
+      x: farPoint.x,
+      y: farPoint.y,
+      groundContact: { x: farPoint.x, y: farPoint.y },
+      uncertaintyS: 0.002,
+      positionSigmaNorm: 0.001,
+      confidence: 0.5,
+      method: 'image-vy-sign-change' as const,
+    }
+    const placed = mapBounceToCourt(bounce, calibration.H, camera.aspect, calibration.rmsError)
+    expect(placed.status === 'unavailable' && placed.reason).toMatch(/off the court/)
+  })
 
   it('refuses when the track shows no bounce', () => {
     const rng = createRng(9)

@@ -1,0 +1,112 @@
+/* Dev-only validation harness page. Plain tokens from DESIGN.md (Day / Night), no framework. */
+:root {
+  --bg: #f1f3ef;
+  --surface: #fafbf8;
+  --ink: #121714;
+  --ink-2: #3c453f;
+  --line: #d3d9d1;
+  --good: #0072b2;
+  --bad: #d55e00;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0f0d;
+    --surface: #141916;
+    --ink: #ebefe9;
+    --ink-2: #b5beb6;
+    --line: #29312c;
+    --good: #3d9de0;
+    --bad: #db6b2e;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  touch-action: manipulation;
+}
+
+#harness {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.375rem;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.status {
+  margin: 0 0 16px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.status[data-state='done'] {
+  color: var(--good);
+}
+
+.status[data-state='failed'] {
+  color: var(--bad);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary dt {
+  color: var(--ink-2);
+}
+
+.summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.clips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  columns: 2 18rem;
+}
+
+.clips li {
+  break-inside: avoid;
+  padding: 4px 0;
+  color: var(--ink-2);
+}
+
+.clips a {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.clips a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary dd {
+    margin-bottom: 6px;
+  }
+}

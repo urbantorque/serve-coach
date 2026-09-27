@@ -65,10 +65,28 @@ export interface TrackerOptions {
   leadInMaxS?: number
   /** Minimum image speed of an outgoing ball (frame heights per second). */
   minOutgoingSpeedNormPerS?: number
+  /**
+   * Side view: largest angle between the outgoing seed line and the image horizontal (deg).
+   * A serve launches within about 15 deg of horizontal; limb and racket seams swing steeply.
+   * Undefined (rear view) = no constraint.
+   */
+  outgoingMaxElevationDeg?: number
   outgoingSeedWindowS?: number
   outgoingMaxDurationS?: number
   /** Timing error tolerated in contactTReal (s; at least 3 frame periods): the outgoing path may meet the toss anywhere within it. */
   contactSlackS?: number
+  /**
+   * A toss rises: detections before the apex must climb at least this many ball radii to it
+   * (6 radii is about 0.2 m; real tosses rise 0.5-1.5 m). Rejects the ball lowered in the hand
+   * at the start of the motion, which fits the falling half of a parabola.
+   */
+  minRiseRadii?: number
+  /**
+   * Allowed vertical image accelerations (frame heights per timestamp-second^2), when the scale
+   * is known: gravity at each time scale the timestamps may have, with model margins (see
+   * analyseBall). A toss outside every band is rejected.
+   */
+  accelerationBandsNorm?: [number, number][]
 }
 
 export interface TossTrackResult {
@@ -133,7 +151,7 @@ interface Context {
 const DEFAULTS = {
   maxTossDurationS: 3,
   stationaryOccupancy: 0.6,
-  tossSearchRounds: 3,
+  tossSearchRounds: 6,
   ransacIterations: 1500,
   seed: 1,
   maxGapFrames: 4,
@@ -144,6 +162,7 @@ const DEFAULTS = {
   outgoingSeedWindowS: 0.1,
   outgoingMaxDurationS: 1.5,
   contactSlackS: 0.03,
+  minRiseRadii: 6,
 }
 
 type Options = TrackerOptions & typeof DEFAULTS
@@ -558,6 +577,13 @@ function acceptToss(ctx: Context, hypothesis: TossModel, allowed: (c: Flat) => b
   const { yFit, xFit, inliers } = refined
   const yValues = inliers.map((c) => c.y)
   if (Math.max(...yValues) - Math.min(...yValues) < 3 * ctx.radius) return null
+  // Physical plausibility: a real toss climbs to its apex, and falls at g (when known).
+  const apexTime = yFit.t0 - yFit.coeffs[1] / (2 * yFit.coeffs[2])
+  const apexY = evalPoly(yFit, apexTime)
+  const beforeApex = inliers.filter((c) => c.t < apexTime).map((c) => c.y)
+  if (!beforeApex.length || Math.max(...beforeApex) - apexY < opts.minRiseRadii * ctx.radius) return null
+  const acceleration = 2 * yFit.coeffs[2]
+  if (opts.accelerationBandsNorm && !opts.accelerationBandsNorm.some(([lo, hi]) => acceleration >= lo && acceleration <= hi)) return null
 
   const leadIn = followLeadIn(ctx, inliers[0], refined, opts, new Set(inliers))
   const first = inliers[0]
@@ -702,6 +728,7 @@ function findOutgoing(ctx: Context, toss: TossTrackResult | null, opts: Options)
       const v = { xh: (b.xh - a.xh) / (b.t - a.t), y: (b.y - a.y) / (b.t - a.t) }
       const speed = Math.hypot(v.xh, v.y)
       if (speed < opts.minOutgoingSpeedNormPerS) continue
+      if (opts.outgoingMaxElevationDeg !== undefined && (Math.atan2(Math.abs(v.y), Math.abs(v.xh)) * 180) / Math.PI > opts.outgoingMaxElevationDeg) continue
       const line: LineHypothesis = { p0: { xh: a.xh, y: a.y }, v, t0: a.t }
       // The line must come back to the contact reference, before its own first point.
       const met = meet(line)

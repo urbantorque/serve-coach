@@ -1,0 +1,3539 @@
+{
+ "format": "serve-synth-truth-extra/1",
+ "clipId": "session",
+ "job": "session",
+ "truthFile": "truth.json",
+ "generator": {
+  "name": "serve-synth",
+  "version": "0.1.0",
+  "script": "tools/synth/src/augmentTruth.ts",
+  "generatedAt": "2026-09-26T22:11:40.489Z"
+ },
+ "view": "side",
+ "playerHeightM": 1.8,
+ "handedness": "right",
+ "derivation": {
+  "atFrames": "stored frames[].world / frames[].landmarks at this clip's frame times (nearest frame to each instant)",
+  "continuous": "kinematic model rebuilt from scenario job \"session\", sampled every 0.5 ms with exact event instants",
+  "continuousSkipped": null,
+  "rebuildMaxDeviationMm": 0.0526,
+  "canonicalPrefers": "continuous when present, else atFrames"
+ },
+ "conventions": {
+  "frontShoulder": "tossing side (left for a right-hander); hitting shoulder = the other",
+  "hipMid": "midpoint of the LEFT_HIP and RIGHT_HIP landmarks (hip joint centres); heights are court z",
+  "trophy": "kinematic trophy position = truth.json events.trophy (midpoint of the hold); hipLowest = lowest mid-hip in [tossRelease, contact - 0.08 s], the METRICS.md 2.4.4 trophy detector and the leg-drive lowest point",
+  "deg2D": "image-plane angle in this clip's camera (pixels, isotropic)",
+  "deg2DLevel": "the same camera rotated level about its centre (pitch and roll removed; METRICS.md 1.1 level correction)",
+  "deg3D": "elevation above the horizontal plane (court z up)"
+ },
+ "serves": [
+  {
+   "index": 0,
+   "courtSide": "deuce",
+   "direction": "T",
+   "style": "flat",
+   "outcome": "wide",
+   "flightTimeS": 0.516417,
+   "canonical": {
+    "toss-apex-height": {
+     "value": 1.73556,
+     "alt": {
+      "m": 3.124
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-forward": {
+     "value": 0.3079,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-drop": {
+     "value": 0.4413,
+     "alt": {
+      "timeS": 0.299961
+     },
+     "source": "truth",
+     "unit": "m (s in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-height-ratio": {
+     "value": 1.4904,
+     "alt": {
+      "m": 2.6827
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-forward": {
+     "value": 0.3638,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "rhythm-release-to-contact": {
+     "value": 0.8366,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "trophy-pause": {
+     "value": 0.1286,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "leg-drive": {
+     "value": 14.957,
+     "alt": {
+      "m": 0.2692
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "drive-time": {
+     "value": 0.489667,
+     "source": "continuous",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "loading-depth": {
+     "value": 1.666,
+     "alt": {
+      "m": 0.03
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "deep-bend-flag": {
+     "value": false,
+     "alt": {
+      "frontKneeAtTrophy3DDeg": 41.594,
+      "frontKneeLoadingMax3DDeg": 41.594,
+      "truthJsonMaxFrontKneeFlexion3DDeg": 41.594,
+      "generatingMaxKneeFlexionDeg": 41.594
+     },
+     "source": "continuous",
+     "unit": "boolean",
+     "availability": {
+      "supported": true
+     }
+    },
+    "shoulder-tilt-trophy": {
+     "value": 16.83,
+     "alt": {
+      "deg2D": 18.754,
+      "deg2DLevel": 18.777,
+      "atTReal": 4.150143,
+      "atHipLowest3D": 16.822,
+      "atHipLowest2DLevel": 18.775,
+      "sideBend2DLevel": 18.676
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "knee-bend-band": {
+     "value": "moderate",
+     "alt": {
+      "backKneeAtTrophy3DDeg": 33.695,
+      "backKneeAtTrophy2DDeg": 6.543,
+      "backKneeAtTrophy2DLevelDeg": 6.619,
+      "bandMetricsMdEdges": "typical",
+      "frontKneeAtTrophy3DDeg": 41.594,
+      "frontKneeBand": "moderate",
+      "backKneeLoadingMax3DDeg": 39.422
+     },
+     "source": "continuous",
+     "unit": "little | moderate | deep",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "shoulder-over-shoulder-contact": {
+     "value": 8.88,
+     "alt": {
+      "deg2D": 24.861,
+      "deg2DLevel": 24.915
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "landing-distance": {
+     "value": 0.4477,
+     "alt": {
+      "fromBaselineM": 0.3732
+     },
+     "source": "continuous",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "placement-zone": {
+     "value": "T",
+     "alt": {
+      "actual": null,
+      "bounceXM": 17.8456,
+      "bounceYM": -0.2796
+     },
+     "source": "truth",
+     "unit": "T | body | wide",
+     "availability": {
+      "supported": true
+     }
+    },
+    "serve-type-mix": {
+     "value": "flat",
+     "source": "truth",
+     "unit": "flat | slice | kick",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "speed-experimental": {
+     "value": 148.15,
+     "alt": {
+      "peakKmh": 148.15,
+      "targetTag": "T"
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "FPS_TOO_LOW"
+     }
+    },
+    "speed-average-rear": {
+     "value": 123.97,
+     "alt": {
+      "chordKmh": 123.77,
+      "flightTimeS": 0.516417
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "speed-radar-entered": {
+     "value": null,
+     "alt": {
+      "radarEquivalentKmh": 148.15
+     },
+     "source": "not simulated",
+     "unit": "km/h",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "spin": {
+     "value": null,
+     "alt": {
+      "generatingSpinRpm": 900
+     },
+     "source": "always unavailable",
+     "unit": "rpm",
+     "availability": {
+      "supported": false,
+      "reason": "NOT_MEASURABLE"
+     }
+    }
+   },
+   "continuous": {
+    "events": {
+     "hipLowest": {
+      "tReal": 4.079677,
+      "frameIndex": 245,
+      "frame": 244.7806,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8918,
+     "heightAtReleaseM": 0.9218,
+     "heightAtContactM": 1.161,
+     "hipRiseM": 0.2692,
+     "hipRisePctHeight": 14.957,
+     "driveTimeS": 0.489667,
+     "loadingDepthM": 0.03,
+     "loadingDepthPctHeight": 1.666,
+     "peakUpwardHipSpeedMs": 1.482,
+     "peakUpwardHipSpeedTReal": 4.417741
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 4.150143,
+     "deg3D": 16.83,
+     "deg2D": 18.754,
+     "deg2DLevel": 18.777
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 4.079677,
+     "deg3D": 16.822,
+     "deg2D": 18.751,
+     "deg2DLevel": 18.775
+    },
+    "trophySideBend": {
+     "atTReal": 4.150143,
+     "deg3D": 16.83,
+     "deg2D": 18.652,
+     "deg2DLevel": 18.676
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 4.569344,
+     "deg3D": 8.88,
+     "deg2D": 24.861,
+     "deg2DLevel": 24.915
+    },
+    "knees": {
+     "atTReal": 4.150143,
+     "front": {
+      "deg3D": 41.594,
+      "deg2D": 34.703,
+      "deg2DLevel": 35.032
+     },
+     "back": {
+      "deg3D": 33.695,
+      "deg2D": 6.543,
+      "deg2DLevel": 6.619
+     },
+     "atHipLowest": {
+      "atTReal": 4.079677,
+      "front": {
+       "deg3D": 41.585,
+       "deg2D": 34.663,
+       "deg2DLevel": 34.99
+      },
+      "back": {
+       "deg3D": 34.779,
+       "deg2D": 6.764,
+       "deg2DLevel": 6.843
+      }
+     },
+     "loadingMaxFront3DDeg": 41.594,
+     "loadingMaxBack3DDeg": 39.422
+    },
+    "landing": {
+     "landingToeXM": 0.3732,
+     "startToeXM": -0.0744,
+     "fromStartToeM": 0.4477
+    },
+    "hipLowestMinusTrophyStartS": -0.006165,
+    "hipLowestMinusTrophyEndS": -0.134767
+   },
+   "atFrames": {
+    "events": {
+     "hipLowest": {
+      "tReal": 4.083333,
+      "frameIndex": 245,
+      "frame": 245,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8918,
+     "heightAtReleaseM": 0.9217,
+     "heightAtContactM": 1.161,
+     "hipRiseM": 0.2692,
+     "hipRisePctHeight": 14.956,
+     "driveTimeS": 0.483334,
+     "loadingDepthM": 0.0299,
+     "loadingDepthPctHeight": 1.661,
+     "peakUpwardHipSpeedMs": 1.419,
+     "peakUpwardHipSpeedTReal": 4.416667
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 4.15,
+     "deg3D": 16.819,
+     "deg2D": 18.755,
+     "deg2DLevel": 18.767
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 4.083333,
+     "deg3D": 16.832,
+     "deg2D": 18.763,
+     "deg2DLevel": 18.786
+    },
+    "trophySideBend": {
+     "atTReal": 4.15,
+     "deg3D": 16.819,
+     "deg2D": 18.658,
+     "deg2DLevel": 18.665
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 4.566667,
+     "deg3D": 8.884,
+     "deg2D": 24.151,
+     "deg2DLevel": 24.233
+    },
+    "knees": {
+     "atTReal": 4.15,
+     "front": {
+      "deg3D": 41.594,
+      "deg2D": 34.7,
+      "deg2DLevel": 35.032
+     },
+     "back": {
+      "deg3D": 33.707,
+      "deg2D": 6.547,
+      "deg2DLevel": 6.613
+     },
+     "atHipLowest": {
+      "atTReal": 4.083333,
+      "front": {
+       "deg3D": 41.587,
+       "deg2D": 34.667,
+       "deg2DLevel": 34.996
+      },
+      "back": {
+       "deg3D": 34.744,
+       "deg2D": 6.753,
+       "deg2DLevel": 6.827
+      }
+     },
+     "loadingMaxFront3DDeg": 41.613,
+     "loadingMaxBack3DDeg": 39.417
+    },
+    "landing": {
+     "landingToeXM": 0.3719,
+     "startToeXM": -0.0744,
+     "fromStartToeM": 0.4463
+    },
+    "hipLowestMinusTrophyStartS": -0.002509,
+    "hipLowestMinusTrophyEndS": -0.131111
+   }
+  },
+  {
+   "index": 1,
+   "courtSide": "ad",
+   "direction": "wide",
+   "style": "flat",
+   "outcome": "in",
+   "flightTimeS": 0.506236,
+   "canonical": {
+    "toss-apex-height": {
+     "value": 1.7705,
+     "alt": {
+      "m": 3.1869
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-forward": {
+     "value": 0.2818,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-drop": {
+     "value": 0.5118,
+     "alt": {
+      "timeS": 0.323029
+     },
+     "source": "truth",
+     "unit": "m (s in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-height-ratio": {
+     "value": 1.4862,
+     "alt": {
+      "m": 2.6751
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-forward": {
+     "value": 0.3398,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "rhythm-release-to-contact": {
+     "value": 0.8798,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "trophy-pause": {
+     "value": 0.0841,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "leg-drive": {
+     "value": 12.662,
+     "alt": {
+      "m": 0.2279
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "drive-time": {
+     "value": 0.415222,
+     "source": "continuous",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "loading-depth": {
+     "value": 2.087,
+     "alt": {
+      "m": 0.0376
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "deep-bend-flag": {
+     "value": true,
+     "alt": {
+      "frontKneeAtTrophy3DDeg": 45.58,
+      "frontKneeLoadingMax3DDeg": 45.58,
+      "truthJsonMaxFrontKneeFlexion3DDeg": 45.58,
+      "generatingMaxKneeFlexionDeg": 45.58
+     },
+     "source": "continuous",
+     "unit": "boolean",
+     "availability": {
+      "supported": true
+     }
+    },
+    "shoulder-tilt-trophy": {
+     "value": 16.83,
+     "alt": {
+      "deg2D": 18.56,
+      "deg2DLevel": 18.571,
+      "atTReal": 13.664996,
+      "atHipLowest3D": 16.821,
+      "atHipLowest2DLevel": 18.565,
+      "sideBend2DLevel": 18.482
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "knee-bend-band": {
+     "value": "moderate",
+     "alt": {
+      "backKneeAtTrophy3DDeg": 39.067,
+      "backKneeAtTrophy2DDeg": 7.149,
+      "backKneeAtTrophy2DLevelDeg": 7.221,
+      "bandMetricsMdEdges": "typical",
+      "frontKneeAtTrophy3DDeg": 45.58,
+      "frontKneeBand": "deep",
+      "backKneeLoadingMax3DDeg": 40.041
+     },
+     "source": "continuous",
+     "unit": "little | moderate | deep",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "shoulder-over-shoulder-contact": {
+     "value": 9.967,
+     "alt": {
+      "deg2D": 25.952,
+      "deg2DLevel": 25.988
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "landing-distance": {
+     "value": 0.354,
+     "alt": {
+      "fromBaselineM": 0.3116
+     },
+     "source": "continuous",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "placement-zone": {
+     "value": "wide",
+     "alt": {
+      "actual": "wide",
+      "bounceXM": 16.8159,
+      "bounceYM": -3.5641
+     },
+     "source": "truth",
+     "unit": "T | body | wide",
+     "availability": {
+      "supported": true
+     }
+    },
+    "serve-type-mix": {
+     "value": "flat",
+     "source": "truth",
+     "unit": "flat | slice | kick",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "speed-experimental": {
+     "value": 146.71,
+     "alt": {
+      "peakKmh": 146.71,
+      "targetTag": "wide"
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "FPS_TOO_LOW"
+     }
+    },
+    "speed-average-rear": {
+     "value": 123.36,
+     "alt": {
+      "chordKmh": 123.17,
+      "flightTimeS": 0.506236
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "speed-radar-entered": {
+     "value": null,
+     "alt": {
+      "radarEquivalentKmh": 146.71
+     },
+     "source": "not simulated",
+     "unit": "km/h",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "spin": {
+     "value": null,
+     "alt": {
+      "generatingSpinRpm": 900
+     },
+     "source": "always unavailable",
+     "unit": "rpm",
+     "availability": {
+      "supported": false,
+      "reason": "NOT_MEASURABLE"
+     }
+    }
+   },
+   "continuous": {
+    "events": {
+     "hipLowest": {
+      "tReal": 13.613851,
+      "frameIndex": 817,
+      "frame": 816.831,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.881,
+     "heightAtReleaseM": 0.9185,
+     "heightAtContactM": 1.1089,
+     "hipRiseM": 0.2279,
+     "hipRisePctHeight": 12.662,
+     "driveTimeS": 0.415222,
+     "loadingDepthM": 0.0376,
+     "loadingDepthPctHeight": 2.087,
+     "peakUpwardHipSpeedMs": 1.111,
+     "peakUpwardHipSpeedTReal": 13.890759
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 13.664996,
+     "deg3D": 16.83,
+     "deg2D": 18.56,
+     "deg2DLevel": 18.571
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 13.613851,
+     "deg3D": 16.821,
+     "deg2D": 18.555,
+     "deg2DLevel": 18.565
+    },
+    "trophySideBend": {
+     "atTReal": 13.664996,
+     "deg3D": 16.83,
+     "deg2D": 18.472,
+     "deg2DLevel": 18.482
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 14.029073,
+     "deg3D": 9.967,
+     "deg2D": 25.952,
+     "deg2DLevel": 25.988
+    },
+    "knees": {
+     "atTReal": 13.664996,
+     "front": {
+      "deg3D": 45.58,
+      "deg2D": 40.225,
+      "deg2DLevel": 40.554
+     },
+     "back": {
+      "deg3D": 39.067,
+      "deg2D": 7.149,
+      "deg2DLevel": 7.221
+     },
+     "atHipLowest": {
+      "atTReal": 13.613851,
+      "front": {
+       "deg3D": 45.568,
+       "deg2D": 40.188,
+       "deg2DLevel": 40.515
+      },
+      "back": {
+       "deg3D": 39.948,
+       "deg2D": 7.304,
+       "deg2DLevel": 7.378
+      }
+     },
+     "loadingMaxFront3DDeg": 45.58,
+     "loadingMaxBack3DDeg": 40.041
+    },
+    "landing": {
+     "landingToeXM": 0.3116,
+     "startToeXM": -0.0425,
+     "fromStartToeM": 0.354
+    },
+    "hipLowestMinusTrophyStartS": -0.009113,
+    "hipLowestMinusTrophyEndS": -0.093178
+   },
+   "atFrames": {
+    "events": {
+     "hipLowest": {
+      "tReal": 13.616667,
+      "frameIndex": 817,
+      "frame": 817,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.881,
+     "heightAtReleaseM": 0.9185,
+     "heightAtContactM": 1.1088,
+     "hipRiseM": 0.2278,
+     "hipRisePctHeight": 12.656,
+     "driveTimeS": 0.416666,
+     "loadingDepthM": 0.0375,
+     "loadingDepthPctHeight": 2.083,
+     "peakUpwardHipSpeedMs": 1.107,
+     "peakUpwardHipSpeedTReal": 13.883333
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 13.666667,
+     "deg3D": 16.83,
+     "deg2D": 18.564,
+     "deg2DLevel": 18.572
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 13.616667,
+     "deg3D": 16.832,
+     "deg2D": 18.569,
+     "deg2DLevel": 18.578
+    },
+    "trophySideBend": {
+     "atTReal": 13.666667,
+     "deg3D": 16.83,
+     "deg2D": 18.449,
+     "deg2DLevel": 18.484
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 14.033333,
+     "deg3D": 9.92,
+     "deg2D": 27.277,
+     "deg2DLevel": 27.312
+    },
+    "knees": {
+     "atTReal": 13.666667,
+     "front": {
+      "deg3D": 45.587,
+      "deg2D": 40.22,
+      "deg2DLevel": 40.563
+     },
+     "back": {
+      "deg3D": 39.011,
+      "deg2D": 7.138,
+      "deg2DLevel": 7.21
+     },
+     "atHipLowest": {
+      "atTReal": 13.616667,
+      "front": {
+       "deg3D": 45.568,
+       "deg2D": 40.189,
+       "deg2DLevel": 40.517
+      },
+      "back": {
+       "deg3D": 39.921,
+       "deg2D": 7.302,
+       "deg2DLevel": 7.37
+      }
+     },
+     "loadingMaxFront3DDeg": 45.592,
+     "loadingMaxBack3DDeg": 40.036
+    },
+    "landing": {
+     "landingToeXM": 0.3111,
+     "startToeXM": -0.0425,
+     "fromStartToeM": 0.3536
+    },
+    "hipLowestMinusTrophyStartS": -0.006297,
+    "hipLowestMinusTrophyEndS": -0.090362
+   }
+  },
+  {
+   "index": 2,
+   "courtSide": "deuce",
+   "direction": "body",
+   "style": "flat",
+   "outcome": "in",
+   "flightTimeS": 0.431406,
+   "canonical": {
+    "toss-apex-height": {
+     "value": 1.8265,
+     "alt": {
+      "m": 3.2877
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-forward": {
+     "value": 0.4999,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-drop": {
+     "value": 0.6221,
+     "alt": {
+      "timeS": 0.356136
+     },
+     "source": "truth",
+     "unit": "m (s in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-height-ratio": {
+     "value": 1.4809,
+     "alt": {
+      "m": 2.6656
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-forward": {
+     "value": 0.5625,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "rhythm-release-to-contact": {
+     "value": 0.9252,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "trophy-pause": {
+     "value": 0.0892,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "leg-drive": {
+     "value": 13.021,
+     "alt": {
+      "m": 0.2344
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "drive-time": {
+     "value": 0.413114,
+     "source": "continuous",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "loading-depth": {
+     "value": 1.25,
+     "alt": {
+      "m": 0.0225
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "deep-bend-flag": {
+     "value": false,
+     "alt": {
+      "frontKneeAtTrophy3DDeg": 37.012,
+      "frontKneeLoadingMax3DDeg": 37.012,
+      "truthJsonMaxFrontKneeFlexion3DDeg": 37.012,
+      "generatingMaxKneeFlexionDeg": 37.012
+     },
+     "source": "continuous",
+     "unit": "boolean",
+     "availability": {
+      "supported": true
+     }
+    },
+    "shoulder-tilt-trophy": {
+     "value": 16.83,
+     "alt": {
+      "deg2D": 18.76,
+      "deg2DLevel": 18.784,
+      "atTReal": 22.261158,
+      "atHipLowest3D": 16.804,
+      "atHipLowest2DLevel": 18.759,
+      "sideBend2DLevel": 18.686
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "knee-bend-band": {
+     "value": "moderate",
+     "alt": {
+      "backKneeAtTrophy3DDeg": 28.195,
+      "backKneeAtTrophy2DDeg": 5.265,
+      "backKneeAtTrophy2DLevelDeg": 5.325,
+      "bandMetricsMdEdges": "typical",
+      "frontKneeAtTrophy3DDeg": 37.012,
+      "frontKneeBand": "moderate",
+      "backKneeLoadingMax3DDeg": 35.913
+     },
+     "source": "continuous",
+     "unit": "little | moderate | deep",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "shoulder-over-shoulder-contact": {
+     "value": 10.674,
+     "alt": {
+      "deg2D": 31.285,
+      "deg2DLevel": 31.379
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "landing-distance": {
+     "value": 0.4453,
+     "alt": {
+      "fromBaselineM": 0.4039
+     },
+     "source": "continuous",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "placement-zone": {
+     "value": "body",
+     "alt": {
+      "actual": "body",
+      "bounceXM": 16.557,
+      "bounceYM": 2.1651
+     },
+     "source": "truth",
+     "unit": "T | body | wide",
+     "availability": {
+      "supported": true
+     }
+    },
+    "serve-type-mix": {
+     "value": "flat",
+     "source": "truth",
+     "unit": "flat | slice | kick",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "speed-experimental": {
+     "value": 162.1,
+     "alt": {
+      "peakKmh": 162.1,
+      "targetTag": "body"
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "FPS_TOO_LOW"
+     }
+    },
+    "speed-average-rear": {
+     "value": 137.41,
+     "alt": {
+      "chordKmh": 137.28,
+      "flightTimeS": 0.431406
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "speed-radar-entered": {
+     "value": null,
+     "alt": {
+      "radarEquivalentKmh": 162.1
+     },
+     "source": "not simulated",
+     "unit": "km/h",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "spin": {
+     "value": null,
+     "alt": {
+      "generatingSpinRpm": 900
+     },
+     "source": "always unavailable",
+     "unit": "rpm",
+     "availability": {
+      "supported": false,
+      "reason": "NOT_MEASURABLE"
+     }
+    }
+   },
+   "continuous": {
+    "events": {
+     "hipLowest": {
+      "tReal": 22.199113,
+      "frameIndex": 1332,
+      "frame": 1331.9468,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.9037,
+     "heightAtReleaseM": 0.9262,
+     "heightAtContactM": 1.1381,
+     "hipRiseM": 0.2344,
+     "hipRisePctHeight": 13.021,
+     "driveTimeS": 0.413114,
+     "loadingDepthM": 0.0225,
+     "loadingDepthPctHeight": 1.25,
+     "peakUpwardHipSpeedMs": 1.323,
+     "peakUpwardHipSpeedTReal": 22.477019
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 22.261158,
+     "deg3D": 16.83,
+     "deg2D": 18.76,
+     "deg2DLevel": 18.784
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 22.199113,
+     "deg3D": 16.804,
+     "deg2D": 18.735,
+     "deg2DLevel": 18.759
+    },
+    "trophySideBend": {
+     "atTReal": 22.261158,
+     "deg3D": 16.83,
+     "deg2D": 18.662,
+     "deg2DLevel": 18.686
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 22.612227,
+     "deg3D": 10.674,
+     "deg2D": 31.285,
+     "deg2DLevel": 31.379
+    },
+    "knees": {
+     "atTReal": 22.261158,
+     "front": {
+      "deg3D": 37.012,
+      "deg2D": 30.833,
+      "deg2DLevel": 31.129
+     },
+     "back": {
+      "deg3D": 28.195,
+      "deg2D": 5.265,
+      "deg2DLevel": 5.325
+     },
+     "atHipLowest": {
+      "atTReal": 22.199113,
+      "front": {
+       "deg3D": 36.985,
+       "deg2D": 30.782,
+       "deg2DLevel": 31.075
+      },
+      "back": {
+       "deg3D": 29.436,
+       "deg2D": 5.505,
+       "deg2DLevel": 5.568
+      }
+     },
+     "loadingMaxFront3DDeg": 37.012,
+     "loadingMaxBack3DDeg": 35.913
+    },
+    "landing": {
+     "landingToeXM": 0.4039,
+     "startToeXM": -0.0414,
+     "fromStartToeM": 0.4453
+    },
+    "hipLowestMinusTrophyStartS": -0.017438,
+    "hipLowestMinusTrophyEndS": -0.106651
+   },
+   "atFrames": {
+    "events": {
+     "hipLowest": {
+      "tReal": 22.2,
+      "frameIndex": 1332,
+      "frame": 1332,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.9037,
+     "heightAtReleaseM": 0.9263,
+     "heightAtContactM": 1.138,
+     "hipRiseM": 0.2343,
+     "hipRisePctHeight": 13.017,
+     "driveTimeS": 0.416667,
+     "loadingDepthM": 0.0226,
+     "loadingDepthPctHeight": 1.256,
+     "peakUpwardHipSpeedMs": 1.293,
+     "peakUpwardHipSpeedTReal": 22.466667
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 22.266667,
+     "deg3D": 16.832,
+     "deg2D": 18.763,
+     "deg2DLevel": 18.785
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 22.2,
+     "deg3D": 16.807,
+     "deg2D": 18.735,
+     "deg2DLevel": 18.763
+    },
+    "trophySideBend": {
+     "atTReal": 22.266667,
+     "deg3D": 16.832,
+     "deg2D": 18.667,
+     "deg2DLevel": 18.687
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 22.616667,
+     "deg3D": 10.617,
+     "deg2D": 33.018,
+     "deg2DLevel": 33.147
+    },
+    "knees": {
+     "atTReal": 22.266667,
+     "front": {
+      "deg3D": 37.011,
+      "deg2D": 30.83,
+      "deg2DLevel": 31.133
+     },
+     "back": {
+      "deg3D": 28.002,
+      "deg2D": 5.236,
+      "deg2DLevel": 5.303
+     },
+     "atHipLowest": {
+      "atTReal": 22.2,
+      "front": {
+       "deg3D": 36.985,
+       "deg2D": 30.784,
+       "deg2DLevel": 31.07
+      },
+      "back": {
+       "deg3D": 29.419,
+       "deg2D": 5.504,
+       "deg2DLevel": 5.575
+      }
+     },
+     "loadingMaxFront3DDeg": 37.027,
+     "loadingMaxBack3DDeg": 35.838
+    },
+    "landing": {
+     "landingToeXM": 0.4039,
+     "startToeXM": -0.0414,
+     "fromStartToeM": 0.4453
+    },
+    "hipLowestMinusTrophyStartS": -0.016551,
+    "hipLowestMinusTrophyEndS": -0.105764
+   }
+  },
+  {
+   "index": 3,
+   "courtSide": "ad",
+   "direction": "wide",
+   "style": "flat",
+   "outcome": "in",
+   "flightTimeS": 0.525891,
+   "canonical": {
+    "toss-apex-height": {
+     "value": 1.72378,
+     "alt": {
+      "m": 3.1028
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-forward": {
+     "value": 0.4408,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-drop": {
+     "value": 0.3809,
+     "alt": {
+      "timeS": 0.278659
+     },
+     "source": "truth",
+     "unit": "m (s in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-height-ratio": {
+     "value": 1.5122,
+     "alt": {
+      "m": 2.7219
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-forward": {
+     "value": 0.4923,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "rhythm-release-to-contact": {
+     "value": 0.8202,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "trophy-pause": {
+     "value": 0.2011,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "leg-drive": {
+     "value": 13.221,
+     "alt": {
+      "m": 0.238
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "drive-time": {
+     "value": 0.516291,
+     "source": "continuous",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "loading-depth": {
+     "value": 2.433,
+     "alt": {
+      "m": 0.0438
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "deep-bend-flag": {
+     "value": true,
+     "alt": {
+      "frontKneeAtTrophy3DDeg": 48.745,
+      "frontKneeLoadingMax3DDeg": 48.745,
+      "truthJsonMaxFrontKneeFlexion3DDeg": 48.745,
+      "generatingMaxKneeFlexionDeg": 48.745
+     },
+     "source": "continuous",
+     "unit": "boolean",
+     "availability": {
+      "supported": true
+     }
+    },
+    "shoulder-tilt-trophy": {
+     "value": 16.83,
+     "alt": {
+      "deg2D": 18.516,
+      "deg2DLevel": 18.523,
+      "atTReal": 30.660534,
+      "atHipLowest3D": 16.828,
+      "atHipLowest2DLevel": 18.526,
+      "sideBend2DLevel": 18.433
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "knee-bend-band": {
+     "value": "moderate",
+     "alt": {
+      "backKneeAtTrophy3DDeg": 42.627,
+      "backKneeAtTrophy2DDeg": 7.728,
+      "backKneeAtTrophy2DLevelDeg": 7.805,
+      "bandMetricsMdEdges": "typical",
+      "frontKneeAtTrophy3DDeg": 48.745,
+      "frontKneeBand": "deep",
+      "backKneeLoadingMax3DDeg": 48.613
+     },
+     "source": "continuous",
+     "unit": "little | moderate | deep",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "shoulder-over-shoulder-contact": {
+     "value": 13.645,
+     "alt": {
+      "deg2D": 35.647,
+      "deg2DLevel": 35.75
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "landing-distance": {
+     "value": 0.4731,
+     "alt": {
+      "fromBaselineM": 0.4551
+     },
+     "source": "continuous",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "placement-zone": {
+     "value": "wide",
+     "alt": {
+      "actual": "wide",
+      "bounceXM": 17.0884,
+      "bounceYM": -3.6286
+     },
+     "source": "truth",
+     "unit": "T | body | wide",
+     "availability": {
+      "supported": true
+     }
+    },
+    "serve-type-mix": {
+     "value": "flat",
+     "source": "truth",
+     "unit": "flat | slice | kick",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "speed-experimental": {
+     "value": 142.13,
+     "alt": {
+      "peakKmh": 142.13,
+      "targetTag": "wide"
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "FPS_TOO_LOW"
+     }
+    },
+    "speed-average-rear": {
+     "value": 119.46,
+     "alt": {
+      "chordKmh": 119.25,
+      "flightTimeS": 0.525891
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "speed-radar-entered": {
+     "value": null,
+     "alt": {
+      "radarEquivalentKmh": 142.13
+     },
+     "source": "not simulated",
+     "unit": "km/h",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "spin": {
+     "value": null,
+     "alt": {
+      "generatingSpinRpm": 900
+     },
+     "source": "always unavailable",
+     "unit": "rpm",
+     "availability": {
+      "supported": false,
+      "reason": "NOT_MEASURABLE"
+     }
+    }
+   },
+   "continuous": {
+    "events": {
+     "hipLowest": {
+      "tReal": 30.557331,
+      "frameIndex": 1833,
+      "frame": 1833.4398,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8712,
+     "heightAtReleaseM": 0.915,
+     "heightAtContactM": 1.1092,
+     "hipRiseM": 0.238,
+     "hipRisePctHeight": 13.221,
+     "driveTimeS": 0.516291,
+     "loadingDepthM": 0.0438,
+     "loadingDepthPctHeight": 2.433,
+     "peakUpwardHipSpeedMs": 1.189,
+     "peakUpwardHipSpeedTReal": 30.917442
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 30.660534,
+     "deg3D": 16.83,
+     "deg2D": 18.516,
+     "deg2DLevel": 18.523
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 30.557331,
+     "deg3D": 16.828,
+     "deg2D": 18.519,
+     "deg2DLevel": 18.526
+    },
+    "trophySideBend": {
+     "atTReal": 30.660534,
+     "deg3D": 16.83,
+     "deg2D": 18.425,
+     "deg2DLevel": 18.433
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 31.073622,
+     "deg3D": 13.645,
+     "deg2D": 35.647,
+     "deg2DLevel": 35.75
+    },
+    "knees": {
+     "atTReal": 30.660534,
+     "front": {
+      "deg3D": 48.745,
+      "deg2D": 43.21,
+      "deg2DLevel": 43.561
+     },
+     "back": {
+      "deg3D": 42.627,
+      "deg2D": 7.728,
+      "deg2DLevel": 7.805
+     },
+     "atHipLowest": {
+      "atTReal": 30.557331,
+      "front": {
+       "deg3D": 48.742,
+       "deg2D": 43.182,
+       "deg2DLevel": 43.532
+      },
+      "back": {
+       "deg3D": 43.376,
+       "deg2D": 7.857,
+       "deg2DLevel": 7.935
+      }
+     },
+     "loadingMaxFront3DDeg": 48.745,
+     "loadingMaxBack3DDeg": 48.613
+    },
+    "landing": {
+     "landingToeXM": 0.4551,
+     "startToeXM": -0.018,
+     "fromStartToeM": 0.4731
+    },
+    "hipLowestMinusTrophyStartS": -0.002661,
+    "hipLowestMinusTrophyEndS": -0.203746
+   },
+   "atFrames": {
+    "events": {
+     "hipLowest": {
+      "tReal": 30.566667,
+      "frameIndex": 1834,
+      "frame": 1834,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8712,
+     "heightAtReleaseM": 0.9152,
+     "heightAtContactM": 1.1089,
+     "hipRiseM": 0.2377,
+     "hipRisePctHeight": 13.206,
+     "driveTimeS": 0.5,
+     "loadingDepthM": 0.044,
+     "loadingDepthPctHeight": 2.444,
+     "peakUpwardHipSpeedMs": 1.185,
+     "peakUpwardHipSpeedTReal": 30.916667
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 30.666667,
+     "deg3D": 16.832,
+     "deg2D": 18.513,
+     "deg2DLevel": 18.525
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 30.566667,
+     "deg3D": 16.832,
+     "deg2D": 18.52,
+     "deg2DLevel": 18.53
+    },
+    "trophySideBend": {
+     "atTReal": 30.666667,
+     "deg3D": 16.832,
+     "deg2D": 18.426,
+     "deg2DLevel": 18.434
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 31.066667,
+     "deg3D": 13.545,
+     "deg2D": 32.453,
+     "deg2DLevel": 32.548
+    },
+    "knees": {
+     "atTReal": 30.666667,
+     "front": {
+      "deg3D": 48.732,
+      "deg2D": 43.221,
+      "deg2DLevel": 43.556
+     },
+     "back": {
+      "deg3D": 42.584,
+      "deg2D": 7.72,
+      "deg2DLevel": 7.79
+     },
+     "atHipLowest": {
+      "atTReal": 30.566667,
+      "front": {
+       "deg3D": 48.748,
+       "deg2D": 43.184,
+       "deg2DLevel": 43.54
+      },
+      "back": {
+       "deg3D": 43.289,
+       "deg2D": 7.851,
+       "deg2DLevel": 7.93
+      }
+     },
+     "loadingMaxFront3DDeg": 48.754,
+     "loadingMaxBack3DDeg": 48.604
+    },
+    "landing": {
+     "landingToeXM": 0.4551,
+     "startToeXM": -0.018,
+     "fromStartToeM": 0.4731
+    },
+    "hipLowestMinusTrophyStartS": 0.006675,
+    "hipLowestMinusTrophyEndS": -0.19441
+   }
+  },
+  {
+   "index": 4,
+   "courtSide": "deuce",
+   "direction": "T",
+   "style": "flat",
+   "outcome": "in",
+   "flightTimeS": 0.43556,
+   "canonical": {
+    "toss-apex-height": {
+     "value": 1.84267,
+     "alt": {
+      "m": 3.3168
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-forward": {
+     "value": 0.4936,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-drop": {
+     "value": 0.6161,
+     "alt": {
+      "timeS": 0.354409
+     },
+     "source": "truth",
+     "unit": "m (s in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-height-ratio": {
+     "value": 1.5004,
+     "alt": {
+      "m": 2.7007
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-forward": {
+     "value": 0.554,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "rhythm-release-to-contact": {
+     "value": 0.9414,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "trophy-pause": {
+     "value": 0.0997,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "leg-drive": {
+     "value": 13.565,
+     "alt": {
+      "m": 0.2442
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "drive-time": {
+     "value": 0.429105,
+     "source": "continuous",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "loading-depth": {
+     "value": 1.532,
+     "alt": {
+      "m": 0.0276
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "deep-bend-flag": {
+     "value": false,
+     "alt": {
+      "frontKneeAtTrophy3DDeg": 40.174,
+      "frontKneeLoadingMax3DDeg": 40.174,
+      "truthJsonMaxFrontKneeFlexion3DDeg": 40.174,
+      "generatingMaxKneeFlexionDeg": 40.174
+     },
+     "source": "continuous",
+     "unit": "boolean",
+     "availability": {
+      "supported": true
+     }
+    },
+    "shoulder-tilt-trophy": {
+     "value": 16.83,
+     "alt": {
+      "deg2D": 18.746,
+      "deg2DLevel": 18.769,
+      "atTReal": 41.453397,
+      "atHipLowest3D": 16.813,
+      "atHipLowest2DLevel": 18.755,
+      "sideBend2DLevel": 18.667
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "knee-bend-band": {
+     "value": "moderate",
+     "alt": {
+      "backKneeAtTrophy3DDeg": 32.134,
+      "backKneeAtTrophy2DDeg": 6.041,
+      "backKneeAtTrophy2DLevelDeg": 6.112,
+      "bandMetricsMdEdges": "typical",
+      "frontKneeAtTrophy3DDeg": 40.174,
+      "frontKneeBand": "moderate",
+      "backKneeLoadingMax3DDeg": 39.685
+     },
+     "source": "continuous",
+     "unit": "little | moderate | deep",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "shoulder-over-shoulder-contact": {
+     "value": 12.592,
+     "alt": {
+      "deg2D": 33.956,
+      "deg2DLevel": 34.071
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "landing-distance": {
+     "value": 0.2674,
+     "alt": {
+      "fromBaselineM": 0.2333
+     },
+     "source": "continuous",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "placement-zone": {
+     "value": "T",
+     "alt": {
+      "actual": "T",
+      "bounceXM": 16.2998,
+      "bounceYM": 0.7694
+     },
+     "source": "truth",
+     "unit": "T | body | wide",
+     "availability": {
+      "supported": true
+     }
+    },
+    "serve-type-mix": {
+     "value": "flat",
+     "source": "truth",
+     "unit": "flat | slice | kick",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "speed-experimental": {
+     "value": 155.9,
+     "alt": {
+      "peakKmh": 155.9,
+      "targetTag": "T"
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "FPS_TOO_LOW"
+     }
+    },
+    "speed-average-rear": {
+     "value": 132.81,
+     "alt": {
+      "chordKmh": 132.67,
+      "flightTimeS": 0.43556
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "speed-radar-entered": {
+     "value": null,
+     "alt": {
+      "radarEquivalentKmh": 155.9
+     },
+     "source": "not simulated",
+     "unit": "km/h",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "spin": {
+     "value": null,
+     "alt": {
+      "generatingSpinRpm": 900
+     },
+     "source": "always unavailable",
+     "unit": "rpm",
+     "availability": {
+      "supported": false,
+      "reason": "NOT_MEASURABLE"
+     }
+    }
+   },
+   "continuous": {
+    "events": {
+     "hipLowest": {
+      "tReal": 41.389881,
+      "frameIndex": 2483,
+      "frame": 2483.3929,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8956,
+     "heightAtReleaseM": 0.9232,
+     "heightAtContactM": 1.1398,
+     "hipRiseM": 0.2442,
+     "hipRisePctHeight": 13.565,
+     "driveTimeS": 0.429105,
+     "loadingDepthM": 0.0276,
+     "loadingDepthPctHeight": 1.532,
+     "peakUpwardHipSpeedMs": 1.336,
+     "peakUpwardHipSpeedTReal": 41.682128
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 41.453397,
+     "deg3D": 16.83,
+     "deg2D": 18.746,
+     "deg2DLevel": 18.769
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 41.389881,
+     "deg3D": 16.813,
+     "deg2D": 18.732,
+     "deg2DLevel": 18.755
+    },
+    "trophySideBend": {
+     "atTReal": 41.453397,
+     "deg3D": 16.83,
+     "deg2D": 18.643,
+     "deg2DLevel": 18.667
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 41.818986,
+     "deg3D": 12.592,
+     "deg2D": 33.956,
+     "deg2DLevel": 34.071
+    },
+    "knees": {
+     "atTReal": 41.453397,
+     "front": {
+      "deg3D": 40.174,
+      "deg2D": 33.601,
+      "deg2DLevel": 33.927
+     },
+     "back": {
+      "deg3D": 32.134,
+      "deg2D": 6.041,
+      "deg2DLevel": 6.112
+     },
+     "atHipLowest": {
+      "atTReal": 41.389881,
+      "front": {
+       "deg3D": 40.155,
+       "deg2D": 33.555,
+       "deg2DLevel": 33.879
+      },
+      "back": {
+       "deg3D": 33.184,
+       "deg2D": 6.248,
+       "deg2DLevel": 6.322
+      }
+     },
+     "loadingMaxFront3DDeg": 40.174,
+     "loadingMaxBack3DDeg": 39.685
+    },
+    "landing": {
+     "landingToeXM": 0.2333,
+     "startToeXM": -0.0341,
+     "fromStartToeM": 0.2674
+    },
+    "hipLowestMinusTrophyStartS": -0.013685,
+    "hipLowestMinusTrophyEndS": -0.113346
+   },
+   "atFrames": {
+    "events": {
+     "hipLowest": {
+      "tReal": 41.383333,
+      "frameIndex": 2483,
+      "frame": 2483,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8956,
+     "heightAtReleaseM": 0.923,
+     "heightAtContactM": 1.1398,
+     "hipRiseM": 0.2442,
+     "hipRisePctHeight": 13.567,
+     "driveTimeS": 0.433334,
+     "loadingDepthM": 0.0274,
+     "loadingDepthPctHeight": 1.522,
+     "peakUpwardHipSpeedMs": 1.299,
+     "peakUpwardHipSpeedTReal": 41.666667
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 41.45,
+     "deg3D": 16.832,
+     "deg2D": 18.739,
+     "deg2DLevel": 18.771
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 41.383333,
+     "deg3D": 16.797,
+     "deg2D": 18.707,
+     "deg2DLevel": 18.735
+    },
+    "trophySideBend": {
+     "atTReal": 41.45,
+     "deg3D": 16.832,
+     "deg2D": 18.644,
+     "deg2DLevel": 18.669
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 41.816667,
+     "deg3D": 12.587,
+     "deg2D": 33.048,
+     "deg2DLevel": 33.176
+    },
+    "knees": {
+     "atTReal": 41.45,
+     "front": {
+      "deg3D": 40.158,
+      "deg2D": 33.604,
+      "deg2DLevel": 33.914
+     },
+     "back": {
+      "deg3D": 32.215,
+      "deg2D": 6.055,
+      "deg2DLevel": 6.119
+     },
+     "atHipLowest": {
+      "atTReal": 41.383333,
+      "front": {
+       "deg3D": 40.148,
+       "deg2D": 33.54,
+       "deg2DLevel": 33.867
+      },
+      "back": {
+       "deg3D": 33.238,
+       "deg2D": 6.263,
+       "deg2DLevel": 6.323
+      }
+     },
+     "loadingMaxFront3DDeg": 40.19,
+     "loadingMaxBack3DDeg": 39.604
+    },
+    "landing": {
+     "landingToeXM": 0.233,
+     "startToeXM": -0.0341,
+     "fromStartToeM": 0.2671
+    },
+    "hipLowestMinusTrophyStartS": -0.020233,
+    "hipLowestMinusTrophyEndS": -0.119894
+   }
+  },
+  {
+   "index": 5,
+   "courtSide": "ad",
+   "direction": "body",
+   "style": "flat",
+   "outcome": "in",
+   "flightTimeS": 0.513903,
+   "canonical": {
+    "toss-apex-height": {
+     "value": 1.8005,
+     "alt": {
+      "m": 3.2409
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-forward": {
+     "value": 0.4839,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-drop": {
+     "value": 0.5352,
+     "alt": {
+      "timeS": 0.330332
+     },
+     "source": "truth",
+     "unit": "m (s in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-height-ratio": {
+     "value": 1.5032,
+     "alt": {
+      "m": 2.7057
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-forward": {
+     "value": 0.5376,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "rhythm-release-to-contact": {
+     "value": 0.885,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "trophy-pause": {
+     "value": 0.163,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "leg-drive": {
+     "value": 14.039,
+     "alt": {
+      "m": 0.2527
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "drive-time": {
+     "value": 0.468532,
+     "source": "continuous",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "loading-depth": {
+     "value": 2.259,
+     "alt": {
+      "m": 0.0407
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "deep-bend-flag": {
+     "value": true,
+     "alt": {
+      "frontKneeAtTrophy3DDeg": 47.183,
+      "frontKneeLoadingMax3DDeg": 47.183,
+      "truthJsonMaxFrontKneeFlexion3DDeg": 47.183,
+      "generatingMaxKneeFlexionDeg": 47.183
+     },
+     "source": "continuous",
+     "unit": "boolean",
+     "availability": {
+      "supported": true
+     }
+    },
+    "shoulder-tilt-trophy": {
+     "value": 16.83,
+     "alt": {
+      "deg2D": 18.579,
+      "deg2DLevel": 18.59,
+      "atTReal": 51.40717,
+      "atHipLowest3D": 16.826,
+      "atHipLowest2DLevel": 18.591,
+      "sideBend2DLevel": 18.5
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "knee-bend-band": {
+     "value": "moderate",
+     "alt": {
+      "backKneeAtTrophy3DDeg": 40.927,
+      "backKneeAtTrophy2DDeg": 7.693,
+      "backKneeAtTrophy2DLevelDeg": 7.772,
+      "bandMetricsMdEdges": "typical",
+      "frontKneeAtTrophy3DDeg": 47.183,
+      "frontKneeBand": "deep",
+      "backKneeLoadingMax3DDeg": 46.38
+     },
+     "source": "continuous",
+     "unit": "little | moderate | deep",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "shoulder-over-shoulder-contact": {
+     "value": 11.116,
+     "alt": {
+      "deg2D": 29.589,
+      "deg2DLevel": 29.661
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "landing-distance": {
+     "value": 0.7364,
+     "alt": {
+      "fromBaselineM": 0.6695
+     },
+     "source": "continuous",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "placement-zone": {
+     "value": "body",
+     "alt": {
+      "actual": "body",
+      "bounceXM": 18.1124,
+      "bounceYM": -1.7919
+     },
+     "source": "truth",
+     "unit": "T | body | wide",
+     "availability": {
+      "supported": true
+     }
+    },
+    "serve-type-mix": {
+     "value": "flat",
+     "source": "truth",
+     "unit": "flat | slice | kick",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "speed-experimental": {
+     "value": 151.49,
+     "alt": {
+      "peakKmh": 151.49,
+      "targetTag": "body"
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "FPS_TOO_LOW"
+     }
+    },
+    "speed-average-rear": {
+     "value": 126.39,
+     "alt": {
+      "chordKmh": 126.19,
+      "flightTimeS": 0.513903
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "speed-radar-entered": {
+     "value": null,
+     "alt": {
+      "radarEquivalentKmh": 151.49
+     },
+     "source": "not simulated",
+     "unit": "km/h",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "spin": {
+     "value": null,
+     "alt": {
+      "generatingSpinRpm": 900
+     },
+     "source": "always unavailable",
+     "unit": "rpm",
+     "availability": {
+      "supported": false,
+      "reason": "NOT_MEASURABLE"
+     }
+    }
+   },
+   "continuous": {
+    "events": {
+     "hipLowest": {
+      "tReal": 51.32037,
+      "frameIndex": 3079,
+      "frame": 3079.2222,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8761,
+     "heightAtReleaseM": 0.9168,
+     "heightAtContactM": 1.1288,
+     "hipRiseM": 0.2527,
+     "hipRisePctHeight": 14.039,
+     "driveTimeS": 0.468532,
+     "loadingDepthM": 0.0407,
+     "loadingDepthPctHeight": 2.259,
+     "peakUpwardHipSpeedMs": 1.356,
+     "peakUpwardHipSpeedTReal": 51.623928
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 51.40717,
+     "deg3D": 16.83,
+     "deg2D": 18.579,
+     "deg2DLevel": 18.59
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 51.32037,
+     "deg3D": 16.826,
+     "deg2D": 18.579,
+     "deg2DLevel": 18.591
+    },
+    "trophySideBend": {
+     "atTReal": 51.40717,
+     "deg3D": 16.83,
+     "deg2D": 18.488,
+     "deg2DLevel": 18.5
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 51.788903,
+     "deg3D": 11.116,
+     "deg2D": 29.589,
+     "deg2DLevel": 29.661
+    },
+    "knees": {
+     "atTReal": 51.40717,
+     "front": {
+      "deg3D": 47.183,
+      "deg2D": 41.62,
+      "deg2DLevel": 41.962
+     },
+     "back": {
+      "deg3D": 40.927,
+      "deg2D": 7.693,
+      "deg2DLevel": 7.772
+     },
+     "atHipLowest": {
+      "atTReal": 51.32037,
+      "front": {
+       "deg3D": 47.177,
+       "deg2D": 41.591,
+       "deg2DLevel": 41.931
+      },
+      "back": {
+       "deg3D": 41.679,
+       "deg2D": 7.831,
+       "deg2DLevel": 7.911
+      }
+     },
+     "loadingMaxFront3DDeg": 47.183,
+     "loadingMaxBack3DDeg": 46.38
+    },
+    "landing": {
+     "landingToeXM": 0.6695,
+     "startToeXM": -0.0669,
+     "fromStartToeM": 0.7364
+    },
+    "hipLowestMinusTrophyStartS": -0.005299,
+    "hipLowestMinusTrophyEndS": -0.168302
+   },
+   "atFrames": {
+    "events": {
+     "hipLowest": {
+      "tReal": 51.316667,
+      "frameIndex": 3079,
+      "frame": 3079,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8761,
+     "heightAtReleaseM": 0.917,
+     "heightAtContactM": 1.1286,
+     "hipRiseM": 0.2525,
+     "hipRisePctHeight": 14.028,
+     "driveTimeS": 0.466666,
+     "loadingDepthM": 0.0409,
+     "loadingDepthPctHeight": 2.272,
+     "peakUpwardHipSpeedMs": 1.344,
+     "peakUpwardHipSpeedTReal": 51.616667
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 51.4,
+     "deg3D": 16.832,
+     "deg2D": 18.579,
+     "deg2DLevel": 18.592
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 51.316667,
+     "deg3D": 16.818,
+     "deg2D": 18.572,
+     "deg2DLevel": 18.58
+    },
+    "trophySideBend": {
+     "atTReal": 51.4,
+     "deg3D": 16.832,
+     "deg2D": 18.494,
+     "deg2DLevel": 18.502
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 51.783333,
+     "deg3D": 11.056,
+     "deg2D": 27.449,
+     "deg2DLevel": 27.524
+    },
+    "knees": {
+     "atTReal": 51.4,
+     "front": {
+      "deg3D": 47.183,
+      "deg2D": 41.622,
+      "deg2DLevel": 41.96
+     },
+     "back": {
+      "deg3D": 40.989,
+      "deg2D": 7.696,
+      "deg2DLevel": 7.789
+     },
+     "atHipLowest": {
+      "atTReal": 51.316667,
+      "front": {
+       "deg3D": 47.162,
+       "deg2D": 41.582,
+       "deg2DLevel": 41.917
+      },
+      "back": {
+       "deg3D": 41.695,
+       "deg2D": 7.822,
+       "deg2DLevel": 7.902
+      }
+     },
+     "loadingMaxFront3DDeg": 47.2,
+     "loadingMaxBack3DDeg": 46.367
+    },
+    "landing": {
+     "landingToeXM": 0.6686,
+     "startToeXM": -0.0669,
+     "fromStartToeM": 0.7355
+    },
+    "hipLowestMinusTrophyStartS": -0.009002,
+    "hipLowestMinusTrophyEndS": -0.172005
+   }
+  },
+  {
+   "index": 6,
+   "courtSide": "deuce",
+   "direction": "wide",
+   "style": "flat",
+   "outcome": "wide",
+   "flightTimeS": 0.506046,
+   "canonical": {
+    "toss-apex-height": {
+     "value": 1.86989,
+     "alt": {
+      "m": 3.3658
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-forward": {
+     "value": 0.3129,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-drop": {
+     "value": 0.6716,
+     "alt": {
+      "timeS": 0.370039
+     },
+     "source": "truth",
+     "unit": "m (s in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-height-ratio": {
+     "value": 1.4968,
+     "alt": {
+      "m": 2.6942
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-forward": {
+     "value": 0.3769,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "rhythm-release-to-contact": {
+     "value": 0.9477,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "trophy-pause": {
+     "value": 0.0814,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "leg-drive": {
+     "value": 11.886,
+     "alt": {
+      "m": 0.2139
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "drive-time": {
+     "value": 0.371063,
+     "source": "continuous",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "loading-depth": {
+     "value": 1.9,
+     "alt": {
+      "m": 0.0342
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "deep-bend-flag": {
+     "value": false,
+     "alt": {
+      "frontKneeAtTrophy3DDeg": 43.93,
+      "frontKneeLoadingMax3DDeg": 43.93,
+      "truthJsonMaxFrontKneeFlexion3DDeg": 43.93,
+      "generatingMaxKneeFlexionDeg": 43.93
+     },
+     "source": "continuous",
+     "unit": "boolean",
+     "availability": {
+      "supported": true
+     }
+    },
+    "shoulder-tilt-trophy": {
+     "value": 16.83,
+     "alt": {
+      "deg2D": 18.711,
+      "deg2DLevel": 18.732,
+      "atTReal": 60.291546,
+      "atHipLowest3D": 16.815,
+      "atHipLowest2DLevel": 18.72,
+      "sideBend2DLevel": 18.626
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "knee-bend-band": {
+     "value": "moderate",
+     "alt": {
+      "backKneeAtTrophy3DDeg": 36.597,
+      "backKneeAtTrophy2DDeg": 6.938,
+      "backKneeAtTrophy2DLevelDeg": 7.02,
+      "bandMetricsMdEdges": "typical",
+      "frontKneeAtTrophy3DDeg": 43.93,
+      "frontKneeBand": "moderate",
+      "backKneeLoadingMax3DDeg": 41.185
+     },
+     "source": "continuous",
+     "unit": "little | moderate | deep",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "shoulder-over-shoulder-contact": {
+     "value": 10.163,
+     "alt": {
+      "deg2D": 28.973,
+      "deg2DLevel": 29.053
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "landing-distance": {
+     "value": 0.506,
+     "alt": {
+      "fromBaselineM": 0.4727
+     },
+     "source": "continuous",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "placement-zone": {
+     "value": "wide",
+     "alt": {
+      "actual": null,
+      "bounceXM": 16.7543,
+      "bounceYM": 4.1572
+     },
+     "source": "truth",
+     "unit": "T | body | wide",
+     "availability": {
+      "supported": true
+     }
+    },
+    "serve-type-mix": {
+     "value": "flat",
+     "source": "truth",
+     "unit": "flat | slice | kick",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "speed-experimental": {
+     "value": 145.91,
+     "alt": {
+      "peakKmh": 145.91,
+      "targetTag": "wide"
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "FPS_TOO_LOW"
+     }
+    },
+    "speed-average-rear": {
+     "value": 122.82,
+     "alt": {
+      "chordKmh": 122.63,
+      "flightTimeS": 0.506046
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "speed-radar-entered": {
+     "value": null,
+     "alt": {
+      "radarEquivalentKmh": 145.91
+     },
+     "source": "not simulated",
+     "unit": "km/h",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "spin": {
+     "value": null,
+     "alt": {
+      "generatingSpinRpm": 900
+     },
+     "source": "always unavailable",
+     "unit": "rpm",
+     "availability": {
+      "supported": false,
+      "reason": "NOT_MEASURABLE"
+     }
+    }
+   },
+   "continuous": {
+    "events": {
+     "hipLowest": {
+      "tReal": 60.236075,
+      "frameIndex": 3614,
+      "frame": 3614.1645,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8852,
+     "heightAtReleaseM": 0.9194,
+     "heightAtContactM": 1.0991,
+     "hipRiseM": 0.2139,
+     "hipRisePctHeight": 11.886,
+     "driveTimeS": 0.371063,
+     "loadingDepthM": 0.0342,
+     "loadingDepthPctHeight": 1.9,
+     "peakUpwardHipSpeedMs": 1.247,
+     "peakUpwardHipSpeedTReal": 60.45194
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 60.291546,
+     "deg3D": 16.83,
+     "deg2D": 18.711,
+     "deg2DLevel": 18.732
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 60.236075,
+     "deg3D": 16.815,
+     "deg2D": 18.699,
+     "deg2DLevel": 18.72
+    },
+    "trophySideBend": {
+     "atTReal": 60.291546,
+     "deg3D": 16.83,
+     "deg2D": 18.605,
+     "deg2DLevel": 18.626
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 60.607138,
+     "deg3D": 10.163,
+     "deg2D": 28.973,
+     "deg2DLevel": 29.053
+    },
+    "knees": {
+     "atTReal": 60.291546,
+     "front": {
+      "deg3D": 43.93,
+      "deg2D": 36.901,
+      "deg2DLevel": 37.256
+     },
+     "back": {
+      "deg3D": 36.597,
+      "deg2D": 6.938,
+      "deg2DLevel": 7.02
+     },
+     "atHipLowest": {
+      "atTReal": 60.236075,
+      "front": {
+       "deg3D": 43.911,
+       "deg2D": 36.851,
+       "deg2DLevel": 37.204
+      },
+      "back": {
+       "deg3D": 37.541,
+       "deg2D": 7.128,
+       "deg2DLevel": 7.212
+      }
+     },
+     "loadingMaxFront3DDeg": 43.93,
+     "loadingMaxBack3DDeg": 41.185
+    },
+    "landing": {
+     "landingToeXM": 0.4727,
+     "startToeXM": -0.0333,
+     "fromStartToeM": 0.506
+    },
+    "hipLowestMinusTrophyStartS": -0.014792,
+    "hipLowestMinusTrophyEndS": -0.09615
+   },
+   "atFrames": {
+    "events": {
+     "hipLowest": {
+      "tReal": 60.233333,
+      "frameIndex": 3614,
+      "frame": 3614,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.8852,
+     "heightAtReleaseM": 0.9191,
+     "heightAtContactM": 1.0989,
+     "hipRiseM": 0.2137,
+     "hipRisePctHeight": 11.872,
+     "driveTimeS": 0.366667,
+     "loadingDepthM": 0.0339,
+     "loadingDepthPctHeight": 1.883,
+     "peakUpwardHipSpeedMs": 1.239,
+     "peakUpwardHipSpeedTReal": 60.45
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 60.283333,
+     "deg3D": 16.835,
+     "deg2D": 18.711,
+     "deg2DLevel": 18.739
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 60.233333,
+     "deg3D": 16.819,
+     "deg2D": 18.691,
+     "deg2DLevel": 18.723
+    },
+    "trophySideBend": {
+     "atTReal": 60.283333,
+     "deg3D": 16.835,
+     "deg2D": 18.592,
+     "deg2DLevel": 18.633
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 60.6,
+     "deg3D": 10.044,
+     "deg2D": 25.966,
+     "deg2DLevel": 26.022
+    },
+    "knees": {
+     "atTReal": 60.283333,
+     "front": {
+      "deg3D": 43.919,
+      "deg2D": 36.891,
+      "deg2DLevel": 37.235
+     },
+     "back": {
+      "deg3D": 36.807,
+      "deg2D": 6.978,
+      "deg2DLevel": 7.064
+     },
+     "atHipLowest": {
+      "atTReal": 60.233333,
+      "front": {
+       "deg3D": 43.907,
+       "deg2D": 36.847,
+       "deg2DLevel": 37.201
+      },
+      "back": {
+       "deg3D": 37.558,
+       "deg2D": 7.134,
+       "deg2DLevel": 7.213
+      }
+     },
+     "loadingMaxFront3DDeg": 43.942,
+     "loadingMaxBack3DDeg": 41.13
+    },
+    "landing": {
+     "landingToeXM": 0.4727,
+     "startToeXM": -0.0333,
+     "fromStartToeM": 0.506
+    },
+    "hipLowestMinusTrophyStartS": -0.017534,
+    "hipLowestMinusTrophyEndS": -0.098892
+   }
+  },
+  {
+   "index": 7,
+   "courtSide": "ad",
+   "direction": "T",
+   "style": "flat",
+   "outcome": "in",
+   "flightTimeS": 0.525272,
+   "canonical": {
+    "toss-apex-height": {
+     "value": 1.84483,
+     "alt": {
+      "m": 3.3207
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-forward": {
+     "value": 0.191,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "toss-drop": {
+     "value": 0.6091,
+     "alt": {
+      "timeS": 0.352401
+     },
+     "source": "truth",
+     "unit": "m (s in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-height-ratio": {
+     "value": 1.5064,
+     "alt": {
+      "m": 2.7116
+     },
+     "source": "truth",
+     "unit": "ratio of standing height (m in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "contact-forward": {
+     "value": 0.2526,
+     "source": "truth",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "rhythm-release-to-contact": {
+     "value": 0.925,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "trophy-pause": {
+     "value": 0.1219,
+     "source": "truth",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "leg-drive": {
+     "value": 12.316,
+     "alt": {
+      "m": 0.2217
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "drive-time": {
+     "value": 0.486031,
+     "source": "continuous",
+     "unit": "s",
+     "availability": {
+      "supported": true
+     }
+    },
+    "loading-depth": {
+     "value": 1.39,
+     "alt": {
+      "m": 0.025
+     },
+     "source": "continuous",
+     "unit": "% of standing height",
+     "availability": {
+      "supported": true
+     }
+    },
+    "deep-bend-flag": {
+     "value": false,
+     "alt": {
+      "frontKneeAtTrophy3DDeg": 38.448,
+      "frontKneeLoadingMax3DDeg": 38.448,
+      "truthJsonMaxFrontKneeFlexion3DDeg": 38.448,
+      "generatingMaxKneeFlexionDeg": 38.448
+     },
+     "source": "continuous",
+     "unit": "boolean",
+     "availability": {
+      "supported": true
+     }
+    },
+    "shoulder-tilt-trophy": {
+     "value": 16.83,
+     "alt": {
+      "deg2D": 18.636,
+      "deg2DLevel": 18.651,
+      "atTReal": 71.053473,
+      "atHipLowest3D": 16.817,
+      "atHipLowest2DLevel": 18.641,
+      "sideBend2DLevel": 18.568
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": true
+     }
+    },
+    "knee-bend-band": {
+     "value": "moderate",
+     "alt": {
+      "backKneeAtTrophy3DDeg": 30.693,
+      "backKneeAtTrophy2DDeg": 5.635,
+      "backKneeAtTrophy2DLevelDeg": 5.692,
+      "bandMetricsMdEdges": "typical",
+      "frontKneeAtTrophy3DDeg": 38.448,
+      "frontKneeBand": "moderate",
+      "backKneeLoadingMax3DDeg": 36.849
+     },
+     "source": "continuous",
+     "unit": "little | moderate | deep",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "shoulder-over-shoulder-contact": {
+     "value": 10.202,
+     "alt": {
+      "deg2D": 26.19,
+      "deg2DLevel": 26.224
+     },
+     "source": "continuous",
+     "unit": "deg (3D; 2D and level-corrected 2D in alt)",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "landing-distance": {
+     "value": 0.5544,
+     "alt": {
+      "fromBaselineM": 0.4833
+     },
+     "source": "continuous",
+     "unit": "m",
+     "availability": {
+      "supported": true
+     }
+    },
+    "placement-zone": {
+     "value": "T",
+     "alt": {
+      "actual": "T",
+      "bounceXM": 18.2483,
+      "bounceYM": -0.3059
+     },
+     "source": "truth",
+     "unit": "T | body | wide",
+     "availability": {
+      "supported": true
+     }
+    },
+    "serve-type-mix": {
+     "value": "flat",
+     "source": "truth",
+     "unit": "flat | slice | kick",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "speed-experimental": {
+     "value": 151.06,
+     "alt": {
+      "peakKmh": 151.06,
+      "targetTag": "T"
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "FPS_TOO_LOW"
+     }
+    },
+    "speed-average-rear": {
+     "value": 125.64,
+     "alt": {
+      "chordKmh": 125.44,
+      "flightTimeS": 0.525272
+     },
+     "source": "truth",
+     "unit": "km/h",
+     "availability": {
+      "supported": false,
+      "reason": "VIEW_NOT_SUPPORTED"
+     }
+    },
+    "speed-radar-entered": {
+     "value": null,
+     "alt": {
+      "radarEquivalentKmh": 151.06
+     },
+     "source": "not simulated",
+     "unit": "km/h",
+     "availability": {
+      "supported": true,
+      "reason": "PLAYER_ENTERED"
+     }
+    },
+    "spin": {
+     "value": null,
+     "alt": {
+      "generatingSpinRpm": 900
+     },
+     "source": "always unavailable",
+     "unit": "rpm",
+     "availability": {
+      "supported": false,
+      "reason": "NOT_MEASURABLE"
+     }
+    }
+   },
+   "continuous": {
+    "events": {
+     "hipLowest": {
+      "tReal": 70.982467,
+      "frameIndex": 4259,
+      "frame": 4258.948,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.9008,
+     "heightAtReleaseM": 0.9258,
+     "heightAtContactM": 1.1225,
+     "hipRiseM": 0.2217,
+     "hipRisePctHeight": 12.316,
+     "driveTimeS": 0.486031,
+     "loadingDepthM": 0.025,
+     "loadingDepthPctHeight": 1.39,
+     "peakUpwardHipSpeedMs": 1.201,
+     "peakUpwardHipSpeedTReal": 71.345474
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 71.053473,
+     "deg3D": 16.83,
+     "deg2D": 18.636,
+     "deg2DLevel": 18.651
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 70.982467,
+     "deg3D": 16.817,
+     "deg2D": 18.626,
+     "deg2DLevel": 18.641
+    },
+    "trophySideBend": {
+     "atTReal": 71.053473,
+     "deg3D": 16.83,
+     "deg2D": 18.552,
+     "deg2DLevel": 18.568
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 71.468499,
+     "deg3D": 10.202,
+     "deg2D": 26.19,
+     "deg2DLevel": 26.224
+    },
+    "knees": {
+     "atTReal": 71.053473,
+     "front": {
+      "deg3D": 38.448,
+      "deg2D": 33.663,
+      "deg2DLevel": 33.942
+     },
+     "back": {
+      "deg3D": 30.693,
+      "deg2D": 5.635,
+      "deg2DLevel": 5.692
+     },
+     "atHipLowest": {
+      "atTReal": 70.982467,
+      "front": {
+       "deg3D": 38.434,
+       "deg2D": 33.629,
+       "deg2DLevel": 33.906
+      },
+      "back": {
+       "deg3D": 31.8,
+       "deg2D": 5.834,
+       "deg2DLevel": 5.893
+      }
+     },
+     "loadingMaxFront3DDeg": 38.448,
+     "loadingMaxBack3DDeg": 36.849
+    },
+    "landing": {
+     "landingToeXM": 0.4833,
+     "startToeXM": -0.0711,
+     "fromStartToeM": 0.5544
+    },
+    "hipLowestMinusTrophyStartS": -0.010063,
+    "hipLowestMinusTrophyEndS": -0.131949
+   },
+   "atFrames": {
+    "events": {
+     "hipLowest": {
+      "tReal": 70.983333,
+      "frameIndex": 4259,
+      "frame": 4259,
+      "inClip": true
+     }
+    },
+    "legDrive": {
+     "lowestHeightM": 0.9008,
+     "heightAtReleaseM": 0.9256,
+     "heightAtContactM": 1.1224,
+     "hipRiseM": 0.2216,
+     "hipRisePctHeight": 12.311,
+     "driveTimeS": 0.483334,
+     "loadingDepthM": 0.0248,
+     "loadingDepthPctHeight": 1.378,
+     "peakUpwardHipSpeedMs": 1.143,
+     "peakUpwardHipSpeedTReal": 71.333333
+    },
+    "shoulderTiltTrophy": {
+     "atTReal": 71.05,
+     "deg3D": 16.823,
+     "deg2D": 18.637,
+     "deg2DLevel": 18.645
+    },
+    "shoulderTiltHipLowest": {
+     "atTReal": 70.983333,
+     "deg3D": 16.818,
+     "deg2D": 18.632,
+     "deg2DLevel": 18.642
+    },
+    "trophySideBend": {
+     "atTReal": 71.05,
+     "deg3D": 16.823,
+     "deg2D": 18.551,
+     "deg2DLevel": 18.561
+    },
+    "shoulderOverShoulderContact": {
+     "atTReal": 71.466667,
+     "deg3D": 10.206,
+     "deg2D": 25.64,
+     "deg2DLevel": 25.7
+    },
+    "knees": {
+     "atTReal": 71.05,
+     "front": {
+      "deg3D": 38.463,
+      "deg2D": 33.664,
+      "deg2DLevel": 33.952
+     },
+     "back": {
+      "deg3D": 30.761,
+      "deg2D": 5.647,
+      "deg2DLevel": 5.698
+     },
+     "atHipLowest": {
+      "atTReal": 70.983333,
+      "front": {
+       "deg3D": 38.438,
+       "deg2D": 33.633,
+       "deg2DLevel": 33.907
+      },
+      "back": {
+       "deg3D": 31.776,
+       "deg2D": 5.836,
+       "deg2DLevel": 5.882
+      }
+     },
+     "loadingMaxFront3DDeg": 38.468,
+     "loadingMaxBack3DDeg": 36.853
+    },
+    "landing": {
+     "landingToeXM": 0.4833,
+     "startToeXM": -0.0711,
+     "fromStartToeM": 0.5544
+    },
+    "hipLowestMinusTrophyStartS": -0.009197,
+    "hipLowestMinusTrophyEndS": -0.131083
+   }
+  }
+ ],
+ "clip": {
+  "serve-count": {
+   "value": 8,
+   "alt": {
+    "servesInTruth": 8
+   },
+   "source": "truth",
+   "unit": "count",
+   "availability": {
+    "supported": true
+   }
+  },
+  "toss-height-spread": {
+   "value": 0.09675,
+   "alt": {
+    "n": 8
+   },
+   "source": "truth",
+   "unit": "m (sample SD)",
+   "availability": {
+    "supported": true
+   }
+  },
+  "toss-forward-spread": {
+   "value": 0.11756,
+   "alt": {
+    "n": 8
+   },
+   "source": "truth",
+   "unit": "m (sample SD)",
+   "availability": {
+    "supported": true
+   }
+  },
+  "rhythm-spread": {
+   "value": 0.04793,
+   "alt": {
+    "n": 8
+   },
+   "source": "truth",
+   "unit": "s (sample SD)",
+   "availability": {
+    "supported": true
+   }
+  },
+  "repeatability": {
+   "value": null,
+   "source": "app-defined composite",
+   "unit": "index",
+   "availability": {
+    "supported": true
+   }
+  },
+  "serve-in-rate": {
+   "value": 0.75,
+   "alt": {
+    "k": 6,
+    "n": 8
+   },
+   "source": "truth",
+   "unit": "k of n",
+   "availability": {
+    "supported": true
+   }
+  },
+  "first-serve-in-rate": {
+   "value": null,
+   "source": "not modelled",
+   "unit": "k of n",
+   "availability": {
+    "supported": true,
+    "reason": "PLAYER_ENTERED"
+   }
+  },
+  "double-faults": {
+   "value": null,
+   "source": "not modelled",
+   "unit": "count",
+   "availability": {
+    "supported": true,
+    "reason": "PLAYER_ENTERED"
+   }
+  },
+  "placement-zone-counts": {
+   "value": {
+    "intended": {
+     "T": 3,
+     "wide": 3,
+     "body": 2
+    },
+    "actual": {
+     "fault": 2,
+     "wide": 2,
+     "body": 2,
+     "T": 2
+    }
+   },
+   "source": "truth"
+  },
+  "serve-type-mix-counts": {
+   "value": {
+    "flat": 8
+   },
+   "source": "truth"
+  },
+  "capture-quality": {
+   "value": {
+    "captureFps": 60,
+    "mediaFps": 60,
+    "timeScale": 1,
+    "width": 1080,
+    "height": 1920,
+    "orientation": "portrait",
+    "view": "side",
+    "distanceM": 6,
+    "distanceFrom": "front toe of the first serve at toss release",
+    "cameraHeightM": 1.2,
+    "lookAtHeightM": 1.6,
+    "focal35mmEquivMm": 26,
+    "pitchDeg": 3.814,
+    "rollDeg": 0,
+    "lighting": "bright",
+    "shutterS": 0.001,
+    "flickerHz": null,
+    "shake": null,
+    "crf": 20,
+    "standingHeightPx": 432.4,
+    "standingHeightPxPer1080ShortSide": 432.4,
+    "standingHeightPxPer1080FrameHeight": 243.2,
+    "perServe": [
+     {
+      "index": 0,
+      "frameTopAtServerM": 5.798,
+      "frameBottomAtServerM": -2.241,
+      "tossApexInFrame": true,
+      "apexRowFromTopFrac": 0.3097,
+      "apexHeadroomOk": true,
+      "bodyInside3pcMarginMotionStartToLanding": true,
+      "contactBallStreakDiameters": 0.61
+     },
+     {
+      "index": 1,
+      "frameTopAtServerM": 6.692,
+      "frameBottomAtServerM": -2.91,
+      "tossApexInFrame": true,
+      "apexRowFromTopFrac": 0.3452,
+      "apexHeadroomOk": true,
+      "bodyInside3pcMarginMotionStartToLanding": true,
+      "contactBallStreakDiameters": 0.61
+     },
+     {
+      "index": 2,
+      "frameTopAtServerM": 5.78,
+      "frameBottomAtServerM": -2.228,
+      "tossApexInFrame": true,
+      "apexRowFromTopFrac": 0.2878,
+      "apexHeadroomOk": true,
+      "bodyInside3pcMarginMotionStartToLanding": true,
+      "contactBallStreakDiameters": 0.65
+     },
+     {
+      "index": 3,
+      "frameTopAtServerM": 6.703,
+      "frameBottomAtServerM": -2.918,
+      "tossApexInFrame": true,
+      "apexRowFromTopFrac": 0.3521,
+      "apexHeadroomOk": true,
+      "bodyInside3pcMarginMotionStartToLanding": true,
+      "contactBallStreakDiameters": 0.59
+     },
+     {
+      "index": 4,
+      "frameTopAtServerM": 5.698,
+      "frameBottomAtServerM": -2.167,
+      "tossApexInFrame": true,
+      "apexRowFromTopFrac": 0.2808,
+      "apexHeadroomOk": true,
+      "bodyInside3pcMarginMotionStartToLanding": true,
+      "contactBallStreakDiameters": 0.63
+     },
+     {
+      "index": 5,
+      "frameTopAtServerM": 6.615,
+      "frameBottomAtServerM": -2.853,
+      "tossApexInFrame": true,
+      "apexRowFromTopFrac": 0.3325,
+      "apexHeadroomOk": true,
+      "bodyInside3pcMarginMotionStartToLanding": true,
+      "contactBallStreakDiameters": 0.63
+     },
+     {
+      "index": 6,
+      "frameTopAtServerM": 5.721,
+      "frameBottomAtServerM": -2.183,
+      "tossApexInFrame": true,
+      "apexRowFromTopFrac": 0.2779,
+      "apexHeadroomOk": true,
+      "bodyInside3pcMarginMotionStartToLanding": true,
+      "contactBallStreakDiameters": 0.56
+     },
+     {
+      "index": 7,
+      "frameTopAtServerM": 6.656,
+      "frameBottomAtServerM": -2.884,
+      "tossApexInFrame": true,
+      "apexRowFromTopFrac": 0.3301,
+      "apexHeadroomOk": true,
+      "bodyInside3pcMarginMotionStartToLanding": true,
+      "contactBallStreakDiameters": 0.62
+     }
+    ]
+   },
+   "unit": "inputs",
+   "availability": {
+    "supported": true
+   },
+   "source": "truth"
+  }
+ }
+}

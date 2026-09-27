@@ -437,6 +437,7 @@ export function buildTruth(inp: TruthInputs): Record<string, unknown> {
       distanceM: sc.camera.distanceM,
       cameraHeightM: sc.camera.heightM,
       lookAtHeightM: sc.camera.lookAtHeightM ?? 1.45,
+      distanceFrom: (sc.camera.anchor ?? 'stance') === 'centre-mark' ? 'centre mark (camera on the baseline extension, aimed along the baseline)' : 'front toe of the first serve at toss release',
       focal35mmEquivMm: sc.camera.focal35mmEquivMm,
       intrinsics: { model: 'pinhole + radial k1,k2 (OpenCV)', fxPx: r(I.fxPx, 4), fyPx: r(I.fyPx, 4), cxPx: I.cxPx, cyPx: I.cyPx, k1: I.k1, k2: I.k2, width: I.widthPx, height: I.heightPx },
       extrinsics: {

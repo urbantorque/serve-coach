@@ -2,18 +2,21 @@ import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
+import { syntheticCorpusPlugin } from './vite/syntheticCorpus.ts'
 
 const fromRoot = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  // syntheticCorpusPlugin is dev-only (apply: 'serve'): it serves ../validation/synthetic under
+  // /__synthetic/ to the validation harness (validation.html) without copying it into public/.
+  plugins: [react(), tailwindcss(), syntheticCorpusPlugin(fromRoot('../validation/synthetic'))],
   build: {
     target: 'es2022',
-    // Vite 8 (Rolldown) name for rollupOptions. validation.html is the dev harness page.
+    // Vite 8 (Rolldown) name for rollupOptions. validation.html is a dev-only page (served by
+    // `npm run dev`), so the production build contains the app only.
     rolldownOptions: {
       input: {
         main: fromRoot('./index.html'),
-        validation: fromRoot('./validation.html'),
       },
     },
   },
@@ -29,7 +32,7 @@ export default defineConfig({
         test: {
           name: 'engine',
           environment: 'node',
-          include: ['src/**/*.test.{ts,tsx}'],
+          include: ['src/**/*.test.{ts,tsx}', 'vite/**/*.test.ts'],
           exclude: ['src/ui/**'],
         },
       },
