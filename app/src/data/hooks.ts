@@ -6,7 +6,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { SessionMode } from '../analysis/types.ts'
 import { getDb } from './db.ts'
-import { hasDemoData } from './demo.ts'
+import { hasDemoData, sampleSessionId } from './demo.ts'
 import { getActiveExperiment, getStats, latestDecision } from './repos/coaching.ts'
 import { getProfile } from './repos/profile.ts'
 import { listServesBySession } from './repos/serves.ts'
@@ -33,6 +33,9 @@ export const useTally = (sessionId: string | undefined) =>
   useLiveQuery(async () => (sessionId ? ((await getTally(sessionId)) ?? null) : null), [sessionId])
 export const useLatestDecision = (sessionId?: string) =>
   useLiveQuery(async () => (await latestDecision(sessionId)) ?? null, [sessionId])
-export const useActiveExperiment = () => useLiveQuery(async () => (await getActiveExperiment()) ?? null, [])
+export const useActiveExperiment = (opts: { demo?: boolean } = {}) =>
+  useLiveQuery(async () => (await getActiveExperiment(opts)) ?? null, [opts.demo])
 export const useHasDemoData = () => useLiveQuery(() => hasDemoData(), [])
+/** The sample session to link to (engine-built seed or fixtures), for "See the sample session". */
+export const useSampleSessionId = () => useLiveQuery(() => sampleSessionId(), [])
 export const useSetting = <K extends SettingKey>(key: K) => useLiveQuery(() => getSetting(key), [key])

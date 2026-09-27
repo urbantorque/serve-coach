@@ -1,0 +1,3 @@
+[baseline-s1] pill "Level the phone"; readout: frame top 4.9 m, phone 1.2 m, 530 px; truth: frame top about 5.1 to 5.4 m, camera 1.2 m
+[fence9-s1] pill "Ready"; readout: frame top 4.9 m, phone 1.6 m, 291 px; truth: frame top about 4.9 m, camera 1.6 m
+[apexout-s1] pill "Phone back 6 steps"; readout: frame top 2.9 m, phone 1.0 m, 579 px; truth: frame top about 3.0 m, camera 1.0 m (blocks)

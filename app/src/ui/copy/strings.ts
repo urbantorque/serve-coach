@@ -171,6 +171,9 @@ export const UI = {
   howWeMeasure: 'How we measure',
   sideTossBias:
     'From the side, a toss nearer the camera than your body reads a little high, and a little sideways wobble adds a few centimetres to the spread.',
+  tossRelativeOnly:
+    "The phone's tilt wasn't recorded, so peak heights are experimental. How far each peak sat from the middle one doesn't depend on the tilt.",
+  tossHeightsOnly: "Where each toss peaked front to back isn't reliable enough to show yet, so this shows peak heights only.",
   measurementLimit: 'At the limit of what we can measure.',
   checkThisServe: 'Check this serve',
   updating: 'Updating…',

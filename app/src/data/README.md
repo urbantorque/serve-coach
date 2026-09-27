@@ -1,1 +1,4 @@
 Local persistence (Dexie 4 over IndexedDB): domain and record types, schema and migrations, repositories, live hooks, zustand stores, retention, deletion, JSON/CSV export and the demo fixtures. No server. Conventions: ../ui/README.md, "Data layer".
+
+- `sample.ts` + `demo.ts`: "See a sample session" loads the engine-built seed in `public/demo/` (three sessions of a synthetic player analysed by the real pipeline, with the real coaching decisions, one experiment and its verdict; rebuild with `node scripts/build-demo.mjs`). Every row is `isDemo: 1`; a production build never falls back to the hand-made `fixtures.ts`.
+- `stripAudio.ts`: removes the sound from an MP4/MOV before a copy is kept (D4): audio tracks become `free` boxes and audio samples are zeroed, with no re-encode and the same file size. Fragmented or unusual files throw, and the pipeline then keeps no copy.

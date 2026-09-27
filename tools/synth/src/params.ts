@@ -267,6 +267,8 @@ export interface SampleOptions {
   style?: ServeStyle
   /** Multiply all SDs (0 = identical serves). */
   sdScale?: number
+  /** Extra SD factor for single parameters, on top of sdScale (e.g. an inconsistent toss only). */
+  sdScaleByParam?: Partial<Record<VariedParam, number>>
   /** Parameter overrides applied after sampling (exact values). */
   overrides?: Partial<ServeParams>
 }
@@ -288,7 +290,7 @@ export function sampleServeParams(rng: Rng, profile: PlayerProfile, opts: Sample
   const means = effectiveMeans(profile, style)
   const vals = {} as Record<VariedParam, number>
   for (const k of VARIED_PARAMS) {
-    let x = truncatedNormal(rng, means[k], profile.sds[k] * sdScale)
+    let x = truncatedNormal(rng, means[k], profile.sds[k] * sdScale * (opts.sdScaleByParam?.[k] ?? 1))
     const lim = LIMITS[k]
     if (lim) x = Math.min(lim[1], Math.max(lim[0], x))
     vals[k] = x

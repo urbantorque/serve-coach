@@ -5,6 +5,8 @@ import { sweepRetention } from '../../data/retention.ts'
 import { DelayedSkeleton, Skeleton, TabBar, ToastViewport } from '../components/index.ts'
 import { cx } from '../components/cx.ts'
 import { ShellContext, type RouteHandle } from './shellContext.ts'
+// First-run redirect to onboarding (ui-profile addition; acts on Today only and can always be skipped).
+import { FirstRunGate } from '../screens/onboarding/FirstRunGate.tsx'
 
 const TAB_ROOTS = new Set(['/', '/record', '/sessions', '/progress'])
 
@@ -77,6 +79,7 @@ export function AppShell() {
       {tabBar ? <TabBar /> : null}
       <ToastViewport aboveTabBar={tabBar} />
       <ScrollRestoration />
+      <FirstRunGate />
     </ShellContext.Provider>
   )
 }

@@ -1,0 +1,50 @@
+[
+ {
+  "scheme": "light",
+  "shot": "serve-detail-portrait",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\reduced-motion\\light-serve-detail-portrait.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": [
+   "warning: You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled"
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "tagging-portrait",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\reduced-motion\\light-tagging-portrait.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": [
+   "warning: You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled"
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-portrait",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\reduced-motion\\dark-serve-detail-portrait.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": [
+   "warning: You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled"
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "tagging-portrait",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\reduced-motion\\dark-tagging-portrait.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": [
+   "warning: You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled"
+  ]
+ }
+]

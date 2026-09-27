@@ -1,0 +1,432 @@
+[
+  {
+    "name": "o1-welcome",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding",
+    "h1": "Welcome",
+    "logs": []
+  },
+  {
+    "name": "o2-age",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/age",
+    "h1": "Are you 18 or over?",
+    "logs": []
+  },
+  {
+    "name": "o2-adults-only",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/adults-only",
+    "h1": "Serve Coach is for adults while we're in beta.",
+    "logs": []
+  },
+  {
+    "name": "o3-play",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/play",
+    "h1": "How do you play?",
+    "logs": []
+  },
+  {
+    "name": "o4-goal",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/goal",
+    "h1": "What costs you points on serve?",
+    "logs": []
+  },
+  {
+    "name": "o5-you",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [
+      "input \"\" 175x26"
+    ],
+    "path": "/onboarding/you",
+    "h1": "About you",
+    "logs": []
+  },
+  {
+    "name": "o6-level",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/level",
+    "h1": "Do you have a UTR?",
+    "logs": []
+  },
+  {
+    "name": "o7-comfort",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/comfort",
+    "h1": "Any areas to go easy on?",
+    "logs": []
+  },
+  {
+    "name": "o8-privacy",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/privacy",
+    "h1": "Your serve stays on your phone",
+    "logs": []
+  },
+  {
+    "name": "o9-ready",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/ready",
+    "h1": "Want to see how it works first?",
+    "logs": []
+  },
+  {
+    "name": "first-run-redirect",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding",
+    "h1": "Welcome",
+    "logs": []
+  },
+  {
+    "name": "profile",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile",
+    "h1": "You",
+    "logs": []
+  },
+  {
+    "name": "profile-empty",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile",
+    "h1": "You",
+    "logs": []
+  },
+  {
+    "name": "your-serve",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [
+      "input \"\" 175x26"
+    ],
+    "path": "/profile/your-serve",
+    "h1": "Your serve",
+    "logs": []
+  },
+  {
+    "name": "comfort",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/comfort",
+    "h1": "Comfort and body",
+    "logs": []
+  },
+  {
+    "name": "coach",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/coach",
+    "h1": "My coach's focus",
+    "logs": []
+  },
+  {
+    "name": "storage",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/storage",
+    "h1": "Storage and privacy",
+    "logs": []
+  },
+  {
+    "name": "storage-sample-only",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/storage",
+    "h1": "Storage and privacy",
+    "logs": []
+  },
+  {
+    "name": "how-we-measure",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/how-we-measure",
+    "h1": "How we measure",
+    "logs": []
+  },
+  {
+    "name": "appearance",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [
+      "button \"System\" 115x32",
+      "button \"Day\" 113x32",
+      "button \"Night\" 113x32"
+    ],
+    "path": "/profile/appearance",
+    "h1": "Appearance",
+    "logs": []
+  },
+  {
+    "name": "about",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/about",
+    "h1": "About and legal",
+    "logs": []
+  },
+  {
+    "name": "plan",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/plan",
+    "h1": "Plan",
+    "logs": []
+  },
+  {
+    "name": "plan-plus",
+    "scheme": "light",
+    "overflowX": false,
+    "small": [],
+    "path": "/plan",
+    "h1": "Plan",
+    "logs": []
+  },
+  {
+    "name": "o1-welcome",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding",
+    "h1": "Welcome",
+    "logs": []
+  },
+  {
+    "name": "o2-age",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/age",
+    "h1": "Are you 18 or over?",
+    "logs": []
+  },
+  {
+    "name": "o2-adults-only",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/adults-only",
+    "h1": "Serve Coach is for adults while we're in beta.",
+    "logs": []
+  },
+  {
+    "name": "o3-play",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/play",
+    "h1": "How do you play?",
+    "logs": []
+  },
+  {
+    "name": "o4-goal",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/goal",
+    "h1": "What costs you points on serve?",
+    "logs": []
+  },
+  {
+    "name": "o5-you",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [
+      "input \"\" 175x26"
+    ],
+    "path": "/onboarding/you",
+    "h1": "About you",
+    "logs": []
+  },
+  {
+    "name": "o6-level",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/level",
+    "h1": "Do you have a UTR?",
+    "logs": []
+  },
+  {
+    "name": "o7-comfort",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/comfort",
+    "h1": "Any areas to go easy on?",
+    "logs": []
+  },
+  {
+    "name": "o8-privacy",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/privacy",
+    "h1": "Your serve stays on your phone",
+    "logs": []
+  },
+  {
+    "name": "o9-ready",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding/ready",
+    "h1": "Want to see how it works first?",
+    "logs": []
+  },
+  {
+    "name": "first-run-redirect",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/onboarding",
+    "h1": "Welcome",
+    "logs": []
+  },
+  {
+    "name": "profile",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile",
+    "h1": "You",
+    "logs": []
+  },
+  {
+    "name": "profile-empty",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile",
+    "h1": "You",
+    "logs": []
+  },
+  {
+    "name": "your-serve",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [
+      "input \"\" 175x26"
+    ],
+    "path": "/profile/your-serve",
+    "h1": "Your serve",
+    "logs": []
+  },
+  {
+    "name": "comfort",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/comfort",
+    "h1": "Comfort and body",
+    "logs": []
+  },
+  {
+    "name": "coach",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/coach",
+    "h1": "My coach's focus",
+    "logs": []
+  },
+  {
+    "name": "storage",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/storage",
+    "h1": "Storage and privacy",
+    "logs": []
+  },
+  {
+    "name": "storage-sample-only",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/storage",
+    "h1": "Storage and privacy",
+    "logs": []
+  },
+  {
+    "name": "how-we-measure",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/how-we-measure",
+    "h1": "How we measure",
+    "logs": []
+  },
+  {
+    "name": "appearance",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [
+      "button \"System\" 115x32",
+      "button \"Day\" 113x32",
+      "button \"Night\" 113x32"
+    ],
+    "path": "/profile/appearance",
+    "h1": "Appearance",
+    "logs": []
+  },
+  {
+    "name": "about",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/profile/about",
+    "h1": "About and legal",
+    "logs": []
+  },
+  {
+    "name": "plan",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/plan",
+    "h1": "Plan",
+    "logs": []
+  },
+  {
+    "name": "plan-plus",
+    "scheme": "dark",
+    "overflowX": false,
+    "small": [],
+    "path": "/plan",
+    "h1": "Plan",
+    "logs": []
+  }
+]

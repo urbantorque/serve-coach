@@ -1,0 +1,1470 @@
+{
+ "version": "1.1.0",
+ "metrics": [
+  {
+   "id": "serve-count",
+   "name": "Serves",
+   "question": "How many serves did I hit?",
+   "unit": "count",
+   "kind": "count",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "fps>=30"
+   ],
+   "reasonCodes": [],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "retoss-count",
+   "name": "Re-tosses",
+   "question": "How often did I catch a bad toss?",
+   "unit": "count",
+   "kind": "count",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "fps>=30"
+   ],
+   "reasonCodes": [],
+   "higherIsBetter": false,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "toss-apex-height",
+   "name": "Toss height",
+   "question": "How high do I toss?",
+   "unit": "ratio-of-height",
+   "kind": "per-serve",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "fps>=30",
+    "event:tossApex",
+    "floor",
+    "bodyHeight",
+    "pitch"
+   ],
+   "reasonCodes": [
+    "APEX_EXTRAPOLATED",
+    "APEX_OUT_OF_FRAME",
+    "BALL_NOT_TRACKED",
+    "PITCH_UNKNOWN",
+    "SCALE_INCONSISTENT",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE",
+    "FEET_NOT_VISIBLE",
+    "BODY_NOT_UPRIGHT"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "High-performance men, mean UTR about 10.7, n = 10",
+    "unit": "m",
+    "low": null,
+    "high": null,
+    "sd": 0.24,
+    "mean": 3.477
+   },
+   "provisionalBands": null
+  },
+  {
+   "id": "toss-forward",
+   "name": "Toss in front",
+   "question": "Is my toss in front of me?",
+   "unit": "cm",
+   "kind": "per-serve",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=30",
+    "event:tossApex",
+    "startToe",
+    "roles:geometric",
+    "bodyHeight",
+    "playerHeight",
+    "pitch",
+    "yaw<=15"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "APEX_OUT_OF_FRAME",
+    "FEET_NOT_VISIBLE",
+    "ROLE_AMBIGUOUS",
+    "PITCH_UNKNOWN",
+    "CAMERA_TILTED",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "toss-lateral",
+   "name": "Toss left-right",
+   "question": "Does my toss drift left or right?",
+   "unit": "cm",
+   "kind": "per-serve",
+   "views": [
+    "rear"
+   ],
+   "statusDefault": "experimental",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:rear",
+    "fps>=30",
+    "event:tossApex",
+    "startToe",
+    "bodyHeight",
+    "playerHeight",
+    "pitch"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "APEX_OUT_OF_FRAME",
+    "FEET_NOT_VISIBLE"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "toss-drop",
+   "name": "Ball drop before contact",
+   "question": "How far does the ball fall before I hit it?",
+   "unit": "cm",
+   "kind": "per-serve",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "fps>=30",
+    "timebase",
+    "event:tossApex",
+    "event:contact-ball"
+   ],
+   "reasonCodes": [
+    "APEX_EXTRAPOLATED",
+    "APEX_OUT_OF_FRAME",
+    "BALL_NOT_TRACKED",
+    "NO_CONTACT",
+    "SCALE_INCONSISTENT",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "Nationally ranked junior men, n = 13",
+    "unit": "m",
+    "low": null,
+    "high": null,
+    "sd": 0.19,
+    "mean": 0.72
+   },
+   "provisionalBands": {
+    "labels": null
+   }
+  },
+  {
+   "id": "toss-height-spread",
+   "name": "Toss height consistency",
+   "question": "Is my toss becoming more consistent (height)?",
+   "unit": "cm",
+   "kind": "session-spread",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "n>=8",
+    "stability",
+    "event:tossApex",
+    "floor",
+    "bodyHeight",
+    "playerHeight"
+   ],
+   "reasonCodes": [
+    "TOO_FEW_SERVES",
+    "CAMERA_MOVED",
+    "IMPLAUSIBLE_VALUE",
+    "APEX_OUT_OF_FRAME"
+   ],
+   "higherIsBetter": false,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": "Includes a small side-to-side component unless you add the rear view.",
+   "referenceRange": {
+    "population": "Professional women, within-player SD at zenith (vertical), n = 8 players x 5 serves",
+    "unit": "cm",
+    "low": null,
+    "high": null,
+    "sd": 6,
+    "mean": null
+   },
+   "provisionalBands": {
+    "low": "< 8",
+    "typical": "8-20",
+    "high": "> 20",
+    "unit": "cm",
+    "labels": {
+     "low": "tight",
+     "typical": "typical",
+     "high": "scattered"
+    }
+   }
+  },
+  {
+   "id": "toss-forward-spread",
+   "name": "Toss front-back consistency",
+   "question": "Is my toss landing in the same place front-to-back?",
+   "unit": "cm",
+   "kind": "session-spread",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "n>=8",
+    "stability",
+    "event:tossApex",
+    "startToe",
+    "roles:geometric",
+    "playerHeight"
+   ],
+   "reasonCodes": [
+    "TOO_FEW_SERVES",
+    "CAMERA_MOVED",
+    "VIEW_NOT_SUPPORTED"
+   ],
+   "higherIsBetter": false,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "Professional women, within-player forward/back SD at zenith, n = 8 x 5",
+    "unit": "cm",
+    "low": null,
+    "high": null,
+    "sd": 7.2,
+    "mean": null
+   },
+   "provisionalBands": {
+    "low": "< 10",
+    "typical": "10-25",
+    "high": "> 25",
+    "unit": "cm",
+    "labels": {
+     "low": "tight",
+     "typical": "typical",
+     "high": "scattered"
+    }
+   }
+  },
+  {
+   "id": "toss-lateral-spread",
+   "name": "Toss side-to-side consistency",
+   "question": "Is my toss landing in the same place side to side?",
+   "unit": "cm",
+   "kind": "session-spread",
+   "views": [
+    "rear"
+   ],
+   "statusDefault": "experimental",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:rear",
+    "n>=8",
+    "stability",
+    "event:tossApex",
+    "startToe",
+    "playerHeight",
+    "pitch"
+   ],
+   "reasonCodes": [
+    "TOO_FEW_SERVES",
+    "CAMERA_MOVED",
+    "VIEW_NOT_SUPPORTED"
+   ],
+   "higherIsBetter": false,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "Professional women, within-player lateral SD at zenith, n = 8 x 5",
+    "unit": "cm",
+    "low": null,
+    "high": null,
+    "sd": 6.6,
+    "mean": null
+   },
+   "provisionalBands": null
+  },
+  {
+   "id": "contact-height-ratio",
+   "name": "Contact height",
+   "question": "How high do I make contact?",
+   "unit": "ratio-of-height",
+   "kind": "per-serve",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "fps>=30",
+    "event:contact-ball",
+    "floor",
+    "bodyHeight",
+    "pitch"
+   ],
+   "reasonCodes": [
+    "CONTACT_NOT_FOUND",
+    "NO_CONTACT",
+    "PITCH_UNKNOWN",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "Beginners (1.426) to elite (1.492) men, n = 32",
+    "unit": "ratio-of-height",
+    "low": 1.426,
+    "high": 1.492,
+    "sd": null,
+    "mean": null
+   },
+   "provisionalBands": {
+    "low": "< 1.38",
+    "typical": "1.38-1.54",
+    "high": "> 1.54",
+    "unit": "ratio-of-height",
+    "labels": null
+   }
+  },
+  {
+   "id": "contact-height-spread",
+   "name": "Contact height consistency",
+   "question": "Do I hit the ball at the same height each time?",
+   "unit": "cm",
+   "kind": "session-spread",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "n>=8",
+    "stability",
+    "event:contact-ball",
+    "floor",
+    "bodyHeight",
+    "playerHeight"
+   ],
+   "reasonCodes": [
+    "TOO_FEW_SERVES",
+    "CAMERA_MOVED"
+   ],
+   "higherIsBetter": false,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "Professional women, impact height within-player SD, n = 8 x 5",
+    "unit": "cm",
+    "low": null,
+    "high": null,
+    "sd": 3.5,
+    "mean": null
+   },
+   "provisionalBands": null
+  },
+  {
+   "id": "contact-forward",
+   "name": "Contact in front",
+   "question": "Am I hitting the ball out in front?",
+   "unit": "cm",
+   "kind": "per-serve",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=30",
+    "event:contact-ball",
+    "startToe",
+    "roles:geometric",
+    "bodyHeight",
+    "playerHeight",
+    "pitch",
+    "yaw<=15"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "CONTACT_NOT_FOUND",
+    "ROLE_AMBIGUOUS",
+    "PITCH_UNKNOWN",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": {
+    "low": "< 15",
+    "typical": "15-70",
+    "high": "> 70",
+    "unit": "cm",
+    "labels": null
+   }
+  },
+  {
+   "id": "rhythm-release-to-contact",
+   "name": "Toss-to-hit time",
+   "question": "How long from toss to hit?",
+   "unit": "ms",
+   "kind": "per-serve",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "fps>=30",
+    "timebase",
+    "event:tossRelease",
+    "event:contact"
+   ],
+   "reasonCodes": [
+    "TIME_BASE_UNKNOWN",
+    "RELEASE_NOT_FOUND",
+    "CONTACT_NOT_FOUND",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "High-performance men, n = 10",
+    "unit": "ms",
+    "low": null,
+    "high": null,
+    "sd": 100,
+    "mean": 970
+   },
+   "provisionalBands": {
+    "low": "< 800",
+    "typical": "800-1200",
+    "high": "> 1200",
+    "unit": "ms",
+    "labels": {
+     "low": "quick",
+     "typical": "typical",
+     "high": "unhurried"
+    }
+   }
+  },
+  {
+   "id": "rhythm-spread",
+   "name": "Rhythm consistency",
+   "question": "Is my rhythm the same every serve?",
+   "unit": "ms",
+   "kind": "session-spread",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "fps>=30",
+    "timebase",
+    "n>=8",
+    "event:tossRelease",
+    "event:contact"
+   ],
+   "reasonCodes": [
+    "TOO_FEW_SERVES",
+    "TIME_BASE_UNKNOWN",
+    "IMPLAUSIBLE_VALUE"
+   ],
+   "higherIsBetter": false,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": {
+    "low": "< 40",
+    "typical": "40-90",
+    "high": "> 90",
+    "unit": "ms",
+    "labels": {
+     "low": "tight",
+     "typical": "typical",
+     "high": "variable"
+    }
+   }
+  },
+  {
+   "id": "trophy-pause",
+   "name": "Pause at the top",
+   "question": "Do I pause at the top?",
+   "unit": "ms",
+   "kind": "per-serve",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "experimental",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "fps>=60",
+    "timebase",
+    "event:trophy-pelvis",
+    "roles:geometric",
+    "toggle:experimental"
+   ],
+   "reasonCodes": [
+    "FPS_TOO_LOW",
+    "POSE_LOW_QUALITY",
+    "CONDITION_NOT_VALIDATED",
+    "EXPERIMENTAL_HIDDEN"
+   ],
+   "higherIsBetter": false,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "leg-drive",
+   "name": "Leg drive (hip rise)",
+   "question": "Am I using my legs?",
+   "unit": "% of height",
+   "kind": "per-serve",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=30",
+    "event:tossRelease",
+    "event:contact",
+    "bodyHeight",
+    "hips:visible"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "OCCLUDED",
+    "CONTACT_NOT_FOUND",
+    "BASELINE_BUILDING",
+    "CONDITION_NOT_VALIDATED",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "drive-time",
+   "name": "Drive time",
+   "question": "How quickly do I drive up to the ball?",
+   "unit": "ms",
+   "kind": "per-serve",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=30",
+    "timebase",
+    "event:trophy-pelvis",
+    "event:contact"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "POSE_LOW_QUALITY",
+    "TIME_BASE_UNKNOWN",
+    "CONDITION_NOT_VALIDATED",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "loading-depth",
+   "name": "Loading (hip dip)",
+   "question": "How far do my hips dip as I load?",
+   "unit": "% of height",
+   "kind": "per-serve",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=30",
+    "event:tossRelease",
+    "event:contact",
+    "bodyHeight",
+    "hips:visible"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "OCCLUDED",
+    "CONDITION_NOT_VALIDATED",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": true,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "deep-bend-flag",
+   "name": "Deep bend (experimental)",
+   "question": "Did I bend deeply at the top?",
+   "unit": "yes/no",
+   "kind": "flag-per-serve",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "experimental",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=30",
+    "event:trophy",
+    "roles:geometric",
+    "frontLeg:visible",
+    "segmentLengths",
+    "pitch",
+    "toggle:experimental"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "ROLE_AMBIGUOUS",
+    "OCCLUDED",
+    "PITCH_UNKNOWN",
+    "EXPERIMENTAL_HIDDEN",
+    "NOT_IMPLEMENTED"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "shoulder-tilt-trophy",
+   "name": "Shoulder tilt at the top",
+   "question": "How much do my shoulders tilt at the top?",
+   "unit": "band",
+   "kind": "band",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=30",
+    "event:trophy",
+    "roles:geometric",
+    "shoulders:visible",
+    "pitch",
+    "baseline:2-sessions"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "ROLE_AMBIGUOUS",
+    "OCCLUDED",
+    "PITCH_UNKNOWN",
+    "CAMERA_TILTED",
+    "BASELINE_BUILDING",
+    "CONDITION_NOT_VALIDATED"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "knee-bend-band",
+   "name": "Knee bend",
+   "question": "How much do my knees bend at the top?",
+   "unit": "band",
+   "kind": "band",
+   "views": [
+    "rear"
+   ],
+   "statusDefault": "experimental",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:rear",
+    "fps>=30",
+    "event:trophy",
+    "pitch",
+    "roles:geometric",
+    "nearerKnee:visible"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "ROLE_AMBIGUOUS",
+    "OCCLUDED",
+    "CONDITION_NOT_VALIDATED"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "shoulder-over-shoulder-contact",
+   "name": "Shoulder over shoulder at contact",
+   "question": "Do my shoulders tilt up into the hit?",
+   "unit": "band",
+   "kind": "band",
+   "views": [
+    "rear"
+   ],
+   "statusDefault": "experimental",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:rear",
+    "fps>=30",
+    "event:contact",
+    "roles:geometric",
+    "shoulders:visible",
+    "pitch",
+    "baseline:2-sessions"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "OCCLUDED",
+    "BASELINE_BUILDING",
+    "CONDITION_NOT_VALIDATED",
+    "EXPERIMENTAL_HIDDEN"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "landing-distance",
+   "name": "Landing distance",
+   "question": "Am I driving into the court?",
+   "unit": "cm",
+   "kind": "per-serve",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=30",
+    "event:landing",
+    "startToe",
+    "roles:geometric",
+    "bodyHeight",
+    "playerHeight",
+    "pitch",
+    "yaw<=15"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "LANDING_NOT_FOUND",
+    "FEET_NOT_VISIBLE",
+    "ROLE_AMBIGUOUS",
+    "PITCH_UNKNOWN",
+    "CONDITION_NOT_VALIDATED",
+    "IMPLAUSIBLE_VALUE",
+    "CHECK_THIS_SERVE"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": true,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "repeatability",
+   "name": "Serve shape repeatability",
+   "question": "How similar are my serves to each other?",
+   "unit": "index-0-100",
+   "kind": "session-index",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "experimental",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "n>=5",
+    "stability",
+    "event:tossRelease",
+    "event:trophy",
+    "event:contact",
+    "roles:geometric",
+    "toggle:experimental"
+   ],
+   "reasonCodes": [
+    "TOO_FEW_SERVES",
+    "CAMERA_MOVED",
+    "EXPERIMENTAL_HIDDEN",
+    "CONDITION_NOT_VALIDATED"
+   ],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "serve-in-rate",
+   "name": "Serves in",
+   "question": "How many serves went in?",
+   "unit": "k-of-n",
+   "kind": "rate",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "player-entered",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "entry:outcome"
+   ],
+   "reasonCodes": [
+    "NOT_ENTERED",
+    "NEEDS_CALIBRATION"
+   ],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "first-serve-in-rate",
+   "name": "First serves in",
+   "question": "Am I getting more first serves in?",
+   "unit": "k-of-n",
+   "kind": "rate",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "player-entered",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "entry:outcome",
+    "entry:serveNumber"
+   ],
+   "reasonCodes": [
+    "NOT_ENTERED",
+    "NEEDS_CALIBRATION"
+   ],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "SwingVision users, NTRP 3.0-5.0, match play, combined genders, 250,000+ sessions",
+    "unit": "%",
+    "low": 53.3,
+    "high": 55.8,
+    "sd": null,
+    "mean": null
+   },
+   "provisionalBands": null
+  },
+  {
+   "id": "second-serve-in-rate",
+   "name": "Second serves in",
+   "question": "Is my second serve reliable?",
+   "unit": "k-of-n",
+   "kind": "rate",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "player-entered",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "entry:outcome",
+    "entry:serveNumber"
+   ],
+   "reasonCodes": [
+    "NOT_ENTERED",
+    "NEEDS_CALIBRATION"
+   ],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "SwingVision users, NTRP 3.0-5.0, match play, combined genders",
+    "unit": "%",
+    "low": 70.4,
+    "high": 70.9,
+    "sd": null,
+    "mean": null
+   },
+   "provisionalBands": null
+  },
+  {
+   "id": "double-faults",
+   "name": "Double faults",
+   "question": "How many double faults?",
+   "unit": "count",
+   "kind": "count",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "player-entered",
+   "validationLevel": "V0",
+   "prerequisites": [],
+   "reasonCodes": [
+    "NOT_ENTERED"
+   ],
+   "higherIsBetter": false,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": {
+    "population": "SwingVision users, NTRP 3.0-5.0, match play",
+    "unit": "per match",
+    "low": 3.21,
+    "high": 3.71,
+    "sd": null,
+    "mean": null
+   },
+   "provisionalBands": null
+  },
+  {
+   "id": "placement-zone",
+   "name": "Where serves land",
+   "question": "Where are my serves landing?",
+   "unit": "counts T/body/wide",
+   "kind": "distribution",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "player-entered",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "entry:outcome"
+   ],
+   "reasonCodes": [
+    "NOT_ENTERED",
+    "NEEDS_CALIBRATION"
+   ],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "serve-type-mix",
+   "name": "Serve types",
+   "question": "Which serves did I practise?",
+   "unit": "counts flat/slice/kick/unknown",
+   "kind": "distribution",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "player-entered",
+   "validationLevel": "V0",
+   "prerequisites": [],
+   "reasonCodes": [],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "speed-experimental",
+   "name": "Launch speed (experimental)",
+   "question": "Roughly how fast was that serve off the racket?",
+   "unit": "km/h range",
+   "kind": "range",
+   "views": [
+    "side"
+   ],
+   "statusDefault": "unavailable",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:side",
+    "fps>=120",
+    "timebase:proven",
+    "event:contact",
+    "playerHeight",
+    "entry:targetZone",
+    "toggle:experimental"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "FPS_TOO_LOW",
+    "TIME_BASE_UNKNOWN",
+    "TARGET_NOT_TAGGED",
+    "PLAYER_HEIGHT_MISSING",
+    "FLICKER",
+    "MOTION_BLUR",
+    "RANGE_TOO_WIDE",
+    "EXPERIMENTAL_HIDDEN",
+    "IMPLAUSIBLE_VALUE"
+   ],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "speed-average-rear",
+   "name": "Average speed to the bounce (experimental)",
+   "question": "Roughly how fast was that serve over its flight?",
+   "unit": "km/h range",
+   "kind": "range",
+   "views": [
+    "rear"
+   ],
+   "statusDefault": "unavailable",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "view:rear",
+    "fps>=60",
+    "timebase:proven",
+    "calibration:court-4pt",
+    "event:contact",
+    "bounce:located",
+    "toggle:experimental"
+   ],
+   "reasonCodes": [
+    "VIEW_NOT_SUPPORTED",
+    "NEEDS_CALIBRATION",
+    "BOUNCE_NOT_LOCATED",
+    "TIME_BASE_UNKNOWN",
+    "FPS_TOO_LOW",
+    "RANGE_TOO_WIDE",
+    "EXPERIMENTAL_HIDDEN",
+    "IMPLAUSIBLE_VALUE"
+   ],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "speed-radar-entered",
+   "name": "Radar speed (you logged)",
+   "question": "What did my radar say?",
+   "unit": "km/h",
+   "kind": "per-serve",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "player-entered",
+   "validationLevel": "V0",
+   "prerequisites": [],
+   "reasonCodes": [],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "spin",
+   "name": "Spin",
+   "question": "How much spin did I use?",
+   "unit": "none",
+   "kind": "per-serve",
+   "views": [],
+   "statusDefault": "unavailable",
+   "validationLevel": "V0",
+   "prerequisites": [],
+   "reasonCodes": [],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "capture-quality",
+   "name": "Capture quality",
+   "question": "Can I trust this session's numbers?",
+   "unit": "good|usable|poor",
+   "kind": "flag",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "measured",
+   "validationLevel": "V0",
+   "prerequisites": [],
+   "reasonCodes": [],
+   "higherIsBetter": true,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "fatigue-flag",
+   "name": "Fatigue check",
+   "question": "Did my serve drop off as I got tired?",
+   "unit": "flag",
+   "kind": "flag",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "n>=16",
+    "event:contact-ball",
+    "block:single"
+   ],
+   "reasonCodes": [],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  },
+  {
+   "id": "load-flag",
+   "name": "Serving volume check",
+   "question": "Am I ramping up my serving too fast?",
+   "unit": "flag",
+   "kind": "flag",
+   "views": [
+    "side",
+    "rear"
+   ],
+   "statusDefault": "estimated",
+   "validationLevel": "V0",
+   "prerequisites": [
+    "history:28d-3sessions"
+   ],
+   "reasonCodes": [],
+   "higherIsBetter": null,
+   "trendOnly": false,
+   "descriptiveOnly": false,
+   "requiredCopy": null,
+   "referenceRange": null,
+   "provisionalBands": null
+  }
+ ],
+ "reasonCodes": {
+  "VIEW_NOT_SUPPORTED": {
+   "meaning": "This view cannot see the quantity",
+   "unlockHint": "Film from the side, on your hitting-arm side, to see this.",
+   "unlockHintRearOnly": "Add a phone behind you to see this."
+  },
+  "VIEW_MISMATCH": {
+   "meaning": "Detected view differs from the declared view",
+   "unlockHint": "This clip doesn't look like the view you chose. Check where the phone is.",
+   "unlockHintRearOnly": null
+  },
+  "FPS_TOO_LOW": {
+   "meaning": "Below the metric's minimum real frame rate",
+   "unlockHint": "Record at 60 fps (120 fps or more for speed).",
+   "unlockHintRearOnly": null
+  },
+  "TIME_BASE_UNKNOWN": {
+   "meaning": "Possible rendered slow motion and the gravity check could not fix it; or a metric needing a proven time base has only a physics-fixed one",
+   "unlockHint": "Import the original slow-motion file, or record in the app.",
+   "unlockHintRearOnly": null
+  },
+  "FRAMES_DROPPED": {
+   "meaning": "More than 10% of frames missing in the serve window",
+   "unlockHint": "Close other apps while recording.",
+   "unlockHintRearOnly": null
+  },
+  "PLAYER_HEIGHT_MISSING": {
+   "meaning": "A cm, m or km/h value needs the entered height",
+   "unlockHint": "Add your height in Profile to see centimetres.",
+   "unlockHintRearOnly": null
+  },
+  "BODY_NOT_UPRIGHT": {
+   "meaning": "No standing frames to measure body height",
+   "unlockHint": "Stand tall for a second before each serve.",
+   "unlockHintRearOnly": null
+  },
+  "FEET_NOT_VISIBLE": {
+   "meaning": "Foot landmarks missing or cut off",
+   "unlockHint": "Keep your feet in the frame.",
+   "unlockHintRearOnly": null
+  },
+  "POSE_LOW_QUALITY": {
+   "meaning": "Tracking quality below 0.5 where the metric needs it",
+   "unlockHint": "Make sure you're the only person near your serving spot, with the light behind the camera.",
+   "unlockHintRearOnly": null
+  },
+  "OCCLUDED": {
+   "meaning": "Needed landmark hidden at the event",
+   "unlockHint": "Try the other side of the court so nothing blocks the view.",
+   "unlockHintRearOnly": null
+  },
+  "ROLE_AMBIGUOUS": {
+   "meaning": "A geometric role (front foot, nearer knee, front shoulder) could not be assigned",
+   "unlockHint": "We couldn't tell your front foot from your back foot on this serve.",
+   "unlockHintRearOnly": null
+  },
+  "BALL_NOT_TRACKED": {
+   "meaning": "Toss track missing or under 6 detections",
+   "unlockHint": "Toss against sky, a fence or a plain windbreak; avoid trees behind you.",
+   "unlockHintRearOnly": null
+  },
+  "APEX_EXTRAPOLATED": {
+   "meaning": "Apex above the frame, fitted with gravity from both branches; kept as estimated with a wider interval",
+   "unlockHint": "Your toss went above the picture, so its height is estimated. Move the phone back a step to see it all.",
+   "unlockHintRearOnly": null
+  },
+  "APEX_OUT_OF_FRAME": {
+   "meaning": "Apex left the frame and could not be fitted (one branch only, or out for more than 0.65 s); carried as censored",
+   "unlockHint": "Move the phone back a step or raise it a little so the whole toss fits.",
+   "unlockHintRearOnly": null
+  },
+  "RELEASE_NOT_FOUND": {
+   "meaning": "Toss release not found",
+   "unlockHint": "We couldn't see this moment clearly on this serve.",
+   "unlockHintRearOnly": null
+  },
+  "CONTACT_NOT_FOUND": {
+   "meaning": "Contact (with ball position) not found",
+   "unlockHint": "We couldn't see this moment clearly on this serve.",
+   "unlockHintRearOnly": null
+  },
+  "LANDING_NOT_FOUND": {
+   "meaning": "Landing not found",
+   "unlockHint": "We couldn't see this moment clearly on this serve.",
+   "unlockHintRearOnly": null
+  },
+  "NO_CONTACT": {
+   "meaning": "Swing and miss",
+   "unlockHint": "Swing and miss: not counted in contact stats.",
+   "unlockHintRearOnly": null
+  },
+  "AUDIO_UNAVAILABLE": {
+   "meaning": "Hit-sound timing off (the default) or audio unusable; contact timed from video",
+   "unlockHint": "Optional: turn on 'Use the hit sound for timing' for sharper contact timing.",
+   "unlockHintRearOnly": null
+  },
+  "NOT_ENTERED": {
+   "meaning": "Player has not tagged what this needs",
+   "unlockHint": "Tag your serves (in, net, long, wide) in review.",
+   "unlockHintRearOnly": null
+  },
+  "TARGET_NOT_TAGGED": {
+   "meaning": "Launch speed needs the aimed target to bound the ball's angle out of the picture (D4)",
+   "unlockHint": "Tag where you aimed: T, body or wide.",
+   "unlockHintRearOnly": null
+  },
+  "BOUNCE_NOT_LOCATED": {
+   "meaning": "Rear view: bounce not found in the video, or located on too few serves in the block",
+   "unlockHint": "Raise the rear phone so both service boxes are clear. 4K helps.",
+   "unlockHintRearOnly": null
+  },
+  "NEEDS_CALIBRATION": {
+   "meaning": "Rear auto outcomes or rear speed need the four-corner tap",
+   "unlockHint": "Tap the four corners of the service box.",
+   "unlockHintRearOnly": null
+  },
+  "CAMERA_MOVED": {
+   "meaning": "Camera drift above threshold",
+   "unlockHint": "Fix the phone firmly; it moved during recording.",
+   "unlockHintRearOnly": null
+  },
+  "CAMERA_TILTED": {
+   "meaning": "Measured pitch or roll above 5 degrees (8 after the tilt test), or yaw above 15 degrees",
+   "unlockHint": "Keep the phone level; the guide turns green.",
+   "unlockHintRearOnly": null
+  },
+  "PITCH_UNKNOWN": {
+   "meaning": "No pitch from sensors or background verticals; absolute heights, cm positions and angles are experimental",
+   "unlockHint": "Record in the app with motion access on, so we can level the picture.",
+   "unlockHintRearOnly": null
+  },
+  "SCALE_INCONSISTENT": {
+   "meaning": "Gravity-based and body-based scales disagree by more than 15%, or the estimated toss depth disagrees with its prior by more than 3 sigma",
+   "unlockHint": "Check your height in Profile. If this was slow motion, import the original.",
+   "unlockHintRearOnly": null
+  },
+  "IMPLAUSIBLE_VALUE": {
+   "meaning": "A hard plausibility bound failed; value excluded and counted as not measured",
+   "unlockHint": "This reading looked wrong, so we left it out.",
+   "unlockHintRearOnly": null
+  },
+  "CHECK_THIS_SERVE": {
+   "meaning": "A soft plausibility bound failed; value kept with lower confidence",
+   "unlockHint": "This one looks unusual. Check this serve?",
+   "unlockHintRearOnly": null
+  },
+  "TOO_FEW_SERVES": {
+   "meaning": "n below the minimum for this aggregate",
+   "unlockHint": "Record at least {n} serves from one side.",
+   "unlockHintRearOnly": null
+  },
+  "BASELINE_BUILDING": {
+   "meaning": "A player-relative band needs at least 2 matched sessions",
+   "unlockHint": "Building your range: {k} of 2 sessions from this set-up.",
+   "unlockHintRearOnly": null
+  },
+  "RANGE_TOO_WIDE": {
+   "meaning": "Speed range wider than 35% of its midpoint",
+   "unlockHint": "This footage can't pin the speed down closely enough.",
+   "unlockHintRearOnly": null
+  },
+  "EXPERIMENTAL_HIDDEN": {
+   "meaning": "Experimental toggle off",
+   "unlockHint": "Turn on experimental metrics in Profile to see this.",
+   "unlockHintRearOnly": null
+  },
+  "CONDITION_NOT_VALIDATED": {
+   "meaning": "Metric not yet validated for this light condition class",
+   "unlockHint": "Checked in daylight only. Under lights this reading is experimental.",
+   "unlockHintRearOnly": null
+  },
+  "VALIDATION_PENDING": {
+   "meaning": "Status capped by validation level",
+   "unlockHint": "",
+   "unlockHintRearOnly": null
+  },
+  "NOT_MEASURABLE": {
+   "meaning": "Physically impossible with phone video",
+   "unlockHint": "Spin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the serve type you meant instead.",
+   "unlockHintRearOnly": null
+  },
+  "NOT_IMPLEMENTED": {
+   "meaning": "Planned, not built in v1",
+   "unlockHint": "Coming later.",
+   "unlockHintRearOnly": null
+  },
+  "LOW_LIGHT": {
+   "meaning": "Exposure or backlight too poor for pose",
+   "unlockHint": "Put the sun or court lights behind the camera.",
+   "unlockHintRearOnly": null
+  },
+  "FLICKER": {
+   "meaning": "100 Hz light flicker detected",
+   "unlockHint": "Under lights, record at 50 or 100 fps if your phone allows it.",
+   "unlockHintRearOnly": null
+  },
+  "MOTION_BLUR": {
+   "meaning": "Ball streak longer than 3 diameters near contact",
+   "unlockHint": "More light, or a shorter shutter in the app's recorder.",
+   "unlockHintRearOnly": null
+  },
+  "UNMATCHED": {
+   "meaning": "Comparison is not like-for-like",
+   "unlockHint": "Compare sessions from the same side, view, set-up and serve.",
+   "unlockHintRearOnly": null
+  }
+ }
+}

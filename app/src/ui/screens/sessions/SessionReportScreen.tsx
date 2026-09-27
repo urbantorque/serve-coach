@@ -1,69 +1,106 @@
-import { FlaskIcon, InfoIcon } from '@phosphor-icons/react'
+import { CaretDownIcon, FlaskIcon, InfoIcon } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { useParams } from 'react-router'
-import type { MetricId } from '../../../analysis/types.ts'
-import { useSession, useSessionStats } from '../../../data/hooks.ts'
+import type { MetricId, MetricValue as MetricValueData } from '../../../analysis/types.ts'
+import { useLatestDecision, useProfile } from '../../../data/hooks.ts'
 import { useSettingsStore } from '../../../data/stores/settings.ts'
 import {
-  CaptureQualityLine,
+  Button,
   DelayedSkeleton,
   EmptyState,
   ListGroup,
+  ListRow,
   MetricGrid,
   MetricTile,
   SampleBanner,
   Screen,
   SectionLabel,
+  SegmentedControl,
   Skeleton,
   UnavailableRow,
 } from '../../components/index.ts'
 import { UI } from '../../copy/strings.ts'
 import { shortDate } from '../../format/dates.ts'
 import { paths } from '../../shell/paths.ts'
+import { matched, seriesFor, stratumOf, stratumWords, usualRange, type SessionBundle } from '../progress/insights/history.ts'
+import { useExperiment, useReportData, useSessionBundles, useSessionData } from '../progress/insights/hooks.ts'
+import { outcomeLinkState } from '../progress/insights/outcomes.ts'
+import { InlineError } from '../progress/insights/ui.tsx'
+import { metricInfoFor } from '../progress/insights/links.ts'
+import { FocusCard, type EvidenceStat } from '../today/FocusCard.tsx'
+import { InsightCard, OutcomesSection } from './report/OutcomesSection.tsx'
+import { CaptureLine, ExperimentResultCard, StorageLine } from './report/ReportParts.tsx'
+import { ServeList } from './report/ServeList.tsx'
+import { SupportTiles } from './report/SupportTiles.tsx'
+import { TossHero } from './report/TossHero.tsx'
 
-/** Hero order (DESIGN §10.6, D5). Side and rear reports are never pooled (D1). */
-const HEROES: Record<'side' | 'rear', MetricId[]> = {
-  side: [
-    'toss-height-spread', 'toss-forward-spread', 'contact-height-ratio', 'rhythm-release-to-contact',
-    'rhythm-spread', 'landing-distance', 'leg-drive', 'shoulder-tilt-trophy',
-  ],
-  rear: ['toss-height-spread', 'contact-height-ratio', 'rhythm-release-to-contact', 'rhythm-spread'],
-}
-const OUTCOMES: MetricId[] = ['first-serve-in-rate', 'second-serve-in-rate', 'double-faults']
-/** Ghost rows every report carries when unavailable (DESIGN §8.7 "Unavailable ghost row"). */
+type Metrics = Partial<Record<MetricId, MetricValueData>>
+
+/** Ghost rows every report carries when unavailable (DESIGN §8.7, §10.6; D1 view limits). */
 const GHOSTS: Record<'side' | 'rear', MetricId[]> = {
   side: ['knee-bend-band', 'shoulder-over-shoulder-contact', 'speed-experimental', 'spin'],
   rear: ['leg-drive', 'shoulder-tilt-trophy', 'speed-average-rear', 'spin'],
 }
+/** Hero and supporting metrics whose own unavailability is also listed with its reason. */
+const CORE: Record<'side' | 'rear', MetricId[]> = {
+  side: ['toss-height-spread', 'toss-forward-spread', 'contact-height-ratio', 'rhythm-release-to-contact', 'rhythm-spread', 'landing-distance', 'leg-drive', 'shoulder-tilt-trophy'],
+  rear: ['toss-height-spread', 'contact-height-ratio', 'rhythm-release-to-contact', 'rhythm-spread'],
+}
+const MORE: Record<'side' | 'rear', MetricId[]> = {
+  side: ['toss-apex-height', 'toss-forward', 'toss-drop', 'contact-forward', 'contact-height-spread', 'retoss-count'],
+  rear: ['toss-apex-height', 'toss-drop', 'contact-height-spread'],
+}
 const EXPERIMENTAL: Record<'side' | 'rear', MetricId[]> = {
   side: ['deep-bend-flag', 'speed-experimental', 'trophy-pause', 'repeatability'],
-  rear: ['toss-lateral-spread', 'knee-bend-band', 'shoulder-over-shoulder-contact', 'speed-average-rear', 'trophy-pause', 'repeatability'],
+  rear: ['toss-lateral-spread', 'toss-lateral', 'knee-bend-band', 'shoulder-over-shoulder-contact', 'speed-average-rear', 'trophy-pause', 'repeatability'],
+}
+const EVIDENCE_OK = (v?: MetricValueData) => v?.status === 'measured' || v?.status === 'estimated'
+
+function ReportSkeleton() {
+  return (
+    <Screen title="Session" back={{ to: paths.sessions(), label: 'Sessions' }}>
+      <DelayedSkeleton>
+        <div className="flex flex-col gap-3">
+          <Skeleton variant="text" className="w-1/2" />
+          <Skeleton variant="text" className="w-5/6" />
+          <Skeleton className="h-36 w-full" />
+          <Skeleton className="h-80 w-full" />
+        </div>
+      </DelayedSkeleton>
+    </Screen>
+  )
 }
 
 /**
- * Session report (DESIGN §10.6, PRODUCT §6.5). STUB: renders the fixed order with real data-layer
- * reads (headline, capture line, hero tiles, outcomes, ghost rows, experimental group, validation
- * footer) so the honesty rules are wired end to end. The focus card, toss map, leg-drive and band
- * tiles, serve strip and storage line are for the Session report builder.
+ * Session report (DESIGN §10.6, PRODUCT §6.5): headline, capture line, the one coaching decision, the
+ * toss-consistency hero, supporting stats, outcomes (you logged) and the ins-and-misses insight, every
+ * serve, what this view can't see, and the experimental group behind the toggle.
  */
 export function SessionReportScreen() {
   const { sessionId } = useParams()
-  const session = useSession(sessionId)
-  const stats = useSessionStats(sessionId)
+  const data = useReportData(sessionId)
+  const profile = useProfile()
+  const decision = useLatestDecision(sessionId)
   const experimental = useSettingsStore((s) => s.experimentalMetrics)
+  const isDemo = data?.session.isDemo === 1
+  const bundles = useSessionBundles({ includeDemo: isDemo })
+  const exp = useExperiment(data?.session.experimentId)
+  const baselineIds = exp ? exp.baselineSessionIds : undefined
+  const retestIds = exp ? exp.retestSessionIds : undefined
+  const expBaseline = useSessionData(baselineIds)
+  const expRetests = useSessionData(retestIds)
+  // A re-test session carries no decision of its own: show the experiment's focus (from its baseline session).
+  const expDecision = useLatestDecision(!decision && exp ? exp.baselineSessionIds.at(-1) : '__none__')
+  const [stratumIdx, setStratumIdx] = useState('0')
+  const [moreOpen, setMoreOpen] = useState(false)
 
-  if (session === undefined || stats === undefined) {
-    return (
-      <Screen title="Session" back={{ to: paths.sessions(), label: 'Sessions' }}>
-        <DelayedSkeleton>
-          <div className="flex flex-col gap-3">
-            <Skeleton variant="text" className="w-2/3" />
-            <Skeleton variant="tile" />
-          </div>
-        </DelayedSkeleton>
-      </Screen>
-    )
-  }
-  if (session === null) {
+  const self: SessionBundle | null = data ? { session: data.session, stats: data.stats } : null
+  const earlier = self && bundles ? bundles.filter((b) => b.session.id !== self.session.id && b.session.startedAt < self.session.startedAt && b.session.isDemo === self.session.isDemo) : []
+  const prevMatched = self ? earlier.filter((b) => matched(b, self)).slice(0, 6) : []
+  const prevData = useSessionData(prevMatched.map((b) => b.session.id))
+
+  if (data === undefined || profile === undefined || decision === undefined) return <ReportSkeleton />
+  if (data === null) {
     return (
       <Screen title="Session" back={{ to: paths.sessions(), label: 'Sessions' }}>
         <EmptyState icon={InfoIcon} title="Session not found" body="It may have been deleted. Your other sessions are in the Sessions tab." />
@@ -71,79 +108,227 @@ export function SessionReportScreen() {
     )
   }
 
+  const { session, stats, rows, tally } = data
   const view = session.view === 'rear' ? 'rear' : 'side'
-  const m = stats?.metrics ?? {}
   const a = session.analysis
-  const tile = (id: MetricId) => {
-    const v = m[id]
-    if (!v || v.status === 'unavailable') return null
-    if (v.status === 'experimental' && !EXPERIMENTAL[view].includes(id)) return null
-    return <MetricTile key={id} metricId={id} value={v} to={paths.metricInfo(id)} />
+  const strata = stats?.strata ?? []
+  const stratum = strata.length > 1 ? strata[Number(stratumIdx)] ?? strata[0] : undefined
+  const m: Metrics = stratum?.metrics ?? stats?.metrics ?? {}
+  const heightM = a?.capture.scale.heightM ?? profile?.heightM
+  const orientation = session.orientation ?? a?.capture.rectification.orientation ?? 'portrait'
+  const key = stratum?.key ?? stratumOf({ session, stats })
+  const stratumLabel = stratumWords(key)
+  const goal = profile?.goal ?? 'first-serves-in'
+  const back = { to: paths.sessions(), label: 'Sessions' }
+
+  if (session.status !== 'ready' || !a) {
+    return (
+      <Screen title={shortDate(session.visitId)} back={back} banner={isDemo ? <SampleBanner /> : undefined}>
+        {session.status === 'failed' ? (
+          <InlineError action={<Button variant="secondary" to={paths.importVideo()}>Choose another video</Button>}>
+            {session.error?.message ?? "This session couldn't be analysed. Your other sessions are fine."}
+          </InlineError>
+        ) : (
+          <InlineError action={<Button variant="secondary" to={paths.processing(session.id)}>See progress</Button>}>
+            This session is still being analysed. The report appears when it's done.
+          </InlineError>
+        )}
+      </Screen>
+    )
   }
-  const ghosts = GHOSTS[view].filter((id) => m[id]?.status === 'unavailable')
-  const experimentalTiles = EXPERIMENTAL[view].filter((id) => m[id] && m[id]?.status === 'experimental')
-  const heroIds = HEROES[view].filter((id) => m[id]?.status !== 'experimental')
+
+  // Usual ranges from previous matched sessions (≥ 2, DESIGN §9.2).
+  const usualOf = (id: MetricId) => (self ? usualRange(seriesFor(id, [...prevMatched].reverse().concat(self))) : null)
+  const usual: Partial<Record<MetricId, [number, number] | null>> = {}
+  for (const id of ['contact-height-ratio', 'rhythm-release-to-contact', 'rhythm-spread', 'landing-distance', 'toss-height-spread'] as MetricId[]) usual[id] = usualOf(id)
+
+  const shownDecision = decision ?? expDecision ?? null
+  const decisionSession = shownDecision?.sessionId === session.id ? m : (expBaseline?.[0]?.stats?.metrics ?? {})
+  const evidence: EvidenceStat[] = (shownDecision?.evidence?.metricIds ?? [])
+    .map((id) => ({ metricId: id, value: decisionSession[id] }))
+    .filter((e): e is EvidenceStat => EVIDENCE_OK(e.value))
+
+  const ghosts = [
+    ...CORE[view].filter((id) => m[id]?.status === 'unavailable'),
+    ...GHOSTS[view].filter((id) => !m[id] || m[id]?.status === 'unavailable'),
+  ]
+  const experimentalIds = EXPERIMENTAL[view].filter((id) => m[id]?.status === 'experimental')
+  const moreIds = MORE[view].filter((id) => m[id] && m[id]!.status !== 'unavailable' && m[id]!.status !== 'experimental')
+  const earlierRows = (prevData ?? []).map((d) => ({ sessionId: d.session.id, rows: d.rows }))
+  const link = outcomeLinkState({ engineLink: stats?.outcomeLink, rows, earlier: earlierRows })
+  const tagged = rows.some((r) => r.kind !== 'untagged')
+  const counts = a.counts
+
+  // Primary action (PRODUCT §6.5 precedence).
+  let primary: { label: string; to: string } | null = null
+  if (isDemo) primary = { label: 'Set up camera', to: paths.setupChoice() }
+  else if (!tagged && !tally) primary = { label: 'Tag serves', to: paths.tagging(session.id) }
+  else if (shownDecision?.gate === 'pain-referral') primary = null
+  else if (shownDecision?.gate === 'low-confidence' || shownDecision?.gate === 'too-few-serves') primary = { label: 'See set-up tips', to: paths.setupChoice() }
+  else if (shownDecision?.focus) primary = { label: 'Start drill', to: paths.focus() }
+  else primary = { label: 'Record session', to: paths.record() }
+
+  const meta = [
+    view === 'rear' ? 'View from behind' : 'Side view',
+    key.courtSide !== 'unknown' ? key.courtSide : null,
+    key.serveNumber === 2 ? 'second serves' : key.serveNumber === 1 ? 'first serves' : null,
+    `${Math.round(a.capture.meta.captureFps)} fps`,
+  ]
+    .filter(Boolean)
+    .join(', ')
 
   return (
     <Screen
       title={shortDate(session.visitId)}
-      back={{ to: paths.sessions(), label: 'Sessions' }}
-      banner={session.isDemo ? <SampleBanner /> : undefined}
+      back={back}
+      banner={isDemo ? <SampleBanner /> : undefined}
+      bottomAction={
+        primary ? (
+          <Button to={primary.to} fullWidth>
+            {primary.label}
+          </Button>
+        ) : undefined
+      }
     >
-      <header className="flex flex-col gap-3">
-        <p className="text-footnote text-ink-3">
-          {view === 'rear' ? 'View from behind' : 'Side view'}, {session.defaultSide ?? 'deuce'},{' '}
-          {session.defaultServeNumber === 2 ? 'second' : 'first'} serves, {a?.capture.meta.captureFps ?? 60} fps
-        </p>
-        {stats?.headline ? <p className="text-title-2 text-ink">{stats.headline}</p> : null}
-        {a ? (
-          <CaptureQualityLine
-            overall={a.capture.quality.overall}
-            measured={a.counts.included}
-            detected={a.counts.analysed}
-            tip={a.capture.quality.checks.find((c) => c.fix)?.fix}
+      <header className="-mt-1 flex flex-col gap-3">
+        <p className="text-footnote text-ink-3">{meta}</p>
+        {strata.length > 1 ? (
+          <SegmentedControl
+            label="Serves shown"
+            value={stratumIdx}
+            onChange={setStratumIdx}
+            options={strata.slice(0, 4).map((s, i) => ({ value: String(i), label: stratumWords(s.key).replace(/^(Side view|View from behind), /, '') }))}
           />
         ) : null}
+        {stats?.headline ? <p className="text-title-2 text-ink text-pretty">{stats.headline}</p> : null}
+        <CaptureLine quality={a.capture.quality} measured={counts.included} detected={counts.analysed} />
       </header>
 
-      <section className="flex flex-col gap-3" aria-label="Your serve today">
-        <SectionLabel>Your serve today</SectionLabel>
-        <MetricGrid>{heroIds.map(tile)}</MetricGrid>
+      {shownDecision || exp ? (
+        <section className="-mt-4 flex flex-col gap-3" aria-label="Your focus">
+          {shownDecision ? (
+            <FocusCard
+              decision={shownDecision}
+              variant="compact"
+              orientation={orientation}
+              stats={evidence}
+              sample={isDemo}
+              showPrimary={false}
+            />
+          ) : null}
+          {exp && session.isRetest === 1 && expBaseline && expRetests ? (
+            <ExperimentResultCard experiment={exp} baseline={expBaseline} retests={expRetests} />
+          ) : null}
+        </section>
+      ) : null}
+
+      <section className="flex flex-col gap-3" aria-labelledby="serve-today">
+        <SectionLabel>
+          <span id="serve-today">Your serve today</span>
+        </SectionLabel>
+        <TossHero
+          session={session}
+          metrics={m}
+          rows={rows}
+          heightM={heightM}
+          previous={(prevData ?? []).map((d) => d.rows)}
+          usualSpread={usual['toss-height-spread'] ?? null}
+          stratumLabel={stratumLabel}
+          experimentalOn={experimental}
+        />
+        <SupportTiles
+          view={view}
+          metrics={m}
+          goal={goal}
+          usual={usual}
+          orientation={orientation}
+          representativeServeId={stats?.representativeServeId}
+          sessionId={session.id}
+        />
+        {moreIds.length ? (
+          <div className="flex flex-col gap-3">
+            <Button variant="tertiary" onClick={() => setMoreOpen((v) => !v)} aria-expanded={moreOpen} aria-controls="more-measurements" className="self-start">
+              <span className="flex items-center gap-1">
+                More measurements
+                <CaretDownIcon size={16} aria-hidden="true" className={moreOpen ? 'rotate-180 transition-transform duration-(--dur-fast) motion-reduce:transition-none' : 'transition-transform duration-(--dur-fast) motion-reduce:transition-none'} />
+              </span>
+            </Button>
+            {moreOpen ? (
+              <div id="more-measurements">
+                <MetricGrid>
+                  {moreIds.map((id) => (
+                    <MetricTile key={id} metricId={id} value={m[id]!} to={metricInfoFor(id, session.id)} />
+                  ))}
+                </MetricGrid>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
-      <section className="flex flex-col gap-3" aria-label="Outcomes">
-        <SectionLabel>Outcomes</SectionLabel>
-        <MetricGrid>{OUTCOMES.map(tile)}</MetricGrid>
+      <section className="flex flex-col gap-3" aria-labelledby="outcomes">
+        <SectionLabel>
+          <span id="outcomes">Outcomes</span>
+        </SectionLabel>
+        <OutcomesSection
+          sessionId={session.id}
+          side={key.courtSide === 'ad' ? 'ad' : 'deuce'}
+          serveNumber={key.serveNumber === 'unknown' ? undefined : key.serveNumber}
+          metrics={m}
+          rows={rows}
+          tally={tally}
+        />
+        {tagged ? <InsightCard state={link} sessionId={session.id} /> : null}
+      </section>
+
+      <section className="flex flex-col gap-3" aria-labelledby="all-serves">
+        <SectionLabel>
+          <span id="all-serves">All serves</span>
+        </SectionLabel>
+        <ServeList sessionId={session.id} rows={rows} view={view} orientation={orientation} heightM={heightM} stratumLabel={stratumLabel} />
       </section>
 
       {ghosts.length ? (
-        <section className="flex flex-col gap-3" aria-label={UI.notAvailableHeader}>
-          <SectionLabel>{UI.notAvailableHeader}</SectionLabel>
+        <section className="flex flex-col gap-3" aria-labelledby="not-available">
+          <SectionLabel>
+            <span id="not-available">{UI.notAvailableHeader}</span>
+          </SectionLabel>
           <ListGroup>
             {ghosts.map((id) => (
-              <UnavailableRow key={id} metricId={id} reasonCode={m[id]?.reasonCode} to={paths.metricInfo(id)} />
+              <UnavailableRow key={id} metricId={id} reasonCode={m[id]?.reasonCode ?? (view === 'side' ? 'NEEDS_REAR_VIEW' : 'NEEDS_SIDE_VIEW')} to={metricInfoFor(id, session.id)} />
             ))}
           </ListGroup>
         </section>
       ) : null}
 
-      {experimental && experimentalTiles.length ? (
-        <section className="flex flex-col gap-3" aria-label={UI.experimentalHeader}>
+      {experimental && experimentalIds.length ? (
+        <section className="flex flex-col gap-3" aria-labelledby="experimental">
           <div className="flex flex-col gap-1">
             <SectionLabel className="flex items-center gap-1.5">
               <FlaskIcon size={16} aria-hidden="true" />
-              {UI.experimentalHeader}
+              <span id="experimental">{UI.experimentalHeader}</span>
             </SectionLabel>
             <p className="text-footnote text-ink-3">{UI.experimentalLine}</p>
           </div>
-          <MetricGrid>{experimentalTiles.map(tile)}</MetricGrid>
+          <MetricGrid>
+            {experimentalIds.map((id) => (
+              <MetricTile key={id} metricId={id} value={m[id]!} to={metricInfoFor(id, session.id)} />
+            ))}
+          </MetricGrid>
         </section>
       ) : null}
 
-      <p className="flex items-start gap-2 text-footnote text-ink-2">
-        <InfoIcon size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
-        <span>{UI.validationFooter}</span>
-      </p>
+      <footer className="flex flex-col gap-3">
+        <ListGroup>
+          <ListRow title="How we measured" to={paths.howWeMeasure()} />
+        </ListGroup>
+        <p className="flex items-start gap-2 text-footnote text-ink-2">
+          <InfoIcon size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
+          <span>{UI.validationFooter}</span>
+        </p>
+        <StorageLine sessionId={session.id} />
+        <p className="text-caption text-ink-3">Engine {a.engine.engineVersion}</p>
+      </footer>
     </Screen>
   )
 }

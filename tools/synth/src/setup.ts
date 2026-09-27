@@ -57,6 +57,8 @@ export interface Scenario {
     courtSides?: CourtSide[]
     style?: ServeStyle
     sdScale?: number
+    /** Extra SD factor per varied parameter (params.ts SampleOptions.sdScaleByParam). */
+    sdScaleByParam?: Partial<Record<VariedParam, number>>
     dribbles?: number[]
     /** Standing time after each recovery before walking back (s), per serve index. */
     idleS?: number[]
@@ -146,7 +148,7 @@ export function sampleScenarioServes(sc: Scenario): ServeParams[] {
   for (let k = 0; k < sc.serves.count; k++) {
     const direction = sc.serves.directions?.[k % sc.serves.directions.length] ?? DEFAULT_DIRECTIONS[k % DEFAULT_DIRECTIONS.length]
     const courtSide = sc.serves.courtSides?.[k % sc.serves.courtSides.length] ?? 'deuce'
-    out.push(sampleServeParams(rng, profile, { direction, courtSide, style: sc.serves.style, sdScale: sc.serves.sdScale, overrides: sc.serves.overrides }))
+    out.push(sampleServeParams(rng, profile, { direction, courtSide, style: sc.serves.style, sdScale: sc.serves.sdScale, sdScaleByParam: sc.serves.sdScaleByParam, overrides: sc.serves.overrides }))
   }
   return out
 }

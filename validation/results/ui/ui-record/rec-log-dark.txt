@@ -1,0 +1,4 @@
+after stop: While it's fresh: how many went in?
+after analyse: http://localhost:5203/processing/01M3GFK1317R11F4PREDMHZWYH
+finished: http://localhost:5203/sessions/01M3GFK1317R11F4PREDMHZWYH
+stored: {"status":"ready","template":"check-in","setup":"side-portrait","videos":[{"source":"in-app-web","storage":"idb","audio":"never-recorded","samples":0,"recordedAnyway":["cq.camera-level","cq.player-in-frame","cq.toss-headroom","cq.court-room","cq.player-size"]}],"tally":{"in":9,"total":15,"net":1}}

@@ -1,0 +1,274 @@
+{
+ "source": "synthetic",
+ "generated": "2026-09-27T04:09:11.155Z",
+ "clips": 122,
+ "note": "Rendered synthetic serves run through the app pipeline; no real footage. See validation/results/metrics/SUMMARY.md.",
+ "metrics": {
+  "toss-apex-height": {
+   "threshold": "median |e| ≤ 0.025, p95 ≤ 0.05, cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": true,
+    "n": 11,
+    "bias": -0.009014545454545468,
+    "mae": 0.011025454545454571,
+    "p95": 0.026720000000000077,
+    "coverage": 1
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": false,
+    "n": 94,
+    "bias": -0.03648585106382982,
+    "mae": 0.03850010638297875,
+    "p95": 0.06894,
+    "coverage": 1
+   }
+  },
+  "toss-forward": {
+   "threshold": "MAE ≤ 5 cm, p95 ≤ 10, cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": false,
+    "n": 11,
+    "bias": 6.70090909090909,
+    "mae": 6.700909090909089,
+    "p95": 8.600000000000001,
+    "coverage": 1
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": false,
+    "n": 94,
+    "bias": 5.422978723404256,
+    "mae": 5.422978723404252,
+    "p95": 8.29,
+    "coverage": 0.9893617021276596
+   }
+  },
+  "toss-drop": {
+   "threshold": "MAE ≤ 5 cm, cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": true,
+    "n": 11,
+    "bias": 0.22999999999999687,
+    "mae": 0.500909090909092,
+    "p95": 3.5999999999999943,
+    "coverage": 1
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": true,
+    "n": 94,
+    "bias": -0.41244680851064036,
+    "mae": 0.7069148936170219,
+    "p95": 3.5999999999999943,
+    "coverage": 0.9893617021276596
+   }
+  },
+  "contact-height-ratio": {
+   "threshold": "MAE ≤ 0.03, p95 ≤ 0.05, cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": true,
+    "n": 11,
+    "bias": -0.005741817148195307,
+    "mae": 0.00717667759499259,
+    "p95": 0.019702489124698186,
+    "coverage": 1
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": false,
+    "n": 95,
+    "bias": -0.02257478511388658,
+    "mae": 0.025256287955126515,
+    "p95": 0.050261880292995276,
+    "coverage": 1
+   }
+  },
+  "contact-forward": {
+   "threshold": "MAE ≤ 6 cm, p95 ≤ 12, cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": false,
+    "n": 11,
+    "bias": 6.565454545454545,
+    "mae": 6.565454545454545,
+    "p95": 8.46,
+    "coverage": 1
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": true,
+    "n": 95,
+    "bias": 5.0926315789473735,
+    "mae": 5.099789473684214,
+    "p95": 8.46,
+    "coverage": 0.9789473684210527
+   }
+  },
+  "rhythm-release-to-contact": {
+   "threshold": "MAE ≤ 1 frame + 5 ms (21.7 ms at 60), cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": true,
+    "n": 11,
+    "bias": -3.9090909090909296,
+    "mae": 10.981818181818177,
+    "p95": 27.5,
+    "coverage": 1
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": true,
+    "n": 95,
+    "bias": 2.1315789473684017,
+    "mae": 9.295789473684204,
+    "p95": 27.5,
+    "coverage": 0.9894736842105263
+   }
+  },
+  "trophy-pause": {
+   "threshold": "MAE ≤ 60 ms",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": false,
+    "n": 6,
+    "bias": -99.91666666666667,
+    "mae": 99.91666666666667,
+    "p95": 177.4,
+    "coverage": 0.5
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": false,
+    "n": 68,
+    "bias": -30.685294117647064,
+    "mae": 65.11764705882354,
+    "p95": 177.4,
+    "coverage": 0.6029411764705882
+   }
+  },
+  "leg-drive": {
+   "threshold": "MAE ≤ 2% H, cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": false,
+    "n": 11,
+    "bias": -2.5174268261440775,
+    "mae": 2.5174268261440775,
+    "p95": 3.0751269918382036,
+    "coverage": 1
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": true,
+    "n": 95,
+    "bias": -1.811460073324603,
+    "mae": 1.9330916992859013,
+    "p95": 3.0137720362366753,
+    "coverage": 1
+   }
+  },
+  "drive-time": {
+   "threshold": "MAE ≤ 50 ms, cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": false,
+    "n": 6,
+    "bias": -63.77287559980841,
+    "mae": 63.77287559980841,
+    "p95": 128.74384142431234,
+    "coverage": 0.8333333333333334
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": false,
+    "n": 68,
+    "bias": -65.77895553414986,
+    "mae": 74.88111242028887,
+    "p95": 132.990041916383,
+    "coverage": 0.7352941176470589
+   }
+  },
+  "loading-depth": {
+   "threshold": "MAE ≤ 2% H",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": true,
+    "n": 11,
+    "bias": -0.41093185571866186,
+    "mae": 0.4213765804851841,
+    "p95": 0.8478235960272931,
+    "coverage": 1
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": true,
+    "n": 95,
+    "bias": -0.3146268246458588,
+    "mae": 0.37654773399664265,
+    "p95": 1.069302802356672,
+    "coverage": 1
+   }
+  },
+  "landing-distance": {
+   "threshold": "MAE ≤ 8 cm, p95 ≤ 15, cov ≥ 93%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": false,
+    "n": 11,
+    "bias": 1.390000000000002,
+    "mae": 5.975454545454547,
+    "p95": 24.11,
+    "coverage": 0.9090909090909091
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": true,
+    "n": 95,
+    "bias": 3.1225263157894725,
+    "mae": 3.821473684210526,
+    "p95": 7.400000000000006,
+    "coverage": 0.9894736842105263
+   }
+  },
+  "shoulder-tilt-trophy": {
+   "threshold": "rectified 2D within ±4° of 3D (p95)",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": false,
+    "n": 11,
+    "bias": 1.6243727979518794,
+    "mae": 1.6243727979518794,
+    "p95": 5.259491455891343,
+    "coverage": null
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": false,
+    "n": 95,
+    "bias": 0.7511525601183283,
+    "mae": 2.2601598920995185,
+    "p95": 8.25008633702536,
+    "coverage": null
+   }
+  },
+  "deep-bend-flag": {
+   "threshold": "two-level error ≤ 15%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": true,
+    "n": 11,
+    "bias": 0,
+    "mae": 0,
+    "p95": 0,
+    "coverage": null
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": true,
+    "n": 94,
+    "bias": 0.06382978723404255,
+    "mae": 0.06382978723404255,
+    "p95": 1,
+    "coverage": null
+   }
+  },
+  "serve-count": {
+   "threshold": "precision and recall ≥ 99%",
+   "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
+    "pass": true,
+    "n": 11,
+    "bias": 0,
+    "mae": 0,
+    "p95": 0,
+    "coverage": null
+   },
+   "all side-view day clips ≥ 60 fps": {
+    "pass": true,
+    "n": 95,
+    "bias": 0,
+    "mae": 0,
+    "p95": 0,
+    "coverage": null
+   }
+  }
+ }
+}

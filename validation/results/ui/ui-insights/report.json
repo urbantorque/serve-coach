@@ -1,0 +1,992 @@
+[
+ {
+  "scenario": "empty",
+  "page": "today",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "empty",
+  "page": "sessions",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "empty",
+  "page": "progress",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "empty",
+  "page": "compare-none",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "empty",
+  "page": "today",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "empty",
+  "page": "sessions",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "empty",
+  "page": "progress",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "empty",
+  "page": "compare-none",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "today",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "sessions",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "All",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Side view",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "From behind",
+    "w": 113,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "report-s1",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Toss height",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Contact",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "Timing",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "All",
+    "w": 87,
+    "h": 32
+   },
+   {
+    "t": "In",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Missed",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Untagged",
+    "w": 85,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "report-s3",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Toss height",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Contact",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "Timing",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "All",
+    "w": 87,
+    "h": 32
+   },
+   {
+    "t": "In",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Missed",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Untagged",
+    "w": 85,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "report-s2-rear",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Toss height",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Contact",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "Timing",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "All",
+    "w": 87,
+    "h": 32
+   },
+   {
+    "t": "In",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Missed",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Untagged",
+    "w": 85,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "compare",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "progress",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "metric-toss-spread",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "metric-knee",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "today",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "sessions",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "All",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Side view",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "From behind",
+    "w": 113,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "report-s1",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Toss height",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Contact",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "Timing",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "All",
+    "w": 87,
+    "h": 32
+   },
+   {
+    "t": "In",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Missed",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Untagged",
+    "w": 85,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "report-s3",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Toss height",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Contact",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "Timing",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "All",
+    "w": 87,
+    "h": 32
+   },
+   {
+    "t": "In",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Missed",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Untagged",
+    "w": 85,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "report-s2-rear",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Toss height",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Contact",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "Timing",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "All",
+    "w": 87,
+    "h": 32
+   },
+   {
+    "t": "In",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Missed",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Untagged",
+    "w": 85,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "compare",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "progress",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "metric-toss-spread",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "sample",
+  "page": "metric-knee",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "today",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "sessions",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "All",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Side view",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "From behind",
+    "w": 113,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "report-s3",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Toss height",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Contact",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "Timing",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "All",
+    "w": 87,
+    "h": 32
+   },
+   {
+    "t": "In",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Missed",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Untagged",
+    "w": 85,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "progress",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Side view, deuce, first serves· 4",
+    "w": 262,
+    "h": 36
+   },
+   {
+    "t": "View from behind, deuce, first serves· 1",
+    "w": 296,
+    "h": 36
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "compare",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "metric-toss-spread",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "metric-leg-drive",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "metric-speed",
+  "scheme": "light",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "today",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "sessions",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "All",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Side view",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "From behind",
+    "w": 113,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "report-s3",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Toss height",
+    "w": 115,
+    "h": 32
+   },
+   {
+    "t": "Contact",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "Timing",
+    "w": 113,
+    "h": 32
+   },
+   {
+    "t": "All",
+    "w": 87,
+    "h": 32
+   },
+   {
+    "t": "In",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Missed",
+    "w": 85,
+    "h": 32
+   },
+   {
+    "t": "Untagged",
+    "w": 85,
+    "h": 32
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "progress",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   },
+   {
+    "t": "Side view, deuce, first serves· 4",
+    "w": 262,
+    "h": 36
+   },
+   {
+    "t": "View from behind, deuce, first serves· 1",
+    "w": 296,
+    "h": 36
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "compare",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "metric-toss-spread",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "metric-leg-drive",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ },
+ {
+  "scenario": "player",
+  "page": "metric-speed",
+  "scheme": "dark",
+  "overflow": 0,
+  "unlabelled": 0,
+  "smallTargets": [
+   {
+    "t": "Skip to content",
+    "w": 32,
+    "h": 24
+   }
+  ],
+  "logs": []
+ }
+]

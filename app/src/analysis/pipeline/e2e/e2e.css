@@ -1,0 +1,355 @@
+/* Dev-only pipeline e2e page. Day / Night values copied from ui/styles/tokens.css (DESIGN.md §2). */
+:root {
+  color-scheme: light;
+  --bg: #f1f3ef;
+  --surface: #fafbf8;
+  --surface-2: #e6eae4;
+  --line: #d3d9d1;
+  --line-strong: #7d887f;
+  --ink: #121714;
+  --ink-2: #3c453f;
+  --ink-3: #58625a;
+  --optic: #d4ee48;
+  --on-optic: #121714;
+  --focus: #121714;
+  --good: #0072b2;
+  --bad: #d55e00;
+  --attention: #9a5a00;
+  --critical: #a3261e;
+  --card-edge: var(--line);
+  --font-sans: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --dur-fast: 160ms;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0b0f0d;
+  --surface: #141916;
+  --surface-2: #1c221e;
+  --line: #29312c;
+  --line-strong: #66716a;
+  --ink: #ebefe9;
+  --ink-2: #b5beb6;
+  --ink-3: #8d978f;
+  --focus: #d4ee48;
+  --good: #3d9de0;
+  --bad: #db6b2e;
+  --attention: #e0a040;
+  --critical: #ff8a7a;
+  --card-edge: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 1rem/1.5 var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+
+#app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 620;
+  text-wrap: balance;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.sub {
+  margin: 4px 0 20px;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--card-edge);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--line-strong);
+  color: var(--ink-2);
+}
+
+.row-done .mark {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.row-active .mark {
+  border-width: 2px;
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.row-failed .mark {
+  border-color: var(--critical);
+  color: var(--critical);
+}
+
+.row-body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 8px;
+  min-width: 0;
+}
+
+.row-label {
+  font-weight: 600;
+}
+
+.row-waiting .row-label {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+.row-detail {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  align-self: center;
+}
+
+.bar {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  width: 100%;
+  background: var(--ink);
+  transform-origin: left center;
+  transition: transform var(--dur-fast) cubic-bezier(0.2, 0, 0, 1);
+}
+
+.row-done .fill {
+  background: var(--good);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    transition: none;
+  }
+}
+
+.live {
+  margin: 16px 0 0;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+}
+
+button {
+  font: inherit;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 16px;
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:hover {
+  background: var(--surface-2);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.facts,
+.metrics {
+  align-items: baseline;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.facts dt,
+.metrics dt {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+.facts dd,
+.metrics dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.metrics dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+
+.value {
+  min-width: 0;
+  font-size: 0.9375rem;
+}
+
+.chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.chip-measured {
+  border-style: solid;
+}
+
+.chip-estimated {
+  border-style: dotted;
+}
+
+.chip-experimental {
+  border-style: dashed;
+}
+
+.chip-unavailable {
+  color: var(--ink-3);
+  border-color: var(--line);
+}
+
+.warnings {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--attention);
+  font-size: 0.8125rem;
+}
+
+.timings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.timings caption {
+  text-align: left;
+  color: var(--ink-3);
+  padding-bottom: 8px;
+}
+
+.timings th,
+.timings td {
+  text-align: left;
+  padding: 6px 4px;
+  border-top: 1px solid var(--line);
+  font-weight: 400;
+}
+
+.timings thead th {
+  border-top: none;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.timings td {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.timings tbody th {
+  white-space: pre;
+}
+
+.strip {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0 0 4px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+}
+
+.strip li {
+  width: 58px;
+  flex: none;
+  text-align: center;
+  line-height: 1.25;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  scroll-snap-align: start;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.strip img {
+  width: 50px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--surface-2);
+  display: block;
+}

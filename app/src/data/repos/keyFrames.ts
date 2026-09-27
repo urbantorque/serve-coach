@@ -25,3 +25,8 @@ export async function getKeyFrameFor(
   const rows = await getDb().keyFrames.where('[serveId+event]').equals([serveId, event]).toArray()
   return rows.find((k) => k.role === role)
 }
+
+/** The session's list thumbnail (a small square crop written by the analysis pipeline), if any. */
+export async function getSessionThumb(sessionId: string): Promise<KeyFrameRecord | undefined> {
+  return getDb().keyFrames.where('sessionId').equals(sessionId).filter((k) => k.role === 'session-thumb').first()
+}

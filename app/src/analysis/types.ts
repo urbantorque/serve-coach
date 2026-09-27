@@ -208,6 +208,12 @@ export interface MetricValue {
   provisional?: boolean
   /** Spread at the limit of what can be measured (DESIGN §3.3 rule 5). */
   nearMeasurementLimit?: boolean
+  /**
+   * Integration addition: the status this per-serve value would have with a known phone pitch. Set
+   * only when PITCH_UNKNOWN lowered it. Absolute heights and positions stay experimental, but spreads
+   * across serves keep their status (METRICS §1.1 item 3), so spread summaries and coaching use it.
+   */
+  statusIfLevel?: MetricStatus
   /** Rounded display text per METRICS.md (engine-owned rounding). */
   display?: string
   /** e.g. 'toss-apex@1.0.0'; bump when the computation changes. */

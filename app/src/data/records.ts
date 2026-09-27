@@ -63,6 +63,11 @@ export interface ProfileRecord {
   inSegment: Flag
   /** Standing "areas to go easy on". Never a pain flag by itself. */
   comfortRegions: BodyRegion[]
+  /**
+   * "My coach's focus" (PRODUCT §6.8.5, research 10 M8; ui-profile addition): a coaching-library
+   * item id pinned in Profile → Coach. Maps to CoachingProfile.pinnedFocusItemId.
+   */
+  pinnedFocusItemId?: string
   /** Referral switch only (D8). Local only; excluded from export unless the player opts in. */
   comfort: { painFlag: Flag; area?: BodyRegion; updatedAt?: string; consentAt?: string }
   createdAt: string
@@ -177,7 +182,11 @@ export interface KeyFrameRecord {
   sessionId: string
   event: KeyFrameEvent
   phase?: ServePhase
-  role: 'thumb' | 'evidence' | 'evidence-full'
+  /**
+   * 'session-thumb' (engine-pipeline addition): one small square crop per session for list rows,
+   * stored with the representative serve's id and deleted with the session.
+   */
+  role: 'thumb' | 'evidence' | 'evidence-full' | 'session-thumb'
   crop?: Rect
   frameIndex: number
   tReal: number
@@ -321,8 +330,33 @@ export interface SettingValues {
   validationMode: boolean
   demoSeedVersion: string
   theme: ThemeSetting
+  /** First-run state (ui-profile addition): the first-run redirect fires only while 'not-started'. */
+  onboarding: OnboardingSetting
+  /** PWA prototype plan flag (ui-profile addition). Set by the Plan screen's test buttons; no payment. */
+  entitlement: EntitlementSetting
 }
 export type SettingKey = keyof SettingValues
+
+/** ui-profile addition: onboarding progress (PRODUCT §6.1). */
+export interface OnboardingSetting {
+  status: 'not-started' | 'completed' | 'skipped'
+  at?: string
+}
+
+/**
+ * ui-profile addition: the local plan flag (PRODUCT §5.2, §6.15). In the PWA prototype no payment is
+ * ever taken; `source: 'prototype'` marks a flag switched on for testing.
+ */
+export interface EntitlementSetting {
+  tier: 'free' | 'plus'
+  plan?: 'annual' | 'monthly' | 'season'
+  source: 'prototype'
+  at?: string
+  /** Annual plan: the 7-day trial's end (ISO). */
+  trialEndsAt?: string
+  /** Season pass: the non-renewing end date (ISO). */
+  endsAt?: string
+}
 
 export interface SettingRecord<K extends SettingKey = SettingKey> {
   key: K
@@ -342,6 +376,8 @@ export const DEFAULT_SETTINGS: SettingValues = {
   validationMode: false,
   demoSeedVersion: '',
   theme: { scheme: 'system', courtSide: 'camera' },
+  onboarding: { status: 'not-started' },
+  entitlement: { tier: 'free', source: 'prototype' },
 }
 
 export interface DeletionLogRecord {

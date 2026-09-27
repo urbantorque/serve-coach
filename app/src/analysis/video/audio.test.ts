@@ -174,6 +174,52 @@ describe('contact vs bounce sharpness', () => {
   })
 })
 
+describe('racket pop vs footstep vs court bounce (synthetic corpus shapes)', () => {
+  // Shapes as rendered by tools/synth/src/audio.ts: the racket-ball impact is a 0.1 ms-attack click
+  // whose energy sits at 0.5-3 kHz (string bed and frame rings), so its high-frequency share is
+  // low (~0.25); a footstep is a noise scuff with a 4 ms attack ringing for ~20 ms, so its
+  // high-frequency share is high. The old score labelled these the wrong way round on 65/65 clips.
+  const sr = 48000
+  const ring = (tau: number, f: number, decayS: number, phase = 0) => Math.sin(2 * Math.PI * f * tau + phase) * Math.exp(-tau / decayS)
+  function scene(): Float32Array {
+    const random = rng(7)
+    const out = new Float32Array(sr * 2)
+    for (let i = 0; i < out.length; i++) out[i] = 0.003 * (2 * random() - 1)
+    const add = (t0: number, amp: number, lengthS: number, shape: (tau: number) => number) => {
+      const i0 = Math.round(t0 * sr)
+      for (let i = i0; i < Math.min(out.length, i0 + lengthS * sr); i++) out[i] += amp * shape((i - i0) / sr)
+    }
+    add(0.4, 0.25, 0.12, (tau) => Math.min(1, tau / 0.0001) * (0.55 * (2 * random() - 1) * Math.exp(-tau / 0.0012) + 0.5 * ring(tau, 1150, 0.006, 0.4) + 0.35 * ring(tau, 2700, 0.003, 1.1) + 0.25 * ring(tau, 560, 0.012, 0.2)))
+    add(0.9, 0.03, 0.2, (tau) => (0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, tau / 0.004))) * (0.6 * (2 * random() - 1) * Math.exp(-tau / 0.02) + 0.5 * ring(tau, 95, 0.03)))
+    add(1.4, 0.1, 0.12, (tau) => (0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, tau / 0.0015))) * (0.8 * ring(tau, 190, 0.014) + 0.4 * ring(tau, 420, 0.007, 1) + 0.25 * (2 * random() - 1) * Math.exp(-tau / 0.003)))
+    return out
+  }
+  const onsets = detectOnsets(scene(), sr)
+  const near = (t: number) => onsets.find((o) => Math.abs(o.tMedia - t) < 0.005)
+
+  it('labels the racket pop contact, the footstep unknown and the bounce bounce', () => {
+    expect(near(0.4)?.kind).toBe('contact')
+    expect(near(0.9)?.kind ?? 'unknown').toBe('unknown')
+    expect(near(1.4)?.kind).toBe('bounce')
+  })
+
+  it('scores the pop above the 0.6 contact-fusion gate and the others below it', () => {
+    expect(near(0.4)!.sharpness).toBeGreaterThanOrEqual(0.6)
+    expect(near(0.4)!.hfRatio).toBeLessThan(0.5) // the old high-frequency cue would have failed it
+    for (const t of [0.9, 1.4]) if (near(t)) expect(near(t)!.sharpness).toBeLessThan(0.6)
+  })
+
+  it('uses decay and low-band share when present, the legacy score otherwise', () => {
+    const fast = { riseTimeMs: 0.1, hfRatio: 0.25, decay6Ms: 3, lowRatio: 0.25 }
+    expect(sharpnessScore(fast)).toBeCloseTo(1, 6)
+    expect(sharpnessScore({ ...fast, decay6Ms: 25 })).toBeLessThan(0.4)
+    expect(sharpnessScore({ ...fast, lowRatio: 0.95 })).toBeLessThan(0.45)
+    expect(classifyTransient(0.3, { lowRatio: 0.9 })).toBe('bounce')
+    expect(classifyTransient(0.3, { lowRatio: 0.1 })).toBe('unknown')
+    expect(sharpnessScore({ riseTimeMs: 0.5, hfRatio: 0.9 })).toBeGreaterThan(0.65)
+  })
+})
+
 describe('assessAudioTiming', () => {
   it('rejects audio from time-scaled (rendered slow-motion) clips', () => {
     expect(assessAudioTiming({ hasAudio: true, timeScale: 1 }).usable).toBe(true)

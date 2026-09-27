@@ -73,6 +73,8 @@ export type AnalysisStage = 'probe' | 'audio' | 'sparse' | 'dense' | 'keyframes'
 export type AnalysisErrorCode =
   | 'unsupported-codec' | 'probe-failed' | 'too-long' | 'storage-full' | 'no-webgl'
   | 'pose-init-failed' | 'decoder-reclaimed' | 'cancelled' | 'internal'
+  /** Pass A found no serve (PRODUCT §6.4 "We couldn't find a serve in this video"). Added by engine-pipeline. */
+  | 'no-serves'
 
 export interface AnalysisProgress {
   jobId: string
@@ -444,6 +446,11 @@ export interface CoachingDecision {
   cue?: { id: string; text: string; style: 'analogy' | 'external-target' }
   drill?: { id: string; title: string; minutes: number; steps: string[]; equipment: string[] }
   referral?: { message: string }
+  /**
+   * Integration addition: a capture-fix decision's player-facing reason and next step (COACHING
+   * DECISION_COPY), so Today and the report can say why there is no focus and what to film next.
+   */
+  captureFix?: { message: string; fix?: string; usableServes: number }
   alternatives: { faultId: string; reason: string }[]
   trace: RuleTraceEntry[]
   phrasing: { source: 'template' | 'on-device-llm' | 'cloud-llm'; model?: string; consentVersion?: string }

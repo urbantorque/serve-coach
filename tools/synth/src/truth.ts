@@ -392,8 +392,8 @@ export function buildTruth(inp: TruthInputs): Record<string, unknown> {
             k,
             {
               mean: r(means[k], 5),
-              sd: r(prof.sds[k] * sdScale, 5),
-              sdEffective: r(prof.sds[k] * sdScale * TRUNCATION_SD_FACTOR, 5),
+              sd: r(prof.sds[k] * sdScale * (sc.serves.sdScaleByParam?.[k] ?? 1), 5),
+              sdEffective: r(prof.sds[k] * sdScale * (sc.serves.sdScaleByParam?.[k] ?? 1) * TRUNCATION_SD_FACTOR, 5),
               limits: LIMITS[k] ?? null,
             },
           ]),

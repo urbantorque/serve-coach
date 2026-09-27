@@ -240,9 +240,23 @@ export interface TransientFeatures {
   peakDbfs: number
   /** Peak energy over the pre-onset noise floor, dB. */
   snrDb: number
+  /**
+   * Time for the 1 ms RMS energy to fall 6 dB below its peak, milliseconds (capped at 50).
+   * A racket-ball impact is a click that dies within a few ms; a scuffing footstep or a
+   * court thud rings on for 10+ ms.
+   */
+  decay6Ms?: number
+  /** Energy in 100-700 Hz / energy above 100 Hz over the first 20 ms (a low "thud" is near 1). */
+  lowRatio?: number
 }
 
 const HF_SPLIT_HZ = 2000
+const LOW_SPLIT_HZ = 700
+const DECAY_CAP_MS = 50
+const DECAY_WINDOW_MS = 6
+/** decay6Ms at or below this scores fully impulsive; at or above DECAY_SLOW_MS not at all. */
+const DECAY_FAST_MS = 7
+const DECAY_SLOW_MS = 13
 
 /**
  * Walks back from the energy peak near `approxSample` to the first sample whose
@@ -315,6 +329,16 @@ export function transientFeatures(signal: Float32Array, filtered: Float32Array, 
   while (t90 < peakAt && amp(t90) < 0.9 * peakAmp) t90++
   const riseTimeMs = (t90 - t10) / ms
 
+  // Decay: from the envelope peak until the energy falls to a quarter (-6 dB). The envelope uses a
+  // 6 ms window so the ripple of a low ring (a 150-200 Hz thud) does not read as a fast decay.
+  const slow = smoothedEnergy(filtered, Math.max(1, Math.round(DECAY_WINDOW_MS * ms)))
+  const decayLimit = Math.min(filtered.length, Math.round(onsetSample + (DECAY_CAP_MS + 30) * ms))
+  let slowPeakAt = onsetSample
+  for (let i = onsetSample; i < end; i++) if (slow[i] > slow[slowPeakAt]) slowPeakAt = i
+  let decayEnd = slowPeakAt
+  while (decayEnd < decayLimit && slow[decayEnd] > 0.25 * slow[slowPeakAt]) decayEnd++
+  const decay6Ms = Math.min(DECAY_CAP_MS, (decayEnd - slowPeakAt) / ms)
+
   // Spectrum of the first ~20 ms (power-of-two length).
   let size = 1
   while (size < 20 * ms) size <<= 1
@@ -324,6 +348,7 @@ export function transientFeatures(signal: Float32Array, filtered: Float32Array, 
   fft(re, im)
   let total = 0
   let high = 0
+  let low = 0
   let weighted = 0
   for (let k = 1; k < size / 2; k++) {
     const f = (k * sampleRate) / size
@@ -332,6 +357,7 @@ export function transientFeatures(signal: Float32Array, filtered: Float32Array, 
     total += p
     weighted += p * f
     if (f >= HF_SPLIT_HZ) high += p
+    if (f < LOW_SPLIT_HZ) low += p
   }
 
   return {
@@ -341,20 +367,46 @@ export function transientFeatures(signal: Float32Array, filtered: Float32Array, 
     spectralCentroidHz: total > 0 ? weighted / total : 0,
     peakDbfs: 10 * Math.log10(peak + 1e-12),
     snrDb: 10 * Math.log10((peak + 1e-12) / (noise + 1e-12)),
+    decay6Ms,
+    lowRatio: total > 0 ? low / total : 0,
   }
 }
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 
-/** 0..1: broadband high-frequency content and a fast rise score as "sharp". */
-export function sharpnessScore(features: Pick<TransientFeatures, 'riseTimeMs' | 'hfRatio'>): number {
-  const hfScore = clamp01((features.hfRatio - 0.2) / 0.5)
-  const riseScore = clamp01((6 - features.riseTimeMs) / 5)
-  return 0.65 * hfScore + 0.35 * riseScore
+type SharpnessFeatures = Pick<TransientFeatures, 'riseTimeMs' | 'hfRatio'> & Partial<Pick<TransientFeatures, 'decay6Ms' | 'lowRatio'>>
+
+/**
+ * 0..1 "impulsiveness" of a transient.
+ *
+ * With the decay and low-band features (what detectOnsets computes) a racket-ball impact scores
+ * high because it rises within about a millisecond, dies within a few milliseconds and is not a
+ * low thud; its energy sits mostly between 0.5 and 4 kHz, so a high-frequency share alone is NOT
+ * the cue (the earlier score labelled the pop 'unknown' and scuffing footsteps, which are
+ * noise-like and ring for 10+ ms, 'contact' on every synthetic clip). Without those features
+ * (legacy callers) it falls back to high-frequency share plus rise time.
+ */
+export function sharpnessScore(features: SharpnessFeatures): number {
+  if (features.decay6Ms === undefined || features.lowRatio === undefined) {
+    const hfScore = clamp01((features.hfRatio - 0.2) / 0.5)
+    const riseScore = clamp01((6 - features.riseTimeMs) / 5)
+    return 0.65 * hfScore + 0.35 * riseScore
+  }
+  const riseScore = clamp01((3 - features.riseTimeMs) / 2.5)
+  const decayScore = clamp01((DECAY_SLOW_MS - features.decay6Ms) / (DECAY_SLOW_MS - DECAY_FAST_MS))
+  const notThudScore = clamp01((0.75 - features.lowRatio) / 0.35)
+  const impulsive = 0.35 * riseScore + 0.65 * decayScore
+  return impulsive * (0.4 + 0.6 * notThudScore)
 }
 
-export function classifyTransient(sharpness: number): AudioOnset['kind'] {
+/**
+ * contact: impulsive (sharpness >= 0.65). bounce: a low thud (most energy below 700 Hz), or, for
+ * legacy callers without the low-band feature, a dull transient (sharpness <= 0.35).
+ * Everything else (footsteps, squeaks, claps) is 'unknown'.
+ */
+export function classifyTransient(sharpness: number, features?: Partial<Pick<TransientFeatures, 'lowRatio'>>): AudioOnset['kind'] {
   if (sharpness >= 0.65) return 'contact'
+  if (features?.lowRatio !== undefined) return features.lowRatio >= 0.5 ? 'bounce' : 'unknown'
   if (sharpness <= 0.35) return 'bounce'
   return 'unknown'
 }
@@ -396,7 +448,7 @@ export function detectOnsets(signal: Float32Array, sampleRate: number, options: 
       tReal: tMedia * timeScale,
       strength: features.snrDb,
       sharpness,
-      kind: labelKinds ? classifyTransient(sharpness) : 'unknown',
+      kind: labelKinds ? classifyTransient(sharpness, features) : 'unknown',
     }
   })
 }

@@ -43,9 +43,14 @@ export async function getExperiment(id: string): Promise<ExperimentRecord | unde
   return getDb().experiments.get(id)
 }
 
-export async function getActiveExperiment(): Promise<ExperimentRecord | undefined> {
+/**
+ * The newest active experiment. `demo` narrows it to sample (true) or the player's own (false) data:
+ * sample experiments never drive the player's Record plan or coaching (PRODUCT §4.4 rule 11).
+ */
+export async function getActiveExperiment(opts: { demo?: boolean } = {}): Promise<ExperimentRecord | undefined> {
   const rows = await getDb().experiments.where('status').equals('active').sortBy('createdAt')
-  return rows.at(-1)
+  const pick = opts.demo === undefined ? rows : rows.filter((e) => (e.isDemo === 1) === opts.demo)
+  return pick.at(-1)
 }
 
 export async function listExperiments(): Promise<ExperimentRecord[]> {

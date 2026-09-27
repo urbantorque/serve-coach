@@ -150,6 +150,15 @@
   --sheet-edge: var(--line);
 }
 
+/*
+ * Night sheets are --surface-2 (§5.4), so fills that use --surface-2 inside a sheet or drawer (status
+ * chips, segmented tracks) step up one level there and keep their shape. The sheet's own background
+ * is unaffected (--sheet-bg is resolved on the root).
+ */
+[data-theme='dark'] .bg-sheet {
+  --surface-2: #272f2a;
+}
+
 /* ---------- Court-side (sun-readable, light-based, luminance only) ---------- */
 [data-contrast='court'] {
   color-scheme: light;

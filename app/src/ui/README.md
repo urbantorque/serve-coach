@@ -101,10 +101,16 @@ Live gallery of every base component in every state: **`/dev/components`** (`npm
   with `buildExportJSON` / `buildExportCSV`. **UI never touches `getDb()` directly.**
 - UI state: `useSettingsStore` (theme, Court-side, experimental toggle; persisted), `useUiStore`
   (filters, running job), `useToastStore` / `showToast(message, action?)`.
-- Demo data: `loadDemoData()` / `removeDemoData()`; `DEMO_FIXTURES` has 3 sessions of a synthetic player
-  (side view 12 Sep, view from behind 19 Sep, side-view re-test 26 Sep) with varied statuses, an
-  experiment with a verdict, practice and match logs. They are hand-authored fixtures, not engine output,
-  flagged `demo: true` / `isDemo: 1`; replace with the engine-built seed (ARCHITECTURE §11) when it exists.
+- Sample data: `loadDemoData()` loads the **engine-built seed** in `public/demo/` (`data/sample.ts`): three
+  sessions of the synthetic player analysed by the real pipeline, with the real coaching decisions, an
+  experiment and its "Did it work?" verdict (built by `node scripts/build-demo.mjs`), and returns the
+  session id to open; `removeDemoData()` deletes it. Every row is `isDemo: 1`. `DEMO_FIXTURES`
+  (hand-authored, not engine output) remain for tests and development only: a production build never
+  falls back to them.
+- Coaching loop: `integration/coachingSync.ts` `syncCoaching()` stores the session's decision (same input
+  as /focus, `ui/screens/focus/focusInput.ts`), links a re-test to the active experiment and stores its
+  verdict (`integration/verdict.ts`: METRICS §4.5 through `analysis/stats`). It runs after an analysis and
+  after tag, include/exclude and practice-log changes (`integration/schedule.ts`, debounced).
 - Schema changes: add a version in `data/db.ts` (additive only) and a test in `data/migrations.test.ts`.
 
 ## Checks before you call a screen done

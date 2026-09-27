@@ -1,0 +1,11 @@
+http://127.0.0.1:61155/ | msedge 154.0.4258.37 | 2 of 2 clips to run (0 already have a result) | concurrency 1
+CSP probe: {"page":{"violation":"connect-src https://odml.pa.googleapis.com/v1/log","xhr":"network error","fetch":"rejected: Failed to fetch"},"worker":{"violation":"connect-src https://odml.pa.googleapis.com/v1/log","xhr":"network error","fetch":"rejected: Blocked on-device: cross-origin request to https://odml.pa.googleapis.com/v1/log (privacy guard)"},"externalDuringProbe":[],"workerUrl":"blob:http://127.0.0.1:61155/<uuid>","pageBlockedByCsp":true,"workerBlockedByCsp":true}
+warm-up console:
+  error: Connecting to 'https://odml.pa.googleapis.com/v1/log' violates the following Content Security Policy directive: "connect-src 'self' blob: data:". The action has been blocked.
+  error: Fetch API cannot load https://odml.pa.googleapis.com/v1/log. Refused to connect because it violates the document's Content Security Policy.
+  warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log
+  1/2 | baseline-s1          | ok  | 27 s | webcodecs | frames 290/290 | pose 100% 0.035 BH | ball recall 100% prec 60% apex +0.25 ms grav 0.999 | onset +0.08 ms | 
+  2/2 | fence9-s1            | ok  | 73 s | webcodecs | frames 290/290 | pose 100% 0.040 BH | ball recall 100% prec 59% apex -0.13 ms grav 1.028 | onset +0.07 ms | 
+Results in C:\Users\roger\OneDrive\Desktop\Serve2\validation\results\ui\ui-playback\harness; external requests during the run (warm-up included): 0
+Refused by the CSP before the network stack: 2
+  POST https://odml.pa.googleapis.com/v1/log (csp)

@@ -21,8 +21,9 @@ const ImportScreen = named(() => import('../screens/record/ImportScreen.tsx'), '
 const ProcessingScreen = named(() => import('../screens/record/ProcessingScreen.tsx'), 'ProcessingScreen')
 const SessionsScreen = named(() => import('../screens/sessions/SessionsScreen.tsx'), 'SessionsScreen')
 const SessionReportScreen = named(() => import('../screens/sessions/SessionReportScreen.tsx'), 'SessionReportScreen')
-const ServeDetailScreen = named(() => import('../screens/sessions/ServeDetailScreen.tsx'), 'ServeDetailScreen')
-const TaggingScreen = named(() => import('../screens/sessions/TaggingScreen.tsx'), 'TaggingScreen')
+// Serve detail and Tagging live in screens/playback.
+const ServeDetailScreen = named(() => import('../screens/playback/ServeDetailScreen.tsx'), 'ServeDetailScreen')
+const TaggingScreen = named(() => import('../screens/playback/TaggingScreen.tsx'), 'TaggingScreen')
 const FocusDrillScreen = named(() => import('../screens/focus/FocusDrillScreen.tsx'), 'FocusDrillScreen')
 const DrillPlayerScreen = named(() => import('../screens/focus/DrillPlayerScreen.tsx'), 'DrillPlayerScreen')
 const PracticeLogScreen = named(() => import('../screens/focus/PracticeLogScreen.tsx'), 'PracticeLogScreen')

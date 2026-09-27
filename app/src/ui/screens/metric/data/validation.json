@@ -1,0 +1,34 @@
+{
+ "source": "validation/results/smoke (synthetic clips only)",
+ "generated": "2026-09-27T00:28:17.124Z",
+ "clips": 65,
+ "sideClips": 54,
+ "apexHeight": {
+  "n": 54,
+  "medianAbsCm": 3.5,
+  "maxAbsCm": 10,
+  "inRange": 54
+ },
+ "release": {
+  "n": 54,
+  "medianAbsMs": 26,
+  "maxAbsMs": 135,
+  "n60": 49,
+  "max60Ms": 38
+ },
+ "contactSound": {
+  "n": 54,
+  "medianAbsMs": 0.08,
+  "maxAbsMs": 0.19
+ },
+ "pose": {
+  "n": 54,
+  "medianErrorPctHeight": 3.2
+ },
+ "speed": {
+  "ranges": 18,
+  "covered": 18,
+  "medianWidthKmh": 90,
+  "refused": 36
+ }
+}

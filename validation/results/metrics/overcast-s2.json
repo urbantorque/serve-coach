@@ -1,0 +1,1466 @@
+{
+ "default": {
+  "rows": [
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "serve-count",
+    "status": "estimated",
+    "value": 1,
+    "truth": 1,
+    "error": 0
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "toss-apex-height",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 1.81,
+    "truth": 1.84894,
+    "error": -0.038939999999999975,
+    "low": 1.6672267775448237,
+    "high": 1.9485215951343002,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "toss-forward",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 46,
+    "truth": 40.849999999999994,
+    "error": 5.150000000000006,
+    "low": 35.865102119788574,
+    "high": 56.156110510206645,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "toss-lateral",
+    "status": "unavailable",
+    "reason": "NEEDS_REAR_VIEW",
+    "value": null,
+    "truth": null
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "toss-drop",
+    "status": "estimated",
+    "value": 66,
+    "truth": 66.4,
+    "error": -0.4000000000000057,
+    "low": 59.39190469870603,
+    "high": 73.02954397549608,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "contact-height-ratio",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 1.4541463520102842,
+    "truth": 1.4801,
+    "error": -0.025953647989715778,
+    "low": 1.3475506729521232,
+    "high": 1.5607420310684452,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "contact-forward",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 52,
+    "truth": 47.339999999999996,
+    "error": 4.660000000000004,
+    "low": 41.80157397716991,
+    "high": 62.7190379136818,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "rhythm-release-to-contact",
+    "status": "estimated",
+    "value": 938,
+    "truth": 935,
+    "error": 3,
+    "low": 869.7390443492909,
+    "high": 1006.0828834614779,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "trophy-pause",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 20,
+    "truth": 88.5,
+    "error": -68.5,
+    "low": 0,
+    "high": 90.00099999999996,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "leg-drive",
+    "status": "estimated",
+    "reason": "BASELINE_BUILDING",
+    "value": 12.326763505593629,
+    "truth": 13.857,
+    "error": -1.5302364944063704,
+    "low": 6.051454129088201,
+    "high": 18.60207288209906,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "drive-time",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 412.3536946262227,
+    "truth": 458.09,
+    "error": -45.73630537377727,
+    "low": 321.6717048416396,
+    "high": 503.0356844108058,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "loading-depth",
+    "status": "estimated",
+    "value": 1.1459861841911168,
+    "truth": 1.436,
+    "error": -0.2900138158088832,
+    "low": -5.128960312256803,
+    "high": 7.420932680639035,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "landing-distance",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 74,
+    "truth": 70.6,
+    "error": 3.4000000000000057,
+    "low": 62.02045706450859,
+    "high": 85.89584582477862,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "shoulder-tilt-trophy (2D level, deg)",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 17.956915783882938,
+    "truth": 18.98,
+    "error": -1.0230842161170628
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "shoulder-tilt-trophy (3D, deg)",
+    "status": "experimental",
+    "value": 17.956915783882938,
+    "truth": 16.83,
+    "error": 1.1269157838829393
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "deep-bend-flag",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": "false",
+    "truth": "false",
+    "error": 0
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "knee-bend-band",
+    "status": "unavailable",
+    "reason": "NEEDS_REAR_VIEW",
+    "value": null,
+    "truth": "typical"
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "metric": "speed-experimental",
+    "status": "unavailable",
+    "reason": "FPS_TOO_LOW",
+    "value": null,
+    "truth": 148.91
+   }
+  ],
+  "events": [
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "event": "tossRelease",
+    "errorMs": -3.3852500000157715,
+    "method": "ball-hinge-fit",
+    "sigmaMs": 25,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "event": "tossApex",
+    "errorMs": 0.028051152928032508,
+    "method": "ball-apex-fit",
+    "sigmaMs": 0.8333499999999994,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "event": "trophy (lowest hip)",
+    "errorMs": 45.232019279146215,
+    "method": "pelvis-min-raw",
+    "sigmaMs": 45,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "event": "contact",
+    "errorMs": -0.5042860946313787,
+    "method": "fused",
+    "sigmaMs": 1.7996034341112461,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "event": "landing",
+    "errorMs": -59.883571644549164,
+    "method": "foot-contact",
+    "sigmaMs": 35.00049999999998,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "event": "recoveryEnd",
+    "errorMs": -299.442,
+    "method": "pose-stable",
+    "sigmaMs": 120,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "default",
+    "event": "motionStart",
+    "errorMs": 0,
+    "method": "pose-still-end",
+    "sigmaMs": 60,
+    "fps": 60
+   }
+  ],
+  "warnings": [],
+  "quality": "good",
+  "qualityChecks": [],
+  "serve": {
+   "classification": "serve",
+   "included": true,
+   "exclusions": [],
+   "plausibility": {
+    "hardRejects": [],
+    "softFlags": []
+   },
+   "metrics": {
+    "spin": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NOT_MEASURABLE"
+    },
+    "toss-lateral": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "knee-bend-band": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "shoulder-over-shoulder-contact": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "speed-average-rear": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "toss-apex-height": {
+     "status": "experimental",
+     "value": 1.81,
+     "reason": "VALIDATION_PENDING",
+     "low": 1.6672267775448237,
+     "high": 1.9485215951343002
+    },
+    "toss-drop": {
+     "status": "estimated",
+     "value": 66,
+     "low": 59.39190469870603,
+     "high": 73.02954397549608
+    },
+    "contact-height-ratio": {
+     "status": "experimental",
+     "value": 1.45,
+     "reason": "VALIDATION_PENDING",
+     "low": 1.3475506729521232,
+     "high": 1.5607420310684452
+    },
+    "toss-forward": {
+     "status": "experimental",
+     "value": 46,
+     "reason": "VALIDATION_PENDING",
+     "low": 35.865102119788574,
+     "high": 56.156110510206645
+    },
+    "contact-forward": {
+     "status": "experimental",
+     "value": 52,
+     "reason": "VALIDATION_PENDING",
+     "low": 41.80157397716991,
+     "high": 62.7190379136818
+    },
+    "rhythm-release-to-contact": {
+     "status": "estimated",
+     "value": 938,
+     "low": 869.7390443492909,
+     "high": 1006.0828834614779
+    },
+    "leg-drive": {
+     "status": "estimated",
+     "value": 12,
+     "reason": "BASELINE_BUILDING",
+     "low": 6.051454129088201,
+     "high": 18.60207288209906
+    },
+    "drive-time": {
+     "status": "experimental",
+     "value": 410,
+     "reason": "VALIDATION_PENDING",
+     "low": 321.6717048416396,
+     "high": 503.0356844108058
+    },
+    "loading-depth": {
+     "status": "estimated",
+     "value": 1,
+     "low": -5.128960312256803,
+     "high": 7.420932680639035
+    },
+    "deep-bend-flag": {
+     "status": "experimental",
+     "value": "no",
+     "reason": "VALIDATION_PENDING"
+    },
+    "shoulder-tilt-trophy": {
+     "status": "experimental",
+     "value": null,
+     "reason": "VALIDATION_PENDING"
+    },
+    "trophy-pause": {
+     "status": "experimental",
+     "value": 20,
+     "reason": "VALIDATION_PENDING",
+     "low": 0,
+     "high": 90.00099999999996
+    },
+    "landing-distance": {
+     "status": "experimental",
+     "value": 74,
+     "reason": "VALIDATION_PENDING",
+     "low": 62.02045706450859,
+     "high": 85.89584582477862
+    },
+    "speed-experimental": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "FPS_TOO_LOW"
+    }
+   },
+   "events": {
+    "setupStart": {
+     "frameIndex": 12,
+     "tReal": 0.19999999999999996,
+     "uncertaintyS": 0.15,
+     "confidence": 0.7,
+     "method": "pose-walk-end"
+    },
+    "motionStart": {
+     "frameIndex": 42,
+     "tReal": 0.7,
+     "uncertaintyS": 0.06,
+     "confidence": 0.8,
+     "method": "pose-still-end"
+    },
+    "tossRelease": {
+     "frameIndex": 102,
+     "tReal": 1.7000057499999843,
+     "uncertaintyS": 0.025,
+     "confidence": 0.8,
+     "method": "ball-hinge-fit"
+    },
+    "tossApex": {
+     "frameIndex": 136,
+     "tReal": 2.270512051152928,
+     "uncertaintyS": 0.0008333499999999994,
+     "confidence": 1,
+     "method": "ball-apex-fit"
+    },
+    "trophy": {
+     "frameIndex": 134,
+     "tReal": 2.225563019279146,
+     "uncertaintyS": 0.045,
+     "confidence": 0.9999607843137256,
+     "method": "pelvis-min"
+    },
+    "lowestHip": {
+     "frameIndex": 134,
+     "tReal": 2.225563019279146,
+     "uncertaintyS": 0.045,
+     "confidence": 0.9999607843137256,
+     "method": "pelvis-min-raw"
+    },
+    "contact": {
+     "frameIndex": 158,
+     "tReal": 2.6379167139053687,
+     "uncertaintyS": 0.0017996034341112462,
+     "confidence": 0.9240002911988099,
+     "method": "fused"
+    },
+    "landing": {
+     "frameIndex": 164,
+     "tReal": 2.739558428355451,
+     "uncertaintyS": 0.03500049999999998,
+     "confidence": 0.994,
+     "method": "foot-contact"
+    },
+    "recoveryEnd": {
+     "frameIndex": 216,
+     "tReal": 3.6,
+     "uncertaintyS": 0.12,
+     "confidence": 0.7,
+     "method": "pose-stable"
+    }
+   }
+  }
+ },
+ "audio": {
+  "rows": [
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "serve-count",
+    "status": "estimated",
+    "value": 1,
+    "truth": 1,
+    "error": 0
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "toss-apex-height",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 1.81,
+    "truth": 1.84894,
+    "error": -0.038939999999999975,
+    "low": 1.6672267775448237,
+    "high": 1.9485215951343002,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "toss-forward",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 46,
+    "truth": 40.849999999999994,
+    "error": 5.150000000000006,
+    "low": 35.865102119788574,
+    "high": 56.156110510206645,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "toss-lateral",
+    "status": "unavailable",
+    "reason": "NEEDS_REAR_VIEW",
+    "value": null,
+    "truth": null
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "toss-drop",
+    "status": "estimated",
+    "value": 66,
+    "truth": 66.4,
+    "error": -0.4000000000000057,
+    "low": 59.411840921531585,
+    "high": 73.04143995489208,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "contact-height-ratio",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 1.4540613209517472,
+    "truth": 1.4801,
+    "error": -0.026038679048252744,
+    "low": 1.3474853197028094,
+    "high": 1.560637322200685,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "contact-forward",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 52,
+    "truth": 47.339999999999996,
+    "error": 4.660000000000004,
+    "low": 41.80229583109954,
+    "high": 62.71982067053089,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "rhythm-release-to-contact",
+    "status": "estimated",
+    "value": 938,
+    "truth": 935,
+    "error": 3,
+    "low": 869.7859872957226,
+    "high": 1006.124253978448,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "trophy-pause",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 20,
+    "truth": 88.5,
+    "error": -68.5,
+    "low": 0,
+    "high": 90.00099999999996,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "leg-drive",
+    "status": "estimated",
+    "reason": "BASELINE_BUILDING",
+    "value": 12.32591853989835,
+    "truth": 13.857,
+    "error": -1.5310814601016496,
+    "low": 6.050626190685117,
+    "high": 18.601210889111584,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "drive-time",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 412.3978513579236,
+    "truth": 458.09,
+    "error": -45.69214864207635,
+    "low": 321.71860609309545,
+    "high": 503.0770966227518,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "loading-depth",
+    "status": "estimated",
+    "value": 1.1459861841911168,
+    "truth": 1.436,
+    "error": -0.2900138158088832,
+    "low": -5.128960312256803,
+    "high": 7.420932680639035,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "landing-distance",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 74,
+    "truth": 70.6,
+    "error": 3.4000000000000057,
+    "low": 62.02045706450859,
+    "high": 85.89584582477862,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "shoulder-tilt-trophy (2D level, deg)",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 17.956915783882938,
+    "truth": 18.98,
+    "error": -1.0230842161170628
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "shoulder-tilt-trophy (3D, deg)",
+    "status": "experimental",
+    "value": 17.956915783882938,
+    "truth": 16.83,
+    "error": 1.1269157838829393
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "deep-bend-flag",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": "false",
+    "truth": "false",
+    "error": 0
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "knee-bend-band",
+    "status": "unavailable",
+    "reason": "NEEDS_REAR_VIEW",
+    "value": null,
+    "truth": "typical"
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "metric": "speed-experimental",
+    "status": "unavailable",
+    "reason": "FPS_TOO_LOW",
+    "value": null,
+    "truth": 148.91
+   }
+  ],
+  "events": [
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "event": "tossRelease",
+    "errorMs": -3.3852500000157715,
+    "method": "ball-hinge-fit",
+    "sigmaMs": 25,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "event": "tossApex",
+    "errorMs": 0.028051152928032508,
+    "method": "ball-apex-fit",
+    "sigmaMs": 0.8333499999999994,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "event": "trophy (lowest hip)",
+    "errorMs": 45.232019279146215,
+    "method": "pelvis-min-raw",
+    "sigmaMs": 45,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "event": "contact",
+    "errorMs": -0.4601293629304948,
+    "method": "fused",
+    "sigmaMs": 1.7563948552410702,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "event": "landing",
+    "errorMs": -59.883571644549164,
+    "method": "foot-contact",
+    "sigmaMs": 35.00049999999998,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "event": "recoveryEnd",
+    "errorMs": -299.442,
+    "method": "pose-stable",
+    "sigmaMs": 120,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "audio",
+    "event": "motionStart",
+    "errorMs": 0,
+    "method": "pose-still-end",
+    "sigmaMs": 60,
+    "fps": 60
+   }
+  ],
+  "warnings": [],
+  "quality": "good",
+  "qualityChecks": [],
+  "serve": {
+   "classification": "serve",
+   "included": true,
+   "exclusions": [],
+   "plausibility": {
+    "hardRejects": [],
+    "softFlags": []
+   },
+   "metrics": {
+    "spin": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NOT_MEASURABLE"
+    },
+    "toss-lateral": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "knee-bend-band": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "shoulder-over-shoulder-contact": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "speed-average-rear": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "toss-apex-height": {
+     "status": "experimental",
+     "value": 1.81,
+     "reason": "VALIDATION_PENDING",
+     "low": 1.6672267775448237,
+     "high": 1.9485215951343002
+    },
+    "toss-drop": {
+     "status": "estimated",
+     "value": 66,
+     "low": 59.411840921531585,
+     "high": 73.04143995489208
+    },
+    "contact-height-ratio": {
+     "status": "experimental",
+     "value": 1.45,
+     "reason": "VALIDATION_PENDING",
+     "low": 1.3474853197028094,
+     "high": 1.560637322200685
+    },
+    "toss-forward": {
+     "status": "experimental",
+     "value": 46,
+     "reason": "VALIDATION_PENDING",
+     "low": 35.865102119788574,
+     "high": 56.156110510206645
+    },
+    "contact-forward": {
+     "status": "experimental",
+     "value": 52,
+     "reason": "VALIDATION_PENDING",
+     "low": 41.80229583109954,
+     "high": 62.71982067053089
+    },
+    "rhythm-release-to-contact": {
+     "status": "estimated",
+     "value": 938,
+     "low": 869.7859872957226,
+     "high": 1006.124253978448
+    },
+    "leg-drive": {
+     "status": "estimated",
+     "value": 12,
+     "reason": "BASELINE_BUILDING",
+     "low": 6.050626190685117,
+     "high": 18.601210889111584
+    },
+    "drive-time": {
+     "status": "experimental",
+     "value": 410,
+     "reason": "VALIDATION_PENDING",
+     "low": 321.71860609309545,
+     "high": 503.0770966227518
+    },
+    "loading-depth": {
+     "status": "estimated",
+     "value": 1,
+     "low": -5.128960312256803,
+     "high": 7.420932680639035
+    },
+    "deep-bend-flag": {
+     "status": "experimental",
+     "value": "no",
+     "reason": "VALIDATION_PENDING"
+    },
+    "shoulder-tilt-trophy": {
+     "status": "experimental",
+     "value": null,
+     "reason": "VALIDATION_PENDING"
+    },
+    "trophy-pause": {
+     "status": "experimental",
+     "value": 20,
+     "reason": "VALIDATION_PENDING",
+     "low": 0,
+     "high": 90.00099999999996
+    },
+    "landing-distance": {
+     "status": "experimental",
+     "value": 74,
+     "reason": "VALIDATION_PENDING",
+     "low": 62.02045706450859,
+     "high": 85.89584582477862
+    },
+    "speed-experimental": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "FPS_TOO_LOW"
+    }
+   },
+   "events": {
+    "setupStart": {
+     "frameIndex": 12,
+     "tReal": 0.19999999999999996,
+     "uncertaintyS": 0.15,
+     "confidence": 0.7,
+     "method": "pose-walk-end"
+    },
+    "motionStart": {
+     "frameIndex": 42,
+     "tReal": 0.7,
+     "uncertaintyS": 0.06,
+     "confidence": 0.8,
+     "method": "pose-still-end"
+    },
+    "tossRelease": {
+     "frameIndex": 102,
+     "tReal": 1.7000057499999843,
+     "uncertaintyS": 0.025,
+     "confidence": 0.8,
+     "method": "ball-hinge-fit"
+    },
+    "tossApex": {
+     "frameIndex": 136,
+     "tReal": 2.270512051152928,
+     "uncertaintyS": 0.0008333499999999994,
+     "confidence": 1,
+     "method": "ball-apex-fit"
+    },
+    "trophy": {
+     "frameIndex": 134,
+     "tReal": 2.225563019279146,
+     "uncertaintyS": 0.045,
+     "confidence": 0.9999607843137256,
+     "method": "pelvis-min"
+    },
+    "lowestHip": {
+     "frameIndex": 134,
+     "tReal": 2.225563019279146,
+     "uncertaintyS": 0.045,
+     "confidence": 0.9999607843137256,
+     "method": "pelvis-min-raw"
+    },
+    "contact": {
+     "frameIndex": 158,
+     "tReal": 2.6379608706370696,
+     "uncertaintyS": 0.0017563948552410701,
+     "confidence": 1,
+     "method": "fused"
+    },
+    "landing": {
+     "frameIndex": 164,
+     "tReal": 2.739558428355451,
+     "uncertaintyS": 0.03500049999999998,
+     "confidence": 0.994,
+     "method": "foot-contact"
+    },
+    "recoveryEnd": {
+     "frameIndex": 216,
+     "tReal": 3.6,
+     "uncertaintyS": 0.12,
+     "confidence": 0.7,
+     "method": "pose-stable"
+    }
+   }
+  }
+ },
+ "injected": {
+  "rows": [
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "serve-count",
+    "status": "estimated",
+    "value": 1,
+    "truth": 1,
+    "error": 0
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "toss-apex-height",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 1.77,
+    "truth": 1.84894,
+    "error": -0.07894000000000001,
+    "low": 1.631022715558378,
+    "high": 1.9087808413431144,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "toss-forward",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 38,
+    "truth": 40.849999999999994,
+    "error": -2.8499999999999943,
+    "low": 27.71270252296808,
+    "high": 47.74093919051281,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "toss-lateral",
+    "status": "unavailable",
+    "reason": "NEEDS_REAR_VIEW",
+    "value": null,
+    "truth": null
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "toss-drop",
+    "status": "estimated",
+    "value": 66,
+    "truth": 66.4,
+    "error": -0.4000000000000057,
+    "low": 59.3950086914517,
+    "high": 73.0333529152403,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "contact-height-ratio",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 1.4303894672374096,
+    "truth": 1.4801,
+    "error": -0.04971053276259041,
+    "low": 1.3249840512161835,
+    "high": 1.5357948832586357,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "contact-forward",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 44,
+    "truth": 47.339999999999996,
+    "error": -3.3399999999999963,
+    "low": 33.41711531898854,
+    "high": 54.03329037371979,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "rhythm-release-to-contact",
+    "status": "estimated",
+    "value": 938,
+    "truth": 935,
+    "error": 3,
+    "low": 869.7482960577395,
+    "high": 1006.092811504564,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "trophy-pause",
+    "status": "unavailable",
+    "reason": "POSE_LOW_QUALITY",
+    "value": null,
+    "truth": 88.5
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "leg-drive",
+    "status": "estimated",
+    "reason": "BASELINE_BUILDING",
+    "value": 12.966747898815967,
+    "truth": 13.857,
+    "error": -0.8902521011840321,
+    "low": 6.691799514348929,
+    "high": 19.241696283283005,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "drive-time",
+    "status": "unavailable",
+    "reason": "POSE_LOW_QUALITY",
+    "value": null,
+    "truth": 458.09
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "loading-depth",
+    "status": "estimated",
+    "value": 1.7421158663695757,
+    "truth": 1.436,
+    "error": 0.3061158663695758,
+    "low": -4.532830630078344,
+    "high": 8.017062362817494,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "landing-distance",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 68,
+    "truth": 70.6,
+    "error": -2.5999999999999943,
+    "low": 56.50185824570271,
+    "high": 80.31999765230147,
+    "covered": true
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "shoulder-tilt-trophy (2D level, deg)",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": 19.54247723156775,
+    "truth": 18.98,
+    "error": 0.5624772315677511
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "shoulder-tilt-trophy (3D, deg)",
+    "status": "experimental",
+    "value": 19.54247723156775,
+    "truth": 16.83,
+    "error": 2.712477231567753
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "deep-bend-flag",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
+    "value": "true",
+    "truth": "false",
+    "error": 1
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "knee-bend-band",
+    "status": "unavailable",
+    "reason": "NEEDS_REAR_VIEW",
+    "value": null,
+    "truth": "typical"
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "metric": "speed-experimental",
+    "status": "unavailable",
+    "reason": "FPS_TOO_LOW",
+    "value": null,
+    "truth": 148.91
+   }
+  ],
+  "events": [
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "event": "tossRelease",
+    "errorMs": -3.3852500000157715,
+    "method": "ball-hinge-fit",
+    "sigmaMs": 25,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "event": "tossApex",
+    "errorMs": 0.028051152928032508,
+    "method": "ball-apex-fit",
+    "sigmaMs": 0.8333499999999994,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "event": "trophy (lowest hip)",
+    "errorMs": -3.234981606991205,
+    "method": "pelvis-min-raw",
+    "sigmaMs": 45,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "event": "contact",
+    "errorMs": -0.4946962188641102,
+    "method": "fused",
+    "sigmaMs": 1.7996339326542423,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "event": "landing",
+    "errorMs": -18.539024231659873,
+    "method": "foot-contact",
+    "sigmaMs": 35.00049999999998,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "event": "recoveryEnd",
+    "errorMs": -416.10900000000004,
+    "method": "pose-stable",
+    "sigmaMs": 120,
+    "fps": 60
+   },
+   {
+    "clip": "overcast-s2",
+    "set": "overcast",
+    "variant": "injected",
+    "event": "motionStart",
+    "errorMs": 33.333000000000055,
+    "method": "pose-still-end",
+    "sigmaMs": 60,
+    "fps": 60
+   }
+  ],
+  "warnings": [],
+  "quality": "good",
+  "qualityChecks": [],
+  "serve": {
+   "classification": "serve",
+   "included": true,
+   "exclusions": [],
+   "plausibility": {
+    "hardRejects": [],
+    "softFlags": []
+   },
+   "metrics": {
+    "spin": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NOT_MEASURABLE"
+    },
+    "toss-lateral": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "knee-bend-band": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "shoulder-over-shoulder-contact": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "speed-average-rear": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "NEEDS_REAR_VIEW"
+    },
+    "toss-apex-height": {
+     "status": "experimental",
+     "value": 1.77,
+     "reason": "VALIDATION_PENDING",
+     "low": 1.631022715558378,
+     "high": 1.9087808413431144
+    },
+    "toss-drop": {
+     "status": "estimated",
+     "value": 66,
+     "low": 59.3950086914517,
+     "high": 73.0333529152403
+    },
+    "contact-height-ratio": {
+     "status": "experimental",
+     "value": 1.43,
+     "reason": "VALIDATION_PENDING",
+     "low": 1.3249840512161835,
+     "high": 1.5357948832586357
+    },
+    "toss-forward": {
+     "status": "experimental",
+     "value": 38,
+     "reason": "VALIDATION_PENDING",
+     "low": 27.71270252296808,
+     "high": 47.74093919051281
+    },
+    "contact-forward": {
+     "status": "experimental",
+     "value": 44,
+     "reason": "VALIDATION_PENDING",
+     "low": 33.41711531898854,
+     "high": 54.03329037371979
+    },
+    "rhythm-release-to-contact": {
+     "status": "estimated",
+     "value": 938,
+     "low": 869.7482960577395,
+     "high": 1006.092811504564
+    },
+    "leg-drive": {
+     "status": "estimated",
+     "value": 13,
+     "reason": "BASELINE_BUILDING",
+     "low": 6.691799514348929,
+     "high": 19.241696283283005
+    },
+    "drive-time": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "POSE_LOW_QUALITY"
+    },
+    "loading-depth": {
+     "status": "estimated",
+     "value": 2,
+     "low": -4.532830630078344,
+     "high": 8.017062362817494
+    },
+    "deep-bend-flag": {
+     "status": "experimental",
+     "value": "yes",
+     "reason": "VALIDATION_PENDING"
+    },
+    "shoulder-tilt-trophy": {
+     "status": "experimental",
+     "value": null,
+     "reason": "VALIDATION_PENDING"
+    },
+    "trophy-pause": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "POSE_LOW_QUALITY"
+    },
+    "landing-distance": {
+     "status": "experimental",
+     "value": 68,
+     "reason": "VALIDATION_PENDING",
+     "low": 56.50185824570271,
+     "high": 80.31999765230147
+    },
+    "speed-experimental": {
+     "status": "unavailable",
+     "value": null,
+     "reason": "FPS_TOO_LOW"
+    }
+   },
+   "events": {
+    "setupStart": {
+     "frameIndex": 0,
+     "tReal": 0,
+     "uncertaintyS": 0.15,
+     "confidence": 0.5,
+     "method": "window-start"
+    },
+    "motionStart": {
+     "frameIndex": 44,
+     "tReal": 0.733333,
+     "uncertaintyS": 0.06,
+     "confidence": 0.8,
+     "method": "pose-still-end"
+    },
+    "tossRelease": {
+     "frameIndex": 102,
+     "tReal": 1.7000057499999843,
+     "uncertaintyS": 0.025,
+     "confidence": 0.8,
+     "method": "ball-hinge-fit"
+    },
+    "tossApex": {
+     "frameIndex": 136,
+     "tReal": 2.270512051152928,
+     "uncertaintyS": 0.0008333499999999994,
+     "confidence": 1,
+     "method": "ball-apex-fit"
+    },
+    "trophy": {
+     "frameIndex": 133,
+     "tReal": 2.216667,
+     "uncertaintyS": 0.07,
+     "confidence": 0.5552031141325671,
+     "method": "toss-arm-apex"
+    },
+    "lowestHip": {
+     "frameIndex": 131,
+     "tReal": 2.1770960183930086,
+     "uncertaintyS": 0.045,
+     "confidence": 0.5552031141325671,
+     "method": "pelvis-min-raw"
+    },
+    "contact": {
+     "frameIndex": 158,
+     "tReal": 2.637926303781136,
+     "uncertaintyS": 0.0017996339326542424,
+     "confidence": 0.9205427960721244,
+     "method": "fused"
+    },
+    "landing": {
+     "frameIndex": 167,
+     "tReal": 2.78090297576834,
+     "uncertaintyS": 0.03500049999999998,
+     "confidence": 0.9372997878931237,
+     "method": "foot-contact"
+    },
+    "recoveryEnd": {
+     "frameIndex": 209,
+     "tReal": 3.483333,
+     "uncertaintyS": 0.12,
+     "confidence": 0.7,
+     "method": "pose-stable"
+    }
+   }
+  }
+ }
+}

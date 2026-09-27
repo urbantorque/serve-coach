@@ -1,0 +1,4 @@
+[light] warning: W0927 03:53:06.048999 2196592 gl_context.cc:1119] OpenGL error checking is disabled
+[light] warning: W0927 03:53:11.968000 2196592 gl_context.cc:1119] OpenGL error checking is disabled
+[light] warning: W0927 03:53:12.464000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.
+[light] warning: W0927 03:53:12.689999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.

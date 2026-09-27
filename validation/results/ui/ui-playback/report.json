@@ -1,0 +1,322 @@
+[
+ {
+  "scheme": "light",
+  "shot": "serve-detail-portrait",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-portrait.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-landscape",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-landscape.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-deleted-video",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-deleted-video.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-sample",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-sample.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "tagging-portrait",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-tagging-portrait.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "tagging-landscape",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-tagging-landscape.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-body-contact",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-body-contact.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-legs",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-legs.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-contact-zoom",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-contact-zoom.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-drawer",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-drawer.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-tag-sheet",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-tag-sheet.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-compare-picker",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-serve-detail-compare-picker.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "compare-side",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-compare-side.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "compare-ghost",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-compare-ghost.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "tagging-tally",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-tagging-tally.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "light",
+  "shot": "tagging-summary",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\light-tagging-summary.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-portrait",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-portrait.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-landscape",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-landscape.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-deleted-video",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-deleted-video.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-sample",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-sample.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "tagging-portrait",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-tagging-portrait.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "tagging-landscape",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-tagging-landscape.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-body-contact",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-body-contact.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-legs",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-legs.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-contact-zoom",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-contact-zoom.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-drawer",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-drawer.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-tag-sheet",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-tag-sheet.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-compare-picker",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-serve-detail-compare-picker.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "compare-side",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-compare-side.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "compare-ghost",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-compare-ghost.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "tagging-tally",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-tagging-tally.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "tagging-summary",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\ui-playback\\dark-tagging-summary.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ],
+  "console": []
+ }
+]

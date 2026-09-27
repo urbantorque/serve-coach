@@ -975,6 +975,74 @@
    }
   },
   {
+   "series": "sample-checkin",
+   "clips": [
+    "sample-checkin"
+   ],
+   "n": 16,
+   "toss-height-spread": {
+    "unit": "m",
+    "mean": 3.33052,
+    "sd": 0.25609
+   },
+   "toss-forward-spread": {
+    "unit": "m",
+    "mean": 0.31768,
+    "sd": 0.07069
+   },
+   "rhythm-spread": {
+    "unit": "s",
+    "mean": 0.924869,
+    "sd": 0.131759
+   },
+   "contactHeightRatio": {
+    "mean": 1.49406,
+    "sd": 0.01093
+   },
+   "legDrivePctHeight": {
+    "mean": 13.17,
+    "sd": 1.275
+   },
+   "driveTimeS": {
+    "mean": 0.422119,
+    "sd": 0.057104
+   }
+  },
+  {
+   "series": "sample-retest",
+   "clips": [
+    "sample-retest"
+   ],
+   "n": 16,
+   "toss-height-spread": {
+    "unit": "m",
+    "mean": 3.28673,
+    "sd": 0.09637
+   },
+   "toss-forward-spread": {
+    "unit": "m",
+    "mean": 0.30117,
+    "sd": 0.09798
+   },
+   "rhythm-spread": {
+    "unit": "s",
+    "mean": 0.906725,
+    "sd": 0.044555
+   },
+   "contactHeightRatio": {
+    "mean": 1.50066,
+    "sd": 0.01252
+   },
+   "legDrivePctHeight": {
+    "mean": 12.743,
+    "sd": 0.956
+   },
+   "driveTimeS": {
+    "mean": 0.446511,
+    "sd": 0.038934
+   }
+  },
+  {
    "series": "session",
    "clips": [
     "session"

@@ -26,7 +26,7 @@ export function CaptureQualityLine({ overall, measured, detected, tip, onOpen }:
         <G size={16} aria-hidden="true" className={cx('shrink-0', overall === 'good' ? 'text-ink' : 'text-attention')} />
         <span>
           <span className="font-strong text-ink">Capture: {CAPTURE_WORDS[overall]}</span>
-          <span className="tabular-nums text-ink-2"> · {measured} of {detected} serves measured</span>
+          <span className="tabular-nums text-ink-2"> · {measured} of {detected} {detected === 1 ? 'serve' : 'serves'} measured</span>
         </span>
       </span>
       {second ? (

@@ -40,6 +40,7 @@ export const GROUPS: ScenarioGroup[] = [
   { id: 'advanced', description: 'Advanced profile: deep knee bend, jump, consistent toss, foot-up stance' },
   { id: 'session', description: 'One continuous multi-serve session clip: 8 serves, alternating sides, pauses, pre-serve ball bounces, distant distractor hits' },
   { id: 'default75', description: 'DECISIONS D1 default set-up: portrait side view 7.5 m from the centre mark, level phone 1.4 m high, 60 fps (deuce serves 1-3)' },
+  { id: 'app-sample', description: "The app's sample player (app/scripts/build-demo.mjs): a check-in and a re-test of 16 first serves to the deuce court in the D1 default set-up" },
   { id: 'fence9', description: 'DECISIONS D1 alternative: landscape side view at the side fence, 9 m from the centre mark, level phone 1.6 m high, 1080p, 60 fps (deuce serves 1-3)' },
 ]
 
@@ -105,6 +106,32 @@ function d1SetupJobs(): Scenario[] {
       video: { orientation: 'landscape' },
       camera: { view: 'side', distanceM: 9, heightM: 1.6, lookAtHeightM: 1.6, anchor: 'centre-mark' },
     }),
+  ]
+}
+
+/**
+ * The app's sample player (app/scripts/build-demo.mjs, ARCHITECTURE §11): the 1.80 m intermediate
+ * in the DECISIONS D1 default set-up (portrait, 7.5 m from the centre mark, level phone 1.4 m high,
+ * 60 fps), 16 first serves to the deuce court per session. The check-in has an inconsistent toss
+ * (toss-peak height SD x2.0, everything else as the profile); the re-test, after two weeks of a toss
+ * drill, has the profile's toss and slightly steadier serves overall (x0.9).
+ */
+function appSampleJobs(): Scenario[] {
+  const camera = { view: 'side', distanceM: 7.5, heightM: 1.4, lookAtHeightM: 1.4, anchor: 'centre-mark' } as const
+  const directions = ['T', 'wide', 'body', 'T', 'wide', 'T', 'body', 'wide', 'T', 'wide', 'body', 'T', 'wide', 'T', 'body', 'wide'] as const
+  const mk = (id: string, description: string, seed: number, serveSeed: number, sd: { all: number; toss: number }, dribbles: number[], idleS: number[]) =>
+    baseScenario(id, description, {
+      seed,
+      serves: { count: 16, serveSeed, courtSides: ['deuce'], directions: [...directions], dribbles, idleS, sdScale: sd.all, sdScaleByParam: { tossApexHeightM: sd.toss } },
+      camera,
+      audio: { distractorsPerMinute: 4 },
+      outputs: [{ id, tags: ['app-sample'], crf: BASE_CRF }],
+    })
+  return [
+    mk('sample-checkin', 'App sample check-in: 16 deuce first serves, D1 default set-up, toss-peak height variability x2.0 (an inconsistent toss)', 7301, SERVE_SEED + 12, { all: 1, toss: 2 },
+      [2, 1, 3, 2, 2, 1, 2, 3, 1, 2, 2, 3, 1, 2, 2, 1], [0.8, 1.1, 0.6, 1.3, 0.9, 0.7, 1.2, 0.8, 1.0, 0.6, 1.4, 0.9, 0.7, 1.1, 0.8, 1.0]),
+    mk('sample-retest', 'App sample re-test after a toss drill: 16 deuce first serves, D1 default set-up, variability x0.9', 7302, SERVE_SEED + 4, { all: 0.9, toss: 1 },
+      [1, 2, 2, 3, 1, 2, 2, 1, 3, 2, 1, 2, 2, 3, 1, 2], [0.9, 0.7, 1.2, 0.8, 1.0, 1.3, 0.6, 0.9, 1.1, 0.7, 1.0, 0.8, 1.2, 0.6, 0.9, 1.1]),
   ]
 }
 
@@ -174,6 +201,7 @@ export function corpus(): Scenario[] {
     }),
   )
   jobs.push(...d1SetupJobs())
+  jobs.push(...appSampleJobs())
   return jobs
 }
 

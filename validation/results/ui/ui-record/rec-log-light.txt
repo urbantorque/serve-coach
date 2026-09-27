@@ -1,0 +1,32 @@
+after stop: While it's fresh: how many went in?
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+after analyse: http://localhost:5203/processing/01M3GFEXEYK649QYM8X7BB71WZ
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+console error: Failed to load resource: net::ERR_FILE_NOT_FOUND
+finished: http://localhost:5203/sessions/01M3GFEXEYK649QYM8X7BB71WZ
+script error: page.evaluate: DexieError

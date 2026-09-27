@@ -22,7 +22,8 @@ export {
 } from './repos/sessions.ts'
 export { getServe, getTrack, listServesBySession, putServesWithTracksAndFrames, setServeIncluded } from './repos/serves.ts'
 export { addVideo, getVideo, getVideoBlob, listVideosBySession, retainUntilFor, setVideoRetention } from './repos/videos.ts'
-export { getKeyFrame, getKeyFrameFor, listKeyFramesForServe, putKeyFrames } from './repos/keyFrames.ts'
+export { getKeyFrame, getKeyFrameFor, getSessionThumb, listKeyFramesForServe, putKeyFrames } from './repos/keyFrames.ts'
+export { getJob, listJobsForSession, putJob, updateJob } from './repos/jobs.ts'
 export { bulkSetTags, deleteTag, getTally, listTags, setTag, setTally } from './repos/tags.ts'
 export {
   attachRetest,
@@ -44,7 +45,16 @@ export {
 export { deleteAllVideos, deleteEverything, deleteMatchLog, deleteServe, deleteSession, deleteVideo } from './deletion.ts'
 export { applyDeleteAfterAnalysis, EVENTS_KEEP_DAYS, sweepRetention } from './retention.ts'
 export { buildExportCSV, buildExportJSON, csvField, toCsv } from './export.ts'
-export { DEMO_SEED_VERSION, hasDemoData, loadDemoData, removeDemoData } from './demo.ts'
+export { DEMO_SEED_VERSION, hasDemoData, loadDemoData, removeDemoData, SAMPLE_SEED_VERSION, sampleSessionId } from './demo.ts'
+export {
+  fetchSampleSeed,
+  insertSampleSeed,
+  isSampleSeed,
+  SAMPLE_FEATURED_SESSION_ID,
+  SAMPLE_PROFILE,
+  SAMPLE_SESSION_IDS,
+  type SampleSeed,
+} from './sample.ts'
 export { DEMO_FIXTURES, DEMO_SESSION_IDS, FIXTURE_NOTE, wilson } from './fixtures.ts'
 export { useSettingsStore } from './stores/settings.ts'
 export { useUiStore, type ViewFilter } from './stores/ui.ts'

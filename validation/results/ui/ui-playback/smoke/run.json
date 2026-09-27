@@ -1,0 +1,34 @@
+{
+ "channel": "msedge",
+ "concurrency": 2,
+ "browser": "msedge 154.0.4258.37",
+ "blockedBeforeNetwork": [
+  "POST https://odml.pa.googleapis.com/v1/log (csp)",
+  "POST https://odml.pa.googleapis.com/v1/log (csp)"
+ ],
+ "warmupConsole": [
+  "error: Connecting to 'https://odml.pa.googleapis.com/v1/log' violates the following Content Security Policy directive: \"connect-src 'self' blob: data:\". The action has been blocked.",
+  "error: Connecting to 'https://odml.pa.googleapis.com/v1/log' violates the following Content Security Policy directive: \"connect-src 'self' blob: data:\". The action has been blocked.",
+  "error: Fetch API cannot load https://odml.pa.googleapis.com/v1/log. Refused to connect because it violates the document's Content Security Policy.",
+  "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log",
+  "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log",
+  "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+ ],
+ "privacyProbe": {
+  "page": {
+   "violation": "connect-src https://odml.pa.googleapis.com/v1/log",
+   "xhr": "network error",
+   "fetch": "rejected: Failed to fetch"
+  },
+  "worker": {
+   "violation": "connect-src https://odml.pa.googleapis.com/v1/log",
+   "xhr": "network error",
+   "fetch": "rejected: Blocked on-device: cross-origin request to https://odml.pa.googleapis.com/v1/log (privacy guard)"
+  },
+  "externalDuringProbe": [],
+  "workerUrl": "blob:http://127.0.0.1:53040/<uuid>",
+  "pageBlockedByCsp": true,
+  "workerBlockedByCsp": true
+ },
+ "externalRequests": []
+}

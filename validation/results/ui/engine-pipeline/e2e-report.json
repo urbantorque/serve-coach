@@ -1,0 +1,5170 @@
+{
+ "generatedAt": "2026-09-27T04:08:55.863Z",
+ "engine": "engine.ts",
+ "engineTsIsStub": false,
+ "results": [
+  {
+   "label": "baseline: run finished",
+   "ok": true,
+   "detail": "16.8 s"
+  },
+  {
+   "label": "baseline: 1 serve found",
+   "ok": true,
+   "detail": "found 1"
+  },
+  {
+   "label": "baseline: serves stored with metrics",
+   "ok": true,
+   "detail": "{\"unavailable\":8,\"experimental\":7,\"estimated\":4}"
+  },
+  {
+   "label": "baseline: every metric has a status",
+   "ok": true
+  },
+  {
+   "label": "baseline: tracks stored (with ball)",
+   "ok": true,
+   "detail": "1 tracks, 1 with ball"
+  },
+  {
+   "label": "baseline: key frames stored",
+   "ok": true,
+   "detail": "8 thumbs, 4 evidence, 234 KB"
+  },
+  {
+   "label": "baseline: session ready with analysis, job done",
+   "ok": true
+  },
+  {
+   "label": "baseline: no copy with sound kept (clip has an audio track)",
+   "ok": true,
+   "detail": "{\"storage\":\"not-kept\",\"audio\":\"removed\",\"retention\":\"delete-after-analysis\"}"
+  },
+  {
+   "label": "baseline: progress monotonic",
+   "ok": true
+  },
+  {
+   "label": "baseline: no console errors",
+   "ok": true,
+   "detail": "warning: W0927 03:51:32.452000 2196592 gl_context.cc:1119] OpenGL error checking is disabled | warning: W0927 03:51:36.072999 2196592 gl_context.cc:1119] OpenGL error checking is disabled | warning: W0927 03:51:36.494000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX. | warning: W0927 03:51:36.679000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX. | warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+  },
+  {
+   "label": "baseline (dark run): finished",
+   "ok": true
+  },
+  {
+   "label": "session: run finished",
+   "ok": true,
+   "detail": "98.2 s"
+  },
+  {
+   "label": "session: 8 serves found",
+   "ok": false,
+   "detail": "found 7; findServeWindows returned 7 window(s)"
+  },
+  {
+   "label": "session: every planned window has a provisional contact",
+   "ok": true,
+   "detail": "7 from pose"
+  },
+  {
+   "label": "session: metrics with statuses",
+   "ok": true,
+   "detail": "{\"unavailable\":65,\"experimental\":43,\"estimated\":25}"
+  },
+  {
+   "label": "session: key frames stored",
+   "ok": true,
+   "detail": "56 thumbs, 28 evidence"
+  },
+  {
+   "label": "session: progress monotonic",
+   "ok": true
+  },
+  {
+   "label": "session: ETA only after 5 s",
+   "ok": true,
+   "detail": "first ETA at 5306 ms"
+  },
+  {
+   "label": "session: no console errors",
+   "ok": true,
+   "detail": "warning: W0927 03:52:07.103000 2196592 gl_context.cc:1119] OpenGL error checking is disabled | warning: W0927 03:52:07.793999 2196592 gl_context.cc:1119] OpenGL error checking is disabled | warning: W0927 03:52:08.180999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX. | warning: W0927 03:52:08.385999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX. | warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+  },
+  {
+   "label": "cancel: run stopped as cancelled",
+   "ok": true,
+   "detail": "cancelled"
+  },
+  {
+   "label": "cancel: session marked cancelled, job cancelled",
+   "ok": true,
+   "detail": "cancelled/cancelled"
+  },
+  {
+   "label": "cancel: nothing half-saved",
+   "ok": true
+  },
+  {
+   "label": "cancel: stopped promptly",
+   "ok": true,
+   "detail": "1.52 s after the last progress event"
+  }
+ ],
+ "reports": {
+  "cancel": {
+   "state": "cancelled",
+   "clip": "/__synthetic/clips/session/session.mp4",
+   "sessionId": "01M3GGNTS2Q38GCYRB9DN6F0AQ",
+   "engine": "engine.ts",
+   "events": [
+    {
+     "t": 184,
+     "stage": "probe",
+     "step": "probe",
+     "overall": 0,
+     "label": "Reading your video"
+    },
+    {
+     "t": 637,
+     "stage": "probe",
+     "step": "probe",
+     "overall": 0.02,
+     "label": "Reading your video"
+    },
+    {
+     "t": 637,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.02,
+     "label": "Finding serves"
+    },
+    {
+     "t": 7235,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0206,
+     "label": "Finding serves",
+     "etaS": 336
+    },
+    {
+     "t": 7517,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0241,
+     "label": "Finding serves",
+     "etaS": 310
+    },
+    {
+     "t": 7783,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0281,
+     "label": "Finding serves",
+     "etaS": 274
+    },
+    {
+     "t": 8046,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0328,
+     "label": "Finding serves",
+     "etaS": 241
+    },
+    {
+     "t": 8315,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0374,
+     "label": "Finding serves",
+     "etaS": 216
+    },
+    {
+     "t": 8567,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0414,
+     "label": "Finding serves",
+     "etaS": 199
+    },
+    {
+     "t": 8854,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0461,
+     "label": "Finding serves",
+     "etaS": 184
+    },
+    {
+     "t": 9137,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0507,
+     "label": "Finding serves",
+     "etaS": 171
+    },
+    {
+     "t": 9402,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0548,
+     "label": "Finding serves",
+     "etaS": 162
+    },
+    {
+     "t": 9655,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0583,
+     "label": "Finding serves",
+     "etaS": 155
+    },
+    {
+     "t": 9919,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0617,
+     "label": "Finding serves",
+     "etaS": 150
+    },
+    {
+     "t": 10215,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0658,
+     "label": "Finding serves",
+     "etaS": 144
+    },
+    {
+     "t": 10497,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0699,
+     "label": "Finding serves",
+     "etaS": 139
+    },
+    {
+     "t": 10781,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0739,
+     "label": "Finding serves",
+     "etaS": 134
+    },
+    {
+     "t": 11054,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.078,
+     "label": "Finding serves",
+     "etaS": 130
+    },
+    {
+     "t": 11339,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.082,
+     "label": "Finding serves",
+     "etaS": 126
+    },
+    {
+     "t": 11592,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0855,
+     "label": "Finding serves",
+     "etaS": 123
+    },
+    {
+     "t": 11871,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.089,
+     "label": "Finding serves",
+     "etaS": 121
+    },
+    {
+     "t": 12150,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0925,
+     "label": "Finding serves",
+     "etaS": 118
+    },
+    {
+     "t": 12427,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0959,
+     "label": "Finding serves",
+     "etaS": 116
+    },
+    {
+     "t": 12700,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0994,
+     "label": "Finding serves",
+     "etaS": 114
+    },
+    {
+     "t": 12975,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1029,
+     "label": "Finding serves",
+     "etaS": 112
+    },
+    {
+     "t": 13248,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1064,
+     "label": "Finding serves",
+     "etaS": 110
+    },
+    {
+     "t": 13530,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1098,
+     "label": "Finding serves",
+     "etaS": 109
+    },
+    {
+     "t": 13789,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1133,
+     "label": "Finding serves",
+     "etaS": 107
+    },
+    {
+     "t": 14066,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1168,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 14330,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1203,
+     "label": "Finding serves",
+     "etaS": 104
+    },
+    {
+     "t": 14628,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1238,
+     "label": "Finding serves",
+     "etaS": 103
+    },
+    {
+     "t": 14900,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1272,
+     "label": "Finding serves",
+     "etaS": 101
+    },
+    {
+     "t": 15195,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1313,
+     "label": "Finding serves",
+     "etaS": 100
+    },
+    {
+     "t": 15471,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1348,
+     "label": "Finding serves",
+     "etaS": 99
+    },
+    {
+     "t": 15742,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1383,
+     "label": "Finding serves",
+     "etaS": 97
+    },
+    {
+     "t": 16010,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1417,
+     "label": "Finding serves",
+     "etaS": 96
+    },
+    {
+     "t": 16274,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1452,
+     "label": "Finding serves",
+     "etaS": 95
+    },
+    {
+     "t": 16526,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1487,
+     "label": "Finding serves",
+     "etaS": 94
+    },
+    {
+     "t": 16800,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1522,
+     "label": "Finding serves",
+     "etaS": 93
+    },
+    {
+     "t": 17057,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1556,
+     "label": "Finding serves",
+     "etaS": 92
+    },
+    {
+     "t": 17309,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1597,
+     "label": "Finding serves",
+     "etaS": 91
+    },
+    {
+     "t": 17583,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1638,
+     "label": "Finding serves",
+     "etaS": 89
+    },
+    {
+     "t": 17865,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1678,
+     "label": "Finding serves",
+     "etaS": 88
+    },
+    {
+     "t": 18152,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1719,
+     "label": "Finding serves",
+     "etaS": 87
+    },
+    {
+     "t": 18427,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1759,
+     "label": "Finding serves",
+     "etaS": 86
+    },
+    {
+     "t": 18698,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1794,
+     "label": "Finding serves",
+     "etaS": 85
+    },
+    {
+     "t": 18957,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1829,
+     "label": "Finding serves",
+     "etaS": 84
+    },
+    {
+     "t": 19216,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1864,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 19476,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1898,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 20285,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1912,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 20564,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1928,
+     "label": "Finding serves",
+     "etaS": 85
+    },
+    {
+     "t": 20840,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1944,
+     "label": "Finding serves",
+     "etaS": 86
+    },
+    {
+     "t": 21091,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1957,
+     "label": "Finding serves",
+     "etaS": 86
+    },
+    {
+     "t": 21358,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1971,
+     "label": "Finding serves",
+     "etaS": 86
+    },
+    {
+     "t": 21618,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1985,
+     "label": "Finding serves",
+     "etaS": 86
+    },
+    {
+     "t": 21874,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1999,
+     "label": "Finding serves",
+     "etaS": 87
+    },
+    {
+     "t": 22139,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2013,
+     "label": "Finding serves",
+     "etaS": 87
+    },
+    {
+     "t": 22397,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2027,
+     "label": "Finding serves",
+     "etaS": 87
+    },
+    {
+     "t": 22678,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2041,
+     "label": "Finding serves",
+     "etaS": 88
+    },
+    {
+     "t": 23391,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2049,
+     "label": "Finding serves",
+     "etaS": 88
+    },
+    {
+     "t": 23669,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.206,
+     "label": "Finding serves",
+     "etaS": 90
+    },
+    {
+     "t": 23923,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2074,
+     "label": "Finding serves",
+     "etaS": 91
+    },
+    {
+     "t": 24211,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2088,
+     "label": "Finding serves",
+     "etaS": 91
+    },
+    {
+     "t": 24479,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2102,
+     "label": "Finding serves",
+     "etaS": 91
+    },
+    {
+     "t": 24747,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2116,
+     "label": "Finding serves",
+     "etaS": 91
+    },
+    {
+     "t": 25016,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.213,
+     "label": "Finding serves",
+     "etaS": 92
+    },
+    {
+     "t": 25300,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2144,
+     "label": "Finding serves",
+     "etaS": 92
+    },
+    {
+     "t": 25580,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2159,
+     "label": "Finding serves",
+     "etaS": 92
+    },
+    {
+     "t": 25838,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2173,
+     "label": "Finding serves",
+     "etaS": 92
+    },
+    {
+     "t": 26119,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2189,
+     "label": "Finding serves",
+     "etaS": 92
+    },
+    {
+     "t": 26564,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2193,
+     "label": "Finding serves",
+     "etaS": 93
+    },
+    {
+     "t": 26816,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2207,
+     "label": "Finding serves",
+     "etaS": 94
+    },
+    {
+     "t": 27084,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2223,
+     "label": "Finding serves",
+     "etaS": 94
+    },
+    {
+     "t": 27354,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2239,
+     "label": "Finding serves",
+     "etaS": 94
+    },
+    {
+     "t": 27615,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2254,
+     "label": "Finding serves",
+     "etaS": 94
+    },
+    {
+     "t": 27895,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.227,
+     "label": "Finding serves",
+     "etaS": 94
+    },
+    {
+     "t": 28170,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2284,
+     "label": "Finding serves",
+     "etaS": 94
+    },
+    {
+     "t": 28431,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2298,
+     "label": "Finding serves",
+     "etaS": 95
+    },
+    {
+     "t": 28691,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2312,
+     "label": "Finding serves",
+     "etaS": 95
+    },
+    {
+     "t": 28955,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2326,
+     "label": "Finding serves",
+     "etaS": 95
+    },
+    {
+     "t": 29631,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2339,
+     "label": "Finding serves",
+     "etaS": 95
+    },
+    {
+     "t": 29902,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2351,
+     "label": "Finding serves",
+     "etaS": 97
+    },
+    {
+     "t": 30165,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2367,
+     "label": "Finding serves",
+     "etaS": 97
+    },
+    {
+     "t": 30429,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2383,
+     "label": "Finding serves",
+     "etaS": 97
+    },
+    {
+     "t": 30688,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2397,
+     "label": "Finding serves",
+     "etaS": 100
+    },
+    {
+     "t": 30961,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2411,
+     "label": "Finding serves",
+     "etaS": 104
+    },
+    {
+     "t": 31220,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2425,
+     "label": "Finding serves",
+     "etaS": 104
+    },
+    {
+     "t": 31496,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.244,
+     "label": "Finding serves",
+     "etaS": 104
+    },
+    {
+     "t": 31758,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2454,
+     "label": "Finding serves",
+     "etaS": 104
+    },
+    {
+     "t": 32033,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.247,
+     "label": "Finding serves",
+     "etaS": 104
+    },
+    {
+     "t": 32728,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2472,
+     "label": "Finding serves",
+     "etaS": 105
+    },
+    {
+     "t": 33006,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2486,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 33269,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2502,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 33520,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2518,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 33790,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2535,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 34050,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2551,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 34307,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2567,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 34585,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2585,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 34861,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2601,
+     "label": "Finding serves",
+     "etaS": 105
+    },
+    {
+     "t": 35627,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2611,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 35916,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2624,
+     "label": "Finding serves",
+     "etaS": 107
+    },
+    {
+     "t": 36185,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2638,
+     "label": "Finding serves",
+     "etaS": 107
+    },
+    {
+     "t": 36451,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2652,
+     "label": "Finding serves",
+     "etaS": 107
+    },
+    {
+     "t": 36718,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2666,
+     "label": "Finding serves",
+     "etaS": 107
+    },
+    {
+     "t": 36996,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.268,
+     "label": "Finding serves",
+     "etaS": 107
+    },
+    {
+     "t": 37266,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2694,
+     "label": "Finding serves",
+     "etaS": 102
+    },
+    {
+     "t": 37528,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2708,
+     "label": "Finding serves",
+     "etaS": 90
+    },
+    {
+     "t": 37788,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2721,
+     "label": "Finding serves",
+     "etaS": 89
+    },
+    {
+     "t": 38039,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2735,
+     "label": "Finding serves",
+     "etaS": 90
+    },
+    {
+     "t": 38292,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2747,
+     "label": "Finding serves",
+     "etaS": 91
+    },
+    {
+     "t": 38984,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2757,
+     "label": "Finding serves",
+     "etaS": 93
+    },
+    {
+     "t": 39245,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2769,
+     "label": "Finding serves",
+     "etaS": 96
+    },
+    {
+     "t": 39536,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2783,
+     "label": "Finding serves",
+     "etaS": 97
+    },
+    {
+     "t": 39802,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2797,
+     "label": "Finding serves",
+     "etaS": 98
+    },
+    {
+     "t": 40140,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2807,
+     "label": "Finding serves",
+     "etaS": 99
+    },
+    {
+     "t": 40503,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2814,
+     "label": "Finding serves",
+     "etaS": 101
+    },
+    {
+     "t": 40753,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2824,
+     "label": "Finding serves",
+     "etaS": 102
+    },
+    {
+     "t": 41030,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2836,
+     "label": "Finding serves",
+     "etaS": 104
+    },
+    {
+     "t": 41313,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2846,
+     "label": "Finding serves",
+     "etaS": 105
+    },
+    {
+     "t": 41583,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2858,
+     "label": "Finding serves",
+     "etaS": 106
+    },
+    {
+     "t": 41837,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.287,
+     "label": "Finding serves",
+     "etaS": 107
+    },
+    {
+     "t": 42118,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2884,
+     "label": "Finding serves",
+     "etaS": 108
+    },
+    {
+     "t": 42385,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.29,
+     "label": "Finding serves",
+     "etaS": 109
+    },
+    {
+     "t": 43315,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2904,
+     "label": "Finding serves",
+     "etaS": 111
+    },
+    {
+     "t": 43589,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2917,
+     "label": "Finding serves",
+     "etaS": 117
+    },
+    {
+     "t": 43849,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2933,
+     "label": "Finding serves",
+     "etaS": 118
+    },
+    {
+     "t": 44104,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2947,
+     "label": "Finding serves",
+     "etaS": 119
+    },
+    {
+     "t": 44371,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2961,
+     "label": "Finding serves",
+     "etaS": 120
+    },
+    {
+     "t": 44636,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2975,
+     "label": "Finding serves",
+     "etaS": 121
+    },
+    {
+     "t": 44899,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2989,
+     "label": "Finding serves",
+     "etaS": 122
+    },
+    {
+     "t": 45173,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.3003,
+     "label": "Finding serves",
+     "etaS": 123
+    },
+    {
+     "t": 45452,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.3018,
+     "label": "Finding serves",
+     "etaS": 125
+    },
+    {
+     "t": 45718,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.3032,
+     "label": "Finding serves",
+     "etaS": 126
+    },
+    {
+     "t": 45974,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.3044,
+     "label": "Finding serves",
+     "etaS": 127
+    },
+    {
+     "t": 46235,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.32,
+     "label": "Finding serves (7 found)",
+     "etaS": 124
+    },
+    {
+     "t": 47343,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3202,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 125
+    },
+    {
+     "t": 47623,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3217,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 128
+    },
+    {
+     "t": 47897,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3236,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 130
+    },
+    {
+     "t": 48167,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3249,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 132
+    },
+    {
+     "t": 48421,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3276,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 133
+    },
+    {
+     "t": 48688,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3305,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 133
+    },
+    {
+     "t": 48954,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3332,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 133
+    },
+    {
+     "t": 49212,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3361,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 133
+    },
+    {
+     "t": 49485,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.339,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 133
+    },
+    {
+     "t": 49744,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3417,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 132
+    },
+    {
+     "t": 50006,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3443,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 131
+    },
+    {
+     "t": 50276,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3472,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 129
+    },
+    {
+     "t": 50536,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3496,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 125
+    },
+    {
+     "t": 50840,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3523,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 123
+    },
+    {
+     "t": 51122,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3549,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 122
+    },
+    {
+     "t": 51380,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3576,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 121
+    },
+    {
+     "t": 51643,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3605,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 119
+    },
+    {
+     "t": 51895,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3631,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 117
+    },
+    {
+     "t": 52146,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3658,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 116
+    },
+    {
+     "t": 52442,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3682,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 115
+    },
+    {
+     "t": 52727,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3708,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 114
+    },
+    {
+     "t": 52995,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3735,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 112
+    },
+    {
+     "t": 53250,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3764,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 111
+    },
+    {
+     "t": 53509,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3788,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 108
+    },
+    {
+     "t": 53773,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3814,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 106
+    },
+    {
+     "t": 54107,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.383,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 106
+    },
+    {
+     "t": 54360,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3846,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 106
+    },
+    {
+     "t": 54618,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3864,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 105
+    },
+    {
+     "t": 54908,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3888,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 104
+    },
+    {
+     "t": 55208,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.391,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 103
+    },
+    {
+     "t": 55466,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3933,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 102
+    },
+    {
+     "t": 55742,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3963,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 101
+    },
+    {
+     "t": 56013,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3994,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 100
+    },
+    {
+     "t": 56271,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.402,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 99
+    },
+    {
+     "t": 56550,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4037,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 98
+    },
+    {
+     "t": 56835,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4055,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 97
+    },
+    {
+     "t": 56872,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.4057,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 97
+    },
+    {
+     "t": 57898,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.406,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 98
+    },
+    {
+     "t": 58154,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4077,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 99
+    },
+    {
+     "t": 58410,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4099,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 99
+    },
+    {
+     "t": 58678,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4118,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 98
+    },
+    {
+     "t": 58943,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4144,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 97
+    },
+    {
+     "t": 59222,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4171,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 96
+    },
+    {
+     "t": 59505,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4197,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 95
+    },
+    {
+     "t": 59766,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4221,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 93
+    },
+    {
+     "t": 60034,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4245,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 92
+    },
+    {
+     "t": 60306,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4272,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 91
+    },
+    {
+     "t": 60581,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4298,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 90
+    },
+    {
+     "t": 60836,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4322,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 89
+    },
+    {
+     "t": 61118,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4346,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 88
+    },
+    {
+     "t": 61422,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4368,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 88
+    },
+    {
+     "t": 61730,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4389,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 87
+    },
+    {
+     "t": 61983,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.441,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 86
+    },
+    {
+     "t": 62262,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4431,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 86
+    },
+    {
+     "t": 62545,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4453,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 85
+    },
+    {
+     "t": 62802,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4469,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 85
+    },
+    {
+     "t": 63136,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.449,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 83
+    },
+    {
+     "t": 63425,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4516,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 82
+    }
+   ],
+   "warnings": [
+    "We couldn't remove the sound from this video, so we didn't keep a copy. Your original is unchanged."
+   ],
+   "consoleErrors": [],
+   "error": {
+    "code": "cancelled",
+    "message": "Analysis stopped before it finished, so nothing from this run was saved.",
+    "detail": "signal aborted"
+   },
+   "verify": {
+    "sessionStatus": "cancelled",
+    "hasAnalysis": false,
+    "serves": 0,
+    "servesWithMetrics": 0,
+    "metricStatuses": {},
+    "metricsWithoutStatus": 0,
+    "tracks": 0,
+    "tracksWithBall": 0,
+    "thumbs": 0,
+    "evidence": 0,
+    "sessionThumb": false,
+    "keyFrameBytes": 0,
+    "statsStored": false,
+    "jobState": "cancelled",
+    "servesInDbAfterCancel": 0
+   },
+   "wallS": 64.942,
+   "console": [
+    "warning: W0927 04:06:25.567000 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+    "warning: W0927 04:06:30.919000 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+    "warning: W0927 04:06:31.331000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+    "warning: W0927 04:06:31.521999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+    "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log",
+    "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+   ]
+  },
+  "baseline": {
+   "state": "done",
+   "clip": "/__synthetic/clips/baseline-s1/baseline-s1.mp4",
+   "sessionId": "01M3GFTK0RZW4C2Z85SAB2YWTX",
+   "engine": "engine.ts",
+   "events": [
+    {
+     "t": 12,
+     "stage": "probe",
+     "step": "probe",
+     "overall": 0,
+     "label": "Reading your video"
+    },
+    {
+     "t": 501,
+     "stage": "probe",
+     "step": "probe",
+     "overall": 0.02,
+     "label": "Reading your video"
+    },
+    {
+     "t": 501,
+     "stage": "audio",
+     "step": "finding-serves",
+     "overall": 0.02,
+     "label": "Finding serves (listening for the hit)"
+    },
+    {
+     "t": 559,
+     "stage": "audio",
+     "step": "finding-serves",
+     "overall": 0.06,
+     "label": "Finding serves (listening for the hit)"
+    },
+    {
+     "t": 559,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.06,
+     "label": "Finding serves"
+    },
+    {
+     "t": 5074,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0674,
+     "label": "Finding serves",
+     "etaS": 70
+    },
+    {
+     "t": 5346,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1267,
+     "label": "Finding serves",
+     "etaS": 44
+    },
+    {
+     "t": 5632,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2008,
+     "label": "Finding serves",
+     "etaS": 25
+    },
+    {
+     "t": 6133,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2097,
+     "label": "Finding serves",
+     "etaS": 24
+    },
+    {
+     "t": 6393,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2229,
+     "label": "Finding serves",
+     "etaS": 22
+    },
+    {
+     "t": 6645,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2377,
+     "label": "Finding serves",
+     "etaS": 21
+    },
+    {
+     "t": 6895,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2524,
+     "label": "Finding serves",
+     "etaS": 21
+    },
+    {
+     "t": 7149,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2672,
+     "label": "Finding serves",
+     "etaS": 20
+    },
+    {
+     "t": 7400,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2819,
+     "label": "Finding serves",
+     "etaS": 19
+    },
+    {
+     "t": 7652,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2967,
+     "label": "Finding serves",
+     "etaS": 18
+    },
+    {
+     "t": 7864,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.32,
+     "label": "Finding serves (1 found)",
+     "etaS": 17
+    },
+    {
+     "t": 8520,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3217,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 18
+    },
+    {
+     "t": 8776,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3378,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 17
+    },
+    {
+     "t": 9046,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3549,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 17
+    },
+    {
+     "t": 9302,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3771,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 16
+    },
+    {
+     "t": 9598,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4031,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 14
+    },
+    {
+     "t": 9867,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4254,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 13
+    },
+    {
+     "t": 10128,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4494,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 13
+    },
+    {
+     "t": 10380,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4736,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 12
+    },
+    {
+     "t": 10656,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4996,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 11
+    },
+    {
+     "t": 10929,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5256,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 10
+    },
+    {
+     "t": 11179,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5496,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 9
+    },
+    {
+     "t": 11452,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5738,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 9
+    },
+    {
+     "t": 11722,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5998,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 8
+    },
+    {
+     "t": 11991,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6258,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 7
+    },
+    {
+     "t": 12263,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6517,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 7
+    },
+    {
+     "t": 12516,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6794,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 6
+    },
+    {
+     "t": 12770,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7054,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 5
+    },
+    {
+     "t": 13035,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7314,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 5
+    },
+    {
+     "t": 13319,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7556,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 4
+    },
+    {
+     "t": 13600,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7668,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 4
+    },
+    {
+     "t": 13855,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.787,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 4
+    },
+    {
+     "t": 14136,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8076,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 3
+    },
+    {
+     "t": 14388,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8279,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 3
+    },
+    {
+     "t": 14650,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8519,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 3
+    },
+    {
+     "t": 14926,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8793,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 2
+    },
+    {
+     "t": 15192,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.901,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 2
+    },
+    {
+     "t": 15468,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.9166,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 1
+    },
+    {
+     "t": 15522,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.92,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 1
+    },
+    {
+     "t": 15673,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.92,
+     "label": "Tracking the toss (serve 1 of 1)",
+     "etaS": 1
+    },
+    {
+     "t": 15685,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.92,
+     "label": "Timing each phase",
+     "etaS": 1
+    },
+    {
+     "t": 15974,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.946,
+     "label": "Timing each phase",
+     "etaS": 1
+    },
+    {
+     "t": 16162,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.96,
+     "label": "Timing each phase",
+     "etaS": 1
+    },
+    {
+     "t": 16162,
+     "stage": "session",
+     "step": "coaching",
+     "overall": 0.96,
+     "label": "Choosing your focus",
+     "etaS": 1
+    },
+    {
+     "t": 16197,
+     "stage": "session",
+     "step": "coaching",
+     "overall": 0.98,
+     "label": "Choosing your focus",
+     "etaS": 1
+    },
+    {
+     "t": 16197,
+     "stage": "session",
+     "step": "saving",
+     "overall": 0.98,
+     "label": "Choosing your focus (saving your results)",
+     "etaS": 1
+    },
+    {
+     "t": 16211,
+     "stage": "done",
+     "step": "done",
+     "overall": 1,
+     "label": "Done"
+    }
+   ],
+   "warnings": [
+    "We couldn't remove the sound from this video, so we didn't keep a copy. Your original is unchanged."
+   ],
+   "consoleErrors": [],
+   "result": {
+    "sessionId": "01M3GFTK0RZW4C2Z85SAB2YWTX",
+    "jobId": "01M3GFTK14BDBQPHM7N7J9WEK7",
+    "serveIds": [
+     "01M3GFTK0RZW4C2Z85SAB2YWTX-s01"
+    ],
+    "servesFound": 1,
+    "servesIncluded": 1,
+    "keyFrames": 13,
+    "timings": {
+     "probeMs": 446.2999999821186,
+     "audioMs": 58.30000001192093,
+     "poseInitMs": 3674.4000000059605,
+     "sparseMs": 3623.0999999940395,
+     "denseMs": 7791.200000017881,
+     "densePoseMs": 7601,
+     "denseBallMs": 6405.799999982119,
+     "ballReadbackMs": 1792.3999999463558,
+     "ballCropScale": 1,
+     "ballAnalyseMs": 137.80000001192093,
+     "measureMs": 69.90000000596046,
+     "keyFramesMs": 405.5,
+     "coachingMs": 34.79999998211861,
+     "saveMs": 14,
+     "totalMs": 16199.699999988079,
+     "framesDecoded": 476,
+     "poseFrames": 261,
+     "ballFrames": 151,
+     "windows": 1,
+     "sparseCoarseFrames": 20,
+     "sparseFillFrames": 67,
+     "ballBackend": "worker",
+     "poseBackend": "worker"
+    },
+    "warnings": [
+     "We couldn't remove the sound from this video, so we didn't keep a copy. Your original is unchanged."
+    ],
+    "coaching": {
+     "status": "decided",
+     "kind": "capture-fix"
+    },
+    "timeBase": {
+     "captureFps": 60,
+     "timeScale": 1,
+     "fpsSource": "timestamps",
+     "status": "physics"
+    },
+    "serveFinding": {
+     "engineWindows": 1,
+     "windows": [
+      {
+       "startReal": 0.6,
+       "endReal": 4.8,
+       "contactT": 2.784557236727352,
+       "contactSource": "audio",
+       "confidence": 0.95
+      }
+     ]
+    },
+    "statsMetricIds": [
+     "serve-count",
+     "retoss-count",
+     "toss-apex-height",
+     "toss-height-spread",
+     "toss-drop",
+     "contact-height-ratio",
+     "contact-height-spread",
+     "rhythm-release-to-contact",
+     "rhythm-spread",
+     "trophy-pause",
+     "toss-forward",
+     "toss-forward-spread",
+     "contact-forward",
+     "leg-drive",
+     "drive-time",
+     "loading-depth",
+     "deep-bend-flag",
+     "shoulder-tilt-trophy",
+     "landing-distance",
+     "repeatability",
+     "fatigue-flag",
+     "capture-quality",
+     "serve-in-rate",
+     "first-serve-in-rate",
+     "second-serve-in-rate",
+     "double-faults",
+     "speed-radar-entered",
+     "placement-zone",
+     "serve-type-mix",
+     "spin",
+     "load-flag",
+     "speed-experimental",
+     "speed-average-rear"
+    ]
+   },
+   "verify": {
+    "sessionStatus": "ready",
+    "hasAnalysis": true,
+    "serves": 1,
+    "servesWithMetrics": 1,
+    "metricStatuses": {
+     "unavailable": 8,
+     "experimental": 7,
+     "estimated": 4
+    },
+    "metricsWithoutStatus": 0,
+    "tracks": 1,
+    "tracksWithBall": 1,
+    "thumbs": 8,
+    "evidence": 4,
+    "sessionThumb": true,
+    "keyFrameBytes": 239661,
+    "statsStored": true,
+    "jobState": "done",
+    "video": {
+     "storage": "not-kept",
+     "audio": "removed",
+     "retention": "delete-after-analysis"
+    }
+   },
+   "wallS": 16.849,
+   "console": [
+    "warning: W0927 03:51:32.452000 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+    "warning: W0927 03:51:36.072999 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+    "warning: W0927 03:51:36.494000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+    "warning: W0927 03:51:36.679000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+    "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log",
+    "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+   ]
+  },
+  "baselineDark": {
+   "state": "done",
+   "wallS": 16.348,
+   "timings": {
+    "probeMs": 29.400000005960464,
+    "audioMs": 50.79999998211861,
+    "poseInitMs": 608.3999999761581,
+    "sparseMs": 3932.699999988079,
+    "denseMs": 9918.699999988079,
+    "densePoseMs": 9664.5,
+    "denseBallMs": 7843.499999880791,
+    "ballReadbackMs": 2142.399999946356,
+    "ballCropScale": 1,
+    "ballAnalyseMs": 180.59999999403954,
+    "measureMs": 81.30000001192093,
+    "keyFramesMs": 442.89999997615814,
+    "coachingMs": 42.89999997615814,
+    "saveMs": 14.799999982118607,
+    "totalMs": 15193.799999982119,
+    "framesDecoded": 476,
+    "poseFrames": 261,
+    "ballFrames": 151,
+    "windows": 1,
+    "sparseCoarseFrames": 20,
+    "sparseFillFrames": 67,
+    "ballBackend": "worker",
+    "poseBackend": "worker"
+   }
+  },
+  "session": {
+   "state": "done",
+   "clip": "/__synthetic/clips/session/session.mp4",
+   "sessionId": "01M3GFVN5WBD2Y83RETXQ3P3C1",
+   "engine": "engine.ts",
+   "events": [
+    {
+     "t": 116,
+     "stage": "probe",
+     "step": "probe",
+     "overall": 0,
+     "label": "Reading your video"
+    },
+    {
+     "t": 173,
+     "stage": "probe",
+     "step": "probe",
+     "overall": 0.02,
+     "label": "Reading your video"
+    },
+    {
+     "t": 173,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.02,
+     "label": "Finding serves"
+    },
+    {
+     "t": 1800,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0206,
+     "label": "Finding serves"
+    },
+    {
+     "t": 2067,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0241,
+     "label": "Finding serves"
+    },
+    {
+     "t": 2348,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0281,
+     "label": "Finding serves"
+    },
+    {
+     "t": 2622,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0322,
+     "label": "Finding serves"
+    },
+    {
+     "t": 2902,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0362,
+     "label": "Finding serves"
+    },
+    {
+     "t": 3177,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0403,
+     "label": "Finding serves"
+    },
+    {
+     "t": 3437,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0438,
+     "label": "Finding serves"
+    },
+    {
+     "t": 3689,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0472,
+     "label": "Finding serves"
+    },
+    {
+     "t": 3971,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0513,
+     "label": "Finding serves"
+    },
+    {
+     "t": 4227,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0554,
+     "label": "Finding serves"
+    },
+    {
+     "t": 4484,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0588,
+     "label": "Finding serves"
+    },
+    {
+     "t": 4746,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0623,
+     "label": "Finding serves"
+    },
+    {
+     "t": 5014,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0658,
+     "label": "Finding serves"
+    },
+    {
+     "t": 5306,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0704,
+     "label": "Finding serves",
+     "etaS": 69
+    },
+    {
+     "t": 5560,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0745,
+     "label": "Finding serves",
+     "etaS": 68
+    },
+    {
+     "t": 5832,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0785,
+     "label": "Finding serves",
+     "etaS": 67
+    },
+    {
+     "t": 6102,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0826,
+     "label": "Finding serves",
+     "etaS": 67
+    },
+    {
+     "t": 6369,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0867,
+     "label": "Finding serves",
+     "etaS": 66
+    },
+    {
+     "t": 6643,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0913,
+     "label": "Finding serves",
+     "etaS": 65
+    },
+    {
+     "t": 6918,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0954,
+     "label": "Finding serves",
+     "etaS": 65
+    },
+    {
+     "t": 7168,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.0994,
+     "label": "Finding serves",
+     "etaS": 64
+    },
+    {
+     "t": 7432,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1041,
+     "label": "Finding serves",
+     "etaS": 63
+    },
+    {
+     "t": 7700,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1087,
+     "label": "Finding serves",
+     "etaS": 62
+    },
+    {
+     "t": 7953,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1127,
+     "label": "Finding serves",
+     "etaS": 62
+    },
+    {
+     "t": 8231,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1174,
+     "label": "Finding serves",
+     "etaS": 61
+    },
+    {
+     "t": 8489,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1214,
+     "label": "Finding serves",
+     "etaS": 61
+    },
+    {
+     "t": 8751,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1261,
+     "label": "Finding serves",
+     "etaS": 60
+    },
+    {
+     "t": 9012,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1307,
+     "label": "Finding serves",
+     "etaS": 59
+    },
+    {
+     "t": 9294,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1354,
+     "label": "Finding serves",
+     "etaS": 59
+    },
+    {
+     "t": 9544,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1388,
+     "label": "Finding serves",
+     "etaS": 59
+    },
+    {
+     "t": 9812,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1429,
+     "label": "Finding serves",
+     "etaS": 58
+    },
+    {
+     "t": 10082,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1469,
+     "label": "Finding serves",
+     "etaS": 58
+    },
+    {
+     "t": 10372,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1516,
+     "label": "Finding serves",
+     "etaS": 58
+    },
+    {
+     "t": 10656,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1562,
+     "label": "Finding serves",
+     "etaS": 57
+    },
+    {
+     "t": 10918,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1603,
+     "label": "Finding serves",
+     "etaS": 57
+    },
+    {
+     "t": 11181,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1643,
+     "label": "Finding serves",
+     "etaS": 56
+    },
+    {
+     "t": 11446,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1684,
+     "label": "Finding serves",
+     "etaS": 56
+    },
+    {
+     "t": 11704,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1725,
+     "label": "Finding serves",
+     "etaS": 56
+    },
+    {
+     "t": 11982,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1765,
+     "label": "Finding serves",
+     "etaS": 55
+    },
+    {
+     "t": 12255,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1806,
+     "label": "Finding serves",
+     "etaS": 55
+    },
+    {
+     "t": 12511,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1846,
+     "label": "Finding serves",
+     "etaS": 55
+    },
+    {
+     "t": 12761,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1887,
+     "label": "Finding serves",
+     "etaS": 54
+    },
+    {
+     "t": 13501,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1912,
+     "label": "Finding serves",
+     "etaS": 55
+    },
+    {
+     "t": 13770,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.193,
+     "label": "Finding serves",
+     "etaS": 57
+    },
+    {
+     "t": 14024,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1946,
+     "label": "Finding serves",
+     "etaS": 57
+    },
+    {
+     "t": 14301,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1963,
+     "label": "Finding serves",
+     "etaS": 58
+    },
+    {
+     "t": 14572,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1979,
+     "label": "Finding serves",
+     "etaS": 58
+    },
+    {
+     "t": 14844,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.1997,
+     "label": "Finding serves",
+     "etaS": 59
+    },
+    {
+     "t": 15101,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2013,
+     "label": "Finding serves",
+     "etaS": 59
+    },
+    {
+     "t": 15358,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2029,
+     "label": "Finding serves",
+     "etaS": 60
+    },
+    {
+     "t": 15608,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2045,
+     "label": "Finding serves",
+     "etaS": 60
+    },
+    {
+     "t": 16216,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2049,
+     "label": "Finding serves",
+     "etaS": 61
+    },
+    {
+     "t": 16469,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2062,
+     "label": "Finding serves",
+     "etaS": 63
+    },
+    {
+     "t": 16735,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2078,
+     "label": "Finding serves",
+     "etaS": 63
+    },
+    {
+     "t": 17011,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2096,
+     "label": "Finding serves",
+     "etaS": 64
+    },
+    {
+     "t": 17292,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2114,
+     "label": "Finding serves",
+     "etaS": 64
+    },
+    {
+     "t": 17545,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.213,
+     "label": "Finding serves",
+     "etaS": 64
+    },
+    {
+     "t": 17815,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2146,
+     "label": "Finding serves",
+     "etaS": 65
+    },
+    {
+     "t": 18080,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2159,
+     "label": "Finding serves",
+     "etaS": 65
+    },
+    {
+     "t": 18337,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2175,
+     "label": "Finding serves",
+     "etaS": 65
+    },
+    {
+     "t": 18966,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2193,
+     "label": "Finding serves",
+     "etaS": 66
+    },
+    {
+     "t": 19222,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2207,
+     "label": "Finding serves",
+     "etaS": 67
+    },
+    {
+     "t": 19489,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2225,
+     "label": "Finding serves",
+     "etaS": 68
+    },
+    {
+     "t": 19781,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2242,
+     "label": "Finding serves",
+     "etaS": 68
+    },
+    {
+     "t": 20052,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.226,
+     "label": "Finding serves",
+     "etaS": 68
+    },
+    {
+     "t": 20311,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2276,
+     "label": "Finding serves",
+     "etaS": 68
+    },
+    {
+     "t": 20589,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2294,
+     "label": "Finding serves",
+     "etaS": 69
+    },
+    {
+     "t": 20851,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.231,
+     "label": "Finding serves",
+     "etaS": 69
+    },
+    {
+     "t": 21121,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2326,
+     "label": "Finding serves",
+     "etaS": 69
+    },
+    {
+     "t": 21693,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2339,
+     "label": "Finding serves",
+     "etaS": 70
+    },
+    {
+     "t": 21964,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2353,
+     "label": "Finding serves",
+     "etaS": 71
+    },
+    {
+     "t": 22214,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2369,
+     "label": "Finding serves",
+     "etaS": 71
+    },
+    {
+     "t": 22467,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2385,
+     "label": "Finding serves",
+     "etaS": 71
+    },
+    {
+     "t": 22731,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2401,
+     "label": "Finding serves",
+     "etaS": 72
+    },
+    {
+     "t": 22992,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2417,
+     "label": "Finding serves",
+     "etaS": 72
+    },
+    {
+     "t": 23248,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2432,
+     "label": "Finding serves",
+     "etaS": 72
+    },
+    {
+     "t": 23500,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2448,
+     "label": "Finding serves",
+     "etaS": 72
+    },
+    {
+     "t": 23759,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2464,
+     "label": "Finding serves",
+     "etaS": 72
+    },
+    {
+     "t": 24423,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2472,
+     "label": "Finding serves",
+     "etaS": 73
+    },
+    {
+     "t": 24679,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2486,
+     "label": "Finding serves",
+     "etaS": 74
+    },
+    {
+     "t": 24934,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2502,
+     "label": "Finding serves",
+     "etaS": 74
+    },
+    {
+     "t": 25213,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.252,
+     "label": "Finding serves",
+     "etaS": 74
+    },
+    {
+     "t": 25481,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2537,
+     "label": "Finding serves",
+     "etaS": 75
+    },
+    {
+     "t": 25757,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2555,
+     "label": "Finding serves",
+     "etaS": 75
+    },
+    {
+     "t": 26033,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2573,
+     "label": "Finding serves",
+     "etaS": 75
+    },
+    {
+     "t": 26297,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2591,
+     "label": "Finding serves",
+     "etaS": 75
+    },
+    {
+     "t": 26558,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2607,
+     "label": "Finding serves",
+     "etaS": 75
+    },
+    {
+     "t": 27021,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2611,
+     "label": "Finding serves",
+     "etaS": 75
+    },
+    {
+     "t": 27281,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2626,
+     "label": "Finding serves",
+     "etaS": 76
+    },
+    {
+     "t": 27563,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2644,
+     "label": "Finding serves",
+     "etaS": 76
+    },
+    {
+     "t": 27816,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.266,
+     "label": "Finding serves",
+     "etaS": 76
+    },
+    {
+     "t": 28078,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2678,
+     "label": "Finding serves",
+     "etaS": 76
+    },
+    {
+     "t": 28339,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2696,
+     "label": "Finding serves",
+     "etaS": 76
+    },
+    {
+     "t": 28590,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2714,
+     "label": "Finding serves",
+     "etaS": 76
+    },
+    {
+     "t": 28862,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2733,
+     "label": "Finding serves",
+     "etaS": 76
+    },
+    {
+     "t": 29142,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2753,
+     "label": "Finding serves",
+     "etaS": 76
+    },
+    {
+     "t": 29484,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2757,
+     "label": "Finding serves",
+     "etaS": 77
+    },
+    {
+     "t": 29754,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2773,
+     "label": "Finding serves",
+     "etaS": 77
+    },
+    {
+     "t": 30029,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2793,
+     "label": "Finding serves",
+     "etaS": 77
+    },
+    {
+     "t": 30290,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2811,
+     "label": "Finding serves",
+     "etaS": 82
+    },
+    {
+     "t": 30554,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2828,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 30804,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2846,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 31079,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2866,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 31331,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2884,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 31584,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2902,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 32076,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2904,
+     "label": "Finding serves",
+     "etaS": 82
+    },
+    {
+     "t": 32332,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2917,
+     "label": "Finding serves",
+     "etaS": 80
+    },
+    {
+     "t": 32589,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2935,
+     "label": "Finding serves",
+     "etaS": 81
+    },
+    {
+     "t": 32849,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2953,
+     "label": "Finding serves",
+     "etaS": 81
+    },
+    {
+     "t": 33120,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2973,
+     "label": "Finding serves",
+     "etaS": 82
+    },
+    {
+     "t": 33370,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.2991,
+     "label": "Finding serves",
+     "etaS": 82
+    },
+    {
+     "t": 33643,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.301,
+     "label": "Finding serves",
+     "etaS": 82
+    },
+    {
+     "t": 33919,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.303,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 34192,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.3048,
+     "label": "Finding serves",
+     "etaS": 83
+    },
+    {
+     "t": 34288,
+     "stage": "sparse",
+     "step": "finding-serves",
+     "overall": 0.32,
+     "label": "Finding serves (7 found)",
+     "etaS": 82
+    },
+    {
+     "t": 34887,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3202,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 81
+    },
+    {
+     "t": 35153,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3225,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 80
+    },
+    {
+     "t": 35420,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3249,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 80
+    },
+    {
+     "t": 35673,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3287,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 80
+    },
+    {
+     "t": 35935,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3326,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 79
+    },
+    {
+     "t": 36187,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3366,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 79
+    },
+    {
+     "t": 36440,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3403,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 78
+    },
+    {
+     "t": 36703,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3443,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 78
+    },
+    {
+     "t": 36953,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.348,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 78
+    },
+    {
+     "t": 37224,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3523,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 77
+    },
+    {
+     "t": 37482,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3562,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 77
+    },
+    {
+     "t": 37750,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3602,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 77
+    },
+    {
+     "t": 38006,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3639,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 76
+    },
+    {
+     "t": 38280,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3682,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 76
+    },
+    {
+     "t": 38556,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3724,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 75
+    },
+    {
+     "t": 38808,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3764,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 75
+    },
+    {
+     "t": 39058,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3798,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 75
+    },
+    {
+     "t": 39310,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3833,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 75
+    },
+    {
+     "t": 39567,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3867,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 74
+    },
+    {
+     "t": 39827,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3904,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 74
+    },
+    {
+     "t": 40092,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3947,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 73
+    },
+    {
+     "t": 40360,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.3989,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 73
+    },
+    {
+     "t": 40614,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4023,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 73
+    },
+    {
+     "t": 40881,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4045,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 73
+    },
+    {
+     "t": 41025,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.4057,
+     "label": "Tracking the toss (serve 1 of 7)",
+     "etaS": 73
+    },
+    {
+     "t": 41786,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.406,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 74
+    },
+    {
+     "t": 42038,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4085,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 77
+    },
+    {
+     "t": 42312,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4118,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 77
+    },
+    {
+     "t": 42587,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4155,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 76
+    },
+    {
+     "t": 42857,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4192,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 76
+    },
+    {
+     "t": 43108,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4227,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 75
+    },
+    {
+     "t": 43371,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4261,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 75
+    },
+    {
+     "t": 43641,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4298,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 72
+    },
+    {
+     "t": 43919,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4336,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 71
+    },
+    {
+     "t": 44191,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4373,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 70
+    },
+    {
+     "t": 44472,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.441,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 69
+    },
+    {
+     "t": 44723,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4442,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 68
+    },
+    {
+     "t": 44975,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4476,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 67
+    },
+    {
+     "t": 45252,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4511,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 66
+    },
+    {
+     "t": 45525,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4548,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 65
+    },
+    {
+     "t": 45799,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4585,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 64
+    },
+    {
+     "t": 46056,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.462,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 64
+    },
+    {
+     "t": 46316,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4657,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 62
+    },
+    {
+     "t": 46568,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4697,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 61
+    },
+    {
+     "t": 46835,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.474,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 60
+    },
+    {
+     "t": 47102,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4782,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 59
+    },
+    {
+     "t": 47359,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4825,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 58
+    },
+    {
+     "t": 47619,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4867,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 56
+    },
+    {
+     "t": 47876,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4892,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 56
+    },
+    {
+     "t": 48141,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.4914,
+     "label": "Tracking the toss (serve 2 of 7)",
+     "etaS": 56
+    },
+    {
+     "t": 48797,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4917,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 56
+    },
+    {
+     "t": 49058,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.494,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 56
+    },
+    {
+     "t": 49321,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.4969,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 55
+    },
+    {
+     "t": 49578,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5004,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 54
+    },
+    {
+     "t": 49835,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5033,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 54
+    },
+    {
+     "t": 50093,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5067,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 53
+    },
+    {
+     "t": 50374,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5102,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 52
+    },
+    {
+     "t": 50629,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5136,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 52
+    },
+    {
+     "t": 50881,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5166,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 51
+    },
+    {
+     "t": 51137,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.52,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 50
+    },
+    {
+     "t": 51417,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5234,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 50
+    },
+    {
+     "t": 51675,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5266,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 49
+    },
+    {
+     "t": 51932,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5301,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 48
+    },
+    {
+     "t": 52188,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.533,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 47
+    },
+    {
+     "t": 52470,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5367,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 47
+    },
+    {
+     "t": 52721,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5399,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 46
+    },
+    {
+     "t": 52977,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5433,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 46
+    },
+    {
+     "t": 53233,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5465,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 45
+    },
+    {
+     "t": 53498,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.55,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 44
+    },
+    {
+     "t": 53754,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5537,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 44
+    },
+    {
+     "t": 54011,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5576,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 43
+    },
+    {
+     "t": 54265,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5616,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 42
+    },
+    {
+     "t": 54519,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5656,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 41
+    },
+    {
+     "t": 54791,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5695,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 40
+    },
+    {
+     "t": 55044,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.573,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 40
+    },
+    {
+     "t": 55297,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5749,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 40
+    },
+    {
+     "t": 55547,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5769,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 39
+    },
+    {
+     "t": 55580,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.5771,
+     "label": "Tracking the toss (serve 3 of 7)",
+     "etaS": 39
+    },
+    {
+     "t": 56320,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5774,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 40
+    },
+    {
+     "t": 56617,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5794,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 40
+    },
+    {
+     "t": 56896,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.581,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 40
+    },
+    {
+     "t": 57166,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5843,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 39
+    },
+    {
+     "t": 57454,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5875,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 38
+    },
+    {
+     "t": 57706,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5906,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 38
+    },
+    {
+     "t": 57982,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5944,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 37
+    },
+    {
+     "t": 58235,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.5976,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 37
+    },
+    {
+     "t": 58490,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6015,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 36
+    },
+    {
+     "t": 58758,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.605,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 36
+    },
+    {
+     "t": 59013,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.609,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 35
+    },
+    {
+     "t": 59270,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6119,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 35
+    },
+    {
+     "t": 59526,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6153,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 34
+    },
+    {
+     "t": 59807,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6183,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 34
+    },
+    {
+     "t": 60065,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6215,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 33
+    },
+    {
+     "t": 60323,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6247,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 33
+    },
+    {
+     "t": 60577,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6281,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 32
+    },
+    {
+     "t": 60828,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6313,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 32
+    },
+    {
+     "t": 61109,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6348,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 32
+    },
+    {
+     "t": 61382,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.638,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 31
+    },
+    {
+     "t": 61660,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6411,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 31
+    },
+    {
+     "t": 61922,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6443,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 31
+    },
+    {
+     "t": 62187,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6481,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 30
+    },
+    {
+     "t": 62462,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6518,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 29
+    },
+    {
+     "t": 62736,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.656,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 29
+    },
+    {
+     "t": 62998,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6596,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 28
+    },
+    {
+     "t": 63282,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6619,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 28
+    },
+    {
+     "t": 63410,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.6629,
+     "label": "Tracking the toss (serve 4 of 7)",
+     "etaS": 28
+    },
+    {
+     "t": 64188,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6631,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 28
+    },
+    {
+     "t": 64445,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6649,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 29
+    },
+    {
+     "t": 64726,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6679,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 29
+    },
+    {
+     "t": 64981,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.671,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 28
+    },
+    {
+     "t": 65243,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6742,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 28
+    },
+    {
+     "t": 65505,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6774,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 28
+    },
+    {
+     "t": 65761,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6804,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 27
+    },
+    {
+     "t": 66017,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6825,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 27
+    },
+    {
+     "t": 66296,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6857,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 27
+    },
+    {
+     "t": 66566,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6889,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 27
+    },
+    {
+     "t": 66828,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6913,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 27
+    },
+    {
+     "t": 67082,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6942,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 27
+    },
+    {
+     "t": 67351,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.6974,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 26
+    },
+    {
+     "t": 67603,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7006,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 26
+    },
+    {
+     "t": 67855,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.704,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 26
+    },
+    {
+     "t": 68108,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7072,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 26
+    },
+    {
+     "t": 68382,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7104,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 26
+    },
+    {
+     "t": 68638,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7134,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 25
+    },
+    {
+     "t": 68896,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7157,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 25
+    },
+    {
+     "t": 69167,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7186,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 25
+    },
+    {
+     "t": 69430,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.721,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 25
+    },
+    {
+     "t": 69699,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7231,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 25
+    },
+    {
+     "t": 69994,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7258,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 25
+    },
+    {
+     "t": 70256,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7274,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 25
+    },
+    {
+     "t": 70520,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7303,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 25
+    },
+    {
+     "t": 70790,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7338,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 24
+    },
+    {
+     "t": 71054,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7375,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 24
+    },
+    {
+     "t": 71304,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7409,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 23
+    },
+    {
+     "t": 71577,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7444,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 23
+    },
+    {
+     "t": 71827,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7461,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 23
+    },
+    {
+     "t": 72082,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7478,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 22
+    },
+    {
+     "t": 72178,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.7486,
+     "label": "Tracking the toss (serve 5 of 7)",
+     "etaS": 22
+    },
+    {
+     "t": 73014,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7488,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 23
+    },
+    {
+     "t": 73285,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7511,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 23
+    },
+    {
+     "t": 73540,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7541,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 23
+    },
+    {
+     "t": 73804,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7575,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 22
+    },
+    {
+     "t": 74068,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.761,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 22
+    },
+    {
+     "t": 74327,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7644,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 22
+    },
+    {
+     "t": 74578,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7679,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 21
+    },
+    {
+     "t": 74843,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7716,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 21
+    },
+    {
+     "t": 75100,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7753,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 21
+    },
+    {
+     "t": 75356,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.779,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 20
+    },
+    {
+     "t": 75615,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7827,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 20
+    },
+    {
+     "t": 75872,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7864,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 20
+    },
+    {
+     "t": 76128,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7901,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 19
+    },
+    {
+     "t": 76389,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7938,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 19
+    },
+    {
+     "t": 76642,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.7976,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 19
+    },
+    {
+     "t": 76904,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8013,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 18
+    },
+    {
+     "t": 77165,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8052,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 18
+    },
+    {
+     "t": 77424,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8087,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 18
+    },
+    {
+     "t": 77698,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8124,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 17
+    },
+    {
+     "t": 77956,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8158,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 17
+    },
+    {
+     "t": 78211,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8185,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 17
+    },
+    {
+     "t": 78475,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8219,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 16
+    },
+    {
+     "t": 78735,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8254,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 16
+    },
+    {
+     "t": 78997,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8291,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 79249,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8308,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 79534,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8326,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 79792,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.8343,
+     "label": "Tracking the toss (serve 6 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 80701,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8345,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 80978,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8361,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 81253,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8371,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 81515,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8379,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 81887,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8387,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 16
+    },
+    {
+     "t": 82241,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8398,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 16
+    },
+    {
+     "t": 82546,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8414,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 16
+    },
+    {
+     "t": 82906,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8425,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 16
+    },
+    {
+     "t": 83188,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8446,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 16
+    },
+    {
+     "t": 83446,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8467,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 83742,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8488,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 84006,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.851,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 84264,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8533,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 84529,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8552,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 84807,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8579,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 85070,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8605,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 15
+    },
+    {
+     "t": 85349,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8632,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 14
+    },
+    {
+     "t": 85607,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8661,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 14
+    },
+    {
+     "t": 85896,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.869,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 14
+    },
+    {
+     "t": 86175,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8722,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 13
+    },
+    {
+     "t": 86429,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8754,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 13
+    },
+    {
+     "t": 86713,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8786,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 12
+    },
+    {
+     "t": 86968,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8821,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 12
+    },
+    {
+     "t": 87221,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8852,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 12
+    },
+    {
+     "t": 87490,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8887,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 11
+    },
+    {
+     "t": 87747,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8922,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 11
+    },
+    {
+     "t": 88018,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8951,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 11
+    },
+    {
+     "t": 88302,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.8983,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 10
+    },
+    {
+     "t": 88560,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.9015,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 10
+    },
+    {
+     "t": 88826,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.9052,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 10
+    },
+    {
+     "t": 89087,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.9089,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 9
+    },
+    {
+     "t": 89350,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.9126,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 9
+    },
+    {
+     "t": 89621,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.916,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 8
+    },
+    {
+     "t": 89874,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.9178,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 8
+    },
+    {
+     "t": 90136,
+     "stage": "dense",
+     "step": "tracking-body",
+     "overall": 0.9195,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 8
+    },
+    {
+     "t": 90200,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.92,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 8
+    },
+    {
+     "t": 90279,
+     "stage": "dense",
+     "step": "tracking-ball",
+     "overall": 0.92,
+     "label": "Tracking the toss (serve 7 of 7)",
+     "etaS": 8
+    },
+    {
+     "t": 90295,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.92,
+     "label": "Timing each phase",
+     "etaS": 8
+    },
+    {
+     "t": 90592,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.932,
+     "label": "Timing each phase",
+     "etaS": 8
+    },
+    {
+     "t": 90917,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.933,
+     "label": "Timing each phase",
+     "etaS": 7
+    },
+    {
+     "t": 91875,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9366,
+     "label": "Timing each phase",
+     "etaS": 7
+    },
+    {
+     "t": 92143,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9396,
+     "label": "Timing each phase",
+     "etaS": 6
+    },
+    {
+     "t": 92683,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9401,
+     "label": "Timing each phase",
+     "etaS": 6
+    },
+    {
+     "t": 92936,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9412,
+     "label": "Timing each phase",
+     "etaS": 6
+    },
+    {
+     "t": 93188,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9437,
+     "label": "Timing each phase",
+     "etaS": 6
+    },
+    {
+     "t": 94672,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9442,
+     "label": "Timing each phase",
+     "etaS": 6
+    },
+    {
+     "t": 95592,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9483,
+     "label": "Timing each phase",
+     "etaS": 6
+    },
+    {
+     "t": 95845,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9519,
+     "label": "Timing each phase",
+     "etaS": 5
+    },
+    {
+     "t": 96436,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9524,
+     "label": "Timing each phase",
+     "etaS": 5
+    },
+    {
+     "t": 97261,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.9564,
+     "label": "Timing each phase",
+     "etaS": 5
+    },
+    {
+     "t": 97460,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.96,
+     "label": "Timing each phase",
+     "etaS": 5
+    },
+    {
+     "t": 97471,
+     "stage": "keyframes",
+     "step": "measuring",
+     "overall": 0.96,
+     "label": "Timing each phase",
+     "etaS": 5
+    },
+    {
+     "t": 97471,
+     "stage": "session",
+     "step": "coaching",
+     "overall": 0.96,
+     "label": "Choosing your focus",
+     "etaS": 5
+    },
+    {
+     "t": 97508,
+     "stage": "session",
+     "step": "coaching",
+     "overall": 0.98,
+     "label": "Choosing your focus",
+     "etaS": 4
+    },
+    {
+     "t": 97508,
+     "stage": "session",
+     "step": "saving",
+     "overall": 0.98,
+     "label": "Choosing your focus (saving your results)",
+     "etaS": 3
+    },
+    {
+     "t": 97528,
+     "stage": "done",
+     "step": "done",
+     "overall": 1,
+     "label": "Done"
+    }
+   ],
+   "warnings": [
+    "We couldn't remove the sound from this video, so we didn't keep a copy. Your original is unchanged."
+   ],
+   "consoleErrors": [],
+   "result": {
+    "sessionId": "01M3GFVN5WBD2Y83RETXQ3P3C1",
+    "jobId": "01M3GFVN9FHDEATEV74DH3655V",
+    "serveIds": [
+     "01M3GFVN5WBD2Y83RETXQ3P3C1-s01",
+     "01M3GFVN5WBD2Y83RETXQ3P3C1-s02",
+     "01M3GFVN5WBD2Y83RETXQ3P3C1-s03",
+     "01M3GFVN5WBD2Y83RETXQ3P3C1-s04",
+     "01M3GFVN5WBD2Y83RETXQ3P3C1-s05",
+     "01M3GFVN5WBD2Y83RETXQ3P3C1-s06",
+     "01M3GFVN5WBD2Y83RETXQ3P3C1-s07"
+    ],
+    "servesFound": 7,
+    "servesIncluded": 6,
+    "keyFrames": 85,
+    "timings": {
+     "probeMs": 28.5,
+     "audioMs": 0,
+     "poseInitMs": 815.6000000238419,
+     "sparseMs": 33245.70000001788,
+     "denseMs": 55975.09999999404,
+     "densePoseMs": 55371.90000000596,
+     "denseBallMs": 44722.30000028014,
+     "ballReadbackMs": 13312.700000464916,
+     "ballCropScale": 1,
+     "ballAnalyseMs": 466.59999999403954,
+     "measureMs": 297.10000002384186,
+     "keyFramesMs": 6875.899999976158,
+     "coachingMs": 37.099999994039536,
+     "saveMs": 19.599999994039536,
+     "totalMs": 97412.19999998808,
+     "framesDecoded": 5709,
+     "poseFrames": 2085,
+     "ballFrames": 1057,
+     "windows": 7,
+     "sparseCoarseFrames": 295,
+     "sparseFillFrames": 576,
+     "ballBackend": "worker",
+     "poseBackend": "worker"
+    },
+    "warnings": [
+     "We couldn't remove the sound from this video, so we didn't keep a copy. Your original is unchanged."
+    ],
+    "coaching": {
+     "status": "decided",
+     "kind": "keep-going"
+    },
+    "timeBase": {
+     "captureFps": 60,
+     "timeScale": 1,
+     "fpsSource": "timestamps",
+     "status": "physics"
+    },
+    "serveFinding": {
+     "engineWindows": 7,
+     "windows": [
+      {
+       "startReal": 2.3333333333333335,
+       "endReal": 6.533333333333333,
+       "contactT": 4.562783869140622,
+       "contactSource": "pose",
+       "confidence": 0.95
+      },
+      {
+       "startReal": 11.8,
+       "endReal": 16,
+       "contactT": 14.00654130835569,
+       "contactSource": "pose",
+       "confidence": 0.8052768382634856
+      },
+      {
+       "startReal": 20.4,
+       "endReal": 24.6,
+       "contactT": 22.56763065558268,
+       "contactSource": "pose",
+       "confidence": 0.95
+      },
+      {
+       "startReal": 39.6,
+       "endReal": 43.8,
+       "contactT": 41.80604990972488,
+       "contactSource": "pose",
+       "confidence": 0.95
+      },
+      {
+       "startReal": 49.6,
+       "endReal": 53.8,
+       "contactT": 51.8,
+       "contactSource": "pose",
+       "confidence": 0.8651368674047341
+      },
+      {
+       "startReal": 58.4,
+       "endReal": 62.6,
+       "contactT": 60.56397319061038,
+       "contactSource": "pose",
+       "confidence": 0.95
+      },
+      {
+       "startReal": 69.26666666666667,
+       "endReal": 73.46666666666667,
+       "contactT": 71.46237783423953,
+       "contactSource": "pose",
+       "confidence": 0.8295714063981733
+      }
+     ]
+    },
+    "statsMetricIds": [
+     "serve-count",
+     "retoss-count",
+     "toss-apex-height",
+     "toss-height-spread",
+     "toss-drop",
+     "contact-height-ratio",
+     "contact-height-spread",
+     "rhythm-release-to-contact",
+     "rhythm-spread",
+     "trophy-pause",
+     "toss-forward",
+     "toss-forward-spread",
+     "contact-forward",
+     "leg-drive",
+     "drive-time",
+     "loading-depth",
+     "deep-bend-flag",
+     "shoulder-tilt-trophy",
+     "landing-distance",
+     "repeatability",
+     "fatigue-flag",
+     "capture-quality",
+     "serve-in-rate",
+     "first-serve-in-rate",
+     "second-serve-in-rate",
+     "double-faults",
+     "speed-radar-entered",
+     "placement-zone",
+     "serve-type-mix",
+     "spin",
+     "load-flag",
+     "speed-experimental",
+     "speed-average-rear"
+    ]
+   },
+   "verify": {
+    "sessionStatus": "ready",
+    "hasAnalysis": true,
+    "serves": 7,
+    "servesWithMetrics": 7,
+    "metricStatuses": {
+     "unavailable": 65,
+     "experimental": 43,
+     "estimated": 25
+    },
+    "metricsWithoutStatus": 0,
+    "tracks": 7,
+    "tracksWithBall": 7,
+    "thumbs": 56,
+    "evidence": 28,
+    "sessionThumb": true,
+    "keyFrameBytes": 1537863,
+    "statsStored": true,
+    "jobState": "done",
+    "video": {
+     "storage": "not-kept",
+     "audio": "removed",
+     "retention": "delete-after-analysis"
+    }
+   },
+   "wallS": 98.197,
+   "console": [
+    "warning: W0927 03:52:07.103000 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+    "warning: W0927 03:52:07.793999 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+    "warning: W0927 03:52:08.180999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+    "warning: W0927 03:52:08.385999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.",
+    "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log",
+    "warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+   ]
+  },
+  "sessionDark": {
+   "state": "done",
+   "wallS": 301.278
+  }
+ }
+}
