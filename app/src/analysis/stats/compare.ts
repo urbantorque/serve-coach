@@ -19,7 +19,7 @@ export interface MatchContext {
   /** Soft factors. */
   fpsClass?: 'fps30' | 'fps60' | 'fps120plus'
   bodyPx?: number
-  conditionClass?: 'day' | 'overcast' | 'night-lights' | 'flicker'
+  conditionClass?: 'day' | 'overcast' | 'night-lights' | 'flicker' | 'unknown'
   captureQuality?: 'good' | 'usable' | 'poor'
 }
 

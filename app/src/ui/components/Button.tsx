@@ -32,7 +32,8 @@ const BASE =
 const VARIANT: Record<ButtonVariant, string> = {
   primary: 'px-5 bg-optic text-on-optic border-token border-optic-edge hover:bg-optic-press active:bg-optic-press',
   secondary: 'px-5 bg-surface text-ink border-token border-line-strong hover:bg-surface-2 active:bg-surface-2',
-  tertiary: 'px-1 text-ink hover:bg-surface-2 active:bg-surface-2',
+  // min-w-11: short labels (Let, Skip, How?) still give a 44 px wide target (DESIGN §5.5).
+  tertiary: 'min-w-11 px-1 text-ink hover:bg-surface-2 active:bg-surface-2',
   destructive: 'px-5 bg-surface text-critical border-token border-line-strong hover:bg-critical-soft active:bg-surface-2',
   critical: 'px-5 bg-critical text-on-critical hover:opacity-90 active:opacity-90',
 }
@@ -62,7 +63,7 @@ export function Button({
   const classes = cx(
     BASE,
     // Disabled replaces the variant colours rather than competing with them.
-    inert ? (variant === 'tertiary' ? 'px-1 text-ink-disabled cursor-not-allowed' : `px-5 ${DISABLED}`) : VARIANT[variant],
+    inert ? (variant === 'tertiary' ? 'min-w-11 px-1 text-ink-disabled cursor-not-allowed' : `px-5 ${DISABLED}`) : VARIANT[variant],
     // Heights (DESIGN §8.3, §5.5): 52 px; 44 px compact secondary and tertiary; 56 px critical fill.
     variant === 'critical' ? 'h-14' : variant === 'tertiary' || (compact && variant === 'secondary') ? 'h-11' : 'h-13',
     variant === 'tertiary' && to && 'underline decoration-1 underline-offset-[3px]',

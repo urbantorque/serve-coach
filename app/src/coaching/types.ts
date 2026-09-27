@@ -145,6 +145,11 @@ export interface CoachingSession {
   isDemo?: boolean
   /** The set-up key (StratumKey.setup). When absent it is read from the METRICS strata keys. */
   setupKey?: string
+  /**
+   * Local calendar date of the practice visit (SessionRecord.visitId). Blocks recorded on one day share
+   * it, so a block recorded after the drill on the day an experiment started is never a re-test (§12.3).
+   */
+  visitId?: string
 }
 
 export interface CoachingExperiment {
@@ -159,6 +164,8 @@ export interface CoachingExperiment {
   cueRegister: CueRegister
   drillVariant: DrillVariant
   pinnedByCoach?: boolean
+  /** The visit (local day) of the session that started it; later blocks that day are same-session (§12.3). */
+  startedVisitId?: string
   /** Later matched re-tests only (§12.3). */
   retests: { sessionId: string; verdict: VerdictId; resolvedMet: boolean }[]
   status: 'active' | 'worked' | 'parked' | 'superseded'
@@ -266,6 +273,11 @@ export interface CoachingInput {
   matchDay?: boolean
   /** Sessions left on cooldown, by item id (§7.4). */
   cooldowns?: Record<string, number>
+  /**
+   * Extra earlier sessions the active experiment's verdict may read (its baseline and earlier re-tests)
+   * when they fall outside `history`. Used only for the "Did it work?" comparison, never for detection.
+   */
+  experimentHistory?: CoachingSession[]
   load?: LoadInput
   verdict?: VerdictFn
   /** ISO 8601 "now" (tests pass a fixed value). */
@@ -304,6 +316,8 @@ export interface ItemCheck {
   text: string
   /** A value to render with MetricValue beside the sentence. */
   metric?: { metricId: MetricId; value: MetricValue }
+  /** Ruled out only by today's "a bit sore" answer: session only, so never stored with the decision (§9.3). */
+  soreToday?: boolean
 }
 
 export interface RankReason {

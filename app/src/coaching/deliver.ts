@@ -5,6 +5,7 @@
 import type { KeyFrameEvent, MetricId, MetricValue, ServePhase } from '../analysis/types.ts'
 import { metricsValue, type Detection } from './detect.ts'
 import { getItem, type LibraryItem } from './library.ts'
+import { EFFORT_REGIONS, FULL_EFFORT } from './lint.ts'
 import type { NormalisedProfile } from './profile.ts'
 import { seriesFor, stratumSeries, values } from './series.ts'
 import { mean, median } from './stats.ts'
@@ -54,20 +55,37 @@ export interface LogRules {
   unlockProgression: boolean
   suggestRegression: boolean
   suggestOtherCue: boolean
+  /**
+   * A practice logged with "It hurts" holds the harder version back (§10.3 drill pain rule): a log
+   * with pain never counts towards the unlock, and the 2 successful practices must both come after the
+   * newest one. True when the "yes" answers would otherwise have unlocked it.
+   */
+  painPaused: boolean
   /** Logs of this item, newest last. */
   logs: PracticeLogSummary[]
+}
+
+/** The logs that count towards the unlock: "yes" answers after the newest practice logged with pain. */
+export function successesSincePain(logs: readonly PracticeLogSummary[]): { yes: number; yesIgnoringPain: number; painLogged: boolean } {
+  let lastPain = -1
+  logs.forEach((l, i) => {
+    if (l.body === 'pain') lastPain = i
+  })
+  const yesIn = (xs: readonly PracticeLogSummary[]) => xs.filter((l) => l.successCriterionMet === 'yes' && l.body !== 'pain').length
+  return { yes: yesIn(logs.slice(lastPain + 1)), yesIgnoringPain: logs.filter((l) => l.successCriterionMet === 'yes').length, painLogged: lastPain >= 0 }
 }
 
 /** §12.2: 2 "yes" logs unlock the progression; 2 "no" suggest the regression; 2 awkward in a row suggest the other cue. */
 export function practiceLogRules(logs: readonly PracticeLogSummary[], itemId?: string): LogRules {
   const mine = logs.filter((l) => !itemId || !l.itemId || l.itemId === itemId)
-  const yes = mine.filter((l) => l.successCriterionMet === 'yes').length
+  const { yes, yesIgnoringPain, painLogged } = successesSincePain(mine)
   const no = mine.filter((l) => l.successCriterionMet === 'no').length
   const lastTwo = mine.slice(-2)
   return {
     unlockProgression: yes >= 2,
     suggestRegression: no >= 2 && yes < 2,
     suggestOtherCue: lastTwo.length === 2 && lastTwo.every((l) => l.feel === 'awkward'),
+    painPaused: painLogged && yes < 2 && yesIgnoringPain >= 2,
     logs: [...mine],
   }
 }
@@ -76,6 +94,17 @@ export function practiceLogRules(logs: readonly PracticeLogSummary[], itemId?: s
 export function progressionGatePasses(item: LibraryItem, profile: NormalisedProfile): boolean {
   const g = item.drill.progressionGate
   return g.levels.includes(profile.level) && !g.excludeIfComfort.some((r) => profile.comfort.has(r))
+}
+
+/**
+ * Safety net under the library gates (§9.3, §11): with a shoulder, elbow, back or other setting (or
+ * today's soreness there), no harder version asks for full pace, full effort or kick, whatever the
+ * library text says. The library lint enforces the same rule on the content.
+ */
+export function effortAllowed(text: string | undefined, profile: NormalisedProfile): boolean {
+  if (!text) return true
+  if (!FULL_EFFORT.test(text) && !/\bkick/i.test(text)) return true
+  return !EFFORT_REGIONS.some((r) => profile.comfort.has(r))
 }
 
 const COUNT = /(\d+)\s+of\s+(\d+)/i
@@ -107,12 +136,14 @@ export function chooseDrill(
   opts: { forceVariant?: DrillVariant } = {},
 ): DrillChoice {
   const rules = practiceLogRules(logs, item.id)
-  const gatePasses = progressionGatePasses(item, profile)
-  const progVariant: 'progression' | 'progression-alt' | null = gatePasses ? 'progression' : item.drill.progressionAlt ? 'progression-alt' : null
+  const gatePasses = progressionGatePasses(item, profile) && effortAllowed(item.drill.progression, profile)
+  const altAllowed = !!item.drill.progressionAlt && effortAllowed(item.drill.progressionAlt, profile)
+  const progVariant: 'progression' | 'progression-alt' | null = gatePasses ? 'progression' : altAllowed ? 'progression-alt' : null
   const progText = progVariant === 'progression' ? item.drill.progression : progVariant === 'progression-alt' ? item.drill.progressionAlt : undefined
-  const sore = profile.soreToday.length > 0
+  // Soreness today, or a practice logged with pain since the last two successful ones (§10.3).
+  const sore = profile.soreToday.length > 0 || rules.painPaused
   let variant: DrillVariant = 'base'
-  if (opts.forceVariant) variant = opts.forceVariant
+  if (opts.forceVariant) variant = opts.forceVariant === 'progression' || opts.forceVariant === 'progression-alt' ? (progVariant && !sore ? progVariant : 'base') : opts.forceVariant
   else if (goal === 'less-effort' || rules.suggestRegression) variant = 'regression'
   else if (rules.unlockProgression && progVariant && !sore) variant = progVariant
   const unlocked = rules.unlockProgression && !!progVariant && !sore
@@ -133,7 +164,7 @@ export function chooseDrill(
       ? { progression: { text: progText, label: progVariant === 'progression' ? item.drill.progressionGate.label : null, variant: progVariant } }
       : {}),
     ...(!unlocked
-      ? { progressionLocked: sore && rules.unlockProgression ? 'paused-sore' : !progVariant ? 'level-or-comfort' : 'needs-two-logs' }
+      ? { progressionLocked: (sore && rules.unlockProgression) || rules.painPaused ? 'paused-sore' : !progVariant ? 'level-or-comfort' : 'needs-two-logs' }
       : {}),
     ...(item.drill.note ? { note: item.drill.note } : {}),
     ...(optionalAid ? { optionalAid } : {}),

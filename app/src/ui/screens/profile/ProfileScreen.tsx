@@ -5,6 +5,7 @@ import {
   FlaskIcon,
   HeartbeatIcon,
   InfoIcon,
+  ListChecksIcon,
   PaletteIcon,
   PlayCircleIcon,
   RulerIcon,
@@ -111,6 +112,13 @@ export function ProfileScreen() {
             leading={<RowIcon><RulerIcon size={24} aria-hidden="true" /></RowIcon>}
             title="How we measure"
             subtitle="Every metric and how sure we are"
+          />
+          {/* Platform addition: the closed beta's local usage counts and report. */}
+          <ListRow
+            to={paths.betaData()}
+            leading={<RowIcon><ListChecksIcon size={24} aria-hidden="true" /></RowIcon>}
+            title="Beta data"
+            subtitle="Usage counts on this phone"
           />
           <SwitchItem
             leading={<RowIcon><FlaskIcon size={24} aria-hidden="true" /></RowIcon>}

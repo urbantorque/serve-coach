@@ -177,11 +177,13 @@ describe('Processing', () => {
   it('without a running job: an analysed session links to its report; an unknown one says so', async () => {
     renderAt(paths.processing('demo-s1'))
     expect(await screen.findByText('This session is analysed', undefined, LOAD)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Report ready' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open report' })).toHaveAttribute('href', paths.sessionReport('demo-s1'))
   })
 
   it('an unknown session says so', async () => {
     renderAt(paths.processing('no-such-session'))
     expect(await screen.findByText("We couldn't find this session", undefined, LOAD)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Session not found' })).toBeInTheDocument()
   })
 })

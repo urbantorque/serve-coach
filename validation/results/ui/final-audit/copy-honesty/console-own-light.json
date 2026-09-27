@@ -1,0 +1,102 @@
+[
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "type": "warning",
+  "text": "W0927 18:50:38.144000 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "type": "warning",
+  "text": "W0927 18:50:43.720000 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "type": "warning",
+  "text": "W0927 18:50:44.348999 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "type": "warning",
+  "text": "W0927 18:50:44.763000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX."
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "type": "warning",
+  "text": "W0927 18:50:45.015000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX."
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "type": "warning",
+  "text": "[privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "type": "warning",
+  "text": "[privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "type": "warning",
+  "text": "[privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "W0927 18:51:12.896999 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "W0927 18:51:14.444999 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "W0927 18:51:14.924999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX."
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "W0927 18:51:15.144000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX."
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "W0927 18:51:15.456999 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "W0927 18:51:50.327000 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "W0927 18:51:51.695000 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX."
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "W0927 18:51:52.944999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX."
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "[privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "[privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "[privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+ },
+ {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "type": "warning",
+  "text": "[privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log"
+ }
+]

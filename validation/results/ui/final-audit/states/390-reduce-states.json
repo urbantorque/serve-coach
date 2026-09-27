@@ -1,0 +1,368 @@
+{
+ "key": "390-reduce",
+ "states": [
+  {
+   "name": "serve-detail",
+   "file": "390-reduce-01-serve-detail.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentReportServe 1Sample data · synthetic playerSe",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 848
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Legs",
+     "left": 320,
+     "right": 405
+    },
+    {
+     "name": "None",
+     "left": 413,
+     "right": 502
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "tagging",
+   "file": "390-reduce-02-tagging.png",
+   "url": "/sessions/sample-s3/tag",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentTag serves1 of 16Sample data · synthetic play",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 867
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Save and exit",
+     "x": 11,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "tagging-after-in",
+   "file": "390-reduce-03-tagging-after-in.png",
+   "url": "/sessions/sample-s3/tag",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "In",
+    "inDialog": false,
+    "top": 535,
+    "bottom": 623
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": "Serve 1: in. Serve 2 of 16."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 12.308333
+    }
+   ],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Save and exit",
+     "x": 11,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "drill",
+   "file": "390-reduce-04-drill.png",
+   "url": "/focus/drill",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentDrillSample data · synthetic playerTarget lad",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 844
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "timer",
+     "live": "off",
+     "text": "08:00"
+    },
+    {
+     "role": null,
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Step 1 of 3Set-upPut one towel at the T and one in the wide corner of the box yo"
+    },
+    {
+     "role": null,
+     "live": "polite",
+     "text": "0 of 20"
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Close drill",
+     "x": 11,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "live-bodycheck",
+   "file": "390-reduce-05-live-bodycheck.png",
+   "url": "/record/live",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "All good",
+    "inDialog": true,
+    "top": 648,
+    "bottom": 700
+   },
+   "dialog": {
+    "name": "Quick body check",
+    "modal": "true"
+   },
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Close camera",
+     "x": 19,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "live-framing",
+   "file": "390-reduce-06-live-framing.png",
+   "url": "/record/live",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentLive framingCamera and levelServe Coach uses ",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 844
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Close camera",
+     "x": 19,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "today",
+   "file": "390-reduce-07-today.png",
+   "url": "/",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentTodayTodaySample data · synthetic playerMonda",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 1139
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": []
+  },
+  {
+   "name": "onboarding",
+   "file": "390-reduce-08-onboarding.png",
+   "url": "/onboarding",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentWelcomeServe CoachFilm a few serves.See what ",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 844
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": []
+  }
+ ],
+ "logs": []
+}

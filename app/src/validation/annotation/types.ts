@@ -45,7 +45,11 @@ export interface CheckAnnotation extends ServeAnnotation {
   subjectCode?: string
 }
 
-/** The per-serve metrics a check can compare, in the app's own units. */
+/**
+ * The per-serve metrics a check can compare, in the app's own units. Leg drive, loading depth and
+ * drive time come from the hip-centre marks and the lowest-hip frame; shoulder tilt at the top from
+ * both shoulders on the trophy frame (METRICS §5.6).
+ */
 export const CHECKED_METRIC_IDS = [
   'toss-apex-height',
   'contact-height-ratio',
@@ -54,12 +58,32 @@ export const CHECKED_METRIC_IDS = [
   'toss-forward',
   'contact-forward',
   'landing-distance',
+  'leg-drive',
+  'loading-depth',
+  'drive-time',
+  'shoulder-tilt-trophy',
 ] as const satisfies readonly MetricId[]
 export type CheckedMetricId = (typeof CHECKED_METRIC_IDS)[number]
 
-/** The events a check marks, in serve order. */
-export const CHECKED_EVENTS = ['tossRelease', 'tossApex', 'contact', 'landing'] as const
+/** The events a check marks, in serve order (keys shared with the engine's ServeEvents). */
+export const CHECKED_EVENTS = ['tossRelease', 'tossApex', 'trophy', 'lowestHip', 'contact', 'landing'] as const
 export type CheckedEvent = (typeof CHECKED_EVENTS)[number]
+
+/**
+ * The app's own unrounded mechanics for a serve (ServeAnalysis.legDrive and .shoulder), so marks are
+ * compared with what the engine computed rather than the rounded display value. The shoulder angle
+ * is internal validation data only: the app never shows degrees for a band (D5).
+ */
+export interface AppMechanics {
+  /** Leg drive, % of height. */
+  hipRisePctH?: number
+  /** Loading depth, % of height. */
+  hipDropPctH?: number
+  /** Drive time, ms. */
+  driveTimeMs?: number
+  /** 2D shoulder-line angle at trophy, degrees, positive = front shoulder higher. */
+  shoulderTiltDeg?: number
+}
 
 /** A point in normalised coordinates of the displayed frame (x / width, y / height). */
 export interface MarkPoint {

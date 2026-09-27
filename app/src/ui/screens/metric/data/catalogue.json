@@ -1138,7 +1138,7 @@
   {
    "id": "speed-experimental",
    "name": "Launch speed (experimental)",
-   "question": "Roughly how fast was that serve off the racket?",
+   "question": "Roughly how fast was that serve off the racquet?",
    "unit": "km/h range",
    "kind": "range",
    "views": [

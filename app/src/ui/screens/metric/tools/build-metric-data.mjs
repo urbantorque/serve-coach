@@ -15,11 +15,19 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '../../../../../..')
 
+/**
+ * Australian spellings for player-facing catalogue text (DESIGN §4.3, §11). metrics.json still has
+ * "racket" in the launch-speed question (flagged to the spec owner); the screen never shows it.
+ */
+export function auSpelling(text) {
+  return typeof text === 'string' ? text.replace(/\bracket(s?)\b/g, 'racquet$1').replace(/\bRacket(s?)\b/g, 'Racquet$1') : text
+}
+
 export function catalogueFrom(metricsJson) {
   const pick = (m) => ({
     id: m.id,
     name: m.name,
-    question: m.question,
+    question: auSpelling(m.question),
     unit: m.unit,
     kind: m.kind,
     views: m.views ?? [],

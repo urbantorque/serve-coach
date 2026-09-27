@@ -39,6 +39,8 @@ export interface BallClient {
   begin(windowId: number, config: WindowBallConfig): Promise<void>
   pushFrame(windowId: number, frameIndex: number, tReal: number, image: BallFrameImage): Promise<void>
   end(windowId: number, options: WindowAnalyseOptions): Promise<BallWindowResult>
+  /** Drops a window that will never be ended (a job a re-plan superseded), freeing its state. */
+  discard?(windowId: number): Promise<void> | void
   dispose(): void
 }
 
@@ -240,6 +242,8 @@ export async function runBallDetect(
     cpuPixels?: boolean
   },
 ): Promise<{ framesDecoded: number; planarFrames: number }> {
+  // A job aborted while it waited its turn on the worker never begins.
+  throwIfAborted(input.signal)
   const crop = cropPixels(input.ballConfig.crop, input.display.width, input.display.height, MEMORY_BUDGET.ballCropMaxLongSidePx, input.ballDownscale)
   await ball.begin(input.windowId, input.ballConfig)
   let decoded = 0

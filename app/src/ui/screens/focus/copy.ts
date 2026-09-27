@@ -41,6 +41,8 @@ export const FOCUS_COPY = {
   notTonight: 'Not playing tonight',
   sampleNote: 'This focus comes from the sample player, not from you.',
   keepGoingBody: 'Keep building consistency. Nothing stood out as clearly worth changing this session.',
+  ruleExperimentalOff:
+    'This coaching rule is still experimental: there are no club-player thresholds for it yet. It runs only when Experimental metrics is on in Profile.',
   recordNext: 'Record next session',
   captureTitle: "We couldn't see enough to coach this time",
   setupCamera: 'Set up camera',
@@ -60,6 +62,31 @@ export const FOCUS_COPY = {
   } satisfies Record<EvidenceTier, string>,
   cuesAreCoaching: 'Cues and drills are coaching interpretation: sensible defaults we keep testing.',
 } as const
+
+/** The session's own counts, as the report headline and capture line use them (sessionValues.headlineFor). */
+export interface SessionServeCounts {
+  /** Serves kept for statistics (analysis.counts.included). */
+  measured: number
+  /** Serves found (analysis.counts.analysed). */
+  detected: number
+}
+
+/**
+ * The count under a focus evidence stat, in the report's words so the two always agree. The report's
+ * headline and capture line count the serves kept for statistics out of the serves found ("14 of 16
+ * serves measured"). A stat's own n and nEligible count only the serves the engine could use for it
+ * ("14 of 14"), which read as a contradiction beside the report. With the session's counts the line
+ * starts with the report's phrase, and adds how many serves this value used when that is fewer (one
+ * court side, or serves without this value).
+ */
+export function evidenceCountLine(stat: { n?: number; nEligible?: number }, counts?: SessionServeCounts | null): string | null {
+  const n = stat.n
+  if (n === undefined) return null
+  const serves = (k: number) => (k === 1 ? 'serve' : 'serves')
+  if (!counts || counts.detected <= 0) return stat.nEligible !== undefined ? `${n} of ${stat.nEligible} ${serves(stat.nEligible)}` : `${n} ${serves(n)}`
+  const base = `${counts.measured} of ${counts.detected} ${serves(counts.detected)} measured`
+  return n >= counts.measured ? base : `${base} · this uses ${n}`
+}
 
 export const DRILL_COPY = {
   step: (i: number, n: number) => `Step ${i} of ${n}`,

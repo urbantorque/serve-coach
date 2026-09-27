@@ -42,11 +42,11 @@ export function ChoiceChips<T extends string | number>({ label, options, value, 
   }
 
   return (
-    <div className={cx('flex gap-x-2 gap-y-1', stacked ? 'flex-col' : 'items-center', className)}>
-      <span className={cx('shrink-0 text-footnote font-label text-ink-2', !stacked && 'w-14')} aria-hidden="true">
+    <div className={cx('flex gap-x-2 gap-y-1', stacked ? 'flex-col' : 'flex-wrap items-center', className)}>
+      <span className={cx('shrink-0 text-footnote font-label text-ink-2', !stacked && 'min-w-14')} aria-hidden="true">
         {label}
       </span>
-      <div role="radiogroup" aria-label={label} aria-disabled={disabled || undefined} onKeyDown={onKeyDown} className="flex flex-wrap gap-1.5 py-1">
+      <div role="radiogroup" aria-label={label} aria-disabled={disabled || undefined} onKeyDown={onKeyDown} className="flex min-w-0 flex-wrap gap-2 py-1">
         {options.map((o, i) => {
           const selected = o.value === value
           return (
@@ -65,7 +65,7 @@ export function ChoiceChips<T extends string | number>({ label, options, value, 
                 else if (!selected) onChange(o.value)
               }}
               className={cx(
-                'relative inline-flex h-9 items-center gap-1 rounded-full px-2.5 text-subhead whitespace-nowrap transition-colors duration-(--dur-fast)',
+                'relative inline-flex min-h-9 min-w-11 items-center justify-center gap-1 rounded-full px-2.5 py-1 text-subhead transition-colors duration-(--dur-fast)',
                 'after:absolute after:inset-x-0 after:-inset-y-1 after:content-[""]',
                 selected
                   ? 'border-token border-ink bg-ink text-ink-inverse'

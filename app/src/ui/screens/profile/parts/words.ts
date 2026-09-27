@@ -97,13 +97,15 @@ export const REGION_LABEL: Record<BodyRegion, string> = Object.fromEntries(REGIO
   string
 >
 
-/** PRODUCT §6.1 O7 and COACHING §10.3 lines, verbatim. */
+/**
+ * Comfort and body copy (PRODUCT §6.1 O7). The over-40 GP line is gone: it followed the 2013 Better
+ * Health Channel page that COACHING §10.3 replaced with the APSS stage 1 screen, whose questions still
+ * need verifying and a clinician review. The pain referral stays in lineDrills.
+ */
 export const COMFORT_COPY = {
   question: 'Any areas to go easy on?',
   none: 'None',
   lineDrills: "We'll leave out drills that load these areas. This isn't a health check. If something hurts, see a physio or GP.",
-  lineGp:
-    "If you're over 40, have a medical condition or haven't exercised for a while, check in with your GP before starting a new training routine.",
   saveQuestion: 'Save these on this phone so we can adjust your drills? They never leave this phone.',
   save: 'Save on this phone',
   dontSave: "Don't save",

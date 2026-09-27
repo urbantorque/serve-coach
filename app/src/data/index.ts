@@ -37,12 +37,25 @@ export {
   listExperiments,
   listMatchLogs,
   listPracticeByExperiment,
+  listPracticeSince,
   logPractice,
   putDecision,
   putStats,
   saveMatchLog,
 } from './repos/coaching.ts'
-export { deleteAllVideos, deleteEverything, deleteMatchLog, deleteServe, deleteSession, deleteVideo } from './deletion.ts'
+export {
+  DELETED_SERVE_NOTE,
+  deleteAllVideos,
+  deleteEverything,
+  deleteMatchLog,
+  deleteServe,
+  deleteSession,
+  deleteVideo,
+  restoreServe,
+  statsAfterServeDelete,
+  wasSessionDeleted,
+  type DeletedServeSnapshot,
+} from './deletion.ts'
 export { applyDeleteAfterAnalysis, EVENTS_KEEP_DAYS, sweepRetention } from './retention.ts'
 export { buildExportCSV, buildExportJSON, csvField, toCsv } from './export.ts'
 export { DEMO_SEED_VERSION, hasDemoData, loadDemoData, removeDemoData, SAMPLE_SEED_VERSION, sampleSessionId } from './demo.ts'
@@ -56,6 +69,47 @@ export {
   type SampleSeed,
 } from './sample.ts'
 export { DEMO_FIXTURES, DEMO_SESSION_IDS, FIXTURE_NOTE, wilson } from './fixtures.ts'
+// Platform additions: local beta events, the beta report, and in-app recording chunks.
+export {
+  clearEvents,
+  daysBucket,
+  droppedEventCount,
+  EVENT_NAMES,
+  EVENT_SCHEMAS,
+  hasEvent,
+  lengthBucket,
+  listEvents,
+  minutesBucket,
+  purgeUnknownEvents,
+  recordEvent,
+  servesBucket,
+  VERDICT_IDS as VERDICT_EVENT_IDS,
+  type EventName,
+  type EventProps,
+} from './repos/events.ts'
+export {
+  ACTIVATION_DAYS,
+  BETA_DEFINITIONS,
+  betaInstallRef,
+  buildBetaReport,
+  computeGates,
+  LOOP_DAYS,
+  resetBetaInstallRef,
+  type BetaReport,
+  type GateSummary,
+} from './betaReport.ts'
+export {
+  appendChunk,
+  discardRecording,
+  getRecordingHeader,
+  listRecordings,
+  readRecording,
+  RECORDING_KEEP_DAYS,
+  startRecordingRows,
+  sweepRecordings,
+  updateRecordingHeader,
+  type RecordingSummary,
+} from './repos/recordings.ts'
 export { useSettingsStore } from './stores/settings.ts'
 export { useUiStore, type ViewFilter } from './stores/ui.ts'
 export { showToast, useToastStore } from './stores/toast.ts'

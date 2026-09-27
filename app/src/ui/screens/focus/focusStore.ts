@@ -83,3 +83,20 @@ export function useTodayBodyCheck(): BodyCheck | undefined {
 export function plannedRetestFor(experimentId: string): string | undefined {
   return useFocusStore.getState().plannedRetest[experimentId]
 }
+
+/**
+ * Back to a fresh install's state, after "Delete everything": the in-memory body check and referral,
+ * and the per-device conveniences (whose storage was just cleared, so a later change cannot write the
+ * old values back).
+ */
+export function resetFocusStore(): void {
+  useFocusStore.setState({
+    bodyCheck: undefined,
+    referral: undefined,
+    remindFrom: undefined,
+    playingTonight: undefined,
+    cueOverride: {},
+    plannedRetest: {},
+    consentDeclined: undefined,
+  })
+}

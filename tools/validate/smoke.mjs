@@ -22,7 +22,7 @@
 //            --channel msedge|chrome --out DIR
 //
 // Exit code 1 if any clip fails to run or any request leaves localhost.
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import os from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -562,9 +562,9 @@ async function main() {
   writeFileSync(join(outDir, 'run.json'), JSON.stringify(runInfo, null, 1))
   writeSummary(loadRecords(selection.map((s) => s.clip.id)), runInfo)
   console.log(`Results in ${outDir}; external requests during the run (warm-up included): ${external.length}`)
-  for (const r of [...new Set(external)]) console.log(`  ${r}`)
+  for (const r of new Set(external)) console.log(`  ${r}`)
   console.log(`Refused by the CSP before the network stack: ${runInfo.blockedBeforeNetwork.length}`)
-  for (const r of [...new Set(runInfo.blockedBeforeNetwork)]) console.log(`  ${r}`)
+  for (const r of new Set(runInfo.blockedBeforeNetwork)) console.log(`  ${r}`)
   return external.length ? 1 : exitCode
 }
 

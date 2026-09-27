@@ -11,6 +11,7 @@ import { logSdSe, relativeSwcToLog, sessionTrend, Z95 } from '../../../../analys
 import type { MetricId, MetricValue, ServeNumber, ServeSide } from '../../../../analysis/types.ts'
 import type { SessionStats, StratumKey, VerdictWord } from '../../../../data/domain.ts'
 import type { SessionRecord } from '../../../../data/records.ts'
+import { displayBound } from '../../../format/metricFormat.ts'
 import { sameSessionSetup, sessionMetric, sessionSetupKey, stratumBaseId } from '../../../format/sessionValues.ts'
 import { configFor } from './metricConfig.ts'
 
@@ -144,7 +145,7 @@ export function seriesFor(metricId: MetricId, bundles: readonly SessionBundle[],
       sessionId: b.session.id,
       visitId: b.session.visitId,
       value,
-      low: v.uncertainty?.low,
+      low: displayBound(metricId, v.uncertainty?.low),
       high: v.uncertainty?.high,
       n,
       provisional: Boolean(v.provisional),

@@ -25,15 +25,13 @@ import type { ServeAnalysis } from '../../../data/domain.ts'
 import { useServes, useSession } from '../../../data/hooks.ts'
 import {
   deleteServe as deleteServeRow,
-  getTrack,
-  listKeyFramesForServe,
-  putServesWithTracksAndFrames,
+  restoreServe as restoreServeRow,
   setServeIncluded as setServeIncludedRow,
   setTag as setTagRow,
   showToast,
   useSettingsStore,
 } from '../../../data/index.ts'
-import type { KeyFrameRecord, ServeTagRecord, SessionRecord } from '../../../data/records.ts'
+import type { ServeTagRecord, SessionRecord } from '../../../data/records.ts'
 import { deleteTag as deleteTagRow } from '../../../data/repos/tags.ts'
 import { scheduleCoachingSync } from '../../../integration/schedule.ts'
 import {
@@ -81,10 +79,12 @@ import {
   openingFrame,
   outcomeKind,
   peekMetrics,
+  radarFromChecks,
   videoGoneLine,
   type CompareTarget,
 } from './serveView.ts'
 import { CheckServeView } from './check/CheckServeView.tsx'
+import { useChecksForServe } from './check/data.ts'
 import { StatDrawer } from './StatDrawer.tsx'
 import { TagAttributes } from './TagAttributes.tsx'
 import { initialTagging, tagPatch, type TagAttrs, type TagOutcome } from './tagging.ts'
@@ -102,6 +102,7 @@ const setTag = synced(setTagRow)
 const deleteTag = synced(deleteTagRow)
 const setServeIncluded = synced(setServeIncludedRow)
 const deleteServe = synced(deleteServeRow)
+const restoreServe = synced(restoreServeRow)
 
 
 /** Portrait video box: 45% of the viewport, never taller than 693 px (DESIGN §8.11). */
@@ -239,8 +240,9 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
         metrics: serve.metrics,
         focus: focus.overlay,
         peers,
+        experimentalOn,
       }),
-    [overlay, pb.track, pb.standing, pb.bodyHeightNorm, pb.clip, serve, focus.overlay, peers],
+    [overlay, pb.track, pb.standing, pb.bodyHeightNorm, pb.clip, serve, focus.overlay, peers, experimentalOn],
   )
 
   // ---------- zoom (portrait clips only) ----------
@@ -290,7 +292,13 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
   })
 
   // ---------- per-serve values ----------
-  const { groups, experimental, unavailable } = groupServeMetrics(serve.metrics, serve.view, experimentalOn)
+  // A radar reading logged in Check this serve fills "Radar speed (you logged)" (D4: player-entered, peak).
+  const checks = useChecksForServe(serve.id)
+  const radar = radarFromChecks(checks)
+  const shownMetrics = radar ? { ...serve.metrics, 'speed-radar-entered': radar.value } : serve.metrics
+  const grouped = groupServeMetrics(shownMetrics, serve.view, experimentalOn)
+  const groups = radar ? grouped.groups.map((g) => ({ ...g, rows: g.rows.map((r) => (r.id === 'speed-radar-entered' ? { ...r, note: radar.note } : r)) })) : grouped.groups
+  const { experimental, unavailable } = grouped
   const focusIds = focus.metricIds.filter((id) => serve.metrics[id])
   const peek = peekMetrics(serve.metrics, focus.metricIds as MetricId[], portrait ? 2 : 3)
 
@@ -322,20 +330,14 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
 
   const confirmDelete = async () => {
     setDeleteOpen(false)
-    // Snapshot for Undo (ARCHITECTURE §8.3: the UI owns the 8 s Undo).
-    const track = await getTrack(serve.id)
-    const frames: KeyFrameRecord[] = []
-    for (const role of ['thumb', 'evidence', 'evidence-full'] as const) frames.push(...(await listKeyFramesForServe(serve.id, role)))
-    const oldTag = tag ?? null
-    await deleteServe(serve.id)
+    // The data layer returns a snapshot of everything it removed (frames, the session thumbnail, tag,
+    // annotations and the earlier stats) for the 8 s Undo (ARCHITECTURE §8.3: the UI owns the Undo).
+    const { snapshot } = await deleteServe(serve.id)
     navigate(paths.sessionReport(session.id), { replace: true })
     showToast(`Serve ${serve.index} deleted.`, {
       label: 'Undo',
       onPress: () => {
-        void (async () => {
-          await putServesWithTracksAndFrames([serve], track ? [track] : [], frames)
-          if (oldTag) await setTag(oldTag.serveId, oldTag.sessionId, oldTag)
-        })()
+        if (snapshot) void restoreServe(snapshot)
       },
     })
   }
@@ -507,7 +509,9 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
           }
         />
         {session.isDemo ? <SampleBanner /> : null}
-        <main className={cx('flex flex-col gap-2', portrait ? 'pb-44' : 'pb-56')}>
+        {/* Room for the collapsed drawer, from its measured height (StatDrawer sets --drawer-peek).
+            A div: AppShell's <main id="main"> is the page's one main landmark. */}
+        <div className={cx('flex flex-col gap-2', portrait ? 'pb-[calc(var(--drawer-peek,176px)+16px)]' : 'pb-[calc(var(--drawer-peek,224px)+16px)]')}>
           <VideoStage
             clip={pb.clip}
             height={portrait ? PORTRAIT_BOX : LANDSCAPE_BOX}
@@ -573,7 +577,7 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
               <div className="gutter">{compareButton}</div>
             </div>
           ) : null}
-        </main>
+        </div>
       </div>
       <StatDrawer
         peek={peek}

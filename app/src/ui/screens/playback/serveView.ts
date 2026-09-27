@@ -101,6 +101,43 @@ export function openingFrame(serve: Pick<ServeAnalysis, 'events' | 'window' | 'p
 export interface MetricRow {
   id: MetricId
   value: MetricValue
+  /** Where a player-entered value came from ("Pocket Radar, logged in Check this serve…"). */
+  note?: string
+}
+
+/** The radar-reading part of a stored check (validation/annotation CheckAnnotation). */
+export interface RadarCheck {
+  updatedAt: string
+  reference?: { radarKmh?: number; radarDevice?: string; radarUnit?: 'km/h' | 'mph'; radarEntered?: number }
+}
+
+const RADAR_DEVICE_WORDS: Record<string, string> = { 'pocket-radar': 'Pocket Radar', 'other-radar': 'a radar', other: 'another device' }
+
+/**
+ * "Radar speed (you logged)" for one serve from the readings entered in Check this serve (D4:
+ * player-entered, a peak speed, with its source). The latest reading wins when several people logged
+ * one. Null when none was logged.
+ */
+export function radarFromChecks(checks: readonly RadarCheck[] | undefined | null): { value: MetricValue; note: string } | null {
+  const logged = (checks ?? []).filter((c) => typeof c.reference?.radarKmh === 'number' && Number.isFinite(c.reference.radarKmh))
+  if (!logged.length) return null
+  const latest = logged.reduce((a, b) => (b.updatedAt > a.updatedAt ? b : a))
+  const r = latest.reference!
+  const device = RADAR_DEVICE_WORDS[r.radarDevice ?? ''] ?? 'a radar'
+  const entered = r.radarUnit === 'mph' && typeof r.radarEntered === 'number' ? ` You entered ${Math.round(r.radarEntered)} mph.` : ''
+  const others = logged.length > 1 ? ` Latest of ${logged.length} readings.` : ''
+  return {
+    value: {
+      id: 'speed-radar-entered',
+      value: Math.round(r.radarKmh!),
+      unit: 'km/h',
+      status: 'player-entered',
+      confidence: 1,
+      basis: `Peak speed from ${device}, entered in Check this serve.`,
+      provenance: 'confirmed-by-you',
+    },
+    note: `Peak speed from ${device}, logged in Check this serve on ${shortDate(new Date(latest.updatedAt))}.${entered}${others}`,
+  }
 }
 export interface MetricGroup {
   title: string

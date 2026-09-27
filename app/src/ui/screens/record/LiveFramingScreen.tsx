@@ -1,5 +1,5 @@
 import { BookOpenIcon, CompassIcon, DotsThreeIcon, FilmReelIcon, ListChecksIcon, SpeakerHighIcon, SpeakerSlashIcon, VideoCameraIcon, XIcon } from '@phosphor-icons/react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { showToast } from '../../../data/index.ts'
 import { useProfile, useSetting } from '../../../data/hooks.ts'
@@ -21,6 +21,7 @@ import { chime, lowTone, primeAudio, speak, spotStateFor } from './live/cues.ts'
 import { evaluateLive, FRAMING, type LiveEvaluation } from './live/framing.ts'
 import { CameraProblemView, CountdownView, LivePanel, PrealertView, RecordingView, TallyView, TurnPrompt, type TallyValues } from './live/LiveViews.tsx'
 import { ClipRecorder, MAX_RECORDING_S, type RecordedClip } from './live/recorder.ts'
+import { recoveryFacts } from './live/recovery.ts'
 import { devClipId, useCamera } from './live/useCamera.ts'
 import { useLevel } from './live/useLevel.ts'
 import { usePosePass } from './live/usePosePass.ts'
@@ -71,6 +72,24 @@ export function LiveFramingScreen() {
   const [busy, setBusy] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const pillRef = useRef<HTMLDivElement>(null)
+  // When the preview is letterboxed (a landscape stream in a portrait screen), the checklist goes in
+  // the empty space under it, so the instruction and its detail card can never cover it.
+  const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
+  const [previewEl, setPreviewEl] = useState<HTMLDivElement | null>(null)
+  const [railBelow, setRailBelow] = useState<number | null>(null)
+  useLayoutEffect(() => {
+    if (!stageEl || !previewEl) return
+    const measure = () => {
+      const previewH = previewEl.offsetHeight
+      setRailBelow(stageEl.clientHeight - previewH >= 160 ? previewH : null)
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(stageEl)
+    ro.observe(previewEl)
+    return () => ro.disconnect()
+  }, [stageEl, previewEl])
   const recorder = useRef<ClipRecorder | null>(null)
   const startedAt = useRef<{ epoch: number; perf: number }>({ epoch: 0, perf: 0 })
   /** Framing when Record was tapped (the pose pass pauses during the countdown). */
@@ -84,7 +103,11 @@ export function LiveFramingScreen() {
   const scene = useSceneStats(camera.video, framing && camera.status === 'live', pose.snapshot)
   const wake = useWakeLock(liveStages)
 
-  const close = useCallback(() => navigate(paths.record()), [navigate])
+  const close = useCallback(() => {
+    // Leaving without analysing: an unsaved recording's chunks go (platform addition; no-op once saved).
+    recorder.current?.discard()
+    navigate(paths.record())
+  }, [navigate])
 
   // A camera that never answers (a pending permission prompt, a stuck driver) gets a way out after 8 s.
   const [slowStart, setSlowStart] = useState(false)
@@ -192,9 +215,36 @@ export function LiveFramingScreen() {
       showToast("This browser can't record video here. Film in the Camera app and import it.")
       return
     }
-    const rec = new ClipRecorder(stream)
-    recorder.current = rec
     startedAt.current = { epoch: Date.now(), perf: performance.now() }
+    // What the saved clip needs besides the video, known now; kept with the chunks so an interrupted
+    // recording can still be analysed on the next launch (platform addition, RecordingRecovery.tsx).
+    const startFacts: Omit<RecordingFacts, 'mimeType' | 'durationS'> = {
+      requested: { width: 1920, height: 1080, fps: flow.fps },
+      delivered: { width: frameW, height: frameH, fps: info?.fps ?? 0 },
+      orientation: frameOrientation,
+      setup: flow.setup,
+      cameraLabel: info?.label,
+      recordingStartMs: startedAt.current.epoch,
+      framingAtStart: framingAtTap.current
+        ? {
+            frameTopM: framingAtTap.current.frameTopM,
+            bodyPx1080: (framingAtTap.current.bodyPx / Math.max(1, frameH)) * 1080,
+            roomAheadM: framingAtTap.current.roomAheadM ?? 0,
+            cameraHeightM: framingAtTap.current.cameraHeightM,
+          }
+        : undefined,
+      recordedAnyway: anyway ?? undefined,
+      expectedServeCount: plan.serves,
+    }
+    const b0 = flow.block
+    const rec = new ClipRecorder(stream, {
+      facts: recoveryFacts({
+        recording: startFacts,
+        block: { side: b0.side, serveNumber: b0.serveNumber, type: b0.type, target: b0.target, wind: b0.wind, light: b0.light, servingSpot: b0.spot },
+        template: TEMPLATE_BY_PLAN[flow.plan] ?? 'check-in',
+      }),
+    })
+    recorder.current = rec
     level.startLog(performance.now())
     try {
       rec.start()
@@ -207,28 +257,9 @@ export function LiveFramingScreen() {
     setStage('recording')
     void rec.done.then(async (clip) => {
       const samples = level.stopLog()
+      rec.noteFacts({ recording: { ...startFacts, orientationSamples: samples } })
       setStage('saving')
-      const facts: RecordingFacts = {
-        mimeType: clip.mimeType,
-        durationS: clip.durationS,
-        requested: { width: 1920, height: 1080, fps: flow.fps },
-        delivered: { width: frameW, height: frameH, fps: info?.fps ?? 0 },
-        orientation: frameOrientation,
-        setup: flow.setup,
-        cameraLabel: info?.label,
-        orientationSamples: samples,
-        recordingStartMs: startedAt.current.epoch,
-        framingAtStart: framingAtTap.current
-          ? {
-              frameTopM: framingAtTap.current.frameTopM,
-              bodyPx1080: (framingAtTap.current.bodyPx / Math.max(1, frameH)) * 1080,
-              roomAheadM: framingAtTap.current.roomAheadM ?? 0,
-              cameraHeightM: framingAtTap.current.cameraHeightM,
-            }
-          : undefined,
-        recordedAnyway: anyway ?? undefined,
-        expectedServeCount: plan.serves,
-      }
+      const facts: RecordingFacts = { ...startFacts, mimeType: clip.mimeType, durationS: clip.durationS, orientationSamples: samples }
       const fileName = `serve-${localDate(new Date(startedAt.current.epoch))}.${clip.mimeType.includes('mp4') ? 'mp4' : 'webm'}`
       let meta = fallbackMeta(fileName, facts)
       try {
@@ -241,7 +272,7 @@ export function LiveFramingScreen() {
       setSaved({ clip, meta, facts, startedAt: new Date(startedAt.current.epoch).toISOString() })
       setStage('tally')
     })
-  }, [camera.stream, level, flow.fps, flow.setup, frameW, frameH, info?.fps, info?.label, frameOrientation, anyway, plan.serves])
+  }, [camera.stream, level, flow.fps, flow.setup, flow.block, flow.plan, frameW, frameH, info?.fps, info?.label, frameOrientation, anyway, plan.serves])
 
   useEffect(() => {
     if (stage !== 'recording') return
@@ -299,6 +330,8 @@ export function LiveFramingScreen() {
               }
             : undefined,
       })
+      // The session owns the clip now; its chunks go once the session has its video (platform addition).
+      recorder.current?.claim(sessionId)
       void startAnalysis({
         sessionId,
         file: saved.clip.blob,
@@ -321,6 +354,7 @@ export function LiveFramingScreen() {
   }
 
   const recordAgain = () => {
+    recorder.current?.discard()
     setSaved(null)
     setTally((t) => ({ ...t, in: null, net: 0, long: 0, wide: 0 }))
     flow.clearBodyCheck()
@@ -426,8 +460,8 @@ export function LiveFramingScreen() {
   return (
     <CourtSide className="fixed inset-0 flex flex-col bg-letterbox">
       {title}
-      <div className={cx('relative min-h-0 flex-1 [container-type:size]', landscapeLayout ? 'flex items-center' : 'flex items-start justify-center')}>
-        <div className="relative overflow-hidden" style={{ aspectRatio: `${aspect}`, width: `min(100cqw, calc(100cqh * ${aspect}))` }}>
+      <div ref={setStageEl} className={cx('relative min-h-0 flex-1 [container-type:size]', landscapeLayout ? 'flex items-center' : 'flex items-start justify-center')}>
+        <div ref={setPreviewEl} className="relative overflow-hidden" style={{ aspectRatio: `${aspect}`, width: `min(100cqw, calc(100cqh * ${aspect}))` }}>
           <video ref={attachVideo} muted playsInline autoPlay aria-label="Camera preview" className="absolute inset-0 size-full bg-letterbox object-contain" />
           {camera.status === 'live' ? (
             <FramingOverlay
@@ -460,12 +494,17 @@ export function LiveFramingScreen() {
               ) : null}
             </div>
           )}
-          {!landscapeLayout ? (
+          {!landscapeLayout && railBelow === null ? (
             <div className={cx('absolute inset-x-1.5 bottom-2', railCollapsed && 'flex justify-center')}>
               <ChecklistRail checks={evaluation.checks} layout="portrait" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
             </div>
           ) : null}
         </div>
+        {!landscapeLayout && railBelow !== null ? (
+          <div className={cx('absolute inset-x-1.5 bottom-2 overflow-y-auto', railCollapsed && 'flex justify-center')} style={{ top: railBelow + 8 }}>
+            <ChecklistRail checks={evaluation.checks} layout="portrait" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
+          </div>
+        ) : null}
         {landscapeLayout ? (
           <div className="absolute top-16 right-[max(12px,env(safe-area-inset-right))] bottom-[max(8px,env(safe-area-inset-bottom))] flex flex-col items-end justify-between gap-2">
             <ChecklistRail checks={evaluation.checks} layout="landscape" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
@@ -506,7 +545,7 @@ export function LiveFramingScreen() {
             <button
               type="button"
               onClick={() => setSheet('detail')}
-              className="inline-flex h-11 items-center justify-self-start rounded-full border-2 border-ink px-3 text-subhead tabular-nums text-ink hover:bg-surface-2"
+              className="inline-flex min-h-11 items-center justify-self-start rounded-full border-2 border-ink px-3 py-1 text-left text-subhead leading-tight tabular-nums text-ink [text-wrap:balance] hover:bg-surface-2"
             >
               {evaluation.checks.filter((c) => c.state === 'pass' || c.state === 'warn').length} of {evaluation.checks.length} ready
             </button>

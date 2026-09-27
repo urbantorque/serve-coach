@@ -5,8 +5,10 @@
  *   1. the player's confirmed capture rate (fpsOverride, CAPTURE §11.3)            -> 'user'
  *   2. the import question "Was this slow motion?" (capture.slowMotionAnswer)      -> 'user'
  *   3. the container (probe: >= 100 fps timestamps or capture-rate metadata)       -> 'proven'
- *   4. otherwise 'unknown': the first serve's toss gravity check proves real time or
+ *   4. otherwise 'unknown': the first serve's toss gravity check confirms real time or
  *      corrects the time base ('physics'); audio timing stays off whenever timeScale != 1.
+ * Only (3) sets meta.timeBaseStatus 'proven'. The engine checks (1), (2) and (4) against every
+ * serve's toss (engine.ts timeBaseOf); speed needs (3) (CAPTURE §11.3, METRICS §2.9).
  * Frame indices never change, so windows kept as frame ranges survive a correction.
  */
 import type { TimeBaseSuggestion } from '../ball/analyse.ts'
@@ -24,15 +26,24 @@ export interface TimeBaseDecision {
 /** Relative distance under which two frame rates are the same. */
 const SAME_RATE = 0.05
 
+/**
+ * A player-declared capture rate. It never makes the time base 'proven' (only container evidence
+ * does, CAPTURE §11.3): the meta keeps fpsSource 'user' and its status, and the engine checks the
+ * answer against the toss's fall (engine.ts timeBaseOf). A rate that matches a container-proven
+ * timeline leaves the proven meta as it is.
+ */
 function withDeclaredRate(meta: VideoMeta, captureFps: number, why: string): TimeBaseDecision | null {
   const nominal = meta.nominalFps
   if (!(captureFps > 0) || !(nominal > 0)) return null
   if (Math.abs(captureFps / nominal - 1) <= SAME_RATE) {
-    // The timeline already runs at the declared rate: real time.
+    if (meta.timeBaseStatus === 'proven' && Math.abs(meta.timeScale - 1) < 1e-9) {
+      return { meta, status: 'proven', notes: [`${why}: ${captureFps} fps agrees with the container, which proves ${meta.captureFps} fps capture`] }
+    }
+    // The timeline already runs at the declared rate: real time, if the toss's fall agrees.
     return {
-      meta: { ...applyTimeScale(meta, nominal, 1, 'user'), timeBaseStatus: 'proven' },
+      meta: { ...applyTimeScale(meta, nominal, 1, 'user'), timeBaseStatus: 'unknown' },
       status: 'user',
-      notes: [`${why}: ${captureFps} fps matches the ${nominal.toFixed(1)} fps timeline, so the clip is real time`],
+      notes: [`${why}: ${captureFps} fps matches the ${nominal.toFixed(1)} fps timeline, so the clip is real time (checked against the toss's fall)`],
     }
   }
   if (captureFps < nominal) {
@@ -40,9 +51,9 @@ function withDeclaredRate(meta: VideoMeta, captureFps: number, why: string): Tim
   }
   const timeScale = nominal / captureFps
   return {
-    meta: { ...applyTimeScale(meta, captureFps, timeScale, 'user'), timeBaseStatus: 'proven' },
+    meta: { ...applyTimeScale(meta, captureFps, timeScale, 'user'), timeBaseStatus: 'unknown' },
     status: 'user',
-    notes: [`${why}: ${captureFps} fps shown on a ${nominal.toFixed(1)} fps timeline (x${timeScale.toFixed(4)} real time)`],
+    notes: [`${why}: ${captureFps} fps shown on a ${nominal.toFixed(1)} fps timeline (x${timeScale.toFixed(4)} real time; checked against the toss's fall, speed unavailable)`],
   }
 }
 
@@ -67,8 +78,10 @@ export function resolveTimeBase(
 }
 
 /**
- * Applies the toss gravity check to an unknown time base. 'consistent' proves real time;
- * 'apply-correction' rescales (fpsSource 'physics'); 'inconclusive' leaves it unknown. A
+ * Applies the toss gravity check to an unknown time base. 'consistent' confirms real time;
+ * 'apply-correction' rescales (fpsSource 'physics'); 'inconclusive' leaves it unknown. Neither makes
+ * meta.timeBaseStatus 'proven' (container evidence only): the engine classes a gravity-confirmed clip
+ * 'normal' and a corrected one 'physics' (timing estimated, speed never; METRICS §2.9). A
  * player-declared or container-proven base is never changed; a disagreement becomes a warning.
  */
 export function applyGravityCheck(
@@ -87,7 +100,7 @@ export function applyGravityCheck(
   }
   if (suggestion.status === 'consistent') {
     return {
-      decision: { meta: { ...decision.meta, timeBaseStatus: 'proven' }, status: 'physics', notes: [...decision.notes, `gravity check: ${suggestion.basis}`] },
+      decision: { meta: decision.meta, status: 'physics', notes: [...decision.notes, `gravity check: ${suggestion.basis}`] },
       changed: false,
     }
   }
@@ -95,7 +108,7 @@ export function applyGravityCheck(
     const scale = suggestion.timeScale
     const corrected = applyTimeScale(decision.meta, decision.meta.nominalFps / scale, scale, 'physics')
     return {
-      decision: { meta: { ...corrected, timeBaseStatus: 'proven' }, status: 'physics', notes: [...decision.notes, `gravity check: ${suggestion.basis}`] },
+      decision: { meta: { ...corrected, timeBaseStatus: 'unknown' }, status: 'physics', notes: [...decision.notes, `gravity check: ${suggestion.basis}`] },
       changed: true,
     }
   }

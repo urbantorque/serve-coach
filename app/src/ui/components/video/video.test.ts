@@ -258,6 +258,30 @@ describe('overlay scenes', () => {
     for (const l of [...c.labels, ...legs.labels]) if (l.metric) expect(l.metric.value.status).not.toBe('unavailable')
   })
 
+  it('never draws an experimental number with the experimental toggle off (D2)', () => {
+    const exp = (id: string, value: number, unit: string): MetricValue => ({ ...estimate(id, value, unit), status: 'experimental', uncertainty: { kind: 'range', low: value - 5, high: value + 5 } })
+    const metrics = {
+      ...base.metrics,
+      'toss-apex-height': exp('toss-apex-height', 1.94, 'ratio-of-height'),
+      'toss-forward': exp('toss-forward', 30, 'cm'),
+      'contact-forward': exp('contact-forward', 30, 'cm'),
+      'landing-distance': exp('landing-distance', 40, 'cm'),
+      'leg-drive': exp('leg-drive', 9, '% of height'),
+    }
+    const scenes = (experimentalOn: boolean) => [
+      buildScene({ ...base, metrics, experimentalOn, overlay: 'toss', frame: 125, focus: 'apex-vs-toe' }),
+      buildScene({ ...base, metrics, experimentalOn, overlay: 'contact', frame: 125 }),
+      buildScene({ ...base, metrics, experimentalOn, overlay: 'legs', frame: 135 }),
+    ]
+    const off = scenes(false).flatMap((s) => s.labels)
+    expect(off.filter((l) => l.metric?.value.status === 'experimental')).toEqual([])
+    // Labels with a word keep it; the "From your toe" labels are numbers only, so they go.
+    expect(off.map((l) => l.id)).toContain('apex')
+    expect(off.map((l) => l.id)).not.toContain('contact-toe')
+    const on = scenes(true).flatMap((s) => s.labels)
+    expect(on.find((l) => l.id === 'contact-toe')?.metric?.value.status).toBe('experimental')
+  })
+
   it('None draws nothing; ghost adds a dashed comparison skeleton', () => {
     expect(buildScene({ ...base, overlay: 'none', frame: 10 }).prims).toHaveLength(0)
     const g = buildScene({ ...base, overlay: 'none', frame: 10, ghost: { pose, frame: 10, map: (p) => p } })

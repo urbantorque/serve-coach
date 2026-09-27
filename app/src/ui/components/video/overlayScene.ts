@@ -111,6 +111,11 @@ export interface SceneInput {
   /** Other serves' apexes in this set-up (apex-scatter). */
   peers?: NPoint[]
   ghost?: GhostPose | null
+  /**
+   * The Profile "Experimental metrics" toggle. Off (the default), no experimental number is drawn on
+   * the video (D2; ui/README.md honesty rule 6): labels keep their word, the number is dropped.
+   */
+  experimentalOn?: boolean
 }
 
 /** +1 when "into the court" is image right. The side camera sits on the hitting-arm side (D1). */
@@ -118,7 +123,10 @@ export function forwardSign(handedness: Handedness): 1 | -1 {
   return handedness === 'right' ? 1 : -1
 }
 
-const usable = (m: MetricValue | undefined): m is MetricValue => Boolean(m && m.status && m.status !== 'unavailable')
+/** A value the overlay may print: available, and experimental only when the toggle is on. */
+export function overlayUsable(m: MetricValue | undefined, experimentalOn = false): m is MetricValue {
+  return Boolean(m && m.status && m.status !== 'unavailable' && (experimentalOn || m.status !== 'experimental'))
+}
 
 function skeletonPrims(lm: (Pt | null)[], ink: Ink, map: (p: NPoint) => NPoint = (p) => p): Prim[] {
   const out: Prim[] = []
@@ -168,6 +176,7 @@ export function buildScene(input: SceneInput): OverlayScene {
   const prims: Prim[] = []
   const labels: LabelSpec[] = []
   const { frame, pose, ball, events, standing, bodyHeightNorm: bh, aspect, metrics } = input
+  const usable = (m: MetricValue | undefined): m is MetricValue => overlayUsable(m, input.experimentalOn)
   const fwd = forwardSign(input.handedness)
   const forwardSide: 'left' | 'right' = fwd === 1 ? 'right' : 'left'
   const backSide: 'left' | 'right' = fwd === 1 ? 'left' : 'right'

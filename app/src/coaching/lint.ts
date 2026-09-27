@@ -4,6 +4,12 @@
  */
 import { METRIC_IDS, type ServePhase } from '../analysis/types.ts'
 import type { LibraryItem } from './library.ts'
+import type { BodyRegion } from './types.ts'
+
+/** Near-maximum effort in drill text (COACHING §9.3 "no speed intent", §11 hard serves). */
+export const FULL_EFFORT = /\bfull[- ](pace|effort|speed)\b|\bmax(imum)?[- ]effort\b|\bas hard as\b/i
+/** Comfort settings that rule out full-effort and kick progressions (§9.3: hard serves 0, or about 70% effort). */
+export const EFFORT_REGIONS: readonly BodyRegion[] = ['shoulder', 'elbow', 'back', 'other']
 
 const PHASES: readonly ServePhase[] = ['setup', 'toss', 'loading', 'drive', 'contact', 'landing', 'recovery']
 const OVERLAYS = ['apex-scatter', 'apex-vs-toe', 'toss-arc', 'contact-height-line', 'contact-vs-toe', 'hip-rise', 'shoulder-line', 'timing-strip', 'outcome-tally', 'none']
@@ -134,6 +140,20 @@ export function lintItem(item: LibraryItem): string[] {
     if (gate.label !== 'coaches-differ') add(13, 'back-leg progression must be labelled coaches-differ')
   }
   if (gated && item.itemType !== 'routine' && !item.drill.progressionAlt) add(13, 'gated progression without progressionAlt')
+  // Effort and kick follow the comfort rules (§9.3, §11): no speed intent or hard serves with a
+  // shoulder, elbow or other setting, about 70% effort with a back setting. A region the item already
+  // rules out (contraindications) needs no gate entry.
+  const missing = (regions: readonly BodyRegion[]) => regions.filter((r) => !item.contraindications.includes(r) && !gate.excludeIfComfort.includes(r))
+  if (FULL_EFFORT.test(prog)) {
+    const miss = missing(EFFORT_REGIONS)
+    if (miss.length) add(13, `full-effort progression must exclude the ${miss.join(', ')} comfort settings`)
+  }
+  if (has(prog, 'kick')) {
+    const miss = missing(EFFORT_REGIONS)
+    if (miss.length) add(13, `kick progression must exclude the ${miss.join(', ')} comfort settings`)
+  }
+  const alt = item.drill.progressionAlt ?? ''
+  if (FULL_EFFORT.test(alt) || has(alt, 'kick')) add(13, 'progressionAlt must be an easier-effort version (no full pace, full effort or kick)')
   // 14. Deny-list in cues, drills and whyItMatters.
   const texts = [
     ...cues,

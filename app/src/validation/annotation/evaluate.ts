@@ -11,7 +11,7 @@
  * - Values are recomputed from the raw marks (agreement.ts), so a formula fix applies to old files.
  */
 import type { AnnotatedPoint } from '../../data/domain.ts'
-import { deriveFromMarks, EVENT_TARGET, METRIC_TARGET, msPerFrame, type MarkContext, type Target } from './agreement.ts'
+import { appValueFor, deriveFromMarks, EVENT_TARGETS, METRIC_TARGET, msPerFrame, type MarkContext, type Target } from './agreement.ts'
 import type { ValidationEntry, ValidationExport } from './export.ts'
 import {
   blandAltman,
@@ -70,8 +70,8 @@ export const UTR_BANDS = ['1-2.99', '3-4.99', '5-7'] as const
 // ---------- results ----------
 
 export interface MetricUnit {
-  /** Unit the statistics are reported in. */
-  unit: '% of height' | 'cm' | 'ms'
+  /** Unit the statistics are reported in (degrees: the 2D shoulder line, validation data only). */
+  unit: '% of height' | 'cm' | 'ms' | 'degrees'
   /** Multiplier from the metric's stored unit to `unit`. */
   scale: number
 }
@@ -84,6 +84,10 @@ export const METRIC_LABEL: Record<CheckedMetricId, string> = {
   'toss-forward': 'Toss in front',
   'contact-forward': 'Contact in front',
   'landing-distance': 'Landing distance',
+  'leg-drive': 'Leg drive (hip rise)',
+  'loading-depth': 'Loading (hip dip)',
+  'drive-time': 'Drive time',
+  'shoulder-tilt-trophy': 'Shoulder line at the top',
 }
 
 export const METRIC_UNIT: Record<CheckedMetricId, MetricUnit> = {
@@ -94,9 +98,13 @@ export const METRIC_UNIT: Record<CheckedMetricId, MetricUnit> = {
   'toss-forward': { unit: 'cm', scale: 1 },
   'contact-forward': { unit: 'cm', scale: 1 },
   'landing-distance': { unit: 'cm', scale: 1 },
+  'leg-drive': { unit: '% of height', scale: 1 },
+  'loading-depth': { unit: '% of height', scale: 1 },
+  'drive-time': { unit: 'ms', scale: 1 },
+  'shoulder-tilt-trophy': { unit: 'degrees', scale: 1 },
 }
 
-const EVENT_LABEL: Record<CheckedEvent, string> = { tossRelease: 'Toss release', tossApex: 'Toss peak', contact: 'Contact', landing: 'Front-foot landing' }
+const EVENT_LABEL: Record<CheckedEvent, string> = { tossRelease: 'Toss release', tossApex: 'Toss peak', trophy: 'Trophy position', lowestHip: 'Lowest hip', contact: 'Contact', landing: 'Front-foot landing' }
 
 export interface MetricResult {
   id: CheckedMetricId
@@ -251,8 +259,8 @@ function prepare(files: readonly ValidationExport[], opts: EvalOptions): { group
 
 // ---------- evaluation ----------
 
-function verdictFor(target: Target | null, maeTU: number | null, n: number, players: number): string {
-  if (!target) return 'Reported only (no V2 target)'
+function verdictFor(target: Target | null, maeTU: number | null, n: number, players: number, noTarget = 'Reported only (no V2 target)'): string {
+  if (!target) return noTarget
   if (maeTU === null || !Number.isFinite(maeTU)) return 'No pairs yet'
   const within = maeTU <= target.max
   if (n < PROTOCOL_SAMPLE.v2ServesPerMetric || players < PROTOCOL_SAMPLE.v2Players) {
@@ -262,6 +270,13 @@ function verdictFor(target: Target | null, maeTU: number | null, n: number, play
 }
 
 const distinct = (xs: readonly string[]) => new Set(xs).size
+
+/** Why a row has no V2 target of its own. */
+const NO_TARGET: Partial<Record<CheckedEvent | CheckedMetricId, string>> = {
+  trophy: "Reported only: no V2 target (the app's trophy is its lowest hip point)",
+  lowestHip: 'Reported only: judged through drive time (2 frames)',
+  'shoulder-tilt-trophy': 'Reported only: the band is judged by coach agreement (80% or more, METRICS §5.6); this is the line it is built on',
+}
 
 export function evaluate(files: readonly ValidationExport[], opts: EvalOptions = {}): EvalResult {
   const { groups, inputs } = prepare(files, opts)
@@ -281,7 +296,19 @@ export function evaluate(files: readonly ValidationExport[], opts: EvalOptions =
     }
     if (errs.length) inter.events.push({ event: ev, n: errs.length, maeFrames: mean(errs.map((x) => Math.abs(x.f))), maeMs: mean(errs.map((x) => Math.abs(x.f * x.mpf))) })
   }
-  const POINTS: AnnotatedPoint[] = ['headTopSetup', 'floorSetup', 'frontToeSetup', 'ballAtApex', 'ballAtContact', 'frontToeLanding']
+  const POINTS: AnnotatedPoint[] = [
+    'headTopSetup',
+    'floorSetup',
+    'frontToeSetup',
+    'ballAtApex',
+    'ballAtContact',
+    'frontToeLanding',
+    'midHipRelease',
+    'midHipLowest',
+    'midHipContact',
+    'shoulderFrontTrophy',
+    'shoulderBackTrophy',
+  ]
   for (const pt of POINTS) {
     const cm: number[] = []
     for (const g of doubles) {
@@ -334,7 +361,7 @@ export function evaluate(files: readonly ValidationExport[], opts: EvalOptions =
       players: players.size,
       dist,
       baMs: blandAltman(errs.map((x) => ({ app: x.app, ref: x.ref, subject: x.subject }))),
-      verdict: verdictFor(EVENT_TARGET, dist?.maeFrames ?? null, errs.length, players.size),
+      verdict: verdictFor(EVENT_TARGETS[ev], dist?.maeFrames ?? null, errs.length, players.size, NO_TARGET[ev]),
     }
   })
 
@@ -348,13 +375,17 @@ export function evaluate(files: readonly ValidationExport[], opts: EvalOptions =
       if (!refs.length) continue
       marked++
       const m = g.entries[0].app.metrics[id]
-      if (!m || m.status === 'unavailable' || !usableNumber(m.value)) continue
+      // The engine's unrounded mechanics where the file has them (leg drive, loading, drive time,
+      // the shoulder line), else the stored value.
+      const appV = appValueFor(id, m, g.entries[0].app.mechanics)
+      if (appV === null) continue
       const ref = mean(refs)
-      const errNative = m.value - ref
-      // Error in the target's unit: frames for toss-to-hit time, % of height for ratios, cm otherwise.
-      const tu = id === 'rhythm-release-to-contact' ? errNative / g.mpf : errNative * u.scale
-      const unc = m.uncertainty
-      pairs.push({ app: m.value * u.scale, ref: ref * u.scale, subject: g.subject, cls: g.cls, tu, ...(unc ? { low: unc.low * u.scale, high: unc.high * u.scale } : {}) })
+      const errNative = appV - ref
+      // Error in the target's unit: frames for toss-to-hit and drive time, % of height for ratios and
+      // hip heights, cm for positions, degrees for the shoulder line.
+      const tu = id === 'rhythm-release-to-contact' || id === 'drive-time' ? errNative / g.mpf : errNative * u.scale
+      const unc = id === 'shoulder-tilt-trophy' ? undefined : m?.uncertainty
+      pairs.push({ app: appV * u.scale, ref: ref * u.scale, subject: g.subject, cls: g.cls, tu, ...(unc ? { low: unc.low * u.scale, high: unc.high * u.scale } : {}) })
     }
     const players = distinct(pairs.map((p) => p.subject))
     const errs = pairs.map((p) => ({ e: p.app - p.ref, subject: p.subject }))
@@ -376,7 +407,7 @@ export function evaluate(files: readonly ValidationExport[], opts: EvalOptions =
       maeInTargetUnit: maeTU,
       // The drop is ½·g·Δt² (METRICS §3.5): its threshold is the peak and contact timing (metrics.json
       // "time MAE <= 1 frame"); the image drop from the marks is a scale cross-check.
-      verdict: id === 'toss-drop' ? 'Judged through the toss peak and contact timing rows; reported as a scale cross-check' : verdictFor(target, maeTU, pairs.length, players),
+      verdict: id === 'toss-drop' ? 'Judged through the toss peak and contact timing rows; reported as a scale cross-check' : verdictFor(target, maeTU, pairs.length, players, NO_TARGET[id]),
       byCondition: classes.map((cls) => {
         const ps = pairs.filter((p) => p.cls === cls)
         return { cls, n: ps.length, mae: mean(ps.map((p) => Math.abs(p.app - p.ref))) }
@@ -471,9 +502,12 @@ export function evaluate(files: readonly ValidationExport[], opts: EvalOptions =
         id,
         label: METRIC_LABEL[id],
         levels: ['day', 'overcast', 'night-lights', 'flicker'].map((c) => `${c} ${lv[c] ?? '?'}`).join(', '),
-        ifPasses: timing.has(id)
-          ? `V2 ceiling is measured (timing metric), in the condition classes tested`
-          : `V2 ceiling is estimated (spatial)${m.statusTarget === 'measured' ? '; measured needs V3' : `; its designed status is ${m.statusTarget}, which V3 confirms`}`,
+        ifPasses:
+          id === 'shoulder-tilt-trophy'
+            ? 'A band: it moves only on coach agreement (80% or more); these marks cross-check the line it is built on'
+            : timing.has(id)
+              ? `V2 ceiling is measured (timing metric), in the condition classes tested${m.statusTarget !== 'measured' ? `; its designed status is ${m.statusTarget}` : ''}`
+              : `V2 ceiling is estimated (spatial)${m.statusTarget === 'measured' ? '; measured needs V3' : `; its designed status is ${m.statusTarget}, which V3 confirms`}`,
       })
     }
   }
@@ -501,6 +535,11 @@ const POINT_LABEL: Partial<Record<AnnotatedPoint, string>> = {
   ballAtApex: 'Ball at the peak',
   ballAtContact: 'Ball at contact',
   frontToeLanding: 'Front toe at landing',
+  midHipRelease: 'Hip centre at release',
+  midHipLowest: 'Hip centre at its lowest',
+  midHipContact: 'Hip centre at contact',
+  shoulderFrontTrophy: 'Front shoulder at trophy',
+  shoulderBackTrophy: 'Back shoulder at trophy',
 }
 
 const counts = (m: Record<string, number>) =>
@@ -546,7 +585,7 @@ export function renderReport(r: EvalResult, meta: { generatedAt: string; files: 
   }
 
   L.push('## Event timing: app against the marks', '')
-  L.push('Error = app frame − marked frame (mean of annotators). Target: MAE ≤ 1 frame (METRICS §5.6).', '')
+  L.push('Error = app frame − marked frame (mean of annotators). Target: MAE ≤ 1 frame for release, peak, contact and landing (METRICS §5.6). The trophy and lowest-hip frames have no target of their own and are reported only.', '')
   L.push('| Event | Serves (players) | Bias (frames) | MAE (frames) | MAE (ms) | Median abs | 90th pct abs | Within 1 frame | App found it | Verdict |')
   L.push('|---|---|---|---|---|---|---|---|---|---|')
   for (const e of r.events) {
@@ -563,7 +602,7 @@ export function renderReport(r: EvalResult, meta: { generatedAt: string; files: 
   L.push('')
 
   L.push('## Metrics: app against the marks', '')
-  L.push('Differences are app − marks. Heights are in % of the player\'s height; toss-to-hit time is judged in frames.', '')
+  L.push("Differences are app − marks. Heights, leg drive and loading are in % of the player's height; toss-to-hit time and drive time are judged in frames; the shoulder line is in degrees (validation data only: the app never shows degrees for a band).", '')
   L.push('| Metric | Unit | Serves (players) | Bias [95% CI] | 95% LoA | MAE [95% CI] | ICC(2,1) [95% CI] | Proportional bias: slope [95% CI] | Marks inside the app\'s range | App produced a value | Target (now) | Verdict |')
   L.push('|---|---|---|---|---|---|---|---|---|---|---|---|')
   for (const m of r.metrics) {

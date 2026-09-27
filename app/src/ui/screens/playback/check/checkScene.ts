@@ -1,7 +1,8 @@
 /**
  * Overlay for "Check this serve": the person's own marks as open crosshairs on the frame they were
- * placed on (the standing pair joined by a thin line), and, only after the marks are saved, the app's
- * points as dots (sky blue for the ball, optic for the feet and the height reference). While marking,
+ * placed on (the standing pair joined by a thin line, and the two shoulders at trophy by a dashed one),
+ * and, only after the marks are saved, the app's points (sky blue dots for the ball, optic dots for the
+ * feet and shoulders with the app's shoulder line, optic ticks for the height reference and hips). While marking,
  * nothing from the app is drawn (METRICS §5.6 blinding).
  */
 import type { AnnotatedPoint } from '../../../../data/domain.ts'
@@ -10,6 +11,7 @@ import type { MarkPoint } from '../../../../validation/annotation/types.ts'
 import type { OverlayScene, Prim } from '../../../components/video/overlayScene.ts'
 
 const BALL_POINTS: readonly AnnotatedPoint[] = ['ballAtApex', 'ballAtContact']
+const SHOULDER_POINTS: readonly AnnotatedPoint[] = ['shoulderFrontTrophy', 'shoulderBackTrophy']
 
 export interface CheckSceneInput {
   frame: number
@@ -33,10 +35,19 @@ export function checkScene({ frame, draft, active, app }: CheckSceneInput): Over
       const onFrame = standing ? mine?.frameIndex === frame : pt.frameIndex === frame || mine?.frameIndex === frame
       if (!onFrame) continue
       if (BALL_POINTS.includes(id)) prims.push({ kind: 'dot', at: pt, r: 5, ink: 'ball', ring: true })
-      else if (id === 'frontToeLanding' || id === 'frontToeSetup') prims.push({ kind: 'dot', at: pt, r: 4.5, ink: 'optic', ring: true })
+      else if (id === 'frontToeLanding' || id === 'frontToeSetup' || SHOULDER_POINTS.includes(id)) prims.push({ kind: 'dot', at: pt, r: 4.5, ink: 'optic', ring: true })
       else prims.push({ kind: 'tick', at: pt, lengthPx: 28, orient: 'h', ink: 'optic', width: 3 })
     }
+    // The app's shoulder line, where both its shoulders are drawn on this frame.
+    const af = app.shoulderFrontTrophy
+    const ab = app.shoulderBackTrophy
+    if (af && ab && af.frameIndex === frame && ab.frameIndex === frame) prims.push({ kind: 'segment', a: { x: af.x, y: af.y }, b: { x: ab.x, y: ab.y }, ink: 'optic', width: 2, alpha: 0.9 })
   }
+
+  // The person's shoulder line on the trophy frame.
+  const sf = p.shoulderFrontTrophy
+  const sb = p.shoulderBackTrophy
+  if (sf && sb && sf.frameIndex === frame && sb.frameIndex === frame) prims.push({ kind: 'segment', a: { x: sf.x, y: sf.y }, b: { x: sb.x, y: sb.y }, ink: 'line', width: 1.5, dash: [4, 3], alpha: 0.9 })
 
   const head = p.headTopSetup
   const floor = p.floorSetup

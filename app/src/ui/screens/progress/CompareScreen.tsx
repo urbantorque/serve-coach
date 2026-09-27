@@ -19,7 +19,7 @@ import {
 } from '../../components/index.ts'
 import { ChartFrame, IntervalBars, StripPlot, type IntervalRow } from '../../charts/index.ts'
 import { metricName } from '../../copy/metricNames.ts'
-import { OUTCOME_WORDS } from '../../copy/strings.ts'
+import { OUTCOME_WORDS, verdictDisplayId } from '../../copy/strings.ts'
 import { formatMetric } from '../../format/metricFormat.ts'
 import { paths } from '../../shell/paths.ts'
 import { barSpec, compareExperiment, comparisonSessionIds, comparisonStatus, deviations, sameZone, type CompareModel, type SessionData } from './insights/compare.ts'
@@ -29,6 +29,8 @@ import { configFor } from './insights/metricConfig.ts'
 import { rateCounts } from './insights/outcomes.ts'
 import { plainText } from './insights/values.ts'
 import { moreServesText } from './insights/words.ts'
+import { FirstLoopCard } from '../plan/FirstLoopCard.tsx'
+import { VerdictBeta } from '../profile/beta/VerdictBeta.tsx'
 
 /** Primary by verdict (DESIGN §10.11; COACHING §12.5). One label per intent across the app. */
 function primaryFor(model: CompareModel): { label: string; to: string } {
@@ -113,13 +115,14 @@ function Chart({ model, baseline, retests, heightM, status }: { model: CompareMo
     <>
       <ChartFrame
         title={`${metricName(id)}, before and after`}
-        subtitle="Bars show the likely range: darker is 80%, lighter is 95%."
+        subtitle="Bars show the likely range: darker is 80%, lighter (outlined) is 95%."
         status={status}
         metricId={id}
+        headingLevel="h2"
         direction={cfg?.direction === 'lower' ? 'lower-steadier' : undefined}
         table={{
           caption: 'Before and after',
-          columns: ['', 'Value', 'Likely range', 'Serves'],
+          columns: ['', 'Value', 'Likely range (95%)', '80% range', 'Serves'],
           rows: rows.map((r, i) => {
             const side = i === 0 ? model.before : model.after
             const value = i === 0 ? model.beforeValue : model.afterValue
@@ -129,6 +132,7 @@ function Chart({ model, baseline, retests, heightM, status }: { model: CompareMo
                 r.label,
                 text(i === 0 ? 'before' : 'after'),
                 isRate ? `${Math.round(r.ci95[0] * 100)} to ${Math.round(r.ci95[1] * 100)}%` : rangeText(id, value, r.ci95[0], r.ci95[1]),
+                isRate ? `${Math.round(r.ci80[0] * 100)} to ${Math.round(r.ci80[1] * 100)}%` : rangeText(id, value, r.ci80[0], r.ci80[1]),
                 String(side.n),
               ],
             }
@@ -353,6 +357,10 @@ export function CompareScreen() {
           <CaretRightIcon size={14} aria-hidden="true" />
         </Link>
       </section>
+      {/* T1 (PRODUCT §6.15): after the first verdict and its next step, once; never for samples. */}
+      {!isDemo && !painPause && model.verdict !== 'not-comparable' ? <FirstLoopCard experiment={exp} /> : null}
+      {/* Beta usage count and the one-time usefulness question (platform addition; PRODUCT §7.4 step 8). */}
+      <VerdictBeta experiment={exp} verdict={verdictDisplayId(model.verdict)} sameSession={Boolean(model.withinSession)} paused={painPause} />
     </Screen>
   )
 }

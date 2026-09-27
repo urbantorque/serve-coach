@@ -24,6 +24,7 @@ const SessionReportScreen = named(() => import('../screens/sessions/SessionRepor
 // Serve detail and Tagging live in screens/playback.
 const ServeDetailScreen = named(() => import('../screens/playback/ServeDetailScreen.tsx'), 'ServeDetailScreen')
 const TaggingScreen = named(() => import('../screens/playback/TaggingScreen.tsx'), 'TaggingScreen')
+const MatchLogScreen = named(() => import('../screens/sessions/matchLog/MatchLogScreen.tsx'), 'MatchLogScreen')
 const FocusDrillScreen = named(() => import('../screens/focus/FocusDrillScreen.tsx'), 'FocusDrillScreen')
 const DrillPlayerScreen = named(() => import('../screens/focus/DrillPlayerScreen.tsx'), 'DrillPlayerScreen')
 const PracticeLogScreen = named(() => import('../screens/focus/PracticeLogScreen.tsx'), 'PracticeLogScreen')
@@ -37,10 +38,13 @@ const StoragePrivacyScreen = named(() => import('../screens/profile/ProfileSecti
 const AboutScreen = named(() => import('../screens/profile/ProfileSections.tsx'), 'AboutScreen')
 const HowWeMeasureScreen = named(() => import('../screens/profile/HowWeMeasureScreen.tsx'), 'HowWeMeasureScreen')
 const AppearanceScreen = named(() => import('../screens/profile/AppearanceScreen.tsx'), 'AppearanceScreen')
+const BetaDataScreen = named(() => import('../screens/profile/beta/BetaDataScreen.tsx'), 'BetaDataScreen')
 const MetricInfoScreen = named(() => import('../screens/metric/MetricInfoScreen.tsx'), 'MetricInfoScreen')
 const PaywallScreen = named(() => import('../screens/plan/PaywallScreen.tsx'), 'PaywallScreen')
 const NotFoundScreen = named(() => import('../screens/NotFoundScreen.tsx'), 'NotFoundScreen')
-const ComponentGallery = named(() => import('../dev/ComponentGallery.tsx'), 'ComponentGallery')
+// Developer page: compiled out of production builds (import.meta.env.DEV is false there, so the
+// lazy chunk and its route are dropped and /dev/components falls through to Not found).
+const ComponentGallery = import.meta.env.DEV ? named(() => import('../dev/ComponentGallery.tsx'), 'ComponentGallery') : null
 
 const h = (title: string, tabBar = true): RouteHandle => ({ title, tabBar })
 
@@ -57,11 +61,14 @@ export const routes: RouteObject[] = [
       { path: 'record/setup', Component: SetupChoiceScreen, handle: h('Set-up', false) },
       { path: 'record/live', Component: LiveFramingScreen, handle: h('Live framing', false) },
       { path: 'record/import', Component: ImportScreen, handle: h('Import a video') },
-      { path: 'processing/:sessionId', Component: ProcessingScreen, handle: h('Analysing') },
+      // Neutral document title: the screen's own title follows the analysis state (ProcessingScreen).
+      { path: 'processing/:sessionId', Component: ProcessingScreen, handle: h('Session analysis') },
       { path: 'sessions', Component: SessionsScreen, handle: h('Sessions') },
       { path: 'sessions/:sessionId', Component: SessionReportScreen, handle: h('Session report') },
       { path: 'sessions/:sessionId/serves/:serveId', Component: ServeDetailScreen, handle: h('Serve detail', false) },
       { path: 'sessions/:sessionId/tag', Component: TaggingScreen, handle: h('Tag serves', false) },
+      { path: 'sessions/matches/new', Component: MatchLogScreen, handle: h('Log a match') },
+      { path: 'sessions/matches/:matchId', Component: MatchLogScreen, handle: h('Edit match') },
       { path: 'focus', Component: FocusDrillScreen, handle: h('Focus and drill') },
       { path: 'focus/drill', Component: DrillPlayerScreen, handle: h('Drill', false) },
       { path: 'focus/log', Component: PracticeLogScreen, handle: h('Log practice') },
@@ -72,12 +79,13 @@ export const routes: RouteObject[] = [
       { path: 'profile/comfort', Component: ComfortScreen, handle: h('Comfort and body', false) },
       { path: 'profile/coach', Component: CoachFocusScreen, handle: h("My coach's focus", false) },
       { path: 'profile/storage', Component: StoragePrivacyScreen, handle: h('Storage and privacy', false) },
+      { path: 'profile/beta-data', Component: BetaDataScreen, handle: h('Beta data', false) },
       { path: 'profile/how-we-measure', Component: HowWeMeasureScreen, handle: h('How we measure', false) },
       { path: 'profile/appearance', Component: AppearanceScreen, handle: h('Appearance', false) },
       { path: 'profile/about', Component: AboutScreen, handle: h('About and legal', false) },
       { path: 'metric/:metricId', Component: MetricInfoScreen, handle: h('How we measure', false) },
       { path: 'plan', Component: PaywallScreen, handle: h('Plan', false) },
-      { path: 'dev/components', Component: ComponentGallery, handle: h('Components') },
+      ...(ComponentGallery ? [{ path: 'dev/components', Component: ComponentGallery, handle: h('Components') }] : []),
       { path: '*', Component: NotFoundScreen, handle: h('Not found') },
     ],
   },

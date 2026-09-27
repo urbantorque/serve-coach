@@ -1,6 +1,6 @@
 import { InfoIcon } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router'
-import type { MetricId, MetricValue as MetricValueData } from '../../../../analysis/types.ts'
+import type { MetricId, MetricStatus, MetricValue as MetricValueData } from '../../../../analysis/types.ts'
 import type { SessionRecord } from '../../../../data/records.ts'
 import { MetricValue, StatusChip } from '../../../components/index.ts'
 import { ChartFrame, covarianceEllipse, StripPlot, TossScatter, type Ellipse } from '../../../charts/index.ts'
@@ -8,7 +8,7 @@ import { OUTCOME_WORDS, UI } from '../../../copy/strings.ts'
 import { formatMetric } from '../../../format/metricFormat.ts'
 import { paths } from '../../../shell/paths.ts'
 import { againstUsual } from '../../progress/insights/history.ts'
-import { apexCm, relativeNumber, tossData, type ServeRow } from '../../progress/insights/serves.ts'
+import { apexCm, relativeNumber, tossData, usableNumber, type ServeRow } from '../../progress/insights/serves.ts'
 import { median } from '../../../../analysis/stats/index.ts'
 import { formatRange } from '../../progress/insights/values.ts'
 
@@ -39,14 +39,28 @@ function relDomain(ds: number[]): [number, number] {
   return [-m, m]
 }
 
+const RANK: Record<MetricStatus, number> = { measured: 0, 'player-entered': 0, estimated: 1, experimental: 2, unavailable: 3 }
+/** The least certain status among plotted values (the chart chip describes what is drawn). */
+function worstStatus(ss: MetricStatus[]): MetricStatus | undefined {
+  return ss.reduce<MetricStatus | undefined>((a, s) => (a === undefined || RANK[s] > RANK[a] ? s : a), undefined)
+}
+
 function Readout({ id, v, usual }: { id: MetricId; v: MetricValueData | undefined; usual?: [number, number] | null }) {
   if (!v) return null
   const f = formatMetric(id, v)
+  // The likely range (status + range + n): shown whenever there is no usual range to read against,
+  // and always for an early read (METRICS §4.1: a provisional spread is shown with its interval).
+  const likely = v.status !== 'unavailable' && f.detail && (!usual || v.provisional) ? f.detail : null
   return (
     <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
       <span className="text-footnote font-label text-ink-2">{id === 'toss-forward-spread' ? 'Front-to-back spread' : id === 'toss-lateral-spread' ? 'Left-right spread' : 'Height spread'}</span>
       <MetricValue metricId={id} value={v} size="metric" chip={false} />
       {v.status !== 'unavailable' && usual ? <span className="text-footnote text-ink-3">usual {formatRange(id, usual)}</span> : null}
+      {likely ? (
+        <span className="text-footnote tabular-nums text-ink-3" data-likely-range>
+          {likely}
+        </span>
+      ) : null}
       {v.status !== 'unavailable' && f.nLine ? <span className="text-footnote tabular-nums text-ink-3">{f.nLine}</span> : null}
       <span aria-hidden="true">
         <StatusChip status={v.status} />
@@ -138,11 +152,12 @@ export function TossHero({ session, metrics, rows, heightM, previous, usualSprea
   if (toss.extrapolated) notes.push(`${toss.extrapolated} ${toss.extrapolated === 1 ? 'peak was' : 'peaks were'} above the picture and ${toss.extrapolated === 1 ? 'is' : 'are'} estimated.`)
   const excluded = rows.filter((r) => !r.included).length
   if (relative) notes.push(UI.tossRelativeOnly)
-  else if (!rear && heightsOnly) notes.push(UI.tossHeightsOnly)
+  // With the experimental front-to-back spread shown above, don't call front-to-back "not reliable
+  // enough to show": say it is experimental, which is what its readout says.
+  else if (!rear && heightsOnly) notes.push(second?.status === 'experimental' ? UI.tossHeightsOnlyExperimental : UI.tossHeightsOnly)
   if (toss.missing && !heightsOnly && !relative && toss.points.length >= 5) notes.push(`${toss.missing} ${toss.missing === 1 ? 'toss' : 'tosses'} could not be placed on the map.`)
   if (excluded) notes.push(`${excluded} ${excluded === 1 ? 'serve' : 'serves'} not measured.`)
 
-  const status = spread?.status === 'unavailable' ? undefined : spread?.status
   // Tosses with a usable peak in any form (absolute, or relative under an unknown tilt).
   const peaks = Math.max(toss.points.length, heights.length, rows.filter((r) => r.included && !r.isLet && relativeNumber(r.metrics['toss-apex-height']) !== null).length)
   const insufficient = relative
@@ -157,13 +172,32 @@ export function TossHero({ session, metrics, rows, heightM, previous, usualSprea
           : `Needs 5 measured tosses to draw the map. You have ${toss.points.length}.`
         : undefined
 
+  // The chip on the chart describes what is drawn: the spread's status while the spread is shown,
+  // otherwise the plotted peaks' own (DESIGN §14: every number carries its data state).
+  const spreadShown = !!spread && spread.status !== 'unavailable'
+  const plotted = rows.filter((r) => r.included && !r.isLet)
+  const status: MetricStatus | undefined = spreadShown
+    ? spread.status
+    : insufficient
+      ? undefined
+      : relative
+        ? worstStatus(relative.map((x) => x.r.metrics['toss-apex-height']?.statusIfLevel ?? 'estimated'))
+        : worstStatus(
+            plotted.flatMap((r) => {
+              const apex = r.metrics['toss-apex-height']
+              if (usableNumber(apex) === null || !apex) return []
+              const fwd = r.metrics['toss-forward']
+              return heightsOnly || usableNumber(fwd) === null || !fwd ? [apex.status] : [apex.status, fwd.status]
+            }),
+          )
+
   return (
     <ChartFrame
       title={title}
       subtitle={stratumLabel}
       status={status}
-      metricId="toss-height-spread"
-      earlyRead={spread?.provisional}
+      metricId={spreadShown ? 'toss-height-spread' : 'toss-apex-height'}
+      earlyRead={spreadShown ? spread.provisional : undefined}
       direction="lower-steadier"
       headingLevel="h3"
       insufficient={insufficient}

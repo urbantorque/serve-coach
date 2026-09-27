@@ -8,7 +8,9 @@ import { StripPlot } from './StripPlot.tsx'
 import { TossScatter } from './TossScatter.tsx'
 import { WilsonBar } from './WilsonBar.tsx'
 
-const svgOf = (name: RegExp) => screen.getByRole('img', { name })
+// Static plots are role=img; plots you can move through with the arrow keys are role=application
+// (aria-roledescription chart) with key help, so screen readers pass the keys through.
+const svgOf = (name: RegExp) => screen.queryByRole('application', { name }) ?? screen.getByRole('img', { name })
 
 describe('charts render accessible SVG (role img + data summary)', () => {
   it('Sparkline: band, latest label, keyboard selection announces the callout', () => {
@@ -27,6 +29,10 @@ describe('charts render accessible SVG (role img + data summary)', () => {
       />,
     )
     const svg = svgOf(/Toss spread over 3 sessions/)
+    // Interactive: an application with key help, so screen readers pass the arrow keys through.
+    expect(svg.getAttribute('role')).toBe('application')
+    expect(svg.getAttribute('aria-roledescription')).toBe('chart')
+    expect(svg).toHaveAccessibleDescription(/arrow keys to move between points, Enter to open/)
     expect(svg).toHaveTextContent('usual')
     expect(svg).toHaveTextContent('≈ 11 cm')
     fireEvent.keyDown(svg, { key: 'ArrowRight' })

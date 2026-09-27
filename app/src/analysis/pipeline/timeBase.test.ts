@@ -22,19 +22,27 @@ function meta(nominalFps: number, extra: Partial<VideoMeta> = {}): VideoMeta {
 }
 
 describe('resolveTimeBase', () => {
-  it('applies a player-confirmed slow-motion rate', () => {
+  it('applies a player-confirmed slow-motion rate, but never as a proven time base (CAPTURE §11.3)', () => {
     const d = resolveTimeBase(meta(30), { fpsOverride: 240 })
     expect(d.status).toBe('user')
     expect(d.meta.captureFps).toBe(240)
     expect(d.meta.timeScale).toBeCloseTo(0.125)
     expect(d.meta.fpsSource).toBe('user')
-    expect(d.meta.timeBaseStatus).toBe('proven')
+    // Only container evidence proves a time base; the engine checks the answer against the toss.
+    expect(d.meta.timeBaseStatus).toBe('unknown')
   })
 
   it('treats a declared rate equal to the timeline as real time', () => {
     const d = resolveTimeBase(meta(240), { fpsOverride: 240 })
     expect(d.meta.timeScale).toBe(1)
     expect(d.status).toBe('user')
+    expect(d.meta.timeBaseStatus).toBe('unknown')
+  })
+
+  it('keeps a container-proven time base when the declared rate agrees with it', () => {
+    const d = resolveTimeBase(meta(240, { timeBaseStatus: 'proven' }), { fpsOverride: 240 })
+    expect(d.status).toBe('proven')
+    expect(d.meta).toMatchObject({ timeBaseStatus: 'proven', fpsSource: 'timestamps', timeScale: 1 })
   })
 
   it('ignores a declared rate below the timeline rate (fast motion is not a serve recording)', () => {
@@ -51,16 +59,19 @@ describe('resolveTimeBase', () => {
 })
 
 describe('applyGravityCheck', () => {
-  it('corrects an unknown base from the toss, and proves real time when consistent', () => {
+  it('corrects an unknown base from the toss, and confirms real time when consistent, without proving either', () => {
     const unknown = resolveTimeBase(meta(30))
     const corrected = applyGravityCheck(unknown, { status: 'apply-correction', timeScale: 0.125, captureFpsFactor: 8, basis: 'too slow' })
     expect(corrected.changed).toBe(true)
     expect(corrected.decision.status).toBe('physics')
-    expect(corrected.decision.meta).toMatchObject({ captureFps: 240, timeScale: 0.125, fpsSource: 'physics', timeBaseStatus: 'proven' })
+    // Toss-corrected: 'physics', never 'proven' (speed is never computed on it, METRICS §2.9).
+    expect(corrected.decision.meta).toMatchObject({ captureFps: 240, timeScale: 0.125, fpsSource: 'physics', timeBaseStatus: 'unknown' })
     const consistent = applyGravityCheck(unknown, { status: 'consistent', timeScale: 1, basis: 'g' })
     expect(consistent.changed).toBe(false)
     expect(consistent.decision.status).toBe('physics')
-    expect(consistent.decision.meta.timeBaseStatus).toBe('proven')
+    // Gravity-consistent: the engine's own toss check classes it 'normal' (not proven timestamps).
+    expect(consistent.decision.meta.timeBaseStatus).toBe('unknown')
+    expect(consistent.decision.meta.fpsSource).toBe('timestamps')
     const inconclusive = applyGravityCheck(unknown, { status: 'inconclusive', basis: '?' })
     expect(inconclusive.decision.status).toBe('unknown')
   })

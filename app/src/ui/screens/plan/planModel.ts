@@ -3,6 +3,7 @@
  * PWA prototype nothing is sold: a plan button only switches a local test flag (see entitlement.ts).
  */
 import type { EntitlementSetting } from '../../../data/records.ts'
+import { allowanceLine as entitlementAllowanceLine, FREE_DAYS_PER_MONTH, isPlus, monthKey as entitlementMonthKey } from '../../../entitlement/index.ts'
 
 export type PlanId = NonNullable<EntitlementSetting['plan']>
 
@@ -94,12 +95,16 @@ export function renewalTerms(plan: PlanId, now: Date): string {
   }
 }
 
-/** PRODUCT §6.15 item 2: what Plus adds, four lines. */
+/**
+ * PRODUCT §6.15 item 2: what Plus adds, four lines. Only what exists: suggested outcome tags from the
+ * view from behind are not built (FUNCTIONAL_STATUS), and would be experimental (PRODUCT §5.2), so
+ * they come back only when they ship, labelled. Comparisons are matched only (D7).
+ */
 export const PLUS_ADDS = [
   'Unlimited analysed sessions',
   'Your full history, and a season view of practice beside comp nights',
-  'Compare any two sessions, with ghost overlays',
-  'Progressions, and suggested outcome tags from the view from behind',
+  'Compare any two matched sessions, with ghost overlays',
+  'Drill progressions that follow your practice log',
 ] as const
 
 /** PRODUCT §5.2 "Always free" row, in player words. */
@@ -111,21 +116,18 @@ export const ALWAYS_FREE = [
 ] as const
 
 /** Free-tier allowance (PRODUCT §5.2): analysed practice days per calendar month after the first loop. */
-export const FREE_DAYS_PER_MONTH = 2
+export { FREE_DAYS_PER_MONTH }
 
 export function allowanceLine(daysUsed: number): string {
-  const used = Math.min(daysUsed, 99)
-  return `${used} of ${FREE_DAYS_PER_MONTH} analysed days this month`
+  return entitlementAllowanceLine({ used: daysUsed, limit: FREE_DAYS_PER_MONTH })
 }
 
 /** "YYYY-MM" for the allowance query (local month). */
-export function monthKey(now: Date): string {
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-}
+export const monthKey = entitlementMonthKey
 
 /** The local test flag a prototype "purchase" writes. No payment, no store call. */
-export function prototypeEntitlement(plan: PlanId, now: Date): EntitlementSetting {
-  const base: EntitlementSetting = { tier: 'plus', plan, source: 'prototype', at: now.toISOString() }
+export function prototypeEntitlement(plan: PlanId, now: Date, via?: EntitlementSetting['via'], feature?: string): EntitlementSetting {
+  const base: EntitlementSetting = { tier: 'plus', plan, source: 'prototype', at: now.toISOString(), ...(via ? { via } : {}), ...(feature ? { feature } : {}) }
   if (plan === 'annual') return { ...base, trialEndsAt: addDays(now, TRIAL_DAYS).toISOString() }
   if (plan === 'season') return { ...base, endsAt: addMonths(now, SEASON_MONTHS).toISOString() }
   return base
@@ -133,12 +135,8 @@ export function prototypeEntitlement(plan: PlanId, now: Date): EntitlementSettin
 
 export const FREE_ENTITLEMENT: EntitlementSetting = { tier: 'free', source: 'prototype' }
 
-/** Plus is on, and a season pass has not run out. */
-export function isPlus(e: EntitlementSetting | undefined, now: Date = new Date()): boolean {
-  if (!e || e.tier !== 'plus') return false
-  if (e.endsAt && new Date(e.endsAt).getTime() < now.getTime()) return false
-  return true
-}
+/** Plus is on, and a season pass has not run out (the rule lives in src/entitlement). */
+export { isPlus }
 
 export function planLabel(e: EntitlementSetting | undefined, now: Date = new Date()): string {
   if (!isPlus(e, now)) return 'Free'

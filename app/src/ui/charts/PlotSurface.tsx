@@ -16,7 +16,11 @@ export interface PlotTarget {
 export interface PlotSurfaceProps {
   width: number
   height: number
-  /** Accessible summary of the data (the SVG is role="img"; the table view is the full equivalent). */
+  /**
+   * Accessible summary of the data. A static plot is role="img"; one you can move through with the
+   * arrow keys is role="application" (so screen readers pass the keys through) with its key help.
+   * The table view is the full equivalent either way.
+   */
   label: string
   targets?: PlotTarget[]
   /** Opens the selected mark (Enter, or a second tap on a selected mark). */
@@ -28,13 +32,16 @@ export interface PlotSurfaceProps {
 }
 
 /**
- * Shared plot surface (DESIGN §9.1): an SVG in CSS px with role="img" and a data summary; a
+ * Shared plot surface (DESIGN §9.1): an SVG in CSS px with a data summary (role="img", or
+ * role="application" with aria-roledescription="chart" and key help when interactive); a
  * nearest-point tap layer with a 24 px radius; keyboard selection (Tab focuses, arrows move, Enter
  * opens, Escape clears); a callout pill in --surface-inverse, value first; a polite live region.
  */
 export function PlotSurface({ width, height, label, targets = [], onOpen, defs, children, className }: PlotSurfaceProps) {
   const [selected, setSelected] = useState<string | null>(null)
-  const hatchId = cssId(useId())
+  const uid = useId()
+  const hatchId = cssId(uid)
+  const helpId = `${cssId(uid)}-help`
   const svgRef = useRef<SVGSVGElement>(null)
   const order = useMemo(() => [...targets].sort((a, b) => a.x - b.x || a.y - b.y).map((t) => targets.indexOf(t)), [targets])
   const sel = selected === null ? null : targets.find((t) => t.id === selected) ?? null
@@ -83,8 +90,10 @@ export function PlotSurface({ width, height, label, targets = [], onOpen, defs, 
         width="100%"
         height={height}
         viewBox={`0 0 ${width} ${height}`}
-        role="img"
+        role={interactive ? 'application' : 'img'}
+        aria-roledescription={interactive ? 'chart' : undefined}
         aria-label={label}
+        aria-describedby={interactive ? helpId : undefined}
         tabIndex={interactive ? 0 : undefined}
         onClick={pick}
         onKeyDown={onKeyDown}
@@ -113,6 +122,11 @@ export function PlotSurface({ width, height, label, targets = [], onOpen, defs, 
         >
           {sel.callout}
         </div>
+      ) : null}
+      {interactive ? (
+        <span id={helpId} className="sr-only">
+          {`Use the arrow keys to move between points${onOpen ? ', Enter to open the selected one' : ''}, Escape to clear.`}
+        </span>
       ) : null}
       <span className="sr-only" aria-live="polite">
         {sel ? sel.callout : ''}

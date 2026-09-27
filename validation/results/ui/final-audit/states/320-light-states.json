@@ -1,0 +1,95 @@
+{
+ "key": "320-light",
+ "states": [
+  {
+   "name": "serve-detail",
+   "file": "320-light-01-serve-detail.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 16,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentReportServe 1Sample data · synthetic playerSe",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 756
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Next serve",
+     "left": 288,
+     "right": 336
+    },
+    {
+     "name": "Legs",
+     "left": 320,
+     "right": 405
+    },
+    {
+     "name": "None",
+     "left": 413,
+     "right": 502
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 23,
+     "y": 19
+    },
+    {
+     "a": "Forward 1 frame",
+     "b": "All values",
+     "x": 6,
+     "y": 21
+    },
+    {
+     "a": "Previous serve",
+     "b": "All values",
+     "x": 48,
+     "y": 21
+    },
+    {
+     "a": "Next serve",
+     "b": "All values",
+     "x": 16,
+     "y": 21
+    },
+    {
+     "a": "Contact",
+     "b": "All values",
+     "x": 78,
+     "y": 11
+    }
+   ]
+  }
+ ],
+ "logs": []
+}

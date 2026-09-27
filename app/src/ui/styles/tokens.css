@@ -144,6 +144,9 @@
   --cat-2: #12a07a;
   --cat-3: #db6b2e;
   --scrim: rgb(0 0 0 / 0.6);
+  /* Denser glass than Day: --ink-3 labels on the tab bar stay >= 4.5:1 even over white content
+     scrolling beneath (tokens.test.ts, worst case with no blur). */
+  --glass: color-mix(in srgb, var(--surface) 94%, transparent);
   --sheet-shadow: 0 0 #0000;
   --card-edge: transparent;
   --sheet-bg: var(--surface-2);
@@ -361,6 +364,16 @@
 /* Visible edge width follows the set: 1 px Day/Night, 2 px Court-side (§2.4). */
 @utility border-token {
   border-width: var(--border-w);
+}
+
+/*
+ * Tab bar labels (§8.2): caption size, capped at 16 px so four labels always fit a 56 px bar and a
+ * 320 px row at any text size (the HIG does not scale tab labels with Dynamic Type either). The full
+ * label stays the link's accessible name.
+ */
+@utility tab-label {
+  font-size: min(var(--fs-caption), 16px);
+  line-height: 1.2;
 }
 
 /* Glyph size token for Phosphor icons that should follow Court-side (§6). */

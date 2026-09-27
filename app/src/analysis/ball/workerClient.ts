@@ -229,6 +229,20 @@ export class BallWorkerClient {
     return reply.result
   }
 
+  /**
+   * Drops a window that will never be ended (a job a re-plan superseded). Call it after the window's
+   * last pushFrame has returned: messages are handled in order, so its frames are processed (and
+   * acknowledged) first, and nothing arrives for the window afterwards.
+   */
+  async discard(windowId: number): Promise<void> {
+    if (this.disposed) return
+    if (this.backend === 'main-thread') {
+      this.local.delete(windowId)
+      return
+    }
+    await this.request({ type: 'discard', id: this.nextId++, windowId })
+  }
+
   /** Re-runs analyseBall on candidates already detected (no pixels needed). */
   async reanalyse(frames: FrameCandidates[], options: WindowAnalyseOptions): Promise<BallWindowResult> {
     if (this.backend === 'main-thread') return analyseWindow(-1, frames, options)

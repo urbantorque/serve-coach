@@ -1,0 +1,73 @@
+[
+ {
+  "key": "390-light",
+  "axe": [],
+  "info": {
+   "h1": [
+    "Live framing"
+   ],
+   "contrast": "court",
+   "overflow": 0,
+   "text": "Skip to content\nLive framing\nToss room above\nFeet about here\n\nChecks\n\nLevel\n: needs a fix\nIn frame\n: needs a fix\nRoom above\n: not checked yet\nAhead\n: not checked yet\nSteady\n: passed\nLight\n: passed\nBall\n: not checked yet\n20 fps\n: needs a fix\nSize\n: not checked yet\n\nTurn the phone upright\n\nThe upright set-up needs the phone standing on its end.\n\n2 of 9 ready\n3 fixes",
+   "buttons": [
+    "Hide checklist 44x44",
+    "Close camera 44x44",
+    "Turn sound and speech off 44x44",
+    "2 of 9 ready 107x44",
+    "Record, 3 fixes 72x72",
+    "More options 44x44"
+   ]
+  },
+  "logs": [
+   "W0927 18:55:52.921999 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+  ]
+ },
+ {
+  "key": "844-light",
+  "axe": [],
+  "info": {
+   "h1": [
+    "Live framing"
+   ],
+   "contrast": "court",
+   "overflow": 0,
+   "text": "Skip to content\nLive framing\nToss room above\nFeet about here\n\nChecks\n\nLevel\n: needs a fix\nIn frame\n: needs a fix\nRoom above\n: not checked yet\nAhead\n: not checked yet\nSteady\n: passed\nLight\n: passed\nBall\n: not checked yet\n20 fps\n: needs a fix\nSize\n: not checked yet\n3 fixes\n\nTurn the phone upright\n\nThe upright set-up needs the phone standing on its end.",
+   "buttons": [
+    "Hide checklist 44x44",
+    "Capture checks 44x44",
+    "More options 44x44",
+    "Record, 3 fixes 72x72",
+    "Close camera 44x44",
+    "Turn sound and speech off 44x44"
+   ]
+  },
+  "logs": [
+   "W0927 18:56:02.097999 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+   "W0927 18:56:02.796000 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+  ]
+ },
+ {
+  "key": "390-light-200",
+  "axe": [],
+  "info": {
+   "h1": [
+    "Live framing"
+   ],
+   "contrast": "court",
+   "overflow": 0,
+   "text": "Skip to content\nLive framing\nToss room above\nFeet about here\n\nChecks\n\nLevel\n: needs a fix\nIn frame\n: needs a fix\nRoom above\n: not checked yet\nAhead\n: not checked yet\nSteady\n: passed\nLight\n: passed\nBall\n: not checked yet\n20 fps\n: needs a fix\nSize\n: not checked yet\n\nTurn the phone upright\n\nThe upright set-up needs the phone standing on its end.\n\n2 of 9 ready\n3 fixes",
+   "buttons": [
+    "Hide checklist 44x44",
+    "Close camera 44x44",
+    "Turn sound and speech off 44x44",
+    "2 of 9 ready 129x44",
+    "Record, 3 fixes 72x72",
+    "More options 44x44"
+   ]
+  },
+  "logs": [
+   "W0927 18:56:11.534000 2196592 gl_context.cc:1119] OpenGL error checking is disabled",
+   "W0927 18:56:12.347000 2196592 gl_context.cc:1119] OpenGL error checking is disabled"
+  ]
+ }
+]

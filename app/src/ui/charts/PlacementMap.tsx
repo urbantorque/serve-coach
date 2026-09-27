@@ -30,8 +30,17 @@ const BOX_W = 150
 const BOX_H = 233
 const STRIP = 32
 const WIDE_STRIP = 40
-const HEIGHT = 300
 const MAX_MARKS = 12
+/** Zone names, then their counts on a row of their own, then the marks (so they never collide). */
+const NAME_Y = 16
+const COUNT_Y = 34
+const CELL_TOP = 40
+/**
+ * The geometry is fixed px, so the labels inside it are capped (the "Show as table" view carries the
+ * same numbers at any text size). Without the cap, 200% text runs zone names into each other.
+ */
+const LABEL_STYLE = { fontSize: 'min(var(--fs-caption), 15px)' } as const
+const COUNT_STYLE = { fontSize: 'min(var(--fs-headline), 17px)' } as const
 
 interface Cell {
   key: string
@@ -62,9 +71,9 @@ export function PlacementMap({ side, serves, label, onOpen }: PlacementMapProps)
   const cells: Cell[] = zones.map((z, i) => ({
     key: `in-${z}`,
     x: bx + i * colW,
-    y: by + 18,
+    y: by + CELL_TOP,
     w: colW,
-    h: BOX_H - 18,
+    h: BOX_H - CELL_TOP,
     serves: serves.filter((s) => s.outcome === 'in' && s.zone === z),
   }))
   const netCells: Cell[] = zones.map((z, i) => ({
@@ -87,9 +96,9 @@ export function PlacementMap({ side, serves, label, onOpen }: PlacementMapProps)
   const wideCell: Cell = {
     key: 'wide',
     x: outerLeft ? bx - WIDE_STRIP - 4 : bx + BOX_W + 4,
-    y: by + 18,
+    y: by + CELL_TOP,
     w: WIDE_STRIP,
-    h: BOX_H - 18,
+    h: BOX_H - CELL_TOP,
     serves: serves.filter((s) => s.outcome === 'wide'),
     label: 'Wide',
   }
@@ -104,31 +113,35 @@ export function PlacementMap({ side, serves, label, onOpen }: PlacementMapProps)
   }
   const placed = [...cells, ...netCells, netUnaimed, longCell, wideCell].flatMap(layoutCell)
   const targets: PlotTarget[] = placed.map((m) => ({ id: m.s.id, x: m.x, y: m.y, callout: m.s.callout }))
-  const count = (c: Cell, x: number, y: number, anchor: 'start' | 'end' = 'end') =>
+  const count = (c: Cell, x: number, y: number, anchor: 'start' | 'middle' | 'end' = 'end') =>
     c.serves.length ? (
-      <text key={`n-${c.key}`} x={x} y={y} textAnchor={anchor} className="fill-ink text-headline tabular-nums">
+      <text key={`n-${c.key}`} x={x} y={y} textAnchor={anchor} className="fill-ink text-headline tabular-nums" style={COUNT_STYLE}>
         {c.serves.length}
       </text>
     ) : null
 
+  // Everything drawn sits inside the SVG: the net strip, its counts row and the "zone not logged" row.
+  const baseHeight = netY + STRIP + 22
   const extraRow = inNoZone.length ? 22 : 0
-  const height = HEIGHT + extraRow
+  const height = baseHeight + extraRow
 
   return (
     <div ref={ref} className="w-full">
       <PlotSurface width={width} height={height} label={label} targets={targets} onOpen={onOpen}>
         {/* Fault strips: labelled regions, no fill. */}
-        <text x={bx + BOX_W / 2} y={by - STRIP - 6} textAnchor="middle" className="fill-ink-3 text-caption">
+        <text x={bx + BOX_W / 2} y={by - STRIP - 6} textAnchor="middle" className="fill-ink-3 text-caption" style={LABEL_STYLE}>
           Long
         </text>
-        <text x={bx + BOX_W / 2} y={netY + STRIP + 14} textAnchor="middle" className="fill-ink-3 text-caption">
+        {/* "Net" beside its strip, on the side away from the wide strip, clear of the net counts. */}
+        <text x={outerLeft ? bx + BOX_W + 6 : bx - 6} y={netY + STRIP / 2 + 6} textAnchor={outerLeft ? 'start' : 'end'} className="fill-ink-3 text-caption" style={LABEL_STYLE}>
           Net
         </text>
         <text
           x={outerLeft ? bx - WIDE_STRIP / 2 - 4 : bx + BOX_W + WIDE_STRIP / 2 + 4}
-          y={by + 12}
+          y={by + NAME_Y}
           textAnchor="middle"
           className="fill-ink-3 text-caption"
+          style={LABEL_STYLE}
         >
           Wide
         </text>
@@ -138,22 +151,23 @@ export function PlacementMap({ side, serves, label, onOpen }: PlacementMapProps)
         <line x1={bx + 2 * colW} x2={bx + 2 * colW} y1={by} y2={netY} stroke="var(--line)" strokeWidth={1} />
         <line x1={bx - 40} x2={bx + BOX_W + 40} y1={netY} y2={netY} stroke="var(--ink-2)" strokeWidth={3} strokeLinecap="round" />
         {zones.map((z, i) => (
-          <text key={z} x={bx + i * colW + 5} y={by + 14} className="fill-ink-2 text-caption">
+          <text key={z} x={bx + i * colW + 5} y={by + NAME_Y} className="fill-ink-2 text-caption" style={LABEL_STYLE}>
             {ZONE_LABEL[z]}
           </text>
         ))}
         {placed.map((m) => (
           <ServeMark key={m.s.id} kind={m.s.outcome} x={m.x} y={m.y} size={8} />
         ))}
-        {cells.map((c) => count(c, c.x + c.w - 4, by + 14))}
-        {netCells.map((c) => count(c, c.x + c.w - 4, netY + STRIP + 14))}
-        {count(netUnaimed, bx + BOX_W - 4, netY + STRIP + 14)}
+        {cells.map((c) => count(c, c.x + c.w - 4, by + COUNT_Y))}
+        {netCells.map((c) => count(c, c.x + c.w - 4, netY + STRIP + 16))}
+        {count(netUnaimed, bx + BOX_W - 4, netY + STRIP + 16)}
         {count(longCell, bx + BOX_W - 4, by - STRIP - 6)}
-        {count(wideCell, wideCell.x + wideCell.w / 2 + 6, by + BOX_H + 14, 'end')}
+        {/* The wide-fault count sits under its own "Wide" label, never under the net line. */}
+        {count(wideCell, wideCell.x + wideCell.w / 2, by + COUNT_Y, 'middle')}
         {inNoZone.length ? (
           <g>
-            <ServeMark kind="in" x={bx + 4} y={height - 10} size={8} />
-            <text x={bx + 14} y={height - 6} className="fill-ink-2 text-footnote tabular-nums">
+            <ServeMark kind="in" x={bx + 4} y={baseHeight + 8} size={8} />
+            <text x={bx + 14} y={baseHeight + 12} className="fill-ink-2 text-footnote tabular-nums" style={LABEL_STYLE}>
               In, zone not logged: {inNoZone.length}
             </text>
           </g>

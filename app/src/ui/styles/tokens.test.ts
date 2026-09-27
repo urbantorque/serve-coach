@@ -72,6 +72,21 @@ describe('colour tokens (DESIGN §2.2, §2.3)', () => {
     })
   }
 
+  it('tab bar labels (--ink-3) stay >= 4.5:1 on the glass over black or white content (no blur, worst case)', () => {
+    const mix = (a: string, b: string, t: number) => {
+      const ch = (h: string, i: number) => parseInt(h.slice(i, i + 2), 16)
+      return `#${[1, 3, 5].map((i) => Math.round(ch(a, i) * t + ch(b, i) * (1 - t)).toString(16).padStart(2, '0')).join('')}`
+    }
+    for (const [setName, set] of [['Day', sets.Day], ['Night', sets.Night]] as const) {
+      const share = Number(/var\(--surface\)\s+(\d+)%/.exec(set['--glass'])?.[1]) / 100
+      expect(share, setName).toBeGreaterThan(0)
+      for (const under of ['#ffffff', '#000000']) {
+        const glass = mix(hex(set, '--surface'), under, share)
+        expect(contrast(hex(set, '--ink-3'), glass), `${setName} over ${under}`).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
   it('no pure black or white in the standard themes (taste skill, DESIGN §0)', () => {
     for (const set of [sets.Day, sets.Night]) {
       for (const v of Object.values(set)) expect(v.toLowerCase()).not.toMatch(/^#(000000|ffffff)$/)

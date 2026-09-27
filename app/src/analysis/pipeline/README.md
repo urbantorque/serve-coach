@@ -43,13 +43,25 @@ The crop is the window's search region cut down to what the detector ever search
 the toss band and the post-contact corridor, plus 0.02 frame heights (`windows.ts ballSearchCrop`).
 Other views keep the player's box widened 0.6 statures, up to the frame top and 1.5 statures into the
 court. Candidates come back in full-frame coordinates, so the tracker and toss analysis see a
-full-frame run. Around the provisional contact time (the highest wrist in the last arm-above-head run;
-the hit sound when hit-sound timing is on):
+full-frame run. Around the provisional contact time (the highest wrist in the last 0.25 s of the last
+arm-above-head run; the hit sound when hit-sound timing is on):
 
 - before contact: toss band only, with the toss-phase plain-colour gate;
-- near contact (± its uncertainty): toss band plus the post-contact corridor, no gate;
+- near contact (± the search doubt, `ballSearchDoubtS`: 0.45 s for a pose-timed contact, 0.25 s for
+  a sound-timed one): toss band plus the post-contact corridor, no gate;
 - after contact (side view): the corridor forward of the contact point, where a serve leaves within
   about 15° of horizontal.
+
+The toss band is the setup band reaching 0.45 statures further towards the court, and always
+covering the provisional contact's wrist column (`tossSearchBand`); with no setup band the whole
+window crop, never the corridor alone. These fixes come from the
+2026-09-28 production-build accuracy run (`validation/results/e2e-final/SUMMARY.md`): on dist12-s1
+and default75-s1 the toss drifted past the band's forward edge and the ball was lost 0.27 s before
+contact (the engine then placed contact where the ball vanished); on the multi-serve clips a contact
+estimate 0.33-0.54 s early (the tossing arm, still up, won the old 0.6 s search) cut the toss track
+before its fall, and 3 of 27 serves went uncounted. The engine also receives every ball candidate
+of every window (`engineObservations`), as the offline validation input does, so it can follow the
+toss back into the hand.
 
 Backpressure: `pushFrame` waits once the worker's share of 12 queued crops is reached, so decode runs
 ahead of the workers without piling up frames.
@@ -142,14 +154,24 @@ The 90 s target for the 16-serve clip was not reached. What bounds it on this ma
   integration test (fake frame source, pose, ball client and engine; fake-indexeddb). They cover
   progress, cancellation, no serves, too long, slow-motion correction, clips with sound and
   persistence.
-- `node src/analysis/pipeline/e2e/run-e2e.mjs [--port 5202]` needs `npx vite --port 5202
-  --strictPort`. It runs the real pipeline in headless Edge on baseline-s1 and the 8-serve session
+- `node src/analysis/pipeline/e2e/run-e2e.mjs [--port 5202] [--server prod|dev|external]` builds and
+  serves the production bundle itself (below). It runs the real pipeline in headless Edge on baseline-s1 and the 8-serve session
   clip, plus a cancellation run. It writes `validation/results/ui/engine-pipeline/e2e-report.json` and
   screenshots. While `engine.ts` is the engine-core stub, the runner uses the page's clearly labelled
   test-double engine (`?engine=double`), so the pipeline's own mechanics are exercised. Pass
   `--engine real` to force `engine.ts`.
 - `e2e/profile.mjs` times Pass B with and without the ball worker (`?noBall=1`).
-- `e2e/perf-bench.mjs --clips a,b --variants "|poseLanes=1" [--repeat n]` times the production
-  pipeline per clip and variant (query knobs in `pipeline-e2e.ts`) and writes the engine's input poses
-  and output serves; `e2e/perf-accuracy.mts --dir DIR` scores those runs against the synthetic truth
-  (serve count, event timing, metric errors, pose error).
+- `e2e/perf-bench.mjs --clips a,b --variants "|poseLanes=1" [--repeat n] [--server prod|dev|external]`
+  times the production pipeline per clip and variant (query knobs in `pipeline-e2e.ts`) and writes the
+  engine's full input (poses, ball observations, tracks, toss entries, onsets, capture context), each
+  ball window's search configuration and candidates, Pass A's poses and the output serves;
+  `e2e/perf-accuracy.mts --dir DIR` scores those runs against the synthetic truth (serve count,
+  event timing, metric errors, pose error).
+- **Production build by default.** `--server prod` (the default for run-e2e.mjs, perf-bench.mjs and
+  `tools/validate/e2e-accuracy.mjs`) runs `vite build` with `e2e/vite.prod.config.mjs` (the app's own
+  config plus the e2e page, into `node_modules/.serve-e2e/dist`) and serves it with `vite preview`,
+  which also serves the synthetic corpus under `/__synthetic/` (`e2e/server.mjs`). `--server dev`
+  starts the dev server; `--server external` uses one already on the port.
+- `tools/validate/e2e-accuracy.mjs` is the scored end-to-end set (five single-serve side clips and
+  the three multi-serve clips); `tools/validate/e2e-replay.ts --dump RUN.json` replays the engine on
+  a run's own input in Node and diffs it against the offline validation input.

@@ -25,7 +25,7 @@ export function WilsonBar({ rate, low, high, label, className }: WilsonBarProps)
       {[0, 0.5, 1].map((t) => (
         <line key={t} x1={x(t)} x2={x(t)} y1={4} y2={8} stroke="var(--line-strong)" strokeWidth={1} />
       ))}
-      <rect x={x(low)} y={3} width={Math.max(3, x(high) - x(low))} height={6} rx={3} fill="var(--good)" fillOpacity={0.25} />
+      <rect x={x(low) + 0.5} y={3.5} width={Math.max(3, x(high) - x(low)) - 1} height={5} rx={2.5} fill="var(--good)" fillOpacity={0.25} stroke="var(--good)" strokeWidth={1} className="court:[fill-opacity:0.4]" />
       <rect x={x(rate) - 1} y={0} width={2} height={12} fill="var(--ink)" />
     </svg>
   )

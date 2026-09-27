@@ -20,7 +20,7 @@ import { fatigueFlag } from '../stats/flags.ts'
 import { applyProvisionalBand, f3Trigger, f12Trigger, f4Trigger, provisionalBandFor, type Sex } from '../stats/bands.ts'
 import { hashString } from '../stats/descriptive.ts'
 import { finalizeMetric, unavailable, wrongViewReason, type Downgrade, type MetricDraft } from './status.ts'
-import { METRIC_VIEWS, PLAUSIBILITY, type ConditionClass } from './catalogue.ts'
+import { METRIC_VIEWS, PLAUSIBILITY, SPATIAL_SPREAD_IDS, type ConditionClass } from './catalogue.ts'
 import { METRIC_IDS } from '../types.ts'
 import type { PerServeResult } from './perServe.ts'
 import { repeatability, type RepeatabilityResult } from './repeatability.ts'
@@ -48,7 +48,14 @@ export interface SessionContext {
   intendedType?: 'flat' | 'slice' | 'kick'
   targetTags?: Record<number, 'T' | 'body' | 'wide'>
   track: PoseTrack
+  /** Share of the block's serves with a hard plausibility reject (§3.25 plausibility): above 0.2 its statistics are unavailable. */
+  blockRejectShare?: number
+  /** The phone moved during the block (§3.25 stability): spreads unavailable (CAMERA_MOVED). */
+  cameraMoved?: boolean
 }
+
+/** §3.25 plausibility: more than this share of the block's serves with a hard reject blocks its statistics. */
+export const BLOCK_REJECT_SHARE = 0.2
 
 const INCLUDED: MetricStatus[] = ['measured', 'estimated']
 
@@ -67,9 +74,9 @@ interface Collected {
 
 /**
  * Collects included values of a per-serve metric (§1.5); experimental ones separately. For a spread
- * (forSpread), a value that is experimental only because the phone pitch is unknown counts with its
- * level status: absolute heights shift with an unknown tilt, but their spread across serves does not
- * to first order (METRICS §1.1 item 3).
+ * (forSpread), each value counts with its status for relative use (MetricValue.statusIfLevel): an
+ * unknown phone pitch shifts every serve alike (METRICS §1.1 item 3), and a value that feeds a spread
+ * is judged by the spread's validation level, not its own.
  */
 function collect(serves: readonly SessionServe[], id: MetricId, scale = 1, contactMetric = false, forSpread = false): Collected {
   const out: Collected = { values: [], experimental: [], nTotal: 0, nCensored: 0, censoredValues: [] }
@@ -80,7 +87,9 @@ function collect(serves: readonly SessionServe[], id: MetricId, scale = 1, conta
     const m = s.analysis.metrics[id]
     if (!m) continue
     if (m.censored === 'right') {
-      out.nCensored++
+      // A toss above the frame counts as larger than every measured one (§3.6), from the same
+      // population: included serves only (a serve excluded from statistics adds nothing).
+      if (s.analysis.included) out.nCensored++
       continue
     }
     if (typeof m.value !== 'number' || m.plausibility === 'hard-reject') continue
@@ -102,7 +111,8 @@ function collect(serves: readonly SessionServe[], id: MetricId, scale = 1, conta
     if (INCLUDED.includes(status) && m.confidence >= 0.5 && s.analysis.included) out.values.push(v)
     else if (status === 'experimental' && s.analysis.included) {
       out.experimental.push(v)
-      out.experimentalReason ??= m.reasonCode
+      // An unknown pitch never lowers a spread (§1.1 item 3): the value is experimental for another reason.
+      out.experimentalReason ??= forSpread && m.reasonCode === 'PITCH_UNKNOWN' ? 'VALIDATION_PENDING' : m.reasonCode
     }
   }
   return out
@@ -122,7 +132,23 @@ export interface StratumAggregate {
   triggers: Record<string, unknown>
 }
 
-function centreMetric(id: MetricId, serves: readonly SessionServe[], ctx: SessionContext, kind: 'mean' | 'median', step: number, extra: (c: number) => Record<string, number | string> = () => ({}), contactMetric = false): MetricValue {
+/**
+ * Downgrades every block statistic (centre or spread) shares (§3.25): a Limited (poor) capture caps
+ * it at experimental; hard plausibility rejects on more than 20% of the block's serves make it
+ * unavailable (IMPLAUSIBLE_VALUE).
+ */
+function blockDowngrades(ctx: SessionContext, id: MetricId, pooled: { useExperimental: boolean; reason?: ReasonCode }): Downgrade[] {
+  const downs: Downgrade[] = []
+  if ((ctx.blockRejectShare ?? 0) > BLOCK_REJECT_SHARE) downs.push({ cap: 'unavailable', reason: 'IMPLAUSIBLE_VALUE' })
+  // A phone that moved mid-block mixes two frames of reference: spatial spreads are unavailable (§3.25 stability).
+  if (ctx.cameraMoved && (SPATIAL_SPREAD_IDS as readonly string[]).includes(id)) downs.push({ cap: 'unavailable', reason: 'CAMERA_MOVED' })
+  // Built from experimental per-serve values only: experimental, with their reason.
+  if (pooled.useExperimental) downs.push({ cap: 'experimental', reason: pooled.reason ?? 'VALIDATION_PENDING' })
+  if (ctx.quality.overall === 'poor') downs.push({ cap: 'experimental', reason: 'EXCLUDED_BY_QUALITY' })
+  return downs
+}
+
+function centreMetric(id: MetricId, serves: readonly SessionServe[], ctx: SessionContext, kind: 'mean' | 'median', step: number, extra: (c: number) => Record<string, number | string> = () => ({}), contactMetric = false, infoReason?: ReasonCode): MetricValue {
   const col = collect(serves, id, 1, contactMetric)
   const useExperimental = col.values.length === 0 && col.experimental.length > 0
   const pool = useExperimental ? col.experimental : col.values
@@ -142,9 +168,7 @@ function centreMetric(id: MetricId, serves: readonly SessionServe[], ctx: Sessio
     if (!Number.isFinite(cm)) return unavailable(id, 'APEX_OUT_OF_FRAME', 'more than half of the tosses left the picture', { n: summary.n, nEligible: col.nTotal })
     value = cm
   }
-  const downs: Downgrade[] = []
-  if (useExperimental) downs.push({ cap: 'experimental', reason: col.experimentalReason ?? 'VALIDATION_PENDING' })
-  if (ctx.quality.overall === 'poor') downs.push({ cap: 'experimental', reason: 'EXCLUDED_BY_QUALITY' })
+  const downs: Downgrade[] = blockDowngrades(ctx, id, { useExperimental, reason: col.experimentalReason })
   const draft: MetricDraft = {
     value: roundTo(value, step),
     confidence: kept.reduce((a, v) => a + (v.confidence ?? 1), 0) / Math.max(1, kept.length),
@@ -156,6 +180,8 @@ function centreMetric(id: MetricId, serves: readonly SessionServe[], ctx: Sessio
     provisional: summary.provisional || (id === 'toss-apex-height' && col.nCensored / Math.max(1, summary.n + col.nCensored) > 0.1),
     sigmaRandom: summary.se ?? undefined,
     downgrades: downs,
+    // An info reason never replaces a downgrade's reason (finalizeMetric keeps the downgrade's).
+    ...(infoReason ? { infoReason } : {}),
   }
   return finalizeMetric(id, draft, ctx.condition)
 }
@@ -180,8 +206,8 @@ function spreadMetric(
       detected: col.values.length,
     }
   }
-  const downs: Downgrade[] = []
-  if (useExperimental) downs.push({ cap: 'experimental', reason: col.experimentalReason ?? 'VALIDATION_PENDING' })
+  // A Limited capture caps spreads like centres (a "Limited" session never headlines a spread).
+  const downs: Downgrade[] = blockDowngrades(ctx, id, { useExperimental, reason: col.experimentalReason })
   const sd = summary.value!
   let plaus: MetricValue['plausibility'] = 'ok'
   if (options.hardAbove !== undefined && sd > options.hardAbove) {
@@ -289,10 +315,12 @@ export function aggregateStratum(key: StratumKey, serves: SessionServe[], ctx: S
       triggers.f3Forward = f3Trigger({ sdObserved: fs.summary.sdObserved!, n: fs.summary.n, meanSigmaRandom: fs.summary.meanSigmaRandom, correctedSd: fs.summary.value!, detectedShare: nTotal ? fs.detected / nTotal : 0, axis: 'forward' })
     }
     M['contact-forward'] = centreMetric('contact-forward', serves, ctx, 'mean', 1, () => ({}), true)
-    M['leg-drive'] = centreMetric('leg-drive', serves, ctx, 'median', 1, (c): Record<string, number> => (ctx.heightEntered ? { cm: Math.round((c / 100) * H * 100) } : {}), true)
+    // BASELINE_BUILDING is an info reason: a downgrade's reason (CONDITION_NOT_VALIDATED under lights,
+    // EXCLUDED_BY_QUALITY on a Limited capture, the experimental pool's) is kept in its place.
+    M['leg-drive'] = centreMetric('leg-drive', serves, ctx, 'median', 1, (c): Record<string, number> => (ctx.heightEntered ? { cm: Math.round((c / 100) * H * 100) } : {}), true, 'BASELINE_BUILDING')
     if (M['leg-drive'].status !== 'unavailable' && (M['leg-drive'].n ?? 0) < 8) {
       M['leg-drive'] = unavailable('leg-drive', 'TOO_FEW_SERVES', `${M['leg-drive'].n} serves measured; the session value needs 8`, { n: M['leg-drive'].n, nEligible: M['leg-drive'].nEligible, unlockHint: 'Record at least 8 serves from one side.' })
-    } else if (M['leg-drive'].status !== 'unavailable') M['leg-drive'] = { ...M['leg-drive'], reasonCode: 'BASELINE_BUILDING', unlockHint: 'Building your range: 1 of 2 sessions from this set-up.', bandBasis: 'player-relative' }
+    } else if (M['leg-drive'].status !== 'unavailable') M['leg-drive'] = { ...M['leg-drive'], bandBasis: 'player-relative' }
     M['drive-time'] = centreMetric('drive-time', serves, ctx, 'median', 10, () => ({}), true)
     const ld = centreMetric('loading-depth', serves, ctx, 'median', 1, (c): Record<string, number> => (ctx.heightEntered ? { cm: Math.round((c / 100) * H * 100) } : {}), true)
     if (ld.status !== 'unavailable' && typeof ld.value === 'number') {
@@ -325,10 +353,15 @@ export function aggregateStratum(key: StratumKey, serves: SessionServe[], ctx: S
   }
 
   // Repeatability (experimental; n ≥ 5 with release, trophy and contact).
+  // Only serves whose release and contact were found (confidence ≥ 0.5, §1.3, §3.17): a contact the
+  // D2 check withheld ('unresolved', 0.45) would time-normalise the serve on the wrong moment. The
+  // representative serve comes from undisputed serves with contact confidence ≥ 0.7 when there are
+  // any (COACHING §8.1).
+  const found = (e: { confidence: number } | undefined) => (e?.confidence ?? 0) >= 0.5
   const trajs = counted
-    .filter((s) => s.analysis.included && !s.core.noContact)
-    .map((s) => ({ serveIndex: s.core.index, traj: serveTrajectory(s.core, ctx.track) }))
-    .filter((t): t is { serveIndex: number; traj: NonNullable<ReturnType<typeof serveTrajectory>> } => t.traj !== null)
+    .filter((s) => s.analysis.included && !s.core.noContact && found(s.core.events.contact) && found(s.core.events.tossRelease) && s.core.contactDispute?.resolution !== 'unresolved')
+    .map((s) => ({ serveIndex: s.core.index, traj: serveTrajectory(s.core, ctx.track), preferred: !s.core.contactDispute && (s.core.events.contact?.confidence ?? 0) >= 0.7 }))
+    .filter((t): t is { serveIndex: number; traj: NonNullable<ReturnType<typeof serveTrajectory>>; preferred: boolean } => t.traj !== null)
   const rep = ctx.view === 'side' || ctx.view === 'rear' ? repeatability(trajs, `${ctx.sessionId}:repeatability`) : null
   M.repeatability = rep
     ? finalizeMetric('repeatability', { value: Math.round(rep.index), confidence: 0.5, basis: `similarity of ${rep.n} serves' body and ball paths to your median serve (experimental)`, uncertainty: rep.ci95 ? { kind: 'range', low: Math.round(rep.ci95[0]), high: Math.round(rep.ci95[1]) } : undefined, n: rep.n, nEligible: nTotal }, ctx.condition)
@@ -338,7 +371,9 @@ export function aggregateStratum(key: StratumKey, serves: SessionServe[], ctx: S
   const ratios = counted
     .filter((s) => s.analysis.included && s.analysis.metrics['contact-height-ratio'] && INCLUDED.includes(s.analysis.metrics['contact-height-ratio']!.status))
     .map((s) => s.result.raw.contactRatio!)
-  const apexCm = counted.filter((s) => s.result.raw.apexM !== undefined).map((s) => s.result.raw.apexM! * 100)
+  // The corroborating toss heights come from the same selection as toss-height-spread: included serves,
+  // measured or estimated, confidence ≥ 0.5, no hard reject, not censored (unrounded, in serve order).
+  const apexCm = collect(counted, 'toss-apex-height', H * 100, false, true).values.map((v) => v.value)
   const ff = fatigueFlag({ contactRatios: ratios, apexCm, seed: `${ctx.sessionId}:fatigue` })
   M['fatigue-flag'] = ff.computed
     ? finalizeMetric('fatigue-flag', { value: ff.flag ? 'yes' : 'no', flag: ff.flag, confidence: ff.confidence, basis: ff.flag ? ff.copy! : 'contact height held steady through the block', secondary: { dropRatio: Math.round((ff.drop ?? 0) * 1000) / 1000 }, n: ratios.length }, ctx.condition)

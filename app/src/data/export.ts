@@ -6,7 +6,7 @@
 import { METRIC_IDS, type MetricId, type MetricValue } from '../analysis/types.ts'
 import { getDb } from './db.ts'
 import type { CaptureContext } from '../analysis/types.ts'
-import type { PracticeLogRecord, ProfileRecord, SessionRecord, TrackRecord } from './records.ts'
+import type { CoachingRecord, MatchLogRecord, PracticeLogRecord, ProfileRecord, SessionRecord, TrackRecord } from './records.ts'
 
 export const EXPORT_FORMAT = 'serve-coach-export'
 export const EXPORT_VERSION = 1
@@ -15,7 +15,11 @@ export const APP_VERSION = '0.1.0'
 export interface ExportOptions {
   /** Demo data is excluded unless chosen (ARCHITECTURE §11). */
   includeDemo?: boolean
-  /** The comfort (pain) flag and comfortRegions are exported only when the player ticks this. */
+  /**
+   * Body-check and comfort detail is exported only when the player ticks this: the profile's comfort
+   * (pain) flag and comfortRegions, practice-log body answers, and the coaching decisions' safety and
+   * comfort wording (pain-referral decisions are left out whole without it).
+   */
   includeComfort?: boolean
   /** Pose and ball tracks are large and off by default. */
   includePose?: boolean
@@ -72,9 +76,44 @@ function exportProfile(p: ProfileRecord | undefined, includeComfort: boolean): P
   return out
 }
 
-/** Practice-log notes never leave the phone (COACHING §12.2). */
-function exportPractice(l: PracticeLogRecord): Omit<PracticeLogRecord, 'note'> {
-  const { note: _note, ...rest } = l
+/**
+ * Practice-log notes never leave the phone (COACHING §12.2). The body answer and the discomfort flag
+ * are body-check answers: exported only with "Include comfort notes" (D8; Storage and privacy copy).
+ */
+function exportPractice(l: PracticeLogRecord, includeComfort: boolean): Omit<PracticeLogRecord, 'note'> {
+  const { note: _note, body, discomfort, ...rest } = l
+  return includeComfort ? { ...rest, ...(body ? { body } : {}), ...(discomfort !== undefined ? { discomfort } : {}) } : rest
+}
+
+/** Wording that carries a body-check or comfort answer (older records named the sore areas). */
+const HEALTH_WORDS = /\bsore\b|\bpain\b|\bhurt|\breferral\b|body check|comfort setting|comfort settings/i
+
+/**
+ * A stored coaching decision without body-check or comfort detail, for an export without "Include
+ * comfort notes": safety-step trace lines become a plain "Safety check applied.", alternatives ruled out
+ * by a comfort setting are left out, and sentences about soreness or comfort leave the "why" text. A
+ * pain-referral decision (no focus, cue or drill; its existence is the health answer) is left out whole.
+ */
+export function scrubDecision(d: CoachingRecord): CoachingRecord | null {
+  if (d.gate === 'pain-referral' || d.referral) return null
+  const out: CoachingRecord = {
+    ...d,
+    trace: d.trace.map((t) => (t.step === 'safety' && HEALTH_WORDS.test(t.detail) ? { ...t, detail: 'Safety check applied.' } : t)),
+    alternatives: d.alternatives.filter((a) => !HEALTH_WORDS.test(a.reason)),
+  }
+  if (d.focus) {
+    const why = d.focus.whyChosen
+      .split(/(?<=[.?])\s+/)
+      .filter((s) => !HEALTH_WORDS.test(s))
+      .join(' ')
+    out.focus = { ...d.focus, whyChosen: why }
+  }
+  return out
+}
+
+/** product-gaps addition: match notes stay on the phone like practice notes (they can mention pain). */
+function exportMatch(m: MatchLogRecord): Omit<MatchLogRecord, 'notes'> {
+  const { notes: _notes, ...rest } = m
   return rest
 }
 
@@ -91,21 +130,23 @@ export async function buildExportJSON(opts: ExportOptions = {}) {
   }
   const keep = (r: { isDemo?: 0 | 1 }) => opts.includeDemo || r.isDemo !== 1
   const experiments = (await db.experiments.toArray()).filter(keep)
+  const includeComfort = opts.includeComfort ?? false
+  const decisions = inScope(await db.coaching.toArray())
   return {
     format: EXPORT_FORMAT,
     version: EXPORT_VERSION,
     exportedAt: now.toISOString(),
     app: { version: APP_VERSION, engineVersion: sessions.at(-1)?.analysis?.engine.engineVersion ?? null, catalogueVersion: '1.1.0' },
-    profile: exportProfile(await db.profile.get('me'), opts.includeComfort ?? false),
+    profile: exportProfile(await db.profile.get('me'), includeComfort),
     sessions: sessions.map((s: SessionRecord) => ({ ...s, capture: captureBySession.get(s.id) ?? null })),
     serves: inScope(await db.serves.toArray()),
     tags: inScope(await db.tags.toArray()),
     tallies: inScope(await db.tallies.toArray()),
     sessionStats: inScope(await db.sessionStats.toArray()),
-    coachingDecisions: inScope(await db.coaching.toArray()),
+    coachingDecisions: includeComfort ? decisions : decisions.map(scrubDecision).filter((d): d is CoachingRecord => d !== null),
     experiments,
-    practiceLogs: (await db.practiceLogs.toArray()).filter(keep).map(exportPractice),
-    matchLogs: (await db.matchLogs.toArray()).filter(keep),
+    practiceLogs: (await db.practiceLogs.toArray()).filter(keep).map((l) => exportPractice(l, includeComfort)),
+    matchLogs: (await db.matchLogs.toArray()).filter(keep).map(exportMatch),
     annotations: inScope(await db.annotations.toArray()),
     ...(opts.includePose ? { tracks: inScope(await db.tracks.toArray()).map(plainTrack) } : {}),
     notes:
@@ -203,8 +244,8 @@ export async function buildExportCSV(opts: ExportOptions = {}): Promise<Record<s
     e.result?.verdict, e.result?.moreServesToConfirm,
   ])
 
-  const matchHeader = ['date', 'competition', 'service_games', 'double_faults', 'first_serve_rough', 'cue_used']
-  const matchRows = json.matchLogs.map((m) => [m.date, m.competition, m.serviceGames, m.doubleFaults, m.firstServeRough, m.cueUsed])
+  const matchHeader = ['date', 'competition', 'service_games', 'double_faults', 'first_serve_rough', 'cue_used', 'first_serves_in', 'first_serves_attempted']
+  const matchRows = json.matchLogs.map((m) => [m.date, m.competition, m.serviceGames, m.doubleFaults, m.firstServeRough, m.cueUsed, m.firstServesIn, m.firstServesAttempted])
 
   return {
     'serves.csv': toCsv(servesHeader, servesRows),

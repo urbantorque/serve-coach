@@ -77,8 +77,12 @@ export interface RepeatabilityResult {
   n: number
 }
 
-/** Repeatability over the serves of one stratum (n ≥ 5), with a seeded bootstrap interval. */
-export function repeatability(trajectories: { serveIndex: number; traj: P[][] }[], seed: string | number = 'repeatability'): RepeatabilityResult | null {
+/**
+ * Repeatability over the serves of one stratum (n ≥ 5), with a seeded bootstrap interval. The
+ * representative serve is the one closest to the reference among the `preferred` serves (clean
+ * events, COACHING §8.1) when any is, else among all.
+ */
+export function repeatability(trajectories: { serveIndex: number; traj: P[][]; preferred?: boolean }[], seed: string | number = 'repeatability'): RepeatabilityResult | null {
   const n = trajectories.length
   if (n < 5) return null
   const S = trajectories[0].traj.length
@@ -96,7 +100,7 @@ export function repeatability(trajectories: { serveIndex: number; traj: P[][] }[
     }
   }
   const sigmaN = POSE_NOISE_BH * Math.sqrt(1 + 1 / n)
-  const deviations = trajectories.map(({ serveIndex, traj }) => {
+  const deviations = trajectories.map(({ serveIndex, traj, preferred }) => {
     let ss = 0
     let m = 0
     for (let s = 0; s < S; s++)
@@ -109,14 +113,15 @@ export function repeatability(trajectories: { serveIndex: number; traj: P[][] }[
         m++
       }
     const d = m ? Math.sqrt(ss / m) : Number.NaN
-    return { serveIndex, d, dc: Math.sqrt(Math.max(d * d - sigmaN * sigmaN, 0)) }
+    return { serveIndex, d, dc: Math.sqrt(Math.max(d * d - sigmaN * sigmaN, 0)), preferred: preferred !== false }
   })
   const ok = deviations.filter((d) => Number.isFinite(d.d))
   if (ok.length < 5) return null
   const idx = (ds: number[]) => 100 * Math.exp(-median(ds) / REPEATABILITY_TAU_BH)
   const values = ok.map((d) => d.dc)
   const boot = bootstrapPercentile(values, idx, 0.95, { seed, resamples: 1000 })
-  const rep = ok.reduce((a, b) => (b.d < a.d ? b : a))
+  const candidates = ok.some((d) => d.preferred) ? ok.filter((d) => d.preferred) : ok
+  const rep = candidates.reduce((a, b) => (b.d < a.d ? b : a))
   return {
     index: idx(values),
     ci95: Number.isFinite(boot.low) ? [boot.low, boot.high] : null,

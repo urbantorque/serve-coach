@@ -42,7 +42,10 @@ export interface ServeBall {
   firstOff?: { t: number; kind: 'outgoing' | 'missing' }
   /** Detections per free-flight frame (ball-visibility check). */
   visibility?: number
-  /** A ball continuing on the parabola to below 0.8 BH with no outgoing ball (swing and miss). */
+  /**
+   * With no outgoing ball: the rectified y of the last on-parabola detection after the apex (the
+   * lowest point the ball was seen on its path). Below 0.8 BH it is a swing and miss (§2.3.4).
+   */
   continuesBelowY?: number
   detections: number
 }
@@ -156,7 +159,13 @@ export function analyseServeBall(input: ServeBallInput): ServeBall {
     // Fall back to a ball-layer toss result in the window (not rectified; no track).
     const res = input.tossResults.find((r) => r.status === 'ok' && r.apex && inWindow(r.apex.tReal))
     if (!res?.fit) return empty
-    return { ...empty, toss: res, parabola: { a: res.fit.a, b: res.fit.b, c: res.fit.c, xa: 0, xb: 0, xc: res.apex!.x }, apexCase: res.apex!.aboveFrame ? 'censored' : res.apex!.bracketed ? 'bracketed' : 'too-few', detections: res.fit.detections }
+    // Its points are in raw image coordinates: rectify them like every other ball point (the apex,
+    // the release, and the parabola shifted with the apex, a close approximation for small tilts).
+    const apex = rectifyPoint(cam, res.apex!.x, res.apex!.y)
+    const dy = apex.y - res.apex!.y
+    const release = res.release ? { ...res.release, ...rectifyPoint(cam, res.release.x, res.release.y) } : res.release
+    const toss: TossAnalysis = { ...res, apex: { ...res.apex!, x: apex.x, y: apex.y }, release }
+    return { ...empty, toss, parabola: { a: res.fit.a, b: res.fit.b, c: res.fit.c + dy, xa: 0, xb: 0, xc: apex.x }, apexCase: res.apex!.aboveFrame ? 'censored' : res.apex!.bracketed ? 'bracketed' : 'too-few', detections: res.fit.detections }
   }
   const leadIn = followLeadIn(raw, input.observations).map((o) => rectObs(cam, o))
   const track: BallTrack = { ...raw, observations: raw.observations.map((o) => rectObs(cam, o)) }
@@ -234,17 +243,17 @@ export function analyseServeBall(input: ServeBallInput): ServeBall {
     const firstOut = outgoing.observations.find((o) => o.source !== 'predicted' && o.tReal > lastOn.tReal)
     if (firstOut && firstOut.tReal - lastOn.tReal <= 0.2) out.firstOff = { t: firstOut.tReal, kind: 'outgoing' }
   }
-  if (lastOn && !out.firstOff && period > 0) {
-    // No outgoing ball: the ball vanished from its predicted parabola. Weak evidence (the detector
-    // can miss a ball); used only with a lower quality, and gated by the other contact methods.
-    const tNext = lastOn.tReal + period
-    const later = det.filter((o) => o.tReal > lastOn.tReal + 0.5 * period)
-    const continuing = later.filter((o) => resid(o) <= tol)
-    if (continuing.length === 0) {
+  if (lastOn && !out.firstOff) {
+    // No outgoing ball. How far the ball stayed on its path: the last on-parabola detection after the
+    // apex (every later detection on the path is itself an inlier, so this is the lowest point seen).
+    // Below 0.8 BH with no hit sound, the serve is a swing and miss (§2.3.4, analyse.ts).
+    out.continuesBelowY = lastOn.y
+    if (period > 0) {
+      // The ball vanished from its predicted parabola. Weak evidence (the detector can miss a ball);
+      // used only with a lower quality, and gated by the other contact methods.
+      const tNext = lastOn.tReal + period
       const yPred = parabola.a * tNext * tNext + parabola.b * tNext + parabola.c
       if (yPred < 0.97) out.firstOff = { t: tNext, kind: 'missing' }
-    } else {
-      out.continuesBelowY = continuing[continuing.length - 1].y
     }
   }
   return out

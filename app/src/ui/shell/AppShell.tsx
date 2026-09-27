@@ -7,6 +7,9 @@ import { cx } from '../components/cx.ts'
 import { ShellContext, type RouteHandle } from './shellContext.ts'
 // First-run redirect to onboarding (ui-profile addition; acts on Today only and can always be skipped).
 import { FirstRunGate } from '../screens/onboarding/FirstRunGate.tsx'
+// Platform services (platform addition): service worker and update prompt, interrupted-recording
+// recovery, storage persistence at the first session, local beta usage counts.
+import { PlatformLayer } from '../../platform/ui/PlatformLayer.tsx'
 
 const TAB_ROOTS = new Set(['/', '/record', '/sessions', '/progress'])
 
@@ -80,6 +83,7 @@ export function AppShell() {
       <ToastViewport aboveTabBar={tabBar} />
       <ScrollRestoration />
       <FirstRunGate />
+      <PlatformLayer />
     </ShellContext.Provider>
   )
 }

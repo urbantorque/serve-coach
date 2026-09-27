@@ -43,7 +43,7 @@ import { BodyCheckSheet, ReferralContent, type BodyCheckStart } from './componen
 import { EvidencePair } from './components/EvidencePair.tsx'
 import { PreMatchCard, WarmUpSteps } from './components/WarmUp.tsx'
 import { WhySheet } from './components/WhySheet.tsx'
-import { FOCUS_COPY } from './copy.ts'
+import { evidenceCountLine, FOCUS_COPY, type SessionServeCounts } from './copy.ts'
 import { todayYmd, useFocusStore } from './focusStore.ts'
 import { useFocusModel, type FocusModel } from './useFocus.ts'
 
@@ -213,7 +213,14 @@ function CaptureFix({ d }: { d: CaptureFixDecision }) {
   )
 }
 
+/** The session's serve counts as the report reads them (its headline and capture line). */
+function serveCountsOf(model: FocusModel): SessionServeCounts | null {
+  const c = model.record?.analysis?.counts
+  return c ? { measured: c.included, detected: c.analysed } : null
+}
+
 function KeepGoing({ d, model }: { d: KeepGoingDecision; model: FocusModel }) {
+  const serveCounts = serveCountsOf(model)
   const [why, setWhy] = useState(false)
   const inRange = d.checks.filter((c) => c.status === 'in-range').length
   return (
@@ -227,7 +234,7 @@ function KeepGoing({ d, model }: { d: KeepGoingDecision; model: FocusModel }) {
         <h2 className="text-title-1 text-ink">{d.title}</h2>
         <p className="text-callout text-ink">{FOCUS_COPY.keepGoingBody}</p>
         {d.comfortLine ? <p className="text-callout text-ink-2">{d.comfortLine}</p> : null}
-        {inRange ? <p className="text-footnote text-ink-3">{`${inRange} checks were in range this session.`}</p> : null}
+        {inRange ? <p className="text-footnote text-ink-3">{`${inRange} ${inRange === 1 ? 'check was' : 'checks were'} in range this session.`}</p> : null}
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <Button variant="secondary" compact fullWidth={false} to={paths.practiceLog()}>
             {FOCUS_COPY.logPractice}
@@ -239,7 +246,7 @@ function KeepGoing({ d, model }: { d: KeepGoingDecision; model: FocusModel }) {
       </Card>
       {d.experiment ? <ExperimentNote copy={d.experiment.copy} /> : null}
       {model.isDemo ? <p className="text-footnote text-ink-3">{FOCUS_COPY.sampleNote}</p> : null}
-      <WhySheet open={why} onClose={() => setWhy(false)} decision={d} />
+      <WhySheet open={why} onClose={() => setWhy(false)} decision={d} counts={serveCounts} />
     </>
   )
 }
@@ -326,6 +333,7 @@ function verdictClause(copy: string, verdict: string): string {
 
 function FocusView({ d, model, banner, onHurts }: { d: FocusDecision; model: FocusModel; banner?: ReactNode; onHurts: () => void }) {
   const navigate = useNavigate()
+  const serveCounts = serveCountsOf(model)
   const [why, setWhy] = useState(false)
   const [howWeKnow, setHowWeKnow] = useState(false)
   const [starting, setStarting] = useState(false)
@@ -432,7 +440,7 @@ function FocusView({ d, model, banner, onHurts }: { d: FocusDecision; model: Foc
                   <MetricValue metricId={s.metricId} value={s.value} detail />
                   {s.value.n !== undefined && s.value.status !== 'player-entered' ? (
                     <span className="text-footnote tabular-nums text-ink-3">
-                      {s.value.nEligible !== undefined ? `${s.value.n} of ${s.value.nEligible} serves` : `${s.value.n} serves`}
+                      {evidenceCountLine(s.value, serveCounts)}
                     </span>
                   ) : null}
                 </span>
@@ -505,7 +513,7 @@ function FocusView({ d, model, banner, onHurts }: { d: FocusDecision; model: Foc
       </div>
       <SafetyFooter lines={d.safetyNotes} />
 
-      <WhySheet open={why} onClose={() => setWhy(false)} decision={d} />
+      <WhySheet open={why} onClose={() => setWhy(false)} decision={d} counts={serveCounts} />
       <Sheet open={howWeKnow} onClose={() => setHowWeKnow(false)} title={FOCUS_COPY.howWeKnow}>
         <div className="flex flex-col gap-3 pb-4">
           <EvidenceTierChip tier={d.effectiveTier} className="self-start" />

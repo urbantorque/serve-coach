@@ -94,7 +94,7 @@ export function HeightInput({ valueCm, onChange, reasonOpen = false }: HeightInp
         </button>
         <div
           className={cx(
-            'flex h-13 min-w-0 flex-1 items-center gap-2 rounded-control border-token bg-surface px-4',
+            'flex min-h-13 min-w-0 flex-1 items-center gap-2 rounded-control border-token bg-surface px-4',
             'focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
             error ? 'border-critical' : 'border-line-strong',
           )}
@@ -124,7 +124,7 @@ export function HeightInput({ valueCm, onChange, reasonOpen = false }: HeightInp
               }
             }}
             onBlur={(e) => commit(e.target.value)}
-            className="w-full min-w-0 bg-transparent text-title-2 font-wide tabular-nums text-ink outline-none placeholder:text-ink-3"
+            className="h-full w-full min-w-0 self-stretch bg-transparent text-title-2 font-wide tabular-nums text-ink outline-none placeholder:text-ink-3"
           />
           <span className="text-subhead text-ink-2" aria-hidden="true">
             cm

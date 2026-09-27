@@ -131,6 +131,7 @@ export function PhaseTimeline({ store, phases, events, window, timing, focusPhas
               <div
                 key={p.phase}
                 data-phase={p.phase}
+                data-focus={focus || undefined}
                 title={PHASE_LABEL[p.phase]}
                 className={cx(
                   'absolute inset-y-0 rounded-full border-x border-surface',
@@ -145,10 +146,10 @@ export function PhaseTimeline({ store, phases, events, window, timing, focusPhas
           {TICK_EVENTS.map((k) => {
             const ev = events[k]
             if (!ev || ev.confidence < 0.5) return null
-            return <span key={k} aria-hidden="true" className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink" style={{ left: `${pct(ev.frameIndex)}%` }} />
+            return <span key={k} aria-hidden="true" data-tick className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink" style={{ left: `${pct(ev.frameIndex)}%` }} />
           })}
           <span aria-hidden="true" className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${pct(frame)}%` }}>
-            <span className="absolute top-1/2 left-1/2 h-6 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink" />
+            <span data-playhead-line className="absolute top-1/2 left-1/2 h-6 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink" />
             <span className="absolute top-1/2 left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink bg-surface" />
           </span>
         </div>

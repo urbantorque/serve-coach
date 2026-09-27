@@ -9,6 +9,7 @@ import { ChoiceChips, RadioCards, Stepper } from '../../components/record/index.
 import { shortDate } from '../../format/dates.ts'
 import { paths } from '../../shell/paths.ts'
 import { IMPORT_HELP, RIGHTS_REMINDER } from './flow/copy.ts'
+import { IMPORT_MOUNT_HINT } from './import/hints.ts'
 import {
   fpsLabel,
   fpsOverrideFor,
@@ -31,7 +32,7 @@ import {
 import { useRecordFlow } from './flow/flowStore.ts'
 import { startAnalysis } from './flow/jobs.ts'
 import { hasSeen, markSeen } from './flow/seenOnce.ts'
-import { importCapture, playerFacts, saveNewSession, soundNote } from './flow/sessionFactory.ts'
+import { importCapture, lightFromTimestamp, playerFacts, saveNewSession, soundNote, type ImportLight } from './flow/sessionFactory.ts'
 
 /** Dev only: a picker for the synthetic corpus, compiled out of production builds. */
 const DevSyntheticPicker = import.meta.env.DEV ? lazy(() => import('./DevSyntheticPicker.tsx').then((m) => ({ default: m.DevSyntheticPicker }))) : null
@@ -71,6 +72,7 @@ export function ImportScreen() {
   const [target, setTarget] = useState<'T' | 'body' | 'wide' | 'mixed' | null>(null)
   const [type, setType] = useState<'flat' | 'slice' | 'kick' | 'mixed' | null>(null)
   const [slow, setSlow] = useState<SlowMotionAnswer | null>(null)
+  const [lightEdit, setLight] = useState<ImportLight | null>(null)
   const [speed, setSpeed] = useState<SlowMotionSpeed | null>(null)
   // The player's own answers win; until then the profile prefills them.
   const [heightEdit, setHeightCm] = useState<number | null>(null)
@@ -110,12 +112,14 @@ export function ImportScreen() {
   const summary = meta ? summariseClip(meta, tb?.device) : null
   const guard = meta && file ? importGuard(meta, file.size) : null
   const askSlow = needsSlowMotionQuestion(tb)
+  // The player's answer wins; an evening timestamp starts it at court lights (never at daylight).
+  const light = lightEdit ?? lightFromTimestamp(meta?.createdAt)
   const view = viewFor(camera)
   const fpsForSpeed = fpsOverrideFor(slow, speed) ?? meta?.captureFps ?? 0
   const speedNote = speedTargetNote({ experimental, captureFps: fpsForSpeed, view: view.view, target })
   const heightMissing = heightCm === null || hand === null
   const sound = soundNote(meta?.hasAudio ?? false)
-  const canAnalyse = Boolean(file && meta && !guard && !heightMissing && !(askSlow && slow === null))
+  const canAnalyse = Boolean(file && meta && !guard && !heightMissing && !(askSlow && slow === null) && light !== null)
   const helper = !file
     ? null
     : guard
@@ -124,10 +128,12 @@ export function ImportScreen() {
         ? 'Add your height and serving hand to continue.'
         : askSlow && slow === null
           ? 'Answer the slow-motion question to continue.'
-          : null
+          : light === null
+            ? 'Say what the light was to continue.'
+            : null
 
   const analyse = async () => {
-    if (!file || !meta || !canAnalyse || heightCm === null || hand === null) return
+    if (!file || !meta || !canAnalyse || heightCm === null || hand === null || light === null) return
     setBusy(true)
     setError(null)
     try {
@@ -146,6 +152,7 @@ export function ImportScreen() {
         hitSoundTiming: hitSound === true,
         mount: mountContext(view.view, mount),
         servingSpot: spot,
+        light,
       }
       const capture = importCapture(player, answers, meta)
       const block = { side, serveNumber: serve, type, target, servingSpot: spot }
@@ -219,9 +226,12 @@ export function ImportScreen() {
             <Button icon={UploadSimpleIcon} onClick={() => inputRef.current?.click()}>
               Choose a video
             </Button>
-            <Button variant="tertiary" onClick={() => setHelp(true)}>
-              For slow-motion videos, choose Files. How?
-            </Button>
+            <p className="flex flex-wrap items-center gap-x-2 text-footnote text-ink-2">
+              <span>Slow-motion videos: choose them from Files.</span>
+              <Button variant="tertiary" onClick={() => setHelp(true)} aria-label="How to import slow-motion videos">
+                How?
+              </Button>
+            </p>
           </Card>
         ) : (
           <Card className="flex flex-col gap-3">
@@ -280,7 +290,10 @@ export function ImportScreen() {
                 <span id="q-mount">How was the phone mounted?</span>
               </SectionLabel>
               <RadioCards label="How was the phone mounted?" options={MOUNT_OPTIONS} value={mount} onChange={setMount} />
-              <p className="text-footnote text-ink-2">{heightsNote(view.view, mount)}</p>
+              <p className="text-footnote text-ink-2">
+                {heightsNote(view.view, mount)}
+                {mount === 'tilted-or-unsure' ? ` ${IMPORT_MOUNT_HINT}` : ''}
+              </p>
             </section>
           ) : null}
 
@@ -347,6 +360,28 @@ export function ImportScreen() {
                 onChange={setTarget}
               />
               {speedNote ? <p className="pl-16 text-footnote text-ink-2">{speedNote}</p> : null}
+            </Card>
+          </section>
+
+          <section className="flex flex-col gap-3" aria-labelledby="q-light">
+            <SectionLabel>
+              <span id="q-light">What was the light?</span>
+            </SectionLabel>
+            <Card className="flex flex-col gap-2">
+              <ChoiceChips
+                stacked
+                label="Light"
+                options={[
+                  { value: 'day' as const, label: 'Daylight' },
+                  { value: 'lights' as const, label: 'Court lights' },
+                  { value: 'unsure' as const, label: 'Not sure' },
+                ]}
+                value={light}
+                onChange={(v) => v && setLight(v)}
+              />
+              <p className="text-footnote text-ink-2">
+                Our checks so far are in daylight only. Under court lights, or if you're not sure, your measurements show as experimental.
+              </p>
             </Card>
           </section>
 

@@ -4,6 +4,7 @@
  * time you open Serve Coach".
  */
 import { getDb } from './db.ts'
+import { EVENT_NAMES } from './repos/events.ts'
 import { setSetting } from './repos/settings.ts'
 
 export const EVENTS_KEEP_DAYS = 180
@@ -31,7 +32,11 @@ export async function sweepRetention(now: Date = new Date()): Promise<SweepResul
       await db.videos.put(next)
     }
     const cutoff = new Date(nowMs - EVENTS_KEEP_DAYS * DAY_MS).toISOString()
-    const eventsDeleted = await db.events.where('at').below(cutoff).delete()
+    // Old rows, and rows an earlier build wrote for an event that left the catalogue (a pain referral
+    // count: health information stays out of analytics, PRODUCT §9.4).
+    const known = new Set<string>(EVENT_NAMES)
+    const eventsDeleted =
+      (await db.events.where('at').below(cutoff).delete()) + (await db.events.filter((e) => !known.has(e.name)).delete())
     if (expired.length) {
       await db.deletionLog.add({ at: now.toISOString(), scope: 'retention-sweep', counts: { videos: expired.length } })
     }

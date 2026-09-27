@@ -30,6 +30,12 @@ Decisions made by the product lead after the research sweep (docs/research/01-09
 ## D2. Honesty labels on every number
 `measured` | `estimated` | `player-entered` | `experimental` | `unavailable`, each with a reason code, a glyph and text chip. Coaching insights also carry an evidence tier: `research-backed` | `coach-recommended` | `experimental`. No unlabelled numbers anywhere.
 
+**D2 addenda (2026-09-28):**
+- **Capture quality** is a data-quality gate, not a serve statistic. It keeps its own rule so it is never hidden: it is always shown, and it carries the `experimental` label ("Automatic check, experimental") until its checks pass validation on real footage. Its info sheet says the checks have only been tested on simulated footage.
+- **Validation levels are cumulative.** A metric reaches V2 (real footage, annotated) only after V1 (synthetic), and V3 (radar/reference instrument) only after V2. Statuses can move up only through a documented validation run.
+- **Contact-height acceptance threshold** is 2.5% of standing height, as in metrics.json. METRICS.md prose should match it.
+- **Fused-event disagreement:** when independent timing signals disagree beyond their stated uncertainty (audio contact vs wrist apex vs ball track), every value that depends on that event is downgraded or withheld. A single wrong event must never produce a confident-looking `estimated` value.
+
 ## D3. Outcomes in single-view mode are player-entered
 Serve-in / net / long / wide, serve number (1st/2nd), intended type (flat/slice/kick) and target zone (T/body/wide) are tagged per serve in a fast review flow, or entered as a session tally. Linking per-serve tags to measured mechanics is a signature insight (e.g. "serves that went in had a toss 12 cm further forward").
 

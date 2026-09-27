@@ -15,7 +15,7 @@ import {
   Skeleton,
   VerdictChip,
 } from '../../components/index.ts'
-import { CAPTURE_WORDS } from '../../copy/strings.ts'
+import { CAPTURE_EXPERIMENTAL, CAPTURE_WORDS } from '../../copy/strings.ts'
 import { monthYear, shortDate } from '../../format/dates.ts'
 import { headlineFor } from '../../format/sessionValues.ts'
 import { paths } from '../../shell/paths.ts'
@@ -27,7 +27,9 @@ function CaptureGlyph({ overall }: { overall: 'good' | 'usable' | 'poor' }) {
   return (
     <span className="inline-flex items-center">
       <G size={20} aria-hidden="true" className={overall === 'good' ? 'text-ink-2' : 'text-attention'} />
-      <span className="sr-only">Capture {CAPTURE_WORDS[overall]}</span>
+      <span className="sr-only">
+        Capture {CAPTURE_WORDS[overall]}, {CAPTURE_EXPERIMENTAL.toLowerCase()}
+      </span>
     </span>
   )
 }
@@ -72,6 +74,7 @@ function SessionRow({ b, verdict }: { b: SessionBundle; verdict?: ExperimentReco
         </span>
       }
       subtitle={subtitle(s)}
+      wrap
       detail={
         verdict && s.isRetest === 1 ? (
           <span className="mt-1 flex">

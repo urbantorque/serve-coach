@@ -1,0 +1,36 @@
+[
+ {
+  "scheme": "light",
+  "reportCount": "16 of 16 serves measured",
+  "focusCounts": [],
+  "whyCounts": [
+   "16 of 16 serves",
+   "16 of 16 serves measured",
+   "16 of 16 serves",
+   "16 of 16 serves measured",
+   "16 of 16 serves",
+   "16 of 16 serves measured",
+   "16 of 16 serves",
+   "16 of 16 serves measured"
+  ],
+  "overflow": false,
+  "console": []
+ },
+ {
+  "scheme": "dark",
+  "reportCount": "16 of 16 serves measured",
+  "focusCounts": [],
+  "whyCounts": [
+   "16 of 16 serves",
+   "16 of 16 serves measured",
+   "16 of 16 serves",
+   "16 of 16 serves measured",
+   "16 of 16 serves",
+   "16 of 16 serves measured",
+   "16 of 16 serves",
+   "16 of 16 serves measured"
+  ],
+  "overflow": false,
+  "console": []
+ }
+]

@@ -10,7 +10,7 @@
  * session's coaching decision; today's body check, a referral and match day are applied on screen
  * on top of it (they are never stored as the session's decision).
  */
-import { buildVerdictRequest, decideFocus, experimentRecordStatus, normaliseProfile, toCoachingRecord, type CoachingDecision } from '../coaching/index.ts'
+import { buildVerdictRequest, decideFocus, experimentRecordStatus, normaliseProfile, retestKind, toCoachingRecord, type CoachingDecision } from '../coaching/index.ts'
 import { attachRetest, createExperiment, putDecision, useSettingsStore } from '../data/index.ts'
 import type { CoachingRecord, ExperimentRecord } from '../data/records.ts'
 import { buildFocusInput, readFocusData } from '../ui/screens/focus/focusInput.ts'
@@ -34,32 +34,38 @@ export interface SyncResult {
 }
 
 /**
- * A session recorded with the re-test plan (Record locks it to the experiment's stratum) joins the
- * experiment once it is analysed. Only a later session can be a re-test.
+ * Which later sessions join the experiment as re-tests (COACHING §12.3, §12.5: "only a later matched
+ * session counts", whatever plan it was recorded with): the engine judges any later matched session, so
+ * the stored experiment must hold the same sessions, or the decision and the record disagree. A session
+ * recorded with the re-test plan joins even when it did not match (its "not comparable yet" reason
+ * shows). Block B, or anything else recorded on the day the experiment started, never joins.
  */
-function retestToAttach(exp: ExperimentRecord | undefined, s: { id: string; isRetest: 0 | 1; experimentId?: string; startedAt: string }): boolean {
-  if (!exp || exp.status !== 'active') return false
-  if (s.isRetest !== 1 || s.experimentId !== exp.id) return false
+function retestToAttach(exp: ExperimentRecord | undefined, built: ReturnType<typeof buildFocusInput>, s: { id: string; isRetest: 0 | 1; experimentId?: string }): boolean {
+  if (!exp || exp.status !== 'active' || !built?.experiment) return false
   if (exp.retestSessionIds.includes(s.id) || exp.baselineSessionIds.includes(s.id)) return false
-  return true
+  const kind = retestKind(built.experiment, built.latest.session)
+  if (kind === 'matched') return true
+  return kind === 'unmatched' && s.isRetest === 1 && s.experimentId === exp.id
 }
 
 async function run(opts: SyncOptions): Promise<SyncResult> {
   const now = opts.now ?? new Date()
-  let raw = await readFocusData()
+  let raw = await readFocusData(now)
   const pick = () => (opts.sessionId ? raw.sessions.find((s) => s.record.id === opts.sessionId) : raw.sessions[0])
   let latest = pick()
   if (!latest) return {}
+  const experimental = opts.experimental ?? useSettingsStore.getState().experimentalMetrics
+  const inputFor = (l: NonNullable<typeof latest>) =>
+    buildFocusInput(raw, { experimental, now, sessionId: l.record.id, cueOverride: useFocusStore.getState().cueOverride })
   let attachedRetest: string | undefined
-  if (retestToAttach(raw.experiment, latest.record)) {
+  if (retestToAttach(raw.experiment, inputFor(latest), latest.record)) {
     await attachRetest(raw.experiment!.id, latest.record.id)
     attachedRetest = latest.record.id
-    raw = await readFocusData()
+    raw = await readFocusData(now)
     latest = pick()
     if (!latest) return {}
   }
-  const experimental = opts.experimental ?? useSettingsStore.getState().experimentalMetrics
-  const built = buildFocusInput(raw, { experimental, now, sessionId: latest.record.id, cueOverride: useFocusStore.getState().cueOverride })
+  const built = inputFor(latest)
   if (!built) return {}
   const decision = decideFocus(built.input)
   const record = toCoachingRecord(decision, {
@@ -70,17 +76,29 @@ async function run(opts: SyncOptions): Promise<SyncResult> {
   await putDecision(record)
 
   let experiment = raw.experiment
+  const ended = 'experiment' in decision ? decision.experiment : undefined
+  const status = experiment ? experimentRecordStatus(ended, experiment.id) : 'active'
+  const endedFields = { endedAt: now.toISOString(), endedSessionId: latest.record.id }
   if (experiment && built.experiment && experiment.retestSessionIds.includes(latest.record.id)) {
     const request = buildVerdictRequest({
       exp: built.experiment,
       session: built.latest.session,
-      history: built.input.history ?? [],
+      history: built.verdictHistory,
       profile: normaliseProfile(built.profile),
     })
     // A verdict that ends the experiment (worked, parked, superseded) is stored with its final status
     // (COACHING §12.5), so a "clearly better" experiment is completed rather than left active.
-    const ended = 'experiment' in decision ? decision.experiment : undefined
-    experiment = { ...experiment, result: experimentResult(request, built.experiment.stratum, now), status: experimentRecordStatus(ended, experiment.id) }
+    experiment = {
+      ...experiment,
+      result: experimentResult(request, built.experiment.stratum, now),
+      status,
+      ...(status !== 'active' ? endedFields : {}),
+    }
+    await createExperiment(experiment)
+  } else if (experiment && status !== 'active') {
+    // Ended without a re-test in this session (superseded by an earlier major fault, or parked by a
+    // standing comfort setting): the stored status follows the decision, so Today and /focus agree.
+    experiment = { ...experiment, status, ...endedFields }
     await createExperiment(experiment)
   }
   return { decision, record, ...(experiment ? { experiment } : {}), ...(attachedRetest ? { attachedRetest } : {}) }

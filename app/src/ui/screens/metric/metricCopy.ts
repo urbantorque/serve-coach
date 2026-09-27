@@ -177,7 +177,7 @@ export const STATUS_MEANING: Record<MetricStatus, string> = {
   measured: 'Measured: worked out directly from your video.',
   estimated: 'Estimate: worked out from your video and your height, so it has a margin of error.',
   'player-entered': 'You logged this.',
-  experimental: "Experimental: we're still checking this method, so treat it as a rough guide. It never feeds coaching.",
+  experimental: "Experimental: we're still checking this method, so treat it as a rough guide. It never gets a verdict, and it can suggest a focus only while experimental metrics are on, marked Experimental.",
   unavailable: 'Not available from this footage.',
 }
 
@@ -185,7 +185,9 @@ export const STATUS_MEANING: Record<MetricStatus, string> = {
 export const LIMITS: { ids: MetricId[]; text: string }[] = [
   {
     ids: ['toss-apex-height', 'toss-height-spread', 'toss-drop'],
-    text: 'From the side, a toss nearer the camera than your body reads a little high, and a little sideways wobble adds a few centimetres to the spread. A view from behind separates the two.',
+    // Engine: a typical toss offset is corrected for (METRICS §3.2); after it, synthetic D1 peak
+    // heights: MAE 1.1% of height, bias −0.9%, n 11 (validation-summary.json; VALIDATION §5 item 3).
+    text: "From the side we can't see how far out towards the camera you toss, so we allow for a typical toss. A toss further out than that reads a little high, one closer to your body a little low, and sideways wobble adds a few centimetres to the spread. On 11 simulated serves from the recommended distance, peak heights were typically within about 1% of your height, reading slightly low on average. A view from behind separates the two.",
   },
   {
     ids: ['toss-apex-height', 'contact-height-ratio', 'toss-drop', 'toss-forward', 'contact-forward', 'landing-distance'],
@@ -193,7 +195,9 @@ export const LIMITS: { ids: MetricId[]; text: string }[] = [
   },
   {
     ids: ['contact-height-ratio', 'toss-drop', 'rhythm-release-to-contact', 'rhythm-spread'],
-    text: 'At 60 fps with the hit sound off, contact timing is within about 13 ms, which is about 4 to 5 cm of ball height. 120 fps or the hit sound sharpens it.',
+    // Per-serve ranges come from the engine's fused contact timing (about 2 ms on simulated serves);
+    // METRICS §2.7's 13 ms is the planning figure for real footage, still unmeasured.
+    text: 'On simulated serves at 60 fps with the hit sound off, we timed contact to within a few milliseconds, under 1 cm of ball height, and that is what each serve’s range shows. On real courts this timing is not yet checked: one frame out would move contact height and ball drop by about 4 to 5 cm. 120 fps or the hit sound sharpens it.',
   },
   {
     ids: ['knee-bend-band', 'loading-depth', 'deep-bend-flag', 'leg-drive'],

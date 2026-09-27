@@ -67,6 +67,18 @@ describe('annotation-eval', () => {
     assert.equal(json.files.length, 2)
   })
 
+  it('covers leg drive, loading, drive time and the shoulder line from hip and shoulder marks (product-gaps)', () => {
+    const md = readFileSync(r.reportPath, 'utf8')
+    assert.match(md, /\| Leg drive \(hip rise\) \| % of height \| 200 \(12\) \|/)
+    assert.match(md, /\| Loading \(hip dip\) \| % of height \| 200 \(12\) \|/)
+    assert.match(md, /\| Drive time \| ms \| 200 \(12\) \|.*MAE ≤ 2 frames/)
+    assert.match(md, /\| Shoulder line at the top \| degrees \| 200 \(12\) \|.*Reported only: the band is judged by coach agreement/)
+    assert.match(md, /\| Drive time \| day V\d, .* \| V2 ceiling is measured \(timing metric\), in the condition classes tested; its designed status is estimated \|/)
+    assert.match(md, /\| Trophy position \| 200 \(12\) \|.*Reported only/)
+    const legs = r.result.metrics.find((m) => m.id === 'leg-drive')!
+    assert.equal(legs.verdict, 'Meets the V2 target')
+  })
+
   it('parses its arguments and the participants file', () => {
     assert.deepEqual(parseArgs(['x.json', '--out', 'o', '--include-sample', 'dir']), { inputs: ['x.json', 'dir'], outDir: 'o', includeSample: true })
     assert.throws(() => parseArgs(['--bogus']), /Unknown option/)

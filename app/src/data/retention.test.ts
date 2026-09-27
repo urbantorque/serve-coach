@@ -46,12 +46,23 @@ describe('retention sweep', () => {
   it('removes local usage events older than 180 days', async () => {
     const db = getDb()
     await db.events.bulkAdd([
-      { name: 'old', at: new Date(NOW.getTime() - 181 * DAY).toISOString(), props: {} },
-      { name: 'recent', at: new Date(NOW.getTime() - 179 * DAY).toISOString(), props: {} },
+      { name: 'drill_started', at: new Date(NOW.getTime() - 181 * DAY).toISOString(), props: {} },
+      { name: 'focus_opened', at: new Date(NOW.getTime() - 179 * DAY).toISOString(), props: {} },
     ])
     const res = await sweepRetention(NOW)
     expect(res.eventsDeleted).toBe(1)
-    expect((await db.events.toArray()).map((e) => e.name)).toEqual(['recent'])
+    expect((await db.events.toArray()).map((e) => e.name)).toEqual(['focus_opened'])
+  })
+
+  it('removes rows an older build wrote for a pain referral (health information stays out of analytics)', async () => {
+    const db = getDb()
+    await db.events.bulkAdd([
+      { name: 'pain_referral_shown', at: new Date(NOW.getTime() - DAY).toISOString(), props: {} },
+      { name: 'focus_opened', at: new Date(NOW.getTime() - DAY).toISOString(), props: {} },
+    ])
+    const res = await sweepRetention(NOW)
+    expect(res.eventsDeleted).toBe(1)
+    expect((await db.events.toArray()).map((e) => e.name)).toEqual(['focus_opened'])
   })
 
   it('delete-after-analysis removes the blob when the job is done, keeping pinned videos', async () => {

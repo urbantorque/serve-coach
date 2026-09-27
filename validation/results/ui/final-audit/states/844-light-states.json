@@ -1,0 +1,358 @@
+{
+ "key": "844-light",
+ "states": [
+  {
+   "name": "serve-detail",
+   "file": "844-light-01-serve-detail.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentReportServe 1Sample data · synthetic playerSe",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 644
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Serve timeline",
+     "b": "All values",
+     "x": 78,
+     "y": 6
+    }
+   ]
+  },
+  {
+   "name": "check-mode",
+   "file": "844-light-02-check-mode.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01?mode=check",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentServe 1Check serve 1Sample data · synthetic p",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 846
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 1.041666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Radar, optional",
+     "left": 801,
+     "right": 894
+    }
+   ],
+   "collide": [
+    {
+     "a": "Frame",
+     "b": "Save check",
+     "x": 520,
+     "y": 22
+    },
+    {
+     "a": "Back 1 frame",
+     "b": "Save check",
+     "x": 48,
+     "y": 22
+    },
+    {
+     "a": "Play",
+     "b": "Save check",
+     "x": 48,
+     "y": 22
+    },
+    {
+     "a": "Forward 1 frame",
+     "b": "Save check",
+     "x": 48,
+     "y": 22
+    }
+   ]
+  },
+  {
+   "name": "check-mode-bottom",
+   "file": "844-light-03-check-mode-bottom.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01?mode=check",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentServe 1Check serve 1Sample data · synthetic p",
+    "inDialog": false,
+    "top": -456,
+    "bottom": 390
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 1.041666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Radar, optional",
+     "left": 801,
+     "right": 894
+    }
+   ],
+   "collide": []
+  },
+  {
+   "name": "tagging",
+   "file": "844-light-04-tagging.png",
+   "url": "/sessions/sample-s3/tag",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentTag serves1 of 16Sample data · synthetic play",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 867
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 5.241666
+    }
+   ],
+   "offscreen": [],
+   "collide": []
+  },
+  {
+   "name": "tagging-after-in",
+   "file": "844-light-05-tagging-after-in.png",
+   "url": "/sessions/sample-s3/tag",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "In",
+    "inDialog": false,
+    "top": 111,
+    "bottom": 199
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": "Serve 1: in. Serve 2 of 16."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": false,
+     "autoplay": false,
+     "t": 11.971269
+    }
+   ],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Save and exit",
+     "b": "Body",
+     "x": 44,
+     "y": 19
+    },
+    {
+     "a": "Save and exit",
+     "b": "Flat",
+     "x": 8,
+     "y": 9
+    },
+    {
+     "a": "Save and exit",
+     "b": "Slice",
+     "x": 28,
+     "y": 9
+    }
+   ]
+  },
+  {
+   "name": "live-bodycheck",
+   "file": "844-light-06-live-bodycheck.png",
+   "url": "/record/live",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "All good",
+    "inDialog": true,
+    "top": 194,
+    "bottom": 246
+   },
+   "dialog": {
+    "name": "Quick body check",
+    "modal": "true"
+   },
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Close camera",
+     "x": 19,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "live-framing",
+   "file": "844-light-07-live-framing.png",
+   "url": "/record/live",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentLive framingCamera and levelServe Coach uses ",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 476
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Close camera",
+     "x": 19,
+     "y": 19
+    }
+   ]
+  }
+ ],
+ "logs": []
+}

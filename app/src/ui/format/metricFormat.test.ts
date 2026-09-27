@@ -72,6 +72,16 @@ describe('formatMetric (DESIGN §4.3)', () => {
     expect(f.text).not.toContain('°')
   })
 
+  it('loading depth can never be negative: its range is floored at zero and reads "up to"', () => {
+    const f = formatMetric('loading-depth', mv({ id: 'loading-depth', status: 'estimated', value: 1, uncertainty: { kind: 'ci95', low: -1.55, high: 4.4 }, n: 16, nEligible: 16 }))
+    expect(f.detail).toBe('likely up to 4% of your height')
+    expect(f.aria).not.toMatch(/-d/)
+    const exp = formatMetric('loading-depth', mv({ id: 'loading-depth', status: 'experimental', value: 1, uncertainty: { kind: 'range', low: -5, high: 7 } }))
+    expect(exp.text).toBe('about up to 7% of your height')
+    // Leg drive keeps its signed range.
+    expect(formatMetric('leg-drive', mv({ id: 'leg-drive', status: 'estimated', value: 9, uncertainty: { kind: 'ci95', low: 6, high: 12 } })).detail).toBe('likely 6% to 12% of your height')
+  })
+
   it('spreads near the measurement limit read "≤ 4 cm"', () => {
     expect(formatMetric('contact-height-spread', mv({ id: 'contact-height-spread', status: 'estimated', value: 3, nearMeasurementLimit: true })).value).toBe('≤ 4')
   })

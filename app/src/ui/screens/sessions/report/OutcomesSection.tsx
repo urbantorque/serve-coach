@@ -59,13 +59,28 @@ export interface OutcomesSectionProps {
   metrics: Metrics
   rows: ServeRow[]
   tally: SessionTallyRecord | null
+  /**
+   * The group a multi-group report is showing. The placement chart then plots only the serves you
+   * logged for that court side (and serve number), so a deuce serve never lands in the ad box.
+   */
+  group?: { courtSide: ServeSide | 'unknown'; serveNumber: 1 | 2 | 'unknown'; defaultSide?: ServeSide; defaultServeNumber?: 1 | 2 }
+}
+
+/** Tagged serves in the shown group (by the side and serve number you logged, else the session's). */
+export function rowsInGroup(rows: ServeRow[], group: OutcomesSectionProps['group']): ServeRow[] {
+  if (!group) return rows
+  return rows.filter((r) => {
+    const side = r.tag?.side ?? group.defaultSide ?? 'unknown'
+    const number = r.tag?.serveNumber ?? group.defaultServeNumber ?? 'unknown'
+    return (group.courtSide === 'unknown' || side === group.courtSide) && (group.serveNumber === 'unknown' || number === group.serveNumber)
+  })
 }
 
 /**
  * Outcomes (D3: player-entered in the side view): the rate tiles with n and Wilson intervals, the
  * service-box schematic when zones were logged, or the "Tag your serves" empty state.
  */
-export function OutcomesSection({ sessionId, side, serveNumber, metrics, rows, tally }: OutcomesSectionProps) {
+export function OutcomesSection({ sessionId, side, serveNumber, metrics, rows, tally, group }: OutcomesSectionProps) {
   const navigate = useNavigate()
   const counts = outcomeCounts(rows)
   const hasTags = counts.tagged > 0
@@ -89,8 +104,12 @@ export function OutcomesSection({ sessionId, side, serveNumber, metrics, rows, t
   const source = hasTags ? 'From your tags' : 'From your tally'
   const dfs = metrics['double-faults']
 
-  const placement: PlacementServe[] = rows
-    .filter((r) => r.tag && (r.kind === 'in' || r.kind === 'net' || r.kind === 'long' || r.kind === 'wide'))
+  const placed = rowsInGroup(rows, group).filter((r) => r.tag && (r.kind === 'in' || r.kind === 'net' || r.kind === 'long' || r.kind === 'wide'))
+  // One report group can still hold serves you logged from both courts: say so rather than name one.
+  const loggedSides = new Set(placed.map((r) => r.tag?.side).filter(Boolean))
+  const courtWords = loggedSides.size > 1 ? 'Both courts' : `${(loggedSides.size === 1 ? [...loggedSides][0] : side) === 'ad' ? 'Ad' : 'Deuce'} court`
+  const mapSide: ServeSide = loggedSides.size === 1 ? ([...loggedSides][0] as ServeSide) : side
+  const placement: PlacementServe[] = placed
     .map((r) => ({
       id: r.id,
       outcome: r.kind as PlacementServe['outcome'],
@@ -120,7 +139,7 @@ export function OutcomesSection({ sessionId, side, serveNumber, metrics, rows, t
       {zoned ? (
         <ChartFrame
           title={`${inCount} of ${placement.length} tagged serves went in`}
-          subtitle={`${side === 'ad' ? 'Ad' : 'Deuce'} court, by the zone you logged`}
+          subtitle={`${courtWords}, by the zone you logged`}
           status="player-entered"
           metricId="placement-zone"
           footer={<span>Schematic: each mark is a serve you logged, in the zone you logged. It isn't a measured landing spot.</span>}
@@ -134,9 +153,9 @@ export function OutcomesSection({ sessionId, side, serveNumber, metrics, rows, t
           }}
         >
           <PlacementMap
-            side={side}
+            side={mapSide}
             serves={placement}
-            label={`Service box schematic, ${placement.length} tagged serves: ${counts.in} in, ${counts.net} net, ${counts.long} long, ${counts.wide} wide.`}
+            label={`Service box schematic, ${courtWords.toLowerCase()}, ${placement.length} tagged serves: ${(['in', 'net', 'long', 'wide'] as const).map((k) => `${placement.filter((p) => p.outcome === k).length} ${k}`).join(', ')}.`}
             onOpen={(id) => navigate(paths.serveDetail(sessionId, id))}
           />
         </ChartFrame>

@@ -12,6 +12,7 @@ import { simulatedRunner } from './flow/analysisAdapter.ts'
 import { clock, fpsLabel, resolutionLabel } from './flow/importLogic.ts'
 import { cancelAnalysis, hasHandle, jobFile, retryAnalysis, startAnalysis, useJob, type JobState } from './flow/jobs.ts'
 import { etaText, stagesFor } from './flow/stages.ts'
+import { AllowanceNotice } from '../plan/AllowanceNotice.tsx'
 
 function useNow(active: boolean, ms = 1000): number {
   const [now, setNow] = useState(() => performance.now())
@@ -153,7 +154,7 @@ function JobView({ job, sessionId }: { job: JobState; sessionId: string }) {
         <div className="flex flex-col gap-4">
           <p className="flex items-start gap-2 text-footnote text-ink-3">
             <ClockCountdownIcon size={20} aria-hidden="true" className="shrink-0" />
-            You can leave this screen: Record shows the progress and the report opens when it's ready. Keep Serve Coach open while it analyses. It usually takes a minute or two.
+            You can leave this screen: Record shows the progress and the report opens when it's ready. Keep Serve Coach open while it analyses. A block of about 15 serves can take a few minutes.
           </p>
           <Button variant="tertiary" onClick={() => setConfirm(true)}>
             Cancel analysis
@@ -233,6 +234,22 @@ function StoredView({ session }: { session: SessionRecord }) {
   )
 }
 
+/** The screen title follows the analysis state, so it never says "Analysing" above a finished report. */
+export function processingTitle(job: JobState | undefined, inMemory: boolean, session: SessionRecord | null | undefined): string {
+  if (inMemory && job) {
+    if (job.phase === 'done') return 'Report ready'
+    if (job.phase === 'failed' || job.phase === 'unavailable') return "Couldn't analyse"
+    if (job.phase === 'cancelled') return 'Analysis cancelled'
+    return 'Analysing'
+  }
+  if (session === undefined) return 'Analysing'
+  if (session === null) return 'Session not found'
+  if (session.status === 'ready') return 'Report ready'
+  if (session.status === 'failed') return "Couldn't analyse"
+  if (session.status === 'importing') return 'Analysing'
+  return 'Analysis stopped'
+}
+
 /**
  * Processing (DESIGN §10.4, §8.18; PRODUCT §6.4): the clip, four stage rows with real progress from
  * the analysis pipeline, an overall bar, the ETA after 5 s of throughput, the first finished serve,
@@ -246,7 +263,7 @@ export function ProcessingScreen() {
   const inMemory = job !== undefined && hasHandle(sessionId)
 
   return (
-    <Screen title="Analysing" back={{ to: paths.record(), label: 'Record' }}>
+    <Screen title={processingTitle(job, inMemory, session)} back={{ to: paths.record(), label: 'Record' }}>
       {inMemory && job ? (
         <JobView job={job} sessionId={sessionId} />
       ) : session === undefined ? (
@@ -271,6 +288,8 @@ export function ProcessingScreen() {
       ) : (
         <StoredView session={session} />
       )}
+      {/* T2 (PRODUCT §6.15): past this month's free analyses, a notice only; the beta never blocks. */}
+      {inMemory && job && job.phase === 'running' ? <AllowanceNotice sessionId={sessionId} /> : null}
     </Screen>
   )
 }

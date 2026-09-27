@@ -1,4 +1,4 @@
-import { CheckCircleIcon, HardDrivesIcon, WarningCircleIcon, XCircleIcon } from '@phosphor-icons/react'
+import { CheckCircleIcon, FlaskIcon, HardDrivesIcon, WarningCircleIcon, XCircleIcon } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import type { QualityReport } from '../../../../analysis/types.ts'
@@ -7,11 +7,13 @@ import { listVideosBySession, setVideoRetention } from '../../../../data/repos/v
 import { showToast } from '../../../../data/stores/toast.ts'
 import { Button, CaptureQualityLine, MetricValue, Sheet } from '../../../components/index.ts'
 import { metricName } from '../../../copy/metricNames.ts'
+import { CAPTURE_SIMULATED_ONLY } from '../../../copy/strings.ts'
 import { shortDate } from '../../../format/dates.ts'
 import { paths } from '../../../shell/paths.ts'
 import { compareExperiment, type SessionData } from '../../progress/insights/compare.ts'
 import { VerdictLine } from '../../progress/insights/ui.tsx'
 import { moreServesText } from '../../progress/insights/words.ts'
+import { tiltHint } from '../../record/import/hints.ts'
 
 /**
  * Capture line (DESIGN §3.6) with the capture detail sheet: every non-passing check with its message
@@ -20,7 +22,7 @@ import { moreServesText } from '../../progress/insights/words.ts'
 export function CaptureLine({ quality, measured, detected }: { quality: QualityReport; measured: number; detected: number }) {
   const [open, setOpen] = useState(false)
   const failing = quality.checks.filter((c) => !c.pass)
-  const tip = failing.find((c) => c.fix)?.fix?.replace(/^Next time,?\s*/i, '')
+  const tip = tiltHint(failing.find((c) => c.fix)?.fix?.replace(/^Next time,?\s*/i, ''))
   return (
     <>
       <CaptureQualityLine overall={quality.overall} measured={measured} detected={detected} tip={tip} onOpen={() => setOpen(true)} />
@@ -35,7 +37,7 @@ export function CaptureLine({ quality, measured, detected }: { quality: QualityR
                     <G size={20} aria-hidden="true" className={c.severity === 'info' ? 'mt-0.5 shrink-0 text-ink-2' : 'mt-0.5 shrink-0 text-attention'} />
                     <span className="flex flex-col gap-0.5">
                       <span className="text-callout text-ink">{c.message}</span>
-                      {c.fix ? <span className="text-footnote text-ink-2">{c.fix}</span> : null}
+                      {c.fix ? <span className="text-footnote text-ink-2">{tiltHint(c.fix)}</span> : null}
                     </span>
                   </li>
                 )
@@ -44,11 +46,15 @@ export function CaptureLine({ quality, measured, detected }: { quality: QualityR
           ) : (
             <p className="flex items-start gap-2 text-callout text-ink">
               <CheckCircleIcon size={20} aria-hidden="true" className="mt-0.5 shrink-0" />
-              Every capture check passed.
+              Every automatic capture check passed.
             </p>
           )}
           <p className="text-footnote text-ink-3">
             {measured} of {detected} serves were measured. Serves we couldn't see clearly stay in the list with the reason.
+          </p>
+          <p className="flex items-start gap-1.5 text-footnote text-ink-2" data-status="experimental">
+            <FlaskIcon size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
+            <span>{CAPTURE_SIMULATED_ONLY}</span>
           </p>
           <Button variant="secondary" to={paths.setupChoice()}>
             See set-up tips

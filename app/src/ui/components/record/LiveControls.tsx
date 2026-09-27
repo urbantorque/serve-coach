@@ -42,7 +42,7 @@ export function CheckItem({ check, showValue, className }: { check: LiveCheck; s
     <li className={cx('flex min-h-[38px] items-center gap-1.5', className)} data-check={check.id} data-state={check.state}>
       <CheckGlyph state={check.state} size={20} />
       <span className="flex min-w-0 flex-col">
-        <span className="truncate text-subhead text-ink">
+        <span className="text-subhead leading-tight text-ink [overflow-wrap:anywhere]">
           {check.label}
           <span className="sr-only">: {STATE_WORD[check.state]}</span>
         </span>
@@ -74,7 +74,7 @@ export function ChecklistRail({ checks, layout, collapsed, onToggle }: Checklist
         type="button"
         onClick={onToggle}
         aria-expanded="false"
-        className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-ink bg-surface px-4 text-subhead tabular-nums text-ink hover:bg-surface-2"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-ink bg-surface px-4 py-1 text-subhead leading-tight tabular-nums text-ink hover:bg-surface-2"
       >
         {summary}
         <CaretUpIcon size={20} aria-hidden="true" />
@@ -89,7 +89,8 @@ export function ChecklistRail({ checks, layout, collapsed, onToggle }: Checklist
           <CaretDownIcon size={20} aria-hidden="true" />
         </button>
       </div>
-      <ul aria-label="Framing checks" className={cx('grid gap-x-1', layout === 'portrait' ? 'grid-cols-3' : 'grid-cols-2')}>
+      {/* Portrait: 3 columns at default text, fewer as the text grows, so names wrap rather than cut off. */}
+      <ul aria-label="Framing checks" className={cx('grid gap-x-1', layout === 'portrait' ? 'grid-cols-[repeat(auto-fill,minmax(min(100%,6.5rem),1fr))]' : 'grid-cols-2')}>
         {checks.map((c) => (
           <CheckItem key={c.id} check={c} className={layout === 'landscape' ? 'min-h-[34px]' : undefined} />
         ))}

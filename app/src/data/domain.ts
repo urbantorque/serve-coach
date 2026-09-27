@@ -385,6 +385,12 @@ export interface SessionStats {
   setupClass?: 'portrait-near' | 'landscape-fence' | 'landscape-near' | 'rear'
   setupKey?: string
   cameraDistanceM?: number
+  /**
+   * Addition: serves the player deleted after analysis (data/deletion.ts deleteServe). The stored rows
+   * cannot rebuild the engine's summaries, so the numbers are kept, the values the deleted serve fed
+   * are marked as an early read with a note, and "Analyse again" rebuilds them.
+   */
+  deletedServeIds?: string[]
 }
 
 // ---------- §6.5 comparisons, experiments and coaching ----------
@@ -429,6 +435,13 @@ export interface Experiment {
   result?: MatchedComparison & { computedAt: string }
   /** Set when a baseline session was deleted; the verdict becomes not-comparable. */
   baselineDeleted?: boolean
+  /**
+   * Addition (COACHING §7.4 cooldown): when the experiment stopped being active, and the session whose
+   * decision ended it. A worked item rests for 2 sessions and a parked or superseded one for 3, counted
+   * from that session (coaching/cooldown via ui/screens/focus/focusInput.ts).
+   */
+  endedAt?: string
+  endedSessionId?: string
 }
 
 export interface RuleTraceEntry {
@@ -475,9 +488,13 @@ export interface CoachingDecision {
 
 export type AnnotatedEvent =
   | 'motionStart' | 'tossRelease' | 'tossApex' | 'trophyStart' | 'trophyEnd' | 'lowestHip' | 'contact' | 'landing'
+  // product-gaps addition (METRICS §5.6): the trophy position frame, for shoulders at trophy.
+  | 'trophy'
 export type AnnotatedPoint =
   | 'ballAtApex' | 'ballAtContact' | 'frontToeSetup' | 'frontToeLanding' | 'headTopSetup' | 'floorSetup'
   | 'midHipLowest' | 'midHipContact' | 'netPostTop' | 'netPostBase'
+  // product-gaps additions (METRICS §5.6): hip centre at release (loading depth), both shoulders at trophy.
+  | 'midHipRelease' | 'shoulderFrontTrophy' | 'shoulderBackTrophy'
 
 export interface ServeAnnotation {
   id: string

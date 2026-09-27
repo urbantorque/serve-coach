@@ -14,13 +14,21 @@ import { paths } from '../../shell/paths.ts'
 import type { MetricGroup, MetricRow, UnavailableItem } from './serveView.ts'
 
 export function MetricLine({ row, focus = false }: { row: MetricRow; focus?: boolean }) {
-  return (
-    <li className="flex min-h-11 items-center justify-between gap-3 py-1.5">
+  const line = (
+    <>
       <span className="min-w-0 text-subhead text-ink-2">
         {metricName(row.id)}
         {focus ? <span className="sr-only"> (focus)</span> : null}
       </span>
       <MetricValue metricId={row.id} value={row.value} className="items-end text-right" detail={false} />
+    </>
+  )
+  if (!row.note) return <li className="flex min-h-11 items-center justify-between gap-3 py-1.5">{line}</li>
+  // A player-entered value names its source under the line (D2, D4).
+  return (
+    <li className="flex flex-col gap-0.5 py-1.5">
+      <span className="flex min-h-11 items-center justify-between gap-3">{line}</span>
+      <span className="text-footnote text-ink-3">{row.note}</span>
     </li>
   )
 }
@@ -39,12 +47,61 @@ export interface StatDrawerProps {
   onExpandedChange: (open: boolean) => void
 }
 
+/**
+ * True on short screens or with large text (iOS Larger Text, Android font scale): the peek then shows
+ * only the first (focus) value, so the collapsed drawer stays under about a third of the screen.
+ */
+function useCompactPeek(): boolean {
+  const read = () => {
+    if (typeof window === 'undefined') return false
+    const rootPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+    return window.innerHeight < 700 || rootPx > 20
+  }
+  const [compact, setCompact] = useState(read)
+  useEffect(() => {
+    const on = () => setCompact(read())
+    window.addEventListener('resize', on)
+    return () => window.removeEventListener('resize', on)
+  }, [])
+  return compact
+}
+
 export function StatDrawer({ peek, focusIds, groups, experimental, unavailable, header, extras, expanded, onExpandedChange }: StatDrawerProps) {
   const titleId = useId()
   const panel = useRef<HTMLDivElement>(null)
   const drag = useRef<number | null>(null)
+  const toggle = useRef<HTMLButtonElement>(null)
+  const body = useRef<HTMLDivElement>(null)
   const [peekH, setPeekH] = useState(0)
   const peekRef = useRef<HTMLDivElement>(null)
+  const compactPeek = useCompactPeek()
+  const peekRows = compactPeek ? peek.slice(0, 1) : peek
+
+  // The page reserves room for the collapsed drawer from its measured height (--drawer-peek), so the
+  // timeline, transport and overlay chips can always scroll clear of it, at any text size.
+  useEffect(() => {
+    if (!peekH) return
+    const root = document.documentElement
+    root.style.setProperty('--drawer-peek', `${peekH}px`)
+    return () => {
+      root.style.removeProperty('--drawer-peek')
+    }
+  }, [peekH])
+
+  // Keyboard focus never lands under the collapsed drawer (WCAG 2.4.11): scroll the focused control
+  // clear of it. Browsers don't do this for fixed overlays on their own.
+  useEffect(() => {
+    if (expanded || !peekH) return
+    const onFocus = (e: FocusEvent) => {
+      const el = e.target as HTMLElement | null
+      if (!el || panel.current?.contains(el) || typeof el.getBoundingClientRect !== 'function') return
+      const r = el.getBoundingClientRect()
+      const limit = window.innerHeight - peekH - 8
+      if (r.bottom > limit) window.scrollBy({ top: r.bottom - limit, behavior: 'instant' as ScrollBehavior })
+    }
+    document.addEventListener('focusin', onFocus)
+    return () => document.removeEventListener('focusin', onFocus)
+  }, [expanded, peekH])
 
   const expandedRef = useRef(expanded)
   useEffect(() => {
@@ -68,7 +125,10 @@ export function StatDrawer({ peek, focusIds, groups, experimental, unavailable, 
   useEffect(() => {
     if (!expanded) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onExpandedChange(false)
+      if (e.key !== 'Escape') return
+      // Focus inside the body would fall to <body> when it hides: bring it back to the toggle.
+      if (body.current?.contains(document.activeElement)) toggle.current?.focus()
+      onExpandedChange(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -95,6 +155,7 @@ export function StatDrawer({ peek, focusIds, groups, experimental, unavailable, 
                 This serve
               </h2>
           <button
+            ref={toggle}
             type="button"
             aria-expanded={expanded}
             aria-controls={`${titleId}-body`}
@@ -122,15 +183,15 @@ export function StatDrawer({ peek, focusIds, groups, experimental, unavailable, 
           </div>
           {!expanded ? (
             <ul className="gutter flex flex-col" aria-label="Values for this serve">
-              {peek.length ? (
-                peek.map((r) => <MetricLine key={r.id} row={r} focus={focusIds.includes(r.id)} />)
+              {peekRows.length ? (
+                peekRows.map((r) => <MetricLine key={r.id} row={r} focus={focusIds.includes(r.id)} />)
               ) : (
                 <li className="py-2 text-footnote text-ink-3">No values measured on this serve.</li>
               )}
             </ul>
           ) : null}
         </div>
-        <div id={`${titleId}-body`} hidden={!expanded} className="gutter min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(24px,env(safe-area-inset-bottom))]">
+        <div ref={body} id={`${titleId}-body`} hidden={!expanded} className="gutter min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(24px,env(safe-area-inset-bottom))]">
           <div className="flex flex-col gap-6 pt-1">
             {header}
             {extras}

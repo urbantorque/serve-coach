@@ -37,12 +37,12 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
   }
 
   return (
-    <div className={cx('flex h-11 items-center', className)}>
+    <div className={cx('flex min-h-11 items-center', className)}>
       <div
         role="radiogroup"
         aria-label={label}
         onKeyDown={onKeyDown}
-        className="flex h-9 w-full items-stretch gap-0.5 rounded-control bg-surface-2 p-0.5"
+        className="flex min-h-9 w-full items-stretch gap-0.5 rounded-control bg-surface-2 p-0.5"
       >
         {options.map((o, i) => {
           const selected = i === index
@@ -58,7 +58,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
               tabIndex={selected ? 0 : -1}
               onClick={() => onChange(o.value)}
               className={cx(
-                'relative flex-1 truncate rounded-control px-2 after:absolute after:inset-x-0 after:-inset-y-1.5',
+                'relative min-w-0 flex-1 rounded-control px-2 py-1 leading-tight break-words [text-wrap:balance] after:absolute after:inset-x-0 after:-inset-y-1.5',
                 selected
                   ? 'border-token border-line-strong bg-surface text-headline text-ink court:border-ink court:bg-ink court:text-ink-inverse'
                   : 'text-subhead text-ink-2 hover:text-ink',

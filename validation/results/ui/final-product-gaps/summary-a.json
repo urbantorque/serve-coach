@@ -1,0 +1,236 @@
+[
+  {
+    "scheme": "light",
+    "name": "match-log-new",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-match-log-new.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "match-log-counted",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-match-log-counted.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "progress-comp-nights-1",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-progress-comp-nights-1.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "progress-comp-nights-2",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-progress-comp-nights-2.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "plus-sheet-t3-season",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-plus-sheet-t3-season.png",
+    "overflow": false,
+    "small": [],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "plan-from-t3",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-plan-from-t3.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "compare-t1-card",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-compare-t1-card.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "plus-sheet-t1",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-plus-sheet-t1.png",
+    "overflow": false,
+    "small": [],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "progress-season-view-plus-1",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-progress-season-view-plus-1.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "progress-season-view-plus-2",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-progress-season-view-plus-2.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "progress-season-view-plus-3",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-progress-season-view-plus-3.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "match-log-new",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-match-log-new.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "match-log-counted",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-match-log-counted.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "progress-comp-nights-1",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-progress-comp-nights-1.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "progress-comp-nights-2",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-progress-comp-nights-2.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "plus-sheet-t3-season",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-plus-sheet-t3-season.png",
+    "overflow": false,
+    "small": [],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "plan-from-t3",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-plan-from-t3.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "compare-t1-card",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-compare-t1-card.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "plus-sheet-t1",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-plus-sheet-t1.png",
+    "overflow": false,
+    "small": [],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "progress-season-view-plus-1",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-progress-season-view-plus-1.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "progress-season-view-plus-2",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-progress-season-view-plus-2.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "progress-season-view-plus-3",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-progress-season-view-plus-3.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  }
+]

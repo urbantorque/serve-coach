@@ -16,6 +16,14 @@
     <!-- Sets data-theme / data-contrast before first paint (DESIGN §13.3). Same-origin, so the CSP allows it. -->
     <script src="/theme-init.js"></script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <!-- Home Screen (platform owner): iOS uses the full-bleed icon and rounds it itself. The web app
+         manifest link is added by vite-plugin-pwa at build time (vite.config.ts). -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Serve Coach" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f1f3ef" media="(prefers-color-scheme: light)" />

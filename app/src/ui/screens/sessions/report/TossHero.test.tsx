@@ -43,12 +43,12 @@ describe('TossHero fallbacks', () => {
   it('shows peak heights when front-to-back positions cannot be drawn', () => {
     renderHero(false)
     expect(screen.getByRole('heading', { name: 'How high your toss peaked on each serve' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /Peak height of each serve, 6 serves/ })).toBeInTheDocument()
+    expect(screen.getByRole('application', { name: /Peak height of each serve, 6 serves/ })).toBeInTheDocument()
   })
   it('shows each peak against the middle one when the phone tilt is unknown', () => {
     renderHero(true)
     expect(screen.getByRole('heading', { name: 'How far each toss peak sat from your middle one' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /above or below the middle one, 6 serves/ })).toBeInTheDocument()
+    expect(screen.getByRole('application', { name: /above or below the middle one, 6 serves/ })).toBeInTheDocument()
     expect(screen.getByText(/tilt wasn't recorded/)).toBeInTheDocument()
     // Absolute heights stay out of the chart with the experimental toggle off.
     expect(screen.queryByText(/middle 3\.\d\d m/)).toBeNull()

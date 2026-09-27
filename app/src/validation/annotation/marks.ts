@@ -6,7 +6,7 @@
 import type { AnnotatedEvent, AnnotatedPoint } from '../../data/domain.ts'
 import type { AnnotatorRole, CheckAnnotation, CheckReference, MarkPoint, RadarDevice } from './types.ts'
 
-export type StepId = 'standing' | 'release' | 'apex' | 'contact' | 'landing' | 'radar'
+export type StepId = 'standing' | 'release' | 'apex' | 'trophy' | 'hips' | 'contact' | 'landing' | 'radar'
 
 export interface StepPoint {
   id: AnnotatedPoint
@@ -39,9 +39,9 @@ export const MARK_STEPS: readonly MarkStep[] = [
   {
     id: 'release',
     title: 'Release',
-    instruction: 'Step to the first frame where the ball has left the hand.',
+    instruction: 'Step to the first frame where the ball has left the hand. For loading, also tap the middle of the hips, level with the hip joints.',
     event: 'tossRelease',
-    points: [],
+    points: [{ id: 'midHipRelease', label: 'Hip centre', optional: true }],
   },
   {
     id: 'apex',
@@ -51,11 +51,34 @@ export const MARK_STEPS: readonly MarkStep[] = [
     points: [{ id: 'ballAtApex', label: 'Ball centre' }],
   },
   {
+    id: 'trophy',
+    title: 'Trophy',
+    instruction:
+      'Step to the trophy position: the tossing arm reaching up and the racket arm bent back, just before the legs push up. Tap the centre of the front shoulder (nearer the net), then the back shoulder.',
+    event: 'trophy',
+    points: [
+      { id: 'shoulderFrontTrophy', label: 'Front shoulder' },
+      { id: 'shoulderBackTrophy', label: 'Back shoulder' },
+    ],
+    optional: true,
+  },
+  {
+    id: 'hips',
+    title: 'Lowest hip',
+    instruction: 'Step to the frame where the hips are lowest, between the toss and the push up. Tap the middle of the hips, level with the hip joints.',
+    event: 'lowestHip',
+    points: [{ id: 'midHipLowest', label: 'Hip centre' }],
+    optional: true,
+  },
+  {
     id: 'contact',
     title: 'Contact',
-    instruction: 'Step to the frame where the strings meet the ball, then tap the centre of the ball.',
+    instruction: 'Step to the frame where the strings meet the ball, then tap the centre of the ball. For leg drive, also tap the middle of the hips.',
     event: 'contact',
-    points: [{ id: 'ballAtContact', label: 'Ball centre' }],
+    points: [
+      { id: 'ballAtContact', label: 'Ball centre' },
+      { id: 'midHipContact', label: 'Hip centre', optional: true },
+    ],
   },
   {
     id: 'landing',
@@ -79,6 +102,8 @@ export const stepById = (id: StepId): MarkStep => MARK_STEPS.find((s) => s.id ==
 export const EVENT_LABEL: Partial<Record<AnnotatedEvent, string>> = {
   tossRelease: 'Release',
   tossApex: 'Peak',
+  trophy: 'Trophy',
+  lowestHip: 'Low hip',
   contact: 'Contact',
   landing: 'Landing',
 }

@@ -2,18 +2,67 @@
  * Deletion cascades (ARCHITECTURE §8.3, D8). Every delete writes a `deletionLog` row with counts only,
  * never content. UI owns confirmation and the 8 s Undo window for serves (it defers the call).
  */
+import type { MetricId, MetricValue } from '../analysis/types.ts'
+import { clearRuntimeCaches } from '../platform/pwa/cacheNames.ts'
 import { getDb } from './db.ts'
-import type { DeletionLogRecord } from './records.ts'
+import type { SessionStats } from './domain.ts'
+import type { AnnotationRecord, DeletionLogRecord, KeyFrameRecord, ServeRecord, ServeTagRecord, TrackRecord } from './records.ts'
+import { HEADER_SEQ, LIVE_GRACE_MS } from './repos/recordings.ts'
 
 async function log(entry: Omit<DeletionLogRecord, 'seq' | 'at'>, now: Date): Promise<void> {
   await getDb().deletionLog.add({ ...entry, at: now.toISOString() })
 }
 
+/** Everything `deleteServe` removed or changed, so the 8 s Undo can put it back exactly. */
+export interface DeletedServeSnapshot {
+  serve: ServeRecord
+  track?: TrackRecord
+  /** Every key frame of the serve, the session's list thumbnail included when this serve held it. */
+  keyFrames: KeyFrameRecord[]
+  tag?: ServeTagRecord
+  annotations: AnnotationRecord[]
+  /** The session statistics as they were before the delete. */
+  stats?: SessionStats
+}
+
+export const DELETED_SERVE_NOTE = 'Includes a serve you deleted; analyse the session again to update.'
+
+/**
+ * The session statistics after one serve is deleted. The stored rows cannot rebuild the engine's
+ * summaries (they need the pose track and raw per-serve results), so the numbers stay, labelled
+ * honestly: every serve-based value the deleted serve fed becomes an early read with a note, and the
+ * serve is dropped from the per-serve values, the best serve and the representative serve.
+ */
+export function statsAfterServeDelete(stats: SessionStats, serve: ServeRecord): SessionStats {
+  const counted = serve.includedFlag === undefined ? serve.included : serve.includedFlag === 1
+  const mark = (m: Partial<Record<MetricId, MetricValue>>) => {
+    if (!counted) return m
+    const out: Partial<Record<MetricId, MetricValue>> = {}
+    for (const [id, v] of Object.entries(m) as [MetricId, MetricValue][]) {
+      const fromServes = !!v && (v.status === 'measured' || v.status === 'estimated') && typeof v.n === 'number' && v.n > 0
+      out[id] = fromServes && !v.basis.includes(DELETED_SERVE_NOTE) ? { ...v, provisional: true, basis: `${v.basis} ${DELETED_SERVE_NOTE}` } : v
+    }
+    return out
+  }
+  const { [serve.id]: _gone, ...derivedPerServe } = stats.derivedPerServe ?? {}
+  const next: SessionStats = {
+    ...stats,
+    metrics: mark(stats.metrics),
+    strata: stats.strata.map((s) => ({ ...s, metrics: mark(s.metrics) })),
+    derivedPerServe,
+    deletedServeIds: [...new Set([...(stats.deletedServeIds ?? []), serve.id])],
+  }
+  if (next.bestServeId === serve.id) delete next.bestServeId
+  if (next.representativeServeId === serve.id) delete next.representativeServeId
+  return next
+}
+
 /**
  * Removes one serve with its tracks, key frames, tag and annotations. Keeps the session video (other
- * serves share it). The cached session statistics are dropped so they are recomputed on next read.
+ * serves share it) and the session statistics, which are labelled as including a deleted serve
+ * (`statsAfterServeDelete`) rather than dropped: nothing else rebuilds them. Returns a snapshot for Undo.
  */
-export async function deleteServe(serveId: string, now: Date = new Date()): Promise<{ removed: boolean }> {
+export async function deleteServe(serveId: string, now: Date = new Date()): Promise<{ removed: boolean; snapshot?: DeletedServeSnapshot }> {
   const db = getDb()
   return db.transaction(
     'rw',
@@ -21,41 +70,90 @@ export async function deleteServe(serveId: string, now: Date = new Date()): Prom
     async () => {
       const serve = await db.serves.get(serveId)
       if (!serve) return { removed: false }
-      const keyFrames = await db.keyFrames.where('serveId').equals(serveId).primaryKeys()
-      const annotations = await db.annotations.where('serveId').equals(serveId).primaryKeys()
-      const hadTrack = (await db.tracks.get(serveId)) ? 1 : 0
-      const hadTag = (await db.tags.get(serveId)) ? 1 : 0
+      const keyFrames = await db.keyFrames.where('serveId').equals(serveId).toArray()
+      const annotations = await db.annotations.where('serveId').equals(serveId).toArray()
+      const track = await db.tracks.get(serveId)
+      const tag = await db.tags.get(serveId)
+      const stats = await db.sessionStats.get(serve.sessionId)
       await db.serves.delete(serveId)
       await db.tracks.delete(serveId)
-      await db.keyFrames.bulkDelete(keyFrames)
+      await db.keyFrames.bulkDelete(keyFrames.map((k) => k.id))
       await db.tags.delete(serveId)
-      await db.annotations.bulkDelete(annotations)
-      await db.sessionStats.delete(serve.sessionId)
+      await db.annotations.bulkDelete(annotations.map((a) => a.id))
+      if (stats) await db.sessionStats.put(statsAfterServeDelete(stats, serve))
       await log(
         {
           scope: 'serve',
           sessionId: serve.sessionId,
-          counts: { serves: 1, tracks: hadTrack, keyFrames: keyFrames.length, tags: hadTag, annotations: annotations.length },
+          counts: { serves: 1, tracks: track ? 1 : 0, keyFrames: keyFrames.length, tags: tag ? 1 : 0, annotations: annotations.length },
         },
         now,
       )
-      return { removed: true }
+      return {
+        removed: true,
+        snapshot: { serve, ...(track ? { track } : {}), keyFrames, ...(tag ? { tag } : {}), annotations, ...(stats ? { stats } : {}) },
+      }
     },
   )
+}
+
+/** Undo for `deleteServe`: puts every removed row and the earlier statistics back (when the session still exists). */
+export async function restoreServe(snapshot: DeletedServeSnapshot): Promise<{ restored: boolean }> {
+  const db = getDb()
+  return db.transaction('rw', [db.sessions, db.serves, db.tracks, db.keyFrames, db.tags, db.annotations, db.sessionStats], async () => {
+    if (!(await db.sessions.get(snapshot.serve.sessionId))) return { restored: false }
+    await db.serves.put(snapshot.serve)
+    if (snapshot.track) await db.tracks.put(snapshot.track)
+    if (snapshot.keyFrames.length) await db.keyFrames.bulkPut(snapshot.keyFrames)
+    if (snapshot.tag) await db.tags.put(snapshot.tag)
+    if (snapshot.annotations.length) await db.annotations.bulkPut(snapshot.annotations)
+    if (snapshot.stats) await db.sessionStats.put(snapshot.stats)
+    return { restored: true }
+  })
+}
+
+/**
+ * True when the player deleted this session (the deletion log keeps its id, never its content). The
+ * analysis pipeline checks it so a run still going when the session was deleted neither recreates the
+ * session nor writes its results (ARCHITECTURE §8.3).
+ */
+export async function wasSessionDeleted(sessionId: string): Promise<boolean> {
+  try {
+    const n = await getDb()
+      .deletionLog.where('scope')
+      .equals('session')
+      .filter((r) => r.sessionId === sessionId)
+      .count()
+    return n > 0
+  } catch {
+    return false
+  }
+}
+
+/** Recording ids whose header says this session took the clip. */
+async function recordingsClaimedBy(sessionId: string): Promise<string[]> {
+  // `seq` alone is not indexed; the header rows are few (at most a handful of recordings are kept).
+  const headers = await getDb()
+    .videoChunks.filter((r) => r.seq === HEADER_SEQ && r.header?.sessionId === sessionId)
+    .toArray()
+  return [...new Set(headers.map((r) => r.recordingId))]
 }
 
 /**
  * Removes a session and everything derived from it. Practice logs and match logs stay (they are not
  * session data). Experiments that used it lose it: a baseline sets `baselineDeleted`, a re-test id is
- * removed, and the stored verdict is cleared so it is recomputed.
+ * removed, and the stored verdict is cleared so it is recomputed. The raw recorder chunks of the clip
+ * this session took are removed too. A run still analysing it is stopped by the caller (the UI's
+ * `cancelAnalysis`); the pipeline also refuses to write for a deleted session (`wasSessionDeleted`).
  */
 export async function deleteSession(sessionId: string, now: Date = new Date()): Promise<{ removed: boolean }> {
   const db = getDb()
+  const claimed = await recordingsClaimedBy(sessionId)
   return db.transaction(
     'rw',
     [
       db.sessions, db.videos, db.videoBlobs, db.serves, db.tracks, db.keyFrames, db.tags, db.tallies,
-      db.sessionStats, db.coaching, db.jobs, db.annotations, db.experiments, db.deletionLog,
+      db.sessionStats, db.coaching, db.jobs, db.annotations, db.experiments, db.videoChunks, db.deletionLog,
     ],
     async () => {
       const session = await db.sessions.get(sessionId)
@@ -71,7 +169,9 @@ export async function deleteSession(sessionId: string, now: Date = new Date()): 
         coaching: await db.coaching.where('sessionId').equals(sessionId).delete(),
         jobs: await db.jobs.where('sessionId').equals(sessionId).delete(),
         annotations: await db.annotations.where('sessionId').equals(sessionId).delete(),
+        recordings: claimed.length,
       }
+      if (claimed.length) await db.videoChunks.where('recordingId').anyOf(claimed).delete()
       await db.videoBlobs.bulkDelete(videoIds)
       await db.videos.bulkDelete(videoIds)
       await db.tallies.delete(sessionId)
@@ -117,9 +217,14 @@ export async function deleteVideo(
   })
 }
 
-export async function deleteAllVideos(now: Date = new Date()): Promise<number> {
+/**
+ * "Delete all videos": every kept clip, and every raw recording still in the recorder's chunk store
+ * (an interrupted clip would otherwise be offered again at the next launch). A recording running now
+ * (`activeIds`, or written in the last few seconds, possibly in another tab) is left alone.
+ */
+export async function deleteAllVideos(now: Date = new Date(), opts: { activeIds?: ReadonlySet<string> } = {}): Promise<number> {
   const db = getDb()
-  return db.transaction('rw', db.videos, db.videoBlobs, db.deletionLog, async () => {
+  return db.transaction('rw', [db.videos, db.videoBlobs, db.videoChunks, db.deletionLog], async () => {
     const live = await db.videos.filter((v) => v.storage !== 'deleted').toArray()
     await db.videoBlobs.clear()
     for (const v of live) {
@@ -127,7 +232,14 @@ export async function deleteAllVideos(now: Date = new Date()): Promise<number> {
       delete next.retainUntil
       await db.videos.put(next)
     }
-    await log({ scope: 'all-videos', counts: { videos: live.length } }, now)
+    const chunks = await db.videoChunks.toArray()
+    const lastWrite = new Map<string, number>()
+    for (const c of chunks) lastWrite.set(c.recordingId, Math.max(lastWrite.get(c.recordingId) ?? 0, c.writtenAt ?? 0))
+    const doomed = [...lastWrite.entries()]
+      .filter(([id, at]) => !opts.activeIds?.has(id) && now.getTime() - at >= LIVE_GRACE_MS)
+      .map(([id]) => id)
+    if (doomed.length) await db.videoChunks.where('recordingId').anyOf(doomed).delete()
+    await log({ scope: 'all-videos', counts: { videos: live.length, recordings: doomed.length } }, now)
     return live.length
   })
 }
@@ -143,12 +255,18 @@ export async function deleteMatchLog(id: string, now: Date = new Date()): Promis
 /**
  * "Delete everything" (typed confirm in the UI): drops the whole database, including match logs, the
  * local events table and the deletion log, then clears web storage. Returns when an empty database is
- * open again. The native video folder and Cache Storage are cleared by the platform layer when it exists.
+ * open again. The service worker's runtime caches are cleared too (the app shell stays, so the app still
+ * opens offline); the native video folder is cleared by the platform layer when it exists. In-memory
+ * screen state (today's body check, a referral, planned re-tests) is reset by the caller
+ * (ui/screens/focus/focusStore.ts `resetFocusStore`), since the data layer never imports the UI.
  */
 export async function deleteEverything(): Promise<void> {
   const db = getDb()
+  // Includes the local usage events (Beta data) and any unfinished recording chunks.
   await db.delete()
   await db.open()
+  // Platform addition: the service worker's runtime caches (sample files and the like); the app shell stays.
+  await clearRuntimeCaches()
   for (const store of ['localStorage', 'sessionStorage'] as const) {
     try {
       globalThis[store]?.clear()

@@ -1,18 +1,18 @@
 import { CheckIcon, FlaskIcon, ShieldCheckIcon } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
-import { useNavigate } from 'react-router'
-import { analysedDaysInMonth, showToast } from '../../../data/index.ts'
+import { useNavigate, useSearchParams } from 'react-router'
+import { listExperiments, listSessions, showToast } from '../../../data/index.ts'
+import { allowance, allowanceLine, monthKey, PLUS_FEATURES } from '../../../entitlement/index.ts'
 import { Button, Card, DelayedSkeleton, ListGroup, ListRow, Screen, SectionLabel, Sheet, Skeleton } from '../../components/index.ts'
 import { cx } from '../../components/cx.ts'
 import { exportDate } from '../../format/dates.ts'
 import { paths } from '../../shell/paths.ts'
 import { PRIVACY_POLICY_SUMMARY } from '../profile/copy.ts'
 import { switchOffTestPlus, switchOnTestPlus, usePlan } from './entitlement.ts'
+import { readPlanLink } from './planLinks.ts'
 import {
   ALWAYS_FREE,
-  allowanceLine,
-  monthKey,
   PLANS,
   planLabel,
   PLUS_ADDS,
@@ -37,18 +37,32 @@ export function PaywallScreen() {
   const [sheet, setSheet] = useState<'terms' | 'privacy' | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const daysUsed = useLiveQuery(() => analysedDaysInMonth(monthKey(now)).catch(() => 0), [now])
+  // The free meter (PRODUCT §5.2): practice days this month, the first loop not counted.
+  const meter = useLiveQuery(
+    async () => allowance(await listSessions({ includeDemo: false }), await listExperiments(), monthKey(now)),
+    [now],
+  )
   const helperId = useId()
+  const [search] = useSearchParams()
+  const link = readPlanLink(search)
 
-  const back = { to: paths.profile(), label: 'You' }
+  const back = link.from ? { to: link.from, label: 'Back' } : { to: paths.profile(), label: 'You' }
   const selected = PLANS.find((p) => p.id === choice)
+  // PRODUCT §6.15 item 1: a headline tied to the moment that brought the player here.
+  const feature = link.feature ? PLUS_FEATURES[link.feature] : null
+  const headline = feature ? `${feature.name} is part of Plus` : link.via === 't1' ? 'That was your first experiment' : 'Keep your experiments going'
+  const pitch = feature
+    ? `${feature.line} Plus also gives you unlimited analysed sessions and your full history.`
+    : link.via === 't1'
+      ? 'Plus keeps this going every week through the season: unlimited analysed sessions, full history and trends, and side-by-side with your best serve.'
+      : 'Plus gives you unlimited analysed sessions, full history and trends, and side-by-side with your best serve.'
 
   const choose = async () => {
     if (!choice) return
     setBusy(true)
     setError(null)
     try {
-      await switchOnTestPlus(choice, new Date())
+      await switchOnTestPlus(choice, new Date(), link.via ?? 'plan', link.feature)
       setThanks(true)
     } catch {
       setError("We couldn't save that. Try again.")
@@ -87,7 +101,7 @@ export function PaywallScreen() {
                 Pick a plan above.
               </p>
             ) : null}
-            <Button variant="secondary" to={paths.profile()}>
+            <Button variant="secondary" to={back.to}>
               Not now
             </Button>
           </>
@@ -125,13 +139,9 @@ export function PaywallScreen() {
 
       <section className="flex flex-col gap-3" aria-labelledby="plan-pitch">
         <h2 id="plan-pitch" className="text-title-1 text-ink">
-          {plan.plus ? 'What Plus includes' : 'Keep your experiments going'}
+          {plan.plus ? 'What Plus includes' : headline}
         </h2>
-        {plan.plus ? null : (
-          <p className="text-callout text-ink-2">
-            Plus gives you unlimited analysed sessions, full history and trends, and side-by-side with your best serve.
-          </p>
-        )}
+        {plan.plus ? null : <p className="text-callout text-ink-2 text-pretty">{pitch}</p>}
       </section>
 
       {plan.plus ? null : (
@@ -177,8 +187,8 @@ export function PaywallScreen() {
             ))}
           </ul>
           <p className="border-t border-line pt-3 text-footnote text-ink-2 tabular-nums">
-            {daysUsed === undefined ? 'Counting analysed days…' : allowanceLine(daysUsed)}. During the beta everything is unlocked, so this is for
-            information only.
+            {meter === undefined ? 'Counting analysed days…' : allowanceLine(meter)}. Your first experiment doesn't count. During the beta, days past
+            the allowance are still analysed.
           </p>
         </div>
       </section>
@@ -217,15 +227,16 @@ export function PaywallScreen() {
         open={thanks}
         onClose={() => {
           setThanks(false)
-          navigate(paths.profile())
+          navigate(link.from ?? paths.profile())
         }}
         title="Plus isn't on sale yet"
         closeStyle="done"
       >
         <div className="flex flex-col gap-3 pb-2">
-          <p className="text-body text-ink">Everything is unlocked during the beta. Thanks for telling us; beta players will get a founder price.</p>
+          <p className="text-body text-ink">Thanks for telling us. Beta players will get a founder price when Plus goes on sale.</p>
           <p className="text-callout text-ink-2">
-            For testing, Plus is now switched on for this phone. No payment was taken, and you can switch it off on this screen.
+            For testing, Plus is now switched on for this phone{feature ? `, so ${feature.name.toLowerCase()} is open` : ''}. No payment was taken, and you can
+            switch it off on this screen.
           </p>
         </div>
       </Sheet>
@@ -257,7 +268,7 @@ function PrototypeBanner() {
   return (
     <div role="note" className="gutter flex min-h-9 items-center gap-2 bg-surface-2 py-2 text-footnote text-ink-2">
       <FlaskIcon size={16} aria-hidden="true" className="shrink-0" />
-      <span className="flex-1">Prototype: no payment is taken. Plan buttons switch a test flag on this phone.</span>
+      <span className="flex-1">Prototype: no payment is taken. A plan button switches on test Plus for this phone, free.</span>
     </div>
   )
 }

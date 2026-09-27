@@ -209,12 +209,12 @@ export function detectTrophy(track: PoseTrack, ref: Reference, releaseT: number,
 
 // ---------- contact: wrist apex ----------
 
-/** Hitting-wrist height maximum within ±0.15 s of `around` (§2.4.5 `wrist-apex`). */
-export function wristApex(track: PoseTrack, ref: Reference, wrist: WristSide, around: number, betaS = 0): MethodEstimate | null {
+/** Hitting-wrist height maximum within ±`halfWindowS` (0.15 s, §2.4.5 `wrist-apex`) of `around`. */
+export function wristApex(track: PoseTrack, ref: Reference, wrist: WristSide, around: number, betaS = 0, halfWindowS = 0.15): MethodEstimate | null {
   let bestT = Number.NaN
   let bestH = -Infinity
   let vis = 0
-  for (const i of rangeIdx(track, around - 0.15, around + 0.15)) {
+  for (const i of rangeIdx(track, around - halfWindowS, around + halfWindowS)) {
     const w = pt(track, i, WRIST[wrist], 0.3)
     if (w && heightOf(ref, w.y) > bestH) {
       bestH = heightOf(ref, w.y)
@@ -233,6 +233,55 @@ export function wristApex(track: PoseTrack, ref: Reference, wrist: WristSide, ar
     if (Math.abs(tv - bestT) <= 1.5 * track.dt) t = tv
   }
   return { method: 'wrist-apex', t: t + betaS, sigma: 0.03 + track.dt, q: 0.5 * Math.min(1, vis) }
+}
+
+/** A wrist counts as above the head from this height (BH), as in the classification (§2.3.4). */
+export const ARM_UP_BH = 0.95
+/** The swing peak is searched in the last part of the chosen arm-up stretch (s); see swingPeakTime. */
+export const SWING_SEARCH_S = 0.25
+/** An arm-up stretch counts as the swing only if its peak is within this of the highest peak (BH). */
+export const SWING_PEAK_MARGIN_BH = 0.08
+
+/**
+ * The swing peak for the fused-event check (D2), found on its own: label-free and not anchored on
+ * the ball or sound estimates, so it can disagree with them. Arm-up stretches are runs of frames in
+ * [from, to] with either wrist above the head (≥ ARM_UP_BH; gaps up to 0.05 s). Contact ends the
+ * swing, so the swing is the LAST stretch that reaches within SWING_PEAK_MARGIN_BH of the highest
+ * peak: a lower blip after it (a mislocated wrist in the follow-through; production session clip,
+ * serve 3, 0.38 s late) does not count. Within that stretch the peak is the highest wrist in its last
+ * SWING_SEARCH_S: the tossing arm, still up at the trophy position, can be higher earlier in the same
+ * stretch. Labels are not used: relabelling itself takes the ball's contact estimate as evidence, so
+ * a wrong ball estimate could otherwise drag the wrist along with it. Returns the time and the wrist
+ * that was higher there, or null.
+ */
+export function swingPeakTime(track: PoseTrack, ref: Reference, from: number, to: number): { t: number; wrist: WristSide } | null {
+  const idx = rangeIdx(track, from, to)
+  const top = (i: number): { h: number; wrist: WristSide } | null => {
+    const l = pt(track, i, LM.LEFT_WRIST, 0.3)
+    const r = pt(track, i, LM.RIGHT_WRIST, 0.3)
+    const hl = l ? heightOf(ref, l.y) : -Infinity
+    const hr = r ? heightOf(ref, r.y) : -Infinity
+    if (!l && !r) return null
+    return hl >= hr ? { h: hl, wrist: 'left' } : { h: hr, wrist: 'right' }
+  }
+  type Sample = { t: number; h: number; wrist: WristSide }
+  const stretches: Sample[][] = []
+  for (const i of idx) {
+    const v = top(i)
+    if (!v || v.h < ARM_UP_BH) continue
+    const s: Sample = { t: track.t[i], h: v.h, wrist: v.wrist }
+    const last = stretches[stretches.length - 1]
+    if (last && s.t - last[last.length - 1].t <= 0.05 + 1e-9) last.push(s)
+    else stretches.push([s])
+  }
+  if (!stretches.length) return null
+  const peakOf = (st: Sample[]) => Math.max(...st.map((x) => x.h))
+  const highest = Math.max(...stretches.map(peakOf))
+  const swing = [...stretches].reverse().find((st) => peakOf(st) >= highest - SWING_PEAK_MARGIN_BH)!
+  const tEnd = swing[swing.length - 1].t
+  let best: Sample | null = null
+  for (const x of swing) if (x.t >= tEnd - SWING_SEARCH_S && (!best || x.h > best.h)) best = x
+  return best ? { t: best.t, wrist: best.wrist } : null
 }
 
 /** The wrist that is higher (and nearer the ball when given) within ±0.1 s of t. */

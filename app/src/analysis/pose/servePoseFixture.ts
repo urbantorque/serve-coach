@@ -25,6 +25,10 @@ export interface ServeFixtureOptions {
   centreX?: number
   floorY?: number
   contactT?: number
+  /** false: the hitting arm stays down the whole time (no swing), as when a toss is caught. */
+  swing?: boolean
+  /** 'catch': after the release the tossing arm stays up and holds at about 1.06 BH (catching the ball). */
+  tossArm?: 'serve' | 'catch'
 }
 
 interface Keyframe {
@@ -64,6 +68,18 @@ function hittingArmKeys(tc: number): { upper: Keyframe[]; fore: Keyframe[] } {
   }
 }
 
+/** No swing: the hitting arm hangs at the side. */
+function restingArmKeys(tc: number): { upper: Keyframe[]; fore: Keyframe[] } {
+  const k = (dt: number, v: number): Keyframe => ({ t: tc + dt, v })
+  return { upper: [k(-2, 0.15), k(3, 0.15)], fore: [k(-2, 0.15), k(3, 0.15)] }
+}
+
+/** A caught toss: released as usual, then the arm comes forward to about 1.06 BH and holds there. */
+function catchingArmKeys(tc: number): Keyframe[] {
+  const k = (dt: number, v: number): Keyframe => ({ t: tc + dt, v })
+  return [k(-2, 0.15), k(-1.2, 0.15), k(-1, 0.15), k(-0.6, PI - 0.15), k(-0.35, PI - 0.25), k(0.1, 2.4), k(0.45, 2.4), k(1.0, 0.15), k(3, 0.15)]
+}
+
 function tossArmKeys(tc: number): Keyframe[] {
   const k = (dt: number, v: number): Keyframe => ({ t: tc + dt, v })
   // Rises to release ~0.6 s before contact, held up through trophy, pulled in before contact.
@@ -100,12 +116,14 @@ export function buildServeFixture(options: ServeFixtureOptions = {}): ServeFixtu
     centreX = 0.5,
     floorY = 0.85,
     contactT = 2,
+    swing = true,
+    tossArm = 'serve',
   } = options
   const frames: PoseFrame[] = []
   const count = Math.round(durationS * fps)
   for (let i = 0; i < count; i++) {
     const t = i / fps
-    const landmarks = poseAt(t, { heightHU, frameAspect, handedness, view, centreX, floorY, contactT })
+    const landmarks = poseAt(t, { heightHU, frameAspect, handedness, view, centreX, floorY, contactT, swing, tossArm })
     frames.push({ frameIndex: i, tReal: t, landmarks, score: 0.95, source: 'injected' })
   }
   return { frames, frameAspect, heightHU, contactT, handedness }
@@ -119,6 +137,8 @@ interface PoseParams {
   centreX: number
   floorY: number
   contactT: number
+  swing: boolean
+  tossArm: 'serve' | 'catch'
 }
 
 /** 3D-ish body point: f = forward (toward the net), l = lateral (+ = player's right), y = image y (HU, down). */
@@ -176,10 +196,10 @@ function poseAt(t: number, p: PoseParams): Landmark[] {
     pts[pinky] = along(0.05 * H, 0.01 * H * Math.sign(s.l))
     pts[thumb] = along(0.035 * H, -0.01 * H * Math.sign(s.l))
   }
-  const hit = hittingArmKeys(p.contactT)
+  const hit = p.swing ? hittingArmKeys(p.contactT) : restingArmKeys(p.contactT)
   const hitUpper = spline(hit.upper, t)
   const hitFore = spline(hit.fore, t)
-  const toss = spline(tossArmKeys(p.contactT), t)
+  const toss = spline(p.tossArm === 'catch' ? catchingArmKeys(p.contactT) : tossArmKeys(p.contactT), t)
   const rightArm = p.handedness === 'right' ? [hitUpper, hitFore] : [toss, toss]
   const leftArm = p.handedness === 'right' ? [toss, toss] : [hitUpper, hitFore]
   arm(LM.RIGHT_SHOULDER, LM.RIGHT_ELBOW, LM.RIGHT_WRIST, LM.RIGHT_PINKY, LM.RIGHT_INDEX, LM.RIGHT_THUMB, rightArm[0], rightArm[1])

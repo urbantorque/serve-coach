@@ -100,7 +100,7 @@ describe('assumed level from the mount answer (METRICS §1.1.3a)', () => {
     expect(rollRatioPerDeg(0.5, 1.8)).toBeCloseTo((0.5 / 1.8) * (Math.PI / 180), 9)
   })
 
-  it('a level mount keeps a typical toss peak estimated; roughly level widens it past the p95 budget', () => {
+  it('a level mount keeps a typical contact height estimated; toss height is over its budget with an assumed level', () => {
     const level = cameraModel(meta, { source: 'import', declaredView: 'side', serveSide: 'deuce', serveNumber: 1, handedness: 'right', playerHeightM: 1.8, playerHeightSource: 'entered', mount: 'level-mount' } as never)
     const rough = cameraModel(meta, { source: 'import', declaredView: 'side', serveSide: 'deuce', serveNumber: 1, handedness: 'right', playerHeightM: 1.8, playerHeightSource: 'entered', mount: 'roughly-level' } as never)
     const unsure = cameraModel(meta, { source: 'import', declaredView: 'side', serveSide: 'deuce', serveNumber: 1, handedness: 'right', playerHeightM: 1.8, playerHeightSource: 'entered', mount: 'tilted-or-unsure' } as never)
@@ -108,13 +108,19 @@ describe('assumed level from the mount answer (METRICS §1.1.3a)', () => {
     expect(level.pitch).toEqual({ value: 0, sigma: 2 })
     expect(rough.pitch?.sigma).toBe(4)
     expect(unsure.tiltStatus).toBe('unknown')
-    const apex = 3.3 / 1.8
-    const a = assumedLevelHeight('toss-apex-height', apex, { cam: level, playerHeightM: 1.8 }, 7.5, 0.5)!
-    const b = assumedLevelHeight('toss-apex-height', apex, { cam: rough, playerHeightM: 1.8 }, 7.5, 0.5)!
+    const contact = 2.7 / 1.8
+    const a = assumedLevelHeight('contact-height-ratio', contact, { cam: level, playerHeightM: 1.8 }, 7.5, 0.5)!
+    const b = assumedLevelHeight('contact-height-ratio', contact, { cam: rough, playerHeightM: 1.8 }, 7.5, 0.5)!
     expect(a.downgrades).toEqual([{ cap: 'estimated', reason: 'TILT_UNKNOWN' }])
     expect(a.widenedP95).toBeLessThanOrEqual(0.05)
-    expect(b.downgrades).toEqual([{ cap: 'experimental', reason: 'PITCH_UNKNOWN' }])
     expect(b.sigmaTilt).toBeCloseTo(2 * a.sigmaTilt, 6)
+    expect(b.widenedP95).toBeGreaterThan(a.widenedP95)
+    // Toss height: its method-only p95 (0.056, truth landmarks) is already over the 0.05 threshold, so
+    // an assumed level makes it experimental whatever the mount (catalogue VALIDATION_LEVELS note).
+    const apex = 3.3 / 1.8
+    const t = assumedLevelHeight('toss-apex-height', apex, { cam: level, playerHeightM: 1.8 }, 7.5, 0.5)!
+    expect(t.downgrades).toEqual([{ cap: 'experimental', reason: 'PITCH_UNKNOWN' }])
+    expect(t.widenedP95).toBeGreaterThan(0.05)
     // Forward positions and angles are not in the budget: they stay experimental (null here).
     expect(assumedLevelHeight('toss-forward', 0, { cam: level, playerHeightM: 1.8 }, 7.5, 0.5)).toBeNull()
   })

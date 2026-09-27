@@ -180,9 +180,11 @@ Annotation uses "Check this serve" (Serve detail → More actions → Check this
 | Mark | Frame rule | Point rule |
 |---|---|---|
 | **Height** (standing reference) | A frame before the toss where the player stands tall and still (both heels down, head level) | **Top of head**: the highest point of the head or hair outline, not a cap's peak. **Heel on the ground**: where a heel meets the court. **Front toe** (optional, needed for forward distances): the tip of the front shoe |
-| **Release** | The **first frame where the ball has left the hand** (a visible gap between ball and fingers) | none |
+| **Release** | The **first frame where the ball has left the hand** (a visible gap between ball and fingers) | **Hip centre** (optional, needed for loading depth): the middle of the hips, level with the hip joints |
 | **Peak** | The frame where the ball is **highest** (lowest y). If two frames tie, the earlier | **Ball centre**: the centre of the ball's blurred outline, not its brightest pixel |
-| **Contact** | The **first frame where the strings meet the ball** (ball and strings touch or overlap) | **Ball centre** as above |
+| **Trophy** (optional; added 2026-09-28) | The **trophy position**: the tossing arm reaching up and the racket arm bent back, just before the legs push up | **Front shoulder** (nearer the net), then **back shoulder**: the centre of each shoulder joint. The tool takes the front shoulder by geometry, as the engine does |
+| **Lowest hip** (optional; added 2026-09-28) | The frame where the **hips are lowest**, between the toss and the push up | **Hip centre** as above |
+| **Contact** | The **first frame where the strings meet the ball** (ball and strings touch or overlap) | **Ball centre** as above. **Hip centre** (optional, needed for leg drive) as above |
 | **Landing** | The **first frame where the front foot is back on the ground** after the serve (the shoe stops dropping) | **Front toe**: the tip of that shoe |
 | **Radar** (optional) | none | The peak speed the radar showed, with its unit (km/h or mph, converted at 1.609) and device |
 
@@ -232,6 +234,8 @@ Each marking phone exports "Export checks" (Check this serve → App vs you → 
 | Knee and shoulder bands (rear) | Two coaches, blinded, three levels | Agreement and weighted κ |
 
 **Gaps in the current tool (`in-app@1`)** [Our inference]. METRICS §5.6 also lists hip centres (leg drive, loading depth), both shoulders at trophy and contact, heel and toe of both feet at release, motion start, the lowest hip frame and the band labels. `in-app@1` does not mark them yet. Until a later tool version adds them, leg drive, loading depth, drive time, trophy pause, shoulder tilt and the bands cannot pass V2 through this protocol; their sessions are still filmed, so the clips can be marked later.
+
+**Update 2026-09-28.** The tool now marks hip centres at release, at their lowest and at contact, the lowest-hip and trophy frames, and both shoulders at trophy (§7.1), and `annotation-eval` reports leg drive and loading depth (MAE ≤ 2.5% of height), drive time (MAE ≤ 2 frames) and the 2D shoulder line at trophy (reported only: the shoulder band is judged by coach agreement). Still not marked: shoulders at contact (rear), heel and toe of both feet at release, motion start, trophy start and end (trophy pause), and the band labels. Nothing has been marked on real footage yet.
 
 ---
 
@@ -298,8 +302,8 @@ Per metric, the thresholds are each metric's `validation.realThreshold` in `docs
 | Toss in front (`toss-forward`) | estimated | V0 all | MAE ≤ 6 cm | MAE ≤ 8 cm | Metrics |
 | Contact in front (`contact-forward`) | estimated | V0 all | MAE ≤ 6 cm | MAE ≤ 10 cm | Metrics |
 | Landing distance (`landing-distance`) | estimated | V0 all | MAE ≤ 6 cm (toe marked) | MAE ≤ 10 cm (tape) | Metrics |
-| Leg drive (`leg-drive`), loading depth (`loading-depth`) | estimated | V1 / V1 / V0 / V0 | MAE ≤ 2.5% of height vs marked hip centres (needs a later tool version, §8) | Leg drive: two-view or IMU hip rise within 2% of height | — |
-| Drive time (`drive-time`) | estimated | V0 all | MAE ≤ 2 frames (needs the lowest-hip frame, §8) | — | — |
+| Leg drive (`leg-drive`), loading depth (`loading-depth`) | estimated | V1 / V1 / V0 / V0 | MAE ≤ 2.5% of height vs marked hip centres (marked since 2026-09-28, §7.1) | Leg drive: two-view or IMU hip rise within 2% of height | Metrics |
+| Drive time (`drive-time`) | estimated | V0 all | MAE ≤ 2 frames (lowest-hip frame marked since 2026-09-28, §7.1) | — | Metrics |
 | Trophy pause (`trophy-pause`) | estimated | V0 all | MAE ≤ 80 ms, after inter-rater agreement is reported (needs trophy frames, §8) | — | — |
 | Spreads (`toss-height-spread`, `toss-forward-spread`, `contact-height-spread`, `rhythm-spread`) | estimated (rhythm spread: measured) | V1 / V1 / V0 / V0 | Cross-day typical error ≤ 25% of the median spread | Within 20% of the triangulated SD | Test–retest |
 | Knee band (rear, `knee-bend-band`), shoulder tilt (`shoulder-tilt-trophy`) | estimated | V0 all | ≥ 80% agreement with coaches; knee band also Krippendorff's α ≥ 0.7 between coaches | — | Bands (later) |

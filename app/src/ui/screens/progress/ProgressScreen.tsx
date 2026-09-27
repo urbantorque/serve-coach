@@ -34,6 +34,8 @@ import {
   stratumOf,
   strataOf,
   stratumWords,
+  minServesFor,
+  trendValue,
   usualRange,
   type SessionBundle,
 } from './insights/history.ts'
@@ -41,6 +43,7 @@ import { useExperiments, useSessionBundles } from './insights/hooks.ts'
 import { pooledRate, rateCounts } from './insights/outcomes.ts'
 import { derived } from './insights/values.ts'
 import { QuestionTile } from './QuestionTile.tsx'
+import { MatchNightsSection } from './matchLog/MatchNightsSection.tsx'
 
 function StratumChips({ options, value, onChange }: { options: { id: string; label: string; count: number }[]; value: string; onChange: (id: string) => void }) {
   if (options.length < 2) return null
@@ -243,13 +246,21 @@ export function ProgressScreen() {
             </Button>
           }
         />
+        {/* Comp nights are their own series and can be logged before any practice session (D11). */}
+        <MatchNightsSection />
       </Screen>
     )
   }
 
   const tile = (metricId: MetricId) => {
-    const series = seriesFor(metricId, sameSetup(metricId), currentKey)
-    return { series, usual: usualRange(series) }
+    const pool = sameSetup(metricId)
+    const series = seriesFor(metricId, pool, currentKey)
+    // The newest session measured this but on too few serves for a trend point (METRICS §4.6): say
+    // that, not "not measured", since its report shows the value.
+    const newest = pool[0]
+    const raw = newest && currentKey ? sessionMetric(newest.stats, metricId, currentKey) : undefined
+    const belowMin = !series.length && raw && trendValue(raw, metricId) !== null && (raw.n ?? 0) < minServesFor(metricId) ? { n: raw.n ?? 0 } : undefined
+    return { series, usual: usualRange(series), belowMin }
   }
   const tossH = tile('toss-height-spread')
   const tossF = tile('toss-forward-spread')
@@ -276,6 +287,7 @@ export function ProgressScreen() {
         label="Height spread"
         series={tossH.series}
         usual={tossH.usual}
+        belowMin={tossH.belowMin}
         stratumLabel={label}
         extra={
           !rear && tossF.series.at(-1) ? (
@@ -305,7 +317,7 @@ export function ProgressScreen() {
         <SectionLabel>
           <span id="contact-rhythm">Contact, rhythm and legs</span>
         </SectionLabel>
-        <QuestionTile headingLevel="h3" question="Is my rhythm steady?" metricId="rhythm-spread" label="Rhythm spread" series={rhythm.series} usual={rhythm.usual} stratumLabel={label} />
+        <QuestionTile headingLevel="h3" question="Is my rhythm steady?" metricId="rhythm-spread" label="Rhythm spread" series={rhythm.series} usual={rhythm.usual} belowMin={rhythm.belowMin} stratumLabel={label} />
         <QuestionTile
           headingLevel="h3"
           question="Am I contacting the ball higher?"
@@ -313,6 +325,7 @@ export function ProgressScreen() {
           label="Contact height"
           series={contact.series}
           usual={contact.usual}
+          belowMin={contact.belowMin}
           stratumLabel={label}
         />
         {!rear ? (
@@ -323,6 +336,7 @@ export function ProgressScreen() {
             label="Hips rose"
             series={legs.series}
             usual={legs.usual}
+            belowMin={legs.belowMin}
             stratumLabel={label}
             extra={
               drive.series.at(-1) ? (
@@ -337,6 +351,8 @@ export function ProgressScreen() {
       <p className="text-footnote text-ink-3">
         Only sessions from the same set-up are compared: {sameSetup().length === 1 ? '1 session' : `${sameSetup().length} sessions`}, {label.toLowerCase()}.
       </p>
+      {/* Comp nights (D11): their own series, never pooled with practice; the season view is Plus. */}
+      <MatchNightsSection practice={{ metricId: 'toss-height-spread', series: tossH.series }} />
     </Screen>
   )
 }

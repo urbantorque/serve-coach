@@ -93,6 +93,11 @@ export async function listPracticeByExperiment(experimentId: string): Promise<Pr
   return getDb().practiceLogs.where('experimentId').equals(experimentId).sortBy('date')
 }
 
+/** Every practice log dated on or after a local YYYY-MM-DD (the load count, COACHING §11.2), oldest first. */
+export async function listPracticeSince(ymd: string): Promise<PracticeLogRecord[]> {
+  return getDb().practiceLogs.where('date').aboveOrEqual(ymd).sortBy('date')
+}
+
 /** The last n logs of one drill, newest first (progression / regression rules, COACHING §12.2). */
 export async function lastLogsForDrill(drillId: string, n: number): Promise<PracticeLogRecord[]> {
   const rows = await getDb().practiceLogs.where('drillId').equals(drillId).sortBy('createdAt')

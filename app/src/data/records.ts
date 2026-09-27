@@ -153,6 +153,35 @@ export interface VideoChunkRecord {
   recordingId: string
   seq: number
   blob: Blob
+  /**
+   * Platform addition (repos/recordings.ts): seq -1 is the recording's header row (an empty blob plus
+   * what the recorder knew when it started, updated at stop and when a session claims the clip), so an
+   * interrupted recording can be offered again on the next launch. Media chunks start at seq 0.
+   */
+  header?: RecordingHeader
+  /** Epoch ms when this chunk was written (cap and clean-up rules). */
+  writtenAt?: number
+}
+
+/**
+ * Platform addition: what an in-app recording needs to be analysed after an interruption. Small and
+ * free of media: facts from the Record flow at start, the tilt log at stop, and the session that took
+ * the clip. `facts` and `capture` are the Record flow's own shapes, kept opaque here.
+ */
+export interface RecordingHeader {
+  mimeType: string
+  /** Epoch ms of the first frame. */
+  startedAt: number
+  /** Set by a clean stop (Stop, 20-minute cap, page hidden). Absent after a crash. */
+  stoppedAt?: number
+  durationS?: number
+  /** The recorder stopped on its own (track ended, error, page hidden, storage full). */
+  interrupted?: boolean
+  /** Record-flow facts at start (RecordingFacts, block, plan); orientation samples are added at stop. */
+  facts?: Record<string, unknown>
+  /** Set when the Record flow saved a session for this clip; chunks go once that session has its video. */
+  sessionId?: string
+  claimedAt?: number
 }
 
 export interface JobRecord {
@@ -277,8 +306,13 @@ export interface MatchLogRecord {
   serviceGames?: number
   doubleFaults?: number
   firstServeRough?: 'under-half' | 'about-half' | 'most' | 'nearly-all'
+  /** product-gaps addition: first serves counted in and attempted (optional; in ≤ attempted). */
+  firstServesIn?: number
+  firstServesAttempted?: number
   cueUsed?: 'yes' | 'no' | 'forgot'
   experimentId?: string
+  /** product-gaps addition: 140 characters; stays on the phone, never exported (like practice notes). */
+  notes?: string
   createdAt: string
   updatedAt: string
   /** Sample data (addition to ARCHITECTURE §7.1). */
@@ -292,6 +326,11 @@ export interface EventRecord {
   /** ISO 8601, bucketed to the hour. */
   at: string
   props: Record<string, string | number | boolean>
+  /**
+   * Platform addition (repos/events.ts): a one-way hash used only to record an event once (one verdict
+   * view per experiment, one rating per decision). Never shown, never exported, never an id.
+   */
+  onceKey?: string
 }
 
 export type AnnotationRecord = ServeAnnotation
@@ -338,8 +377,31 @@ export interface SettingValues {
   onboarding: OnboardingSetting
   /** PWA prototype plan flag (ui-profile addition). Set by the Plan screen's test buttons; no payment. */
   entitlement: EntitlementSetting
+  /**
+   * Platform addition: a random reference for the beta report, so the founder can tell two reports from
+   * one phone apart. Not linked to the player, resettable in Profile > Beta data; '' until first needed.
+   */
+  betaInstallRef: string
+  /** product-gaps addition: when the Plus sheet and card were shown (src/entitlement). Local only. */
+  paywall: PaywallStateSetting
 }
 export type SettingKey = keyof SettingValues
+
+/**
+ * product-gaps addition (PRODUCT §6.15 rules): what the paywall has already shown, so T1 appears once,
+ * T2 once a month, and neither more than once a day. Local only; never sent anywhere.
+ */
+export interface PaywallStateSetting {
+  /** T1: when the first-loop card was first shown, and for which experiment. */
+  t1ShownAt?: string
+  t1ExperimentId?: string
+  /** T2: the months ("YYYY-MM") whose allowance notice was shown. */
+  t2Months?: string[]
+  /** Local day ("YYYY-MM-DD") of the last T1 or T2 showing (once a day outside T3). */
+  lastShownDay?: string
+  /** The last few showings, newest last (at most 20): trigger, feature and time. */
+  log?: { trigger: 't1' | 't2' | 't3'; feature?: string; at: string }[]
+}
 
 /** ui-profile addition: onboarding progress (PRODUCT §6.1). */
 export interface OnboardingSetting {
@@ -360,6 +422,10 @@ export interface EntitlementSetting {
   trialEndsAt?: string
   /** Season pass: the non-renewing end date (ISO). */
   endsAt?: string
+  /** product-gaps addition: the paywall moment that led to the choice (fake-door intent, local only). */
+  via?: 't1' | 't2' | 't3' | 'plan'
+  /** product-gaps addition: the Plus feature named by a T3 sheet, when that led here. */
+  feature?: string
 }
 
 export interface SettingRecord<K extends SettingKey = SettingKey> {
@@ -382,12 +448,14 @@ export const DEFAULT_SETTINGS: SettingValues = {
   theme: { scheme: 'system', courtSide: 'camera' },
   onboarding: { status: 'not-started' },
   entitlement: { tier: 'free', source: 'prototype' },
+  betaInstallRef: '',
+  paywall: {},
 }
 
 export interface DeletionLogRecord {
   seq?: number
   at: string
-  scope: 'serve' | 'session' | 'video' | 'all-videos' | 'retention-sweep' | 'match-log' | 'events-sweep'
+  scope: 'serve' | 'session' | 'video' | 'all-videos' | 'retention-sweep' | 'match-log' | 'events-sweep' | 'recording-sweep'
   /** e.g. { serves: 1, keyFrames: 9 }; never content. */
   counts: Record<string, number>
   sessionId?: string

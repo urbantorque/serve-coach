@@ -33,6 +33,11 @@ import { cx } from '../../components/cx.ts'
 import { exportDate, shortDate } from '../../format/dates.ts'
 import { paths } from '../../shell/paths.ts'
 import { useOnboardingDraft } from '../onboarding/draftStore.ts'
+import { resetFocusStore } from '../focus/focusStore.ts'
+import { cancelAnalysis, useJobs } from '../record/flow/jobs.ts'
+import { activeRecordings } from '../record/live/recorder.ts'
+import { STORAGE_CHANGED_EVENT } from '../../../platform/storage.ts'
+import { StorageProtection } from '../../../platform/ui/StorageProtection.tsx'
 import { EXPORT_FAILED, NO_NETWORK_LINE, STORAGE_FACTS } from './copy.ts'
 import { ChoiceList } from './parts/ChoiceList.tsx'
 import { ConfirmSheet } from './parts/ConfirmSheet.tsx'
@@ -72,11 +77,16 @@ function useStorageEstimate(): { usage: number | null; persisted: boolean | null
     const storage = globalThis.navigator?.storage
     if (!storage) return
     let live = true
-    void Promise.all([storage.estimate?.().catch(() => undefined), storage.persisted?.().catch(() => undefined)]).then(([est, persisted]) => {
-      if (live) setState({ usage: typeof est?.usage === 'number' ? est.usage : null, persisted: typeof persisted === 'boolean' ? persisted : null })
-    })
+    const read = () =>
+      void Promise.all([storage.estimate?.().catch(() => undefined), storage.persisted?.().catch(() => undefined)]).then(([est, persisted]) => {
+        if (live) setState({ usage: typeof est?.usage === 'number' ? est.usage : null, persisted: typeof persisted === 'boolean' ? persisted : null })
+      })
+    read()
+    // Platform addition: read again after the player asks for protection (StorageProtection).
+    window.addEventListener(STORAGE_CHANGED_EVENT, read)
     return () => {
       live = false
+      window.removeEventListener(STORAGE_CHANGED_EVENT, read)
     }
   }, [])
   return state
@@ -192,6 +202,8 @@ export function StoragePrivacyScreen() {
               ? 'Protected from automatic clean-up: No. Add Serve Coach to your Home Screen, or export regularly.'
               : 'Protected from automatic clean-up: not known in this browser. Export regularly to keep a copy.'}
         </p>
+        {/* Platform addition: the browser's storage estimate, and asking again for protection. */}
+        <StorageProtection />
       </Card>
 
       <section className="flex flex-col gap-3" aria-labelledby={`${id}-keep`}>
@@ -414,11 +426,14 @@ export function StoragePrivacyScreen() {
               showToast('Video deleted. Stats and key frames stay.')
               break
             case 'session':
+              // Stop a run still analysing it first, so nothing is written for a deleted session.
+              cancelAnalysis(confirm.row.session.id)
               await deleteSession(confirm.row.session.id)
               showToast('Session deleted.')
               break
             case 'all-videos': {
-              const n = await deleteAllVideos()
+              // Interrupted recordings go too; a recording running now is left alone.
+              const n = await deleteAllVideos(new Date(), { activeIds: activeRecordings })
               showToast(n === 1 ? '1 video deleted.' : `${n} videos deleted.`)
               break
             }
@@ -426,7 +441,11 @@ export function StoragePrivacyScreen() {
               await applyRetention(confirm.next)
               break
             case 'everything': {
+              for (const id of Object.keys(useJobs.getState().jobs)) cancelAnalysis(id)
               await deleteEverything()
+              // In-memory answers (a referral, today's body check, planned re-tests) go too, so they
+              // are not written back to storage by the next change.
+              resetFocusStore()
               useOnboardingDraft.getState().reset()
               await useSettingsStore.getState().hydrate()
               setDeletedAt(new Date())
@@ -474,7 +493,7 @@ function confirmCopy(c: Confirm | null): { title: string; removes: string; keeps
     case 'everything':
       return {
         title: 'Delete everything?',
-        removes: 'Every video, session, stat, tag, log, your profile, comfort notes and settings are deleted from this phone. This cannot be undone.',
+        removes: 'Every video, session, stat, tag, log, usage count, your profile, comfort notes and settings are deleted from this phone. This cannot be undone.',
         keeps: 'Export first if you want a copy.',
         confirmLabel: 'Delete',
         typedWord: 'delete',

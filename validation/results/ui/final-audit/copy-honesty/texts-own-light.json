@@ -1,0 +1,768 @@
+{
+ "import-form-default75-s1": {
+  "url": "http://127.0.0.1:5487/record/import",
+  "text": "Skip to content\nRecord\nImport a video\n\ndefault75-s1.mp4\n\n0:05 · 1080p · 60 fps · upright\n\nChoose another video\nWhere was the camera?\nSide, my hitting-arm side\nThe usual set-up. Most of your report comes from this view.\nSide, other side\nBehind me, raised\nAnalysed as its own view from behind, never mixed with side-view stats.\nSomewhere else\nOnly timing is estimated; this angle doesn't show your toss height reliably.\nHow was the phone mounted?\nLevel mount\nA fence clip or tripod you checked with a level, or a level app.\nRoughly level\nPropped up and pointing straight, not tipped up or down.\nTilted, or not sure\nLeaning on a bag, tipped up or down, or you can't say.\n\nThere's no tilt reading for imports, so heights are experimental. Spreads and timing are not affected. Next time, a fence clip or tripod checked with a level keeps heights as estimates, and recording in the app reads the tilt for you.\n\nThe serves in this video\nSide\nDeuce\nAd\nBoth\nServes\nFirst\nSecond\nMixed\nSpot\nSingles\nDoubles\nMostly\nFlat\nSlice\nKick\nMixed\nAiming\nT\nBody\nWide\nMixed\nFrame rate\n\n60 fps, read from the file.\n\nYou\nYour height (cm)\n180\n\nWe use it to turn your video into centimetres. It never leaves this phone.\n\nWhich hand do you serve with?\nRight\nLeft\n\nThis video has sound. Stored copies never keep sound, so if it can't be removed we keep only the stats and key frames. Your original is unchanged.\n\nOnly import videos you're allowed to use. If the player is under 18, a parent or guardian needs to agree.\n\nAnalyse\nToday\nRecord\nSessions\nProgress",
+  "metrics": []
+ },
+ "processing-default75-s1": {
+  "url": "http://127.0.0.1:5487/processing/01M3J38WDGZXH20E0T07C42AS2",
+  "text": "Skip to content\nRecord\nAnalysing\nMon 28 Sep, 0:05\nSide view, deuce, first serves\n1080p, 60 fps\nFinding serves\n, in progress\nTracking the toss\n, waiting\nTiming each phase\n, waiting\nChoosing your focus\n, waiting\n2%\n\nFinding serves\n\nYou can leave this screen: Record shows the progress and the report opens when it's ready. Keep Serve Coach open while it analyses. It usually takes a minute or two.\n\nCancel analysis\nToday\nRecord\nSessions\nProgress\nWe asked this browser to keep your sessions, so it doesn't clear them to free up space.",
+  "metrics": []
+ },
+ "own-report-default75-s1": {
+  "url": "http://127.0.0.1:5487/sessions/01M3J38WDGZXH20E0T07C42AS2",
+  "text": "Skip to content\nSessions\nMon 28 Sep\n\nSide view, deuce, first serves, 60 fps\n\n1 of 1 serve measured.\n\nCapture: Good · 1 of 1 serve measured\nNext time: Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.\nWe couldn't see enough to coach this time\n\nWe found 1 usable serve. Coaching needs at least 6 from one session.\n\nRecord 12 to 15 serves from one side, with the whole toss in the picture.\n\nSee set-up tips\nYour serve today\nWhere your toss peaked on each serve\nSide view, deuce, first serves\nLower is steadier\n\nNeeds 5 measured tosses to draw this. You have 1.\n\nFrom the side, a toss nearer the camera than your body reads a little high, and a little sideways wobble adds a few centimetres to the spread.\nOutcomes\nTag your serves to see this\n\nIn, net, long or wide takes about 2 seconds a serve.\n\nTag serves\nAll serves\nToss height\nContact\nTiming\nToss height on each serve\nSide view, deuce, first serves\n\nNot enough measured serves to draw this.\n\nIn\nNet\nLong or wide\nNot tagged\nAll\nIn\nMissed\nUntagged\n\nKey:\nEstimate\n\nServe 1\nNot tagged\nToss to hit\n≈ 1.00 s\nToss-to-hit time, about 1.00 seconds, Estimate, likely 0.95 to 1.05 seconds\nEstimate\nNot available from this session\nToss height consistency\nNeeds more serves\nWhy\nToss front-back consistency\nNeeds more serves\nWhy\nContact height\nNeeds more serves\nWhy\nToss-to-hit time\nNeeds more serves\nWhy\nRhythm consistency\nNeeds more serves\nWhy\nLanding distance\nNeeds more serves\nWhy\nLeg drive (hip rise)\nNeeds more serves\nWhy\nShoulder tilt at the top\nNeeds more serves\nWhy\nKnee bend\nNeeds a view from behind\nWhy\nShoulder over shoulder at contact\nNeeds a view from behind\nWhy\nLaunch speed (experimental)\nNeeds 120 fps\nWhy\nSpin\nNot measurable by phone\nWhy\nHow we measured\n\nEarly version: our measurements are checked on simulated serves, not yet on real courts.\n\nVideo kept until Wed 28 Oct.\n\nKeep this video\n\nEngine 1.0.0\n\nTag serves\nToday\nRecord\nSessions\nProgress",
+  "metrics": [
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 1.00 sToss-to-hit time, about 1.00 seconds, Estimate, likely 0.95 to 1.05 seconds"
+   },
+   {
+    "id": "toss-height-spread",
+    "status": "unavailable",
+    "text": "Toss height consistencyNeeds more servesWhy"
+   },
+   {
+    "id": "toss-forward-spread",
+    "status": "unavailable",
+    "text": "Toss front-back consistencyNeeds more servesWhy"
+   },
+   {
+    "id": "contact-height-ratio",
+    "status": "unavailable",
+    "text": "Contact heightNeeds more servesWhy"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "unavailable",
+    "text": "Toss-to-hit timeNeeds more servesWhy"
+   },
+   {
+    "id": "rhythm-spread",
+    "status": "unavailable",
+    "text": "Rhythm consistencyNeeds more servesWhy"
+   },
+   {
+    "id": "landing-distance",
+    "status": "unavailable",
+    "text": "Landing distanceNeeds more servesWhy"
+   },
+   {
+    "id": "leg-drive",
+    "status": "unavailable",
+    "text": "Leg drive (hip rise)Needs more servesWhy"
+   },
+   {
+    "id": "shoulder-tilt-trophy",
+    "status": "unavailable",
+    "text": "Shoulder tilt at the topNeeds more servesWhy"
+   },
+   {
+    "id": "knee-bend-band",
+    "status": "unavailable",
+    "text": "Knee bendNeeds a view from behindWhy"
+   },
+   {
+    "id": "shoulder-over-shoulder-contact",
+    "status": "unavailable",
+    "text": "Shoulder over shoulder at contactNeeds a view from behindWhy"
+   },
+   {
+    "id": "speed-experimental",
+    "status": "unavailable",
+    "text": "Launch speed (experimental)Needs 120 fpsWhy"
+   },
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "SpinNot measurable by phoneWhy"
+   }
+  ]
+ },
+ "own-serve-default75-s1-01M3J38WDGZXH20E0T07C42AS2-s01": {
+  "url": "http://127.0.0.1:5487/sessions/01M3J38WDGZXH20E0T07C42AS2/serves/01M3J38WDGZXH20E0T07C42AS2-s01",
+  "text": "Skip to content\nReport\nServe 1\nServe 1 of 1\nTag\nZoom to you\nContact\nFrame 132 · 2.78 s\n1×\nBody\nToss\nContact\nLegs\nNone\n\nFaded joints: we're less sure where they are.\n\nThis serve\nAll values\nToss-to-hit time\n≈ 1.00 s\nToss-to-hit time, about 1.00 seconds, Estimate, likely 0.95 to 1.05 seconds\nEstimate\nBall drop before contact\n≈ 75 cm\nBall drop before contact, about 75 centimetres, Estimate, likely 73 to 77 centimetres\nEstimate",
+  "metrics": [
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 1.00 sToss-to-hit time, about 1.00 seconds, Estimate, likely 0.95 to 1.05 secondsEstimate"
+   },
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 75 cmBall drop before contact, about 75 centimetres, Estimate, likely 73 to 77 centimetresEstimate"
+   },
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 75 cmBall drop before contact, about 75 centimetres, Estimate, likely 73 to 77 centimetresEstimate"
+   },
+   {
+    "id": "loading-depth",
+    "status": "estimated",
+    "text": "≈ 1% of your heightLoading (hip dip), about 1% of your height, Estimate, likely -5% to 7% of your heightEstimate"
+   },
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 9% of your heightLeg drive (hip rise), about 9% of your height, Estimate, likely 3% to 16% of your heightEstimate"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 1.00 sToss-to-hit time, about 1.00 seconds, Estimate, likely 0.95 to 1.05 secondsEstimate"
+   },
+   {
+    "id": "toss-lateral",
+    "status": "unavailable",
+    "text": "Toss left-rightNeeds a view from behindWhy"
+   },
+   {
+    "id": "trophy-pause",
+    "status": "unavailable",
+    "text": "Pause at the topBody not clearWhy"
+   },
+   {
+    "id": "knee-bend-band",
+    "status": "unavailable",
+    "text": "Knee bendNeeds a view from behindWhy"
+   },
+   {
+    "id": "drive-time",
+    "status": "unavailable",
+    "text": "Drive timeBody not clearWhy"
+   },
+   {
+    "id": "shoulder-over-shoulder-contact",
+    "status": "unavailable",
+    "text": "Shoulder over shoulder at contactNeeds a view from behindWhy"
+   },
+   {
+    "id": "speed-experimental",
+    "status": "unavailable",
+    "text": "Launch speed (experimental)Needs 120 fpsWhy"
+   },
+   {
+    "id": "speed-average-rear",
+    "status": "unavailable",
+    "text": "Average speed to the bounce (experimental)Needs a view from behindWhy"
+   },
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "SpinNot measurable by phoneWhy"
+   }
+  ]
+ },
+ "own-serve-all-default75-s1-01M3J38WDGZXH20E0T07C42AS2-s01": {
+  "url": "http://127.0.0.1:5487/sessions/01M3J38WDGZXH20E0T07C42AS2/serves/01M3J38WDGZXH20E0T07C42AS2-s01",
+  "text": "Skip to content\nReport\nServe 1\nServe 1 of 1\nTag\nZoom to you\nContact\nFrame 132 · 2.78 s\n1×\nBody\nToss\nContact\nLegs\nNone\n\nFaded joints: we're less sure where they are.\n\nThis serve\nShow less\nOutcome\nNot tagged\nTag serve\nKey frames\nSetup\nRelease\nPeak\nTop of swing\nLowest point\nContact\nLanding\nRecovery\nNot clear on this serve\nCompare\nToss\nBall drop before contact\n≈ 75 cm\nBall drop before contact, about 75 centimetres, Estimate, likely 73 to 77 centimetres\nEstimate\nLoading\nLoading (hip dip)\n≈ 1% of your height\nLoading (hip dip), about 1% of your height, Estimate, likely -5% to 7% of your height\nEstimate\nDrive\nLeg drive (hip rise)\n≈ 9% of your height\nLeg drive (hip rise), about 9% of your height, Estimate, likely 3% to 16% of your height\nEstimate\nContact\nToss-to-hit time\n≈ 1.00 s\nToss-to-hit time, about 1.00 seconds, Estimate, likely 0.95 to 1.05 seconds\nEstimate\nNot available from this session\nToss left-right\nNeeds a view from behind\nWhy\nPause at the top\nBody not clear\nWhy\nKnee bend\nNeeds a view from behind\nWhy\nDrive time\nBody not clear\nWhy\nShoulder over shoulder at contact\nNeeds a view from behind\nWhy\nLaunch speed (experimental)\nNeeds 120 fps\nWhy\nAverage speed to the bounce (experimental)\nNeeds a view from behind\nWhy\nSpin\nNot measurable by phone\nWhy",
+  "metrics": [
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 75 cmBall drop before contact, about 75 centimetres, Estimate, likely 73 to 77 centimetresEstimate"
+   },
+   {
+    "id": "loading-depth",
+    "status": "estimated",
+    "text": "≈ 1% of your heightLoading (hip dip), about 1% of your height, Estimate, likely -5% to 7% of your heightEstimate"
+   },
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 9% of your heightLeg drive (hip rise), about 9% of your height, Estimate, likely 3% to 16% of your heightEstimate"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 1.00 sToss-to-hit time, about 1.00 seconds, Estimate, likely 0.95 to 1.05 secondsEstimate"
+   },
+   {
+    "id": "toss-lateral",
+    "status": "unavailable",
+    "text": "Toss left-rightNeeds a view from behindWhy"
+   },
+   {
+    "id": "trophy-pause",
+    "status": "unavailable",
+    "text": "Pause at the topBody not clearWhy"
+   },
+   {
+    "id": "knee-bend-band",
+    "status": "unavailable",
+    "text": "Knee bendNeeds a view from behindWhy"
+   },
+   {
+    "id": "drive-time",
+    "status": "unavailable",
+    "text": "Drive timeBody not clearWhy"
+   },
+   {
+    "id": "shoulder-over-shoulder-contact",
+    "status": "unavailable",
+    "text": "Shoulder over shoulder at contactNeeds a view from behindWhy"
+   },
+   {
+    "id": "speed-experimental",
+    "status": "unavailable",
+    "text": "Launch speed (experimental)Needs 120 fpsWhy"
+   },
+   {
+    "id": "speed-average-rear",
+    "status": "unavailable",
+    "text": "Average speed to the bounce (experimental)Needs a view from behindWhy"
+   },
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "SpinNot measurable by phoneWhy"
+   }
+  ]
+ },
+ "own-metric-capture-default75-s1": {
+  "url": "http://127.0.0.1:5487/metric/capture-quality?session=01M3J38WDGZXH20E0T07C42AS2",
+  "text": "Skip to content\nBack\nCapture quality\n\nExperimental (off)\n\nTurn on experimental metrics in Profile to see this.\n\nThis session has a value. Experimental: we're still checking this method, so treat it as a rough guide. It never feeds coaching.\n\nWhat it is\n\nCan I trust this session's numbers?\n\nHow well we could see this session: Good, Fair or Limited.\n\nHow we measure it\nWe check framing, light, steadiness, frame rate and how clearly we saw the ball and your body on each serve.\nHow sure we are\n\nTested on simulated serves, but those tests can't settle it yet, so it stays experimental.\n\nOn simulated clips, the view check caught all 5 clips filmed from in front instead of the side, and the tilt check turned down all 5 clips with the phone tipped up. The other checks are only tested one by one.\n\nKnown limits\nEvery check so far used computer-generated serves: one simulated player on a rendered court, filmed by our own model of a phone camera. Real players, phones, courts and court lights may do worse.\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "capture-quality",
+    "status": "unavailable",
+    "text": "Experimental (off)Turn on experimental metrics in Profile to see this."
+   }
+  ]
+ },
+ "own-metric-toss-height-default75-s1": {
+  "url": "http://127.0.0.1:5487/metric/toss-apex-height?session=01M3J38WDGZXH20E0T07C42AS2",
+  "text": "Skip to content\nBack\nToss height\n\nNeeds more serves\n\nRecord at least 8 serves from one side.\n\nNot available from this footage.\n\nWhat it is\n\nHow high do I toss?\n\nHow high your toss peaks, as a multiple of your height.\n\nHow we measure it\nWe follow the ball from your toss hand, fit its path, and find the top of its flight.\nWe measure the peak above the court using your height as the scale.\nPeaks above the picture are estimated from the curve of the ball and marked \"Peak estimated\".\nWhat it needs\n30 fps or more\nYes\nToss peak seen\nNot checked\nFeet in the picture\nNot checked\nStanding height in the picture\nNot checked\nPhone tilt known\nNo\n\nFor the session on Mon 28 Sep.\n\nHow sure we are\n\nChecked on simulated serves in daylight. Not yet checked on real courts.\n\nNot yet checked under court lights, so at night it shows as experimental.\n\nAt the recommended set-ups (11 simulated serves filmed 7 to 9 m away), the typical error was about 1% of your height (about 2 cm for you), and 1 in 20 serves was off by about 2.5% of your height (about 5 cm for you) or more.\n\nOur stated range held the true value on 11 of 11 of those serves.\n\nOur pass mark is a typical error within 2.5% of your height, and 1 in 20 serves within 5%. It passed.\n\nFilming closer than about 6 m made heights read low, so those serves are marked experimental. A tilted phone, or one whose tilt we could not read, does the same.\n\nTest details\nKnown limits\nFrom the side, a toss nearer the camera than your body reads a little high, and a little sideways wobble adds a few centimetres to the spread. A view from behind separates the two.\nHeights and distances depend on your entered height, so the whole set could sit a few centimetres high or low. Comparisons with your own serves are sharper than the absolute numbers.\nEvery check so far used computer-generated serves: one simulated player on a rendered court, filmed by our own model of a phone camera. Real players, phones, courts and court lights may do worse.\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "toss-apex-height",
+    "status": "unavailable",
+    "text": "Needs more servesRecord at least 8 serves from one side."
+   }
+  ]
+ },
+ "own-metric-leg-drive-default75-s1": {
+  "url": "http://127.0.0.1:5487/metric/leg-drive?session=01M3J38WDGZXH20E0T07C42AS2",
+  "text": "Skip to content\nBack\nLeg drive (hip rise)\n\nNeeds more serves\n\nRecord at least 8 serves from one side.\n\nNot available from this footage.\n\nWhat it is\n\nAm I using my legs?\n\nHow far your hips rise from their lowest point to contact, as a share of your height. It describes how you use your legs, compared with your own serves.\n\nHow we measure it\nWe track the middle of your hips through the serve.\nWe find their lowest point after the toss.\nWe measure how far they rise by contact, as a share of your height.\nWhat it needs\nSide view\nYes\n30 fps or more\nYes\nToss release found\nNot checked\nContact found\nNot checked\nStanding height in the picture\nNot checked\nHips visible\nNot checked\n\nFor the session on Mon 28 Sep.\n\nHow sure we are\n\nChecked on simulated serves in daylight, on limited evidence so far. Not yet checked on real courts.\n\nNot yet checked under court lights, so at night it shows as experimental.\n\nAt the recommended set-ups (11 simulated serves filmed 7 to 9 m away), the typical error was about 2.5% of your height, and 1 in 20 serves was off by about 3% of your height or more.\n\nOur stated range held the true value on 11 of 11 of those serves.\n\nOur pass mark is a typical error within 2% of your height. It hasn't passed yet.\n\nMost of the error is a steady offset: the tracker reads your hip rise a little low on every serve, so comparisons with your own serves aren't affected.\n\nTest details\nKnown limits\nFrom the side your knees point at the camera at the top of the swing, so we describe your legs by hip rise and hip drop instead of a knee angle. A knee-bend band needs the view from behind.\nBody tracking from phone video is noisier than lab systems, and left and right can swap. We assign sides from the shape of the serve.\nEvery check so far used computer-generated serves: one simulated player on a rendered court, filmed by our own model of a phone camera. Real players, phones, courts and court lights may do worse.\nCompared with your own serves\n\nWe compare this only with your own usual serves. Published trunk angles and professional leg values measure different things, so we don't show them.\n\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "leg-drive",
+    "status": "unavailable",
+    "text": "Needs more servesRecord at least 8 serves from one side."
+   }
+  ]
+ },
+ "own-metric-serve-count-default75-s1": {
+  "url": "http://127.0.0.1:5487/metric/serve-count?session=01M3J38WDGZXH20E0T07C42AS2",
+  "text": "Skip to content\nBack\nServes\n≈ 1 serve\nServes, about 1 serve, Estimate\nEstimate\n\nMon 28 Sep · Side view, deuce, first serves\n\nEstimate: worked out from your video and your height, so it has a margin of error.\n\nWhat it is\n\nHow many serves did I hit?\n\nHow many serves we found in the video.\n\nHow we measure it\nWe find each serve from your toss arm, the ball above your head and the hit.\nWhat it needs\n30 fps or more\nYes\n\nFor the session on Mon 28 Sep.\n\nHow sure we are\n\nChecked on simulated serves in daylight, on limited evidence so far. Not yet checked on real courts.\n\nNot yet checked under court lights, so at night it shows as experimental.\n\nAt the recommended set-ups (11 simulated serves filmed 7 to 9 m away), every serve was found, with no extras, and the same across 95 simulated side-view clips.\n\nOur pass mark is at least 99 of 100 serves found, with no extras. It passed.\n\nRun through the full app, from video to report, two longer simulated sessions of 8 and 16 serves were harder: it found every serve but was unsure of 3 and left them out, so the count read 1 or 2 short. Those serves stay in your list, marked as excluded, and you can include them again.\n\nTest details\nKnown limits\nEvery check so far used computer-generated serves: one simulated player on a rendered court, filmed by our own model of a phone camera. Real players, phones, courts and court lights may do worse.\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "serve-count",
+    "status": "estimated",
+    "text": "≈ 1 serveServes, about 1 serve, Estimate"
+   }
+  ]
+ },
+ "own-metric-spin-default75-s1": {
+  "url": "http://127.0.0.1:5487/metric/spin?session=01M3J38WDGZXH20E0T07C42AS2",
+  "text": "Skip to content\nBack\nSpin\n\nNot measurable by phone\n\nSpin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the serve type you meant instead.\n\nNever measured, whatever the footage.\n\nWhat it is\n\nHow much spin did I use?\n\nHow much spin you put on the ball.\n\nHow we measure it\nA phone video cannot see the ball spinning: it is too small and too blurred. We never estimate it.\nHow sure we are\n\nPhone video can't see spin, so there is nothing to check and it is never shown as a number.\n\nKnown limits\nFrom the side, speed needs 120 fps or more, your height and where you aimed. From behind it needs the court corners tapped and a bounce in the video. The hit sound never gives speed. Spin is never available.\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "Not measurable by phoneSpin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the ser"
+   }
+  ]
+ },
+ "sid-default75-s1": "01M3J38WDGZXH20E0T07C42AS2",
+ "import-form-session": {
+  "url": "http://127.0.0.1:5487/record/import",
+  "text": "Skip to content\nRecord\nImport a video\n\nsession.mp4\n\n1:14 · 1080p · 60 fps · upright\n\nChoose another video\nWhere was the camera?\nSide, my hitting-arm side\nThe usual set-up. Most of your report comes from this view.\nSide, other side\nBehind me, raised\nAnalysed as its own view from behind, never mixed with side-view stats.\nSomewhere else\nOnly timing is estimated; this angle doesn't show your toss height reliably.\nHow was the phone mounted?\nLevel mount\nA fence clip or tripod you checked with a level, or a level app.\nRoughly level\nPropped up and pointing straight, not tipped up or down.\nTilted, or not sure\nLeaning on a bag, tipped up or down, or you can't say.\n\nThere's no tilt reading for imports, so heights are experimental. Spreads and timing are not affected. Next time, a fence clip or tripod checked with a level keeps heights as estimates, and recording in the app reads the tilt for you.\n\nThe serves in this video\nSide\nDeuce\nAd\nBoth\nServes\nFirst\nSecond\nMixed\nSpot\nSingles\nDoubles\nMostly\nFlat\nSlice\nKick\nMixed\nAiming\nT\nBody\nWide\nMixed\nFrame rate\n\n60 fps, read from the file.\n\nYou\nYour height (cm)\n180\n\nWe use it to turn your video into centimetres. It never leaves this phone.\n\nWhich hand do you serve with?\nRight\nLeft\n\nThis video has sound. Stored copies never keep sound, so if it can't be removed we keep only the stats and key frames. Your original is unchanged.\n\nAnalyse\nToday\nRecord\nSessions\nProgress",
+  "metrics": []
+ },
+ "processing-session": {
+  "url": "http://127.0.0.1:5487/processing/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "text": "Skip to content\nRecord\nAnalysing\nMon 28 Sep, 1:14\nSide view, deuce, first serves\n1080p, 60 fps\nFinding serves\n, in progress\nTracking the toss\n, waiting\nTiming each phase\n, waiting\nChoosing your focus\n, waiting\n2%\n\nFinding serves\n\nYou can leave this screen: Record shows the progress and the report opens when it's ready. Keep Serve Coach open while it analyses. It usually takes a minute or two.\n\nCancel analysis\nToday\nRecord\nSessions\nProgress",
+  "metrics": []
+ },
+ "own-report-session": {
+  "url": "http://127.0.0.1:5487/sessions/01M3J39XT9SQ7ZND8WDA19EFMF",
+  "text": "Skip to content\nSessions\nMon 28 Sep\n\nSide view, deuce, first serves, 60 fps\n\n8 of 8 serves measured.\n\nCapture: Good · 8 of 8 serves measured\nNext time: Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.\nYour focus\nNothing clear to change\n\nKeep building consistency. Your toss and timing were steady on most serves.\n\nYour serve today\nHow far each toss peak sat from your middle one\nSide view, deuce, first serves\nLower is steadier\nHeight spread\nNeeds more serves\nToss height consistency: Not available. Needs more serves.\nNot available\nmiddle toss\n-20\n0\n+20 cm\nThe phone's tilt wasn't recorded, so peak heights are experimental. How far each peak sat from the middle one doesn't depend on the tilt.\nFrom the side, a toss nearer the camera than your body reads a little high, and a little sideways wobble adds a few centimetres to the spread.\nShow as table\nRhythm consistency\n≈ 40 ms\nRhythm consistency, about 40 milliseconds, Estimate, likely 10 to 95 milliseconds, 8 of 8 serves\nlikely 10 to 95 ms\n8 of 8 serves\nEstimate\nEarly read\nToss-to-hit time\n≈ 0.90 s\nToss-to-hit time, about 0.90 seconds, Estimate, likely 0.81 to 0.96 seconds, 8 of 8 serves\nlikely 0.81 to 0.96 s\n8 of 8 serves\nEstimate\nEarly read\nLeg drive (hip rise)\nHips rose\n≈ 11% of your height\nLeg drive (hip rise), about 11% of your height, Estimate, likely 7% to 14% of your height, 8 of 8 serves\n8 of 8 serves\nEstimate\nEarly read\nBefore that, your hips dropped\n≈ 2% of your height\nLoading (hip dip), about 2% of your height, Estimate, likely -1% to 5% of your height, 8 of 8 serves\nEstimate\nMore measurements\nOutcomes\nTag your serves to see this\n\nIn, net, long or wide takes about 2 seconds a serve.\n\nTag serves\nAll serves\nToss height\nContact\nTiming\nToss height on each serve\nSide view, deuce, first serves\n\nNot enough measured serves to draw this.\n\nIn\nNet\nLong or wide\nNot tagged\nAll\nIn\nMissed\nUntagged\n\nKey:\nEstimate\n\nServe 1\nNot tagged\nToss to hit\n≈ 0.86 s\nToss-to-hit time, about 0.86 seconds, Estimate, likely 0.81 to 0.91 seconds\nEstimate\nServe 2\nNot tagged\nToss to hit\n≈ 0.89 s\nToss-to-hit time, about 0.89 seconds, Estimate, likely 0.84 to 0.94 seconds\nEstimate\nServe 3\nNot tagged\nToss to hit\n≈ 0.90 s\nToss-to-hit time, about 0.90 seconds, Estimate, likely 0.85 to 0.95 seconds\nEstimate\nServe 4\nNot tagged\nToss to hit\n≈ 0.81 s\nToss-to-hit time, about 0.81 seconds, Estimate, likely 0.76 to 0.86 seconds\nEstimate\nServe 5\nNot tagged\nToss to hit\n≈ 0.94 s\nToss-to-hit time, about 0.94 seconds, Estimate, likely 0.90 to 0.99 seconds\nEstimate\nServe 6\nNot tagged\nToss to hit\n≈ 0.88 s\nToss-to-hit time, about 0.88 seconds, Estimate, likely 0.83 to 0.93 seconds\nEstimate\nServe 7\nNot tagged\nToss to hit\n≈ 0.96 s\nToss-to-hit time, about 0.96 seconds, Estimate, likely 0.91 to 1.01 seconds\nEstimate\nServe 8\nNot tagged\nToss to hit\n≈ 0.92 s\nToss-to-hit time, about 0.92 seconds, Estimate, likely 0.88 to 0.97 seconds\nEstimate\nNot available from this session\nToss height consistency\nNeeds more serves\nWhy\nKnee bend\nNeeds a view from behind\nWhy\nShoulder over shoulder at contact\nNeeds a view from behind\nWhy\nLaunch speed (experimental)\nNeeds 120 fps\nWhy\nSpin\nNot measurable by phone\nWhy\nHow we measured\n\nEarly version: our measurements are checked on simulated serves, not yet on real courts.\n\nVideo kept until Wed 28 Oct.\n\nKeep this video\n\nEngine 1.0.0\n\nTag serves\nToday\nRecord\nSessions\nProgress",
+  "metrics": [
+   {
+    "id": "toss-height-spread",
+    "status": "unavailable",
+    "text": "Needs more servesToss height consistency: Not available. Needs more serves."
+   },
+   {
+    "id": "rhythm-spread",
+    "status": "estimated",
+    "text": "≈ 40 msRhythm consistency, about 40 milliseconds, Estimate, likely 10 to 95 milliseconds, 8 of 8 serves"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.90 sToss-to-hit time, about 0.90 seconds, Estimate, likely 0.81 to 0.96 seconds, 8 of 8 serves"
+   },
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 11% of your heightLeg drive (hip rise), about 11% of your height, Estimate, likely 7% to 14% of your height, 8 of 8 serves"
+   },
+   {
+    "id": "loading-depth",
+    "status": "estimated",
+    "text": "≈ 2% of your heightLoading (hip dip), about 2% of your height, Estimate, likely -1% to 5% of your height, 8 of 8 servesEstimate"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.86 sToss-to-hit time, about 0.86 seconds, Estimate, likely 0.81 to 0.91 seconds"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.89 sToss-to-hit time, about 0.89 seconds, Estimate, likely 0.84 to 0.94 seconds"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.90 sToss-to-hit time, about 0.90 seconds, Estimate, likely 0.85 to 0.95 seconds"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.81 sToss-to-hit time, about 0.81 seconds, Estimate, likely 0.76 to 0.86 seconds"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.94 sToss-to-hit time, about 0.94 seconds, Estimate, likely 0.90 to 0.99 seconds"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.88 sToss-to-hit time, about 0.88 seconds, Estimate, likely 0.83 to 0.93 seconds"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.96 sToss-to-hit time, about 0.96 seconds, Estimate, likely 0.91 to 1.01 seconds"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.92 sToss-to-hit time, about 0.92 seconds, Estimate, likely 0.88 to 0.97 seconds"
+   },
+   {
+    "id": "toss-height-spread",
+    "status": "unavailable",
+    "text": "Toss height consistencyNeeds more servesWhy"
+   },
+   {
+    "id": "knee-bend-band",
+    "status": "unavailable",
+    "text": "Knee bendNeeds a view from behindWhy"
+   },
+   {
+    "id": "shoulder-over-shoulder-contact",
+    "status": "unavailable",
+    "text": "Shoulder over shoulder at contactNeeds a view from behindWhy"
+   },
+   {
+    "id": "speed-experimental",
+    "status": "unavailable",
+    "text": "Launch speed (experimental)Needs 120 fpsWhy"
+   },
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "SpinNot measurable by phoneWhy"
+   }
+  ]
+ },
+ "own-serve-session-01M3J39XT9SQ7ZND8WDA19EFMF-s01": {
+  "url": "http://127.0.0.1:5487/sessions/01M3J39XT9SQ7ZND8WDA19EFMF/serves/01M3J39XT9SQ7ZND8WDA19EFMF-s01",
+  "text": "Skip to content\nReport\nServe 1\nServe 1 of 8\nTag\nZoom to you\nContact\nFocus\nFrame 135 · 4.57 s\n1×\nBody\nToss\nContact\nLegs\nNone\n\nFaded joints: we're less sure where they are.\n\nThis serve\nAll values\nToss-to-hit time\n≈ 0.86 s\nToss-to-hit time, about 0.86 seconds, Estimate, likely 0.81 to 0.91 seconds\nEstimate\nBall drop before contact\n≈ 44 cm\nBall drop before contact, about 44 centimetres, Estimate, likely 43 to 45 centimetres\nEstimate",
+  "metrics": [
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.86 sToss-to-hit time, about 0.86 seconds, Estimate, likely 0.81 to 0.91 secondsEstimate"
+   },
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 44 cmBall drop before contact, about 44 centimetres, Estimate, likely 43 to 45 centimetresEstimate"
+   },
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 44 cmBall drop before contact, about 44 centimetres, Estimate, likely 43 to 45 centimetresEstimate"
+   },
+   {
+    "id": "loading-depth",
+    "status": "estimated",
+    "text": "≈ 1% of your heightLoading (hip dip), about 1% of your height, Estimate, likely -5% to 8% of your heightEstimate"
+   },
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 12% of your heightLeg drive (hip rise), about 12% of your height, Estimate, likely 6% to 18% of your heightEstimate"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.86 sToss-to-hit time, about 0.86 seconds, Estimate, likely 0.81 to 0.91 secondsEstimate"
+   },
+   {
+    "id": "toss-lateral",
+    "status": "unavailable",
+    "text": "Toss left-rightNeeds a view from behindWhy"
+   },
+   {
+    "id": "trophy-pause",
+    "status": "unavailable",
+    "text": "Pause at the topBody not clearWhy"
+   },
+   {
+    "id": "knee-bend-band",
+    "status": "unavailable",
+    "text": "Knee bendNeeds a view from behindWhy"
+   },
+   {
+    "id": "drive-time",
+    "status": "unavailable",
+    "text": "Drive timeBody not clearWhy"
+   },
+   {
+    "id": "shoulder-over-shoulder-contact",
+    "status": "unavailable",
+    "text": "Shoulder over shoulder at contactNeeds a view from behindWhy"
+   },
+   {
+    "id": "speed-experimental",
+    "status": "unavailable",
+    "text": "Launch speed (experimental)Needs 120 fpsWhy"
+   },
+   {
+    "id": "speed-average-rear",
+    "status": "unavailable",
+    "text": "Average speed to the bounce (experimental)Needs a view from behindWhy"
+   },
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "SpinNot measurable by phoneWhy"
+   }
+  ]
+ },
+ "own-serve-all-session-01M3J39XT9SQ7ZND8WDA19EFMF-s01": {
+  "url": "http://127.0.0.1:5487/sessions/01M3J39XT9SQ7ZND8WDA19EFMF/serves/01M3J39XT9SQ7ZND8WDA19EFMF-s01",
+  "text": "Skip to content\nReport\nServe 1\nServe 1 of 8\nTag\nZoom to you\nContact\nFocus\nFrame 135 · 4.57 s\n1×\nBody\nToss\nContact\nLegs\nNone\n\nFaded joints: we're less sure where they are.\n\nThis serve\nShow less\nOutcome\nNot tagged\nTag serve\nKey frames\nSetup\nRelease\nPeak\nTop of swing\nLowest point\nContact\nFocus\nLanding\nRecovery\nCompare\nToss\nBall drop before contact\n≈ 44 cm\nBall drop before contact, about 44 centimetres, Estimate, likely 43 to 45 centimetres\nEstimate\nLoading\nLoading (hip dip)\n≈ 1% of your height\nLoading (hip dip), about 1% of your height, Estimate, likely -5% to 8% of your height\nEstimate\nDrive\nLeg drive (hip rise)\n≈ 12% of your height\nLeg drive (hip rise), about 12% of your height, Estimate, likely 6% to 18% of your height\nEstimate\nContact\nToss-to-hit time\n≈ 0.86 s\nToss-to-hit time, about 0.86 seconds, Estimate, likely 0.81 to 0.91 seconds\nEstimate\nNot available from this session\nToss left-right\nNeeds a view from behind\nWhy\nPause at the top\nBody not clear\nWhy\nKnee bend\nNeeds a view from behind\nWhy\nDrive time\nBody not clear\nWhy\nShoulder over shoulder at contact\nNeeds a view from behind\nWhy\nLaunch speed (experimental)\nNeeds 120 fps\nWhy\nAverage speed to the bounce (experimental)\nNeeds a view from behind\nWhy\nSpin\nNot measurable by phone\nWhy",
+  "metrics": [
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 44 cmBall drop before contact, about 44 centimetres, Estimate, likely 43 to 45 centimetresEstimate"
+   },
+   {
+    "id": "loading-depth",
+    "status": "estimated",
+    "text": "≈ 1% of your heightLoading (hip dip), about 1% of your height, Estimate, likely -5% to 8% of your heightEstimate"
+   },
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 12% of your heightLeg drive (hip rise), about 12% of your height, Estimate, likely 6% to 18% of your heightEstimate"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.86 sToss-to-hit time, about 0.86 seconds, Estimate, likely 0.81 to 0.91 secondsEstimate"
+   },
+   {
+    "id": "toss-lateral",
+    "status": "unavailable",
+    "text": "Toss left-rightNeeds a view from behindWhy"
+   },
+   {
+    "id": "trophy-pause",
+    "status": "unavailable",
+    "text": "Pause at the topBody not clearWhy"
+   },
+   {
+    "id": "knee-bend-band",
+    "status": "unavailable",
+    "text": "Knee bendNeeds a view from behindWhy"
+   },
+   {
+    "id": "drive-time",
+    "status": "unavailable",
+    "text": "Drive timeBody not clearWhy"
+   },
+   {
+    "id": "shoulder-over-shoulder-contact",
+    "status": "unavailable",
+    "text": "Shoulder over shoulder at contactNeeds a view from behindWhy"
+   },
+   {
+    "id": "speed-experimental",
+    "status": "unavailable",
+    "text": "Launch speed (experimental)Needs 120 fpsWhy"
+   },
+   {
+    "id": "speed-average-rear",
+    "status": "unavailable",
+    "text": "Average speed to the bounce (experimental)Needs a view from behindWhy"
+   },
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "SpinNot measurable by phoneWhy"
+   }
+  ]
+ },
+ "own-serve-session-01M3J39XT9SQ7ZND8WDA19EFMF-s02": {
+  "url": "http://127.0.0.1:5487/sessions/01M3J39XT9SQ7ZND8WDA19EFMF/serves/01M3J39XT9SQ7ZND8WDA19EFMF-s02",
+  "text": "Skip to content\nReport\nServe 2\nServe 2 of 8\nTag\nZoom to you\nContact\nFocus\nFrame 135 · 14.03 s\n1×\nBody\nToss\nContact\nLegs\nNone\n\nFaded joints: we're less sure where they are.\n\nThis serve\nAll values\nToss-to-hit time\n≈ 0.89 s\nToss-to-hit time, about 0.89 seconds, Estimate, likely 0.84 to 0.94 seconds\nEstimate\nBall drop before contact\n≈ 51 cm\nBall drop before contact, about 51 centimetres, Estimate, likely 50 to 52 centimetres\nEstimate",
+  "metrics": [
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.89 sToss-to-hit time, about 0.89 seconds, Estimate, likely 0.84 to 0.94 secondsEstimate"
+   },
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 51 cmBall drop before contact, about 51 centimetres, Estimate, likely 50 to 52 centimetresEstimate"
+   },
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 51 cmBall drop before contact, about 51 centimetres, Estimate, likely 50 to 52 centimetresEstimate"
+   },
+   {
+    "id": "loading-depth",
+    "status": "estimated",
+    "text": "≈ 2% of your heightLoading (hip dip), about 2% of your height, Estimate, likely -4% to 9% of your heightEstimate"
+   },
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 11% of your heightLeg drive (hip rise), about 11% of your height, Estimate, likely 4% to 17% of your heightEstimate"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.89 sToss-to-hit time, about 0.89 seconds, Estimate, likely 0.84 to 0.94 secondsEstimate"
+   },
+   {
+    "id": "toss-lateral",
+    "status": "unavailable",
+    "text": "Toss left-rightNeeds a view from behindWhy"
+   },
+   {
+    "id": "trophy-pause",
+    "status": "unavailable",
+    "text": "Pause at the topBody not clearWhy"
+   },
+   {
+    "id": "knee-bend-band",
+    "status": "unavailable",
+    "text": "Knee bendNeeds a view from behindWhy"
+   },
+   {
+    "id": "drive-time",
+    "status": "unavailable",
+    "text": "Drive timeBody not clearWhy"
+   },
+   {
+    "id": "shoulder-over-shoulder-contact",
+    "status": "unavailable",
+    "text": "Shoulder over shoulder at contactNeeds a view from behindWhy"
+   },
+   {
+    "id": "speed-experimental",
+    "status": "unavailable",
+    "text": "Launch speed (experimental)Needs 120 fpsWhy"
+   },
+   {
+    "id": "speed-average-rear",
+    "status": "unavailable",
+    "text": "Average speed to the bounce (experimental)Needs a view from behindWhy"
+   },
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "SpinNot measurable by phoneWhy"
+   }
+  ]
+ },
+ "own-serve-all-session-01M3J39XT9SQ7ZND8WDA19EFMF-s02": {
+  "url": "http://127.0.0.1:5487/sessions/01M3J39XT9SQ7ZND8WDA19EFMF/serves/01M3J39XT9SQ7ZND8WDA19EFMF-s02",
+  "text": "Skip to content\nReport\nServe 2\nServe 2 of 8\nTag\nZoom to you\nContact\nFocus\nFrame 135 · 14.03 s\n1×\nBody\nToss\nContact\nLegs\nNone\n\nFaded joints: we're less sure where they are.\n\nThis serve\nShow less\nOutcome\nNot tagged\nTag serve\nKey frames\nSetup\nRelease\nPeak\nTop of swing\nLowest point\nContact\nFocus\nLanding\nRecovery\nCompare\nToss\nBall drop before contact\n≈ 51 cm\nBall drop before contact, about 51 centimetres, Estimate, likely 50 to 52 centimetres\nEstimate\nLoading\nLoading (hip dip)\n≈ 2% of your height\nLoading (hip dip), about 2% of your height, Estimate, likely -4% to 9% of your height\nEstimate\nDrive\nLeg drive (hip rise)\n≈ 11% of your height\nLeg drive (hip rise), about 11% of your height, Estimate, likely 4% to 17% of your height\nEstimate\nContact\nToss-to-hit time\n≈ 0.89 s\nToss-to-hit time, about 0.89 seconds, Estimate, likely 0.84 to 0.94 seconds\nEstimate\nNot available from this session\nToss left-right\nNeeds a view from behind\nWhy\nPause at the top\nBody not clear\nWhy\nKnee bend\nNeeds a view from behind\nWhy\nDrive time\nBody not clear\nWhy\nShoulder over shoulder at contact\nNeeds a view from behind\nWhy\nLaunch speed (experimental)\nNeeds 120 fps\nWhy\nAverage speed to the bounce (experimental)\nNeeds a view from behind\nWhy\nSpin\nNot measurable by phone\nWhy",
+  "metrics": [
+   {
+    "id": "toss-drop",
+    "status": "estimated",
+    "text": "≈ 51 cmBall drop before contact, about 51 centimetres, Estimate, likely 50 to 52 centimetresEstimate"
+   },
+   {
+    "id": "loading-depth",
+    "status": "estimated",
+    "text": "≈ 2% of your heightLoading (hip dip), about 2% of your height, Estimate, likely -4% to 9% of your heightEstimate"
+   },
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 11% of your heightLeg drive (hip rise), about 11% of your height, Estimate, likely 4% to 17% of your heightEstimate"
+   },
+   {
+    "id": "rhythm-release-to-contact",
+    "status": "estimated",
+    "text": "≈ 0.89 sToss-to-hit time, about 0.89 seconds, Estimate, likely 0.84 to 0.94 secondsEstimate"
+   },
+   {
+    "id": "toss-lateral",
+    "status": "unavailable",
+    "text": "Toss left-rightNeeds a view from behindWhy"
+   },
+   {
+    "id": "trophy-pause",
+    "status": "unavailable",
+    "text": "Pause at the topBody not clearWhy"
+   },
+   {
+    "id": "knee-bend-band",
+    "status": "unavailable",
+    "text": "Knee bendNeeds a view from behindWhy"
+   },
+   {
+    "id": "drive-time",
+    "status": "unavailable",
+    "text": "Drive timeBody not clearWhy"
+   },
+   {
+    "id": "shoulder-over-shoulder-contact",
+    "status": "unavailable",
+    "text": "Shoulder over shoulder at contactNeeds a view from behindWhy"
+   },
+   {
+    "id": "speed-experimental",
+    "status": "unavailable",
+    "text": "Launch speed (experimental)Needs 120 fpsWhy"
+   },
+   {
+    "id": "speed-average-rear",
+    "status": "unavailable",
+    "text": "Average speed to the bounce (experimental)Needs a view from behindWhy"
+   },
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "SpinNot measurable by phoneWhy"
+   }
+  ]
+ },
+ "own-metric-capture-session": {
+  "url": "http://127.0.0.1:5487/metric/capture-quality?session=01M3J39XT9SQ7ZND8WDA19EFMF",
+  "text": "Skip to content\nBack\nCapture quality\n\nExperimental (off)\n\nTurn on experimental metrics in Profile to see this.\n\nThis session has a value. Experimental: we're still checking this method, so treat it as a rough guide. It never feeds coaching.\n\nWhat it is\n\nCan I trust this session's numbers?\n\nHow well we could see this session: Good, Fair or Limited.\n\nHow we measure it\nWe check framing, light, steadiness, frame rate and how clearly we saw the ball and your body on each serve.\nHow sure we are\n\nTested on simulated serves, but those tests can't settle it yet, so it stays experimental.\n\nOn simulated clips, the view check caught all 5 clips filmed from in front instead of the side, and the tilt check turned down all 5 clips with the phone tipped up. The other checks are only tested one by one.\n\nKnown limits\nEvery check so far used computer-generated serves: one simulated player on a rendered court, filmed by our own model of a phone camera. Real players, phones, courts and court lights may do worse.\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "capture-quality",
+    "status": "unavailable",
+    "text": "Experimental (off)Turn on experimental metrics in Profile to see this."
+   }
+  ]
+ },
+ "own-metric-toss-height-session": {
+  "url": "http://127.0.0.1:5487/metric/toss-apex-height?session=01M3J39XT9SQ7ZND8WDA19EFMF",
+  "text": "Skip to content\nBack\nToss height\n\nExperimental (off)\n\nTurn on experimental metrics in Profile to see this.\n\nThis session has a value. Experimental: we're still checking this method, so treat it as a rough guide. It never feeds coaching.\n\nWhat it is\n\nHow high do I toss?\n\nHow high your toss peaks, as a multiple of your height.\n\nHow we measure it\nWe follow the ball from your toss hand, fit its path, and find the top of its flight.\nWe measure the peak above the court using your height as the scale.\nPeaks above the picture are estimated from the curve of the ball and marked \"Peak estimated\".\nWhat it needs\n30 fps or more\nYes\nToss peak seen\nYes\nFeet in the picture\nYes\nStanding height in the picture\nYes\nPhone tilt known\nNo\n\nFor the session on Mon 28 Sep.\n\nHow sure we are\n\nChecked on simulated serves in daylight. Not yet checked on real courts.\n\nNot yet checked under court lights, so at night it shows as experimental.\n\nAt the recommended set-ups (11 simulated serves filmed 7 to 9 m away), the typical error was about 1% of your height (about 2 cm for you), and 1 in 20 serves was off by about 2.5% of your height (about 5 cm for you) or more.\n\nOur stated range held the true value on 11 of 11 of those serves.\n\nOur pass mark is a typical error within 2.5% of your height, and 1 in 20 serves within 5%. It passed.\n\nFilming closer than about 6 m made heights read low, so those serves are marked experimental. A tilted phone, or one whose tilt we could not read, does the same.\n\nTest details\nKnown limits\nFrom the side, a toss nearer the camera than your body reads a little high, and a little sideways wobble adds a few centimetres to the spread. A view from behind separates the two.\nHeights and distances depend on your entered height, so the whole set could sit a few centimetres high or low. Comparisons with your own serves are sharper than the absolute numbers.\nEvery check so far used computer-generated serves: one simulated player on a rendered court, filmed by our own model of a phone camera. Real players, phones, courts and court lights may do worse.\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "toss-apex-height",
+    "status": "unavailable",
+    "text": "Experimental (off)Turn on experimental metrics in Profile to see this."
+   }
+  ]
+ },
+ "own-metric-leg-drive-session": {
+  "url": "http://127.0.0.1:5487/metric/leg-drive?session=01M3J39XT9SQ7ZND8WDA19EFMF",
+  "text": "Skip to content\nBack\nLeg drive (hip rise)\n≈ 11% of your height\nLeg drive (hip rise), about 11% of your height, Estimate, likely 7% to 14% of your height, 8 of 8 serves\nEstimate\nEarly read\n\nlikely 7% to 14% of your height\n\nMon 28 Sep, 8 of 8 serves · Side view, deuce, first serves\n\nCouldn't see this clearly. Building your range: {k} of 2 sessions from this set-up.\n\nEstimate: worked out from your video and your height, so it has a margin of error.\n\nWhat it is\n\nAm I using my legs?\n\nHow far your hips rise from their lowest point to contact, as a share of your height. It describes how you use your legs, compared with your own serves.\n\nYour trend\n≈ 11% of your height\nEstimate\nSide view, deuce, first serves\n\nBuilding your baseline (1 of 2 sessions). Record another from the same side to see a trend.\n\nHow we measure it\nWe track the middle of your hips through the serve.\nWe find their lowest point after the toss.\nWe measure how far they rise by contact, as a share of your height.\nWhat it needs\nSide view\nYes\n30 fps or more\nYes\nToss release found\nYes\nContact found\nYes\nStanding height in the picture\nYes\nHips visible\nYes\n\nFor the session on Mon 28 Sep.\n\nHow sure we are\n\nChecked on simulated serves in daylight, on limited evidence so far. Not yet checked on real courts.\n\nNot yet checked under court lights, so at night it shows as experimental.\n\nAt the recommended set-ups (11 simulated serves filmed 7 to 9 m away), the typical error was about 2.5% of your height, and 1 in 20 serves was off by about 3% of your height or more.\n\nOur stated range held the true value on 11 of 11 of those serves.\n\nOur pass mark is a typical error within 2% of your height. It hasn't passed yet.\n\nMost of the error is a steady offset: the tracker reads your hip rise a little low on every serve, so comparisons with your own serves aren't affected.\n\nTest details\nKnown limits\nFrom the side your knees point at the camera at the top of the swing, so we describe your legs by hip rise and hip drop instead of a knee angle. A knee-bend band needs the view from behind.\nBody tracking from phone video is noisier than lab systems, and left and right can swap. We assign sides from the shape of the serve.\nEvery check so far used computer-generated serves: one simulated player on a rendered court, filmed by our own model of a phone camera. Real players, phones, courts and court lights may do worse.\nCompared with your own serves\n\nWe compare this only with your own usual serves. Published trunk angles and professional leg values measure different things, so we don't show them.\n\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 11% of your heightLeg drive (hip rise), about 11% of your height, Estimate, likely 7% to 14% of your height, 8 of 8 serves"
+   },
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "Estimate"
+   }
+  ]
+ },
+ "own-metric-serve-count-session": {
+  "url": "http://127.0.0.1:5487/metric/serve-count?session=01M3J39XT9SQ7ZND8WDA19EFMF",
+  "text": "Skip to content\nBack\nServes\n≈ 8 serves\nServes, about 8 serves, Estimate\nEstimate\n\nMon 28 Sep · Side view, deuce, first serves\n\nEstimate: worked out from your video and your height, so it has a margin of error.\n\nWhat it is\n\nHow many serves did I hit?\n\nHow many serves we found in the video.\n\nYour trend\n≈ 8 serves\nEstimate\nSide view, deuce, first serves\n\nBuilding your baseline (1 of 2 sessions). Record another from the same side to see a trend.\n\nHow we measure it\nWe find each serve from your toss arm, the ball above your head and the hit.\nWhat it needs\n30 fps or more\nYes\n\nFor the session on Mon 28 Sep.\n\nHow sure we are\n\nChecked on simulated serves in daylight, on limited evidence so far. Not yet checked on real courts.\n\nNot yet checked under court lights, so at night it shows as experimental.\n\nAt the recommended set-ups (11 simulated serves filmed 7 to 9 m away), every serve was found, with no extras, and the same across 95 simulated side-view clips.\n\nOur pass mark is at least 99 of 100 serves found, with no extras. It passed.\n\nRun through the full app, from video to report, two longer simulated sessions of 8 and 16 serves were harder: it found every serve but was unsure of 3 and left them out, so the count read 1 or 2 short. Those serves stay in your list, marked as excluded, and you can include them again.\n\nTest details\nKnown limits\nEvery check so far used computer-generated serves: one simulated player on a rendered court, filmed by our own model of a phone camera. Real players, phones, courts and court lights may do worse.\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "serve-count",
+    "status": "estimated",
+    "text": "≈ 8 servesServes, about 8 serves, Estimate"
+   },
+   {
+    "id": "serve-count",
+    "status": "estimated",
+    "text": "Estimate"
+   }
+  ]
+ },
+ "own-metric-spin-session": {
+  "url": "http://127.0.0.1:5487/metric/spin?session=01M3J39XT9SQ7ZND8WDA19EFMF",
+  "text": "Skip to content\nBack\nSpin\n\nNot measurable by phone\n\nSpin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the serve type you meant instead.\n\nNever measured, whatever the footage.\n\nWhat it is\n\nHow much spin did I use?\n\nHow much spin you put on the ball.\n\nHow we measure it\nA phone video cannot see the ball spinning: it is too small and too blurred. We never estimate it.\nHow sure we are\n\nPhone video can't see spin, so there is nothing to check and it is never shown as a number.\n\nKnown limits\nFrom the side, speed needs 120 fps or more, your height and where you aimed. From behind it needs the court corners tapped and a bounce in the video. The hit sound never gives speed. Spin is never available.\nMore in How we measure",
+  "metrics": [
+   {
+    "id": "spin",
+    "status": "unavailable",
+    "text": "Not measurable by phoneSpin needs cameras shooting about 1,000 frames a second or a radar tracker; phone video can't measure it. Log the ser"
+   }
+  ]
+ },
+ "sid-session": "01M3J39XT9SQ7ZND8WDA19EFMF",
+ "own-today": {
+  "url": "http://127.0.0.1:5487/",
+  "text": "Skip to content\n\nToday\n\nToday\n\nMonday 28 September\n\nYour focus\nNothing clear to change\n\nKeep building consistency. Your toss and timing were steady on most serves.\n\nRecord session\nLog practice\nBuilding your baseline: 1 of 2 sessions\n\nA session counts when at least 8 serves from the same side and set-up are measured. Record another session like it to see trends.\n\nRecord\nLast session\n\nMon 28 Sep · Side view, 8 serves\n\n8 of 8 serves measured.\n\nCapture: Good · 8 of 8 serves measured\n\nOpen report\nToday\nRecord\nSessions\nProgress",
+  "metrics": []
+ },
+ "own-sessions": {
+  "url": "http://127.0.0.1:5487/sessions",
+  "text": "Skip to content\n\nSessions\n\nSessions\nSeptember 2026\nMon 28 Sep\nImported\nSide view · 8 of 8 measured\n8 of 8 serves measured.\nCapture Good\nMon 28 Sep\nImported\nSide view · 1 of 1 measured\n1 of 1 serve measured.\nCapture Good\nToday\nRecord\nSessions\nProgress",
+  "metrics": []
+ },
+ "own-focus": {
+  "url": "http://127.0.0.1:5487/focus",
+  "text": "Skip to content\nToday\nYour focus\n\nYour focus\n\nCoaches recommend\nNothing clear to change\n\nKeep building consistency. Nothing stood out as clearly worth changing this session.\n\n1 checks were in range this session.\n\nLog practice\nWhat we checked\nPlaying tonight?\nStop if anything hurts\n\nAny pain? Stop and see a physio or GP.\n\nRecord next session\nToday\nRecord\nSessions\nProgress",
+  "metrics": []
+ },
+ "own-progress": {
+  "url": "http://127.0.0.1:5487/progress",
+  "text": "Skip to content\n\nProgress\n\nProgress\n\nBuilding your baseline: 1 of 2 sessions\n\nA session counts when at least 8 serves from the same side and set-up are measured. Record another session like it to see trends.\n\nIs my toss becoming more consistent?\n\nSide view, deuce, first serves\n\nNot measured in these sessions yet. The measurement page says what it needs.\n\nSee the trend and how we measure it\nAm I getting more first serves in?\n\nSide view, deuce, first serves\n\nTag your serves or enter a tally after a session to see this.\n\nDid this change work?\n\nYour experiments appear here once you practise a focus and record a re-test.\n\nContact, rhythm and legs\nIs my rhythm steady?\n\nSide view, deuce, first serves\n\nNot measured in these sessions yet. The measurement page says what it needs.\n\nSee the trend and how we measure it\nAm I contacting the ball higher?\n\nSide view, deuce, first serves\n\nNot measured in these sessions yet. The measurement page says what it needs.\n\nSee the trend and how we measure it\nAm I using my legs?\n\nSide view, deuce, first serves\n\nHips rose\n≈ 11% of your height\nLeg drive (hip rise), about 11% of your height, Estimate, likely 7% to 14% of your height, 8 of 8 serves\n\nEstimate\nEarly read\n8 serves, Mon 28 Sep\n\nBuilding your baseline: 1 of 2 sessions with 8 or more measured serves. Record another from the same side and set-up to see a trend.\n\nSee the trend and how we measure it\n\nOnly sessions from the same set-up are compared: 1 session, side view, deuce, first serves.\n\nComp nights\nHow is your serve going on comp night?\n\nAfter a match, log your service games, double faults and, if you counted them, first serves in. It takes about 20 seconds and shows here next to your practice, never mixed with it.\n\nLog a match\nToday\nRecord\nSessions\nProgress",
+  "metrics": [
+   {
+    "id": "leg-drive",
+    "status": "estimated",
+    "text": "≈ 11% of your heightLeg drive (hip rise), about 11% of your height, Estimate, likely 7% to 14% of your height, 8 of 8 serves"
+   }
+  ]
+ },
+ "own-compare": {
+  "url": "http://127.0.0.1:5487/progress/compare",
+  "text": "Skip to content\nProgress\nDid it work?\nNothing to compare yet\n\nCompare needs another session from the same side, view and serve.\n\nToday\nRecord\nSessions\nProgress",
+  "metrics": []
+ }
+}

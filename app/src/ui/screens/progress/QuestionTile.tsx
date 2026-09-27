@@ -25,6 +25,8 @@ export interface QuestionTileProps {
   hollow?: boolean
   /** h2 at the top level of Progress; h3 inside a labelled section. */
   headingLevel?: 'h2' | 'h3'
+  /** The newest matched session has a value, but on fewer serves than a trend point needs. */
+  belowMin?: { n: number }
 }
 
 const USUAL_WORD = { below: 'below your usual', inside: 'inside your usual range', above: 'above your usual' } as const
@@ -39,7 +41,7 @@ function directionOf(metricId: MetricId) {
  * with the latest value and its state, a sparkline of matched sessions with the grey "usual" band,
  * n, the set-up label, and the trend verdict in words (or the baseline / comparison state).
  */
-export function QuestionTile({ question, metricId, label, series, usual, stratumLabel, extra, hollow, headingLevel: H = 'h2' }: QuestionTileProps) {
+export function QuestionTile({ question, metricId, label, series, usual, stratumLabel, extra, hollow, headingLevel: H = 'h2', belowMin }: QuestionTileProps) {
   const latest = series.at(-1)
   const state = trendState(metricId, series)
   const titleId = `q-${metricId}`
@@ -137,7 +139,14 @@ export function QuestionTile({ question, metricId, label, series, usual, stratum
           {dir.text}
         </span>
       ) : null}
-      {status ?? (latest ? null : <p className="text-footnote text-ink-2">Not measured in these sessions yet. The measurement page says what it needs.</p>)}
+      {status ??
+        (latest ? null : belowMin ? (
+          <p className="text-footnote text-ink-2" data-below-min>
+            {`Your latest session measured this on ${belowMin.n} ${belowMin.n === 1 ? 'serve' : 'serves'}. A trend needs ${minServesFor(metricId)} or more from one side and set-up, so record about 15 serves from one side.`}
+          </p>
+        ) : (
+          <p className="text-footnote text-ink-2">Not measured in these sessions yet. The measurement page says what it needs.</p>
+        ))}
       <Link
         to={metricInfoFor(metricId, latest?.sessionId)}
         className="-ml-1 inline-flex min-h-11 items-center gap-0.5 self-start rounded-control px-1 text-footnote font-label text-ink underline underline-offset-[3px] hover:bg-surface-2"

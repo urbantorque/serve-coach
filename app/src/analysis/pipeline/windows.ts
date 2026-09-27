@@ -91,8 +91,16 @@ function midHip(landmarks: Landmark[]): { x: number; y: number } | null {
 
 /** Longest gap (s) inside one arm-above-head run. */
 const RUN_GAP_S = 0.3
-/** Contact is the end of the upward swing: searched in the last part of the final run (s). */
-const CONTACT_SEARCH_S = 0.6
+/**
+ * Contact is the end of the upward swing: searched in the last part of the final run (s). The run
+ * ends as the hitting arm comes down after contact (about 0.1 s later); before that the tossing arm
+ * is still up at the trophy position, often HIGHER in 15 Hz samples than the hitting wrist, which
+ * MediaPipe blurs at contact. Over 0.6 s the tossing arm won on 8% of the corpus's 15 Hz phases
+ * (contact placed 0.25-0.73 s early, 49 of 590); over the last 0.25 s, 2% (13 of 590; median
+ * error 18 ms). Measured on the cleaned poses of every side-view corpus clip, subsampled at each
+ * 15 Hz phase (2026-09-28).
+ */
+export const CONTACT_SEARCH_S = 0.25
 
 /**
  * Provisional contact from pose: the highest wrist point (smallest y) in the last CONTACT_SEARCH_S
@@ -337,6 +345,67 @@ export function ballSearchCrop(
   if (x1 - x0 <= 1e-3 || y1 - y0 <= 1e-3) return crop
   const tight = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }
   return tight.w * tight.h < crop.w * crop.h ? tight : crop
+}
+
+/**
+ * Half-width of doubt (s) the ball search uses around the provisional contact (BallWindowProcessor:
+ * toss band with the plain-colour gate before `pc - doubt`, toss band plus corridor without the gate
+ * up to `pc + doubt`, the corridor alone after). It is deliberately wider than the provisional
+ * contact's own uncertainty: a toss cut short by the phase split loses the ball's fall to contact,
+ * and then the engine can neither bracket the apex nor find contact from the ball. On the corpus the
+ * sparse-pose contact is still 0.25-0.5 s off on 2% of 15 Hz phases (dusk footage, a late spurious
+ * arm run), so pose-timed searches keep the union open for 0.45 s either side. The offline harness,
+ * whose accuracy the validation report quotes, searches the whole frame without a gate.
+ */
+export const BALL_CONTACT_DOUBT_S: Record<ProvisionalContact['source'], number> = { pose: 0.45, audio: 0.25, window: 0.6 }
+
+export function ballSearchDoubtS(contact: Pick<ProvisionalContact, 'source' | 'uncertaintyS'>): number {
+  return Math.max(contact.uncertaintyS, BALL_CONTACT_DOUBT_S[contact.source])
+}
+
+/**
+ * Extra reach (statures) of the toss band towards the court. ballSetupFromPoses spans the shoulders
+ * and tossing wrist ± 0.45 statures, but a toss that drifts forward leaves it before contact:
+ * dist12-s1 and default75-s1 (synthetic, production pipeline, 2026-09-28) lost the ball 0.27 s before
+ * contact at the band's forward edge, so the engine placed contact where the ball vanished.
+ */
+export const TOSS_BAND_FORWARD_REACH = 0.45
+
+/**
+ * The toss band the ball search uses: the setup band reaching TOSS_BAND_FORWARD_REACH statures
+ * further towards the court (both ways when the direction is unknown), and always covering the
+ * provisional contact's wrist column (± 0.2 statures), where the toss ends. Side view only; other
+ * views keep the setup band. Pure.
+ *
+ * With no setup band (ballSetupFromPoses found no tossing wrist and shoulders in the window's first
+ * second), the side view searches the whole window crop, as the toss phase already does without a
+ * band. Returning null there would leave the band-plus-corridor phase with the corridor alone
+ * (BallWindowProcessor unites the corridor with the band), which lost the ball at its apex on 6 of
+ * 45 serves in the 2026-09-28 production run (baseline-s1, session serve 7, check-in serves 1, 4
+ * and 6, re-test serve 14): the toss track ended at the apex, so neither toss nor contact values.
+ */
+export function tossSearchBand(
+  band: RegionOfInterest | null,
+  w: Pick<PlannedWindow, 'forward' | 'statureNorm' | 'contact' | 'crop'>,
+  view: CameraView,
+  aspect: number,
+): RegionOfInterest | null {
+  if (view !== 'side') return band
+  if (!band) return { x0: w.crop.x, y0: w.crop.y, x1: clamp01(w.crop.x + w.crop.w), y1: clamp01(w.crop.y + w.crop.h) }
+  if (!(w.statureNorm > 0)) return band
+  const reach = (TOSS_BAND_FORWARD_REACH * w.statureNorm) / aspect
+  let x0 = w.forward >= 0 ? band.x0 : band.x0 - reach
+  let x1 = w.forward <= 0 ? band.x1 : band.x1 + reach
+  if (w.forward === 0) {
+    x0 = band.x0 - reach
+    x1 = band.x1 + reach
+  }
+  if (w.contact.source === 'pose' && w.contact.wrist) {
+    const half = (0.2 * w.statureNorm) / aspect
+    x0 = Math.min(x0, w.contact.wrist.x - half)
+    x1 = Math.max(x1, w.contact.wrist.x + half)
+  }
+  return { x0: clamp01(x0), y0: band.y0, x1: clamp01(x1), y1: band.y1 }
 }
 
 /** Hitting-wrist peak (sparse poses), refined by the strongest hit sound within 0.4 s when available. */

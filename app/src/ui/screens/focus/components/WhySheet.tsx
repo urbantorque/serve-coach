@@ -1,44 +1,61 @@
 import { InfoIcon } from '@phosphor-icons/react'
-import type { FocusDecision, ItemCheck, KeepGoingDecision, RankReason } from '../../../../coaching/index.ts'
+import { getItem, type FocusDecision, type ItemCheck, type KeepGoingDecision, type RankReason } from '../../../../coaching/index.ts'
 import { MetricValue, SectionLabel, Sheet, StatusChip } from '../../../components/index.ts'
-import { FOCUS_COPY } from '../copy.ts'
+import { evidenceCountLine, FOCUS_COPY, type SessionServeCounts } from '../copy.ts'
 
-function MetricLine({ metric }: { metric: NonNullable<RankReason['metric']> }) {
-  const n = metric.value.n
+function MetricLine({ metric, counts }: { metric: NonNullable<RankReason['metric']>; counts?: SessionServeCounts | null }) {
+  const line = metric.value.status !== 'player-entered' ? evidenceCountLine(metric.value, counts) : null
   return (
     <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
       <MetricValue metricId={metric.metricId} value={metric.value} detail />
-      {n !== undefined && metric.value.status !== 'player-entered' ? (
-        <span className="text-footnote tabular-nums text-ink-3">
-          {metric.value.nEligible !== undefined ? `${n} of ${metric.value.nEligible} serves` : `${n} serves`}
-        </span>
-      ) : null}
+      {line ? <span className="text-footnote tabular-nums text-ink-3">{line}</span> : null}
     </span>
   )
 }
 
-function ReasonRow({ r }: { r: RankReason }) {
+function ReasonRow({ r, counts }: { r: RankReason; counts?: SessionServeCounts | null }) {
   return (
     <li className="flex flex-col gap-1.5 py-3 [&+li]:border-t [&+li]:border-line">
       <p className="text-callout text-ink">{r.text}</p>
-      {r.metric ? <MetricLine metric={r.metric} /> : null}
+      {r.metric ? <MetricLine metric={r.metric} counts={counts} /> : null}
       {r.playerEntered && !r.metric ? <StatusChip status="player-entered" className="self-start" /> : null}
     </li>
   )
 }
 
-function CheckRow({ c }: { c: ItemCheck }) {
+/**
+ * The line under a check. An item that is experimental because of its coaching RULE (no club-player
+ * thresholds yet, coaching-library.json evidenceTier) says so, so it never reads as if the measurement
+ * were experimental when the report shows it as an estimate. Data-experimental checks keep their text.
+ */
+export function checkText(c: ItemCheck): string {
+  if (c.status === 'experimental-off' && getItem(c.itemId)?.evidenceTier === 'experimental') return FOCUS_COPY.ruleExperimentalOff
+  return c.text
+}
+
+function CheckRow({ c, counts }: { c: ItemCheck; counts?: SessionServeCounts | null }) {
   return (
     <li className="flex flex-col gap-1 py-3 [&+li]:border-t [&+li]:border-line">
       <p className="text-headline text-ink">{c.title}</p>
-      <p className="text-footnote text-ink-2">{c.text}</p>
-      {c.metric && c.metric.value.status !== 'experimental' ? <MetricLine metric={c.metric} /> : null}
+      <p className="text-footnote text-ink-2">{checkText(c)}</p>
+      {c.metric && c.metric.value.status !== 'experimental' ? <MetricLine metric={c.metric} counts={counts} /> : null}
     </li>
   )
 }
 
 /** "Why this focus?" (COACHING §7.6): the reasons, then what else was noticed and why it was not chosen. */
-export function WhySheet({ open, onClose, decision }: { open: boolean; onClose: () => void; decision: FocusDecision | KeepGoingDecision }) {
+export function WhySheet({
+  open,
+  onClose,
+  decision,
+  counts,
+}: {
+  open: boolean
+  onClose: () => void
+  decision: FocusDecision | KeepGoingDecision
+  /** The session's serve counts, so every count line reads like the report's. */
+  counts?: SessionServeCounts | null
+}) {
   const focus = decision.kind === 'focus' ? decision : undefined
   const checked = decision.kind === 'keep-going' ? decision.checks.filter((c) => c.status !== 'not-applicable') : []
   return (
@@ -46,7 +63,7 @@ export function WhySheet({ open, onClose, decision }: { open: boolean; onClose: 
       <div className="flex flex-col gap-6 pb-4">
         {focus ? (
           <section aria-label="Reasons">
-            <ul>{focus.reasons.map((r, i) => <ReasonRow key={i} r={r} />)}</ul>
+            <ul>{focus.reasons.map((r, i) => <ReasonRow key={i} r={r} counts={counts} />)}</ul>
           </section>
         ) : null}
         {decision.notes.length ? (
@@ -64,12 +81,12 @@ export function WhySheet({ open, onClose, decision }: { open: boolean; onClose: 
             <SectionLabel>
               <span id="also-noticed">{FOCUS_COPY.alsoNoticed}</span>
             </SectionLabel>
-            <ul>{focus.alsoConsidered.map((c) => <CheckRow key={c.itemId} c={c} />)}</ul>
+            <ul>{focus.alsoConsidered.map((c) => <CheckRow key={c.itemId} c={c} counts={counts} />)}</ul>
           </section>
         ) : null}
         {checked.length ? (
           <section className="flex flex-col gap-1" aria-label={FOCUS_COPY.whatWeChecked}>
-            <ul>{checked.map((c) => <CheckRow key={c.itemId} c={c} />)}</ul>
+            <ul>{checked.map((c) => <CheckRow key={c.itemId} c={c} counts={counts} />)}</ul>
           </section>
         ) : null}
         <p className="text-footnote text-ink-3">{FOCUS_COPY.cuesAreCoaching}</p>

@@ -20,7 +20,7 @@ import {
 } from '../../components/index.ts'
 import { ChartFrame, Sparkline } from '../../charts/index.ts'
 import { metricName } from '../../copy/metricNames.ts'
-import { reasonShortForm, UI } from '../../copy/strings.ts'
+import { CAPTURE_SIMULATED_ONLY, hasReasonShortForm, reasonShortForm, UI } from '../../copy/strings.ts'
 import { formatMetric } from '../../format/metricFormat.ts'
 import { shortDate } from '../../format/dates.ts'
 import { paths } from '../../shell/paths.ts'
@@ -32,6 +32,7 @@ import catalogue from './data/catalogue.json'
 import { HowSure } from './HowSure.tsx'
 import { LIMITS, METRIC_COPY, NO_OUTSIDE, PREREQ_WORDS, STATUS_MEANING } from './metricCopy.ts'
 import { VALIDATION_LIMIT, validationStateOf } from './validationWords.ts'
+import { tiltHint } from '../record/import/hints.ts'
 
 type CatalogueEntry = (typeof catalogue.metrics)[number]
 type Check = { key: string; label: string; state: 'pass' | 'fail' | 'unknown' }
@@ -86,16 +87,28 @@ function checksFor(entry: CatalogueEntry, bundle: SessionBundle | null, v: Metri
   return out
 }
 
-function unlockHint(code: string | undefined, metricId: string): string | null {
+/** Replaces every {token} in a catalogue hint: {k} matched sessions so far, {n} serves needed. */
+export function fillTokens(hint: string, k: number): string {
+  return hint.replace(/\{k\}/g, String(k)).replace(/\{n\}/g, '8').replace(/\{[a-z]+\}/gi, '')
+}
+
+/**
+ * The unlock hint for a reason. `stored` is the hint the engine already filled for this value; a
+ * baseline hint is rebuilt from the matched sessions this page can see (`k`), because the engine has
+ * no history and always says "1 of 2".
+ */
+export function unlockHint(code: string | undefined, metricId: string, opts: { stored?: string; k?: number } = {}): string | null {
   if (metricId === 'speed-experimental')
     return 'Record at 120 fps or more from the side, with your height entered and one target tagged (T, Body or Wide). Turn on experimental metrics.'
   if (metricId === 'knee-bend-band') return 'From the side, your knees point at the camera at the top of the swing. Add a phone behind you to see this.'
   const reasons = catalogue.reasonCodes as Record<string, { meaning: string | null; unlockHint: string | null; unlockHintRearOnly: string | null }>
   if (code === 'NEEDS_REAR_VIEW') return reasons.VIEW_NOT_SUPPORTED?.unlockHintRearOnly ?? null
   if (code === 'NEEDS_SIDE_VIEW') return reasons.VIEW_NOT_SUPPORTED?.unlockHint ?? null
+  const k = opts.k ?? 1
+  if (code !== 'BASELINE_BUILDING' && opts.stored) return tiltHint(fillTokens(opts.stored, k)) || null
   const key = code === 'TILT_UNKNOWN' ? 'PITCH_UNKNOWN' : code === 'EXCLUDED_BY_QUALITY' ? 'IMPLAUSIBLE_VALUE' : code
   const hint = key ? reasons[key]?.unlockHint : null
-  return hint ? hint.replace('{n}', '8') : null
+  return hint ? tiltHint(fillTokens(hint, k)) : null
 }
 
 /** With no session to check against, the list is what a session needs, so no state word per row. */
@@ -127,8 +140,8 @@ function bestStatusWords(id: MetricId, best: MetricStatus): string {
 /** Header when no session has this measurement yet: not "couldn't see this", because nothing was filmed. */
 function NoReadingHeader({ id }: { id: MetricId }) {
   const best = statusCeiling(id, 'day').status
-  // Capture quality is a session line, not a value with a label (docs/VALIDATION.md §5 item 12).
-  const chip = best !== 'unavailable' && id !== 'capture-quality'
+  // Capture quality is always shown, labelled experimental (DECISIONS D2 addendum, 2026-09-28).
+  const chip = best !== 'unavailable'
   return (
     <div className="flex flex-col gap-2" data-metric={id} data-status="none">
       <p className="text-title-2 text-ink">{id === 'spin' ? 'Not measurable by phone' : 'No reading yet'}</p>
@@ -139,7 +152,7 @@ function NoReadingHeader({ id }: { id: MetricId }) {
             <span className="text-footnote text-ink-2">{best === 'estimated' || best === 'measured' ? 'In daylight it shows as' : 'It shows as'}</span>
             <StatusChip status={best} />
           </div>
-          <p className="text-footnote text-ink-3">{STATUS_MEANING[best]}</p>
+          <p className="text-footnote text-ink-3">{id === 'capture-quality' ? CAPTURE_SIMULATED_ONLY : STATUS_MEANING[best]}</p>
         </>
       ) : null}
     </div>
@@ -203,8 +216,12 @@ export function MetricInfoScreen() {
     ready.find((b) => b.session.isDemo === 0 && b.stats?.metrics[id]) ??
     ready.find((b) => b.stats?.metrics[id]) ??
     null
-  const v = bundle?.stats?.metrics[id]
-  const hiddenExperimental = v?.status === 'experimental' && !experimentalOn
+  const stored = bundle?.stats?.metrics[id]
+  // Capture quality is a data-quality gate: never hidden, and always labelled experimental until its
+  // checks pass on real footage, whatever an older analysis stored (DECISIONS D2 addendum).
+  const isCapture = id === 'capture-quality'
+  const v: MetricValueData | undefined = isCapture && stored && stored.status !== 'unavailable' ? { ...stored, status: 'experimental' } : stored
+  const hiddenExperimental = v?.status === 'experimental' && !experimentalOn && !isCapture
   const shown = v && !hiddenExperimental ? v : undefined
   const isDemo = bundle?.session.isDemo === 1
   const heightM = bundle?.session.analysis?.capture.scale.heightM ?? profile?.heightM
@@ -214,11 +231,20 @@ export function MetricInfoScreen() {
   const sideOnly = (SIDE_ONLY_METRIC_IDS as readonly string[]).includes(id)
   const unavailable = !shown || shown.status === 'unavailable'
   const reasonCode = shown?.reasonCode ?? (bundle && rearOnly && bundle.session.view !== 'rear' ? 'NEEDS_REAR_VIEW' : bundle && sideOnly && bundle.session.view === 'rear' ? 'NEEDS_SIDE_VIEW' : hiddenExperimental ? 'EXPERIMENTAL_HIDDEN' : undefined)
-  const hint = unavailable ? unlockHint(reasonCode, id) : null
-
   // Trend over matched sessions of the same kind (own, or sample for a sample session).
   const pool = bundle ? ready.filter((b) => b.session.isDemo === bundle.session.isDemo && matched(b, bundle, id)) : []
   const series = entry.statusDefault === 'experimental' || id === 'spin' ? [] : seriesFor(id, pool)
+  // Matched sessions so far for a baseline ("1 of 2"): this session counts even below the trend minimum.
+  const baselineK = Math.max(1, Math.min(series.length, 2))
+  const hint = unavailable ? unlockHint(reasonCode, id, { stored: shown?.unlockHint, k: baselineK }) : null
+  // The line under a value that WAS measured: only a reason with its own words (never "Couldn't see
+  // this clearly"), and no baseline line once two matched sessions exist.
+  const infoCode = shown && shown.status !== 'unavailable' ? shown.reasonCode : undefined
+  const infoHint = infoCode ? unlockHint(infoCode, id, { stored: shown?.unlockHint, k: baselineK }) : null
+  const infoLine =
+    infoCode && hasReasonShortForm(infoCode, id) && !(infoCode === 'BASELINE_BUILDING' && series.length >= 2)
+      ? (infoCode === 'BASELINE_BUILDING' && infoHint ? [infoHint] : [reasonShortForm(infoCode, id), infoHint]).filter(Boolean).join('. ').replace(/\.?$/, '.')
+      : null
   const usual = usualRange(series)
   const trend = trendState(id, series)
   const bands = shown && typeof shown.value === 'number' && !NO_OUTSIDE.has(id) ? clubBands(entry, shown.value) : !NO_OUTSIDE.has(id) ? clubBands(entry, null) : null
@@ -261,12 +287,10 @@ export function MetricInfoScreen() {
                 {bundle ? ` · ${stratumWords(stratumOf(bundle))}` : ''}
               </p>
             ) : null}
-            {shown!.reasonCode && shown!.status !== 'unavailable' ? (
-              <p className="flex items-start gap-1.5 text-footnote text-ink-2">
+            {infoLine ? (
+              <p className="flex items-start gap-1.5 text-footnote text-ink-2" data-reason-line>
                 <InfoIcon size={14} aria-hidden="true" className="mt-0.5 shrink-0" />
-                <span>
-                  {reasonShortForm(shown!.reasonCode, id)}. {unlockHint(shown!.reasonCode, id) ?? ''}
-                </span>
+                <span>{infoLine}</span>
               </p>
             ) : null}
           </>
@@ -279,7 +303,9 @@ export function MetricInfoScreen() {
                 ? 'Nothing logged for this session yet.'
                 : unavailable && id === 'spin'
                   ? 'Never measured, whatever the footage.'
-                  : STATUS_MEANING[unavailable ? 'unavailable' : shown!.status]}
+                  : !unavailable && isCapture
+                    ? CAPTURE_SIMULATED_ONLY
+                    : STATUS_MEANING[unavailable ? 'unavailable' : shown!.status]}
           </p>
         ) : null}
       </header>

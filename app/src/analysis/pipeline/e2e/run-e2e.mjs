@@ -3,9 +3,12 @@
  * End-to-end browser test of the production pipeline (engine-pipeline).
  *
  *   node src/analysis/pipeline/e2e/run-e2e.mjs [--port 5202] [--engine auto|real|double] [--only baseline|session|cancel]
+ *       [--server prod|dev|external]
  *
- * Expects a dev server (npx vite --port 5202 --strictPort) serving the synthetic corpus at
- * /__synthetic/. Runs runAnalysis in headless Edge (Playwright, 390 x 844, DPR 2) on
+ * --server prod (default) builds the production bundle and serves it with vite preview on the port
+ * (e2e/server.mjs, the synthetic corpus at /__synthetic/); dev starts the dev server there; external
+ * uses a server already listening (npx vite --port 5202 --strictPort). Runs runAnalysis in headless
+ * Edge (Playwright, 390 x 844, DPR 2) on
  *   1. /__synthetic/clips/baseline-s1/baseline-s1.mp4 (one serve, hit-sound timing on), and
  *   2. the multi-serve session clip from validation/synthetic/manifest.json (8 serves, hit-sound off),
  *   3. a cancellation run (aborts at 45%: the session must be marked, with no serves written),
@@ -18,6 +21,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
+import { E2E_PAGE, startE2EServer } from './server.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const appRoot = resolve(here, '../../../..')
@@ -32,7 +36,8 @@ const arg = (name, fallback) => {
 const port = Number(arg('port', '5202'))
 const engineMode = arg('engine', 'auto')
 const only = arg('only', '')
-const base = `http://localhost:${port}`
+const serverMode = arg('server', 'prod')
+let base = `http://localhost:${port}`
 
 async function sessionClip() {
   const manifest = JSON.parse(await readFile(join(repoRoot, 'validation/synthetic/manifest.json'), 'utf8'))
@@ -48,7 +53,7 @@ async function engineIsStub() {
 
 function pageUrl(clip, extra) {
   const q = new URLSearchParams({ clip, view: 'side', heightM: '1.8', hand: 'right', ...extra })
-  return `${base}/src/analysis/pipeline/e2e/pipeline-e2e.html?${q}`
+  return `${base}${E2E_PAGE}?${q}`
 }
 
 async function run(browser, name, url, { timeoutMs, scheme = 'light', screenshot = true }) {
@@ -96,6 +101,8 @@ async function main() {
   const useDouble = engineMode === 'double' || (engineMode === 'auto' && stub)
   const engineParam = useDouble ? { engine: 'double' } : {}
   const session = await sessionClip()
+  const server = await startE2EServer({ mode: serverMode, port })
+  base = server.base
   const browser = await chromium.launch({ channel: 'msedge', headless: true })
   const results = []
   const reports = {}
@@ -154,6 +161,7 @@ async function main() {
     }
   } finally {
     await browser.close()
+    await server.stop()
   }
   // --only re-runs one group: merge it into the existing report instead of replacing the others.
   if (only) {
@@ -167,7 +175,7 @@ async function main() {
     }
   }
   const failed = results.filter((r) => !r.ok)
-  const out = { generatedAt: new Date().toISOString(), engine: useDouble ? 'test-double (engine.ts is a stub)' : 'engine.ts', engineTsIsStub: stub, results, reports }
+  const out = { generatedAt: new Date().toISOString(), server: serverMode, engine: useDouble ? 'test-double (engine.ts is a stub)' : 'engine.ts', engineTsIsStub: stub, results, reports }
   await writeFile(join(outDir, 'e2e-report.json'), JSON.stringify(out, null, 1))
   console.log(`\n${results.length - failed.length} of ${results.length} checks passed; report in ${join(outDir, 'e2e-report.json')}`)
   process.exitCode = failed.length ? 1 : 0

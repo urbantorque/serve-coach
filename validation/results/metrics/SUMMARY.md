@@ -1,6 +1,6 @@
 # Metric validation on the synthetic corpus (engine-core)
 
-Generated 2026-09-27T11:40:44.202Z by `tools/validate/metrics-eval.ts` in 193 s over 122 clips.
+Generated 2026-09-27T18:06:51.621Z by `tools/validate/metrics-eval.ts` in 63 s over 122 clips.
 
 Inputs are the app pipeline's REAL outputs for each rendered clip (cleaned MediaPipe poses, ball candidates, tracks and toss analysis, audio onsets; `smoke.mjs --full`), with the truth camera pitch passed as an in-app sensor reading. Truth is the generator's `truth.json` and `truth-extra.json` (`canonical`). No real footage is involved; every figure is synthetic (METRICS §6 item 8).
 
@@ -30,18 +30,18 @@ Variants: **default** (hit sound off), **audio** (hit sound on), **injected** (t
 | toss-apex-height | ratio | 118 of 129 | -0.039 | 0.041 | 0.073 | 0.091 | 100% (118) | experimental:VALIDATION_PENDING 97, unavailable:APEX_OUT_OF_FRAME 1, estimated 21, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5 |
 | toss-forward | cm | 112 of 129 | 5.7 | 5.7 | 8.7 | 11.9 | 97% (112) | experimental:VALIDATION_PENDING 112, unavailable:APEX_OUT_OF_FRAME 1, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, unavailable:NEEDS_SIDE_VIEW 6 |
 | toss-lateral | cm | 0 of 129 | – | – | – | – | – | unavailable:NEEDS_REAR_VIEW 123, experimental:VALIDATION_PENDING 6 |
-| toss-drop | cm | 123 of 129 | -0.3 | 0.8 | 3.6 | 9.4 | 99% (123) | estimated 118, unavailable:APEX_OUT_OF_FRAME 1, unavailable:VIEW_MISMATCH 5, experimental:VALIDATION_PENDING 5 |
-| contact-height-ratio | ratio | 119 of 129 | -0.025 | 0.027 | 0.054 | 0.076 | 100% (119) | experimental:VALIDATION_PENDING 98, estimated 21, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5 |
-| contact-forward | cm | 113 of 129 | 5.4 | 5.4 | 8.8 | 11.7 | 96% (113) | experimental:VALIDATION_PENDING 113, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| rhythm-release-to-contact | ms | 124 of 129 | 0.6 | 13.3 | 38.8 | 134.8 | 99% (124) | estimated 113, experimental:FPS_TOO_LOW 6, unavailable:VIEW_MISMATCH 5, experimental:VALIDATION_PENDING 5 |
-| trophy-pause | ms | 82 of 129 | -38.2 | 69.7 | 177.4 | 219.3 | 59% (82) | experimental:VALIDATION_PENDING 77, unavailable:POSE_LOW_QUALITY 36, unavailable:FPS_TOO_LOW 6, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5 |
-| leg-drive | % H | 118 of 129 | -1.9 | 2.0 | 3.1 | 3.6 | 100% (118) | estimated 113, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| drive-time | ms | 82 of 129 | -65.7 | 74.7 | 131.9 | 144.8 | 74% (82) | experimental:VALIDATION_PENDING 77, unavailable:POSE_LOW_QUALITY 36, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| loading-depth | % H | 118 of 129 | -0.3 | 0.4 | 1.1 | 1.6 | 100% (118) | estimated 113, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| landing-distance | cm | 113 of 129 | 3.6 | 4.1 | 7.9 | 24.1 | 99% (113) | experimental:VALIDATION_PENDING 108, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| shoulder-tilt-trophy (2D level, deg) | deg | 113 of 129 | -0.7 | 1.5 | 5.3 | 11.2 | – | experimental:VALIDATION_PENDING 108, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| shoulder-tilt-trophy (3D, deg) | deg | 113 of 129 | 0.9 | 2.2 | 8.1 | 9.9 | – | experimental 113, unavailable:undefined 16 |
-| deep-bend-flag |  | 112 of 129 | 0.1 | 0.1 | 1.0 | 1.0 | – | experimental:VALIDATION_PENDING 107, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6, unavailable:OCCLUDED 1 |
+| toss-drop | cm | 122 of 129 | -0.3 | 0.8 | 3.6 | 9.4 | 99% (122) | estimated 116, unavailable:APEX_OUT_OF_FRAME 1, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5, experimental:VALIDATION_PENDING 5 |
+| contact-height-ratio | ratio | 118 of 129 | -0.025 | 0.027 | 0.054 | 0.076 | 100% (118) | experimental:VALIDATION_PENDING 96, estimated 21, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5 |
+| contact-forward | cm | 112 of 129 | 5.4 | 5.4 | 8.8 | 11.7 | 96% (112) | experimental:VALIDATION_PENDING 111, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| rhythm-release-to-contact | ms | 123 of 129 | 0.6 | 13.4 | 38.8 | 134.8 | 99% (123) | estimated 111, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, experimental:FPS_TOO_LOW 6, unavailable:VIEW_MISMATCH 5, experimental:VALIDATION_PENDING 5 |
+| trophy-pause | ms | 81 of 129 | -37.8 | 69.7 | 177.4 | 219.3 | 58% (81) | experimental:VALIDATION_PENDING 75, unavailable:POSE_LOW_QUALITY 36, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:FPS_TOO_LOW 6, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5 |
+| leg-drive | % H | 117 of 129 | -1.9 | 2.0 | 3.1 | 3.6 | 100% (117) | estimated 111, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| drive-time | ms | 81 of 129 | -65.5 | 74.5 | 131.9 | 144.8 | 74% (81) | experimental:VALIDATION_PENDING 75, unavailable:POSE_LOW_QUALITY 36, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| loading-depth | % H | 117 of 129 | -0.3 | 0.4 | 1.1 | 1.6 | 100% (117) | estimated 111, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| landing-distance | cm | 112 of 129 | 3.6 | 4.1 | 7.9 | 24.1 | 99% (112) | experimental:VALIDATION_PENDING 106, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| shoulder-tilt-trophy (2D level, deg) | deg | 112 of 129 | -0.7 | 1.5 | 5.3 | 11.2 | – | experimental:VALIDATION_PENDING 106, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| shoulder-tilt-trophy (3D, deg) | deg | 112 of 129 | 0.9 | 2.2 | 8.1 | 9.9 | – | experimental 112, unavailable:undefined 17 |
+| deep-bend-flag |  | 111 of 129 | 0.1 | 0.1 | 1.0 | 1.0 | – | experimental:VALIDATION_PENDING 105, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 1, unavailable:CONTACT_NOT_FOUND 1, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6, unavailable:OCCLUDED 1 |
 | knee-bend-band |  | 6 of 129 | 0.0 | 0.0 | 0.0 | 0.0 | – | unavailable:NEEDS_REAR_VIEW 123, experimental:VALIDATION_PENDING 6 |
 | speed-experimental |  | 0 of 129 | – | – | – | – | – | unavailable:FPS_TOO_LOW 100, unavailable:RANGE_TOO_WIDE 15, unavailable:VIEW_MISMATCH 5, unavailable:NEEDS_SIDE_VIEW 6, unavailable:TIME_BASE_UNKNOWN 3 |
 | toss-height-spread (pooled) |  | 1 of 1 | 0.8 | 0.8 | 0.8 | 0.8 | 100% (1) | pooled 1 |
@@ -68,7 +68,7 @@ Variants: **default** (hit sound off), **audio** (hit sound on), **injected** (t
 | dist12 | 0.015 / 0.007 / 100% / 5/5 | 0.2 / -0.0 / 100% / 5/5 | 0.009 / 0.005 / 100% / 5/5 | 8.2 / 8.2 / 100% / 5/5 | 8.2 / 8.2 / 100% / 5/5 | 11.5 / 1.7 / 100% / 5/5 | 1.7 / -1.7 / 100% / 5/5 | 99.3 / -99.3 / 40% / 5/5 | 0.2 / -0.0 / 100% / 5/5 | 6.5 / 6.5 / 100% / 5/5 | 117.9 / -117.9 / 20% / 5/5 | 1.2 / 0.1 / – / 5/5 |
 | dist4 | – (0/5: CAMERA_TILTED) | 0.7 / 0.6 / 100% / 5/5 | – (0/5: CAMERA_TILTED) | – (0/5: CAMERA_TILTED) | – (0/5: CAMERA_TILTED) | 19.1 / 19.1 / 100% / 5/5 | 2.7 / -2.7 / 100% / 5/5 | 87.1 / -87.1 / 67% / 3/5 | 0.4 / -0.4 / 100% / 5/5 | – (0/5: CAMERA_TILTED) | 32.1 / -17.6 / 100% / 3/5 | – (0/5: CAMERA_TILTED) |
 | dist7 | 0.017 / -0.017 / 100% / 5/5 | 0.2 / -0.0 / 100% / 5/5 | 0.010 / -0.010 / 100% / 5/5 | 7.4 / 7.4 / 100% / 5/5 | 7.2 / 7.2 / 100% / 5/5 | 9.7 / -1.3 / 100% / 5/5 | 2.2 / -2.2 / 100% / 5/5 | 86.8 / -86.8 / 67% / 3/5 | 0.3 / -0.3 / 100% / 5/5 | 4.4 / 3.9 / 100% / 5/5 | 128.1 / -128.1 / 33% / 3/5 | 1.2 / 0.5 / – / 5/5 |
-| dusk | 0.041 / -0.041 / 100% / 5/5 | 4.0 / -4.0 / 80% / 5/5 | 0.015 / -0.005 / 100% / 5/5 | 4.8 / 4.8 / 100% / 5/5 | 4.2 / 4.2 / 100% / 5/5 | 7.7 / -5.3 / 100% / 5/5 | 1.6 / -1.6 / 100% / 5/5 | 67.2 / -67.2 / 100% / 5/5 | 0.2 / -0.1 / 100% / 5/5 | 2.7 / 2.7 / 100% / 5/5 | 52.5 / -15.9 / 60% / 5/5 | 0.4 / 0.1 / – / 5/5 |
+| dusk | 0.041 / -0.041 / 100% / 5/5 | 4.8 / -4.8 / 75% / 4/5 | 0.018 / -0.005 / 100% / 4/5 | 4.8 / 4.8 / 100% / 5/5 | 3.8 / 3.8 / 100% / 4/5 | 8.7 / -7.5 / 100% / 4/5 | 1.5 / -1.5 / 100% / 4/5 | 63.0 / -63.0 / 100% / 4/5 | 0.2 / -0.0 / 100% / 4/5 | 2.4 / 2.4 / 100% / 4/5 | 48.6 / -2.8 / 50% / 4/5 | 0.4 / 0.1 / – / 4/5 |
 | fence9 | 0.005 / 0.003 / 100% / 3/3 | 1.3 / 1.1 / 100% / 3/3 | 0.007 / -0.002 / 100% / 3/3 | 6.0 / 6.0 / 100% / 3/3 | 6.2 / 6.2 / 100% / 3/3 | 14.1 / -4.1 / 100% / 3/3 | 2.8 / -2.8 / 100% / 3/3 | 45.5 / -45.5 / 100% / 1/3 | 0.5 / -0.5 / 100% / 3/3 | 10.3 / -5.7 / 67% / 3/3 | 68.5 / -68.5 / 100% / 1/3 | 0.3 / -0.1 / – / 3/3 |
 | fps120 | 0.053 / -0.053 / 100% / 5/5 | 0.2 / -0.0 / 100% / 5/5 | 0.036 / -0.036 / 100% / 5/5 | 4.6 / 4.6 / 100% / 5/5 | 4.0 / 4.0 / 100% / 5/5 | 6.0 / 4.7 / 100% / 5/5 | 2.5 / -2.5 / 100% / 5/5 | 74.6 / -73.5 / 80% / 5/5 | 0.2 / -0.1 / 100% / 5/5 | 3.1 / 3.1 / 100% / 5/5 | 56.3 / -25.9 / 40% / 5/5 | 0.5 / -0.3 / – / 5/5 |
 | fps240 | 0.049 / -0.049 / 100% / 5/5 | 0.2 / -0.0 / 100% / 5/5 | 0.034 / -0.034 / 100% / 5/5 | 5.6 / 5.6 / 100% / 5/5 | 5.0 / 5.0 / 100% / 5/5 | 9.9 / -0.3 / 100% / 5/5 | 2.4 / -2.4 / 100% / 5/5 | 77.9 / -77.9 / 60% / 5/5 | 0.2 / -0.1 / 100% / 5/5 | 3.7 / 3.7 / 100% / 5/5 | 48.5 / -47.9 / 60% / 5/5 | 0.8 / -0.6 / – / 5/5 |
@@ -94,7 +94,7 @@ Variants: **default** (hit sound off), **audio** (hit sound on), **injected** (t
 | tossRelease | 79.8 / 32.8 / 6/6 | 13.3 / -1.5 / 105/105 | 6.0 / -4.9 / 5/5 | 8.4 / 0.5 / 13/13 |
 | tossApex | 0.8 / -0.7 / 6/6 | 0.7 / 0.0 / 105/105 | 0.1 / 0.0 / 5/5 | 0.1 / 0.0 / 13/13 |
 | trophy (lowest hip) | 86.8 / 34.9 / 6/6 | 85.6 / 24.3 / 105/105 | 74.6 / 73.2 / 5/5 | 73.1 / 73.1 / 13/13 |
-| contact | 6.8 / -0.2 / 6/6 | 2.3 / -1.3 / 105/105 | 0.4 / -0.3 / 5/5 | 0.6 / -0.6 / 13/13 |
+| contact | 6.8 / -0.2 / 6/6 | 2.2 / -1.3 / 105/105 | 0.4 / -0.3 / 5/5 | 0.6 / -0.6 / 13/13 |
 | landing | 120.9 / 72.3 / 6/6 | 65.6 / 28.4 / 105/105 | 80.7 / 54.9 / 5/5 | 66.5 / 46.5 / 13/13 |
 | recoveryEnd | 544.9 / -333.6 / 6/6 | 395.1 / -282.2 / 105/105 | 379.0 / -292.1 / 5/5 | 402.2 / -254.4 / 13/13 |
 | motionStart | 55.6 / -0.0 / 6/6 | 124.3 / 65.0 / 105/105 | 34.5 / 27.8 / 5/5 | 100.3 / 90.1 / 13/13 |
@@ -107,18 +107,18 @@ Variants: **default** (hit sound off), **audio** (hit sound on), **injected** (t
 | toss-apex-height | ratio | 118 of 129 | -0.039 | 0.041 | 0.073 | 0.091 | 100% (118) | experimental:VALIDATION_PENDING 97, unavailable:APEX_OUT_OF_FRAME 1, estimated 21, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5 |
 | toss-forward | cm | 112 of 129 | 5.7 | 5.7 | 8.7 | 11.9 | 97% (112) | experimental:VALIDATION_PENDING 112, unavailable:APEX_OUT_OF_FRAME 1, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, unavailable:NEEDS_SIDE_VIEW 6 |
 | toss-lateral | cm | 0 of 129 | – | – | – | – | – | unavailable:NEEDS_REAR_VIEW 123, experimental:VALIDATION_PENDING 6 |
-| toss-drop | cm | 123 of 129 | -0.1 | 0.4 | 1.4 | 8.4 | 99% (123) | estimated 118, unavailable:APEX_OUT_OF_FRAME 1, unavailable:VIEW_MISMATCH 5, experimental:VALIDATION_PENDING 5 |
-| contact-height-ratio | ratio | 119 of 129 | -0.026 | 0.028 | 0.052 | 0.070 | 100% (119) | experimental:VALIDATION_PENDING 98, estimated 21, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5 |
-| contact-forward | cm | 113 of 129 | 5.4 | 5.4 | 8.8 | 11.7 | 96% (113) | experimental:VALIDATION_PENDING 113, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| rhythm-release-to-contact | ms | 124 of 129 | 1.3 | 13.6 | 38.8 | 130.8 | 99% (124) | estimated 113, experimental:FPS_TOO_LOW 6, unavailable:VIEW_MISMATCH 5, experimental:VALIDATION_PENDING 5 |
-| trophy-pause | ms | 82 of 129 | -38.2 | 69.7 | 177.4 | 219.3 | 59% (82) | experimental:VALIDATION_PENDING 77, unavailable:POSE_LOW_QUALITY 36, unavailable:FPS_TOO_LOW 6, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5 |
-| leg-drive | % H | 118 of 129 | -1.9 | 2.0 | 3.0 | 3.6 | 100% (118) | estimated 113, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| drive-time | ms | 82 of 129 | -65.1 | 74.9 | 131.9 | 144.8 | 73% (82) | experimental:VALIDATION_PENDING 77, unavailable:POSE_LOW_QUALITY 36, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| loading-depth | % H | 118 of 129 | -0.3 | 0.4 | 1.1 | 1.6 | 100% (118) | estimated 113, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| landing-distance | cm | 113 of 129 | 3.6 | 4.1 | 7.9 | 24.1 | 99% (113) | experimental:VALIDATION_PENDING 108, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
-| shoulder-tilt-trophy (2D level, deg) | deg | 113 of 129 | -0.7 | 1.5 | 5.3 | 11.2 | – | experimental:VALIDATION_PENDING 108, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| toss-drop | cm | 123 of 129 | -0.1 | 0.4 | 1.4 | 8.4 | 99% (123) | estimated 116, unavailable:APEX_OUT_OF_FRAME 1, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5, experimental:VALIDATION_PENDING 5 |
+| contact-height-ratio | ratio | 119 of 129 | -0.026 | 0.028 | 0.052 | 0.070 | 100% (119) | experimental:VALIDATION_PENDING 96, estimated 21, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5 |
+| contact-forward | cm | 113 of 129 | 5.4 | 5.4 | 8.8 | 11.7 | 96% (113) | experimental:VALIDATION_PENDING 111, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| rhythm-release-to-contact | ms | 124 of 129 | 1.3 | 13.6 | 38.8 | 130.8 | 99% (124) | estimated 111, experimental:CONTACT_NOT_FOUND 2, experimental:FPS_TOO_LOW 6, unavailable:VIEW_MISMATCH 5, experimental:VALIDATION_PENDING 5 |
+| trophy-pause | ms | 82 of 129 | -38.2 | 69.7 | 177.4 | 219.3 | 59% (82) | experimental:VALIDATION_PENDING 75, unavailable:POSE_LOW_QUALITY 36, experimental:CONTACT_NOT_FOUND 2, unavailable:FPS_TOO_LOW 6, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5 |
+| leg-drive | % H | 118 of 129 | -1.9 | 2.0 | 3.0 | 3.6 | 100% (118) | estimated 111, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| drive-time | ms | 82 of 129 | -65.1 | 74.9 | 131.9 | 144.8 | 73% (82) | experimental:VALIDATION_PENDING 75, unavailable:POSE_LOW_QUALITY 36, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| loading-depth | % H | 118 of 129 | -0.3 | 0.4 | 1.1 | 1.6 | 100% (118) | estimated 111, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| landing-distance | cm | 113 of 129 | 3.6 | 4.1 | 7.9 | 24.1 | 99% (113) | experimental:VALIDATION_PENDING 106, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
+| shoulder-tilt-trophy (2D level, deg) | deg | 113 of 129 | -0.7 | 1.5 | 5.3 | 11.2 | – | experimental:VALIDATION_PENDING 106, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6 |
 | shoulder-tilt-trophy (3D, deg) | deg | 113 of 129 | 0.9 | 2.2 | 8.1 | 9.9 | – | experimental 113, unavailable:undefined 16 |
-| deep-bend-flag |  | 112 of 129 | 0.1 | 0.1 | 1.0 | 1.0 | – | experimental:VALIDATION_PENDING 107, unavailable:CAMERA_TILTED 5, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6, unavailable:OCCLUDED 1 |
+| deep-bend-flag |  | 112 of 129 | 0.1 | 0.1 | 1.0 | 1.0 | – | experimental:VALIDATION_PENDING 105, unavailable:CAMERA_TILTED 5, experimental:CONTACT_NOT_FOUND 2, unavailable:VIEW_MISMATCH 5, experimental:CONDITION_NOT_VALIDATED 5, unavailable:NEEDS_SIDE_VIEW 6, unavailable:OCCLUDED 1 |
 | knee-bend-band |  | 6 of 129 | 0.0 | 0.0 | 0.0 | 0.0 | – | unavailable:NEEDS_REAR_VIEW 123, experimental:VALIDATION_PENDING 6 |
 | speed-experimental |  | 0 of 129 | – | – | – | – | – | unavailable:FPS_TOO_LOW 100, unavailable:RANGE_TOO_WIDE 15, unavailable:VIEW_MISMATCH 5, unavailable:NEEDS_SIDE_VIEW 6, unavailable:TIME_BASE_UNKNOWN 3 |
 | toss-height-spread (pooled) |  | 1 of 1 | 0.8 | 0.8 | 0.8 | 0.8 | 100% (1) | pooled 1 |
@@ -261,15 +261,15 @@ Pass/fail per metric on the D1 envelope and on all side-view day clips at 60 fps
 | --- | --- | --- | --- |
 | toss-apex-height | median |e| ≤ 0.025, p95 ≤ 0.05, cov ≥ 93% | PASS: median 0.011, p95 0.027, cov 100% (n 11) | FAIL: median 0.043, p95 0.069, cov 100% (n 94) |
 | toss-forward | MAE ≤ 5 cm, p95 ≤ 10, cov ≥ 93% | FAIL: MAE 6.7, p95 8.6, cov 100% (n 11) | FAIL: MAE 5.4, p95 8.3, cov 99% (n 94) |
-| toss-drop | MAE ≤ 5 cm, cov ≥ 93% | PASS: MAE 0.5, cov 100% (n 11) | PASS: MAE 0.7, cov 99% (n 94) |
-| contact-height-ratio | MAE ≤ 0.03, p95 ≤ 0.05, cov ≥ 93% | PASS: MAE 0.007, p95 0.020, cov 100% (n 11) | FAIL: MAE 0.025, p95 0.050, cov 100% (n 95) |
-| contact-forward | MAE ≤ 6 cm, p95 ≤ 12, cov ≥ 93% | FAIL: MAE 6.6, p95 8.5, cov 100% (n 11) | PASS: MAE 5.1, p95 8.5, cov 98% (n 95) |
-| rhythm-release-to-contact | MAE ≤ 1 frame + 5 ms (21.7 ms at 60), cov ≥ 93% | PASS: MAE 11.0, cov 100% (n 11) | PASS: MAE 9.3, cov 99% (n 95) |
-| trophy-pause | MAE ≤ 60 ms | FAIL: MAE 99.9 (n 6) | FAIL: MAE 65.1 (n 68) |
-| leg-drive | MAE ≤ 2% H, cov ≥ 93% | FAIL: MAE 2.5, bias -2.5, cov 100% (n 11) | PASS: MAE 1.9, bias -1.8, cov 100% (n 95) |
-| drive-time | MAE ≤ 50 ms, cov ≥ 93% | FAIL: MAE 63.8, cov 83% (n 6) | FAIL: MAE 74.9, cov 74% (n 68) |
-| loading-depth | MAE ≤ 2% H | PASS: MAE 0.4 (n 11) | PASS: MAE 0.4 (n 95) |
-| landing-distance | MAE ≤ 8 cm, p95 ≤ 15, cov ≥ 93% | FAIL: MAE 6.0, p95 24.1, cov 91% (n 11) | PASS: MAE 3.8, p95 7.4, cov 99% (n 95) |
-| shoulder-tilt-trophy (3D, deg) | rectified 2D within ±4° of 3D (p95) | FAIL: MAE 1.6, p95 5.3 (n 11) | FAIL: MAE 2.3, p95 8.3 (n 95) |
-| deep-bend-flag | two-level error ≤ 15% | PASS: error 0% (n 11) | PASS: error 6% (n 94) |
+| toss-drop | MAE ≤ 5 cm, cov ≥ 93% | PASS: MAE 0.5, cov 100% (n 11) | PASS: MAE 0.7, cov 99% (n 93) |
+| contact-height-ratio | MAE ≤ 0.03, p95 ≤ 0.05, cov ≥ 93% | PASS: MAE 0.007, p95 0.020, cov 100% (n 11) | FAIL: MAE 0.025, p95 0.050, cov 100% (n 94) |
+| contact-forward | MAE ≤ 6 cm, p95 ≤ 12, cov ≥ 93% | FAIL: MAE 6.6, p95 8.5, cov 100% (n 11) | PASS: MAE 5.1, p95 8.5, cov 98% (n 94) |
+| rhythm-release-to-contact | MAE ≤ 1 frame + 5 ms (21.7 ms at 60), cov ≥ 93% | PASS: MAE 11.0, cov 100% (n 11) | PASS: MAE 9.4, cov 99% (n 94) |
+| trophy-pause | MAE ≤ 60 ms | FAIL: MAE 99.9 (n 6) | FAIL: MAE 65.1 (n 67) |
+| leg-drive | MAE ≤ 2% H, cov ≥ 93% | FAIL: MAE 2.5, bias -2.5, cov 100% (n 11) | PASS: MAE 1.9, bias -1.8, cov 100% (n 94) |
+| drive-time | MAE ≤ 50 ms, cov ≥ 93% | FAIL: MAE 63.8, cov 83% (n 6) | FAIL: MAE 74.7, cov 73% (n 67) |
+| loading-depth | MAE ≤ 2% H | PASS: MAE 0.4 (n 11) | PASS: MAE 0.4 (n 94) |
+| landing-distance | MAE ≤ 8 cm, p95 ≤ 15, cov ≥ 93% | FAIL: MAE 6.0, p95 24.1, cov 91% (n 11) | PASS: MAE 3.8, p95 7.4, cov 99% (n 94) |
+| shoulder-tilt-trophy (3D, deg) | rectified 2D within ±4° of 3D (p95) | FAIL: MAE 1.6, p95 5.3 (n 11) | FAIL: MAE 2.3, p95 8.3 (n 94) |
+| deep-bend-flag | two-level error ≤ 15% | PASS: error 0% (n 11) | PASS: error 6% (n 93) |
 | serve-count | precision and recall ≥ 99% | PASS: 0 wrong of 11 (n 11) | PASS: 0 wrong of 95 (n 95) |

@@ -1,0 +1,98 @@
+{
+  "steps": [
+    {
+      "name": "first run and service worker in control",
+      "ok": true
+    },
+    {
+      "name": "an update waits for Reload, then takes over once",
+      "ok": true,
+      "detail": {
+        "controller": "http://localhost:5402/sw.js",
+        "reloads": 1
+      }
+    },
+    {
+      "name": "seed: sample session plus an own copy of its experiment",
+      "ok": true
+    },
+    {
+      "name": "light: screens",
+      "ok": true
+    },
+    {
+      "name": "dark: screens",
+      "ok": true
+    },
+    {
+      "name": "usefulness: rate once, then never asked again",
+      "ok": true,
+      "detail": {
+        "usefulness": "Usefulness\nAsked once after each verdict.\n1 of 1 rated 4 or 5"
+      }
+    },
+    {
+      "name": "export the beta report (a download here; the share sheet on phones)",
+      "ok": true,
+      "detail": {
+        "events": 8,
+        "gates": "open",
+        "usefulness": {
+          "rated": 1,
+          "fourOrFive": 1,
+          "skipped": 0,
+          "byRating": {
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 1,
+            "5": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "offline: the sample session loads again from the runtime cache",
+      "ok": true,
+      "detail": {
+        "demoFilesCached": 487
+      }
+    }
+  ],
+  "failures": [],
+  "consoleErrors": [],
+  "audits": {
+    "light-profile": {
+      "overflow": false,
+      "small": []
+    },
+    "light-beta-data": {
+      "overflow": false,
+      "small": []
+    },
+    "light-storage": {
+      "overflow": false,
+      "small": []
+    },
+    "light-compare-usefulness": {
+      "overflow": false,
+      "small": []
+    },
+    "dark-profile": {
+      "overflow": false,
+      "small": []
+    },
+    "dark-beta-data": {
+      "overflow": false,
+      "small": []
+    },
+    "dark-storage": {
+      "overflow": false,
+      "small": []
+    },
+    "dark-compare-usefulness": {
+      "overflow": false,
+      "small": []
+    }
+  }
+}

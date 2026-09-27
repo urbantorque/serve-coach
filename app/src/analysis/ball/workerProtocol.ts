@@ -23,6 +23,8 @@ export type ToBallWorker =
   | { type: 'end'; id: number; windowId: number; options: WindowAnalyseOptions }
   /** Re-runs analyseBall on candidates already detected (e.g. with onsets, a contact time or a corrected time base). */
   | { type: 'reanalyse'; id: number; frames: FrameCandidates[]; options: WindowAnalyseOptions }
+  /** Drops a window that will never be ended (a superseded job); replies `ready`. */
+  | { type: 'discard'; id: number; windowId: number }
   | { type: 'dispose'; id: number }
 
 export type FromBallWorker =

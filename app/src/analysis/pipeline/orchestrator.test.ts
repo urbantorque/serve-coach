@@ -15,7 +15,7 @@ import type { BitmapFrame, FrameSelection, FrameSource, RawFrame } from '../vide
 import { analyseSessionDouble } from './e2e/testDoubleEngine.ts'
 import { MEMORY_BUDGET } from './budget.ts'
 import { AnalysisError } from './errors.ts'
-import { defaultDeps, DENSE_NUM_POSES, POSE_ROI_MAX_SIDE_PX, runAnalysis, type PipelineDeps } from './orchestrator.ts'
+import { defaultDeps, DENSE_NUM_POSES, engineObservations, POSE_ROI_MAX_SIDE_PX, runAnalysis, type PipelineDeps } from './orchestrator.ts'
 import type { BallClient, PoseEstimator } from './passes.ts'
 import { servePoseAt } from './testPoses.ts'
 import type { PipelineEvent, PipelineProgress } from './types.ts'
@@ -495,5 +495,34 @@ describe('runAnalysis', () => {
     expect(decide).toHaveBeenCalledOnce()
     expect(await getDb().sessions.count()).toBe(0)
     expect(await getDb().serves.count()).toBe(0)
+  })
+})
+
+describe('engineObservations', () => {
+  it('passes every window candidate to the engine (as the offline validation input does), once, plus predicted track points', () => {
+    const tracks = [
+      {
+        id: 1,
+        kind: 'toss' as const,
+        observations: [
+          { frameIndex: 10, tReal: 10 / 60, x: 0.5, y: 0.4, radius: 0.003, score: 0.9, source: 'detected' as const },
+          { frameIndex: 11, tReal: 11 / 60, x: 0.5, y: 0.39, radius: 0.003, score: 0, source: 'predicted' as const },
+        ],
+      },
+    ]
+    const windows = [
+      {
+        candidates: [
+          { frameIndex: 9, tReal: 9 / 60, candidates: [{ x: 0.49, y: 0.45, radiusNorm: 0.003, score: 0.4 }] },
+          { frameIndex: 10, tReal: 10 / 60, candidates: [{ x: 0.5, y: 0.4, radiusNorm: 0.003, score: 0.9 }, { x: 0.2, y: 0.7, radiusNorm: 0.004, score: 0.2 }] },
+        ],
+      },
+    ]
+    const obs = engineObservations(tracks, windows)
+    expect(obs.map((o) => `${o.frameIndex}:${o.source}`)).toEqual(['9:detected', '10:detected', '10:detected', '11:predicted'])
+    expect(obs.filter((o) => o.frameIndex === 10 && o.x === 0.5)).toHaveLength(1)
+    expect(obs.find((o) => o.frameIndex === 9)?.radius).toBe(0.003)
+    // Without windows it is the tracks' points alone (the old input).
+    expect(engineObservations(tracks)).toHaveLength(2)
   })
 })

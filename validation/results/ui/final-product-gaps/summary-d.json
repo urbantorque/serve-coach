@@ -1,0 +1,68 @@
+[
+  {
+    "scheme": "light",
+    "name": "match-log-bottom-error-and-pain-rule",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-match-log-bottom-error-and-pain-rule.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "match-log-save-refused",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-match-log-save-refused.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "progress-empty-with-comp-nights",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-progress-empty-with-comp-nights.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "match-log-bottom-error-and-pain-rule",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-match-log-bottom-error-and-pain-rule.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "match-log-save-refused",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-match-log-save-refused.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "progress-empty-with-comp-nights",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-progress-empty-with-comp-nights.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  }
+]

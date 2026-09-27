@@ -9,9 +9,11 @@ import {
 import { useId, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { LESS_EFFORT_LINE } from '../../../coaching/safety.ts'
+import type { MetricStatus } from '../../../analysis/types.ts'
+import { median } from '../../../analysis/stats/index.ts'
 import { DEMO_FIXTURES, loadDemoData, showToast } from '../../../data/index.ts'
 import type { BodyRegion, Weekday } from '../../../data/records.ts'
-import { TossScatter, type TossPoint } from '../../charts/index.ts'
+import { StripPlot } from '../../charts/index.ts'
 import { Button, Card, OutcomeMark, Sheet, StatusChip } from '../../components/index.ts'
 import { paths } from '../../shell/paths.ts'
 import { ChoiceList } from '../profile/parts/ChoiceList.tsx'
@@ -292,30 +294,39 @@ export function OnboardingScreen() {
 
 // ---------- O1 ----------
 
-function samplePoints(): { points: TossPoint[]; label: string } {
+type SamplePeak = { id: string; value: number; kind: 'in' | 'net' | 'long' | 'wide' | 'untagged'; callout: string }
+
+/**
+ * The sample's peak heights, one per serve: the same heights-only strip a real report draws. Front-to-back
+ * positions are experimental (toss-forward is V0), so the first screen never shows a toss map; the chip
+ * is the plotted heights' own status, never a hard-coded one.
+ */
+function samplePeaks(): { peaks: SamplePeak[]; status: MetricStatus | null; label: string } {
   const s = DEMO_FIXTURES.sessions.at(-1)
-  if (!s) return { points: [], label: '' }
+  if (!s) return { peaks: [], status: null, label: '' }
   const outcome = new Map(s.tags.map((t) => [t.serveId, t.outcome]))
-  const points: TossPoint[] = []
+  const peaks: SamplePeak[] = []
+  const statuses = new Set<MetricStatus>()
   for (const sv of s.serves) {
-    const fwd = sv.metrics['toss-forward']
     const apex = sv.metrics['toss-apex-height']
     const cm = apex?.secondary?.cm
-    if (!sv.included || typeof fwd?.value !== 'number' || typeof cm !== 'number') continue
+    if (!sv.included || !apex || (apex.status !== 'measured' && apex.status !== 'estimated') || typeof cm !== 'number') continue
+    statuses.add(apex.status)
     const o = outcome.get(sv.id)
-    points.push({
+    peaks.push({
       id: sv.id,
-      xCm: fwd.value,
-      yCm: cm,
+      value: cm / 100,
       kind: o === 'in' ? 'in' : o === 'net' ? 'net' : o === 'long' ? 'long' : o === 'wide' ? 'wide' : 'untagged',
-      callout: `Serve ${sv.index}`,
+      callout: `${(cm / 100).toFixed(2)} m · Serve ${sv.index}`,
     })
   }
-  return { points, label: `Sample toss map: where ${points.length} toss peaks landed for a computer-generated player.` }
+  const status: MetricStatus | null = statuses.has('estimated') ? 'estimated' : statuses.has('measured') ? 'measured' : null
+  return { peaks, status, label: `Sample strip: how high ${peaks.length} toss peaks went for a computer-generated player.` }
 }
 
 function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) {
-  const sample = useMemo(() => samplePoints(), [])
+  const sample = useMemo(() => samplePeaks(), [])
+  const mid = sample.peaks.length ? median(sample.peaks.map((p) => p.value)) : undefined
   return (
     <Frame
       title="Welcome"
@@ -343,15 +354,20 @@ function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void 
           Find out if it worked.
         </p>
       </div>
-      {sample.points.length ? (
+      {sample.peaks.length >= 5 && sample.status ? (
         <Card as="figure" className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-footnote font-label text-ink-2">Toss peaks, one dot per serve</span>
-            <StatusChip status="estimated" />
+            <span className="text-footnote font-label text-ink-2">How high each toss peaked, one dot per serve</span>
+            <StatusChip status={sample.status} />
           </div>
           {/* A picture of the idea, not something to use here: the chart is inert and described below. */}
           <div inert aria-hidden="true">
-            <TossScatter points={sample.points} height={180} label={sample.label} />
+            <StripPlot
+              label={sample.label}
+              rows={[{ key: 'sample-apex', data: sample.peaks, median: mid, medianLabel: mid !== undefined ? `middle ${mid.toFixed(2)} m` : undefined }]}
+              domain={[Math.min(...sample.peaks.map((p) => p.value)) - 0.1, Math.max(...sample.peaks.map((p) => p.value)) + 0.1]}
+              unit="m"
+            />
           </div>
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-footnote text-ink-2" aria-hidden="true">
             <li className="inline-flex items-center gap-1.5">
@@ -437,7 +453,6 @@ function ComfortQuestion({ draft, update }: { draft: OnboardingDraft; update: (p
       </div>
       <div className="flex flex-col gap-2">
         <p className="text-footnote text-ink-2">{COMFORT_COPY.lineDrills}</p>
-        <p className="text-footnote text-ink-2">{COMFORT_COPY.lineGp}</p>
       </div>
       {draft.comfortRegions.length ? (
         <section aria-labelledby={`${id}-save`} className="flex flex-col gap-3">

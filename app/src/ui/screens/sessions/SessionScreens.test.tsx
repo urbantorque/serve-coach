@@ -5,6 +5,7 @@ import { loadDemoData } from '../../../data/demo.ts'
 import { getDb } from '../../../data/db.ts'
 import { setSetting } from '../../../data/repos/settings.ts'
 import { useSettingsStore } from '../../../data/stores/settings.ts'
+import { UI } from '../../copy/strings.ts'
 import { paths } from '../../shell/paths.ts'
 import { expectHonest, primaryCount, renderAt } from '../progress/insights/testing.tsx'
 
@@ -46,7 +47,7 @@ describe('Session report', () => {
     expect(idx.every((i) => i >= 0), JSON.stringify(idx)).toBe(true)
     expect([...idx].sort((a, b) => a - b)).toEqual(idx)
     // Hero toss map: a figure with state chip and a role=img plot summarising the data.
-    expect(screen.getByRole('img', { name: /Toss map, 20 serves/ })).toBeInTheDocument()
+    expect(screen.getByRole('application', { name: /Toss map, 20 serves/ })).toBeInTheDocument()
     // Outcomes are player-entered with n and the likely range.
     expect(document.querySelector('[data-metric-tile="first-serve-in-rate"]')?.getAttribute('data-status')).toBe('player-entered')
     expect(screen.getAllByText(/likely 35% to 73%/).length).toBeGreaterThan(0)
@@ -87,7 +88,7 @@ describe('Session report', () => {
     useSettingsStore.setState({ experimentalMetrics: true })
     renderAt(paths.sessionReport('demo-s3'))
     await screen.findByText('Your serve today', {}, { timeout: 8000 })
-    expect(screen.getByText('Not yet checked against a radar or measured marks. Not used for coaching.')).toBeInTheDocument()
+    expect(screen.getByText(UI.experimentalLine)).toBeInTheDocument()
     expect(document.querySelector('[data-metric="speed-experimental"]')?.textContent).toMatch(/about 130 to 145/)
     expectHonest({ experimentalAllowed: true })
   })

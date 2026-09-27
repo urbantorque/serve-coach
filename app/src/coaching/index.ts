@@ -7,6 +7,8 @@ export { detectItem, ITEM_WORDS, type Detection, type DetectStatus } from './det
 export { buildEvidence, chooseCue, chooseDrill, keyFrameEventFor, OUTCOME_LINE, practiceLogRules, progressionGatePasses, retestPlan } from './deliver.ts'
 export {
   buildVerdictRequest,
+  COOLDOWN_SESSIONS,
+  cooldownsFrom,
   experimentFromDecision,
   experimentRecordStatus,
   experimentTransition,
@@ -19,6 +21,8 @@ export {
   STRAIGHT_AFTER_PRACTICE,
   SUPERSEDED_COPY,
   unmatchedReason,
+  localYmd,
+  type EndedExperiment,
   type MatchedComparisonResult,
   type RetestDue,
   type SameSessionCheck,

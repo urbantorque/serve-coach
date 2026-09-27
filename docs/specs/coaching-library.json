@@ -485,9 +485,15 @@
           "utr-1-3",
           "utr-4-7"
         ],
-        "excludeIfComfort": [],
+        "excludeIfComfort": [
+          "shoulder",
+          "elbow",
+          "back",
+          "other"
+        ],
         "label": null
       },
+      "progressionAlt": "About 70% effort with a target in each box, still with no wait at the top.",
       "regression": "Serve from the service line with a smooth, unhurried toss and no stop at the top."
     },
     "contraindications": [],
@@ -596,7 +602,7 @@
         ],
         "label": "coaches-differ"
       },
-      "progressionAlt": "Quick-rise serves at full pace, with a target in each box.",
+      "progressionAlt": "Quick-rise serves at about 70% effort, with a target in each box.",
       "regression": "Shadow swings with a short, quick rise, then 10 easy serves from the service line."
     },
     "contraindications": [
@@ -684,9 +690,14 @@
           "utr-1-3",
           "utr-4-7"
         ],
-        "excludeIfComfort": [],
+        "excludeIfComfort": [
+          "shoulder",
+          "elbow",
+          "other"
+        ],
         "label": null
       },
+      "progressionAlt": "Add a deep target in each box and keep the see-saw at about 70% effort.",
       "regression": "Shadow swings from the trophy position with the see-saw tipped up at the front, then 10 easy serves from the service line."
     },
     "contraindications": [
@@ -793,9 +804,15 @@
           "utr-1-3",
           "utr-4-7"
         ],
-        "excludeIfComfort": [],
+        "excludeIfComfort": [
+          "shoulder",
+          "elbow",
+          "back",
+          "other"
+        ],
         "label": null
       },
+      "progressionAlt": "Keep the same rhythm at about 70% effort, mixing first and second serves.",
       "regression": "From the service line, toss first and let the racquet follow the ball up without stopping, at an easy pace."
     },
     "contraindications": [],
@@ -882,9 +899,15 @@
           "utr-1-3",
           "utr-4-7"
         ],
-        "excludeIfComfort": [],
+        "excludeIfComfort": [
+          "shoulder",
+          "elbow",
+          "back",
+          "other"
+        ],
         "label": null
       },
+      "progressionAlt": "About 70% effort with a target in each box, keeping the flow.",
       "regression": "Lag rhythm from the service line: start with the racquet down, toss first, and let the racquet follow the ball up without stopping."
     },
     "contraindications": [],
@@ -986,9 +1009,15 @@
           "utr-1-3",
           "utr-4-7"
         ],
-        "excludeIfComfort": [],
+        "excludeIfComfort": [
+          "shoulder",
+          "elbow",
+          "back",
+          "other"
+        ],
         "label": null
       },
+      "progressionAlt": "Aim each tap or serve at a target in the box, at about 70% effort, reaching as high as before.",
       "regression": "Stay at the service line for all the balls; any ball that lands in the box counts."
     },
     "contraindications": [],
@@ -1169,7 +1198,10 @@
           "utr-4-7"
         ],
         "excludeIfComfort": [
-          "back"
+          "back",
+          "shoulder",
+          "elbow",
+          "other"
         ],
         "label": null
       },

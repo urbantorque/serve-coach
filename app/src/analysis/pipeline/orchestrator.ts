@@ -24,10 +24,11 @@ import { getSetting } from '../../data/repos/settings.ts'
 import { ulid } from '../../platform/ids.ts'
 import { ballSetupFromPoses, soundDelayEstimateS, type BallSetup } from '../ball/analyse.ts'
 import type { TargetTag } from '../ball/speed.ts'
-import type { BallWindowResult, WindowAnalyseOptions, WindowBallConfig } from '../ball/workerCore.ts'
+import { analyseWindow, type BallWindowResult, type WindowAnalyseOptions, type WindowBallConfig } from '../ball/workerCore.ts'
 import { analyseSession as engineAnalyseSession, findServeWindows as engineFindServeWindows, type EngineInput, type EngineOutput } from '../engine.ts'
 import { cleanPoseFrames } from '../pose/smoothing.ts'
 import type { AudioOnset, BallObservation, BallTrack, CaptureContext, PoseFrame, VideoMeta } from '../types.ts'
+import { cameraModel, unrectifyPoint } from '../serve/geometry.ts'
 import type { FrameSource } from '../video/frameTypes.ts'
 import type { ProbeResult } from '../video/probe.ts'
 import { contactOnsets } from './audio.ts'
@@ -42,7 +43,7 @@ import { applyGravityCheck, resolveTimeBase, type TimeBaseDecision } from './tim
 import { compactBallTrack, compactPoseTrack, mergePoses, retimePoses } from './tracks.ts'
 import type { PipelineEvent, PipelineTimings, RunAnalysisOptions, RunAnalysisResult } from './types.ts'
 import { LaneQueue } from './laneQueue.ts'
-import { activitySpans, ballIndices, ballSearchCrop, planWindows, poseIndices, sparseStep, type PlannedWindow } from './windows.ts'
+import { activitySpans, ballIndices, ballSearchCrop, ballSearchDoubtS, planWindows, poseIndices, sparseStep, tossSearchBand, type PlannedWindow } from './windows.ts'
 
 export const PIPELINE_VERSION = '1.0.0'
 /**
@@ -310,6 +311,22 @@ function adoptServes(out: EngineOutput, sessionId: string, videoId: string): { s
   if (stats.bestServeId === undefined) delete stats.bestServeId
   if (stats.representativeServeId === undefined) delete stats.representativeServeId
   return { serves, stats }
+}
+
+/**
+ * Every ball candidate the windows' detection kept, plus the tracks' observations (predicted ones
+ * included), once each. The engine follows the toss back into the hand through the candidates
+ * (serve/ball.ts followLeadIn), exactly as the offline validation input does
+ * (tools/validate/metrics-eval.ts passes every candidate); with the tracks' points alone it could not.
+ */
+export function engineObservations(tracks: readonly BallTrack[], windows: readonly Pick<BallWindowResult, 'candidates'>[] = []): BallObservation[] {
+  const fromCandidates: BallObservation[] = []
+  for (const w of windows) {
+    for (const f of w.candidates ?? []) {
+      for (const c of f.candidates) fromCandidates.push({ frameIndex: f.frameIndex, tReal: f.tReal, x: c.x, y: c.y, radius: c.radiusNorm, score: c.score, source: 'detected' })
+    }
+  }
+  return uniqueObservations([...tracks, { id: 0, kind: 'unknown', observations: fromCandidates }])
 }
 
 function uniqueObservations(tracks: readonly BallTrack[]): BallObservation[] {
@@ -660,16 +677,23 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       ballSetupFromPoses(poses, { aspect, handedness, playerHeightM: heightM })
     const display = () => ({ width: meta().width, height: meta().height })
 
-    const windowConfig = (w: PlannedWindow, setup: BallSetup): WindowBallConfig => ({
-      crop: passB.tightBallCrop === false ? w.crop : ballSearchCrop(w.crop, setup.tossRoi, w.corridor, options.view, aspect, BALL_CROP_MARGIN_H),
-      frameAspect: aspect,
-      expectedRadiusNorm: setup.expectedRadiusNorm,
-      tossRoi: setup.tossRoi,
-      corridor: w.corridor,
-      provisionalContactT: w.contact.tReal,
-      contactUncertaintyS: w.contact.uncertaintyS,
-      cameraView: options.view,
-    })
+    // The ball search keeps the whole toss in view: the band reaches towards the court and the
+    // band-plus-corridor phase spans the provisional contact's realistic error (windows.ts
+    // tossSearchBand, ballSearchDoubtS). A toss cut short there made the engine place contact where
+    // the ball vanished (0.27 s early on dist12-s1) or leave the serve uncounted.
+    const windowConfig = (w: PlannedWindow, setup: BallSetup): WindowBallConfig => {
+      const tossRoi = tossSearchBand(setup.tossRoi, w, options.view, aspect)
+      return {
+        crop: passB.tightBallCrop === false ? w.crop : ballSearchCrop(w.crop, tossRoi, w.corridor, options.view, aspect, BALL_CROP_MARGIN_H),
+        frameAspect: aspect,
+        expectedRadiusNorm: setup.expectedRadiusNorm,
+        tossRoi,
+        corridor: w.corridor,
+        provisionalContactT: w.contact.tReal,
+        contactUncertaintyS: ballSearchDoubtS(w.contact),
+        cameraView: options.view,
+      }
+    }
     const analyseOptionsFor =
       (sparseSetup: BallSetup) =>
       (dense: PoseFrame[]): WindowAnalyseOptions => {
@@ -716,6 +740,10 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     interface BallJob {
       id: number
       client: BallClient
+      clientIndex: number
+      frames: number
+      /** Aborts this job only (a re-plan supersedes it); the run's signal aborts it too. */
+      abort: AbortController
       sparseSetup: BallSetup
       detected: Promise<{ framesDecoded: number; planarFrames: number }>
     }
@@ -740,12 +768,30 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       const config = windowConfig(w, sparseSetup)
       ballCrops[i] = config.crop
       cropScales.push(downscale)
+      const abort = new AbortController()
+      const onRunAbort = () => abort.abort(signal?.reason)
+      if (signal?.aborted) abort.abort(signal.reason)
+      else signal?.addEventListener('abort', onRunAbort, { once: true })
       const detected = clientTail[k].then(() =>
-        runBallDetect(frameSource!, client, { windowId: id, ballFrames, ballConfig: config, ballDownscale: downscale, display: display(), signal, cpuPixels: ballCpu }),
+        runBallDetect(frameSource!, client, { windowId: id, ballFrames, ballConfig: config, ballDownscale: downscale, display: display(), signal: abort.signal, cpuPixels: ballCpu }),
       )
       clientTail[k] = detected.catch(() => undefined)
       detected.catch(() => undefined) // observed when the window is ended
-      return { id, client, sparseSetup, detected }
+      void detected.catch(() => undefined).then(() => signal?.removeEventListener('abort', onRunAbort))
+      return { id, client, clientIndex: k, frames: ballFrames.length, abort, sparseSetup, detected }
+    }
+    /**
+     * A job a re-plan replaced: stop its detection, stop counting it, and free the worker's state for
+     * its window once the detection has settled (every frame it sent arrives before the discard).
+     */
+    const supersede = (old: BallJob) => {
+      old.abort.abort()
+      ballAcks.delete(old.id)
+      clientLoad[old.clientIndex] = Math.max(0, clientLoad[old.clientIndex] - old.frames)
+      void old.detected
+        .catch(() => undefined)
+        .then(() => old.client.discard?.(old.id))
+        .catch(() => undefined)
     }
     // Every window's ball detection starts now (speculatively for an unknown time base: the plan only
     // changes on a slow-motion correction, and then the later jobs are started again).
@@ -809,9 +855,19 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
           for (let k = 0; k < planned.length && k < replanned.length; k++) planned[k] = { ...replanned[k], index: planned[k].index }
           w = planned[i]
           epoch++
-          // Later windows: their detection and pose ran on the old plan and time base; start them
-          // again (their old pose jobs are dropped unless already running).
+          // Later windows: their detection and pose ran on the old plan and time base; stop those
+          // jobs and start them again (their old pose jobs are dropped unless already running).
+          for (let k = i + 1; k < n; k++) supersede(ballJobs[k])
           ballJobs = ballJobs.map((old, k) => (k > i ? startBallJob(k) : old))
+          // Earlier windows were analysed on the old time base: re-time their kept candidates and
+          // analyse them again (ball layer, main thread), so their tracks, toss fit and contact are in
+          // real time like every other input the engine gets.
+          for (let k = 0; k < ballResults.length; k++) {
+            const old = ballResults[k]
+            const frames = old.candidates.map((f) => ({ ...f, tReal: f.tReal * factor }))
+            const options = analyseOptionsFor(setupFor(sparseIn(planned[k])))(setupPoses(planned[k], densePosesByWindow[k]))
+            ballResults[k] = analyseWindow(old.windowId, frames, options, { detectMs: old.timings.detectMs, readbackMs: old.timings.readbackMs })
+          }
           for (let k = i + 1; k < n; k++) {
             queue.drop(poseKeys[k])
             poseFraction[k] = 0
@@ -867,7 +923,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       profile: { heightM, handedness, sex: options.profile.sex },
       poses: allPoses,
       ball: {
-        observations: uniqueObservations(allTracks),
+        observations: engineObservations(allTracks, ballResults),
         tracks: allTracks,
         toss: ballResults.map((r, k) => ({
           windowIndex: k,
@@ -912,6 +968,9 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     }
     t = now()
     failStage = 'internal'
+    // The engine's ball points (toss apex, ball at contact) are rectified; the crops are cut from the
+    // displayed frames, so they go back to image coordinates with the engine's camera model.
+    const keyFrameCam = cameraModel(meta(), capture, { view: options.view })
     const plan = planKeyFrames({
       sessionId: options.sessionId,
       serves: adopted,
@@ -919,6 +978,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       frameCount: frameSource.frameTimes.length,
       aspect,
       representativeServeId: stats.representativeServeId ?? stats.bestServeId,
+      toImage: (x, y) => unrectifyPoint(keyFrameCam, x, y),
     })
     let keyFrames: KeyFrameRecord[] = []
     try {

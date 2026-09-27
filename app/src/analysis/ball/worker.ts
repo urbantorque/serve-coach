@@ -80,6 +80,10 @@ function handle(message: ToBallWorker): void {
         scope.postMessage({ type: 'result', id: message.id, windowId: -1, result })
         return
       }
+      case 'discard':
+        windows.delete(message.windowId)
+        scope.postMessage({ type: 'ready', id: message.id })
+        return
       case 'dispose':
         windows.clear()
         canvas = null

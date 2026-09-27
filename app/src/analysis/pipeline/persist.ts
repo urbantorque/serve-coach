@@ -21,7 +21,9 @@ import { createSession, getSession, markStatus, setAnalysis, updateSession } fro
 import { getSetting } from '../../data/repos/settings.ts'
 import { addVideo, listVideosBySession, retainUntilFor } from '../../data/repos/videos.ts'
 import { applyDeleteAfterAnalysis } from '../../data/retention.ts'
+import { wasSessionDeleted } from '../../data/deletion.ts'
 import type { CameraView, CaptureContext, SessionMode, VideoMeta } from '../types.ts'
+import { AnalysisError } from './errors.ts'
 
 export const SOUND_NOT_KEPT_COPY = "We couldn't remove the sound from this video, so we didn't keep a copy. Your original is unchanged."
 export const LOW_SPACE_NOT_KEPT_COPY = "Your phone is low on space, so we didn't keep a copy of this video. Your results are saved."
@@ -42,6 +44,8 @@ export async function prepareSession(input: {
     await updateSession(input.sessionId, { status: 'analysing', error: undefined })
     return { ...existing, status: 'analysing' }
   }
+  // Deleted by the player while queued: never bring it back (ARCHITECTURE §8.3).
+  if (await wasSessionDeleted(input.sessionId)) throw new AnalysisError('cancelled', 'the session was deleted before analysis started')
   const c = input.capture
   return createSession({
     id: input.sessionId,
@@ -109,6 +113,8 @@ export interface StoreVideoInput {
 
 /** Stores the clip (or only its metadata) per the retention setting; returns the record and any player-facing note. */
 export async function storeVideo(input: StoreVideoInput): Promise<{ record: VideoRecord; note?: string }> {
+  // No clip is kept for a session the player deleted while it was being analysed.
+  if (!(await getSession(input.sessionId))) throw new AnalysisError('cancelled', 'the session was deleted during analysis')
   const now = input.now ?? new Date()
   const fingerprint = await fingerprintOf(input.file, input.meta.durationMediaS)
   // "Analyse again" on the same clip (the picked file, or the kept copy, which has the same size and
@@ -204,7 +210,15 @@ export interface CommitInput {
  */
 export async function commitResults(input: CommitInput): Promise<void> {
   const db = getDb()
+  let deleted = false
   await db.transaction('rw', [db.sessions, db.serves, db.tracks, db.keyFrames, db.sessionStats, db.jobs, db.coaching], async () => {
+    // The player deleted the session while it was analysing: write nothing (no orphaned key frames,
+    // pose tracks, stats or decisions that no screen could list, export or delete).
+    if (!(await db.sessions.get(input.sessionId))) {
+      deleted = true
+      await db.jobs.delete(input.jobId)
+      return
+    }
     await db.serves.where('sessionId').equals(input.sessionId).delete()
     await db.tracks.where('sessionId').equals(input.sessionId).delete()
     await db.keyFrames.where('sessionId').equals(input.sessionId).delete()
@@ -214,6 +228,7 @@ export async function commitResults(input: CommitInput): Promise<void> {
     await setAnalysis(input.sessionId, input.analysis)
     await updateJob(input.jobId, { state: 'done', progress: 1, completedWindows: input.windowsDone })
   })
+  if (deleted) throw new AnalysisError('cancelled', 'the session was deleted during analysis')
   // A clip that was never stored stays 'not-kept' (it is not "deleted after analysis").
   if (input.videoStored) await applyDeleteAfterAnalysis(input.sessionId)
 }

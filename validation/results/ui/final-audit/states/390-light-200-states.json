@@ -1,0 +1,1631 @@
+{
+ "key": "390-light-200",
+ "states": [
+  {
+   "name": "serve-detail",
+   "file": "390-light-200-01-serve-detail.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentReportServe 1Sample data · synthetic playerSe",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 939
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Serve timeline",
+     "b": "All values",
+     "x": 135,
+     "y": 11
+    },
+    {
+     "a": "Forward 1 frame",
+     "b": "All values",
+     "x": 31,
+     "y": 25
+    },
+    {
+     "a": "Previous serve",
+     "b": "All values",
+     "x": 48,
+     "y": 25
+    },
+    {
+     "a": "Next serve",
+     "b": "All values",
+     "x": 48,
+     "y": 25
+    }
+   ]
+  },
+  {
+   "name": "drawer-open",
+   "file": "390-light-200-02-drawer-open.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "Show less",
+    "inDialog": false,
+    "top": 115,
+    "bottom": 159
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    },
+    {
+     "name": "Contact, focus. Show this frame",
+     "left": 346,
+     "right": 396
+    },
+    {
+     "name": "Landing. Show this frame",
+     "left": 424,
+     "right": 474
+    },
+    {
+     "name": "Recovery. Show this frame",
+     "left": 490,
+     "right": 540
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Outcome: in, you logged. Chang",
+     "b": "Show less",
+     "x": 55,
+     "y": 14
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Peak. Show this frame",
+     "x": 5,
+     "y": 44
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Top of swing. Show this frame",
+     "x": 50,
+     "y": 44
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Lowest point. Show this frame",
+     "x": 50,
+     "y": 44
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Contact, focus. Show this fram",
+     "x": 36,
+     "y": 44
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Setup. Show this frame",
+     "x": 34,
+     "y": 2
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Release. Show this frame",
+     "x": 50,
+     "y": 2
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Peak. Show this frame",
+     "x": 50,
+     "y": 2
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Top of swing. Show this frame",
+     "x": 50,
+     "y": 2
+    }
+   ]
+  },
+  {
+   "name": "drawer-after-25-tabs",
+   "file": "390-light-200-03-drawer-after-25-tabs.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "Peak. Show this frame",
+    "inDialog": false,
+    "top": 449,
+    "bottom": 537
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    },
+    {
+     "name": "Contact, focus. Show this frame",
+     "left": 346,
+     "right": 396
+    },
+    {
+     "name": "Landing. Show this frame",
+     "left": 424,
+     "right": 474
+    },
+    {
+     "name": "Recovery. Show this frame",
+     "left": 490,
+     "right": 540
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Outcome: in, you logged. Chang",
+     "b": "Show less",
+     "x": 55,
+     "y": 14
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Peak. Show this frame",
+     "x": 5,
+     "y": 44
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Top of swing. Show this frame",
+     "x": 50,
+     "y": 44
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Lowest point. Show this frame",
+     "x": 50,
+     "y": 44
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Contact, focus. Show this fram",
+     "x": 36,
+     "y": 44
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Setup. Show this frame",
+     "x": 34,
+     "y": 2
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Release. Show this frame",
+     "x": 50,
+     "y": 2
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Peak. Show this frame",
+     "x": 50,
+     "y": 2
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Top of swing. Show this frame",
+     "x": 50,
+     "y": 2
+    }
+   ]
+  },
+  {
+   "name": "drawer-closed",
+   "file": "390-light-200-04-drawer-closed.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentReportServe 1Sample data · synthetic playerSe",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 939
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Serve timeline",
+     "b": "All values",
+     "x": 135,
+     "y": 11
+    },
+    {
+     "a": "Forward 1 frame",
+     "b": "All values",
+     "x": 31,
+     "y": 25
+    },
+    {
+     "a": "Previous serve",
+     "b": "All values",
+     "x": 48,
+     "y": 25
+    },
+    {
+     "a": "Next serve",
+     "b": "All values",
+     "x": 48,
+     "y": 25
+    }
+   ]
+  },
+  {
+   "name": "tag-sheet",
+   "file": "390-light-200-05-tag-sheet.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "DIV",
+    "role": "dialog",
+    "name": "Tag serve 11st2ndDeuceAdAimed atTBodyWideTypeFlatSliceKickIn",
+    "inDialog": true,
+    "top": 170,
+    "bottom": 844
+   },
+   "dialog": {
+    "name": "Tag serve 1",
+    "modal": "true"
+   },
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Zoom to you",
+     "b": "In",
+     "x": 8,
+     "y": 44
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Net",
+     "x": 169,
+     "y": 44
+    },
+    {
+     "a": "Serve timeline",
+     "b": "All values",
+     "x": 135,
+     "y": 11
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Long",
+     "x": 169,
+     "y": 32
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Wide",
+     "x": 169,
+     "y": 32
+    },
+    {
+     "a": "Playback speed: normal speed. ",
+     "b": "Long",
+     "x": 62,
+     "y": 36
+    },
+    {
+     "a": "Back 1 frame",
+     "b": "Long",
+     "x": 48,
+     "y": 48
+    },
+    {
+     "a": "Play",
+     "b": "Long",
+     "x": 27,
+     "y": 48
+    },
+    {
+     "a": "Play",
+     "b": "Wide",
+     "x": 9,
+     "y": 48
+    }
+   ]
+  },
+  {
+   "name": "tag-sheet-40-tabs",
+   "file": "390-light-200-06-tag-sheet-40-tabs.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "In",
+    "inDialog": true,
+    "top": 447,
+    "bottom": 535
+   },
+   "dialog": {
+    "name": "Tag serve 1",
+    "modal": "true"
+   },
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Zoom to you",
+     "b": "In",
+     "x": 8,
+     "y": 44
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Net",
+     "x": 169,
+     "y": 44
+    },
+    {
+     "a": "Serve timeline",
+     "b": "All values",
+     "x": 135,
+     "y": 11
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Long",
+     "x": 169,
+     "y": 32
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Wide",
+     "x": 169,
+     "y": 32
+    },
+    {
+     "a": "Playback speed: normal speed. ",
+     "b": "Long",
+     "x": 62,
+     "y": 36
+    },
+    {
+     "a": "Back 1 frame",
+     "b": "Long",
+     "x": 48,
+     "y": 48
+    },
+    {
+     "a": "Play",
+     "b": "Long",
+     "x": 27,
+     "y": 48
+    },
+    {
+     "a": "Play",
+     "b": "Wide",
+     "x": 9,
+     "y": 48
+    }
+   ]
+  },
+  {
+   "name": "tag-sheet-closed",
+   "file": "390-light-200-07-tag-sheet-closed.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "Outcome: in, you logged. Change",
+    "inDialog": false,
+    "top": 146,
+    "bottom": 178
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Serve timeline",
+     "b": "All values",
+     "x": 135,
+     "y": 11
+    },
+    {
+     "a": "Forward 1 frame",
+     "b": "All values",
+     "x": 31,
+     "y": 25
+    },
+    {
+     "a": "Previous serve",
+     "b": "All values",
+     "x": 48,
+     "y": 25
+    },
+    {
+     "a": "Next serve",
+     "b": "All values",
+     "x": 48,
+     "y": 25
+    }
+   ]
+  },
+  {
+   "name": "check-mode",
+   "file": "390-light-200-08-check-mode.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01?mode=check",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentServe 1Check serve 1Sample data · synthetic p",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 1534
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 1.041666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Peak, not marked",
+     "left": 340,
+     "right": 460
+    },
+    {
+     "name": "Trophy, optional",
+     "left": 468,
+     "right": 614
+    },
+    {
+     "name": "Lowest hip, optional",
+     "left": 622,
+     "right": 820
+    },
+    {
+     "name": "Contact, not marked",
+     "left": 828,
+     "right": 987
+    },
+    {
+     "name": "Landing, not marked",
+     "left": 995,
+     "right": 1156
+    },
+    {
+     "name": "Radar, optional",
+     "left": 1164,
+     "right": 1298
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Serve 1",
+     "x": 19,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "check-mode-bottom",
+   "file": "390-light-200-09-check-mode-bottom.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01?mode=check",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentServe 1Check serve 1Sample data · synthetic p",
+    "inDialog": false,
+    "top": -690,
+    "bottom": 844
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 1.041666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Peak, not marked",
+     "left": 340,
+     "right": 460
+    },
+    {
+     "name": "Trophy, optional",
+     "left": 468,
+     "right": 614
+    },
+    {
+     "name": "Lowest hip, optional",
+     "left": 622,
+     "right": 820
+    },
+    {
+     "name": "Contact, not marked",
+     "left": 828,
+     "right": 987
+    },
+    {
+     "name": "Landing, not marked",
+     "left": 995,
+     "right": 1156
+    },
+    {
+     "name": "Radar, optional",
+     "left": 1164,
+     "right": 1298
+    }
+   ],
+   "collide": [
+    {
+     "a": "Zoom to you",
+     "b": "Heel on the ground, not marked",
+     "x": 142,
+     "y": 28
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Front toe(optional), not marke",
+     "x": 145,
+     "y": 8
+    },
+    {
+     "a": "Frame",
+     "b": "Next: Release",
+     "x": 214,
+     "y": 41
+    },
+    {
+     "a": "Forward 1 frame",
+     "b": "Change who is marking",
+     "x": 19,
+     "y": 32
+    },
+    {
+     "a": "Back 10 frames",
+     "b": "Change who is marking",
+     "x": 48,
+     "y": 32
+    },
+    {
+     "a": "Forward 10 frames",
+     "b": "Change who is marking",
+     "x": 48,
+     "y": 32
+    }
+   ]
+  },
+  {
+   "name": "compare-picker",
+   "file": "390-light-200-10-compare-picker.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "DIV",
+    "role": "dialog",
+    "name": "Compare withYour best serveYour best, 26 SepLast sessionLast",
+    "inDialog": true,
+    "top": 281,
+    "bottom": 844
+   },
+   "dialog": {
+    "name": "Compare with",
+    "modal": "true"
+   },
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Faded joints: we're less sure where they are."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Report",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Zoom to you",
+     "b": "Your best serveYour best, 26 S",
+     "x": 189,
+     "y": 36
+    },
+    {
+     "a": "Serve timeline",
+     "b": "All values",
+     "x": 135,
+     "y": 11
+    },
+    {
+     "a": "Serve timeline",
+     "b": "Last sessionLast session, 12 S",
+     "x": 350,
+     "y": 44
+    },
+    {
+     "a": "Playback speed: normal speed. ",
+     "b": "Before the drillNo drill start",
+     "x": 62,
+     "y": 26
+    },
+    {
+     "a": "Back 1 frame",
+     "b": "Last sessionLast session, 12 S",
+     "x": 48,
+     "y": 8
+    },
+    {
+     "a": "Back 1 frame",
+     "b": "Before the drillNo drill start",
+     "x": 48,
+     "y": 32
+    },
+    {
+     "a": "Play",
+     "b": "Last sessionLast session, 12 S",
+     "x": 48,
+     "y": 8
+    },
+    {
+     "a": "Play",
+     "b": "Before the drillNo drill start",
+     "x": 48,
+     "y": 32
+    },
+    {
+     "a": "Forward 1 frame",
+     "b": "All values",
+     "x": 31,
+     "y": 25
+    }
+   ]
+  },
+  {
+   "name": "compare-view",
+   "file": "390-light-200-11-compare-view.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentCompareDoneSide by sideGhost (Plus)Today, ser",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 844
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Left: today · Right: your best"
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    },
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 12.308333
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    }
+   ],
+   "collide": []
+  },
+  {
+   "name": "compare-ghost",
+   "file": "390-light-200-12-compare-ghost.png",
+   "url": "/sessions/sample-s3/serves/sample-s3-s01",
+   "overflow": 0,
+   "active": {
+    "tag": "DIV",
+    "role": "dialog",
+    "name": "Ghost overlay is part of PlusYour other serve drawn over thi",
+    "inDialog": true,
+    "top": 68,
+    "bottom": 844
+   },
+   "dialog": {
+    "name": "Ghost overlay is part of Plus",
+    "modal": "true"
+   },
+   "live": [
+    {
+     "role": null,
+     "live": "polite",
+     "text": "Left: today · Right: your best"
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 3.741666
+    },
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 12.308333
+    }
+   ],
+   "offscreen": [
+    {
+     "name": "Contact",
+     "left": 276,
+     "right": 435
+    },
+    {
+     "name": "Legs",
+     "left": 443,
+     "right": 561
+    },
+    {
+     "name": "None",
+     "left": 569,
+     "right": 694
+    }
+   ],
+   "collide": []
+  },
+  {
+   "name": "tagging",
+   "file": "390-light-200-13-tagging.png",
+   "url": "/sessions/sample-s3/tag",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentTag serves1 of 16Sample data · synthetic play",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 904
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": true,
+     "autoplay": false,
+     "t": 5.241666
+    }
+   ],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Save and exit",
+     "x": 11,
+     "y": 19
+    },
+    {
+     "a": "T",
+     "b": "Flat",
+     "x": 48,
+     "y": 6
+    },
+    {
+     "a": "Body",
+     "b": "Flat",
+     "x": 44,
+     "y": 6
+    },
+    {
+     "a": "Body",
+     "b": "Slice",
+     "x": 50,
+     "y": 6
+    },
+    {
+     "a": "Wide",
+     "b": "Slice",
+     "x": 39,
+     "y": 6
+    }
+   ]
+  },
+  {
+   "name": "tagging-after-in",
+   "file": "390-light-200-14-tagging-after-in.png",
+   "url": "/sessions/sample-s3/tag",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "In",
+    "inDialog": false,
+    "top": 572,
+    "bottom": 660
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": "Serve 1: in. Serve 2 of 16."
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [
+    {
+     "paused": false,
+     "autoplay": false,
+     "t": 11.980349
+    }
+   ],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Save and exit",
+     "x": 11,
+     "y": 19
+    },
+    {
+     "a": "T",
+     "b": "Flat",
+     "x": 48,
+     "y": 6
+    },
+    {
+     "a": "Body",
+     "b": "Flat",
+     "x": 44,
+     "y": 6
+    },
+    {
+     "a": "Body",
+     "b": "Slice",
+     "x": 50,
+     "y": 6
+    },
+    {
+     "a": "Wide",
+     "b": "Slice",
+     "x": 39,
+     "y": 6
+    }
+   ]
+  },
+  {
+   "name": "focus-no-why",
+   "file": "390-light-200-15-focus-no-why.png",
+   "url": "/focus",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentTodayYour focusSample data · synthetic player",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 1318
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [
+    {
+     "name": "Progress",
+     "left": 293,
+     "right": 393
+    }
+   ],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to Today",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "Log practice",
+     "b": "Record next session",
+     "x": 224,
+     "y": 19
+    },
+    {
+     "a": "What we checked",
+     "b": "Record next session",
+     "x": 265,
+     "y": 21
+    },
+    {
+     "a": "What we checked",
+     "b": "Today",
+     "x": 57,
+     "y": 11
+    },
+    {
+     "a": "What we checked",
+     "b": "Record",
+     "x": 98,
+     "y": 11
+    },
+    {
+     "a": "What we checked",
+     "b": "Sessions",
+     "x": 103,
+     "y": 11
+    },
+    {
+     "a": "What we checked",
+     "b": "Progress",
+     "x": 13,
+     "y": 11
+    },
+    {
+     "a": "Sessions",
+     "b": "Progress",
+     "x": 5,
+     "y": 66
+    }
+   ]
+  },
+  {
+   "name": "live-bodycheck",
+   "file": "390-light-200-16-live-bodycheck.png",
+   "url": "/record/live",
+   "overflow": 0,
+   "active": {
+    "tag": "BUTTON",
+    "role": null,
+    "name": "All good",
+    "inDialog": true,
+    "top": 648,
+    "bottom": 700
+   },
+   "dialog": {
+    "name": "Quick body check",
+    "modal": "true"
+   },
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Close camera",
+     "x": 19,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "live-framing",
+   "file": "390-light-200-17-live-framing.png",
+   "url": "/record/live",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentLive framingCamera and levelServe Coach uses ",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 967
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Close camera",
+     "x": 19,
+     "y": 19
+    }
+   ]
+  },
+  {
+   "name": "plan",
+   "file": "390-light-200-18-plan.png",
+   "url": "/plan",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentYouPlanPrototype: no payment is taken. A plan",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 3755
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [],
+   "collide": [
+    {
+     "a": "Skip to content",
+     "b": "Back to You",
+     "x": 19,
+     "y": 19
+    },
+    {
+     "a": "YearlyAbout A$8.33 a month. Fr",
+     "b": "Choose a plan",
+     "x": 350,
+     "y": 6
+    },
+    {
+     "a": "YearlyAbout A$8.33 a month. Fr",
+     "b": "Not now",
+     "x": 350,
+     "y": 52
+    }
+   ]
+  },
+  {
+   "name": "today",
+   "file": "390-light-200-19-today.png",
+   "url": "/",
+   "overflow": 0,
+   "active": {
+    "tag": "BODY",
+    "role": null,
+    "name": "Skip to contentTodayTodaySample data · synthetic playerMonda",
+    "inDialog": false,
+    "top": 0,
+    "bottom": 2116
+   },
+   "dialog": null,
+   "live": [
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    },
+    {
+     "role": "status",
+     "live": "polite",
+     "text": ""
+    }
+   ],
+   "running": 0,
+   "videos": [],
+   "offscreen": [
+    {
+     "name": "Progress",
+     "left": 293,
+     "right": 393
+    }
+   ],
+   "collide": [
+    {
+     "a": "Sessions",
+     "b": "Progress",
+     "x": 5,
+     "y": 66
+    }
+   ]
+  }
+ ],
+ "logs": []
+}

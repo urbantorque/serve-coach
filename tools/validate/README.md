@@ -24,3 +24,27 @@ Privacy: every request the browser context makes is routed; anything not address
 server is recorded and aborted, so a policy gap shows up as a failure without anything leaving the
 machine. During the warm-up the page and the running pose worker are probed with a request to
 MediaPipe's telemetry endpoint. Exit code 1 if a clip fails or any request left for another host.
+
+## End-to-end accuracy of the production build (`e2e-accuracy.mjs`, `e2e-replay.ts`)
+
+`metrics-eval.ts` scores the engine on the offline harness's full-rate input. The app itself runs
+the production pipeline (`runAnalysis`: sparse serve scan, per-window dense pose, ball search in
+workers), which can hand the engine different evidence. `e2e-accuracy.mjs` scores that path:
+
+```sh
+node tools/validate/e2e-accuracy.mjs --port 5401                  # production build (vite build + preview), 8 clips
+node tools/validate/e2e-accuracy.mjs --server dev --clips session # the dev server, one clip
+node tools/validate/e2e-accuracy.mjs --skip-run                   # re-score the stored runs
+```
+
+It runs `app/src/analysis/pipeline/e2e/perf-bench.mjs` (one fresh headless Edge context per clip,
+`?dump=1`), scores the runs with `perf-accuracy.mts` (the `metrics-eval.ts` scoring) and counts
+serves against the truth contacts (counted, hits, false serves). Default clips: `baseline-s1`,
+`dist12-s1`, `default75-s1`, `fence9-s1`, `fps240-s1`, `session`, `sample-checkin`, `sample-retest`.
+Output: `validation/results/e2e-final/` (`runs/`, `accuracy.md`, `accuracy.json`, `counts.json`,
+`SUMMARY.md`).
+
+`e2e-replay.ts --dump validation/results/e2e-final/runs/<clip>__default.json` replays `analyseSession`
+in Node on the exact input the production pipeline passed (poses, ball observations, tracks, toss
+entries, onsets, capture context), checks it reproduces the stored serves, and diffs that input
+against the offline one (`validation/results/metrics/pipeline/full/<clip>.json`, when present).

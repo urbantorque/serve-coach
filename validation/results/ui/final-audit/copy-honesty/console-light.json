@@ -1,0 +1,487 @@
+[
+ {
+  "url": "http://127.0.0.1:5487/onboarding",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/record",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/progress",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/focus",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/progress/compare",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/record/import",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/record/setup",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/plan",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile/how-we-measure",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile/storage",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile/comfort",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile/your-serve",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile/about",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile/beta-data",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile/coach",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/matches/new",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/focus/log",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s1",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s1/serves/sample-s1-s01",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s1/serves/sample-s1-s02",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s1/serves/sample-s1-s03",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s2",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s2/serves/sample-s2-s01",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s2/serves/sample-s2-s02",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s2/serves/sample-s2-s03",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s3",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s3/serves/sample-s3-s01",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s3/serves/sample-s3-s02",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s3/serves/sample-s3-s03",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/focus",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/focus/drill",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/focus/log",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/progress",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/progress/compare",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s2/tag",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/serve-count",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/retoss-count",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/toss-apex-height",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/toss-forward",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/toss-lateral",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/toss-drop",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/toss-height-spread",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/toss-forward-spread",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/toss-lateral-spread",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/contact-height-ratio",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/contact-height-spread",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/contact-forward",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/rhythm-release-to-contact",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/rhythm-spread",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/trophy-pause",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/leg-drive",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/drive-time",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/loading-depth",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/deep-bend-flag",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/shoulder-tilt-trophy",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/knee-bend-band",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/shoulder-over-shoulder-contact",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/landing-distance",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/repeatability",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/serve-in-rate",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/first-serve-in-rate",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/second-serve-in-rate",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/double-faults",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/placement-zone",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/serve-type-mix",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/speed-experimental",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/speed-average-rear",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/speed-radar-entered",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/spin",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/capture-quality",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/fatigue-flag",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/load-flag",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile/how-we-measure",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/profile",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s1",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s1/serves/sample-s1-s01",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s1/serves/sample-s1-s02",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s2",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s2/serves/sample-s2-s01",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s2/serves/sample-s2-s02",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s3",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s3/serves/sample-s3-s01",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/sessions/sample-s3/serves/sample-s3-s02",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/progress",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/progress/compare",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/focus",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/speed-experimental",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/landing-distance",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ },
+ {
+  "url": "http://127.0.0.1:5487/metric/toss-forward",
+  "type": "warning",
+  "text": "Service Worker registration blocked by Playwright"
+ }
+]

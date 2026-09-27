@@ -9,6 +9,7 @@ import { WarningCircleIcon } from '@phosphor-icons/react'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ServePhase } from '../../../analysis/types.ts'
 import { useServe, useSession } from '../../../data/hooks.ts'
+import { useSettingsStore } from '../../../data/stores/settings.ts'
 import type { SessionRecord } from '../../../data/records.ts'
 import type { ServeAnalysis } from '../../../data/domain.ts'
 import { AppBar, DelayedSkeleton, EmptyState, SegmentedControl, Skeleton } from '../../components/index.ts'
@@ -35,6 +36,7 @@ import {
   type VideoController,
 } from '../../components/video/index.ts'
 import { PHASE_LABEL } from '../../copy/strings.ts'
+import { usePlusGate } from '../plan/usePlusGate.tsx'
 import { sameCameraSetup, type CompareTarget } from './serveView.ts'
 import { useServePlayback, type ServePlayback } from './useServePlayback.ts'
 
@@ -106,7 +108,7 @@ function CompareLoaded({
   store,
   controller,
   target,
-  mode,
+  mode: requestedMode,
   onMode,
   overlay,
   onOverlay,
@@ -119,6 +121,9 @@ function CompareLoaded({
   otherSession,
   otherPb,
 }: CompareViewProps & { bar: ReactNode; other: ServeAnalysis; otherSession: SessionRecord; otherPb: ServePlayback }) {
+  // T3 (PRODUCT §6.15): the ghost overlay is Plus; side by side stays free.
+  const gate = usePlusGate('ghost-compare')
+  const mode = requestedMode === 'ghost' && gate.ready && !gate.plus ? 'side' : requestedMode
   const [videoGhost, setVideoGhost] = useState(false)
   const [otherStore] = useState<Playhead>(() => createPlayhead())
   const map = useCallback(
@@ -145,6 +150,8 @@ function CompareLoaded({
     return cur && oth ? ghostMapper(cur, oth) : null
   }, [pb.standing, pb.bodyHeightNorm, pb.clip, otherPb.standing, otherPb.bodyHeightNorm, otherPb.clip])
 
+  // Experimental numbers stay off the video unless the toggle is on (D2).
+  const experimentalOn = useSettingsStore((s) => s.experimentalMetrics)
   const sceneCurrent = useCallback(
     (f: number) =>
       buildScene({
@@ -159,8 +166,9 @@ function CompareLoaded({
         aspect: pb.clip.width / pb.clip.height,
         metrics: serve.metrics,
         ghost: mode === 'ghost' && ghostMap && otherPb.track?.pose ? { pose: otherPb.track.pose, frame: map(f), map: ghostMap } : null,
+        experimentalOn,
       }),
-    [overlay, pb.track, pb.standing, pb.bodyHeightNorm, pb.clip, serve, mode, ghostMap, otherPb.track, map],
+    [overlay, pb.track, pb.standing, pb.bodyHeightNorm, pb.clip, serve, mode, ghostMap, otherPb.track, map, experimentalOn],
   )
   const sceneOther = useCallback(
     (f: number) =>
@@ -175,8 +183,9 @@ function CompareLoaded({
         bodyHeightNorm: otherPb.bodyHeightNorm,
         aspect: otherPb.clip.width / otherPb.clip.height,
         metrics: other.metrics,
+        experimentalOn,
       }),
-    [overlay, otherPb.track, otherPb.standing, otherPb.bodyHeightNorm, otherPb.clip, other],
+    [overlay, otherPb.track, otherPb.standing, otherPb.bodyHeightNorm, otherPb.clip, other, experimentalOn],
   )
 
   const otherPeak = tossPeak(otherPb.track?.ball)?.y ?? null
@@ -199,18 +208,19 @@ function CompareLoaded({
   return (
     <div className="flex min-h-[100dvh] flex-col bg-bg" data-compare={mode}>
       {bar}
-      <main className="flex flex-col gap-2 pb-8">
+      <div className="flex flex-col gap-2 pb-8">
         <div className="gutter">
           <SegmentedControl
             label="Compare view"
             options={[
               { value: 'side', label: 'Side by side' },
-              { value: 'ghost', label: 'Ghost' },
+              { value: 'ghost', label: gate.plus ? 'Ghost' : 'Ghost (Plus)' },
             ]}
             value={mode}
-            onChange={(m) => onMode(m)}
+            onChange={(m) => (m === 'ghost' ? gate.request(() => onMode('ghost')) : onMode(m))}
           />
         </div>
+        {gate.sheet}
         {mode === 'side' ? (
           <div className={cx(bothLandscape ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-4')}>
             <VideoStage
@@ -300,7 +310,7 @@ function CompareLoaded({
             ) : null}
           </div>
         ) : null}
-      </main>
+      </div>
     </div>
   )
 }

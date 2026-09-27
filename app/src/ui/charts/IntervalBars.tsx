@@ -93,9 +93,11 @@ export function IntervalBars({ rows, domain, sameZone, unit, formatTick = defaul
             {r.sublabel}
           </text>
         ) : null}
-        <rect x={clamp(r.ci95[0])} width={Math.max(4, clamp(r.ci95[1]) - clamp(r.ci95[0]))} y={barY} height={10} rx={5} fill={colour} fillOpacity={0.12} />
-        <rect x={clamp(r.ci80[0])} width={Math.max(4, clamp(r.ci80[1]) - clamp(r.ci80[0]))} y={barY} height={10} rx={5} fill={colour} fillOpacity={0.22} />
-        <rect x={clamp(r.estimate) - 1} y={cy - 9} width={2} height={18} fill={colour} />
+        {/* The 95% range carries a full-colour outline so its ends pass 3:1 in every set (WCAG 1.4.11).
+            Court-side (§2.4) drops the tints: 95% at 30%, 80% solid, >= 3:1 apart in sun. */}
+        <rect x={clamp(r.ci95[0]) + 0.5} width={Math.max(4, clamp(r.ci95[1]) - clamp(r.ci95[0])) - 1} y={barY + 0.5} height={9} rx={4.5} fill={colour} fillOpacity={0.12} stroke={colour} strokeWidth={1} className="court:[fill-opacity:0.3]" data-interval="95" />
+        <rect x={clamp(r.ci80[0])} width={Math.max(4, clamp(r.ci80[1]) - clamp(r.ci80[0]))} y={barY} height={10} rx={5} fill={colour} fillOpacity={0.22} className="court:[fill-opacity:1]" data-interval="80" />
+        <rect x={clamp(r.estimate) - 1} y={cy - 9} width={2} height={18} fill={colour} stroke="var(--surface)" strokeWidth={1} paintOrder="stroke" />
         {dotEls}
         {unitEls}
       </g>

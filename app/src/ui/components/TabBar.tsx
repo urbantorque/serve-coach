@@ -25,7 +25,7 @@ const TABS: Tab[] = [
 export function TabBar() {
   return (
     <nav aria-label="Main" className="glass fixed inset-x-0 bottom-0 z-(--z-tabbar) border-t border-line pad-safe-bottom court:border-t-2">
-      <ul className="mx-auto grid h-14 max-w-(--content-max) grid-cols-4">
+      <ul className="mx-auto grid min-h-14 max-w-(--content-max) grid-cols-4">
         {TABS.map(({ to, label, icon: G, end }) => (
           <li key={to} className="flex">
             <NavLink
@@ -45,7 +45,7 @@ export function TabBar() {
                   >
                     <G aria-hidden="true" />
                   </span>
-                  <span className={cx('text-caption', isActive ? 'font-strong text-ink' : 'text-ink-3')}>{label}</span>
+                  <span className={cx('tab-label whitespace-nowrap', isActive ? 'font-strong text-ink' : 'text-ink-3')}>{label}</span>
                 </>
               )}
             </NavLink>

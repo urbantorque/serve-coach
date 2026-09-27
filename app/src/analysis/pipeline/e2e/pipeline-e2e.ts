@@ -24,6 +24,7 @@ import type { EngineInput, EngineOutput } from '../../engine.ts'
 import { AnalysisError } from '../errors.ts'
 import { defaultDeps, runAnalysis, type PipelineDeps } from '../orchestrator.ts'
 import type { BallFrameImage } from '../../ball/workerProtocol.ts'
+import type { BallWindowResult, WindowBallConfig } from '../../ball/workerCore.ts'
 import type { PoseEstimator } from '../passes.ts'
 import type { PipelineEvent, PipelineProgress, RunAnalysisResult } from '../types.ts'
 import { analyseSessionDouble, findServeWindowsDouble } from './testDoubleEngine.ts'
@@ -77,6 +78,16 @@ export interface PipelineDump {
   poseStats?: unknown[]
   /** Pose-source stats when Pass B starts (Pass A alone; the source's stats are cumulative). */
   poseStatsPassA?: unknown[]
+  /**
+   * The rest of the engine input, exactly as the pipeline passed it (ball observations, tracks and
+   * per-window toss entries, onsets, capture context, profile, target tags), so the engine can be
+   * replayed offline on the production pipeline's input (tools/validate/e2e-replay.ts).
+   */
+  input?: Omit<EngineInput, 'poses' | 'meta'>
+  /** Per ball window: the search configuration and the ball layer's result (with every candidate). */
+  ballWindows?: { windowId: number; config: WindowBallConfig; result: BallWindowResult }[]
+  /** Pass A's cleaned sparse poses, as findServeWindows received them (same packing as `poses`). */
+  sparsePoses?: [number, number, number[][] | null][]
 }
 
 declare global {
@@ -88,15 +99,28 @@ declare global {
 
 const r5 = (v: number | undefined) => (v === undefined ? 0 : Math.round(v * 1e5) / 1e5)
 
+const packPoses = (poses: readonly EngineInput['poses'][number][]): PipelineDump['poses'] =>
+  poses.map((p) => [p.frameIndex, p.tReal, p.landmarks ? p.landmarks.map((l) => [r5(l.x), r5(l.y), r5(l.z), r5(l.visibility)]) : null])
+
 function packDump(input: EngineInput, out: EngineOutput): PipelineDump {
   return {
     meta: input.meta,
-    poses: input.poses.map((p) => [p.frameIndex, p.tReal, p.landmarks ? p.landmarks.map((l) => [r5(l.x), r5(l.y), r5(l.z), r5(l.visibility)]) : null]),
+    poses: packPoses(input.poses),
     windows: (input.ball.toss ?? []).map((t) => t as { startReal: number; endReal: number }).map((t) => ({ startReal: t.startReal, endReal: t.endReal })),
     serves: out.serves.map((s) => ({ ...s, keyFrames: {} })),
     stats: out.stats,
     quality: out.quality.overall,
     ballTracks: input.ball.tracks.length,
+    input: {
+      view: input.view,
+      capture: input.capture,
+      profile: input.profile,
+      ball: input.ball,
+      onsets: input.onsets,
+      targetTags: input.targetTags,
+      ids: input.ids,
+      heightEntered: input.heightEntered,
+    },
   }
 }
 
@@ -232,11 +256,34 @@ async function main(): Promise<void> {
   // stats, captured by wrapping the injected deps (the pipeline itself is unchanged).
   const poseSources: PoseEstimator[] = []
   let passAStats: unknown[] | null = null
+  const ballWindows: NonNullable<PipelineDump['ballWindows']> = []
+  let sparsePoses: PipelineDump['sparsePoses']
   if (params.get('dump') === '1') {
     const real = deps.engine
     const createPose = deps.createPoseSource
+    const createBall = deps.createBallClient
     deps = {
       ...deps,
+      // Ball windows: the search configuration each ran with and the ball layer's full result.
+      createBallClient: async (onAck, options) => {
+        const client = await createBall(onAck, options)
+        const configs = new Map<number, WindowBallConfig>()
+        return {
+          backend: client.backend,
+          begin: (windowId, config) => {
+            configs.set(windowId, config)
+            return client.begin(windowId, config)
+          },
+          pushFrame: (windowId, frameIndex, tReal, image) => client.pushFrame(windowId, frameIndex, tReal, image),
+          end: async (windowId, analyseOptions) => {
+            const result = await client.end(windowId, analyseOptions)
+            const config = configs.get(windowId)
+            if (config) ballWindows.push({ windowId, config, result })
+            return result
+          },
+          dispose: () => client.dispose(),
+        }
+      },
       createPoseSource: async (pass, model) => {
         const source = await createPose(pass, model)
         poseSources.push(source)
@@ -251,7 +298,10 @@ async function main(): Promise<void> {
         return source
       },
       engine: {
-        findServeWindows: real.findServeWindows,
+        findServeWindows: (poses, meta, handedness) => {
+          sparsePoses = packPoses(poses)
+          return real.findServeWindows(poses, meta, handedness)
+        },
         analyseSession: (input) => {
           const out = real.analyseSession(input)
           window.__pipelineDump = packDump(input, out)
@@ -268,6 +318,10 @@ async function main(): Promise<void> {
   const heightM = Number(params.get('heightM')) > 0 ? Number(params.get('heightM')) : 1.8
   const target = params.get('target') as TargetZone | null
   const hitSound = params.get('hitSound') === '1'
+  // The light answer the import flow would record (?light=day|lights|indoor). The synthetic renders'
+  // lighting is known: night renders say so in their name; everything else is daylight. Without an
+  // answer the engine treats the light as unknown (nothing validated), as it does for a real import.
+  const light = pick<'day' | 'lights' | 'indoor'>(params.get('light'), ['day', 'lights', 'indoor'], /night/i.test(clip) ? 'lights' : 'day')
   const cancelAt = Number(params.get('cancelAt'))
   const started = performance.now()
   controller = new AbortController()
@@ -288,6 +342,7 @@ async function main(): Promise<void> {
       playerHeightM: heightM,
       playerHeightSource: 'entered',
       hitSoundTiming: hitSound,
+      conditions: { light },
     }
     const result = await runAnalysis(file, {
       sessionId,
@@ -333,6 +388,8 @@ async function main(): Promise<void> {
     if (window.__pipelineDump) {
       window.__pipelineDump.poseStats = poseSources.map((s) => s.stats?.() ?? null)
       if (passAStats) window.__pipelineDump.poseStatsPassA = passAStats
+      window.__pipelineDump.ballWindows = ballWindows
+      window.__pipelineDump.sparsePoses = sparsePoses
     }
     report.verify = await verify(sessionId, result.serveIds)
     report.state = 'done'

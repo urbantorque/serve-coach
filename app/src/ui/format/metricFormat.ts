@@ -41,6 +41,17 @@ const RATIO = new Set(['contact-height-ratio', 'toss-apex-height'])
 const SHARE = new Set(['leg-drive', 'loading-depth'])
 const RATE = new Set(['serve-in-rate', 'first-serve-in-rate', 'second-serve-in-rate'])
 const BAND = new Set(['shoulder-tilt-trophy', 'knee-bend-band', 'shoulder-over-shoulder-contact'])
+/**
+ * Metrics that can never be below zero by construction: loading depth is the hip height at release
+ * minus the lowest hip height after it (serve/events.ts detectTrophy). A range below zero would be
+ * physically impossible, so the display floors it and says "up to" (DESIGN §3.3 rule 11: no signs).
+ */
+export const FLOOR_ZERO = new Set(['loading-depth'])
+
+/** A range bound for display: floored at zero where the quantity cannot be negative. */
+export function displayBound(metricId: string, x: number | undefined): number | undefined {
+  return x !== undefined && FLOOR_ZERO.has(metricId) ? Math.max(0, x) : x
+}
 
 const toNum = (v: MetricValue['value']): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 const fmtInt = (x: number) => Math.round(x).toLocaleString('en-AU')
@@ -69,11 +80,14 @@ interface Parts {
   words?: boolean
   percent?: string
   detail?: string
+  /** The low bound sat at the quantity's floor (zero): write "up to {high}". */
+  floor?: boolean
 }
 
 function numericParts(id: string, v: MetricValue): Parts | null {
-  const n = toNum(v.value)
-  const lo = v.uncertainty?.low
+  const raw = toNum(v.value)
+  const n = raw !== null && FLOOR_ZERO.has(id) ? Math.max(0, raw) : raw
+  const lo = displayBound(id, v.uncertainty?.low)
   const hi = v.uncertainty?.high
   const pair = (f: (x: number) => string) => (lo !== undefined && hi !== undefined ? { low: f(lo), high: f(hi) } : {})
   // METRICS §4.9 through the one precision rule the engine also uses (analysis/metrics/precision.ts):
@@ -101,7 +115,7 @@ function numericParts(id: string, v: MetricValue): Parts | null {
   }
   if (SHARE.has(id) && n !== null) {
     const f = (x: number) => `${num(x)}%`
-    return { value: f(n), unit: 'of your height', ...pair(f) }
+    return { value: f(n), unit: 'of your height', ...pair(f), floor: FLOOR_ZERO.has(id) && lo !== undefined && lo <= 0 }
   }
   if (RATE.has(id) && n !== null) {
     const total = v.n ?? 0
@@ -177,13 +191,14 @@ export function formatMetric(metricId: string, v: MetricValue): FormattedMetric 
   const unitSep = parts.unit ? `${THIN}${parts.unit}` : ''
   const nLine = nLineFor(metricId, v)
   const hasRange = parts.low !== undefined && parts.high !== undefined
+  const span = parts.floor ? `up to ${parts.high}` : `${parts.low} to ${parts.high}`
   let text: string
   let detail = parts.detail
   let approx = false
 
   if (v.status === 'experimental') {
     // D4 and DESIGN §3.1: experimental values are always a rounded range with "about", never one number.
-    text = hasRange ? `about ${parts.low} to ${parts.high}${unitSep}` : `about ${parts.value}${unitSep}`
+    text = hasRange ? `about ${span}${unitSep}` : `about ${parts.value}${unitSep}`
     if (!hasRange && import.meta.env.DEV && !parts.words) {
       console.warn(`[MetricValue] experimental ${metricId} has no range; DESIGN §3.1 asks for one.`)
     }
@@ -191,7 +206,7 @@ export function formatMetric(metricId: string, v: MetricValue): FormattedMetric 
   } else if (v.status === 'estimated' && !parts.words) {
     approx = true
     text = `≈${THIN}${parts.value}${unitSep}`
-    if (hasRange) detail = `likely ${parts.low} to ${parts.high}${unitSep}`
+    if (hasRange) detail = `likely ${span}${unitSep}`
   } else {
     text = parts.words ? parts.value : `${parts.value}${unitSep}`
     if (v.status === 'player-entered' && RATE.has(metricId) && hasRange) detail = `likely ${parts.low} to ${parts.high}`

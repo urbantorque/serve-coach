@@ -18,6 +18,11 @@ export interface ListRowProps {
   to?: string
   onPress?: () => void
   className?: string
+  /**
+   * Let the subtitle and detail wrap instead of truncating (session rows: they carry n and the
+   * early-read label, which DESIGN §12 says are never cut off).
+   */
+  wrap?: boolean
   /** Extra attributes for honesty tests (e.g. data-metric on ghost rows). */
   dataAttrs?: Record<`data-${string}`, string>
 }
@@ -26,7 +31,7 @@ export interface ListRowProps {
  * List row (DESIGN §8.5): min 56 px, 12 px vertical padding, divider inset to the text start and only
  * between rows. Put rows inside <ListGroup> (a level-1 card) so dividers and grouping work.
  */
-export function ListRow({ title, subtitle, detail, leading, trailing, chevron, to, onPress, className, dataAttrs }: ListRowProps) {
+export function ListRow({ title, subtitle, detail, leading, trailing, chevron, to, onPress, className, dataAttrs, wrap = false }: ListRowProps) {
   const interactive = Boolean(to || onPress)
   const showChevron = chevron ?? interactive
   const inner = (
@@ -36,8 +41,8 @@ export function ListRow({ title, subtitle, detail, leading, trailing, chevron, t
         <span data-divider className="absolute inset-x-0 top-0 h-px bg-line court:h-0.5" aria-hidden="true" />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="text-headline text-ink">{title}</span>
-          {subtitle ? <span className="truncate text-footnote text-ink-2">{subtitle}</span> : null}
-          {detail ? <span className="line-clamp-2 text-footnote text-ink-2">{detail}</span> : null}
+          {subtitle ? <span className={cx(wrap ? 'break-words' : 'truncate', 'text-footnote text-ink-2')}>{subtitle}</span> : null}
+          {detail ? <span className={cx(!wrap && 'line-clamp-2', 'text-footnote text-ink-2 text-pretty')}>{detail}</span> : null}
         </span>
         {trailing ? <span className="shrink-0 text-subhead tabular-nums text-ink-2">{trailing}</span> : null}
         {showChevron ? <CaretRightIcon size={20} aria-hidden="true" className="shrink-0 text-ink-3" /> : null}

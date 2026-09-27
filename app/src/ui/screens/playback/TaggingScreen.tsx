@@ -214,7 +214,7 @@ function Tagging({ session, serves, tags }: { session: SessionRecord; serves: Se
         {spoken}
       </p>
       {mode === 'serves' ? (
-        <main className="flex flex-col pb-[max(32px,env(safe-area-inset-bottom))]">
+        <div className="flex flex-col pb-[max(32px,env(safe-area-inset-bottom))]">
           <TagVideo
             key={serve.id}
             session={session}
@@ -252,7 +252,7 @@ function Tagging({ session, serves, tags }: { session: SessionRecord; serves: Se
               </Button>
             </div>
           </div>
-        </main>
+        </div>
       ) : (
         <TallyPanel session={session} serveCount={serves.length} counts={counts} onDone={() => navigate(paths.sessionReport(session.id))} onBack={() => setMode('serves')} />
       )}
@@ -478,7 +478,7 @@ function TallyPanel({
   )
 
   return (
-    <main className="gutter flex flex-col gap-5 pt-2 pb-[max(32px,env(safe-area-inset-bottom))]">
+    <div className="gutter flex flex-col gap-5 pt-2 pb-[max(32px,env(safe-area-inset-bottom))]">
       <SegmentedControl<'1' | '2'>
         label="Which serves"
         options={[
@@ -554,6 +554,6 @@ function TallyPanel({
       <Button variant="tertiary" fullWidth onClick={onBack}>
         Tag each serve instead
       </Button>
-    </main>
+    </div>
   )
 }

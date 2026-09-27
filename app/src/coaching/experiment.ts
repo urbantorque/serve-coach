@@ -7,6 +7,7 @@
  * meets a resolved threshold, never starts a cooldown and never marks an experiment "worked" (§12.3).
  */
 import type { MetricId, MetricValue } from '../analysis/types.ts'
+import { successesSincePain } from './deliver.ts'
 import { detectItem, subjectOf } from './detect.ts'
 import type { LibraryItem } from './library.ts'
 import { getItem } from './library.ts'
@@ -58,6 +59,9 @@ export type RetestKind = 'same-session' | 'earlier' | 'matched' | 'unmatched'
 export function retestKind(exp: CoachingExperiment, session: CoachingSession): RetestKind {
   if (session.id === exp.startedSessionId) return 'same-session'
   if (session.startedAt <= exp.startedAt) return 'earlier'
+  // Block B of an "Experiment" visit, or any recording later on the day the experiment started, shows
+  // the drill's immediate effect: never a re-test (§12.3). Only a later visit can be one.
+  if (exp.startedVisitId && session.visitId && session.visitId === exp.startedVisitId) return 'same-session'
   if (session.captureQuality === 'poor') return 'unmatched'
   return servesInStratum(session, exp.stratum).length > 0 ? 'matched' : 'unmatched'
 }
@@ -361,8 +365,11 @@ export function experimentTransition(
   const item = getItem(exp.itemId)
   const subject = item ? subjectOf(item.id, item.title).toLowerCase() : 'this'
   if (verdict.verdict === 'not-comparable') return { status: 'continue', copy: verdictSentence(verdict) }
-  const prev = exp.retests.at(-1)
-  const all = [...exp.retests, { sessionId: '', verdict: verdict.verdict, resolvedMet }]
+  // Only re-tests that got a verdict count towards the 2- and 3-re-test rules: a "not comparable yet"
+  // one had no transition (§12.5) and must not bring parking closer.
+  const judged = exp.retests.filter((r) => r.verdict !== 'not-comparable')
+  const prev = judged.at(-1)
+  const all = [...judged, { sessionId: '', verdict: verdict.verdict, resolvedMet }]
   const consecutiveResolved = resolvedMet && prev?.resolvedMet === true && !WORSE.has(prev.verdict) && !WORSE.has(verdict.verdict)
   if (verdict.verdict === 'clearly-better' || consecutiveResolved) {
     return {
@@ -379,20 +386,54 @@ export function experimentTransition(
     return { status: 'continue', copy: "It dipped a little, which often happens mid-change. Let's make the drill a bit easier.", variant: 'regression' }
   }
   if (verdict.verdict === 'no-clear-change') {
-    const earlierNoChange = exp.retests.filter((r) => r.verdict === 'no-clear-change').length
+    const earlierNoChange = judged.filter((r) => r.verdict === 'no-clear-change').length
     if (earlierNoChange >= 1) {
       return { status: 'continue', copy: "No clear change yet. Let's try it from a different angle.", swapCue: true }
     }
     return { status: 'continue', copy: 'About the same so far. Changes like this often take a few sessions.' }
   }
   if (verdict.verdict === 'likely-better') {
-    const yes = logs.filter((l) => l.successCriterionMet === 'yes').length
+    // Only this item's own practices, and none logged with pain (§10.3, §12.2; practiceLogRules).
+    const { yes } = successesSincePain(logs.filter((l) => !l.itemId || l.itemId === exp.itemId))
     return { status: 'continue', copy: "Keep going; it's moving the right way.", unlockProgression: yes >= 2 }
   }
   return { status: 'continue', copy: 'Too early to tell. Record a few more serves next time.' }
 }
 
 export const SUPERSEDED_COPY = 'Something earlier in your serve needs attention first.'
+
+/** Sessions an item rests after its experiment ends (§7.4): worked 2, parked or superseded 3. */
+export const COOLDOWN_SESSIONS = { worked: 2, parked: 3 } as const
+
+export interface EndedExperiment {
+  itemId: string
+  /** 'worked' (completed) or 'parked' (parked, superseded or otherwise abandoned). */
+  kind: keyof typeof COOLDOWN_SESSIONS
+  /** ISO start of the session whose decision ended it (that session counts as the first rest). */
+  endedAt: string
+}
+
+/**
+ * Cooldowns for the session starting at `currentStartedAt` (§7.4, §12.5), from experiments that ended
+ * earlier. The ending session is the first of the rest; every later session up to and including the
+ * current one uses one more, so a parked item is skipped by the ending session and the next two, and
+ * is eligible again on the third later session. The decision itself still lifts a cooldown for a
+ * "slipped" item, which is never eligible (§6.4).
+ */
+export function cooldownsFrom(
+  ended: readonly EndedExperiment[],
+  sessions: readonly { startedAt: string }[],
+  currentStartedAt: string,
+): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const e of ended) {
+    if (e.endedAt > currentStartedAt) continue
+    const used = sessions.filter((s) => s.startedAt > e.endedAt && s.startedAt <= currentStartedAt).length
+    const left = COOLDOWN_SESSIONS[e.kind] - used
+    if (left > 0) out[e.itemId] = Math.max(out[e.itemId] ?? 0, left)
+  }
+  return out
+}
 
 /**
  * The stored ExperimentRecord status after a decision (COACHING §12.5; ARCHITECTURE Experiment.status):
@@ -429,15 +470,32 @@ const addDays = (ymd: string, days: number) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/**
+ * The local calendar date (YYYY-MM-DD) of an ISO instant, the calendar practice-log dates use. A plain
+ * date passes through unchanged (parsing "YYYY-MM-DD" alone would read it as UTC midnight and shift it).
+ */
+export function localYmd(isoOrDate: string): string {
+  if (isoOrDate.length <= 10) return isoOrDate.slice(0, 10)
+  const d = new Date(isoOrDate)
+  if (Number.isNaN(d.getTime())) return isoOrDate.slice(0, 10)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+}
+
 export function retestDue(exp: CoachingExperiment, logs: readonly PracticeLogSummary[], today: string, since: string = exp.startedAt): RetestDue {
-  const mine = logs.filter((l) => !l.itemId || l.itemId === exp.itemId).filter((l) => l.date >= since.slice(0, 10))
+  // Session times and "now" are UTC instants; practice logs carry local dates. Compare local dates, so
+  // a Melbourne morning re-test is not dated the day before (and "overdue" turns at local midnight).
+  const sinceYmd = localYmd(since)
+  const todayYmd = localYmd(today)
+  const mine = logs.filter((l) => !l.itemId || l.itemId === exp.itemId).filter((l) => l.date >= sinceYmd)
   const words = stratumWords(exp.stratum)
   if (mine.length === 0) {
     return { state: 'practise-first', practices: 0, text: `Practise the drill once or twice first. Then record 12 to 15 ${words}.` }
   }
   const first = [...mine].sort((a, b) => (a.date < b.date ? -1 : 1))[0].date
   const dueBy = addDays(first, 7)
-  const overdue = today.slice(0, 10) > dueBy
+  const overdue = todayYmd > dueBy
   const lead = mine.length >= 2 ? 'Re-test ready.' : 'Re-test ready, though one more practice first is better.'
   return {
     state: overdue ? 'overdue' : 'ready',

@@ -28,7 +28,8 @@ const SCREENS: [string, string | RegExp][] = [
   [paths.setupChoice(), 'Where will your phone go?'],
   [paths.liveFraming(), 'Live framing'],
   [paths.importVideo(), 'Import a video'],
-  [paths.processing('demo-s1'), 'Analysing'],
+  // An analysed session: the title says so rather than 'Analysing' (no job running).
+  [paths.processing('demo-s1'), 'Report ready'],
   [paths.sessions(), 'Sessions'],
   [paths.sessionReport('demo-s1'), 'Sat 12 Sep'],
   [paths.serveDetail('demo-s1', 'demo-s1-serve-07'), 'Serve 7'],

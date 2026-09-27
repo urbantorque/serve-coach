@@ -98,8 +98,13 @@ export const STATE_SHORT: Record<ValidationState, string> = {
   'not-applicable': 'You log this.',
 }
 
-/** Second line for V1 metrics: lights and real courts (METRICS §1.3 night cap, D11 comp nights). */
-export const NIGHT_WORDS = 'Not yet checked under court lights, so at night it shows as experimental.'
+/**
+ * Second line for V1 metrics: lights and real courts (METRICS §1.3 night cap, D11 comp nights). The
+ * engine knows the light only from the session's answer (Record's Light setting, Import's light
+ * question), so the line says so.
+ */
+export const NIGHT_WORDS =
+  "Not yet checked under court lights, so a session you mark as under lights, or an import where you weren't sure of the light, shows it as experimental."
 
 type Unit = 'ratio' | 'cm' | 'ms' | 'pctH' | 'rate' | 'count' | 'angle'
 
@@ -152,11 +157,10 @@ const SHIFT: Partial<Record<MetricId, string>> = {
   'trophy-pause': 'The moment your hips are lowest is hard to pin down in time.',
   'drive-time': 'The moment your hips are lowest is hard to pin down in time.',
   'landing-distance': 'Most serves were close, but a few were well off, mostly with the phone sideways at the fence, 9 m away.',
-  // validation/results/ui/harden-performance/bench/{session,sample-checkin}__default__before.json (27 Sep 2026):
-  // the full app found all 8 and all 16 serves, but marked 1 and 2 of them unsure (BALL_NOT_TRACKED) and
-  // counted 7 and 14. docs/VALIDATION.md §3.3.
+  // validation/results/e2e-final/SUMMARY.md and docs/VALIDATION.md §3.3 "Resolved on the production
+  // build": 45 of 45 serves counted, 0 extra, across the 8 end-to-end clips (sessions of 8 and 16 included).
   'serve-count':
-    "Run through the full app, from video to report, two longer simulated sessions of 8 and 16 serves were harder: it found every serve but was unsure of 3 and left them out, so the count read 1 or 2 short. Those serves stay in your list, marked as excluded, and you can include them again.",
+    'Run through the full app, from video to report, on 8 simulated clips (45 serves, including sessions of 8 and 16), every serve was counted and nothing extra. Real footage is untested, so if a serve is left out it stays in your list, marked as excluded, and you can include it again.',
   'toss-height-spread': 'A toss that wanders left or right adds a little to the spread from the side.',
   'contact-height-spread': 'At 60 fps a very steady contact can be below what we can measure; we say so when it is.',
   'speed-experimental': 'It needs 120 fps or more, your height and the target you aimed at.',

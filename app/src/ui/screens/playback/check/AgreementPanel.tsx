@@ -13,6 +13,7 @@ const GROUPS: { kind: RowKind; title: string }[] = [
   { kind: 'timing', title: 'Timing' },
   { kind: 'height', title: 'Heights' },
   { kind: 'position', title: 'Positions' },
+  { kind: 'body', title: 'Legs and shoulders' },
   { kind: 'scale', title: 'Scale' },
   { kind: 'speed', title: 'Radar' },
 ]
@@ -43,6 +44,7 @@ function Row({ row, frame, onSeek, speed }: { row: AgreementRow; frame: number |
         {row.sentence}
         {row.unsure ? ' You marked this frame as not sure.' : ''}
       </span>
+      {row.note ? <span className="text-footnote text-ink-3">{row.note}</span> : null}
       {row.kind === 'timing' && row.youFrame !== undefined ? (
         <span className="text-footnote tabular-nums text-ink-3">
           {row.appFrame !== undefined ? `App frame ${row.appFrame} · ` : ''}Your frame {row.youFrame}

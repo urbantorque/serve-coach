@@ -3,7 +3,7 @@
  * components, plausibility bounds (§4.2) and honesty labels. Values are in the catalogue units
  * (ratio, cm, ms, % of height); the 95% interval is value ± 1.96·√(σ_r² + σ_leak² + σ_s² + σ_p²).
  */
-import { LM, type MetricId, type MetricValue, type ReasonCode, type TargetZone } from '../types.ts'
+import { LM, type MetricId, type MetricStatus, type MetricValue, type ReasonCode, type TargetZone } from '../types.ts'
 import { estimateServeSpeedFromTrack } from '../ball/speed.ts'
 import { scaleFromBodyHeight } from '../ball/scale.ts'
 import { kneeFlexionDeg } from '../pose/body.ts'
@@ -13,10 +13,28 @@ import { xOf, yOf } from '../serve/ball.ts'
 import type { ServeCore } from '../serve/analyse.ts'
 import { indexAt, landmarksAt, localQuadratic, midHip, pointSpeed, pt, rangeIdx, velocityHalfWindow, type PoseTrack } from '../serve/track.ts'
 import { bandProbabilities } from '../stats/aggregate.ts'
-import { ASSUMED_LEVEL_HEIGHT_BUDGET, METRIC_VIEWS, MIN_VALIDATED_DISTANCE_M, PITCH_SENSITIVE_IDS, PLAUSIBILITY, ROLL_OFFSET_DEFAULT_M, type ConditionClass } from './catalogue.ts'
-import { finalizeMetric, unavailable, wrongViewReason, type Downgrade, type MetricDraft } from './status.ts'
+import {
+  ASSUMED_LEVEL_HEIGHT_BUDGET,
+  METRIC_VIEWS,
+  MIN_VALIDATED_DISTANCE_M,
+  PITCH_SENSITIVE_IDS,
+  PLAUSIBILITY,
+  POSE_DERIVED_IDS,
+  POSITION_IDS,
+  ROLL_OFFSET_DEFAULT_M,
+  UNLOCK_HINTS,
+  lowerStatus,
+  type ConditionClass,
+} from './catalogue.ts'
+import { fillHint, finalizeMetric, unavailable, wrongViewReason, type Downgrade, type MetricDraft } from './status.ts'
 
 export const G = 9.81
+
+/** Values that depend on the contact time (directly, or through the trophy window [release, contact − 0.08 s] and the landing search after contact). */
+export const CONTACT_DEPENDENT_IDS: readonly MetricId[] = [
+  'toss-drop', 'contact-height-ratio', 'contact-forward', 'rhythm-release-to-contact', 'leg-drive', 'drive-time', 'loading-depth',
+  'deep-bend-flag', 'shoulder-tilt-trophy', 'knee-bend-band', 'shoulder-over-shoulder-contact', 'trophy-pause', 'landing-distance', 'speed-experimental',
+]
 
 /**
  * trophy-pause stillness floors (BH/s): §3.13 starts at pelvis 0.15 and wrists 0.6 and grid-searches
@@ -43,10 +61,64 @@ export interface MetricContext {
   cameraSide: 'chest' | 'back'
   servedFrom?: 'deuce' | 'ad'
   targetTag?: TargetZone
-  /** Session-level blocks that make metrics unavailable. */
+  /** The phone moved during the block (a sustained orientation change): positions unavailable (CAMERA_MOVED, §3.25 stability). */
   cameraMoved?: boolean
   /** Per-serve share of missing frames in the serve window (0..1). */
   framesMissingShare?: number
+  /** The player's standing height in pixels at a 1080p-equivalent resolution (§3.25 subject-size). */
+  bodyPx1080?: number
+  /** This serve's head or hitting arm left the picture at contact (§3.25 framing): contact values unavailable. */
+  contactCut?: boolean
+  /** |toss gravity ÷ 9.81 − 1| over the clip (§3.25 scale); above 0.15 the cm values are unavailable. */
+  scaleOff?: number
+}
+
+/** §3.25 subject-size: below this (px at 1080p) pose metrics are unavailable; below the second, one level lower. */
+export const SUBJECT_SIZE_BLOCK_PX = 150
+export const SUBJECT_SIZE_WARN_PX = 250
+/** §3.25 scale: toss gravity and body scale more than this far apart block the cm values. */
+export const SCALE_BLOCK = 0.15
+/** Values scaled by the standing height in the picture (H_HU, METRICS §1.1). */
+export const BODY_SCALED_IDS: readonly MetricId[] = [
+  'toss-apex-height', 'contact-height-ratio', 'toss-forward', 'toss-lateral', 'contact-forward', 'landing-distance', 'leg-drive', 'loading-depth', 'speed-experimental',
+]
+/** cm values from the image scale (§3.25 "cm values"): positions and the launch speed. */
+const IMAGE_CM_IDS: readonly MetricId[] = [...POSITION_IDS, 'speed-experimental']
+/** Metrics whose `cm` secondary converts a ratio of height with the body scale. */
+const CM_SECONDARY_IDS: readonly MetricId[] = ['toss-apex-height', 'contact-height-ratio', 'leg-drive', 'loading-depth']
+const PER_SERVE_POSE_IDS: readonly MetricId[] = (POSE_DERIVED_IDS as readonly MetricId[]).filter((id) => id !== 'repeatability')
+
+/** A per-serve value made unavailable by a capture check (METRICS §3.25 "block"). */
+function blocked(m: MetricValue, reason: ReasonCode, checkId: string): MetricValue {
+  if (m.status === 'unavailable') return m
+  return unavailable(m.id as MetricId, reason, m.basis, {
+    ...(m.validationLevel ? { validationLevel: m.validationLevel } : {}),
+    ...(m.conditionClass ? { conditionClass: m.conditionClass } : {}),
+    ...(m.quantity ? { quantity: m.quantity } : {}),
+    checkId,
+  })
+}
+
+/** A per-serve value capped by a capture check: at experimental, or one level lower ('down-one'). */
+function capped(m: MetricValue, cap: 'experimental' | 'down-one', reason: ReasonCode, checkId?: string): MetricValue {
+  if (m.status === 'unavailable' || m.status === 'player-entered') return m
+  const next: MetricStatus = cap === 'down-one' && m.status === 'measured' ? 'estimated' : 'experimental'
+  const out: MetricValue = { ...m }
+  if (lowerStatus(m.status, next) !== m.status) {
+    out.status = next
+    out.reasonCode = reason
+    const hint = fillHint(UNLOCK_HINTS[reason])
+    if (hint) out.unlockHint = hint
+    else delete out.unlockHint
+    if (checkId) out.checkId = checkId
+    if (next === 'experimental' && out.uncertainty?.kind === 'ci95') out.uncertainty = { ...out.uncertainty, kind: 'range' }
+  }
+  // The check affects the value's relative use too (a per-serve error, not a shared one).
+  if (out.statusIfLevel && lowerStatus(out.statusIfLevel, next) !== out.statusIfLevel) {
+    if (next === out.status) delete out.statusIfLevel
+    else out.statusIfLevel = next
+  }
+  return out
 }
 
 export interface PerServeResult {
@@ -198,7 +270,7 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
   const want = (id: MetricId) => live.includes(id)
 
   if (!ref || core.classification === 'shadow' || core.classification === 'other') {
-    const reason: ReasonCode = !ref ? (core.refSource === 'none' ? 'FEET_NOT_VISIBLE' : 'BODY_NOT_UPRIGHT') : 'BALL_NOT_TRACKED'
+    const reason: ReasonCode = !ref ? (core.refFailure === 'no-upright' ? 'BODY_NOT_UPRIGHT' : 'FEET_NOT_VISIBLE') : 'BALL_NOT_TRACKED'
     for (const id of live) set(id, unavailable(id, reason, basisView))
     return res
   }
@@ -224,11 +296,19 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
   const tossTime = core.ball.apexCase
   const retoss = core.classification === 'retoss'
   const noContact = core.noContact
-  const commonDown: Downgrade[] = []
+  /** Downgrades every value of this serve shares. */
+  const baseDown: Downgrade[] = []
   // Depth-corrected heights were validated at the D1 distances only (7–9 m); nearer, the §3.2 prior
   // over-corrects (synthetic 5 m set-ups read 4–7% of height low; the 5 m rear view likewise).
   const nearDown: Downgrade[] = D < MIN_VALIDATED_DISTANCE_M ? [{ cap: 'experimental', reason: 'VALIDATION_PENDING' }] : []
-  if ((ctx.framesMissingShare ?? 0) > 0.1) commonDown.push({ cap: 'unavailable', reason: 'FRAMES_DROPPED' })
+  if ((ctx.framesMissingShare ?? 0) > 0.1) baseDown.push({ cap: 'unavailable', reason: 'FRAMES_DROPPED' })
+  // D2 fused-event check (serve/analyse.ts checkContactSignals): when the contact timing signals
+  // disagreed but a majority (or a spread every signal agrees with) fixed the time, every value that
+  // depends on contact is experimental; with no majority, contact's confidence is below 0.5 and
+  // contactReason() withholds them (CONTACT_NOT_FOUND). The toss apex and its forward position do
+  // not depend on contact and keep `baseDown`.
+  const dispute = core.contactDispute
+  const commonDown: Downgrade[] = [...baseDown, ...(dispute && dispute.resolution !== 'unresolved' ? [{ cap: 'experimental' as const, reason: 'CONTACT_NOT_FOUND' as const }] : [])]
 
   const plaus = (key: string, value: number, hard: (v: number) => boolean, soft: (v: number) => boolean): 'ok' | 'soft-flag' | 'hard-reject' => {
     if (hard(value)) {
@@ -289,7 +369,7 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
       const apexM = ratio * H
       res.raw.apexRatio = ratio
       res.raw.apexM = apexM
-      const downs: Downgrade[] = [...commonDown, ...tilt.downgrades, ...(assumed?.downgrades ?? []), ...nearDown]
+      const downs: Downgrade[] = [...baseDown, ...tilt.downgrades, ...(assumed?.downgrades ?? []), ...nearDown]
       if (tossTime === 'fitted-above') downs.push({ cap: 'estimated', reason: 'APEX_EXTRAPOLATED' })
       if (gravityReject) downs.push({ cap: 'unavailable', reason: 'IMPLAUSIBLE_VALUE' })
       // Plausibility: hard below contact height − 0.10 m (checked after contact below), above 5.5 m.
@@ -467,7 +547,7 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
       res.sigmas[id] = sig
       if (id === 'toss-forward') res.raw.forwardCm = cm
       else res.raw.lateralCm = cm
-      const downs: Downgrade[] = [...commonDown, ...tilt.downgrades]
+      const downs: Downgrade[] = [...baseDown, ...tilt.downgrades]
       if (tossTime === 'fitted-above') downs.push({ cap: 'estimated', reason: 'APEX_EXTRAPOLATED' })
       const outcome = id === 'toss-forward' ? plaus('tossForwardM', cm / 100, (v) => !inRange(v, PLAUSIBILITY.tossForwardM.hard), (v) => !inRange(v, PLAUSIBILITY.tossForwardM.soft)) : 'ok'
       set(
@@ -988,6 +1068,7 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
               ? 'TARGET_NOT_TAGGED'
               : contactReason() ?? (!core.ball.outgoing ? 'BALL_NOT_TRACKED' : null)
     if (why) set(id, unavailable(id, why, 'ball track just after contact (side view)', { quantity: 'launch-speed' }))
+    else if ((ctx.framesMissingShare ?? 0) > 0.1) set(id, unavailable(id, 'FRAMES_DROPPED', 'ball track just after contact (side view)', { quantity: 'launch-speed' }))
     else {
       const est = estimateServeSpeedFromTrack(core.ball.outgoing!, {
         contactTReal: tc!,
@@ -1015,7 +1096,8 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
                   confidence: est.confidence,
                   basis: `launch speed just after contact (experimental range): ${est.basis}`,
                   uncertainty: { kind: 'range', low: est.lowKmh, high: est.highKmh },
-                  downgrades: [{ cap: 'experimental', reason: 'VALIDATION_PENDING' }],
+                  // The serve's shared downgrades (dropped frames, the D2 contact dispute: speed is timed from contact).
+                  downgrades: [...commonDown, { cap: 'experimental', reason: 'VALIDATION_PENDING' }],
                 },
                 outcome,
               ),
@@ -1027,6 +1109,47 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
     }
   }
   if (want('speed-average-rear')) set('speed-average-rear', unavailable('speed-average-rear', 'NEEDS_CALIBRATION', 'contact to the bounce located in the rear view', { quantity: 'average-speed' }))
+
+  // Say why in every contact-dependent value when the timing signals disagreed (D2).
+  if (dispute) {
+    const note = `contact timing signals disagreed (${dispute.signals.map((s) => `${s.name === 'ball' ? 'ball track' : s.name === 'audio' ? 'hit sound' : 'wrist peak'} ${s.t.toFixed(2)} s`).join(', ')}${dispute.dropped ? `; ${dispute.dropped === 'ball' ? 'ball track' : dispute.dropped === 'audio' ? 'hit sound' : 'wrist peak'} left out` : ''})`
+    for (const id of CONTACT_DEPENDENT_IDS) {
+      const m = M[id]
+      if (m && (m.status !== 'unavailable' || m.reasonCode === 'CONTACT_NOT_FOUND')) m.basis = `${m.basis}; ${note}`
+    }
+  }
+
+  // Capture checks that block or lower this serve's values (METRICS §3.25: "Block = the metrics that
+  // depend on the check become unavailable for that serve with the listed code").
+  const gate = (ids: readonly MetricId[], f: (m: MetricValue) => MetricValue) => {
+    for (const id of ids) {
+      const m = M[id]
+      if (m) M[id] = f(m)
+    }
+  }
+  // Framing: the head or hitting arm left the picture at contact.
+  if (ctx.contactCut) gate(CONTACT_DEPENDENT_IDS, (m) => blocked(m, 'OCCLUDED', 'cq.player-in-frame'))
+  // Subject size: pose metrics unavailable below 150 px, one level lower below 250 px.
+  if (ctx.bodyPx1080 !== undefined && ctx.bodyPx1080 < SUBJECT_SIZE_BLOCK_PX) gate(PER_SERVE_POSE_IDS, (m) => blocked(m, 'POSE_LOW_QUALITY', 'cq.player-size'))
+  else if (ctx.bodyPx1080 !== undefined && ctx.bodyPx1080 < SUBJECT_SIZE_WARN_PX) gate(PER_SERVE_POSE_IDS, (m) => capped(m, 'down-one', 'POSE_LOW_QUALITY', 'cq.player-size'))
+  // Scale: the toss fell at a rate the body scale does not predict; image-scale centimetres are unreliable.
+  if ((ctx.scaleOff ?? 0) > SCALE_BLOCK) {
+    gate(IMAGE_CM_IDS, (m) => blocked(m, 'SCALE_INCONSISTENT', 'cq.scale-consistency'))
+    gate(CM_SECONDARY_IDS, (m) => {
+      if (m.status === 'unavailable' || m.secondary?.cm === undefined) return m
+      const rest = { ...m.secondary }
+      delete rest.cm
+      return { ...m, secondary: rest }
+    })
+  }
+  // Stability: the phone moved during the block, so positions from one frame of reference are not comparable.
+  if (ctx.cameraMoved) gate(POSITION_IDS, (m) => blocked(m, 'CAMERA_MOVED', 'cq.camera-stability'))
+  // Standing height from a session fallback or from fewer than 5 upright frames (METRICS §1.1 H_HU):
+  // body-scaled values carry confidence × 0.8; a weak estimate with no session fallback is experimental.
+  if (core.refSource === 'fallback' || core.refSource === 'weak') {
+    gate(BODY_SCALED_IDS, (m) => (m.status === 'unavailable' ? m : { ...m, confidence: Math.round(m.confidence * 0.8 * 1000) / 1000 }))
+    if (core.refSource === 'weak') gate(BODY_SCALED_IDS, (m) => capped(m, 'experimental', 'BODY_NOT_UPRIGHT'))
+  }
 
   // View evidence (§2.3.7): outgoing ball mainly horizontal in the side view.
   const out = core.ball.outgoing?.observations.filter((o) => o.source !== 'predicted') ?? []

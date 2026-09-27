@@ -1,0 +1,84 @@
+[
+  {
+    "scheme": "light",
+    "name": "import-mount-hint",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-import-mount-hint.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\"",
+      "input \"Choose a video\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "processing-t2-sheet",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-processing-t2-sheet.png",
+    "overflow": false,
+    "small": [],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "processing-t2-notice",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-processing-t2-notice.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "report-capture-details-tilt-hint",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-report-capture-details-tilt-hint.png",
+    "overflow": false,
+    "small": [],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "import-mount-hint",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-import-mount-hint.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\"",
+      "input \"Choose a video\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "processing-t2-sheet",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-processing-t2-sheet.png",
+    "overflow": false,
+    "small": [],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "processing-t2-notice",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-processing-t2-notice.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "report-capture-details-tilt-hint",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-report-capture-details-tilt-hint.png",
+    "overflow": false,
+    "small": [],
+    "dashes": false,
+    "degrees": false
+  }
+]

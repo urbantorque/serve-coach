@@ -42,21 +42,21 @@ export function AppBar({ title, variant = 'pushed', back, leading, trailing }: A
       back?.to ? (
         <Link
           to={back.to}
-          className="-ml-2 inline-flex h-11 min-w-11 items-center gap-0.5 rounded-control pr-2 text-subhead text-ink active:bg-surface-2"
+          className="-ml-2 inline-flex h-11 max-w-full min-w-11 items-center gap-0.5 rounded-control pr-2 text-subhead text-ink active:bg-surface-2"
           aria-label={`Back to ${back.label ?? 'previous screen'}`}
         >
-          <CaretLeftIcon aria-hidden="true" />
-          <span>{backLabel}</span>
+          <CaretLeftIcon aria-hidden="true" className="shrink-0" />
+          <span className="min-w-0 truncate">{backLabel}</span>
         </Link>
       ) : (
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="-ml-2 inline-flex h-11 min-w-11 items-center gap-0.5 rounded-control pr-2 text-subhead text-ink active:bg-surface-2"
+          className="-ml-2 inline-flex h-11 max-w-full min-w-11 items-center gap-0.5 rounded-control pr-2 text-subhead text-ink active:bg-surface-2"
           aria-label="Back"
         >
-          <CaretLeftIcon aria-hidden="true" />
-          <span>{backLabel}</span>
+          <CaretLeftIcon aria-hidden="true" className="shrink-0" />
+          <span className="min-w-0 truncate">{backLabel}</span>
         </button>
       )
     ) : null
@@ -72,22 +72,24 @@ export function AppBar({ title, variant = 'pushed', back, leading, trailing }: A
           scrolled ? 'glass border-b border-line court:border-b-2' : 'border-b border-transparent',
         )}
       >
-        <div className="gutter relative mx-auto flex h-13 max-w-(--content-max) items-center justify-between gap-2">
-          <div className="flex min-w-11 items-center">{leading ?? backButton}</div>
+        {/* Three columns, the side ones equal so the title stays centred. At large text the title and the
+            back label truncate inside their own columns instead of drawing over each other (DESIGN §12). */}
+        <div className="gutter mx-auto grid h-13 max-w-(--content-max) grid-cols-[minmax(2.75rem,1fr)_minmax(0,auto)_minmax(2.75rem,1fr)] items-center gap-2">
+          <div className="flex min-w-0 items-center">{leading ?? backButton}</div>
           {variant === 'pushed' ? (
-            <h1 className="absolute inset-x-30 truncate text-center text-headline text-ink">{title}</h1>
+            <h1 className="min-w-0 truncate text-center text-headline text-ink">{title}</h1>
           ) : (
             <p
               aria-hidden="true"
               className={cx(
-                'absolute inset-x-30 truncate text-center text-headline text-ink transition-opacity duration-(--dur-fast)',
+                'min-w-0 truncate text-center text-headline text-ink transition-opacity duration-(--dur-fast)',
                 showBarTitle ? 'opacity-100' : 'opacity-0',
               )}
             >
               {title}
             </p>
           )}
-          <div className="flex min-w-11 items-center justify-end">{trailing}</div>
+          <div className="flex min-w-0 items-center justify-end">{trailing}</div>
         </div>
       </header>
       {variant === 'root' ? (

@@ -7,6 +7,7 @@ import {
   getItem,
   itemByFaultId,
   normaliseProfile,
+  primarySpec,
   rederiveRetests,
   type CoachingExperiment,
   type CoachingProfile,
@@ -83,6 +84,8 @@ export function toCoachingSession(
     ...(stats?.bestServeId ? { bestServeId: stats.bestServeId } : {}),
     ...(stats?.representativeServeId ? { representativeServeId: stats.representativeServeId } : {}),
     ...(rec.template ? { template: rec.template } : {}),
+    // The practice visit (local day): a block recorded after the drill that day is never a re-test.
+    ...(rec.visitId ? { visitId: rec.visitId } : {}),
     isDemo: rec.isDemo === 1,
   }
 }
@@ -128,6 +131,7 @@ export function toCoachingExperiment(
     faultId: it.faultId ?? e.faultId,
     startedSessionId: start?.id ?? e.baselineSessionIds.at(-1) ?? '',
     startedAt: start && start.startedAt > e.createdAt ? start.startedAt : e.createdAt,
+    ...(start?.visitId ? { startedVisitId: start.visitId } : {}),
     stratum: e.stratum,
     cueRegister: registerFromCueId(e.cueId) ?? 'outcome',
     drillVariant: variantFromDrillId(e.drillId),
@@ -154,8 +158,14 @@ export function toPracticeSummary(l: PracticeLogRecord): PracticeLogSummary {
 
 /** The stored experiment for a focus the player starts working on (§12.1 -> ARCHITECTURE Experiment). */
 export function toExperimentRecord(d: FocusDecision, decisionId: string, baselineSessionIds: string[], opts: { isDemo?: boolean } = {}): Omit<ExperimentRecord, 'id' | 'createdAt'> {
-  const spread = d.evidence.stats[0]?.metricId?.endsWith('-spread')
-  const primary = (d.evidence.stats[0]?.metricId ?? getItem(d.itemId)?.detection.metricIds[0] ?? 'serve-in-rate') as MetricId
+  // The item's own primary metric and direction (the one its verdict uses, coaching primarySpec), not
+  // whichever evidence stat happened to be shown first: an experimental or missing first stat is
+  // filtered out of the evidence and would otherwise name the experiment after another metric.
+  const it = getItem(d.itemId)
+  const spec = it ? primarySpec(it, normaliseProfile({ level: 'unknown', goal: 'first-serves-in', comfortRegions: [], heightM: 1.75, showExperimental: false })) : undefined
+  const primary = (spec?.displayId ?? d.evidence.stats[0]?.metricId ?? 'serve-in-rate') as MetricId
+  // A target band of [0, high edge] (toss drop) means lower is better.
+  const direction = spec ? (spec.direction === 'increase' ? 'increase' : 'decrease') : d.evidence.stats[0]?.metricId?.endsWith('-spread') ? 'decrease' : 'increase'
   return {
     status: 'active',
     decisionId,
@@ -163,8 +173,8 @@ export function toExperimentRecord(d: FocusDecision, decisionId: string, baselin
     cueId: `${d.itemId}:${d.cue.register}`,
     drillId: d.drill.id,
     primaryMetricId: primary,
-    secondaryMetricIds: d.evidence.stats.slice(1).map((s) => s.metricId),
-    direction: spread || d.itemId === 'toss-within-reach' || d.itemId === 'flowing-motion' ? 'decrease' : 'increase',
+    secondaryMetricIds: d.evidence.stats.map((s) => s.metricId).filter((id) => id !== primary),
+    direction,
     stratum: d.stratum,
     baselineSessionIds,
     retestSessionIds: [],

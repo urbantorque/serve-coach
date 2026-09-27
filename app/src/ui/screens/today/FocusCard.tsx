@@ -19,6 +19,8 @@ import { PHASE_LABEL } from '../../copy/strings.ts'
 import { paths } from '../../shell/paths.ts'
 import { stratumWords } from '../progress/insights/history.ts'
 import { KeyFrameById } from '../progress/insights/ui.tsx'
+import { tiltHint } from '../record/import/hints.ts'
+import { FOCUS_COPY } from '../focus/copy.ts'
 
 export interface EvidenceStat {
   metricId: MetricId
@@ -244,7 +246,8 @@ export function KeepGoingCard({ variant, sample, showPrimary }: { variant: 'full
       <h2 id="keep-going" className={variant === 'full' ? 'text-title-1 text-ink' : 'text-headline text-ink'}>
         Nothing clear to change
       </h2>
-      <p className="text-callout text-ink-2">Keep building consistency. Your toss and timing were steady on most serves.</p>
+      {/* The stored keep-going record keeps no checks, so the card claims nothing it did not measure. */}
+      <p className="text-callout text-ink-2">{FOCUS_COPY.keepGoingBody}</p>
       {variant === 'full' && !sample ? (
         <div className="flex w-full flex-col gap-3 pt-2">
           {showPrimary ? (
@@ -275,7 +278,7 @@ export function CaptureFixCard({
 }) {
   // The coaching engine's own reason and next step when stored; older records only have the trace.
   const detail = captureFix?.message ?? trace.find((t) => t.step === 'confidence' && !t.passed)?.detail
-  const fix = captureFix ? captureFix.fix : 'The set-up guide shows where to put the phone so the whole serve fits.'
+  const fix = captureFix ? tiltHint(captureFix.fix) : 'The set-up guide shows where to put the phone so the whole serve fits.'
   return (
     <section aria-labelledby="capture-fix" className="card flex flex-col items-start gap-2 p-5">
       <WarningCircleIcon size={24} aria-hidden="true" className="text-attention" />

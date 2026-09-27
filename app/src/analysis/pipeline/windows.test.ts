@@ -3,7 +3,10 @@ import { servePoses } from './testPoses.ts'
 import {
   activitySpans,
   ballIndices,
+  BALL_CONTACT_DOUBT_S,
   ballSearchCrop,
+  ballSearchDoubtS,
+  CONTACT_SEARCH_S,
   forwardDirection,
   FULL_RATE_AFTER_S,
   FULL_RATE_BEFORE_S,
@@ -14,6 +17,8 @@ import {
   provisionalContact,
   sparseStep,
   statureFromPoses,
+  TOSS_BAND_FORWARD_REACH,
+  tossSearchBand,
   wristPeak,
 } from './windows.ts'
 
@@ -50,6 +55,21 @@ describe('wristPeak', () => {
     poses[late] = { ...poses[late], landmarks: poses[late].landmarks!.map((l, k) => (k === 15 ? { ...l, y: 0.28 } : l)) }
     const peak = wristPeak(poses, 'right')
     expect(Math.abs(peak!.tReal - 2.2)).toBeLessThan(0.05)
+  })
+
+  it('is not fooled by the tossing arm held higher than the blurred hitting wrist (session serve 7: 0.54 s early)', () => {
+    // Production Pass A poses of the session clip, serve 7: the tossing wrist stayed above the head
+    // (and higher than the hitting wrist's 15 Hz samples) until 0.2 s before contact.
+    const contactT = 2.2
+    const poses = servePoses({ contactT }).map((p) => {
+      if (!p.landmarks) return p
+      const l = p.landmarks.map((x) => ({ ...x }))
+      if (p.tReal >= contactT - 0.9 && p.tReal <= contactT - 0.2) l[15] = { x: l[15].x, y: 0.11, visibility: 0.95 }
+      return { ...p, landmarks: l }
+    })
+    expect(CONTACT_SEARCH_S).toBeLessThanOrEqual(0.3)
+    const peak = wristPeak(poses, 'right')
+    expect(Math.abs(peak!.tReal - contactT)).toBeLessThan(0.08)
   })
 
   it('returns null when no wrist rises above the head', () => {
@@ -220,6 +240,48 @@ describe('pose thinning and the ball crop', () => {
     // Outside the core nothing changes; without a contact nothing is thinned.
     expect(thin.filter((f) => f < 60 || f > 192)).toEqual(full.filter((f) => f < 60 || f > 192))
     expect(poseIndices({ ...w, contact: undefined }, 60, undefined, { slowCoreHz: 30 })).toEqual(full)
+  })
+
+  it('ballSearchDoubtS: the ball search keeps the band and corridor open well beyond the contact estimate', () => {
+    expect(ballSearchDoubtS({ source: 'pose', uncertaintyS: 0.13 })).toBe(BALL_CONTACT_DOUBT_S.pose)
+    expect(ballSearchDoubtS({ source: 'pose', uncertaintyS: 0.13 })).toBeGreaterThanOrEqual(0.4)
+    expect(ballSearchDoubtS({ source: 'audio', uncertaintyS: 0.05 })).toBe(BALL_CONTACT_DOUBT_S.audio)
+    expect(ballSearchDoubtS({ source: 'window', uncertaintyS: 0.9 })).toBe(0.9)
+  })
+
+  it('tossSearchBand: reaches towards the court and covers the contact column (dist12-s1 lost the ball at the old edge)', () => {
+    const band = { x0: 0.347, y0: 0, x1: 0.559, y1: 0.556 }
+    const aspect = 0.5625
+    const statureNorm = 0.26
+    const reach = (TOSS_BAND_FORWARD_REACH * statureNorm) / aspect
+    const contact = { tReal: 2.8, frameIndex: 168, uncertaintyS: 0.11, source: 'pose' as const, wrist: { x: 0.53, y: 0.37 } }
+    const crop = { x: 0.31, y: 0, w: 0.69, h: 0.58 }
+    const fwd = tossSearchBand(band, { forward: 1, statureNorm, crop, contact }, 'side', aspect)!
+    expect(fwd.x0).toBe(band.x0)
+    expect(fwd.x1).toBeCloseTo(band.x1 + reach, 9)
+    // The ball at contact on dist12-s1 was at x 0.566, past the old edge (0.559).
+    expect(fwd.x1).toBeGreaterThan(0.6)
+    expect(fwd.y0).toBe(band.y0)
+    expect(fwd.y1).toBe(band.y1)
+    const back = tossSearchBand(band, { forward: -1, statureNorm, crop, contact }, 'side', aspect)!
+    expect(back.x0).toBeCloseTo(band.x0 - reach, 9)
+    expect(back.x1).toBeGreaterThanOrEqual(band.x1)
+    const unknown = tossSearchBand(band, { forward: 0, statureNorm, crop, contact }, 'side', aspect)!
+    expect(unknown.x0).toBeCloseTo(band.x0 - reach, 9)
+    expect(unknown.x1).toBeCloseTo(band.x1 + reach, 9)
+    // A contact wrist outside the band is always covered.
+    const far = tossSearchBand(band, { forward: -1, statureNorm, crop, contact: { ...contact, wrist: { x: 0.8, y: 0.37 } } }, 'side', aspect)!
+    expect(far.x1).toBeGreaterThanOrEqual(0.8)
+    // Other views keep the setup band.
+    expect(tossSearchBand(band, { forward: 1, statureNorm, crop, contact }, 'rear', aspect)).toBe(band)
+    expect(tossSearchBand(null, { forward: 1, statureNorm, crop, contact }, 'rear', aspect)).toBeNull()
+    // No setup band in the side view: the whole window crop, never the corridor alone (the ball
+    // was lost at its apex on 6 of 45 serves when the band-plus-corridor phase had no band).
+    const whole = tossSearchBand(null, { forward: 1, statureNorm, crop, contact }, 'side', aspect)!
+    expect(whole.x0).toBeCloseTo(crop.x, 9)
+    expect(whole.x1).toBeCloseTo(crop.x + crop.w, 9)
+    expect(whole.y0).toBe(0)
+    expect(whole.y1).toBeCloseTo(crop.h, 9)
   })
 
   it('ballSearchCrop: the side view crops to the toss band and corridor plus a margin, never beyond the window crop', () => {

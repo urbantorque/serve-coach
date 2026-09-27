@@ -7,6 +7,7 @@ import { DEMO_FIXTURES } from '../data/fixtures.ts'
 import { createExperiment, getExperiment, latestDecision } from '../data/repos/coaching.ts'
 import { toServeRecord } from '../data/repos/serves.ts'
 import type { ExperimentRecord, SessionRecord } from '../data/records.ts'
+import { experimentRecordStatus } from '../coaching/index.ts'
 import { syncCoaching } from './coachingSync.ts'
 
 beforeEach(async () => {
@@ -64,14 +65,37 @@ describe('syncCoaching', () => {
     expect((await getExperiment('own-exp'))?.retestSessionIds).toEqual(['own-2'])
   })
 
-  it('never links a session that was not recorded as this experiment’s re-test', async () => {
+  it('links any later matched session (COACHING §12.3), so the stored experiment and the decision agree', async () => {
     const side = DEMO_FIXTURES.sessions.filter((s) => s.session.view === 'side')
     await ownCopy(DEMO_FIXTURES.sessions.indexOf(side[0]), 'own-1')
-    await createExperiment({ ...DEMO_FIXTURES.experiment, id: 'own-exp', isDemo: 0, baselineSessionIds: ['own-1'], retestSessionIds: [], result: undefined })
-    await ownCopy(DEMO_FIXTURES.sessions.indexOf(side.at(-1)!), 'own-2')
+    await createExperiment({ ...DEMO_FIXTURES.experiment, id: 'own-exp', isDemo: 0, baselineSessionIds: ['own-1'], retestSessionIds: [], result: undefined, createdAt: '2026-09-12T12:00:00+10:00' })
+    // A normal check-in in the same stratum, not recorded with the re-test plan.
+    await ownCopy(DEMO_FIXTURES.sessions.indexOf(side.at(-1)!), 'own-2', { template: 'check-in', isRetest: 0, experimentId: undefined })
     const r = await syncCoaching({ now: new Date('2026-09-26T10:00:00+10:00'), experimental: false })
+    expect(r.attachedRetest).toBe('own-2')
+    const stored = await getExperiment('own-exp')
+    expect(stored?.retestSessionIds).toEqual(['own-2'])
+    const verdict = r.decision && 'verdict' in r.decision ? r.decision.verdict : undefined
+    expect(verdict?.verdict).toBeDefined()
+    expect(stored?.result?.verdict).toBeDefined()
+    const ended = r.decision && 'experiment' in r.decision ? r.decision.experiment : undefined
+    expect(stored?.status).toBe(experimentRecordStatus(ended, 'own-exp'))
+  })
+
+  it('never links a block recorded on the day the experiment started (Block B after the drill, §12.3)', async () => {
+    const side = DEMO_FIXTURES.sessions.filter((s) => s.session.view === 'side')
+    const first = side[0].session
+    await ownCopy(DEMO_FIXTURES.sessions.indexOf(side[0]), 'own-1')
+    await createExperiment({ ...DEMO_FIXTURES.experiment, id: 'own-exp', isDemo: 0, baselineSessionIds: ['own-1'], retestSessionIds: [], result: undefined, createdAt: '2026-09-12T08:20:00+10:00' })
+    // Block B: the same visit, 40 minutes later, recorded as its own "Experiment" session.
+    await ownCopy(DEMO_FIXTURES.sessions.indexOf(side.at(-1)!), 'own-b', { startedAt: '2026-09-12T08:50:00+10:00', visitId: first.visitId, template: 'experiment', isRetest: 1, experimentId: 'own-exp' })
+    const r = await syncCoaching({ now: new Date('2026-09-12T09:30:00+10:00'), experimental: false })
     expect(r.attachedRetest).toBeUndefined()
-    expect((await getExperiment('own-exp'))?.retestSessionIds).toEqual([])
+    const stored = await getExperiment('own-exp')
+    expect(stored?.retestSessionIds).toEqual([])
+    expect(stored?.status).toBe('active')
+    expect(stored?.result).toBeUndefined()
+    expect(r.decision && 'verdict' in r.decision ? r.decision.verdict : undefined).toBeUndefined()
   })
 
   it('serialises concurrent calls and never throws', async () => {

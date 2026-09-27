@@ -1,0 +1,134 @@
+[
+  {
+    "scheme": "light",
+    "name": "serve-detail-radar-row",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-serve-detail-radar-row.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "check-app-vs-you-1",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-check-app-vs-you-1.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "check-app-vs-you-2",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-check-app-vs-you-2.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "check-app-vs-you-3",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-check-app-vs-you-3.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "check-mark-trophy",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-check-mark-trophy.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "light",
+    "name": "check-mark-lowest-hip",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\light-check-mark-lowest-hip.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "serve-detail-radar-row",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-serve-detail-radar-row.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "check-app-vs-you-1",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-check-app-vs-you-1.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "check-app-vs-you-2",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-check-app-vs-you-2.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "check-app-vs-you-3",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-check-app-vs-you-3.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "check-mark-trophy",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-check-mark-trophy.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  },
+  {
+    "scheme": "dark",
+    "name": "check-mark-lowest-hip",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\final-product-gaps\\dark-check-mark-lowest-hip.png",
+    "overflow": false,
+    "small": [
+      "a \"Skip to content\""
+    ],
+    "dashes": false,
+    "degrees": false
+  }
+]

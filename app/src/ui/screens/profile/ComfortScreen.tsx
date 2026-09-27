@@ -116,7 +116,6 @@ export function ComfortScreen() {
           </p>
         )}
         <p className="text-footnote text-ink-2">{COMFORT_COPY.lineDrills}</p>
-        <p className="text-footnote text-ink-2">{COMFORT_COPY.lineGp}</p>
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby={`${id}-hurts`}>

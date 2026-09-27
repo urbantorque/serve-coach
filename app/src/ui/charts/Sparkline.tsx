@@ -108,9 +108,10 @@ export function Sparkline({ points: all, band, domain, variant = 'tile', hollow 
           ? points.map((p, i) =>
               p.low !== undefined && p.high !== undefined ? (
                 <g key={`ci-${p.key}`}>
-                  <rect x={x(i) - 4} width={8} y={y(p.high)} height={Math.max(2, y(p.low) - y(p.high))} rx={4} fill="var(--ink-2)" fillOpacity={0.12} />
+                  {/* Outlined 95% range (>= 3:1 edge); Court-side tints are stronger (§2.4). */}
+                  <rect x={x(i) - 3.5} width={7} y={y(p.high)} height={Math.max(2, y(p.low) - y(p.high))} rx={3.5} fill="var(--ink-2)" fillOpacity={0.12} stroke="var(--ink-2)" strokeWidth={1} className="court:[fill-opacity:0.3]" />
                   {p.low80 !== undefined && p.high80 !== undefined ? (
-                    <rect x={x(i) - 4} width={8} y={y(p.high80)} height={Math.max(2, y(p.low80) - y(p.high80))} rx={4} fill="var(--ink-2)" fillOpacity={0.22} />
+                    <rect x={x(i) - 4} width={8} y={y(p.high80)} height={Math.max(2, y(p.low80) - y(p.high80))} rx={4} fill="var(--ink-2)" fillOpacity={0.22} className="court:[fill-opacity:0.6]" />
                   ) : null}
                 </g>
               ) : null,

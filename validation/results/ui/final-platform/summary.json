@@ -1,0 +1,239 @@
+{
+  "base": "http://localhost:5402",
+  "startedAt": "2026-09-27T18:11:12.196Z",
+  "steps": [
+    {
+      "name": "first run: skip set-up to Today",
+      "ok": true,
+      "ms": 1622
+    },
+    {
+      "name": "service worker installs, precaches and controls the page",
+      "ok": true,
+      "ms": 597,
+      "detail": {
+        "caches": {
+          "serve-coach-precache-1k5usvi": 163
+        }
+      }
+    },
+    {
+      "name": "persistence and storage estimate readable",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "import and analyse a clip online (which wasm does the pose loader fetch?)",
+      "ok": true,
+      "ms": 20401
+    },
+    {
+      "name": "live framing with a fake camera (which wasm and model does the live pose pass fetch?)",
+      "ok": true,
+      "ms": 14563
+    },
+    {
+      "name": "record: chunks reach IndexedDB while recording",
+      "ok": true,
+      "ms": 20539,
+      "detail": {
+        "rows": 10,
+        "mediaChunks": 9,
+        "bytes": 270895,
+        "header": {
+          "mimeType": "video/mp4;codecs=avc1.640028",
+          "startedAt": 1790532720991,
+          "facts": {
+            "v": 1,
+            "recording": {
+              "requested": {
+                "width": 1920,
+                "height": 1080,
+                "fps": 60
+              },
+              "delivered": {
+                "width": 640,
+                "height": 480,
+                "fps": 20
+              },
+              "orientation": "landscape",
+              "setup": "portrait",
+              "cameraLabel": "fake_device_0",
+              "recordingStartMs": 1790532720991,
+              "recordedAnyway": [
+                "cq.camera-level",
+                "cq.player-in-frame",
+                "cq.toss-headroom",
+                "cq.court-room",
+                "cq.frame-rate",
+                "cq.player-size"
+              ],
+              "expectedServeCount": 15
+            },
+            "block": {
+              "side": "deuce",
+              "serveNumber": 1,
+              "type": null,
+              "target": null,
+              "wind": "calm",
+              "light": "day",
+              "servingSpot": "singles"
+            },
+            "template": "check-in"
+          }
+        }
+      }
+    },
+    {
+      "name": "hard crash mid-recording, then the next launch offers the clip",
+      "ok": true,
+      "ms": 26076
+    },
+    {
+      "name": "offline: reload from the service worker and open screens",
+      "ok": true,
+      "ms": 3840
+    },
+    {
+      "name": "offline: analyse a clip (pose worker, models and wasm from the service worker)",
+      "ok": true,
+      "ms": 16728
+    },
+    {
+      "name": "offline: dark screens",
+      "ok": true,
+      "ms": 2134
+    }
+  ],
+  "failures": [],
+  "requests": {
+    "total": 928,
+    "offOrigin": [],
+    "fromServiceWorker": [
+      "http://localhost:5402"
+    ],
+    "failedOffline": [
+      "page-or-worker blob:http://localhost:5402/aa6e7c57-a137-4765-a91d-bb1dd4e3b6ce net::ERR_ABORTED"
+    ],
+    "mediapipeAndModels": {
+      "load service-worker": [
+        "/models/pose_landmarker_lite.task",
+        "/models/pose_landmarker_full.task",
+        "/mediapipe/wasm/vision_wasm_module_internal.js",
+        "/mediapipe/wasm/vision_wasm_module_internal.wasm"
+      ],
+      "analysis-online page": [
+        "/mediapipe/wasm/vision_wasm_module_internal.js",
+        "/mediapipe/wasm/vision_wasm_module_internal.wasm",
+        "/models/pose_landmarker_full.task"
+      ],
+      "live-framing page": [
+        "/mediapipe/wasm/vision_wasm_module_internal.js",
+        "/mediapipe/wasm/vision_wasm_module_internal.wasm",
+        "/models/pose_landmarker_lite.task"
+      ],
+      "crash page": [
+        "/mediapipe/wasm/vision_wasm_module_internal.js",
+        "/mediapipe/wasm/vision_wasm_module_internal.wasm",
+        "/models/pose_landmarker_full.task"
+      ],
+      "analysis-offline page": [
+        "/mediapipe/wasm/vision_wasm_module_internal.js",
+        "/mediapipe/wasm/vision_wasm_module_internal.wasm",
+        "/models/pose_landmarker_full.task"
+      ]
+    }
+  },
+  "consoleErrors": [],
+  "cspViolations": [],
+  "caches": {
+    "serve-coach-precache-1k5usvi": 163
+  },
+  "manifest": {
+    "name": "Serve Coach",
+    "display": "standalone",
+    "orientation": "any",
+    "icons": [
+      "192x192 any",
+      "512x512 any",
+      "192x192 maskable",
+      "512x512 maskable",
+      "any any"
+    ]
+  },
+  "storage": {
+    "persisted": false,
+    "estimate": {
+      "quota": 10768024271,
+      "usage": 30606031,
+      "usageDetails": {
+        "caches": 30519652,
+        "indexedDB": 73728,
+        "serviceWorkerRegistrations": 12651
+      }
+    }
+  },
+  "onlineAnalysis": {
+    "seconds": 18,
+    "sessionId": "01M3J10V56E3Z8CKN279BJ8YPG"
+  },
+  "recordingWhileLive": {
+    "rows": 10,
+    "mediaChunks": 9,
+    "bytes": 270895,
+    "header": {
+      "mimeType": "video/mp4;codecs=avc1.640028",
+      "startedAt": 1790532720991,
+      "facts": {
+        "v": 1,
+        "recording": {
+          "requested": {
+            "width": 1920,
+            "height": 1080,
+            "fps": 60
+          },
+          "delivered": {
+            "width": 640,
+            "height": 480,
+            "fps": 20
+          },
+          "orientation": "landscape",
+          "setup": "portrait",
+          "cameraLabel": "fake_device_0",
+          "recordingStartMs": 1790532720991,
+          "recordedAnyway": [
+            "cq.camera-level",
+            "cq.player-in-frame",
+            "cq.toss-headroom",
+            "cq.court-room",
+            "cq.frame-rate",
+            "cq.player-size"
+          ],
+          "expectedServeCount": 15
+        },
+        "block": {
+          "side": "deuce",
+          "serveNumber": 1,
+          "type": null,
+          "target": null,
+          "wind": "calm",
+          "light": "day",
+          "servingSpot": "singles"
+        },
+        "template": "check-in"
+      }
+    }
+  },
+  "recovery": {
+    "text": "A recording was interrupted We kept 0:09 of video from Mon 28 Sep at 4:12 am. You can still analyse it. Serve Coach closed while it was recording, so the last second may be missing. It stays on this phone for 7 days unless you delete it. Analyse recording Not now Delete recording",
+    "after": {
+      "url": "/processing/01M3J134WBN5RZ5DCYRYKF8AVF",
+      "text": "Record Analysing Mon 28 Sep, 0:09 Side view, deuce, first serves 480p, 21 fps Finding serves , stopped Tracking the toss , waiting Timing each phase , waiting Choosing your focus , waiting 31% Finding serves We couldn't find a serve in this video. Try a clip where you're side-on and fully in the pic"
+    }
+  },
+  "offlineAnalysis": {
+    "seconds": 15,
+    "sessionId": "01M3J13E2WHQ8XJATC35ECGN1G"
+  },
+  "finishedAt": "2026-09-27T18:12:59.228Z"
+}

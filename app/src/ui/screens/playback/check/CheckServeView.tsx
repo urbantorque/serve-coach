@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router'
 import type { AnnotatedPoint, ServeAnalysis } from '../../../../data/domain.ts'
 import { useSettingsStore } from '../../../../data/index.ts'
 import type { SessionRecord } from '../../../../data/records.ts'
-import { compareWithMarks, type AgreementRow } from '../../../../validation/annotation/agreement.ts'
+import { compareWithMarks, mechanicsOf, type AgreementRow } from '../../../../validation/annotation/agreement.ts'
 import {
   annotationId,
   clearStep,
@@ -57,6 +57,7 @@ import { checkScene } from './checkScene.ts'
 import { annotatorLabel, useAnnotator, useChecksForServe, useStudyCode, type Annotator } from './data.ts'
 import { Loupe } from './Loupe.tsx'
 import { MarkPanel } from './MarkPanel.tsx'
+import { usePinnedBlock } from './usePinnedBlock.ts'
 
 /**
  * Serve detail's boxes (DESIGN §8.11), with portrait at 40% of the screen instead of the 45% cap: the
@@ -66,7 +67,8 @@ import { MarkPanel } from './MarkPanel.tsx'
 const PORTRAIT_BOX = 'min(40dvh, 693px)'
 const LANDSCAPE_BOX = 'calc(min(100vw, 560px) * 9 / 16)'
 /** Pinned only where the screen is tall enough to leave room for the marks below. */
-const PINNED = '[@media(min-height:640px)]:sticky [@media(min-height:640px)]:top-[calc(3.25rem+env(safe-area-inset-top))]'
+/** Pinned directly under the fixed app bar (--appbar-h is px, so the offset holds at any text size). */
+const PINNED = '[@media(min-height:640px)]:sticky [@media(min-height:640px)]:top-[calc(var(--appbar-h)+env(safe-area-inset-top))]'
 
 /** Half a second either side of the app's serve window, so the person can find frames the app missed. */
 const PAD_S = 0.5
@@ -184,6 +186,8 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
   const frame = usePlayhead(store, (s) => s.frame)
   const playing = usePlayhead(store, (s) => s.playing)
   const [zoom, setZoom] = usePlayerZoom()
+  const pinRef = useRef<HTMLDivElement>(null)
+  const pinned = usePinnedBlock(pinRef)
 
   const [draft, setDraft] = useState<MarkDraft>(initialDraft)
   const [mode, setMode] = useState<'mark' | 'result'>(existing ? 'result' : 'mark')
@@ -215,6 +219,7 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
         metrics: serve.metrics,
         ctx: { clip, timing: pb.timing, handedness: serve.handedness, heightM },
         appStandingNorm: app.standingNorm,
+        appMechanics: mechanicsOf(serve),
       }),
     [saved, existing, serve, clip, pb.timing, heightM, app.standingNorm],
   )
@@ -358,6 +363,16 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
         return ev?.landing?.frameIndex ?? pt?.frontToeLanding?.frameIndex ?? null
       case 'metric:rhythm-release-to-contact':
         return ev?.tossRelease?.frameIndex ?? null
+      case 'event:trophy':
+      case 'metric:shoulder-tilt-trophy':
+        return ev?.trophy?.frameIndex ?? pt?.shoulderFrontTrophy?.frameIndex ?? null
+      case 'event:lowestHip':
+      case 'metric:drive-time':
+        return ev?.lowestHip?.frameIndex ?? pt?.midHipLowest?.frameIndex ?? null
+      case 'metric:leg-drive':
+        return pt?.midHipContact?.frameIndex ?? ev?.contact?.frameIndex ?? null
+      case 'metric:loading-depth':
+        return pt?.midHipLowest?.frameIndex ?? ev?.lowestHip?.frameIndex ?? null
       case 'scale:standing':
         return pt?.headTopSetup?.frameIndex ?? null
       default:
@@ -405,8 +420,8 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
     <div className="flex min-h-[100dvh] flex-col bg-bg" data-check-serve data-mode={mode}>
       <AppBar title={title} back={back} />
       {session.isDemo ? <SampleBanner /> : null}
-      <main className="flex flex-col gap-2 pb-6">
-        <div className={`z-(--z-sticky) flex flex-col gap-2 bg-bg pb-1 ${PINNED}`}>
+      <div className="flex flex-col gap-2 pb-6">
+        <div ref={pinRef} className={`z-(--z-sticky) flex flex-col gap-2 bg-bg pb-1 ${pinned ? PINNED : ''}`}>
           <VideoStage
             clip={clip}
             height={portrait ? PORTRAIT_BOX : LANDSCAPE_BOX}
@@ -513,7 +528,7 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
             </div>
           </>
         )}
-      </main>
+      </div>
       <BottomActionBar>
         {mode === 'mark' ? (
           <>

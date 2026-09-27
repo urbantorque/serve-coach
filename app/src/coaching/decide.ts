@@ -30,10 +30,11 @@ import { loadGuidance } from './load.ts'
 import { normaliseProfile, REGION_WORDS, type NormalisedProfile } from './profile.ts'
 import { compareRanked, toRanked, type Ranked } from './rank.ts'
 import { COMFORT_LINE, REFERRAL_COPY, sorenessLine, UNDER_18_MESSAGE } from './safety.ts'
-import { largestStratum, sameStratum } from './strata.ts'
+import { largestStratum, matchedHistory, sameStratum, servesInStratum } from './strata.ts'
 import type {
   BodyRegion,
   CoachingDecision,
+  CoachingExperiment,
   CoachingInput,
   CoachingSession,
   CoachingStratum,
@@ -74,6 +75,8 @@ export const DECISION_COPY = {
   laterStage: 'Comes later in the serve, so we will look again after this.',
   smallerGap: 'Costs fewer serves than your focus right now.',
   onCooldown: 'Resting after your last experiment.',
+  pinnedStays: "Your coach's focus stays until it is unpinned.",
+  soreHold: "You're a bit sore today, so your experiment waits. It carries on when you're feeling better.",
   captureTooFew: (n: number) => `We found ${n} usable ${n === 1 ? 'serve' : 'serves'}. Coaching needs at least 6 from one session.`,
   captureTooFewFix: 'Record 12 to 15 serves from one side, with the whole toss in the picture.',
 } as const
@@ -125,7 +128,8 @@ export function decideFocus(input: CoachingInput): CoachingDecision {
     trace.push({ step: 'safety', passed: false, detail: `Referral: ${referral}. No focus, cue or drill.` })
     return { ...baseOf(pre), kind: 'referral', level: referral, copy: REFERRAL_COPY[referral] }
   }
-  trace.push({ step: 'safety', passed: true, detail: bc?.answer === 'sore' ? `Sore today: ${bc.regions.join(', ')}.` : 'No pain reported.' })
+  // The trace is stored and exported with the decision, so it never names the sore areas (D8).
+  trace.push({ step: 'safety', passed: true, detail: bc?.answer === 'sore' ? 'Body check: go easy today.' : 'No pain reported.' })
   const profile = pre.profile
   if (profile.ageBand === 'under-18') {
     trace.push({ step: 'age', passed: false, detail: 'Under 18: the serve coach is for adults in v1 (D11).' })
@@ -178,12 +182,36 @@ export function decideFocus(input: CoachingInput): CoachingDecision {
     const measurable = !!d && !!d.stratum && !UNMEASURABLE.has(d.status)
     const ranked = dataOk ? rankEligible(ctx, detections, new Set()) : []
     const engineTop = ranked.find((r) => r.item.id !== pinned.id)
+    // The coach's focus stays whatever the re-test says (PRODUCT §2.3), but its experiment still gets
+    // its verdict and transition (PRODUCT §6.8.5): a dip still eases the drill, "no clear change" still
+    // swaps the cue, and a finished or parked experiment is closed so a fresh one can start.
+    const pinExp = input.activeExperiment?.status === 'active' && input.activeExperiment.itemId === pinned.id ? input.activeExperiment : undefined
+    const ev = pinExp ? evaluateExperiment(ctx, pinExp) : undefined
+    const t = ev?.transition
+    const pinNote: FocusDecision['experiment'] | undefined =
+      pinExp && t
+        ? t.status === 'continue'
+          ? {
+              id: pinExp.id,
+              itemId: pinExp.itemId,
+              status: 'continue',
+              copy: t.copy,
+              ...(t.variant ? { variant: t.variant } : {}),
+              ...(t.swapCue ? { swapCue: true } : {}),
+              ...(t.unlockProgression ? { unlockProgression: true } : {}),
+            }
+          : { id: pinExp.id, itemId: pinExp.itemId, status: t.status, copy: `${t.copy} ${DECISION_COPY.pinnedStays}` }
+        : undefined
     return buildFocus(ctx, pinned, d, {
       pinnedByCoach: true,
       measurable,
       alsoFirst: engineTop ? [checkFrom(engineTop.item, engineTop.detection, 'eligible', `${engineTop.item.title}: what this session would otherwise focus on.`)] : [],
       detections,
       ranked,
+      ...(pinNote ? { experiment: pinNote } : {}),
+      ...(ev?.verdict ? { verdict: ev.verdict } : {}),
+      ...(pinExp ? { stratum: pinExp.stratum, register: t?.swapCue ? (pinExp.cueRegister === 'analogy' ? 'outcome' : 'analogy') : pinExp.cueRegister } : {}),
+      ...(t?.status === 'continue' && t.variant ? { variant: t.variant } : {}),
     })
   }
   if (!dataOk) return captureFix(ctx, usable)
@@ -196,22 +224,15 @@ export function decideFocus(input: CoachingInput): CoachingDecision {
   let transition: Transition | undefined
   if (exp) {
     const expItem = getItem(exp.itemId)
-    const kind = retestKind(exp, session)
-    if (kind === 'matched' || (kind === 'unmatched' && session.template === 'retest')) {
-      const cmp =
-        kind === 'matched'
-          ? matchedComparison({ exp, session, history, profile, verdict: input.verdict })
-          : null
-      const result = cmp?.result ?? { verdict: 'not-comparable' as const, method: 'coaching', reason: unmatchedReason(exp, session) }
-      const copy = cmp?.copy ?? verdictSentence(result)
-      verdictOut = { ...result, copy, metricId: cmp?.request.metricId ?? 'serve-in-rate', rate: cmp?.request.kind === 'rate' }
-      transition = experimentTransition(exp, result, cmp?.resolvedMet ?? false, input.practiceLogs ?? [])
-      trace.push({ step: 'experiment', itemId: exp.itemId, passed: true, detail: `Re-test verdict ${result.verdict}; transition ${transition.status}.` })
-    } else {
-      trace.push({ step: 'experiment', itemId: exp.itemId, passed: true, detail: `Not a later matched re-test (${kind}); no transition.` })
-    }
+    const ev = evaluateExperiment(ctx, exp)
+    verdictOut = ev.verdict
+    transition = ev.transition
     const excluded = !!expItem && expItem.contraindications.some((r) => profile.comfort.has(r))
+    // Today's "a bit sore" answer is session only (§9.3): it holds the experiment for today, never parks it.
+    const standing = new Set(input.profile.comfortRegions)
+    const soreOnly = excluded && !!expItem && !expItem.contraindications.some((r) => standing.has(r))
     const stage = expItem?.detection.chainStage ?? 99
+    // §7.2 step 4: an earlier-stage item that passes step 5 (comfort, cooldown, confidence, tier) with severity major.
     const earlierMajor = [...detections.values()].find((d) => {
       const it = getItem(d.itemId)
       return (
@@ -219,10 +240,20 @@ export function decideFocus(input: CoachingInput): CoachingDecision {
         (it.detection.chainStage ?? 99) < stage &&
         d.status === 'eligible' &&
         d.severity === 'major' &&
+        d.confidence >= 0.7 &&
+        (cooldowns[d.itemId] ?? 0) === 0 &&
+        !(d.pathTier === 'experimental' && !profile.showExperimental) &&
         !it.contraindications.some((r) => profile.comfort.has(r))
       )
     })
     const continues = !transition || transition.status === 'continue'
+    if (expItem && continues && soreOnly && !earlierMajor) {
+      trace.push({ step: 'experiment', itemId: exp.itemId, passed: false, detail: 'Held for today by the body check; no transition.' })
+      return keepGoing(ctx, detections, {
+        experiment: { id: exp.id, itemId: exp.itemId, status: 'continue', copy: DECISION_COPY.soreHold },
+        verdict: verdictOut,
+      })
+    }
     if (expItem && continues && !excluded && !earlierMajor) {
       const d = detectionInStratum(ctx, expItem, exp.stratum) ?? detections.get(expItem.id)
       return buildFocus(ctx, expItem, d, {
@@ -286,6 +317,35 @@ export function decideFocus(input: CoachingInput): CoachingDecision {
     ranked,
     cooldowns,
   })
+}
+
+// ---------------------------------------------------------------------------------------------
+// Experiment verdict (step 4, and the coach's focus in step 3)
+// ---------------------------------------------------------------------------------------------
+
+/** History plus the experiment's own earlier sessions (baseline, re-tests), never the session itself. */
+function verdictHistory(ctx: Ctx): CoachingSession[] {
+  const extra = ctx.input.experimentHistory ?? []
+  if (!extra.length) return ctx.history
+  const byId = new Map(ctx.history.map((h) => [h.id, h]))
+  for (const h of extra) if (h.id !== ctx.session.id && !byId.has(h.id)) byId.set(h.id, h)
+  return [...byId.values()]
+}
+
+/** The re-test verdict and §12.5 transition for this session, when it is a later re-test. */
+function evaluateExperiment(ctx: Ctx, exp: CoachingExperiment): { verdict?: FocusDecision['verdict']; transition?: Transition } {
+  const { session, input, profile, trace } = ctx
+  const kind = retestKind(exp, session)
+  if (kind === 'matched' || (kind === 'unmatched' && session.template === 'retest')) {
+    const cmp = kind === 'matched' ? matchedComparison({ exp, session, history: verdictHistory(ctx), profile, verdict: input.verdict }) : null
+    const result = cmp?.result ?? { verdict: 'not-comparable' as const, method: 'coaching', reason: unmatchedReason(exp, session) }
+    const copy = cmp?.copy ?? verdictSentence(result)
+    const transition = experimentTransition(exp, result, cmp?.resolvedMet ?? false, input.practiceLogs ?? [])
+    trace.push({ step: 'experiment', itemId: exp.itemId, passed: true, detail: `Re-test verdict ${result.verdict}; transition ${transition.status}.` })
+    return { verdict: { ...result, copy, metricId: cmp?.request.metricId ?? 'serve-in-rate', rate: cmp?.request.kind === 'rate' }, transition }
+  }
+  trace.push({ step: 'experiment', itemId: exp.itemId, passed: true, detail: `Not a later matched re-test (${kind}); no transition.` })
+  return {}
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -375,7 +435,13 @@ function allChecks(ctx: Ctx, detections: Map<string, Detection>, focusId: string
     const d = detections.get(it.id)
     const region = comfortRegionOf(it.id, ctx.profile)
     if (region) {
-      out.push(checkFrom(it, d, 'comfort-setting', `${subjectOf(it.id, it.title)}: not coached because of your ${REGION_WORDS[region]} comfort setting.`))
+      // A standing setting is named; today's soreness alone is session only and never stored (§9.3).
+      const standing = (getItem(it.id)?.contraindications ?? []).find((r) => ctx.input.profile.comfortRegions.includes(r))
+      out.push(
+        standing
+          ? checkFrom(it, d, 'comfort-setting', `${subjectOf(it.id, it.title)}: not coached because of your ${REGION_WORDS[standing]} comfort setting.`)
+          : { ...checkFrom(it, d, 'comfort-setting', `${subjectOf(it.id, it.title)}: not today, while you're a bit sore.`), soreToday: true },
+      )
       continue
     }
     if (!d) continue
@@ -489,7 +555,7 @@ function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: Focu
   }
   const checks = allChecks(ctx, o.detections, it.id, o.cooldowns)
   const exp = input.activeExperiment
-  const sameSession = exp && exp.itemId === it.id ? sameSessionCheck(it.id, session, profile, exp.stratum) : undefined
+  const sameSession = exp && exp.itemId === it.id ? (sameSessionCheck(it.id, session, profile, exp.stratum) ?? blockBAfterDrill(ctx, exp, it.id)) : undefined
   const retested = exp && retestKind(exp, session) === 'matched'
   const due = exp && exp.status === 'active' && exp.itemId === it.id ? retestDue(exp, input.practiceLogs ?? [], ctx.now, retested ? session.startedAt : exp.startedAt) : undefined
   ctx.trace.push({ step: 'cue', itemId: it.id, passed: true, detail: `${cue.register} cue.` })
@@ -531,8 +597,32 @@ function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: Focu
   }
 }
 
+/**
+ * "Straight after practice" when Block B was recorded as its own session on the day the experiment
+ * started (CAPTURE §5 Experiment template): the start session's serves are block 1, this session's
+ * block 2. Display only, never a verdict (§12.3).
+ */
+function blockBAfterDrill(ctx: Ctx, exp: CoachingExperiment, itemId: string): FocusDecision['sameSession'] {
+  const { session, profile } = ctx
+  if (session.id === exp.startedSessionId || retestKind(exp, session) !== 'same-session') return undefined
+  const start = verdictHistory(ctx).find((h) => h.id === exp.startedSessionId)
+  if (!start) return undefined
+  const tagged = (s: CoachingSession['serves'][number], block: number) => ({
+    ...s,
+    block,
+    courtSide: exp.stratum.courtSide === 'unknown' ? undefined : exp.stratum.courtSide,
+    serveNumber: exp.stratum.serveNumber === 'unknown' ? undefined : exp.stratum.serveNumber,
+    intendedType: exp.stratum.intendedType === 'unknown' ? undefined : exp.stratum.intendedType,
+  })
+  const a = servesInStratum(start, exp.stratum).map((s) => tagged(s, 1))
+  const b = servesInStratum(session, exp.stratum).map((s) => tagged(s, 2))
+  if (!a.length || !b.length) return undefined
+  return sameSessionCheck(itemId, { ...session, serves: [...a, ...b] }, profile, exp.stratum)
+}
+
+/** §6.4: the personal baseline starts after 3 matched sessions (same stratum and set-up, not poor). */
 function hasHistory(ctx: Ctx, key: CoachingStratum): boolean {
-  return ctx.history.filter((h) => h.startedAt < ctx.session.startedAt && h.view === key.view).length >= 3
+  return matchedHistory(ctx.history, key, ctx.session.startedAt).length >= 3
 }
 
 function fallbackStratum(session: CoachingSession): CoachingStratum {

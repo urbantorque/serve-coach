@@ -29,11 +29,11 @@ import { bodyAxisRollDeg, cameraModel, ROLL_SANITY_LIMIT_DEG, setupClassOf, type
 import { setupKeyOf } from './metrics/setup.ts'
 import { buildTrack, indexAt, pt, rangeIdx, type PoseTrack } from './serve/track.ts'
 import { findServeWindows as findWindows, type ServeWindowSpan } from './serve/windows.ts'
-import { analyseServe, serveEvents, type ServeCore } from './serve/analyse.ts'
+import { analyseServe, AUDIO_CALIBRATION, serveEvents, type ServeCore } from './serve/analyse.ts'
 import { buildPhases } from './serve/phases.ts'
 import { computeServeMetrics, type MetricContext, type PerServeResult, type TimeBaseClass } from './metrics/perServe.ts'
 import { buildSessionStats, type SessionServe } from './metrics/session.ts'
-import { computeQuality } from './quality/checks.ts'
+import { bodyPx1080Of, computeQuality, scaleRatioOf, sustainedOrientationChange, type TimeBaseNote } from './quality/checks.ts'
 import { BANDS_VERSION, CATALOGUE_VERSION, ENGINE_VERSION, type ConditionClass } from './metrics/catalogue.ts'
 import { finalizeMetric, unavailable } from './metrics/status.ts'
 import { hashString, median } from './stats/descriptive.ts'
@@ -98,25 +98,79 @@ function parseTossEntries(raw: unknown[] | undefined): { toss: TossAnalysis[]; w
   return { toss, windows }
 }
 
-function conditionClassOf(capture?: CaptureContext): ConditionClass {
-  if (capture?.conditions?.light === 'lights') return 'night-lights'
-  return 'day'
+/**
+ * The light condition class (METRICS §1.3) from the player's answer. Nothing estimates it from the
+ * pixels yet (no luminance or flicker check exists), so a clip with no answer (an import) is
+ * 'unknown': nothing is validated for it and every value is at most experimental. Indoor courts are
+ * artificial light (validated nowhere yet): night-lights. Without a capture context at all (tests,
+ * offline tools that pass none) the class stays 'day'.
+ */
+export function conditionClassOf(capture?: CaptureContext): ConditionClass {
+  if (!capture) return 'day'
+  const light = capture.conditions?.light
+  if (light === 'day') return 'day'
+  if (light === 'lights' || light === 'indoor') return 'night-lights'
+  return 'unknown'
 }
 
-function timeBaseOf(meta: VideoMeta, cores: readonly ServeCore[]): { cls: TimeBaseClass; relSigma: number; realTimePrior: boolean } {
-  if (meta.timeBaseStatus === 'proven') return { cls: 'proven', relSigma: 0.003, realTimePrior: true }
-  if (meta.fpsSource === 'physics') return { cls: 'physics', relSigma: 0.02, realTimePrior: true }
+export interface TimeBaseInfo {
+  cls: TimeBaseClass
+  relSigma: number
+  realTimePrior: boolean
+  note: TimeBaseNote
+}
+
+/**
+ * The time base class (METRICS §2.9, CAPTURE §11.3):
+ *   - 'proven' only from container evidence (timestamps or capture-rate metadata): relSigma 0.003, speed allowed;
+ *   - 'physics': slow motion corrected with the toss's fall (fpsSource 'physics'), or a player's
+ *     slow-motion answer the toss's fall confirms. Timing estimated, relSigma ≥ 2%, speed never;
+ *   - 'normal': real time confirmed by the toss's fall, or assumed for a clip with nothing against it;
+ *   - 'unknown': timing unavailable. The toss's fall contradicts the clip's rate (or the player's
+ *     answer), or a slow-motion answer the toss could not check.
+ * A player's answer is always checked against the toss's fall here (the pipeline only checks an
+ * unknown time base).
+ */
+export function timeBaseOf(meta: VideoMeta, cores: readonly ServeCore[]): TimeBaseInfo {
   const factors = cores
     .map((c) => c.ball.toss?.gravity)
     .filter((g): g is NonNullable<typeof g> => !!g && g.status === 'ok' && g.timeScaleFactor !== undefined)
-  if (factors.length) {
-    const f = median(factors.map((g) => g.timeScaleFactor!))
-    const sigma = median(factors.map((g) => (g.timeScaleSigma ?? 0.05) / (g.timeScaleFactor ?? 1)))
-    if (Math.abs(Math.log(f)) <= Math.max(2 * sigma, Math.log(1.12))) return { cls: 'normal', relSigma: Math.max(0.02, sigma / Math.sqrt(factors.length)), realTimePrior: true }
-    return { cls: 'unknown', relSigma: 0.02, realTimePrior: false }
+  const gravity = factors.length
+    ? (() => {
+        const f = median(factors.map((g) => g.timeScaleFactor!))
+        const sigma = median(factors.map((g) => (g.timeScaleSigma ?? 0.05) / (g.timeScaleFactor ?? 1)))
+        return { consistent: Math.abs(Math.log(f)) <= Math.max(2 * sigma, Math.log(1.12)), relSigma: Math.max(0.02, sigma / Math.sqrt(factors.length)) }
+      })()
+    : null
+  if (meta.fpsSource === 'physics') return { cls: 'physics', relSigma: gravity?.relSigma ?? 0.02, realTimePrior: true, note: 'toss-corrected' }
+  if (meta.timeBaseStatus === 'proven' && (meta.fpsSource === 'container' || meta.fpsSource === 'timestamps')) return { cls: 'proven', relSigma: 0.003, realTimePrior: true, note: 'container' }
+  if (meta.fpsSource === 'user') {
+    const slowMotion = Math.abs(meta.timeScale - 1) > 1e-6
+    if (gravity && !gravity.consistent) return { cls: 'unknown', relSigma: 0.02, realTimePrior: false, note: 'declared-contradicted' }
+    if (gravity) return slowMotion ? { cls: 'physics', relSigma: gravity.relSigma, realTimePrior: true, note: 'declared-confirmed' } : { cls: 'normal', relSigma: gravity.relSigma, realTimePrior: true, note: 'toss-confirmed' }
+    // Before the ball pass (no cores) a slow-motion answer is not trusted as real time either: no
+    // gravity prior in the toss fit, so the check above stays independent.
+    return slowMotion ? { cls: 'unknown', relSigma: 0.02, realTimePrior: false, note: 'declared-unconfirmed' } : { cls: 'normal', relSigma: 0.02, realTimePrior: true, note: 'assumed' }
   }
-  if (meta.timeBaseKind === 'possible-rendered-slomo') return { cls: 'unknown', relSigma: 0.02, realTimePrior: false }
-  return { cls: 'normal', relSigma: 0.02, realTimePrior: true }
+  if (gravity) return gravity.consistent ? { cls: 'normal', relSigma: gravity.relSigma, realTimePrior: true, note: 'toss-confirmed' } : { cls: 'unknown', relSigma: 0.02, realTimePrior: false, note: 'toss-contradicted' }
+  if (meta.timeBaseKind === 'possible-rendered-slomo') return { cls: 'unknown', relSigma: 0.02, realTimePrior: false, note: 'unconfirmed-slomo' }
+  return { cls: 'normal', relSigma: 0.02, realTimePrior: true, note: 'assumed' }
+}
+
+/**
+ * The session's audio–video offset for serve k (METRICS §2.4.5, AUDIO_CALIBRATION), from the OTHER
+ * serves' (hit sound, ball-intersection) pairs; undefined when it cannot be calibrated.
+ */
+function audioOffsetFor(k: number, cores: readonly ServeCore[], captureFps: number): { offsetS: number; sigmaS: number } | undefined {
+  if (captureFps < AUDIO_CALIBRATION.minFps) return undefined
+  const pairs = cores.map((c) => (c.audioPair ? c.audioPair.audioT - c.audioPair.ballT : null))
+  if (pairs.filter((r) => r !== null).length < AUDIO_CALIBRATION.minPairs) return undefined
+  const others = pairs.filter((r, j): r is number => r !== null && j !== k)
+  if (others.length < AUDIO_CALIBRATION.minOtherPairs) return undefined
+  const offsetS = median(others)
+  if (Math.abs(offsetS) > AUDIO_CALIBRATION.maxOffsetS) return undefined
+  const mad = median(others.map((r) => Math.abs(r - offsetS)))
+  return { offsetS, sigmaS: Math.max(AUDIO_CALIBRATION.sigmaFloorS, 1.4826 * mad) }
 }
 
 /** netDir prior from handedness and camera side (§1.1): chest side, right-hander → net to the right. */
@@ -147,12 +201,17 @@ export function missingShare(track: Pick<PoseTrack, 't' | 'frameIndex'>, a: numb
   return Math.min(1, missing / expected)
 }
 
-/** Framing from raw (unrectified) landmarks: cut at contact, or feet out at landing. */
+/** §3.25 framing: the body must stay inside this margin of the picture (fraction of each side). */
+export const FRAMING_MARGIN = 0.03
+
+/** Framing from raw (unrectified) landmarks: cut at contact, or feet out at landing (outside the 3% margin). */
 function framingOf(poses: readonly PoseFrame[], core: ServeCore): 'ok' | 'feet-at-landing' | 'contact-cut' | 'unknown' {
   const c = core.events.contact?.tReal
   if (c === undefined) return 'unknown'
   const near = (t: number) => poses.reduce<PoseFrame | null>((best, p) => (p.landmarks && (!best || Math.abs(p.tReal - t) < Math.abs(best.tReal - t)) ? p : best), null)
-  const out = (lm: { x: number; y: number; visibility: number } | undefined) => !!lm && lm.visibility >= 0.3 && (lm.x < 0.005 || lm.x > 0.995 || lm.y < 0.005 || lm.y > 0.995)
+  const lo = FRAMING_MARGIN
+  const hi = 1 - FRAMING_MARGIN
+  const out = (lm: { x: number; y: number; visibility: number } | undefined) => !!lm && lm.visibility >= 0.3 && (lm.x < lo || lm.x > hi || lm.y < lo || lm.y > hi)
   const pc = near(c)
   if (pc?.landmarks) {
     const hitWrist = core.hitWrist === 'left' ? LM.LEFT_WRIST : LM.RIGHT_WRIST
@@ -286,10 +345,16 @@ export function analyseSession(input: EngineInput): EngineOutput {
     prevRecovery = core.events.recoveryEnd?.tReal
     cores.push(core)
   })
+  // Second pass: (a) a serve with fewer than 5 upright frames ('weak') or none takes the session median
+  // H_HU of the serves that had them (METRICS §1.1); weak serves never feed that median. (b) With the
+  // hit sound, the audio–video offset calibrated from the other serves (METRICS §2.4.5).
   const refs = cores.filter((c) => c.ref && c.refSource === 'setup-upright').map((c) => c.ref!.bodyHeightHU)
   const fallbackHU = refs.length ? median(refs) : undefined
+  const firstPass = [...cores]
   for (let k = 0; k < cores.length; k++) {
-    if (cores[k].refSource === 'setup-upright' || !fallbackHU) continue
+    const needsHeight = cores[k].refSource !== 'setup-upright' && !!fallbackHU
+    const audioOffset = onsets.length ? audioOffsetFor(k, firstPass, captureFps) : undefined
+    if (!needsHeight && !audioOffset) continue
     cores[k] = analyseServe({
       index: k + 1,
       window: cores[k].window,
@@ -306,13 +371,20 @@ export function analyseSession(input: EngineInput): EngineOutput {
       onsets,
       realTime: prior.realTimePrior,
       previousRecoveryEnd: k > 0 ? cores[k - 1].events.recoveryEnd?.tReal : undefined,
-      fallbackBodyHeightHU: fallbackHU,
+      fallbackBodyHeightHU: needsHeight ? fallbackHU : undefined,
+      audioOffset,
       searchStart: searchStartOf(k),
       captureFps,
     })
   }
   const tb = timeBaseOf(meta, cores)
-  if (tb.cls === 'unknown') warnings.push('The time base could not be confirmed (possible slow motion): timing metrics are unavailable.')
+  if (tb.cls === 'unknown') {
+    warnings.push(
+      tb.note === 'declared-contradicted'
+        ? "The toss fell at a rate that doesn't match the frame rate given for this clip: timing metrics are unavailable."
+        : 'The time base could not be confirmed (possible slow motion): timing metrics are unavailable.',
+    )
+  }
 
   // View check (§2.3.7) from the outgoing ball. In a true side view the served ball crosses the
   // picture (|dx| > 2|dy|) and does not climb steeply (image speed ≥ −2.5 BH/s). From behind
@@ -376,10 +448,18 @@ export function analyseSession(input: EngineInput): EngineOutput {
   const intended = capture?.intendedType
   const serveNumber: 1 | 2 | 'unknown' = capture?.serveNumber === 1 || capture?.serveNumber === 2 ? capture.serveNumber : 'unknown'
 
+  // Capture checks that gate values (METRICS §3.25 "Block"), computed before the metrics that depend on
+  // them: subject size, framing at contact, scale (toss gravity vs body), and the phone moving.
+  const framing = cores.map((c) => framingOf(input.poses, c))
+  const bodyPx1080 = bodyPx1080Of(cores, meta.height, Math.min(meta.width, meta.height)) ?? undefined
+  const scaleRatio = scaleRatioOf(cores, tb.cls)
+  const cameraMoved = sustainedOrientationChange(capture?.orientationSamples, cores.filter((c) => c.classification === 'serve').map((c) => ({ start: c.window.start, end: c.window.end })))
+  if (cameraMoved) warnings.push('The phone moved during the serves: positions and spreads are unavailable (CAMERA_MOVED).')
+
   // Metrics per serve.
   const results: PerServeResult[] = []
   const framesMissing: (number | null)[] = []
-  cores.forEach((core) => {
+  cores.forEach((core, k) => {
     const a = core.events.tossRelease ? core.events.tossRelease.tReal - 0.5 : core.window.start
     const b = core.events.contact ? core.events.contact.tReal + 0.5 : core.window.end
     const miss = missingShare(track, a, b, captureFps)
@@ -400,17 +480,15 @@ export function analyseSession(input: EngineInput): EngineOutput {
       servedFrom,
       targetTag: input.targetTags?.[core.index] ?? (capture?.intendedTarget && capture.intendedTarget !== 'mixed' ? capture.intendedTarget : undefined),
       framesMissingShare: miss ?? 0,
+      ...(bodyPx1080 !== undefined ? { bodyPx1080 } : {}),
+      contactCut: framing[k] === 'contact-cut',
+      ...(scaleRatio !== null ? { scaleOff: Math.abs(scaleRatio - 1) } : {}),
+      cameraMoved,
     }
     results.push(computeServeMetrics(core, track, ctx))
   })
 
   // Quality.
-  const bump = (() => {
-    const s = capture?.orientationSamples
-    if (!s || s.length < 3) return false
-    for (let i = 1; i < s.length; i++) if (Math.abs(s[i].pitchDeg - s[i - 1].pitchDeg) > 1 || Math.abs(s[i].rollDeg - s[i - 1].rollDeg) > 1) return true
-    return false
-  })()
   const lostTimes = input.poses.filter((p) => p.track?.reason === 'lost').map((p) => p.tReal)
   const lost = cores.map((c) => lostTimes.some((t) => t >= c.window.start && t <= c.window.end))
   const quality = computeQuality({
@@ -418,6 +496,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
     cam,
     captureFps,
     timeBase: tb.cls,
+    timeBaseNote: tb.note,
     displayedHeightPx: meta.height,
     shortSidePx: Math.min(meta.width, meta.height),
     condition,
@@ -425,9 +504,9 @@ export function analyseSession(input: EngineInput): EngineOutput {
     view: { declared: view, mismatch: viewMismatch, mismatchShare },
     framesMissing,
     hardRejects: results.map((r) => r.hardRejects.length),
-    framing: cores.map((c) => framingOf(input.poses, c)),
+    framing,
     lostTracking: lost,
-    cameraBump: bump,
+    cameraBump: cameraMoved,
     ...(standingRoll ? { standingRoll: { rollDeg: standingRoll.rollDeg, flagged: rollFlag } } : {}),
   })
 
@@ -583,19 +662,23 @@ export function analyseSession(input: EngineInput): EngineOutput {
     return analysis
   })
 
-  // Speed session values (experimental): typical = median of per-serve midpoints; fastest = max.
-  const speeds = analyses.map((a) => a.metrics['speed-experimental']).filter((m): m is MetricValue => !!m && m.status === 'experimental' && !!m.uncertainty)
+  // Speed session values (experimental): typical = median of per-serve midpoints; fastest = max. Only
+  // serves kept for statistics count (a serve blocked for dropped frames or lost tracking does not).
+  const ranged = (m: MetricValue | undefined): m is MetricValue => !!m && m.status === 'experimental' && !!m.uncertainty
+  const speeds = analyses.filter((a) => a.included).map((a) => a.metrics['speed-experimental']).filter(ranged)
   const speedMetrics: MetricValue[] = []
   if (view === 'side') {
+    const nServes = analyses.filter((a) => a.detection.kind === 'serve').length
     if (speeds.length) {
       const mids = speeds.map((m) => (m.uncertainty!.low + m.uncertainty!.high) / 2)
       const lows = speeds.map((m) => m.uncertainty!.low)
       const highs = speeds.map((m) => m.uncertainty!.high)
       speedMetrics.push(
-        finalizeMetric('speed-experimental', { value: `${Math.round(median(lows) / 5) * 5}–${Math.round(median(highs) / 5) * 5}`, quantity: 'launch-speed', confidence: 0.4, basis: `typical launch speed range over ${speeds.length} serves (experimental)`, uncertainty: { kind: 'range', low: Math.round(median(lows) / 5) * 5, high: Math.round(median(highs) / 5) * 5 }, secondary: { fastestMidKmh: Math.round(Math.max(...mids)) }, n: speeds.length, downgrades: [{ cap: 'experimental', reason: 'VALIDATION_PENDING' }] }, condition),
+        finalizeMetric('speed-experimental', { value: `${Math.round(median(lows) / 5) * 5}–${Math.round(median(highs) / 5) * 5}`, quantity: 'launch-speed', confidence: 0.4, basis: `typical launch speed range over ${speeds.length} of ${nServes} serves (experimental)`, uncertainty: { kind: 'range', low: Math.round(median(lows) / 5) * 5, high: Math.round(median(highs) / 5) * 5 }, secondary: { fastestMidKmh: Math.round(Math.max(...mids)) }, n: speeds.length, nEligible: nServes, downgrades: [{ cap: 'experimental', reason: 'VALIDATION_PENDING' }] }, condition),
       )
     } else {
-      const reason = analyses.map((a) => a.metrics['speed-experimental']?.reasonCode).find((r) => r) ?? 'FPS_TOO_LOW'
+      const excludedOnly = analyses.some((a) => !a.included && ranged(a.metrics['speed-experimental']))
+      const reason = excludedOnly ? 'EXCLUDED_BY_QUALITY' : analyses.map((a) => a.metrics['speed-experimental']?.reasonCode).find((r) => r) ?? 'FPS_TOO_LOW'
       speedMetrics.push(unavailable('speed-experimental', reason, 'launch speed from the ball track just after contact', { quantity: 'launch-speed' }))
     }
     speedMetrics.push(unavailable('speed-average-rear', 'NEEDS_REAR_VIEW', 'average speed to a bounce seen from behind', { quantity: 'average-speed' }))
@@ -606,16 +689,21 @@ export function analyseSession(input: EngineInput): EngineOutput {
     speedMetrics.push(unavailable('speed-experimental', 'NEEDS_SIDE_VIEW', 'launch speed needs the side view', { quantity: 'launch-speed' }))
     speedMetrics.push(unavailable('speed-average-rear', 'NEEDS_REAR_VIEW', 'average speed needs the view from behind', { quantity: 'average-speed' }))
   }
-  const captureQuality: MetricValue = {
-    id: 'capture-quality',
-    value: quality.report.overall,
-    unit: 'good|usable|poor',
-    status: 'measured',
-    confidence: 1,
-    basis: quality.reasons.length ? quality.reasons.join(' ') : 'all capture checks passed',
-    display: quality.report.overall === 'good' ? 'Good' : quality.report.overall === 'usable' ? 'Fair' : 'Limited',
-    secondary: { score: quality.score },
-  }
+  // Capture quality (DECISIONS D2 addendum, 2026-09-28): a data-quality gate, always shown, labelled
+  // experimental ("Automatic check, experimental") until its checks pass validation on real footage.
+  // Its status comes from the catalogue like every other value: target measured, validation V0
+  // (metrics.json validationState V0-synthetic-inconclusive), so experimental with VALIDATION_PENDING.
+  const captureQuality: MetricValue = finalizeMetric(
+    'capture-quality',
+    {
+      value: quality.report.overall,
+      confidence: 1,
+      basis: `Automatic check, experimental (tested on simulated footage only): ${quality.reasons.length ? quality.reasons.join(' ') : 'all capture checks passed'}`,
+      display: quality.report.overall === 'good' ? 'Good' : quality.report.overall === 'usable' ? 'Fair' : 'Limited',
+      secondary: { score: quality.score },
+    },
+    condition,
+  )
   const inputsHash = String(hashString(JSON.stringify({ n: input.poses.length, t: input.ball.tracks.length, o: input.onsets.length, view, H, handedness, tags: input.targetTags ?? {} })))
   const { stats } = buildSessionStats(
     sessionServes,
@@ -631,6 +719,8 @@ export function analyseSession(input: EngineInput): EngineOutput {
       intendedType: intended,
       targetTags: input.targetTags,
       track,
+      blockRejectShare: quality.blockRejectShare,
+      cameraMoved,
     },
     { captureQuality, speed: speedMetrics, inputsHash },
   )

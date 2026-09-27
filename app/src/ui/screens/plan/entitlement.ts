@@ -1,7 +1,8 @@
 /**
  * The local plan flag (PRODUCT §5.2, §6.15). Public API for other screens that mark Plus features:
- * `usePlan()` returns `{ plus, entitlement }` (undefined while loading). In the PWA prototype the flag
- * is only ever switched by the Plan screen's test buttons; no payment is taken and nothing is sent.
+ * `usePlan()` returns `{ plus, entitlement }` (undefined while loading), and `usePlusGate` (in
+ * usePlusGate.tsx) wraps a Plus feature with the T3 sheet. In the PWA prototype the flag is only
+ * ever switched by the Plan screen's test buttons; no payment is taken and nothing is sent.
  */
 import { getSetting, setSetting } from '../../../data/index.ts'
 import { useSetting } from '../../../data/hooks.ts'
@@ -19,9 +20,12 @@ export async function getPlan(): Promise<{ plus: boolean; entitlement: Entitleme
   return { plus: isPlus(entitlement), entitlement }
 }
 
-/** Prototype only: switches Plus on for testing. Takes no payment and calls no store. */
-export async function switchOnTestPlus(plan: PlanId, now: Date = new Date()): Promise<EntitlementSetting> {
-  const e = prototypeEntitlement(plan, now)
+/**
+ * Prototype only: switches Plus on for testing. Takes no payment and calls no store. `via` and
+ * `feature` record which paywall moment led here (the fake-door intent, kept on this phone).
+ */
+export async function switchOnTestPlus(plan: PlanId, now: Date = new Date(), via?: EntitlementSetting['via'], feature?: string): Promise<EntitlementSetting> {
+  const e = prototypeEntitlement(plan, now, via, feature)
   await setSetting('entitlement', e, now)
   return e
 }

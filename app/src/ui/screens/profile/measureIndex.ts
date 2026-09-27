@@ -5,12 +5,12 @@
  * (analysis/metrics/catalogue.ts); the state and numbers from metrics.json and validation-summary.json
  * via ../metric/validationWords.ts. Never from this screen.
  */
-import { METRIC_VIEWS, statusCeiling, type ValidationLevel } from '../../../analysis/metrics/catalogue.ts'
+import { lowerStatus, METRIC_VIEWS, statusCeiling, type ValidationLevel } from '../../../analysis/metrics/catalogue.ts'
 import { METRIC_IDS, type MetricId, type MetricStatus } from '../../../analysis/types.ts'
 import { metricName } from '../../copy/metricNames.ts'
 import { rowDetail, validationStateOf, type ValidationState } from '../metric/validationWords.ts'
 
-export type MeasureGroupId = 'video' | 'experimental' | 'logged' | 'not-measurable'
+export type MeasureGroupId = 'always' | 'video' | 'experimental' | 'logged' | 'not-measurable'
 
 export interface MeasureRow {
   id: MetricId
@@ -26,6 +26,7 @@ export interface MeasureRow {
 }
 
 export const GROUP_TITLES: Record<MeasureGroupId, string> = {
+  always: 'Always shown (automatic check, experimental)',
   video: 'Measured or estimated from your video',
   experimental: 'Experimental (shown only when turned on)',
   logged: 'You log these',
@@ -33,8 +34,9 @@ export const GROUP_TITLES: Record<MeasureGroupId, string> = {
 }
 
 export const GROUP_NOTES: Record<MeasureGroupId, string> = {
+  always: 'Every session gets this check, whatever your settings. Its checks have only been tested on simulated footage, so it carries the experimental label.',
   video: 'An estimate uses your height, so it has a margin of error. Every value shows its label and how many serves it came from.',
-  experimental: "Not accurate enough yet on simulated serves, or not checked yet. Shown only when you turn them on, and never used for your focus, verdicts or Progress.",
+  experimental: "Not accurate enough yet on simulated serves, or not checked yet. Shown only when you turn them on. They never get a verdict or a Progress trend, and can suggest a focus only while turned on, marked Experimental.",
   logged: 'Serve outcomes, targets and serve types come from your tags or tally, so they carry the "You logged" label.',
   'not-measurable': 'We say so rather than guess.',
 }
@@ -47,27 +49,45 @@ export const LEVEL_SHORT: Record<ValidationLevel, string> = {
   V3: 'Checked against a physical reference',
 }
 
-export function viewWords(views: readonly ('side' | 'rear')[]): string {
+/**
+ * Where a metric can be computed. A metric checked on simulated serves was checked from the side
+ * only (the raised view from behind was never rendered, docs/VALIDATION.md §7), so it says so.
+ */
+export function viewWords(views: readonly ('side' | 'rear')[], level: ValidationLevel = 'V0'): string {
   if (views.length === 0) return 'No view'
-  if (views.length === 2) return 'Either view'
+  if (views.length === 2) return level === 'V0' ? 'Either view' : 'Either view, checked from the side only'
   return views[0] === 'side' ? 'Side view' : 'View from behind'
 }
 
+/**
+ * Session summaries built from per-serve values of another metric: the engine can only give them the
+ * lower of the two statuses (analysis/metrics/session.ts spreadMetric), so the index says the same.
+ */
+const BUILT_FROM: Partial<Record<MetricId, MetricId>> = { 'toss-forward-spread': 'toss-forward' }
+const BUILT_FROM_WORDS: Partial<Record<MetricId, string>> = {
+  'toss-forward-spread': 'Shown as experimental while front-to-back toss positions are experimental.',
+}
+
 export function measureRow(id: MetricId): MeasureRow {
-  const { status, level } = statusCeiling(id, 'day')
+  const own = statusCeiling(id, 'day')
+  const source = BUILT_FROM[id]
+  const status = source ? lowerStatus(own.status, statusCeiling(source, 'day').status) : own.status
+  const capped = status !== own.status
   return {
     id,
     name: metricName(id),
     status,
-    level,
-    views: viewWords(METRIC_VIEWS[id]),
-    levelWords: LEVEL_SHORT[level],
+    level: own.level,
+    views: viewWords(METRIC_VIEWS[id], own.level),
+    levelWords: LEVEL_SHORT[own.level],
     validationState: validationStateOf(id),
-    validationWords: rowDetail(id),
+    validationWords: capped ? `${rowDetail(id)} ${BUILT_FROM_WORDS[id] ?? ''}`.trim() : rowDetail(id),
   }
 }
 
 export function groupOf(row: MeasureRow): MeasureGroupId {
+  // DECISIONS D2 addendum: capture quality is never hidden behind the experimental toggle.
+  if (row.id === 'capture-quality') return 'always'
   if (row.status === 'unavailable') return 'not-measurable'
   if (row.status === 'player-entered') return 'logged'
   if (row.status === 'experimental') return 'experimental'
@@ -75,7 +95,7 @@ export function groupOf(row: MeasureRow): MeasureGroupId {
 }
 
 export function measureIndex(): { group: MeasureGroupId; rows: MeasureRow[] }[] {
-  const order: MeasureGroupId[] = ['video', 'experimental', 'logged', 'not-measurable']
+  const order: MeasureGroupId[] = ['always', 'video', 'experimental', 'logged', 'not-measurable']
   const rows = METRIC_IDS.map(measureRow)
   return order.map((group) => ({ group, rows: rows.filter((r) => groupOf(r) === group) })).filter((g) => g.rows.length > 0)
 }

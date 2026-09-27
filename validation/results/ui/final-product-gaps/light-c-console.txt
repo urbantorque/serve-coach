@@ -1,0 +1,8 @@
+warning: W0927 18:10:46.720000 2196592 gl_context.cc:1119] OpenGL error checking is disabled
+warning: W0927 18:10:51.347000 2196592 gl_context.cc:1119] OpenGL error checking is disabled
+warning: W0927 18:10:51.420000 2196592 gl_context.cc:1119] OpenGL error checking is disabled
+warning: W0927 18:10:51.897999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.
+warning: W0927 18:10:52.084999 2196592 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.
+warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log
+warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log
+warning: [privacy] pose worker: blocked a cross-origin request to https://odml.pa.googleapis.com/v1/log

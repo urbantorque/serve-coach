@@ -1,7 +1,9 @@
 import { CaretDownIcon, FlaskIcon, InfoIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { useParams } from 'react-router'
-import type { MetricId, MetricValue as MetricValueData } from '../../../analysis/types.ts'
+import { validationLevel } from '../../../analysis/metrics/catalogue.ts'
+import type { MetricId, MetricValue as MetricValueData, ReasonCode } from '../../../analysis/types.ts'
+import { REAR_ONLY_METRIC_IDS, SIDE_ONLY_METRIC_IDS } from '../../../analysis/types.ts'
 import { useLatestDecision, useProfile } from '../../../data/hooks.ts'
 import { useSettingsStore } from '../../../data/stores/settings.ts'
 import {
@@ -53,8 +55,29 @@ const MORE: Record<'side' | 'rear', MetricId[]> = {
   rear: ['toss-apex-height', 'toss-drop', 'contact-height-spread'],
 }
 const EXPERIMENTAL: Record<'side' | 'rear', MetricId[]> = {
-  side: ['deep-bend-flag', 'speed-experimental', 'trophy-pause', 'repeatability'],
+  // landing-distance, shoulder-tilt-trophy, toss-forward and contact-forward are experimental by
+  // validation (V0): with enough serves they carry the experimental label, so they show here.
+  side: ['deep-bend-flag', 'speed-experimental', 'trophy-pause', 'repeatability', 'landing-distance', 'shoulder-tilt-trophy', 'toss-forward', 'contact-forward'],
   rear: ['toss-lateral-spread', 'toss-lateral', 'knee-bend-band', 'shoulder-over-shoulder-contact', 'speed-average-rear', 'trophy-pause', 'repeatability'],
+}
+/**
+ * Metrics the engine sets for the whole session only, never per group (analysis/metrics/session.ts):
+ * a multi-group report reads them from the session, not from the shown group.
+ */
+const SESSION_WIDE: MetricId[] = ['spin', 'speed-experimental', 'speed-average-rear']
+
+/**
+ * The reason a ghost row gives (DESIGN §3.1, D4). Spin is never measurable by phone, whatever the
+ * footage. Side-view launch speed below 120 fps needs 120 fps first, whatever else went missing.
+ * Only metrics that need the other view say so.
+ */
+export function ghostReason(id: MetricId, v: MetricValueData | undefined, view: 'side' | 'rear', fps: number | undefined): ReasonCode | undefined {
+  if (id === 'spin') return 'NOT_MEASURABLE'
+  if (id === 'speed-experimental' && view === 'side' && fps !== undefined && fps < 120) return 'FPS_TOO_LOW'
+  if (v?.reasonCode) return v.reasonCode
+  if (view === 'side' && (REAR_ONLY_METRIC_IDS as readonly string[]).includes(id)) return 'NEEDS_REAR_VIEW'
+  if (view === 'rear' && (SIDE_ONLY_METRIC_IDS as readonly string[]).includes(id)) return 'NEEDS_SIDE_VIEW'
+  return undefined
 }
 
 function ReportSkeleton() {
@@ -118,6 +141,9 @@ export function SessionReportScreen() {
   const strata = stats?.strata ?? []
   const stratum = strata.length > 1 ? strata[Number(stratumIdx)] ?? strata[0] : undefined
   const m: Metrics = stratum?.metrics ?? stats?.metrics ?? {}
+  // The shown group's metrics plus the session-wide ones (spin and speed are never set per group).
+  const mv: Metrics = { ...m }
+  for (const id of SESSION_WIDE) if (stats?.metrics[id]) mv[id] = stats.metrics[id]
   const heightM = a?.capture.scale.heightM ?? profile?.heightM
   const orientation = session.orientation ?? a?.capture.rectification.orientation ?? 'portrait'
   const key = stratum?.key ?? stratumOf({ session, stats })
@@ -153,11 +179,15 @@ export function SessionReportScreen() {
   const evidence = decisionEvidence(shownDecision, decisionStats)
   const headline = headlineFor(session, stats)
 
+  // A metric that is experimental by validation (V0) never shows as an ordinary value, so with the
+  // toggle off its "Needs more serves" would promise something more serves can't deliver.
+  const experimentalByValidation = (id: MetricId) => validationLevel(id, 'day') === 'V0'
   const ghosts = [
-    ...CORE[view].filter((id) => m[id]?.status === 'unavailable'),
-    ...GHOSTS[view].filter((id) => !m[id] || m[id]?.status === 'unavailable'),
+    ...CORE[view].filter((id) => mv[id]?.status === 'unavailable' && (experimental || !experimentalByValidation(id))),
+    ...GHOSTS[view].filter((id) => !mv[id] || mv[id]?.status === 'unavailable'),
   ]
-  const experimentalIds = EXPERIMENTAL[view].filter((id) => m[id]?.status === 'experimental')
+  const fps = a.capture.meta.captureFps
+  const experimentalIds = EXPERIMENTAL[view].filter((id) => mv[id]?.status === 'experimental')
   const moreIds = MORE[view].filter((id) => m[id] && m[id]!.status !== 'unavailable' && m[id]!.status !== 'experimental')
   const earlierRows = (prevData ?? []).map((d) => ({ sessionId: d.session.id, rows: d.rows }))
   const link = outcomeLinkState({ engineLink: stats?.outcomeLink, rows, earlier: earlierRows })
@@ -210,7 +240,11 @@ export function SessionReportScreen() {
       </header>
 
       {shownDecision || exp ? (
-        <section className="-mt-4 flex flex-col gap-3" aria-label="Your focus">
+        <section className="-mt-4 flex flex-col gap-3" aria-labelledby="your-focus">
+          {/* The cards below carry h3 titles; this keeps the heading order h1, h2, h3. */}
+          <h2 id="your-focus" className="sr-only">
+            Your focus
+          </h2>
           {shownDecision ? (
             <FocusCard
               decision={shownDecision}
@@ -282,6 +316,7 @@ export function SessionReportScreen() {
           metrics={m}
           rows={rows}
           tally={tally}
+          group={strata.length > 1 ? { courtSide: key.courtSide, serveNumber: key.serveNumber, defaultSide: session.defaultSide, defaultServeNumber: session.defaultServeNumber } : undefined}
         />
         {tagged ? <InsightCard state={link} sessionId={session.id} /> : null}
       </section>
@@ -300,7 +335,7 @@ export function SessionReportScreen() {
           </SectionLabel>
           <ListGroup>
             {ghosts.map((id) => (
-              <UnavailableRow key={id} metricId={id} reasonCode={m[id]?.reasonCode ?? (view === 'side' ? 'NEEDS_REAR_VIEW' : 'NEEDS_SIDE_VIEW')} to={metricInfoFor(id, session.id)} />
+              <UnavailableRow key={id} metricId={id} reasonCode={ghostReason(id, mv[id], view, fps)} to={metricInfoFor(id, session.id)} />
             ))}
           </ListGroup>
         </section>
@@ -317,7 +352,7 @@ export function SessionReportScreen() {
           </div>
           <MetricGrid>
             {experimentalIds.map((id) => (
-              <MetricTile key={id} metricId={id} value={m[id]!} to={metricInfoFor(id, session.id)} />
+              <MetricTile key={id} metricId={id} value={mv[id]!} to={metricInfoFor(id, session.id)} />
             ))}
           </MetricGrid>
         </section>

@@ -28,7 +28,12 @@ export interface VideoMeta {
   isVariableFrameRate: boolean
   frameCount: number
   // ---- v1 additions (ARCHITECTURE §6.1), all optional ----
-  /** From assessTimeBase(): 'proven' only with >=100 fps timestamps, an Android capture-fps key, or a gravity proof. */
+  /**
+   * From assessTimeBase(): 'proven' only with >=100 fps timestamps or an Android capture-fps key
+   * (container evidence). A player's answer or the toss gravity check never makes it 'proven'
+   * (CAPTURE §11.3): they set fpsSource 'user' or 'physics', and the engine judges them against the
+   * toss's fall (speed stays unavailable).
+   */
   timeBaseStatus?: 'proven' | 'unknown'
   timeBaseKind?: 'normal' | 'native-high-fps' | 'metadata-time-scaled' | 'possible-rendered-slomo'
   /** Piecewise-linear media->real map for rendered slow motion with 1x ramps. */
@@ -183,7 +188,8 @@ export interface MetricValue {
   /** CAPTURE check id (for example 'cq.toss-headroom') when a capture or serve check caused the status. */
   checkId?: string
   validationLevel?: 'V0' | 'V1' | 'V2' | 'V3'
-  conditionClass?: 'day' | 'overcast' | 'night-lights' | 'flicker'
+  /** 'unknown': the light was not recorded (an import with no light answer); nothing is validated for it. */
+  conditionClass?: 'day' | 'overcast' | 'night-lights' | 'flicker' | 'unknown'
   band?: Band | 'unclear'
   bandBasis?: 'population-provisional' | 'player-relative' | 'fixed-geometric'
   bandProbabilities?: { low: number; typical: number; high: number }
@@ -209,9 +215,16 @@ export interface MetricValue {
   /** Spread at the limit of what can be measured (DESIGN §3.3 rule 5). */
   nearMeasurementLimit?: boolean
   /**
-   * Integration addition: the status this per-serve value would have with a known phone pitch. Set
-   * only when PITCH_UNKNOWN lowered it. Absolute heights and positions stay experimental, but spreads
-   * across serves keep their status (METRICS §1.1 item 3), so spread summaries and coaching use it.
+   * Integration addition: the status this per-serve value has when it is used RELATIVE to the other
+   * serves (a spread, or each serve against the session's middle one). Set only when that is higher
+   * than `status`. Two things do not affect relative use:
+   *   - an unknown phone pitch (PITCH_UNKNOWN): a shared tilt shifts every serve alike (METRICS §1.1
+   *     item 3);
+   *   - the value's own validation ceiling, for values that feed a spread: they are judged by the
+   *     spread's validation level instead. toss-forward failed V1 on a constant bias (MediaPipe's foot
+   *     point sits behind the toe) that cancels in a spread, and toss-forward-spread passed its own
+   *     check (validation/results/metrics/SUMMARY.md).
+   * Every other downgrade still applies. Spread summaries and coaching use it; absolute values never do.
    */
   statusIfLevel?: MetricStatus
   /** Rounded display text per METRICS.md (engine-owned rounding). */

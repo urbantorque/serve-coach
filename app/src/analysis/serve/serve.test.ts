@@ -4,7 +4,8 @@ import { buildServeFixture } from '../pose/servePoseFixture.ts'
 import { MIRROR_INDEX } from '../pose/landmarks.ts'
 import { cameraModel, focalLongFromFov, levelRotation, rectifyPoint, setupClassOf, unrectifyPoint, cameraDistanceM } from './geometry.ts'
 import { buildTrack, indexAt, localQuadratic, pt } from './track.ts'
-import { fuseEvent, detectTrophy, measureNoise, heightOf } from './events.ts'
+import { fuseEvent, detectTrophy, measureNoise, heightOf, swingPeakTime } from './events.ts'
+import { checkContactSignals, DISPUTE_K } from './analyse.ts'
 import { relabelSides } from './relabel.ts'
 import { findServeWindows, samplingAllowance } from './windows.ts'
 import { ballBracketContact, ballIntersectionContact, followLeadIn, type ServeBall } from './ball.ts'
@@ -230,5 +231,78 @@ describe('ball contact methods (§2.4.5)', () => {
     const track = { id: 1, kind: 'toss' as const, observations: [obs(1.0, 0.5, 0.5, 60), obs(1.0 + 1 / 60, 0.5, 0.48, 61), obs(1.0 + 2 / 60, 0.5, 0.46, 62)] }
     const lead = followLeadIn(track, [obs(1.0 - 1 / 60, 0.5, 0.52, 59), obs(1.0 - 2 / 60, 0.5, 0.54, 58), obs(1.0 - 1 / 60, 0.9, 0.1, 59)])
     expect(lead.map((o) => o.frameIndex)).toEqual([58, 59])
+  })
+})
+
+describe('fused-event check on contact (D2 addendum)', () => {
+  const m = (method: string, t: number, sigma: number, q = 0.8) => ({ method, t, sigma, q })
+  const ballAt = (t: number, sigma = 0.01) => fuseEvent([m('ball-bracket', t, sigma, 0.35)], null)
+  const dt = 1 / 60
+
+  it('stays silent when the signals agree, or when there is only one', () => {
+    expect(checkContactSignals({ ball: ballAt(2.78), audio: m('audio-onset', 2.782, 0.008), wrist: m('wrist-apex', 2.77, 0.047) }, dt)).toBeNull()
+    expect(checkContactSignals({ ball: ballAt(2.52), audio: null, wrist: null }, dt)).toBeNull()
+    // Within DISPUTE_K combined σ is agreement: the wrist's 47 ms σ allows about 0.14 s.
+    expect(DISPUTE_K).toBe(3)
+    expect(checkContactSignals({ ball: ballAt(2.78), audio: null, wrist: m('wrist-apex', 2.66, 0.047) }, dt)).toBeNull()
+  })
+
+  it('a ball that only vanished against the swing peak is unresolved: nothing to say which is right (dist12-s1)', () => {
+    const r = checkContactSignals({ ball: ballAt(2.521), ballObserved: false, audio: null, wrist: m('wrist-apex', 2.78, 0.047) }, dt)!
+    expect(r.dispute.resolution).toBe('unresolved')
+    expect(r.methods).toBeUndefined()
+    expect(r.dispute.spreadS).toBeCloseTo(0.259, 3)
+  })
+
+  it('an observed departure (outgoing track meeting the toss) keeps the ball, but the dispute stands', () => {
+    const r = checkContactSignals({ ball: ballAt(2.78, 0.002), ballObserved: true, audio: null, wrist: m('wrist-apex', 2.42, 0.047) }, dt)!
+    expect(r.dispute.resolution).toBe('ball-observed')
+    expect(r.dispute.dropped).toBe('wrist')
+    expect(r.methods!.every((x) => x.method.startsWith('ball-'))).toBe(true)
+  })
+
+  it('three signals with one outlier: the majority decides and the outlier is dropped', () => {
+    const r = checkContactSignals({ ball: ballAt(2.52), audio: m('audio-onset', 2.785, 0.008), wrist: m('wrist-apex', 2.78, 0.047) }, dt)!
+    expect(r.dispute.resolution).toBe('majority')
+    expect(r.dispute.dropped).toBe('ball')
+    expect(r.methods!.map((x) => x.method).sort()).toEqual(['audio-onset', 'wrist-apex'])
+  })
+
+  it('three signals where only the extremes disagree: fused from all, flagged as a spread', () => {
+    const r = checkContactSignals({ ball: ballAt(2.70, 0.004), audio: m('audio-onset', 2.74, 0.02), wrist: m('wrist-apex', 2.80, 0.03) }, dt)!
+    expect(r.dispute.resolution).toBe('spread')
+    expect(r.methods).toHaveLength(3)
+  })
+
+  it('three signals that all disagree are unresolved', () => {
+    const r = checkContactSignals({ ball: ballAt(2.3, 0.005), audio: m('audio-onset', 2.55, 0.008), wrist: m('wrist-apex', 2.8, 0.03) }, dt)!
+    expect(r.dispute.resolution).toBe('unresolved')
+  })
+})
+
+describe('swing peak (label-free, for the fused-event check)', () => {
+  const fx = buildServeFixture({ heightHU: 0.3, floorY: 0.85, contactT: 2 })
+  const track = buildTrack(fx.frames, cameraModel(meta))
+  const ref = { yFloor: 0.85, bodyHeightHU: 0.3 }
+  it('finds contact at the end of the last arm-up stretch', () => {
+    const p = swingPeakTime(track, ref, 1.0, 3.2)!
+    expect(Math.abs(p.t - 2)).toBeLessThan(0.05)
+    expect(p.wrist).toBe('right')
+  })
+  it('does not depend on left/right labels (a whole-body mirror)', () => {
+    const mirrored = buildTrack(fx.frames.map((f) => ({ ...f, landmarks: f.landmarks ? MIRROR_INDEX.map((j) => f.landmarks![j]) : null })), cameraModel(meta))
+    const p = swingPeakTime(mirrored, ref, 1.0, 3.2)!
+    expect(Math.abs(p.t - 2)).toBeLessThan(0.05)
+    expect(p.wrist).toBe('left')
+  })
+  it('returns null when no wrist rises above the head in the span', () => {
+    expect(swingPeakTime(track, ref, 0, 0.5)).toBeNull()
+  })
+  it('ignores a lower blip after the swing (a mislocated wrist in the follow-through, production session serve 3)', () => {
+    const frames = fx.frames.map((f) =>
+      f.landmarks && f.tReal >= 2.38 && f.tReal <= 2.42 ? { ...f, landmarks: f.landmarks.map((l, k) => (k === LM.RIGHT_WRIST ? { ...l, y: 0.85 - 1.0 * 0.3, visibility: 0.8 } : l)) } : f,
+    )
+    const p = swingPeakTime(buildTrack(frames, cameraModel(meta)), ref, 1.0, 3.2)!
+    expect(Math.abs(p.t - 2)).toBeLessThan(0.05)
   })
 })

@@ -1,0 +1,1210 @@
+[
+ {
+  "name": "baseline-s1__default",
+  "clip": "baseline-s1",
+  "variant": "",
+  "tag": "",
+  "state": "done",
+  "wallS": 20.11,
+  "timings": {
+   "probeMs": 816.2000000029802,
+   "audioMs": 0,
+   "poseInitMs": 5391.699999999255,
+   "sparseMs": 5055.300000000745,
+   "denseMs": 7018.400000002235,
+   "densePoseMs": 6827.300000000745,
+   "denseBallMs": 3146.8999999910593,
+   "ballReadbackMs": 0.29999999701976776,
+   "ballCropScale": 1,
+   "ballAnalyseMs": 167.5,
+   "measureMs": 129.30000000074506,
+   "keyFramesMs": 451.19999999925494,
+   "coachingMs": 17.899999998509884,
+   "saveMs": 13.5,
+   "totalMs": 19073.300000000745,
+   "framesDecoded": 615,
+   "poseFrames": 261,
+   "ballFrames": 151,
+   "windows": 1,
+   "sparseCoarseFrames": 20,
+   "sparseFillFrames": 67,
+   "ballBackend": "worker",
+   "ballWorkers": 2,
+   "ballPixels": "cpu",
+   "ballPlanarFrames": 151,
+   "seededWindows": 0,
+   "poseLanes": 2,
+   "poseBackend": "worker"
+  },
+  "servesFound": 1,
+  "consoleErrors": 0,
+  "servesTruth": 1,
+  "servesAnalysed": 1,
+  "events": {
+   "tossRelease": {
+    "n": 1,
+    "maeMs": 0.8850000000300007,
+    "biasMs": -0.8850000000300007
+   },
+   "tossApex": {
+    "n": 1,
+    "maeMs": 0.25659208845230097,
+    "biasMs": 0.25659208845230097
+   },
+   "trophy (lowest hip)": {
+    "n": 1,
+    "maeMs": 77.38856867019805,
+    "biasMs": 77.38856867019805
+   },
+   "contact": {
+    "n": 1,
+    "maeMs": 0.7734434103929821,
+    "biasMs": -0.7734434103929821
+   },
+   "landing": {
+    "n": 1,
+    "maeMs": 152.65650202806836,
+    "biasMs": 152.65650202806836
+   }
+  },
+  "metrics": {
+   "serve-count": {
+    "n": 1,
+    "mae": 0,
+    "bias": 0,
+    "statuses": "estimated 1"
+   },
+   "toss-apex-height": {
+    "n": 1,
+    "mae": 0.07050000000000001,
+    "bias": -0.07050000000000001,
+    "statuses": "experimental 1"
+   },
+   "contact-height-ratio": {
+    "n": 1,
+    "mae": 0.03112496037711443,
+    "bias": -0.03112496037711443,
+    "statuses": "experimental 1"
+   },
+   "toss-drop": {
+    "n": 1,
+    "mae": 0.18999999999999773,
+    "bias": -0.18999999999999773,
+    "statuses": "estimated 1"
+   },
+   "rhythm-release-to-contact": {
+    "n": 1,
+    "mae": 0.2999999999999545,
+    "bias": 0.2999999999999545,
+    "statuses": "estimated 1"
+   },
+   "leg-drive": {
+    "n": 1,
+    "mae": 2.4334846812021222,
+    "bias": -2.4334846812021222,
+    "statuses": "estimated 1"
+   },
+   "loading-depth": {
+    "n": 1,
+    "mae": 0.044070859984131294,
+    "bias": -0.044070859984131294,
+    "statuses": "estimated 1"
+   },
+   "toss-forward": {
+    "n": 1,
+    "mae": 1.7099999999999937,
+    "bias": 1.7099999999999937,
+    "statuses": "experimental 1"
+   },
+   "landing-distance": {
+    "n": 1,
+    "mae": 2.530000000000001,
+    "bias": 2.530000000000001,
+    "statuses": "experimental 1"
+   },
+   "trophy-pause": {
+    "n": 1,
+    "mae": 121.70000000000002,
+    "bias": 121.70000000000002,
+    "statuses": "experimental 1"
+   },
+   "drive-time": {
+    "n": 1,
+    "mae": 78.1620120805913,
+    "bias": -78.1620120805913,
+    "statuses": "experimental 1"
+   }
+  },
+  "pose": {
+   "frames": 205,
+   "meanBH": 0.1040751462526842,
+   "tolerantBH": 0.02628564563778019,
+   "medianBH": 0.031448290853577546,
+   "wristBH": 0.029959981831630015,
+   "wristFrames": 12
+  },
+  "poseStats": {
+   "inferenceMedianMs": 33,
+   "prepareMedianMs": 7,
+   "roundTripMedianMs": 66.5,
+   "count": 261
+  }
+ },
+ {
+  "name": "default75-s1__default",
+  "clip": "default75-s1",
+  "variant": "",
+  "tag": "",
+  "state": "done",
+  "wallS": 15.327,
+  "timings": {
+   "probeMs": 39.900000002235174,
+   "audioMs": 0,
+   "poseInitMs": 1167.300000000745,
+   "sparseMs": 6207.89999999851,
+   "denseMs": 6435,
+   "densePoseMs": 6312.699999999255,
+   "denseBallMs": 2757.0000000074506,
+   "ballReadbackMs": 0.3999999985098839,
+   "ballCropScale": 1,
+   "ballAnalyseMs": 105.19999999925494,
+   "measureMs": 108.19999999925494,
+   "keyFramesMs": 401.5,
+   "coachingMs": 16.5,
+   "saveMs": 14.600000001490116,
+   "totalMs": 14547.300000000745,
+   "framesDecoded": 614,
+   "poseFrames": 260,
+   "ballFrames": 151,
+   "windows": 1,
+   "sparseCoarseFrames": 20,
+   "sparseFillFrames": 67,
+   "ballBackend": "worker",
+   "ballWorkers": 2,
+   "ballPixels": "cpu",
+   "ballPlanarFrames": 151,
+   "seededWindows": 0,
+   "poseLanes": 2,
+   "poseBackend": "worker"
+  },
+  "servesFound": 1,
+  "consoleErrors": 0,
+  "servesTruth": 1,
+  "servesAnalysed": 1,
+  "events": {
+   "tossRelease": {
+    "n": 1,
+    "maeMs": 0.05166666669675912,
+    "biasMs": -0.05166666669675912
+   },
+   "tossApex": {
+    "n": 1,
+    "maeMs": 0.10443874888288462,
+    "biasMs": -0.10443874888288462
+   },
+   "trophy (lowest hip)": {
+    "n": 1,
+    "maeMs": 124.21894641230624,
+    "biasMs": 124.21894641230624
+   },
+   "contact": {
+    "n": 1,
+    "maeMs": 0.2459298400085963,
+    "biasMs": -0.2459298400085963
+   },
+   "landing": {
+    "n": 1,
+    "maeMs": 171.22799427755453,
+    "biasMs": 171.22799427755453
+   }
+  },
+  "metrics": {
+   "serve-count": {
+    "n": 1,
+    "mae": 0,
+    "bias": 0,
+    "statuses": "estimated 1"
+   },
+   "toss-apex-height": {
+    "n": 1,
+    "mae": 0.009499999999999842,
+    "bias": 0.009499999999999842,
+    "statuses": "experimental 1"
+   },
+   "contact-height-ratio": {
+    "n": 1,
+    "mae": 0.006277247546560227,
+    "bias": 0.006277247546560227,
+    "statuses": "experimental 1"
+   },
+   "toss-drop": {
+    "n": 1,
+    "mae": 0.18999999999999773,
+    "bias": -0.18999999999999773,
+    "statuses": "estimated 1"
+   },
+   "rhythm-release-to-contact": {
+    "n": 1,
+    "mae": 0.2999999999999545,
+    "bias": 0.2999999999999545,
+    "statuses": "estimated 1"
+   },
+   "leg-drive": {
+    "n": 1,
+    "mae": 3.122906848387805,
+    "bias": -3.122906848387805,
+    "statuses": "estimated 1"
+   },
+   "loading-depth": {
+    "n": 1,
+    "mae": 0.827297374169196,
+    "bias": -0.827297374169196,
+    "statuses": "estimated 1"
+   },
+   "toss-forward": {
+    "n": 1,
+    "mae": 6.709999999999994,
+    "bias": 6.709999999999994,
+    "statuses": "experimental 1"
+   },
+   "landing-distance": {
+    "n": 1,
+    "mae": 4.530000000000001,
+    "bias": 4.530000000000001,
+    "statuses": "experimental 1"
+   },
+   "trophy-pause": {
+    "n": 0,
+    "mae": null,
+    "bias": null,
+    "statuses": "unavailable 1"
+   },
+   "drive-time": {
+    "n": 0,
+    "mae": null,
+    "bias": null,
+    "statuses": "unavailable 1"
+   }
+  },
+  "pose": {
+   "frames": 202,
+   "meanBH": 0.10824559436470113,
+   "tolerantBH": 0.029738908422991074,
+   "medianBH": 0.036492227862867946,
+   "wristBH": 0.023282376701653392,
+   "wristFrames": 12
+  },
+  "poseStats": {
+   "inferenceMedianMs": 32,
+   "prepareMedianMs": 5.300000000745058,
+   "roundTripMedianMs": 64.69999999925494,
+   "count": 260
+  }
+ },
+ {
+  "name": "dist12-s1__default",
+  "clip": "dist12-s1",
+  "variant": "",
+  "tag": "",
+  "state": "done",
+  "wallS": 18.27,
+  "timings": {
+   "probeMs": 32.899999998509884,
+   "audioMs": 0,
+   "poseInitMs": 1092.1999999955297,
+   "sparseMs": 6608.5,
+   "denseMs": 9065.099999997765,
+   "densePoseMs": 7296.10000000149,
+   "denseBallMs": 8752.20000001043,
+   "ballReadbackMs": 0.30000000074505806,
+   "ballCropScale": 1,
+   "ballAnalyseMs": 138.39999999850988,
+   "measureMs": 145.59999999776483,
+   "keyFramesMs": 486.8999999985099,
+   "coachingMs": 24.899999998509884,
+   "saveMs": 17.299999997019768,
+   "totalMs": 17601.099999997765,
+   "framesDecoded": 614,
+   "poseFrames": 260,
+   "ballFrames": 151,
+   "windows": 1,
+   "sparseCoarseFrames": 20,
+   "sparseFillFrames": 67,
+   "ballBackend": "worker",
+   "ballWorkers": 2,
+   "ballPixels": "cpu",
+   "ballPlanarFrames": 151,
+   "seededWindows": 0,
+   "poseLanes": 2,
+   "poseBackend": "worker"
+  },
+  "servesFound": 1,
+  "consoleErrors": 0,
+  "servesTruth": 1,
+  "servesAnalysed": 1,
+  "events": {
+   "tossRelease": {
+    "n": 1,
+    "maeMs": 3.3850000000297253,
+    "biasMs": -3.3850000000297253
+   },
+   "tossApex": {
+    "n": 1,
+    "maeMs": 0.08369616165904148,
+    "biasMs": 0.08369616165904148
+   },
+   "trophy (lowest hip)": {
+    "n": 1,
+    "maeMs": 99.43689102666342,
+    "biasMs": 99.43689102666342
+   },
+   "contact": {
+    "n": 1,
+    "maeMs": 0.09208565986584816,
+    "biasMs": -0.09208565986584816
+   },
+   "landing": {
+    "n": 1,
+    "maeMs": 176.34393302867534,
+    "biasMs": 176.34393302867534
+   }
+  },
+  "metrics": {
+   "serve-count": {
+    "n": 1,
+    "mae": 0,
+    "bias": 0,
+    "statuses": "estimated 1"
+   },
+   "toss-apex-height": {
+    "n": 1,
+    "mae": 0.009499999999999842,
+    "bias": 0.009499999999999842,
+    "statuses": "experimental 1"
+   },
+   "contact-height-ratio": {
+    "n": 1,
+    "mae": 0.005152183078013239,
+    "bias": 0.005152183078013239,
+    "statuses": "experimental 1"
+   },
+   "toss-drop": {
+    "n": 1,
+    "mae": 0.18999999999999773,
+    "bias": -0.18999999999999773,
+    "statuses": "estimated 1"
+   },
+   "rhythm-release-to-contact": {
+    "n": 1,
+    "mae": 3.2999999999999545,
+    "bias": 3.2999999999999545,
+    "statuses": "estimated 1"
+   },
+   "leg-drive": {
+    "n": 1,
+    "mae": 1.4488084358075497,
+    "bias": -1.4488084358075497,
+    "statuses": "estimated 1"
+   },
+   "loading-depth": {
+    "n": 1,
+    "mae": 0.10816463230134543,
+    "bias": -0.10816463230134543,
+    "statuses": "estimated 1"
+   },
+   "toss-forward": {
+    "n": 1,
+    "mae": 6.709999999999994,
+    "bias": 6.709999999999994,
+    "statuses": "experimental 1"
+   },
+   "landing-distance": {
+    "n": 1,
+    "mae": 5.530000000000001,
+    "bias": 5.530000000000001,
+    "statuses": "experimental 1"
+   },
+   "trophy-pause": {
+    "n": 1,
+    "mae": 38.29999999999998,
+    "bias": -38.29999999999998,
+    "statuses": "experimental 1"
+   },
+   "drive-time": {
+    "n": 1,
+    "mae": 99.52897668652952,
+    "bias": -99.52897668652952,
+    "statuses": "experimental 1"
+   }
+  },
+  "pose": {
+   "frames": 204,
+   "meanBH": 0.11306451739940991,
+   "tolerantBH": 0.02616033304923103,
+   "medianBH": 0.03464817165678595,
+   "wristBH": 0.04202045905381784,
+   "wristFrames": 12
+  },
+  "poseStats": {
+   "inferenceMedianMs": 34.900000002235174,
+   "prepareMedianMs": 4.300000000745058,
+   "roundTripMedianMs": 73.30000000074506,
+   "count": 260
+  }
+ },
+ {
+  "name": "fence9-s1__default",
+  "clip": "fence9-s1",
+  "variant": "",
+  "tag": "",
+  "state": "done",
+  "wallS": 30.366,
+  "timings": {
+   "probeMs": 61.19999999925494,
+   "audioMs": 0,
+   "poseInitMs": 870.5,
+   "sparseMs": 7497.10000000149,
+   "denseMs": 20524.800000000745,
+   "densePoseMs": 7593.199999999255,
+   "denseBallMs": 19797.999999988824,
+   "ballReadbackMs": 0.4999999962747097,
+   "ballCropScale": 1,
+   "ballAnalyseMs": 176.10000000149012,
+   "measureMs": 134.19999999925494,
+   "keyFramesMs": 455.30000000074506,
+   "coachingMs": 30.199999999254942,
+   "saveMs": 20.899999998509884,
+   "totalMs": 29744.60000000149,
+   "framesDecoded": 614,
+   "poseFrames": 260,
+   "ballFrames": 151,
+   "windows": 1,
+   "sparseCoarseFrames": 20,
+   "sparseFillFrames": 67,
+   "ballBackend": "worker",
+   "ballWorkers": 2,
+   "ballPixels": "cpu",
+   "ballPlanarFrames": 151,
+   "seededWindows": 0,
+   "poseLanes": 2,
+   "poseBackend": "worker"
+  },
+  "servesFound": 1,
+  "consoleErrors": 0,
+  "servesTruth": 1,
+  "servesAnalysed": 1,
+  "events": {
+   "tossRelease": {
+    "n": 1,
+    "maeMs": 8.385000000029175,
+    "biasMs": -8.385000000029175
+   },
+   "tossApex": {
+    "n": 1,
+    "maeMs": 0.10862935623467962,
+    "biasMs": -0.10862935623467962
+   },
+   "trophy (lowest hip)": {
+    "n": 1,
+    "maeMs": 27.73882975615516,
+    "biasMs": -27.73882975615516
+   },
+   "contact": {
+    "n": 1,
+    "maeMs": 0.28061816628222047,
+    "biasMs": -0.28061816628222047
+   },
+   "landing": {
+    "n": 1,
+    "maeMs": 171.86117382701215,
+    "biasMs": 171.86117382701215
+   }
+  },
+  "metrics": {
+   "serve-count": {
+    "n": 1,
+    "mae": 0,
+    "bias": 0,
+    "statuses": "estimated 1"
+   },
+   "toss-apex-height": {
+    "n": 1,
+    "mae": 0.009499999999999842,
+    "bias": 0.009499999999999842,
+    "statuses": "experimental 1"
+   },
+   "contact-height-ratio": {
+    "n": 1,
+    "mae": 0.0052896615694615345,
+    "bias": 0.0052896615694615345,
+    "statuses": "experimental 1"
+   },
+   "toss-drop": {
+    "n": 1,
+    "mae": 0.18999999999999773,
+    "bias": -0.18999999999999773,
+    "statuses": "estimated 1"
+   },
+   "rhythm-release-to-contact": {
+    "n": 1,
+    "mae": 8.299999999999955,
+    "bias": 8.299999999999955,
+    "statuses": "estimated 1"
+   },
+   "leg-drive": {
+    "n": 1,
+    "mae": 3.1189780136342424,
+    "bias": -3.1189780136342424,
+    "statuses": "estimated 1"
+   },
+   "loading-depth": {
+    "n": 1,
+    "mae": 0.9880188535001124,
+    "bias": -0.9880188535001124,
+    "statuses": "estimated 1"
+   },
+   "toss-forward": {
+    "n": 1,
+    "mae": 5.709999999999994,
+    "bias": 5.709999999999994,
+    "statuses": "experimental 1"
+   },
+   "landing-distance": {
+    "n": 1,
+    "mae": 4.530000000000001,
+    "bias": 4.530000000000001,
+    "statuses": "experimental 1"
+   },
+   "trophy-pause": {
+    "n": 0,
+    "mae": null,
+    "bias": null,
+    "statuses": "unavailable 1"
+   },
+   "drive-time": {
+    "n": 0,
+    "mae": null,
+    "bias": null,
+    "statuses": "unavailable 1"
+   }
+  },
+  "pose": {
+   "frames": 203,
+   "meanBH": 0.11981121110024899,
+   "tolerantBH": 0.030672145330418257,
+   "medianBH": 0.039674889301116616,
+   "wristBH": 0.07853384890800953,
+   "wristFrames": 12
+  },
+  "poseStats": {
+   "inferenceMedianMs": 37.19999999925494,
+   "prepareMedianMs": 6.199999999254942,
+   "roundTripMedianMs": 75.90000000223517,
+   "count": 260
+  }
+ },
+ {
+  "name": "fps240-s1__default",
+  "clip": "fps240-s1",
+  "variant": "",
+  "tag": "",
+  "state": "done",
+  "wallS": 27.449,
+  "timings": {
+   "probeMs": 52.69999999925494,
+   "audioMs": 0,
+   "poseInitMs": 1943.6000000014901,
+   "sparseMs": 8673,
+   "denseMs": 14435.60000000149,
+   "densePoseMs": 13294.39999999851,
+   "denseBallMs": 12857.600000035018,
+   "ballReadbackMs": 6.100000008940697,
+   "ballCropScale": 1,
+   "ballAnalyseMs": 658.9000000022352,
+   "measureMs": 466.5,
+   "keyFramesMs": 1034,
+   "coachingMs": 21.899999998509884,
+   "saveMs": 18.899999998509884,
+   "totalMs": 26812.699999999255,
+   "framesDecoded": 1862,
+   "poseFrames": 392,
+   "ballFrames": 399,
+   "windows": 1,
+   "sparseCoarseFrames": 20,
+   "sparseFillFrames": 67,
+   "ballBackend": "worker",
+   "ballWorkers": 2,
+   "ballPixels": "cpu",
+   "ballPlanarFrames": 399,
+   "seededWindows": 0,
+   "poseLanes": 2,
+   "poseBackend": "worker"
+  },
+  "servesFound": 1,
+  "consoleErrors": 0,
+  "servesTruth": 1,
+  "servesAnalysed": 1,
+  "events": {
+   "tossRelease": {
+    "n": 1,
+    "maeMs": 0.5733333333761692,
+    "biasMs": 0.5733333333761692
+   },
+   "tossApex": {
+    "n": 1,
+    "maeMs": 0.3874340802050291,
+    "biasMs": 0.3874340802050291
+   },
+   "trophy (lowest hip)": {
+    "n": 1,
+    "maeMs": 123.40324449945106,
+    "biasMs": 123.40324449945106
+   },
+   "contact": {
+    "n": 1,
+    "maeMs": 0.747219957181855,
+    "biasMs": -0.747219957181855
+   },
+   "landing": {
+    "n": 1,
+    "maeMs": 145.08954234196557,
+    "biasMs": 145.08954234196557
+   }
+  },
+  "metrics": {
+   "serve-count": {
+    "n": 1,
+    "mae": 0,
+    "bias": 0,
+    "statuses": "estimated 1"
+   },
+   "toss-apex-height": {
+    "n": 1,
+    "mae": 0.08050000000000002,
+    "bias": -0.08050000000000002,
+    "statuses": "experimental 1"
+   },
+   "contact-height-ratio": {
+    "n": 1,
+    "mae": 0.042612444359519275,
+    "bias": -0.042612444359519275,
+    "statuses": "experimental 1"
+   },
+   "toss-drop": {
+    "n": 1,
+    "mae": 0.18999999999999773,
+    "bias": -0.18999999999999773,
+    "statuses": "estimated 1"
+   },
+   "rhythm-release-to-contact": {
+    "n": 1,
+    "mae": 1.7000000000000455,
+    "bias": -1.7000000000000455,
+    "statuses": "estimated 1"
+   },
+   "leg-drive": {
+    "n": 1,
+    "mae": 2.985219476512711,
+    "bias": -2.985219476512711,
+    "statuses": "estimated 1"
+   },
+   "loading-depth": {
+    "n": 1,
+    "mae": 0.39525721898672894,
+    "bias": -0.39525721898672894,
+    "statuses": "estimated 1"
+   },
+   "toss-forward": {
+    "n": 1,
+    "mae": 1.7099999999999937,
+    "bias": 1.7099999999999937,
+    "statuses": "experimental 1"
+   },
+   "landing-distance": {
+    "n": 1,
+    "mae": 6.469999999999999,
+    "bias": -6.469999999999999,
+    "statuses": "experimental 1"
+   },
+   "trophy-pause": {
+    "n": 1,
+    "mae": 91.70000000000002,
+    "bias": 91.70000000000002,
+    "statuses": "experimental 1"
+   },
+   "drive-time": {
+    "n": 1,
+    "mae": 124.15046445663313,
+    "bias": -124.15046445663313,
+    "statuses": "experimental 1"
+   }
+  },
+  "pose": {
+   "frames": 336,
+   "meanBH": 0.0974744207774087,
+   "tolerantBH": 0.025011962592585556,
+   "medianBH": 0.02828729245225201,
+   "wristBH": 0.021807928629658194,
+   "wristFrames": 24
+  },
+  "poseStats": {
+   "inferenceMedianMs": 38.400000002235174,
+   "prepareMedianMs": 8.800000000745058,
+   "roundTripMedianMs": 78.10000000149012,
+   "count": 392
+  }
+ },
+ {
+  "name": "sample-checkin__default",
+  "clip": "sample-checkin",
+  "variant": "",
+  "tag": "",
+  "state": "done",
+  "wallS": 172.673,
+  "timings": {
+   "probeMs": 46,
+   "audioMs": 0,
+   "poseInitMs": 555.0999999977648,
+   "sparseMs": 66768,
+   "denseMs": 95711.10000000149,
+   "densePoseMs": 189115.19999999925,
+   "denseBallMs": 53727.9999999851,
+   "ballReadbackMs": 4.700000002980232,
+   "ballCropScale": 1,
+   "ballAnalyseMs": 1983.8000000044703,
+   "measureMs": 1342.800000000745,
+   "keyFramesMs": 5042.20000000298,
+   "coachingMs": 32.899999998509884,
+   "saveMs": 80.10000000149012,
+   "totalMs": 171200.80000000075,
+   "framesDecoded": 13261,
+   "poseFrames": 4478,
+   "ballFrames": 2416,
+   "windows": 16,
+   "sparseCoarseFrames": 538,
+   "sparseFillFrames": 1165,
+   "ballBackend": "worker",
+   "ballWorkers": 2,
+   "ballPixels": "cpu",
+   "ballPlanarFrames": 2416,
+   "seededWindows": 0,
+   "poseLanes": 2,
+   "poseBackend": "worker"
+  },
+  "servesFound": 16,
+  "consoleErrors": 0,
+  "servesTruth": 16,
+  "servesAnalysed": 16,
+  "events": {
+   "tossRelease": {
+    "n": 16,
+    "maeMs": 11.098187500164281,
+    "biasMs": -6.59039583356874
+   },
+   "tossApex": {
+    "n": 16,
+    "maeMs": 0.21048803727652388,
+    "biasMs": 0.13521996712018147
+   },
+   "trophy (lowest hip)": {
+    "n": 16,
+    "maeMs": 71.27806744277063,
+    "biasMs": -23.991012230239335
+   },
+   "contact": {
+    "n": 16,
+    "maeMs": 0.7388660507375855,
+    "biasMs": -0.7388660507375855
+   },
+   "landing": {
+    "n": 16,
+    "maeMs": 80.02367872992156,
+    "biasMs": 74.13425816813435
+   }
+  },
+  "metrics": {
+   "serve-count": {
+    "n": 1,
+    "mae": 0,
+    "bias": 0,
+    "statuses": "estimated 1"
+   },
+   "toss-apex-height": {
+    "n": 16,
+    "mae": 0.011648749999999944,
+    "bias": 0.008461249999999934,
+    "statuses": "experimental 16"
+   },
+   "contact-height-ratio": {
+    "n": 16,
+    "mae": 0.012033043382282671,
+    "bias": 0.011817205177880652,
+    "statuses": "experimental 16"
+   },
+   "toss-drop": {
+    "n": 16,
+    "mae": 0.3337500000000002,
+    "bias": -0.3075000000000001,
+    "statuses": "estimated 16"
+   },
+   "rhythm-release-to-contact": {
+    "n": 16,
+    "mae": 10.706250000000026,
+    "bias": 5.943750000000023,
+    "statuses": "estimated 16"
+   },
+   "leg-drive": {
+    "n": 16,
+    "mae": 2.5542815109580133,
+    "bias": -2.5542815109580133,
+    "statuses": "estimated 16"
+   },
+   "loading-depth": {
+    "n": 16,
+    "mae": 0.44163294535542724,
+    "bias": -0.43936100519234783,
+    "statuses": "estimated 16"
+   },
+   "toss-forward": {
+    "n": 16,
+    "mae": 6.67,
+    "bias": 6.67,
+    "statuses": "experimental 16"
+   },
+   "landing-distance": {
+    "n": 16,
+    "mae": 3.9731250000000005,
+    "bias": 3.9143750000000006,
+    "statuses": "experimental 16"
+   },
+   "trophy-pause": {
+    "n": 3,
+    "mae": 93.53333333333335,
+    "bias": 93.53333333333335,
+    "statuses": "unavailable 13, experimental 3"
+   },
+   "drive-time": {
+    "n": 3,
+    "mae": 49.343775455585025,
+    "bias": -32.882088508298374,
+    "statuses": "unavailable 13, experimental 3"
+   }
+  },
+  "pose": {
+   "frames": 3636,
+   "meanBH": 0.10645334292024501,
+   "tolerantBH": 0.03290921899958967,
+   "medianBH": 0.03799259082864312,
+   "wristBH": 0.02504863272205272,
+   "wristFrames": 192
+  },
+  "poseStats": {
+   "inferenceMedianMs": 46.80000000074506,
+   "prepareMedianMs": 3,
+   "roundTripMedianMs": 87.5,
+   "count": 3089
+  }
+ },
+ {
+  "name": "sample-retest__default",
+  "clip": "sample-retest",
+  "variant": "",
+  "tag": "",
+  "state": "done",
+  "wallS": 175.305,
+  "timings": {
+   "probeMs": 45.80000000074506,
+   "audioMs": 0,
+   "poseInitMs": 1727.5,
+   "sparseMs": 71627.10000000149,
+   "denseMs": 93123.90000000224,
+   "densePoseMs": 184831.30000000075,
+   "denseBallMs": 71204.20000005141,
+   "ballReadbackMs": 5.200000017881393,
+   "ballCropScale": 1,
+   "ballAnalyseMs": 1654,
+   "measureMs": 1029.699999999255,
+   "keyFramesMs": 4173.900000002235,
+   "coachingMs": 20.699999999254942,
+   "saveMs": 36.80000000074506,
+   "totalMs": 173490.30000000075,
+   "framesDecoded": 13491,
+   "poseFrames": 4495,
+   "ballFrames": 2416,
+   "windows": 16,
+   "sparseCoarseFrames": 554,
+   "sparseFillFrames": 1170,
+   "ballBackend": "worker",
+   "ballWorkers": 2,
+   "ballPixels": "cpu",
+   "ballPlanarFrames": 2416,
+   "seededWindows": 0,
+   "poseLanes": 2,
+   "poseBackend": "worker"
+  },
+  "servesFound": 16,
+  "consoleErrors": 0,
+  "servesTruth": 16,
+  "servesAnalysed": 16,
+  "events": {
+   "tossRelease": {
+    "n": 16,
+    "maeMs": 7.7786458334689055,
+    "biasMs": -4.2529375002390015
+   },
+   "tossApex": {
+    "n": 16,
+    "maeMs": 0.056620571377147266,
+    "biasMs": 0.020369071714348985
+   },
+   "trophy (lowest hip)": {
+    "n": 16,
+    "maeMs": 38.48795271977481,
+    "biasMs": 37.547900563674986
+   },
+   "contact": {
+    "n": 16,
+    "maeMs": 0.8024030388943948,
+    "biasMs": -0.8024030388943948
+   },
+   "landing": {
+    "n": 16,
+    "maeMs": 51.3299508770354,
+    "biasMs": 45.95825980637402
+   }
+  },
+  "metrics": {
+   "serve-count": {
+    "n": 1,
+    "mae": 0,
+    "bias": 0,
+    "statuses": "estimated 1"
+   },
+   "toss-apex-height": {
+    "n": 16,
+    "mae": 0.012653124999999987,
+    "bias": -0.007833124999999996,
+    "statuses": "experimental 16"
+   },
+   "contact-height-ratio": {
+    "n": 16,
+    "mae": 0.007546692517817338,
+    "bias": -0.0015539035527123435,
+    "statuses": "experimental 16"
+   },
+   "toss-drop": {
+    "n": 16,
+    "mae": 0.29499999999999993,
+    "bias": -0.2375000000000007,
+    "statuses": "estimated 16"
+   },
+   "rhythm-release-to-contact": {
+    "n": 16,
+    "mae": 7.38750000000001,
+    "bias": 3.337500000000013,
+    "statuses": "estimated 16"
+   },
+   "leg-drive": {
+    "n": 16,
+    "mae": 2.591984638098132,
+    "bias": -2.591984638098132,
+    "statuses": "estimated 16"
+   },
+   "loading-depth": {
+    "n": 16,
+    "mae": 0.30810874845286446,
+    "bias": -0.2228942932224393,
+    "statuses": "estimated 16"
+   },
+   "toss-forward": {
+    "n": 16,
+    "mae": 5.7581250000000015,
+    "bias": 5.7581250000000015,
+    "statuses": "experimental 16"
+   },
+   "landing-distance": {
+    "n": 16,
+    "mae": 3.3418749999999995,
+    "bias": 3.3418749999999995,
+    "statuses": "experimental 16"
+   },
+   "trophy-pause": {
+    "n": 5,
+    "mae": 70.82000000000001,
+    "bias": 70.82000000000001,
+    "statuses": "unavailable 11, experimental 5"
+   },
+   "drive-time": {
+    "n": 5,
+    "mae": 44.46314463541258,
+    "bias": -44.46314463541258,
+    "statuses": "unavailable 11, experimental 5"
+   }
+  },
+  "pose": {
+   "frames": 3657,
+   "meanBH": 0.11578982792399013,
+   "tolerantBH": 0.0280684963244219,
+   "medianBH": 0.0395823514811765,
+   "wristBH": 0.038711229042548985,
+   "wristFrames": 192
+  },
+  "poseStats": {
+   "inferenceMedianMs": 46.30000000074506,
+   "prepareMedianMs": 2.900000002235174,
+   "roundTripMedianMs": 89.09999999776483,
+   "count": 3110
+  }
+ },
+ {
+  "name": "session__default",
+  "clip": "session",
+  "variant": "",
+  "tag": "",
+  "state": "done",
+  "wallS": 101.457,
+  "timings": {
+   "probeMs": 37,
+   "audioMs": 0,
+   "poseInitMs": 2375.900000002235,
+   "sparseMs": 40988.099999997765,
+   "denseMs": 52875.89999999851,
+   "densePoseMs": 101934.19999999925,
+   "denseBallMs": 71909.69999996573,
+   "ballReadbackMs": 2.3999999836087227,
+   "ballCropScale": 1,
+   "ballAnalyseMs": 2175.7000000029802,
+   "measureMs": 557,
+   "keyFramesMs": 2181.5,
+   "coachingMs": 26.400000002235174,
+   "saveMs": 36.100000001490116,
+   "totalMs": 100052.69999999925,
+   "framesDecoded": 7008,
+   "poseFrames": 2267,
+   "ballFrames": 1208,
+   "windows": 8,
+   "sparseCoarseFrames": 295,
+   "sparseFillFrames": 583,
+   "ballBackend": "worker",
+   "ballWorkers": 2,
+   "ballPixels": "cpu",
+   "ballPlanarFrames": 1208,
+   "seededWindows": 0,
+   "poseLanes": 2,
+   "poseBackend": "worker"
+  },
+  "servesFound": 8,
+  "consoleErrors": 0,
+  "servesTruth": 8,
+  "servesAnalysed": 8,
+  "events": {
+   "tossRelease": {
+    "n": 8,
+    "maeMs": 11.088124999929228,
+    "biasMs": -1.595541666903955
+   },
+   "tossApex": {
+    "n": 8,
+    "maeMs": 0.14193161014997013,
+    "biasMs": 0.13171957853141958
+   },
+   "trophy (lowest hip)": {
+    "n": 8,
+    "maeMs": 56.78435658670033,
+    "biasMs": 56.78435658670033
+   },
+   "contact": {
+    "n": 8,
+    "maeMs": 0.4235065623046097,
+    "biasMs": -0.30166575961754205
+   },
+   "landing": {
+    "n": 8,
+    "maeMs": 57.37504491901324,
+    "biasMs": 33.64880167695905
+   }
+  },
+  "metrics": {
+   "serve-count": {
+    "n": 1,
+    "mae": 0,
+    "bias": 0,
+    "statuses": "estimated 1"
+   },
+   "toss-apex-height": {
+    "n": 8,
+    "mae": 0.04643124999999998,
+    "bias": -0.025528750000000044,
+    "statuses": "experimental 8"
+   },
+   "contact-height-ratio": {
+    "n": 8,
+    "mae": 0.036151885426681185,
+    "bias": -0.01074868000997603,
+    "statuses": "experimental 8"
+   },
+   "toss-drop": {
+    "n": 8,
+    "mae": 0.24375000000000124,
+    "bias": -0.10125000000000117,
+    "statuses": "estimated 8"
+   },
+   "rhythm-release-to-contact": {
+    "n": 8,
+    "mae": 10.987500000000011,
+    "bias": 1.1374999999999886,
+    "statuses": "estimated 8"
+   },
+   "leg-drive": {
+    "n": 8,
+    "mae": 2.3322765698278416,
+    "bias": -2.3322765698278416,
+    "statuses": "estimated 8"
+   },
+   "loading-depth": {
+    "n": 8,
+    "mae": 0.3222272798531425,
+    "bias": -0.006866970036564418,
+    "statuses": "estimated 8"
+   },
+   "toss-forward": {
+    "n": 8,
+    "mae": 7.852499999999998,
+    "bias": 7.852499999999998,
+    "statuses": "experimental 8"
+   },
+   "landing-distance": {
+    "n": 8,
+    "mae": 6.731250000000001,
+    "bias": 6.571250000000001,
+    "statuses": "experimental 8"
+   },
+   "trophy-pause": {
+    "n": 3,
+    "mae": 123.33333333333333,
+    "bias": 9.266666666666666,
+    "statuses": "unavailable 5, experimental 3"
+   },
+   "drive-time": {
+    "n": 3,
+    "mae": 60.459143921640056,
+    "bias": -60.459143921640056,
+    "statuses": "unavailable 5, experimental 3"
+   }
+  },
+  "pose": {
+   "frames": 1841,
+   "meanBH": 0.101146405605507,
+   "tolerantBH": 0.0315357200675351,
+   "medianBH": 0.03576037892054455,
+   "wristBH": 0.05292223350153135,
+   "wristFrames": 96
+  },
+  "poseStats": {
+   "inferenceMedianMs": 44.600000001490116,
+   "prepareMedianMs": 3,
+   "roundTripMedianMs": 88.5,
+   "count": 1573
+  }
+ }
+]

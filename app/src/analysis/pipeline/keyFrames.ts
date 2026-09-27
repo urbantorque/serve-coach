@@ -73,17 +73,26 @@ function clampRect(r: Rect): Rect {
   return { x: x0, y: y0, w: Math.max(0.01, x1 - x0), h: Math.max(0.01, y1 - y0) }
 }
 
-/** Evidence crop for a serve: the player's box over the serve, up to the toss apex, widened 0.3 statures. */
-export function evidenceCrop(serve: Pick<ServeAnalysis, 'toss' | 'contact'>, poses: readonly PoseFrame[], aspect: number): Rect | undefined {
+/**
+ * Evidence crop for a serve: the player's box over the serve, up to the toss apex, widened 0.3
+ * statures. The poses are in displayed-frame coordinates; the serve's ball points are rectified, so
+ * `toImage` (unrectifyPoint with the session's camera model) maps them back before they widen the box.
+ */
+export function evidenceCrop(
+  serve: Pick<ServeAnalysis, 'toss' | 'contact'>,
+  poses: readonly PoseFrame[],
+  aspect: number,
+  toImage: (x: number, y: number) => { x: number; y: number } = (x, y) => ({ x, y }),
+): Rect | undefined {
   const box = playerBox(poses)
   if (!box) return undefined
   const bh = statureFromPoses(poses) || box.y1 - box.y0
   const bhx = bh / aspect
   let y0 = box.y0
-  if (serve.toss?.apexXY) y0 = Math.min(y0, serve.toss.apexXY.y)
+  if (serve.toss?.apexXY) y0 = Math.min(y0, toImage(serve.toss.apexXY.x, serve.toss.apexXY.y).y)
   let x0 = box.x0
   let x1 = box.x1
-  const ball = serve.contact?.ballXY
+  const ball = serve.contact?.ballXY ? toImage(serve.contact.ballXY.x, serve.contact.ballXY.y) : undefined
   if (ball) {
     x0 = Math.min(x0, ball.x)
     x1 = Math.max(x1, ball.x)
@@ -134,6 +143,11 @@ export interface KeyFramePlanInput {
   aspect: number
   /** Serve whose contact frame becomes the session thumbnail. */
   representativeServeId?: string
+  /**
+   * Maps the engine's rectified ball points (toss apex, ball at contact) back to the displayed frame
+   * the crops are cut from (unrectifyPoint with the session's camera model). Identity when absent.
+   */
+  toImage?: (x: number, y: number) => { x: number; y: number }
 }
 
 /** Every key-frame image to write, and the serve -> ids map for ServeAnalysis.keyFrames. */
@@ -143,7 +157,7 @@ export function planKeyFrames(input: KeyFramePlanInput): { requests: KeyFrameReq
   for (const serve of input.serves) {
     const frames = eventFrames(serve, input.frameCount)
     const poses = input.posesByServe.get(serve.id) ?? []
-    const crop = evidenceCrop(serve, poses, input.aspect)
+    const crop = evidenceCrop(serve, poses, input.aspect, input.toImage)
     const ids: ServeAnalysis['keyFrames'] = {}
     for (const [event, frameIndex] of Object.entries(frames) as [KeyFrameEvent, number][]) {
       const phase = phaseOf(serve, event, frameIndex)

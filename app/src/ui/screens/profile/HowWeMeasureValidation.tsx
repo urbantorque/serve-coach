@@ -74,7 +74,7 @@ export function CheckSteps() {
         </ol>
       </Card>
       <p className="text-footnote text-ink-2">
-        A measurement that passes on simulated serves shows as an estimate in daylight. Under court lights, and until it passes, it shows as experimental.
+        A measurement that passes on simulated serves shows as an estimate in daylight. In a session you mark as under lights (or, for an import, not sure of the light), and until it passes, it shows as experimental.
       </p>
     </section>
   )

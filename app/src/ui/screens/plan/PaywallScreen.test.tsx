@@ -52,7 +52,8 @@ describe('Plan (prototype paywall)', () => {
     expect(await screen.findByRole('dialog', { name: "Plus isn't on sale yet" })).toBeInTheDocument()
     const e = await getSetting('entitlement')
     expect(e).toMatchObject({ tier: 'plus', plan: 'annual', source: 'prototype' })
-    expect(Object.keys(e).sort()).toEqual(['at', 'plan', 'source', 'tier', 'trialEndsAt'])
+    expect(Object.keys(e).sort()).toEqual(['at', 'plan', 'source', 'tier', 'trialEndsAt', 'via'])
+    expect(e.via).toBe('plan')
   })
 
   it('test Plus can be switched off again', async () => {

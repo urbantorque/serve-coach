@@ -7,7 +7,11 @@ import type { MetricId, MetricStatus, MetricValue, ReasonCode } from '../types.t
 import {
   METRIC_UNITS,
   POSE_DERIVED_IDS,
+  SPREAD_OF,
+  STATUS_TARGET,
   UNLOCK_HINTS,
+  UNVALIDATED_LIGHT,
+  VALIDATION_LEVELS,
   lowerStatus,
   statusCeiling,
   type ConditionClass,
@@ -67,7 +71,7 @@ export const REASON_TEXT: Partial<Record<ReasonCode, string>> = {
   BALL_NOT_TRACKED: 'The ball toss was not tracked.',
   APEX_OUT_OF_FRAME: 'The toss went above the picture and could not be fitted.',
   RELEASE_NOT_FOUND: 'The toss release was not found.',
-  CONTACT_NOT_FOUND: 'The ball was not seen near contact.',
+  CONTACT_NOT_FOUND: 'The moment of contact could not be pinned down (the ball was not seen near it, or the timing signals disagreed).',
   LANDING_NOT_FOUND: 'The landing was not found.',
   NO_CONTACT: 'Swing and miss.',
   NOT_ENTERED: 'Not tagged yet.',
@@ -75,6 +79,7 @@ export const REASON_TEXT: Partial<Record<ReasonCode, string>> = {
   NEEDS_CALIBRATION: 'Needs the four-corner court tap.',
   BOUNCE_NOT_LOCATED: 'The bounce was not found in the video.',
   CAMERA_MOVED: 'The phone moved during recording.',
+  SCALE_INCONSISTENT: 'The toss fell at a different rate than your height predicts, so centimetres are not reliable.',
   CAMERA_TILTED: 'The phone was tilted more than we can correct.',
   IMPLAUSIBLE_VALUE: 'This reading failed a plausibility check.',
   TOO_FEW_SERVES: 'Not enough serves for this summary.',
@@ -107,20 +112,31 @@ export function unavailable(id: MetricId, reason: ReasonCode, basis: string, ext
   }
 }
 
-const NIGHT: ConditionClass[] = ['night-lights', 'flicker']
+/** True when the metric reached a validation level above V0 in some condition class. */
+function validatedSomewhere(id: MetricId): boolean {
+  return Object.values(VALIDATION_LEVELS[id] ?? {}).some((l) => l !== 'V0')
+}
 
 /** Resolves the emitted status of a computed value and builds the MetricValue. */
 export function finalizeMetric(id: MetricId, draft: MetricDraft, condition: ConditionClass): MetricValue {
   const { status: ceiling, level } = statusCeiling(id, condition)
+  const poseDerived = (POSE_DERIVED_IDS as readonly string[]).includes(id)
+  const unvalidatedLight = UNVALIDATED_LIGHT.includes(condition)
   let status = ceiling
   let reason: ReasonCode | undefined
-  if ((POSE_DERIVED_IDS as readonly string[]).includes(id) && NIGHT.includes(condition) && status !== 'experimental') {
+  if (poseDerived && unvalidatedLight && status !== 'experimental') {
     status = 'experimental'
     reason = 'CONDITION_NOT_VALIDATED'
   }
-  if (level === 'V0' && ceiling === 'experimental' && !reason) reason = NIGHT.includes(condition) && (POSE_DERIVED_IDS as readonly string[]).includes(id) ? 'CONDITION_NOT_VALIDATED' : 'VALIDATION_PENDING'
-  // The status without the unknown-pitch cap (METRICS §1.1 item 3: spreads keep their status).
-  let levelStatus = status
+  // V0 here: because of the light (the metric passed in another class, or is pose-derived under
+  // unvalidated light), or because it has not passed anywhere yet.
+  if (level === 'V0' && ceiling === 'experimental' && !reason) reason = unvalidatedLight && (poseDerived || validatedSomewhere(id)) ? 'CONDITION_NOT_VALIDATED' : 'VALIDATION_PENDING'
+  // The status for relative use (MetricValue.statusIfLevel): without the unknown-pitch cap (METRICS
+  // §1.1 item 3), and for a value that feeds a spread, under the spread's validation ceiling instead
+  // of its own.
+  const spread = SPREAD_OF[id as MetricId]
+  let levelStatus = spread ? lowerStatus(STATUS_TARGET[id as MetricId], statusCeiling(spread, condition).status) : status
+  if (spread && poseDerived && unvalidatedLight) levelStatus = lowerStatus(levelStatus, 'experimental')
   for (const d of draft.downgrades ?? []) if (d.reason !== 'PITCH_UNKNOWN') levelStatus = lowerStatus(levelStatus, d.cap)
   for (const d of draft.downgrades ?? []) {
     const next = lowerStatus(status, d.cap)
@@ -131,7 +147,7 @@ export function finalizeMetric(id: MetricId, draft: MetricDraft, condition: Cond
     }
   }
   if (status === 'unavailable') {
-    return unavailable(id, reason ?? 'VALIDATION_PENDING', draft.basis, { validationLevel: level, conditionClass: condition })
+    return unavailable(id, reason ?? 'VALIDATION_PENDING', draft.basis, { validationLevel: level, conditionClass: condition, ...(draft.checkId ? { checkId: draft.checkId } : {}) })
   }
   const out: MetricValue = {
     id,
@@ -155,7 +171,7 @@ export function finalizeMetric(id: MetricId, draft: MetricDraft, condition: Cond
     'flag', 'censored', 'quantity', 'provenance', 'display', 'n', 'nEligible', 'provisional', 'nearMeasurementLimit', 'checkId',
   ]
   for (const k of copy) if (draft[k] !== undefined) (out as unknown as Record<string, unknown>)[k] = draft[k]
-  if (levelStatus !== status && levelStatus !== 'unavailable') out.statusIfLevel = levelStatus
+  if (levelStatus !== 'unavailable' && lowerStatus(levelStatus, status) === status && levelStatus !== status) out.statusIfLevel = levelStatus
   if (status === 'experimental' && out.uncertainty?.kind === 'ci95') out.uncertainty = { ...out.uncertainty, kind: 'range' }
   return out
 }

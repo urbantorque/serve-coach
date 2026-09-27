@@ -17,9 +17,9 @@ export interface SyntheticOptions {
   /** Share of serves marked by a second annotator. */
   doubleShare?: number
   /** App bias: toss and contact height in % of height, events in frames, forward distances in cm. */
-  bias?: { apexPct?: number; contactPct?: number; eventFrames?: number; forwardCm?: number }
+  bias?: { apexPct?: number; contactPct?: number; eventFrames?: number; forwardCm?: number; legDrivePct?: number; loadingPct?: number; shoulderDeg?: number }
   /** App noise (SD): heights in % of height, events in frames, forward distances in cm. */
-  noise?: { heightPct?: number; eventFrames?: number; forwardCm?: number }
+  noise?: { heightPct?: number; eventFrames?: number; forwardCm?: number; hipPct?: number; shoulderDeg?: number }
   /** Extra entries flagged as sample data and as not blind (both must be left out by default). */
   sampleEntries?: number
   unblindedEntries?: number
@@ -47,8 +47,8 @@ export function syntheticExport(opts: SyntheticOptions = {}): ValidationExport {
     const v = next()
     return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
   }
-  const bias = { apexPct: 0, contactPct: 0, eventFrames: 0, forwardCm: 0, ...opts.bias }
-  const noise = { heightPct: 1.5, eventFrames: 0.6, forwardCm: 4, ...opts.noise }
+  const bias = { apexPct: 0, contactPct: 0, eventFrames: 0, forwardCm: 0, legDrivePct: 0, loadingPct: 0, shoulderDeg: 0, ...opts.bias }
+  const noise = { heightPct: 1.5, eventFrames: 0.6, forwardCm: 4, hipPct: 1, shoulderDeg: 2.5, ...opts.noise }
   const players = opts.players ?? 10
   const perPlayer = opts.servesPerPlayer ?? 20
   const entries: ValidationEntry[] = []
@@ -80,6 +80,18 @@ export function syntheticExport(opts: SyntheticOptions = {}): ValidationExport {
       const contactF = apexF + Math.round(fps * (0.35 + gauss() * 0.03))
       const landingF = contactF + Math.round(fps * 0.4)
       const mpf = 1000 / fps
+      // Lower body and shoulders (METRICS §3.15, §3.27 to §3.29), in % of height and degrees.
+      const loading = 6 + gauss() * 2
+      const legDrive = 12 + gauss() * 3
+      const lowF = contactF - Math.round(fps * (0.35 + gauss() * 0.03))
+      const trophyF = lowF - Math.round(fps * 0.03)
+      const hipRelease = 0.53 + gauss() * 0.01
+      const hipLow = hipRelease - loading / 100
+      const hipContact = hipLow + legDrive / 100
+      const tilt = 20 + gauss() * 5
+      const shoulderDx = 0.045 * standing / 0.19
+      const shoulderY = floorY - 0.8 * standing
+      const shoulderDy = Math.tan((tilt * Math.PI) / 180) * shoulderDx
 
       const markNoise = () => gauss() * 0.0012
       const frameNoise = () => Math.round(gauss() * 0.35)
@@ -100,6 +112,8 @@ export function syntheticExport(opts: SyntheticOptions = {}): ValidationExport {
           tossApex: { frameIndex: apexF + frameNoise(), sure: true },
           contact: { frameIndex: contactF + frameNoise(), sure: true },
           landing: { frameIndex: landingF + frameNoise(), sure: true },
+          trophy: { frameIndex: trophyF + frameNoise(), sure: true },
+          lowestHip: { frameIndex: lowF + frameNoise(), sure: true },
         },
         points: {
           headTopSetup: { frameIndex: 40, x: toeX - 0.01 + markNoise(), y: floorY - standing + markNoise() },
@@ -108,6 +122,13 @@ export function syntheticExport(opts: SyntheticOptions = {}): ValidationExport {
           ballAtApex: { frameIndex: apexF, x: toeX + fromCm(tossFwd) + markNoise(), y: floorY - apexRatio * standing + markNoise() },
           ballAtContact: { frameIndex: contactF, x: toeX + fromCm(contactFwd) + markNoise(), y: floorY - contactRatio * standing + markNoise() },
           frontToeLanding: { frameIndex: landingF, x: toeX + fromCm(landing) + markNoise(), y: floorY + markNoise() },
+          midHipRelease: { frameIndex: release, x: toeX - 0.02 + markNoise(), y: floorY - hipRelease * standing + markNoise() },
+          midHipLowest: { frameIndex: lowF, x: toeX - 0.02 + markNoise(), y: floorY - hipLow * standing + markNoise() },
+          midHipContact: { frameIndex: contactF, x: toeX + markNoise(), y: floorY - hipContact * standing + markNoise() },
+          // Front shoulder nearer the net and higher by the tilt; labels deliberately swapped on some
+          // serves (the maths takes the front shoulder by geometry, as the engine does).
+          [s % 7 === 3 ? 'shoulderBackTrophy' : 'shoulderFrontTrophy']: { frameIndex: trophyF, x: toeX + (fwd * shoulderDx) / 2 / aspect + markNoise(), y: shoulderY - shoulderDy / 2 + markNoise() },
+          [s % 7 === 3 ? 'shoulderFrontTrophy' : 'shoulderBackTrophy']: { frameIndex: trophyF, x: toeX - (fwd * shoulderDx) / 2 / aspect + markNoise(), y: shoulderY + shoulderDy / 2 + markNoise() },
         },
         ...(s % 5 === 0 ? { reference: { radarKmh: 150 + gauss() * 12, radarDevice: 'pocket-radar' as const, radarQuantity: 'peak' as const, radarUnit: 'km/h' as const } } : {}),
       })
@@ -127,7 +148,11 @@ export function syntheticExport(opts: SyntheticOptions = {}): ValidationExport {
         const f = truth + Math.round(bias.eventFrames + gauss() * noise.eventFrames)
         return { frameIndex: f, tReal: f / fps, confidence: 0.9, method: 'synthetic', uncertaintyS: 1 / fps }
       }
-      const events = { tossRelease: ev(release), tossApex: ev(apexF), contact: ev(contactF), landing: ev(landingF) }
+      const events = { tossRelease: ev(release), tossApex: ev(apexF), trophy: ev(trophyF), lowestHip: ev(lowF), contact: ev(contactF), landing: ev(landingF) }
+      const appLegDrive = legDrive + bias.legDrivePct + gauss() * noise.hipPct
+      const appLoading = loading + bias.loadingPct + gauss() * noise.hipPct
+      const appDriveMs = (events.contact.frameIndex - events.lowestHip.frameIndex) * mpf
+      const mechanics = { hipRisePctH: appLegDrive, hipDropPctH: appLoading, driveTimeMs: appDriveMs, shoulderTiltDeg: tilt + bias.shoulderDeg + gauss() * noise.shoulderDeg }
       const radar = s % 5 === 0
       const speedTruth = 150
       const metrics: Record<string, ExportedMetric> = {
@@ -138,6 +163,11 @@ export function syntheticExport(opts: SyntheticOptions = {}): ValidationExport {
         'toss-forward': est(tossFwd + bias.forwardCm + gauss() * noise.forwardCm, 'cm', 6),
         'contact-forward': est(contactFwd + bias.forwardCm + gauss() * noise.forwardCm, 'cm', 6),
         'landing-distance': est(landing + bias.forwardCm + gauss() * noise.forwardCm, 'cm', 6),
+        // Stored values are rounded like the engine's (1% of height, 10 ms); the mechanics are not.
+        'leg-drive': { ...est(appLegDrive, '% of height', 1.8), value: Math.round(appLegDrive) },
+        'loading-depth': { ...est(appLoading, '% of height', 1.8), value: Math.round(appLoading) },
+        'drive-time': { ...est(appDriveMs, 'ms', 40), value: Math.round(appDriveMs / 10) * 10 },
+        'shoulder-tilt-trophy': { value: null, unit: 'band', status: 'estimated', confidence: 0.6, conditionClass: night ? 'night-lights' : 'day' },
         ...(radar && fps >= 120
           ? { 'speed-experimental': { value: null, unit: 'km/h', status: 'experimental' as MetricValue['status'], confidence: 0.4, uncertainty: { kind: 'range' as const, low: speedTruth * 0.9, high: speedTruth * 1.1 }, quantity: 'launch-speed' as const } }
           : {}),
@@ -165,7 +195,7 @@ export function syntheticExport(opts: SyntheticOptions = {}): ValidationExport {
         },
         serve: { id: serveId, index: s + 1, window: { startFrame: 0, endFrame: landingF + 30, tStartReal: 0, tEndReal: (landingF + 30) / fps }, included: true, exclusions: [], softFlags: [], hardRejects: [] },
         engine: ENGINE,
-        app: { events, metrics, points: {}, standingNorm: standing * (1 + gauss() * 0.01) },
+        app: { events, metrics, points: {}, standingNorm: standing * (1 + gauss() * 0.01), mechanics },
         derived: { you: { standingNorm: null, metrics: {}, radarKmh: null }, rows: [] },
       }
       entries.push({ ...base, annotation: marks('AB', 'team') })

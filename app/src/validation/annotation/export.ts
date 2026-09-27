@@ -8,8 +8,8 @@
 import type { Handedness, MetricStatus, MetricValue } from '../../analysis/types.ts'
 import type { AnnotatedPoint, EngineStamp, ServeAnalysis } from '../../data/domain.ts'
 import type { SessionRecord, VideoRecord } from '../../data/records.ts'
-import { compareWithMarks, type DerivedValues } from './agreement.ts'
-import type { CheckAnnotation, MarkPoint } from './types.ts'
+import { compareWithMarks, mechanicsOf, type DerivedValues } from './agreement.ts'
+import type { AppMechanics, CheckAnnotation, MarkPoint } from './types.ts'
 
 export const VALIDATION_FORMAT = 'serve-coach-validation'
 export const VALIDATION_VERSION = 1
@@ -65,10 +65,15 @@ export interface ValidationEntry {
   app: {
     events: Record<string, ExportedEvent>
     metrics: Record<string, ExportedMetric>
-    /** The app's image points for the marked ones (ball at peak and contact, toe at landing, standing floor and head). */
+    /** The app's image points for the marked ones (ball at peak and contact, toe at landing, standing floor and head, hip centres, shoulders at trophy). */
     points: Partial<Record<AnnotatedPoint, MarkPoint>>
     /** The app's standing height in the frame (fraction of the frame height). */
     standingNorm: number | null
+    /**
+     * The engine's unrounded leg drive, loading depth, drive time and 2D shoulder angle at trophy
+     * (validation data; the app never shows the angle). Absent in files written before it existed.
+     */
+    mechanics?: AppMechanics
   }
   /** Convenience copy of what the marks imply and the per-serve differences (the tool recomputes them). */
   derived: { you: DerivedValues; rows: { id: string; diff: Record<string, number> | null; within: boolean | null }[] }
@@ -139,10 +144,12 @@ export function buildEntry(src: ExportSource, subjectKey: string): ValidationEnt
   const clip = clipOf(video, session)
   const heightM = video?.capture.playerHeightM ?? 1.75
   const heightSource = video?.capture.playerHeightSource ?? 'default'
+  const mechanics = mechanicsOf(serve)
   const agreement = compareWithMarks({
     marks: annotation,
     events: serve.events,
     metrics: serve.metrics,
+    appMechanics: mechanics,
     ctx: { clip, timing: { nominalFps: clip.nominalFps, timeScale: clip.timeScale }, handedness: serve.handedness, heightM },
     appStandingNorm: src.appStandingNorm,
   })
@@ -180,7 +187,7 @@ export function buildEntry(src: ExportSource, subjectKey: string): ValidationEnt
       hardRejects: [...serve.plausibility.hardRejects],
     },
     engine: serve.engine,
-    app: { events, metrics, points: src.appPoints, standingNorm: src.appStandingNorm },
+    app: { events, metrics, points: src.appPoints, standingNorm: src.appStandingNorm, mechanics },
     derived: {
       you: agreement.derived,
       rows: agreement.rows.map((r) => ({ id: r.id, diff: r.diff ? (Object.fromEntries(Object.entries(r.diff).filter(([, v]) => typeof v === 'number')) as Record<string, number>) : null, within: r.within })),

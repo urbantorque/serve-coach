@@ -14,7 +14,14 @@ export const CATALOGUE_VERSION = '1.1.0'
 export const ENGINE_VERSION = '1.0.0'
 export const BANDS_VERSION = 'bands_v1_provisional'
 
-export type ConditionClass = 'day' | 'overcast' | 'night-lights' | 'flicker'
+/**
+ * METRICS §1.3 condition classes, plus 'unknown': the light was not recorded (an import with no
+ * light answer). No metric is validated for 'unknown', so every value is at most experimental there,
+ * with CONDITION_NOT_VALIDATED. The engine never assumes daylight it was not told about.
+ */
+export type ConditionClass = 'day' | 'overcast' | 'night-lights' | 'flicker' | 'unknown'
+/** Condition classes the pose evidence has not been validated in (METRICS §1.3 night cap). */
+export const UNVALIDATED_LIGHT: readonly ConditionClass[] = ['night-lights', 'flicker', 'unknown']
 export type ValidationLevel = 'V0' | 'V1' | 'V2' | 'V3'
 
 /** Canonical engine units per metric id (MetricValue.unit). */
@@ -142,6 +149,16 @@ export const METRIC_VIEWS: Record<MetricId, readonly ('side' | 'rear')[]> = {
 
 export const TIMING_METRIC_IDS = ['rhythm-release-to-contact', 'rhythm-spread', 'toss-drop', 'trophy-pause', 'drive-time'] as const
 export const SPATIAL_SPREAD_IDS = ['toss-height-spread', 'toss-forward-spread', 'toss-lateral-spread', 'contact-height-spread'] as const
+/** The session spread each per-serve value feeds (its relative use is judged by the spread's level). */
+export const SPREAD_OF: Partial<Record<MetricId, MetricId>> = {
+  'toss-apex-height': 'toss-height-spread',
+  'toss-forward': 'toss-forward-spread',
+  'toss-lateral': 'toss-lateral-spread',
+  'contact-height-ratio': 'contact-height-spread',
+  'rhythm-release-to-contact': 'rhythm-spread',
+}
+/** cm positions from the image scale (METRICS §3.25 "positions" and "cm values"). */
+export const POSITION_IDS = ['toss-forward', 'toss-lateral', 'contact-forward', 'landing-distance'] as const
 export const POSE_DERIVED_IDS = [
   'leg-drive', 'drive-time', 'loading-depth', 'deep-bend-flag', 'shoulder-tilt-trophy', 'landing-distance',
   'trophy-pause', 'knee-bend-band', 'shoulder-over-shoulder-contact', 'repeatability',
@@ -235,7 +252,14 @@ const V1_DAY: Partial<Record<ConditionClass, ValidationLevel>> = { day: 'V1', ov
  * night-capped until the S4 cells pass.
  *
  * Passed (V1): serve-count, toss-apex-height and contact-height-ratio (D1 distances only; closer
- * than 6 m they are capped at experimental per serve), toss-drop, rhythm-release-to-contact
+ * than 6 m they are capped at experimental per serve). toss-apex-height is a LIMITED pass: with
+ * truth landmarks (the 'injected', method-only variant) the D1 set gives median 4.1% and p95 5.6% of
+ * height, which fails the gate (median ≤ 2.5%, p95 ≤ 5%). The app-pipeline pass (median 1.1%, p95
+ * 2.7%) relies on MediaPipe's ~3% high head/floor reading cancelling the depth prior's
+ * over-correction (the renders put the toss 0.09–0.21 m nearer the camera, the prior 0.30 m). Neither
+ * bias is confirmed on real players; a V2 real-footage check must confirm the cancellation. Until
+ * then the method-only p95 sets its assumed-level budget below. contact-height-ratio passes with truth
+ * landmarks too (MAE 2.5%, p95 3.9%). Also: toss-drop, rhythm-release-to-contact
  * (≥ 45 fps; 30 fps is capped per serve), leg-drive (method MAE 0.6% with injected noise; MediaPipe
  * reads about 2% of height low, a persistent bias), loading-depth, and the spreads
  * toss-height-spread, toss-forward-spread, contact-height-spread, rhythm-spread (one 8-serve block
@@ -270,10 +294,13 @@ export const MIN_VALIDATED_DISTANCE_M = 6
  * per-serve error still meets the METRICS acceptance threshold:
  *   √(measuredP95² + (1.96·σ_tilt)²) ≤ p95Threshold   (ratio of standing height)
  * p95Threshold: METRICS §3.2 (p95 ≤ 5% of standing height) and §3.8 (p95 ≤ 0.05). measuredP95: the
- * synthetic worst-5% error at the D1 distances (validation/results/metrics/SUMMARY.md, 2026-09-27).
+ * synthetic worst-5% error at the D1 distances (validation/results/metrics/SUMMARY.md, 2026-09-27),
+ * the larger of the app-pipeline and the method-only (truth landmarks) variants: toss-apex-height's
+ * app-pipeline p95 (0.027) rests on two biases cancelling (VALIDATION_LEVELS above), so its method-only
+ * p95 (0.056) is used, and an assumed level never keeps toss height estimated.
  */
 export const ASSUMED_LEVEL_HEIGHT_BUDGET: Partial<Record<MetricId, { p95Threshold: number; measuredP95: number }>> = {
-  'toss-apex-height': { p95Threshold: 0.05, measuredP95: 0.027 },
+  'toss-apex-height': { p95Threshold: 0.05, measuredP95: 0.056 },
   'contact-height-ratio': { p95Threshold: 0.05, measuredP95: 0.02 },
 }
 /** Planning horizontal offset of the ball from the floor reference when the image gives none (m) [Our inference]. */

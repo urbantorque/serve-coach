@@ -13,7 +13,7 @@ import {
   summariseClip,
   viewFor,
 } from './importLogic.ts'
-import { importCapture, playerFacts, sessionFor } from './sessionFactory.ts'
+import { importCapture, lightFromTimestamp, playerFacts, sessionFor } from './sessionFactory.ts'
 
 describe('clip summary', () => {
   it('formats length, size, rate and orientation (CAPTURE §11.2)', () => {
@@ -105,5 +105,21 @@ describe('"How was the phone mounted?" (METRICS §1.1.3a)', () => {
     const none = importCapture(player, { view: 'side', side: 'deuce', serveNumber: 1, hitSoundTiming: false }, meta)
     expect(none.mount).toBeUndefined()
     expect(none.servingSpot).toBeUndefined()
+  })
+
+  it('the light answer sets the condition: only "Daylight" is day; lights, not sure or no answer take the night path', () => {
+    const player = playerFacts({ heightM: 1.8, handedness: 'right' })
+    const meta = { width: 1080, height: 1920, captureFps: 60, mimeType: 'video/mp4' }
+    const base = { view: 'side' as const, side: 'deuce' as const, serveNumber: 1 as const, hitSoundTiming: false }
+    expect(importCapture(player, { ...base, light: 'day' }, meta).conditions?.light).toBe('day')
+    expect(importCapture(player, { ...base, light: 'lights' }, meta).conditions?.light).toBe('lights')
+    expect(importCapture(player, { ...base, light: 'unsure' }, meta).conditions?.light).toBe('lights')
+    expect(importCapture(player, base, meta).conditions?.light).toBe('lights')
+    // An evening timestamp starts the answer at court lights; daytime leaves it for the player.
+    const at = (h: number) => new Date(2026, 8, 12, h, 30).toISOString()
+    expect(lightFromTimestamp(at(19))).toBe('lights')
+    expect(lightFromTimestamp(at(6))).toBe('lights')
+    expect(lightFromTimestamp(at(11))).toBeNull()
+    expect(lightFromTimestamp(undefined)).toBeNull()
   })
 })

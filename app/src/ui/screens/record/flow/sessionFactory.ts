@@ -117,6 +117,31 @@ export interface ImportAnswers {
   mount?: PhoneMount
   /** Addition: singles or doubles serving spot. */
   servingSpot?: ServingSpot | null
+  /**
+   * Addition: "What was the light?" The file can't say, and nothing in the pipeline detects court
+   * lights, so the player answers. 'unsure' (or no answer) takes the conservative path: court lights,
+   * where every metric is experimental until it is checked under lights (METRICS §1.3).
+   */
+  light?: ImportLight | null
+}
+
+export type ImportLight = 'day' | 'lights' | 'unsure'
+
+/** The capture condition for an import's light answer: only a clear "Daylight" counts as day. */
+export function importLight(answer: ImportLight | null | undefined): 'day' | 'lights' {
+  return answer === 'day' ? 'day' : 'lights'
+}
+
+/**
+ * A starting answer from the clip's own timestamp: filmed from 6 pm to 7 am (local time) most likely
+ * means court lights. Otherwise no answer, so the player chooses.
+ */
+export function lightFromTimestamp(createdAt: string | undefined): ImportLight | null {
+  if (!createdAt) return null
+  const d = new Date(createdAt)
+  if (Number.isNaN(d.getTime())) return null
+  const h = d.getHours()
+  return h >= 18 || h < 7 ? 'lights' : null
 }
 
 /** CaptureContext for an import (CAPTURE §11.2): pitch unknown, built from the probe and the answers. */
@@ -142,6 +167,7 @@ export function importCapture(player: PlayerFacts, answers: ImportAnswers, meta:
     slowMotionAnswer: answers.slowMotionAnswer,
     ...(answers.mount ? { mount: answers.mount } : {}),
     ...(answers.servingSpot ? { servingSpot: answers.servingSpot } : {}),
+    conditions: { light: importLight(answers.light) },
   }
 }
 

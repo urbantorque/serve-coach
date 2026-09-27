@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { lintCopy } from './lint.ts'
 import { METRIC_NAMES } from './metricNames.ts'
 import * as strings from './strings.ts'
-import { NEVER_SAY, reasonShortForm, verdictDisplayId } from './strings.ts'
+import { hasReasonShortForm, NEVER_SAY, REASON_FALLBACK, reasonShortForm, verdictDisplayId } from './strings.ts'
 
 const catalogueJson = readFileSync(resolve(process.cwd(), '../docs/specs/metrics.json'), 'utf8')
 const catalogue = JSON.parse(catalogueJson) as { metrics: { id: string; name: string }[] }
@@ -51,6 +51,13 @@ describe('reason short forms (DESIGN §3.1)', () => {
     for (const code of ['NEEDS_REAR_VIEW', 'APEX_OUT_OF_FRAME', 'NEEDS_CALIBRATION', 'BOUNCE_NOT_LOCATED', 'TILT_UNKNOWN'] as const) {
       expect(reasonShortForm(code).split(' ').length).toBeLessThanOrEqual(5)
     }
+    // Reasons that sit beside a measured value have their own words, never the fallback.
+    for (const code of ['BASELINE_BUILDING', 'VALIDATION_PENDING', 'CONDITION_NOT_VALIDATED', 'CONTACT_NOT_FOUND', 'RANGE_TOO_WIDE'] as const) {
+      expect(reasonShortForm(code)).not.toBe(REASON_FALLBACK)
+      expect(hasReasonShortForm(code)).toBe(true)
+      expect(reasonShortForm(code).split(' ').length).toBeLessThanOrEqual(5)
+    }
+    expect(hasReasonShortForm('ROLE_AMBIGUOUS')).toBe(false)
   })
 
   it('maps every spec spelling of a verdict to one display id (DESIGN §15 flag 2)', () => {
