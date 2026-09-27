@@ -18,6 +18,17 @@ export default defineConfig({
       input: {
         main: fromRoot('./index.html'),
       },
+      output: {
+        // Long-lived vendor chunks (cached across app updates); screens are code-split by route.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+            { name: 'router', test: /node_modules[\\/]react-router[\\/]/ },
+            { name: 'motion', test: /node_modules[\\/](motion|framer-motion|motion-dom|motion-utils)[\\/]/ },
+            { name: 'dexie', test: /node_modules[\\/](dexie|dexie-react-hooks)[\\/]/ },
+          ],
+        },
+      },
     },
   },
   worker: {

@@ -1,1 +1,1 @@
-Local persistence (Dexie over IndexedDB) for sessions, serves, analysis results and player profile; no server required.
+Local persistence (Dexie 4 over IndexedDB): domain and record types, schema and migrations, repositories, live hooks, zustand stores, retention, deletion, JSON/CSV export and the demo fixtures. No server. Conventions: ../ui/README.md, "Data layer".

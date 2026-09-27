@@ -1,0 +1,100 @@
+/* Base styles (DESIGN.md §13.4): Dynamic Type, focus ring, reduced motion and transparency, forced colours. */
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    /* Keep focused elements clear of the sticky app bar, bottom action bar and tab bar. */
+    scroll-padding-top: calc(var(--appbar-h) + env(safe-area-inset-top));
+    scroll-padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 76px);
+  }
+
+  /* iPhone: follow Dynamic Type. Touch-only so desktop Safari (13 px system body) is unaffected. */
+  @supports (font: -apple-system-body) {
+    @media (hover: none) and (pointer: coarse) {
+      html {
+        font: -apple-system-body;
+        font-family: var(--font-sans);
+      }
+    }
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-body);
+    line-height: 1.5;
+    overscroll-behavior-y: none;
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+
+  /* Headings balance; paragraphs avoid orphans (§4.2). */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* Court-side subtree: body weight steps up (§2.4). */
+  [data-contrast='court'] {
+    font-weight: var(--fw-body);
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  [data-contrast='court'] .glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .glass {
+      background: var(--surface);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /* Nothing in the app loops or animates by CSS keyframes; this also stops smooth scrolling (§7.3). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Windows High Contrast / forced colours (§12): chips, buttons and focus rings use system colours. */
+  @media (forced-colors: active) {
+    .chip,
+    .btn {
+      border: 1px solid CanvasText;
+    }
+    :focus-visible {
+      outline-color: Highlight;
+    }
+  }
+}

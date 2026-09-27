@@ -16,6 +16,12 @@ free of React and DOM-only globals so it runs in Node (Vitest), Web Workers and 
 
 Pose models live in `public/models/` (see `../docs/MODELS.md`).
 
+**UI.** Tokens, base components, the app shell with a route for every screen, and the data layer are in
+`src/ui` and `src/data`; conventions for screen builders are in `src/ui/README.md`, and `/dev/components`
+is a live gallery. `node scripts/ui-screenshots.mjs` (with `vite preview` on port 4173) screenshots the
+gallery and key screens at 390 × 844 in Day and Night with headless Edge and reports console errors,
+horizontal overflow and small tap targets into `../validation/results/ui-foundation/`.
+
 **Privacy.** `index.html` (and the dev-only `validation.html`) carry the app's Content-Security-Policy as the
 first `<head>` element: `connect-src 'self' blob: data:` keeps every request on the device, including
 MediaPipe's usage telemetry. Workers must be started from a `blob:` bootstrap so they inherit it (see

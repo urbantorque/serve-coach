@@ -1,0 +1,28 @@
+/**
+ * Base components (DESIGN §8, §13.6). Screens import from here. See src/ui/README.md for the rules,
+ * above all: never render a metric number without its data state (use MetricValue / MetricTile).
+ */
+export { AppBar, type AppBarProps } from './AppBar.tsx'
+export { Badge } from './Badge.tsx'
+export { Button, type ButtonProps, type ButtonVariant } from './Button.tsx'
+export { CaptureQualityLine, type CaptureQualityLineProps } from './CaptureQualityLine.tsx'
+export { Card, SectionLabel } from './Card.tsx'
+export { cx } from './cx.ts'
+export { EmptyState, type EmptyStateProps } from './EmptyState.tsx'
+export { EvidenceTierChip, type EvidenceTierChipProps } from './EvidenceTierChip.tsx'
+export { IconButton, ProfileButton, type IconButtonProps } from './IconButton.tsx'
+export { ListGroup, ListRow, RowIcon, type ListRowProps } from './ListRow.tsx'
+export { MetricGrid, MetricTile, type MetricTileProps } from './MetricTile.tsx'
+export { MetricValue, type MetricValueProps } from './MetricValue.tsx'
+export { OutcomeMark } from './OutcomeMark.tsx'
+export { ProgressStages, type ProgressStagesProps, type Stage, type StageState } from './ProgressStages.tsx'
+export { SampleBanner } from './SampleBanner.tsx'
+export { BottomActionBar, Screen, type ScreenProps } from './Screen.tsx'
+export { SegmentedControl, type SegmentedControlProps, type SegmentedOption } from './SegmentedControl.tsx'
+export { Sheet, type SheetProps } from './Sheet.tsx'
+export { DelayedSkeleton, Skeleton } from './Skeleton.tsx'
+export { StatusChip, StatusGlyph, type StatusChipProps, type StatusGlyphProps } from './StatusChip.tsx'
+export { TabBar } from './TabBar.tsx'
+export { ToastViewport } from './Toast.tsx'
+export { UnavailableRow, type UnavailableRowProps } from './UnavailableRow.tsx'
+export { VerdictChip, type VerdictChipProps } from './VerdictChip.tsx'

@@ -1,0 +1,361 @@
+/*
+ * Serve Coach design tokens (DESIGN.md §2, §4, §5, §7, §13.2). Three sets: Day (default), Night
+ * ([data-theme='dark']) and Court-side ([data-contrast='court'], on <html> or on a camera-screen root).
+ * Components use these through Tailwind utilities only; no raw hex in components.
+ *
+ * Differences from the §13.2 snippet, all in service of §2.4 and §5.4:
+ *  - Type sizes and weights are runtime variables (--fs-*, --fw-*) mapped with `@theme inline`, so the
+ *    Court-side subtree can step footnote/caption up to 15 px and add 100 to weights.
+ *  - Level-1 card edge, level-2 glass and level-3 sheet surface are tokens (--card-edge, --sheet-*),
+ *    because they differ per set, not just in colour.
+ *  - z-index layers are tokens (--z-*) mirrored in ui/tokens/z.ts.
+ */
+
+/* ---------- Day (default) ---------- */
+:root {
+  color-scheme: light;
+  --bg: #f1f3ef;
+  --surface: #fafbf8;
+  --surface-2: #e6eae4;
+  --surface-inverse: #1a201c;
+  --ink-inverse: #f1f3ef;
+  --line: #d3d9d1;
+  --line-strong: #7d887f;
+  --ink: #121714;
+  --ink-2: #3c453f;
+  --ink-3: #58625a;
+  --ink-disabled: #8f9890;
+  --optic: #d4ee48;
+  --optic-press: #c4de36;
+  --on-optic: #121714;
+  --optic-edge: #6f7f12;
+  --focus: #121714;
+  --good: #0072b2;
+  --good-soft: #e1edf4;
+  --bad: #d55e00;
+  --bad-soft: #f7e7dc;
+  --neutral: #7f8981;
+  --band: #dce2da;
+  --attention: #9a5a00;
+  --critical: #a3261e;
+  --critical-soft: #f6e1de;
+  --on-critical: #fafbf8;
+  --cat-1: #0072b2;
+  --cat-2: #009e73;
+  --cat-3: #d55e00;
+  --scrim: rgb(10 14 12 / 0.45);
+  --sheet-shadow: 0 -12px 40px rgb(18 23 20 / 0.14);
+  --glass: color-mix(in srgb, var(--surface) 88%, transparent);
+  --border-w: 1px;
+
+  /* Level surfaces (§5.4) */
+  --card-edge: var(--line);
+  --sheet-bg: var(--surface);
+  --sheet-edge: transparent;
+
+  /* Video overlay palette (§2.7): fixed in every set, used only over footage. */
+  --overlay-halo: rgb(11 15 13 / 0.7);
+  --overlay-line: #f4f6f2;
+  --overlay-ball: #56b4e9;
+  --overlay-label-bg: rgb(11 15 13 / 0.72);
+  --recording: #e5322d;
+  --letterbox: #0b0f0d;
+
+  /* Motion (§7.1) */
+  --dur-press: 100ms;
+  --dur-fast: 160ms;
+  --dur-base: 220ms;
+  --dur-chart: 360ms;
+
+  /* Runtime type scale (§4.2); Court-side steps these up (§2.4). rem so Dynamic Type applies. */
+  --fs-display: 2rem;
+  --fs-title-1: 1.5rem;
+  --fs-title-2: 1.25rem;
+  --fs-headline: 1rem;
+  --fs-body: 1rem;
+  --fs-callout: 0.9375rem;
+  --fs-subhead: 0.9375rem;
+  --fs-footnote: 0.8125rem;
+  --fs-caption: 0.75rem;
+  --fs-metric: 1.75rem;
+  --fs-metric-hero: 2.75rem;
+  --fs-cue: 1.75rem;
+  --fs-timer: 4rem;
+  --fw-display: 650;
+  --fw-title-1: 620;
+  --fw-title-2: 600;
+  --fw-headline: 600;
+  --fw-body: 400;
+  --fw-callout: 400;
+  --fw-subhead: 500;
+  --fw-footnote: 450;
+  --fw-caption: 600;
+  --fw-metric: 620;
+  --fw-metric-hero: 650;
+  --fw-cue: 500;
+  --fw-timer: 600;
+  --fw-strong: 700;
+
+  /* Icons (§6): 24 px default, 28 px in Court-side. */
+  --icon: 24px;
+
+  /* z-index layers (§5.4), mirrored in src/ui/tokens/z.ts */
+  --z-content: 0;
+  --z-sticky: 10;
+  --z-tabbar: 20;
+  --z-video-controls: 30;
+  --z-sheet: 40;
+  --z-toast: 50;
+  --z-camera: 60;
+
+  /* Frame (§5.1) */
+  --appbar-h: 52px;
+  --tabbar-h: 56px;
+  --content-max: 560px;
+}
+
+/* ---------- Night ---------- */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0b0f0d;
+  --surface: #141916;
+  --surface-2: #1c221e;
+  --surface-inverse: #ebefe9;
+  --ink-inverse: #121714;
+  --line: #29312c;
+  --line-strong: #66716a;
+  --ink: #ebefe9;
+  --ink-2: #b5beb6;
+  --ink-3: #8d978f;
+  --ink-disabled: #5d665f;
+  --optic-edge: #d4ee48;
+  --focus: #d4ee48;
+  --good: #3d9de0;
+  --good-soft: #14293a;
+  --bad: #db6b2e;
+  --bad-soft: #3a2317;
+  --neutral: #6c766e;
+  --band: #252c27;
+  --attention: #e0a040;
+  --critical: #ff8a7a;
+  --critical-soft: #3d1c19;
+  --on-critical: #121714;
+  --cat-1: #3d9de0;
+  --cat-2: #12a07a;
+  --cat-3: #db6b2e;
+  --scrim: rgb(0 0 0 / 0.6);
+  --sheet-shadow: 0 0 #0000;
+  --card-edge: transparent;
+  --sheet-bg: var(--surface-2);
+  --sheet-edge: var(--line);
+}
+
+/* ---------- Court-side (sun-readable, light-based, luminance only) ---------- */
+[data-contrast='court'] {
+  color-scheme: light;
+  --bg: #fcfdfb;
+  --surface: #fcfdfb;
+  --surface-2: #eef1ec;
+  --surface-inverse: #060907;
+  --ink-inverse: #fcfdfb;
+  --line: #5b655d;
+  --line-strong: #3a423c;
+  --ink: #060907;
+  --ink-2: #1d2520;
+  --ink-3: #2f3832;
+  --ink-disabled: #6b746c;
+  --on-optic: #060907;
+  --optic-edge: #060907;
+  --focus: #060907;
+  --good: #0072b2;
+  --good-soft: #e1edf4;
+  --bad: #b04a00;
+  --bad-soft: #f7e7dc;
+  --neutral: #5b655d;
+  --band: #d5dbd3;
+  --attention: #7a4600;
+  --critical: #8f1f18;
+  --critical-soft: #f6e1de;
+  --on-critical: #fcfdfb;
+  --cat-1: #0072b2;
+  --cat-2: #009e73;
+  --cat-3: #b04a00;
+  --scrim: rgb(6 9 7 / 0.6);
+  --sheet-shadow: 0 0 #0000;
+  --glass: var(--surface);
+  --border-w: 2px;
+  --card-edge: var(--line);
+  --sheet-bg: var(--surface);
+  --sheet-edge: var(--ink);
+
+  /* §2.4: minimum 15 px, weights +100, icons 28 px. */
+  --fs-callout: 0.9375rem;
+  --fs-footnote: 0.9375rem;
+  --fs-caption: 0.9375rem;
+  --fw-display: 750;
+  --fw-title-1: 720;
+  --fw-title-2: 700;
+  --fw-headline: 700;
+  --fw-body: 500;
+  --fw-callout: 500;
+  --fw-subhead: 600;
+  --fw-footnote: 550;
+  --fw-caption: 700;
+  --fw-metric: 720;
+  --fw-metric-hero: 750;
+  --fw-cue: 600;
+  --fw-timer: 700;
+  --fw-strong: 800;
+  --icon: 28px;
+}
+
+/* Remove Tailwind's default palette, radii, shadows, fonts and type scale so only these tokens exist. */
+@theme {
+  --color-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+
+  --text-*: initial;
+  --ease-*: initial;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-disabled: var(--ink-disabled);
+  --color-optic: var(--optic);
+  --color-optic-press: var(--optic-press);
+  --color-on-optic: var(--on-optic);
+  --color-optic-edge: var(--optic-edge);
+  --color-focus: var(--focus);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-neutral: var(--neutral);
+  --color-band: var(--band);
+  --color-attention: var(--attention);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+  --color-on-critical: var(--on-critical);
+  --color-cat-1: var(--cat-1);
+  --color-cat-2: var(--cat-2);
+  --color-cat-3: var(--cat-3);
+  --color-card-edge: var(--card-edge);
+  --color-sheet: var(--sheet-bg);
+  --color-sheet-edge: var(--sheet-edge);
+  --color-letterbox: var(--letterbox);
+  --shadow-sheet: var(--sheet-shadow);
+
+  --text-display: var(--fs-display);
+  --text-display--line-height: 1.15;
+  --text-display--font-weight: var(--fw-display);
+  --text-display--letter-spacing: -0.01em;
+  --text-title-1: var(--fs-title-1);
+  --text-title-1--line-height: 1.25;
+  --text-title-1--font-weight: var(--fw-title-1);
+  --text-title-2: var(--fs-title-2);
+  --text-title-2--line-height: 1.3;
+  --text-title-2--font-weight: var(--fw-title-2);
+  --text-headline: var(--fs-headline);
+  --text-headline--line-height: 1.375;
+  --text-headline--font-weight: var(--fw-headline);
+  --text-body: var(--fs-body);
+  --text-body--line-height: 1.5;
+  --text-body--font-weight: var(--fw-body);
+  --text-callout: var(--fs-callout);
+  --text-callout--line-height: 1.45;
+  --text-callout--font-weight: var(--fw-callout);
+  --text-subhead: var(--fs-subhead);
+  --text-subhead--line-height: 1.35;
+  --text-subhead--font-weight: var(--fw-subhead);
+  --text-footnote: var(--fs-footnote);
+  --text-footnote--line-height: 1.4;
+  --text-footnote--font-weight: var(--fw-footnote);
+  --text-caption: var(--fs-caption);
+  --text-caption--line-height: 1.35;
+  --text-caption--font-weight: var(--fw-caption);
+  --text-metric: var(--fs-metric);
+  --text-metric--line-height: 1.1;
+  --text-metric--font-weight: var(--fw-metric);
+  --text-metric-hero: var(--fs-metric-hero);
+  --text-metric-hero--line-height: 1.05;
+  --text-metric-hero--font-weight: var(--fw-metric-hero);
+  --text-metric-hero--letter-spacing: -0.01em;
+  --text-cue: var(--fs-cue);
+  --text-cue--line-height: 1.2;
+  --text-cue--font-weight: var(--fw-cue);
+  --text-timer: var(--fs-timer);
+  --text-timer--line-height: 1;
+  --text-timer--font-weight: var(--fw-timer);
+  /* Weights that follow Court-side (+100): label = 600, strong = 700. */
+  --font-weight-label: var(--fw-headline);
+  --font-weight-strong: var(--fw-strong);
+}
+
+@theme {
+  --font-sans: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --spacing: 4px;
+  --radius-control: 14px;
+  --radius-card: 20px;
+  --radius-sheet: 28px;
+  --radius-media: 10px;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+@custom-variant court (&:where([data-contrast='court'], [data-contrast='court'] *));
+
+/* Scoreboard-width figures for values (§4.1, §4.2 metric styles). */
+@utility font-wide {
+  font-stretch: 112%;
+}
+
+/* Level-2 floating chrome (§5.4): tab bar, sticky filter row, bottom action bar. */
+@utility glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+/* Level-1 card (§5.4): 1 px line in Day, no visible edge in Night, 2 px line in Court-side. */
+@utility card {
+  background: var(--surface);
+  border: var(--border-w) solid var(--card-edge);
+  border-radius: 20px;
+}
+
+/* Screen gutter (§5.1): 20 px, 16 px at the narrowest widths, and never inside a landscape safe area. */
+@utility gutter {
+  padding-inline: max(20px, env(safe-area-inset-left)) max(20px, env(safe-area-inset-right));
+  @media (width < 360px) {
+    padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+  }
+}
+
+@utility pad-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pad-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Visible edge width follows the set: 1 px Day/Night, 2 px Court-side (§2.4). */
+@utility border-token {
+  border-width: var(--border-w);
+}
+
+/* Glyph size token for Phosphor icons that should follow Court-side (§6). */
+@utility size-icon {
+  width: var(--icon);
+  height: var(--icon);
+}

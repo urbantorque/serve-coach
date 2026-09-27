@@ -1,1 +1,1 @@
-Reusable presentational React components (buttons, metric cards, honesty badges, video scrubber).
+Base components (DESIGN §8, §13.6): app bar, tab bar, buttons, chips (data state, evidence tier, verdict), MetricValue and MetricTile, sheets, lists, empty states, progress stages, toasts, skeletons. Gallery at /dev/components; conventions in ../README.md.
