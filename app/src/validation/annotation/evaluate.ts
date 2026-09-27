@@ -374,7 +374,9 @@ export function evaluate(files: readonly ValidationExport[], opts: EvalOptions =
       intervalCoverage: withInterval.length ? coverage(withInterval) : null,
       target,
       maeInTargetUnit: maeTU,
-      verdict: verdictFor(target, maeTU, pairs.length, players),
+      // The drop is ½·g·Δt² (METRICS §3.5): its threshold is the peak and contact timing (metrics.json
+      // "time MAE <= 1 frame"); the image drop from the marks is a scale cross-check.
+      verdict: id === 'toss-drop' ? 'Judged through the toss peak and contact timing rows; reported as a scale cross-check' : verdictFor(target, maeTU, pairs.length, players),
       byCondition: classes.map((cls) => {
         const ps = pairs.filter((p) => p.cls === cls)
         return { cls, n: ps.length, mae: mean(ps.map((p) => Math.abs(p.app - p.ref))) }
@@ -554,8 +556,10 @@ export function renderReport(r: EvalResult, meta: { generatedAt: string; files: 
   L.push('', `| Event | ${HISTOGRAM_BINS.join(' | ')} |`, `|---|${HISTOGRAM_BINS.map(() => '---').join('|')}|`)
   for (const e of r.events) if (e.dist) L.push(`| ${e.label} | ${e.dist.histogram.join(' | ')} |`)
   L.push('', 'Bland–Altman on event times (ms):', '')
-  L.push('| Event | Bias [95% CI] | 95% limits of agreement | Method |', '|---|---|---|---|')
-  for (const e of r.events) if (e.baMs) L.push(`| ${e.label} | ${f1(e.baMs.bias)} [${range(e.baMs.biasCi)}] | ${range(e.baMs.loa)} | ${e.baMs.method === 'repeated' ? `repeated measures, ${e.baMs.subjects} players` : 'single'} |`)
+  if (r.events.some((e) => e.baMs)) {
+    L.push('| Event | Bias [95% CI] | 95% limits of agreement | Method |', '|---|---|---|---|')
+    for (const e of r.events) if (e.baMs) L.push(`| ${e.label} | ${f1(e.baMs.bias)} [${range(e.baMs.biasCi)}] | ${range(e.baMs.loa)} | ${e.baMs.method === 'repeated' ? `repeated measures, ${e.baMs.subjects} players` : 'single'} |`)
+  } else L.push('Needs at least 3 serves with the event marked and found by the app.')
   L.push('')
 
   L.push('## Metrics: app against the marks', '')

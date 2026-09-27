@@ -114,8 +114,19 @@ until it has been validated on labelled real recordings.**
 1. **WebCodecs** (`decoder.ts`). Used when the file is MP4/MOV, `VideoDecoder` exists, and
    `isConfigSupported` accepts the codec. It is frame-exact. Decoding starts at the keyframe
    before the first wanted frame, stepping back one more GOP for open-GOP leading pictures.
-   Frames outside the request are closed immediately. Memory is bounded by a decode queue
-   of 12, 6 pending output frames and 8 MB read batches. Dolby Vision `dvh1`/`dvhe`
+   Frames outside the request are closed immediately. Samples that no wanted frame depends on
+   are not fed at all (`nalRef.ts`: H.264 pictures whose slices all have nal_ref_idc 0; HEVC
+   sub-layer non-reference pictures of the top temporal layer), so every frame that comes out
+   is bit-identical while a sparse selection decodes less: 48% of the synthetic corpus's samples
+   (libx264 B-frames), and the 16-serve clip's 4 Hz scan in 4.9 s instead of 9.8 s (hardware,
+   Edge 154, 2026-09-28). Phone encoders that write only I and P pictures have nothing to skip.
+   `DecodeStats.samplesSkipped` counts them; `skipDisposable: false` turns it off. A decode run
+   is split at a flush only when that skips more than 45 samples (`MIN_SKIP_SAMPLES`: a flush
+   cost about as much as decoding 35). `DecodeOptions.hardwareAcceleration` asks for a software
+   decoder for one call (check `FrameSource.canDecodeWith` first): its frames live in CPU memory,
+   and `planar.ts` copies a crop out of one in its own YUV layout (about 1 ms for a 950 x 1270
+   crop, against 13 ms for the same `copyTo` of a hardware frame, which reads the GPU back).
+   Memory is bounded by a decode queue of 12, 6 pending output frames and 8 MB read batches. Dolby Vision `dvh1`/`dvhe`
    (iPhone HDR) is decoded as its HEVC base layer, using an `hvc1.*` string built from
    `hvcC`.
 2. **Media element** (`seekDecoder.ts`). Used for WebM/VP9, for codecs WebCodecs rejects,

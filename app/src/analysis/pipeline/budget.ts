@@ -25,12 +25,23 @@ export const MEMORY_BUDGET = {
   /** Longest side of the crop sent to the ball worker (pixels); larger crops are downscaled. */
   ballCropMaxLongSidePx: 1280,
   /**
+   * The same for a YUV crop copied from a CPU-memory frame (video/planar.ts). YUV 4:2:0 is 1.5 bytes
+   * a pixel against 4 for a bitmap, so a 2048 px crop queues no more bytes than a 1280 px bitmap.
+   */
+  ballPlanarMaxLongSidePx: 2048,
+  /**
    * Longest side of bitmaps fed to pose in Pass A. 640 lost serves served from the far (ad) side at
    * 6 m: on the 8-serve synthetic session (CRF 30 copy) Pass A found 6 of 8 at 640 and 8 of 8 at
    * 1080 (every contact within 0.06 s of truth), for about 7% more Pass A time (integration run,
    * 2026-09-27).
    */
   sparseMaxLongSidePx: 1080,
+  /**
+   * Frames decoded ahead of the pose worker (pipeline/prefetch.ts). Three keeps decode busy while a
+   * frame is inferred without holding many hardware-decoder buffers (the decoder keeps its own
+   * few pending outputs too).
+   */
+  decodeAhead: 3,
 } as const
 
 /**
@@ -44,6 +55,19 @@ export function ballWorkerCount(env: { hardwareConcurrency?: number; deviceMemor
   const threads = env?.hardwareConcurrency ?? 2
   if (env?.deviceMemory !== undefined && env.deviceMemory < 4) return 1
   return Math.max(1, Math.min(3, Math.floor(threads / 3)))
+}
+
+/**
+ * Pass B pose lanes: landmarkers (one worker each) that take serve windows in parallel. Every lane
+ * runs the same model on the same GPU, so a window's poses are the same whichever lane runs it.
+ * Measured on an 8-thread laptop (Intel Core Ultra 5 226V, Arc 130V, 2026-09-27, 8-serve clip):
+ * two lanes cut Pass B by 9% (the WebGL work shares one GPU process, so a third adds little) for
+ * one more landmarker in memory. Smaller devices keep one.
+ */
+export function densePoseLaneCount(env: { hardwareConcurrency?: number; deviceMemory?: number } | undefined = globalThis.navigator): number {
+  const threads = env?.hardwareConcurrency ?? 2
+  if (env?.deviceMemory !== undefined && env.deviceMemory < 8) return 1
+  return threads >= 8 ? 2 : 1
 }
 
 /** Crops queued per ball worker: the §5.10 queue split between the workers, at least 4 each. */

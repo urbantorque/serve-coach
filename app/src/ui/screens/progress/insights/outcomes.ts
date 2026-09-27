@@ -10,7 +10,24 @@ import type { MetricId, MetricValue } from '../../../../analysis/types.ts'
 import type { OutcomeLink } from '../../../../data/domain.ts'
 import { configFor } from './metricConfig.ts'
 import { isFault, perServe, type ServeRow } from './serves.ts'
-import { holm, mean, sd, servesToConfirmRate, tCdf, welch, wilson, type Interval } from './stats.ts'
+import { holm, mean, servesToConfirm, tCdf, welch, wilson } from '../../../../analysis/stats/index.ts'
+
+type Interval = [number, number]
+
+/** SWC and τ of a rate (METRICS §4.5: 10 and 5 percentage points). */
+const RATE_SWC = 0.1
+const RATE_TAU = 0.05
+
+/**
+ * "About N more serves" to see a 10-point change in a rate (METRICS §4.5 steps 1 to 4 through
+ * analysis/stats `servesToConfirm`: design effect = SWC, V = p(1 − p), τ_rate, k₂ = 3 sessions).
+ * Infinity = too small to confirm by counting (the > 150 message).
+ */
+export function servesForRateChange(p: number, n: number, sessions: number): number {
+  const v = Math.max(p * (1 - p), 0.01)
+  const r = servesToConfirm({ delta: RATE_SWC, se: 0, swc: RATE_SWC, v1: v, n1: n, v2: v, n2: 0, k1: sessions, sharedVar: 0, tau: RATE_TAU })
+  return r.tooSmall || r.n === null ? Number.POSITIVE_INFINITY : r.n
+}
 
 // ---------------------------------------------------------------------------------------------
 // Pooled rate (Progress tile 2, PRODUCT §6.9)
@@ -59,8 +76,11 @@ export function pooledRate(sessions: readonly RateSession[], window = 100): Pool
     n,
     sessions: used,
     rate,
-    ci95: wilson(k, n),
-    moreServes: servesToConfirmRate({ p: rate, nBaseline: n, nFollow: 0, k1: used }),
+    ci95: (() => {
+      const w = wilson(k, n)
+      return [w.low, w.high] as Interval
+    })(),
+    moreServes: servesForRateChange(rate, n, used),
   }
 }
 
@@ -121,8 +141,9 @@ export function linkCandidates(rows: readonly ServeRow[]): LinkCandidate[] {
   const tests = LINK_FAMILY.map((metricId) => {
     const { ins, faults } = groups(rows, metricId)
     if (ins.length < MIN_PER_GROUP || faults.length < MIN_PER_GROUP) return null
-    const w = welch(faults, ins)
-    return { metricId, ins, faults, w }
+    // analysis/stats welch(a, b) is mean(a) − mean(b): ins minus faults.
+    const w = welch(ins, faults)
+    return w ? { metricId, ins, faults, w } : null
   }).filter((t): t is NonNullable<typeof t> => t !== null)
   const pass = holm(tests.map((t) => t.w.p))
   return tests
@@ -146,12 +167,9 @@ export function linkCandidates(rows: readonly ServeRow[]): LinkCandidate[] {
 export function replicates(c: LinkCandidate, rows: readonly ServeRow[]): boolean {
   const { ins, faults } = groups(rows, c.metricId)
   if (ins.length < 2 || faults.length < 2) return false
-  const diff = mean(ins) - mean(faults)
-  if (Math.sign(diff) !== Math.sign(c.diff) || diff === 0) return false
-  const se = Math.sqrt(sd(ins) ** 2 / ins.length + sd(faults) ** 2 / faults.length)
-  if (!(se > 0)) return false
-  const w = welch(faults, ins)
-  const oneSided = 1 - tCdf(Math.abs(diff) / se, w.df)
+  const w = welch(ins, faults)
+  if (!w || Math.sign(w.diff) !== Math.sign(c.diff) || w.diff === 0 || !(w.se > 0)) return false
+  const oneSided = 1 - tCdf(Math.abs(w.diff) / w.se, w.df)
   return oneSided < 0.1
 }
 

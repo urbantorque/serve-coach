@@ -27,6 +27,7 @@ import {
   setPoint,
   setSure,
   stepById,
+  stepDone,
   stepFrame,
   toAnnotation,
   type MarkDraft,
@@ -53,13 +54,19 @@ import { AgreementPanel } from './AgreementPanel.tsx'
 import { appPointsFor } from './appPoints.ts'
 import { ExportSheet, WhoSheet } from './CheckSheets.tsx'
 import { checkScene } from './checkScene.ts'
-import { annotatorLabel, useAnnotator, useChecksForServe, type Annotator } from './data.ts'
+import { annotatorLabel, useAnnotator, useChecksForServe, useStudyCode, type Annotator } from './data.ts'
 import { Loupe } from './Loupe.tsx'
 import { MarkPanel } from './MarkPanel.tsx'
 
-/** Same boxes as Serve detail (DESIGN §8.11). */
-const PORTRAIT_BOX = 'min(45dvh, 693px)'
+/**
+ * Serve detail's boxes (DESIGN §8.11), with portrait at 40% of the screen instead of the 45% cap: the
+ * video, scrubber and transport stay pinned under the app bar while the marks scroll beneath, so the
+ * frame being marked is always in view and the step card still gets room on a 390 × 844 phone.
+ */
+const PORTRAIT_BOX = 'min(40dvh, 693px)'
 const LANDSCAPE_BOX = 'calc(min(100vw, 560px) * 9 / 16)'
+/** Pinned only where the screen is tall enough to leave room for the marks below. */
+const PINNED = '[@media(min-height:640px)]:sticky [@media(min-height:640px)]:top-[calc(3.25rem+env(safe-area-inset-top))]'
 
 /** Half a second either side of the app's serve window, so the person can find frames the app missed. */
 const PAD_S = 0.5
@@ -75,7 +82,9 @@ export function CheckServeView(props: CheckServeViewProps) {
   const { session, serve, pb } = props
   const checks = useChecksForServe(serve.id)
   const [annotator, setAnnotator] = useAnnotator()
-  // Marks in progress survive a change of who is marking (unless that person already has a saved check).
+  const [studyCode, setStudyCode] = useStudyCode(session.id)
+  // Unsaved marks survive a change of who is marking (fixing the initials before saving). Saved marks
+  // never pass to the next person, so a second annotator on the same phone starts blind.
   const [carried, setCarried] = useState<MarkDraft | null>(null)
   const title = `Check serve ${serve.index}`
   const back = { to: paths.serveDetail(session.id, serve.id), label: `Serve ${serve.index}` }
@@ -88,7 +97,13 @@ export function CheckServeView(props: CheckServeViewProps) {
         <EmptyState
           icon={VideoCameraSlashIcon}
           title="Checking needs the video"
-          body={session.isDemo ? 'Sample serves have no video, so there are no frames to mark.' : "Marking frames needs the original clip, and this serve's video isn't on this phone."}
+          body={
+            pb.video && pb.video.role !== 'demo'
+              ? "Marking frames needs the original clip, and this serve's video isn't on this phone any more. Key frames alone can't be checked."
+              : session.isDemo
+                ? 'Sample serves have no video, so there are no frames to mark.'
+                : "Marking frames needs the original clip, and this serve's video isn't on this phone."
+          }
           action={
             <Button variant="secondary" to={back.to}>
               Back to serve
@@ -120,8 +135,11 @@ export function CheckServeView(props: CheckServeViewProps) {
       initialDraft={mine ? fromAnnotation(mine) : (carried ?? emptyDraft())}
       others={others}
       annotator={annotator}
-      onAnnotator={(a, draft) => {
-        setCarried(draft)
+      studyCode={studyCode || mine?.subjectCode || ''}
+      onAnnotator={(a, code, unsaved) => {
+        setStudyCode(code)
+        if (a.initials === annotator.initials && a.role === annotator.role) return
+        setCarried(unsaved)
         setAnnotator(a)
       }}
       title={title}
@@ -135,7 +153,9 @@ interface SessionProps extends CheckServeViewProps {
   initialDraft: MarkDraft
   others: number
   annotator: Annotator
-  onAnnotator: (a: Annotator, draft: MarkDraft) => void
+  studyCode: string
+  /** `unsaved`: the marks to carry to the new person, or null when this person's marks are saved. */
+  onAnnotator: (a: Annotator, studyCode: string, unsaved: MarkDraft | null) => void
   title: string
   back: { to: string; label: string }
 }
@@ -146,7 +166,7 @@ function paddedWindow(serve: ServeAnalysis, pb: ServePlayback): { startFrame: nu
   return { startFrame: Math.max(0, serve.window.startFrame - pad), endFrame: Math.min(last, serve.window.endFrame + pad) }
 }
 
-function CheckSession({ session, serve, serves, pb, existing, initialDraft, others, annotator, onAnnotator, title, back }: SessionProps) {
+function CheckSession({ session, serve, serves, pb, existing, initialDraft, others, annotator, studyCode, onAnnotator, title, back }: SessionProps) {
   const navigate = useNavigate()
   const experimentalOn = useSettingsStore((s) => s.experimentalMetrics)
   const win = useMemo(() => paddedWindow(serve, pb), [serve, pb])
@@ -284,11 +304,11 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
     return () => document.removeEventListener('keydown', onKey)
   }, [controller])
 
-  const appPoints = app.points
-  const scene = useCallback(
-    (f: number) => checkScene({ frame: f, draft, active: mode === 'mark' ? target : null, app: mode === 'result' ? appPoints : null }),
-    [draft, mode, target, appPoints],
-  )
+  // The app's points are drawn only once the comparison is shown (blinding). The active point is worked
+  // out from primitives here, so the memoised scene never depends on the step object.
+  const activePoint = useMemo(() => (mode === 'mark' ? (chosen ?? nextPointOf(stepById(stepId), draft)) : null), [mode, chosen, stepId, draft])
+  const shownApp = mode === 'result' ? app.points : null
+  const scene = useCallback((f: number) => checkScene({ frame: f, draft, active: activePoint, app: shownApp }), [draft, activePoint, shownApp])
 
   const save = async () => {
     setSaving(true)
@@ -302,10 +322,13 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
         captureFps: pb.video?.meta.captureFps ?? pb.timing.nominalFps,
         now: new Date().toISOString(),
         previous: existing,
+        subjectCode: studyCode || undefined,
       })
       await saveCheck(a)
       setSaved(a)
       setMode('result')
+      // The comparison starts at its summary, not wherever the marks list was scrolled to.
+      window.scrollTo({ top: 0 })
     } finally {
       setSaving(false)
     }
@@ -354,7 +377,15 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
   const topLeft = (
     <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-(--overlay-label-bg) px-3 text-footnote font-label whitespace-nowrap text-(--overlay-line)">
       <CrosshairSimpleIcon size={16} aria-hidden="true" />
-      {mode === 'result' ? 'App vs you' : target ? `Tap: ${step.points.find((p) => p.id === target)?.label}` : step.event ? 'Find the frame' : step.title}
+      {mode === 'result'
+        ? 'App vs you'
+        : target
+          ? `Tap: ${step.points.find((p) => p.id === target)?.label}`
+          : stepDone(step, draft)
+            ? `${step.title} marked`
+            : step.event
+              ? 'Find the frame'
+              : step.title}
     </span>
   )
   const zoomPill = portrait ? (
@@ -375,57 +406,44 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
       <AppBar title={title} back={back} />
       {session.isDemo ? <SampleBanner /> : null}
       <main className="flex flex-col gap-2 pb-6">
-        <VideoStage
-          clip={clip}
-          height={portrait ? PORTRAIT_BOX : LANDSCAPE_BOX}
-          region={region}
-          src={pb.videoUrl ?? undefined}
-          videoRef={attach}
-          store={store}
-          scene={scene}
-          labels={false}
-          topLeft={topLeft}
-          bottomRight={zoomPill}
-          onPick={onPick}
-          onBoxKeyDown={onBoxKeyDown}
-          renderLayer={(view) => (loupe ? <Loupe video={videoNode} at={loupe} frame={frame} view={view} /> : null)}
-          label={
-            mode === 'mark'
-              ? `Serve ${serve.index} video for marking. ${target ? `Tap to mark: ${step.points.find((p) => p.id === target)?.label}. Arrow keys move the mark.` : 'Use Mark frame for this step.'}`
-              : `Serve ${serve.index} video with your marks and the app's points.`
-          }
-        />
-        <p className="sr-only" aria-live="polite">
-          {announce}
-        </p>
-        {mode === 'result' ? <p className="gutter text-footnote text-ink-2">Crosshair: your mark. Dot: the app's point.</p> : null}
-        <FrameScrubber
-          store={store}
-          window={win}
-          timing={pb.timing}
-          onSeek={seek}
-          onScrub={(active) => active && controller.pause()}
-          marks={scrubMarks}
-          caption={mode === 'mark' ? `${done} of ${total} marked` : undefined}
-        />
-        <TransportRow store={store} onStep={stepBy} onToggle={controller.toggle} onRate={controller.setRate} onBigStep={stepBy} />
+        <div className={`z-(--z-sticky) flex flex-col gap-2 bg-bg pb-1 ${PINNED}`}>
+          <VideoStage
+            clip={clip}
+            height={portrait ? PORTRAIT_BOX : LANDSCAPE_BOX}
+            region={region}
+            src={pb.videoUrl ?? undefined}
+            videoRef={attach}
+            store={store}
+            scene={scene}
+            labels={false}
+            topLeft={topLeft}
+            bottomRight={zoomPill}
+            onPick={onPick}
+            onBoxKeyDown={onBoxKeyDown}
+            renderLayer={(view) => (loupe ? <Loupe video={videoNode} at={loupe} frame={frame} view={view} /> : null)}
+            label={
+              mode === 'mark'
+                ? `Serve ${serve.index} video for marking. ${target ? `Tap to mark: ${step.points.find((p) => p.id === target)?.label}. Arrow keys move the mark.` : 'Use Mark frame for this step.'}`
+                : `Serve ${serve.index} video with your marks and the app's points.`
+            }
+          />
+          <p className="sr-only" aria-live="polite">
+            {announce}
+          </p>
+          <FrameScrubber
+            store={store}
+            window={win}
+            timing={pb.timing}
+            onSeek={seek}
+            onScrub={(active) => active && controller.pause()}
+            marks={scrubMarks}
+            caption={mode === 'mark' ? `${done} of ${total} marked` : undefined}
+          />
+          <TransportRow store={store} onStep={stepBy} onToggle={controller.toggle} onRate={controller.setRate} onBigStep={stepBy} />
+        </div>
 
         {mode === 'mark' ? (
           <>
-            <div className="gutter flex flex-col gap-1">
-              <div className="flex items-center justify-between gap-3">
-                <span className="flex min-w-0 items-center gap-1.5 text-footnote text-ink-2">
-                  <UserIcon size={16} aria-hidden="true" className="shrink-0" />
-                  <span className="truncate">Marked by: {annotatorLabel(annotator)}</span>
-                </span>
-                <Button variant="tertiary" onClick={() => setWhoOpen(true)}>
-                  Change
-                </Button>
-              </div>
-              <p className="text-footnote text-ink-3">
-                {revealed ? "You've seen the app's values for this serve. Changed marks are kept out of the blind set." : "The app's answers stay hidden until you save."}
-              </p>
-            </div>
             <MarkPanel
               draft={draft}
               step={step}
@@ -447,6 +465,23 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
               onRadar={(radar) => setDraft((d) => ({ ...d, radar }))}
               onGoToFrame={seek}
             />
+            <div className="gutter flex flex-col gap-1 border-t border-line pt-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-1.5 text-footnote text-ink-2">
+                  <UserIcon size={16} aria-hidden="true" className="shrink-0" />
+                  <span className="truncate">
+                    Marked by: {annotatorLabel(annotator)}
+                    {studyCode ? ` · Player ${studyCode}` : ''}
+                  </span>
+                </span>
+                <Button variant="tertiary" aria-label="Change who is marking" onClick={() => setWhoOpen(true)}>
+                  Change
+                </Button>
+              </div>
+              <p className="text-footnote text-ink-3">
+                {revealed ? "You've seen the app's values for this serve. Changed marks are kept out of the blind set." : "The app's answers stay hidden until you save."}
+              </p>
+            </div>
           </>
         ) : (
           <>
@@ -493,7 +528,14 @@ function CheckSession({ session, serve, serves, pb, existing, initialDraft, othe
           <Button to={back.to}>Done</Button>
         )}
       </BottomActionBar>
-      <WhoSheet key={String(whoOpen)} open={whoOpen} onClose={() => setWhoOpen(false)} value={annotator} onSave={(a) => onAnnotator(a, draft)} />
+      <WhoSheet
+        key={String(whoOpen)}
+        open={whoOpen}
+        onClose={() => setWhoOpen(false)}
+        value={annotator}
+        studyCode={studyCode}
+        onSave={(a, code) => onAnnotator(a, code, existing ? null : draft)}
+      />
       <ExportSheet open={exportOpen} onClose={() => setExportOpen(false)} />
     </div>
   )

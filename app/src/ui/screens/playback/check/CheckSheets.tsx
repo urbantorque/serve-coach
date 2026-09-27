@@ -6,16 +6,30 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useId, useState } from 'react'
 import { showToast } from '../../../../data/index.ts'
 import { isSample } from '../../../../validation/annotation/export.ts'
-import { cleanInitials } from '../../../../validation/annotation/marks.ts'
+import { cleanInitials, cleanSubjectCode } from '../../../../validation/annotation/marks.ts'
 import { gatherChecks } from '../../../../validation/annotation/store.ts'
 import type { AnnotatorRole } from '../../../../validation/annotation/types.ts'
 import { Button, SegmentedControl, Sheet } from '../../../components/index.ts'
 import { exportChecks, ROLE_LABEL, type Annotator } from './data.ts'
 
-export function WhoSheet({ open, onClose, value, onSave }: { open: boolean; onClose: () => void; value: Annotator; onSave: (a: Annotator) => void }) {
+export function WhoSheet({
+  open,
+  onClose,
+  value,
+  studyCode,
+  onSave,
+}: {
+  open: boolean
+  onClose: () => void
+  value: Annotator
+  /** The session's study participant code ('' on a player's own phone). */
+  studyCode: string
+  onSave: (a: Annotator, studyCode: string) => void
+}) {
   const id = useId()
   const [initials, setInitials] = useState(value.initials)
   const [role, setRole] = useState<AnnotatorRole>(value.role)
+  const [code, setCode] = useState(studyCode)
   return (
     <Sheet open={open} onClose={onClose} title="Who is marking?">
       <div className="flex flex-col gap-4 pb-2">
@@ -33,6 +47,7 @@ export function WhoSheet({ open, onClose, value, onSave }: { open: boolean; onCl
             id={`${id}-initials`}
             type="text"
             autoComplete="off"
+            spellCheck={false}
             autoCapitalize="characters"
             maxLength={4}
             value={initials}
@@ -44,9 +59,29 @@ export function WhoSheet({ open, onClose, value, onSave }: { open: boolean; onCl
             Up to 4 letters, never a name. When two people check the same serve, initials keep their marks apart.
           </p>
         </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${id}-code`} className="text-footnote font-label text-ink-2">
+            Player's study code (optional)
+          </label>
+          <input
+            id={`${id}-code`}
+            type="text"
+            autoComplete="off"
+            spellCheck={false}
+            autoCapitalize="characters"
+            maxLength={8}
+            value={code}
+            aria-describedby={`${id}-code-help`}
+            onChange={(e) => setCode(cleanSubjectCode(e.target.value))}
+            className="h-13 w-full rounded-control border-token border-line-strong bg-surface px-4 text-body text-ink uppercase"
+          />
+          <p id={`${id}-code-help`} className="text-footnote text-ink-3">
+            Only for a study phone that holds several players, for example P07. It keeps each player's serves together in the export. Leave it empty for your own serves.
+          </p>
+        </div>
         <Button
           onClick={() => {
-            onSave({ initials, role })
+            onSave({ initials, role }, code)
             onClose()
           }}
         >

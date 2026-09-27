@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkClipBudget, checkStorage, MAX_FILE_BYTES } from './budget.ts'
+import { ballQueuePerWorker, ballWorkerCount, checkClipBudget, checkStorage, densePoseLaneCount, MAX_FILE_BYTES, MEMORY_BUDGET } from './budget.ts'
 import { AnalysisError } from './errors.ts'
 
 const meta = (durationMediaS: number, captureFps: number, timeScale = 1) => ({ durationMediaS, captureFps, timeScale })
@@ -31,5 +31,21 @@ describe('checkStorage', () => {
     expect(await checkStorage(200, { estimate: async () => ({ quota: 1000, usage: 700 }) })).toBe(false)
     expect(await checkStorage(200, undefined)).toBe(true)
     expect(await checkStorage(200, { estimate: async () => Promise.reject(new Error('x')) })).toBe(true)
+  })
+})
+
+describe('workers and lanes', () => {
+  it('sizes the ball pool and the Pass B pose lanes from the device', () => {
+    expect(ballWorkerCount({ hardwareConcurrency: 8 })).toBe(2)
+    expect(ballWorkerCount({ hardwareConcurrency: 12 })).toBe(3)
+    expect(ballWorkerCount({ hardwareConcurrency: 4 })).toBe(1)
+    expect(ballWorkerCount({ hardwareConcurrency: 8, deviceMemory: 2 })).toBe(1)
+    expect(densePoseLaneCount({ hardwareConcurrency: 8 })).toBe(2)
+    expect(densePoseLaneCount({ hardwareConcurrency: 8, deviceMemory: 8 })).toBe(2)
+    expect(densePoseLaneCount({ hardwareConcurrency: 8, deviceMemory: 4 })).toBe(1)
+    expect(densePoseLaneCount({ hardwareConcurrency: 6 })).toBe(1)
+    expect(densePoseLaneCount({})).toBe(1)
+    expect(ballQueuePerWorker(2) * 2).toBeLessThanOrEqual(MEMORY_BUDGET.ballQueue)
+    expect(ballQueuePerWorker(3)).toBe(4)
   })
 })

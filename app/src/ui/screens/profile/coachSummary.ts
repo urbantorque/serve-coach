@@ -15,6 +15,7 @@ import { metricName } from '../../copy/metricNames.ts'
 import { STATUS_LABEL, UI } from '../../copy/strings.ts'
 import { exportDate, shortDate } from '../../format/dates.ts'
 import { formatMetric } from '../../format/metricFormat.ts'
+import { headlineFor } from '../../format/sessionValues.ts'
 
 /** Preferred order after the focus evidence (hero metrics first, D5; outcomes last, D3). */
 const STAT_ORDER: readonly MetricId[] = [
@@ -109,6 +110,8 @@ export function buildCoachSummary({ session, stats, decision, now = new Date() }
   const picked = pickStats(stats, decision)
   const sample = session.isDemo === 1
   const serves = servesLine(stats)
+  // The same headline sentence the report shows (rebuilt from the stored values, METRICS §4.9).
+  const headline = headlineFor(session, stats)
   const paused = decision?.gate === 'pain-referral'
   // Coaching content is left out when coaching was paused by a body check (the reason stays private).
   const focus = paused ? undefined : decision?.focus
@@ -121,7 +124,7 @@ export function buildCoachSummary({ session, stats, decision, now = new Date() }
     createdAt: now.toISOString(),
     sample,
     session: { date: session.visitId, view: session.view, cameraSide: session.cameraSide ?? null, serves },
-    headline: stats?.headline ?? null,
+    headline,
     focus: focus ? { title: focus.title, evidenceTier: focus.evidenceTier, why: focus.whyChosen } : null,
     cue: cue?.text ?? null,
     drill: drill ? { title: drill.title, minutes: drill.minutes, steps: drill.steps } : null,
@@ -178,7 +181,7 @@ export function buildCoachSummary({ session, stats, decision, now = new Date() }
 ${sample ? '<p class="banner">Sample data · synthetic player. Real engine output on computer-generated video, not a real serve.</p>' : ''}
 <h1>${e(title)}</h1>
 <p class="muted">${e([viewWords(session.view), serves, exportDate(session.visitId)].filter(Boolean).join(' · '))}</p>
-${stats?.headline ? `<h2>Headline</h2><p>${e(stats.headline)}</p>` : ''}
+${headline ? `<h2>Headline</h2><p>${e(headline)}</p>` : ''}
 ${focus ? `<h2>Focus</h2><p><strong>${e(focus.title)}</strong></p><p class="muted">${e(focus.whyChosen)}</p>` : ''}
 ${cue ? `<h2>Cue</h2><p class="cue">“${e(cue.text)}”</p>` : ''}
 ${drill ? `<h2>Drill</h2><p><strong>${e(drill.title)}</strong>, about ${e(String(drill.minutes))} minutes</p><ol>${drill.steps.map((s) => `<li>${e(s)}</li>`).join('')}</ol>` : ''}

@@ -50,7 +50,9 @@ export async function seedPlayer(opts: { painFlag?: boolean } = {}): Promise<voi
       await db.sessions.put({ ...base.session, id, visitId: date, startedAt: `${date}T08:00:00+10:00`, createdAt: `${date}T08:00:00+10:00` })
       const stats = structuredClone(base.stats)
       stats.sessionId = id
+      // The stratum summary is the canonical session value (ui/format/sessionValues.ts): keep both in step.
       stats.metrics['toss-height-spread']!.value = spread
+      for (const st of stats.strata) if (st.metrics['toss-height-spread']) st.metrics['toss-height-spread'] = { ...st.metrics['toss-height-spread'], value: spread }
       await db.sessionStats.put(stats)
     }
     await db.coaching.put(own(fx.decision))

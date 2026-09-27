@@ -65,18 +65,56 @@ export interface RunAnalysisOptions {
   /** Skip persistence (tests, validation). Results are still returned. */
   persist?: boolean
   /**
-   * Pass A sampling (validation and tuning only). Defaults: a 4 Hz scan with a 15 Hz fill around
-   * arm-above-head activity. `coarseHz === fineHz` samples the whole clip at one rate.
+   * Pass A tuning (validation only; the defaults are the measured choice and match the pipeline
+   * before the 2026-09-28 performance round exactly). Defaults: a 4 Hz scan with a 15 Hz fill around
+   * arm-above-head activity; `coarseHz === fineHz` samples the whole clip at one rate. Serve finding
+   * is sensitive to the smallest change in these poses (see orchestrator.ts), so every knob is off.
    */
-  passA?: { coarseHz?: number; fineHz?: number }
+  passA?: {
+    coarseHz?: number
+    fineHz?: number
+    /**
+     * Landmarker poses for the coarse scan and the fill: 2 (the default) runs the person detector on
+     * every frame so a bystander stays a separate pose; 1 tracks from the previous landmarks.
+     */
+    coarseNumPoses?: 1 | 2
+    fillNumPoses?: 1 | 2
+    /** Start the fill stream from the nearest coarse pose of the server instead of localising again. */
+    seedFill?: boolean
+  }
   /**
    * Pass B tuning (validation and profiling only; the defaults are the measured choice).
-   * numPoses: 1 tracks the server from frame to frame (ARCHITECTURE §5.4), 2 detects every frame.
-   * lanes: serve windows analysed at once, each with its own decoder, pose worker and ball worker
-   * (default from the device, budget.ts `analysisLanes`). reuseSparse: skip context frames Pass A
-   * already estimated.
+   *  - numPoses: 2 (default) detects every frame; 1 tracks from frame to frame (cheaper, but lags;
+   *    see DENSE_NUM_POSES).
+   *  - lanes: ball-detection workers (default from the device, budget.ts ballWorkerCount).
+   *  - poseLanes: landmarkers that take windows in parallel (default budget.ts densePoseLaneCount).
+   *  - ballPixels: 'cpu' (default where the codec decodes in software) copies YUV crops out of
+   *    software-decoded frames, no GPU readback; 'gpu' reads bitmaps back.
+   *  - tightBallCrop: cut the ball crop down to the toss band and the post-contact corridor (side
+   *    view), the only places the detector searches (default on).
+   *  - reuseSparse (off): skip context frames Pass A already estimated. About a fifth fewer Pass B
+   *    poses, but the toss and contact height errors on the 16-serve check-in clip rose from 0.010
+   *    to 0.018.
+   *  - seedPose (off): start each window's stream from its Pass A pose instead of localising the
+   *    server (about 0.35 s a window); it moved lowest-hip timing and loading depth.
+   *  - slowCoreHz (off): pose rate in the slow parts of the core; 30 Hz cut Pass B pose frames by
+   *    17% but moved the landing and toss-height errors.
    */
-  passB?: { numPoses?: 1 | 2; lanes?: number; reuseSparse?: boolean }
+  passB?: {
+    numPoses?: 1 | 2
+    lanes?: number
+    poseLanes?: number
+    ballPixels?: 'cpu' | 'gpu'
+    tightBallCrop?: boolean
+    reuseSparse?: boolean
+    seedPose?: boolean
+    slowCoreHz?: number
+  }
+  /**
+   * Pose input (validation and profiling only): longest side of the ROI crop handed to the
+   * landmarker (MediaPipePoseSourceOptions.roiMaxSidePx; 0 keeps the source resolution).
+   */
+  pose?: { roiMaxSidePx?: number }
 }
 
 export interface StageTiming {
@@ -115,6 +153,14 @@ export interface PipelineTimings {
   ballBackend: 'worker' | 'main-thread'
   /** Ball-detection workers used in Pass B (each runs one window at a time on its own decode). */
   ballWorkers: number
+  /** How ball crops reached the workers: 'cpu' (YUV copy of software-decoded frames), 'gpu' (bitmap readback). */
+  ballPixels: 'cpu' | 'gpu'
+  /** Ball frames that took the CPU path (the rest fell back to bitmaps). */
+  ballPlanarFrames: number
+  /** Pass B pose streams started from a Pass A seed instead of a localisation. */
+  seededWindows: number
+  /** Pass B pose lanes (windows run in parallel, one per lane). */
+  poseLanes: number
   poseBackend: string
 }
 
@@ -134,7 +180,15 @@ export interface RunAnalysisResult {
   /** Serve finding, for validation: windows from findServeWindows and the planned ones (real s). */
   serveFinding: {
     engineWindows: number
-    windows: { startReal: number; endReal: number; contactT: number; contactSource: string; confidence: number }[]
+    windows: {
+      startReal: number
+      endReal: number
+      contactT: number
+      contactSource: string
+      confidence: number
+      /** Ball search crop (full-frame normalised), for profiling. */
+      ballCrop?: { x: number; y: number; w: number; h: number }
+    }[]
   }
 }
 

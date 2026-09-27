@@ -16,10 +16,10 @@
  *                         where a serve leaves within about 15 deg of horizontal); whole crop otherwise.
  * Without pc the whole crop is searched with no gate.
  */
-import type { BallTrack, CameraView, ImageDataLike, MetricValue, ServeEvents } from '../types.ts'
+import type { BallTrack, CameraView, MetricValue, ServeEvents } from '../types.ts'
 import { analyseBall, TOSS_ROI_END_MARGIN_S, type BallAnalysisOptions, type BallSetup, type TimeBaseSuggestion } from './analyse.ts'
 import type { BounceEstimate, BounceUnavailable, CourtPlacement } from './bounce.ts'
-import { BallDetector, BROAD_SIZE_PRIOR, TOSS_PLAIN_SUPPORT_GATE, type DetectorOptions } from './detector.ts'
+import { BallDetector, BROAD_SIZE_PRIOR, TOSS_PLAIN_SUPPORT_GATE, type DetectorImage, type DetectorOptions } from './detector.ts'
 import type { RegionOfInterest } from './scale.ts'
 import type { FlightTimeSpeedEstimate, SpeedUnavailable, TargetTag, TrackSpeedEstimate } from './speed.ts'
 import type { TossAnalysis } from './toss.ts'
@@ -145,7 +145,7 @@ export class BallWindowProcessor {
   }
 
   /** Detects in one crop image (crop-normalised) and records full-frame candidates. Frames in time order. */
-  process(frame: { frameIndex: number; tReal: number; image: ImageDataLike }): FrameCandidates {
+  process(frame: { frameIndex: number; tReal: number; image: DetectorImage }): FrameCandidates {
     const started = now()
     const phase = this.phaseAt(frame.tReal)
     const overrides: Parameters<BallDetector['detect']>[1] = {}

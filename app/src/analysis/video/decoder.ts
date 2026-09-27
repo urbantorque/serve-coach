@@ -8,6 +8,7 @@
 import type { ByteSource } from './byteSource.ts'
 import { planDecodeSegments } from './decodePlan.ts'
 import type { DecodeOptions, DecodeStats, FrameProducer, ProducedFrame } from './frameTypes.ts'
+import { isDisposable, nalFormatFor, type NalFormat } from './nalRef.ts'
 import type { ProbeResult } from './probe.ts'
 import type { SampleInfo } from './timing.ts'
 
@@ -110,6 +111,11 @@ export interface WebCodecsDecoderOptions {
   maxDecodeQueue?: number
   /** Max decoded frames buffered before the consumer takes them. */
   maxPendingFrames?: number
+  /**
+   * Leave out samples that are neither wanted nor referenced by any other picture (nalRef.ts).
+   * Every decoded frame is bit-identical either way. Default true.
+   */
+  skipDisposable?: boolean
 }
 
 function abortError(): Error {
@@ -125,6 +131,10 @@ export class WebCodecsFrameProducer implements FrameProducer {
   private readonly maxPendingFrames: number
   /** Chunk timestamp (us) -> presentation index. */
   private readonly indexByTimestamp = new Map<number, number>()
+  /** Decode-order sample -> presentation index. */
+  private readonly frameOfSample: Int32Array
+  /** NAL framing when disposable samples may be skipped; null otherwise. */
+  private readonly nal: NalFormat | null
   private closed = false
 
   constructor(probe: ProbeResult, source: ByteSource, options: WebCodecsDecoderOptions) {
@@ -134,6 +144,27 @@ export class WebCodecsFrameProducer implements FrameProducer {
     this.maxDecodeQueue = options.maxDecodeQueue ?? 12
     this.maxPendingFrames = options.maxPendingFrames ?? 6
     for (const frame of probe.frames) this.indexByTimestamp.set(this.timestampOf(frame.ctsTicks), frame.index)
+    this.frameOfSample = new Int32Array(probe.video.samples.length).fill(-1)
+    for (const frame of probe.frames) if (frame.sampleIndex >= 0 && frame.sampleIndex < this.frameOfSample.length) this.frameOfSample[frame.sampleIndex] = frame.index
+    this.nal = options.skipDisposable === false ? null : nalFormatFor(probe.video.decoderCodec, probe.video.description)
+  }
+
+  private readonly support = new Map<HardwareAcceleration, Promise<boolean>>()
+
+  /** Whether this clip's codec decodes with the given preference (cached per preference). */
+  canDecodeWith(hardwareAcceleration: HardwareAcceleration): Promise<boolean> {
+    let known = this.support.get(hardwareAcceleration)
+    if (!known) {
+      known =
+        hardwareAcceleration === this.config.hardwareAcceleration
+          ? Promise.resolve(true)
+          : VideoDecoder.isConfigSupported({ ...this.config, hardwareAcceleration }).then(
+              (r) => r.supported === true,
+              () => false,
+            )
+      this.support.set(hardwareAcceleration, known)
+    }
+    return known
   }
 
   private timestampOf(ctsTicks: number): number {
@@ -158,6 +189,7 @@ export class WebCodecsFrameProducer implements FrameProducer {
       yielded: 0,
       missingIndices: [],
       samplesFed: 0,
+      samplesSkipped: 0,
       elapsedMs: 0,
       notes: [],
     }
@@ -195,6 +227,7 @@ export class WebCodecsFrameProducer implements FrameProducer {
     })
     decoder.addEventListener('dequeue', notify)
     options.signal?.addEventListener('abort', onAbort)
+    const config = options.hardwareAcceleration ? { ...this.config, hardwareAcceleration: options.hardwareAcceleration } : this.config
     const rotation = this.probe.meta.rotationDeg // VideoFrames come out in coded orientation
     // Runs of samples (planDecodeSegments): each run starts at a keyframe and ends with a flush,
     // so the samples between far-apart wanted frames are never decoded.
@@ -206,7 +239,7 @@ export class WebCodecsFrameProducer implements FrameProducer {
 
     try {
       if (options.signal?.aborted) throw abortError()
-      decoder.configure(this.config)
+      decoder.configure(config)
       for (;;) {
         if (failure) throw failure
         // Feed while the decoder and the output buffer have room.
@@ -219,6 +252,12 @@ export class WebCodecsFrameProducer implements FrameProducer {
           const sample = this.probe.video.samples[nextSample]
           const data = await reader.read(nextSample)
           if (decoder.state !== 'configured') break
+          // A picture nobody wants and nobody references is left out (no other frame changes).
+          if (this.nal && !sample.isSync && !plan.wanted.has(this.frameOfSample[nextSample]) && isDisposable(data, this.nal)) {
+            stats.samplesSkipped++
+            nextSample++
+            continue
+          }
           decoder.decode(this.chunkFor(sample, data))
           stats.samplesFed++
           nextSample++

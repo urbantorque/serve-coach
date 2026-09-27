@@ -16,7 +16,8 @@ import { RUN, stateCounts, typicalError, VALIDATION_LIMIT, validationStateOf, ty
 function Disclosure({ title, children }: { title: string; children: ReactNode }) {
   return (
     <details className="group card overflow-hidden">
-      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 hover:bg-surface-2 [&::-webkit-details-marker]:hidden">
+      {/* Inset focus ring: the card's overflow-hidden would clip the default 2 px outer offset. */}
+      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-card px-4 py-3 hover:bg-surface-2 focus-visible:outline-offset-[-2px] [&::-webkit-details-marker]:hidden">
         <span className="flex-1 text-headline text-ink">{title}</span>
         <CaretDownIcon size={20} aria-hidden="true" className="shrink-0 text-ink-3 transition-transform duration-(--dur-fast) group-open:rotate-180 motion-reduce:transition-none" />
       </summary>

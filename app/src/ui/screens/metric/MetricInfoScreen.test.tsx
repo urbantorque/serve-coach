@@ -83,6 +83,30 @@ describe('Metric info', () => {
     expect(screen.queryByText('Test details')).toBeNull()
   })
 
+  it('with no session yet it says so, with the best label, instead of "couldn\'t see this clearly"', async () => {
+    renderAt(paths.metricInfo('toss-apex-height'))
+    expect(await screen.findByText('No reading yet', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(document.querySelector('[data-metric="toss-apex-height"]')?.getAttribute('data-status')).toBe('none')
+    expect(screen.getByText('In daylight it shows as')).toBeInTheDocument()
+    expect(screen.queryByText(/Couldn't see this clearly/)).toBeNull()
+    expect(screen.queryByText('Not checked')).toBeNull()
+    expect(screen.getByText('What a session needs for this measurement.')).toBeInTheDocument()
+    expect(screen.getByText(/^Checked on simulated serves in daylight\./)).toBeInTheDocument()
+    expectHonest()
+  })
+
+  it('with no session, spin and experimental measurements say what they need', async () => {
+    renderAt(paths.metricInfo('spin'))
+    expect(await screen.findByText('Not measurable by phone', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.queryByText(/shows as/)).toBeNull()
+  })
+
+  it('with no session, a rear-only experimental measurement asks for a view from behind', async () => {
+    renderAt(paths.metricInfo('toss-lateral'))
+    expect(await screen.findByText(/Record a session from behind you, with experimental metrics turned on/, {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.getByText('It shows as')).toBeInTheDocument()
+  })
+
   it('unknown ids say so', async () => {
     renderAt(paths.metricInfo('trunk-tilt-band'))
     expect(await screen.findByText("We don't know this measurement", {}, { timeout: 3000 })).toBeInTheDocument()

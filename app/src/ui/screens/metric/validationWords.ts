@@ -85,6 +85,9 @@ export const STATE_WORDS: Record<ValidationState, string> = {
   'not-applicable': 'You log this, so the camera plays no part. We count what you enter.',
 }
 
+/** Spin is 'not-applicable' too, but nobody logs it: it is never measured (D4). */
+export const SPIN_WORDS = "Phone video can't see spin, so there is nothing to check and it is never shown as a number."
+
 /** Short form for list rows (How we measure). */
 export const STATE_SHORT: Record<ValidationState, string> = {
   'V1-synthetic-pass': 'Checked on simulated serves.',
@@ -149,8 +152,11 @@ const SHIFT: Partial<Record<MetricId, string>> = {
   'trophy-pause': 'The moment your hips are lowest is hard to pin down in time.',
   'drive-time': 'The moment your hips are lowest is hard to pin down in time.',
   'landing-distance': 'Most serves were close, but a few were well off, mostly with the phone sideways at the fence, 9 m away.',
-  // validation/results/ui/engine-pipeline/e2e-report.json: "session: 8 serves found" failed, found 7.
-  'serve-count': "Long sessions with walking and ball bounces between serves are the hardest case: in our one simulated session, the app's quick scan has missed 1 of 8 serves. Check the serve strip: once you confirm it, the count is exact.",
+  // validation/results/ui/harden-performance/bench/{session,sample-checkin}__default__before.json (27 Sep 2026):
+  // the full app found all 8 and all 16 serves, but marked 1 and 2 of them unsure (BALL_NOT_TRACKED) and
+  // counted 7 and 14. docs/VALIDATION.md §3.3.
+  'serve-count':
+    "Run through the full app, from video to report, two longer simulated sessions of 8 and 16 serves were harder: it found every serve but was unsure of 3 and left them out, so the count read 1 or 2 short. Those serves stay in your list, marked as excluded, and you can include them again.",
   'toss-height-spread': 'A toss that wanders left or right adds a little to the spread from the side.',
   'contact-height-spread': 'At 60 fps a very steady contact can be below what we can measure; we say so when it is.',
   'speed-experimental': 'It needs 120 fps or more, your height and the target you aimed at.',

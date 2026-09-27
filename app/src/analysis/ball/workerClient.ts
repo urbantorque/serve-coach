@@ -1,7 +1,7 @@
 /**
  * Client for the ball-detection worker (engine-pipeline).
  *
- * - `pushFrame` posts a crop (ImageBitmap, transferred) and resolves once fewer than `maxQueue`
+ * - `pushFrame` posts a crop (ImageBitmap or YUV crop buffer, transferred) and resolves once fewer than `maxQueue`
  *   frames are waiting in the worker, so the decoder runs ahead of detection without piling up
  *   frames (ARCHITECTURE §5.10: bounded ImageBitmaps).
  * - `end` waits for the window's last frame, then returns analyseBall's result.
@@ -11,9 +11,11 @@
  *   cancelling a job cleans up within one message turn.
  */
 import type { ImageDataLike } from '../types.ts'
+import { isPlanarCrop } from '../video/planar.ts'
+import type { DetectorImage } from './detector.ts'
 import type { FrameCandidates } from './tracker.ts'
 import { analyseWindow, BallWindowProcessor, type BallWindowResult, type WindowAnalyseOptions, type WindowBallConfig } from './workerCore.ts'
-import type { FromBallWorker, ToBallWorker } from './workerProtocol.ts'
+import type { BallFrameImage, FromBallWorker, ToBallWorker } from './workerProtocol.ts'
 
 export interface BallFrameAck {
   windowId: number
@@ -37,9 +39,16 @@ interface Pending {
   reject: (error: Error) => void
 }
 
-type Image = ImageBitmap | ImageDataLike
+type Image = BallFrameImage
 
 const isBitmap = (image: Image): image is ImageBitmap => typeof (image as ImageBitmap).close === 'function'
+
+/** Buffers handed over with a frame: the bitmap itself, or a YUV crop's pixel buffer. */
+function transferables(image: Image): Transferable[] {
+  if (isBitmap(image)) return [image]
+  if (isPlanarCrop(image)) return [image.data.buffer as ArrayBuffer]
+  return []
+}
 
 function workerSupported(): boolean {
   return typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined' && typeof createImageBitmap === 'function'
@@ -183,8 +192,9 @@ export class BallWorkerClient {
       const entry = this.local.get(windowId)
       if (!entry) throw new Error(`frame for unknown window ${windowId}`)
       const t0 = now()
-      let pixels: ImageDataLike
+      let pixels: DetectorImage
       try {
+        // YUV crops go to the detector as they are (it converts only what it refines).
         pixels = isBitmap(image) ? this.readbackLocal(image) : image
       } finally {
         if (isBitmap(image)) image.close()
@@ -200,7 +210,7 @@ export class BallWorkerClient {
     }
     this.queued++
     const message: ToBallWorker = { type: 'frame', id: this.nextId++, windowId, frameIndex, tReal, image }
-    this.worker!.postMessage(message, isBitmap(image) ? [image] : [])
+    this.worker!.postMessage(message, transferables(image))
     await this.waitForRoom(this.maxQueue)
   }
 

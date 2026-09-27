@@ -37,6 +37,12 @@ export interface CheckAnnotation extends ServeAnnotation {
   revealedAt?: string
   updatedAt: string
   reference?: CheckReference
+  /**
+   * Study participant code (for example "P07") when one study phone holds several players' sessions
+   * (docs/VALIDATION_PROTOCOL.md §7.4). The export uses it as the subject key, so pooled statistics
+   * cluster serves by player. A pseudonym, never a name. Absent on a player's own phone.
+   */
+  subjectCode?: string
 }
 
 /** The per-serve metrics a check can compare, in the app's own units. */

@@ -66,7 +66,7 @@ Apple pays within 45 days of the end of the fiscal month (research 08 [S44]). Re
 
 Sources: research 08 §4.3–4.4, [S52][S60][S61][S74]. Prices are list prices at 27 September 2026.
 
-**What we measured on-device** (engine-pipeline report, headless Edge on a shared laptop, synthetic clips): about 60 ms of pose inference per frame, and 97 s to analyse an 8-serve, 73.5 s clip. Battery and time on an iPhone are **not measured** (research 08 open question 4). The on-device cost is zero in money, not in the player's time.
+**What we measured on-device** (headless Edge on a shared laptop, synthetic clips; engine-pipeline report and `validation/results/ui/harden-performance`): about 60 ms of pose inference per frame, and 97–141 s to analyse an 8-serve, 73.5 s clip, depending on machine load. Battery and time on an iPhone are **not measured** (research 08 open question 4). The on-device cost is zero in money, not in the player's time.
 
 ### 4.3 Per active user a month (research 08 §4.6)
 
@@ -134,7 +134,17 @@ Order and dates follow research 10 §6, adjusted to the launch path in [LAUNCH_A
 | 7 | **Tennis Australia, Tennis Victoria, UTR** | AO StartUps; UTR Power already bundles partner perks (research 08 [S7][S33]) | One conversation per body in Q4 2026 | A named pilot or perk |
 | 8 | **Apple Ads** | Break-even cost per install about A$1.16 at median conversion | A capped **A$1,500 over 4 weeks**, after App Store listing optimisation, during the soft launch | Cost per install ≤ A$1.50 |
 
-Later: Perth and Canberra for the October summer comps, then Adelaide and Brisbane (research 10 §1).
+**Sequence, Melbourne first** (channel numbers from the table above; dates follow [LAUNCH_AU.md](LAUNCH_AU.md) §1):
+
+| Window | Moves | Anchor |
+|---|---|---|
+| Oct – Dec 2026 | Recruit 20–30 Melbourne coaches (1). One conversation each with Tennis Australia, Tennis Victoria and UTR (7). Price survey through associations and groups (§8) | Spring comps are mid-season (NENTG started 3 August, research 10 [N5]); coaches line up students before summer |
+| Dec 2026 – Jan 2027 | Email the 12 TROLS associations and WDTA (2). Admin-approved beta calls in the Melbourne hitting-partner group (6) | Pre-season emails for the February seasons (research 10 §6) |
+| Feb – Mar 2027 | TestFlight closed beta. Serve Check nights at 5 pennant clubs with a captain's pack (3). A radar booth at a state event if its dates fit (4; dates not researched) | February association seasons; pennant pre-season grading |
+| May – Jul 2027 | Soft launch: QR codes at 5–10 courts (5); the capped A$1,500 Apple Ads test (8); captain's packs at round 1 | Pennant round 1, early May if the 2026 pattern holds (2027 dates UNVERIFIED) |
+| Aug 2027 on | Only after gate 2: Perth and Canberra coaches and clubs (1, 3) for the October summer comps; an Australian Open radar booth in January 2028 | Gate 3 before any paid channel scales |
+
+Adelaide and Brisbane come after Perth and Canberra (research 10 §1).
 
 **Cost-per-install ceiling** = allowable cost per payer × download-to-paid. At A$40 per payer and 2.9% download-to-paid, CPI must be ≤ A$1.16 (research 08 §7). Australian Apple Ads benchmarks could not be verified (research 08 open question 1), so the test is the fastest answer.
 
@@ -193,8 +203,11 @@ Benchmarks behind the thresholds (RevenueCat 2026, Health & Fitness medians; res
 | Counted fixed costs | A$2,136 | A$2,136 | A$2,136 |
 | **Contribution before unpriced costs** | **about A$455** | **about A$6,600** | **about A$32,300** |
 | Same scenario on cloud processing (variable cost) | A$2,408 | A$4,815 | A$9,630 |
+| Paid acquisition per payer: (Apple Ads + coach fees) ÷ payers, against the A$40 gate | A$37 | A$14 | A$7 |
 
 Proceeds check (base, unrounded payer counts): 93.6 × A$77.26 + 36 × 4 × A$11.58 + 14.4 × A$30.90 = A$7,232 + A$1,668 + A$445 ≈ A$9,345.
+
+Acquisition check (conservative): (A$1,500 + A$176) ÷ 45 payers = A$37.23. It is under the A$40 ceiling only because the scenario counts no staff time or event costs. The conservative case sits at the gate-2 stop line for download-to-paid (1.5%).
 
 **Reading:** year one is a validation year, not a business year. Even the upside case pays for a lean team only if costs stay near zero, which is the case for on-device processing and the reason the free tier can exist. The same base case on cloud processing would spend about half its proceeds on compute.
 

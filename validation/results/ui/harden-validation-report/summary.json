@@ -1,6 +1,82 @@
 [
   {
     "scheme": "light",
+    "screen": "fresh-metric-toss-height",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\light-fresh-metric-toss-height.png",
+    "height": 1824,
+    "title": "How we measure: Serve Coach",
+    "theme": "light",
+    "overflow": null,
+    "smallTargets": [],
+    "dashes": false,
+    "degrees": false,
+    "sampleBanner": false,
+    "couldntSee": false,
+    "headerStatus": "none",
+    "states": [
+      "V1-synthetic-pass"
+    ],
+    "console": []
+  },
+  {
+    "scheme": "light",
+    "screen": "fresh-metric-serve-count",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\light-fresh-metric-serve-count.png",
+    "height": 1692,
+    "title": "How we measure: Serve Coach",
+    "theme": "light",
+    "overflow": null,
+    "smallTargets": [],
+    "dashes": false,
+    "degrees": false,
+    "sampleBanner": false,
+    "couldntSee": false,
+    "headerStatus": "none",
+    "states": [
+      "V1-synthetic-pass-limited"
+    ],
+    "console": []
+  },
+  {
+    "scheme": "light",
+    "screen": "fresh-metric-toss-lateral",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\light-fresh-metric-toss-lateral.png",
+    "height": 1307,
+    "title": "How we measure: Serve Coach",
+    "theme": "light",
+    "overflow": null,
+    "smallTargets": [],
+    "dashes": false,
+    "degrees": false,
+    "sampleBanner": false,
+    "couldntSee": false,
+    "headerStatus": "none",
+    "states": [
+      "V0-unvalidated"
+    ],
+    "console": []
+  },
+  {
+    "scheme": "light",
+    "screen": "fresh-metric-spin",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\light-fresh-metric-spin.png",
+    "height": 844,
+    "title": "How we measure: Serve Coach",
+    "theme": "light",
+    "overflow": null,
+    "smallTargets": [],
+    "dashes": false,
+    "degrees": false,
+    "sampleBanner": false,
+    "couldntSee": false,
+    "headerStatus": "none",
+    "states": [
+      "not-applicable"
+    ],
+    "console": []
+  },
+  {
+    "scheme": "light",
     "screen": "how-we-measure",
     "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\light-how-we-measure.png",
     "height": 5682,
@@ -10,6 +86,9 @@
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": null,
     "states": [
       "V1-synthetic-pass-limited",
       "V1-synthetic-pass",
@@ -30,6 +109,9 @@
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": null,
     "states": [
       "V1-synthetic-pass-limited",
       "V1-synthetic-pass",
@@ -43,13 +125,16 @@
     "scheme": "light",
     "screen": "metric-toss-height",
     "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\light-metric-toss-height.png",
-    "height": 2360,
+    "height": 2934,
     "title": "How we measure: Serve Coach",
     "theme": "light",
     "overflow": null,
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": "estimated",
     "states": [
       "V1-synthetic-pass"
     ],
@@ -59,13 +144,16 @@
     "scheme": "light",
     "screen": "metric-toss-forward",
     "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\light-metric-toss-forward.png",
-    "height": 1742,
+    "height": 1773,
     "title": "How we measure: Serve Coach",
     "theme": "light",
     "overflow": null,
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": "unavailable",
     "states": [
       "V1-synthetic-fail"
     ],
@@ -75,13 +163,16 @@
     "scheme": "light",
     "screen": "metric-toss-spread",
     "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\light-metric-toss-spread.png",
-    "height": 1763,
+    "height": 2304,
     "title": "How we measure: Serve Coach",
     "theme": "light",
     "overflow": null,
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": "estimated",
     "states": [
       "V1-synthetic-pass-limited"
     ],
@@ -98,6 +189,85 @@
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": "unavailable",
+    "states": [
+      "not-applicable"
+    ],
+    "console": []
+  },
+  {
+    "scheme": "dark",
+    "screen": "fresh-metric-toss-height",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\dark-fresh-metric-toss-height.png",
+    "height": 1824,
+    "title": "How we measure: Serve Coach",
+    "theme": "dark",
+    "overflow": null,
+    "smallTargets": [],
+    "dashes": false,
+    "degrees": false,
+    "sampleBanner": false,
+    "couldntSee": false,
+    "headerStatus": "none",
+    "states": [
+      "V1-synthetic-pass"
+    ],
+    "console": []
+  },
+  {
+    "scheme": "dark",
+    "screen": "fresh-metric-serve-count",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\dark-fresh-metric-serve-count.png",
+    "height": 1692,
+    "title": "How we measure: Serve Coach",
+    "theme": "dark",
+    "overflow": null,
+    "smallTargets": [],
+    "dashes": false,
+    "degrees": false,
+    "sampleBanner": false,
+    "couldntSee": false,
+    "headerStatus": "none",
+    "states": [
+      "V1-synthetic-pass-limited"
+    ],
+    "console": []
+  },
+  {
+    "scheme": "dark",
+    "screen": "fresh-metric-toss-lateral",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\dark-fresh-metric-toss-lateral.png",
+    "height": 1307,
+    "title": "How we measure: Serve Coach",
+    "theme": "dark",
+    "overflow": null,
+    "smallTargets": [],
+    "dashes": false,
+    "degrees": false,
+    "sampleBanner": false,
+    "couldntSee": false,
+    "headerStatus": "none",
+    "states": [
+      "V0-unvalidated"
+    ],
+    "console": []
+  },
+  {
+    "scheme": "dark",
+    "screen": "fresh-metric-spin",
+    "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\dark-fresh-metric-spin.png",
+    "height": 844,
+    "title": "How we measure: Serve Coach",
+    "theme": "dark",
+    "overflow": null,
+    "smallTargets": [],
+    "dashes": false,
+    "degrees": false,
+    "sampleBanner": false,
+    "couldntSee": false,
+    "headerStatus": "none",
     "states": [
       "not-applicable"
     ],
@@ -114,6 +284,9 @@
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": null,
     "states": [
       "V1-synthetic-pass-limited",
       "V1-synthetic-pass",
@@ -134,6 +307,9 @@
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": null,
     "states": [
       "V1-synthetic-pass-limited",
       "V1-synthetic-pass",
@@ -147,13 +323,16 @@
     "scheme": "dark",
     "screen": "metric-toss-height",
     "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\dark-metric-toss-height.png",
-    "height": 2360,
+    "height": 2934,
     "title": "How we measure: Serve Coach",
     "theme": "dark",
     "overflow": null,
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": "estimated",
     "states": [
       "V1-synthetic-pass"
     ],
@@ -163,13 +342,16 @@
     "scheme": "dark",
     "screen": "metric-toss-forward",
     "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\dark-metric-toss-forward.png",
-    "height": 1742,
+    "height": 1773,
     "title": "How we measure: Serve Coach",
     "theme": "dark",
     "overflow": null,
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": "unavailable",
     "states": [
       "V1-synthetic-fail"
     ],
@@ -179,13 +361,16 @@
     "scheme": "dark",
     "screen": "metric-toss-spread",
     "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-validation-report\\dark-metric-toss-spread.png",
-    "height": 1763,
+    "height": 2304,
     "title": "How we measure: Serve Coach",
     "theme": "dark",
     "overflow": null,
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": "estimated",
     "states": [
       "V1-synthetic-pass-limited"
     ],
@@ -202,6 +387,9 @@
     "smallTargets": [],
     "dashes": false,
     "degrees": false,
+    "sampleBanner": true,
+    "couldntSee": false,
+    "headerStatus": "unavailable",
     "states": [
       "not-applicable"
     ],

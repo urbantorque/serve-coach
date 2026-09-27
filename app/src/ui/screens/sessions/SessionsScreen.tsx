@@ -17,6 +17,7 @@ import {
 } from '../../components/index.ts'
 import { CAPTURE_WORDS } from '../../copy/strings.ts'
 import { monthYear, shortDate } from '../../format/dates.ts'
+import { headlineFor } from '../../format/sessionValues.ts'
 import { paths } from '../../shell/paths.ts'
 import type { SessionBundle } from '../progress/insights/history.ts'
 import { useExperiments, useSessionBundles, useSessionThumbUrl } from '../progress/insights/hooks.ts'
@@ -77,7 +78,7 @@ function SessionRow({ b, verdict }: { b: SessionBundle; verdict?: ExperimentReco
             <VerdictChip verdict={verdict.verdict} />
           </span>
         ) : (
-          b.stats?.headline
+          (headlineFor(s, b.stats) ?? undefined)
         )
       }
       trailing={a && s.status === 'ready' ? <CaptureGlyph overall={a.capture.quality.overall} /> : undefined}

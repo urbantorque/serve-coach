@@ -133,3 +133,33 @@ export function speedTargetNote(opts: { experimental: boolean; captureFps: numbe
   if (opts.target === null || opts.target === 'mixed') return 'For a speed range, pick one target: T, Body or Wide.'
   return null
 }
+
+export type MountAnswer = 'level-mount' | 'roughly-level' | 'tilted-or-unsure'
+
+/**
+ * "How was the phone mounted?" (METRICS §1.1.3a). Imports carry no tilt reading, so the answer is
+ * the only evidence of level: a level mount stands for pitch 0 ± 2°, roughly level 0 ± 4°, and the
+ * engine widens every height range by that much (and checks the standing player for roll). "Tilted
+ * or not sure" keeps heights experimental. Asked for side views only: the rear set-up is raised and
+ * pointed down on purpose, so it is never level.
+ */
+export const MOUNT_OPTIONS: { value: MountAnswer; title: string; body: string }[] = [
+  { value: 'level-mount', title: 'Level mount', body: 'A fence clip or tripod you checked with a level, or a level app.' },
+  { value: 'roughly-level', title: 'Roughly level', body: 'Propped up and pointing straight, not tipped up or down.' },
+  { value: 'tilted-or-unsure', title: 'Tilted, or not sure', body: "Leaning on a bag, tipped up or down, or you can't say." },
+]
+
+/** The capture context's `mount` for an answer (only side views are asked). */
+export function mountContext(view: CameraView, answer: MountAnswer): CaptureContext['mount'] | undefined {
+  return view === 'side' ? answer : undefined
+}
+
+/** The footnote on what the answer means for heights (never promises more than METRICS allows). */
+export function heightsNote(view: CameraView, answer: MountAnswer): string {
+  if (view !== 'side') return "There's no tilt reading for imports, so heights from this view are experimental."
+  if (answer === 'tilted-or-unsure') return "There's no tilt reading for imports, so heights are experimental. Spreads and timing are not affected."
+  if (answer === 'level-mount') {
+    return 'We take the phone as level, allowing for a small tilt, so heights can stay estimates, with a wider range. If you look tilted in the picture while standing, heights become experimental.'
+  }
+  return 'We take the phone as roughly level, allowing for a larger tilt, so heights get a wider range. The highest ones, like the toss peak, may stay experimental.'
+}

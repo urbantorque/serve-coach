@@ -128,7 +128,8 @@ export function cameraModel(meta: Pick<VideoMeta, 'width' | 'height'>, capture?:
     tiltSource = 'motion-sensor'
   }
   // No sensor: an import's mount answer is a prior (level assumed, not measured), never a correction.
-  const mountSigma = capture?.mount === 'level-mount' || capture?.mount === 'roughly-level' ? MOUNT_TILT_SIGMA_DEG[capture.mount] : undefined
+  // Side views only: the rear set-up is raised and pointed down on purpose (CAPTURE §6), never level.
+  const mountSigma = view === 'side' && (capture?.mount === 'level-mount' || capture?.mount === 'roughly-level') ? MOUNT_TILT_SIGMA_DEG[capture.mount] : undefined
   if (!pitch && mountSigma !== undefined) {
     return {
       aspect, orientation, fHU, fovLongDeg, fovSource,

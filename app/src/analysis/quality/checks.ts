@@ -152,7 +152,8 @@ export function computeQuality(input: QualityInput): QualityOutcome {
     const sigma = input.cam.pitch?.sigma ?? 0
     if (roll?.flagged) {
       checks.push(
-        check('cq.camera-level', false, 'warn', `You lean about ${Math.abs(roll.rollDeg).toFixed(0)}° in the picture while standing, so the phone was probably not level. Heights are experimental.`, {
+        // No angle in the words (D5): the player sees that they look tilted, not a number of degrees.
+        check('cq.camera-level', false, 'warn', 'You look tilted in the picture while standing, so the phone was probably not level. Heights are experimental.', {
           scope: 'clip',
           value: roll.rollDeg,
           fix: 'Use a fence clip or a tripod with a level, or record in the app.',
@@ -161,7 +162,7 @@ export function computeQuality(input: QualityInput): QualityOutcome {
       )
     } else {
       checks.push(
-        check('cq.camera-level', true, 'info', `Level taken from your answer (within about ${sigma}°)${roll ? ', and you stood upright in the picture' : ''}. Heights have wider ranges.`, { scope: 'clip', value: roll?.rollDeg }),
+        check('cq.camera-level', true, 'info', `Level taken from your answer about the mount${sigma > 2 ? ' (roughly level)' : ''}${roll ? ', and you stood upright in the picture' : ''}. Heights have wider ranges.`, { scope: 'clip', value: roll?.rollDeg }),
       )
     }
   } else if (t === 'unknown') {

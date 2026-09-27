@@ -29,9 +29,32 @@ const all = [
   { label: 'full n1 2w side512', model: 'full', numPoses: 1, maxInFlight: 2, workers: 2, side: 512 },
   { label: 'lite n2 1w', model: 'lite', numPoses: 2, maxInFlight: 2, workers: 1 },
   { label: 'lite n1 1w', model: 'lite', numPoses: 1, maxInFlight: 2, workers: 1 },
+  { label: 'full n1 3w', model: 'full', numPoses: 1, maxInFlight: 2, workers: 3 },
+  { label: 'full n1 1w side256', model: 'full', numPoses: 1, maxInFlight: 2, workers: 1, side: 256 },
+  { label: 'full n1 2w side256', model: 'full', numPoses: 1, maxInFlight: 2, workers: 2, side: 256 },
+  { label: 'full n2 2w side256', model: 'full', numPoses: 2, maxInFlight: 2, workers: 2, side: 256 },
+  { label: 'full n1 1w side320', model: 'full', numPoses: 1, maxInFlight: 2, workers: 1, side: 320 },
+  { label: 'full n1 1w side384', model: 'full', numPoses: 1, maxInFlight: 2, workers: 1, side: 384 },
+  { label: 'full n2 1w side320', model: 'full', numPoses: 2, maxInFlight: 2, workers: 1, side: 320 },
+  { label: 'full n2 1w side384', model: 'full', numPoses: 2, maxInFlight: 2, workers: 1, side: 384 },
+  { label: 'full n2 1w side256', model: 'full', numPoses: 2, maxInFlight: 2, workers: 1, side: 256 },
+  { label: 'full n1 1w side512 if3', model: 'full', numPoses: 1, maxInFlight: 3, workers: 1, side: 512 },
+  { label: 'full n1 1w side512 if4', model: 'full', numPoses: 1, maxInFlight: 4, workers: 1, side: 512 },
+  { label: 'full n2 1w if3', model: 'full', numPoses: 2, maxInFlight: 3, workers: 1 },
+  { label: 'full n2 2w if3', model: 'full', numPoses: 2, maxInFlight: 3, workers: 2 },
+  { label: 'full n1 2w side512 if3', model: 'full', numPoses: 1, maxInFlight: 3, workers: 2, side: 512 },
+  { label: 'lite n1 1w side512', model: 'lite', numPoses: 1, maxInFlight: 2, workers: 1, side: 512 },
+  { label: 'lite n2 1w side512', model: 'lite', numPoses: 2, maxInFlight: 2, workers: 1, side: 512 },
+  { label: 'full n2 1w side512', model: 'full', numPoses: 2, maxInFlight: 2, workers: 1, side: 512 },
+  { label: 'full n1 1w if4', model: 'full', numPoses: 1, maxInFlight: 4, workers: 1 },
   { label: 'full n2 CPU 1w', model: 'full', numPoses: 2, delegate: 'CPU', maxInFlight: 2, workers: 1 },
+  { label: 'full n1 CPU 1w side512', model: 'full', numPoses: 1, delegate: 'CPU', maxInFlight: 2, workers: 1, side: 512 },
+  { label: 'full n1 CPU 2w side512', model: 'full', numPoses: 1, delegate: 'CPU', maxInFlight: 2, workers: 2, side: 512 },
+  { label: 'full n1 CPU 3w side512', model: 'full', numPoses: 1, delegate: 'CPU', maxInFlight: 2, workers: 3, side: 512 },
 ]
-const configs = only ? all.filter((c) => only.split(',').some((o) => c.label.includes(o))) : all
+const picked = only ? all.filter((c) => only.split(',').some((o) => c.label === o)) : all
+// --repeat N runs the picked set N times, interleaved, so machine-load drift hits every configuration alike.
+const configs = Array.from({ length: Number(arg('repeat', '1')) }, () => picked).flat()
 
 const browser = await chromium.launch({ channel: 'msedge', headless: true })
 try {

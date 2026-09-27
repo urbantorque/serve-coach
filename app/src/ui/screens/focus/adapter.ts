@@ -28,6 +28,7 @@ import type {
   SessionRecord,
   SessionTallyRecord,
 } from '../../../data/records.ts'
+import { sessionSetupKey } from '../../format/sessionValues.ts'
 
 export function toCoachingSession(
   rec: SessionRecord,
@@ -55,6 +56,8 @@ export function toCoachingSession(
     })
   const useTally = tally && (tally.conflictResolution === 'tally' || !tags.some((t) => t.outcome))
   const fatigue = stats?.metrics['fatigue-flag']
+  // The set-up key every screen matches on (older sessions derive it from their capture summary).
+  const setupKey = sessionSetupKey(rec, stats)
   return {
     id: rec.id,
     startedAt: rec.startedAt,
@@ -63,6 +66,7 @@ export function toCoachingSession(
     handedness: rec.analysis?.capture.handedness.profile ?? serves[0]?.handedness ?? 'right',
     fpsClass: rec.fpsClass ?? rec.analysis?.capture.fpsClass ?? 'fps60',
     ...(rec.setup ? { setup: rec.setup } : {}),
+    ...(setupKey ? { setupKey } : {}),
     captureQuality: rec.analysis?.capture.quality.overall ?? 'usable',
     qualityChecks: rec.analysis?.capture.quality.checks ?? [],
     serves: cServes,

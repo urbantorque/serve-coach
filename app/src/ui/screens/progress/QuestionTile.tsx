@@ -7,7 +7,7 @@ import { Sparkline, type SparkPoint } from '../../charts/index.ts'
 import { UI } from '../../copy/strings.ts'
 import { shortDate } from '../../format/dates.ts'
 import { metricInfoFor } from './insights/links.ts'
-import { againstUsual, trendState, type SeriesPoint } from './insights/history.ts'
+import { againstUsual, minServesFor, trendState, type SeriesPoint } from './insights/history.ts'
 import { configFor } from './insights/metricConfig.ts'
 import { formatRange, plainText, shortText } from './insights/values.ts'
 import { VerdictLine } from './insights/ui.tsx'
@@ -57,7 +57,12 @@ export function QuestionTile({ question, metricId, label, series, usual, stratum
 
   let status: ReactNode = null
   if (state.kind === 'baseline') {
-    status = <p className="text-footnote text-ink-2">Building your baseline ({state.have} of 2 sessions). Record another from the same side to see a trend.</p>
+    // The count is of sessions with enough serves for this measurement (METRICS §4.6: 8, spreads 12).
+    status = (
+      <p className="text-footnote text-ink-2">
+        Building your baseline: {state.have} of {state.need} sessions with {minServesFor(metricId)} or more measured serves. Record another from the same side and set-up to see a trend.
+      </p>
+    )
   } else if (state.kind === 'comparison') {
     const up = state.after.value > state.before.value
     const same = plainText(metricId, state.after.metric) === plainText(metricId, state.before.metric)

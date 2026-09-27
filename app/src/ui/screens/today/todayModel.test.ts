@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DEMO_FIXTURES } from '../../../data/fixtures.ts'
 import type { ExperimentRecord, PracticeLogRecord, ProfileRecord } from '../../../data/records.ts'
 import type { SessionBundle } from '../progress/insights/history.ts'
-import { experimentStep, sessionLine, todayModel } from './todayModel.ts'
+import { currentExperiment, experimentStep, sessionLine, todayModel } from './todayModel.ts'
 
 const FX = DEMO_FIXTURES
 const own = (b: SessionBundle, id = b.session.id.replace('demo-', 'own-')): SessionBundle => ({
@@ -39,9 +39,25 @@ describe('Today model (PRODUCT §6.2, DESIGN §10.2)', () => {
 
   it('baseline building until 2 matched sessions with 8 or more serves', () => {
     const one = todayModel({ bundles: [own(sample[0])], experiments: [], practiceLogs: [], profile, now: NOW })
-    expect(one.baseline).toEqual({ have: 1, need: 2 })
+    expect(one.baseline).toMatchObject({ have: 1, need: 2, minServes: 8, latestCounts: true })
     const two = todayModel({ bundles: [own(sample[0]), own(sample[2])], experiments: [], practiceLogs: [], profile, now: NOW })
     expect(two.baseline).toBeNull()
+  })
+
+  it('a 1-serve session does not count towards the baseline, and the card says why', () => {
+    const one = own(sample[0])
+    const short = { ...one, stats: { ...one.stats!, strata: one.stats!.strata.map((s) => ({ ...s, n: 1 })) } }
+    const m = todayModel({ bundles: [short], experiments: [], practiceLogs: [], profile, now: NOW })
+    expect(m.baseline).toMatchObject({ have: 0, need: 2, latestServes: 1, latestCounts: false })
+  })
+
+  it('a finished experiment is shown once with its verdict, then the next session takes over', () => {
+    const done = exp({ status: 'completed', retestSessionIds: ['own-s3'] })
+    expect(currentExperiment([done], 'own-s3', false)?.id).toBe(done.id)
+    expect(currentExperiment([done], 'own-s4', false)).toBeNull()
+    const active = exp({ id: 'active-one', status: 'active' })
+    expect(currentExperiment([done, active], 'own-s3', false)?.id).toBe('active-one')
+    expect(currentExperiment([done], 'own-s3', true)).toBeNull()
   })
 
   it('experiment step: practise, then re-test due, then the result', () => {

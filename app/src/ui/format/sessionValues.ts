@@ -25,16 +25,21 @@ export function stratumBaseId(k: Pick<StratumKey, 'view' | 'cameraSide' | 'court
 type StatsLike = Pick<SessionStats, 'metrics' | 'strata'> | null | undefined
 
 /**
- * The canonical session value of a metric (METRICS §1.6): the stored value of the named stratum,
- * else of the headline stratum (`stats.metrics`, the stratum with the most included serves).
+ * The canonical session value of a metric (METRICS §1.6): the stored value of the named stratum, or
+ * of the headline stratum (`stats.metrics`, the stratum with the most included serves) when no
+ * stratum is named. A session with several strata that lacks the named one has no value for it
+ * (strata never pool); with one stratum or none stored, its session value stands (the same rule as
+ * coaching's `metricsValue`, so the focus card and the report agree).
  */
 export function sessionMetric(stats: StatsLike, metricId: MetricId | string, stratum?: Partial<StratumKey> | null): MetricValue | undefined {
   if (!stats) return undefined
-  if (stratum && stratum.view && stats.strata?.length) {
+  const strata = stats.strata ?? []
+  if (stratum && stratum.view && strata.length) {
     const want = stratumBaseId(stratum as StratumKey)
-    const hit = stats.strata.find((s) => stratumBaseId(s.key) === want)
-    const v = hit?.metrics[metricId as MetricId]
-    if (v) return v
+    const hit = strata.find((s) => stratumBaseId(s.key) === want)
+    // Session-level-only metrics (rates from tags, capture quality) are not stored per stratum.
+    if (hit) return hit.metrics[metricId as MetricId] ?? stats.metrics[metricId as MetricId]
+    if (strata.length > 1) return undefined
   }
   return stats.metrics[metricId as MetricId]
 }
@@ -76,8 +81,54 @@ export function headlineFor(session: Pick<SessionRecord, 'analysis'>, stats: Ses
   return sessionHeadline({ metrics: stats.metrics, strata, measured: a.counts.included, detected: a.counts.analysed })
 }
 
+/** One focus-card stat: a metric and the value shown for it. */
+export interface DecisionStat {
+  metricId: MetricId
+  value: MetricValue
+}
+
+/**
+ * The evidence stats of a stored coaching decision (COACHING §8.2): the canonical session value of
+ * each evidence metric in the decision's own stratum (stored on the decision; older decisions fall
+ * back to the headline stratum), measured or estimated only. Today, the report's focus card and the
+ * focus screen all read it here, so the focus shows the same number as the report's tiles.
+ */
+export function decisionEvidence(
+  decision: { evidence?: { metricIds: readonly MetricId[] }; stratum?: Partial<StratumKey> } | null | undefined,
+  stats: StatsLike,
+): DecisionStat[] {
+  if (!decision?.evidence) return []
+  return decision.evidence.metricIds
+    .map((metricId) => ({ metricId, value: sessionMetric(stats, metricId, decision.stratum) }))
+    .filter((e): e is DecisionStat => e.value?.status === 'measured' || e.value?.status === 'estimated')
+}
+
 /** One side of a stored "Did it work?" result. */
 export type ComparisonSide = MatchedComparison['baseline']
+
+/**
+ * A one-session side's own stored value for the experiment's stratum (the canonical session value),
+ * or undefined for a pooled side, a missing session or an unavailable value.
+ */
+export function ownSessionValue(
+  metricId: MetricId,
+  side: Pick<ComparisonSide, 'sessionIds'>,
+  sessions: readonly { session: { id: string }; stats: StatsLike }[],
+  stratum: Partial<StratumKey> | null | undefined,
+): MetricValue | undefined {
+  // A spread pools within-session variances (METRICS §4.2): a listed session with fewer than 2 serves
+  // in the stratum adds nothing, so a side whose other sessions are like that is one session.
+  const contributes = (id: string) => {
+    if (!metricId.endsWith('-spread')) return true
+    const s = sessions.find((x) => x.session.id === id)
+    return !s || (sessionMetric(s.stats, metricId, stratum)?.n ?? 0) >= 2
+  }
+  const ids = side.sessionIds.filter(contributes)
+  if (ids.length !== 1) return undefined
+  const own = sessions.find((s) => s.session.id === ids[0])
+  const v = own ? sessionMetric(own.stats, metricId, stratum) : undefined
+  return v && typeof v.value === 'number' && v.status !== 'unavailable' ? v : undefined
+}
 
 /**
  * The value a "Did it work?" side shows. One session: that session's own stored value for the
@@ -91,11 +142,8 @@ export function sideMetric(
   stratum: Partial<StratumKey> | null | undefined,
   pooledStatus: Exclude<MetricStatus, 'unavailable'>,
 ): MetricValue {
-  if (side.sessionIds.length === 1) {
-    const own = sessions.find((s) => s.session.id === side.sessionIds[0])
-    const v = own ? sessionMetric(own.stats, metricId, stratum) : undefined
-    if (v && typeof v.value === 'number' && v.status !== 'unavailable') return v
-  }
+  const own = ownSessionValue(metricId, side, sessions, stratum)
+  if (own) return own
   return {
     id: metricId,
     value: side.value,

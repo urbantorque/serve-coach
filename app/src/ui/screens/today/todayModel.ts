@@ -5,7 +5,7 @@
  */
 import type { VerdictWord } from '../../../data/domain.ts'
 import type { ExperimentRecord, PracticeLogRecord, ProfileRecord, SessionRecord, Weekday } from '../../../data/records.ts'
-import { matched, type SessionBundle } from '../progress/insights/history.ts'
+import { baselineProgress, type BaselineProgress, type SessionBundle } from '../progress/insights/history.ts'
 
 export type ExperimentStep =
   | { kind: 'practise'; day: number; practices: 0 }
@@ -19,10 +19,14 @@ export interface TodayModel {
   last: SessionBundle | null
   /** Sessions (own, or sample in sample mode) newest first. */
   sessions: SessionBundle[]
+  /**
+   * The experiment Today talks about: the active one, else one that just finished (its verdict came
+   * from the newest session), so the result shows once before the next focus takes over.
+   */
   experiment: ExperimentRecord | null
   step: ExperimentStep | null
-  /** Matched sessions with ≥ 8 included serves, when fewer than 2 exist (METRICS §4.1). */
-  baseline: { have: number; need: 2 } | null
+  /** Building your baseline (METRICS §4.1): shown while fewer than 2 matched sessions qualify. */
+  baseline: BaselineProgress | null
   welcomeBack: boolean
 }
 
@@ -42,6 +46,20 @@ export function experimentStep(exp: ExperimentRecord, logs: readonly PracticeLog
   return { kind: 'retest-due', day, practices: practices.length, minutes }
 }
 
+/**
+ * The experiment Today shows (sample experiments only in sample mode): the active one; else a
+ * completed one whose verdict came from the newest session. Once a verdict ends an experiment it is
+ * stored as `completed` (coaching `experimentRecordStatus`), never left active.
+ */
+export function currentExperiment(experiments: readonly ExperimentRecord[], newestSessionId: string | undefined, demo: boolean): ExperimentRecord | null {
+  const want = demo ? 1 : 0
+  const mine = experiments.filter((e) => (e.isDemo ?? 0) === want)
+  const active = mine.find((e) => e.status === 'active')
+  if (active) return active
+  if (!newestSessionId) return null
+  return mine.find((e) => e.status === 'completed' && e.result && e.retestSessionIds.at(-1) === newestSessionId) ?? null
+}
+
 export function todayModel(input: {
   bundles: readonly SessionBundle[]
   experiments: readonly ExperimentRecord[]
@@ -57,14 +75,15 @@ export function todayModel(input: {
   const last = sessions[0] ?? null
   const painPause = input.profile?.comfort.painFlag === 1
   const wantDemo = mode === 'sample' ? 1 : 0
-  const experiment = input.experiments.find((e) => e.status === 'active' && (e.isDemo ?? 0) === wantDemo) ?? null
+  const experiment = currentExperiment(input.experiments, last?.session.id, mode === 'sample')
   const step = experiment ? experimentStep(experiment, input.practiceLogs.filter((l) => (l.isDemo ?? 0) === wantDemo), input.now) : null
 
+  // METRICS §4.1: sessions from the same stratum and set-up with ≥ 8 included serves in it. A short
+  // session (one serve, or a warm-up) does not count, and the card says why.
   let baseline: TodayModel['baseline'] = null
   if (mode === 'player' && last) {
-    const enough = (b: SessionBundle) => (b.session.analysis?.counts.included ?? 0) >= 8
-    const have = own.filter((b) => enough(b) && matched(b, last)).length
-    if (have < 2) baseline = { have, need: 2 }
+    const p = baselineProgress(own, last)
+    if (p.have < p.need) baseline = p
   }
 
   const hour = input.now.getHours()

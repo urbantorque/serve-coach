@@ -313,6 +313,32 @@ export function planWindows(windows: readonly EngineWindow[], options: PlanOptio
   return planned
 }
 
+/**
+ * The ball worker's crop for a window. In the side view with a toss band and a post-contact corridor,
+ * the detector only ever searches those two (BallWindowProcessor: toss band, then their union, then
+ * the corridor), so the crop shrinks to their bounding box plus `marginH` (frame heights; room for
+ * the detector's refinement box and its running background at the edges). Otherwise, or when the
+ * box would not be smaller, the window's crop. Pure.
+ */
+export function ballSearchCrop(
+  crop: NormRect,
+  tossRoi: RegionOfInterest | null | undefined,
+  corridor: RegionOfInterest | null | undefined,
+  view: CameraView,
+  aspect: number,
+  marginH: number,
+): NormRect {
+  if (view !== 'side' || !tossRoi || !corridor) return crop
+  const mx = marginH / aspect
+  const x0 = Math.max(crop.x, Math.min(tossRoi.x0, corridor.x0) - mx)
+  const y0 = Math.max(crop.y, Math.min(tossRoi.y0, corridor.y0) - marginH)
+  const x1 = Math.min(crop.x + crop.w, Math.max(tossRoi.x1, corridor.x1) + mx)
+  const y1 = Math.min(crop.y + crop.h, Math.max(tossRoi.y1, corridor.y1) + marginH)
+  if (x1 - x0 <= 1e-3 || y1 - y0 <= 1e-3) return crop
+  const tight = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }
+  return tight.w * tight.h < crop.w * crop.h ? tight : crop
+}
+
 /** Hitting-wrist peak (sparse poses), refined by the strongest hit sound within 0.4 s when available. */
 export function provisionalContact(window: EngineWindow, poses: readonly PoseFrame[], options: PlanOptions): ProvisionalContact {
   const peak = wristPeak(poses, options.handedness)
@@ -333,6 +359,14 @@ export function provisionalContact(window: EngineWindow, poses: readonly PoseFra
   return contact
 }
 
+/**
+ * Full-rate span of the core around the provisional contact when the slow parts are thinned
+ * (poseIndices slowCoreHz): from the drive (after the lowest hip) to landing, where the fast events
+ * are (contact, landing, the wrist and knee velocities); release and the trophy position move slowly.
+ */
+export const FULL_RATE_BEFORE_S = 0.55
+export const FULL_RATE_AFTER_S = 0.45
+
 /** Real rate of Pass B pose outside the core (§5.4 step 2: every 3rd frame at 60 fps). */
 export const CONTEXT_POSE_HZ = 20
 /**
@@ -350,12 +384,19 @@ export const CONTEXT_COVERED_S = 0.05
  * The core is always estimated in full by Pass B, so its frames come from one source.
  */
 export function poseIndices(
-  w: Pick<PlannedWindow, 'startFrame' | 'endFrame' | 'coreStartFrame' | 'coreEndFrame'>,
+  w: Pick<PlannedWindow, 'startFrame' | 'endFrame' | 'coreStartFrame' | 'coreEndFrame'> & { contact?: Pick<ProvisionalContact, 'frameIndex' | 'uncertaintyS'> },
   captureFps: number,
   covered?: ReadonlySet<number>,
+  options: { slowCoreHz?: number } = {},
 ): number[] {
   const coreStep = captureFps >= 200 ? 2 : 1
   const contextStep = Math.max(1, Math.round(captureFps / CONTEXT_POSE_HZ))
+  // Optional thinning of the slow parts of the core (see FULL_RATE_BEFORE_S): the full-rate span
+  // around the provisional contact, widened by its doubt, keeps every core frame.
+  const slowStep = options.slowCoreHz && w.contact ? Math.max(coreStep, Math.round(captureFps / options.slowCoreHz)) : coreStep
+  const doubt = w.contact ? Math.ceil(w.contact.uncertaintyS * captureFps) : 0
+  const fullFrom = w.contact ? w.contact.frameIndex - Math.ceil(FULL_RATE_BEFORE_S * captureFps) - doubt : w.coreStartFrame
+  const fullTo = w.contact ? w.contact.frameIndex + Math.ceil(FULL_RATE_AFTER_S * captureFps) + doubt : w.coreEndFrame
   const near = Math.max(0, Math.round(CONTEXT_COVERED_S * captureFps))
   const isCovered = (f: number) => {
     if (!covered || covered.size === 0) return false
@@ -366,7 +407,8 @@ export function poseIndices(
   for (let f = w.startFrame; f <= w.endFrame; f++) {
     const inCore = f >= w.coreStartFrame && f <= w.coreEndFrame
     if (inCore) {
-      if ((f - w.coreStartFrame) % coreStep === 0) out.push(f)
+      const step = f >= fullFrom && f <= fullTo ? coreStep : slowStep
+      if ((f - w.coreStartFrame) % step === 0) out.push(f)
     } else if (f === w.startFrame || f === w.endFrame || ((f - w.startFrame) % contextStep === 0 && !isCovered(f))) {
       out.push(f)
     }

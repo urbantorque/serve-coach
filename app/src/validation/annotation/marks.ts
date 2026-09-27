@@ -200,6 +200,14 @@ export function cleanInitials(raw: string): string {
 
 export const annotationId = (serveId: string, initials: string): string => `check:${serveId}:${initials || 'ANON'}`
 
+/** A study participant code: letters, digits and hyphens, up to 8, upper case ("p07" → "P07"). */
+export function cleanSubjectCode(raw: string): string {
+  return raw
+    .replace(/[^a-z0-9-]/gi, '')
+    .slice(0, 8)
+    .toUpperCase()
+}
+
 export interface AnnotationMeta {
   serveId: string
   sessionId: string
@@ -210,6 +218,8 @@ export interface AnnotationMeta {
   now: string
   /** The stored record being edited, if any (keeps createdAt, the blind flag and revealedAt). */
   previous?: CheckAnnotation | null
+  /** Study participant code, when the phone holds several players' sessions. */
+  subjectCode?: string
 }
 
 function sameMarks(a: MarkDraft, b: MarkDraft): boolean {
@@ -246,6 +256,7 @@ export function toAnnotation(d: MarkDraft, meta: AnnotationMeta): CheckAnnotatio
     ...(d.notes ? { notes: d.notes } : {}),
     blind,
     ...(prev?.revealedAt ? { revealedAt: prev.revealedAt } : {}),
+    ...(meta.subjectCode ? { subjectCode: cleanSubjectCode(meta.subjectCode) } : {}),
   }
 }
 

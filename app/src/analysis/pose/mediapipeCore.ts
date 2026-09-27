@@ -86,13 +86,18 @@ export class LocatorSlot {
     if (this.config.runningMode === 'IMAGE' && this.config.numPoses >= LOCATOR_MIN_POSES) return { handle: main }
     if (this.pending) return { handle: await this.pending }
     const started = performance.now()
-    this.pending = LandmarkerHandle.create({
+    const pending = LandmarkerHandle.create({
       ...this.config,
       runningMode: 'IMAGE',
       numPoses: Math.max(LOCATOR_MIN_POSES, this.config.numPoses),
       delegate: main.info.delegate,
     })
-    const handle = await this.pending
+    this.pending = pending
+    // A failed creation is not kept: the next localisation (the next stream) tries again.
+    pending.catch(() => {
+      if (this.pending === pending) this.pending = null
+    })
+    const handle = await pending
     return { handle, setupMs: performance.now() - started }
   }
 
@@ -135,6 +140,21 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
+/**
+ * A network failure while loading the wasm loader, the wasm binary or the model: transient, so the
+ * same delegate is tried again instead of falling back to the CPU (or, for the ROI locator, giving
+ * up on localisation for the whole clip). Seen in production builds (2026-09-28, integrated flows):
+ * when Pass B's extra pose lane and Pass A's locator fetch the 9 MB model at the same moment,
+ * Chromium fails one request with net::ERR_CACHE_WRITE_FAILURE ("Failed to fetch"). A failed
+ * locator left Pass A on full frames and it found 3 of 16 serves.
+ */
+export function isTransientLoadError(error: unknown): boolean {
+  return /failed to fetch|networkerror|network error|load failed|err_cache|net::/i.test(errorMessage(error))
+}
+
+/** Retries of one delegate after a transient load failure, and the wait before each (ms). */
+export const LOAD_RETRY_DELAYS_MS: readonly number[] = [250, 1000]
+
 function blankImage(): ImageData {
   return new ImageData(64, 64)
 }
@@ -155,7 +175,8 @@ export class LandmarkerHandle {
     const order: Delegate[] = config.delegate === 'auto' ? ['GPU', 'CPU'] : [config.delegate]
     let gpuError: string | undefined
     let lastError: unknown
-    for (const delegate of order) {
+    for (let d = 0, attempt = 0; d < order.length; ) {
+      const delegate = order[d]
       const started = performance.now()
       let landmarker: PoseLandmarker | null = null
       try {
@@ -179,12 +200,21 @@ export class LandmarkerHandle {
         return handle
       } catch (error) {
         lastError = error
-        if (delegate === 'GPU') gpuError = errorMessage(error)
         try {
           landmarker?.close()
         } catch {
           // Closing a half-initialised landmarker can throw; nothing else to release.
         }
+        // A load that failed on the network is tried again with the same delegate
+        // (filesetForLoad gives the retry its own loader URL).
+        if (isTransientLoadError(error) && attempt < LOAD_RETRY_DELAYS_MS.length) {
+          await new Promise((resolve) => setTimeout(resolve, LOAD_RETRY_DELAYS_MS[attempt]))
+          attempt++
+          continue
+        }
+        if (delegate === 'GPU') gpuError = errorMessage(error)
+        d++
+        attempt = 0
       }
     }
     throw new Error(`PoseLandmarker could not be created (${order.join(' then ')}): ${errorMessage(lastError)}`)

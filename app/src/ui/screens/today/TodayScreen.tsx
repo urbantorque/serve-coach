@@ -2,7 +2,6 @@ import { ArrowsClockwiseIcon, CaretRightIcon, FlagPennantIcon, VideoCameraIcon }
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import type { MetricValue as MetricValueData } from '../../../analysis/types.ts'
 import { loadDemoData } from '../../../data/demo.ts'
 import { showToast } from '../../../data/index.ts'
 import { useLatestDecision, useProfile } from '../../../data/hooks.ts'
@@ -23,18 +22,19 @@ import {
   Skeleton,
 } from '../../components/index.ts'
 import { longDate, shortDate } from '../../format/dates.ts'
+import { decisionEvidence, headlineFor } from '../../format/sessionValues.ts'
 import { paths } from '../../shell/paths.ts'
-import { stratumWords, type SessionBundle } from '../progress/insights/history.ts'
+import { baselineWords, stratumWords, type SessionBundle } from '../progress/insights/history.ts'
 import { useExperiments, useSessionBundles } from '../progress/insights/hooks.ts'
 import { VerdictLine } from '../progress/insights/ui.tsx'
-import { FocusCard, KeepGoingCard, PainPauseCard, type EvidenceStat } from './FocusCard.tsx'
-import { sessionLine, todayModel, type ExperimentStep, type TodayModel } from './todayModel.ts'
-
-const usable = (v?: MetricValueData) => v?.status === 'measured' || v?.status === 'estimated'
+import { FocusCard, KeepGoingCard, PainPauseCard } from './FocusCard.tsx'
+import { currentExperiment, sessionLine, todayModel, type ExperimentStep, type TodayModel } from './todayModel.ts'
 
 function LastSessionCard({ bundle, welcomeBack }: { bundle: SessionBundle; welcomeBack: boolean }) {
   const s = bundle.session
   const a = s.analysis
+  // The same sentence (and spread number) as the report's headline (ui/format/sessionValues.ts).
+  const headline = headlineFor(s, bundle.stats)
   return (
     <section className="flex flex-col gap-3" aria-labelledby="last-session">
       <SectionLabel>
@@ -45,7 +45,7 @@ function LastSessionCard({ bundle, welcomeBack }: { bundle: SessionBundle; welco
         <p className="text-headline text-ink">
           {shortDate(s.visitId)} <span className="text-footnote font-normal text-ink-2">· {sessionLine(s)}</span>
         </p>
-        {bundle.stats?.headline ? <p className="line-clamp-2 text-callout text-ink-2">{bundle.stats.headline}</p> : null}
+        {headline ? <p className="line-clamp-2 text-callout text-ink-2">{headline}</p> : null}
         {a ? <CaptureQualityLine overall={a.capture.quality.overall} measured={a.counts.included} detected={a.counts.analysed} /> : null}
         <Link
           to={paths.sessionReport(s.id)}
@@ -74,11 +74,12 @@ function ExperimentStrip({ model, title }: { model: TodayModel; title?: string }
   const planned = useFocusStore((s) => (exp ? s.plannedRetest[exp.id] : undefined))
   if (!exp || !step) return null
   const stratum = stratumWords(exp.stratum)
+  const name = title ? title.toLowerCase() : 'experiment'
   return (
     <section aria-labelledby="experiment-strip" className="card flex flex-col items-start gap-2 p-4">
       <h2 id="experiment-strip" className="flex items-center gap-2 text-headline text-ink">
         <ArrowsClockwiseIcon size={20} aria-hidden="true" className="shrink-0 text-ink-2" />
-        Day {step.day} of {whose} {title ? title.toLowerCase() : 'experiment'}
+        {exp.status === 'completed' ? `${whose.charAt(0).toUpperCase()}${whose.slice(1)} ${name} is finished` : `Day ${step.day} of ${whose} ${name}`}
       </h2>
       <p className="text-callout text-ink-2">{stepText(step, stratum, model.mode === 'sample' ? undefined : planned)}</p>
       {step.kind === 'result' ? (
@@ -116,7 +117,11 @@ export function TodayScreen() {
   const experiments = useExperiments()
   const profile = useProfile()
   const [now] = useState(() => new Date())
-  const activeIds = experiments?.filter((e) => e.status === 'active').map((e) => e.id) ?? []
+  // Practice logs of the experiment Today shows (the active one, or one that just finished).
+  const newest = bundles?.filter((b) => b.session.status === 'ready').sort((a, b) => b.session.startedAt.localeCompare(a.session.startedAt))
+  const ownNewest = newest?.find((b) => b.session.isDemo === 0)
+  const shown = experiments && newest ? currentExperiment(experiments, (ownNewest ?? newest[0])?.session.id, !ownNewest) : null
+  const activeIds = shown ? [shown.id] : []
   const logs = useLiveQuery(async () => (await Promise.all(activeIds.map(listPracticeByExperiment))).flat() as PracticeLogRecord[], [activeIds.join(',')])
 
   const model =
@@ -178,11 +183,12 @@ export function TodayScreen() {
   }
 
   const decisionBundle = model.sessions.find((b) => b.session.id === decision?.sessionId)
-  const evidence: EvidenceStat[] = (decision?.evidence?.metricIds ?? [])
-    .map((id) => ({ metricId: id, value: decisionBundle?.stats?.metrics[id] as MetricValueData }))
-    .filter((e) => usable(e.value))
+  // The focus's numbers: its session's stored values in the focus's stratum, as on the report.
+  const evidence = decisionEvidence(decision, decisionBundle?.stats)
   const orientation = decisionBundle?.session.orientation ?? model.last?.session.orientation ?? 'portrait'
-  const practiceCount = model.step?.practices ?? 0
+  const activeExperiment = model.experiment?.status === 'active' ? model.experiment : null
+  const practiceCount = activeExperiment ? (model.step?.practices ?? 0) : 0
+  const baseline = model.baseline ? baselineWords(model.baseline) : null
 
   return (
     <Screen title="Today" variant="root" trailing={<ProfileButton />} banner={sample ? <SampleBanner /> : undefined}>
@@ -218,7 +224,7 @@ export function TodayScreen() {
               variant="full"
               orientation={orientation}
               stats={evidence}
-              experiment={model.experiment}
+              experiment={activeExperiment}
               practiceCount={practiceCount}
               sample={sample}
               showPrimary={!sample}
@@ -230,12 +236,12 @@ export function TodayScreen() {
         </>
       )}
 
-      {model.baseline && !model.painPause ? (
+      {baseline && !model.painPause ? (
         <section aria-labelledby="baseline" className="card flex flex-col items-start gap-2 p-4">
           <h2 id="baseline" className="text-headline text-ink">
-            Building your baseline: {model.baseline.have} of {model.baseline.need} sessions
+            {baseline.title}
           </h2>
-          <p className="text-callout text-ink-2">Record another session from the same side to see trends.</p>
+          <p className="text-callout text-ink-2">{baseline.body}</p>
           <Button variant="secondary" compact fullWidth={false} to={paths.record()}>
             Record
           </Button>

@@ -278,7 +278,8 @@ export function LiveFramingScreen() {
     setBusy(true)
     setSaveError(null)
     const b = flow.block
-    const block = { side: b.side, serveNumber: b.serveNumber, type: b.type, target: b.target, wind: b.wind, light: b.light }
+    // The serving spot chosen on Record is a set-up matching factor (METRICS §4.4), saved with the session.
+    const block = { side: b.side, serveNumber: b.serveNumber, type: b.type, target: b.target, wind: b.wind, light: b.light, servingSpot: b.spot }
     // Hit-sound onsets are not captured by the in-browser recorder in this build, so none are claimed.
     const capture = recordingCapture(player, block, saved.facts, false)
     try {

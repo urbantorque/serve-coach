@@ -4,6 +4,11 @@
 
 **Short version:** `npx cap add ios` **worked on Windows**. The Xcode project in `app/ios` is generated and configured (permission strings, privacy manifest, iOS 26.0 target), but it has **never been resolved, signed, compiled or run**. Everything from Swift package resolution onwards needs a Mac.
 
+**Re-checked at the hardening commit after `33ac31f`** (28 September 2026, Windows):
+- `CI=1 npx cap sync ios` exits 0. It copies `dist/` into `ios/App/App/public` and rewrites `Package.swift` with no tracked changes.
+- `CI=1 npx cap doctor ios` (run on 27 September) reports `[error] Xcode is not installed`, which is expected on Windows.
+- `npm run build` passes again (typecheck clean); the synced `dist/` is that build, 84 MB.
+
 ## 1. What was generated here (Windows 11, 27 September 2026)
 
 Commands, run in `app/` with Node 24.18.0 and `@capacitor/cli` 8.5.2:
@@ -48,7 +53,15 @@ Left as generated, **decide on the Mac**: iPhone and iPad (`TARGETED_DEVICE_FAMI
 
 ## 3. Privacy manifest (`PrivacyInfo.xcprivacy`)
 
-Current contents: `NSPrivacyTracking` false, no tracking domains, **no collected data types**, **no required-reason APIs**. That is accurate today: the only native code is the Capacitor template, whose own manifest declares none, and the web app's storage runs inside WebKit. The App Store privacy label can therefore be "Data Not Collected" while nothing leaves the device (research 07 §9 [S38]).
+Current contents: `NSPrivacyTracking` false, no tracking domains, **no collected data types**, **no required-reason APIs**.
+
+That is accurate today:
+- The only native code is the Capacitor template and framework.
+- The framework's own manifests (`Capacitor/PrivacyInfo.xcprivacy` and `CapacitorCordova/PrivacyInfo.xcprivacy` in `@capacitor/ios` 8.5.2) declare no required-reason APIs and no collected data.
+- A search of its Swift and Objective-C sources found no `UserDefaults`, `systemUptime`, `mach_absolute_time`, file-timestamp or free-space calls.
+- The web app's IndexedDB and localStorage run inside WebKit, not through the app's own `UserDefaults`.
+
+The App Store privacy label can therefore be "Data Not Collected" while nothing leaves the device (research 07 §9 [S38]).
 
 Add entries when native code starts using these APIs (research 07 [S39][S40]):
 
@@ -99,7 +112,7 @@ Pruning the unused WebAssembly variants alone would save about 22 MB *[our infer
 
 ## 6. Native plugin plan
 
-Plugins live as local Swift packages under `app/ios-plugins/`, each with a TypeScript interface in `platform/native.ts` (ARCHITECTURE §15.2 step 6). The web engine stays the reference implementation: a native module replaces a TypeScript one only after it reproduces the golden per-serve outputs from `tools/validate` within stated tolerances (ARCHITECTURE §15.3).
+Plugins will live as local Swift packages under `app/ios-plugins/`, each with a TypeScript interface in `platform/native.ts` (ARCHITECTURE §15.2 step 6). Neither exists yet. The web engine stays the reference implementation: a native module replaces a TypeScript one only after it reproduces the golden per-serve outputs from `tools/validate` within stated tolerances (ARCHITECTURE §15.3).
 
 | Plugin | Order | Purpose |
 |---|---|---|
@@ -196,7 +209,7 @@ The Capacitor side (`ServeCapturePlugin: CAPPlugin`) exposes `configure`, `start
 
 ### 6.2 `PoseEstimator` (Swift sketch)
 
-Mirrors the TypeScript `PoseEstimator` in `app/src/analysis/pipeline/passes.ts` (`init`, `estimate`, `dispose`, `stats`) and returns frames in the engine's `PoseFrame` shape with `source: "apple-vision"`. **Not compiled.**
+Mirrors the TypeScript `PoseEstimator` in `app/src/analysis/pipeline/passes.ts` (`init`, `estimate`, `dispose`, `stats`, `configure`) and returns frames in the engine's `PoseFrame` shape with `source: "apple-vision"` (already a valid source in `app/src/analysis/types.ts`). **Not compiled.**
 
 ```swift
 import AVFoundation
@@ -227,6 +240,7 @@ struct PoseRequest {
 protocol PoseEstimator: AnyObject {
     var backend: String { get }            // "vision" or "coreml"
     func prepare() async throws
+    func configure(maxPeople: Int)         // TS configure({ numPoses }): 2 in Pass A, 1 in Pass B
     func estimate(_ request: PoseRequest) -> AsyncThrowingStream<PoseFrame, Error>
     func cancel()
     func stats() -> (backend: String, detectErrors: [String])

@@ -146,9 +146,12 @@ export interface SegmentedDecodePlan {
 
 /**
  * Samples that must be skipped before a new run is worth a decoder flush. A flush drains the
- * decoder's reorder queue (a few frames of latency); a GOP of a phone clip is 30-60 samples.
+ * decoder and the next run refills it from a keyframe: measured on a 1080p60 H.264 clip (GOP 60,
+ * hardware decode, 2026-09-27) a run boundary cost about 48 ms, the time to decode about 35
+ * samples, so a 4 Hz scan split into one run per GOP decoded the clip 40% slower than straight
+ * through. A run is split only when it skips clearly more than that.
  */
-export const MIN_SKIP_SAMPLES = 8
+export const MIN_SKIP_SAMPLES = 45
 
 /** Keyframe (decode order) from which `frame` can be decoded: see planDecode's open-GOP rule. */
 function keyframeFor(samples: readonly SampleInfo[], frame: FrameTiming): number {

@@ -1,7 +1,817 @@
 {
-  "base": "http://localhost:4321",
-  "startedAt": "2026-09-27T10:11:29.713Z",
+  "base": "http://localhost:4331",
+  "startedAt": "2026-09-27T17:00:00.833Z",
   "shots": [
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "baseline-import-ready",
+      "file": "light-b01-baseline-import-ready.png",
+      "fullFile": "light-b01-baseline-import-ready-full.png",
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "baseline-import-mount",
+      "file": "light-b02-baseline-import-mount.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "baseline-processing",
+      "file": "light-b03-baseline-processing.png",
+      "fullFile": null,
+      "path": "/processing/01M3HVX61DF1B7WB6CR9MTWWA8",
+      "title": "Analysing: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "baseline-report",
+      "file": "light-b04-baseline-report.png",
+      "fullFile": "light-b04-baseline-report-full.png",
+      "path": "/sessions/01M3HVX61DF1B7WB6CR9MTWWA8",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 13,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "baseline-tagged",
+      "file": "light-b05-baseline-tagged.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HVX61DF1B7WB6CR9MTWWA8/tag",
+      "title": "Tag serves: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Tag serves"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "check-start",
+      "file": "light-b06-check-start.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HVX61DF1B7WB6CR9MTWWA8/serves/01M3HVX61DF1B7WB6CR9MTWWA8-s01?mode=check",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Check serve 1"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "check-marked",
+      "file": "light-b07-check-marked.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HVX61DF1B7WB6CR9MTWWA8/serves/01M3HVX61DF1B7WB6CR9MTWWA8-s01?mode=check",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Check serve 1"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "check-result",
+      "file": "light-b08-check-result.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HVX61DF1B7WB6CR9MTWWA8/serves/01M3HVX61DF1B7WB6CR9MTWWA8-s01?mode=check",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Check serve 1"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "today-own",
+      "file": "light-b09-today-own.png",
+      "fullFile": "light-b09-today-own-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "checkin-import-ready",
+      "file": "light-c01-checkin-import-ready.png",
+      "fullFile": "light-c01-checkin-import-ready-full.png",
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "checkin-processing",
+      "file": "light-c02-checkin-processing.png",
+      "fullFile": null,
+      "path": "/processing/01M3HVY9GT1A1C6K72TTGAF19J",
+      "title": "Analysing: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "checkin-report",
+      "file": "light-c03-checkin-report.png",
+      "fullFile": "light-c03-checkin-report-full.png",
+      "path": "/sessions/01M3HVY9GT1A1C6K72TTGAF19J",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 16,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "checkin-toss-hero",
+      "file": "light-c04-checkin-toss-hero.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HVY9GT1A1C6K72TTGAF19J",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 16,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "today-focus",
+      "file": "light-c05-today-focus.png",
+      "fullFile": "light-c05-today-focus-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "focus-own",
+      "file": "light-c06-focus-own.png",
+      "fullFile": "light-c06-focus-own-full.png",
+      "path": "/focus",
+      "title": "Focus and drill: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Your focus"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "drill-own",
+      "file": "light-c07-drill-own.png",
+      "fullFile": null,
+      "path": "/focus/drill",
+      "title": "Drill: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Drill"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "log-own",
+      "file": "light-c08-log-own.png",
+      "fullFile": "light-c08-log-own-full.png",
+      "path": "/focus/log",
+      "title": "Log practice: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Log practice"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "log-saved",
+      "file": "light-c09-log-saved.png",
+      "fullFile": null,
+      "path": "/focus/log",
+      "title": "Log practice: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Log practice"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "today-experiment",
+      "file": "light-c10-today-experiment.png",
+      "fullFile": "light-c10-today-experiment-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "record-retest",
+      "file": "light-c11-record-retest.png",
+      "fullFile": "light-c11-record-retest-full.png",
+      "path": "/record",
+      "title": "Record: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Record"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "retest-import-ready",
+      "file": "light-c12-retest-import-ready.png",
+      "fullFile": "light-c12-retest-import-ready-full.png",
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "retest-processing",
+      "file": "light-c13-retest-processing.png",
+      "fullFile": null,
+      "path": "/processing/01M3HW3D5VHN48519TM6XWQ4J6",
+      "title": "Analysing: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "retest-report",
+      "file": "light-c14-retest-report.png",
+      "fullFile": "light-c14-retest-report-full.png",
+      "path": "/sessions/01M3HW3D5VHN48519TM6XWQ4J6",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 20,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "retest-toss-hero",
+      "file": "light-c15-retest-toss-hero.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HW3D5VHN48519TM6XWQ4J6",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 20,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "compare-own",
+      "file": "light-c16-compare-own.png",
+      "fullFile": "light-c16-compare-own-full.png",
+      "path": "/progress/compare/01M3HW33QN8DFKZ33B3VG91TAF",
+      "title": "Did it work?: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 4,
+      "unlabelled": [],
+      "h1": [
+        "Did it work?"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "progress-own",
+      "file": "light-c17-progress-own.png",
+      "fullFile": "light-c17-progress-own-full.png",
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 7,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "today-after-retest",
+      "file": "light-c18-today-after-retest.png",
+      "fullFile": "light-c18-today-after-retest-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "baseline-import-ready",
+      "file": "dark-b01-baseline-import-ready.png",
+      "fullFile": "dark-b01-baseline-import-ready-full.png",
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "baseline-import-mount",
+      "file": "dark-b02-baseline-import-mount.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "baseline-processing",
+      "file": "dark-b03-baseline-processing.png",
+      "fullFile": null,
+      "path": "/processing/01M3HWA00MH23H6ZW8JZMW57WK",
+      "title": "Analysing: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "baseline-report",
+      "file": "dark-b04-baseline-report.png",
+      "fullFile": "dark-b04-baseline-report-full.png",
+      "path": "/sessions/01M3HWA00MH23H6ZW8JZMW57WK",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 13,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "baseline-tagged",
+      "file": "dark-b05-baseline-tagged.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HWA00MH23H6ZW8JZMW57WK/tag",
+      "title": "Tag serves: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Tag serves"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "check-start",
+      "file": "dark-b06-check-start.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HWA00MH23H6ZW8JZMW57WK/serves/01M3HWA00MH23H6ZW8JZMW57WK-s01?mode=check",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Check serve 1"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "check-marked",
+      "file": "dark-b07-check-marked.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HWA00MH23H6ZW8JZMW57WK/serves/01M3HWA00MH23H6ZW8JZMW57WK-s01?mode=check",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Check serve 1"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "check-result",
+      "file": "dark-b08-check-result.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HWA00MH23H6ZW8JZMW57WK/serves/01M3HWA00MH23H6ZW8JZMW57WK-s01?mode=check",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Check serve 1"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "today-own",
+      "file": "dark-b09-today-own.png",
+      "fullFile": "dark-b09-today-own-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "checkin-import-ready",
+      "file": "dark-c01-checkin-import-ready.png",
+      "fullFile": "dark-c01-checkin-import-ready-full.png",
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "checkin-processing",
+      "file": "dark-c02-checkin-processing.png",
+      "fullFile": null,
+      "path": "/processing/01M3HWAZGYG5DM7XECPYJN4R0N",
+      "title": "Analysing: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "checkin-report",
+      "file": "dark-c03-checkin-report.png",
+      "fullFile": "dark-c03-checkin-report-full.png",
+      "path": "/sessions/01M3HWAZGYG5DM7XECPYJN4R0N",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 16,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "checkin-toss-hero",
+      "file": "dark-c04-checkin-toss-hero.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HWAZGYG5DM7XECPYJN4R0N",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 16,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "today-focus",
+      "file": "dark-c05-today-focus.png",
+      "fullFile": "dark-c05-today-focus-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "focus-own",
+      "file": "dark-c06-focus-own.png",
+      "fullFile": "dark-c06-focus-own-full.png",
+      "path": "/focus",
+      "title": "Focus and drill: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Your focus"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "drill-own",
+      "file": "dark-c07-drill-own.png",
+      "fullFile": null,
+      "path": "/focus/drill",
+      "title": "Drill: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Drill"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "log-own",
+      "file": "dark-c08-log-own.png",
+      "fullFile": "dark-c08-log-own-full.png",
+      "path": "/focus/log",
+      "title": "Log practice: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Log practice"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "log-saved",
+      "file": "dark-c09-log-saved.png",
+      "fullFile": null,
+      "path": "/focus/log",
+      "title": "Log practice: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Log practice"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "today-experiment",
+      "file": "dark-c10-today-experiment.png",
+      "fullFile": "dark-c10-today-experiment-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "record-retest",
+      "file": "dark-c11-record-retest.png",
+      "fullFile": "dark-c11-record-retest-full.png",
+      "path": "/record",
+      "title": "Record: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Record"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "retest-import-ready",
+      "file": "dark-c12-retest-import-ready.png",
+      "fullFile": "dark-c12-retest-import-ready-full.png",
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "retest-processing",
+      "file": "dark-c13-retest-processing.png",
+      "fullFile": null,
+      "path": "/processing/01M3HWG71X0PBW1DSGPPTSD4HN",
+      "title": "Analysing: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "retest-report",
+      "file": "dark-c14-retest-report.png",
+      "fullFile": "dark-c14-retest-report-full.png",
+      "path": "/sessions/01M3HWG71X0PBW1DSGPPTSD4HN",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 20,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "retest-toss-hero",
+      "file": "dark-c15-retest-toss-hero.png",
+      "fullFile": null,
+      "path": "/sessions/01M3HWG71X0PBW1DSGPPTSD4HN",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 20,
+      "unlabelled": [],
+      "h1": [
+        "Mon 28 Sep"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "compare-own",
+      "file": "dark-c16-compare-own.png",
+      "fullFile": "dark-c16-compare-own-full.png",
+      "path": "/progress/compare/01M3HWFXGM49N23T5CPFD7FRYQ",
+      "title": "Did it work?: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 4,
+      "unlabelled": [],
+      "h1": [
+        "Did it work?"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "progress-own",
+      "file": "dark-c17-progress-own.png",
+      "fullFile": "dark-c17-progress-own-full.png",
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 7,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "today-after-retest",
+      "file": "dark-c18-today-after-retest.png",
+      "fullFile": "dark-c18-today-after-retest-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
     {
       "scheme": "light",
       "flow": "a",
@@ -364,347 +1174,62 @@
     },
     {
       "scheme": "light",
-      "flow": "b",
-      "name": "baseline-import-ready",
-      "file": "light-b01-baseline-import-ready.png",
-      "fullFile": "light-b01-baseline-import-ready-full.png",
-      "path": "/record/import",
-      "title": "Import a video: Serve Coach",
+      "flow": "a",
+      "name": "metric-info-serve-count",
+      "file": "light-a25-metric-info-serve-count.png",
+      "fullFile": "light-a25-metric-info-serve-count-full.png",
+      "path": "/metric/serve-count?session=sample-s3",
+      "title": "How we measure: Serve Coach",
       "overflowX": 0,
-      "metricCount": 0,
+      "metricCount": 2,
       "unlabelled": [],
       "h1": [
-        "Import a video"
+        "Serves"
       ]
     },
     {
       "scheme": "light",
-      "flow": "b",
-      "name": "baseline-processing",
-      "file": "light-b02-baseline-processing.png",
-      "fullFile": null,
-      "path": "/processing/01M3H5KR941PZB82Q0XW0A16P0",
-      "title": "Analysing: Serve Coach",
+      "flow": "a",
+      "name": "metric-info-toss-apex-height",
+      "file": "light-a26-metric-info-toss-apex-height.png",
+      "fullFile": "light-a26-metric-info-toss-apex-height-full.png",
+      "path": "/metric/toss-apex-height?session=sample-s3",
+      "title": "How we measure: Serve Coach",
       "overflowX": 0,
-      "metricCount": 0,
+      "metricCount": 2,
       "unlabelled": [],
       "h1": [
-        "Analysing"
+        "Toss height"
       ]
     },
     {
       "scheme": "light",
-      "flow": "b",
-      "name": "baseline-report",
-      "file": "light-b03-baseline-report.png",
-      "fullFile": "light-b03-baseline-report-full.png",
-      "path": "/sessions/01M3H5KR941PZB82Q0XW0A16P0",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 13,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "b",
-      "name": "baseline-tagged",
-      "file": "light-b04-baseline-tagged.png",
-      "fullFile": null,
-      "path": "/sessions/01M3H5KR941PZB82Q0XW0A16P0/tag",
-      "title": "Tag serves: Serve Coach",
+      "flow": "a",
+      "name": "metric-info-spin",
+      "file": "light-a27-metric-info-spin.png",
+      "fullFile": "light-a27-metric-info-spin-full.png",
+      "path": "/metric/spin?session=sample-s3",
+      "title": "How we measure: Serve Coach",
       "overflowX": 0,
       "metricCount": 1,
       "unlabelled": [],
       "h1": [
-        "Tag serves"
+        "Spin"
       ]
     },
     {
       "scheme": "light",
-      "flow": "b",
-      "name": "today-own",
-      "file": "light-b05-today-own.png",
-      "fullFile": "light-b05-today-own-full.png",
-      "path": "/",
-      "title": "Today: Serve Coach",
+      "flow": "a",
+      "name": "how-we-measure",
+      "file": "light-a28-how-we-measure.png",
+      "fullFile": "light-a28-how-we-measure-full.png",
+      "path": "/profile/how-we-measure",
+      "title": "How we measure: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
       "unlabelled": [],
       "h1": [
-        "Today"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "checkin-import-ready",
-      "file": "light-c01-checkin-import-ready.png",
-      "fullFile": "light-c01-checkin-import-ready-full.png",
-      "path": "/record/import",
-      "title": "Import a video: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Import a video"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "checkin-processing",
-      "file": "light-c02-checkin-processing.png",
-      "fullFile": null,
-      "path": "/processing/01M3H5N6T61S47K8MTKAB43JXD",
-      "title": "Analysing: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Analysing"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "checkin-report",
-      "file": "light-c03-checkin-report.png",
-      "fullFile": "light-c03-checkin-report-full.png",
-      "path": "/sessions/01M3H5N6T61S47K8MTKAB43JXD",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 16,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "checkin-toss-hero",
-      "file": "light-c04-checkin-toss-hero.png",
-      "fullFile": null,
-      "path": "/sessions/01M3H5N6T61S47K8MTKAB43JXD",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 16,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "today-focus",
-      "file": "light-c05-today-focus.png",
-      "fullFile": "light-c05-today-focus-full.png",
-      "path": "/",
-      "title": "Today: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 1,
-      "unlabelled": [],
-      "h1": [
-        "Today"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "focus-own",
-      "file": "light-c06-focus-own.png",
-      "fullFile": "light-c06-focus-own-full.png",
-      "path": "/focus",
-      "title": "Focus and drill: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 1,
-      "unlabelled": [],
-      "h1": [
-        "Your focus"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "drill-own",
-      "file": "light-c07-drill-own.png",
-      "fullFile": null,
-      "path": "/focus/drill",
-      "title": "Drill: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Drill"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "log-own",
-      "file": "light-c08-log-own.png",
-      "fullFile": "light-c08-log-own-full.png",
-      "path": "/focus/log",
-      "title": "Log practice: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Log practice"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "log-saved",
-      "file": "light-c09-log-saved.png",
-      "fullFile": null,
-      "path": "/focus/log",
-      "title": "Log practice: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Log practice"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "today-experiment",
-      "file": "light-c10-today-experiment.png",
-      "fullFile": "light-c10-today-experiment-full.png",
-      "path": "/",
-      "title": "Today: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 1,
-      "unlabelled": [],
-      "h1": [
-        "Today"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "record-retest",
-      "file": "light-c11-record-retest.png",
-      "fullFile": "light-c11-record-retest-full.png",
-      "path": "/record",
-      "title": "Record: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Record"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "retest-import-ready",
-      "file": "light-c12-retest-import-ready.png",
-      "fullFile": "light-c12-retest-import-ready-full.png",
-      "path": "/record/import",
-      "title": "Import a video: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Import a video"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "retest-processing",
-      "file": "light-c13-retest-processing.png",
-      "fullFile": null,
-      "path": "/processing/01M3H5XHEG755WP43QY8QS6SQX",
-      "title": "Analysing: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Analysing"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "retest-report",
-      "file": "light-c14-retest-report.png",
-      "fullFile": "light-c14-retest-report-full.png",
-      "path": "/sessions/01M3H5XHEG755WP43QY8QS6SQX",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 20,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "retest-toss-hero",
-      "file": "light-c15-retest-toss-hero.png",
-      "fullFile": null,
-      "path": "/sessions/01M3H5XHEG755WP43QY8QS6SQX",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 20,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "compare-own",
-      "file": "light-c16-compare-own.png",
-      "fullFile": "light-c16-compare-own-full.png",
-      "path": "/progress/compare/01M3H5X7NCRZFH0H7T99C1R2HE",
-      "title": "Did it work?: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 4,
-      "unlabelled": [],
-      "h1": [
-        "Did it work?"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "progress-own",
-      "file": "light-c17-progress-own.png",
-      "fullFile": "light-c17-progress-own-full.png",
-      "path": "/progress",
-      "title": "Progress: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 7,
-      "unlabelled": [],
-      "h1": [
-        "Progress"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "c",
-      "name": "today-after-retest",
-      "file": "light-c18-today-after-retest.png",
-      "fullFile": "light-c18-today-after-retest-full.png",
-      "path": "/",
-      "title": "Today: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Today"
+        "How we measure"
       ]
     },
     {
@@ -1069,713 +1594,642 @@
     },
     {
       "scheme": "dark",
-      "flow": "b",
-      "name": "baseline-import-ready",
-      "file": "dark-b01-baseline-import-ready.png",
-      "fullFile": "dark-b01-baseline-import-ready-full.png",
-      "path": "/record/import",
-      "title": "Import a video: Serve Coach",
+      "flow": "a",
+      "name": "metric-info-serve-count",
+      "file": "dark-a25-metric-info-serve-count.png",
+      "fullFile": "dark-a25-metric-info-serve-count-full.png",
+      "path": "/metric/serve-count?session=sample-s3",
+      "title": "How we measure: Serve Coach",
       "overflowX": 0,
-      "metricCount": 0,
+      "metricCount": 2,
       "unlabelled": [],
       "h1": [
-        "Import a video"
+        "Serves"
       ]
     },
     {
       "scheme": "dark",
-      "flow": "b",
-      "name": "baseline-processing",
-      "file": "dark-b02-baseline-processing.png",
-      "fullFile": null,
-      "path": "/processing/01M3H6BADT63XB6MASABW6B7G6",
-      "title": "Analysing: Serve Coach",
+      "flow": "a",
+      "name": "metric-info-toss-apex-height",
+      "file": "dark-a26-metric-info-toss-apex-height.png",
+      "fullFile": "dark-a26-metric-info-toss-apex-height-full.png",
+      "path": "/metric/toss-apex-height?session=sample-s3",
+      "title": "How we measure: Serve Coach",
       "overflowX": 0,
-      "metricCount": 0,
+      "metricCount": 2,
       "unlabelled": [],
       "h1": [
-        "Analysing"
+        "Toss height"
       ]
     },
     {
       "scheme": "dark",
-      "flow": "b",
-      "name": "baseline-report",
-      "file": "dark-b03-baseline-report.png",
-      "fullFile": "dark-b03-baseline-report-full.png",
-      "path": "/sessions/01M3H6BADT63XB6MASABW6B7G6",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 13,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "b",
-      "name": "baseline-tagged",
-      "file": "dark-b04-baseline-tagged.png",
-      "fullFile": null,
-      "path": "/sessions/01M3H6BADT63XB6MASABW6B7G6/tag",
-      "title": "Tag serves: Serve Coach",
+      "flow": "a",
+      "name": "metric-info-spin",
+      "file": "dark-a27-metric-info-spin.png",
+      "fullFile": "dark-a27-metric-info-spin-full.png",
+      "path": "/metric/spin?session=sample-s3",
+      "title": "How we measure: Serve Coach",
       "overflowX": 0,
       "metricCount": 1,
       "unlabelled": [],
       "h1": [
-        "Tag serves"
+        "Spin"
       ]
     },
     {
       "scheme": "dark",
-      "flow": "b",
-      "name": "today-own",
-      "file": "dark-b05-today-own.png",
-      "fullFile": "dark-b05-today-own-full.png",
-      "path": "/",
-      "title": "Today: Serve Coach",
+      "flow": "a",
+      "name": "how-we-measure",
+      "file": "dark-a28-how-we-measure.png",
+      "fullFile": "dark-a28-how-we-measure-full.png",
+      "path": "/profile/how-we-measure",
+      "title": "How we measure: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
       "unlabelled": [],
       "h1": [
-        "Today"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "checkin-import-ready",
-      "file": "dark-c01-checkin-import-ready.png",
-      "fullFile": "dark-c01-checkin-import-ready-full.png",
-      "path": "/record/import",
-      "title": "Import a video: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Import a video"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "checkin-processing",
-      "file": "dark-c02-checkin-processing.png",
-      "fullFile": null,
-      "path": "/processing/01M3H6CFT5MXMAKN1NXA3WNEYJ",
-      "title": "Analysing: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Analysing"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "checkin-report",
-      "file": "dark-c03-checkin-report.png",
-      "fullFile": "dark-c03-checkin-report-full.png",
-      "path": "/sessions/01M3H6CFT5MXMAKN1NXA3WNEYJ",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 16,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "checkin-toss-hero",
-      "file": "dark-c04-checkin-toss-hero.png",
-      "fullFile": null,
-      "path": "/sessions/01M3H6CFT5MXMAKN1NXA3WNEYJ",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 16,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "today-focus",
-      "file": "dark-c05-today-focus.png",
-      "fullFile": "dark-c05-today-focus-full.png",
-      "path": "/",
-      "title": "Today: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 1,
-      "unlabelled": [],
-      "h1": [
-        "Today"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "focus-own",
-      "file": "dark-c06-focus-own.png",
-      "fullFile": "dark-c06-focus-own-full.png",
-      "path": "/focus",
-      "title": "Focus and drill: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 1,
-      "unlabelled": [],
-      "h1": [
-        "Your focus"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "drill-own",
-      "file": "dark-c07-drill-own.png",
-      "fullFile": null,
-      "path": "/focus/drill",
-      "title": "Drill: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Drill"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "log-own",
-      "file": "dark-c08-log-own.png",
-      "fullFile": "dark-c08-log-own-full.png",
-      "path": "/focus/log",
-      "title": "Log practice: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Log practice"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "log-saved",
-      "file": "dark-c09-log-saved.png",
-      "fullFile": null,
-      "path": "/focus/log",
-      "title": "Log practice: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Log practice"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "today-experiment",
-      "file": "dark-c10-today-experiment.png",
-      "fullFile": "dark-c10-today-experiment-full.png",
-      "path": "/",
-      "title": "Today: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 1,
-      "unlabelled": [],
-      "h1": [
-        "Today"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "record-retest",
-      "file": "dark-c11-record-retest.png",
-      "fullFile": "dark-c11-record-retest-full.png",
-      "path": "/record",
-      "title": "Record: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Record"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "retest-import-ready",
-      "file": "dark-c12-retest-import-ready.png",
-      "fullFile": "dark-c12-retest-import-ready-full.png",
-      "path": "/record/import",
-      "title": "Import a video: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Import a video"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "retest-processing",
-      "file": "dark-c13-retest-processing.png",
-      "fullFile": null,
-      "path": "/processing/01M3H6N2JQTVA10HZF8QYG05FR",
-      "title": "Analysing: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Analysing"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "retest-report",
-      "file": "dark-c14-retest-report.png",
-      "fullFile": "dark-c14-retest-report-full.png",
-      "path": "/sessions/01M3H6N2JQTVA10HZF8QYG05FR",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 20,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "retest-toss-hero",
-      "file": "dark-c15-retest-toss-hero.png",
-      "fullFile": null,
-      "path": "/sessions/01M3H6N2JQTVA10HZF8QYG05FR",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 20,
-      "unlabelled": [],
-      "h1": [
-        "Sun 27 Sep"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "compare-own",
-      "file": "dark-c16-compare-own.png",
-      "fullFile": "dark-c16-compare-own-full.png",
-      "path": "/progress/compare/01M3H6MRGCKJ3CMPZ6Z1ZJRMX3",
-      "title": "Did it work?: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 4,
-      "unlabelled": [],
-      "h1": [
-        "Did it work?"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "progress-own",
-      "file": "dark-c17-progress-own.png",
-      "fullFile": "dark-c17-progress-own-full.png",
-      "path": "/progress",
-      "title": "Progress: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 7,
-      "unlabelled": [],
-      "h1": [
-        "Progress"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "c",
-      "name": "today-after-retest",
-      "file": "dark-c18-today-after-retest.png",
-      "fullFile": "dark-c18-today-after-retest-full.png",
-      "path": "/",
-      "title": "Today: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Today"
+        "How we measure"
       ]
     }
   ],
   "steps": [
     {
       "scheme": "light",
-      "flow": "a",
-      "name": "first run redirects to onboarding",
-      "ok": true,
-      "ms": 1434
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "onboarding answers",
-      "ok": true,
-      "ms": 4752
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "sample session report",
-      "ok": true,
-      "ms": 5163
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "serve detail with overlays",
-      "ok": true,
-      "ms": 8016
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "check-in report: the focus that started the experiment",
-      "ok": true,
-      "ms": 3043
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "metric info",
-      "ok": true,
-      "ms": 2285
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "tagging",
-      "ok": true,
-      "ms": 2907
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "today (sample)",
-      "ok": true,
-      "ms": 1875
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "focus",
-      "ok": true,
-      "ms": 2286
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "drill",
-      "ok": true,
-      "ms": 1398
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "practice log",
-      "ok": true,
-      "ms": 2052
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "progress",
-      "ok": true,
-      "ms": 1956
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "compare (sample)",
-      "ok": true,
-      "ms": 1867
-    },
-    {
-      "scheme": "light",
-      "flow": "a",
-      "name": "sessions list",
-      "ok": true,
-      "ms": 1988
-    },
-    {
-      "scheme": "light",
       "flow": "b",
       "name": "skip set-up",
       "ok": true,
-      "ms": 1072
+      "ms": 1038
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "import baseline clip and analyse",
       "ok": true,
-      "ms": 41315
+      "ms": 22738
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "tag the imported serve",
       "ok": true,
-      "ms": 2850
+      "ms": 2868
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "check this serve (annotation mode) on the imported serve",
+      "ok": true,
+      "ms": 8067
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "today reflects the stored decision",
       "ok": true,
-      "ms": 2121
+      "ms": 2140
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "skip set-up and import a 16-serve check-in",
       "ok": true,
-      "ms": 262784
+      "ms": 157626
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "today shows the new focus",
       "ok": true,
-      "ms": 2261
+      "ms": 2159
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "focus → drill → two practice logs (starts the experiment)",
       "ok": true,
-      "ms": 5805
+      "ms": 5509
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "today and record show the re-test",
       "ok": true,
-      "ms": 4032
+      "ms": 3975
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "import the re-test and see the verdict",
       "ok": true,
-      "ms": 407595
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "first run redirects to onboarding",
-      "ok": true,
-      "ms": 1181
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "onboarding answers",
-      "ok": true,
-      "ms": 4799
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "sample session report",
-      "ok": true,
-      "ms": 4930
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "serve detail with overlays",
-      "ok": true,
-      "ms": 8026
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "check-in report: the focus that started the experiment",
-      "ok": true,
-      "ms": 3081
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "metric info",
-      "ok": true,
-      "ms": 2361
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "tagging",
-      "ok": true,
-      "ms": 2898
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "today (sample)",
-      "ok": true,
-      "ms": 1907
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "focus",
-      "ok": true,
-      "ms": 2313
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "drill",
-      "ok": true,
-      "ms": 1404
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "practice log",
-      "ok": true,
-      "ms": 2080
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "progress",
-      "ok": true,
-      "ms": 2002
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "compare (sample)",
-      "ok": true,
-      "ms": 1927
-    },
-    {
-      "scheme": "dark",
-      "flow": "a",
-      "name": "sessions list",
-      "ok": true,
-      "ms": 2038
+      "ms": 167986
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "skip set-up",
       "ok": true,
-      "ms": 1167
+      "ms": 1017
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "import baseline clip and analyse",
       "ok": true,
-      "ms": 31191
+      "ms": 18574
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "tag the imported serve",
       "ok": true,
-      "ms": 3060
+      "ms": 2873
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "check this serve (annotation mode) on the imported serve",
+      "ok": true,
+      "ms": 8061
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "today reflects the stored decision",
       "ok": true,
-      "ms": 2221
+      "ms": 2189
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "skip set-up and import a 16-serve check-in",
       "ok": true,
-      "ms": 271268
+      "ms": 161513
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "today shows the new focus",
       "ok": true,
-      "ms": 2242
+      "ms": 2162
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "focus → drill → two practice logs (starts the experiment)",
       "ok": true,
-      "ms": 5889
+      "ms": 5582
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "today and record show the re-test",
       "ok": true,
-      "ms": 4184
+      "ms": 3977
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "import the re-test and see the verdict",
       "ok": true,
-      "ms": 460955
+      "ms": 167830
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "first run redirects to onboarding",
+      "ok": true,
+      "ms": 1136
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "onboarding answers",
+      "ok": true,
+      "ms": 4653
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "sample session report",
+      "ok": true,
+      "ms": 3838
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "serve detail with overlays",
+      "ok": true,
+      "ms": 7818
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "check-in report: the focus that started the experiment",
+      "ok": true,
+      "ms": 2917
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "metric info",
+      "ok": true,
+      "ms": 2283
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "tagging",
+      "ok": true,
+      "ms": 2768
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "today (sample)",
+      "ok": true,
+      "ms": 1825
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "focus",
+      "ok": true,
+      "ms": 2250
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "drill",
+      "ok": true,
+      "ms": 1347
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "practice log",
+      "ok": true,
+      "ms": 1985
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "progress",
+      "ok": true,
+      "ms": 1946
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "compare (sample)",
+      "ok": true,
+      "ms": 1824
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "sessions list",
+      "ok": true,
+      "ms": 1965
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "metric info: serve count, toss height, spin (sample)",
+      "ok": true,
+      "ms": 4870
+    },
+    {
+      "scheme": "light",
+      "flow": "a",
+      "name": "how we measure",
+      "ok": true,
+      "ms": 1589
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "first run redirects to onboarding",
+      "ok": true,
+      "ms": 1094
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "onboarding answers",
+      "ok": true,
+      "ms": 4619
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "sample session report",
+      "ok": true,
+      "ms": 3735
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "serve detail with overlays",
+      "ok": true,
+      "ms": 7858
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "check-in report: the focus that started the experiment",
+      "ok": true,
+      "ms": 2910
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "metric info",
+      "ok": true,
+      "ms": 2471
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "tagging",
+      "ok": true,
+      "ms": 2792
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "today (sample)",
+      "ok": true,
+      "ms": 1845
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "focus",
+      "ok": true,
+      "ms": 2262
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "drill",
+      "ok": true,
+      "ms": 1341
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "practice log",
+      "ok": true,
+      "ms": 1965
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "progress",
+      "ok": true,
+      "ms": 1914
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "compare (sample)",
+      "ok": true,
+      "ms": 1825
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "sessions list",
+      "ok": true,
+      "ms": 1967
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "metric info: serve count, toss height, spin (sample)",
+      "ok": true,
+      "ms": 4900
+    },
+    {
+      "scheme": "dark",
+      "flow": "a",
+      "name": "how we measure",
+      "ok": true,
+      "ms": 1835
     }
   ],
   "consoleErrors": [],
   "failures": [],
   "todayDecision": [
     {
-      "sessionId": "01M3H6BADT63XB6MASABW6B7G6",
-      "createdAt": "2026-09-27T10:25:38.615Z",
+      "sessionId": "01M3HWA00MH23H6ZW8JZMW57WK",
+      "createdAt": "2026-09-27T16:49:10.586Z",
       "gate": "too-few-serves",
       "focus": null
     }
   ],
-  "ownAfterLogs": [
-    {
-      "id": "01M3H6MRGCKJ3CMPZ6Z1ZJRMX3",
-      "status": "active",
-      "primary": "toss-height-spread",
-      "baseline": [
-        "01M3H6CFT5MXMAKN1NXA3WNEYJ"
-      ]
-    }
-  ],
   "ownExperiment": {
-    "retestSessionId": "01M3H6N2JQTVA10HZF8QYG05FR",
+    "retestSessionId": "01M3HWG71X0PBW1DSGPPTSD4HN",
     "experiments": [
       {
-        "id": "01M3H6MRGCKJ3CMPZ6Z1ZJRMX3",
-        "status": "active",
+        "id": "01M3HWFXGM49N23T5CPFD7FRYQ",
+        "status": "completed",
         "isDemo": 0,
         "baseline": [
-          "01M3H6CFT5MXMAKN1NXA3WNEYJ"
+          "01M3HWAZGYG5DM7XECPYJN4R0N"
         ],
         "retests": [
-          "01M3H6N2JQTVA10HZF8QYG05FR"
+          "01M3HWG71X0PBW1DSGPPTSD4HN"
         ],
         "verdict": "clearly-better",
-        "before": 27.709640485292766,
-        "after": 8.559351610957457,
+        "before": 28.131992554402196,
+        "after": 9.573955417513764,
         "caveats": []
       }
     ]
   },
-  "finishedAt": "2026-09-27T10:38:07.778Z"
+  "ownAfterLogs": [
+    {
+      "id": "01M3HWFXGM49N23T5CPFD7FRYQ",
+      "status": "active",
+      "primary": "toss-height-spread",
+      "baseline": [
+        "01M3HWAZGYG5DM7XECPYJN4R0N"
+      ]
+    }
+  ],
+  "imports": [
+    {
+      "scheme": "light",
+      "prefix": "baseline-",
+      "mountAsked": true,
+      "mount": "Level mount",
+      "spot": "Singles"
+    },
+    {
+      "scheme": "light",
+      "prefix": "checkin-",
+      "mountAsked": true,
+      "mount": "default",
+      "spot": null
+    },
+    {
+      "scheme": "light",
+      "prefix": "retest-",
+      "mountAsked": true,
+      "mount": "default",
+      "spot": null
+    },
+    {
+      "scheme": "dark",
+      "prefix": "baseline-",
+      "mountAsked": true,
+      "mount": "Level mount",
+      "spot": "Singles"
+    },
+    {
+      "scheme": "dark",
+      "prefix": "checkin-",
+      "mountAsked": true,
+      "mount": "default",
+      "spot": null
+    },
+    {
+      "scheme": "dark",
+      "prefix": "retest-",
+      "mountAsked": true,
+      "mount": "default",
+      "spot": null
+    }
+  ],
+  "analyses": [
+    {
+      "scheme": "light",
+      "prefix": "baseline-",
+      "clip": "baseline-s1.mp4",
+      "sessionId": "01M3HVX61DF1B7WB6CR9MTWWA8",
+      "processingS": 17.327,
+      "servesFound": 1,
+      "servesIncluded": 1,
+      "exclusions": {}
+    },
+    {
+      "scheme": "light",
+      "prefix": "checkin-",
+      "clip": "sample-checkin.mp4",
+      "sessionId": "01M3HVY9GT1A1C6K72TTGAF19J",
+      "processingS": 151.046,
+      "servesFound": 16,
+      "servesIncluded": 14,
+      "exclusions": {
+        "BALL_NOT_TRACKED": 2
+      }
+    },
+    {
+      "scheme": "light",
+      "prefix": "retest-",
+      "clip": "sample-retest.mp4",
+      "sessionId": "01M3HW3D5VHN48519TM6XWQ4J6",
+      "processingS": 153.724,
+      "servesFound": 16,
+      "servesIncluded": 16,
+      "exclusions": {}
+    },
+    {
+      "scheme": "dark",
+      "prefix": "baseline-",
+      "clip": "baseline-s1.mp4",
+      "sessionId": "01M3HWA00MH23H6ZW8JZMW57WK",
+      "processingS": 13.122,
+      "servesFound": 1,
+      "servesIncluded": 1,
+      "exclusions": {}
+    },
+    {
+      "scheme": "dark",
+      "prefix": "checkin-",
+      "clip": "sample-checkin.mp4",
+      "sessionId": "01M3HWAZGYG5DM7XECPYJN4R0N",
+      "processingS": 154.998,
+      "servesFound": 16,
+      "servesIncluded": 14,
+      "exclusions": {
+        "BALL_NOT_TRACKED": 2
+      }
+    },
+    {
+      "scheme": "dark",
+      "prefix": "retest-",
+      "clip": "sample-retest.mp4",
+      "sessionId": "01M3HWG71X0PBW1DSGPPTSD4HN",
+      "processingS": 153.501,
+      "servesFound": 16,
+      "servesIncluded": 16,
+      "exclusions": {}
+    }
+  ],
+  "levelMountImport": {
+    "light": {
+      "sessionId": "01M3HVX61DF1B7WB6CR9MTWWA8",
+      "phoneMount": "level-mount",
+      "servingSpot": "singles",
+      "setupKey": "portrait|close|singles",
+      "tossApexHeight": {
+        "status": "unavailable",
+        "value": null,
+        "reasonCode": "TOO_FEW_SERVES"
+      },
+      "contactHeight": {
+        "status": "unavailable",
+        "value": null,
+        "reasonCode": "TOO_FEW_SERVES"
+      },
+      "tossHeightSpread": {
+        "status": "unavailable",
+        "value": null,
+        "reasonCode": "TOO_FEW_SERVES"
+      }
+    },
+    "dark": {
+      "sessionId": "01M3HWA00MH23H6ZW8JZMW57WK",
+      "phoneMount": "level-mount",
+      "servingSpot": "singles",
+      "setupKey": "portrait|close|singles",
+      "tossApexHeight": {
+        "status": "unavailable",
+        "value": null,
+        "reasonCode": "TOO_FEW_SERVES"
+      },
+      "contactHeight": {
+        "status": "unavailable",
+        "value": null,
+        "reasonCode": "TOO_FEW_SERVES"
+      },
+      "tossHeightSpread": {
+        "status": "unavailable",
+        "value": null,
+        "reasonCode": "TOO_FEW_SERVES"
+      }
+    }
+  },
+  "checkServe": {
+    "light": {
+      "sessionId": "01M3HVX61DF1B7WB6CR9MTWWA8",
+      "rows": [
+        "Toss peak Within the 1-frame target Same frame as your mark. App frame 144 · Your frame 144 Show frame 144.",
+        "Contact Within the 1-frame target Same frame as your mark. App frame 167 · Your frame 167 Show frame 167."
+      ],
+      "savedChecks": 1
+    },
+    "dark": {
+      "sessionId": "01M3HWA00MH23H6ZW8JZMW57WK",
+      "rows": [
+        "Toss peak Within the 1-frame target Same frame as your mark. App frame 144 · Your frame 144 Show frame 144.",
+        "Contact Within the 1-frame target Same frame as your mark. App frame 167 · Your frame 167 Show frame 167."
+      ],
+      "savedChecks": 1
+    }
+  },
+  "finishedAt": "2026-09-27T17:01:32.325Z"
 }

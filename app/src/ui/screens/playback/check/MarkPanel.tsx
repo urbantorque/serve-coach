@@ -21,6 +21,7 @@ import {
 import type { RadarDevice } from '../../../../validation/annotation/types.ts'
 import { Button, SegmentedControl } from '../../../components/index.ts'
 import { cx } from '../../../components/cx.ts'
+import { ChipRadios } from './ChipRadios.tsx'
 
 export interface MarkPanelProps {
   draft: MarkDraft
@@ -78,33 +79,29 @@ function PointChooser({ step, draft, target, onTarget, onGoToFrame }: { step: Ma
       <span id={`${step.id}-points`} className="text-footnote font-label text-ink-2">
         The next tap on the video marks
       </span>
-      <div role="radiogroup" aria-labelledby={`${step.id}-points`} className="flex flex-wrap gap-2">
-        {step.points.map((p) => {
+      <ChipRadios
+        labelId={`${step.id}-points`}
+        value={target}
+        onSelect={(id) => {
+          onTarget(id)
+          const placed = draft.points[id]
+          if (placed) onGoToFrame(placed.frameIndex)
+        }}
+        options={step.points.map((p) => {
           const placed = draft.points[p.id]
-          const selected = p.id === target
-          return (
-            <button
-              key={p.id}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              onClick={() => {
-                onTarget(p.id)
-                if (placed) onGoToFrame(placed.frameIndex)
-              }}
-              className={cx(
-                'relative inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-subhead after:absolute after:inset-x-0 after:-inset-y-1',
-                selected ? 'bg-ink font-label text-ink-inverse' : 'border-token border-line-strong text-ink hover:bg-surface-2',
-              )}
-            >
-              {placed ? <CheckCircleIcon size={16} aria-hidden="true" /> : <CircleIcon size={16} aria-hidden="true" />}
-              {p.label}
-              {p.optional ? <span className="text-ink-3">(optional)</span> : null}
-              <span className="sr-only">{placed ? `, marked on frame ${placed.frameIndex}` : ', not marked'}</span>
-            </button>
-          )
+          return {
+            value: p.id,
+            done: Boolean(placed),
+            label: (
+              <>
+                {p.label}
+                {p.optional ? <span className={p.id === target ? 'opacity-80' : 'text-ink-3'}>(optional)</span> : null}
+              </>
+            ),
+            srSuffix: placed ? `, marked on frame ${placed.frameIndex}` : ', not marked',
+          }
         })}
-      </div>
+      />
     </div>
   )
 }
@@ -144,6 +141,7 @@ function RadarForm({ draft, onRadar }: { draft: MarkDraft; onRadar: (r: MarkDraf
           type="text"
           inputMode="decimal"
           autoComplete="off"
+          spellCheck={false}
           value={text}
           aria-describedby={`${id}-help${error ? ` ${id}-error` : ''}`}
           aria-invalid={error ? true : undefined}
@@ -174,15 +172,21 @@ function RadarForm({ draft, onRadar }: { draft: MarkDraft; onRadar: (r: MarkDraf
           apply(text, u, device)
         }}
       />
-      <SegmentedControl
-        label="Radar"
-        options={(Object.keys(RADAR_DEVICE_LABEL) as RadarDevice[]).map((d) => ({ value: d, label: RADAR_DEVICE_LABEL[d] }))}
-        value={device}
-        onChange={(d) => {
-          setDevice(d)
-          apply(text, unit, d)
-        }}
-      />
+      {/* Chips wrap, so "Pocket Radar" never truncates the way a three-way segmented control does at 350 px. */}
+      <div className="flex flex-col gap-2">
+        <span id={`${id}-device`} className="text-footnote font-label text-ink-2">
+          Measured with
+        </span>
+        <ChipRadios
+          labelId={`${id}-device`}
+          value={device}
+          onSelect={(d) => {
+            setDevice(d)
+            apply(text, unit, d)
+          }}
+          options={(Object.keys(RADAR_DEVICE_LABEL) as RadarDevice[]).map((d) => ({ value: d, label: RADAR_DEVICE_LABEL[d] }))}
+        />
+      </div>
     </div>
   )
 }

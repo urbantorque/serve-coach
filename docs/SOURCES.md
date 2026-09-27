@@ -1,10 +1,10 @@
 # Sources
 
-A consolidated bibliography of the outside sources behind Serve Coach's decisions, specs and launch documents. Everything was accessed on **27 September 2026** unless noted. Full reference lists, access notes and fact-check logs live in the research files (`docs/research/01`–`10` and `docs/research/gaps/`); this page groups the sources that matter, says what each one supports, and names the documents that rely on it.
+A consolidated bibliography of the outside sources behind Serve Coach's decisions, specs and launch documents. Everything was accessed on **27 September 2026** unless noted. The four agreement-statistics references in §1.5 marked "Added here" were checked against Europe PMC and Crossref records on that date. Full reference lists, access notes and fact-check logs live in the research files (`docs/research/01`–`10` and `docs/research/gaps/`); this page groups the sources that matter, says what each one supports, and names the documents that rely on it.
 
 **How to read it.**
 - **Cited as** gives the research file and source number, for example "08 [S1]" means `docs/research/08-monetisation-costs.md`, source S1.
-- **Relied on by** names our documents: DECISIONS (D1–D11), PRODUCT, METRICS, COACHING, CAPTURE, ARCHITECTURE, DESIGN, MONETISATION, LAUNCH_AU, FUNCTIONAL_STATUS, LIMITATIONS, IOS_ROUTE.
+- **Relied on by** names our documents: DECISIONS (D1–D11), PRODUCT, METRICS, COACHING, CAPTURE, ARCHITECTURE, DESIGN, VALIDATION, MONETISATION, LAUNCH_AU, FUNCTIONAL_STATUS, LIMITATIONS, NEXT_STEPS, IOS_ROUTE.
 - The groups keep three kinds of evidence apart:
   1. **Established research** (§1): peer-reviewed findings, clinical guidance and standard methods.
   2. **Coaching interpretation** (§2): expert practice, useful but not directly proven.
@@ -100,7 +100,7 @@ Relied on by: DECISIONS D1, D4, D5; METRICS; CAPTURE; ARCHITECTURE; FUNCTIONAL_S
 
 ### 1.5 Statistics and showing uncertainty
 
-Relied on by: DECISIONS D7; METRICS §4; DESIGN (uncertainty display).
+Relied on by: DECISIONS D7; METRICS §4, §5.6; DESIGN (uncertainty display); VALIDATION; NEXT_STEPS §2.
 
 | Source | URL | Cited as | Supports |
 |---|---|---|---|
@@ -110,6 +110,10 @@ Relied on by: DECISIONS D7; METRICS §4; DESIGN (uncertainty display).
 | Kay M et al. (2016). User-centred uncertainty visualisation on mobile. CHI | https://doi.org/10.1145/2858036.2858558 | 09 [S63] | Showing ranges on a phone |
 | Correll M, Gleicher M (2014). Error bars considered harmful. *IEEE TVCG* 20(12) | https://doi.org/10.1109/TVCG.2014.2346298 | 09 [S66] | Interval bars design |
 | Belia S et al. (2005). Researchers misunderstand confidence intervals. *Psychol Methods* 10(4):389–396 | https://doi.org/10.1037/1082-989X.10.4.389 | 09 [S67] | Verdicts in words, not bare intervals |
+| Bland JM, Altman DG (1986). Statistical methods for assessing agreement between two methods of clinical measurement. *Lancet* 1(8476):307–310 | https://doi.org/10.1016/S0140-6736(86)90837-8 | Added here (METRICS §5.6 and research 05 §9 name the method without a citation) | Bias and 95% limits of agreement, app against hand marks (`tools/validate/annotation-eval.ts`) |
+| Bland JM, Altman DG (2007). Agreement between methods of measurement with multiple observations per individual. *J Biopharm Stat* 17(4):571–582 | https://doi.org/10.1080/10543400701329422 | Added here | The repeated-measures variant, because serves are nested in players |
+| Shrout PE, Fleiss JL (1979). Intraclass correlations: uses in assessing rater reliability. *Psychol Bull* 86(2):420–428 | https://doi.org/10.1037/0033-2909.86.2.420 | Added here | ICC(2,1) for inter-annotator and app-against-marks agreement |
+| Koo TK, Li MY (2016). A guideline of selecting and reporting intraclass correlation coefficients for reliability research. *J Chiropr Med* 15(2):155–163 | https://doi.org/10.1016/j.jcm.2016.02.012 | Added here | How the ICC is reported (form, type, interval) |
 
 ---
 
@@ -341,7 +345,10 @@ These are our own files, not outside sources. They are listed so claims can be t
 
 | File | What it is |
 |---|---|
+| [VALIDATION.md](VALIDATION.md) | The accuracy report: every metric's validation state, with the results file behind each number |
 | `validation/results/metrics/SUMMARY.md`; `app/src/analysis/metrics/validation-summary.json` | Metric accuracy on 122 synthetic clips (the basis of every status in FUNCTIONAL_STATUS) |
+| `app/src/validation/annotation/`; `tools/validate/annotation-eval.ts` | "Check this serve" marks, agreement statistics and the pooled real-footage evaluation (not yet run on real footage) |
+| `validation/results/ui/harden-performance/bench/` | Processing-time benchmark on synthetic clips (laptop, not a phone) |
 | `validation/results/smoke/SUMMARY.md` | Pipeline smoke run on 65 clips, including the privacy probe |
 | `validation/results/ui/integrated/report.json` and screenshots | End-to-end flows in headless Edge |
 | `validation/synthetic/manifest.json`; `tools/synth/README.md` | The synthetic corpus and how it is generated |

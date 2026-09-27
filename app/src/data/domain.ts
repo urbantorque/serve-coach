@@ -461,6 +461,11 @@ export interface CoachingDecision {
    * DECISION_COPY), so Today and the report can say why there is no focus and what to film next.
    */
   captureFix?: { message: string; fix?: string; usableServes: number }
+  /**
+   * Addition: the stratum the focus and its evidence stats come from, so every screen reads the
+   * evidence numbers from the same stored stratum summary (METRICS §1.6). Absent on older records.
+   */
+  stratum?: StratumKey
   alternatives: { faultId: string; reason: string }[]
   trace: RuleTraceEntry[]
   phrasing: { source: 'template' | 'on-device-llm' | 'cloud-llm'; model?: string; consentVersion?: string }

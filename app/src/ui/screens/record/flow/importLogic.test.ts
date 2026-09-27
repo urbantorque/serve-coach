@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   clock,
   fpsOverrideFor,
+  heightsNote,
   importGuard,
+  MOUNT_OPTIONS,
+  mountContext,
   needsSlowMotionQuestion,
   resolutionLabel,
   slowMotionContext,
@@ -10,6 +13,7 @@ import {
   summariseClip,
   viewFor,
 } from './importLogic.ts'
+import { importCapture, playerFacts, sessionFor } from './sessionFactory.ts'
 
 describe('clip summary', () => {
   it('formats length, size, rate and orientation (CAPTURE §11.2)', () => {
@@ -70,5 +74,36 @@ describe('camera position and speed (D1, D4)', () => {
     expect(speedTargetNote({ experimental: true, captureFps: 240, view: 'side', target: 'mixed' })).toMatch(/pick one target/)
     expect(speedTargetNote({ experimental: true, captureFps: 240, view: 'side', target: 'wide' })).toBeNull()
     expect(speedTargetNote({ experimental: true, captureFps: 240, view: 'rear', target: null })).toBeNull()
+  })
+})
+
+describe('"How was the phone mounted?" (METRICS §1.1.3a)', () => {
+  it('side views carry the answer; other views never assume level', () => {
+    expect(mountContext('side', 'level-mount')).toBe('level-mount')
+    expect(mountContext('side', 'tilted-or-unsure')).toBe('tilted-or-unsure')
+    expect(mountContext('rear', 'level-mount')).toBeUndefined()
+    expect(MOUNT_OPTIONS.map((o) => o.value)).toEqual(['level-mount', 'roughly-level', 'tilted-or-unsure'])
+  })
+
+  it('the heights note never promises more than METRICS allows, and names no degrees', () => {
+    expect(heightsNote('side', 'tilted-or-unsure')).toMatch(/experimental/)
+    expect(heightsNote('side', 'level-mount')).toMatch(/can stay estimates/)
+    expect(heightsNote('side', 'roughly-level')).toMatch(/may stay experimental/)
+    expect(heightsNote('rear', 'level-mount')).toMatch(/experimental/)
+    for (const a of ['level-mount', 'roughly-level', 'tilted-or-unsure'] as const) expect(heightsNote('side', a)).not.toMatch(/\d\s*°/)
+  })
+
+  it('the answer and the serving spot reach the capture context and the session record', () => {
+    const player = playerFacts({ heightM: 1.8, handedness: 'right' })
+    const meta = { width: 1080, height: 1920, captureFps: 60, mimeType: 'video/mp4' }
+    const capture = importCapture(player, { view: 'side', cameraSide: 'chest', side: 'deuce', serveNumber: 1, hitSoundTiming: false, mount: 'level-mount', servingSpot: 'doubles' }, meta)
+    expect(capture.mount).toBe('level-mount')
+    expect(capture.servingSpot).toBe('doubles')
+    const rec = sessionFor({ capture, view: 'side', cameraSide: 'chest', mode: 'technique', template: 'import', startedAt: '2026-09-27T08:00:00+10:00', block: { side: 'deuce', serveNumber: 1, servingSpot: 'doubles' } })
+    expect(rec.servingSpot).toBe('doubles')
+    expect(rec.phoneMount).toBe('level-mount')
+    const none = importCapture(player, { view: 'side', side: 'deuce', serveNumber: 1, hitSoundTiming: false }, meta)
+    expect(none.mount).toBeUndefined()
+    expect(none.servingSpot).toBeUndefined()
   })
 })

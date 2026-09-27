@@ -21,13 +21,15 @@ import {
 } from '../../components/index.ts'
 import { UI } from '../../copy/strings.ts'
 import { shortDate } from '../../format/dates.ts'
+import { decisionEvidence, headlineFor } from '../../format/sessionValues.ts'
 import { paths } from '../../shell/paths.ts'
 import { matched, seriesFor, stratumOf, stratumWords, usualRange, type SessionBundle } from '../progress/insights/history.ts'
+import { comparisonSessionIds } from '../progress/insights/compare.ts'
 import { useExperiment, useReportData, useSessionBundles, useSessionData } from '../progress/insights/hooks.ts'
 import { outcomeLinkState } from '../progress/insights/outcomes.ts'
 import { InlineError } from '../progress/insights/ui.tsx'
 import { metricInfoFor } from '../progress/insights/links.ts'
-import { FocusCard, type EvidenceStat } from '../today/FocusCard.tsx'
+import { FocusCard } from '../today/FocusCard.tsx'
 import { InsightCard, OutcomesSection } from './report/OutcomesSection.tsx'
 import { CaptureLine, ExperimentResultCard, StorageLine } from './report/ReportParts.tsx'
 import { ServeList } from './report/ServeList.tsx'
@@ -54,7 +56,6 @@ const EXPERIMENTAL: Record<'side' | 'rear', MetricId[]> = {
   side: ['deep-bend-flag', 'speed-experimental', 'trophy-pause', 'repeatability'],
   rear: ['toss-lateral-spread', 'toss-lateral', 'knee-bend-band', 'shoulder-over-shoulder-contact', 'speed-average-rear', 'trophy-pause', 'repeatability'],
 }
-const EVIDENCE_OK = (v?: MetricValueData) => v?.status === 'measured' || v?.status === 'estimated'
 
 function ReportSkeleton() {
   return (
@@ -85,8 +86,8 @@ export function SessionReportScreen() {
   const isDemo = data?.session.isDemo === 1
   const bundles = useSessionBundles({ includeDemo: isDemo })
   const exp = useExperiment(data?.session.experimentId)
-  const baselineIds = exp ? exp.baselineSessionIds : undefined
-  const retestIds = exp ? exp.retestSessionIds : undefined
+  const baselineIds = exp ? comparisonSessionIds(exp, 'baseline') : undefined
+  const retestIds = exp ? comparisonSessionIds(exp, 'retest') : undefined
   const expBaseline = useSessionData(baselineIds)
   const expRetests = useSessionData(retestIds)
   // A re-test session carries no decision of its own: show the experiment's focus (from its baseline session).
@@ -96,7 +97,10 @@ export function SessionReportScreen() {
 
   const self: SessionBundle | null = data ? { session: data.session, stats: data.stats } : null
   const earlier = self && bundles ? bundles.filter((b) => b.session.id !== self.session.id && b.session.startedAt < self.session.startedAt && b.session.isDemo === self.session.isDemo) : []
-  const prevMatched = self ? earlier.filter((b) => matched(b, self)).slice(0, 6) : []
+  // Usual ranges and the toss map's usual area compare the shown stratum with the same stratum and
+  // set-up in earlier sessions (METRICS §4.4).
+  const shownKey = data?.stats?.strata && data.stats.strata.length > 1 ? (data.stats.strata[Number(stratumIdx)] ?? data.stats.strata[0]).key : self ? stratumOf(self) : undefined
+  const prevMatched = self && shownKey ? earlier.filter((b) => matched(b, self, undefined, shownKey)).slice(0, 6) : []
   const prevData = useSessionData(prevMatched.map((b) => b.session.id))
 
   if (data === undefined || profile === undefined || decision === undefined) return <ReportSkeleton />
@@ -138,15 +142,16 @@ export function SessionReportScreen() {
   }
 
   // Usual ranges from previous matched sessions (≥ 2, DESIGN §9.2).
-  const usualOf = (id: MetricId) => (self ? usualRange(seriesFor(id, [...prevMatched].reverse().concat(self))) : null)
+  const usualOf = (id: MetricId) => (self ? usualRange(seriesFor(id, [...prevMatched].reverse().concat(self), key)) : null)
   const usual: Partial<Record<MetricId, [number, number] | null>> = {}
   for (const id of ['contact-height-ratio', 'rhythm-release-to-contact', 'rhythm-spread', 'landing-distance', 'toss-height-spread'] as MetricId[]) usual[id] = usualOf(id)
 
   const shownDecision = decision ?? expDecision ?? null
-  const decisionSession = shownDecision?.sessionId === session.id ? m : (expBaseline?.[0]?.stats?.metrics ?? {})
-  const evidence: EvidenceStat[] = (shownDecision?.evidence?.metricIds ?? [])
-    .map((id) => ({ metricId: id, value: decisionSession[id] }))
-    .filter((e): e is EvidenceStat => EVIDENCE_OK(e.value))
+  // The focus's numbers are its own session's stored values in the focus's stratum, the same ones
+  // Today shows (ui/format/sessionValues.ts), whichever stratum this report is showing.
+  const decisionStats = shownDecision?.sessionId === session.id ? stats : (expBaseline?.find((d) => d.session.id === shownDecision?.sessionId) ?? expBaseline?.[0])?.stats
+  const evidence = decisionEvidence(shownDecision, decisionStats)
+  const headline = headlineFor(session, stats)
 
   const ghosts = [
     ...CORE[view].filter((id) => m[id]?.status === 'unavailable'),
@@ -200,7 +205,7 @@ export function SessionReportScreen() {
             options={strata.slice(0, 4).map((s, i) => ({ value: String(i), label: stratumWords(s.key).replace(/^(Side view|View from behind), /, '') }))}
           />
         ) : null}
-        {stats?.headline ? <p className="text-title-2 text-ink text-pretty">{stats.headline}</p> : null}
+        {headline ? <p className="text-title-2 text-ink text-pretty">{headline}</p> : null}
         <CaptureLine quality={a.capture.quality} measured={counts.included} detected={counts.analysed} />
       </header>
 
@@ -217,7 +222,7 @@ export function SessionReportScreen() {
             />
           ) : null}
           {exp && session.isRetest === 1 && expBaseline && expRetests ? (
-            <ExperimentResultCard experiment={exp} baseline={expBaseline} retests={expRetests} />
+            <ExperimentResultCard experiment={exp} baseline={expBaseline} retests={expRetests} heightM={heightM} />
           ) : null}
         </section>
       ) : null}

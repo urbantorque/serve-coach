@@ -12,7 +12,6 @@ import { paths } from '../../../shell/paths.ts'
 import { compareExperiment, type SessionData } from '../../progress/insights/compare.ts'
 import { VerdictLine } from '../../progress/insights/ui.tsx'
 import { moreServesText } from '../../progress/insights/words.ts'
-import { derived } from '../../progress/insights/values.ts'
 
 /**
  * Capture line (DESIGN §3.6) with the capture detail sheet: every non-passing check with its message
@@ -64,13 +63,13 @@ export function CaptureLine({ quality, measured, detected }: { quality: QualityR
  * "Did it work?" card on a re-test report (PRODUCT §6.5 item 5): the verdict in words with the
  * effect and n, linking to Compare.
  */
-export function ExperimentResultCard({ experiment, baseline, retests }: { experiment: ExperimentRecord; baseline: SessionData[]; retests: SessionData[] }) {
-  const model = compareExperiment(experiment, baseline, retests)
+export function ExperimentResultCard({ experiment, baseline, retests, heightM }: { experiment: ExperimentRecord; baseline: SessionData[]; retests: SessionData[]; heightM?: number }) {
+  const model = compareExperiment(experiment, baseline, retests, heightM)
   const id = model.metricId
-  const status = model.fromEngine ? 'estimated' : (baseline[0]?.stats?.metrics[id]?.status ?? 'estimated')
-  const st = status === 'unavailable' || status === 'experimental' ? 'estimated' : status
-  const before = derived(id, st, model.before.value, { n: model.before.n })
-  const after = derived(id, st, model.after.value, { n: model.after.n })
+  // The same values Compare shows: each one-session side is that session's own stored value, so the
+  // re-test's number here equals its headline and toss tile (ui/format/sessionValues.ts).
+  const before = model.beforeValue
+  const after = model.afterValue
   return (
     <section aria-labelledby="did-it-work" className="card flex flex-col items-start gap-3 p-4">
       <h3 id="did-it-work" className="text-headline text-ink">

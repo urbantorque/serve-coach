@@ -218,6 +218,7 @@ export class MediaElementFrameProducer implements FrameProducer {
       yielded: 0,
       missingIndices: [],
       samplesFed: 0,
+      samplesSkipped: 0,
       elapsedMs: 0,
       notes: [...this.timeline.notes],
     }

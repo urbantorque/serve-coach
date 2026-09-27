@@ -138,7 +138,7 @@ export function assumedLevelHeight(
   const sigmaTilt = Math.hypot(sPitch, sRoll)
   const widenedP95 = Math.hypot(budget.measuredP95, Z * sigmaTilt)
   return widenedP95 <= budget.p95Threshold
-    ? { sigmaTilt, downgrades: [], infoReason: 'TILT_UNKNOWN', widenedP95 }
+    ? { sigmaTilt, downgrades: [{ cap: 'estimated', reason: 'TILT_UNKNOWN' }], infoReason: 'TILT_UNKNOWN', widenedP95 }
     : { sigmaTilt, downgrades: [{ cap: 'experimental', reason: 'PITCH_UNKNOWN' }], widenedP95 }
 }
 

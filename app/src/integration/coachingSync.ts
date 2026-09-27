@@ -10,7 +10,7 @@
  * session's coaching decision; today's body check, a referral and match day are applied on screen
  * on top of it (they are never stored as the session's decision).
  */
-import { buildVerdictRequest, decideFocus, normaliseProfile, toCoachingRecord, type CoachingDecision } from '../coaching/index.ts'
+import { buildVerdictRequest, decideFocus, experimentRecordStatus, normaliseProfile, toCoachingRecord, type CoachingDecision } from '../coaching/index.ts'
 import { attachRetest, createExperiment, putDecision, useSettingsStore } from '../data/index.ts'
 import type { CoachingRecord, ExperimentRecord } from '../data/records.ts'
 import { buildFocusInput, readFocusData } from '../ui/screens/focus/focusInput.ts'
@@ -77,7 +77,10 @@ async function run(opts: SyncOptions): Promise<SyncResult> {
       history: built.input.history ?? [],
       profile: normaliseProfile(built.profile),
     })
-    experiment = { ...experiment, result: experimentResult(request, built.experiment.stratum, now) }
+    // A verdict that ends the experiment (worked, parked, superseded) is stored with its final status
+    // (COACHING §12.5), so a "clearly better" experiment is completed rather than left active.
+    const ended = 'experiment' in decision ? decision.experiment : undefined
+    experiment = { ...experiment, result: experimentResult(request, built.experiment.stratum, now), status: experimentRecordStatus(ended, experiment.id) }
     await createExperiment(experiment)
   }
   return { decision, record, ...(experiment ? { experiment } : {}), ...(attachedRetest ? { attachedRetest } : {}) }

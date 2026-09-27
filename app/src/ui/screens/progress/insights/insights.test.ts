@@ -4,8 +4,20 @@ import { describe, expect, it } from 'vitest'
 import type { MetricValue } from '../../../../analysis/types.ts'
 import { DEMO_FIXTURES } from '../../../../data/fixtures.ts'
 import type { ExperimentRecord } from '../../../../data/records.ts'
-import { barSpec, compareExperiment, deviations, sameZone, servesToConfirmSpread, type SessionData } from './compare.ts'
-import { againstUsual, matched, seriesFor, stratumOf, stratumWords, trendState, usualRange, type SessionBundle } from './history.ts'
+import { experimentResult } from '../../../../integration/verdict.ts'
+import { barSpec, compareExperiment, deviations, localRequest, sameZone, type SessionData } from './compare.ts'
+import {
+  againstUsual,
+  baselineProgress,
+  baselineWords,
+  matched,
+  seriesFor,
+  stratumOf,
+  stratumWords,
+  trendState,
+  usualRange,
+  type SessionBundle,
+} from './history.ts'
 import { METRIC_CONFIG } from './metricConfig.ts'
 import { linkCandidates, outcomeLinkState, pooledRate, rateCounts, replicates } from './outcomes.ts'
 import { apexCm, outcomeCounts, outcomeKind, perServe, serveRows, tossData, usableNumber, type ServeRow } from './serves.ts'
@@ -113,6 +125,31 @@ describe('matched history (METRICS §4.4, §4.6; DESIGN §9.2)', () => {
   })
 })
 
+describe('Building your baseline (METRICS §4.1)', () => {
+  it('counts matched sessions with 8 or more measured serves, and says why a short one does not count', () => {
+    const b = bundle(0)
+    const short = structuredClone(bundle(0))
+    short.session = { ...short.session, id: 'short', startedAt: '2026-09-26T08:00:00+10:00' }
+    short.stats!.strata = short.stats!.strata.map((s) => ({ ...s, n: 1, nTotal: 1 }))
+    const p = baselineProgress([short], short)
+    expect(p).toMatchObject({ have: 0, need: 2, latestServes: 1, latestCounts: false })
+    expect(baselineWords(p).body).toMatch(/at least 8 serves.*In your latest, 1 was/)
+    expect(baselineProgress([b, short], short).have).toBe(1)
+    expect(baselineProgress([b, bundle(2)], bundle(2)).have).toBe(2)
+  })
+
+  it('sessions from different set-ups (distance class) never count together', () => {
+    const near = structuredClone(bundle(0))
+    near.session = { ...near.session, id: 'near' }
+    near.stats!.setupKey = 'portrait|close|singles'
+    const std = structuredClone(bundle(2))
+    std.stats!.setupKey = 'portrait|standard|singles'
+    expect(matched(near, std)).toBe(false)
+    expect(matched(near, std, 'rhythm-spread')).toBe(true)
+    expect(baselineProgress([near, std], std).have).toBe(1)
+  })
+})
+
 describe('outcomes', () => {
   it('pooled rate: counts, Wilson interval, and the > 150 serves message for a 10-point change', () => {
     expect(rateCounts(FX.sessions[0].stats.metrics['first-serve-in-rate'])).toEqual({ k: 12, n: 22 })
@@ -200,10 +237,25 @@ describe('did it work? (METRICS §4.5)', () => {
     expect(d).toHaveLength(20)
   })
 
-  it('"about N more serves" for spreads rounds up to 5 and gives up beyond counting', () => {
-    const n = servesToConfirmSpread({ deltaLog: 0.3, seLog: 0.25, n1: 20, n2: 20, swcLog: 0.1625, tau: 0.05, k1: 1 })
-    expect(n % 5).toBe(0)
-    expect(servesToConfirmSpread({ deltaLog: 0.01, seLog: 0.3, n1: 20, n2: 20, swcLog: 0.1625, tau: 0.3, k1: 1 })).toBe(Number.POSITIVE_INFINITY)
+  it('the phone-side fallback IS the stored-result function (one verdict implementation, METRICS §4.5)', () => {
+    const local = { ...exp, result: undefined }
+    const m = compareExperiment(local, [data(0)], [data(2)], 1.78)
+    const stored = experimentResult(localRequest(local, [data(0)], [data(2)], 1.78), local.stratum)
+    expect(m.verdict).toBe(stored.verdict)
+    // A one-session side shows that session's own stored value, the number its report shows.
+    expect(m.beforeValue).toBe(data(0).stats!.metrics['toss-height-spread'])
+    expect(m.afterValue).toBe(data(2).stats!.metrics['toss-height-spread'])
+    expect(m.before.value).toBe(data(0).stats!.metrics['toss-height-spread']!.value)
+    if (m.moreServes !== undefined && Number.isFinite(m.moreServes)) expect(m.moreServes % 5).toBe(0)
+  })
+
+  it('a spread baseline session with a single value adds nothing, so it is left out (METRICS §4.2)', () => {
+    const one = structuredClone(data(2))
+    one.session = { ...one.session, id: 'one-serve' }
+    let kept = 0
+    one.rows = one.rows.map((r) => (r.included && kept++ === 0 ? r : { ...r, included: false }))
+    const req = localRequest({ ...exp, result: undefined }, [data(0), one], [data(2)], 1.78)
+    expect(req.baseline.sessionIds).toEqual([data(0).session.id])
   })
 })
 

@@ -53,7 +53,7 @@ export function metricsVerdict(req: VerdictRequest): VerdictResult {
   if (!out) return { verdict: 'not-comparable', method: 'none', reason: 'this measurement has no before-and-after rule yet' }
   const limit = out.verdict === 'at-measurement-limit'
   return {
-    verdict: limit ? 'not-comparable' : out.verdict,
+    verdict: out.verdict === 'at-measurement-limit' ? 'not-comparable' : out.verdict,
     method: out.method,
     ...(out.delta !== undefined ? { delta: out.delta } : {}),
     ...(out.ci95 ? { low: out.ci95[0], high: out.ci95[1] } : {}),

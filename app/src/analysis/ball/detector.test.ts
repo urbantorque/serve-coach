@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { planarToRgba, type PlanarCrop } from '../video/planar.ts'
 import { BallDetector, chooseDownscaleFactor, dilateMax3x3, downscaleRgb, selectKth } from './detector.ts'
 import { median, percentile } from './fit.ts'
 import { ballAt, createScene, LIGHTING, type Capsule, type SceneSpec } from './testing/synthFrames.ts'
@@ -352,5 +353,64 @@ describe('detector kernels (fast paths match the straightforward versions exactl
       const sorted = Array.from(values).sort((a, b) => a - b)
       for (const k of [0, n >> 1, n - 1]) expect(selectKth(Float64Array.from(values), n, k)).toBe(sorted[k])
     }
+  })
+})
+
+describe('BallDetector on YUV crops (video/planar.ts)', () => {
+  /** RGBA -> limited-range BT.709 I420, as a decoder would hand it over. */
+  function toI420(image: { width: number; height: number; data: Uint8ClampedArray }): PlanarCrop {
+    const { width: w, height: h, data } = image
+    const ySize = w * h
+    const cw = w / 2
+    const out = new Uint8Array(ySize + 2 * cw * (h / 2))
+    const kr = 0.2126
+    const kb = 0.0722
+    const kg = 1 - kr - kb
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const p = (y * w + x) * 4
+        out[y * w + x] = Math.round(16 + (219 / 255) * (kr * data[p] + kg * data[p + 1] + kb * data[p + 2]))
+      }
+    }
+    for (let y = 0; y < h / 2; y++) {
+      for (let x = 0; x < cw; x++) {
+        let r = 0
+        let g = 0
+        let b = 0
+        for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+          const p = ((2 * y + dy) * w + 2 * x + dx) * 4
+          r += data[p] / 4
+          g += data[p + 1] / 4
+          b += data[p + 2] / 4
+        }
+        const Y = kr * r + kg * g + kb * b
+        out[ySize + y * cw + x] = Math.round(128 + (224 / 255) * ((b - Y) / (2 * (1 - kb))))
+        out[ySize + cw * (h / 2) + y * cw + x] = Math.round(128 + (224 / 255) * ((r - Y) / (2 * (1 - kr))))
+      }
+    }
+    const layout = [{ offset: 0, stride: w }, { offset: ySize, stride: cw }, { offset: ySize + cw * (h / 2), stride: cw }]
+    return { kind: 'planar', format: 'I420', codedWidth: w, codedHeight: h, data: out, layout, kr, kb, fullRange: false, rotationDeg: 0, downscale: 1 }
+  }
+
+  it('finds the same ball from the YUV directly as from its RGBA conversion', { timeout: 30_000 }, () => {
+    const scene = createScene({ width: W, height: H, seed: 11, upper: 'sky', lower: 'grass', horizonY: 0.45, lighting: LIGHTING.sun, noiseSigma: 4, playerX: 0.4 })
+    const viaRgba = new BallDetector({ expectedRadiusNorm: 6 / H })
+    const direct = new BallDetector({ expectedRadiusNorm: 6 / H })
+    let compared = 0
+    for (let f = 0; f < 40; f++) {
+      const t = f / 60
+      const ball = ballAt(tossPath, t, 1 / 120, 6)
+      const yuv = toI420(scene.render(ball, [], 1000 + f))
+      const a = viaRgba.detect({ image: planarToRgba(yuv), tReal: t })
+      const b = direct.detect({ image: yuv, tReal: t })
+      if (f === 0) continue
+      expect(b.length > 0).toBe(a.length > 0)
+      if (!a[0]) continue
+      compared++
+      expect(Math.hypot((a[0].x - b[0].x) * W, (a[0].y - b[0].y) * H)).toBeLessThan(0.5)
+      expect(Math.abs(a[0].score - b[0].score)).toBeLessThan(0.05)
+      expect(Math.hypot(b[0].x * W - ball.x, b[0].y * H - ball.y)).toBeLessThan(2)
+    }
+    expect(compared).toBeGreaterThan(35)
   })
 })

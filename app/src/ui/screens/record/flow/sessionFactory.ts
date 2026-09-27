@@ -11,9 +11,11 @@ import type {
   CaptureContext,
   CaptureSetup,
   Handedness,
+  PhoneMount,
   ServeNumber,
   ServeSide,
   ServeType,
+  ServingSpot,
   TargetZone,
   VideoMeta,
 } from '../../../../analysis/types.ts'
@@ -42,6 +44,8 @@ export interface BlockFacts {
   target?: TargetZone | 'mixed' | null
   wind?: 'calm' | 'breezy' | 'windy'
   light?: 'day' | 'lights'
+  /** Addition: singles or doubles serving spot (a set-up matching factor, METRICS §4.4). */
+  servingSpot?: ServingSpot | null
 }
 
 export interface RecordingFacts {
@@ -76,6 +80,7 @@ export function recordingCapture(player: PlayerFacts, block: BlockFacts, facts: 
     declaredView: 'side',
     cameraSide: 'chest',
     serveSide: block.side,
+    ...(block.servingSpot ? { servingSpot: block.servingSpot } : {}),
     serveNumber: block.serveNumber,
     intendedType: intendedType(block.type),
     intendedTarget: block.target ?? undefined,
@@ -108,6 +113,10 @@ export interface ImportAnswers {
   target?: TargetZone | 'mixed' | null
   slowMotionAnswer?: CaptureContext['slowMotionAnswer']
   hitSoundTiming: boolean
+  /** Addition: "How was the phone mounted?" (side views; METRICS §1.1.3a). */
+  mount?: PhoneMount
+  /** Addition: singles or doubles serving spot. */
+  servingSpot?: ServingSpot | null
 }
 
 /** CaptureContext for an import (CAPTURE §11.2): pitch unknown, built from the probe and the answers. */
@@ -131,6 +140,8 @@ export function importCapture(player: PlayerFacts, answers: ImportAnswers, meta:
     setup,
     hitSoundTiming: answers.hitSoundTiming,
     slowMotionAnswer: answers.slowMotionAnswer,
+    ...(answers.mount ? { mount: answers.mount } : {}),
+    ...(answers.servingSpot ? { servingSpot: answers.servingSpot } : {}),
   }
 }
 
@@ -190,6 +201,8 @@ export function sessionFor(input: SessionInput): Omit<SessionRecord, 'id' | 'cre
     defaultServeNumber: b.serveNumber === 'mixed' ? undefined : b.serveNumber,
     defaultIntendedType: intendedType(b.type),
     defaultTarget: b.target && b.target !== 'mixed' ? b.target : undefined,
+    ...((input.capture.servingSpot ?? b.servingSpot) ? { servingSpot: (input.capture.servingSpot ?? b.servingSpot)! } : {}),
+    ...(input.capture.mount ? { phoneMount: input.capture.mount } : {}),
   }
 }
 

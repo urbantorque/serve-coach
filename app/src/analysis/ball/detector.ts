@@ -13,6 +13,7 @@
  *  5. sub-pixel centroid refined at full resolution for the top candidates.
  */
 import type { ImageDataLike } from '../types.ts'
+import { downscalePlanar, isPlanarCrop, planarOutputSize, planarRegionToRgba, type PlanarCrop } from '../video/planar.ts'
 import { ballColourLikelihood, clamp, DEFAULT_COLOUR_MODEL, smoothstep, type ColourModel } from './colour.ts'
 import { blobShape, extractBlobs, type BlobStats, type CellRect } from './components.ts'
 import type { RegionOfInterest } from './scale.ts'
@@ -79,8 +80,14 @@ export interface DetectorOptions {
   plainSupportHigh?: number
 }
 
+/**
+ * A frame for the detector: RGBA, or a YUV crop of a CPU-memory frame (video/planar.ts), which is
+ * box-downscaled straight from the YUV and converted to RGB only where candidates are refined.
+ */
+export type DetectorImage = ImageDataLike | PlanarCrop
+
 export interface DetectorFrame {
-  image: ImageDataLike
+  image: DetectorImage
   tReal: number
 }
 
@@ -412,8 +419,19 @@ function cloneGrid(grid: GridFrame): GridFrame {
   return { ...grid, r: grid.r.slice(), g: grid.g.slice(), b: grid.b.slice() }
 }
 
+/** Full-resolution RGBA of a pixel rectangle: row-major from (x0, y0) with stride `width`. */
+interface PixelRegion {
+  data: Uint8ClampedArray
+  x0: number
+  y0: number
+  width: number
+}
+
 interface ScoringContext {
-  image: ImageDataLike
+  /** Full-resolution size of the frame. */
+  image: { width: number; height: number }
+  /** Full-resolution RGBA for [x0, x1) x [y0, y1) (a view of RGBA input, a conversion of YUV input). */
+  region: (x0: number, y0: number, x1: number, y1: number) => PixelRegion
   grid: GridFrame
   motion: Float32Array | null
   /** Running background (grid resolution), for un-mixing moving full-resolution pixels. */
@@ -521,6 +539,7 @@ function refineAtFullResolution(
   const y0 = Math.max(0, (stats.minY - 1) * f)
   const x1 = Math.min(image.width, (stats.maxX + 2) * f)
   const y1 = Math.min(image.height, (stats.maxY + 2) * f)
+  const px = ctx.region(x0, y0, x1, y1)
   let sw = 0
   let sx = 0
   let sy = 0
@@ -529,10 +548,10 @@ function refineAtFullResolution(
   for (let y = y0; y < y1; y++) {
     const cellY = Math.min(grid.height - 1, Math.floor(y / f))
     for (let x = x0; x < x1; x++) {
-      const p = (y * image.width + x) * 4
-      const r = image.data[p]
-      const g = image.data[p + 1]
-      const b = image.data[p + 2]
+      const p = ((y - px.y0) * px.width + (x - px.x0)) * 4
+      const r = px.data[p]
+      const g = px.data[p + 1]
+      const b = px.data[p + 2]
       const cellX = Math.min(grid.width - 1, Math.floor(x / f))
       const cell = cellY * grid.width + cellX
       let l = ballColourLikelihood(r, g, b, ctx.model)
@@ -594,7 +613,9 @@ export class BallDetector {
   ): BallCandidate[] {
     const opts = { ...DEFAULTS, ...this.options, ...overrides }
     const model = opts.colourModel ?? DEFAULT_COLOUR_MODEL
-    const image = frame.image
+    const input = frame.image
+    const planar = isPlanarCrop(input) ? input : null
+    const image = planar ? planarOutputSize(planar) : (input as ImageDataLike)
     const dims = `${image.width}x${image.height}`
     if (this.factor === 0 || dims !== this.dims) {
       this.factor =
@@ -604,7 +625,7 @@ export class BallDetector {
       this.dims = dims
       this.background = null
     }
-    const grid = downscaleRgb(image, this.factor)
+    const grid: GridFrame = planar ? { ...downscalePlanar(planar, this.factor), factor: this.factor } : downscaleRgb(input as ImageDataLike, this.factor)
     const rect = roiToCells(opts.roi, grid)
     const inOrder = frame.tReal > this.lastTReal
     const pixelColour = colourLikelihoodMap(grid, rect, model)
@@ -624,8 +645,12 @@ export class BallDetector {
     const maxRadiusCells = (expectedRadiusPx ? 2.3 * expectedRadiusPx : 0.06 * image.height) / this.factor
     const maxArea = Math.ceil(Math.PI * maxRadiusCells ** 2 + 2 * maxRadiusCells * (opts.maxStreakRatio * maxRadiusCells))
     const blobs = extractBlobs(combined, colour, motion, grid.width, rect, opts.maskThreshold, maxArea)
+    const rgba = planar ? null : (input as ImageDataLike)
     const ctx: ScoringContext = {
       image,
+      region: rgba
+        ? () => ({ data: rgba.data, x0: 0, y0: 0, width: rgba.width })
+        : (x0, y0, x1, y1) => planarRegionToRgba(planar!, x0, y0, x1, y1),
       grid,
       motion,
       background: maps ? this.background : null,

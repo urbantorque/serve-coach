@@ -164,9 +164,12 @@ describe('planDecodeSegments', () => {
     const { samples, frames } = stream(600, 60)
     // 175 -> keyframe 180 is only 5 samples past 175: not worth a flush.
     expect(planDecodeSegments(samples, frames, [130, 175, 185])!.segments).toEqual([{ firstSample: 120, lastSample: 185 }])
-    // A coarse step skips the tail of every GOP (46-59, 106-119, ...): one run per GOP.
+    // A coarse step skips only the tail of every GOP (46-59, 106-119, ...): a flush per GOP costs
+    // more than decoding 14 samples, so the scan stays one run by default...
     const every15 = Array.from({ length: 40 }, (_, k) => k * 15)
-    const runs = planDecodeSegments(samples, frames, every15)!.segments
+    expect(planDecodeSegments(samples, frames, every15)!.segments).toEqual([{ firstSample: 0, lastSample: 585 }])
+    // ...and splits per GOP only under a small threshold.
+    const runs = planDecodeSegments(samples, frames, every15, 8)!.segments
     expect(runs).toHaveLength(10)
     expect(runs[0]).toEqual({ firstSample: 0, lastSample: 45 })
     // Every 10th frame leaves 9 samples at the end of each GOP: still one run under a threshold of 10.

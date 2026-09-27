@@ -110,6 +110,15 @@ source.noiseEvents // every injected dropout / swap, for checking what cleaning 
   `ServerTracker` keeps the server. Cost: MediaPipe then runs its person detector on every
   frame (about 10 ms per frame on this machine). `numPoses: 1` with VIDEO mode is the fast
   option (see the ROI section).
+- **Throughput (measured 2026-09-28, `smoke/run-throughput.mjs`, Arc 130V, 120 pre-cropped frames):**
+  the WebGL path costs a nearly fixed 15-28 ms a frame whatever the model (lite 13-26 ms, full
+  15-28 ms; numPoses 2 adds the detector, about 10 ms). A second landmarker in another worker adds
+  about 10% (the GPU process is shared); the CPU delegate takes 33 ms a frame with numPoses 1 and
+  91 ms with 2, per worker. `maxInFlight` changes results, not only speed: the ROI crop for the
+  next frame is chosen from the observations so far, so a deeper pipeline crops from older ones.
+- **Stream settings (`configure`):** `numPoses`, `roiMaxSidePx` and a `seed` (the server's pose
+  just before the stream, which starts the ROI and the tracker without a localisation) apply from
+  the next `estimate()` call.
 - **Score:** tasks-vision exposes no per-pose score, so `PoseFrame.score` is the mean
   visibility of the 12 core joints.
 - **Privacy:** tasks-vision 1.0.1 POSTs usage telemetry (task type, timings, no image data)
@@ -499,6 +508,16 @@ runs; other agents were loading the machine at the same time.
   any second landmarker in the worker failed with "ModuleFactory not set". That broke the ROI
   locator and, silently, the GPU -> CPU retry inside the worker. `mediapipeCore.ts` now gives
   every load after the first a unique query string.
+- **Fixed at integration (2026-09-28): concurrent model fetches in production builds.** Pass B's
+  extra pose lane starts loading while Pass A runs, at the same moment Pass A's worker creates
+  its ROI locator. Both fetch the 9 MB `pose_landmarker_full.task`, and on a static host
+  (`vite preview`) Chromium failed one of them with `net::ERR_CACHE_WRITE_FAILURE` ("Failed to
+  fetch"). The dev server never showed it. When the locator lost, Pass A ran on full frames for
+  the whole clip and found 3 of 16 serves on `sample-checkin` (7 production runs); when the
+  extra lane lost, it fell back to the CPU delegate (91 ms a frame). `LandmarkerHandle.create`
+  now retries the same delegate after a network failure (`isTransientLoadError`, 0.25 s then
+  1 s), and a failed locator is not kept, so the next stream tries again. After the fix:
+  16 found, 14 counted, all lanes on the GPU, in 2 of 2 production runs.
 
 ## Known limitations
 

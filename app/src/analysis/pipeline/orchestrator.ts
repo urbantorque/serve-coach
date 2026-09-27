@@ -4,14 +4,16 @@
  *   probe (+ time base: player override, slow-motion answer, container proof)
  *   -> session, video (retention per the player's setting) and job rows
  *   -> contact onsets (hit-sound timing only; timestamps only)
- *   -> Pass A: sparse pose (lite, ~15 Hz real) -> cleanPoseFrames -> findServeWindows -> planned windows
- *   -> Pass B per window: dense pose (ROI, pose worker) + ball detection (ball worker, crop + corridor)
- *      -> analyseBall; the first toss's gravity check proves or corrects an unknown time base
+ *   -> Pass A: sparse pose (4 Hz scan, 15 Hz fill; the landmarker starts loading at the probe)
+ *      -> cleanPoseFrames -> findServeWindows -> planned windows
+ *   -> Pass B per window: dense pose (ROI; windows shared over the pose lanes) + ball detection
+ *      (ball workers, YUV crops of the toss band and corridor) -> analyseBall; the first toss's
+ *      gravity check proves or corrects an unknown time base
  *   -> analyseSession (engine-core) -> key frames (JPEG) -> tracks -> coaching (if available)
  *   -> one commit through the data layer.
  *
- * Cancellation: the AbortSignal reaches the decoder; on abort the ball worker is terminated and
- * the pose sources disposed at once, so work stops within one frame. A cancelled or failed run
+ * Cancellation: the AbortSignal reaches the decoder; on abort the ball workers are terminated and
+ * the pose sources (and any still loading) disposed at once, so work stops within one frame. A cancelled or failed run
  * marks the session and job and writes no results (never half-saved).
  */
 import type { AnalysisErrorCode, EngineStamp, RectificationInfo, ServeAnalysis, ServeWindow, SessionAnalysis, SessionStats } from '../../data/domain.ts'
@@ -29,7 +31,7 @@ import type { AudioOnset, BallObservation, BallTrack, CaptureContext, PoseFrame,
 import type { FrameSource } from '../video/frameTypes.ts'
 import type { ProbeResult } from '../video/probe.ts'
 import { contactOnsets } from './audio.ts'
-import { ballQueuePerWorker, ballWorkerCount, checkClipBudget, checkStorage, MEMORY_BUDGET } from './budget.ts'
+import { ballQueuePerWorker, ballWorkerCount, checkClipBudget, checkStorage, densePoseLaneCount, MEMORY_BUDGET } from './budget.ts'
 import { runCoachingStep, type CoachingStepResult } from './coaching.ts'
 import { AnalysisError, isAbort, throwIfAborted, toAnalysisError } from './errors.ts'
 import { encodeJpeg, extractKeyFrames, planKeyFrames, type JpegEncoder } from './keyFrames.ts'
@@ -39,7 +41,8 @@ import { ProgressReporter } from './progress.ts'
 import { applyGravityCheck, resolveTimeBase, type TimeBaseDecision } from './timeBase.ts'
 import { compactBallTrack, compactPoseTrack, mergePoses, retimePoses } from './tracks.ts'
 import type { PipelineEvent, PipelineTimings, RunAnalysisOptions, RunAnalysisResult } from './types.ts'
-import { activitySpans, ballIndices, planWindows, poseIndices, sparseStep, type PlannedWindow } from './windows.ts'
+import { LaneQueue } from './laneQueue.ts'
+import { activitySpans, ballIndices, ballSearchCrop, planWindows, poseIndices, sparseStep, type PlannedWindow } from './windows.ts'
 
 export const PIPELINE_VERSION = '1.0.0'
 /**
@@ -55,16 +58,68 @@ export function ballDownscaleFor(expectedRadiusNorm: number | undefined, frameHe
   const radiusPx = expectedRadiusNorm * frameHeightPx
   return radiusPx > BALL_RADIUS_TARGET_PX ? BALL_RADIUS_TARGET_PX / radiusPx : 1
 }
+/**
+ * Margin (frame heights) around the toss band and the post-contact corridor when the ball crop is
+ * cut down to them (windows.ts ballSearchCrop): several ball radii, so the detector's refinement box
+ * and running background never reach the crop edge where it searches.
+ */
+export const BALL_CROP_MARGIN_H = 0.02
 /** Pass A fine rate around arm-above-head activity (engine contract: findServeWindows works at ~15-30 Hz). */
 export const SPARSE_HZ = 15
 /** Pass A coarse rate over the whole clip (ARCHITECTURE §5.3: 4 fps). */
 export const SPARSE_COARSE_HZ = 4
 /**
- * Pass B landmarker poses: 1 tracks the server from frame to frame and runs MediaPipe's detector only
- * when the track is lost (ARCHITECTURE §5.4). Measured on this laptop's GPU: 26.6 against 39.6 ms a
- * frame for 2, which re-detects every frame. Pass A keeps 2 so a bystander stays a separate pose.
+ * Pass B landmarker poses. 2 runs MediaPipe's detector on every frame; 1 tracks from the previous
+ * landmarks, which is about 25% cheaper (24-26 against 33-34 ms a frame on this laptop) but smooths
+ * causally: on the synthetic session and check-in clips (2026-09-28, perf-accuracy.mts) the
+ * lowest-hip timing error grew by 30-65 ms and loading-depth error from 0.33-0.43 to 0.52-0.75 %H.
+ * Accuracy wins: 2, as before this round. Pass A keeps 2 as well (a bystander stays a separate pose).
  */
-export const DENSE_NUM_POSES = 1
+export const DENSE_NUM_POSES = 2
+/**
+ * Pass B pose rate (Hz) in the slow parts of the core (windows.ts poseIndices: outside the full-rate
+ * span around the provisional contact). Undefined keeps the whole core at the full rate.
+ */
+export const DENSE_SLOW_CORE_HZ: number | undefined = undefined
+/**
+ * Longest side of the Pass B ROI crop handed to the landmarker (MediaPipePoseSource roiMaxSidePx);
+ * 0 keeps the source resolution. A 512 px cap (the landmark model sees 256 px anyway) saved about
+ * 1 ms a frame with numPoses 2, within run-to-run noise, and moved the wrist and landing errors
+ * both ways, so the default stays as before this round. Kept as a tuning knob (options.pose).
+ */
+export const POSE_ROI_MAX_SIDE_PX = 0
+/** A Pass A pose seeds a window's pose stream only if it is this close to the window's first frame (s). */
+export const SEED_MAX_GAP_S = 0.5
+
+/** A Pass B pose job: the frames to estimate and the pose its stream starts from. */
+export interface PoseJob {
+  key: string
+  frames: readonly number[]
+  seed?: { landmarks: NonNullable<PoseFrame['landmarks']>; tReal: number }
+}
+
+/**
+ * Identity of a pose job: everything its result depends on (the time base, the frames, the seed's
+ * exact values). Two windows with the same key get the same poses on any lane.
+ */
+export function poseJobKey(frames: readonly number[], seed: PoseJob['seed'], timeScale: number): string {
+  const s = seed ? `${seed.tReal}:${seed.landmarks.map((l) => `${l.x},${l.y},${l.z},${l.visibility}`).join(';')}` : '-'
+  return `${timeScale}|${frames.join(',')}|${s}`
+}
+
+/**
+ * The server's pose nearest `t0` within `maxGapS`, preferring the latest at or before it, else the
+ * earliest after it: a seed for a pose stream that starts at `t0` (no localisation).
+ */
+export function nearestPose(poses: readonly PoseFrame[], t0: number, maxGapS: number): { landmarks: NonNullable<PoseFrame['landmarks']>; tReal: number } | undefined {
+  let best: PoseFrame | undefined
+  for (const p of poses) {
+    if (!p.landmarks || Math.abs(p.tReal - t0) > maxGapS) continue
+    const better = !best || (p.tReal <= t0 ? best.tReal > t0 || p.tReal > best.tReal : best.tReal > t0 && p.tReal < best.tReal)
+    if (better) best = p
+  }
+  return best?.landmarks ? { landmarks: best.landmarks, tReal: best.tReal } : undefined
+}
 const DEFAULT_HEIGHT_M = 1.75
 /** 26 mm-equivalent main lens, long-side field of view (ARCHITECTURE §5.4 step 4). */
 const LENS_DEFAULT_FOV_DEG = 67.3
@@ -174,6 +229,10 @@ function emptyTimings(): PipelineTimings {
     sparseFillFrames: 0,
     ballBackend: 'main-thread',
     ballWorkers: 0,
+    ballPixels: 'gpu',
+    ballPlanarFrames: 0,
+    seededWindows: 0,
+    poseLanes: 0,
     poseBackend: 'uninitialised',
   }
 }
@@ -310,6 +369,9 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
   let frameSource: FrameSource | null = null
   let sparsePose: PoseEstimator | null = null
   let densePose: PoseEstimator | null = null
+  /** Pass B's extra pose lanes (landmarkers beside Pass A's, loaded during Pass A). */
+  let extraPose: PoseEstimator[] = []
+  let extraPoseStart: Promise<PoseEstimator[]> | null = null
   let balls: BallClient[] = []
   let jobStarted = false
   let videoStored = false
@@ -320,12 +382,54 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     for (const b of balls) b.dispose()
     void sparsePose?.dispose()
     void densePose?.dispose()
+    for (const p of extraPose) void p.dispose()
   }
   signal?.addEventListener('abort', onAbort, { once: true })
   const raceAbortWork = <T,>(work: Promise<T>): Promise<T> => raceAbort(work, signal)
 
+  // The landmarker loads (runtime, model, GPU warm-up: 1-5 s) while the clip is probed and stored,
+  // instead of after. The source is owned by the run from creation, so abort and clean-up reach it;
+  // one that finishes loading after the run has ended is disposed at once.
+  let ended = false
+  let poseStart: Promise<PoseEstimator> | null = null
+  const startPose = (): Promise<PoseEstimator> => {
+    poseStart ??= (async () => {
+      const source = await deps.createPoseSource('sparse', options.poseModel ?? 'full')
+      if (ended || signal?.aborted) {
+        void source.dispose()
+        throw new AnalysisError('cancelled', 'pose source created after the run ended')
+      }
+      sparsePose = source
+      await source.init?.()
+      return source
+    })()
+    poseStart.catch(() => undefined) // observed where Pass A awaits it
+    return poseStart
+  }
+
+  /** Extra Pass B landmarkers, each in its own worker, loaded in parallel. */
+  const startExtraPose = (count: number): Promise<PoseEstimator[]> => {
+    const work = (async () => {
+      const created: PoseEstimator[] = []
+      for (let k = 0; k < count; k++) {
+        const source = await deps.createPoseSource('dense', options.poseModel ?? 'full')
+        if (ended || signal?.aborted) {
+          void source.dispose()
+          throw new AnalysisError('cancelled', 'pose source created after the run ended')
+        }
+        extraPose.push(source)
+        created.push(source)
+      }
+      await Promise.all(created.map((source) => source.init?.()))
+      return created
+    })()
+    work.catch(() => undefined) // observed where Pass B awaits it
+    return work
+  }
+
   try {
     throwIfAborted(signal)
+    startPose()
     const fileName = file instanceof File && file.name ? file.name : 'clip.mp4'
 
     // ---------- 1. probe, time base, budgets ----------
@@ -407,31 +511,78 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
 
     // ---------- 3. Pass A: sparse pose, serve windows ----------
     // One landmarker serves both passes (ARCHITECTURE §5.10: single landmarker, rebuilt per job).
-    // Measured: the lite model was no faster per frame here (decode and ROI dominate) and a second
-    // model cost about 3 s of start-up and its own memory.
+    // Measured: the lite model was no faster per frame here (the GPU time per inference is mostly
+    // fixed overhead, 2026-09-27) and a second model cost about 3 s of start-up and its own memory.
     progress.update('finding-serves', 0)
     failStage = 'pose-init-failed'
     t = now()
-    sparsePose = await deps.createPoseSource('sparse', options.poseModel ?? 'full')
-    await raceAbort(Promise.resolve(sparsePose.init?.()), signal)
+    const sparseSource = await raceAbort(startPose(), signal)
+    sparsePose = sparseSource
+    // Only the part of the start-up the probe and storage did not already cover.
     timings.poseInitMs += now() - t
     failStage = 'internal'
     throwIfAborted(signal)
-    const sparse = await raceAbortWork(runSparsePass(frameSource, sparsePose, {
-      coarseStep: sparseStep(meta().captureFps, options.passA?.coarseHz ?? SPARSE_COARSE_HZ),
-      fineStep: sparseStep(meta().captureFps, options.passA?.fineHz ?? SPARSE_HZ),
+    const passA = options.passA ?? {}
+    const passB = options.passB ?? {}
+    // Pass B's extra landmarkers load while Pass A runs (their GPU warm-up is short once Pass A's
+    // shaders are compiled).
+    const poseLaneCount = Math.max(1, Math.round(passB.poseLanes ?? densePoseLaneCount()))
+    if (poseLaneCount > 1) extraPoseStart = startExtraPose(poseLaneCount - 1)
+
+    // Pass B pose jobs. A window's dense poses depend only on its frame list and its seed, so a job is
+    // keyed by exactly those; every lane gets the same settings, so a window's poses never depend on
+    // which lane ran it.
+    const slowCoreHz = passB.slowCoreHz === undefined ? DENSE_SLOW_CORE_HZ : passB.slowCoreHz || undefined
+    const coveredOf = (raw: readonly PoseFrame[]) => (passB.reuseSparse === true ? new Set(raw.filter((p) => p.landmarks).map((p) => p.frameIndex)) : undefined)
+    const poseJobFor = (w: PlannedWindow, seedPoses: readonly PoseFrame[], covered: ReadonlySet<number> | undefined, times: ArrayLike<number>): PoseJob => {
+      const frames = poseIndices(w, meta().captureFps, covered, { slowCoreHz })
+      const seed = passB.seedPose !== true || frames.length === 0 ? undefined : nearestPose(seedPoses, times[frames[0]], SEED_MAX_GAP_S)
+      return { key: poseJobKey(frames, seed, meta().timeScale), frames, seed }
+    }
+    const poseProgress = new Map<string, (done: number, total: number) => void>()
+    const runPoseJob = async (job: PoseJob, lane: PoseEstimator): Promise<PoseFrame[]> => {
+      throwIfAborted(signal)
+      if (job.seed) {
+        lane.configure?.({ seed: job.seed })
+        timings.seededWindows++
+      }
+      const result = await runPoseWindow(frameSource!, lane, { poseFrames: job.frames, signal, onPoseFrame: (done, total) => poseProgress.get(job.key)?.(done, total) })
+      timings.densePoseMs += result.poseMs
+      timings.poseFrames += result.poses.length
+      timings.framesDecoded += result.framesDecoded
+      return result.poses
+    }
+
+    const sparse = await raceAbortWork(runSparsePass(frameSource, sparseSource, {
+      coarseStep: sparseStep(meta().captureFps, passA.coarseHz ?? SPARSE_COARSE_HZ),
+      fineStep: sparseStep(meta().captureFps, passA.fineHz ?? SPARSE_HZ),
       fillSpans: (coarse) => activitySpans(coarse),
       signal,
       onFrame: (fraction) => progress.update('finding-serves', 0.95 * fraction),
+      // Tuning only: by default Pass A runs exactly as before (numPoses 2, each stream localising the
+      // server itself). Serve finding is sensitive to the smallest change in these poses: on the
+      // 8-serve session clip, tracking the fill with numPoses 1, feeding decoder frames with a scale,
+      // software decoding and a CPU-delegate fill each lost one or two far-side (ad court) serves.
+      beforeStream: (stream, context) => {
+        const settings: Parameters<NonNullable<PoseEstimator['configure']>>[0] = {}
+        const numPoses = stream === 'coarse' ? passA.coarseNumPoses : passA.fillNumPoses
+        if (numPoses !== undefined) settings.numPoses = numPoses
+        if (stream === 'fill' && passA.seedFill === true && context.indices.length > 0) {
+          const seed = nearestPose(context.coarse, frameTimes()[context.indices[0]], SEED_MAX_GAP_S)
+          if (seed) settings.seed = seed
+        }
+        if (Object.keys(settings).length > 0) sparseSource.configure?.(settings)
+      },
     }))
     timings.sparseMs = sparse.ms
     timings.sparseCoarseFrames = sparse.coarseFrames
     timings.sparseFillFrames = sparse.fillFrames
     timings.framesDecoded += frameSource.frameTimes.length
     timings.poseFrames += sparse.poses.length
-    const sparseErrors = sparsePose.stats?.().detectErrors ?? []
+    const sparseErrors = sparseSource.stats?.().detectErrors ?? []
     throwIfAborted(signal)
     let sparseClean = cleanPoseFrames(sparse.poses, { frameAspect: aspect }).frames
+    let sparseRaw: PoseFrame[] = sparse.poses
     let engineWindows = deps.engine.findServeWindows(sparseClean, meta(), handedness)
     // Sound travel time from the player to the phone, from the stature scale (onsets only).
     const soundDelayS = onsets.length
@@ -456,19 +607,33 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     progress.update('finding-serves', 1, { servesFound: planned.length })
     if (persist) await patchJob(jobId, { state: 'dense', windows: planned.map((w) => toServeWindow(w, frameTimes())), progress: progress.current })
 
-    // ---------- 4. Pass B: dense pose (GPU) and ball detection (CPU pool) per window ----------
-    // Pose runs window after window on the one pose worker: the GPU is its limit (a second pose
-    // worker measured no faster), and numPoses 1 lets MediaPipe track the server instead of
-    // re-detecting every frame (ARCHITECTURE §5.4). Ball detection is CPU work: each window runs on
-    // one of a pool of ball workers, on its own decode, while pose works through the windows.
-    // Results are taken in window order, so the first toss's gravity check still decides the time
-    // base before any later window is ended.
+    // ---------- 4. Pass B: dense pose (GPU lanes) and ball detection (CPU pool) per window ----------
+    // Pose: the windows are shared out over the pose lanes (Pass A's landmarker plus
+    // densePoseLaneCount - 1 more), each window one stream, so its poses are the same whichever lane
+    // runs it. Ball detection is CPU work: each window runs on one of a pool of ball workers, on its
+    // own software decode, while pose works through the windows. Results are taken in window order,
+    // so the first toss's gravity check still decides the time base before any later window is ended.
     failStage = 'pose-init-failed'
     t = now()
-    densePose = sparsePose
+    // Pose lanes: Pass A's landmarker and any extra ones (see densePoseLaneCount).
+    let poseLanes: PoseEstimator[] = [sparseSource]
+    if (extraPoseStart) {
+      try {
+        poseLanes = [sparseSource, ...(await raceAbort(extraPoseStart, signal))]
+      } catch (error) {
+        if (isAbort(error) || signal?.aborted) throw error
+        warnings.push(`extra pose lanes unavailable: ${error instanceof Error ? error.message : String(error)}`)
+        for (const lane of extraPose) void lane.dispose()
+        extraPose = []
+      }
+    }
+    densePose = sparseSource
     sparsePose = null
-    const passB = options.passB ?? {}
-    densePose.configure?.({ numPoses: passB.numPoses ?? DENSE_NUM_POSES })
+    timings.poseLanes = poseLanes.length
+    for (const lane of poseLanes) {
+      lane.configure?.({ numPoses: passB.numPoses ?? DENSE_NUM_POSES, roiMaxSidePx: options.pose?.roiMaxSidePx ?? POSE_ROI_MAX_SIDE_PX })
+    }
+    const queue = new LaneQueue(poseLanes, runPoseJob)
     const ballWorkers = Math.max(1, Math.round(passB.lanes ?? ballWorkerCount()))
     const ballAcks = new Map<number, () => void>()
     const onBallAck = (ack: { windowId: number }) => ballAcks.get(ack.windowId)?.()
@@ -476,10 +641,16 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     timings.poseInitMs += now() - t
     timings.ballBackend = balls[0].backend
     timings.ballWorkers = balls.length
+    // Ball pixels: from software-decoded frames when this codec decodes in software here (a CPU
+    // copy, no GPU readback beside the pose worker; video/planar.ts), else bitmaps read back.
+    const ballCpu = passB.ballPixels !== 'gpu' && (await frameSource.canDecodeWith?.('prefer-software')) === true
+    timings.ballPixels = ballCpu ? 'cpu' : 'gpu'
     failStage = 'internal'
     throwIfAborted(signal)
     const denseStarted = now()
     const cropScales: number[] = []
+    /** Ball crop each window's detection ran on (for serveFinding). */
+    const ballCrops: WindowBallConfig['crop'][] = []
     const densePosesByWindow: PoseFrame[][] = []
     const ballResults: BallWindowResult[] = []
     const denseFrameSet = new Set<number>()
@@ -490,7 +661,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     const display = () => ({ width: meta().width, height: meta().height })
 
     const windowConfig = (w: PlannedWindow, setup: BallSetup): WindowBallConfig => ({
-      crop: w.crop,
+      crop: passB.tightBallCrop === false ? w.crop : ballSearchCrop(w.crop, setup.tossRoi, w.corridor, options.view, aspect, BALL_CROP_MARGIN_H),
       frameAspect: aspect,
       expectedRadiusNorm: setup.expectedRadiusNorm,
       tossRoi: setup.tossRoi,
@@ -517,19 +688,27 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       }
     const sparseIn = (w: PlannedWindow) => sparseClean.filter((p) => p.frameIndex >= w.startFrame && p.frameIndex <= w.endFrame)
     // Context frames Pass A already estimated are reused (the core is always estimated here).
-    const covered = passB.reuseSparse === false ? undefined : new Set(sparse.poses.filter((p) => p.landmarks).map((p) => p.frameIndex))
+    const covered = coveredOf(sparse.poses)
+    const seedPoses = passB.seedPose === true ? sparseClean : []
+    // The ball analysis takes the player's stature from the window's first second of poses. With the
+    // context reused, the window's own stream starts at the core, so Pass A's poses fill the context in.
+    const setupPoses = (w: PlannedWindow, dense: PoseFrame[]) =>
+      covered ? mergePoses(sparseRaw.filter((p) => p.frameIndex >= w.startFrame && p.frameIndex <= w.endFrame), dense) : dense
 
     // Progress: every window counts pose and ball halves; overall is monotonic in the reporter.
     const n = planned.length
     const poseFraction = new Array<number>(n).fill(0)
     const ballFraction = new Array<number>(n).fill(0)
-    let posing = 0
     let servesDone = 0
     const report = () => {
       let sum = 0
-      for (let k = 0; k < n; k++) sum += (poseFraction[k] + ballFraction[k]) / 2
-      const step = posing < n ? 'tracking-body' : 'tracking-ball'
-      progress.update(step, sum / n, { serveIndex: Math.min(n, (posing < n ? posing : servesDone) + 1), servesDone })
+      let posed = 0 // windows whose pose is done
+      for (let k = 0; k < n; k++) {
+        sum += (poseFraction[k] + ballFraction[k]) / 2
+        if (poseFraction[k] >= 1) posed++
+      }
+      const step = posed < n ? 'tracking-body' : 'tracking-ball'
+      progress.update(step, sum / n, { serveIndex: Math.min(n, (posed < n ? posed : servesDone) + 1), servesDone })
     }
 
     // Ball jobs: begin + every ball frame on the job's worker (jobs on one worker run in turn).
@@ -538,7 +717,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       id: number
       client: BallClient
       sparseSetup: BallSetup
-      detected: Promise<{ framesDecoded: number }>
+      detected: Promise<{ framesDecoded: number; planarFrames: number }>
     }
     let epoch = 0
     const clientTail: Promise<unknown>[] = balls.map(() => Promise.resolve())
@@ -558,9 +737,11 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
         report()
       })
       const downscale = ballDownscaleFor(sparseSetup.expectedRadiusNorm, meta().height)
+      const config = windowConfig(w, sparseSetup)
+      ballCrops[i] = config.crop
       cropScales.push(downscale)
       const detected = clientTail[k].then(() =>
-        runBallDetect(frameSource!, client, { windowId: id, ballFrames, ballConfig: windowConfig(w, sparseSetup), ballDownscale: downscale, display: display(), signal }),
+        runBallDetect(frameSource!, client, { windowId: id, ballFrames, ballConfig: config, ballDownscale: downscale, display: display(), signal, cpuPixels: ballCpu }),
       )
       clientTail[k] = detected.catch(() => undefined)
       detected.catch(() => undefined) // observed when the window is ended
@@ -570,58 +751,33 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     // changes on a slow-motion correction, and then the later jobs are started again).
     let ballJobs: BallJob[] = planned.map((_, i) => startBallJob(i))
 
-    // Pose: windows in order on the pose worker, ahead of the ball results.
-    const poseReady = planned.map(() => {
-      let resolve!: (poses: PoseFrame[]) => void
-      let reject!: (error: unknown) => void
-      const promise = new Promise<PoseFrame[]>((a, b) => {
-        resolve = a
-        reject = b
+    // Pose: every window's job, in window order, shared out over the lanes.
+    const poseKeys: string[] = []
+    const requestPose = (i: number): Promise<PoseFrame[]> => {
+      const job = poseJobFor(planned[i], seedPoses, covered, frameTimes())
+      poseKeys[i] = job.key
+      poseProgress.set(job.key, (done, total) => {
+        if (poseKeys[i] !== job.key) return
+        poseFraction[i] = done / Math.max(1, total)
+        report()
       })
-      promise.catch(() => undefined)
-      return { promise, resolve, reject, epoch: 0 }
-    })
-    const poseWindow = async (i: number): Promise<PoseFrame[]> => {
-      const poseFrames = poseIndices(planned[i], meta().captureFps, covered)
-      const result = await runPoseWindow(frameSource!, densePose!, {
-        poseFrames,
-        signal,
-        onPoseFrame: (done, total) => {
-          poseFraction[i] = done / Math.max(1, total)
-          report()
-        },
+      const promise = queue.request(job.key, job, true).then((poses) => {
+        if (poseKeys[i] === job.key) poseFraction[i] = 1
+        report()
+        return poses
       })
-      poseFraction[i] = 1
-      timings.densePoseMs += result.poseMs
-      timings.poseFrames += result.poses.length
-      timings.framesDecoded += result.framesDecoded
-      return result.poses
+      promise.catch(() => undefined) // observed in window order below
+      return promise
     }
-    const poseTask = (async () => {
-      for (posing = 0; posing < n; posing++) {
-        throwIfAborted(signal)
-        const k = posing
-        poseReady[k].epoch = epoch
-        poseReady[k].resolve(await poseWindow(k))
-      }
-      report()
-    })()
-    poseTask.catch((error: unknown) => {
-      for (const ready of poseReady) ready.reject(error)
-    })
+    const poseJobs = planned.map((_, i) => requestPose(i))
 
     for (let i = 0; i < n; i++) {
       throwIfAborted(signal)
       let w = planned[i]
       const job = ballJobs[i]
       const detected = await raceAbortWork(job.detected)
-      let poses = await raceAbortWork(poseReady[i].promise)
-      if (poseReady[i].epoch !== epoch) {
-        // Estimated before a time-base correction re-planned this window: estimate it again.
-        await raceAbortWork(poseTask)
-        poses = await raceAbortWork(poseWindow(i))
-      }
-      let ballResult = await raceAbortWork(job.client.end(job.id, analyseOptionsFor(job.sparseSetup)(poses)))
+      let poses = await raceAbortWork(poseJobs[i])
+      let ballResult = await raceAbortWork(job.client.end(job.id, analyseOptionsFor(job.sparseSetup)(setupPoses(w, poses))))
       ballAcks.delete(job.id)
       ballFraction[i] = 1
       timings.denseBallMs += ballResult.timings.detectMs + ballResult.timings.readbackMs
@@ -629,6 +785,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       timings.ballAnalyseMs += ballResult.timings.analyseMs
       timings.ballFrames += ballResult.framesProcessed
       timings.framesDecoded += detected.framesDecoded
+      timings.ballPlanarFrames += detected.planarFrames
 
       // The first toss decides an unknown time base (gravity); a correction re-times everything,
       // re-runs this window's ball detection on the corrected timestamps and re-plans the rest.
@@ -643,6 +800,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
           warn(`This looks like slow motion (${Math.round(meta().captureFps)} fps), so we corrected the timing.`)
           const windowSparse = sparseIn(w)
           sparseClean = retimePoses(sparseClean, factor)
+          sparseRaw = retimePoses(sparseRaw, factor)
           for (let k = 0; k < densePosesByWindow.length; k++) densePosesByWindow[k] = retimePoses(densePosesByWindow[k], factor)
           poses = retimePoses(poses, factor)
           onsets = [] // time-scaled audio is never used for timing
@@ -651,18 +809,25 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
           for (let k = 0; k < planned.length && k < replanned.length; k++) planned[k] = { ...replanned[k], index: planned[k].index }
           w = planned[i]
           epoch++
-          // Later windows: their detection ran on the old plan; start them again (pose too, above).
+          // Later windows: their detection and pose ran on the old plan and time base; start them
+          // again (their old pose jobs are dropped unless already running).
           ballJobs = ballJobs.map((old, k) => (k > i ? startBallJob(k) : old))
+          for (let k = i + 1; k < n; k++) {
+            queue.drop(poseKeys[k])
+            poseFraction[k] = 0
+            poseJobs[k] = requestPose(k)
+          }
           const redoSetup = setupFor(windowSparse.map((p) => ({ ...p, tReal: p.tReal * factor })))
           const redoId = w.index + epoch * 100_000 + 50_000
           const redo = await raceAbortWork(
-            runBallDetect(frameSource, job.client, { windowId: redoId, ballFrames: ballIndices(w, meta().captureFps), ballConfig: windowConfig(w, redoSetup), ballDownscale: ballDownscaleFor(job.sparseSetup.expectedRadiusNorm, meta().height), display: display(), signal }),
+            runBallDetect(frameSource, job.client, { windowId: redoId, ballFrames: ballIndices(w, meta().captureFps), ballConfig: windowConfig(w, redoSetup), ballDownscale: ballDownscaleFor(job.sparseSetup.expectedRadiusNorm, meta().height), display: display(), signal, cpuPixels: ballCpu }),
           )
-          ballResult = await raceAbortWork(job.client.end(redoId, analyseOptionsFor(job.sparseSetup)(poses)))
+          ballResult = await raceAbortWork(job.client.end(redoId, analyseOptionsFor(job.sparseSetup)(setupPoses(w, poses))))
           timings.denseBallMs += ballResult.timings.detectMs + ballResult.timings.readbackMs
           timings.ballReadbackMs += ballResult.timings.readbackMs
           timings.ballFrames += ballResult.framesProcessed
           timings.framesDecoded += redo.framesDecoded
+          timings.ballPlanarFrames += redo.planarFrames
         }
       }
       for (const p of poses) denseFrameSet.add(p.frameIndex)
@@ -672,15 +837,16 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       report()
       if (persist) await patchJob(jobId, { completedWindows: planned.slice(0, i + 1).map((p) => p.index), progress: progress.current })
     }
-    await raceAbortWork(poseTask)
+    await settleWithin(queue.close(), DISPOSE_BUDGET_MS)
     progress.update('tracking-ball', 1, { serveIndex: n, servesDone: n })
     timings.denseMs = now() - denseStarted
     timings.ballCropScale = cropScales.length ? cropScales.reduce((a, b) => a + b, 0) / cropScales.length : 1
-    const poseStats = densePose.stats?.()
-    timings.poseBackend = poseStats?.backend ?? 'unknown'
-    if (poseStats?.detectErrors.length) warn('Part of this video could not be tracked, so some serves may be missing values.')
-    await settleWithin(densePose.dispose(), DISPOSE_BUDGET_MS)
+    const laneStats = poseLanes.map((lane) => lane.stats?.())
+    timings.poseBackend = laneStats[0]?.backend ?? 'unknown'
+    if (laneStats.some((st) => st?.detectErrors.length)) warn('Part of this video could not be tracked, so some serves may be missing values.')
+    await Promise.all(poseLanes.map((lane) => settleWithin(lane.dispose(), DISPOSE_BUDGET_MS)))
     densePose = null
+    extraPose = []
     for (const b of balls) b.dispose()
     balls = []
     throwIfAborted(signal)
@@ -922,12 +1088,13 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       timeBase: { captureFps: meta().captureFps, timeScale: meta().timeScale, fpsSource: meta().fpsSource, status: timeBase.status },
       serveFinding: {
         engineWindows: engineWindows.length,
-        windows: planned.map((p) => ({
+        windows: planned.map((p, k) => ({
           startReal: frameTimes()[p.startFrame],
           endReal: frameTimes()[p.endFrame],
           contactT: p.contact.tReal,
           contactSource: p.contact.source,
           confidence: p.confidence,
+          ballCrop: ballCrops[k] ?? p.crop,
         })),
       },
     }
@@ -946,9 +1113,10 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     progress.flush()
     throw err
   } finally {
+    ended = true
     signal?.removeEventListener('abort', onAbort)
     for (const b of balls) b.dispose()
-    await Promise.all([settleWithin(sparsePose?.dispose(), DISPOSE_BUDGET_MS), settleWithin(densePose?.dispose(), DISPOSE_BUDGET_MS)])
+    await Promise.all([settleWithin(sparsePose?.dispose(), DISPOSE_BUDGET_MS), settleWithin(densePose?.dispose(), DISPOSE_BUDGET_MS), ...extraPose.map((lane) => settleWithin(lane.dispose(), DISPOSE_BUDGET_MS))])
     frameSource?.close()
   }
 }

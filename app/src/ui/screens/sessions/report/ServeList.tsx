@@ -9,7 +9,7 @@ import { ChartFrame, StripPlot, type StripDatum } from '../../../charts/index.ts
 import { OUTCOME_WORDS, reasonShortForm, UI } from '../../../copy/strings.ts'
 import { paths } from '../../../shell/paths.ts'
 import { apexCm, isFault, perServe, type ServeRow } from '../../progress/insights/serves.ts'
-import { median } from '../../progress/insights/stats.ts'
+import { median } from '../../../../analysis/stats/index.ts'
 import { StatusLegend, ServeFrame } from '../../progress/insights/ui.tsx'
 
 type StripMetric = 'toss' | 'contact' | 'timing'

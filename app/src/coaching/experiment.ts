@@ -193,12 +193,17 @@ export function buildVerdictRequest(input: ComparisonInput): VerdictRequest {
   // METRICS §1.5 inclusion (measured or estimated, confidence ≥ 0.5, included, not hard-rejected), the
   // same rule the engine's session summaries use, so a one-session side equals that session's value.
   const included = (smp: Sample[]) => smp.filter((x) => (x.status === 'measured' || x.status === 'estimated') && (x.inclusionConfidence ?? x.confidence) >= 0.5)
+  // Spreads pool within-session variances (METRICS §4.2, Σ(n_i − 1) df): a session with a single value
+  // adds no information, so it is left out rather than counted in n (the 1-serve deuce block of a
+  // both-sides session no longer inflates a baseline's n or its σ_r).
+  const minPerSession = spec.kind === 'spread' ? 2 : 1
   let budget = 60
   const baseGroups: Sample[][] = []
   const baseIds: string[] = []
   for (const s of baselineSessions) {
     if (budget <= 0) break
     const xs = included(seriesFor(s, servesInStratum(s, exp.stratum), spec.seriesId, opts).usable).slice(0, budget)
+    if (xs.length < minPerSession) continue
     budget -= xs.length
     if (xs.length) {
       baseGroups.push(xs)
@@ -209,7 +214,7 @@ export function buildVerdictRequest(input: ComparisonInput): VerdictRequest {
   const followIds: string[] = []
   for (const s of followSessions) {
     const xs = included(seriesFor(s, s.id === session.id ? followUpServes(s, exp.stratum) : servesInStratum(s, exp.stratum), spec.seriesId, opts).usable)
-    if (xs.length) {
+    if (xs.length >= minPerSession) {
       followGroups.push(xs)
       followIds.push(s.id)
     }

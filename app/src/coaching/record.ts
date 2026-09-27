@@ -69,6 +69,7 @@ export function toCoachingRecord(
             },
           }
         : {}),
+      ...(focus?.stratum ? { stratum: focus.stratum } : {}),
       cue: { id: d.cue.id, text: d.cue.text, style: d.cue.register === 'analogy' ? 'analogy' : 'external-target' },
       drill: { id: d.drill.id, title: d.drill.name, minutes: d.drill.minutes, steps: d.drill.steps, equipment: ['Ball basket'] },
       alternatives: (focus?.alsoConsidered ?? []).map((c) => ({ faultId: getItem(c.itemId)?.faultId ?? c.itemId, reason: c.text })),

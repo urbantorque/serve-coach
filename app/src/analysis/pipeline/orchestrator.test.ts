@@ -13,8 +13,9 @@ import type { PoseInputFrame } from '../pose/poseSource.ts'
 import type { PoseFrame, VideoMeta } from '../types.ts'
 import type { BitmapFrame, FrameSelection, FrameSource, RawFrame } from '../video/frameTypes.ts'
 import { analyseSessionDouble } from './e2e/testDoubleEngine.ts'
+import { MEMORY_BUDGET } from './budget.ts'
 import { AnalysisError } from './errors.ts'
-import { defaultDeps, runAnalysis, type PipelineDeps } from './orchestrator.ts'
+import { defaultDeps, DENSE_NUM_POSES, POSE_ROI_MAX_SIDE_PX, runAnalysis, type PipelineDeps } from './orchestrator.ts'
 import type { BallClient, PoseEstimator } from './passes.ts'
 import { servePoseAt } from './testPoses.ts'
 import type { PipelineEvent, PipelineProgress } from './types.ts'
@@ -128,7 +129,7 @@ function fakeBall(timeBase: TimeBaseSuggestion = { status: 'consistent', timeSca
     },
     async pushFrame(_w, _f, _t, image) {
       log.frames++
-      image.close()
+      if ('close' in image) image.close()
     },
     async end(windowId, options) {
       const r: BallWindowResult = analyseWindow(windowId, [], options)
@@ -226,7 +227,8 @@ describe('runAnalysis', () => {
 
     // Resources: decoder frames closed promptly, workers and sources released.
     expect(source.state.rawOpen).toBe(0)
-    expect(source.state.rawMaxOpen).toBeLessThanOrEqual(3)
+    // Decode-ahead queue, the frame the pose source holds and the next one handed over, one ball frame.
+    expect(source.state.rawMaxOpen).toBeLessThanOrEqual(MEMORY_BUDGET.decodeAhead + 3)
     expect(source.state.closed).toBe(true)
     expect(pose.disposed).toBe(true)
     expect(ball.log.disposed).toBe(true)
@@ -286,6 +288,27 @@ describe('runAnalysis', () => {
     expect((await getSession('S1'))?.status).toBe('cancelled')
   })
 
+  it('disposes the landmarker that was still loading when a run is cancelled before Pass A', async () => {
+    // The landmarker starts loading at the probe; this one finishes loading after the cancel.
+    const pose = fakePose()
+    let created = 0
+    const { deps } = makeDeps({
+      createPoseSource: async () => {
+        created++
+        await new Promise((r) => setTimeout(r, 30))
+        return pose
+      },
+    })
+    const controller = new AbortController()
+    const run = runAnalysis(file(), { ...baseOptions, signal: controller.signal }, deps)
+    setTimeout(() => controller.abort(), 0)
+    await expect(run).rejects.toMatchObject({ code: 'cancelled' })
+    await new Promise((r) => setTimeout(r, 60))
+    expect(created).toBe(1)
+    expect(pose.disposed).toBe(true)
+    expect((await getSession('S1'))?.status).toBe('cancelled')
+  })
+
   it('no serve found: a player-facing error and a failed session', async () => {
     const { deps } = makeDeps({ engine: { findServeWindows: () => [], analyseSession: analyseSessionDouble } })
     const error = await runAnalysis(file(), baseOptions, deps).catch((e) => e)
@@ -312,27 +335,27 @@ describe('runAnalysis', () => {
     expect(warnings.join(' ')).toMatch(/slow motion/)
   })
 
-  it('Pass B: pose with numPoses 1 on the pose worker, ball windows spread over the ball workers, results in window order', async () => {
+  it('Pass B: windows spread over the pose lanes and ball workers, the same poses whichever lane runs them, results in window order', async () => {
     const source = fakeSource({ frames: 60 * 12 })
     const clients: ReturnType<typeof fakeBall>[] = []
-    const configured: { numPoses?: number }[] = []
-    const pose = fakePose()
-    const poseFrames: number[][] = []
-    const trackedPose: PoseEstimator = {
-      ...pose,
-      configure: (settings) => configured.push(settings),
+    const configured: { lane: number; settings: Parameters<NonNullable<PoseEstimator['configure']>>[0] }[] = []
+    const streams: { lane: number; frames: number[] }[] = []
+    let created = 0
+    const lane = (id: number): PoseEstimator => ({
+      ...fakePose(),
+      configure: (settings) => configured.push({ lane: id, settings }),
       async *estimate(frames: AsyncIterable<PoseInputFrame>) {
         const seen: number[] = []
-        poseFrames.push(seen)
+        streams.push({ lane: id, frames: seen })
         for await (const f of frames) {
           seen.push(f.frameIndex)
           yield { frameIndex: f.frameIndex, tReal: f.tReal, landmarks: servePoseAt(f.tReal % 6, CONTACT_T), score: 0.9, source: 'injected' } satisfies PoseFrame
         }
       },
-    }
+    })
     const { deps } = makeDeps({
       source,
-      createPoseSource: async () => trackedPose,
+      createPoseSource: async () => lane(created++),
       createBallClient: async () => {
         const b = fakeBall()
         clients.push(b)
@@ -347,15 +370,23 @@ describe('runAnalysis', () => {
       },
     })
     const events: PipelineEvent[] = []
-    const result = await runAnalysis(file(), { ...baseOptions, passB: { lanes: 2 }, onProgress: (e) => events.push(e) }, deps)
+    const result = await runAnalysis(file(), { ...baseOptions, passB: { lanes: 2, poseLanes: 2 }, onProgress: (e) => events.push(e) }, deps)
     expect(result.servesFound).toBe(2)
     expect(result.timings.ballWorkers).toBe(2)
-    expect(configured).toContainEqual({ numPoses: 1 })
+    expect(result.timings.poseLanes).toBe(2)
+    // Pass A runs as before this round (no settings); Pass B sets every lane alike, with no seeds.
+    expect(configured.filter((c) => c.lane === 0 && configured.indexOf(c) < 1).map((c) => c.settings)).toEqual([{ numPoses: DENSE_NUM_POSES, roiMaxSidePx: POSE_ROI_MAX_SIDE_PX }])
+    expect(configured.map((c) => c.lane).sort()).toEqual([0, 1])
+    for (const c of configured) expect(c.settings).toEqual({ numPoses: DENSE_NUM_POSES, roiMaxSidePx: POSE_ROI_MAX_SIDE_PX })
+    expect(result.timings.seededWindows).toBe(0)
+    // Pass A's coarse and fill streams on the first landmarker, then one window per lane.
+    expect(streams.slice(0, 2).map((st) => st.lane)).toEqual([0, 0])
+    const dense = streams.slice(2)
+    expect(dense.map((st) => st.lane).sort()).toEqual([0, 1])
     // Two windows, one per ball worker.
     expect(clients.map((c) => c.log.begins)).toEqual([[0], [1]])
-    // Pass B pose streams (after Pass A's coarse and fill streams) cover each window's core in full.
-    const dense = poseFrames.slice(-2)
-    for (const frames of dense) {
+    // Each Pass B stream covers its window's core in full.
+    for (const { frames } of dense) {
       const sorted = [...frames].sort((a, b) => a - b)
       expect(frames).toEqual(sorted)
       let run = 0
@@ -371,6 +402,52 @@ describe('runAnalysis', () => {
     expect(progress.some((p) => p.label === 'Tracking the toss (serve 2 of 2)')).toBe(true)
     expect(source.state.rawOpen).toBe(0)
     expect(clients.every((c) => c.log.disposed)).toBe(true)
+  })
+
+  it('Pass B pose on one lane or two gives the same serves, and optional seeds start each window from its Pass A pose', async () => {
+    const run = async (passB: NonNullable<Parameters<typeof runAnalysis>[1]['passB']>) => {
+      const configured: Parameters<NonNullable<PoseEstimator['configure']>>[0][] = []
+      const firstFrames: number[] = []
+      const pose = (): PoseEstimator => ({
+        ...fakePose(),
+        configure: (settings) => configured.push(settings),
+        async *estimate(frames: AsyncIterable<PoseInputFrame>) {
+          let first = true
+          for await (const f of frames) {
+            if (first) firstFrames.push(f.frameIndex)
+            first = false
+            yield { frameIndex: f.frameIndex, tReal: f.tReal, landmarks: servePoseAt(f.tReal % 6, CONTACT_T), score: 0.9, source: 'injected' } satisfies PoseFrame
+          }
+        },
+      })
+      const { deps } = makeDeps({
+        source: fakeSource({ frames: 60 * 12 }),
+        createPoseSource: async () => pose(),
+        engine: {
+          findServeWindows: () => [
+            { startReal: 0, endReal: 3.8, confidence: 0.9 },
+            { startReal: 6, endReal: 9.8, confidence: 0.9 },
+          ],
+          analyseSession: analyseSessionDouble,
+        },
+      })
+      const result = await runAnalysis(file(), { ...baseOptions, persist: false, passB }, deps)
+      return { result, configured, firstFrames }
+    }
+    const one = await run({ poseLanes: 1 })
+    const two = await run({ poseLanes: 2 })
+    expect(two.result.serveIds).toEqual(one.result.serveIds)
+    expect(two.result.timings.poseFrames).toBe(one.result.timings.poseFrames)
+    const seeded = await run({ poseLanes: 1, seedPose: true })
+    expect(seeded.result.timings.seededWindows).toBe(2)
+    const seeds = seeded.configured.filter((c) => c.seed)
+    expect(seeds).toHaveLength(2)
+    for (const [k, c] of seeds.entries()) {
+      // Pass A's two streams come first; then one stream per window.
+      const first = seeded.firstFrames[2 + k] / 60
+      expect(c.seed!.tReal).toBeLessThanOrEqual(first + 1e-9)
+      expect(first - c.seed!.tReal).toBeLessThan(0.5)
+    }
   })
 
   it('Pass B reuses Pass A poses for the context outside the core', async () => {

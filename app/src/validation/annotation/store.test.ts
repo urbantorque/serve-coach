@@ -127,4 +127,28 @@ describe('check storage', () => {
     expect(text).not.toMatch(/comfort|pain/i)
     expect(validationFileName(new Date(2026, 8, 27, 10))).toBe('serve-coach-validation@1-2026-09-27.json')
   })
+
+  it('never writes free-text notes into the validation file, though the stored check keeps them', async () => {
+    const { annotation } = await seed('real', 0)
+    await saveCheck({ ...annotation, notes: 'Sore shoulder today, J. Smith filming' })
+    const [g] = await gatherChecks()
+    expect(g.annotation.notes).toContain('Sore shoulder')
+    const file = buildValidationExport([{ ...g, appPoints: {}, appStandingNorm: null }], { now: new Date(NOW), subjectKey: 'abc123' })
+    expect(file.entries[0].annotation).not.toHaveProperty('notes')
+    expect(JSON.stringify(file)).not.toMatch(/Sore|Smith/)
+    // The marks themselves are unchanged.
+    expect(file.entries[0].annotation.events).toEqual(annotation.events)
+  })
+
+  it("a study phone's checks cluster by the study code; without one, by the phone's random key", async () => {
+    const { annotation } = await seed('real', 0)
+    const [g] = await gatherChecks()
+    const plain = buildValidationExport([{ ...g, appPoints: {}, appStandingNorm: null }], { now: new Date(NOW), subjectKey: 'abc123' })
+    expect(plain.entries[0].subject.key).toBe('abc123')
+    await saveCheck({ ...annotation, subjectCode: 'P07' })
+    const [coded] = await gatherChecks()
+    const file = buildValidationExport([{ ...coded, appPoints: {}, appStandingNorm: null }], { now: new Date(NOW), subjectKey: 'abc123' })
+    expect(file.entries[0].subject.key).toBe('P07')
+    expect(file.privacy).toMatch(/study code/)
+  })
 })

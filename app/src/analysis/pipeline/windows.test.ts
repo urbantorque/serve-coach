@@ -3,7 +3,10 @@ import { servePoses } from './testPoses.ts'
 import {
   activitySpans,
   ballIndices,
+  ballSearchCrop,
   forwardDirection,
+  FULL_RATE_AFTER_S,
+  FULL_RATE_BEFORE_S,
   framesInSpans,
   frameAt,
   planWindows,
@@ -200,5 +203,37 @@ describe('sampling', () => {
     expect(hfr.length).toBe(206 + 189) // 0, 2, ..., 410 then 411..599
     // Without a contact estimate the whole range stays at full rate.
     expect(ballIndices({ ballStartFrame: 0, ballEndFrame: 99 }, 240)).toHaveLength(100)
+  })
+})
+
+describe('pose thinning and the ball crop', () => {
+  it('slowCoreHz thins only the slow parts of the core; the span around the provisional contact keeps every frame', () => {
+    const w = { startFrame: 0, endFrame: 252, coreStartFrame: 60, coreEndFrame: 192, contact: { frameIndex: 156, uncertaintyS: 0.1 } }
+    const full = poseIndices(w, 60)
+    const thin = poseIndices(w, 60, undefined, { slowCoreHz: 30 })
+    const fullFrom = 156 - Math.ceil(FULL_RATE_BEFORE_S * 60) - 6 // 117
+    const fullTo = 156 + Math.ceil(FULL_RATE_AFTER_S * 60) + 6 // 189
+    for (let f = fullFrom; f <= fullTo; f++) expect(thin).toContain(f)
+    const slow = thin.filter((f) => f >= 60 && f < fullFrom)
+    expect(slow.every((f) => (f - 60) % 2 === 0)).toBe(true)
+    expect(thin.length).toBeLessThan(full.length)
+    // Outside the core nothing changes; without a contact nothing is thinned.
+    expect(thin.filter((f) => f < 60 || f > 192)).toEqual(full.filter((f) => f < 60 || f > 192))
+    expect(poseIndices({ ...w, contact: undefined }, 60, undefined, { slowCoreHz: 30 })).toEqual(full)
+  })
+
+  it('ballSearchCrop: the side view crops to the toss band and corridor plus a margin, never beyond the window crop', () => {
+    const crop = { x: 0.1, y: 0, w: 0.8, h: 0.7 }
+    const toss = { x0: 0.3, y0: 0, x1: 0.55, y1: 0.5 }
+    const corridor = { x0: 0.45, y0: 0.3, x1: 0.95, y1: 0.55 }
+    const tight = ballSearchCrop(crop, toss, corridor, 'side', 0.5625, 0.02)
+    expect(tight.x).toBeCloseTo(0.3 - 0.02 / 0.5625, 9)
+    expect(tight.y).toBe(0)
+    expect(tight.x + tight.w).toBeCloseTo(0.9, 9) // clipped to the window crop
+    expect(tight.y + tight.h).toBeCloseTo(0.57, 9)
+    // Other views, or a missing band or corridor, keep the window crop.
+    expect(ballSearchCrop(crop, toss, corridor, 'rear', 0.5625, 0.02)).toBe(crop)
+    expect(ballSearchCrop(crop, null, corridor, 'side', 0.5625, 0.02)).toBe(crop)
+    expect(ballSearchCrop(crop, toss, null, 'side', 0.5625, 0.02)).toBe(crop)
   })
 })

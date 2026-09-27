@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest'
 import { decideFocus } from './decide.ts'
 import { chooseDrill, practiceLogRules } from './deliver.ts'
-import { experimentTransition, matchedComparison, retestDue, retestKind } from './experiment.ts'
+import { buildVerdictRequest, experimentRecordStatus, experimentTransition, matchedComparison, retestDue, retestKind } from './experiment.ts'
+import { sameStratum, serveStratum } from './strata.ts'
 import { item } from './library.ts'
 import { loadGuidance, rampFlag } from './load.ts'
 import { normaliseProfile } from './profile.ts'
@@ -103,6 +104,50 @@ describe('matched comparison and verdicts (§12.3, §12.4)', () => {
     expect(experimentTransition(exp(), { verdict: 'likely-worse', method: 'x' }, false).variant).toBe('regression')
     const one = exp({ retests: [{ sessionId: 'a', verdict: 'no-clear-change', resolvedMet: false }] })
     expect(experimentTransition(one, flat, false).swapCue).toBe(true)
+  })
+})
+
+describe('set-up matching and baseline grouping (METRICS §1.6, §4.4)', () => {
+  const p = normaliseProfile(profile({ sex: 'female', heightM: 1.75 }))
+  const at = (id: string, date: string, s: number, setupKey?: string, n = 16) => ({ ...tossSession(id, date, s, { n }), ...(setupKey ? { setupKey } : {}) })
+
+  it('a baseline filmed from another distance class never pools with the re-test', () => {
+    const near = at('near', '2026-09-18T09:00:00+10:00', 21, 'portrait|close|singles')
+    const std = at('std', '2026-09-20T09:00:00+10:00', 21, 'portrait|standard|singles')
+    const retest = { ...at('rt', '2026-09-25T09:00:00+10:00', 14, 'portrait|standard|singles'), template: 'retest' }
+    const e = exp({ stratum: { ...DEUCE_FIRST, setup: 'portrait|standard|singles' } })
+    expect(sameStratum(serveStratum(near, near.serves[0]), e.stratum)).toBe(false)
+    expect(sameStratum(serveStratum(std, std.serves[0]), e.stratum)).toBe(true)
+    const req = buildVerdictRequest({ exp: e, session: retest, history: [near, std], profile: p })
+    expect(req.baseline.sessionIds).toEqual(['std'])
+    // Older sessions without a set-up key still match (they cannot be told apart).
+    const old = at('old', '2026-09-19T09:00:00+10:00', 21)
+    expect(buildVerdictRequest({ exp: e, session: retest, history: [old, std], profile: p }).baseline.sessionIds).toEqual(['std', 'old'])
+  })
+
+  it('a spread baseline session with a single serve in the stratum adds nothing and is left out', () => {
+    const single = at('single', '2026-09-19T09:00:00+10:00', 21, undefined, 1)
+    const base = at('base', '2026-09-20T09:00:00+10:00', 21)
+    const retest = { ...at('rt', '2026-09-25T09:00:00+10:00', 14), template: 'retest' }
+    const req = buildVerdictRequest({ exp: exp(), session: retest, history: [single, base], profile: p })
+    expect(req.baseline.sessionIds).toEqual(['base'])
+    expect(req.baseline.bySession?.flat()).toHaveLength(16)
+  })
+
+  it('a verdict that ends the experiment stores it as completed (worked) or abandoned (parked, superseded)', () => {
+    expect(experimentRecordStatus({ id: 'e1', status: 'worked' }, 'e1')).toBe('completed')
+    expect(experimentRecordStatus({ id: 'e1', status: 'parked' }, 'e1')).toBe('abandoned')
+    expect(experimentRecordStatus({ id: 'e1', status: 'superseded' }, 'e1')).toBe('abandoned')
+    expect(experimentRecordStatus({ id: 'e1', status: 'continue' }, 'e1')).toBe('active')
+    expect(experimentRecordStatus(undefined, 'e1')).toBe('active')
+    expect(experimentRecordStatus({ id: 'other', status: 'worked' }, 'e1')).toBe('active')
+    // A clearly better re-test ends the experiment through the decision.
+    const baseline = tossSession('base', '2026-09-20T09:00:00+10:00', 24, { n: 30 })
+    const retest = tossSession('rt1', '2026-09-25T09:00:00+10:00', 8, { n: 30, template: 'retest' })
+    const c = matchedComparison({ exp: exp(), session: retest, history: [baseline], profile: p })
+    expect(c.result.verdict).toBe('clearly-better')
+    const t = experimentTransition(exp(), c.result, c.resolvedMet)
+    expect(experimentRecordStatus({ id: 'e1', status: t.status }, 'e1')).toBe('completed')
   })
 })
 

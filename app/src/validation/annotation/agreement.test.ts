@@ -5,6 +5,7 @@ import { compareWithMarks, deriveFromMarks, msPerFrame, radarInRange, type MarkC
 import {
   annotationId,
   cleanInitials,
+  cleanSubjectCode,
   emptyDraft,
   fromAnnotation,
   MARK_STEPS,
@@ -165,6 +166,18 @@ describe('marks draft', () => {
     expect(cleanInitials('r. d-90x y')).toBe('RDXY')
     expect(annotationId('s1', 'RD')).toBe('check:s1:RD')
     expect(annotationId('s1', '')).toBe('check:s1:ANON')
+  })
+
+  it('a study code is a short pseudonym, saved on the check; adding it later keeps the marks blind', () => {
+    expect(cleanSubjectCode(' p-07 (Jane) ')).toBe('P-07JANE')
+    expect(cleanSubjectCode('p07')).toBe('P07')
+    const meta = { serveId: 's1', sessionId: 'x', videoId: 'v', initials: 'RD', role: 'team' as const, captureFps: 60, now: '2026-09-27T01:00:00Z' }
+    const d = setEvent(emptyDraft(), 'contact', 150)
+    expect(toAnnotation(d, meta)).not.toHaveProperty('subjectCode')
+    const revealed = { ...toAnnotation(d, meta), revealedAt: '2026-09-27T01:05:00Z' }
+    const coded = toAnnotation(d, { ...meta, previous: revealed, subjectCode: 'p07' })
+    expect(coded.subjectCode).toBe('P07')
+    expect(coded.blind).toBe(true)
   })
 
   it('blinding: marks changed after the comparison was shown are no longer blind', () => {

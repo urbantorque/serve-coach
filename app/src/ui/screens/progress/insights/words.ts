@@ -1,5 +1,5 @@
 import type { VerdictWord } from '../../../../data/domain.ts'
-import { MAX_SERVES_TO_CONFIRM } from './stats.ts'
+import { MORE_SERVES_CAP as MAX_SERVES_TO_CONFIRM } from '../../../../analysis/stats/index.ts'
 
 /** "About 10 more serves to confirm." or the > 150 message (METRICS §4.5 step 4). */
 export function moreServesText(n: number | undefined, verdict: VerdictWord): string | null {

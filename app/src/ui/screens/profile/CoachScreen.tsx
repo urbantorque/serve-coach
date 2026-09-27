@@ -22,6 +22,7 @@ import {
 } from '../../components/index.ts'
 import { PHASE_LABEL } from '../../copy/strings.ts'
 import { shortDate } from '../../format/dates.ts'
+import { headlineFor } from '../../format/sessionValues.ts'
 import { paths } from '../../shell/paths.ts'
 import { buildCoachSummary, pickStats } from './coachSummary.ts'
 import { EXPORT_FAILED } from './copy.ts'
@@ -180,6 +181,7 @@ function ShareSection({ sessions }: { sessions: SessionRecord[] }) {
     [session?.id],
   )
   const stats = useMemo(() => (bundle ? pickStats(bundle.stats, bundle.decision) : []), [bundle])
+  const headline = session && bundle ? headlineFor(session, bundle.stats) : null
 
   if (!recent.length) {
     return (
@@ -238,7 +240,7 @@ function ShareSection({ sessions }: { sessions: SessionRecord[] }) {
             <Skeleton variant="text" className="h-12" />
           ) : (
             <>
-              {bundle?.stats?.headline ? <p className="text-callout text-ink">{bundle.stats.headline}</p> : null}
+              {headline ? <p className="text-callout text-ink">{headline}</p> : null}
               {bundle?.decision?.focus && bundle.decision.gate !== 'pain-referral' ? (
                 <p className="text-callout text-ink-2">Focus: {bundle.decision.focus.title}</p>
               ) : null}

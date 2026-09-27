@@ -1,0 +1,537 @@
+{
+  "generatedAt": "2026-09-27T12:25:33.472Z",
+  "files": [
+    "validation/results/ui/harden-annotation/light-export-synthetic-serve-coach-validation@1-2026-09-27.json",
+    "validation/results/ui/harden-annotation/dark-export-synthetic-serve-coach-validation@1-2026-09-27.json"
+  ],
+  "skipped": [],
+  "result": {
+    "inputs": {
+      "files": 2,
+      "entriesRead": 2,
+      "duplicates": 1,
+      "leftOutSample": 0,
+      "leftOutUnblinded": 0,
+      "servesUsed": 1,
+      "players": 1,
+      "annotators": 1,
+      "doubleAnnotated": 0,
+      "byCondition": {
+        "unknown": 1
+      },
+      "byFps": {
+        "60 fps": 1
+      },
+      "bySetup": {
+        "side-portrait": 1
+      },
+      "leftHandedPlayers": 0,
+      "engineVersions": [
+        "0.0.0-dev-fixture"
+      ]
+    },
+    "sample": [
+      {
+        "requirement": "Players (V2 stage)",
+        "target": "≥ 8",
+        "now": "1",
+        "met": false
+      },
+      {
+        "requirement": "Players (full library)",
+        "target": "≥ 30",
+        "now": "1",
+        "met": false
+      },
+      {
+        "requirement": "Serves checked (full library)",
+        "target": "≥ 1,500",
+        "now": "1",
+        "met": false
+      },
+      {
+        "requirement": "Serves marked by two annotators",
+        "target": "≥ 25%",
+        "now": "0%",
+        "met": false
+      },
+      {
+        "requirement": "Left-handed players",
+        "target": "≥ 5",
+        "now": "0",
+        "met": false
+      },
+      {
+        "requirement": "Condition classes with serves",
+        "target": "day and night-lights at least",
+        "now": "unknown",
+        "met": false
+      }
+    ],
+    "interRater": {
+      "serves": 0,
+      "events": [],
+      "points": [],
+      "metrics": []
+    },
+    "events": [
+      {
+        "event": "tossRelease",
+        "label": "Toss release",
+        "marked": 1,
+        "players": 1,
+        "dist": {
+          "n": 1,
+          "biasFrames": -1,
+          "maeFrames": 1,
+          "maeMs": 16.666666666666668,
+          "medianAbsFrames": 1,
+          "p90AbsFrames": 1,
+          "within": {
+            "0": 0,
+            "1": 1,
+            "2": 1
+          },
+          "histogram": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "baMs": null,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far within the target"
+      },
+      {
+        "event": "tossApex",
+        "label": "Toss peak",
+        "marked": 1,
+        "players": 1,
+        "dist": {
+          "n": 1,
+          "biasFrames": 0,
+          "maeFrames": 0,
+          "maeMs": 0,
+          "medianAbsFrames": 0,
+          "p90AbsFrames": 0,
+          "within": {
+            "0": 1,
+            "1": 1,
+            "2": 1
+          },
+          "histogram": [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ]
+        },
+        "baMs": null,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far within the target"
+      },
+      {
+        "event": "contact",
+        "label": "Contact",
+        "marked": 1,
+        "players": 1,
+        "dist": {
+          "n": 1,
+          "biasFrames": 0,
+          "maeFrames": 0,
+          "maeMs": 0,
+          "medianAbsFrames": 0,
+          "p90AbsFrames": 0,
+          "within": {
+            "0": 1,
+            "1": 1,
+            "2": 1
+          },
+          "histogram": [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ]
+        },
+        "baMs": null,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far within the target"
+      },
+      {
+        "event": "landing",
+        "label": "Front-foot landing",
+        "marked": 1,
+        "players": 1,
+        "dist": {
+          "n": 1,
+          "biasFrames": 14,
+          "maeFrames": 14,
+          "maeMs": 233.33333333333334,
+          "medianAbsFrames": 14,
+          "p90AbsFrames": 14,
+          "within": {
+            "0": 0,
+            "1": 0,
+            "2": 0
+          },
+          "histogram": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        "baMs": null,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far outside the target"
+      }
+    ],
+    "metrics": [
+      {
+        "id": "toss-apex-height",
+        "label": "Toss height",
+        "unit": "% of height",
+        "n": 1,
+        "players": 1,
+        "produced": {
+          "k": 1,
+          "n": 1
+        },
+        "ba": null,
+        "mae": {
+          "mae": 0.5256749136130452,
+          "ci": [
+            null,
+            null
+          ]
+        },
+        "icc": null,
+        "intervalCoverage": {
+          "k": 1,
+          "n": 1,
+          "p": 1,
+          "low": 0.2065493117918027,
+          "high": 1
+        },
+        "target": {
+          "max": 3,
+          "unit": "% of height",
+          "text": "3% of height target"
+        },
+        "maeInTargetUnit": 0.525674913613039,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far within the target",
+        "byCondition": [
+          {
+            "cls": "unknown",
+            "n": 1,
+            "mae": 0.5256749136130452
+          }
+        ]
+      },
+      {
+        "id": "contact-height-ratio",
+        "label": "Contact height",
+        "unit": "% of height",
+        "n": 1,
+        "players": 1,
+        "produced": {
+          "k": 1,
+          "n": 1
+        },
+        "ba": null,
+        "mae": {
+          "mae": 2.5756590174466396,
+          "ci": [
+            null,
+            null
+          ]
+        },
+        "icc": null,
+        "intervalCoverage": {
+          "k": 1,
+          "n": 1,
+          "p": 1,
+          "low": 0.2065493117918027,
+          "high": 1
+        },
+        "target": {
+          "max": 2.5,
+          "unit": "% of height",
+          "text": "2.5% of height target"
+        },
+        "maeInTargetUnit": 2.575659017446652,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far outside the target",
+        "byCondition": [
+          {
+            "cls": "unknown",
+            "n": 1,
+            "mae": 2.5756590174466396
+          }
+        ]
+      },
+      {
+        "id": "toss-drop",
+        "label": "Ball drop before contact",
+        "unit": "cm",
+        "n": 1,
+        "players": 1,
+        "produced": {
+          "k": 1,
+          "n": 1
+        },
+        "ba": null,
+        "mae": {
+          "mae": 0.1824010759074497,
+          "ci": [
+            null,
+            null
+          ]
+        },
+        "icc": null,
+        "intervalCoverage": {
+          "k": 1,
+          "n": 1,
+          "p": 1,
+          "low": 0.2065493117918027,
+          "high": 1
+        },
+        "target": null,
+        "maeInTargetUnit": 0.1824010759074497,
+        "verdict": "Judged through the toss peak and contact timing rows; reported as a scale cross-check",
+        "byCondition": [
+          {
+            "cls": "unknown",
+            "n": 1,
+            "mae": 0.1824010759074497
+          }
+        ]
+      },
+      {
+        "id": "rhythm-release-to-contact",
+        "label": "Toss-to-hit time",
+        "unit": "ms",
+        "n": 1,
+        "players": 1,
+        "produced": {
+          "k": 1,
+          "n": 1
+        },
+        "ba": null,
+        "mae": {
+          "mae": 26.66666666666663,
+          "ci": [
+            null,
+            null
+          ]
+        },
+        "icc": null,
+        "intervalCoverage": {
+          "k": 1,
+          "n": 1,
+          "p": 1,
+          "low": 0.2065493117918027,
+          "high": 1
+        },
+        "target": {
+          "max": 1,
+          "unit": "frames",
+          "text": "1-frame target"
+        },
+        "maeInTargetUnit": 1.5999999999999976,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far outside the target",
+        "byCondition": [
+          {
+            "cls": "unknown",
+            "n": 1,
+            "mae": 26.66666666666663
+          }
+        ]
+      },
+      {
+        "id": "toss-forward",
+        "label": "Toss in front",
+        "unit": "cm",
+        "n": 1,
+        "players": 1,
+        "produced": {
+          "k": 1,
+          "n": 1
+        },
+        "ba": null,
+        "mae": {
+          "mae": 2.7783433983640293,
+          "ci": [
+            null,
+            null
+          ]
+        },
+        "icc": null,
+        "intervalCoverage": {
+          "k": 1,
+          "n": 1,
+          "p": 1,
+          "low": 0.2065493117918027,
+          "high": 1
+        },
+        "target": {
+          "max": 6,
+          "unit": "cm",
+          "text": "6 cm target"
+        },
+        "maeInTargetUnit": 2.7783433983640293,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far within the target",
+        "byCondition": [
+          {
+            "cls": "unknown",
+            "n": 1,
+            "mae": 2.7783433983640293
+          }
+        ]
+      },
+      {
+        "id": "contact-forward",
+        "label": "Contact in front",
+        "unit": "cm",
+        "n": 1,
+        "players": 1,
+        "produced": {
+          "k": 1,
+          "n": 1
+        },
+        "ba": null,
+        "mae": {
+          "mae": 2.716054060689011,
+          "ci": [
+            null,
+            null
+          ]
+        },
+        "icc": null,
+        "intervalCoverage": {
+          "k": 1,
+          "n": 1,
+          "p": 1,
+          "low": 0.2065493117918027,
+          "high": 1
+        },
+        "target": {
+          "max": 6,
+          "unit": "cm",
+          "text": "6 cm target"
+        },
+        "maeInTargetUnit": 2.716054060689011,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far within the target",
+        "byCondition": [
+          {
+            "cls": "unknown",
+            "n": 1,
+            "mae": 2.716054060689011
+          }
+        ]
+      },
+      {
+        "id": "landing-distance",
+        "label": "Landing distance",
+        "unit": "cm",
+        "n": 1,
+        "players": 1,
+        "produced": {
+          "k": 1,
+          "n": 1
+        },
+        "ba": null,
+        "mae": {
+          "mae": 2.1700074029628382,
+          "ci": [
+            null,
+            null
+          ]
+        },
+        "icc": null,
+        "intervalCoverage": {
+          "k": 1,
+          "n": 1,
+          "p": 1,
+          "low": 0.2065493117918027,
+          "high": 1
+        },
+        "target": {
+          "max": 6,
+          "unit": "cm",
+          "text": "6 cm target"
+        },
+        "maeInTargetUnit": 2.1700074029628382,
+        "verdict": "Too little data to judge (1 of 150 serves, 1 of 8 players); so far within the target",
+        "byCondition": [
+          {
+            "cls": "unknown",
+            "n": 1,
+            "mae": 2.1700074029628382
+          }
+        ]
+      }
+    ],
+    "speed": {
+      "verdict": "Too little data to judge (0 of 200 serves)",
+      "radarLogged": 1,
+      "pairs": 0,
+      "maePct": null,
+      "ba": null,
+      "coverage": null
+    },
+    "status": [
+      {
+        "id": "toss-apex-height",
+        "label": "Toss height",
+        "levels": "day V1, overcast V1, night-lights V0, flicker V0",
+        "ifPasses": "V2 ceiling is estimated (spatial); its designed status is estimated, which V3 confirms"
+      },
+      {
+        "id": "contact-height-ratio",
+        "label": "Contact height",
+        "levels": "day V1, overcast V1, night-lights V0, flicker V0",
+        "ifPasses": "V2 ceiling is estimated (spatial); its designed status is estimated, which V3 confirms"
+      },
+      {
+        "id": "toss-drop",
+        "label": "Ball drop before contact",
+        "levels": "day V1, overcast V1, night-lights V0, flicker V0",
+        "ifPasses": "V2 ceiling is measured (timing metric), in the condition classes tested"
+      },
+      {
+        "id": "rhythm-release-to-contact",
+        "label": "Toss-to-hit time",
+        "levels": "day V1, overcast V1, night-lights V0, flicker V0",
+        "ifPasses": "V2 ceiling is measured (timing metric), in the condition classes tested"
+      },
+      {
+        "id": "toss-forward",
+        "label": "Toss in front",
+        "levels": "day V0, overcast V0, night-lights V0, flicker V0",
+        "ifPasses": "V2 ceiling is estimated (spatial); its designed status is estimated, which V3 confirms"
+      },
+      {
+        "id": "contact-forward",
+        "label": "Contact in front",
+        "levels": "day V0, overcast V0, night-lights V0, flicker V0",
+        "ifPasses": "V2 ceiling is estimated (spatial); its designed status is estimated, which V3 confirms"
+      },
+      {
+        "id": "landing-distance",
+        "label": "Landing distance",
+        "levels": "day V0, overcast V0, night-lights V0, flicker V0",
+        "ifPasses": "V2 ceiling is estimated (spatial); its designed status is estimated, which V3 confirms"
+      }
+    ]
+  }
+}

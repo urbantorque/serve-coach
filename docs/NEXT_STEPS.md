@@ -1,11 +1,11 @@
 # Next steps
 
-**As of 27 September 2026.** The highest-value work, ranked by value for effort. Each step has one crisp success criterion. Dates line up with [LAUNCH_AU.md](LAUNCH_AU.md); the gaps they close are in [LIMITATIONS.md](LIMITATIONS.md).
+**As of 28 September 2026, the hardening commit after `33ac31f`.** The highest-value work, ranked by value for effort. Each step has one crisp success criterion. Dates line up with [LAUNCH_AU.md](LAUNCH_AU.md); the gaps they close are in [LIMITATIONS.md](LIMITATIONS.md).
 
 | Rank | Step | Value | Effort | Target | Depends on |
 |---|---|---|---|---|---|
 | 1 | Clinician review of pain and referral copy | Release blocker | Low | 18 Dec 2026 | A booked clinician |
-| 2 | Annotation mode, then the real-footage and radar validation sprint | Highest: turns synthetic claims into real ones | Medium | Mode by 6 Nov 2026; study by 31 Mar 2027 | — |
+| 2 | Real-footage and radar validation sprint with "Check this serve" | Highest: turns synthetic claims into real ones | Medium | Dry run by 6 Nov 2026; study by 31 Mar 2027 | Consenting adult players; one radar |
 | 3 | Device QA on real iPhones (web app and Capacitor shell) | High: the first real performance numbers | Low–medium | 30 Nov 2026 | A Mac and 3 iPhones |
 | 4 | On-device usage counts and a consented beta report | High: without it no gate can be measured | Low | 15 Jan 2027 | D8 decision on upload |
 | 5 | Native capture plugin (`ServeCapture`) | High: fixes blur, frame rate and tilt | Medium–high | 31 Jan 2027 | Step 3 |
@@ -19,12 +19,33 @@
 - **Why first:** it is cheap, it is a release blocker (PRODUCT §11 item 6), and it gates both the beta and the public launch. The segment skews to players with shoulder or elbow complaints (research 10 §2.2).
 - **Success criterion:** written sign-off from the named clinician on the final copy, merged with all `src/coaching` safety tests passing.
 
-## 2. Annotation mode, then the real-footage and radar validation sprint
+## 2. Real-footage and radar validation sprint with "Check this serve"
 
-- **What:** finish and integrate the in-app annotation mode (METRICS §5.6: frame stepping, event marks, click points for ball, heels, toes and hips, band labels, blinded to engine output, JSON export). At `b576aaa` the hidden "Validation mode" toggle did nothing; a "Check this serve" module with radar entry and pooled evaluation is in progress this round (`app/src/validation/annotation`). Then film consenting adults at Melbourne Serve Check nights and practice courts, with a radar behind the server for speed.
-- **Why:** every accuracy claim is synthetic. This is the single step that moves metrics from ≈ to validated, publishes the "How accurate is this?" page, and decides which metrics may be advertised (ACL, research 07 §12 item 13).
-- **Sample (METRICS §5.6 V2):** ≥ 8 players (≥ 3 women, ≥ 1 left-hander, ≥ 2 aged 40+), ≥ 150 serves per metric, portrait-near and landscape-fence set-ups, ≥ 3 conditions including 2 lit courts (LED and metal halide), 60 fps plus a 120/240 fps subset; test–retest on ≥ 6 players over sessions ≥ 2 days apart; two annotators on ≥ 25% of serves. Speed (V3): 200+ radar-paired serves.
-- **Success criterion:** the METRICS §5.6 acceptance table is run on the full sample and published, and the hero metrics (toss height and forward spreads, contact height, rhythm, leg drive) either pass V2 or are explicitly kept experimental in the catalogue and the app copy.
+- **What is built:** the annotation tooling landed in `33ac31f`.
+  - "Check this serve" in Serve detail: frame stepping, event marks, points for the ball, toe, head top and heel, and radar entry, with the app's answers hidden until the marks are saved. Exports `serve-coach-validation@1` JSON.
+  - `tools/validate/annotation-eval.ts`: inter-annotator agreement, Bland–Altman, MAE with a player-cluster bootstrap, ICC(2,1) and interval coverage.
+  - It has only seen synthetic clips.
+- **What to do:**
+  1. **Fill the marking gaps.** Check this serve compares seven metrics today. Leg drive, a hero metric, needs the hip taps from ARCHITECTURE §12, and the knee and shoulder bands need band labels. Add both before the sprint.
+  2. **Dry run.** The team films itself and two annotators mark the same 20 serves. This exercises export, pooling and the report end to end, and gives the per-serve marking time.
+  3. **Sprint.** Film consenting adults at Melbourne Serve Check nights and practice courts, with a radar behind the server for speed.
+  4. **Close the loop.** Bring the radar reading through to the report's "Radar speed (you logged)" row.
+- **Why:** every accuracy claim is synthetic. This is the single step that:
+  - moves metrics from ≈ to validated;
+  - updates "How we measure" and [VALIDATION.md](VALIDATION.md) with real numbers;
+  - decides which metrics may be advertised (ACL, research 07 §12 item 13).
+- **Sample (METRICS §5.6 V2):**
+  - at least 8 players, including 3+ women, 1+ left-hander and 2+ aged 40 or over;
+  - at least 150 serves per metric;
+  - portrait-near and landscape-fence set-ups;
+  - at least 3 conditions, including 2 lit courts (LED and metal halide);
+  - 60 fps plus a 120/240 fps subset;
+  - test–retest on 6+ players over sessions 2+ days apart;
+  - two annotators on at least 25% of serves;
+  - for speed (V3), 200+ radar-paired serves.
+- **Success criteria:**
+  - *Dry run:* `annotation-eval.ts` produces a complete report from two annotators' exports of the same 20 real serves, with inter-annotator limits of agreement for every checked metric.
+  - *Sprint:* the METRICS §5.6 acceptance table is run on the full sample and published. The hero metrics (toss height and forward spreads, contact height, rhythm, leg drive) either pass V2 or are explicitly kept experimental in the catalogue and the app copy.
 
 ## 3. Device QA on real iPhones
 
@@ -64,7 +85,17 @@
 
 ## Also queued (lower rank)
 
-- Request `navigator.storage.persist()`, add a web manifest and service-worker precache for the web beta, or state clearly that the web build is not an offline app.
-- Match log entry (M6), the practice-toss ball check, flicker detection, window-level resume, the missed serve on the 8-serve session clip, and de-duplicating video records when a session is re-analysed.
-- Render the 20-serve variability, re-toss and miss clips so spreads and re-toss count have more than one synthetic block behind them.
+- **Serve count end to end.** Stop the engine dropping found serves when the ball track is weak (engine-core). Success: 27 of 27 serves counted on the synthetic benchmark clips in the full app pipeline, against 24 of 27 today.
+- **Contact timing end to end.** On `dist12-s1` and `default75-s1` the full pipeline places contact about 0.27 s early and still reports toss drop, rhythm and leg drive as estimates (VALIDATION §3.3). Success: contact within 1 frame on every benchmark clip in the full pipeline, or the serve's contact-based metrics drop to experimental when contact evidence is weak.
+- **Benchmark the production build.** This round's speed work was measured on the dev server only, and a model-loading race that broke serve finding appeared only in the production build (VALIDATION §6; fixed). Success: `perf-bench.mjs` gains a production-build mode, and every pipeline change reports serve counts from it on the five benchmark clips.
+- **Mount answer on real phones.** The Import mount question and the assumed-level rule (METRICS §1.1.3a) are built and checked on synthetic clips only. Success: in the validation sprint, level-mount imports meet the toss-height and contact-height thresholds of METRICS §5.6, with the phone's real tilt read from a reference device.
+- **Label fix.** Bring the `capture-quality` label into line with its V0 validation state. It describes the recording, not the serve, and the report's capture line and the analysis gates read it, so the product lead should choose: an "experimental" label that stays visible, or a status exemption written into METRICS §1.3.
+- **Offline web beta.** Request `navigator.storage.persist()` and add a web manifest and service-worker precache, or state clearly that the web build is not an offline app.
+- **Smaller gaps:**
+  - match log entry (M6);
+  - the practice-toss ball check;
+  - flicker detection;
+  - window-level resume;
+  - de-duplicating video records when a session is re-analysed.
+- **Richer synthetic evidence.** Render the 20-serve variability, re-toss and miss clips, so spreads and serve classification have more than one synthetic block behind them.
 - A privacy policy and terms of use drafted for legal review, including the automated-analysis section before 10 December 2026 ([LAUNCH_AU.md](LAUNCH_AU.md) §3).

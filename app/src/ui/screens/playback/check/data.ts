@@ -6,7 +6,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { gatherChecks, listChecks, listChecksForServe } from '../../../../validation/annotation/store.ts'
 import { buildValidationExport, validationFileName } from '../../../../validation/annotation/export.ts'
-import { cleanInitials } from '../../../../validation/annotation/marks.ts'
+import { cleanInitials, cleanSubjectCode } from '../../../../validation/annotation/marks.ts'
 import type { AnnotatorRole } from '../../../../validation/annotation/types.ts'
 import { appPointsFor } from './appPoints.ts'
 
@@ -43,6 +43,35 @@ export function useAnnotator(): [Annotator, (a: Annotator) => void] {
     setValue(clean)
     try {
       globalThis.localStorage?.setItem(ANNOTATOR_KEY, JSON.stringify(clean))
+    } catch {
+      // Remembering is optional.
+    }
+  }
+  return [value, set]
+}
+
+const STUDY_CODE_KEY = (sessionId: string) => `serve-coach:study-code:${sessionId}`
+
+/**
+ * The study participant code for a session (docs/VALIDATION_PROTOCOL.md §7.4), remembered on this phone
+ * so every serve of the session gets it; each saved check also stores its own. Empty on a player's own
+ * phone. `fallback` is a code already saved on a check of this serve.
+ */
+export function useStudyCode(sessionId: string, fallback?: string): [string, (code: string) => void] {
+  const [value, setValue] = useState<string>(() => {
+    try {
+      const stored = globalThis.localStorage?.getItem(STUDY_CODE_KEY(sessionId))
+      if (stored !== null && stored !== undefined) return cleanSubjectCode(stored)
+    } catch {
+      // Storage can be unavailable; the fallback applies.
+    }
+    return cleanSubjectCode(fallback ?? '')
+  })
+  const set = (code: string) => {
+    const clean = cleanSubjectCode(code)
+    setValue(clean)
+    try {
+      globalThis.localStorage?.setItem(STUDY_CODE_KEY(sessionId), clean)
     } catch {
       // Remembering is optional.
     }

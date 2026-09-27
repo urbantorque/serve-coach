@@ -219,53 +219,78 @@ export const encodeJpeg: JpegEncoder = async (image, r, quality) => {
 }
 
 /**
- * Decodes each requested frame once (in frame order) and encodes its images. Bitmaps are closed
- * as soon as their images are written; `onFrame` reports progress.
+ * Frames whose images are being encoded while the decoder moves on. Encoding (canvas draw and
+ * JPEG) used to hold the decoder for every image in turn; overlapping a few frames keeps the
+ * decoder busy while bounding the bitmaps alive to this many (full-frame, about 8 MB each at 1080p).
+ */
+export const KEY_FRAMES_ENCODING = 3
+
+/**
+ * Decodes each requested frame once (in frame order) and encodes its images, up to
+ * KEY_FRAMES_ENCODING frames at once. Bitmaps are closed as soon as their images are written;
+ * `onFrame` reports progress. Records come back in request order.
  */
 export async function extractKeyFrames(
   source: Pick<FrameSource, 'bitmaps' | 'meta' | 'frameTimes'>,
   requests: readonly KeyFrameRequest[],
-  options: { signal?: AbortSignal; encoder?: JpegEncoder; now?: Date; onFrame?: (done: number, total: number) => void } = {},
+  options: { signal?: AbortSignal; encoder?: JpegEncoder; now?: Date; onFrame?: (done: number, total: number) => void; concurrency?: number } = {},
 ): Promise<KeyFrameRecord[]> {
   const encoder = options.encoder ?? encodeJpeg
   const createdAt = (options.now ?? new Date()).toISOString()
-  const byFrame = new Map<number, KeyFrameRequest[]>()
-  for (const r of requests) {
+  const byFrame = new Map<number, { request: KeyFrameRequest; order: number }[]>()
+  requests.forEach((r, order) => {
     const list = byFrame.get(r.frameIndex) ?? []
-    list.push(r)
+    list.push({ request: r, order })
     byFrame.set(r.frameIndex, list)
-  }
+  })
   const indices = [...byFrame.keys()].sort((a, b) => a - b)
-  const out: KeyFrameRecord[] = []
-  if (indices.length === 0) return out
+  const records: (KeyFrameRecord | undefined)[] = new Array(requests.length)
+  if (indices.length === 0) return []
+  const limit = Math.max(1, options.concurrency ?? KEY_FRAMES_ENCODING)
   let done = 0
-  for await (const frame of source.bitmaps({ indices }, { signal: options.signal, applyRotation: true })) {
+  const encoding: Promise<void>[] = []
+  const encodeFrame = async (frame: { index: number; tReal: number; bitmap: ImageBitmap }): Promise<void> => {
     try {
       const { width, height } = frame.bitmap
-      for (const r of byFrame.get(frame.index) ?? []) {
-        const region = outputSize(r.crop, width, height, r.longSidePx, r.square)
-        const blob = await encoder(frame.bitmap, region, r.quality)
-        const record: KeyFrameRecord = {
-          id: r.id,
-          serveId: r.serveId,
-          sessionId: r.sessionId,
-          event: r.event,
-          phase: r.phase,
-          role: r.role,
-          frameIndex: frame.index,
-          tReal: frame.tReal,
-          width: region.width,
-          height: region.height,
-          blob,
-          createdAt,
-        }
-        if (r.crop) record.crop = r.crop
-        out.push(record)
-      }
+      await Promise.all(
+        (byFrame.get(frame.index) ?? []).map(async ({ request: r, order }) => {
+          const region = outputSize(r.crop, width, height, r.longSidePx, r.square)
+          const blob = await encoder(frame.bitmap, region, r.quality)
+          const record: KeyFrameRecord = {
+            id: r.id,
+            serveId: r.serveId,
+            sessionId: r.sessionId,
+            event: r.event,
+            phase: r.phase,
+            role: r.role,
+            frameIndex: frame.index,
+            tReal: frame.tReal,
+            width: region.width,
+            height: region.height,
+            blob,
+            createdAt,
+          }
+          if (r.crop) record.crop = r.crop
+          records[order] = record
+        }),
+      )
     } finally {
       frame.bitmap.close()
     }
     options.onFrame?.(++done, indices.length)
   }
-  return out
+  try {
+    for await (const frame of source.bitmaps({ indices }, { signal: options.signal, applyRotation: true })) {
+      const job = encodeFrame(frame)
+      job.catch(() => undefined) // observed below; no unhandled-rejection report meanwhile
+      encoding.push(job)
+      if (encoding.length >= limit) await encoding.shift()
+    }
+    await Promise.all(encoding)
+  } catch (error) {
+    // Every bitmap is closed by its own encode; wait for them before reporting the failure.
+    await Promise.allSettled(encoding)
+    throw error
+  }
+  return records.filter((r): r is KeyFrameRecord => r !== undefined)
 }

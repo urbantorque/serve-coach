@@ -1,6 +1,7 @@
 import { CheckCircleIcon, CircleDashedIcon, InfoIcon, XCircleIcon } from '@phosphor-icons/react'
 import { useParams, useSearchParams } from 'react-router'
-import type { MetricId, MetricValue as MetricValueData } from '../../../analysis/types.ts'
+import { statusCeiling } from '../../../analysis/metrics/catalogue.ts'
+import type { MetricId, MetricStatus, MetricValue as MetricValueData } from '../../../analysis/types.ts'
 import { METRIC_IDS, REAR_ONLY_METRIC_IDS, SIDE_ONLY_METRIC_IDS } from '../../../analysis/types.ts'
 import { useProfile } from '../../../data/hooks.ts'
 import { useSettingsStore } from '../../../data/stores/settings.ts'
@@ -97,15 +98,51 @@ function unlockHint(code: string | undefined, metricId: string): string | null {
   return hint ? hint.replace('{n}', '8') : null
 }
 
-function CheckRow({ c }: { c: Check }) {
+/** With no session to check against, the list is what a session needs, so no state word per row. */
+function CheckRow({ c, plain = false }: { c: Check; plain?: boolean }) {
   const G = c.state === 'pass' ? CheckCircleIcon : c.state === 'fail' ? XCircleIcon : CircleDashedIcon
   const word = c.state === 'pass' ? 'Yes' : c.state === 'fail' ? 'No' : 'Not checked'
   return (
     <li className="flex min-h-11 items-center gap-2 border-t border-line py-2 first:border-t-0">
       <G size={20} aria-hidden="true" className={c.state === 'fail' ? 'shrink-0 text-attention' : c.state === 'pass' ? 'shrink-0 text-ink' : 'shrink-0 text-ink-3'} />
       <span className="flex-1 text-callout text-ink">{c.label}</span>
-      <span className="text-footnote text-ink-2">{word}</span>
+      {plain ? null : <span className="text-footnote text-ink-2">{word}</span>}
     </li>
+  )
+}
+
+/** The best label this measurement can carry today, in daylight (engine catalogue, METRICS §1.3). */
+function bestStatusWords(id: MetricId, best: MetricStatus): string {
+  if (id === 'spin') return "Phone video can't see spin, so this never has a value."
+  if (id === 'capture-quality') return 'Every session you record or import gets this check: Good, Fair or Limited.'
+  if (best === 'player-entered') return 'Tag your serves in a session and this fills in from your tags.'
+  const behind = (REAR_ONLY_METRIC_IDS as readonly string[]).includes(id)
+  if (best === 'experimental')
+    return behind
+      ? 'Record a session from behind you, with experimental metrics turned on, to see a rough value.'
+      : 'Record a session with experimental metrics turned on to see a rough value.'
+  return 'Record or import a serve session to see yours.'
+}
+
+/** Header when no session has this measurement yet: not "couldn't see this", because nothing was filmed. */
+function NoReadingHeader({ id }: { id: MetricId }) {
+  const best = statusCeiling(id, 'day').status
+  // Capture quality is a session line, not a value with a label (docs/VALIDATION.md §5 item 12).
+  const chip = best !== 'unavailable' && id !== 'capture-quality'
+  return (
+    <div className="flex flex-col gap-2" data-metric={id} data-status="none">
+      <p className="text-title-2 text-ink">{id === 'spin' ? 'Not measurable by phone' : 'No reading yet'}</p>
+      <p className="text-callout text-ink-2">{bestStatusWords(id, best)}</p>
+      {chip ? (
+        <>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-footnote text-ink-2">{best === 'estimated' || best === 'measured' ? 'In daylight it shows as' : 'It shows as'}</span>
+            <StatusChip status={best} />
+          </div>
+          <p className="text-footnote text-ink-3">{STATUS_MEANING[best]}</p>
+        </>
+      ) : null}
+    </div>
   )
 }
 
@@ -194,7 +231,9 @@ export function MetricInfoScreen() {
   return (
     <Screen title={title} back={{ label: 'Back' }} banner={isDemo ? <SampleBanner /> : undefined}>
       <header className="flex flex-col gap-2">
-        {unavailable ? (
+        {!bundle ? (
+          <NoReadingHeader id={id} />
+        ) : unavailable ? (
           <div className="flex flex-col gap-2" data-metric={id} data-status="unavailable">
             <p className="flex items-center gap-2 text-title-2 text-ink">
               <StatusGlyph status="unavailable" size={24} className="text-ink-3" />
@@ -232,11 +271,17 @@ export function MetricInfoScreen() {
             ) : null}
           </>
         )}
-        <p className="text-footnote text-ink-3">
-          {hiddenExperimental
-            ? 'This session has an experimental value. Turn on experimental metrics in Profile to see it.'
-            : STATUS_MEANING[unavailable ? 'unavailable' : shown!.status]}
-        </p>
+        {bundle ? (
+          <p className="text-footnote text-ink-3">
+            {hiddenExperimental
+              ? `This session has a value. ${STATUS_MEANING.experimental}`
+              : unavailable && statusCeiling(id, 'day').status === 'player-entered'
+                ? 'Nothing logged for this session yet.'
+                : unavailable && id === 'spin'
+                  ? 'Never measured, whatever the footage.'
+                  : STATUS_MEANING[unavailable ? 'unavailable' : shown!.status]}
+          </p>
+        ) : null}
       </header>
 
       <Section id="what" title="What it is">
@@ -298,10 +343,10 @@ export function MetricInfoScreen() {
         <Section id="needs" title="What it needs">
           <ul className="card px-4">
             {checks.map((c) => (
-              <CheckRow key={c.key} c={c} />
+              <CheckRow key={c.key} c={c} plain={!bundle} />
             ))}
           </ul>
-          {bundle ? <p className="text-footnote text-ink-3">For the session on {shortDate(bundle.session.visitId)}.</p> : null}
+          <p className="text-footnote text-ink-3">{bundle ? `For the session on ${shortDate(bundle.session.visitId)}.` : 'What a session needs for this measurement.'}</p>
         </Section>
       ) : null}
 

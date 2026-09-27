@@ -9,12 +9,15 @@
  * soon as its consumer is done with it.
  */
 import type { BallWindowResult, WindowAnalyseOptions, WindowBallConfig } from '../ball/workerCore.ts'
+import type { BallFrameImage } from '../ball/workerProtocol.ts'
 import type { PoseInputFrame } from '../pose/poseSource.ts'
 import type { PoseFrame } from '../types.ts'
 import type { FrameSelection, FrameSource, RawFrame } from '../video/frameTypes.ts'
+import { copyCrop } from '../video/planar.ts'
 import { FrameRenderer } from '../video/render.ts'
 import { MEMORY_BUDGET } from './budget.ts'
 import { throwIfAborted } from './errors.ts'
+import { prefetch } from './prefetch.ts'
 import { framesInSpans } from './windows.ts'
 
 /** What the passes need from a pose source (MediaPipePoseSource satisfies it). */
@@ -23,15 +26,18 @@ export interface PoseEstimator {
   init?(): Promise<void>
   dispose(): Promise<void>
   stats?(): { backend: string; detectErrors: string[] }
-  /** Settings for later streams (MediaPipePoseSource.configure): numPoses 1 for Pass B. */
-  configure?(settings: { numPoses?: number }): void
+  /**
+   * Settings for later streams (MediaPipePoseSource.configure): numPoses 1 for Pass B, and a seed
+   * (the server's pose just before the next stream) that replaces the stream's first localisation.
+   */
+  configure?(settings: { numPoses?: number; roiMaxSidePx?: number; seed?: { landmarks: NonNullable<PoseFrame['landmarks']>; tReal: number } }): void
 }
 
 /** What the passes need from the ball worker client. */
 export interface BallClient {
   readonly backend: 'worker' | 'main-thread'
   begin(windowId: number, config: WindowBallConfig): Promise<void>
-  pushFrame(windowId: number, frameIndex: number, tReal: number, image: ImageBitmap): Promise<void>
+  pushFrame(windowId: number, frameIndex: number, tReal: number, image: BallFrameImage): Promise<void>
   end(windowId: number, options: WindowAnalyseOptions): Promise<BallWindowResult>
   dispose(): void
 }
@@ -61,11 +67,17 @@ export async function runSparsePass(
     fillSpans: (coarse: PoseFrame[]) => [number, number][]
     signal?: AbortSignal
     onFrame?: (fraction: number) => void
+    /**
+     * Called before each pose stream starts (the coarse scan, then the fill with the frames it will
+     * estimate), e.g. to configure the pose source for that stream.
+     */
+    beforeStream?: (stream: 'coarse' | 'fill', context: { coarse: PoseFrame[]; indices: readonly number[] }) => void
   },
 ): Promise<SparsePassResult> {
   const started = now()
   const n = source.frameTimes.length
   const coarseTotal = Math.ceil(n / options.coarseStep)
+  options.beforeStream?.('coarse', { coarse: [], indices: [] })
   const coarse = await posesFor(source, pose, { step: options.coarseStep }, options.signal, (done) => options.onFrame?.((0.6 * done) / coarseTotal))
   let fill: PoseFrame[] = []
   if (options.fineStep < options.coarseStep) {
@@ -73,6 +85,7 @@ export async function runSparsePass(
     const have = new Set(coarse.poses.map((p) => p.frameIndex))
     const indices = framesInSpans(times, options.fillSpans(coarse.poses), options.fineStep, have)
     if (indices.length > 0) {
+      options.beforeStream?.('fill', { coarse: coarse.poses, indices })
       const result = await posesFor(source, pose, { indices }, options.signal, (done) => options.onFrame?.(0.6 + (0.4 * done) / indices.length))
       fill = result.poses
     }
@@ -91,9 +104,8 @@ async function posesFor(
 ): Promise<{ poses: PoseFrame[]; decoded: number }> {
   let decoded = 0
   async function* inputs(): AsyncGenerator<PoseInputFrame> {
-    const iterator = source
-      .bitmaps(selection, { maxLongSidePx: MEMORY_BUDGET.sparseMaxLongSidePx, signal })
-      [Symbol.asyncIterator]()
+    // Decode-ahead: the next frames decode (and render) while the pose worker infers this one.
+    const iterator = prefetch(source.bitmaps(selection, { maxLongSidePx: MEMORY_BUDGET.sparseMaxLongSidePx, signal }), MEMORY_BUDGET.decodeAhead, (f) => f.bitmap.close())[Symbol.asyncIterator]()
     let previous: ImageBitmap | null = null
     try {
       for (;;) {
@@ -174,7 +186,7 @@ export async function runPoseWindow(
   let decoded = 0
   async function* feed(): AsyncGenerator<PoseInputFrame> {
     let held: DisplayFrame | null = null
-    const iterator = displayFrames(source, input.poseFrames, input.signal)[Symbol.asyncIterator]()
+    const iterator = prefetch(displayFrames(source, input.poseFrames, input.signal), MEMORY_BUDGET.decodeAhead, (f) => f.close())[Symbol.asyncIterator]()
     try {
       for (;;) {
         const next = await iterator.next()
@@ -219,11 +231,55 @@ export async function runBallDetect(
     ballDownscale?: number
     display: { width: number; height: number }
     signal?: AbortSignal
+    /**
+     * CPU pixel path (ballPixelPath 'cpu'): decode with 'prefer-software' and copy each crop out of
+     * the CPU-memory frame in YUV (video/planar.ts), converted in the ball worker. No GPU readback,
+     * so ball detection no longer stalls on (or stalls) the pose worker's GPU work. A frame that
+     * cannot be copied that way (format, colour space) takes the GPU path.
+     */
+    cpuPixels?: boolean
   },
-): Promise<{ framesDecoded: number }> {
+): Promise<{ framesDecoded: number; planarFrames: number }> {
   const crop = cropPixels(input.ballConfig.crop, input.display.width, input.display.height, MEMORY_BUDGET.ballCropMaxLongSidePx, input.ballDownscale)
   await ball.begin(input.windowId, input.ballConfig)
   let decoded = 0
+  let planarFrames = 0
+  if (input.cpuPixels) {
+    // Integer box downscale in the worker's conversion: the ball stays 10-20 px in radius, as the
+    // GPU path's resize keeps it about 10 px; the detector picks its grid from the radius either way.
+    const rect = { x: crop.sx, y: crop.sy, width: crop.sw, height: crop.sh }
+    const k = Math.max(1, Math.floor(1 / Math.max(0.05, input.ballDownscale ?? 1)), Math.ceil(Math.max(crop.sw, crop.sh) / MEMORY_BUDGET.ballPlanarMaxLongSidePx))
+    let renderer: FrameRenderer | null = null
+    for await (const raw of source.rawFrames({ indices: input.ballFrames }, { signal: input.signal, hardwareAcceleration: 'prefer-software' })) {
+      decoded++
+      let image: BallFrameImage | null = null
+      try {
+        if (isVideoFrame(raw.image)) image = await copyCrop(raw.image, rect, raw.pendingRotationDeg, k)
+        if (image) planarFrames++
+        else {
+          // GPU path for this frame: display orientation first, then the resized crop.
+          let display: VideoFrame | ImageBitmap = raw.image
+          let rendered: ImageBitmap | null = null
+          if (raw.pendingRotationDeg !== 0) {
+            renderer ??= new FrameRenderer({ width: source.meta.width, height: source.meta.height }, { willReadFrequently: false })
+            renderer.draw(raw.image, raw.pendingRotationDeg)
+            rendered = await renderer.toBitmap()
+            display = rendered
+          }
+          try {
+            image = await createImageBitmap(display, crop.sx, crop.sy, crop.sw, crop.sh, { resizeWidth: crop.outWidth, resizeHeight: crop.outHeight, resizeQuality: 'high' })
+          } finally {
+            rendered?.close()
+          }
+        }
+      } finally {
+        raw.close()
+      }
+      await ball.pushFrame(input.windowId, raw.index, raw.tReal, image)
+      throwIfAborted(input.signal)
+    }
+    return { framesDecoded: decoded, planarFrames }
+  }
   for await (const frame of displayFrames(source, input.ballFrames, input.signal)) {
     decoded++
     let bitmap: ImageBitmap
@@ -239,7 +295,11 @@ export async function runBallDetect(
     await ball.pushFrame(input.windowId, frame.index, frame.tReal, bitmap)
     throwIfAborted(input.signal)
   }
-  return { framesDecoded: decoded }
+  return { framesDecoded: decoded, planarFrames }
+}
+
+function isVideoFrame(image: VideoFrame | ImageBitmap): image is VideoFrame {
+  return typeof VideoFrame !== 'undefined' && image instanceof VideoFrame
 }
 
 function now(): number {

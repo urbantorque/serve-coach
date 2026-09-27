@@ -1,0 +1,64 @@
+{
+ "light-report-retest": {
+  "overflow": false
+ },
+ "light-report-baseline": {
+  "overflow": false
+ },
+ "light-compare": {
+  "overflow": false
+ },
+ "light-today-sample": {
+  "overflow": false
+ },
+ "light-import-questions": {
+  "overflow": false
+ },
+ "light-import-level-mount": {
+  "overflow": false
+ },
+ "light-texts": {
+  "headline": "16 of 16 serves measured. Toss height varied by about 9.5 cm (early read).",
+  "card": "Did it work?Clearly betterToss height consistency: ≈ 30 cmToss height consistency, about 30 centimetres, Estimate, likely 20 to 45 centimetres, 14 of 14 serves then ≈ 9.5 cmToss height consistency, about 9.5 centimetres, Estimate, likely 7 to 14.5 centimetres, 16 of 16 servesEstimate (14 and 16 serves, same set-up).See the comparison",
+  "hero": [
+   "EstimateEarly read",
+   "≈ 9.5 cmToss height consistency, about 9.5 centimetres, Estimate, likely 7 to 14.5 centimetres, 16 of 16 serves"
+  ],
+  "baselineHeadline": "14 of 16 serves measured. Toss height varied by about 30 cm (early read).",
+  "baselineFocus": "Your focusCoaches recommendSteady toss height“Every toss peaks at the same spot.”",
+  "compare": "Your toss height consistency went from ≈ 30 cmToss height consistency, about 30 centimetres, Estimate, likely 20 to 45 centimetres, 14 of 14 serves to ≈ 9.5 cmToss height consistency, about 9.5 centimetres, Estimate, likely 7 to 14.5 centimetres, 16 of 16 serves.",
+  "today": "TodayTodaySample data · synthetic playerSunday 27 SeptemberRecord your first servesBelow is a sample player's Today. Record 15 serves from one side and we'll find one thing for you to work on.Set up cameraYour focusNothing clear to changeKeep building consistency. Your toss and timing were steady on most serves.Day 16 of the sample player's steady toss height experimentYour re-test is in. 2 practices logged.Clearly betterSee resultLast sessionSat 26 Sep · Side view, 16 serves16 of 16 serves measured. Toss height varied by about 9.5 cm (early read).Capture: Good · 16 of 16 serves measuredOpen report"
+ },
+ "light-console": [],
+ "dark-report-retest": {
+  "overflow": false
+ },
+ "dark-report-baseline": {
+  "overflow": false
+ },
+ "dark-compare": {
+  "overflow": false
+ },
+ "dark-today-sample": {
+  "overflow": false
+ },
+ "dark-import-questions": {
+  "overflow": false
+ },
+ "dark-import-level-mount": {
+  "overflow": false
+ },
+ "dark-texts": {
+  "headline": "16 of 16 serves measured. Toss height varied by about 9.5 cm (early read).",
+  "card": "Did it work?Clearly betterToss height consistency: ≈ 30 cmToss height consistency, about 30 centimetres, Estimate, likely 20 to 45 centimetres, 14 of 14 serves then ≈ 9.5 cmToss height consistency, about 9.5 centimetres, Estimate, likely 7 to 14.5 centimetres, 16 of 16 servesEstimate (14 and 16 serves, same set-up).See the comparison",
+  "hero": [
+   "EstimateEarly read",
+   "≈ 9.5 cmToss height consistency, about 9.5 centimetres, Estimate, likely 7 to 14.5 centimetres, 16 of 16 serves"
+  ],
+  "baselineHeadline": "14 of 16 serves measured. Toss height varied by about 30 cm (early read).",
+  "baselineFocus": "Your focusCoaches recommendSteady toss height“Every toss peaks at the same spot.”",
+  "compare": "Your toss height consistency went from ≈ 30 cmToss height consistency, about 30 centimetres, Estimate, likely 20 to 45 centimetres, 14 of 14 serves to ≈ 9.5 cmToss height consistency, about 9.5 centimetres, Estimate, likely 7 to 14.5 centimetres, 16 of 16 serves.",
+  "today": "TodayTodaySample data · synthetic playerSunday 27 SeptemberRecord your first servesBelow is a sample player's Today. Record 15 serves from one side and we'll find one thing for you to work on.Set up cameraYour focusNothing clear to changeKeep building consistency. Your toss and timing were steady on most serves.Day 16 of the sample player's steady toss height experimentYour re-test is in. 2 practices logged.Clearly betterSee resultLast sessionSat 26 Sep · Side view, 16 serves16 of 16 serves measured. Toss height varied by about 9.5 cm (early read).Capture: Good · 16 of 16 serves measuredOpen report"
+ },
+ "dark-console": []
+}

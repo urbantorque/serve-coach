@@ -53,20 +53,25 @@ export function Sparkline({ points: all, band, domain, variant = 'tile', hollow 
   const points = all.slice(-MAX_POINTS)
   const detail = variant === 'detail'
   const height = detail ? 180 : 72
-  // With a band, the tile leaves room at the left for its "usual" label so points never cover it.
-  const m = detail ? { top: 22, right: 28, bottom: 26, left: band ? 44 : 8 } : { top: 20, right: 28, bottom: 8, left: band ? 44 : 6 }
   const valueExtent = extent(points.flatMap((p) => (detail && p.low !== undefined && p.high !== undefined ? [p.value, p.low, p.high] : [p.value])))
   const dom: Domain = domain ?? padDomain(unionDomain(valueExtent, band ?? null) ?? [0, 1], 0.1)
-  const x = linear([0, Math.max(1, points.length - 1)], [m.left + (points.length === 1 ? (width - m.left - m.right) / 2 : 0), width - m.right])
-  const y = linear(dom, [height - m.bottom, m.top])
   const ticks = detail ? niceTicks(dom, 4) : []
   const step = tickStep(dom, 4)
+  // Detail: the first session sits right of the tick labels (about 7 px per caption character), so a
+  // point or its interval never covers a label.
+  const tickW = ticks.reduce((w, t) => Math.max(w, formatTick(t, step).length * 7 + 12), 8)
+  // With a band, the tile leaves room at the left for its "usual" label so points never cover it.
+  const m = detail ? { top: 22, right: 28, bottom: 26, left: Math.max(band ? 44 : 8, tickW) } : { top: 20, right: 28, bottom: 8, left: band ? 44 : 6 }
+  const x = linear([0, Math.max(1, points.length - 1)], [m.left + (points.length === 1 ? (width - m.left - m.right) / 2 : 0), width - m.right])
+  const y = linear(dom, [height - m.bottom, m.top])
   const last = points.length - 1
   const targets: PlotTarget[] = points.map((p, i) => ({ id: p.key, x: x(i), y: y(p.value), callout: p.callout }))
   const line = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join('')
   const lx = x(last)
   const ly = last >= 0 ? y(points[last].value) : 0
-  const labelBelow = ly - m.top < 16
+  // Above the point when the text fits (baseline 10 px up, about 12 px of ascent), so a line rising
+  // to the latest point does not run through its label.
+  const labelBelow = ly - 22 < 0
   // "usual" sits inside the band's left end (below it when the band is thinner than the text).
   const bandLabelY = band ? (y(band[0]) - y(band[1]) >= 14 ? y(band[0]) - 4 : Math.min(height - 2, y(band[0]) + 12)) : null
   // Keep the direct label inside the plot: about 7 px per character at footnote 600.
@@ -124,6 +129,11 @@ export function Sparkline({ points: all, band, domain, variant = 'tile', hollow 
               x={labelX}
               y={labelBelow ? ly + 20 : ly - 10}
               textAnchor={labelAnchor}
+              // A surface-coloured halo keeps the label legible where it crosses the line or an interval.
+              stroke="var(--surface)"
+              strokeWidth={4}
+              strokeLinejoin="round"
+              paintOrder="stroke"
               className="fill-ink text-footnote font-label tabular-nums"
             >
               {latestLabel}

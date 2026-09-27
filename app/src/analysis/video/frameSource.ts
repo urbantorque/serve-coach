@@ -37,6 +37,8 @@ export interface OpenFrameSourceOptions {
   hardwareAcceleration?: HardwareAcceleration
   /** Reuse an existing probe of the same file. */
   probe?: ProbeResult
+  /** WebCodecs: leave out samples no wanted frame depends on (default true; WebCodecsDecoderOptions). */
+  skipDisposable?: boolean
 }
 
 class DecodingFrameSource implements FrameSource {
@@ -126,6 +128,10 @@ class DecodingFrameSource implements FrameSource {
     }
   }
 
+  canDecodeWith(hardwareAcceleration: HardwareAcceleration): Promise<boolean> {
+    return this.producer.canDecodeWith?.(hardwareAcceleration) ?? Promise.resolve(false)
+  }
+
   close(): void {
     this.producer.close()
   }
@@ -171,6 +177,6 @@ export async function openFrameSource(file: Blob, options: OpenFrameSourceOption
     if (prefer === 'webcodecs') throw new Error(support.reason)
     return openMediaElement(file, opts, `${support.reason} Falling back to the media element.`, probe)
   }
-  const producer = new WebCodecsFrameProducer(probe, source, { config: support.config })
+  const producer = new WebCodecsFrameProducer(probe, source, { config: support.config, skipDisposable: options.skipDisposable })
   return new DecodingFrameSource(producer, probe.meta, probe.frames, support.reason, probe)
 }

@@ -7,15 +7,23 @@
  *
  * Serves the production build (vite preview) itself. Flows:
  *   A. First run → onboarding → "See a sample session" (engine-built seed) → report → serve detail
- *      with overlays → tagging → focus → drill → practice log → Today → progress → compare.
- *   B. Real import of a synthetic clip (validation/synthetic, set via the file picker) → processing
- *      → report → tagging → Today with the stored decision.
+ *      with overlays → tagging → focus → drill → practice log → Today → progress → compare →
+ *      sessions → Metric info (serve count, toss height, spin) → How we measure.
+ *   B. Real import of a synthetic clip (validation/synthetic, set via the file picker), answering
+ *      "How was the phone mounted?" with Level mount and the Singles spot → processing → report →
+ *      tagging → "Check this serve" (peak and contact marked at the clip's truth, saved, App vs you)
+ *      → Today with the stored decision.
  *   C. The player's own loop (light; --dark-c adds dark): import a 16-serve check-in (synthetic
  *      sample-checkin) → Today and focus → drill → two practice logs (starts the experiment) → Record
  *      pins the re-test → import sample-retest as the re-test → report → "Did it work?" → Progress.
+ *
+ * report.json also records, per import, the serves found and counted and why any were left out
+ * (`analyses`), requests to any host but the preview server (`offHostRequests`, should be empty),
+ * and pose/GPU diagnostics (`diagnostics`: MediaPipe's INFO lines, which it writes to stderr, and
+ * WebGL or delegate warnings; they are not counted as console errors).
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 import { preview } from 'vite'
@@ -44,6 +52,11 @@ if (only && existsSync(join(outDir, 'report.json'))) {
   report.consoleErrors = (prev.consoleErrors ?? []).filter((x) => x.flow !== only)
   report.failures = (prev.failures ?? []).filter((f) => !new RegExp(`^(light|dark)[ -]${only}([0-9]| |-)`).test(f))
   for (const k of ['todayDecision', 'ownExperiment', 'ownAfterLogs']) if (prev[k] !== undefined) report[k] = prev[k]
+  // Flow B and C records (imports, analyses, the level-mount import, the check) and per-flow diagnostics.
+  const importFlow = (prefix) => (prefix === 'baseline-' ? 'b' : 'c')
+  for (const k of ['imports', 'analyses']) if (prev[k]) report[k] = prev[k].filter((x) => importFlow(x.prefix) !== only)
+  if (only !== 'b') for (const k of ['levelMountImport', 'checkServe']) if (prev[k] !== undefined) report[k] = prev[k]
+  for (const k of ['diagnostics', 'offHostRequests']) if (prev[k]) report[k] = prev[k].filter((x) => x.flow !== only)
 }
 const log = (...a) => console.log('[flows]', ...a)
 
@@ -266,13 +279,25 @@ async function flowA(page, scheme) {
     await page.waitForTimeout(1200)
     await shot('sessions', { full: true })
   })
+  await step('metric info: serve count, toss height, spin (sample)', async () => {
+    for (const id of ['serve-count', 'toss-apex-height', 'spin']) {
+      await page.goto(`${base}/metric/${id}?session=sample-s3`)
+      await page.getByRole('heading', { level: 1 }).first().waitFor({ timeout: 15_000 })
+      await shot(`metric-info-${id}`, { full: true, wait: 1000 })
+    }
+  })
+  await step('how we measure', async () => {
+    await page.goto(base + '/profile/how-we-measure')
+    await page.getByRole('heading', { level: 1 }).first().waitFor({ timeout: 15_000 })
+    await shot('how-we-measure', { full: true, wait: 1000 })
+  })
 }
 
 // ---------------------------------------------------------------------------------------------
 // Flow B: a real import through processing
 // ---------------------------------------------------------------------------------------------
 
-async function importClip(page, file, { shot, prefix, viaRecord = false }) {
+async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = false, mount = null, spot = null }) {
   if (viaRecord) {
     // Client-side from Record, so the re-test plan Record pinned (kept in memory) applies.
     await page.getByRole('link', { name: /Import a video/ }).first().click()
@@ -293,14 +318,98 @@ async function importClip(page, file, { shot, prefix, viaRecord = false }) {
     const r = (await g.count()) ? g.getByRole('radio', { name }) : page.getByRole('radio', { name })
     if (await r.count()) await r.first().click()
   }
+  // Side views ask how the phone was mounted (METRICS §1.1.3a); the default answer is "Tilted, or not sure".
+  const mountGroup = page.getByRole('radiogroup', { name: 'How was the phone mounted?' })
+  if (mount) {
+    await mountGroup.getByRole('radio', { name: new RegExp(`^${mount}`) }).first().click()
+  }
+  if (spot) {
+    const g = page.getByRole('radiogroup', { name: 'Spot' })
+    await ((await g.count()) ? g.getByRole('radio', { name: spot }) : page.getByRole('radio', { name: spot })).first().click()
+  }
+  report.imports = [...(report.imports ?? []), { scheme, prefix, mountAsked: (await mountGroup.count()) > 0, mount: mount ?? 'default', spot: spot ?? null }]
   await shot(`${prefix}import-ready`, { full: true })
+  if (mount) {
+    await page.locator('#q-mount').scrollIntoViewIfNeeded()
+    await shot(`${prefix}import-mount`)
+  }
+  const clicked = Date.now()
   await page.getByRole('button', { name: 'Analyse' }).click()
   await page.waitForURL(/\/processing\//, { timeout: 30_000 })
   await page.waitForTimeout(6000)
   await shot(`${prefix}processing`)
   await page.waitForURL(/\/sessions\/[^/]+$/, { timeout: 900_000 })
+  const processingS = (Date.now() - clicked) / 1000
   await page.waitForTimeout(1500)
-  return /\/sessions\/([^/]+)$/.exec(new URL(page.url()).pathname)?.[1]
+  const sessionId = /\/sessions\/([^/]+)$/.exec(new URL(page.url()).pathname)?.[1]
+  // What the analysis stored: serves found and counted, and why any were left out.
+  const serves = ((await idbAll(page, 'serves')) ?? []).filter((x) => x.sessionId === sessionId)
+  const exclusions = {}
+  for (const x of serves) for (const r of x.exclusions ?? []) exclusions[r] = (exclusions[r] ?? 0) + 1
+  const entry = { scheme, prefix, clip: basename(file), sessionId, processingS, servesFound: serves.length, servesIncluded: serves.filter((x) => x.includedFlag === 1).length, exclusions }
+  report.analyses = [...(report.analyses ?? []), entry]
+  log(`analysis ${JSON.stringify(entry)}`)
+  return sessionId
+}
+
+/**
+ * "Check this serve" on an imported synthetic clip: open it from More actions, mark the toss peak and
+ * contact at the clip's ground truth (validation/synthetic truth.json), save, and read "App vs you".
+ */
+async function checkThisServe(page, sessionId, shot, scheme, clipId = 'baseline-s1') {
+  const truth = JSON.parse(readFileSync(join(repoRoot, 'validation/synthetic/clips', clipId, 'truth.json'), 'utf8'))
+  const ev = truth.serves[0].events
+  const ballAt = (f) => {
+    const fr = truth.frames[f]
+    const b = fr.balls.find((x) => x.inFrame && !x.held) ?? fr.balls[0]
+    return b ? { x: b.x, y: b.y } : null
+  }
+  await page.goto(`${base}/sessions/${sessionId}`)
+  const serveLink = page.locator('a[href*="/serves/"]').first()
+  await serveLink.waitFor({ timeout: 15_000 })
+  await serveLink.scrollIntoViewIfNeeded()
+  await serveLink.click()
+  await page.waitForSelector('[data-serve-detail]', { timeout: 60_000 })
+  await page.waitForTimeout(1500)
+  await page.getByRole('button', { name: 'More actions' }).click()
+  await page.getByRole('menuitem', { name: 'Check this serve' }).click()
+  await page.waitForSelector('[data-check-serve]', { timeout: 60_000 })
+  await shot('check-start', { wait: 1500 })
+  const slider = page.getByRole('slider', { name: 'Frame' })
+  const seekTo = async (frame) => {
+    await slider.focus()
+    await slider.press('Home')
+    let d = frame - Number(await slider.getAttribute('aria-valuenow'))
+    while (d >= 10) {
+      await slider.press('Shift+ArrowRight')
+      d -= 10
+    }
+    while (d > 0) {
+      await slider.press('ArrowRight')
+      d -= 1
+    }
+    await page.waitForFunction((f) => document.querySelector('[role="slider"][aria-label="Frame"]')?.getAttribute('aria-valuenow') === String(f), frame)
+    await page.waitForTimeout(350)
+  }
+  const tap = async (p) => {
+    const r = await page.locator('[data-check-serve] video').first().boundingBox()
+    if (!r || !p) throw new Error('no video box or no truth point')
+    await page.mouse.click(r.x + p.x * r.width, r.y + p.y * r.height)
+    await page.waitForTimeout(200)
+  }
+  await page.getByRole('button', { name: /^Peak/ }).click()
+  await seekTo(ev.tossApex.frameIndex)
+  await tap(ballAt(ev.tossApex.frameIndex))
+  await page.getByRole('button', { name: /^Contact/ }).click()
+  await seekTo(ev.contact.frameIndex)
+  await tap(ballAt(ev.contact.frameIndex))
+  await shot('check-marked')
+  await page.getByRole('button', { name: 'Save check' }).click()
+  await page.waitForSelector('[data-check-serve][data-mode="result"]', { timeout: 30_000 })
+  await shot('check-result', { wait: 1500 })
+  const rows = await page.locator('[aria-label="Timing"] li, [aria-label="Heights"] li, [aria-label="Positions"] li').allInnerTexts()
+  const saved = ((await idbAll(page, 'annotations')) ?? []).filter((a) => a.sessionId === sessionId)
+  report.checkServe = { ...(report.checkServe ?? {}), [scheme]: { sessionId, rows: rows.map((r) => r.replace(/\s+/g, ' ').trim()), savedChecks: saved.length } }
 }
 
 async function flowB(page, scheme) {
@@ -313,8 +422,27 @@ async function flowB(page, scheme) {
     await page.waitForURL((u) => !u.pathname.startsWith('/onboarding'), { timeout: 10_000 })
   })
   await step('import baseline clip and analyse', async () => {
-    sessionId = await importClip(page, clip('baseline-s1'), { shot, prefix: 'baseline-' })
+    sessionId = await importClip(page, clip('baseline-s1'), { shot, prefix: 'baseline-', scheme, mount: 'Level mount', spot: 'Singles' })
     await shot('baseline-report', { full: true })
+    // A level-mount import keeps absolute heights at their V1 label while the widened range allows it.
+    const sessions = (await idbAll(page, 'sessions')) ?? []
+    const statsRows = (await idbAll(page, 'sessionStats')) ?? []
+    const own = sessions.find((s) => s.id === sessionId)
+    const st = statsRows.find((s) => s.sessionId === sessionId)
+    const pick = (id) => {
+      const v = st?.metrics?.[id]
+      return v ? { status: v.status, value: v.value ?? null, reasonCode: v.reasonCode ?? null } : null
+    }
+    report.levelMountImport = report.levelMountImport ?? {}
+    report.levelMountImport[scheme] = {
+      sessionId,
+      phoneMount: own?.phoneMount ?? null,
+      servingSpot: own?.servingSpot ?? null,
+      setupKey: st?.setupKey ?? null,
+      tossApexHeight: pick('toss-apex-height'),
+      contactHeight: pick('contact-height-ratio'),
+      tossHeightSpread: pick('toss-height-spread'),
+    }
   })
   await step('tag the imported serve', async () => {
     if (!sessionId) throw new Error('no session')
@@ -323,6 +451,10 @@ async function flowB(page, scheme) {
     await button(page, 'In').first().click()
     await page.waitForTimeout(1500)
     await shot('baseline-tagged')
+  })
+  await step('check this serve (annotation mode) on the imported serve', async () => {
+    if (!sessionId) throw new Error('no session')
+    await checkThisServe(page, sessionId, shot, scheme)
   })
   await step('today reflects the stored decision', async () => {
     await page.goto(base + '/')
@@ -343,7 +475,7 @@ async function flowC(page, scheme) {
     await button(page, 'Skip set-up').click()
     await page.getByRole('radio', { name: 'Yes' }).click()
     await page.waitForURL((u) => !u.pathname.startsWith('/onboarding'), { timeout: 10_000 })
-    await importClip(page, clip('sample-checkin'), { shot, prefix: 'checkin-' })
+    await importClip(page, clip('sample-checkin'), { shot, prefix: 'checkin-', scheme })
     await shot('checkin-report', { full: true })
     await toHero(page)
     await shot('checkin-toss-hero')
@@ -381,7 +513,7 @@ async function flowC(page, scheme) {
     await shot('record-retest', { full: true, wait: 1000 })
   })
   await step('import the re-test and see the verdict', async () => {
-    const id = await importClip(page, clip('sample-retest'), { shot, prefix: 'retest-', viaRecord: true })
+    const id = await importClip(page, clip('sample-retest'), { shot, prefix: 'retest-', scheme, viaRecord: true })
     await shot('retest-report', { full: true, wait: 2500 })
     await toHero(page)
     await shot('retest-toss-hero')
@@ -422,9 +554,21 @@ async function main() {
         const page = await context.newPage()
         page.setDefaultTimeout(20_000)
         page.on('console', (m) => {
-          if (m.type() === 'error') report.consoleErrors.push({ scheme, flow: name, text: m.text().slice(0, 300), url: page.url() })
+          const text = m.text()
+          // MediaPipe's WebAssembly writes its INFO lines to stderr (console.error); they are not errors.
+          const wasmInfo = /^INFO: /.test(text)
+          if (m.type() === 'error' && !wasmInfo) report.consoleErrors.push({ scheme, flow: name, text: text.slice(0, 300), url: page.url() })
+          // Pose and GPU diagnostics (delegate fallback, lost or too many WebGL contexts), kept for triage.
+          if (wasmInfo || (m.type() === 'warning' && /webgl|context|gpu|delegate|xnnpack/i.test(text) && !/OpenGL error checking is disabled/.test(text))) {
+            report.diagnostics = [...(report.diagnostics ?? []), { scheme, flow: name, at: new Date().toISOString(), type: m.type(), text: text.slice(0, 300), url: page.url() }]
+          }
         })
         page.on('pageerror', (e) => report.consoleErrors.push({ scheme, flow: name, text: `pageerror: ${e.message}`.slice(0, 300), url: page.url() }))
+        // Nothing should leave the device (D8): every request not addressed to the preview server is listed.
+        page.on('request', (r) => {
+          const u = r.url()
+          if (!u.startsWith(base) && !u.startsWith('data:') && !u.startsWith('blob:')) report.offHostRequests = [...(report.offHostRequests ?? []), { scheme, flow: name, url: u.slice(0, 200) }]
+        })
         log(`--- flow ${name} (${scheme})`)
         await fn(page, scheme)
         await context.close()

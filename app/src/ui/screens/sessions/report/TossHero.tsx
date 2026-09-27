@@ -9,7 +9,7 @@ import { formatMetric } from '../../../format/metricFormat.ts'
 import { paths } from '../../../shell/paths.ts'
 import { againstUsual } from '../../progress/insights/history.ts'
 import { apexCm, relativeNumber, tossData, type ServeRow } from '../../progress/insights/serves.ts'
-import { median } from '../../progress/insights/stats.ts'
+import { median } from '../../../../analysis/stats/index.ts'
 import { formatRange } from '../../progress/insights/values.ts'
 
 export interface TossHeroProps {

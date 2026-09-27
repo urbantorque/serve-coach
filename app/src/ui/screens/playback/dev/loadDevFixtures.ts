@@ -70,7 +70,10 @@ function waitFor(el: HTMLMediaElement, event: string): Promise<void> {
 const toJpeg = (canvas: HTMLCanvasElement, q = 0.82) =>
   new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/jpeg', q))
 
-/** Grabs thumbnails (2× of 50 × 88 / 88 × 50) and 540 px evidence frames for a serve's events. */
+/**
+ * Grabs full-frame thumbnails at the pipeline's size (480 px long side, analysis/pipeline/keyFrames.ts,
+ * so the strip's player crop has the same pixels to work with) and 540 px evidence frames.
+ */
 async function grabKeyFrames(blob: Blob, serve: ServeAnalysis, fps: number, now: string): Promise<KeyFrameRecord[]> {
   const url = URL.createObjectURL(blob)
   const video = document.createElement('video')
@@ -84,8 +87,8 @@ async function grabKeyFrames(blob: Blob, serve: ServeAnalysis, fps: number, now:
     const h = video.videoHeight
     const portrait = h > w
     const thumb = document.createElement('canvas')
-    thumb.width = portrait ? 100 : 176
-    thumb.height = portrait ? 176 : 100
+    thumb.width = portrait ? Math.round((480 * w) / h) : 480
+    thumb.height = portrait ? 480 : Math.round((480 * h) / w)
     const full = document.createElement('canvas')
     full.width = portrait ? 540 : 960
     full.height = Math.round((full.width * h) / w)

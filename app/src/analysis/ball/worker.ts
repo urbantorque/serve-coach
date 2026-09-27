@@ -1,12 +1,14 @@
 /**
  * Ball-detection worker (engine-pipeline). Module worker entry: receives transferred ImageBitmap
- * crops, reads them back to RGBA in its own OffscreenCanvas (so neither the readback nor the
- * detection runs on the UI thread), runs BallWindowProcessor per window and analyseBall at the
- * end of each window. Messages are handled strictly in arrival order.
+ * crops and reads them back to RGBA in its own OffscreenCanvas, or takes YUV crops copied from
+ * CPU-memory frames, which the detector box-downscales straight from the YUV (video/planar.ts), so
+ * neither readback nor detection runs on the UI thread. Runs BallWindowProcessor per window and
+ * analyseBall at the end of each window. Messages are handled strictly in arrival order.
  */
-import type { ImageDataLike } from '../types.ts'
+import { isPlanarCrop } from '../video/planar.ts'
+import type { DetectorImage } from './detector.ts'
 import { analyseWindow, BallWindowProcessor } from './workerCore.ts'
-import type { FromBallWorker, ToBallWorker } from './workerProtocol.ts'
+import type { BallFrameImage, FromBallWorker, ToBallWorker } from './workerProtocol.ts'
 
 interface WorkerScope {
   postMessage(message: FromBallWorker): void
@@ -18,8 +20,9 @@ const windows = new Map<number, { processor: BallWindowProcessor; readbackMs: nu
 let canvas: OffscreenCanvas | null = null
 let ctx: OffscreenCanvasRenderingContext2D | null = null
 
-function readback(image: ImageBitmap | ImageDataLike): ImageDataLike {
-  if (!('close' in image)) return image
+/** Pixels for the detector: bitmaps are read back; RGBA and YUV crops go as they are. */
+function readback(image: BallFrameImage): DetectorImage {
+  if (isPlanarCrop(image) || !('close' in image)) return image
   const { width, height } = image
   if (!canvas || canvas.width !== width || canvas.height !== height) {
     canvas = new OffscreenCanvas(width, height)
@@ -57,7 +60,7 @@ function handle(message: ToBallWorker): void {
             readbackMs,
           })
         } finally {
-          if ('close' in message.image) message.image.close()
+          if (!isPlanarCrop(message.image) && 'close' in message.image) message.image.close()
         }
         return
       }

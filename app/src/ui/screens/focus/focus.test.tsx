@@ -62,6 +62,15 @@ describe('adapter over the sample fixtures', () => {
     const rec = toCoachingRecord(d, { sessionId: current.id })
     expect(rec).toMatchObject({ sessionId: 'demo-s3', gate: 'ok', focus: { faultId: 'toss-height-inconsistent' }, cue: { style: 'external-target' } })
   })
+
+  it('passes the same set-up key the screens match on, with the saved serving spot', () => {
+    const s = DEMO_FIXTURES.sessions[2]
+    const serves = s.serves.map((x) => ({ ...x, includedFlag: x.included ? (1 as const) : (0 as const) }))
+    const plain = toCoachingSession(s.session, serves, s.tags, s.tally, s.stats)
+    expect(plain.setupKey).toMatch(/^(portrait|landscape|unknown)\|/)
+    const withSpot = toCoachingSession({ ...s.session, servingSpot: 'doubles' }, serves, s.tags, s.tally, s.stats)
+    expect(withSpot.setupKey?.split('|')[2]).toBe('doubles')
+  })
 })
 
 describe('focus screens', () => {

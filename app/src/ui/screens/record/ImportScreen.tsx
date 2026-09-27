@@ -12,7 +12,10 @@ import { IMPORT_HELP, RIGHTS_REMINDER } from './flow/copy.ts'
 import {
   fpsLabel,
   fpsOverrideFor,
+  heightsNote,
   importGuard,
+  MOUNT_OPTIONS,
+  mountContext,
   needsSlowMotionQuestion,
   resolutionLabel,
   slowMotionContext,
@@ -20,6 +23,7 @@ import {
   summariseClip,
   viewFor,
   type CameraAnswer,
+  type MountAnswer,
   type SlowMotionAnswer,
   type SlowMotionSpeed,
   type TimeBaseFacts,
@@ -44,8 +48,9 @@ const CAMERA_OPTIONS: { value: CameraAnswer; title: string; body?: string }[] = 
 /**
  * Import a video (CAPTURE §11, PRODUCT §6.3.6, DESIGN §10.3): pick a clip, read its size, length and
  * frame rate without decoding, ask only what the file cannot tell (camera position, side, serve,
- * slow motion, target), then analyse on this phone. Tilt is unknown for imports, so heights are
- * capped at estimated (TILT_UNKNOWN).
+ * slow motion, target, how the phone was mounted, the serving spot), then analyse on this phone.
+ * Imports have no tilt reading: a level mount lets heights stay estimates with a wider range
+ * (METRICS §1.1.3a); otherwise heights are experimental.
  */
 export function ImportScreen() {
   const navigate = useNavigate()
@@ -58,6 +63,9 @@ export function ImportScreen() {
   const [file, setFile] = useState<File | null>(null)
   const [probed, setProbed] = useState<Probed | null>(null)
   const [camera, setCamera] = useState<CameraAnswer>('side-chest')
+  // Nothing is assumed until the player says the phone was level.
+  const [mount, setMount] = useState<MountAnswer>('tilted-or-unsure')
+  const [spot, setSpot] = useState<'singles' | 'doubles' | null>(null)
   const [side, setSide] = useState<'deuce' | 'ad' | 'both'>('deuce')
   const [serve, setServe] = useState<1 | 2 | 'mixed'>(1)
   const [target, setTarget] = useState<'T' | 'body' | 'wide' | 'mixed' | null>(null)
@@ -136,9 +144,11 @@ export function ImportScreen() {
         target,
         slowMotionAnswer: askSlow ? slowMotionContext(slow, speed) : undefined,
         hitSoundTiming: hitSound === true,
+        mount: mountContext(view.view, mount),
+        servingSpot: spot,
       }
       const capture = importCapture(player, answers, meta)
-      const block = { side, serveNumber: serve, type, target }
+      const block = { side, serveNumber: serve, type, target, servingSpot: spot }
       const startedAt = meta.createdAt ?? new Date().toISOString()
       const { sessionId } = await saveNewSession({
         // The re-test plan picked on Record also applies to an imported clip (it links to the experiment).
@@ -261,7 +271,18 @@ export function ImportScreen() {
               <span id="q-camera">Where was the camera?</span>
             </SectionLabel>
             <RadioCards label="Where was the camera?" options={CAMERA_OPTIONS} value={camera} onChange={setCamera} />
+            {view.view === 'rear' ? <p className="text-footnote text-ink-2">{heightsNote(view.view, mount)}</p> : null}
           </section>
+
+          {view.view === 'side' ? (
+            <section className="flex flex-col gap-3" aria-labelledby="q-mount">
+              <SectionLabel>
+                <span id="q-mount">How was the phone mounted?</span>
+              </SectionLabel>
+              <RadioCards label="How was the phone mounted?" options={MOUNT_OPTIONS} value={mount} onChange={setMount} />
+              <p className="text-footnote text-ink-2">{heightsNote(view.view, mount)}</p>
+            </section>
+          ) : null}
 
           <section className="flex flex-col gap-3" aria-labelledby="q-serves">
             <SectionLabel>
@@ -287,6 +308,16 @@ export function ImportScreen() {
                 ]}
                 value={serve}
                 onChange={(v) => v !== null && setServe(v)}
+              />
+              <ChoiceChips
+                label="Spot"
+                optional
+                options={[
+                  { value: 'singles', label: 'Singles' },
+                  { value: 'doubles', label: 'Doubles' },
+                ]}
+                value={spot}
+                onChange={setSpot}
               />
               {serve === 'mixed' || side === 'both' ? (
                 <p className="pl-16 text-footnote text-ink-2">You'll sort each serve when you tag them after analysis. Stats never mix the two.</p>
@@ -394,8 +425,8 @@ export function ImportScreen() {
             <p className="flex items-start gap-2 text-footnote text-ink-2">
               <InfoIcon size={20} aria-hidden="true" className="shrink-0" />
               {sound === 'none'
-                ? `We keep a copy on this phone${retention?.policy === 'auto-delete-days' ? ` for ${retention.days} days` : ''}, following your storage setting. There's no tilt reading for imports, so heights are marked as estimates.`
-                : "This video has sound. Stored copies never keep sound, so if it can't be removed we keep only the stats and key frames. Your original is unchanged. There's no tilt reading for imports, so heights are marked as estimates."}
+                ? `We keep a copy on this phone${retention?.policy === 'auto-delete-days' ? ` for ${retention.days} days` : ''}, following your storage setting.`
+                : "This video has sound. Stored copies never keep sound, so if it can't be removed we keep only the stats and key frames. Your original is unchanged."}
             </p>
             {firstImport ? (
               <p className="flex items-start gap-2 text-footnote text-ink-2">

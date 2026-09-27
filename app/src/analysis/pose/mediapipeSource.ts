@@ -16,7 +16,7 @@
  * - Up to `maxInFlight` frames are pipelined to the worker. The caller may release an
  *   input image as soon as the next input frame is requested.
  */
-import type { PoseFrame } from '../types.ts'
+import type { Landmark, PoseFrame } from '../types.ts'
 import { meanCoreVisibility } from './landmarks.ts'
 import { type LocaliseOptions, localisePeople } from './localise.ts'
 import type { Delegate, DetectOutput, DetectTarget, LandmarkerConfig, LandmarkerHandle, LandmarkerInitInfo, LandmarkerResetOptions, LocatorSlot, PoseModel, RunningMode } from './mediapipeCore.ts'
@@ -74,6 +74,16 @@ export interface StreamSettings {
    * (ARCHITECTURE §5.4: Pass B, once Pass A has locked on the server).
    */
   numPoses?: number
+  /**
+   * The server's pose (full-frame normalised) shortly before the stream's first frame, e.g. from
+   * Pass A. With ROI 'auto' the stream starts tracking from it instead of localising the server
+   * again (a full-frame, tile and verification search: about 0.35 s per stream, measured on a
+   * 16-serve clip). Applies to the next stream only; the tracker keeps its own rules, so a seed
+   * that no longer matches anyone is dropped like a lost track.
+   */
+  seed?: { landmarks: Landmark[]; tReal: number }
+  /** Replaces MediaPipePoseSourceOptions.roiMaxSidePx from the next stream on (0: no downscale). */
+  roiMaxSidePx?: number
 }
 
 export interface TimingSummary {
@@ -94,6 +104,8 @@ export interface RoiStats {
   localisationsFound: number
   /** Detector runs spent on localisation (full frame, tiles, verification crops). */
   localiserRuns: number
+  /** Streams that started from a seed pose (StreamSettings.seed) instead of a localisation. */
+  seededStreams: number
   /** Wall time per localisation attempt (calling thread). */
   localiseMs: TimingSummary
   /** One-off creation of the IMAGE-mode locator landmarker (VIDEO mode only), ms. */
@@ -402,9 +414,11 @@ export class MediaPipePoseSource implements PoseSource {
   private readonly cropSideFractions: number[] = []
   private readonly detectErrors: string[] = []
   private counts = { frames: 0, withPerson: 0, multiple: 0, lost: 0, reacquired: 0 }
-  private roiCounts = { cropped: 0, skipped: 0, localisations: 0, found: 0, localiserRuns: 0, locatorSetupMs: undefined as number | undefined }
+  private roiCounts = { cropped: 0, skipped: 0, localisations: 0, found: 0, localiserRuns: 0, seeded: 0, locatorSetupMs: undefined as number | undefined }
   private decisions: Array<TrackDecision & { frameIndex: number }> = []
   private pendingSettings: StreamSettings | null = null
+  /** Crop cap in force (options.roiMaxSidePx until a stream's settings replace it). */
+  private roiMaxSidePx: number
   private trace: RoiTraceEntry[] = []
 
   constructor(options: MediaPipePoseSourceOptions = {}) {
@@ -427,6 +441,7 @@ export class MediaPipePoseSource implements PoseSource {
       // An explicit `undefined` (e.g. runningMode: config.runningMode) keeps the default.
       ...(Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined)) as MediaPipePoseSourceOptions),
     }
+    this.roiMaxSidePx = this.options.roiMaxSidePx
   }
 
   /**
@@ -464,6 +479,7 @@ export class MediaPipePoseSource implements PoseSource {
         localisations: this.roiCounts.localisations,
         localisationsFound: this.roiCounts.found,
         localiserRuns: this.roiCounts.localiserRuns,
+        seededStreams: this.roiCounts.seeded,
         localiseMs: summarise(this.localiseMs),
         locatorSetupMs: this.roiCounts.locatorSetupMs,
         meanCropSideFraction: fractions.length ? fractions.reduce((s, v) => s + v, 0) / fractions.length : Number.NaN,
@@ -475,7 +491,7 @@ export class MediaPipePoseSource implements PoseSource {
   resetStats(): void {
     for (const values of [this.inferenceMs, this.roundTripMs, this.prepareMs, this.localiseMs, this.cropSideFractions, this.detectErrors]) values.length = 0
     this.counts = { frames: 0, withPerson: 0, multiple: 0, lost: 0, reacquired: 0 }
-    this.roiCounts = { ...this.roiCounts, cropped: 0, skipped: 0, localisations: 0, found: 0, localiserRuns: 0 }
+    this.roiCounts = { ...this.roiCounts, cropped: 0, skipped: 0, localisations: 0, found: 0, localiserRuns: 0, seeded: 0 }
   }
 
   /** Tracker decisions for the most recent estimate() call, one per frame. */
@@ -573,7 +589,10 @@ export class MediaPipePoseSource implements PoseSource {
     const backend = await this.ensureReady()
     const settings = this.pendingSettings
     this.pendingSettings = null
-    if (this.streams > 0 || settings) await backend.reset(settings ?? undefined)
+    const seed = settings?.seed
+    if (settings?.roiMaxSidePx !== undefined) this.roiMaxSidePx = Math.max(0, settings.roiMaxSidePx)
+    const landmarker = settings?.numPoses !== undefined ? { numPoses: settings.numPoses } : undefined
+    if (this.streams > 0 || landmarker) await backend.reset(landmarker)
     this.streams++
     this.decisions = []
     this.trace = []
@@ -628,6 +647,8 @@ export class MediaPipePoseSource implements PoseSource {
           frameSize = size
           tracker = new ServerTracker({ ...this.options.tracker, frameAspect: size.width / size.height })
           roi = this.options.roi === 'auto' ? new RoiController(size, this.options.roiOptions) : null
+          // A seed (configure) starts the ROI and the track on the known server: no localisation.
+          if (seed && roi && tracker.update([{ landmarks: seed.landmarks }], seed.tReal).index !== null && roi.start(seed.landmarks, seed.tReal)) this.roiCounts.seeded++
         }
         // A new clip starts 1 s after the previous one so VIDEO-mode timestamps stay increasing.
         offsetMs ??= this.streams === 1 && this.lastTimestampMs <= 0 ? 0 : this.lastTimestampMs + 1000 - frame.tReal * 1000
@@ -664,7 +685,7 @@ export class MediaPipePoseSource implements PoseSource {
           crop,
           target: 'main',
           lastUse: true,
-          maxSidePx: this.options.roiMaxSidePx || undefined,
+          maxSidePx: this.roiMaxSidePx || undefined,
         })
         this.prepareMs.push(prepareMs)
         result.catch(() => undefined) // observed in finish(); avoids an unhandled-rejection report meanwhile

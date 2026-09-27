@@ -367,7 +367,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
   if (rollFlag) {
     metricCam = { ...cam, tiltStatus: 'unknown' }
     warnings.push(
-      `The standing player leans ${Math.abs(standingRoll!.rollDeg).toFixed(1)}° from the picture's vertical, so the phone was probably not level: heights are experimental (PITCH_UNKNOWN).`,
+      `The standing player leans ${Math.abs(standingRoll!.rollDeg).toFixed(1)} degrees from the picture's vertical, so the phone was probably not level: heights are experimental (PITCH_UNKNOWN).`,
     )
   }
 

@@ -38,7 +38,10 @@ export interface ValidationEntry {
   annotation: CheckAnnotation
   /** Sample (demo) data: never part of a real validation set. */
   sample: boolean
-  /** A random key for this phone's player (not linked to any identity), so serves cluster by player. */
+  /**
+   * The player, so serves cluster by player: the check's study code when one study phone holds several
+   * players, else a random key for this phone's player. Neither is linked to any identity in the file.
+   */
   subject: { key: string; handedness: Handedness; heightM: number; heightSource: 'entered' | 'default' }
   clip: {
     videoId: string
@@ -91,7 +94,7 @@ export interface ExportSource {
 }
 
 export const PRIVACY_NOTE =
-  'No video, images, names, notes about pain or comfort, or profile details beyond the height the app used. Annotators are initials. The subject key is random and stays on the phone that made it.'
+  'No video, images, names, notes of any kind, or profile details beyond the height the app used. Annotators are initials. The subject key is a study code, or a random key that stays on the phone that made it.'
 
 function exportMetric(v: MetricValue): ExportedMetric {
   return {
@@ -123,8 +126,16 @@ export function isSample(src: Pick<ExportSource, 'video' | 'session'>): boolean 
   return src.session?.isDemo === 1 || src.video?.isDemo === 1
 }
 
+/** The annotation as exported: free text is never written (it could name someone or describe pain). */
+export function exportedAnnotation(a: CheckAnnotation): CheckAnnotation {
+  const copy = { ...a }
+  delete copy.notes
+  return copy
+}
+
 export function buildEntry(src: ExportSource, subjectKey: string): ValidationEntry {
-  const { annotation, serve, video, session } = src
+  const { serve, video, session } = src
+  const annotation = exportedAnnotation(src.annotation)
   const clip = clipOf(video, session)
   const heightM = video?.capture.playerHeightM ?? 1.75
   const heightSource = video?.capture.playerHeightSource ?? 'default'
@@ -144,7 +155,8 @@ export function buildEntry(src: ExportSource, subjectKey: string): ValidationEnt
   return {
     annotation,
     sample: isSample(src),
-    subject: { key: subjectKey, handedness: serve.handedness, heightM, heightSource },
+    // A study code (several players on one study phone) names the player; otherwise the phone's random key does.
+    subject: { key: annotation.subjectCode || subjectKey, handedness: serve.handedness, heightM, heightSource },
     clip: {
       videoId: serve.videoId,
       fingerprint: video?.fingerprint ?? null,

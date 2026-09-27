@@ -1,0 +1,582 @@
+[
+ {
+  "scheme": "light",
+  "shot": "serve-detail-apex",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-serve-detail-apex.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-apex-video",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-serve-detail-apex-video.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-apex-zoom",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-serve-detail-apex-zoom.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-drawer",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-serve-detail-drawer.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "keyframe-strip",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-keyframe-strip.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "keyframe-strip-cropped",
+  "cropped": 7
+ },
+ {
+  "scheme": "light",
+  "shot": "overflow-menu",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-overflow-menu.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-start",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-start.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-height-marked",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-height-marked.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-release-marked",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-release-marked.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-peak-loupe",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-peak-loupe.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-landing-marked",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-landing-marked.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-radar",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-radar.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-who-sheet",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-who-sheet.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-result.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result-scroll-1",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-result-scroll-1.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result-scroll-2",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-result-scroll-2.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result-scroll-3",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-result-scroll-3.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result-scroll-4",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-result-scroll-4.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result-scroll-5",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-result-scroll-5.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result-scroll-6",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-result-scroll-6.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result-text",
+  "rows": [
+   "On this serve the app was within target on 7 of 10 checks.",
+   "One serve can't show how accurate the app is. Exported checks from many serves and players are pooled to measure that.",
+   "Your marks show as You logged",
+   "On the video, a crosshair is your mark and a dot is the app's point.",
+   "Toss release Within the 1-frame target The app is 1 frame earlier (17 ms). App frame 107 · Your frame 108 Show frame 108.",
+   "Toss peak Within the 1-frame target Same frame as your mark. App frame 144 · Your frame 144 Show frame 144.",
+   "Contact Within the 1-frame target Same frame as your mark. App frame 167 · Your frame 167 Show frame 167.",
+   "Front foot lands Outside the 1-frame target The app is 14 frames later (233 ms). App frame 189 · Your frame 175 Show frame 175.",
+   "Toss-to-hit time Outside the 1-frame target The app reads 27 ms longer. App ≈ 1.01 s Toss-to-hit time, about 1.01 seconds, Estimate, likely 0.96 to 1.06 seconds Estimate You 0.98 s Toss-to-hit time, 0.98 seconds, You logged You logged Show frame 108.",
+   "Toss height Within the 3% of height target The app reads 1 cm higher (0.5% of height). App ≈ 1.94 × your height Toss height, about 1.94 times your height, Estimate, likely 1.71 to 2.18 times your height Estimate You 1.93 × your height Toss height, 1.93 times your height, You logged You logged Show frame 144.",
+   "Contact height Outside the 2.5% of height target The app reads 5 cm lower (2.6% of height). App ≈ 1.51 × your height Contact height, about 1.51 times your height, Estimate, likely 1.48 to 1.54 times your height Estimate You 1.54 × your height Contact height, 1.54 times your height, You logged You logged Show frame 167.",
+   "Ball drop before contact Within half a centimetre of your marks. App ≈ 72 cm Ball drop before contact, about 72 centimetres, Estimate, likely 63 to 81 centimetres Estimate You 72 cm Ball drop before contact, 72 centimetres, You logged You logged Show frame 167.",
+   "Toss in front Within the 6 cm target The app reads 3 cm further forward. App ≈ 54 cm Toss in front, about 54 centimetres, Estimate, likely 47 to 61 centimetres Estimate You 51 cm Toss in front, 51 centimetres, You logged You logged Show frame 144.",
+   "Contact in front Within the 6 cm target The app reads 3 cm further forward. App ≈ 61 cm Contact in front, about 61 centimetres, Estimate, likely 53 to 69 centimetres Estimate You 58 cm Contact in front, 58 centimetres, You logged You logged Show frame 167.",
+   "Landing distance Within the 6 cm target The app reads 2 cm further forward. App ≈ 35 cm Landing distance, about 35 centimetres, Estimate, likely 25 to 50 centimetres Estimate You 34 cm Landing distance, 34 centimetres, You logged You logged Show frame 175."
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-result-row-frame",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-result-row-frame.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-export-sheet-sample",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-export-sheet-sample.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-export-sheet",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-export-sheet.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-export-toast",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-export-toast.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "export",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-export-synthetic-serve-coach-validation@1-2026-09-27.json",
+  "suggested": "serve-coach-validation@1-2026-09-27.json"
+ },
+ {
+  "scheme": "light",
+  "shot": "check-edit-after-reveal",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-edit-after-reveal.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-no-video",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-no-video.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "check-landscape",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-check-landscape.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "serve-detail-landscape-apex",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\light-serve-detail-landscape-apex.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "light",
+  "shot": "console",
+  "console": [],
+  "offHost": []
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-apex",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-serve-detail-apex.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-apex-video",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-serve-detail-apex-video.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-apex-zoom",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-serve-detail-apex-zoom.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-drawer",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-serve-detail-drawer.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "keyframe-strip",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-keyframe-strip.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "keyframe-strip-cropped",
+  "cropped": 7
+ },
+ {
+  "scheme": "dark",
+  "shot": "overflow-menu",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-overflow-menu.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-start",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-start.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-height-marked",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-height-marked.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-release-marked",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-release-marked.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-peak-loupe",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-peak-loupe.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-landing-marked",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-landing-marked.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-radar",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-radar.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-who-sheet",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-who-sheet.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-result.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result-scroll-1",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-result-scroll-1.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result-scroll-2",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-result-scroll-2.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result-scroll-3",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-result-scroll-3.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result-scroll-4",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-result-scroll-4.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result-scroll-5",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-result-scroll-5.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result-scroll-6",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-result-scroll-6.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result-text",
+  "rows": [
+   "On this serve the app was within target on 7 of 10 checks.",
+   "One serve can't show how accurate the app is. Exported checks from many serves and players are pooled to measure that.",
+   "Your marks show as You logged",
+   "On the video, a crosshair is your mark and a dot is the app's point.",
+   "Toss release Within the 1-frame target The app is 1 frame earlier (17 ms). App frame 107 · Your frame 108 Show frame 108.",
+   "Toss peak Within the 1-frame target Same frame as your mark. App frame 144 · Your frame 144 Show frame 144.",
+   "Contact Within the 1-frame target Same frame as your mark. App frame 167 · Your frame 167 Show frame 167.",
+   "Front foot lands Outside the 1-frame target The app is 14 frames later (233 ms). App frame 189 · Your frame 175 Show frame 175.",
+   "Toss-to-hit time Outside the 1-frame target The app reads 27 ms longer. App ≈ 1.01 s Toss-to-hit time, about 1.01 seconds, Estimate, likely 0.96 to 1.06 seconds Estimate You 0.98 s Toss-to-hit time, 0.98 seconds, You logged You logged Show frame 108.",
+   "Toss height Within the 3% of height target The app reads 1 cm higher (0.5% of height). App ≈ 1.94 × your height Toss height, about 1.94 times your height, Estimate, likely 1.71 to 2.18 times your height Estimate You 1.93 × your height Toss height, 1.93 times your height, You logged You logged Show frame 144.",
+   "Contact height Outside the 2.5% of height target The app reads 5 cm lower (2.6% of height). App ≈ 1.51 × your height Contact height, about 1.51 times your height, Estimate, likely 1.48 to 1.54 times your height Estimate You 1.54 × your height Contact height, 1.54 times your height, You logged You logged Show frame 167.",
+   "Ball drop before contact Within half a centimetre of your marks. App ≈ 72 cm Ball drop before contact, about 72 centimetres, Estimate, likely 63 to 81 centimetres Estimate You 72 cm Ball drop before contact, 72 centimetres, You logged You logged Show frame 167.",
+   "Toss in front Within the 6 cm target The app reads 3 cm further forward. App ≈ 54 cm Toss in front, about 54 centimetres, Estimate, likely 47 to 61 centimetres Estimate You 51 cm Toss in front, 51 centimetres, You logged You logged Show frame 144.",
+   "Contact in front Within the 6 cm target The app reads 3 cm further forward. App ≈ 61 cm Contact in front, about 61 centimetres, Estimate, likely 53 to 69 centimetres Estimate You 58 cm Contact in front, 58 centimetres, You logged You logged Show frame 167.",
+   "Landing distance Within the 6 cm target The app reads 2 cm further forward. App ≈ 35 cm Landing distance, about 35 centimetres, Estimate, likely 25 to 50 centimetres Estimate You 34 cm Landing distance, 34 centimetres, You logged You logged Show frame 175."
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-result-row-frame",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-result-row-frame.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-export-sheet-sample",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-export-sheet-sample.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-export-sheet",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-export-sheet.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-export-toast",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-export-toast.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "export",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-export-synthetic-serve-coach-validation@1-2026-09-27.json",
+  "suggested": "serve-coach-validation@1-2026-09-27.json"
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-edit-after-reveal",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-edit-after-reveal.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-no-video",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-no-video.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "check-landscape",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-check-landscape.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "serve-detail-landscape-apex",
+  "file": "C:\\Users\\roger\\OneDrive\\Desktop\\Serve2\\validation\\results\\ui\\harden-annotation\\dark-serve-detail-landscape-apex.png",
+  "overflow": false,
+  "smallTargets": [
+   "a \"Skip to content\""
+  ]
+ },
+ {
+  "scheme": "dark",
+  "shot": "console",
+  "console": [],
+  "offHost": []
+ }
+]

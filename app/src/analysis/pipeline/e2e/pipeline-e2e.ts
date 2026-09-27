@@ -23,6 +23,7 @@ import type { CameraView, CaptureContext, Handedness, MetricValue, TargetZone } 
 import type { EngineInput, EngineOutput } from '../../engine.ts'
 import { AnalysisError } from '../errors.ts'
 import { defaultDeps, runAnalysis, type PipelineDeps } from '../orchestrator.ts'
+import type { BallFrameImage } from '../../ball/workerProtocol.ts'
 import type { PoseEstimator } from '../passes.ts'
 import type { PipelineEvent, PipelineProgress, RunAnalysisResult } from '../types.ts'
 import { analyseSessionDouble, findServeWindowsDouble } from './testDoubleEngine.ts'
@@ -74,6 +75,8 @@ export interface PipelineDump {
   quality: string
   ballTracks: number
   poseStats?: unknown[]
+  /** Pose-source stats when Pass B starts (Pass A alone; the source's stats are cumulative). */
+  poseStatsPassA?: unknown[]
 }
 
 declare global {
@@ -217,7 +220,9 @@ async function main(): Promise<void> {
       createBallClient: async () => ({
         backend: 'main-thread',
         begin: async () => undefined,
-        pushFrame: async (_w: number, _f: number, _t: number, image: ImageBitmap) => image.close(),
+        pushFrame: async (_w: number, _f: number, _t: number, image: BallFrameImage) => {
+          if ('close' in image) image.close()
+        },
         end: async (windowId: number, options) => analyseWindow(windowId, [], options),
         dispose: () => undefined,
       }),
@@ -226,6 +231,7 @@ async function main(): Promise<void> {
   // Accuracy dumps (perf-bench.mjs): the engine's input poses and output serves, plus pose-source
   // stats, captured by wrapping the injected deps (the pipeline itself is unchanged).
   const poseSources: PoseEstimator[] = []
+  let passAStats: unknown[] | null = null
   if (params.get('dump') === '1') {
     const real = deps.engine
     const createPose = deps.createPoseSource
@@ -234,6 +240,14 @@ async function main(): Promise<void> {
       createPoseSource: async (pass, model) => {
         const source = await createPose(pass, model)
         poseSources.push(source)
+        // Pass B switches the landmarker to numPoses 1: snapshot the Pass A stats then.
+        const configure = source.configure?.bind(source)
+        if (configure) {
+          source.configure = (settings) => {
+            if (settings.numPoses === 1 && !passAStats) passAStats = poseSources.map((s) => s.stats?.() ?? null)
+            configure(settings)
+          }
+        }
         return source
       },
       engine: {
@@ -283,13 +297,27 @@ async function main(): Promise<void> {
       hitSoundTiming: hitSound,
       signal: controller.signal,
       source: 'file-import',
-      passA: params.get('passA') === 'uniform' ? { coarseHz: 15, fineHz: 15 } : undefined,
-      // Pass B tuning knobs for perf-bench.mjs A/B runs (?numPoses=2, ?lanes=1, ?reuse=0).
+      // Pass A knobs: ?passA=uniform (15 Hz everywhere), ?coarseNP=1|2 and ?fillNP=1|2 (landmarker
+      // poses per stream), ?seedFill=0 (localise the fill stream instead of seeding it).
+      passA: {
+        ...(params.get('passA') === 'uniform' ? { coarseHz: 15, fineHz: 15 } : {}),
+        coarseNumPoses: params.get('coarseNP') === '1' ? 1 : params.get('coarseNP') === '2' ? 2 : undefined,
+        fillNumPoses: params.get('fillNP') === '1' ? 1 : params.get('fillNP') === '2' ? 2 : undefined,
+        seedFill: params.get('seedFill') === '0' ? false : undefined,
+      },
+      // Pass B tuning knobs for perf-bench.mjs A/B runs (?numPoses=2, ?lanes=1, ?reuse=0,
+      // ?ballPixels=gpu, ?seed=0) and the pose crop size (?roiSide=0 keeps the source resolution).
       passB: {
         numPoses: params.get('numPoses') === '2' ? 2 : params.get('numPoses') === '1' ? 1 : undefined,
         lanes: Number(params.get('lanes')) > 0 ? Number(params.get('lanes')) : undefined,
-        reuseSparse: params.get('reuse') === '0' ? false : undefined,
+        reuseSparse: params.get('reuse') === '1' ? true : params.get('reuse') === '0' ? false : undefined,
+        ballPixels: params.get('ballPixels') === 'gpu' ? 'gpu' : params.get('ballPixels') === 'cpu' ? 'cpu' : undefined,
+        seedPose: params.get('seed') === '1' ? true : params.get('seed') === '0' ? false : undefined,
+        tightBallCrop: params.get('tightCrop') === '0' ? false : undefined,
+        slowCoreHz: params.has('slowCore') ? Number(params.get('slowCore')) : undefined,
+        poseLanes: params.has('poseLanes') ? Number(params.get('poseLanes')) : undefined,
       },
+      pose: params.has('roiSide') ? { roiMaxSidePx: Number(params.get('roiSide')) } : undefined,
       onProgress: (event: PipelineEvent) => {
         if (event.type === 'warning') report.warnings.push(event.message)
         if (event.type !== 'progress') return
@@ -302,7 +330,10 @@ async function main(): Promise<void> {
     }, deps)
     const { stats, ...rest } = result
     report.result = { ...rest, statsMetricIds: Object.keys(stats.metrics) }
-    if (window.__pipelineDump) window.__pipelineDump.poseStats = poseSources.map((s) => s.stats?.() ?? null)
+    if (window.__pipelineDump) {
+      window.__pipelineDump.poseStats = poseSources.map((s) => s.stats?.() ?? null)
+      if (passAStats) window.__pipelineDump.poseStatsPassA = passAStats
+    }
     report.verify = await verify(sessionId, result.serveIds)
     report.state = 'done'
     state.status = 'done'

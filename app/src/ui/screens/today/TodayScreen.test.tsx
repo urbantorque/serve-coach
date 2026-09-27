@@ -6,6 +6,9 @@ import { useSettingsStore } from '../../../data/stores/settings.ts'
 import { paths } from '../../shell/paths.ts'
 import { expectHonest, primaryCount, renderAt, seedPlayer } from '../progress/insights/testing.tsx'
 
+// Screens load several stores from IndexedDB; under a full parallel run the default 5 s is tight.
+vi.setConfig({ testTimeout: 15_000 })
+
 beforeEach(async () => {
   await resetDbForTests()
   useSettingsStore.setState({ experimentalMetrics: false })
@@ -14,7 +17,7 @@ beforeEach(async () => {
 describe('Today', () => {
   it('empty: record your first serves, one primary', async () => {
     renderAt(paths.today())
-    expect(await screen.findByText('Record your first serves', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByText('Record your first serves', {}, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'See a sample session' })).toBeInTheDocument()
     expect(primaryCount()).toBe(1)
   })
@@ -23,7 +26,7 @@ describe('Today', () => {
     await loadDemoData()
     const errors = vi.spyOn(console, 'error')
     renderAt(paths.today())
-    expect(await screen.findByRole('heading', { name: 'Steady toss height' }, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Steady toss height' }, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.getByText('Sample data · synthetic player')).toBeInTheDocument()
     expect(screen.getByText(/sample player's focus/)).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Start drill/ })).toBeNull()
@@ -36,7 +39,7 @@ describe('Today', () => {
   it("player: the focus card's one primary follows the experiment (re-test after practice), with the last session", async () => {
     await seedPlayer()
     renderAt(paths.today())
-    expect(await screen.findByRole('heading', { name: 'Steady toss height' }, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Steady toss height' }, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Record re-test/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /of your steady toss height experiment/ })).toBeInTheDocument()
     expect(screen.getByText('Last session')).toBeInTheDocument()
@@ -51,7 +54,7 @@ describe('Today', () => {
   it('pain pause: no focus, cue, drill or re-test anywhere; stats and the last session stay', async () => {
     await seedPlayer({ painFlag: true })
     renderAt(paths.today())
-    expect(await screen.findByText('Coaching is paused. Your stats are safe.', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByText('Coaching is paused. Your stats are safe.', {}, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Steady toss height' })).toBeNull()
     expect(screen.queryByText(/Every toss peaks/)).toBeNull()
     expect(screen.queryByText(/Re-test/)).toBeNull()

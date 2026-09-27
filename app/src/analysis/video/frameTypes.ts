@@ -64,6 +64,8 @@ export interface DecodeStats {
   missingIndices: number[]
   /** Coded samples fed to the decoder, including keyframe pre-roll (WebCodecs only). */
   samplesFed: number
+  /** Samples left out because no wanted frame depends on them (WebCodecs only; video/nalRef.ts). */
+  samplesSkipped: number
   elapsedMs: number
   notes: string[]
 }
@@ -71,6 +73,12 @@ export interface DecodeStats {
 export interface DecodeOptions {
   signal?: AbortSignal
   onStats?: (stats: DecodeStats) => void
+  /**
+   * WebCodecs only: decoder preference for this call (the media-element path ignores it). Check
+   * FrameSource.canDecodeWith first; 'prefer-software' gives CPU-memory frames whose pixels
+   * VideoFrame.copyTo reads without a GPU readback.
+   */
+  hardwareAcceleration?: HardwareAcceleration
 }
 
 /** Output of a path-specific producer before the factory attaches times. */
@@ -87,6 +95,8 @@ export interface FrameProducer {
   readonly path: DecodePath
   /** Yields the requested presentation indices (ascending) at most once each, in order. */
   produce(indices: readonly number[], options: DecodeOptions): AsyncGenerator<ProducedFrame>
+  /** See FrameSource.canDecodeWith. */
+  canDecodeWith?(hardwareAcceleration: HardwareAcceleration): Promise<boolean>
   close(): void
 }
 
@@ -113,5 +123,10 @@ export interface FrameSource {
     selection?: FrameSelection,
     options?: RenderOptions & DecodeOptions & { applyRotation?: boolean },
   ): AsyncGenerator<BitmapFrame>
+  /**
+   * Whether a decode with this preference (DecodeOptions.hardwareAcceleration) can run here.
+   * Optional: sources without it (tests, media element) take the default only.
+   */
+  canDecodeWith?(hardwareAcceleration: HardwareAcceleration): Promise<boolean>
   close(): void
 }

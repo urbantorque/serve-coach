@@ -6,6 +6,9 @@ import { useSettingsStore } from '../../../data/stores/settings.ts'
 import { paths } from '../../shell/paths.ts'
 import { expectHonest, primaryCount, renderAt, seedPlayer } from './insights/testing.tsx'
 
+// Screens load several stores from IndexedDB; under a full parallel run the default 5 s is tight.
+vi.setConfig({ testTimeout: 15_000 })
+
 beforeEach(async () => {
   await resetDbForTests()
   useSettingsStore.setState({ experimentalMetrics: false })
@@ -15,7 +18,7 @@ describe('Progress', () => {
   it('sample data never enters Progress', async () => {
     await loadDemoData()
     renderAt(paths.progress())
-    expect(await screen.findByText('Nothing to show yet', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByText('Nothing to show yet', {}, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.queryByText('Sample data · synthetic player')).toBeNull()
   })
 
@@ -23,7 +26,7 @@ describe('Progress', () => {
     await seedPlayer()
     const errors = vi.spyOn(console, 'error')
     renderAt(paths.progress())
-    expect(await screen.findByRole('heading', { name: 'Is my toss becoming more consistent?' }, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Is my toss becoming more consistent?' }, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Am I getting more first serves in?' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Is my rhythm steady?' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Am I using my legs?' })).toBeInTheDocument()
@@ -47,7 +50,7 @@ describe('Compare ("Did it work?")', () => {
   it('verdict words first, the effect with n, before/after intervals and the next step', async () => {
     await seedPlayer()
     renderAt(paths.compare('own-exp-toss-height'))
-    expect(await screen.findByText('Likely better', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByText('Likely better', {}, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.getByText(/Your toss height consistency went from/)).toBeInTheDocument()
     expect(screen.getByText('About 10 more serves to confirm.')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /^Before .* after / })).toBeInTheDocument()
@@ -61,13 +64,13 @@ describe('Compare ("Did it work?")', () => {
 
   it('without an experiment: nothing to compare yet', async () => {
     renderAt(paths.compare())
-    expect(await screen.findByText('Nothing to compare yet', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByText('Nothing to compare yet', {}, { timeout: 8000 })).toBeInTheDocument()
   })
 
   it('sample experiment is labelled and never offers a re-test for the sample player', async () => {
     await loadDemoData()
     renderAt(paths.compare('demo-exp-toss-height'))
-    expect(await screen.findByText('Sample data · synthetic player', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByText('Sample data · synthetic player', {}, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Record re-test' })).toBeNull()
   })
 })

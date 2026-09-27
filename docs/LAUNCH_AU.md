@@ -10,7 +10,7 @@
 
 | When | Milestone | Exit criterion |
 |---|---|---|
-| **28 Sep – 30 Oct 2026** | Foundations: company, Apple account, advisers, Mac, internal TestFlight of the current web app, annotation mode | Organisation enrolment approved; the shell runs on one iPhone |
+| **28 Sep – 6 Nov 2026** | Foundations: company, Apple account, advisers, Mac, internal TestFlight of the current web app, annotation dry run on team-filmed footage ("Check this serve" is built) | Organisation enrolment approved; the shell runs on one iPhone; the first real-footage agreement report exists |
 | **Nov 2026 – Jan 2027** | Evidence and native capture: real-footage and radar validation sprint in Melbourne, native capture plugin, clinician review, privacy policy (ADM section by 10 Dec) | Clinician-approved copy; capture plugin passes device QA; validation data collected |
 | **Feb – Mar 2027** | TestFlight closed beta, 18+, Melbourne comp players, timed to the February association seasons and the pennant pre-season | Gate 1 (§7) and the validation gate (§6) |
 | **Apr 2027** | App Store submission (iOS 27 SDK required from April 2027) | Approved build with in-app purchase |
@@ -92,6 +92,9 @@
 4. **Background processing**: the web engine needs the app open ("Keep Serve Coach open while it analyses"); native analysis could continue in the background later. Local notifications for "Your session is ready" (PRODUCT §5.3).
 
 **Real-footage and radar validation gate** (must pass before the public launch, by about 31 March 2027):
+- Tooling: built in `33ac31f` and not yet used on real footage.
+  - "Check this serve" marks events, points and radar readings, blinded to the app's values, and exports JSON.
+  - `tools/validate/annotation-eval.ts` pools the exports into the agreement report ([NEXT_STEPS.md](NEXT_STEPS.md) §2).
 - Protocol: METRICS §5.6 V2. At least 8 players (3+ women, 1+ left-hander, 2+ aged 40 or over), 150+ serves per metric, both side set-ups, 3+ conditions including 2 lit courts (LED and metal halide), 60 fps plus a 120/240 fps subset; test–retest on 6+ players across sessions 2+ days apart; two annotators on 25%+ of serves. Consent in writing; adults only; footage filmed by the team or shared by players, never downloaded (founder instruction).
 - Radar (for any speed claim): a radar behind the server, 200+ serves across speeds (METRICS §5.6 V3). Without it, speed stays unavailable or experimental.
 - Pass: the METRICS §5.6 acceptance table for the hero metrics (toss consistency, contact height, rhythm, leg drive). Metrics that fail stay `experimental` and are not advertised.

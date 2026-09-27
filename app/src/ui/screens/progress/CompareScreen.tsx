@@ -1,6 +1,8 @@
 import { CaretRightIcon, HourglassMediumIcon, InfoIcon, ScalesIcon } from '@phosphor-icons/react'
 import { Link, useParams } from 'react-router'
-import type { MetricId, MetricStatus } from '../../../analysis/types.ts'
+import { formatNumber } from '../../../analysis/metrics/precision.ts'
+import { wilson, Z80 } from '../../../analysis/stats/index.ts'
+import type { MetricId, MetricStatus, MetricValue as MetricValueData } from '../../../analysis/types.ts'
 import { useProfile } from '../../../data/hooks.ts'
 import type { ExperimentRecord } from '../../../data/records.ts'
 import {
@@ -20,13 +22,12 @@ import { metricName } from '../../copy/metricNames.ts'
 import { OUTCOME_WORDS } from '../../copy/strings.ts'
 import { formatMetric } from '../../format/metricFormat.ts'
 import { paths } from '../../shell/paths.ts'
-import { barSpec, compareExperiment, deviations, sameZone, type CompareModel, type SessionData } from './insights/compare.ts'
+import { barSpec, compareExperiment, comparisonSessionIds, comparisonStatus, deviations, sameZone, type CompareModel, type SessionData } from './insights/compare.ts'
 import { stratumWords } from './insights/history.ts'
 import { useExperiment, useExperiments, usePracticeLogs, useSessionData } from './insights/hooks.ts'
 import { configFor } from './insights/metricConfig.ts'
 import { rateCounts } from './insights/outcomes.ts'
-import { wilson, Z80 } from './insights/stats.ts'
-import { derived, plainText } from './insights/values.ts'
+import { plainText } from './insights/values.ts'
 import { moreServesText } from './insights/words.ts'
 
 /** Primary by verdict (DESIGN §10.11; COACHING §12.5). One label per intent across the app. */
@@ -50,10 +51,10 @@ function primaryFor(model: CompareModel): { label: string; to: string } {
   }
 }
 
-function statusOf(model: CompareModel, baseline: SessionData[]): Exclude<MetricStatus, 'unavailable'> {
-  const s = baseline[0]?.stats?.metrics[model.metricId]?.status
-  if (configFor(model.metricId)?.kind === 'rate') return 'player-entered'
-  return s === 'measured' ? 'measured' : 'estimated'
+/** A value's range in the value's own display precision ("20 to 45 cm"), so a table row reads like its value. */
+function rangeText(id: MetricId, v: MetricValueData, low: number, high: number): string {
+  const unit = formatMetric(id, v).unit
+  return `${formatNumber(id, low, v)} to ${formatNumber(id, high, v)}${unit ? ` ${unit}` : ''}`
 }
 
 function Chart({ model, baseline, retests, heightM, status }: { model: CompareModel; baseline: SessionData[]; retests: SessionData[]; heightM?: number; status: MetricStatus }) {
@@ -62,13 +63,16 @@ function Chart({ model, baseline, retests, heightM, status }: { model: CompareMo
   const isRateMetric = cfg?.kind === 'rate'
   const rateBars = (side: CompareModel['before']) => {
     const k = Math.round(side.value * side.n)
-    return { estimate: side.value, ci95: wilson(k, side.n), ci80: wilson(k, side.n, Z80) }
+    const w95 = wilson(k, side.n)
+    const w80 = wilson(k, side.n, Z80)
+    return { estimate: side.value, ci95: [w95.low, w95.high] as [number, number], ci80: [w80.low, w80.high] as [number, number] }
   }
   const b = isRateMetric ? rateBars(model.before) : barSpec(id, model.before)
   const a = isRateMetric ? rateBars(model.after) : barSpec(id, model.after)
   const zone = sameZone(id, model.before.value)
   const isRate = cfg?.kind === 'rate'
-  const text = (v: number, n: number) => plainText(id, derived(id, status === 'player-entered' ? 'player-entered' : 'estimated', v, { n }))
+  // Every number here is the side's own value (the session's stored value for a one-session side).
+  const text = (which: 'before' | 'after') => plainText(id, which === 'before' ? model.beforeValue : model.afterValue)
   const units = (data: SessionData[]) => data.flatMap((d) => d.rows.filter((r) => r.kind !== 'untagged' && !r.isLet)).map((r) => r.kind).sort((x, y) => (x === 'in' ? -1 : y === 'in' ? 1 : 0))
   const rows: IntervalRow[] = [
     {
@@ -80,7 +84,7 @@ function Chart({ model, baseline, retests, heightM, status }: { model: CompareMo
       ci95: b.ci95,
       ci80: b.ci80,
       units: isRate ? units(baseline) : undefined,
-      callout: `${text(model.before.value, model.before.n)} · before`,
+      callout: `${text('before')} · before`,
     },
     {
       key: 'after',
@@ -91,7 +95,7 @@ function Chart({ model, baseline, retests, heightM, status }: { model: CompareMo
       ci95: a.ci95,
       ci80: a.ci80,
       units: isRate ? units(retests) : undefined,
-      callout: `${text(model.after.value, model.after.n)} · after`,
+      callout: `${text('after')} · after`,
     },
   ]
   const lo = Math.min(b.ci95[0], a.ci95[0], zone?.[0] ?? Infinity)
@@ -118,12 +122,13 @@ function Chart({ model, baseline, retests, heightM, status }: { model: CompareMo
           columns: ['', 'Value', 'Likely range', 'Serves'],
           rows: rows.map((r, i) => {
             const side = i === 0 ? model.before : model.after
+            const value = i === 0 ? model.beforeValue : model.afterValue
             return {
               key: r.key,
               cells: [
                 r.label,
-                text(side.value, side.n),
-                isRate ? `${Math.round(r.ci95[0] * 100)} to ${Math.round(r.ci95[1] * 100)}%` : `${text(r.ci95[0], side.n).replace('≈', '').trim()} to ${text(r.ci95[1], side.n).replace('≈', '').trim()}`,
+                text(i === 0 ? 'before' : 'after'),
+                isRate ? `${Math.round(r.ci95[0] * 100)} to ${Math.round(r.ci95[1] * 100)}%` : rangeText(id, value, r.ci95[0], r.ci95[1]),
                 String(side.n),
               ],
             }
@@ -137,7 +142,7 @@ function Chart({ model, baseline, retests, heightM, status }: { model: CompareMo
           unit={isRate ? undefined : unit}
           formatTick={isRate ? (v) => `${Math.round(v * 100)}%` : id === 'contact-height-ratio' ? (v) => v.toFixed(2) : undefined}
           directionLabel={cfg?.direction === 'lower' ? '← Steadier' : undefined}
-          label={`Before ${text(model.before.value, model.before.n)}, after ${text(model.after.value, model.after.n)}. ${zone ? 'The shaded zone is about the same as before.' : ''}`}
+          label={`Before ${text('before')}, after ${text('after')}. ${zone ? 'The shaded zone is about the same as before.' : ''}`}
         />
       </ChartFrame>
       {evidence && devB.length && devA.length ? (
@@ -225,8 +230,9 @@ export function CompareScreen() {
       ? undefined
       : (list.find((e) => !e.isDemo && e.retestSessionIds.length) ?? list.find((e) => !e.isDemo) ?? null)
   const exp = experimentId ? byId : fallback
-  const baseline = useSessionData(exp ? exp.baselineSessionIds : undefined)
-  const retests = useSessionData(exp ? exp.retestSessionIds : undefined)
+  // Every session a side of the stored result used, so each side shows its sessions' own values.
+  const baseline = useSessionData(exp ? comparisonSessionIds(exp, 'baseline') : undefined)
+  const retests = useSessionData(exp ? comparisonSessionIds(exp, 'retest') : undefined)
   const logs = usePracticeLogs(exp?.id)
   const back = { to: paths.progress(), label: 'Progress' }
 
@@ -239,17 +245,19 @@ export function CompareScreen() {
     )
   }
 
-  const model = compareExperiment(exp, baseline!, retests!)
-  const status = statusOf(model, baseline!)
+  const heightM = baseline?.[0]?.session.analysis?.capture.scale.heightM ?? profile?.heightM
+  const model = compareExperiment(exp, baseline!, retests!, heightM)
+  const status = comparisonStatus(model.metricId, baseline!, exp.stratum)
   const id = model.metricId
   const isDemo = exp.isDemo === 1
   const painPause = profile?.comfort.painFlag === 1
   const primary = painPause ? null : primaryFor(model)
   const more = moreServesText(model.moreServes, model.verdict)
-  const heightM = baseline?.[0]?.session.analysis?.capture.scale.heightM ?? profile?.heightM
   const minutes = (logs ?? []).reduce((a, l) => a + l.minutes, 0)
-  const before = derived(id, status, model.before.value, { n: model.before.n, secondary: configFor(id)?.kind === 'rate' ? { k: Math.round(model.before.value * model.before.n) } : undefined })
-  const after = derived(id, status, model.after.value, { n: model.after.n, secondary: configFor(id)?.kind === 'rate' ? { k: Math.round(model.after.value * model.after.n) } : undefined })
+  const rateK = (v: MetricValueData, n: number) => (configFor(id)?.kind === 'rate' && typeof v.value === 'number' && typeof v.secondary?.k !== 'number' ? { ...v, n, secondary: { ...v.secondary, k: Math.round(v.value * n) } } : v)
+  // The canonical values: a one-session side shows that session's own stored value (report, Today, Progress).
+  const before = rateK(model.beforeValue, model.before.n)
+  const after = rateK(model.afterValue, model.after.n)
   const beforeText = formatMetric(id, before)
   const same = beforeText.text === formatMetric(id, after).text
 
@@ -306,7 +314,13 @@ export function CompareScreen() {
 
       {model.verdict !== 'not-comparable' ? (
         <section className="flex flex-col gap-3" aria-label="Before and after">
-          <Chart model={model} baseline={baseline!} retests={retests!} heightM={heightM} status={status} />
+          <Chart
+            model={model}
+            baseline={baseline!.filter((d) => exp.baselineSessionIds.includes(d.session.id))}
+            retests={retests!.filter((d) => exp.retestSessionIds.includes(d.session.id))}
+            heightM={heightM}
+            status={status}
+          />
         </section>
       ) : null}
 

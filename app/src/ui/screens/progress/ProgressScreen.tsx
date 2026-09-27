@@ -2,6 +2,8 @@ import { ChartLineUpIcon, CheckIcon, FlaskIcon } from '@phosphor-icons/react'
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import type { MetricId } from '../../../analysis/types.ts'
+import type { StratumKey } from '../../../data/domain.ts'
+import { sessionMetric } from '../../format/sessionValues.ts'
 import { useProfile } from '../../../data/hooks.ts'
 import type { ExperimentRecord } from '../../../data/records.ts'
 import {
@@ -22,7 +24,19 @@ import { Sparkline, WilsonBar } from '../../charts/index.ts'
 import { metricName } from '../../copy/metricNames.ts'
 import { shortDate } from '../../format/dates.ts'
 import { paths } from '../../shell/paths.ts'
-import { seriesFor, stratumId, stratumOf, strataOf, stratumWords, usualRange, type SessionBundle } from './insights/history.ts'
+import {
+  baselineProgress,
+  baselineWords,
+  hasStratum,
+  matched,
+  seriesFor,
+  stratumId,
+  stratumOf,
+  strataOf,
+  stratumWords,
+  usualRange,
+  type SessionBundle,
+} from './insights/history.ts'
 import { useExperiments, useSessionBundles } from './insights/hooks.ts'
 import { pooledRate, rateCounts } from './insights/outcomes.ts'
 import { derived } from './insights/values.ts'
@@ -56,10 +70,11 @@ function StratumChips({ options, value, onChange }: { options: { id: string; lab
   )
 }
 
-function RateTile({ bundles, metricId, question, stratumLabel }: { bundles: SessionBundle[]; metricId: MetricId; question: string; stratumLabel: string }) {
+function RateTile({ bundles, metricId, question, stratumLabel, stratum }: { bundles: SessionBundle[]; metricId: MetricId; question: string; stratumLabel: string; stratum?: StratumKey }) {
   // Never pool across entry modes (tags vs tally, METRICS §4.4).
   const withCounts = bundles
-    .map((b) => ({ b, v: b.stats?.metrics[metricId], c: rateCounts(b.stats?.metrics[metricId]) }))
+    .map((b) => ({ b, v: sessionMetric(b.stats, metricId, stratum) }))
+    .map((x) => ({ ...x, c: rateCounts(x.v) }))
     .filter((x) => x.c)
   const mode = withCounts.at(-1)?.v?.provenance ?? 'tally'
   const same = withCounts.filter((x) => (x.v?.provenance ?? 'tally') === mode)
@@ -191,9 +206,15 @@ export function ProgressScreen() {
   const strata = useMemo(() => strataOf(ready), [ready])
   const latestId = ready[0] ? stratumId(stratumOf(ready[0])) : null
   const current = picked && strata.some((x) => x.id === picked) ? picked : latestId
-  const inStratum = ready.filter((b) => stratumId(stratumOf(b)) === current)
-  const rear = inStratum[0]?.session.view === 'rear'
-  const label = inStratum[0] ? stratumWords(stratumOf(inStratum[0])) : ''
+  const currentKey = strata.find((x) => x.id === current)?.key
+  // Sessions with this stratum (METRICS §1.6), newest first; trends also need the same set-up as the
+  // newest one (METRICS §4.4: distance class, orientation, serving spot), except timing metrics.
+  const inStratum = currentKey ? ready.filter((b) => hasStratum(b, currentKey)) : []
+  const latest = inStratum[0]
+  const rear = latest?.session.view === 'rear'
+  const label = currentKey ? stratumWords(currentKey) : ''
+  const sameSetup = (metricId?: MetricId) => (latest && currentKey ? inStratum.filter((b) => matched(b, latest, metricId, currentKey)) : [])
+  const baseline = latest && currentKey ? baselineProgress(inStratum, latest, { key: currentKey }) : null
   const ownExperiments = (experiments ?? []).filter((e) => !e.isDemo)
 
   if (all === undefined || experiments === undefined || profile === undefined) {
@@ -227,7 +248,7 @@ export function ProgressScreen() {
   }
 
   const tile = (metricId: MetricId) => {
-    const series = seriesFor(metricId, inStratum)
+    const series = seriesFor(metricId, sameSetup(metricId), currentKey)
     return { series, usual: usualRange(series) }
   }
   const tossH = tile('toss-height-spread')
@@ -242,10 +263,11 @@ export function ProgressScreen() {
   return (
     <Screen title="Progress" variant="root">
       <StratumChips options={opts} value={current ?? ''} onChange={setPicked} />
-      {inStratum.length < 2 ? (
-        <p className="-mt-2 text-callout text-ink-2">
-          Building your baseline: {inStratum.length} of 2 sessions from this set-up. Record another from the same side to see trends.
-        </p>
+      {baseline && baseline.have < baseline.need ? (
+        <div className="-mt-2 flex flex-col gap-1">
+          <p className="text-callout text-ink">{baselineWords(baseline).title}</p>
+          <p className="text-footnote text-ink-2">{baselineWords(baseline).body}</p>
+        </div>
       ) : null}
 
       <QuestionTile
@@ -266,6 +288,7 @@ export function ProgressScreen() {
 
       <RateTile
         bundles={inStratum.slice().reverse()}
+        stratum={currentKey}
         metricId={secondGoal ? 'second-serve-in-rate' : 'first-serve-in-rate'}
         question={secondGoal ? 'Is my second serve safe?' : 'Am I getting more first serves in?'}
         stratumLabel={label}
@@ -312,7 +335,7 @@ export function ProgressScreen() {
         ) : null}
       </section>
       <p className="text-footnote text-ink-3">
-        Only sessions from the same set-up are compared: {inStratum.length === 1 ? '1 session' : `${inStratum.length} sessions`}, {label.toLowerCase()}.
+        Only sessions from the same set-up are compared: {sameSetup().length === 1 ? '1 session' : `${sameSetup().length} sessions`}, {label.toLowerCase()}.
       </p>
     </Screen>
   )

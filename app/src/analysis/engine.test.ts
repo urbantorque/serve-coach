@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { analyseSession, findServeWindows, missingShare, type EngineInput } from './engine.ts'
-import { LM, METRIC_IDS, REAR_ONLY_METRIC_IDS, type BallObservation, type BallTrack, type CaptureContext, type MetricValue, type VideoMeta } from './types.ts'
+import { LM, METRIC_IDS, REAR_ONLY_METRIC_IDS, type BallObservation, type BallTrack, type CaptureContext, type MetricValue, type PhoneMount, type PoseFrame, type VideoMeta } from './types.ts'
 import { buildServeFixture } from './pose/servePoseFixture.ts'
 
 const FPS = 60
@@ -12,7 +12,7 @@ const FLOOR_Y = 0.85
 const CONTACT_T = 2.4
 
 /** A fixture serve (exact kinematic pose) with a physically consistent toss and outgoing ball. */
-function syntheticSession(opts: { fps?: number; view?: 'side' | 'rear'; pitch?: number | null; heightHU?: number } = {}): { input: EngineInput; truth: { tRelease: number; tApex: number; apexRatio: number } } {
+function syntheticSession(opts: { fps?: number; view?: 'side' | 'rear'; pitch?: number | null; heightHU?: number; mount?: PhoneMount; rollDeg?: number } = {}): { input: EngineInput; truth: { tRelease: number; tApex: number; apexRatio: number } } {
   const fps = opts.fps ?? FPS
   const heightHU = opts.heightHU ?? HEIGHT_HU
   const fx = buildServeFixture({ fps, durationS: 4.5, heightHU, floorY: FLOOR_Y, contactT: CONTACT_T, view: opts.view ?? 'side' })
@@ -55,11 +55,25 @@ function syntheticSession(opts: { fps?: number; view?: 'side' | 'rear'; pitch?: 
     source: 'in-app-native', declaredView: opts.view ?? 'side', cameraSide: 'chest', serveSide: 'deuce', serveNumber: 1, intendedType: 'flat',
     handedness: 'right', playerHeightM: H_M, playerHeightSource: 'entered', hitSoundTiming: false,
     ...(opts.pitch === null ? {} : { orientationSamples: [{ tMs: 0, pitchDeg: opts.pitch ?? 0, rollDeg: 0 }] }),
+    ...(opts.mount ? { source: 'import' as const, mount: opts.mount } : {}),
   }
+  const poses = opts.rollDeg ? rollFrames(fx.frames, opts.rollDeg, aspect) : fx.frames
   return {
-    input: { meta, view: opts.view ?? 'side', capture, profile: { heightM: H_M, handedness: 'right' }, poses: fx.frames, ball: { observations: obs, tracks }, onsets: [], ids: { sessionId: 'fixture', videoId: 'fixture-video' } },
+    input: { meta, view: opts.view ?? 'side', capture, profile: { heightM: H_M, handedness: 'right' }, poses, ball: { observations: obs, tracks }, onsets: [], ids: { sessionId: 'fixture', videoId: 'fixture-video' } },
     truth: { tRelease, tApex, apexRatio: (FLOOR_Y - yApex) / heightHU },
   }
+}
+
+/** The same poses seen by a phone rolled by `deg` (rotation about the picture centre, in HU). */
+function rollFrames(frames: readonly PoseFrame[], deg: number, aspect: number): PoseFrame[] {
+  const a = (deg * Math.PI) / 180
+  const cx = 0.5 * aspect
+  const rot = (x: number, y: number) => {
+    const u = x * aspect - cx
+    const v = y - 0.5
+    return { x: (cx + u * Math.cos(a) - v * Math.sin(a)) / aspect, y: 0.5 + u * Math.sin(a) + v * Math.cos(a) }
+  }
+  return frames.map((f) => (f.landmarks ? { ...f, landmarks: f.landmarks.map((l) => ({ ...l, ...rot(l.x, l.y) })) } : f))
 }
 
 describe('engine contract', () => {
@@ -149,6 +163,49 @@ describe('status downgrades', () => {
     expect(m.reasonCode).toBe('PITCH_UNKNOWN')
     // Timing is unaffected.
     expect(out.serves[0].metrics['toss-drop']!.status).toBe('estimated')
+  })
+
+  it('an import with a level mount (pitch 0 ± 2°) keeps heights estimated with a wider range (§1.1.3a)', () => {
+    const level = analyseSession(syntheticSession({ pitch: null, mount: 'level-mount' }).input)
+    const sensor = analyseSession(syntheticSession().input)
+    const m = level.serves[0].metrics['toss-apex-height']!
+    expect(level.serves[0].rectification.status).toBe('assumed-level')
+    expect(m.status).toBe('estimated')
+    expect(m.reasonCode).toBe('TILT_UNKNOWN')
+    const width = (v: MetricValue) => v.uncertainty!.high - v.uncertainty!.low
+    expect(width(m)).toBeGreaterThan(width(sensor.serves[0].metrics['toss-apex-height']!))
+    expect(level.quality.checks.find((c) => c.id === 'cq.camera-level')?.pass).toBe(true)
+    // Spreads and timing are unaffected by a shared tilt.
+    expect(level.serves[0].metrics['toss-drop']!.status).toBe(sensor.serves[0].metrics['toss-drop']!.status)
+  })
+
+  it('"roughly level" (± 4°) widens further, and the p95 budget decides its status', () => {
+    const width = (v: MetricValue) => v.uncertainty!.high - v.uncertainty!.low
+    const level = analyseSession(syntheticSession({ pitch: null, mount: 'level-mount' }).input).serves[0].metrics['toss-apex-height']!
+    const rough = analyseSession(syntheticSession({ pitch: null, mount: 'roughly-level' }).input).serves[0].metrics['toss-apex-height']!
+    expect(width(rough)).toBeGreaterThan(width(level))
+    expect(['estimated', 'experimental']).toContain(rough.status)
+    expect(rough.status === 'experimental' ? rough.reasonCode : 'TILT_UNKNOWN').toBe(rough.status === 'experimental' ? 'PITCH_UNKNOWN' : rough.reasonCode)
+  })
+
+  it('"tilted or not sure" leaves the pitch unknown, and a rear clip never assumes level', () => {
+    const unsure = analyseSession(syntheticSession({ pitch: null, mount: 'tilted-or-unsure' }).input)
+    expect(unsure.serves[0].metrics['toss-apex-height']!.status).toBe('experimental')
+    expect(unsure.serves[0].rectification.status).toBe('unknown')
+    const rear = analyseSession(syntheticSession({ pitch: null, mount: 'level-mount', view: 'rear' }).input)
+    for (const s of rear.serves) expect(s.rectification.status).not.toBe('assumed-level')
+  })
+
+  it('roll sanity check: a player leaning 5° in the picture contradicts "level mount" (heights experimental)', () => {
+    const tilted = analyseSession(syntheticSession({ pitch: null, mount: 'level-mount', rollDeg: 5 }).input)
+    expect(tilted.serves[0].metrics['toss-apex-height']!.status).toBe('experimental')
+    expect(tilted.warnings.join(' ')).toMatch(/leans .* from the picture's vertical/)
+    const check = tilted.quality.checks.find((c) => c.id === 'cq.camera-level')
+    expect(check?.pass).toBe(false)
+    expect(check?.message).not.toMatch(/\d\s*°/)
+    // Under the 3° limit the answer stands.
+    const slight = analyseSession(syntheticSession({ pitch: null, mount: 'level-mount', rollDeg: 1.5 }).input)
+    expect(slight.serves[0].metrics['toss-apex-height']!.status).toBe('estimated')
   })
 
   it('a camera closer than the validated distances caps heights at experimental', () => {

@@ -76,5 +76,17 @@ describe('pooled evaluation of synthetic annotations', () => {
     }
     expect(md).not.toMatch(/NaN|undefined/)
     expect(md).toContain('| Toss height | % of height | 200 (10) |')
+    // Ball drop is a timing metric (½·g·Δt²): judged through the event rows, not its own MAE.
+    expect(r.metrics.find((m) => m.id === 'toss-drop')!.verdict).toMatch(/^Judged through the toss peak and contact timing rows/)
+  })
+
+  it('a single checked serve still renders: no empty tables, no missing numbers', () => {
+    const one = evaluate([syntheticExport({ seed: 5, players: 1, servesPerPlayer: 1, doubleShare: 0 })])
+    expect(one.inputs.servesUsed).toBe(1)
+    const md = renderReport(one, { generatedAt: '2026-09-27', files: ['one.json'] })
+    expect(md).toContain('Needs at least 3 serves with the event marked and found by the app.')
+    expect(md).toContain('No serve was marked by two annotators yet.')
+    expect(md).not.toMatch(/NaN|undefined/)
+    expect(md).not.toMatch(/\| Event \| Bias \[95% CI\] \| 95% limits of agreement \| Method \|\n\|---\|---\|---\|---\|\n\n/)
   })
 })

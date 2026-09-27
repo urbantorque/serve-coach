@@ -13,7 +13,7 @@ const GROUPS: { kind: RowKind; title: string }[] = [
   { kind: 'timing', title: 'Timing' },
   { kind: 'height', title: 'Heights' },
   { kind: 'position', title: 'Positions' },
-  { kind: 'scale', title: 'Height in the picture' },
+  { kind: 'scale', title: 'Scale' },
   { kind: 'speed', title: 'Radar' },
 ]
 
@@ -75,13 +75,10 @@ function Row({ row, frame, onSeek, speed }: { row: AgreementRow; frame: number |
   return (
     <li>
       {frame !== null ? (
-        <button
-          type="button"
-          onClick={() => onSeek(frame)}
-          aria-label={`${row.label}: ${row.sentence} Show frame ${frame}`}
-          className="flex w-full flex-col gap-1.5 rounded-control py-3 text-left hover:bg-surface-2 active:bg-surface-2"
-        >
+        // The content is the accessible name (values, states and target included); the action is added.
+        <button type="button" onClick={() => onSeek(frame)} className="flex w-full flex-col gap-1.5 rounded-control py-3 text-left hover:bg-surface-2 active:bg-surface-2">
           {body}
+          <span className="sr-only">{`Show frame ${frame}.`}</span>
         </button>
       ) : (
         <div className="flex flex-col gap-1.5 py-3">{body}</div>
@@ -120,8 +117,9 @@ export function AgreementPanel({ agreement, frameFor, onSeek, speed, heightDefau
         </p>
         <p className="text-footnote text-ink-2">One serve can't show how accurate the app is. Exported checks from many serves and players are pooled to measure that.</p>
         <p className="flex flex-wrap items-center gap-2 text-footnote text-ink-2">
-          Your marks show as <StatusChip status="player-entered" />. On the video: crosshair, your mark; dot, the app.
+          Your marks show as <StatusChip status="player-entered" />
         </p>
+        <p className="text-footnote text-ink-2">On the video, a crosshair is your mark and a dot is the app's point.</p>
         {heightDefault ? <p className="text-footnote text-ink-2">{`Height not entered, so centimetres assume ${heightM.toFixed(2)} m. Percentages of height are unaffected.`}</p> : null}
         {!blind ? <p className="text-footnote text-ink-2">These marks changed after the app's values were shown, so they are kept out of the blind set.</p> : null}
         {othersCount ? <p className="text-footnote text-ink-2">{`${othersCount === 1 ? 'One other person has' : `${othersCount} other people have`} also checked this serve. Their marks stay hidden.`}</p> : null}
