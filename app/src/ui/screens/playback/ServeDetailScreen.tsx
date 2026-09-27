@@ -4,11 +4,13 @@
  * ratio (portrait clips capped at 45% of the screen, with "Zoom to you"); the phase timeline,
  * transport and overlay chips sit at a fixed y for every serve; the "This serve" drawer lists the
  * serve's values with their data states. Compare (side by side or ghost) is phase-synced. When the
- * video was deleted, playback steps through the stored key frames with overlays.
+ * video was deleted, playback steps through the stored key frames with overlays. "Check this serve"
+ * (?mode=check, More actions) opens the annotation mode in check/CheckServeView.tsx.
  */
 import {
   ArrowsLeftRightIcon,
   CornersInIcon,
+  CrosshairSimpleIcon,
   CornersOutIcon,
   HardDrivesIcon,
   ProhibitIcon,
@@ -82,6 +84,7 @@ import {
   videoGoneLine,
   type CompareTarget,
 } from './serveView.ts'
+import { CheckServeView } from './check/CheckServeView.tsx'
 import { StatDrawer } from './StatDrawer.tsx'
 import { TagAttributes } from './TagAttributes.tsx'
 import { initialTagging, tagPatch, type TagAttrs, type TagOutcome } from './tagging.ts'
@@ -112,6 +115,7 @@ function serveTitle(serve: { index: number } | undefined, serveId: string): stri
 
 export function ServeDetailScreen() {
   const { sessionId = '', serveId = '' } = useParams()
+  const [search] = useSearchParams()
   const devLoading = useDevFixtures(sessionId)
   const session = useSession(sessionId)
   const serves = useServes(sessionId)
@@ -158,6 +162,7 @@ export function ServeDetailScreen() {
       </div>
     )
   }
+  if (search.get('mode') === 'check') return <CheckServeView key={serve.id} session={session} serve={serve} serves={serves ?? []} pb={pb} />
   return <ServeDetailView key={serve.id} session={session} serve={serve} serves={serves ?? []} tags={tags ?? []} pb={pb} decision={decision ?? null} />
 }
 
@@ -267,6 +272,7 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
   const goServe = (s: ServeAnalysis | undefined) => {
     if (s) navigate(paths.serveDetail(session.id, s.id), { replace: true })
   }
+  const openCheck = () => navigate(`${paths.serveDetail(session.id, serve.id)}?mode=check`)
 
   // Keyboard: Space plays, , and . step (the timeline has its own arrow keys).
   useEffect(() => {
@@ -376,6 +382,9 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
       orientation={pb.orientation}
       store={store}
       focusEvent={focus.phase ? focus.event : null}
+      pose={pb.track?.pose}
+      bodyHeightNorm={pb.bodyHeightNorm}
+      clip={pb.clip}
       onSelect={(f) => {
         seek(f)
         setDrawerOpen(false)
@@ -410,7 +419,10 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
       {serve.plausibility.softFlags.length ? (
         <div role="note" className="flex items-start gap-2 rounded-control bg-surface-2 p-3 text-footnote text-ink-2">
           <WarningCircleIcon size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-attention" />
-          <span>Check this serve: one value looks unusual, so we're less sure of it.</span>
+          <span className="flex-1">One value on this serve looks unusual, so we're less sure of it.</span>
+          <button type="button" onClick={openCheck} className="-my-3 h-11 shrink-0 font-label text-ink underline underline-offset-[3px]">
+            Check this serve
+          </button>
         </div>
       ) : null}
     </>
@@ -487,6 +499,7 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
             <OverflowMenu
               items={[
                 { label: 'Compare with your best', icon: ArrowsLeftRightIcon, onSelect: () => setPickerOpen(true) },
+                { label: 'Check this serve', icon: CrosshairSimpleIcon, onSelect: openCheck },
                 { label: serve.included ? 'Exclude this serve' : 'Include again', icon: ProhibitIcon, onSelect: () => void toggleIncluded() },
                 { label: 'Delete serve', icon: TrashIcon, destructive: true, onSelect: () => setDeleteOpen(true) },
               ]}

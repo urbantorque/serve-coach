@@ -132,6 +132,70 @@ export interface DecodePlan {
   wanted: ReadonlySet<number>
 }
 
+/** One contiguous decode-order run of samples, starting at a keyframe. */
+export interface DecodeSegment {
+  firstSample: number
+  lastSample: number
+}
+
+export interface SegmentedDecodePlan {
+  /** Runs to feed in order; the decoder is flushed between runs (the next run starts at a keyframe). */
+  segments: DecodeSegment[]
+  wanted: ReadonlySet<number>
+}
+
+/**
+ * Samples that must be skipped before a new run is worth a decoder flush. A flush drains the
+ * decoder's reorder queue (a few frames of latency); a GOP of a phone clip is 30-60 samples.
+ */
+export const MIN_SKIP_SAMPLES = 8
+
+/** Keyframe (decode order) from which `frame` can be decoded: see planDecode's open-GOP rule. */
+function keyframeFor(samples: readonly SampleInfo[], frame: FrameTiming): number {
+  let first = frame.sampleIndex
+  while (first > 0 && !(samples[first].isSync && samples[first].ctsTicks <= frame.ctsTicks)) first--
+  return samples[first].isSync ? first : 0
+}
+
+/**
+ * Like planDecode, but split into runs so that the samples between far-apart wanted frames are not
+ * decoded at all: a new run starts at the next wanted frame's keyframe when that keyframe lies at
+ * least `minSkipSamples` beyond the current run. Sparse requests (key frames, activity spans, serve
+ * windows) then decode only the GOPs that hold a wanted frame. Runs never overlap and the frames of
+ * a later run all present after those of an earlier one, so output stays in presentation order.
+ */
+export function planDecodeSegments(
+  samples: readonly SampleInfo[],
+  frames: readonly FrameTiming[],
+  indices: readonly number[],
+  minSkipSamples = MIN_SKIP_SAMPLES,
+): SegmentedDecodePlan | null {
+  if (indices.length === 0) return null
+  const sorted = [...new Set(indices)].sort((a, b) => a - b)
+  const segments: DecodeSegment[] = []
+  let current: DecodeSegment | null = null
+  for (const index of sorted) {
+    const frame = frames[index]
+    const key = keyframeFor(samples, frame)
+    if (current && key <= current.lastSample + minSkipSamples) {
+      current.lastSample = Math.max(current.lastSample, frame.sampleIndex)
+      current.firstSample = Math.min(current.firstSample, key)
+      continue
+    }
+    current = { firstSample: key, lastSample: frame.sampleIndex }
+    segments.push(current)
+  }
+  // A frame presented later can decode earlier (B-frames), and an open-GOP leading picture can
+  // pull a run's start back: merge runs that now touch or overlap.
+  const merged: DecodeSegment[] = []
+  for (const s of segments) {
+    const last = merged[merged.length - 1]
+    if (last && s.firstSample <= last.lastSample + 1) last.lastSample = Math.max(last.lastSample, s.lastSample)
+    else merged.push({ ...s })
+  }
+  return { segments: merged, wanted: new Set(sorted) }
+}
+
 /**
  * Chooses the decode-order sample span that produces every wanted frame: from the last
  * keyframe at or before the earliest needed sample to the latest needed sample. The

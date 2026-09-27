@@ -6,7 +6,7 @@
     "Twin of METRICS.md. Code reads ids, names, units, statuses, prerequisites, reference ranges, plausibility bounds and thresholds from here; algorithms live in METRICS.md.",
     "Revised 2026-09-27 for DECISIONS D1, D4, D5 and D11 (see the METRICS.md revision log). trunk-tilt-band is removed (replaced by shoulder-tilt-trophy); knee-bend-band is rear view only; the side-view audio flight-time speed method is removed.",
     "statusDefault = the status the engine emits when all prerequisites hold and the metric has passed synthetic validation (V1) in that condition class. statusTarget = the status after real-footage validation passes.",
-    "validationLevel is stored per condition class (day, overcast, night-lights, flicker). All metrics are V0 until the first synthetic matrix run (METRICS.md section 5) passes; CI then promotes them through a reviewed change.",
+    "validationLevel is stored per condition class (day, overcast, night-lights, flicker). All metrics are V0 until the first synthetic matrix run (METRICS.md section 5) passes; CI then promotes them through a reviewed change. The first synthetic run (2026-09-27, 122 rendered clips) promoted 11 metrics to V1 in day and overcast only; every metric stays V0 under night-lights and flicker. validationState and validationNote say how each level was reached (see validationStates and docs/VALIDATION.md).",
     "Emitted status = min(statusTarget, statusCeilingByValidationLevel[validationLevel[conditionClass]]), then the condition cap, then the per-value rules in METRICS.md section 3. Status order: unavailable < experimental < estimated < measured. player-entered is outside the ladder.",
     "Experimental values are hidden unless the profile experimental toggle is on, never appear in headlines, and are never cited by coaching text.",
     "Heights are ball-centre heights. Ratios are of the player standing height. Positive forward = into the court from the start toe (the geometric front toe at toss release). Roles (front foot, wrists, front shoulder, nearer knee) are geometric, never MediaPipe left/right labels.",
@@ -90,6 +90,14 @@
       "T",
       "body",
       "wide"
+    ],
+    "validationState": [
+      "V1-synthetic-pass",
+      "V1-synthetic-pass-limited",
+      "V1-synthetic-fail",
+      "V0-synthetic-inconclusive",
+      "V0-unvalidated",
+      "not-applicable"
     ]
   },
   "statusCeilingByValidationLevel": {
@@ -103,6 +111,24 @@
       "note": "Timing = timingMetricIds. Spatial spreads (spatialSpreadIds) stay estimated until V3 (two-view triangulated SD within 20%), because V2 annotation shares the engine image geometry and cannot see the sideways leak."
     },
     "V3": "statusTarget"
+  },
+  "validationStates": {
+    "note": "Per-metric validationState (added 2026-09-27). validationLevel per condition class caps the status (section 1.3); validationState says how that level was reached. app/src/ui/screens/metric/validationState.test.ts keeps both equal to the engine catalogue (app/src/analysis/metrics/catalogue.ts).",
+    "V1-synthetic-pass": "Passed the synthetic thresholds at the D1 set-ups in daylight: V1 in day and overcast, V0 under lights and flicker.",
+    "V1-synthetic-pass-limited": "V1 in day and overcast, but on thin or partial evidence (see validationNote): one multi-serve block, or a persistent bias that cancels in player-relative use.",
+    "V1-synthetic-fail": "Scored on the synthetic corpus and failed at least one threshold: stays V0 (experimental).",
+    "V0-synthetic-inconclusive": "Scored on the synthetic corpus, but the corpus cannot test what matters yet (too few clips, or the render hides the known failure): stays V0.",
+    "V0-unvalidated": "Not scored against synthetic truth yet (no renders or no truth): V0.",
+    "not-applicable": "Player-entered or never measured (spin): nothing to validate for the camera; the level stays V0 and does not cap the status.",
+    "lastRun": {
+      "date": "2026-09-27",
+      "kind": "synthetic",
+      "clips": 122,
+      "serves": 129,
+      "results": "validation/results/metrics/SUMMARY.md",
+      "summary": "app/src/analysis/metrics/validation-summary.json",
+      "report": "docs/VALIDATION.md"
+    }
   },
   "serveCountConfirmed": {
     "status": "measured",
@@ -853,11 +879,13 @@
       "statusWhenConfirmed": "measured",
       "statusTarget": "measured",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass-limited",
+      "validationNote": "Serve count exact on all 122 clips (0 wrong in 95 side-view daylight clips at 60 fps or more; 8 of 8 in the multi-serve clip with full-rate poses). Limited: one multi-serve clip only, no re-toss, shadow-swing, miss or dribble-heavy renders, and the production serve scan (4 to 15 Hz) found 7 of 8 serves in that clip (validation/results/ui/engine-pipeline/e2e-report.json, 04:08 UTC); an engine change in progress on 2026-09-27 (serve/windows.ts sampling allowance) reaches 100% in a Pass A simulation but has not been re-run end to end. Estimated until the player confirms the serve strip. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "fps>=30"
       ],
@@ -899,6 +927,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-unvalidated",
+      "validationNote": "No re-toss (caught toss) renders exist yet (S7); classification is unit-tested only. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "fps>=30"
       ],
@@ -940,11 +970,13 @@
       "statusDefault": "estimated",
       "statusTarget": "estimated",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass",
+      "validationNote": "Passes at the D1 set-ups (portrait 7 to 7.5 m, landscape fence 9 m; n 11): median error 1.1% of height, p95 2.7%, coverage 100%. Fails over all side-view daylight clips at 60 fps or more (median 4.3%, p95 6.9%; n 94) because 5 m clips read 4 to 7% low (depth prior), so heights filmed closer than 6 m are capped at experimental per serve. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "fps>=30",
         "event:tossApex",
@@ -1063,6 +1095,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-fail",
+      "validationNote": "MAE 6.7 cm at the D1 set-ups (threshold 5 cm) and 5.4 cm over all daylight side clips: MediaPipe foot point sits about 0.02 of height behind the toe tip, so positions read 4 to 5 cm long. Experimental. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=30",
@@ -1169,6 +1203,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-unvalidated",
+      "validationNote": "Rear view only; no rear lateral result was scored against truth (6 rear clips at 5 m, camera 1.5 m high, not the raised rear set-up). Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:rear",
         "fps>=30",
@@ -1230,11 +1266,13 @@
       "statusTarget": "measured",
       "statusTargetCondition": "measured only for serves with sigma_dt <= 8 ms (120 fps, opt-in audio or ball-intersection); otherwise estimated at every level",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass",
+      "validationNote": "MAE 0.5 cm at the D1 set-ups (n 11) and 0.7 cm over all daylight side clips (n 94), coverage 99 to 100%. Measured status needs sigma of the time difference <= 8 ms and V2. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "fps>=30",
         "timebase",
@@ -1388,11 +1426,13 @@
       "statusTarget": "estimated",
       "statusAfterV3": "measured",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass-limited",
+      "validationNote": "Rests on one 8-serve multi-serve block (pooled corrected SD error +0.8 cm) plus per-serve error analysis; the S9 20-serve variability family is not rendered yet. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "views": [
         "side",
         "rear"
@@ -1488,11 +1528,13 @@
       "statusTarget": "estimated",
       "statusAfterV3": "measured",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass-limited",
+      "validationNote": "Rests on one 8-serve block (pooled corrected SD error -2.2 cm) plus per-serve error analysis; the toe-point bias is constant within a session so it does not inflate the spread; S9 not rendered yet. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "views": [
         "side"
       ],
@@ -1579,6 +1621,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-unvalidated",
+      "validationNote": "Rear view only; not scored against truth. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "views": [
         "rear"
       ],
@@ -1651,11 +1695,13 @@
       "statusDefault": "estimated",
       "statusTarget": "estimated",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass",
+      "validationNote": "Passes at the D1 set-ups (MAE 0.007, p95 0.020, n 11). Over all daylight side clips MAE 0.025 but p95 0.0503 against 0.05 (5 m clips read low), so heights filmed closer than 6 m are capped at experimental per serve. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "fps>=30",
         "event:contact-ball",
@@ -1778,11 +1824,13 @@
       "statusTarget": "estimated",
       "statusAfterV3": "measured",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass-limited",
+      "validationNote": "Rests on one 8-serve block at 60 fps plus per-serve error analysis; S9 not rendered yet. With the hit sound off the corrected SD was 0 cm against a true 1.9 cm (range 0 to 4.7 cm held the truth): the true spread is below the 60 fps measurement noise, so this block shows the at-the-limit case, not accuracy. With the hit sound on: 1.93 cm against 1.91 cm. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "views": [
         "side",
         "rear"
@@ -1855,6 +1903,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-fail",
+      "validationNote": "MAE 6.6 cm at the D1 set-ups (threshold 6 cm); passes narrowly over all daylight side clips (5.1 cm). Same foot-point bias as toss-forward. Experimental. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=30",
@@ -1971,11 +2021,13 @@
       "statusDefault": "estimated",
       "statusTarget": "measured",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass",
+      "validationNote": "MAE 11 ms at the D1 set-ups and 9.3 ms over all daylight side clips at 60 fps or more, coverage 99 to 100%. At 30 fps release timing MAE is about 80 ms, so 30 fps rhythm is capped at experimental (FPS_TOO_LOW). Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "statusRules": {
         "30fps-or-physics-timebase": "estimated even after V2",
         "contact-wrist-only": "experimental",
@@ -2081,11 +2133,13 @@
       "statusDefault": "estimated",
       "statusTarget": "measured",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass-limited",
+      "validationNote": "Rests on one 8-serve block (pooled error -5.3 ms) plus per-serve error analysis; S9 not rendered yet; flagged at the measurement limit at 30 fps. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "statusRules": {
         "30-59fps": "nearMeasurementLimit flagged; never measured"
       },
@@ -2177,6 +2231,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-fail",
+      "validationNote": "MAE 100 ms at the D1 set-ups (n 6) and 65 ms over all daylight side clips (n 68) against 60 ms; coverage 50 to 60%. Experimental. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "fps>=60",
         "timebase",
@@ -2247,11 +2303,13 @@
       "statusDefault": "estimated",
       "statusTarget": "estimated",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass-limited",
+      "validationNote": "Method error 0.7% of height with injected noise; with MediaPipe, MAE 1.9% over all daylight side clips (pass) but 2.5% at the D1 set-ups (fail against 2%). The error is a persistent 2% low read of the hip rise, which cancels in the player-relative comparisons the product shows; stated in the value basis. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=30",
@@ -2343,6 +2401,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-fail",
+      "validationNote": "The lowest-hip minimum is flat: MAE 64 ms at the D1 set-ups and 75 ms overall against 50 ms, coverage 74 to 83%. Experimental. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=30",
@@ -2427,11 +2487,13 @@
       "statusDefault": "estimated",
       "statusTarget": "estimated",
       "validationLevel": {
-        "day": "V0",
-        "overcast": "V0",
+        "day": "V1",
+        "overcast": "V1",
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-pass",
+      "validationNote": "MAE 0.4% of height at the D1 set-ups and overall (threshold 2%). Descriptive only. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=30",
@@ -2507,6 +2569,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-synthetic-inconclusive",
+      "validationNote": "Two-level error 0% at the D1 set-ups and 6% overall (threshold 15%), but the rendered front knee bends almost in the image plane, which understates the side-view knee problem (tools/synth README), so the pass does not count. Experimental by design. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=30",
@@ -2597,6 +2661,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-fail",
+      "validationNote": "Rectified 2D angle vs 3D: p95 5.3 deg at the D1 set-ups and 8.3 deg overall against 4 deg. The corpus holds the trophy thorax posture constant, so band and player-relative discrimination are untestable. Experimental. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=30",
@@ -2681,6 +2747,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-synthetic-inconclusive",
+      "validationNote": "Rear view only: 6 of 6 rear serves banded correctly, far too few, and the rear clips are filmed low (1.5 m), not from the raised rear set-up. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:rear",
         "fps>=30",
@@ -2757,6 +2825,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-unvalidated",
+      "validationNote": "Rear view only; not scored against truth. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:rear",
         "fps>=30",
@@ -2819,6 +2889,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-fail",
+      "validationNote": "p95 24 cm at the D1 set-ups (threshold 15 cm; coverage 91%) although MAE 6.0 cm; passes over all daylight side clips (MAE 3.8 cm, p95 7.4 cm). With injected foot noise MAE 6.3 cm, p95 15.6 cm. Experimental, trend only. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=30",
@@ -2895,6 +2967,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-unvalidated",
+      "validationNote": "Needs the S9 variability family (20-serve blocks at several sdScale values), not rendered yet. Experimental by design. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "n>=5",
         "stability",
@@ -3000,6 +3074,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "not-applicable",
+      "validationNote": "Player-entered; counts and Wilson intervals are unit-tested. The rear-view automatic path is not built or validated. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "entry:outcome"
       ],
@@ -3070,6 +3146,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "not-applicable",
+      "validationNote": "Player-entered; counts and Wilson intervals are unit-tested. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "entry:outcome",
         "entry:serveNumber"
@@ -3149,6 +3227,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "not-applicable",
+      "validationNote": "Player-entered; counts and Wilson intervals are unit-tested. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "entry:outcome",
         "entry:serveNumber"
@@ -3201,6 +3281,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "not-applicable",
+      "validationNote": "Player-entered. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [],
       "prerequisitesAnyOf": [
         "entry:secondServeBlock",
@@ -3274,6 +3356,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "not-applicable",
+      "validationNote": "Player-entered; the rear-view automatic zone is not validated. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "entry:outcome"
       ],
@@ -3327,6 +3411,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "not-applicable",
+      "validationNote": "Player-entered intent. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [],
       "autoClassifier": {
         "status": "unavailable",
@@ -3370,6 +3456,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V1-synthetic-fail",
+      "validationNote": "Ball study: 7 of 7 ranges at 120/240 fps held the true speed, but ranges are about 45% of their midpoint wide against the 35% display limit, so the engine shows none (RANGE_TOO_WIDE on 15 clips, FPS_TOO_LOW on 100). Experimental by design. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:side",
         "fps>=120",
@@ -3471,6 +3559,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-unvalidated",
+      "validationNote": "Validated only on unit-test flights; on the one rendered rear clip a false bounce was found and refused, so no range was produced. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "view:rear",
         "fps>=60",
@@ -3550,6 +3640,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "not-applicable",
+      "validationNote": "Player-entered radar reading; becomes validation data. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [],
       "inputs": {
         "units": [
@@ -3599,6 +3691,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "not-applicable",
+      "validationNote": "Never measured (NOT_MEASURABLE); unavailable in 100% of clips. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [],
       "referenceNote": "Serve spin is about 1,000-5,000 rpm (research 05 [S43]); at 240 fps the ball turns 75-125 deg between frames; even Hawk-Eye estimates had an error SD of about 540 rpm (research 05 [S44]).",
       "evidenceTier": "research-backed",
@@ -3637,6 +3731,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-synthetic-inconclusive",
+      "validationNote": "Individual checks are unit-tested; on renders the view check flagged 5 of 5 front-45 clips with no false alarms on side clips and the tilt check refused the 4 m clips, but the full flag matrix (METRICS §5.4) is not scored. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [],
       "checks": [
         "fps",
@@ -3740,6 +3836,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-unvalidated",
+      "validationNote": "No declining-contact scenario rendered yet; rule unit-tested only. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "n>=16",
         "event:contact-ball",
@@ -3779,6 +3877,8 @@
         "night-lights": "V0",
         "flicker": "V0"
       },
+      "validationState": "V0-unvalidated",
+      "validationNote": "Arithmetic on logged volume; unit-tested only. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "history:28d-3sessions"
       ],

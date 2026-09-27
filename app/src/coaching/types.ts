@@ -85,6 +85,11 @@ export interface CoachingStratum {
   serveNumber: ServeNumber | 'unknown'
   intendedType: ServeType | 'unknown'
   handedness: Handedness
+  /**
+   * The session's set-up key (orientation | distance class | serving spot; analysis/metrics/setup.ts).
+   * Matching needs the same set-up (METRICS §1.6, §4.4); a missing key (older sessions) matches any.
+   */
+  setup?: string
 }
 
 export interface CoachingServe {
@@ -138,6 +143,8 @@ export interface CoachingSession {
   representativeServeId?: string
   template?: string
   isDemo?: boolean
+  /** The set-up key (StratumKey.setup). When absent it is read from the METRICS strata keys. */
+  setupKey?: string
 }
 
 export interface CoachingExperiment {
@@ -197,8 +204,14 @@ export interface VerdictSide {
   /** Rates: serves in and tagged serves over the side. */
   k?: number
   n?: number
-  /** Per-serve random error (1 sigma) for the spread noise correction (METRICS §4.2). */
+  /**
+   * Per-serve random error (1 sigma) for the spread noise correction (METRICS §4.2): the root mean
+   * square of the engine's per-serve σ_r over this side's serves, so a one-session side corrects
+   * exactly as that session's own spread does (the canonical session value).
+   */
   sigmaR?: number
+  /** The engine's per-serve σ_r, grouped like bySession (for the stratified bootstrap). */
+  sigmaRBySession?: number[][]
   /** Shared per-session scale error sigma_s (METRICS §1.2). */
   sigmaShared?: number
 }

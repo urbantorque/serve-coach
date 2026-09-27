@@ -6,7 +6,7 @@ import { cameraModel, focalLongFromFov, levelRotation, rectifyPoint, setupClassO
 import { buildTrack, indexAt, localQuadratic, pt } from './track.ts'
 import { fuseEvent, detectTrophy, measureNoise, heightOf } from './events.ts'
 import { relabelSides } from './relabel.ts'
-import { findServeWindows } from './windows.ts'
+import { findServeWindows, samplingAllowance } from './windows.ts'
 import { ballBracketContact, ballIntersectionContact, followLeadIn, type ServeBall } from './ball.ts'
 
 const meta = { width: 1080, height: 1920 }
@@ -143,6 +143,43 @@ describe('serve windows (§2.3)', () => {
     expect(w[0].startReal).toBeLessThan(w[0].anchorReal - 2)
     const still = fx.frames.map((f) => ({ ...f, landmarks: fx.frames[0].landmarks }))
     expect(findServeWindows(still, { ...meta, durationMediaS: 4.5, timeScale: 1 }, 'right')).toHaveLength(0)
+  })
+
+  it('the sampling allowance is nil at 60 fps and covers a peak between 15 Hz samples', () => {
+    expect(samplingAllowance(1 / 60)).toBeLessThan(0.004)
+    expect(samplingAllowance(1 / 15)).toBeCloseTo(50 * (1 / 30) ** 2, 6)
+    expect(samplingAllowance(2 / 15)).toBe(0.12)
+    expect(samplingAllowance(0)).toBe(0)
+  })
+
+  it('finds a short, low contact peak at every 15 Hz sampling phase and beside a blurred frame (session clip, 31.07 s)', () => {
+    // The 6 m ad-court serves of the synthetic session clip: the hitting wrist tops out near 1.0 BH
+    // and stays above 0.95 BH for about 67 ms, so 15 Hz samples can miss the top.
+    const tc = 2.4
+    const fx = buildServeFixture({ heightHU: 0.3, floorY: 0.85, contactT: tc, durationS: 4.5, fps: 60 })
+    const bh = 0.3
+    const low = fx.frames.map((f) => {
+      if (!f.landmarks) return f
+      const lm = f.landmarks.map((l) => ({ ...l }))
+      const w = lm[LM.RIGHT_WRIST]
+      const cap = 0.85 - bh * (1.0 - 50 * (f.tReal - tc) ** 2)
+      if (Math.abs(f.tReal - tc) < 0.25) w.y = Math.max(w.y, cap)
+      return { ...f, landmarks: lm }
+    })
+    const m = { ...meta, durationMediaS: 4.5, timeScale: 1 }
+    expect(findServeWindows(low, m, 'right')).toHaveLength(1)
+    for (let off = 0; off < 4; off++) {
+      const sparse = low.filter((f) => f.frameIndex % 4 === off)
+      const w = findServeWindows(sparse, m, 'right')
+      expect(w, `phase ${off}`).toHaveLength(1)
+      expect(w[0].startReal).toBeLessThan(tc - 1)
+      expect(w[0].endReal).toBeGreaterThan(tc + 0.5)
+    }
+    // The frame nearest contact lost its (blurred) hitting wrist.
+    const blurred = low
+      .filter((f) => f.frameIndex % 4 === 1)
+      .map((f) => (Math.abs(f.tReal - tc) < 0.02 && f.landmarks ? { ...f, landmarks: f.landmarks.map((l, k) => (k === LM.RIGHT_WRIST ? { ...l, visibility: 0 } : l)) } : f))
+    expect(findServeWindows(blurred, m, 'right')).toHaveLength(1)
   })
 })
 

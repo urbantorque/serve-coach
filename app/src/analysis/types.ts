@@ -325,6 +325,12 @@ export type CameraOrientation = 'portrait' | 'landscape'
 /** D1 set-up, classified from the capture context and the framing check. CAPTURE owns the names. */
 export type CaptureSetup = 'side-portrait' | 'side-landscape-fence' | 'side-other' | 'rear-outcomes' | 'unknown'
 export type TiltStatus = 'measured-level' | 'measured-corrected' | 'measured-over-cap' | 'unknown'
+  /** Addition: no sensor pitch, level assumed from the import's mount answer (METRICS §1.1.3a). */
+  | 'assumed-level'
+/** Addition: the import question "How was the phone mounted?" (METRICS §1.1.3a). */
+export type PhoneMount = 'level-mount' | 'roughly-level' | 'tilted-or-unsure'
+/** Addition: where on the baseline the server stood (singles or doubles serving spot). A set-up factor. */
+export type ServingSpot = 'singles' | 'doubles'
 
 /** Events that own a stored key frame (ARCHITECTURE §5.5). */
 export type KeyFrameEvent = 'setup' | 'release' | 'apex' | 'trophy' | 'lowestHip' | 'contact' | 'landing' | 'recovery'
@@ -364,6 +370,10 @@ export interface CaptureContext {
   intrinsics?: number[]
   /** Live capture only: 10 Hz (PWA) or per-frame (native) attitude. Absent => pitch unknown. */
   orientationSamples?: { tMs: number; pitchDeg: number; rollDeg: number }[]
+  /** Addition (imports): how the phone was mounted. Without sensor samples, a level mount means pitch 0 ± 2°, roughly level 0 ± 4°. */
+  mount?: PhoneMount
+  /** Addition: singles or doubles serving spot of the block (a set-up matching factor). */
+  servingSpot?: ServingSpot
   recordingStartMs?: number
   framingAtStart?: {
     frameTopM: number

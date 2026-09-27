@@ -169,6 +169,31 @@ function paintPrim(c: PaintContext, prim: Prim): void {
       )
       break
     }
+    case 'cross': {
+      // Four arms around an open centre, so the marked pixel itself stays visible.
+      const p = pt(c, prim.at)
+      const outer = prim.sizePx / 2
+      const inner = Math.max(3, outer * 0.3)
+      strokeWithHalo(
+        c,
+        () => {
+          ctx.beginPath()
+          ctx.moveTo(p.x - outer, p.y)
+          ctx.lineTo(p.x - inner, p.y)
+          ctx.moveTo(p.x + inner, p.y)
+          ctx.lineTo(p.x + outer, p.y)
+          ctx.moveTo(p.x, p.y - outer)
+          ctx.lineTo(p.x, p.y - inner)
+          ctx.moveTo(p.x, p.y + inner)
+          ctx.lineTo(p.x, p.y + outer)
+        },
+        inkColour(c.palette, prim.ink),
+        prim.width,
+        undefined,
+        prim.alpha ?? 1,
+      )
+      break
+    }
     case 'text': {
       const p = pt(c, prim.at)
       ctx.save()

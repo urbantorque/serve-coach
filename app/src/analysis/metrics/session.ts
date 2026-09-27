@@ -24,6 +24,7 @@ import { METRIC_VIEWS, PLAUSIBILITY, type ConditionClass } from './catalogue.ts'
 import { METRIC_IDS } from '../types.ts'
 import type { PerServeResult } from './perServe.ts'
 import { repeatability, type RepeatabilityResult } from './repeatability.ts'
+import { sessionHeadline } from './headline.ts'
 import type { ServeCore } from '../serve/analyse.ts'
 import type { PoseTrack } from '../serve/track.ts'
 import { serveTrajectory } from './repeatability.ts'
@@ -398,24 +399,19 @@ export function buildSessionStats(serves: SessionServe[], ctx: SessionContext, e
   const derivedPerServe: SessionStats['derivedPerServe'] = {}
   const repIndex = head?.repeatability?.representativeServeIndex
   const representative = repIndex !== undefined ? serves.find((s) => s.core.index === repIndex)?.analysis.id : undefined
-  const measured = metrics['toss-height-spread']
-  const nMeasured = head?.n ?? 0
-  const spreadText = measured && measured.status !== 'unavailable' && typeof measured.value === 'number' ? `toss height varied by about ${measured.value} cm${measured.provisional ? ' (early read)' : ''}` : ''
-  // A session over more than one stratum (both sides, or first and second serves) counts every serve;
-  // the spread belongs to the headline stratum, so it names it (§1.6: strata never pool).
-  const multi = strata.length > 1
-  const sides = new Set(strata.map((s) => s.key.courtSide))
-  const whereAll = sides.size > 1 && sides.size === strata.length ? ' from both sides' : ' in more than one set-up'
-  const headWhere = head && head.key.courtSide !== 'unknown' && sides.size > 1 ? `On the ${head.key.courtSide} side` : 'In the biggest group'
   // "X of N measured" counts like the capture line (the pipeline's analysis counts): every serve the
-  // engine found except caught tosses and shadow swings, and the ones kept for statistics.
-  const found = (ss: readonly SessionServe[]) => ss.filter((s) => s.core.classification !== 'retoss' && s.core.classification !== 'shadow')
-  const kept = (ss: readonly SessionServe[]) => found(ss).filter((s) => s.analysis.included).length
-  const headline = !head || totalServes === 0
-    ? 'No serves were found in this video.'
-    : multi
-      ? `${kept(serves)} of ${found(serves).length} ${found(serves).length === 1 ? 'serve' : 'serves'} measured${whereAll}${spreadText ? `. ${headWhere}, ${spreadText}` : ''}.`
-      : `${Math.max(nMeasured, kept(head.serves))} of ${Math.max(head.nTotal, found(head.serves).length)} ${Math.max(head.nTotal, found(head.serves).length) === 1 ? 'serve' : 'serves'} measured${spreadText ? `. ${spreadText.charAt(0).toUpperCase()}${spreadText.slice(1)}` : ''}.`
+  // engine found except caught tosses and shadow swings, and the ones kept for statistics. The
+  // sentence (and its spread number) is the shared headline.ts one the UI also renders.
+  const found = serves.filter((s) => s.core.classification !== 'retoss' && s.core.classification !== 'shadow')
+  const headline =
+    !head || totalServes === 0
+      ? 'No serves were found in this video.'
+      : sessionHeadline({
+          metrics,
+          strata: strata.map((s) => ({ key: s.key, metrics: s.metrics })),
+          measured: Math.max(strata.length > 1 ? 0 : head.n, found.filter((s) => s.analysis.included).length),
+          detected: Math.max(strata.length > 1 ? 0 : head.nTotal, found.length),
+        })
   const stats: SessionStats = {
     sessionId: ctx.sessionId,
     inputsHash: extra.inputsHash,

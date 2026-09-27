@@ -1,8 +1,16 @@
 /**
  * Strata and matching (COACHING §6.1; METRICS §1.6, §4.4). A stratum is view x camera side x court
- * side x serve number x intended type (x handedness). Statistics are never mixed across views.
+ * side x serve number x intended type (x handedness), within one set-up (orientation, distance class
+ * and serving spot: analysis/metrics/setup.ts). Statistics are never mixed across views or set-ups,
+ * so a baseline at 6 m never pools with a re-test at 7.5 m.
  */
+import { sameSetup } from '../analysis/metrics/setup.ts'
 import type { CoachingServe, CoachingSession, CoachingStratum } from './types.ts'
+
+/** The session's set-up key: its own, else the one the engine wrote on its strata keys. */
+export function sessionSetupKey(session: CoachingSession): string | undefined {
+  return session.setupKey ?? session.strata?.find((s) => s.key.setup)?.key.setup
+}
 
 export interface StratumGroup {
   key: CoachingStratum
@@ -11,6 +19,7 @@ export interface StratumGroup {
 }
 
 export function serveStratum(session: CoachingSession, serve: CoachingServe): CoachingStratum {
+  const setup = sessionSetupKey(session)
   return {
     view: session.view,
     cameraSide: session.cameraSide ?? 'unknown',
@@ -18,6 +27,7 @@ export function serveStratum(session: CoachingSession, serve: CoachingServe): Co
     serveNumber: serve.serveNumber ?? session.defaults?.serveNumber ?? 'unknown',
     intendedType: serve.intendedType ?? session.defaults?.intendedType ?? 'unknown',
     handedness: session.handedness ?? 'right',
+    ...(setup ? { setup } : {}),
   }
 }
 
@@ -25,9 +35,12 @@ export function stratumId(k: CoachingStratum): string {
   return [k.view, k.cameraSide, k.courtSide, k.serveNumber, k.intendedType, k.handedness].join('|')
 }
 
-/** Hard matching (METRICS §4.4): every key field equal; "unknown" intended type matches only "unknown". */
+/**
+ * Hard matching (METRICS §4.4): every key field equal ("unknown" intended type matches only
+ * "unknown") and the same set-up (a missing set-up key, from an older session, matches any).
+ */
 export function sameStratum(a: CoachingStratum, b: CoachingStratum): boolean {
-  return stratumId(a) === stratumId(b)
+  return stratumId(a) === stratumId(b) && sameSetup(a.setup, b.setup)
 }
 
 export function groupStrata(session: CoachingSession): StratumGroup[] {

@@ -59,6 +59,11 @@ export interface DetectOutput {
   locatorSetupMs?: number
 }
 
+/** Options applied when a new clip (stream) starts. */
+export interface LandmarkerResetOptions {
+  numPoses?: number
+}
+
 /** Which landmarker runs a request: the clip's main one, or the IMAGE-mode one used for localisation. */
 export type DetectTarget = 'main' | 'locate'
 
@@ -165,7 +170,7 @@ export class LandmarkerHandle {
         })
         const initMs = performance.now() - started
         const info: LandmarkerInitInfo = { delegate, model: config.model, runningMode: config.runningMode, initMs, warmupMs: 0, gpuError }
-        const handle = new LandmarkerHandle(landmarker, info, config)
+        const handle = new LandmarkerHandle(landmarker, info, { ...config })
         // Warm-up: a GPU context can be created and still fail on first use, so the
         // fallback decision is made after one real inference.
         const warmStart = performance.now()
@@ -208,10 +213,17 @@ export class LandmarkerHandle {
 
   /**
    * Clears MediaPipe's cross-frame state (tracked ROI, internal smoothing) before a new
-   * clip. setOptions rebuilds the graph but keeps the loaded wasm and model.
+   * clip. setOptions rebuilds the graph but keeps the loaded wasm and model. `numPoses`
+   * switches between detecting every frame (2: a bystander stays a separate pose) and
+   * VIDEO-mode tracking (1: the detector runs only when the track is lost).
    */
-  async reset(): Promise<void> {
-    await this.landmarker.setOptions({ runningMode: this.config.runningMode })
+  async reset(options: LandmarkerResetOptions = {}): Promise<void> {
+    if (options.numPoses !== undefined && options.numPoses >= 1) this.config.numPoses = Math.round(options.numPoses)
+    await this.landmarker.setOptions({ runningMode: this.config.runningMode, numPoses: this.config.numPoses })
+  }
+
+  get numPoses(): number {
+    return this.config.numPoses
   }
 
   close(): void {

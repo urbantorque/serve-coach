@@ -183,3 +183,12 @@ export function correctSdBounds(low: number, high: number, meanSigmaR: number): 
     high: Math.sqrt(Math.max(high * high - (0.8 * meanSigmaR) ** 2, 0)),
   }
 }
+
+/**
+ * An 80% interval from a 95% one around its centre, assuming a normal shape (each side scaled by
+ * z₀.₉₀ / z₀.₉₇₅). For drawing nested interval bars (DESIGN §9.7) when only the 95% interval is stored.
+ */
+export function ci80FromCi95(low: number, high: number, centre = (low + high) / 2): [number, number] {
+  const f = Z80 / Z95
+  return [centre - (centre - low) * f, centre + (high - centre) * f]
+}

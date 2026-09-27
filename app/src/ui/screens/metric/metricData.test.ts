@@ -7,7 +7,7 @@ import catalogue from './data/catalogue.json'
 import validation from './data/validation.json'
 import { LIMITS, METRIC_COPY, PREREQ_WORDS, STATUS_MEANING } from './metricCopy.ts'
 // @ts-expect-error: plain ESM build script without type declarations
-import { catalogueFrom, loadSmoke, validationFrom } from './tools/build-metric-data.mjs'
+import { catalogueFrom, loadSmoke, ROWS_FILE, SMOKE_DIR, spreadsFrom, validationFrom } from './tools/build-metric-data.mjs'
 
 // Tests run from app/ (the vitest root).
 const ROOT = resolve(process.cwd(), '..')
@@ -19,10 +19,12 @@ describe('Metric info data stays in step with its sources', () => {
     expect(catalogue.metrics.map((m) => m.id)).toEqual([...METRIC_IDS])
   })
 
-  const smoke = resolve(ROOT, 'validation/results/smoke')
-  it.runIf(existsSync(resolve(smoke, 'SUMMARY.md')))('validation.json matches validation/results/smoke', () => {
+  const smoke = resolve(ROOT, SMOKE_DIR)
+  const rowsFile = resolve(ROOT, ROWS_FILE)
+  it.runIf(existsSync(resolve(smoke, 'SUMMARY.md')) && existsSync(rowsFile))('validation.json matches the latest pipeline run and the pooled spread rows', () => {
     const { clips, generated } = loadSmoke(smoke)
-    expect(validationFrom(clips, generated)).toEqual(validation)
+    const rows = JSON.parse(readFileSync(rowsFile, 'utf8')).rows
+    expect({ ...validationFrom(clips, generated), spreadSource: `${ROWS_FILE} (default variant, pooled)`, spreads: spreadsFrom(rows) }).toEqual(validation)
   })
 
   it('validation numbers are internally consistent', () => {

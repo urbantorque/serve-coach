@@ -63,7 +63,7 @@ async function handleMessage(message: ToPoseWorker): Promise<void> {
         return
       }
       case 'reset': {
-        await handle?.reset()
+        await handle?.reset(message.options)
         reply({ type: 'done', id: message.id, lastTimestampMs: handle?.lastTimestamp })
         return
       }

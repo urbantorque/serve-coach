@@ -333,26 +333,66 @@ export function provisionalContact(window: EngineWindow, poses: readonly PoseFra
   return contact
 }
 
+/** Real rate of Pass B pose outside the core (§5.4 step 2: every 3rd frame at 60 fps). */
+export const CONTEXT_POSE_HZ = 20
 /**
- * Pose frame indices for a window: every frame in the core (every 2nd at >= 200 fps capture),
- * every 3rd outside it (§5.4 step 2). Always includes the window's first and last frame.
+ * A context frame is skipped when Pass A already has a pose within this many seconds (Pass A runs
+ * at 15 Hz around every serve, so its poses are at most 33 ms from any frame there).
  */
-export function poseIndices(w: Pick<PlannedWindow, 'startFrame' | 'endFrame' | 'coreStartFrame' | 'coreEndFrame'>, captureFps: number): number[] {
+export const CONTEXT_COVERED_S = 0.05
+
+/**
+ * Pose frame indices for a window: every frame in the core (every 2nd at >= 200 fps capture), and
+ * a 20 Hz grid outside it (§5.4 step 2). Always includes the window's first and last frame.
+ *
+ * `covered` (Pass A pose frames): outside the core a grid frame is skipped when Pass A already
+ * has a pose within CONTEXT_COVERED_S, so the context (setup, recovery) is not estimated twice.
+ * The core is always estimated in full by Pass B, so its frames come from one source.
+ */
+export function poseIndices(
+  w: Pick<PlannedWindow, 'startFrame' | 'endFrame' | 'coreStartFrame' | 'coreEndFrame'>,
+  captureFps: number,
+  covered?: ReadonlySet<number>,
+): number[] {
   const coreStep = captureFps >= 200 ? 2 : 1
+  const contextStep = Math.max(1, Math.round(captureFps / CONTEXT_POSE_HZ))
+  const near = Math.max(0, Math.round(CONTEXT_COVERED_S * captureFps))
+  const isCovered = (f: number) => {
+    if (!covered || covered.size === 0) return false
+    for (let d = 0; d <= near; d++) if (covered.has(f - d) || covered.has(f + d)) return true
+    return false
+  }
   const out: number[] = []
   for (let f = w.startFrame; f <= w.endFrame; f++) {
     const inCore = f >= w.coreStartFrame && f <= w.coreEndFrame
-    const step = inCore ? coreStep : 3
-    const offset = inCore ? f - w.coreStartFrame : f - w.startFrame
-    if (offset % step === 0 || f === w.startFrame || f === w.endFrame) out.push(f)
+    if (inCore) {
+      if ((f - w.coreStartFrame) % coreStep === 0) out.push(f)
+    } else if (f === w.startFrame || f === w.endFrame || ((f - w.startFrame) % contextStep === 0 && !isCovered(f))) {
+      out.push(f)
+    }
   }
   return out
 }
 
-/** Every frame of the ball range. */
-export function ballIndices(w: Pick<PlannedWindow, 'ballStartFrame' | 'ballEndFrame'>): number[] {
+/** Ball detection runs at this real rate or more in the toss phase (200+ fps capture is thinned to it). */
+export const BALL_TOSS_MIN_HZ = 100
+/** Full-rate ball frames start this long before the provisional contact's doubt band (s). */
+export const BALL_FULL_RATE_MARGIN_S = 0.1
+
+/**
+ * Ball frame indices: every frame of the ball range, except that at 200 fps and above the toss
+ * phase (up to BALL_FULL_RATE_MARGIN_S before the provisional contact's doubt band) keeps every
+ * 2nd frame. A 120 Hz toss still gives the release hinge fit, apex fit and gravity check about 150
+ * points; contact, the outgoing ball and the experimental speed keep the full rate.
+ */
+export function ballIndices(w: Pick<PlannedWindow, 'ballStartFrame' | 'ballEndFrame'> & { contact?: Pick<ProvisionalContact, 'frameIndex' | 'uncertaintyS'> }, captureFps = 60): number[] {
+  const step = Math.max(1, Math.floor(captureFps / BALL_TOSS_MIN_HZ))
+  const fullFrom =
+    step > 1 && w.contact ? w.contact.frameIndex - Math.ceil((w.contact.uncertaintyS + BALL_FULL_RATE_MARGIN_S) * captureFps) : w.ballStartFrame
   const out: number[] = []
-  for (let f = w.ballStartFrame; f <= w.ballEndFrame; f++) out.push(f)
+  for (let f = w.ballStartFrame; f <= w.ballEndFrame; f++) {
+    if (f >= fullFrom || (f - w.ballStartFrame) % step === 0) out.push(f)
+  }
   return out
 }
 

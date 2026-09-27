@@ -104,6 +104,10 @@ export interface SessionRecord {
   defaultServeNumber?: ServeNumber
   defaultIntendedType?: ServeType
   defaultTarget?: TargetZone
+  /** Addition: singles or doubles serving spot of the block (a set-up matching factor, METRICS §4.4). */
+  servingSpot?: import('../analysis/types.ts').ServingSpot
+  /** Addition (imports): the answer to "How was the phone mounted?" (METRICS §1.1.3a). */
+  phoneMount?: import('../analysis/types.ts').PhoneMount
   linkedSessionId?: string
   label?: string
   venueLabel?: string

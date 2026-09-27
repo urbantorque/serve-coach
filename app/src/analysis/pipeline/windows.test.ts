@@ -173,4 +173,32 @@ describe('sampling', () => {
     expect(sparseStep(10)).toBe(1)
     expect(statureFromPoses([])).toBe(0)
   })
+
+  it('poses: context frames Pass A already covers are not estimated again; the core always is', () => {
+    const w = { startFrame: 0, endFrame: 240, coreStartFrame: 60, coreEndFrame: 190 }
+    const all = poseIndices(w, 60)
+    // Pass A at 15 Hz (every 4th frame) over the whole window.
+    const passA = new Set(Array.from({ length: 61 }, (_, k) => 4 * k))
+    const reused = poseIndices(w, 60, passA)
+    for (let f = 60; f <= 190; f++) expect(reused).toContain(f) // core: all of it, even frames Pass A has
+    expect(reused.filter((f) => f < 60 || f > 190)).toEqual([0, 240]) // context: only the window ends
+    expect(all.filter((f) => f < 60).length).toBe(20) // without Pass A: the 20 Hz grid
+    // Pass A covering only the start: the context after the core keeps its grid.
+    const early = poseIndices(w, 60, new Set([0, 4, 8, 12]))
+    expect(early.filter((f) => f > 190)).toEqual(all.filter((f) => f > 190))
+    expect(early.filter((f) => f > 0 && f < 12)).toEqual([])
+  })
+
+  it('ball: full rate up to 120 fps; at 240 fps the toss phase keeps every 2nd frame', () => {
+    const w = { ballStartFrame: 0, ballEndFrame: 599, contact: { frameIndex: 455, uncertaintyS: 0.08 } }
+    expect(ballIndices(w, 60)).toHaveLength(600)
+    expect(ballIndices(w, 120)).toHaveLength(600)
+    const hfr = ballIndices(w, 240)
+    const fullFrom = 455 - Math.ceil((0.08 + 0.1) * 240) // 411
+    expect(hfr.filter((f) => f < fullFrom).every((f) => f % 2 === 0)).toBe(true)
+    for (let f = fullFrom; f <= 599; f++) expect(hfr).toContain(f)
+    expect(hfr.length).toBe(206 + 189) // 0, 2, ..., 410 then 411..599
+    // Without a contact estimate the whole range stays at full rate.
+    expect(ballIndices({ ballStartFrame: 0, ballEndFrame: 99 }, 240)).toHaveLength(100)
+  })
 })

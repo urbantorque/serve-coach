@@ -26,6 +26,35 @@ const MIN_VIS = 0.3
 export const WINDOW_BEFORE_S = 2.2
 export const WINDOW_AFTER_S = 2.0
 export const ANCHOR_MERGE_S = 1.2
+/** Anchor height of the higher wrist at a dense sample (METRICS §2.3.1). */
+export const ANCHOR_MIN_BH = 0.95
+/**
+ * Curvature of the hitting wrist's height peak near contact, BH/s². Measured on the synthetic corpus
+ * (smoke --full dumps, dense MediaPipe poses): the narrowest peaks (6 m, ad court, blurred wrist at
+ * contact) stay above 0.95 BH for only 67 ms and drop about 0.056 BH within 33 ms of the top.
+ */
+export const WRIST_PEAK_CURVATURE_BH_S2 = 50
+/** Largest drop allowed for a peak that fell between sparse samples (or beside a blurred one). */
+export const MAX_SAMPLING_ALLOWANCE_BH = 0.12
+/**
+ * The tossing arm before the anchor. 0.90 BH left the ad-court serves of the 6 m session clip on the
+ * edge (their toss arm peaks at 0.90 to 0.93 BH in dense poses, 0.895 in the sparse pass), so one of
+ * them came and went with the sampling phase. 0.85 BH is still above the shoulders (about 0.82 BH).
+ */
+export const TOSS_MIN_BH = 0.85
+/** Two wrist samples closer than this (about the cleaned wrist noise, 0.02 to 0.04 BH) are a tie. */
+export const LOCAL_MAX_TOLERANCE_BH = 0.03
+
+/**
+ * How far the true peak can sit above the highest sample when the samples are `gapS` apart: the top
+ * of a parabola with curvature K lies at most gap/2 from a sample, so it is at most K·(gap/2)² higher.
+ * At 60 fps this is 0.003 BH (no change); at the pipeline's 15 Hz Pass A it is 0.056 BH, and beside a
+ * frame where the blurred hitting wrist was not found (a 133 ms gap) it reaches the 0.12 BH cap.
+ */
+export function samplingAllowance(gapS: number): number {
+  if (!(gapS > 0)) return 0
+  return Math.min(MAX_SAMPLING_ALLOWANCE_BH, WRIST_PEAK_CURVATURE_BH_S2 * (gapS / 2) ** 2)
+}
 
 function usable(f: PoseFrame, k: number): { x: number; y: number } | null {
   const lm = f.landmarks?.[k]
@@ -44,7 +73,7 @@ function floorOf(f: PoseFrame): number | null {
 /**
  * Serve windows from a coarse pose pass. Anchor = local maximum of the higher wrist with
  * h ≥ 0.95 BH, ≥ nose + 0.08, prominence ≥ 0.30 BH over the preceding 1.5 s, and a toss (the
- * other wrist ≥ 0.90 BH in [t − 1.6, t − 0.15]). Anchors < 1.2 s apart merge; windows are
+ * other wrist ≥ 0.85 BH in [t − 1.6, t − 0.15]). Anchors < 1.2 s apart merge; windows are
  * [t − 2.2, t + 2.0] s, split at the midpoint where neighbours overlap, clamped to the clip.
  */
 export function findServeWindows(poses: readonly PoseFrame[], meta: Pick<VideoMeta, 'width' | 'height' | 'durationMediaS' | 'timeScale'>, _handedness: Handedness): ServeWindowSpan[] {
@@ -88,14 +117,27 @@ export function findServeWindows(poses: readonly PoseFrame[], meta: Pick<VideoMe
   const anchors: Anchor[] = []
   for (let i = 1; i < samples.length - 1; i++) {
     const h = higher(samples[i])
-    if (h === null || h < 0.95) continue
-    // Local maximum over ±0.15 s.
+    if (h === null || h < ANCHOR_MIN_BH - MAX_SAMPLING_ALLOWANCE_BH) continue
+    // Sparse sampling (Pass A runs at about 15 Hz) or a frame where the blurred hitting wrist was not
+    // found can put the short contact peak between two samples: lower the bar by the most the peak
+    // could have dropped over the gap to the nearest wrist sample on either side (never at 60 fps).
+    let prevT = Number.NaN
+    for (let j = i - 1; j >= 0; j--) if (higher(samples[j]) !== null) { prevT = samples[j].t; break }
+    let nextT = Number.NaN
+    for (let j = i + 1; j < samples.length; j++) if (higher(samples[j]) !== null) { nextT = samples[j].t; break }
+    const gap = Math.max(Number.isFinite(prevT) ? samples[i].t - prevT : 0, Number.isFinite(nextT) ? nextT - samples[i].t : 0)
+    const allowance = samplingAllowance(gap)
+    const minH = ANCHOR_MIN_BH - allowance
+    if (h < minH) continue
+    // Local maximum over ±0.15 s, within the pose noise: the falling toss arm can sit a hair above the
+    // hitting wrist's first sparse sample, and two samples either side of a peak can be near-equal.
+    // Near-equal candidates merge below (the higher is kept).
     let isMax = true
-    for (let j = i - 1; j >= 0 && samples[i].t - samples[j].t <= 0.15; j--) if ((higher(samples[j]) ?? -Infinity) > h) isMax = false
-    for (let j = i + 1; j < samples.length && samples[j].t - samples[i].t <= 0.15; j++) if ((higher(samples[j]) ?? -Infinity) > h) isMax = false
+    for (let j = i - 1; j >= 0 && samples[i].t - samples[j].t <= 0.15; j--) if ((higher(samples[j]) ?? -Infinity) > h + LOCAL_MAX_TOLERANCE_BH) isMax = false
+    for (let j = i + 1; j < samples.length && samples[j].t - samples[i].t <= 0.15; j++) if ((higher(samples[j]) ?? -Infinity) > h + LOCAL_MAX_TOLERANCE_BH) isMax = false
     if (!isMax) continue
     const nose = samples[i].hNose
-    if (nose !== null && h < nose + 0.08) continue
+    if (nose !== null && h < nose + Math.max(0, 0.08 - allowance)) continue
     let minBefore = Infinity
     for (let j = i - 1; j >= 0 && samples[i].t - samples[j].t <= 1.5; j--) {
       const hj = higher(samples[j])
@@ -110,13 +152,13 @@ export function findServeWindows(poses: readonly PoseFrame[], meta: Pick<VideoMe
     for (let j = i - 1; j >= 0 && samples[i].t - samples[j].t <= 1.6; j--) {
       if (samples[i].t - samples[j].t < 0.15) continue
       const other = anchorLeft ? samples[j].hR : samples[j].hL
-      if (other !== null && other >= 0.9) toss = true
+      if (other !== null && other >= TOSS_MIN_BH) toss = true
       const a = samples[j].hL
       const b = samples[j].hR
-      if (samples[i].t - samples[j].t >= 0.35 && a !== null && b !== null && Math.max(a, b) >= 0.9 && Math.abs(a - b) >= 0.1) tossLabelFree = true
+      if (samples[i].t - samples[j].t >= 0.35 && a !== null && b !== null && Math.max(a, b) >= TOSS_MIN_BH && Math.abs(a - b) >= 0.1) tossLabelFree = true
     }
     if (!toss && !tossLabelFree) continue
-    const margin = Math.min(1, (h - 0.95) / 0.15) * 0.5 + Math.min(1, (prominence - 0.3) / 0.3) * 0.5
+    const margin = Math.max(0, Math.min(1, (h - minH) / 0.15)) * 0.5 + Math.min(1, (prominence - 0.3) / 0.3) * 0.5
     anchors.push({ t: samples[i].t, h, confidence: (toss ? 0.6 : 0.5) + 0.35 * margin })
   }
   // Merge anchors closer than 1.2 s, keeping the higher wrist.

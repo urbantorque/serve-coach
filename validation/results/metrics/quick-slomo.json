@@ -291,8 +291,7 @@
   "warnings": [],
   "quality": "usable",
   "qualityChecks": [
-   "cq.time-base:warn",
-   "cq.dropped-frames:warn"
+   "cq.time-base:warn"
   ],
   "serve": {
    "classification": "serve",
@@ -773,8 +772,7 @@
   "warnings": [],
   "quality": "usable",
   "qualityChecks": [
-   "cq.time-base:warn",
-   "cq.dropped-frames:warn"
+   "cq.time-base:warn"
   ],
   "serve": {
    "classification": "serve",
@@ -1255,8 +1253,7 @@
   "warnings": [],
   "quality": "usable",
   "qualityChecks": [
-   "cq.time-base:warn",
-   "cq.dropped-frames:warn"
+   "cq.time-base:warn"
   ],
   "serve": {
    "classification": "serve",

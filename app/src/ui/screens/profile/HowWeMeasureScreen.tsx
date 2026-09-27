@@ -2,8 +2,9 @@ import { EyeSlashIcon, InfoIcon } from '@phosphor-icons/react'
 import { useMemo } from 'react'
 import type { MetricStatus } from '../../../analysis/types.ts'
 import { Card, ListGroup, ListRow, Screen, SectionLabel, StatusChip } from '../../components/index.ts'
-import { STATUS_LABEL, UI } from '../../copy/strings.ts'
+import { UI } from '../../copy/strings.ts'
 import { paths } from '../../shell/paths.ts'
+import { CheckSteps, KnownLimits, ValidationResults } from './HowWeMeasureValidation.tsx'
 import { CANNOT_MEASURE, GROUP_NOTES, GROUP_TITLES, measureIndex } from './measureIndex.ts'
 
 /** PRODUCT §6.14 item 3: each label in one line. */
@@ -17,9 +18,10 @@ const STATUS_MEANING: Record<MetricStatus, string> = {
 const LEGEND: MetricStatus[] = ['measured', 'estimated', 'player-entered', 'experimental', 'unavailable']
 
 /**
- * How we measure (PRODUCT §6.13 item 5, DESIGN §10.14 index): what each label means, every metric
- * with the highest label the engine can give it today and its validation level, and what a phone
- * cannot measure. Each row opens that metric's info page.
+ * How we measure (PRODUCT §6.13 item 5, DESIGN §3.2, §10.14 index): what each label means, how far our
+ * checks have gone, every metric with the highest label the engine can give it today, its validation
+ * state in plain words and typical error on simulated serves, the validation results, known limits and
+ * what a phone cannot measure. Each row opens that metric's info page (full figures and its limits).
  */
 export function HowWeMeasureScreen() {
   const groups = useMemo(() => measureIndex(), [])
@@ -48,6 +50,8 @@ export function HowWeMeasureScreen() {
         </Card>
       </section>
 
+      <CheckSteps />
+
       {groups.map(({ group, rows }) => (
         <section key={group} className="flex flex-col gap-2" aria-labelledby={`hwm-${group}`}>
           <SectionLabel>
@@ -60,7 +64,8 @@ export function HowWeMeasureScreen() {
                 key={r.id}
                 to={paths.metricInfo(r.id)}
                 title={r.name}
-                subtitle={`${r.views} · ${r.status === 'player-entered' || r.status === 'unavailable' ? STATUS_LABEL[r.status] : r.levelWords}`}
+                subtitle={r.views}
+                detail={r.validationWords}
                 trailing={<StatusChip status={r.status} compact />}
                 dataAttrs={{ 'data-index-metric': r.id, 'data-status': r.status }}
               />
@@ -68,6 +73,10 @@ export function HowWeMeasureScreen() {
           </ListGroup>
         </section>
       ))}
+
+      <ValidationResults />
+
+      <KnownLimits />
 
       <section className="flex flex-col gap-2" aria-labelledby="hwm-cannot">
         <SectionLabel>

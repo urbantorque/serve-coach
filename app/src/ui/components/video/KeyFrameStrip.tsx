@@ -3,17 +3,21 @@
  * Setup and Recovery when detected), in time order, from stored key frames so it works after the video
  * is deleted. Thumbnails follow the clip orientation (88 × 50 or 50 × 88). The current one has a 2 px
  * ring; the focus event says "Focus" with a target glyph; a missing event is a plain slot that says
- * "Not clear on this serve" and is not tappable. Tap seeks (paused).
+ * "Not clear on this serve" and is not tappable. Tap seeks (paused). With the pose track, each thumbnail
+ * is cropped around the tracked body at its frame (thumbCrop.ts) so the player is not tiny.
  */
 import { EyeSlashIcon, ImageIcon, TargetIcon } from '@phosphor-icons/react'
 import { useEffect, useMemo, useRef } from 'react'
 import type { KeyFrameEvent, ServeEvents } from '../../../analysis/types.ts'
 import { currentItem, stripItems } from './keyFrames.ts'
+import type { PoseTrackCompact } from '../../../data/domain.ts'
 import type { KeyFrameRecord } from '../../../data/records.ts'
 import { KEY_FRAME_LABEL } from '../../copy/strings.ts'
 import { cx } from '../cx.ts'
+import type { Size } from './geometry.ts'
 import { useObjectUrls } from './objectUrls.ts'
 import { usePlayhead, type Playhead } from './playhead.ts'
+import { cropImageStyle, thumbCrop, type NRect } from './thumbCrop.ts'
 
 
 function useFrameUrls(frames: KeyFrameRecord[]): Partial<Record<KeyFrameEvent, string>> {
@@ -29,6 +33,8 @@ function useFrameUrls(frames: KeyFrameRecord[]): Partial<Record<KeyFrameEvent, s
   }, [frames, urls])
 }
 
+const THUMB: Record<'portrait' | 'landscape', Size> = { portrait: { width: 50, height: 88 }, landscape: { width: 88, height: 50 } }
+
 export interface KeyFrameStripProps {
   events: ServeEvents
   frames: KeyFrameRecord[]
@@ -36,16 +42,30 @@ export interface KeyFrameStripProps {
   store: Playhead
   focusEvent?: KeyFrameEvent | null
   onSelect: (frame: number, event: KeyFrameEvent) => void
+  /** Pose track, standing height (fraction of the frame height) and clip size: crop each thumbnail to the player. */
+  pose?: PoseTrackCompact
+  bodyHeightNorm?: number | null
+  clip?: Size
   className?: string
 }
 
-export function KeyFrameStrip({ events, frames, orientation, store, focusEvent, onSelect, className }: KeyFrameStripProps) {
+export function KeyFrameStrip({ events, frames, orientation, store, focusEvent, onSelect, pose, bodyHeightNorm, clip, className }: KeyFrameStripProps) {
   const frame = usePlayhead(store, (s) => s.frame)
   const items = useMemo(() => stripItems(events), [events])
   const urls = useFrameUrls(frames)
   const current = currentItem(items, frame)
   const rowRef = useRef<HTMLUListElement>(null)
   const size = orientation === 'portrait' ? 'h-22 w-[50px]' : 'h-[50px] w-22'
+  const thumb = THUMB[orientation]
+  const crops = useMemo(() => {
+    const out: Partial<Record<KeyFrameEvent, { crop: NRect; image?: NRect }>> = {}
+    if (!pose || !clip) return out
+    for (const k of frames) {
+      const crop = thumbCrop({ pose, frame: k.frameIndex, bodyHeightNorm, clip, thumb })
+      if (crop) out[k.event] = { crop, image: k.crop }
+    }
+    return out
+  }, [frames, pose, bodyHeightNorm, clip, thumb])
 
   // Scroll the focus event into view on open.
   useEffect(() => {
@@ -79,8 +99,16 @@ export function KeyFrameStrip({ events, frames, orientation, store, focusEvent, 
                   isCurrent ? 'outline-2 outline-offset-2 outline-ink dark:outline-optic' : '',
                 )}
               >
-                {url ? (
-                  <img src={url} alt="" width={orientation === 'portrait' ? 50 : 88} height={orientation === 'portrait' ? 88 : 50} className="size-full object-cover" />
+                {url && crops[it.event] ? (
+                  <img
+                    src={url}
+                    alt=""
+                    data-cropped=""
+                    className="absolute max-w-none"
+                    style={cropImageStyle(crops[it.event]!.crop, crops[it.event]!.image, thumb)}
+                  />
+                ) : url ? (
+                  <img src={url} alt="" width={thumb.width} height={thumb.height} className="size-full object-cover" />
                 ) : (
                   <ImageIcon size={18} aria-hidden="true" />
                 )}

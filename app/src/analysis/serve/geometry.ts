@@ -20,6 +20,12 @@ export const FOV_LONG_24MM_DEG = 71.6
 export const TILT_CAP_DEG = 5
 /** A measured rear pitch is rectified without the cap (rear metrics are tested on tilted renders). */
 export const REAR_TILT_LIMIT_DEG = 25
+/**
+ * Imports have no motion sensors. The mount answer (CaptureContext.mount) stands in as a prior on
+ * pitch and roll, both 0 with this 1σ (METRICS §1.1.3a): a fence clip or a tripod with a level, or a
+ * phone the player judged roughly level. "Tilted or not sure" leaves the pitch unknown.
+ */
+export const MOUNT_TILT_SIGMA_DEG = { 'level-mount': 2, 'roughly-level': 4 } as const
 /** Relative focal-length σ (24 vs 26 mm, residual stabilisation crop). */
 export const FOCAL_REL_SIGMA = 0.05
 
@@ -33,7 +39,7 @@ export interface CameraModel {
   fovLongDeg: number
   fovSource: 'intrinsics' | 'videoFieldOfView' | 'lens-default'
   tiltStatus: TiltStatus
-  tiltSource: 'motion-sensor' | 'native-attitude' | 'none'
+  tiltSource: 'motion-sensor' | 'native-attitude' | 'none' | 'mount-answer'
   pitch?: Estimate
   roll?: Estimate
   /** True when rectification is applied (a measured tilt within the cap, or any measured rear tilt). */
@@ -121,6 +127,19 @@ export function cameraModel(meta: Pick<VideoMeta, 'width' | 'height'>, capture?:
   } else if (pitch) {
     tiltSource = 'motion-sensor'
   }
+  // No sensor: an import's mount answer is a prior (level assumed, not measured), never a correction.
+  const mountSigma = capture?.mount === 'level-mount' || capture?.mount === 'roughly-level' ? MOUNT_TILT_SIGMA_DEG[capture.mount] : undefined
+  if (!pitch && mountSigma !== undefined) {
+    return {
+      aspect, orientation, fHU, fovLongDeg, fovSource,
+      tiltStatus: 'assumed-level',
+      tiltSource: 'mount-answer',
+      pitch: { value: 0, sigma: mountSigma },
+      roll: { value: 0, sigma: mountSigma },
+      rectified: false,
+      R: [1, 0, 0, 0, 1, 0, 0, 0, 1],
+    }
+  }
   let tiltStatus: TiltStatus = 'unknown'
   let rectified = false
   let R = [1, 0, 0, 0, 1, 0, 0, 0, 1]
@@ -171,6 +190,56 @@ export function unrectifyPoint(cam: CameraModel, x: number, y: number): { x: num
 /** Camera distance to the player's plane D = f_HU · H_m / H_HU (metres, ±6% with an assumed focal). */
 export function cameraDistanceM(cam: CameraModel, playerHeightM: number, bodyHeightHU: number): number {
   return (cam.fHU * playerHeightM) / bodyHeightHU
+}
+
+/**
+ * Height error per degree of pitch left in the picture (METRICS §1.1.3a), in ratio-of-height units.
+ * A camera pitched by δ and treated as level shifts each image row to tan(θ − δ). With the height
+ * normalised by the standing body (floor to head top at the same depth), to first order in δ:
+ *   d(ratio)/dδ = ratio · (1 − ratio) · H / D   per radian   (= z·(H − z) / (H·D) for a point at z)
+ * The camera height cancels. It is zero at the floor and at head height and negative above the head
+ * (a phone tilted up but treated as level reads the toss low). A 3.3 m toss peak, 1.8 m player,
+ * 7.5 m away: 1.2 cm per degree; 6 m away: 1.4 cm; a 3.5 m peak at 6 m: 1.7 cm (the gap study's
+ * "about 1.8 cm per degree"). Exact tan() agrees within 2% up to 5° (checked in serve.test.ts).
+ */
+export function pitchRatioPerDeg(ratio: number, heightM: number, distanceM: number): number {
+  return ((ratio * (1 - ratio) * heightM) / distanceM) * (Math.PI / 180)
+}
+
+/** Roll left in the picture: a point Δu to the side of the floor reference reads Δu·sin(roll) higher. Ratio per degree. */
+export function rollRatioPerDeg(offsetM: number, heightM: number): number {
+  return (Math.abs(offsetM) / heightM) * (Math.PI / 180)
+}
+
+/** Roll above this (standing body axis vs the image vertical) contradicts a level-mount answer. */
+export const ROLL_SANITY_LIMIT_DEG = 3
+
+/**
+ * Roll sanity check from the standing player (METRICS §1.1.3a): the median angle between the image
+ * vertical and the line from the mid-ankle to the mid-shoulder over upright setup frames, in HU (so
+ * the aspect ratio cancels). Positive = the body leans clockwise in the picture. People stand within
+ * a degree or two of vertical, so more than 3° means the phone was rolled. Null with fewer than
+ * 5 usable frames. Pass `points(i)` as the rectified landmark reader.
+ */
+export function bodyAxisRollDeg(
+  frames: readonly number[],
+  aspect: number,
+  points: (i: number) => { ankleL?: { x: number; y: number } | null; ankleR?: { x: number; y: number } | null; shoulderL?: { x: number; y: number } | null; shoulderR?: { x: number; y: number } | null },
+): { rollDeg: number; n: number } | null {
+  const angles: number[] = []
+  for (const i of frames) {
+    const p = points(i)
+    if (!p.ankleL || !p.ankleR || !p.shoulderL || !p.shoulderR) continue
+    const ax = ((p.ankleL.x + p.ankleR.x) / 2) * aspect
+    const ay = (p.ankleL.y + p.ankleR.y) / 2
+    const sx = ((p.shoulderL.x + p.shoulderR.x) / 2) * aspect
+    const sy = (p.shoulderL.y + p.shoulderR.y) / 2
+    const dy = ay - sy
+    if (!(dy > 0)) continue
+    angles.push((Math.atan2(sx - ax, dy) * 180) / Math.PI)
+  }
+  if (angles.length < 5) return null
+  return { rollDeg: median(angles), n: angles.length }
 }
 
 /** D1 set-up class (§1.1): orientation plus distance. */

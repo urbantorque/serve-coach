@@ -4,6 +4,8 @@
  * geometry, time-sync, track and scene helpers they use. Screens compose these.
  */
 export * from './geometry.ts'
+export * from './labelPlacement.ts'
+export * from './thumbCrop.ts'
 export * from './phaseSync.ts'
 export * from './skeleton.ts'
 export * from './tracks.ts'
@@ -14,6 +16,7 @@ export { useFollowerVideo, useVideoController, type VideoController } from './us
 export { VideoStage, type VideoStageProps } from './VideoStage.tsx'
 export { OverlayLabels } from './OverlayLabels.tsx'
 export { PhaseTimeline, type PhaseTimelineProps } from './PhaseTimeline.tsx'
+export { FrameScrubber, type FrameScrubberProps } from './FrameScrubber.tsx'
 export { sliderText, TICK_EVENTS } from './timeline.ts'
 export { TransportRow, type TransportRowProps } from './TransportRow.tsx'
 export { OverlayChips, type OverlayChipsProps } from './OverlayChips.tsx'

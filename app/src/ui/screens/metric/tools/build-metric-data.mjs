@@ -1,7 +1,11 @@
 // Builds the two data files the Metric info screen reads (the app cannot import from ../docs or
 // ../validation at runtime: Vite's dev server only serves the app package):
 //   data/catalogue.json   the player-facing subset of docs/specs/metrics.json
-//   data/validation.json  building-block numbers from validation/results/smoke/*.json
+//   data/validation.json  building-block numbers from the latest full smoke run of the app pipeline
+//                         (validation/results/metrics/pipeline/*.json, 122 clips) and the pooled
+//                         spread rows of the metric run (validation/results/metrics/rows.json)
+// Per-metric accuracy numbers are NOT copied: the screens import the engine's own
+// app/src/analysis/metrics/validation-summary.json (ARCHITECTURE §13).
 // Run from app/:  node src/ui/screens/metric/tools/build-metric-data.mjs
 // metricData.test.ts re-derives both and fails when they drift from their sources.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -21,6 +25,8 @@ export function catalogueFrom(metricsJson) {
     views: m.views ?? [],
     statusDefault: m.statusDefault,
     validationLevel: m.validationLevel?.day ?? 'V0',
+    validationLevelNight: m.validationLevel?.['night-lights'] ?? 'V0',
+    validationState: m.validationState ?? 'V0-unvalidated',
     prerequisites: m.prerequisites ?? [],
     reasonCodes: m.reasonCodes ?? [],
     higherIsBetter: m.higherIsBetter ?? null,
@@ -59,9 +65,12 @@ const median = (xs) => {
   const n = s.length
   return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : null
 }
-const round = (x, step) => (x === null ? null : Math.round(x / step) * step)
+const round = (x, step) => (x === null ? null : Number((Math.round(x / step) * step).toFixed(4)))
 
-export function validationFrom(clips, generated) {
+export const SMOKE_DIR = 'validation/results/metrics/pipeline'
+export const ROWS_FILE = 'validation/results/metrics/rows.json'
+
+export function validationFrom(clips, generated, source = SMOKE_DIR) {
   const ok = clips.filter((c) => c?.result?.ok && c.result.scores)
   const side = ok.filter((c) => c.result.inputs?.view === 'side')
   const toss = (c) => c.result.scores.ball.passes[c.result.scores.ball.finalPass ?? 0]?.toss
@@ -79,7 +88,7 @@ export function validationFrom(clips, generated) {
   const ranges = side.map(speedOf).filter((s) => s && s.status === 'experimental')
   const refused = side.map(speedOf).filter((s) => s && s.status === 'unavailable').length
   return {
-    source: 'validation/results/smoke (synthetic clips only)',
+    source: `${source} (synthetic clips only)`,
     generated,
     clips: ok.length,
     sideClips: side.length,
@@ -96,6 +105,20 @@ export function validationFrom(clips, generated) {
   }
 }
 
+/** Pooled spreads over the one multi-serve clip (default variant: hit sound off). */
+export function spreadsFrom(rows) {
+  const out = {}
+  const units = { 'toss-height-spread': 'cm', 'toss-forward-spread': 'cm', 'contact-height-spread': 'cm', 'rhythm-spread': 'ms' }
+  for (const [id, unit] of Object.entries(units)) {
+    const r = rows.find((x) => x.variant === 'default' && x.metric === id + ' (pooled)')
+    if (!r) continue
+    const serves = rows.find((x) => x.variant === 'default' && x.clip === r.clip && x.metric === 'serve-count')?.truth ?? null
+    const q = (x) => Math.round(x * 100) / 100
+    out[id] = { clip: r.clip, n: serves, unit, value: q(r.value), truth: q(r.truth), low: q(r.low), high: q(r.high), covered: r.covered === true }
+  }
+  return out
+}
+
 export function loadSmoke(dir) {
   const files = readdirSync(dir).filter((f) => f.endsWith('.json'))
   const clips = files.map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8')))
@@ -107,7 +130,9 @@ export function loadSmoke(dir) {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const metrics = JSON.parse(readFileSync(join(root, 'docs/specs/metrics.json'), 'utf8'))
   writeFileSync(join(here, '../data/catalogue.json'), JSON.stringify(catalogueFrom(metrics), null, 1) + '\n')
-  const { clips, generated } = loadSmoke(join(root, 'validation/results/smoke'))
-  writeFileSync(join(here, '../data/validation.json'), JSON.stringify(validationFrom(clips, generated), null, 1) + '\n')
+  const { clips, generated } = loadSmoke(join(root, SMOKE_DIR))
+  const rows = JSON.parse(readFileSync(join(root, ROWS_FILE), 'utf8')).rows
+  const data = { ...validationFrom(clips, generated), spreadSource: `${ROWS_FILE} (default variant, pooled)`, spreads: spreadsFrom(rows) }
+  writeFileSync(join(here, '../data/validation.json'), JSON.stringify(data, null, 1) + '\n')
   console.log('wrote catalogue.json and validation.json')
 }

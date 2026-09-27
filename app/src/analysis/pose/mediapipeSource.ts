@@ -19,7 +19,7 @@
 import type { PoseFrame } from '../types.ts'
 import { meanCoreVisibility } from './landmarks.ts'
 import { type LocaliseOptions, localisePeople } from './localise.ts'
-import type { Delegate, DetectOutput, DetectTarget, LandmarkerConfig, LandmarkerHandle, LandmarkerInitInfo, LocatorSlot, PoseModel, RunningMode } from './mediapipeCore.ts'
+import type { Delegate, DetectOutput, DetectTarget, LandmarkerConfig, LandmarkerHandle, LandmarkerInitInfo, LandmarkerResetOptions, LocatorSlot, PoseModel, RunningMode } from './mediapipeCore.ts'
 import { type FrameStream, type PoseImage, type PoseInputFrame, type PoseSource, imageSize } from './poseSource.ts'
 import { type FrameSize, type PixelRect, type RoiOptions, RoiController, cropCandidateToFrame, isFullFrame } from './roi.ts'
 import { ServerTracker, type PoseCandidate, type TrackDecision, type TrackerOptions } from './tracking.ts'
@@ -58,6 +58,22 @@ export interface MediaPipePoseSourceOptions {
   transferInputBitmaps?: boolean
   /** Worker start-up budget before falling back to the main thread. */
   workerInitTimeoutMs?: number
+  /**
+   * Longest side of the ROI crop handed to the landmarker (ARCHITECTURE §5.4: 256-512 px). The
+   * detector sees 224 px and the landmark model 256 px of the crop anyway, so a larger crop only
+   * costs copy, transfer and texture upload. Unset: the crop keeps its source resolution.
+   */
+  roiMaxSidePx?: number
+}
+
+/** Per-stream settings (configure()), applied when the next estimate() starts. */
+export interface StreamSettings {
+  /**
+   * 2 detects every frame (a bystander stays a separate pose; VIDEO equals IMAGE mode). 1 lets
+   * MediaPipe track from the previous landmarks and run the detector only when the track is lost
+   * (ARCHITECTURE §5.4: Pass B, once Pass A has locked on the server).
+   */
+  numPoses?: number
 }
 
 export interface TimingSummary {
@@ -121,6 +137,8 @@ interface SubmitRequest {
   target?: DetectTarget
   /** This is the last use of the caller's image (it may be closed when owned). */
   lastUse?: boolean
+  /** Downscale the crop to this longest side (see MediaPipePoseSourceOptions.roiMaxSidePx). */
+  maxSidePx?: number
 }
 
 interface Backend {
@@ -128,7 +146,7 @@ interface Backend {
   init(config: LandmarkerConfig): Promise<LandmarkerInitInfo>
   /** Resolves once the image has been consumed (copied or processed); `result` settles later. */
   submit(image: PoseImage, timestampMs: number, request?: SubmitRequest): Promise<{ result: Promise<DetectOutput>; prepareMs: number }>
-  reset(): Promise<void>
+  reset(options?: LandmarkerResetOptions): Promise<void>
   close(): Promise<void>
 }
 
@@ -153,8 +171,22 @@ async function toTransferableBitmap(image: PoseImage, transferOwnership: boolean
   return createImageBitmap(toTexSource(image) as ImageBitmapSource, BITMAP_OPTIONS)
 }
 
-/** Copies only the crop rectangle: the GPU-side copy is proportional to the crop, not the frame. */
-function cropToBitmap(image: PoseImage, rect: PixelRect): Promise<ImageBitmap> {
+/**
+ * Copies only the crop rectangle: the GPU-side copy is proportional to the crop, not the frame.
+ * With maxSidePx the copy is also downscaled (one GPU pass); landmarks stay crop-normalised, so the
+ * crop -> frame mapping is unchanged.
+ */
+function cropToBitmap(image: PoseImage, rect: PixelRect, maxSidePx?: number): Promise<ImageBitmap> {
+  const long = Math.max(rect.width, rect.height)
+  if (maxSidePx && maxSidePx > 0 && long > maxSidePx) {
+    const scale = maxSidePx / long
+    return createImageBitmap(toTexSource(image) as ImageBitmapSource, rect.x, rect.y, rect.width, rect.height, {
+      ...BITMAP_OPTIONS,
+      resizeWidth: Math.max(1, Math.round(rect.width * scale)),
+      resizeHeight: Math.max(1, Math.round(rect.height * scale)),
+      resizeQuality: 'medium',
+    })
+  }
   return createImageBitmap(toTexSource(image) as ImageBitmapSource, rect.x, rect.y, rect.width, rect.height, BITMAP_OPTIONS)
 }
 
@@ -182,7 +214,7 @@ class MainThreadBackend implements Backend {
     let bitmap: ImageBitmap | null = null
     try {
       const target = request.target === 'locate' ? await this.locator.get(this.handle) : { handle: this.handle }
-      bitmap = needsCrop(image, request.crop) ? await cropToBitmap(image, request.crop) : null
+      bitmap = needsCrop(image, request.crop) ? await cropToBitmap(image, request.crop, request.maxSidePx) : null
       const prepareMs = performance.now() - started
       const output = target.handle.detect(bitmap ?? toTexSource(image), timestampMs)
       return { result: Promise.resolve(target.setupMs === undefined ? output : { ...output, locatorSetupMs: target.setupMs }), prepareMs }
@@ -194,8 +226,8 @@ class MainThreadBackend implements Backend {
     }
   }
 
-  async reset(): Promise<void> {
-    await this.handle?.reset()
+  async reset(options?: LandmarkerResetOptions): Promise<void> {
+    await this.handle?.reset(options)
   }
 
   async close(): Promise<void> {
@@ -265,7 +297,7 @@ class WorkerBackend implements Backend {
     const started = performance.now()
     let bitmap: ImageBitmap
     if (needsCrop(image, request.crop)) {
-      bitmap = await cropToBitmap(image, request.crop)
+      bitmap = await cropToBitmap(image, request.crop, request.maxSidePx)
       if (request.lastUse && this.transferOwnership && isImageBitmap(image)) image.close()
     } else {
       bitmap = await toTransferableBitmap(image, this.transferOwnership && request.lastUse !== false)
@@ -278,8 +310,8 @@ class WorkerBackend implements Backend {
     return { result, prepareMs }
   }
 
-  async reset(): Promise<void> {
-    await this.request({ type: 'reset' })
+  async reset(options?: LandmarkerResetOptions): Promise<void> {
+    await this.request({ type: 'reset', options })
   }
 
   async close(): Promise<void> {
@@ -372,6 +404,7 @@ export class MediaPipePoseSource implements PoseSource {
   private counts = { frames: 0, withPerson: 0, multiple: 0, lost: 0, reacquired: 0 }
   private roiCounts = { cropped: 0, skipped: 0, localisations: 0, found: 0, localiserRuns: 0, locatorSetupMs: undefined as number | undefined }
   private decisions: Array<TrackDecision & { frameIndex: number }> = []
+  private pendingSettings: StreamSettings | null = null
   private trace: RoiTraceEntry[] = []
 
   constructor(options: MediaPipePoseSourceOptions = {}) {
@@ -390,9 +423,18 @@ export class MediaPipePoseSource implements PoseSource {
       maxInFlight: 2,
       transferInputBitmaps: false,
       workerInitTimeoutMs: 60_000,
+      roiMaxSidePx: 0,
       // An explicit `undefined` (e.g. runningMode: config.runningMode) keeps the default.
       ...(Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined)) as MediaPipePoseSourceOptions),
     }
+  }
+
+  /**
+   * Settings for the next estimate() stream onwards (e.g. numPoses 1 for Pass B). They are sent
+   * with the landmarker reset that starts the stream, so no model is reloaded.
+   */
+  configure(settings: StreamSettings): void {
+    this.pendingSettings = { ...this.pendingSettings, ...settings }
   }
 
   /** Loads wasm and model (and starts the worker). Optional: estimate() calls it. */
@@ -529,7 +571,9 @@ export class MediaPipePoseSource implements PoseSource {
 
   async *estimate(frames: FrameStream<PoseInputFrame>): AsyncGenerator<PoseFrame> {
     const backend = await this.ensureReady()
-    if (this.streams > 0) await backend.reset()
+    const settings = this.pendingSettings
+    this.pendingSettings = null
+    if (this.streams > 0 || settings) await backend.reset(settings ?? undefined)
     this.streams++
     this.decisions = []
     this.trace = []
@@ -616,7 +660,12 @@ export class MediaPipePoseSource implements PoseSource {
         this.trace.push({ frameIndex: frame.frameIndex, crop, skipped: false, localised })
 
         const submittedAt = performance.now()
-        const { result, prepareMs } = await backend.submit(frame.image, offsetMs + frame.tReal * 1000, { crop, target: 'main', lastUse: true })
+        const { result, prepareMs } = await backend.submit(frame.image, offsetMs + frame.tReal * 1000, {
+          crop,
+          target: 'main',
+          lastUse: true,
+          maxSidePx: this.options.roiMaxSidePx || undefined,
+        })
         this.prepareMs.push(prepareMs)
         result.catch(() => undefined) // observed in finish(); avoids an unhandled-rejection report meanwhile
         inFlight.push({ frameIndex: frame.frameIndex, tReal: frame.tReal, submittedAt, crop, frameSize: size, skipped: false, result })

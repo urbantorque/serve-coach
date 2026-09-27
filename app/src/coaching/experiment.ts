@@ -11,7 +11,7 @@ import { detectItem, subjectOf } from './detect.ts'
 import type { LibraryItem } from './library.ts'
 import { getItem } from './library.ts'
 import type { NormalisedProfile } from './profile.ts'
-import { outcomeCounts, seriesFor, stratumSeries, values } from './series.ts'
+import { outcomeCounts, seriesFor, stratumSeries, type Sample } from './series.ts'
 import { mean, median, sd, mad } from './stats.ts'
 import { largestStratum, sameStratum, servesInStratum, stratumWords } from './strata.ts'
 import type {
@@ -190,24 +190,47 @@ export function buildVerdictRequest(input: ComparisonInput): VerdictRequest {
       sameSession: false,
     }
   }
+  // METRICS §1.5 inclusion (measured or estimated, confidence ≥ 0.5, included, not hard-rejected), the
+  // same rule the engine's session summaries use, so a one-session side equals that session's value.
+  const included = (smp: Sample[]) => smp.filter((x) => (x.status === 'measured' || x.status === 'estimated') && (x.inclusionConfidence ?? x.confidence) >= 0.5)
   let budget = 60
-  const baseGroups: number[][] = []
+  const baseGroups: Sample[][] = []
+  const baseIds: string[] = []
   for (const s of baselineSessions) {
     if (budget <= 0) break
-    const xs = values(seriesFor(s, servesInStratum(s, exp.stratum), spec.seriesId, opts)).slice(0, budget)
+    const xs = included(seriesFor(s, servesInStratum(s, exp.stratum), spec.seriesId, opts).usable).slice(0, budget)
     budget -= xs.length
-    if (xs.length) baseGroups.push(xs)
+    if (xs.length) {
+      baseGroups.push(xs)
+      baseIds.push(s.id)
+    }
   }
-  const followGroups = followSessions
-    .map((s) => values(seriesFor(s, s.id === session.id ? followUpServes(s, exp.stratum) : servesInStratum(s, exp.stratum), spec.seriesId, opts)))
-    .filter((g) => g.length > 0)
+  const followGroups: Sample[][] = []
+  const followIds: string[] = []
+  for (const s of followSessions) {
+    const xs = included(seriesFor(s, s.id === session.id ? followUpServes(s, exp.stratum) : servesInStratum(s, exp.stratum), spec.seriesId, opts).usable)
+    if (xs.length) {
+      followGroups.push(xs)
+      followIds.push(s.id)
+    }
+  }
+  // Spreads: the engine's own per-serve σ_r (METRICS §4.2: only σ_r is subtracted). The library's
+  // measurementErrorDefault (which adds sideways drift) is a detection rule and a fallback only.
+  const sigma = (groups: Sample[][]) => {
+    const all = groups.flat()
+    const known = all.map((x) => x.sigmaRandom).filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+    if (spec.kind !== 'spread') return {}
+    if (known.length !== all.length || !all.length) return spec.sigmaR !== undefined ? { sigmaR: spec.sigmaR } : {}
+    return { sigmaR: Math.sqrt(known.reduce((a, v) => a + v * v, 0) / known.length), sigmaRBySession: groups.map((g) => g.map((x) => x.sigmaRandom as number)) }
+  }
+  const valuesOf = (groups: Sample[][]) => groups.map((g) => g.map((x) => x.value))
   return {
     metricId: spec.displayId,
     kind: spec.kind,
     direction: spec.direction,
     ...(spec.band ? { band: spec.band } : {}),
-    baseline: { sessionIds: baselineSessions.map((s) => s.id), bySession: baseGroups, sigmaR: spec.sigmaR },
-    followUp: { sessionIds: followSessions.map((s) => s.id), bySession: followGroups, sigmaR: spec.sigmaR },
+    baseline: { sessionIds: baseIds, bySession: valuesOf(baseGroups), ...sigma(baseGroups) },
+    followUp: { sessionIds: followIds, bySession: valuesOf(followGroups), ...sigma(followGroups) },
     sameSession: false,
   }
 }
@@ -277,15 +300,20 @@ export function sameSessionCheck(itemId: string, session: CoachingSession, profi
   const spec = primarySpec(item, profile)
   if (spec.noVerdict || spec.kind === 'rate') return undefined
   const opts = { heightM: profile.heightM, showExperimental: false }
-  const a = values(stratumSeries(session, key, spec.seriesId, { ...opts, block: blocks[0] }))
-  const b = values(stratumSeries(session, key, spec.seriesId, { ...opts, block: blocks[blocks.length - 1] }))
+  const sa = stratumSeries(session, key, spec.seriesId, { ...opts, block: blocks[0] }).usable
+  const sb = stratumSeries(session, key, spec.seriesId, { ...opts, block: blocks[blocks.length - 1] }).usable
+  const a = sa.map((x) => x.value)
+  const b = sb.map((x) => x.value)
   const min = spec.kind === 'spread' ? 8 : 5
   if (a.length < min || b.length < min) return undefined
-  const summarise = (xs: number[]): MetricValue => {
+  // The engine's σ_r when every serve carries one (METRICS §4.2), else the library default.
+  const noise = (smp: readonly Sample[]) =>
+    smp.every((x) => typeof x.sigmaRandom === 'number') && smp.length ? Math.sqrt(smp.reduce((acc, x) => acc + (x.sigmaRandom as number) ** 2, 0) / smp.length) : spec.sigmaR ?? 0
+  const summarise = (xs: number[], e: number): MetricValue => {
     let v: number
     if (spec.kind === 'spread') {
       const s = xs.length >= 15 ? sd(xs) : 1.4826 * mad(xs)
-      v = Math.round(Math.sqrt(Math.max(0, s * s - (spec.sigmaR ?? 0) ** 2)) * 2) / 2
+      v = Math.round(Math.sqrt(Math.max(0, s * s - e ** 2)) * 2) / 2
     } else {
       const c = spec.seriesId === 'leg-drive' || spec.seriesId === 'toss-drop' ? median(xs) : mean(xs)
       v = spec.seriesId === 'contact-height-ratio' ? Math.round(c * 100) / 100 : Math.round(c)
@@ -301,7 +329,7 @@ export function sameSessionCheck(itemId: string, session: CoachingSession, profi
       provisional: true,
     }
   }
-  return { metricId: spec.displayId, before: summarise(a), after: summarise(b), copy: STRAIGHT_AFTER_PRACTICE }
+  return { metricId: spec.displayId, before: summarise(a, noise(sa)), after: summarise(b, noise(sb)), copy: STRAIGHT_AFTER_PRACTICE }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -360,6 +388,22 @@ export function experimentTransition(
 }
 
 export const SUPERSEDED_COPY = 'Something earlier in your serve needs attention first.'
+
+/**
+ * The stored ExperimentRecord status after a decision (COACHING §12.5; ARCHITECTURE Experiment.status):
+ * `worked` -> 'completed'; `parked` or `superseded` -> 'abandoned'; otherwise it stays 'active'. The
+ * app stores the "Did it work?" result and this status together, so an experiment whose verdict ended
+ * it is never left active (a finished "clearly better" experiment is completed, not still running).
+ */
+export function experimentRecordStatus(
+  decisionExperiment: { id: string; status: CoachingExperiment['status'] | 'continue' } | undefined,
+  experimentId: string,
+): 'active' | 'completed' | 'abandoned' {
+  if (!decisionExperiment || decisionExperiment.id !== experimentId) return 'active'
+  if (decisionExperiment.status === 'worked') return 'completed'
+  if (decisionExperiment.status === 'parked' || decisionExperiment.status === 'superseded') return 'abandoned'
+  return 'active'
+}
 
 // ---------------------------------------------------------------------------------------------
 // Re-test due (§12.3): after at least 1 logged practice (2 is better), ideally within 7 days.

@@ -2,10 +2,14 @@
  * Overlay labels (DESIGN §2.7, §8.11): the measurement-label pill (#F4F6F2 text on the 72% dark
  * pill), placed at the end of the line away from the body and kept inside the video box. Numbers
  * render through <MetricValue> with the compact data-state glyph, so nothing on video is unlabelled.
+ * All labels of a frame are measured together and placed so they never cover a ruler tick, its
+ * graduation ("2×"), a marker ring or each other (labelPlacement.ts). Placement writes the pills'
+ * position straight to the DOM after layout (measuring is a DOM job), so it never re-renders.
  */
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { useLayoutEffect, useRef, type CSSProperties } from 'react'
 import { MetricValue } from '../MetricValue.tsx'
-import { clampLabel, toBox, type Size, type ViewTransform } from './geometry.ts'
+import { toBox, type Size, type ViewTransform } from './geometry.ts'
+import { labelObstacles, placeLabels, type LabelRequest } from './labelPlacement.ts'
 import type { LabelSpec, OverlayScene } from './overlayScene.ts'
 import { usePlayhead, type Playhead } from './playhead.ts'
 
@@ -40,53 +44,45 @@ export function OverlayLabels({
   insetTop?: number
 }) {
   const frame = usePlayhead(store, (s) => s.frame)
-  const labels = scene(frame).labels
+  const { labels, prims } = scene(frame)
+  const layer = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const root = layer.current
+    if (!root) return
+    const requests: LabelRequest[] = []
+    const els = new Map<string, HTMLElement>()
+    for (const l of labels) {
+      const el = root.querySelector<HTMLElement>(`[data-overlay-label="${l.id}"]`)
+      if (!el) continue
+      els.set(l.id, el)
+      requests.push({ id: l.id, anchor: toBox(transform, clip, l.at.x, l.at.y), w: el.offsetWidth, h: el.offsetHeight, side: l.side })
+    }
+    const obstacles = labelObstacles(prims, (p) => toBox(transform, clip, p.x, p.y))
+    const placed = placeLabels(requests, { box, insetTop, obstacles })
+    for (const [id, el] of els) {
+      const p = placed[id]
+      if (!p) continue
+      el.style.transform = `translate(${Math.round(p.x)}px, ${Math.round(p.y)}px)`
+      el.style.visibility = 'visible'
+    }
+  }, [labels, prims, transform, clip, box, insetTop])
+
   if (!labels.length) return null
   return (
-    <div className="pointer-events-none absolute inset-0" style={PILL_VARS}>
+    <div ref={layer} className="pointer-events-none absolute inset-0" style={PILL_VARS}>
       {labels.map((l) => (
-        <Label key={l.id} spec={l} transform={transform} clip={clip} box={box} insetTop={insetTop} />
+        <Label key={l.id} spec={l} />
       ))}
     </div>
   )
 }
 
-function Label({ spec, transform, clip, box, insetTop }: { spec: LabelSpec; transform: ViewTransform; clip: Size; box: Size; insetTop: number }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const anchor = toBox(transform, clip, spec.at.x, spec.at.y)
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
-
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const w = el.offsetWidth
-    const h = el.offsetHeight
-    const gap = 10
-    // Preferred side first; flip when it would leave the box, then keep it inside.
-    const right = anchor.x + gap
-    const left = anchor.x - gap - w
-    const fitsRight = right + w <= box.width - 8
-    const fitsLeft = left >= 8
-    let next: { x: number; y: number }
-    if (fitsRight || fitsLeft) {
-      const x = spec.side === 'right' ? (fitsRight ? right : left) : fitsLeft ? left : right
-      next = clampLabel(x, anchor.y - h / 2, w, h, box)
-      next = { x: next.x, y: Math.max(insetTop, next.y) }
-    } else {
-      // Neither side fits: above the anchor (below when there is no room), centred and kept inside.
-      const above = anchor.y - gap - h
-      next = clampLabel(anchor.x - w / 2, above >= insetTop ? above : anchor.y + gap, w, h, box)
-      next = { x: next.x, y: Math.max(insetTop, next.y) }
-    }
-    setPos((p) => (p && Math.abs(p.x - next.x) < 0.5 && Math.abs(p.y - next.y) < 0.5 ? p : next))
-  }, [anchor.x, anchor.y, spec.side, box, insetTop, spec.text, spec.metric?.value, spec.metric2?.value])
-
+function Label({ spec }: { spec: LabelSpec }) {
   return (
     <div
-      ref={ref}
       data-overlay-label={spec.id}
-      className="absolute top-0 left-0 inline-flex max-w-[70%] flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-full bg-(--overlay-label-bg) px-2.5 py-1 text-footnote font-label text-(--overlay-line)"
-      style={{ transform: pos ? `translate(${Math.round(pos.x)}px, ${Math.round(pos.y)}px)` : undefined, visibility: pos ? 'visible' : 'hidden' }}
+      className="invisible absolute top-0 left-0 inline-flex max-w-[70%] flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-full bg-(--overlay-label-bg) px-2.5 py-1 text-footnote font-label text-(--overlay-line)"
     >
       <span>{spec.text}</span>
       {spec.metric ? <MetricValue metricId={spec.metric.id} value={spec.metric.value} compactChip /> : null}

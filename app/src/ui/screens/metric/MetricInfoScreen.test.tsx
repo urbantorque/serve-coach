@@ -21,7 +21,12 @@ describe('Metric info', () => {
     for (const s of ['What it is', 'Your trend', 'How we measure it', 'What it needs', 'How sure we are', 'Known limits', 'Typical for club players (provisional)', 'For context']) {
       expect(screen.getByText(s)).toBeInTheDocument()
     }
-    expect(screen.getByText(/simulated side-view clips, the toss peak height was typically within/)).toBeInTheDocument()
+    // How sure we are: the validation state in words, the evidence and the synthetic-only limit.
+    expect(document.querySelector('[data-validation-state]')?.getAttribute('data-validation-state')).toBe('V1-synthetic-pass-limited')
+    expect(screen.getByText(/Checked on simulated serves in daylight, on limited evidence so far\. Not yet checked on real courts\./)).toBeInTheDocument()
+    expect(screen.getByText(/Not yet checked under court lights/)).toBeInTheDocument()
+    expect(screen.getByText(/On one simulated block of 8 serves, we read a spread of/)).toBeInTheDocument()
+    expect(screen.getByText(/Every check so far used computer-generated serves/)).toBeInTheDocument()
     expect(screen.getByText(/Not a target/)).toBeInTheDocument()
     expect(screen.getByText(/Yours: /)).toBeInTheDocument()
     expectHonest()
@@ -48,6 +53,34 @@ describe('Metric info', () => {
     renderAt(`${paths.metricInfo('speed-experimental')}?session=demo-s3`)
     expect(await screen.findByText('Experimental (off)', {}, { timeout: 3000 })).toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/130 to 145/)
+  })
+
+  it('how sure we are: typical error, pass mark and test details for a measured metric', async () => {
+    await seedPlayer()
+    renderAt(paths.metricInfo('toss-apex-height'))
+    expect(await screen.findByText('How sure we are', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.getByText(/^Checked on simulated serves in daylight\. Not yet checked on real courts\.$/)).toBeInTheDocument()
+    expect(screen.getByText(/^At the recommended set-ups \(11 simulated serves filmed 7 to 9 m away\), the typical error was about 1% of your height/)).toBeInTheDocument()
+    expect(screen.getByText(/Our pass mark is a typical error within 2\.5% of your height, and 1 in 20 serves within 5%\. It passed\./)).toBeInTheDocument()
+    expect(screen.getByText('Test details')).toBeInTheDocument()
+    expect(screen.getByText('Recommended set-ups, 7 to 9 m away')).toBeInTheDocument()
+    expect(screen.getAllByText('Not passed yet').length).toBeGreaterThan(0) // the 5 m clips read low: said, not hidden
+    expectHonest()
+  })
+
+  it('a metric that failed its simulated check says so and stays experimental', async () => {
+    await seedPlayer()
+    renderAt(paths.metricInfo('toss-forward'))
+    expect(await screen.findByText(/Tested on simulated serves and not accurate enough yet, so it stays experimental/, {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.getByText(/It hasn't passed yet\./)).toBeInTheDocument()
+    expect(screen.getByText(/toe point sits a little behind your real toe/)).toBeInTheDocument()
+  })
+
+  it('logged values say the camera plays no part', async () => {
+    await seedPlayer()
+    renderAt(paths.metricInfo('first-serve-in-rate'))
+    expect(await screen.findByText(/You log this, so the camera plays no part/, {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.queryByText('Test details')).toBeNull()
   })
 
   it('unknown ids say so', async () => {

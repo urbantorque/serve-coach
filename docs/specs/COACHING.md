@@ -636,13 +636,14 @@ For a pinned coach's focus the first line is "Your coach's focus". The engine's 
 - **Re-test:** in a later session, after the warm-up and before the drill: 12–15 deuce first serves, side view.
 - **Also noticed:** contact height (later in the serve); net misses. Leg drive is not coached (knee comfort setting).
 
-**Re-test five days later.** It is matched: side view, deuce court, first serves, untagged. There are 17 recorded and 16 usable serves, s = 14 cm, so σ̂ = 13.4 cm.
-- METRICS §4.5 on −ln SD: Δ = ln(20.6/13.4) = 0.43, SE = √(1/30 + 1/30) = 0.258.
-  - CI95 is −0.08 to 0.94, so the change is not `clearly-better`.
-  - The lower edge of CI80 is 0.10 > 0, so the verdict is **`likely-better`**.
-- "About N more serves": SE* = 0.43/1.96, so n₂* = 35.0 and N = 19, rounded up to **20**.
-- Verdict copy: **"Likely better. About 20 more serves to confirm."**
+**Re-test five days later.** It is matched: side view, same set-up (portrait, 7.5 m), deuce court, first serves, untagged. There are 17 recorded and 16 usable serves, s = 14 cm, so σ̂ = 13.4 cm.
+- **METRICS §4.5 decides the verdict** (revised 27 Sep 2026; the earlier text used an unbounded −ln SD test). Spreads use the stratified bootstrap of corrected variances with Pocock bounds for 3 looks (z = 2.29 and 1.65) and the between-session term τ = 0.15 on the log scale:
+  - Δ = 1 − 13.4/20.6 = 0.35 (35% tighter), above the 15% SWC;
+  - CI95* is about −0.40 to 0.71 and CI80* about −0.12 to 0.63. Both lower edges are below 0, so the change is neither `clearly-better` nor `likely-better`; the verdict is **`too-early`**.
+- "About N more serves" (log scale): SE ≈ √(1/30 + 1/30 + 0.15²·2) = 0.33; the shrunk effect is about 0.21, so SE* = 0.21 / (2.29 + 0.84) = 0.067. One matched session's τ term alone (0.15²·(1 + 1/3) = 0.030) is bigger than SE*² (0.0045), so no number of serves settles it this way: the "more than 150 serves" message applies.
+- Verdict copy: **"Too early to tell. A change this size needs more than 150 serves to confirm, so keep practising and re-test."** The between-session term is why: one good session is not yet evidence that the change stuck. The second and third planned re-tests add sessions (k grows), which is what shrinks τ's share.
 - σ̂ = 13.4 cm meets the resolved value of 15 cm once. `worked` needs `clearly-better`, or the resolved value in two consecutive matched re-tests (§12.5), so the experiment continues and the progression unlocks if the log criterion is met.
+- The numbers are reproduced by `coaching/experiment.test.ts` ("§7.7 re-test numbers follow METRICS §4.5") through the one `analysis/stats` implementation.
 
 (The previous version of this example, σ̂ 16.7 cm at n = 14 with e = 3 cm, has a lower bound of about 13.4 cm. Under the F3 rule it would be "possible": shown, not coached.)
 
@@ -991,7 +992,7 @@ One screen, all prefilled; 10 seconds to complete.
 
 **What.** 12–15 serves in the locked stratum: same view, same camera side, same court side, same serve number and the same intended type. Serve at match pace to one target, with your cue in mind. The verdict needs at least 8 included serves each side (METRICS §4.1, §4.5). Spread items should aim for 12 or more, so detection can also re-run.
 
-**Matched** means METRICS §4.4 (view and camera side, court side, serve number, intended type and handedness). Its soft factors apply, and a `poor` capture makes the pair not comparable. Different court, light, wind or D1 set-up (portrait vs landscape) are allowed and noted on the comparison card (ARCHITECTURE §5.7 caveats).
+**Matched** means METRICS §4.4 (view and camera side, **set-up**, court side, serve number, intended type and handedness). Its soft factors apply, and a `poor` capture makes the pair not comparable. Different court, light or wind are allowed and noted on the comparison card (ARCHITECTURE §5.7 caveats). The set-up (orientation, camera distance class and singles or doubles serving spot, `StratumKey.setup`) is a hard key for heights, positions and spreads, so a baseline filmed at 6 m never pools with a re-test at 7.5 m (revised 27 Sep 2026; METRICS §1.6, §4.4).
 
 **Same-session comparisons (CAPTURE §5 "Experiment" template: Block A → drill → Block B).**
 - They are shown only as **"Straight after practice"** copy, for example: "Straight after practice: toss spread 18 → 12 cm (same session). That's the drill's immediate effect, which often fades. Your next session will show what stuck."
@@ -1464,3 +1465,9 @@ Each is to be replaced or confirmed with our own data (§15.4).
 28. Verdict defined three ways: **accepted** for these files. METRICS §4.5 ids, minimum n and N cap apply, and `resolvedWhen` uses `clearly-better`. The CAPTURE and PRODUCT alignment is flagged in §16 item 10; ARCHITECTURE `VerdictWord` already matches.
 29. Match day: **accepted** (§7.9, `matchDay` input, §11.1 routine).
 30. The 80/20 and 1-2-3 wording, and independence: **accepted**. The PRODUCT §1.5 change is flagged.
+
+**Consistency round (27 Sep 2026, later).**
+- **§7.7 worked example follows METRICS §4.5.** The re-test (σ̂ 20.6 → 13.4 cm, n = 16 each side) is now worked through the METRICS §4.5 spread rule (stratified bootstrap, Pocock 2.29 / 1.65, τ 0.15 on the log scale): **too early to tell**, with the "more than 150 serves" message, instead of the earlier "likely better, about 20 more serves" (an unbounded −ln SD test with no τ). Coaching's fallback verdict is now the `analysis/stats` implementation itself, so the injected and fallback verdicts cannot disagree; the unit test reproduces the §7.7 numbers.
+- **Spread noise in verdicts.** "Did it work?" corrects spreads with the engine's per-serve σ_r (METRICS §4.2), the same correction the session's own spread uses, so a one-session baseline or re-test shows the same number as that session's report. The e = 4 cm default (which adds sideways drift) stays a detection rule (§6.2 b) and a fallback when METRICS reports no σ_r.
+- **Set-up is a matching key (§12.3).** Baselines and re-tests match on the set-up key (orientation, distance class, serving spot) as METRICS §4.4 requires; sessions analysed before the key existed match any set-up.
+- **Experiment state.** A verdict that ends an experiment (`worked`, `parked`, `superseded`) maps to the stored `completed` or `abandoned` status (`experimentRecordStatus`), not `active`.

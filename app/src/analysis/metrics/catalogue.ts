@@ -264,6 +264,21 @@ export const VALIDATION_LEVELS: Partial<Record<MetricId, Partial<Record<Conditio
 /** Closer than this (camera to server, metres) the depth prior over-corrects heights (§3.2): experimental. */
 export const MIN_VALIDATED_DISTANCE_M = 6
 
+/**
+ * Absolute heights with a level ASSUMED from the import's mount answer (METRICS §1.1.3a). The pitch
+ * and roll priors widen each serve's range; the value keeps its V1 status only while the widened
+ * per-serve error still meets the METRICS acceptance threshold:
+ *   √(measuredP95² + (1.96·σ_tilt)²) ≤ p95Threshold   (ratio of standing height)
+ * p95Threshold: METRICS §3.2 (p95 ≤ 5% of standing height) and §3.8 (p95 ≤ 0.05). measuredP95: the
+ * synthetic worst-5% error at the D1 distances (validation/results/metrics/SUMMARY.md, 2026-09-27).
+ */
+export const ASSUMED_LEVEL_HEIGHT_BUDGET: Partial<Record<MetricId, { p95Threshold: number; measuredP95: number }>> = {
+  'toss-apex-height': { p95Threshold: 0.05, measuredP95: 0.027 },
+  'contact-height-ratio': { p95Threshold: 0.05, measuredP95: 0.02 },
+}
+/** Planning horizontal offset of the ball from the floor reference when the image gives none (m) [Our inference]. */
+export const ROLL_OFFSET_DEFAULT_M = 0.5
+
 export function validationLevel(id: MetricId, condition: ConditionClass): ValidationLevel {
   return VALIDATION_LEVELS[id]?.[condition] ?? 'V0'
 }

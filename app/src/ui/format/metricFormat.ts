@@ -3,6 +3,7 @@
  * layer never adds digits: it rounds to the catalogue precision and writes ranges with "to".
  * Only `<MetricValue>` and the tiles call this; screens never format metric numbers themselves.
  */
+import { formatNumber } from '../../analysis/metrics/precision.ts'
 import type { MetricValue } from '../../analysis/types.ts'
 import { metricName } from '../copy/metricNames.ts'
 import { BAND_WORDS, CAPTURE_WORDS, reasonShortForm, STATUS_LABEL } from '../copy/strings.ts'
@@ -42,11 +43,6 @@ const RATE = new Set(['serve-in-rate', 'first-serve-in-rate', 'second-serve-in-r
 const BAND = new Set(['shoulder-tilt-trophy', 'knee-bend-band', 'shoulder-over-shoulder-contact'])
 
 const toNum = (v: MetricValue['value']): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
-const roundTo = (x: number, step: number) => Math.round(x / step) * step
-const fmtHalf = (x: number) => {
-  const r = roundTo(x, 0.5)
-  return Number.isInteger(r) ? String(r) : r.toFixed(1)
-}
 const fmtInt = (x: number) => Math.round(x).toLocaleString('en-AU')
 
 /** Rounds a speed range outward to 5 km/h (D4, METRICS §4.9). */
@@ -80,32 +76,31 @@ function numericParts(id: string, v: MetricValue): Parts | null {
   const lo = v.uncertainty?.low
   const hi = v.uncertainty?.high
   const pair = (f: (x: number) => string) => (lo !== undefined && hi !== undefined ? { low: f(lo), high: f(hi) } : {})
+  // METRICS §4.9 through the one precision rule the engine also uses (analysis/metrics/precision.ts):
+  // the value and both bounds of its range share one step, widened to 5 cm for wide intervals.
+  const num = (x: number) => formatNumber(id, x, v)
 
   if (DURATION_S.has(id) && n !== null) {
-    const f = (x: number) => (x / 1000).toFixed(2)
-    return { value: f(n), unit: 's', ...pair(f) }
+    return { value: num(n), unit: 's', ...pair(num) }
   }
   if (TIMING_SPREAD.has(id) && n !== null) {
-    const f = (x: number) => fmtInt(roundTo(x, 5))
-    return { value: f(n), unit: 'ms', ...pair(f) }
+    return { value: num(n), unit: 'ms', ...pair(num) }
   }
   if (SPREAD_CM.has(id) && n !== null) {
-    if (v.nearMeasurementLimit) return { value: `≤${THIN}${fmtHalf(Math.max(n, 4))}`, unit: 'cm' }
-    return { value: fmtHalf(n), unit: 'cm', ...pair(fmtHalf) }
+    if (v.nearMeasurementLimit) return { value: `≤${THIN}${formatNumber(id, Math.max(n, 4))}`, unit: 'cm' }
+    return { value: num(n), unit: 'cm', ...pair(num) }
   }
   if (POSITION_CM.has(id) && n !== null) {
     // DESIGN §3.3 rule 11: negative positions are directions, not signs.
     const behind = n < 0 && id !== 'toss-drop'
-    const f = (x: number) => fmtInt(Math.abs(x))
     const unit = id === 'toss-lateral' ? 'cm' : behind ? 'cm behind' : 'cm'
-    return { value: f(n), unit, ...(n >= 0 || id === 'toss-drop' ? pair((x) => fmtInt(x)) : {}) }
+    return { value: num(Math.abs(n)), unit, ...(n >= 0 || id === 'toss-drop' ? pair(num) : {}) }
   }
   if (RATIO.has(id) && n !== null) {
-    const f = (x: number) => x.toFixed(2)
-    return { value: f(n), unit: '× your height', ...pair(f) }
+    return { value: num(n), unit: '× your height', ...pair(num) }
   }
   if (SHARE.has(id) && n !== null) {
-    const f = (x: number) => `${Math.round(x)}%`
+    const f = (x: number) => `${num(x)}%`
     return { value: f(n), unit: 'of your height', ...pair(f) }
   }
   if (RATE.has(id) && n !== null) {

@@ -69,6 +69,14 @@ export interface RunAnalysisOptions {
    * arm-above-head activity. `coarseHz === fineHz` samples the whole clip at one rate.
    */
   passA?: { coarseHz?: number; fineHz?: number }
+  /**
+   * Pass B tuning (validation and profiling only; the defaults are the measured choice).
+   * numPoses: 1 tracks the server from frame to frame (ARCHITECTURE §5.4), 2 detects every frame.
+   * lanes: serve windows analysed at once, each with its own decoder, pose worker and ball worker
+   * (default from the device, budget.ts `analysisLanes`). reuseSparse: skip context frames Pass A
+   * already estimated.
+   */
+  passB?: { numPoses?: 1 | 2; lanes?: number; reuseSparse?: boolean }
 }
 
 export interface StageTiming {
@@ -105,6 +113,8 @@ export interface PipelineTimings {
   sparseCoarseFrames: number
   sparseFillFrames: number
   ballBackend: 'worker' | 'main-thread'
+  /** Ball-detection workers used in Pass B (each runs one window at a time on its own decode). */
+  ballWorkers: number
   poseBackend: string
 }
 

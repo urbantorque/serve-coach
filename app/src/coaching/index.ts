@@ -8,6 +8,7 @@ export { buildEvidence, chooseCue, chooseDrill, keyFrameEventFor, OUTCOME_LINE, 
 export {
   buildVerdictRequest,
   experimentFromDecision,
+  experimentRecordStatus,
   experimentTransition,
   matchedComparison,
   primarySpec,
@@ -43,6 +44,6 @@ export {
   UNDER_18_MESSAGE,
 } from './safety.ts'
 export { toCoachingRecord } from './record.ts'
-export { largestStratum, sameStratum, stratumId, stratumWords } from './strata.ts'
-export { metricsVerdict, verdictSentence } from './verdict.ts'
+export { largestStratum, sameStratum, sessionSetupKey, stratumId, stratumWords } from './strata.ts'
+export { metricsVerdict, verdictOutput, verdictSentence, VERDICT_MINIMUM } from './verdict.ts'
 export type * from './types.ts'

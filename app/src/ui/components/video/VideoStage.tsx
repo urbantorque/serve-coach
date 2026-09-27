@@ -2,14 +2,15 @@
  * The video box (DESIGN §8.11): the clip at its own aspect ratio (fit, zoomed to the player, or the
  * fixed Tagging crop), the overlay canvas above it, value labels as DOM pills, corner pills and a
  * bottom scrim while controls show. Letterbox bars are the letterbox token. Tap toggles the controls;
- * a horizontal swipe changes serve; in Player zoom a horizontal drag pans instead.
+ * a horizontal swipe changes serve; in Player zoom a horizontal drag pans instead. In marking mode
+ * (`onPick`, "Check this serve") a press or drag reports the position in the clip instead.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { cx } from '../cx.ts'
 import { drawnRect, fitTransform, panLimits, regionTransform, type ClipRegion, type Size, type ViewTransform } from './geometry.ts'
 import { OverlayLabels } from './OverlayLabels.tsx'
 import { paintScene, readPalette } from './overlayPaint.ts'
-import type { OverlayScene } from './overlayScene.ts'
+import type { NPoint, OverlayScene } from './overlayScene.ts'
 import type { Playhead } from './playhead.ts'
 
 export interface VideoStageProps {
@@ -44,6 +45,15 @@ export interface VideoStageProps {
   controlsVisible?: boolean
   onTap?: () => void
   onSwipe?: (direction: 1 | -1) => void
+  /**
+   * Marking mode: a press, drag and release report the position in normalised clip coordinates
+   * (clamped to the frame) instead of tap, swipe or pan. The box becomes focusable.
+   */
+  onPick?: (phase: 'start' | 'move' | 'end', p: NPoint, view: { scale: number }) => void
+  /** Keyboard handler for the focused box (marking: arrow keys nudge the mark). */
+  onBoxKeyDown?: (e: KeyboardEvent<HTMLDivElement>) => void
+  /** Extra layer drawn above the overlay, given the current mapping (loupe, hints). */
+  renderLayer?: (view: { transform: ViewTransform; box: Size; clip: Size }) => ReactNode
   /** Accessible description of what the box shows. */
   label: string
   /** Placeholder content when there is no media. */
@@ -71,6 +81,9 @@ export function VideoStage({
   controlsVisible = true,
   onTap,
   onSwipe,
+  onPick,
+  onBoxKeyDown,
+  renderLayer,
   label,
   children,
   className,
@@ -111,12 +124,35 @@ export function VideoStage({
     ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
     : undefined
 
+  const toClip = (e: PointerEvent<HTMLDivElement>): NPoint | null => {
+    const el = boxRef.current
+    if (!el || !transform) return null
+    const r = el.getBoundingClientRect()
+    const x = (e.clientX - r.left - transform.ox) / (clip.width * transform.scale)
+    const y = (e.clientY - r.top - transform.oy) / (clip.height * transform.scale)
+    return { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)) }
+  }
+  const picking = useRef(false)
+
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button,a,[role="button"]')) return
+    if (onPick) {
+      const p = toClip(e)
+      if (!p) return
+      picking.current = true
+      ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
+      onPick('start', p, { scale: transform?.scale ?? 1 })
+      return
+    }
     drag.current = { x: e.clientX, y: e.clientY, t: performance.now(), pan, moved: false }
     ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
   }
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (onPick) {
+      const p = picking.current ? toClip(e) : null
+      if (p) onPick('move', p, { scale: transform?.scale ?? 1 })
+      return
+    }
     const d = drag.current
     if (!d) return
     const dx = e.clientX - d.x
@@ -124,6 +160,12 @@ export function VideoStage({
     if (pannable && d.moved) setPan(d.pan + dx)
   }
   const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    if (onPick) {
+      const p = picking.current ? toClip(e) : null
+      picking.current = false
+      if (p) onPick('end', p, { scale: transform?.scale ?? 1 })
+      return
+    }
     const d = drag.current
     drag.current = null
     if (!d) return
@@ -141,20 +183,25 @@ export function VideoStage({
     <div
       ref={boxRef}
       role="group"
-      aria-label={pannable ? `${label} Zoomed to you: use the left and right arrow keys to pan.` : label}
+      aria-label={pannable && !onPick ? `${label} Zoomed to you: use the left and right arrow keys to pan.` : label}
       // Player zoom: the box takes focus so arrow keys pan (keyboard alternative to the drag).
-      tabIndex={pannable ? 0 : undefined}
+      tabIndex={pannable || onPick ? 0 : undefined}
       onKeyDown={(e) => {
+        onBoxKeyDown?.(e)
+        if (e.defaultPrevented) return
         if (!pannable || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return
         e.preventDefault()
         setPan(pan + (e.key === 'ArrowLeft' ? 32 : -32))
       }}
-      className={cx('group relative w-full overflow-hidden bg-letterbox select-none', pannable ? 'touch-none' : 'touch-pan-y', className)}
+      className={cx('group relative w-full overflow-hidden bg-letterbox select-none', pannable || onPick ? 'touch-none' : 'touch-pan-y', onPick && 'cursor-crosshair', className)}
       style={{ height }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerCancel={() => (drag.current = null)}
+      onPointerCancel={() => {
+        drag.current = null
+        picking.current = false
+      }}
     >
       {src ? (
         <video
@@ -196,6 +243,7 @@ export function VideoStage({
       {scene && transform && labels ? (
         <OverlayLabels store={store} scene={scene} transform={transform} clip={clip} box={box} insetTop={topLeft || topRight ? 48 : 8} />
       ) : null}
+      {renderLayer && transform ? renderLayer({ transform, box, clip }) : null}
       {children}
       <div
         aria-hidden="true"

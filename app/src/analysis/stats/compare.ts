@@ -133,3 +133,13 @@ export function sessionTrend(
   }
   return { status: 'trend', slope, change, changeSe, verdict, neutralWords, n: pts.length }
 }
+
+/** Spread SWCs are relative (METRICS §4.5: 15%); trends fit ln(SD), so this is the SWC on the log scale. */
+export function relativeSwcToLog(relative: number): number {
+  return -Math.log(1 - relative)
+}
+
+/** Planning SE of ln(SD) for a sample of n (METRICS §4.3): 1/√(2(n − 1)). */
+export function logSdSe(n: number): number {
+  return 1 / Math.sqrt(2 * Math.max(n - 1, 1))
+}

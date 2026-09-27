@@ -107,7 +107,7 @@ export interface EngineStamp {
 
 export interface RectificationInfo {
   status: TiltStatus
-  source: 'motion-sensor' | 'native-attitude' | 'none'
+  source: 'motion-sensor' | 'native-attitude' | 'none' | 'mount-answer'
   orientation: CameraOrientation
   fovDeg: number
   fovSource: 'intrinsics' | 'videoFieldOfView' | 'lens-default'
@@ -327,6 +327,12 @@ export interface StratumKey {
   serveNumber: ServeNumber | 'unknown'
   intendedType: ServeType | 'unknown'
   handedness: Handedness
+  /**
+   * Addition: the set-up key `${orientation}|${distanceClass}|${servingSpot}` (METRICS §1.6, §4.4:
+   * set-up class is a matching key; analysis/metrics/setup.ts). Absent on sessions analysed before it
+   * existed, where matching falls back to the session record.
+   */
+  setup?: string
 }
 
 export interface SoftFactors {
@@ -375,6 +381,10 @@ export interface SessionStats {
   representativeServeId?: string
   /** One or two sentence headline (COACHING/PRODUCT templates; DESIGN §10.6 length rules). */
   headline?: string
+  /** Addition: METRICS §1.1 set-up class, the set-up key (StratumKey.setup) and the median camera distance. */
+  setupClass?: 'portrait-near' | 'landscape-fence' | 'landscape-near' | 'rear'
+  setupKey?: string
+  cameraDistanceM?: number
 }
 
 // ---------- §6.5 comparisons, experiments and coaching ----------

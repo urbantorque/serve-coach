@@ -1,34 +1,77 @@
 {
- "source": "validation/results/smoke (synthetic clips only)",
- "generated": "2026-09-27T00:28:17.124Z",
- "clips": 65,
- "sideClips": 54,
+ "source": "validation/results/metrics/pipeline (synthetic clips only)",
+ "generated": "2026-09-27T03:47:37.859Z",
+ "clips": 122,
+ "sideClips": 111,
  "apexHeight": {
-  "n": 54,
+  "n": 110,
   "medianAbsCm": 3.5,
-  "maxAbsCm": 10,
-  "inRange": 54
+  "maxAbsCm": 20,
+  "inRange": 110
  },
  "release": {
-  "n": 54,
+  "n": 110,
   "medianAbsMs": 26,
   "maxAbsMs": 135,
-  "n60": 49,
-  "max60Ms": 38
+  "n60": 105,
+  "max60Ms": 51
  },
  "contactSound": {
-  "n": 54,
+  "n": 111,
   "medianAbsMs": 0.08,
   "maxAbsMs": 0.19
  },
  "pose": {
-  "n": 54,
-  "medianErrorPctHeight": 3.2
+  "n": 111,
+  "medianErrorPctHeight": 3.3
  },
  "speed": {
   "ranges": 18,
   "covered": 18,
   "medianWidthKmh": 90,
-  "refused": 36
+  "refused": 93
+ },
+ "spreadSource": "validation/results/metrics/rows.json (default variant, pooled)",
+ "spreads": {
+  "toss-height-spread": {
+   "clip": "session",
+   "n": 8,
+   "unit": "cm",
+   "value": 10.51,
+   "truth": 9.68,
+   "low": 6.95,
+   "high": 21.4,
+   "covered": true
+  },
+  "toss-forward-spread": {
+   "clip": "session",
+   "n": 8,
+   "unit": "cm",
+   "value": 9.56,
+   "truth": 11.76,
+   "low": 5.06,
+   "high": 20.7,
+   "covered": true
+  },
+  "contact-height-spread": {
+   "clip": "session",
+   "n": 8,
+   "unit": "cm",
+   "value": 0,
+   "truth": 1.91,
+   "low": 0,
+   "high": 4.68,
+   "covered": true
+  },
+  "rhythm-spread": {
+   "clip": "session",
+   "n": 8,
+   "unit": "ms",
+   "value": 42.67,
+   "truth": 47.93,
+   "low": 0,
+   "high": 103.43,
+   "covered": true
+  }
  }
 }

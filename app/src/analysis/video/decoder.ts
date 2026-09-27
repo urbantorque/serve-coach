@@ -6,7 +6,7 @@
  * limit, the pending-output limit and the sample read batch size.
  */
 import type { ByteSource } from './byteSource.ts'
-import { planDecode } from './decodePlan.ts'
+import { planDecodeSegments } from './decodePlan.ts'
 import type { DecodeOptions, DecodeStats, FrameProducer, ProducedFrame } from './frameTypes.ts'
 import type { ProbeResult } from './probe.ts'
 import type { SampleInfo } from './timing.ts'
@@ -161,7 +161,7 @@ export class WebCodecsFrameProducer implements FrameProducer {
       elapsedMs: 0,
       notes: [],
     }
-    const plan = planDecode(this.probe.video.samples, this.probe.frames, indices)
+    const plan = planDecodeSegments(this.probe.video.samples, this.probe.frames, indices)
     if (!plan) {
       options.onStats?.(stats)
       return
@@ -171,6 +171,7 @@ export class WebCodecsFrameProducer implements FrameProducer {
     const emitted = new Set<number>()
     let failure: unknown = null
     let flushed = false
+    let flushStarted = false
     let wake: (() => void) | null = null
     const notify = () => {
       const resolve = wake
@@ -194,10 +195,14 @@ export class WebCodecsFrameProducer implements FrameProducer {
     })
     decoder.addEventListener('dequeue', notify)
     options.signal?.addEventListener('abort', onAbort)
-    const reader = new SampleReader(this.source, this.probe.video.samples, plan.lastSample)
-    let nextSample = plan.firstSample
-    let flushStarted = false
     const rotation = this.probe.meta.rotationDeg // VideoFrames come out in coded orientation
+    // Runs of samples (planDecodeSegments): each run starts at a keyframe and ends with a flush,
+    // so the samples between far-apart wanted frames are never decoded.
+    let segment = 0
+    let reader = new SampleReader(this.source, this.probe.video.samples, plan.segments[0].lastSample)
+    let nextSample = plan.segments[0].firstSample
+    let lastSample = plan.segments[0].lastSample
+    if (plan.segments.length > 1) stats.notes.push(`${plan.segments.length} decode runs.`)
 
     try {
       if (options.signal?.aborted) throw abortError()
@@ -206,7 +211,7 @@ export class WebCodecsFrameProducer implements FrameProducer {
         if (failure) throw failure
         // Feed while the decoder and the output buffer have room.
         while (
-          nextSample <= plan.lastSample &&
+          nextSample <= lastSample &&
           decoder.decodeQueueSize < this.maxDecodeQueue &&
           pending.length < this.maxPendingFrames &&
           !failure
@@ -219,7 +224,7 @@ export class WebCodecsFrameProducer implements FrameProducer {
           nextSample++
         }
         if (failure) throw failure
-        if (nextSample > plan.lastSample && !flushStarted) {
+        if (nextSample > lastSample && !flushStarted) {
           flushStarted = true
           decoder.flush().then(
             () => {
@@ -252,9 +257,19 @@ export class WebCodecsFrameProducer implements FrameProducer {
           }
           if (failure) throw failure
         }
-        if (flushed && pending.length === 0) break
+        if (flushed && pending.length === 0) {
+          if (++segment >= plan.segments.length) break
+          // Next run: the decoder needs a keyframe after a flush, which is where every run starts.
+          const next = plan.segments[segment]
+          reader = new SampleReader(this.source, this.probe.video.samples, next.lastSample)
+          nextSample = next.firstSample
+          lastSample = next.lastSample
+          flushStarted = false
+          flushed = false
+          continue
+        }
         const canFeed =
-          nextSample <= plan.lastSample &&
+          nextSample <= lastSample &&
           decoder.decodeQueueSize < this.maxDecodeQueue &&
           pending.length < this.maxPendingFrames
         if (!canFeed && pending.length === 0 && !failure) {

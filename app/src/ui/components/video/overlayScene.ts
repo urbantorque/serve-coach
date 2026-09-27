@@ -68,6 +68,8 @@ export type Prim =
   | { kind: 'tick'; at: NPoint; lengthPx: number; orient: 'h' | 'v'; ink: Ink; width: number }
   /** Small canvas text (ruler graduations only; never a metric value). */
   | { kind: 'text'; at: NPoint; text: string; align: 'left' | 'right'; dx: number }
+  /** A crosshair of fixed pixel size with an open centre (a hand-placed mark in "Check this serve"). */
+  | { kind: 'cross'; at: NPoint; sizePx: number; ink: Ink; width: number; alpha?: number }
 
 export interface LabelSpec {
   id: string

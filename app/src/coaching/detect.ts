@@ -214,15 +214,20 @@ export const subjectOf = (itemId: string, fallback: string) => ITEM_WORDS[itemId
 // Display values (MetricValues the UI renders)
 // ---------------------------------------------------------------------------------------------
 
-/** METRICS's own display value for a stratum (preferred, so the focus agrees with the tiles). */
+/**
+ * METRICS's own session value for a stratum: the ONE canonical number, so the focus card, Today and
+ * the report tiles agree. When the engine has a value for the stratum it is returned even when it is
+ * unavailable (the evidence then shows no number rather than a coaching recomputation); coaching's
+ * own reads below are only for sessions without engine statistics (older records, tests).
+ */
 export function metricsValue(session: CoachingSession, key: CoachingStratum | undefined, id: MetricId): MetricValue | undefined {
   if (key && session.strata) {
     const s = session.strata.find((x) => stratumId(x.key) === stratumId(key))
     const v = s?.metrics[id]
-    if (v && v.status !== 'unavailable') return v
+    if (v) return v
   }
   const v = session.metrics?.[id]
-  if (v && v.status !== 'unavailable' && (!session.strata || session.strata.length <= 1)) return v
+  if (v && (!session.strata || session.strata.length <= 1)) return v
   return undefined
 }
 

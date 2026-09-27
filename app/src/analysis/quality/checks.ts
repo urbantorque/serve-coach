@@ -32,6 +32,8 @@ export interface QualityInput {
   lostTracking: readonly boolean[]
   /** Orientation step > 1° during recording (camera bump). */
   cameraBump: boolean
+  /** Level assumed from the mount answer: the standing body axis against the image vertical (METRICS §1.1.3a). */
+  standingRoll?: { rollDeg: number; flagged: boolean }
 }
 
 type Sev = QualityCheck['severity']
@@ -145,6 +147,23 @@ export function computeQuality(input: QualityInput): QualityOutcome {
   const t = input.cam.tiltStatus
   if (t === 'measured-level' || t === 'measured-corrected') {
     checks.push(check('cq.camera-level', true, 'info', t === 'measured-level' ? 'The phone was level.' : `The phone was tilted ${Math.abs(input.cam.pitch?.value ?? 0).toFixed(1)}°; we levelled the picture.`, { scope: 'clip', value: input.cam.pitch?.value }))
+  } else if (t === 'assumed-level') {
+    const roll = input.standingRoll
+    const sigma = input.cam.pitch?.sigma ?? 0
+    if (roll?.flagged) {
+      checks.push(
+        check('cq.camera-level', false, 'warn', `You lean about ${Math.abs(roll.rollDeg).toFixed(0)}° in the picture while standing, so the phone was probably not level. Heights are experimental.`, {
+          scope: 'clip',
+          value: roll.rollDeg,
+          fix: 'Use a fence clip or a tripod with a level, or record in the app.',
+          affects: ['heights', 'angles'],
+        }),
+      )
+    } else {
+      checks.push(
+        check('cq.camera-level', true, 'info', `Level taken from your answer (within about ${sigma}°)${roll ? ', and you stood upright in the picture' : ''}. Heights have wider ranges.`, { scope: 'clip', value: roll?.rollDeg }),
+      )
+    }
   } else if (t === 'unknown') {
     checks.push(check('cq.camera-level', false, 'info', 'Phone tilt unknown, so heights and angles are experimental.', { scope: 'clip', fix: 'Record in the app with motion access on, so we can level the picture.', affects: ['heights', 'angles'] }))
   } else {

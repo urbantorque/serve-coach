@@ -7,7 +7,8 @@ import { item } from './library.ts'
 import { loadGuidance, rampFlag } from './load.ts'
 import { normaliseProfile } from './profile.ts'
 import { apex, exactSpread, mv, profile, session } from './testkit.ts'
-import type { CoachingExperiment, CoachingStratum, FocusDecision, PracticeLogSummary, VerdictFn } from './types.ts'
+import type { CoachingExperiment, CoachingStratum, FocusDecision, PracticeLogSummary } from './types.ts'
+import { didItWork } from '../analysis/stats/index.ts'
 import { metricsVerdict } from './verdict.ts'
 
 const DEUCE_FIRST: CoachingStratum = { view: 'side', cameraSide: 'chest', courtSide: 'deuce', serveNumber: 1, intendedType: 'unknown', handedness: 'right' }
@@ -43,47 +44,39 @@ const exp = (over: Partial<CoachingExperiment> = {}): CoachingExperiment => ({
   ...over,
 })
 
-/** The COACHING §7.7 arithmetic (z 1.96 / 1.28 on -ln SD, no tau): used to check the loop, not METRICS. */
-const coachingExampleVerdict: VerdictFn = (req) => {
-  const sig = (g: number[][], e: number) => {
-    const xs = g.flat()
-    const m = xs.reduce((a, b) => a + b, 0) / xs.length
-    const s = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1))
-    return { v: Math.sqrt(s * s - e * e), n: xs.length }
-  }
-  const b = sig(req.baseline.bySession ?? [], req.baseline.sigmaR ?? 0)
-  const f = sig(req.followUp.bySession ?? [], req.followUp.sigmaR ?? 0)
-  const delta = Math.log(b.v / f.v)
-  const se = Math.sqrt(1 / (2 * (b.n - 1)) + 1 / (2 * (f.n - 1)))
-  const lo80 = delta - 1.2816 * se
-  const lo95 = delta - 1.96 * se
-  const seStar = delta / 1.96
-  const n2 = 1 + 1 / (2 * (seStar ** 2 - 1 / (2 * (b.n - 1))))
-  const more = Math.ceil((n2 - f.n) / 5) * 5
-  return { verdict: lo95 > 0 ? 'clearly-better' : lo80 > 0 ? 'likely-better' : 'too-early', delta, moreServes: more, method: 'coaching-7.7' }
-}
-
 describe('matched comparison and verdicts (§12.3, §12.4)', () => {
   const baseline = tossSession('base', '2026-09-20T09:00:00+10:00', 21)
   const retest = tossSession('rt1', '2026-09-25T09:00:00+10:00', 14, { template: 'retest' })
   const p = normaliseProfile(profile({ sex: 'female', heightM: 1.75 }))
 
-  it('verdict maths on the §7.7 re-test numbers: likely better, N = 20, resolved met once, still active', () => {
-    const c = matchedComparison({ exp: exp(), session: retest, history: [baseline], profile: p, verdict: coachingExampleVerdict })
-    expect(c.result.verdict).toBe('likely-better')
-    expect(c.result.delta).toBeCloseTo(0.43, 2)
-    expect(c.result.moreServes).toBe(20)
-    expect(c.copy).toBe('Likely better. About 20 more serves to confirm.')
+  it('§7.7 re-test numbers follow METRICS §4.5: too early to tell, more than 150 serves, resolved met once, still active', () => {
+    // COACHING §7.7 (revised 27 Sep 2026): σ̂ 20.6 cm -> 13.4 cm at n = 16 each side. The spread
+    // bootstrap with Pocock bounds (2.29 / 1.65) and τ 0.15 on the log scale leaves the 80% interval
+    // across 0, and planning on the log scale finds no N below 150.
+    const c = matchedComparison({ exp: exp(), session: retest, history: [baseline], profile: p })
+    expect(c.request.baseline.bySession?.[0]).toHaveLength(16)
+    expect(c.result.method).toBe('spread-bootstrap')
+    expect(c.result.verdict).toBe('too-early')
+    expect(c.result.delta).toBeCloseTo(1 - 13.416 / 20.616, 2)
+    expect(c.result.low).toBeLessThan(0)
+    expect(c.result.tooSmallToConfirm).toBe(true)
+    expect(c.copy).toBe('Too early to tell. A change this size needs more than 150 serves to confirm, so keep practising and re-test.')
     expect(c.resolvedMet).toBe(true)
-    const t = experimentTransition(exp(), c.result, c.resolvedMet)
-    expect(t.status).toBe('continue')
+    expect(experimentTransition(exp(), c.result, c.resolvedMet).status).toBe('continue')
   })
 
-  it('the METRICS §4.5 fallback (Pocock bounds, tau 0.15) is more cautious on the same numbers', () => {
+  it('the fallback verdict IS the analysis/stats verdict (one implementation, METRICS §4.5)', () => {
     const c = matchedComparison({ exp: exp(), session: retest, history: [baseline], profile: p })
-    expect(c.result.method).toMatch(/metrics-4.5/)
-    expect(['too-early', 'likely-better']).toContain(c.result.verdict)
-    expect(c.result.verdict).not.toBe('clearly-better')
+    const b = c.request.baseline
+    const f = c.request.followUp
+    const out = didItWork({
+      metricId: 'toss-height-spread', swc: 0.15, tau: 0.15, seed: 'toss-height-spread', kind: 'spread',
+      baseline: [{ sessionId: b.sessionIds[0], values: b.bySession![0], sigmaRandom: b.sigmaR ?? 0 }],
+      followUp: [{ sessionId: f.sessionIds[0], values: f.bySession![0], sigmaRandom: f.sigmaR ?? 0 }],
+    })
+    expect(c.result.verdict).toBe(out.verdict)
+    expect(c.result.delta).toBe(out.delta)
+    expect([c.result.low, c.result.high]).toEqual(out.ci95)
   })
 
   it('an unmatched re-test (ad court vs a deuce experiment) is not comparable, with the reason', () => {

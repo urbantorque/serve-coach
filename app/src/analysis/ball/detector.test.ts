@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BallDetector, chooseDownscaleFactor, downscaleRgb } from './detector.ts'
+import { BallDetector, chooseDownscaleFactor, dilateMax3x3, downscaleRgb, selectKth } from './detector.ts'
 import { median, percentile } from './fit.ts'
 import { ballAt, createScene, LIGHTING, type Capsule, type SceneSpec } from './testing/synthFrames.ts'
 
@@ -268,5 +268,89 @@ describe('BallDetector under floodlight flicker', () => {
     )
     expect(compensated.recall).toBeGreaterThanOrEqual(0.95)
     expect(compensated.falsePerFrame).toBeLessThan(raw.falsePerFrame)
+  })
+})
+
+describe('detector kernels (fast paths match the straightforward versions exactly)', () => {
+  // The versions the detector used before the row-streaming / separable / quickselect rewrites.
+  function downscaleReference(image: { width: number; height: number; data: Uint8ClampedArray }, factor: number) {
+    const width = Math.floor(image.width / factor)
+    const height = Math.floor(image.height / factor)
+    const r = new Float32Array(width * height)
+    const g = new Float32Array(width * height)
+    const b = new Float32Array(width * height)
+    const inv = 1 / (factor * factor)
+    for (let cy = 0; cy < height; cy++) {
+      for (let cx = 0; cx < width; cx++) {
+        let sr = 0
+        let sg = 0
+        let sb = 0
+        for (let dy = 0; dy < factor; dy++) {
+          let p = ((cy * factor + dy) * image.width + cx * factor) * 4
+          for (let dx = 0; dx < factor; dx++, p += 4) {
+            sr += image.data[p]
+            sg += image.data[p + 1]
+            sb += image.data[p + 2]
+          }
+        }
+        const i = cy * width + cx
+        r[i] = sr * inv
+        g[i] = sg * inv
+        b[i] = sb * inv
+      }
+    }
+    return { width, height, r, g, b }
+  }
+  function dilateReference(map: Float32Array, width: number, rect: { x0: number; y0: number; x1: number; y1: number }) {
+    const out = new Float32Array(map.length)
+    for (let y = rect.y0; y < rect.y1; y++) {
+      for (let x = rect.x0; x < rect.x1; x++) {
+        let best = 0
+        for (let dy = -1; dy <= 1; dy++) {
+          const ny = y + dy
+          if (ny < rect.y0 || ny >= rect.y1) continue
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = x + dx
+            if (nx < rect.x0 || nx >= rect.x1) continue
+            const v = map[ny * width + nx]
+            if (v > best) best = v
+          }
+        }
+        out[y * width + x] = best
+      }
+    }
+    return out
+  }
+  let seed = 7
+  const rand = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 2 ** 32)
+
+  it('downscaleRgb', () => {
+    for (const [w, h, f] of [[37, 29, 1], [37, 29, 2], [101, 67, 3], [64, 64, 8], [5, 5, 3]] as const) {
+      const data = new Uint8ClampedArray(w * h * 4).map(() => Math.floor(rand() * 256))
+      const image = { width: w, height: h, data }
+      const fast = downscaleRgb(image, f)
+      const ref = downscaleReference(image, f)
+      expect([fast.width, fast.height]).toEqual([ref.width, ref.height])
+      expect(Array.from(fast.r)).toEqual(Array.from(ref.r))
+      expect(Array.from(fast.g)).toEqual(Array.from(ref.g))
+      expect(Array.from(fast.b)).toEqual(Array.from(ref.b))
+    }
+  })
+
+  it('dilateMax3x3', () => {
+    const width = 23
+    const height = 17
+    const map = new Float32Array(width * height).map(() => (rand() < 0.3 ? rand() : 0))
+    for (const rect of [{ x0: 0, y0: 0, x1: width, y1: height }, { x0: 3, y0: 2, x1: 19, y1: 9 }, { x0: 5, y0: 5, x1: 6, y1: 6 }, { x0: 4, y0: 4, x1: 4, y1: 9 }]) {
+      expect(Array.from(dilateMax3x3(map, width, rect))).toEqual(Array.from(dilateReference(map, width, rect)))
+    }
+  })
+
+  it('selectKth returns the sorted element', () => {
+    for (const n of [1, 2, 3, 50, 51, 1000]) {
+      const values = Float64Array.from({ length: n }, () => Math.round(rand() * 20) / 7) // with ties
+      const sorted = Array.from(values).sort((a, b) => a - b)
+      for (const k of [0, n >> 1, n - 1]) expect(selectKth(Float64Array.from(values), n, k)).toBe(sorted[k])
+    }
   })
 })

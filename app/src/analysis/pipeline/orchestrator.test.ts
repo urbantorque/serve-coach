@@ -307,8 +307,81 @@ describe('runAnalysis', () => {
     const { deps } = makeDeps({ source: fakeSource({ fps: 30, frames: 240 }), ball })
     const result = await runAnalysis(file(), { ...baseOptions, onProgress: (e) => e.type === 'warning' && warnings.push(e.message) }, deps)
     expect(result.timeBase).toMatchObject({ status: 'physics', captureFps: 240, timeScale: 0.125, fpsSource: 'physics' })
-    expect(ball.log.begins).toEqual([0, 0])
+    // The window's ball detection ran again, under a fresh job id (a stale job can never feed it).
+    expect(ball.log.begins).toEqual([0, 150_000])
     expect(warnings.join(' ')).toMatch(/slow motion/)
+  })
+
+  it('Pass B: pose with numPoses 1 on the pose worker, ball windows spread over the ball workers, results in window order', async () => {
+    const source = fakeSource({ frames: 60 * 12 })
+    const clients: ReturnType<typeof fakeBall>[] = []
+    const configured: { numPoses?: number }[] = []
+    const pose = fakePose()
+    const poseFrames: number[][] = []
+    const trackedPose: PoseEstimator = {
+      ...pose,
+      configure: (settings) => configured.push(settings),
+      async *estimate(frames: AsyncIterable<PoseInputFrame>) {
+        const seen: number[] = []
+        poseFrames.push(seen)
+        for await (const f of frames) {
+          seen.push(f.frameIndex)
+          yield { frameIndex: f.frameIndex, tReal: f.tReal, landmarks: servePoseAt(f.tReal % 6, CONTACT_T), score: 0.9, source: 'injected' } satisfies PoseFrame
+        }
+      },
+    }
+    const { deps } = makeDeps({
+      source,
+      createPoseSource: async () => trackedPose,
+      createBallClient: async () => {
+        const b = fakeBall()
+        clients.push(b)
+        return b.client
+      },
+      engine: {
+        findServeWindows: () => [
+          { startReal: 0, endReal: 3.8, confidence: 0.9 },
+          { startReal: 6, endReal: 9.8, confidence: 0.9 },
+        ],
+        analyseSession: analyseSessionDouble,
+      },
+    })
+    const events: PipelineEvent[] = []
+    const result = await runAnalysis(file(), { ...baseOptions, passB: { lanes: 2 }, onProgress: (e) => events.push(e) }, deps)
+    expect(result.servesFound).toBe(2)
+    expect(result.timings.ballWorkers).toBe(2)
+    expect(configured).toContainEqual({ numPoses: 1 })
+    // Two windows, one per ball worker.
+    expect(clients.map((c) => c.log.begins)).toEqual([[0], [1]])
+    // Pass B pose streams (after Pass A's coarse and fill streams) cover each window's core in full.
+    const dense = poseFrames.slice(-2)
+    for (const frames of dense) {
+      const sorted = [...frames].sort((a, b) => a - b)
+      expect(frames).toEqual(sorted)
+      let run = 0
+      let longest = 0
+      for (let k = 1; k < sorted.length; k++) {
+        run = sorted[k] === sorted[k - 1] + 1 ? run + 1 : 0
+        longest = Math.max(longest, run)
+      }
+      expect(longest).toBeGreaterThan(100) // 2.2 s at 60 fps, every frame
+    }
+    const progress = events.filter((e): e is { type: 'progress'; progress: PipelineProgress } => e.type === 'progress').map((e) => e.progress)
+    for (let i = 1; i < progress.length; i++) expect(progress[i].overall).toBeGreaterThanOrEqual(progress[i - 1].overall)
+    expect(progress.some((p) => p.label === 'Tracking the toss (serve 2 of 2)')).toBe(true)
+    expect(source.state.rawOpen).toBe(0)
+    expect(clients.every((c) => c.log.disposed)).toBe(true)
+  })
+
+  it('Pass B reuses Pass A poses for the context outside the core', async () => {
+    const counts: Record<string, number> = {}
+    for (const reuse of [true, false]) {
+      const pose = fakePose()
+      const { deps } = makeDeps({ source: fakeSource({ frames: 60 * 5 }), pose })
+      const result = await runAnalysis(file(), { ...baseOptions, persist: false, passB: { reuseSparse: reuse } }, deps)
+      counts[String(reuse)] = result.timings.poseFrames
+    }
+    expect(counts.true).toBeLessThan(counts.false)
   })
 
   it('does not keep a copy of a clip whose sound cannot be removed', async () => {

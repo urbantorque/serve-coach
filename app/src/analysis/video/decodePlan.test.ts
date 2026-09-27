@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { ensureFixtures, readFixture } from './__fixtures__/fixtures.mjs'
-import { estimateTimeline, nearestFrameIndex, planDecode, selectFrameIndices } from './decodePlan.ts'
+import { estimateTimeline, nearestFrameIndex, planDecode, planDecodeSegments, selectFrameIndices } from './decodePlan.ts'
 import { probeVideo, type ProbeResult } from './probe.ts'
 import type { FrameTiming, SampleInfo } from './timing.ts'
 
@@ -131,5 +131,73 @@ describe('planDecode', () => {
 
   it('returns null for an empty request', () => {
     expect(planDecode(probe.video.samples, probe.frames, [])).toBeNull()
+    expect(planDecodeSegments(probe.video.samples, probe.frames, [])).toBeNull()
+  })
+})
+
+describe('planDecodeSegments', () => {
+  let probe: ProbeResult
+  beforeAll(async () => {
+    ensureFixtures()
+    probe = await probeVideo(readFixture('cfr60.mp4'))
+  }, 120_000)
+
+  /** Closed-GOP stream without reordering: `gop` samples per keyframe, decode order = presentation order. */
+  function stream(n: number, gop: number): { samples: SampleInfo[]; frames: FrameTiming[] } {
+    const samples: SampleInfo[] = Array.from({ length: n }, (_, index) => ({ index, dtsTicks: index, ctsTicks: index, durationTicks: 1, isSync: index % gop === 0, offset: index, size: 1 }))
+    const frames: FrameTiming[] = samples.map((s) => ({ index: s.index, sampleIndex: s.index, ctsTicks: s.ctsTicks, tMedia: s.ctsTicks, durationS: 1, isKeyframe: s.isSync }))
+    return { samples, frames }
+  }
+
+  it('decodes only the GOPs holding wanted frames', () => {
+    const { samples, frames } = stream(600, 60)
+    // Key frames of two serves far apart: 130, 150 (one run from 120) and 431 (a run from 420).
+    const plan = planDecodeSegments(samples, frames, [150, 130, 431])!
+    expect(plan.segments).toEqual([
+      { firstSample: 120, lastSample: 150 },
+      { firstSample: 420, lastSample: 431 },
+    ])
+    expect([...plan.wanted]).toEqual([130, 150, 431])
+  })
+
+  it('keeps one run when the next keyframe is within the skip threshold', () => {
+    const { samples, frames } = stream(600, 60)
+    // 175 -> keyframe 180 is only 5 samples past 175: not worth a flush.
+    expect(planDecodeSegments(samples, frames, [130, 175, 185])!.segments).toEqual([{ firstSample: 120, lastSample: 185 }])
+    // A coarse step skips the tail of every GOP (46-59, 106-119, ...): one run per GOP.
+    const every15 = Array.from({ length: 40 }, (_, k) => k * 15)
+    const runs = planDecodeSegments(samples, frames, every15)!.segments
+    expect(runs).toHaveLength(10)
+    expect(runs[0]).toEqual({ firstSample: 0, lastSample: 45 })
+    // Every 10th frame leaves 9 samples at the end of each GOP: still one run under a threshold of 10.
+    const every10 = Array.from({ length: 60 }, (_, k) => k * 10)
+    expect(planDecodeSegments(samples, frames, every10, 10)!.segments).toEqual([{ firstSample: 0, lastSample: 590 }])
+  })
+
+  it('matches planDecode for a contiguous span (a serve window)', () => {
+    const plan = planDecodeSegments(probe.video.samples, probe.frames, [37, 38, 39, 40])!
+    const single = planDecode(probe.video.samples, probe.frames, [37, 38, 39, 40])!
+    expect(plan.segments).toEqual([{ firstSample: single.firstSample, lastSample: single.lastSample }])
+  })
+
+  it('starts each run at a keyframe and covers every wanted sample (B-frames, GOP 30)', () => {
+    const wanted = [5, 70, 71, 100, 110]
+    const plan = planDecodeSegments(probe.video.samples, probe.frames, wanted)!
+    for (const s of plan.segments) expect(probe.video.samples[s.firstSample].isSync).toBe(true)
+    for (const i of wanted) {
+      const sample = probe.frames[i].sampleIndex
+      expect(plan.segments.some((s) => sample >= s.firstSample && sample <= s.lastSample)).toBe(true)
+    }
+    // Runs are disjoint and ascending.
+    for (let k = 1; k < plan.segments.length; k++) expect(plan.segments[k].firstSample).toBeGreaterThan(plan.segments[k - 1].lastSample)
+    expect(plan.segments.length).toBeGreaterThan(1)
+  })
+
+  it('pulls a run back for an open-GOP leading picture', () => {
+    const cts = [0, 3, 1, 2, 6, 4, 5]
+    const samples: SampleInfo[] = cts.map((c, index) => ({ index, dtsTicks: index, ctsTicks: c, durationTicks: 1, isSync: index === 0 || index === 4, offset: index, size: 1 }))
+    const order = [...samples].sort((a, b) => a.ctsTicks - b.ctsTicks)
+    const frames: FrameTiming[] = order.map((s, index) => ({ index, sampleIndex: s.index, ctsTicks: s.ctsTicks, tMedia: s.ctsTicks, durationS: 1, isKeyframe: s.isSync }))
+    expect(planDecodeSegments(samples, frames, [4], 0)!.segments).toEqual([{ firstSample: 0, lastSample: 5 }])
   })
 })

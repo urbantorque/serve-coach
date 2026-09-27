@@ -5,7 +5,7 @@
  */
 import type { MetricId, MetricStatus, MetricValue, ServeOutcome } from '../analysis/types.ts'
 import { median, sd } from './stats.ts'
-import { groupStrata, serveStratum, servesInStratum, stratumId } from './strata.ts'
+import { groupStrata, serveStratum, servesInStratum, sessionSetupKey, stratumId } from './strata.ts'
 import type { CoachingServe, CoachingSession, CoachingStratum, FpsClassNumber } from './types.ts'
 
 export interface Sample {
@@ -16,6 +16,10 @@ export interface Sample {
   low: number
   high: number
   confidence: number
+  /** The engine's stored confidence (METRICS §1.5 inclusion needs ≥ 0.5; no coaching discount). */
+  inclusionConfidence?: number
+  /** The engine's per-serve random error σ_r in the same units (spread noise correction, METRICS §4.2). */
+  sigmaRandom?: number
   status: MetricStatus
   outcome?: ServeOutcome
   band?: MetricValue['band']
@@ -58,10 +62,11 @@ const DEFAULT_HALF_WIDTH: Partial<Record<MetricId, number>> = {
 const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 
 /** Toss peak height in cm: METRICS reports a ratio of standing height with the cm value in `secondary.cm`. */
-function toThresholdUnits(metricId: MetricId, mv: MetricValue, heightM: number): { value: number; low: number; high: number } | null {
+function toThresholdUnits(metricId: MetricId, mv: MetricValue, heightM: number): { value: number; low: number; high: number; sigmaRandom?: number } | null {
   const v = num(mv.value)
   if (v === null) return null
   const scale = metricId === 'toss-apex-height' && mv.unit !== 'cm' ? heightM * 100 : 1
+  const sigmaRandom = num(mv.sigmaRandom) !== null ? (mv.sigmaRandom as number) * scale : undefined
   const secondaryCm = metricId === 'toss-apex-height' ? num(mv.secondary?.cm) : null
   const value = secondaryCm ?? v * scale
   const u = mv.uncertainty
@@ -91,7 +96,7 @@ function toThresholdUnits(metricId: MetricId, mv: MetricValue, heightM: number):
     low = value - half
     high = value + half
   }
-  return { value, low: Math.min(low, high), high: Math.max(low, high) }
+  return { value, low: Math.min(low, high), high: Math.max(low, high), ...(sigmaRandom !== undefined ? { sigmaRandom } : {}) }
 }
 
 export interface SeriesOptions {
@@ -153,7 +158,7 @@ export function seriesFor(_session: CoachingSession, serves: readonly CoachingSe
     if (!t) continue
     // A soft-flagged value keeps its mark with its confidence multiplied by 0.7 (METRICS §4.2).
     const confidence = mv.plausibility === 'soft-flag' ? mv.confidence * 0.7 : mv.confidence
-    usable.push({ serveId: s.id, ...t, confidence, status: mv.status, outcome: s.outcome, reasonCode: mv.reasonCode })
+    usable.push({ serveId: s.id, ...t, confidence, inclusionConfidence: mv.confidence, status: mv.status, outcome: s.outcome, reasonCode: mv.reasonCode })
     if (mv.status === 'experimental') anyExperimental = true
   }
   return { metricId, recorded: scoped.length, usable, outOfFrame, anyExperimental, hiddenExperimental, unavailableReasons }
@@ -238,6 +243,7 @@ export function outcomeCounts(session: CoachingSession, key: CoachingStratum): O
 
 /** The stratum a session tally belongs to (block card defaults). */
 export function tallyStratum(session: CoachingSession, serveNumber: 1 | 2): CoachingStratum {
+  const setup = sessionSetupKey(session)
   return {
     view: session.view,
     cameraSide: session.cameraSide ?? 'unknown',
@@ -245,6 +251,7 @@ export function tallyStratum(session: CoachingSession, serveNumber: 1 | 2): Coac
     serveNumber,
     intendedType: session.defaults?.intendedType ?? 'unknown',
     handedness: session.handedness ?? 'right',
+    ...(setup ? { setup } : {}),
   }
 }
 

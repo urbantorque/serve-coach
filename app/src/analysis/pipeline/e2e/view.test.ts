@@ -14,7 +14,7 @@ const progress = (overall: number, extra: Partial<PipelineProgress> = {}): Pipel
   ...extra,
 })
 
-const timings = { probeMs: 1, audioMs: 0, poseInitMs: 1, sparseMs: 1, denseMs: 1, densePoseMs: 1, denseBallMs: 1, ballReadbackMs: 1, ballCropScale: 1, ballAnalyseMs: 1, measureMs: 1, keyFramesMs: 1, coachingMs: 1, saveMs: 1, totalMs: 1000, sparseCoarseFrames: 1, sparseFillFrames: 1, framesDecoded: 1, poseFrames: 1, ballFrames: 1, windows: 1, ballBackend: 'worker', poseBackend: 'worker' } satisfies PipelineTimings
+const timings = { probeMs: 1, audioMs: 0, poseInitMs: 1, sparseMs: 1, denseMs: 1, densePoseMs: 1, denseBallMs: 1, ballReadbackMs: 1, ballCropScale: 1, ballAnalyseMs: 1, measureMs: 1, keyFramesMs: 1, coachingMs: 1, saveMs: 1, totalMs: 1000, sparseCoarseFrames: 1, sparseFillFrames: 1, framesDecoded: 1, poseFrames: 1, ballFrames: 1, windows: 1, ballBackend: 'worker', ballWorkers: 1, poseBackend: 'worker' } satisfies PipelineTimings
 
 describe('pipeline e2e view', () => {
   it('renders the four rows with determinate, labelled progress bars while running', () => {

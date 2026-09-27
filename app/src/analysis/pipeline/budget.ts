@@ -33,6 +33,24 @@ export const MEMORY_BUDGET = {
   sparseMaxLongSidePx: 1080,
 } as const
 
+/**
+ * Ball-detection workers for Pass B. Ball detection is CPU work (pixel readback and the detector)
+ * and runs beside the GPU-bound pose worker, one serve window per worker at a time, each on its own
+ * decode. Measured on an 8-thread laptop (2026-09-27): more pose workers gain nothing (the GPU is
+ * saturated), but ball detection scales with workers. Small devices keep one worker; the queued
+ * crops are split between workers, so memory stays within the §5.10 budget.
+ */
+export function ballWorkerCount(env: { hardwareConcurrency?: number; deviceMemory?: number } | undefined = globalThis.navigator): number {
+  const threads = env?.hardwareConcurrency ?? 2
+  if (env?.deviceMemory !== undefined && env.deviceMemory < 4) return 1
+  return Math.max(1, Math.min(3, Math.floor(threads / 3)))
+}
+
+/** Crops queued per ball worker: the §5.10 queue split between the workers, at least 4 each. */
+export function ballQueuePerWorker(workers: number): number {
+  return Math.max(4, Math.floor(MEMORY_BUDGET.ballQueue / Math.max(1, workers)))
+}
+
 export interface ClipBudget {
   realDurationS: number
   limitS: number

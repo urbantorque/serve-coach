@@ -1,13 +1,12 @@
 /**
  * Pass A (sparse pose over the whole clip) and Pass B (dense, per serve window) of ARCHITECTURE
  * §5.3-§5.4, on the main thread as orchestration only: decoding is WebCodecs (hardware), pose
- * runs in the pose worker (MediaPipePoseSource, ROI crops) and ball detection in the ball worker.
+ * runs in the pose worker (MediaPipePoseSource, ROI crops) and ball detection in ball workers.
  *
- * Pass B decodes each window once, in frame order. Each decoded frame is (a) cropped to the
- * window's ball search region and transferred to the ball worker when it lies in the ball range,
- * and (b) handed to the pose source when it is a pose frame. Pose and ball work in parallel; the
- * decoder runs ahead of both, bounded by the ball queue and the pose source's frames in flight.
- * Every VideoFrame/ImageBitmap is closed as soon as both consumers are done with it.
+ * Pass B runs pose and ball on separate decodes of a window (runPoseWindow, runBallDetect), so the
+ * GPU-bound pose worker and the CPU-bound ball workers never wait on each other: hardware decoding
+ * a window twice costs far less than either consumer. Every VideoFrame/ImageBitmap is closed as
+ * soon as its consumer is done with it.
  */
 import type { BallWindowResult, WindowAnalyseOptions, WindowBallConfig } from '../ball/workerCore.ts'
 import type { PoseInputFrame } from '../pose/poseSource.ts'
@@ -16,7 +15,7 @@ import type { FrameSelection, FrameSource, RawFrame } from '../video/frameTypes.
 import { FrameRenderer } from '../video/render.ts'
 import { MEMORY_BUDGET } from './budget.ts'
 import { throwIfAborted } from './errors.ts'
-import { framesInSpans, type PlannedWindow } from './windows.ts'
+import { framesInSpans } from './windows.ts'
 
 /** What the passes need from a pose source (MediaPipePoseSource satisfies it). */
 export interface PoseEstimator {
@@ -24,6 +23,8 @@ export interface PoseEstimator {
   init?(): Promise<void>
   dispose(): Promise<void>
   stats?(): { backend: string; detectErrors: string[] }
+  /** Settings for later streams (MediaPipePoseSource.configure): numPoses 1 for Pass B. */
+  configure?(settings: { numPoses?: number }): void
 }
 
 /** What the passes need from the ball worker client. */
@@ -118,32 +119,6 @@ async function posesFor(
   return { poses, decoded }
 }
 
-export interface DenseWindowInput {
-  window: PlannedWindow
-  /** Frame indices to decode for pose / for the ball (ascending). */
-  poseFrames: readonly number[]
-  ballFrames: readonly number[]
-  ballConfig: WindowBallConfig
-  /** Scale of the ball crop (1 = full resolution), from the expected ball size. */
-  ballDownscale?: number
-  /** Built after the pose pass (dense poses give the better scale). */
-  analyseOptions: (densePoses: PoseFrame[]) => WindowAnalyseOptions
-  /** Display size of the frame (after rotation). */
-  display: { width: number; height: number }
-  signal?: AbortSignal
-  onPoseFrame?: (done: number, total: number) => void
-  /** Skip pose (re-running only the ball after a time-base correction). */
-  ballOnly?: boolean
-}
-
-export interface DenseWindowResult {
-  poses: PoseFrame[]
-  ball: BallWindowResult
-  framesDecoded: number
-  poseMs: number
-  wallMs: number
-}
-
 /**
  * Pixel crop of the displayed frame for a normalised rect, and the transfer size: scaled by
  * `downscale` (<= 1) and with the long side capped. Normalised coordinates are unaffected.
@@ -185,78 +160,86 @@ async function* displayFrames(source: Pick<FrameSource, 'rawFrames' | 'meta'>, i
   }
 }
 
-export async function runDenseWindow(
+/**
+ * Pass B pose for one window, on its own decode: only the pose frames are decoded and each frame is
+ * released as soon as the pose source has taken its ROI crop. Runs on the GPU-bound pose worker;
+ * ball detection for the same window runs meanwhile on its own decode (runBallDetect).
+ */
+export async function runPoseWindow(
   source: Pick<FrameSource, 'rawFrames' | 'meta'>,
-  pose: PoseEstimator | null,
-  ball: BallClient,
-  input: DenseWindowInput,
-): Promise<DenseWindowResult> {
+  pose: PoseEstimator,
+  input: { poseFrames: readonly number[]; signal?: AbortSignal; onPoseFrame?: (done: number, total: number) => void },
+): Promise<{ poses: PoseFrame[]; framesDecoded: number; poseMs: number }> {
   const started = now()
-  const w = input.window
-  const poseSet = new Set(input.ballOnly ? [] : input.poseFrames)
-  const ballSet = new Set(input.ballFrames)
-  const indices = [...new Set([...poseSet, ...ballSet])].sort((a, b) => a - b)
-  const crop = cropPixels(input.ballConfig.crop, input.display.width, input.display.height, MEMORY_BUDGET.ballCropMaxLongSidePx, input.ballDownscale)
-  await ball.begin(w.index, input.ballConfig)
   let decoded = 0
-
-  // One generator drives the decode; it feeds the ball worker itself and yields pose frames.
   async function* feed(): AsyncGenerator<PoseInputFrame> {
-    let heldForPose: DisplayFrame | null = null
-    const iterator = displayFrames(source, indices, input.signal)[Symbol.asyncIterator]()
+    let held: DisplayFrame | null = null
+    const iterator = displayFrames(source, input.poseFrames, input.signal)[Symbol.asyncIterator]()
     try {
       for (;;) {
         const next = await iterator.next()
-        if (next.done) break
-        const frame = next.value
-        decoded++
         // The pose source is done with the previous frame once it asks for the next one.
-        heldForPose?.close()
-        heldForPose = null
-        try {
-          if (ballSet.has(frame.index)) {
-            const bitmap = await createImageBitmap(frame.image, crop.sx, crop.sy, crop.sw, crop.sh, {
-              resizeWidth: crop.outWidth,
-              resizeHeight: crop.outHeight,
-              resizeQuality: 'high',
-            })
-            await ball.pushFrame(w.index, frame.index, frame.tReal, bitmap)
-          }
-        } catch (error) {
-          frame.close()
-          throw error
-        }
-        if (poseSet.has(frame.index)) {
-          heldForPose = frame
-          yield { frameIndex: frame.index, tReal: frame.tReal, image: frame.image }
-        } else {
-          frame.close()
-        }
+        held?.close()
+        held = null
+        if (next.done) break
+        decoded++
+        held = next.value
+        yield { frameIndex: held.index, tReal: held.tReal, image: held.image }
         throwIfAborted(input.signal)
       }
     } finally {
-      heldForPose?.close()
+      held?.close()
       await iterator.return?.(undefined)
     }
   }
-
   const poses: PoseFrame[] = []
-  let poseMs = 0
-  if (pose && poseSet.size > 0) {
-    const poseStarted = now()
-    const total = poseSet.size
+  if (input.poseFrames.length > 0) {
     for await (const frame of pose.estimate(feed())) {
       poses.push(frame)
-      input.onPoseFrame?.(poses.length, total)
+      input.onPoseFrame?.(poses.length, input.poseFrames.length)
     }
-    poseMs = now() - poseStarted
-  } else {
-    // Ball only: drain the feed without pose.
-    for await (const unused of feed()) void unused
   }
   throwIfAborted(input.signal)
-  const result = await ball.end(w.index, input.analyseOptions(poses))
-  return { poses, ball: result, framesDecoded: decoded, poseMs, wallMs: now() - started }
+  return { poses, framesDecoded: decoded, poseMs: now() - started }
+}
+
+/**
+ * Ball detection for one window on its own decode: every ball frame is cropped on the GPU to the
+ * window's search region and transferred to the ball worker (begin + pushFrame). The caller ends
+ * the window (ball.end) once the dense poses are known. Each frame is closed right after its crop,
+ * so a ball job never holds decoder frames while the worker is busy.
+ */
+export async function runBallDetect(
+  source: Pick<FrameSource, 'rawFrames' | 'meta'>,
+  ball: BallClient,
+  input: {
+    windowId: number
+    ballFrames: readonly number[]
+    ballConfig: WindowBallConfig
+    ballDownscale?: number
+    display: { width: number; height: number }
+    signal?: AbortSignal
+  },
+): Promise<{ framesDecoded: number }> {
+  const crop = cropPixels(input.ballConfig.crop, input.display.width, input.display.height, MEMORY_BUDGET.ballCropMaxLongSidePx, input.ballDownscale)
+  await ball.begin(input.windowId, input.ballConfig)
+  let decoded = 0
+  for await (const frame of displayFrames(source, input.ballFrames, input.signal)) {
+    decoded++
+    let bitmap: ImageBitmap
+    try {
+      bitmap = await createImageBitmap(frame.image, crop.sx, crop.sy, crop.sw, crop.sh, {
+        resizeWidth: crop.outWidth,
+        resizeHeight: crop.outHeight,
+        resizeQuality: 'high',
+      })
+    } finally {
+      frame.close()
+    }
+    await ball.pushFrame(input.windowId, frame.index, frame.tReal, bitmap)
+    throwIfAborted(input.signal)
+  }
+  return { framesDecoded: decoded }
 }
 
 function now(): number {

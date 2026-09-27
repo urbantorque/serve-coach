@@ -12,7 +12,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass-limited",
    "prerequisites": [
     "fps>=30"
    ],
@@ -36,6 +38,8 @@
    ],
    "statusDefault": "estimated",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-unvalidated",
    "prerequisites": [
     "fps>=30"
    ],
@@ -58,7 +62,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass",
    "prerequisites": [
     "fps>=30",
     "event:tossApex",
@@ -102,6 +108,8 @@
    ],
    "statusDefault": "estimated",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-fail",
    "prerequisites": [
     "view:side",
     "fps>=30",
@@ -141,6 +149,8 @@
    ],
    "statusDefault": "experimental",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-unvalidated",
    "prerequisites": [
     "view:rear",
     "fps>=30",
@@ -173,7 +183,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass",
    "prerequisites": [
     "fps>=30",
     "timebase",
@@ -216,7 +228,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass-limited",
    "prerequisites": [
     "n>=8",
     "stability",
@@ -265,7 +279,9 @@
     "side"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass-limited",
    "prerequisites": [
     "view:side",
     "n>=8",
@@ -315,6 +331,8 @@
    ],
    "statusDefault": "experimental",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-unvalidated",
    "prerequisites": [
     "view:rear",
     "n>=8",
@@ -354,7 +372,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass",
    "prerequisites": [
     "fps>=30",
     "event:contact-ball",
@@ -400,7 +420,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass-limited",
    "prerequisites": [
     "n>=8",
     "stability",
@@ -438,6 +460,8 @@
    ],
    "statusDefault": "estimated",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-fail",
    "prerequisites": [
     "view:side",
     "fps>=30",
@@ -481,7 +505,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass",
    "prerequisites": [
     "fps>=30",
     "timebase",
@@ -530,7 +556,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass-limited",
    "prerequisites": [
     "fps>=30",
     "timebase",
@@ -572,6 +600,8 @@
    ],
    "statusDefault": "experimental",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-fail",
    "prerequisites": [
     "fps>=60",
     "timebase",
@@ -602,7 +632,9 @@
     "side"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass-limited",
    "prerequisites": [
     "view:side",
     "fps>=30",
@@ -638,6 +670,8 @@
    ],
    "statusDefault": "estimated",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-fail",
    "prerequisites": [
     "view:side",
     "fps>=30",
@@ -670,7 +704,9 @@
     "side"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V0",
+   "validationLevel": "V1",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-pass",
    "prerequisites": [
     "view:side",
     "fps>=30",
@@ -704,6 +740,8 @@
    ],
    "statusDefault": "experimental",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-synthetic-inconclusive",
    "prerequisites": [
     "view:side",
     "fps>=30",
@@ -740,6 +778,8 @@
    ],
    "statusDefault": "estimated",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-fail",
    "prerequisites": [
     "view:side",
     "fps>=30",
@@ -776,6 +816,8 @@
    ],
    "statusDefault": "experimental",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-synthetic-inconclusive",
    "prerequisites": [
     "view:rear",
     "fps>=30",
@@ -808,6 +850,8 @@
    ],
    "statusDefault": "experimental",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-unvalidated",
    "prerequisites": [
     "view:rear",
     "fps>=30",
@@ -842,6 +886,8 @@
    ],
    "statusDefault": "estimated",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-fail",
    "prerequisites": [
     "view:side",
     "fps>=30",
@@ -882,6 +928,8 @@
    ],
    "statusDefault": "experimental",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-unvalidated",
    "prerequisites": [
     "n>=5",
     "stability",
@@ -916,6 +964,8 @@
    ],
    "statusDefault": "player-entered",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "not-applicable",
    "prerequisites": [
     "entry:outcome"
    ],
@@ -942,6 +992,8 @@
    ],
    "statusDefault": "player-entered",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "not-applicable",
    "prerequisites": [
     "entry:outcome",
     "entry:serveNumber"
@@ -976,6 +1028,8 @@
    ],
    "statusDefault": "player-entered",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "not-applicable",
    "prerequisites": [
     "entry:outcome",
     "entry:serveNumber"
@@ -1010,6 +1064,8 @@
    ],
    "statusDefault": "player-entered",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "not-applicable",
    "prerequisites": [],
    "reasonCodes": [
     "NOT_ENTERED"
@@ -1040,6 +1096,8 @@
    ],
    "statusDefault": "player-entered",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "not-applicable",
    "prerequisites": [
     "entry:outcome"
    ],
@@ -1066,6 +1124,8 @@
    ],
    "statusDefault": "player-entered",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "not-applicable",
    "prerequisites": [],
    "reasonCodes": [],
    "higherIsBetter": null,
@@ -1086,6 +1146,8 @@
    ],
    "statusDefault": "unavailable",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V1-synthetic-fail",
    "prerequisites": [
     "view:side",
     "fps>=120",
@@ -1125,6 +1187,8 @@
    ],
    "statusDefault": "unavailable",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-unvalidated",
    "prerequisites": [
     "view:rear",
     "fps>=60",
@@ -1163,6 +1227,8 @@
    ],
    "statusDefault": "player-entered",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "not-applicable",
    "prerequisites": [],
    "reasonCodes": [],
    "higherIsBetter": true,
@@ -1181,6 +1247,8 @@
    "views": [],
    "statusDefault": "unavailable",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "not-applicable",
    "prerequisites": [],
    "reasonCodes": [],
    "higherIsBetter": null,
@@ -1202,6 +1270,8 @@
    ],
    "statusDefault": "measured",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-synthetic-inconclusive",
    "prerequisites": [],
    "reasonCodes": [],
    "higherIsBetter": true,
@@ -1223,6 +1293,8 @@
    ],
    "statusDefault": "estimated",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-unvalidated",
    "prerequisites": [
     "n>=16",
     "event:contact-ball",
@@ -1248,6 +1320,8 @@
    ],
    "statusDefault": "estimated",
    "validationLevel": "V0",
+   "validationLevelNight": "V0",
+   "validationState": "V0-unvalidated",
    "prerequisites": [
     "history:28d-3sessions"
    ],

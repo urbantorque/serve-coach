@@ -1,11 +1,14 @@
 /**
  * "How we measure" index (PRODUCT §6.13 item 5, DESIGN §10.14): every metric with the highest data
- * state the engine can give it today (in daylight) and its validation level in words. Statuses and
- * levels come from the engine catalogue (analysis/metrics/catalogue.ts), never from this screen.
+ * state the engine can give it today (in daylight) and its validation state in words with the typical
+ * error on simulated serves. Statuses and levels come from the engine catalogue
+ * (analysis/metrics/catalogue.ts); the state and numbers from metrics.json and validation-summary.json
+ * via ../metric/validationWords.ts. Never from this screen.
  */
 import { METRIC_VIEWS, statusCeiling, type ValidationLevel } from '../../../analysis/metrics/catalogue.ts'
 import { METRIC_IDS, type MetricId, type MetricStatus } from '../../../analysis/types.ts'
 import { metricName } from '../../copy/metricNames.ts'
+import { rowDetail, validationStateOf, type ValidationState } from '../metric/validationWords.ts'
 
 export type MeasureGroupId = 'video' | 'experimental' | 'logged' | 'not-measurable'
 
@@ -16,6 +19,10 @@ export interface MeasureRow {
   level: ValidationLevel
   views: string
   levelWords: string
+  /** metrics.json validationState (docs/VALIDATION.md). */
+  validationState: ValidationState
+  /** "Checked on simulated serves. Typical error about 1% of your height." */
+  validationWords: string
 }
 
 export const GROUP_TITLES: Record<MeasureGroupId, string> = {
@@ -27,7 +34,7 @@ export const GROUP_TITLES: Record<MeasureGroupId, string> = {
 
 export const GROUP_NOTES: Record<MeasureGroupId, string> = {
   video: 'An estimate uses your height, so it has a margin of error. Every value shows its label and how many serves it came from.',
-  experimental: 'Not yet checked against a radar or measured marks. Never used for your focus, verdicts or Progress.',
+  experimental: "Not accurate enough yet on simulated serves, or not checked yet. Shown only when you turn them on, and never used for your focus, verdicts or Progress.",
   logged: 'Serve outcomes, targets and serve types come from your tags or tally, so they carry the "You logged" label.',
   'not-measurable': 'We say so rather than guess.',
 }
@@ -48,7 +55,16 @@ export function viewWords(views: readonly ('side' | 'rear')[]): string {
 
 export function measureRow(id: MetricId): MeasureRow {
   const { status, level } = statusCeiling(id, 'day')
-  return { id, name: metricName(id), status, level, views: viewWords(METRIC_VIEWS[id]), levelWords: LEVEL_SHORT[level] }
+  return {
+    id,
+    name: metricName(id),
+    status,
+    level,
+    views: viewWords(METRIC_VIEWS[id]),
+    levelWords: LEVEL_SHORT[level],
+    validationState: validationStateOf(id),
+    validationWords: rowDetail(id),
+  }
 }
 
 export function groupOf(row: MeasureRow): MeasureGroupId {

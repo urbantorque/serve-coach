@@ -28,44 +28,12 @@ import { useSessionBundles } from '../progress/insights/hooks.ts'
 import { formatRange, plainText, shortText } from '../progress/insights/values.ts'
 import { VerdictLine } from '../progress/insights/ui.tsx'
 import catalogue from './data/catalogue.json'
-import validation from './data/validation.json'
+import { HowSure } from './HowSure.tsx'
 import { LIMITS, METRIC_COPY, NO_OUTSIDE, PREREQ_WORDS, STATUS_MEANING } from './metricCopy.ts'
+import { VALIDATION_LIMIT, validationStateOf } from './validationWords.ts'
 
 type CatalogueEntry = (typeof catalogue.metrics)[number]
 type Check = { key: string; label: string; state: 'pass' | 'fail' | 'unknown' }
-
-const VALIDATION_WORDS: Record<string, string> = {
-  V0: 'Not yet checked as a whole on real serves.',
-  V1: 'Checked on simulated serves. Real-court check in progress.',
-  V2: 'Checked against hand-marked real video.',
-  V3: 'Checked against a physical reference (radar, measuring pole or a second camera).',
-}
-
-const TOSS_HEIGHT = new Set(['toss-apex-height', 'toss-height-spread', 'toss-drop'])
-const TIMING = new Set(['rhythm-release-to-contact', 'rhythm-spread', 'trophy-pause', 'drive-time'])
-const POSE = new Set(['leg-drive', 'drive-time', 'loading-depth', 'shoulder-tilt-trophy', 'contact-height-ratio', 'landing-distance', 'deep-bend-flag', 'contact-forward'])
-
-/** Building-block numbers from the engine's smoke run on synthetic clips (validation/results/smoke). */
-function evidenceLines(id: string): string[] {
-  const v = validation
-  const out: string[] = []
-  if (TOSS_HEIGHT.has(id)) {
-    out.push(
-      `On ${v.apexHeight.n} simulated side-view clips, the toss peak height was typically within ${v.apexHeight.medianAbsCm} cm of the truth (at most ${v.apexHeight.maxAbsCm} cm), and inside our stated range on ${v.apexHeight.inRange} of ${v.apexHeight.n}.`,
-    )
-  }
-  if (TIMING.has(id)) {
-    out.push(`On simulated clips at 60 fps or more, the toss release was found within ${v.release.max60Ms} ms (typically ${v.release.medianAbsMs} ms), and the hit sound within 1 ms.`)
-  }
-  if (POSE.has(id)) out.push(`Body tracking on ${v.pose.n} simulated side-view clips was typically within ${v.pose.medianErrorPctHeight}% of your height per joint.`)
-  if (id === 'speed-experimental') {
-    out.push(
-      `On simulated clips, ${v.speed.covered} of ${v.speed.ranges} speed ranges held the true speed. The ranges were about ${v.speed.medianWidthKmh} km/h wide, and ${v.speed.refused} clips were refused (under 120 fps, or no clean track after contact).`,
-    )
-  }
-  if (out.length) out.push('These are computer-generated serves, not real courts.')
-  return out
-}
 
 function parseBand(s: string): { lo?: number; hi?: number } {
   const t = s.replace(/\s/g, '')
@@ -155,7 +123,8 @@ function Section({ id, title, children }: { id: string; title: string; children:
 /**
  * Metric info, "How we measure" for one metric (DESIGN §10.14, PRODUCT §6.14): this value with its
  * state and n, what it is, your trend over matched sessions, how we measure it, what it needs, how
- * sure we are (validation level and our synthetic building-block numbers), known limits, and
+ * sure we are (validation state in words, typical error and pass mark from simulated serves, with the
+ * test details in a disclosure), known limits (including the synthetic-only limit), and
  * provisional club-player context that is never a target. Unavailable metrics lead with the reason.
  */
 export function MetricInfoScreen() {
@@ -218,7 +187,8 @@ export function MetricInfoScreen() {
   const bands = shown && typeof shown.value === 'number' && !NO_OUTSIDE.has(id) ? clubBands(entry, shown.value) : !NO_OUTSIDE.has(id) ? clubBands(entry, null) : null
   const limits = LIMITS.filter((l) => l.ids.includes(id)).map((l) => l.text)
   if (entry.requiredCopy && !limits.some((t) => t.includes('sideways'))) limits.unshift(entry.requiredCopy)
-  const evidence = evidenceLines(id)
+  // Every camera measurement carries the synthetic-only limit (METRICS §6 item 8).
+  if (validationStateOf(id) !== 'not-applicable') limits.push(VALIDATION_LIMIT)
   const checks = checksFor(entry, bundle, v, heightM, experimentalOn)
 
   return (
@@ -336,12 +306,7 @@ export function MetricInfoScreen() {
       ) : null}
 
       <Section id="sure" title="How sure we are">
-        <p className="text-callout text-ink">{VALIDATION_WORDS[entry.validationLevel] ?? VALIDATION_WORDS.V0}</p>
-        {evidence.map((t) => (
-          <p key={t} className="text-callout text-ink-2">
-            {t}
-          </p>
-        ))}
+        <HowSure id={id} heightM={heightM} />
       </Section>
 
       {limits.length ? (

@@ -7,13 +7,13 @@ import { LM, type MetricId, type MetricValue, type ReasonCode, type TargetZone }
 import { estimateServeSpeedFromTrack } from '../ball/speed.ts'
 import { scaleFromBodyHeight } from '../ball/scale.ts'
 import { kneeFlexionDeg } from '../pose/body.ts'
-import type { CameraModel } from '../serve/geometry.ts'
+import { pitchRatioPerDeg, rollRatioPerDeg, type CameraModel } from '../serve/geometry.ts'
 import { heightOf, FOOT_TOE, WRIST, type WristSide } from '../serve/events.ts'
 import { xOf, yOf } from '../serve/ball.ts'
 import type { ServeCore } from '../serve/analyse.ts'
 import { indexAt, landmarksAt, localQuadratic, midHip, pointSpeed, pt, rangeIdx, velocityHalfWindow, type PoseTrack } from '../serve/track.ts'
 import { bandProbabilities } from '../stats/aggregate.ts'
-import { METRIC_VIEWS, MIN_VALIDATED_DISTANCE_M, PITCH_SENSITIVE_IDS, PLAUSIBILITY, type ConditionClass } from './catalogue.ts'
+import { ASSUMED_LEVEL_HEIGHT_BUDGET, METRIC_VIEWS, MIN_VALIDATED_DISTANCE_M, PITCH_SENSITIVE_IDS, PLAUSIBILITY, ROLL_OFFSET_DEFAULT_M, type ConditionClass } from './catalogue.ts'
 import { finalizeMetric, unavailable, wrongViewReason, type Downgrade, type MetricDraft } from './status.ts'
 
 export const G = 9.81
@@ -110,7 +110,36 @@ function tiltDowngrades(id: MetricId, ctx: MetricContext): { unavailable?: Reaso
   if (!(PITCH_SENSITIVE_IDS as readonly string[]).includes(id)) return { downgrades: [] }
   if (ctx.cam.tiltStatus === 'measured-over-cap') return { unavailable: 'CAMERA_TILTED', downgrades: [] }
   if (ctx.cam.tiltStatus === 'unknown') return { downgrades: [{ cap: 'experimental', reason: 'PITCH_UNKNOWN' }] }
+  // A level assumed from the mount answer: absolute heights are judged against their error budget
+  // (assumedLevelHeight); positions and angles stay experimental (they are V0 anyway).
+  if (ctx.cam.tiltStatus === 'assumed-level' && !ASSUMED_LEVEL_HEIGHT_BUDGET[id]) return { downgrades: [{ cap: 'experimental', reason: 'PITCH_UNKNOWN' }] }
   return { downgrades: [] }
+}
+
+/**
+ * METRICS §1.1.3a: with no sensor, a level mount means pitch and roll 0 ± σ (2° level mount, 4° roughly
+ * level). Their height error, from geometry (pitchRatioPerDeg, rollRatioPerDeg), is session-shared
+ * (σ_s: the same for every serve, so spreads are unaffected). The value keeps its status only while
+ * the widened per-serve error still meets the METRICS p95 threshold; otherwise experimental
+ * (PITCH_UNKNOWN). Returns null when the level is not assumed (a sensor pitch, or pitch unknown).
+ */
+export function assumedLevelHeight(
+  id: MetricId,
+  ratio: number,
+  ctx: Pick<MetricContext, 'cam' | 'playerHeightM'>,
+  distanceM: number,
+  offsetM: number | undefined,
+): { sigmaTilt: number; downgrades: Downgrade[]; infoReason?: ReasonCode; widenedP95: number } | null {
+  const budget = ASSUMED_LEVEL_HEIGHT_BUDGET[id]
+  if (ctx.cam.tiltStatus !== 'assumed-level' || !budget) return null
+  const H = ctx.playerHeightM
+  const sPitch = Math.abs(pitchRatioPerDeg(ratio, H, distanceM)) * (ctx.cam.pitch?.sigma ?? 0)
+  const sRoll = rollRatioPerDeg(offsetM ?? ROLL_OFFSET_DEFAULT_M, H) * (ctx.cam.roll?.sigma ?? 0)
+  const sigmaTilt = Math.hypot(sPitch, sRoll)
+  const widenedP95 = Math.hypot(budget.measuredP95, Z * sigmaTilt)
+  return widenedP95 <= budget.p95Threshold
+    ? { sigmaTilt, downgrades: [], infoReason: 'TILT_UNKNOWN', widenedP95 }
+    : { sigmaTilt, downgrades: [{ cap: 'experimental', reason: 'PITCH_UNKNOWN' }], widenedP95 }
 }
 
 function ci(value: number, sig: { r: number; leak: number; shared: number }): { kind: 'ci95'; low: number; high: number } {
@@ -251,13 +280,16 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
       const extraM = tossTime === 'fitted-above' ? G * ((core.ball.apexGapS ?? 0) / 2) * (period / 2) : 0
       const sr = Math.hypot((toss!.apex!.yUncertaintyNorm ?? 0) / bh, extraM / H)
       const leak = (Math.abs(ratio - rH) * 0.15) / D
-      const shared = Math.hypot(0.005 / 1, bodyRel.s * ratio, 0.005 * ratio * pitchSigmaDeg, bodyRel.p * ratio, (Math.abs(ratio - rH) * tossPrior.sigma) / D)
+      // Pitch: the sensor's residual (planning 0.5% of the ratio per degree, §3.2), or the mount answer's prior from geometry.
+      const assumed = assumedLevelHeight(id, ratio, ctx, D, core.s0 ? Math.abs(toss!.apex!.x - core.s0.x) * aspect * mPerHU : undefined)
+      const pitchTerm = assumed ? assumed.sigmaTilt : 0.005 * ratio * pitchSigmaDeg
+      const shared = Math.hypot(0.005 / 1, bodyRel.s * ratio, pitchTerm, bodyRel.p * ratio, (Math.abs(ratio - rH) * tossPrior.sigma) / D)
       const sig = { r: sr, leak, shared }
       res.sigmas[id] = sig
       const apexM = ratio * H
       res.raw.apexRatio = ratio
       res.raw.apexM = apexM
-      const downs: Downgrade[] = [...commonDown, ...tilt.downgrades, ...nearDown]
+      const downs: Downgrade[] = [...commonDown, ...tilt.downgrades, ...(assumed?.downgrades ?? []), ...nearDown]
       if (tossTime === 'fitted-above') downs.push({ cap: 'estimated', reason: 'APEX_EXTRAPOLATED' })
       if (gravityReject) downs.push({ cap: 'unavailable', reason: 'IMPLAUSIBLE_VALUE' })
       // Plausibility: hard below contact height − 0.10 m (checked after contact below), above 5.5 m.
@@ -274,7 +306,7 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
         sigmaLeak: sig.leak,
         sigmaShared: sig.shared,
         downgrades: downs,
-        infoReason: ctx.heightEntered ? undefined : 'PLAYER_HEIGHT_MISSING',
+        infoReason: ctx.heightEntered ? assumed?.infoReason : 'PLAYER_HEIGHT_MISSING',
       }
       set(id, finalizeMetric(id, withPlaus(draft, outcome), ctx.condition))
     }
@@ -362,12 +394,14 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
       const vy = Math.abs(2 * p!.a * tc! + p!.b) / bh
       const sr = Math.hypot(vy * sigmaTc, (toss?.fit?.rmse ?? 0) / bh)
       const leak = (Math.abs(ratio - rH) * 0.15) / D
-      const shared = Math.hypot(0.005, bodyRel.s * ratio, 0.005 * ratio * pitchSigmaDeg, bodyRel.p * ratio, (Math.abs(ratio - rH) * contactPrior.sigma) / D)
+      const assumed = assumedLevelHeight(id, ratio, ctx, D, core.s0 ? Math.abs(contactBall!.x - core.s0.x) * aspect * mPerHU : undefined)
+      const pitchTerm = assumed ? assumed.sigmaTilt : 0.005 * ratio * pitchSigmaDeg
+      const shared = Math.hypot(0.005, bodyRel.s * ratio, pitchTerm, bodyRel.p * ratio, (Math.abs(ratio - rH) * contactPrior.sigma) / D)
       const sig = { r: sr, leak, shared }
       res.sigmas[id] = sig
       res.raw.contactRatio = ratio
       res.raw.contactCm = ratio * H * 100
-      const downs: Downgrade[] = [...commonDown, ...tilt.downgrades, ...nearDown]
+      const downs: Downgrade[] = [...commonDown, ...tilt.downgrades, ...(assumed?.downgrades ?? []), ...nearDown]
       if (contactBall!.extrapS > 0.05) downs.push({ cap: 'experimental', reason: 'CONTACT_NOT_FOUND' })
       const outcome = plaus('contactHeightRatio', ratio, (v) => !inRange(v, PLAUSIBILITY.contactHeightRatio.hard), (v) => !inRange(v, PLAUSIBILITY.contactHeightRatio.soft))
       set(
@@ -385,6 +419,7 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
               sigmaLeak: sig.leak,
               sigmaShared: sig.shared,
               downgrades: downs,
+              ...(assumed?.infoReason ? { infoReason: assumed.infoReason } : {}),
             },
             outcome,
           ),

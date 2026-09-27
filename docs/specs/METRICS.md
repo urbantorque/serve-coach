@@ -315,6 +315,12 @@ These are *initial* values. For scale: at contact the hitting wrist sits about 0
 
 - Anchors less than 1.2 s apart are merged; keep the higher wrist.
 - An audio `contact` onset with no pose anchor within ±0.3 s is ignored. It is usually a ball struck on the next court (research 05 [S40]).
+- **Sparse sampling (added 27 Sep 2026, engine `serve/windows.ts`).** The coarse pass samples at about 15 Hz, and the hitting wrist's peak can be short: on the 6 m ad-court serves of the synthetic session clip it tops out at 1.0–1.04 BH and stays above 0.95 BH for 67–100 ms, and MediaPipe often loses the blurred wrist on the frame nearest contact. So one serve of eight came and went with the sampling phase (truth contact 31.07 s). Three changes, all no-ops on dense poses:
+  - the height and nose bars are lowered by the most the peak could have dropped over the gap to the nearest wrist sample, `K·(gap/2)²` with the measured peak curvature K = 50 BH/s², capped at 0.12 BH (0.003 BH at 60 fps, 0.056 BH at 15 Hz);
+  - the toss condition uses `h ≥ 0.85` (the ad-court toss arm peaks at 0.90–0.93 BH; 0.85 BH is still above the shoulders);
+  - a local maximum is judged within 0.03 BH (the cleaned wrist noise), so the falling toss arm cannot mask the first hitting-wrist sample.
+
+  Pass A simulation on the 122 corpus dumps (raw poses subsampled like the pipeline, then cleaned): recall 98.0% → 100% at uniform 15 Hz (every phase), 98.2% → 100% for the 4 Hz + 15 Hz two-level pass, dense 100% unchanged; no extra windows before or after.
 
 **2.3.2 Windows.**
 - A serve's window is `[t_A − 2.2 s, t_A + 2.0 s]`.

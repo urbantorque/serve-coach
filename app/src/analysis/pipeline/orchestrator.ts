@@ -29,11 +29,11 @@ import type { AudioOnset, BallObservation, BallTrack, CaptureContext, PoseFrame,
 import type { FrameSource } from '../video/frameTypes.ts'
 import type { ProbeResult } from '../video/probe.ts'
 import { contactOnsets } from './audio.ts'
-import { checkClipBudget, checkStorage, MEMORY_BUDGET } from './budget.ts'
+import { ballQueuePerWorker, ballWorkerCount, checkClipBudget, checkStorage, MEMORY_BUDGET } from './budget.ts'
 import { runCoachingStep, type CoachingStepResult } from './coaching.ts'
 import { AnalysisError, isAbort, throwIfAborted, toAnalysisError } from './errors.ts'
 import { encodeJpeg, extractKeyFrames, planKeyFrames, type JpegEncoder } from './keyFrames.ts'
-import { runDenseWindow, runSparsePass, type BallClient, type PoseEstimator } from './passes.ts'
+import { runBallDetect, runPoseWindow, runSparsePass, type BallClient, type PoseEstimator } from './passes.ts'
 import { commitResults, markCancelled, markFailed, patchJob, prepareSession, startJob, storeVideo } from './persist.ts'
 import { ProgressReporter } from './progress.ts'
 import { applyGravityCheck, resolveTimeBase, type TimeBaseDecision } from './timeBase.ts'
@@ -59,6 +59,12 @@ export function ballDownscaleFor(expectedRadiusNorm: number | undefined, frameHe
 export const SPARSE_HZ = 15
 /** Pass A coarse rate over the whole clip (ARCHITECTURE §5.3: 4 fps). */
 export const SPARSE_COARSE_HZ = 4
+/**
+ * Pass B landmarker poses: 1 tracks the server from frame to frame and runs MediaPipe's detector only
+ * when the track is lost (ARCHITECTURE §5.4). Measured on this laptop's GPU: 26.6 against 39.6 ms a
+ * frame for 2, which re-detects every frame. Pass A keeps 2 so a bystander stays a separate pose.
+ */
+export const DENSE_NUM_POSES = 1
 const DEFAULT_HEIGHT_M = 1.75
 /** 26 mm-equivalent main lens, long-side field of view (ARCHITECTURE §5.4 step 4). */
 const LENS_DEFAULT_FOV_DEG = 67.3
@@ -73,7 +79,7 @@ export interface PipelineDeps {
   probe: (file: Blob, fileName: string) => Promise<ProbeResult | undefined>
   openFrameSource: (file: Blob, options: { fileName: string; probe?: ProbeResult }) => Promise<FrameSource>
   createPoseSource: (pass: 'sparse' | 'dense', model: 'full' | 'lite') => Promise<PoseEstimator>
-  createBallClient: (onAck: (ack: { windowId: number; frameIndex: number }) => void) => Promise<BallClient>
+  createBallClient: (onAck: (ack: { windowId: number; frameIndex: number }) => void, options?: { maxQueue?: number }) => Promise<BallClient>
   engine: Engine
   encoder: JpegEncoder
   coaching: (input: Parameters<typeof runCoachingStep>[0]) => Promise<CoachingStepResult>
@@ -96,9 +102,9 @@ export const defaultDeps: PipelineDeps = {
     const { MediaPipePoseSource } = await import('../pose/mediapipeSource.ts')
     return new MediaPipePoseSource({ model, numPoses: 2, roi: 'auto', maxInFlight: MEMORY_BUDGET.poseInFlight, useWorker: 'auto' })
   },
-  createBallClient: async (onAck) => {
+  createBallClient: async (onAck, options) => {
     const { BallWorkerClient } = await import('../ball/workerClient.ts')
-    return BallWorkerClient.create({ maxQueue: MEMORY_BUDGET.ballQueue, onAck })
+    return BallWorkerClient.create({ maxQueue: options?.maxQueue ?? MEMORY_BUDGET.ballQueue, onAck })
   },
   engine: { findServeWindows: engineFindServeWindows, analyseSession: engineAnalyseSession },
   encoder: encodeJpeg,
@@ -167,6 +173,7 @@ function emptyTimings(): PipelineTimings {
     sparseCoarseFrames: 0,
     sparseFillFrames: 0,
     ballBackend: 'main-thread',
+    ballWorkers: 0,
     poseBackend: 'uninitialised',
   }
 }
@@ -303,14 +310,14 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
   let frameSource: FrameSource | null = null
   let sparsePose: PoseEstimator | null = null
   let densePose: PoseEstimator | null = null
-  let ball: BallClient | null = null
+  let balls: BallClient[] = []
   let jobStarted = false
   let videoStored = false
   let failStage: AnalysisErrorCode = 'internal'
 
   // Abort: stop the workers at once (the decoder sees the signal itself).
   const onAbort = () => {
-    ball?.dispose()
+    for (const b of balls) b.dispose()
     void sparsePose?.dispose()
     void densePose?.dispose()
   }
@@ -449,15 +456,26 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     progress.update('finding-serves', 1, { servesFound: planned.length })
     if (persist) await patchJob(jobId, { state: 'dense', windows: planned.map((w) => toServeWindow(w, frameTimes())), progress: progress.current })
 
-    // ---------- 4. Pass B: dense pose + ball per window ----------
+    // ---------- 4. Pass B: dense pose (GPU) and ball detection (CPU pool) per window ----------
+    // Pose runs window after window on the one pose worker: the GPU is its limit (a second pose
+    // worker measured no faster), and numPoses 1 lets MediaPipe track the server instead of
+    // re-detecting every frame (ARCHITECTURE §5.4). Ball detection is CPU work: each window runs on
+    // one of a pool of ball workers, on its own decode, while pose works through the windows.
+    // Results are taken in window order, so the first toss's gravity check still decides the time
+    // base before any later window is ended.
     failStage = 'pose-init-failed'
     t = now()
     densePose = sparsePose
     sparsePose = null
-    let onBallAck: ((windowId: number) => void) | null = null
-    ball = await deps.createBallClient((ack) => onBallAck?.(ack.windowId))
+    const passB = options.passB ?? {}
+    densePose.configure?.({ numPoses: passB.numPoses ?? DENSE_NUM_POSES })
+    const ballWorkers = Math.max(1, Math.round(passB.lanes ?? ballWorkerCount()))
+    const ballAcks = new Map<number, () => void>()
+    const onBallAck = (ack: { windowId: number }) => ballAcks.get(ack.windowId)?.()
+    for (let k = 0; k < ballWorkers; k++) balls.push(await deps.createBallClient(onBallAck, { maxQueue: ballQueuePerWorker(ballWorkers) }))
     timings.poseInitMs += now() - t
-    timings.ballBackend = ball.backend
+    timings.ballBackend = balls[0].backend
+    timings.ballWorkers = balls.length
     failStage = 'internal'
     throwIfAborted(signal)
     const denseStarted = now()
@@ -469,6 +487,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     const servedFrom = capture.serveSide === 'both' ? undefined : capture.serveSide
     const setupFor = (poses: PoseFrame[]): BallSetup =>
       ballSetupFromPoses(poses, { aspect, handedness, playerHeightM: heightM })
+    const display = () => ({ width: meta().width, height: meta().height })
 
     const windowConfig = (w: PlannedWindow, setup: BallSetup): WindowBallConfig => ({
       crop: w.crop,
@@ -496,101 +515,165 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
           seed: 1,
         }
       }
+    const sparseIn = (w: PlannedWindow) => sparseClean.filter((p) => p.frameIndex >= w.startFrame && p.frameIndex <= w.endFrame)
+    // Context frames Pass A already estimated are reused (the core is always estimated here).
+    const covered = passB.reuseSparse === false ? undefined : new Set(sparse.poses.filter((p) => p.landmarks).map((p) => p.frameIndex))
 
-    const perWindowShare = 1 / planned.length
-    for (let i = 0; i < planned.length; i++) {
+    // Progress: every window counts pose and ball halves; overall is monotonic in the reporter.
+    const n = planned.length
+    const poseFraction = new Array<number>(n).fill(0)
+    const ballFraction = new Array<number>(n).fill(0)
+    let posing = 0
+    let servesDone = 0
+    const report = () => {
+      let sum = 0
+      for (let k = 0; k < n; k++) sum += (poseFraction[k] + ballFraction[k]) / 2
+      const step = posing < n ? 'tracking-body' : 'tracking-ball'
+      progress.update(step, sum / n, { serveIndex: Math.min(n, (posing < n ? posing : servesDone) + 1), servesDone })
+    }
+
+    // Ball jobs: begin + every ball frame on the job's worker (jobs on one worker run in turn).
+    // A job id is the window index, bumped per re-plan so a stale job can never feed a new one.
+    interface BallJob {
+      id: number
+      client: BallClient
+      sparseSetup: BallSetup
+      detected: Promise<{ framesDecoded: number }>
+    }
+    let epoch = 0
+    const clientTail: Promise<unknown>[] = balls.map(() => Promise.resolve())
+    const clientLoad = balls.map(() => 0)
+    const startBallJob = (i: number): BallJob => {
+      const w = planned[i]
+      const sparseSetup = setupFor(sparseIn(w))
+      const ballFrames = ballIndices(w, meta().captureFps)
+      let k = 0
+      for (let c = 1; c < balls.length; c++) if (clientLoad[c] < clientLoad[k]) k = c
+      clientLoad[k] += ballFrames.length
+      const client = balls[k]
+      const id = w.index + epoch * 100_000
+      let acks = 0
+      ballAcks.set(id, () => {
+        ballFraction[i] = ++acks / Math.max(1, ballFrames.length)
+        report()
+      })
+      const downscale = ballDownscaleFor(sparseSetup.expectedRadiusNorm, meta().height)
+      cropScales.push(downscale)
+      const detected = clientTail[k].then(() =>
+        runBallDetect(frameSource!, client, { windowId: id, ballFrames, ballConfig: windowConfig(w, sparseSetup), ballDownscale: downscale, display: display(), signal }),
+      )
+      clientTail[k] = detected.catch(() => undefined)
+      detected.catch(() => undefined) // observed when the window is ended
+      return { id, client, sparseSetup, detected }
+    }
+    // Every window's ball detection starts now (speculatively for an unknown time base: the plan only
+    // changes on a slow-motion correction, and then the later jobs are started again).
+    let ballJobs: BallJob[] = planned.map((_, i) => startBallJob(i))
+
+    // Pose: windows in order on the pose worker, ahead of the ball results.
+    const poseReady = planned.map(() => {
+      let resolve!: (poses: PoseFrame[]) => void
+      let reject!: (error: unknown) => void
+      const promise = new Promise<PoseFrame[]>((a, b) => {
+        resolve = a
+        reject = b
+      })
+      promise.catch(() => undefined)
+      return { promise, resolve, reject, epoch: 0 }
+    })
+    const poseWindow = async (i: number): Promise<PoseFrame[]> => {
+      const poseFrames = poseIndices(planned[i], meta().captureFps, covered)
+      const result = await runPoseWindow(frameSource!, densePose!, {
+        poseFrames,
+        signal,
+        onPoseFrame: (done, total) => {
+          poseFraction[i] = done / Math.max(1, total)
+          report()
+        },
+      })
+      poseFraction[i] = 1
+      timings.densePoseMs += result.poseMs
+      timings.poseFrames += result.poses.length
+      timings.framesDecoded += result.framesDecoded
+      return result.poses
+    }
+    const poseTask = (async () => {
+      for (posing = 0; posing < n; posing++) {
+        throwIfAborted(signal)
+        const k = posing
+        poseReady[k].epoch = epoch
+        poseReady[k].resolve(await poseWindow(k))
+      }
+      report()
+    })()
+    poseTask.catch((error: unknown) => {
+      for (const ready of poseReady) ready.reject(error)
+    })
+
+    for (let i = 0; i < n; i++) {
       throwIfAborted(signal)
       let w = planned[i]
-      const windowSparse = sparseClean.filter((p) => p.frameIndex >= w.startFrame && p.frameIndex <= w.endFrame)
-      const sparseSetup = setupFor(windowSparse)
-      const poseFrames = poseIndices(w, meta().captureFps)
-      const ballFrames = ballIndices(w)
-      let poseDone = 0
-      let ballDone = 0
-      const report = () => {
-        const f = (poseDone / Math.max(1, poseFrames.length) + ballDone / Math.max(1, ballFrames.length)) / 2
-        const step = poseDone < poseFrames.length ? 'tracking-body' : 'tracking-ball'
-        progress.update(step, (i + f) * perWindowShare, { serveIndex: i + 1, servesDone: i })
+      const job = ballJobs[i]
+      const detected = await raceAbortWork(job.detected)
+      let poses = await raceAbortWork(poseReady[i].promise)
+      if (poseReady[i].epoch !== epoch) {
+        // Estimated before a time-base correction re-planned this window: estimate it again.
+        await raceAbortWork(poseTask)
+        poses = await raceAbortWork(poseWindow(i))
       }
-      const windowIndex = w.index
-      onBallAck = (windowId) => {
-        if (windowId === windowIndex) {
-          ballDone++
-          report()
-        }
-      }
-      try {
-        const dense = await raceAbortWork(runDenseWindow(frameSource, densePose, ball, {
-          window: w,
-          poseFrames,
-          ballFrames,
-          ballDownscale: ballDownscaleFor(sparseSetup.expectedRadiusNorm, meta().height),
-          ballConfig: windowConfig(w, sparseSetup),
-          analyseOptions: analyseOptionsFor(sparseSetup),
-          display: { width: meta().width, height: meta().height },
-          signal,
-          onPoseFrame: (done) => {
-            poseDone = done
-            report()
-          },
-        }))
-        let ballResult = dense.ball
-        let poses = dense.poses
-        timings.densePoseMs += dense.poseMs
-        timings.denseBallMs += ballResult.timings.detectMs + ballResult.timings.readbackMs
-        timings.ballReadbackMs += ballResult.timings.readbackMs
-        cropScales.push(ballDownscaleFor(sparseSetup.expectedRadiusNorm, meta().height))
-        timings.ballAnalyseMs += ballResult.timings.analyseMs
-        timings.poseFrames += poses.length
-        timings.ballFrames += ballResult.framesProcessed
-        timings.framesDecoded += dense.framesDecoded
+      let ballResult = await raceAbortWork(job.client.end(job.id, analyseOptionsFor(job.sparseSetup)(poses)))
+      ballAcks.delete(job.id)
+      ballFraction[i] = 1
+      timings.denseBallMs += ballResult.timings.detectMs + ballResult.timings.readbackMs
+      timings.ballReadbackMs += ballResult.timings.readbackMs
+      timings.ballAnalyseMs += ballResult.timings.analyseMs
+      timings.ballFrames += ballResult.framesProcessed
+      timings.framesDecoded += detected.framesDecoded
 
-        // The first toss decides an unknown time base (gravity); a correction re-times everything
-        // and re-runs this window's ball detection on the corrected timestamps.
-        if (timeBase.status === 'unknown' && ballResult.toss?.status === 'ok') {
-          const before = meta().timeScale
-          const checked = applyGravityCheck(timeBase, ballResult.timeBase)
-          timeBase = checked.decision
-          if (checked.warning) warn(checked.warning)
-          frameSource.setMeta(timeBase.meta)
-          if (checked.changed) {
-            const factor = meta().timeScale / before
-            warn(`This looks like slow motion (${Math.round(meta().captureFps)} fps), so we corrected the timing.`)
-            sparseClean = retimePoses(sparseClean, factor)
-            for (let k = 0; k < densePosesByWindow.length; k++) densePosesByWindow[k] = retimePoses(densePosesByWindow[k], factor)
-            poses = retimePoses(poses, factor)
-            onsets = [] // time-scaled audio is never used for timing
-            engineWindows = engineWindows.map((ew) => ({ ...ew, startReal: ew.startReal * factor, endReal: ew.endReal * factor }))
-            const replanned = planWindows(engineWindows, { frameTimes: frameTimes(), sparsePoses: sparseClean, handedness, view: options.view, aspect })
-            for (let k = 0; k < planned.length && k < replanned.length; k++) planned[k] = { ...replanned[k], index: planned[k].index }
-            w = planned[i]
-            const redo = await raceAbortWork(runDenseWindow(frameSource, null, ball, {
-              window: w,
-              poseFrames: [],
-              ballFrames: ballIndices(w),
-              ballDownscale: ballDownscaleFor(sparseSetup.expectedRadiusNorm, meta().height),
-              ballConfig: windowConfig(w, setupFor(windowSparse.map((p) => ({ ...p, tReal: p.tReal * factor })))),
-              analyseOptions: () => analyseOptionsFor(sparseSetup)(poses),
-              display: { width: meta().width, height: meta().height },
-              signal,
-              ballOnly: true,
-            }))
-            ballResult = redo.ball
-            timings.denseBallMs += redo.ball.timings.detectMs + redo.ball.timings.readbackMs
-            timings.ballReadbackMs += redo.ball.timings.readbackMs
-            timings.ballFrames += redo.ball.framesProcessed
-            timings.framesDecoded += redo.framesDecoded
-          }
+      // The first toss decides an unknown time base (gravity); a correction re-times everything,
+      // re-runs this window's ball detection on the corrected timestamps and re-plans the rest.
+      if (timeBase.status === 'unknown' && ballResult.toss?.status === 'ok') {
+        const before = meta().timeScale
+        const checked = applyGravityCheck(timeBase, ballResult.timeBase)
+        timeBase = checked.decision
+        if (checked.warning) warn(checked.warning)
+        frameSource.setMeta(timeBase.meta)
+        if (checked.changed) {
+          const factor = meta().timeScale / before
+          warn(`This looks like slow motion (${Math.round(meta().captureFps)} fps), so we corrected the timing.`)
+          const windowSparse = sparseIn(w)
+          sparseClean = retimePoses(sparseClean, factor)
+          for (let k = 0; k < densePosesByWindow.length; k++) densePosesByWindow[k] = retimePoses(densePosesByWindow[k], factor)
+          poses = retimePoses(poses, factor)
+          onsets = [] // time-scaled audio is never used for timing
+          engineWindows = engineWindows.map((ew) => ({ ...ew, startReal: ew.startReal * factor, endReal: ew.endReal * factor }))
+          const replanned = planWindows(engineWindows, { frameTimes: frameTimes(), sparsePoses: sparseClean, handedness, view: options.view, aspect })
+          for (let k = 0; k < planned.length && k < replanned.length; k++) planned[k] = { ...replanned[k], index: planned[k].index }
+          w = planned[i]
+          epoch++
+          // Later windows: their detection ran on the old plan; start them again (pose too, above).
+          ballJobs = ballJobs.map((old, k) => (k > i ? startBallJob(k) : old))
+          const redoSetup = setupFor(windowSparse.map((p) => ({ ...p, tReal: p.tReal * factor })))
+          const redoId = w.index + epoch * 100_000 + 50_000
+          const redo = await raceAbortWork(
+            runBallDetect(frameSource, job.client, { windowId: redoId, ballFrames: ballIndices(w, meta().captureFps), ballConfig: windowConfig(w, redoSetup), ballDownscale: ballDownscaleFor(job.sparseSetup.expectedRadiusNorm, meta().height), display: display(), signal }),
+          )
+          ballResult = await raceAbortWork(job.client.end(redoId, analyseOptionsFor(job.sparseSetup)(poses)))
+          timings.denseBallMs += ballResult.timings.detectMs + ballResult.timings.readbackMs
+          timings.ballReadbackMs += ballResult.timings.readbackMs
+          timings.ballFrames += ballResult.framesProcessed
+          timings.framesDecoded += redo.framesDecoded
         }
-        for (const p of poses) denseFrameSet.add(p.frameIndex)
-        densePosesByWindow.push(poses)
-        ballResults.push(ballResult)
-      } finally {
-        onBallAck = null
       }
-      progress.update('tracking-ball', (i + 1) * perWindowShare, { serveIndex: Math.min(planned.length, i + 2), servesDone: i + 1 })
+      for (const p of poses) denseFrameSet.add(p.frameIndex)
+      densePosesByWindow.push(poses)
+      ballResults.push(ballResult)
+      servesDone = i + 1
+      report()
       if (persist) await patchJob(jobId, { completedWindows: planned.slice(0, i + 1).map((p) => p.index), progress: progress.current })
     }
+    await raceAbortWork(poseTask)
+    progress.update('tracking-ball', 1, { serveIndex: n, servesDone: n })
     timings.denseMs = now() - denseStarted
     timings.ballCropScale = cropScales.length ? cropScales.reduce((a, b) => a + b, 0) / cropScales.length : 1
     const poseStats = densePose.stats?.()
@@ -598,8 +681,8 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     if (poseStats?.detectErrors.length) warn('Part of this video could not be tracked, so some serves may be missing values.')
     await settleWithin(densePose.dispose(), DISPOSE_BUDGET_MS)
     densePose = null
-    ball.dispose()
-    ball = null
+    for (const b of balls) b.dispose()
+    balls = []
     throwIfAborted(signal)
 
     // ---------- 5. measuring: engine, key frames, tracks ----------
@@ -864,7 +947,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     throw err
   } finally {
     signal?.removeEventListener('abort', onAbort)
-    ball?.dispose()
+    for (const b of balls) b.dispose()
     await Promise.all([settleWithin(sparsePose?.dispose(), DISPOSE_BUDGET_MS), settleWithin(densePose?.dispose(), DISPOSE_BUDGET_MS)])
     frameSource?.close()
   }

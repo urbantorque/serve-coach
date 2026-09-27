@@ -1274,10 +1274,8 @@
    }
   ],
   "warnings": [],
-  "quality": "usable",
-  "qualityChecks": [
-   "cq.dropped-frames:warn"
-  ],
+  "quality": "good",
+  "qualityChecks": [],
   "serve": {
    "classification": "serve",
    "included": true,

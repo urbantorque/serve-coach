@@ -25,8 +25,9 @@ import type {
 import type { ServeAnalysis, SessionStats, StratumKey } from '../data/domain.ts'
 import type { TossAnalysis } from './ball/toss.ts'
 import { assessAudioTiming } from './video/audio.ts'
-import { cameraModel, setupClassOf, type CameraModel, type SetupClass } from './serve/geometry.ts'
-import { buildTrack, indexAt, pt, type PoseTrack } from './serve/track.ts'
+import { bodyAxisRollDeg, cameraModel, ROLL_SANITY_LIMIT_DEG, setupClassOf, type CameraModel, type SetupClass } from './serve/geometry.ts'
+import { setupKeyOf } from './metrics/setup.ts'
+import { buildTrack, indexAt, pt, rangeIdx, type PoseTrack } from './serve/track.ts'
 import { findServeWindows as findWindows, type ServeWindowSpan } from './serve/windows.ts'
 import { analyseServe, serveEvents, type ServeCore } from './serve/analyse.ts'
 import { buildPhases } from './serve/phases.ts'
@@ -347,6 +348,29 @@ export function analyseSession(input: EngineInput): EngineOutput {
   const viewMismatch = decided.length >= 1 && mismatchShare >= 0.7 && (view === 'side' || view === 'rear')
   if (viewMismatch) warnings.push('This clip does not look like the view that was chosen; view-specific metrics are unavailable.')
 
+  // Roll sanity check (METRICS §1.1.3a). A level that is only ASSUMED from the import's mount answer
+  // must agree with the standing player: the mid-ankle to mid-shoulder line within 3° of the image
+  // vertical over the upright setup frames. Otherwise the answer is not trusted and the pitch is unknown.
+  let metricCam: CameraModel = cam
+  const setupFrames = cores.flatMap((c) =>
+    c.events.setupStart && c.events.motionStart && c.events.motionStart.tReal > c.events.setupStart.tReal ? rangeIdx(track, c.events.setupStart.tReal, c.events.motionStart.tReal) : [],
+  )
+  const standingRoll = cam.tiltStatus === 'assumed-level'
+    ? bodyAxisRollDeg(setupFrames, cam.aspect, (i) => ({
+        ankleL: pt(track, i, LM.LEFT_ANKLE, 0.5),
+        ankleR: pt(track, i, LM.RIGHT_ANKLE, 0.5),
+        shoulderL: pt(track, i, LM.LEFT_SHOULDER, 0.5),
+        shoulderR: pt(track, i, LM.RIGHT_SHOULDER, 0.5),
+      }))
+    : null
+  const rollFlag = standingRoll !== null && Math.abs(standingRoll.rollDeg) > ROLL_SANITY_LIMIT_DEG
+  if (rollFlag) {
+    metricCam = { ...cam, tiltStatus: 'unknown' }
+    warnings.push(
+      `The standing player leans ${Math.abs(standingRoll!.rollDeg).toFixed(1)}° from the picture's vertical, so the phone was probably not level: heights are experimental (PITCH_UNKNOWN).`,
+    )
+  }
+
   // Court side per serve.
   const clustered = view === 'side' && capture?.serveSide === 'both' ? courtSides(cores, handedness, cameraSide) : new Map()
   const intended = capture?.intendedType
@@ -364,7 +388,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
     const ctx: MetricContext = {
       view,
       viewMismatch,
-      cam,
+      cam: metricCam,
       captureFps,
       timeBase: tb.cls,
       timeScaleRelSigma: tb.relSigma,
@@ -404,10 +428,16 @@ export function analyseSession(input: EngineInput): EngineOutput {
     framing: cores.map((c) => framingOf(input.poses, c)),
     lostTracking: lost,
     cameraBump: bump,
+    ...(standingRoll ? { standingRoll: { rollDeg: standingRoll.rollDeg, flagged: rollFlag } } : {}),
   })
 
   // Assemble ServeAnalysis records.
-  const setupClass: SetupClass = setupClassOf(view, cam, median(cores.filter((c) => c.cameraDistanceM).map((c) => c.cameraDistanceM!)) || 7)
+  const distances = cores.filter((c) => c.cameraDistanceM).map((c) => c.cameraDistanceM!)
+  const cameraDistanceM = distances.length ? median(distances) : undefined
+  const setupClass: SetupClass = setupClassOf(view, cam, cameraDistanceM || 7)
+  // The set-up key (METRICS §1.6, §4.4): orientation, distance class and serving spot. Every stratum
+  // of this clip shares it; coaching and the UI never pool or compare across set-ups.
+  const setupKey = setupKeyOf({ orientation: cam.orientation, distanceM: cameraDistanceM, servingSpot: capture?.servingSpot })
   const analysedAt = new Date().toISOString()
   const stamp = {
     engineVersion: ENGINE_VERSION,
@@ -422,7 +452,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
     bandsVersion: BANDS_VERSION,
   }
   const rectification = {
-    status: cam.tiltStatus,
+    status: metricCam.tiltStatus,
     source: cam.tiltSource,
     orientation: cam.orientation,
     fovDeg: Math.round(cam.fovLongDeg * 10) / 10,
@@ -547,6 +577,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
       serveNumber,
       intendedType: intended ?? 'unknown',
       handedness,
+      setup: setupKey,
     }
     sessionServes.push({ analysis, core, result: r, stratum })
     return analysis
@@ -608,7 +639,9 @@ export function analyseSession(input: EngineInput): EngineOutput {
   for (const id of METRIC_IDS) if (!stats.metrics[id]) stats.metrics[id] = unavailable(id, 'TOO_FEW_SERVES', 'no serves were analysed', { n: 0 })
   // Setup class and the representative serve, for matching and key frames.
   stats.derivedPerServe = Object.fromEntries(analyses.map((a) => [a.id, {}]))
-  ;(stats as SessionStats & { setupClass?: SetupClass }).setupClass = setupClass
+  stats.setupClass = setupClass
+  stats.setupKey = setupKey
+  if (cameraDistanceM !== undefined) stats.cameraDistanceM = Math.round(cameraDistanceM * 100) / 100
   if (!analyses.length) warnings.push('No serve was found in this video.')
   return { serves: analyses, stats, quality: quality.report, warnings }
 }

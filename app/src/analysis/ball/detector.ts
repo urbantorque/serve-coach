@@ -125,7 +125,13 @@ export function chooseDownscaleFactor(frameHeightPx: number, expectedRadiusNorm?
   return Math.max(1, Math.round(frameHeightPx / 720))
 }
 
-/** Box-average RGBA image into factor x factor cells (partial edge cells are dropped). */
+const LITTLE_ENDIAN = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1
+
+/**
+ * Box-average RGBA image into factor x factor cells (partial edge cells are dropped).
+ * Streams the image row by row into per-row integer sums (cache friendly; the sums are exact
+ * integers, so the result is identical to summing cell by cell).
+ */
 export function downscaleRgb(image: ImageDataLike, factor: number): GridFrame {
   const width = Math.floor(image.width / factor)
   const height = Math.floor(image.height / factor)
@@ -133,24 +139,70 @@ export function downscaleRgb(image: ImageDataLike, factor: number): GridFrame {
   const g = new Float32Array(width * height)
   const b = new Float32Array(width * height)
   const data = image.data
-  const inv = 1 / (factor * factor)
-  for (let cy = 0; cy < height; cy++) {
-    for (let cx = 0; cx < width; cx++) {
-      let sr = 0
-      let sg = 0
-      let sb = 0
-      for (let dy = 0; dy < factor; dy++) {
-        let p = ((cy * factor + dy) * image.width + cx * factor) * 4
-        for (let dx = 0; dx < factor; dx++, p += 4) {
-          sr += data[p]
-          sg += data[p + 1]
-          sb += data[p + 2]
-        }
+  const rowStride = image.width * 4
+  if (factor === 1) {
+    for (let y = 0; y < height; y++) {
+      let p = y * rowStride
+      const base = y * width
+      for (let x = 0; x < width; x++, p += 4) {
+        r[base + x] = data[p]
+        g[base + x] = data[p + 1]
+        b[base + x] = data[p + 2]
       }
-      const i = cy * width + cx
-      r[i] = sr * inv
-      g[i] = sg * inv
-      b[i] = sb * inv
+    }
+    return { width, height, factor, r, g, b }
+  }
+  const inv = 1 / (factor * factor)
+  const sr = new Uint32Array(width)
+  const sg = new Uint32Array(width)
+  const sb = new Uint32Array(width)
+  // One 32-bit load per pixel when the buffer allows it (RGBA bytes; little-endian on every
+  // platform the app runs on, checked below), else three byte loads.
+  const words = data.byteOffset % 4 === 0 && LITTLE_ENDIAN ? new Uint32Array(data.buffer, data.byteOffset, data.length >> 2) : null
+  const wordStride = image.width
+  for (let cy = 0; cy < height; cy++) {
+    sr.fill(0)
+    sg.fill(0)
+    sb.fill(0)
+    for (let dy = 0; dy < factor; dy++) {
+      if (words) {
+        let q = (cy * factor + dy) * wordStride
+        for (let cx = 0; cx < width; cx++) {
+          let ar = 0
+          let ag = 0
+          let ab = 0
+          for (let dx = 0; dx < factor; dx++, q++) {
+            const v = words[q]
+            ar += v & 0xff
+            ag += (v >>> 8) & 0xff
+            ab += (v >>> 16) & 0xff
+          }
+          sr[cx] += ar
+          sg[cx] += ag
+          sb[cx] += ab
+        }
+        continue
+      }
+      let p = (cy * factor + dy) * rowStride
+      for (let cx = 0; cx < width; cx++) {
+        let ar = 0
+        let ag = 0
+        let ab = 0
+        for (let dx = 0; dx < factor; dx++, p += 4) {
+          ar += data[p]
+          ag += data[p + 1]
+          ab += data[p + 2]
+        }
+        sr[cx] += ar
+        sg[cx] += ag
+        sb[cx] += ab
+      }
+    }
+    const base = cy * width
+    for (let cx = 0; cx < width; cx++) {
+      r[base + cx] = sr[cx] * inv
+      g[base + cx] = sg[cx] * inv
+      b[base + cx] = sb[cx] * inv
     }
   }
   return { width, height, factor, r, g, b }
@@ -226,18 +278,45 @@ export interface MotionMaps {
  * the frame to move the median. Returns 1 when too few cells are bright enough.
  */
 export function illuminationGain(grid: GridFrame, background: GridFrame, step = 4, minLevelSum = 60): number {
-  const ratios: number[] = []
+  const ratios = new Float64Array(Math.ceil(grid.height / step) * Math.ceil(grid.width / step) + 1)
+  let n = 0
   for (let y = 0; y < grid.height; y += step) {
     for (let x = (y / step) % 2 ? step >> 1 : 0; x < grid.width; x += step) {
       const i = y * grid.width + x
       const b = background.r[i] + background.g[i] + background.b[i]
       if (b < minLevelSum) continue
-      ratios.push((grid.r[i] + grid.g[i] + grid.b[i]) / b)
+      ratios[n++] = (grid.r[i] + grid.g[i] + grid.b[i]) / b
     }
   }
-  if (ratios.length < 50) return 1
-  ratios.sort((a, b) => a - b)
-  return clamp(ratios[ratios.length >> 1], 0.5, 2)
+  if (n < 50) return 1
+  // The element a full sort would put at n >> 1 (quickselect: linear time, same value).
+  return clamp(selectKth(ratios, n, n >> 1), 0.5, 2)
+}
+
+/** k-th smallest of values[0..n) (0-based), partially reordering the array (Hoare quickselect). */
+export function selectKth(values: Float64Array, n: number, k: number): number {
+  let lo = 0
+  let hi = n - 1
+  while (lo < hi) {
+    const pivot = values[(lo + hi) >> 1]
+    let i = lo
+    let j = hi
+    while (i <= j) {
+      while (values[i] < pivot) i++
+      while (values[j] > pivot) j--
+      if (i <= j) {
+        const t = values[i]
+        values[i] = values[j]
+        values[j] = t
+        i++
+        j--
+      }
+    }
+    if (k <= j) hi = j
+    else if (k >= i) lo = i
+    else return values[k]
+  }
+  return values[k]
 }
 
 /**
@@ -282,23 +361,39 @@ export function motionMaps(
   return { motion, colour: effective }
 }
 
-/** 3x3 maximum filter inside rect; closes noise holes in the motion map of a slow ball. */
+/**
+ * 3x3 maximum filter inside rect; closes noise holes in the motion map of a slow ball.
+ * Separable (row maxima, then column maxima of those), which gives the same maxima with
+ * fewer reads. Values are >= 0 (motion likelihoods), so the result is floored at 0 as before.
+ */
 export function dilateMax3x3(map: Float32Array, width: number, rect: CellRect): Float32Array {
   const out = new Float32Array(map.length)
-  for (let y = rect.y0; y < rect.y1; y++) {
-    for (let x = rect.x0; x < rect.x1; x++) {
-      let best = 0
-      for (let dy = -1; dy <= 1; dy++) {
-        const ny = y + dy
-        if (ny < rect.y0 || ny >= rect.y1) continue
-        for (let dx = -1; dx <= 1; dx++) {
-          const nx = x + dx
-          if (nx < rect.x0 || nx >= rect.x1) continue
-          const v = map[ny * width + nx]
-          if (v > best) best = v
-        }
-      }
-      out[y * width + x] = best
+  const w = rect.x1 - rect.x0
+  const h = rect.y1 - rect.y0
+  if (w <= 0 || h <= 0) return out
+  // Horizontal pass into a rect-sized buffer.
+  const row = new Float32Array(w * h)
+  for (let y = 0; y < h; y++) {
+    const src = (rect.y0 + y) * width + rect.x0
+    const dst = y * w
+    for (let x = 0; x < w; x++) {
+      let best = map[src + x]
+      if (x > 0 && map[src + x - 1] > best) best = map[src + x - 1]
+      if (x < w - 1 && map[src + x + 1] > best) best = map[src + x + 1]
+      row[dst + x] = best > 0 ? best : 0
+    }
+  }
+  // Vertical pass.
+  for (let y = 0; y < h; y++) {
+    const dst = (rect.y0 + y) * width + rect.x0
+    const mid = y * w
+    const up = mid - w
+    const down = mid + w
+    for (let x = 0; x < w; x++) {
+      let best = row[mid + x]
+      if (y > 0 && row[up + x] > best) best = row[up + x]
+      if (y < h - 1 && row[down + x] > best) best = row[down + x]
+      out[dst + x] = best
     }
   }
   return out

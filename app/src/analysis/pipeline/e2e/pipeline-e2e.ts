@@ -20,8 +20,10 @@ import { getSession } from '../../../data/repos/sessions.ts'
 import { listVideosBySession } from '../../../data/repos/videos.ts'
 import { ulid } from '../../../platform/ids.ts'
 import type { CameraView, CaptureContext, Handedness, MetricValue, TargetZone } from '../../types.ts'
+import type { EngineInput, EngineOutput } from '../../engine.ts'
 import { AnalysisError } from '../errors.ts'
 import { defaultDeps, runAnalysis, type PipelineDeps } from '../orchestrator.ts'
+import type { PoseEstimator } from '../passes.ts'
 import type { PipelineEvent, PipelineProgress, RunAnalysisResult } from '../types.ts'
 import { analyseSessionDouble, findServeWindowsDouble } from './testDoubleEngine.ts'
 import { renderView, type ServeSummary, type ViewState } from './view.ts'
@@ -61,9 +63,37 @@ export interface E2EReport {
   consoleErrors: string[]
 }
 
+/** Engine input/output kept for accuracy checks against the clip's truth (perf-accuracy.mts). */
+export interface PipelineDump {
+  meta: EngineInput['meta']
+  /** [frameIndex, tReal, landmarks as [x, y, z, visibility] rows or null]. */
+  poses: [number, number, number[][] | null][]
+  windows: { startReal: number; endReal: number }[]
+  serves: EngineOutput['serves']
+  stats: EngineOutput['stats']
+  quality: string
+  ballTracks: number
+  poseStats?: unknown[]
+}
+
 declare global {
   interface Window {
     __pipelineE2E?: E2EReport
+    __pipelineDump?: PipelineDump
+  }
+}
+
+const r5 = (v: number | undefined) => (v === undefined ? 0 : Math.round(v * 1e5) / 1e5)
+
+function packDump(input: EngineInput, out: EngineOutput): PipelineDump {
+  return {
+    meta: input.meta,
+    poses: input.poses.map((p) => [p.frameIndex, p.tReal, p.landmarks ? p.landmarks.map((l) => [r5(l.x), r5(l.y), r5(l.z), r5(l.visibility)]) : null]),
+    windows: (input.ball.toss ?? []).map((t) => t as { startReal: number; endReal: number }).map((t) => ({ startReal: t.startReal, endReal: t.endReal })),
+    serves: out.serves.map((s) => ({ ...s, keyFrames: {} })),
+    stats: out.stats,
+    quality: out.quality.overall,
+    ballTracks: input.ball.tracks.length,
   }
 }
 
@@ -193,6 +223,29 @@ async function main(): Promise<void> {
       }),
     }
   }
+  // Accuracy dumps (perf-bench.mjs): the engine's input poses and output serves, plus pose-source
+  // stats, captured by wrapping the injected deps (the pipeline itself is unchanged).
+  const poseSources: PoseEstimator[] = []
+  if (params.get('dump') === '1') {
+    const real = deps.engine
+    const createPose = deps.createPoseSource
+    deps = {
+      ...deps,
+      createPoseSource: async (pass, model) => {
+        const source = await createPose(pass, model)
+        poseSources.push(source)
+        return source
+      },
+      engine: {
+        findServeWindows: real.findServeWindows,
+        analyseSession: (input) => {
+          const out = real.analyseSession(input)
+          window.__pipelineDump = packDump(input, out)
+          return out
+        },
+      },
+    }
+  }
   if (useDouble) state.clipLabel = `${clip} (test-double engine: engine.ts is still a stub)`
   const report: E2EReport = { state: 'running', clip, sessionId, engine: useDouble ? 'test-double' : 'engine.ts', events: [], warnings: [], consoleErrors }
   window.__pipelineE2E = report
@@ -231,6 +284,12 @@ async function main(): Promise<void> {
       signal: controller.signal,
       source: 'file-import',
       passA: params.get('passA') === 'uniform' ? { coarseHz: 15, fineHz: 15 } : undefined,
+      // Pass B tuning knobs for perf-bench.mjs A/B runs (?numPoses=2, ?lanes=1, ?reuse=0).
+      passB: {
+        numPoses: params.get('numPoses') === '2' ? 2 : params.get('numPoses') === '1' ? 1 : undefined,
+        lanes: Number(params.get('lanes')) > 0 ? Number(params.get('lanes')) : undefined,
+        reuseSparse: params.get('reuse') === '0' ? false : undefined,
+      },
       onProgress: (event: PipelineEvent) => {
         if (event.type === 'warning') report.warnings.push(event.message)
         if (event.type !== 'progress') return
@@ -243,6 +302,7 @@ async function main(): Promise<void> {
     }, deps)
     const { stats, ...rest } = result
     report.result = { ...rest, statsMetricIds: Object.keys(stats.metrics) }
+    if (window.__pipelineDump) window.__pipelineDump.poseStats = poseSources.map((s) => s.stats?.() ?? null)
     report.verify = await verify(sessionId, result.serveIds)
     report.state = 'done'
     state.status = 'done'
