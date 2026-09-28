@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { UNLOCK_HINTS } from '../../../../analysis/metrics/catalogue.ts'
 import { lintCopy } from '../../../copy/lint.ts'
 import { IMPORT_MOUNT_HINT, TILT_HINT, tiltHint } from './hints.ts'
 
@@ -22,5 +23,12 @@ describe('tilt hint copy', () => {
       expect(lintCopy(t)).toEqual([])
       expect(t).not.toMatch(/\d\s*°/)
     }
+  })
+})
+
+describe('the engine emits the same tilt hint (engine 1.1.0)', () => {
+  it('PITCH_UNKNOWN and TILT_UNKNOWN unlock hints are TILT_HINT, so tiltHint has nothing to rewrite', () => {
+    expect(UNLOCK_HINTS.PITCH_UNKNOWN).toBe(TILT_HINT)
+    expect(UNLOCK_HINTS.TILT_UNKNOWN).toBe(TILT_HINT)
   })
 })

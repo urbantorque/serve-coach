@@ -30,6 +30,7 @@ import { setupKeyOf } from './metrics/setup.ts'
 import { buildTrack, indexAt, pt, rangeIdx, type PoseTrack } from './serve/track.ts'
 import { findServeWindows as findWindows, type ServeWindowSpan } from './serve/windows.ts'
 import { analyseServe, AUDIO_CALIBRATION, serveEvents, type ServeCore } from './serve/analyse.ts'
+import { FOOT_TOE } from './serve/events.ts'
 import { buildPhases } from './serve/phases.ts'
 import { computeServeMetrics, type MetricContext, type PerServeResult, type TimeBaseClass } from './metrics/perServe.ts'
 import { buildSessionStats, type SessionServe } from './metrics/session.ts'
@@ -179,6 +180,87 @@ function netDirPrior(handedness: Handedness, cameraSide: 'chest' | 'back'): 1 | 
   return (cameraSide === 'back' ? -base : base) as 1 | -1
 }
 
+/**
+ * Session evidence rule for the data checks that can override what the player told us: the netDir
+ * check (METRICS §1.1) and the view check (§2.3.7). Evidence is counted per serve (one vote per
+ * serve, from that serve's own ball and body), never per ball track, so a stray or mis-associated
+ * track can move at most one serve's vote. The check acts only with at least
+ * SESSION_EVIDENCE_MIN_SERVES serves carrying evidence (every counted serve when a clip has fewer)
+ * and at least SESSION_EVIDENCE_SHARE of them contradicting.
+ */
+export const SESSION_EVIDENCE_MIN_SERVES = 3
+export const SESSION_EVIDENCE_SHARE = 0.7
+
+export interface SessionEvidence {
+  /** Serves with evidence either way. */
+  decided: number
+  /** Serves whose evidence contradicts what was declared. */
+  contradicting: number
+  /** contradicting / decided (0 with no evidence). */
+  share: number
+  /** Enough serves carry evidence for the check to act. */
+  enough: boolean
+  /** Enough evidence, and at least SESSION_EVIDENCE_SHARE of it contradicts. */
+  contradicted: boolean
+}
+
+/** `votes`: per serve, true = contradicts, false = agrees, null = no evidence. `counted`: serves in the clip. */
+export function sessionEvidence(votes: readonly (boolean | null)[], counted: number): SessionEvidence {
+  const decided = votes.filter((v) => v !== null).length
+  const contradicting = votes.filter((v) => v === true).length
+  const share = decided ? contradicting / decided : 0
+  const needed = Math.max(1, Math.min(SESSION_EVIDENCE_MIN_SERVES, Math.max(counted, decided)))
+  const enough = decided >= needed
+  return { decided, contradicting, share, enough, contradicted: enough && share >= SESSION_EVIDENCE_SHARE }
+}
+
+/** "2 of 5 serves", "1 of 1 serve". */
+const servesOf = (k: number, n: number) => `${k} of ${n} serve${n === 1 ? '' : 's'}`
+
+/** Smallest outgoing-ball travel across the picture that shows a direction (BH). */
+const NETDIR_BALL_MIN_BH = 0.1
+/** Smallest landing step from the start toe that shows a direction (BH; about 14 cm at 1.8 m). */
+const NETDIR_STEP_MIN_BH = 0.08
+
+/**
+ * One serve's evidence for netDir (METRICS §1.1), in image x (+1 = towards the right):
+ *   - the served ball: this serve's own outgoing track (ServeBall.outgoing, the first outgoing track
+ *     after this serve's toss apex; never a track from another window), detections only, moving
+ *     mainly across the picture;
+ *   - the landing step: the landing toe (2 frames after a real foot contact, as landing-distance)
+ *     minus the start toe S0. S0 is the netDir front toe, so under a wrong prior it is the back toe
+ *     and the step still points to the net.
+ * When both exist and disagree the serve gives no evidence. null = no evidence.
+ */
+export function netDirVote(core: ServeCore, track: PoseTrack, aspect: number): 1 | -1 | null {
+  const bh = core.ref?.bodyHeightHU
+  if (!bh) return null
+  let ball: 1 | -1 | null = null
+  const o = (core.ball.outgoing?.observations ?? []).filter((x) => x.source !== 'predicted')
+  if (o.length >= 2) {
+    const dx = (o[o.length - 1].x - o[0].x) * aspect
+    const dy = o[o.length - 1].y - o[0].y
+    if (Math.abs(dx) >= NETDIR_BALL_MIN_BH * bh && Math.abs(dx) > Math.abs(dy)) ball = dx > 0 ? 1 : -1
+  }
+  let step: 1 | -1 | null = null
+  const land = core.events.landing
+  if (land && land.event.method === 'foot-contact' && (land.foot === 'left' || land.foot === 'right') && core.s0 && track.t.length) {
+    const i0 = indexAt(track, land.event.tReal + 2 * track.dt)
+    const xs: number[] = []
+    for (let i = i0; i <= Math.min(track.t.length - 1, i0 + 2); i++) {
+      const q = pt(track, i, FOOT_TOE[land.foot], 0.5)
+      if (q) xs.push(q.x)
+    }
+    if (xs.length) {
+      xs.sort((p, q) => p - q)
+      const dx = (xs[xs.length >> 1] - core.s0.x) * aspect
+      if (Math.abs(dx) >= NETDIR_STEP_MIN_BH * bh) step = dx > 0 ? 1 : -1
+    }
+  }
+  if (ball !== null && step !== null) return ball === step ? ball : null
+  return ball ?? step
+}
+
 /** Missing-frame share in [a, b] when the pose rate is dense (≈ capture rate); null otherwise. */
 /**
  * Share of the video's frames missing in [a, b]: time gaps between consecutive analysed frames that
@@ -302,80 +384,89 @@ export function analyseSession(input: EngineInput): EngineOutput {
 
   // Time base prior before the ball pass.
   const prior = timeBaseOf(meta, [])
-  let netDir = view === 'side' ? netDirPrior(handedness, cameraSide) : 1
-
-  // Data check of netDir (§1.1): the outgoing ball's x direction across serves.
-  const outDirs = input.ball.tracks
-    .filter((t) => t.kind === 'outgoing' && t.observations.length >= 2)
-    .map((t) => Math.sign(t.observations[t.observations.length - 1].x - t.observations[0].x))
-    .filter((s) => s !== 0)
-  if (view === 'side' && outDirs.length >= 1) {
-    const disagree = outDirs.filter((s) => s !== netDir).length / outDirs.length
-    if (disagree >= 0.7) {
-      netDir = (netDir === 1 ? -1 : 1) as 1 | -1
-      warnings.push('The ball left towards the other side of the picture than expected for your hand and camera side (VIEW_MISMATCH, info). Using the ball direction.')
-    }
-  }
 
   // Per-serve analysis (two passes: the second fills body height from the session when a serve lacks upright frames).
-  const cores: ServeCore[] = []
-  let prevRecovery: number | undefined
   const firstT = input.poses.length ? Math.min(...input.poses.map((p) => p.tReal)) : 0
   const searchStartOf = (k: number) => Math.max(firstT, spans[k].anchorReal - 8, k > 0 ? Math.max(spans[k - 1].endReal, spans[k - 1].anchorReal + 1.5) : -Infinity)
-  spans.forEach((s, k) => {
-    const core = analyseServe({
-      index: k + 1,
-      window: { start: s.startReal, end: s.endReal, anchor: s.anchorReal, confidence: s.confidence },
-      track,
-      cam,
-      view,
-      handedness,
-      netDir,
-      playerHeightM: H,
-      playerHeightEntered: heightEntered,
-      tracks: input.ball.tracks,
-      observations: input.ball.observations,
-      tossResults: parsed.toss,
-      onsets,
-      realTime: prior.realTimePrior,
-      previousRecoveryEnd: prevRecovery,
-      searchStart: searchStartOf(k),
-      captureFps,
+  const analyseAll = (netDir: 1 | -1): ServeCore[] => {
+    const cores: ServeCore[] = []
+    let prevRecovery: number | undefined
+    spans.forEach((s, k) => {
+      const core = analyseServe({
+        index: k + 1,
+        window: { start: s.startReal, end: s.endReal, anchor: s.anchorReal, confidence: s.confidence },
+        track,
+        cam,
+        view,
+        handedness,
+        netDir,
+        playerHeightM: H,
+        playerHeightEntered: heightEntered,
+        tracks: input.ball.tracks,
+        observations: input.ball.observations,
+        tossResults: parsed.toss,
+        onsets,
+        realTime: prior.realTimePrior,
+        previousRecoveryEnd: prevRecovery,
+        searchStart: searchStartOf(k),
+        captureFps,
+      })
+      prevRecovery = core.events.recoveryEnd?.tReal
+      cores.push(core)
     })
-    prevRecovery = core.events.recoveryEnd?.tReal
-    cores.push(core)
-  })
-  // Second pass: (a) a serve with fewer than 5 upright frames ('weak') or none takes the session median
-  // H_HU of the serves that had them (METRICS §1.1); weak serves never feed that median. (b) With the
-  // hit sound, the audio–video offset calibrated from the other serves (METRICS §2.4.5).
-  const refs = cores.filter((c) => c.ref && c.refSource === 'setup-upright').map((c) => c.ref!.bodyHeightHU)
-  const fallbackHU = refs.length ? median(refs) : undefined
-  const firstPass = [...cores]
-  for (let k = 0; k < cores.length; k++) {
-    const needsHeight = cores[k].refSource !== 'setup-upright' && !!fallbackHU
-    const audioOffset = onsets.length ? audioOffsetFor(k, firstPass, captureFps) : undefined
-    if (!needsHeight && !audioOffset) continue
-    cores[k] = analyseServe({
-      index: k + 1,
-      window: cores[k].window,
-      track,
-      cam,
-      view,
-      handedness,
-      netDir,
-      playerHeightM: H,
-      playerHeightEntered: heightEntered,
-      tracks: input.ball.tracks,
-      observations: input.ball.observations,
-      tossResults: parsed.toss,
-      onsets,
-      realTime: prior.realTimePrior,
-      previousRecoveryEnd: k > 0 ? cores[k - 1].events.recoveryEnd?.tReal : undefined,
-      fallbackBodyHeightHU: needsHeight ? fallbackHU : undefined,
-      audioOffset,
-      searchStart: searchStartOf(k),
-      captureFps,
-    })
+    // Second pass: (a) a serve with fewer than 5 upright frames ('weak') or none takes the session median
+    // H_HU of the serves that had them (METRICS §1.1); weak serves never feed that median. (b) With the
+    // hit sound, the audio–video offset calibrated from the other serves (METRICS §2.4.5).
+    const refs = cores.filter((c) => c.ref && c.refSource === 'setup-upright').map((c) => c.ref!.bodyHeightHU)
+    const fallbackHU = refs.length ? median(refs) : undefined
+    const firstPass = [...cores]
+    for (let k = 0; k < cores.length; k++) {
+      const needsHeight = cores[k].refSource !== 'setup-upright' && !!fallbackHU
+      const audioOffset = onsets.length ? audioOffsetFor(k, firstPass, captureFps) : undefined
+      if (!needsHeight && !audioOffset) continue
+      cores[k] = analyseServe({
+        index: k + 1,
+        window: cores[k].window,
+        track,
+        cam,
+        view,
+        handedness,
+        netDir,
+        playerHeightM: H,
+        playerHeightEntered: heightEntered,
+        tracks: input.ball.tracks,
+        observations: input.ball.observations,
+        tossResults: parsed.toss,
+        onsets,
+        realTime: prior.realTimePrior,
+        previousRecoveryEnd: k > 0 ? cores[k - 1].events.recoveryEnd?.tReal : undefined,
+        fallbackBodyHeightHU: needsHeight ? fallbackHU : undefined,
+        audioOffset,
+        searchStart: searchStartOf(k),
+        captureFps,
+      })
+    }
+    return cores
+  }
+
+  // netDir (§1.1): the prior from the entered hand and camera side, checked against the data: one
+  // vote per counted serve from its own served ball and landing step (netDirVote). The prior is
+  // overridden only when enough serves carry evidence and ≥ 70% of them contradict it
+  // (sessionEvidence); a stray ball track from another court or window never decides it.
+  let netDir: 1 | -1 = view === 'side' ? netDirPrior(handedness, cameraSide) : 1
+  let cores = analyseAll(netDir)
+  if (view === 'side') {
+    const counted = cores.filter((c) => c.classification === 'serve')
+    const dirs = counted.map((c) => netDirVote(c, track, cam.aspect))
+    const ev = sessionEvidence(dirs.map((d) => (d === null ? null : d !== netDir)), counted.length)
+    const seen = `on ${servesOf(ev.contradicting, ev.decided)} where it could be seen`
+    if (ev.contradicted) {
+      netDir = (netDir === 1 ? -1 : 1) as 1 | -1
+      cores = analyseAll(netDir)
+      warnings.push(`The served ball or the landing step went towards the other side of the picture than expected for your hand and camera side ${seen} (VIEW_MISMATCH, info). Using the direction they showed.`)
+    } else if (ev.contradicting > 0) {
+      warnings.push(`The served ball or the landing step went towards the other side of the picture than expected for your hand and camera side ${seen} (info). Not enough to override your entries, so your hand and camera side were used.`)
+    }
   }
   const tb = timeBaseOf(meta, cores)
   if (tb.cls === 'unknown') {
@@ -414,11 +505,15 @@ export function analyseSession(input: EngineInput): EngineOutput {
     if (view === 'rear') return horizontal && growth > 0.7
     return null
   })
-  const decided = sideEvidence.filter((x): x is boolean => x !== null)
-  const contradict = decided.filter((h) => h).length
-  const mismatchShare = decided.length ? contradict / decided.length : 0
-  const viewMismatch = decided.length >= 1 && mismatchShare >= 0.7 && (view === 'side' || view === 'rear')
+  // One vote per serve (sessionEvidence): a single fast stray track in a long session cannot
+  // withhold every view-specific value; a short clip still needs every counted serve's evidence.
+  const viewEv = sessionEvidence(sideEvidence, cores.filter((c) => c.classification === 'serve').length)
+  const mismatchShare = viewEv.share
+  const viewMismatch = viewEv.contradicted && (view === 'side' || view === 'rear')
   if (viewMismatch) warnings.push('This clip does not look like the view that was chosen; view-specific metrics are unavailable.')
+  else if (viewEv.contradicting > 0 && (view === 'side' || view === 'rear')) {
+    warnings.push(`The served ball did not move as it would in the chosen view on ${servesOf(viewEv.contradicting, viewEv.decided)} with a fast served ball (info). Not enough to call the view wrong, so view-specific metrics were kept.`)
+  }
 
   // Roll sanity check (METRICS §1.1.3a). A level that is only ASSUMED from the import's mount answer
   // must agree with the standing player: the mid-ankle to mid-shoulder line within 3° of the image
@@ -501,7 +596,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
     shortSidePx: Math.min(meta.width, meta.height),
     condition,
     audio: { on: audioOn, usable: audioTiming.usable && onsets.length > 0, reason: audioTiming.usable ? undefined : audioTiming.reason },
-    view: { declared: view, mismatch: viewMismatch, mismatchShare },
+    view: { declared: view, mismatch: viewMismatch, mismatchShare, decided: viewEv.decided, contradicting: viewEv.contradicting },
     framesMissing,
     hardRejects: results.map((r) => r.hardRejects.length),
     framing,

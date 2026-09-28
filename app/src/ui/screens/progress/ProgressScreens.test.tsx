@@ -32,7 +32,8 @@ describe('Progress', () => {
     expect(screen.getByRole('heading', { name: 'Am I using my legs?' })).toBeInTheDocument()
     // Toss tile: latest value below the usual range from the two earlier sessions.
     expect(screen.getAllByText(/usual 18 to 19.5 cm/).length).toBeGreaterThan(0)
-    expect(screen.getByRole('img', { name: /Is my toss becoming more consistent\? 4 matched sessions/ })).toBeInTheDocument()
+    // An interactive plot (arrow keys move between sessions) is role="application" with its key help (PlotSurface).
+    expect(screen.getByRole('application', { name: /Is my toss becoming more consistent\? 4 matched sessions/ })).toBeInTheDocument()
     // Rates: counts and the honest "too small to confirm by counting" message.
     expect(screen.getByText(/more than 150 serves to confirm/)).toBeInTheDocument()
     // Experiments with their verdict words.

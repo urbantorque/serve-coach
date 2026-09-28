@@ -234,4 +234,4 @@ export const LIBRARY_VERSION = (() => {
   return `lib-${h.toString(16).padStart(8, '0')}`
 })()
 
-export const ENGINE_VERSION = 'coaching@1.0.0'
+export const ENGINE_VERSION = 'coaching@1.1.0'

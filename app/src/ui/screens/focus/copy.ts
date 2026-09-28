@@ -43,6 +43,9 @@ export const FOCUS_COPY = {
   keepGoingBody: 'Keep building consistency. Nothing stood out as clearly worth changing this session.',
   ruleExperimentalOff:
     'This coaching rule is still experimental: there are no club-player thresholds for it yet. It runs only when Experimental metrics is on in Profile.',
+  /** The same, as one line of a list without titles ("Also checked" on the focus card). */
+  ruleExperimentalOffFor: (subject: string) =>
+    `${subject}: this coaching rule is still experimental, with no club-player thresholds yet. It runs only when Experimental metrics is on in Profile.`,
   recordNext: 'Record next session',
   captureTitle: "We couldn't see enough to coach this time",
   setupCamera: 'Set up camera',

@@ -105,7 +105,10 @@ export interface CoachingServe {
   courtSide?: ServeSide
   serveNumber?: ServeNumber
   intendedType?: ServeType
-  /** CAPTURE block index; within-session comparisons never cross blocks. */
+  /**
+   * CAPTURE block index; within-session comparisons never cross blocks. Set for an "Experiment"
+   * recording that holds both blocks (experiment.ts `experimentBlocks`): 1 before the drill, 2 after.
+   */
   block?: number
 }
 
@@ -166,6 +169,13 @@ export interface CoachingExperiment {
   pinnedByCoach?: boolean
   /** The visit (local day) of the session that started it; later blocks that day are same-session (§12.3). */
   startedVisitId?: string
+  /**
+   * Each later visit's re-test: visitId -> the first session that day with serves in the stratum
+   * (experiment.ts `retestVisitsOf`). Anything recorded after it that day (Block B of an "Experiment"
+   * visit, a block after the drill) is same-session, never a re-test (§12.3). decideFocus derives it
+   * from its sessions when absent.
+   */
+  retestVisits?: Record<string, string>
   /** Later matched re-tests only (§12.3). */
   retests: { sessionId: string; verdict: VerdictId; resolvedMet: boolean }[]
   status: 'active' | 'worked' | 'parked' | 'superseded'

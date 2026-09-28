@@ -14,7 +14,7 @@ import {
   WarningCircleIcon,
 } from '@phosphor-icons/react'
 import { useId, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { PAUSE_LINE, REFERRAL_COPY, type CaptureFixDecision, type FocusDecision, type KeepGoingDecision } from '../../../coaching/index.ts'
 import { loadDemoData, showToast } from '../../../data/index.ts'
 import {
@@ -54,11 +54,17 @@ import { useFocusModel, type FocusModel } from './useFocus.ts'
  */
 export function FocusDrillScreen() {
   const model = useFocusModel()
-  const [body, setBody] = useState<BodyCheckStart | null>(null)
+  // Today's pause card links here with ?body=settle, so "It's settled" runs the body check (DESIGN §8.8).
+  const [params, setParams] = useSearchParams()
+  const [body, setBody] = useState<BodyCheckStart | null>(() => (params.get('body') === 'settle' ? 'settle' : null))
+  const closeBody = () => {
+    setBody(null)
+    if (params.has('body')) setParams({}, { replace: true })
+  }
   return (
     <>
       <FocusPage model={model} onBody={setBody} />
-      <BodyCheckSheet open={body !== null} onClose={() => setBody(null)} start={body ?? 'question'} profile={model.profile} previousLevel={model.referral} />
+      <BodyCheckSheet open={body !== null} onClose={closeBody} start={body ?? 'question'} profile={model.profile} previousLevel={model.referral} />
     </>
   )
 }

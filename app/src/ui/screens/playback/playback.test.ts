@@ -11,7 +11,10 @@ import {
   groupServeMetrics,
   openingFrame,
   peekMetrics,
+  playerVideoLine,
   sameCameraSetup,
+  thisServeLabel,
+  VIDEO_MISSING_LINE,
   videoGoneLine,
   type CompareSessionData,
 } from './serveView.ts'
@@ -96,6 +99,16 @@ describe('video availability lines', () => {
     expect(videoGoneLine(stored)).toBeNull()
     expect(videoGoneLine({ ...stored, storage: 'deleted', deletedReason: 'retention' })).toBe('Video deleted after 30 days. Key frames kept.')
     expect(videoGoneLine({ ...stored, storage: 'deleted', deletedReason: 'after-analysis' })).toBe('Video deleted after analysis. Key frames kept.')
+  })
+  it('a clip stored on the phone whose file did not load says it can\'t be found (never a pose reason)', () => {
+    const stored = { ...s1.video, role: 'primary' as const, storage: 'idb' as const }
+    expect(playerVideoLine(stored, null)).toBe(VIDEO_MISSING_LINE)
+    expect(playerVideoLine({ ...stored, storage: 'native' }, null)).toBe(VIDEO_MISSING_LINE)
+    expect(playerVideoLine(stored, 'blob:clip')).toBeNull()
+    // Still loading: no line yet.
+    expect(playerVideoLine(stored, undefined)).toBeNull()
+    // A known reason wins.
+    expect(playerVideoLine({ ...stored, storage: 'deleted', deletedReason: 'after-analysis' }, null)).toBe('Video deleted after analysis. Key frames kept.')
   })
   it('steps between stored key frames when the video is gone', () => {
     const frames = [100, 140, 170]
@@ -185,5 +198,13 @@ describe('tagging state (DESIGN §8.14)', () => {
     expect(announce(6, 'in', 15, false)).toBe('Serve 7: in. Serve 8 of 15.')
     expect(tallyConflict(c, 2)).toEqual({ tags: 1, tally: 2 })
     expect(tallyConflict(c, 1)).toBeNull()
+  })
+})
+
+describe('Compare pill for this serve', () => {
+  it('says Today only for a session from today, else its date', () => {
+    const now = new Date(2026, 8, 28, 10, 0)
+    expect(thisServeLabel({ visitId: '2026-09-28' }, 3, now)).toBe('Today, serve 3')
+    expect(thisServeLabel({ visitId: '2026-09-26' }, 1, now)).toBe('26 Sep, serve 1')
   })
 })

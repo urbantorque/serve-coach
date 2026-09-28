@@ -3,6 +3,9 @@ import 'fake-indexeddb/auto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { ENGINE_VERSION } from '../analysis/metrics/catalogue.ts'
+import { PIPELINE_VERSION } from '../analysis/pipeline/orchestrator.ts'
+import { ENGINE_VERSION as COACHING_ENGINE_VERSION } from '../coaching/library.ts'
 import { getDb, resetDbForTests } from './db.ts'
 import { hasDemoData, loadDemoData, removeDemoData, sampleSessionId } from './demo.ts'
 import { isSampleSeed, packTyped, SAMPLE_FEATURED_SESSION_ID, type SampleSeed, unpackTyped } from './sample.ts'
@@ -40,6 +43,25 @@ describe.skipIf(!existsSync(seedPath))('published sample seed (public/demo)', ()
       for (const serve of s.serves) for (const m of Object.values(serve.metrics)) expect(m?.status).toBeTruthy()
       // A stored video never has sound (D4, D8).
       for (const v of s.videos) expect(v.audio === 'never-recorded' || v.audio === 'removed').toBe(true)
+    }
+  })
+
+  it('was built by the current engine, pipeline and coaching engine (rebuild with scripts/build-demo.mjs)', () => {
+    expect(seed.versions.engine).toBe(ENGINE_VERSION)
+    expect(seed.versions.pipeline).toBe(PIPELINE_VERSION)
+    expect(seed.versions.coachingEngine).toBe(COACHING_ENGINE_VERSION)
+  })
+
+  it('counts every serve of the three clips, and labels capture quality experimental (D2 addendum)', () => {
+    const expected: Record<string, number> = { 'sample-s1': 8, 'sample-s2': 16, 'sample-s3': 16 }
+    for (const s of seed.sessions) {
+      const n = expected[s.session.id]
+      expect(s.serves, s.session.id).toHaveLength(n)
+      expect(s.serves.filter((x) => x.includedFlag === 1), s.session.id).toHaveLength(n)
+      expect(s.stats.metrics['serve-count']?.value, s.session.id).toBe(n)
+      const cq = s.stats.metrics['capture-quality']
+      expect(cq?.status, s.session.id).toBe('experimental')
+      expect(cq?.reasonCode, s.session.id).toBe('VALIDATION_PENDING')
     }
   })
 

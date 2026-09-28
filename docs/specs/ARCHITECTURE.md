@@ -1656,7 +1656,7 @@ UI code never touches `db` directly.
 
 **PWA quota and eviction.** WebKit (Safari 17+) gives a browser-app origin up to about 60% of disk, and a home-screen web app gets the same quota. Non-persistent origins can be evicted, least recently used first, under storage pressure or after inactivity. `navigator.storage.persist()` is granted heuristically, for example to home-screen web apps [A1]. The app therefore:
 
-1. calls `persist()` after the first successful analysis, not on first run;
+1. calls `persist()` after the first successful analysis, not on first run (*as built, 28 September 2026: when the first real session is handed to analysis, with one line telling the player why; Storage & privacy also has "Ask to protect"*);
 2. shows "Protected from automatic clean-up: yes/no" in Storage & privacy;
 3. recommends Add to Home Screen on iOS;
 4. nudges an export when persistence is denied.

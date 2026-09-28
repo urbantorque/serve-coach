@@ -37,7 +37,12 @@ export interface QualityInput {
   shortSidePx: number
   condition: ConditionClass
   audio: { usable: boolean; on: boolean; reason?: string }
-  view: { declared: string; mismatch: boolean; mismatchShare: number }
+  /**
+   * The view check (§2.3.7): mismatch only with enough serves carrying evidence (engine
+   * sessionEvidence). `decided` / `contradicting`: serves with evidence, and those contradicting the
+   * declared view (a few contradicting serves without a mismatch are reported as info).
+   */
+  view: { declared: string; mismatch: boolean; mismatchShare: number; decided?: number; contradicting?: number }
   /** Per serve: share of frames missing in the serve window (dense pose only). */
   framesMissing: readonly (number | null)[]
   /** Per serve: hard plausibility rejects. */
@@ -258,7 +263,7 @@ export function computeQuality(input: QualityInput): QualityOutcome {
       )
     }
   } else if (t === 'unknown') {
-    checks.push(check('cq.camera-level', false, 'info', 'Phone tilt unknown, so heights and angles are experimental.', { scope: 'clip', fix: 'Record in the app with motion access on, so we can level the picture.', affects: ['heights', 'angles'] }))
+    checks.push(check('cq.camera-level', false, 'info', 'Phone tilt unknown, so heights and angles are experimental.', { scope: 'clip', fix: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.", affects: ['heights', 'angles'] }))
   } else {
     checks.push(check('cq.camera-level', false, 'block', 'The phone was tilted more than we can correct.', { scope: 'clip', value: input.cam.pitch?.value, fix: 'Keep the phone level; the guide turns green.', affects: ['heights', 'positions', 'angles'] }))
   }
@@ -325,7 +330,13 @@ export function computeQuality(input: QualityInput): QualityOutcome {
   checks.push(check('cq.audio-timing', true, 'info', input.audio.on ? (input.audio.usable ? 'Hit-sound timing was used for contact.' : `Hit-sound timing was on but not usable${input.audio.reason ? `: ${input.audio.reason}` : ''}.`) : 'Hit-sound timing was off; contact was timed from the video.', { scope: 'clip' }))
 
   // View.
-  checks.push(input.view.mismatch ? check('cq.view', false, 'block', "This clip doesn't look like the view you chose.", { scope: 'clip', value: input.view.mismatchShare, fix: 'Check where the phone is.' }) : check('cq.view', true, 'info', 'The camera view matched.', { scope: 'clip' }))
+  checks.push(
+    input.view.mismatch
+      ? check('cq.view', false, 'block', "This clip doesn't look like the view you chose.", { scope: 'clip', value: input.view.mismatchShare, fix: 'Check where the phone is.' })
+      : (input.view.contradicting ?? 0) > 0
+        ? check('cq.view', true, 'info', `The served ball didn't look like the view you chose on ${input.view.contradicting} of ${input.view.decided} checked serve${input.view.decided === 1 ? '' : 's'}; not enough to change anything.`, { scope: 'clip', value: input.view.mismatchShare })
+        : check('cq.view', true, 'info', 'The camera view matched.', { scope: 'clip' }),
+  )
 
   // Condition class.
   if (input.condition === 'overcast') checks.push(check('cq.condition', true, 'info', 'Overcast light.', { scope: 'clip' }))

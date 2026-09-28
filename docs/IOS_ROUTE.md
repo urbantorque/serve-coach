@@ -1,20 +1,21 @@
 # iOS route
 
-**Updated 27 September 2026.** How the web app becomes an iPhone app: a Capacitor 8 shell around the built web app first, then native plugins for capture and (optionally) pose, then a fully native app only if the evidence calls for it (DECISIONS D9; ARCHITECTURE §15). Launch dates and legal steps are in [LAUNCH_AU.md](LAUNCH_AU.md).
+**Updated 28 September 2026.** How the web app becomes an iPhone app: a Capacitor 8 shell around the built web app first, then native plugins for capture and (optionally) pose, then a fully native app only if the evidence calls for it (DECISIONS D9; ARCHITECTURE §15). Launch dates and legal steps are in [LAUNCH_AU.md](LAUNCH_AU.md).
 
 **Short version:** `npx cap add ios` **worked on Windows**. The Xcode project in `app/ios` is generated and configured (permission strings, privacy manifest, iOS 26.0 target), but it has **never been resolved, signed, compiled or run**. Everything from Swift package resolution onwards needs a Mac.
 
-**Re-checked at the hardening commit after `33ac31f`** (28 September 2026, Windows):
-- `CI=1 npx cap sync ios` exits 0. It copies `dist/` into `ios/App/App/public` and rewrites `Package.swift` with no tracked changes.
+**Re-checked at the final-round commit after `4478e16`** (28 September 2026, Windows):
+- `npm run build` passes (typecheck clean); `dist/` is **73 MB** (§5).
+- `CI=1 npx cap sync ios` exits 0 ("Sync finished"). It copies `dist/` into `ios/App/App/public` and rewrites `Package.swift` with no tracked changes.
 - `CI=1 npx cap doctor ios` (run on 27 September) reports `[error] Xcode is not installed`, which is expected on Windows.
-- `npm run build` passes again (typecheck clean); the synced `dist/` is that build, 84 MB.
+- The web build now carries a web app manifest and a service worker (`sw.js`). **The service worker is never registered inside the shell** (`app/src/platform/pwa/register.ts` checks `Capacitor.isNativePlatform()`): the bundle is already local, and WKWebView service workers need App-Bound Domains (ARCHITECTURE §15.1). `sw.js` and the manifest are copied into the bundle but unused there.
 
 ## 1. What was generated here (Windows 11, 27 September 2026)
 
 Commands, run in `app/` with Node 24.18.0 and `@capacitor/cli` 8.5.2:
 
 ```sh
-npm run build            # tsc -b && vite build -> dist/ (83 MB, see §5)
+npm run build            # tsc -b && vite build -> dist/ (73 MB at the final round, see §5)
 CI=1 npx cap add ios     # exit 0
 CI=1 npx cap sync ios    # exit 0, after the capacitor.config.ts change
 ```
@@ -99,16 +100,16 @@ Add entries when native code starts using these APIs (research 07 [S39][S40]):
 
 ## 5. Web bundle size
 
-`dist/` is **83 MB**, all of which ships inside the app:
+`dist/` is **73 MB** (final round, 28 September 2026; 83 MB before), all of which ships inside the app:
 
 | Part | Size | Note |
 |---|---|---|
-| `mediapipe/wasm` | 34 MB | Three runtime variants (standard, module and no-SIMD, about 11–12 MB each). Ship only the variant the pose worker loads |
-| `demo` | 32 MB | Sample-session clips (4.3–7.7 MB each), key frames (8.7 MB), seed (5.2 MB) |
+| `demo` | 32 MB | Sample-session clips (4.5, 6.2 and 8.0 MB), key frames (8.8 MB), seed (5.4 MB). Rebuilt by the final engine |
+| `mediapipe/wasm` | 24 MB | Two runtime variants, about 12 MB each: `vision_wasm_module_internal` (the pose worker's build) and `vision_wasm_internal` (the main-thread fallback if the worker cannot start). The no-SIMD variant (11.3 MB) is no longer copied |
 | `models` | 15 MB | Pose Landmarker full (9.4 MB) and lite (5.8 MB). The pipeline defaults to full; lite is used for live framing |
-| `assets` | 3.1 MB | JavaScript and CSS |
+| `assets` | 3.3 MB | JavaScript and CSS |
 
-Pruning the unused WebAssembly variants alone would save about 22 MB *[our inference from the file sizes; confirm which variant loads on iOS first]*.
+In Edge, analysis (online, offline and a recovered recording) and live framing only ever requested `vision_wasm_module_internal` (`app/src/platform/README.md`, "Measured"). The saving from pruning is therefore about 11 MB, not the 22 MB estimated earlier: the fallback stays until the Mac sprint confirms the pose worker starts under `capacitor://`; if it does, dropping `vision_wasm_internal` saves another 11.8 MB.
 
 ## 6. Native plugin plan
 

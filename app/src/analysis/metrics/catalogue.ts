@@ -11,7 +11,7 @@
 import type { MetricId, MetricStatus, ReasonCode } from '../types.ts'
 
 export const CATALOGUE_VERSION = '1.1.0'
-export const ENGINE_VERSION = '1.0.0'
+export const ENGINE_VERSION = '1.1.0'
 export const BANDS_VERSION = 'bands_v1_provisional'
 
 /**
@@ -196,7 +196,7 @@ export const UNLOCK_HINTS: Record<ReasonCode, string> = {
   NEEDS_CALIBRATION: 'Tap the four corners of the service box.',
   CAMERA_MOVED: 'Fix the phone firmly; it moved during recording.',
   CAMERA_TILTED: 'Keep the phone level; the guide turns green.',
-  PITCH_UNKNOWN: 'Record in the app with motion access on, so we can level the picture.',
+  PITCH_UNKNOWN: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.",
   SCALE_INCONSISTENT: 'Check your height in Profile. If this was slow motion, import the original.',
   IMPLAUSIBLE_VALUE: 'This reading looked wrong, so we left it out.',
   CHECK_THIS_SERVE: 'This one looks unusual. Check this serve?',
@@ -215,7 +215,7 @@ export const UNLOCK_HINTS: Record<ReasonCode, string> = {
   UNMATCHED: 'Compare sessions from the same side, view, set-up and serve.',
   NEEDS_SIDE_VIEW: 'Film from the side, on your hitting-arm side, to see this.',
   NEEDS_REAR_VIEW: 'Add a phone behind you to see this.',
-  TILT_UNKNOWN: 'Record in the app with motion access on, so we can level the picture.',
+  TILT_UNKNOWN: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.",
   EXCLUDED_BY_QUALITY: 'This reading looked wrong, so we left it out.',
 }
 

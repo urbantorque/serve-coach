@@ -30,6 +30,7 @@ import { rateCounts } from './insights/outcomes.ts'
 import { plainText } from './insights/values.ts'
 import { moreServesText } from './insights/words.ts'
 import { FirstLoopCard } from '../plan/FirstLoopCard.tsx'
+import { useFocusStore } from '../focus/focusStore.ts'
 import { VerdictBeta } from '../profile/beta/VerdictBeta.tsx'
 
 /** Primary by verdict (DESIGN §10.11; COACHING §12.5). One label per intent across the app. */
@@ -227,6 +228,8 @@ export function CompareScreen() {
   const list = useExperiments()
   const byId = useExperiment(experimentId)
   const profile = useProfile()
+  // A referral raised this session pauses coaching even when the answer was not saved (D8).
+  const referral = useFocusStore((s) => s.referral)
   // Without an id: the most recent of the player's own experiments with a re-test (never a sample).
   const fallback: ExperimentRecord | null | undefined = experimentId
     ? undefined
@@ -254,7 +257,7 @@ export function CompareScreen() {
   const status = comparisonStatus(model.metricId, baseline!, exp.stratum)
   const id = model.metricId
   const isDemo = exp.isDemo === 1
-  const painPause = profile?.comfort.painFlag === 1
+  const painPause = profile?.comfort.painFlag === 1 || Boolean(referral)
   const primary = painPause ? null : primaryFor(model)
   const more = moreServesText(model.moreServes, model.verdict)
   const minutes = (logs ?? []).reduce((a, l) => a + l.minutes, 0)

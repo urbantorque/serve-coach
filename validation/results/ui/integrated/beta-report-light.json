@@ -1,0 +1,121 @@
+{
+  "format": "serve-coach-beta-report",
+  "version": 1,
+  "exportedAt": "2026-09-28T00:48:22.995Z",
+  "app": {
+    "version": "0.1.0",
+    "platform": "pwa",
+    "display": "browser"
+  },
+  "installRef": "BRV7S5QNFX",
+  "definitions": {
+    "activation": "Within 7 days of the first open: one analysed session with 10 or more serves and capture Fair or Good, then Focus and drill opened.",
+    "loopCompletion": "A re-test analysed within 14 days of its baseline whose “Did it work?” verdict was not “Not comparable yet”.",
+    "activeWeek": "At least one analysed session or one logged practice in the week.",
+    "usefulness": "Ratings of “How useful is this change for you?” (1 to 5), asked once after each verdict. Skips are counted.",
+    "times": "Every time is rounded down to the hour (UTC)."
+  },
+  "gates": {
+    "firstOpenedAt": "2026-09-28T00:00:00.000Z",
+    "activation": {
+      "status": "open",
+      "windowEndsAt": "2026-10-05T00:00:00.000Z",
+      "validSessionAt": null,
+      "focusOpenedAt": null
+    },
+    "loopCompletion": {
+      "loops": 0,
+      "firstAt": null
+    },
+    "weekly": {
+      "weeks": [
+        {
+          "week": "2026-W40",
+          "sessions": 1,
+          "practice": 0
+        }
+      ],
+      "activeWeeks": 1,
+      "afterActivation": []
+    },
+    "usefulness": {
+      "rated": 0,
+      "fourOrFive": 0,
+      "skipped": 0,
+      "byRating": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      }
+    },
+    "counts": {
+      "app_first_opened": 1,
+      "analysis_completed": 1,
+      "focus_opened": 0,
+      "drill_started": 0,
+      "drill_completed": 0,
+      "practice_logged": 0,
+      "verdict_viewed": 0,
+      "usefulness_rated": 0,
+      "usefulness_skipped": 0,
+      "paywall_viewed": 3,
+      "recording_recovered": 0,
+      "storage_persist_requested": 1
+    }
+  },
+  "events": [
+    {
+      "name": "app_first_opened",
+      "at": "2026-09-28T00:00:00.000Z",
+      "props": {
+        "display": "browser",
+        "platform": "pwa"
+      }
+    },
+    {
+      "name": "paywall_viewed",
+      "at": "2026-09-28T00:00:00.000Z",
+      "props": {
+        "trigger": "t3"
+      }
+    },
+    {
+      "name": "paywall_viewed",
+      "at": "2026-09-28T00:00:00.000Z",
+      "props": {
+        "trigger": "t3"
+      }
+    },
+    {
+      "name": "storage_persist_requested",
+      "at": "2026-09-28T00:00:00.000Z",
+      "props": {
+        "result": "denied",
+        "from": "first-session"
+      }
+    },
+    {
+      "name": "paywall_viewed",
+      "at": "2026-09-28T00:00:00.000Z",
+      "props": {
+        "trigger": "t2"
+      }
+    },
+    {
+      "name": "analysis_completed",
+      "at": "2026-09-28T00:00:00.000Z",
+      "props": {
+        "serves": "1-4",
+        "capture": "good",
+        "valid": false,
+        "view": "side",
+        "source": "imported",
+        "retest": false,
+        "sinceBaseline": "none"
+      }
+    }
+  ],
+  "notes": "Made on this phone from local usage counts. No video, images, pose data, sound, notes, heights, body-check answers, referrals or ids are in it. Serve Coach did not send it anywhere; you chose where it goes."
+}

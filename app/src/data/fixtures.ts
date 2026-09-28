@@ -548,7 +548,13 @@ function sessionMetrics(spec: SessionSpec, draws: Draw[], serves: ServeAnalysis[
 
   m['serve-count'] = mv('serve-count', 'measured', spec.serves, 'count', { n: spec.serves, nEligible: spec.serves })
   m['retoss-count'] = mv('retoss-count', 'estimated', spec.view === 'side' ? 1 : 0, 'count', { n: spec.serves })
-  m['capture-quality'] = mv('capture-quality', 'measured', spec.capture.overall, 'good|usable|poor', common)
+  // DECISIONS D2 addendum: a data-quality gate, always shown, experimental until real-footage validation.
+  m['capture-quality'] = mv('capture-quality', 'experimental', spec.capture.overall, 'good|usable|poor', {
+    ...common,
+    reasonCode: 'VALIDATION_PENDING',
+    validationLevel: 'V0',
+    basis: `Automatic check, experimental (tested on simulated footage only). ${BASIS}`,
+  })
 
   const apexRatios = inc.map((d) => d.apexCm / (PLAYER_HEIGHT_M * 100))
   const apex = meanCi(apexRatios, 0.01)

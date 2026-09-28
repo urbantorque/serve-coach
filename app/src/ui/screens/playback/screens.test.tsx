@@ -13,6 +13,7 @@ import { paths } from '../../shell/paths.ts'
 import { routes } from '../../shell/routes.ts'
 import { ThemeProvider } from '../../theme/ThemeProvider.tsx'
 import { fixtureServe, fixtureSession, fixtureVideo, type PlaybackFixture } from './dev/harnessFixture.ts'
+import { VIDEO_MISSING_LINE } from './serveView.ts'
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
@@ -31,12 +32,19 @@ function assertHonestAndCalm() {
 }
 
 /** A real engine run on a synthetic clip, stored like the analysis worker would, with the video deleted. */
-async function seedFixture(sessionId: string) {
+async function seedFixture(sessionId: string, opts: { storage?: 'deleted' | 'idb'; keyFrames?: boolean } = {}) {
   const f = JSON.parse(readFileSync(join(process.cwd(), 'src/ui/screens/playback/dev/fixtures/baseline-s1.json'), 'utf8')) as PlaybackFixture
   const videoId = `${sessionId}-video`
   const { serve, track } = fixtureServe(f, { sessionId, index: 1, videoId, analysedAt: '2026-09-26T00:00:00Z' })
   await createSession(fixtureSession(f, { id: sessionId, startedAt: '2026-09-26T08:00:00+10:00', label: 'Fixture', videoIds: [videoId], serveIds: [serve.id] }))
-  await addVideo(fixtureVideo(f, { id: videoId, sessionId, importedAt: '2026-08-20T08:00:00+10:00', sizeBytes: 1, storage: 'deleted' }))
+  // storage 'idb' without a blob: the record says the clip is on the phone, but its file is missing
+  // (imported today, so the 30-day retention sweep leaves the record alone).
+  const importedAt = opts.storage === 'idb' ? new Date().toISOString() : '2026-08-20T08:00:00+10:00'
+  await addVideo(fixtureVideo(f, { id: videoId, sessionId, importedAt, sizeBytes: 1, storage: opts.storage ?? 'deleted' }))
+  if (opts.keyFrames === false) {
+    await putServesWithTracksAndFrames([serve], [track])
+    return serve
+  }
   const frames: KeyFrameRecord[] = (['release', 'apex', 'contact'] as const).map((event) => {
     const e = serve.events[event === 'release' ? 'tossRelease' : event === 'apex' ? 'tossApex' : 'contact']!
     return {
@@ -116,6 +124,19 @@ describe('Serve detail', () => {
     // Keyboard on the timeline: Home goes to the serve start.
     fireEvent.keyDown(slider, { key: 'Home' })
     expect(slider).toHaveAttribute('aria-valuenow', String(serve.window.startFrame))
+    assertHonestAndCalm()
+  })
+
+  it('a stored clip whose file is missing says so, not a pose reason, and draws no overlay over the empty box', async () => {
+    const serve = await seedFixture('fixture-missing', { storage: 'idb', keyFrames: false })
+    renderAt(paths.serveDetail('fixture-missing', serve.id))
+    expect(await screen.findByText(VIDEO_MISSING_LINE, undefined, { timeout: 5000 })).toBeInTheDocument()
+    expect(screen.queryByText("Couldn't see this clearly")).toBeNull()
+    // Overlays need the video or its key frames under them (DESIGN §8.11): no chips, no canvas.
+    expect(screen.queryByRole('radio', { name: 'Body' })).toBeNull()
+    expect(document.querySelector('canvas')).toBeNull()
+    // Nothing to play: no Play button, and the step buttons move between phases.
+    expect(screen.queryByRole('button', { name: 'Play' })).toBeNull()
     assertHonestAndCalm()
   })
 

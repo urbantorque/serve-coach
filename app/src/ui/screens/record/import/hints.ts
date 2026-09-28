@@ -4,7 +4,8 @@
  * access on, so we can level the picture.", predates the import mount question (METRICS §1.1 item
  * 3a): it said nothing about imports and named a browser permission instead of what the app does.
  * Screens pass stored hints through `tiltHint`, so sessions analysed before this change read the
- * same as new ones.
+ * same as new ones. Since engine 1.1.0 the engine and metrics.json emit TILT_HINT's wording
+ * themselves (catalogue.ts PITCH_UNKNOWN / TILT_UNKNOWN, quality/checks.ts `cq.camera-level`).
  */
 
 /** What a player can do next time: record in the app (it reads the tilt), or answer the mount question on import. */

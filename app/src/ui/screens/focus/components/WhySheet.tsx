@@ -1,6 +1,7 @@
 import { InfoIcon } from '@phosphor-icons/react'
-import { getItem, type FocusDecision, type ItemCheck, type KeepGoingDecision, type RankReason } from '../../../../coaching/index.ts'
+import type { FocusDecision, ItemCheck, KeepGoingDecision, RankReason } from '../../../../coaching/index.ts'
 import { MetricValue, SectionLabel, Sheet, StatusChip } from '../../../components/index.ts'
+import { checkText } from '../checkWords.ts'
 import { evidenceCountLine, FOCUS_COPY, type SessionServeCounts } from '../copy.ts'
 
 function MetricLine({ metric, counts }: { metric: NonNullable<RankReason['metric']>; counts?: SessionServeCounts | null }) {
@@ -23,16 +24,7 @@ function ReasonRow({ r, counts }: { r: RankReason; counts?: SessionServeCounts |
   )
 }
 
-/**
- * The line under a check. An item that is experimental because of its coaching RULE (no club-player
- * thresholds yet, coaching-library.json evidenceTier) says so, so it never reads as if the measurement
- * were experimental when the report shows it as an estimate. Data-experimental checks keep their text.
- */
-export function checkText(c: ItemCheck): string {
-  if (c.status === 'experimental-off' && getItem(c.itemId)?.evidenceTier === 'experimental') return FOCUS_COPY.ruleExperimentalOff
-  return c.text
-}
-
+/** A check row: the rule-experimental wording comes from checkWords.ts (rule tier, not data status). */
 function CheckRow({ c, counts }: { c: ItemCheck; counts?: SessionServeCounts | null }) {
   return (
     <li className="flex flex-col gap-1 py-3 [&+li]:border-t [&+li]:border-line">

@@ -4,20 +4,20 @@ A calm, phone-first virtual serve coach for Australian recreational players (UTR
 You film your serve side-on with one phone; the app analyses it on the phone, labels every number honestly, and gives you one focus, one cue and one drill.
 You practise, re-test, and the app answers "Did it work?" with a matched before-and-after comparison.
 
-**Status (28 September 2026, the hardening commit after `33ac31f`):**
-- **What exists:** a working web prototype (Vite, React 19, TypeScript, Tailwind v4) with a framework-free analysis engine, and a generated iOS shell that has never been built.
-- **How it has been tested:** **all validation so far is on synthetic video; no real footage, real phone or radar has been used.** No serve metric is yet "measured"; the best label is "estimated".
+**Status (28 September 2026, the final-round commit after `4478e16`):**
+- **What exists:** a working web prototype (Vite, React 19, TypeScript, Tailwind v4) with a framework-free analysis engine. It installs as an offline web app (manifest and service worker), and a generated iOS shell exists that has never been built.
+- **How it has been tested:** **all validation so far is on synthetic video; no real footage, real phone or radar has been used.** No serve metric is yet "measured"; the best label is "estimated". On the production build the full pipeline counts 45 of 45 synthetic serves with no false serves (`validation/results/e2e-final/SUMMARY.md`).
 - **Where to start:** [docs/FUNCTIONAL_STATUS.md](docs/FUNCTIONAL_STATUS.md), [docs/VALIDATION.md](docs/VALIDATION.md) and [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ## Screenshots
 
-From the end-to-end flows in headless Edge at 390 × 844 (synthetic player, `validation/results/ui/integrated/`, 110 images in light and dark):
+From the end-to-end flows on the production build in headless Edge at 390 × 844 (synthetic player, `validation/results/ui/integrated/`, 146 screenshots (208 image files with the full-page captures) images in light and dark):
 
 | Session report | Serve detail, toss overlay | Focus with evidence | "Did it work?" |
 |---|---|---|---|
-| <img src="validation/results/ui/integrated/light-a06-sample-report.png" width="180" alt="Sample session report: 16 of 16 serves measured, toss height varied by about 9.5 cm"> | <img src="validation/results/ui/integrated/light-a09-serve-detail-toss.png" width="180" alt="Serve detail with the toss trail, peak and drop labelled as estimates"> | <img src="validation/results/ui/integrated/light-c06-focus-own.png" width="180" alt="Focus screen: steady toss height, key frame beside the player's best serve"> | <img src="validation/results/ui/integrated/light-c16-compare-own.png" width="180" alt="Did it work: toss height consistency from about 30 cm to about 9.5 cm, clearly better"> |
+| <img src="validation/results/ui/integrated/light-a06-sample-report.png" width="180" alt="Sample session report: 16 of 16 serves measured, toss height varied by about 9.5 cm, an early read with its likely range, and the experimental capture check"> | <img src="validation/results/ui/integrated/light-a09-serve-detail-toss.png" width="180" alt="Serve detail with the toss trail, peak and drop labelled as estimates"> | <img src="validation/results/ui/integrated/light-c06-focus-own.png" width="180" alt="Focus screen: steady toss height, key frame beside the player's best serve"> | <img src="validation/results/ui/integrated/light-c16-compare-own.png" width="180" alt="Did it work: toss height consistency from about 25 cm to about 10 cm, clearly better"> |
 
-More: onboarding (`light-a01`–`a05`), tagging (`a16`–`a17`), drill and practice log (`a20`–`a21`, `c07`–`c09`), Progress (`a22`, `c17`), import with the mount question and processing (`b01`–`b03`, `c12`–`c13`), Check this serve (`b06`–`b08`), Metric info and How we measure (`a15`, `a25`–`a28`), and every screen in dark (`dark-*`).
+More: onboarding (`light-a01`–`a05`), tagging (`a16`–`a17`), drill and practice log (`a20`–`a21`, `c07`–`c09`), Progress (`a22`, `c18`), import with the mount question and processing (`b01`–`b03`, `c12`–`c13`), Check this serve with hip and shoulder marks (`b06`–`b11`), Metric info and How we measure (`a15`, `a25`–`a28`), the first-experiment Plus card (`c17`), offline (`d01`–`d03`), match log and comp nights (`d04`–`d06`), Plus sheets (`d07`, `d08`, `d11`–`d12`), Beta data (`d14`), and every screen in dark (`dark-*`).
 
 ## Run it
 
@@ -26,28 +26,39 @@ More: onboarding (`light-a01`–`a05`), tagging (`a16`–`a17`), drill and pract
 ```sh
 cd app
 npm install          # also copies the MediaPipe WebAssembly runtime into public/mediapipe
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:5173 (development: no service worker)
 ```
 
 - **Phone-sized view:** open http://localhost:5173 and switch DevTools to device mode at 390 × 844.
+- **Production build, installable and offline:**
+  ```sh
+  npm run build        # tsc -b && vite build -> dist/ (about 73 MB, with sw.js and the web app manifest)
+  npm run preview      # http://localhost:4173
+  ```
+  The service worker installs on the first load (about 30 MB: the app shell, both pose models and one WebAssembly build). Reload with the network off (DevTools → Network → Offline) and the app still opens; Edge and Chrome offer "Install". A new build waits for the player's "Reload".
 - **A phone on the LAN:** `npm run dev -- --host`, then open the printed network address. Plain `http://<LAN address>` is not a secure context, so the browser blocks the camera and WebCodecs there (the app says so on the camera screen, and analysis falls back to slower seek-per-frame decoding). For the camera and full-speed decoding, serve over HTTPS (for example Vite `server.https` with a locally trusted certificate). The desktop route is the reliable one today; no real phone has been tested yet.
 - **Sample session:** finish onboarding and choose **See a sample session**, or use Profile → **See a sample session**. It is real engine output on synthetic clips, marked "Sample data · synthetic player".
 - **Import a synthetic clip:** Record → **Import a video**.
   - Pick for example `validation/synthetic/clips/default75-s1/default75-s1.mp4` (one serve, D1 default set-up) or `validation/synthetic/clips/sample-checkin/sample-checkin.mp4` (16 serves).
+  - Answer "What was the light?" (the synthetic clips are daylight) and, for a side view, "How was the phone mounted?" ("Level mount" can keep heights as estimates when filmed from 6 m or more).
   - In a dev build the Import screen also has a **Developer: synthetic clip** picker that loads clips from `/__synthetic/`.
-  - Video files are not in git; generate them first (below). On a laptop, one serve takes about 13–17 s to analyse and a 16-serve clip about 2.5 minutes.
+  - Video files are not in git; generate them first (below). On a laptop (production build), one serve takes about 15–28 s to analyse and a 16-serve clip about 2.7 minutes.
 - **Check a serve by hand:** open a serve → More actions → **Check this serve**.
-  - Mark the moments and points, then compare "App vs you".
+  - Mark the moments and points (height, release and hip, peak, trophy shoulders, lowest hip, contact ball and hip, landing, optional radar), then compare "App vs you".
   - The JSON export feeds `tools/validate/annotation-eval.ts` (below).
+- **Comp nights:** Progress → Comp nights → **Log a match** (`/sessions/matches/new`).
+- **Beta data:** Profile → Beta data shows the local usage counts and exports the beta report (JSON, nothing is sent).
+- **Plus (prototype, no payment):** Profile → Plan → "Test Plus" unlocks the ghost overlay and the season view.
 
 ### Checks
 
 ```sh
 cd app
-npm test             # Vitest: engine project in Node, UI project in jsdom (1,091 tests in 115 files at the hardening commit, 28 September 2026)
+npm test             # Vitest: engine project in Node, UI project in jsdom (1,332 tests in 140 files at the final-round commit)
 npm run typecheck    # tsc -b
 npm run lint         # oxlint --deny-warnings
 npm run build        # tsc -b && vite build -> dist/
+CI=1 npx cap sync ios   # copies dist/ into the iOS shell (works on Windows; building needs a Mac)
 ```
 
 ### Synthetic corpus (`tools/synth`)
@@ -71,6 +82,8 @@ node tools/validate/smoke.mjs --full                 # also dumps per-frame data
 app/node_modules/.bin/tsx tools/validate/metrics-eval.ts   # metric accuracy vs truth -> validation/results/metrics/SUMMARY.md
 app/node_modules/.bin/tsx tools/validate/annotation-eval.ts <exports...>   # pooled "Check this serve" exports
                                                      # -> validation/real/<date>/ (agreement, bias, ICC, coverage)
+node tools/validate/e2e-accuracy.mjs --port 5401     # production build, full pipeline, 8 clips (45 serves), about 10 min
+                                                     # -> validation/results/e2e-final/SUMMARY.md
 ```
 
 Details: [tools/validate/README.md](tools/validate/README.md). The accuracy report built from these runs is [docs/VALIDATION.md](docs/VALIDATION.md).
@@ -79,14 +92,15 @@ Details: [tools/validate/README.md](tools/validate/README.md). The accuracy repo
 
 ```sh
 cd app
-npm run build && node scripts/integrated-flows.mjs   # flows A-C in light and dark -> validation/results/ui/integrated/
+npm run build && node scripts/integrated-flows.mjs --dark-c   # flows A-D in light and dark, on the production build
+                                                              # -> validation/results/ui/integrated/ (about 25 min)
 node scripts/build-demo.mjs                          # rebuilds public/demo from real engine output (needs the session,
-                                                     # sample-checkin and sample-retest clips)
+                                                     # sample-checkin and sample-retest clips; about 9 min)
 ```
 
 ### iOS
 
-`app/ios` is a generated Capacitor 8 project that has never been built. See [docs/IOS_ROUTE.md](docs/IOS_ROUTE.md) for what exists and the steps that need a Mac.
+`app/ios` is a generated Capacitor 8 project that has never been built; `CI=1 npx cap sync ios` passes on Windows. See [docs/IOS_ROUTE.md](docs/IOS_ROUTE.md) for what exists and the steps that need a Mac.
 
 ## Repository map
 

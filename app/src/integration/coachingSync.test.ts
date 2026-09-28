@@ -98,6 +98,28 @@ describe('syncCoaching', () => {
     expect(r.decision && 'verdict' in r.decision ? r.decision.verdict : undefined).toBeUndefined()
   })
 
+  it('on a later Experiment visit, links Block A and never Block B after the drill (§12.3)', async () => {
+    const side = DEMO_FIXTURES.sessions.filter((s) => s.session.view === 'side')
+    await ownCopy(DEMO_FIXTURES.sessions.indexOf(side[0]), 'own-1')
+    await createExperiment({ ...DEMO_FIXTURES.experiment, id: 'own-exp', isDemo: 0, baselineSessionIds: ['own-1'], retestSessionIds: [], result: undefined, createdAt: '2026-09-12T12:00:00+10:00' })
+    const later = { visitId: '2026-09-20', template: 'experiment' as const, isRetest: 0 as const, experimentId: undefined }
+    // Block A, before the drill: the visit's re-test.
+    await ownCopy(DEMO_FIXTURES.sessions.indexOf(side.at(-1)!), 'own-a', { ...later, startedAt: '2026-09-20T09:00:00+10:00' })
+    const first = await syncCoaching({ now: new Date('2026-09-20T09:30:00+10:00'), experimental: false })
+    expect(first.attachedRetest).toBe('own-a')
+    const afterA = await getExperiment('own-exp')
+    expect(afterA?.result?.current.sessionIds).toEqual(['own-a'])
+    // Block B, 45 minutes later on the same visit, after the drill.
+    await ownCopy(DEMO_FIXTURES.sessions.indexOf(side.at(-1)!), 'own-b', { ...later, startedAt: '2026-09-20T09:45:00+10:00' })
+    const r = await syncCoaching({ now: new Date('2026-09-20T10:30:00+10:00'), experimental: false })
+    expect(r.attachedRetest).toBeUndefined()
+    expect(r.decision && 'verdict' in r.decision ? r.decision.verdict : undefined).toBeUndefined()
+    const stored = await getExperiment('own-exp')
+    expect(stored?.retestSessionIds).toEqual(['own-a'])
+    expect(stored?.result).toEqual(afterA?.result)
+    expect(stored?.status).toBe(afterA?.status)
+  })
+
   it('serialises concurrent calls and never throws', async () => {
     const results = await Promise.all([syncCoaching(), syncCoaching(), syncCoaching({ sessionId: 'missing' })])
     expect(results).toHaveLength(3)

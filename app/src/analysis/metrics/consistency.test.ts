@@ -45,10 +45,35 @@ describe('display precision (METRICS §4.9)', () => {
 describe('session headline (METRICS §4.1)', () => {
   it('prints the spread with the same rule as the tiles', () => {
     const s = spread(28, 20.3, 45.2, { n: 14 })
-    expect(spreadPhrase(s)).toBe('toss height varied by about 30 cm (early read)')
+    // An early read headlines with its interval (METRICS §4.1), both bounds on the value's own step.
+    expect(spreadPhrase(s)).toBe('toss height varied by about 30 cm (early read, likely 20 to 45 cm)')
     expect(sessionHeadline({ metrics: { 'toss-height-spread': s }, strata: [{ key: { courtSide: 'deuce' }, metrics: {} }], measured: 14, detected: 16 })).toBe(
-      '14 of 16 serves measured. Toss height varied by about 30 cm (early read).',
+      '14 of 16 serves measured. Toss height varied by about 30 cm (early read, likely 20 to 45 cm).',
     )
+    expect(spreadPhrase(spread(9.5, 7.0, 14.7, { n: 13 }))).toBe('toss height varied by about 9.5 cm (early read, likely 7 to 14.5 cm)')
+    // A standard read needs no interval in the sentence (its tile carries it).
+    expect(spreadPhrase(spread(9.5, 8.1, 11.2, { n: 24, provisional: false }))).toBe('toss height varied by about 9.5 cm')
+  })
+
+  it('an early read without a two-sided interval stays out of the headline', () => {
+    expect(spreadPhrase(spread(28, 20.3, 45.2, { n: 14, uncertainty: undefined }))).toBe('')
+    expect(spreadPhrase(spread(28, 20.3, 45.2, { n: 14, secondary: { atLeast: 'yes' } }))).toBe('')
+    expect(spreadPhrase(spread(28, 20.3, 45.2, { n: 24, provisional: false, secondary: { atLeast: 'yes' } }))).toBe('toss height varied by at least 30 cm')
+  })
+
+  it('names the headline group\'s own n when the session has more than one group', () => {
+    const s = spread(9.5, 7.0, 14.7, { n: 13 })
+    expect(
+      sessionHeadline({
+        metrics: { 'toss-height-spread': s },
+        strata: [
+          { key: { courtSide: 'deuce' }, metrics: {} },
+          { key: { courtSide: 'ad' }, metrics: {} },
+        ],
+        measured: 22,
+        detected: 24,
+      }),
+    ).toBe('22 of 24 serves measured from both sides. On the deuce side (13 serves), toss height varied by about 9.5 cm (early read, likely 7 to 14.5 cm).')
   })
 
   it('never headlines an experimental spread, one at the measurement limit, or a provisional one under 12 serves', () => {

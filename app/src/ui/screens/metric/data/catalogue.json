@@ -1411,7 +1411,7 @@
    "unlockHintRearOnly": null
   },
   "CONTACT_NOT_FOUND": {
-   "meaning": "Contact (with ball position) not found",
+   "meaning": "Contact (with ball position) not found, or independent contact signals (ball, hit sound, swing peak) disagree beyond their uncertainty (DECISIONS D2 addendum)",
    "unlockHint": "We couldn't see this moment clearly on this serve.",
    "unlockHintRearOnly": null
   },
@@ -1462,7 +1462,7 @@
   },
   "PITCH_UNKNOWN": {
    "meaning": "No pitch from sensors or background verticals; absolute heights, cm positions and angles are experimental",
-   "unlockHint": "Record in the app with motion access on, so we can level the picture.",
+   "unlockHint": "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.",
    "unlockHintRearOnly": null
   },
   "SCALE_INCONSISTENT": {

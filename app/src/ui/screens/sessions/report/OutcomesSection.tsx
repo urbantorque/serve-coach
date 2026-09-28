@@ -67,7 +67,7 @@ export interface OutcomesSectionProps {
 }
 
 /** Tagged serves in the shown group (by the side and serve number you logged, else the session's). */
-export function rowsInGroup(rows: ServeRow[], group: OutcomesSectionProps['group']): ServeRow[] {
+function rowsInGroup(rows: ServeRow[], group: OutcomesSectionProps['group']): ServeRow[] {
   if (!group) return rows
   return rows.filter((r) => {
     const side = r.tag?.side ?? group.defaultSide ?? 'unknown'

@@ -117,7 +117,7 @@ Typical hybrid check: 6 × A$0.011 + 2 progress summaries × A$0.019 + about A$0
 
 **Why here:** the verdict is the moment of proven value and the step most tied to retention (research 08 Implication 5). The first court visit comes before any value, so a trial offered at install can expire before the player sees anything; offer it after the first analysed session and test that against an onboarding trial (research 08 §5, implication 2).
 
-**Build status:** the Plan screen exists with honest beta copy ("Everything is unlocked during the beta"), but T1–T3 are **not wired** yet; the screen is reachable only from Profile. In the beta, plan taps are a fake door that records intent and says Plus is not on sale (research 08 §8.3).
+**Build status** (updated 28 September 2026): T1 (a card below the first "Did it work?" verdict), T2 (a notice and sheet on Processing past 2 analysed days a month after the free first loop; it only notifies) and T3 (a sheet when a free player taps the ghost overlay or the season view) are wired, with the once-a-day rule and no offers for sample data, during a pain pause or for Plus. The Plan screen takes `?via`, `?feature` and `?from`, and "Test Plus" (no payment) unlocks those two features. Locking them in the beta departs from PRODUCT §5.3 and needs a product decision. Plan taps remain a fake door that records intent and says Plus is not on sale (research 08 §8.3).
 
 ## 7. Acquisition channels, Melbourne first
 
@@ -162,7 +162,7 @@ Benchmarks behind the thresholds (RevenueCat 2026, Health & Fitness medians; res
 
 **Pricing evidence before in-app purchase goes live** (research 08 §8.3): Van Westendorp (n ≥ 200 comp players who have seen a demo) and Gabor–Granger at A$79.99 / A$99.99 / A$129.99 / A$149.99, then fake-door paywall cells in the beta. Live A/B tests need about 2,500 installs per arm to detect 3% → 4.5% download-to-paid, which an Australian beta cannot produce.
 
-**Instrumentation gap:** none of these can be measured from the current build, which records no usage events ([FUNCTIONAL_STATUS.md](FUNCTIONAL_STATUS.md) §7). D8 also rules out upload. Options (PRODUCT §9.4): an opt-in, counters-only upload after a D8 amendment, or consented "send my beta report" exports plus interviews, which is weaker evidence.
+**Instrumentation gap** (updated 28 September 2026): the build now keeps local usage counts (Profile → Beta data: activation, loop completion, active weeks, usefulness, Plus offers seen) and exports a JSON beta report the tester chooses to send ([FUNCTIONAL_STATUS.md](FUNCTIONAL_STATUS.md) §7). There is still no upload, so gates rest on testers sending reports. D8 also rules out upload. Options (PRODUCT §9.4): an opt-in, counters-only upload after a D8 amendment, or consented "send my beta report" exports plus interviews, which is weaker evidence.
 
 ## 9. Unit economics
 

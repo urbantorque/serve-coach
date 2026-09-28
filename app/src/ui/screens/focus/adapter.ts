@@ -4,11 +4,13 @@
  */
 import type { MetricId, MetricValue } from '../../../analysis/types.ts'
 import {
+  experimentBlocks,
   getItem,
   itemByFaultId,
   normaliseProfile,
   primarySpec,
   rederiveRetests,
+  retestVisitsOf,
   type CoachingExperiment,
   type CoachingProfile,
   type CoachingServe,
@@ -39,22 +41,25 @@ export function toCoachingSession(
   stats: SessionStats | null | undefined,
 ): CoachingSession {
   const tagBy = new Map(tags.map((t) => [t.serveId, t]))
-  const cServes: CoachingServe[] = [...serves]
-    .sort((a, b) => a.index - b.index)
-    .map((s) => {
-      const t = tagBy.get(s.id)
-      const derived = (stats?.derivedPerServe?.[s.id] ?? {}) as Partial<Record<MetricId, MetricValue>>
-      return {
-        id: s.id,
-        index: s.index,
-        included: s.includedFlag === undefined ? s.included : s.includedFlag === 1,
-        metrics: { ...s.metrics, ...derived },
-        ...(t?.outcome ? { outcome: t.outcome } : {}),
-        ...(t?.side ? { courtSide: t.side } : {}),
-        ...(t?.serveNumber ? { serveNumber: t.serveNumber } : {}),
-        ...(t?.intendedType ? { intendedType: t.intendedType } : {}),
-      }
-    })
+  const ordered = [...serves].sort((a, b) => a.index - b.index)
+  // An "Experiment" recording that holds both blocks: Block A before the drill's pause, Block B after
+  // (coaching experimentBlocks; CAPTURE §5.5). Only Block A can count towards a verdict (§12.3).
+  const blocks = rec.template === 'experiment' ? experimentBlocks(ordered.map((s) => s.window?.tStartReal)) : undefined
+  const cServes: CoachingServe[] = ordered.map((s, i) => {
+    const t = tagBy.get(s.id)
+    const derived = (stats?.derivedPerServe?.[s.id] ?? {}) as Partial<Record<MetricId, MetricValue>>
+    return {
+      id: s.id,
+      index: s.index,
+      included: s.includedFlag === undefined ? s.included : s.includedFlag === 1,
+      metrics: { ...s.metrics, ...derived },
+      ...(t?.outcome ? { outcome: t.outcome } : {}),
+      ...(t?.side ? { courtSide: t.side } : {}),
+      ...(t?.serveNumber ? { serveNumber: t.serveNumber } : {}),
+      ...(t?.intendedType ? { intendedType: t.intendedType } : {}),
+      ...(blocks ? { block: blocks[i] } : {}),
+    }
+  })
   const useTally = tally && (tally.conflictResolution === 'tally' || !tags.some((t) => t.outcome))
   const fatigue = stats?.metrics['fatigue-flag']
   // The set-up key every screen matches on (older sessions derive it from their capture summary).
@@ -138,6 +143,9 @@ export function toCoachingExperiment(
     retests: [],
     status: e.status === 'active' ? 'active' : e.status === 'completed' ? 'worked' : 'parked',
   }
+  // Each later visit's re-test is its first recording in the stratum; a block after the drill that
+  // day is same-session (§12.3), so it is never attached, pooled or judged as a re-test.
+  exp.retestVisits = retestVisitsOf(exp, sessions)
   const earlier = e.retestSessionIds.filter((id) => id !== currentSessionId).map((id) => byId.get(id)).filter((s): s is CoachingSession => !!s)
   exp.retests = rederiveRetests(exp, earlier, sessions, normaliseProfile(profile), verdict)
   return exp

@@ -23,6 +23,7 @@ import {
   sameSessionCheck,
   SUPERSEDED_COPY,
   unmatchedReason,
+  withRetestVisits,
   type Transition,
 } from './experiment.ts'
 import { ENGINE_VERSION, FOCUS_ITEMS, getItem, item as libItem, LIBRARY_VERSION, type LibraryItem } from './library.ts'
@@ -105,10 +106,14 @@ const baseOf = (c: Ctx) => ({
   notes: c.notes,
 })
 
-export function decideFocus(input: CoachingInput): CoachingDecision {
-  const now = input.now ?? new Date().toISOString()
-  const session = input.session
-  const history = (input.history ?? []).filter((h) => h.id !== session.id)
+export function decideFocus(given: CoachingInput): CoachingDecision {
+  const now = given.now ?? new Date().toISOString()
+  const session = given.session
+  const history = (given.history ?? []).filter((h) => h.id !== session.id)
+  // Each later visit's re-test (§12.3), from every session the engine sees, unless the caller set it.
+  const input: CoachingInput = given.activeExperiment
+    ? { ...given, activeExperiment: withRetestVisits(given.activeExperiment, [session, ...history, ...(given.experimentHistory ?? [])]) }
+    : given
   const trace: TraceEntry[] = []
   const bc = input.bodyCheck
   const pre: Ctx = {
@@ -557,7 +562,14 @@ function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: Focu
   const exp = input.activeExperiment
   const sameSession = exp && exp.itemId === it.id ? (sameSessionCheck(it.id, session, profile, exp.stratum) ?? blockBAfterDrill(ctx, exp, it.id)) : undefined
   const retested = exp && retestKind(exp, session) === 'matched'
-  const due = exp && exp.status === 'active' && exp.itemId === it.id ? retestDue(exp, input.practiceLogs ?? [], ctx.now, retested ? session.startedAt : exp.startedAt) : undefined
+  // Practice counts from this re-test, else from the last one (a block after the drill on a re-test
+  // visit is not one), else from the start.
+  const lastRetestId = exp?.retests.at(-1)?.sessionId
+  const lastRetestAt = lastRetestId ? verdictHistory(ctx).find((h) => h.id === lastRetestId && h.startedAt < session.startedAt)?.startedAt : undefined
+  const due =
+    exp && exp.status === 'active' && exp.itemId === it.id
+      ? retestDue(exp, input.practiceLogs ?? [], ctx.now, retested ? session.startedAt : (lastRetestAt ?? exp.startedAt))
+      : undefined
   ctx.trace.push({ step: 'cue', itemId: it.id, passed: true, detail: `${cue.register} cue.` })
   ctx.trace.push({ step: 'drill', itemId: it.id, passed: true, detail: `${drill.variant} variant.` })
   return {
@@ -598,14 +610,15 @@ function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: Focu
 }
 
 /**
- * "Straight after practice" when Block B was recorded as its own session on the day the experiment
- * started (CAPTURE §5 Experiment template): the start session's serves are block 1, this session's
- * block 2. Display only, never a verdict (§12.3).
+ * "Straight after practice" when Block B was recorded as its own session (CAPTURE §5 Experiment
+ * template): Block A is the start session on the day the experiment started, or that visit's re-test on
+ * a later day; its serves are block 1, this session's block 2. Display only, never a verdict (§12.3).
  */
 function blockBAfterDrill(ctx: Ctx, exp: CoachingExperiment, itemId: string): FocusDecision['sameSession'] {
   const { session, profile } = ctx
   if (session.id === exp.startedSessionId || retestKind(exp, session) !== 'same-session') return undefined
-  const start = verdictHistory(ctx).find((h) => h.id === exp.startedSessionId)
+  const blockAId = session.visitId && session.visitId !== exp.startedVisitId ? exp.retestVisits?.[session.visitId] : exp.startedSessionId
+  const start = blockAId ? verdictHistory(ctx).find((h) => h.id === blockAId && h.startedAt < session.startedAt) : undefined
   if (!start) return undefined
   const tagged = (s: CoachingSession['serves'][number], block: number) => ({
     ...s,

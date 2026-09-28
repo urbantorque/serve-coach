@@ -71,7 +71,7 @@ const SESSION_WIDE: MetricId[] = ['spin', 'speed-experimental', 'speed-average-r
  * footage. Side-view launch speed below 120 fps needs 120 fps first, whatever else went missing.
  * Only metrics that need the other view say so.
  */
-export function ghostReason(id: MetricId, v: MetricValueData | undefined, view: 'side' | 'rear', fps: number | undefined): ReasonCode | undefined {
+function ghostReason(id: MetricId, v: MetricValueData | undefined, view: 'side' | 'rear', fps: number | undefined): ReasonCode | undefined {
   if (id === 'spin') return 'NOT_MEASURABLE'
   if (id === 'speed-experimental' && view === 'side' && fps !== undefined && fps < 120) return 'FPS_TOO_LOW'
   if (v?.reasonCode) return v.reasonCode

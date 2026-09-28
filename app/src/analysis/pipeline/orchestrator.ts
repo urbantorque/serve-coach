@@ -45,7 +45,7 @@ import type { PipelineEvent, PipelineTimings, RunAnalysisOptions, RunAnalysisRes
 import { LaneQueue } from './laneQueue.ts'
 import { activitySpans, ballIndices, ballSearchCrop, ballSearchDoubtS, planWindows, poseIndices, sparseStep, tossSearchBand, type PlannedWindow } from './windows.ts'
 
-export const PIPELINE_VERSION = '1.0.0'
+export const PIPELINE_VERSION = '1.1.0'
 /**
  * The ball crop is downscaled on the GPU until the expected ball radius is about this many pixels.
  * The detector works on a grid of about 3 cells per radius anyway (detector.ts), so a larger ball

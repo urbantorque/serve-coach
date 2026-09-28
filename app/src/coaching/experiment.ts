@@ -62,8 +62,60 @@ export function retestKind(exp: CoachingExperiment, session: CoachingSession): R
   // Block B of an "Experiment" visit, or any recording later on the day the experiment started, shows
   // the drill's immediate effect: never a re-test (§12.3). Only a later visit can be one.
   if (exp.startedVisitId && session.visitId && session.visitId === exp.startedVisitId) return 'same-session'
+  // On a later visit only its first recording in the stratum is the re-test (recorded before the
+  // drill); Block B, or anything else recorded after it that day, is same-session too.
+  const first = session.visitId ? exp.retestVisits?.[session.visitId] : undefined
+  if (first && first !== session.id) return 'same-session'
   if (session.captureQuality === 'poor') return 'unmatched'
   return servesInStratum(session, exp.stratum).length > 0 ? 'matched' : 'unmatched'
+}
+
+const byStart = (a: CoachingSession, b: CoachingSession) => (a.startedAt < b.startedAt ? -1 : a.startedAt > b.startedAt ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+
+/**
+ * The re-test of each later visit (§12.3; `CoachingExperiment.retestVisits`): visitId -> the first
+ * session that day, by start time, with serves in the experiment's stratum, whatever its capture
+ * quality. It was recorded before the drill; anything after it that day may not have been, so it never
+ * counts as a re-test. Sessions without a visit are left to the other rules.
+ */
+export function retestVisitsOf(exp: CoachingExperiment, sessions: readonly CoachingSession[]): Record<string, string> {
+  const out: Record<string, string> = {}
+  const later = sessions
+    .filter((s) => s.visitId && s.id !== exp.startedSessionId && s.startedAt > exp.startedAt && s.visitId !== exp.startedVisitId)
+    .filter((s) => servesInStratum(s, exp.stratum).length > 0)
+    .sort(byStart)
+  for (const s of later) if (!out[s.visitId!]) out[s.visitId!] = s.id
+  return out
+}
+
+/** The experiment with its later visits' re-tests worked out from these sessions (kept when already set). */
+export function withRetestVisits(exp: CoachingExperiment, sessions: readonly CoachingSession[]): CoachingExperiment {
+  return exp.retestVisits ? exp : { ...exp, retestVisits: retestVisitsOf(exp, sessions) }
+}
+
+/** A pause this long between two serves of one "Experiment" recording is the drill (CAPTURE §5.5: 10 min). */
+export const DRILL_BREAK_S = 300
+/** CAPTURE §5.5 "Experiment": Block A is 15 serves. */
+export const BLOCK_A_SERVES = 15
+
+/**
+ * Blocks of an "Experiment" recording that holds both blocks (CAPTURE §5.5: Block A, drill, Block B):
+ * the serves before its longest pause of at least DRILL_BREAK_S are block 1, the rest block 2.
+ * Undefined when there is no such pause or a serve's time is unknown (one block as far as we can tell).
+ * `times` are the serves' start times in seconds, in serve order.
+ */
+export function experimentBlocks(times: readonly (number | undefined)[]): number[] | undefined {
+  if (times.length < 2 || times.some((t) => typeof t !== 'number' || !Number.isFinite(t))) return undefined
+  let at = -1
+  let longest = 0
+  for (let i = 1; i < times.length; i++) {
+    const gap = (times[i] as number) - (times[i - 1] as number)
+    if (gap >= DRILL_BREAK_S && gap > longest) {
+      longest = gap
+      at = i
+    }
+  }
+  return at < 0 ? undefined : times.map((_, i) => (i < at ? 1 : 2))
 }
 
 const SIDE = { deuce: 'deuce court', ad: 'ad court', unknown: 'untagged court side' } as const
@@ -130,15 +182,26 @@ export function primarySpec(item: LibraryItem, profile: NormalisedProfile, fps =
   }
 }
 
-function followUpServes(session: CoachingSession, key: CoachingStratum) {
+/**
+ * A session's serves in the stratum that were recorded before any drill (§12.3). For an "Experiment"
+ * recording only Block A counts: its first block when the recording holds both (`experimentBlocks`),
+ * else its first 15 serves, the template's Block A (CAPTURE §5.5), so serves after the drill in one
+ * long recording never reach a baseline or a re-test.
+ */
+function preDrillServes(session: CoachingSession, key: CoachingStratum) {
   const serves = servesInStratum(session, key)
-  // An "Experiment" template session: only the block recorded before the drill counts (§12.3).
-  if (session.template === 'experiment') {
-    const blocks = serves.map((s) => s.block ?? 0)
-    const first = blocks.length ? Math.min(...blocks) : 0
+  if (session.template !== 'experiment') return serves
+  const blocks = [...new Set(serves.map((s) => s.block ?? 0))]
+  if (blocks.length > 1) {
+    const first = Math.min(...blocks)
     return serves.filter((s) => (s.block ?? 0) === first)
   }
-  return serves
+  return [...serves].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)).slice(0, BLOCK_A_SERVES)
+}
+
+/** The session as the verdict pools see it: an "Experiment" recording keeps only Block A. */
+function beforeDrill(session: CoachingSession, key: CoachingStratum): CoachingSession {
+  return session.template === 'experiment' ? restrictTo(session, key) : session
 }
 
 export interface ComparisonInput {
@@ -168,11 +231,14 @@ export function buildVerdictRequest(input: ComparisonInput): VerdictRequest {
     .filter((h) => h.startedAt <= exp.startedAt && h.captureQuality !== 'poor' && servesInStratum(h, exp.stratum).length > 0)
     .sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))
     .slice(0, 3)
-  // Follow-up: later matched sessions up to and including this one, at most 3.
+    .map((h) => beforeDrill(h, exp.stratum))
+  // Follow-up: later matched re-tests up to and including this one, at most 3. A block recorded after
+  // the drill (same visit as the start or as a re-test) is same-session and never pools in (§12.3).
   const followSessions = all
-    .filter((h) => h.startedAt > exp.startedAt && h.startedAt <= session.startedAt && h.captureQuality !== 'poor' && servesInStratum(h, exp.stratum).length > 0)
+    .filter((h) => h.startedAt <= session.startedAt && retestKind(exp, h) === 'matched')
     .sort((a, b) => (a.startedAt < b.startedAt ? -1 : 1))
     .slice(-3)
+    .map((h) => beforeDrill(h, exp.stratum))
   const opts = { heightM: profile.heightM, showExperimental: false, forSpread: spec.kind === 'spread' }
   if (spec.kind === 'rate') {
     const sum = (ss: CoachingSession[]) =>
@@ -217,7 +283,7 @@ export function buildVerdictRequest(input: ComparisonInput): VerdictRequest {
   const followGroups: Sample[][] = []
   const followIds: string[] = []
   for (const s of followSessions) {
-    const xs = included(seriesFor(s, s.id === session.id ? followUpServes(s, exp.stratum) : servesInStratum(s, exp.stratum), spec.seriesId, opts).usable)
+    const xs = included(seriesFor(s, servesInStratum(s, exp.stratum), spec.seriesId, opts).usable)
     if (xs.length >= minPerSession) {
       followGroups.push(xs)
       followIds.push(s.id)
@@ -280,7 +346,7 @@ export function matchedComparison(input: ComparisonInput): MatchedComparisonResu
 
 /** A copy of the session with only the experiment's stratum (and, for Experiment templates, block A). */
 function restrictTo(session: CoachingSession, key: CoachingStratum): CoachingSession {
-  const keep = new Set(followUpServes(session, key).map((s) => s.id))
+  const keep = new Set(preDrillServes(session, key).map((s) => s.id))
   return { ...session, serves: session.serves.filter((s) => keep.has(s.id)) }
 }
 

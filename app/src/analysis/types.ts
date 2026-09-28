@@ -210,7 +210,7 @@ export interface MetricValue {
   n?: number
   /** Serves that were eligible, for "X of N serves measured". */
   nEligible?: number
-  /** METRICS §4.1 early read: shown with "Early read", never in a headline. */
+  /** METRICS §4.1 early read: shown with "Early read"; only a spread from 12 serves, with its interval, may headline. */
   provisional?: boolean
   /** Spread at the limit of what can be measured (DESIGN §3.3 rule 5). */
   nearMeasurementLimit?: boolean

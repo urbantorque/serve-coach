@@ -85,6 +85,23 @@ describe('Today model (PRODUCT §6.2, DESIGN §10.2)', () => {
     expect(morning.matchDay).toBe(false)
   })
 
+  it('a referral raised this session pauses coaching without the saved flag (no consent), and hides match day', () => {
+    const at = new Date('2026-09-27T15:00:00+10:00')
+    const noConsent = { ...profile, comfort: { painFlag: 0 as const } }
+    const m = todayModel({ bundles: [own(sample[0])], experiments: [], practiceLogs: [], profile: noConsent, now: at, referral: 'stop-and-book' })
+    expect(m.painPause).toBe(true)
+    expect(m.referral).toBe('stop-and-book')
+    expect(m.matchDay).toBe(false)
+    // A red flag answered this session wins over the saved "Stop and book" flag.
+    const red = todayModel({ bundles: [own(sample[0])], experiments: [], practiceLogs: [], profile: { ...profile, comfort: { painFlag: 1 } }, now: at, referral: 'today' })
+    expect(red.referral).toBe('today')
+    // The saved flag alone is "Stop and book"; neither means no pause.
+    expect(todayModel({ bundles: [own(sample[0])], experiments: [], practiceLogs: [], profile: { ...profile, comfort: { painFlag: 1 } }, now: at }).referral).toBe('stop-and-book')
+    const clear = todayModel({ bundles: [own(sample[0])], experiments: [], practiceLogs: [], profile: noConsent, now: at })
+    expect(clear.painPause).toBe(false)
+    expect(clear.referral).toBeNull()
+  })
+
   it('welcome back after 14 days, without any streak language', () => {
     const m = todayModel({ bundles: [own(sample[0])], experiments: [], practiceLogs: [], profile, now: new Date('2026-10-20T09:00:00+10:00') })
     expect(m.welcomeBack).toBe(true)

@@ -2,6 +2,7 @@ import { ArrowsClockwiseIcon, CaretRightIcon, FlagPennantIcon, VideoCameraIcon }
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { REFERRAL_COPY } from '../../../coaching/safety.ts'
 import { loadDemoData } from '../../../data/demo.ts'
 import { showToast } from '../../../data/index.ts'
 import { useLatestDecision, useProfile } from '../../../data/hooks.ts'
@@ -45,7 +46,8 @@ function LastSessionCard({ bundle, welcomeBack }: { bundle: SessionBundle; welco
         <p className="text-headline text-ink">
           {shortDate(s.visitId)} <span className="text-footnote font-normal text-ink-2">· {sessionLine(s)}</span>
         </p>
-        {headline ? <p className="line-clamp-2 text-callout text-ink-2">{headline}</p> : null}
+        {/* Never clamped: an early read's label and interval sit at the end of the sentence (METRICS §4.1). */}
+        {headline ? <p className="text-callout text-ink-2 text-pretty">{headline}</p> : null}
         {a ? <CaptureQualityLine overall={a.capture.quality.overall} measured={a.counts.included} detected={a.counts.analysed} /> : null}
         <Link
           to={paths.sessionReport(s.id)}
@@ -116,6 +118,9 @@ export function TodayScreen() {
   const bundles = useSessionBundles({ includeDemo: true })
   const experiments = useExperiments()
   const profile = useProfile()
+  // A referral raised this session ("It hurts" or a red flag on Record, live framing or /focus) pauses
+  // coaching here too, even when the answer was not saved (COACHING §7.5, §7.9, §10.3; D8).
+  const referral = useFocusStore((s) => s.referral)
   const [now] = useState(() => new Date())
   // Practice logs of the experiment Today shows (the active one, or one that just finished).
   const newest = bundles?.filter((b) => b.session.status === 'ready').sort((a, b) => b.session.startedAt.localeCompare(a.session.startedAt))
@@ -126,7 +131,7 @@ export function TodayScreen() {
 
   const model =
     bundles && experiments && profile !== undefined && logs
-      ? todayModel({ bundles, experiments, practiceLogs: logs, profile, now })
+      ? todayModel({ bundles, experiments, practiceLogs: logs, profile, now, ...(referral ? { referral } : {}) })
       : null
   // The newest session's stored decision (kept in step by integration/coachingSync.ts after analysis,
   // tagging and practice); the experiment's starting decision until the newest session has one.
@@ -205,7 +210,8 @@ export function TodayScreen() {
       ) : null}
 
       {model.painPause ? (
-        <PainPauseCard />
+        // "Stop and book" keeps the card's own §10.3 text; a red flag leads with its instruction.
+        <PainPauseCard message={model.referral && model.referral !== 'stop-and-book' ? REFERRAL_COPY[model.referral].title : undefined} />
       ) : (
         <>
           {model.matchDay && decision?.cue && !sample ? (

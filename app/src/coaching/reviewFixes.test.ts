@@ -145,7 +145,8 @@ describe("today's soreness holds an experiment, never parks it (COACHING §9.3, 
     const d = decideFocus({ profile: profile(), session: tossSession('now', '2026-09-26T09:00:00+10:00', 21), bodyCheck: { answer: 'sore', regions: ['knee', 'back'] }, now: '2026-09-26T10:00:00+10:00' })
     const rec = toCoachingRecord(d)
     const text = JSON.stringify({ trace: rec.trace, alternatives: rec.alternatives })
-    expect(text).not.toMatch(/knee|back|sore/i)
+    // Body areas and soreness never appear ("Toss front to back" is an item's name, not an area).
+    expect(text).not.toMatch(/knee|(?<!front to )back|sore/i)
     expect(d.kind === 'focus' ? d.checks.some((c) => c.soreToday) : true).toBe(true)
   })
 })

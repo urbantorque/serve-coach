@@ -3,7 +3,7 @@
  * End-to-end flows in headless Edge (390 x 844, DPR 2, light and dark), with a screenshot of every
  * screen, console errors, horizontal overflow and unlabelled metric checks.
  *
- *   npm run build && node scripts/integrated-flows.mjs [--port 4321] [--out ../validation/results/ui/integrated] [--only a|b|c]
+ *   npm run build && node scripts/integrated-flows.mjs [--port 4321] [--out ../validation/results/ui/integrated] [--only a|b|c|d] [--dark-c]
  *
  * Serves the production build (vite preview) itself. Flows:
  *   A. First run → onboarding → "See a sample session" (engine-built seed) → report → serve detail
@@ -14,8 +14,16 @@
  *      tagging → "Check this serve" (peak and contact marked at the clip's truth, saved, App vs you)
  *      → Today with the stored decision.
  *   C. The player's own loop (light; --dark-c adds dark): import a 16-serve check-in (synthetic
- *      sample-checkin) → Today and focus → drill → two practice logs (starts the experiment) → Record
- *      pins the re-test → import sample-retest as the re-test → report → "Did it work?" → Progress.
+ *      sample-checkin; then dated one day back in IndexedDB, because a re-test must come from a later
+ *      visit than the check-in, COACHING §12.3) → Today and focus → drill → two practice logs (starts the experiment) → Record
+ *      pins the re-test → import sample-retest as the re-test → report → "Did it work?" (with the T1
+ *      Plus card on the first completed loop) → Progress.
+ *   D. Platform and product gaps: the service worker takes control → the sample → offline reload
+ *      (Today, a report, Beta data) → match log entry → Progress comp nights → T3 sheets (season view,
+ *      ghost overlay) → T2 on Processing for a third analysed day this month (earlier days copied from
+ *      the sample as the player's own) → Beta data export (checked for ids and free text).
+ *   Flow B's "Check this serve" also marks standing height, the hip centre at release, lowest hip and
+ *   contact, and the trophy shoulders, so "App vs you" has its legs and shoulders rows.
  *
  * report.json also records, per import, the serves found and counted and why any were left out
  * (`analyses`), requests to any host but the preview server (`offHostRequests`, should be empty),
@@ -51,9 +59,9 @@ if (only && existsSync(join(outDir, 'report.json'))) {
   report.steps = (prev.steps ?? []).filter((x) => x.flow !== only)
   report.consoleErrors = (prev.consoleErrors ?? []).filter((x) => x.flow !== only)
   report.failures = (prev.failures ?? []).filter((f) => !new RegExp(`^(light|dark)[ -]${only}([0-9]| |-)`).test(f))
-  for (const k of ['todayDecision', 'ownExperiment', 'ownAfterLogs']) if (prev[k] !== undefined) report[k] = prev[k]
+  for (const k of ['todayDecision', 'ownExperiment', 'ownAfterLogs', 'paywall', 'pwa', 'matchLog', 'betaExport', 'checkinBackdated']) if (prev[k] !== undefined) report[k] = prev[k]
   // Flow B and C records (imports, analyses, the level-mount import, the check) and per-flow diagnostics.
-  const importFlow = (prefix) => (prefix === 'baseline-' ? 'b' : 'c')
+  const importFlow = (prefix) => (prefix === 'baseline-' ? 'b' : prefix === 't2-' ? 'd' : 'c')
   for (const k of ['imports', 'analyses']) if (prev[k]) report[k] = prev[k].filter((x) => importFlow(x.prefix) !== only)
   if (only !== 'b') for (const k of ['levelMountImport', 'checkServe']) if (prev[k] !== undefined) report[k] = prev[k]
   for (const k of ['diagnostics', 'offHostRequests']) if (prev[k]) report[k] = prev[k].filter((x) => x.flow !== only)
@@ -297,7 +305,7 @@ async function flowA(page, scheme) {
 // Flow B: a real import through processing
 // ---------------------------------------------------------------------------------------------
 
-async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = false, mount = null, spot = null }) {
+async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = false, mount = null, spot = null, onProcessing = null }) {
   if (viaRecord) {
     // Client-side from Record, so the re-test plan Record pinned (kept in memory) applies.
     await page.getByRole('link', { name: /Import a video/ }).first().click()
@@ -318,6 +326,9 @@ async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = f
     const r = (await g.count()) ? g.getByRole('radio', { name }) : page.getByRole('radio', { name })
     if (await r.count()) await r.first().click()
   }
+  // The light has no default for a clip without an evening timestamp; the synthetic clips are daylight.
+  const lightGroup = page.getByRole('radiogroup', { name: 'Light' })
+  if (await lightGroup.count()) await lightGroup.getByRole('radio', { name: 'Daylight' }).first().click()
   // Side views ask how the phone was mounted (METRICS §1.1.3a); the default answer is "Tilted, or not sure".
   const mountGroup = page.getByRole('radiogroup', { name: 'How was the phone mounted?' })
   if (mount) {
@@ -336,6 +347,7 @@ async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = f
   const clicked = Date.now()
   await page.getByRole('button', { name: 'Analyse' }).click()
   await page.waitForURL(/\/processing\//, { timeout: 30_000 })
+  if (onProcessing) await onProcessing()
   await page.waitForTimeout(6000)
   await shot(`${prefix}processing`)
   await page.waitForURL(/\/sessions\/[^/]+$/, { timeout: 900_000 })
@@ -397,17 +409,54 @@ async function checkThisServe(page, sessionId, shot, scheme, clipId = 'baseline-
     await page.mouse.click(r.x + p.x * r.width, r.y + p.y * r.height)
     await page.waitForTimeout(200)
   }
+  // Landmarks from the generator's truth (MediaPipe numbering): hips 23/24, shoulders 11/12, heels 29/30.
+  const lm = (f) => truth.frames[f].landmarks
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })
+  const hipAt = (f) => mid(lm(f)[23], lm(f)[24])
+  const f0 = Math.min(60, Math.max(0, ev.tossRelease.frameIndex - 30))
+  const floorY = Math.max(lm(f0)[29].y, lm(f0)[30].y, lm(f0)[31].y, lm(f0)[32].y)
+  const nose = lm(f0)[0]
+  // Standing height (for leg drive and loading in % of height).
+  await page.getByRole('button', { name: /^Height/ }).click()
+  await seekTo(f0)
+  await tap({ x: nose.x - 0.004, y: nose.y - 0.075 * (floorY - nose.y) })
+  await tap({ x: lm(f0)[29].x, y: floorY })
+  // Release with the hip centre (loading depth), the peak, the trophy shoulders, the lowest hip.
+  await page.getByRole('button', { name: /^Release/ }).click()
+  await seekTo(ev.tossRelease.frameIndex)
+  await tap(hipAt(ev.tossRelease.frameIndex))
   await page.getByRole('button', { name: /^Peak/ }).click()
   await seekTo(ev.tossApex.frameIndex)
   await tap(ballAt(ev.tossApex.frameIndex))
+  if (ev.trophy) {
+    await page.getByRole('button', { name: /^Trophy/ }).click()
+    await seekTo(ev.trophy.frameIndex)
+    await tap(lm(ev.trophy.frameIndex)[11])
+    await tap(lm(ev.trophy.frameIndex)[12])
+    await shot('check-mark-trophy')
+  }
+  const lowest = ev.trophyEnd ?? ev.lowestHip
+  if (lowest) {
+    await page.getByRole('button', { name: /^Lowest hip/ }).click()
+    await seekTo(lowest.frameIndex)
+    await tap(hipAt(lowest.frameIndex))
+    await shot('check-mark-lowest-hip')
+  }
+  // Contact: the ball, then the hip centre (leg drive).
   await page.getByRole('button', { name: /^Contact/ }).click()
   await seekTo(ev.contact.frameIndex)
   await tap(ballAt(ev.contact.frameIndex))
+  await tap(hipAt(ev.contact.frameIndex))
   await shot('check-marked')
   await page.getByRole('button', { name: 'Save check' }).click()
   await page.waitForSelector('[data-check-serve][data-mode="result"]', { timeout: 30_000 })
   await shot('check-result', { wait: 1500 })
-  const rows = await page.locator('[aria-label="Timing"] li, [aria-label="Heights"] li, [aria-label="Positions"] li').allInnerTexts()
+  const legs = page.getByRole('region', { name: 'Legs and shoulders' })
+  if (await legs.count()) {
+    await legs.first().scrollIntoViewIfNeeded()
+    await shot('check-result-legs', { wait: 600 })
+  }
+  const rows = await page.locator('[aria-label="Timing"] li, [aria-label="Heights"] li, [aria-label="Positions"] li, [aria-label="Legs and shoulders"] li').allInnerTexts()
   const saved = ((await idbAll(page, 'annotations')) ?? []).filter((a) => a.sessionId === sessionId)
   report.checkServe = { ...(report.checkServe ?? {}), [scheme]: { sessionId, rows: rows.map((r) => r.replace(/\s+/g, ' ').trim()), savedChecks: saved.length } }
 }
@@ -468,6 +517,38 @@ async function flowB(page, scheme) {
 // Flow C: the player's own experiment loop
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Moves a session one or more days back (start time and practice day), straight in IndexedDB. Flow C
+ * uses it so the check-in reads as filmed yesterday: a re-test must be on a later visit than the
+ * check-in (COACHING §12.3), and every import in this script happens on the same day.
+ */
+function backdateSession(page, sessionId, days) {
+  return page.evaluate(
+    ({ sessionId, days }) =>
+      new Promise((resolve, reject) => {
+        const open = indexedDB.open('serve-coach')
+        open.onerror = () => reject(open.error)
+        open.onsuccess = () => {
+          const tx = open.result.transaction('sessions', 'readwrite')
+          const store = tx.objectStore('sessions')
+          const get = store.get(sessionId)
+          let visitId = null
+          get.onsuccess = () => {
+            const s = get.result
+            if (!s) return reject(new Error(`no session ${sessionId}`))
+            const d = new Date(new Date(s.startedAt).getTime() - days * 86_400_000)
+            const pad = (n) => String(n).padStart(2, '0')
+            visitId = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+            store.put({ ...s, startedAt: d.toISOString(), createdAt: d.toISOString(), visitId })
+          }
+          tx.oncomplete = () => resolve(visitId)
+          tx.onerror = () => reject(tx.error)
+        }
+      }),
+    { sessionId, days },
+  )
+}
+
 async function flowC(page, scheme) {
   const { shot, step } = flowRunner(page, scheme, 'c')
   await step('skip set-up and import a 16-serve check-in', async () => {
@@ -475,7 +556,10 @@ async function flowC(page, scheme) {
     await button(page, 'Skip set-up').click()
     await page.getByRole('radio', { name: 'Yes' }).click()
     await page.waitForURL((u) => !u.pathname.startsWith('/onboarding'), { timeout: 10_000 })
-    await importClip(page, clip('sample-checkin'), { shot, prefix: 'checkin-', scheme })
+    const checkinId = await importClip(page, clip('sample-checkin'), { shot, prefix: 'checkin-', scheme })
+    // As if filmed yesterday, so today's re-test is a later visit (COACHING §12.3).
+    report.checkinBackdated = { ...(report.checkinBackdated ?? {}), [scheme]: await backdateSession(page, checkinId, 1) }
+    await page.reload()
     await shot('checkin-report', { full: true })
     await toHero(page)
     await shot('checkin-toss-hero')
@@ -533,6 +617,14 @@ async function flowC(page, scheme) {
     await page.goto(base + (own ? `/progress/compare/${own.id}` : '/progress/compare'))
     await page.waitForTimeout(2000)
     await shot('compare-own', { full: true })
+    // T1 (PRODUCT §6.15): the first completed loop shows one calm Plus card below the verdict.
+    const t1 = page.getByRole('region', { name: 'That was your first experiment' })
+    const t1Shown = (await t1.count()) > 0
+    report.paywall = { ...(report.paywall ?? {}), [`${scheme}-t1`]: { shown: t1Shown, verdict: own?.verdict ?? null } }
+    if (t1Shown) {
+      await t1.first().scrollIntoViewIfNeeded()
+      await shot('compare-own-t1-card', { wait: 600 })
+    }
     await page.goto(base + '/progress')
     await page.waitForTimeout(1500)
     await shot('progress-own', { full: true })
@@ -542,12 +634,191 @@ async function flowC(page, scheme) {
   })
 }
 
+// ---------------------------------------------------------------------------------------------
+// Flow D: installable offline app, match log, Plus moments (T2, T3), Beta data export
+// ---------------------------------------------------------------------------------------------
+
+/** Copies sample-s2's rows as the player's own analysed sessions on earlier September days (raw IndexedDB). */
+function seedOwnDays(page, days) {
+  return page.evaluate(
+    (days) =>
+      new Promise((resolve, reject) => {
+        const open = indexedDB.open('serve-coach')
+        open.onerror = () => reject(open.error)
+        open.onsuccess = () => {
+          const db = open.result
+          const tx = db.transaction(['sessions', 'sessionStats'], 'readwrite')
+          const sessions = tx.objectStore('sessions')
+          const stats = tx.objectStore('sessionStats')
+          const getS = sessions.get('sample-s2')
+          getS.onsuccess = () => {
+            const s = getS.result
+            if (!s) return reject(new Error('sample-s2 not loaded'))
+            const getT = stats.get('sample-s2')
+            getT.onsuccess = () => {
+              const t = getT.result
+              for (const day of days) {
+                const id = `own-${day}`
+                const at = `${day}T08:05:00+10:00`
+                const { isDemo: _d, label: _l, experimentId: _e, isRetest: _r, ...rest } = s
+                sessions.put({ ...rest, id, visitId: day, startedAt: at, createdAt: at, isDemo: 0 })
+                if (t) {
+                  const { isDemo: _td, ...trest } = t
+                  stats.put({ ...trest, sessionId: id, isDemo: 0 })
+                }
+              }
+            }
+          }
+          tx.oncomplete = () => resolve(days.length)
+          tx.onerror = () => reject(tx.error)
+        }
+      }),
+    days,
+  )
+}
+
+async function flowD(page, scheme) {
+  const { shot, step } = flowRunner(page, scheme, 'd')
+  const context = page.context()
+  report.pwa = report.pwa ?? {}
+  report.paywall = report.paywall ?? {}
+  await step('skip set-up; the service worker takes control', async () => {
+    await page.goto(base + '/onboarding')
+    await button(page, 'Skip set-up').click()
+    await page.getByRole('radio', { name: 'Yes' }).click()
+    await page.waitForURL((u) => !u.pathname.startsWith('/onboarding'), { timeout: 10_000 })
+    await page.evaluate(() => navigator.serviceWorker.ready.then(() => true))
+    await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 60_000 })
+    const cache = await page.evaluate(async () => {
+      let entries = 0
+      for (const k of await caches.keys()) entries += (await (await caches.open(k)).keys()).length
+      return { names: await caches.keys(), entries }
+    })
+    report.pwa[scheme] = { controlled: true, ...cache }
+  })
+  await step('load the sample (cached on first use)', async () => {
+    await page.goto(base + '/profile')
+    await page.getByRole('button', { name: /See a sample session/ }).first().click()
+    await page.waitForURL(/\/sessions\/sample-s\d/, { timeout: 60_000 })
+    await page.getByText(/Sample data/i).first().waitFor()
+  })
+  await step('offline: reload and move around', async () => {
+    await context.setOffline(true)
+    await page.goto(base + '/')
+    await page.getByRole('heading', { level: 1, name: 'Today' }).waitFor({ timeout: 20_000 })
+    await shot('offline-today', { wait: 1200 })
+    await page.goto(base + '/sessions/sample-s3')
+    await page.getByText(/Sample data/i).first().waitFor({ timeout: 20_000 })
+    await shot('offline-report', { wait: 1500 })
+    await page.goto(base + '/profile/beta-data')
+    await page.getByRole('heading', { level: 1, name: 'Beta data' }).waitFor({ timeout: 20_000 })
+    await shot('offline-beta-data', { wait: 800 })
+    report.pwa[scheme].offlineScreens = ['today', 'report', 'beta-data']
+    await context.setOffline(false)
+  })
+  await step('match log: a comp night with counted first serves', async () => {
+    await page.goto(base + '/sessions/matches/new')
+    await page.getByRole('button', { name: 'Save', exact: true }).waitFor({ timeout: 15_000 })
+    await shot('match-log-new', { wait: 600 })
+    const games = page.getByRole('button', { name: 'More: Service games' })
+    for (let i = 0; i < 2; i++) await games.click()
+    await page.getByRole('button', { name: 'More: Double faults' }).click()
+    await page.getByRole('radiogroup', { name: 'Did you count first serves?' }).getByRole('radio', { name: /Yes/ }).click()
+    for (let i = 0; i < 12; i++) await page.getByRole('button', { name: 'More: First serves hit' }).click()
+    for (let i = 0; i < 7; i++) await page.getByRole('button', { name: 'More: First serves in' }).click()
+    await shot('match-log-filled', { full: true })
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await page.waitForURL((u) => !u.pathname.endsWith('/matches/new'), { timeout: 15_000 })
+    const logs = (await idbAll(page, 'matchLogs')) ?? []
+    const own = logs.filter((m) => m.isDemo !== 1)
+    report.matchLog = { ...(report.matchLog ?? {}), [scheme]: own.map((m) => ({ serviceGames: m.serviceGames, doubleFaults: m.doubleFaults, firstServesIn: m.firstServesIn ?? null, firstServesAttempted: m.firstServesAttempted ?? null, hasNotes: Boolean(m.notes) })) }
+    if (own.length !== 1) throw new Error(`expected 1 saved match log, found ${own.length}`)
+  })
+  await step('progress: comp nights, and the season view (T3)', async () => {
+    await page.goto(base + '/progress')
+    const comp = page.getByRole('region', { name: 'Comp nights' })
+    await comp.waitFor({ timeout: 15_000 })
+    await comp.scrollIntoViewIfNeeded()
+    await shot('progress-comp-nights', { wait: 800 })
+    await comp.getByRole('button', { name: /Season view/ }).click()
+    const sheet = page.getByRole('dialog', { name: 'Season view is part of Plus' })
+    await sheet.waitFor({ timeout: 10_000 })
+    await shot('plus-sheet-t3-season', { wait: 600 })
+    report.paywall[`${scheme}-t3-season`] = { shown: true }
+    await page.keyboard.press('Escape')
+  })
+  await step('compare view: the ghost overlay (T3)', async () => {
+    await page.goto(base + '/sessions/sample-s3')
+    const serveLink = page.locator('a[href*="/serves/"]').first()
+    await serveLink.waitFor({ timeout: 15_000 })
+    await serveLink.scrollIntoViewIfNeeded()
+    await serveLink.click()
+    await page.waitForSelector('[data-serve-detail]', { timeout: 60_000 })
+    await page.getByRole('button', { name: 'More actions' }).click()
+    await page.getByRole('menuitem', { name: 'Compare with your best' }).click()
+    const picker = page.getByRole('dialog', { name: 'Compare with' })
+    await picker.waitFor({ timeout: 10_000 })
+    // The best serve loads after the sheet opens; wait for an enabled option.
+    const best = picker.locator('button:not([aria-disabled="true"])', { hasText: /Your best serve/ })
+    await best.first().waitFor({ timeout: 15_000 })
+    await best.first().click()
+    const group = page.getByRole('radiogroup', { name: 'Compare view' })
+    await group.waitFor({ timeout: 15_000 })
+    await group.getByRole('radio', { name: 'Ghost (Plus)' }).click()
+    await page.getByRole('dialog', { name: 'Ghost overlay is part of Plus' }).waitFor({ timeout: 10_000 })
+    await shot('plus-sheet-t3-ghost', { wait: 600 })
+    report.paywall[`${scheme}-t3-ghost`] = { shown: true }
+    await page.keyboard.press('Escape')
+  })
+  await step('T2: a third analysed day this month shows the allowance notice', async () => {
+    // Earlier September days of the player's own (copies of the sample check-in): the first is the
+    // free first loop, the next two use this month's 2 free days, so today's import is past them.
+    await seedOwnDays(page, ['2026-09-08', '2026-09-15', '2026-09-22'])
+    let sheetSeen = false
+    const sessionId = await importClip(page, clip('baseline-s1'), {
+      shot,
+      prefix: 't2-',
+      scheme,
+      mount: 'Level mount',
+      onProcessing: async () => {
+        const sheet = page.getByRole('dialog', { name: "Past this month's free analyses" })
+        await sheet.waitFor({ timeout: 30_000 })
+        sheetSeen = true
+        await shot('processing-t2-sheet', { wait: 600 })
+        await sheet.getByRole('button', { name: 'Not now' }).click()
+        await shot('processing-t2-notice', { wait: 600 })
+      },
+    })
+    const state = ((await idbAll(page, 'settings')) ?? []).find((s) => s.key === 'paywall')?.value ?? null
+    const t2Months = state?.t2Months ?? []
+    report.paywall[`${scheme}-t2`] = { sessionId, sheetSeen, shown: t2Months.length > 0, t2Months, log: (state?.log ?? []).map((l) => l.trigger) }
+    if (!t2Months.length) throw new Error('T2 was not shown')
+  })
+  await step('beta data: counts and the exported report', async () => {
+    await page.goto(base + '/profile/beta-data')
+    await page.getByRole('heading', { level: 1, name: 'Beta data' }).waitFor({ timeout: 15_000 })
+    await shot('beta-data', { full: true, wait: 800 })
+    const [download] = await Promise.all([page.waitForEvent('download', { timeout: 20_000 }), page.getByRole('button', { name: 'Export report' }).click()])
+    const file = join(outDir, `beta-report-${scheme}.json`)
+    await download.saveAs(file)
+    const json = JSON.parse(readFileSync(file, 'utf8'))
+    // No ids, dedupe keys, free text, heights or body answers (platform README): no such key in any
+    // event, and no app id (ULID) anywhere in the file. The top-level "notes" is the report's own
+    // plain statement of what it leaves out.
+    const eventKeys = new Set((json.events ?? []).flatMap((e) => [...Object.keys(e), ...Object.keys(e.props ?? {})]))
+    const leaks = ['onceKey', 'sessionId', 'serveId', 'experimentId', 'heightM', 'notes', 'painFlag', 'id'].filter((k) => eventKeys.has(k))
+    if (/\b[0-9A-HJKMNP-TV-Z]{26}\b/.test(JSON.stringify(json))) leaks.push('an app id (ULID)')
+    report.betaExport = { ...(report.betaExport ?? {}), [scheme]: { file: basename(file), events: Array.isArray(json.events) ? json.events.length : null, keys: Object.keys(json), leaks } }
+    if (leaks.length) throw new Error(`beta report carries ${leaks.join(', ')}`)
+  })
+}
+
 async function main() {
   const server = await preview({ root: appRoot, preview: { port, strictPort: true }, logLevel: 'warn' })
   const browser = await chromium.launch({ channel: 'msedge', headless: true })
   try {
     for (const scheme of ['light', 'dark']) {
-      for (const [name, fn] of [['a', flowA], ['b', flowB], ['c', flowC]]) {
+      for (const [name, fn] of [['a', flowA], ['b', flowB], ['c', flowC], ['d', flowD]]) {
         if (only && only !== name) continue
         if (name === 'c' && scheme === 'dark' && !args.includes('--dark-c')) continue
         const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: scheme })
@@ -564,10 +835,12 @@ async function main() {
           }
         })
         page.on('pageerror', (e) => report.consoleErrors.push({ scheme, flow: name, text: `pageerror: ${e.message}`.slice(0, 300), url: page.url() }))
-        // Nothing should leave the device (D8): every request not addressed to the preview server is listed.
-        page.on('request', (r) => {
+        // Nothing should leave the device (D8): every request not addressed to the preview server is
+        // listed, from the page, its workers and the service worker (context-level events).
+        context.on('request', (r) => {
           const u = r.url()
-          if (!u.startsWith(base) && !u.startsWith('data:') && !u.startsWith('blob:')) report.offHostRequests = [...(report.offHostRequests ?? []), { scheme, flow: name, url: u.slice(0, 200) }]
+          // Network schemes only: the browser's own pages (edge://downloads-hub after a download) are not requests from the app.
+          if (/^(https?|wss?):/.test(u) && !u.startsWith(base)) report.offHostRequests = [...(report.offHostRequests ?? []), { scheme, flow: name, url: u.slice(0, 200) }]
         })
         log(`--- flow ${name} (${scheme})`)
         await fn(page, scheme)

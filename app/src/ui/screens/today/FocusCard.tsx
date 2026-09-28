@@ -20,6 +20,7 @@ import { paths } from '../../shell/paths.ts'
 import { stratumWords } from '../progress/insights/history.ts'
 import { KeyFrameById } from '../progress/insights/ui.tsx'
 import { tiltHint } from '../record/import/hints.ts'
+import { alternativeText } from '../focus/checkWords.ts'
 import { FOCUS_COPY } from '../focus/copy.ts'
 
 export interface EvidenceStat {
@@ -222,7 +223,7 @@ export function FocusCard({ decision, variant, orientation, stats = [], experime
               <p className="text-footnote font-label text-ink-3">Also checked</p>
               {decision.alternatives.map((a) => (
                 <p key={a.faultId} className="text-footnote text-ink-2">
-                  {a.reason}
+                  {alternativeText(a)}
                 </p>
               ))}
             </div>
@@ -318,7 +319,7 @@ export function PainPauseCard({ message }: { message?: string }) {
       <p className="text-callout text-ink">
         {message ?? STOP_AND_BOOK}
       </p>
-      <Button variant="secondary" fullWidth={false} to={paths.comfort()}>
+      <Button variant="secondary" fullWidth={false} to={`${paths.focus()}?body=settle`}>
         It's settled
       </Button>
     </section>

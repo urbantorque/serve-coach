@@ -21,6 +21,7 @@ import { BEFORE_YOU_GO, DOUBLES_CARD, FILMING_AT_COURTS, HIT_SOUND, PAIN_RULE, R
 import { FPS_OPTIONS, PLANS, RETEST_PLAN, useRecordFlow, type FpsChoice, type PlanId } from './flow/flowStore.ts'
 import { hasSeen, markSeen } from './flow/seenOnce.ts'
 import { bodyCheckForReferral, noteBodyCheck } from '../focus/actions.ts'
+import { useFocusStore } from '../focus/focusStore.ts'
 
 type SheetId = 'fps' | 'sound' | 'before' | 'etiquette' | 'rear' | null
 
@@ -48,7 +49,9 @@ export function RecordScreen() {
   const [bodyCheck, setBodyCheck] = useState(false)
   const [unlocked, setUnlocked] = useState(false)
 
-  const paused = profile?.comfort.painFlag === 1
+  // A referral raised this session (the body check here) pauses coaching even when not saved (D8).
+  const referral = useFocusStore((s) => s.referral)
+  const paused = profile?.comfort.painFlag === 1 || Boolean(referral)
   const retestDue = Boolean(experiment) && !paused
   const locked = retestDue && flow.plan === 'retest' && !unlocked
 

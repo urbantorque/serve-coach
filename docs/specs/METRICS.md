@@ -87,7 +87,7 @@ All engine types come from `app/src/analysis/types.ts`. Times are real seconds (
 | Hitting wrist | The wrist that is nearest the ball and highest within ±0.1 s of contact. Before contact is known (coarse pass), anchors use the **higher of the two wrists** (§2.3.1). |
 | Front shoulder | At trophy: the shoulder with the larger `netDir · x` (nearer the net). The back shoulder is the other. |
 | Rear view: nearer knee | The leg whose ankle sits lower in the rectified image at trophy (from a raised camera behind the server, the foot nearer the camera projects lower). If the two ankles differ by < 0.02 BH, the nearer knee is `ROLE_AMBIGUOUS` and knee bands return `unclear`; the front knee is never used as a fallback. |
-| `netDir` (side view) | +1 if the net is to the right in the image, −1 if it is to the left. The prior comes from the entered handedness and camera side. On the chest side, a right-hander has the net on the right, and a left-hander has it on the left. The data then verify it: the median sign of (landing toe x − S0 x) and of the outgoing-ball x velocity across serves. If ≥ 70% of serves disagree with the prior, use the data and raise `VIEW_MISMATCH` (info). |
+| `netDir` (side view) | +1 if the net is to the right in the image, −1 if it is to the left. The prior comes from the entered handedness and camera side. On the chest side, a right-hander has the net on the right, and a left-hander has it on the left. The data then verify it: the median sign of (landing toe x − S0 x) and of the outgoing-ball x velocity across serves. If ≥ 70% of serves disagree with the prior, use the data and raise `VIEW_MISMATCH` (info). *Implementation (28 September 2026, `engine.ts` `netDirVote`, `sessionEvidence`):* one vote per counted serve, never per ball track; a serve votes only from its own matched outgoing ball (≥ 0.1 BH, mainly horizontal) and its landing step (≥ 0.08 BH), and casts no vote when the two disagree; tracks outside every serve are ignored. The prior is overturned only when at least 3 serves carry evidence and ≥ 70% of them contradict it, or, in a clip with fewer than 3 serves, when every serve does. Some but not enough contradicting evidence keeps the prior with an info warning. |
 | `hitDir` (rear view) | +1 if the hitting-arm side is to the right in the image, −1 otherwise. From behind, a right-hander's hitting side is on the right. |
 | Handedness | From the profile. `inferHandedness` (pose) is a cross-check only, because it relies on arm labels. |
 | **Player-plane frame (PPF)** | Metres, on the vertical plane through S0 that faces the camera. `u` is horizontal. In the side view, u = forward towards the net, positive into the court: `u = netDir · (x − x_S0) · aspect · mPerHU`. In the rear view, u = lateral, positive towards the hitting-arm side: `u = hitDir · (x − x_S0) · aspect · mPerHU`. `v` is height above the floor: `v = (y_floor − y) · mPerHU`. |
@@ -195,7 +195,7 @@ Labels follow D2 and the `MetricStatus` definitions in `types.ts`: measured, est
 | `BALL_NOT_TRACKED` | Toss track missing or fewer than 6 detections | "Toss against sky, a fence or a plain windbreak; avoid trees behind you." |
 | `APEX_EXTRAPOLATED` | The apex was above the frame and was fitted with gravity from both branches (§2.4.3); value kept with a wider interval | "Your toss went above the picture, so its height is estimated. Move the phone back a step to see it all." |
 | `APEX_OUT_OF_FRAME` | The apex left the frame and could not be fitted (one branch only, or out of the frame for more than 0.65 s) | "Move the phone back a step or raise it a little so the whole toss fits." |
-| `RELEASE_NOT_FOUND`, `CONTACT_NOT_FOUND`, `LANDING_NOT_FOUND` | The event was not found with confidence ≥ 0.5 | Generic: "We couldn't see this moment clearly on this serve." |
+| `RELEASE_NOT_FOUND`, `CONTACT_NOT_FOUND`, `LANDING_NOT_FOUND` | The event was not found with confidence ≥ 0.5. `CONTACT_NOT_FOUND` also covers independent contact signals that disagree (DECISIONS D2 addendum, §2.4.5 "Fused-event disagreement") | Generic: "We couldn't see this moment clearly on this serve." |
 | `NO_CONTACT` | Swing and miss | "Swing and miss: not counted in contact stats." |
 | `AUDIO_UNAVAILABLE` | Hit-sound timing is off (the default) or the audio is unusable; contact is timed from video | "Optional: turn on 'Use the hit sound for timing' for sharper contact timing." |
 | `NOT_ENTERED` | The player has not tagged what this needs | "Tag your serves (in, net, long, wide) in review." |
@@ -372,7 +372,7 @@ Otherwise the value is `unknown`.
 - **Side:** the outgoing ball and the landing step move mainly horizontally, with `|Δx| > 2|Δy|` in HU. `estimateFacingSide` shows square-on shoulders at trophy (chest or back) and profile at contact.
 - **Rear:** the landing step and outgoing ball move mainly upwards in the image, and the body shrinks after contact.
 
-If the evidence contradicts the declared view on ≥ 70% of serves, raise `VIEW_MISMATCH` and make every view-specific metric unavailable.
+If the evidence contradicts the declared view on ≥ 70% of serves, raise `VIEW_MISMATCH` and make every view-specific metric unavailable. *As built (28 September 2026):* the same one-vote-per-serve evidence rule as `netDir` (§1.1): at least 3 serves with evidence, or every serve in a clip of fewer than 3; some but not enough contradicting evidence passes the check with an info message that states the share.
 
 ### 2.4 Events
 
@@ -449,6 +449,14 @@ Contact is the most important timing event. It fuses up to four methods. **Defau
 - **Fallbacks:**
   - Without audio (the default): `ball-intersection` or `ball-bracket`.
   - Without a ball near contact (racket occlusion): `wrist-apex` alone, with confidence capped at 0.6. **Contact-position metrics then become unavailable** (`CONTACT_NOT_FOUND`), because the wrist cannot tell us where the ball was. Timing metrics may still use it, as experimental.
+- **Fused-event disagreement (DECISIONS D2 addendum; built 28 September 2026, `serve/analyse.ts` `checkContactSignals`, `metrics/perServe.ts` `CONTACT_DEPENDENT_IDS`).** Three independent signals are compared: the ball (`ball-intersection` or `ball-bracket`), the hit sound (when on) and a **swing peak found on its own** (the hitting wrist's highest point in the swing, searched without the other estimates, ignoring left/right labels and a lower arm-up blip after the swing). This is separate from `wrist-apex` above, which is still searched only within ±0.15 s of the other estimates. Any pair more than 3 combined σ apart is a disagreement. Resolution:
+
+  | Evidence | Contact-dependent values (`CONTACT_DEPENDENT_IDS`: toss-drop, contact-height-ratio, contact-forward, rhythm-release-to-contact, leg-drive, drive-time, loading-depth, deep-bend-flag, shoulder-tilt-trophy, knee-bend-band, shoulder-over-shoulder-contact, trophy-pause, landing-distance, speed-experimental) |
+  |---|---|
+  | A majority of three signals agree, or the ball was seen leaving on an outgoing track | Kept, capped at `experimental`, reason `CONTACT_NOT_FOUND`, the signals named in the basis |
+  | Anything else (for example a ball that only vanished, with the swing peak disagreeing) | Withheld (`unavailable`, `CONTACT_NOT_FOUND`) |
+
+  A single wrong event never produces a confident `estimated` value.
 - **Contact ball position:** the toss parabola `y(t_c)` and `x(t_c)` at the fused contact time. Extrapolation beyond the last on-parabola detection is allowed up to 0.10 s. Beyond that, the position is unavailable.
 
 #### 2.4.6 `landing`

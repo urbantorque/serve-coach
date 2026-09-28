@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { analyseSession, findServeWindows, missingShare, type EngineInput } from './engine.ts'
+import { analyseSession, findServeWindows, missingShare, sessionEvidence, type EngineInput } from './engine.ts'
 import { LM, METRIC_IDS, REAR_ONLY_METRIC_IDS, type BallObservation, type BallTrack, type CaptureContext, type MetricValue, type PhoneMount, type PoseFrame, type VideoMeta } from './types.ts'
 import { buildServeFixture } from './pose/servePoseFixture.ts'
 
@@ -395,6 +395,138 @@ describe('status downgrades', () => {
       expect(s.metrics['toss-forward']?.reasonCode).toBe('NEEDS_SIDE_VIEW')
     }
     expect(out.stats.metrics['speed-experimental']?.reasonCode).toBe('NEEDS_SIDE_VIEW')
+  })
+})
+
+/** What each serve's outgoing ball does: as served, mirrored, climbing steeply (45° in front), or not tracked. */
+type OutgoingKind = 'normal' | 'reversed' | 'rising' | 'none'
+
+/**
+ * A session of the fixture serve repeated back to back (4.5 s apart), each with its own outgoing
+ * ball. The fixture serve has no landing step, so the served ball is each serve's only netDir evidence.
+ */
+function multiServeSession(outs: readonly OutgoingKind[], opts: { cameraSide?: 'chest' | 'back'; strayT?: number } = {}): EngineInput {
+  const { input } = syntheticSession()
+  const seg = input.meta.durationMediaS
+  const n = input.poses.length
+  const aspect = input.meta.width / input.meta.height
+  const toss = input.ball.tracks.find((t) => t.kind === 'toss')!
+  const out = input.ball.tracks.find((t) => t.kind === 'outgoing')!
+  const tossObs = input.ball.observations.filter((o) => !out.observations.includes(o))
+  const o0 = out.observations[0]
+  const outgoingOf = (kind: OutgoingKind): BallObservation[] =>
+    kind === 'none'
+      ? []
+      : kind === 'reversed'
+        ? out.observations.map((o) => ({ ...o, x: o0.x - (o.x - o0.x) }))
+        : kind === 'rising'
+          ? out.observations.map((o) => ({ ...o, x: o0.x + (o.x - o0.x) / 5, y: o0.y - 4 * (o.tReal - o0.tReal) }))
+          : out.observations
+  const at = (k: number) => (o: BallObservation): BallObservation => ({ ...o, frameIndex: o.frameIndex + k * n, tReal: o.tReal + k * seg })
+  const poses: PoseFrame[] = []
+  const observations: BallObservation[] = []
+  const tracks: BallTrack[] = []
+  outs.forEach((kind, k) => {
+    for (const p of input.poses) poses.push({ ...p, frameIndex: p.frameIndex + k * n, tReal: p.tReal + k * seg })
+    const outgoing = outgoingOf(kind).map(at(k))
+    observations.push(...tossObs.map(at(k)), ...outgoing)
+    tracks.push({ id: tracks.length + 1, kind: 'toss', observations: toss.observations.map(at(k)) })
+    if (outgoing.length) tracks.push({ id: tracks.length + 1, kind: 'outgoing', observations: outgoing })
+  })
+  if (opts.strayT !== undefined) {
+    // A fast ball crossing the picture the other way (another court), outside every serve's contact.
+    const stray = [0, 1, 2].map((j): BallObservation => ({ frameIndex: Math.round(opts.strayT! * FPS) + j, tReal: opts.strayT! + j / FPS, x: 0.8 - (3 / aspect) * (j / FPS), y: 0.8, radius: 0.004, score: 0.9, source: 'detected' }))
+    observations.push(...stray)
+    tracks.push({ id: tracks.length + 1, kind: 'outgoing', observations: stray })
+  }
+  return {
+    ...input,
+    meta: { ...input.meta, durationMediaS: seg * outs.length, frameCount: poses.length },
+    capture: { ...input.capture!, cameraSide: opts.cameraSide ?? 'chest' },
+    poses,
+    ball: { observations, tracks },
+  }
+}
+
+describe('session evidence rule (netDir §1.1, view check §2.3.7): one vote per serve, never one stray track', () => {
+  it('needs 3 serves with evidence (every counted serve in a shorter clip) and ≥ 70% contradicting', () => {
+    const none = null
+    // One contradicting serve of ten: not enough evidence, whatever its share.
+    expect(sessionEvidence([true, none, none, none, none, none, none, none, none, none], 10)).toMatchObject({ decided: 1, share: 1, enough: false, contradicted: false })
+    expect(sessionEvidence([true, true, none, none], 4)).toMatchObject({ enough: false, contradicted: false })
+    expect(sessionEvidence([true, true, true], 3)).toMatchObject({ enough: true, contradicted: true })
+    expect(sessionEvidence([true, true, true, false, none, none, none, none, none, none], 10)).toMatchObject({ enough: true, share: 0.75, contradicted: true })
+    // Mixed evidence below 70% keeps what was declared.
+    expect(sessionEvidence([true, true, true, true, false, false], 6).contradicted).toBe(false)
+    // A clip of one or two serves: the evidence of every counted serve is all there is.
+    expect(sessionEvidence([true], 1).contradicted).toBe(true)
+    expect(sessionEvidence([true, none], 2).contradicted).toBe(false)
+    expect(sessionEvidence([true, true], 2).contradicted).toBe(true)
+    expect(sessionEvidence([], 0)).toMatchObject({ decided: 0, share: 0, enough: false, contradicted: false })
+  })
+})
+
+describe('netDir data check (§1.1): per-serve evidence', () => {
+  const fwd = (out: ReturnType<typeof analyseSession>) => out.serves.map((s) => s.metrics['toss-forward']?.value)
+  const flipNote = (out: ReturnType<typeof analyseSession>) => out.warnings.filter((w) => /other side of the picture/.test(w))
+  const normal = analyseSession(multiServeSession(['normal', 'normal', 'normal', 'normal']))
+
+  it('a normal session keeps the prior and says nothing', () => {
+    expect(normal.serves.map((s) => s.detection.kind)).toEqual(['serve', 'serve', 'serve', 'serve'])
+    expect(flipNote(normal)).toEqual([])
+  })
+
+  it('one reversed ball in a 4-serve session does not mirror the forward metrics (prior kept, info note)', () => {
+    const out = analyseSession(multiServeSession(['reversed', 'none', 'none', 'none']))
+    expect(fwd(out)).toEqual(fwd(normal))
+    const notes = flipNote(out)
+    expect(notes).toHaveLength(1)
+    expect(notes[0]).toMatch(/on 1 of 1 serve where it could be seen \(info\)\. Not enough to override your entries/)
+    expect(notes[0]).not.toMatch(/VIEW_MISMATCH/)
+  })
+
+  it('a stray ball track outside every serve is never evidence', () => {
+    const out = analyseSession(multiServeSession(['none', 'none', 'none'], { strayT: 0.3 }))
+    expect(fwd(out)).toEqual(fwd(normal).slice(0, 3))
+    expect(flipNote(out)).toEqual([])
+    const single = analyseSession(multiServeSession(['none'], { strayT: 0.3 }))
+    expect(fwd(single)).toEqual(fwd(normal).slice(0, 1))
+    expect(flipNote(single)).toEqual([])
+  })
+
+  it('3 of 3 serves going the other way override the prior (VIEW_MISMATCH info)', () => {
+    const out = analyseSession(multiServeSession(['reversed', 'reversed', 'reversed']))
+    expect(flipNote(out)[0]).toMatch(/on 3 of 3 serves where it could be seen \(VIEW_MISMATCH, info\)\. Using the direction they showed/)
+    expect(fwd(out)).not.toEqual(fwd(normal).slice(0, 3))
+    // A wrong camera-side entry is corrected the same way: the data put the net back on the right.
+    const back = analyseSession(multiServeSession(['normal', 'normal', 'normal'], { cameraSide: 'back' }))
+    expect(flipNote(back)[0]).toMatch(/VIEW_MISMATCH, info/)
+    const backTooFew = analyseSession(multiServeSession(['normal', 'normal', 'none', 'none'], { cameraSide: 'back' }))
+    expect(flipNote(backTooFew)[0]).toMatch(/on 2 of 2 serves where it could be seen \(info\)/)
+    expect(fwd(back)).not.toEqual(fwd(backTooFew).slice(0, 3))
+  })
+})
+
+describe('view check (§2.3.7): one vote per serve', () => {
+  const viewCheck = (out: ReturnType<typeof analyseSession>) => out.quality.checks.find((c) => c.id === 'cq.view')!
+
+  it('one steeply climbing ball in a 4-serve session does not withhold view-specific values', () => {
+    const out = analyseSession(multiServeSession(['rising', 'none', 'none', 'none']))
+    expect(viewCheck(out).pass).toBe(true)
+    expect(viewCheck(out).severity).toBe('info')
+    expect(viewCheck(out).message).toMatch(/on 1 of 1 checked serve; not enough to change anything/)
+    expect(out.warnings.join(' ')).not.toMatch(/does not look like the view/)
+    for (const s of out.serves) expect(s.metrics['toss-forward']?.reasonCode).not.toBe('VIEW_MISMATCH')
+    expect(out.quality.overall).not.toBe('poor')
+  })
+
+  it('3 of 3 climbing balls raise VIEW_MISMATCH; so does the one serve of a one-serve clip (the front45 controls)', () => {
+    for (const outs of [['rising', 'rising', 'rising'], ['rising']] as OutgoingKind[][]) {
+      const out = analyseSession(multiServeSession(outs))
+      expect(viewCheck(out).pass).toBe(false)
+      expect(out.quality.overall).toBe('poor')
+      for (const s of out.serves) expect(s.metrics['toss-forward']?.reasonCode).toBe('VIEW_MISMATCH')
+    }
   })
 })
 

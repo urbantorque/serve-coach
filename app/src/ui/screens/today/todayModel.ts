@@ -3,6 +3,7 @@
  * PURE, so every state (empty, sample, baseline building, practise, re-test due, result, pain pause,
  * match day, welcome back) is unit-tested without rendering.
  */
+import type { ReferralLevel } from '../../../coaching/index.ts'
 import type { VerdictWord } from '../../../data/domain.ts'
 import type { ExperimentRecord, PracticeLogRecord, ProfileRecord, SessionRecord, Weekday } from '../../../data/records.ts'
 import { baselineProgress, type BaselineProgress, type SessionBundle } from '../progress/insights/history.ts'
@@ -14,7 +15,14 @@ export type ExperimentStep =
 
 export interface TodayModel {
   mode: 'empty' | 'sample' | 'player'
+  /**
+   * A referral is active (COACHING §7.5, §7.9, §10.3): this session's answer ("It hurts" or a red flag,
+   * kept in memory only) or the saved pain flag (kept only with consent, D8). No cue, drill, re-test
+   * or match-day card shows while it is.
+   */
   painPause: boolean
+  /** Its level: this session's answer wins; the saved flag alone is "Stop and book". */
+  referral: ReferralLevel | null
   matchDay: boolean
   last: SessionBundle | null
   /** Sessions (own, or sample in sample mode) newest first. */
@@ -66,6 +74,8 @@ export function todayModel(input: {
   practiceLogs: readonly PracticeLogRecord[]
   profile: ProfileRecord | null
   now: Date
+  /** The referral raised this session (focus/focusStore.ts), which is never saved without consent. */
+  referral?: ReferralLevel
 }): TodayModel {
   const ready = input.bundles.filter((b) => b.session.status === 'ready')
   const own = ready.filter((b) => b.session.isDemo === 0)
@@ -73,7 +83,9 @@ export function todayModel(input: {
   const mode: TodayModel['mode'] = own.length ? 'player' : sample.length ? 'sample' : 'empty'
   const sessions = [...(mode === 'player' ? own : sample)].sort((a, b) => b.session.startedAt.localeCompare(a.session.startedAt))
   const last = sessions[0] ?? null
-  const painPause = input.profile?.comfort.painFlag === 1
+  // The same rule as /focus (useFocus.ts): the in-memory referral or the saved flag.
+  const referral: ReferralLevel | null = input.referral ?? (input.profile?.comfort.painFlag === 1 ? 'stop-and-book' : null)
+  const painPause = referral !== null
   const wantDemo = mode === 'sample' ? 1 : 0
   const experiment = currentExperiment(input.experiments, last?.session.id, mode === 'sample')
   const step = experiment ? experimentStep(experiment, input.practiceLogs.filter((l) => (l.isDemo ?? 0) === wantDemo), input.now) : null
@@ -89,7 +101,7 @@ export function todayModel(input: {
   const hour = input.now.getHours()
   const matchDay = Boolean(input.profile?.matchNights.includes(WEEKDAYS[input.now.getDay()])) && hour >= 12 && !painPause
   const welcomeBack = mode === 'player' && last ? daysBetween(last.session.startedAt, input.now) >= 14 : false
-  return { mode, painPause, matchDay, last, sessions, experiment, step, baseline, welcomeBack }
+  return { mode, painPause, referral, matchDay, last, sessions, experiment, step, baseline, welcomeBack }
 }
 
 /** "View from behind, 12 serves" / "Side view, 22 serves". */

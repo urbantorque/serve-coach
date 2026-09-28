@@ -436,7 +436,7 @@
       "unlockHint": "We couldn't see this moment clearly on this serve."
     },
     "CONTACT_NOT_FOUND": {
-      "meaning": "Contact (with ball position) not found",
+      "meaning": "Contact (with ball position) not found, or independent contact signals (ball, hit sound, swing peak) disagree beyond their uncertainty (DECISIONS D2 addendum)",
       "unlockHint": "We couldn't see this moment clearly on this serve."
     },
     "LANDING_NOT_FOUND": {
@@ -477,7 +477,7 @@
     },
     "PITCH_UNKNOWN": {
       "meaning": "No pitch from sensors or background verticals; absolute heights, cm positions and angles are experimental",
-      "unlockHint": "Record in the app with motion access on, so we can level the picture."
+      "unlockHint": "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates."
     },
     "SCALE_INCONSISTENT": {
       "meaning": "Gravity-based and body-based scales disagree by more than 15%, or the estimated toss depth disagrees with its prior by more than 3 sigma",
@@ -885,7 +885,7 @@
         "flicker": "V0"
       },
       "validationState": "V1-synthetic-pass-limited",
-      "validationNote": "Serve count exact on all 122 clips (0 wrong in 95 side-view daylight clips at 60 fps or more; 8 of 8 in the multi-serve clip with full-rate poses). Limited: offline engine evidence only, no re-toss, shadow-swing, miss or dribble-heavy renders. End to end in the full app pipeline the count falls short: after the serve/windows.ts sampling change the scan found every serve (8 of 8 in the session clip, 16 of 16 in sample-checkin), but the engine classified 3 of those 24 as uncertain (BALL_NOT_TRACKED, scan contact 0.33 to 0.54 s early) and did not count them, so serve-count read 7 and 14 (validation/results/ui/harden-performance/bench/session__default__before.json and sample-checkin__default__before.json, 2026-09-27 11:07 and 11:11 UTC; earlier run 04:08 UTC found 7 of 8). End-to-end recall 24 of 27 (89%) against 99%; unchanged on the integrated build of 2026-09-28, where the 16-serve sample-retest clip also counts 16 of 16 (40 of 43, 93%): open issue for engine-core. Estimated until the player confirms the serve strip. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
+      "validationNote": "Serve count exact on all 122 clips offline (0 wrong in 95 side-view daylight clips at 60 fps or more; 8 of 8 in the multi-serve clip with full-rate poses). End to end in the production build (validation/results/e2e-final/SUMMARY.md, 2026-09-28): 45 of 45 true serves counted with 0 false serves across 8 clips (sessions of 8, 16 and 16 included), and 0 of 38 dribbles counted, after the pipeline toss-search band and Pass A contact-estimate fixes (docs/VALIDATION.md section 3.3). Before those fixes it was 24 of 27 on the original five clips (40 of 43 with the re-test clip). Limited: synthetic serves only; no re-toss, shadow-swing or miss clips (those counting rules are unit-tested only). Estimated until the player confirms the serve strip.",
       "prerequisites": [
         "fps>=30"
       ],

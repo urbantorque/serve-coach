@@ -37,7 +37,7 @@ import {
 } from '../../components/video/index.ts'
 import { PHASE_LABEL } from '../../copy/strings.ts'
 import { usePlusGate } from '../plan/usePlusGate.tsx'
-import { sameCameraSetup, type CompareTarget } from './serveView.ts'
+import { sameCameraSetup, thisServeLabel, type CompareTarget } from './serveView.ts'
 import { useServePlayback, type ServePlayback } from './useServePlayback.ts'
 
 export interface CompareViewProps {
@@ -232,8 +232,8 @@ function CompareLoaded({
               store={store}
               scene={pb.track ? sceneCurrent : null}
               labels={bothLandscape}
-              topLeft={pill(`Today, serve ${serve.index}`)}
-              label={`Today, serve ${serve.index}`}
+              topLeft={pill(thisServeLabel(session, serve.index))}
+              label={thisServeLabel(session, serve.index)}
             />
             <VideoStage
               clip={otherPb.clip}
@@ -260,8 +260,8 @@ function CompareLoaded({
             ghostRef={followerRef}
             store={store}
             scene={pb.track ? sceneCurrent : null}
-            topLeft={pill(`Today, serve ${serve.index}`)}
-            label={`Today, serve ${serve.index}, with ${target.legend} as a ghost`}
+            topLeft={pill(thisServeLabel(session, serve.index))}
+            label={`${thisServeLabel(session, serve.index)}, with ${target.legend} as a ghost`}
           />
         )}
         <CompareReadout store={store} otherStore={otherStore} serve={serve} other={other} pb={pb} otherPb={otherPb} />

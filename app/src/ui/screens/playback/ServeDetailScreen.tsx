@@ -66,7 +66,7 @@ import {
   type OverlayId,
   type Playhead,
 } from '../../components/video/index.ts'
-import { OUTCOME_WORDS, REASON_FALLBACK, reasonShortForm } from '../../copy/strings.ts'
+import { OUTCOME_WORDS, reasonShortForm } from '../../copy/strings.ts'
 import { paths } from '../../shell/paths.ts'
 import { CompareView } from './CompareView.tsx'
 import { useCompareUniverse, useDecision, useExperiment, useSessionTags, useTracks } from './data.ts'
@@ -79,8 +79,9 @@ import {
   openingFrame,
   outcomeKind,
   peekMetrics,
+  playerVideoLine,
   radarFromChecks,
-  videoGoneLine,
+  VIDEO_MISSING_LINE,
   type CompareTarget,
 } from './serveView.ts'
 import { CheckServeView } from './check/CheckServeView.tsx'
@@ -201,7 +202,9 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
   const stepping = !hasVideo && pb.stillFrames.length > 0
   // Follow the frame only when stepping through stills (keeps video playback cheap).
   const stillFrame = usePlayhead(store, (s) => (stepping ? s.frame : -1))
-  const goneLine = decodeError ? "This video can't be played on this phone right now. Key frames are below." : videoGoneLine(pb.video)
+  const goneLine = decodeError ? "This video can't be played on this phone right now. Key frames are below." : playerVideoLine(pb.video, pb.videoUrl)
+  // Overlays are drawn over the video or its key frames (DESIGN §8.11), never over an empty box.
+  const hasMedia = hasVideo || stepping
   const tag = tags.find((t) => t.serveId === serve.id)
   const index = serves.findIndex((s) => s.id === serve.id)
   const prev = index > 0 ? serves[index - 1] : undefined
@@ -522,7 +525,7 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
             onVideoError={() => setDecodeError(true)}
             still={stepping ? stillFor(pb.stillFrames, pb.stills, stillFrame) : null}
             store={store}
-            scene={pb.track?.pose || pb.track?.ball ? scene : null}
+            scene={hasMedia && (pb.track?.pose || pb.track?.ball) ? scene : null}
             topLeft={servePill}
             topRight={tagPill}
             bottomRight={zoomPill}
@@ -535,7 +538,7 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
               <div className="absolute inset-0 grid place-items-center p-8 text-center text-callout text-(--overlay-line)">
                 <span className="flex max-w-[260px] flex-col items-center gap-2">
                   <HardDrivesIcon size={28} aria-hidden="true" />
-                  {goneLine ?? REASON_FALLBACK}
+                  {goneLine ?? VIDEO_MISSING_LINE}
                 </span>
               </div>
             ) : null}
@@ -570,7 +573,7 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
             playDisabledReason={hasVideo ? null : (goneLine ?? 'No video')}
             stepLabel={hasVideo ? undefined : { back: 'Previous key frame', forward: 'Next key frame' }}
           />
-          {OVERLAY_IDS.some((id) => id !== 'none' && !disabled[id]) ? <OverlayChips value={overlay} onChange={setOverlay} disabled={disabled} /> : null}
+          {hasMedia && OVERLAY_IDS.some((id) => id !== 'none' && !disabled[id]) ? <OverlayChips value={overlay} onChange={setOverlay} disabled={disabled} /> : null}
           {!portrait ? (
             <div className="flex flex-col gap-3 pt-2">
               {strip}

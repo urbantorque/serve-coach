@@ -7,6 +7,7 @@ import { useProfile, useSetting } from '../../../data/hooks.ts'
 import type { ExperimentRecord } from '../../../data/records.ts'
 import { markPaywallShown, t1Due } from '../../../entitlement/index.ts'
 import { Button } from '../../components/index.ts'
+import { useFocusStore } from '../focus/focusStore.ts'
 import { usePlan } from './entitlement.ts'
 import { PlusSheet } from './PlusSheet.tsx'
 
@@ -19,6 +20,8 @@ import { PlusSheet } from './PlusSheet.tsx'
 export function FirstLoopCard({ experiment }: { experiment: ExperimentRecord }) {
   const plan = usePlan()
   const profile = useProfile()
+  // A referral raised this session pauses coaching even when the answer was not saved (D8).
+  const referral = useFocusStore((s) => s.referral)
   const state = useSetting('paywall')
   const experiments = useLiveQuery(() => listExperiments(), [])
   const location = useLocation()
@@ -31,7 +34,7 @@ export function FirstLoopCard({ experiment }: { experiment: ExperimentRecord }) 
 
   // Decide once, during render, when everything has loaded (React's "adjust state while rendering").
   if (loaded && shown === null) {
-    setShown(t1Due({ plus: plan.plus, experiment, experiments, state: state ?? {}, now: new Date(), painPause: profile?.comfort?.painFlag === 1 }))
+    setShown(t1Due({ plus: plan.plus, experiment, experiments, state: state ?? {}, now: new Date(), painPause: profile?.comfort?.painFlag === 1 || Boolean(referral) }))
   }
   // Recording the showing is the side effect: once, the first time the card appears.
   const alreadyRecorded = Boolean(state?.t1ShownAt)

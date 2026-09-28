@@ -88,7 +88,7 @@ function checksFor(entry: CatalogueEntry, bundle: SessionBundle | null, v: Metri
 }
 
 /** Replaces every {token} in a catalogue hint: {k} matched sessions so far, {n} serves needed. */
-export function fillTokens(hint: string, k: number): string {
+function fillTokens(hint: string, k: number): string {
   return hint.replace(/\{k\}/g, String(k)).replace(/\{n\}/g, '8').replace(/\{[a-z]+\}/gi, '')
 }
 
@@ -97,7 +97,7 @@ export function fillTokens(hint: string, k: number): string {
  * baseline hint is rebuilt from the matched sessions this page can see (`k`), because the engine has
  * no history and always says "1 of 2".
  */
-export function unlockHint(code: string | undefined, metricId: string, opts: { stored?: string; k?: number } = {}): string | null {
+function unlockHint(code: string | undefined, metricId: string, opts: { stored?: string; k?: number } = {}): string | null {
   if (metricId === 'speed-experimental')
     return 'Record at 120 fps or more from the side, with your height entered and one target tagged (T, Body or Wide). Turn on experimental metrics.'
   if (metricId === 'knee-bend-band') return 'From the side, your knees point at the camera at the top of the swing. Add a phone behind you to see this.'

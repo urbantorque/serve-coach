@@ -235,7 +235,7 @@ function StoredView({ session }: { session: SessionRecord }) {
 }
 
 /** The screen title follows the analysis state, so it never says "Analysing" above a finished report. */
-export function processingTitle(job: JobState | undefined, inMemory: boolean, session: SessionRecord | null | undefined): string {
+function processingTitle(job: JobState | undefined, inMemory: boolean, session: SessionRecord | null | undefined): string {
   if (inMemory && job) {
     if (job.phase === 'done') return 'Report ready'
     if (job.phase === 'failed' || job.phase === 'unavailable') return "Couldn't analyse"

@@ -6,6 +6,7 @@ import { listExperiments, listSessions } from '../../../data/index.ts'
 import { useProfile, useSetting } from '../../../data/hooks.ts'
 import { useToastStore } from '../../../data/stores/toast.ts'
 import { markPaywallShown, t2Due } from '../../../entitlement/index.ts'
+import { useFocusStore } from '../focus/focusStore.ts'
 import { usePlan } from './entitlement.ts'
 import { PlusSheet } from './PlusSheet.tsx'
 
@@ -21,6 +22,8 @@ const SETTLE_MS = 1200
 export function AllowanceNotice({ sessionId }: { sessionId: string }) {
   const plan = usePlan()
   const profile = useProfile()
+  // A referral raised this session pauses coaching even when the answer was not saved (D8).
+  const referral = useFocusStore((s) => s.referral)
   const state = useSetting('paywall')
   const location = useLocation()
   const data = useLiveQuery(async () => ({ sessions: await listSessions({ includeDemo: false }), experiments: await listExperiments() }), [])
@@ -39,7 +42,7 @@ export function AllowanceNotice({ sessionId }: { sessionId: string }) {
   const session = data?.sessions.find((s) => s.id === sessionId)
   // Decide once, during render, when everything has loaded (React's "adjust state while rendering").
   if (due === null && plan !== undefined && profile !== undefined && state !== undefined && data && session) {
-    const d = t2Due({ plus: plan.plus, session, sessions: data.sessions, experiments: data.experiments, state: state ?? {}, now: new Date(), painPause: profile?.comfort?.painFlag === 1 })
+    const d = t2Due({ plus: plan.plus, session, sessions: data.sessions, experiments: data.experiments, state: state ?? {}, now: new Date(), painPause: profile?.comfort?.painFlag === 1 || Boolean(referral) })
     setDue(d)
     setAutoOpen(d ? 'pending' : 'done')
   }

@@ -231,6 +231,21 @@ export function videoGoneLine(video: VideoRecord | null | undefined): string | n
   }
 }
 
+/** A clip whose record says it is stored, but whose file could not be read on this phone. */
+export const VIDEO_MISSING_LINE = "This video can't be found on this phone. Phases and values are below."
+
+/**
+ * The player's line for the clip: why it is gone (videoGoneLine), or, when its record says it is
+ * stored but the file did not load (`url` settled to null: a blob lost from the phone's storage, a
+ * native file this build cannot reach), that it can't be found. Never a pose-quality reason: the
+ * video is missing, not the analysis. Null while the clip plays or is still loading.
+ */
+export function playerVideoLine(video: VideoRecord | null | undefined, url: string | null | undefined): string | null {
+  const gone = videoGoneLine(video)
+  if (gone) return gone
+  return url === null ? VIDEO_MISSING_LINE : null
+}
+
 // ---------- outcome words ----------
 
 export function outcomeKind(outcome: ServeOutcome | undefined): 'in' | 'net' | 'long' | 'wide' | 'untagged' {
@@ -331,4 +346,15 @@ export function compareTargets(input: {
 export function sameCameraSetup(a: SessionRecord, b: SessionRecord): boolean {
   if (a.id === b.id) return true
   return a.setup !== undefined && a.setup === b.setup && a.orientation === b.orientation && a.view === b.view && a.cameraSide === b.cameraSide
+}
+
+/**
+ * The pill over this serve in Compare: "Today, serve 3" only when the session is from today, else its
+ * date ("26 Sep, serve 3"), so a sample or older session never reads as today's.
+ */
+export function thisServeLabel(session: Pick<SessionRecord, 'visitId'>, index: number, now: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  const when = session.visitId === today ? 'Today' : shortDate(session.visitId).replace(/^\w+ /, '')
+  return `${when}, serve ${index}`
 }

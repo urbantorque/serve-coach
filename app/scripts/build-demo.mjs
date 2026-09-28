@@ -96,9 +96,10 @@ const PRACTICE = [
   { date: '2026-09-21', createdAt: '2026-09-21T18:40:00+10:00', minutes: 12, reps: 45, successCriterionMet: 'yes', feel: 'ok', cueHelpful: 'yes', body: 'fine' },
 ]
 
+// First serves as counts (in / hit), as the match log now asks (the rough band is for older entries).
 const MATCH_LOGS = [
-  { id: 'sample-match-1', date: '2026-09-15', competition: 'night-comp', serviceGames: 5, doubleFaults: 3, firstServeRough: 'about-half', cueUsed: 'no', createdAt: '2026-09-16T07:30:00+10:00', updatedAt: '2026-09-16T07:30:00+10:00' },
-  { id: 'sample-match-2', date: '2026-09-22', competition: 'night-comp', serviceGames: 6, doubleFaults: 2, firstServeRough: 'most', cueUsed: 'yes', createdAt: '2026-09-23T07:15:00+10:00', updatedAt: '2026-09-23T07:15:00+10:00' },
+  { id: 'sample-match-1', date: '2026-09-15', competition: 'night-comp', serviceGames: 5, doubleFaults: 3, firstServesIn: 14, firstServesAttempted: 30, cueUsed: 'no', createdAt: '2026-09-16T07:30:00+10:00', updatedAt: '2026-09-16T07:30:00+10:00' },
+  { id: 'sample-match-2', date: '2026-09-22', competition: 'night-comp', serviceGames: 6, doubleFaults: 2, firstServesIn: 21, firstServesAttempted: 34, cueUsed: 'yes', createdAt: '2026-09-23T07:15:00+10:00', updatedAt: '2026-09-23T07:15:00+10:00' },
 ]
 
 function log(...a) {

@@ -444,7 +444,7 @@ Profile sheet
 4. **One focus.** Nothing competes with the focus card's primary button (research 09 pattern 19).
 5. **Matched comparisons only.** Same view, camera side, court side, serve number, intended type and handedness (METRICS §4.4). Unmatched comparisons say why and offer the nearest matched one.
 6. **Experimental stays out of the story.** Experimental values never appear in headlines, focus explanations, verdicts or Progress tiles. They show only with the experimental toggle on (D2; METRICS §1.5).
-7. **Provisional stays out of headlines.** "Early read" values are never used in a headline (METRICS §4.1).
+7. **Provisional stays out of headlines.** "Early read" values are never used in a headline, with one exception from METRICS §4.1: a provisional spread from 12 or more serves may headline, labelled "early read" and with its interval ("about 30 cm (early read, likely 20 to 45 cm)").
 8. **Colour is never the only signal.** Outcomes use shapes (● in, ▲ net, ✕ long or wide, ○ untagged). Verdicts use words. Nothing is signalled by red alone (research 09 §10).
 9. **Own serves only.** Comparisons are with the player's own serves, never with a professional or a population norm (COACHING §8.1). Reference bands, where shown, name their population and are labelled "context, not a target".
    - The provisional recreational bands (gap ranges §7, UTR 1–7) may appear on the Metric info sheet as "Typical for club players (provisional)". They use words such as tight / typical / scattered, never good / bad, and a player's band label changes only when the estimate crosses an edge by more than the stated margin (hysteresis).
@@ -552,6 +552,8 @@ This is the product's statement of what each metric is, not a report of what the
 | Background | Analysis needs the app open. Copy: "Keep Serve Coach open while it analyses. It takes about a minute." (ARCHITECTURE §5.8) | The same, plus local notifications for "Your session is ready" |
 | Notifications | None. Web push needs a server, which D8 rules out | Local notifications only, opt-in: analysis ready, re-test reminder, match-day card |
 | Storage | IndexedDB, with a persistence request and a nudge to add to the home screen (ARCHITECTURE §8.1) | Native files in the app sandbox |
+
+**As built (28 September 2026), pending a product decision:** the prototype departs from "everything is unlocked" for two Plus features. The ghost overlay in Compare and the season view on Progress are locked for free players and show the T3 sheet; "Test Plus" on the Plan screen unlocks them. Every other Plus feature has an id (`app/src/entitlement/features.ts`) but nothing checks it yet. T2 only notifies: every session is still analysed. The PWA installs (manifest, service worker) and works offline; it asks the browser to keep its data when the first real session is handed to analysis (FUNCTIONAL_STATUS §7).
 
 ### 5.4 Out of scope for v1
 
@@ -863,7 +865,7 @@ This is the CAPTURE §11 flow, which owns it:
 
    Capture words are Good / Fair / Limited, mapping to `good` / `usable` / `poor`.
 2. **Stratum switcher**, when the session has more than one stratum (for example Deuce 1st / Ad 1st). The headline uses the stratum with the most included serves (METRICS §1.6).
-3. **Headline:** one sentence chosen by the first matching rule below. It never uses experimental or provisional values.
+3. **Headline:** one sentence chosen by the first matching rule below. It never uses experimental or provisional values, except a provisional spread from 12 or more serves shown as an early read with its interval (§4.4 rule 7; METRICS §4.1).
 
    | Rule | Template | Example |
    |---|---|---|
@@ -1275,7 +1277,7 @@ Tapping a tile opens Trend detail.
 
 **Purpose.** Record comp-night serving in about 20 seconds, so the player can tell their own story ("Did it carry over?"). It is never pooled with practice, and never used for a verdict.
 
-**Entry points.** Today's morning-after card; Progress tile 5; Profile → Comp nights → **Add a match**.
+**Entry points.** Today's morning-after card; Progress tile 5; Profile → Comp nights → **Add a match**. *As built (28 September 2026): a full screen at `/sessions/matches/new`, opened from Progress ("Comp nights") only; the morning-after card and the Profile entry are not built. First serves are entered as counts (in and hit, optional) instead of the rough slider below; older entries with only the rough band still show it, marked "rough".*
 
 **Fields.** Each field is a proposed id for METRICS.md and ARCHITECTURE to confirm, and all are `player-entered`.
 

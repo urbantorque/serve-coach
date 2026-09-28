@@ -119,6 +119,16 @@ describe('focus screens', () => {
     honesty()
   })
 
+  it("Today's \"It's settled\" (/focus?body=settle) opens the body check on the paused focus page", async () => {
+    await loadDemoData()
+    useFocusStore.setState({ referral: 'stop-and-book' })
+    renderAt(`${paths.focus()}?body=settle`)
+    const dialog = await screen.findByRole('dialog', undefined, { timeout: 4000 })
+    expect(within(dialog).getAllByRole('button').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Coaching is paused. Your stats are safe.', undefined, { timeout: 4000 })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Start drill/ })).not.toBeInTheDocument()
+  })
+
   it('match night shows the pre-match card with the current cue and no new focus', async () => {
     await loadDemoData()
     useFocusStore.getState().setPlayingTonight(true)

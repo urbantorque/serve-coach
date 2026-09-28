@@ -92,9 +92,12 @@ export function HeightInput({ valueCm, onChange, reasonOpen = false }: HeightInp
         <button type="button" className={btn} aria-label="Shorter by 1 cm" aria-disabled={atMin || undefined} onClick={() => (atMin ? undefined : step(-1))}>
           <MinusIcon size={20} aria-hidden="true" />
         </button>
-        <div
+        {/* The whole 52 px box is the target (DESIGN §12): a label for the input, so a tap anywhere in
+            it, the "cm" included, focuses the field (and opens the keyboard on iOS). */}
+        <label
+          htmlFor={`${id}-in`}
           className={cx(
-            'flex min-h-13 min-w-0 flex-1 items-center gap-2 rounded-control border-token bg-surface px-4',
+            'flex min-h-13 min-w-0 flex-1 cursor-text items-center gap-2 rounded-control border-token bg-surface px-4',
             'focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus',
             error ? 'border-critical' : 'border-line-strong',
           )}
@@ -124,12 +127,12 @@ export function HeightInput({ valueCm, onChange, reasonOpen = false }: HeightInp
               }
             }}
             onBlur={(e) => commit(e.target.value)}
-            className="h-full w-full min-w-0 self-stretch bg-transparent text-title-2 font-wide tabular-nums text-ink outline-none placeholder:text-ink-3"
+            className="min-h-12 w-full min-w-0 self-stretch bg-transparent text-title-2 font-wide tabular-nums text-ink outline-none placeholder:text-ink-3"
           />
           <span className="text-subhead text-ink-2" aria-hidden="true">
             cm
           </span>
-        </div>
+        </label>
         <button type="button" className={btn} aria-label="Taller by 1 cm" aria-disabled={atMax || undefined} onClick={() => (atMax ? undefined : step(1))}>
           <PlusIcon size={20} aria-hidden="true" />
         </button>
