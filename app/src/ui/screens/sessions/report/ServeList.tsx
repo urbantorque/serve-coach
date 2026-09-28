@@ -34,6 +34,15 @@ const STRIP: Record<StripMetric, { id: MetricId; label: string; unit: string; sc
   timing: { id: 'rhythm-release-to-contact', label: 'Timing', unit: 's', scale: (v) => v / 1000, fmt: (v) => `${v.toFixed(2)} s` },
 }
 
+/** Toss strip when only relative peaks are reportable: each peak against the session's middle one, in cm. */
+const TOSS_RELATIVE = {
+  id: 'toss-apex-height' as MetricId,
+  label: 'Toss peak against your middle one',
+  unit: 'cm',
+  scale: (v: number) => v,
+  fmt: (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(Math.round(v))} cm`,
+}
+
 export interface ServeListProps {
   sessionId: string
   rows: ServeRow[]
@@ -53,17 +62,29 @@ export function ServeList({ sessionId, rows, view, orientation, heightM, stratum
   const [metric, setMetric] = useState<StripMetric>('toss')
   const [filter, setFilter] = useState<Filter>('all')
   const [expanded, setExpanded] = useState(false)
-  const cfg = STRIP[metric]
+  const tossPeaks = (relative: boolean) =>
+    rows
+      .filter((r) => r.included && !r.isLet)
+      .map((r) => ({ row: r, cm: apexCm(r, heightM, relative) }))
+      .filter((x): x is { row: ServeRow; cm: number } => x.cm !== null)
+  // Absolute peak heights can be experimental (e.g. unknown phone tilt) while each peak's distance from
+  // the middle one is still an estimate (METRICS §1.1 item 3), so the toss strip falls back to that,
+  // matching the toss hero.
+  const absolutePeaks = metric === 'toss' ? tossPeaks(false) : []
+  const relativePeaks = metric === 'toss' && absolutePeaks.length < 2 ? tossPeaks(true) : []
+  const tossRelative = relativePeaks.length >= 2
+  const cfg = tossRelative ? TOSS_RELATIVE : STRIP[metric]
   const values =
     metric === 'toss'
-      ? rows
-          .filter((r) => r.included && !r.isLet)
-          .map((r) => ({ row: r, cm: apexCm(r, heightM) }))
-          .filter((x): x is { row: ServeRow; cm: number } => x.cm !== null)
-          .map((x) => ({ row: x.row, v: x.cm / 100 }))
+      ? tossRelative
+        ? (() => {
+            const mid = median(relativePeaks.map((x) => x.cm))
+            return relativePeaks.map((x) => ({ row: x.row, v: x.cm - mid }))
+          })()
+        : absolutePeaks.map((x) => ({ row: x.row, v: x.cm / 100 }))
       : perServe(rows, cfg.id).map((p) => ({ row: p.row, v: cfg.scale(p.value) }))
   const vs = values.map((x) => x.v)
-  const pad = vs.length ? Math.max((Math.max(...vs) - Math.min(...vs)) * 0.1, metric === 'contact' ? 0.02 : 0.05) : 0.1
+  const pad = vs.length ? Math.max((Math.max(...vs) - Math.min(...vs)) * 0.1, tossRelative ? 2 : metric === 'contact' ? 0.02 : 0.05) : 0.1
   const domain: [number, number] = vs.length ? [Math.min(...vs) - pad, Math.max(...vs) + pad] : [0, 1]
   const data: StripDatum[] = values.map((x) => ({
     id: x.row.id,
@@ -93,7 +114,7 @@ export function ServeList({ sessionId, rows, view, orientation, heightM, stratum
         onChange={setMetric}
       />
       <ChartFrame
-        title={`${cfg.label} on each serve`}
+        title={tossRelative ? 'Each toss peak against your middle one' : `${cfg.label} on each serve`}
         subtitle={stratumLabel}
         status={values.length ? 'estimated' : undefined}
         metricId={cfg.id}
@@ -106,11 +127,15 @@ export function ServeList({ sessionId, rows, view, orientation, heightM, stratum
         footer={<OutcomeLegend />}
       >
         <StripPlot
-          label={`${cfg.label} for ${values.length} serves${med !== undefined ? `, middle ${cfg.fmt(med)}` : ''}.`}
-          rows={[{ key: metric, data, median: med, medianLabel: med !== undefined ? `middle ${cfg.fmt(med)}` : undefined }]}
+          label={
+            tossRelative
+              ? `Toss peak for ${values.length} serves, each against your middle toss, from ${cfg.fmt(Math.min(...vs))} to ${cfg.fmt(Math.max(...vs))}.`
+              : `${cfg.label} for ${values.length} serves${med !== undefined ? `, middle ${cfg.fmt(med)}` : ''}.`
+          }
+          rows={[{ key: metric, data, median: med, medianLabel: med === undefined ? undefined : tossRelative ? 'middle toss' : `middle ${cfg.fmt(med)}` }]}
           domain={domain}
-          unit={cfg.unit === '×' ? undefined : cfg.unit}
-          formatTick={(v) => (metric === 'toss' ? v.toFixed(2) : metric === 'contact' ? v.toFixed(2) : v.toFixed(2))}
+          unit={cfg.unit === '×' || tossRelative ? undefined : cfg.unit}
+          formatTick={(v) => (tossRelative ? cfg.fmt(v) : v.toFixed(2))}
           onOpen={(id) => navigate(paths.serveDetail(sessionId, id))}
         />
       </ChartFrame>
