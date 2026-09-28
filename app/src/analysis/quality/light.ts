@@ -15,10 +15,16 @@
  *     clock error). The clip's amplitude is the median over the runs. A ≥ 3% is a warning: class
  *     `flicker`, `speed-experimental` blocked (FLICKER, §3.25); 1–3% is info.
  *   - Darkness: court lights leave the sky (the top rows of the background) far darker than the lit
- *     court and player, where daylight makes the sky the brightest part of the picture. The clip is
- *     `dark` when the median top-band luma is below DARK_SKY_LUMA, or below DARK_SKY_RATIO of the
- *     bottom band. Thresholds are initial values from the synthetic S4 renders
- *     (tools/validate/light-eval.ts; validation/results/light/SUMMARY.md), not from real courts.
+ *     court and player, where daylight makes the sky the brightest part of the picture. Each frame's
+ *     band is the median of its cells (a floodlight or a patch of sky in the band does not move it),
+ *     and the clip is `dark` when the median top band is below DARK_SKY_LUMA AND below DARK_SKY_RATIO
+ *     of the bottom band: near-black, and far darker than the court. Both, so that a dark windbreak
+ *     above a sunlit court (dim, but not black) is not taken for night: on the synthetic corpus
+ *     (tools/validate/light-eval.ts; validation/results/light/SUMMARY.md, 124 clips) night skies read 0
+ *     against a court at 170, and the darkest daylight top band (a fence filling the top of the low
+ *     4.5 m apexout set-up) 29 against 94, which a 40 / 0.35 rule called night. The thresholds sit
+ *     between those; they are initial values, not calibrated on real courts, and a miss only leaves
+ *     the class to the player's answer.
  *
  * Pixel evidence only ever LOWERS the class (day → night-lights or flicker): a bright picture never
  * turns an unknown or a court-lights answer into daylight.
@@ -38,10 +44,10 @@ export const FLICKER_MIN_RUN_S = 2
 export const FLICKER_MIN_SAMPLES = 20
 /** An alias this close to 0 Hz (25, 50, 100 fps; the 4 Hz coarse scan) cannot show flicker. */
 const MIN_ALIAS_HZ = 1
-/** The top band (sky, far fence) darker than this (0–255 luma) means court lights. [S4 renders] */
-export const DARK_SKY_LUMA = 40
-/** ... or darker than this share of the bottom band (court). [S4 renders] */
-export const DARK_SKY_RATIO = 0.35
+/** The top band (sky, far fence) darker than this (0–255 luma) ... [synthetic corpus: night 0, darkest daylight 29] */
+export const DARK_SKY_LUMA = 18
+/** ... and darker than this share of the bottom band (court) means court lights. [night 0/170, darkest daylight 29/94] */
+export const DARK_SKY_RATIO = 0.2
 /** Fewest frames for any light evidence. */
 export const LIGHT_MIN_FRAMES = 8
 
@@ -92,7 +98,7 @@ function mean(xs: readonly number[]): number {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN
 }
 
-/** Per frame: background mean, top band, bottom band and subject means. */
+/** Per frame: background mean, top and bottom band medians, and the subject's mean. */
 function frameStats(f: LumaFrame, box: ReturnType<PlayerBoxAt>): { bg: number; top: number; bottom: number; subject?: number } {
   const n = LUMA_GRID
   const bg: number[] = []
@@ -117,7 +123,7 @@ function frameStats(f: LumaFrame, box: ReturnType<PlayerBoxAt>): { bg: number; t
       else if (r >= (3 * n) / 4) bottom.push(v)
     }
   }
-  return { bg: mean(bg), top: mean(top), bottom: mean(bottom), ...(subj.length ? { subject: mean(subj) } : {}) }
+  return { bg: mean(bg), top: median(top), bottom: median(bottom), ...(subj.length ? { subject: mean(subj) } : {}) }
 }
 
 /**
@@ -227,7 +233,7 @@ export function lightEvidence(frames: readonly LumaFrame[], opts: { captureFps: 
     stats.map((x) => ({ frameIndex: x.f.frameIndex, value: x.s.bg })),
     opts.captureFps,
   )
-  const dark = Number.isFinite(skyLuma) && (skyLuma < DARK_SKY_LUMA || (Number.isFinite(groundLuma) && groundLuma > 0 && skyLuma < DARK_SKY_RATIO * groundLuma))
+  const dark = Number.isFinite(skyLuma) && Number.isFinite(groundLuma) && skyLuma < DARK_SKY_LUMA && skyLuma < DARK_SKY_RATIO * groundLuma
   return {
     frames: frames.length,
     backgroundLuma,

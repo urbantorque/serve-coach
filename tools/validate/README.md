@@ -48,3 +48,17 @@ Output: `validation/results/e2e-final/` (`runs/`, `accuracy.md`, `accuracy.json`
 in Node on the exact input the production pipeline passed (poses, ball observations, tracks, toss
 entries, onsets, capture context), checks it reproduces the stored serves, and diffs that input
 against the offline one (`validation/results/metrics/pipeline/full/<clip>.json`, when present).
+
+## Light from the pixels (`light-eval.ts`)
+
+Runs the app's light evidence (`app/src/analysis/quality/light.ts`: mains flicker at its alias and a
+dark sky over a lit court, which lower the condition class the player gave) on every rendered clip,
+decoded with the app's `ffmpeg-static` to a 16 × 16 luma grid and sampled like the serve scan (4 Hz
+plus a 15 Hz fill around the serve), the player's box from the truth landmarks left out.
+
+```sh
+app/node_modules/.bin/tsx tools/validate/light-eval.ts [--clips a,b] [--sets night240,dusk]
+```
+
+Output: `validation/results/light/SUMMARY.md` and `rows.json` (renders only; the thresholds are
+initial values, not calibrated on real courts).

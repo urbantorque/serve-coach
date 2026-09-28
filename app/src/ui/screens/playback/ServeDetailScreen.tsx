@@ -90,6 +90,7 @@ import { StatDrawer } from './StatDrawer.tsx'
 import { TagAttributes } from './TagAttributes.tsx'
 import { initialTagging, tagPatch, type TagAttrs, type TagOutcome } from './tagging.ts'
 import { TagPad } from './TagPad.tsx'
+import { fitStageHeight, useFitStage } from './useFitStage.ts'
 import { stepStill, stillFor, useServePlayback, type ServePlayback } from './useServePlayback.ts'
 // Tag, include/exclude and delete change what coaching sees: re-decide the focus (D6).
 const synced =
@@ -192,6 +193,7 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
   const [controlsVisible, toggleControls, pokeControls] = useAutoHide(playing)
   const [zoom, setZoom] = usePlayerZoom()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const { setStage, setControls: setStageControls } = useFitStage()
   const [tagOpen, setTagOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -514,10 +516,10 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
         {session.isDemo ? <SampleBanner /> : null}
         {/* Room for the collapsed drawer, from its measured height (StatDrawer sets --drawer-peek).
             A div: AppShell's <main id="main"> is the page's one main landmark. */}
-        <div className={cx('flex flex-col gap-2', portrait ? 'pb-[calc(var(--drawer-peek,176px)+16px)]' : 'pb-[calc(var(--drawer-peek,224px)+16px)]')}>
+        <div ref={setStage} className={cx('flex flex-col gap-2', portrait ? 'pb-[calc(var(--drawer-peek,176px)+16px)]' : 'pb-[calc(var(--drawer-peek,224px)+16px)]')}>
           <VideoStage
             clip={pb.clip}
-            height={portrait ? PORTRAIT_BOX : LANDSCAPE_BOX}
+            height={fitStageHeight(portrait ? PORTRAIT_BOX : LANDSCAPE_BOX)}
             region={region}
             pannable={Boolean(region)}
             src={hasVideo ? (pb.videoUrl ?? undefined) : undefined}
@@ -543,6 +545,8 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
               </div>
             ) : null}
           </VideoStage>
+          {/* Measured (useFitStage) so the video leaves them room above the collapsed drawer (finding 70). */}
+          <div ref={setStageControls} className="flex flex-col gap-2">
           {stepping && goneLine ? (
             <p role="note" className="gutter flex items-center gap-2 text-footnote text-ink-2">
               <HardDrivesIcon size={16} aria-hidden="true" className="shrink-0" />
@@ -574,6 +578,7 @@ function ServeDetailView({ session, serve, serves, tags, pb, decision }: ViewPro
             stepLabel={hasVideo ? undefined : { back: 'Previous key frame', forward: 'Next key frame' }}
           />
           {hasMedia && OVERLAY_IDS.some((id) => id !== 'none' && !disabled[id]) ? <OverlayChips value={overlay} onChange={setOverlay} disabled={disabled} /> : null}
+          </div>
           {!portrait ? (
             <div className="flex flex-col gap-3 pt-2">
               {strip}

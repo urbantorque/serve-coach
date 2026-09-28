@@ -109,6 +109,22 @@ export async function practiceLogDateRange(opts: { demo: boolean }): Promise<{ f
   return { ...(first ? { first: first.date } : {}), ...(last ? { last: last.date } : {}) }
 }
 
+/**
+ * The newest practice logged "It hurts" of one kind (demo or real), over the whole history and every
+ * drill, whatever experiment it belongs to (COACHING §10.3: no harder version opens until 2 successful
+ * practices come after it). Newest by local date, then by save time.
+ */
+export async function latestPainLog(opts: { demo: boolean }): Promise<PracticeLogRecord | undefined> {
+  const rows = await getDb()
+    .practiceLogs.filter((l) => l.body === 'pain' && (l.isDemo === 1) === opts.demo)
+    .toArray()
+  let newest: PracticeLogRecord | undefined
+  for (const l of rows) {
+    if (!newest || l.date > newest.date || (l.date === newest.date && (l.createdAt ?? '') > (newest.createdAt ?? ''))) newest = l
+  }
+  return newest
+}
+
 /** The last n logs of one drill, newest first (progression / regression rules, COACHING §12.2). */
 export async function lastLogsForDrill(drillId: string, n: number): Promise<PracticeLogRecord[]> {
   const rows = await getDb().practiceLogs.where('drillId').equals(drillId).sortBy('createdAt')

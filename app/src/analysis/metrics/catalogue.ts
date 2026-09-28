@@ -11,7 +11,7 @@
 import type { MetricId, MetricStatus, ReasonCode } from '../types.ts'
 
 export const CATALOGUE_VERSION = '1.1.0'
-export const ENGINE_VERSION = '1.1.0'
+export const ENGINE_VERSION = '1.1.1'
 export const BANDS_VERSION = 'bands_v1_provisional'
 
 /**

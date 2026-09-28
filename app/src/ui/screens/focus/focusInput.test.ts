@@ -6,10 +6,10 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { decideFocus, rampFlag, type FocusDecision } from '../../../coaching/index.ts'
 import { getDb, resetDbForTests } from '../../../data/db.ts'
 import { DEMO_FIXTURES } from '../../../data/fixtures.ts'
-import { createExperiment, logPractice } from '../../../data/repos/coaching.ts'
+import { createExperiment, logPractice, saveMatchLog } from '../../../data/repos/coaching.ts'
 import { toServeRecord } from '../../../data/repos/serves.ts'
 import type { SessionRecord } from '../../../data/records.ts'
-import { buildFocusInput, readFocusData } from './focusInput.ts'
+import { buildFocusInput, loadFrom, readFocusData } from './focusInput.ts'
 
 beforeEach(async () => {
   await resetDbForTests()
@@ -60,8 +60,11 @@ describe('load guidance reads the whole history, not only the 36-day window (fin
     // Three months of history, the last session 46 days ago.
     for (let i = 0; i < 12; i++) await ownCopy(`old-${i}`, iso(now.getTime() - (90 - i * 4) * DAY))
     const raw = await readFocusData(now)
-    expect(raw.load.sessions).toHaveLength(0)
+    // Nothing in the last 36 days (the window reaches back only to the 4 weeks before the break).
+    expect(raw.load.sessions.filter((x) => now.getTime() - new Date(x.startedAt).getTime() < 36 * DAY)).toHaveLength(0)
     const built = buildFocusInput(raw, { experimental: false, now })!
+    expect(built.input.load?.last7Days).toBe(0)
+    expect(built.input.load?.chronicWeeklyMean).toBe(0)
     expect(built.input.load?.daysSinceLastServes).toBe(46)
     expect(built.input.load?.historyDays).toBe(90)
     expect(built.input.load?.sessionsInHistory).toBe(12)
@@ -103,5 +106,90 @@ describe('a practice logged sore today reaches the engine (finding 0)', () => {
     await logPractice({ date: new Date(now.getTime() - DAY).toLocaleDateString('en-CA'), itemId: 'keep-going', minutes: 10, reps: 20, setting: 'court', body: 'sore' })
     const built = buildFocusInput(await readFocusData(now), { experimental: false, now })!
     expect(built.input.soreLoggedToday).toBeUndefined()
+  })
+})
+
+describe('same-day practice and match logs count at once (finding 12 residual; COACHING §11.2)', () => {
+  it('read at 10:00, a practice and a match dated today count towards today and the last 7 days', async () => {
+    const now = new Date('2026-09-28T10:00:00+10:00')
+    const ymd = now.toLocaleDateString('en-CA')
+    // The player's own session 2 days ago (with no own session the sample data would be read).
+    await ownCopy('own', iso(now.getTime() - 2 * DAY))
+    const per = side[0].session.analysis?.counts.analysed ?? 0
+    await logPractice({ date: ymd, minutes: 20, reps: 60, setting: 'court', body: 'fine' })
+    await saveMatchLog({ date: ymd, competition: 'night-comp', serviceGames: 5 })
+    const load = loadFrom((await readFocusData(now)).load, now)
+    expect(load.servesToday).toBe(60 + 60)
+    expect(load.last7Days).toBe(per + 120)
+    expect(load.daysSinceLastServes).toBe(0)
+  })
+
+  it('a log dated tomorrow still does not count today', async () => {
+    const now = new Date('2026-09-28T10:00:00+10:00')
+    await ownCopy('own', iso(now.getTime() - 2 * DAY))
+    const per = side[0].session.analysis?.counts.analysed ?? 0
+    await logPractice({ date: '2026-09-29', minutes: 20, reps: 60, setting: 'court', body: 'fine' })
+    const load = loadFrom((await readFocusData(now)).load, now)
+    expect(load.servesToday).toBe(0)
+    expect(load.last7Days).toBe(per)
+  })
+})
+
+describe('"Welcome back" gives a number when the 4 weeks before the break are known (COACHING §11)', () => {
+  it('a 46-day break after 3 months: about half the usual week', async () => {
+    const now = new Date('2026-09-28T10:00:00+10:00')
+    for (let i = 0; i < 12; i++) await ownCopy(`old-${i}`, iso(now.getTime() - (90 - i * 4) * DAY))
+    const built = buildFocusInput(await readFocusData(now), { experimental: false, now })!
+    const per = side[0].session.analysis?.counts.analysed ?? 0
+    // Sessions 46, 50, ... 70 days ago fall in the 4 weeks up to the last one: 7 of them.
+    expect(built.input.load?.previousWeeklyAverage).toBe((7 * per) / 4)
+    const d = decideFocus(built.input)
+    const text = d.kind === 'focus' || d.kind === 'keep-going' ? d.load.notes.find((n) => n.id === 'return')?.text : undefined
+    expect(text).toMatch(/keep to about \d+ serves/)
+  })
+
+  it('a history shorter than 4 weeks before the break keeps the no-number wording', async () => {
+    const now = new Date('2026-09-28T10:00:00+10:00')
+    for (const ago of [40, 30]) await ownCopy(`short-${ago}`, iso(now.getTime() - ago * DAY))
+    const built = buildFocusInput(await readFocusData(now), { experimental: false, now })!
+    expect(built.input.load?.daysSinceLastServes).toBe(30)
+    expect(built.input.load?.previousWeeklyAverage).toBeUndefined()
+  })
+})
+
+describe('a pain log of any drill reaches the engine (finding 0 residual; COACHING §10.3)', () => {
+  it('a keep-going practice logged "It hurts" yesterday sets lastPainLog; today it also holds the day', async () => {
+    const now = new Date('2026-09-28T18:00:00+10:00')
+    await ownCopy('today', iso(now.getTime() - 6 * 3_600_000))
+    const yesterday = new Date(now.getTime() - DAY).toLocaleDateString('en-CA')
+    const pain = await logPractice({ date: yesterday, itemId: 'keep-going', minutes: 10, reps: 20, setting: 'court', body: 'pain' })
+    const raw = await readFocusData(now)
+    expect(raw.painLog?.id).toBe(pain.id)
+    const built = buildFocusInput(raw, { experimental: false, now })!
+    expect(built.input.lastPainLog).toEqual({ date: yesterday, createdAt: pain.createdAt })
+    expect(built.input.soreLoggedToday).toBeUndefined()
+    const sameDay = buildFocusInput(raw, { experimental: false, now: new Date(now.getTime() - DAY) })!
+    expect(sameDay.input.soreLoggedToday).toBe(true)
+  })
+
+  it("the experiment's harder version stays shut after a keep-going pain log, even with 2 successful practices before it", async () => {
+    const now = new Date('2026-09-28T18:00:00+10:00')
+    await ownCopy('today', iso(now.getTime() - 6 * 3_600_000))
+    const itemId = 'toss-height-steady'
+    await createExperiment({ ...DEMO_FIXTURES.experiment, id: 'own-exp', isDemo: 0, baselineSessionIds: ['today'], retestSessionIds: [], result: undefined, createdAt: iso(now.getTime() - 5 * 3_600_000) })
+    for (const ago of [3, 2]) {
+      await logPractice({ date: new Date(now.getTime() - ago * DAY).toLocaleDateString('en-CA'), experimentId: 'own-exp', itemId, minutes: 10, reps: 20, successCriterionMet: 'yes', setting: 'court', body: 'fine' })
+    }
+    const open = decideFocus(buildFocusInput(await readFocusData(now), { experimental: false, now })!.input) as FocusDecision
+    expect(open.kind).toBe('focus')
+    expect(open.itemId).toBe(itemId)
+    expect(open.drill.variant).not.toBe('base')
+    // The keep-going drill logged "It hurts" yesterday (no experiment): the harder version waits.
+    await logPractice({ date: new Date(now.getTime() - DAY).toLocaleDateString('en-CA'), itemId: 'keep-going', minutes: 10, reps: 20, successCriterionMet: 'partly', setting: 'court', body: 'pain' })
+    const held = decideFocus(buildFocusInput(await readFocusData(now), { experimental: false, now })!.input) as FocusDecision
+    expect(held.kind).toBe('focus')
+    expect(held.drill.variant).toBe('base')
+    expect(held.drill.progression).toBeUndefined()
+    expect(held.drill.progressionLocked).toBe('paused-sore')
   })
 })

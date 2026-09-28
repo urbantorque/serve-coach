@@ -793,8 +793,13 @@ function detectComposite(item: LibraryItem, env: DetectEnv, key: CoachingStratum
     resolved: co.length === 0 || med <= band.highEdge,
     primary: { metricId: 'toss-drop', value: med, kind: 'centre', n: xs.length },
   }
-  const likely = med > band.likelyAbove && co.length >= (t.likelyNeedsCoSignals ?? 2)
-  const possible = highBand && co.length >= (t.possibleNeedsCoSignals ?? 1)
+  const fires = (n: number) => ({ likely: med > band.likelyAbove && n >= (t.likelyNeedsCoSignals ?? 2), possible: highBand && n >= (t.possibleNeedsCoSignals ?? 1) })
+  // The trophy pause is experimental: shown as a co-signal with the toggle on, but it never decides on
+  // its own whether or how strongly the item fires. When only it tips the rule, the path is experimental,
+  // which is noticed but never the focus (D2; §5.1, §13; finding 44).
+  const firm = fires(co.filter((x) => x !== 'trophy-pause').length)
+  const firmFires = firm.likely || firm.possible
+  const { likely, possible } = firmFires ? firm : fires(co.length)
   if ((likely || possible) && conf >= 0.7) {
     return base(item, 'eligible', likely ? (w.likely ?? w.found) : w.found, {
       ...common,
@@ -802,6 +807,7 @@ function detectComposite(item: LibraryItem, env: DetectEnv, key: CoachingStratum
       confidence: conf,
       severity: likely ? 'major' : 'moderate',
       wording: likely ? 'likely' : 'possible',
+      ...(firmFires ? {} : { pathTier: 'experimental' as const }),
     })
   }
   if (highBand && co.length === 0) return base(item, 'in-range', w.bandOnly ?? w.fine, { ...common, confidence: conf })

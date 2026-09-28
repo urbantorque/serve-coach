@@ -1,0 +1,51 @@
+{
+  "console": [],
+  "checks": [
+    {
+      "scheme": "light",
+      "prefilled": "2026-09-27",
+      "help": "From when the file was last changed. Change it if you filmed on another day."
+    },
+    {
+      "scheme": "light",
+      "future": {
+        "help": "Choose a day up to today.",
+        "invalid": "true"
+      }
+    },
+    {
+      "scheme": "light",
+      "edited": {
+        "value": "2026-09-20",
+        "help": "You set this date."
+      }
+    },
+    {
+      "scheme": "light",
+      "horizontalOverflow": false
+    },
+    {
+      "scheme": "dark",
+      "prefilled": "2026-09-27",
+      "help": "From when the file was last changed. Change it if you filmed on another day."
+    },
+    {
+      "scheme": "dark",
+      "future": {
+        "help": "Choose a day up to today.",
+        "invalid": "true"
+      }
+    },
+    {
+      "scheme": "dark",
+      "edited": {
+        "value": "2026-09-20",
+        "help": "You set this date."
+      }
+    },
+    {
+      "scheme": "dark",
+      "horizontalOverflow": false
+    }
+  ]
+}

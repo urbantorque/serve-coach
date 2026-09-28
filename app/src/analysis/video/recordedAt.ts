@@ -9,8 +9,10 @@
  * Placeholder values are ignored: 0 (1904), anything before 2005 or more than a day in the future.
  *
  * recordingTimeFor() gives the import flow its order: the container's recording time, else the file's
- * last-modified time (a copy can move it, so it is second), else the time of the import. The player can
- * still change the date on the import screen; whatever they choose is the session's date.
+ * last-modified time (a copy can move it, so it is second; one from the last 5 minutes is the copy made
+ * for the import and is skipped), else the time of the import. The player can still change the day on
+ * the import screen (localDateOf / withLocalDate); whatever they choose is the session's date, and the
+ * pipeline hands that date, not the container's, to coaching.
  */
 import { metadataString, QT_KEYS, type ContainerMetadata } from './qtMetadata.ts'
 
@@ -94,6 +96,35 @@ export function recordingTimeFor(input: { createdAt?: string; fileLastModified?:
   const container = input.createdAt ? plausible(Date.parse(input.createdAt), nowMs) : null
   if (container !== null) return { iso: new Date(container).toISOString(), source: 'container' }
   const modified = input.fileLastModified !== undefined ? plausible(input.fileLastModified, nowMs) : null
-  if (modified !== null) return { iso: new Date(modified).toISOString(), source: 'file-modified' }
+  // A file "changed" in the last few minutes was most likely just copied or exported for the import
+  // (iOS Photos hands over a fresh copy), so it says nothing about when it was filmed.
+  if (modified !== null && nowMs - modified > FRESH_COPY_MS) return { iso: new Date(modified).toISOString(), source: 'file-modified' }
   return { iso: new Date(nowMs).toISOString(), source: 'import-time' }
+}
+
+/** A last-modified time this close to the import is the copy, not the recording. */
+const FRESH_COPY_MS = 5 * 60_000
+
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/** The local calendar date ('YYYY-MM-DD', the phone's time zone) of an ISO time: the import screen's date field. */
+export function localDateOf(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+}
+
+/**
+ * The player's corrected date (E2): `iso` moved to the local calendar date `ymd`, keeping its local
+ * time of day (the evening-light prefill and the order within the day stay). Null for a malformed
+ * date, one before 2005, or one after today.
+ */
+export function withLocalDate(iso: string, ymd: string, nowMs = Date.now()): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd)
+  const base = new Date(iso)
+  if (!m || Number.isNaN(base.getTime())) return null
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), base.getHours(), base.getMinutes(), base.getSeconds(), base.getMilliseconds())
+  if (d.getFullYear() !== Number(m[1]) || d.getMonth() !== Number(m[2]) - 1 || d.getDate() !== Number(m[3])) return null
+  if (d.getTime() < EARLIEST_MS || localDateOf(d.toISOString()) > localDateOf(new Date(nowMs).toISOString())) return null
+  // Today with a time of day still to come (a clip "filmed" later today): now instead.
+  return new Date(Math.min(d.getTime(), nowMs)).toISOString()
 }

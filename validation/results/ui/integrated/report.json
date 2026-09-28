@@ -1,6 +1,6 @@
 {
-  "base": "http://localhost:4391",
-  "startedAt": "2026-09-28T00:47:01.435Z",
+  "base": "http://localhost:4321",
+  "startedAt": "2026-09-28T05:37:27.537Z",
   "shots": [
     {
       "scheme": "light",
@@ -86,7 +86,7 @@
       "path": "/sessions/sample-s3",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 24,
+      "metricCount": 23,
       "unlabelled": [],
       "h1": [
         "Sat 26 Sep"
@@ -101,7 +101,7 @@
       "path": "/sessions/sample-s3",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 24,
+      "metricCount": 23,
       "unlabelled": [],
       "h1": [
         "Sat 26 Sep"
@@ -116,7 +116,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 16,
+      "metricCount": 15,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -131,7 +131,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 18,
+      "metricCount": 16,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -146,7 +146,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 17,
+      "metricCount": 16,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -161,7 +161,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 17,
+      "metricCount": 16,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -176,7 +176,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 17,
+      "metricCount": 16,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -191,7 +191,7 @@
       "path": "/sessions/sample-s2",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 22,
+      "metricCount": 21,
       "unlabelled": [],
       "h1": [
         "Sat 12 Sep"
@@ -206,7 +206,7 @@
       "path": "/sessions/sample-s2",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 22,
+      "metricCount": 21,
       "unlabelled": [],
       "h1": [
         "Sat 12 Sep"
@@ -386,7 +386,7 @@
       "path": "/metric/toss-apex-height?session=sample-s3",
       "title": "How we measure: Serve Coach",
       "overflowX": 0,
-      "metricCount": 2,
+      "metricCount": 1,
       "unlabelled": [],
       "h1": [
         "Toss height"
@@ -425,9 +425,24 @@
     {
       "scheme": "light",
       "flow": "b",
+      "name": "baseline-import-date",
+      "file": "light-b01-baseline-import-date.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
       "name": "baseline-import-ready",
-      "file": "light-b01-baseline-import-ready.png",
-      "fullFile": "light-b01-baseline-import-ready-full.png",
+      "file": "light-b02-baseline-import-ready.png",
+      "fullFile": "light-b02-baseline-import-ready-full.png",
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
       "overflowX": 0,
@@ -441,7 +456,7 @@
       "scheme": "light",
       "flow": "b",
       "name": "baseline-import-mount",
-      "file": "light-b02-baseline-import-mount.png",
+      "file": "light-b03-baseline-import-mount.png",
       "fullFile": null,
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
@@ -456,9 +471,9 @@
       "scheme": "light",
       "flow": "b",
       "name": "baseline-processing",
-      "file": "light-b03-baseline-processing.png",
+      "file": "light-b04-baseline-processing.png",
       "fullFile": null,
-      "path": "/processing/01M3JP9YXA2VF68Q9ME0WV86RC",
+      "path": "/processing/01M3K8ASMZS47QJE6E51EPJ1RX",
       "title": "Session analysis: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -471,24 +486,24 @@
       "scheme": "light",
       "flow": "b",
       "name": "baseline-report",
-      "file": "light-b04-baseline-report.png",
-      "fullFile": "light-b04-baseline-report-full.png",
-      "path": "/sessions/01M3JP9YXA2VF68Q9ME0WV86RC",
+      "file": "light-b05-baseline-report.png",
+      "fullFile": "light-b05-baseline-report-full.png",
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 11,
       "unlabelled": [],
       "h1": [
-        "Mon 28 Sep"
+        "Sun 27 Sep"
       ]
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "baseline-tagged",
-      "file": "light-b05-baseline-tagged.png",
+      "file": "light-b06-baseline-tagged.png",
       "fullFile": null,
-      "path": "/sessions/01M3JP9YXA2VF68Q9ME0WV86RC/tag",
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX/tag",
       "title": "Tag serves: Serve Coach",
       "overflowX": 0,
       "metricCount": 1,
@@ -501,9 +516,9 @@
       "scheme": "light",
       "flow": "b",
       "name": "check-start",
-      "file": "light-b06-check-start.png",
+      "file": "light-b07-check-start.png",
       "fullFile": null,
-      "path": "/sessions/01M3JP9YXA2VF68Q9ME0WV86RC/serves/01M3JP9YXA2VF68Q9ME0WV86RC-s01?mode=check",
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX/serves/01M3K8ASMZS47QJE6E51EPJ1RX-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -516,9 +531,9 @@
       "scheme": "light",
       "flow": "b",
       "name": "check-mark-trophy",
-      "file": "light-b07-check-mark-trophy.png",
+      "file": "light-b08-check-mark-trophy.png",
       "fullFile": null,
-      "path": "/sessions/01M3JP9YXA2VF68Q9ME0WV86RC/serves/01M3JP9YXA2VF68Q9ME0WV86RC-s01?mode=check",
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX/serves/01M3K8ASMZS47QJE6E51EPJ1RX-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -531,9 +546,24 @@
       "scheme": "light",
       "flow": "b",
       "name": "check-mark-lowest-hip",
-      "file": "light-b08-check-mark-lowest-hip.png",
+      "file": "light-b09-check-mark-lowest-hip.png",
       "fullFile": null,
-      "path": "/sessions/01M3JP9YXA2VF68Q9ME0WV86RC/serves/01M3JP9YXA2VF68Q9ME0WV86RC-s01?mode=check",
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX/serves/01M3K8ASMZS47QJE6E51EPJ1RX-s01?mode=check",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Check serve 1"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "check-mark-radar",
+      "file": "light-b10-check-mark-radar.png",
+      "fullFile": null,
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX/serves/01M3K8ASMZS47QJE6E51EPJ1RX-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -546,9 +576,9 @@
       "scheme": "light",
       "flow": "b",
       "name": "check-marked",
-      "file": "light-b09-check-marked.png",
+      "file": "light-b11-check-marked.png",
       "fullFile": null,
-      "path": "/sessions/01M3JP9YXA2VF68Q9ME0WV86RC/serves/01M3JP9YXA2VF68Q9ME0WV86RC-s01?mode=check",
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX/serves/01M3K8ASMZS47QJE6E51EPJ1RX-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -561,12 +591,12 @@
       "scheme": "light",
       "flow": "b",
       "name": "check-result",
-      "file": "light-b10-check-result.png",
+      "file": "light-b12-check-result.png",
       "fullFile": null,
-      "path": "/sessions/01M3JP9YXA2VF68Q9ME0WV86RC/serves/01M3JP9YXA2VF68Q9ME0WV86RC-s01?mode=check",
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX/serves/01M3K8ASMZS47QJE6E51EPJ1RX-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 14,
+      "metricCount": 15,
       "unlabelled": [],
       "h1": [
         "Check serve 1"
@@ -576,12 +606,12 @@
       "scheme": "light",
       "flow": "b",
       "name": "check-result-legs",
-      "file": "light-b11-check-result-legs.png",
+      "file": "light-b13-check-result-legs.png",
       "fullFile": null,
-      "path": "/sessions/01M3JP9YXA2VF68Q9ME0WV86RC/serves/01M3JP9YXA2VF68Q9ME0WV86RC-s01?mode=check",
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX/serves/01M3K8ASMZS47QJE6E51EPJ1RX-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 14,
+      "metricCount": 15,
       "unlabelled": [],
       "h1": [
         "Check serve 1"
@@ -590,9 +620,24 @@
     {
       "scheme": "light",
       "flow": "b",
+      "name": "baseline-report-radar",
+      "file": "light-b14-baseline-report-radar.png",
+      "fullFile": null,
+      "path": "/sessions/01M3K8ASMZS47QJE6E51EPJ1RX",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 12,
+      "unlabelled": [],
+      "h1": [
+        "Sun 27 Sep"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
       "name": "today-own",
-      "file": "light-b12-today-own.png",
-      "fullFile": "light-b12-today-own-full.png",
+      "file": "light-b15-today-own.png",
+      "fullFile": "light-b15-today-own-full.png",
       "path": "/",
       "title": "Today: Serve Coach",
       "overflowX": 0,
@@ -605,9 +650,24 @@
     {
       "scheme": "light",
       "flow": "c",
+      "name": "checkin-import-date",
+      "file": "light-c01-checkin-import-date.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
       "name": "checkin-import-ready",
-      "file": "light-c01-checkin-import-ready.png",
-      "fullFile": "light-c01-checkin-import-ready-full.png",
+      "file": "light-c02-checkin-import-ready.png",
+      "fullFile": "light-c02-checkin-import-ready-full.png",
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
       "overflowX": 0,
@@ -621,9 +681,9 @@
       "scheme": "light",
       "flow": "c",
       "name": "checkin-processing",
-      "file": "light-c02-checkin-processing.png",
+      "file": "light-c03-checkin-processing.png",
       "fullFile": null,
-      "path": "/processing/01M3JPBWG4M3G3GHXRDNY3T7RF",
+      "path": "/processing/01M3K8C3P821NT6WA7BMKVA0PW",
       "title": "Session analysis: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -636,9 +696,9 @@
       "scheme": "light",
       "flow": "c",
       "name": "checkin-report",
-      "file": "light-c03-checkin-report.png",
-      "fullFile": "light-c03-checkin-report-full.png",
-      "path": "/sessions/01M3JPBWG4M3G3GHXRDNY3T7RF",
+      "file": "light-c04-checkin-report.png",
+      "fullFile": "light-c04-checkin-report-full.png",
+      "path": "/sessions/01M3K8C3P821NT6WA7BMKVA0PW",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 19,
@@ -651,9 +711,9 @@
       "scheme": "light",
       "flow": "c",
       "name": "checkin-toss-hero",
-      "file": "light-c04-checkin-toss-hero.png",
+      "file": "light-c05-checkin-toss-hero.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPBWG4M3G3GHXRDNY3T7RF",
+      "path": "/sessions/01M3K8C3P821NT6WA7BMKVA0PW",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 19,
@@ -666,8 +726,8 @@
       "scheme": "light",
       "flow": "c",
       "name": "today-focus",
-      "file": "light-c05-today-focus.png",
-      "fullFile": "light-c05-today-focus-full.png",
+      "file": "light-c06-today-focus.png",
+      "fullFile": "light-c06-today-focus-full.png",
       "path": "/",
       "title": "Today: Serve Coach",
       "overflowX": 0,
@@ -681,8 +741,8 @@
       "scheme": "light",
       "flow": "c",
       "name": "focus-own",
-      "file": "light-c06-focus-own.png",
-      "fullFile": "light-c06-focus-own-full.png",
+      "file": "light-c07-focus-own.png",
+      "fullFile": "light-c07-focus-own-full.png",
       "path": "/focus",
       "title": "Focus and drill: Serve Coach",
       "overflowX": 0,
@@ -696,7 +756,7 @@
       "scheme": "light",
       "flow": "c",
       "name": "drill-own",
-      "file": "light-c07-drill-own.png",
+      "file": "light-c08-drill-own.png",
       "fullFile": null,
       "path": "/focus/drill",
       "title": "Drill: Serve Coach",
@@ -711,8 +771,8 @@
       "scheme": "light",
       "flow": "c",
       "name": "log-own",
-      "file": "light-c08-log-own.png",
-      "fullFile": "light-c08-log-own-full.png",
+      "file": "light-c09-log-own.png",
+      "fullFile": "light-c09-log-own-full.png",
       "path": "/focus/log",
       "title": "Log practice: Serve Coach",
       "overflowX": 0,
@@ -726,7 +786,7 @@
       "scheme": "light",
       "flow": "c",
       "name": "log-saved",
-      "file": "light-c09-log-saved.png",
+      "file": "light-c10-log-saved.png",
       "fullFile": null,
       "path": "/focus/log",
       "title": "Log practice: Serve Coach",
@@ -741,8 +801,8 @@
       "scheme": "light",
       "flow": "c",
       "name": "today-experiment",
-      "file": "light-c10-today-experiment.png",
-      "fullFile": "light-c10-today-experiment-full.png",
+      "file": "light-c11-today-experiment.png",
+      "fullFile": "light-c11-today-experiment-full.png",
       "path": "/",
       "title": "Today: Serve Coach",
       "overflowX": 0,
@@ -756,8 +816,8 @@
       "scheme": "light",
       "flow": "c",
       "name": "record-retest",
-      "file": "light-c11-record-retest.png",
-      "fullFile": "light-c11-record-retest-full.png",
+      "file": "light-c12-record-retest.png",
+      "fullFile": "light-c12-record-retest-full.png",
       "path": "/record",
       "title": "Record: Serve Coach",
       "overflowX": 0,
@@ -770,9 +830,24 @@
     {
       "scheme": "light",
       "flow": "c",
+      "name": "retest-import-date",
+      "file": "light-c13-retest-import-date.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
       "name": "retest-import-ready",
-      "file": "light-c12-retest-import-ready.png",
-      "fullFile": "light-c12-retest-import-ready-full.png",
+      "file": "light-c14-retest-import-ready.png",
+      "fullFile": "light-c14-retest-import-ready-full.png",
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
       "overflowX": 0,
@@ -786,9 +861,9 @@
       "scheme": "light",
       "flow": "c",
       "name": "retest-processing",
-      "file": "light-c13-retest-processing.png",
+      "file": "light-c15-retest-processing.png",
       "fullFile": null,
-      "path": "/processing/01M3JPHXRMJKKTM1T42QSVHSN1",
+      "path": "/processing/01M3K8H4RY6SXB9NTSN45RE485",
       "title": "Session analysis: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -801,9 +876,9 @@
       "scheme": "light",
       "flow": "c",
       "name": "retest-report",
-      "file": "light-c14-retest-report.png",
-      "fullFile": "light-c14-retest-report-full.png",
-      "path": "/sessions/01M3JPHXRMJKKTM1T42QSVHSN1",
+      "file": "light-c16-retest-report.png",
+      "fullFile": "light-c16-retest-report-full.png",
+      "path": "/sessions/01M3K8H4RY6SXB9NTSN45RE485",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 21,
@@ -816,9 +891,9 @@
       "scheme": "light",
       "flow": "c",
       "name": "retest-toss-hero",
-      "file": "light-c15-retest-toss-hero.png",
+      "file": "light-c17-retest-toss-hero.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPHXRMJKKTM1T42QSVHSN1",
+      "path": "/sessions/01M3K8H4RY6SXB9NTSN45RE485",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 21,
@@ -831,9 +906,9 @@
       "scheme": "light",
       "flow": "c",
       "name": "compare-own",
-      "file": "light-c16-compare-own.png",
-      "fullFile": "light-c16-compare-own-full.png",
-      "path": "/progress/compare/01M3JPHJVF6M9WQSXKTA7FJPB1",
+      "file": "light-c18-compare-own.png",
+      "fullFile": "light-c18-compare-own-full.png",
+      "path": "/progress/compare/01M3K8GTJC27HXQ2SKWXP3NMRS",
       "title": "Did it work?: Serve Coach",
       "overflowX": 0,
       "metricCount": 4,
@@ -846,9 +921,39 @@
       "scheme": "light",
       "flow": "c",
       "name": "compare-own-t1-card",
-      "file": "light-c17-compare-own-t1-card.png",
+      "file": "light-c19-compare-own-t1-card.png",
       "fullFile": null,
-      "path": "/progress/compare/01M3JPHJVF6M9WQSXKTA7FJPB1",
+      "path": "/progress/compare/01M3K8GTJC27HXQ2SKWXP3NMRS",
+      "title": "Did it work?: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 4,
+      "unlabelled": [],
+      "h1": [
+        "Did it work?"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "plus-preview-t1",
+      "file": "light-c20-plus-preview-t1.png",
+      "fullFile": null,
+      "path": "/progress/compare/01M3K8GTJC27HXQ2SKWXP3NMRS",
+      "title": "Did it work?: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 4,
+      "unlabelled": [],
+      "h1": [
+        "Did it work?"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "c",
+      "name": "plus-preview-t1-answered",
+      "file": "light-c21-plus-preview-t1-answered.png",
+      "fullFile": null,
+      "path": "/progress/compare/01M3K8GTJC27HXQ2SKWXP3NMRS",
       "title": "Did it work?: Serve Coach",
       "overflowX": 0,
       "metricCount": 4,
@@ -861,8 +966,8 @@
       "scheme": "light",
       "flow": "c",
       "name": "progress-own",
-      "file": "light-c18-progress-own.png",
-      "fullFile": "light-c18-progress-own-full.png",
+      "file": "light-c22-progress-own.png",
+      "fullFile": "light-c22-progress-own-full.png",
       "path": "/progress",
       "title": "Progress: Serve Coach",
       "overflowX": 0,
@@ -876,8 +981,8 @@
       "scheme": "light",
       "flow": "c",
       "name": "today-after-retest",
-      "file": "light-c19-today-after-retest.png",
-      "fullFile": "light-c19-today-after-retest-full.png",
+      "file": "light-c23-today-after-retest.png",
+      "fullFile": "light-c23-today-after-retest-full.png",
       "path": "/",
       "title": "Today: Serve Coach",
       "overflowX": 0,
@@ -885,6 +990,351 @@
       "unlabelled": [],
       "h1": [
         "Today"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "offline-today",
+      "file": "light-d01-offline-today.png",
+      "fullFile": null,
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "offline-report",
+      "file": "light-d02-offline-report.png",
+      "fullFile": null,
+      "path": "/sessions/sample-s3",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 23,
+      "unlabelled": [],
+      "h1": [
+        "Sat 26 Sep"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "offline-beta-data",
+      "file": "light-d03-offline-beta-data.png",
+      "fullFile": null,
+      "path": "/profile/beta-data",
+      "title": "Beta data: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Beta data"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "t2-import-date",
+      "file": "light-d04-t2-import-date.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "t2-import-ready",
+      "file": "light-d05-t2-import-ready.png",
+      "fullFile": "light-d05-t2-import-ready-full.png",
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "t2-import-mount",
+      "file": "light-d06-t2-import-mount.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "plus-preview-t2",
+      "file": "light-d07-plus-preview-t2.png",
+      "fullFile": null,
+      "path": "/processing/01M3K8QE563T9EMWS63JSAN25S",
+      "title": "Session analysis: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "plus-preview-t2-answered",
+      "file": "light-d08-plus-preview-t2-answered.png",
+      "fullFile": null,
+      "path": "/processing/01M3K8QE563T9EMWS63JSAN25S",
+      "title": "Session analysis: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "processing-t2-notice",
+      "file": "light-d09-processing-t2-notice.png",
+      "fullFile": null,
+      "path": "/processing/01M3K8QE563T9EMWS63JSAN25S",
+      "title": "Session analysis: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "t2-processing",
+      "file": "light-d10-t2-processing.png",
+      "fullFile": null,
+      "path": "/sessions/01M3K8QE563T9EMWS63JSAN25S",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 11,
+      "unlabelled": [],
+      "h1": [
+        "Sun 27 Sep"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "today-morning-after",
+      "file": "light-d11-today-morning-after.png",
+      "fullFile": null,
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "match-log-new",
+      "file": "light-d12-match-log-new.png",
+      "fullFile": null,
+      "path": "/sessions/matches/new?date=2026-09-27&from=%2F",
+      "title": "Log a match: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Log a match"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "match-log-filled",
+      "file": "light-d13-match-log-filled.png",
+      "fullFile": "light-d13-match-log-filled-full.png",
+      "path": "/sessions/matches/new?date=2026-09-27&from=%2F",
+      "title": "Log a match: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Log a match"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "today-after-match-log",
+      "file": "light-d14-today-after-match-log.png",
+      "fullFile": "light-d14-today-after-match-log-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "profile-match-log-row",
+      "file": "light-d15-profile-match-log-row.png",
+      "fullFile": null,
+      "path": "/profile",
+      "title": "Profile: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "You"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "progress-comp-nights",
+      "file": "light-d16-progress-comp-nights.png",
+      "fullFile": null,
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 3,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "plus-preview-t3-season",
+      "file": "light-d17-plus-preview-t3-season.png",
+      "fullFile": null,
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 3,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "plus-preview-t3-season-answered",
+      "file": "light-d18-plus-preview-t3-season-answered.png",
+      "fullFile": null,
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 3,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "progress-season-view",
+      "file": "light-d19-progress-season-view.png",
+      "fullFile": null,
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 3,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "plus-preview-t3-ghost",
+      "file": "light-d20-plus-preview-t3-ghost.png",
+      "fullFile": null,
+      "path": "/sessions/sample-s3/serves/sample-s3-s01",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Compare"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "plus-preview-t3-ghost-answered",
+      "file": "light-d21-plus-preview-t3-ghost-answered.png",
+      "fullFile": null,
+      "path": "/sessions/sample-s3/serves/sample-s3-s01",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Compare"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "compare-ghost",
+      "file": "light-d22-compare-ghost.png",
+      "fullFile": null,
+      "path": "/sessions/sample-s3/serves/sample-s3-s01",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Compare"
+      ]
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "beta-data",
+      "file": "light-d23-beta-data.png",
+      "fullFile": "light-d23-beta-data-full.png",
+      "path": "/profile/beta-data",
+      "title": "Beta data: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Beta data"
       ]
     },
     {
@@ -971,7 +1421,7 @@
       "path": "/sessions/sample-s3",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 24,
+      "metricCount": 23,
       "unlabelled": [],
       "h1": [
         "Sat 26 Sep"
@@ -986,7 +1436,7 @@
       "path": "/sessions/sample-s3",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 24,
+      "metricCount": 23,
       "unlabelled": [],
       "h1": [
         "Sat 26 Sep"
@@ -1001,7 +1451,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 16,
+      "metricCount": 15,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -1016,7 +1466,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 18,
+      "metricCount": 16,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -1031,7 +1481,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 17,
+      "metricCount": 16,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -1046,7 +1496,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 17,
+      "metricCount": 16,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -1061,7 +1511,7 @@
       "path": "/sessions/sample-s3/serves/sample-s3-s01",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 17,
+      "metricCount": 16,
       "unlabelled": [],
       "h1": [
         "Serve 1"
@@ -1076,7 +1526,7 @@
       "path": "/sessions/sample-s2",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 22,
+      "metricCount": 21,
       "unlabelled": [],
       "h1": [
         "Sat 12 Sep"
@@ -1091,7 +1541,7 @@
       "path": "/sessions/sample-s2",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 22,
+      "metricCount": 21,
       "unlabelled": [],
       "h1": [
         "Sat 12 Sep"
@@ -1271,7 +1721,7 @@
       "path": "/metric/toss-apex-height?session=sample-s3",
       "title": "How we measure: Serve Coach",
       "overflowX": 0,
-      "metricCount": 2,
+      "metricCount": 1,
       "unlabelled": [],
       "h1": [
         "Toss height"
@@ -1310,9 +1760,24 @@
     {
       "scheme": "dark",
       "flow": "b",
+      "name": "baseline-import-date",
+      "file": "dark-b01-baseline-import-date.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
       "name": "baseline-import-ready",
-      "file": "dark-b01-baseline-import-ready.png",
-      "fullFile": "dark-b01-baseline-import-ready-full.png",
+      "file": "dark-b02-baseline-import-ready.png",
+      "fullFile": "dark-b02-baseline-import-ready-full.png",
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
       "overflowX": 0,
@@ -1326,7 +1791,7 @@
       "scheme": "dark",
       "flow": "b",
       "name": "baseline-import-mount",
-      "file": "dark-b02-baseline-import-mount.png",
+      "file": "dark-b03-baseline-import-mount.png",
       "fullFile": null,
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
@@ -1341,9 +1806,9 @@
       "scheme": "dark",
       "flow": "b",
       "name": "baseline-processing",
-      "file": "dark-b03-baseline-processing.png",
+      "file": "dark-b04-baseline-processing.png",
       "fullFile": null,
-      "path": "/processing/01M3JPVS0ATJCS11T8JC7RGFD3",
+      "path": "/processing/01M3K8T1GBWFMT7HFKNWX7MHMS",
       "title": "Session analysis: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -1356,24 +1821,24 @@
       "scheme": "dark",
       "flow": "b",
       "name": "baseline-report",
-      "file": "dark-b04-baseline-report.png",
-      "fullFile": "dark-b04-baseline-report-full.png",
-      "path": "/sessions/01M3JPVS0ATJCS11T8JC7RGFD3",
+      "file": "dark-b05-baseline-report.png",
+      "fullFile": "dark-b05-baseline-report-full.png",
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 11,
       "unlabelled": [],
       "h1": [
-        "Mon 28 Sep"
+        "Sun 27 Sep"
       ]
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "baseline-tagged",
-      "file": "dark-b05-baseline-tagged.png",
+      "file": "dark-b06-baseline-tagged.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPVS0ATJCS11T8JC7RGFD3/tag",
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS/tag",
       "title": "Tag serves: Serve Coach",
       "overflowX": 0,
       "metricCount": 1,
@@ -1386,9 +1851,9 @@
       "scheme": "dark",
       "flow": "b",
       "name": "check-start",
-      "file": "dark-b06-check-start.png",
+      "file": "dark-b07-check-start.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPVS0ATJCS11T8JC7RGFD3/serves/01M3JPVS0ATJCS11T8JC7RGFD3-s01?mode=check",
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS/serves/01M3K8T1GBWFMT7HFKNWX7MHMS-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -1401,9 +1866,9 @@
       "scheme": "dark",
       "flow": "b",
       "name": "check-mark-trophy",
-      "file": "dark-b07-check-mark-trophy.png",
+      "file": "dark-b08-check-mark-trophy.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPVS0ATJCS11T8JC7RGFD3/serves/01M3JPVS0ATJCS11T8JC7RGFD3-s01?mode=check",
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS/serves/01M3K8T1GBWFMT7HFKNWX7MHMS-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -1416,9 +1881,24 @@
       "scheme": "dark",
       "flow": "b",
       "name": "check-mark-lowest-hip",
-      "file": "dark-b08-check-mark-lowest-hip.png",
+      "file": "dark-b09-check-mark-lowest-hip.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPVS0ATJCS11T8JC7RGFD3/serves/01M3JPVS0ATJCS11T8JC7RGFD3-s01?mode=check",
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS/serves/01M3K8T1GBWFMT7HFKNWX7MHMS-s01?mode=check",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Check serve 1"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "check-mark-radar",
+      "file": "dark-b10-check-mark-radar.png",
+      "fullFile": null,
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS/serves/01M3K8T1GBWFMT7HFKNWX7MHMS-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -1431,9 +1911,9 @@
       "scheme": "dark",
       "flow": "b",
       "name": "check-marked",
-      "file": "dark-b09-check-marked.png",
+      "file": "dark-b11-check-marked.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPVS0ATJCS11T8JC7RGFD3/serves/01M3JPVS0ATJCS11T8JC7RGFD3-s01?mode=check",
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS/serves/01M3K8T1GBWFMT7HFKNWX7MHMS-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -1446,12 +1926,12 @@
       "scheme": "dark",
       "flow": "b",
       "name": "check-result",
-      "file": "dark-b10-check-result.png",
+      "file": "dark-b12-check-result.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPVS0ATJCS11T8JC7RGFD3/serves/01M3JPVS0ATJCS11T8JC7RGFD3-s01?mode=check",
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS/serves/01M3K8T1GBWFMT7HFKNWX7MHMS-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 14,
+      "metricCount": 15,
       "unlabelled": [],
       "h1": [
         "Check serve 1"
@@ -1461,12 +1941,12 @@
       "scheme": "dark",
       "flow": "b",
       "name": "check-result-legs",
-      "file": "dark-b11-check-result-legs.png",
+      "file": "dark-b13-check-result-legs.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPVS0ATJCS11T8JC7RGFD3/serves/01M3JPVS0ATJCS11T8JC7RGFD3-s01?mode=check",
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS/serves/01M3K8T1GBWFMT7HFKNWX7MHMS-s01?mode=check",
       "title": "Serve detail: Serve Coach",
       "overflowX": 0,
-      "metricCount": 14,
+      "metricCount": 15,
       "unlabelled": [],
       "h1": [
         "Check serve 1"
@@ -1475,9 +1955,24 @@
     {
       "scheme": "dark",
       "flow": "b",
+      "name": "baseline-report-radar",
+      "file": "dark-b14-baseline-report-radar.png",
+      "fullFile": null,
+      "path": "/sessions/01M3K8T1GBWFMT7HFKNWX7MHMS",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 12,
+      "unlabelled": [],
+      "h1": [
+        "Sun 27 Sep"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
       "name": "today-own",
-      "file": "dark-b12-today-own.png",
-      "fullFile": "dark-b12-today-own-full.png",
+      "file": "dark-b15-today-own.png",
+      "fullFile": "dark-b15-today-own-full.png",
       "path": "/",
       "title": "Today: Serve Coach",
       "overflowX": 0,
@@ -1490,9 +1985,24 @@
     {
       "scheme": "dark",
       "flow": "c",
+      "name": "checkin-import-date",
+      "file": "dark-c01-checkin-import-date.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
       "name": "checkin-import-ready",
-      "file": "dark-c01-checkin-import-ready.png",
-      "fullFile": "dark-c01-checkin-import-ready-full.png",
+      "file": "dark-c02-checkin-import-ready.png",
+      "fullFile": "dark-c02-checkin-import-ready-full.png",
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
       "overflowX": 0,
@@ -1506,9 +2016,9 @@
       "scheme": "dark",
       "flow": "c",
       "name": "checkin-processing",
-      "file": "dark-c02-checkin-processing.png",
+      "file": "dark-c03-checkin-processing.png",
       "fullFile": null,
-      "path": "/processing/01M3JPX3ZHZDHER66TCGGNND00",
+      "path": "/processing/01M3K8V9H3KG8ZF723T9BHJQ15",
       "title": "Session analysis: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -1521,9 +2031,9 @@
       "scheme": "dark",
       "flow": "c",
       "name": "checkin-report",
-      "file": "dark-c03-checkin-report.png",
-      "fullFile": "dark-c03-checkin-report-full.png",
-      "path": "/sessions/01M3JPX3ZHZDHER66TCGGNND00",
+      "file": "dark-c04-checkin-report.png",
+      "fullFile": "dark-c04-checkin-report-full.png",
+      "path": "/sessions/01M3K8V9H3KG8ZF723T9BHJQ15",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 19,
@@ -1536,9 +2046,9 @@
       "scheme": "dark",
       "flow": "c",
       "name": "checkin-toss-hero",
-      "file": "dark-c04-checkin-toss-hero.png",
+      "file": "dark-c05-checkin-toss-hero.png",
       "fullFile": null,
-      "path": "/sessions/01M3JPX3ZHZDHER66TCGGNND00",
+      "path": "/sessions/01M3K8V9H3KG8ZF723T9BHJQ15",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 19,
@@ -1551,8 +2061,8 @@
       "scheme": "dark",
       "flow": "c",
       "name": "today-focus",
-      "file": "dark-c05-today-focus.png",
-      "fullFile": "dark-c05-today-focus-full.png",
+      "file": "dark-c06-today-focus.png",
+      "fullFile": "dark-c06-today-focus-full.png",
       "path": "/",
       "title": "Today: Serve Coach",
       "overflowX": 0,
@@ -1566,8 +2076,8 @@
       "scheme": "dark",
       "flow": "c",
       "name": "focus-own",
-      "file": "dark-c06-focus-own.png",
-      "fullFile": "dark-c06-focus-own-full.png",
+      "file": "dark-c07-focus-own.png",
+      "fullFile": "dark-c07-focus-own-full.png",
       "path": "/focus",
       "title": "Focus and drill: Serve Coach",
       "overflowX": 0,
@@ -1581,7 +2091,7 @@
       "scheme": "dark",
       "flow": "c",
       "name": "drill-own",
-      "file": "dark-c07-drill-own.png",
+      "file": "dark-c08-drill-own.png",
       "fullFile": null,
       "path": "/focus/drill",
       "title": "Drill: Serve Coach",
@@ -1596,8 +2106,8 @@
       "scheme": "dark",
       "flow": "c",
       "name": "log-own",
-      "file": "dark-c08-log-own.png",
-      "fullFile": "dark-c08-log-own-full.png",
+      "file": "dark-c09-log-own.png",
+      "fullFile": "dark-c09-log-own-full.png",
       "path": "/focus/log",
       "title": "Log practice: Serve Coach",
       "overflowX": 0,
@@ -1611,7 +2121,7 @@
       "scheme": "dark",
       "flow": "c",
       "name": "log-saved",
-      "file": "dark-c09-log-saved.png",
+      "file": "dark-c10-log-saved.png",
       "fullFile": null,
       "path": "/focus/log",
       "title": "Log practice: Serve Coach",
@@ -1626,8 +2136,8 @@
       "scheme": "dark",
       "flow": "c",
       "name": "today-experiment",
-      "file": "dark-c10-today-experiment.png",
-      "fullFile": "dark-c10-today-experiment-full.png",
+      "file": "dark-c11-today-experiment.png",
+      "fullFile": "dark-c11-today-experiment-full.png",
       "path": "/",
       "title": "Today: Serve Coach",
       "overflowX": 0,
@@ -1641,8 +2151,8 @@
       "scheme": "dark",
       "flow": "c",
       "name": "record-retest",
-      "file": "dark-c11-record-retest.png",
-      "fullFile": "dark-c11-record-retest-full.png",
+      "file": "dark-c12-record-retest.png",
+      "fullFile": "dark-c12-record-retest-full.png",
       "path": "/record",
       "title": "Record: Serve Coach",
       "overflowX": 0,
@@ -1655,9 +2165,24 @@
     {
       "scheme": "dark",
       "flow": "c",
+      "name": "retest-import-date",
+      "file": "dark-c13-retest-import-date.png",
+      "fullFile": null,
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Import a video"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
       "name": "retest-import-ready",
-      "file": "dark-c12-retest-import-ready.png",
-      "fullFile": "dark-c12-retest-import-ready-full.png",
+      "file": "dark-c14-retest-import-ready.png",
+      "fullFile": "dark-c14-retest-import-ready-full.png",
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
       "overflowX": 0,
@@ -1671,9 +2196,9 @@
       "scheme": "dark",
       "flow": "c",
       "name": "retest-processing",
-      "file": "dark-c13-retest-processing.png",
+      "file": "dark-c15-retest-processing.png",
       "fullFile": null,
-      "path": "/processing/01M3JQ4CE4CZMA01K1AXAP6H9F",
+      "path": "/processing/01M3K90TQC6B0HQDC382XC3YS0",
       "title": "Session analysis: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -1686,9 +2211,9 @@
       "scheme": "dark",
       "flow": "c",
       "name": "retest-report",
-      "file": "dark-c14-retest-report.png",
-      "fullFile": "dark-c14-retest-report-full.png",
-      "path": "/sessions/01M3JQ4CE4CZMA01K1AXAP6H9F",
+      "file": "dark-c16-retest-report.png",
+      "fullFile": "dark-c16-retest-report-full.png",
+      "path": "/sessions/01M3K90TQC6B0HQDC382XC3YS0",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 21,
@@ -1701,9 +2226,9 @@
       "scheme": "dark",
       "flow": "c",
       "name": "retest-toss-hero",
-      "file": "dark-c15-retest-toss-hero.png",
+      "file": "dark-c17-retest-toss-hero.png",
       "fullFile": null,
-      "path": "/sessions/01M3JQ4CE4CZMA01K1AXAP6H9F",
+      "path": "/sessions/01M3K90TQC6B0HQDC382XC3YS0",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
       "metricCount": 21,
@@ -1716,9 +2241,9 @@
       "scheme": "dark",
       "flow": "c",
       "name": "compare-own",
-      "file": "dark-c16-compare-own.png",
-      "fullFile": "dark-c16-compare-own-full.png",
-      "path": "/progress/compare/01M3JQ41RF2BT5BN7MQ4ZTJYD7",
+      "file": "dark-c18-compare-own.png",
+      "fullFile": "dark-c18-compare-own-full.png",
+      "path": "/progress/compare/01M3K90GAKP2TFJWAH4FH1HZJ8",
       "title": "Did it work?: Serve Coach",
       "overflowX": 0,
       "metricCount": 4,
@@ -1731,9 +2256,39 @@
       "scheme": "dark",
       "flow": "c",
       "name": "compare-own-t1-card",
-      "file": "dark-c17-compare-own-t1-card.png",
+      "file": "dark-c19-compare-own-t1-card.png",
       "fullFile": null,
-      "path": "/progress/compare/01M3JQ41RF2BT5BN7MQ4ZTJYD7",
+      "path": "/progress/compare/01M3K90GAKP2TFJWAH4FH1HZJ8",
+      "title": "Did it work?: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 4,
+      "unlabelled": [],
+      "h1": [
+        "Did it work?"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "plus-preview-t1",
+      "file": "dark-c20-plus-preview-t1.png",
+      "fullFile": null,
+      "path": "/progress/compare/01M3K90GAKP2TFJWAH4FH1HZJ8",
+      "title": "Did it work?: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 4,
+      "unlabelled": [],
+      "h1": [
+        "Did it work?"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "c",
+      "name": "plus-preview-t1-answered",
+      "file": "dark-c21-plus-preview-t1-answered.png",
+      "fullFile": null,
+      "path": "/progress/compare/01M3K90GAKP2TFJWAH4FH1HZJ8",
       "title": "Did it work?: Serve Coach",
       "overflowX": 0,
       "metricCount": 4,
@@ -1746,8 +2301,8 @@
       "scheme": "dark",
       "flow": "c",
       "name": "progress-own",
-      "file": "dark-c18-progress-own.png",
-      "fullFile": "dark-c18-progress-own-full.png",
+      "file": "dark-c22-progress-own.png",
+      "fullFile": "dark-c22-progress-own-full.png",
       "path": "/progress",
       "title": "Progress: Serve Coach",
       "overflowX": 0,
@@ -1761,8 +2316,8 @@
       "scheme": "dark",
       "flow": "c",
       "name": "today-after-retest",
-      "file": "dark-c19-today-after-retest.png",
-      "fullFile": "dark-c19-today-after-retest-full.png",
+      "file": "dark-c23-today-after-retest.png",
+      "fullFile": "dark-c23-today-after-retest-full.png",
       "path": "/",
       "title": "Today: Serve Coach",
       "overflowX": 0,
@@ -1770,216 +2325,6 @@
       "unlabelled": [],
       "h1": [
         "Today"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "offline-today",
-      "file": "light-d01-offline-today.png",
-      "fullFile": null,
-      "path": "/",
-      "title": "Today: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Today"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "offline-report",
-      "file": "light-d02-offline-report.png",
-      "fullFile": null,
-      "path": "/sessions/sample-s3",
-      "title": "Session report: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 24,
-      "unlabelled": [],
-      "h1": [
-        "Sat 26 Sep"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "offline-beta-data",
-      "file": "light-d03-offline-beta-data.png",
-      "fullFile": null,
-      "path": "/profile/beta-data",
-      "title": "Beta data: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Beta data"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "match-log-new",
-      "file": "light-d04-match-log-new.png",
-      "fullFile": null,
-      "path": "/sessions/matches/new",
-      "title": "Log a match: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Log a match"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "match-log-filled",
-      "file": "light-d05-match-log-filled.png",
-      "fullFile": "light-d05-match-log-filled-full.png",
-      "path": "/sessions/matches/new",
-      "title": "Log a match: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 1,
-      "unlabelled": [],
-      "h1": [
-        "Log a match"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "progress-comp-nights",
-      "file": "light-d06-progress-comp-nights.png",
-      "fullFile": null,
-      "path": "/progress",
-      "title": "Progress: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 2,
-      "unlabelled": [],
-      "h1": [
-        "Progress"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "plus-sheet-t3-season",
-      "file": "light-d07-plus-sheet-t3-season.png",
-      "fullFile": null,
-      "path": "/progress",
-      "title": "Progress: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 2,
-      "unlabelled": [],
-      "h1": [
-        "Progress"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "plus-sheet-t3-ghost",
-      "file": "light-d08-plus-sheet-t3-ghost.png",
-      "fullFile": null,
-      "path": "/sessions/sample-s3/serves/sample-s3-s01",
-      "title": "Serve detail: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Compare"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "t2-import-ready",
-      "file": "light-d09-t2-import-ready.png",
-      "fullFile": "light-d09-t2-import-ready-full.png",
-      "path": "/record/import",
-      "title": "Import a video: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Import a video"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "t2-import-mount",
-      "file": "light-d10-t2-import-mount.png",
-      "fullFile": null,
-      "path": "/record/import",
-      "title": "Import a video: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Import a video"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "processing-t2-sheet",
-      "file": "light-d11-processing-t2-sheet.png",
-      "fullFile": null,
-      "path": "/processing/01M3JQPHSM5596R0JN1CSKF455",
-      "title": "Session analysis: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Analysing"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "processing-t2-notice",
-      "file": "light-d12-processing-t2-notice.png",
-      "fullFile": null,
-      "path": "/processing/01M3JQPHSM5596R0JN1CSKF455",
-      "title": "Session analysis: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Analysing"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "t2-processing",
-      "file": "light-d13-t2-processing.png",
-      "fullFile": null,
-      "path": "/processing/01M3JQPHSM5596R0JN1CSKF455",
-      "title": "Session analysis: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Analysing"
-      ]
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "beta-data",
-      "file": "light-d14-beta-data.png",
-      "fullFile": "light-d14-beta-data-full.png",
-      "path": "/profile/beta-data",
-      "title": "Beta data: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Beta data"
       ]
     },
     {
@@ -2006,7 +2351,7 @@
       "path": "/sessions/sample-s3",
       "title": "Session report: Serve Coach",
       "overflowX": 0,
-      "metricCount": 24,
+      "metricCount": 23,
       "unlabelled": [],
       "h1": [
         "Sat 26 Sep"
@@ -2030,84 +2375,24 @@
     {
       "scheme": "dark",
       "flow": "d",
-      "name": "match-log-new",
-      "file": "dark-d04-match-log-new.png",
+      "name": "t2-import-date",
+      "file": "dark-d04-t2-import-date.png",
       "fullFile": null,
-      "path": "/sessions/matches/new",
-      "title": "Log a match: Serve Coach",
+      "path": "/record/import",
+      "title": "Import a video: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
       "unlabelled": [],
       "h1": [
-        "Log a match"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "d",
-      "name": "match-log-filled",
-      "file": "dark-d05-match-log-filled.png",
-      "fullFile": "dark-d05-match-log-filled-full.png",
-      "path": "/sessions/matches/new",
-      "title": "Log a match: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 1,
-      "unlabelled": [],
-      "h1": [
-        "Log a match"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "d",
-      "name": "progress-comp-nights",
-      "file": "dark-d06-progress-comp-nights.png",
-      "fullFile": null,
-      "path": "/progress",
-      "title": "Progress: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 2,
-      "unlabelled": [],
-      "h1": [
-        "Progress"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "d",
-      "name": "plus-sheet-t3-season",
-      "file": "dark-d07-plus-sheet-t3-season.png",
-      "fullFile": null,
-      "path": "/progress",
-      "title": "Progress: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 2,
-      "unlabelled": [],
-      "h1": [
-        "Progress"
-      ]
-    },
-    {
-      "scheme": "dark",
-      "flow": "d",
-      "name": "plus-sheet-t3-ghost",
-      "file": "dark-d08-plus-sheet-t3-ghost.png",
-      "fullFile": null,
-      "path": "/sessions/sample-s3/serves/sample-s3-s01",
-      "title": "Serve detail: Serve Coach",
-      "overflowX": 0,
-      "metricCount": 0,
-      "unlabelled": [],
-      "h1": [
-        "Compare"
+        "Import a video"
       ]
     },
     {
       "scheme": "dark",
       "flow": "d",
       "name": "t2-import-ready",
-      "file": "dark-d09-t2-import-ready.png",
-      "fullFile": "dark-d09-t2-import-ready-full.png",
+      "file": "dark-d05-t2-import-ready.png",
+      "fullFile": "dark-d05-t2-import-ready-full.png",
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
       "overflowX": 0,
@@ -2121,7 +2406,7 @@
       "scheme": "dark",
       "flow": "d",
       "name": "t2-import-mount",
-      "file": "dark-d10-t2-import-mount.png",
+      "file": "dark-d06-t2-import-mount.png",
       "fullFile": null,
       "path": "/record/import",
       "title": "Import a video: Serve Coach",
@@ -2135,10 +2420,25 @@
     {
       "scheme": "dark",
       "flow": "d",
-      "name": "processing-t2-sheet",
-      "file": "dark-d11-processing-t2-sheet.png",
+      "name": "plus-preview-t2",
+      "file": "dark-d07-plus-preview-t2.png",
       "fullFile": null,
-      "path": "/processing/01M3JQRXC5Q4X0HG8AQK3Q1VY7",
+      "path": "/processing/01M3K96M1N2FGZBXBZKJVV8BKG",
+      "title": "Session analysis: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Analysing"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "plus-preview-t2-answered",
+      "file": "dark-d08-plus-preview-t2-answered.png",
+      "fullFile": null,
+      "path": "/processing/01M3K96M1N2FGZBXBZKJVV8BKG",
       "title": "Session analysis: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -2151,9 +2451,9 @@
       "scheme": "dark",
       "flow": "d",
       "name": "processing-t2-notice",
-      "file": "dark-d12-processing-t2-notice.png",
+      "file": "dark-d09-processing-t2-notice.png",
       "fullFile": null,
-      "path": "/processing/01M3JQRXC5Q4X0HG8AQK3Q1VY7",
+      "path": "/processing/01M3K96M1N2FGZBXBZKJVV8BKG",
       "title": "Session analysis: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
@@ -2166,23 +2466,203 @@
       "scheme": "dark",
       "flow": "d",
       "name": "t2-processing",
-      "file": "dark-d13-t2-processing.png",
+      "file": "dark-d10-t2-processing.png",
       "fullFile": null,
-      "path": "/processing/01M3JQRXC5Q4X0HG8AQK3Q1VY7",
-      "title": "Session analysis: Serve Coach",
+      "path": "/sessions/01M3K96M1N2FGZBXBZKJVV8BKG",
+      "title": "Session report: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 11,
+      "unlabelled": [],
+      "h1": [
+        "Sun 27 Sep"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "today-morning-after",
+      "file": "dark-d11-today-morning-after.png",
+      "fullFile": null,
+      "path": "/",
+      "title": "Today: Serve Coach",
       "overflowX": 0,
       "metricCount": 0,
       "unlabelled": [],
       "h1": [
-        "Analysing"
+        "Today"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "match-log-new",
+      "file": "dark-d12-match-log-new.png",
+      "fullFile": null,
+      "path": "/sessions/matches/new?date=2026-09-27&from=%2F",
+      "title": "Log a match: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Log a match"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "match-log-filled",
+      "file": "dark-d13-match-log-filled.png",
+      "fullFile": "dark-d13-match-log-filled-full.png",
+      "path": "/sessions/matches/new?date=2026-09-27&from=%2F",
+      "title": "Log a match: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 1,
+      "unlabelled": [],
+      "h1": [
+        "Log a match"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "today-after-match-log",
+      "file": "dark-d14-today-after-match-log.png",
+      "fullFile": "dark-d14-today-after-match-log-full.png",
+      "path": "/",
+      "title": "Today: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Today"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "profile-match-log-row",
+      "file": "dark-d15-profile-match-log-row.png",
+      "fullFile": null,
+      "path": "/profile",
+      "title": "Profile: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "You"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "progress-comp-nights",
+      "file": "dark-d16-progress-comp-nights.png",
+      "fullFile": null,
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 3,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "plus-preview-t3-season",
+      "file": "dark-d17-plus-preview-t3-season.png",
+      "fullFile": null,
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 3,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "plus-preview-t3-season-answered",
+      "file": "dark-d18-plus-preview-t3-season-answered.png",
+      "fullFile": null,
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 3,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "progress-season-view",
+      "file": "dark-d19-progress-season-view.png",
+      "fullFile": null,
+      "path": "/progress",
+      "title": "Progress: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 3,
+      "unlabelled": [],
+      "h1": [
+        "Progress"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "plus-preview-t3-ghost",
+      "file": "dark-d20-plus-preview-t3-ghost.png",
+      "fullFile": null,
+      "path": "/sessions/sample-s3/serves/sample-s3-s01",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Compare"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "plus-preview-t3-ghost-answered",
+      "file": "dark-d21-plus-preview-t3-ghost-answered.png",
+      "fullFile": null,
+      "path": "/sessions/sample-s3/serves/sample-s3-s01",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Compare"
+      ]
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "compare-ghost",
+      "file": "dark-d22-compare-ghost.png",
+      "fullFile": null,
+      "path": "/sessions/sample-s3/serves/sample-s3-s01",
+      "title": "Serve detail: Serve Coach",
+      "overflowX": 0,
+      "metricCount": 0,
+      "unlabelled": [],
+      "h1": [
+        "Compare"
       ]
     },
     {
       "scheme": "dark",
       "flow": "d",
       "name": "beta-data",
-      "file": "dark-d14-beta-data.png",
-      "fullFile": "dark-d14-beta-data-full.png",
+      "file": "dark-d23-beta-data.png",
+      "fullFile": "dark-d23-beta-data-full.png",
       "path": "/profile/beta-data",
       "title": "Beta data: Serve Coach",
       "overflowX": 0,
@@ -2199,706 +2679,658 @@
       "flow": "a",
       "name": "first run redirects to onboarding",
       "ok": true,
-      "ms": 2246
+      "ms": 1308
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "onboarding answers",
       "ok": true,
-      "ms": 6021
+      "ms": 4653
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "sample session report",
       "ok": true,
-      "ms": 6083
+      "ms": 3920
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "serve detail with overlays",
       "ok": true,
-      "ms": 8173
+      "ms": 7712
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "check-in report: the focus that started the experiment",
       "ok": true,
-      "ms": 3129
+      "ms": 2922
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "metric info",
       "ok": true,
-      "ms": 2469
+      "ms": 2254
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "tagging",
       "ok": true,
-      "ms": 2865
+      "ms": 2719
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "today (sample)",
       "ok": true,
-      "ms": 1735
+      "ms": 1489
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "focus",
       "ok": true,
-      "ms": 2336
+      "ms": 2197
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "drill",
       "ok": true,
-      "ms": 1399
+      "ms": 1331
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "practice log",
       "ok": true,
-      "ms": 2514
+      "ms": 1954
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "progress",
       "ok": true,
-      "ms": 2469
+      "ms": 1913
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "compare (sample)",
       "ok": true,
-      "ms": 1955
+      "ms": 1771
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "sessions list",
       "ok": true,
-      "ms": 2004
+      "ms": 1936
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "metric info: serve count, toss height, spin (sample)",
       "ok": true,
-      "ms": 5311
+      "ms": 4249
     },
     {
       "scheme": "light",
       "flow": "a",
       "name": "how we measure",
       "ok": true,
-      "ms": 2096
+      "ms": 1846
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "skip set-up",
       "ok": true,
-      "ms": 1655
+      "ms": 1024
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "import baseline clip and analyse",
       "ok": true,
-      "ms": 40224
+      "ms": 21634
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "tag the imported serve",
       "ok": true,
-      "ms": 2638
+      "ms": 2472
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "check this serve (annotation mode) on the imported serve",
       "ok": true,
-      "ms": 16554
+      "ms": 14760
+    },
+    {
+      "scheme": "light",
+      "flow": "b",
+      "name": "the report shows the radar reading as \"Radar speed (you logged)\"",
+      "ok": true,
+      "ms": 1558
     },
     {
       "scheme": "light",
       "flow": "b",
       "name": "today reflects the stored decision",
       "ok": true,
-      "ms": 2359
+      "ms": 1772
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "skip set-up and import a 16-serve check-in",
       "ok": true,
-      "ms": 187706
+      "ms": 155058
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "today shows the new focus",
       "ok": true,
-      "ms": 1907
+      "ms": 1860
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "focus → drill → two practice logs (starts the experiment)",
       "ok": true,
-      "ms": 6169
+      "ms": 5671
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "today and record show the re-test",
       "ok": true,
-      "ms": 4196
+      "ms": 3904
     },
     {
       "scheme": "light",
       "flow": "c",
       "name": "import the re-test and see the verdict",
       "ok": true,
-      "ms": 224957
+      "ms": 197430
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "skip set-up; the service worker takes control",
+      "ok": true,
+      "ms": 1086
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "load the sample (cached on first use)",
+      "ok": true,
+      "ms": 2197
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "offline: reload and move around",
+      "ok": true,
+      "ms": 4770
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "T2: a third analysed day this month shows the allowance notice and the Plus preview",
+      "ok": true,
+      "ms": 19106
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "morning after a comp night: Today asks for the match log (U3)",
+      "ok": true,
+      "ms": 1359
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "match log: a comp night with counted first serves",
+      "ok": true,
+      "ms": 2241
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "the logged night clears the card; Profile lists the match log",
+      "ok": true,
+      "ms": 3350
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "progress: comp nights, and the season view (T3 preview; open in the beta)",
+      "ok": true,
+      "ms": 4769
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "compare view: the ghost overlay (T3 preview; open in the beta)",
+      "ok": true,
+      "ms": 5741
+    },
+    {
+      "scheme": "light",
+      "flow": "d",
+      "name": "beta data: counts and the exported report",
+      "ok": true,
+      "ms": 1689
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "first run redirects to onboarding",
       "ok": true,
-      "ms": 1119
+      "ms": 1105
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "onboarding answers",
       "ok": true,
-      "ms": 5857
+      "ms": 4679
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "sample session report",
       "ok": true,
-      "ms": 4898
+      "ms": 4140
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "serve detail with overlays",
       "ok": true,
-      "ms": 8744
+      "ms": 7626
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "check-in report: the focus that started the experiment",
       "ok": true,
-      "ms": 3163
+      "ms": 3378
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "metric info",
       "ok": true,
-      "ms": 2043
+      "ms": 2235
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "tagging",
       "ok": true,
-      "ms": 2858
+      "ms": 2754
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "today (sample)",
       "ok": true,
-      "ms": 1552
+      "ms": 1782
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "focus",
       "ok": true,
-      "ms": 2367
+      "ms": 2228
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "drill",
       "ok": true,
-      "ms": 1415
+      "ms": 1353
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "practice log",
       "ok": true,
-      "ms": 2020
+      "ms": 1942
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "progress",
       "ok": true,
-      "ms": 2246
+      "ms": 1928
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "compare (sample)",
       "ok": true,
-      "ms": 2107
+      "ms": 1784
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "sessions list",
       "ok": true,
-      "ms": 2232
+      "ms": 1936
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "metric info: serve count, toss height, spin (sample)",
       "ok": true,
-      "ms": 5131
+      "ms": 4852
     },
     {
       "scheme": "dark",
       "flow": "a",
       "name": "how we measure",
       "ok": true,
-      "ms": 2433
+      "ms": 1819
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "skip set-up",
       "ok": true,
-      "ms": 1232
+      "ms": 1033
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "import baseline clip and analyse",
       "ok": true,
-      "ms": 23072
+      "ms": 19318
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "tag the imported serve",
       "ok": true,
-      "ms": 2797
+      "ms": 2771
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "check this serve (annotation mode) on the imported serve",
       "ok": true,
-      "ms": 15897
+      "ms": 14409
+    },
+    {
+      "scheme": "dark",
+      "flow": "b",
+      "name": "the report shows the radar reading as \"Radar speed (you logged)\"",
+      "ok": true,
+      "ms": 1573
     },
     {
       "scheme": "dark",
       "flow": "b",
       "name": "today reflects the stored decision",
       "ok": true,
-      "ms": 2192
+      "ms": 1798
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "skip set-up and import a 16-serve check-in",
       "ok": true,
-      "ms": 227189
+      "ms": 171363
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "today shows the new focus",
       "ok": true,
-      "ms": 2265
+      "ms": 1858
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "focus → drill → two practice logs (starts the experiment)",
       "ok": true,
-      "ms": 5595
+      "ms": 5673
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "today and record show the re-test",
       "ok": true,
-      "ms": 4498
+      "ms": 3969
     },
     {
       "scheme": "dark",
       "flow": "c",
       "name": "import the re-test and see the verdict",
       "ok": true,
-      "ms": 192271
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "skip set-up; the service worker takes control",
-      "ok": true,
-      "ms": 4999
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "load the sample (cached on first use)",
-      "ok": true,
-      "ms": 7252
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "offline: reload and move around",
-      "ok": true,
-      "ms": 5778
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "match log: a comp night with counted first serves",
-      "ok": true,
-      "ms": 3411
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "progress: comp nights, and the season view (T3)",
-      "ok": true,
-      "ms": 2410
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "compare view: the ghost overlay (T3)",
-      "ok": true,
-      "ms": 3058
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "T2: a third analysed day this month shows the allowance notice",
-      "ok": true,
-      "ms": 48288
-    },
-    {
-      "scheme": "light",
-      "flow": "d",
-      "name": "beta data: counts and the exported report",
-      "ok": true,
-      "ms": 2880
+      "ms": 180966
     },
     {
       "scheme": "dark",
       "flow": "d",
       "name": "skip set-up; the service worker takes control",
       "ok": true,
-      "ms": 3937
+      "ms": 1112
     },
     {
       "scheme": "dark",
       "flow": "d",
       "name": "load the sample (cached on first use)",
       "ok": true,
-      "ms": 7654
+      "ms": 2035
     },
     {
       "scheme": "dark",
       "flow": "d",
       "name": "offline: reload and move around",
       "ok": true,
-      "ms": 5781
+      "ms": 4782
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "T2: a third analysed day this month shows the allowance notice and the Plus preview",
+      "ok": true,
+      "ms": 19507
+    },
+    {
+      "scheme": "dark",
+      "flow": "d",
+      "name": "morning after a comp night: Today asks for the match log (U3)",
+      "ok": true,
+      "ms": 1157
     },
     {
       "scheme": "dark",
       "flow": "d",
       "name": "match log: a comp night with counted first serves",
       "ok": true,
-      "ms": 3320
+      "ms": 2262
     },
     {
       "scheme": "dark",
       "flow": "d",
-      "name": "progress: comp nights, and the season view (T3)",
+      "name": "the logged night clears the card; Profile lists the match log",
       "ok": true,
-      "ms": 2350
+      "ms": 3653
     },
     {
       "scheme": "dark",
       "flow": "d",
-      "name": "compare view: the ghost overlay (T3)",
+      "name": "progress: comp nights, and the season view (T3 preview; open in the beta)",
       "ok": true,
-      "ms": 2932
+      "ms": 4355
     },
     {
       "scheme": "dark",
       "flow": "d",
-      "name": "T2: a third analysed day this month shows the allowance notice",
+      "name": "compare view: the ghost overlay (T3 preview; open in the beta)",
       "ok": true,
-      "ms": 35310
+      "ms": 5659
     },
     {
       "scheme": "dark",
       "flow": "d",
       "name": "beta data: counts and the exported report",
       "ok": true,
-      "ms": 2266
+      "ms": 1632
     }
   ],
   "consoleErrors": [],
   "failures": [],
-  "todayDecision": [
-    {
-      "sessionId": "01M3JPVS0ATJCS11T8JC7RGFD3",
-      "createdAt": "2026-09-28T00:33:19.485Z",
-      "gate": "too-few-serves",
-      "focus": null
-    }
-  ],
-  "ownExperiment": {
-    "retestSessionId": "01M3JQ4CE4CZMA01K1AXAP6H9F",
-    "experiments": [
-      {
-        "id": "01M3JQ41RF2BT5BN7MQ4ZTJYD7",
-        "status": "completed",
-        "isDemo": 0,
-        "baseline": [
-          "01M3JPX3ZHZDHER66TCGGNND00"
-        ],
-        "retests": [
-          "01M3JQ4CE4CZMA01K1AXAP6H9F"
-        ],
-        "verdict": "clearly-better",
-        "before": 26.030393315674495,
-        "after": 9.89854536986277,
-        "caveats": []
-      }
-    ]
-  },
-  "ownAfterLogs": [
-    {
-      "id": "01M3JQ41RF2BT5BN7MQ4ZTJYD7",
-      "status": "active",
-      "primary": "toss-height-spread",
-      "baseline": [
-        "01M3JPX3ZHZDHER66TCGGNND00"
-      ]
-    }
-  ],
-  "paywall": {
-    "light-t1": {
-      "shown": true,
-      "verdict": "clearly-better"
-    },
-    "light-t3-season": {
-      "shown": true
-    },
-    "light-t3-ghost": {
-      "shown": true
-    },
-    "light-t2": {
-      "sessionId": "01M3JQPHSM5596R0JN1CSKF455",
-      "sheetSeen": true,
-      "shown": true,
-      "t2Months": [
-        "2026-09"
-      ],
-      "log": [
-        "t3",
-        "t3",
-        "t2"
-      ]
-    },
-    "dark-t1": {
-      "shown": true,
-      "verdict": "clearly-better"
-    },
-    "dark-t3-season": {
-      "shown": true
-    },
-    "dark-t3-ghost": {
-      "shown": true
-    },
-    "dark-t2": {
-      "sessionId": "01M3JQRXC5Q4X0HG8AQK3Q1VY7",
-      "sheetSeen": true,
-      "shown": true,
-      "t2Months": [
-        "2026-09"
-      ],
-      "log": [
-        "t3",
-        "t3",
-        "t2"
-      ]
-    }
-  },
-  "pwa": {
-    "light": {
-      "controlled": true,
-      "names": [
-        "serve-coach-precache-1tbpdnv"
-      ],
-      "entries": 162,
-      "offlineScreens": [
-        "today",
-        "report",
-        "beta-data"
-      ]
-    },
-    "dark": {
-      "controlled": true,
-      "names": [
-        "serve-coach-precache-1tbpdnv"
-      ],
-      "entries": 162,
-      "offlineScreens": [
-        "today",
-        "report",
-        "beta-data"
-      ]
-    }
-  },
-  "matchLog": {
-    "light": [
-      {
-        "serviceGames": 6,
-        "doubleFaults": 1,
-        "firstServesIn": 17,
-        "firstServesAttempted": 32,
-        "hasNotes": false
-      }
-    ],
-    "dark": [
-      {
-        "serviceGames": 6,
-        "doubleFaults": 1,
-        "firstServesIn": 17,
-        "firstServesAttempted": 32,
-        "hasNotes": false
-      }
-    ]
-  },
-  "betaExport": {
-    "light": {
-      "file": "beta-report-light.json",
-      "events": 6,
-      "keys": [
-        "format",
-        "version",
-        "exportedAt",
-        "app",
-        "installRef",
-        "definitions",
-        "gates",
-        "events",
-        "notes"
-      ],
-      "leaks": []
-    },
-    "dark": {
-      "file": "beta-report-dark.json",
-      "events": 6,
-      "keys": [
-        "format",
-        "version",
-        "exportedAt",
-        "app",
-        "installRef",
-        "definitions",
-        "gates",
-        "events",
-        "notes"
-      ],
-      "leaks": []
-    }
-  },
-  "checkinBackdated": {
-    "light": "2026-09-27",
-    "dark": "2026-09-27"
-  },
   "imports": [
     {
       "scheme": "light",
       "prefix": "baseline-",
       "mountAsked": true,
       "mount": "Level mount",
-      "spot": "Singles"
+      "spot": "Singles",
+      "fileLastChanged": "2026-09-27",
+      "dateRead": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      },
+      "dateSet": null,
+      "dateFinal": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      }
     },
     {
       "scheme": "light",
       "prefix": "checkin-",
       "mountAsked": true,
       "mount": "default",
-      "spot": null
+      "spot": null,
+      "fileLastChanged": "2026-09-27",
+      "dateRead": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      },
+      "dateSet": "2026-09-27",
+      "dateFinal": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      }
     },
     {
       "scheme": "light",
       "prefix": "retest-",
       "mountAsked": true,
       "mount": "default",
-      "spot": null
+      "spot": null,
+      "fileLastChanged": "2026-09-27",
+      "dateRead": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      },
+      "dateSet": "2026-09-28",
+      "dateFinal": {
+        "value": "2026-09-28",
+        "note": "You set this date."
+      }
+    },
+    {
+      "scheme": "light",
+      "prefix": "t2-",
+      "mountAsked": true,
+      "mount": "Level mount",
+      "spot": null,
+      "fileLastChanged": "2026-09-27",
+      "dateRead": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      },
+      "dateSet": null,
+      "dateFinal": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      }
     },
     {
       "scheme": "dark",
       "prefix": "baseline-",
       "mountAsked": true,
       "mount": "Level mount",
-      "spot": "Singles"
+      "spot": "Singles",
+      "fileLastChanged": "2026-09-27",
+      "dateRead": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      },
+      "dateSet": null,
+      "dateFinal": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      }
     },
     {
       "scheme": "dark",
       "prefix": "checkin-",
       "mountAsked": true,
       "mount": "default",
-      "spot": null
+      "spot": null,
+      "fileLastChanged": "2026-09-27",
+      "dateRead": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      },
+      "dateSet": "2026-09-27",
+      "dateFinal": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      }
     },
     {
       "scheme": "dark",
       "prefix": "retest-",
       "mountAsked": true,
       "mount": "default",
-      "spot": null
-    },
-    {
-      "scheme": "light",
-      "prefix": "t2-",
-      "mountAsked": true,
-      "mount": "Level mount",
-      "spot": null
+      "spot": null,
+      "fileLastChanged": "2026-09-27",
+      "dateRead": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      },
+      "dateSet": "2026-09-28",
+      "dateFinal": {
+        "value": "2026-09-28",
+        "note": "You set this date."
+      }
     },
     {
       "scheme": "dark",
       "prefix": "t2-",
       "mountAsked": true,
       "mount": "Level mount",
-      "spot": null
+      "spot": null,
+      "fileLastChanged": "2026-09-27",
+      "dateRead": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      },
+      "dateSet": null,
+      "dateFinal": {
+        "value": "2026-09-27",
+        "note": "From when the file was last changed. Change it if you filmed on another day."
+      }
     }
   ],
   "analyses": [
@@ -2906,86 +3338,102 @@
       "scheme": "light",
       "prefix": "baseline-",
       "clip": "baseline-s1.mp4",
-      "sessionId": "01M3JP9YXA2VF68Q9ME0WV86RC",
-      "processingS": 33.895,
+      "sessionId": "01M3K8ASMZS47QJE6E51EPJ1RX",
+      "processingS": 15.613,
       "servesFound": 1,
       "servesIncluded": 1,
-      "exclusions": {}
+      "exclusions": {},
+      "startedAt": "2026-09-26T19:40:20.613Z",
+      "visitId": "2026-09-27"
     },
     {
       "scheme": "light",
       "prefix": "checkin-",
       "clip": "sample-checkin.mp4",
-      "sessionId": "01M3JPBWG4M3G3GHXRDNY3T7RF",
-      "processingS": 179.335,
+      "sessionId": "01M3K8C3P821NT6WA7BMKVA0PW",
+      "processingS": 147.596,
       "servesFound": 16,
       "servesIncluded": 16,
-      "exclusions": {}
+      "exclusions": {},
+      "startedAt": "2026-09-27T06:10:46.674Z",
+      "visitId": "2026-09-27"
     },
     {
       "scheme": "light",
       "prefix": "retest-",
       "clip": "sample-retest.mp4",
-      "sessionId": "01M3JPHXRMJKKTM1T42QSVHSN1",
-      "processingS": 207.539,
+      "sessionId": "01M3K8H4RY6SXB9NTSN45RE485",
+      "processingS": 179.236,
       "servesFound": 16,
       "servesIncluded": 16,
-      "exclusions": {}
+      "exclusions": {},
+      "startedAt": "2026-09-28T05:41:44.576Z",
+      "visitId": "2026-09-28"
+    },
+    {
+      "scheme": "light",
+      "prefix": "t2-",
+      "clip": "baseline-s1.mp4",
+      "sessionId": "01M3K8QE563T9EMWS63JSAN25S",
+      "processingS": 13.958,
+      "servesFound": 1,
+      "servesIncluded": 1,
+      "exclusions": {},
+      "startedAt": "2026-09-26T19:40:20.613Z",
+      "visitId": "2026-09-27"
     },
     {
       "scheme": "dark",
       "prefix": "baseline-",
       "clip": "baseline-s1.mp4",
-      "sessionId": "01M3JPVS0ATJCS11T8JC7RGFD3",
-      "processingS": 16.493,
+      "sessionId": "01M3K8T1GBWFMT7HFKNWX7MHMS",
+      "processingS": 13.546,
       "servesFound": 1,
       "servesIncluded": 1,
-      "exclusions": {}
+      "exclusions": {},
+      "startedAt": "2026-09-26T19:40:20.613Z",
+      "visitId": "2026-09-27"
     },
     {
       "scheme": "dark",
       "prefix": "checkin-",
       "clip": "sample-checkin.mp4",
-      "sessionId": "01M3JPX3ZHZDHER66TCGGNND00",
-      "processingS": 219.859,
+      "sessionId": "01M3K8V9H3KG8ZF723T9BHJQ15",
+      "processingS": 163.895,
       "servesFound": 16,
       "servesIncluded": 16,
-      "exclusions": {}
+      "exclusions": {},
+      "startedAt": "2026-09-27T06:10:46.674Z",
+      "visitId": "2026-09-27"
     },
     {
       "scheme": "dark",
       "prefix": "retest-",
       "clip": "sample-retest.mp4",
-      "sessionId": "01M3JQ4CE4CZMA01K1AXAP6H9F",
-      "processingS": 174.648,
+      "sessionId": "01M3K90TQC6B0HQDC382XC3YS0",
+      "processingS": 162.658,
       "servesFound": 16,
       "servesIncluded": 16,
-      "exclusions": {}
-    },
-    {
-      "scheme": "light",
-      "prefix": "t2-",
-      "clip": "baseline-s1.mp4",
-      "sessionId": "01M3JQPHSM5596R0JN1CSKF455",
-      "processingS": 42.18,
-      "servesFound": 1,
-      "servesIncluded": 1,
-      "exclusions": {}
+      "exclusions": {},
+      "startedAt": "2026-09-28T05:50:18.575Z",
+      "visitId": "2026-09-28"
     },
     {
       "scheme": "dark",
       "prefix": "t2-",
       "clip": "baseline-s1.mp4",
-      "sessionId": "01M3JQRXC5Q4X0HG8AQK3Q1VY7",
-      "processingS": 29.387,
+      "sessionId": "01M3K96M1N2FGZBXBZKJVV8BKG",
+      "processingS": 14.114,
       "servesFound": 1,
       "servesIncluded": 1,
-      "exclusions": {}
+      "exclusions": {},
+      "startedAt": "2026-09-26T19:40:20.613Z",
+      "visitId": "2026-09-27"
     }
   ],
   "levelMountImport": {
     "light": {
-      "sessionId": "01M3JP9YXA2VF68Q9ME0WV86RC",
+      "sessionId": "01M3K8ASMZS47QJE6E51EPJ1RX",
       "phoneMount": "level-mount",
       "servingSpot": "singles",
       "setupKey": "portrait|close|singles",
@@ -3006,7 +3454,7 @@
       }
     },
     "dark": {
-      "sessionId": "01M3JPVS0ATJCS11T8JC7RGFD3",
+      "sessionId": "01M3K8T1GBWFMT7HFKNWX7MHMS",
       "phoneMount": "level-mount",
       "servingSpot": "singles",
       "setupKey": "portrait|close|singles",
@@ -3029,7 +3477,7 @@
   },
   "checkServe": {
     "light": {
-      "sessionId": "01M3JP9YXA2VF68Q9ME0WV86RC",
+      "sessionId": "01M3K8ASMZS47QJE6E51EPJ1RX",
       "rows": [
         "Toss release Within the 1-frame target Same frame as your mark. App frame 107 · Your frame 107 Show frame 107.",
         "Toss peak Within the 1-frame target Same frame as your mark. App frame 144 · Your frame 144 Show frame 144.",
@@ -3040,14 +3488,14 @@
         "Toss height Outside the 3% of height target The app reads 19 cm lower (10.5% of height). App about 1.70 to 1.98 × your height Toss height, about 1.70 to 1.98 times your height, Experimental Experimental You 1.94 × your height Toss height, 1.94 times your height, You logged You logged Show frame 144.",
         "Contact height Outside the 2.5% of height target The app reads 13 cm lower (7.4% of height). App about 1.36 to 1.57 × your height Contact height, about 1.36 to 1.57 times your height, Experimental Experimental You 1.54 × your height Contact height, 1.54 times your height, You logged You logged Show frame 167.",
         "Ball drop before contact The app reads 3 cm more drop. App ≈ 75 cm Ball drop before contact, about 75 centimetres, Estimate, likely 67 to 82 centimetres Estimate You 72 cm Ball drop before contact, 72 centimetres, You logged You logged Show frame 167.",
-        "Leg drive (hip rise) Within the 2.5% of height target The app reads 2% of height less hip rise than your marks (about 4 cm). App ≈ 10% of your height Leg drive (hip rise), about 10% of your height, Estimate, likely 4% to 16% of your height Estimate You 12% of your height Leg drive (hip rise), 12% of your height, You logged You logged Show frame 167.",
+        "Leg drive (hip rise) Within the 2.5% of height target The app reads 2% of height less hip rise than your marks (about 4 cm). App ≈ 10% of your height Leg drive (hip rise), about 10% of your height, Estimate, likely 4% to 16% of your height, Reads about 2.5% of your height low on simulated serves, so compare it with your own serves only. Estimate You 12% of your height Leg drive (hip rise), 12% of your height, You logged You logged Show frame 167.",
         "Loading (hip dip) Within the 2.5% of height target Within half a centimetre of your marks. App ≈ 2% of your height Loading (hip dip), about 2% of your height, Estimate, likely up to 8% of your height Estimate You 2% of your height Loading (hip dip), 2% of your height, You logged You logged Show frame 147.",
         "Drive time Outside the 2-frame target The app reads 89 ms longer (5 frames). App about 0.21 to 0.64 s Drive time, about 0.21 to 0.64 seconds, Experimental Experimental You 0.33 s Drive time, 0.33 seconds, You logged You logged Show frame 147."
       ],
       "savedChecks": 1
     },
     "dark": {
-      "sessionId": "01M3JPVS0ATJCS11T8JC7RGFD3",
+      "sessionId": "01M3K8T1GBWFMT7HFKNWX7MHMS",
       "rows": [
         "Toss release Within the 1-frame target Same frame as your mark. App frame 107 · Your frame 107 Show frame 107.",
         "Toss peak Within the 1-frame target Same frame as your mark. App frame 144 · Your frame 144 Show frame 144.",
@@ -3058,13 +3506,318 @@
         "Toss height Outside the 3% of height target The app reads 19 cm lower (10.5% of height). App about 1.70 to 1.98 × your height Toss height, about 1.70 to 1.98 times your height, Experimental Experimental You 1.94 × your height Toss height, 1.94 times your height, You logged You logged Show frame 144.",
         "Contact height Outside the 2.5% of height target The app reads 13 cm lower (7.4% of height). App about 1.36 to 1.57 × your height Contact height, about 1.36 to 1.57 times your height, Experimental Experimental You 1.54 × your height Contact height, 1.54 times your height, You logged You logged Show frame 167.",
         "Ball drop before contact The app reads 3 cm more drop. App ≈ 75 cm Ball drop before contact, about 75 centimetres, Estimate, likely 67 to 82 centimetres Estimate You 72 cm Ball drop before contact, 72 centimetres, You logged You logged Show frame 167.",
-        "Leg drive (hip rise) Within the 2.5% of height target The app reads 2% of height less hip rise than your marks (about 4 cm). App ≈ 10% of your height Leg drive (hip rise), about 10% of your height, Estimate, likely 4% to 16% of your height Estimate You 12% of your height Leg drive (hip rise), 12% of your height, You logged You logged Show frame 167.",
+        "Leg drive (hip rise) Within the 2.5% of height target The app reads 2% of height less hip rise than your marks (about 4 cm). App ≈ 10% of your height Leg drive (hip rise), about 10% of your height, Estimate, likely 4% to 16% of your height, Reads about 2.5% of your height low on simulated serves, so compare it with your own serves only. Estimate You 12% of your height Leg drive (hip rise), 12% of your height, You logged You logged Show frame 167.",
         "Loading (hip dip) Within the 2.5% of height target Within half a centimetre of your marks. App ≈ 2% of your height Loading (hip dip), about 2% of your height, Estimate, likely up to 8% of your height Estimate You 2% of your height Loading (hip dip), 2% of your height, You logged You logged Show frame 147.",
         "Drive time Outside the 2-frame target The app reads 89 ms longer (5 frames). App about 0.21 to 0.64 s Drive time, about 0.21 to 0.64 seconds, Experimental Experimental You 0.33 s Drive time, 0.33 seconds, You logged You logged Show frame 147."
       ],
       "savedChecks": 1
     }
   },
-  "offHostRequests": [],
-  "finishedAt": "2026-09-28T00:51:11.217Z"
+  "radarRow": {
+    "light": {
+      "text": "Radar speed (you logged) 172 km/h Radar speed (you logged), 172 kilometres per hour, You logged, from your radar, 1 serve Pocket Radar, peak Serve 1, logged in Check this serve You logged",
+      "source": "Pocket Radar, peak",
+      "status": "player-entered",
+      "aria": "Radar speed (you logged), 172 kilometres per hour, You logged, from your radar, 1 serve, Pocket Radar, peak. Serve 1, logged in Check this serve."
+    },
+    "dark": {
+      "text": "Radar speed (you logged) 172 km/h Radar speed (you logged), 172 kilometres per hour, You logged, from your radar, 1 serve Pocket Radar, peak Serve 1, logged in Check this serve You logged",
+      "source": "Pocket Radar, peak",
+      "status": "player-entered",
+      "aria": "Radar speed (you logged), 172 kilometres per hour, You logged, from your radar, 1 serve, Pocket Radar, peak. Serve 1, logged in Check this serve."
+    }
+  },
+  "todayDecision": [
+    {
+      "sessionId": "01M3K8T1GBWFMT7HFKNWX7MHMS",
+      "createdAt": "2026-09-28T05:46:54.003Z",
+      "gate": "too-few-serves",
+      "focus": null
+    }
+  ],
+  "importDates": {
+    "light": {
+      "checkin": {
+        "sessionId": "01M3K8C3P821NT6WA7BMKVA0PW",
+        "day": "2026-09-27"
+      },
+      "retest": {
+        "sessionId": "01M3K8H4RY6SXB9NTSN45RE485",
+        "day": "2026-09-28"
+      }
+    },
+    "dark": {
+      "checkin": {
+        "sessionId": "01M3K8V9H3KG8ZF723T9BHJQ15",
+        "day": "2026-09-27"
+      },
+      "retest": {
+        "sessionId": "01M3K90TQC6B0HQDC382XC3YS0",
+        "day": "2026-09-28"
+      }
+    }
+  },
+  "ownAfterLogs": [
+    {
+      "id": "01M3K90GAKP2TFJWAH4FH1HZJ8",
+      "status": "active",
+      "primary": "toss-height-spread",
+      "baseline": [
+        "01M3K8V9H3KG8ZF723T9BHJQ15"
+      ]
+    }
+  ],
+  "ownExperiment": {
+    "retestSessionId": "01M3K90TQC6B0HQDC382XC3YS0",
+    "experiments": [
+      {
+        "id": "01M3K90GAKP2TFJWAH4FH1HZJ8",
+        "status": "completed",
+        "isDemo": 0,
+        "baseline": [
+          "01M3K8V9H3KG8ZF723T9BHJQ15"
+        ],
+        "retests": [
+          "01M3K90TQC6B0HQDC382XC3YS0"
+        ],
+        "verdict": "clearly-better",
+        "before": 26.030393315674495,
+        "after": 9.89854536986277,
+        "caveats": []
+      }
+    ]
+  },
+  "paywall": {
+    "light-t1": {
+      "shown": true,
+      "verdict": "clearly-better"
+    },
+    "light-t2": {
+      "sessionId": "01M3K8QE563T9EMWS63JSAN25S",
+      "sheetSeen": true,
+      "shown": true,
+      "t2Months": [
+        "2026-09"
+      ],
+      "log": [
+        "t2"
+      ]
+    },
+    "light-t3-season": {
+      "shown": true,
+      "featureOpen": true
+    },
+    "light-t3-ghost": {
+      "shown": true,
+      "featureOpen": true
+    },
+    "dark-t1": {
+      "shown": true,
+      "verdict": "clearly-better"
+    },
+    "dark-t2": {
+      "sessionId": "01M3K96M1N2FGZBXBZKJVV8BKG",
+      "sheetSeen": true,
+      "shown": true,
+      "t2Months": [
+        "2026-09"
+      ],
+      "log": [
+        "t2"
+      ]
+    },
+    "dark-t3-season": {
+      "shown": true,
+      "featureOpen": true
+    },
+    "dark-t3-ghost": {
+      "shown": true,
+      "featureOpen": true
+    }
+  },
+  "plusPreview": {
+    "light-t1": {
+      "title": "That was your first experiment",
+      "beta": "Beta: this is unlocked for you. Nothing is sold during the beta.",
+      "price": "Proposed price after the beta: A$99.99 a year, or A$14.99 a month.",
+      "answer": "maybe"
+    },
+    "light-t2": {
+      "title": "Past this month's free analyses",
+      "beta": "Beta: this is unlocked for you. Nothing is sold during the beta.",
+      "price": "Proposed price after the beta: A$99.99 a year, or A$14.99 a month.",
+      "answer": "yes"
+    },
+    "light-t3-season": {
+      "title": "Season view is part of Plus",
+      "beta": "Beta: this is unlocked for you. Nothing is sold during the beta.",
+      "price": "Proposed price after the beta: A$99.99 a year, or A$14.99 a month.",
+      "answer": "no"
+    },
+    "light-t3-ghost": {
+      "title": "Ghost overlay is part of Plus",
+      "beta": "Beta: this is unlocked for you. Nothing is sold during the beta.",
+      "price": "Proposed price after the beta: A$99.99 a year, or A$14.99 a month.",
+      "answer": "maybe"
+    },
+    "dark-t1": {
+      "title": "That was your first experiment",
+      "beta": "Beta: this is unlocked for you. Nothing is sold during the beta.",
+      "price": "Proposed price after the beta: A$99.99 a year, or A$14.99 a month.",
+      "answer": "maybe"
+    },
+    "dark-t2": {
+      "title": "Past this month's free analyses",
+      "beta": "Beta: this is unlocked for you. Nothing is sold during the beta.",
+      "price": "Proposed price after the beta: A$99.99 a year, or A$14.99 a month.",
+      "answer": "yes"
+    },
+    "dark-t3-season": {
+      "title": "Season view is part of Plus",
+      "beta": "Beta: this is unlocked for you. Nothing is sold during the beta.",
+      "price": "Proposed price after the beta: A$99.99 a year, or A$14.99 a month.",
+      "answer": "no"
+    },
+    "dark-t3-ghost": {
+      "title": "Ghost overlay is part of Plus",
+      "beta": "Beta: this is unlocked for you. Nothing is sold during the beta.",
+      "price": "Proposed price after the beta: A$99.99 a year, or A$14.99 a month.",
+      "answer": "maybe"
+    }
+  },
+  "pwa": {
+    "light": {
+      "controlled": true,
+      "names": [
+        "serve-coach-precache-2ni1ev"
+      ],
+      "entries": 167,
+      "offlineScreens": [
+        "today",
+        "report",
+        "beta-data"
+      ]
+    },
+    "dark": {
+      "controlled": true,
+      "names": [
+        "serve-coach-precache-2ni1ev"
+      ],
+      "entries": 167,
+      "offlineScreens": [
+        "today",
+        "report",
+        "beta-data"
+      ]
+    }
+  },
+  "morningAfter": {
+    "light": {
+      "night": "sun",
+      "shown": true,
+      "text": "After last night's comp How did it go? Log it while it's fresh: service games, double faults and, if you counted, first serves in. About 20 seconds. It sits beside your practice, never mixed with it. Log the match Not now",
+      "logDate": "2026-09-27",
+      "afterLog": "gone",
+      "profileRow": "Match log 1 comp night logged. They show on Progress"
+    },
+    "dark": {
+      "night": "sun",
+      "shown": true,
+      "text": "After last night's comp How did it go? Log it while it's fresh: service games, double faults and, if you counted, first serves in. About 20 seconds. It sits beside your practice, never mixed with it. Log the match Not now",
+      "logDate": "2026-09-27",
+      "afterLog": "gone",
+      "profileRow": "Match log 1 comp night logged. They show on Progress"
+    }
+  },
+  "matchLog": {
+    "light": [
+      {
+        "date": "2026-09-27",
+        "serviceGames": 6,
+        "doubleFaults": 1,
+        "firstServesIn": 17,
+        "firstServesAttempted": 32,
+        "hasNotes": false
+      }
+    ],
+    "dark": [
+      {
+        "date": "2026-09-27",
+        "serviceGames": 6,
+        "doubleFaults": 1,
+        "firstServesIn": 17,
+        "firstServesAttempted": 32,
+        "hasNotes": false
+      }
+    ]
+  },
+  "betaExport": {
+    "light": {
+      "file": "beta-report-light.json",
+      "events": 9,
+      "keys": [
+        "format",
+        "version",
+        "exportedAt",
+        "app",
+        "installRef",
+        "definitions",
+        "gates",
+        "events",
+        "notes"
+      ],
+      "leaks": [],
+      "wtp": [
+        {
+          "trigger": "t2",
+          "wtp": "yes",
+          "price": "annual-99-99"
+        },
+        {
+          "trigger": "t3",
+          "wtp": "no",
+          "price": "annual-99-99"
+        },
+        {
+          "trigger": "t3",
+          "wtp": "maybe",
+          "price": "annual-99-99"
+        }
+      ]
+    },
+    "dark": {
+      "file": "beta-report-dark.json",
+      "events": 9,
+      "keys": [
+        "format",
+        "version",
+        "exportedAt",
+        "app",
+        "installRef",
+        "definitions",
+        "gates",
+        "events",
+        "notes"
+      ],
+      "leaks": [],
+      "wtp": [
+        {
+          "trigger": "t2",
+          "wtp": "yes",
+          "price": "annual-99-99"
+        },
+        {
+          "trigger": "t3",
+          "wtp": "no",
+          "price": "annual-99-99"
+        },
+        {
+          "trigger": "t3",
+          "wtp": "maybe",
+          "price": "annual-99-99"
+        }
+      ]
+    }
+  },
+  "finishedAt": "2026-09-28T05:54:04.059Z"
 }

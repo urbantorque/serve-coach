@@ -144,7 +144,8 @@ export function seriesFor(metricId: MetricId, bundles: readonly SessionBundle[],
     out.push({
       sessionId: b.session.id,
       visitId: b.session.visitId,
-      value,
+      // Floored like its range where the quantity cannot be negative (hip dip, leg drive; finding 61).
+      value: displayBound(metricId, value) ?? value,
       low: displayBound(metricId, v.uncertainty?.low),
       high: v.uncertainty?.high,
       n,

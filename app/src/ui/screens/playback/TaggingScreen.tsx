@@ -229,7 +229,8 @@ function Tagging({ session, serves, tags }: { session: SessionRecord; serves: Se
           <div className="gutter flex flex-col gap-3">
             <div className="flex flex-col">
               <TagAttributes attrs={state.attrs} onChange={(attrs) => setState((s) => ({ ...s, attrs }))} showTarget showType />
-              <p className="h-5 text-footnote text-ink-3">
+              {/* min-h, not h: at 200% text the hint wraps and must push the pad down (finding 74). */}
+              <p className="min-h-5 text-footnote text-ink-3" data-block-hint>
                 {state.pointPlay ? "We'll switch between first and second serves for you." : 'Applies to the rest of this block.'}
                 {!hasTarget ? <span className="sr-only"> Target is optional.</span> : null}
               </p>

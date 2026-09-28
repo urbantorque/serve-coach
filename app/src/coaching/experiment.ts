@@ -21,6 +21,7 @@ import type {
   CoachingStratum,
   DrillVariant,
   FocusDecision,
+  PainLogMark,
   PracticeLogSummary,
   VerdictFn,
   VerdictId,
@@ -444,8 +445,10 @@ export function experimentTransition(
   verdict: VerdictResult,
   resolvedMet: boolean,
   logs: readonly PracticeLogSummary[] = [],
-  /** Local YYYY-MM-DD: a practice logged sore today holds the unlock for the day (§9.3, §10.3). */
+  /** Local YYYY-MM-DD: a practice logged sore or with pain today holds the unlock for the day (§9.3, §10.3). */
   today?: string,
+  /** The newest practice of any drill logged with pain: only successful practices after it count (§10.3). */
+  lastPainLog?: PainLogMark,
 ): Transition {
   const item = getItem(exp.itemId)
   const subject = item ? subjectOf(item.id, item.title).toLowerCase() : 'this'
@@ -478,10 +481,10 @@ export function experimentTransition(
     return { status: 'continue', copy: 'About the same so far. Changes like this often take a few sessions.' }
   }
   if (verdict.verdict === 'likely-better') {
-    // Only this item's own practices, none logged with pain, and not on a day a practice was logged
-    // sore (§9.3, §10.3, §12.2; practiceLogRules).
-    const { yes } = successesSincePain(logs.filter((l) => !l.itemId || l.itemId === exp.itemId))
-    return { status: 'continue', copy: "Keep going; it's moving the right way.", unlockProgression: yes >= 2 && !soreLoggedOn(logs, today) }
+    // Only this item's own practices after the newest one of any drill logged with pain, and not on a
+    // day a practice was logged sore or with pain (§9.3, §10.3, §12.2; practiceLogRules).
+    const { yes } = successesSincePain(logs.filter((l) => !l.itemId || l.itemId === exp.itemId), lastPainLog)
+    return { status: 'continue', copy: "Keep going; it's moving the right way.", unlockProgression: yes >= 2 && !soreLoggedOn(logs, today, lastPainLog) }
   }
   return { status: 'continue', copy: 'Too early to tell. Record a few more serves next time.' }
 }

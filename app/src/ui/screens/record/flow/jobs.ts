@@ -242,9 +242,19 @@ export function retryAnalysis(sessionId: string, runner?: RunAnalysis): boolean 
   return true
 }
 
-/** Test helper: forget every job. */
-export function resetJobsForTests(): void {
+/**
+ * Forgets every job ("Delete everything", finding 18): each run is stopped, its in-memory file and
+ * options are dropped (so Resume or Try again can never write a deleted session back), the job list is
+ * emptied and the Record tab's status row cleared. A run that settles afterwards finds no job to update.
+ */
+export function forgetAllJobs(): void {
   for (const h of handles.values()) h.abort.abort()
   handles.clear()
   useJobs.setState({ jobs: {} })
+  useUiStore.getState().setActiveJob(null)
+}
+
+/** Test helper: forget every job. */
+export function resetJobsForTests(): void {
+  forgetAllJobs()
 }

@@ -34,6 +34,7 @@ export {
   getStats,
   lastLogsForDrill,
   latestDecision,
+  latestPainLog,
   listExperiments,
   listMatchLogs,
   listPracticeByExperiment,

@@ -1,9 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetDbForTests } from '../../../../data/db.ts'
 import { getSession, getTally, useUiStore } from '../../../../data/index.ts'
 import type { CaptureContext } from '../../../../analysis/types.ts'
 import { setRunAnalysisForTests, type RunAnalysis } from './analysisAdapter.ts'
-import { cancelAnalysis, hasHandle, JOB_ERROR_COPY, resetJobsForTests, retryAnalysis, startAnalysis, useJobs } from './jobs.ts'
+import { DEFAULT_BLOCK, resetRecordFlow, useRecordFlow } from './flowStore.ts'
+import { cancelAnalysis, forgetAllJobs, hasHandle, JOB_ERROR_COPY, jobFile, resetJobsForTests, retryAnalysis, startAnalysis, useJobs } from './jobs.ts'
 import { lintCopy } from '../../../copy/lint.ts'
 import { importCapture, playerFacts, recordingCapture, saveNewSession, sessionFor, setupFor, type SessionInput } from './sessionFactory.ts'
 
@@ -60,6 +61,39 @@ describe('analysis jobs', () => {
     expect(useJobs.getState().jobs.s3.phase).toBe('cancelled')
     expect(retryAnalysis('s3', async () => ({ sessionId: 's3' }))).toBe(true)
     expect(retryAnalysis('nope')).toBe(false)
+  })
+
+  it('"Delete everything" forgets every job and its video, so Resume cannot bring a session back (finding 18)', async () => {
+    const runner: RunAnalysis = (_f, o) =>
+      new Promise((_resolve, reject) => {
+        o.onProgress({ type: 'progress', progress: { stage: 'sparse', label: 'Finding serves', overall: 0.2 } })
+        const stop = () => reject(new DOMException('stop', 'AbortError'))
+        if (o.signal.aborted) stop()
+        else o.signal.addEventListener('abort', stop)
+      })
+    const done = startAnalysis({ sessionId: 's5', file: new Blob(['x']), run, clip, runner })
+    await vi.waitFor(() => expect(useUiStore.getState().activeJob?.sessionId).toBe('s5'))
+    forgetAllJobs()
+    expect(useJobs.getState().jobs).toEqual({})
+    expect(useUiStore.getState().activeJob).toBeNull()
+    expect(hasHandle('s5')).toBe(false)
+    expect(jobFile('s5')).toBeUndefined()
+    expect(retryAnalysis('s5', async () => ({ sessionId: 's5' }))).toBe(false)
+    // The stopped run settles later and finds no job to bring back.
+    expect(await done).toBe('cancelled')
+    expect(useJobs.getState().jobs.s5).toBeUndefined()
+  })
+
+  it('"Delete everything" also starts the Record flow afresh (no re-test plan or body-check mark kept)', () => {
+    useRecordFlow.getState().setPlan('retest')
+    useRecordFlow.getState().markBodyChecked()
+    useRecordFlow.getState().setBlock({ side: 'ad', light: 'lights' })
+    resetRecordFlow()
+    const s = useRecordFlow.getState()
+    expect(s.plan).toBe('check-in')
+    expect(s.bodyCheckedAt).toBeNull()
+    expect(s.block.side).toBe(DEFAULT_BLOCK.side)
+    expect(s.lightChosen).toBe(false)
   })
 
   it('says so plainly when the pipeline is not in this build', async () => {

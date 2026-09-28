@@ -7,6 +7,7 @@
  * position straight to the DOM after layout (measuring is a DOM job), so it never re-renders.
  */
 import { useLayoutEffect, useRef, type CSSProperties } from 'react'
+import { shortCaveat } from '../../format/metricFormat.ts'
 import { MetricValue } from '../MetricValue.tsx'
 import { toBox, type Size, type ViewTransform } from './geometry.ts'
 import { labelObstacles, placeLabels, type LabelRequest } from './labelPlacement.ts'
@@ -79,6 +80,9 @@ export function OverlayLabels({
 }
 
 function Label({ spec }: { spec: LabelSpec }) {
+  // A relative-only value (leg drive) carries its caveat on the video too; the full sentence is in the
+  // value's spoken text and beside it in the serve drawer (finding 50).
+  const caveat = spec.metric ? shortCaveat(spec.metric.id, spec.metric.value) : undefined
   return (
     <div
       data-overlay-label={spec.id}
@@ -86,6 +90,11 @@ function Label({ spec }: { spec: LabelSpec }) {
     >
       <span>{spec.text}</span>
       {spec.metric ? <MetricValue metricId={spec.metric.id} value={spec.metric.value} compactChip /> : null}
+      {caveat ? (
+        <span aria-hidden="true" data-overlay-caveat>
+          ({caveat})
+        </span>
+      ) : null}
       {spec.metric2 ? (
         <>
           <span>{spec.metric2.joiner}</span>

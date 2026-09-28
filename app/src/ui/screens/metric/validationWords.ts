@@ -39,9 +39,16 @@ export interface MetricResult {
   d1?: GroupResult
   /** Every side-view daylight clip at 60 fps or more (includes 5 m clips, closer than D1). */
   all?: GroupResult
+  /** Recommended set-ups with exact body points plus noise (the method-only variant). */
+  method?: GroupResult
+  /**
+   * Passed through the app at the recommended set-ups but not with exact body points (finding 41): the
+   * close result rests on two errors cancelling, so the metric has not passed and the words say both.
+   */
+  appOnlyPass?: boolean
 }
 
-type SummaryGroup = { pass: boolean; n: number; bias: number; mae: number; p95: number; coverage: number | null }
+type SummaryGroup = { pass: boolean; n: number; bias: number; mae: number; p95: number; coverage: number | null; passAppPipeline?: boolean }
 type SummaryMetric = Record<string, SummaryGroup | string>
 
 const SUMMARY_METRICS = summary.metrics as unknown as Record<string, SummaryMetric>
@@ -57,7 +64,11 @@ function group(m: SummaryMetric | undefined, prefix: string): GroupResult | unde
 export function metricResult(id: MetricId): MetricResult | null {
   const m = SUMMARY_METRICS[id]
   if (!m) return null
-  return { d1: group(m, 'd1'), all: group(m, 'all side-view') }
+  const d1 = group(m, 'd1')
+  const method = group(m, 'method-only')
+  const d1Raw = Object.entries(m).find(([k]) => k.toLowerCase().startsWith('d1'))?.[1]
+  const appOnlyPass = !!d1 && !d1.pass && typeof d1Raw === 'object' && d1Raw.passAppPipeline === true && !!method && !method.pass
+  return { d1, all: group(m, 'all side-view'), ...(method ? { method } : {}), ...(appOnlyPass ? { appOnlyPass } : {}) }
 }
 
 export function validationStateOf(id: MetricId): ValidationState {
@@ -100,11 +111,12 @@ export const STATE_SHORT: Record<ValidationState, string> = {
 
 /**
  * Second line for V1 metrics: lights and real courts (METRICS §1.3 night cap, D11 comp nights). The
- * engine knows the light only from the session's answer (Record's Light setting, Import's light
- * question), so the line says so.
+ * engine takes the light from the session's answer (Record's Light setting, Import's light question)
+ * and lowers it when the video itself shows court lights or flicker (analysis/quality/light.ts), so
+ * the line says both.
  */
 export const NIGHT_WORDS =
-  "Not yet checked under court lights, so a session you mark as under lights, or an import where you weren't sure of the light, shows it as experimental."
+  "Not yet checked under court lights, so a session under lights (as you mark it, or as the video looks), or an import where you weren't sure of the light, shows it as experimental."
 
 type Unit = 'ratio' | 'cm' | 'ms' | 'pctH' | 'rate' | 'count' | 'angle'
 
@@ -148,8 +160,11 @@ const PASS_MARK: Partial<Record<MetricId, string>> = {
  * error is a steady offset that cancels against the player's own serves (VALIDATION §3.3; finding 50).
  * Metric info explains the miss beside the Estimate chip, and How we measure says the same.
  */
-export const RELATIVE_ONLY: Partial<Record<MetricId, { markLine: string; result: string; detailResult: string }>> = {
+export const RELATIVE_ONLY: Partial<Record<MetricId, { markLine: string; result: string; detailResult: string; row: string }>> = {
   'leg-drive': {
+    // How we measure row (finding 50): the same scope and the same low-read figure as the value's note
+    // (format/metricFormat.ts RELATIVE_ONLY_NOTE) and Metric info's "On average it reads" row.
+    row: 'Passed for comparing with your own serves only, limited evidence. As an absolute number it reads about 2.5% of your height low.',
     markLine:
       "As an absolute number it hasn't passed yet: almost all of the error is a steady low read of your hip rise, which cancels when you compare with your own serves. That comparison is what its Estimate label covers, and every value says it reads low.",
     result: 'Passed for comparing with your own serves only, limited evidence',
@@ -157,12 +172,22 @@ export const RELATIVE_ONLY: Partial<Record<MetricId, { markLine: string; result:
   },
 }
 
+/**
+ * Ranges the engine sets from its planning allowance rather than from the simulated result, so they are
+ * much wider than the typical error beside them (finding 61; analysis/metrics/perServe.ts sigma). Said
+ * on Metric info so "likely up to 12%" never sits unexplained next to "under 1%".
+ */
+const WIDE_RANGE: Partial<Record<MetricId, string>> = {
+  'loading-depth':
+    "Each value's range comes from our allowance for body-tracking noise on real courts (about 6% of your height either side for one serve, less for a session), not from this simulated result, so it is much wider than the typical error. It may narrow once real courts are checked.",
+}
+
 /** What can shift it: the conditions the synthetic run showed matter (DESIGN §10.14 "what can shift it"). */
 const SHIFT: Partial<Record<MetricId, string>> = {
   // Finding 41: V1 is gated on the method-only variant too (VALIDATION.md §3.3; validation-summary.json
   // "method-only at D1"). Through the app it passed; with exact body points it did not.
   'toss-apex-height':
-    'Through the app, simulated serves read within the pass mark, but with exact body points they were off by about 4% of your height: the close result relied on two small errors cancelling, which real players may not share. So toss height stays experimental until real footage settles it. How steady your toss is (its spread) is not affected. Filming closer than about 6 m also made heights read low, and so does a tilted phone, or one whose tilt we could not read.',
+    'The close result through the app relied on two small errors cancelling, which real players may not share, so toss height stays experimental until real footage settles it. How steady your toss is (its spread) is not affected. Filming closer than about 6 m also made heights read low, and so does a tilted phone, or one whose tilt we could not read.',
   'contact-height-ratio': 'Filming closer than about 6 m made heights read low, so those serves are marked experimental.',
   'toss-drop': 'Very dim light and heavy motion blur made it less sure. 120 fps or the hit sound sharpens it.',
   'rhythm-release-to-contact': 'At 30 fps the toss release is hard to see, so 30 fps rhythm is marked experimental.',
@@ -230,12 +255,17 @@ export function typicalError(id: MetricId, heightM?: number): string | null {
   if (!g) return null
   if (UNIT[id] === 'count') return g.mae === 0 ? 'no serves missed or added' : null
   if (UNIT[id] === 'rate') return `off on ${Math.round(g.mae * g.n)} of ${g.n} serves`
-  return errorWords(id, g.mae, heightM)
+  const app = errorWords(id, g.mae, heightM)
+  // Passed through the app only: the exact-body-point figure beside it, so a small number never reads as a pass.
+  if (r?.appOnlyPass && r.method && app) return `${app} through the app, ${errorWords(id, r.method.mae, heightM)} with exact body points`
+  return app
 }
 
 /** How we measure row detail: validation words plus the typical error when there is one. */
 export function rowDetail(id: MetricId): string {
   if (id === 'spin') return "Phone video can't see spin, so we never estimate it."
+  const relativeOnly = RELATIVE_ONLY[id]?.row
+  if (relativeOnly) return relativeOnly
   const state = validationStateOf(id)
   // Numbers only where they describe a real result: not for logged values, bands in degrees (D5),
   // counts, yes/no flags, or states whose test can't settle the question.
@@ -283,9 +313,17 @@ export function keyNumberLines(id: MetricId, heightM?: number): string[] {
     }
     if (g.coverage !== null && unit !== 'count' && unit !== 'rate' && unit !== 'angle') {
       out.push(`Our stated range held the true value on ${Math.round(g.coverage * g.n)} of ${g.n} of those serves.`)
+      const wide = WIDE_RANGE[id]
+      if (wide) out.push(wide)
     }
     const mark = PASS_MARK[id]
-    if (mark) out.push(`Our pass mark is ${mark}. ${g.pass ? 'It passed.' : (RELATIVE_ONLY[id]?.markLine ?? "It hasn't passed yet.")}`)
+    const methodTyp = r?.appOnlyPass && r.method ? errorWords(id, r.method.mae, heightM) : null
+    const methodLine = r?.appOnlyPass
+      ? methodTyp
+        ? `Through the app it was within that, but with exact body points the typical error was ${methodTyp}, so it hasn't passed yet.`
+        : "Through the app it was within that, but not with exact body points, so it hasn't passed yet."
+      : null
+    if (mark) out.push(`Our pass mark is ${mark}. ${g.pass ? 'It passed.' : (methodLine ?? RELATIVE_ONLY[id]?.markLine ?? "It hasn't passed yet.")}`)
   }
   const spread = spreadLine(id)
   if (spread) out.push(spread)
@@ -322,7 +360,13 @@ export function detailRows(id: MetricId, which: 'd1' | 'all', heightM?: number):
     if (bias) rows.push({ label: 'On average it reads', value: Math.abs(g.bias) < Math.abs(g.mae) / 4 ? 'close to the truth' : `${bias} ${biasDirection(id, g.bias)}` })
     if (g.coverage !== null) rows.push({ label: 'Range held the true value', value: `${Math.round(g.coverage * g.n)} of ${g.n}` })
   }
-  rows.push({ label: 'Result', value: g.pass ? 'Passed' : (RELATIVE_ONLY[id]?.detailResult ?? 'Not passed yet') })
+  const res = metricResult(id)
+  const appOnly = which === 'd1' && !!res?.appOnlyPass
+  if (appOnly && res?.method && unit !== 'count' && unit !== 'rate' && unit !== 'angle') {
+    const typ = errorWords(id, res.method.mae, heightM)
+    if (typ) rows.push({ label: 'Typical error with exact body points', value: typ })
+  }
+  rows.push({ label: 'Result', value: g.pass ? 'Passed' : appOnly ? 'Not passed yet (passed through the app only)' : (RELATIVE_ONLY[id]?.detailResult ?? 'Not passed yet') })
   return rows
 }
 

@@ -1,0 +1,921 @@
+[
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/coaching/deliver.ts",
+  "line": 62,
+  "severity": "critical",
+  "title": "Practice logs where the player reported pain still unlock the harder progression",
+  "detail": "practiceLogRules counts every log with successCriterionMet 'yes' and ignores body ('sore' or 'pain') and discomfort. experimentTransition does the same for unlockProgression (experiment.ts:389). chooseDrill blocks the progression only for today's in-memory 'sore' body check (profile.soreToday). On PracticeLogScreen, choosing 'It hurts' opens the red-flag sheet, but closing it without answering leaves body='pain' with no referral. The save screen then says 'Two practices met the goal, so the harder version is open'.",
+  "failure_scenario": "Log 1: goal met yes, body fine. Log 2: goal met yes, body 'It hurts', red-flag sheet dismissed. The log is stored with discomfort=1 and there is no referral, so /focus immediately serves the progression (reach-up 'at full pace', or legs-spring back-leg serves). A player who just reported pain gets a harder, higher-load drill.",
+  "fix": "In practiceLogRules and experimentTransition, do not unlock (or re-lock) when any log since the last unlock has body 'pain' or 'sore' or discomfort=1, and set progressionLocked 'paused-sore'. Treat a saved log with body='pain' as a referral trigger (setReferral('stop-and-book'), plus the painFlag with consent) even if the red-flag sheet is dismissed."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/today/todayModel.ts",
+  "line": 76,
+  "severity": "major",
+  "title": "Today ignores an active in-memory pain referral and still shows the cue, drill and match-night card",
+  "detail": "painPause reads only profile.comfort.painFlag, which is written only when consentAt is set (focus/actions.ts:27, BodyCheckSheet persistFlag). The referral itself lives in useFocusStore.referral, and TodayScreen never reads it. The match-day flag (line 90) is also gated only on the persisted flag. The stored decision Today renders comes from coachingSync, which never receives the referral.",
+  "failure_scenario": "The player declined 'Save body-check answers on this phone' (or skipped comfort areas in onboarding) and answers 'It hurts' on Record. /focus shows the referral, but Today still shows the focus card with the cue, the drill, 'Start drill' / 'Record re-test', and on a comp night 'Comp night tonight … Warm up with your cue'. COACHING §7.9 and §10.3 require no cue or drill and a hidden match-day card while a referral is active.",
+  "fix": "Derive painPause in TodayScreen and todayModel from useFocusStore.referral OR painFlag, as useFocusModel does, and hide the FocusCard CTA and the match-day section when either is set."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/coaching/library.json",
+  "line": 989,
+  "severity": "major",
+  "title": "Full-pace and kick progressions unlock for players with shoulder, elbow or back comfort settings",
+  "detail": "Most progressionGate.excludeIfComfort lists are empty (reach-up, steady-rhythm, shoulder-tilt, toss-to-reach-height, flowing-motion: 'at full pace'). second-serve-margin excludes only back but its progression adds kick. When the legs-spring gate fails for back comfort, deliver.ts:111 falls back to progressionAlt 'Quick-rise serves at full pace'. Verified with tsx: shoulder + 2 yes logs gives reach-up 'progression … at full pace' next to its own comfortNote 'Taps only … skip the full serves' while loadGuidance.hardServeCap=0. Back gives legs-spring progression-alt 'at full pace' against the note 'Keep the effort easy'. Elbow gives the second-serve kick progression against the note 'Slice at about 70% effort'. lint.ts checks only kick vs back.",
+  "failure_scenario": "A player with a standing shoulder or elbow setting (hard serves 0, COACHING §9.3 and §11) logs two successful practices and is told to serve 'at full pace' or add kick second serves.",
+  "fix": "Add shoulder, elbow and other (and back for full-pace items) to excludeIfComfort on full-pace and kick progressions. Make progressionAlt respect the same comfort exclusions (no alt, or an easy-effort alt). Add a lint rule: a progression text containing 'full pace' or 'kick' must exclude shoulder, elbow and other."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/platform/ui/PlatformLayer.tsx",
+  "line": 101,
+  "severity": "major",
+  "title": "A pain referral is recorded as a usage event and goes into the beta report",
+  "detail": "useStoreEvents records 'pain_referral_shown' (events.ts:67) whenever useFocusStore.referral turns on, even if the player declined saving body-check answers. buildBetaReport exports every event with an hour-bucketed time, and its notes claim there are no body-check answers in the report. PRODUCT §9.4 says pain and referral data are health information and must stay entirely out of analytics. COACHING §10 says the answers are never sent to analytics.",
+  "failure_scenario": "A tester answers 'It hurts', then exports Profile > Beta data and sends it to the founder. The report shows that this tester had a pain referral at a given hour, although they declined storing body-check answers.",
+  "fix": "Remove the pain_referral_shown event from EVENT_SCHEMAS and PlatformLayer, and verify the safety gate with tests, as PRODUCT §9.4 says. At minimum, never include it in buildBetaReport and never record it without consent."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/data/export.ts",
+  "line": 113,
+  "severity": "major",
+  "title": "Export leaks body-check and comfort detail when 'Include comfort notes' is off",
+  "detail": "includeComfort strips only profile.comfort and comfortRegions. practiceLogs keep body ('sore' or 'pain') and discomfort in the JSON and in practice.csv (lines 193-200). coachingDecisions are exported with trace and alternatives. decide.ts:128 writes trace detail 'Sore today: knee, back.', which ensureExperiment stores from the live decision. Alternatives and whyChosen carry text such as 'Leg drive: not coached because of your hip, knee or ankle comfort setting.' The same whyChosen text reaches the coach summary (profile/coachSummary.ts:128), which promises 'Not included: … pain or comfort answers'.",
+  "failure_scenario": "A player with a knee comfort setting who answered 'A bit sore: back' and logged a painful practice exports JSON or CSV with the toggle off. The file still shows body='pain', discomfort=1, 'Sore today: back.' and the knee comfort setting.",
+  "fix": "When includeComfort is false, drop body and discomfort from practice logs and scrub safety-step trace details and comfort-setting alternatives and reasons from coachingDecisions. Better still, never write sore regions into the stored trace (a generic 'Sore today' is enough) and keep comfort wording out of whyChosen."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/data/deletion.ts",
+  "line": 53,
+  "severity": "major",
+  "title": "Deleting a session while it is being analysed leaves orphaned key frames, pose tracks, stats and decisions",
+  "detail": "deleteSession does not abort the running job and does not stop later writes. The orchestrator has already run prepareSession and storeVideo and later calls commitResults (persist.ts:205), which writes serves, tracks, keyFrames (player JPEGs), sessionStats and coaching for the sessionId without checking that the session still exists (setAnalysis is a silent no-op update). StoragePrivacyScreen offers 'Delete session' on every row, including sessions still analysing. If the delete lands before storeVideo, a VideoRecord and blob for the deleted session are also written.",
+  "failure_scenario": "The player records, then goes to Profile > Storage and deletes that session while it shows 'analysing'. About a minute later the pipeline commits images and pose data for a session that no longer exists. They are never listed, exported, swept or deletable except by 'Delete everything'.",
+  "fix": "In deleteSession, cancel the job for that session (the jobs store AbortController), or refuse to delete while status is queued or analysing. In commitResults and storeVideo, check db.sessions.get(sessionId) inside the transaction and discard the run if the session is gone."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/data/deletion.ts",
+  "line": 121,
+  "severity": "major",
+  "title": "'Delete all videos' (and session deletion) leaves raw recorder chunks behind",
+  "detail": "deleteAllVideos clears videoBlobs and marks VideoRecords deleted but never touches videoChunks. That table holds unfinished or interrupted in-app recordings for up to 7 days and claimed clips until the next sweep. deleteSession does not remove chunks whose header.sessionId is that session either; they wait for a launch sweep or the 60 s job-done sweep.",
+  "failure_scenario": "A recording is interrupted (the tab is killed). The player chooses 'Delete all videos' to clear footage from the phone. The raw clip survives in IndexedDB and RecordingRecovery offers it again on the next launch.",
+  "fix": "In deleteAllVideos, also clear videoChunks, skipping recordings in activeRecordings. In deleteSession, delete chunk rows whose header.sessionId matches. Log the counts in deletionLog."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/focus/focusInput.ts",
+  "line": 134,
+  "severity": "major",
+  "title": "Cooldowns are never supplied, so parked and worked items come straight back",
+  "detail": "buildFocusInput never sets input.cooldowns (grep: the only producer is decide.ts inside a single call). A parked item (3-session cooldown) or a worked item (2 sessions) is on cooldown only within the decision that ended it. On the next session, rankEligible sees cooldowns={} and the item is eligible again. earlierMajor (decide.ts:215) also ignores cooldown, which COACHING §7.2 step 5 requires.",
+  "failure_scenario": "toss-height-steady is parked after 3 stalled re-tests ('Let's park it and try another route'). The next analysed session picks toss-height-steady again, and a new experiment on the same item starts. This contradicts COACHING §7.4.",
+  "fix": "Derive cooldowns from stored experiments: completed gives 2 and abandoned (parked or superseded) gives 3, minus the analysed sessions since the experiment ended. Pass them in CoachingInput, and apply them in the earlierMajor check too."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/integration/coachingSync.ts",
+  "line": 73,
+  "severity": "major",
+  "title": "Any later matched session ends experiments in the decision, but only re-test-template sessions are saved",
+  "detail": "decide.ts:199 treats every later session with serves in the experiment stratum as a re-test (retestKind 'matched') and applies experimentTransition (worked, parked, superseded). coachingSync saves the result and status only when the session is in retestSessionIds, which requires template 'retest' (sessionFactory.ts:234). rederiveRetests also counts only attached sessions.",
+  "failure_scenario": "The player records a normal check-in in the same stratum. The decision says 'It worked' and moves to a new focus B, but ExperimentRecord A stays active with no result. Today shows focus B and the A strip ('Re-test due'), Compare has no verdict, the T1 and loop events never fire, and the next session re-evaluates A. The focus can switch back and forth between A and B.",
+  "fix": "Choose one rule. Either treat only attached re-tests (isRetest/experimentId) as re-tests in decideFocus (other matched sessions give no transition), or have coachingSync attach any later matched session and save status and result whenever decision.experiment is present (including superseded in a non-re-test session)."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/focus/adapter.ts",
+  "line": 40,
+  "severity": "major",
+  "title": "Block separation is never populated, so post-drill serves count as a real re-test",
+  "detail": "CoachingServe.block is never set: toCoachingSession omits it and ServeAnalysis has no block. followUpServes (experiment.ts:129) therefore keeps every serve, sameSessionCheck (experiment.ts:303) always sees one block and returns undefined ('Straight after practice' never shows), and the 'Experiment' plan ('Two blocks with a drill between them', blockIndex always 0) produces either one pooled session or two separate sessions.",
+  "failure_scenario": "Block A, then the drill, then Block B recorded as a second 'experiment' session. Block B is later than exp.startedAt, so retestKind returns 'matched' and the drill's immediate effect decides the verdict and can mark the experiment 'worked'. COACHING §12.3 says a same-session comparison never drives a transition.",
+  "fix": "Carry a block index per serve (or link Block B to Block A through visitId, template 'experiment' and linkedSessionId). In retestKind, classify same-visit post-drill blocks as 'same-session', and set CoachingServe.block in the adapter."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/coaching/decide.ts",
+  "line": 254,
+  "severity": "major",
+  "title": "One 'a bit sore' answer parks the active experiment, and the next practice log abandons it",
+  "detail": "The comfort set includes today's soreToday. If the experiment item is contraindicated (for example legs-spring with a sore knee), decide marks it 'parked' with a 3-session cooldown. ensureExperiment (actions.ts:47) then saves the previous experiment as 'abandoned' as soon as the player logs practice on the new focus. COACHING §9.3 says soreness is session-only and only excludes or adjusts. Nothing in §12.5 parks an experiment for a one-day soreness.",
+  "failure_scenario": "Three weeks into a legs-spring experiment, the player answers 'A bit sore: hip, knee or ankle'. /focus shows focus B with 'Your comfort settings rule this focus out for now'. They log a practice for B and experiment A is permanently abandoned.",
+  "fix": "For a soreness-only exclusion, hold the experiment unchanged (keep-going or a no-load card for today, no cooldown and no status change). Park only on a standing comfort setting, and make ensureExperiment keep an experiment that was only held."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/data/deletion.ts",
+  "line": 34,
+  "severity": "major",
+  "title": "Deleting one serve permanently wipes the whole session's statistics",
+  "detail": "deleteServe deletes sessionStats for the session and says they are 'recomputed on next read', but nothing recomputes them. putStats is called only by the pipeline commit and the demo loaders, and getStats simply returns undefined. The Undo in ServeDetailScreen restores serves, tracks, frames and tags but not sessionStats, annotations or the 'session-thumb' key frame (deleted with the serve's id).",
+  "failure_scenario": "The player deletes one mis-detected serve. The session report loses every headline and stratum statistic, Progress drops the session from trends, and coaching falls back to its own reads. Undo does not bring any of it back, and the session loses its list thumbnail.",
+  "fix": "Recompute the session statistics (buildSessionStats) from the remaining serves after the delete, or mark them stale and recompute on read. Snapshot sessionStats, annotations and the session-thumb frame for the 8 s Undo."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/focus/focusInput.ts",
+  "line": 45,
+  "severity": "major",
+  "title": "The 12-session history window drops the experiment baseline and skews the load flag",
+  "detail": "readFocusData keeps only the newest 12 ready sessions. toCoachingExperiment, rederiveRetests and buildVerdictRequest look for the baseline and earlier re-tests only in that pool. loadFrom also computes last7Days, chronicWeeklyMean (days 7-35) and historyDays from those 12 sessions, and it ignores match-log serves (COACHING §11.2).",
+  "failure_scenario": "A long experiment (several blocks per visit) passes 12 sessions. The baseline session leaves the pool, the verdict becomes not-comparable or baseline-less, earlier re-tests are re-derived differently, and the experiment can never conclude. A busy player gets a false 'You've served a lot more this week' ramp, because the chronic mean counts only a few sessions.",
+  "fix": "Always load the active experiment's baseline and re-test sessions whatever the limit. Compute load with a 35-day date-range query over sessions, practice logs and match logs, not the last 12 sessions."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/coaching/experiment.ts",
+  "line": 375,
+  "severity": "minor",
+  "title": "Not-comparable re-tests count towards the 3-re-test parking rule",
+  "detail": "all = [...exp.retests, current], and rederiveRetests includes matched sessions whose verdict was 'not-comparable' (for example fewer than 8 serves). Verified with tsx: two not-comparable re-tests followed by a first real 'no-clear-change' gives status 'parked'. §12.5 treats not-comparable as 'No transition'.",
+  "failure_scenario": "Two short re-tests with 6 serves each, then a full re-test showing 'About the same' parks the experiment after only one real comparison.",
+  "fix": "Count only comparable verdicts (exclude not-comparable, and arguably too-early) when applying the '2 re-tests' and '3 re-tests' rules."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/focus/actions.ts",
+  "line": 41,
+  "severity": "minor",
+  "title": "Keep-going practice logs are attached to the active experiment and count towards its unlock",
+  "detail": "For a non-focus decision, ensureExperiment returns the active experiment, so savePracticeLog files keep-going ('Target ladder') logs under that experiment's id. experimentTransition counts successCriterionMet 'yes' logs without filtering by itemId (experiment.ts:389).",
+  "failure_scenario": "The experiment item is excluded today, so the decision is keep-going. The player logs two successful Target ladder sessions, and the next likely-better verdict flags unlockProgression for the experiment.",
+  "fix": "Do not attach logs to an experiment whose item differs from the logged itemId. Filter logs by itemId in experimentTransition."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/coaching/decide.ts",
+  "line": 171,
+  "severity": "minor",
+  "title": "With a coach's focus pinned, its experiment never gets a transition",
+  "detail": "Step 3 returns the pinned focus before step 4, so verdict, experimentTransition, regression-after-dip and parking never run for the pinned experiment. coachingSync then saves status 'active' forever (ensureExperiment creates the experiment with pinnedByCoach). This follows the §7.2 pseudo-code literally, but §12.1 expects pinned experiments to have re-tests. Flag it for the spec owner.",
+  "failure_scenario": "A coach pins reach-up. Re-tests show 'Clearly better' or 'Likely worse', but the focus never concludes or regresses, and the decision carries no verdict.",
+  "fix": "Run the step 4 verdict and transition when the active experiment's item equals the pinned item, or confirm with the spec owner and document it."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/focus/adapter.ts",
+  "line": 157,
+  "severity": "minor",
+  "title": "The stored experiment's primaryMetricId and direction come from the first displayed stat, not primarySpec",
+  "detail": "toExperimentRecord uses d.evidence.stats[0]. evidenceStats drops experimental or unavailable values, so a toss-height-steady experiment whose spread stat is filtered is stored as 'toss-apex-height' with direction 'increase'. toss-to-reach-height is always stored as 'increase'. Progress titles (ProgressScreen.tsx:167) and the fallback compare (insights/compare.ts:120) use this metric.",
+  "failure_scenario": "The toss-height spread is experimental (unknown pitch), so Progress names the experiment 'Toss height'. When no stored result exists, Compare judges the toss-height centre instead of the spread.",
+  "fix": "Set primaryMetricId and direction from coaching primarySpec(item) (displayId and direction), not from the evidence stats."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/coaching/experiment.ts",
+  "line": 433,
+  "severity": "minor",
+  "title": "retestDue mixes UTC and local dates",
+  "detail": "since.slice(0,10) (session.startedAt, an ISO UTC string) and today.slice(0,10) (ctx.now = now.toISOString()) are UTC dates, while practice-log dates and addDays are local YYYY-MM-DD. In Melbourne (UTC+10/+11) they differ before 10-11 am.",
+  "failure_scenario": "A re-test recorded at 8 am on 29 Sep has since '2026-09-28', so a practice logged on the 28th counts as after the re-test and the card says 'Re-test ready' instead of 'practise first'. 'Overdue' also flips at 10 am, not midnight.",
+  "fix": "Convert both instants to local YMD (localDate(new Date(x))) before comparing them with log dates."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/data/deletion.ts",
+  "line": 150,
+  "severity": "minor",
+  "title": "'Delete everything' keeps the in-memory focus store and writes it back to storage",
+  "detail": "deleteEverything clears IndexedDB, localStorage and sessionStorage but does not reset useFocusStore (referral, bodyCheck, cueOverride, plannedRetest keyed by deleted experiment ids, playingTonight) or reload. The next persist() call writes the old state back to localStorage.",
+  "failure_scenario": "After 'Delete everything', /focus still shows the pain pause from the in-memory referral. A later cue swap re-saves plannedRetest entries for experiments that no longer exist.",
+  "fix": "Reset useFocusStore (and other zustand stores such as jobs) inside the delete-everything flow, or reload the page after it completes."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/coaching/decide.ts",
+  "line": 342,
+  "severity": "minor",
+  "title": "Evidence for a continuing experiment ignores the set-up key",
+  "detail": "stratumOf in decide.ts builds keys without setup, and sameSetup(undefined, x) matches any set-up. detectionInStratum therefore keeps serves filmed at another orientation or distance. retestKind (servesInStratum with setup) correctly says 'unmatched', but the focus card still shows detection and evidence from the mismatched set-up under the experiment's stratum.",
+  "failure_scenario": "The experiment was set up portrait at 7.5 m. Today's session is landscape at the fence. The continuing focus shows spreads and heights from the other set-up as the experiment's evidence (METRICS §4.4: set-up is a hard key).",
+  "fix": "Use strata.ts serveStratum (which carries setup) in detectionInStratum, and return undefined or 'not comparable' evidence when the set-up differs."
+ },
+ {
+  "area": "coaching-data",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/coaching/decide.ts",
+  "line": 534,
+  "severity": "minor",
+  "title": "The baseline note counts any same-view session, not matched sessions",
+  "detail": "hasHistory counts earlier sessions with the same view only. The note 'your own baseline starts after 3 matched sessions' (§6.4) is suppressed once 3 unrelated sessions exist (other court side, serve number or set-up), while the relative rules still have no matched history.",
+  "failure_scenario": "The player has 3 ad-court sessions and 1 deuce session. A deuce focus from the absolute rule omits 'Compared with published ranges…', which suggests a personal baseline that does not exist.",
+  "fix": "Use matchedHistory(ctx.history, key, ctx.session.startedAt).length >= 3."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/engine.ts",
+  "line": 101,
+  "severity": "critical",
+  "title": "Imported clips and 'indoor' clips are always treated as daylight, so night-comp footage keeps day-validated 'estimated' labels",
+  "detail": "conditionClassOf() returns 'night-lights' only when capture.conditions.light === 'lights' and 'day' otherwise. importCapture() (ui/screens/record/flow/sessionFactory.ts:123) never sets conditions, and ImportScreen never asks about light. Nothing in the engine or pipeline detects the light either: there is no luminance or flicker FFT check, and 'mergeQuality' is mentioned in quality/checks.ts but does not exist. Every imported clip is therefore scored as 'day', and so is the type-level value 'indoor'. The V1_DAY ceilings then apply, and the POSE_DERIVED_IDS night cap (CONDITION_NOT_VALIDATED) never fires. The METRICS §3.25 flicker block on speed-experimental is also never applied.",
+  "failure_scenario": "A pennant player films a Tuesday night comp serve block under floodlights in the iPhone Camera app and imports it, which is the documented fallback when the web recorder fails. leg-drive, loading-depth, toss-apex-height, contact-height-ratio, toss-drop and rhythm come out 'estimated' from V1 day-only synthetic validation. Per D2 and METRICS §1.3 they should be experimental (CONDITION_NOT_VALIDATED). The same happens on an in-app recording where the player leaves the default 'Day' chip selected.",
+  "fix": "Treat an unknown light as unvalidated. Add a Day/Lights/Indoor question to the import flow. In the engine, map a missing light to a class whose ceiling is V0 for pose-derived ids (or to a new 'unknown' class), and map 'indoor' to 'flicker'. Better still, estimate the class from frame luminance and a 100 Hz-alias flicker FFT on the sparse pass, and let that override the answer when it contradicts it."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/pipeline/timeBase.ts",
+  "line": 98,
+  "severity": "major",
+  "title": "Time bases corrected by gravity or declared by the player reach the engine as 'proven', so the engine's 'physics' class never runs and speed is unlocked",
+  "detail": "applyGravityCheck() stamps timeBaseStatus:'proven' on the 'apply-correction' result (line 98) and on the 'consistent' result (line 90). withDeclaredRate() does the same for a rate the player typed or picked (lines 33 and 43). engine.ts timeBaseOf() checks timeBaseStatus==='proven' first (line 107), so the fpsSource==='physics' branch and its own gravity cross-check are unreachable for these clips. The effects: relSigma drops to 0.003 instead of at least 0.02; perServe lets speed-experimental through (timeBase==='proven'); cq.time-base shows 'Real-time timestamps confirmed.' instead of the 'physics' warning 'speed is not available'; and a wrong player answer is never checked against the toss's fitted gravity.",
+  "failure_scenario": "(a) A 240 fps slow-motion clip is exported on a 30 fps timeline and imported without an answer. The toss gravity corrects the time base, the engine sees 'proven', emits an experimental launch-speed range (METRICS §3.25 says speed is blocked for physics-fixed time bases), and the always-visible capture-quality line says the timestamps were confirmed. (b) The player answers 'slomo-240' for a clip that was really 120 fps. Every timing value is halved: rhythm reads about 500 ms instead of 1000 ms and toss-drop reads a quarter of its true size, yet both stay 'estimated'. Apparent gravity is about 4x, so only toss-apex-height is rejected and cq.scale-consistency blocks without downgrading anything.",
+  "fix": "Keep timeBaseStatus 'proven' for container or timestamp evidence only. In timeBaseOf, check fpsSource 'physics' before timeBaseStatus (class 'physics', relSigma of at least 0.02, speed blocked). For fpsSource 'user', still compute the gravity factors from the cores, and demote to 'unknown' (TIME_BASE_UNKNOWN on timing metrics) when |log f| is beyond tolerance."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/serve/analyse.ts",
+  "line": 544,
+  "severity": "major",
+  "title": "Caught tosses are counted as serves: the swing test accepts the tossing arm and 'serve' does not require contact evidence",
+  "detail": "hitApexOk is true when either wrist is at 0.95 BH or higher at any frame in [tossPeakT, tossPeakT+1.2]. At the toss apex the tossing arm is still up. On the pose fixture the tossing wrist is 1.02 BH at tc−0.25 s and 0.94 BH at tc−0.2 s, and a player catching the ball raises it again. So 'validToss && !hitApexOk → retoss' almost never fires. METRICS §2.3.4 defines retoss as 'the tossing arm up, no wrist apex ≥ 0.95 BH'. The 'serve' branch (lines 565-568) also does not require the contact evidence that §2.3.4 lists: it only sets noContact when the ball continues below 0.8 BH, and a caught ball stops at the hand at about 1 BH. No retoss clip exists in the corpus, so this is untested.",
+  "failure_scenario": "A player tosses badly and catches the ball at head height. It is classified 'serve', so serve-count (V1, 'estimated') goes up and retoss-count stays 0. The bracket (ball 'missing' at the hand) plus the anchored wrist, which follows the catching hand, fuse to a confidence of about 0.67. rhythm-release-to-contact (release to catch, about 1.0 s) and toss-drop (apex to catch, about 40 cm) are then 'estimated' and enter the session medians and spreads. Only contact height is rejected as implausible.",
+  "fix": "Require the swing peak to come from the non-tossing arm. Without labels: the wrist that was not nearest the ball before release, or a swing peak after the toss apex that rises above the tossing wrist's height at release by a margin. Require §2.3.4 contact evidence (an intersection, a bracket closed by an outgoing ball, or audio) for 'serve'. Classify as retoss when the toss track ends within 0.15 BH of either wrist. Add a caught-toss unit test."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/serve/analyse.ts",
+  "line": 440,
+  "severity": "major",
+  "title": "A serve with only 1-4 upright frames is labelled 'setup-upright', so the session body-height fallback is never applied to it",
+  "detail": "In the first pass fallbackBodyHeightHU is undefined, so bodyHU is taken from upright0.heightHU even when upright0.frames < 5. The else branch then sets refSource = input.fallbackBodyHeightHU ? 'fallback' : 'setup-upright', which gives 'setup-upright'. engine.ts:289-292 uses exactly that label for two things: to build the session fallback median, and to skip the second pass. So the weak serve is never re-analysed with the session H_HU, and its 1-4-frame estimate is also mixed into the fallback median. The branch without a release (line 446) correctly returns 'none'.",
+  "failure_scenario": "A player walks in, bounces the ball (lean over 25°, filtered out) and starts the motion almost at once, leaving 2 upright frames. The body height (the scale of every height ratio) comes from a median of 2 head-top estimates. A 2% error moves contact-height-ratio by 0.03, above the 2.5% acceptance threshold, while the value stays 'estimated' and uprightFrames=2 is ignored.",
+  "fix": "In the else branch, set refSource to 'none' (or a new 'weak' value) when no fallback was used and upright frames are below 5, so the second pass re-runs the serve with the session median. Build the fallback median only from serves with uprightFrames of 5 or more."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/quality/checks.ts",
+  "line": 88,
+  "severity": "major",
+  "title": "Blocking capture checks never gate the metrics they are specified to block, and spreads ignore 'poor' quality",
+  "detail": "METRICS §3.25 says: 'Block = the metrics that depend on the check become unavailable for that serve with the listed code'. The engine only records checks and weights. None of these results reach MetricContext or computeServeMetrics: subject-size under 150 px (pose metrics → POSE_LOW_QUALITY), 150-249 px (pose metrics down one level), framing with the head or hitting arm out at contact (contact metrics), scale more than 15% off (cm values → SCALE_INCONSISTENT), and plausibility rejects on more than 20% of the block (block statistics → IMPLAUSIBLE_VALUE). None of these is a session block, so overall stays 'usable'. In session.ts, centreMetric downgrades on quality 'poor' but spreadMetric (lines 163-212) does not, so a 'Limited' session still reports toss-height-spread as 'estimated' and the headline shows 'toss height varied by about X cm'. framingOf also uses a 0.5% edge margin where the spec says 3%.",
+  "failure_scenario": "A landscape clip filmed from 12 m has the player at about 140 px. cq.player-size says 'too small for body readings' (block), yet leg-drive and loading-depth stay 'estimated'. Separately, 4 of 12 serves hard-reject, which blocks cq.plausibility, but the session medians and spreads are still published as 'estimated'.",
+  "fix": "Pass the per-serve and per-clip check results into MetricContext (for example bodyPx1080, contactCut, scaleOff, blockRejectShare) and apply the §3.25 downgrades in perServe and in the session aggregation. Add the 'poor' → experimental downgrade to spreadMetric. Use the 3% framing margin."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/engine.ts",
+  "line": 408,
+  "severity": "major",
+  "title": "Camera-bump check: CAMERA_MOVED is never applied, and the detector scans the whole log including the start and stop taps",
+  "detail": "engine.ts sets cameraBump when any two consecutive 10 Hz orientation samples differ by more than 1°. That raises cq.camera-stability 'block' ('affects spreads, positions'), but MetricContext.cameraMoved (perServe.ts:53) is never set and CAMERA_MOVED is applied nowhere, so heights, positions and spreads keep their status. In the other direction, useLevel logs from level.startLog(), called at the Record tap, until after rec.done, which comes after the Stop tap. The log is a low-passed gravity vector (τ 0.3 s): a finger press on a fence-clipped phone moves it by several degrees for a few hundred milliseconds, which crosses the 1° step between samples. The rectification also uses one median pitch for the whole clip, even across a real bump.",
+  "failure_scenario": "Likely: every in-app recording started and stopped by hand shows 'The phone moved during recording' as a block-level headline reason in the always-visible capture quality (overall Fair), when nothing moved. Conversely, a phone knocked 3° by a ball hitting the fence mid-block leaves toss-height-spread and contact heights 'estimated' across two different pitches.",
+  "fix": "Only count a bump inside serve windows, ignore the first and last ~1.5 s, and require a sustained change (median pitch or roll over 1 s before vs after differing by more than 1°). When a real bump is found, set ctx.cameraMoved and cap spreads and positions at unavailable (CAMERA_MOVED), or rectify each segment with its own pitch."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/pipeline/orchestrator.ts",
+  "line": 827,
+  "severity": "minor",
+  "title": "A slow-motion correction re-times poses but not the ball results of earlier windows",
+  "detail": "When the first 'ok' toss (window i) corrects the time base, the code re-times sparseClean, sparseRaw, densePosesByWindow, poses and engineWindows, and redoes window i's ball detection. ballResults[k] for k < i (tracks, candidates, toss, contactFromTracks) keep the old tReal. The engine gets them through renumberTracks and engineObservations. analyseServeBall then assigns toss tracks by median time and outgoing tracks by start time in real-time windows, so these stale tracks miss their own serve and can fall into a later window.",
+  "failure_scenario": "An imported 240 fps slow-motion clip on a 30 fps timeline has a first serve whose toss analysis is not 'ok' (for example, the ball leaves the frame). Serve 2 corrects the time base by a factor of 1/8. Serve 1's toss and outgoing tracks stay at 8x their real times, so serve 1 loses its ball evidence. In a long clip they can land in serve 5's window, where the stale toss track wins if it has more detections and gives a wrong toss-forward or apex.",
+  "fix": "When the time base changes, re-time every ballResults[k] for k < i (observation tReal, candidate tReal, toss events, contactFromTracks) by the same factor, or rerun their analyse step with the corrected meta."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/perServe.ts",
+  "line": 1032,
+  "severity": "minor",
+  "title": "speed-experimental skips the serve's shared downgrades, and the session speed includes quality-blocked serves",
+  "detail": "The per-serve speed draft only uses [{experimental, VALIDATION_PENDING}]. It omits baseDown, so FRAMES_DROPPED (cap unavailable) never applies to speed. engine.ts:587 builds the session typical and fastest speed from every serve's experimental value without checking analysis.included. Serves blocked for more than 10% dropped frames or for lost tracking therefore still feed the session range.",
+  "failure_scenario": "On a 240 fps session, a phone thermal stutter drops 15% of frames around serve 6's contact. That serve is excluded from statistics and its other values are unavailable (FRAMES_DROPPED), but its launch-speed range still appears and moves the session's 'typical launch speed' range.",
+  "fix": "Use [...commonDown, {experimental, VALIDATION_PENDING}] for speed-experimental, and filter the session speeds to analyses with included === true."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/engine.ts",
+  "line": 253,
+  "severity": "minor",
+  "title": "One outgoing ball track can flip netDir, or mark a view mismatch, for the whole session",
+  "detail": "netDir is flipped when at least 70% of 'outgoing' tracks disagree with the handedness and camera-side prior, with outDirs.length >= 1. That covers every outgoing track in the clip, not only those matched to serves. viewMismatch likewise needs only decided.length >= 1. One mis-associated track (a ball from the next court, a bounce) overrides a known prior for every serve.",
+  "failure_scenario": "In a 10-serve side-view session only one outgoing track is found, and it is a stray ball rolling the other way. netDir flips: the front foot, S0, the toss-forward and contact-forward signs, landing distance and shoulder tilt are all mirrored. Alternatively, one diagonal stray track marks the session VIEW_MISMATCH, which withholds every view-specific metric and makes capture quality Limited.",
+  "fix": "Require at least 3 decided tracks, or a majority of counted serves, and only use outgoing tracks matched to a serve's contact (core.ball.outgoing). Otherwise keep the prior and add an info warning."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/serve/analyse.ts",
+  "line": 482,
+  "severity": "minor",
+  "title": "With a fixed 8 ms audio-video σ and no offset calibration, a normal sync offset trips the D2 dispute",
+  "detail": "The audio method's σ is hypot(0.0005, 0.06·D/343, 0.008). The engine never passes input.audioOffset. With ball-intersection σ of a few ms, the ball-vs-audio gate is about 3·hypot(0.002, 0.008) ≈ 25 ms. Phone recordings and edited imports commonly carry a steady audio-video offset of 20-50 ms. The swing (σ about 47 ms) agrees with both, so checkContactSignals returns 'spread', and every contact-dependent value on every serve is capped at experimental.",
+  "failure_scenario": "The player turns on 'Use the hit sound for timing' (offered as sharper timing), and the clip has a steady 35 ms audio offset. Every serve's contact-height-ratio, toss-drop and rhythm drop from 'estimated' to 'experimental' with the reason 'contact timing signals disagreed'. The opt-in makes results worse, and the note blames the serve.",
+  "fix": "Estimate the session's audio-video offset as the median of (audio − ball-intersection) over serves where both exist and the swing agrees, and pass it as audioOffset with its σ. Otherwise widen σ_AV to the realistic offset spread before gating."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/serve/events.ts",
+  "line": 38,
+  "severity": "minor",
+  "title": "fuseEvent gates around the earlier of two methods, so the later one is always dropped",
+  "detail": "mid = sorted[(n−1)>>1]. With two methods that is the earlier one, so when two methods disagree the later one is always dropped, whatever their quality or σ. The D2 check covers most cases, but not when the label-free swing is null (no wrist at 0.95 BH or higher). Then the ball methods and the anchored wrist are fused alone: an early, wrong ball bracket with an outgoing kind (q 0.7, confidence 0.56) wins over a later, correct wrist apex, and the contact counts as 'estimated'.",
+  "failure_scenario": "The hitting wrist is blurred at contact (visibility below 0.3, so swingPeakTime finds no stretch). The toss track is cut short and bracket-closed by a stray 'outgoing' detection 0.2 s early. fuseEvent keeps the bracket, drops the wrist, and contact-dependent values are 'estimated' from a single wrong signal.",
+  "fix": "For two methods, gate on their mutual distance: if they disagree, return the higher-quality one with its confidence capped below 0.5, or mark the event disputed. Use a weighted median for larger sets."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/session.ts",
+  "line": 295,
+  "severity": "minor",
+  "title": "The session leg-drive value overwrites its downgrade reason with BASELINE_BUILDING",
+  "detail": "For any non-unavailable session leg-drive, the code sets reasonCode:'BASELINE_BUILDING' and a new unlockHint. That replaces the reason finalizeMetric chose for an experimental value: CONDITION_NOT_VALIDATED at night, EXCLUDED_BY_QUALITY on a poor session, or the experimental-pool reason. The value stays experimental but its explanation is wrong.",
+  "failure_scenario": "On a session recorded with the 'Lights' chip, the leg drive shows 'Building your range: 1 of 2 sessions' instead of 'Checked in daylight only. Under lights this reading is experimental.'",
+  "fix": "Only set BASELINE_BUILDING as an info reason when the metric has no reasonCode. Keep the downgrade reason, and store the baseline hint separately."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/perServe.ts",
+  "line": 207,
+  "severity": "minor",
+  "title": "BODY_NOT_UPRIGHT can never be emitted: no upright frames is reported as FEET_NOT_VISIBLE",
+  "detail": "analyseServe returns early (line 338-340, 'no upright frames and no session fallback') with ref null and refSource 'none'. perServe maps !ref && refSource==='none' to FEET_NOT_VISIBLE, so BODY_NOT_UPRIGHT (hint 'Stand tall for a second before each serve.') is unreachable.",
+  "failure_scenario": "A single-serve clip that starts mid-bounce, with feet clearly visible, shows 'Your feet were not clearly visible. Keep your feet in the frame.' on every value, which is the wrong advice.",
+  "fix": "Record why the reference failed on the core (for example core.refFailure = 'no-feet' | 'no-upright') and map it to FEET_NOT_VISIBLE or BODY_NOT_UPRIGHT."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/session.ts",
+  "line": 101,
+  "severity": "minor",
+  "title": "toss-forward-spread can never reach its V1 level",
+  "detail": "VALIDATION_LEVELS gives toss-forward-spread V1_DAY, but its per-serve source toss-forward is V0, so it finalizes as 'experimental' with no statusIfLevel (the ceiling is already experimental). collect(forSpread) puts every value in the experimental pool, and spreadMetric then downgrades the spread to experimental (VALIDATION_PENDING) whenever it has 8 or more. The status silently differs from the catalogue and from validation-summary.json.",
+  "failure_scenario": "A 20-serve daylight session at 7 m shows toss-forward-spread as experimental, hidden unless toggled, although the catalogue and docs say V1/estimated. Coaching's F3 forward trigger and the band read a hidden value.",
+  "fix": "For spreads, judge each per-serve value by the spread's own validation level: carry a 'status for spreads' that ignores only the V0 ceiling of the source centre. Otherwise set toss-forward-spread back to V0 in VALIDATION_LEVELS and the docs."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/session.ts",
+  "line": 82,
+  "severity": "minor",
+  "title": "Censored apexes from excluded serves still count towards the censored median and the 'at least' label",
+  "detail": "collect() increments nCensored before it checks s.analysis.included, while uncensored values need included === true. Censored apexes from serves blocked by quality (lost tracking, dropped frames) are counted as 'above every value'. That pushes censoredMedian up and can cross the 10% line for isLowerBound ('at least').",
+  "failure_scenario": "Two tosses above the frame on serves blocked for lost tracking, plus 10 good serves, give a session toss-apex median shifted to a higher order statistic, flagged as provisional and 'at least' in the spread, even though those serves are 'Excluded from your stats'.",
+  "fix": "Skip non-included serves before counting them as censored, the same as uncensored values."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/perServe.ts",
+  "line": 446,
+  "severity": "minor",
+  "title": "The apex can be hard-rejected by a contact height that was itself disputed or withheld",
+  "detail": "contactRatio is set as soon as contact-height-ratio is computed, before finalizeMetric applies FRAMES_DROPPED (unavailable) or a D2 'majority' or 'ball-observed' cap (experimental). The rule 'apex below contact − 0.10 m' then replaces an 'estimated' toss-apex-height with IMPLAUSIBLE_VALUE, based on a contact that is not trusted. This contradicts the D2 addendum's point that the toss apex does not depend on contact.",
+  "failure_scenario": "The ball track is the D2 outlier (dropped). Contact is re-fused from the sound and the swing and evaluated on the toss parabola about 0.08 s late, so the ball is higher. The contact ratio then exceeds the apex, and a correct apex is removed as implausible.",
+  "fix": "Only apply the cross-check when the contact-height value finalized as measured or estimated and contactDispute is undefined."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/session.ts",
+  "line": 328,
+  "severity": "minor",
+  "title": "Repeatability and the representative serve use contacts that D2 withheld",
+  "detail": "The trajectories are filtered on analysis.included && !noContact only. serveTrajectory anchors samples on events.contact, including 'unresolved' disputed contacts (confidence 0.45) whose dependent values were withheld. The representative serve then drives the 'your own best serve' key-frame evidence (D6).",
+  "failure_scenario": "The serve whose contact time was unresolved (ball and swing 0.3 s apart) is time-normalised on the wrong contact. It distorts the pointwise median reference and can be chosen as the representative serve, so the coaching evidence frame shows a mis-timed 'contact'.",
+  "fix": "Only include serves with events.contact.confidence of at least 0.5 and no contactDispute (or at most 'majority'), and prefer undisputed serves for the representative."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/session.ts",
+  "line": 341,
+  "severity": "minor",
+  "title": "The fatigue-flag corroboration reads apex heights from rejected, unavailable and excluded serves",
+  "detail": "apexCm takes raw.apexM from every counted serve. raw.apexM is set before finalizeMetric, so it includes apexes later made unavailable (FRAMES_DROPPED, gravity reject, hard reject), serves that are not included, and serves whose toss metric is experimental. The list is also not aligned with contactRatios, which are filtered by status.",
+  "failure_scenario": "Two late serves have wild, hard-rejected apex fits. The SD of the last third comes out at more than 1.5x the first third, so 'corroborated' raises the fatigue flag's confidence to 0.8 on implausible data.",
+  "fix": "Build apexCm from the same included serves as contactRatios, using only measured or estimated toss-apex-height values."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/pipeline/keyFrames.ts",
+  "line": 76,
+  "severity": "minor",
+  "title": "Evidence crops mix rectified ball coordinates with raw frames",
+  "detail": "evidenceCrop widens the player box with serve.toss.apexXY and serve.contact.ballXY. Both are in rectified coordinates (serve/ball.ts rectObs, engine.ts:516/527), but the crop is cut from the raw displayed frame. With a measured tilt up to 5° the difference reaches fHU·tan(5°), about 0.065 frame heights, more than the 0.08·bh margin (about 0.035 at 0.45 BH).",
+  "failure_scenario": "A phone tilted 4° down (measured-corrected) gives a rectified apex lower in the picture than it really is, so the apex evidence crop cuts off the top of the toss. The key frame beside the player's own best serve then does not show the ball.",
+  "fix": "Unrectify apexXY and ballXY (unrectifyPoint with the session camera model) before building the crop, or store raw-image copies alongside them."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/pipeline/orchestrator.ts",
+  "line": 837,
+  "severity": "minor",
+  "title": "After a re-plan, superseded ball jobs are never ended: duplicate detection and worker state are held until dispose",
+  "detail": "On a time-base correction, ballJobs for k > i are restarted with a new epoch id. The old jobs' runBallDetect keeps running on the same client (clientTail chains the new jobs behind it), and their windows are never end()ed, so the worker keeps their FrameCandidates until dispose. Every later window's detection runs twice, and clientLoad double-counts.",
+  "failure_scenario": "On a 16-serve slow-motion import whose second toss triggers the correction, about 14 windows are decoded and detected twice, roughly doubling the ball stage on a phone, and stale per-window state stays in the worker for the whole run.",
+  "fix": "Give BallClient a cancel(windowId) (or end and discard), and call it for the superseded jobs before starting new ones. Abort the old runBallDetect with a per-job AbortController."
+ },
+ {
+  "area": "engine",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/analysis/metrics/catalogue.ts",
+  "line": 250,
+  "severity": "minor",
+  "title": "The V1 'estimated' ceiling for heights depends on two biases cancelling, not on method accuracy",
+  "detail": "validation/results/metrics/SUMMARY.md says that with truth landmarks the depth-prior bias is larger and MediaPipe's roughly 3% high reading 'partly cancels' it. validation/results/metrics/rows.json shows the 'injected' variant (truth landmarks plus noise, cleaned like the app) at D1 distances failing the V1 gate while the rows are still labelled 'estimated': toss-apex-height MAE 0.043 at dist7 and 0.044 at default75, against a median threshold of 0.025. The pass therefore rests on how MediaPipe behaves on synthetic renders, which may not transfer to real players.",
+  "failure_scenario": "On real footage where MediaPipe's head-top bias differs from the renders (hair, cap, backlight), toss-apex and contact heights at 7 m can err by about 4% of height while shown as 'estimated', above the 2.5% contact acceptance threshold in the D2 addendum.",
+  "fix": "Gate V1 on the injected (method-only) variant as well, or state the dependence on the MediaPipe bias in the validation note and keep heights experimental until a V2 real-footage check confirms the cancellation."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/sessions/SessionReportScreen.tsx",
+  "line": 303,
+  "severity": "critical",
+  "title": "Spin and launch speed rows say \"Needs a view from behind\" on multi-group reports",
+  "detail": "The ghost rows fall back to `m[id]?.reasonCode ?? (view === 'side' ? 'NEEDS_REAR_VIEW' : 'NEEDS_SIDE_VIEW')`. The stored per-group metrics for small groups carry no `spin` or `speed-experimental` value, so both rows get the rear-view fallback. This breaks D4 (spin is always unavailable, with 'Not measurable by phone') and tells players that a second camera would give them spin. It also gives the wrong reason for a side-view metric: launch speed needs 120 fps, not a rear view. The serve drawer (serveView.ts) forces NOT_MEASURABLE for spin, but the report does not. Screenshots: validation/results/ui/final-audit/copy-honesty/light-sample-report-sample-s1.png and dark-v-s1-spin-row.png.",
+  "failure_scenario": "Open the sample 'Sat 5 Sep' report (both sides, 4 and 3 serves per group), or any report of your own with two court-side groups. Under 'Not available from this session' it reads 'Launch speed (experimental): Needs a view from behind' and 'Spin: Needs a view from behind'.",
+  "fix": "Choose each ghost row's reason per id: spin is always NOT_MEASURABLE. speed-experimental takes the session-level value's reason, otherwise FPS_TOO_LOW below 120 fps. Only REAR_ONLY_METRIC_IDS get NEEDS_REAR_VIEW. Add a test that every report fixture (single-group, multi-group and single-serve) renders 'Spin' with 'Not measurable by phone'."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/components/CaptureQualityLine.tsx",
+  "line": 28,
+  "severity": "critical",
+  "title": "Capture quality is never labelled experimental, is hidden on own sessions and shows 'Measured' on the sample",
+  "detail": "D2 addendum (2026-09-28): capture quality 'is always shown, and it carries the experimental label (\"Automatic check, experimental\")'. VALIDATION §5 item 12 and §9 say the same. Actual behaviour: (1) the capture line on the report, Today and Sessions reads 'Capture: Good · 16 of 16 serves measured' with no label, and the Capture details sheet does not mention it either. (2) Metric info for an imported session shows 'Experimental (off). Turn on experimental metrics in Profile to see this.' because MetricInfoScreen.tsx:208 has no capture-quality exception to `hiddenExperimental`. (3) Metric info for the sample shows 'Good' with a 'Measured' chip and 'Measured: worked out directly from your video', directly above 'so it stays experimental'. (4) How we measure lists it under 'Experimental (shown only when turned on)'. That is four different statuses for one quantity. Screenshots: light-own-metric-capture-default75-s1.png, dark-v-metric-capture.png.",
+  "failure_scenario": "Import any clip and open the report: 'Capture: Good' has no label. Tap into Metric info for capture quality: it is hidden behind the toggle. Load the sample and open the same page: it says Measured.",
+  "fix": "Add a flask glyph and the words 'Automatic check, experimental' to CaptureQualityLine and to the Capture details sheet, which are used on the report, Today and Sessions. In MetricInfoScreen, exempt capture-quality from hiddenExperimental and show the Experimental chip. In measureIndex, give capture quality its own 'Always shown' row instead of the experimental group. Rebuild the sample seed so its stored status is experimental."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/coaching/decide.ts",
+  "line": 326,
+  "severity": "critical",
+  "title": "With the toggle on, experimental data can choose the focus, although the app says it never does",
+  "detail": "rankEligible admits items with `pathTier === 'experimental'` when `showExperimental` is on. The orchestrator (pipeline/orchestrator.ts:996) sets that flag from the Profile 'Experimental metrics' setting. detectPerServe also switches to series that include experimental values in that case. So flowing-motion (driven by trophy-pause, V1-synthetic-fail), shoulder-tilt (shoulder-tilt-trophy, V0) and steady-rhythm can become the focus, and then the experiment verdict. The app says the opposite in several places: Profile toggle 'Never used for your focus.' (profile/copy.ts:37); Metric info 'It never feeds coaching.' (metricCopy.ts:180); report 'Not used for coaching.' (strings.ts:167); How we measure 'never used for your focus, verdicts or Progress' (measureIndex.ts:37); VALIDATION §1 'never feed coaching'. COACHING §5.1 allows it, so the specs themselves conflict with D2.",
+  "failure_scenario": "A player turns on Experimental metrics, having read 'Never used for your focus', then records a session where the trophy pause is long. The next focus is 'Keep it flowing', chosen from an experimental metric that failed its synthetic check, and 'Did it work?' then gives a verdict on it.",
+  "fix": "The product lead needs to decide. Either (a) keep experimental data and experimental-tier rules out of coaching whatever the toggle says, which matches D2 and every UI string, or (b) keep the COACHING §5.1 behaviour and rewrite the five strings, for example 'When on, experimental checks can also suggest a focus, marked Experimental'. Add a decide test that pins the chosen behaviour."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/record/flow/sessionFactory.ts",
+  "line": 123,
+  "severity": "critical",
+  "title": "Imported night clips are treated as daylight, so 'at night it shows as experimental' is false",
+  "detail": "importCapture never sets `conditions`, and engine.ts:101 conditionClassOf returns 'day' unless `conditions.light === 'lights'`. The Import screen never asks about light, and nothing in the pipeline detects floodlights. Every V1 metric page (HowSure.tsx:37, NIGHT_WORDS in validationWords.ts:102) promises 'Not yet checked under court lights, so at night it shows as experimental', and VALIDATION §0 states 'night sessions show at most Experimental'. For imports, the most likely path for a night-comp player filming on the Camera app, that promise is not kept. In-app recording also defaults Light to 'Day'.",
+  "failure_scenario": "A Melbourne night-comp player (D11 launch segment) films 15 serves under court lights on the Camera app and imports them. Toss height, contact height, drop, rhythm and leg drive all show as 'Estimate' with daylight synthetic error figures, although every metric is V0 under lights.",
+  "fix": "Add a required light question to Import (Daylight / Court lights / Not sure). Map 'Court lights' and 'Not sure' to night-lights, or to a not-validated condition, so V1 metrics cap at experimental. Until that ships, change NIGHT_WORDS to say that imported clips are assumed to be daylight."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/metric/MetricInfoScreen.tsx",
+  "line": 264,
+  "severity": "major",
+  "title": "Metric info shows 'Couldn't see this clearly' on values it did see, and leaks a raw '{k}' template",
+  "detail": "For any shown value that has a reasonCode, the header prints `reasonShortForm(code)` plus `unlockHint(code)`. BASELINE_BUILDING, VALIDATION_PENDING, CONDITION_NOT_VALIDATED, RANGE_TOO_WIDE and CONTACT_NOT_FOUND have no short form in strings.ts, so they fall back to \"Couldn't see this clearly\". unlockHint only replaces '{n}', so the BASELINE_BUILDING hint renders its placeholder. Leg drive carries BASELINE_BUILDING for every player's first two sessions. Screenshot: dark-v-metric-leg-drive.png.",
+  "failure_scenario": "A new player imports one session and opens Leg drive. The page shows '≈ 11% of your height, Estimate' followed by \"Couldn't see this clearly. Building your range: {k} of 2 sessions from this set-up.\" Toss in front and Landing distance with the toggle on show \"Couldn't see this clearly.\" under a value, and the Serving volume check page shows the same '{k}' text.",
+  "fix": "Add player short forms, for example BASELINE_BUILDING 'Building your usual range (1 of 2 sessions)', VALIDATION_PENDING 'Still being checked', CONDITION_NOT_VALIDATED 'Not checked under lights'. Never show REASON_FALLBACK above an available value. Replace every {token} in hints, with {k} set to the number of matched sessions. Add a copy-lint test that fails when a rendered screen contains '{'."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/today/FocusCard.tsx",
+  "line": 248,
+  "severity": "major",
+  "title": "'Nothing clear to change' card claims toss and timing were steady without any measurement",
+  "detail": "KeepGoingCard hard-codes 'Keep building consistency. Your toss and timing were steady on most serves.' It shows on Today and on the report for every keep-going decision. That includes sessions whose spreads were never computed ('Height spread: Needs more serves' on the imported 8-serve clip and on sample Sat 5 Sep), and keep-going decisions caused by comfort exclusions or a ruled-out coach pin. The Focus screen shows a different body for the same decision ('Nothing stood out as clearly worth changing this session.') and '1 checks were in range this session.' (FocusDrillScreen.tsx:237).",
+  "failure_scenario": "Import the synthetic 8-serve session clip. The report shows 'Height spread: Needs more serves / Not available', and directly above it the focus card asserts 'Your toss and timing were steady on most serves.'",
+  "fix": "Use FOCUS_COPY.keepGoingBody everywhere. Mention steadiness only when the toss-height-spread and steady-rhythm checks returned 'in-range', and say which. Fix the plural ('1 check was in range')."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/onboarding/OnboardingScreen.tsx",
+  "line": 350,
+  "severity": "major",
+  "title": "First screen shows a front-to-back toss map labelled 'Estimate', but toss-forward is experimental",
+  "detail": "The welcome card draws toss peaks against 'Front toe' and 'Into court →' with an Estimate chip. toss-forward failed its synthetic check (MAE 6.7 cm against 5 cm; V1-synthetic-fail, V0) and is hidden unless the toggle is on. The report itself refuses to draw this map ('Where each toss peaked front to back isn't reliable enough to show yet'). The first thing a player sees promises a view the product labels experimental. Screenshot: light-v-onboarding.png.",
+  "failure_scenario": "A new user sees the forward and back toss map marked Estimate during onboarding. After a first session the same chart never appears, and the report explains it isn't reliable enough to show.",
+  "fix": "Show the heights-only strip that the report actually draws, or keep the map with an Experimental chip and a caption such as 'Front-to-back position is experimental'."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/public/demo/seed@1.json",
+  "severity": "major",
+  "title": "Sample session was built by the pre-fix engine and shows outdated counts and statuses",
+  "detail": "The seed's builtAt is 2026-09-27T15:30Z, before the engine-accuracy fixes (serve counting, fused-event rule, capture-quality through the catalogue). As a result it stores capture-quality as status 'measured' (Metric info shows a Measured chip). It counts 7 of 8 and 14 of 16 serves, with 3 rows 'Not measured · Ball not tracked', while VALIDATION §3.3 now reports 45 of 45 counted on the production build, including these clips. Serve count Metric info for Sat 12 Sep answers 'How many serves did I hit?' with '≈ 14 serves' although 16 were hit and are listed. The sample is presented as 'the real engine's output', so it is also the main honesty demo.",
+  "failure_scenario": "A prospective user taps 'See a sample session' and sees 2 of 16 serves dropped and capture quality marked 'Measured', neither of which the shipped engine does any longer.",
+  "fix": "Rerun `node app/scripts/build-demo.mjs` on the current engine, check that capture quality is experimental and the counts are 8/8, 16/16 and 16/16, and commit the new seed and key frames. Add a test that fails when the seed's engine or methodVersion lags the catalogue, or when its capture-quality status is not experimental."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/analysis/metrics/catalogue.ts",
+  "line": 260,
+  "severity": "major",
+  "title": "Leg drive's absolute % is shown as Estimate though it failed its accuracy check",
+  "detail": "The report, serve detail, Progress and focus evidence all show '≈ 10% of your height, Estimate, likely 7% to 13%'. VALIDATION §3.2 lists leg drive's product status as 'Estimate, player-relative band only', because the D1 check failed (MAE 2.5% against 2%, with a persistent low read). The Metric info page puts 'Estimate' next to 'Our pass mark is a typical error within 2% of your height. It hasn't passed yet.' How we measure lists 'Typical error: about 2.5% of your height' under 'Measured or estimated'. The DESIGN §3.3 rule 6 band words ('Typical for you') never appear. On the sample the truth is about 12.6% and the display says 10%.",
+  "failure_scenario": "A player reads 'Hips rose ≈ 10% of your height (Estimate)' as an absolute measure, while the same app says the method hasn't passed and reads about 2.5% of height low.",
+  "fix": "Follow VALIDATION §3.2: show the player-relative band words as the Estimate. Show the % only as experimental, or with a basis line ('reads about 2% of your height low on simulated serves'). Or ask the product lead to record the exception in DECISIONS and word Metric info so that 'It hasn't passed yet' does not sit unexplained beside an Estimate chip."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/metric/validationWords.ts",
+  "line": 158,
+  "severity": "major",
+  "title": "Serve count Metric info still says the count reads 1 or 2 short, and calls 95 serves '95 clips'",
+  "detail": "SHIFT['serve-count'] tells every player that longer sessions 'found every serve but was unsure of 3 and left them out, so the count read 1 or 2 short'. VALIDATION §3.3 and §8 item 6 record the production-build fix (45 of 45 counted, 0 false) and explicitly say this wording should change. Line 253 also prints 'the same across 95 simulated side-view clips'. The 'All' group n in validation-summary.json is 95 serves, not clips.",
+  "failure_scenario": "On the imported 8-serve session (8 of 8 counted), the serve count page warns that the count reads 1 or 2 short and cites '95 simulated side-view clips'.",
+  "fix": "Rewrite the line from VALIDATION §3.3, for example 'Run through the full app on 8 simulated clips (45 serves), every serve was counted and nothing extra. Real footage is untested.' Change 'clips' to 'serves' on line 253."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/coaching/decide.ts",
+  "line": 388,
+  "severity": "minor",
+  "title": "'Rhythm is an experimental check' next to a rhythm value labelled Estimate",
+  "detail": "The 'What we checked' sheet says \"Same rhythm every serve: Rhythm is an experimental check, which you haven't switched on.\" The same report shows 'Rhythm consistency ≈ 35 ms, Estimate' (V1). The copy confuses the coaching rule's evidence tier (the steady-rhythm thresholds lack population data) with the metric's data status. detect.ts:368 and 585 use the same template.",
+  "failure_scenario": "On the sample Sat 26 Sep focus, 'What we checked' calls rhythm experimental while the report tile beside it calls it an Estimate.",
+  "fix": "When the item is experimental because of its rule rather than its data, say so: 'The rhythm rule is experimental coaching (no club-player data yet). It runs only with experimental checks on.'"
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/metric/metricCopy.ts",
+  "line": 196,
+  "severity": "minor",
+  "title": "Ball drop per-serve range (±1 cm) contradicts the stated contact-timing limit (4 to 5 cm)",
+  "detail": "The Known limits line on toss-drop, contact height and rhythm says 'At 60 fps with the hit sound off, contact timing is within about 13 ms, which is about 4 to 5 cm of ball height.' The serve drawer shows 'Ball drop before contact ≈ 44 cm, likely 43 to 45 cm' for 60 fps with the hit sound off. The same quantity carries two incompatible uncertainty statements.",
+  "failure_scenario": "A player opens serve 1 ('likely 43 to 45 cm') and then the Ball drop info page ('about 4 to 5 cm of ball height').",
+  "fix": "Make them agree. Either derive the limits line from the synthetic result, saying that on simulated serves contact timing was within about 2 ms and that real footage is unmeasured, or widen the per-serve drop interval to include real-world contact uncertainty."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/copy/strings.ts",
+  "line": 172,
+  "severity": "minor",
+  "title": "Side-toss bias line says heights read high, but the engine corrects for this and validation found them reading low",
+  "detail": "UI.sideTossBias ('a toss nearer the camera than your body reads a little high') is shown on every toss chart and on the Metric info pages. The engine applies a 0.30 m depth prior (basis: 'corrected with a 0.30 m prior'). VALIDATION §5 item 3 reports heights reading low after correction: bias −0.9% at D1 and 4 to 7% low at 5 m. The line describes the uncorrected physics from D1.",
+  "failure_scenario": "A player told the toss 'reads a little high' mentally lowers a number that, on the only evidence available, already reads slightly low.",
+  "fix": "Rewrite, and update D1 to match: 'From the side we can't see how far your toss is towards the camera, so we assume a typical spot. On simulated serves heights landed within about 2% of your height at the recommended distance. Sideways wobble adds a few centimetres to the spread.'"
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/profile/measureIndex.ts",
+  "line": 52,
+  "severity": "minor",
+  "title": "How we measure overstates the validated scope: 'Either view' heights, and toss front-back consistency listed as Estimate",
+  "detail": "Toss height, contact height, drop and rhythm are listed as 'Either view · Checked on simulated serves. Typical error...'. Only the side-view D1 set-ups passed; the D1 raised rear view was never rendered (VALIDATION §7), and the 5 m rear clips scored 6.1% MAE. 'Toss front-back consistency: Checked on simulated serves, limited evidence, Estimate' is grouped as estimated, but the engine emits it as experimental (VALIDATION_PENDING) and the report says front-to-back 'isn't reliable enough to show yet'. With the toggle on, the report shows 'Front-to-back spread about 2.5 to 11.5 cm' directly above that sentence (strings.ts:176).",
+  "failure_scenario": "A player filming from behind reads that toss height is checked for 'Either view' with a 1% typical error, which was never tested for that view.",
+  "fix": "Derive the view label from the validated views (side only for now). Group rows by the status the engine actually emits, which puts toss-forward-spread under experimental. Hide the tossHeightsOnly note whenever the front-to-back readout is shown."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/sessions/SessionReportScreen.tsx",
+  "line": 48,
+  "severity": "minor",
+  "title": "Report lists experimental metrics as 'Needs more serves' when experimental metrics are off",
+  "detail": "CORE includes landing-distance and shoulder-tilt-trophy, which are experimental by validation. When unavailable they appear as 'Landing distance: Needs more serves' and 'Shoulder tilt at the top: Needs more serves' with the toggle off. That implies they would appear as ordinary values with more serves, but with enough serves they are hidden. In the same list, sample Sat 12 Sep shows 'Launch speed (experimental): Ball not tracked' for a 60 fps session; the real blocker is 'Needs 120 fps'.",
+  "failure_scenario": "The imported 1-serve report lists Landing distance and Shoulder tilt under 'Needs more serves'. The player records 15 serves and neither appears.",
+  "fix": "Exclude experimental-by-validation ids from the ghost list unless the toggle is on (or show 'Experimental (off)'). Give FPS_TOO_LOW precedence over BALL_NOT_TRACKED for speed."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/progress/QuestionTile.tsx",
+  "line": 140,
+  "severity": "minor",
+  "title": "Progress says rhythm was 'Not measured in these sessions yet' while the report shows it",
+  "detail": "seriesFor drops sessions below minServesFor(rhythm-spread), and the tile then says 'Not measured in these sessions yet'. The same session's report shows 'Rhythm consistency ≈ 40 ms, Estimate, Early read, 8 of 8 serves'. Leg drive, from the same 8 serves, does appear on Progress.",
+  "failure_scenario": "After importing the 8-serve session, Progress says 'Is my rhythm steady? Not measured in these sessions yet' while the report shows a rhythm value.",
+  "fix": "Distinguish the cases: 'Needs 12 measured serves in a session for a trend (this one had 8)' when a value exists below the minimum. Keep 'Not measured' for truly missing values."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/sessions/SessionReportScreen.tsx",
+  "line": 280,
+  "severity": "minor",
+  "title": "Outcomes card labels all serves of a both-sides session as one court",
+  "detail": "OutcomesSection receives the selected group's side but all of the session's rows. Sample Sat 5 Sep (alternating deuce and ad) shows '6 of 8 tagged serves went in, Ad court, by the zone you logged', plotting 8 serves of which 4 were deuce. The group toggle says ad has 4 serves.",
+  "failure_scenario": "A player reviewing a both-sides block sees deuce-court serves drawn in the ad-court box.",
+  "fix": "Pass only the selected group's rows, or label the card 'Both courts' when the rows span both sides."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/plan/planModel.ts",
+  "line": 103,
+  "severity": "minor",
+  "title": "Plan screen sells an unbuilt, unvalidated feature and 'any two sessions'",
+  "detail": "PLUS_ADDS promises 'suggested outcome tags from the view from behind'. The 'rear-suggested-tags' feature is referenced nowhere except features.ts and planModel.ts. It depends on the rear bounce path, which VALIDATION §2.4 says is validated only on unit-test flights (a false bounce mapped 118 m down the court), and it is not labelled experimental. 'Compare any two sessions' drops 'matched', although D7 allows matched comparisons only (features.ts says 'any two matched sessions').",
+  "failure_scenario": "A tester switches on test Plus for 'suggested outcome tags' and finds nothing. If the feature later ships from the unvalidated bounce path, it would carry no experimental label.",
+  "fix": "Remove the line until the feature exists, then label it 'experimental'. Change the line to 'Compare any two matched sessions, with ghost overlays'."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/analysis/metrics/headline.ts",
+  "line": 40,
+  "severity": "minor",
+  "title": "Early-read spread headlines without the interval METRICS requires",
+  "detail": "The report headline, Today and the Sessions list read 'Toss height varied by about 30 cm (early read).' METRICS §4.1 allows a provisional spread to headline only 'shown with its interval', and DESIGN §3.3 rule 4 says early reads never headline. Here the n and the range (likely 20 to 45 cm) are missing.",
+  "failure_scenario": "The Sessions list row for Sat 12 Sep shows 'Toss height varied by about 30 cm (early read).' with no range or n.",
+  "fix": "Append the range ('about 30 cm, likely 20 to 45 (early read)'), or leave early reads out of the headline. Reconcile DESIGN §3.3 rule 4 with METRICS §4.1."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/format/metricFormat.ts",
+  "line": 102,
+  "severity": "minor",
+  "title": "Hip-drop ranges go negative and are far wider than the stated error",
+  "detail": "Loading depth renders 'likely -2% to 4% of your height' (Metric info, and aria text on the report) and 'likely -5% to 8%' per serve, with a '-2' axis tick. A negative hip dip is a rise, and DESIGN §3.3 rule 11 bans signs. The ±6% per-serve range is also 13 times the 'Typical error: under 1% of your height' shown in How we measure.",
+  "failure_scenario": "The Loading (hip dip) Metric info page for the sample shows 'likely -2% to 4% of your height'.",
+  "fix": "Clamp the displayed lower bound at 0 for the share-of-height metrics (write 'up to 4%'). Ask engine-core why the per-serve interval is about 13 times the synthetic error."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/record/ProcessingScreen.tsx",
+  "line": 157,
+  "severity": "minor",
+  "title": "'It usually takes a minute or two' is an unmeasured claim",
+  "detail": "No phone has been measured (VALIDATION §6). On the laptop, a 16-serve session took 150 to 173 s in production. ARCHITECTURE budgets 180 s on an iPhone 12.",
+  "failure_scenario": "A player importing a standard 15 to 16 serve block waits about 3 minutes or more after being told 'a minute or two'.",
+  "fix": "'This can take a few minutes for a full block. Keep Serve Coach open.' Add phone numbers only once measured."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/sessions/report/TossHero.tsx",
+  "line": 145,
+  "severity": "minor",
+  "title": "Toss height strip shows numbers without a status chip when the spread is unavailable",
+  "detail": "The chart's chip comes from toss-height-spread's status. When the spread is unavailable (too few serves per group), the strip still plots estimated peak heights with 'middle 3.11 m' and metre ticks, and no status chip. DESIGN §14 requires a data-state chip on every number.",
+  "failure_scenario": "On the sample Sat 5 Sep report, 'How high your toss peaked on each serve' shows 'middle 3.11 m' with only 'Not available' chips on the two spread readouts.",
+  "fix": "Take the chart's chip from the plotted toss-apex-height values (Estimate), independent of the spread readout."
+ },
+ {
+  "area": "ui-copy",
+  "file": "docs/specs/metrics.json",
+  "line": 3443,
+  "severity": "minor",
+  "title": "US spelling 'racket' in a player-facing question",
+  "detail": "The speed-experimental question 'Roughly how fast was that serve off the racket?' is shown on Metric info (copied to app/src/ui/screens/metric/data/catalogue.json:1141). DESIGN §4.3 says 'racquet', and the same page's 'What it is' uses 'racquet'.",
+  "failure_scenario": "The Launch speed Metric info page shows 'racket' two lines above 'racquet'.",
+  "fix": "Change it to 'racquet' in metrics.json, then rerun build-metric-data.mjs."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/profile/parts/words.ts",
+  "line": 106,
+  "severity": "minor",
+  "title": "Comfort screen health line uses superseded wording instead of COACHING's",
+  "detail": "\"If you're over 40, have a medical condition or haven't exercised for a while, check in with your GP before starting a new training routine.\" follows the 2013 Better Health Channel basis, which COACHING §10.3 says APSS replaced. DESIGN §11 rule 8 requires referral and health copy exactly as COACHING writes it. PRODUCT O7 still cites it. For the 30 to 55 launch segment this sends most users to a GP on age alone.",
+  "failure_scenario": "A 42-year-old pennant player opening Comfort and body is told to see a GP before 'a new training routine', which no COACHING rule asks for.",
+  "fix": "Use COACHING §10.3's APSS-based line ('Please check with your GP or another health professional before starting a new serving routine' after any yes answer), or remove the line pending the clinician review COACHING requires. Update PRODUCT O7."
+ },
+ {
+  "area": "ui-copy",
+  "file": "app/src/ui/screens/record/flow/copy.ts",
+  "line": 62,
+  "severity": "minor",
+  "title": "Set-up copy states tilt is measured and removed, which is unvalidated",
+  "detail": "The fence set-up says 'We measure the tilt and take it out.' VALIDATION §7: pitch came from truth as a perfect sensor reading, the tilt family was not rendered, and tilt measurement and its error were not exercised. The same claim appears in CAPTURE.md:220.",
+  "failure_scenario": "A player tilts the phone at the fence, trusting the correction, and gets heights labelled Estimate on the strength of a correction that has never been tested.",
+  "fix": "'We read the tilt from the phone's motion sensor and correct for it. This correction hasn't been checked on real phones yet.' Update CAPTURE.md to match."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/components/video/overlayScene.ts",
+  "line": 276,
+  "severity": "critical",
+  "title": "Experimental 'From your toe' value is drawn on the video while the experimental toggle is off",
+  "detail": "buildScene labels contact-forward (and toss-forward on apex-vs-toe focus, line 248) whenever usable(m) is true. usable (line 121) only rejects 'unavailable', so experimental values pass. ServeDetailScreen never passes experimentalMetrics into buildScene (lines 229-244). With the toggle at its default (off), the Contact overlay on every sample serve shows the pill 'From your toe  about 20 to 39 cm' with the flask glyph. peekMetrics and groupServeMetrics already filter experimental values, so the overlay is the one leak. This breaks D2, README honesty rule 6 and the audit rule that experimental values stay hidden unless the toggle is on. Evidence: validation/results/ui/final-audit/states/overlay-390-sample-s3-s01-Contact.png and overlay-390-150-sample-s3-s01-Contact.png.",
+  "failure_scenario": "A new player with default settings opens Serve 1, taps the Contact chip, and reads 'From your toe about 20 to 39 cm' on the video. That is an experimental contact-in-front value the app promises not to show.",
+  "fix": "Pass experimentalOn into buildScene (or into a usable() variant) and drop labels whose status is 'experimental' unless the toggle is on, for contact-forward, toss-forward and any other experimental metric on the video. Add a scene test with the toggle off that asserts no label has metric.value.status === 'experimental'."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/components/CaptureQualityLine.tsx",
+  "line": 28,
+  "severity": "major",
+  "title": "Capture quality has no 'experimental' label, which the D2 addendum requires",
+  "detail": "The D2 addendum added today says capture quality is always shown and carries the experimental label ('Automatic check, experimental') until it is validated on real footage. Its info sheet must also say the checks were tested only on simulated footage. CaptureQualityLine renders 'Capture: Good · 16 of 16 serves measured' with no experimental chip or wording. The Capture details sheet (ReportParts.tsx lines 28-57) says 'Every capture check passed.' with no simulated-footage caveat. The same line appears on Today, and the Sessions list shows only a glyph. No 'Automatic check' string exists anywhere in app/src/ui. Evidence: slices/390-light-report-s3-00.png, slices/390-court-today-01.png.",
+  "failure_scenario": "A player sees 'Capture: Good' and 'Every capture check passed.' under the headline. They take it as a validated pass, but the checks have only run on synthetic clips.",
+  "fix": "Add the experimental StatusChip (or 'Automatic check, experimental' text) to CaptureQualityLine in every place it is used. Add one line to the Capture details sheet: 'These checks have only been tested on simulated footage.' Add a copy test that asserts the label is present."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/sessions/report/TossHero.tsx",
+  "line": 48,
+  "severity": "major",
+  "title": "The lead hero value (toss height spread) is shown without its likely range",
+  "detail": "Readout renders <MetricValue size='metric' chip={false}/> without detail, so formatMetric's 'likely X to Y' line is dropped. The engine stores ci95 7.05 to 14.77 cm for sample-s3 toss-height-spread (public/demo/seed@1.json). The report still shows a bare '≈ 9.5 cm, 16 of 16 serves'. The smaller tiles below (Contact height, Rhythm consistency) do show 'likely …'. The session headline 'Toss height varied by about 9.5 cm (early read)' also has no interval. METRICS §4.1 allows a provisional spread to headline only 'labelled early read and shown with its interval', and the honesty rule wants status + range + n.",
+  "failure_scenario": "The report's most prominent number reads as a precise 9.5 cm. The real uncertainty (about 7 to 15 cm) is hidden, so a player can't tell whether a 2 cm change next week means anything.",
+  "fix": "Pass detail to the hero MetricValue, or render f.detail under the value next to nLine, whenever v.uncertainty exists. Mirror the interval in headlineFor for provisional spreads, for example '… about 9.5 cm (likely 7 to 15, early read)'."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/playback/ServeDetailScreen.tsx",
+  "line": 518,
+  "severity": "major",
+  "title": "The 'This serve' drawer covers the timeline, transport and overlay chips on short screens and at large text, and hides keyboard focus",
+  "detail": "<main> reserves a fixed pb-44/pb-56 (px). The fixed StatDrawer peek height grows with rem text and with two-line metric names. At 360x740 the collapsed drawer covers the overlay chips on load, and a keyboard-focused 'Body' chip sits under the drawer (WCAG 2.4.11). At 200% text even max scroll leaves Body/Toss/Contact under the drawer (bottomCheck), and Serve timeline, speed, Back/Play/Forward and Prev/Next serve all take focus behind it. The same happens at 320x640 and in landscape 844x390 (PWA orientation 'any'). Evidence: 360-light-serve-detail.png, 390-light-200-serve-detail.png, 320-light-serve-detail.png, states/844-light-01-serve-detail.png.",
+  "failure_scenario": "A player with iOS Larger Text, or a 360 px Android phone, cannot see or tap the overlay chips or the play button. Tabbing moves focus onto controls hidden under the drawer.",
+  "fix": "Size main's bottom padding from the measured peek height (StatDrawer already measures peekH; expose it as a CSS variable) instead of pb-44. Cap the peek at one metric row when the viewport is under about 760 px or the root font is over 125%. Add scroll-margin-bottom equal to the peek height so focused controls scroll clear of it."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/playback/check/CheckServeView.tsx",
+  "line": 69,
+  "severity": "major",
+  "title": "'Check this serve': the pinned player hides the focused marking controls, and the sticky offset breaks at large text",
+  "detail": "PINNED makes the video, scrubber and transport sticky at top 3.25rem while the AppBar is a fixed h-13 (52 px). html scroll-padding-top covers only --appbar-h, so tabbing to 'Top of head, not marked', 'Landing, not marked' or 'Next: Release' leaves them under the pinned block. The focus walk confirmed this at 390x844 and 360x740, not only at large text. At 200% the 3.25rem top becomes 104 px, so scrolled text shows in a 52 px gap between the app bar and the video. The pinned block plus the Save bar also leave roughly one line of visible content. Evidence: states/390-light-11-check-mode-bottom.png, states/390-light-200-09-check-mode-bottom.png.",
+  "failure_scenario": "A keyboard or switch user marking a serve for validation moves to the 'Top of head' point button. It is focused but hidden behind the transport row. At 200% the step card is effectively unreachable.",
+  "fix": "Set the sticky top to the real app bar height (var(--appbar-h) or the same px unit as AppBar). Add scroll-margin-top equal to the pinned block's measured height on the marking panel's focusables. Drop the pin when the root font is enlarged or when the pinned block would exceed about 55% of the viewport."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/components/AppBar.tsx",
+  "line": 78,
+  "severity": "major",
+  "title": "On every pushed screen at 200% text, the back label overlaps the app bar title",
+  "detail": "The pushed-title h1 is 'absolute inset-x-30' (120 px each side) inside a fixed h-13 bar. The back button label is rem-sized text that is not constrained. At 200% 'Sessions', 'Record', 'Today' and 'Serve' run under the centred title: 'SessionsSat 26 …', 'RecorImport…', 'TodayYour fo…', 'ServeCheck s…'. DESIGN §12 allows the title to truncate but not to collide. Evidence: 390-light-200-import.png, slices/390-light-200-report-s3-02.png, states/390-light-200-15-focus-no-why.png.",
+  "failure_scenario": "A player using iOS Larger Text opens any report or settings page. The header reads as garbled overlapping words, and it is unclear what the back button does.",
+  "fix": "Use a three-column grid (auto 1fr auto) for the bar instead of an absolute title, and truncate the back label with max-w. Or show only the chevron (keeping the aria-label) when the label and title would collide. Let the bar grow with min-h instead of h-13."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/components/TabBar.tsx",
+  "line": 28,
+  "severity": "major",
+  "title": "At large text the tab bar labels overflow, collide and are cut off at the bottom",
+  "detail": "The list is a fixed h-14 (56 px) grid while the labels use text-caption (rem). At 200% 'Sessions' and 'Progress' touch and overlap (the hit areas collide by 5 px), 'Progress' pokes 3 px past the right edge, and the whole label row falls below the 56 px bar and is clipped by the viewport. It happens on every tab root. Evidence: 390-light-200-today.png, 360-court-200-*.png.",
+  "failure_scenario": "A low-vision player at 200% text cannot read which tab is which. Labels are half off-screen and 'SessionsProgress' runs together.",
+  "fix": "Use min-h instead of h-14, cap the label with max-font-size (for example min(0.75rem*1.35, 18px)), or at large sizes switch to icon-only tabs with a large-content tooltip, as the HIG does. Make sure --tabbar-h and the scroll-padding follow the real height."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/playback/TagAttributes.tsx",
+  "line": 36,
+  "severity": "major",
+  "title": "Tagging attribute chips overlap each other at large text and become untappable",
+  "detail": "ChoiceChips uses a fixed 'flex h-11' row around a flex-wrap chip group with a fixed w-16 label. At 150 to 200% the chips wrap onto a second line inside the 44 px row and draw over the next row. 'Flat' covers 'Wide', 'Kick' covers 'Applies to the rest of this block', and the 'Aimed at'/'Type' labels wrap into each other. The segmented control truncates 'Deuce' to 'D…'. axe reports target-size at 360-court-200 because 'Wide' is covered down to 8 px. The same component is in the Tag sheet on Serve detail. Evidence: 390-light-200-tagging.png, states/390-light-200-05-tag-sheet.png.",
+  "failure_scenario": "A player at 200% text tries to log 'aimed wide' after a serve. The Wide chip sits under the Flat chip, so the tap lands on Flat.",
+  "fix": "Replace h-11 with min-h-11 and let the row wrap (flex-wrap on the outer row, label on its own line at large sizes). Let SegmentedControl segments wrap or grow instead of truncating option labels."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/record/ImportScreen.tsx",
+  "line": 223,
+  "severity": "major",
+  "title": "The Import screen scrolls sideways at 360 px because of a 7-word no-wrap button label",
+  "detail": "'For slow-motion videos, choose Files. How?' is a tertiary Button, and .btn is whitespace-nowrap. It overflows the card and the viewport by 9 px at 360 (light/dark), 19 px at 360 Court-side, 45 to 55 px at 320, 140 px at 150% text and 302 px at 200%. The label also breaks DESIGN §14 (button labels 1 to 3 words, never wrapping at 320). Evidence: 360-court-import-full.png, 390-light-200-import.png.",
+  "failure_scenario": "On a common 360 px Android phone the first screen of the import flow scrolls horizontally, and the help link's text runs past the card border.",
+  "fix": "Make it a short button ('Slow-motion help') after a one-line sentence, or render it as an inline text link that can wrap (no whitespace-nowrap)."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/record/LiveFramingScreen.tsx",
+  "line": 525,
+  "severity": "major",
+  "title": "Live framing at 200% text: the prompt covers the checklist, check names truncate and the ready pill overflows",
+  "detail": "The camera overlay mixes fixed-height pills (h-11 '2 of 9 ready') and a fixed-size checklist panel with rem text. At 200% the 'Turn the phone upright' prompt and its detail card sit on top of the Checks panel, the check names truncate ('Le…', 'In fr…', 'Ro…'), and '2 of 9 ready' spills outside its pill border. At 390 without enlarged text, the prompt's detail card already overlaps the 'Toss room above' guide label. Evidence: states/live-390-light-200-framing.png, states/live-390-light-framing.png.",
+  "failure_scenario": "A player who uses larger text sets up the phone at the fence. They cannot read which of the 9 checks still needs a fix because the names are cut off and hidden under the prompt.",
+  "fix": "Use min-h on the ready pill. Stack the prompt and the checklist in one flow column so they cannot overlap, and at large text sizes show the checklist as a single-column list rather than a 3-column grid of truncated names."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/charts/PlacementMap.tsx",
+  "line": 124,
+  "severity": "major",
+  "title": "The service-box chart's 'Net' label is drawn outside the SVG over the caption, and zone labels collide at large text",
+  "detail": "HEIGHT is 300, but the Net label is placed at netY + STRIP + 14 = 329, and PlotSurface sets overflow-visible, so 'Net' prints over 'Schematic: each mark is a serve you logged…' on every report at every width and theme. The SVG geometry is fixed px while <text> uses rem caption/headline sizes. In Court-side (heavier weight), and at 150 to 200%, the zone labels and counts collide ('WideWideBody', '5 3 5' on the labels). The wide-fault count '2' also sits under the net line, where it reads as a net count. Evidence: slices/390-light-report-s3-03.png, slices/390-light-200-report-s3-06.png.",
+  "failure_scenario": "Every player who opens a session report sees 'Net' printed on top of the caption under the Outcomes chart. At large text the zone names are unreadable.",
+  "fix": "Include the Net strip label in the height (HEIGHT = netY + STRIP + 22, or compute it from font metrics). Clip or measure text with the rendered font size, put counts on their own row above the zone names, and move the wide count next to the Wide strip label."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/charts/IntervalBars.tsx",
+  "line": 96,
+  "severity": "major",
+  "title": "The likely-range bars on 'Did it work?' are nearly invisible in Court-side (sun) and Night modes",
+  "detail": "The 95% and 80% interval bars use fillOpacity 0.12 and 0.22 of the series colour. On the surface that is about 1.1 to 1.3:1, well under the 3:1 that WCAG 1.4.11 and DESIGN §12 require for chart marks. Court-side doesn't strengthen them. In Night the 'Before' bar is a faint grey smear. These bars are the uncertainty the verdict rests on ('darker is 80%, lighter is 95%'). Evidence: slices/390-court-compare-00.png, slices/390-dark-compare-00.png.",
+  "failure_scenario": "On court at midday a player opens 'Did it work?'. They see only two tick marks and cannot tell that the before and after ranges overlap or how wide they are, so the 'Clearly better' verdict looks more certain than it is.",
+  "fix": "Draw each interval with a ≥3:1 outline (stroke in the series colour, or line-strong) and use solid fills with ≥3:1 between the 80% and 95% tones in Court-side, or use a hatch for 95%. Add these pairs to tokens.test contrast checks."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/components/ListRow.tsx",
+  "line": 39,
+  "severity": "major",
+  "title": "The Sessions list cuts off the 'early read' qualifier at default size and the serve count at large text",
+  "detail": "ListRow's subtitle is 'truncate' (one line) and its detail is 'line-clamp-2'. The sample check-in headline '14 of 16 serves measured. Toss height varied by about 30 cm (early read).' is clamped to '…about 30 cm…' at 390 px default text, so the provisional qualifier disappears. At 200% the subtitle becomes 'Side view · 16 …', which drops 'of 16 measured'. DESIGN §12 says no truncation of values, and the honesty rules require n and state on every number. Evidence: 390-light-sessions.png, slices/390-light-200-sessions-00.png.",
+  "failure_scenario": "A player scanning the Sessions list reads 'Toss height varied by about 30 cm' as a settled result, because '(early read)' was cut. At large text they can't see how many serves were measured.",
+  "fix": "Let subtitle and detail wrap in session rows (no truncate or line-clamp), or put the qualifier first ('Early read: toss height varied…'). Keep values and n out of truncated spans."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/components/video/TransportRow.tsx",
+  "line": 111,
+  "severity": "minor",
+  "title": "Serve detail scrolls 16 px sideways at 320 px: a class conflict makes the prev/next buttons 48 px",
+  "detail": "The Previous serve, Next serve and ±10 frame buttons use cx(BTN, 'size-11'), but BTN already contains size-12. In the built CSS .size-12 comes after .size-11, so they render at 48 px. The right slot (w-24, 96 px) must hold 48+4+48 = 100 px. At 320x640 'Next serve' ends at x=336 and the document overflows by 16 px, against DESIGN §12 (reflow at 320 without horizontal scroll). At 390 the slot already overflows into the gap next to 'Forward 1 frame'. Evidence: 320-light-serve-detail.png, summary-320-and-150pct.json.",
+  "failure_scenario": "On an iPhone SE-class or other 320 px screen, the Next serve control sits partly off-screen and the whole serve detail page pans sideways when swiped.",
+  "fix": "Remove size-12 from BTN and set the size per button (or use tailwind-merge in cx). Let the side slots be flex-1 min-w-0 instead of a fixed w-24."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/playback/ServeDetailScreen.tsx",
+  "line": 518,
+  "severity": "minor",
+  "title": "Serve detail and Tagging nest a second <main> inside the shell's <main id='main'>",
+  "detail": "AppShell already renders <main id='main'>. ServeDetailScreen (line 518), CheckServeView (line 419) and TaggingScreen (lines 217 and 481) render their own <main>. axe reports landmark-main-is-top-level, landmark-no-duplicate-main and landmark-unique on every run of serve-detail and tagging (16 of 16 configs).",
+  "failure_scenario": "A VoiceOver rotor user jumping to 'main' lands on two unnamed main landmarks and the skip link target is ambiguous.",
+  "fix": "Change the inner <main> elements to <div> (or <section aria-label=…>) and keep the shell's main as the single landmark."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/today/FocusCard.tsx",
+  "line": 82,
+  "severity": "minor",
+  "title": "Headings jump from h1 to h3 on the check-in report and on 'Did it work?'",
+  "detail": "axe heading-order fails on /sessions/sample-s2 (the FocusCard title 'Steady toss height' is an h3 with no h2 before it) and on /progress/compare (ChartFrame defaults to headingLevel h3, used at CompareScreen.tsx line 116 directly after the h1). It fails in all 16 base configs.",
+  "failure_scenario": "A screen-reader user navigating by heading level misses these sections when listing h2s and hears a skipped level.",
+  "fix": "Pass headingLevel='h2' to ChartFrame on CompareScreen. Let FocusCard take a heading level, or put it under an h2 section label on the report."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/playback/StatDrawer.tsx",
+  "line": 79,
+  "severity": "minor",
+  "title": "Closing the expanded drawer with Escape drops keyboard focus to <body>",
+  "detail": "The drawer's Escape handler only calls onExpandedChange(false). If focus was inside the drawer body (for example a key-frame 'Peak. Show this frame' button), that body becomes hidden and focus falls to document.body. The next Tab restarts at 'Skip to content'. Verified in states/390-light-*: after 25 Tabs plus Escape, activeElement is BODY.",
+  "failure_scenario": "A keyboard user opens 'All values', moves into the key frames, presses Escape, and loses their place on the page.",
+  "fix": "On Escape (and on the 'Show less' toggle), move focus back to the 'All values' button whenever activeElement is inside the drawer body."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/playback/TagAttributes.tsx",
+  "line": 50,
+  "severity": "minor",
+  "title": "Several targets are under 44 x 44 px: target chips, the tagging Let/Skip buttons and the height field",
+  "detail": "The chip hit area is 'after:inset-x-0 after:-inset-y-1', so only height is extended. The 'T' chip is 39x44 on Tagging and 31x44 in Record's target row, and the 'Ad' segment is 41x44. The tertiary Let (31x44) and Skip (41x44) buttons on the tagging pad are also short. In HeightInput (parts/HeightInput.tsx line 127) the real <input> is only 26 px tall inside a 52 px box that is not a label, which leaves dead zones above and below the digits. DESIGN §12 and §14 require at least 44x44 on every target.",
+  "failure_scenario": "Tagging at the fence between serves, a player aims for 'T' or 'Let' with a thumb and misses because the target is 31 px wide.",
+  "fix": "Add min-w-11 to chips and tertiary pad buttons (or after:-inset-x-[n] as needed). Make the height box a <label htmlFor> or give the input h-full."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/components/TabBar.tsx",
+  "line": 48,
+  "severity": "minor",
+  "title": "In Night mode, inactive tab labels fall below 4.5:1 over the glass tab bar",
+  "detail": "Inactive labels are text-ink-3 (#8d978f) at 12 px on the translucent .glass bar. On Log practice in Night, with the selected (light) chip scrolled under the bar, axe measured 4.26:1 against the blended #2e332f background. Contrast depends on the content behind the bar, and DESIGN asks for AAA on secondary text.",
+  "failure_scenario": "A night-comp player on Log practice in dark mode can't reliably read 'Today' or 'Record' in the tab bar while lighter content scrolls beneath it.",
+  "fix": "Use text-ink-2 for inactive tab labels, or make the bar background opaque enough (for example 96%) that the worst case stays at or above 4.5:1. Add the pair to tokens.test."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/components/video/PhaseTimeline.tsx",
+  "line": 137,
+  "severity": "minor",
+  "title": "The phase timeline disappears in forced-colours (Windows High Contrast) mode",
+  "detail": "Phase spans are background-only divs (bg-ink-3, bg-surface-2, bg-band) with no border or forced-colors rule. Under forced-colors: active their backgrounds are removed, so the serve timeline shows only stray tick glyphs and the playhead ring. The focus-phase highlight is gone too. DESIGN §12 requires marks to use system colours in forced colours. Evidence: states/forced-serve.png.",
+  "failure_scenario": "A Windows High Contrast user reviewing a serve on a laptop can't see where Toss, Loading or Contact phases are on the scrubber.",
+  "fix": "Give spans a 1 px border (forced-color-adjust: none, or a @media (forced-colors: active) rule using CanvasText/Highlight), and draw the focus phase with Highlight."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/charts/PlotSurface.tsx",
+  "line": 86,
+  "severity": "minor",
+  "title": "Interactive charts are exposed as role='img', so arrow-key selection is hidden from screen readers",
+  "detail": "The plot SVG has role='img', aria-label and tabIndex=0, and handles Arrow, Enter and Escape to select and open serves. role='img' makes the children presentational, and screen readers in browse mode don't pass arrow keys to an image. The selection only surfaces through the sr-only live region, and nothing tells the user the chart is operable.",
+  "failure_scenario": "A VoiceOver user reaches the toss beeswarm, hears 'Peak height of each serve, 16 serves, image', and never learns they can arrow through serves or press Enter to open one.",
+  "fix": "Use role='application' (or role='group' with aria-roledescription='chart') on the interactive surface and add usage to the label or aria-describedby ('Use arrow keys to move between serves, Enter to open'). Keep role='img' only for non-interactive plots."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/playback/ServeDetailScreen.tsx",
+  "line": 538,
+  "severity": "minor",
+  "title": "A missing video shows 'Couldn't see this clearly' with the skeleton drawn over the message",
+  "detail": "When video.storage is 'idb' but the blob can't be loaded (videoUrl null) and there are no stills, goneLine is null. The placeholder then falls back to REASON_FALLBACK 'Couldn't see this clearly', which is a pose-quality reason, not a missing-video state. VideoStage still receives scene (line 529), so the overlay canvas paints the skeleton on top of the icon and text. This was reproduced when IndexedDB video blobs were absent (a restored storage state without blobs).",
+  "failure_scenario": "After a recording whose chunks were never assembled, or a partial restore, the player sees a skeleton over 'Couldn't see this clearly' and thinks the pose failed, when the video is simply missing.",
+  "fix": "When hasVideo and stepping are both false, use an explicit line such as 'This video isn't on this phone. Phases and values are below.' and pass scene={null} so no overlay paints over the placeholder."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/screens/sessions/SessionsScreen.tsx",
+  "line": 25,
+  "severity": "minor",
+  "title": "The Sessions list shows capture quality as a glyph only, with the word visible only to screen readers",
+  "detail": "CaptureGlyph renders a check-circle or warning glyph with the word in sr-only text. DESIGN §12 requires glyph + word for capture quality, and D2 now also requires the experimental label. Sighted users see an unlabelled tick next to every row, which reads as 'done' or 'verified'.",
+  "failure_scenario": "A player scanning the Sessions list reads the tick as 'this session is verified'. They can't tell Good from Fair without opening each report.",
+  "fix": "Show a compact visible word ('Good', 'Fair', 'Limited') next to the glyph, or drop the glyph from the row and rely on the report's full capture line (with its experimental label)."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/shell/routes.ts",
+  "line": 85,
+  "severity": "minor",
+  "title": "The dev component gallery ships in production at /dev/components",
+  "detail": "The route table registers 'dev/components' with no import.meta.env.DEV guard. In the production build it renders the full gallery: token swatches, fixture values and working Theme/Court-side controls that write the persisted theme setting. The data README says hand-authored fixtures are for tests and development only.",
+  "failure_scenario": "A beta tester who follows a shared link or guesses the URL sees fixture numbers that look like real metrics and can change their saved theme from a developer page.",
+  "fix": "Register the route only when import.meta.env.DEV is true (or behind the beta/dev flag), so the lazy chunk is excluded from production."
+ },
+ {
+  "area": "ui-copy",
+  "file": "C:/Users/roger/OneDrive/Desktop/Serve2/app/src/ui/shell/routes.ts",
+  "line": 62,
+  "severity": "minor",
+  "title": "The processing route's title says 'Analysing' after analysis has finished",
+  "detail": "The route handle title for processing/:sessionId is always 'Analysing'. Opening it for a finished session shows the app bar 'Analysing' above 'This session is analysed. Your report is ready.' The document title says Analysing too. Evidence: 390-light-processing.png.",
+  "failure_scenario": "A player who returns from a notification or a Sessions row sees a header that says the app is still analysing, directly above a message saying it's done.",
+  "fix": "Let ProcessingScreen set the title from the session status ('Analysing', 'Report ready', 'Couldn't analyse'), or use a neutral route title such as 'Session'."
+ }
+]

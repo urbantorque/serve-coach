@@ -12,9 +12,10 @@
     -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    /* Keep focused elements clear of the sticky app bar, bottom action bar and tab bar. */
+    /* Keep focused elements clear of the sticky app bar, bottom action bar and tab bar. The action bar
+       publishes its measured height (--action-bar-h; it grows with large text, finding 71). */
     scroll-padding-top: calc(var(--appbar-h) + env(safe-area-inset-top));
-    scroll-padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 76px);
+    scroll-padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--action-bar-h, 76px));
   }
 
   /* iPhone: follow Dynamic Type. Touch-only so desktop Safari (13 px system body) is unaffected. */

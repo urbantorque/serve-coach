@@ -81,7 +81,11 @@ export function LiveFramingScreen() {
   // and the checklist and the framing labels start below them, so at any text size nothing sits
   // under the instruction (finding 76). Offsets are from the stage's top and the preview's top.
   const [topEl, setTopEl] = useState<HTMLDivElement | null>(null)
-  const [topClear, setTopClear] = useState({ stage: 0, preview: 0 })
+  // The instruction's own column (pill, detail card, "Show level"), and the landscape right column: the
+  // right column starts below the instruction only when the two actually overlap side to side.
+  const [centreEl, setCentreEl] = useState<HTMLDivElement | null>(null)
+  const [rightEl, setRightEl] = useState<HTMLDivElement | null>(null)
+  const [topClear, setTopClear] = useState({ stage: 0, preview: 0, overlapsRight: false })
   useLayoutEffect(() => {
     if (!stageEl || !previewEl) return
     const measure = () => {
@@ -91,7 +95,8 @@ export function LiveFramingScreen() {
         const bottom = topEl.getBoundingClientRect().bottom
         const stage = Math.max(0, Math.round(bottom - stageEl.getBoundingClientRect().top))
         const preview = Math.max(0, Math.round(bottom - previewEl.getBoundingClientRect().top))
-        setTopClear((c) => (c.stage === stage && c.preview === preview ? c : { stage, preview }))
+        const overlapsRight = !!centreEl && !!rightEl && centreEl.getBoundingClientRect().right + 8 > rightEl.getBoundingClientRect().left
+        setTopClear((c) => (c.stage === stage && c.preview === preview && c.overlapsRight === overlapsRight ? c : { stage, preview, overlapsRight }))
       }
     }
     measure()
@@ -100,8 +105,9 @@ export function LiveFramingScreen() {
     ro.observe(stageEl)
     ro.observe(previewEl)
     if (topEl) ro.observe(topEl)
+    if (rightEl) ro.observe(rightEl)
     return () => ro.disconnect()
-  }, [stageEl, previewEl, topEl])
+  }, [stageEl, previewEl, topEl, centreEl, rightEl])
   const recorder = useRef<ClipRecorder | null>(null)
   const startedAt = useRef<{ epoch: number; perf: number }>({ epoch: 0, perf: 0 })
   /** Framing when Record was tapped (the pose pass pauses during the countdown). */
@@ -530,12 +536,17 @@ export function LiveFramingScreen() {
           </div>
         ) : null}
         {landscapeLayout ? (
+          // Record and its row always stay on screen: the checklist takes what is left above them and
+          // scrolls (finding 76). It starts below the instruction only when they overlap side to side.
           <div
+            ref={setRightEl}
             className="absolute right-[max(12px,env(safe-area-inset-right))] bottom-[max(8px,env(safe-area-inset-bottom))] flex flex-col items-end justify-between gap-2"
-            style={{ top: Math.max(64, topClear.stage + 8) }}
+            style={{ top: topClear.overlapsRight ? Math.max(64, topClear.stage + 8) : 64 }}
           >
-            <ChecklistRail checks={evaluation.checks} layout="landscape" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
-            <div className="flex items-center gap-3">
+            <div className="min-h-0 shrink overflow-y-auto overscroll-contain rounded-card" data-checklist-rail>
+              <ChecklistRail checks={evaluation.checks} layout="landscape" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
               <IconButton icon={ListChecksIcon} label="Capture checks" variant="filled" onClick={() => setSheet('detail')} />
               <IconButton icon={DotsThreeIcon} label="More options" variant="filled" onClick={() => setSheet('menu')} />
               <RecordButton ready={ready} label={recordLabel} onPress={onRecordPress} layout="inline" />
@@ -549,7 +560,9 @@ export function LiveFramingScreen() {
           className="pad-safe-top pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 px-3 pt-3 [&>*]:pointer-events-auto"
         >
           <IconButton icon={XIcon} label="Close camera" onClick={close} className="bg-surface-inverse text-ink-inverse hover:bg-surface-inverse" />
-          <div className="flex min-w-0 flex-col items-center gap-2">
+          {/* Never more than about 40% of the screen, so the checklist and the bottom bar keep their room
+              at any text size; a long detail scrolls inside it (finding 76). */}
+          <div ref={setCentreEl} className="flex max-h-[40dvh] min-w-0 flex-col items-center gap-2 overflow-y-auto overscroll-contain" data-instruction-column>
             <InstructionPill ref={pillRef} kind={pill.kind} text={pill.text} detail={pill.detail} />
             {level.motion === 'prompt' && camera.status === 'live' ? (
               <Button variant="secondary" fullWidth={false} icon={CompassIcon} onClick={() => void level.request()}>

@@ -95,6 +95,8 @@ describe.skipIf(!existsSync(seedPath))('published sample seed (public/demo)', ()
     const sessions = await db.sessions.toArray()
     expect(sessions).toHaveLength(seed.sessions.length)
     expect(sessions.every((s) => s.isDemo === 1)).toBe(true)
+    // The seed predates real blocks (block 0): each sample recording is numbered as a block (extra item C1).
+    expect(sessions.every((s) => (s.blockIndex ?? 0) >= 1)).toBe(true)
     const track = await db.tracks.get(seed.sessions[0].serves[0].id)
     expect(track?.pose.xyv).toBeInstanceOf(Float32Array)
     expect((await db.videos.toArray()).every((v) => v.isDemo === 1)).toBe(true)

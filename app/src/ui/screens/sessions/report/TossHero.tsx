@@ -6,6 +6,7 @@ import { MetricValue, StatusChip } from '../../../components/index.ts'
 import { ChartFrame, covarianceEllipse, StripPlot, TossScatter, type Ellipse } from '../../../charts/index.ts'
 import { OUTCOME_WORDS, UI } from '../../../copy/strings.ts'
 import { formatMetric } from '../../../format/metricFormat.ts'
+import { relDomain, relTick, relWords } from '../../../format/tossRelative.ts'
 import { paths } from '../../../shell/paths.ts'
 import { againstUsual } from '../../progress/insights/history.ts'
 import { apexCm, relativeNumber, tossData, usableNumber, type ServeRow } from '../../progress/insights/serves.ts'
@@ -24,19 +25,6 @@ export interface TossHeroProps {
   stratumLabel: string
   /** Experimental toggle: experimental readouts (the rear left-right spread) show only when on. */
   experimentalOn: boolean
-}
-
-/** "≈ 12 cm higher" / "≈ 8 cm lower" / "about the same" for a peak against the middle toss. */
-function relWords(d: number): string {
-  const cm = Math.round(Math.abs(d))
-  if (cm === 0) return 'at the middle'
-  return `≈ ${cm} cm ${d > 0 ? 'higher' : 'lower'}`
-}
-
-/** Symmetric domain around the middle toss, at least ±20 cm, in 10 cm steps. */
-function relDomain(ds: number[]): [number, number] {
-  const m = Math.max(20, Math.ceil((Math.max(...ds.map((d) => Math.abs(d))) + 3) / 10) * 10)
-  return [-m, m]
 }
 
 const RANK: Record<MetricStatus, number> = { measured: 0, 'player-entered': 0, estimated: 1, experimental: 2, unavailable: 3 }
@@ -248,7 +236,7 @@ export function TossHero({ session, metrics, rows, heightM, previous, usualSprea
           ]}
           domain={relDomain(relative.map((x) => x.d))}
           unit="cm"
-          formatTick={(v) => (v > 0 ? `+${Math.round(v)}` : `${Math.round(v)}`)}
+          formatTick={relTick}
           onOpen={(id) => navigate(paths.serveDetail(session.id, id))}
         />
       ) : heightsOnly ? (

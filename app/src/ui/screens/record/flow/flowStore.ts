@@ -108,6 +108,22 @@ export const useRecordFlow = create<FlowState>()((set) => ({
   setTagAfterAnalysis: (tagAfterAnalysis) => set({ tagAfterAnalysis }),
 }))
 
+/**
+ * "Delete everything" (finding 18): the visit's plan (a re-test of a deleted experiment), block card
+ * and body-check mark start again, as on a fresh start.
+ */
+export function resetRecordFlow(): void {
+  useRecordFlow.setState({
+    plan: 'check-in',
+    block: { ...DEFAULT_BLOCK, light: lightForClock() },
+    fps: 60,
+    setup: 'portrait',
+    bodyCheckedAt: null,
+    tagAfterAnalysis: false,
+    lightChosen: false,
+  })
+}
+
 /** Frame-rate choices and copy (CAPTURE §3.3). */
 export const FPS_OPTIONS: { value: FpsChoice; title: string; body: string }[] = [
   {

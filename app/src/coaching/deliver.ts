@@ -20,6 +20,7 @@ import type {
   EvidenceStat,
   FocusEvidence,
   Goal,
+  PainLogMark,
   PracticeLogSummary,
   RetestPlan,
 } from './types.ts'
@@ -58,43 +59,63 @@ export interface LogRules {
   /**
    * A practice logged with "It hurts" holds the harder version back (§10.3 drill pain rule): a log
    * with pain never counts towards the unlock, and the 2 successful practices must both come after the
-   * newest one. A practice logged "A bit sore or tight" today holds it for the rest of the day, like
-   * today's sore body check (§9.3, §10.1), even when the "Where?" sheet was closed unanswered. True
-   * when the "yes" answers would otherwise have unlocked it.
+   * newest one, whichever drill it was (`lastPainLog`). A practice logged "A bit sore or tight" or "It
+   * hurts" today holds it for the rest of the day, like today's sore body check (§9.3, §10.1), even when
+   * the "Where?" sheet was closed unanswered. True when the "yes" answers would otherwise have
+   * unlocked it.
    */
   painPaused: boolean
-  /** A practice (of any drill) was logged "A bit sore or tight" today. */
+  /** A practice (of any drill) was logged "A bit sore or tight" or "It hurts" today. */
   soreLoggedToday: boolean
   /** Logs of this item, newest last. */
   logs: PracticeLogSummary[]
 }
 
-/** The logs that count towards the unlock: "yes" answers after the newest practice logged with pain. */
-export function successesSincePain(logs: readonly PracticeLogSummary[]): { yes: number; yesIgnoringPain: number; painLogged: boolean } {
+/**
+ * Whether a log was saved after the pain mark: a later local day, or the same day with a later save
+ * time. On the same day without both save times it is not counted as after (the safe side).
+ */
+export function loggedAfter(log: Pick<PracticeLogSummary, 'date' | 'createdAt'>, mark: PainLogMark): boolean {
+  if (log.date !== mark.date) return log.date > mark.date
+  return !!log.createdAt && !!mark.createdAt && log.createdAt > mark.createdAt
+}
+
+/**
+ * The logs that count towards the unlock: "yes" answers after the newest practice logged with pain,
+ * among these logs or (`lastPainLog`) of any drill.
+ */
+export function successesSincePain(
+  logs: readonly PracticeLogSummary[],
+  lastPainLog?: PainLogMark,
+): { yes: number; yesIgnoringPain: number; painLogged: boolean } {
   let lastPain = -1
   logs.forEach((l, i) => {
     if (l.body === 'pain') lastPain = i
   })
+  const after = logs.slice(lastPain + 1).filter((l) => !lastPainLog || loggedAfter(l, lastPainLog))
   const yesIn = (xs: readonly PracticeLogSummary[]) => xs.filter((l) => l.successCriterionMet === 'yes' && l.body !== 'pain').length
-  return { yes: yesIn(logs.slice(lastPain + 1)), yesIgnoringPain: logs.filter((l) => l.successCriterionMet === 'yes').length, painLogged: lastPain >= 0 }
+  return { yes: yesIn(after), yesIgnoringPain: logs.filter((l) => l.successCriterionMet === 'yes').length, painLogged: lastPain >= 0 || !!lastPainLog }
 }
 
-/** A practice of any drill logged "A bit sore or tight" on this local day (YYYY-MM-DD). */
-export function soreLoggedOn(logs: readonly PracticeLogSummary[], today: string | undefined): boolean {
-  return !!today && logs.some((l) => l.body === 'sore' && l.date === today)
+/** A practice of any drill logged "A bit sore or tight" or "It hurts" on this local day (YYYY-MM-DD). */
+export function soreLoggedOn(logs: readonly PracticeLogSummary[], today: string | undefined, lastPainLog?: PainLogMark): boolean {
+  if (!today) return false
+  return lastPainLog?.date === today || logs.some((l) => (l.body === 'sore' || l.body === 'pain') && l.date === today)
 }
 
 /**
  * §12.2: 2 "yes" logs unlock the progression; 2 "no" suggest the regression; 2 awkward in a row suggest
- * the other cue. With `today` (local YYYY-MM-DD), a practice logged sore that day holds the unlock for
- * the day; `logs` may hold every drill's logs (the sore check reads them all, the counts this item's).
+ * the other cue. With `today` (local YYYY-MM-DD), a practice logged sore or with pain that day holds the
+ * unlock for the day; `logs` may hold every drill's logs (the sore check reads them all, the counts
+ * this item's). `lastPainLog` is the newest practice of any drill logged with pain: only "yes" answers
+ * after it count (§10.3).
  */
-export function practiceLogRules(logs: readonly PracticeLogSummary[], itemId?: string, today?: string): LogRules {
+export function practiceLogRules(logs: readonly PracticeLogSummary[], itemId?: string, today?: string, lastPainLog?: PainLogMark): LogRules {
   const mine = logs.filter((l) => !itemId || !l.itemId || l.itemId === itemId)
-  const { yes, yesIgnoringPain, painLogged } = successesSincePain(mine)
+  const { yes, yesIgnoringPain, painLogged } = successesSincePain(mine, lastPainLog)
   const no = mine.filter((l) => l.successCriterionMet === 'no').length
   const lastTwo = mine.slice(-2)
-  const soreToday = soreLoggedOn(logs, today)
+  const soreToday = soreLoggedOn(logs, today, lastPainLog)
   return {
     unlockProgression: yes >= 2 && !soreToday,
     suggestRegression: no >= 2 && yes < 2,
@@ -148,15 +169,15 @@ export function chooseDrill(
   profile: NormalisedProfile,
   goal: Goal,
   logs: readonly PracticeLogSummary[] = [],
-  opts: { forceVariant?: DrillVariant; today?: string; soreLoggedToday?: boolean } = {},
+  opts: { forceVariant?: DrillVariant; today?: string; soreLoggedToday?: boolean; lastPainLog?: PainLogMark } = {},
 ): DrillChoice {
-  const rules = practiceLogRules(logs, item.id, opts.today)
+  const rules = practiceLogRules(logs, item.id, opts.today, opts.lastPainLog)
   const gatePasses = progressionGatePasses(item, profile) && effortAllowed(item.drill.progression, profile)
   const altAllowed = !!item.drill.progressionAlt && effortAllowed(item.drill.progressionAlt, profile)
   const progVariant: 'progression' | 'progression-alt' | null = gatePasses ? 'progression' : altAllowed ? 'progression-alt' : null
   const progText = progVariant === 'progression' ? item.drill.progression : progVariant === 'progression-alt' ? item.drill.progressionAlt : undefined
-  // Soreness today (the body check, or a practice logged sore today), or a practice logged with pain
-  // since the last two successful ones (§9.3, §10.3).
+  // Soreness today (the body check, or a practice logged sore or with pain today), or a practice of
+  // any drill logged with pain since the last two successful ones (§9.3, §10.3).
   const sore = profile.soreToday.length > 0 || rules.painPaused || rules.soreLoggedToday || !!opts.soreLoggedToday
   let variant: DrillVariant = 'base'
   if (opts.forceVariant) variant = opts.forceVariant === 'progression' || opts.forceVariant === 'progression-alt' ? (progVariant && !sore ? progVariant : 'base') : opts.forceVariant

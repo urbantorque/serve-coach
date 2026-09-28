@@ -5,7 +5,7 @@
  * The bundle lives in public/demo/ (seed JSON, key-frame JPEGs, one no-audio video per session) and is
  * inserted with isDemo = 1 when the player taps "See a sample session".
  */
-import { getDb } from './db.ts'
+import { getDb, withBlockNumbers } from './db.ts'
 import type {
   CoachingRecord,
   ExperimentRecord,
@@ -201,8 +201,9 @@ export async function insertSampleSeed(packed: SampleSeed, fetchBlob: BlobFetche
     'rw',
     [db.sessions, db.videos, db.videoBlobs, db.serves, db.tracks, db.keyFrames, db.tags, db.tallies, db.sessionStats, db.coaching, db.experiments, db.practiceLogs, db.matchLogs],
     async () => {
+      const numbered = new Map(withBlockNumbers(seed.sessions.map((s) => demo(s.session))).map((r) => [r.id, r]))
       for (const s of seed.sessions) {
-        await db.sessions.put(demo(s.session))
+        await db.sessions.put(numbered.get(s.session.id) ?? demo(s.session))
         for (const v of s.videos) {
           const { file: _file, ...row } = v
           const storage = row.storage === 'idb' && !kept.has(row.id) ? 'deleted' : row.storage

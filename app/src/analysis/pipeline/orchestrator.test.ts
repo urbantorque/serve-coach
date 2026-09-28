@@ -538,6 +538,15 @@ describe('runAnalysis', () => {
     expect(engineInput?.light).toBeUndefined()
   })
 
+  it('coaching gets the session’s own date (the import screen’s recording time or the player’s correction, E2), never the time of the analysis', async () => {
+    await createSession({ id: 'S1', startedAt: '2026-09-20T09:30:00.000Z', status: 'queued', mode: 'technique', view: 'side' })
+    const decide = vi.fn(async (_input: { startedAt: string }) => ({ status: 'decided' as const, decision: { kind: 'focus' } }))
+    const { deps } = makeDeps({ coaching: decide as unknown as PipelineDeps['coaching'] })
+    await runAnalysis(file(), baseOptions, deps)
+    expect(decide.mock.calls[0][0].startedAt).toBe('2026-09-20T09:30:00.000Z')
+    expect((await getSession('S1'))?.startedAt).toBe('2026-09-20T09:30:00.000Z')
+  })
+
   it('persist: false writes nothing and passes a coaching decision through', async () => {
     const decide = vi.fn(async () => ({ status: 'decided' as const, decision: { kind: 'focus' } }))
     const { deps } = makeDeps({ coaching: decide })

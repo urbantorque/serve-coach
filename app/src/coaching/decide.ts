@@ -19,6 +19,7 @@ import {
   experimentTransition,
   localYmd,
   matchedComparison,
+  primarySpec,
   retestDue,
   retestKind,
   sameSessionCheck,
@@ -32,6 +33,7 @@ import { loadGuidance } from './load.ts'
 import { normaliseProfile, REGION_WORDS, type NormalisedProfile } from './profile.ts'
 import { compareRanked, toRanked, type Ranked } from './rank.ts'
 import { COMFORT_LINE, REFERRAL_COPY, sorenessLine, UNDER_18_MESSAGE } from './safety.ts'
+import { seriesFor, values } from './series.ts'
 import { largestStratum, matchedHistory, servesInStratum } from './strata.ts'
 import type {
   BodyRegion,
@@ -254,7 +256,8 @@ export function decideFocus(given: CoachingInput): CoachingDecision {
         d.severity === 'major' &&
         d.confidence >= 0.7 &&
         (cooldowns[d.itemId] ?? 0) === 0 &&
-        !(d.pathTier === 'experimental' && !profile.showExperimental) &&
+        // Experimental evidence never interrupts an experiment, toggle or not (D2; §5.1, finding 44).
+        d.pathTier !== 'experimental' &&
         !it.contraindications.some((r) => profile.comfort.has(r))
       )
     })
@@ -355,8 +358,8 @@ function evaluateExperiment(ctx: Ctx, exp: CoachingExperiment): { verdict?: Focu
     const cmp = kind === 'matched' ? matchedComparison({ exp, session, history: verdictHistory(ctx), profile, verdict: input.verdict }) : null
     const result = cmp?.result ?? { verdict: 'not-comparable' as const, method: 'coaching', reason: unmatchedReason(exp, session) }
     const copy = cmp?.copy ?? verdictSentence(result)
-    const t = experimentTransition(exp, result, cmp?.resolvedMet ?? false, input.practiceLogs ?? [], localYmd(ctx.now))
-    // A practice logged sore today (any drill) holds the harder version for the day (§9.3, §10.3).
+    const t = experimentTransition(exp, result, cmp?.resolvedMet ?? false, input.practiceLogs ?? [], localYmd(ctx.now), input.lastPainLog)
+    // A practice logged sore or with pain today (any drill) holds the harder version for the day (§9.3, §10.3).
     const transition = t.unlockProgression && input.soreLoggedToday ? { ...t, unlockProgression: false } : t
     trace.push({ step: 'experiment', itemId: exp.itemId, passed: true, detail: `Re-test verdict ${result.verdict}; transition ${transition.status}.` })
     return { verdict: { ...result, copy, metricId: cmp?.request.metricId ?? 'serve-in-rate', rate: cmp?.request.kind === 'rate' }, transition }
@@ -399,8 +402,9 @@ function rankEligible(ctx: Ctx, detections: Map<string, Detection>, skip: Set<st
     if (!(d.confidence >= 0.7) || !atLeast(d.severity, 'moderate')) continue
     if (isComfortExcluded(it.id, ctx.profile)) continue
     if ((cooldowns[it.id] ?? 0) > 0) continue
-    // Effective experimental items run only with "Show experimental" on (§5.1, §13).
-    if (d.pathTier === 'experimental' && !ctx.profile.showExperimental) continue
+    // An effective experimental item never becomes the focus, toggle or not (D2; PRODUCT §4.2 rule 6;
+    // §5.1, §13; finding 44). With "Show experimental" on it shows under "Also noticed" only.
+    if (d.pathTier === 'experimental') continue
     out.push(toRanked(it, d, ctx.session, ctx.input.profile.goal))
   }
   out.sort(compareRanked)
@@ -443,6 +447,9 @@ export function withoutComfortClause(text: string): string {
   return /comfort/i.test(out) ? '' : out
 }
 
+/** An experimental check noticed with "Show experimental" on: it never sets the focus (D2; finding 44). */
+export const EXPERIMENTAL_NOTICED = 'This is an experimental check, so it never sets your focus.'
+
 function checkFrom(it: LibraryItem, d: Detection | undefined, status: ItemCheck['status'], text?: string): ItemCheck {
   return {
     itemId: it.id,
@@ -481,6 +488,11 @@ function allChecks(ctx: Ctx, detections: Map<string, Detection>, focusId: string
     if (d.status === 'not-applicable') continue
     if (d.status === 'eligible' && d.pathTier === 'experimental' && !ctx.profile.showExperimental) {
       out.push(checkFrom(it, d, 'experimental-off', `${subjectOf(it.id, it.title)} is an experimental check, which you haven't switched on.`))
+      continue
+    }
+    if (d.status === 'eligible' && d.pathTier === 'experimental') {
+      // Toggle on: noticed and marked, never the focus (finding 44).
+      out.push(checkFrom(it, d, 'eligible', `${d.text ? `${d.text} ` : ''}${EXPERIMENTAL_NOTICED}`.trim()))
       continue
     }
     out.push(checkFrom(it, d, d.status === 'eligible' ? 'eligible' : (d.status as ItemCheck['status'])))
@@ -567,10 +579,10 @@ function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: Focu
   // holds the harder version for the day (COACHING §9.3, §10.3).
   const logs = input.practiceLogs ?? []
   const today = localYmd(ctx.now)
-  const rules = practiceLogRules(logs, it.id, today)
+  const rules = practiceLogRules(logs, it.id, today, input.lastPainLog)
   const register = o.register ?? profile.register
   const cue = chooseCue(it, register, stratum)
-  const drill = chooseDrill(it, profile, input.profile.goal, logs, { ...(o.variant ? { forceVariant: o.variant } : {}), today, soreLoggedToday: !!input.soreLoggedToday })
+  const drill = chooseDrill(it, profile, input.profile.goal, logs, { ...(o.variant ? { forceVariant: o.variant } : {}), today, soreLoggedToday: !!input.soreLoggedToday, ...(input.lastPainLog ? { lastPainLog: input.lastPainLog } : {}) })
   const primaryStatus = d?.metric?.value.status
   const effectiveTier = weakestTier([it.evidenceTier, d?.pathTier ?? it.evidenceTier, ...(primaryStatus === 'experimental' ? (['experimental'] as const) : [])])
   const reasons: RankReason[] = []
@@ -589,7 +601,7 @@ function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: Focu
   if (evidence.outcomeSentence) reasons.push({ kind: 'outcome', text: evidence.outcomeSentence })
   if (it.goalsServed.includes(input.profile.goal)) reasons.push({ kind: 'goal', text: DECISION_COPY.goal(input.profile.goal) })
   if (session.flags?.fatigue) reasons.push({ kind: 'fatigue', text: DECISION_COPY.fatigue })
-  if (measurable && d && (d.path === 'absolute' || d.path === 'population') && !hasHistory(ctx, stratum)) {
+  if (measurable && d && (d.path === 'absolute' || d.path === 'population') && !hasHistory(ctx, stratum, it)) {
     ctx.notes.push(DECISION_COPY.baselineBuilding)
   }
   const checks = allChecks(ctx, o.detections, it.id, o.cooldowns)
@@ -667,9 +679,26 @@ function blockBAfterDrill(ctx: Ctx, exp: CoachingExperiment, itemId: string): Fo
   return sameSessionCheck(itemId, { ...session, serves: [...a, ...b] }, profile, exp.stratum)
 }
 
-/** §6.4: the personal baseline starts after 3 matched sessions (same stratum and set-up, not poor). */
-function hasHistory(ctx: Ctx, key: CoachingStratum): boolean {
-  return matchedHistory(ctx.history, key, ctx.session.startedAt).length >= 3
+/** Earlier matched sessions a personal baseline needs (§6.4; detect's REQUIRED_PRIOR_SESSIONS). */
+const BASELINE_SESSIONS = 3
+
+/**
+ * §6.4: the personal baseline starts after 3 matched sessions (same stratum and set-up, not poor) that
+ * have the item's primary metric with at least its per-session minimum of usable serves, the same
+ * history the relative and "slipped" rules read (history.ts). A matched session with only a few serves,
+ * or with the metric out of frame, does not count.
+ */
+function hasHistory(ctx: Ctx, key: CoachingStratum, it: LibraryItem): boolean {
+  const spec = primarySpec(it, ctx.profile)
+  const spread = spec.kind === 'spread'
+  const minServes = Math.max(1, it.detection.minUsableServes)
+  const opts = { heightM: ctx.profile.heightM, showExperimental: ctx.profile.showExperimental, forSpread: spread }
+  let n = 0
+  for (const h of matchedHistory(ctx.history, key, ctx.session.startedAt)) {
+    if (values(seriesFor(h, servesInStratum(h, key), spec.seriesId, opts)).length >= minServes) n++
+    if (n >= BASELINE_SESSIONS) return true
+  }
+  return false
 }
 
 function fallbackStratum(session: CoachingSession): CoachingStratum {

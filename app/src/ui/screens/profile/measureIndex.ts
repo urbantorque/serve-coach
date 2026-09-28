@@ -50,12 +50,15 @@ export const LEVEL_SHORT: Record<ValidationLevel, string> = {
 }
 
 /**
- * Where a metric can be computed. A metric checked on simulated serves was checked from the side
- * only (the raised view from behind was never rendered, docs/VALIDATION.md §7), so it says so.
+ * Where a metric can be computed. Every simulated check so far was scored from the side only (the
+ * raised view from behind was never rendered, docs/VALIDATION.md §7), so a two-view row that passed
+ * says "checked from the side only", and one that quotes a typical error without passing (toss height,
+ * trophy pause) says "scored from the side only": a player filming from behind never reads a side-view
+ * error as theirs (finding 55).
  */
-export function viewWords(views: readonly ('side' | 'rear')[], level: ValidationLevel = 'V0'): string {
+export function viewWords(views: readonly ('side' | 'rear')[], level: ValidationLevel = 'V0', scored = false): string {
   if (views.length === 0) return 'No view'
-  if (views.length === 2) return level === 'V0' ? 'Either view' : 'Either view, checked from the side only'
+  if (views.length === 2) return level !== 'V0' ? 'Either view, checked from the side only' : scored ? 'Either view, scored from the side only' : 'Either view'
   return views[0] === 'side' ? 'Side view' : 'View from behind'
 }
 
@@ -67,15 +70,16 @@ export function viewWords(views: readonly ('side' | 'rear')[], level: Validation
  */
 export function measureRow(id: MetricId): MeasureRow {
   const own = statusCeiling(id, 'day')
+  const words = rowDetail(id)
   return {
     id,
     name: metricName(id),
     status: own.status,
     level: own.level,
-    views: viewWords(METRIC_VIEWS[id], own.level),
+    views: viewWords(METRIC_VIEWS[id], own.level, words.includes('Typical error')),
     levelWords: LEVEL_SHORT[own.level],
     validationState: validationStateOf(id),
-    validationWords: rowDetail(id),
+    validationWords: words,
   }
 }
 

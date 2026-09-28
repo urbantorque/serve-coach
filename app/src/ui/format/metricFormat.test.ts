@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MetricValue } from '../../analysis/types.ts'
-import { formatMetric, outwardTo5 } from './metricFormat.ts'
+import { formatMetric, outwardTo5, shortCaveat } from './metricFormat.ts'
 
 const mv = (p: Partial<MetricValue> & Pick<MetricValue, 'id' | 'status'>): MetricValue => ({
   value: null,
@@ -86,9 +86,23 @@ describe('formatMetric (DESIGN §4.3)', () => {
     expect(wide.aria).not.toMatch(/-d/)
   })
 
+  it('a range whose bounds round to one step says one number, never "6% to 6%" (finding 61)', () => {
+    const est = formatMetric('loading-depth', mv({ id: 'loading-depth', status: 'estimated', value: 6.1, uncertainty: { kind: 'ci95', low: 5.8, high: 6.3 }, n: 16, nEligible: 16 }))
+    expect(est.text).toMatch(/6%/)
+    expect(est.detail).toBeUndefined()
+    expect(est.aria).not.toMatch(/6 percent to 6/)
+    const exp = formatMetric('toss-forward', mv({ id: 'toss-forward', status: 'experimental', value: 30, uncertainty: { kind: 'range', low: 29.6, high: 30.2 } }))
+    expect(exp.text).not.toMatch(/ to /)
+    expect(exp.text).toMatch(/^about 30/)
+  })
+
   it('leg drive as an Estimate always carries its low-read caveat, in the text and the spoken sentence (finding 50)', () => {
     const f = formatMetric('leg-drive', mv({ id: 'leg-drive', status: 'estimated', value: 10, uncertainty: { kind: 'ci95', low: 7, high: 13 }, n: 16, nEligible: 16 }))
-    expect(f.note).toMatch(/reads about 2% of your height low/i)
+    expect(f.note).toMatch(/reads about 2.5% of your height low/i)
+    // The video's "Hips rose" pill carries the short form (finding 50).
+    expect(shortCaveat('leg-drive', { status: 'estimated' })).toBe('reads low')
+    expect(shortCaveat('leg-drive', { status: 'experimental' })).toBeUndefined()
+    expect(shortCaveat('loading-depth', { status: 'estimated' })).toBeUndefined()
     expect(f.note).toMatch(/your own serves/)
     expect(f.aria).toContain(f.note!)
     // Experimental values are already a rough range; loading depth never gets the note.

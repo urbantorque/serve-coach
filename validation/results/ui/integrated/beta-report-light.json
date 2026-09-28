@@ -1,13 +1,13 @@
 {
   "format": "serve-coach-beta-report",
   "version": 1,
-  "exportedAt": "2026-09-28T00:48:22.995Z",
+  "exportedAt": "2026-09-28T05:45:46.175Z",
   "app": {
     "version": "0.1.0",
     "platform": "pwa",
     "display": "browser"
   },
-  "installRef": "BRV7S5QNFX",
+  "installRef": "32ZCV705T5",
   "definitions": {
     "activation": "Within 7 days of the first open: one analysed session with 10 or more serves and capture Fair or Good, then Focus and drill opened.",
     "loopCompletion": "A re-test analysed within 14 days of its baseline whose “Did it work?” verdict was not “Not comparable yet”.",
@@ -16,10 +16,10 @@
     "times": "Every time is rounded down to the hour (UTC)."
   },
   "gates": {
-    "firstOpenedAt": "2026-09-28T00:00:00.000Z",
+    "firstOpenedAt": "2026-09-28T05:00:00.000Z",
     "activation": {
       "status": "open",
-      "windowEndsAt": "2026-10-05T00:00:00.000Z",
+      "windowEndsAt": "2026-10-05T05:00:00.000Z",
       "validSessionAt": null,
       "focusOpenedAt": null
     },
@@ -61,6 +61,7 @@
       "usefulness_rated": 0,
       "usefulness_skipped": 0,
       "paywall_viewed": 3,
+      "plus_wtp_answered": 3,
       "recording_recovered": 0,
       "storage_persist_requested": 1
     }
@@ -68,29 +69,15 @@
   "events": [
     {
       "name": "app_first_opened",
-      "at": "2026-09-28T00:00:00.000Z",
+      "at": "2026-09-28T05:00:00.000Z",
       "props": {
         "display": "browser",
         "platform": "pwa"
       }
     },
     {
-      "name": "paywall_viewed",
-      "at": "2026-09-28T00:00:00.000Z",
-      "props": {
-        "trigger": "t3"
-      }
-    },
-    {
-      "name": "paywall_viewed",
-      "at": "2026-09-28T00:00:00.000Z",
-      "props": {
-        "trigger": "t3"
-      }
-    },
-    {
       "name": "storage_persist_requested",
-      "at": "2026-09-28T00:00:00.000Z",
+      "at": "2026-09-28T05:00:00.000Z",
       "props": {
         "result": "denied",
         "from": "first-session"
@@ -98,14 +85,23 @@
     },
     {
       "name": "paywall_viewed",
-      "at": "2026-09-28T00:00:00.000Z",
+      "at": "2026-09-28T05:00:00.000Z",
       "props": {
         "trigger": "t2"
       }
     },
     {
+      "name": "plus_wtp_answered",
+      "at": "2026-09-28T05:00:00.000Z",
+      "props": {
+        "trigger": "t2",
+        "wtp": "yes",
+        "price": "annual-99-99"
+      }
+    },
+    {
       "name": "analysis_completed",
-      "at": "2026-09-28T00:00:00.000Z",
+      "at": "2026-09-28T05:00:00.000Z",
       "props": {
         "serves": "1-4",
         "capture": "good",
@@ -114,6 +110,38 @@
         "source": "imported",
         "retest": false,
         "sinceBaseline": "none"
+      }
+    },
+    {
+      "name": "paywall_viewed",
+      "at": "2026-09-28T05:00:00.000Z",
+      "props": {
+        "trigger": "t3"
+      }
+    },
+    {
+      "name": "plus_wtp_answered",
+      "at": "2026-09-28T05:00:00.000Z",
+      "props": {
+        "trigger": "t3",
+        "wtp": "no",
+        "price": "annual-99-99"
+      }
+    },
+    {
+      "name": "paywall_viewed",
+      "at": "2026-09-28T05:00:00.000Z",
+      "props": {
+        "trigger": "t3"
+      }
+    },
+    {
+      "name": "plus_wtp_answered",
+      "at": "2026-09-28T05:00:00.000Z",
+      "props": {
+        "trigger": "t3",
+        "wtp": "maybe",
+        "price": "annual-99-99"
       }
     }
   ],

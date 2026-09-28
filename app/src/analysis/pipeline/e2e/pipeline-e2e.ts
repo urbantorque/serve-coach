@@ -120,6 +120,8 @@ function packDump(input: EngineInput, out: EngineOutput): PipelineDump {
       targetTags: input.targetTags,
       ids: input.ids,
       heightEntered: input.heightEntered,
+      // The light measured on the serve scan (quality/light.ts), so a replay sees the same class.
+      ...(input.light ? { light: input.light } : {}),
     },
   }
 }

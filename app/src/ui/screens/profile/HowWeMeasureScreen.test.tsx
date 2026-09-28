@@ -23,7 +23,9 @@ describe('How we measure: validation layer', () => {
       expect(row.textContent, r.id).toContain(r.validationWords)
       expect(row.querySelector('a')?.getAttribute('href')).toBe(paths.metricInfo(r.id))
     }
-    expect(byId.get('toss-apex-height')?.validationWords).toBe('Checked on simulated serves. Typical error: about 1% of your height.')
+    expect(byId.get('contact-height-ratio')?.validationWords).toBe('Checked on simulated serves. Typical error: under 1% of your height.')
+    // Passed through the app only (finding 41): both figures, never a pass.
+    expect(byId.get('toss-apex-height')?.validationWords).toBe('Simulated check not passed yet. Typical error: about 1% of your height through the app, about 4% of your height with exact body points.')
     expect(byId.get('toss-forward')?.validationWords).toMatch(/^Simulated check not passed yet\./)
     expect(byId.get('first-serve-in-rate')?.validationWords).toBe('You log this.')
   })
@@ -33,11 +35,12 @@ describe('How we measure: validation layer', () => {
     expect(await screen.findByText('How far our checks have gone', {}, { timeout: 3000 })).toBeInTheDocument()
     expect(screen.getByText('Validation results')).toBeInTheDocument()
     expect(screen.getByText(/We ran 122 computer-generated serve clips/)).toBeInTheDocument()
-    expect(screen.getByText(/11 measurements passed \(6 on limited evidence\)\. 7 haven.t passed yet and stay experimental\./)).toBeInTheDocument()
+    expect(screen.getByText(/10 measurements passed \(6 on limited evidence\)\. 8 haven.t passed yet and stay experimental\./)).toBeInTheDocument()
     expect(screen.getByText(/Not tested yet: real players, real phones and courts, real court lights/)).toBeInTheDocument()
     expect(screen.getByText('Results by measurement')).toBeInTheDocument()
     expect(document.querySelector('[data-result-metric="toss-forward"]')?.textContent).toMatch(/Not passed yet/)
-    expect(document.querySelector('[data-result-metric="toss-apex-height"]')?.textContent).toMatch(/Passed\. Typical error: about 1% of your height/)
+    expect(document.querySelector('[data-result-metric="contact-height-ratio"]')?.textContent).toMatch(/Passed\. Typical error: under 1% of your height/)
+    expect(document.querySelector('[data-result-metric="toss-apex-height"]')?.textContent).toMatch(/Not passed yet\. Typical error: about 1% of your height through the app, about 4% of your height with exact body points/)
     expect(screen.getByText('Known limits')).toBeInTheDocument()
     expect(screen.getAllByText(/Every check so far used computer-generated serves/).length).toBeGreaterThan(0)
     const text = document.body.textContent ?? ''

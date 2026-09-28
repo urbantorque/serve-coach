@@ -46,7 +46,7 @@ import type { PipelineEvent, PipelineTimings, RunAnalysisOptions, RunAnalysisRes
 import { LaneQueue } from './laneQueue.ts'
 import { activitySpans, ballIndices, ballSearchCrop, ballSearchDoubtS, planWindows, poseIndices, sparseStep, tossSearchBand, type PlannedWindow } from './windows.ts'
 
-export const PIPELINE_VERSION = '1.1.0'
+export const PIPELINE_VERSION = '1.1.1'
 /**
  * The ball crop is downscaled on the GPU until the expected ball radius is about this many pixels.
  * The detector works on a grid of about 3 cells per radius anyway (detector.ts), so a larger ball
@@ -511,13 +511,17 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
 
     // Session, video and job rows before any decoding (a failed run can be retried).
     let videoId = ulid()
+    // When the serves were filmed: the session's own date when it exists (the import screen saved the
+    // recording time or the player's correction, E2), else the container's recording time, else now.
+    let startedAt = probed.createdAt ?? new Date().toISOString()
     if (persist) {
-      await prepareSession({
+      const session = await prepareSession({
         sessionId: options.sessionId,
         view: options.view,
         capture,
-        startedAt: probed.createdAt ?? new Date().toISOString(),
+        startedAt,
       })
+      startedAt = session.startedAt
       const stored = await storeVideo({
         videoId,
         sessionId: options.sessionId,
@@ -1064,7 +1068,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     const showExperimental = persist ? await getSetting('experimentalMetrics') : false
     const coaching = await raceAbortWork(deps.coaching({
       sessionId: options.sessionId,
-      startedAt: probed.createdAt ?? new Date().toISOString(),
+      startedAt,
       view: options.view,
       capture,
       fpsClass,

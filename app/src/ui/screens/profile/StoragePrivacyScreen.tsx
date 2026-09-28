@@ -34,7 +34,9 @@ import { exportDate, shortDate } from '../../format/dates.ts'
 import { paths } from '../../shell/paths.ts'
 import { useOnboardingDraft } from '../onboarding/draftStore.ts'
 import { resetFocusStore } from '../focus/focusStore.ts'
-import { cancelAnalysis, useJobs } from '../record/flow/jobs.ts'
+import { resetRecordFlow } from '../record/flow/flowStore.ts'
+import { cancelAnalysis, forgetAllJobs, useJobs } from '../record/flow/jobs.ts'
+import { resetTodayStore } from '../today/todayStore.ts'
 import { activeRecordings } from '../record/live/recorder.ts'
 import { STORAGE_CHANGED_EVENT } from '../../../platform/storage.ts'
 import { StorageProtection } from '../../../platform/ui/StorageProtection.tsx'
@@ -446,6 +448,11 @@ export function StoragePrivacyScreen() {
               // In-memory answers (a referral, today's body check, planned re-tests) go too, so they
               // are not written back to storage by the next change.
               resetFocusStore()
+              // Every analysis job goes with its in-memory video, so Resume can never bring a deleted
+              // session back (finding 18); the Record flow and Today start fresh too.
+              forgetAllJobs()
+              resetRecordFlow()
+              resetTodayStore()
               useOnboardingDraft.getState().reset()
               await useSettingsStore.getState().hydrate()
               setDeletedAt(new Date())

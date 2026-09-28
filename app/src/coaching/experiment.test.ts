@@ -247,6 +247,22 @@ describe('load guidance (§11)', () => {
     const g = loadGuidance(normaliseProfile(profile()), 'first-serves-in', { daysSinceLastServes: 20, previousWeeklyAverage: 120 })
     expect(g.notes.find((n) => n.id === 'return')?.text).toMatch(/about 60 serves/)
   })
+
+  it('after a break one session never asks for more than the first week allows (the budget and the note agree)', () => {
+    const light = loadGuidance(normaliseProfile(profile()), 'first-serves-in', { daysSinceLastServes: 46, previousWeeklyAverage: 38 })
+    expect(light.sessionBudget).toBe(20)
+    expect(light.hardServeCap).toBe(10)
+    expect(light.notes[0].text).toMatch(/about 20 guided serves today/)
+    expect(light.notes.find((n) => n.id === 'return')?.text).toMatch(/about 20 serves/)
+    // A busy player's week back still allows a normal session; without a number nothing changes.
+    expect(loadGuidance(normaliseProfile(profile()), 'first-serves-in', { daysSinceLastServes: 20, previousWeeklyAverage: 400 }).sessionBudget).toBe(80)
+    expect(loadGuidance(normaliseProfile(profile()), 'first-serves-in', { daysSinceLastServes: 20 }).sessionBudget).toBe(80)
+    expect(loadGuidance(normaliseProfile(profile()), 'first-serves-in', { daysSinceLastServes: 3, previousWeeklyAverage: 38 }).sessionBudget).toBe(80)
+    // Down to the warm-up only: no hard serves at all.
+    const tiny = loadGuidance(normaliseProfile(profile()), 'first-serves-in', { daysSinceLastServes: 30, previousWeeklyAverage: 12 })
+    expect(tiny.sessionBudget).toBe(10)
+    expect(tiny.hardServeCap).toBe(0)
+  })
 })
 
 describe('METRICS §4.5 fallback verdict', () => {

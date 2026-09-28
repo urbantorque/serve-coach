@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseMoovMetadata, QT_KEYS, type ContainerMetadata } from './qtMetadata.ts'
-import { containerRecordingTime, parseRecorderDate, recordingTimeFor } from './recordedAt.ts'
+import { containerRecordingTime, localDateOf, parseRecorderDate, recordingTimeFor, withLocalDate } from './recordedAt.ts'
 
 const enc = new TextEncoder()
 const u32 = (v: number) => [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]
@@ -60,5 +60,24 @@ describe('recording time from the container (E2)', () => {
     expect(recordingTimeFor({ fileLastModified: Date.UTC(2026, 8, 26, 8), nowMs: NOW })).toEqual({ iso: '2026-09-26T08:00:00.000Z', source: 'file-modified' })
     expect(recordingTimeFor({ fileLastModified: 0, nowMs: NOW })).toEqual({ iso: new Date(NOW).toISOString(), source: 'import-time' })
     expect(recordingTimeFor({ nowMs: NOW }).source).toBe('import-time')
+    // A file "changed" a minute ago is the copy handed over for the import (iOS Photos), not the recording.
+    expect(recordingTimeFor({ fileLastModified: NOW - 60_000, nowMs: NOW }).source).toBe('import-time')
+  })
+
+  it('the player can move the date: the local time of day is kept, never a future day or before 2005', () => {
+    // Local times, so the test holds in any time zone.
+    const recorded = new Date(2026, 8, 27, 19, 41, 8).toISOString()
+    expect(localDateOf(recorded)).toBe('2026-09-27')
+    const moved = withLocalDate(recorded, '2026-09-20', NOW)!
+    expect(localDateOf(moved)).toBe('2026-09-20')
+    expect(new Date(moved).getHours()).toBe(19)
+    expect(new Date(moved).getMinutes()).toBe(41)
+    expect(withLocalDate(recorded, '2099-01-01', NOW)).toBeNull()
+    expect(withLocalDate(recorded, '2001-01-01', NOW)).toBeNull()
+    expect(withLocalDate(recorded, '2026-02-30', NOW)).toBeNull()
+    expect(withLocalDate(recorded, '', NOW)).toBeNull()
+    // Today, at a time still to come: now.
+    const now = new Date(2026, 8, 28, 9, 0, 0).getTime()
+    expect(withLocalDate(recorded, '2026-09-28', now)).toBe(new Date(now).toISOString())
   })
 })

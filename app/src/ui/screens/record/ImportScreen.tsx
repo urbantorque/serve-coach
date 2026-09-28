@@ -2,7 +2,7 @@ import { FilmReelIcon, InfoIcon, ShieldCheckIcon, UploadSimpleIcon, WarningCircl
 import { lazy, Suspense, useId, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { VideoMeta } from '../../../analysis/types.ts'
-import { recordingTimeFor } from '../../../analysis/video/recordedAt.ts'
+import { localDateOf, recordingTimeFor, withLocalDate } from '../../../analysis/video/recordedAt.ts'
 import { saveProfile, useSettingsStore } from '../../../data/index.ts'
 import { useProfile, useSetting } from '../../../data/hooks.ts'
 import { Button, Card, DelayedSkeleton, Screen, SectionLabel, Sheet, Skeleton } from '../../components/index.ts'
@@ -74,6 +74,8 @@ export function ImportScreen() {
   const [type, setType] = useState<'flat' | 'slice' | 'kick' | 'mixed' | null>(null)
   const [slow, setSlow] = useState<SlowMotionAnswer | null>(null)
   const [lightEdit, setLight] = useState<ImportLight | null>(null)
+  // The day the player says it was filmed ('YYYY-MM-DD'); until then the recording time's day.
+  const [dateEdit, setDateEdit] = useState<string | null>(null)
   const [speed, setSpeed] = useState<SlowMotionSpeed | null>(null)
   // The player's own answers win; until then the profile prefills them.
   const [heightEdit, setHeightCm] = useState<number | null>(null)
@@ -89,6 +91,7 @@ export function ImportScreen() {
   const pick = async (f: File | null) => {
     setError(null)
     setFile(f)
+    setDateEdit(null)
     setSlow(null)
     setSpeed(null)
     if (!f) {
@@ -118,12 +121,23 @@ export function ImportScreen() {
   const recorded = meta ? recordingTimeFor({ createdAt: meta.createdAt, fileLastModified: file?.lastModified }) : null
   // The player's answer wins; an evening timestamp starts it at court lights (never at daylight).
   const light = lightEdit ?? lightFromTimestamp(recorded && recorded.source !== 'import-time' ? recorded.iso : undefined)
+  // The player can move the day (the time of day is kept); a cleared or future date asks again.
+  const filmedAt = recorded ? (dateEdit === null ? recorded.iso : withLocalDate(recorded.iso, dateEdit)) : null
+  const dateNote = !recorded
+    ? ''
+    : dateEdit !== null
+      ? 'You set this date.'
+      : recorded.source === 'container'
+        ? 'Read from the video file.'
+        : recorded.source === 'file-modified'
+          ? 'From when the file was last changed. Change it if you filmed on another day.'
+          : "The video doesn't say when it was filmed, so it's set to today. Change it if you filmed on another day."
   const view = viewFor(camera)
   const fpsForSpeed = fpsOverrideFor(slow, speed) ?? meta?.captureFps ?? 0
   const speedNote = speedTargetNote({ experimental, captureFps: fpsForSpeed, view: view.view, target })
   const heightMissing = heightCm === null || hand === null
   const sound = soundNote(meta?.hasAudio ?? false)
-  const canAnalyse = Boolean(file && meta && !guard && !heightMissing && !(askSlow && slow === null) && light !== null)
+  const canAnalyse = Boolean(file && meta && !guard && !heightMissing && !(askSlow && slow === null) && light !== null && filmedAt !== null)
   const helper = !file
     ? null
     : guard
@@ -134,10 +148,12 @@ export function ImportScreen() {
           ? 'Answer the slow-motion question to continue.'
           : light === null
             ? 'Say what the light was to continue.'
-            : null
+            : filmedAt === null
+              ? 'Choose the day you filmed to continue.'
+              : null
 
   const analyse = async () => {
-    if (!file || !meta || !canAnalyse || heightCm === null || hand === null || light === null) return
+    if (!file || !meta || !canAnalyse || heightCm === null || hand === null || light === null || filmedAt === null) return
     setBusy(true)
     setError(null)
     try {
@@ -160,7 +176,7 @@ export function ImportScreen() {
       }
       const capture = importCapture(player, answers, meta)
       const block = { side, serveNumber: serve, type, target, servingSpot: spot }
-      const startedAt = recorded?.iso ?? new Date().toISOString()
+      const startedAt = filmedAt
       const { sessionId } = await saveNewSession({
         // The re-test plan picked on Record also applies to an imported clip (it links to the experiment).
         session: { capture, view: view.view, cameraSide: view.cameraSide, mode: view.mode, template: useRecordFlow.getState().plan === 'retest' ? 'retest' : 'import', startedAt, block },
@@ -364,6 +380,33 @@ export function ImportScreen() {
                 onChange={setTarget}
               />
               {speedNote ? <p className="pl-16 text-footnote text-ink-2">{speedNote}</p> : null}
+            </Card>
+          </section>
+
+          <section className="flex flex-col gap-3" aria-labelledby="q-when">
+            <SectionLabel>
+              <span id="q-when">When was it filmed?</span>
+            </SectionLabel>
+            <Card className="flex flex-col gap-1.5">
+              <label htmlFor={`${inputId}-date`} className="text-footnote font-label text-ink-2">
+                Date
+              </label>
+              <input
+                id={`${inputId}-date`}
+                type="date"
+                name="filmed-date"
+                autoComplete="off"
+                min="2005-01-01"
+                max={localDateOf(new Date().toISOString())}
+                value={dateEdit ?? (recorded ? localDateOf(recorded.iso) : '')}
+                aria-invalid={filmedAt === null ? true : undefined}
+                aria-describedby={`${inputId}-date-help`}
+                onChange={(e) => setDateEdit(e.target.value)}
+                className="h-13 w-full rounded-control border-token border-line-strong bg-surface px-4 text-body text-ink tabular-nums"
+              />
+              <p id={`${inputId}-date-help`} aria-live="polite" className="text-footnote text-ink-3">
+                {filmedAt === null ? 'Choose a day up to today.' : dateNote}
+              </p>
             </Card>
           </section>
 

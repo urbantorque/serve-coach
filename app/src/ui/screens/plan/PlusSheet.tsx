@@ -1,5 +1,5 @@
 import { CheckIcon, FlaskIcon, ShieldCheckIcon } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { recordWtpAnswer, WTP_ANSWERS, type PaywallTrigger, type PlusFeature, type WtpAnswer } from '../../../entitlement/index.ts'
 import { Button, Sheet } from '../../components/index.ts'
 import { ChoiceChips } from '../../components/record/ChoiceChips.tsx'
@@ -60,10 +60,12 @@ function AddsList({ label }: { label: string }) {
 function PlusPreviewSheet({ open, onClose, trigger, feature }: PlusSheetProps) {
   const copy = plusPreviewCopy(trigger, feature)
   const [answer, setAnswer] = useState<WtpAnswer | null>(null)
-  // A fresh question each time the sheet opens.
-  useEffect(() => {
+  // A fresh question each time the sheet opens (state adjusted while rendering, not in an effect).
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
     if (open) setAnswer(null)
-  }, [open])
+  }
   const choose = (a: WtpAnswer | null) => {
     if (!a || answer) return
     setAnswer(a)

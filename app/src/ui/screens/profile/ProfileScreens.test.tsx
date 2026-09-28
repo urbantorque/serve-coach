@@ -6,6 +6,11 @@ import { METRIC_IDS } from '../../../analysis/types.ts'
 import { resetDbForTests } from '../../../data/db.ts'
 import { DEMO_FIXTURES, getProfile, getSetting, hasDemoData, listSessions, loadDemoData, saveProfile, setSetting, useSettingsStore } from '../../../data/index.ts'
 import { lintCopy } from '../../copy/lint.ts'
+import { useUiStore } from '../../../data/stores/ui.ts'
+import { useFocusStore } from '../focus/focusStore.ts'
+import { useRecordFlow } from '../record/flow/flowStore.ts'
+import { hasHandle, startAnalysis, useJobs } from '../record/flow/jobs.ts'
+import { useTodayStore } from '../today/todayStore.ts'
 import { paths } from '../../shell/paths.ts'
 import { routes } from '../../shell/routes.ts'
 import { ThemeProvider } from '../../theme/ThemeProvider.tsx'
@@ -194,6 +199,40 @@ describe('Storage and privacy', () => {
     expect(await screen.findByText('Everything is deleted')).toBeInTheDocument()
     expect(await getProfile()).toBeUndefined()
     expect(await listSessions()).toEqual([])
+  })
+
+  it('"Delete everything" leaves nothing in memory: jobs and their video, a referral, the re-test plan (finding 18)', async () => {
+    const user = userEvent.setup()
+    const clip = { title: 'Mon 28 Sep, 0:05', line: 'Side view, deuce, first serves', tech: '1080p, 60 fps', orientation: 'portrait' as const }
+    void startAnalysis({
+      sessionId: 'running',
+      file: new Blob(['x']),
+      clip,
+      run: { profile: { heightM: 1.8, handedness: 'right' }, view: 'side', capture: {} as never },
+      runner: (_f, o) =>
+        new Promise((_r, reject) => {
+          const stop = () => reject(new DOMException('stop', 'AbortError'))
+          if (o.signal.aborted) stop()
+          else o.signal.addEventListener('abort', stop)
+        }),
+    })
+    useFocusStore.getState().setReferral('stop-and-book')
+    useRecordFlow.getState().setPlan('retest')
+    useTodayStore.getState().dismissMorningAfter('2026-09-27')
+    renderAt(paths.storage())
+    await h1('Storage and privacy')
+    expect(await screen.findByText(/On this phone:/)).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Delete everything' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Delete everything?' })
+    await user.type(within(dialog).getByLabelText(/Type “delete” to confirm/), 'delete')
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }))
+    expect(await screen.findByText('Everything is deleted')).toBeInTheDocument()
+    expect(useJobs.getState().jobs).toEqual({})
+    expect(hasHandle('running')).toBe(false)
+    expect(useUiStore.getState().activeJob).toBeNull()
+    expect(useFocusStore.getState().referral).toBeUndefined()
+    expect(useRecordFlow.getState().plan).toBe('check-in')
+    expect(useTodayStore.getState().morningAfterDismissed).toBeUndefined()
   })
 })
 

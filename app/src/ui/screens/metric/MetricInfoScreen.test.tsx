@@ -57,14 +57,23 @@ describe('Metric info', () => {
 
   it('how sure we are: typical error, pass mark and test details for a measured metric', async () => {
     await seedPlayer()
-    renderAt(paths.metricInfo('toss-apex-height'))
+    renderAt(paths.metricInfo('contact-height-ratio'))
     expect(await screen.findByText('How sure we are', {}, { timeout: 3000 })).toBeInTheDocument()
     expect(screen.getByText(/^Checked on simulated serves in daylight\. Not yet checked on real courts\.$/)).toBeInTheDocument()
-    expect(screen.getByText(/^At the recommended set-ups \(11 simulated serves filmed 7 to 9 m away\), the typical error was about 1% of your height/)).toBeInTheDocument()
-    expect(screen.getByText(/Our pass mark is a typical error within 2\.5% of your height, and 1 in 20 serves within 5%\. It passed\./)).toBeInTheDocument()
+    expect(screen.getByText(/^At the recommended set-ups \(11 simulated serves filmed 7 to 9 m away\), the typical error was under 1% of your height/)).toBeInTheDocument()
+    expect(screen.getByText(/Our pass mark is a typical error within 3% of your height, and 1 in 20 serves within 5%\. It passed\./)).toBeInTheDocument()
     expect(screen.getByText('Test details')).toBeInTheDocument()
     expect(screen.getByText('Recommended set-ups, 7 to 9 m away')).toBeInTheDocument()
-    expect(screen.getAllByText('Not passed yet').length).toBeGreaterThan(0) // the 5 m clips read low: said, not hidden
+    expect(screen.getAllByText('Not passed yet').length).toBeGreaterThan(0) // the 5 m clips read low (p95): said, not hidden
+    expectHonest()
+  })
+
+  it('toss height passed through the app only: both figures, experimental, never "It passed" (finding 41)', async () => {
+    await seedPlayer()
+    renderAt(paths.metricInfo('toss-apex-height'))
+    expect(await screen.findByText(/Tested on simulated serves and not accurate enough yet, so it stays experimental/, {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.getByText(/Through the app it was within that, but with exact body points the typical error was about 4% of your height/)).toBeInTheDocument()
+    expect(screen.queryByText(/It passed\./)).toBeNull()
     expectHonest()
   })
 
@@ -84,9 +93,9 @@ describe('Metric info', () => {
   })
 
   it('with no session yet it says so, with the best label, instead of "couldn\'t see this clearly"', async () => {
-    renderAt(paths.metricInfo('toss-apex-height'))
+    renderAt(paths.metricInfo('contact-height-ratio'))
     expect(await screen.findByText('No reading yet', {}, { timeout: 3000 })).toBeInTheDocument()
-    expect(document.querySelector('[data-metric="toss-apex-height"]')?.getAttribute('data-status')).toBe('none')
+    expect(document.querySelector('[data-metric="contact-height-ratio"]')?.getAttribute('data-status')).toBe('none')
     expect(screen.getByText('In daylight it shows as')).toBeInTheDocument()
     expect(screen.queryByText(/Couldn't see this clearly/)).toBeNull()
     expect(screen.queryByText('Not checked')).toBeNull()

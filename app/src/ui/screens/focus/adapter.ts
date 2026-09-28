@@ -166,6 +166,7 @@ export function toPracticeSummary(l: PracticeLogRecord): PracticeLogSummary {
     ...(l.cueHelpful ? { cueHelpful: l.cueHelpful } : {}),
     ...(l.body ? { body: l.body } : {}),
     ...(l.reps !== undefined ? { approxServes: l.reps } : {}),
+    ...(l.createdAt ? { createdAt: l.createdAt } : {}),
   }
 }
 

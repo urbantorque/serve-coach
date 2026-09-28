@@ -131,7 +131,7 @@ The model has 3 phases and 8 stages. It is a published teaching and clinical fra
 | `contact-forward` | cm from the front toe at release to the ball at contact, + = into the court | estimated | `contact-in-front`; branch in `bring-it-down` copy |
 | `rhythm-release-to-contact` | ms from ball release to contact | measured | Co-signal for `toss-to-reach-height`; context |
 | `rhythm-spread` | Noise-corrected SD of release-to-contact, ms; needs ≥ 60 fps | estimated | `steady-rhythm` |
-| `trophy-pause` | ms of stillness at the trophy position; needs ≥ 60 fps | **experimental** | `flowing-motion`; co-signal for `toss-to-reach-height` (with the experimental toggle on only) |
+| `trophy-pause` | ms of stillness at the trophy position; needs ≥ 60 fps | **experimental** | `flowing-motion`; co-signal for `toss-to-reach-height` (with the experimental toggle on only, and never the co-signal that alone makes it fire: §6.2 (f)) |
 | `leg-drive` | Hip rise from the lowest mid-hip point to contact, % of standing height (D5; gap-geometry §5) | estimated (expected) | `legs-spring` |
 | `drive-time` | ms from the lowest mid-hip point to contact; a player-relative trend (±35–50 ms at 60 fps) | estimated or experimental | Co-signal for `legs-spring` |
 | `loading-depth` | Hip drop from ball release to the lowest point, % of height | estimated | **Never a trigger, a rank input or a focus stat.** It may appear only as a description in "How it works", never as a "bend more" instruction (D5, P11) |
@@ -171,7 +171,7 @@ A fault is in v1 only if all four hold:
 - **Practicable alone.** A solo player can practise the fix with a basket at a public court in 5–10 minutes.
 - **Not an outcome coaches treat as a result.** Coaches do not treat it as a result that should not be cued (landing: gap-audit §5).
 
-An item whose **effective tier** is experimental (§13) runs only when the player has switched on "Show experimental" (D10 profile sheet). This covers an experimental detection metric, an experimental detection path, or an experimental item tier.
+An item whose **effective tier** is experimental (§13) runs only when the player has switched on "Show experimental" (D10 profile sheet). This covers an experimental detection metric, an experimental detection path, or an experimental item tier. **Even with the toggle on it never becomes the focus, an experiment or a verdict, and never supersedes an experiment** (D2; PRODUCT §4.2 rule 6 and §6.14 item 7, "never used for your focus"; product decision 28 September 2026, finding 44): it is listed under "Also noticed" with the Experimental tier and the line "This is an experimental check, so it never sets your focus." When nothing else fires, the decision is "keep going".
 
 ### 5.2 The 14 faults (plus "keep going" and the warm-up routine)
 
@@ -319,7 +319,7 @@ Every rule uses the `MetricValue` fields `value`, `uncertainty` (low/high) and `
   - women, or sex not given: 125 cm.
 - **Co-signals**, each judged on the session median:
   1. release to contact > 1,150 ms;
-  2. a trophy wait: `trophy-pause` > 500 ms (experimental; it counts only with the toggle on), or trophy-to-contact > 550 ms once METRICS provides it (§4 request 4);
+  2. a trophy wait: `trophy-pause` > 500 ms (experimental; it counts only with the toggle on, and when it is the co-signal that alone makes the rule fire, the firing path is experimental: noticed, never the focus, §5.1), or trophy-to-contact > 550 ms once METRICS provides it (§4 request 4);
   3. `contact-height-ratio` ≥ 0.04 below the player's own best median (needs a personal best).
 - **Outcomes:**
   - "Possible" = the high band plus ≥ 1 co-signal.
@@ -493,7 +493,8 @@ decide(inputs):
       if item.contraindications ∩ comfort ≠ ∅        -> consider(item, 'comfort-setting'); continue
       if cooldown[item] > 0 and not slipped(item)     -> continue          // §6.4 "slipped" lifts cooldown
       paths = detection paths whose effective tier (§13) is allowed:
-              an experimental path needs profile.showExperimental
+              an experimental path needs profile.showExperimental,
+              and even then it is only listed ('Also noticed'), never ranked (§5.1)
       if no path allowed                              -> consider(item, 'experimental-off'); continue
       if the primary metric is unavailable because the apex left the frame -> consider(item, 'not-in-frame'); continue
       if minimum serves or sessions unmet             -> consider(item, 'needs-more-serves' | 'needs-more-sessions'); continue
@@ -670,9 +671,9 @@ For a pinned coach's focus the first line is "Your coach's focus". The engine's 
 | `reasons`, `alsoConsidered` | `RuleTraceEntry[]`, `alternatives` | `reasons` → trace steps; `alsoConsidered` → `alternatives` |
 
 **Reachability** (ARCHITECTURE's test requires every entry to be reachable or marked dormant):
-- `shoulder-tilt` and `steady-rhythm` run only with the experimental toggle on, because their tier is experimental. `shoulder-tilt` also needs METRICS to emit the player-relative band.
-- `flowing-motion` runs only with the experimental toggle on while `trophy-pause` is experimental.
-- `legs-spring` runs by default through its relative path once 3 matched sessions exist. Its population path needs the toggle.
+- `shoulder-tilt` and `steady-rhythm` run only with the experimental toggle on, because their tier is experimental, and are then listed as noticed, never the focus (§5.1). `shoulder-tilt` also needs METRICS to emit the player-relative band.
+- `flowing-motion` runs only with the experimental toggle on while `trophy-pause` is experimental, and is then listed as noticed, never the focus (§5.1).
+- `legs-spring` runs by default through its relative path once 3 matched sessions exist. Its population path needs the toggle and is then listed as noticed, never the focus.
 - `warm-up-routine` is reached through the match-day card and the pre-session warm-up offer, never through detection.
 
 ### 7.9 Match day and the pre-match card (research 10 M10)
@@ -1055,7 +1056,7 @@ D2 sets three tiers for coaching insights. They describe **the claim in "why it 
 | `experimental` | The detection metric is experimental, **or** the thresholds lack population data, **or** the coaching link is only our inference | "Experimental" plus the flask glyph (D2) | `steady-rhythm` (gap-ranges §7.4); `shoulder-tilt` (no reference applies; the band is new); `legs-spring` population path; `flowing-motion` while `trophy-pause` is experimental |
 
 - **Effective tier** at runtime = the weakest of the item's `evidenceTier`, the firing path's tier (`tierByPath`) and the primary metric's status, where `experimental` status forces `experimental`.
-- **Effective experimental items run only with "Show experimental" on** (§5.1).
+- **Effective experimental items run only with "Show experimental" on, and never become the focus even then** (§5.1): they show under "Also noticed", marked Experimental.
 - **"How we know"** names the population behind every claim, for example "in 13 junior men" or "in 22 professional men".
 - **Cues and drills are always coaching interpretation.** No trial supports any specific cue for UTR 1–7 servers (research 03, Open question 5). The "How we coach" page says so.
 - **No item is tagged on vendor claims.** For example, Kovacs's statement that good servers lose only 5–7 mph off the back leg is a [Vendor claim] (research 03 [S50]) and is not quoted in-app.
@@ -1152,7 +1153,7 @@ The founder did not allow downloading real serve footage, so v1 validation uses 
 | Supersede | Active stage-6 experiment plus a new major stage-2 fault | Experiment superseded |
 | Unmatched re-test | Ad court vs deuce experiment | `not-comparable` |
 | Verdict maths | §7.7 re-test numbers | `likely-better`, N = 20; resolved met once; status stays `active` |
-| Experimental gate | Toggle off | `steady-rhythm`, `shoulder-tilt`, `flowing-motion` listed "experimental-off" |
+| Experimental gate | Toggle off; toggle on | Off: `steady-rhythm`, `shoulder-tilt`, `flowing-motion` listed "experimental-off". On: they can be listed as noticed, never the focus; a session where only they fire gives "keep going" (`experimentalNeverFocus.test.ts`) |
 | Other view | A rear-view session | No side-view item runs; each is listed "other-view" |
 | Content lint | `coaching-library.json` | All §14 lint rules pass; a fixture with `trunk-tilt-band`, a "sit" cue or a 6-rep toss drill fails |
 

@@ -136,7 +136,7 @@ function LogForm({ model, d }: { model: FocusModel; d?: FocusDecision | KeepGoin
     setSaving(true)
     setError(false)
     try {
-      await savePracticeLog(model, {
+      const log = await savePracticeLog(model, {
         date: todayYmd(),
         ...(d ? { itemId: d.itemId, drillId: d.drill.id, drillVariant: d.drill.variant === 'progression-alt' ? 'progression' : d.drill.variant } : {}),
         minutes,
@@ -149,8 +149,10 @@ function LogForm({ model, d }: { model: FocusModel; d?: FocusDecision | KeepGoin
         body,
         ...(note.trim() ? { note: note.trim().slice(0, 140) } : {}),
       })
-      const logs = [...model.logs.map(toPracticeSummary), { date: todayYmd(), itemId: d?.itemId, successCriterionMet: met, feel, body }]
-      const rules = practiceLogRules(logs, d?.itemId, todayYmd())
+      const logs = [...model.logs.map(toPracticeSummary), toPracticeSummary(log)]
+      // Only successful practices after the newest one of any drill logged with pain count (§10.3).
+      const pain = body === 'pain' ? log : model.painLog
+      const rules = practiceLogRules(logs, d?.itemId, todayYmd(), pain ? { date: pain.date, createdAt: pain.createdAt } : undefined)
       // Never "the harder version is open" after a sore or painful practice, or with a referral (§10.3).
       const calm = body === 'fine' && !referralActive && !useFocusStore.getState().referral
       setSaved({ unlocked: calm && rules.unlockProgression && !d?.drill.progression, regression: rules.suggestRegression, otherCue: rules.suggestOtherCue })

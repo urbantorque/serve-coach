@@ -25,6 +25,8 @@ export interface FocusModel {
   experimentRecord?: ExperimentRecord
   experiment?: CoachingExperiment
   logs: PracticeLogRecord[]
+  /** The newest practice of any drill logged "It hurts" (every harder version waits after it, §10.3). */
+  painLog?: PracticeLogRecord
   orientation: 'portrait' | 'landscape'
   matchDay: boolean
   referral?: ReferralLevel
@@ -59,6 +61,7 @@ export function useFocusModel(now: Date = new Date()): FocusModel {
       isDemo: raw.isDemo,
       profile: raw.profile,
       logs: raw.logs,
+      ...(raw.painLog ? { painLog: raw.painLog } : {}),
       matchDay: isMatchDay(raw.profile, playingTonight, now),
       ...(referral ? { referral } : {}),
     }

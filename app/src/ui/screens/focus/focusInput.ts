@@ -29,6 +29,7 @@ import {
   getProfile,
   getStats,
   getTally,
+  latestPainLog,
   listExperiments,
   listMatchLogs,
   listPracticeByExperiment,
@@ -78,6 +79,11 @@ export interface FocusRaw {
   /** Finished, parked or superseded experiments of the same kind of data (cooldowns, COACHING §7.4). */
   endedExperiments: ExperimentRecord[]
   logs: PracticeLogRecord[]
+  /**
+   * The newest practice of any drill logged "It hurts" (same kind of data), whatever experiment it
+   * belongs to: every harder version waits for 2 successful practices after it (COACHING §10.3).
+   */
+  painLog?: PracticeLogRecord
   load: LoadEvents
   isDemo: boolean
 }
@@ -89,6 +95,10 @@ const BASELINE_LOOKBACK = 8
 const FOLLOW_UP_LIMIT = 40
 /** Days of history the load guidance reads (last 7 days + the 28 before them). */
 const LOAD_DAYS = 36
+/** A break this long gets the "Welcome back" note (COACHING §11); its number reads the 4 weeks before it. */
+const BREAK_DAYS = 14
+const WEEKS_BEFORE_BREAK = 4
+const DAY_MS = 86_400_000
 
 async function load(record: SessionRecord, blocks?: ReadonlyMap<string, number>): Promise<Loaded> {
   const [serves, tags, tally, stats] = await Promise.all([listServesBySession(record.id), listTags(record.id), getTally(record.id), getStats(record.id)])
@@ -107,18 +117,11 @@ function blocksByVisit(all: readonly SessionRecord[]): Map<string, number> {
 }
 
 export async function readFocusData(now: Date = new Date()): Promise<FocusRaw> {
-  const since = todayYmd(new Date(now.getTime() - LOAD_DAYS * 86_400_000))
-  const [all, profile, experiments, practiceSince, matchLogs] = await Promise.all([
-    listSessions({ includeDemo: true }),
-    getProfile(),
-    listExperiments(),
-    listPracticeSince(since),
-    listMatchLogs(),
-  ])
+  const [all, profile, experiments, matchLogs] = await Promise.all([listSessions({ includeDemo: true }), getProfile(), listExperiments(), listMatchLogs()])
   const ready = all.filter((s) => s.status === 'ready' && s.analysis)
   const real = ready.filter((s) => s.isDemo !== 1)
   const isDemo = real.length === 0
-  const exp = await getActiveExperiment({ demo: isDemo })
+  const [exp, painLog, practiceRange] = await Promise.all([getActiveExperiment({ demo: isDemo }), latestPainLog({ demo: isDemo }), practiceLogDateRange({ demo: isDemo })])
   const ordered = (isDemo ? ready.filter((s) => s.isDemo === 1) : real).sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1))
   const pool = ordered.slice(0, HISTORY_LIMIT)
   const blocks = blocksByVisit(all)
@@ -139,15 +142,19 @@ export async function readFocusData(now: Date = new Date()): Promise<FocusRaw> {
   }
   const logs = experiment ? await listPracticeByExperiment(experiment.id) : []
   const sameKind = (r: { isDemo?: 0 | 1 }) => (r.isDemo === 1) === isDemo
-  const sinceIso = new Date(now.getTime() - LOAD_DAYS * 86_400_000).toISOString()
   // The whole history's first and last serving events (not windowed): sessions, practice and matches.
-  const practiceRange = await practiceLogDateRange({ demo: isDemo })
-  const matchesOfKind = matchLogs.filter(sameKind)
+  const matchesOfKind = matchLogs.filter(sameKind).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
   const edges = [
     ...(ordered.length ? [ordered[ordered.length - 1].startedAt, ordered[0].startedAt].map((t) => new Date(t).getTime()) : []),
-    ...[practiceRange.first, practiceRange.last].filter((d): d is string => !!d).map(practiceTime),
-    ...(matchesOfKind.length ? [matchesOfKind[0].date, matchesOfKind[matchesOfKind.length - 1].date].map(matchTime) : []),
+    ...[practiceRange.first, practiceRange.last].filter((d): d is string => !!d).map((d) => practiceTime(d, now)),
+    ...(matchesOfKind.length ? [matchesOfKind[0].date, matchesOfKind[matchesOfKind.length - 1].date].map((d) => matchTime(d, now)) : []),
   ].filter((t) => Number.isFinite(t) && t <= now.getTime())
+  // The load window: the last 36 days, reaching back to the 4 weeks before the last serves after a
+  // break (the "Welcome back" note's number, COACHING §11).
+  const lastServes = edges.length ? Math.max(...edges) : undefined
+  const windowStart = Math.min(now.getTime() - LOAD_DAYS * DAY_MS, lastServes !== undefined ? lastServes - (WEEKS_BEFORE_BREAK * 7 + 1) * DAY_MS : Infinity)
+  const since = todayYmd(new Date(windowStart))
+  const practiceSince = await listPracticeSince(since)
   return {
     sessions,
     experimentSessions,
@@ -155,10 +162,11 @@ export async function readFocusData(now: Date = new Date()): Promise<FocusRaw> {
     experiment,
     endedExperiments: experiments.filter((e) => e.status !== 'active' && sameKind(e)),
     logs,
+    ...(painLog ? { painLog } : {}),
     load: {
-      sessions: ordered.filter((s) => s.startedAt >= sinceIso).map((s) => ({ startedAt: s.startedAt, serves: s.analysis?.counts.analysed ?? 0 })),
+      sessions: ordered.filter((s) => new Date(s.startedAt).getTime() >= windowStart).map((s) => ({ startedAt: s.startedAt, serves: s.analysis?.counts.analysed ?? 0 })),
       practice: practiceSince.filter(sameKind),
-      matches: matchLogs.filter((m) => m.date >= since && sameKind(m)),
+      matches: matchesOfKind.filter((m) => m.date >= since),
       ...(edges.length ? { historyStartMs: Math.min(...edges), lastServesMs: Math.max(...edges) } : {}),
       sessionCount: ordered.length,
     },
@@ -171,9 +179,16 @@ export function coachingProfileRecord(raw: Pick<FocusRaw, 'isDemo' | 'profile'>)
   return raw.isDemo ? SAMPLE_PROFILE : raw.profile
 }
 
-/** When a practice log's and a match log's serves count (their records carry a local date only). */
-const practiceTime = (ymd: string) => new Date(`${ymd}T12:00:00`).getTime()
-const matchTime = (ymd: string) => new Date(`${ymd}T19:00:00`).getTime()
+/**
+ * When a practice log's and a match log's serves count (their records carry a local date only): noon
+ * and 7 pm on that day, or now for one dated today before then (a morning practice counts at once).
+ */
+const onDay = (ymd: string, hhmm: string, now: Date) => {
+  const t = new Date(`${ymd}T${hhmm}:00`).getTime()
+  return ymd === todayYmd(now) ? Math.min(t, now.getTime()) : t
+}
+const practiceTime = (ymd: string, now: Date) => onDay(ymd, '12:00', now)
+const matchTime = (ymd: string, now: Date) => onDay(ymd, '19:00', now)
 
 /** COACHING §11.2: match serves ≈ 10 × service games + 10 warm-up serves (load flag only). */
 export const matchServes = (m: Pick<MatchLogRecord, 'serviceGames'>) => 10 * (m.serviceGames ?? 0) + 10
@@ -186,11 +201,11 @@ export const matchServes = (m: Pick<MatchLogRecord, 'serviceGames'>) => 10 * (m.
  * reader passed it (a break longer than the window must not look like a short history).
  */
 export function loadFrom(events: LoadEvents, now: Date): LoadInput {
-  const day = 86_400_000
+  const day = DAY_MS
   const all = [
     ...events.sessions.map((s) => ({ t: new Date(s.startedAt).getTime(), n: s.serves, session: true })),
-    ...events.practice.map((l) => ({ t: practiceTime(l.date), n: l.reps ?? 0, session: false })),
-    ...events.matches.map((m) => ({ t: matchTime(m.date), n: matchServes(m), session: false })),
+    ...events.practice.map((l) => ({ t: practiceTime(l.date, now), n: l.reps ?? 0, session: false })),
+    ...events.matches.map((m) => ({ t: matchTime(m.date, now), n: matchServes(m), session: false })),
   ].filter((e) => Number.isFinite(e.t) && e.t <= now.getTime())
   const age = (t: number) => (now.getTime() - t) / day
   const sum = (lo: number, hi: number) => all.filter((e) => age(e.t) >= lo && age(e.t) < hi).reduce((a, e) => a + e.n, 0)
@@ -200,12 +215,18 @@ export function loadFrom(events: LoadEvents, now: Date): LoadInput {
   const last = times.length ? Math.max(...times) : undefined
   const today = todayYmd(now)
   const yesterday = todayYmd(new Date(now.getTime() - day))
+  // After a break: the weekly average of the 4 weeks before the last serves, only when the history
+  // before the break covers them (a shorter one keeps the note's no-number wording).
+  const span = WEEKS_BEFORE_BREAK * 7 * day
+  const coversBreak = last !== undefined && age(last) >= BREAK_DAYS && last - first >= span - day
+  const before = coversBreak ? all.filter((e) => e.t <= last && e.t > last - span).reduce((a, e) => a + e.n, 0) : 0
   return {
     last7Days: sum(0, 7),
     chronicWeeklyMean: sum(7, 35) / 4,
     historyDays: Math.floor(age(first)),
     sessionsInHistory: Math.max(events.sessionCount ?? 0, all.filter((e) => e.session).length),
     ...(last !== undefined ? { daysSinceLastServes: Math.floor(age(last)) } : {}),
+    ...(before > 0 ? { previousWeeklyAverage: before / WEEKS_BEFORE_BREAK } : {}),
     servesToday: all.filter((e) => todayYmd(new Date(e.t)) === today).reduce((a, e) => a + e.n, 0),
     servesYesterday: all.filter((e) => todayYmd(new Date(e.t)) === yesterday).reduce((a, e) => a + e.n, 0),
   }
@@ -272,7 +293,13 @@ export function buildFocusInput(raw: FocusRaw, o: FocusInputOptions): BuiltFocus
   const experiment = raw.experiment ? toCoachingExperiment(raw.experiment, forExperiment, profile, latest.session.id, canonicalVerdict) : undefined
   if (experiment && o.cueOverride?.[experiment.itemId]) experiment.cueRegister = o.cueOverride[experiment.itemId]
   const now = o.now
-  const logs: PracticeLogSummary[] = raw.logs.filter((l) => l.date <= todayYmd(now)).map(toPracticeSummary)
+  const today = todayYmd(now)
+  // Oldest first by local date, then by save time (the pain rule reads the order within a day).
+  const logs: PracticeLogSummary[] = raw.logs
+    .filter((l) => l.date <= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.createdAt ?? '').localeCompare(b.createdAt ?? ''))
+    .map(toPracticeSummary)
+  const pain = raw.painLog && raw.painLog.date <= today ? raw.painLog : undefined
   const known = new Map([...raw.sessions, ...(raw.experimentSessions ?? [])].map((s) => [s.record.id, { startedAt: s.record.startedAt }]))
   const cooldowns = cooldownsFor(raw.endedExperiments ?? [], known, raw.sessions.map((s) => s.record), latest.record.startedAt)
   const input: CoachingInput = {
@@ -282,9 +309,12 @@ export function buildFocusInput(raw: FocusRaw, o: FocusInputOptions): BuiltFocus
     ...(extra.length ? { experimentHistory: extra } : {}),
     ...(experiment ? { activeExperiment: experiment } : {}),
     practiceLogs: logs,
-    // A practice of any drill logged "A bit sore or tight" today holds the harder version for the day
-    // (COACHING §9.3, §10.3), even when the "Where?" sheet was closed without an answer.
-    ...([...raw.logs, ...(raw.load?.practice ?? [])].some((l) => l.body === 'sore' && l.date === todayYmd(now)) ? { soreLoggedToday: true } : {}),
+    // A practice of any drill logged "A bit sore or tight" or "It hurts" today holds the harder version
+    // for the day (COACHING §9.3, §10.3), even when the "Where?" sheet was closed without an answer.
+    ...([...raw.logs, ...(raw.load?.practice ?? []), ...(pain ? [pain] : [])].some((l) => (l.body === 'sore' || l.body === 'pain') && l.date === today) ? { soreLoggedToday: true } : {}),
+    // The newest practice of any drill logged "It hurts": no harder version until 2 successful
+    // practices of the item come after it (COACHING §10.3).
+    ...(pain ? { lastPainLog: { date: pain.date, createdAt: pain.createdAt } } : {}),
     ...(o.bodyCheck ? { bodyCheck: o.bodyCheck } : {}),
     ...(o.painFlag ? { painFlag: true } : {}),
     ...(o.referral ? { activeReferral: o.referral } : {}),

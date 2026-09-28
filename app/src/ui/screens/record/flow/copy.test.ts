@@ -41,3 +41,18 @@ describe('fence set-up tilt copy (finding 66)', () => {
     expect(COPY.FENCE_CARD.body).toMatch(/hasn't been checked on real phones yet/)
   })
 })
+
+describe('no live or set-up string promises the tilt is simply taken out (finding 66)', () => {
+  it('the motion pre-alert, the live-check detail and every set-up string carry the caveat', async () => {
+    const { MOTION_PREALERT } = await import('./copy.ts')
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    expect(MOTION_PREALERT).toMatch(/correct for it/)
+    expect(MOTION_PREALERT).toMatch(/hasn't been checked on real phones yet/)
+    const framing = readFileSync(join(process.cwd(), 'src/ui/screens/record/live/framing.ts'), 'utf8')
+    for (const src of [framing, readFileSync(join(process.cwd(), 'src/ui/screens/record/flow/copy.ts'), 'utf8')]) {
+      expect(src).not.toMatch(/take (it|the tilt) out/)
+      for (const line of src.split('\n').filter((l) => /correct for it/.test(l) && /tilt/.test(l))) expect(line).toMatch(/real phones/)
+    }
+  })
+})

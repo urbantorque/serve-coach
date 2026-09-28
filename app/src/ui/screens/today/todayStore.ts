@@ -32,3 +32,8 @@ export const useTodayStore = create<TodayState>()((set) => ({
     }
   },
 }))
+
+/** "Delete everything" (finding 18): forget the dismissed card in memory too (storage was cleared). */
+export function resetTodayStore(): void {
+  useTodayStore.setState({ morningAfterDismissed: undefined })
+}

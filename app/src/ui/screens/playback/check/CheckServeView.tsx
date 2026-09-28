@@ -60,11 +60,14 @@ import { MarkPanel } from './MarkPanel.tsx'
 import { usePinnedBlock } from './usePinnedBlock.ts'
 
 /**
- * Serve detail's boxes (DESIGN §8.11), with portrait at 40% of the screen instead of the 45% cap: the
+ * Serve detail's boxes (DESIGN §8.11), with portrait at 32% of the screen instead of the 45% cap: the
  * video, scrubber and transport stay pinned under the app bar while the marks scroll beneath, so the
- * frame being marked is always in view and the step card still gets room on a 390 × 844 phone.
+ * frame being marked is always in view. usePinnedBlock unpins when the block (with the app bar) would
+ * take more than 55% of the screen; at 32% it pins on 390 × 844 and 430 × 932 phones and leaves the
+ * step card about 280 px, and unpins on shorter phones and with large text (finding 71). The loupe
+ * gives the precision a smaller video loses.
  */
-const PORTRAIT_BOX = 'min(40dvh, 693px)'
+const PORTRAIT_BOX = 'min(32dvh, 693px)'
 const LANDSCAPE_BOX = 'calc(min(100vw, 560px) * 9 / 16)'
 /** Pinned only where the screen is tall enough to leave room for the marks below. */
 /** Pinned directly under the fixed app bar (--appbar-h is px, so the offset holds at any text size). */

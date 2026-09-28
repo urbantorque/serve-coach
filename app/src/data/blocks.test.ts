@@ -2,7 +2,9 @@
 // next block of its template, in the same transaction as the write (CAPTURE §5.5: Block A = 1, B = 2).
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { resetDbForTests } from './db.ts'
+import { getDb, resetDbForTests, withBlockNumbers } from './db.ts'
+import { loadDemoData } from './demo.ts'
+import { DEMO_FIXTURES } from './fixtures.ts'
 import { createSession, listBlocksOfVisit, markStatus } from './repos/sessions.ts'
 
 beforeEach(async () => {
@@ -35,5 +37,20 @@ describe('createSession numbers recording blocks per visit and template', () => 
     const own = await createSession({ ...base, startedAt: at('08:30'), template: 'experiment' })
     const set = await createSession({ ...base, startedAt: at('09:00'), template: 'experiment', blockIndex: 5 })
     expect([own.blockIndex, set.blockIndex]).toEqual([1, 5])
+  })
+})
+
+describe('sample data is numbered too (it is written outside createSession)', () => {
+  it('the fixtures load with a block number per recording', async () => {
+    await loadDemoData(DEMO_FIXTURES)
+    const rows = await getDb().sessions.toArray()
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.every((s) => (s.blockIndex ?? 0) >= 1)).toBe(true)
+  })
+
+  it('withBlockNumbers fills only a missing or 0 block, per visit and template', () => {
+    const row = (id: string, startedAt: string, blockIndex?: number) => ({ ...base, id, startedAt, visitId: startedAt.slice(0, 10), template: 'experiment' as const, createdAt: startedAt, isRetest: 0 as const, isDemo: 1 as const, ...(blockIndex !== undefined ? { blockIndex } : {}) })
+    const out = withBlockNumbers([row('a', at('08:00'), 0), row('b', at('08:40')), row('c', at('09:00'), 7)])
+    expect(out.map((s) => s.blockIndex)).toEqual([1, 2, 7])
   })
 })

@@ -18,9 +18,10 @@ import {
   XCircleIcon,
   type Icon,
 } from '@phosphor-icons/react'
-import type { Ref } from 'react'
+import { useLayoutEffect, useRef, useState, type Ref } from 'react'
 import type { CheckId, CheckState, LiveCheck } from '../../screens/record/live/framing.ts'
 import { cx } from '../cx.ts'
+import { hiddenGuideLabels } from './guideLabels.ts'
 
 const STATE_WORD: Record<CheckState, string> = {
   pass: 'passed',
@@ -207,8 +208,33 @@ export function FramingOverlay({ orientation, feetY, tilt, level, labelsBelowPx 
       <line {...props} stroke={GUIDE} strokeOpacity={0.85} strokeWidth={2} vectorEffect="non-scaling-stroke" />
     </>
   )
+  const box = useRef<HTMLDivElement>(null)
+  const tossLabel = useRef<HTMLSpanElement>(null)
+  const feetLabel = useRef<HTMLSpanElement>(null)
+  const [hidden, setHidden] = useState({ toss: false, feet: false })
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return
+    const measure = () => {
+      const t = tossLabel.current
+      const f = feetLabel.current
+      if (!t || !f) return
+      const next = hiddenGuideLabels({
+        height: el.clientHeight,
+        toss: [t.offsetTop, t.offsetTop + t.offsetHeight],
+        feet: [f.offsetTop, f.offsetTop + f.offsetHeight],
+        coveredTo: labelsBelowPx,
+      })
+      setHidden((h) => (h.toss === next.toss && h.feet === next.feet ? h : next))
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [labelsBelowPx, feet, portrait])
   return (
-    <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+    <div ref={box} className="pointer-events-none absolute inset-0" aria-hidden="true">
       <svg className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none">
         <rect x={0} y={0} width={100} height={tossBand * 100} fill={GUIDE} fillOpacity={0.12} />
         {line({ x1: band[0] * 100, x2: band[0] * 100, y1: tossBand * 100, y2: feet * 100, strokeDasharray: '6 6' })}
@@ -223,12 +249,24 @@ export function FramingOverlay({ orientation, feetY, tilt, level, labelsBelowPx 
         style={{ left: '50%', top: `${dotY * 100}%`, borderColor: GUIDE, background: level ? GUIDE : 'transparent', boxShadow: `0 0 0 2px ${HALO}` }}
       />
       <span
+        ref={tossLabel}
+        data-guide-label="toss"
         className="absolute left-3 text-footnote font-label"
-        style={{ top: `max(calc(${tossBand * 100}% + 0.25rem), ${Math.round(labelsBelowPx) + 4}px)`, color: GUIDE, textShadow: `0 0 3px ${HALO}` }}
+        style={{
+          top: `max(calc(${tossBand * 100}% + 0.25rem), ${Math.round(labelsBelowPx) + 4}px)`,
+          color: GUIDE,
+          textShadow: `0 0 3px ${HALO}`,
+          visibility: hidden.toss ? 'hidden' : undefined,
+        }}
       >
         Toss room above
       </span>
-      <span className="absolute left-3 text-footnote font-label" style={{ top: `calc(${feet * 100}% + 0.25rem)`, color: GUIDE, textShadow: `0 0 3px ${HALO}` }}>
+      <span
+        ref={feetLabel}
+        data-guide-label="feet"
+        className="absolute left-3 text-footnote font-label"
+        style={{ top: `calc(${feet * 100}% + 0.25rem)`, color: GUIDE, textShadow: `0 0 3px ${HALO}`, visibility: hidden.feet ? 'hidden' : undefined }}
+      >
         {feetY === null ? 'Feet about here' : 'Feet here'}
       </span>
       {level ? (

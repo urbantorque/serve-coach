@@ -13,6 +13,7 @@ import { UI } from '../../copy/strings.ts'
 import { formatMetric } from '../../format/metricFormat.ts'
 import { paths } from '../../shell/paths.ts'
 import type { MetricGroup, MetricRow, UnavailableItem } from './serveView.ts'
+import { peekRowsFor } from './peek.ts'
 
 export function MetricLine({ row, focus = false }: { row: MetricRow; focus?: boolean }) {
   const line = (
@@ -58,15 +59,11 @@ export interface StatDrawerProps {
 /** Controls a keyboard or tap can focus on purpose; never a tabindex="-1" container such as <main>. */
 const FOCUSABLE = 'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [role="slider"], [role="radio"]'
 
-/**
- * True on short screens or with large text (iOS Larger Text, Android font scale): the peek then shows
- * only the first (focus) value, so the collapsed drawer stays under about a third of the screen.
- */
-function useCompactPeek(): boolean {
+function useCompactPeek(): 'all' | 1 | 0 {
   const read = () => {
-    if (typeof window === 'undefined') return false
+    if (typeof window === 'undefined') return 'all' as const
     const rootPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-    return window.innerHeight < 700 || rootPx > 20
+    return peekRowsFor(window.innerHeight, rootPx)
   }
   const [compact, setCompact] = useState(read)
   useEffect(() => {
@@ -86,7 +83,7 @@ export function StatDrawer({ peek, focusIds, groups, experimental, unavailable, 
   const [peekH, setPeekH] = useState(0)
   const peekRef = useRef<HTMLDivElement>(null)
   const compactPeek = useCompactPeek()
-  const peekRows = compactPeek ? peek.slice(0, 1) : peek
+  const peekRows = compactPeek === 'all' ? peek : peek.slice(0, compactPeek)
 
   // The page reserves room for the collapsed drawer from its measured height (--drawer-peek), so the
   // timeline, transport and overlay chips can always scroll clear of it, at any text size.
@@ -204,7 +201,7 @@ export function StatDrawer({ peek, focusIds, groups, experimental, unavailable, 
           </button>
             </div>
           </div>
-          {!expanded ? (
+          {!expanded && compactPeek !== 0 ? (
             <ul className="gutter flex flex-col" aria-label="Values for this serve">
               {peekRows.length ? (
                 peekRows.map((r) => <MetricLine key={r.id} row={r} focus={focusIds.includes(r.id)} />)

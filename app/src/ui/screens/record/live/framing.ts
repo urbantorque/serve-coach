@@ -319,7 +319,7 @@ export function evaluateLive(input: LiveInputs): LiveEvaluation {
     } else if (levelState === 'unknown') {
       instruction =
         input.motion === 'prompt'
-          ? { checkId: 'level', text: 'Allow motion access', detail: 'We use it to measure the tilt and take it out.' }
+          ? { checkId: 'level', text: 'Allow motion access', detail: "We use it to read the tilt and correct for it (not yet checked on real phones)." }
           : { checkId: 'level', text: 'Level the phone by eye', detail: "We can't read the tilt here. Line it up with the net post or a fence post." }
     } else if (level.state === 'block') {
       instruction = { checkId: 'level', text: 'Level the phone', detail: level.value }

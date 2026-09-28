@@ -1,6 +1,6 @@
 # Metric validation on the synthetic corpus (engine-core)
 
-Generated 2026-09-28T02:11:10.680Z by `tools/validate/metrics-eval.ts` in 80 s over 122 clips.
+Generated 2026-09-28T03:57:45.766Z by `tools/validate/metrics-eval.ts` in 48 s over 122 clips.
 
 Inputs are the app pipeline's REAL outputs for each rendered clip (cleaned MediaPipe poses, ball candidates, tracks and toss analysis, audio onsets; `smoke.mjs --full`), with the truth camera pitch passed as an in-app sensor reading. Truth is the generator's `truth.json` and `truth-extra.json` (`canonical`). No real footage is involved; every figure is synthetic (METRICS §6 item 8).
 

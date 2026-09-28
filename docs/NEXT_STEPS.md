@@ -1,13 +1,13 @@
 # Next steps
 
-**As of 28 September 2026, the final-round commit after `4478e16`.** The highest-value work, ranked by value for effort. Each step has one crisp success criterion. Dates line up with [LAUNCH_AU.md](LAUNCH_AU.md); the gaps they close are in [LIMITATIONS.md](LIMITATIONS.md).
+**As of 28 September 2026, the closure-round commit after `07e31a7`** (all 92 review findings audited and closed: [REVIEW_CLOSURE.md](REVIEW_CLOSURE.md)). The highest-value work, ranked by value for effort. Each step has one crisp success criterion. Dates line up with [LAUNCH_AU.md](LAUNCH_AU.md); the gaps they close are in [LIMITATIONS.md](LIMITATIONS.md).
 
 | Rank | Step | Value | Effort | Target | Depends on |
 |---|---|---|---|---|---|
 | 1 | Clinician review of pain and referral copy | Release blocker | Low | 18 Dec 2026 | A booked clinician |
 | 2 | Real-footage and radar validation sprint with "Check this serve" | Highest: turns synthetic claims into real ones | Medium | Dry run by 6 Nov 2026; study by 31 Mar 2027 | Consenting adult players; one radar |
 | 3 | Device QA on real iPhones (web app and Capacitor shell) | High: the first real performance numbers | Low–medium | 30 Nov 2026 | A Mac and 3 iPhones |
-| 4 | Product decision on Plus in the beta, and the beta report route | High: the beta gates need both | Low | 31 Oct 2026 | Product lead; D8 decision on upload |
+| 4 | The beta report route (Plus in the beta is decided) | High: the beta gates and the price answers need it | Low | 31 Oct 2026 | Product lead; D8 decision on upload |
 | 5 | Native capture plugin (`ServeCapture`) | High: fixes blur, frame rate and tilt | Medium–high | 31 Jan 2027 | Step 3 |
 | 6 | TestFlight closed beta with 20–30 Melbourne comp players | High: first retention and usefulness evidence | Medium | 1 Feb – mid-Mar 2027 | Steps 1, 4, 5 |
 | 7 | Pricing tests: survey and fake-door cells | Medium: de-risks A$99.99 | Low | Survey Oct–Nov 2026; cells in the beta | Step 4 |
@@ -28,7 +28,7 @@
 - **What to do:**
   1. **Dry run.** The team films itself and two annotators mark the same 20 serves. This exercises export, pooling and the report end to end, and gives the per-serve marking time.
   2. **Sprint.** Film consenting adults at Melbourne Serve Check nights and practice courts, with a radar behind the server for speed. Include level-mount imports and in-app recordings with a reference level, so the mount answer and the sensor path are tested.
-  3. **Close the loop.** Bring the radar reading through to the session report and `speed-radar-entered`.
+  3. **Close the loop.** The radar reading already reaches Serve detail and the session report ("Radar speed (you logged)", with its source); give the engine's session-level `speed-radar-entered` the same reading and use the pairs for V3.
 - **Why:** every accuracy claim is synthetic. This is the single step that moves metrics from ≈ to validated, updates "How we measure" and [VALIDATION.md](VALIDATION.md) with real numbers, and decides which metrics may be advertised (ACL, research 07 §12 item 13).
 - **Sample (METRICS §5.6 V2):** at least 8 players, including 3+ women, 1+ left-hander and 2+ aged 40 or over; at least 150 serves per metric; portrait-near and landscape-fence set-ups; at least 3 conditions, including 2 lit courts (LED and metal halide); 60 fps plus a 120/240 fps subset; test–retest on 6+ players over sessions 2+ days apart; two annotators on at least 25% of serves; for speed (V3), 200+ radar-paired serves.
 - **Success criteria:**
@@ -41,14 +41,14 @@
 - **Why:** there are no phone numbers at all; ARCHITECTURE's 90 s budget rests on an assumed 25 ms pose frame.
 - **Success criterion:** every CAPTURE §13.2 item has a recorded result, and the 12-serve reference clip analyses in ≤ 90 s on an iPhone 15-class device (≤ 180 s on iPhone 12-class) with no WebContent kill (ARCHITECTURE §5.11, §14), or the go-native trigger in ARCHITECTURE §15.3 is formally raised. If the pose worker loads the module build in the shell, drop `vision_wasm_internal` (11.8 MB).
 
-## 4. Product decision on Plus in the beta, and the beta report route
+## 4. The beta report route
 
-- **What is built:** local usage counts (Profile → Beta data) with the beta gates computed on the phone, and a JSON report the tester exports and chooses to send; T1, T2 and T3 paywall moments; a "Test Plus" flag that unlocks the ghost overlay and the season view.
+- **Decided (28 September 2026):** everything is unlocked for beta testers (PRODUCT §5.3, MONETISATION §6). T1, T2 and T3 show a non-blocking "Plus preview" with the proposed price and one question, "Would you pay A$99.99 a year for this?", stored on the phone as `plus_wtp_answered` (moment, answer, price). The Plan screen keeps "Test Plus" and a "Test the after-beta limits" switch.
+- **What is built:** local usage counts (Profile → Beta data) with the beta gates computed on the phone, and a JSON report the tester exports and chooses to send, now carrying the price answers. The integrated flows check that the exported report holds the three answers given and no ids or free text.
 - **What to decide:**
-  - Keep the ghost overlay and season view locked for free testers (as built), or unlock everything as PRODUCT §5.3 says. Then make the code, PRODUCT §5.3 and the Plan copy agree.
   - Whether to add the PRODUCT §9.4 opt-in, counters-only upload (needs a D8 amendment and changes the App Store privacy label), or run the beta on sent reports plus interviews.
-  - Connect the paywall moments to the events repository, so Plus offers seen and plan taps come from one place.
-- **Success criterion:** a written decision in DECISIONS.md, the code and PRODUCT §5.3 matching it, and a test session producing every gate-1 event in the exported report with no free text, video, pose or health data (PRODUCT §9.4).
+  - Connect the paywall moments to the events repository, so Plus previews seen and plan taps come from one place.
+- **Success criterion:** a written decision in DECISIONS.md, and a test session producing every gate-1 event and each price answer in the exported report with no free text, video, pose or health data (PRODUCT §9.4).
 
 ## 5. Native capture plugin (`ServeCapture`)
 
@@ -78,11 +78,16 @@
 
 - **Landing and lowest-hip timing.** Landing is 145–176 ms late on the single-serve clips and the lowest hip 28–124 ms off (engine rules; VALIDATION §3.3, `validation/results/e2e-final/SUMMARY.md`). Success: landing and lowest-hip MAE within 2 frames at 60 fps on the corpus, offline and end to end.
 - **Serve-scan contact estimate.** Still more than 0.25 s off on about 2% of 15 Hz samplings on the corpus. Success: 0 of 590 samplings more than 0.25 s off, or the full-rate pose core widened to cover the miss.
-- **Date imports by when they were filmed.** Read the clip's recording time (MP4 `mvhd`/QuickTime creation date, falling back to the file date) so visits, re-tests and the monthly allowance follow the filming day, not the import day. Success: a check-in and a re-test filmed on different days but imported together link as baseline and re-test, and the light question defaults from the recording time.
-- **Record block numbers.** The record flow saves every session as block 0, so two-block recordings are split by a 5-minute pause or the first 15 serves. Success: Record stores the block number and the coaching engine uses it.
+- **Recording dates on real files.** Imports are dated from the container's recording time, else the file's last change, and the player can change the day (done in the closure round). Success: iPhone Camera, iPhone Photos (picker, possibly transcoded) and two Android phones' files each give the filming day with no player correction.
+- **Hip-dip ranges (review finding 61, deferred).** The per-serve loading-depth range assumes 2% of height of noise per hip point (about ±6%) against a synthetic error under 1%. Success: an interval-coverage run on the corpus sets the σ so that 95% ranges cover the truth 93–97% of the time, and Metric info's explanation is updated.
+- **Load notes on the keep-going card.** A player back from a break whose decision is "Nothing clear to change" sees neither "Welcome back" nor the ramp note. Success: the keep-going card shows the same load notes as a focus card, with a test.
+- **Development fixtures follow the catalogue.** `app/src/data/fixtures.ts` (dev fallback and test scaffolding, never used by a production build) still stores toss height and toss and contact forward as Estimate. Success: the fixtures are capped by `statusCeiling` like the engine, and the tests built on them assert the capped statuses.
+- **Landscape Serve detail.** At 844 × 390 the overlay chips under the value drawer need a scroll. Success: chips and Play visible on load in landscape at 100% and 200% text.
 - **Richer synthetic evidence.** Render the 20-serve variability, re-toss, shadow-swing and miss clips, so spreads and serve classification have more than one synthetic block behind them, and run the in-app (sensor-levelled) path end to end.
-- **Match log entry points and the second usefulness question.** Today's morning-after card and Profile → Comp nights; the usefulness question after the first practice log (PRODUCT §6.8.1).
-- **Smaller gaps:** the practice-toss ball check; flicker detection; window-level resume; de-duplicating video records when a session is re-analysed; a session-report radar row.
+- **The second usefulness question.** Ask it after the first practice log too (PRODUCT §6.8.1); the match log's morning-after card and Profile entry are built.
+- **Smaller gaps:** the practice-toss ball check; live flicker detection while filming (after recording, the serve scan now measures flicker and a dark sky); window-level resume; de-duplicating video records when a session is re-analysed.
 - A privacy policy and terms of use drafted for legal review, including the automated-analysis section before 10 December 2026 ([LAUNCH_AU.md](LAUNCH_AU.md) §3).
+
+**Done in the closure round (28 September 2026):** every one of the 92 adversarial-review findings audited against the code and closed (60 already fixed, 30 fixed in this round, 1 not a bug, 1 deferred: [REVIEW_CLOSURE.md](REVIEW_CLOSURE.md)); pain logs hold every harder version; experimental data never picks the focus; light read from the pixels (flicker, dark sky); caught tosses no longer counted; toss height experimental until real footage (method-only gate); per-serve scale borrowed only from the same distance; recording dates and the "When was it filmed?" field; recorded blocks; the beta unlock with the Plus preview and price question; the report's radar row; the morning-after card and Profile's Match log; the sample rebuilt by engine 1.1.1.
 
 **Done in the final round (28 September 2026):** serve count end to end (45 of 45 on the production build), contact timing end to end, a production-build benchmark mode, the capture-quality label, an installable offline PWA with storage protection, crash-safe recording chunks, local usage counts and a beta report, the match log, T1–T3 paywall moments, and hip and shoulder marks in "Check this serve".

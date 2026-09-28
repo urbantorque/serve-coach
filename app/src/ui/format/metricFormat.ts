@@ -60,7 +60,18 @@ export const FLOOR_ZERO = new Set(['loading-depth', 'leg-drive'])
  * wherever its % shows as an Estimate, this caveat sits beside it.
  */
 export const RELATIVE_ONLY_NOTE: Readonly<Record<string, string>> = {
-  'leg-drive': 'Reads about 2% of your height low on simulated serves, so compare it with your own serves only.',
+  // One figure everywhere: the D1 bias, as Metric info's "On average it reads" row and How we measure say.
+  'leg-drive': 'Reads about 2.5% of your height low on simulated serves, so compare it with your own serves only.',
+}
+
+/** The same caveat, short enough for a pill on the video (the overlay's "Hips rose" label; finding 50). */
+export const RELATIVE_ONLY_SHORT: Readonly<Record<string, string>> = {
+  'leg-drive': 'reads low',
+}
+
+/** The short caveat for a value shown where the full note does not fit (estimated or measured only). */
+export function shortCaveat(metricId: string, v: Pick<MetricValue, 'status'>): string | undefined {
+  return v.status === 'estimated' || v.status === 'measured' ? RELATIVE_ONLY_SHORT[metricId] : undefined
 }
 
 /** A range bound for display: floored at zero where the quantity cannot be negative. */
@@ -205,7 +216,9 @@ export function formatMetric(metricId: string, v: MetricValue): FormattedMetric 
   }
   const unitSep = parts.unit ? `${THIN}${parts.unit}` : ''
   const nLine = nLineFor(metricId, v)
-  const hasRange = parts.low !== undefined && parts.high !== undefined
+  // A range whose bounds round to the same step says one number, never "6% to 6%" (finding 61).
+  const degenerate = parts.low !== undefined && parts.low === parts.high && !parts.floor
+  const hasRange = parts.low !== undefined && parts.high !== undefined && !degenerate
   const span = parts.floor ? `up to ${parts.high}` : `${parts.low} to ${parts.high}`
   const note = v.status === 'estimated' || v.status === 'measured' ? RELATIVE_ONLY_NOTE[metricId] : undefined
   let text: string
@@ -215,8 +228,8 @@ export function formatMetric(metricId: string, v: MetricValue): FormattedMetric 
   if (v.status === 'experimental') {
     // D4 and DESIGN §3.1: experimental values are always a rounded range with "about", never one number.
     // "up to about 7%", never "about up to 7%".
-    text = hasRange ? (parts.floor ? `up to about ${parts.high}${unitSep}` : `about ${span}${unitSep}`) : `about ${parts.value}${unitSep}`
-    if (!hasRange && import.meta.env.DEV && !parts.words) {
+    text = hasRange ? (parts.floor ? `up to about ${parts.high}${unitSep}` : `about ${span}${unitSep}`) : `about ${degenerate ? parts.low : parts.value}${unitSep}`
+    if (!hasRange && !degenerate && import.meta.env.DEV && !parts.words) {
       console.warn(`[MetricValue] experimental ${metricId} has no range; DESIGN §3.1 asks for one.`)
     }
     if (parts.words) text = parts.value

@@ -201,6 +201,17 @@ export interface PracticeLogSummary {
   cueHelpful?: 'yes' | 'not-sure' | 'no'
   body?: 'fine' | 'sore' | 'pain'
   approxServes?: number
+  /** When it was saved (ISO 8601): orders logs of one day against a practice logged with pain. */
+  createdAt?: string
+}
+
+/**
+ * The newest practice logged "It hurts", of any drill (COACHING §10.3): its local date and, when known,
+ * when it was saved. Every drill's harder version waits for 2 successful practices after it.
+ */
+export interface PainLogMark {
+  date: string
+  createdAt?: string
 }
 
 /** Serve counts for load guidance (§11). Match serves come from the morning-after log (§11.2). */
@@ -286,11 +297,17 @@ export interface CoachingInput {
   /** Practice logs for the active experiment (newest last). */
   practiceLogs?: PracticeLogSummary[]
   /**
-   * A practice of any drill was logged "A bit sore or tight" today, including one outside
+   * A practice of any drill was logged "A bit sore or tight" or "It hurts" today, including one outside
    * `practiceLogs`: the harder version waits for the rest of the day (§9.3, §10.3), even when the
    * "Where?" sheet was closed without an answer.
    */
   soreLoggedToday?: boolean
+  /**
+   * The newest practice logged "It hurts", of any drill, including one outside `practiceLogs` (a
+   * keep-going drill, or a focus shown for today only). No harder version opens until 2 successful
+   * practices of the item come after it, and none on its day (§9.3, §10.3).
+   */
+  lastPainLog?: PainLogMark
   bodyCheck?: BodyCheck
   /** ProfileRecord.comfort.painFlag: a referral is still unresolved. */
   painFlag?: boolean

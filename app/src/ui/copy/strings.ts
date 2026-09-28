@@ -186,8 +186,9 @@ export const UI = {
   earlyRead: 'Early read',
   plus: 'Plus',
   experimentalHeader: 'Experimental',
-  // COACHING §5.1: with the toggle on, an experimental check can suggest the focus (marked
-  // Experimental). Experimental numbers never get a verdict or a Progress trend.
+  // COACHING §5.1 (finding 44): with the toggle on, an experimental check can be listed as noticed
+  // (marked Experimental), but never sets the focus. Experimental numbers never get a verdict or a
+  // Progress trend.
   experimentalLine: 'Not yet checked against a radar or measured marks. Never used for your focus or verdicts.',
   notAvailableHeader: 'Not available from this session',
   validationFooter:

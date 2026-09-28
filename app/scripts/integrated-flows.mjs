@@ -11,17 +11,23 @@
  *      sessions → Metric info (serve count, toss height, spin) → How we measure.
  *   B. Real import of a synthetic clip (validation/synthetic, set via the file picker), answering
  *      "How was the phone mounted?" with Level mount and the Singles spot → processing → report →
- *      tagging → "Check this serve" (peak and contact marked at the clip's truth, saved, App vs you)
- *      → Today with the stored decision.
+ *      tagging → "Check this serve" (peak and contact marked at the clip's truth, a radar reading,
+ *      saved, App vs you) → the report's "Radar speed (you logged)" row (U2) → Today with the stored
+ *      decision.
  *   C. The player's own loop (light; --dark-c adds dark): import a 16-serve check-in (synthetic
- *      sample-checkin; then dated one day back in IndexedDB, because a re-test must come from a later
- *      visit than the check-in, COACHING §12.3) → Today and focus → drill → two practice logs (starts the experiment) → Record
- *      pins the re-test → import sample-retest as the re-test → report → "Did it work?" (with the T1
- *      Plus card on the first completed loop) → Progress.
+ *      sample-checkin), dated yesterday in "When was it filmed?", because a re-test must come from a
+ *      later visit than the check-in (COACHING §12.3) → Today and focus → drill → two practice logs
+ *      (starts the experiment) → Record pins the re-test → import sample-retest as the re-test, dated
+ *      today → report → "Did it work?" (with the T1 Plus card on the first completed loop and its
+ *      beta Plus preview, U1) → Progress.
  *   D. Platform and product gaps: the service worker takes control → the sample → offline reload
- *      (Today, a report, Beta data) → match log entry → Progress comp nights → T3 sheets (season view,
- *      ghost overlay) → T2 on Processing for a third analysed day this month (earlier days copied from
- *      the sample as the player's own) → Beta data export (checked for ids and free text).
+ *      (Today, a report, Beta data) → T2 on Processing for a third analysed day this month (earlier
+ *      days copied from the sample as the player's own), with the Plus preview → the morning-after
+ *      card on Today (U3) → match log from the card → Profile's Match log row → Progress comp nights →
+ *      T3 previews (season view, ghost overlay; both open in the beta) → Beta data export (checked for
+ *      ids and free text, and for the three price answers, plus_wtp_answered).
+ *   Every import records the "When was it filmed?" day (E2): the synthetic clips carry no recording
+ *   time, so it must be the file's last change unless the flow sets it, and the stored visit must match.
  *   Flow B's "Check this serve" also marks standing height, the hip centre at release, lowest hip and
  *   contact, and the trophy shoulders, so "App vs you" has its legs and shoulders rows.
  *
@@ -30,7 +36,7 @@
  * and pose/GPU diagnostics (`diagnostics`: MediaPipe's INFO lines, which it writes to stderr, and
  * WebGL or delegate warnings; they are not counted as console errors).
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
@@ -59,7 +65,7 @@ if (only && existsSync(join(outDir, 'report.json'))) {
   report.steps = (prev.steps ?? []).filter((x) => x.flow !== only)
   report.consoleErrors = (prev.consoleErrors ?? []).filter((x) => x.flow !== only)
   report.failures = (prev.failures ?? []).filter((f) => !new RegExp(`^(light|dark)[ -]${only}([0-9]| |-)`).test(f))
-  for (const k of ['todayDecision', 'ownExperiment', 'ownAfterLogs', 'paywall', 'pwa', 'matchLog', 'betaExport', 'checkinBackdated']) if (prev[k] !== undefined) report[k] = prev[k]
+  for (const k of ['todayDecision', 'ownExperiment', 'ownAfterLogs', 'paywall', 'pwa', 'matchLog', 'betaExport', 'importDates', 'radarRow', 'morningAfter', 'plusPreview']) if (prev[k] !== undefined) report[k] = prev[k]
   // Flow B and C records (imports, analyses, the level-mount import, the check) and per-flow diagnostics.
   const importFlow = (prefix) => (prefix === 'baseline-' ? 'b' : prefix === 't2-' ? 'd' : 'c')
   for (const k of ['imports', 'analyses']) if (prev[k]) report[k] = prev[k].filter((x) => importFlow(x.prefix) !== only)
@@ -145,6 +151,27 @@ function idbAll(page, store) {
 }
 
 const button = (page, name) => page.getByRole('button', { name, exact: true })
+
+/**
+ * The beta "Plus preview" sheet (U1; PRODUCT §5.3): says the feature is unlocked, gives the proposed
+ * price, asks "Would you pay A$99.99 a year for this?" once and closes with Continue. Records what
+ * showed and the answer given (stored on the phone as the beta event plus_wtp_answered).
+ */
+async function answerPlusPreview(page, shot, scheme, trigger, title, answer) {
+  const sheet = page.getByRole('dialog', { name: title })
+  await sheet.waitFor({ timeout: 30_000 })
+  const preview = sheet.locator('[data-plus-preview]')
+  if (!(await preview.count())) throw new Error(`"${title}" is not the beta Plus preview`)
+  const beta = (await sheet.locator('[data-beta-line]').innerText()).trim()
+  const price = (await sheet.locator('[data-preview-price]').innerText()).trim()
+  await shot(`plus-preview-${trigger}`, { wait: 600 })
+  await sheet.getByRole('radiogroup', { name: 'Would you pay A$99.99 a year for this?' }).getByRole('radio', { name: answer, exact: true }).click()
+  await sheet.getByRole('status').filter({ hasText: 'Your answer is saved' }).first().waitFor({ timeout: 5_000 })
+  await shot(`plus-preview-${trigger}-answered`, { wait: 400 })
+  await sheet.getByRole('button', { name: 'Continue', exact: true }).click()
+  await sheet.waitFor({ state: 'hidden', timeout: 10_000 })
+  report.plusPreview = { ...(report.plusPreview ?? {}), [`${scheme}-${trigger}`]: { title, beta, price, answer: answer.toLowerCase() } }
+}
 
 async function clickFirst(page, locators) {
   for (const l of locators) {
@@ -305,7 +332,23 @@ async function flowA(page, scheme) {
 // Flow B: a real import through processing
 // ---------------------------------------------------------------------------------------------
 
-async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = false, mount = null, spot = null, onProcessing = null }) {
+/** A local calendar day, "YYYY-MM-DD", `days` from today. */
+function localYmd(days = 0) {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** "When was it filmed?" (E2): the day in the date field and the line under it. */
+async function filmedDate(page) {
+  const input = page.locator('input[name="filmed-date"]')
+  if (!(await input.count())) return null
+  const helpId = await input.getAttribute('aria-describedby')
+  const help = helpId ? page.locator(`[id="${helpId}"]`) : null
+  return { value: await input.inputValue(), note: help && (await help.count()) ? (await help.innerText()).trim() : null }
+}
+
+async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = false, mount = null, spot = null, date = null, onProcessing = null }) {
   if (viaRecord) {
     // Client-side from Record, so the re-test plan Record pinned (kept in memory) applies.
     await page.getByRole('link', { name: /Import a video/ }).first().click()
@@ -314,6 +357,18 @@ async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = f
   await page.locator('input[type="file"]').setInputFiles(file)
   await page.getByRole('button', { name: 'Analyse' }).waitFor({ timeout: 30_000 })
   await page.waitForTimeout(800)
+  // When was it filmed? (E2) The synthetic clips carry no recording time, so the day comes from the
+  // file's last change; `date` changes it the way a player would, in the date field.
+  const mtime = statSync(file).mtime
+  const fileDay = `${mtime.getFullYear()}-${String(mtime.getMonth() + 1).padStart(2, '0')}-${String(mtime.getDate()).padStart(2, '0')}`
+  const dateRead = await filmedDate(page)
+  if (date) {
+    await page.locator('input[name="filmed-date"]').fill(date)
+    await page.waitForTimeout(200)
+  }
+  const dateFinal = await filmedDate(page)
+  await page.locator('#q-when').scrollIntoViewIfNeeded()
+  await shot(`${prefix}import-date`)
   // No profile yet (set-up skipped): the synthetic player is 1.80 m and right-handed.
   if (await page.getByRole('button', { name: 'Analyse' }).isDisabled()) {
     const more = page.getByRole('button', { name: 'More: Your height (cm)' })
@@ -338,7 +393,13 @@ async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = f
     const g = page.getByRole('radiogroup', { name: 'Spot' })
     await ((await g.count()) ? g.getByRole('radio', { name: spot }) : page.getByRole('radio', { name: spot })).first().click()
   }
-  report.imports = [...(report.imports ?? []), { scheme, prefix, mountAsked: (await mountGroup.count()) > 0, mount: mount ?? 'default', spot: spot ?? null }]
+  report.imports = [
+    ...(report.imports ?? []),
+    { scheme, prefix, mountAsked: (await mountGroup.count()) > 0, mount: mount ?? 'default', spot: spot ?? null, fileLastChanged: fileDay, dateRead, dateSet: date, dateFinal },
+  ]
+  if (!dateRead?.value) throw new Error('the "When was it filmed?" field had no date')
+  if (!date && dateRead.value !== fileDay) throw new Error(`filmed date ${dateRead.value}, expected the file's last change ${fileDay}`)
+  if (date && dateFinal?.value !== date) throw new Error(`filmed date ${dateFinal?.value}, expected ${date}`)
   await shot(`${prefix}import-ready`, { full: true })
   if (mount) {
     await page.locator('#q-mount').scrollIntoViewIfNeeded()
@@ -358,7 +419,21 @@ async function importClip(page, file, { shot, prefix, scheme = '', viaRecord = f
   const serves = ((await idbAll(page, 'serves')) ?? []).filter((x) => x.sessionId === sessionId)
   const exclusions = {}
   for (const x of serves) for (const r of x.exclusions ?? []) exclusions[r] = (exclusions[r] ?? 0) + 1
-  const entry = { scheme, prefix, clip: basename(file), sessionId, processingS, servesFound: serves.length, servesIncluded: serves.filter((x) => x.includedFlag === 1).length, exclusions }
+  const stored = ((await idbAll(page, 'sessions')) ?? []).find((s) => s.id === sessionId)
+  const entry = {
+    scheme,
+    prefix,
+    clip: basename(file),
+    sessionId,
+    processingS,
+    servesFound: serves.length,
+    servesIncluded: serves.filter((x) => x.includedFlag === 1).length,
+    exclusions,
+    startedAt: stored?.startedAt ?? null,
+    visitId: stored?.visitId ?? null,
+  }
+  // The session is dated by the day in the field (E2), not by the import.
+  if (dateFinal?.value && stored?.visitId !== dateFinal.value) throw new Error(`session visit ${stored?.visitId}, expected the filmed day ${dateFinal.value}`)
   report.analyses = [...(report.analyses ?? []), entry]
   log(`analysis ${JSON.stringify(entry)}`)
   return sessionId
@@ -447,6 +522,11 @@ async function checkThisServe(page, sessionId, shot, scheme, clipId = 'baseline-
   await seekTo(ev.contact.frameIndex)
   await tap(ballAt(ev.contact.frameIndex))
   await tap(hipAt(ev.contact.frameIndex))
+  // Radar (optional): the peak speed a radar showed. It fills "Radar speed (you logged)" (U2).
+  await page.getByRole('button', { name: /^Radar/ }).click()
+  await page.getByLabel('Peak speed').fill('172')
+  await page.getByLabel('Peak speed').blur()
+  await shot('check-mark-radar')
   await shot('check-marked')
   await page.getByRole('button', { name: 'Save check' }).click()
   await page.waitForSelector('[data-check-serve][data-mode="result"]', { timeout: 30_000 })
@@ -505,6 +585,19 @@ async function flowB(page, scheme) {
     if (!sessionId) throw new Error('no session')
     await checkThisServe(page, sessionId, shot, scheme)
   })
+  await step('the report shows the radar reading as "Radar speed (you logged)"', async () => {
+    if (!sessionId) throw new Error('no session')
+    await page.goto(`${base}/sessions/${sessionId}`)
+    const tile = page.locator('[data-radar-speed]')
+    await tile.waitFor({ timeout: 15_000 })
+    await tile.scrollIntoViewIfNeeded()
+    await shot('baseline-report-radar', { wait: 800 })
+    const text = (await tile.innerText()).replace(/\s+/g, ' ').trim()
+    const source = (await tile.locator('[data-radar-source]').innerText()).trim()
+    report.radarRow = { ...(report.radarRow ?? {}), [scheme]: { text, source, status: await tile.getAttribute('data-status'), aria: await tile.getAttribute('aria-label') } }
+    if (!/Radar speed \(you logged\)/.test(text) || !/172/.test(text)) throw new Error(`radar row reads "${text}"`)
+    if (source !== 'Pocket Radar, peak') throw new Error(`radar source "${source}"`)
+  })
   await step('today reflects the stored decision', async () => {
     await page.goto(base + '/')
     await page.getByRole('heading', { level: 1, name: 'Today' }).waitFor({ timeout: 15_000 })
@@ -517,38 +610,6 @@ async function flowB(page, scheme) {
 // Flow C: the player's own experiment loop
 // ---------------------------------------------------------------------------------------------
 
-/**
- * Moves a session one or more days back (start time and practice day), straight in IndexedDB. Flow C
- * uses it so the check-in reads as filmed yesterday: a re-test must be on a later visit than the
- * check-in (COACHING §12.3), and every import in this script happens on the same day.
- */
-function backdateSession(page, sessionId, days) {
-  return page.evaluate(
-    ({ sessionId, days }) =>
-      new Promise((resolve, reject) => {
-        const open = indexedDB.open('serve-coach')
-        open.onerror = () => reject(open.error)
-        open.onsuccess = () => {
-          const tx = open.result.transaction('sessions', 'readwrite')
-          const store = tx.objectStore('sessions')
-          const get = store.get(sessionId)
-          let visitId = null
-          get.onsuccess = () => {
-            const s = get.result
-            if (!s) return reject(new Error(`no session ${sessionId}`))
-            const d = new Date(new Date(s.startedAt).getTime() - days * 86_400_000)
-            const pad = (n) => String(n).padStart(2, '0')
-            visitId = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-            store.put({ ...s, startedAt: d.toISOString(), createdAt: d.toISOString(), visitId })
-          }
-          tx.oncomplete = () => resolve(visitId)
-          tx.onerror = () => reject(tx.error)
-        }
-      }),
-    { sessionId, days },
-  )
-}
-
 async function flowC(page, scheme) {
   const { shot, step } = flowRunner(page, scheme, 'c')
   await step('skip set-up and import a 16-serve check-in', async () => {
@@ -556,10 +617,9 @@ async function flowC(page, scheme) {
     await button(page, 'Skip set-up').click()
     await page.getByRole('radio', { name: 'Yes' }).click()
     await page.waitForURL((u) => !u.pathname.startsWith('/onboarding'), { timeout: 10_000 })
-    const checkinId = await importClip(page, clip('sample-checkin'), { shot, prefix: 'checkin-', scheme })
-    // As if filmed yesterday, so today's re-test is a later visit (COACHING §12.3).
-    report.checkinBackdated = { ...(report.checkinBackdated ?? {}), [scheme]: await backdateSession(page, checkinId, 1) }
-    await page.reload()
+    // Filmed yesterday, set in "When was it filmed?" (E2), so today's re-test is a later visit (COACHING §12.3).
+    const checkinId = await importClip(page, clip('sample-checkin'), { shot, prefix: 'checkin-', scheme, date: localYmd(-1) })
+    report.importDates = { ...(report.importDates ?? {}), [scheme]: { ...(report.importDates?.[scheme] ?? {}), checkin: { sessionId: checkinId, day: localYmd(-1) } } }
     await shot('checkin-report', { full: true })
     await toHero(page)
     await shot('checkin-toss-hero')
@@ -597,7 +657,9 @@ async function flowC(page, scheme) {
     await shot('record-retest', { full: true, wait: 1000 })
   })
   await step('import the re-test and see the verdict', async () => {
-    const id = await importClip(page, clip('sample-retest'), { shot, prefix: 'retest-', scheme, viaRecord: true })
+    // Filmed today (the file was last changed on the check-in's day, so the player moves it in the date field).
+    const id = await importClip(page, clip('sample-retest'), { shot, prefix: 'retest-', scheme, viaRecord: true, date: localYmd(0) })
+    report.importDates = { ...(report.importDates ?? {}), [scheme]: { ...(report.importDates?.[scheme] ?? {}), retest: { sessionId: id, day: localYmd(0) } } }
     await shot('retest-report', { full: true, wait: 2500 })
     await toHero(page)
     await shot('retest-toss-hero')
@@ -624,6 +686,9 @@ async function flowC(page, scheme) {
     if (t1Shown) {
       await t1.first().scrollIntoViewIfNeeded()
       await shot('compare-own-t1-card', { wait: 600 })
+      // The beta "Plus preview" (U1): non-blocking, the price question, then Continue.
+      await t1.first().getByRole('button', { name: 'What Plus adds' }).click()
+      await answerPlusPreview(page, shot, scheme, 't1', 'That was your first experiment', 'Maybe')
     }
     await page.goto(base + '/progress')
     await page.waitForTimeout(1500)
@@ -677,6 +742,29 @@ function seedOwnDays(page, days) {
   )
 }
 
+/** Sets the player's comp nights (profile.matchNights) straight in IndexedDB. */
+function setMatchNights(page, nights) {
+  return page.evaluate(
+    (nights) =>
+      new Promise((resolve, reject) => {
+        const open = indexedDB.open('serve-coach')
+        open.onerror = () => reject(open.error)
+        open.onsuccess = () => {
+          const tx = open.result.transaction('profile', 'readwrite')
+          const store = tx.objectStore('profile')
+          const get = store.get('me')
+          get.onsuccess = () => {
+            if (!get.result) return reject(new Error('no profile'))
+            store.put({ ...get.result, matchNights: nights })
+          }
+          tx.oncomplete = () => resolve(nights)
+          tx.onerror = () => reject(tx.error)
+        }
+      }),
+    nights,
+  )
+}
+
 async function flowD(page, scheme) {
   const { shot, step } = flowRunner(page, scheme, 'd')
   const context = page.context()
@@ -716,8 +804,46 @@ async function flowD(page, scheme) {
     report.pwa[scheme].offlineScreens = ['today', 'report', 'beta-data']
     await context.setOffline(false)
   })
+  await step('T2: a third analysed day this month shows the allowance notice and the Plus preview', async () => {
+    // Earlier September days of the player's own (copies of the sample check-in): the first is the
+    // free first loop, the next two use this month's 2 free days, so today's import is past them.
+    await seedOwnDays(page, ['2026-09-08', '2026-09-15', '2026-09-22'])
+    let sheetSeen = false
+    const sessionId = await importClip(page, clip('baseline-s1'), {
+      shot,
+      prefix: 't2-',
+      scheme,
+      mount: 'Level mount',
+      onProcessing: async () => {
+        // Beta (PRODUCT §5.3): nothing waits; the preview says so, asks the price question once, then Continue.
+        await answerPlusPreview(page, shot, scheme, 't2', "Past this month's free analyses", 'Yes')
+        sheetSeen = true
+        await shot('processing-t2-notice', { wait: 600 })
+      },
+    })
+    const state = ((await idbAll(page, 'settings')) ?? []).find((s) => s.key === 'paywall')?.value ?? null
+    const t2Months = state?.t2Months ?? []
+    report.paywall[`${scheme}-t2`] = { sessionId, sheetSeen, shown: t2Months.length > 0, t2Months, log: (state?.log ?? []).map((l) => l.trigger) }
+    if (!t2Months.length) throw new Error('T2 was not shown')
+  })
+  await step('morning after a comp night: Today asks for the match log (U3)', async () => {
+    // Comp nights include yesterday's weekday; the player has their own sessions now (not sample mode).
+    const yesterday = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][new Date(Date.now() - 86_400_000).getDay()]
+    await setMatchNights(page, [yesterday])
+    await page.goto(base + '/')
+    await page.getByRole('heading', { level: 1, name: 'Today' }).waitFor({ timeout: 15_000 })
+    const card = page.locator('[data-morning-after]')
+    await card.waitFor({ timeout: 15_000 })
+    await card.scrollIntoViewIfNeeded()
+    await shot('today-morning-after', { wait: 800 })
+    report.morningAfter = { ...(report.morningAfter ?? {}), [scheme]: { night: yesterday, shown: true, text: (await card.innerText()).replace(/\s+/g, ' ').trim() } }
+    await card.getByRole('link', { name: 'Log the match' }).click()
+    await page.waitForURL(/\/sessions\/matches\/new/, { timeout: 15_000 })
+    const url = new URL(page.url())
+    report.morningAfter[scheme].logDate = url.searchParams.get('date')
+    if (url.searchParams.get('date') !== localYmd(-1)) throw new Error(`match log opened for ${url.searchParams.get('date')}, expected ${localYmd(-1)}`)
+  })
   await step('match log: a comp night with counted first serves', async () => {
-    await page.goto(base + '/sessions/matches/new')
     await page.getByRole('button', { name: 'Save', exact: true }).waitFor({ timeout: 15_000 })
     await shot('match-log-new', { wait: 600 })
     const games = page.getByRole('button', { name: 'More: Service games' })
@@ -731,23 +857,42 @@ async function flowD(page, scheme) {
     await page.waitForURL((u) => !u.pathname.endsWith('/matches/new'), { timeout: 15_000 })
     const logs = (await idbAll(page, 'matchLogs')) ?? []
     const own = logs.filter((m) => m.isDemo !== 1)
-    report.matchLog = { ...(report.matchLog ?? {}), [scheme]: own.map((m) => ({ serviceGames: m.serviceGames, doubleFaults: m.doubleFaults, firstServesIn: m.firstServesIn ?? null, firstServesAttempted: m.firstServesAttempted ?? null, hasNotes: Boolean(m.notes) })) }
+    report.matchLog = {
+      ...(report.matchLog ?? {}),
+      [scheme]: own.map((m) => ({ date: m.date ?? null, serviceGames: m.serviceGames, doubleFaults: m.doubleFaults, firstServesIn: m.firstServesIn ?? null, firstServesAttempted: m.firstServesAttempted ?? null, hasNotes: Boolean(m.notes) })),
+    }
     if (own.length !== 1) throw new Error(`expected 1 saved match log, found ${own.length}`)
   })
-  await step('progress: comp nights, and the season view (T3)', async () => {
+  await step('the logged night clears the card; Profile lists the match log', async () => {
+    await page.goto(base + '/')
+    await page.getByRole('heading', { level: 1, name: 'Today' }).waitFor({ timeout: 15_000 })
+    await page.waitForTimeout(1500)
+    const still = await page.locator('[data-morning-after]').count()
+    report.morningAfter[scheme].afterLog = still ? 'still shown' : 'gone'
+    await shot('today-after-match-log', { full: true })
+    if (still) throw new Error('the morning-after card is still shown after the night was logged')
+    await page.goto(base + '/profile')
+    const row = page.getByRole('link', { name: /Match log/ })
+    await row.waitFor({ timeout: 15_000 })
+    await row.scrollIntoViewIfNeeded()
+    report.morningAfter[scheme].profileRow = (await row.innerText()).replace(/\s+/g, ' ').trim()
+    await shot('profile-match-log-row', { wait: 600 })
+    if (!/1 comp night logged/.test(report.morningAfter[scheme].profileRow)) throw new Error(`Profile match log row reads "${report.morningAfter[scheme].profileRow}"`)
+  })
+  await step('progress: comp nights, and the season view (T3 preview; open in the beta)', async () => {
     await page.goto(base + '/progress')
     const comp = page.getByRole('region', { name: 'Comp nights' })
     await comp.waitFor({ timeout: 15_000 })
     await comp.scrollIntoViewIfNeeded()
     await shot('progress-comp-nights', { wait: 800 })
     await comp.getByRole('button', { name: /Season view/ }).click()
-    const sheet = page.getByRole('dialog', { name: 'Season view is part of Plus' })
-    await sheet.waitFor({ timeout: 10_000 })
-    await shot('plus-sheet-t3-season', { wait: 600 })
-    report.paywall[`${scheme}-t3-season`] = { shown: true }
-    await page.keyboard.press('Escape')
+    await answerPlusPreview(page, shot, scheme, 't3-season', 'Season view is part of Plus', 'No')
+    // The feature opened under the preview (beta: everything unlocked).
+    await comp.getByRole('button', { name: /Hide season view/ }).waitFor({ timeout: 10_000 })
+    await shot('progress-season-view', { wait: 800 })
+    report.paywall[`${scheme}-t3-season`] = { shown: true, featureOpen: true }
   })
-  await step('compare view: the ghost overlay (T3)', async () => {
+  await step('compare view: the ghost overlay (T3 preview; open in the beta)', async () => {
     await page.goto(base + '/sessions/sample-s3')
     const serveLink = page.locator('a[href*="/serves/"]').first()
     await serveLink.waitFor({ timeout: 15_000 })
@@ -764,35 +909,11 @@ async function flowD(page, scheme) {
     await best.first().click()
     const group = page.getByRole('radiogroup', { name: 'Compare view' })
     await group.waitFor({ timeout: 15_000 })
-    await group.getByRole('radio', { name: 'Ghost (Plus)' }).click()
-    await page.getByRole('dialog', { name: 'Ghost overlay is part of Plus' }).waitFor({ timeout: 10_000 })
-    await shot('plus-sheet-t3-ghost', { wait: 600 })
-    report.paywall[`${scheme}-t3-ghost`] = { shown: true }
-    await page.keyboard.press('Escape')
-  })
-  await step('T2: a third analysed day this month shows the allowance notice', async () => {
-    // Earlier September days of the player's own (copies of the sample check-in): the first is the
-    // free first loop, the next two use this month's 2 free days, so today's import is past them.
-    await seedOwnDays(page, ['2026-09-08', '2026-09-15', '2026-09-22'])
-    let sheetSeen = false
-    const sessionId = await importClip(page, clip('baseline-s1'), {
-      shot,
-      prefix: 't2-',
-      scheme,
-      mount: 'Level mount',
-      onProcessing: async () => {
-        const sheet = page.getByRole('dialog', { name: "Past this month's free analyses" })
-        await sheet.waitFor({ timeout: 30_000 })
-        sheetSeen = true
-        await shot('processing-t2-sheet', { wait: 600 })
-        await sheet.getByRole('button', { name: 'Not now' }).click()
-        await shot('processing-t2-notice', { wait: 600 })
-      },
-    })
-    const state = ((await idbAll(page, 'settings')) ?? []).find((s) => s.key === 'paywall')?.value ?? null
-    const t2Months = state?.t2Months ?? []
-    report.paywall[`${scheme}-t2`] = { sessionId, sheetSeen, shown: t2Months.length > 0, t2Months, log: (state?.log ?? []).map((l) => l.trigger) }
-    if (!t2Months.length) throw new Error('T2 was not shown')
+    await group.getByRole('radio', { name: /^Ghost/ }).click()
+    await answerPlusPreview(page, shot, scheme, 't3-ghost', 'Ghost overlay is part of Plus', 'Maybe')
+    await page.waitForSelector('[data-compare="ghost"]', { timeout: 10_000 })
+    await shot('compare-ghost', { wait: 1200 })
+    report.paywall[`${scheme}-t3-ghost`] = { shown: true, featureOpen: true }
   })
   await step('beta data: counts and the exported report', async () => {
     await page.goto(base + '/profile/beta-data')
@@ -808,8 +929,14 @@ async function flowD(page, scheme) {
     const eventKeys = new Set((json.events ?? []).flatMap((e) => [...Object.keys(e), ...Object.keys(e.props ?? {})]))
     const leaks = ['onceKey', 'sessionId', 'serveId', 'experimentId', 'heightM', 'notes', 'painFlag', 'id'].filter((k) => eventKeys.has(k))
     if (/\b[0-9A-HJKMNP-TV-Z]{26}\b/.test(JSON.stringify(json))) leaks.push('an app id (ULID)')
-    report.betaExport = { ...(report.betaExport ?? {}), [scheme]: { file: basename(file), events: Array.isArray(json.events) ? json.events.length : null, keys: Object.keys(json), leaks } }
+    // The price answers (U1): one per preview answered in this flow, moment, answer and price only.
+    const wtp = (json.events ?? []).filter((e) => e.name === 'plus_wtp_answered').map((e) => e.props)
+    report.betaExport = { ...(report.betaExport ?? {}), [scheme]: { file: basename(file), events: Array.isArray(json.events) ? json.events.length : null, keys: Object.keys(json), leaks, wtp } }
     if (leaks.length) throw new Error(`beta report carries ${leaks.join(', ')}`)
+    for (const [trigger, answer] of [['t2', 'yes'], ['t3', 'no'], ['t3', 'maybe']]) {
+      if (!wtp.some((p) => p?.trigger === trigger && p?.wtp === answer && p?.price === 'annual-99-99')) throw new Error(`no plus_wtp_answered ${trigger}/${answer} in the beta report`)
+    }
+    if (wtp.some((p) => Object.keys(p ?? {}).some((k) => !['trigger', 'wtp', 'price'].includes(k)))) throw new Error('plus_wtp_answered carries more than trigger, wtp and price')
   })
 }
 

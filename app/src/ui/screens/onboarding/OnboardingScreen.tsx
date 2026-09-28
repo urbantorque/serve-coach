@@ -9,11 +9,10 @@ import {
 import { useId, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { LESS_EFFORT_LINE } from '../../../coaching/safety.ts'
-import type { MetricStatus } from '../../../analysis/types.ts'
-import { median } from '../../../analysis/stats/index.ts'
-import { DEMO_FIXTURES, loadDemoData, showToast } from '../../../data/index.ts'
+import { loadDemoData, showToast } from '../../../data/index.ts'
 import type { BodyRegion, Weekday } from '../../../data/records.ts'
 import { StripPlot } from '../../charts/index.ts'
+import { relTick } from '../../format/tossRelative.ts'
 import { Button, Card, OutcomeMark, Sheet, StatusChip } from '../../components/index.ts'
 import { paths } from '../../shell/paths.ts'
 import { ChoiceList } from '../profile/parts/ChoiceList.tsx'
@@ -33,6 +32,7 @@ import { PRIVACY_FACTS, PRIVACY_POLICY_SUMMARY } from '../profile/copy.ts'
 import { markOnboarding, saveOnboarding } from './actions.ts'
 import { useOnboardingDraft } from './draftStore.ts'
 import { Frame, Helper } from './Frame.tsx'
+import { welcomeStrip } from './welcomeStrip.ts'
 import {
   ADULTS_ONLY,
   continueBlocker,
@@ -294,39 +294,10 @@ export function OnboardingScreen() {
 
 // ---------- O1 ----------
 
-type SamplePeak = { id: string; value: number; kind: 'in' | 'net' | 'long' | 'wide' | 'untagged'; callout: string }
-
-/**
- * The sample's peak heights, one per serve: the same heights-only strip a real report draws. Front-to-back
- * positions are experimental (toss-forward is V0), so the first screen never shows a toss map; the chip
- * is the plotted heights' own status, never a hard-coded one.
- */
-function samplePeaks(): { peaks: SamplePeak[]; status: MetricStatus | null; label: string } {
-  const s = DEMO_FIXTURES.sessions.at(-1)
-  if (!s) return { peaks: [], status: null, label: '' }
-  const outcome = new Map(s.tags.map((t) => [t.serveId, t.outcome]))
-  const peaks: SamplePeak[] = []
-  const statuses = new Set<MetricStatus>()
-  for (const sv of s.serves) {
-    const apex = sv.metrics['toss-apex-height']
-    const cm = apex?.secondary?.cm
-    if (!sv.included || !apex || (apex.status !== 'measured' && apex.status !== 'estimated') || typeof cm !== 'number') continue
-    statuses.add(apex.status)
-    const o = outcome.get(sv.id)
-    peaks.push({
-      id: sv.id,
-      value: cm / 100,
-      kind: o === 'in' ? 'in' : o === 'net' ? 'net' : o === 'long' ? 'long' : o === 'wide' ? 'wide' : 'untagged',
-      callout: `${(cm / 100).toFixed(2)} m · Serve ${sv.index}`,
-    })
-  }
-  const status: MetricStatus | null = statuses.has('estimated') ? 'estimated' : statuses.has('measured') ? 'measured' : null
-  return { peaks, status, label: `Sample strip: how high ${peaks.length} toss peaks went for a computer-generated player.` }
-}
-
 function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) {
-  const sample = useMemo(() => samplePeaks(), [])
-  const mid = sample.peaks.length ? median(sample.peaks.map((p) => p.value)) : undefined
+  // The same strip a real report draws, capped by the current engine (finding 48): absolute peak
+  // heights while they are at least an Estimate, otherwise each peak's distance from the middle one.
+  const sample = useMemo(() => welcomeStrip(), [])
   return (
     <Frame
       title="Welcome"
@@ -354,19 +325,20 @@ function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void 
           Find out if it worked.
         </p>
       </div>
-      {sample.peaks.length >= 5 && sample.status ? (
+      {sample ? (
         <Card as="figure" className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-footnote font-label text-ink-2">How high each toss peaked, one dot per serve</span>
+          <div className="flex items-start justify-between gap-2" data-welcome-strip={sample.mode}>
+            <span className="text-footnote font-label text-ink-2">{sample.heading}</span>
             <StatusChip status={sample.status} />
           </div>
           {/* A picture of the idea, not something to use here: the chart is inert and described below. */}
           <div inert aria-hidden="true">
             <StripPlot
               label={sample.label}
-              rows={[{ key: 'sample-apex', data: sample.peaks, median: mid, medianLabel: mid !== undefined ? `middle ${mid.toFixed(2)} m` : undefined }]}
-              domain={[Math.min(...sample.peaks.map((p) => p.value)) - 0.1, Math.max(...sample.peaks.map((p) => p.value)) + 0.1]}
-              unit="m"
+              rows={[{ key: 'sample-apex', data: sample.peaks, median: sample.median, medianLabel: sample.medianLabel }]}
+              domain={sample.domain}
+              unit={sample.unit}
+              {...(sample.mode === 'relative' ? { formatTick: relTick } : {})}
             />
           </div>
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-footnote text-ink-2" aria-hidden="true">

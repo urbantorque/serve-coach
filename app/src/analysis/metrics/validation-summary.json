@@ -1,6 +1,6 @@
 {
  "source": "synthetic",
- "generated": "2026-09-28T02:11:10.764Z",
+ "generated": "2026-09-28T03:57:45.824Z",
  "clips": 122,
  "note": "Rendered synthetic serves run through the app pipeline; no real footage. See validation/results/metrics/SUMMARY.md.",
  "metrics": {

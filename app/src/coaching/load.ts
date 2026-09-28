@@ -26,20 +26,23 @@ export function loadGuidance(
   opts: { fatigue?: boolean } = {},
 ): LoadGuidance {
   const anyComfort = profile.comfort.size > 0
-  const sessionBudget = anyComfort || goal === 'less-effort' ? 40 : profile.level === 'utr-1-3' ? 60 : 80
+  // Back after a break (§11): the first week stays at or under half the previous weekly average, so
+  // one session never asks for more than that week's serves (the budget and the note agree).
+  const onBreak = load?.daysSinceLastServes !== undefined && load.daysSinceLastServes >= 14
+  const prev = load?.previousWeeklyAverage
+  const returnWeek = onBreak && prev && prev > 0 ? Math.max(10, Math.round((prev * 0.5) / 5) * 5) : undefined
+  const baseBudget = anyComfort || goal === 'less-effort' ? 40 : profile.level === 'utr-1-3' ? 60 : 80
+  const sessionBudget = returnWeek !== undefined ? Math.min(baseBudget, returnWeek) : baseBudget
   const noHard = goal === 'less-effort' || profile.comfort.has('shoulder') || profile.comfort.has('elbow') || profile.comfort.has('other')
-  const hardServeCap = noHard ? 0 : 30
+  // Never more hard serves than the budget leaves after the 10-serve warm-up (§11.1: none before it).
+  const hardServeCap = noHard ? 0 : Math.min(30, Math.max(0, sessionBudget - 10))
   const notes: LoadGuidance['notes'] = [{ id: 'budget', text: LOAD_COPY.budget(sessionBudget) }]
   notes.push({ id: 'budget', text: hardServeCap === 0 ? LOAD_COPY.noHardServes : LOAD_COPY.hardServes(hardServeCap) })
   if (profile.soreToday.length) notes.push({ id: 'sore', text: sorenessLine(profile.soreToday) })
   if (load?.servesToday !== undefined && load.servesToday >= sessionBudget) notes.push({ id: 'budget-reached', text: LOAD_COPY.budgetReached })
   if (rampFlag(load)) notes.push({ id: 'ramp', text: LOAD_COPY.ramp })
-  if (load?.daysSinceLastServes !== undefined && load.daysSinceLastServes >= 14) {
-    const prev = load.previousWeeklyAverage
-    notes.push({
-      id: 'return',
-      text: prev && prev > 0 ? LOAD_COPY.returnAfterBreak(Math.max(10, Math.round((prev * 0.5) / 5) * 5)) : LOAD_COPY.returnAfterBreakNoHistory,
-    })
+  if (onBreak) {
+    notes.push({ id: 'return', text: returnWeek !== undefined ? LOAD_COPY.returnAfterBreak(returnWeek) : LOAD_COPY.returnAfterBreakNoHistory })
   }
   if (load?.servesYesterday !== undefined && load.servesYesterday > 60) notes.push({ id: 'spacing', text: LOAD_COPY.spacing })
   if (opts.fatigue) notes.push({ id: 'fatigue', text: LOAD_COPY.fatigue })

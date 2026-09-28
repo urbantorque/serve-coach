@@ -4,20 +4,20 @@ A calm, phone-first virtual serve coach for Australian recreational players (UTR
 You film your serve side-on with one phone; the app analyses it on the phone, labels every number honestly, and gives you one focus, one cue and one drill.
 You practise, re-test, and the app answers "Did it work?" with a matched before-and-after comparison.
 
-**Status (28 September 2026, the final-round commit after `4478e16`):**
+**Status (28 September 2026, the closure-round commit after `07e31a7`):**
 - **What exists:** a working web prototype (Vite, React 19, TypeScript, Tailwind v4) with a framework-free analysis engine. It installs as an offline web app (manifest and service worker), and a generated iOS shell exists that has never been built.
-- **How it has been tested:** **all validation so far is on synthetic video; no real footage, real phone or radar has been used.** No serve metric is yet "measured"; the best label is "estimated". On the production build the full pipeline counts 45 of 45 synthetic serves with no false serves (`validation/results/e2e-final/SUMMARY.md`).
+- **How it has been tested:** **all validation so far is on synthetic video; no real footage, real phone or radar has been used.** No serve metric is yet "measured"; the best label is "estimated". On the production build the full pipeline counts 45 of 45 synthetic serves with no false serves (`validation/results/e2e-final/SUMMARY.md`). All 92 findings of an adversarial review are audited and closed ([docs/REVIEW_CLOSURE.md](docs/REVIEW_CLOSURE.md)).
 - **Where to start:** [docs/FUNCTIONAL_STATUS.md](docs/FUNCTIONAL_STATUS.md), [docs/VALIDATION.md](docs/VALIDATION.md) and [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ## Screenshots
 
-From the end-to-end flows on the production build in headless Edge at 390 × 844 (synthetic player, `validation/results/ui/integrated/`, 146 screenshots (208 image files with the full-page captures) images in light and dark):
+From the end-to-end flows on the production build in headless Edge at 390 × 844 (synthetic player, `validation/results/ui/integrated/`: 178 screenshots, 242 image files with the full-page captures, in light and dark):
 
 | Session report | Serve detail, toss overlay | Focus with evidence | "Did it work?" |
 |---|---|---|---|
-| <img src="validation/results/ui/integrated/light-a06-sample-report.png" width="180" alt="Sample session report: 16 of 16 serves measured, toss height varied by about 9.5 cm, an early read with its likely range, and the experimental capture check"> | <img src="validation/results/ui/integrated/light-a09-serve-detail-toss.png" width="180" alt="Serve detail with the toss trail, peak and drop labelled as estimates"> | <img src="validation/results/ui/integrated/light-c06-focus-own.png" width="180" alt="Focus screen: steady toss height, key frame beside the player's best serve"> | <img src="validation/results/ui/integrated/light-c16-compare-own.png" width="180" alt="Did it work: toss height consistency from about 25 cm to about 10 cm, clearly better"> |
+| <img src="validation/results/ui/integrated/light-a06-sample-report.png" width="180" alt="Sample session report: 16 of 16 serves measured, toss height varied by about 9.5 cm, an early read with its likely range, and the experimental capture check"> | <img src="validation/results/ui/integrated/light-a09-serve-detail-toss.png" width="180" alt="Serve detail with the toss trail, peak and drop labelled as estimates"> | <img src="validation/results/ui/integrated/light-c07-focus-own.png" width="180" alt="Focus screen: steady toss height, key frame beside the player's best serve"> | <img src="validation/results/ui/integrated/light-c18-compare-own.png" width="180" alt="Did it work: toss height consistency from about 25 cm to about 10 cm, clearly better"> |
 
-More: onboarding (`light-a01`–`a05`), tagging (`a16`–`a17`), drill and practice log (`a20`–`a21`, `c07`–`c09`), Progress (`a22`, `c18`), import with the mount question and processing (`b01`–`b03`, `c12`–`c13`), Check this serve with hip and shoulder marks (`b06`–`b11`), Metric info and How we measure (`a15`, `a25`–`a28`), the first-experiment Plus card (`c17`), offline (`d01`–`d03`), match log and comp nights (`d04`–`d06`), Plus sheets (`d07`, `d08`, `d11`–`d12`), Beta data (`d14`), and every screen in dark (`dark-*`).
+More: onboarding (`light-a01`–`a05`), tagging (`a16`–`a17`), drill and practice log (`a20`–`a21`, `c08`–`c10`), Progress (`a22`, `c22`), import with the "When was it filmed?" date, the mount question and processing (`b01`–`b04`, `c01`–`c03`, `c13`–`c15`), Check this serve with hip, shoulder and radar marks (`b07`–`b13`), the report's radar row (`b14`), Metric info and How we measure (`a15`, `a25`–`a28`), the first-experiment Plus card and its beta Plus preview (`c19`–`c21`), offline (`d01`–`d03`), the T2 preview on Processing (`d07`–`d09`), the morning-after card, match log and Profile's Match log row (`d11`–`d15`), comp nights and the season view (`d16`–`d19`), the T3 previews and the ghost overlay (`d17`–`d18`, `d20`–`d22`), Beta data (`d23`), and every screen in dark (`dark-*`).
 
 ## Run it
 
@@ -48,13 +48,14 @@ npm run dev          # http://localhost:5173 (development: no service worker)
   - The JSON export feeds `tools/validate/annotation-eval.ts` (below).
 - **Comp nights:** Progress → Comp nights → **Log a match** (`/sessions/matches/new`).
 - **Beta data:** Profile → Beta data shows the local usage counts and exports the beta report (JSON, nothing is sent).
-- **Plus (prototype, no payment):** Profile → Plan → "Test Plus" unlocks the ghost overlay and the season view.
+- **Plus (prototype, no payment):** everything is unlocked in the beta. The Plus moments show a "Plus preview" with the proposed price and one question ("Would you pay A$99.99 a year for this?"), kept on the phone. Profile → Plan → "Test the after-beta limits" brings back the free plan's locks on one phone; "Test Plus" unlocks them again.
+- **Filming date:** an import is dated from the video's recording time, else the file's last change; change the day under "When was it filmed?" on the Import screen.
 
 ### Checks
 
 ```sh
 cd app
-npm test             # Vitest: engine project in Node, UI project in jsdom (1,332 tests in 140 files at the final-round commit)
+npm test             # Vitest: engine project in Node, UI project in jsdom (1,500 tests in 158 files at the closure-round commit)
 npm run typecheck    # tsc -b
 npm run lint         # oxlint --deny-warnings
 npm run build        # tsc -b && vite build -> dist/
@@ -136,6 +137,7 @@ node scripts/build-demo.mjs                          # rebuilds public/demo from
 | [docs/VALIDATION.md](docs/VALIDATION.md) | How accurate each metric is on synthetic video, and how we know |
 | [docs/LIMITATIONS.md](docs/LIMITATIONS.md) | What it cannot do or prove yet |
 | [docs/NEXT_STEPS.md](docs/NEXT_STEPS.md) | Ranked next steps with success criteria |
+| [docs/REVIEW_CLOSURE.md](docs/REVIEW_CLOSURE.md) | Where each of the 92 adversarial-review findings ended up, and how it was checked |
 | [docs/MONETISATION.md](docs/MONETISATION.md) | Australian pricing, costs, channels, gates, 12-month scenario |
 | [docs/LAUNCH_AU.md](docs/LAUNCH_AU.md) | Dated path to an Australian App Store launch, legal and Apple requirements |
 | [docs/IOS_ROUTE.md](docs/IOS_ROUTE.md) | The generated iOS project, Mac steps, native plugin plan |

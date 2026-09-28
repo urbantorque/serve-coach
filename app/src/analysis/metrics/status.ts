@@ -51,7 +51,7 @@ export interface MetricDraft {
   checkId?: string
 }
 
-export const METHOD_VERSION = 'engine-core@1.1.0'
+export const METHOD_VERSION = 'engine-core@1.1.1'
 
 /** Plain-English reason text for `unavailableReason` (METRICS §1.3 meanings). */
 export const REASON_TEXT: Partial<Record<ReasonCode, string>> = {

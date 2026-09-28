@@ -166,5 +166,6 @@ export const IMPORT_HELP = {
 export const RIGHTS_REMINDER = "Only import videos you're allowed to use. If the player is under 18, a parent or guardian needs to agree."
 
 export const CAMERA_PREALERT = "Serve Coach uses the camera to record your serve. Video is analysed on this phone and isn't uploaded."
-export const MOTION_PREALERT = "It also reads the phone's motion sensors to measure its tilt, so we can take the tilt out."
+// Finding 66: the correction is untested on real phones (VALIDATION §7: pitch came from truth), so it says so.
+export const MOTION_PREALERT = "It also reads the phone's motion sensors to measure its tilt, so we can correct for it. This correction hasn't been checked on real phones yet."
 export const PAIN_RULE = "If a serve hurts, stop. Sharp pain, pain that builds, or pain that's still there tomorrow is a reason to see a physio or doctor."

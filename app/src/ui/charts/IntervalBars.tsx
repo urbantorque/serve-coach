@@ -1,7 +1,7 @@
 import type { OutcomeMarkKind } from '../copy/strings.ts'
 import { beeswarm, packUnits } from './layout.ts'
 import { ServeMark } from './marks.tsx'
-import { BAND_CLASS } from './markStyle.ts'
+import { BAND_CLASS, INTERVAL_FILL } from './markStyle.ts'
 import { PlotSurface, type PlotTarget } from './PlotSurface.tsx'
 import { useChartWidth } from './useChartWidth.ts'
 import { formatTick as defaultTick, linear, niceTicks, tickStep, type Domain } from './scale.ts'
@@ -38,14 +38,6 @@ export interface IntervalBarsProps {
   label: string
   onOpen?: (id: string) => void
 }
-
-/**
- * Interval fills (DESIGN §9.7, §12; WCAG 1.4.11). The 80% range is solid in the row colour, so it is at
- * least 3:1 against the 95% tint and the surface in Day, Night and Court-side; the 95% range is a tint
- * with a full-colour outline (3:1 against the surface); the estimate tick is --ink with a --surface
- * halo, overhanging the bars by 4 px. tokens.test.ts checks these pairs in every set.
- */
-export const INTERVAL_FILL = { ci95: 0.12, ci95Court: 0.3, ci80: 1 } as const
 
 const LEFT = 72
 const RIGHT = 10

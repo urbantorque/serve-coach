@@ -6,7 +6,7 @@
  * coaching output on computer-generated video. The hand-authored fixtures (fixtures.ts) remain the
  * fallback when the seed cannot be fetched (tests, an offline first run) and for UI development.
  */
-import { getDb } from './db.ts'
+import { getDb, withBlockNumbers } from './db.ts'
 import { deleteSession } from './deletion.ts'
 import { DEMO_FIXTURES, DEMO_SESSION_IDS, type DemoFixtures } from './fixtures.ts'
 import { toServeRecord } from './repos/serves.ts'
@@ -34,8 +34,9 @@ async function loadFixtures(fixtures: DemoFixtures): Promise<void> {
     'rw',
     [db.sessions, db.videos, db.serves, db.tags, db.tallies, db.sessionStats, db.coaching, db.experiments, db.practiceLogs, db.matchLogs],
     async () => {
+      const numbered = new Map(withBlockNumbers(fixtures.sessions.map((s) => s.session)).map((r) => [r.id, r]))
       for (const s of fixtures.sessions) {
-        await db.sessions.put(s.session)
+        await db.sessions.put(numbered.get(s.session.id) ?? s.session)
         await db.videos.put(s.video)
         await db.serves.bulkPut(s.serves.map(toServeRecord))
         if (s.tags.length) await db.tags.bulkPut(s.tags)

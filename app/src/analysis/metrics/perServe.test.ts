@@ -52,7 +52,7 @@ const T_VERTEX = 1.0
 const Y_VERTEX = 0.135
 const parabola = { a: A, b: -2 * A * T_VERTEX, c: A * T_VERTEX * T_VERTEX + Y_VERTEX, xa: 0, xb: 0, xc: 0.5 }
 
-function core(opts: { apexY: number; contactT: number; dispute?: ServeCore['contactDispute'] }): ServeCore {
+function core(opts: { apexY: number; contactT: number; dispute?: ServeCore['contactDispute']; lastOnT?: number; wristOnly?: boolean }): ServeCore {
   return {
     index: 1,
     window: { start: 0, end: 2, anchor: 1.2, confidence: 0.9 },
@@ -76,7 +76,7 @@ function core(opts: { apexY: number; contactT: number; dispute?: ServeCore['cont
       parabola,
       apexCase: 'bracketed',
       detections: 20,
-      lastOnT: opts.contactT,
+      lastOnT: opts.lastOnT ?? opts.contactT,
     },
     events: {
       tossRelease: { frameIndex: 36, tReal: 0.6, confidence: 0.9, uncertaintyS: 0.01, method: 'ball', used: [] } as unknown as ServeCore['events']['tossRelease'],
@@ -85,7 +85,7 @@ function core(opts: { apexY: number; contactT: number; dispute?: ServeCore['cont
     },
     releaseMethods: [],
     contactMethods: [],
-    contactWristOnly: false,
+    contactWristOnly: opts.wristOnly ?? false,
     contactDispute: opts.dispute,
     tossWrist: 'left',
     hitWrist: 'right',
@@ -139,6 +139,18 @@ describe('apex below contact − 0.10 m (§4.2): only a trusted contact can reje
     const r = computeServeMetrics(core({ apexY: APEX_BELOW_VERTEX, contactT: 1.02 }), track, { ...ctx, contactCut: true })
     expect(r.metrics['toss-apex-height']?.status).not.toBe('unavailable')
     expect(r.hardRejects).not.toContain('apexHeightM')
+  })
+
+  it('a contact the ball was last seen 80 ms before (extrapolated) never rejects the apex', () => {
+    const r = computeServeMetrics(core({ apexY: APEX_BELOW_VERTEX, contactT: 1.02, lastOnT: 0.94 }), track, ctx)
+    expect(r.metrics['toss-apex-height']?.status).not.toBe('unavailable')
+    expect(r.hardRejects).not.toContain('apexHeightM')
+  })
+
+  it('under court lights (a calibration cap both heights share) a trusted contact still rejects an apex below it', () => {
+    const r = computeServeMetrics(core({ apexY: APEX_BELOW_VERTEX, contactT: 1.02 }), track, { ...ctx, condition: 'night-lights' })
+    expect(r.metrics['contact-height-ratio']?.reasonCode).toBe('CONDITION_NOT_VALIDATED')
+    expect(r.metrics['toss-apex-height']?.reasonCode).toBe('IMPLAUSIBLE_VALUE')
   })
 
   it('an apex at the parabola vertex is never rejected by a contact on the same parabola', () => {

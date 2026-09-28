@@ -75,6 +75,18 @@ describe('court lights by the picture: a dark sky over a lit court', () => {
     expect(lightEvidence(frames((r) => (r < 6 ? 160 : 100)), { captureFps: 60 })!.dark).toBe(false)
     expect(lightEvidence(frames((r) => (r < 6 ? 110 : 7)), { captureFps: 60 })!.dark).toBe(false)
   })
+  it('a dark windbreak above a sunlit court (dim, not black) is not night; floodlights in a black sky do not hide the night', () => {
+    // Windbreak luma 45 over a court at 150: below 0.35 of the court, but not near-black.
+    expect(lightEvidence(frames((r) => (r < 4 ? 45 : 150)), { captureFps: 60 })!.dark).toBe(false)
+    // The darkest daylight top band on the synthetic corpus: a fence filling the top of the low 4.5 m set-up (29 over 94).
+    expect(lightEvidence(frames((r) => (r < 4 ? 29 : 94)), { captureFps: 60 })!.dark).toBe(false)
+    // Night sky 8 with three floodlight cells at 255 in the top band: the band's median stays black.
+    const lamps = lightEvidence(frames((r, c) => (r < 4 ? (r === 1 && c >= 2 && c <= 4 ? 255 : 8) : 170)), { captureFps: 60 })!
+    expect(lamps.skyLuma).toBe(8)
+    expect(lamps.dark).toBe(true)
+    // A dim, evenly lit picture (sky 30, court 60) is not night: under court lights the court is far brighter than the sky.
+    expect(lightEvidence(frames((r) => (r < 4 ? 30 : 60)), { captureFps: 60 })!.dark).toBe(false)
+  })
   it("leaves the player's box out of the background", () => {
     // A bright player standing in a dark-sky picture: the box is left out, the sky stays dark.
     const ev = lightEvidence(frames((r, c) => (c >= 6 && c <= 9 ? 250 : r < 6 ? 6 : 170)), { captureFps: 60, playerBox: () => ({ x0: 6 / 16, x1: 10 / 16, y0: 0, y1: 1 }) })!

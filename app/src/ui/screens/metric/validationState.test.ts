@@ -139,14 +139,29 @@ describe('validation words (DESIGN §3.2, §11; honesty rules)', () => {
   })
 
   it('numbers come with the simulated-serve qualifier and the pass mark', () => {
-    const lines = keyNumberLines('toss-apex-height', 1.8)
+    const lines = keyNumberLines('contact-height-ratio', 1.8)
     expect(lines[0]).toMatch(/^At the recommended set-ups \(11 simulated serves/)
     expect(lines.join(' ')).toMatch(/Our pass mark is .* It passed\./)
     expect(keyNumberLines('toss-forward').join(' ')).toMatch(/It hasn't passed yet\./)
-    expect(rowDetail('toss-apex-height')).toMatch(/^Checked on simulated serves\. Typical error: about 1% of your height\.$/)
+    expect(rowDetail('contact-height-ratio')).toMatch(/^Checked on simulated serves\. Typical error: under 1% of your height\.$/)
     expect(rowDetail('toss-forward')).toMatch(/^Simulated check not passed yet\./)
     expect(rowDetail('serve-in-rate')).toBe('You log this.')
     expect(rowDetail('spin')).toMatch(/never estimate/)
+  })
+})
+
+describe('toss height: a pass through the app only (fails with exact body points) never reads as a pass (finding 41)', () => {
+  it('Metric info gives both figures and says it has not passed; the row and details agree', () => {
+    const lines = keyNumberLines('toss-apex-height', 1.8).join(' ')
+    expect(lines).not.toMatch(/It passed\./)
+    expect(lines).toMatch(/Through the app it was within that, but with exact body points the typical error was about 4% of your height .*, so it hasn't passed yet\./)
+    expect(lines).toMatch(/two small errors cancelling/)
+    expect(rowDetail('toss-apex-height')).toBe('Simulated check not passed yet. Typical error: about 1% of your height through the app, about 4% of your height with exact body points.')
+    const rows = detailRows('toss-apex-height', 'd1')
+    expect(rows.find((r) => r.label === 'Typical error with exact body points')?.value).toMatch(/about 4%/)
+    expect(rows.find((r) => r.label === 'Result')?.value).toBe('Not passed yet (passed through the app only)')
+    expect(metricResult('toss-apex-height')?.appOnlyPass).toBe(true)
+    expect(metricResult('contact-height-ratio')?.appOnlyPass).toBeUndefined()
   })
 })
 
@@ -158,5 +173,17 @@ describe('leg drive: a relative-only pass is explained, not left as "It hasn\'t 
     expect(lines).toMatch(/compare with your own serves/)
     expect(RELATIVE_ONLY['leg-drive']?.result).toMatch(/your own serves only/)
     expect(detailRows('leg-drive', 'd1').find((r) => r.label === 'Result')?.value).toMatch(/absolute/)
+    // How we measure's row says the same, with the same low-read figure as the note and Metric info.
+    expect(rowDetail('leg-drive')).toBe('Passed for comparing with your own serves only, limited evidence. As an absolute number it reads about 2.5% of your height low.')
+    expect(detailRows('leg-drive', 'd1').find((r) => r.label === 'On average it reads')?.value).toMatch(/about 2.5% of your height low/)
+  })
+})
+
+describe('loading depth: a range much wider than the typical error is explained (finding 61)', () => {
+  it('Metric info says where the wide range comes from, beside "under 1%"', () => {
+    const lines = keyNumberLines('loading-depth').join(' ')
+    expect(lines).toMatch(/typical error was under 1% of your height/)
+    expect(lines).toMatch(/range comes from our allowance for body-tracking noise .* much wider than the typical error/)
+    expect(keyNumberLines('contact-height-ratio').join(' ')).not.toMatch(/allowance for body-tracking noise/)
   })
 })

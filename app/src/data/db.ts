@@ -103,24 +103,39 @@ export function numberBlocks<T extends Pick<SessionRecord, 'startedAt' | 'create
   return out
 }
 
-/** v2 -> v3 upgrade. Idempotent: it only fills a missing (or 0) blockIndex. */
-export async function upgradeToV3(tx: Transaction): Promise<void> {
-  const table = tx.table('sessions')
-  const rows = (await table.toArray()) as SessionRecord[]
+/** Block numbers for a missing (or 0) blockIndex among these rows, grouped by blockGroup. */
+export function missingBlockNumbers(rows: readonly SessionRecord[]): Map<string, number> {
   const groups = new Map<string, SessionRecord[]>()
   for (const s of rows) {
     const g = groups.get(blockGroup(s)) ?? []
     g.push(s)
     groups.set(blockGroup(s), g)
   }
+  const out = new Map<string, number>()
   for (const group of groups.values()) {
     if (group.every((s) => s.blockIndex && s.blockIndex > 0)) continue
-    const numbers = numberBlocks(group)
-    for (const s of group) {
-      if (s.blockIndex && s.blockIndex > 0) continue
-      await table.update(s.id, { blockIndex: numbers.get(s.id) })
+    for (const [id, n] of numberBlocks(group)) {
+      const s = group.find((x) => x.id === id)
+      if (!(s?.blockIndex && s.blockIndex > 0)) out.set(id, n)
     }
   }
+  return out
+}
+
+/**
+ * Rows written outside createSession (the sample data, whose seed predates real blocks and says 0):
+ * each gets its block number as a recording would.
+ */
+export function withBlockNumbers<T extends SessionRecord>(rows: readonly T[]): T[] {
+  const numbers = missingBlockNumbers(rows)
+  return rows.map((s) => (numbers.has(s.id) ? { ...s, blockIndex: numbers.get(s.id) } : s))
+}
+
+/** v2 -> v3 upgrade. Idempotent: it only fills a missing (or 0) blockIndex. */
+export async function upgradeToV3(tx: Transaction): Promise<void> {
+  const table = tx.table('sessions')
+  const numbers = missingBlockNumbers((await table.toArray()) as SessionRecord[])
+  for (const [id, blockIndex] of numbers) await table.update(id, { blockIndex })
 }
 
 export function fpsClassFor(captureFps: number): FpsClass {

@@ -1689,7 +1689,7 @@ This extends COACHING §14 (coaching content) and CAPTURE §3 (setup copy), whic
 | Leg drive | "Your hips rose a little less than your usual today (typical for you: 11–14%)." [placeholder numbers] | "Weak leg drive." / "Pros rise 16%." |
 | Spin | "Spin can't be measured from phone video." | "Spin: 2,300 rpm" |
 | Capture tip | "Your toss left the picture on 3 of 15 serves. Move the phone back a step." | "Bad framing detected." |
-| Tilt | "Level the phone. A small tilt up is fine; we measure it and take it out." | "Camera angle invalid." |
+| Tilt | "Level the phone. We read any tilt from the motion sensor and correct for it, but that correction hasn't been checked on real phones yet." | "Camera angle invalid." |
 | Night | "Court lights: timing will be a little less precise. Your toss and posture are fine." | "Low quality video." |
 | Empty state | "No sessions yet. Your first one takes about 30 minutes, warm-up included." | "Nothing here!" |
 | Allowance | "You've used this month's 2 free analysed days. It's saved; we'll analyse it on 1 November, or now with Plus." | "Upgrade now to continue!" |
