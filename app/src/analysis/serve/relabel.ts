@@ -68,6 +68,11 @@ export interface RelabelEvidenceInput {
   /** Frame range to process (indices into the track, inclusive). */
   from: number
   to: number
+  /**
+   * Compute the states only (RelabelReport.upperStates) and leave the track as it is: the swing test
+   * of the classification (§2.3.4) follows the arms from the toss alone, without the contact cue.
+   */
+  dryRun?: boolean
 }
 
 export interface RelabelReport {
@@ -78,6 +83,8 @@ export interface RelabelReport {
   lowerEvidenceFrames: number
   /** Frames where the chosen state disagrees with that frame's own evidence (conflicts). */
   conflicts: number
+  /** Dry runs: the upper-body state per frame from `from` (1 = the labels are mirrored). */
+  upperStates?: Uint8Array
 }
 
 function d2(track: PoseTrack, i: number, a: number, j: number, b: number): number | null {
@@ -212,6 +219,7 @@ export function relabelSides(track: PoseTrack, input: RelabelEvidenceInput): Rel
   }
 
   const upper = report.upperEvidenceFrames > 0 ? viterbi(n, upperEv, (k) => transitionCosts(track, from + k, UPPER_CONTINUITY, bh)) : new Uint8Array(n)
+  if (input.dryRun) return { ...report, upperStates: upper }
   const lower = report.lowerEvidenceFrames > 0 ? viterbi(n, lowerEv, (k) => transitionCosts(track, from + k, LOWER_CONTINUITY, bh)) : new Uint8Array(n)
   for (let k = 0; k < n; k++) {
     if ((upper[k] === 1 && upperEv[k] < 0) || (upper[k] === 0 && upperEv[k] > 0)) report.conflicts++

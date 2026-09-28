@@ -116,7 +116,7 @@ function Chart({ model, baseline, retests, heightM, status }: { model: CompareMo
     <>
       <ChartFrame
         title={`${metricName(id)}, before and after`}
-        subtitle="Bars show the likely range: darker is 80%, lighter (outlined) is 95%."
+        subtitle="Bars show the likely range: solid is 80%, the outlined tint is 95%."
         status={status}
         metricId={id}
         headingLevel="h2"

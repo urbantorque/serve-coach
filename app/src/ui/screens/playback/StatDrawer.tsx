@@ -10,6 +10,7 @@ import { MetricValue, SectionLabel, UnavailableRow } from '../../components/inde
 import { cx } from '../../components/cx.ts'
 import { metricName } from '../../copy/metricNames.ts'
 import { UI } from '../../copy/strings.ts'
+import { formatMetric } from '../../format/metricFormat.ts'
 import { paths } from '../../shell/paths.ts'
 import type { MetricGroup, MetricRow, UnavailableItem } from './serveView.ts'
 
@@ -23,12 +24,19 @@ export function MetricLine({ row, focus = false }: { row: MetricRow; focus?: boo
       <MetricValue metricId={row.id} value={row.value} className="items-end text-right" detail={false} />
     </>
   )
-  if (!row.note) return <li className="flex min-h-11 items-center justify-between gap-3 py-1.5">{line}</li>
+  // A caveat that belongs beside the number (leg drive's low read); the value's spoken sentence has it.
+  const caveat = formatMetric(row.id, row.value).note
+  if (!row.note && !caveat) return <li className="flex min-h-11 items-center justify-between gap-3 py-1.5">{line}</li>
   // A player-entered value names its source under the line (D2, D4).
   return (
     <li className="flex flex-col gap-0.5 py-1.5">
       <span className="flex min-h-11 items-center justify-between gap-3">{line}</span>
-      <span className="text-footnote text-ink-3">{row.note}</span>
+      {row.note ? <span className="text-footnote text-ink-3">{row.note}</span> : null}
+      {caveat ? (
+        <span aria-hidden="true" className="text-footnote text-ink-3" data-metric-note>
+          {caveat}
+        </span>
+      ) : null}
     </li>
   )
 }
@@ -46,6 +54,9 @@ export interface StatDrawerProps {
   expanded: boolean
   onExpandedChange: (open: boolean) => void
 }
+
+/** Controls a keyboard or tap can focus on purpose; never a tabindex="-1" container such as <main>. */
+const FOCUSABLE = 'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [role="slider"], [role="radio"]'
 
 /**
  * True on short screens or with large text (iOS Larger Text, Android font scale): the peek then shows
@@ -95,8 +106,13 @@ export function StatDrawer({ peek, focusIds, groups, experimental, unavailable, 
     const onFocus = (e: FocusEvent) => {
       const el = e.target as HTMLElement | null
       if (!el || panel.current?.contains(el) || typeof el.getBoundingClientRect !== 'function') return
+      // Only a control focused on purpose: a tap on plain text focuses <main tabindex="-1"> (the skip
+      // link's target), and scrolling to its bottom would jump the page (finding 70).
+      if (typeof el.matches !== 'function' || !el.matches(FOCUSABLE)) return
       const r = el.getBoundingClientRect()
       const limit = window.innerHeight - peekH - 8
+      // A target taller than the free area above the drawer can't be brought clear; leave the page be.
+      if (r.height > limit) return
       if (r.bottom > limit) window.scrollBy({ top: r.bottom - limit, behavior: 'instant' as ScrollBehavior })
     }
     document.addEventListener('focusin', onFocus)
@@ -105,7 +121,14 @@ export function StatDrawer({ peek, focusIds, groups, experimental, unavailable, 
 
   const expandedRef = useRef(expanded)
   useEffect(() => {
+    const was = expandedRef.current
     expandedRef.current = expanded
+    // However the drawer collapses (Escape, the scrim, a swipe, or a key frame chosen inside it), focus
+    // that was in its body would fall to <body> when the body hides: bring it back to the toggle.
+    if (was && !expanded) {
+      const active = document.activeElement
+      if (!active || active === document.body || body.current?.contains(active)) toggle.current?.focus()
+    }
   }, [expanded])
 
   useEffect(() => {

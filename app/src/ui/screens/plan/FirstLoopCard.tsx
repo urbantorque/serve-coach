@@ -53,7 +53,11 @@ export function FirstLoopCard({ experiment }: { experiment: ExperimentRecord }) 
           <h2 id={titleId} className="text-headline text-ink">
             That was your first experiment
           </h2>
-          <p className="text-callout text-ink-2">Plus keeps this going every week through the season. Your verdict and next focus stay free.</p>
+          <p className="text-callout text-ink-2">
+            {plan?.beta
+              ? 'After the beta, Plus will keep this going every week through the season. It is unlocked for you now. Your verdict and next focus stay free.'
+              : 'Plus keeps this going every week through the season. Your verdict and next focus stay free.'}
+          </p>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -64,7 +68,7 @@ export function FirstLoopCard({ experiment }: { experiment: ExperimentRecord }) 
           Not now
         </Button>
       </div>
-      <PlusSheet open={open} onClose={() => setOpen(false)} trigger="t1" from={`${location.pathname}${location.search}`} />
+      <PlusSheet open={open} onClose={() => setOpen(false)} trigger="t1" from={`${location.pathname}${location.search}`} beta={plan?.beta} />
     </section>
   )
 }

@@ -10,6 +10,19 @@ export async function putJob(job: JobRecord): Promise<void> {
   await getDb().jobs.put(job)
 }
 
+/**
+ * Writes a job only while its session exists (the check and the write are one transaction), so a run
+ * whose session was deleted mid-run never leaves a job row behind. False when the session is gone.
+ */
+export async function putJobForSession(job: JobRecord): Promise<boolean> {
+  const db = getDb()
+  return db.transaction('rw', db.sessions, db.jobs, async () => {
+    if (!(await db.sessions.get(job.sessionId))) return false
+    await db.jobs.put(job)
+    return true
+  })
+}
+
 export async function getJob(id: string): Promise<JobRecord | undefined> {
   return getDb().jobs.get(id)
 }

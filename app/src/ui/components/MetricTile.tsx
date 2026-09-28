@@ -44,6 +44,11 @@ export function MetricTile({ metricId, value, label, usual, to, onOpen, classNam
       <MetricValue metricId={metricId} value={value} size="metric" chip={false} />
       {context && value.status !== 'unavailable' ? <span className="text-footnote text-ink-3">{context}</span> : null}
       {f.nLine && value.status !== 'unavailable' ? <span className="text-footnote tabular-nums text-ink-3">{f.nLine}</span> : null}
+      {f.note ? (
+        <span className="text-footnote text-ink-2" data-metric-note>
+          {f.note}
+        </span>
+      ) : null}
       <span className="mt-auto flex flex-wrap items-center gap-2 pt-2">
         <StatusChip status={value.status} />
         {value.provisional ? <Badge>{UI.earlyRead}</Badge> : null}

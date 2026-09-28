@@ -497,11 +497,11 @@
     "variant": "audio",
     "metric": "toss-drop",
     "status": "estimated",
-    "value": 67,
+    "value": 66,
     "truth": 66.4,
-    "error": 0.5999999999999943,
-    "low": 58.11580337489365,
-    "high": 75.09283081070764,
+    "error": -0.4000000000000057,
+    "low": 54.951342498082,
+    "high": 77.73147308329615,
     "covered": true
    },
    {
@@ -530,11 +530,11 @@
     "variant": "audio",
     "metric": "rhythm-release-to-contact",
     "status": "estimated",
-    "value": 962,
+    "value": 961,
     "truth": 935,
-    "error": 27,
-    "low": 891.4328309815647,
-    "high": 1032.2300861143042,
+    "error": 26,
+    "low": 887.6249745258137,
+    "high": 1034.5819321989527,
     "covered": true
    },
    {
@@ -554,11 +554,11 @@
     "metric": "leg-drive",
     "status": "estimated",
     "reason": "BASELINE_BUILDING",
-    "value": 10.920024052495203,
+    "value": 10.932773789361283,
     "truth": 13.857,
-    "error": -2.9369759475047967,
-    "low": 4.6400561775368345,
-    "high": 17.19999192745357,
+    "error": -2.9242262106387162,
+    "low": 4.64210774172276,
+    "high": 17.223439836999805,
     "covered": true
    },
    {
@@ -680,9 +680,9 @@
     "set": "dist4",
     "variant": "audio",
     "event": "contact",
-    "errorMs": 0.9157585479209196,
+    "errorMs": 0.18775336236975804,
     "method": "fused",
-    "sigmaMs": 7.279753026511386,
+    "sigmaMs": 13.010500521569162,
     "fps": 60
    },
    {
@@ -763,9 +763,9 @@
     },
     "toss-drop": {
      "status": "estimated",
-     "value": 67,
-     "low": 58.11580337489365,
-     "high": 75.09283081070764
+     "value": 66,
+     "low": 54.951342498082,
+     "high": 77.73147308329615
     },
     "contact-height-ratio": {
      "status": "unavailable",
@@ -784,16 +784,16 @@
     },
     "rhythm-release-to-contact": {
      "status": "estimated",
-     "value": 962,
-     "low": 891.4328309815647,
-     "high": 1032.2300861143042
+     "value": 961,
+     "low": 887.6249745258137,
+     "high": 1034.5819321989527
     },
     "leg-drive": {
      "status": "estimated",
      "value": 11,
      "reason": "BASELINE_BUILDING",
-     "low": 4.6400561775368345,
-     "high": 17.19999192745357
+     "low": 4.64210774172276,
+     "high": 17.223439836999805
     },
     "drive-time": {
      "status": "unavailable",
@@ -877,8 +877,8 @@
     },
     "contact": {
      "frameIndex": 158,
-     "tReal": 2.639336758547921,
-     "uncertaintyS": 0.007279753026511387,
+     "tReal": 2.63860875336237,
+     "uncertaintyS": 0.013010500521569162,
      "confidence": 1,
      "method": "fused"
     },

@@ -62,9 +62,9 @@
     "rear"
    ],
    "statusDefault": "estimated",
-   "validationLevel": "V1",
+   "validationLevel": "V0",
    "validationLevelNight": "V0",
-   "validationState": "V1-synthetic-pass",
+   "validationState": "V1-synthetic-fail",
    "prerequisites": [
     "fps>=30",
     "event:tossApex",
@@ -1462,7 +1462,7 @@
   },
   "PITCH_UNKNOWN": {
    "meaning": "No pitch from sensors or background verticals; absolute heights, cm positions and angles are experimental",
-   "unlockHint": "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.",
+   "unlockHint": "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount can keep contact height as an estimate.",
    "unlockHintRearOnly": null
   },
   "SCALE_INCONSISTENT": {

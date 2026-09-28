@@ -56,7 +56,8 @@ export function toCoachingRecord(
         title: d.title,
         phase: focus?.phase ?? 'contact',
         evidenceTier: d.effectiveTier,
-        whyChosen: focus ? focus.reasons.map((r) => r.text).join(' ') : d.whyItMatters,
+        // A reason that names a comfort setting is stored in its neutral form (D8; RankReason.storedText).
+        whyChosen: focus ? focus.reasons.map((r) => r.storedText ?? r.text).filter(Boolean).join(' ') : d.whyItMatters,
       },
       ...(focus && focus.evidence.keyServeId && focus.evidence.keyFrameEvent
         ? {

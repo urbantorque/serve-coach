@@ -109,3 +109,35 @@ export function sessionLine(s: SessionRecord): string {
   const n = s.analysis?.counts.analysed ?? 0
   return `${s.view === 'rear' ? 'View from behind' : 'Side view'}, ${n} ${n === 1 ? 'serve' : 'serves'}`
 }
+
+export interface MorningAfter {
+  /** The comp night, "YYYY-MM-DD" (yesterday, local). */
+  date: string
+}
+
+const ymdOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+/**
+ * The morning-after card (PRODUCT §6.11, D11; U3): the day after one of the player's comp nights (set
+ * in their profile), a gentle prompt to log the match while it is fresh. Never for sample data, never
+ * while coaching is paused for pain, not once that night is logged, and not after "Not now".
+ */
+export function morningAfter(input: {
+  profile: ProfileRecord | null
+  now: Date
+  mode: TodayModel['mode']
+  painPause: boolean
+  /** Match log dates already logged (own entries only). */
+  loggedDates: readonly string[]
+  /** The comp-night date the player dismissed the card for. */
+  dismissed?: string
+}): MorningAfter | null {
+  if (input.mode !== 'player' || input.painPause) return null
+  const nights = input.profile?.matchNights ?? []
+  if (!nights.length) return null
+  const yesterday = new Date(input.now.getFullYear(), input.now.getMonth(), input.now.getDate() - 1, 12)
+  if (!nights.includes(WEEKDAYS[yesterday.getDay()])) return null
+  const date = ymdOf(yesterday)
+  if (input.loggedDates.includes(date) || input.dismissed === date) return null
+  return { date }
+}

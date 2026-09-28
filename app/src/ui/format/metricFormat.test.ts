@@ -77,9 +77,23 @@ describe('formatMetric (DESIGN §4.3)', () => {
     expect(f.detail).toBe('likely up to 4% of your height')
     expect(f.aria).not.toMatch(/-d/)
     const exp = formatMetric('loading-depth', mv({ id: 'loading-depth', status: 'experimental', value: 1, uncertainty: { kind: 'range', low: -5, high: 7 } }))
-    expect(exp.text).toBe('about up to 7% of your height')
-    // Leg drive keeps its signed range.
+    expect(exp.text).toBe('up to about 7% of your height')
+    expect(exp.aria).not.toMatch(/-d/)
+    // Leg drive (hip rise from its lowest point) is floored too; a range clear of zero is unchanged.
     expect(formatMetric('leg-drive', mv({ id: 'leg-drive', status: 'estimated', value: 9, uncertainty: { kind: 'ci95', low: 6, high: 12 } })).detail).toBe('likely 6% to 12% of your height')
+    const wide = formatMetric('leg-drive', mv({ id: 'leg-drive', status: 'estimated', value: 3, uncertainty: { kind: 'ci95', low: -2, high: 8 } }))
+    expect(wide.detail).toBe('likely up to 8% of your height')
+    expect(wide.aria).not.toMatch(/-d/)
+  })
+
+  it('leg drive as an Estimate always carries its low-read caveat, in the text and the spoken sentence (finding 50)', () => {
+    const f = formatMetric('leg-drive', mv({ id: 'leg-drive', status: 'estimated', value: 10, uncertainty: { kind: 'ci95', low: 7, high: 13 }, n: 16, nEligible: 16 }))
+    expect(f.note).toMatch(/reads about 2% of your height low/i)
+    expect(f.note).toMatch(/your own serves/)
+    expect(f.aria).toContain(f.note!)
+    // Experimental values are already a rough range; loading depth never gets the note.
+    expect(formatMetric('leg-drive', mv({ id: 'leg-drive', status: 'experimental', value: 10, uncertainty: { kind: 'range', low: 5, high: 15 } })).note).toBeUndefined()
+    expect(formatMetric('loading-depth', mv({ id: 'loading-depth', status: 'estimated', value: 2, uncertainty: { kind: 'ci95', low: 1, high: 4 } })).note).toBeUndefined()
   })
 
   it('spreads near the measurement limit read "≤ 4 cm"', () => {

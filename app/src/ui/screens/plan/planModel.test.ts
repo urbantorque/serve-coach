@@ -50,7 +50,8 @@ describe('plans (PRODUCT §5.2, §6.15, §10)', () => {
     expect(isPlus(season, addMonths(NOW, 5))).toBe(false)
     expect(isPlus({ tier: 'free', source: 'prototype' }, NOW)).toBe(false)
     expect(planLabel(annual, NOW)).toBe('Plus, yearly (test)')
-    expect(planLabel(undefined, NOW)).toBe('Free')
+    expect(planLabel(undefined, NOW)).toBe('Beta, everything unlocked')
+    expect(planLabel({ tier: 'free', source: 'prototype', afterBetaTest: true }, NOW)).toBe('Free')
   })
 
   it('shows the allowance with its n', () => {

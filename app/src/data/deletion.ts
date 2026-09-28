@@ -25,13 +25,29 @@ export interface DeletedServeSnapshot {
   stats?: SessionStats
 }
 
-export const DELETED_SERVE_NOTE = 'Includes a serve you deleted; analyse the session again to update.'
+/**
+ * Appended to the basis of every value the deleted serve fed. Analysing the session again is not
+ * offered as the fix: the engine would find every serve in the video again, the deleted one included.
+ */
+export const DELETED_SERVE_NOTE = 'Worked out before you deleted a serve, so it still includes that serve.'
+
+/**
+ * The report's line for a session with deleted serves (`SessionStats.deletedServeIds`): its values and
+ * their n were worked out with those serves, which the report says in words, not only with the
+ * "Early read" chip.
+ */
+export function deletedServesLine(count: number): string {
+  return count === 1
+    ? 'These numbers were worked out before you deleted a serve, so they still include it.'
+    : `These numbers were worked out before you deleted ${count} serves, so they still include them.`
+}
 
 /**
  * The session statistics after one serve is deleted. The stored rows cannot rebuild the engine's
- * summaries (they need the pose track and raw per-serve results), so the numbers stay, labelled
- * honestly: every serve-based value the deleted serve fed becomes an early read with a note, and the
- * serve is dropped from the per-serve values, the best serve and the representative serve.
+ * summaries (they need the pose track and raw per-serve results), so the numbers and their n stay as
+ * the engine worked them out, labelled honestly: every serve-based value the deleted serve fed becomes
+ * an early read with a note, the report says so in words (`deletedServesLine`), and the serve is
+ * dropped from the per-serve values, the best serve and the representative serve.
  */
 export function statsAfterServeDelete(stats: SessionStats, serve: ServeRecord): SessionStats {
   const counted = serve.includedFlag === undefined ? serve.included : serve.includedFlag === 1
@@ -128,6 +144,37 @@ export async function wasSessionDeleted(sessionId: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/**
+ * Clears anything an analysis run wrote for a session the player deleted meanwhile (videos and their
+ * blobs, the job, serves, tracks, key frames, stats and decisions). A no-op while the session exists.
+ * The pipeline calls it when a run stops as cancelled or failed; the writes themselves already check
+ * the session in their own transactions, so this is the safety net. Returns the rows removed.
+ */
+export async function sweepDeletedSessionRows(sessionId: string): Promise<number> {
+  const db = getDb()
+  return db.transaction(
+    'rw',
+    [db.sessions, db.videos, db.videoBlobs, db.jobs, db.serves, db.tracks, db.keyFrames, db.sessionStats, db.coaching],
+    async () => {
+      if (await db.sessions.get(sessionId)) return 0
+      const videoIds = await db.videos.where('sessionId').equals(sessionId).primaryKeys()
+      await db.videoBlobs.bulkDelete(videoIds)
+      await db.videos.bulkDelete(videoIds)
+      let removed = videoIds.length
+      removed += await db.jobs.where('sessionId').equals(sessionId).delete()
+      removed += await db.serves.where('sessionId').equals(sessionId).delete()
+      removed += await db.tracks.where('sessionId').equals(sessionId).delete()
+      removed += await db.keyFrames.where('sessionId').equals(sessionId).delete()
+      removed += await db.coaching.where('sessionId').equals(sessionId).delete()
+      if (await db.sessionStats.get(sessionId)) {
+        await db.sessionStats.delete(sessionId)
+        removed++
+      }
+      return removed
+    },
+  )
 }
 
 /** Recording ids whose header says this session took the clip. */

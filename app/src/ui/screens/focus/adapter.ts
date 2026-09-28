@@ -39,6 +39,8 @@ export function toCoachingSession(
   tags: readonly ServeTagRecord[],
   tally: SessionTallyRecord | null | undefined,
   stats: SessionStats | null | undefined,
+  /** How many blocks of this template the session's visit holds (real block numbers, CAPTURE §5.5). */
+  visit: { blocksInVisit?: number } = {},
 ): CoachingSession {
   const tagBy = new Map(tags.map((t) => [t.serveId, t]))
   const ordered = [...serves].sort((a, b) => a.index - b.index)
@@ -91,6 +93,9 @@ export function toCoachingSession(
     ...(rec.template ? { template: rec.template } : {}),
     // The practice visit (local day): a block recorded after the drill that day is never a re-test.
     ...(rec.visitId ? { visitId: rec.visitId } : {}),
+    // The recording's block in its visit: an Experiment visit's Block B never reaches a baseline or a re-test.
+    ...(rec.blockIndex && rec.blockIndex > 0 ? { blockIndex: rec.blockIndex } : {}),
+    ...(visit.blocksInVisit && visit.blocksInVisit > 0 ? { blocksInVisit: visit.blocksInVisit } : {}),
     isDemo: rec.isDemo === 1,
   }
 }

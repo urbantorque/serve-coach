@@ -1,9 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { analyseSession, findServeWindows, missingShare, sessionEvidence, type EngineInput } from './engine.ts'
+import { analyseSession, findServeWindows, missingShare, serveScaleOffsets, sessionBodyHeight, sessionEvidence, type EngineInput } from './engine.ts'
+import type { ServeCore } from './serve/analyse.ts'
+import type { LightEvidence } from './quality/light.ts'
 import { LM, METRIC_IDS, REAR_ONLY_METRIC_IDS, type BallObservation, type BallTrack, type CaptureContext, type MetricValue, type PhoneMount, type PoseFrame, type VideoMeta } from './types.ts'
 import { buildServeFixture } from './pose/servePoseFixture.ts'
+import { assumedLevelHeight } from './metrics/perServe.ts'
+import { cameraModel } from './serve/geometry.ts'
 
 const FPS = 60
 const H_M = 1.8
@@ -36,6 +40,12 @@ function syntheticSession(
     caught?: boolean
     /** A swing and miss: the ball keeps falling on its path past the hitting arm to the ground. */
     miss?: boolean
+    /** With caught: the tracker loses the falling ball this long before it reaches the hand. */
+    lostBeforeCatchS?: number
+    /** Ball detections in the hand this long before release (a lead-in), part of the toss track. */
+    leadInS?: number
+    /** A serve whose outgoing ball was not tracked (no hit sound): the toss track ends at contact. */
+    noOutgoing?: boolean
     /** Phone orientation samples (tMs from the start of recording) instead of the one level sample. */
     orientation?: { tMs: number; pitchDeg: number; rollDeg: number }[]
     /** Real frame rate declared on the meta (fpsSource, timeScale, timeBaseStatus) for time-base tests. */
@@ -62,7 +72,7 @@ function syntheticSession(
   const xAt = (t: number) => (catchFrame ? x0 + ((catchFrame.landmarks![LM.LEFT_WRIST].x - x0) * (t - tRelease)) / (catchFrame.tReal - tRelease) : x0 + 0.01 * (t - tRelease))
   const yAt = (t: number) => (catchFrame && t >= catchFrame.tReal ? catchFrame.landmarks![LM.LEFT_WRIST].y - 0.004 : y(t))
   const missEnd = tApex + Math.sqrt((FLOOR_Y - 0.3 * heightHU - yApex) / a)
-  const tossEnd = catchT !== undefined ? catchT + 1e-6 : opts.miss ? missEnd : CONTACT_T - (opts.tossCutS ?? 0)
+  const tossEnd = catchT !== undefined ? catchT + 1e-6 - (opts.lostBeforeCatchS ?? 0) : opts.miss ? missEnd : CONTACT_T - (opts.tossCutS ?? 0)
   const obs: BallObservation[] = []
   const toss: BallObservation[] = []
   const outgoing: BallObservation[] = []
@@ -70,12 +80,12 @@ function syntheticSession(
     const t = f.tReal
     if (opts.noBall) continue
     if (opts.tossOnlyRising && t > tApex - 0.12) continue
-    if (t >= tRelease - 0.05 && t < tossEnd) {
+    if (t >= tRelease - (opts.leadInS ?? 0.05) && t < tossEnd) {
       const wrist = f.landmarks![LM.LEFT_WRIST]
       const o: BallObservation = t < tRelease ? { frameIndex: f.frameIndex, tReal: t, x: wrist.x, y: wrist.y - 0.004, radius: 0.004, score: 0.9, source: 'detected' } : { frameIndex: f.frameIndex, tReal: t, x: xAt(t), y: yAt(t), radius: 0.004, score: 0.95, source: 'detected' }
       obs.push(o)
-      if (t >= tRelease) toss.push(o)
-    } else if (opts.tossCutS === undefined && !opts.tossOnlyRising && !opts.caught && !opts.miss && t > CONTACT_T && t < CONTACT_T + 3.5 / fps) {
+      if (t >= tRelease || opts.leadInS !== undefined) toss.push(o)
+    } else if (opts.tossCutS === undefined && !opts.tossOnlyRising && !opts.caught && !opts.miss && !opts.noOutgoing && t > CONTACT_T && t < CONTACT_T + 3.5 / fps) {
       const dt = t - CONTACT_T
       const o: BallObservation = { frameIndex: f.frameIndex, tReal: t, x: x0 + 0.01 * (CONTACT_T - tRelease) + (5 / aspect) * dt, y: y(CONTACT_T) + 0.3 * dt, radius: 0.004, score: 0.9, source: 'detected' }
       obs.push(o)
@@ -190,7 +200,11 @@ describe('analyseSession on a synthetic serve (side view, D1 distance, 60 fps)',
 
   it('measures toss height and drop against the fixture truth', () => {
     const apex = serve.metrics['toss-apex-height']!
-    expect(apex.status).toBe('estimated')
+    // V0 until a real-footage check (V1 is gated on the method-only variant too, finding 41); its
+    // relative use rides on toss-height-spread (V1).
+    expect(apex.status).toBe('experimental')
+    expect(apex.reasonCode).toBe('VALIDATION_PENDING')
+    expect(apex.statusIfLevel).toBe('estimated')
     // Fixture heights are exact; the depth prior (§3.2) lowers the value by (ratio − r_h)·δ/D.
     expect(Math.abs((apex.value as number) - truth.apexRatio)).toBeLessThan(0.15)
     expect(apex.uncertainty!.low).toBeLessThan(apex.value as number)
@@ -253,7 +267,10 @@ describe('fused-event disagreement (D2 addendum): one wrong event never gives a 
     expect(s.detection.kind).toBe('serve')
     expect(s.included).toBe(true)
     expect(cut.stats.metrics['serve-count']?.value).toBe(1)
-    expect(s.metrics['toss-apex-height']?.status).toBe('estimated')
+    // The apex keeps its own status and reason (not CONTACT_NOT_FOUND).
+    expect(s.metrics['toss-apex-height']?.status).toBe('experimental')
+    expect(s.metrics['toss-apex-height']?.reasonCode).toBe('VALIDATION_PENDING')
+    expect(s.metrics['toss-apex-height']?.statusIfLevel).toBe('estimated')
   })
 
   it('with the hit sound agreeing with the swing peak, the ball is outvoted: contact is right, dependent values experimental', () => {
@@ -282,8 +299,9 @@ describe('fused-event disagreement (D2 addendum): one wrong event never gives a 
       expect(v.metrics[id]?.reasonCode, id).toBe('CONTACT_NOT_FOUND')
       expect(v.metrics[id]?.basis, id).toMatch(/wrist peak left out/)
     }
-    // The toss apex does not depend on contact.
-    expect(v.metrics['toss-apex-height']?.status).toBe('estimated')
+    // The toss apex does not depend on contact: its own status and reason, its relative use kept.
+    expect(v.metrics['toss-apex-height']?.reasonCode).toBe('VALIDATION_PENDING')
+    expect(v.metrics['toss-apex-height']?.statusIfLevel).toBe('estimated')
   })
 
   it('leaves agreeing signals alone: the clean serve keeps its estimated values and no dispute note', () => {
@@ -326,24 +344,37 @@ describe('status downgrades', () => {
     expect(out.serves[0].metrics['toss-drop']!.status).toBe('estimated')
   })
 
-  it('an import with a level mount (pitch 0 ± 2°) keeps contact height estimated with a wider range (§1.1.3a)', () => {
+  it('an import with a level mount (pitch 0 ± 2°) keeps contact height estimated while the widened p95 fits (§1.1.3a)', () => {
     const level = analyseSession(syntheticSession({ pitch: null, mount: 'level-mount' }).input)
     const sensor = analyseSession(syntheticSession().input)
     const m = level.serves[0].metrics['contact-height-ratio']!
     expect(level.serves[0].rectification.status).toBe('assumed-level')
+    // The budget uses the larger (method-only) p95, 3.9%; the roll prior grows with how far the ball
+    // is from the start toe, so it fits up to about 0.7 m (the budget test below).
     expect(m.status).toBe('estimated')
     expect(m.reasonCode).toBe('TILT_UNKNOWN')
     // The mount's tilt prior widens the range (the next test compares level with roughly level).
     expect(m.uncertainty!.high - m.uncertainty!.low).toBeGreaterThan(0)
-    // Toss height's V1 pass rests on two biases cancelling; its method-only p95 (5.6%) is over the
-    // budget, so an assumed level never keeps it estimated (catalogue ASSUMED_LEVEL_HEIGHT_BUDGET).
-    const apex = level.serves[0].metrics['toss-apex-height']!
-    expect(apex.status).toBe('experimental')
-    expect(apex.reasonCode).toBe('PITCH_UNKNOWN')
-    expect(sensor.serves[0].metrics['toss-apex-height']!.status).toBe('estimated')
+    expect(sensor.serves[0].metrics['contact-height-ratio']!.status).toBe('estimated')
+    // Toss height is V0 (finding 41), experimental with or without a mount answer.
+    expect(level.serves[0].metrics['toss-apex-height']!.status).toBe('experimental')
+    expect(sensor.serves[0].metrics['toss-apex-height']!.status).toBe('experimental')
     expect(level.quality.checks.find((c) => c.id === 'cq.camera-level')?.pass).toBe(true)
     // Spreads and timing are unaffected by a shared tilt.
     expect(level.serves[0].metrics['toss-drop']!.status).toBe(sensor.serves[0].metrics['toss-drop']!.status)
+  })
+
+  it('the level-mount budget: contact height 0.2 to 0.6 m ahead of the toe stays estimated (TILT_UNKNOWN), 0.8 m does not', () => {
+    const cam = cameraModel(syntheticSession({ pitch: null, mount: 'level-mount' }).input.meta, syntheticSession({ pitch: null, mount: 'level-mount' }).input.capture, { view: 'side' })
+    expect(cam.tiltStatus).toBe('assumed-level')
+    for (const off of [0.2, 0.4, 0.6]) {
+      const r = assumedLevelHeight('contact-height-ratio', 1.5, { cam, playerHeightM: H_M }, 7.5, off)!
+      expect(r.widenedP95, String(off)).toBeLessThanOrEqual(0.05)
+      expect(r.downgrades[0], String(off)).toEqual({ cap: 'estimated', reason: 'TILT_UNKNOWN' })
+    }
+    const far = assumedLevelHeight('contact-height-ratio', 1.5, { cam, playerHeightM: H_M }, 7.5, 0.8)!
+    expect(far.widenedP95).toBeGreaterThan(0.05)
+    expect(far.downgrades[0]).toEqual({ cap: 'experimental', reason: 'PITCH_UNKNOWN' })
   })
 
   it('"roughly level" (± 4°) widens further, and the p95 budget decides its status', () => {
@@ -571,5 +602,171 @@ describe('missingShare (dropped frames)', () => {
     const frames = Array.from({ length: 60 }, (_, k) => [k, (k + (k >= 30 ? 5 : 0)) / 60] as [number, number])
     const share = missingShare(track(frames), 0, 64 / 60, 60)
     expect(share).toBeCloseTo(5 / 65, 3)
+  })
+})
+
+describe('E1: a serve never takes the scale of another distance', () => {
+  // The session clip: near-side serves stand on floor row ~0.705 with H_HU ~0.23, far-side ones on
+  // ~0.678 with ~0.19 (production run, final e2e re-run).
+  const refs = [
+    { yFloor: 0.7041, bodyHeightHU: 0.2293 },
+    { yFloor: 0.6772, bodyHeightHU: 0.1905 },
+    { yFloor: 0.7045, bodyHeightHU: 0.2177 },
+    { yFloor: 0.6774, bodyHeightHU: 0.1897 },
+    { yFloor: 0.7071, bodyHeightHU: 0.2311 },
+    { yFloor: 0.6806, bodyHeightHU: 0.199 },
+    { yFloor: 0.6788, bodyHeightHU: 0.1907 },
+  ]
+  it('the fallback standing height comes from the serves at the same floor row, not the median of both sides', () => {
+    const at = sessionBodyHeight(refs)!
+    // Serve 7 of that run stood on 0.7053 with 4 upright frames: the old median (0.199) read its heights 11-13% high.
+    expect(at(0.7053)).toBeCloseTo(0.2293, 3)
+    expect(at(0.6780)).toBeCloseTo(0.1906, 3)
+    // Between the two sides: on the line through them (H_HU is linear in the floor row for a level camera).
+    const mid = at(0.692)
+    expect(mid).toBeGreaterThan(0.195)
+    expect(mid).toBeLessThan(0.225)
+    // One distance only: its median.
+    expect(sessionBodyHeight(refs.slice(0, 1))!(0.6)).toBe(0.2293)
+    expect(sessionBodyHeight([])).toBeUndefined()
+  })
+
+  it('a serve whose toss falls at a different rate than the others is flagged, never rescaled', () => {
+    const core = (index: number, g: number): ServeCore =>
+      ({ index, classification: 'serve', ball: { toss: { gravity: { status: 'ok', apparentGravityMps2: g, timeScaleFactor: Math.sqrt(g / 9.81), timeScaleSigma: 0.01 } } } }) as unknown as ServeCore
+    const cores = [core(1, 9.54), core(2, 9.45), core(3, 10.13), core(4, 9.49), core(5, 9.53), core(6, 9.54), core(7, 11.01), core(8, 9.42)]
+    const flagged = serveScaleOffsets(cores, 'normal')
+    expect([...flagged.keys()]).toEqual([7])
+    expect(flagged.get(7)!).toBeGreaterThan(0.1)
+    // An unknown time base says nothing about a serve's scale.
+    expect(serveScaleOffsets(cores, 'unknown').size).toBe(0)
+  })
+})
+
+// The production run where session serve 7 had 4 upright frames and took the session median H_HU
+// (final e2e re-run, 2026-09-28): contact height 1.71 and toss height 2.11 (truth 1.50 and 1.87).
+const e1Path = fileURLToPath(new URL('../../../validation/results/e2e-final/repro/session__default__e1-before.json', import.meta.url))
+describe.skipIf(!existsSync(e1Path))('E1 regression on the stored production run (session clip)', () => {
+  it('serve 7 reads like the other serves (contact 1.48, truth 1.50), and no serve toss says a different time base', () => {
+    const run = JSON.parse(readFileSync(e1Path, 'utf8')) as { dump: { meta: VideoMeta; poses: [number, number, number[][] | null][]; input: Omit<EngineInput, 'poses' | 'meta'> } }
+    const poses: PoseFrame[] = run.dump.poses.map(([frameIndex, tReal, lms]) => ({
+      frameIndex,
+      tReal,
+      landmarks: lms ? lms.map((r) => ({ x: r[0], y: r[1], z: r[2], visibility: r[3] })) : null,
+      score: lms ? 1 : 0,
+      source: 'mediapipe',
+    }))
+    const out = analyseSession({ ...run.dump.input, meta: run.dump.meta, poses })
+    expect(out.serves).toHaveLength(8)
+    const s7 = out.serves[6]
+    expect(Math.abs(s7.contact!.heightOverStature!.value - 1.4968)).toBeLessThan(0.04)
+    expect(Math.abs(s7.toss!.apexAboveGroundBH!.value - 1.87)).toBeLessThan(0.1)
+    // Every serve's toss now agrees on the clip's time base within 3%.
+    for (const s of out.serves) expect(Math.abs((s.toss!.gravity.timeScaleFactor ?? 1) - 1), String(s.index)).toBeLessThan(0.03)
+  })
+})
+
+describe('classification (§2.3.4): a serve needs a swing of the other arm and contact evidence (finding 23)', () => {
+  const kinds = (input: EngineInput) => {
+    const out = analyseSession(input)
+    return { out, kinds: out.serves.map((s) => s.detection.kind), serveCount: out.stats.metrics['serve-count']?.value, retossCount: out.stats.metrics['retoss-count']?.value }
+  }
+
+  it('a caught toss tracked into the hand is a re-toss, not a serve', () => {
+    const r = kinds(syntheticSession({ caught: true }).input)
+    expect(r.kinds).toEqual(['toss-only'])
+    expect(r.out.serves[0].included).toBe(false)
+  })
+
+  for (const lost of [0.1, 0.12, 0.15, 0.2]) {
+    for (const leadInS of [undefined, 0.3]) {
+      it(`a caught toss whose track is lost ${lost} s before the hand${leadInS ? ' (with in-hand lead-in)' : ''} is never counted as a serve`, () => {
+        const r = kinds(syntheticSession({ caught: true, lostBeforeCatchS: lost, leadInS }).input)
+        expect(r.kinds).not.toContain('serve')
+        // The ball's path, carried on past its last detection, reaches the catching hand: a re-toss.
+        expect(r.kinds).toEqual(['toss-only'])
+        expect(r.retossCount).toBe(1)
+        expect(r.serveCount).toBe(0)
+        expect(r.out.serves.every((s) => !s.included)).toBe(true)
+        // Its toss never enters the session's toss statistics.
+        expect(r.out.stats.metrics['toss-apex-height']?.n ?? 0).toBe(0)
+      })
+    }
+  }
+
+  it('a real serve whose outgoing ball was not tracked (no hit sound) still counts: the ball left its path at the swing', () => {
+    const r = kinds(syntheticSession({ noOutgoing: true }).input)
+    expect(r.kinds).toEqual(['serve'])
+    expect(r.out.serves[0].included).toBe(true)
+  })
+
+  it('a swing and miss still counts as a serve, with NO_CONTACT', () => {
+    const r = kinds(syntheticSession({ miss: true }).input)
+    expect(r.kinds).toEqual(['serve'])
+    expect(r.out.serves[0].exclusions).toContain('NO_CONTACT')
+  })
+
+  it('the clean serve is a serve', () => {
+    expect(kinds(syntheticSession().input).kinds).toEqual(['serve'])
+  })
+})
+
+describe('condition class (METRICS §1.3, finding 21): the answer, then the pixels, never assumed daylight', () => {
+  const POSE_AND_HEIGHT = ['leg-drive', 'loading-depth', 'contact-height-ratio', 'toss-drop', 'rhythm-release-to-contact'] as const
+  const dark: LightEvidence = { frames: 60, backgroundLuma: 120, skyLuma: 6, groundLuma: 170, flicker: { amplitude: 0.002, runs: 2, aliasHz: [5, 5] }, dark: true, flickering: false }
+  const flickering: LightEvidence = { ...dark, flicker: { amplitude: 0.11, runs: 2, aliasHz: [5, 5] }, flickering: true }
+  const bright: LightEvidence = { frames: 60, backgroundLuma: 120, skyLuma: 160, groundLuma: 100, flicker: { amplitude: 0.001, runs: 2, aliasHz: [5, 5] }, dark: false, flickering: false }
+
+  it('daylight answer: day-validated values stay estimated', () => {
+    const s = analyseSession(syntheticSession({ light: 'day' }).input).serves[0]
+    for (const id of POSE_AND_HEIGHT) expect(s.metrics[id]?.status, id).toBe('estimated')
+    expect(s.metrics['leg-drive']?.conditionClass).toBe('day')
+  })
+
+  for (const light of ['none', 'lights', 'indoor'] as const) {
+    it(`light '${light}': every day-validated value is experimental with CONDITION_NOT_VALIDATED, and capture quality says why`, () => {
+      const out = analyseSession(syntheticSession({ light }).input)
+      const s = out.serves[0]
+      for (const id of POSE_AND_HEIGHT) {
+        expect(s.metrics[id]?.status, id).toBe('experimental')
+        expect(s.metrics[id]?.reasonCode, id).toBe('CONDITION_NOT_VALIDATED')
+      }
+      expect(s.metrics['leg-drive']?.conditionClass).toBe(light === 'none' ? 'unknown' : 'night-lights')
+      expect(out.quality.checks.find((c) => c.id === 'cq.condition')?.severity).toBe('warn')
+    })
+  }
+
+  it('a daylight answer over a dark-sky, lit-court picture is analysed as court lights, and says so', () => {
+    const { input } = syntheticSession({ light: 'day' })
+    const out = analyseSession({ ...input, light: dark })
+    const s = out.serves[0]
+    expect(s.metrics['leg-drive']?.conditionClass).toBe('night-lights')
+    for (const id of POSE_AND_HEIGHT) expect(s.metrics[id]?.status, id).toBe('experimental')
+    expect(out.warnings.join(' ')).toMatch(/looks like it was filmed under court lights/)
+    expect(out.quality.checks.find((c) => c.id === 'cq.condition')?.message).toMatch(/looks like court lights, not daylight/)
+  })
+
+  it('a bright picture never turns an unknown or court-lights answer into daylight', () => {
+    for (const light of ['none', 'lights'] as const) {
+      const { input } = syntheticSession({ light })
+      const s = analyseSession({ ...input, light: bright }).serves[0]
+      expect(s.metrics['leg-drive']?.conditionClass, light).toBe(light === 'none' ? 'unknown' : 'night-lights')
+      expect(s.metrics['leg-drive']?.status, light).toBe('experimental')
+    }
+  })
+
+  it('mains flicker ≥ 3%: class flicker, a cq.flicker warning, and the launch speed blocked (FLICKER, §3.25)', () => {
+    const { input } = syntheticSession({ light: 'day', fps: 240, metaPatch: { timeBaseStatus: 'proven' } })
+    const out = analyseSession({ ...input, light: flickering, targetTags: { 1: 'T' } })
+    const s = out.serves[0]
+    expect(s.metrics['leg-drive']?.conditionClass).toBe('flicker')
+    expect(out.quality.checks.find((c) => c.id === 'cq.flicker')).toMatchObject({ pass: false, severity: 'warn' })
+    expect(s.metrics['speed-experimental']?.status).toBe('unavailable')
+    expect(s.metrics['speed-experimental']?.reasonCode).toBe('FLICKER')
+    expect(out.stats.metrics['speed-experimental']?.reasonCode).toBe('FLICKER')
+    // Without flicker the same clip's speed is not blocked for it.
+    const calm = analyseSession({ ...input, light: bright, targetTags: { 1: 'T' } })
+    expect(calm.serves[0].metrics['speed-experimental']?.reasonCode).not.toBe('FLICKER')
+    expect(calm.quality.checks.find((c) => c.id === 'cq.flicker')).toMatchObject({ pass: true, severity: 'info' })
   })
 })

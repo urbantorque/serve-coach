@@ -96,6 +96,11 @@ export function LegDriveTile({ metrics, orientation, serveId, sessionId }: { met
             </span>
           ) : null}
           {f.nLine ? <span className="text-footnote tabular-nums text-ink-3">{f.nLine}</span> : null}
+          {f.note && !band ? (
+            <span className="text-footnote text-ink-2" data-metric-note>
+              {f.note}
+            </span>
+          ) : null}
           <span className="flex flex-wrap items-center gap-2 pt-1">
             <StatusChip status={lift.status} />
             {lift.provisional ? <Badge>{UI.earlyRead}</Badge> : null}

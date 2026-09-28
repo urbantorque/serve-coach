@@ -1,14 +1,21 @@
 import { Dexie } from 'dexie'
 import type { SessionMode } from '../../analysis/types.ts'
 import { localDate, ulid } from '../../platform/ids.ts'
-import { fpsClassFor, getDb } from '../db.ts'
+import { blockGroup, fpsClassFor, getDb } from '../db.ts'
 import type { SessionAnalysis } from '../domain.ts'
 import type { SessionRecord, SessionStatus } from '../records.ts'
 
 export type NewSession = Omit<SessionRecord, 'id' | 'createdAt' | 'visitId' | 'isRetest' | 'isDemo'> &
   Partial<Pick<SessionRecord, 'id' | 'createdAt' | 'visitId' | 'isRetest' | 'isDemo'>>
 
+/**
+ * Adds a session. Each recording is its own block (CAPTURE §5.5): unless the caller set one,
+ * `blockIndex` is 1 + the highest block of the visit's earlier recordings with the same template that
+ * produced (or may still produce) results, worked out in the same transaction as the write, so an
+ * Experiment visit's Block A is 1 and its Block B is 2.
+ */
 export async function createSession(input: NewSession, now: Date = new Date()): Promise<SessionRecord> {
+  const db = getDb()
   const record: SessionRecord = {
     ...input,
     id: input.id ?? ulid(now.getTime()),
@@ -17,8 +24,27 @@ export async function createSession(input: NewSession, now: Date = new Date()): 
     isRetest: input.isRetest ?? 0,
     isDemo: input.isDemo ?? 0,
   }
-  await getDb().sessions.add(record)
-  return record
+  return db.transaction('rw', db.sessions, async () => {
+    if (!(record.blockIndex && record.blockIndex > 0)) {
+      const group = blockGroup(record)
+      const earlier = await db.sessions
+        .where('visitId')
+        .equals(record.visitId)
+        .filter((s) => blockGroup(s) === group && s.status !== 'failed' && s.status !== 'cancelled')
+        .toArray()
+      record.blockIndex = 1 + earlier.reduce((m, s) => Math.max(m, s.blockIndex && s.blockIndex > 0 ? s.blockIndex : 1), 0)
+    }
+    await db.sessions.add(record)
+    return record
+  })
+}
+
+/** The visit's blocks in recording order (`[visitId+blockIndex]`). */
+export async function listBlocksOfVisit(visitId: string): Promise<SessionRecord[]> {
+  return getDb()
+    .sessions.where('[visitId+blockIndex]')
+    .between([visitId, Dexie.minKey], [visitId, Dexie.maxKey])
+    .toArray()
 }
 
 export async function getSession(id: string): Promise<SessionRecord | undefined> {

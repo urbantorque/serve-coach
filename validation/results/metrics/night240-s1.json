@@ -55,7 +55,7 @@
     "variant": "default",
     "metric": "toss-drop",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
+    "reason": "CONDITION_NOT_VALIDATED",
     "value": 75,
     "truth": 75.19,
     "error": -0.18999999999999773,
@@ -69,7 +69,7 @@
     "variant": "default",
     "metric": "contact-height-ratio",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
+    "reason": "CONDITION_NOT_VALIDATED",
     "value": 1.4947792076918958,
     "truth": 1.5028,
     "error": -0.008020792308104152,
@@ -97,7 +97,7 @@
     "variant": "default",
     "metric": "rhythm-release-to-contact",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
+    "reason": "CONDITION_NOT_VALIDATED",
     "value": 995,
     "truth": 997.7,
     "error": -2.7000000000000455,
@@ -349,14 +349,14 @@
     "toss-drop": {
      "status": "experimental",
      "value": 75,
-     "reason": "VALIDATION_PENDING",
+     "reason": "CONDITION_NOT_VALIDATED",
      "low": 73.67392814312586,
      "high": 76.31756184744299
     },
     "contact-height-ratio": {
      "status": "experimental",
      "value": 1.49,
-     "reason": "VALIDATION_PENDING",
+     "reason": "CONDITION_NOT_VALIDATED",
      "low": 1.3848514226634816,
      "high": 1.60470699272031
     },
@@ -377,7 +377,7 @@
     "rhythm-release-to-contact": {
      "status": "experimental",
      "value": 995,
-     "reason": "VALIDATION_PENDING",
+     "reason": "CONDITION_NOT_VALIDATED",
      "low": 945.4512045180392,
      "high": 1044.235939588339
     },
@@ -555,12 +555,12 @@
     "variant": "audio",
     "metric": "toss-drop",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
+    "reason": "CONDITION_NOT_VALIDATED",
     "value": 75,
     "truth": 75.19,
     "error": -0.18999999999999773,
-    "low": 73.68415630560912,
-    "high": 76.31915265589271,
+    "low": 73.67561050728169,
+    "high": 76.31782467163968,
     "covered": true
    },
    {
@@ -569,12 +569,12 @@
     "variant": "audio",
     "metric": "contact-height-ratio",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
-    "value": 1.494746997820303,
+    "reason": "CONDITION_NOT_VALIDATED",
+    "value": 1.4947739065309582,
     "truth": 1.5028,
-    "error": -0.008053002179696955,
-    "low": 1.3848240565702021,
-    "high": 1.6046699390704038,
+    "error": -0.008026093469041706,
+    "low": 1.3848469186781278,
+    "high": 1.6047008943837886,
     "covered": true
    },
    {
@@ -587,8 +587,8 @@
     "value": 66,
     "truth": 58.96,
     "error": 7.039999999999999,
-    "low": 54.34911303091836,
-    "high": 76.69829766622495,
+    "low": 54.34891009376428,
+    "high": 76.69806987793106,
     "covered": true
    },
    {
@@ -597,12 +597,12 @@
     "variant": "audio",
     "metric": "rhythm-release-to-contact",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
+    "reason": "CONDITION_NOT_VALIDATED",
     "value": 995,
     "truth": 997.7,
     "error": -2.7000000000000455,
-    "low": 945.4673970150155,
-    "high": 1044.250557914152,
+    "low": 945.4538695524983,
+    "high": 1044.2383455402005,
     "covered": true
    },
    {
@@ -626,11 +626,11 @@
     "metric": "leg-drive",
     "status": "experimental",
     "reason": "CONDITION_NOT_VALIDATED",
-    "value": 11.910607859328277,
+    "value": 11.902070411848237,
     "truth": 12.519,
-    "error": -0.6083921406717234,
-    "low": 5.635633541912845,
-    "high": 18.185582176743708,
+    "error": -0.6169295881517627,
+    "low": 5.62709741329369,
+    "high": 18.177043410402785,
     "covered": true
    },
    {
@@ -640,11 +640,11 @@
     "metric": "drive-time",
     "status": "experimental",
     "reason": "CONDITION_NOT_VALIDATED",
-    "value": 493.8825168970218,
+    "value": 493.86964697878756,
     "truth": 500.09400000000005,
-    "error": -6.211483102978264,
-    "low": 233.44805176899422,
-    "high": 754.3169820250494,
+    "error": -6.224353021212494,
+    "low": 233.43505629030165,
+    "high": 754.3042376672735,
     "covered": true
    },
    {
@@ -764,9 +764,9 @@
     "set": "night240",
     "variant": "audio",
     "event": "contact",
-    "errorMs": -0.597972535311353,
+    "errorMs": -0.6108424535455903,
     "method": "fused",
-    "sigmaMs": 1.0699721431777645,
+    "sigmaMs": 1.077951633828115,
     "fps": 240
    },
    {
@@ -849,16 +849,16 @@
     "toss-drop": {
      "status": "experimental",
      "value": 75,
-     "reason": "VALIDATION_PENDING",
-     "low": 73.68415630560912,
-     "high": 76.31915265589271
+     "reason": "CONDITION_NOT_VALIDATED",
+     "low": 73.67561050728169,
+     "high": 76.31782467163968
     },
     "contact-height-ratio": {
      "status": "experimental",
      "value": 1.49,
-     "reason": "VALIDATION_PENDING",
-     "low": 1.3848240565702021,
-     "high": 1.6046699390704038
+     "reason": "CONDITION_NOT_VALIDATED",
+     "low": 1.3848469186781278,
+     "high": 1.6047008943837886
     },
     "toss-forward": {
      "status": "experimental",
@@ -871,29 +871,29 @@
      "status": "experimental",
      "value": 66,
      "reason": "VALIDATION_PENDING",
-     "low": 54.34911303091836,
-     "high": 76.69829766622495
+     "low": 54.34891009376428,
+     "high": 76.69806987793106
     },
     "rhythm-release-to-contact": {
      "status": "experimental",
      "value": 995,
-     "reason": "VALIDATION_PENDING",
-     "low": 945.4673970150155,
-     "high": 1044.250557914152
+     "reason": "CONDITION_NOT_VALIDATED",
+     "low": 945.4538695524983,
+     "high": 1044.2383455402005
     },
     "leg-drive": {
      "status": "experimental",
      "value": 12,
      "reason": "CONDITION_NOT_VALIDATED",
-     "low": 5.635633541912845,
-     "high": 18.185582176743708
+     "low": 5.62709741329369,
+     "high": 18.177043410402785
     },
     "drive-time": {
      "status": "experimental",
      "value": 490,
      "reason": "CONDITION_NOT_VALIDATED",
-     "low": 233.44805176899422,
-     "high": 754.3169820250494
+     "low": 233.43505629030165,
+     "high": 754.3042376672735
     },
     "loading-depth": {
      "status": "experimental",
@@ -977,8 +977,8 @@
     },
     "contact": {
      "frameIndex": 668,
-     "tReal": 2.7830060274646886,
-     "uncertaintyS": 0.0010699721431777645,
+     "tReal": 2.7829931575464544,
+     "uncertaintyS": 0.001077951633828115,
      "confidence": 1,
      "method": "fused"
     },
@@ -1055,7 +1055,7 @@
     "variant": "injected",
     "metric": "toss-drop",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
+    "reason": "CONDITION_NOT_VALIDATED",
     "value": 75,
     "truth": 75.19,
     "error": -0.18999999999999773,
@@ -1069,7 +1069,7 @@
     "variant": "injected",
     "metric": "contact-height-ratio",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
+    "reason": "CONDITION_NOT_VALIDATED",
     "value": 1.460836742129842,
     "truth": 1.5028,
     "error": -0.041963257870157866,
@@ -1097,7 +1097,7 @@
     "variant": "injected",
     "metric": "rhythm-release-to-contact",
     "status": "experimental",
-    "reason": "VALIDATION_PENDING",
+    "reason": "CONDITION_NOT_VALIDATED",
     "value": 995,
     "truth": 997.7,
     "error": -2.7000000000000455,
@@ -1349,14 +1349,14 @@
     "toss-drop": {
      "status": "experimental",
      "value": 75,
-     "reason": "VALIDATION_PENDING",
+     "reason": "CONDITION_NOT_VALIDATED",
      "low": 73.67301634216226,
      "high": 76.31663127946796
     },
     "contact-height-ratio": {
      "status": "experimental",
      "value": 1.46,
-     "reason": "VALIDATION_PENDING",
+     "reason": "CONDITION_NOT_VALIDATED",
      "low": 1.3525605507617862,
      "high": 1.569112933497898
     },
@@ -1377,7 +1377,7 @@
     "rhythm-release-to-contact": {
      "status": "experimental",
      "value": 995,
-     "reason": "VALIDATION_PENDING",
+     "reason": "CONDITION_NOT_VALIDATED",
      "low": 945.4488042768224,
      "high": 1044.2335368567988
     },

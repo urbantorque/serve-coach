@@ -9,7 +9,8 @@ import { cx } from '../../components/cx.ts'
 import { exportDate } from '../../format/dates.ts'
 import { paths } from '../../shell/paths.ts'
 import { PRIVACY_POLICY_SUMMARY } from '../profile/copy.ts'
-import { switchOffTestPlus, switchOnTestPlus, usePlan } from './entitlement.ts'
+import { SwitchItem } from '../profile/parts/SwitchItem.tsx'
+import { setAfterBetaTest, switchOffTestPlus, switchOnTestPlus, usePlan } from './entitlement.ts'
 import { readPlanLink } from './planLinks.ts'
 import {
   ALWAYS_FREE,
@@ -26,7 +27,9 @@ import {
  * the plan button. No countdowns, no strike-through prices, nothing preselected.
  *
  * PWA prototype: nothing is sold. A plan button records the choice as a local test flag (Plus on for
- * this phone), says no payment was taken, and tells the player Plus is not on sale yet.
+ * this phone), says no payment was taken, and tells the player Plus is not on sale yet. During the beta
+ * everything is unlocked (PRODUCT §5.3); the "Test the after-beta limits" switch brings back the free
+ * plan's locks on this phone, so the post-beta behaviour can be tried.
  */
 export function PaywallScreen() {
   const navigate = useNavigate()
@@ -108,6 +111,20 @@ export function PaywallScreen() {
         )
       }
     >
+      {plan.beta ? (
+        <Card className="flex items-start gap-3" label="Beta">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-2 text-ink-2">
+            <FlaskIcon size={24} aria-hidden="true" />
+          </span>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h2 className="text-headline text-ink">Beta: everything is unlocked for you</h2>
+            <p className="text-callout text-ink-2">
+              Every Plus feature is open on this phone while the beta runs, and nothing is sold. The plans below are what we propose after the beta.
+            </p>
+          </div>
+        </Card>
+      ) : null}
+
       {plan.plus ? (
         <Card className="flex flex-col gap-3" label="Your plan">
           <div className="flex items-start gap-3">
@@ -187,10 +204,27 @@ export function PaywallScreen() {
             ))}
           </ul>
           <p className="border-t border-line pt-3 text-footnote text-ink-2 tabular-nums">
-            {meter === undefined ? 'Counting analysed days…' : allowanceLine(meter)}. Your first experiment doesn't count. During the beta, days past
-            the allowance are still analysed.
+            {meter === undefined ? 'Counting analysed days…' : allowanceLine(meter)}. After the beta, that is the free plan's meter; your first experiment
+            doesn't count. During the beta, days past the allowance are still analysed.
           </p>
         </div>
+      </section>
+
+      <section className="flex flex-col gap-2" aria-labelledby="plan-testing">
+        <SectionLabel>
+          <span id="plan-testing">Prototype testing</span>
+        </SectionLabel>
+        <ListGroup>
+          <SwitchItem
+            label="Test the after-beta limits"
+            description="Locks Plus features the way the free plan would after the beta. Test Plus still unlocks them."
+            checked={Boolean(plan.entitlement.afterBetaTest)}
+            onChange={async (on) => {
+              await setAfterBetaTest(on)
+              showToast(on ? 'After-beta limits on for this phone.' : 'Back to the beta: everything is unlocked.')
+            }}
+          />
+        </ListGroup>
       </section>
 
       <section className="flex flex-col gap-2" aria-labelledby="plan-manage">

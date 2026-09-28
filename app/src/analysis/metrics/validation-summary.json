@@ -1,18 +1,19 @@
 {
  "source": "synthetic",
- "generated": "2026-09-27T18:06:51.678Z",
+ "generated": "2026-09-28T02:11:10.764Z",
  "clips": 122,
  "note": "Rendered synthetic serves run through the app pipeline; no real footage. See validation/results/metrics/SUMMARY.md.",
  "metrics": {
   "toss-apex-height": {
    "threshold": "median |e| ≤ 0.025, p95 ≤ 0.05, cov ≥ 93%",
    "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
-    "pass": true,
+    "pass": false,
     "n": 11,
     "bias": -0.009014545454545468,
     "mae": 0.011025454545454571,
     "p95": 0.026720000000000077,
-    "coverage": 1
+    "coverage": 1,
+    "passAppPipeline": true
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": false,
@@ -20,6 +21,14 @@
     "bias": -0.03648585106382982,
     "mae": 0.03850010638297875,
     "p95": 0.06894,
+    "coverage": 1
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": false,
+    "n": 11,
+    "bias": -0.039923636363636404,
+    "mae": 0.039923636363636404,
+    "p95": 0.056440000000000046,
     "coverage": 1
    }
   },
@@ -31,7 +40,8 @@
     "bias": 6.70090909090909,
     "mae": 6.700909090909089,
     "p95": 8.600000000000001,
-    "coverage": 1
+    "coverage": 1,
+    "passAppPipeline": false
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": false,
@@ -40,6 +50,14 @@
     "mae": 5.422978723404252,
     "p95": 8.29,
     "coverage": 0.9893617021276596
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": true,
+    "n": 11,
+    "bias": -1.5718181818181824,
+    "mae": 1.5718181818181824,
+    "p95": 2.8499999999999943,
+    "coverage": 1
    }
   },
   "toss-drop": {
@@ -50,7 +68,8 @@
     "bias": 0.22999999999999687,
     "mae": 0.500909090909092,
     "p95": 3.5999999999999943,
-    "coverage": 1
+    "coverage": 1,
+    "passAppPipeline": true
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": true,
@@ -59,6 +78,14 @@
     "mae": 0.7033333333333339,
     "p95": 3.5999999999999943,
     "coverage": 0.989247311827957
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": true,
+    "n": 11,
+    "bias": 0.22999999999999687,
+    "mae": 0.500909090909092,
+    "p95": 3.5999999999999943,
+    "coverage": 1
    }
   },
   "contact-height-ratio": {
@@ -69,7 +96,8 @@
     "bias": -0.005741817148195307,
     "mae": 0.00717667759499259,
     "p95": 0.019702489124698186,
-    "coverage": 1
+    "coverage": 1,
+    "passAppPipeline": true
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": false,
@@ -77,6 +105,14 @@
     "bias": -0.02276525073708928,
     "mae": 0.02547143102483865,
     "p95": 0.050261880292995276,
+    "coverage": 1
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": true,
+    "n": 11,
+    "bias": -0.025327939211255354,
+    "mae": 0.025327939211255354,
+    "p95": 0.038650925685751236,
     "coverage": 1
    }
   },
@@ -88,7 +124,8 @@
     "bias": 6.565454545454545,
     "mae": 6.565454545454545,
     "p95": 8.46,
-    "coverage": 1
+    "coverage": 1,
+    "passAppPipeline": false
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": true,
@@ -97,6 +134,14 @@
     "mae": 5.09117021276596,
     "p95": 8.46,
     "coverage": 0.9787234042553191
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": true,
+    "n": 11,
+    "bias": -1.8890909090909083,
+    "mae": 1.8890909090909083,
+    "p95": 3.3399999999999963,
+    "coverage": 1
    }
   },
   "rhythm-release-to-contact": {
@@ -107,7 +152,8 @@
     "bias": -3.9090909090909296,
     "mae": 10.981818181818177,
     "p95": 27.5,
-    "coverage": 1
+    "coverage": 1,
+    "passAppPipeline": true
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": true,
@@ -116,6 +162,14 @@
     "mae": 9.357446808510632,
     "p95": 27.5,
     "coverage": 0.9893617021276596
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": true,
+    "n": 11,
+    "bias": -4.00000000000002,
+    "mae": 10.890909090909087,
+    "p95": 27.5,
+    "coverage": 1
    }
   },
   "trophy-pause": {
@@ -126,7 +180,8 @@
     "bias": -99.91666666666667,
     "mae": 99.91666666666667,
     "p95": 177.4,
-    "coverage": 0.5
+    "coverage": 0.5,
+    "passAppPipeline": false
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": false,
@@ -135,6 +190,14 @@
     "mae": 65.06865671641793,
     "p95": 177.4,
     "coverage": 0.5970149253731343
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": false,
+    "n": 5,
+    "bias": 51.8,
+    "mae": 107.16,
+    "p95": 281.5,
+    "coverage": 0.6
    }
   },
   "leg-drive": {
@@ -145,7 +208,8 @@
     "bias": -2.5174268261440775,
     "mae": 2.5174268261440775,
     "p95": 3.0751269918382036,
-    "coverage": 1
+    "coverage": 1,
+    "passAppPipeline": false
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": true,
@@ -153,6 +217,14 @@
     "bias": -1.8090240705955947,
     "mae": 1.9319496500245665,
     "p95": 3.0137720362366753,
+    "coverage": 1
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": true,
+    "n": 11,
+    "bias": -0.07277804419690138,
+    "mae": 0.6773162463005591,
+    "p95": 1.1263046834689359,
     "coverage": 1
    }
   },
@@ -164,7 +236,8 @@
     "bias": -63.77287559980841,
     "mae": 63.77287559980841,
     "p95": 128.74384142431234,
-    "coverage": 0.8333333333333334
+    "coverage": 0.8333333333333334,
+    "passAppPipeline": false
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": false,
@@ -173,6 +246,14 @@
     "mae": 74.74645090991415,
     "p95": 132.990041916383,
     "coverage": 0.7313432835820896
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": false,
+    "n": 5,
+    "bias": 6.3305563670270315,
+    "mae": 96.50065725099805,
+    "p95": 135.12746067204455,
+    "coverage": 0.6
    }
   },
   "loading-depth": {
@@ -183,7 +264,8 @@
     "bias": -0.41093185571866186,
     "mae": 0.4213765804851841,
     "p95": 0.8478235960272931,
-    "coverage": 1
+    "coverage": 1,
+    "passAppPipeline": true
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": true,
@@ -191,6 +273,14 @@
     "bias": -0.3168065474324686,
     "mae": 0.37938618986145234,
     "p95": 1.069302802356672,
+    "coverage": 1
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": true,
+    "n": 11,
+    "bias": 0.37021857607784237,
+    "mae": 0.6028155621089806,
+    "p95": 2.5905565793113463,
     "coverage": 1
    }
   },
@@ -202,7 +292,8 @@
     "bias": 1.390000000000002,
     "mae": 5.975454545454547,
     "p95": 24.11,
-    "coverage": 0.9090909090909091
+    "coverage": 0.9090909090909091,
+    "passAppPipeline": false
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": true,
@@ -211,6 +302,14 @@
     "mae": 3.8207446808510634,
     "p95": 7.400000000000006,
     "coverage": 0.9893617021276596
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": false,
+    "n": 10,
+    "bias": -6.165999999999999,
+    "mae": 6.4239999999999995,
+    "p95": 22.47,
+    "coverage": 0.8
    }
   },
   "shoulder-tilt-trophy": {
@@ -221,7 +320,8 @@
     "bias": 1.6243727979518794,
     "mae": 1.6243727979518794,
     "p95": 5.259491455891343,
-    "coverage": null
+    "coverage": null,
+    "passAppPipeline": false
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": false,
@@ -230,23 +330,40 @@
     "mae": 2.2564497329261193,
     "p95": 8.25008633702536,
     "coverage": null
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": false,
+    "n": 11,
+    "bias": -0.08128504006864047,
+    "mae": 2.2905149866630357,
+    "p95": 5.940036611834676,
+    "coverage": null
    }
   },
   "deep-bend-flag": {
    "threshold": "two-level error ≤ 15%",
    "D1 envelope (portrait 7–7.5 m, landscape fence 9 m)": {
-    "pass": true,
+    "pass": false,
     "n": 11,
     "bias": 0,
     "mae": 0,
     "p95": 0,
-    "coverage": null
+    "coverage": null,
+    "passAppPipeline": true
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": true,
     "n": 93,
     "bias": 0.06451612903225806,
     "mae": 0.06451612903225806,
+    "p95": 1,
+    "coverage": null
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": false,
+    "n": 11,
+    "bias": 0.45454545454545453,
+    "mae": 0.45454545454545453,
     "p95": 1,
     "coverage": null
    }
@@ -259,11 +376,20 @@
     "bias": 0,
     "mae": 0,
     "p95": 0,
-    "coverage": null
+    "coverage": null,
+    "passAppPipeline": true
    },
    "all side-view day clips ≥ 60 fps": {
     "pass": true,
     "n": 95,
+    "bias": 0,
+    "mae": 0,
+    "p95": 0,
+    "coverage": null
+   },
+   "method-only at D1 (truth landmarks + noise)": {
+    "pass": true,
+    "n": 11,
     "bias": 0,
     "mae": 0,
     "p95": 0,

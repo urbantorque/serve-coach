@@ -7,7 +7,7 @@
  * meets a resolved threshold, never starts a cooldown and never marks an experiment "worked" (§12.3).
  */
 import type { MetricId, MetricValue } from '../analysis/types.ts'
-import { successesSincePain } from './deliver.ts'
+import { soreLoggedOn, successesSincePain } from './deliver.ts'
 import { detectItem, subjectOf } from './detect.ts'
 import type { LibraryItem } from './library.ts'
 import { getItem } from './library.ts'
@@ -62,6 +62,9 @@ export function retestKind(exp: CoachingExperiment, session: CoachingSession): R
   // Block B of an "Experiment" visit, or any recording later on the day the experiment started, shows
   // the drill's immediate effect: never a re-test (§12.3). Only a later visit can be one.
   if (exp.startedVisitId && session.visitId && session.visitId === exp.startedVisitId) return 'same-session'
+  // Block B of an "Experiment" visit recorded on its own was recorded after the drill, whatever else
+  // the visit holds (real block numbers, CAPTURE §5.5): never a re-test.
+  if (isBlockB(session)) return 'same-session'
   // On a later visit only its first recording in the stratum is the re-test (recorded before the
   // drill); Block B, or anything else recorded after it that day, is same-session too.
   const first = session.visitId ? exp.retestVisits?.[session.visitId] : undefined
@@ -70,7 +73,9 @@ export function retestKind(exp: CoachingExperiment, session: CoachingSession): R
   return servesInStratum(session, exp.stratum).length > 0 ? 'matched' : 'unmatched'
 }
 
-const byStart = (a: CoachingSession, b: CoachingSession) => (a.startedAt < b.startedAt ? -1 : a.startedAt > b.startedAt ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+/** Start time, then the recording's block in its visit (real block numbers), then id. */
+const byStart = (a: CoachingSession, b: CoachingSession) =>
+  a.startedAt < b.startedAt ? -1 : a.startedAt > b.startedAt ? 1 : (a.blockIndex ?? 0) - (b.blockIndex ?? 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
 
 /**
  * The re-test of each later visit (§12.3; `CoachingExperiment.retestVisits`): visitId -> the first
@@ -191,12 +196,24 @@ export function primarySpec(item: LibraryItem, profile: NormalisedProfile, fps =
 function preDrillServes(session: CoachingSession, key: CoachingStratum) {
   const serves = servesInStratum(session, key)
   if (session.template !== 'experiment') return serves
+  // Block B recorded as its own recording (the visit's second Experiment block): after the drill.
+  if (isBlockB(session)) return []
   const blocks = [...new Set(serves.map((s) => s.block ?? 0))]
   if (blocks.length > 1) {
     const first = Math.min(...blocks)
     return serves.filter((s) => (s.block ?? 0) === first)
   }
+  // Block A recorded on its own (the visit has a later Experiment block): every serve came before the drill.
+  if (session.blockIndex === 1 && (session.blocksInVisit ?? 1) >= 2) return serves
   return [...serves].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)).slice(0, BLOCK_A_SERVES)
+}
+
+/**
+ * An "Experiment" recording that is the visit's second (or later) block of that template: Block B,
+ * recorded after the drill (CAPTURE §5.5). Known only from real block numbers (SessionRecord.blockIndex).
+ */
+export function isBlockB(session: Pick<CoachingSession, 'template' | 'blockIndex'>): boolean {
+  return session.template === 'experiment' && (session.blockIndex ?? 0) >= 2
 }
 
 /** The session as the verdict pools see it: an "Experiment" recording keeps only Block A. */
@@ -427,6 +444,8 @@ export function experimentTransition(
   verdict: VerdictResult,
   resolvedMet: boolean,
   logs: readonly PracticeLogSummary[] = [],
+  /** Local YYYY-MM-DD: a practice logged sore today holds the unlock for the day (§9.3, §10.3). */
+  today?: string,
 ): Transition {
   const item = getItem(exp.itemId)
   const subject = item ? subjectOf(item.id, item.title).toLowerCase() : 'this'
@@ -459,9 +478,10 @@ export function experimentTransition(
     return { status: 'continue', copy: 'About the same so far. Changes like this often take a few sessions.' }
   }
   if (verdict.verdict === 'likely-better') {
-    // Only this item's own practices, and none logged with pain (§10.3, §12.2; practiceLogRules).
+    // Only this item's own practices, none logged with pain, and not on a day a practice was logged
+    // sore (§9.3, §10.3, §12.2; practiceLogRules).
     const { yes } = successesSincePain(logs.filter((l) => !l.itemId || l.itemId === exp.itemId))
-    return { status: 'continue', copy: "Keep going; it's moving the right way.", unlockProgression: yes >= 2 }
+    return { status: 'continue', copy: "Keep going; it's moving the right way.", unlockProgression: yes >= 2 && !soreLoggedOn(logs, today) }
   }
   return { status: 'continue', copy: 'Too early to tell. Record a few more serves next time.' }
 }

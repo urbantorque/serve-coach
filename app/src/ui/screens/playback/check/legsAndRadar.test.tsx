@@ -13,7 +13,7 @@ import { paths } from '../../../shell/paths.ts'
 import { routes } from '../../../shell/routes.ts'
 import { ThemeProvider } from '../../../theme/ThemeProvider.tsx'
 import { fixtureServe, fixtureSession, fixtureVideo, type PlaybackFixture } from '../dev/harnessFixture.ts'
-import { radarFromChecks } from '../serveView.ts'
+import { radarForSession, radarFromChecks } from '../serveView.ts'
 import { checkScene } from './checkScene.ts'
 
 vi.mock('../data.ts', async (importOriginal) => {
@@ -141,6 +141,23 @@ describe('radar row and shoulder overlay (pure)', () => {
     expect(r.note).toMatch(/^Peak speed from Pocket Radar, logged in Check this serve on Sun 27 Sep\. You entered 88 mph\. Latest of 2 readings\.$/)
     expect(radarFromChecks([])).toBeNull()
     expect(radarFromChecks(undefined)).toBeNull()
+  })
+
+  it('the session row keeps the latest reading per serve, shows the fastest with its serve, and counts serves', () => {
+    const idx = (id: string) => ({ a: 3, b: 7 } as Record<string, number>)[id]
+    const r = radarForSession(
+      [
+        { serveId: 'a', updatedAt: '2026-09-26T10:00:00.000Z', reference: { radarKmh: 170, radarDevice: 'pocket-radar' } },
+        { serveId: 'a', updatedAt: '2026-09-27T10:00:00.000Z', reference: { radarKmh: 140, radarDevice: 'pocket-radar' } },
+        { serveId: 'b', updatedAt: '2026-09-27T11:00:00.000Z', reference: { radarKmh: 151.4, radarDevice: 'pocket-radar' } },
+        { serveId: 'gone', updatedAt: '2026-09-27T11:00:00.000Z', reference: { radarKmh: 200 } },
+      ],
+      idx,
+    )!
+    expect(r.value).toMatchObject({ id: 'speed-radar-entered', value: 151, status: 'player-entered', n: 2 })
+    expect(r.source).toBe('Pocket Radar, peak')
+    expect(r.serveLine).toBe('Fastest of 2 serves you logged, serve 7')
+    expect(radarForSession([], idx)).toBeNull()
   })
 
   it('joins the two shoulder marks on the trophy frame; the app line appears only after saving', () => {

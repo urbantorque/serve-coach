@@ -17,6 +17,7 @@ import { chooseCue, chooseDrill, buildEvidence, practiceLogRules, retestPlan, wh
 import { detectItem, subjectOf, weakestTier, type Detection } from './detect.ts'
 import {
   experimentTransition,
+  localYmd,
   matchedComparison,
   retestDue,
   retestKind,
@@ -31,7 +32,7 @@ import { loadGuidance } from './load.ts'
 import { normaliseProfile, REGION_WORDS, type NormalisedProfile } from './profile.ts'
 import { compareRanked, toRanked, type Ranked } from './rank.ts'
 import { COMFORT_LINE, REFERRAL_COPY, sorenessLine, UNDER_18_MESSAGE } from './safety.ts'
-import { largestStratum, matchedHistory, sameStratum, servesInStratum } from './strata.ts'
+import { largestStratum, matchedHistory, servesInStratum } from './strata.ts'
 import type {
   BodyRegion,
   CoachingDecision,
@@ -71,6 +72,7 @@ export const DECISION_COPY = {
   comfortLine: "Your comfort settings rule out today's main candidates. Check with a physio before working on them.",
   pinnedComfort: "Your comfort settings rule out your coach's focus today. Check with a physio before working on it.",
   notMeasurable: "We can't measure this one from this recording, so there is no evidence to show. The cue and drill still apply.",
+  notComparable: (why: string) => `${why} We only compare like with like, so this recording shows no evidence for your experiment. The cue and drill still apply.`,
   keepGoingTitle: 'Nothing clear to change',
   matchDay: 'No new changes today.',
   laterStage: 'Comes later in the serve, so we will look again after this.',
@@ -178,19 +180,23 @@ export function decideFocus(given: CoachingInput): CoachingDecision {
   const pinnedId = input.profile.pinnedFocusItemId
   const pinned = pinnedId ? getItem(pinnedId) : undefined
   if (pinned && pinned.itemType === 'focus') {
-    trace.push({ step: 'pinned', itemId: pinned.id, passed: true, detail: 'A coach focus is pinned.' })
     if (pinned.contraindications.some((r) => profile.comfort.has(r))) {
-      trace.push({ step: 'pinned', itemId: pinned.id, passed: false, detail: 'Pinned focus excluded by a comfort setting.' })
+      // The trace is stored and exported: no item id and no comfort wording, since the item ruled out
+      // would name the body region (D8).
+      trace.push({ step: 'pinned', passed: false, detail: 'A coach focus is pinned but not available today.' })
       return keepGoing(ctx, detections, { pinnedRuledOut: true, comfortLine: DECISION_COPY.pinnedComfort })
     }
-    const d = dataOk ? (detections.get(pinned.id) ?? detectItem(pinned, env)) : undefined
-    const measurable = !!d && !!d.stratum && !UNMEASURABLE.has(d.status)
-    const ranked = dataOk ? rankEligible(ctx, detections, new Set()) : []
-    const engineTop = ranked.find((r) => r.item.id !== pinned.id)
+    trace.push({ step: 'pinned', itemId: pinned.id, passed: true, detail: 'A coach focus is pinned.' })
     // The coach's focus stays whatever the re-test says (PRODUCT §2.3), but its experiment still gets
     // its verdict and transition (PRODUCT §6.8.5): a dip still eases the drill, "no clear change" still
     // swaps the cue, and a finished or parked experiment is closed so a fresh one can start.
     const pinExp = input.activeExperiment?.status === 'active' && input.activeExperiment.itemId === pinned.id ? input.activeExperiment : undefined
+    // With its experiment running, the evidence comes from the experiment's stratum and set-up only.
+    const d = !dataOk ? undefined : pinExp ? detectionInStratum(ctx, pinned, pinExp.stratum) : (detections.get(pinned.id) ?? detectItem(pinned, env))
+    const pinUnmeasured = dataOk && pinExp && !d ? notComparableNote(ctx, pinExp) : undefined
+    const measurable = !!d && !!d.stratum && !UNMEASURABLE.has(d.status)
+    const ranked = dataOk ? rankEligible(ctx, detections, new Set()) : []
+    const engineTop = ranked.find((r) => r.item.id !== pinned.id)
     const ev = pinExp ? evaluateExperiment(ctx, pinExp) : undefined
     const t = ev?.transition
     const pinNote: FocusDecision['experiment'] | undefined =
@@ -217,6 +223,7 @@ export function decideFocus(given: CoachingInput): CoachingDecision {
       ...(ev?.verdict ? { verdict: ev.verdict } : {}),
       ...(pinExp ? { stratum: pinExp.stratum, register: t?.swapCue ? (pinExp.cueRegister === 'analogy' ? 'outcome' : 'analogy') : pinExp.cueRegister } : {}),
       ...(t?.status === 'continue' && t.variant ? { variant: t.variant } : {}),
+      ...(pinUnmeasured ? { unmeasuredNote: pinUnmeasured } : {}),
     })
   }
   if (!dataOk) return captureFix(ctx, usable)
@@ -260,10 +267,13 @@ export function decideFocus(given: CoachingInput): CoachingDecision {
       })
     }
     if (expItem && continues && !excluded && !earlierMajor) {
-      const d = detectionInStratum(ctx, expItem, exp.stratum) ?? detections.get(expItem.id)
+      // Evidence from the experiment's own stratum and set-up only (METRICS §4.4), never the whole
+      // session's: a recording at another set-up, side or serve number shows no evidence, and says why.
+      const d = detectionInStratum(ctx, expItem, exp.stratum)
       return buildFocus(ctx, expItem, d, {
         pinnedByCoach: exp.pinnedByCoach ?? false,
         measurable: true,
+        ...(d ? {} : { unmeasuredNote: notComparableNote(ctx, exp) }),
         experiment: {
           id: exp.id,
           itemId: exp.itemId,
@@ -301,7 +311,7 @@ export function decideFocus(given: CoachingInput): CoachingDecision {
 
   // 7. NOTHING CLEAR.
   if (ranked.length === 0) {
-    trace.push({ step: 'select', passed: false, detail: comfortBlocked ? 'Every eligible item is excluded by comfort.' : 'Nothing eligible.' })
+    trace.push({ step: 'select', passed: false, detail: comfortBlocked ? 'Nothing eligible after the safety checks.' : 'Nothing eligible.' })
     return keepGoing(ctx, detections, {
       ...(comfortBlocked ? { comfortLine: DECISION_COPY.comfortLine } : {}),
       cooldowns,
@@ -345,7 +355,9 @@ function evaluateExperiment(ctx: Ctx, exp: CoachingExperiment): { verdict?: Focu
     const cmp = kind === 'matched' ? matchedComparison({ exp, session, history: verdictHistory(ctx), profile, verdict: input.verdict }) : null
     const result = cmp?.result ?? { verdict: 'not-comparable' as const, method: 'coaching', reason: unmatchedReason(exp, session) }
     const copy = cmp?.copy ?? verdictSentence(result)
-    const transition = experimentTransition(exp, result, cmp?.resolvedMet ?? false, input.practiceLogs ?? [])
+    const t = experimentTransition(exp, result, cmp?.resolvedMet ?? false, input.practiceLogs ?? [], localYmd(ctx.now))
+    // A practice logged sore today (any drill) holds the harder version for the day (§9.3, §10.3).
+    const transition = t.unlockProgression && input.soreLoggedToday ? { ...t, unlockProgression: false } : t
     trace.push({ step: 'experiment', itemId: exp.itemId, passed: true, detail: `Re-test verdict ${result.verdict}; transition ${transition.status}.` })
     return { verdict: { ...result, copy, metricId: cmp?.request.metricId ?? 'serve-in-rate', rate: cmp?.request.kind === 'rate' }, transition }
   }
@@ -398,26 +410,38 @@ function rankEligible(ctx: Ctx, detections: Map<string, Detection>, skip: Set<st
   return out
 }
 
+/**
+ * The item's detection from this session's serves in an experiment's stratum only, set-up included
+ * (METRICS §4.4: a portrait 7.5 m experiment never takes evidence from a landscape fence recording).
+ * Undefined when the session has no serves there: the experiment then shows no evidence rather than
+ * the whole session's.
+ */
 function detectionInStratum(ctx: Ctx, it: LibraryItem, key: CoachingStratum): Detection | undefined {
-  const scoped: CoachingSession = { ...ctx.session, serves: ctx.session.serves.filter((s) => sameStratum(stratumOf(ctx.session, s), key)) }
-  if (!scoped.serves.length) return undefined
-  return detectItem(it, { profile: ctx.profile, session: scoped, history: ctx.history })
+  const serves = servesInStratum(ctx.session, key)
+  if (!serves.length) return undefined
+  return detectItem(it, { profile: ctx.profile, session: { ...ctx.session, serves }, history: ctx.history })
 }
 
-function stratumOf(session: CoachingSession, s: CoachingSession['serves'][number]): CoachingStratum {
-  return {
-    view: session.view,
-    cameraSide: session.cameraSide ?? 'unknown',
-    courtSide: s.courtSide ?? session.defaults?.courtSide ?? 'unknown',
-    serveNumber: s.serveNumber ?? session.defaults?.serveNumber ?? 'unknown',
-    intendedType: s.intendedType ?? session.defaults?.intendedType ?? 'unknown',
-    handedness: session.handedness ?? 'right',
-  }
+/** The evidence note when this session holds nothing comparable for the experiment (set-up, side, view). */
+function notComparableNote(ctx: Ctx, exp: CoachingExperiment): string {
+  return DECISION_COPY.notComparable(unmatchedReason(exp, ctx.session))
 }
 
 // ---------------------------------------------------------------------------------------------
 // "Why this focus?" lists
 // ---------------------------------------------------------------------------------------------
+
+/**
+ * A detection sentence without its "with your shoulder comfort setting" clause, for the stored decision
+ * ("This session: contact height is compared only with your own best."). Empty when nothing is left.
+ */
+export function withoutComfortClause(text: string): string {
+  const out = text
+    .replace(/\b[Ww]ith your [a-z ,]*?comfort settings?,\s*/g, '')
+    .replace(/^[a-z]/, (c) => c.toUpperCase())
+    .trim()
+  return /comfort/i.test(out) ? '' : out
+}
 
 function checkFrom(it: LibraryItem, d: Detection | undefined, status: ItemCheck['status'], text?: string): ItemCheck {
   return {
@@ -518,6 +542,8 @@ interface FocusOpts {
   detections: Map<string, Detection>
   ranked: Ranked[]
   cooldowns?: Record<string, number>
+  /** Why there is no evidence when the session holds nothing comparable for the experiment. */
+  unmeasuredNote?: string
 }
 
 function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: FocusOpts): FocusDecision {
@@ -535,13 +561,16 @@ function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: Focu
         overlay: it.evidence.overlay,
         stats: [],
         outcomeLine: 'none' as const,
-        viewNote: DECISION_COPY.notMeasurable,
+        viewNote: o.unmeasuredNote ?? DECISION_COPY.notMeasurable,
       }
-  const logs = (input.practiceLogs ?? []).filter((l) => !l.itemId || l.itemId === it.id)
-  const rules = practiceLogRules(logs, it.id)
+  // Every drill's logs: the counts read this item's own, and a practice logged sore today (any drill)
+  // holds the harder version for the day (COACHING §9.3, §10.3).
+  const logs = input.practiceLogs ?? []
+  const today = localYmd(ctx.now)
+  const rules = practiceLogRules(logs, it.id, today)
   const register = o.register ?? profile.register
   const cue = chooseCue(it, register, stratum)
-  const drill = chooseDrill(it, profile, input.profile.goal, logs, o.variant ? { forceVariant: o.variant } : {})
+  const drill = chooseDrill(it, profile, input.profile.goal, logs, { ...(o.variant ? { forceVariant: o.variant } : {}), today, soreLoggedToday: !!input.soreLoggedToday })
   const primaryStatus = d?.metric?.value.status
   const effectiveTier = weakestTier([it.evidenceTier, d?.pathTier ?? it.evidenceTier, ...(primaryStatus === 'experimental' ? (['experimental'] as const) : [])])
   const reasons: RankReason[] = []
@@ -550,8 +579,13 @@ function buildFocus(ctx: Ctx, it: LibraryItem, d: Detection | undefined, o: Focu
   const stage = it.detection.chainStage ?? 99
   const beatsLater = o.ranked.some((x) => x.item.id !== it.id && (x.item.detection.chainStage ?? 99) > stage)
   if (!o.pinnedByCoach && (stage <= 3 || beatsLater)) reasons.push({ kind: 'stage', text: stage <= 3 ? DECISION_COPY.stageEarly : DECISION_COPY.stageClearest })
-  if (measurable && d) reasons.push({ kind: 'detection', text: d.status === 'eligible' ? d.text : `This session: ${d.text.charAt(0).toLowerCase()}${d.text.slice(1)}`, ...(d.metric ? { metric: d.metric } : {}), ...(d.playerEntered ? { playerEntered: true } : {}) })
-  if (!measurable) reasons.push({ kind: 'detection', text: DECISION_COPY.notMeasurable })
+  if (measurable && d) {
+    const text = d.status === 'eligible' ? d.text : `This session: ${d.text.charAt(0).toLowerCase()}${d.text.slice(1)}`
+    // The stored "why" never names a comfort setting (D8): the screen says why, the record keeps the rest.
+    const stored = d.status === 'comfort-setting' ? withoutComfortClause(text) : undefined
+    reasons.push({ kind: 'detection', text, ...(stored !== undefined && stored !== text ? { storedText: stored } : {}), ...(d.metric ? { metric: d.metric } : {}), ...(d.playerEntered ? { playerEntered: true } : {}) })
+  }
+  if (!measurable) reasons.push({ kind: 'detection', text: o.unmeasuredNote ?? DECISION_COPY.notMeasurable })
   if (evidence.outcomeSentence) reasons.push({ kind: 'outcome', text: evidence.outcomeSentence })
   if (it.goalsServed.includes(input.profile.goal)) reasons.push({ kind: 'goal', text: DECISION_COPY.goal(input.profile.goal) })
   if (session.flags?.fatigue) reasons.push({ kind: 'fatigue', text: DECISION_COPY.fatigue })

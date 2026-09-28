@@ -8,6 +8,7 @@ import type { VideoMeta } from '../types.ts'
 import { sniffContainer, toByteSource, toOwnedArrayBuffer, type ByteInput, type ContainerKind } from './byteSource.ts'
 import { codecFamily, hevcCodecString, type HevcProfileFields } from './codecs.ts'
 import { parseMoovMetadata, type ContainerMetadata } from './qtMetadata.ts'
+import { containerRecordingTime, type ContainerTime } from './recordedAt.ts'
 import { displaySize, rotationFromMatrix, type MatrixRotation } from './rotation.ts'
 import { assessTimeBase, type TimeBaseAssessment } from './timeBase.ts'
 import {
@@ -70,6 +71,8 @@ export interface ProbeResult {
   timing: FrameTimingStats
   timeBase: TimeBaseAssessment
   metadata: ContainerMetadata
+  /** When the clip was recorded, by the container (recordedAt.ts); also VideoMeta.createdAt. */
+  recordedAt?: ContainerTime
   isFragmented: boolean
   warnings: string[]
 }
@@ -276,6 +279,7 @@ export async function probeVideo(input: ByteInput, options: ProbeOptions = {}): 
   if (rotation.mirrored) warnings.push('Track matrix mirrors the image; mirroring is not applied by this decoder.')
 
   const metadata = parseMoovMetadata(parsed.moovBytes)
+  const recordedAt = containerRecordingTime(metadata)
   const timeBase = assessTimeBase({
     nominalFps: frames.length > 1 ? timing.nominalFps : Number.NaN,
     segments: timing.segments,
@@ -307,6 +311,7 @@ export async function probeVideo(input: ByteInput, options: ProbeOptions = {}): 
     fpsSource: timeBase.fpsSource,
     isVariableFrameRate: timing.isVariableFrameRate,
     frameCount: frames.length,
+    ...(recordedAt ? { createdAt: recordedAt.iso } : {}),
   }
 
   return {
@@ -334,6 +339,7 @@ export async function probeVideo(input: ByteInput, options: ProbeOptions = {}): 
     timing,
     timeBase,
     metadata,
+    ...(recordedAt ? { recordedAt } : {}),
     isFragmented: info.isFragmented,
     warnings,
   }

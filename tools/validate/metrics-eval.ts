@@ -571,17 +571,26 @@ for (const variant of ['default', 'audio', 'injected']) {
     { metric: 'deep-bend-flag', label: 'two-level error ≤ 15%', check: (e) => stats(e).mae <= 0.15, stat: (e) => `error ${Math.round(stats(e).mae * 100)}%` },
     { metric: 'serve-count', label: 'precision and recall ≥ 99%', check: (e) => e.every((x) => x === 0), stat: (e) => `${e.filter((x) => x !== 0).length} wrong of ${e.length}` },
   ]
-  lines.push('## Acceptance against the METRICS S0 thresholds (default variant)')
+  // V1 is gated on the method-only variant too (finding 41, 2026-09-28): the same thresholds on the
+  // D1 envelope with truth landmarks ('injected'), so a pass that rests on MediaPipe's biases
+  // cancelling the method's own does not count. The D1 group's `pass` in the summary is both.
+  const inj = allRows.filter((r) => r.variant === 'injected')
+  const METHOD = 'method-only at D1 (truth landmarks + noise)'
+  const allGroups: { name: string; rows: Row[]; pick: (r: Row) => boolean }[] = [
+    ...groups.map((g) => ({ ...g, rows: d })),
+    ...(inj.length ? [{ name: METHOD, rows: inj, pick: (r: Row) => D1.includes(r.set) }] : []),
+  ]
+  lines.push('## Acceptance against the METRICS S0 thresholds (default variant; method-only gate)')
   lines.push('')
-  lines.push('Pass/fail per metric on the D1 envelope and on all side-view day clips at 60 fps or more (5 m clips of the older base240 family included). Coverage = per-serve 95% interval coverage. Metrics that fail stay at V0 (experimental) in the engine; see `app/src/analysis/metrics/catalogue.ts`.')
+  lines.push("Pass/fail per metric on the D1 envelope and on all side-view day clips at 60 fps or more (5 m clips of the older base240 family included), and on the D1 envelope with truth landmarks (the injected, method-only variant). A metric reaches V1 only when the app pipeline AND the method-only variant pass at D1 (finding 41): a pass that rests on the pose model's bias cancelling the method's does not count. Coverage = per-serve 95% interval coverage. Metrics that fail stay at V0 (experimental) in the engine; see `app/src/analysis/metrics/catalogue.ts`.")
   lines.push('')
-  lines.push(`| metric | threshold | ${groups.map((g) => g.name).join(' | ')} |`)
-  lines.push(`| --- | --- | ${groups.map(() => '---').join(' | ')} |`)
+  lines.push(`| metric | threshold | ${allGroups.map((g) => g.name).join(' | ')} |`)
+  lines.push(`| --- | --- | ${allGroups.map(() => '---').join(' | ')} |`)
   const summaryJson: Record<string, unknown> = {}
   for (const rule of rules) {
     const perGroup: Record<string, unknown> = {}
-    const cells = groups.map((g) => {
-      const rs = d.filter((r) => r.metric === rule.metric && g.pick(r))
+    const cells = allGroups.map((g) => {
+      const rs = g.rows.filter((r) => r.metric === rule.metric && g.pick(r))
       const errs = rs.filter((r) => typeof r.error === 'number').map((r) => r.error!)
       const cov = rs.filter((r) => r.covered !== undefined)
       const c = cov.length ? cov.filter((r) => r.covered).length / cov.length : null
@@ -591,6 +600,10 @@ for (const variant of ['default', 'audio', 'injected']) {
       return `${rule.check(errs, c) ? 'PASS' : 'FAIL'}: ${rule.stat(errs, c)} (n ${errs.length})`
     })
     lines.push(`| ${rule.metric} | ${rule.label} | ${cells.join(' | ')} |`)
+    // The D1 pass (what the engine's V1 rests on) needs the method-only variant to pass too.
+    const d1 = perGroup[groups[0].name] as { pass: boolean } | undefined
+    const method = perGroup[METHOD] as { pass: boolean } | undefined
+    if (d1 && method) perGroup[groups[0].name] = { ...d1, passAppPipeline: d1.pass, pass: d1.pass && method.pass }
     summaryJson[rule.metric.replace(/ \(.*\)$/, '')] = { threshold: rule.label, ...perGroup }
   }
   lines.push('')

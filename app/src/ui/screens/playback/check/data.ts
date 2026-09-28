@@ -12,6 +12,8 @@ import { appPointsFor } from './appPoints.ts'
 
 export const useChecksForServe = (serveId: string) => useLiveQuery(() => listChecksForServe(serveId), [serveId])
 export const useAllChecks = (enabled: boolean) => useLiveQuery(async () => (enabled ? listChecks() : null), [enabled])
+/** Every check on this session's serves (the report's "Radar speed (you logged)" row). */
+export const useChecksForSession = (sessionId: string) => useLiveQuery(async () => (await listChecks()).filter((c) => c.sessionId === sessionId), [sessionId])
 
 const ANNOTATOR_KEY = 'serve-coach:check-annotator'
 const SUBJECT_KEY = 'serve-coach:validation-subject'

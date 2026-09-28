@@ -177,7 +177,7 @@ export const STATUS_MEANING: Record<MetricStatus, string> = {
   measured: 'Measured: worked out directly from your video.',
   estimated: 'Estimate: worked out from your video and your height, so it has a margin of error.',
   'player-entered': 'You logged this.',
-  experimental: "Experimental: we're still checking this method, so treat it as a rough guide. It never gets a verdict, and it can suggest a focus only while experimental metrics are on, marked Experimental.",
+  experimental: "Experimental: we're still checking this method, so treat it as a rough guide. Never used for your focus or verdicts.",
   unavailable: 'Not available from this footage.',
 }
 

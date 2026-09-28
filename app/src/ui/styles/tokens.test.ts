@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { INTERVAL_FILL } from '../charts/IntervalBars.tsx'
 import { Z } from '../tokens/z.ts'
 
 const tokensCss = readFileSync(resolve(process.cwd(), 'src/ui/styles/tokens.css'), 'utf8')
@@ -85,6 +86,34 @@ describe('colour tokens (DESIGN §2.2, §2.3)', () => {
         expect(contrast(hex(set, '--ink-3'), glass), `${setName} over ${under}`).toBeGreaterThanOrEqual(4.5)
       }
     }
+  })
+
+  it('"Did it work?" interval bars: outline, 80% and 95% ranges and the estimate tick pass 3:1 in every set (WCAG 1.4.11, finding 78)', () => {
+    const mix = (a: string, b: string, t: number) => {
+      const ch = (h: string, i: number) => parseInt(h.slice(i, i + 2), 16)
+      return `#${[1, 3, 5].map((i) => Math.round(ch(a, i) * t + ch(b, i) * (1 - t)).toString(16).padStart(2, '0')).join('')}`
+    }
+    const failures: string[] = []
+    const need = (what: string, a: string, b: string) => {
+      const r = contrast(a, b)
+      if (r < 3) failures.push(`${what}: ${r.toFixed(2)} < 3`)
+    }
+    for (const [setName, set] of Object.entries(sets)) {
+      const surface = hex(set, '--surface')
+      const a95 = setName === 'Court-side' ? INTERVAL_FILL.ci95Court : INTERVAL_FILL.ci95
+      for (const tone of ['--good', '--neutral']) {
+        const colour = hex(set, tone)
+        const fill95 = mix(colour, surface, a95)
+        const fill80 = mix(colour, surface, INTERVAL_FILL.ci80)
+        need(`${setName} ${tone} 95% outline vs surface`, colour, surface)
+        need(`${setName} ${tone} 80% fill vs 95% fill`, fill80, fill95)
+        need(`${setName} ${tone} 80% fill vs surface`, fill80, surface)
+        // The ink tick's surface halo separates it from the solid 80% bar; its overhang sits on the surface.
+        need(`${setName} ${tone} tick halo vs 80% fill`, surface, fill80)
+        need(`${setName} tick vs surface`, hex(set, '--ink'), surface)
+      }
+    }
+    expect(failures).toEqual([])
   })
 
   it('no pure black or white in the standard themes (taste skill, DESIGN §0)', () => {

@@ -1,0 +1,270 @@
+{
+  "sessions-390-light": {
+    "text": "Capture: Good Experimental Capture Good, automatic check, experimental",
+    "inside": true,
+    "hscroll": 0
+  },
+  "sessions-390-dark": {
+    "text": "Capture: Good Experimental Capture Good, automatic check, experimental",
+    "inside": true,
+    "hscroll": 0
+  },
+  "sessions-390-court": {
+    "text": "Capture: Good Experimental Capture Good, automatic check, experimental",
+    "inside": true,
+    "hscroll": 0
+  },
+  "sessions-320-light-200": {
+    "text": "Capture: Good Experimental Capture Good, automatic check, experimental",
+    "inside": true,
+    "hscroll": 0
+  },
+  "drawer-70": {
+    "before": 0,
+    "afterTextTap": {
+      "scrollY": 0,
+      "active": "MAIN#main"
+    },
+    "peek": 169,
+    "hiddenInTabWalk": []
+  },
+  "drawer-83": {
+    "active": "BUTTON",
+    "name": "All values",
+    "expanded": "false"
+  },
+  "forced-390-light": {
+    "focusBg": "rgb(55, 0, 110)",
+    "focusBorder": "rgb(55, 0, 110)",
+    "phaseBorder": "rgb(0, 0, 0) 1px",
+    "tickBg": "rgb(0, 0, 0)",
+    "lineBg": "rgb(0, 0, 0)",
+    "canvas": "rgb(255, 255, 255)"
+  },
+  "forced-390-dark": {
+    "focusBg": "rgb(26, 235, 255)",
+    "focusBorder": "rgb(26, 235, 255)",
+    "phaseBorder": "rgb(255, 255, 255) 1px",
+    "tickBg": "rgb(255, 255, 255)",
+    "lineBg": "rgb(255, 255, 255)",
+    "canvas": "rgb(0, 0, 0)"
+  },
+  "forced-390-court": {
+    "focusBg": "rgb(55, 0, 110)",
+    "focusBorder": "rgb(55, 0, 110)",
+    "phaseBorder": "rgb(0, 0, 0) 1px",
+    "tickBg": "rgb(0, 0, 0)",
+    "lineBg": "rgb(0, 0, 0)",
+    "canvas": "rgb(255, 255, 255)"
+  },
+  "tagbar-390-light-200": {
+    "header": [
+      0,
+      0,
+      390,
+      82
+    ],
+    "title": [
+      116,
+      19,
+      274,
+      63
+    ],
+    "trailing": [
+      282,
+      0,
+      370,
+      81
+    ],
+    "banner": [
+      0,
+      82,
+      390,
+      83
+    ],
+    "appbarH": "81px",
+    "spill": false
+  },
+  "tagbar-360-court-200": {
+    "header": [
+      0,
+      0,
+      360,
+      82
+    ],
+    "title": [
+      116,
+      19,
+      244,
+      63
+    ],
+    "trailing": [
+      252,
+      0,
+      340,
+      81
+    ],
+    "banner": [
+      0,
+      82,
+      360,
+      83
+    ],
+    "appbarH": "81px",
+    "spill": false
+  },
+  "tagbar-320-light-200": {
+    "header": [
+      0,
+      0,
+      320,
+      82
+    ],
+    "title": [
+      112,
+      19,
+      208,
+      63
+    ],
+    "trailing": [
+      216,
+      0,
+      304,
+      81
+    ],
+    "banner": [
+      0,
+      82,
+      320,
+      83
+    ],
+    "appbarH": "81px",
+    "spill": false
+  },
+  "tagbar-390-light": {
+    "header": [
+      0,
+      0,
+      390,
+      53
+    ],
+    "title": [
+      155,
+      15,
+      235,
+      37
+    ],
+    "trailing": [
+      325,
+      16,
+      370,
+      36
+    ],
+    "banner": [
+      0,
+      53,
+      390,
+      54
+    ],
+    "appbarH": "52px",
+    "spill": false
+  },
+  "live-390-light": {
+    "pill": {
+      "l": 64,
+      "t": 12,
+      "r": 326,
+      "b": 118
+    },
+    "rail": {
+      "l": 6,
+      "t": 301,
+      "r": 384,
+      "b": 475
+    },
+    "pillOverRail": null,
+    "pillOverGuides": [],
+    "coveredChecks": [],
+    "showLevelOverRail": null,
+    "hs": 0,
+    "text": "Skip to content | Live framing | Toss room above | Feet about here |  | Checks |  | Level | : ne"
+  },
+  "live-390-light-200": {
+    "pill": {
+      "l": 64,
+      "t": 12,
+      "r": 326,
+      "b": 404
+    },
+    "rail": {
+      "l": 6,
+      "t": 412,
+      "r": 384,
+      "b": 814
+    },
+    "pillOverRail": null,
+    "pillOverGuides": [
+      "Feet about here:169x42"
+    ],
+    "coveredChecks": [
+      "Ball",
+      "20 fps",
+      "Size"
+    ],
+    "showLevelOverRail": null,
+    "hs": 0,
+    "text": "Skip to content | Live framing | Toss room above | Feet about here |  | Checks |  | Level | : no"
+  },
+  "live-360-court-200": {
+    "pill": {
+      "l": 64,
+      "t": 12,
+      "r": 296,
+      "b": 446
+    },
+    "rail": {
+      "l": 6,
+      "t": 454,
+      "r": 354,
+      "b": 856
+    },
+    "pillOverRail": null,
+    "pillOverGuides": [
+      "Feet about here:169x42"
+    ],
+    "coveredChecks": [
+      "Room above",
+      "Ahead",
+      "Steady",
+      "Light"
+    ],
+    "showLevelOverRail": null,
+    "hs": 0,
+    "text": "Skip to content | Live framing | Toss room above | Feet about here |  | Checks |  | Level | : no"
+  },
+  "live-320-light-200": {
+    "pill": {
+      "l": 64,
+      "t": 12,
+      "r": 256,
+      "b": 532
+    },
+    "rail": {
+      "l": 6,
+      "t": 540,
+      "r": 314,
+      "b": 942
+    },
+    "pillOverRail": null,
+    "pillOverGuides": [
+      "Feet about here:169x42"
+    ],
+    "coveredChecks": [
+      "Level"
+    ],
+    "showLevelOverRail": null,
+    "hs": 0,
+    "text": "Skip to content | Live framing | Toss room above | Feet about here |  | Checks |  | Level | : no"
+  },
+  "console": []
+}

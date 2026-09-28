@@ -477,7 +477,7 @@
     },
     "PITCH_UNKNOWN": {
       "meaning": "No pitch from sensors or background verticals; absolute heights, cm positions and angles are experimental",
-      "unlockHint": "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates."
+      "unlockHint": "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount can keep contact height as an estimate."
     },
     "SCALE_INCONSISTENT": {
       "meaning": "Gravity-based and body-based scales disagree by more than 15%, or the estimated toss depth disagrees with its prior by more than 3 sigma",
@@ -970,13 +970,13 @@
       "statusDefault": "estimated",
       "statusTarget": "estimated",
       "validationLevel": {
-        "day": "V1",
-        "overcast": "V1",
+        "day": "V0",
+        "overcast": "V0",
         "night-lights": "V0",
         "flicker": "V0"
       },
-      "validationState": "V1-synthetic-pass",
-      "validationNote": "Passes at the D1 set-ups (portrait 7 to 7.5 m, landscape fence 9 m; n 11): median error 1.1% of height, p95 2.7%, coverage 100%. Fails over all side-view daylight clips at 60 fps or more (median 4.3%, p95 6.9%; n 94) because 5 m clips read 4 to 7% low (depth prior), so heights filmed closer than 6 m are capped at experimental per serve. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
+      "validationState": "V1-synthetic-fail",
+      "validationNote": "Experimental until checked on real footage (V1 is gated on the method-only variant too, 28 September 2026). Through the app pipeline it passes at the D1 set-ups (portrait 7 to 7.5 m, landscape fence 9 m; n 11): median error 1.1% of height, p95 2.7%, coverage 100%. With truth landmarks (the method-only variant) the same clips fail: median 4.1%, p95 5.6%. The app-pipeline pass rests on MediaPipe reading heads about 3% high, which cancels the depth prior's over-correction on the renders; neither bias is confirmed on real players, so a V2 real-footage check must confirm it. Over all side-view daylight clips at 60 fps or more it fails as well (median 4.3%, p95 6.9%; n 94; 5 m clips read 4 to 7% low). Its spread (toss-height-spread) cancels a steady bias and keeps V1. Synthetic run 2026-09-27 (122 rendered clips, 129 serves; validation/results/metrics/SUMMARY.md; docs/VALIDATION.md).",
       "prerequisites": [
         "fps>=30",
         "event:tossApex",

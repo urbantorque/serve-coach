@@ -426,6 +426,11 @@ export interface EntitlementSetting {
   via?: 't1' | 't2' | 't3' | 'plan'
   /** product-gaps addition: the Plus feature named by a T3 sheet, when that led here. */
   feature?: string
+  /**
+   * ui-copy addition (beta decision, PRODUCT §5.3): everything is unlocked during the beta. The Plan
+   * screen's prototype switch turns this on to test the after-beta free plan on this phone.
+   */
+  afterBetaTest?: boolean
 }
 
 export interface SettingRecord<K extends SettingKey = SettingKey> {

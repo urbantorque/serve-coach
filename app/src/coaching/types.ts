@@ -153,6 +153,16 @@ export interface CoachingSession {
    * it, so a block recorded after the drill on the day an experiment started is never a re-test (§12.3).
    */
   visitId?: string
+  /**
+   * This recording's block in its visit (SessionRecord.blockIndex, 1-based among the visit's
+   * recordings of the same template; CAPTURE §5.5). For an "Experiment" template, block 1 is Block A
+   * (before the drill) and block 2 or later is Block B (after it), so a Block B recorded on its own
+   * never reaches a baseline or a re-test. Absent for older or sample sessions (one block as far as we
+   * can tell).
+   */
+  blockIndex?: number
+  /** How many blocks of this template the visit holds (when known): 2 or more means Block A stood alone. */
+  blocksInVisit?: number
 }
 
 export interface CoachingExperiment {
@@ -275,6 +285,12 @@ export interface CoachingInput {
   activeExperiment?: CoachingExperiment
   /** Practice logs for the active experiment (newest last). */
   practiceLogs?: PracticeLogSummary[]
+  /**
+   * A practice of any drill was logged "A bit sore or tight" today, including one outside
+   * `practiceLogs`: the harder version waits for the rest of the day (§9.3, §10.3), even when the
+   * "Where?" sheet was closed without an answer.
+   */
+  soreLoggedToday?: boolean
   bodyCheck?: BodyCheck
   /** ProfileRecord.comfort.painFlag: a referral is still unresolved. */
   painFlag?: boolean
@@ -333,6 +349,11 @@ export interface ItemCheck {
 export interface RankReason {
   kind: 'pinned' | 'experiment' | 'stage' | 'detection' | 'outcome' | 'goal' | 'relative' | 'fatigue' | 'coach-note'
   text: string
+  /**
+   * The wording kept in the stored decision when `text` names a comfort setting (D8): shown on this
+   * phone, never stored, exported or shared. Empty means the reason is left out of the stored "why".
+   */
+  storedText?: string
   metric?: { metricId: MetricId; value: MetricValue }
   /** A player-entered count shown as text ("7 of 10 misses"); render with a "You logged" chip. */
   playerEntered?: boolean

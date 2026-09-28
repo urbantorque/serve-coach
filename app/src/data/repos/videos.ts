@@ -23,6 +23,22 @@ export async function addVideo(record: VideoRecord, blob?: Blob): Promise<VideoR
   return row
 }
 
+/**
+ * `addVideo` for an analysis run: the session check and the write are one transaction, so a session
+ * the player deletes while its clip is being prepared never gets a video or blob afterwards
+ * (ARCHITECTURE §8.3). Returns null, having written nothing, when the session no longer exists.
+ */
+export async function addVideoForSession(record: VideoRecord, blob?: Blob): Promise<VideoRecord | null> {
+  const db = getDb()
+  const row: VideoRecord = { ...record, retainUntil: record.retention.retainUntil }
+  return db.transaction('rw', db.sessions, db.videos, db.videoBlobs, async () => {
+    if (!(await db.sessions.get(record.sessionId))) return null
+    await db.videos.put(row)
+    if (blob) await db.videoBlobs.put({ id: row.id, blob })
+    return row
+  })
+}
+
 export async function getVideo(id: string): Promise<VideoRecord | undefined> {
   return getDb().videos.get(id)
 }

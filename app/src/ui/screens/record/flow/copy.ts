@@ -59,7 +59,7 @@ export const SIX_STEPS = [
 
 export const FENCE_CARD = {
   title: 'Using the side fence instead?',
-  body: 'Clip the phone sideways to the side fence, in line with the baseline, about 1.4 to 1.8 m high. If we ask, tilt the top back a little. We measure the tilt and take it out. Use 4K if your phone offers it.',
+  body: "Clip the phone sideways to the side fence, in line with the baseline, about 1.4 to 1.8 m high. If we ask, tilt the top back a little. We read the tilt from the phone's motion sensor and correct for it. This correction hasn't been checked on real phones yet. Use 4K if your phone offers it.",
 } as const
 
 export const DOUBLES_CARD = {

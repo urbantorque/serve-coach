@@ -77,19 +77,31 @@ export function LiveFramingScreen() {
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [previewEl, setPreviewEl] = useState<HTMLDivElement | null>(null)
   const [railBelow, setRailBelow] = useState<number | null>(null)
+  // The top controls (close, the instruction with its detail card, "Show level", sound) are measured,
+  // and the checklist and the framing labels start below them, so at any text size nothing sits
+  // under the instruction (finding 76). Offsets are from the stage's top and the preview's top.
+  const [topEl, setTopEl] = useState<HTMLDivElement | null>(null)
+  const [topClear, setTopClear] = useState({ stage: 0, preview: 0 })
   useLayoutEffect(() => {
     if (!stageEl || !previewEl) return
     const measure = () => {
       const previewH = previewEl.offsetHeight
       setRailBelow(stageEl.clientHeight - previewH >= 160 ? previewH : null)
+      if (topEl) {
+        const bottom = topEl.getBoundingClientRect().bottom
+        const stage = Math.max(0, Math.round(bottom - stageEl.getBoundingClientRect().top))
+        const preview = Math.max(0, Math.round(bottom - previewEl.getBoundingClientRect().top))
+        setTopClear((c) => (c.stage === stage && c.preview === preview ? c : { stage, preview }))
+      }
     }
     measure()
     if (typeof ResizeObserver === 'undefined') return
     const ro = new ResizeObserver(measure)
     ro.observe(stageEl)
     ro.observe(previewEl)
+    if (topEl) ro.observe(topEl)
     return () => ro.disconnect()
-  }, [stageEl, previewEl])
+  }, [stageEl, previewEl, topEl])
   const recorder = useRef<ClipRecorder | null>(null)
   const startedAt = useRef<{ epoch: number; perf: number }>({ epoch: 0, perf: 0 })
   /** Framing when Record was tapped (the pose pass pauses during the countdown). */
@@ -469,6 +481,7 @@ export function LiveFramingScreen() {
               feetY={pose.snapshot?.floorY ?? null}
               tilt={level.tilt}
               level={evaluation.levelState === 'level'}
+              labelsBelowPx={topClear.preview}
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center" role="status">
@@ -495,18 +508,32 @@ export function LiveFramingScreen() {
             </div>
           )}
           {!landscapeLayout && railBelow === null ? (
-            <div className={cx('absolute inset-x-1.5 bottom-2', railCollapsed && 'flex justify-center')}>
-              <ChecklistRail checks={evaluation.checks} layout="portrait" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
+            // Anchored to the bottom of the preview, never reaching above the top controls: when the
+            // text is large it scrolls inside that space instead of sliding under the instruction.
+            <div
+              className={cx('pointer-events-none absolute inset-x-1.5 bottom-2 flex flex-col justify-end', railCollapsed && 'items-center')}
+              style={{ top: topClear.preview + 8 }}
+            >
+              <div className="pointer-events-auto max-h-full overflow-y-auto overscroll-contain rounded-card" data-checklist-rail>
+                <ChecklistRail checks={evaluation.checks} layout="portrait" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
+              </div>
             </div>
           ) : null}
         </div>
         {!landscapeLayout && railBelow !== null ? (
-          <div className={cx('absolute inset-x-1.5 bottom-2 overflow-y-auto', railCollapsed && 'flex justify-center')} style={{ top: railBelow + 8 }}>
+          <div
+            className={cx('absolute inset-x-1.5 bottom-2 overflow-y-auto overscroll-contain', railCollapsed && 'flex justify-center')}
+            style={{ top: Math.max(railBelow, topClear.stage) + 8 }}
+            data-checklist-rail
+          >
             <ChecklistRail checks={evaluation.checks} layout="portrait" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
           </div>
         ) : null}
         {landscapeLayout ? (
-          <div className="absolute top-16 right-[max(12px,env(safe-area-inset-right))] bottom-[max(8px,env(safe-area-inset-bottom))] flex flex-col items-end justify-between gap-2">
+          <div
+            className="absolute right-[max(12px,env(safe-area-inset-right))] bottom-[max(8px,env(safe-area-inset-bottom))] flex flex-col items-end justify-between gap-2"
+            style={{ top: Math.max(64, topClear.stage + 8) }}
+          >
             <ChecklistRail checks={evaluation.checks} layout="landscape" collapsed={railCollapsed} onToggle={() => setRailCollapsed((c) => !c)} />
             <div className="flex items-center gap-3">
               <IconButton icon={ListChecksIcon} label="Capture checks" variant="filled" onClick={() => setSheet('detail')} />
@@ -515,10 +542,21 @@ export function LiveFramingScreen() {
             </div>
           </div>
         ) : null}
-        {/* Top controls over the preview: close, the one instruction, sound. */}
-        <div className="pad-safe-top absolute inset-x-0 top-0 flex items-start justify-between gap-2 px-3 pt-3">
+        {/* Top controls over the preview: close, the one instruction (with "Show level" under it, in the
+            same column, so it never lands on the checklist), sound. Measured as one block (topClear). */}
+        <div
+          ref={setTopEl}
+          className="pad-safe-top pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 px-3 pt-3 [&>*]:pointer-events-auto"
+        >
           <IconButton icon={XIcon} label="Close camera" onClick={close} className="bg-surface-inverse text-ink-inverse hover:bg-surface-inverse" />
-          <InstructionPill ref={pillRef} kind={pill.kind} text={pill.text} detail={pill.detail} />
+          <div className="flex min-w-0 flex-col items-center gap-2">
+            <InstructionPill ref={pillRef} kind={pill.kind} text={pill.text} detail={pill.detail} />
+            {level.motion === 'prompt' && camera.status === 'live' ? (
+              <Button variant="secondary" fullWidth={false} icon={CompassIcon} onClick={() => void level.request()}>
+                Show level
+              </Button>
+            ) : null}
+          </div>
           <IconButton
             icon={sound ? SpeakerHighIcon : SpeakerSlashIcon}
             label={sound ? 'Turn sound and speech off' : 'Turn sound and speech on'}
@@ -529,13 +567,6 @@ export function LiveFramingScreen() {
             className="bg-surface-inverse text-ink-inverse hover:bg-surface-inverse"
           />
         </div>
-        {level.motion === 'prompt' && camera.status === 'live' ? (
-          <div className="absolute inset-x-0 top-[40%] flex justify-center">
-            <Button variant="secondary" fullWidth={false} icon={CompassIcon} onClick={() => void level.request()}>
-              Show level
-            </Button>
-          </div>
-        ) : null}
         {showSpot ? <SpotStateView {...spot} orientation={frameOrientation} onDismiss={() => setSpotDismissed(true)} /> : null}
       </div>
 

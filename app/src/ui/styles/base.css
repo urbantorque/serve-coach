@@ -96,20 +96,8 @@
     :focus-visible {
       outline-color: Highlight;
     }
-    /* Serve timeline (PhaseTimeline): background-only spans vanish in forced colours, so outline each
-       phase, fill the focus phase with Highlight, and keep the event ticks and playhead line. */
-    [data-phase] {
-      border: 1px solid CanvasText;
-    }
-    [data-phase][data-focus] {
-      forced-color-adjust: none;
-      background: Highlight;
-      border-color: Highlight;
-    }
-    [data-tick],
-    [data-playhead-line] {
-      forced-color-adjust: none;
-      background: CanvasText;
-    }
+    /* Serve timeline (PhaseTimeline): its forced-colour rules (phase outlines, the Highlight focus
+       phase, CanvasText ticks and playhead line) are forced-colors: utilities on the elements, because
+       rules in this base layer lose to the token utilities (bg-ink-3, bg-ink). */
   }
 }

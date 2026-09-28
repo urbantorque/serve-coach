@@ -18,6 +18,7 @@ export const EVENT_LABEL: Record<EventName, string> = {
   usefulness_rated: 'Usefulness rated',
   usefulness_skipped: 'Usefulness skipped',
   paywall_viewed: 'Plus offer seen',
+  plus_wtp_answered: 'Plus price question answered',
   recording_recovered: 'Interrupted recording',
   storage_persist_requested: 'Storage protection asked',
 }
@@ -32,6 +33,7 @@ export const COUNT_ROWS: { name: EventName; one: string; many: string }[] = [
   { name: 'verdict_viewed', one: 'Verdict seen', many: 'Verdicts seen' },
   { name: 'usefulness_rated', one: 'Usefulness rating', many: 'Usefulness ratings' },
   { name: 'paywall_viewed', one: 'Plus offer seen', many: 'Plus offers seen' },
+  { name: 'plus_wtp_answered', one: 'Price question answered', many: 'Price questions answered' },
   { name: 'recording_recovered', one: 'Interrupted recording', many: 'Interrupted recordings' },
 ]
 
@@ -113,6 +115,8 @@ const KEY_WORDS: Record<string, string> = {
   sameSession: 'same session',
   rating: 'rating',
   trigger: 'shown from',
+  wtp: 'would pay',
+  price: 'price asked',
   choice: 'choice',
   length: 'length',
   result: 'answer',
@@ -140,6 +144,7 @@ const PHRASES: Record<string, string> = {
   'sinceBaseline:none': '',
   'from:first-session': 'asked at the first session',
   'from:storage-screen': 'asked from Storage and privacy',
+  'price:annual-99-99': 'A$99.99 a year',
 }
 
 /** A stored value in words: "15-24" reads "15 to 24", "25+" reads "25 or more", yes/no for flags. */

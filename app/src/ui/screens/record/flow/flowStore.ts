@@ -60,6 +60,10 @@ export interface FlowState {
   bodyCheckedAt: number | null
   /** After Stop, whether to open tagging when analysis finishes. */
   tagAfterAnalysis: boolean
+  /** The player picked the Light chip this visit; until then it follows the clock (lightForClock). */
+  lightChosen: boolean
+  /** Before the player picks: the Light chip from the local clock (evening and night: court lights). */
+  syncLightToClock: (now?: Date) => void
   setPlan: (plan: PlanId) => void
   setBlock: (patch: Partial<Block>) => void
   setFps: (fps: FpsChoice) => void
@@ -69,7 +73,17 @@ export interface FlowState {
   setTagAfterAnalysis: (on: boolean) => void
 }
 
-export const DEFAULT_BLOCK: Block = { side: 'deuce', serveNumber: 1, type: null, target: null, spot: 'singles', wind: 'calm', light: 'day' }
+/**
+ * The Light chip's starting answer from the local clock (finding 21): 6 pm to 7 am is court lights, as
+ * an import's timestamp does (sessionFactory lightFromTimestamp). Daylight is never assumed after dark;
+ * the engine also checks the picture (a dark sky over a lit court, or flicker) and says so.
+ */
+export function lightForClock(now: Date = new Date()): Light {
+  const h = now.getHours()
+  return h >= 18 || h < 7 ? 'lights' : 'day'
+}
+
+export const DEFAULT_BLOCK: Block = { side: 'deuce', serveNumber: 1, type: null, target: null, spot: 'singles', wind: 'calm', light: lightForClock() }
 
 export const useRecordFlow = create<FlowState>()((set) => ({
   plan: 'check-in',
@@ -78,13 +92,15 @@ export const useRecordFlow = create<FlowState>()((set) => ({
   setup: 'portrait',
   bodyCheckedAt: null,
   tagAfterAnalysis: false,
+  lightChosen: false,
+  syncLightToClock: (now) => set((s) => (s.lightChosen || s.block.light === lightForClock(now) ? s : { block: { ...s.block, light: lightForClock(now) } })),
   setPlan: (plan) =>
     set((s) => ({
       plan,
       // The second-serve template records second serves (CAPTURE §5.5).
       block: plan === 'second-serve-check-in' ? { ...s.block, serveNumber: 2 } : plan === 'check-in' ? { ...s.block, serveNumber: 1 } : s.block,
     })),
-  setBlock: (patch) => set((s) => ({ block: { ...s.block, ...patch } })),
+  setBlock: (patch) => set((s) => ({ block: { ...s.block, ...patch }, lightChosen: s.lightChosen || patch.light !== undefined })),
   setFps: (fps) => set({ fps }),
   setSetup: (setup) => set({ setup }),
   markBodyChecked: () => set({ bodyCheckedAt: Date.now() }),

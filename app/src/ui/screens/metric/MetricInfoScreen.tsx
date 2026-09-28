@@ -87,6 +87,13 @@ function checksFor(entry: CatalogueEntry, bundle: SessionBundle | null, v: Metri
   return out
 }
 
+/**
+ * Metrics whose baseline is weeks of history, not 2 matched sessions from one set-up (the catalogue's
+ * "{k} of 2" hint): their hint is the engine's own. The serving volume check needs 28 days and 3 sessions.
+ */
+const HISTORY_BASELINE: ReadonlySet<string> = new Set(['load-flag'])
+const LOAD_FLAG_HINT = 'Keep filming your sessions; the volume check starts after four weeks.'
+
 /** Replaces every {token} in a catalogue hint: {k} matched sessions so far, {n} serves needed. */
 function fillTokens(hint: string, k: number): string {
   return hint.replace(/\{k\}/g, String(k)).replace(/\{n\}/g, '8').replace(/\{[a-z]+\}/gi, '')
@@ -105,6 +112,9 @@ function unlockHint(code: string | undefined, metricId: string, opts: { stored?:
   if (code === 'NEEDS_REAR_VIEW') return reasons.VIEW_NOT_SUPPORTED?.unlockHintRearOnly ?? null
   if (code === 'NEEDS_SIDE_VIEW') return reasons.VIEW_NOT_SUPPORTED?.unlockHint ?? null
   const k = opts.k ?? 1
+  // Only the per-set-up bands build over 2 matched sessions; the serving volume check needs weeks of
+  // history, so its baseline hint is the engine's own (never "1 of 2 sessions").
+  if (code === 'BASELINE_BUILDING' && HISTORY_BASELINE.has(metricId)) return opts.stored && !opts.stored.includes('{') ? opts.stored : LOAD_FLAG_HINT
   if (code !== 'BASELINE_BUILDING' && opts.stored) return tiltHint(fillTokens(opts.stored, k)) || null
   const key = code === 'TILT_UNKNOWN' ? 'PITCH_UNKNOWN' : code === 'EXCLUDED_BY_QUALITY' ? 'IMPLAUSIBLE_VALUE' : code
   const hint = key ? reasons[key]?.unlockHint : null
@@ -280,6 +290,11 @@ export function MetricInfoScreen() {
               {shown!.provisional ? <Badge>{UI.earlyRead}</Badge> : null}
             </span>
             {f?.detail ? <p className="text-footnote text-ink-3">{f.detail}</p> : null}
+            {f?.note ? (
+              <p aria-hidden="true" className="text-footnote text-ink-2" data-metric-note>
+                {f.note}
+              </p>
+            ) : null}
             {bundle ? (
               <p className="text-footnote tabular-nums text-ink-2">
                 {shortDate(bundle.session.visitId)}

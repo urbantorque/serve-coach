@@ -29,6 +29,21 @@ describe('Sessions list', () => {
     expect(screen.getByText('Sat 19 Sep')).toBeInTheDocument()
   })
 
+  it('capture quality shows a visible word and its experimental label on every analysed row, never a bare glyph (finding 89)', async () => {
+    renderAt(paths.sessions())
+    await screen.findByText('Sample', {}, { timeout: 8000 })
+    const marks = [...document.querySelectorAll<HTMLElement>('[data-capture-mark]')]
+    expect(marks.length).toBeGreaterThan(0)
+    for (const m of marks) {
+      const visible = [...m.querySelectorAll<HTMLElement>('[aria-hidden="true"]')].map((el) => el.textContent ?? '').join(' ')
+      expect(visible).toMatch(/Capture: (Good|Fair|Limited)/)
+      expect(visible).toContain('Experimental')
+      // The word is not only in screen-reader text.
+      expect(m.querySelector('.sr-only')?.textContent).toMatch(/automatic check, experimental/)
+      expect(visible.replace(/\s+/g, ' ')).not.toBe('')
+    }
+  })
+
   it('empty state', async () => {
     await resetDbForTests()
     renderAt(paths.sessions())

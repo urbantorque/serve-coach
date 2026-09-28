@@ -5,7 +5,7 @@
 export type * from './domain.ts'
 export type * from './records.ts'
 export { DEFAULT_SETTINGS } from './records.ts'
-export { CURRENT_DB_VERSION, DB_NAME, fpsClassFor } from './db.ts'
+export { blockGroup, CURRENT_DB_VERSION, DB_NAME, fpsClassFor } from './db.ts'
 
 export { computeInSegment, getProfile, saveProfile } from './repos/profile.ts'
 export { getAllSettings, getSetting, setSetting } from './repos/settings.ts'
@@ -39,12 +39,14 @@ export {
   listPracticeByExperiment,
   listPracticeSince,
   logPractice,
+  practiceLogDateRange,
   putDecision,
   putStats,
   saveMatchLog,
 } from './repos/coaching.ts'
 export {
   DELETED_SERVE_NOTE,
+  deletedServesLine,
   deleteAllVideos,
   deleteEverything,
   deleteMatchLog,
@@ -53,6 +55,7 @@ export {
   deleteVideo,
   restoreServe,
   statsAfterServeDelete,
+  sweepDeletedSessionRows,
   wasSessionDeleted,
   type DeletedServeSnapshot,
 } from './deletion.ts'

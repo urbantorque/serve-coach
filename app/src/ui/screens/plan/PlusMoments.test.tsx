@@ -21,8 +21,36 @@ beforeEach(async () => {
 })
 
 describe('T1: after the first "Did it work?" verdict', () => {
-  it('an inline card below the verdict and next step, once; the verdict stays free', async () => {
+  it('beta: the card opens the non-blocking Plus preview: unlocked, what Plus will include, the price, one question, Continue', async () => {
     await seedPlayer()
+    renderAt(paths.compare('own-exp-toss-height'))
+    expect(await screen.findByText('Likely better', {}, { timeout: 8000 })).toBeInTheDocument()
+    const card = await screen.findByRole('region', { name: 'That was your first experiment' }, { timeout: 8000 })
+    expect(within(card).getByText(/It is unlocked for you now/)).toBeInTheDocument()
+    expect(primaryCount()).toBe(1)
+    fireEvent.click(within(card).getByRole('button', { name: 'What Plus adds' }))
+    const sheet = await screen.findByRole('dialog', { name: 'That was your first experiment' }, { timeout: 8000 })
+    expect(within(sheet).getByText('Beta: this is unlocked for you. Nothing is sold during the beta.')).toBeInTheDocument()
+    expect(within(sheet).getByRole('list', { name: 'What Plus will include' })).toHaveTextContent('Unlimited analysed sessions')
+    expect(within(sheet).getByText(/Proposed price after the beta: A\$99\.99 a year/)).toBeInTheDocument()
+    expect(within(sheet).queryByRole('link', { name: 'See Plus' })).toBeNull()
+    fireEvent.click(within(within(sheet).getByRole('radiogroup', { name: /Would you pay/ })).getByRole('radio', { name: 'Yes' }))
+    await waitFor(async () => {
+      const rows = await getDb().events.toArray()
+      expect(rows.filter((e) => e.name === 'plus_wtp_answered').map((e) => e.props)).toEqual([{ trigger: 't1', wtp: 'yes', price: 'annual-99-99' }])
+    })
+    // One answer per showing: a second tap changes nothing.
+    fireEvent.click(within(within(sheet).getByRole('radiogroup', { name: /Would you pay/ })).getByRole('radio', { name: 'No' }))
+    expect((await getDb().events.toArray()).filter((e) => e.name === 'plus_wtp_answered')).toHaveLength(1)
+    expect(lintCopy(document.body.textContent ?? '')).toEqual([])
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Continue' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expectHonest()
+  })
+
+  it('after the beta (the Plan screen test): an inline card below the verdict and next step, once; the verdict stays free', async () => {
+    await seedPlayer()
+    await setSetting('entitlement', { tier: 'free', source: 'prototype', afterBetaTest: true })
     renderAt(paths.compare('own-exp-toss-height'))
     expect(await screen.findByText('Likely better', {}, { timeout: 8000 })).toBeInTheDocument()
     const card = await screen.findByRole('region', { name: 'That was your first experiment' }, { timeout: 8000 })
@@ -123,7 +151,10 @@ describe('T2: past this month\'s free analyses', () => {
       </ThemeProvider>,
     )
     const sheet = await screen.findByRole('dialog', { name: "Past this month's free analyses" }, { timeout: 8000 })
-    expect(within(sheet).getByText(/During the beta nothing waits: this one is being analysed now/)).toBeInTheDocument()
+    // Beta: a preview that blocks nothing (PRODUCT §5.3).
+    expect(within(sheet).getByText(/This one is being analysed now/)).toBeInTheDocument()
+    expect(within(sheet).getByText(/Beta: this is unlocked for you/)).toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: 'Continue' })).toBeInTheDocument()
     expect(screen.getByText(/goes past the free plan's 2 analysed practice days this month/)).toBeInTheDocument()
     await waitFor(async () => expect((await getSetting('paywall')).t2Months).toEqual([month]))
   })

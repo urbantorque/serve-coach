@@ -6,7 +6,7 @@ import { Card, SectionLabel } from '../../components/index.ts'
 import { metricName } from '../../copy/metricNames.ts'
 import { paths } from '../../shell/paths.ts'
 import { LIMITS } from '../metric/metricCopy.ts'
-import { RUN, stateCounts, typicalError, VALIDATION_LIMIT, validationStateOf, type ValidationState } from '../metric/validationWords.ts'
+import { RELATIVE_ONLY, RUN, stateCounts, typicalError, VALIDATION_LIMIT, validationStateOf, type ValidationState } from '../metric/validationWords.ts'
 
 /**
  * How we measure: the validation layer (PRODUCT §6.13 item 5 "Validation results"; DESIGN §3.2;
@@ -153,7 +153,7 @@ export function ValidationResults() {
                 <Link to={paths.metricInfo(id)} className="flex min-h-11 flex-col justify-center py-2 hover:bg-surface-2">
                   <span className="text-subhead text-ink">{metricName(id)}</span>
                   <span className="text-footnote text-ink-2">
-                    {RESULT_WORDS[state]}
+                    {RELATIVE_ONLY[id]?.result ?? RESULT_WORDS[state]}
                     {typ ? `. Typical error: ${typ}` : ''}
                   </span>
                 </Link>

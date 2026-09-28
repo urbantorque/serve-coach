@@ -143,16 +143,32 @@ const PASS_MARK: Partial<Record<MetricId, string>> = {
   'shoulder-tilt-trophy': 'close to the true tilt on 19 of 20 serves',
 }
 
+/**
+ * Metrics recorded as a limited pass although their absolute error misses the pass mark, because the
+ * error is a steady offset that cancels against the player's own serves (VALIDATION §3.3; finding 50).
+ * Metric info explains the miss beside the Estimate chip, and How we measure says the same.
+ */
+export const RELATIVE_ONLY: Partial<Record<MetricId, { markLine: string; result: string; detailResult: string }>> = {
+  'leg-drive': {
+    markLine:
+      "As an absolute number it hasn't passed yet: almost all of the error is a steady low read of your hip rise, which cancels when you compare with your own serves. That comparison is what its Estimate label covers, and every value says it reads low.",
+    result: 'Passed for comparing with your own serves only, limited evidence',
+    detailResult: 'Not passed as an absolute number (a steady low read)',
+  },
+}
+
 /** What can shift it: the conditions the synthetic run showed matter (DESIGN §10.14 "what can shift it"). */
 const SHIFT: Partial<Record<MetricId, string>> = {
-  'toss-apex-height': 'Filming closer than about 6 m made heights read low, so those serves are marked experimental. A tilted phone, or one whose tilt we could not read, does the same.',
+  // Finding 41: V1 is gated on the method-only variant too (VALIDATION.md §3.3; validation-summary.json
+  // "method-only at D1"). Through the app it passed; with exact body points it did not.
+  'toss-apex-height':
+    'Through the app, simulated serves read within the pass mark, but with exact body points they were off by about 4% of your height: the close result relied on two small errors cancelling, which real players may not share. So toss height stays experimental until real footage settles it. How steady your toss is (its spread) is not affected. Filming closer than about 6 m also made heights read low, and so does a tilted phone, or one whose tilt we could not read.',
   'contact-height-ratio': 'Filming closer than about 6 m made heights read low, so those serves are marked experimental.',
   'toss-drop': 'Very dim light and heavy motion blur made it less sure. 120 fps or the hit sound sharpens it.',
   'rhythm-release-to-contact': 'At 30 fps the toss release is hard to see, so 30 fps rhythm is marked experimental.',
   'rhythm-spread': 'At 30 fps the timing noise is close to the spread itself, so we say when it is at the limit.',
   'toss-forward': "Most of the error is a steady offset: the body tracker's toe point sits a little behind your real toe, so positions read a few centimetres long.",
   'contact-forward': "Most of the error is a steady offset: the body tracker's toe point sits a little behind your real toe, so positions read a few centimetres long.",
-  'leg-drive': "Most of the error is a steady offset: the tracker reads your hip rise a little low on every serve, so comparisons with your own serves aren't affected.",
   'loading-depth': 'Very small dips are hard to tell apart from tracking noise.',
   'trophy-pause': 'The moment your hips are lowest is hard to pin down in time.',
   'drive-time': 'The moment your hips are lowest is hard to pin down in time.',
@@ -269,7 +285,7 @@ export function keyNumberLines(id: MetricId, heightM?: number): string[] {
       out.push(`Our stated range held the true value on ${Math.round(g.coverage * g.n)} of ${g.n} of those serves.`)
     }
     const mark = PASS_MARK[id]
-    if (mark) out.push(`Our pass mark is ${mark}. ${g.pass ? 'It passed.' : "It hasn't passed yet."}`)
+    if (mark) out.push(`Our pass mark is ${mark}. ${g.pass ? 'It passed.' : (RELATIVE_ONLY[id]?.markLine ?? "It hasn't passed yet.")}`)
   }
   const spread = spreadLine(id)
   if (spread) out.push(spread)
@@ -306,7 +322,7 @@ export function detailRows(id: MetricId, which: 'd1' | 'all', heightM?: number):
     if (bias) rows.push({ label: 'On average it reads', value: Math.abs(g.bias) < Math.abs(g.mae) / 4 ? 'close to the truth' : `${bias} ${biasDirection(id, g.bias)}` })
     if (g.coverage !== null) rows.push({ label: 'Range held the true value', value: `${Math.round(g.coverage * g.n)} of ${g.n}` })
   }
-  rows.push({ label: 'Result', value: g.pass ? 'Passed' : 'Not passed yet' })
+  rows.push({ label: 'Result', value: g.pass ? 'Passed' : (RELATIVE_ONLY[id]?.detailResult ?? 'Not passed yet') })
   return rows
 }
 

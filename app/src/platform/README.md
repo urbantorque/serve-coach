@@ -121,6 +121,7 @@ it is never exported.
 | `verdict_viewed` | Compare ("Did it work?"), once per experiment and verdict | verdict, re-test within 14 days, same session |
 | `usefulness_rated` / `usefulness_skipped` | Compare, once per experiment, skippable | rating 1 to 5 |
 | `paywall_viewed` | PlatformLayer (the Plan screen) | trigger (plan, t1, t2, t3) |
+| `plus_wtp_answered` | the beta Plus preview sheet (`entitlement/beta.ts` `recordWtpAnswer`) | trigger (t1, t2, t3), answer (yes, maybe, no), price asked |
 | `recording_recovered` | the launch offer | choice, length bucket |
 | `storage_persist_requested` | `storage.ts` | result, from |
 

@@ -217,7 +217,7 @@ Title: "Set up your phone"
 
 Cards shown under the steps, only when they apply:
 
-- **"Using the side fence instead?"** (always available as a link under step 4): "Clip the phone sideways to the side fence, in line with the baseline, about 1.4 to 1.8 m high. If we ask, tilt the top back a little. We measure the tilt and take it out. Use 4K if your phone offers it." *(Landscape at the fence, section 2.1.)*
+- **"Using the side fence instead?"** (always available as a link under step 4): "Clip the phone sideways to the side fence, in line with the baseline, about 1.4 to 1.8 m high. If we ask, tilt the top back a little. We read the tilt from the phone's motion sensor and correct for it. This correction hasn't been checked on real phones yet. Use 4K if your phone offers it." *(Landscape at the fence, section 2.1.)*
 - **"Serving from your doubles spot?"** (when the block card says Doubles spot): "You'll be 2 to 3 m closer to the phone, so move the phone 2 big steps further back."
 - **"Measuring speed?"** (only when the experimental speed toggle is on): "We need to see the ball fly for a moment after you hit it. Put the phone about 8.5 m from the centre mark, or clip it sideways to the side fence. Tag your target (T, body or wide) for each block." (D4; section 2.3)
 

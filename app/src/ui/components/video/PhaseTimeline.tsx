@@ -13,6 +13,12 @@ import { frameToReal, phaseAt, type ClipTiming } from './phaseSync.ts'
 import { sliderText, TICK_EVENTS } from './timeline.ts'
 import { usePlayhead, type Playhead } from './playhead.ts'
 
+/** Forced colours: every phase outlined in CanvasText (the Canvas fill is the system's). */
+const FORCED_PHASE = 'forced-colors:border forced-colors:border-[CanvasText]'
+/** Forced colours: the focus phase filled with Highlight, kept as is by the system. */
+const FORCED_FOCUS = 'forced-colors:border forced-colors:border-[Highlight] forced-colors:bg-[Highlight] forced-colors:[forced-color-adjust:none]'
+/** Forced colours: event ticks and the playhead line in CanvasText, kept as is by the system. */
+const FORCED_MARK = 'forced-colors:bg-[CanvasText] forced-colors:[forced-color-adjust:none]'
 
 export interface PhaseTimelineProps {
   store: Playhead
@@ -135,6 +141,9 @@ export function PhaseTimeline({ store, phases, events, window, timing, focusPhas
                 title={PHASE_LABEL[p.phase]}
                 className={cx(
                   'absolute inset-y-0 rounded-full border-x border-surface',
+                  // Forced colours (DESIGN §12): system colours as utilities, so they beat the token
+                  // background whatever the app theme (finding 86).
+                  focus ? FORCED_FOCUS : FORCED_PHASE,
                   focus ? 'bg-ink-3' : i % 2 === 0 ? 'bg-surface-2' : 'bg-band',
                 )}
                 style={{ left: `${left}%`, width: `${Math.max(0.6, right - left)}%` }}
@@ -146,10 +155,10 @@ export function PhaseTimeline({ store, phases, events, window, timing, focusPhas
           {TICK_EVENTS.map((k) => {
             const ev = events[k]
             if (!ev || ev.confidence < 0.5) return null
-            return <span key={k} aria-hidden="true" data-tick className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink" style={{ left: `${pct(ev.frameIndex)}%` }} />
+            return <span key={k} aria-hidden="true" data-tick className={cx('absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink', FORCED_MARK)} style={{ left: `${pct(ev.frameIndex)}%` }} />
           })}
           <span aria-hidden="true" className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${pct(frame)}%` }}>
-            <span data-playhead-line className="absolute top-1/2 left-1/2 h-6 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink" />
+            <span data-playhead-line className={cx('absolute top-1/2 left-1/2 h-6 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink', FORCED_MARK)} />
             <span className="absolute top-1/2 left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink bg-surface" />
           </span>
         </div>

@@ -89,6 +89,11 @@ export function MetricValue({
         ) : null}
       </span>
       {detail && f.detail ? <span className="text-footnote text-ink-3">{f.detail}</span> : null}
+      {detail && f.note ? (
+        <span aria-hidden="true" className="text-footnote text-ink-2" data-metric-note>
+          {f.note}
+        </span>
+      ) : null}
     </span>
   )
 }

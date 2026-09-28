@@ -150,7 +150,7 @@ function LogForm({ model, d }: { model: FocusModel; d?: FocusDecision | KeepGoin
         ...(note.trim() ? { note: note.trim().slice(0, 140) } : {}),
       })
       const logs = [...model.logs.map(toPracticeSummary), { date: todayYmd(), itemId: d?.itemId, successCriterionMet: met, feel, body }]
-      const rules = practiceLogRules(logs, d?.itemId)
+      const rules = practiceLogRules(logs, d?.itemId, todayYmd())
       // Never "the harder version is open" after a sore or painful practice, or with a referral (§10.3).
       const calm = body === 'fine' && !referralActive && !useFocusStore.getState().referral
       setSaved({ unlocked: calm && rules.unlockProgression && !d?.drill.progression, regression: rules.suggestRegression, otherCue: rules.suggestOtherCue })

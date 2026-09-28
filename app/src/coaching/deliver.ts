@@ -58,9 +58,13 @@ export interface LogRules {
   /**
    * A practice logged with "It hurts" holds the harder version back (§10.3 drill pain rule): a log
    * with pain never counts towards the unlock, and the 2 successful practices must both come after the
-   * newest one. True when the "yes" answers would otherwise have unlocked it.
+   * newest one. A practice logged "A bit sore or tight" today holds it for the rest of the day, like
+   * today's sore body check (§9.3, §10.1), even when the "Where?" sheet was closed unanswered. True
+   * when the "yes" answers would otherwise have unlocked it.
    */
   painPaused: boolean
+  /** A practice (of any drill) was logged "A bit sore or tight" today. */
+  soreLoggedToday: boolean
   /** Logs of this item, newest last. */
   logs: PracticeLogSummary[]
 }
@@ -75,17 +79,28 @@ export function successesSincePain(logs: readonly PracticeLogSummary[]): { yes: 
   return { yes: yesIn(logs.slice(lastPain + 1)), yesIgnoringPain: logs.filter((l) => l.successCriterionMet === 'yes').length, painLogged: lastPain >= 0 }
 }
 
-/** §12.2: 2 "yes" logs unlock the progression; 2 "no" suggest the regression; 2 awkward in a row suggest the other cue. */
-export function practiceLogRules(logs: readonly PracticeLogSummary[], itemId?: string): LogRules {
+/** A practice of any drill logged "A bit sore or tight" on this local day (YYYY-MM-DD). */
+export function soreLoggedOn(logs: readonly PracticeLogSummary[], today: string | undefined): boolean {
+  return !!today && logs.some((l) => l.body === 'sore' && l.date === today)
+}
+
+/**
+ * §12.2: 2 "yes" logs unlock the progression; 2 "no" suggest the regression; 2 awkward in a row suggest
+ * the other cue. With `today` (local YYYY-MM-DD), a practice logged sore that day holds the unlock for
+ * the day; `logs` may hold every drill's logs (the sore check reads them all, the counts this item's).
+ */
+export function practiceLogRules(logs: readonly PracticeLogSummary[], itemId?: string, today?: string): LogRules {
   const mine = logs.filter((l) => !itemId || !l.itemId || l.itemId === itemId)
   const { yes, yesIgnoringPain, painLogged } = successesSincePain(mine)
   const no = mine.filter((l) => l.successCriterionMet === 'no').length
   const lastTwo = mine.slice(-2)
+  const soreToday = soreLoggedOn(logs, today)
   return {
-    unlockProgression: yes >= 2,
+    unlockProgression: yes >= 2 && !soreToday,
     suggestRegression: no >= 2 && yes < 2,
     suggestOtherCue: lastTwo.length === 2 && lastTwo.every((l) => l.feel === 'awkward'),
-    painPaused: painLogged && yes < 2 && yesIgnoringPain >= 2,
+    painPaused: (painLogged && yes < 2 && yesIgnoringPain >= 2) || (soreToday && yes >= 2),
+    soreLoggedToday: soreToday,
     logs: [...mine],
   }
 }
@@ -133,15 +148,16 @@ export function chooseDrill(
   profile: NormalisedProfile,
   goal: Goal,
   logs: readonly PracticeLogSummary[] = [],
-  opts: { forceVariant?: DrillVariant } = {},
+  opts: { forceVariant?: DrillVariant; today?: string; soreLoggedToday?: boolean } = {},
 ): DrillChoice {
-  const rules = practiceLogRules(logs, item.id)
+  const rules = practiceLogRules(logs, item.id, opts.today)
   const gatePasses = progressionGatePasses(item, profile) && effortAllowed(item.drill.progression, profile)
   const altAllowed = !!item.drill.progressionAlt && effortAllowed(item.drill.progressionAlt, profile)
   const progVariant: 'progression' | 'progression-alt' | null = gatePasses ? 'progression' : altAllowed ? 'progression-alt' : null
   const progText = progVariant === 'progression' ? item.drill.progression : progVariant === 'progression-alt' ? item.drill.progressionAlt : undefined
-  // Soreness today, or a practice logged with pain since the last two successful ones (§10.3).
-  const sore = profile.soreToday.length > 0 || rules.painPaused
+  // Soreness today (the body check, or a practice logged sore today), or a practice logged with pain
+  // since the last two successful ones (§9.3, §10.3).
+  const sore = profile.soreToday.length > 0 || rules.painPaused || rules.soreLoggedToday || !!opts.soreLoggedToday
   let variant: DrillVariant = 'base'
   if (opts.forceVariant) variant = opts.forceVariant === 'progression' || opts.forceVariant === 'progression-alt' ? (progVariant && !sore ? progVariant : 'base') : opts.forceVariant
   else if (goal === 'less-effort' || rules.suggestRegression) variant = 'regression'

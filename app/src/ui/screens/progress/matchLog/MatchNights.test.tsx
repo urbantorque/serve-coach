@@ -41,12 +41,35 @@ describe('Comp nights on Progress', () => {
     errors.mockRestore()
   })
 
-  it('the season view is Plus: free players get the calm sheet naming it, test Plus opens it', async () => {
+  it('beta: the season view opens, with the calm Plus preview once that day (PRODUCT §5.3)', async () => {
     await seedPlayer()
     await twoMatches()
     renderAt(paths.progress())
     const section = await screen.findByRole('region', { name: 'Comp nights' }, { timeout: 8000 })
-    fireEvent.click(await within(section).findByRole('button', { name: /Season view/ }))
+    fireEvent.click(await within(section).findByRole('button', { name: 'Season view' }))
+    expect(await screen.findByRole('heading', { name: 'Practice and comp nights, week by week' }, { timeout: 8000 })).toBeInTheDocument()
+    const sheet = await screen.findByRole('dialog', { name: 'Season view is part of Plus' }, { timeout: 8000 })
+    expect(within(sheet).getByText(/Beta: this is unlocked for you/)).toBeInTheDocument()
+    expect(sheet.querySelector('[data-preview-price]')?.textContent).toMatch(/A\$99\.99 a year/)
+    expect(within(sheet).queryByRole('link', { name: 'See Plus' })).toBeNull()
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Continue' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await waitFor(async () => expect((await getSetting('paywall')).log?.at(-1)).toMatchObject({ trigger: 't3', feature: 'season-view' }))
+    // Closing and opening again the same day: no second preview.
+    fireEvent.click(within(section).getByRole('button', { name: 'Hide season view' }))
+    fireEvent.click(within(section).getByRole('button', { name: 'Season view' }))
+    await new Promise((r) => setTimeout(r, 300))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('after the beta (the Plan screen test): free players get the calm sheet naming it, test Plus opens it', async () => {
+    await seedPlayer()
+    await twoMatches()
+    await setSetting('entitlement', { tier: 'free', source: 'prototype', afterBetaTest: true })
+    renderAt(paths.progress())
+    const section = await screen.findByRole('region', { name: 'Comp nights' }, { timeout: 8000 })
+    // Once the plan is read, the button carries its Plus badge (after the beta, a free player).
+    fireEvent.click(await within(section).findByRole('button', { name: /Season view.*Plus/ }, { timeout: 8000 }))
     const sheet = await screen.findByRole('dialog', { name: 'Season view is part of Plus' }, { timeout: 8000 })
     expect(within(sheet).getByText(/free and no payment is taken/)).toBeInTheDocument()
     expect(within(sheet).getByText(/Always free: the body check and pain advice, every label, export and deletion/)).toBeInTheDocument()

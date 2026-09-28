@@ -538,8 +538,8 @@
     "value": 65,
     "truth": 66.4,
     "error": -1.4000000000000057,
-    "low": 58.25792880068803,
-    "high": 71.81001821183912,
+    "low": 58.239032212622455,
+    "high": 71.79925593053483,
     "covered": true
    },
    {
@@ -549,11 +549,11 @@
     "metric": "contact-height-ratio",
     "status": "experimental",
     "reason": "VALIDATION_PENDING",
-    "value": 1.4787482292299683,
+    "value": 1.478827662161161,
     "truth": 1.4801,
-    "error": -0.0013517707700316794,
-    "low": 1.3686964037126867,
-    "high": 1.5888000547472498,
+    "error": -0.001272337838839066,
+    "low": 1.368757173917161,
+    "high": 1.588898150405161,
     "covered": true
    },
    {
@@ -566,8 +566,8 @@
     "value": 49,
     "truth": 47.339999999999996,
     "error": 1.6600000000000037,
-    "low": 38.828315241473575,
-    "high": 59.48939979948541,
+    "low": 38.82769501870336,
+    "high": 59.48872921628713,
     "covered": true
    },
    {
@@ -579,8 +579,8 @@
     "value": 944,
     "truth": 935,
     "error": 9,
-    "low": 874.5472268892219,
-    "high": 1013.4098262365518,
+    "low": 874.5028979395369,
+    "high": 1013.3711204702512,
     "covered": true
    },
    {
@@ -600,11 +600,11 @@
     "metric": "leg-drive",
     "status": "estimated",
     "reason": "BASELINE_BUILDING",
-    "value": 15.067532862714073,
+    "value": 15.068634242106105,
     "truth": 13.857,
-    "error": 1.2105328627140732,
-    "low": 8.79185757869336,
-    "high": 21.343208146734785,
+    "error": 1.211634242106106,
+    "low": 8.792926577149943,
+    "high": 21.344341907062265,
     "covered": true
    },
    {
@@ -733,9 +733,9 @@
     "set": "shake",
     "variant": "audio",
     "event": "contact",
-    "errorMs": -0.2701734371277631,
+    "errorMs": -0.3116907951206116,
     "method": "fused",
-    "sigmaMs": 1.8389043578697108,
+    "sigmaMs": 1.8803422937532945,
     "fps": 60
    },
    {
@@ -816,15 +816,15 @@
     "toss-drop": {
      "status": "estimated",
      "value": 65,
-     "low": 58.25792880068803,
-     "high": 71.81001821183912
+     "low": 58.239032212622455,
+     "high": 71.79925593053483
     },
     "contact-height-ratio": {
      "status": "experimental",
      "value": 1.48,
      "reason": "VALIDATION_PENDING",
-     "low": 1.3686964037126867,
-     "high": 1.5888000547472498
+     "low": 1.368757173917161,
+     "high": 1.588898150405161
     },
     "toss-forward": {
      "status": "experimental",
@@ -837,21 +837,21 @@
      "status": "experimental",
      "value": 49,
      "reason": "VALIDATION_PENDING",
-     "low": 38.828315241473575,
-     "high": 59.48939979948541
+     "low": 38.82769501870336,
+     "high": 59.48872921628713
     },
     "rhythm-release-to-contact": {
      "status": "estimated",
      "value": 944,
-     "low": 874.5472268892219,
-     "high": 1013.4098262365518
+     "low": 874.5028979395369,
+     "high": 1013.3711204702512
     },
     "leg-drive": {
      "status": "estimated",
      "value": 15,
      "reason": "BASELINE_BUILDING",
-     "low": 8.79185757869336,
-     "high": 21.343208146734785
+     "low": 8.792926577149943,
+     "high": 21.344341907062265
     },
     "drive-time": {
      "status": "unavailable",
@@ -937,8 +937,8 @@
     },
     "contact": {
      "frameIndex": 158,
-     "tReal": 2.6381508265628724,
-     "uncertaintyS": 0.0018389043578697108,
+     "tReal": 2.6381093092048795,
+     "uncertaintyS": 0.0018803422937532946,
      "confidence": 1,
      "method": "fused"
     },
@@ -1078,8 +1078,8 @@
     "set": "shake",
     "variant": "injected",
     "metric": "leg-drive",
-    "status": "estimated",
-    "reason": "BASELINE_BUILDING",
+    "status": "experimental",
+    "reason": "BODY_NOT_UPRIGHT",
     "value": 16.485693073816233,
     "truth": 13.857,
     "error": 2.6286930738162333,
@@ -1102,7 +1102,8 @@
     "set": "shake",
     "variant": "injected",
     "metric": "loading-depth",
-    "status": "estimated",
+    "status": "experimental",
+    "reason": "BODY_NOT_UPRIGHT",
     "value": -0.22648744172991675,
     "truth": 1.436,
     "error": -1.6624874417299167,
@@ -1327,9 +1328,9 @@
      "high": 1013.3753681988958
     },
     "leg-drive": {
-     "status": "estimated",
+     "status": "experimental",
      "value": 16,
-     "reason": "BASELINE_BUILDING",
+     "reason": "BODY_NOT_UPRIGHT",
      "low": 10.21072972033322,
      "high": 22.760656427299246
     },
@@ -1339,8 +1340,9 @@
      "reason": "POSE_LOW_QUALITY"
     },
     "loading-depth": {
-     "status": "estimated",
+     "status": "experimental",
      "value": 0,
+     "reason": "BODY_NOT_UPRIGHT",
      "low": -6.501433938177836,
      "high": 6.048459054718002
     },

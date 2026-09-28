@@ -33,3 +33,11 @@ describe('Record flow copy (DESIGN §11)', () => {
     expect(COPY.FRAMING_RULE.body).toContain('4.5 m')
   })
 })
+
+describe('fence set-up tilt copy (finding 66)', () => {
+  it('says the tilt correction is untested on real phones, never that it is simply measured and removed', () => {
+    expect(COPY.FENCE_CARD.body).not.toMatch(/take it out/)
+    expect(COPY.FENCE_CARD.body).toContain("motion sensor")
+    expect(COPY.FENCE_CARD.body).toMatch(/hasn't been checked on real phones yet/)
+  })
+})

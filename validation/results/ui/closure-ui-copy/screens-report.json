@@ -1,0 +1,61 @@
+{
+  "sessions-light": [
+    "Capture: Good Experimental Capture Good, automatic check, experimental",
+    "Capture: Good Experimental Capture Good, automatic check, experimental",
+    "Capture: Good Experimental Capture Good, automatic check, experimental"
+  ],
+  "report-s3-light": {
+    "leg": "Leg drive (hip rise) Hips rose ≈ 10% of your height Leg drive (hip rise), about 10% of your height, Estimate, likely 7% to 13% of your height, 16 of 16 serves, Reads about 2% of your height low on simulated serves, so compare it with your own serves only. 16 of 16 serves Reads about 2% of your height low on simulated serves, so compare it with your own serves only. Estimate Before that, your hips dropped ≈ 1% of your height Loading (hip dip), about 1% of your height, Estimate, likely up to 4% of your height, 16 of 16 serves Estimate",
+    "tokens": false
+  },
+  "report-s2-light": {
+    "frontToBack": true,
+    "notReliable": false,
+    "newNote": true
+  },
+  "metric-leg-drive-light": "Back Leg drive (hip rise) Sample data · synthetic player ≈ 10% of your height Leg drive (hip rise), about 10% of your height, Estimate, likely 7% to 13% of your height, 16 of 16 serves, Reads about 2% of your height low on simulated serves, so compare it with your own serves only. Estimate likely 7% to 13% of your height Reads about 2% of your height low on simulated serves, so compare it with your own serves only. S",
+  "metric-load-flag-light": "Back Serving volume check Sample data · synthetic player Starts after four weeks Keep filming your sessions; the volume check starts after four weeks. Not available from this footage. What it is Am I ramping up my serving too fast? How sure we are Not yet checked, even on simulated serves. It is simple arithmetic on the serves you log. The sums are tested; the advice isn't. Known limits Every check so far used comput",
+  "metric-loading-depth-light": "Back Loading (hip dip) Sample data · synthetic player ≈ 1% of your height Loading (hip dip), about 1% of your height, Estimate, likely up to 4% of your height, 16 of 16 serves Estimate likely up to 4% of your height Sat 26 Sep, 16 of 16 serves · Side view, deuce, first serves Estimate: worked out from your video and your height, so it has a margin of error. What it is How far do my hips dip as I load? How far your hi",
+  "hwm-leg-light": "Leg drive (hip rise) Passed for comparing with your own serves only, limited evidence. Typical error: about 2.5% of your height",
+  "compare-light": [
+    "95 fill rgb(127, 137, 129) fo 0.12 stroke rgb(127, 137, 129)",
+    "80 fill rgb(127, 137, 129) fo 1 stroke none",
+    "estimate fill rgb(18, 23, 20) fo 1 stroke rgb(250, 251, 248)"
+  ],
+  "plan-light": "You Plan Prototype: no payment is taken. A plan button switches on test Plus for this phone, free. Beta: everything is unlocked for you Every Plus feature is open on this phone while the beta runs, and nothing is sold. The plans below are what we propose after the beta. Keep your experiments going P",
+  "sessions-dark": [
+    "Capture: Good Experimental Capture Good, automatic check, experimental",
+    "Capture: Good Experimental Capture Good, automatic check, experimental",
+    "Capture: Good Experimental Capture Good, automatic check, experimental"
+  ],
+  "report-s3-dark": {
+    "leg": "Leg drive (hip rise) Hips rose ≈ 10% of your height Leg drive (hip rise), about 10% of your height, Estimate, likely 7% to 13% of your height, 16 of 16 serves, Reads about 2% of your height low on simulated serves, so compare it with your own serves only. 16 of 16 serves Reads about 2% of your height low on simulated serves, so compare it with your own serves only. Estimate Before that, your hips dropped ≈ 1% of your height Loading (hip dip), about 1% of your height, Estimate, likely up to 4% of your height, 16 of 16 serves Estimate",
+    "tokens": false
+  },
+  "report-s2-dark": {
+    "frontToBack": true,
+    "notReliable": false,
+    "newNote": true
+  },
+  "metric-leg-drive-dark": "Back Leg drive (hip rise) Sample data · synthetic player ≈ 10% of your height Leg drive (hip rise), about 10% of your height, Estimate, likely 7% to 13% of your height, 16 of 16 serves, Reads about 2% of your height low on simulated serves, so compare it with your own serves only. Estimate likely 7% to 13% of your height Reads about 2% of your height low on simulated serves, so compare it with your own serves only. S",
+  "metric-load-flag-dark": "Back Serving volume check Sample data · synthetic player Starts after four weeks Keep filming your sessions; the volume check starts after four weeks. Not available from this footage. What it is Am I ramping up my serving too fast? How sure we are Not yet checked, even on simulated serves. It is simple arithmetic on the serves you log. The sums are tested; the advice isn't. Known limits Every check so far used comput",
+  "metric-loading-depth-dark": "Back Loading (hip dip) Sample data · synthetic player ≈ 1% of your height Loading (hip dip), about 1% of your height, Estimate, likely up to 4% of your height, 16 of 16 serves Estimate likely up to 4% of your height Sat 26 Sep, 16 of 16 serves · Side view, deuce, first serves Estimate: worked out from your video and your height, so it has a margin of error. What it is How far do my hips dip as I load? How far your hi",
+  "hwm-leg-dark": "Leg drive (hip rise) Passed for comparing with your own serves only, limited evidence. Typical error: about 2.5% of your height",
+  "compare-dark": [
+    "95 fill rgb(108, 118, 110) fo 0.12 stroke rgb(108, 118, 110)",
+    "80 fill rgb(108, 118, 110) fo 1 stroke none",
+    "estimate fill rgb(235, 239, 233) fo 1 stroke rgb(20, 25, 22)"
+  ],
+  "plan-dark": "You Plan Prototype: no payment is taken. A plan button switches on test Plus for this phone, free. Beta: everything is unlocked for you Every Plus feature is open on this phone while the beta runs, and nothing is sold. The plans below are what we propose after the beta. Keep your experiments going P",
+  "today-light": "After last night's comp How did it go? Log it while it's fresh: service games, double faults and, if you counted, first serves in. About 20 seconds. It sits beside your practice, never mixed with it. Log the match Not now",
+  "radar-light": "Radar speed (you logged) 142 km/h Radar speed (you logged), 142 kilometres per hour, You logged, from your radar, 1 serves Pocket Radar, peak Serve 4, logged in Check this serve You logged",
+  "plus-preview-light": "Season view is part of Plus Beta: this is unlocked for you. Nothing is sold during the beta. Your practice focus beside your comp nights, week by week. Shown side by side, never combined. What Plus will include Unlimited analysed sessions Your full history, and a season view of practice beside comp nights Compare any two matched sessions, with ghost overlays Drill progressions that follow your pra",
+  "season-open-light": true,
+  "profile-light": "Match log 2 comp nights logged. They show on Progress My coach's focus Pin a focus, share a session Data Storage and privacy Keep or delete videos, export, delete How we measure Every metric and how sure we are Beta data Usage counts on this phone Experimental metrics Numbers we're still checking, like speed ranges",
+  "today-dark": "After last night's comp How did it go? Log it while it's fresh: service games, double faults and, if you counted, first serves in. About 20 seconds. It sits beside your practice, never mixed with it. Log the match Not now",
+  "radar-dark": "Radar speed (you logged) 142 km/h Radar speed (you logged), 142 kilometres per hour, You logged, from your radar, 1 serves Pocket Radar, peak Serve 4, logged in Check this serve You logged",
+  "plus-preview-dark": "Season view is part of Plus Beta: this is unlocked for you. Nothing is sold during the beta. Your practice focus beside your comp nights, week by week. Shown side by side, never combined. What Plus will include Unlimited analysed sessions Your full history, and a season view of practice beside comp nights Compare any two matched sessions, with ghost overlays Drill progressions that follow your pra",
+  "season-open-dark": true,
+  "profile-dark": "Match log 2 comp nights logged. They show on Progress My coach's focus Pin a focus, share a session Data Storage and privacy Keep or delete videos, export, delete How we measure Every metric and how sure we are Beta data Usage counts on this phone Experimental metrics Numbers we're still checking, like speed ranges",
+  "console": []
+}

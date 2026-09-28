@@ -63,6 +63,11 @@ export const EVENT_SCHEMAS = {
   usefulness_skipped: {},
   /** The plan screen or a Plus sheet was shown (trigger: PRODUCT §6.15 moments, or the Profile plan row). */
   paywall_viewed: { trigger: ['plan', 't1', 't2', 't3'] },
+  /**
+   * Beta "Plus preview" (PRODUCT §5.3): the one-tap "Would you pay A$99.99 a year for this?" at a paywall
+   * moment. The moment, the answer and the price asked about; nothing else.
+   */
+  plus_wtp_answered: { trigger: ['t1', 't2', 't3'], wtp: ['yes', 'maybe', 'no'], price: ['annual-99-99'] },
   // No pain, referral or body-check event exists, not even a count: they are health information and
   // stay entirely out of analytics (PRODUCT §9.4; COACHING §10). The safety gate is checked by the
   // coaching safety tests and the copy audit, not by telemetry.

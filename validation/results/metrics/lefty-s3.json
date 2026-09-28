@@ -538,8 +538,8 @@
     "value": 59,
     "truth": 59.040000000000006,
     "error": -0.04000000000000625,
-    "low": 53.0709240752318,
-    "high": 65.267741879998,
+    "low": 53.062823775931435,
+    "high": 65.26733674157686,
     "covered": true
    },
    {
@@ -549,11 +549,11 @@
     "metric": "contact-height-ratio",
     "status": "experimental",
     "reason": "VALIDATION_PENDING",
-    "value": 1.442278682998397,
+    "value": 1.4423010909718852,
     "truth": 1.4946,
-    "error": -0.05232131700160303,
-    "low": 1.335320434341301,
-    "high": 1.5492369316554928,
+    "error": -0.05229890902811474,
+    "low": 1.3353329953080784,
+    "high": 1.549269186635692,
     "covered": true
    },
    {
@@ -566,8 +566,8 @@
     "value": 31,
     "truth": 28.09,
     "error": 2.91,
-    "low": 20.99956205142705,
-    "high": 40.20283558006996,
+    "low": 20.999352168393997,
+    "high": 40.20262615157704,
     "covered": true
    },
    {
@@ -579,8 +579,8 @@
     "value": 908,
     "truth": 909.5,
     "error": -1.5,
-    "low": 840.7897776777654,
-    "high": 975.0372369151992,
+    "low": 840.7743768411613,
+    "high": 975.027674185179,
     "covered": true
    },
    {
@@ -600,11 +600,11 @@
     "metric": "leg-drive",
     "status": "estimated",
     "reason": "BASELINE_BUILDING",
-    "value": 11.909887673479636,
+    "value": 11.909964579566768,
     "truth": 12.722,
-    "error": -0.8121123265203636,
-    "low": 5.6349067902782055,
-    "high": 18.184868556681067,
+    "error": -0.8120354204332312,
+    "low": 5.6349824505196615,
+    "high": 18.184946708613875,
     "covered": true
    },
    {
@@ -733,9 +733,9 @@
     "set": "lefty",
     "variant": "audio",
     "event": "contact",
-    "errorMs": 0.3018572964661459,
+    "errorMs": 0.2893755131538889,
     "method": "fused",
-    "sigmaMs": 1.7188244280477547,
+    "sigmaMs": 1.7525281397512789,
     "fps": 60
    },
    {
@@ -816,15 +816,15 @@
     "toss-drop": {
      "status": "estimated",
      "value": 59,
-     "low": 53.0709240752318,
-     "high": 65.267741879998
+     "low": 53.062823775931435,
+     "high": 65.26733674157686
     },
     "contact-height-ratio": {
      "status": "experimental",
      "value": 1.44,
      "reason": "VALIDATION_PENDING",
-     "low": 1.335320434341301,
-     "high": 1.5492369316554928
+     "low": 1.3353329953080784,
+     "high": 1.549269186635692
     },
     "toss-forward": {
      "status": "experimental",
@@ -837,21 +837,21 @@
      "status": "experimental",
      "value": 31,
      "reason": "VALIDATION_PENDING",
-     "low": 20.99956205142705,
-     "high": 40.20283558006996
+     "low": 20.999352168393997,
+     "high": 40.20262615157704
     },
     "rhythm-release-to-contact": {
      "status": "estimated",
      "value": 908,
-     "low": 840.7897776777654,
-     "high": 975.0372369151992
+     "low": 840.7743768411613,
+     "high": 975.027674185179
     },
     "leg-drive": {
      "status": "estimated",
      "value": 12,
      "reason": "BASELINE_BUILDING",
-     "low": 5.6349067902782055,
-     "high": 18.184868556681067
+     "low": 5.6349824505196615,
+     "high": 18.184946708613875
     },
     "drive-time": {
      "status": "unavailable",
@@ -937,8 +937,8 @@
     },
     "contact": {
      "frameIndex": 154,
-     "tReal": 2.571252857296466,
-     "uncertaintyS": 0.0017188244280477547,
+     "tReal": 2.571240375513154,
+     "uncertaintyS": 0.0017525281397512789,
      "confidence": 1,
      "method": "fused"
     },

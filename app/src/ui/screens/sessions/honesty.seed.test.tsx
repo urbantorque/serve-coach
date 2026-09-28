@@ -11,9 +11,14 @@ import { resetDbForTests } from '../../../data/db.ts'
 import { loadDemoData } from '../../../data/demo.ts'
 import { isSampleSeed, unpackTyped, type SampleSeed } from '../../../data/sample.ts'
 import { useSettingsStore } from '../../../data/stores/settings.ts'
-import { CAPTURE_EXPERIMENTAL, REASON_FALLBACK } from '../../copy/strings.ts'
+import { statusCeiling } from '../../../analysis/metrics/catalogue.ts'
+import { CAPTURE_EXPERIMENTAL, REASON_FALLBACK, UI } from '../../copy/strings.ts'
+import { measureIndex } from '../profile/measureIndex.ts'
 import { paths } from '../../shell/paths.ts'
 import { renderAt } from '../progress/insights/testing.tsx'
+import { emptyDraft, toAnnotation } from '../../../validation/annotation/marks.ts'
+import { deleteCheck, saveCheck } from '../../../validation/annotation/store.ts'
+import { lintCopy } from '../../copy/lint.ts'
 
 const raw: unknown = JSON.parse(readFileSync(resolve(process.cwd(), 'public/demo/seed@1.json'), 'utf8'))
 if (!isSampleSeed(raw)) throw new Error('public/demo/seed@1.json is not a sample seed')
@@ -49,6 +54,8 @@ describe('sample report ghost rows (D4, D1)', () => {
     const speed = ghostRow('speed-experimental')
     // Every sample session is 60 fps: the blocker is the frame rate, whatever else went missing.
     expect(speed?.textContent).toContain('Needs 120 fps')
+    // No unfilled {token} anywhere on the report (finding 46).
+    expect(document.body.textContent ?? '').not.toMatch(/\{[a-z]+\}/i)
     const section = document.querySelector<HTMLElement>('section[aria-labelledby="not-available"]')!
     for (const row of within(section).getAllByRole('listitem')) {
       const metric = row.getAttribute('data-metric')
@@ -96,7 +103,20 @@ describe('capture quality is always shown, labelled experimental (D2 addendum)',
 })
 
 describe('Metric info never shows a raw {token} or "couldn\'t see this" beside a measured value', () => {
-  it.each(['leg-drive', 'toss-height-spread', 'rhythm-spread', 'contact-height-ratio', 'loading-depth', 'serve-count'])('%s', async (id) => {
+  it('the serving volume check says it starts after four weeks, never "1 of 2 sessions"', async () => {
+    for (const s of seed.sessions) {
+      renderAt(`${paths.metricInfo('load-flag')}?session=${s.session.id}`)
+      await screen.findByText('What it is', {}, { timeout: 15_000 })
+      const header = pageHeader()
+      expect(header.textContent, s.session.id).not.toMatch(/of 2 sessions/)
+      expect(header.textContent, s.session.id).not.toContain('Building your usual range')
+      expect(header.textContent, s.session.id).toContain('Starts after four weeks')
+      expect(header.textContent, s.session.id).toContain('four weeks')
+      cleanup()
+    }
+  })
+
+  it.each(['leg-drive', 'toss-height-spread', 'rhythm-spread', 'contact-height-ratio', 'loading-depth', 'serve-count', 'load-flag', 'fatigue-flag'])('%s', async (id) => {
     for (const s of seed.sessions) {
       renderAt(`${paths.metricInfo(id)}?session=${s.session.id}`)
       await screen.findByText('What it is', {}, { timeout: 15_000 })
@@ -104,6 +124,53 @@ describe('Metric info never shows a raw {token} or "couldn\'t see this" beside a
       const text = document.body.textContent ?? ''
       expect(text, `${id} ${s.session.id}`).not.toMatch(/\{[a-z]+\}/i)
       if (header.querySelector('[data-status]')?.getAttribute('data-status') !== 'unavailable') expect(header.textContent, `${id} ${s.session.id}`).not.toContain(REASON_FALLBACK)
+      cleanup()
+    }
+  })
+})
+
+describe('toss front-to-back: one status everywhere (finding 55)', () => {
+  it('sample-s2 with the toggle off never shows the front-to-back readout beside "isn\'t reliable enough to show"', async () => {
+    renderAt(paths.sessionReport('sample-s2'))
+    await screen.findByText('Your serve today', {}, { timeout: 15_000 })
+    const text = document.body.textContent ?? ''
+    if (text.includes('Front-to-back spread')) expect(text).not.toContain(UI.tossHeightsOnly)
+    expect(text).not.toMatch(/Shown as experimental while front-to-back/)
+  })
+
+  it('How we measure lists toss front-to-back consistency with the status the engine gives it', () => {
+    const row = measureIndex()
+      .flatMap((g) => g.rows.map((r) => ({ ...r, group: g.group })))
+      .find((r) => r.id === 'toss-forward-spread')!
+    expect(row.status).toBe(statusCeiling('toss-forward-spread', 'day').status)
+    expect(row.group).toBe(row.status === 'experimental' ? 'experimental' : 'video')
+  })
+})
+
+describe('session report: "Radar speed (you logged)" (U2)', () => {
+  it('shows the reading logged in Check this serve, player-entered, with its source; no reading, no row', async () => {
+    renderAt(paths.sessionReport('sample-s3'))
+    await screen.findByText('Your serve today', {}, { timeout: 15_000 })
+    expect(document.querySelector('[data-radar-speed]')).toBeNull()
+    cleanup()
+
+    const s3 = seed.sessions.find((s) => s.session.id === 'sample-s3')!
+    const serve = s3.serves.find((s) => s.included) ?? s3.serves[0]
+    const check = await saveCheck(
+      toAnnotation({ ...emptyDraft(), radar: { value: 88, unit: 'mph', device: 'pocket-radar' } }, { serveId: serve.id, sessionId: 'sample-s3', videoId: serve.videoId, initials: '', role: 'player', captureFps: 60, now: '2026-09-27T09:00:00.000Z' }),
+    )
+    try {
+      renderAt(paths.sessionReport('sample-s3'))
+      await screen.findByText('Your serve today', {}, { timeout: 15_000 })
+      const tile = await screen.findByText('Radar speed (you logged)', {}, { timeout: 5000 }).then((el) => el.closest<HTMLElement>('[data-radar-speed]')!)
+      expect(tile).toHaveTextContent('142')
+      expect(tile).toHaveTextContent('Pocket Radar, peak')
+      expect(tile).toHaveTextContent(`Serve ${serve.index}, logged in Check this serve`)
+      expect(tile).toHaveTextContent('You logged')
+      expect(tile.querySelector('[data-metric="speed-radar-entered"]')?.getAttribute('data-status')).toBe('player-entered')
+      expect(lintCopy(tile.textContent ?? '')).toEqual([])
+    } finally {
+      await deleteCheck(check.id)
       cleanup()
     }
   })

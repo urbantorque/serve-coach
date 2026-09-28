@@ -66,7 +66,62 @@ export const SCHEMA_V2: Record<string, string> = {
     'id, startedAt, visitId, status, mode, isDemo, [mode+startedAt], [mode+fpsClass+startedAt], linkedSessionId, experimentId',
 }
 
-export const CURRENT_DB_VERSION = 2
+/**
+ * Version 3 (closure round, 28 Sep 2026): real recording blocks. `SessionRecord.blockIndex` is the
+ * 1-based order of a recording among the visit's recordings of the same template (CAPTURE §5.5:
+ * Experiment Block A = 1, Block B = 2). Earlier versions saved every session as block 0; the upgrade
+ * numbers them from their start times. A compound index lists a visit's blocks in order. Every v2
+ * index is kept.
+ */
+export const SCHEMA_V3: Record<string, string> = {
+  sessions:
+    'id, startedAt, visitId, status, mode, isDemo, [mode+startedAt], [mode+fpsClass+startedAt], linkedSessionId, experimentId, [visitId+blockIndex]',
+}
+
+export const CURRENT_DB_VERSION = 3
+
+/** A session that never produced results does not take a block number (it is recorded again). */
+const takesBlock = (s: Pick<SessionRecord, 'status'>) => s.status !== 'failed' && s.status !== 'cancelled'
+
+/** The group a block number counts within: same visit, same template, same kind of data. */
+export const blockGroup = (s: Pick<SessionRecord, 'visitId' | 'template' | 'isDemo'>) => `${s.isDemo === 1 ? 'demo' : 'own'}|${s.visitId}|${s.template ?? ''}`
+
+/**
+ * Block numbers for sessions in one group, oldest first: each is 1 + the sessions before it that took
+ * a block (a failed or cancelled recording is numbered but does not move the count on, as when the
+ * Record flow numbers a new recording). Sessions that already have a number keep it.
+ */
+export function numberBlocks<T extends Pick<SessionRecord, 'startedAt' | 'createdAt' | 'id' | 'status' | 'blockIndex'>>(group: readonly T[]): Map<string, number> {
+  const out = new Map<string, number>()
+  const ordered = [...group].sort((a, b) => a.startedAt.localeCompare(b.startedAt) || (a.createdAt ?? '').localeCompare(b.createdAt ?? '') || a.id.localeCompare(b.id))
+  let taken = 0
+  for (const s of ordered) {
+    const n = s.blockIndex && s.blockIndex > 0 ? s.blockIndex : taken + 1
+    out.set(s.id, n)
+    if (takesBlock(s)) taken = Math.max(taken + 1, n)
+  }
+  return out
+}
+
+/** v2 -> v3 upgrade. Idempotent: it only fills a missing (or 0) blockIndex. */
+export async function upgradeToV3(tx: Transaction): Promise<void> {
+  const table = tx.table('sessions')
+  const rows = (await table.toArray()) as SessionRecord[]
+  const groups = new Map<string, SessionRecord[]>()
+  for (const s of rows) {
+    const g = groups.get(blockGroup(s)) ?? []
+    g.push(s)
+    groups.set(blockGroup(s), g)
+  }
+  for (const group of groups.values()) {
+    if (group.every((s) => s.blockIndex && s.blockIndex > 0)) continue
+    const numbers = numberBlocks(group)
+    for (const s of group) {
+      if (s.blockIndex && s.blockIndex > 0) continue
+      await table.update(s.id, { blockIndex: numbers.get(s.id) })
+    }
+  }
+}
 
 export function fpsClassFor(captureFps: number): FpsClass {
   return captureFps >= 100 ? 'fps120plus' : captureFps >= 50 ? 'fps60' : 'fps30'
@@ -109,6 +164,7 @@ export class ServeCoachDB extends Dexie {
     super(name)
     this.version(1).stores(SCHEMA_V1)
     this.version(2).stores(SCHEMA_V2).upgrade(upgradeToV2)
+    this.version(3).stores(SCHEMA_V3).upgrade(upgradeToV3)
   }
 }
 

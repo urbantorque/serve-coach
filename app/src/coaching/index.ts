@@ -25,6 +25,7 @@ export {
   retestVisitsOf,
   withRetestVisits,
   experimentBlocks,
+  isBlockB,
   DRILL_BREAK_S,
   BLOCK_A_SERVES,
   type EndedExperiment,

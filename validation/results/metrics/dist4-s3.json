@@ -499,8 +499,8 @@
     "value": 59,
     "truth": 59.040000000000006,
     "error": -0.04000000000000625,
-    "low": 52.66924849135187,
-    "high": 64.79193567129118,
+    "low": 52.644046013104884,
+    "high": 64.77133156879124,
     "covered": true
    },
    {
@@ -532,8 +532,8 @@
     "value": 926,
     "truth": 909.5,
     "error": 16.5,
-    "low": 858.4418356063334,
-    "high": 993.9967254073304,
+    "low": 858.3731236966022,
+    "high": 993.9304824565455,
     "covered": true
    },
    {
@@ -553,11 +553,11 @@
     "metric": "leg-drive",
     "status": "estimated",
     "reason": "BASELINE_BUILDING",
-    "value": 9.887904480410903,
+    "value": 9.889059445797443,
     "truth": 12.759,
-    "error": -2.8710955195890975,
-    "low": 3.6126834618033588,
-    "high": 16.16312549901845,
+    "error": -2.8699405542025573,
+    "low": 3.613827550317037,
+    "high": 16.16429134127785,
     "covered": true
    },
    {
@@ -679,9 +679,9 @@
     "set": "dist4",
     "variant": "audio",
     "event": "contact",
-    "errorMs": -0.5594194931823893,
+    "errorMs": -0.6268969234404231,
     "method": "fused",
-    "sigmaMs": 1.748965999456189,
+    "sigmaMs": 1.7847044577483762,
     "fps": 60
    },
    {
@@ -762,8 +762,8 @@
     "toss-drop": {
      "status": "estimated",
      "value": 59,
-     "low": 52.66924849135187,
-     "high": 64.79193567129118
+     "low": 52.644046013104884,
+     "high": 64.77133156879124
     },
     "contact-height-ratio": {
      "status": "unavailable",
@@ -783,15 +783,15 @@
     "rhythm-release-to-contact": {
      "status": "estimated",
      "value": 926,
-     "low": 858.4418356063334,
-     "high": 993.9967254073304
+     "low": 858.3731236966022,
+     "high": 993.9304824565455
     },
     "leg-drive": {
      "status": "estimated",
      "value": 10,
      "reason": "BASELINE_BUILDING",
-     "low": 3.6126834618033588,
-     "high": 16.16312549901845
+     "low": 3.613827550317037,
+     "high": 16.16429134127785
     },
     "drive-time": {
      "status": "unavailable",
@@ -875,8 +875,8 @@
     },
     "contact": {
      "frameIndex": 154,
-     "tReal": 2.5703915805068176,
-     "uncertaintyS": 0.001748965999456189,
+     "tReal": 2.5703241030765596,
+     "uncertaintyS": 0.0017847044577483761,
      "confidence": 1,
      "method": "fused"
     },

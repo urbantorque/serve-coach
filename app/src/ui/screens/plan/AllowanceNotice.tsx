@@ -77,6 +77,7 @@ export function AllowanceNotice({ sessionId }: { sessionId: string }) {
         }}
         trigger="t2"
         from={`${location.pathname}${location.search}`}
+        beta={plan?.beta}
       />
     </>
   )

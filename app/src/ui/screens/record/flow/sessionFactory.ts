@@ -221,7 +221,8 @@ export function sessionFor(input: SessionInput): Omit<SessionRecord, 'id' | 'cre
     setup: input.capture.setup,
     orientation: input.capture.orientation,
     template: input.template,
-    blockIndex: 0,
+    // No blockIndex here: the data layer numbers each recording as the visit's next block of this
+    // template when it saves the session (createSession; CAPTURE §5.5 Block A = 1, Block B = 2).
     conditions: input.capture.conditions,
     defaultSide: b.side === 'both' ? undefined : b.side,
     defaultServeNumber: b.serveNumber === 'mixed' ? undefined : b.serveNumber,

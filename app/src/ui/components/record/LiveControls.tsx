@@ -178,6 +178,11 @@ export interface FramingOverlayProps {
   feetY: number | null
   tilt: { pitchDeg: number; rollDeg: number } | null
   level: boolean
+  /**
+   * Where the top controls end, in px from the preview's top: the "Toss room above" label moves below
+   * them so the instruction's detail card never covers it (finding 76).
+   */
+  labelsBelowPx?: number
 }
 
 const HALO = 'var(--overlay-halo)'
@@ -189,7 +194,7 @@ const GUIDE = 'var(--overlay-line)'
  * roll, centre dot moving with pitch; solid with the word "Level" within 2°). White at 60% with the
  * dark halo (§2.7). Guides are not data, so they may be dashed.
  */
-export function FramingOverlay({ orientation, feetY, tilt, level }: FramingOverlayProps) {
+export function FramingOverlay({ orientation, feetY, tilt, level, labelsBelowPx = 0 }: FramingOverlayProps) {
   const portrait = orientation === 'portrait'
   const tossBand = 0.2
   const band = portrait ? [0.3, 0.7] : [0.35, 0.6]
@@ -217,7 +222,10 @@ export function FramingOverlay({ orientation, feetY, tilt, level }: FramingOverl
         className="absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
         style={{ left: '50%', top: `${dotY * 100}%`, borderColor: GUIDE, background: level ? GUIDE : 'transparent', boxShadow: `0 0 0 2px ${HALO}` }}
       />
-      <span className="absolute left-3 text-footnote font-label" style={{ top: `calc(${tossBand * 100}% + 0.25rem)`, color: GUIDE, textShadow: `0 0 3px ${HALO}` }}>
+      <span
+        className="absolute left-3 text-footnote font-label"
+        style={{ top: `max(calc(${tossBand * 100}% + 0.25rem), ${Math.round(labelsBelowPx) + 4}px)`, color: GUIDE, textShadow: `0 0 3px ${HALO}` }}
+      >
         Toss room above
       </span>
       <span className="absolute left-3 text-footnote font-label" style={{ top: `calc(${feet * 100}% + 0.25rem)`, color: GUIDE, textShadow: `0 0 3px ${HALO}` }}>

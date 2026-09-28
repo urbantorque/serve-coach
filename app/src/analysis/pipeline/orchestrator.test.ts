@@ -13,6 +13,8 @@ import type { PoseInputFrame } from '../pose/poseSource.ts'
 import type { PoseFrame, VideoMeta } from '../types.ts'
 import type { BitmapFrame, FrameSelection, FrameSource, RawFrame } from '../video/frameTypes.ts'
 import { analyseSessionDouble } from './e2e/testDoubleEngine.ts'
+import type { EngineInput } from '../engine.ts'
+import { LUMA_GRID } from '../quality/light.ts'
 import { MEMORY_BUDGET } from './budget.ts'
 import { AnalysisError } from './errors.ts'
 import { defaultDeps, DENSE_NUM_POSES, engineObservations, POSE_ROI_MAX_SIDE_PX, runAnalysis, type PipelineDeps } from './orchestrator.ts'
@@ -485,6 +487,55 @@ describe('runAnalysis', () => {
     const videos = await listVideosBySession('S1')
     expect(videos.map((v) => v.id)).toEqual([video.id])
     expect((await listServesBySession('S1')).every((s) => s.videoId === video.id)).toBe(true)
+  })
+
+  it('measures the light on the sparse pass (finding 21): a luma grid per decoded frame, before the pose source takes it, and hands the engine the evidence', async () => {
+    const pose = fakePose()
+    const seen: number[] = []
+    let measuredBeforePose = true
+    const grid = (sky: number, court: number) => {
+      const g = new Uint8Array(LUMA_GRID * LUMA_GRID)
+      for (let k = 0; k < g.length; k++) g[k] = k < (LUMA_GRID * LUMA_GRID) / 4 ? sky : court
+      return g
+    }
+    let engineInput: EngineInput | undefined
+    const { deps } = makeDeps({
+      pose,
+      createLumaMeasurer: () => (image) => {
+        seen.push(image.width)
+        if (pose.frames > seen.length) measuredBeforePose = false
+        return grid(6, 170)
+      },
+      engine: {
+        findServeWindows: () => [{ startReal: 0, endReal: 3.8, confidence: 0.9 }],
+        analyseSession: (input) => {
+          engineInput = input
+          return analyseSessionDouble(input)
+        },
+      },
+    })
+    await runAnalysis(file(), { ...baseOptions, persist: false }, deps)
+    expect(seen.length).toBeGreaterThan(8)
+    expect(measuredBeforePose).toBe(true)
+    expect(engineInput?.light?.frames).toBe(seen.length)
+    expect(engineInput?.light?.dark).toBe(true)
+  })
+
+  it('without a measurer (Node, or a browser without OffscreenCanvas) the engine gets no light evidence', async () => {
+    let engineInput: EngineInput | undefined
+    const { deps } = makeDeps({
+      createLumaMeasurer: () => undefined,
+      engine: {
+        findServeWindows: () => [{ startReal: 0, endReal: 3.8, confidence: 0.9 }],
+        analyseSession: (input) => {
+          engineInput = input
+          return analyseSessionDouble(input)
+        },
+      },
+    })
+    await runAnalysis(file(), { ...baseOptions, persist: false }, deps)
+    expect(engineInput).toBeDefined()
+    expect(engineInput?.light).toBeUndefined()
   })
 
   it('persist: false writes nothing and passes a coaching decision through', async () => {

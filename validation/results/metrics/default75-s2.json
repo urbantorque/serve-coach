@@ -16,7 +16,8 @@
     "set": "default75",
     "variant": "default",
     "metric": "toss-apex-height",
-    "status": "estimated",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
     "value": 1.84,
     "truth": 1.84894,
     "error": -0.008939999999999948,
@@ -325,8 +326,9 @@
      "reason": "NEEDS_REAR_VIEW"
     },
     "toss-apex-height": {
-     "status": "estimated",
+     "status": "experimental",
      "value": 1.84,
+     "reason": "VALIDATION_PENDING",
      "low": 1.7197096116326134,
      "high": 1.964252083696564
     },
@@ -492,7 +494,8 @@
     "set": "default75",
     "variant": "audio",
     "metric": "toss-apex-height",
-    "status": "estimated",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
     "value": 1.84,
     "truth": 1.84894,
     "error": -0.008939999999999948,
@@ -533,8 +536,8 @@
     "value": 66,
     "truth": 66.4,
     "error": -0.4000000000000057,
-    "low": 59.21504942219633,
-    "high": 72.79567440845753,
+    "low": 59.19904665028915,
+    "high": 72.78592628218382,
     "covered": true
    },
    {
@@ -543,11 +546,11 @@
     "variant": "audio",
     "metric": "contact-height-ratio",
     "status": "estimated",
-    "value": 1.4810386322703821,
+    "value": 1.4811090400824731,
     "truth": 1.4801,
-    "error": 0.0009386322703821559,
-    "low": 1.3862731689752192,
-    "high": 1.575804095565545,
+    "error": 0.001009040082473156,
+    "low": 1.3863279962834703,
+    "high": 1.575890083881476,
     "covered": true
    },
    {
@@ -560,8 +563,8 @@
     "value": 53,
     "truth": 47.339999999999996,
     "error": 5.660000000000004,
-    "low": 43.14628621546912,
-    "high": 62.95046375107371,
+    "low": 43.14567684082442,
+    "high": 62.949828671154435,
     "covered": true
    },
    {
@@ -573,8 +576,8 @@
     "value": 938,
     "truth": 935,
     "error": 3,
-    "low": 870.0450243460243,
-    "high": 1006.3983693687628,
+    "low": 870.0070899459249,
+    "high": 1006.3647430899046,
     "covered": true
    },
    {
@@ -594,11 +597,11 @@
     "metric": "leg-drive",
     "status": "estimated",
     "reason": "BASELINE_BUILDING",
-    "value": 11.29469883913008,
+    "value": 11.295214106238504,
     "truth": 13.857,
-    "error": -2.5623011608699198,
-    "low": 5.019560141424093,
-    "high": 17.569837536836065,
+    "error": -2.5617858937614955,
+    "low": 5.0200679671247554,
+    "high": 17.57036024535225,
     "covered": true
    },
    {
@@ -727,9 +730,9 @@
     "set": "default75",
     "variant": "audio",
     "event": "contact",
-    "errorMs": -1.0269031426224373,
+    "errorMs": -1.0626834821012565,
     "method": "fused",
-    "sigmaMs": 1.7395551286147097,
+    "sigmaMs": 1.7739497766440524,
     "fps": 60
    },
    {
@@ -801,22 +804,23 @@
      "reason": "NEEDS_REAR_VIEW"
     },
     "toss-apex-height": {
-     "status": "estimated",
+     "status": "experimental",
      "value": 1.84,
+     "reason": "VALIDATION_PENDING",
      "low": 1.7197096116326134,
      "high": 1.964252083696564
     },
     "toss-drop": {
      "status": "estimated",
      "value": 66,
-     "low": 59.21504942219633,
-     "high": 72.79567440845753
+     "low": 59.19904665028915,
+     "high": 72.78592628218382
     },
     "contact-height-ratio": {
      "status": "estimated",
      "value": 1.48,
-     "low": 1.3862731689752192,
-     "high": 1.575804095565545
+     "low": 1.3863279962834703,
+     "high": 1.575890083881476
     },
     "toss-forward": {
      "status": "experimental",
@@ -829,21 +833,21 @@
      "status": "experimental",
      "value": 53,
      "reason": "VALIDATION_PENDING",
-     "low": 43.14628621546912,
-     "high": 62.95046375107371
+     "low": 43.14567684082442,
+     "high": 62.949828671154435
     },
     "rhythm-release-to-contact": {
      "status": "estimated",
      "value": 938,
-     "low": 870.0450243460243,
-     "high": 1006.3983693687628
+     "low": 870.0070899459249,
+     "high": 1006.3647430899046
     },
     "leg-drive": {
      "status": "estimated",
      "value": 11,
      "reason": "BASELINE_BUILDING",
-     "low": 5.019560141424093,
-     "high": 17.569837536836065
+     "low": 5.0200679671247554,
+     "high": 17.57036024535225
     },
     "drive-time": {
      "status": "unavailable",
@@ -929,8 +933,8 @@
     },
     "contact": {
      "frameIndex": 158,
-     "tReal": 2.6373940968573777,
-     "uncertaintyS": 0.0017395551286147096,
+     "tReal": 2.637358316517899,
+     "uncertaintyS": 0.0017739497766440524,
      "confidence": 1,
      "method": "fused"
     },
@@ -968,7 +972,8 @@
     "set": "default75",
     "variant": "injected",
     "metric": "toss-apex-height",
-    "status": "estimated",
+    "status": "experimental",
+    "reason": "VALIDATION_PENDING",
     "value": 1.8,
     "truth": 1.84894,
     "error": -0.048939999999999984,
@@ -1285,8 +1290,9 @@
      "reason": "NEEDS_REAR_VIEW"
     },
     "toss-apex-height": {
-     "status": "estimated",
+     "status": "experimental",
      "value": 1.8,
+     "reason": "VALIDATION_PENDING",
      "low": 1.6803865586673743,
      "high": 1.9207030892817338
     },

@@ -288,7 +288,7 @@ METRICS §1.3 caps each metric's state by its validation level. Before real-foot
 9. **Precision** follows METRICS §4.9; the display layer never adds digits.
 10. **Ranges** use "to" in text ("12 to 15 cm") for clarity and screen readers. Compact axis ticks and tooltips may use a hyphen ("12-15"), with an `aria-label` that says "to". No en or em dashes in UI strings.
 11. **Negative positions** are written as directions, not signs: "5 cm behind your front toe", not "−5 cm".
-12. **Side-view toss bias is stated, not hidden** (D1). Wherever `toss-apex-height` or `toss-height-spread` from the side view is explained (toss hero tile footnote, Metric info), one line says so: "From the side, a toss nearer the camera than your body reads a little high, and a little sideways wobble adds a few centimetres to the spread." A peak fitted above the picture carries "Peak estimated" beside its chip (`APEX_EXTRAPOLATED`); more than about 0.5 m above the picture it is unavailable ("Toss left the frame").
+12. **Side-view toss bias is stated, not hidden** (D1). Wherever `toss-apex-height` or `toss-height-spread` from the side view is explained (toss hero tile footnote, Metric info), one line says so: "From the side we can't see how far out towards the camera you toss, so we allow for a typical toss. A toss further out than that reads a little high, one closer to your body a little low, and sideways wobble adds a few centimetres to the spread." (The engine corrects the raw bias with a 0.30 m depth prior; see the D1 addendum. Metric info adds the synthetic result: within about 1% of height at the recommended distance, slightly low on average.) A peak fitted above the picture carries "Peak estimated" beside its chip (`APEX_EXTRAPOLATED`); more than about 0.5 m above the picture it is unavailable ("Toss left the frame").
 13. **Provisional club-player bands** (gap ranges §7, UTR 1–7) appear only in Metric info under "Typical for club players (provisional)", in words such as tight / typical / scattered, never good / bad, and never in tiles, headlines or charts. A player's band word changes only when the estimate crosses an edge by more than the stated margin (hysteresis, owned by METRICS).
 14. **Plausibility** (gap ranges §8; values owned by METRICS). A hard-rejected serve stays visible in the serve index and strip with a "Not measured" chip and counts in "X of N measured". A soft-flagged serve keeps its mark; its serve-index button adds a 12 px `WarningCircleIcon` in `--attention` (dashed rings stay reserved for experimental marks), and its callout and Serve detail add a "Check this serve" tertiary link. A contact height above 1.62 × height also shows "Is your height right?" with a link to About you.
 
@@ -1647,8 +1647,8 @@ A pushed page (inside Profile's stack or from any chip or tile). Content comes f
     │ Checked on simulated serves. Real-   │ words ("about ±2 cm per serve at 60 fps"),
     │ court check in progress.             │ what can shift it
     │ Known limits                         │ METRICS §6 items that apply; for side-view toss
-    │ From the side, a toss nearer the     │ metrics always the §3.3 rule 12 sentence (bias
-    │ camera reads a little high...        │ and sideways-wobble inflation, D1)
+    │ From the side we can't see how far   │ metrics always the §3.3 rule 12 sentence (the
+    │ out towards the camera you toss...   │ depth allowance and sideways wobble, D1)
     │ Typical for club players             │ provisional recreational band (gap ranges §7),
     │ (provisional): 8 to 20 cm. Yours:    │ words tight / typical / scattered, never good
     │ typical.                             │ or bad (§3.3 rule 13)

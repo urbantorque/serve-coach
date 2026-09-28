@@ -34,7 +34,7 @@ export const NO_NETWORK_LINE =
   'Serve Coach has no servers. Pose tracking (Google MediaPipe) runs inside the app with its usage reporting blocked, so nothing leaves this phone.'
 
 /** One-line version for the Profile switch row (DESIGN §10.12). */
-export const EXPERIMENTAL_SHORT = "Numbers we're still checking, like speed ranges. When on, they can also suggest your focus, marked Experimental."
+export const EXPERIMENTAL_SHORT = "Numbers we're still checking, like speed ranges. Never used for your focus."
 
 export const RETENTION_FOOTNOTE = 'Videos older than {days} days are deleted the next time you open Serve Coach.'
 

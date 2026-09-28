@@ -139,6 +139,8 @@ export const REASON_FALLBACK = "Couldn't see this clearly"
 export function reasonShortForm(code: ReasonCode | undefined, metricId?: string, opts: { minServes?: number } = {}): string {
   if (!code) return REASON_FALLBACK
   if (code === 'FPS_TOO_LOW' && metricId?.startsWith('speed')) return 'Needs 120 fps'
+  // The serving volume check waits for four weeks of history, not two sessions from one set-up.
+  if (code === 'BASELINE_BUILDING' && metricId === 'load-flag') return 'Starts after four weeks'
   if (code === 'TOO_FEW_SERVES') return opts.minServes ? `Needs ${opts.minServes} serves` : 'Needs more serves'
   if (code === 'VIEW_NOT_SUPPORTED') {
     return metricId && (REAR_ONLY_METRIC_IDS as readonly string[]).includes(metricId) ? 'Needs a view from behind' : 'Needs the side view'
@@ -186,7 +188,7 @@ export const UI = {
   experimentalHeader: 'Experimental',
   // COACHING §5.1: with the toggle on, an experimental check can suggest the focus (marked
   // Experimental). Experimental numbers never get a verdict or a Progress trend.
-  experimentalLine: 'Not yet checked against a radar or measured marks. They never get a verdict, and can suggest a focus only while this is on, marked Experimental.',
+  experimentalLine: 'Not yet checked against a radar or measured marks. Never used for your focus or verdicts.',
   notAvailableHeader: 'Not available from this session',
   validationFooter:
     'Early version: our measurements are checked on simulated serves, not yet on real courts.',
@@ -198,7 +200,8 @@ export const UI = {
   tossRelativeOnly:
     "The phone's tilt wasn't recorded, so peak heights are experimental. How far each peak sat from the middle one doesn't depend on the tilt.",
   tossHeightsOnly: "Where each toss peaked front to back isn't reliable enough to show yet, so this shows peak heights only.",
-  tossHeightsOnlyExperimental: 'Front-to-back positions are still experimental, so this chart shows peak heights only.',
+  /** With a front-to-back (or left-right) spread shown above the chart: the spread compares tosses with each other, the per-serve positions are experimental. */
+  tossHeightsOnlyExperimental: "Each toss's own front-to-back position is still experimental, so the chart shows peak heights only. The spread above compares your tosses with each other.",
   measurementLimit: 'At the limit of what we can measure.',
   checkThisServe: 'Check this serve',
   updating: 'Updating…',

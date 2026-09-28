@@ -15,13 +15,13 @@ import type { AnalysisErrorCode, SessionAnalysis, SessionStats, ServeAnalysis } 
 import { getDb } from '../../data/db.ts'
 import type { CoachingRecord, JobRecord, KeyFrameRecord, RetentionPolicy, SessionRecord, TrackRecord, VideoRecord } from '../../data/records.ts'
 import { putDecision, putStats } from '../../data/repos/coaching.ts'
-import { putJob, updateJob } from '../../data/repos/jobs.ts'
+import { putJobForSession, updateJob } from '../../data/repos/jobs.ts'
 import { putServesWithTracksAndFrames } from '../../data/repos/serves.ts'
 import { createSession, getSession, markStatus, setAnalysis, updateSession } from '../../data/repos/sessions.ts'
 import { getSetting } from '../../data/repos/settings.ts'
-import { addVideo, listVideosBySession, retainUntilFor } from '../../data/repos/videos.ts'
+import { addVideoForSession, listVideosBySession, retainUntilFor } from '../../data/repos/videos.ts'
 import { applyDeleteAfterAnalysis } from '../../data/retention.ts'
-import { wasSessionDeleted } from '../../data/deletion.ts'
+import { sweepDeletedSessionRows, wasSessionDeleted } from '../../data/deletion.ts'
 import type { CameraView, CaptureContext, SessionMode, VideoMeta } from '../types.ts'
 import { AnalysisError } from './errors.ts'
 
@@ -166,7 +166,10 @@ export async function storeVideo(input: StoreVideoInput): Promise<{ record: Vide
     audio,
     isDemo: 0,
   }
-  const stored = await addVideo(record, blob)
+  // The session check and the write are one transaction: a delete that lands while the clip was
+  // being fingerprinted or stripped of sound leaves no video or blob behind (ARCHITECTURE §8.3).
+  const stored = await addVideoForSession(record, blob)
+  if (!stored) throw new AnalysisError('cancelled', 'the session was deleted during analysis')
   return { record: stored, note }
 }
 
@@ -182,7 +185,8 @@ export async function startJob(input: { jobId: string; sessionId: string; videoI
     engineVersion: input.engineVersion,
     updatedAt: (input.now ?? new Date()).toISOString(),
   }
-  await putJob(job)
+  // Never a job row for a session the player has deleted (checked in the same transaction).
+  if (!(await putJobForSession(job))) throw new AnalysisError('cancelled', 'the session was deleted during analysis')
   return job
 }
 
@@ -233,13 +237,18 @@ export async function commitResults(input: CommitInput): Promise<void> {
   if (input.videoStored) await applyDeleteAfterAnalysis(input.sessionId)
 }
 
-/** Cancelled: the session and job are marked; nothing from the run is written. */
+/**
+ * Cancelled: the session and job are marked; nothing from the run is written. When the session itself
+ * was deleted meanwhile, anything the run wrote for it before the delete is cleared too.
+ */
 export async function markCancelled(sessionId: string, jobId: string | null): Promise<void> {
   await markStatus(sessionId, 'cancelled', { code: 'cancelled', message: 'Analysis stopped before it finished.' })
   if (jobId) await updateJob(jobId, { state: 'cancelled', error: { code: 'cancelled', message: 'cancelled by the player' } })
+  await sweepDeletedSessionRows(sessionId)
 }
 
 export async function markFailed(sessionId: string, jobId: string | null, code: AnalysisErrorCode, message: string): Promise<void> {
   await markStatus(sessionId, 'failed', { code, message })
   if (jobId) await updateJob(jobId, { state: 'failed', error: { code, message } })
+  await sweepDeletedSessionRows(sessionId)
 }

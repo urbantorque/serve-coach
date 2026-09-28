@@ -11,6 +11,7 @@
 import type { MetricId, MetricValue } from '../../../analysis/types.ts'
 import type { CoachingDecision, SessionStats } from '../../../data/domain.ts'
 import type { SessionRecord } from '../../../data/records.ts'
+import { scrubWhy } from '../../../data/scrub.ts'
 import { metricName } from '../../copy/metricNames.ts'
 import { STATUS_LABEL, UI } from '../../copy/strings.ts'
 import { exportDate, shortDate } from '../../format/dates.ts'
@@ -114,7 +115,8 @@ export function buildCoachSummary({ session, stats, decision, now = new Date() }
   const headline = headlineFor(session, stats)
   const paused = decision?.gate === 'pain-referral'
   // Coaching content is left out when coaching was paused by a body check (the reason stays private).
-  const focus = paused ? undefined : decision?.focus
+  // The stored "why" of older decisions can name a comfort setting; the summary never carries one (D8).
+  const focus = paused || !decision?.focus ? undefined : { ...decision.focus, whyChosen: scrubWhy(decision.focus.whyChosen) }
   const cue = paused ? undefined : decision?.cue
   const drill = paused ? undefined : decision?.drill
 

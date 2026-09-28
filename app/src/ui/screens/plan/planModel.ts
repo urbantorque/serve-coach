@@ -3,7 +3,7 @@
  * PWA prototype nothing is sold: a plan button only switches a local test flag (see entitlement.ts).
  */
 import type { EntitlementSetting } from '../../../data/records.ts'
-import { allowanceLine as entitlementAllowanceLine, FREE_DAYS_PER_MONTH, isPlus, monthKey as entitlementMonthKey } from '../../../entitlement/index.ts'
+import { allowanceLine as entitlementAllowanceLine, FREE_DAYS_PER_MONTH, inBeta, isPlus, monthKey as entitlementMonthKey } from '../../../entitlement/index.ts'
 
 export type PlanId = NonNullable<EntitlementSetting['plan']>
 
@@ -139,7 +139,8 @@ export const FREE_ENTITLEMENT: EntitlementSetting = { tier: 'free', source: 'pro
 export { isPlus }
 
 export function planLabel(e: EntitlementSetting | undefined, now: Date = new Date()): string {
-  if (!isPlus(e, now)) return 'Free'
+  // The beta unlocks everything (PRODUCT §5.3); 'Free' is the after-beta test.
+  if (!isPlus(e, now)) return inBeta(e) ? 'Beta, everything unlocked' : 'Free'
   const title = PLANS.find((p) => p.id === e?.plan)?.title ?? 'Plus'
   return `Plus, ${title.toLowerCase()} (test)`
 }

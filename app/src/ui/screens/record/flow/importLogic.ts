@@ -159,7 +159,7 @@ export function heightsNote(view: CameraView, answer: MountAnswer): string {
   if (view !== 'side') return "There's no tilt reading for imports, so heights from this view are experimental."
   if (answer === 'tilted-or-unsure') return "There's no tilt reading for imports, so heights are experimental. Spreads and timing are not affected."
   if (answer === 'level-mount') {
-    return 'We take the phone as level, allowing for a small tilt, so heights can stay estimates, with a wider range. If you look tilted in the picture while standing, heights become experimental.'
+    return 'We take the phone as level, allowing for a small tilt, so contact height can stay an estimate, with a wider range. Toss height stays experimental until it is checked on real courts. If you look tilted in the picture while standing, heights become experimental.'
   }
-  return 'We take the phone as roughly level, allowing for a larger tilt, so heights get a wider range. The highest ones, like the toss peak, may stay experimental.'
+  return 'We take the phone as roughly level, allowing for a larger tilt, so heights get a wider range and may stay experimental.'
 }

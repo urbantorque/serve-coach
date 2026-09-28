@@ -510,11 +510,11 @@
     "variant": "audio",
     "metric": "toss-drop",
     "status": "estimated",
-    "value": 69,
+    "value": 70,
     "truth": 66.4,
-    "error": 2.5999999999999943,
-    "low": 60.633595182984315,
-    "high": 78.15675778489715,
+    "error": 3.5999999999999943,
+    "low": 58.728124960303916,
+    "high": 81.30196662376903,
     "covered": true
    },
    {
@@ -524,11 +524,11 @@
     "metric": "contact-height-ratio",
     "status": "experimental",
     "reason": "VALIDATION_PENDING",
-    "value": 1.4104237122783454,
+    "value": 1.4072305870557444,
     "truth": 1.4801,
-    "error": -0.06967628772165457,
-    "low": 1.305358200264038,
-    "high": 1.5154892242926528,
+    "error": -0.07286941294425553,
+    "low": 1.2971978087322458,
+    "high": 1.5172633653792431,
     "covered": true
    },
    {
@@ -548,11 +548,11 @@
     "metric": "rhythm-release-to-contact",
     "status": "experimental",
     "reason": "FPS_TOO_LOW",
-    "value": 976,
+    "value": 977,
     "truth": 935,
-    "error": 41,
-    "low": 773.0880156865593,
-    "high": 1178.1937499696382,
+    "error": 42,
+    "low": 773.8561439789498,
+    "high": 1180.7779719419755,
     "covered": true
    },
    {
@@ -692,9 +692,9 @@
     "set": "quick-rear30-lefty",
     "variant": "audio",
     "event": "contact",
-    "errorMs": 3.8838828280973736,
+    "errorMs": 5.560057960461329,
     "method": "fused",
-    "sigmaMs": 7.097717697157701,
+    "sigmaMs": 12.007721109469268,
     "fps": 30
    },
    {
@@ -804,16 +804,16 @@
     },
     "toss-drop": {
      "status": "estimated",
-     "value": 69,
-     "low": 60.633595182984315,
-     "high": 78.15675778489715
+     "value": 70,
+     "low": 58.728124960303916,
+     "high": 81.30196662376903
     },
     "contact-height-ratio": {
      "status": "experimental",
      "value": 1.41,
      "reason": "VALIDATION_PENDING",
-     "low": 1.305358200264038,
-     "high": 1.5154892242926528
+     "low": 1.2971978087322458,
+     "high": 1.5172633653792431
     },
     "toss-lateral": {
      "status": "experimental",
@@ -824,10 +824,10 @@
     },
     "rhythm-release-to-contact": {
      "status": "experimental",
-     "value": 976,
+     "value": 977,
      "reason": "FPS_TOO_LOW",
-     "low": 773.0880156865593,
-     "high": 1178.1937499696382
+     "low": 773.8561439789498,
+     "high": 1180.7779719419755
     },
     "knee-bend-band": {
      "status": "experimental",
@@ -895,8 +895,8 @@
     },
     "contact": {
      "frameIndex": 79,
-     "tReal": 2.6423048828280975,
-     "uncertaintyS": 0.0070977176971577,
+     "tReal": 2.6439810579604615,
+     "uncertaintyS": 0.012007721109469268,
      "confidence": 1,
      "method": "fused"
     },
@@ -958,9 +958,9 @@
     "set": "quick-rear30-lefty",
     "variant": "injected",
     "metric": "toss-lateral",
-    "status": "experimental",
-    "reason": "VALIDATION_PENDING",
-    "value": 7,
+    "status": "unavailable",
+    "reason": "SCALE_INCONSISTENT",
+    "value": null,
     "truth": null
    },
    {
@@ -1275,11 +1275,9 @@
      "high": 1.5269558581413316
     },
     "toss-lateral": {
-     "status": "experimental",
-     "value": 7,
-     "reason": "VALIDATION_PENDING",
-     "low": -2.008922440234114,
-     "high": 16.3135588046501
+     "status": "unavailable",
+     "value": null,
+     "reason": "SCALE_INCONSISTENT"
     },
     "rhythm-release-to-contact": {
      "status": "experimental",

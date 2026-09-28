@@ -55,6 +55,11 @@ export function RecordScreen() {
   const retestDue = Boolean(experiment) && !paused
   const locked = retestDue && flow.plan === 'retest' && !unlocked
 
+  // The Light chip follows the clock until the player picks it (finding 21: never daylight by default at night).
+  useEffect(() => {
+    useRecordFlow.getState().syncLightToClock()
+  }, [])
+
   // A due re-test is pinned first and preselected (DESIGN §10.3 R1), matched to the experiment's stratum.
   const pinnedFor = useRef<string | null>(null)
   useEffect(() => {

@@ -36,7 +36,8 @@ import { ballQueuePerWorker, ballWorkerCount, checkClipBudget, checkStorage, den
 import { runCoachingStep, type CoachingStepResult } from './coaching.ts'
 import { AnalysisError, isAbort, throwIfAborted, toAnalysisError } from './errors.ts'
 import { encodeJpeg, extractKeyFrames, planKeyFrames, type JpegEncoder } from './keyFrames.ts'
-import { runBallDetect, runPoseWindow, runSparsePass, type BallClient, type PoseEstimator } from './passes.ts'
+import { createLumaMeasurer, runBallDetect, runPoseWindow, runSparsePass, type BallClient, type PoseEstimator } from './passes.ts'
+import { lightEvidence, type LightEvidence, type PlayerBoxAt } from '../quality/light.ts'
 import { commitResults, markCancelled, markFailed, patchJob, prepareSession, startJob, storeVideo } from './persist.ts'
 import { ProgressReporter } from './progress.ts'
 import { applyGravityCheck, resolveTimeBase, type TimeBaseDecision } from './timeBase.ts'
@@ -141,6 +142,11 @@ export interface PipelineDeps {
   coaching: (input: Parameters<typeof runCoachingStep>[0]) => Promise<CoachingStepResult>
   onsets: typeof contactOnsets
   now: () => number
+  /**
+   * The sparse pass's luma measurer for the light check (quality/light.ts; passes.ts
+   * createLumaMeasurer). Optional: without one, the condition class rests on the player's answer.
+   */
+  createLumaMeasurer?: () => ((image: ImageBitmap) => ArrayLike<number> | null) | undefined
 }
 
 export const defaultDeps: PipelineDeps = {
@@ -167,6 +173,7 @@ export const defaultDeps: PipelineDeps = {
   coaching: (input) => runCoachingStep(input),
   onsets: contactOnsets,
   now: () => performance.now(),
+  createLumaMeasurer,
 }
 
 /**
@@ -251,6 +258,25 @@ function defaultCapture(options: RunAnalysisOptions, meta: VideoMeta): CaptureCo
     orientation: meta.width < meta.height ? 'portrait' : 'landscape',
     hitSoundTiming: options.hitSoundTiming ?? false,
   }
+}
+
+/** The player's box per sparse frame (normalised, padded), for the light check's background. */
+export function playerBoxesOf(poses: readonly PoseFrame[]): PlayerBoxAt {
+  const boxes = new Map<number, { x0: number; y0: number; x1: number; y1: number }>()
+  for (const p of poses) {
+    const pts = (p.landmarks ?? []).filter((l) => (l.visibility ?? 1) >= 0.3)
+    if (pts.length < 5) continue
+    const xs = pts.map((l) => l.x)
+    const ys = pts.map((l) => l.y)
+    const x0 = Math.min(...xs)
+    const x1 = Math.max(...xs)
+    const y0 = Math.min(...ys)
+    const y1 = Math.max(...ys)
+    const px = 0.15 * (x1 - x0) + 0.02
+    const py = 0.1 * (y1 - y0) + 0.02
+    boxes.set(p.frameIndex, { x0: x0 - px, x1: x1 + px, y0: y0 - py, y1: y1 + py })
+  }
+  return (frameIndex) => boxes.get(frameIndex) ?? null
 }
 
 function rectificationFor(capture: CaptureContext, meta: VideoMeta): RectificationInfo {
@@ -576,6 +602,8 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       fillSpans: (coarse) => activitySpans(coarse),
       signal,
       onFrame: (fraction) => progress.update('finding-serves', 0.95 * fraction),
+      // The light check (finding 21): a small luma grid of every frame the pass decodes.
+      measureLuma: deps.createLumaMeasurer?.(),
       // Tuning only: by default Pass A runs exactly as before (numPoses 2, each stream localising the
       // server itself). Serve finding is sensitive to the smallest change in these poses: on the
       // 8-serve session clip, tracking the fill with numPoses 1, feeding decoder frames with a scale,
@@ -916,6 +944,8 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
     const { tracks: allTracks, perWindow: trackIds } = renumberTracks(ballResults)
     const targetTags: EngineInput['targetTags'] = {}
     if (targetTag) planned.forEach((_, k) => (targetTags[k + 1] = targetTag))
+    // Light from the pixels (quality/light.ts), the player's box from the sparse poses left out.
+    const light: LightEvidence | null = sparse.luma.length ? lightEvidence(sparse.luma, { captureFps: meta().captureFps, playerBox: playerBoxesOf(sparseClean) }) : null
     const engineInput: EngineInput = {
       meta: meta(),
       view: options.view,
@@ -947,6 +977,7 @@ export async function runAnalysis(file: Blob, options: RunAnalysisOptions, deps:
       },
       onsets,
       targetTags: targetTag ? targetTags : undefined,
+      ...(light ? { light } : {}),
     }
     const out = deps.engine.analyseSession(engineInput)
     for (const message of out.warnings) warnings.push(`engine: ${message}`)

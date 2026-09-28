@@ -1,4 +1,4 @@
-import { CheckCircleIcon, EyeIcon, ListBulletsIcon, VideoCameraIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react'
+import { CheckCircleIcon, EyeIcon, FlaskIcon, ListBulletsIcon, VideoCameraIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react'
 import { useSearchParams } from 'react-router'
 import type { ExperimentRecord, SessionRecord } from '../../../data/records.ts'
 import {
@@ -22,11 +22,22 @@ import { paths } from '../../shell/paths.ts'
 import type { SessionBundle } from '../progress/insights/history.ts'
 import { useExperiments, useSessionBundles, useSessionThumbUrl } from '../progress/insights/hooks.ts'
 
-function CaptureGlyph({ overall }: { overall: 'good' | 'usable' | 'poor' }) {
+/**
+ * Capture quality on a session row: glyph + visible word, and the visible experimental label (flask),
+ * never a bare tick that reads as "verified" (DESIGN §8 Session row, §12; DECISIONS D2 addendum).
+ */
+function CaptureMark({ overall }: { overall: 'good' | 'usable' | 'poor' }) {
   const G = overall === 'good' ? CheckCircleIcon : overall === 'usable' ? WarningCircleIcon : WarningIcon
   return (
-    <span className="inline-flex items-center">
-      <G size={20} aria-hidden="true" className={overall === 'good' ? 'text-ink-2' : 'text-attention'} />
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5" data-capture-mark={overall}>
+      <span aria-hidden="true" className="inline-flex items-center gap-1 whitespace-nowrap text-footnote font-label text-ink-2">
+        <G size={16} className={overall === 'good' ? 'shrink-0 text-ink-2' : 'shrink-0 text-attention'} />
+        Capture: {CAPTURE_WORDS[overall]}
+      </span>
+      <span aria-hidden="true" className="inline-flex items-center gap-1 whitespace-nowrap text-footnote text-ink-3" data-status="experimental">
+        <FlaskIcon size={14} className="shrink-0" />
+        Experimental
+      </span>
       <span className="sr-only">
         Capture {CAPTURE_WORDS[overall]}, {CAPTURE_EXPERIMENTAL.toLowerCase()}
       </span>
@@ -76,15 +87,18 @@ function SessionRow({ b, verdict }: { b: SessionBundle; verdict?: ExperimentReco
       subtitle={subtitle(s)}
       wrap
       detail={
-        verdict && s.isRetest === 1 ? (
-          <span className="mt-1 flex">
-            <VerdictChip verdict={verdict.verdict} />
-          </span>
-        ) : (
-          (headlineFor(s, b.stats) ?? undefined)
-        )
+        <span className="flex flex-col items-start gap-1">
+          {verdict && s.isRetest === 1 ? (
+            <span className="mt-1 flex">
+              <VerdictChip verdict={verdict.verdict} />
+            </span>
+          ) : (
+            (headlineFor(s, b.stats) ?? null)
+          )}
+          {/* Under the headline, not squeezed beside it: the word and its label stay whole. */}
+          {a && s.status === 'ready' ? <CaptureMark overall={a.capture.quality.overall} /> : null}
+        </span>
       }
-      trailing={a && s.status === 'ready' ? <CaptureGlyph overall={a.capture.quality.overall} /> : undefined}
     />
   )
 }
@@ -102,8 +116,8 @@ type ViewFilter = 'all' | 'side' | 'rear'
 
 /**
  * Sessions tab root (DESIGN §10.5, PRODUCT §6.12): month groups of session rows (key-frame
- * thumbnail, date and template, view and "X of N measured", the headline or the re-test verdict, a
- * capture glyph). A view filter appears once both views exist. Sample sessions sit last under "Sample".
+ * thumbnail, date and template, view and "X of N measured", the headline or the re-test verdict, and
+ * capture quality as glyph + word with its experimental label). A view filter appears once both views exist. Sample sessions sit last under "Sample".
  */
 export function SessionsScreen() {
   const bundles = useSessionBundles({ includeDemo: true })

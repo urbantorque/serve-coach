@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto'
 import { Dexie } from 'dexie'
 import { describe, expect, it } from 'vitest'
-import { CURRENT_DB_VERSION, SCHEMA_V1, SCHEMA_V2, ServeCoachDB, upgradeToV2 } from './db.ts'
+import { CURRENT_DB_VERSION, numberBlocks, SCHEMA_V1, SCHEMA_V2, SCHEMA_V3, ServeCoachDB, upgradeToV2, upgradeToV3 } from './db.ts'
 import { DEMO_FIXTURES } from './fixtures.ts'
 import { toServeRecord } from './repos/serves.ts'
 import type { SessionRecord } from './records.ts'
@@ -61,7 +61,7 @@ describe('migration v1 -> v2', () => {
 
     const db = new ServeCoachDB(name)
     await db.open()
-    expect(db.verno).toBe(2)
+    expect(db.verno).toBe(CURRENT_DB_VERSION)
 
     // Row counts are unchanged.
     expect(await db.sessions.count()).toBe(1)
@@ -99,5 +99,65 @@ describe('migration v1 -> v2', () => {
     await db.transaction('rw', db.sessions, (tx) => upgradeToV2(tx))
     expect(await db.sessions.toArray()).toEqual(before)
     db.close()
+  })
+})
+
+describe('migration v2 -> v3 (real recording blocks)', () => {
+  /** A v2 database with one visit holding an Experiment Block A and Block B (both saved as block 0), a failed re-record, and a check-in. */
+  async function buildV2Fixture(name: string) {
+    const v2 = new Dexie(name)
+    v2.version(1).stores(SCHEMA_V1)
+    v2.version(2).stores(SCHEMA_V2)
+    await v2.open()
+    const fx = DEMO_FIXTURES.sessions[0]
+    const base = { ...fx.session, isDemo: 0 as const, visitId: '2026-09-20' }
+    await v2.table('sessions').bulkPut([
+      { ...base, id: 'A', startedAt: '2026-09-20T08:00:00+10:00', template: 'experiment', blockIndex: 0 },
+      { ...base, id: 'A-failed', startedAt: '2026-09-20T08:20:00+10:00', template: 'experiment', blockIndex: 0, status: 'failed' },
+      { ...base, id: 'B', startedAt: '2026-09-20T08:40:00+10:00', template: 'experiment', blockIndex: 0 },
+      { ...base, id: 'C', startedAt: '2026-09-20T07:30:00+10:00', template: 'check-in', blockIndex: 0 },
+      { ...base, id: 'D', startedAt: '2026-09-21T08:00:00+10:00', visitId: '2026-09-21', template: 'experiment' },
+    ])
+    await v2.table('serves').bulkPut(fx.serves.map((s) => ({ ...toServeRecord(s), sessionId: 'A' })))
+    v2.close()
+    return fx
+  }
+
+  it('numbers every visit by template from start times, keeps serves and adds the visit-block index', async () => {
+    const name = uniqueName()
+    const fx = await buildV2Fixture(name)
+    const db = new ServeCoachDB(name)
+    await db.open()
+    expect(db.verno).toBe(3)
+    const by = Object.fromEntries((await db.sessions.toArray()).map((s) => [s.id, s.blockIndex]))
+    // Block A = 1, the failed re-record is numbered but does not move the count, Block B = 2.
+    expect(by).toEqual({ A: 1, 'A-failed': 2, B: 2, C: 1, D: 1 })
+    expect(await db.serves.count()).toBe(fx.serves.length)
+    expect(db.sessions.schema.idxByName['[visitId+blockIndex]']).toBeDefined()
+    const ordered = await db.sessions.where('[visitId+blockIndex]').between(['2026-09-20', Dexie.minKey], ['2026-09-20', Dexie.maxKey]).toArray()
+    expect(ordered.map((s) => s.blockIndex)).toEqual([1, 1, 2, 2])
+    db.close()
+  })
+
+  it('v3 keeps every v2 sessions index', () => {
+    const v2 = SCHEMA_V2.sessions.split(',').map((s) => s.trim())
+    const v3 = SCHEMA_V3.sessions.split(',').map((s) => s.trim())
+    for (const idx of v2) expect(v3).toContain(idx)
+  })
+
+  it('the upgrade is idempotent, and a session that already has a block keeps it', async () => {
+    const name = uniqueName()
+    await buildV2Fixture(name)
+    const db = new ServeCoachDB(name)
+    await db.open()
+    const before = await db.sessions.toArray()
+    await db.transaction('rw', db.sessions, (tx) => upgradeToV3(tx))
+    expect(await db.sessions.toArray()).toEqual(before)
+    db.close()
+    const kept = numberBlocks([
+      { id: 'x', startedAt: '2026-09-20T08:00:00Z', createdAt: '2026-09-20T08:00:00Z', status: 'ready', blockIndex: 3 },
+      { id: 'y', startedAt: '2026-09-20T09:00:00Z', createdAt: '2026-09-20T09:00:00Z', status: 'ready' },
+    ])
+    expect(Object.fromEntries(kept)).toEqual({ x: 3, y: 4 })
   })
 })

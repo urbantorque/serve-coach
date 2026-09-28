@@ -199,6 +199,11 @@ export interface ServeInput {
   previousRecoveryEnd?: number
   /** Session fallback H_HU when this serve has too few upright frames. */
   fallbackBodyHeightHU?: number
+  /**
+   * Session fallback H_HU at this serve's floor row (engine sessionBodyHeight: the serves at the same
+   * distance); wins over fallbackBodyHeightHU.
+   */
+  fallbackBodyHeightAt?: (yFloor: number) => number | undefined
   /** Audio–video offset (s) and its σ, when calibrated. */
   audioOffset?: { offsetS: number; sigmaS: number }
 }
@@ -367,7 +372,9 @@ export function analyseServe(input: ServeInput): ServeCore {
     return core
   }
   const upright0 = uprightBodyHeight(track, s0t, Math.max(s0t + 0.3, preEnd), floor0.y)
-  let bodyHU = upright0 && upright0.frames >= 5 ? upright0.heightHU : input.fallbackBodyHeightHU ?? upright0?.heightHU
+  const fallbackAt = (yFloor: number) => input.fallbackBodyHeightAt?.(yFloor) ?? input.fallbackBodyHeightHU
+  const hasFallback = !!input.fallbackBodyHeightAt || input.fallbackBodyHeightHU !== undefined
+  let bodyHU = upright0 && upright0.frames >= 5 ? upright0.heightHU : fallbackAt(floor0.y) ?? upright0?.heightHU
   if (!bodyHU) {
     notes.push('no upright frames and no session fallback for body height')
     core.refFailure = 'no-upright'
@@ -398,7 +405,7 @@ export function analyseServe(input: ServeInput): ServeCore {
   const prelimRelease = tossOk ? ball.toss!.release!.tReal : prelimContact - 1.0
 
   // 4. Relabel left/right (anatomical) before any per-side series.
-  core.relabel = relabelSides(track, {
+  const relabelInput = {
     handedness: input.handedness,
     netDir: input.view === 'side' ? input.netDir : undefined,
     view: input.view,
@@ -408,7 +415,8 @@ export function analyseServe(input: ServeInput): ServeCore {
     stance: { tStart: Math.max(s0t, prelimRelease - 1.2), tEnd: prelimRelease + 0.05 },
     from: Math.max(0, indexAt(track, s0t)),
     to: Math.max(0, indexAt(track, window.end)),
-  })
+  }
+  core.relabel = relabelSides(track, relabelInput)
 
   // Geometric roles: the tossing wrist is the one nearest the ball before release.
   if (tossOk) {
@@ -477,13 +485,16 @@ export function analyseServe(input: ServeInput): ServeCore {
     } else {
       // Fewer than 5 upright frames: the session fallback when given (bodyHU is it, step 1), else a
       // weak estimate from 1–4 frames that the engine's second pass replaces when it can.
-      core.refSource = input.fallbackBodyHeightHU ? 'fallback' : 'weak'
+      const fb = hasFallback ? fallbackAt(ref.yFloor) : undefined
+      core.refSource = fb ? 'fallback' : 'weak'
+      // The session value at the refined floor row (the serve's own distance).
+      if (fb) bodyHU = fb
       core.uprightFrames = Math.max(upright1?.frames ?? 0, upright0?.frames ?? 0)
     }
     ref = { ...ref, bodyHeightHU: bodyHU }
     core.noise = measureNoise(track, ref, Math.max(s0t, releaseT - 2.0), Math.min(releaseT - 0.9, core.events.motionStart.tReal))
   } else {
-    core.refSource = upright0 && upright0.frames >= 5 ? 'setup-upright' : input.fallbackBodyHeightHU ? 'fallback' : upright0 ? 'weak' : 'none'
+    core.refSource = upright0 && upright0.frames >= 5 ? 'setup-upright' : hasFallback && fallbackAt(floor0.y) ? 'fallback' : upright0 ? 'weak' : 'none'
     core.uprightFrames = upright0?.frames ?? 0
   }
   core.ref = ref
@@ -582,11 +593,19 @@ export function analyseServe(input: ServeInput): ServeCore {
 
   // 9. Classification (§2.3.4).
   const contactT = core.events.contact?.tReal
-  // A hitting-arm apex: the wrist that did NOT hold the ball before release reaches above the head
-  // (≥ 0.95 BH) from just before the toss apex (contact on the rise) to 1.2 s after it. The tossing
-  // arm is still up at the apex and a catching hand rises again, so it never counts as a swing.
+  // The swing of the arm that did NOT release the toss (finding 23): followed from the release by the
+  // continuity of the two wrists' positions, never by their labels, which the relabeller sets from
+  // "the highest wrist at contact" and so can flip onto a catching hand. A hitting-arm apex: that wrist
+  // reaches above the head (≥ 0.95 BH) from just before the toss apex (contact on the rise) to 1.2 s
+  // after it. The tossing arm is still up at the apex and a catching hand rises again; neither counts.
+  // The arms from the toss alone: the relabeller's upper-body pass without the contact cue (a dry
+  // run; the track keeps its labels), anchored on the wrist nearest the ball at release.
+  const armsFromToss = tossOk ? relabelSides(track, { ...relabelInput, contactT: undefined, stance: undefined, dryRun: true }) : null
+  const otherArm = armsFromToss?.upperStates ? otherArmSeries(track, ref, armsFromToss.upperStates, relabelInput.from, hitWristAnat) : null
+  const swingOfOther = otherArm && tossPeakT !== undefined ? otherArm.peak(tossPeakT - SWING_BEFORE_APEX_S, tossPeakT + SWING_AFTER_APEX_S) : null
+  // Without a release (a toss seen only rising) the labelled non-tossing wrist stands in.
   const hitCandidate: WristSide = tossWristAtRelease === 'left' ? 'right' : 'left'
-  const hitApexOk = (() => {
+  const labelledSwing = (() => {
     if (tossPeakT === undefined) return false
     for (const i of rangeIdx(track, tossPeakT - SWING_BEFORE_APEX_S, tossPeakT + SWING_AFTER_APEX_S)) {
       const w = pt(track, i, WRIST[hitCandidate], 0.3)
@@ -594,24 +613,55 @@ export function analyseServe(input: ServeInput): ServeCore {
     }
     return false
   })()
-  const contactEvidence = !!(inter || (bracket && ball.firstOff?.kind === 'outgoing') || core.audioContact)
+  const hitApexOk = swingOfOther ? swingOfOther.h >= ARM_UP_BH : labelledSwing
+  // §2.3.4 contact evidence: the ball met by an outgoing track (intersection, or a bracket closed by an
+  // outgoing detection), or a hit-sound onset ...
+  const strongEvidence = !!(inter || (bracket && ball.firstOff?.kind === 'outgoing') || core.audioContact)
+  // ... or the ball leaving its path early: it vanished from the parabola (which still ran inside the
+  // picture) above the head while the other arm was up (the racket arm above the head within 0.3 s
+  // before to 0.15 s after). A caught toss vanishes at the catching hand with the other arm down.
+  const lastOnY = ball.lastOnT !== undefined && ball.parabola ? yOf(ball.parabola, ball.lastOnT) : undefined
+  const leftPathAtSwing =
+    !strongEvidence &&
+    ball.firstOff?.kind === 'missing' &&
+    ball.lastOnT !== undefined &&
+    lastOnY !== undefined &&
+    heightOf(ref, lastOnY) >= LEFT_PATH_MIN_BH &&
+    !!otherArm &&
+    (otherArm.peak(ball.lastOnT - LEFT_PATH_BEFORE_VANISH_S, (ball.firstOff?.t ?? ball.lastOnT) + LEFT_PATH_AFTER_VANISH_S)?.h ?? 0) >= ARM_UP_BH
+  const contactEvidence = strongEvidence || leftPathAtSwing
   // A caught toss (§2.3.4 `retoss`): the ball's last detection after the apex is within 0.15 BH of
   // either wrist (it came back to a hand), and nothing says it was hit (no outgoing ball, no hit
   // sound). At contact the ball is a racket length (about 0.35 BH) from the hitting wrist.
-  core.caughtToss = (() => {
-    if (tossPeakT === undefined || contactEvidence || ball.outgoing) return false
-    const after = (ball.tossTrack?.observations ?? []).filter((o) => o.source !== 'predicted' && o.tReal > tossPeakT)
-    const last = after[after.length - 1]
-    // Caught at a hand above the waist; a ball seen falling below 0.8 BH past a swing is a miss.
-    if (!last || heightOf(ref, last.y) < 0.8) return false
-    const i = indexAt(track, last.tReal)
-    if (i < 0 || Math.abs(track.t[i] - last.tReal) > 0.05) return false
-    return (['left', 'right'] as const).some((side) => {
+  const afterApex = tossPeakT === undefined ? [] : (ball.tossTrack?.observations ?? []).filter((o) => o.source !== 'predicted' && o.tReal > tossPeakT)
+  const lastSeen = afterApex[afterApex.length - 1]
+  const nearWrist = (i: number, p: { x: number; y: number }) =>
+    (['left', 'right'] as const).some((side) => {
       const w = pt(track, i, WRIST[side], 0.3)
-      return !!w && Math.hypot((w.x - last.x) * cam.aspect, w.y - last.y) / ref.bodyHeightHU <= CAUGHT_TOSS_BH
+      return !!w && Math.hypot((w.x - p.x) * cam.aspect, w.y - p.y) / ref.bodyHeightHU <= CAUGHT_TOSS_BH
     })
+  core.caughtToss = (() => {
+    if (tossPeakT === undefined || strongEvidence || ball.outgoing || !lastSeen) return false
+    // Caught at a hand above the waist; a ball seen falling below 0.8 BH past a swing is a miss.
+    if (heightOf(ref, lastSeen.y) < 0.8) return false
+    const i = indexAt(track, lastSeen.tReal)
+    if (i < 0 || Math.abs(track.t[i] - lastSeen.tReal) > 0.05) return false
+    return nearWrist(i, lastSeen)
   })()
   const caught = core.caughtToss
+  // With no swing of the other arm: the ball's path, carried on past its last detection for up to
+  // 0.25 s, reaches a hand (a catch the tracker lost just before the hand) ...
+  const returnsToHand = (() => {
+    if (caught) return true
+    if (!lastSeen || !ball.parabola || strongEvidence || ball.outgoing) return false
+    for (const i of rangeIdx(track, lastSeen.tReal + 1e-6, lastSeen.tReal + CAUGHT_EXTRAPOLATE_S)) {
+      const t = track.t[i]
+      if (nearWrist(i, { x: xOf(ball.parabola, t), y: yOf(ball.parabola, t) })) return true
+    }
+    return false
+  })()
+  // ... or it left the picture (its path ran out of the frame after its last detection).
+  const leftPicture = !!lastSeen && !ball.outgoing && !ball.firstOff && ball.continuesBelowY !== undefined
   const validToss = tossOk && ball.detections >= 6 && (ball.apexCase === 'bracketed' || ball.apexCase === 'fitted-above' || ball.apexCase === 'censored')
     && (ball.apexCase !== 'bracketed' || heightOf(ref, ball.toss!.apex!.y) >= 1.35)
   // Toss evidence without a full toss analysis: the ball seen rising above the head in the toss
@@ -622,14 +672,25 @@ export function analyseServe(input: ServeInput): ServeCore {
   // cut short before its apex `unknown`): a free flight fitted from ≥ 6 detections to an apex ≥ 1.35 BH.
   const fittedToss = tossOk && !ball.tossTrack && (ball.toss!.fit?.detections ?? 0) >= 6 && heightOf(ref, ball.toss!.apex!.y) >= 1.35
   const tossSeen = validToss || tossTrackPeak(ball, ref)?.rose === true || fittedToss
-  if (validToss && hitApexOk && !caught) {
+  // Swing and miss: the ball stayed on its path to below 0.8 BH, with no outgoing ball or hit sound.
+  const continues = ball.continuesBelowY !== undefined && heightOf(ref, ball.continuesBelowY) < 0.8
+  if (validToss && hitApexOk && !caught && contactEvidence) {
     core.classification = 'serve'
-    // Swing and miss: the ball stayed on its path to below 0.8 BH, with no outgoing ball or hit sound.
-    const continues = ball.continuesBelowY !== undefined && heightOf(ref, ball.continuesBelowY) < 0.8
-    if (!contactEvidence && continues && !ball.outgoing) core.noContact = true
-  } else if (validToss) {
+    if (leftPathAtSwing) notes.push('contact from the ball leaving its path at the swing (no outgoing ball or hit sound)')
+  } else if (validToss && hitApexOk && !caught && continues && !ball.outgoing) {
+    core.classification = 'serve'
+    core.noContact = true
+  } else if (validToss && (caught || (!hitApexOk && (returnsToHand || leftPicture)))) {
     core.classification = 'retoss'
-    notes.push(caught ? 'toss caught: the ball came back to a hand' : 'toss with no hitting-arm swing')
+    notes.push(caught || returnsToHand ? 'toss caught: the ball came back to a hand' : 'toss with no hitting-arm swing')
+  } else if (validToss) {
+    // A toss with neither the evidence of a hit nor of a catch: excluded as uncertain, never counted.
+    core.classification = 'other'
+    notes.push(
+      hitApexOk
+        ? 'swing seen, but no contact evidence (no outgoing ball, hit sound, or ball leaving its path at the swing)'
+        : 'toss with no swing of the other arm, and the ball neither came back to a hand nor left the picture',
+    )
   } else if (tossSeen && hitApexOk && !caught) {
     core.classification = 'serve'
     notes.push('counted from the swing and a toss seen above the head; the toss could not be fully analysed')
@@ -675,6 +736,46 @@ export function analyseServe(input: ServeInput): ServeCore {
 export const UNRESOLVED_CONTACT_CONFIDENCE = 0.45
 /** A toss whose last detection is this close to a wrist (BH) came back to the hand (§2.3.4). */
 export const CAUGHT_TOSS_BH = 0.15
+/** With no swing, the toss path is carried on this long past its last detection to find the catching hand (s). */
+export const CAUGHT_EXTRAPOLATE_S = 0.25
+/** "The ball leaves the parabola early" (§2.3.4): it vanished at least this high (BH; contact is 1.1 to 1.75 H) ... */
+export const LEFT_PATH_MIN_BH = 1.1
+/** ... with the other arm above the head from this long before its last on-path detection ... */
+export const LEFT_PATH_BEFORE_VANISH_S = 0.3
+/** ... to this long after the first frame it was missing (s). */
+export const LEFT_PATH_AFTER_VANISH_S = 0.15
+
+/**
+ * The arm that did not toss, frame by frame, from a dry-run relabelling anchored on the toss (states
+ * relative to the track's current labels, from index `from`): its wrist height (BH) and the highest
+ * point in a time span.
+ */
+export function otherArmSeries(
+  track: PoseTrack,
+  ref: Reference,
+  states: Uint8Array,
+  from: number,
+  hitSide: WristSide,
+): { heightAt: (i: number) => number | null; peak: (a: number, b: number) => { t: number; h: number } | null } {
+  const tossSide: WristSide = hitSide === 'left' ? 'right' : 'left'
+  const heightAt = (i: number) => {
+    const k = i - from
+    if (k < 0 || k >= states.length) return null
+    const w = pt(track, i, WRIST[states[k] ? tossSide : hitSide], 0.3)
+    return w ? heightOf(ref, w.y) : null
+  }
+  const peak = (a: number, b: number) => {
+    let best: { t: number; h: number } | null = null
+    for (const i of rangeIdx(track, a, b)) {
+      const h = heightAt(i)
+      if (h !== null && (!best || h > best.h)) best = { t: track.t[i], h }
+    }
+    return best
+  }
+  return { heightAt, peak }
+}
+
+
 
 /**
  * The toss track's highest detection (rectified), and whether the ball was seen RISING to it above

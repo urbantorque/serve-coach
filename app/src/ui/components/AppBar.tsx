@@ -24,6 +24,7 @@ export interface AppBarProps {
  */
 export function AppBar({ title, variant = 'pushed', back, leading, trailing }: AppBarProps) {
   const sentinel = useRef<HTMLDivElement>(null)
+  const bar = useRef<HTMLDivElement>(null)
   const [scrolled, setScrolled] = useState(false)
   const navigate = useNavigate()
 
@@ -34,6 +35,26 @@ export function AppBar({ title, variant = 'pushed', back, leading, trailing }: A
     const io = new IntersectionObserver(([entry]) => setScrolled(!entry.isIntersecting), { rootMargin: '-52px 0px 0px 0px' })
     io.observe(el)
     return () => io.disconnect()
+  }, [])
+
+  // The bar is at least 52 px and grows when large text wraps a slot (finding 72): publish its real
+  // height as --appbar-h so scroll-padding and anything pinned under the bar follow it.
+  useEffect(() => {
+    const el = bar.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const root = document.documentElement
+    const publish = () => {
+      const h = el.offsetHeight
+      if (h > 52) root.style.setProperty('--appbar-h', `${h}px`)
+      else root.style.removeProperty('--appbar-h')
+    }
+    publish()
+    const ro = new ResizeObserver(publish)
+    ro.observe(el)
+    return () => {
+      ro.disconnect()
+      root.style.removeProperty('--appbar-h')
+    }
   }, [])
 
   const backLabel = back?.label && back.label.length <= 12 ? back.label : 'Back'
@@ -73,8 +94,9 @@ export function AppBar({ title, variant = 'pushed', back, leading, trailing }: A
         )}
       >
         {/* Three columns, the side ones equal so the title stays centred. At large text the title and the
-            back label truncate inside their own columns instead of drawing over each other (DESIGN §12). */}
-        <div className="gutter mx-auto grid h-13 max-w-(--content-max) grid-cols-[minmax(2.75rem,1fr)_minmax(0,auto)_minmax(2.75rem,1fr)] items-center gap-2">
+            back label truncate inside their own columns instead of drawing over each other (DESIGN §12),
+            and a slot that wraps (a trailing counter) grows the bar instead of spilling out of it. */}
+        <div ref={bar} className="gutter mx-auto grid min-h-13 max-w-(--content-max) grid-cols-[minmax(2.75rem,1fr)_minmax(0,auto)_minmax(2.75rem,1fr)] items-center gap-2">
           <div className="flex min-w-0 items-center">{leading ?? backButton}</div>
           {variant === 'pushed' ? (
             <h1 className="min-w-0 truncate text-center text-headline text-ink">{title}</h1>

@@ -1,5 +1,6 @@
 /**
- * Player-facing words for profile answers (PRODUCT §6.1 O2 to O7, verbatim), shared by onboarding and
+ * Player-facing words for profile answers (PRODUCT §6.1 O2 to O7; the comfort copy leaves out the
+ * pre-exercise screen, which waits on clinician review, COACHING §10.3), shared by onboarding and
  * Profile → Your serve so both screens offer the same options (DESIGN §10.12). Australian English,
  * sentence case, no dashes (DESIGN §11).
  */

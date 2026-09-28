@@ -139,6 +139,55 @@ export function radarFromChecks(checks: readonly RadarCheck[] | undefined | null
     note: `Peak speed from ${device}, logged in Check this serve on ${shortDate(new Date(latest.updatedAt))}.${entered}${others}`,
   }
 }
+/** A radar check tied to its serve (the session report gathers every serve's readings). */
+export interface SessionRadarCheck extends RadarCheck {
+  serveId: string
+}
+
+/**
+ * "Radar speed (you logged)" for the session report (U2): from the readings entered in Check this
+ * serve, the latest per serve. The value is the fastest logged reading, player-entered (D4: a peak
+ * speed, never measured by the app), with its source ("Pocket Radar, peak"), the serve it came from
+ * and how many serves have a reading. Null when none was logged.
+ */
+export function radarForSession(
+  checks: readonly SessionRadarCheck[] | undefined | null,
+  serveIndex: (serveId: string) => number | undefined,
+): { value: MetricValue; source: string; serveLine: string; count: number } | null {
+  const perServe = new Map<string, SessionRadarCheck>()
+  for (const c of checks ?? []) {
+    if (typeof c.reference?.radarKmh !== 'number' || !Number.isFinite(c.reference.radarKmh)) continue
+    if (serveIndex(c.serveId) === undefined) continue
+    const prev = perServe.get(c.serveId)
+    if (!prev || c.updatedAt > prev.updatedAt) perServe.set(c.serveId, c)
+  }
+  const logged = [...perServe.values()]
+  if (!logged.length) return null
+  const top = logged.reduce((a, b) => (b.reference!.radarKmh! > a.reference!.radarKmh! ? b : a))
+  const r = top.reference!
+  const kmh = Math.round(r.radarKmh!)
+  const devices = new Set(logged.map((c) => RADAR_DEVICE_WORDS[c.reference?.radarDevice ?? ''] ?? 'a radar'))
+  const device = RADAR_DEVICE_WORDS[r.radarDevice ?? ''] ?? 'a radar'
+  const source = devices.size > 1 ? 'Your radars, peak' : `${device.charAt(0).toUpperCase()}${device.slice(1)}, peak`
+  const n = logged.length
+  const serveLine = n === 1 ? `Serve ${serveIndex(top.serveId)}, logged in Check this serve` : `Fastest of ${n} serves you logged, serve ${serveIndex(top.serveId)}`
+  return {
+    value: {
+      id: 'speed-radar-entered',
+      value: kmh,
+      unit: 'km/h',
+      status: 'player-entered',
+      confidence: 1,
+      basis: `Peak speed from ${device}, entered in Check this serve.`,
+      provenance: 'confirmed-by-you',
+      n,
+    },
+    source,
+    serveLine,
+    count: n,
+  }
+}
+
 export interface MetricGroup {
   title: string
   rows: MetricRow[]

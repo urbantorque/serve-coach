@@ -17,6 +17,7 @@ Decisions made by the product lead after the research sweep (docs/research/01-09
   - shoulder tilt at the trophy position.
 - **What the side view cannot measure:** knee bend (the knees point at the camera at the trophy position) and shoulder-over-shoulder tilt or forward lean at contact.
 - Known bias: a toss 0.3 m nearer the camera than the body reads about 8-12 cm high, and a 10 cm sideways toss spread adds 2-4 cm of apparent height spread. Absolute toss height is therefore `estimated`, and the consistency copy says so.
+- **D1 addendum (2026-09-28): the depth prior.** The engine corrects that raw bias by assuming the toss sits 0.30 m nearer the camera than the body (a depth prior). After the correction, simulated D1 peak heights landed within about 1% of standing height, slightly low on average (docs/VALIDATION.md §5 item 3: MAE 1.1%, bias −0.9%, n 11), and 4 to 7% low at 5 m. The player copy therefore says the app allows for a typical toss, that a toss further out than that reads a little high and one closer to the body a little low, and that sideways wobble adds a few centimetres to the spread (DESIGN §3.3 rule 12). It no longer says the toss simply reads high.
 - **Second angle (optional, "outcomes view")**: a raised rear view behind the server with both service boxes visible. It unlocks:
   - toss left/right drift;
   - a knee-bend band (the knee nearer the camera is in profile);

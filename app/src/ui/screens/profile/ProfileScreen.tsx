@@ -2,6 +2,7 @@ import {
   CaretRightIcon,
   ChalkboardTeacherIcon,
   DatabaseIcon,
+  FlagPennantIcon,
   FlaskIcon,
   HeartbeatIcon,
   InfoIcon,
@@ -13,9 +14,10 @@ import {
   TennisBallIcon,
   XIcon,
 } from '@phosphor-icons/react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { loadDemoData, removeDemoData, showToast, useSettingsStore } from '../../../data/index.ts'
+import { listMatchLogs, loadDemoData, removeDemoData, showToast, useSettingsStore } from '../../../data/index.ts'
 import { useHasDemoData, useProfile, useSampleSessionId } from '../../../data/hooks.ts'
 import { Badge, IconButton, ListGroup, ListRow, RowIcon, SampleBanner, Screen, SectionLabel } from '../../components/index.ts'
 import { paths } from '../../shell/paths.ts'
@@ -39,6 +41,7 @@ export function ProfileScreen() {
   const experimental = useSettingsStore((s) => s.experimentalMetrics)
   const setExperimental = useSettingsStore((s) => s.setExperimentalMetrics)
   const [loadingSample, setLoadingSample] = useState(false)
+  const ownMatches = useLiveQuery(async () => (await listMatchLogs()).filter((m) => m.isDemo !== 1).length, [])
 
   const removeSample = async () => {
     await removeDemoData()
@@ -86,6 +89,12 @@ export function ProfileScreen() {
             leading={<RowIcon><HeartbeatIcon size={24} aria-hidden="true" /></RowIcon>}
             title="Comfort and body"
             subtitle={comfortSubtitle(profile)}
+          />
+          <ListRow
+            to={`${paths.matchLog()}?from=${encodeURIComponent(paths.profile())}`}
+            leading={<RowIcon><FlagPennantIcon size={24} aria-hidden="true" /></RowIcon>}
+            title="Match log"
+            subtitle={matchLogSubtitle(ownMatches)}
           />
           <ListRow
             to={paths.coachFocus()}
@@ -173,6 +182,11 @@ export function ProfileScreen() {
       </section>
     </Screen>
   )
+}
+
+function matchLogSubtitle(n: number | undefined): string {
+  if (!n) return 'Log a comp night in about 20 seconds'
+  return `${n === 1 ? '1 comp night' : `${n} comp nights`} logged. They show on Progress`
 }
 
 function comfortSubtitle(p: ReturnType<typeof useProfile>): string {

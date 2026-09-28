@@ -5,7 +5,7 @@ import { MIRROR_INDEX } from '../pose/landmarks.ts'
 import { cameraModel, focalLongFromFov, levelRotation, rectifyPoint, setupClassOf, unrectifyPoint, cameraDistanceM } from './geometry.ts'
 import { buildTrack, indexAt, localQuadratic, pt } from './track.ts'
 import { fuseEvent, detectTrophy, measureNoise, heightOf, swingPeakTime } from './events.ts'
-import { checkContactSignals, DISPUTE_K } from './analyse.ts'
+import { checkContactSignals, DISPUTE_K, otherArmSeries } from './analyse.ts'
 import { relabelSides } from './relabel.ts'
 import { findServeWindows, samplingAllowance } from './windows.ts'
 import { ballBracketContact, ballIntersectionContact, followLeadIn, type ServeBall } from './ball.ts'
@@ -305,4 +305,31 @@ describe('swing peak (label-free, for the fused-event check)', () => {
     const p = swingPeakTime(buildTrack(frames, cameraModel(meta)), ref, 1.0, 3.2)!
     expect(Math.abs(p.t - 2)).toBeLessThan(0.05)
   })
+})
+
+describe('the swing of the other arm (§2.3.4, finding 23): followed from the toss, never from the contact cue', () => {
+  const fx = (swing: boolean, tossArm: 'serve' | 'catch') => buildServeFixture({ fps: 60, durationS: 4.5, heightHU: 0.19, floorY: 0.85, contactT: 2.4, view: 'side', swing, tossArm })
+  const ref = { yFloor: 0.85, bodyHeightHU: 0.19 }
+  const base = { handedness: 'right' as const, netDir: 1 as const, view: 'side' as const, bodyHeightHU: 0.19 }
+  /** MediaPipe-style labels: every frame from 1.9 s on mirrored (a persistent whole-body mirror). */
+  const mirroredFrom = (frames: PoseFrame[], t0: number) => frames.map((f) => (f.landmarks && f.tReal >= t0 ? { ...f, landmarks: MIRROR_INDEX.map((j) => f.landmarks![j]) } : f))
+
+  for (const [name, frames, expectUp] of [
+    ['a serve', fx(true, 'serve').frames, true],
+    ['a caught toss', fx(false, 'catch').frames, false],
+    ['a caught toss with the labels mirrored mid-way', mirroredFrom(fx(false, 'catch').frames, 1.9), false],
+  ] as const) {
+    it(`${name}: the other arm ${expectUp ? 'reaches above the head at contact' : 'never rises above the head'}`, () => {
+      const track = buildTrack(frames, cameraModel(meta))
+      const input = { ...base, toss: { tStart: 1.1, tEnd: 1.6 }, from: 0, to: track.t.length - 1 }
+      // The full relabelling with "the highest wrist at contact is the hitting hand" (the cue a caught toss fools).
+      relabelSides(track, { ...input, contactT: 2.4 })
+      const dry = relabelSides(track, { ...input, dryRun: true })
+      const peak = otherArmSeries(track, ref, dry.upperStates!, 0, 'right').peak(1.7, 3.25)!
+      if (expectUp) {
+        expect(peak.h).toBeGreaterThan(1.1)
+        expect(peak.t).toBeCloseTo(2.4, 1)
+      } else expect(peak.h).toBeLessThan(0.95)
+    })
+  }
 })

@@ -74,6 +74,19 @@ describe('Profile', () => {
     await waitFor(async () => expect(await hasDemoData()).toBe(false))
     expect(await screen.findByText('See a sample session')).toBeInTheDocument()
   })
+
+  it('has an entry to the match log that comes back to You (U3)', async () => {
+    const user = userEvent.setup()
+    const router = renderAt(paths.profile())
+    await h1('You')
+    const row = await screen.findByRole('link', { name: /Match log/ })
+    expect(row).toHaveTextContent('Log a comp night in about 20 seconds')
+    expect(row.getAttribute('href')).toBe(`/sessions/matches/new?from=${encodeURIComponent('/profile')}`)
+    await user.click(row)
+    await h1('Log a match')
+    expect(router.state.location.pathname).toBe('/sessions/matches/new')
+    expect(screen.getByRole('link', { name: /Back to You/ })).toHaveAttribute('href', '/profile')
+  })
 })
 
 describe('Your serve', () => {

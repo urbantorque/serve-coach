@@ -6,6 +6,7 @@ import { Badge, MetricValue, StatusChip } from '../../components/index.ts'
 import { Sparkline, type SparkPoint } from '../../charts/index.ts'
 import { UI } from '../../copy/strings.ts'
 import { shortDate } from '../../format/dates.ts'
+import { formatMetric } from '../../format/metricFormat.ts'
 import { metricInfoFor } from './insights/links.ts'
 import { againstUsual, minServesFor, trendState, type SeriesPoint } from './insights/history.ts'
 import { configFor } from './insights/metricConfig.ts'
@@ -43,6 +44,8 @@ function directionOf(metricId: MetricId) {
  */
 export function QuestionTile({ question, metricId, label, series, usual, stratumLabel, extra, hollow, headingLevel: H = 'h2', belowMin }: QuestionTileProps) {
   const latest = series.at(-1)
+  // Leg drive's low-read caveat sits beside its latest value (finding 50).
+  const latestNote = latest ? formatMetric(metricId, latest.metric).note : undefined
   const state = trendState(metricId, series)
   const titleId = `q-${metricId}`
   const points: SparkPoint[] = series.slice(-8).map((p) => ({
@@ -121,6 +124,11 @@ export function QuestionTile({ question, metricId, label, series, usual, stratum
             </span>
           </span>
           {usual ? <span className="text-footnote text-ink-3">usual {formatRange(metricId, usual)}</span> : null}
+          {latestNote ? (
+            <span aria-hidden="true" className="text-footnote text-ink-2" data-metric-note>
+              {latestNote}
+            </span>
+          ) : null}
           {extra}
         </div>
       ) : null}

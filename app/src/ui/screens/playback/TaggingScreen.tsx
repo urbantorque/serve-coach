@@ -203,7 +203,7 @@ function Tagging({ session, serves, tags }: { session: SessionRecord; serves: Se
         leading={<IconButton icon={XIcon} label="Save and exit" to={paths.sessionReport(session.id)} />}
         trailing={
           mode === 'serves' ? (
-            <span className="text-subhead tabular-nums text-ink-2" aria-label={`Serve ${state.index + 1} of ${serves.length}`}>
+            <span className="text-right text-subhead tabular-nums text-ink-2 [text-wrap:balance]" aria-label={`Serve ${state.index + 1} of ${serves.length}`}>
               {state.index + 1} of {serves.length}
             </span>
           ) : undefined

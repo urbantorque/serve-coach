@@ -1,9 +1,10 @@
 /**
  * Capture-quality checks computable from engine data (METRICS §3.25; ids follow CAPTURE's `cq.*`).
- * Pixel checks (exposure, flicker, blur, background drift) need the frames and belong to the
- * pipeline. NONE IS COMPUTED YET: there is no luminance or flicker estimate, so the light condition
- * class comes only from the player's answer, and a clip with no answer is class 'unknown' (every
- * value at most experimental). Checks that block (§3.25 "Block") are applied to the values by
+ * Of the pixel checks, the light ones are measured on the sparse pass (quality/light.ts): mains
+ * flicker (`cq.flicker`) and a dark sky over a lit court, which lower the condition class the player
+ * gave (engine conditionClassOf); a clip with no answer and no such evidence is class 'unknown' (every
+ * value at most experimental). Exposure, blur and background drift are not computed yet. Checks that
+ * block (§3.25 "Block") are applied to the values by
  * metrics/perServe.ts (per serve) and metrics/session.ts (block statistics), not only listed. The session
  * overall rule: good if every serve passes (info ignored); usable (Fair) with any warning and
  * ≥ 70% analysable; poor (Limited) on a session-level block or < 50% analysable.
@@ -13,6 +14,7 @@ import type { ServeCore } from '../serve/analyse.ts'
 import type { CameraModel } from '../serve/geometry.ts'
 import type { ConditionClass } from '../metrics/catalogue.ts'
 import type { TimeBaseClass } from '../metrics/perServe.ts'
+import { FLICKER_INFO, FLICKER_WARN, type LightEvidence } from './light.ts'
 
 /** How the engine settled the time base (engine.ts timeBaseOf), for the cq.time-base wording. */
 export type TimeBaseNote =
@@ -55,6 +57,10 @@ export interface QualityInput {
   cameraBump: boolean
   /** Level assumed from the mount answer: the standing body axis against the image vertical (METRICS §1.1.3a). */
   standingRoll?: { rollDeg: number; flagged: boolean }
+  /** Light measured from the pixels (sparse pass), when the pipeline had frames to measure. */
+  light?: LightEvidence
+  /** The player's light answer, for the wording. */
+  lightAnswer?: 'day' | 'lights' | 'indoor'
 }
 
 type Sev = QualityCheck['severity']
@@ -263,7 +269,7 @@ export function computeQuality(input: QualityInput): QualityOutcome {
       )
     }
   } else if (t === 'unknown') {
-    checks.push(check('cq.camera-level', false, 'info', 'Phone tilt unknown, so heights and angles are experimental.', { scope: 'clip', fix: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.", affects: ['heights', 'angles'] }))
+    checks.push(check('cq.camera-level', false, 'info', 'Phone tilt unknown, so heights and angles are experimental.', { scope: 'clip', fix: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount can keep contact height as an estimate.", affects: ['heights', 'angles'] }))
   } else {
     checks.push(check('cq.camera-level', false, 'block', 'The phone was tilted more than we can correct.', { scope: 'clip', value: input.cam.pitch?.value, fix: 'Keep the phone level; the guide turns green.', affects: ['heights', 'positions', 'angles'] }))
   }
@@ -338,10 +344,38 @@ export function computeQuality(input: QualityInput): QualityOutcome {
         : check('cq.view', true, 'info', 'The camera view matched.', { scope: 'clip' }),
   )
 
+  // Flicker (§3.25, CAPTURE cq.flicker): mains flicker at its alias, measured on the sparse pass.
+  const flicker = input.light?.flicker
+  if (flicker) {
+    const pct = Math.round(flicker.amplitude * 1000) / 10
+    if (flicker.amplitude >= FLICKER_WARN)
+      checks.push(
+        check('cq.flicker', false, 'warn', "The court lights are flickering in your video, so ball tracking is less certain and speed isn't available.", {
+          scope: 'clip',
+          value: flicker.amplitude,
+          fix: 'At night, use 25 or 50 fps if your phone offers it.',
+          affects: ['speed-experimental', 'toss'],
+        }),
+      )
+    else if (flicker.amplitude >= FLICKER_INFO) checks.push(check('cq.flicker', true, 'info', `Slight light flicker (about ${pct}%), not enough to affect readings.`, { scope: 'clip', value: flicker.amplitude }))
+    else checks.push(check('cq.flicker', true, 'info', 'No light flicker.', { scope: 'clip', value: flicker.amplitude }))
+  }
+
   // Condition class.
+  const byPixels = input.light?.dark && input.lightAnswer !== 'lights' && input.lightAnswer !== 'indoor'
   if (input.condition === 'overcast') checks.push(check('cq.condition', true, 'info', 'Overcast light.', { scope: 'clip' }))
   else if (input.condition === 'night-lights' || input.condition === 'flicker')
-    checks.push(check('cq.condition', false, 'warn', 'Under court lights, body-based readings are experimental until they are validated for night light.', { scope: 'clip', affects: ['pose'] }))
+    checks.push(
+      check(
+        'cq.condition',
+        false,
+        'warn',
+        byPixels && input.lightAnswer === 'day'
+          ? 'This looks like court lights, not daylight, so body-based readings and heights are experimental until they are validated for night light.'
+          : 'Under court lights, body-based readings are experimental until they are validated for night light.',
+        { scope: 'clip', affects: ['pose'], ...(byPixels ? { fix: 'If it really was daylight, check that the sky or the far fence is in the picture.' } : {}) },
+      ),
+    )
   else if (input.condition === 'unknown')
     checks.push(
       check('cq.condition', false, 'warn', "The light for this clip wasn't recorded, so readings checked only in daylight are experimental.", {

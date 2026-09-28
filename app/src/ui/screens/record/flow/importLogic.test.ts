@@ -87,7 +87,8 @@ describe('"How was the phone mounted?" (METRICS §1.1.3a)', () => {
 
   it('the heights note never promises more than METRICS allows, and names no degrees', () => {
     expect(heightsNote('side', 'tilted-or-unsure')).toMatch(/experimental/)
-    expect(heightsNote('side', 'level-mount')).toMatch(/can stay estimates/)
+    expect(heightsNote('side', 'level-mount')).toMatch(/contact height can stay an estimate/)
+    expect(heightsNote('side', 'level-mount')).toMatch(/Toss height stays experimental/)
     expect(heightsNote('side', 'roughly-level')).toMatch(/may stay experimental/)
     expect(heightsNote('rear', 'level-mount')).toMatch(/experimental/)
     for (const a of ['level-mount', 'roughly-level', 'tilted-or-unsure'] as const) expect(heightsNote('side', a)).not.toMatch(/\d\s*°/)

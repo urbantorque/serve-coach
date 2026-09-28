@@ -32,10 +32,11 @@ import { findServeWindows as findWindows, type ServeWindowSpan } from './serve/w
 import { analyseServe, AUDIO_CALIBRATION, serveEvents, type ServeCore } from './serve/analyse.ts'
 import { FOOT_TOE } from './serve/events.ts'
 import { buildPhases } from './serve/phases.ts'
-import { computeServeMetrics, type MetricContext, type PerServeResult, type TimeBaseClass } from './metrics/perServe.ts'
+import { computeServeMetrics, SERVE_SCALE_FLAG, type MetricContext, type PerServeResult, type TimeBaseClass } from './metrics/perServe.ts'
 import { buildSessionStats, type SessionServe } from './metrics/session.ts'
 import { bodyPx1080Of, computeQuality, scaleRatioOf, sustainedOrientationChange, type TimeBaseNote } from './quality/checks.ts'
 import { BANDS_VERSION, CATALOGUE_VERSION, ENGINE_VERSION, type ConditionClass } from './metrics/catalogue.ts'
+import type { LightEvidence } from './quality/light.ts'
 import { finalizeMetric, unavailable } from './metrics/status.ts'
 import { hashString, median } from './stats/descriptive.ts'
 import { LM, METRIC_IDS } from './types.ts'
@@ -60,6 +61,11 @@ export interface EngineInput {
   ids?: { sessionId: string; videoId: string }
   /** Whether the player entered their height (else the default 1.75 m is an assumption). */
   heightEntered?: boolean
+  /**
+   * Light measured from the pixels on the sparse pass (quality/light.ts lightEvidence): flicker and a
+   * dark sky lower the condition class the answer gave (conditionClassOf). Absent: the answer alone.
+   */
+  light?: LightEvidence | null
 }
 
 export interface EngineOutput {
@@ -100,18 +106,35 @@ function parseTossEntries(raw: unknown[] | undefined): { toss: TossAnalysis[]; w
 }
 
 /**
- * The light condition class (METRICS §1.3) from the player's answer. Nothing estimates it from the
- * pixels yet (no luminance or flicker check exists), so a clip with no answer (an import) is
- * 'unknown': nothing is validated for it and every value is at most experimental. Indoor courts are
- * artificial light (validated nowhere yet): night-lights. Without a capture context at all (tests,
- * offline tools that pass none) the class stays 'day'.
+ * The light condition class (METRICS §1.3): the player's answer, then the pixels (quality/light.ts,
+ * measured on the sparse pass). The answer: 'day' is day; court lights and indoor courts (artificial
+ * light, validated nowhere yet) are night-lights; no answer is 'unknown' (nothing is validated for it,
+ * every value at most experimental). The pixels can only LOWER that: mains flicker at or above 3%
+ * makes the class 'flicker' whatever was answered (it also blocks speed, §3.25), and a dark sky over a
+ * lit court turns a 'day' (or missing) answer into night-lights. A bright picture never turns an
+ * answer into daylight. Without a capture context at all (tests, offline tools that pass none) the
+ * class stays 'day' unless the pixels say otherwise.
  */
-export function conditionClassOf(capture?: CaptureContext): ConditionClass {
-  if (!capture) return 'day'
-  const light = capture.conditions?.light
-  if (light === 'day') return 'day'
-  if (light === 'lights' || light === 'indoor') return 'night-lights'
-  return 'unknown'
+export function conditionClassOf(capture?: CaptureContext, light?: LightEvidence | null): ConditionClass {
+  const answer = capture?.conditions?.light
+  const fromAnswer: ConditionClass = !capture || answer === 'day' ? 'day' : answer === 'lights' || answer === 'indoor' ? 'night-lights' : 'unknown'
+  if (light?.flickering) return 'flicker'
+  if (light?.dark && (fromAnswer === 'day' || fromAnswer === 'unknown')) return 'night-lights'
+  return fromAnswer
+}
+
+/** A plain sentence when the pixels changed the class the answer gave (engine warning). */
+export function conditionOverrideNote(capture: CaptureContext | undefined, light: LightEvidence | null | undefined, condition: ConditionClass): string | null {
+  const answered = capture?.conditions?.light
+  if (condition === 'flicker') {
+    return `The court lights are flickering in this video (about ${Math.round((light?.flicker?.amplitude ?? 0) * 100)}% of the brightness), so readings are experimental and speed isn't available (FLICKER). At night, use 25 or 50 fps if your phone offers it.`
+  }
+  if (condition === 'night-lights' && light?.dark && answered !== 'lights' && answered !== 'indoor') {
+    return answered === 'day'
+      ? 'This video looks like it was filmed under court lights (a dark sky over a lit court), not in daylight, so it was analysed as a night session: readings checked only in daylight are experimental (CONDITION_NOT_VALIDATED).'
+      : 'This video looks like it was filmed under court lights (a dark sky over a lit court), so readings checked only in daylight are experimental (CONDITION_NOT_VALIDATED).'
+  }
+  return null
 }
 
 export interface TimeBaseInfo {
@@ -334,6 +357,79 @@ function courtSides(cores: readonly ServeCore[], handedness: Handedness, cameraS
   return out
 }
 
+/**
+ * Two floor rows closer than this share of the standing height are the same distance: about 1% of the
+ * frame at D1 set-ups, where the two court sides differ by 2–3% (the session clip: 0.678 against 0.705).
+ */
+export const FLOOR_MATCH_BH = 0.05
+
+/**
+ * The session's standing height in the picture (H_HU) for a serve that had fewer than 5 upright frames
+ * (METRICS §1.1 fallback), from the serves that had them. H_HU depends on the distance, and so does
+ * the floor row: for a level camera both are proportional to 1/D, so H_HU is linear in the floor row
+ * (H_HU = (H / h_camera)·(yFloor − y_horizon)). The fallback therefore comes from the serves at the
+ * same floor row (median), else from a straight line through them (clamped near the measured values),
+ * else the plain median. A median over both court sides would put a near-side serve at the average
+ * distance: on the session clip one serve's heights read 11% high that way (final e2e re-run).
+ */
+export function sessionBodyHeight(refs: readonly { yFloor: number; bodyHeightHU: number }[]): ((yFloor: number) => number) | undefined {
+  if (!refs.length) return undefined
+  const hs = refs.map((r) => r.bodyHeightHU)
+  const all = median(hs)
+  const tol = FLOOR_MATCH_BH * all
+  const ys = refs.map((r) => r.yFloor)
+  const span = Math.max(...ys) - Math.min(...ys)
+  let line: { a: number; b: number } | null = null
+  if (refs.length >= 2 && span > tol) {
+    const my = ys.reduce((p, q) => p + q, 0) / ys.length
+    const mh = hs.reduce((p, q) => p + q, 0) / hs.length
+    let syy = 0
+    let syh = 0
+    for (const r of refs) {
+      syy += (r.yFloor - my) ** 2
+      syh += (r.yFloor - my) * (r.bodyHeightHU - mh)
+    }
+    const b = syy > 0 ? syh / syy : 0
+    // Nearer serves have a lower floor row (larger y) and a taller body: a slope of the other sign is noise.
+    if (b > 0) line = { a: mh - b * my, b }
+  }
+  const lo = 0.85 * Math.min(...hs)
+  const hi = 1.15 * Math.max(...hs)
+  return (yFloor: number) => {
+    const near = refs.filter((r) => Math.abs(r.yFloor - yFloor) <= tol)
+    if (near.length) return median(near.map((r) => r.bodyHeightHU))
+    if (line) return Math.max(lo, Math.min(hi, line.a + line.b * yFloor))
+    return all
+  }
+}
+
+/**
+ * Per-serve scale check against the session (E1, 2026-09-28). The time base is a clip property (the
+ * container, else the session's gravity check over every toss: timeBaseOf); a single serve's toss fit
+ * never changes it or any value's scale. What a serve's own toss can do is FLAG the serve: its fall
+ * (apparent gravity from this serve's body scale) disagreeing with the other serves' median by more
+ * than SERVE_SCALE_FLAG and 3σ means this serve's standing-height scale is off (a fallback H_HU, a
+ * bent setup), so its body-scaled values are capped at experimental (perServe.ts, SCALE_INCONSISTENT).
+ * Returns |g_serve / median(g_others) − 1| for the flagged serves only; needs 2 other serves.
+ */
+export function serveScaleOffsets(cores: readonly ServeCore[], timeBase: TimeBaseClass): Map<number, number> {
+  const out = new Map<number, number>()
+  if (timeBase === 'unknown') return out
+  const gs = cores
+    .filter((c) => c.classification === 'serve')
+    .map((c) => ({ index: c.index, grav: c.ball.toss?.gravity }))
+    .filter((x): x is { index: number; grav: NonNullable<typeof x.grav> } => !!x.grav && x.grav.status === 'ok' && Number.isFinite(x.grav.apparentGravityMps2 ?? Number.NaN))
+  for (const x of gs) {
+    const others = gs.filter((y) => y.index !== x.index).map((y) => y.grav.apparentGravityMps2!)
+    if (others.length < 2) continue
+    const off = Math.abs(x.grav.apparentGravityMps2! / median(others) - 1)
+    // σ of the apparent gravity: twice the relative σ of the time-scale factor.
+    const rel = 2 * ((x.grav.timeScaleSigma ?? 0.05) / (x.grav.timeScaleFactor ?? 1))
+    if (off > SERVE_SCALE_FLAG && off > 3 * rel) out.set(x.index, off)
+  }
+  return out
+}
+
 // ---------- analyseSession ----------
 
 export function analyseSession(input: EngineInput): EngineOutput {
@@ -348,7 +444,9 @@ export function analyseSession(input: EngineInput): EngineOutput {
   const H = input.profile.heightM > 0 ? input.profile.heightM : 1.75
   if (H < 1.3 || H > 2.2) warnings.push('Entered height is outside the adult range; check it in Profile.')
   const cam: CameraModel = cameraModel(meta, capture, { view })
-  const condition = conditionClassOf(capture)
+  const condition = conditionClassOf(capture, input.light)
+  const lightNote = conditionOverrideNote(capture, input.light, condition)
+  if (lightNote) warnings.push(lightNote)
   const cameraSide = capture?.cameraSide ?? 'chest'
   const track = buildTrack(input.poses, cam)
   const parsed = parseTossEntries(input.ball.toss)
@@ -414,14 +512,14 @@ export function analyseSession(input: EngineInput): EngineOutput {
       prevRecovery = core.events.recoveryEnd?.tReal
       cores.push(core)
     })
-    // Second pass: (a) a serve with fewer than 5 upright frames ('weak') or none takes the session median
-    // H_HU of the serves that had them (METRICS §1.1); weak serves never feed that median. (b) With the
-    // hit sound, the audio–video offset calibrated from the other serves (METRICS §2.4.5).
-    const refs = cores.filter((c) => c.ref && c.refSource === 'setup-upright').map((c) => c.ref!.bodyHeightHU)
-    const fallbackHU = refs.length ? median(refs) : undefined
+    // Second pass: (a) a serve with fewer than 5 upright frames ('weak') or none takes H_HU from the
+    // serves that had them AT ITS DISTANCE (sessionBodyHeight: matched by the floor row), never from a
+    // median over both court sides (METRICS §1.1); weak serves never feed it. (b) With the hit sound,
+    // the audio–video offset calibrated from the other serves (METRICS §2.4.5).
+    const fallbackAt = sessionBodyHeight(cores.filter((c) => c.ref && c.refSource === 'setup-upright').map((c) => ({ yFloor: c.ref!.yFloor, bodyHeightHU: c.ref!.bodyHeightHU })))
     const firstPass = [...cores]
     for (let k = 0; k < cores.length; k++) {
-      const needsHeight = cores[k].refSource !== 'setup-upright' && !!fallbackHU
+      const needsHeight = cores[k].refSource !== 'setup-upright' && !!fallbackAt
       const audioOffset = onsets.length ? audioOffsetFor(k, firstPass, captureFps) : undefined
       if (!needsHeight && !audioOffset) continue
       cores[k] = analyseServe({
@@ -440,7 +538,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
         onsets,
         realTime: prior.realTimePrior,
         previousRecoveryEnd: k > 0 ? cores[k - 1].events.recoveryEnd?.tReal : undefined,
-        fallbackBodyHeightHU: needsHeight ? fallbackHU : undefined,
+        fallbackBodyHeightAt: needsHeight ? fallbackAt : undefined,
         audioOffset,
         searchStart: searchStartOf(k),
         captureFps,
@@ -548,6 +646,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
   const framing = cores.map((c) => framingOf(input.poses, c))
   const bodyPx1080 = bodyPx1080Of(cores, meta.height, Math.min(meta.width, meta.height)) ?? undefined
   const scaleRatio = scaleRatioOf(cores, tb.cls)
+  const serveScale = serveScaleOffsets(cores, tb.cls)
   const cameraMoved = sustainedOrientationChange(capture?.orientationSamples, cores.filter((c) => c.classification === 'serve').map((c) => ({ start: c.window.start, end: c.window.end })))
   if (cameraMoved) warnings.push('The phone moved during the serves: positions and spreads are unavailable (CAMERA_MOVED).')
 
@@ -578,6 +677,7 @@ export function analyseSession(input: EngineInput): EngineOutput {
       ...(bodyPx1080 !== undefined ? { bodyPx1080 } : {}),
       contactCut: framing[k] === 'contact-cut',
       ...(scaleRatio !== null ? { scaleOff: Math.abs(scaleRatio - 1) } : {}),
+      ...(serveScale.has(core.index) ? { serveScaleOff: serveScale.get(core.index)! } : {}),
       cameraMoved,
     }
     results.push(computeServeMetrics(core, track, ctx))
@@ -595,6 +695,8 @@ export function analyseSession(input: EngineInput): EngineOutput {
     displayedHeightPx: meta.height,
     shortSidePx: Math.min(meta.width, meta.height),
     condition,
+    ...(input.light ? { light: input.light } : {}),
+    lightAnswer: capture?.conditions?.light,
     audio: { on: audioOn, usable: audioTiming.usable && onsets.length > 0, reason: audioTiming.usable ? undefined : audioTiming.reason },
     view: { declared: view, mismatch: viewMismatch, mismatchShare, decided: viewEv.decided, contradicting: viewEv.contradicting },
     framesMissing,

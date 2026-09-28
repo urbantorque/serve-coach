@@ -27,6 +27,11 @@ export interface FormattedMetric {
   nLine?: string
   /** Reason phrase when unavailable (never a dash or a number). */
   reason?: string
+  /**
+   * A caveat that belongs beside the number wherever it is shown (never a separate screen): leg drive's
+   * absolute % reads about 2% of height low (VALIDATION §3.3), so it is only good against your own serves.
+   */
+  note?: string
   /** Full sentence for screen readers. */
   aria: string
 }
@@ -43,10 +48,20 @@ const RATE = new Set(['serve-in-rate', 'first-serve-in-rate', 'second-serve-in-r
 const BAND = new Set(['shoulder-tilt-trophy', 'knee-bend-band', 'shoulder-over-shoulder-contact'])
 /**
  * Metrics that can never be below zero by construction: loading depth is the hip height at release
- * minus the lowest hip height after it (serve/events.ts detectTrophy). A range below zero would be
- * physically impossible, so the display floors it and says "up to" (DESIGN §3.3 rule 11: no signs).
+ * minus the lowest hip height after it (serve/events.ts detectTrophy), and leg drive is the hip height
+ * at contact minus that same lowest point. A range below zero would be physically impossible, so the
+ * display floors it and says "up to" (DESIGN §3.3 rule 11: no signs).
  */
-export const FLOOR_ZERO = new Set(['loading-depth'])
+export const FLOOR_ZERO = new Set(['loading-depth', 'leg-drive'])
+
+/**
+ * Leg drive failed its absolute pass mark on simulated serves (MAE 2.5% against 2%), almost all of it a
+ * steady low read that cancels against the player's own serves (VALIDATION §3.2, §3.3; finding 50). So
+ * wherever its % shows as an Estimate, this caveat sits beside it.
+ */
+export const RELATIVE_ONLY_NOTE: Readonly<Record<string, string>> = {
+  'leg-drive': 'Reads about 2% of your height low on simulated serves, so compare it with your own serves only.',
+}
 
 /** A range bound for display: floored at zero where the quantity cannot be negative. */
 export function displayBound(metricId: string, x: number | undefined): number | undefined {
@@ -173,7 +188,7 @@ function nLineFor(id: string, v: MetricValue): string | undefined {
   }
   if (RATE.has(id)) return v.provenance === 'from-your-tags' ? 'from your tags' : undefined
   if (id === 'serve-count') return undefined
-  return v.nEligible !== undefined ? `${v.n} of ${v.nEligible} serves` : `${v.n} serves`
+  return v.nEligible !== undefined ? `${v.n} of ${v.nEligible} serves` : `${v.n} ${v.n === 1 ? 'serve' : 'serves'}`
 }
 
 /** Formats one value for display. Throws on a missing status in development (DESIGN §8.6). */
@@ -192,13 +207,15 @@ export function formatMetric(metricId: string, v: MetricValue): FormattedMetric 
   const nLine = nLineFor(metricId, v)
   const hasRange = parts.low !== undefined && parts.high !== undefined
   const span = parts.floor ? `up to ${parts.high}` : `${parts.low} to ${parts.high}`
+  const note = v.status === 'estimated' || v.status === 'measured' ? RELATIVE_ONLY_NOTE[metricId] : undefined
   let text: string
   let detail = parts.detail
   let approx = false
 
   if (v.status === 'experimental') {
     // D4 and DESIGN §3.1: experimental values are always a rounded range with "about", never one number.
-    text = hasRange ? `about ${span}${unitSep}` : `about ${parts.value}${unitSep}`
+    // "up to about 7%", never "about up to 7%".
+    text = hasRange ? (parts.floor ? `up to about ${parts.high}${unitSep}` : `about ${span}${unitSep}`) : `about ${parts.value}${unitSep}`
     if (!hasRange && import.meta.env.DEV && !parts.words) {
       console.warn(`[MetricValue] experimental ${metricId} has no range; DESIGN §3.1 asks for one.`)
     }
@@ -220,6 +237,7 @@ export function formatMetric(metricId: string, v: MetricValue): FormattedMetric 
     STATUS_LABEL[v.status],
     detail ? speak(detail) : undefined,
     nLine,
+    note,
   ]
     .filter(Boolean)
     .join(', ')
@@ -233,6 +251,7 @@ export function formatMetric(metricId: string, v: MetricValue): FormattedMetric 
     percent: parts.percent,
     words: parts.words ?? false,
     nLine,
+    ...(note ? { note } : {}),
     aria,
   }
 }

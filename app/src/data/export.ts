@@ -7,6 +7,9 @@ import { METRIC_IDS, type MetricId, type MetricValue } from '../analysis/types.t
 import { getDb } from './db.ts'
 import type { CaptureContext } from '../analysis/types.ts'
 import type { CoachingRecord, MatchLogRecord, PracticeLogRecord, ProfileRecord, SessionRecord, TrackRecord } from './records.ts'
+import { scrubDecision } from './scrub.ts'
+
+export { HEALTH_WORDS, scrubDecision, scrubWhy } from './scrub.ts'
 
 export const EXPORT_FORMAT = 'serve-coach-export'
 export const EXPORT_VERSION = 1
@@ -85,31 +88,6 @@ function exportPractice(l: PracticeLogRecord, includeComfort: boolean): Omit<Pra
   return includeComfort ? { ...rest, ...(body ? { body } : {}), ...(discomfort !== undefined ? { discomfort } : {}) } : rest
 }
 
-/** Wording that carries a body-check or comfort answer (older records named the sore areas). */
-const HEALTH_WORDS = /\bsore\b|\bpain\b|\bhurt|\breferral\b|body check|comfort setting|comfort settings/i
-
-/**
- * A stored coaching decision without body-check or comfort detail, for an export without "Include
- * comfort notes": safety-step trace lines become a plain "Safety check applied.", alternatives ruled out
- * by a comfort setting are left out, and sentences about soreness or comfort leave the "why" text. A
- * pain-referral decision (no focus, cue or drill; its existence is the health answer) is left out whole.
- */
-export function scrubDecision(d: CoachingRecord): CoachingRecord | null {
-  if (d.gate === 'pain-referral' || d.referral) return null
-  const out: CoachingRecord = {
-    ...d,
-    trace: d.trace.map((t) => (t.step === 'safety' && HEALTH_WORDS.test(t.detail) ? { ...t, detail: 'Safety check applied.' } : t)),
-    alternatives: d.alternatives.filter((a) => !HEALTH_WORDS.test(a.reason)),
-  }
-  if (d.focus) {
-    const why = d.focus.whyChosen
-      .split(/(?<=[.?])\s+/)
-      .filter((s) => !HEALTH_WORDS.test(s))
-      .join(' ')
-    out.focus = { ...d.focus, whyChosen: why }
-  }
-  return out
-}
 
 /** product-gaps addition: match notes stay on the phone like practice notes (they can mention pain). */
 function exportMatch(m: MatchLogRecord): Omit<MatchLogRecord, 'notes'> {

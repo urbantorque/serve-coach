@@ -2,6 +2,7 @@ import { FilmReelIcon, InfoIcon, ShieldCheckIcon, UploadSimpleIcon, WarningCircl
 import { lazy, Suspense, useId, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { VideoMeta } from '../../../analysis/types.ts'
+import { recordingTimeFor } from '../../../analysis/video/recordedAt.ts'
 import { saveProfile, useSettingsStore } from '../../../data/index.ts'
 import { useProfile, useSetting } from '../../../data/hooks.ts'
 import { Button, Card, DelayedSkeleton, Screen, SectionLabel, Sheet, Skeleton } from '../../components/index.ts'
@@ -50,7 +51,7 @@ const CAMERA_OPTIONS: { value: CameraAnswer; title: string; body?: string }[] = 
  * Import a video (CAPTURE §11, PRODUCT §6.3.6, DESIGN §10.3): pick a clip, read its size, length and
  * frame rate without decoding, ask only what the file cannot tell (camera position, side, serve,
  * slow motion, target, how the phone was mounted, the serving spot), then analyse on this phone.
- * Imports have no tilt reading: a level mount lets heights stay estimates with a wider range
+ * Imports have no tilt reading: a level mount lets contact height stay an estimate with a wider range
  * (METRICS §1.1.3a); otherwise heights are experimental.
  */
 export function ImportScreen() {
@@ -112,8 +113,11 @@ export function ImportScreen() {
   const summary = meta ? summariseClip(meta, tb?.device) : null
   const guard = meta && file ? importGuard(meta, file.size) : null
   const askSlow = needsSlowMotionQuestion(tb)
+  // When the clip was recorded (E2): the container's recording time, else the file's last change,
+  // else now. It dates the session; only a real recording time (not the import) prefills the light.
+  const recorded = meta ? recordingTimeFor({ createdAt: meta.createdAt, fileLastModified: file?.lastModified }) : null
   // The player's answer wins; an evening timestamp starts it at court lights (never at daylight).
-  const light = lightEdit ?? lightFromTimestamp(meta?.createdAt)
+  const light = lightEdit ?? lightFromTimestamp(recorded && recorded.source !== 'import-time' ? recorded.iso : undefined)
   const view = viewFor(camera)
   const fpsForSpeed = fpsOverrideFor(slow, speed) ?? meta?.captureFps ?? 0
   const speedNote = speedTargetNote({ experimental, captureFps: fpsForSpeed, view: view.view, target })
@@ -156,7 +160,7 @@ export function ImportScreen() {
       }
       const capture = importCapture(player, answers, meta)
       const block = { side, serveNumber: serve, type, target, servingSpot: spot }
-      const startedAt = meta.createdAt ?? new Date().toISOString()
+      const startedAt = recorded?.iso ?? new Date().toISOString()
       const { sessionId } = await saveNewSession({
         // The re-test plan picked on Record also applies to an imported clip (it links to the experiment).
         session: { capture, view: view.view, cameraSide: view.cameraSide, mode: view.mode, template: useRecordFlow.getState().plan === 'retest' ? 'retest' : 'import', startedAt, block },

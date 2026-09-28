@@ -27,3 +27,13 @@ export {
   type T2Input,
 } from './triggers.ts'
 export { getEntitlement, getPaywallState, markPaywallShown } from './store.ts'
+export {
+  BETA_EVERYTHING_UNLOCKED,
+  hasPlusAccess,
+  inBeta,
+  PREVIEW_PRICE,
+  recordWtpAnswer,
+  t3PreviewDue,
+  WTP_ANSWERS,
+  type WtpAnswer,
+} from './beta.ts'

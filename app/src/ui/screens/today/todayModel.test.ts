@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DEMO_FIXTURES } from '../../../data/fixtures.ts'
 import type { ExperimentRecord, PracticeLogRecord, ProfileRecord } from '../../../data/records.ts'
 import type { SessionBundle } from '../progress/insights/history.ts'
-import { currentExperiment, experimentStep, sessionLine, todayModel } from './todayModel.ts'
+import { currentExperiment, experimentStep, morningAfter, sessionLine, todayModel } from './todayModel.ts'
 
 const FX = DEMO_FIXTURES
 const own = (b: SessionBundle, id = b.session.id.replace('demo-', 'own-')): SessionBundle => ({
@@ -106,5 +106,29 @@ describe('Today model (PRODUCT §6.2, DESIGN §10.2)', () => {
     const m = todayModel({ bundles: [own(sample[0])], experiments: [], practiceLogs: [], profile, now: new Date('2026-10-20T09:00:00+10:00') })
     expect(m.welcomeBack).toBe(true)
     expect(sessionLine(sample[1].session)).toBe('View from behind, 12 serves')
+  })
+})
+
+describe('morning after a comp night (U3)', () => {
+  const profile = { ...FX.profile, matchNights: ['tue'] } as ProfileRecord
+  // Wednesday 30 September 2026, 8 am: Tuesday was a comp night.
+  const wed = new Date(2026, 8, 30, 8, 0)
+  const base = { profile, now: wed, mode: 'player' as const, painPause: false, loggedDates: [] as string[] }
+
+  it('the day after a comp night set in the profile, for the player only', () => {
+    expect(morningAfter(base)).toEqual({ date: '2026-09-29' })
+    expect(morningAfter({ ...base, now: new Date(2026, 8, 30, 21, 0) })).toEqual({ date: '2026-09-29' })
+    expect(morningAfter({ ...base, now: new Date(2026, 9, 1, 8, 0) })).toBeNull() // Thursday
+    expect(morningAfter({ ...base, mode: 'sample' })).toBeNull()
+    expect(morningAfter({ ...base, profile: { ...profile, matchNights: [] } })).toBeNull()
+    expect(morningAfter({ ...base, profile: null })).toBeNull()
+  })
+
+  it('never during a pain pause, once logged, or after "Not now" for that night', () => {
+    expect(morningAfter({ ...base, painPause: true })).toBeNull()
+    expect(morningAfter({ ...base, loggedDates: ['2026-09-29'] })).toBeNull()
+    expect(morningAfter({ ...base, dismissed: '2026-09-29' })).toBeNull()
+    // A dismissal for last week's night does not hide this week's.
+    expect(morningAfter({ ...base, dismissed: '2026-09-22' })).toEqual({ date: '2026-09-29' })
   })
 })

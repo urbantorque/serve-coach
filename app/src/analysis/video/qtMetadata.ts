@@ -6,6 +6,7 @@
  *  - moov/udta classic text atoms (©mak, ©mod, ©swr, ...) and udta/meta/ilst fourcc items
  *  - timed-metadata tracks ('mebx' sample entries): the key names they declare
  *    (values live in media samples and are not read here)
+ *  - moov/mvhd creation_time (seconds since 1904-01-01 UTC; 0 when the writer left it empty)
  * Tolerant by design: malformed atoms are skipped, never thrown.
  */
 
@@ -24,6 +25,8 @@ export interface ContainerMetadata {
   /** Track-level mdta items keyed by `${trackId}:${key}`. */
   track: Record<string, MetadataValue>
   timedMetadataTracks: TimedMetadataTrack[]
+  /** moov/mvhd creation_time: seconds since 1904-01-01 00:00 UTC (0 or absent when not written). */
+  mvhdCreationTime?: number
 }
 
 interface Atom {
@@ -277,6 +280,11 @@ export function parseMoovMetadata(bytes: Uint8Array): ContainerMetadata {
     for (const atom of childAtoms(view, moov.start, moov.end)) {
       if (atom.type === 'meta') Object.assign(result.movie, parseMetaAtom(view, atom).items)
       else if (atom.type === 'udta') parseUdta(view, atom, result)
+      else if (atom.type === 'mvhd' && atom.end - atom.start >= 12) {
+        // Full box: version (1), flags (3), then creation_time (32 bits, or 64 in version 1).
+        const version = view.getUint8(atom.start)
+        result.mvhdCreationTime = version === 1 && atom.end - atom.start >= 20 ? Number(view.getBigUint64(atom.start + 4)) : view.getUint32(atom.start + 4)
+      }
       else if (atom.type === 'trak') {
         const trackId = trackIdOf(view, atom)
         const meta = findChild(view, atom, 'meta')
@@ -317,6 +325,8 @@ export const QT_KEYS = {
   model: 'com.apple.quicktime.model',
   software: 'com.apple.quicktime.software',
   creationDate: 'com.apple.quicktime.creationdate',
+  /** udta classic text atom with the recording date (e.g. "2026-09-27T19:41:08+1000"). */
+  udtaDay: '©day',
   /** iOS 18 / macOS 15: 1 = play at full frame rate, 0 = play as slow motion (Apple AVFoundation docs). */
   fullFrameRatePlaybackIntent: 'com.apple.quicktime.full-frame-rate-playback-intent',
   androidCaptureFps: 'com.android.capture.fps',

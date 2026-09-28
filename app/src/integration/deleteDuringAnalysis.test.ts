@@ -170,3 +170,51 @@ describe('deleting a session while it is analysing', () => {
     expect(await rowsFor('S2')).toEqual(NOTHING)
   })
 })
+
+describe('deleting a session while its clip is being stored (check-then-act race)', () => {
+  it('a delete during the clip fingerprint leaves no video, blob or job for the deleted session', async () => {
+    await createSession({ id: 'S3', startedAt: new Date().toISOString(), status: 'queued', mode: 'technique', view: 'side' } as never)
+    const realCrypto = globalThis.crypto
+    let deletion = null as Promise<{ removed: boolean }> | null
+    // The player taps Delete session while storeVideo is hashing the clip (after its first existence check).
+    const subtle = {
+      digest: async (alg: AlgorithmIdentifier, data: BufferSource) => {
+        deletion ??= deleteSession('S3')
+        await deletion
+        return realCrypto.subtle.digest(alg, data)
+      },
+    }
+    vi.stubGlobal(
+      'crypto',
+      new Proxy(realCrypto, {
+        get(target, key) {
+          if (key === 'subtle') return subtle
+          const v = Reflect.get(target, key) as unknown
+          return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(target) : v
+        },
+      }),
+    )
+    try {
+      const file = new File([new Uint8Array(4096)], 'serve.mp4', { type: 'video/mp4' })
+      await expect(runAnalysis(file, { sessionId: 'S3', profile: { heightM: 1.8, handedness: 'right' }, view: 'side' }, deps)).rejects.toMatchObject({ code: 'cancelled' })
+    } finally {
+      vi.stubGlobal('crypto', realCrypto)
+    }
+    expect((await deletion)?.removed).toBe(true)
+    expect(await rowsFor('S3')).toEqual(NOTHING)
+  })
+
+  it('startJob refuses a deleted session, and a cancelled run sweeps rows written before the delete', async () => {
+    const { startJob, markCancelled } = await import('../analysis/pipeline/persist.ts')
+    await createSession({ id: 'S4', startedAt: new Date().toISOString(), status: 'queued', mode: 'technique', view: 'side' } as never)
+    await deleteSession('S4')
+    await expect(startJob({ jobId: 'J4', sessionId: 'S4', videoId: 'V4', engineVersion: 'test' })).rejects.toMatchObject({ code: 'cancelled' })
+    // Stray rows from before the fix (or any path that slipped through) go when the run stops.
+    const db = getDb()
+    await db.jobs.put({ id: 'J4b', sessionId: 'S4', videoId: 'V4', state: 'sparse', completedWindows: [], progress: 0, attempts: 1, engineVersion: 'test', updatedAt: new Date().toISOString() })
+    await db.videos.put({ id: 'V4', sessionId: 'S4' } as never)
+    await db.videoBlobs.put({ id: 'V4', blob: new Blob([new Uint8Array(8)]) })
+    await markCancelled('S4', 'J4b')
+    expect(await rowsFor('S4')).toEqual(NOTHING)
+  })
+})

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { REFERRAL_COPY } from '../../../coaching/safety.ts'
 import { loadDemoData } from '../../../data/demo.ts'
-import { showToast } from '../../../data/index.ts'
+import { listMatchLogs, showToast } from '../../../data/index.ts'
 import { useLatestDecision, useProfile } from '../../../data/hooks.ts'
 import type { PracticeLogRecord } from '../../../data/records.ts'
 import { listPracticeByExperiment } from '../../../data/repos/coaching.ts'
@@ -29,7 +29,8 @@ import { baselineWords, stratumWords, type SessionBundle } from '../progress/ins
 import { useExperiments, useSessionBundles } from '../progress/insights/hooks.ts'
 import { VerdictLine } from '../progress/insights/ui.tsx'
 import { FocusCard, KeepGoingCard, PainPauseCard } from './FocusCard.tsx'
-import { currentExperiment, sessionLine, todayModel, type ExperimentStep, type TodayModel } from './todayModel.ts'
+import { currentExperiment, morningAfter, sessionLine, todayModel, type ExperimentStep, type MorningAfter, type TodayModel } from './todayModel.ts'
+import { useTodayStore } from './todayStore.ts'
 
 function LastSessionCard({ bundle, welcomeBack }: { bundle: SessionBundle; welcomeBack: boolean }) {
   const s = bundle.session
@@ -96,6 +97,37 @@ function ExperimentStrip({ model, title }: { model: TodayModel; title?: string }
   )
 }
 
+/**
+ * The morning after a comp night (PRODUCT §6.11, D11; U3): a gentle prompt to log the match while it is
+ * fresh. Secondary and dismissible: the focus card keeps the screen's one primary action.
+ */
+function MorningAfterCard({ card, onDismiss }: { card: MorningAfter; onDismiss: () => void }) {
+  const to = `${paths.matchLog()}?date=${card.date}&from=${encodeURIComponent(paths.today())}`
+  return (
+    <section aria-labelledby="morning-after" className="card flex flex-col items-start gap-2 p-4" data-morning-after>
+      <p className="flex items-center gap-2 text-footnote font-label text-ink-3">
+        <FlagPennantIcon size={16} aria-hidden="true" />
+        After last night's comp
+      </p>
+      <h2 id="morning-after" className="text-headline text-ink">
+        How did it go?
+      </h2>
+      <p className="text-callout text-ink-2">
+        Log it while it's fresh: service games, double faults and, if you counted, first serves in. About 20 seconds. It sits beside your practice, never mixed
+        with it.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="secondary" compact fullWidth={false} to={to}>
+          Log the match
+        </Button>
+        <Button variant="tertiary" onClick={onDismiss}>
+          Not now
+        </Button>
+      </div>
+    </section>
+  )
+}
+
 function TodaySkeleton() {
   return (
     <DelayedSkeleton>
@@ -122,6 +154,9 @@ export function TodayScreen() {
   // coaching here too, even when the answer was not saved (COACHING §7.5, §7.9, §10.3; D8).
   const referral = useFocusStore((s) => s.referral)
   const [now] = useState(() => new Date())
+  const matchDates = useLiveQuery(async () => (await listMatchLogs()).filter((m) => m.isDemo !== 1).map((m) => m.date), [])
+  const dismissedMorningAfter = useTodayStore((s) => s.morningAfterDismissed)
+  const dismissMorningAfter = useTodayStore((s) => s.dismissMorningAfter)
   // Practice logs of the experiment Today shows (the active one, or one that just finished).
   const newest = bundles?.filter((b) => b.session.status === 'ready').sort((a, b) => b.session.startedAt.localeCompare(a.session.startedAt))
   const ownNewest = newest?.find((b) => b.session.isDemo === 0)
@@ -194,6 +229,9 @@ export function TodayScreen() {
   const activeExperiment = model.experiment?.status === 'active' ? model.experiment : null
   const practiceCount = activeExperiment ? (model.step?.practices ?? 0) : 0
   const baseline = model.baseline ? baselineWords(model.baseline) : null
+  const afterComp = matchDates
+    ? morningAfter({ profile: profile ?? null, now, mode: model.mode, painPause: model.painPause, loggedDates: matchDates, dismissed: dismissedMorningAfter })
+    : null
 
   return (
     <Screen title="Today" variant="root" trailing={<ProfileButton />} banner={sample ? <SampleBanner /> : undefined}>
@@ -239,6 +277,7 @@ export function TodayScreen() {
             <KeepGoingCard variant="full" sample={sample} showPrimary={!sample} />
           )}
           <ExperimentStrip model={model} title={experimentTitle ? `${experimentTitle} experiment` : undefined} />
+          {afterComp ? <MorningAfterCard card={afterComp} onDismiss={() => dismissMorningAfter(afterComp.date)} /> : null}
         </>
       )}
 

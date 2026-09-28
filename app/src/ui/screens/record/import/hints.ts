@@ -10,10 +10,10 @@
 
 /** What a player can do next time: record in the app (it reads the tilt), or answer the mount question on import. */
 export const TILT_HINT =
-  'Record in the app, which reads the phone\'s tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.'
+  'Record in the app, which reads the phone\'s tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount can keep contact height as an estimate.'
 
 /** The import screen's own line under the mount question, for a side view answered "Tilted, or not sure". */
-export const IMPORT_MOUNT_HINT = 'Next time, a fence clip or tripod checked with a level keeps heights as estimates, and recording in the app reads the tilt for you.'
+export const IMPORT_MOUNT_HINT = 'Next time, a fence clip or tripod checked with a level can keep contact height as an estimate, and recording in the app reads the tilt for you.'
 
 const STALE = /record in the app with motion access on/i
 

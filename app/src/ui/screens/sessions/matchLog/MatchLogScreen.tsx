@@ -24,7 +24,7 @@ export function MatchLogScreen() {
   const { matchId } = useParams()
   const [search] = useSearchParams()
   const from = safeFrom(search.get('from')) ?? paths.progress()
-  const back = { to: from, label: from.startsWith(paths.progress()) ? 'Progress' : 'Back' }
+  const back = { to: from, label: from.startsWith(paths.progress()) ? 'Progress' : from === paths.today() ? 'Today' : from === paths.profile() ? 'You' : 'Back' }
   const profile = useProfile()
   const logs = useLiveQuery(() => listMatchLogs(), [])
   const active = useActiveExperiment()
@@ -51,13 +51,17 @@ export function MatchLogScreen() {
     )
   }
   const own = logs.filter((l) => l.isDemo !== 1)
+  // ?date= from the morning-after card on Today: the comp night it asked about (never a future day).
+  const asked = search.get('date')
+  const draft = existing ? fromRecord(existing) : defaultDraft({ now: new Date(), matchNights: profile?.matchNights, last: own.at(-1) ?? null })
+  if (!existing && asked && /^\d{4}-\d{2}-\d{2}$/.test(asked) && asked <= ymd(new Date())) draft.date = asked
   return (
     <MatchForm
       key={existing?.id ?? 'new'}
       title={title}
       back={back}
       existing={existing}
-      initial={existing ? fromRecord(existing) : defaultDraft({ now: new Date(), matchNights: profile?.matchNights, last: own.at(-1) ?? null })}
+      initial={draft}
       experimentId={active && !active.isDemo ? active.id : undefined}
     />
   )

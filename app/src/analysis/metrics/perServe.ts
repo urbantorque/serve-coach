@@ -71,6 +71,12 @@ export interface MetricContext {
   contactCut?: boolean
   /** |toss gravity ÷ 9.81 − 1| over the clip (§3.25 scale); above 0.15 the cm values are unavailable. */
   scaleOff?: number
+  /**
+   * This serve's toss gravity against the other serves' median (engine serveScaleOffsets), set only
+   * when it disagrees beyond SERVE_SCALE_FLAG and 3σ: the serve's body scale is off, so its
+   * body-scaled values are capped at experimental (SCALE_INCONSISTENT). It never rescales a value.
+   */
+  serveScaleOff?: number
 }
 
 /** §3.25 subject-size: below this (px at 1080p) pose metrics are unavailable; below the second, one level lower. */
@@ -78,6 +84,8 @@ export const SUBJECT_SIZE_BLOCK_PX = 150
 export const SUBJECT_SIZE_WARN_PX = 250
 /** §3.25 scale: toss gravity and body scale more than this far apart block the cm values. */
 export const SCALE_BLOCK = 0.15
+/** A serve's toss gravity this far from the session's (relative) flags its body scale (engine serveScaleOffsets). */
+export const SERVE_SCALE_FLAG = 0.1
 /** Values scaled by the standing height in the picture (H_HU, METRICS §1.1). */
 export const BODY_SCALED_IDS: readonly MetricId[] = [
   'toss-apex-height', 'contact-height-ratio', 'toss-forward', 'toss-lateral', 'contact-forward', 'landing-distance', 'leg-drive', 'loading-depth', 'speed-experimental',
@@ -212,6 +220,29 @@ export function assumedLevelHeight(
   return widenedP95 <= budget.p95Threshold
     ? { sigmaTilt, downgrades: [{ cap: 'estimated', reason: 'TILT_UNKNOWN' }], infoReason: 'TILT_UNKNOWN', widenedP95 }
     : { sigmaTilt, downgrades: [{ cap: 'experimental', reason: 'PITCH_UNKNOWN' }], widenedP95 }
+}
+
+/** Reasons that say the contact itself (its time or its ball position) is not trusted. */
+const CONTACT_DISTRUST: readonly ReasonCode[] = ['CONTACT_NOT_FOUND', 'NO_CONTACT', 'FRAMES_DROPPED', 'OCCLUDED', 'IMPLAUSIBLE_VALUE', 'EXCLUDED_BY_QUALITY']
+
+/**
+ * Whether contact height may reject the toss apex (§4.2 "apex below contact − 0.10 m"). Only a
+ * contact that is itself trusted: its value was not withheld, rejected or capped for a contact reason,
+ * the D2 fused-event check found no disagreement, the ball (not the wrist alone) placed it and was seen
+ * within 50 ms of it, the hitting arm was in the picture and no frames were dropped.
+ */
+export function contactTrustedForApexCheck(
+  m: MetricValue | undefined,
+  core: Pick<ServeCore, 'contactDispute' | 'contactWristOnly'>,
+  ctx: Pick<MetricContext, 'contactCut' | 'framesMissingShare'>,
+  extrapS: number | undefined,
+): boolean {
+  if (!m || m.status === 'unavailable' || m.plausibility === 'hard-reject') return false
+  if (m.reasonCode && CONTACT_DISTRUST.includes(m.reasonCode)) return false
+  if (core.contactDispute || core.contactWristOnly) return false
+  if (extrapS === undefined || extrapS > 0.05) return false
+  if (ctx.contactCut || (ctx.framesMissingShare ?? 0) > 0.1) return false
+  return true
 }
 
 function ci(value: number, sig: { r: number; leak: number; shared: number }): { kind: 'ci95'; low: number; high: number } {
@@ -509,10 +540,18 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
     }
   }
   // Apex below contact height − 0.10 m: hard reject of the apex (an apex cannot be below a later point).
-  if (apexRatio !== undefined && contactRatio !== undefined && apexRatio * H < contactRatio * H - PLAUSIBILITY.apexHeightM.hardBelowContactMinusM) {
-    res.hardRejects.push('apexHeightM')
+  // Only against a contact that is itself trusted (DECISIONS D2 addendum: the apex does not depend on
+  // contact): no disputed or wrist-only contact, the ball seen within 50 ms of it, the hitting arm in
+  // the picture, no dropped frames, and a contact value that was not itself withheld or rejected.
+  // Calibration caps shared by both heights (PITCH_UNKNOWN, CONDITION_NOT_VALIDATED, near distance)
+  // do not matter here: the check compares two heights on the same scale.
+  if (apexRatio !== undefined && contactRatio !== undefined && contactTrustedForApexCheck(M['contact-height-ratio'], core, ctx, contactBall?.extrapS) && apexRatio * H < contactRatio * H - PLAUSIBILITY.apexHeightM.hardBelowContactMinusM) {
     const m = M['toss-apex-height']
-    if (m) set('toss-apex-height', unavailable('toss-apex-height', 'IMPLAUSIBLE_VALUE', m.basis, { plausibility: 'hard-reject' }))
+    // An apex already withheld for another reason keeps that reason and is not counted twice.
+    if (m && m.status !== 'unavailable') {
+      res.hardRejects.push('apexHeightM')
+      set('toss-apex-height', unavailable('toss-apex-height', 'IMPLAUSIBLE_VALUE', m.basis, { plausibility: 'hard-reject', ...(m.validationLevel ? { validationLevel: m.validationLevel } : {}), ...(m.conditionClass ? { conditionClass: m.conditionClass } : {}) }))
+    }
   }
 
   // ---------- forward / lateral positions (§3.3, §3.4, §3.10) ----------
@@ -1142,6 +1181,14 @@ export function computeServeMetrics(core: ServeCore, track: PoseTrack, ctx: Metr
       return { ...m, secondary: rest }
     })
   }
+  // Per-serve scale: this serve's toss fell at a rate the other serves' tosses and its body scale do
+  // not agree on. Its time base stays the clip's; only its body-scaled values are flagged.
+  if ((ctx.serveScaleOff ?? 0) > SERVE_SCALE_FLAG) {
+    res.softFlags.push('serveGravityScale')
+    gate(BODY_SCALED_IDS, (m) => capped(m, 'experimental', 'SCALE_INCONSISTENT', 'cq.scale-consistency'))
+  }
+  // Flicker (§3.25): mains flicker at or above 3% blocks the launch speed (FLICKER).
+  if (ctx.condition === 'flicker') gate(['speed-experimental'], (m) => blocked(m, 'FLICKER', 'cq.flicker'))
   // Stability: the phone moved during the block, so positions from one frame of reference are not comparable.
   if (ctx.cameraMoved) gate(POSITION_IDS, (m) => blocked(m, 'CAMERA_MOVED', 'cq.camera-stability'))
   // Standing height from a session fallback or from fewer than 5 upright frames (METRICS §1.1 H_HU):

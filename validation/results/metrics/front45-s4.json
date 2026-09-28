@@ -653,9 +653,9 @@
     "set": "front45",
     "variant": "audio",
     "event": "contact",
-    "errorMs": 3.3871017442437257,
+    "errorMs": 3.5633624142357156,
     "method": "fused",
-    "sigmaMs": 1.7614258733119696,
+    "sigmaMs": 1.7976838549665621,
     "fps": 60
    },
    {
@@ -849,8 +849,8 @@
     },
     "contact": {
      "frameIndex": 151,
-     "tReal": 2.5193451017442436,
-     "uncertaintyS": 0.0017614258733119697,
+     "tReal": 2.5195213624142356,
+     "uncertaintyS": 0.0017976838549665622,
      "confidence": 1,
      "method": "fused"
     },

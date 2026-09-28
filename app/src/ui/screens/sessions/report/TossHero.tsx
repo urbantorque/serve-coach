@@ -152,9 +152,10 @@ export function TossHero({ session, metrics, rows, heightM, previous, usualSprea
   if (toss.extrapolated) notes.push(`${toss.extrapolated} ${toss.extrapolated === 1 ? 'peak was' : 'peaks were'} above the picture and ${toss.extrapolated === 1 ? 'is' : 'are'} estimated.`)
   const excluded = rows.filter((r) => !r.included).length
   if (relative) notes.push(UI.tossRelativeOnly)
-  // With the experimental front-to-back spread shown above, don't call front-to-back "not reliable
-  // enough to show": say it is experimental, which is what its readout says.
-  else if (!rear && heightsOnly) notes.push(second?.status === 'experimental' ? UI.tossHeightsOnlyExperimental : UI.tossHeightsOnly)
+  // With a front-to-back spread shown above (Estimate, or Experimental with the toggle on), never call
+  // front-to-back "not reliable enough to show": the per-serve positions are experimental, the spread
+  // compares tosses with each other (finding 55).
+  else if (!rear && heightsOnly) notes.push(second && second.status !== 'unavailable' ? UI.tossHeightsOnlyExperimental : UI.tossHeightsOnly)
   if (toss.missing && !heightsOnly && !relative && toss.points.length >= 5) notes.push(`${toss.missing} ${toss.missing === 1 ? 'toss' : 'tosses'} could not be placed on the map.`)
   if (excluded) notes.push(`${excluded} ${excluded === 1 ? 'serve' : 'serves'} not measured.`)
 

@@ -13,6 +13,7 @@ import type { BallFrameImage } from '../ball/workerProtocol.ts'
 import type { PoseInputFrame } from '../pose/poseSource.ts'
 import type { PoseFrame } from '../types.ts'
 import type { FrameSelection, FrameSource, RawFrame } from '../video/frameTypes.ts'
+import { LUMA_GRID, lumaGridFromRgba, type LumaFrame } from '../quality/light.ts'
 import { copyCrop } from '../video/planar.ts'
 import { FrameRenderer } from '../video/render.ts'
 import { MEMORY_BUDGET } from './budget.ts'
@@ -46,6 +47,8 @@ export interface BallClient {
 
 export interface SparsePassResult {
   poses: PoseFrame[]
+  /** Luma grid of every frame the pass decoded (quality/light.ts), when a measurer was given. */
+  luma: LumaFrame[]
   /** Pose frames at the coarse rate / added by the fine fill. */
   coarseFrames: number
   fillFrames: number
@@ -74,13 +77,29 @@ export async function runSparsePass(
      * estimate), e.g. to configure the pose source for that stream.
      */
     beforeStream?: (stream: 'coarse' | 'fill', context: { coarse: PoseFrame[]; indices: readonly number[] }) => void
+    /**
+     * Luma grid of a decoded frame (the light check, quality/light.ts), taken before the pose source
+     * gets the frame; null when it cannot be read. Omitted: no light measurement.
+     */
+    measureLuma?: (image: ImageBitmap) => ArrayLike<number> | null
   },
 ): Promise<SparsePassResult> {
   const started = now()
   const n = source.frameTimes.length
   const coarseTotal = Math.ceil(n / options.coarseStep)
+  const luma: LumaFrame[] = []
+  const onDecoded = options.measureLuma
+    ? (frame: { index: number; tReal: number; bitmap: ImageBitmap }) => {
+        try {
+          const grid = options.measureLuma!(frame.bitmap)
+          if (grid) luma.push({ frameIndex: frame.index, tReal: frame.tReal, grid })
+        } catch {
+          // The light check is best effort; the pose pass never waits on it.
+        }
+      }
+    : undefined
   options.beforeStream?.('coarse', { coarse: [], indices: [] })
-  const coarse = await posesFor(source, pose, { step: options.coarseStep }, options.signal, (done) => options.onFrame?.((0.6 * done) / coarseTotal))
+  const coarse = await posesFor(source, pose, { step: options.coarseStep }, options.signal, (done) => options.onFrame?.((0.6 * done) / coarseTotal), onDecoded)
   let fill: PoseFrame[] = []
   if (options.fineStep < options.coarseStep) {
     const times = source.frameTimes.map((f) => f.tMedia * source.meta.timeScale)
@@ -88,13 +107,14 @@ export async function runSparsePass(
     const indices = framesInSpans(times, options.fillSpans(coarse.poses), options.fineStep, have)
     if (indices.length > 0) {
       options.beforeStream?.('fill', { coarse: coarse.poses, indices })
-      const result = await posesFor(source, pose, { indices }, options.signal, (done) => options.onFrame?.(0.6 + (0.4 * done) / indices.length))
+      const result = await posesFor(source, pose, { indices }, options.signal, (done) => options.onFrame?.(0.6 + (0.4 * done) / indices.length), onDecoded)
       fill = result.poses
     }
   }
   const poses = [...coarse.poses, ...fill].sort((a, b) => a.frameIndex - b.frameIndex)
   options.onFrame?.(1)
-  return { poses, coarseFrames: coarse.poses.length, fillFrames: fill.length, framesDecoded: coarse.decoded + fill.length, ms: now() - started }
+  luma.sort((a, b) => a.frameIndex - b.frameIndex)
+  return { poses, luma, coarseFrames: coarse.poses.length, fillFrames: fill.length, framesDecoded: coarse.decoded + fill.length, ms: now() - started }
 }
 
 async function posesFor(
@@ -103,6 +123,7 @@ async function posesFor(
   selection: FrameSelection,
   signal: AbortSignal | undefined,
   onFrame: (done: number) => void,
+  onDecoded?: (frame: { index: number; tReal: number; bitmap: ImageBitmap }) => void,
 ): Promise<{ poses: PoseFrame[]; decoded: number }> {
   let decoded = 0
   async function* inputs(): AsyncGenerator<PoseInputFrame> {
@@ -117,6 +138,8 @@ async function posesFor(
         previous?.close()
         previous = next.value.bitmap
         decoded++
+        // Before the pose source takes it (it may transfer the bitmap to its worker).
+        onDecoded?.(next.value)
         yield { frameIndex: next.value.index, tReal: next.value.tReal, image: next.value.bitmap }
       }
     } finally {
@@ -308,4 +331,30 @@ function isVideoFrame(image: VideoFrame | ImageBitmap): image is VideoFrame {
 
 function now(): number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now()
+}
+
+/** Side of the canvas a frame is drawn to before its luma grid is averaged (4 × 4 pixels per cell). */
+const LUMA_DRAW_PX = LUMA_GRID * 4
+
+/**
+ * The browser's luma measurer for the sparse pass (quality/light.ts): the frame drawn small to an
+ * OffscreenCanvas, read back and averaged to the grid. Undefined where there is no OffscreenCanvas
+ * (Node tests), so the light check is skipped there.
+ */
+export function createLumaMeasurer(): ((image: ImageBitmap) => Uint8Array | null) | undefined {
+  if (typeof OffscreenCanvas === 'undefined') return undefined
+  let ctx: OffscreenCanvasRenderingContext2D | null = null
+  try {
+    ctx = new OffscreenCanvas(LUMA_DRAW_PX, LUMA_DRAW_PX).getContext('2d', { willReadFrequently: true })
+  } catch {
+    ctx = null
+  }
+  if (!ctx) return undefined
+  const c2d = ctx
+  c2d.imageSmoothingEnabled = true
+  c2d.imageSmoothingQuality = 'high'
+  return (image) => {
+    c2d.drawImage(image, 0, 0, LUMA_DRAW_PX, LUMA_DRAW_PX)
+    return lumaGridFromRgba(c2d.getImageData(0, 0, LUMA_DRAW_PX, LUMA_DRAW_PX).data, LUMA_DRAW_PX, LUMA_DRAW_PX)
+  }
 }

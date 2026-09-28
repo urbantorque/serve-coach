@@ -98,6 +98,17 @@ export async function listPracticeSince(ymd: string): Promise<PracticeLogRecord[
   return getDb().practiceLogs.where('date').aboveOrEqual(ymd).sortBy('date')
 }
 
+/**
+ * The dates of the oldest and newest practice log of one kind (demo or real), over the whole history
+ * rather than a window: the load guidance's history length and days since the last serves (COACHING §11).
+ */
+export async function practiceLogDateRange(opts: { demo: boolean }): Promise<{ first?: string; last?: string }> {
+  const kind = (l: PracticeLogRecord) => (l.isDemo === 1) === opts.demo
+  const table = getDb().practiceLogs
+  const [first, last] = await Promise.all([table.orderBy('date').filter(kind).first(), table.orderBy('date').reverse().filter(kind).first()])
+  return { ...(first ? { first: first.date } : {}), ...(last ? { last: last.date } : {}) }
+}
+
 /** The last n logs of one drill, newest first (progression / regression rules, COACHING §12.2). */
 export async function lastLogsForDrill(drillId: string, n: number): Promise<PracticeLogRecord[]> {
   const rows = await getDb().practiceLogs.where('drillId').equals(drillId).sortBy('createdAt')

@@ -1,9 +1,12 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDb, resetDbForTests } from '../../../data/db.ts'
 import { loadDemoData } from '../../../data/demo.ts'
 import { DEMO_FIXTURES } from '../../../data/fixtures.ts'
+import { saveMatchLog } from '../../../data/index.ts'
 import { useSettingsStore } from '../../../data/stores/settings.ts'
+import { lintCopy } from '../../copy/lint.ts'
+import { useTodayStore } from './todayStore.ts'
 import { paths } from '../../shell/paths.ts'
 import { useFocusStore } from '../focus/focusStore.ts'
 import { expectHonest, primaryCount, renderAt, seedPlayer } from '../progress/insights/testing.tsx'
@@ -107,5 +110,43 @@ describe('Today', () => {
     expect(screen.queryByText(/Re-test/)).toBeNull()
     expect(screen.getByText('Last session')).toBeInTheDocument()
     expect(primaryCount()).toBe(0)
+  })
+})
+
+describe('the morning after a comp night (U3)', () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    // Monday 28 September 2026, 8 am: Sunday was a comp night.
+    vi.setSystemTime(new Date(2026, 8, 28, 8, 0))
+    try {
+      localStorage.removeItem('serve-coach:today')
+    } catch {
+      // jsdom storage
+    }
+    useTodayStore.setState({ morningAfterDismissed: undefined })
+    await seedPlayer()
+    await getDb().profile.update(DEMO_FIXTURES.profile.id, { matchNights: ['sun'] })
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('a gentle, dismissible card to log last night, secondary to the focus', async () => {
+    renderAt(paths.today())
+    const card = await screen.findByRole('region', { name: 'How did it go?' }, { timeout: 8000 })
+    expect(within(card).getByText("After last night's comp")).toBeInTheDocument()
+    expect(within(card).getByRole('link', { name: 'Log the match' }).getAttribute('href')).toBe(`/sessions/matches/new?date=2026-09-27&from=${encodeURIComponent('/')}`)
+    // The focus card keeps the one primary action.
+    expect(primaryCount()).toBe(1)
+    expect(lintCopy(card.textContent ?? '')).toEqual([])
+    fireEvent.click(within(card).getByRole('button', { name: 'Not now' }))
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'How did it go?' })).toBeNull())
+    expect(useTodayStore.getState().morningAfterDismissed).toBe('2026-09-27')
+  })
+
+  it('not once that night is logged', async () => {
+    await saveMatchLog({ date: '2026-09-27', competition: 'night-comp', serviceGames: 5, doubleFaults: 2 })
+    renderAt(paths.today())
+    await screen.findByRole('heading', { name: 'Steady toss height' }, { timeout: 8000 })
+    await new Promise((r) => setTimeout(r, 200))
+    expect(screen.queryByRole('region', { name: 'How did it go?' })).toBeNull()
   })
 })

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { resetDbForTests } from '../../../data/db.ts'
+import { getDb, resetDbForTests } from '../../../data/db.ts'
 import { addVideo, createSession, getSetting, putServesWithTracksAndFrames, setSetting, setTag } from '../../../data/index.ts'
 import { useSettingsStore } from '../../../data/stores/settings.ts'
 import { paths } from '../../shell/paths.ts'
@@ -59,7 +59,25 @@ async function openCompare() {
 }
 
 describe('T3: the ghost overlay is Plus; side by side stays free', () => {
-  it('a free player sees "Ghost (Plus)" and gets the sheet naming it; the view stays side by side', async () => {
+  it('beta: Ghost opens straight away, with the non-blocking Plus preview and its one-tap price question', async () => {
+    const group = await openCompare()
+    fireEvent.click(await within(group).findByRole('radio', { name: 'Ghost' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Ghost overlay is part of Plus' }, { timeout: 8000 })
+    expect(within(screen.getByRole('radiogroup', { name: 'Compare view' })).getByRole('radio', { name: 'Ghost' })).toHaveAttribute('aria-checked', 'true')
+    expect(within(sheet).getByText(/Beta: this is unlocked for you/)).toBeInTheDocument()
+    const question = within(sheet).getByRole('radiogroup', { name: 'Would you pay A$99.99 a year for this?' })
+    fireEvent.click(within(question).getByRole('radio', { name: 'Maybe' }))
+    expect(await within(sheet).findByText(/Your answer is saved on this phone/)).toBeInTheDocument()
+    await waitFor(async () => {
+      const rows = await getDb().events.toArray()
+      expect(rows.find((e) => e.name === 'plus_wtp_answered')?.props).toEqual({ trigger: 't3', wtp: 'maybe', price: 'annual-99-99' })
+    })
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Continue' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /part of Plus/ })).toBeNull())
+  })
+
+  it('after the beta (the Plan screen test): a free player sees "Ghost (Plus)" and gets the sheet naming it; the view stays side by side', async () => {
+    await setSetting('entitlement', { tier: 'free', source: 'prototype', afterBetaTest: true })
     const group = await openCompare()
     fireEvent.click(await within(group).findByRole('radio', { name: 'Ghost (Plus)' }))
     expect(await screen.findByRole('dialog', { name: 'Ghost overlay is part of Plus' }, { timeout: 8000 })).toBeInTheDocument()

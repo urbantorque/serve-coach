@@ -516,8 +516,8 @@
     "value": 48,
     "truth": 45.7,
     "error": 2.299999999999997,
-    "low": 41.18828973370924,
-    "high": 54.72884909296933,
+    "low": 36.64067257832507,
+    "high": 59.587388517760694,
     "covered": true
    },
    {
@@ -527,11 +527,11 @@
     "metric": "contact-height-ratio",
     "status": "experimental",
     "reason": "VALIDATION_PENDING",
-    "value": 1.440408408919599,
+    "value": 1.4395996322662816,
     "truth": 1.4928,
-    "error": -0.05239159108040092,
-    "low": 1.3331737054469694,
-    "high": 1.5476431123922285,
+    "error": -0.05320036773371828,
+    "low": 1.3234784733626903,
+    "high": 1.555720791169873,
     "covered": true
    },
    {
@@ -550,11 +550,11 @@
     "variant": "audio",
     "metric": "rhythm-release-to-contact",
     "status": "estimated",
-    "value": 864,
+    "value": 865,
     "truth": 843.6,
-    "error": 20.399999999999977,
-    "low": 796.7707338783862,
-    "high": 931.4429789827836,
+    "error": 21.399999999999977,
+    "low": 790.8371514030001,
+    "high": 938.389347472341,
     "covered": true
    },
    {
@@ -698,9 +698,9 @@
     "set": "rear",
     "variant": "audio",
     "event": "contact",
-    "errorMs": 2.9248564305568436,
+    "errorMs": 3.431249437642503,
     "method": "fused",
-    "sigmaMs": 7.838610984790478,
+    "sigmaMs": 17.246187274170914,
     "fps": 60
    },
    {
@@ -810,15 +810,15 @@
     "toss-drop": {
      "status": "estimated",
      "value": 48,
-     "low": 41.18828973370924,
-     "high": 54.72884909296933
+     "low": 36.64067257832507,
+     "high": 59.587388517760694
     },
     "contact-height-ratio": {
      "status": "experimental",
      "value": 1.44,
      "reason": "VALIDATION_PENDING",
-     "low": 1.3331737054469694,
-     "high": 1.5476431123922285
+     "low": 1.3234784733626903,
+     "high": 1.555720791169873
     },
     "toss-lateral": {
      "status": "experimental",
@@ -829,9 +829,9 @@
     },
     "rhythm-release-to-contact": {
      "status": "estimated",
-     "value": 864,
-     "low": 796.7707338783862,
-     "high": 931.4429789827836
+     "value": 865,
+     "low": 790.8371514030001,
+     "high": 938.389347472341
     },
     "knee-bend-band": {
      "status": "experimental",
@@ -901,8 +901,8 @@
     },
     "contact": {
      "frameIndex": 152,
-     "tReal": 2.5316068564305567,
-     "uncertaintyS": 0.007838610984790478,
+     "tReal": 2.5321132494376424,
+     "uncertaintyS": 0.017246187274170915,
      "confidence": 1,
      "method": "fused"
     },
@@ -964,9 +964,9 @@
     "set": "rear",
     "variant": "injected",
     "metric": "toss-lateral",
-    "status": "experimental",
-    "reason": "VALIDATION_PENDING",
-    "value": 3,
+    "status": "unavailable",
+    "reason": "SCALE_INCONSISTENT",
+    "value": null,
     "truth": null
    },
    {
@@ -1279,11 +1279,9 @@
      "high": 1.5818028556794608
     },
     "toss-lateral": {
-     "status": "experimental",
-     "value": 3,
-     "reason": "VALIDATION_PENDING",
-     "low": -6.458731628615622,
-     "high": 11.759477401682753
+     "status": "unavailable",
+     "value": null,
+     "reason": "SCALE_INCONSISTENT"
     },
     "rhythm-release-to-contact": {
      "status": "estimated",

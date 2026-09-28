@@ -15,6 +15,7 @@ import {
   keyNumberLines,
   metricResult,
   NIGHT_WORDS,
+  RELATIVE_ONLY,
   rowDetail,
   STATE_SHORT,
   STATE_WORDS,
@@ -146,5 +147,16 @@ describe('validation words (DESIGN §3.2, §11; honesty rules)', () => {
     expect(rowDetail('toss-forward')).toMatch(/^Simulated check not passed yet\./)
     expect(rowDetail('serve-in-rate')).toBe('You log this.')
     expect(rowDetail('spin')).toMatch(/never estimate/)
+  })
+})
+
+describe('leg drive: a relative-only pass is explained, not left as "It hasn\'t passed yet" beside an Estimate (finding 50)', () => {
+  it('Metric info explains the steady low read and what the Estimate covers; How we measure agrees', () => {
+    const lines = keyNumberLines('leg-drive').join(' ')
+    expect(lines).not.toMatch(/It hasn't passed yet\./)
+    expect(lines).toMatch(/As an absolute number it hasn't passed yet/)
+    expect(lines).toMatch(/compare with your own serves/)
+    expect(RELATIVE_ONLY['leg-drive']?.result).toMatch(/your own serves only/)
+    expect(detailRows('leg-drive', 'd1').find((r) => r.label === 'Result')?.value).toMatch(/absolute/)
   })
 })

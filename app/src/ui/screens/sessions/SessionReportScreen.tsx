@@ -5,6 +5,7 @@ import { validationLevel } from '../../../analysis/metrics/catalogue.ts'
 import type { MetricId, MetricValue as MetricValueData, ReasonCode } from '../../../analysis/types.ts'
 import { REAR_ONLY_METRIC_IDS, SIDE_ONLY_METRIC_IDS } from '../../../analysis/types.ts'
 import { useLatestDecision, useProfile } from '../../../data/hooks.ts'
+import { deletedServesLine } from '../../../data/deletion.ts'
 import { useSettingsStore } from '../../../data/stores/settings.ts'
 import {
   Button,
@@ -34,6 +35,7 @@ import { metricInfoFor } from '../progress/insights/links.ts'
 import { FocusCard } from '../today/FocusCard.tsx'
 import { InsightCard, OutcomesSection } from './report/OutcomesSection.tsx'
 import { CaptureLine, ExperimentResultCard, StorageLine } from './report/ReportParts.tsx'
+import { RadarSpeedTile } from './report/RadarSpeedTile.tsx'
 import { ServeList } from './report/ServeList.tsx'
 import { SupportTiles } from './report/SupportTiles.tsx'
 import { TossHero } from './report/TossHero.tsx'
@@ -237,6 +239,12 @@ export function SessionReportScreen() {
         ) : null}
         {headline ? <p className="text-title-2 text-ink text-pretty">{headline}</p> : null}
         <CaptureLine quality={a.capture.quality} measured={counts.included} detected={counts.analysed} />
+        {stats?.deletedServeIds?.length ? (
+          <p className="flex items-start gap-1.5 text-footnote text-ink-2">
+            <InfoIcon size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
+            <span>{deletedServesLine(stats.deletedServeIds.length)}</span>
+          </p>
+        ) : null}
       </header>
 
       {shownDecision || exp ? (
@@ -284,6 +292,8 @@ export function SessionReportScreen() {
           representativeServeId={stats?.representativeServeId}
           sessionId={session.id}
         />
+        {/* A radar reading logged in Check this serve (player-entered, a peak speed with its source). */}
+        <RadarSpeedTile sessionId={session.id} rows={rows} />
         {moreIds.length ? (
           <div className="flex flex-col gap-3">
             <Button variant="tertiary" onClick={() => setMoreOpen((v) => !v)} aria-expanded={moreOpen} aria-controls="more-measurements" className="self-start">

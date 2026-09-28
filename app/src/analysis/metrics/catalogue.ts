@@ -196,7 +196,7 @@ export const UNLOCK_HINTS: Record<ReasonCode, string> = {
   NEEDS_CALIBRATION: 'Tap the four corners of the service box.',
   CAMERA_MOVED: 'Fix the phone firmly; it moved during recording.',
   CAMERA_TILTED: 'Keep the phone level; the guide turns green.',
-  PITCH_UNKNOWN: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.",
+  PITCH_UNKNOWN: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount can keep contact height as an estimate.",
   SCALE_INCONSISTENT: 'Check your height in Profile. If this was slow motion, import the original.',
   IMPLAUSIBLE_VALUE: 'This reading looked wrong, so we left it out.',
   CHECK_THIS_SERVE: 'This one looks unusual. Check this serve?',
@@ -215,7 +215,7 @@ export const UNLOCK_HINTS: Record<ReasonCode, string> = {
   UNMATCHED: 'Compare sessions from the same side, view, set-up and serve.',
   NEEDS_SIDE_VIEW: 'Film from the side, on your hitting-arm side, to see this.',
   NEEDS_REAR_VIEW: 'Add a phone behind you to see this.',
-  TILT_UNKNOWN: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount keeps heights as estimates.",
+  TILT_UNKNOWN: "Record in the app, which reads the phone's tilt once you allow it, or answer “How was the phone mounted?” when you import. A level mount can keep contact height as an estimate.",
   EXCLUDED_BY_QUALITY: 'This reading looked wrong, so we left it out.',
 }
 
@@ -251,19 +251,22 @@ const V1_DAY: Partial<Record<ConditionClass, ValidationLevel>> = { day: 'V1', ov
  * V0 for every metric: the corpus has night renders at 240 fps only, and pose-derived metrics are
  * night-capped until the S4 cells pass.
  *
- * Passed (V1): serve-count, toss-apex-height and contact-height-ratio (D1 distances only; closer
- * than 6 m they are capped at experimental per serve). toss-apex-height is a LIMITED pass: with
- * truth landmarks (the 'injected', method-only variant) the D1 set gives median 4.1% and p95 5.6% of
- * height, which fails the gate (median ≤ 2.5%, p95 ≤ 5%). The app-pipeline pass (median 1.1%, p95
- * 2.7%) relies on MediaPipe's ~3% high head/floor reading cancelling the depth prior's
- * over-correction (the renders put the toss 0.09–0.21 m nearer the camera, the prior 0.30 m). Neither
- * bias is confirmed on real players; a V2 real-footage check must confirm the cancellation. Until
- * then the method-only p95 sets its assumed-level budget below. contact-height-ratio passes with truth
- * landmarks too (MAE 2.5%, p95 3.9%). Also: toss-drop, rhythm-release-to-contact
- * (≥ 45 fps; 30 fps is capped per serve), leg-drive (method MAE 0.6% with injected noise; MediaPipe
- * reads about 2% of height low, a persistent bias), loading-depth, and the spreads
- * toss-height-spread, toss-forward-spread, contact-height-spread, rhythm-spread (one 8-serve block
- * plus per-serve error analysis; the S9 variability family is not rendered yet).
+ * Passed (V1): serve-count and contact-height-ratio (D1 distances only; closer than 6 m it is
+ * capped at experimental per serve; it passes with truth landmarks too, MAE 2.5%, p95 3.9%), toss-drop,
+ * rhythm-release-to-contact (≥ 45 fps; 30 fps is capped per serve), leg-drive (method MAE 0.6% with
+ * injected noise; MediaPipe reads about 2% of height low, a persistent bias), loading-depth, and the
+ * spreads toss-height-spread, toss-forward-spread, contact-height-spread, rhythm-spread (one 8-serve
+ * block plus per-serve error analysis; the S9 variability family is not rendered yet).
+ *
+ * V1 is gated on the method-only ('injected': truth landmarks with planning noise) variant as well as
+ * the app pipeline (finding 41, 2026-09-28). toss-apex-height passes the app pipeline at D1 (median
+ * 1.1%, p95 2.7% of height) but fails with truth landmarks (median 4.1%, p95 5.6%, against median ≤
+ * 2.5%, p95 ≤ 5%): the app-pipeline pass rests on MediaPipe's ~3% high head/floor reading cancelling
+ * the depth prior's over-correction (the renders put the toss 0.09–0.21 m nearer the camera, the prior
+ * 0.30 m), and neither bias is confirmed on real players. So toss-apex-height stays V0 (experimental,
+ * VALIDATION_PENDING) until a V2 real-footage check confirms it. Its spread (toss-height-spread) is
+ * a within-session SD, where a persistent bias cancels, and keeps V1: toss height's relative use
+ * (statusIfLevel) is still estimated.
  *
  * Failed (V0): toss-forward and contact-forward (MAE 5.3–6.7 cm against 5–6 cm: MediaPipe's foot
  * point sits behind the toe), drive-time (flat hip minimum: MAE 64–75 ms against 50), landing-distance
@@ -273,7 +276,6 @@ const V1_DAY: Partial<Record<ConditionClass, ValidationLevel>> = { day: 'V1', ov
  */
 export const VALIDATION_LEVELS: Partial<Record<MetricId, Partial<Record<ConditionClass, ValidationLevel>>>> = {
   'serve-count': V1_DAY,
-  'toss-apex-height': V1_DAY,
   'toss-drop': V1_DAY,
   'contact-height-ratio': V1_DAY,
   'rhythm-release-to-contact': V1_DAY,
@@ -295,13 +297,14 @@ export const MIN_VALIDATED_DISTANCE_M = 6
  *   √(measuredP95² + (1.96·σ_tilt)²) ≤ p95Threshold   (ratio of standing height)
  * p95Threshold: METRICS §3.2 (p95 ≤ 5% of standing height) and §3.8 (p95 ≤ 0.05). measuredP95: the
  * synthetic worst-5% error at the D1 distances (validation/results/metrics/SUMMARY.md, 2026-09-27),
- * the larger of the app-pipeline and the method-only (truth landmarks) variants: toss-apex-height's
- * app-pipeline p95 (0.027) rests on two biases cancelling (VALIDATION_LEVELS above), so its method-only
- * p95 (0.056) is used, and an assumed level never keeps toss height estimated.
+ * the larger of the app-pipeline and the method-only (truth landmarks) variants: contact height
+ * 0.020 (app pipeline) and 0.039 (method-only), so 0.039. toss-apex-height is V0 (VALIDATION_LEVELS
+ * above) and experimental whatever the mount; its entry keeps its method-only p95 (0.056) so the
+ * widened range stays honest if it reaches V1.
  */
 export const ASSUMED_LEVEL_HEIGHT_BUDGET: Partial<Record<MetricId, { p95Threshold: number; measuredP95: number }>> = {
   'toss-apex-height': { p95Threshold: 0.05, measuredP95: 0.056 },
-  'contact-height-ratio': { p95Threshold: 0.05, measuredP95: 0.02 },
+  'contact-height-ratio': { p95Threshold: 0.05, measuredP95: 0.039 },
 }
 /** Planning horizontal offset of the ball from the floor reference when the image gives none (m) [Our inference]. */
 export const ROLL_OFFSET_DEFAULT_M = 0.5
