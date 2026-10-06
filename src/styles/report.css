@@ -878,11 +878,86 @@
   color: var(--fg-muted);
 }
 
+/* The dose on the left and "Show me" on the right, one row: the two things a
+   player does with a drill, side by side. */
+.focus-drill-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 11px;
+}
+
+/* The same quiet lime text button as "Change" on the level line, with the
+   same 44px hit area grown from the middle — see `.levelled-btn::after`. */
+.drill-show {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  gap: 3px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lime);
+}
+
+.drill-show::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+@media (hover: hover) {
+  .drill-show:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* The chevron points down when the demonstration is open, as a disclosure. */
+.drill-show[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+
+.fault-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* Which half is which, under the picture rather than painted into it, so the
+   words stay text a screen reader and the copy lint can both read. */
+.fault-demo-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: -4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* Holds the player's place while the rig is loading, so the box below the
+   drill does not jump when the picture arrives. Square, as the rig draws. */
+.fault-demo-wait {
+  aspect-ratio: 1;
+  max-height: 68svh;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
+}
+
 /* The dose, as the one lime object inside the drill box — the thing you go and
    do, sized like a count rather than a heading. */
 .focus-reps {
   display: inline-block;
-  margin-top: 11px;
   padding: 5px 11px;
   border-radius: var(--r-pill);
   background: var(--lime-glow);

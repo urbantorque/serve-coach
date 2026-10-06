@@ -8,6 +8,8 @@ import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
+import FaultDemoPanel from '../components/FaultDemoPanel'
+import { hasDemo } from '../lib/faultDemoDials'
 import TrackPlayer from '../components/TrackPlayer'
 import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
 import { pairTracks } from '../lib/trackPair'
@@ -218,6 +220,8 @@ export default function Report({
    */
   const [saved, setSaved] = useState<{ file: string; gaps: string[] }>()
   const [pickingLevel, setPickingLevel] = useState(false)
+  /** Whether the top fix is being shown moving — see `FaultDemoPanel`. */
+  const [showingFault, setShowingFault] = useState(false)
   /*
    * Hiding the spreads, not deleting them.
    *
@@ -578,7 +582,26 @@ export default function Report({
           <span className="t-overline focus-drill-kicker">The drill</span>
           <h3 className="t-subhead">{plan[0].drill.name}</h3>
           <p>{plan[0].drill.how}</p>
-          <span className="focus-reps">{plan[0].drill.reps}</span>
+          <div className="focus-drill-foot">
+            <span className="focus-reps">{plan[0].drill.reps}</span>
+            {/* Only for a fault the rig can pose and the engine names on it —
+                see `faultDemoDials.ts`. A fallback focus from the ranking has
+                no fault behind it, and neither does a report saved before the
+                focus carried one. */}
+            {hasDemo(plan[0].flaw) && (
+              <button
+                className="drill-show"
+                onClick={() => setShowingFault((v) => !v)}
+                aria-expanded={showingFault}
+              >
+                {showingFault ? 'Hide' : 'Show me'}
+                <Icon name="chevron" size={13} />
+              </button>
+            )}
+          </div>
+          {showingFault && hasDemo(plan[0].flaw) && (
+            <FaultDemoPanel flaw={plan[0].flaw} racket={analysis.handedness} />
+          )}
         </div>
 
         {/*

@@ -2,6 +2,8 @@ import type { ServeType } from '../storage/prefs'
 import type { BallFlight, TossFlight } from '../vision/ballTrack'
 import type { Consistency } from './consistency'
 import type { Diagnosis } from './diagnose'
+import type { FlawId } from './flaws'
+import type { BodyAxis } from './axes'
 import type { RacketEstimate } from './racket'
 import type { Triage as TriageResult } from './triage'
 import type { KeyframePoses, SwingTrack } from '../storage/poseTrack'
@@ -166,8 +168,14 @@ export interface Analysis {
   fundamentals: Fundamental[]
   overall: number
   overallStatus: Status
-  /** The single thing to work on next. */
-  focus: { title: string; why: string; drill: Drill }
+  /**
+   * The single thing to work on next.
+   *
+   * `flaw` and `axis` name the fault it came from, when it came from one —
+   * absent for the measurement-ranking fallback and for every report saved
+   * before they were carried. Only the fault demonstration reads them.
+   */
+  focus: { title: string; why: string; drill: Drill; flaw?: FlawId; axis?: BodyAxis }
   /**
    * The six keyframes as a tracked body — see `storage/poseTrack.ts`.
    *

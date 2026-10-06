@@ -709,6 +709,26 @@ do not. That card is one serve; a pair is a statement about a set of them, and
 half a comparison shared without its dates or serve numbers is a picture of two
 serves with nothing saying which is which.
 
+**Show me the fault.** Under the top drill, "Show me" plays two model serves
+side by side on one clock: the same serve with the fault and without it. Both
+come from the synthetic rig (`lib/faultDemo.ts`), built on the phone when asked,
+so no footage is stored or downloaded. A left-hander sees left-handed bodies.
+
+Each demonstration has to earn its place twice (`faultDemo.test.ts`). The engine
+must name the fault on the left body and not on the right. The two bodies must
+also differ by at least a tenth of body height at the moment the fault is judged,
+because two identical figures under "this fault" and "the fix" teach nothing.
+Five faults pass: the tray grip, the posture collapse, the collapsed elbow, the
+shallow drop and the low contact. Three were built, measured and left out. The
+hip-before-shoulder timing fault is never more than 0.016 body heights apart. An
+early shoulder turn faces the lens on a side-on camera. And a toss that wanders
+is about a ball the drawing does not show.
+
+Side by side rather than as a dashed ghost under the fault, which was tried
+first. That ghost is dim on purpose and drawn from the hips up, and two bodies a
+fault apart overlap almost everywhere, so the one difference was the hardest
+thing on screen to see.
+
 **What to practise.** Any single report picks the weakest thing in that serve,
 which on a given day might just be the serve you happened to film. Across trips
 to the court the app looks for the thing that is *still* wrong — ranked by lowest

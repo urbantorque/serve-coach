@@ -247,11 +247,15 @@ this first.
       `measure()` without a ball, so the ball metrics escape every replay.
       *Proof:* the replay suite and clipbench carry `tossPeakHeight` and
       `contactBelowPeak`.
-- [ ] **D1.6 The small engine defects** (`ANALYSIS-REVIEW.md` F8) · M. Skip
-      missing Kalman slots instead of feeding a stale value. Measure blur in a
-      window round contact, not over the whole serve. Scale the serve finder's
-      tolerance to body height. Give yaw one formula. Take gravity from the
-      measured height, not 1.78 m. *Proof:* one dialled check each.
+- [~] **D1.6 The small engine defects** (`ANALYSIS-REVIEW.md` F8) · M.
+      *Gap fill — done:* a lost sample is now filled by a cubic through two
+      measured samples either side. One lost sample at the drop or contact at
+      30 fps: 0.07 → 0.014 body heights. Making the filter coast, as F8
+      proposed, was tried and measured worse (0.09–0.12). *Gravity — already
+      fine:* the ball tracker accepts ±55% of the expected gravity, so the
+      1.78 m assumption moves nothing. *Blur window — left alone:* the
+      whole-serve median is a deliberate, measured choice (`triage.ts`), not
+      an oversight. Still open: serve-finder tolerance, one yaw formula.
 
 ### Wave D2 — One serve, judged once, by cited standards
 Clean up the judgement before new readings are added to it.
@@ -301,14 +305,16 @@ already has dials for D3.2–D3.4; until now nothing read them.
       at the knee trough — the published amateur signature (WTA 2026), readable
       side-on. Joins the sequence group. *Proof:* new rig dial for arm timing,
       ensemble.
-- [ ] **D3.6 Side-on trunk rotation** · M. Shoulder span over hip span through
+- [ ] **D3.6 Side-on trunk rotation** · M. *Research caution:* no published
+      validation, and the width ratio is least sensitive at the trophy. Report
+      timing and order, never degrees. Shoulder span over hip span through
       trophy → contact needs no depth, so `early_shoulder_rotation` can fire on
       the recommended angle instead of lying dormant. *Proof:* `shoulderYaw`/`hipYaw`
       sweep at 82–90° camera yaw; plausibility on bench frames.
-- [ ] **D3.7 Swing direction at contact** · S, after D1.2. The racket hand's
-      velocity over contact ± 2 native-rate samples: brushing up the ball or
-      driving through it. The core of a second serve. *Proof:* rig kick vs flat
-      swing paths.
+- [!] **D3.7 Swing direction at contact** — dropped. The methods research
+      (`.scratch/research-methods.md` §9; Sheets 2011) puts the kick-vs-flat
+      difference in the racket's sideways path, which is depth on a side-on
+      camera. Kick is cued from toss and contact placement instead.
 - [ ] **D3.8 The order the body fires in** · M, after D1.2. Legs → trunk → arm
       peak times (`legs_peak_ms`, `wrist_peak_ms`, `chain_span_ms`, all
       `UNCALIBRATED` today) drawn as a timeline. Graded on order only, per
@@ -329,12 +335,12 @@ the coaching around it.
       easier version, the common mistake, and a pass mark the app can check
       (`{ metricId, threshold, ofServes }`). Written for every reachable fault,
       under `voice.ts`. *Proof:* type-level totality over `FlawId`; copy lint.
-- [ ] **D4.2 "Show me" from the rig** · M. Each fault maps to a rig dial, so the
-      app can build that fault and the clean serve on the device and play them
-      side by side in `TrackPlayer`. A demo for every fault with no video
-      assets, no download, no licence. *Proof:* every `FlawId` has a dial that
-      the engine reads back as that fault — the demo cannot show what it would
-      not detect.
+- [x] **D4.2 "Show me" from the rig** · M. Two model serves, side by side
+      on one clock, under the top drill. Five faults pass both proofs (named by
+      the engine; at least 0.1 body heights apart at the judged moment). Three
+      were measured and dropped as invisible on a stick figure: hip-before-
+      shoulder timing, early shoulder turn and toss drift. A dashed overlay was
+      tried first and was unreadable.
 - [ ] **D4.3 Check my drill** · M. Film a basket in drill mode; only the focus
       measurement is scored against its pass mark, serve by serve. Pass moves
       you up a step; a miss offers the easier version. Extends the `practice`
@@ -382,10 +388,7 @@ The outcome taps already exist and nothing reads them.
       the existing storage pressure rules, so a saved report replays real video
       and before/after can be played side by side. *Proof:* storage tests at
       each pressure tier; nothing written without the opt-in.
-- [ ] **D6.5 Suggest the serve type** · S, after D3.1 and D3.7. Offer
-      "Looks like a kick" from toss placement and swing direction, never
-      silently applied. *Proof:* rig kick/flat sweep; ambiguous zone says
-      nothing.
+- [!] **D6.5 Suggest the serve type** — dropped with D3.7.
 - [ ] **D6.6 Progress by fault** · S. Trends per named fault and per
       progression step, beside the per-measurement charts. *Proof:* seeded
       history.

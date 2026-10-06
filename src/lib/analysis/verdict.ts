@@ -464,6 +464,8 @@ function focusFor(
     title: overshot ? (copy.highTitle ?? copy.title) : copy.title,
     why: cue(overshot ? copy.high : copy.low),
     drill,
+    flaw,
+    ...(axis ? { axis } : {}),
   }
 }
 
