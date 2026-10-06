@@ -374,6 +374,12 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     title: 'Your shoulders open too early',
     low: 'Your chest turns to the court before your hips do, so the legs and trunk add nothing to the swing.',
   },
+  no_leg_drive: {
+    title: 'Your legs sit the serve out',
+    low: 'Your hips barely rise between the knee bend and the hit, so your arm does the work your legs should.',
+  },
+  // Not named any more — see `arming_the_ball` in flaws.ts. Kept for the reports
+  // that were filed with it.
   arming_the_ball: {
     title: 'The arm goes first',
     low: 'Your shoulders fire before your hips, so the serve runs on arm strength and the speed stops there.',

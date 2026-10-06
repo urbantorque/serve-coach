@@ -922,6 +922,11 @@ export function diagnose(
       tossPeak === undefined
         ? undefined
         : { value: tossPeak, confidence: clamp(options.ball?.confidence ?? 0, 0, 1) },
+    // The hips rising from the deepest load to contact: the legs' share of the
+    // serve, read from image y, which is vertical at every angle the app takes.
+    // Graded since the research gave it a scale — see its band in `tiers.ts`.
+    leg_drive_rise_ratio:
+      legDrive.rise === null ? undefined : { value: legDrive.rise, confidence: legDrive.confidence },
   }
 
   const signals: Record<string, number> = {}

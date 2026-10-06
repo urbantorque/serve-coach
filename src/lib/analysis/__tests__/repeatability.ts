@@ -211,11 +211,9 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   // consumer that prints it has to know — see the print sites in `depth.test.ts`.
   const offset = d.landing?.offset
   if (typeof offset === 'number' && Number.isFinite(offset)) out.landing_offset_ratio = offset
-  // The fourth, and the only one in this bag that is indifferent to where the
-  // camera stood — it is read from image y, and vertical is vertical at every
-  // angle the app accepts. Dimensionless like the two above it.
-  const rise = d.legDrive?.rise
-  if (typeof rise === 'number' && Number.isFinite(rise)) out.leg_drive_rise_ratio = rise
+  // The leg-drive rise used to be the fourth entry here. It is graded now and
+  // arrives through `signals` with the other graded readings — see its band
+  // in `tiers.ts` — so carrying it here as well would declare it ungraded too.
   // The fifth, and unlike the one above it this one is a depth reading: a joint
   // angle cannot be had from a single axis. It arrives through this door for the
   // reason every other measurement does — the "declared uncalibrated ⟺ actually

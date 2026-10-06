@@ -173,6 +173,37 @@ export const SIGNALS: Record<string, SignalSpec> = {
     anchors: { 3: [12, 200], 5: [20, 200], 7: [28, 200], 9: [36, 200] },
     seriousMiss: 16,
   },
+  /*
+   * How far the hips rise from the deepest load to contact, in standing
+   * heights, read from image y.
+   *
+   * GRADED SINCE THE RESEARCH GAVE IT A SCALE. It sat in `UNCALIBRATED` as the
+   * best-conditioned reading in the engine with nothing to grade it against.
+   * Professionals' centre of mass rises 15.8 ± 3.4% of height from its lowest
+   * point to impact (Deghaies et al. 2026, J Hum Kinet, 22 ATP players), and a
+   * serve with no leg drive cost about a tenth of racket speed while saving the
+   * shoulder nothing (Reid, Elliott & Alderson 2008, MSSE 40:308). The hip
+   * centre tracks the centre of mass closely through a vertical drive.
+   *
+   * ITS ZERO IS 0.0457 (`LEG_DRIVE_FLOOR`). A player who never leaves the ground
+   * still rises, because straightening out of the knee bend lifts the hips. So
+   * the bottom rung sits just above that floor — the serve that only
+   * straightens — and every rung stays below the professional mean less one
+   * deviation (0.124): nobody here is asked for a tour jump.
+   *
+   * IT TRACKS ITS DIAL. Swept against `contactHipHeight` across eight seeds: 0.95
+   * (planted) reads 0.0457, 1.02 reads 0.0866, 1.10 reads 0.1333, 1.18 reads
+   * 0.1786 — near one to one, deviation flat at 0.004–0.005, identical to four
+   * decimals at 45° and 82°, because vertical is vertical for every camera the
+   * app accepts.
+   */
+  leg_drive_rise_ratio: {
+    id: 'leg_drive_rise_ratio',
+    unit: 'ratio',
+    direction: 'higher',
+    anchors: { 3: [0.05, 0.4], 5: [0.07, 0.4], 7: [0.09, 0.4], 9: [0.11, 0.4] },
+    seriousMiss: 0.04,
+  },
   contact_height_ratio: {
     id: 'contact_height_ratio',
     unit: 'ratio',
@@ -335,6 +366,8 @@ export const NOISE_FLOOR: Record<string, number> = {
   elbow_lift_ratio: 0.012,
   contact_height_ratio: 0.012,
   toss_peak_ratio: 0.02,
+  // One and a half of its ensemble deviation, 0.006, rounded up to the next hundredth.
+  leg_drive_rise_ratio: 0.01,
 }
 
 /**
@@ -593,48 +626,6 @@ export const UNCALIBRATED: Record<string, string> = {
    * what a club player's number should be, and the rig cannot be asked, because
    * every one of its tracks hangs off a single normalised phase schedule.
    */
-  /*
-   * Peak leg drive's missing half, and the reason that entry stays where it is.
-   *
-   * `legs_peak_ms` times the drive and cannot measure it. This measures it: hip
-   * centre rise from the trophy to contact, in body heights, read from image y.
-   *
-   * IT TRACKS THE DIAL, WHICH IS WHAT `legs_peak_ms` FAILED. Swept against
-   * `contactHipHeight` across eight seeds:
-   *
-   *     dialled hip height   rise     deviation
-   *          0.95 (planted)  0.0457     0.0037
-   *          1.02            0.0866     0.0038
-   *          1.10            0.1333     0.0039
-   *          1.18            0.1786     0.0051
-   *
-   * Near one-to-one in body heights, deviation flat, and about ten deviations
-   * between adjacent steps. **Identical to four decimals at 45° and 82°** — the
-   * most camera-indifferent reading in this engine, because vertical is vertical
-   * for every camera the app accepts.
-   *
-   * SO WHY IS IT HERE. The ordinary reason this register exists: nothing in this
-   * repo knows what a club player's rise should be. A tour serve leaves the
-   * ground and a good club serve often does not, and neither is a fault. The rig
-   * cannot be asked — its dial is a number somebody chose — and there is no
-   * footage. Being well conditioned is what a quantity needs *before* a band
-   * could exist; it is not a band.
-   *
-   * AND ITS ZERO IS 0.0457. A player who never leaves the ground still rises,
-   * because they straighten out of the trophy knee bend and the hips travel with
-   * them. Anything built on this calibrates against that floor — the same
-   * warning `LandingBalance.offset` carries for a different reason.
-   */
-  leg_drive_rise_ratio:
-    // Was 0.004, from R51·1, and it had drifted to 0.0059 by the time R85 built
-    // the check that compares this entry against the ensemble. Nothing between
-    // the two rounds was about the leg drive; a recorded figure simply stopped
-    // being true, which is the fourth time this loop has found one — after a
-    // 315 ms jump that was never reproducible, a landing floor 29% off, and a
-    // tempo confound measured at the wrong smoothing radius.
-    'measured and not named: tracks its dial near one-to-one, deviation 0.006, ' +
-    'identical at 45° and 82° — and nothing here knows what a club player rise ' +
-    'should be. Zero is 0.0457, not 0: straightening lifts the hips too.',
 
   /*
    * How much of the trophy's knee bend was spent by contact.

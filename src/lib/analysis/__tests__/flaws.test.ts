@@ -143,14 +143,24 @@ check('the waiter’s tray is caught, and the grip flag follows it', () => {
   note(`palm elevation ${clean.grip.palm_to_sky_deg} clean, ${tray.grip.palm_to_sky_deg} tray`)
 })
 
-check('arming the ball is caught from the order the two lines fire in', () => {
+check('the order the two lines fire in is measured, and no longer named', () => {
+  // Retired as a named fault on the research — see `arming_the_ball` in
+  // flaws.ts. The measurement still has to work: it is data, and it is shown.
   const clean = run({}, 5).diagnosis
   assert(clean.sequence.lead_ms > 0, `hips did not lead on a clean serve: ${clean.sequence.lead_ms}`)
 
   const armed = run({ hipLead: -0.09 }, 5).diagnosis
   assert(armed.sequence.lead_ms < 0, 'the shoulders firing first was not seen')
-  assert(flagged(armed).includes('arming_the_ball'), `arming missed: ${flagged(armed).join(', ')}`)
+  assert(!flagged(armed).includes('arming_the_ball'), 'the retired fault was named')
   note(`lead ${clean.sequence.lead_ms}ms clean, ${armed.sequence.lead_ms}ms armed`)
+})
+
+check('legs that never lift the body are caught from the hips', () => {
+  const clean = run({}, 5).diagnosis
+  assert(!flagged(clean).includes('no_leg_drive'), 'a driving serve was told its legs sat out')
+  const planted = run({ contactHipHeight: 0.95 }, 5).diagnosis
+  assert(flagged(planted).includes('no_leg_drive'), `planted serve missed: ${flagged(planted).join(', ')}`)
+  note(`rise ${clean.signals.leg_drive_rise_ratio} driving, ${planted.signals.leg_drive_rise_ratio} planted`)
 })
 
 check('both rotation peaks land before contact, where the swing is', () => {
@@ -266,10 +276,13 @@ check('root causes are listed ahead of the symptoms they explain', () => {
   // three milliseconds. -90 is kept anyway: a fixture sitting that close to a
   // floor is one re-derivation away from testing the floor instead of the
   // ordering it is here for.
-  const { diagnosis } = run({ shoulderYaw: 60, hipYaw: 56, hipLead: -0.09 }, 5)
+  // The pair used to be early rotation and arming the ball; arming is no
+  // longer named, so the elbow and the drop it shortens stand in — the same
+  // causal link, measured on the same serve.
+  const { diagnosis } = run({ dropBelowShoulder: 0.05 }, 5)
   const order = diagnosis.flaws.filter((f) => f.detected).map((f) => f.flaw)
-  const cause = order.indexOf('early_shoulder_rotation')
-  const symptom = order.indexOf('arming_the_ball')
+  const cause = order.indexOf('collapsed_elbow')
+  const symptom = order.indexOf('shallow_drop')
   assert(cause >= 0 && symptom >= 0, 'the pair under test did not both fire')
   assert(cause < symptom, 'the symptom was listed ahead of its own cause')
 })

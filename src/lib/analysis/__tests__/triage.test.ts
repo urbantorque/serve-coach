@@ -435,8 +435,15 @@ check('a symptom is never chosen over the cause it was attributed to', () => {
 })
 
 check('the swing is reached once the foundations are sound', () => {
-  const { result } = pipeline({ hipLead: -0.09 })
+  const { result } = pipeline({ shoulderYaw: 60, hipYaw: 56 })
   assert(result.primary_flaw?.group === 'sequence', `chose ${result.primary_flaw?.group}`)
+})
+
+check('legs come straight after the toss, ahead of the drop', () => {
+  // Kovacs's order: the release, then the load. A serve that never drives and
+  // also drops short is sent to its legs first.
+  const { result } = pipeline({ contactHipHeight: 0.95, dropBelowShoulder: 0.05 })
+  assert(result.primary_flaw?.group === 'legs', `chose ${result.primary_flaw?.group}`)
 })
 
 check('a clean serve at its own level is handed nothing to fix', () => {

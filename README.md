@@ -760,6 +760,26 @@ first. That ghost is dim on purpose and drawn from the hips up, and two bodies a
 fault apart overlap almost everywhere, so the one difference was the hardest
 thing on screen to see.
 
+**"The arm goes first" is retired, and "your legs sit the serve out" replaces it.**
+The old fault graded whether the hips turned before the shoulders. The research
+says that order is not the fault it looks like. Olympic servers' upper torsos
+peak before their pelvis (Fleisig 2003). In 347 professional serves, segment
+order did not predict ball speed (van Trigt 2024). And the reading's own noise
+floor was above the miss it called serious. It is still measured and shown; it
+is no longer named.
+
+What the evidence does tie to an arm-only serve is legs that do not lift the
+body into the ball. A serve with no leg drive cost about a tenth of racket speed
+and saved the shoulder nothing (Reid, Elliott & Alderson 2008), and
+professionals' centre of mass rises 15.8 ± 3.4% of height from its lowest point
+to impact (Deghaies 2026). The engine already measured the hips' rise from the
+trophy to contact, the steadiest reading it has: vertical is vertical from every
+camera, and it varies by 0.006 between filmings. It sat ungraded only because
+nothing gave it a scale, and now something does. `no_leg_drive` grades it on a
+ladder that starts just above a serve that only straightens (0.05) and stays
+under the professional mean less one deviation at the top (0.11). It sits in
+the fix order straight after the toss, which is Kovacs's priority.
+
 **Every drill is a rung on a ladder.** The drill under the top fix says which
 step it is ("step 3 of 5"), and "All steps" opens the rest. You get one thing to
 feel, the steps from most guided to most like a match, an easier way in, the

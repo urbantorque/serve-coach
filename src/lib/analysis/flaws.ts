@@ -32,6 +32,7 @@ import {
 export type FlawId =
   | 'waiters_tray'
   | 'arming_the_ball'
+  | 'no_leg_drive'
   | 'early_shoulder_rotation'
   | 'posture_collapse'
   | 'toss_drift'
@@ -120,7 +121,29 @@ export const FLAWS: FlawSpec[] = [
   // Arming is the timing fault. When the coil is already gone at the trophy,
   // the shoulders firing first is that same collapse showing up a moment later
   // rather than a second thing to fix.
-  { flaw: 'arming_the_ball', signal: 'hip_lead_ms', causedBy: 'early_shoulder_rotation' },
+  /*
+   * Measured and no longer named. It graded whether the hips turned before the
+   * shoulders, and the research says that order is not the fault it looks like:
+   * in Fleisig 2003 the upper torso peaks before the pelvis in Olympic servers,
+   * and in a 2024 IMU study of professionals (van Trigt, Front Sports Act Living
+   * 6:1463299) pelvis and trunk peaks were often reversed and their timing was
+   * not associated with ball speed. Its own noise floor (76 ms) was already
+   * above the 45 ms it called serious — see `UNDER_RESOLVED.hip_lead_ms`. What
+   * the evidence does tie to an arm-only serve is legs that do not drive, which
+   * is `no_leg_drive` below. Kept, so old reports keep their findings.
+   */
+  {
+    flaw: 'arming_the_ball',
+    signal: 'hip_lead_ms',
+    causedBy: 'early_shoulder_rotation',
+    notNamed: 'see UNDER_RESOLVED.hip_lead_ms; segment order does not predict serve speed (van Trigt 2024)',
+  },
+  // The arm doing the work because the legs did not lift the body into the
+  // ball. Serving with no leg drive cost about a tenth of racket speed and saved
+  // the shoulder nothing (Reid, Elliott & Alderson 2008); professionals' centre
+  // of mass rises 15.8 ± 3.4% of height from the lowest point to impact
+  // (Deghaies 2026). Read as the hips rising from the trophy to contact.
+  { flaw: 'no_leg_drive', signal: 'leg_drive_rise_ratio' },
   { flaw: 'toss_drift', signal: 'toss_drift_ratio' },
   // A spine that folds sideways is usually a body chasing a ball that did not
   // go where the last one did. Told on its own it reads as "stand up

@@ -275,7 +275,10 @@ Clean up the judgement before new readings are added to it.
 - [ ] **D2.4 Serve type reaches the diagnosis** · S. `diagnose()` takes
       `serveType`, so a good kick contact cannot become a `low_contact` focus.
       *Proof:* rig kick serve, flat and kick verdicts compared.
-- [ ] **D2.5 Replace the strict hips-first rule** · S. `arming_the_ball` becomes
+- [x] **D2.5 Replace the strict hips-first rule** · S. *Done differently, on the
+      research: hips-first is measured and no longer named, and a new
+      `no_leg_drive` grades the hips' rise (Deghaies 2026, Reid 2008), placed
+      after the toss in the fix order. Original plan:* `arming_the_ball` becomes
       "trunk before arm", which the IMU study supports; the pelvis-vs-trunk order
       stays measured and ungraded. *Proof:* `hipLead` sweep stops naming a fault.
 

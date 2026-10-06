@@ -296,37 +296,37 @@ check('no floor is quietly set below what its own repeatability asks for', () =>
   if (unchecked.length) note(`  floors this ensemble never exercised: ${unchecked.join(', ')}`)
 })
 
-check('the sequencing detector that was kept still tells a gross fault from none', () => {
+check('the sequencing detector that was dropped stays measured and stays silent', () => {
   /*
-   * What earns `arming_the_ball` its place, stated as the measurement rather
-   * than as an opinion. `hip_lead_ms` is under-resolved and the decision taken
-   * was to keep it at an honest floor — 85 ms then, 76 now that the trunk pair
-   * is smoothed over a window measured in seconds — on the grounds that it still
-   * separates a grossly armed serve from a clean one. If that stops being true
-   * the flaw has to go, and this is what would say so.
-   *
-   * Rates rather than single clips, because a single clip is exactly how this
-   * escaped notice: filmed once, noiseless, the detector looks perfect.
-   *
-   * The margins are wide on purpose. Twenty-four draws read 0% and 83% here,
-   * and sixty draws of the same ensemble read 2% and 78% — which is the spread
-   * you get on a rate from two dozen samples, not a change in the engine. The
-   * bounds are set at 15% and 50% so that an unlucky ensemble passes and a
-   * detector that has actually come apart does not, because a test that fails
-   * on luck is a test people learn to re-run rather than read.
+   * `arming_the_ball` used to earn its place here by separating a grossly
+   * armed serve from a clean one on the rig, which it did. What retired it was
+   * not the rig but the research: the order the pelvis and trunk peak in is not
+   * associated with serve speed in professionals (van Trigt 2024), and the trunk
+   * often peaks first even in Olympic servers (Fleisig 2003). A detector that
+   * grades a pattern the best servers break is grading the wrong thing, however
+   * cleanly it measures it. So the number stays, and the player never hears it.
    */
-  const clean = namedOn(realise(), 'arming_the_ball')
-  const gross = namedOn(realise({ hipLead: -0.12 }), 'arming_the_ball')
-  note(`  arming named on ${(clean * 100).toFixed(0)}% clean, ${(gross * 100).toFixed(0)}% grossly armed`)
+  const gross = realise({ hipLead: -0.12 })
+  const named = namedOn(gross, 'arming_the_ball')
+  note(`  arming named on ${(named * 100).toFixed(0)}% of grossly armed serves (should be none)`)
+  assert(named === 0, `the retired detector still named itself on ${(named * 100).toFixed(0)}%`)
+  const measured = gross.filter((r) => Number.isFinite(r.signals.hip_lead_ms)).length
+  assert(measured >= gross.length * 0.8, `hip lead measured on only ${measured} of ${gross.length}`)
+})
 
-  assert(
-    clean <= 0.15,
-    `a clean, well-sequenced serve was told it arms the ball on ${(clean * 100).toFixed(0)}% of realisations`,
-  )
-  assert(
-    gross >= 0.5,
-    `a serve whose shoulders fire 120 ms early was caught only ${(gross * 100).toFixed(0)}% of the time`,
-  )
+check('the leg-drive detector tells a serve that drives from one that only straightens', () => {
+  /*
+   * What earns `no_leg_drive` its place, stated as rates the way the retired
+   * detector was. Planted at contact (`contactHipHeight: 0.95`) is a serve that
+   * straightens out of the knee bend and never lifts the body; the clean rig
+   * drives the hips to 1.09. At a club level the first must be named most of
+   * the time and the second almost never.
+   */
+  const clean = namedOn(realise(), 'no_leg_drive')
+  const planted = namedOn(realise({ contactHipHeight: 0.95 }), 'no_leg_drive')
+  note(`  no leg drive named on ${(clean * 100).toFixed(0)}% clean, ${(planted * 100).toFixed(0)}% planted`)
+  assert(clean <= 0.05, `a driving serve was told its legs sat out on ${(clean * 100).toFixed(0)}%`)
+  assert(planted >= 0.8, `a planted serve was caught only ${(planted * 100).toFixed(0)}% of the time`)
 })
 
 check('the contact detector that was dropped stays measured and stays silent', () => {
@@ -371,7 +371,7 @@ heading('The kinetic chain, and what its provenance costs')
 // centre in image y, and vertical is vertical at every camera angle the app
 // accepts — measured identical to four decimals at 45° and 82°. Labelling it
 // "world z" in the printed audit would contradict the one claim it makes.
-const SEEN = ['legs_peak_ms', 'elbow_peak_ms', 'wrist_peak_ms', 'chain_span_ms', 'leg_drive_rise_ratio']
+const SEEN = ['legs_peak_ms', 'elbow_peak_ms', 'wrist_peak_ms', 'chain_span_ms']
 const INFERRED = ['hips_peak_ms', 'shoulders_peak_ms']
 
 /**
@@ -1939,7 +1939,9 @@ check('the deviations UNCALIBRATED states are the ones the ensemble measures', (
   }
   const measured = new Map(chainDeviations(deep.reads).map((d) => [d.id, d.sd]))
 
-  const rows = ['leg_drive_rise_ratio', 'knee_extension_deg'].map((id) => ({
+  // `leg_drive_rise_ratio` left this list when it gained a band; its deviation
+  // is now held by the noise-floor checks every graded signal answers to.
+  const rows = ['knee_extension_deg'].map((id) => ({
     id,
     stated: stated(id),
     measured: measured.get(id),
@@ -2266,7 +2268,7 @@ check('a player who never leaves the ground reads the leg-drive floor', () => {
    * jump clears it, or the floor would be swallowing the measurement.
    */
   const grounded = realise({ contactHipHeight: 0.95 }, 5, SEEDS.slice(0, 10))
-    .map((r) => r.chain.leg_drive_rise_ratio)
+    .map((r) => r.signals.leg_drive_rise_ratio)
     .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
   assert(grounded.length > 5, `only ${grounded.length} grounded clips read a rise`)
   const mean = grounded.reduce((a, b) => a + b, 0) / grounded.length
@@ -2277,7 +2279,7 @@ check('a player who never leaves the ground reads the leg-drive floor', () => {
   )
 
   const jumping = realise({ contactHipHeight: 1.12 }, 5, SEEDS.slice(0, 10))
-    .map((r) => r.chain.leg_drive_rise_ratio)
+    .map((r) => r.signals.leg_drive_rise_ratio)
     .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
   const jumpMean = jumping.reduce((a, b) => a + b, 0) / jumping.length
   assert(

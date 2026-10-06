@@ -47,6 +47,10 @@ export const HIERARCHY: { group: string; flaws: FlawId[] }[] = [
   // Then where the ball is. Every fault below this can be caused by a toss in
   // the wrong place, and several of them usually are.
   { group: 'toss', flaws: ['toss_height', 'toss_drift'] },
+  // Then the legs. Kovacs's order puts the load straight after the release:
+  // his team finds most serve faults in those two stages, and a serve whose
+  // legs never lift the body has nothing under the swing for the drop to use.
+  { group: 'legs', flaws: ['no_leg_drive'] },
   // Then whether the body can stay under it.
   { group: 'posture', flaws: ['posture_collapse'] },
   // Then the swing: the drop that makes racket speed possible.
@@ -87,6 +91,7 @@ export const FLAW_DRILL: Record<FlawId, string> = {
   collapsed_elbow: 'overhead_throw',
   early_shoulder_rotation: 'hip_lead_turn',
   arming_the_ball: 'back_leg_serve',
+  no_leg_drive: 'back_leg_serve',
   pancake_contact: 'pronation_snap',
   low_contact: 'up_and_out',
 }

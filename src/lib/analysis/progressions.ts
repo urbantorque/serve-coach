@@ -278,7 +278,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     pass: 4,
   },
 
-  arming_the_ball: {
+  no_leg_drive: {
     cue: 'Send the ball all the way to the back fence and let your body throw your arm.',
     steps: [
       {
