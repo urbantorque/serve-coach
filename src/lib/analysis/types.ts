@@ -50,7 +50,10 @@ export interface Frame {
  * Bumping it when nothing moved costs a player one break in their chart; not
  * bumping it when something did costs them a gain they never made.
  */
-export const SCORING_VERSION = 2
+// 3: the knee-bend band reopened to the 27-study meta-analysis, and the two ball
+// bands — toss peak and fall before contact — re-anchored to published toss
+// heights. Each moves a score a saved report already carries.
+export const SCORING_VERSION = 3
 
 /**
  * What a report saved before the stamp existed is worth.

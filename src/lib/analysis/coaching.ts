@@ -185,10 +185,19 @@ export const METRICS: Record<string, MetricCopy> = {
     unit: '×',
     phase: 'toss',
     weight: 1.2,
-    // Peak of the ball above the court, in body heights. Contact wants to happen
-    // at 1.28–1.5, and the ball should top out a little above that so you are
-    // reaching up to a still ball rather than chasing a falling one.
-    ideal: [1.38, 1.72],
+    // Peak of the ball above the court, in body heights.
+    //
+    // THE CEILING USED TO BE 1.72, and it was set against the wrong landmark.
+    // It was argued from contact height — 1.28–1.5 — but that number is the
+    // *wrist*, and the ball at contact sits about a quarter of a body height
+    // above the wrist, at roughly 1.44–1.48 of standing height. Published toss
+    // peaks in skilled servers are 1.82–2.08 of standing height measured from
+    // the ankle line this app uses (Newton 2025, 3.48 m at 1.87 m; Vacek 2025,
+    // 3.40 m at 1.81 m; Gao 2026, WTA, 3.56–3.65 m at 1.72 m), so the old
+    // ceiling told every one of them their toss was too high. The ceiling now
+    // sits above all of them: a toss past 2.1 is one that falls well over a
+    // metre into the swing. The floor is unchanged, for want of club data.
+    ideal: [1.38, 2.1],
     range: [0.9, 2.4],
     decimals: 2,
     insight: {
@@ -197,37 +206,46 @@ export const METRICS: Record<string, MetricCopy> = {
       high: 'Your toss climbs **far above** contact, so you hit it falling fast and time it perfectly or not at all.',
     },
     fix: {
-      low: 'Toss so the ball peaks **one ball above** your racket at full stretch.',
-      high: '**Lower the toss** until it peaks one ball above your reach. A high toss times badly.',
+      low: 'Toss so the ball peaks **about a racket length above** your racket at full stretch.',
+      high: '**Lower the toss** until it peaks about a racket length above your reach. A toss that high times badly.',
     },
     drill: {
       name: 'Rail height toss',
-      how: 'Pick a fence rail one ball above your racket reach and toss to that height.',
+      how: 'Pick a fence rail about a racket length above your racket reach and toss to that height.',
       reps: '20 tosses',
     },
   },
   contactBelowPeak: {
     id: 'contactBelowPeak',
-    label: 'Hitting the ball at its peak',
+    label: 'How far the ball falls first',
     unit: '×',
     phase: 'contact',
     weight: 1.1,
     // How far the ball has fallen from its apex by the moment of contact.
-    ideal: [0, 0.09],
-    range: [0, 0.6],
+    //
+    // THIS WAS 0–0.09, AND THE RESEARCH SAYS THE OPPOSITE. Skilled servers do
+    // not hit the ball at its peak: it falls 0.56–0.94 m before impact (Newton
+    // 2025; Vacek 2025; Connolly 2021; Gao 2026, WTA), about 0.3–0.5 of
+    // standing height, struck roughly a third to two fifths of a second after
+    // the apex. The old band called all of them late. It now flags only a fall
+    // past 0.55 — over a metre for most adults, a ball left to drop well below
+    // where the serve wants it. Measured on the ball, so the published drops
+    // apply directly, unlike the wrist-based contact height.
+    ideal: [0, 0.55],
+    range: [0, 1],
     decimals: 3,
     insight: {
       low: 'You strike the ball at the **top** of its flight, where it barely moves.',
-      ok: 'You catch the ball **near the top**, while it still hangs.',
-      high: 'You let the ball **fall** before you hit it, so you meet it lower than you could have.',
+      ok: 'The ball **falls into your swing** from its peak, the way strong servers time it.',
+      high: 'You let the ball **fall a long way** before you hit it, so you meet it lower than you could have.',
     },
     fix: {
       low: '',
-      high: '**Start the swing earlier** so the racket arrives as the ball stops climbing. Check your toss height first.',
+      high: '**Start the swing earlier** so you meet the ball soon after it peaks. Check your toss height first.',
     },
     drill: {
-      name: 'Catch the peak',
-      how: 'Toss and swing so the racket meets the ball the instant it stops climbing.',
+      name: 'Swing as it turns',
+      how: 'Toss and start your swing as the ball reaches the top, so you meet it soon after it starts to fall.',
       reps: '15 serves',
     },
   },
@@ -964,10 +982,9 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
       // corrected at 19.
       shoulderTilt: [32, 50],
       // A kick is tossed a little lower and further back than a flat serve, so
-      // the toss is allowed to peak at racket reach rather than a ball above it.
-      // The ceiling holds at the flat serve's: a toss climbing past that falls
-      // too fast to brush up, whatever spin you meant to put on it.
-      tossPeakHeight: [1.2, 1.72],
+      // the toss is allowed to peak at racket reach. The ceiling holds at the
+      // flat serve's — see its own comment for why that is 2.1.
+      tossPeakHeight: [1.2, 2.1],
     },
     insight: {
       contactAhead: {

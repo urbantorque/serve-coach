@@ -436,3 +436,14 @@ clips, frame sheets read by eye, and the rig's own limb lengths.
 - **Arm extension** reads 160–171 on real clips. Elite literature has 14–30° of
   bend at impact (interior 150–166). The band floor of 160 sits mid-elite, but
   real readings clear it. Left alone until a clip reads below it.
+- **Two ball bands contradicted the literature and are fixed** (D2.1, first
+  part). The toss ceiling (1.72, and 1.78 at the top rung) sat below every
+  published skilled toss peak (1.82–2.08 from the ankle line). The
+  fall-before-contact band (0–0.09) called every skilled server late, since the
+  ball falls 0.3–0.5 of standing height into a good serve. Both were argued from
+  the wrist's contact height rather than the ball's. Ceilings are now 2.1, and
+  the fall band is 0–0.55. Scoring version 3.
+- **Still to cite** (rest of D2.1): shoulder tilt (meta-analysis 25 ± 7 at the
+  trophy matches the 14–32 band), drop to contact (forward swing 0.13 s matches
+  110–230 ms), leg drive card band (Deghaies 2026), and the provisional
+  wrist-based contact height.

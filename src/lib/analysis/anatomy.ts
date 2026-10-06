@@ -63,13 +63,13 @@ const LADDERS: Record<string, Stop[]> = {
   tossPeakHeight: [
     { under: 1.2, tag: 'Peaks below the racket' },
     { under: 1.38, tag: 'Peaks at racket reach' },
-    { under: 1.72, tag: 'Peaks a ball above the racket' },
+    { under: 2.1, tag: 'Peaks well above the racket' },
     { under: Infinity, tag: 'Peaks far above the racket' },
   ],
   contactBelowPeak: [
     { under: 0.03, tag: 'Struck at the peak' },
-    { under: 0.09, tag: 'Struck near the peak' },
-    { under: 0.2, tag: 'Struck on the way down' },
+    { under: 0.15, tag: 'Struck as it starts to fall' },
+    { under: 0.55, tag: 'Struck as the ball falls' },
     { under: Infinity, tag: 'Struck well past the peak' },
   ],
 

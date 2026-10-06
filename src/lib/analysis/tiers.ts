@@ -215,7 +215,11 @@ export const SIGNALS: Record<string, SignalSpec> = {
     id: 'toss_peak_ratio',
     unit: 'ratio',
     direction: 'band',
-    anchors: { 3: [1.24, 1.92], 5: [1.3, 1.86], 7: [1.36, 1.8], 9: [1.4, 1.78] },
+    // The ceilings used to fall with the rung, to 1.78 at the top — below every
+    // published toss peak in skilled servers (1.82–2.08 from the ankle line; see
+    // `tossPeakHeight` in coaching.ts). A better server is not asked to toss
+    // lower than the best servers do, so the ceiling is the card's at every rung.
+    anchors: { 3: [1.24, 2.15], 5: [1.3, 2.1], 7: [1.36, 2.1], 9: [1.4, 2.1] },
     seriousMiss: 0.18,
   },
 }

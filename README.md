@@ -760,6 +760,21 @@ first. That ghost is dim on purpose and drawn from the hips up, and two bodies a
 fault apart overlap almost everywhere, so the one difference was the hardest
 thing on screen to see.
 
+**The two ball targets were set against the wrist, and now follow the ball.**
+The toss band was argued from contact height. But contact height is the wrist,
+and at contact the ball sits about a quarter of a body height above it. So the
+toss ceiling (1.72× standing height) sat below every published toss peak in
+skilled servers. Measured from this app's ankle line, those run 1.82–2.08 (Newton
+2025, Vacek 2025, and WTA players in Gao 2026), so the app told all of them their
+toss was too high. The fall-before-contact band (0–0.09) was worse. Skilled
+servers let the ball fall 0.56–0.94 m from its apex before impact, about a third
+of a second, so the old band called every one of them late. The toss ceiling is
+now 2.1 at every level. The fall band is 0–0.55, so only a ball left to drop over
+a metre is flagged, and the copy and readouts say "falls into your swing" where
+they used to praise only the peak. Both are measured on the ball itself, so the
+published numbers apply directly. The floors are unchanged, for want of club
+data. `SCORING_VERSION` moves to 3, which also covers the knee-bend reopening.
+
 **"The arm goes first" is retired, and "your legs sit the serve out" replaces it.**
 The old fault graded whether the hips turned before the shoulders. The research
 says that order is not the fault it looks like. Olympic servers' upper torsos

@@ -275,24 +275,32 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { high: 'Straight lift' },
   },
   tossPeakHeight: {
-    stamp: '99c04c3d',
+    // Re-stamped when the ceiling moved from 1.72 to 2.1 on published toss
+    // heights. The middle rung became "well above the racket", and the high line
+    // now only ever stands over "far above".
+    stamp: '17587504',
     insight: {
       // "Peaks at racket reach" is claimed on both sides: it is the flat serve's
       // near miss and the kick serve's floor, and neither sentence denies it.
       low: ['Peaks below the racket', 'Peaks at racket reach'],
-      ok: ['Peaks at racket reach', 'Peaks a ball above the racket'],
-      high: ['Peaks a ball above the racket', 'Peaks far above the racket'],
+      ok: ['Peaks at racket reach', 'Peaks well above the racket'],
+      high: ['Peaks far above the racket'],
     },
-    aim: { low: 'Peaks a ball above the racket', high: 'Peaks a ball above the racket' },
+    aim: { low: 'Peaks well above the racket', high: 'Peaks well above the racket' },
   },
   contactBelowPeak: {
-    stamp: '4c48180c',
+    // Re-stamped when the band moved from 0–0.09 to 0–0.55 on published drops
+    // from apex to impact: falling into the swing is praised, and only a long
+    // fall is not. The high line now only ever stands over "well past".
+    stamp: '172f9d6d',
     insight: {
       low: ['Struck at the peak'],
-      ok: ['Struck at the peak', 'Struck near the peak'],
-      high: ['Struck on the way down', 'Struck well past the peak'],
+      // Re-anchored to published drops: the ball falls a fair way into a good
+      // serve, so falling is praised and only falling a long way is not.
+      ok: ['Struck at the peak', 'Struck as it starts to fall', 'Struck as the ball falls'],
+      high: ['Struck well past the peak'],
     },
-    aim: { high: 'Struck at the peak' },
+    aim: { high: 'Struck as it starts to fall' },
   },
   kneeBend: {
     stamp: 'c3f25db6',
