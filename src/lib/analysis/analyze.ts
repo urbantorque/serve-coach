@@ -75,6 +75,18 @@ import { causalFocus } from './verdict'
 import { cue } from './voice'
 import { buildPhases, detectServe, looksSlowedDown, type Skeleton } from './phases'
 import {
+  chooseStretch,
+  fileTimes,
+  probeWorthRunning,
+  retimeFlight,
+  retimeFrames,
+  stretchFromBall,
+  stretchNote,
+  type BallStretch,
+  type Stretch,
+} from './slowMotion'
+import { readContainerTiming, stretchFromContainer } from '../pose/container'
+import {
   NotAServeError,
   SCORING_VERSION,
   type Analysis,
@@ -180,6 +192,16 @@ export interface AnalyzeOptions {
    * a ground-truth fixture. Dev builds only — see `NotAServeError.capture`.
    */
   captureOnFailure?: boolean
+  /**
+   * The clip itself, for reading its own timing boxes — see `pose/container.ts`.
+   * Optional: without it a slow-motion stretch can still be read off the ball.
+   */
+  file?: Blob
+  /**
+   * A stretch already settled for this clip, so a sweep reads every serve of a
+   * basket on the clock the first one was read on.
+   */
+  knownStretch?: Stretch
 }
 
 /**
@@ -661,13 +683,59 @@ async function findBall(
   frames: Frame[],
   skel: Skeleton,
   signal?: AbortSignal,
+  /**
+   * Seconds of file per second of serve. `frames` are on the file's clock, so a
+   * stretched clip's ball falls at gravity divided by its square — see
+   * `slowMotion.ts`. The flight that comes back is on the file's clock too.
+   */
+  stretch = 1,
 ): Promise<BallFlight | undefined> {
-  const { keys, bodyHeight } = skel
+  const { keys } = skel
   // From a little before release — the ball is in the hand and already moving —
   // to just past contact, so the apex is bracketed on both sides even for a
   // player who hits very late.
-  const from = Math.max(0, keys.toss - 2)
-  const to = Math.min(frames.length - 1, keys.contact + 2)
+  const read = await ballCandidates(video, frames, skel, keys.toss - 2, keys.contact + 2, signal)
+  if (!read) return undefined
+  const flight = trackBall(read.perFrame, { expectedGravity: read.gravity / (stretch * stretch) })
+  // A confident fit still has to describe a ball that went up and came down
+  // somewhere near the player rather than a passing bird.
+  if (!flight || flight.confidence < 0.45) return undefined
+  return flight
+}
+
+/**
+ * Whether the ball's fall says the clip is slow motion, and by how much.
+ *
+ * Read over everything before contact rather than from the toss keyframe: on a
+ * stretched clip the window was sized for a real-time serve, so the toss can
+ * sit anywhere in it, and the falling ball near contact is what the test needs.
+ * Only run when the motion already looks slow — it is a whole pixel pass.
+ */
+async function probeStretch(
+  video: HTMLVideoElement,
+  frames: Frame[],
+  skel: Skeleton,
+  signal?: AbortSignal,
+): Promise<BallStretch | undefined> {
+  const read = await ballCandidates(video, frames, skel, 0, skel.keys.contact + 2, signal)
+  return read ? stretchFromBall(read.perFrame, read.gravity) : undefined
+}
+
+/**
+ * Ball candidates, frame by frame, over `[from, to]` of `frames`, and the
+ * gravity a real-time fall has at this player's scale.
+ */
+async function ballCandidates(
+  video: HTMLVideoElement,
+  frames: Frame[],
+  skel: Skeleton,
+  fromIndex: number,
+  toIndex: number,
+  signal?: AbortSignal,
+): Promise<{ perFrame: { t: number; candidates: ReturnType<typeof findCandidates> }[]; gravity: number } | undefined> {
+  const { keys, bodyHeight } = skel
+  const from = Math.max(0, fromIndex)
+  const to = Math.min(frames.length - 1, toIndex)
   if (to - from < 4 || !(bodyHeight > 0)) return undefined
 
   const times = frames.slice(from, to + 1).map((f) => f.t)
@@ -732,13 +800,7 @@ async function findBall(
   // Gravity in frame-normalised units. The player's own measured height is the
   // only real-world scale the pipeline has: `bodyHeight` image units span about
   // 1.78 m, so a metre is bodyHeight / 1.78 of the frame.
-  const expectedGravity = (9.81 * bodyHeight) / 1.78
-
-  const flight = trackBall(perFrame, { expectedGravity })
-  // A confident fit still has to describe a ball that went up and came down
-  // somewhere near the player rather than a passing bird.
-  if (!flight || flight.confidence < 0.45) return undefined
-  return flight
+  return { perFrame, gravity: (9.81 * bodyHeight) / 1.78 }
 }
 
 /**
@@ -1047,10 +1109,15 @@ export function pickFocus(fundamentals: Fundamental[]): Analysis['focus'] {
  */
 export function rescore(analysis: Analysis, serveType: ServeType): Analysis | undefined {
   if (!analysis.frames?.length) return undefined
+  // On the serve's clock, as the analysis that produced this report was —
+  // `stretch` is absent on every real-time clip and every older report.
+  const factor = analysis.stretch?.factor ?? 1
+  const frames = retimeFrames(analysis.frames, factor)
+  const servedBall = retimeFlight(analysis.ball, factor)
 
   let skel: Skeleton
   try {
-    skel = detectServe(analysis.frames, analysis.quality.sampledFps, analysis.handedness)
+    skel = detectServe(frames, analysis.quality.sampledFps, analysis.handedness)
   } catch {
     return undefined
   }
@@ -1062,18 +1129,18 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
   // changed the serve type on a clip filmed dead side-on. The same argument, and
   // the same trap, applies to blur: the swing was as smeared under one serve type
   // as under the other.
-  const resilience = assessResilience(analysis.frames, skel)
+  const resilience = assessResilience(frames, skel)
   const depthUnreliable = resilience.spatial.depth_unreliable
 
-  const fundamentals = measure(analysis.frames, skel, analysis.quality.view === 'side', {
-    ball: analysis.ball,
+  const fundamentals = measure(frames, skel, analysis.quality.view === 'side', {
+    ball: servedBall,
     serveType,
     confidence: {
-      frames: analysis.frames,
+      frames,
       skel,
       swingSamples: analysis.quality.swingSamples,
       view: analysis.quality.view,
-      ballConfidence: analysis.ball?.confidence,
+      ballConfidence: servedBall?.confidence,
       depthUnreliable,
       blur: resilience.blur,
     },
@@ -1134,16 +1201,19 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
  */
 export function rediagnose(analysis: Analysis, tier: number | undefined): Analysis | undefined {
   if (!analysis.frames?.length) return undefined
+  // The serve's clock, exactly as `rescore` reads it.
+  const factor = analysis.stretch?.factor ?? 1
+  const frames = retimeFrames(analysis.frames, factor)
 
   let skel: Skeleton
   try {
-    skel = detectServe(analysis.frames, analysis.quality.sampledFps, analysis.handedness)
+    skel = detectServe(frames, analysis.quality.sampledFps, analysis.handedness)
   } catch {
     return undefined
   }
 
-  const diagnosis = diagnose(analysis.frames, skel, { tier, ball: analysis.ball })
-  const verdict = triage(diagnosis, assessResilience(analysis.frames, skel))
+  const diagnosis = diagnose(frames, skel, { tier, ball: retimeFlight(analysis.ball, factor) })
+  const verdict = triage(diagnosis, assessResilience(frames, skel))
 
   return {
     ...analysis,
@@ -1376,20 +1446,34 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     if (issue) throw issue
   }
 
-  const extracted = await extractFrames(video, landmarker, {
-    signal,
-    serveIndex: opts.serveIndex,
-    knownServeTimes: opts.knownServeTimes,
-    people,
-    onProgress: (p: ExtractProgress) =>
-      onProgress({
-        step: p.phase === 'scanning' ? 'scanning' : 'tracking',
-        ratio: p.ratio,
-        detail: p.phase === 'scanning' ? 'Finding the serve' : 'Tracking your body',
-      }),
-  })
+  /*
+   * Slow motion the file admits to, before a frame is read — see
+   * `slowMotion.ts`. A sweep hands down what the serve it started from settled
+   * on, so every serve in a basket is read on one clock.
+   */
+  let stretch: Stretch = opts.knownStretch ?? { factor: 1, source: 'none' }
+  if (!opts.knownStretch && opts.file) {
+    const fromFile = stretchFromContainer(await readContainerTiming(opts.file))
+    if (fromFile) stretch = { factor: fromFile, source: 'file' }
+  }
 
-  const { fps, window, serves, located } = extracted
+  const extract = (knownServeTimes: number[] | undefined) =>
+    extractFrames(video, landmarker, {
+      signal,
+      serveIndex: opts.serveIndex,
+      knownServeTimes,
+      people,
+      stretch: stretch.factor,
+      onProgress: (p: ExtractProgress) =>
+        onProgress({
+          step: p.phase === 'scanning' ? 'scanning' : 'tracking',
+          ratio: p.ratio,
+          detail: p.phase === 'scanning' ? 'Finding the serve' : 'Tracking your body',
+        }),
+    })
+  let extracted = await extract(opts.knownServeTimes)
+
+  let { fps, window, serves, located } = extracted
   if (extracted.times.length) opts.onServesLocated?.(extracted.times)
   let frames = extracted.frames
   const aspect = video.videoWidth / Math.max(1, video.videoHeight)
@@ -1414,11 +1498,22 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // the clip again against that hand, rather than passed on. Tried once: the
   // second read is against the arm the detector itself picked out as having
   // served, so a second refusal is about the serve and worth showing.
+  /*
+   * The frames the engine reads, on the serve's own clock.
+   *
+   * `frames` stays on the file's clock throughout, because every seek, every
+   * still and the player's overlay are on it. Everything that measures — the
+   * keyframes, the timings, the slow-motion hedge — reads this copy instead, so
+   * a four-times clip is measured exactly as the real-time serve it shows. One
+   * for a real-time clip, where this is `frames` itself.
+   */
+  const engine = () => retimeFrames(frames, stretch.factor)
+
   const detect = (): Skeleton => {
     let hand = opts.handedness
     for (let attempt = 0; ; attempt++) {
       try {
-        return detectServe(frames, fps, hand)
+        return detectServe(engine(), fps * stretch.factor, hand)
       } catch (err) {
         if (err instanceof NotAServeError && err.suggestedHand && attempt === 0) {
           hand = err.suggestedHand
@@ -1444,6 +1539,39 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   }
 
   let skel = detect()
+
+  /*
+   * Slow motion the file did not admit to, read off the ball's fall.
+   *
+   * Only asked when the serve, read at face value, is slower than a real-time
+   * one tends to be — it is a whole pixel pass — and only acted on when the
+   * motion agrees at the same factor (`chooseStretch`). Then the serve is read
+   * again with a window sized for the real motion: the first window was sized
+   * for a real-time serve, which on a four-times clip is under a second of it.
+   */
+  if (stretch.source === 'none' && !opts.skipBall) {
+    const swing = skel.times.contact - skel.times.drop
+    const motion = skel.times.contact - frames[skel.keys.ready].t
+    if (probeWorthRunning(swing, motion)) {
+      onProgress({ step: 'measuring', ratio: 0.25, detail: 'Checking for slow motion' })
+      const ball = await probeStretch(video, frames, skel, signal)
+      const chosen = chooseStretch({ ball, swing, motion })
+      if (chosen.factor > 1) {
+        stretch = chosen
+        extracted = await extract(extracted.times.length ? extracted.times : opts.knownServeTimes)
+        ;({ fps, window, serves, located } = extracted)
+        frames = extracted.frames
+        if (frames.length < 8) {
+          throw new NotAServeError('I found no player in that video.', [
+            'Put the player fully in frame, well lit.',
+            'Keep everyone else out of the shot.',
+          ])
+        }
+        for (const f of frames) f.visibility = keyVisibility(f)
+        skel = detect()
+      }
+    }
+  }
 
   /*
    * A second, sharper read of the swing, before anything is levelled or
@@ -1505,17 +1633,22 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // the blur figure it measures had exactly one consumer, the refusal, so a clip
   // was either thrown out for a smeared swing or reported as though there were
   // none. Nothing in between, which is where most amateur footage lives.
-  const resilience = assessResilience(frames, skel)
+  const resilience = assessResilience(engine(), skel)
 
-  const quality = assessQuality(frames, skel, fps, resilience.blur)
+  const quality = assessQuality(engine(), skel, fps * stretch.factor, resilience.blur)
 
   // Locating serves in a long clip is bounded now, but bounded is not free — it
   // still costs a few hundred video seeks, and the player has no way to know that
   // the length of their clip is why they waited. Said once, on the report, rather
   // than as a blocking complaint about a clip that worked perfectly well.
   // Said once, plainly, beside the timings it hedges — see `looksSlowedDown`.
-  if (looksSlowedDown(frames, skel)) {
+  if (looksSlowedDown(engine(), skel)) {
     quality.warnings.push(cue('This clip looks like slow motion, so I show the timings but do not score them.'))
+  }
+  // Said when the stretch was found and undone, so a player who filmed in slow
+  // motion knows the timings are the serve's and not the file's.
+  if (stretch.factor > 1) {
+    quality.warnings.push(cue(stretchNote(stretch)))
   }
 
   if (video.duration > LONG_CLIP_SECONDS) {
@@ -1531,7 +1664,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   let ball: BallFlight | undefined
   if (!opts.skipBall) {
     onProgress({ step: 'measuring', ratio: 0.4, detail: 'Looking for the ball' })
-    ball = await findBall(video, extracted.frames, skel, signal)
+    ball = await findBall(video, extracted.frames, skel, signal, stretch.factor)
   }
 
   // What the pixels saw, kept for drawing over them; `ball` itself moves into
@@ -1575,15 +1708,18 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   onProgress({ step: 'measuring', ratio: 0.55, detail: 'Measuring the fundamentals' })
   const serveType = opts.serveType ?? 'flat'
-  const fundamentals = measure(frames, skel, quality.view === 'side', {
-    ball,
+  // The ball on the serve's clock, as the engine's frames are; `ball` itself
+  // stays on the file's, for drawing over the video.
+  const servedBall = retimeFlight(ball, stretch.factor)
+  const fundamentals = measure(engine(), skel, quality.view === 'side', {
+    ball: servedBall,
     serveType,
     confidence: {
-      frames,
+      frames: engine(),
       skel,
       swingSamples: quality.swingSamples,
       view: quality.view,
-      ballConfidence: ball?.confidence,
+      ballConfidence: servedBall?.confidence,
       depthUnreliable: resilience.spatial.depth_unreliable,
       blur: resilience.blur,
     },
@@ -1593,7 +1729,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // used. A second pass over data already in memory rather than a second pass
   // over the video — it costs about a millisecond, which is why it is not
   // behind a flag.
-  const diagnosis = diagnose(frames, skel, { tier: opts.tier, ball })
+  const diagnosis = diagnose(engine(), skel, { tier: opts.tier, ball: servedBall })
 
   // What the clip itself was worth, and the single thing to work on — or the
   // reason there is nothing worth saying. Carried as data rather than acted on
@@ -1602,7 +1738,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // about which one it is.
   const verdict = triage(diagnosis, resilience)
 
-  const phases = buildPhases(frames, skel.keys, skel.times)
+  // On the file's clock, because the stills and the player seek by them.
+  const phases = buildPhases(frames, skel.keys, fileTimes(skel.times, stretch.factor))
 
   const bands = bandsFor(fundamentals)
 
@@ -1706,6 +1843,9 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     scoringVersion: SCORING_VERSION,
     diagnosis,
     triage: verdict,
+    // Kept so a rescore reads the same clock, and so a sweep can hand it down.
+    // Absent on a real-time clip, which is what every older report already is.
+    ...(stretch.factor > 1 ? { stretch } : {}),
   }
 }
 

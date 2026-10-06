@@ -4,6 +4,7 @@ import type { Consistency } from './consistency'
 import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
 import type { BodyAxis } from './axes'
+import type { Stretch } from './slowMotion'
 import type { RacketEstimate } from './racket'
 import type { Triage as TriageResult } from './triage'
 import type { KeyframePoses, SwingTrack } from '../storage/poseTrack'
@@ -168,6 +169,13 @@ export interface Analysis {
   fundamentals: Fundamental[]
   overall: number
   overallStatus: Status
+  /**
+   * How much slower than life the clip plays, when it was slow motion and the
+   * app could tell — from the file's own boxes or the ball's fall
+   * (`slowMotion.ts`). `frames`, `phases` and `ball` stay on the file's
+   * clock for drawing and seeking; the measurements were read on the serve's.
+   */
+  stretch?: Stretch
   /**
    * The single thing to work on next.
    *

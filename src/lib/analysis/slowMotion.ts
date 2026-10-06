@@ -30,6 +30,7 @@
  * and the existing hedge in place: an unknown stretch is never guessed.
  */
 import { trackBall, type BallFlight, type BallCandidate } from '../vision/ballTrack'
+import type { Frame } from './types'
 
 /**
  * The stretches a phone actually produces: 60, 120 and 240 frames a second
@@ -111,6 +112,77 @@ export function motionAgrees(swing: number, motion: number, factor: number): boo
   const realSwing = swing / factor
   const realMotion = motion / factor
   return realSwing >= 0.06 && realSwing <= 0.4 && realMotion >= 0.5 && realMotion <= 3.2
+}
+
+/**
+ * A clip's frames on the serve's own clock rather than the file's.
+ *
+ * The engine reads every duration, window and speed off `Frame.t`, so handing
+ * it this copy is the whole conversion: the keyframes, the timings and the
+ * slow-motion hedge all come out as they would for a real-time clip of the same
+ * serve. Indices are untouched, which is what lets the caller keep seeking the
+ * video with the original frames — a keyframe found here is the same row there.
+ */
+export function retimeFrames(frames: Frame[], factor: number): Frame[] {
+  if (!(factor > 1)) return frames
+  return frames.map((f) => ({ ...f, t: f.t / factor }))
+}
+
+/**
+ * The ball's flight on the serve's clock: the same curve, with time divided.
+ *
+ * In file seconds the height is `c0 + c1·t + c2·t²`; substituting `t = s·u`
+ * gives `c0 + (c1·s)·u + (c2·s²)·u²` in real seconds. The samples and the
+ * apex move with the clock and nothing about the shape changes.
+ */
+export function retimeFlight(flight: BallFlight | undefined, factor: number): BallFlight | undefined {
+  if (!flight || !(factor > 1)) return flight
+  const [c0, c1, c2] = flight.coefficients
+  return {
+    ...flight,
+    coefficients: [c0, c1 * factor, c2 * factor * factor],
+    apex: { ...flight.apex, t: flight.apex.t / factor },
+    samples: flight.samples.map((p) => ({ ...p, t: p.t / factor })),
+  }
+}
+
+/**
+ * Whether a clip whose file said nothing is worth a pixel pass to ask the ball.
+ *
+ * Only when the serve, read at face value, is slower than a real-time one
+ * usually is. A clip that passes at one is read at one without asking: the
+ * probe costs a whole second pass over the video, and a real-time serve has
+ * nothing to gain from it. A slow real-time serve that trips this costs the
+ * pass and changes nothing, because the ball then reads one.
+ */
+export function probeWorthRunning(swing: number, motion: number): boolean {
+  return !motionAgrees(swing, motion, 1) || swing > 0.25 || motion > 2.2
+}
+
+/** Keyframe times found on the serve's clock, moved back onto the file's for seeking. */
+export function fileTimes<T extends Record<string, number>>(times: T, factor: number): T {
+  if (!(factor > 1)) return times
+  const out = { ...times }
+  for (const k of Object.keys(out) as (keyof T)[]) out[k] = ((out[k] as number) * factor) as T[keyof T]
+  return out
+}
+
+/** The stretch as a player would say it. */
+const timesWord = (factor: number): string => {
+  const n = Math.round(factor)
+  return n === 2 ? 'twice' : n === 4 ? 'four times' : n === 8 ? 'eight times' : `${n} times`
+}
+
+/**
+ * The line the report carries when a stretch was found and undone.
+ *
+ * Says where the knowledge came from, because the two sources are not equally
+ * certain and a player who filmed at a known rate can check the file's answer.
+ */
+export function stretchNote(stretch: Stretch): string {
+  return stretch.source === 'file'
+    ? `Your phone filmed this in slow motion at ${timesWord(stretch.factor)}, so every timing here is real time.`
+    : `The ball's fall shows slow motion at ${timesWord(stretch.factor)}, so every timing here is real time.`
 }
 
 export type StretchSource = 'file' | 'ball' | 'none'

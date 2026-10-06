@@ -7,7 +7,20 @@
  * two, four and eight times that, so each one's gravity in file seconds is a
  * quarter, a sixteenth or a sixty-fourth of the real thing.
  */
-import { chooseStretch, motionAgrees, stretchFromBall, STRETCHES } from '../slowMotion'
+import {
+  chooseStretch,
+  fileTimes,
+  motionAgrees,
+  retimeFlight,
+  retimeFrames,
+  stretchFromBall,
+  stretchNote,
+  STRETCHES,
+} from '../slowMotion'
+import { buildServe } from '../syntheticServe'
+import { detectServe, looksSlowedDown } from '../phases'
+import { measure } from '../metrics'
+import { cueIssues } from '../voice'
 import { assert, check, heading, near, note, report } from './harness'
 
 /** The player's height in frame units, and real gravity at that scale (`findBall`'s formula). */
@@ -141,6 +154,60 @@ check('nothing to go on leaves the clip at one', () => {
   assert(pick.factor === 1 && pick.source === 'none', `chose ${pick.factor}`)
   const realTime = chooseStretch({ ball: stretchFromBall(toss(1, 5), GRAVITY), swing: 0.14, motion: 1.2 })
   assert(realTime.factor === 1, 'a real-time ball stretched the clip')
+})
+
+heading('A stretched serve, read on its own clock, measures as the real one')
+
+check('a four-times clip retimed reads the timings of the serve, not the file', () => {
+  // The serve at 120 frames a second, and the file a phone writes from it: the
+  // same frames, four times further apart in time.
+  const real = buildServe({}, 120)
+  const file = real.map((f) => ({ ...f, t: f.t * 4 }))
+  const truth = measure(real, detectServe(real, 120), true)
+  const fileSkel = detectServe(file, 30)
+  assert(looksSlowedDown(file, fileSkel), 'setup: the file did not look slowed down')
+  const retimed = retimeFrames(file, 4)
+  const skel = detectServe(retimed, 120)
+  assert(!looksSlowedDown(retimed, skel), 'the retimed clip still looks like slow motion')
+  const read = measure(retimed, skel, true)
+  for (const id of ['dropToContact', 'totalTime', 'loadRatio']) {
+    const want = truth.flatMap((f) => f.metrics).find((m) => m.id === id)!.value
+    const got = read.flatMap((f) => f.metrics).find((m) => m.id === id)!.value
+    note(`${id}: real ${want.toFixed(1)}, retimed ${got.toFixed(1)}`)
+    near(got, want, Math.abs(want) * 0.01 + 1e-6, id)
+  }
+  // And the keyframes land on the same rows, so seeking the file by them is right.
+  near(skel.keys.contact, detectServe(real, 120).keys.contact, 0, 'contact row')
+})
+
+check('a flight retimed is the same curve on the other clock', () => {
+  const flight = stretchFromBall(toss(4, 2024), GRAVITY)!.flight
+  const real = retimeFlight(flight, 4)!
+  // Same height at the same instant, read on each clock.
+  for (const fileT of [flight.apex.t - 0.5, flight.apex.t, flight.apex.t + 0.5]) {
+    const [a0, a1, a2] = flight.coefficients
+    const [b0, b1, b2] = real.coefficients
+    const u = fileT / 4
+    near(b0 + b1 * u + b2 * u * u, a0 + a1 * fileT + a2 * fileT * fileT, 1e-9, 'height')
+  }
+  // And it falls at real gravity on the serve's clock.
+  near((2 * real.coefficients[2]) / GRAVITY, 1, 0.15, 'gravity on the real clock')
+})
+
+check('keyframe times go back onto the file clock for seeking', () => {
+  const t = fileTimes({ toss: 0.2, drop: 0.9, contact: 1.05 }, 4)
+  near(t.contact, 4.2, 1e-9, 'contact')
+  assert(fileTimes({ toss: 1, drop: 2, contact: 3 }, 1).contact === 3, 'a real-time clip moved')
+})
+
+check('the report line about the stretch passes the copy rules', () => {
+  for (const source of ['file', 'ball'] as const) {
+    for (const factor of [2, 4, 8, 3.97]) {
+      const line = stretchNote({ factor, source })
+      const issues = cueIssues(line)
+      assert(issues.length === 0, `"${line}": ${issues.join('; ')}`)
+    }
+  }
 })
 
 report()

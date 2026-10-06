@@ -226,15 +226,15 @@ Sizes: **S** ≤ 1 round · **M** 2–3 · **L** 4+.
 Most later readings need more than four or five samples through the swing. Do
 this first.
 
-- [ ] **D1.1 Read the real frame rate** (was E8) · M. A small MP4/MOV box parser
+- [x] **D1.1 Read the real frame rate** (was E8) · M. *Done: `pose/container.ts` reads mdhd/stts and Android's `com.android.capture.fps`; tested on byte-built boxes. Original plan:* A small MP4/MOV box parser
       (`mdhd` timescale, `stts` deltas, the capture-rate metadata iOS and
       Android write for slow motion). *Proof:* byte-built box fixtures in the
       test suite, including variable-rate `stts`.
-- [ ] **D1.2 Sample the swing at the source rate** · M. Keep 32 fps for
+- [~] **D1.2 Sample the swing at the source rate** · M. *Partly delivered by D1.3: a stretched clip's window is now read four or eight times wider, so its swing is sampled that much denser. Real-time high-frame-rate files are still capped at 32 fps. Original plan:* Keep 32 fps for
       ready → trophy; read trophy → contact + 0.1 s at 60/120/240 inside the
       existing frame budget. *Proof:* `buildServe(dials, fps)` at 30/60/120/240,
       keyframe error against the rig's true instants, ensemble at each rate.
-- [ ] **D1.3 Rescale slow motion instead of hedging it** · S. When D1.1 finds a
+- [x] **D1.3 Rescale slow motion instead of hedging it** · S. *Done, and wider than planned: the stretch also comes from the ball's fall (gravity at 1/2/4/8×, `slowMotion.ts`, as the methods research advised), the serve is re-read with a real-time window, and the engine measures a retimed copy. A 4× rig clip measures identically to the real one. Original plan:* When D1.1 finds a
       capture rate above the playback rate, convert every timing to real seconds
       and lift the 0.3 hedge. Keep the motion-based detector (E9) as the
       fallback when metadata is absent. *Proof:* the same rig serve, stretched
@@ -406,3 +406,30 @@ contact-frame number. D4 and D5 do not depend on D1–D3 and carry the most
 player value per round, so they can run alongside it. D2 must land before D3's
 readings are graded. D6 last, except D6.1, which is one round and can go any
 time.
+
+### Findings on real footage and the rig (2026-10-06)
+Measured, not guessed: `/clipbench.html` run headless on the five Commons
+clips, frame sheets read by eye, and the rig's own limb lengths.
+
+- **Two refusals were right.** The Sharapova clip has her returning and
+  rallying, with no serve of hers in it. `Saque_reves` is table tennis. Both
+  "not a serve" answers stand.
+- **Contact height is not miscalibrated on real clips.** The two real club
+  serves read wrist contact at 1.31–1.32, inside the 1.28–1.50 band.
+  Anthropometry puts a real wrist lower (about 1.18–1.28 on a floor-based
+  stature). The engine's own chain (ankle ground, nose ÷ 0.93) reads higher,
+  so the band and the chain agree. **Left alone.**
+- **The rig's arm stretches to reach its clean contact.** At
+  `contactReach: 1.38` the forearm is 0.70 m against its own 0.44 m at ready.
+  The reach at which it keeps its length is about 1.22. Every expectation
+  dialled at the default sits on a body no player has. That is worth fixing in
+  the rig (a reach-limited arm, with the jump carrying the rest), but it moves
+  every noise floor derived from the rig. It needs its own round.
+- **Drop depth reads at or below zero on every real rear-oblique clip**
+  (−0.05/−0.06), so "the racket stops short behind you" leads on real
+  footage. At 320×240 from behind, the frames cannot settle whether the drops
+  were shallow or the wrist was misplaced behind the back. Open, and the next
+  thing to check when better open footage turns up.
+- **Arm extension** reads 160–171 on real clips. Elite literature has 14–30° of
+  bend at impact (interior 150–166). The band floor of 160 sits mid-elite, but
+  real readings clear it. Left alone until a clip reads below it.

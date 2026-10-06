@@ -467,6 +467,37 @@ collapses onto it). Recorded here rather than fixed, because sizing those window
 by the serve's own length is a change to the most load-bearing file in the engine
 and every noise floor in `tiers.ts` was derived against their current values.
 
+**Slow motion is now read on the serve's clock, when the app can tell how slow
+it is.** The paragraph above is still true of a stretched clip read at face
+value. What changed is that the app can now usually find out the factor, and then
+it does not read the clip at face value:
+
+- **The file says so.** Android writes the capture rate beside the playback rate
+  (`com.android.capture.fps`), and `pose/container.ts` reads it by walking box
+  headers to the `moov`: a handful of small reads, wherever the phone put it.
+  The ratio is the stretch exactly.
+- **The ball says so.** iPhone exports bake the slow motion into the timestamps
+  and leave no tag, but gravity cannot be stretched without showing it. A toss
+  tracked at a quarter of gravity in file seconds is a two-times clip, at a
+  sixteenth a four-times one. `analysis/slowMotion.ts` runs the tracker at the
+  gravity of each stretch a phone produces (1, 2, 4, 8) and keeps the fit that
+  rounds back to the factor it searched at. The ball is believed only when the
+  swing and the whole motion also come out at human speed under that factor.
+  The probe is a whole pixel pass, so it runs only when the serve read at face
+  value is slower than a real-time one.
+
+With a factor in hand, the serve is read again with a window sized for the real
+motion: four times the file for a four-times clip, which also samples the swing
+four times as densely. The engine then measures a copy of the frames on the
+serve's clock. The frames, phases and ball on the report stay on the file's
+clock, because every seek, still and overlay is. On the rig, a four-times clip
+read this way measures what the real-time serve does to the tenth of a
+millisecond: drop to contact 145.8 ms, keyframes on the same rows. The slow-motion
+hedge lifts, and the ball the tracker used to reject as too slow to be a ball is
+measured. Neither source, or a disagreement between the ball and the motion,
+leaves the clip at one and the hedge in place: an unknown stretch is never
+guessed.
+
 **And the confound turns out to be arithmetic rather than a model.** Swept across
 a grid of four rotations by four leans, the shift lean causes is **15.0, 15.0,
 16.0 and 15.0°** at rotations of 0, 20, 40 and 60 — a spread of one degree across

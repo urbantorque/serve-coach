@@ -810,6 +810,9 @@ export default function App() {
         const analysis = await analyzeServe({
           videoUrl: url,
           fileName: file.name || 'Your serve',
+          // Its own timing boxes, read for a slow-motion stretch — see
+          // `pose/container.ts`. Nothing leaves the device.
+          file,
           handedness,
           serveIndex,
           serveType,
@@ -962,6 +965,10 @@ export default function App() {
             setSweep((s) => (s ? { ...s, done: [...s.done, { number, score: serve?.overall }] } : s)),
           // The report this was launched from already scanned this clip.
           knownServeTimes: serveTimesRef.current,
+          // And already settled its clock, which a sweep cannot re-check: it
+          // skips the ball, and the ball is one of the two ways to tell.
+          file,
+          knownStretch: analysis.stretch,
           onServesLocated: (times) => {
             serveTimesRef.current = times
           },

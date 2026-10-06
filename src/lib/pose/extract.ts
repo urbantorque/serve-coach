@@ -58,8 +58,19 @@ export interface ReadWindow {
  * before a single frame is decoded. It is worth being able to check without a
  * browser.
  */
-export function readWindow(duration: number, times: number[], serveIndex: number): ReadWindow {
-  if (duration <= SINGLE_PASS_SECONDS) {
+export function readWindow(
+  duration: number,
+  times: number[],
+  serveIndex: number,
+  /**
+   * Seconds of file per second of serve — see `analysis/slowMotion.ts`. Every
+   * span here is a span of *serve*, so a four-times slow-motion clip needs four
+   * times the file to hold the same motion. One for a real-time clip.
+   */
+  stretch = 1,
+): ReadWindow {
+  const s = Math.max(1, stretch)
+  if (duration <= SINGLE_PASS_SECONDS * s) {
     return { start: 0, end: duration, serves: { count: 1, index: 0 }, located: true }
   }
   if (times.length) {
@@ -67,8 +78,8 @@ export function readWindow(duration: number, times: number[], serveIndex: number
     // feedback on is almost always the one they just hit.
     const index = serveIndex < 0 ? times.length - 1 : Math.min(serveIndex, times.length - 1)
     return {
-      start: Math.max(0, times[index] - LEAD_IN),
-      end: Math.min(duration, times[index] + LEAD_OUT),
+      start: Math.max(0, times[index] - LEAD_IN * s),
+      end: Math.min(duration, times[index] + LEAD_OUT * s),
       serves: { count: times.length, index },
       located: true,
     }
@@ -84,7 +95,7 @@ export function readWindow(duration: number, times: number[], serveIndex: number
   // chosen blind, so a refusal downstream can say the scan missed rather than
   // say the motion was not a serve.
   return {
-    start: Math.max(0, duration - FALLBACK_SPAN),
+    start: Math.max(0, duration - FALLBACK_SPAN * s),
     end: duration,
     serves: { count: 1, index: 0 },
     located: false,
@@ -492,6 +503,8 @@ export async function extractFrames(
     knownServeTimes?: number[]
     /** Where the people are, for pointing the pose model at the server. */
     people?: FindPeople
+    /** Seconds of file per second of serve, when the clip is known to be slow motion. */
+    stretch?: number
   } = {},
 ): Promise<{
   frames: Frame[]
@@ -538,7 +551,7 @@ export async function extractFrames(
   }
 
   const times =
-    duration <= SINGLE_PASS_SECONDS
+    duration <= SINGLE_PASS_SECONDS * Math.max(1, opts.stretch ?? 1)
       ? []
       : // A caller sweeping every serve in a clip already knows where they are;
         // re-deriving that once per serve is the single most wasteful thing this
@@ -550,7 +563,7 @@ export async function extractFrames(
           people: opts.people,
         })))
 
-  const { start, end, serves, located } = readWindow(duration, times, serveIndex)
+  const { start, end, serves, located } = readWindow(duration, times, serveIndex, opts.stretch)
 
   const crop = await findCrop(video, opts.people, start, end, check)
   input = poseInput(video, crop)
