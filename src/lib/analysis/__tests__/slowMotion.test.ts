@@ -7,16 +7,8 @@
  * two, four and eight times that, so each one's gravity in file seconds is a
  * quarter, a sixteenth or a sixty-fourth of the real thing.
  */
-import {
-  chooseStretch,
-  fileTimes,
-  motionAgrees,
-  retimeFlight,
-  retimeFrames,
-  stretchFromBall,
-  stretchNote,
-  STRETCHES,
-} from '../slowMotion'
+import { fileTimes, motionAgrees, retimeFlight, retimeFrames, stretchNote } from '../slowMotion'
+import { chooseStretch, stretchFromBall, STRETCHES } from '../slowMotionProbe'
 import { buildServe } from '../syntheticServe'
 import { detectServe, looksSlowedDown } from '../phases'
 import { measure } from '../metrics'

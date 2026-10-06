@@ -13,7 +13,6 @@ import {
   strainBehindLine,
   strainGlanceLine,
 } from './lib/analysis/verdict'
-import { checkDrill } from './lib/analysis/progressions'
 import {
   bestConsistencyGap,
   bestOverallScore,
@@ -1046,7 +1045,11 @@ export default function App() {
         // The basket against the top fix's ladder, from the serves just read —
         // see `checkDrill`. Only when the report names a fault to check.
         const primary = analysis.triage?.status === 'ok' ? analysis.triage.primary_flaw?.flaw : undefined
-        const drillCheck = primary ? checkDrill(primary, swept.serves) : undefined
+        // Loaded here rather than with the app: the ladders are a page of copy,
+        // and only a finished sweep ever reads them.
+        const drillCheck = primary
+          ? (await import('./lib/analysis/progressions')).checkDrill(primary, swept.serves)
+          : undefined
         const measured: Analysis = { ...analysis, consistency: result, ...(drillCheck ? { drillCheck } : {}) }
         remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)
         setView({ kind: 'report', analysis: measured, videoUrl: url })

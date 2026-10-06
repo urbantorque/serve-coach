@@ -74,18 +74,8 @@ import { swingTrack } from '../storage/poseTrack'
 import { causalFocus } from './verdict'
 import { cue } from './voice'
 import { buildPhases, detectServe, looksSlowedDown, type Skeleton } from './phases'
-import {
-  chooseStretch,
-  fileTimes,
-  probeWorthRunning,
-  retimeFlight,
-  retimeFrames,
-  stretchFromBall,
-  stretchNote,
-  type BallStretch,
-  type Stretch,
-} from './slowMotion'
-import { readContainerTiming, stretchFromContainer } from '../pose/container'
+import { fileTimes, probeWorthRunning, retimeFlight, retimeFrames, stretchNote, type Stretch } from './slowMotion'
+import type { BallStretch } from './slowMotionProbe'
 import {
   NotAServeError,
   SCORING_VERSION,
@@ -718,7 +708,10 @@ async function probeStretch(
   signal?: AbortSignal,
 ): Promise<BallStretch | undefined> {
   const read = await ballCandidates(video, frames, skel, 0, skel.keys.contact + 2, signal)
-  return read ? stretchFromBall(read.perFrame, read.gravity) : undefined
+  if (!read) return undefined
+  // Loaded with the probe: four tracker runs most clips never need.
+  const { stretchFromBall } = await import('./slowMotionProbe')
+  return stretchFromBall(read.perFrame, read.gravity)
 }
 
 /**
@@ -1453,6 +1446,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
    */
   let stretch: Stretch = opts.knownStretch ?? { factor: 1, source: 'none' }
   if (!opts.knownStretch && opts.file) {
+    // Loaded only for a clip that came with its file — see `pose/container.ts`.
+    const { readContainerTiming, stretchFromContainer } = await import('../pose/container')
     const fromFile = stretchFromContainer(await readContainerTiming(opts.file))
     if (fromFile) stretch = { factor: fromFile, source: 'file' }
   }
@@ -1555,6 +1550,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     if (probeWorthRunning(swing, motion)) {
       onProgress({ step: 'measuring', ratio: 0.25, detail: 'Checking for slow motion' })
       const ball = await probeStretch(video, frames, skel, signal)
+      const { chooseStretch } = await import('./slowMotionProbe')
       const chosen = chooseStretch({ ball, swing, motion })
       if (chosen.factor > 1) {
         stretch = chosen
