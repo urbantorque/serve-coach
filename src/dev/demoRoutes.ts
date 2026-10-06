@@ -12,6 +12,7 @@
 import type { View } from '../App'
 import type { FaultMove } from '../lib/analysis/carryForward'
 import { buildConsistency, pairStills, type ServePairFrames } from '../lib/analysis/consistency'
+import { checkDrill } from '../lib/analysis/progressions'
 import type { Analysis } from '../lib/analysis/types'
 import type { PracticeLog, Session } from '../lib/storage/db'
 import { DEMO_DIALS, fitToClip, sampleAnalysis, sampleBasket, sampleClip, sampleHistory } from './sampleAnalysis'
@@ -94,6 +95,15 @@ export async function runDemoRoute(
       fitted.serves = { count: 5, index: 4 }
       const basket = sampleBasket()
       fitted.consistency = buildConsistency(basket, 5)
+      // The drill check, worked out from the swept serves exactly as the app
+      // does after a real sweep. `&passed` checks against a basket of clean
+      // serves instead, so the "Move up a step" state can be looked at too.
+      const primary = fitted.triage?.status === 'ok' ? fitted.triage.primary_flaw?.flaw : undefined
+      const checked = new URLSearchParams(location.search).has('passed')
+        ? Array.from({ length: 6 }, (_, i) => sampleAnalysis({ dropBelowShoulder: 0.45, trophyKneeAngle: 133, tossArmHold: 0.72, contactReach: 1.38, seed: i + 1 }))
+        : basket
+      const drillCheck = primary ? checkDrill(primary, checked) : undefined
+      if (drillCheck) fitted.drillCheck = drillCheck
       // The rig draws no pictures, so the paired strip would be the one
       // part of a basket report `?demo=basket` could not show — which is
       // the whole reason this route exists. Stand-in tiles rather than

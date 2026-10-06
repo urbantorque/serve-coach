@@ -13,6 +13,7 @@ import {
   strainBehindLine,
   strainGlanceLine,
 } from './lib/analysis/verdict'
+import { checkDrill } from './lib/analysis/progressions'
 import {
   bestConsistencyGap,
   bestOverallScore,
@@ -272,6 +273,11 @@ export default function App() {
   const [offlineReady, setOfflineReady] = useState<boolean>()
   const [warming, setWarming] = useState<OfflineWarmup>()
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
+
+  /** The player moving a fault's ladder a rung, from the report. */
+  const moveLadder = useCallback((flaw: string, step: number) => {
+    setPrefs((p) => writePrefs({ ladder: { ...p.ladder, [flaw]: step } }))
+  }, [])
   /**
    * The report on screen looks saved and is not.
    *
@@ -1037,7 +1043,11 @@ export default function App() {
         // They still go no further than the screen.
         setPair(swept.pair)
 
-        const measured: Analysis = { ...analysis, consistency: result }
+        // The basket against the top fix's ladder, from the serves just read —
+        // see `checkDrill`. Only when the report names a fault to check.
+        const primary = analysis.triage?.status === 'ok' ? analysis.triage.primary_flaw?.flaw : undefined
+        const drillCheck = primary ? checkDrill(primary, swept.serves) : undefined
+        const measured: Analysis = { ...analysis, consistency: result, ...(drillCheck ? { drillCheck } : {}) }
         remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)
         setView({ kind: 'report', analysis: measured, videoUrl: url })
         void trySave(measured)
@@ -1396,6 +1406,8 @@ export default function App() {
               practice={practice}
               onLogDrill={logDrill}
               onUndoDrill={practice?.drilled ? undoDrill : undefined}
+              ladder={prefs.ladder}
+              onLadderStep={moveLadder}
             />
           )}
 
@@ -1436,6 +1448,8 @@ export default function App() {
               practice={practice}
               onLogDrill={logDrill}
               onUndoDrill={practice?.drilled ? undoDrill : undefined}
+              ladder={prefs.ladder}
+              onLadderStep={moveLadder}
             />
           )}
 

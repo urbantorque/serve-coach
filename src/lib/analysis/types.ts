@@ -5,6 +5,7 @@ import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
 import type { BodyAxis } from './axes'
 import type { Stretch } from './slowMotion'
+import type { DrillCheck } from './progressions'
 import type { RacketEstimate } from './racket'
 import type { Triage as TriageResult } from './triage'
 import type { KeyframePoses, SwingTrack } from '../storage/poseTrack'
@@ -176,6 +177,11 @@ export interface Analysis {
    * clock for drawing and seeking; the measurements were read on the serve's.
    */
   stretch?: Stretch
+  /**
+   * How the basket swept from this report did against the top fix's ladder —
+   * see `progressions.ts`. Absent until a basket has been swept.
+   */
+  drillCheck?: DrillCheck
   /**
    * The single thing to work on next.
    *

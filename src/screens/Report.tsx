@@ -10,7 +10,7 @@ import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
 import FaultDemoPanel from '../components/FaultDemoPanel'
 import { hasDemo } from '../lib/faultDemoDials'
-import { CHECK_SERVES, progressionFor } from '../lib/analysis/progressions'
+import { CHECK_SERVES, drillCheckLine, progressionFor } from '../lib/analysis/progressions'
 import TrackPlayer from '../components/TrackPlayer'
 import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
 import { pairTracks } from '../lib/trackPair'
@@ -159,6 +159,10 @@ interface Props {
   onLogDrill?: () => void
   /** Take back the most recent one. */
   onUndoDrill?: () => void
+  /** Which rung of each fault's ladder the player is on — see `progressions.ts`. */
+  ladder?: Partial<Record<string, number>>
+  /** Move the player to another rung of a fault's ladder. */
+  onLadderStep?: (flaw: string, step: number) => void
   /**
    * Whether this session may turn a report into a ground-truth fixture.
    *
@@ -206,6 +210,8 @@ export default function Report({
   practice,
   onLogDrill,
   onUndoDrill,
+  ladder: rungs,
+  onLadderStep,
   fixtureExport,
   example,
 }: Props) {
@@ -225,6 +231,8 @@ export default function Report({
   const [showingFault, setShowingFault] = useState(false)
   /** Whether the top fix's whole ladder is open — see `progressions.ts`. */
   const [showingSteps, setShowingSteps] = useState(false)
+  /** The rung the player just moved to from this report, so the button is spent. */
+  const [movedTo, setMovedTo] = useState<number>()
   /*
    * Hiding the spreads, not deleting them.
    *
@@ -345,7 +353,20 @@ export default function Report({
   // The top fix's ladder, and where its drill sits on it. By name rather than
   // by identity: a reopened report's drill has been through storage.
   const ladder = plan[0].flaw ? progressionFor(plan[0].flaw, plan[0].axis) : undefined
-  const rung = ladder ? ladder.steps.findIndex((s) => s.name === plan[0].drill.name) : -1
+  // The rung the report's own drill sits on, unless the player has moved.
+  const ownRung = ladder ? ladder.steps.findIndex((s) => s.name === plan[0].drill.name) : -1
+  const storedRung = plan[0].flaw ? rungs?.[plan[0].flaw] : undefined
+  const rung =
+    ladder &&
+    storedRung !== undefined &&
+    Number.isInteger(storedRung) &&
+    storedRung >= 0 &&
+    storedRung < ladder.steps.length
+      ? storedRung
+      : ownRung
+  const drill = ladder && rung >= 0 ? ladder.steps[rung] : plan[0].drill
+  // The basket swept from this report, judged against this fault's bar.
+  const check = analysis.drillCheck?.flaw === plan[0].flaw ? analysis.drillCheck : undefined
   const suppressed = suppressedNote(analysis.triage, plan.length)
   const levelled = tierLabel(analysis.triage)
 
@@ -589,10 +610,10 @@ export default function Report({
           <span className="t-overline focus-drill-kicker">
             The drill{rung >= 0 && ladder ? ` · step ${rung + 1} of ${ladder.steps.length}` : ''}
           </span>
-          <h3 className="t-subhead">{plan[0].drill.name}</h3>
-          <p>{plan[0].drill.how}</p>
+          <h3 className="t-subhead">{drill.name}</h3>
+          <p>{drill.how}</p>
           <div className="focus-drill-foot">
-            <span className="focus-reps">{plan[0].drill.reps}</span>
+            <span className="focus-reps">{drill.reps}</span>
             <span className="drill-actions">
             {/* Only for a fault the rig can pose and the engine names on it —
                 see `faultDemoDials.ts`. A fallback focus from the ranking has
@@ -620,6 +641,45 @@ export default function Report({
             )}
             </span>
           </div>
+          {/* What the last basket said about this step, and the one move it
+              earns. Moving is the player's tap, never automatic: a step is
+              theirs to take, and a ladder that moved itself would be a ladder
+              nobody trusted. */}
+          {check && ladder && rung >= 0 && (
+            <div className="drill-check">
+              <p>
+                {movedTo === undefined
+                  ? drillCheckLine(check)
+                  : `Now on step ${movedTo + 1} of ${ladder.steps.length}: ${ladder.steps[movedTo].name}.`}
+              </p>
+              {onLadderStep && plan[0].flaw && movedTo === undefined && (
+                <>
+                  {check.outcome === 'passed' && rung < ladder.steps.length - 1 && (
+                    <button
+                      className="drill-show"
+                      onClick={() => {
+                        onLadderStep(plan[0].flaw!, rung + 1)
+                        setMovedTo(rung + 1)
+                      }}
+                    >
+                      Move up a step
+                    </button>
+                  )}
+                  {check.outcome === 'not_yet' && check.clean <= check.need / 2 && rung > 0 && (
+                    <button
+                      className="drill-show"
+                      onClick={() => {
+                        onLadderStep(plan[0].flaw!, rung - 1)
+                        setMovedTo(rung - 1)
+                      }}
+                    >
+                      Try the step before
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
           {showingFault && hasDemo(plan[0].flaw) && (
             <FaultDemoPanel flaw={plan[0].flaw} racket={analysis.handedness} />
           )}

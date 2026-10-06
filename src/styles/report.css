@@ -918,6 +918,26 @@
   }
 }
 
+/* What the last basket said about the step, under the drill it judged. */
+.drill-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.focus-drill .drill-check p {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
 /* "Show me" and "All steps", side by side at the right of the dose. */
 .drill-actions {
   display: inline-flex;

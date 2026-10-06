@@ -680,6 +680,9 @@ export function normalise(raw: unknown): Session | undefined {
       drill: { name: '', how: '', reps: '' },
     },
     triage: usableTriage(s.triage),
+    // Rendered as a sentence with numbers in it, so a hand-edited backup must
+    // not reach the report with half of one.
+    drillCheck: usableDrillCheck(s.drillCheck),
     // Dropped rather than repaired when it is the wrong shape. Every other field
     // here is load-bearing and worth defaulting; the spreads are an extra a
     // report is complete without, and the panel that draws them reaches through
@@ -861,6 +864,17 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
  * cannot be handed something they will throw on, without pretending to validate
  * seventeen nested rows a hand-edited backup could still get subtly wrong.
  */
+/** A stored drill check, or nothing — see `analysis/progressions.ts`. */
+function usableDrillCheck(raw: unknown): Session['drillCheck'] {
+  if (typeof raw !== 'object' || raw === null) return undefined
+  const c = raw as Record<string, unknown>
+  const count = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 99
+  if (typeof c.flaw !== 'string' || !count(c.read) || !count(c.clean) || !count(c.need)) return undefined
+  if (c.outcome !== 'passed' && c.outcome !== 'not_yet' && c.outcome !== 'unread') return undefined
+  if ((c.clean as number) > (c.read as number)) return undefined
+  return c as unknown as Session['drillCheck']
+}
+
 function usableConsistency(raw: unknown): Session['consistency'] {
   if (typeof raw !== 'object' || raw === null) return undefined
   const c = raw as Partial<NonNullable<Session['consistency']>>

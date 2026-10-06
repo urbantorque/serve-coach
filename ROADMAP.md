@@ -344,7 +344,7 @@ the coaching around it.
       were measured and dropped as invisible on a stick figure: hip-before-
       shoulder timing, early shoulder turn and toss drift. A dashed overlay was
       tried first and was unreadable.
-- [ ] **D4.3 Check my drill** · M. Film a basket in drill mode; only the focus
+- [x] **D4.3 Check my drill** · M. *Done on the basket sweep rather than a separate drill mode: `checkDrill` counts clean serves against the ladder's bar, the player moves up or down by tap, and the rung is remembered per fault. Original plan:* Film a basket in drill mode; only the focus
       measurement is scored against its pass mark, serve by serve. Pass moves
       you up a step; a miss offers the easier version. Extends the `practice`
       store with the step. *Proof:* seeded sessions through every transition.

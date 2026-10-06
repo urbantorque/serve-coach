@@ -778,6 +778,17 @@ Writing them replaced three drills a coach would not hand out:
 - a two-second sink at the bottom, now Kovacs's back-leg serve;
 - a whole basket on tiptoe, now "hit up and out".
 
+**A basket checks the step.** When a basket is swept from a report, the serves
+just read are counted against the top fix's ladder (`checkDrill`). A serve is
+clean when the fault was looked for, could be seen, and was not named. A serve
+the fault could not be judged on counts for neither side, so a step is never
+passed on serves nobody could read. Enough clean serves earn "Move up a step".
+A basket that mostly still shows the fault offers the step before. Too few
+readable serves earns "film a few more". Moving is always the player's tap: a
+ladder that moved itself would be one nobody trusted. The rung is remembered per
+fault (`prefs.ladder`), and the report's drill follows it. `?demo=basket` shows
+the state where the fault is still there, and `&passed` the move up.
+
 **What to practise.** Any single report picks the weakest thing in that serve,
 which on a given day might just be the serve you happened to film. Across trips
 to the court the app looks for the thing that is *still* wrong — ranked by lowest

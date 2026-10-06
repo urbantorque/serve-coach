@@ -2,8 +2,10 @@
  * The drill ladders, held to the same rules as every other line a player reads,
  * and tied to the drill the report already hands out.
  */
-import { CHECK_SERVES, everyProgression, progressionFor, stepOf } from '../progressions'
-import { FLAWS } from '../flaws'
+import { CHECK_SERVES, checkDrill, drillCheckLine, everyProgression, progressionFor, stepOf } from '../progressions'
+import { FLAWS, type FlawFinding, type FlawId } from '../flaws'
+import type { Diagnosis } from '../diagnose'
+import type { Triage } from '../triage'
 import { drillIdFor } from '../triage'
 import { drillFor } from '../verdict'
 import { cueIssues } from '../voice'
@@ -76,6 +78,59 @@ check('"drop" is only ever the racket drop', () => {
     for (const line of [p.cue, p.easier, p.mistake, ...p.steps.map((s) => s.how)]) {
       assert(!/\bball (drops|dropping)\b|\bdrop the ball\b/i.test(line), `${flaw}: "${line}" drops a ball`)
     }
+  }
+})
+
+heading('A basket checks the step')
+
+/** A swept serve as the check reads it: the one finding, and whether the clip was read. */
+function serve(flaw: FlawId, verdict: 'clean' | 'named' | 'unseen' | 'refused') {
+  return {
+    triage: { status: verdict === 'refused' ? 'rejected' : 'ok' } as Triage,
+    diagnosis: {
+      flaws:
+        verdict === 'refused'
+          ? []
+          : [{ flaw, detected: verdict === 'named', confidence: verdict === 'unseen' ? 0.2 : 0.9 } as FlawFinding],
+    } as unknown as Diagnosis,
+  }
+}
+const basket = (flaw: FlawId, ...v: ('clean' | 'named' | 'unseen' | 'refused')[]) => v.map((x) => serve(flaw, x))
+
+check('enough clean serves pass the step, at the ladder’s own bar', () => {
+  // shallow_drop asks for four of six.
+  const c = checkDrill('shallow_drop', basket('shallow_drop', 'clean', 'clean', 'named', 'clean', 'clean', 'named'))!
+  assert(c.outcome === 'passed', `outcome ${c.outcome}`)
+  assert(c.read === 6 && c.clean === 4 && c.need === 4, `read ${c.read}, clean ${c.clean}, need ${c.need}`)
+})
+
+check('a full basket that falls short is not yet, and so is one past saving', () => {
+  const short = checkDrill('shallow_drop', basket('shallow_drop', 'clean', 'clean', 'clean', 'named', 'named', 'named'))!
+  assert(short.outcome === 'not_yet', `full basket: ${short.outcome}`)
+  // Three named in four read: four of six is out of reach whatever else is filmed.
+  const lost = checkDrill('shallow_drop', basket('shallow_drop', 'named', 'named', 'named', 'clean', 'unseen', 'refused'))!
+  assert(lost.outcome === 'not_yet', `out of reach: ${lost.outcome}`)
+})
+
+check('serves the fault could not be judged on count for nothing either way', () => {
+  const c = checkDrill('shallow_drop', basket('shallow_drop', 'clean', 'clean', 'unseen', 'refused', 'unseen', 'clean'))!
+  assert(c.read === 3 && c.clean === 3, `read ${c.read}, clean ${c.clean}`)
+  assert(c.outcome === 'unread', `three clean of three read is not a pass of four: ${c.outcome}`)
+})
+
+check('a fault with no ladder has no check', () => {
+  assert(checkDrill('pancake_contact', basket('pancake_contact', 'clean')) === undefined, 'the pancake was checked')
+})
+
+check('every line a check can print passes the copy rules', () => {
+  const lines = [
+    drillCheckLine({ flaw: 'shallow_drop', read: 6, clean: 5, need: 4, outcome: 'passed' }),
+    drillCheckLine({ flaw: 'shallow_drop', read: 6, clean: 2, need: 4, outcome: 'not_yet' }),
+    drillCheckLine({ flaw: 'shallow_drop', read: 2, clean: 2, need: 4, outcome: 'unread' }),
+  ]
+  for (const line of lines) {
+    const issues = cueIssues(line)
+    assert(issues.length === 0, `"${line}": ${issues.join('; ')}`)
   }
 })
 

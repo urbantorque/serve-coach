@@ -33,6 +33,12 @@ export interface Prefs {
   seenFilmingGuide: boolean
   /** Whether persistent storage has been requested from the browser. */
   askedToPersist: boolean
+  /**
+   * Which rung of each fault's ladder the player is on, zero-based — see
+   * `analysis/progressions.ts`. Absent for a fault means the rung the report's
+   * own drill sits on. Moved only by the player, from the report.
+   */
+  ladder?: Partial<Record<string, number>>
 }
 
 const KEY = 'serve-coach-prefs'

@@ -44,7 +44,9 @@
  */
 import { DRILLS } from './coaching'
 import type { BodyAxis } from './axes'
-import type { FlawId } from './flaws'
+import type { Diagnosis } from './diagnose'
+import { MIN_EVIDENCE, type FlawId } from './flaws'
+import type { Triage } from './triage'
 import type { Drill } from './types'
 
 export interface Progression {
@@ -318,6 +320,74 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     mistake: 'Dropping your head, or reaching forwards for a toss that went too far in front. Toss up, then hit up.',
     pass: 5,
   },
+}
+
+/**
+ * What a basket said about the step a player is on.
+ *
+ * Counted from the sweep's own diagnoses, one per serve, so it is the engine's
+ * judgement and not a second one: a serve is clean when the fault was looked
+ * for, could be seen, and was not named. A serve the fault could not be judged
+ * on — refused, the limb unseen, the ball missing — is not counted either way,
+ * because a step passed on serves nobody could read is a step nobody passed.
+ */
+export interface DrillCheck {
+  flaw: FlawId
+  /** Serves the fault could be judged on. */
+  read: number
+  /** Of those, the ones it was not named on. */
+  clean: number
+  /** The ladder's bar, out of `CHECK_SERVES`. */
+  need: number
+  outcome: 'passed' | 'not_yet' | 'unread'
+}
+
+/** A serve's verdict on one fault: clean, named, or not judged at all. */
+type Judged = 'clean' | 'named' | 'unread'
+
+function judge(
+  serve: { diagnosis?: Diagnosis; triage?: Triage },
+  flaw: FlawId,
+): Judged {
+  if (serve.triage?.status !== 'ok') return 'unread'
+  const finding = serve.diagnosis?.flaws.find((f) => f.flaw === flaw)
+  if (!finding || !(finding.confidence >= MIN_EVIDENCE)) return 'unread'
+  return finding.detected ? 'named' : 'clean'
+}
+
+/**
+ * Check one basket against the bar of a fault's ladder.
+ *
+ * Passed when enough serves came back clean. Not yet when too many were named
+ * for the bar to be reachable inside one basket, or when a full basket was read
+ * and fell short. Otherwise too few serves could be judged to say, and the
+ * player is told to film more rather than told they failed.
+ */
+export function checkDrill(
+  flaw: FlawId,
+  serves: { diagnosis?: Diagnosis; triage?: Triage }[],
+): DrillCheck | undefined {
+  const ladder = PROGRESSIONS[flaw]
+  if (!ladder) return undefined
+  const verdicts = serves.map((s) => judge(s, flaw))
+  const clean = verdicts.filter((v) => v === 'clean').length
+  const named = verdicts.filter((v) => v === 'named').length
+  const read = clean + named
+  const need = ladder.pass
+  const outcome: DrillCheck['outcome'] =
+    clean >= need ? 'passed' : named > CHECK_SERVES - need || read >= CHECK_SERVES ? 'not_yet' : 'unread'
+  return { flaw, read, clean, need, outcome }
+}
+
+/** The line a check earns on the report, in the copy rules' voice. */
+export function drillCheckLine(check: DrillCheck): string {
+  if (check.outcome === 'passed') {
+    return `Clean on ${check.clean} of ${check.read} serves in that basket, so you have passed this step.`
+  }
+  if (check.outcome === 'not_yet') {
+    return `Clean on ${check.clean} of ${check.read} serves in that basket. Stay on this step for now.`
+  }
+  return `Only ${check.read} of those serves showed this clearly. Film a few more to check the step.`
 }
 
 /**
