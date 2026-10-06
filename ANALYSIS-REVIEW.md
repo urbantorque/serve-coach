@@ -457,6 +457,49 @@ MediaPipe and COCO-style labels, so hip error favours RTMPose for a reason
 that is not accuracy. The arm joints — the ones the serve is measured from —
 share a convention, and that is where the gain is largest.
 
+### A second set, from every side: COCO tennis (2026-10-07)
+
+The table above is one camera: rear three-quarter, the player about 215 px
+tall. `npm run setup:bench` now also builds `bench-data/coco-tennis` from
+COCO 2017. Annotations are **CC BY 4.0 [V]**. Images are kept only where the
+photograph's own Flickr licence allows commercial use; that leaves out about
+two thirds of the candidates, on purpose.
+
+The selection rule is in `scripts/fetch-bench.mjs`: a racket in the image, a
+labelled player at least 120 px tall, and a wrist raised above the shoulders
+with a racket beside them. That gives **146 overhead tennis frames**. Most are
+serves; a few are smashes and high forehand finishes. `bench.html?set=coco-tennis`
+runs them. Each frame is also filed by the view its *labels* show (`viewOf`:
+shoulder span over torso length). That gives 36 edge-on, 100 oblique and
+10 square frames. Desktop Chrome, WebGPU, as before.
+
+| Variant | All 146: wrists | elbows | Edge-on 36: wrists | elbows | L/R swaps | ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| det → mp-full crop (the app's MediaPipe path) | 1.60 / 85% | 1.79 / 87% | 1.53 / 84% | **2.37** / 84% | 3 | 86 |
+| mp-heavy | 1.34 / 92% | 1.32 / 93% | 1.55 / 88% | 1.48 / 92% | 1 | 35 |
+| **det → RTMPose-s** (what re-reads the swing today) | 1.17 / 95% | 0.91 / 97% | 1.24 / 87% | 1.07 / 94% | 0 | 34 |
+| **det → RTMPose-m** | **0.86 / 99%** | **0.78 / 99%** | **1.02 / 96%** | **0.84 / 95%** | 0 | 51 |
+| RTMPose-m on the labelled box (ceiling) | 0.82 / 98% | 0.82 / 100% | 1.05 / 96% | 0.79 / 99% | 0 | 51 |
+
+Median error is % of player height; PCK is the share within 5%.
+
+**What it adds to the table above.**
+
+1. **The ranking holds on a second set and from other angles.** RTMPose-m,
+   then RTMPose-s, then MediaPipe on the arm joints, everywhere. Neither
+   RTMPose model swapped left and right once.
+2. **Edge-on is where MediaPipe's elbow is weakest**, at 2.37% of height. That
+   is the view in which one shoulder hides the other. RTMPose-s more than
+   halves it, which is the swing re-read E7 already ships.
+3. **RTMPose-m beats RTMPose-s on wrists here too:** −26% over all frames and
+   −18% edge-on. On Tennis Player Actions it was −16%. The wrist is the contact
+   landmark, so this is evidence for D6.7 from a second, independent set. It
+   costs 54 MB against 22 MB and about 1.5× the time, and still needs the
+   memory-footprint check.
+4. Errors are lower across the board than on Tennis Player Actions. COCO's
+   players are larger and its photographs sharper than phone video frames, so
+   compare the two sets by ranking, not by number.
+
 ---
 
 ## 8 · What was executed, with no footage from the owner

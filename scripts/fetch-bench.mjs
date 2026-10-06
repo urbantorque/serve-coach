@@ -16,6 +16,12 @@
  * 180 Hz, with each serve's outcome. Read by `npm run bench:mocap`
  * (ANALYSIS-REVIEW.md §9).
  *
+ * COCO 2017, tennis only (cocodataset.org; annotations CC BY 4.0, images under
+ * their own Flickr licences, commercial-use ones only): the serve-shaped frames
+ * from every camera side, in the same format as Tennis Player Actions. Read by
+ * `bench.html?set=coco-tennis` (ANALYSIS-REVIEW.md §7). The annotation archive
+ * is 252 MB; only the selection is kept.
+ *
  * Attribution is written next to each dataset, as the licences require. Each
  * licence is re-checked at its source before anything is downloaded, so a
  * change of terms stops the fetch rather than passing unnoticed.
@@ -81,9 +87,11 @@ async function pool(items, n, fn) {
  * Node has no zip reader, and the two archives here are small and ordinary:
  * stored or deflated entries, under 4 GB, no encryption. Read from the central
  * directory, which is the part of the format that is authoritative about
- * sizes, then each entry's local header for where its data starts.
+ * sizes, then each entry's local header for where its data starts. `wanted`
+ * picks entries by name before anything is inflated, which matters for COCO:
+ * its archive inflates to 834 MB and two of its six files are needed.
  */
-function unzip(buf) {
+function unzip(buf, wanted = () => true) {
   const eocd = buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]))
   if (eocd < 0) throw new Error('not a zip archive')
   const entries = buf.readUInt16LE(eocd + 10)
@@ -99,7 +107,7 @@ function unzip(buf) {
     const local = buf.readUInt32LE(p + 42)
     const name = buf.toString('utf8', p + 46, p + 46 + nameLength)
     p += 46 + nameLength + extraLength + commentLength
-    if (name.endsWith('/')) continue
+    if (name.endsWith('/') || !wanted(name)) continue
     const start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28)
     const data = buf.subarray(start, start + compressed)
     if (method === 0) out.set(name, data)
@@ -201,5 +209,157 @@ when it reads them (src/dev/mocap/bath.ts).
   console.log(`  bath-serve: ${count} serves, outcome sheet`)
 }
 
+/* --------------------------------------------------------- COCO, tennis only */
+
+/**
+ * The serve-shaped tennis frames in COCO 2017, in the benchmark's own format.
+ *
+ * Tennis Player Actions is one camera position: rear three-quarter, the player
+ * a couple of hundred pixels tall. COCO's tennis photographs come from every
+ * side, so they ask whether a ranking measured there holds where the phone
+ * actually stands. Selected, not hand-picked:
+ * - the image has a `tennis racket` box (category 43);
+ * - the player has at least 12 labelled keypoints, is not a crowd label, and
+ *   is at least 120 px tall;
+ * - a wrist is raised at least 12% of the player's height above the higher
+ *   shoulder (an overhead: the toss, the trophy, contact or a smash);
+ * - a racket box sits beside that player rather than across the court;
+ * - the photograph's own Flickr licence allows commercial use (CC BY, BY-SA,
+ *   BY-ND, no known restrictions, US government). The non-commercial ones would
+ *   roughly triple the count and are left out on purpose.
+ * One player per image, the tallest that qualifies.
+ *
+ * Annotations are CC BY 4.0 (COCO Consortium). Images keep their own licences,
+ * listed per file in ATTRIBUTION.txt. The images are fetched over HTTPS from
+ * the bucket's path-style address, because images.cocodataset.org itself has
+ * no certificate for that name.
+ */
+async function cocoTennis() {
+  const TERMS = 'https://cocodataset.org/dataset/termsofuse.htm'
+  const BUCKET = 'https://s3.amazonaws.com/images.cocodataset.org'
+  const DEST = path.join(root, 'bench-data', 'coco-tennis')
+  const COMMERCIAL = (url) => /creativecommons\.org\/licenses\/by(-sa|-nd)?\/|flickr\.com\/commons|usa\.gov\/copyright/.test(url)
+
+  if (fs.existsSync(path.join(DEST, 'serve.json'))) {
+    const have = JSON.parse(fs.readFileSync(path.join(DEST, 'serve.json'), 'utf8'))
+    const missing = have.images.filter((im) => !fs.existsSync(path.join(DEST, 'serve', im.file_name)))
+    if (!missing.length) {
+      console.log(`  coco-tennis: ${have.images.length} serve-shaped frames (already here)`)
+      return
+    }
+  }
+
+  const terms = (await bytes(TERMS)).toString('utf8')
+  if (!terms.includes('creativecommons.org/licenses/by/4.0')) {
+    throw new Error('COCO annotation licence is no longer stated as CC BY 4.0; re-check before using')
+  }
+
+  const files = unzip(await bytes(`${BUCKET}/annotations/annotations_trainval2017.zip`), (n) =>
+    /(instances|person_keypoints)_(train|val)2017\.json$/.test(n),
+  )
+
+  /** Regex matches over a large buffer, in overlapping windows, never one giant string. */
+  function* scan(buf, re) {
+    const W = 64 << 20
+    const overlap = 2 << 20
+    for (let s = 0; ; s += W - overlap) {
+      const text = buf.toString('latin1', s, Math.min(buf.length, s + W))
+      re.lastIndex = 0
+      let m
+      while ((m = re.exec(text))) yield m
+      if (s + W >= buf.length) break
+    }
+  }
+
+  const images = []
+  const annotations = []
+  const attribution = []
+  for (const split of ['train2017', 'val2017']) {
+    const instances = files.get(`annotations/instances_${split}.json`)
+    const keypoints = files.get(`annotations/person_keypoints_${split}.json`)
+
+    const licences = new Map()
+    for (const m of scan(keypoints, /\{"url": ?"([^"]+)","id": ?(\d+),"name": ?"([^"]+)"\}/g)) licences.set(+m[2], { url: m[1], name: m[3] })
+
+    const rackets = new Map()
+    const racketIds = new Set()
+    for (const m of scan(instances, /"image_id": ?(\d+),"bbox": ?\[([^\]]*)\],"category_id": ?43,"id": ?(\d+)/g)) {
+      if (racketIds.has(m[3])) continue
+      racketIds.add(m[3])
+      if (!rackets.has(+m[1])) rackets.set(+m[1], [])
+      rackets.get(+m[1]).push(m[2].split(',').map(Number))
+    }
+
+    const meta = new Map()
+    const imageRe =
+      /\{"license": ?(\d+),"file_name": ?"([^"]+)","coco_url": ?"[^"]+","height": ?(\d+),"width": ?(\d+),"date_captured": ?"[^"]*","flickr_url": ?"([^"]*)","id": ?(\d+)\}/g
+    for (const m of scan(keypoints, imageRe)) {
+      if (rackets.has(+m[6])) meta.set(+m[6], { license: +m[1], file_name: m[2], height: +m[3], width: +m[4], flickr: m[5] })
+    }
+
+    const best = new Map()
+    const personIds = new Set()
+    const personRe =
+      /"num_keypoints": ?(\d+),"area": ?[^,]+,"iscrowd": ?(\d),"keypoints": ?\[([^\]]*)\],"image_id": ?(\d+),"bbox": ?\[([^\]]*)\],"category_id": ?1,"id": ?(\d+)/g
+    for (const m of scan(keypoints, personRe)) {
+      if (personIds.has(m[6])) continue
+      personIds.add(m[6])
+      const id = +m[4]
+      const image = meta.get(id)
+      if (!image || !COMMERCIAL(licences.get(image.license)?.url ?? '')) continue
+      const kp = m[3].split(',').map(Number)
+      const bbox = m[5].split(',').map(Number)
+      if (+m[2] || +m[1] < 12 || bbox[3] < 120) continue
+      const at = (j) => (kp[j * 3 + 2] > 0 ? { x: kp[j * 3], y: kp[j * 3 + 1] } : undefined)
+      const ls = at(5)
+      const rs = at(6)
+      if (!ls || !rs) continue
+      const raised = [at(9), at(10)].some((w) => w && Math.min(ls.y, rs.y) - w.y > 0.12 * bbox[3])
+      if (!raised) continue
+      const beside = rackets.get(id).some(([x, y, w, h]) => {
+        const cx = x + w / 2
+        const cy = y + h / 2
+        return (
+          cx > bbox[0] - 0.3 * bbox[3] && cx < bbox[0] + bbox[2] + 0.3 * bbox[3] && cy > bbox[1] - 0.5 * bbox[3] && cy < bbox[1] + bbox[3]
+        )
+      })
+      if (!beside) continue
+      if ((best.get(id)?.bbox[3] ?? 0) < bbox[3]) best.set(id, { image_id: id, keypoints: kp, bbox, num_keypoints: +m[1] })
+    }
+
+    for (const [id, ann] of best) {
+      const im = meta.get(id)
+      images.push({ id, file_name: im.file_name, width: im.width, height: im.height, split })
+      annotations.push(ann)
+      attribution.push(`${im.file_name}\t${licences.get(im.license).name}\t${im.flickr}`)
+    }
+  }
+
+  fs.mkdirSync(path.join(DEST, 'serve'), { recursive: true })
+  fs.writeFileSync(path.join(DEST, 'serve.json'), JSON.stringify({ images, annotations }))
+  fs.writeFileSync(
+    path.join(DEST, 'ATTRIBUTION.txt'),
+    `COCO 2017 (Lin et al. 2014, "Microsoft COCO: Common Objects in Context"), https://cocodataset.org
+Annotations: COCO Consortium, Creative Commons Attribution 4.0 (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Annotations reduced to one serve-shaped tennis player per image by scripts/fetch-bench.mjs.
+Images are unmodified Flickr photographs under their own licences, one per line:
+file, licence, source
+
+${attribution.sort().join('\n')}
+`,
+  )
+
+  let fetched = 0
+  await pool(images, 8, async (im) => {
+    const dest = path.join(DEST, 'serve', im.file_name)
+    if (fs.existsSync(dest)) return
+    fs.writeFileSync(dest, await bytes(`${BUCKET}/${im.split}/${im.file_name}`))
+    fetched++
+  })
+  console.log(`  coco-tennis: ${images.length} serve-shaped frames (${fetched} fetched), serve.json`)
+}
+
 await tennisPlayerActions()
 await bathServe()
+await cocoTennis()

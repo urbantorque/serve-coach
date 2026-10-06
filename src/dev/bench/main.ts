@@ -6,6 +6,17 @@
  * quick subset. Results render as a table and are left on `window.__bench` so
  * a script can read them.
  *
+ * Two labelled sets, chosen with `?set=`:
+ *
+ *   tennis-player-actions   (default) 500 serve frames, one rear three-quarter
+ *                           camera, the player about 215 px tall
+ *   coco-tennis             146 overhead tennis frames from COCO 2017 — mostly
+ *                           serves, from every side of the player
+ *
+ * Under the main table, each view the labels put the player in — edge-on,
+ * oblique or square to the lens (`viewOf`) — gets its own, so a ranking can be
+ * checked against the angle a phone actually films from.
+ *
  * The variants answer ANALYSIS-REVIEW.md's Tier 0 question — does a different
  * pose model, or the same one read differently, get the serving arm right more
  * often — on real smartphone serve frames rather than on the synthetic rig:
@@ -34,10 +45,14 @@ import {
   type Pt,
   type Truth,
   type VariantSummary,
+  type View,
+  viewOf,
 } from './score'
 
-const DATA = '/bench-data/tennis-player-actions'
 const params = new URLSearchParams(location.search)
+const SETS = ['tennis-player-actions', 'coco-tennis']
+const SET = SETS.includes(params.get('set') ?? '') ? params.get('set')! : SETS[0]
+const DATA = `/bench-data/${SET}`
 const LIMIT = Number(params.get('n')) || Infinity
 const out = document.getElementById('out')!
 const log = (s: string) => {
@@ -186,7 +201,7 @@ async function main() {
     .filter((im) => byImage.has(im.id))
     .sort((a, b) => a.file_name.localeCompare(b.file_name))
     .slice(0, LIMIT)
-  log(`${items.length} labelled serve frames`)
+  log(`${items.length} labelled frames from ${SET}`)
 
   log('loading models…')
   const mpFull = await mediapipe('/models/pose_landmarker_full.task')
@@ -250,27 +265,50 @@ async function main() {
   const summaries: Record<string, VariantSummary> = Object.fromEntries(
     Object.entries(results).map(([k, r]) => [k, summarise(r)]),
   )
+  const views = (['edge-on', 'oblique', 'square'] as View[]).map((view) => {
+    const of = <T extends { truth: Truth }>(r: T[]) => r.filter((x) => viewOf(x.truth) === view)
+    return {
+      view,
+      images: of(results['mp-full']).length,
+      summaries: Object.fromEntries(
+        Object.entries(results).map(([k, r]) => [k, summarise(of(r))]),
+      ) as Record<string, VariantSummary>,
+    }
+  })
   ;(window as unknown as { __bench: unknown }).__bench = {
+    set: SET,
     summaries,
+    views,
     perImage: Object.fromEntries(
       Object.entries(results).map(([k, r]) => [k, r.map((x) => ({ file: x.truth.file, pred: x.pred, ms: x.ms }))]),
     ),
   }
-  render(summaries)
+  render(summaries, views)
 }
 
-function render(s: Record<string, VariantSummary>) {
+function table(s: Record<string, VariantSummary>): string {
   const groups = Object.keys(Object.values(s)[0].medianError)
+  const cell = (v: VariantSummary, g: string) =>
+    Number.isNaN(v.medianError[g]) ? '<td>—</td>' : `<td>${v.medianError[g].toFixed(1)} / ${(v.pck05[g] * 100).toFixed(0)}%</td>`
   const rows = Object.entries(s).map(
     ([k, v]) =>
       `<tr><th>${k}</th><td>${v.missed}</td><td>${v.wrongPerson}</td><td>${v.swapped}</td>` +
-      groups.map((g) => `<td>${v.medianError[g].toFixed(1)} / ${(v.pck05[g] * 100).toFixed(0)}%</td>`).join('') +
+      groups.map((g) => cell(v, g)).join('') +
       `<td>${v.msPerImage.toFixed(0)}</td></tr>`,
   )
-  document.getElementById('table')!.innerHTML =
+  return (
     `<table><tr><th>variant</th><th>missed</th><th>wrong person</th><th>L/R swapped</th>` +
     groups.map((g) => `<th>${g}<br><small>median % ht / PCK@5%</small></th>`).join('') +
     `<th>ms</th></tr>${rows.join('')}</table>`
+  )
+}
+
+function render(s: Record<string, VariantSummary>, views: { view: View; images: number; summaries: Record<string, VariantSummary> }[]) {
+  const byView = views
+    .filter((v) => v.images > 0)
+    .map((v) => `<h2>${v.view[0].toUpperCase()}${v.view.slice(1)} · ${v.images} ${v.images === 1 ? 'frame' : 'frames'}</h2>${table(v.summaries)}`)
+    .join('')
+  document.getElementById('table')!.innerHTML = `<h2>All frames · ${SET}</h2>${table(s)}${byView}`
   log('done')
 }
 

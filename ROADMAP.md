@@ -402,6 +402,10 @@ The outcome taps already exist and nothing reads them.
       `/bench.html` beats RTMPose-s on wrists and elbows and the memory
       footprint test still passes; try WebGPU for `onnxruntime-web` alongside.
       *Proof:* the benchmark table in `ANALYSIS-REVIEW.md` §7, re-run.
+      *Benchmark half met (2026-10-07):* it beats RTMPose-s on both sets.
+      Wrists are −16% on Tennis Player Actions and −26% on 146 COCO overhead
+      frames from every side (−18% on the edge-on ones);
+      `bench.html?set=coco-tennis`. The footprint test is still to run.
 
 ### Order of play
 D1 first, because D3.4, D3.7 and D3.8 depend on it and D1.4 sharpens every

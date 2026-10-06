@@ -9,6 +9,7 @@ import {
   rtmCrop,
   summarise,
   truthFrom,
+  viewOf,
   wrongPerson,
   type Pt,
   type Truth,
@@ -55,6 +56,24 @@ check('left and right exchanged is caught', () => {
   const p = pointsOf(t)
   for (const [l, r] of [[5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]) [p[l], p[r]] = [p[r], p[l]]
   assert(leftRightSwapped(p, t), 'a mirrored skeleton was not flagged')
+})
+
+check('the camera view is read from the labelled shoulders against the torso', () => {
+  // Shoulders 40 px apart over a 100 px torso is square on; 10 px is edge-on.
+  const withShoulders = (span: number, hips = true): Truth => {
+    const joints: (Pt | undefined)[] = COCO_JOINTS.map(() => undefined)
+    joints[5] = { x: 100 - span / 2, y: 100 }
+    joints[6] = { x: 100 + span / 2, y: 100 }
+    if (hips) {
+      joints[11] = { x: 95, y: 200 }
+      joints[12] = { x: 105, y: 200 }
+    }
+    return { file: 'v.jpg', joints, bbox: [0, 0, 100, 300] }
+  }
+  assert(viewOf(withShoulders(90)) === 'square', 'chest to the lens')
+  assert(viewOf(withShoulders(60)) === 'oblique', 'turned')
+  assert(viewOf(withShoulders(20)) === 'edge-on', 'one shoulder behind the other')
+  assert(viewOf(withShoulders(90, false)) === undefined, 'no hips, no view')
 })
 
 check('MediaPipe indices land on the matching COCO joints', () => {

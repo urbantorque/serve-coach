@@ -86,6 +86,29 @@ export function truthFrom(file: string, keypoints: number[], bbox: number[]): Tr
  */
 export const scaleOf = (t: Truth): number => Math.max(1, t.bbox[3])
 
+/**
+ * How the camera saw the player's shoulders, from the labels themselves.
+ *
+ * Shoulder span over torso length (shoulder midpoint to hip midpoint), both in
+ * the image. Square on — chest or back to the lens — it is about 0.8–1.0;
+ * edge-on, with one shoulder behind the other, it falls towards zero. Read
+ * from the labels rather than from any model, so a variant cannot move its own
+ * image into an easier group. `undefined` when a shoulder or both hips are
+ * unlabelled.
+ */
+export type View = 'edge-on' | 'oblique' | 'square'
+
+export function viewOf(t: Truth): View | undefined {
+  const [ls, rs] = [t.joints[5], t.joints[6]]
+  const hips = [t.joints[11], t.joints[12]].filter((p): p is Pt => !!p)
+  if (!ls || !rs || !hips.length) return undefined
+  const hip = { x: hips.reduce((a, p) => a + p.x, 0) / hips.length, y: hips.reduce((a, p) => a + p.y, 0) / hips.length }
+  const torso = Math.hypot((ls.x + rs.x) / 2 - hip.x, (ls.y + rs.y) / 2 - hip.y)
+  if (torso < 1) return undefined
+  const ratio = Math.hypot(ls.x - rs.x, ls.y - rs.y) / torso
+  return ratio < 0.45 ? 'edge-on' : ratio < 0.8 ? 'oblique' : 'square'
+}
+
 /** Per-joint error as a fraction of player height; `undefined` where not comparable. */
 export function jointErrors(pred: Prediction, t: Truth): (number | undefined)[] {
   const s = scaleOf(t)
