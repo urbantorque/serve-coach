@@ -162,6 +162,28 @@ check('a gap of a frame or two is filled in from the motion either side', () => 
   }
 })
 
+check('a sample lost where the hand turns round is filled on the turn, not past it', () => {
+  // The drop and contact are where the tracker loses the racket hand and where
+  // the hand reverses. A constant-velocity filter carried it past the turn —
+  // 0.07 body heights off at 30 fps, on both — which is what this pins.
+  const fps = 30
+  const clean = buildServe({}, fps)
+  const keys = detectServe(clean, fps).keys
+  for (const [name, at] of [['drop', keys.drop], ['contact', keys.contact]] as const) {
+    let sum = 0
+    const seeds = 12
+    for (let s = 1; s <= seeds; s++) {
+      const noisy = buildServe({ noise: 0.008, seed: s * 7919 }, fps)
+      const bridged = bridgeDetectionGaps(grid(noisy, (i) => i === at))
+      assert(bridged.length === noisy.length, `${name}: the lost sample was not bridged`)
+      sum += missBy(bridged[at], clean[at], LM.rightWrist) / RIG_BODY_HEIGHT
+    }
+    const mean = sum / seeds
+    note(`${name}: one lost sample at 30 fps, bridged ${mean.toFixed(4)} body heights from the truth`)
+    within(mean, 0, 0.03, `${name}: bridged wrist`)
+  }
+})
+
 check('a long blackout is left as a hole rather than smoothed over', () => {
   const truth = buildServe({}, FPS)
   // Twelve samples — a quarter of a second — gone through the top of the swing.
