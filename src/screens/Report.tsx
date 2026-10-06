@@ -10,6 +10,7 @@ import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
 import FaultDemoPanel from '../components/FaultDemoPanel'
 import { hasDemo } from '../lib/faultDemoDials'
+import { CHECK_SERVES, progressionFor } from '../lib/analysis/progressions'
 import TrackPlayer from '../components/TrackPlayer'
 import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
 import { pairTracks } from '../lib/trackPair'
@@ -222,6 +223,8 @@ export default function Report({
   const [pickingLevel, setPickingLevel] = useState(false)
   /** Whether the top fix is being shown moving — see `FaultDemoPanel`. */
   const [showingFault, setShowingFault] = useState(false)
+  /** Whether the top fix's whole ladder is open — see `progressions.ts`. */
+  const [showingSteps, setShowingSteps] = useState(false)
   /*
    * Hiding the spreads, not deleting them.
    *
@@ -339,6 +342,10 @@ export default function Report({
    */
   const ranked = causalPlan(analysis.triage, analysis.diagnosis)
   const plan = ranked.length ? ranked : [analysis.focus]
+  // The top fix's ladder, and where its drill sits on it. By name rather than
+  // by identity: a reopened report's drill has been through storage.
+  const ladder = plan[0].flaw ? progressionFor(plan[0].flaw, plan[0].axis) : undefined
+  const rung = ladder ? ladder.steps.findIndex((s) => s.name === plan[0].drill.name) : -1
   const suppressed = suppressedNote(analysis.triage, plan.length)
   const levelled = tierLabel(analysis.triage)
 
@@ -579,11 +586,14 @@ export default function Report({
         )}
 
         <div className="focus-drill">
-          <span className="t-overline focus-drill-kicker">The drill</span>
+          <span className="t-overline focus-drill-kicker">
+            The drill{rung >= 0 && ladder ? ` · step ${rung + 1} of ${ladder.steps.length}` : ''}
+          </span>
           <h3 className="t-subhead">{plan[0].drill.name}</h3>
           <p>{plan[0].drill.how}</p>
           <div className="focus-drill-foot">
             <span className="focus-reps">{plan[0].drill.reps}</span>
+            <span className="drill-actions">
             {/* Only for a fault the rig can pose and the engine names on it —
                 see `faultDemoDials.ts`. A fallback focus from the ranking has
                 no fault behind it, and neither does a report saved before the
@@ -598,9 +608,51 @@ export default function Report({
                 <Icon name="chevron" size={13} />
               </button>
             )}
+            {ladder && rung >= 0 && (
+              <button
+                className="drill-show"
+                onClick={() => setShowingSteps((v) => !v)}
+                aria-expanded={showingSteps}
+              >
+                {showingSteps ? 'Hide steps' : 'All steps'}
+                <Icon name="chevron" size={13} />
+              </button>
+            )}
+            </span>
           </div>
           {showingFault && hasDemo(plan[0].flaw) && (
             <FaultDemoPanel flaw={plan[0].flaw} racket={analysis.handedness} />
+          )}
+          {/* The ladder the drill above is one rung of: easiest first, the
+              current rung marked, and the bar for moving up. Folded by default
+              — the drill is the instruction, and this is the plan around it. */}
+          {showingSteps && ladder && rung >= 0 && (
+            <div className="drill-ladder">
+              <p className="drill-feel">
+                <strong>Feel:</strong> {ladder.cue}
+              </p>
+              <ol className="drill-steps">
+                {ladder.steps.map((step, i) => (
+                  <li key={step.name} className={i === rung ? 'is-now' : undefined} aria-current={i === rung ? 'step' : undefined}>
+                    <span className="drill-step-name">
+                      {step.name}
+                      {i === rung && <span className="drill-step-now">Now</span>}
+                    </span>
+                    <span className="drill-step-how">{step.how}</span>
+                    <span className="drill-step-reps">{step.reps}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="drill-note">
+                <strong>Too hard?</strong> {ladder.easier}
+              </p>
+              <p className="drill-note">
+                <strong>Watch for:</strong> {ladder.mistake}
+              </p>
+              <p className="drill-note">
+                Move up a step when {ladder.pass} of your next {CHECK_SERVES} serves come back without this fault.
+              </p>
+            </div>
           )}
         </div>
 

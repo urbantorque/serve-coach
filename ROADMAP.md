@@ -330,7 +330,10 @@ already has dials for D3.2–D3.4; until now nothing read them.
 The diagnosis is good; what follows it is one sentence of text. This wave adds
 the coaching around it.
 
-- [ ] **D4.1 Drill model v2** · M. `Drill` gains a feel cue, 3–5 progression
+- [x] **D4.1 Drill model v2** · M. *Done as ladders (`progressions.ts`): a
+      cue, 3–5 steps, an easier way in, the mistake, and a bar of N of 6 serves
+      judged by the engine. Three drills replaced on the research. Original
+      plan:* `Drill` gains a feel cue, 3–5 progression
       steps (shadow → service line → half pace → full → under pressure), an
       easier version, the common mistake, and a pass mark the app can check
       (`{ metricId, threshold, ofServes }`). Written for every reachable fault,

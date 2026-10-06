@@ -84,11 +84,11 @@ export const FLAW_DRILL: Record<FlawId, string> = {
   toss_drift: 'one_line_toss',
   posture_collapse: 'head_up_hold',
   shallow_drop: 'back_scratch_drop',
-  collapsed_elbow: 'elbow_up_l',
+  collapsed_elbow: 'overhead_throw',
   early_shoulder_rotation: 'hip_lead_turn',
-  arming_the_ball: 'slow_sink_hold',
+  arming_the_ball: 'back_leg_serve',
   pancake_contact: 'pronation_snap',
-  low_contact: 'heels_up_basket',
+  low_contact: 'up_and_out',
 }
 
 /**

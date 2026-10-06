@@ -918,6 +918,116 @@
   }
 }
 
+/* "Show me" and "All steps", side by side at the right of the dose. */
+.drill-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/*
+ * The ladder the drill is one rung of.
+ *
+ * A numbered list inside the drill box rather than a second box, because it is
+ * the same drill's plan rather than a second thing to do. The current rung is
+ * the one lime mark, matching the dose pill above it, and the rest stay quiet.
+ */
+.drill-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+
+.focus-drill .drill-feel,
+.focus-drill .drill-note {
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.drill-feel strong,
+.drill-note strong {
+  color: var(--fg);
+  font-weight: var(--wt-key);
+}
+
+.drill-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: rung;
+}
+
+.drill-steps li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 11px 10px 36px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--hairline-soft);
+  counter-increment: rung;
+}
+
+.drill-steps li::before {
+  content: counter(rung);
+  position: absolute;
+  left: 12px;
+  top: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.drill-steps li.is-now {
+  border-color: var(--lime-deep);
+  background: var(--lime-glow);
+}
+
+.drill-steps li.is-now::before {
+  color: var(--lime);
+}
+
+.drill-step-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+.drill-step-now {
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--lime-glow);
+  color: var(--lime);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.drill-step-how {
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.drill-step-reps {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
 /* The chevron points down when the demonstration is open, as a disclosure. */
 .drill-show[aria-expanded='true'] svg {
   transform: rotate(90deg);

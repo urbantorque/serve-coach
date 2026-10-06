@@ -840,6 +840,30 @@ export const DRILLS: Record<string, Drill> = {
     how: 'Serve at half pace and let the palm turn out through the ball, thumb finishing down.',
     reps: '20 serves',
   },
+
+  // Three that replaced a drill a coach would not hand out. Each of the old ones
+  // asked for a hold or a stance the serve never has: a pause at the drop
+  // (elbow_up_l), a two-second sink at the bottom (slow_sink_hold) and a whole
+  // basket on the toes (heels_up_basket). A pause practised is a pause learned —
+  // the hitch, which every coaching source in `progressions.ts` warns holds
+  // teach — and serving on the toes takes away the leg load that lifts the
+  // contact. The old three stay above, because the per-measurement cards still
+  // use two of them; only the fault's answer moved.
+  overhead_throw: {
+    name: 'Overhead throws',
+    how: 'Throw an old ball high and far, so it peaks well above net height. The throw puts the elbow where it belongs.',
+    reps: '15 throws',
+  },
+  back_leg_serve: {
+    name: 'Back-leg serves',
+    how: 'Serve with your weight on your back leg only, letting the hips turn before the arm swings.',
+    reps: '15 serves',
+  },
+  up_and_out: {
+    name: 'Hit up and out',
+    how: 'From the service line, swing up and out towards the back fence and let the racket bring the ball down.',
+    reps: '20 serves',
+  },
 }
 
 /* ------------------------------------------------------------- serve types */

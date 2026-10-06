@@ -729,6 +729,24 @@ first. That ghost is dim on purpose and drawn from the hips up, and two bodies a
 fault apart overlap almost everywhere, so the one difference was the hardest
 thing on screen to see.
 
+**Every drill is a rung on a ladder.** The drill under the top fix says which
+step it is ("step 3 of 5"), and "All steps" opens the rest. You get one thing to
+feel, the steps from most guided to most like a match, an easier way in, the
+mistake people make doing it, and when to move up: the fault gone from four or
+five of your next six serves. The engine judges that at your own target, not by
+a second threshold (`analysis/progressions.ts`).
+
+The ladders follow Dr Mark Kovacs's order of priorities: grip, then toss, then
+legs. They draw on drills from Feel Tennis, Essential Tennis, Top Tennis
+Training, the USTA and the ITF's constraints-led coaching. Every cue points at
+the ball, the racket or the court, because outward-focused cues moved serve
+accuracy in the research. No step holds a position: a pose practised mid-swing is
+how a player learns the stop-and-restart hitch, and a check enforces this.
+Writing them replaced three drills a coach would not hand out:
+- a pause at the drop, now overhead throws;
+- a two-second sink at the bottom, now Kovacs's back-leg serve;
+- a whole basket on tiptoe, now "hit up and out".
+
 **What to practise.** Any single report picks the weakest thing in that serve,
 which on a given day might just be the serve you happened to film. Across trips
 to the court the app looks for the thing that is *still* wrong — ranked by lowest
