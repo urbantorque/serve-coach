@@ -10,6 +10,19 @@ separation and shoulder tilt are computed almost entirely from that `z`. Until
 there are recorded fixtures here, those two measurements are untested against
 anything real.
 
+## Real motion without a camera: `bath-serves.json`
+
+A different kind of fixture, and not a substitute for the recorded clips this
+page is about. `bath-serves.json` holds six real serves from marker motion
+capture — the Bath set, CC BY 4.0, attribution in the file — as joint paths
+rather than pose output. `mocap.test.ts` films them with a virtual phone
+(`../mocapServe.ts`) and checks the engine's keyframes and verdicts against
+the 180 Hz capture. No pose model runs, so it proves the engine's rules and
+bands meet real motion. It proves nothing about MediaPipe on real pixels,
+which is still what `RECORDED` is for. Regenerate it with
+`npm run bench:mocap -- --fixture` after `npm run setup:bench`; the whole set
+is `npm run bench:mocap` (ANALYSIS-REVIEW.md §9).
+
 ## Capturing one
 
 1. `npm run dev`, analyse the clip in the browser.

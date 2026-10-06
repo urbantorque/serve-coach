@@ -484,3 +484,114 @@ that can be measured, not assumed. Twenty card bands still want a citation or
 a derivation; contact height needs a definition first (it reads the wrist,
 the literature reads the ball). And the one thing no open dataset replaces:
 a labelled clip from the side-on angle the app actually asks for.
+
+---
+
+## 9 · Measured: real serve motion through a virtual phone (2026-10-07)
+
+The rig can only show that the engine agrees with the rig. Section 8 ended on
+the one thing no open dataset seemed to replace: a labelled serve from the
+angle the app asks for. Marker motion capture of real serves gets close, with
+no filming and a clean licence.
+
+**The data.** The Bath serve set (Durlind, Martinez-Hernandez & Assaf 2025,
+doi:10.15125/BATH-01454, **CC BY 4.0 [V]**): 42 serves, 75 markers at 180 Hz,
+eight Qualisys cameras, with each serve's outcome (in, out or net). The files
+carry no marker names. The layout was worked out from the data (rigid
+distances, sides of the trunk and pelvis) and is written down in
+`src/dev/mocap/bath.ts`. It is one right-handed player throughout. Forty serves
+finish their swing; two stop before the racket comes over.
+
+**The method.** `mocapServe.ts` turns the joint paths into exactly what the
+engine reads off a video: MediaPipe-shaped image and world landmarks, from a
+level pinhole phone (65° vertical field of view, upright, 1 m up, 4.5 m away)
+standing where players prop one. `src/dev/mocap/engine.ts` then runs the same
+pure steps `runAnalysis` takes. No pose model runs and the landmarks are where
+the joints were, so **every disagreement below is the engine's rules, bands or
+camera model, not MediaPipe**. Truth comes from the same joints in 3D at
+180 Hz, in two kinds: each keyframe under the engine's own definition (what
+the phone costs), and the event that definition stands in for (what the
+definition costs). `npm run setup:bench`, then `npm run bench:mocap`. Six serves
+ride in the suite as `fixtures/bath-serves.json` (`mocap.test.ts`).
+
+### What the engine gets right on real motion
+
+| Keyframe, engine minus truth | 30 fps | 60 fps | 120 fps |
+| --- | --- | --- | --- |
+| Contact (wrist top), guide placement | +5 ± 9 ms rms, [−9, +18] | −5 ± 7 | −5 ± 6, [−11, +1] |
+| Trophy (deepest knee bend) | −17 ± 20, [−41, +3] | −10 ± 12 | −9 ± 10 |
+| Drop (wrist lowest against the shoulder) | +6 ± 11, [−8, +20] | +3 ± 6 | +2 ± 3 |
+
+- **The tent fit holds on real swings.** Contact sits within 18 ms at 30 fps
+  from every placement. Higher frame rates tighten everything, as section 2
+  predicted.
+- Knee bend reads 70.7° (median), against 72° in 3D. That is inside the
+  re-anchored band (E6) from every angle.
+- No serve was refused, and none was triaged out.
+
+### What it gets wrong, from every placement and every frame rate
+
+1. **Every real serve is told its racket drop is shallow.** `shallow_drop` is
+   detected on 40 of 40 serves and is the first fix on all 40, from all five
+   placements at 30, 60 and 120 fps. At the racket's low point this player's
+   hand is 3–8 cm *above* the shoulder, while the racket head is 35–44 cm below
+   it. The racket drops; the hand does not. That is the published geometry of
+   maximum external rotation: upper arm at about shoulder height, forearm laid
+   back (Fleisig 2003: 101° abduction, 104° elbow flexion). `dropDepth` reads
+   −0.03, while `drop_depth_ratio` wants the hand 0.08–0.52 body heights below
+   the shoulder and the card band wants 0.16–0.34. Those bands describe the
+   "back scratch" coaching image, which the rig was posed to (dial
+   `dropBelowShoulder: 0.45` m). **This explains the open item in §8 and in the
+   roadmap's findings**: the rear-oblique Commons clips read −0.05/−0.06
+   because real drops read about zero, not because the wrist was misplaced.
+   The elbow at the low point reads 52–54° interior, between the WTA top-40
+   (67°) and lower-ranked (52°) means (Gao 2026). By the literature this is a
+   real drop.
+2. **The camera model is turned 90° from a real stance.** A textbook server
+   points the shoulder line at the net. From the baseline, where
+   `FilmingGuide.tsx` puts the phone, the shoulders are spread across the
+   picture. `estimateYaw` reads 22–36°, and `assessQuality` files every clip as
+   **angled**. From the back fence it reads 61–74° and files it as **side**. The
+   rig poses the opposite: a player square to the net, edge-on to a baseline
+   phone (`shoulderYaw` 82–86° at ready). The consequences:
+   - `contactAhead`, the one reading the guide says only a side view can see,
+     is never reported from the guide's placement. From the back fence it is
+     reported, and there image x is lateral, not net-ward (it reads −0.03).
+   - Every reading routed by `axes.ts` and `DEPTH_YAW_RANGE` is routed on the
+     wrong premise for real footage.
+3. **The toss keyframe comes after the ball has gone.** `phases.ts` takes the
+   toss as the tossing wrist highest *above its own shoulder*. The trunk keeps
+   tilting after the hand peaks, so that lands 90–210 ms after the hand's
+   highest point (+144 ms mean, guide placement, 30 fps). The keyframe's
+   caption says "ball released". Release height, toss-arm extension,
+   sync-at-release and every toss-anchored timing read a later instant than
+   they name. Even against its own definition the peak is a broad plateau:
+   ±64 ms rms.
+4. **Contact height depends on where the phone stands.** The same serves read
+   1.14 (guide), 1.23 (the other side of the baseline), 1.13 (back fence) and
+   1.11 (rear oblique) body heights. Perspective puts ±5% on a band 0.22 wide.
+   In 3D the wrist peaks at 2.16 m and the racket head at 2.62 m. Against an
+   estimated 1.80 m stature (headband plus 7–8 cm), that is 1.20 and 1.46. The
+   racket head sits between the published beginner (1.43) and elite (1.49)
+   impact heights, which is an ordinary club contact. In the engine's own units
+   the wrist is 1.24, below the band's 1.28 floor. `low_contact` fires on 26 of
+   40 from the guide, 1 of 40 from the other side and 37 of 40 from the back
+   fence. Whether the fault is named depends on where the phone stood.
+5. **The wrist peaks 15–31 ms before the racket head does.** The engine's
+   contact is the wrist top. Without a ball marker this set cannot say whether
+   impact is nearer the wrist top or the racket's top. It does bound the
+   question: the definition costs −17 to −31 ms against the racket's highest
+   point, depending on placement.
+6. **A clip that stops before contact is called left-handed.** The two
+   unfinished Bath captures are refused with "This looks like a left-handed
+   serve." That is a refusal with the wrong reason.
+
+### What it settles, and what it does not
+
+It settles that items 1, 2 and 4 are not pose-model error: they appear with
+exact landmarks. It does not settle anything about MediaPipe, which never runs
+here. It speaks for one player, so a band is never re-derived from this set
+alone. Every change above should be anchored to the literature cited in
+`.scratch/research-biomech.md`, with this set as the check that real motion
+passes. Each of the first three is pinned in `mocap.test.ts` as a **KNOWN**
+check, so the change that fixes it goes red and has to say so.

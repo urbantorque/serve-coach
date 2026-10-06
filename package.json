@@ -15,7 +15,8 @@
     "test": "node scripts/run-tests.mjs",
     "replay:fixture": "node scripts/replay-fixture.mjs",
     "setup:assets": "node scripts/fetch-assets.mjs",
-    "setup:bench": "node scripts/fetch-bench.mjs"
+    "setup:bench": "node scripts/fetch-bench.mjs",
+    "bench:mocap": "node scripts/bench-mocap.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.18",

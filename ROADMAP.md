@@ -447,3 +447,58 @@ clips, frame sheets read by eye, and the rig's own limb lengths.
   trophy matches the 14–32 band), drop to contact (forward swing 0.13 s matches
   110–230 ms), leg drive card band (Deghaies 2026), and the provisional
   wrist-based contact height.
+
+### Real serve motion, measured (2026-10-07)
+`npm run bench:mocap` films the 40 finished serves in the Bath motion-capture
+set (CC BY 4.0) with a virtual phone from five placements, at 30, 60 and
+120 fps, and runs the engine's own steps on them (`ANALYSIS-REVIEW.md` §9).
+No pose model runs, so what it finds is the engine's, not MediaPipe's. Timing
+holds up: contact within 18 ms of the 180 Hz capture at 30 fps, and the drop
+within 20 ms. Three things do not, and each is pinned as a KNOWN check in
+`mocap.test.ts`:
+
+- **`shallow_drop` is the first fix on every real serve, from every angle.**
+  The hand stays level with the shoulder at a real drop while the racket head
+  falls 35–44 cm. The drop bands describe the back-scratch image. This also
+  answers "drop depth reads at or below zero on rear-oblique clips" above.
+- **The guide's placement is filed as an angled view, and the back fence as
+  side-on.** A textbook stance points the shoulders at the net; the rig poses a
+  player square to it. `contactAhead` never reaches the card from where the
+  guide puts the phone.
+- **The toss keyframe lands 90–210 ms after the tossing hand peaks**, because
+  it is read against the shoulder while the trunk tilts.
+
+### Wave D7 — Agree with real motion
+Every item is proven against the Bath set (the KNOWN checks flip) and anchored
+to the literature, never re-derived from one player.
+
+- [ ] **D7.1 Re-anchor the drop** · M. Grade the racket's fall by what a camera
+      can see of it: the elbow folded (interior angle at the low point; WTA
+      top-40 67°, lower-ranked 52°, Gao 2026) and the hand behind the head.
+      Stop asking the hand to drop below the shoulder. Re-pose the rig's drop
+      (`dropBelowShoulder` 0.45 m is a back-scratch) and re-derive the floors
+      that move with it. *Proof:* KNOWN drop check flips; real drops pass from
+      every placement; rig `collapsed_elbow` still fires.
+- [ ] **D7.2 A camera model that matches a real stance** · L. Read the camera
+      from what the phone sees of the court direction (the swing's travel), not
+      from shoulder span at ready, or re-pose the rig's stance side-on and
+      re-derive `DEPTH_YAW_RANGE`, the view thresholds and the `axes.ts`
+      routing against it. *Proof:* the guide placement is filed as side and
+      reports `contactAhead`; the back fence is not; the rig and the Bath set
+      agree on which is which.
+- [ ] **D7.3 Toss from the hand** · S. Take release from the tossing hand's own
+      path (its peak, or its upward speed falling away), not from wrist-over-
+      shoulder. *Proof:* toss keyframe within ±40 ms of the hand's peak on the
+      Bath set; rig toss readings re-checked.
+- [ ] **D7.4 Contact height that does not depend on the phone** · M. Correct for
+      the hand's depth against the body plane, or report the height only from
+      placements where it holds, and cite the wrist band (D2.2). *Proof:* the
+      five placements agree within the noise floor on the Bath set.
+- [ ] **D7.5 Say why a clip without contact was refused** · S. A capture that
+      ends before the racket comes over is told it looks left-handed.
+      *Proof:* the two unfinished Bath serves get a no-contact refusal.
+- [ ] **D7.6 Noise ensembles on real motion** · S. `filmMocap` takes the rig's
+      `noise`, `depthNoise` and `depthBias`, so the ensembles behind every
+      `NOISE_FLOOR` can be re-run on real serves and the self-referential
+      floors (`ANALYSIS-REVIEW.md` F1) checked. *Proof:* a floor table, rig
+      against real motion.
