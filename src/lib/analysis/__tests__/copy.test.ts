@@ -380,15 +380,13 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Arm folded in an L', high: 'Arm folded in an L' },
   },
   handUnderElbow: {
-    stamp: '53ad2911',
+    // Re-stamped when the floor moved from 20 to 4 on real serve motion: the
+    // shortfall line now covers only the hand that never gets under the elbow,
+    // and the praise covers dipping under it as well as hanging there.
+    stamp: '1043fb58',
     insight: {
-      // Two rungs under one sentence, which is only safe because that sentence
-      // names the shortfall the two share instead of a position. "Never gets
-      // under the elbow" and "dips under the elbow" are different bodies, and a
-      // line committing to either would be taken back by the readout beside it
-      // for every player at the other end.
-      low: ['Hand never gets under the elbow', 'Hand dips under the elbow'],
-      ok: ['Hand hangs under the elbow'],
+      low: ['Hand never gets under the elbow'],
+      ok: ['Hand dips under the elbow', 'Hand hangs under the elbow'],
       // Claimed although the band runs to the end of the axis and this line
       // therefore cannot be shown today. The claim is what a future ceiling
       // would be checked against, and writing it now is cheaper than
@@ -398,7 +396,7 @@ const CLAIMED: Record<string, Claimed> = {
     // No `high`, because there is no instruction above a band that ends at the
     // top of its own axis — the same blank `tossPathWobble` carries at the
     // opposite end.
-    aim: { low: 'Hand hangs under the elbow' },
+    aim: { low: 'Hand dips under the elbow' },
   },
   dropToContact: {
     // Re-stamped when `ok` dropped the phrase "acceleration window" — lab

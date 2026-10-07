@@ -27,7 +27,7 @@ import { clamp, keyVisibility, mean, sided } from './geometry'
 import type { BodyAxis } from './axes'
 import type { Diagnosis } from './diagnose'
 import type { FlawFinding, FlawId } from './flaws'
-import { SEVERITY_RANK, type Severity } from './tiers'
+import { SEVERITY_RANK, bandFor, type Severity } from './tiers'
 import type { Skeleton } from './phases'
 import type { Frame } from './types'
 
@@ -497,6 +497,9 @@ export function injuryInputsRead(
   return INJURY_INPUTS[flag].every((id) => Number.isFinite(signals[id]))
 }
 
+/** The racket-drop band's floor — the same at every level — below which the hand never laid back. */
+const NO_DROP = bandFor('drop_depth_ratio', 5)[0]
+
 function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
   const out: { flag: InjuryFlag; severity: Severity }[] = []
   const sig = (id: string) => d.signals[id] ?? Number.NaN
@@ -525,8 +528,15 @@ function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
 
   // Reaching for a high contact with no external rotation to get there: the
   // shoulder makes up the difference at the end of its own range.
+  //
+  // "No drop" is the hand left above the shoulder by more than the drop band
+  // allows (`drop_depth_ratio` in tiers.ts), the forearm never laid back. It
+  // used to be a hand less than 0.1 *below* the shoulder, the back-scratch
+  // belief the drop band was re-anchored away from: on real serve motion the
+  // hand sits at the shoulder on a full drop, so that rule warned every player
+  // with a high contact about a shoulder they were using correctly.
   if (has('shoulder_load_no_drop')) {
-    if (sig('drop_depth_ratio') <= 0.1 && sig('contact_height_ratio') >= 1.3) {
+    if (sig('drop_depth_ratio') < NO_DROP && sig('contact_height_ratio') >= 1.3) {
       out.push({ flag: 'shoulder_load_no_drop', severity: 'medium' })
     }
   }

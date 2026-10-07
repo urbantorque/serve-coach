@@ -23,6 +23,7 @@ import { findPracticeFocus } from '../lib/practice'
 import { KEEP_STILLS, type PracticeLog, type Session } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
 import { buildServe, type ServeDials } from '../lib/analysis/syntheticServe'
+import { assessSpatial, viewFromCourtYaw } from '../lib/analysis/spatial'
 
 /**
  * A blank clip matching the sample analysis's duration, so the player and its
@@ -102,14 +103,17 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
   // A spine folding well past the absolute limit, plus a tray grip rotated hard
   // through the ball: the lumbar flag and the wrist flag together.
   //
-  // The forearm drop is 0.25 rather than 0.4, and the difference is anatomy
-  // rather than taste. Past about 0.3 that dial stops laying the arm over and
-  // starts lengthening the forearm — at 0.4 it is 1.40× the upper arm, where a
-  // real one is about 0.8 (see its KNOWN LIMIT in `syntheticServe.ts`). At 0.25
-  // the wrist flag is raised on 20 of 24 noise realisations, which is exactly
-  // the rate 0.4 managed, so the demo poses an arm that exists and earns the
-  // same flag at the same rate rather than reaching it by stretching.
-  injury: { spineLean: 34, palmToSky: 80, trophyForearmDrop: 0.25 },
+  // The forearm drop is 0.25 rather than 0.4. It was chosen when 0.4 stretched
+  // the forearm to 1.40× the upper arm; the re-posed arm holds its lengths to
+  // 0.4 now (see its KNOWN LIMIT in `syntheticServe.ts`), and 0.25 still lays
+  // it over enough to turn the palm up.
+  //
+  // The hard turn through the ball is dialled, as the name says. Since the
+  // rig's arm was re-posed on real motion its default turn reads 33–39° — under
+  // the wrist flag's 45° — so without it the flag came up on 13 of 24 noise
+  // realisations and not at all on the clean serve this route draws. At 120°
+  // it is raised on 22 of 24, and on the clean one.
+  injury: { spineLean: 34, palmToSky: 80, trophyForearmDrop: 0.25, pronation: 120 },
   // Heavy tracker noise smears the racket hand through the swing, which is what
   // `too_blurry` is measuring. Nothing here says "reject"; the resilience pass
   // decides that on its own.
@@ -352,8 +356,12 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): 
     fps,
   )
   const skel = detectServe(frames, fps)
-  const sideView = skel.shoulderWidth / skel.bodyHeight < 0.1
-  const fundamentals = measure(frames, skel, sideView)
+  // Filed the way `assessQuality` files a real clip, against the court. This
+  // was its own rule — shoulders under a tenth of standing height apart — which
+  // called shoulders pointing at the lens side-on; a real server has their back
+  // to the guide's camera, and the rig now stands like one.
+  const view = viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight).court_yaw_deg)
+  const fundamentals = measure(frames, skel, view === 'side')
   const phases = buildPhases(frames, skel.keys)
 
   // The diagnostic half of the pipeline, run for real. Without it the demo
@@ -379,7 +387,7 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): 
     quality: {
       confidence: 0.86,
       warnings: ['This is a sample report built from a simulated serve, not a real video.'],
-      view: sideView ? 'side' : 'angled',
+      view,
       sampledFps: fps,
       swingSamples: Math.max(0, skel.keys.contact - skel.keys.drop),
     },

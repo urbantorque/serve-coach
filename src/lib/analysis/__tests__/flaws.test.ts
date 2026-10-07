@@ -170,7 +170,12 @@ check('both rotation peaks land before contact, where the swing is', () => {
 })
 
 check('a trunk with no coil left at the trophy is caught', () => {
-  const flat = run({ shoulderYaw: 60, hipYaw: 56 }, 5).diagnosis
+  // From a corner. The rig's default camera is the guide's own placement, and a
+  // real server has their back to it at the ready — shoulders square to the
+  // lens, the turn happening towards and away from it — so the coil is hedged
+  // there and the fault cannot be named from it, which is the hedge working
+  // (`engine.test.ts`, `CORNER`).
+  const flat = run({ shoulderYaw: 60, hipYaw: 56, cameraYaw: 45 }, 5).diagnosis
   assert(
     flagged(flat).includes('early_shoulder_rotation'),
     `early rotation missed: ${flagged(flat).join(', ')}`,

@@ -462,16 +462,18 @@ export const METRICS: Record<string, MetricCopy> = {
     // exactly as well as the ones beside it.
     weight: 0.7,
     /*
-     * PROVISIONAL BAND. There is no recorded footage in this repo to calibrate
-     * against — `__tests__/fixtures/index.ts` still has an empty RECORDED list —
-     * so the floor here is anchored to the synthetic rig and to nothing else.
-     * On that rig a serve with a textbook racket drop spends 28.6% of its
-     * toss-to-contact window with the hand under the elbow, one with no drop at
-     * all spends 2.9%, and the share climbs monotonically between them: 14.3 at
-     * a 0.10 m drop, 20.0 at 0.20, 25.7 at 0.30. Twenty is the rung boundary
-     * that sits under every serve the rig calls loaded and over every one it
-     * calls flat, and that is the entire evidence for it. Re-derive it from real
-     * clips the moment there are any.
+     * PROVISIONAL BAND, now re-derived from real motion as its first version
+     * asked. That version anchored a floor of 20% to the synthetic rig alone,
+     * when the rig dropped the hand down the back: 28.6% for its clean serve.
+     * Real full drops keep the hand near the shoulder, and on the 40 Bath serves
+     * filmed from three places the share's medians are 10.5%, 14.3% and 17.6%,
+     * with the lowest tenth at 4.7–14%. So 20 called most real drops short. The
+     * rebuilt rig, posed like those serves, reads 18% for its clean drop and 0%
+     * whenever the racket never falls or the elbow collapses. What the share can
+     * honestly separate is whether the hand gets under the elbow at all, so the
+     * floor is 4: under every real drop's lowest tenth and over every serve with
+     * none. It is still uncited — no study measures this — which is why the
+     * weight above stays low.
      *
      * The ceiling is the end of the axis because naming a fault above the band
      * would be inventing one. Hanging under the elbow for a very long share of
@@ -492,7 +494,7 @@ export const METRICS: Record<string, MetricCopy> = {
      * will often name this its weakest row. That is true — it is the weakest row
      * — and `weight` above is what keeps it from being more than a note.
      */
-    ideal: [20, 100],
+    ideal: [4, 100],
     range: [0, 100],
     decimals: 0,
     insight: {
@@ -500,8 +502,8 @@ export const METRICS: Record<string, MetricCopy> = {
       // cover two rungs that describe different bodies — a hand that never gets
       // under the elbow and one that dips under it and leaves. Naming either
       // would deny the readout printed beside it for players at the other end.
-      low: 'Your hand **spends too little time under your elbow**, so the arm pushes the ball instead of throwing it.',
-      ok: 'Your hand **hangs under your elbow** on the way up, which is where racket speed comes from.',
+      low: 'Your hand **never gets under your elbow**, so the arm pushes the ball instead of throwing it.',
+      ok: 'Your hand **gets under your elbow** on the way up, so the racket swings up from below.',
       high: 'Your hand **hangs under your elbow** for a long stretch of the swing.',
     },
     fix: {

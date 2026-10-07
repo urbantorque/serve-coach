@@ -217,17 +217,18 @@ function splitFromRig(cameraYaw: number) {
 
 check('a corner camera keeps both axes, a side-on one keeps only depth', () => {
   const corner = splitFromRig(45)
-  note(`dialled 45°, measured ${corner.spatial.yaw_deg}° → ${corner.split.framing}`)
+  note(`dialled 45°, read ${corner.spatial.court_yaw_deg}° to the court → ${corner.split.framing}`)
   assert(
     corner.split.framing === 'both_axes',
     `a three-quarter camera framed as ${corner.split.framing}`,
   )
 
-  // The rig's default. Measured a few degrees high — `estimateYaw` divides by a
-  // fixed shoulder-span ratio and the rig's shoulders are not exactly that —
-  // which is why this asserts the verdict and not the angle.
+  // The rig's default. Read off the shoulders at the ready, which a real
+  // server has square to this camera, so the reading is pinned at the end of
+  // its range rather than measured there — which is why this asserts the
+  // verdict and not the angle.
   const sideOn = splitFromRig(82)
-  note(`dialled 82°, measured ${sideOn.spatial.yaw_deg}° → ${sideOn.split.framing}`)
+  note(`dialled 82°, read ${sideOn.spatial.court_yaw_deg}° to the court → ${sideOn.split.framing}`)
   assert(
     sideOn.split.framing === 'depth_only',
     `a dead side-on camera framed as ${sideOn.split.framing}`,
@@ -238,7 +239,7 @@ check('a corner camera keeps both axes, a side-on one keeps only depth', () => {
   )
 
   const faceOn = splitFromRig(0)
-  note(`dialled 0°, measured ${faceOn.spatial.yaw_deg}° → ${faceOn.split.framing}`)
+  note(`dialled 0°, read ${faceOn.spatial.court_yaw_deg}° to the court → ${faceOn.split.framing}`)
   assert(
     faceOn.split.framing === 'lateral_only',
     `a face-on camera framed as ${faceOn.split.framing}`,
@@ -391,11 +392,16 @@ check('the fallback yaw is labelled rather than left to look like a measurement'
    * This asserts the two are now distinguishable, and that separating them
    * moved no number.
    */
-  const frames = buildServe({ cameraYaw: 45, seed: 4500 }, FPS)
+  // Dialled at 27° because that is where this rig READS 45. The reading is the
+  // camera against the shoulders at the ready, and since the rig was re-posed
+  // on the Bath serves those sit 15° past the net axis — so the dial and the
+  // reading are no longer the same number, and the claim here is about the
+  // reading.
+  const frames = buildServe({ cameraYaw: 27, seed: 4500 }, FPS)
   const skel = detectServe(frames, FPS)
 
   const real = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
-  assert(real.yaw_measured, 'a serve the rig filmed from 45° came back as unmeasurable')
+  assert(real.yaw_measured, 'a serve the rig filmed to read 45° came back as unmeasurable')
 
   // Exit one: nothing to divide the shoulder span by.
   const noHeight = assessSpatial(frames, skel.keys.ready, 0)
@@ -450,31 +456,40 @@ heading('Two clips filmed from the same spot, and how far apart they read')
  * only by tracker noise. Anything the gate spends there is unavailable for the
  * camera genuinely moving.
  *
- * THE ANSWER, AND IT IS THE GOOD ONE. Twelve seeds at each angle:
+ * THE ANSWER CHANGED WHEN THE RIG STOOD LIKE A REAL SERVER, and the new one is
+ * worse. Twelve seeds at each angle, re-measured after the rig was re-posed on
+ * the Bath serves (it used to stand with its shoulders pointing at the guide's
+ * camera; a real server stands with their back to it):
  *
  *     dial   mean read   deviation   worst spread   pairs within 5°
- *       30      29.0        2.77         11.00           83%
- *       45      46.4        1.80          7.00           94%
- *       60      62.3        1.43          5.00          100%
- *       75      78.0        1.29          5.00          100%
- *       82      84.3        1.03          3.00          100%
- *       88      85.1        1.11          4.00          100%
+ *        0      73.0        1.29          5             100%
+ *       15      57.1        1.50          5             100%
+ *       27      44.0        1.83          6              95%
+ *       45      22.2        3.08         10              76%
+ *       60       1.2        3.31         12              83%
+ *       75       0.0        0.00          0             100%
+ *       82       0.0        0.00          0             100%
+ *       88       0.9        3.04         11              83%
  *
- * From 60° up, every pair of takes agrees inside the gate. The app asks for
- * side-on footage, so the whole five-degree budget is available for the camera.
+ * At the guide's own dial every pair agrees — and that is saturation, not a
+ * steady estimator. The shoulders are square to that camera at the ready, their
+ * projected span comes out wider than `SHOULDER_SPAN_RATIO`, and the clamp pins
+ * the reading at zero on every take. Either side of the pinned range, at 60°
+ * and at 88°, noise lifts some takes off zero and a sixth of same-spot pairs
+ * land outside the gate; at a true corner it is a quarter.
  *
- * WHY IT IMPROVES WITH ANGLE, WHICH IS STRUCTURE RATHER THAN LUCK. The reading
- * is `acos(span / SHOULDER_SPAN_RATIO)`, and `d(acos p)/dp` is `-1/√(1-p²)`:
- * unbounded as the projected span approaches its full width — face-on — and at
- * its smallest when the span approaches zero, which is side-on. The estimator is
- * best conditioned exactly where this app is used.
+ * WHY, AND IT IS THE SAME STRUCTURE AS BEFORE, REFLECTED. The reading is
+ * `acos(span / SHOULDER_SPAN_RATIO)`, and `d(acos p)/dp` is `-1/√(1-p²)`:
+ * unbounded as the projected span approaches its full width — shoulders square
+ * to the lens — and smallest when it approaches zero. It used to be best
+ * conditioned at the guide's placement because the rig turned its shoulders
+ * end-on to it. A real server turns them square to it, which is the worst
+ * conditioned the estimator gets, and only the clamp hides that at the dial
+ * itself. A phone a few degrees off the guide's line is outside the clamp.
  *
- * AND ONE LIMIT WORTH WRITING DOWN. The mean saturates: 75° reads 78.0, 82°
- * reads 84.3, and 88° reads only 85.1. Past roughly 82 the reading stops
- * tracking the dial. That is fine for a gate on a *difference* between two
- * readings and would not be fine for anything grading the absolute — which is
- * the same shape of finding `UNCALIBRATED.external_rotation_deg` already
- * carries, arrived at from a different direction.
+ * Pinned below rather than fixed: the fix is a camera reading that does not
+ * rest on one shoulder span at the ready (ROADMAP D7.2), and a wider gate would
+ * admit pairs whose difference really is the phone.
  */
 const YAW_SEEDS = [11, 202, 3131, 7000, 44444, 909, 1234, 5678, 8642, 31337, 606, 777]
 
@@ -503,65 +518,93 @@ function agreementWithin(read: number[], tolerance: number): number {
   return pairs ? within / pairs : 0
 }
 
-check('on the side-on footage this app asks for, the gate spends nothing on noise', () => {
+const describe = (dial: number, read: number[], agree: number) =>
+  `  ${dial}° dialled: reads ${(read.reduce((a, b) => a + b, 0) / read.length).toFixed(1)}, ` +
+  `spread ${(Math.max(...read) - Math.min(...read)).toFixed(1)}, ${(agree * 100).toFixed(0)}% of pairs inside the gate`
+
+check('at the guide\'s own placement every take agrees, because the reading is pinned', () => {
   /*
    * Stated in `GHOST_YAW_TOLERANCE_DEG` rather than in 5, so this goes red if
-   * either the gate or the estimator moves — which is exactly when the question
-   * is worth re-opening. Three angles rather than one, because a single dial is
-   * one seed's worth of evidence about a claim that spans a range.
+   * either the gate or the estimator moves. And the pinning is asserted beside
+   * the agreement, so nobody reads 100% here as a steady estimator: it is the
+   * clamp, and the KNOWN check below is what it costs a step either side.
    */
-  for (const dial of [60, 75, 82]) {
+  for (const dial of [75, 82]) {
     const read = yawEnsemble(dial)
     assert(read.length === YAW_SEEDS.length, `${dial}°: only ${read.length} of ${YAW_SEEDS.length} takes read at all`)
     const agree = agreementWithin(read, GHOST_YAW_TOLERANCE_DEG)
-    const spread = Math.max(...read) - Math.min(...read)
-    note(`  ${dial}° dialled: reads ${(read.reduce((a, b) => a + b, 0) / read.length).toFixed(1)}, spread ${spread.toFixed(1)}, ${(agree * 100).toFixed(0)}% of pairs inside the gate`)
+    note(describe(dial, read, agree))
+    assert(agree === 1, `${dial}°: only ${(agree * 100).toFixed(0)}% of takes from one camera agree inside the gate`)
     assert(
-      agree === 1,
-      `${dial}°: only ${(agree * 100).toFixed(0)}% of takes from one camera agree inside a ` +
-        `${GHOST_YAW_TOLERANCE_DEG}° gate — the gate is spending its budget on the tracker`,
+      read.every((v) => v === 0),
+      `${dial}°: the reading is no longer pinned at zero — the shoulder span moved against SHOULDER_SPAN_RATIO`,
     )
   }
 })
 
-check('face-on, it does not, and that is the acos and not the app', () => {
+check('KNOWN: a step either side of the guide\'s placement, the gate spends its budget on noise', () => {
   /*
-   * The other half, and it has to be asserted or the check above reads as a
-   * claim about the estimator everywhere rather than about the range this app
-   * films in. A face-on clip is already refused for depth (`DEPTH_YAW_RANGE`),
-   * so this costs the ghost nothing today — it is here so that a future round
-   * widening what counts as readable finds out what it is buying.
+   * The defect, pinned. A phone a few degrees off the guide's line, or thirty
+   * degrees round towards the corner, is outside the clamp, and a sixth of
+   * same-spot takes then read as a moved camera and the ghost is refused for
+   * it. When this goes red the camera reading has stopped resting on one
+   * shoulder span (ROADMAP D7.2) — flip it.
    */
-  const read = yawEnsemble(30)
+  for (const dial of [60, 88]) {
+    const read = yawEnsemble(dial)
+    const agree = agreementWithin(read, GHOST_YAW_TOLERANCE_DEG)
+    note(describe(dial, read, agree))
+    assert(
+      agree < 1,
+      `KNOWN gap closed: at ${dial}° every same-spot pair now agrees inside the gate without being pinned — flip this`,
+    )
+  }
+})
+
+check('end-on to the shoulders it is steady, and that is the acos and not the app', () => {
+  /*
+   * The other half, and it has to be asserted or the KNOWN check above reads as
+   * a claim about the estimator everywhere. Filmed from behind the server the
+   * shoulders point at the lens at the ready, the span is near zero, and the
+   * acos is at its best: every pair agrees, unpinned.
+   */
+  const read = yawEnsemble(0)
   const agree = agreementWithin(read, GHOST_YAW_TOLERANCE_DEG)
-  note(`  30° dialled: ${(agree * 100).toFixed(0)}% of pairs inside the gate`)
+  note(describe(0, read, agree))
   assert(
-    agree < 1,
-    'the estimator is now as steady face-on as side-on — the acos argument above no longer holds',
+    agree === 1 && read.every((v) => v > 0),
+    'end-on, same-spot takes no longer agree — the acos argument above no longer holds',
   )
 })
 
 
 /* ------------------------------------------- the stance, and where it goes -- */
 
-heading('Why the stance cannot be read from the footage this app asks for')
+heading('The stance, from the footage this app asks for')
 
 /**
- * R60's premise, measured — and it is exactly backwards.
+ * R60's premise, measured twice — and the second time it is right.
  *
  * The round proposed reading platform against pinpoint from ankle separation
  * over time, because "the back foot sliding up to the front is a large, slow,
- * unambiguous motion along the axis the camera sees best". It is large, slow and
- * unambiguous. It is along the axis a side-on camera sees **worst**: a serve
- * stance is apart along the player's own depth axis, and this very file has
- * established that at 82° image x is 99% depth and 14% lateral.
+ * unambiguous motion along the axis the camera sees best". R60·2 refused it on
+ * this file's evidence: the rig's feet sat apart along the guide camera's line
+ * of sight, the stance projected onto almost nothing side-on, and the signal
+ * walked down into a noise floor that stays put.
  *
- * So the stance projects onto almost nothing, and the noise floor does not move
- * with it — landmark jitter does not care where the camera is. The signal walks
- * down into a floor that stays put.
+ * The rig stood the wrong way round. A real server's front foot is ahead of the
+ * back one towards the net — the Bath servers' ankles sit 0.17 m apart along the
+ * net axis at the ready, and 0.28 m along the baseline — and the guide's camera
+ * looks along the baseline, so the net-axis half of the stance runs straight
+ * across its picture. Re-posed on that motion the rig reads the stance at
+ * eighteen times its own noise from the guide's placement, larger than from a
+ * corner. R60·2's refusal rested on the old stance and is reopened (ROADMAP
+ * D7.2); nothing reads the stance yet.
  *
- * This is the check that would go red if that ever stopped being true, which is
- * the only circumstance under which the round is worth reopening.
+ * One limit the corner row carries: the rig's feet are apart along the net axis
+ * only, where a real stance is also apart along the baseline. So from a corner a
+ * real stance reads larger than this rig's, and the side-on figure is the one
+ * that matches.
  */
 const STANCE_SEEDS = [11, 202, 3131, 7000, 44444, 909, 1234, 5678]
 
@@ -582,7 +625,7 @@ function stanceAt(cameraYaw: number): { mean: number; sd: number } {
   return { mean, sd: Math.sqrt(gaps.reduce((a, b) => a + (b - mean) ** 2, 0) / gaps.length) }
 }
 
-check('the stance walks into the noise as the camera goes side-on', () => {
+check('side-on, the stance stands well clear of its own noise', () => {
   const shallow = stanceAt(30)
   const sideOn = stanceAt(82)
   note(
@@ -591,55 +634,45 @@ check('the stance walks into the noise as the camera goes side-on', () => {
       `82°: ${sideOn.mean.toFixed(4)} ± ${sideOn.sd.toFixed(4)} ` +
       `(${((100 * sideOn.sd) / sideOn.mean).toFixed(0)}%)`,
   )
-  // The collapse itself. Two of the three checks here could be satisfied by a
-  // rig that simply produced a small stance everywhere; this one cannot.
+  // The reopening itself, as arithmetic: what R60·2 asserted was under twice
+  // its noise is now many times it.
   assert(
-    sideOn.mean < shallow.mean / 4,
+    sideOn.mean > 8 * sideOn.sd,
+    `side-on the stance reads only ${(sideOn.mean / sideOn.sd).toFixed(1)}× its noise — ` +
+      'R60·2\'s refusal is back in force',
+  )
+  // And it is the guide's camera that sees it best, which is the half a rig
+  // producing a big stance everywhere could not satisfy.
+  assert(
+    sideOn.mean > shallow.mean,
     `the stance reads ${sideOn.mean.toFixed(4)} side-on against ${shallow.mean.toFixed(4)} at 30° — ` +
-      'it no longer collapses, so R60 is worth reopening',
+      'the guide\'s camera is no longer the one that sees it best',
   )
 })
 
-check('the noise floor does not collapse with it, which is the whole problem', () => {
+check('the noise floor does not move with the camera', () => {
   /*
-   * If the floor fell with the signal the ratio would survive and a detector
-   * would still work. It does not: jitter is a fraction of the frame and has
-   * nothing to do with where the camera stands.
+   * Jitter is a fraction of the frame and has nothing to do with where the
+   * camera stands — which used to be the whole problem and is now why the ratio
+   * above can be trusted at either angle.
    */
   const shallow = stanceAt(30)
   const sideOn = stanceAt(82)
   assert(
     Math.abs(sideOn.sd - shallow.sd) < shallow.sd * 0.5,
     `the floor moved from ${shallow.sd.toFixed(4)} to ${sideOn.sd.toFixed(4)} — ` +
-      'if it now tracks the signal, the ratio may be usable after all',
+      'if it now tracks the signal, the ratio above wants re-reading',
   )
 })
 
-check('side-on, the stance is smaller than twice its own noise', () => {
-  // The sentence `UNDER_RESOLVED.stance_narrowing_ratio` rests on, as arithmetic.
-  const sideOn = stanceAt(82)
-  assert(
-    sideOn.mean < 2 * sideOn.sd,
-    `side-on the stance reads ${sideOn.mean.toFixed(4)} against a floor of ${sideOn.sd.toFixed(4)} — ` +
-      'that is now a signal, and the withdrawal should be revisited',
-  )
-})
-
-check('and it is genuinely readable face-on, which is why this is withdrawn rather than impossible', () => {
-  /*
-   * The half that makes this an honest withdrawal instead of a dead end. The
-   * measurement exists; the app just cannot ask for the footage it needs.
-   * `DEPTH_YAW_RANGE` accepts 18–78° because face-on loses the depth readings
-   * the rest of the report is made of, and that trade has nothing to do with
-   * feet — so a reading available only there is one the app cannot offer.
-   */
+check('and from a corner too', () => {
   const shallow = stanceAt(30)
   assert(
     shallow.mean > 8 * shallow.sd,
-    `even at 30° the stance is only ${(shallow.mean / shallow.sd).toFixed(1)}× its noise, ` +
-      'so the withdrawal is about the measurement rather than about the camera',
+    `at 30° the stance is only ${(shallow.mean / shallow.sd).toFixed(1)}× its noise`,
   )
 })
+
 
 
 /* ----------------------------------------------- court lines, and their cost -- */

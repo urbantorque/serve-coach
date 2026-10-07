@@ -19,6 +19,7 @@
 
 import { measure } from './metrics'
 import { detectServe } from './phases'
+import { assessSpatial, viewFromCourtYaw } from './spatial'
 import type { Frame, Landmark, PhaseId, Quality } from './types'
 
 /* ------------------------------------------------------------------ packing */
@@ -769,8 +770,9 @@ export function validateFixture(fixture: Fixture): FixtureResult {
   if (expectedMetrics && Object.keys(expectedMetrics).length > 0) {
     // The view drives which metrics exist at all, so derive it the same way the
     // pipeline does rather than trusting the label.
-    const spanRatio = skel.shoulderWidth / skel.bodyHeight
-    const sideView = fixture.expect.view ? fixture.expect.view === 'side' : spanRatio < 0.1
+    const sideView = fixture.expect.view
+      ? fixture.expect.view === 'side'
+      : viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight).court_yaw_deg) === 'side'
     const produced = measure(frames, skel, sideView).flatMap((f) => f.metrics)
 
     for (const [id, expected] of Object.entries(expectedMetrics)) {

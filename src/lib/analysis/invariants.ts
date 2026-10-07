@@ -110,21 +110,20 @@ export function rescale(frames: readonly Frame[], factor: number, about = { x: 0
  * would the camera actually have handed us".
  */
 export function tilt(frames: readonly Frame[], degrees: number): Frame[] {
-  const rad = (degrees * Math.PI) / 180
-  const cos = Math.cos(rad)
-  const sin = Math.sin(rad)
-  const spun = frames.map((f) => ({
-    ...f,
-    // World is metres about the hip centre, so it rotates about zero — there is
-    // no pivot to choose. z is the axis of rotation and does not move.
-    world: f.world.map((l) => ({
-      x: l.x * cos - l.y * sin,
-      y: l.x * sin + l.y * cos,
-      z: l.z,
-      visibility: l.visibility,
-    })),
-  }))
-  return levelFrames(spun, -degrees, { cx: 0.5, cy: 0.5 })
+  /*
+   * ONE CALL, BOTH SPACES. `levelFrames` rotates the world landmarks alongside
+   * the image ones (it has since before this transform was written — see its
+   * own comment in `spatial.ts`), so un-levelling by the roll rolls both, once,
+   * which is what a tilted phone hands over.
+   *
+   * This used to rotate the world here as well and then call `levelFrames`,
+   * which rolled the image six degrees and the world twelve. The engine's own
+   * levelling then took six back off each and left the world rolled by six
+   * that no camera put there — and that residue was what the three roll gaps
+   * below were measuring. A transform that is not a faithful model of a way of
+   * filming tests the transform; this one did, for two months.
+   */
+  return levelFrames([...frames], -degrees, { cx: 0.5, cy: 0.5 })
 }
 
 /**
@@ -142,53 +141,23 @@ export interface KnownGap {
   why: string
 }
 
-/**
- * What a rolled phone does to the measurements read out of world space.
+/*
+ * What a rolled phone does to the measurements read out of world space:
+ * nothing, once the pipeline has levelled it — and the harness spent two months
+ * saying otherwise.
  *
- * FOUND BY THIS HARNESS, on synthetic frames, with no footage — which is the
- * argument for the harness. The pipeline detects a tilted phone and corrects it
- * with `levelFrames`, which rotates *image* landmarks back onto gravity and
- * says so. MediaPipe's world landmarks are reported in a frame aligned to the
- * image, so a rolled camera rolls those too, and nothing rotates them back.
- * Every measurement read as a direction in world space therefore keeps the
- * roll: shoulder tilt and hip–shoulder separation are read as bearings
- * (`groundYaw`, `signedElevationFromHorizontal`), and contact depth is read
- * along the same axis.
- *
- * Interior joint angles are unaffected and it is worth saying why, because it
- * is the reason this went unnoticed: `jointAngle` is rotation-invariant by
- * construction, so knee bend and elbow angle come out identical on a tilted
- * clip. The measurements that move are precisely the three this codebase
- * already calls its noisiest.
- *
- * NOT FIXED HERE, deliberately. The fix is to rotate world landmarks alongside
- * the image ones, which is four lines — and it moves the value of three stored
- * measurements on every tilted clip, so it is a recalibration (`SCORING_VERSION`)
- * and it wants at least one real tilted clip behind it before it lands. That is
- * a shoot, and it is now a shoot with a specific question attached rather than a
- * general request for footage: see `CORPUS.md`.
+ * This file used to carry three roll gaps — `contactAhead`,
+ * `hipShoulderSeparation` and `dropToContact` — on the finding that
+ * `levelFrames` rotates the image back onto gravity and leaves MediaPipe's
+ * camera-aligned world landmarks rolled. It does not leave them: it has rotated
+ * the world alongside the image since before this harness was written. The
+ * drift was the harness's own. `tilt` rolled the world twice, and the reader in
+ * `invariants.test.ts` skipped the levelling pass `runAnalysis` runs, so the
+ * three were measuring six degrees of roll no phone had put there. With one
+ * roll in, and the pipeline's own correction out, nothing drifts. Recorded
+ * rather than silently deleted because `CORPUS.md` asked a shoot to settle it,
+ * and the question no longer needs one.
  */
-const ROLL_GAPS: KnownGap[] = [
-  {
-    id: 'contactAhead',
-    why: 'depth is read along a world axis that the levelling pass leaves rotated',
-  },
-  {
-    id: 'hipShoulderSeparation',
-    why: 'a bearing in world space, so it carries the roll the image correction removed',
-  },
-  // `shoulderTilt` is NOT here, and was, on the reasoning above. It is read
-  // from the horizontal in world space and so does carry the roll — but its
-  // target band is wide enough that six degrees of it lands inside the budget,
-  // and the harness said so rather than agreeing with the guess. Worth leaving
-  // written down: the argument for including it was sound and the measurement
-  // is the arbiter. It will appear here the day the roll being tested is
-  // larger, which is a question for a real tilted clip.
-  {
-    id: 'dropToContact',
-    why: 'the corrected frames move the drop keyframe by a sample on some clips',
-  },
-]
 
 /** Every transform, named — so a report can say which one moved a number. */
 export const TRANSFORMS: {
@@ -213,13 +182,10 @@ export const TRANSFORMS: {
   {
     name: 'half the frame rate',
     proves: 'a 30 fps phone reads the same serve as a slow-motion one',
+    // `elbowAtDrop` was a known gap here — read on a single keyframe that
+    // quantises with the sample rate — and stopped drifting when the drop
+    // search stopped smoothing over five samples at 30 fps (`phases.ts`).
     apply: (f) => decimate(f, 2),
-    knownGaps: [
-      {
-        id: 'elbowAtDrop',
-        why: 'read on a single keyframe that quantises with the sample rate, and the elbow is moving fastest exactly there',
-      },
-    ],
   },
   {
     name: 'filmed from further back',
@@ -240,7 +206,6 @@ export const TRANSFORMS: {
     // the mirror's entry, and it hid `shoulderTilt` behind a magnitude
     // comparison — which is exactly how a real drift disappears into a
     // tolerance nobody argued for.
-    knownGaps: ROLL_GAPS,
   },
 ]
 

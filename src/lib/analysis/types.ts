@@ -57,7 +57,12 @@ export interface Frame {
 // shoulder is a full racket drop, contact height starts at what published
 // impact heights put a club wrist at, and arm extension is the straightest the
 // arm gets near contact rather than one frame-rate-dependent sample.
-export const SCORING_VERSION = 4
+// 5: the camera read against the court and the rig re-posed on real motion
+// (ANALYSIS-REVIEW.md §9) — a clip from the guide's placement is now filed
+// side-on and reports how far in front it was hit, the hand-under-elbow floor
+// moved from 20% to 4%, and the racket drop is found on a narrower smooth at
+// 30 fps, which moves the drop keyframe and every reading taken at it.
+export const SCORING_VERSION = 5
 
 /**
  * What a report saved before the stamp existed is worth.

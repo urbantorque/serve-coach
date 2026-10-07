@@ -67,6 +67,7 @@ import {
   levelPivot,
   rotateImagePoint,
   unlevelFrames,
+  viewFromCourtYaw,
   type Tilt,
 } from './spatial'
 import { assessResilience, triage } from './triage'
@@ -957,8 +958,15 @@ export function assessQuality(
   // a frame bridged over a lost detection sits in the array but was never filmed.
   const swingSamples = capturedSamples(frames, skel.keys.drop, skel.keys.contact)
 
-  const spanRatio = skel.shoulderWidth / skel.bodyHeight
-  const view: Quality['view'] = spanRatio > 0.17 ? 'front-back' : spanRatio < 0.1 ? 'side' : 'angled'
+  // In court terms, from the same angle `axes.ts` reads image x by. It used to
+  // be cut from the shoulder span directly, wide meaning front-on, which held
+  // only for a player square to the net: a real server is side-on at the start,
+  // so a phone where the filming guide puts it saw both shoulders and filed the
+  // clip as filmed from behind — and `contactAhead`, which only a side view can
+  // see, never reached the card from the one place the guide asks for.
+  const view: Quality['view'] = viewFromCourtYaw(
+    assessSpatial(frames, skel.keys.ready, skel.bodyHeight).court_yaw_deg,
+  )
 
   const anklesSeen = median(
     win.map((fr) => Math.min(fr.image[LM.leftAnkle].visibility, fr.image[LM.rightAnkle].visibility)),

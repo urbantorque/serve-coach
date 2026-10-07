@@ -467,9 +467,10 @@ export function measure(
   // the bottom of `measure` correctly take two of them off the card and leave a
   // beginner with one row. A share of a window is not read at an instant, so it
   // is still the same quantity on exactly that clip: on the synthetic rig it is
-  // 2.9% for a serve with no drop and 28.6% for the clean one, and it climbs
-  // monotonically between them (14.3 at a 0.10 m drop, 20.0 at 0.20, 25.7 at
-  // 0.30).
+  // 0% for a racket that never falls and 18% for a real-style drop, climbing
+  // with the drop (13.6 with the hand 10 cm above the shoulder, 22.7 level with
+  // it, 27.3 below), and real full drops read 10–18% (`handUnderElbow` in
+  // coaching.ts).
   //
   // Three deliberate choices, each of them a fault this file has already paid
   // for somewhere else:
@@ -487,7 +488,10 @@ export function measure(
   // there is no `imageXAxis` question to get wrong and no depth to infer: which
   // of two points sits higher in the picture is the same fact from every camera
   // angle. Measured across the rig at 20°, 45°, 60° and 89° of yaw it does not
-  // move at all.
+  // move at all. Real motion is less kind: perspective tips the vertical order
+  // near the swing's turning points, and the same Bath serves read 10.5% from
+  // the guide's placement and 17.6% from the other side of the baseline — one
+  // reason the card's weight for it stays low.
   //
   // And the hand has to be up off the hip line as well as under the elbow. A
   // racket left hanging by the thigh also puts the elbow above the hand — that

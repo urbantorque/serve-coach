@@ -19,7 +19,7 @@
  */
 import { assessQuality, blockingFramingIssue, pickFocus, rescore } from '../analyze'
 import { FINE_FPS, MAX_FINE_FRAMES, readWindow, samplingRateFor } from '../../pose/extract'
-import { assessSpatial, DEPTH_YAW_RANGE } from '../spatial'
+import { assessSpatial, DEPTH_YAW_RANGE, viewFromCourtYaw } from '../spatial'
 import {
   SOFT_MEASUREMENT,
   metricConfidence,
@@ -64,6 +64,18 @@ import { CLEAN_SERVE, buildServe, type ServeDials } from '../syntheticServe'
 import { RECORDED } from './fixtures'
 import { assert, check, heading, near, note, report, within } from './harness'
 
+/**
+ * The view the app files a clip under, read the way `assessQuality` reads it:
+ * against the court, from the camera's angle to the shoulders at the ready.
+ * Several checks here used their own rule — shoulders under a tenth of
+ * standing height apart — which called shoulders pointing at the lens side-on;
+ * a real server has their back to the guide's camera, so that rule stopped
+ * meaning side-on when the rig stood like one.
+ */
+const sideViewOf = (frames: Frame[], skel: { keys: { ready: number }; bodyHeight: number }) =>
+  viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight).court_yaw_deg) === 'side'
+
+
 const FPS = 50
 
 /**
@@ -89,7 +101,7 @@ interface Sample {
 function analyse(dials: Partial<ServeDials>): Sample {
   const frames = buildServe({ ...CLEAN_SERVE, ...dials }, FPS)
   const skel = detectServe(frames, FPS)
-  const sideView = skel.shoulderWidth / skel.bodyHeight < 0.1
+  const sideView = sideViewOf(frames, skel)
   const fundamentals = measure(frames, skel, sideView)
 
   const keys: Record<string, number> = {}
@@ -1157,7 +1169,7 @@ const KICK_DIALS: Partial<ServeDials> = { shoulderTilt: 30, contactReach: 1.3 }
 function measureAs(dials: Partial<ServeDials>, serveType: 'flat' | 'kick' | 'slice') {
   const frames = buildServe(dials, FPS)
   const skel = detectServe(frames, FPS)
-  const fundamentals = measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1, {
+  const fundamentals = measure(frames, skel, sideViewOf(frames, skel), {
     serveType,
   })
   return {
@@ -1198,7 +1210,7 @@ check('the flat bands are exactly what they always were', () => {
   const withType = measureAs({}, 'flat')
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
-  const plain = measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
+  const plain = measure(frames, skel, sideViewOf(frames, skel))
   for (const before of plain.flatMap((f) => f.metrics)) {
     const after = withType.metric(before.id)
     assert(
@@ -1333,22 +1345,59 @@ heading('Camera angle under noise')
  * Two different questions, and they get two different answers. Constraint 1
  * cares about one of them: a camera angle the app cannot actually read depth
  * from must never be confidently read as one it can.
+ *
+ * The angles here are the camera against the SHOULDERS, which is what the
+ * estimator reads and what `DEPTH_YAW_RANGE` is stated in. Since the rig was
+ * re-posed on the Bath serves its shoulders sit 15° past the net axis at the
+ * ready, so the dial that produces each reading is no longer the reading: 52
+ * reads 13°, 47.5 reads 20°, 27 reads 45°.
  */
 check('an angle clearly too face-on for depth is (almost) never read as readable', () => {
   // The dangerous direction. A camera this close to face-on has a foreshortened
   // shoulder line the model is guessing at, and confidently trusting hip-
   // shoulder separation or shoulder tilt off it is the exact failure this
   // codebase is built to avoid.
-  const trials = 100
-  let wronglyReliable = 0
-  for (let i = 0; i < trials; i++) {
-    const frames = buildServe({ cameraYaw: 14, noise: POOR_NOISE, seed: 5000 + i * 7919 }, FPS)
+  //
+  // Square to the shoulders — the guide's own placement, where a real server
+  // has their back to the phone. This check used to dial 14° and believe it
+  // was testing a 14° reading; on the rig as it stood then, that dial read 0°,
+  // pinned, exactly as this one does. The half it never tested is the KNOWN
+  // check below.
+  const wronglyReliable = falselyReliable(CLEAN_SERVE.cameraYaw, 5000)
+  note(`the guide's placement, reading 0° (below the ${DEPTH_YAW_RANGE[0]}° floor), poor-light noise: ${wronglyReliable}/100 wrongly read reliable`)
+  within(wronglyReliable / 100, 0, 0.1, 'false-reliable rate on a genuinely unreadable angle')
+})
+
+/** Of 100 poor-light takes from one dial, how many the spatial pass calls readable in depth. */
+function falselyReliable(cameraYaw: number, seed0: number): number {
+  let n = 0
+  for (let i = 0; i < 100; i++) {
+    const frames = buildServe({ cameraYaw, noise: POOR_NOISE, seed: seed0 + i * 7919 }, FPS)
     const skel = detectServe(frames, FPS)
-    const spatial = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
-    if (!spatial.depth_unreliable) wronglyReliable++
+    if (!assessSpatial(frames, skel.keys.ready, skel.bodyHeight).depth_unreliable) n++
   }
-  note(`14° camera (below the ${DEPTH_YAW_RANGE[0]}° floor), poor-light noise: ${wronglyReliable}/${trials} wrongly read reliable`)
-  within(wronglyReliable / trials, 0, 0.1, 'false-reliable rate on a genuinely unreadable angle')
+  return n
+}
+
+check('KNOWN: a few degrees under the floor, poor light reads the angle as readable', () => {
+  /*
+   * The dangerous direction, pinned. A camera that reads 13° clean — five
+   * degrees inside the unreadable side — is read as readable on about a fifth
+   * of poor-light takes, because the reading is `acos` of the shoulder span and
+   * its slope near square is four times what it is at 45°: the same jitter
+   * that moves a mid-range reading by a degree moves this one by four. The
+   * clean-reading p10–p90 under that noise is 0–21°.
+   *
+   * Not hidden by moving the floor, which would trade this for the
+   * over-hedging the next check records. The fix is a camera reading that does
+   * not rest on one shoulder span (ROADMAP D7.2). When this goes red, flip it.
+   */
+  const wronglyReliable = falselyReliable(52, 5000)
+  note(`a camera reading 13°, poor-light noise: ${wronglyReliable}/100 wrongly read reliable`)
+  assert(
+    wronglyReliable > 10,
+    'KNOWN gap closed: a camera just under the depth floor is no longer misread under poor light — flip this',
+  )
 })
 
 check('an angle just inside the readable range is often over-hedged as unreliable under noise', () => {
@@ -1363,12 +1412,12 @@ check('an angle just inside the readable range is often over-hedged as unreliabl
   const trials = 100
   let overHedged = 0
   for (let i = 0; i < trials; i++) {
-    const frames = buildServe({ cameraYaw: 20, noise: TYPICAL_NOISE, seed: 6000 + i * 7919 }, FPS)
+    const frames = buildServe({ cameraYaw: 47.5, noise: TYPICAL_NOISE, seed: 6000 + i * 7919 }, FPS)
     const skel = detectServe(frames, FPS)
     const spatial = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
     if (spatial.depth_unreliable) overHedged++
   }
-  note(`20° camera (2° inside the reliable range), typical noise: ${overHedged}/${trials} over-hedged as unreliable`)
+  note(`a camera reading 20° (2° inside the reliable range), typical noise: ${overHedged}/${trials} over-hedged as unreliable`)
   within(overHedged / trials, 0.3, 1, 'the over-hedging rate this close to the boundary — a ratchet, not a target')
 })
 
@@ -1376,12 +1425,12 @@ check('an angle well clear of either boundary is essentially never mis-hedged', 
   const trials = 60
   let wrong = 0
   for (let i = 0; i < trials; i++) {
-    const frames = buildServe({ cameraYaw: 45, noise: POOR_NOISE, seed: 8000 + i * 7919 }, FPS)
+    const frames = buildServe({ cameraYaw: 27, noise: POOR_NOISE, seed: 8000 + i * 7919 }, FPS)
     const skel = detectServe(frames, FPS)
     const spatial = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
     if (spatial.depth_unreliable) wrong++
   }
-  note(`45° camera (mid-range), poor-light noise: ${wrong}/${trials} wrongly hedged`)
+  note(`a camera reading 45° (mid-range), poor-light noise: ${wrong}/${trials} wrongly hedged`)
   within(wrong / trials, 0, 0.1, 'mis-hedging rate in the middle of the readable range')
 })
 
@@ -1528,8 +1577,14 @@ heading('A camera that drifts across the clip')
  * `UNCALIBRATED` already tracks for other signals. These values were found
  * by sweeping the dial against this one synthetic serve until each named
  * behaviour appeared, which is enough to prove the mechanism reaches the
- * report at all; it is not evidence that 0.8 (80% of the frame) is a
+ * report at all; it is not evidence that 1.6 (160% of the frame) is a
  * realistic pan, and the comments below say so at each value used.
+ *
+ * Re-swept when the rig's swing was re-posed on the Bath serves. The hand now
+ * travels from well behind the head at the drop to 0.29 m in front of the hips
+ * at contact, which is more forward travel in the picture than the old swing
+ * had, so it takes more drift to cancel: the reading goes uncertain at 0.9–1.1
+ * of the frame (was 0.4) and reverses from 1.2 (was 0.8).
  */
 function pannedServe(cameraPan: number) {
   const frames = buildServe({ cameraPan }, 50)
@@ -1560,21 +1615,21 @@ check('a small pan leaves a confidently-signed reading untouched', () => {
 })
 
 check('a large enough pan can make a real sign genuinely uncertain, and the app says so rather than guessing', () => {
-  // Found by sweeping the dial: at this value the pan's own slope roughly
-  // cancels the swing's real forward travel, and `forwardDirection`'s 6%-of-
+  // Found by sweeping the dial: at a whole frame of drift the pan's own slope
+  // roughly cancels the swing's real forward travel, and `forwardDirection`'s 6%-of-
   // body-height certainty floor correctly refuses to call a coin flip a
   // direction — the honest answer, not a defect.
-  const uncertain = pannedServe(0.4)
+  const uncertain = pannedServe(1.0)
   assert(uncertain.contactAhead === undefined, 'a camera drift that erased the real forward travel still reported a sign')
 })
 
 check('past that, a large pan reads the swing travelling the wrong way', () => {
-  // Four fifths of the frame — not proposed as realistic, only as proof the
+  // Over one and a half frames — not proposed as realistic, only as proof the
   // failure this dial exists to name is reachable at all: past the point
   // where the pan's own slope dominates the wrist's real one, the sign it
   // hands to `contactAhead` is confidently the opposite of the truth.
   const clean = pannedServe(0)
-  const reversed = pannedServe(0.8)
+  const reversed = pannedServe(1.6)
   assert(clean.contactAhead! > 0, 'the clean baseline was not the positive case this check assumes')
   assert(reversed.contactAhead! < 0, `a large pan did not flip the sign: ${reversed.contactAhead}`)
   near(Math.abs(reversed.contactAhead!), Math.abs(clean.contactAhead!), 1e-6, 'the flipped magnitude')
@@ -1582,7 +1637,7 @@ check('past that, a large pan reads the swing travelling the wrong way', () => {
 
 check('vertical measurements never move, at any pan — the failure is horizontal only', () => {
   const clean = pannedServe(0)
-  for (const pan of [0.1, 0.4, 0.8]) {
+  for (const pan of [0.1, 1.0, 1.6]) {
     const p = pannedServe(pan)
     near(p.contactHeight!, clean.contactHeight!, 1e-9, `contactHeight at pan ${pan}`)
     near(p.dropDepth!, clean.dropDepth!, 1e-9, `dropDepth at pan ${pan}`)
@@ -2116,8 +2171,10 @@ check('a trophy in the wrong place hedges the coil instead of inventing a fault'
 check('a trunk that genuinely never turned is still measured, not hedged', () => {
   // The other half of the distinction: this player really did arm the ball, the
   // window was long enough to have shown a sweep, and zero is the measurement.
-  // Hedging it here would bury the fault the card exists to name.
-  const frames = buildServe({ shoulderYaw: 20, hipYaw: 14 }, FPS)
+  // Hedging it here would bury the fault the card exists to name. The rig parks
+  // the shoulders at `61 − dial` at the trophy and finishes them at 80°, so
+  // these hold them two degrees short of where they finish (`engine.test.ts`).
+  const frames = buildServe({ shoulderYaw: -17, hipYaw: -23 }, FPS)
   const skel = detectServe(frames, FPS)
   const ctx = {
     frames,
@@ -2190,7 +2247,7 @@ check('measuring the serve does not disturb the camera read taken before it', ()
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
   const before = assessResilience(frames, skel)
-  measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
+  measure(frames, skel, sideViewOf(frames, skel))
   diagnose(frames, skel)
   const after = assessResilience(frames, skel)
   note(`yaw ${before.spatial.yaw_deg}° before measuring, ${after.spatial.yaw_deg}° after`)

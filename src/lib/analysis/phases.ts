@@ -312,6 +312,8 @@ function findTrophy(
   toss: number,
   from: number,
   beforeContact: number,
+  /** The earliest the racket drop can be: `DROP_LOOKBACK` before contact, never before the toss. */
+  dropFrom: number,
 ): { index: number; fromArms: boolean } {
   const window = kneeAngles.slice(from, beforeContact + 1)
   const trough = window.length ? Math.max(...window) - Math.min(...window) : 0
@@ -321,12 +323,21 @@ function findTrophy(
 
   // Bounded above by where the racket bottoms out, so the search cannot run past
   // the drop and up the far side into contact, which is the highest the hand
-  // gets in the whole motion. Searching from the toss rather than from a trophy
-  // we do not yet have is safe here: before the toss the racket hangs by the
-  // hip, which is lower than the drop, and that is the one thing that would
-  // capture this minimum.
-  const provisionalDrop = argMinIn(racketPosture, toss, beforeContact)
-  if (provisionalDrop <= toss) return { index: toss, fromArms: true }
+  // gets in the whole motion.
+  //
+  // That bottom is looked for only in the stretch of the swing a drop can be in
+  // (`dropFrom`). It used to be looked for anywhere after the toss, on the
+  // promise that nothing there sits lower than the drop. That held while the rig
+  // dropped the hand down the back. A real drop leaves the hand at the shoulder,
+  // and on the Bath serves the hand on the backswing, as the ball goes up, sits
+  // just as low (+0.03 of standing height above the shoulder, against +0.05 at
+  // the drop). So on stiff legs the "drop" landed on the toss, the trophy with
+  // it, and a real racket drop was reported as a racket that never fell.
+  const provisionalDrop = argMinIn(racketPosture, dropFrom, beforeContact)
+  // Lowest at the very start of that stretch means the hand only rose through
+  // it: there is no drop to bound the trophy by, and the trophy is put on the
+  // toss, where a serve with neither a load nor a drop has always had it.
+  if (provisionalDrop <= Math.max(toss, dropFrom)) return { index: toss, fromArms: true }
   return { index: argMaxIn(racketPosture, toss, provisionalDrop), fromArms: true }
 }
 
@@ -343,6 +354,16 @@ function findTrophy(
  * them".
  */
 const MIN_DROP_SEPARATION = 0.08
+
+/**
+ * How far before contact a racket drop can be, in seconds.
+ *
+ * The drop bottoms out 110–230 ms before contact on the card's own band, and a
+ * median 145 ms on the Bath serves; 0.3 s holds the slowest of those with room
+ * to spare and still keeps the backswing — a quarter of a second earlier at the
+ * very least — out of the search.
+ */
+const DROP_LOOKBACK = 0.3
 
 /** Enforce a strictly readable order without letting one bad pick eat the rest. */
 function orderKeys(raw: Keyframes, n: number): Keyframes {
@@ -434,8 +455,20 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   // Contact is a place — the highest the racket hand gets — so it is the one
   // event measured in absolute height. Everything else is a posture.
   const racketHeight = heightSeries(frames, R.wrist)
-  const racketPosture = posture(frames, R.wrist, R.shoulder)
-  const tossPosture = posture(frames, T.wrist, T.shoulder)
+  // The two posture series smooth over at most five samples, and never over
+  // more than about 100 ms of serve. Five samples is 83 ms at 60 fps, 167 at 30
+  // and 417 at 12 — longer than the whole drop-to-contact swing. A real drop is
+  // shallow (on the Bath serves the hand bottoms out at the shoulder, not down
+  // the back) and the climb out of it is steep, so a wide window averages the
+  // bottom into the climb and drags it early: at 30 fps the drop landed 54 ms
+  // before the rig posed it, and at 12 fps its minimum vanished and the search
+  // came back with its own lower bound. Three samples at 30 fps takes the drop
+  // to 37 ms early and its spread across 30 / 50 / 120 fps from 43 to 26 ms
+  // (`depth.test.ts`). Unchanged from 45 fps up.
+  const clock = clockOf(frames, fps)
+  const postureRadius = clamp(Math.round(clock.rate / 30), 1, 2)
+  const racketPosture = posture(frames, R.wrist, R.shoulder, postureRadius)
+  const tossPosture = posture(frames, T.wrist, T.shoulder, postureRadius)
 
   // Light-smoothed counterparts, used only to sharpen and time the two events
   // whose exact moment matters.
@@ -445,7 +478,6 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
 
   const contact = sharpen(racketHeightSharp, argMaxIn(racketHeight, 0, frames.length - 1))
 
-  const clock = clockOf(frames, fps)
   const beforeContact = Math.max(0, contact - 1)
 
   /*
@@ -497,7 +529,14 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
     Math.max(2, Math.round(clock.rate / 12)),
   )
   const trophyFrom = clock.at(toss, -0.2)
-  const found = findTrophy(kneeAngles, racketPosture, toss, trophyFrom, beforeContact)
+  const found = findTrophy(
+    kneeAngles,
+    racketPosture,
+    toss,
+    trophyFrom,
+    beforeContact,
+    Math.max(toss, clock.at(contact, -DROP_LOOKBACK)),
+  )
   const trophy = found.index
 
   // Racket drop: hand at its lowest relative to the shoulder — behind the back.

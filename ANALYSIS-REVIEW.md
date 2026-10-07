@@ -701,9 +701,100 @@ serve was given a fault to fix first.
   rising after the toss as the body lifts under a held arm, peaking at 1.5 s
   against a toss at 1.0 s. The rig's tossing arm needs re-posing first, which
   moves every toss reading, so it gets its own round.
-- **The camera model (D7.2).** Untouched. The rating change above removes its
-  largest effect on verdicts; `contactAhead` from the guide's placement still
-  waits on it.
+- **The camera model (D7.2).** Done in part; see the next section.
+
+### The camera read against the court, on a rig that stands like a real server (2026-10-07, scoring version 5)
+
+**What changed.** The synthetic rig's stance, trunk turn and arms were
+re-posed on the Bath serves. The shoulder line sits at 165° (court frame) at
+the ready, 159° at the trophy, 195° at the drop and 260° at contact, with the
+hips at 245°. The racket hand is well back on the backswing, behind the head at
+the trophy and the drop, and 0.29 m in front of the hips at contact. The elbow
+is solved onto the shoulder–hand segment with both arm lengths held. The
+camera's view is now read against the court (`Spatial.court_yaw_deg`, 90 minus
+the shoulder reading) for the side/end call, the `axes.ts` routing and the
+framing advice. The shoulder reading (`yaw_deg`) still decides
+`depth_unreliable` and the comparison gate.
+
+**On the Bath serves.** The guide's placement is filed side-on on all 40
+serves at 30, 60 and 120 fps, and `contactAhead` is reported from it (median
+17–21%). The back fence is filed front-back. No serve is refused, and no fault
+is named except a handful of `low_contact` from the rear-oblique left
+placement. The KNOWN check in `mocap.test.ts` flipped to a positive one.
+
+**Fixed on the way.**
+- **The drop at 30 fps and below.** A real drop is shallow and the climb out
+  of it is steep, so a five-sample smooth (167 ms at 30 fps, 417 ms at 12)
+  dragged it early. At 30 fps it landed 54 ms early; at 12 fps the minimum
+  vanished. The posture smooth is now capped at about 100 ms of serve. The
+  drop is 37 ms early at 30 fps, it spreads 26 ms across 30/50/120 fps (was
+  43), and 12 fps finds it. Nothing changes from 45 fps up.
+- **The trophy on stiff legs.** The racket's low point was looked for anywhere
+  after the toss. On real motion the hand on the backswing sits as low as at
+  the drop, so it is now looked for only in the 0.3 s before contact.
+- **The no-drop injury rule.** `shoulder_load_no_drop` still used the old
+  drop band. It reads the band's floor now.
+- **Hand under the elbow.** Its 20% floor was anchored to the old rig, whose
+  hand went down the back (28.6% clean). Real drops read 10.5–17.6% (medians
+  from three placements), so the floor is 4%: under every real drop's lowest
+  tenth and over every serve with none.
+- **The invariance harness.** Its tilted-phone transform rolled the 3D pose
+  twice, and its reader skipped the levelling pass `runAnalysis` runs. The
+  three "known roll gaps" were measuring that residue. `levelFrames` has
+  rotated the world landmarks since before the harness existed. With one roll
+  in and the real correction applied, nothing drifts. The gaps are deleted,
+  and a check holds the transform to one roll.
+- **Two bounds now take the larger measurement.** Spine lean moves the
+  external-rotation reading 0.5° per degree on the old arm and 0.2° on the
+  Bath-shaped one. The bound keeps 0.5. The chain ratio's tempo term doubled
+  to 0.0223 per second, and the bound takes it.
+- **The fault demonstrations.** The collapsed elbow is now the back scratch:
+  hand down the back, elbow fallen under it. The posture-collapse demo is
+  withdrawn. By contact the hips face the net, so a sideways bend runs along
+  the baseline the guide's camera looks down, and the two figures differ by
+  0.035 body heights.
+
+**What the realistic rig surfaced, pinned as KNOWN.** The engine read the old
+rig well because the rig stood the way the camera model assumed. Real
+servers do not, and it shows in five places.
+1. **The guide's camera sees the shoulders square at the ready.** The shoulder
+   reading saturates there, so `depth_unreliable` is set at the guide's own
+   placement and the coil is hedged. The old rig hedged it there too, from
+   the other end of the range. How wide a pose model's shoulders are decides
+   whether real footage saturates. COCO's hand-labelled shoulders, on 822
+   upright, front-facing people, have a median width of 0.229 of height. The
+   rig's is 0.221 and `SHOULDER_SPAN_RATIO` is 0.21. The Bath joint centres,
+   which are marker-derived and narrower, give 0.194, which is why the bench
+   reads 25° from the guide where the rig reads 0°.
+2. **Shoulder span cannot say which side.** A real stance holds the shoulders
+   15° past the net axis, so a true 45° corner and a 75° near-side camera give
+   the same reading. A corner reads 66°, outside R80b's band, and a sideways
+   toss is named and drilled as forwards-and-back at a real corner again
+   (`depth.test.ts`).
+3. **The comparison gate near the guide's placement.** At the guide's own dial
+   the reading is pinned at zero and every pair agrees. Either side of the
+   pinned range, a sixth of same-spot pairs land outside the 5° gate; at a
+   true corner it is a quarter (`axes.test.ts`).
+4. **Just under the depth floor.** A camera that reads 13° clean is read as
+   readable on 22 of 100 poor-light takes. The old check never tested this:
+   its 14° dial read 0° on the old rig (`robustness.test.ts`).
+5. **Sideways motion is along the baseline once the body faces the net.** A
+   sideways landing reads at a quarter of its size from the guide's placement
+   (0.020 against 0.062 from behind). The landing is ungraded, so no verdict
+   moves (`depth.test.ts`).
+
+Items 2–4 share one fix: a camera reading that does not rest on one shoulder
+span at the ready, such as the swing's travel or the body's forward motion
+into the court (ROADMAP D7.2).
+
+**Rig limits found, not fixed.** The rig's feet turn with its hips; the Bath
+servers' feet stay apart along the net axis. The rig also under-turns the hand
+through contact: its pronation reads 20–39° where the Bath serves read a median
+of 93°. Separately, R60·2 refused reading the stance because the rig stood its
+feet along the guide camera's line of sight. A real front foot is ahead
+towards the net (0.17 m on the Bath serves), and the rebuilt rig reads the
+stance at 18 times its noise from the guide's placement. That refusal is
+reopened.
 
 **A caution about this set's elbow angles.** The elbow centres are averages of
 skin markers on the back of the joint. Swapping between the candidate centres

@@ -246,9 +246,17 @@ export function imageXSplit(yawDeg: number, spatialConfidence = 1): ImageXSplit 
  *
  * Which is why it is `roll_confidence` and not `confidence` — see
  * `spatial_confidence` above for what the other factor was costing and where.
+ *
+ * And `court_yaw_deg`, not `yaw_deg`. The axes this file names are the court's
+ * — front-to-back is towards the net, sideways is along the baseline — and
+ * `yaw_deg` is the camera's angle to the shoulder line, which is a different
+ * angle by however the player stands. The synthetic rig stood square to the net,
+ * where the two coincide, and that is the only reason this ever read the
+ * shoulder angle without being wrong. A real server stands side-on, 90° away
+ * (ANALYSIS-REVIEW.md §9).
  */
 export function imageXSplitFrom(spatial: Spatial): ImageXSplit {
-  return imageXSplit(spatial.yaw_deg, spatial.roll_confidence)
+  return imageXSplit(spatial.court_yaw_deg, spatial.roll_confidence)
 }
 
 /**

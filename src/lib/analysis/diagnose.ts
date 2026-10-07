@@ -1183,17 +1183,21 @@ export const MIN_ROTATION_LEVER = 0.25
  *
  * The reading is taken against the trunk's up vector, so leaning the trunk moves
  * the reference and the number follows even though the shoulder has not rotated.
- * `depth.test.ts` measures 15.1° of shift across 30° of lean; this is that,
- * per degree.
  *
- * IT IS ADDITIVE, WHICH IS THE WHOLE REASON IT IS A NUMBER AND NOT A MODEL. Swept
- * across a grid of four rotations by four leans, the shift lean causes is 15.0,
- * 15.0, 16.0 and 15.0° at rotations of 0, 20, 40 and 60 — a spread of one degree
- * across the entire range. The two quantities are separable, so a consumer can
- * subtract this and be left with the rotation, rather than needing a model of how
- * the two interact.
+ * A BOUND, NOT A COEFFICIENT, since the rig's arm was re-posed on the Bath
+ * serves. `depth.test.ts` measured 15.1° of shift across 30° of lean on the old
+ * arm (hand behind the racket shoulder) and 6° on the Bath-shaped one (hand
+ * behind the head, elbow out to the side): 0.5 per degree and 0.2. How much a
+ * lean moves the reference depends on where the arm sits relative to the lean,
+ * so no single coefficient is the arm's — and the larger of the two measured is
+ * kept, because every consumer uses this to size a bound, and a bound wants the
+ * worst arm it has seen.
  *
- * NOTHING SUBTRACTS IT HERE, and that is deliberate. `Diagnosis` returns what was
+ * IT IS ADDITIVE on each arm, which is what lets it be a number at all. Swept
+ * across four rotations by four leans, the shift lean causes is the same at
+ * rotations of 0, 20, 40 and 60 to within a degree on both arms.
+ *
+ * NOTHING SUBTRACTS IT, and that is deliberate. `Diagnosis` returns what was
  * measured; a corrected number that silently differs from the geometry is exactly
  * the kind of confident adjustment this codebase does not make in the data layer.
  * The correction is also rig-derived — it assumes this rig's spine bends the way a
@@ -1203,7 +1207,7 @@ export const MIN_ROTATION_LEVER = 0.25
  * both halves.
  *
  * What it is FOR: bounding a delta. Two serves whose lean differs by L degrees
- * carry `0.5 × L` degrees of false rotation change between them, which against
+ * carry up to `0.5 × L` degrees of false rotation change between them, which against
  * this reading's own ~15° deviation says a lean difference of ten degrees spends
  * a third of the floor before the shoulder has done anything.
  */
@@ -1259,9 +1263,14 @@ export const ER_DEVIATION_DEG = 11.8
  */
 
 /** Deviation of the ratio between takes, flat across tempo — which is what makes the terms separable. */
-export const CHAIN_RATIO_DEVIATION = 0.0065
-/** How far the mean moves per second of tempo difference: 5.7% across a 0.6 s range. */
-export const CHAIN_RATIO_PER_SECOND = 0.0102
+export const CHAIN_RATIO_DEVIATION = 0.0067
+/**
+ * How far the mean moves per second of tempo difference: 13.5% across a 0.6 s
+ * range. It was 0.0102 (5.7%) until the rig's swing was re-posed on the Bath
+ * serves, and the re-posed figure is the one kept because it is the larger: a
+ * bound sized on the gentler swing would let tempo through as a change.
+ */
+export const CHAIN_RATIO_PER_SECOND = 0.0223
 
 /**
  * Read external rotation off one frame.

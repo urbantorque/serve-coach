@@ -235,8 +235,9 @@ export interface RotationMove {
  *     thing to keep in step.
  *   · A posture difference big enough to explain the change. The angle is read
  *     against the trunk's up vector, so leaning moves the reference without the
- *     shoulder rotating; `ER_LEAN_SENSITIVITY` measures that at 0.5° per degree
- *     and is additive, which is what makes a bound possible rather than a model.
+ *     shoulder rotating; `ER_LEAN_SENSITIVITY` bounds that at 0.5° per degree —
+ *     the worse of the two arms it was measured on — and it is additive on each,
+ *     which is what makes a bound possible rather than a model.
  *     Both leans or neither — `signals` already drops a reading below
  *     `MIN_EVIDENCE`, so a badly seen trunk is absent rather than wrong.
  *

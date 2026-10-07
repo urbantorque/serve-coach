@@ -16,16 +16,32 @@ import { detectServe } from '../phases'
 import { measure } from '../metrics'
 import { diagnose } from '../diagnose'
 import { LM, jointAngle, sided } from '../geometry'
-import { DRIFT_BUDGET, TRANSFORMS, budgetFor, decimate, driftBetween, rescale } from '../invariants'
+import { DRIFT_BUDGET, TRANSFORMS, budgetFor, decimate, driftBetween, rescale, tilt } from '../invariants'
+import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot } from '../spatial'
 import { buildServe, CLEAN_SERVE, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
 
 const FPS = 60
 const ASPECT = 1
 
-/** Every measurement of one serve, read by the real pipeline. */
-function readServe(frames: ReturnType<typeof buildServe>, fps = FPS) {
-  const skel = detectServe(frames, fps)
+/**
+ * Every measurement of one serve, read by the real pipeline.
+ *
+ * Including the levelling pass, which this skipped until the rig was re-posed
+ * and a tilted phone started moving the shoulder tilt by a third of its band:
+ * `runAnalysis` reads the roll, levels the clip if it is past `NOTABLE_ROLL` and
+ * detects again, so a reader that does not is testing a pipeline nobody runs.
+ * The order and arguments are `runAnalysis`'s, as `src/dev/mocap/engine.ts` has
+ * them.
+ */
+function readServe(input: ReturnType<typeof buildServe>, fps = FPS) {
+  let frames = input
+  let skel = detectServe(frames, fps)
+  const { roll_deg } = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+  if (Math.abs(roll_deg) >= NOTABLE_ROLL) {
+    frames = levelFrames(frames, roll_deg, levelPivot(frames))
+    skel = detectServe(frames, fps)
+  }
   const metrics = measure(frames, skel, true).flatMap((f) => f.metrics)
   return { skel, metrics }
 }
@@ -175,15 +191,38 @@ check('every transform returns different frames from the ones it was given', () 
   }
 })
 
+check('tilting rolls the picture and the 3D pose by the same amount, once', () => {
+  /*
+   * The defect this harness carried for two months: the world was rolled twice
+   * and the image once, and three "known gaps" were the difference. A phone
+   * rolls both by one angle, because MediaPipe reports the world in the
+   * camera's frame — so the hip-to-ankle line has to turn by the same six
+   * degrees in each, and the roll the pipeline reads off the picture has to be
+   * the one that went in.
+   */
+  const frames = buildServe(CLEAN_SERVE, FPS)
+  const rolled = tilt(frames, 6)
+  const turn = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.atan2(b.y - a.y, b.x - a.x)
+  const deg = (r: number) => (r * 180) / Math.PI
+  const i = Math.floor(frames.length / 3)
+  const image = deg(turn(rolled[i].image[LM.leftHip], rolled[i].image[LM.leftAnkle]) - turn(frames[i].image[LM.leftHip], frames[i].image[LM.leftAnkle]))
+  const world = deg(turn(rolled[i].world[LM.leftHip], rolled[i].world[LM.leftAnkle]) - turn(frames[i].world[LM.leftHip], frames[i].world[LM.leftAnkle]))
+  assert(Math.abs(image - 6) < 0.01 && Math.abs(world - 6) < 0.01, `the picture turned ${image.toFixed(2)}° and the pose ${world.toFixed(2)}°`)
+  const skel = detectServe(rolled, FPS)
+  const read = assessSpatial(rolled, skel.keys.ready, skel.bodyHeight).roll_deg
+  assert(Math.abs(read - 6) <= 1, `the pipeline read ${read}° of roll off a 6° tilt`)
+})
+
 note(`drift budget: ${DRIFT_BUDGET * 100}% of a measurement's own target band`)
 note('a convention with an argument, not a measurement — see CORPUS.md')
 
 heading('The rig has to pose a body somebody has')
 
 /**
- * `trophyForearmDrop` moves the hand and nothing puts the forearm back, so past
- * about 0.3 it stops laying the arm over and starts stretching it — 1.40× the
- * upper arm at 0.4, 3.35× at 0.8, where a real forearm is about 0.8×. Every
+ * `trophyForearmDrop` moves the hand, and the elbow solved onto it holds both
+ * arm lengths only while the hand is within reach — so past about 0.4 it stops
+ * laying the arm over and starts stretching it: 1.15× the upper arm at 0.5,
+ * 2.07× at 0.8, where a real forearm is about 0.8×. Every
  * measurement read off the racket arm at that dial is then a measurement of an
  * arm nobody has.
  *
@@ -211,7 +250,7 @@ const forearmRatioAt = (drop: number): number => {
 check('the trophy drop every caller uses keeps the forearm shorter than the upper arm', () => {
   // A real forearm is about 0.8 of the upper arm. One that is longer is the
   // dial stretching rather than rotating, and 1.0 is a generous bound on that.
-  for (const drop of [0, 0.15, 0.25, 0.3]) {
+  for (const drop of [0, 0.15, 0.25, 0.3, 0.4]) {
     const ratio = forearmRatioAt(drop)
     assert(ratio < 1, `at ${drop} the forearm is ${ratio.toFixed(2)}× the upper arm`)
   }
@@ -294,8 +333,8 @@ check('and past that the dial is measurably stretching, not rotating', () => {
   // as a number somebody liked. If this ever stops being true the dial has been
   // rebuilt, and the limit documented on it needs rewriting rather than trusting.
   const stretched = forearmRatioAt(0.8)
-  assert(stretched > 2, `at 0.8 the forearm was ${stretched.toFixed(2)}× the upper arm, expected the documented 3.35×`)
-  note(`0.4 → ${forearmRatioAt(0.4).toFixed(2)}×, 0.8 → ${stretched.toFixed(2)}×`)
+  assert(stretched > 1.5, `at 0.8 the forearm was ${stretched.toFixed(2)}× the upper arm, expected the documented 2.07×`)
+  note(`0.5 → ${forearmRatioAt(0.5).toFixed(2)}×, 0.8 → ${stretched.toFixed(2)}×`)
 })
 
 heading('The landing')
@@ -497,13 +536,17 @@ check('the landing dials are invisible to everything that existed before them', 
   }
 
   // And the dial is not simply doing nothing, which is how the assertions above
-  // would pass on a rig that had quietly stopped posing a landing at all.
-  const landed = read({ landingLean: 0.12 }).landing
+  // would pass on a rig that had quietly stopped posing a landing at all. Read
+  // from behind the server: the fall runs along the hip line, which by the
+  // finish faces the net, so the guide's camera sees a quarter of it
+  // (`depth.test.ts` holds that as a known gap).
+  const square = read({ cameraYaw: 0 }).landing
+  const landed = read({ landingLean: 0.12, cameraYaw: 0 }).landing
   assert(
-    typeof landed === 'number' && typeof clean.landing === 'number' && landed > clean.landing + 0.03,
-    `the only reading that should move went ${clean.landing} → ${landed}`,
+    typeof landed === 'number' && typeof square === 'number' && landed > square + 0.03,
+    `the only reading that should move went ${square} → ${landed}`,
   )
-  note(`  every keyframe, signal, metric and flaw held; landing alone moved ${clean.landing} → ${landed}`)
+  note(`  every keyframe, signal, metric and flaw held; landing alone moved ${square} → ${landed}`)
 })
 
 check('the landing is clamped where the leg runs out rather than stretching', () => {

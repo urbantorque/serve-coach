@@ -30,7 +30,7 @@ import {
   splitByServeNumber,
 } from '../consistency'
 import { Cancelled } from '../../pose/extract'
-import { diagnose } from '../diagnose'
+import { CHAIN_RATIO_DEVIATION, CHAIN_RATIO_PER_SECOND, diagnose } from '../diagnose'
 import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
 import { measure } from '../metrics'
 import { detectServe, looksSlowedDown, refineExtremum, type Skeleton } from '../phases'
@@ -45,9 +45,22 @@ import {
   type Metric,
   type Status,
 } from '../types'
+import { assessSpatial, viewFromCourtYaw } from '../spatial'
 import { CLEAN_SERVE, U, buildServe, type ServeDials } from '../syntheticServe'
 import { cueIssues } from '../voice'
 import { assert, check, near, note, report, within } from './harness'
+
+/**
+ * The view the app files a clip under, read the way `assessQuality` reads it:
+ * against the court, from the camera's angle to the shoulders at the ready.
+ * Several checks here used their own rule — shoulders under a tenth of
+ * standing height apart — which called shoulders pointing at the lens side-on;
+ * a real server has their back to the guide's camera, so that rule stopped
+ * meaning side-on when the rig stood like one.
+ */
+const sideViewOf = (frames: Frame[], skel: { keys: { ready: number }; bodyHeight: number }) =>
+  viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight).court_yaw_deg) === 'side'
+
 
 /** Declared up here because checks run top to bottom as the module executes. */
 const DAY = 86_400_000
@@ -57,7 +70,9 @@ const FPS = 50
 /**
  * A camera angle the spatial pass calls readable in depth.
  *
- * The rig's default is 82°, which is dead side-on and outside `DEPTH_YAW_RANGE`:
+ * The rig's default is 82°, which is dead side-on to the court and outside
+ * `DEPTH_YAW_RANGE` — a real server has their back to that camera at the ready,
+ * so it sees the shoulders square and the trunk turns towards and away from it:
  * a fine place to measure heights and angles from, and the one place the app
  * refuses to state a coil *direction* from. Named so the checks that need a
  * corner say why they moved.
@@ -67,8 +82,7 @@ const CORNER = 45
 function run(dials: Partial<ServeDials> = {}) {
   const frames = buildServe(dials, FPS)
   const skel = detectServe(frames, FPS)
-  const spanRatio = skel.shoulderWidth / skel.bodyHeight
-  const sideView = spanRatio < 0.1
+  const sideView = sideViewOf(frames, skel)
   const fundamentals = measure(frames, skel, sideView)
   return { frames, skel, fundamentals, sideView }
 }
@@ -146,7 +160,7 @@ check('identifies a left-hander, and measures them the same', () => {
   const skel = detectServe(frames, FPS)
   assert(skel.racket === 'left', `mirrored serve read as ${skel.racket}-handed`)
 
-  const left = measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
+  const left = measure(frames, skel, sideViewOf(frames, skel))
   // The two trunk measurements are in this list because they are signed, and a
   // sign about a vertical axis is exactly the thing that reverses when a serve
   // is mirrored. Measured without orienting them by the racket hand, every
@@ -578,7 +592,7 @@ check('a mirrored trophy is wrong for a left-hander too', () => {
   const frames = mirror(buildServe({ shoulderTilt: -24, hipYaw: 108 }, FPS))
   const skel = detectServe(frames, FPS)
   assert(skel.racket === 'left', `the mirrored serve read as ${skel.racket}-handed`)
-  const f = measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
+  const f = measure(frames, skel, sideViewOf(frames, skel))
   assert(metric(f, 'shoulderTilt').value < -15, `left-handed reverse tilt measured ${metric(f, 'shoulderTilt').value.toFixed(1)}°`)
   assert(
     metric(f, 'hipShoulderSeparation').value < -15,
@@ -700,8 +714,11 @@ check('a trunk that barely rotates is not handed a coil sign by noise', () => {
   // one of which is always wrong and both of which look authoritative on a card.
   for (const trunkRotationSign of [1, -1] as const) {
     // Shoulders parked within a few degrees of where they finish: no uncoiling
-    // at all, which is the fault itself rather than a measurement problem.
-    const armed = run({ trunkRotationSign, shoulderYaw: 20, hipYaw: 14 })
+    // at all, which is the fault itself rather than a measurement problem. The
+    // rig finishes the shoulders at 80° and the hips at 65° (`syntheticServe.ts`,
+    // from the Bath serves) and parks them at `61 − dial` at the trophy, so these
+    // hold the shoulders 2° short of where they finish, 6° of coil behind them.
+    const armed = run({ trunkRotationSign, shoulderYaw: -17, hipYaw: -23 })
     const sep = metric(armed.fundamentals, 'hipShoulderSeparation')
 
     // Measured off the rig rather than assumed from the dials, so this cannot
@@ -2720,7 +2737,7 @@ check('the rig separates a dialled second serve, and that proves nothing', () =>
     for (const seed of seeds) {
       const frames = buildServe({ ...dials, seed, noise: 0.006 }, FPS)
       const skel = detectServe(frames, FPS)
-      const f = measure(frames, skel, skel.shoulderWidth / skel.bodyHeight < 0.1)
+      const f = measure(frames, skel, sideViewOf(frames, skel))
       const h = f.flatMap((x) => x.metrics).find((m) => m.id === 'contactHeight')?.value
       const r = diagnose(frames, skel).chain?.span_ratio
       if (typeof h === 'number') height.push(h)
@@ -2784,14 +2801,14 @@ const ratioDelta = (c: ReturnType<typeof ratioBasket>) =>
   c.uncalibrated?.find((d) => d.id === 'chain_span_ratio')
 
 check('a sequence change past both terms is reported', () => {
-  // 0.04 apart at identical tempo, against a ~0.0092 floor.
+  // 0.04 apart at identical tempo, against a ~0.0095 floor.
   const d = ratioDelta(ratioBasket([
     { ratio: 0.09, seconds: 1.35 },
     { ratio: 0.13, seconds: 1.35 },
   ]))
   assert(!!d, 'a 0.04 change at equal tempo was not reported')
   assert(
-    Math.abs(d!.bound - Math.SQRT2 * 0.0065) < 1e-9,
+    Math.abs(d!.bound - Math.SQRT2 * CHAIN_RATIO_DEVIATION) < 1e-9,
     `at equal tempo the bound came back ${d!.bound}`,
   )
 })
@@ -2809,16 +2826,16 @@ check('a change inside the noise on a difference is refused', () => {
 check('a tempo difference widens the bound, and can eat the change', () => {
   /*
    * The half that makes this entry different from its two siblings: its bound
-   * is not a constant. Two serves a second apart in tempo carry 0.0102 of false
-   * change before the sequence has done anything, so the same delta that passes
-   * at equal tempo is refused across one.
+   * is not a constant. Two serves a second apart in tempo carry `CHAIN_RATIO_PER_SECOND`
+   * (0.0223) of false change before the sequence has done anything, so the same
+   * delta that passes at equal tempo is refused across one.
    */
   const same = ratioDelta(ratioBasket([
     { ratio: 0.100, seconds: 1.35 },
     { ratio: 0.111, seconds: 1.35 },
   ]))
-  // 0.011 sits between the two bounds: past 0.0092 at equal tempo, inside the
-  // 0.0123 that a 0.8 s gap buys. Chosen to straddle them rather than to be
+  // 0.011 sits between the two bounds: past 0.0095 at equal tempo, inside the
+  // 0.0202 that a 0.8 s gap buys. Chosen to straddle them rather than to be
   // comfortably large, since a comfortable delta would pass both and prove
   // nothing about the tempo term.
   assert(!!same, 'a 0.011 change at equal tempo was refused')
@@ -2828,6 +2845,10 @@ check('a tempo difference widens the bound, and can eat the change', () => {
     { ratio: 0.111, seconds: 1.90 },
   ]))
   assert(!apart, 'the same change across a 0.8 s tempo gap was reported anyway')
+  assert(
+    Math.hypot(Math.SQRT2 * CHAIN_RATIO_DEVIATION, CHAIN_RATIO_PER_SECOND * 0.8) > 0.011,
+    'the 0.8 s bound no longer covers the 0.011 change this check straddles with',
+  )
 })
 
 check('without both tempos there is no bound, so there is no comparison', () => {

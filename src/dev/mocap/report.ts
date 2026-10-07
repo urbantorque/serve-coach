@@ -41,6 +41,7 @@ export interface BenchRow {
   refused: number
   /** Engine minus truth, ms: `phone` against the engine's own definition in 3D, `event` against the event. */
   timing: Record<string, { phone: number[]; event?: number[] }>
+  /** The camera's angle to the court (`Spatial.court_yaw_deg`) — what the view is filed on. */
   yaw: number[]
   views: Record<string, number>
   flaws: Record<string, number>
@@ -90,7 +91,7 @@ export function benchMocap(serves: MocapServe[], placements = PLACEMENTS, rates 
         row.timing.trophy.phone.push(ms(at('trophy'), truth.kneeBottom))
         row.timing.drop.phone.push(ms(skel.times.drop - lead, truth.dropPosture))
         row.timing.drop.event!.push(ms(skel.times.drop - lead, truth.racketBottom))
-        row.yaw.push(resilience.spatial.yaw_deg)
+        row.yaw.push(resilience.spatial.court_yaw_deg)
         row.views[quality.view] = (row.views[quality.view] ?? 0) + 1
         for (const f of diagnosis.flaws) if (f.detected) row.flaws[f.flaw] = (row.flaws[f.flaw] ?? 0) + 1
         const primary = verdict.primary_flaw?.flaw ?? (verdict.status === 'rejected' ? `refused: ${verdict.reason}` : 'none')
@@ -129,7 +130,7 @@ export function formatBench(rows: BenchRow[]): string {
     for (const [k, t] of Object.entries(r.timing)) {
       out.push(`    ${k.padEnd(8)} ${summary(t.phone).padEnd(34)} ${t.event ? summary(t.event) : ''}`)
     }
-    out.push(`  camera: yaw ${median(r.yaw).toFixed(0)}° median [${sorted(r.yaw)[0] ?? '—'}, ${sorted(r.yaw).at(-1) ?? '—'}], filed as ${counts(r.views)}`)
+    out.push(`  camera: ${median(r.yaw).toFixed(0)}° to the court (median, range ${sorted(r.yaw)[0] ?? '—'}–${sorted(r.yaw).at(-1) ?? '—'}), filed as ${counts(r.views)}`)
     out.push(`  faults named: ${counts(r.flaws)}`)
     out.push(`  told to fix first: ${counts(r.primary)}`)
     const metrics = Object.entries(r.metrics)

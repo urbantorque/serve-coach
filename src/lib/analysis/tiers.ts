@@ -635,18 +635,23 @@ export const UNCALIBRATED: Record<string, string> = {
    * directions:
    *
    *   · **The change is real.** On a clean rig both frames report 14.4° for
-   *     every 15° dialled, identically, at every step — a gain of 0.96. Two
-   *     independent references seeing the same change means the change belongs
-   *     to the arm and not to the frame. (Under the modelled camera the apparent
-   *     gain falls to 0.8, which is the unsigned angle biasing towards the
-   *     middle of its range under noise, not the geometry moving.)
-   *   · **The absolute is not.** The same arm reads 44.5° in one frame and
-   *     149.1° in the other. There is no zero to put a band around.
+   *     every 15° dialled, at every step — a gain of 0.96. Two independent
+   *     references seeing the same change means the change belongs to the arm
+   *     and not to the frame. Since the arm was re-posed on the Bath serves the
+   *     two run opposite ways round — the shoulder line sits on the far side of
+   *     the forearm's arc — which is a fact about unsigned angles, not the arm.
+   *     (Under the modelled camera the apparent gain falls to 0.8, which is the
+   *     unsigned angle biasing towards the middle of its range under noise, not
+   *     the geometry moving.)
+   *   · **The absolute is not.** The same arm reads 57.1° in one frame and
+   *     93.5° in the other, and the gap moves as the arm turns. There is no zero
+   *     to put a band around.
    *   · **And switching frames is not the fix.** Each is confounded by a
-   *     different posture: 30° of spine lean moves the trunk frame 15.1°, and
-   *     30° of shoulder tilt moves the shoulder frame 35.3°. The trunk frame is
-   *     the better of the two and is still moved by a whole noise floor by a
-   *     posture that is not a shoulder rotation — and spine lean is not
+   *     different posture: 30° of spine lean moves the trunk frame 6° on the
+   *     Bath-shaped arm (15.1° on the old one), and 30° of shoulder tilt moves
+   *     the shoulder frame 67°. The trunk frame is the better of the two and is
+   *     still moved by half a noise floor by a posture that is not a shoulder
+   *     rotation — and spine lean is not
    *     hypothetical, it is the signal the lumbar injury flag is read from.
    *
    * So: measured, returned in `Diagnosis.externalRotation`, kept out of
@@ -659,10 +664,11 @@ export const UNCALIBRATED: Record<string, string> = {
   external_rotation_deg:
     'measured and not named: 9.4–11.8° deviation over a 48° span, which is ' +
     'gradeable, but read against a chosen reference frame with no zero — the ' +
-    'same arm reads 44.5° against the trunk and 149.1° against the shoulder ' +
-    'line. Both frames agree exactly about a CHANGE (14.4° per 15° dialled) and ' +
-    'both are confounded by posture: 30° of spine lean moves the trunk frame ' +
-    '15.1°. Delta gradeable in principle, absolute ruled out.',
+    'same arm reads 57.1° against the trunk and 93.5° against the shoulder ' +
+    'line. Both frames agree exactly about the size of a CHANGE (14.4° per 15° ' +
+    'dialled, opposite ways round) and both are confounded by posture: 30° of ' +
+    'spine lean moves the trunk frame 6–15° depending on where the arm sits. ' +
+    'Delta gradeable in principle, absolute ruled out.',
   /*
    * Peak leg drive: the fastest the hips rose in the frame.
    *
@@ -872,10 +878,12 @@ export const UNCALIBRATED: Record<string, string> = {
    * fact about the filming. Nothing here knows which direction is worse anyway.
    */
   landing_offset_ratio:
-    'measured and not named: well conditioned — 0.0035 square against 0.0657 ' +
-    'landed, on a 0.0045 deviation — but nothing knows what a club player should ' +
-    'read, and the rig poses a symmetric shift where a real collapse is over the ' +
-    'front foot, so it is validated against a model of the fault rather than the fault',
+    'measured and not named: well conditioned from behind the server — 0.0035 ' +
+    'square against 0.0657 landed, on a 0.0045 deviation — and a quarter of that ' +
+    'from the guide placement, where a body facing the net falls along the ' +
+    'camera\'s line of sight; nothing knows what a club player should read, and ' +
+    'the rig poses a symmetric shift where a real collapse is over the front ' +
+    'foot, so it is validated against a model of the fault rather than the fault',
 
   /*
    * Peak racket-hand speed, and peak elbow speed, as moments in the serve.

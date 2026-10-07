@@ -38,6 +38,18 @@ import {
 
 const FPS = 50
 
+/**
+ * A camera the judge has nothing to say about: it reads 45° to the court.
+ *
+ * Dialled at 27 rather than 45 because the reading is taken off the shoulders
+ * at the ready, and since the rig was re-posed on the Bath serves those sit 15°
+ * past the net axis — so the dial and the reading are no longer the same
+ * number. The checks below that used to stand at 60 stood there for an angle
+ * in the middle of the range; on this rig 60 is square to the shoulders, which
+ * reads as dead side-on to the court.
+ */
+const CORNER = 27
+
 /** Seven frames of the rig standing still, from whichever angle. */
 const standing = (cameraYaw: number): Frame[] =>
   buildServe({ cameraYaw }, FPS).slice(0, PREVIEW_WINDOW)
@@ -162,14 +174,14 @@ heading('Saying nothing until there is something to say')
 
 check('a part-filled window is never judged', () => {
   for (let n = 0; n < PREVIEW_WINDOW; n++) {
-    const frames = standing(60).slice(0, n)
+    const frames = standing(CORNER).slice(0, n)
     const verdict = judgeFraming(readFraming(frames))
     // An empty preview is the exception: no pose at all is not a window still
     // filling up, it is the one call that is true from the first frame.
     const expected = n === 0 ? 'no-player' : 'looking'
     assert(verdict.call === expected, `${n} frames said ${verdict.call}`)
   }
-  assert(judgeFraming(readFraming(standing(60))).call === 'ready', 'a full clean window was not ready')
+  assert(judgeFraming(readFraming(standing(CORNER))).call === 'ready', 'a full clean window was not ready')
 })
 
 check('the window is the one assessSpatial reads', () => {
@@ -182,17 +194,16 @@ check('the window is the one assessSpatial reads', () => {
 heading('Camera angle, through the rig')
 
 check('the rig sweep lands where DEPTH_YAW_RANGE says it should', () => {
-  // Recovered yaw, not dialled yaw. `estimateYaw` inverts a shoulder span
-  // against a fixed span-to-height ratio, and against this rig it saturates near
-  // face-on: 0°, 5° and 10° of dialled camera all come back as 0°, and 18° comes
-  // back as 13°. So the dialled angle at which the depth axis is declared
-  // unreadable is a few degrees higher than the range's own lower bound. That is
-  // a property of the estimator and this rig, not of any phone.
+  // Recovered angle to the court, not dialled yaw — the number the judge acts
+  // on (`collapsed`). It is read off the shoulders at the ready, which a real
+  // server holds 15° past the net axis, so it peaks at 90 for a dial of about
+  // 75 rather than 90, and saturates there: every dial from 60 to 90 comes back
+  // as 90. That is a property of the estimator and this rig, not of any phone.
   const seen: string[] = []
   for (const dialled of [0, 10, 30, 45, 60, 82, 90]) {
     const r = readFraming(standing(dialled))
     assert(r.spatial !== null && r.yaw_measured, `no yaw recovered at a dialled ${dialled}`)
-    const yaw = r.spatial!.yaw_deg
+    const yaw = r.spatial!.court_yaw_deg
     const call = judgeFraming(r).call
     seen.push(`${dialled}→${yaw}:${call}`)
 
@@ -204,7 +215,7 @@ check('the rig sweep lands where DEPTH_YAW_RANGE says it should', () => {
 })
 
 check('a corner camera is the one the check leaves alone', () => {
-  for (const dialled of [30, 40, 50, 60, 70]) {
+  for (const dialled of [10, 20, 30, 40, 50]) {
     const verdict = judgeFraming(readFraming(standing(dialled)))
     assert(verdict.call === 'ready', `a dialled ${dialled} was told to ${verdict.call}`)
   }
@@ -213,12 +224,13 @@ check('a corner camera is the one the check leaves alone', () => {
 check('the guide angle and the engine window do not agree, and the check follows the engine', () => {
   // Worth pinning down rather than leaving as folklore. The filming guide's first
   // rule is "stand side-on"; the rig's own default camera is 82°, which comes
-  // back as 85°; and `DEPTH_YAW_RANGE` stops accepting the lateral axis above
-  // 78°. So a player who follows the written instruction to the letter is told
+  // back as 90° to the court — pinned there, because a real server has their
+  // back to that camera and the shoulders read square; and `DEPTH_YAW_RANGE`
+  // stops accepting the lateral axis above 78°. So a player who follows the written instruction to the letter is told
   // here to move a step round. The check reports what the engine will actually
   // do with the clip. Reconciling the two sentences is a job for a person.
   const r = readFraming(standing(82))
-  within(r.spatial!.yaw_deg, 80, 90, 'recovered yaw at the rig default')
+  within(r.spatial!.court_yaw_deg, 80, 90, 'recovered angle to the court at the rig default')
   assert(judgeFraming(r).call === 'turn-off-side', 'dead side-on was waved through')
 })
 
@@ -256,7 +268,7 @@ const leaning = (frames: Frame[], deg: number): Frame[] => {
 
 check('roll is called out at exactly the angle spatial.ts corrects from', () => {
   for (const roll of [0, 2, NOTABLE_ROLL - 0.5, NOTABLE_ROLL, 12, 20]) {
-    const base = standing(60)
+    const base = standing(CORNER)
     const frames = unlevelFrames(base, { roll_deg: roll, ...levelPivot(base) })
     const r = readFraming(frames)
     const call = judgeFraming(r).call
@@ -270,7 +282,7 @@ check('a leaning player and a tilted phone are the same reading, and the cue adm
    * The check the previous version of this file did not make, and the reason
    * the cue no longer names the phone.
    *
-   * Both rows below are the rig at a 60° camera. One tilts the picture and
+   * Both rows below are the rig at a camera reading 45°. One tilts the picture and
    * leaves the player upright in it; the other leaves the picture alone and
    * leans the player. `roll_deg` cannot separate them — it is one angle off
    * image vertical — so any cue that names either object as the thing to move
@@ -278,7 +290,7 @@ check('a leaning player and a tilted phone are the same reading, and the cue adm
    * is already right.
    */
   for (const deg of [5, 8, 12]) {
-    const base = standing(60)
+    const base = standing(CORNER)
     const tilted = readFraming(unlevelFrames(base, { roll_deg: deg, ...levelPivot(base) }))
     const leant = readFraming(leaning(base, deg))
 
@@ -295,12 +307,12 @@ check('a leaning player and a tilted phone are the same reading, and the cue adm
     )
   }
   // The honesty the ambiguity forces, pinned so it cannot be edited back out.
-  const said = plain(judgeFraming(readFraming(leaning(standing(60), 10))).cue)
+  const said = plain(judgeFraming(readFraming(leaning(standing(CORNER), 10))).cue)
   assert(/cannot tell/.test(said), `the cue picked a culprit it cannot see: "${said}"`)
 })
 
 check('roll never outranks something the camera cannot see past', () => {
-  const base = standing(60)
+  const base = standing(CORNER)
   const rolled = unlevelFrames(base, { roll_deg: 15, ...levelPivot(base) })
   const verdict = judgeFraming(readFraming(unseen(rolled, HANDS)))
   assert(verdict.call === 'hands-unseen', `a rolled phone with no hands said ${verdict.call}`)
@@ -310,7 +322,7 @@ check('roll never outranks something the camera cannot see past', () => {
 heading('Cropping, and the ruler')
 
 check('each crop reaches the player as the thing they can fix', () => {
-  const base = standing(60)
+  const base = standing(CORNER)
   const cases: [number[], FramingCall][] = [
     [FEET, 'feet-cropped'],
     [[LM.nose], 'head-cropped'],
@@ -325,14 +337,14 @@ check('each crop reaches the player as the thing they can fix', () => {
 })
 
 check('both ends gone is a refusal, one end gone is not', () => {
-  const base = standing(60)
+  const base = standing(CORNER)
   assert(judgeFraming(readFraming(unseen(base, [...FEET, LM.nose]))).grade === 'refused', 'both ends survived')
   assert(judgeFraming(readFraming(unseen(base, FEET))).grade === 'hedged', 'cropped feet were refused')
   assert(judgeFraming(readFraming(unseen(base, [LM.nose]))).grade === 'hedged', 'a cropped head was refused')
 })
 
 check('the standing height is dropped, never guessed, when the feet are not in shot', () => {
-  const base = standing(60)
+  const base = standing(CORNER)
   const height = standingHeight(base)
   assert(height !== null && height > 0, 'no height from a clean window')
   // The rig stands the player 0.516 of the frame tall at every camera angle, so
@@ -366,7 +378,7 @@ heading('Building a preview frame')
 
 check('the aspect correction round-trips, and it changes the answer', () => {
   const aspect = 16 / 9
-  const source = standing(60)
+  const source = standing(CORNER)
 
   // Undo the correction to get back to what MediaPipe hands over, then rebuild.
   const raw = source.map((f) => f.image.map((p) => ({ ...p, x: p.x / aspect })))

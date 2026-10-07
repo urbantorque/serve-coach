@@ -265,9 +265,9 @@ export interface Consistency {
  * WHY THIS IS THE ONLY HONEST USE OF THAT REGISTER. Every entry in it is a
  * measurement with no band behind it — repeatable enough to compare, with
  * nothing to compare it *to*. `external_rotation_deg` is the sharp case: the
- * same arm reads 44.5° against the trunk and 149.1° against the shoulder line,
+ * same arm reads 57.1° against the trunk and 93.5° against the shoulder line,
  * so there is no zero to hang a target on, and both frames nonetheless agree
- * exactly about a change (14.4° per 15° dialled). A delta between two of one
+ * exactly about the size of a change (14.4° per 15° dialled). A delta between two of one
  * player's serves is a fact. The same number against a target is four invented
  * numbers, and this type exists so the first can ship without the second.
  *
@@ -516,11 +516,11 @@ function landingBalanceDelta(
  * THE CONFOUNDER IS POSTURE, AND IT IS ARITHMETIC. The angle is read against the
  * trunk's up vector, so leaning the trunk moves the reference and the reading
  * follows without the shoulder having rotated at all. `ER_LEAN_SENSITIVITY`
- * measures that at 0.5° per degree of lean and — this is what makes a bound
- * possible rather than a model — it is *additive*: swept across four rotations
- * by four leans the shift is 15.0, 15.0, 16.0 and 15.0°, a spread of one degree
- * across the whole range. So two serves whose lean differs by L carry 0.5 × L
- * degrees of false change between them, and anything at or under that is posture
+ * bounds that at 0.5° per degree of lean — the worse of the two arms it was
+ * measured on — and, which is what makes a bound possible rather than a model,
+ * it is *additive*: swept across four rotations by four leans the shift is the
+ * same at every rotation to within a degree. So two serves whose lean differs
+ * by L carry up to 0.5 × L degrees of false change between them, and anything at or under that is posture
  * wearing a shoulder's clothes.
  *
  * REFUSED, NOT HEDGED, when the bound eats the delta. This is an extra line on a
@@ -669,15 +669,16 @@ function motionSecondsOf(a: Analysis): number | undefined {
  * THE CONFOUNDER IS TEMPO, AND ONLY PARTLY. `chain_span_ratio` exists because
  * the raw span grades tempo — the same serve served slowly has a longer chain —
  * and dividing by the motion's own duration removes most of that dependence and
- * not all of it. What is left is 0.0102 per second of tempo difference, measured
- * in R50·3's premise cycle.
+ * not all of it. What is left is 0.0223 per second of tempo difference, measured
+ * in R50·3's premise cycle and again after the rig's swing was re-posed on real
+ * motion, which doubled it; the larger is the one kept.
  *
  * **THE ROUND'S OWN 21% IS THE WRONG NUMBER AND THIS IS WHY.** That figure is
  * the register's, and it is the *total* spread of the reading across a tempo
  * sweep with seed noise folded in — the right answer to "is this bandable" and
  * the wrong one for a difference. Bounding with it would refuse every comparison
  * there is, and refuse it mostly for a reason that is not tempo. The two terms
- * add in quadrature: 0.0092 at equal tempo, growing as the two serves diverge.
+ * add in quadrature: 0.0095 at equal tempo, growing as the two serves diverge.
  *
  * REFUSED WITHOUT BOTH TEMPOS. The bound cannot be computed without them, and a
  * delta with no bound is a number nobody can say is not the clock.

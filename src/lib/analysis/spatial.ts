@@ -36,10 +36,32 @@ export interface Spatial {
    */
   roll_deg: number
   /**
-   * Where the camera stood relative to the player, in degrees: 90 is dead
-   * side-on, 0 is dead front or back.
+   * Where the camera stood relative to the player's shoulder line at the start,
+   * in degrees: 90 is the shoulder line pointing at the lens, 0 is it lying
+   * across the picture.
+   *
+   * A question about the body, not the court, and kept for the body questions:
+   * whether the trunk's rotation can be seen without inferring depth
+   * (`depth_unreliable`). Where the net is in the picture is `court_yaw_deg`.
    */
   yaw_deg: number
+  /**
+   * Where the camera stood relative to the court, in degrees: 90 is the net
+   * direction running straight across the picture — a phone on the baseline, as
+   * the filming guide asks — and 0 is the net direction pointing into the lens,
+   * a phone at the back fence or the net.
+   *
+   * Read from the stance, because a server starts side-on: the shoulder line
+   * points at the net, so the camera's angle to the net is the complement of
+   * its angle to the shoulders. Measured, not assumed: on the 40 Bath serves the
+   * shoulder line sat 15° off the net direction at the start, and the guide's
+   * placement read 65° here against a true 90 (ANALYSIS-REVIEW.md §9). A player
+   * standing square to the net would read 90° off, which is the mistake this
+   * field exists to stop making: the synthetic rig used to stand that way and
+   * the camera model learned it, so a phone where the guide puts it was filed
+   * as a view from behind.
+   */
+  court_yaw_deg: number
   /**
    * Whether `yaw_deg` was measured at all, or is the fallback standing in for
    * one that could not be.
@@ -105,6 +127,33 @@ export const NOTABLE_ROLL = 4
  */
 export const DEPTH_YAW_RANGE: [number, number] = [18, 78]
 
+/**
+ * The camera's angle to the net, from its angle to the shoulders at the start.
+ *
+ * The complement, because the stance is side-on: see `Spatial.court_yaw_deg`.
+ * Its own function so the capture-time framing check and the analysis cannot
+ * convert the two angles different ways.
+ */
+export const courtYawFrom = (shoulderYawDeg: number): number => clamp(90 - shoulderYawDeg, 0, 90)
+
+/**
+ * Which way a clip was filmed, in court terms.
+ *
+ * `side` has the net direction across the picture, where how far in front of
+ * the body contact happens is seen rather than inferred; `front-back` has it
+ * pointing into the lens. The boundaries are the shoulder-span thresholds the
+ * view was always cut at — a span over 0.17 or under 0.10 of standing height,
+ * 36° and 61.5° of shoulder yaw — carried across to the court angle.
+ */
+export const SIDE_VIEW_COURT_YAW = 54
+export const END_VIEW_COURT_YAW = 28.5
+
+export function viewFromCourtYaw(courtYawDeg: number): 'side' | 'front-back' | 'angled' {
+  if (courtYawDeg > SIDE_VIEW_COURT_YAW) return 'side'
+  if (courtYawDeg < END_VIEW_COURT_YAW) return 'front-back'
+  return 'angled'
+}
+
 export function assessSpatial(frames: Frame[], readyIndex: number, bodyHeight: number): Spatial {
   const roll = estimateRoll(frames, readyIndex)
   const yaw = estimateYaw(frames, readyIndex, bodyHeight)
@@ -121,6 +170,7 @@ export function assessSpatial(frames: Frame[], readyIndex: number, bodyHeight: n
   return {
     roll_deg: Math.round(roll * 10) / 10,
     yaw_deg: Math.round(yaw.deg),
+    court_yaw_deg: Math.round(courtYawFrom(yaw.deg)),
     yaw_measured: yaw.measured,
     depth_unreliable,
     confidence: Math.round(rollCost * yawCost * 100) / 100,

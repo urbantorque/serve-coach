@@ -16,9 +16,9 @@ import { assessQuality } from '../analyze'
 import { DRILLS } from '../coaching'
 import { metricConfidence, SOFT_MEASUREMENT } from '../confidence'
 import { diagnose } from '../diagnose'
-import type { FlawId } from '../flaws'
+import { evaluateFlaws, type FlawId } from '../flaws'
 import { detectServe } from '../phases'
-import { assessSpatial, levelFrames, NOTABLE_ROLL } from '../spatial'
+import { assessSpatial, courtYawFrom, levelFrames, NOTABLE_ROLL } from '../spatial'
 import { stabilise } from '../kalman'
 import {
   FLAW_DRILL,
@@ -197,9 +197,13 @@ check('past the point detectServe fails on its own, it still fails safely rather
 check('the camera angle is recovered from the shoulder line', () => {
   const sideOn = pipeline({ cameraYaw: 88 })
   const angled = pipeline({ cameraYaw: 45 })
+  // The stored yaw is the camera against the shoulders at the ready, and a
+  // real server has their back to the guide's camera — so side-on to the court
+  // is square to the shoulders, and the larger COURT angle is the claim.
+  const court = (r: typeof sideOn) => courtYawFrom(r.result.quality!.yaw_deg)
   assert(
-    sideOn.result.quality!.yaw_deg > angled.result.quality!.yaw_deg,
-    `side-on read as ${sideOn.result.quality!.yaw_deg}°, angled as ${angled.result.quality!.yaw_deg}°`,
+    court(sideOn) > court(angled),
+    `side-on read as ${court(sideOn)}° to the court, angled as ${court(angled)}°`,
   )
   assert(sideOn.result.quality!.depth_unreliable, 'a dead side-on camera claimed to see depth')
   assert(!angled.result.quality!.depth_unreliable, 'a three-quarter view was called unreadable')
@@ -429,13 +433,37 @@ check('a player with a terrible toss is not lectured on sequencing', () => {
 })
 
 check('a symptom is never chosen over the cause it was attributed to', () => {
-  const { result } = pipeline({ dropBelowShoulder: 0.05 })
+  /*
+   * Placed on readings rather than posed on the rig, and the rig is why. The
+   * pair is a racket drop that stayed high and an elbow that fell, and since
+   * the drop band was re-anchored on real motion (ANALYSIS-REVIEW.md §9) the
+   * two cannot share a serve: a hand left a hand's width above the shoulder
+   * holds the elbow up with it, and the rig — which keeps both arm lengths —
+   * will not pose one without the other. The rule under test is the triage's,
+   * not the pair's, so it is held on readings set past both bands.
+   */
+  const frames = buildServe({}, FPS)
+  const skel = detectServe(frames, FPS)
+  const diagnosis = diagnose(frames, skel, { tier: 5 })
+  const flaws = evaluateFlaws(
+    {
+      drop_depth_ratio: { value: -0.3, confidence: 0.9 },
+      elbow_lift_ratio: { value: -0.3, confidence: 0.9 },
+    },
+    5,
+  )
+  const symptom = flaws.find((f) => f.flaw === 'shallow_drop')
+  assert(symptom?.detected === true && symptom.caused_by === 'collapsed_elbow', 'the pair no longer attributes')
+  const result = triage({ ...diagnosis, flaws }, assessResilience(frames, skel))
   assert(result.primary_flaw?.flaw !== 'shallow_drop', 'the symptom outranked its own cause')
   assert(result.primary_flaw?.flaw === 'collapsed_elbow', `chose ${result.primary_flaw?.flaw}`)
 })
 
 check('the swing is reached once the foundations are sound', () => {
-  const { result } = pipeline({ shoulderYaw: 60, hipYaw: 56 })
+  // From a corner: the guide's own camera sees a real server's shoulders
+  // square, so the coil is hedged there and nothing in this group can be named
+  // from it (`flaws.test.ts`, "a trunk with no coil left at the trophy").
+  const { result } = pipeline({ shoulderYaw: 60, hipYaw: 56, cameraYaw: 45 })
   assert(result.primary_flaw?.group === 'sequence', `chose ${result.primary_flaw?.group}`)
 })
 
@@ -472,7 +500,11 @@ check('every flaw the engine can name has a drill that exists', () => {
 heading('Mechanics that risk a joint')
 
 check('a hard-rotated tray grip is flagged as a wrist risk', () => {
-  const { result } = pipeline({ palmToSky: 80, trophyForearmDrop: 0.22 })
+  // The hard rotation is dialled, not assumed. The rig's default turn through
+  // contact reads 33–39° since its arm was re-posed — under the rule's 45° —
+  // where the forty Bath serves read a median of 93°, so the rig under-turns
+  // the hand (ROADMAP D7.2) and a check about a hard turn has to ask for one.
+  const { result } = pipeline({ palmToSky: 80, trophyForearmDrop: 0.22, pronation: 120 })
   const risks = result.injury_risk.map((r) => r.flag)
   note(risks.join(', ') || 'none')
   assert(
@@ -615,6 +647,9 @@ check('a shaky, low-light, phone-rate clip does not crash and reports honestly',
 check('nothing in the ensemble of bad clips throws', () => {
   let refused = 0
   let hedged = 0
+  // Of the clips jittered past the rig's poor-light figure (0.012), how many
+  // were read with confidence anyway — the fourth category, by row.
+  let roughButConfident = 0
   for (const seed of [2, 13, 29, 41, 57]) {
     for (const fps of [24, 30, 50]) {
       for (const dials of [
@@ -631,6 +666,7 @@ check('nothing in the ensemble of bad clips throws', () => {
         )
         if (result.status === 'rejected') refused++
         else if (result.quality!.confidence < 0.7) hedged++
+        else if ((dials.noise ?? 0) > 0.012) roughButConfident++
       }
     }
   }
@@ -641,8 +677,24 @@ check('nothing in the ensemble of bad clips throws', () => {
   // beyond — so the answer that should come back is a hedged report, not a dead
   // end. What must never grow is a fourth category: read, and read confidently.
   note(`${refused} of 60 scrappy clips refused, ${hedged} read at collapsed confidence`)
+  /*
+   * Per row rather than as a count, since the count went from 31 to exactly 30
+   * when the rig's arm was re-posed on real motion. The rows that moved are the
+   * two mildest: 35% of frames dropped, and a corner camera with jitter of
+   * 0.01 — under the poor-light figure. Neither costs the score anything it can
+   * see; the corner row's blur reads 0.08–0.18, and a dropped frame leaves the
+   * swing with five samples or more. The guide's own placement caps every clip
+   * at 0.75 on the depth hedge, which is why the dropped-frame row sits at 0.74
+   * and the corner row above it. What the count was standing in for is that
+   * no clip jittered past poor light is read as if it were clean — so that is
+   * what is asserted, on every one of the thirty.
+   */
   assert(
-    refused + hedged > 30,
+    roughButConfident === 0,
+    `${roughButConfident} clips jittered past poor light were read at full confidence`,
+  )
+  assert(
+    refused + hedged >= 30,
     `only ${refused + hedged} of 60 deliberately scrappy clips were either refused or hedged`,
   )
 })
@@ -697,6 +749,7 @@ function base(over: BaseOver = {}): Resilience {
     spatial: {
       roll_deg: 0,
       yaw_deg: 60,
+      court_yaw_deg: 30,
       yaw_measured: true,
       depth_unreliable: false,
       confidence: over.spatial ?? 1,

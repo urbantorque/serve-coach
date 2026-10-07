@@ -269,7 +269,7 @@ const LOOKING_CUE = '**Stand where you will serve** and hold still while I look.
  */
 function collapsed(r: FramingReading): 'depth' | 'lateral' | null {
   if (!r.spatial || !r.yaw_measured) return null
-  const split = imageXSplit(r.spatial.yaw_deg, r.spatial.roll_confidence)
+  const split = imageXSplit(r.spatial.court_yaw_deg, r.spatial.roll_confidence)
   if (!split.depth.readable) return 'depth'
   if (!split.lateral.readable) return 'lateral'
   return null

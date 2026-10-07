@@ -24,6 +24,19 @@ const THIGH = 0.44
 const SHIN = 0.44
 const NOSE_DROP = -0.72
 
+/**
+ * Where the trunk's yaw dials are measured from, and where it ends up.
+ *
+ * Yaw here is the direction of the left-to-right girdle line in the x–z plane:
+ * 0 is side-on (left shoulder to the net), 90 is square to it. The dials name
+ * coil at the trophy as they always have; `TRUNK_ZERO − dial` is the yaw, so the
+ * default shoulders (82) sit at −21, coiled past side-on as the Bath serves'
+ * shoulders are at the trophy. The contact yaws are those serves' medians.
+ */
+const TRUNK_ZERO = 61
+const SHOULDERS_AT_CONTACT = 80
+const HIPS_AT_CONTACT = 65
+
 const GROUND_Y = 0.95
 /**
  * 1.8 m maps to 0.54 image units, which leaves headroom for the racket hand at
@@ -63,8 +76,29 @@ export interface ServeDials {
   contactHipHeight: number
   /** Wrist height at contact as a multiple of standing height. */
   contactReach: number
-  /** How far the racket wrist falls below the shoulder at the drop, metres. */
+  /**
+   * How far the racket wrist falls below the shoulder at the drop, metres;
+   * negative is above it.
+   *
+   * The default is the real one: at the racket's low point the arm is at
+   * maximum external rotation, upper arm about level with the shoulder and
+   * forearm laid back, so the hand sits near shoulder height while the racket
+   * head falls. The Bath serves put it 5 cm above. It used to be 0.45 below —
+   * the hand down the back, which no measured serve does.
+   */
   dropBelowShoulder: number
+  /**
+   * Where the racket elbow rides at the drop, from −1 (down by the ribs) to 1
+   * (high above the shoulder). It picks which way the elbow bends out of the
+   * shoulder–hand line, and so how high it sits.
+   *
+   * Its own dial because the collapsed elbow is its own fault. It used to come
+   * free with a shallow drop: the old solver hung the elbow under the shoulder
+   * whenever the hand stopped near it, so `dropBelowShoulder: 0.05` meant both.
+   * With the hand where a real drop puts it, the elbow is up and out — 12 cm
+   * above the shoulder on the Bath serves — unless this says otherwise.
+   */
+  dropElbowLift: number
   /** Elbow angle of the tossing arm at release, degrees. */
   tossElbow: number
   /** Fraction of toss→contact that the tossing arm stays above its shoulder. */
@@ -144,20 +178,23 @@ export interface ServeDials {
    * and pushes it out to the side, which is the shape a player carrying a tray
    * actually makes.
    *
-   * KNOWN LIMIT: it moves the hand, and nothing puts the forearm back. Past
-   * about 0.3 the elbow-to-wrist distance starts growing rather than the arm
-   * rotating, measured on the clean rig at the trophy frame:
+   * KNOWN LIMIT: it moves the hand, and the elbow can only follow while the
+   * hand is within reach. The elbow is solved onto the shoulder–hand segment
+   * with both arm lengths held, so the arm keeps its shape until the hand is
+   * placed past full stretch, and from there the elbow-to-wrist distance grows
+   * instead. Measured on the clean rig at the trophy frame, with the hand
+   * travelling back 0.6 of the dial (it was 1.25 while the arm was first being
+   * re-posed, which put the tray's own 0.22 past reach):
    *
    * ```
    * dial   forearm(m)  upper arm(m)  ratio
-   * 0.00       0.272        0.321      0.85   ← a real forearm is about 0.8
-   * 0.20       0.268        0.313      0.86
-   * 0.30       0.288        0.301      0.96
-   * 0.40       0.420        0.301      1.40
-   * 0.80       1.007        0.300      3.35
+   * 0.00       0.270        0.300      0.90   ← a real forearm is about 0.8
+   * 0.40       0.270        0.300      0.90
+   * 0.50       0.344        0.300      1.15
+   * 0.80       0.622        0.300      2.07
    * ```
    *
-   * So a dial above ~0.3 poses a body nobody has, and any measurement read off
+   * So a dial above ~0.4 poses a body nobody has, and any measurement read off
    * the racket arm there is a measurement of that. It does not invalidate what
    * the dial is used for — `palm_to_sky_deg` is read from the palm normal and
    * the flags built on it are still earned — but it does mean the dial cannot be
@@ -496,7 +533,8 @@ export const CLEAN_SERVE: ServeDials = {
   trunkRotationSign: 1,
   contactHipHeight: 1.09,
   contactReach: 1.38,
-  dropBelowShoulder: 0.45,
+  dropBelowShoulder: -0.05,
+  dropElbowLift: 0.4,
   tossElbow: 172,
   tossArmHold: 0.72,
   tossWobble: 0.01,
@@ -637,13 +675,37 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // the trunk rotates in without touching how far it rotates, how the hips
     // lead the shoulders, or which landmark is labelled which.
     const spin = d.trunkRotationSign
+    /*
+     * The trunk, turned on the court the way a real server turns it.
+     *
+     * Each yaw is the direction of the left-to-right line across the girdle, in
+     * the x–z plane: 0 points straight back from the net, which is side-on —
+     * left shoulder to the net — and 90 points to the player's right, which is
+     * square to it. The rig used to stand square at the start and turn *away*
+     * from the net into contact, 90° off and the wrong way round, and the camera
+     * model learned that pose: a phone on the baseline, where the filming guide
+     * puts it, saw a profile. Real servers stand side-on and unwind to square.
+     * Measured on the 40 Bath serves (ANALYSIS-REVIEW.md §9), the shoulders sit
+     * at −15 at the start, −21 at the trophy (coiled past side-on) and +80 at
+     * contact; the hips at +65 at contact.
+     *
+     * The two dials keep their meaning. `shoulderYaw − hipYaw` is still the coil
+     * at the trophy, to the degree, and the default still holds 26 of it; only
+     * the zero moved, to `TRUNK_ZERO`, which puts the default shoulders at the
+     * measured −21.
+     */
+    const shouldersAtTrophy = TRUNK_ZERO - d.shoulderYaw
     const shoulderYaw =
       spin *
       track(
         [
-          [U.ready, d.shoulderYaw + 4],
-          [U.trophy, d.shoulderYaw],
-          [U.contact, 16],
+          [U.ready, shouldersAtTrophy + 6],
+          [U.trophy, shouldersAtTrophy],
+          // Most of the turn comes after the racket drop: the Bath shoulders have
+          // unwound 36° of their 101° by then. A share rather than a number of
+          // degrees, so a trunk dialled not to turn does not turn here either.
+          [U.drop, shouldersAtTrophy + 0.36 * (SHOULDERS_AT_CONTACT - shouldersAtTrophy)],
+          [U.contact, SHOULDERS_AT_CONTACT],
         ],
         u,
       )
@@ -657,9 +719,11 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       spin *
       track(
         [
-          [U.ready, d.shoulderYaw + 2],
-          [U.trophy, d.hipYaw],
-          [U.contact, 10],
+          [U.ready, shouldersAtTrophy + 4],
+          [U.trophy, TRUNK_ZERO - d.hipYaw],
+          // The hips' share by the drop, on the same serves: 31° of 74°.
+          [U.drop, TRUNK_ZERO - d.hipYaw + 0.42 * (HIPS_AT_CONTACT - (TRUNK_ZERO - d.hipYaw))],
+          [U.contact, HIPS_AT_CONTACT],
         ],
         uHips,
       )
@@ -706,7 +770,10 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       SHOULDER_DROP + HALF_SHOULDER * shSin,
       lz + HALF_SHOULDER * shDir.z * shCos,
     )
-    world[LM.nose] = lm(lx, NOSE_DROP, lz + 0.06)
+    // The face looks where the chest does: perpendicular to the shoulder line,
+    // towards +z when side-on and towards the net (−x) when square.
+    const facing = { x: -shDir.z, z: shDir.x }
+    world[LM.nose] = lm(lx + facing.x * 0.06, NOSE_DROP, lz + facing.z * 0.06)
 
     // Legs: bend splits evenly between hip and ankle, which is enough for the
     // knee angle to come out as dialled.
@@ -843,12 +910,17 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       // head — which is a fault, and not one a serve labelled clean should have.
       // The sweep is also what tells the engine which way the net is, and a
       // clean serve should give it plenty to work with.
+      //
+      // Placed where the Bath serves put the hand, relative to the hips: well
+      // back on the backswing as the ball goes up, behind the head at the
+      // trophy and the drop, and 0.29 in front of the hips at contact.
       x: track(
         [
-          [U.ready, 0.18],
-          [U.trophy, 0.24 + d.trophyForearmDrop * 1.25],
-          [U.drop, 0.2],
-          [U.contact, -0.2],
+          [U.ready, 0.24],
+          [U.toss, 0.72],
+          [U.trophy, 0.45 + d.trophyForearmDrop * 0.6],
+          [U.drop, 0.31],
+          [U.contact, -0.29],
         ],
         u,
       ),
@@ -876,7 +948,22 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
         ],
         u,
       ),
-      z: track([[U.ready, 0.1], [U.trophy, 0.26], [U.drop, 0.3], [U.contact, -0.1]], u),
+      // +z is the player's right. Side-on, that is in front of the chest, so the
+      // hand starts there and goes round behind the head — the player's left —
+      // for the trophy and the drop, then comes over to strike in line with the
+      // body. The rig used to swing this the other way round, the hand behind
+      // the right shoulder at the trophy, which only fits a player square to the
+      // net (Bath: +0.24, −0.17, −0.26, −0.19, +0.02).
+      z: track(
+        [
+          [U.ready, 0.24],
+          [U.toss, -0.17],
+          [U.trophy, -0.26],
+          [U.drop, -0.19],
+          [U.contact, 0.02],
+        ],
+        u,
+      ),
     }
 
     // Occlusion: held at the position last seen, not at the true one — see
@@ -912,8 +999,10 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
         ],
         u,
       ),
+      // In front of the chest at the start, holding the ball beside the racket,
+      // then straight up over the front foot (Bath: +0.26, +0.04, −0.03).
       z:
-        track([[U.ready, 0.08], [U.toss, -0.1], [U.contact, 0.1]], u) +
+        track([[U.ready, 0.26], [U.toss, 0.04], [U.contact, -0.03]], u) +
         Math.sin(u * 37) * d.tossWobbleLateral,
     }
 
@@ -929,7 +1018,22 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
 
     world[LM.rightWrist] = lm(racketWrist.x, racketWrist.y, racketWrist.z)
     world[LM.leftWrist] = lm(tossWrist.x, tossWrist.y, tossWrist.z)
-    world[LM.rightElbow] = solveElbow(rSh, world[LM.rightWrist], 1)
+    /*
+     * The racket elbow, bent the way a real one bends at each moment.
+     *
+     * Any point on the circle round the shoulder–hand line is a valid elbow,
+     * and which one is the difference between two different arms. The hints
+     * are directions taken from the Bath serves' elbows relative to the
+     * shoulder: down and a little back holding the racket at the start, back
+     * on the backswing, straight back at the trophy, back, out and up at the
+     * drop (where `dropElbowLift` takes over), forward and up at contact.
+     */
+    const elbowHint = {
+      x: track([[U.ready, 0.2], [U.toss, 1], [U.trophy, 1], [U.drop, 0.6], [U.contact, -0.4]], u),
+      y: track([[U.ready, 1], [U.toss, 0.5], [U.trophy, 0], [U.drop, -d.dropElbowLift], [U.contact, -0.8]], u),
+      z: track([[U.ready, 0.3], [U.toss, 0], [U.trophy, 0], [U.drop, 0.65], [U.contact, 0.45]], u),
+    }
+    world[LM.rightElbow] = solveElbowToward(rSh, world[LM.rightWrist], elbowHint)
     world[LM.leftElbow] = solveElbow(lSh, world[LM.leftWrist], -1, rad(180 - d.tossElbow))
 
     /*
@@ -1165,6 +1269,43 @@ function solveKnee(hip: Landmark, ankle: Landmark): Landmark {
   }
 
   return lm(hip.x + ux * a + px * h, hip.y + uy * a + py * h, hip.z + uz * a + pz * h)
+}
+
+/**
+ * Place an elbow on a shoulder→wrist segment, on the side a hint points to.
+ *
+ * Exact lengths: the elbow is the point of the circle the two segments allow
+ * that lies nearest the hint, so the upper arm and forearm come out at their
+ * own lengths whenever the hand is in reach. (Past reach — the stretched
+ * contact `contactReach` still asks for — the elbow sits on the line and the
+ * forearm takes up the rest, as it always has.)
+ */
+function solveElbowToward(sh: Landmark, wr: Landmark, hint: { x: number; y: number; z: number }): Landmark {
+  const dx = wr.x - sh.x
+  const dy = wr.y - sh.y
+  const dz = wr.z - sh.z
+  const span = Math.hypot(dx, dy, dz)
+  const reach = Math.min(span, UPPER_ARM + FOREARM - 1e-3)
+  const a = (UPPER_ARM ** 2 - FOREARM ** 2 + reach ** 2) / (2 * Math.max(reach, 1e-4))
+  const h = Math.sqrt(Math.max(0, UPPER_ARM ** 2 - a * a))
+  const ux = dx / Math.max(span, 1e-6)
+  const uy = dy / Math.max(span, 1e-6)
+  const uz = dz / Math.max(span, 1e-6)
+  // The hint with its component along the arm removed: the direction on the
+  // circle it points at.
+  const along = hint.x * ux + hint.y * uy + hint.z * uz
+  let px = hint.x - along * ux
+  let py = hint.y - along * uy
+  let pz = hint.z - along * uz
+  const pn = Math.hypot(px, py, pz)
+  if (pn < 1e-6) {
+    // A hint straight along the arm says nothing about the bend; fall back to up.
+    px = -ux * -uy
+    py = -1 - uy * -uy
+    pz = -uz * -uy
+  }
+  const n = Math.hypot(px, py, pz) || 1
+  return lm(sh.x + ux * a + (px / n) * h, sh.y + uy * a + (py / n) * h, sh.z + uz * a + (pz / n) * h)
 }
 
 /**

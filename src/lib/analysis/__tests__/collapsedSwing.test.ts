@@ -134,11 +134,14 @@ check('it climbs with the racket drop, on serves the keyframes can see', () => {
   // The evidence that this is a measurement of the swing and not of the clip.
   // A number that survives the collapse and means nothing would be worse than
   // the empty card it replaced.
-  const shares = [0, 0.1, 0.2, 0.3].map((dropBelowShoulder) => {
+  // From a hand left 25 cm above the shoulder (no drop) to one 10 cm below
+  // it. Past that the share saturates on the rig, the hand being under the
+  // elbow for the whole drop either way.
+  const shares = [-0.25, -0.1, 0, 0.1].map((dropBelowShoulder) => {
     const { get } = analyse({ dropBelowShoulder })
     return get('handUnderElbow')!.value
   })
-  note(`drop 0 / 0.1 / 0.2 / 0.3 m → ${shares.map((s) => s.toFixed(1)).join(' / ')}`)
+  note(`hand −0.25 / −0.1 / 0 / 0.1 m from the shoulder → ${shares.map((s) => s.toFixed(1)).join(' / ')}`)
   for (let i = 1; i < shares.length; i++) {
     assert(
       shares[i] > shares[i - 1],

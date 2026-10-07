@@ -18,10 +18,13 @@ import type { PhaseId } from './analysis/types'
  *
  *   · the tray lays the forearm over as well as turning the palm, because that
  *     is the shape the fault makes (`trophyForearmDrop`'s own comment);
- *   · the spine lean is dialled without the toss wobble the flaw suite pairs it
- *     with, so the picture is the collapse and not its cause;
- *   · a collapsed elbow is the hand stopping near the shoulder with the elbow
- *     fallen beside it, which the stick figure shows.
+ *   · a collapsed elbow is the back scratch: the hand let down behind the
+ *     shoulder with the elbow fallen under it. The elbow dial alone is not
+ *     enough since the drop was re-posed on real motion — with the hand left at
+ *     the shoulder, as real serves leave it, an arm of fixed length cannot put
+ *     the elbow further than 0.09 of standing height under the shoulder line,
+ *     and the fault starts past 0.11. Nothing real comes near that either: the
+ *     forty Bath serves hold the elbow between 0.00 and 0.04 *above* the line.
  *
  * The moment is the keyframe the fault's own signal is read at in
  * `diagnose.ts` — where the picture parks for a player who has asked for less
@@ -37,6 +40,13 @@ import type { PhaseId } from './analysis/types'
  *     anywhere in the swing — a timing fault has no shape.
  *   · `early_shoulder_rotation` is the trunk turning towards the net, which on
  *     the side-on camera is a turn towards the lens: 0.04 at its widest.
+ *   · `posture_collapse` is the spine bending sideways across the hips, and by
+ *     contact the hips face the net — so the bend runs along the baseline, which
+ *     is the line the guide's camera looks down. It was shown while the rig
+ *     reached contact still side-on; re-posed on the Bath serves' trunk turn,
+ *     a 26° collapse moves the picture 0.035 body heights. The engine still
+ *     names it, because it reads the lean from the depth the pose model infers,
+ *     and the picture draws only what the lens sees.
  *   · `toss_drift` is where the ball goes, and the picture draws no ball; the
  *     hand's own wander is 0.08, and the trail follows the racket hand rather
  *     than the tossing one.
@@ -52,8 +62,7 @@ import type { PhaseId } from './analysis/types'
  */
 export const DEMOS: Partial<Record<FlawId, { dials: Partial<ServeDials>; moment: PhaseId }>> = {
   waiters_tray: { dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, moment: 'trophy' },
-  posture_collapse: { dials: { spineLean: 26 }, moment: 'contact' },
-  collapsed_elbow: { dials: { dropBelowShoulder: 0.05 }, moment: 'drop' },
+  collapsed_elbow: { dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, moment: 'drop' },
   low_contact: { dials: { contactReach: 1.0 }, moment: 'contact' },
 }
 

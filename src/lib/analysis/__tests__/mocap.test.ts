@@ -189,23 +189,24 @@ check('a real racket drop is not called shallow, from any placement', () => {
   }
 })
 
-check("KNOWN: the guide's own placement is filed as an angled view, the back fence as side-on", () => {
-  // A textbook stance points the shoulder line at the net. From the baseline,
-  // where `FilmingGuide.tsx` puts the phone, both shoulders are spread across
-  // the picture, so `estimateYaw` reads ~25° and `assessQuality` files the clip
-  // as angled — which keeps `contactAhead`, the reading the guide says only a
-  // side view can see, off the card. The synthetic rig poses the opposite: a
-  // player square to the net, seen edge-on. Goes red when the camera model is
-  // made to agree with the stance.
+check("the guide's own placement is filed as side-on, and the back fence is not", () => {
+  // Was pinned as KNOWN. A textbook stance points the shoulder line at the
+  // net, so from the baseline, where `FilmingGuide.tsx` puts the phone, both
+  // shoulders are spread across the picture and the shoulder-span reading comes
+  // out near square. That reading used to be taken as the camera's angle to the
+  // court, which filed the guide's own clip as angled and kept `contactAhead` —
+  // the reading the guide says only a side view can see — off the card, while
+  // the back fence was filed as side-on. The view is now read against the
+  // court (`Spatial.court_yaw_deg`), and the rig stands the way these serves do.
   const guide = readAll({ bearing: 90 })
   const back = readAll({ bearing: 180, distance: 6 })
-  note(`yaw from the guide's placement: ${fmt(guide.map((r) => r.run.resilience.spatial.yaw_deg))}°`)
-  note(`yaw from the back fence: ${fmt(back.map((r) => r.run.resilience.spatial.yaw_deg))}°`)
-  for (const r of guide) assert(r.run.quality.view === 'angled', `${r.serve.id} guide view is ${r.run.quality.view}`)
-  for (const r of back) assert(r.run.quality.view === 'side', `${r.serve.id} back-fence view is ${r.run.quality.view}`)
+  note(`court angle from the guide's placement: ${fmt(guide.map((r) => r.run.resilience.spatial.court_yaw_deg))}°`)
+  note(`court angle from the back fence: ${fmt(back.map((r) => r.run.resilience.spatial.court_yaw_deg))}°`)
+  for (const r of guide) assert(r.run.quality.view === 'side', `${r.serve.id} guide view is ${r.run.quality.view}`)
+  for (const r of back) assert(r.run.quality.view !== 'side', `${r.serve.id} back-fence view is side`)
   for (const r of guide) {
     const ahead = r.run.fundamentals.flatMap((f) => f.metrics).some((m) => m.id === 'contactAhead')
-    assert(!ahead, `${r.serve.id}: contactAhead is now reported from the guide's placement`)
+    assert(ahead, `${r.serve.id}: contactAhead is missing from the guide's placement`)
   }
 })
 

@@ -16,7 +16,7 @@ import { DRILLS } from '../coaching'
 import { diagnose } from '../diagnose'
 import type { FlawId } from '../flaws'
 import { detectServe } from '../phases'
-import { FLAW_DRILL, HIERARCHY, assessResilience, triage } from '../triage'
+import { FLAW_DRILL, FLAW_DRILL_BY_AXIS, HIERARCHY, assessResilience, triage } from '../triage'
 import { MAX_PLAN, causalPlan, suppressedNote } from '../verdict'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
@@ -108,11 +108,17 @@ heading('Causes before the things they cause')
 check('the plan runs down the hierarchy, never back up it', () => {
   const { diagnosis, verdict, plan } = pipeline(MESSY)
   const detected = diagnosis.flaws.filter((f) => f.detected)
-  // Map each planned item back to the flaw that produced it, by its drill.
+  // Map each planned item back to the flaw that produced it, by its drill —
+  // including the drills a flaw hands out per axis. The toss drift on this
+  // serve is read front-to-back, so its entry is the baseline drill rather
+  // than `FLAW_DRILL`'s axis-blind one, and a lookup that only knew the latter
+  // filed it on no rung at all.
+  const drillsOf = (f: FlawId) => [FLAW_DRILL[f], ...Object.values(FLAW_DRILL_BY_AXIS[f] ?? {})]
   const flawOf = (name: string) =>
-    (Object.keys(FLAW_DRILL) as FlawId[]).find((f) => DRILLS[FLAW_DRILL[f]].name === name)
+    (Object.keys(FLAW_DRILL) as FlawId[]).find((f) => drillsOf(f).some((id) => DRILLS[id].name === name))
 
   const rungs = plan.map((p) => rung(flawOf(p.drill.name)!))
+  assert(rungs.every((r) => r >= 0), `a planned drill maps to no rung: ${plan.map((p) => p.drill.name).join(', ')}`)
   note(`rungs ${rungs.join(' → ')} of ${HIERARCHY.length}`)
   for (let i = 1; i < rungs.length; i++) {
     assert(rungs[i] >= rungs[i - 1], `plan went back up the hierarchy at position ${i + 1}`)

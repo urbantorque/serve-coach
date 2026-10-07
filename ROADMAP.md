@@ -468,7 +468,8 @@ within 20 ms. Three things do not, and each is pinned as a KNOWN check in
 - **The guide's placement is filed as an angled view, and the back fence as
   side-on.** A textbook stance points the shoulders at the net; the rig poses a
   player square to it. `contactAhead` never reaches the card from where the
-  guide puts the phone.
+  guide puts the phone. *Fixed by D7.2's first half: the guide's placement is
+  side-on on all 40 serves and reports `contactAhead`.*
 - **The toss keyframe lands 90–210 ms after the tossing hand peaks**, because
   it is read against the shoulder while the trunk tilts.
 
@@ -488,13 +489,34 @@ to the literature, never re-derived from one player.
       (`dropBelowShoulder` 0.45 m is a back-scratch) and re-derive the floors
       that move with it. *Proof:* KNOWN drop check flips; real drops pass from
       every placement; rig `collapsed_elbow` still fires.
-- [ ] **D7.2 A camera model that matches a real stance** · L. Read the camera
-      from what the phone sees of the court direction (the swing's travel), not
-      from shoulder span at ready, or re-pose the rig's stance side-on and
-      re-derive `DEPTH_YAW_RANGE`, the view thresholds and the `axes.ts`
-      routing against it. *Proof:* the guide placement is filed as side and
-      reports `contactAhead`; the back fence is not; the rig and the Bath set
-      agree on which is which.
+- [~] **D7.2 A camera model that matches a real stance** · L. *First half
+      done (2026-10-07, scoring version 5): the rig's stance, trunk turn and
+      arms re-posed on the Bath serves, and the view, the `axes.ts` routing and
+      the framing advice read against the court (`court_yaw_deg`). The guide
+      placement is filed side-on and reports `contactAhead` on all 40 serves;
+      the back fence is not. The realistic rig also exposed five limits of a
+      camera read from one shoulder span, now pinned as KNOWN checks
+      (`ANALYSIS-REVIEW.md` §9). Still open:*
+      - **A second camera cue that says which side.** A true 45° corner reads
+        66°, so R80b's band misses it and a sideways toss is drilled as
+        forwards-and-back. The comparison gate refuses a sixth of same-spot
+        pairs near the guide's placement. A camera 5° under the depth floor is
+        misread as readable on 22% of poor-light takes. One fix covers all
+        three: read the court direction from the swing's travel or the body's
+        forward motion, and check it on the Bath set from all five placements.
+        *Proof:* the three KNOWN checks in `depth.test.ts`, `axes.test.ts`
+        and `robustness.test.ts` flip.
+      - **`SHOULDER_SPAN_RATIO` against pose-model shoulders.** COCO's
+        hand-labelled frontal shoulders have a median width of 0.229 of height,
+        against the 0.21 ratio. The ratio decides whether the guide's placement
+        saturates on real footage. Settle it with item 1, since a court
+        direction that does not use the span makes this moot for the view.
+      - **Rig fidelity.** Its feet turn with its hips (Bath feet stay apart
+        along the net axis), and its hand turns through contact far less than
+        real serves (pronation 20–39° against a Bath median of 93°).
+      - **R60·2 reopened.** From the guide's placement the stance reads at 18
+        times its noise, because a real front foot is ahead towards the net.
+        Platform against pinpoint is readable after all.
 - [ ] **D7.3 Toss from the hand** · M, was S. *Blocked on the rig: its tossing
       hand rises after the toss as the body lifts under a held arm, so a
       hand-peak toss lands 0.5 s late on every rig serve. Re-pose the rig's

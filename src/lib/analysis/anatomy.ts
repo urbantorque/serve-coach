@@ -134,7 +134,7 @@ const LADDERS: Record<string, Stop[]> = {
   // is no footage here to say what too much of it looks like, and a rung is a
   // claim about a body.
   handUnderElbow: [
-    { under: 8, tag: 'Hand never gets under the elbow' },
+    { under: 4, tag: 'Hand never gets under the elbow' },
     { under: 20, tag: 'Hand dips under the elbow' },
     { under: Infinity, tag: 'Hand hangs under the elbow' },
   ],

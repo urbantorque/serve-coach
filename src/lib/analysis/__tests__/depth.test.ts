@@ -48,14 +48,14 @@
  * caught them, which is the only useful form of that lesson.
  */
 import { LM } from '../geometry'
-import { ER_LEAN_SENSITIVITY, LANDING_SQUARE_FLOOR, LEG_DRIVE_FLOOR, diagnose } from '../diagnose'
+import { ER_DEVIATION_DEG, ER_LEAN_SENSITIVITY, LANDING_SQUARE_FLOOR, LEG_DRIVE_FLOOR, diagnose } from '../diagnose'
 import { measure } from '../metrics'
 import { detectServe } from '../phases'
 import { assessSpatial } from '../spatial'
 import { peakTimeInside } from '../kinematics'
 import { SOFT_MEASUREMENT } from '../confidence'
 import { NOISE_FLOOR, SIGNALS, UNCALIBRATED, UNDER_RESOLVED, inferTier } from '../tiers'
-import { buildServe, type ServeDials } from '../syntheticServe'
+import { CLEAN_SERVE, buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
 import {
   DEPTH_AWARE,
@@ -639,10 +639,17 @@ check('the landing is read from the picture plane and tracks what the rig posed'
    * evidence — a number that holds still and never moves is a constant with a
    * units label, which is the trap `UNCALIBRATED` records against the chain.
    */
-  const at = (landingLean: number) => {
+  /*
+   * FILMED FROM BEHIND THE SERVER, and the reason is the finding rather than a
+   * convenience. The landing falls across the hip line, and since the rig was
+   * re-posed on the Bath serves the hips reach contact facing the net — so the
+   * fall runs along the baseline, which is the line the guide's camera looks
+   * down. The KNOWN check below holds that half.
+   */
+  const at = (landingLean: number, cameraYaw = 0) => {
     const xs: number[] = []
     for (const seed of SEEDS) {
-      const frames = buildServe({ ...DEPTH_AWARE, seed, landingLean }, FPS)
+      const frames = buildServe({ ...DEPTH_AWARE, seed, landingLean, cameraYaw }, FPS)
       let skel
       try {
         skel = detectServe(frames, FPS)
@@ -672,6 +679,25 @@ check('the landing is read from the picture plane and tracks what the rig posed'
     collapsed.mu - square.mu > 4 * Math.max(square.sd, collapsed.sd),
     `a dialled landing moved the reading ${(collapsed.mu - square.mu).toFixed(4)} against a ` +
       `deviation of ${Math.max(square.sd, collapsed.sd).toFixed(4)} — it does not respond to the fault`,
+  )
+
+  /*
+   * KNOWN: from the guide's own placement the same fall barely registers —
+   * 0.0196 against 0.0039 square, a quarter of what it reads from behind, and
+   * under four deviations. The reading is ungraded (`UNCALIBRATED`), so this
+   * costs no player a verdict today; it is pinned so that grading it off the
+   * guide's footage has to get past this line first. When it goes red, the
+   * landing has become visible from the side and this half should flip.
+   */
+  const guideSquare = at(0, CLEAN_SERVE.cameraYaw)
+  const guideFall = at(0.12, CLEAN_SERVE.cameraYaw)
+  note(
+    `  guide placement: square ${guideSquare.mu.toFixed(4)}, 0.12 m landing ${guideFall.mu.toFixed(4)} ` +
+      `± ${guideFall.sd.toFixed(4)}`,
+  )
+  assert(
+    guideFall.mu - guideSquare.mu < 4 * Math.max(guideSquare.sd, guideFall.sd),
+    'KNOWN gap closed: a sideways landing now reads clearly from the guide placement — flip this half',
   )
 })
 
@@ -1261,11 +1287,17 @@ check('the two depth readings are marked soft when the camera cannot see depth',
   // cannot be made better. Filmed from a yaw where one axis of the player's
   // depth points at the lens, both must fall below the threshold that keeps a
   // measurement out of the focus ranking.
+  //
+  // That yaw is the guide's own placement. A real server stands with their back
+  // to a camera on the baseline (the Bath serves' shoulders sit 15° off the net
+  // axis at the ready), so the camera sees the shoulders square and the trunk
+  // turn happens towards and away from it. It used to be dialled at 4°, when the
+  // rig stood the other way round and the guide's camera saw it end-on.
   const headOn = readOnce({
     noise: IN_PLANE,
     depthNoise: DEPTH_MULTIPLIER,
     depthBias: DEPTH_BIAS,
-    cameraYaw: 4,
+    cameraYaw: CLEAN_SERVE.cameraYaw,
     seed: 4242,
   })
   assert(headOn !== undefined, 'a face-on clip could not be read at all')
@@ -1400,18 +1432,20 @@ check('the rig says nothing about the camera here, and the entry admits it', () 
  * serve rather than from the lens — world coordinates do not rotate when the
  * camera does, which is what makes them world coordinates.
  *
- * The dial is not being dropped. `cameraYaw: 4` moves the depth confidences in
- * the check above from usable to soft, on the same realisations. It reaches
- * everything projected. It cannot reach this, because this never looks.
+ * The dial is not being dropped. Turning the camera to see the shoulders square
+ * moves the depth confidences in the check above from usable to soft, on the
+ * same realisations. It reaches everything projected. It cannot reach this,
+ * because this never looks.
  *
  * SO A SAME-SPOT GATE ON THE TRUNK LEAD BUYS NOTHING AT ANY TIGHTNESS, and
  * R50c's stated premise — that the trunk lead has "an absolute belonging to the
  * camera and a change that does not" — is false for the quantity the engine
  * actually computes. What is true of it instead is worse and already recorded:
  * `UNDER_RESOLVED.hip_lead_ms` puts the seed deviation at about 50 ms against a
- * 76 ms floor, and this ensemble reads 52. A delta between two serves inherits
- * both spreads, so it starts at roughly 74 ms of noise before the camera is
- * mentioned. That, not the camera position, is what R50c has to answer.
+ * 76 ms floor, and this ensemble reads 41 since the rig's trunk was re-posed on
+ * real motion. A delta between two serves inherits both spreads, so it starts at
+ * roughly 58 ms of noise before the camera is mentioned. That, not the camera
+ * position, is what R50c has to answer.
  *
  * Pinned rather than written down, because "invariant" is a claim that decays
  * silently: the day someone rebuilds the trunk peaks out of projected width —
@@ -1457,18 +1491,23 @@ check('the trunk lead does not move when the camera does, so a spot gate buys no
       `floor — ${((deltaNoise / NOISE_FLOOR.hip_lead_ms) * 100).toFixed(0)}% of it`,
   )
   /*
-   * 74 against 76 is not a pass. The floor is what one serve's reading has to
-   * clear to be worth grading, and a delta arrives carrying 97% of it before
-   * the two serves have differed by anything at all. `NOISE_FLOOR`'s own rule
-   * is one and a half deviations; this is one and a half deviations of noise
-   * with no room left for a signal.
+   * 58 against 76 is not a pass. The floor is what one serve's reading has to
+   * clear to be worth grading, and a delta arrives carrying three quarters of
+   * it before the two serves have differed by anything at all. `NOISE_FLOOR`'s
+   * own rule is one and a half deviations; this leaves room for a signal of
+   * about a third of a deviation.
+   *
+   * It read 74 — 97% of the floor — until the rig's trunk was re-posed on the
+   * Bath serves' turn (ANALYSIS-REVIEW.md §9). The quieter delta is the trunk
+   * pair turning through angles where the inferred depth matters less, not the
+   * estimator improving, and it is still most of the floor: R50c stays blocked.
    *
    * Asserted as a band rather than a direction so it reddens both ways: if the
-   * trunk pair gets quieter this stops holding and R50c unblocks, which is
-   * news, and if it gets noisier the margin recorded here is stale.
+   * trunk pair gets quieter still this stops holding and R50c may unblock,
+   * which is news, and if it gets noisier the margin recorded here is stale.
    */
   assert(
-    deltaNoise > NOISE_FLOOR.hip_lead_ms * 0.8 && deltaNoise < NOISE_FLOOR.hip_lead_ms * 1.2,
+    deltaNoise > NOISE_FLOOR.hip_lead_ms * 0.65 && deltaNoise < NOISE_FLOOR.hip_lead_ms * 0.9,
     `a trunk-lead delta carries ${deltaNoise.toFixed(0)} ms of noise against a ` +
       `${NOISE_FLOOR.hip_lead_ms} ms floor — that ratio has moved, so R50c and this refusal ` +
       'both want re-deriving',
@@ -1644,9 +1683,17 @@ function rotationAgainst(dials: Partial<ServeDials>, ref: 'trunk' | 'shoulders')
 check('two independent reference frames see the same change', () => {
   /*
    * The finding a band on a DELTA would rest on. Neither frame has a true zero
-   * — they disagree about the same arm by about a hundred degrees — but if both
+   * — they disagree about the same arm by up to ninety degrees — but if both
    * report the same change for the same rotation, the change is a property of
    * the arm rather than of the frame that was picked.
+   *
+   * THE SAME SIZE, AND SINCE THE ARM WAS RE-POSED, OPPOSITE WAYS. Both readings
+   * are unsigned angles to a reference, and on the Bath-shaped arm — hand
+   * behind the head, elbow out to the side — the shoulder line sits on the far
+   * side of the forearm's arc from the trunk's up vector. So the forearm
+   * turning away from one is turning towards the other: +14.4° in the trunk
+   * frame is −14.4° in the shoulder frame, every step. The size of a change is
+   * still the arm's; which way an unsigned angle runs is the frame's.
    */
   const steps = [0, 15, 30, 45, 60]
   const trunk = steps.map((deg) => rotationAgainst({ trophyExternalRotation: deg }, 'trunk'))
@@ -1656,23 +1703,39 @@ check('two independent reference frames see the same change', () => {
   const dShoulders = shoulders.slice(1).map((v, i) => v - shoulders[i])
   for (let i = 0; i < dTrunk.length; i++) {
     assert(
-      Math.abs(dTrunk[i] - dShoulders[i]) < 0.5,
+      Math.abs(Math.abs(dTrunk[i]) - Math.abs(dShoulders[i])) < 0.5,
       `step ${i + 1}: trunk saw ${dTrunk[i].toFixed(1)}°, shoulders saw ${dShoulders[i].toFixed(1)}°`,
     )
   }
-  // And each step really is a step, so agreeing about nothing cannot pass.
+  // Each frame runs one way the whole sweep, so a step is a change and not a
+  // reading folding back on itself past its reference.
+  assert(
+    dTrunk.every((d) => Math.sign(d) === Math.sign(dTrunk[0])) &&
+      dShoulders.every((d) => Math.sign(d) === Math.sign(dShoulders[0])),
+    'a frame changed direction partway through the sweep',
+  )
+  // And the engine's own frame — the trunk — reads more rotation as more.
   for (const d of dTrunk) assert(d > 10, `a 15° rotation only moved the reading ${d.toFixed(1)}°`)
-  note(`per 15° dialled: ${dTrunk.map((d) => d.toFixed(1)).join(', ')}° in both frames`)
+  note(
+    `per 15° dialled: ${dTrunk.map((d) => d.toFixed(1)).join(', ')}° against the trunk, ` +
+      `${dShoulders.map((d) => d.toFixed(1)).join(', ')}° against the shoulders`,
+  )
 })
 
 check('and disagree completely about the absolute', () => {
   // The other half, and the reason nothing grades the absolute. If these ever
   // converge, the zero has stopped being arbitrary and UNCALIBRATED wants
   // re-reading rather than trusting.
+  //
+  // Measured against the reading's own deviation rather than against the
+  // hundred degrees the old arm put between them. Since the frames mirror each
+  // other (above), the gap shrinks as the arm turns — 94° at no rotation, 36°
+  // at 30 — and they cross near 50. A crossing is not a shared zero: it is the
+  // one rotation where two references happen to sit equally far off.
   const trunk = rotationAgainst({ trophyExternalRotation: 30 }, 'trunk')
   const shoulders = rotationAgainst({ trophyExternalRotation: 30 }, 'shoulders')
   assert(
-    Math.abs(trunk - shoulders) > 60,
+    Math.abs(trunk - shoulders) > 2 * ER_DEVIATION_DEG,
     `the two frames now agree to ${Math.abs(trunk - shoulders).toFixed(1)}° about one arm`,
   )
   note(`one arm, two frames: ${trunk.toFixed(1)}° and ${shoulders.toFixed(1)}°`)
@@ -1696,7 +1759,12 @@ check('both frames are moved by a posture that is not external rotation', () => 
     rotationAgainst({ ...held, shoulderTilt: 35 }, 'shoulders') -
     rotationAgainst({ ...held, shoulderTilt: 5 }, 'shoulders')
 
-  assert(Math.abs(leanSpan) > 8, `spine lean moved the trunk frame only ${leanSpan.toFixed(1)}° — re-read UNCALIBRATED`)
+  // 5.9° on the Bath-shaped arm, down from 15.1 on the old one; a band either
+  // side of it, so the confound vanishing is news as much as it doubling.
+  assert(
+    Math.abs(leanSpan) > 3 && Math.abs(leanSpan) < 12,
+    `30° of spine lean moved the trunk frame ${leanSpan.toFixed(1)}° — re-read UNCALIBRATED`,
+  )
   assert(
     Math.abs(tiltSpan) > Math.abs(leanSpan),
     `the shoulder frame is no longer the worse of the two: lean ${leanSpan.toFixed(1)}°, tilt ${tiltSpan.toFixed(1)}°`,
@@ -1737,49 +1805,45 @@ check('the lean confound is additive, not entangled with the rotation', () => {
       'ER_LEAN_SENSITIVITY cannot be one number',
   )
 
-  // And the number itself, against what the sweep measured.
+  // And the number itself, against the constant — which is a BOUND, the worst
+  // arm it has been measured on (see `ER_LEAN_SENSITIVITY`), so the sweep has
+  // to sit under it rather than on it.
   const perDegree = shifts.reduce((a, b) => a + b, 0) / shifts.length / 30
   assert(
-    Math.abs(perDegree - ER_LEAN_SENSITIVITY) < 0.1,
-    `lean now injects ${perDegree.toFixed(2)}° per degree, not ${ER_LEAN_SENSITIVITY}`,
+    perDegree <= ER_LEAN_SENSITIVITY + 0.05,
+    `lean now injects ${perDegree.toFixed(2)}° per degree, past the ${ER_LEAN_SENSITIVITY} bound`,
   )
   note(`lean shifts the reading ${shifts.map((s) => s.toFixed(0)).join('/')}° at rotations 0/20/40/60`)
 })
 
-check('and subtracting it recovers the rotation the arm actually had', () => {
+check('and the bound covers the shift the arm actually had', () => {
   // The claim the constant exists to support, checked end to end rather than
-  // inferred from the two above. Correcting with the lean the engine itself
-  // measured — not the dial — because that is all a consumer will ever have.
+  // inferred from the two above: two serves a lean apart differ by no more than
+  // the bound says, so a comparison the bound lets through was not made by the
+  // lean. Using the lean the engine itself measured — not the dial — because
+  // that is all a consumer will ever have.
+  //
+  // This used to subtract the constant and ask for the upright reading back,
+  // inside two degrees. That held while the constant was the one arm's exact
+  // coefficient. It stopped being one number when the arm was re-posed — 0.5 on
+  // the old arm, 0.2 on the Bath-shaped one — and no consumer subtracts it:
+  // `carryForward.ts` and `consistency.ts` both use it to size a bound.
   const at = (er: number, lean: number) => {
     const frames = buildServe({ ...REF_CLEAN, trophyExternalRotation: er, spineLean: lean }, FPS)
     const d = diagnose(frames, detectServe(frames, FPS), { tier: 5 })
     return { deg: d.externalRotation.deg!, lean: d.signals.spine_lean_deg }
   }
 
-  /*
-   * Two degrees, and the budget is derived rather than picked to pass — this
-   * suite's own README forbids widening a tolerance to make a run green, so the
-   * number has to come from somewhere. It is:
-   *
-   *   · 1.0° of rounding. `externalRotation.deg` is a whole number, and this
-   *     compares two of them, so ±0.5 each.
-   *   · 0.25° of coefficient residual. The measured shift is 15.0/15.0/16.0/15.0
-   *     over 30° of lean, a mean of 0.508 per degree against the 0.5 the
-   *     constant carries; over 29° of measured lean that is 0.23°.
-   *
-   * Which is 1.25 before any measurement slop, and the first draft asserted 1.5
-   * and failed at exactly 1.5 on one row. That failure was the rounding, not the
-   * correction — the fix is to state the budget the arithmetic actually has, not
-   * to shave the number until it passes.
-   */
+  // One degree of rounding on top: `externalRotation.deg` is a whole number,
+  // and this compares two of them, so ±0.5 each.
   for (const er of [0, 20, 40, 60]) {
     const upright = at(er, 0)
     const leaning = at(er, 30)
-    const corrected = leaning.deg - ER_LEAN_SENSITIVITY * leaning.lean
+    const bound = ER_LEAN_SENSITIVITY * Math.abs(leaning.lean - upright.lean) + 1
     assert(
-      Math.abs(corrected - upright.deg) < 2,
+      Math.abs(leaning.deg - upright.deg) <= bound,
       `at rotation ${er}: leaning read ${leaning.deg}° at ${leaning.lean.toFixed(1)}° of lean, ` +
-        `corrected to ${corrected.toFixed(1)}°, upright read ${upright.deg}°`,
+        `upright ${upright.deg}° — ${Math.abs(leaning.deg - upright.deg)}° apart against a bound of ${bound.toFixed(1)}`,
     )
   }
 })
@@ -1810,15 +1874,21 @@ heading('Splitting the chain ratio spread into the two things it is made of')
  * register swept:
  *
  *     tempo    mean     sd      sd/mean
- *     1.10 s   0.1036   0.0065    6.3%
- *     1.35 s   0.1065   0.0060    5.6%
- *     1.70 s   0.1097   0.0070    6.4%
+ *     1.10 s   0.0925   0.0067    7.2%
+ *     1.35 s   0.0999   0.0063    6.3%
+ *     1.70 s   0.1059   0.0070    6.6%
  *
- * So the two terms are **noise at about 6% of the reading, flat across tempo**,
- * and a **mean that moves 5.7% across the whole 0.6 s range** — about 0.0102 per
+ * So the two terms are **noise at about 7% of the reading, flat across tempo**,
+ * and a **mean that moves 13.5% across the whole 0.6 s range** — about 0.0223 per
  * second of tempo difference. A delta between two serves therefore carries
- * `hypot(√2 × 0.0065, 0.0102 × |Δt|)`, which at equal tempo is 0.0092 — 8.6% of
- * the reading — and grows only as the two serves' tempos diverge.
+ * `hypot(√2 × 0.0067, 0.0223 × |Δt|)`, which at equal tempo is 0.0094 — 9.4% of
+ * the reading — and grows as the two serves' tempos diverge.
+ *
+ * Re-measured after the rig's swing was re-posed on the Bath serves. The tempo
+ * term more than doubled (it was 5.7%, 0.0102 per second): a hand that bottoms
+ * out at the shoulder and climbs steeply to contact puts more of the chain's
+ * span into the part of the swing that tempo stretches. It is still the smaller
+ * share of the register's 21%, which is the finding, and no longer by much.
  *
  * NOTHING IS BUILT ON THIS YET. R50·3 is the round that would, and this is its
  * premise cycle: the numbers written down, no production code, so that the round
@@ -1870,7 +1940,7 @@ check('the reading wanders about a sixteenth of itself between takes, at every t
   }
 })
 
-check('the tempo term is far smaller than the register total, which is the finding', () => {
+check('the tempo term is smaller than the register total, which is the finding', () => {
   /*
    * The check that would go red if somebody read the 21% as a tempo sensitivity
    * and built a bound on it. Stated as the movement of the MEAN, which is the
@@ -1879,8 +1949,9 @@ check('the tempo term is far smaller than the register total, which is the findi
   const means = RATIO_STATS.map((s) => s.mean)
   const spread = (Math.max(...means) - Math.min(...means)) / Math.abs(meanOf(means))
   note(`  the mean moves ${(100 * spread).toFixed(1)}% across ${RATIO_TEMPOS[0]}–${RATIO_TEMPOS[2]}s`)
+  // Four fifths of the register total: past that the tempo term IS most of it.
   assert(
-    spread < 0.12,
+    spread < 0.17,
     `the mean moves ${(100 * spread).toFixed(1)}% across the tempo range — at or near the 21% ` +
       'the register states, so that figure IS the tempo term after all and this finding is wrong',
   )
@@ -1908,11 +1979,11 @@ check('a delta between two serves is bounded by both terms, not by either alone'
       `plus ${perSecond.toFixed(4)} per second of tempo difference`,
   )
   // Big enough to refuse noise, small enough to admit a real change: the reading
-  // itself sits near 0.107, so a bound past a fifth of that would refuse
+  // itself sits near 0.1, so a bound past a fifth of that would refuse
   // everything and there would be no entry worth building.
   assert(
     atEqualTempo > 0.005 && atEqualTempo < 0.02,
-    `an equal-tempo bound of ${atEqualTempo.toFixed(4)} is not usable against a reading near 0.107`,
+    `an equal-tempo bound of ${atEqualTempo.toFixed(4)} is not usable against a reading near 0.1`,
   )
   assert(perSecond > 0, 'the tempo term came out at or below zero, so there is nothing to bound')
 })
@@ -2048,10 +2119,16 @@ check('the landing baseline moves with the back foot, and the front ankle does n
       'baseline this finding claims',
   )
   // And the two are not interchangeable at square, which is why switching costs
-  // a re-derivation rather than a rename.
+  // a re-derivation rather than a rename. Half a stance read 0.0499 before the
+  // rig's trunk was re-posed; it reads 0.0153 now, because the rig's feet turn
+  // with its hips and the hips reach the finish facing the net, which lays the
+  // stance along the guide camera's line of sight. The Bath servers' feet do not
+  // do that — they stay apart along the net axis — so this is a rig limit
+  // (ROADMAP D7.2) and the threshold is stated against the landing floor rather
+  // than against either figure.
   const square = read(0, 0)
   assert(
-    square.both < 0.001 && square.front > 0.02,
+    square.both < 0.001 && square.front > 3 * LANDING_SQUARE_FLOOR,
     `a square landing reads both=${square.both.toFixed(4)} front=${square.front.toFixed(4)} — ` +
       'the baselines no longer differ at zero, so the floor may not need re-deriving after all',
   )
@@ -2120,24 +2197,48 @@ check('at the corner a sideways toss is named and drilled as a forwards one', ()
    *
    * Nothing is named across the band at all, which is the whole point: no axis
    * beats a coin flip in there, so the app says nothing rather than something.
+   *
+   * THE BAND IS IN THE ESTIMATE'S TERMS, and since the rig was re-posed on the
+   * Bath serves the estimate and the camera are no longer the same number. The
+   * estimate reads the shoulder line at the ready, and a real server's sits 15°
+   * past the net axis — so it reads 90 for a camera square to those shoulders
+   * (dial 75), not for one on the baseline, and the cameras it calls 38° and
+   * 49° are dialled at 20° and 30°. Those are what the band is checked on here.
    */
-  const corner = named(45, 0.1, 0)
-  note(`45° lateral-only: axis=${corner.axis ?? 'none'}, detected=${corner.detected}`)
+  const corner = named(30, 0.1, 0)
+  note(`dial 30° lateral-only: axis=${corner.axis ?? 'none'}, detected=${corner.detected}`)
   assert(
     corner.axis === undefined && !corner.detected,
-    `the corner still names an axis (${corner.axis}) and detects=${corner.detected} — the band ` +
-      'is no longer covering 45°, where neither axis beats a coin flip',
+    `inside the band the estimate still names an axis (${corner.axis}) and detects=${corner.detected} — ` +
+      'the band is no longer covering the angle where neither axis beats a coin flip',
   )
-  // And both edges of the band, because a band that only silences its middle is
-  // a narrower band than the one the measurement asked for.
-  for (const yaw of [35, 50]) {
+  // And the band's other reading, because a band that only silences one angle
+  // is a narrower band than the one the measurement asked for.
+  for (const yaw of [20]) {
     const edge = named(yaw, 0.1, 0)
     assert(
       !edge.detected,
-      `at ${yaw}° a sideways wobble is still detected as ${edge.axis} — misattribution was ` +
+      `at dial ${yaw}° a sideways wobble is still detected as ${edge.axis} — misattribution was ` +
         'measured here, and the band was drawn to cover it',
     )
   }
+
+  /*
+   * KNOWN, AND IT IS THE DEFECT THE BAND WAS BUILT TO CLOSE, BACK AT A REAL
+   * CORNER. A camera dialled at 45° — a true three-quarter view of the court —
+   * reads 66° and sits outside the band, so a sideways wobble is named and
+   * drilled as forwards-and-back again. Not a threshold to move: the shoulder
+   * span says how far the camera is off square to the shoulders and not which
+   * side, so a 45° corner and a 75° near-side camera are the same reading, and
+   * any band that caught one would silence the other. The fix is a second cue
+   * that says which side (ROADMAP D7.2). When this goes red, flip it.
+   */
+  const trueCorner = named(45, 0.1, 0)
+  note(`dial 45° lateral-only: axis=${trueCorner.axis ?? 'none'}, detected=${trueCorner.detected}`)
+  assert(
+    trueCorner.axis === 'depth' && trueCorner.detected,
+    'KNOWN gap closed: a true corner camera no longer names a sideways toss as forwards-and-back — flip this half',
+  )
 
   /*
    * And the other end, which is the half that makes the confidence figure damning
@@ -2205,13 +2306,14 @@ check('one toss wobble reads seven times smaller on the axis a side-on camera ca
   }
 
   /*
-   * 30 and 60 rather than 30, 45, 60, 82 — R80b's band silences the toss axis
-   * between 32° and 53°, so the rig returns no reading at 45 and this row cannot
-   * be built there. That is the band working, not the finding going away: the
-   * seven-fold collapse is measured on the angles the app still names an axis
-   * at, which is the only place it can cost anybody anything.
+   * Dialled at 0 and 10 for the end of the range where image x runs across the
+   * body. R80b's band silences the toss axis where the estimate reads 32–53°,
+   * which since the rig was re-posed is dials 20 and 30 (see the check above),
+   * so no reading can be built there. That is the band working, not the finding
+   * going away: the collapse is measured on the angles the app still names an
+   * axis at, which is the only place it can cost anybody anything.
    */
-  const rows = [20, 30, 60, 82].map((yaw) => ({
+  const rows = [0, 10, 60, 82].map((yaw) => ({
     yaw,
     depth: read({ cameraYaw: yaw, tossWobble: 0.1, tossWobbleLateral: 0 }),
     lateral: read({ cameraYaw: yaw, tossWobble: 0, tossWobbleLateral: 0.1 }),
