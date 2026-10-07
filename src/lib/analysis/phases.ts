@@ -692,6 +692,26 @@ function assertPlausible(
     throw new NotAServeError('I could not find a serve in that clip.', filming)
   }
 
+  // Contact on the toss: the racket never came over. A clip that stops after
+  // the toss and before the swing has one arm overhead — the tossing one — so
+  // the detector below offered the other hand, `runAnalysis` read it again
+  // against that hand, and the "serve" it found had toss, trophy, drop, contact
+  // and finish all on one sample. Triage then refused it as too few frames,
+  // which sends a player off to change a frame rate that was never the problem.
+  // Found on two unfinished serves in the Bath motion capture
+  // (ANALYSIS-REVIEW.md §9); a real serve puts 0.7–0.8 s between the two.
+  //
+  // Not extended to contact on the clip's last sample, though a clip cut
+  // mid-swing ends that way too: one stopped just as the ball left ends there
+  // as well, and that one is measured and only its landing refused (`landing`
+  // in diagnose.ts). The two cannot be told apart from the height alone.
+  if (keys.contact <= keys.toss) {
+    throw new NotAServeError('The clip ends before the racket reaches the ball.', [
+      'Keep filming for a second after you hit the ball.',
+      ...filming,
+    ])
+  }
+
   // Tracking that comes and goes across the swing used to be refused outright
   // here, below 0.4. `triage` already computes this same mean over this same
   // window and rejects it at 0.45 — softly, with the reason on screen and the

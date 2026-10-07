@@ -690,6 +690,11 @@ reading, that spread is measured and allowed for.
 `shallow_drop` and `early_shoulder_rotation` are named on none. Before, every
 serve was given a fault to fix first.
 
+- **A clip that stops before contact.** It was refused as left-handed. In
+  `runAnalysis` the retry against the other hand then "found" a serve with
+  every keyframe on one sample, which triage refused as too few frames. It is
+  now refused as ending before the racket reaches the ball (D7.5).
+
 **Not fixed yet, and why.**
 - **The toss keyframe (D7.3).** Taking release from the hand's own peak is
   right for real motion and wrong for the rig. The rig's tossing hand keeps

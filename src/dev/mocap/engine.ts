@@ -33,16 +33,29 @@ export interface EngineRun {
 
 export type EngineResult = { ok: true; run: EngineRun } | { ok: false; refusal: string }
 
+/**
+ * `detect` in `runAnalysis`: a refusal that names the other hand is answered by
+ * reading the clip again against that hand, once.
+ */
+function detect(frames: Frame[], fps: number): Skeleton {
+  try {
+    return detectServe(frames, fps)
+  } catch (err) {
+    if (err instanceof NotAServeError && err.suggestedHand) return detectServe(frames, fps, err.suggestedHand)
+    throw err
+  }
+}
+
 export function runEngine(input: Frame[], fps: number, serveType: ServeType = 'flat'): EngineResult {
   let frames = input
   let skel: Skeleton
   try {
-    skel = detectServe(frames, fps)
+    skel = detect(frames, fps)
     const tilt = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
     if (Math.abs(tilt.roll_deg) >= NOTABLE_ROLL) {
       const pivot = levelPivot(frames)
       frames = levelFrames(frames, tilt.roll_deg, pivot)
-      skel = detectServe(frames, fps)
+      skel = detect(frames, fps)
     }
   } catch (err) {
     if (err instanceof NotAServeError) return { ok: false, refusal: err.message }

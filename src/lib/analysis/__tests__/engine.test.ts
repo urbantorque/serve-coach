@@ -273,6 +273,41 @@ check('rejects a clip with nothing in it to find a moment in', () => {
   assert(threw, 'a perfectly flat clip was accepted')
 })
 
+/** The rig's clean serve, cut off at `u` of its motion. */
+function stoppedBefore(u: number): Frame[] {
+  const end = 0.35 + u * CLEAN_SERVE.motionSeconds
+  return buildServe({}, FPS).filter((f) => f.t <= end)
+}
+
+check('a clip that stops before contact is told so, not that it is left-handed', () => {
+  // The path a real one takes in `runAnalysis`: the first read offers the other
+  // hand, because the only arm overhead is the tossing one; the second read is
+  // against that hand. That used to come back as a serve with every keyframe on
+  // one sample, which triage then refused as too few frames. Two unfinished
+  // serves in the Bath motion capture did exactly this (ANALYSIS-REVIEW.md §9).
+  // Cut soon after the toss, while the racket arm is still low — the shape the
+  // Bath clips stop in. A clip cut just after contact is measured, with only its
+  // landing refused; `depth.test.ts` holds that side.
+  for (const u of [0.5, 0.55]) {
+    const frames = stoppedBefore(u)
+    let message = ''
+    try {
+      try {
+        detectServe(frames, FPS)
+      } catch (err) {
+        if (err instanceof NotAServeError && err.suggestedHand) detectServe(frames, FPS, err.suggestedHand)
+        else throw err
+      }
+    } catch (err) {
+      if (err instanceof NotAServeError) message = err.message
+    }
+    assert(
+      message === 'The clip ends before the racket reaches the ball.',
+      `cut at ${u}: ${message || 'read as a serve'}`,
+    )
+  }
+})
+
 /**
  * `NotAServeError`'s message and hints are thrown inline rather than read out of
  * a table, so `copy.test.ts`'s `everyCue()` sweep never sees them — a whole
@@ -301,6 +336,7 @@ check('every clip-refusal message and hint passes the house-voice editor', () =>
     ['too short', () => detectServe(buildServe({}, FPS).slice(0, 5), FPS)],
     ['wrong hand', () => detectServe(wrongHandedClip(), FPS, 'left')],
     ['frozen', () => detectServe(frozenClip(), FPS)],
+    ['stopped before contact', () => detectServe(stoppedBefore(0.5), FPS, 'left')],
   ]
   for (const [label, run] of thrown) {
     try {

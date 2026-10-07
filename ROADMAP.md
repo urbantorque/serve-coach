@@ -510,7 +510,13 @@ to the literature, never re-derived from one player.
       the hand's depth against the body plane, or report the height only from
       placements where it holds, and cite the wrist band (D2.2). *Proof:* the
       five placements agree within the noise floor on the Bath set.
-- [ ] **D7.5 Say why a clip without contact was refused** · S. A capture that
+- [x] **D7.5 Say why a clip without contact was refused** · S. *Done
+      (2026-10-07): worse than the message — the retry against the other hand
+      found a "serve" with every keyframe on one sample, which triage refused
+      as too few frames. Contact on the toss is now refused as "The clip ends
+      before the racket reaches the ball." A clip cut between the trophy and
+      contact still reaches triage's refusal.
+      Original plan:* A capture that
       ends before the racket comes over is told it looks left-handed.
       *Proof:* the two unfinished Bath serves get a no-contact refusal.
 - [ ] **D7.6 Noise ensembles on real motion** · S. `filmMocap` takes the rig's
