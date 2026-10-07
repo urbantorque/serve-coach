@@ -360,7 +360,7 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): 
   // was its own rule — shoulders under a tenth of standing height apart — which
   // called shoulders pointing at the lens side-on; a real server has their back
   // to the guide's camera, and the rig now stands like one.
-  const view = viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight).court_yaw_deg)
+  const view = viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight, skel).court_yaw_deg)
   const fundamentals = measure(frames, skel, view === 'side')
   const phases = buildPhases(frames, skel.keys)
 

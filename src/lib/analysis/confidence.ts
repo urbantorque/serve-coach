@@ -348,7 +348,7 @@ const sweepResolved = (ctx: ConfidenceContext): boolean =>
  */
 function imageXAxisTrust(ctx: ConfidenceContext): number {
   const split = imageXSplitFrom(
-    assessSpatial(ctx.frames, ctx.skel.keys.ready, ctx.skel.bodyHeight),
+    assessSpatial(ctx.frames, ctx.skel.keys.ready, ctx.skel.bodyHeight, ctx.skel),
   )
   if (!split.dominant) return 0
   return readImageX(1, split.dominant, split).confidence

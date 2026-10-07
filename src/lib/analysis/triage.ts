@@ -264,7 +264,7 @@ export function assessResilience(frames: Frame[], skel: Skeleton): Resilience {
   const { keys, bodyHeight } = skel
   const R = sided(skel.racket)
 
-  const spatial = assessSpatial(frames, keys.ready, bodyHeight)
+  const spatial = assessSpatial(frames, keys.ready, bodyHeight, skel)
 
   // The racket hand: the fastest-moving landmark in the clip, and the first
   // thing to degrade when the camera has little light per frame.

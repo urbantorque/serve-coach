@@ -750,6 +750,7 @@ function base(over: BaseOver = {}): Resilience {
       roll_deg: 0,
       yaw_deg: 60,
       court_yaw_deg: 30,
+      court_yaw_from: 'stance',
       yaw_measured: true,
       depth_unreliable: false,
       confidence: over.spatial ?? 1,

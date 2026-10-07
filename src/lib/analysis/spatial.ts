@@ -51,17 +51,20 @@ export interface Spatial {
    * the filming guide asks — and 0 is the net direction pointing into the lens,
    * a phone at the back fence or the net.
    *
-   * Read from the stance, because a server starts side-on: the shoulder line
-   * points at the net, so the camera's angle to the net is the complement of
-   * its angle to the shoulders. Measured, not assumed: on the 40 Bath serves the
-   * shoulder line sat 15° off the net direction at the start, and the guide's
-   * placement read 65° here against a true 90 (ANALYSIS-REVIEW.md §9). A player
-   * standing square to the net would read 90° off, which is the mistake this
-   * field exists to stop making: the synthetic rig used to stand that way and
-   * the camera model learned it, so a phone where the guide puts it was filed
-   * as a view from behind.
+   * Read from the swing when there is one (`court_yaw_from: 'swing'`): the
+   * hitting hand travels from the drop to contact towards the net, and the
+   * world landmarks give that travel's direction against the lens with its
+   * sign — see `courtYawFromSwing`. Otherwise from the stance, as the
+   * complement of the camera's angle to the shoulders at the start, which is
+   * all a live preview has: a server starts side-on, so the shoulder line
+   * points roughly at the net. Roughly is the trouble, and why the swing is
+   * preferred: the Bath servers' shoulders sit 15° off the net direction, and
+   * the shoulder span cannot say on which side, so a true 45° corner read 66°
+   * from the stance (ANALYSIS-REVIEW.md §9).
    */
   court_yaw_deg: number
+  /** Which of the two readings `court_yaw_deg` came from. */
+  court_yaw_from: 'swing' | 'stance'
   /**
    * Whether `yaw_deg` was measured at all, or is the fallback standing in for
    * one that could not be.
@@ -154,9 +157,96 @@ export function viewFromCourtYaw(courtYawDeg: number): 'side' | 'front-back' | '
   return 'angled'
 }
 
-export function assessSpatial(frames: Frame[], readyIndex: number, bodyHeight: number): Spatial {
+/**
+ * How far the hitting hand's path from the drop to contact runs off the net
+ * direction, towards the hitting side, in degrees.
+ *
+ * Measured on the 40 Bath serves: between the drop and contact the hand
+ * travels 0.60 m towards the net and 0.21 m towards the hitting side, relative
+ * to the hips. One player, so a constant with a known source rather than a
+ * population figure — a kick serve, swung up and across, will sit further
+ * off. An error here moves the court angle by the same number of degrees and
+ * does not flip it, which is the property the stance reading lacks.
+ */
+export const SWING_OFF_NET_DEG = 19.3
+
+/**
+ * The shortest drop-to-contact travel, in metres along the ground, that the
+ * court direction is read from. A third of the Bath serves' 0.64 m: below it
+ * the swing barely went anywhere, and the depth noise on its two ends is a
+ * large share of what is left.
+ */
+const MIN_SWING_TRAVEL_M = 0.2
+
+/** The keyframes and hand a swing reading needs — a `Skeleton` has them. */
+export interface SwingWindow {
+  keys: { drop: number; contact: number }
+  racket: 'left' | 'right'
+}
+
+/**
+ * The camera's angle to the court, from the direction the swing travelled.
+ *
+ * World landmarks come in the camera's frame — x across the picture, z away
+ * from the lens — so the hand's travel along the ground from the drop to
+ * contact has a direction against the lens, signed, and the net direction is
+ * that turned back by `SWING_OFF_NET_DEG`. The depth half of it is inferred,
+ * which is the usual objection, and it was measured rather than assumed: on
+ * the Bath serves filmed from 24 places round the player, with depth jittered
+ * four times as hard as the picture and a shared per-frame depth offset, this
+ * reads the true angle to a median 2.9° (p90 7.8°, worst 12°), where the
+ * stance reading is off by a median 20° and up to 37°. It neither saturates
+ * square-on nor confuses the two sides, because it is an angle from a vector
+ * rather than an inverse cosine of a length.
+ *
+ * Null when the swing went too short a way to point anywhere.
+ */
+export function courtYawFromSwing(frames: Frame[], swing: SwingWindow): number | null {
+  const { drop, contact } = swing.keys
+  if (!(contact > drop) || drop < 0 || contact >= frames.length) return null
+  const wrist = swing.racket === 'left' ? LM.leftWrist : LM.rightWrist
+  // Three samples about each end, so one jittered frame cannot set the
+  // direction on its own.
+  const at = (k: number) => {
+    let x = 0
+    let z = 0
+    let n = 0
+    for (let i = Math.max(0, k - 1); i <= Math.min(frames.length - 1, k + 1); i++) {
+      const p = frames[i].world[wrist]
+      if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.z)) continue
+      x += p.x
+      z += p.z
+      n++
+    }
+    return n ? { x: x / n, z: z / n } : null
+  }
+  const from = at(drop)
+  const to = at(contact)
+  if (!from || !to) return null
+  const dx = to.x - from.x
+  const dz = to.z - from.z
+  if (Math.hypot(dx, dz) < MIN_SWING_TRAVEL_M) return null
+
+  // The swing veers towards the hitting side, so the net is that far back the
+  // other way — and a left-hander's mirror image veers the other way.
+  const off = swing.racket === 'left' ? SWING_OFF_NET_DEG : -SWING_OFF_NET_DEG
+  const net = (Math.atan2(dz, dx) * 180) / Math.PI - off
+  // The net direction's line against the picture's horizontal, 0–90.
+  const across = ((net % 180) + 180) % 180
+  const offPicture = across > 90 ? 180 - across : across
+  return 90 - offPicture
+}
+
+export function assessSpatial(
+  frames: Frame[],
+  readyIndex: number,
+  bodyHeight: number,
+  /** Read the court angle from this swing when it is long enough; the stance otherwise. */
+  swing?: SwingWindow,
+): Spatial {
   const roll = estimateRoll(frames, readyIndex)
   const yaw = estimateYaw(frames, readyIndex, bodyHeight)
+  const fromSwing = swing ? courtYawFromSwing(frames, swing) : null
 
   const depth_unreliable = yaw.deg < DEPTH_YAW_RANGE[0] || yaw.deg > DEPTH_YAW_RANGE[1]
 
@@ -170,7 +260,8 @@ export function assessSpatial(frames: Frame[], readyIndex: number, bodyHeight: n
   return {
     roll_deg: Math.round(roll * 10) / 10,
     yaw_deg: Math.round(yaw.deg),
-    court_yaw_deg: Math.round(courtYawFrom(yaw.deg)),
+    court_yaw_deg: Math.round(fromSwing ?? courtYawFrom(yaw.deg)),
+    court_yaw_from: fromSwing === null ? 'stance' : 'swing',
     yaw_measured: yaw.measured,
     depth_unreliable,
     confidence: Math.round(rollCost * yawCost * 100) / 100,

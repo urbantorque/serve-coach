@@ -1388,20 +1388,26 @@ check('its deviation is stated against the span it has to work across', () => {
   assert(worst < 9.4, `${worst.toFixed(1)}° is no longer better than external rotation's 9.4°`)
 })
 
-check('the rig says nothing about the camera here, and the entry admits it', () => {
+check('the camera moves it by less than its own noise, and the entry claims nothing either way', () => {
   /*
-   * R50c'S FINDING, APPLIED BEFORE IT COULD BE MISREAD. This reads identical at
-   * every camera angle — and that is a fact about the rig, not about a phone:
-   * world coordinates do not rotate when the camera does, so a world-derived
-   * reading is invariant here by construction. Round 40 established exactly this
-   * and it would have been very easy to report as robustness.
-   *
-   * Checked both ways: the invariance is real, and `UNCALIBRATED` says what it
-   * is worth.
+   * R50c'S FINDING, CORRECTED. This used to read identical at every camera
+   * angle, and the comment here said that was a fact about the rig: its world
+   * landmarks were fixed to the court, so a world-derived reading was invariant
+   * by construction. MediaPipe's are not — they come in the camera's frame, and
+   * the inferred depth that carries most of the noise points wherever the lens
+   * does. The rig now hands them over that way, and the reading moves: 3.5°
+   * across 30–82°, a little over half its own deviation. So a camera angle is
+   * worth a fraction of the noise here, which is a measurement, not a claim
+   * about phones in general — the entry still says nothing about the camera.
    */
-  const yaws = [30, 45, 60, 82].map((y) => extensionAt(133, y).mean)
-  const spread = Math.max(...yaws) - Math.min(...yaws)
-  assert(spread < 1e-9, `the reading moved ${spread.toFixed(3)}° across camera yaw`)
+  const yaws = [30, 45, 60, 82].map((y) => extensionAt(133, y))
+  const spread = Math.max(...yaws.map((r) => r.mean)) - Math.min(...yaws.map((r) => r.mean))
+  const deviation = Math.max(...yaws.map((r) => r.sd))
+  note(`across 30/45/60/82°: ${yaws.map((r) => r.mean.toFixed(1)).join(' / ')}, deviation up to ${deviation.toFixed(1)}°`)
+  assert(
+    spread < deviation,
+    `the reading moved ${spread.toFixed(1)}° across camera yaw against a ${deviation.toFixed(1)}° deviation`,
+  )
   /*
    * And the entry has to carry the caveat, not just this comment. A future
    * reader meets `UNCALIBRATED.knee_extension_deg` long before they meet this
@@ -1413,7 +1419,6 @@ check('the rig says nothing about the camera here, and the entry admits it', () 
     !/camera|angle|yaw|invariant/i.test(entry),
     `the entry claims something about camera angle: "${entry}"`,
   )
-  note('identical at 30°, 45°, 60° and 82° — a rig property, per R50c, so unclaimed')
 })
 
 /* ============================== how tight a same-spot gate has to be (R50c) = */
@@ -1423,40 +1428,35 @@ check('the rig says nothing about the camera here, and the entry admits it', () 
  * and it has been blocked on one number: how tight "one spot" has to be.
  * `NEXT.md` answers with "cycle 105's 315 ms branch jump between 50° and 55°",
  * a figure that appears nowhere in this tree and cannot be re-run — the defect
- * `repeatability.ts`' own header names. So it got measured, and the measurement
- * says the question does not apply.
+ * `repeatability.ts`' own header names. So it got measured.
  *
- * `hip_lead_ms` IS EXACTLY INVARIANT TO CAMERA YAW. Not approximately: 58.199 ms
- * at 4° and 58.199 at 75°, every seed, every angle between. It is the difference
- * of two peak times read from world landmarks, and the rig builds those from the
- * serve rather than from the lens — world coordinates do not rotate when the
- * camera does, which is what makes them world coordinates.
+ * THE FIRST MEASUREMENT WAS THE RIG'S. It read `hip_lead_ms` exactly the same at
+ * every camera angle, to the third decimal, and this block concluded that a
+ * same-spot gate bought nothing at any tightness. The rig's world landmarks
+ * were fixed to the court; MediaPipe's come in the camera's frame, with the
+ * inferred depth pointing wherever the lens does. With the rig handing them
+ * over that way, the trunk lead moves with the camera:
  *
- * The dial is not being dropped. Turning the camera to see the shoulders square
- * moves the depth confidences in the check above from usable to soft, on the
- * same realisations. It reaches everything projected. It cannot reach this,
- * because this never looks.
+ *     camera dial     4°     45°     60°     82° (the guide's)
+ *     mean (ms)       78      77      90     103
+ *     deviation (ms)  30      21      31      39
  *
- * SO A SAME-SPOT GATE ON THE TRUNK LEAD BUYS NOTHING AT ANY TIGHTNESS, and
- * R50c's stated premise — that the trunk lead has "an absolute belonging to the
- * camera and a change that does not" — is false for the quantity the engine
- * actually computes. What is true of it instead is worse and already recorded:
- * `UNDER_RESOLVED.hip_lead_ms` puts the seed deviation at about 50 ms against a
- * 76 ms floor, and this ensemble reads 41 since the rig's trunk was re-posed on
- * real motion. A delta between two serves inherits both spreads, so it starts at
- * roughly 58 ms of noise before the camera is mentioned. That, not the camera
- * position, is what R50c has to answer.
+ * Worst at the guide's placement, and for the reason the depth hedge exists:
+ * from there a real server's trunk turns towards and away from the lens, so
+ * the turn is read almost entirely from inferred depth.
  *
- * Pinned rather than written down, because "invariant" is a claim that decays
- * silently: the day someone rebuilds the trunk peaks out of projected width —
- * which is what R50c proposes — this check goes red and says so, which is
- * exactly when somebody needs to be told.
+ * SO THE SPOT MATTERS, AND THE NOISE MATTERS MORE. Two serves filmed from
+ * spots a corner's width apart can differ by 25 ms of camera alone, so R50c
+ * would need a camera gate after all. But the per-serve spread is the larger
+ * term: at the guide's placement a delta between two serves carries about
+ * 55 ms of noise against a 76 ms floor before the serves have differed at all.
+ * That is what R50c has to answer first.
  */
-const SPOT_YAWS = [4, 45, 50, 55, 60, 75] as const
-/** Twelve rather than twenty-four: six yaws of a full ensemble is the budget. */
+const SPOT_YAWS = [4, 45, 60, 82] as const
+/** Twelve rather than twenty-four: four yaws of a full ensemble is the budget. */
 const SPOT_SEEDS = SEEDS.slice(0, 12)
 
-check('the trunk lead does not move when the camera does, so a spot gate buys nothing', () => {
+check('the trunk lead moves with the camera, and is noisiest where the guide puts it', () => {
   const rows = SPOT_YAWS.map((yaw) => {
     const reads = realise({ cameraYaw: yaw }, 5, SPOT_SEEDS)
       .map((r) => r.signals.hip_lead_ms)
@@ -1469,38 +1469,39 @@ check('the trunk lead does not move when the camera does, so a spot gate buys no
     rows.every((r) => r.n === SPOT_SEEDS.length),
     'the rig lost clips at some yaws, so the rows below are not comparable',
   )
-  note(rows.map((r) => `${r.yaw}°: ${r.mean.toFixed(3)}`).join(', '))
+  note(rows.map((r) => `${r.yaw}°: ${r.mean.toFixed(1)} ± ${r.sd.toFixed(1)}`).join(', '))
 
+  // The camera reaches it. A rig whose world stopped turning with the lens
+  // would read flat again, which is the artefact this check used to pin.
   const spread = Math.max(...rows.map((r) => r.mean)) - Math.min(...rows.map((r) => r.mean))
+  assert(spread > 10, `the trunk lead moved only ${spread.toFixed(1)} ms across camera yaw`)
+  const guide = rows.find((r) => r.yaw === 82)!
+  const corner = rows.find((r) => r.yaw === 45)!
   assert(
-    spread < 1e-9,
-    `the trunk lead moved ${spread.toFixed(3)} ms across camera yaw — it is read from world ` +
-      'landmarks, which do not rotate with the lens, so any movement here is a defect and not a sensitivity',
+    guide.sd > corner.sd,
+    `the guide's placement (${guide.sd.toFixed(1)} ms) is no longer noisier than a corner (${corner.sd.toFixed(1)} ms)`,
   )
 
   /*
    * And the number R50c actually has to clear, stated on the same run so it
-   * cannot be transcribed and left to age. Two serves differenced carry both
-   * spreads, hence the quadrature.
+   * cannot be transcribed and left to age, at the placement the app asks for.
+   * Two serves differenced carry both spreads, hence the quadrature.
    */
-  const sd = rows[0].sd
+  const sd = guide.sd
   const deltaNoise = Math.SQRT2 * sd
   note(
-    `spot gate: irrelevant. The floor that matters is a delta noise of ${deltaNoise.toFixed(0)} ms, ` +
+    `at the guide's placement a delta carries ${deltaNoise.toFixed(0)} ms of noise, ` +
       `from a per-serve spread of ${sd.toFixed(0)}, against a ${NOISE_FLOOR.hip_lead_ms} ms noise ` +
       `floor — ${((deltaNoise / NOISE_FLOOR.hip_lead_ms) * 100).toFixed(0)}% of it`,
   )
   /*
-   * 58 against 76 is not a pass. The floor is what one serve's reading has to
-   * clear to be worth grading, and a delta arrives carrying three quarters of
-   * it before the two serves have differed by anything at all. `NOISE_FLOOR`'s
-   * own rule is one and a half deviations; this leaves room for a signal of
-   * about a third of a deviation.
+   * 55 against 76 is not a pass. The floor is what one serve's reading has to
+   * clear to be worth grading, and a delta arrives carrying nearly three
+   * quarters of it before the two serves have differed by anything at all.
    *
-   * It read 74 — 97% of the floor — until the rig's trunk was re-posed on the
-   * Bath serves' turn (ANALYSIS-REVIEW.md §9). The quieter delta is the trunk
-   * pair turning through angles where the inferred depth matters less, not the
-   * estimator improving, and it is still most of the floor: R50c stays blocked.
+   * It read 74 — 97% of the floor — before the rig's trunk was re-posed on the
+   * Bath serves' turn, and 58 after it while the rig's world was still fixed to
+   * the court. R50c stays blocked.
    *
    * Asserted as a band rather than a direction so it reddens both ways: if the
    * trunk pair gets quieter still this stops holding and R50c may unblock,
@@ -2198,47 +2199,30 @@ check('at the corner a sideways toss is named and drilled as a forwards one', ()
    * Nothing is named across the band at all, which is the whole point: no axis
    * beats a coin flip in there, so the app says nothing rather than something.
    *
-   * THE BAND IS IN THE ESTIMATE'S TERMS, and since the rig was re-posed on the
-   * Bath serves the estimate and the camera are no longer the same number. The
-   * estimate reads the shoulder line at the ready, and a real server's sits 15°
-   * past the net axis — so it reads 90 for a camera square to those shoulders
-   * (dial 75), not for one on the baseline, and the cameras it calls 38° and
-   * 49° are dialled at 20° and 30°. Those are what the band is checked on here.
+   * AT A REAL CORNER, AGAIN. For one round the camera angle came from the
+   * stance alone, which read a true 45° corner as 66° and put it outside the
+   * band: a real server's shoulders sit 15° off the net and the shoulder span
+   * cannot say on which side. It now comes from the swing's direction
+   * (`courtYawFromSwing`), which reads the dial, so the corners are the dials
+   * again and the KNOWN check that pinned the gap is gone.
    */
-  const corner = named(30, 0.1, 0)
-  note(`dial 30° lateral-only: axis=${corner.axis ?? 'none'}, detected=${corner.detected}`)
+  const corner = named(45, 0.1, 0)
+  note(`45° lateral-only: axis=${corner.axis ?? 'none'}, detected=${corner.detected}`)
   assert(
     corner.axis === undefined && !corner.detected,
-    `inside the band the estimate still names an axis (${corner.axis}) and detects=${corner.detected} — ` +
-      'the band is no longer covering the angle where neither axis beats a coin flip',
+    `the corner still names an axis (${corner.axis}) and detects=${corner.detected} — the band ` +
+      'is no longer covering 45°, where neither axis beats a coin flip',
   )
-  // And the band's other reading, because a band that only silences one angle
-  // is a narrower band than the one the measurement asked for.
-  for (const yaw of [20]) {
+  // And both edges of the band, because a band that only silences its middle is
+  // a narrower band than the one the measurement asked for.
+  for (const yaw of [35, 50]) {
     const edge = named(yaw, 0.1, 0)
     assert(
       !edge.detected,
-      `at dial ${yaw}° a sideways wobble is still detected as ${edge.axis} — misattribution was ` +
+      `at ${yaw}° a sideways wobble is still detected as ${edge.axis} — misattribution was ` +
         'measured here, and the band was drawn to cover it',
     )
   }
-
-  /*
-   * KNOWN, AND IT IS THE DEFECT THE BAND WAS BUILT TO CLOSE, BACK AT A REAL
-   * CORNER. A camera dialled at 45° — a true three-quarter view of the court —
-   * reads 66° and sits outside the band, so a sideways wobble is named and
-   * drilled as forwards-and-back again. Not a threshold to move: the shoulder
-   * span says how far the camera is off square to the shoulders and not which
-   * side, so a 45° corner and a 75° near-side camera are the same reading, and
-   * any band that caught one would silence the other. The fix is a second cue
-   * that says which side (ROADMAP D7.2). When this goes red, flip it.
-   */
-  const trueCorner = named(45, 0.1, 0)
-  note(`dial 45° lateral-only: axis=${trueCorner.axis ?? 'none'}, detected=${trueCorner.detected}`)
-  assert(
-    trueCorner.axis === 'depth' && trueCorner.detected,
-    'KNOWN gap closed: a true corner camera no longer names a sideways toss as forwards-and-back — flip this half',
-  )
 
   /*
    * And the other end, which is the half that makes the confidence figure damning
@@ -2306,14 +2290,15 @@ check('one toss wobble reads seven times smaller on the axis a side-on camera ca
   }
 
   /*
-   * Dialled at 0 and 10 for the end of the range where image x runs across the
-   * body. R80b's band silences the toss axis where the estimate reads 32–53°,
-   * which since the rig was re-posed is dials 20 and 30 (see the check above),
-   * so no reading can be built there. That is the band working, not the finding
-   * going away: the collapse is measured on the angles the app still names an
-   * axis at, which is the only place it can cost anybody anything.
+   * 10, 20, 65 and 82 rather than 30, 45, 60, 82 — R80b's band silences the toss
+   * axis between 32° and 53°, so the rig returns no reading at 45, and the rows
+   * either side stay clear of the band by more than the camera reading wanders
+   * under noise (`courtYawFromSwing`, up to about 8°). That is the band working,
+   * not the finding going away: the seven-fold collapse is measured on the
+   * angles the app still names an axis at, which is the only place it can cost
+   * anybody anything.
    */
-  const rows = [0, 10, 60, 82].map((yaw) => ({
+  const rows = [10, 20, 65, 82].map((yaw) => ({
     yaw,
     depth: read({ cameraYaw: yaw, tossWobble: 0.1, tossWobbleLateral: 0 }),
     lateral: read({ cameraYaw: yaw, tossWobble: 0, tossWobbleLateral: 0.1 }),

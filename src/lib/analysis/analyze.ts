@@ -965,7 +965,7 @@ export function assessQuality(
   // clip as filmed from behind — and `contactAhead`, which only a side view can
   // see, never reached the card from the one place the guide asks for.
   const view: Quality['view'] = viewFromCourtYaw(
-    assessSpatial(frames, skel.keys.ready, skel.bodyHeight).court_yaw_deg,
+    assessSpatial(frames, skel.keys.ready, skel.bodyHeight, skel).court_yaw_deg,
   )
 
   const anklesSeen = median(

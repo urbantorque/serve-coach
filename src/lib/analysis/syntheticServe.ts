@@ -1120,12 +1120,36 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // calibration taken early drifting out of date, not a symmetric wobble.
     const zoom = 1 + d.cameraZoom * (i / Math.max(1, count - 1))
 
+    /*
+     * World landmarks in the CAMERA's frame, as MediaPipe reports them: x
+     * across the picture, y down, z away from the lens, origin at the hips
+     * (`kinematics.ts` has the convention note). The pose above is built in the
+     * court's frame, and it used to be handed over in it — so the 3D pose came
+     * out the same from every camera, and the depth noise below landed on the
+     * court's sideways axis wherever the phone stood. At the guide's placement
+     * the two frames all but coincide, which is why nothing noticed; anywhere
+     * else the rig was modelling a tracker that knows where the net is. The
+     * rotation is the one the picture uses, so the two agree by construction.
+     * Aliased slots (the hand landmarks that share the wrist) stay aliased.
+     */
+    const cosCam = Math.cos(cam)
+    const sinCam = Math.sin(cam)
+    const turned = new Map<Landmark, Landmark>()
+    for (let k = 0; k < world.length; k++) {
+      const p = world[k]
+      let q = turned.get(p)
+      if (!q) {
+        q = lm(p.x * cosCam - p.z * sinCam, p.y, p.x * sinCam + p.z * cosCam)
+        turned.set(p, q)
+      }
+      world[k] = q
+    }
+
     const image = world.map((p) => {
-      // Rotate about the vertical axis so the camera can sit anywhere from
-      // side-on to face-on, then drop z.
-      const x = p.x * Math.cos(cam) - p.z * Math.sin(cam)
+      // Already turned to the camera above, so the picture is the world with
+      // depth dropped.
       const heightAboveGround = hipHeight - p.y
-      const rawX = 0.5 + x * SCALE
+      const rawX = 0.5 + p.x * SCALE
       const rawY = GROUND_Y - heightAboveGround * SCALE
       // Scaled about the player's own ground anchor, not the frame centre —
       // a pan-like image-position shift would otherwise ride along with

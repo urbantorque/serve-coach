@@ -770,7 +770,8 @@ servers do not, and it shows in five places.
    15° past the net axis, so a true 45° corner and a 75° near-side camera give
    the same reading. A corner reads 66°, outside R80b's band, and a sideways
    toss is named and drilled as forwards-and-back at a real corner again
-   (`depth.test.ts`).
+   (`depth.test.ts`). *Closed by reading the court angle from the swing (next
+   section).*
 3. **The comparison gate near the guide's placement.** At the guide's own dial
    the reading is pinned at zero and every pair agrees. Either side of the
    pinned range, a sixth of same-spot pairs land outside the 5° gate; at a
@@ -783,9 +784,9 @@ servers do not, and it shows in five places.
    (0.020 against 0.062 from behind). The landing is ungraded, so no verdict
    moves (`depth.test.ts`).
 
-Items 2–4 share one fix: a camera reading that does not rest on one shoulder
-span at the ready, such as the swing's travel or the body's forward motion
-into the court (ROADMAP D7.2).
+Items 2–4 rest on one shoulder span at the ready. Item 2 is fixed by a second
+reading, from the swing (next section). Items 3 and 4 are about the shoulders
+themselves and stay open (ROADMAP D7.2).
 
 **Rig limits found, not fixed.** The rig's feet turn with its hips; the Bath
 servers' feet stay apart along the net axis. The rig also under-turns the hand
@@ -795,6 +796,61 @@ feet along the guide camera's line of sight. A real front foot is ahead
 towards the net (0.17 m on the Bath serves), and the rebuilt rig reads the
 stance at 18 times its noise from the guide's placement. That refusal is
 reopened.
+
+### The court angle from the swing (2026-10-07, still scoring version 5)
+
+**The reading.** After a capture, the camera's angle to the court now comes
+from the swing (`courtYawFromSwing`). The hitting hand's path from the drop to
+contact, in the world landmarks, has a direction against the lens. MediaPipe
+reports those in the camera's frame, x across the picture and z away from it.
+The net direction is that path turned back by `SWING_OFF_NET_DEG`: on the Bath
+serves the hand travels 0.60 m towards the net and 0.21 m towards the hitting
+side, which is 19°. It is an angle from a vector rather than an inverse cosine
+of a length, so it does not saturate square-on and does not confuse the two
+sides. The stance reading is kept as the fallback when the swing travels under
+0.2 m, and for the live preview, which has no swing.
+
+**Measured before it shipped.** The Bath serves were filmed from 24 placements
+round the player, with depth jittered four times as hard as the picture and a
+shared per-frame depth offset:
+
+| Error against the true angle | median | p90 | worst |
+| --- | --- | --- | --- |
+| Stance (shoulder span at the ready) | 20° | 28° | 37° |
+| Swing direction | 2.9° | 7.8° | 12° |
+
+On the bench, all 40 serves from both baseline placements read 88° and are
+filed side-on. The back fence reads 2–4° (front-back), and both rear corners
+read 43–48° and are filed as angled. Before, one corner was filed end-on and
+the other side-on. Item 2 above is closed: at a real corner, a sideways toss is
+no longer named and drilled as forwards-and-back.
+
+**The constant is one player's.** A swing that veers further, such as a kick
+serve brushed up and across, moves the reading by the same number of degrees.
+It does not flip it. No other open data measures this.
+
+**Kept on the stance, on purpose.**
+- **The comparison gate (item 3).** The swing varies from serve to serve at a
+  fixed camera: on the Bath serves without noise, 81–90° at the guide's
+  placement and 37–54° at a corner. That is wider than the 5° gate, so it
+  would refuse more pairs than the stance does.
+- **The depth hedge (item 4).** It asks whether the shoulders' turn is seen or
+  inferred, which is a question about the shoulders.
+- **The viewfinder.** It has no swing to read.
+
+**The rig's world landmarks now turn with the camera.** They were built in the
+court's frame and handed over in it. As a result, the 3D pose looked the same
+from every camera, and the modelled depth noise sat on the court's sideways
+axis wherever the phone stood. At the guide's placement the two frames nearly
+coincide, which is why nothing noticed. Two recorded findings were artefacts of
+it and are corrected:
+- **The trunk lead moves with the camera after all.** R50c's "exactly
+  invariant" becomes 78 ms from behind, 77 from a corner and 103 from the
+  guide's placement, where its deviation nearly doubles (21 → 39 ms). A
+  same-spot gate would matter, though the per-serve noise still blocks R50c
+  first.
+- **Knee extension moves 3.5° across camera angle.** That is a little over
+  half its own deviation.
 
 **A caution about this set's elbow angles.** The elbow centres are averages of
 skin markers on the back of the joint. Swapping between the candidate centres

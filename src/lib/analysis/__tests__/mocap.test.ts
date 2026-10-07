@@ -189,6 +189,33 @@ check('a real racket drop is not called shallow, from any placement', () => {
   }
 })
 
+check('the camera\'s angle to the court is read from the swing, from every placement', () => {
+  /*
+   * The second half of D7.2. The stance reading cannot tell the two sides of
+   * a real server's shoulders apart, so it read the rear-oblique corners as
+   * 23° and 63° — one end-on, one side-on — when both stand at 45°. The swing's
+   * direction carries its own sign. Ten degrees either way is the bound: wider
+   * than the 7.8° p90 the 24-placement sweep measured with depth noise, and
+   * well inside the 25° that separates side-on from a corner.
+   */
+  const truth: [number, number][] = [
+    [90, 90],
+    [270, 90],
+    [180, 0],
+    [135, 45],
+    [225, 45],
+  ]
+  for (const [bearing, angle] of truth) {
+    const runs = readAll({ bearing })
+    const read = runs.map((r) => r.run.resilience.spatial)
+    note(`bearing ${bearing}: ${fmt(read.map((s) => s.court_yaw_deg))}° to the court, true ${angle}°`)
+    for (const s of read) {
+      assert(s.court_yaw_from === 'swing', `bearing ${bearing}: read from the ${s.court_yaw_from}, not the swing`)
+      within(s.court_yaw_deg, angle - 10, angle + 10, `court angle from bearing ${bearing}`)
+    }
+  }
+})
+
 check("the guide's own placement is filed as side-on, and the back fence is not", () => {
   // Was pinned as KNOWN. A textbook stance points the shoulder line at the
   // net, so from the baseline, where `FilmingGuide.tsx` puts the phone, both

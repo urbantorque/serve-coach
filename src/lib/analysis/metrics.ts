@@ -356,7 +356,7 @@ export function measure(
   // hand over. `confidence.ts` asks the identical question of the identical
   // frames, so the axis a card is named for and the axis its confidence is
   // priced against cannot disagree.
-  const imageX = imageXSplitFrom(assessSpatial(frames, keys.ready, bodyHeight))
+  const imageX = imageXSplitFrom(assessSpatial(frames, keys.ready, bodyHeight, skel))
 
   /* ----------------------------------------------------------------- toss */
   values.tossArmExtension = steadyAngle(frames, keys.toss, T.shoulder, T.elbow, T.wrist)

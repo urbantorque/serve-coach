@@ -281,12 +281,15 @@ check('the trophy keyframe is refused, and the knee argument for it was backward
   )
 
   // Which axis the rig actually bends. If this ever moves, the paragraph in
-  // skeleton.ts about it is stale and so is this test.
+  // skeleton.ts about it is stale and so is this test. The world landmarks now
+  // come in the camera's frame, as MediaPipe's do, so at the rig's 82° the
+  // court's sideways bend reads as camera depth with a sliver of x (8° worth)
+  // rather than as depth alone.
   const f = s.frameAt(s.skel.keys.trophy)
   const hip = f.world[LM.rightHip]
   const knee = f.world[LM.rightKnee]
   assert(
-    Math.abs(knee.x - hip.x) < 1e-6 && Math.abs(knee.z - hip.z) > 0.05,
+    Math.abs(knee.x - hip.x) < 0.2 * Math.abs(knee.z - hip.z) && Math.abs(knee.z - hip.z) > 0.05,
     `the rig's thigh now moves dx ${(knee.x - hip.x).toFixed(4)} dz ${(knee.z - hip.z).toFixed(4)} — ` +
       'it used to bend purely in world z, which is what made the old projection figures a rig artefact',
   )

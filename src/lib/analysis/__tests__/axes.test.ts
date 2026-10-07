@@ -19,6 +19,7 @@ import { assessResilience, triage } from '../triage'
 import { causalFocus } from '../verdict'
 import { imageXSplit, imageXSplitFrom, readImageX } from '../axes'
 import { LM } from '../geometry'
+import { mirrorFrames } from '../mirror'
 import { MIN_FRAME_HEIGHT_SHARE } from '../framingIssues'
 import { assert, check, heading, near, note, report, within } from './harness'
 
@@ -377,6 +378,84 @@ check('the two do not swap', () => {
   )
 })
 
+heading('The camera against the court, from the swing')
+
+/**
+ * `courtYawFromSwing`: the hitting hand's path from the drop to contact, read
+ * as a direction against the lens and turned back by `SWING_OFF_NET_DEG`.
+ *
+ * The rig's swing is posed on the Bath serves, so it veers off the net by the
+ * same 19° the constant carries, and these checks are about the arithmetic
+ * and its noise rather than about that constant — which `mocap.test.ts`
+ * checks on real motion from five placements.
+ */
+const courtFromRig = (dials: Partial<ServeDials>) => {
+  const frames = buildServe(dials, FPS)
+  const skel = detectServe(frames, FPS)
+  return assessSpatial(frames, skel.keys.ready, skel.bodyHeight, skel)
+}
+
+/** The true angle between the net direction and the picture, for a dial. */
+const courtOfDial = (dial: number) => {
+  const a = ((dial % 180) + 180) % 180
+  return a > 90 ? 180 - a : a
+}
+
+check('it reads the dial all the way round, with no side mistaken for the other', () => {
+  /*
+   * Including the dials either side of each square-on and end-on, which is
+   * where the stance reading saturated (every dial from 60 to 90 read 90) and
+   * folded (45 and 105 read the same). Noise-free, so a miss is arithmetic.
+   */
+  const misses: string[] = []
+  for (let dial = 0; dial < 180; dial += 15) {
+    const s = courtFromRig({ cameraYaw: dial })
+    if (s.court_yaw_from !== 'swing' || Math.abs(s.court_yaw_deg - courtOfDial(dial)) > 2) {
+      misses.push(`${dial}→${s.court_yaw_deg} (${s.court_yaw_from})`)
+    }
+  }
+  assert(misses.length === 0, `read off the dial: ${misses.join(', ')}`)
+})
+
+check('depth noise moves it by degrees, not by sides', () => {
+  /*
+   * The depth half of the swing's direction is inferred, so it is jittered
+   * here at the suite's depth-aware figures — four times the picture's noise,
+   * and a shared per-frame offset on top.
+   */
+  let worst = 0
+  for (const dial of [0, 30, 45, 60, 82]) {
+    for (const seed of [11, 202, 3131, 7000, 44444, 909]) {
+      const s = courtFromRig({ cameraYaw: dial, seed, noise: 0.006, depthNoise: 4, depthBias: 0.006 })
+      worst = Math.max(worst, Math.abs(s.court_yaw_deg - courtOfDial(dial)))
+    }
+  }
+  note(`  worst miss over five dials and six takes each: ${worst}°`)
+  assert(worst <= 12, `a noisy take read ${worst}° off the dial`)
+})
+
+check('a left-hander reads the same court', () => {
+  // Mirrored, the swing veers the other way, and the constant has to flip
+  // with the hand or every left-hander is read 38° off.
+  for (const dial of [20, 45, 82]) {
+    const frames = mirrorFrames(buildServe({ cameraYaw: dial }, FPS), 1)
+    const skel = detectServe(frames, FPS)
+    const s = assessSpatial(frames, skel.keys.ready, skel.bodyHeight, skel)
+    assert(skel.racket === 'left', 'the mirrored serve was not read left-handed')
+    within(s.court_yaw_deg, courtOfDial(dial) - 2, courtOfDial(dial) + 2, `left-handed at ${dial}°`)
+  }
+})
+
+check('a swing too short to point anywhere falls back to the stance', () => {
+  const frames = buildServe({}, FPS)
+  const skel = detectServe(frames, FPS)
+  const stuck = { ...skel, keys: { ...skel.keys, drop: skel.keys.contact - 1 } }
+  const s = assessSpatial(frames, skel.keys.ready, skel.bodyHeight, stuck)
+  assert(s.court_yaw_from === 'stance', `a one-sample swing was read as a direction (${s.court_yaw_deg}°)`)
+  const none = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
+  assert(none.court_yaw_from === 'stance', 'with no swing handed over, the stance is all there is')
+})
+
 heading('A camera angle that could not be read, told apart from one that reads 45')
 
 check('the fallback yaw is labelled rather than left to look like a measurement', () => {
@@ -488,8 +567,9 @@ heading('Two clips filmed from the same spot, and how far apart they read')
  * itself. A phone a few degrees off the guide's line is outside the clamp.
  *
  * Pinned below rather than fixed: the fix is a camera reading that does not
- * rest on one shoulder span at the ready (ROADMAP D7.2), and a wider gate would
- * admit pairs whose difference really is the phone.
+ * rest on one shoulder span at the ready and holds still from serve to serve
+ * (ROADMAP D7.2) — the swing's direction, which now gives the court angle, does
+ * not — and a wider gate would admit pairs whose difference really is the phone.
  */
 const YAW_SEEDS = [11, 202, 3131, 7000, 44444, 909, 1234, 5678, 8642, 31337, 606, 777]
 
@@ -547,8 +627,10 @@ check('KNOWN: a step either side of the guide\'s placement, the gate spends its 
    * The defect, pinned. A phone a few degrees off the guide's line, or thirty
    * degrees round towards the corner, is outside the clamp, and a sixth of
    * same-spot takes then read as a moved camera and the ghost is refused for
-   * it. When this goes red the camera reading has stopped resting on one
-   * shoulder span (ROADMAP D7.2) — flip it.
+   * it. When this goes red the gate's reading has stopped resting on one
+   * shoulder span (ROADMAP D7.2) — flip it. The court angle now has a second
+   * reading, from the swing, and it is not the answer here: a swing varies
+   * 9–17° from serve to serve at a fixed camera, wider than the gate itself.
    */
   for (const dial of [60, 88]) {
     const read = yawEnsemble(dial)

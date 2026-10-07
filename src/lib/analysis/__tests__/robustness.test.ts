@@ -1389,8 +1389,9 @@ check('KNOWN: a few degrees under the floor, poor light reads the angle as reada
    * clean-reading p10–p90 under that noise is 0–21°.
    *
    * Not hidden by moving the floor, which would trade this for the
-   * over-hedging the next check records. The fix is a camera reading that does
-   * not rest on one shoulder span (ROADMAP D7.2). When this goes red, flip it.
+   * over-hedging the next check records. The question is about the shoulders
+   * — is their turn seen or inferred — so the swing reading that now gives the
+   * court angle does not answer it (ROADMAP D7.2). When this goes red, flip it.
    */
   const wronglyReliable = falselyReliable(52, 5000)
   note(`a camera reading 13°, poor-light noise: ${wronglyReliable}/100 wrongly read reliable`)

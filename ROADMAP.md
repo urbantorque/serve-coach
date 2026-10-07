@@ -497,15 +497,24 @@ to the literature, never re-derived from one player.
       the back fence is not. The realistic rig also exposed five limits of a
       camera read from one shoulder span, now pinned as KNOWN checks
       (`ANALYSIS-REVIEW.md` §9). Still open:*
-      - **A second camera cue that says which side.** A true 45° corner reads
-        66°, so R80b's band misses it and a sideways toss is drilled as
-        forwards-and-back. The comparison gate refuses a sixth of same-spot
-        pairs near the guide's placement. A camera 5° under the depth floor is
-        misread as readable on 22% of poor-light takes. One fix covers all
-        three: read the court direction from the swing's travel or the body's
-        forward motion, and check it on the Bath set from all five placements.
-        *Proof:* the three KNOWN checks in `depth.test.ts`, `axes.test.ts`
-        and `robustness.test.ts` flip.
+      - [x] **A second camera cue that says which side.** *Done
+        (2026-10-07): after a capture the court angle comes from the swing's
+        direction (`courtYawFromSwing`), 2.9° median error from 24 placements
+        with depth noise, against 20° from the stance. Every bench placement is
+        filed correctly, and the corner KNOWN check in `depth.test.ts` flipped.
+        The rig's world landmarks now turn with the camera, as MediaPipe's do,
+        which reversed R50c's "the trunk lead is camera-invariant".*
+      - **The two stance questions that remain.** The comparison gate refuses
+        a sixth of same-spot pairs near the guide's placement, and a camera 5°
+        under the depth floor is read as readable on 22% of poor-light takes.
+        Both ask about the shoulders, so the swing does not answer them: a
+        swing varies 9–17° from serve to serve at a fixed camera, which would
+        make the gate worse. *Proof:* the KNOWN checks in `axes.test.ts` and
+        `robustness.test.ts` flip.
+      - **`SWING_OFF_NET_DEG` beyond one player.** 19° comes from the Bath
+        server. Check it against a second mocap set or published racket-path
+        angles, per serve type, before relying on corner classification for
+        kick serves.
       - **`SHOULDER_SPAN_RATIO` against pose-model shoulders.** COCO's
         hand-labelled frontal shoulders have a median width of 0.229 of height,
         against the 0.21 ratio. The ratio decides whether the guide's placement

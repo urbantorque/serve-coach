@@ -772,7 +772,7 @@ export function validateFixture(fixture: Fixture): FixtureResult {
     // pipeline does rather than trusting the label.
     const sideView = fixture.expect.view
       ? fixture.expect.view === 'side'
-      : viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight).court_yaw_deg) === 'side'
+      : viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight, skel).court_yaw_deg) === 'side'
     const produced = measure(frames, skel, sideView).flatMap((f) => f.metrics)
 
     for (const [id, expected] of Object.entries(expectedMetrics)) {

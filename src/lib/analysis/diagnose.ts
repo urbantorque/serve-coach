@@ -645,7 +645,7 @@ export function diagnose(
   // test — must not silently lose what depends on it because its caller had
   // nothing to hand over. Two things depend on it: the coil hedge below, and
   // which body axis the toss drift is.
-  const spatial = assessSpatial(frames, keys.ready, bodyHeight)
+  const spatial = assessSpatial(frames, keys.ready, bodyHeight, skel)
   const imageX = imageXSplitFrom(spatial)
 
   /* --- the chain, proximal to distal ------------------------------------ */

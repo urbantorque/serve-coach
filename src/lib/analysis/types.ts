@@ -61,7 +61,10 @@ export interface Frame {
 // (ANALYSIS-REVIEW.md §9) — a clip from the guide's placement is now filed
 // side-on and reports how far in front it was hit, the hand-under-elbow floor
 // moved from 20% to 4%, and the racket drop is found on a narrower smooth at
-// 30 fps, which moves the drop keyframe and every reading taken at it.
+// 30 fps, which moves the drop keyframe and every reading taken at it. Then,
+// before any of it shipped, the court angle moved to the swing's direction, so
+// a clip from a corner is filed as one — which readings it carries, and which
+// axis a toss drift is named for, moved with it.
 export const SCORING_VERSION = 5
 
 /**
