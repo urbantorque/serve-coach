@@ -237,15 +237,20 @@ check("the guide's own placement is filed as side-on, and the back fence is not"
   }
 })
 
-check('KNOWN: the toss keyframe lands well after the tossing hand peaks', () => {
-  // `phases.ts` takes the toss as the tossing wrist highest *above its own
-  // shoulder*. The trunk keeps tilting after the hand peaks, so that comes
-  // 90–210 ms later — after the ball has gone, though the keyframe's caption
-  // says "ball released". Goes red when the toss is read from the hand itself.
-  const runs = readAll({ fps: 60 })
-  const late = runs.map(({ run, truth, lead }) => (run.frames[run.skel.keys.toss].t - lead - truth.tossTop) * 1000)
-  note(`toss keyframe after the hand's peak, ms: ${fmt(late)}`)
-  for (const v of late) assert(v > 60, `toss keyframe only ${v.toFixed(0)} ms after the hand's peak`)
+check('the toss keyframe lands on the tossing hand\'s peak, from every placement', () => {
+  // Was pinned as KNOWN: the toss was the tossing wrist highest *above its own
+  // shoulder*, and the trunk keeps tilting after the hand peaks, so it landed
+  // 90–210 ms later — after the ball had gone, though the keyframe's caption
+  // says "ball released". It is now the top of the hand's own lift
+  // (`findRelease`), in metres over the ground, so the placement cannot move
+  // it the way perspective moved a picture-height peak (D7.3).
+  for (const bearing of [90, 180, 135]) {
+    const runs = readAll({ fps: 60, bearing })
+    const off = runs.map(({ run, truth, lead }) => (run.frames[run.skel.keys.toss].t - lead - truth.tossTop) * 1000)
+    note(`bearing ${bearing}: toss keyframe minus the hand's peak, ms: ${fmt(off)}`)
+    for (const r of runs) assert(r.run.skel.derivation.tossFromHand, `${r.serve.id}: fell back to the posture toss`)
+    for (const v of off) within(v, -40, 40, `toss against the hand's peak from bearing ${bearing} (ms)`)
+  }
 })
 
 report()

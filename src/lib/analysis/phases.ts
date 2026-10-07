@@ -6,6 +6,7 @@ import {
   jointAngle,
   mean,
   median,
+  midpoint,
   sided,
   smooth,
   other,
@@ -132,6 +133,12 @@ export interface Skeleton {
      * the trophy's *position in time* is then describing the toss instead.
      */
     trophyOnToss: boolean
+    /**
+     * The toss was read from the hand's own lift (`findRelease`). False when
+     * nothing rose far enough to be one and it fell back to the tossing hand
+     * highest over its shoulder, which lands after the ball has gone.
+     */
+    tossFromHand: boolean
   }
 }
 
@@ -195,6 +202,99 @@ function findReady(tossIdx: number, tossHeight: number[], limit: number): number
     if (tossHeight[i] <= threshold) return i
   }
   return limit
+}
+
+/**
+ * How high the tossing hand is, in metres, over a fixed point on the ground.
+ *
+ * Two halves, each from where it is measured best. The hand above the hips
+ * comes from the world landmarks' vertical, which is in metres and carries no
+ * perspective. The hips' own rise and fall comes from the picture, turned into
+ * metres by the torso — the same length measured both ways. Picture height
+ * alone was tried first and read the release 40 ms late from the guide's
+ * placement on the Bath serves: after release the tossing hand moves towards
+ * that camera, so it keeps climbing in the picture after it has stopped
+ * climbing in space. Hand-over-hips alone was worse, 110 ms late, because the
+ * body sinks into the trophy after the ball has gone and the arm holds still
+ * against it.
+ *
+ * `torso` is that length in metres, for a caller asking whether something
+ * that rose rose far enough to be a toss.
+ */
+function tossHandHeight(
+  frames: Frame[],
+  wrist: number,
+  from: number,
+  to: number,
+): { height: number[]; torso: number } {
+  const torsoOf = (f: Frame) => {
+    const ws = midpoint(f.world[LM.leftShoulder], f.world[LM.rightShoulder])
+    const wh = midpoint(f.world[LM.leftHip], f.world[LM.rightHip])
+    const is = midpoint(f.image[LM.leftShoulder], f.image[LM.rightShoulder])
+    const ih = midpoint(f.image[LM.leftHip], f.image[LM.rightHip])
+    return {
+      metres: Math.hypot(ws.x - wh.x, ws.y - wh.y, ws.z - wh.z),
+      picture: Math.hypot(is.x - ih.x, is.y - ih.y),
+    }
+  }
+  const window = frames.slice(Math.max(0, from), Math.min(frames.length, to + 1)).map(torsoOf)
+  const torso = median(window.map((w) => w.metres))
+  const metresPerUnit = median(window.filter((w) => w.picture > 1e-6).map((w) => w.metres / w.picture))
+  const height = frames.map((f) => {
+    const wh = midpoint(f.world[LM.leftHip], f.world[LM.rightHip])
+    const ih = midpoint(f.image[LM.leftHip], f.image[LM.rightHip])
+    // World and picture y both grow downwards.
+    return -(f.world[wrist].y - wh.y) - ih.y * metresPerUnit
+  })
+  return { height, torso }
+}
+
+/**
+ * Ball release: the top of the tossing hand's lift.
+ *
+ * Found as the first moment after the hand's fastest rise that it stops going
+ * up — the roadmap's "upward speed falling away", taken at zero because that is
+ * where the hand peaks, which is what the Bath serves are checked against. Not
+ * the hand's highest point in the window, which on a player holding the arm up
+ * while the legs drive is the legs lifting a held arm, near contact; and not
+ * the hand highest over its own shoulder, which the serve's own trunk tilt
+ * moves later after the ball has gone (on the Bath serves 90–210 ms after the
+ * hand peaks, ANALYSIS-REVIEW.md §9).
+ *
+ * Null when what rose was not a toss — a lift shorter than the torso, such as
+ * a ball being bounced, or a clip that starts with the arm already up — so the
+ * caller can fall back to the posture it used before.
+ */
+function findRelease(
+  frames: Frame[],
+  height: number[],
+  from: number,
+  to: number,
+  torso: number,
+): number | null {
+  const lo = Math.max(1, from)
+  const hi = Math.min(to, height.length - 2)
+  if (hi - lo < 3 || !(torso > 0)) return null
+
+  let fastest = -1
+  let speed = 0
+  for (let i = lo; i <= hi; i++) {
+    const dt = frames[i + 1].t - frames[i - 1].t
+    if (!(dt > 0)) continue
+    const v = (height[i + 1] - height[i - 1]) / dt
+    if (v > speed) {
+      speed = v
+      fastest = i
+    }
+  }
+  if (fastest < 0) return null
+
+  let top = fastest
+  while (top < hi + 1 && height[top + 1] > height[top]) top++
+  let bottom = fastest
+  while (bottom > from && height[bottom - 1] < height[bottom]) bottom--
+  if (height[top] - height[bottom] < torso) return null
+  return top
 }
 
 /**
@@ -481,8 +581,13 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   const beforeContact = Math.max(0, contact - 1)
 
   /*
-   * Toss: tossing arm at full stretch above its shoulder, searched back from
-   * contact — and then sharpened, for the reason contact and the drop are.
+   * Toss: the top of the tossing hand's lift (`findRelease`, `tossHandHeight`),
+   * searched in the two seconds before contact. On the Bath serves this lands a
+   * median 4–7 ms from the hand's peak at every placement and frame rate; the
+   * posture below — tossing arm at full stretch above its shoulder — landed
+   * 90–210 ms after it, because the trunk keeps tilting once the ball has gone.
+   * The posture stays as the fallback for a clip with no lift to read, and the
+   * history below is why it is sharpened.
    *
    * It was the one keyframe of the six found on a hard-smoothed series with
    * nothing pulling it back onto the real peak, and it was measurably the one
@@ -504,7 +609,18 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
    * dependent BIAS where the feature it is smoothing is asymmetric. Noise and
    * bias fail differently, and only one of them shows up in a deviation.
    */
-  const toss = sharpen(tossPostureSharp, argMaxIn(tossPosture, clock.at(contact, -2.0), beforeContact))
+  const tossFrom = clock.at(contact, -2.0)
+  const lift = tossHandHeight(frames, T.wrist, tossFrom, beforeContact)
+  // An 80 ms smooth, sized in time: the release is the first top of the lift,
+  // and a smooth counted in samples is ±17 ms at 120 fps, which lets jitter
+  // put a top in the middle of the rise.
+  const liftRadius = Math.max(1, Math.round(clock.rate * 0.08))
+  const release = findRelease(frames, smooth(lift.height, liftRadius), tossFrom, beforeContact, lift.torso)
+  const tossFromHand = release !== null
+  const toss =
+    release !== null
+      ? sharpen(smooth(lift.height, 1), release)
+      : sharpen(tossPostureSharp, argMaxIn(tossPosture, tossFrom, beforeContact))
 
   // Trophy: deepest leg load. Both knees averaged so a side-on view — where the
   // far leg is often occluded — still reads sensibly. Found from the knees
@@ -693,7 +809,7 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
     handednessConfidence: confidence,
     detectedRacket: guess.racket,
     detectionConfidence: guess.confidence,
-    derivation: { scaleFromTorso, trophyFromArms: found.fromArms, dropOnTrophy, trophyOnToss },
+    derivation: { scaleFromTorso, trophyFromArms: found.fromArms, dropOnTrophy, trophyOnToss, tossFromHand },
   }
 }
 

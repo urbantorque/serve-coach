@@ -367,7 +367,10 @@ export function filmMocap(serve: MocapServe, phone: Partial<VirtualPhone> = {}):
 export interface MocapTruth {
   /** Engine's contact: the racket wrist at its highest. */
   wristTop: number
-  /** Engine's toss: the tossing wrist highest above its own shoulder. */
+  /**
+   * The toss the engine used before D7.3: the tossing wrist highest above its
+   * own shoulder, which the trunk's tilt puts 90–210 ms after the hand peaks.
+   */
   tossPosture: number
   /** Engine's trophy: deepest knee bend, mean of both knees, before the top. */
   kneeBottom: number
@@ -375,7 +378,10 @@ export interface MocapTruth {
   dropPosture: number
   /** The racket head at its highest. The ball was not marked; this is the nearest stand-in for impact. */
   racketTop: number
-  /** The tossing hand at its highest — just after the ball has left it. */
+  /**
+   * The tossing hand at its highest — just after the ball has left it, and the
+   * engine's toss since D7.3 (`findRelease` in `phases.ts`).
+   */
   tossTop: number
   /** The racket head at its lowest between the knee bend and the top: the racket drop itself. */
   racketBottom: number

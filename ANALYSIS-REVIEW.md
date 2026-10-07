@@ -696,11 +696,16 @@ serve was given a fault to fix first.
   now refused as ending before the racket reaches the ball (D7.5).
 
 **Not fixed yet, and why.**
-- **The toss keyframe (D7.3).** Taking release from the hand's own peak is
-  right for real motion and wrong for the rig. The rig's tossing hand keeps
-  rising after the toss as the body lifts under a held arm, peaking at 1.5 s
-  against a toss at 1.0 s. The rig's tossing arm needs re-posing first, which
-  moves every toss reading, so it gets its own round.
+- **The toss keyframe (D7.3).** Fixed later the same day, without re-posing
+  the rig's arm. The rig's tossing hand does keep rising after the toss, as
+  the body lifts a held arm. So the release is the *first* top of the hand's
+  lift after its fastest rise, not its highest point (`findRelease`). It is
+  read as the hand over the hips from the world landmarks plus the hips' rise
+  and fall from the picture: picture height alone read 40 ms late from the
+  guide's placement, because the hand moves towards that camera after
+  release. On the Bath serves it now lands a median 4–7 ms from the hand's
+  peak at every placement and frame rate, and within ±50 ms (p10–p90) with
+  tracker noise. It was 90–210 ms late.
 - **The camera model (D7.2).** Done in part; see the next section.
 
 ### The camera read against the court, on a rig that stands like a real server (2026-10-07, scoring version 5)

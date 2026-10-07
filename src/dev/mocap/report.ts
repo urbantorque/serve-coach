@@ -61,7 +61,9 @@ export function benchMocap(serves: MocapServe[], placements = PLACEMENTS, rates 
         refused: 0,
         timing: {
           contact: { phone: [], event: [] },
-          toss: { phone: [], event: [] },
+          // The toss's definition and its event are the same instant since D7.3 —
+          // the tossing hand at its highest — so it has one column.
+          toss: { phone: [] },
           trophy: { phone: [] },
           drop: { phone: [], event: [] },
         },
@@ -86,8 +88,7 @@ export function benchMocap(serves: MocapServe[], placements = PLACEMENTS, rates 
         const ms = (a: number, b: number) => (a - b) * 1000
         row.timing.contact.phone.push(ms(skel.times.contact - lead, truth.wristTop))
         row.timing.contact.event!.push(ms(skel.times.contact - lead, truth.racketTop))
-        row.timing.toss.phone.push(ms(at('toss'), truth.tossPosture))
-        row.timing.toss.event!.push(ms(at('toss'), truth.tossTop))
+        row.timing.toss.phone.push(ms(at('toss'), truth.tossTop))
         row.timing.trophy.phone.push(ms(at('trophy'), truth.kneeBottom))
         row.timing.drop.phone.push(ms(skel.times.drop - lead, truth.dropPosture))
         row.timing.drop.event!.push(ms(skel.times.drop - lead, truth.racketBottom))

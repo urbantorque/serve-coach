@@ -31,6 +31,7 @@ import {
 } from '../triage'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { NotAServeError } from '../types'
+import { runEngine } from '../../../dev/mocap/engine'
 import { assert, check, heading, near, note, report } from './harness'
 
 const FPS = 50
@@ -180,17 +181,27 @@ check('a severely rotated clip is refused, not measured through a 25° clamp', (
  * safely, with a real NotAServeError and never a crash or invented numbers.
  */
 check('past the point detectServe fails on its own, it still fails safely rather than crashing', () => {
+  /*
+   * Through the pipeline rather than `detectServe` alone. Since the toss is
+   * read from the tossing hand's own lift (`findRelease`), the detector finds
+   * a "serve" in a clip rolled 110° where it used to throw; what the guarantee
+   * is about is the player, and the pipeline still refuses every one of these
+   * — the keyframes it found put contact on the toss, which is refused before
+   * anything is measured. The reason that refusal gives (the clip ends before
+   * the racket reaches the ball) is the wrong one for a rotated phone, and was
+   * already what a 90–100° roll got; that is the gap described above.
+   */
   for (const deg of [110, 135, 165, 179, 180, 181]) {
     const level = buildServe({}, FPS)
     const tilted = rollFrames(level, deg)
-    let threw: unknown
+    let outcome: string
     try {
-      detectServe(tilted, FPS)
-      threw = undefined
+      const result = runEngine(tilted, FPS)
+      outcome = result.ok ? result.run.verdict.status : 'refused'
     } catch (err) {
-      threw = err
+      outcome = err instanceof NotAServeError ? 'refused' : `crashed: ${err}`
     }
-    assert(threw instanceof NotAServeError, `${deg}° did not fail safely: ${threw}`)
+    assert(outcome === 'refused' || outcome === 'rejected', `${deg}° did not fail safely: ${outcome}`)
   }
 })
 

@@ -471,7 +471,8 @@ within 20 ms. Three things do not, and each is pinned as a KNOWN check in
   guide puts the phone. *Fixed by D7.2's first half: the guide's placement is
   side-on on all 40 serves and reports `contactAhead`.*
 - **The toss keyframe lands 90–210 ms after the tossing hand peaks**, because
-  it is read against the shoulder while the trunk tilts.
+  it is read against the shoulder while the trunk tilts. *Fixed by D7.3: it lands within
+  a few milliseconds of the hand's peak.*
 
 ### Wave D7 — Agree with real motion
 Every item is proven against the Bath set (the KNOWN checks flip) and anchored
@@ -526,13 +527,38 @@ to the literature, never re-derived from one player.
       - **R60·2 reopened.** From the guide's placement the stance reads at 18
         times its noise, because a real front foot is ahead towards the net.
         Platform against pinpoint is readable after all.
-- [ ] **D7.3 Toss from the hand** · M, was S. *Blocked on the rig: its tossing
-      hand rises after the toss as the body lifts under a held arm, so a
-      hand-peak toss lands 0.5 s late on every rig serve. Re-pose the rig's
-      tossing arm first. Original plan:* Take release from the tossing hand's own
-      path (its peak, or its upward speed falling away), not from wrist-over-
-      shoulder. *Proof:* toss keyframe within ±40 ms of the hand's peak on the
-      Bath set; rig toss readings re-checked.
+- [x] **D7.3 Toss from the hand** · M, was S. *Done (2026-10-07), without
+      re-posing the rig's tossing arm: the release is the first top of the
+      hand's lift after its fastest rise (`findRelease`), not its highest
+      point, so a held arm that the legs lift later does not count. The height
+      is the hand over the hips from the world landmarks plus the hips' rise
+      and fall from the picture. Picture height alone read 40 ms late from the
+      guide's placement, because of perspective. On the Bath serves the toss
+      lands a median 4–7 ms from the hand's peak at every placement and frame
+      rate without noise, and within ±50 ms (p10–p90) with tracker noise. It
+      was 90–210 ms late. The KNOWN check flipped. The readings taken at the
+      toss moved modestly on real serves (hold 70 → 75%, sync-at-release
+      0.11 → 0.04, total time +25 ms), and no new fault is named. The
+      toss-drift floor rose from 0.006 to 0.007 by its own 1.5× rule. Original
+      plan:* Take release from the tossing hand's own path (its peak, or its
+      upward speed falling away), not from wrist-over-shoulder. *Proof:* toss
+      keyframe within ±40 ms of the hand's peak on the Bath set; rig toss
+      readings re-checked.
+- [ ] **D7.7 Hand-under-elbow from the guide's placement** · S. *Found while
+      checking D7.3.* Two of the 40 real full drops read 0% from the guide's
+      placement at 30 fps. This was already true before D7.3. The 4% floor sits
+      at that placement's lowest tenth, so a real drop can be read out as
+      "Hand never gets under the elbow". From that camera the reading cannot
+      separate a real drop from none at the low end. Decide whether to
+      withdraw its grade or move it to a placement-aware floor. *Proof:* no
+      real drop from any bench placement reads under the floor.
+- [ ] **D7.8 Say a rotated phone, not a missing contact** · S. *Found while
+      checking D7.3, already true before it.* A clip rolled 89–110° is refused
+      as "The clip ends before the racket reaches the ball", because the
+      keyframes found in a sideways picture put contact on the toss. Estimate
+      roll before the full skeleton exists, as the note on R14 in
+      `triage.test.ts` describes. *Proof:* rolled clips get a camera-angle
+      refusal.
 - [~] **D7.4 Contact height that does not depend on the phone** · M. *Leniency
       done (2026-10-07): bands re-anchored to published impact heights, a
       measured `CAMERA_ALLOWANCE` before `low_contact` is named, and contact

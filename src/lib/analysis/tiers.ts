@@ -393,7 +393,12 @@ export const NOISE_FLOOR: Record<string, number> = {
   spine_lean_deg: 7,
   // The rest are read from x and y, which the camera genuinely saw, and are an
   // order of magnitude steadier for it.
-  toss_drift_ratio: 0.006,
+  //
+  // 0.007 rather than 0.006 since the toss keyframe moved onto the tossing
+  // hand's peak (`findRelease`): the drift is read from the start of the lift
+  // to that keyframe, and ending it at the peak rather than 150 ms after it
+  // took the deviation to about 0.0045, which 1.5× rounds up past 0.006.
+  toss_drift_ratio: 0.007,
   drop_depth_ratio: 0.012,
   elbow_lift_ratio: 0.012,
   contact_height_ratio: 0.012,
