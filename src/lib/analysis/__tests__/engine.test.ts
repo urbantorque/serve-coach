@@ -694,14 +694,14 @@ check('a trunk that barely rotates is not handed a coil sign by noise', () => {
 /**
  * A serve a club player actually hits, rather than one dialled fault at a time.
  *
- * No racket drop — so the arm is already straight at the bottom of the "drop" —
+ * No racket drop — the hand stays high above the shoulder at the bottom of it —
  * barely bent knees, a flat trophy and contact a hand's width below full reach.
  * This is the shape the score curve has to stay humane about: a player like this
  * misses several bands at once by construction, which is why `SCORE_FLOOR` sits
  * at 30 and not near zero.
  */
 const RECREATIONAL: Partial<ServeDials> = {
-  dropBelowShoulder: 0.03,
+  dropBelowShoulder: -0.25,
   contactReach: 1.2,
   trophyKneeAngle: 160,
   shoulderTilt: 8,
@@ -716,8 +716,8 @@ const BADGE_DIALS: Partial<ServeDials>[] = [
   { trophyKneeAngle: 176 },
   { shoulderTilt: 6 },
   { shoulderYaw: 68, hipYaw: 59 },
-  { contactReach: 1.15 },
-  { dropBelowShoulder: 0.03 },
+  { contactReach: 1.0 },
+  { dropBelowShoulder: -0.25 },
 ]
 
 check('the badge and the band agree on every measurement, both ways round', () => {
@@ -1029,7 +1029,7 @@ check('stiff legs are reported as a loading fault', () => {
 })
 
 check('a shallow racket drop is reported as a swing fault, not rejected', () => {
-  const { fundamentals } = run({ dropBelowShoulder: 0.03 })
+  const { fundamentals } = run({ dropBelowShoulder: -0.25 })
   const dd = metric(fundamentals, 'dropDepth')
   assert(dd.status === 'work' || dd.status === 'fair', `drop depth scored ${dd.score} with no drop`)
   assert(Boolean(dd.fix), 'no fix offered for a shallow drop')
@@ -1039,15 +1039,23 @@ check('a shallow racket drop is reported as a swing fault, not rejected', () => 
  * The commonest serve this app will ever be shown.
  *
  * Ten degrees of knee bend is below the trough `findTrophy` insists on, so the
- * trophy is looked for in the arms; the racket hand comes down to shoulder
- * height and no further, so there is no fall for the arms to find either. Both
+ * trophy is looked for in the arms; the racket hand stays well above the
+ * shoulder, so there is no fall for the arms to find either. Both
  * keyframes end up on the toss — the state `derivation.dropOnTrophy` records —
  * and the interval between them stops being the swing's acceleration window.
  *
  * Not a pathological rig setting: this is a club player who stands tall and
  * pushes the racket at the ball, which is most of them.
  */
-const MODAL_CLUB_SERVE: Partial<ServeDials> = { trophyKneeAngle: 170, dropBelowShoulder: 0 }
+/**
+ * A racket that never lays back: the hand left well above the shoulder.
+ *
+ * Since the drop band was re-anchored on real motion (ANALYSIS-REVIEW.md §9) a
+ * hand that stops level with the shoulder is a full drop, so the poses below
+ * that used `dropBelowShoulder` 0–0.05 for "no drop" now hold the hand 25 cm
+ * above it instead — the forearm still upright, which is what a missing drop is.
+ */
+const MODAL_CLUB_SERVE: Partial<ServeDials> = { trophyKneeAngle: 170, dropBelowShoulder: -0.25 }
 
 /**
  * A toss already falling by the time the racket arrives, built by hand.
@@ -1136,8 +1144,9 @@ check('a drop that did happen is still timed', () => {
   // legs load, so the trophy comes off the knees and the racket bottoms out at
   // its own moment however shallow that moment is — a real interval, and taking
   // it away from every player whose drop is merely shallow would cost far more
-  // than the collapsed case ever cost.
-  const frames = buildServe({ dropBelowShoulder: 0.03 }, FPS)
+  // than the collapsed case ever cost. Dialled at the shallowest drop that still
+  // dips: the hand 20 cm above the shoulder, just outside the band.
+  const frames = buildServe({ dropBelowShoulder: -0.2 }, FPS)
   const skel = detectServe(frames, FPS)
   assert(!skel.derivation.dropOnTrophy, 'a drop found at its own moment was called a collapse')
 
@@ -1164,7 +1173,7 @@ check('the collapsed drop is spotted at any frame rate', () => {
 })
 
 check('a low reach is reported as a contact fault', () => {
-  const low = run({ contactReach: 1.15 }).fundamentals
+  const low = run({ contactReach: 1.0 }).fundamentals
   const full = run({ contactReach: 1.38 }).fundamentals
   const ch = metric(low, 'contactHeight')
   assert(ch.status === 'work' || ch.status === 'fair', `contact height scored ${ch.score} at 1.15×`)

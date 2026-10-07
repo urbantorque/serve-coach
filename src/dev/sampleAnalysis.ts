@@ -124,7 +124,9 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
     shoulderYaw: 62,
     hipYaw: 58,
     shoulderTilt: 5,
-    contactReach: 1.16,
+    // Well under the contact band, which since it was re-anchored on published
+    // impact heights starts at 1.14; 1.16 used to sit below the old 1.28.
+    contactReach: 1.0,
     tossElbow: 138,
   },
 }

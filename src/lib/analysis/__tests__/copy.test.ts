@@ -359,13 +359,16 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Strong drive up', high: 'Strong drive up' },
   },
   dropDepth: {
-    stamp: '6585e1cf',
+    // Re-stamped when the band moved from the hand down the back (0.16–0.34) to
+    // the hand near the shoulder (−0.1–0.3), on real serve motion — and the rungs
+    // were renamed for the hand, which is what is measured.
+    stamp: '7bc4dc23',
     insight: {
-      low: ['Racket stays at the shoulder', 'Racket half drops'],
-      ok: ['Racket falls down the back'],
-      high: ['Racket falls past the back'],
+      low: ['Hand stays above the shoulder'],
+      ok: ['Hand level with the shoulder', 'Hand below the shoulder'],
+      high: ['Hand far down the back'],
     },
-    aim: { low: 'Racket falls down the back', high: 'Racket falls down the back' },
+    aim: { low: 'Hand level with the shoulder', high: 'Hand below the shoulder' },
   },
   elbowAtDrop: {
     stamp: 'd737de98',

@@ -674,7 +674,7 @@ export function normalise(raw: unknown): Session | undefined {
     video: s.video ?? { name: 'Your serve', durationMs: 0, width: 0, height: 0 },
     handedness: s.handedness === 'left' ? 'left' : 'right',
     quality: usableQuality(s.quality),
-    focus: s.focus ?? {
+    focus: usableFocus(s.focus) ?? {
       title: 'Keep filming',
       why: 'This report was saved by an older version of the app, so some detail is missing.',
       drill: { name: '', how: '', reps: '' },
@@ -864,6 +864,25 @@ function withChain(d: Analysis['diagnosis']): Analysis['diagnosis'] {
  * cannot be handed something they will throw on, without pretending to validate
  * seventeen nested rows a hand-edited backup could still get subtly wrong.
  */
+/**
+ * A stored focus, or nothing for `normalise` to replace.
+ *
+ * The focus card splits `why` into sentences and names `drill.name` with no
+ * guard, so a focus of the wrong shape is a blank screen rather than a missing
+ * line. It used to be passed through whole whenever it was present at all; that
+ * held only while every stored serve also named a fault, because the report
+ * then wrote its focus from the triage verdict and never read this one.
+ */
+function usableFocus(raw: unknown): Session['focus'] | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined
+  const f = raw as Record<string, unknown>
+  const d = f.drill as Record<string, unknown> | null | undefined
+  const text = (v: unknown) => typeof v === 'string'
+  if (!text(f.title) || !text(f.why)) return undefined
+  if (typeof d !== 'object' || d === null || !text(d.name) || !text(d.how) || !text(d.reps)) return undefined
+  return f as unknown as Session['focus']
+}
+
 /** A stored drill check, or nothing — see `analysis/progressions.ts`. */
 function usableDrillCheck(raw: unknown): Session['drillCheck'] {
   if (typeof raw !== 'object' || raw === null) return undefined

@@ -32,7 +32,9 @@ import type { Fundamental, Metric } from '../types'
 const FPS = 50
 
 /**
- * Rigid legs and a racket that never falls behind the back.
+ * Rigid legs and a racket that never falls behind the back: the hand stays
+ * well above the shoulder (a hand that stops level with it is a full drop on
+ * real motion — ANALYSIS-REVIEW.md §9).
  *
  * The same dials `engine.test.ts` calls the modal club serve, repeated here
  * rather than imported so that this file states the shape it is about. Both
@@ -40,7 +42,7 @@ const FPS = 50
  * rig change that quietly gave this serve a drop fails loudly instead of turning
  * every check below into a statement about a different player.
  */
-const COLLAPSED: Partial<ServeDials> = { trophyKneeAngle: 170, dropBelowShoulder: 0 }
+const COLLAPSED: Partial<ServeDials> = { trophyKneeAngle: 170, dropBelowShoulder: -0.25 }
 
 function analyse(dials: Partial<ServeDials>, fps = FPS) {
   const frames = buildServe(dials, fps)

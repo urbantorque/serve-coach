@@ -1,6 +1,6 @@
 import type { ServeType } from '../storage/prefs'
 import { readoutOf, targetOf } from './anatomy'
-import { FUNDAMENTALS, metricCopy, type MetricCopy } from './coaching'
+import { FUNDAMENTALS, METRICS, metricCopy, type MetricCopy } from './coaching'
 import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
 import { assessSpatial } from './spatial'
 import { cue } from './voice'
@@ -175,6 +175,37 @@ function steadyAngle(
     steadyWorld(frames, idx, b, radius),
     steadyWorld(frames, idx, c, radius),
   )
+}
+
+/**
+ * How far either side of contact the straightest arm is looked for, in seconds.
+ *
+ * Arm extension used to be read at the contact sample with its neighbours
+ * averaged in — ±33 ms either side of impact at 30 fps, smoothing straight
+ * through the event the methods brief warns against (Knudson & Bahamonde 2001).
+ * The arm straightens into the ball and folds after it, so the reading moved
+ * with wherever the samples happened to fall: on the 40 real serves in the Bath
+ * capture, the same serve read a median 6.8° apart at 30 and 60 fps, and up to
+ * 16°, against a band 20° wide.
+ *
+ * The straightest the arm gets near contact has a flat top, so a few
+ * milliseconds of timing error barely move it. Over ±50 ms the two frame rates
+ * agree to a median 2.1° (worst 5.7°), and the reading lands within 2.1° of the
+ * same quantity taken from the capture in 3D. Fifty milliseconds also holds the
+ * racket head's highest point, which on those serves comes 15–31 ms after the
+ * wrist's.
+ */
+const ARM_EXTENSION_WINDOW = 0.05
+
+/** The straightest racket arm within `ARM_EXTENSION_WINDOW` of contact, or nothing in reach. */
+function straightestArm(frames: Frame[], contactT: number, R: ReturnType<typeof sided>): number | undefined {
+  let best: number | undefined
+  for (const f of frames) {
+    if (Math.abs(f.t - contactT) > ARM_EXTENSION_WINDOW) continue
+    const angle = jointAngle(f.world[R.shoulder], f.world[R.elbow], f.world[R.wrist])
+    if (Number.isFinite(angle) && (best === undefined || angle > best)) best = angle
+  }
+  return best
 }
 
 /**
@@ -487,7 +518,9 @@ export function measure(
 
   /* -------------------------------------------------------------- contact */
   values.contactHeight = above(fContact, R.wrist)
-  values.armExtension = steadyAngle(frames, keys.contact, R.shoulder, R.elbow, R.wrist)
+  values.armExtension =
+    straightestArm(frames, skel.times.contact, R) ??
+    steadyAngle(frames, keys.contact, R.shoulder, R.elbow, R.wrist)
 
   {
     const ankleTrophy = midpoint(fTrophy.image[LM.leftAnkle], fTrophy.image[LM.rightAnkle])
@@ -593,6 +626,7 @@ export function measure(
       // answer on the right side of a rung. See `HAND_HANG_MIN_SAMPLES`.
       .filter((m) => (m === 'handUnderElbow' ? m in values : true))
       .map((m) => build(m, values[m], confidenceCtx, serveType, measuredAxis[m]))
+      .map((m) => (m?.id === 'dropDepth' && skel.derivation.dropOnTrophy ? neverFell(m) : m))
       // And whatever `build` declined to invent. Everything above this line
       // names a condition we can see coming and drops the measurement for a
       // stated reason; this catches the ones we cannot — an arithmetic that came
@@ -619,6 +653,38 @@ export function measure(
       drill: def.drill,
     }
   })
+}
+
+/**
+ * The racket drop on a serve whose racket never fell.
+ *
+ * `dropToContact` and `elbowAtDrop` leave the card when the drop lands on the
+ * trophy, because each would be a number about a keyframe that never happened.
+ * The drop row stays, because it is the one that says so — but its band cannot.
+ * The band asks where the hand was at the bottom of the drop, and since it was
+ * re-anchored on real motion (a hand near the shoulder is a full drop) a racket
+ * that never moved from the trophy can sit inside it. The old band only agreed
+ * with the collapse by accident.
+ *
+ * So the judgement comes from the structure, as `shallow_drop`'s does in
+ * `flaws.ts`: scored at the curve's floor, told the low-side insight and fix,
+ * and read out as what happened rather than as a position the value would
+ * otherwise be given a name for.
+ */
+function neverFell(m: Metric): Metric {
+  const copy = METRICS.dropDepth
+  // The score curve's floor — the whole miss, since a drop that never happened
+  // is as far from the band as the measurement can be.
+  const floor = scoreAgainst(Number.NEGATIVE_INFINITY, copy.ideal, copy.range, copy.missSpan)
+  const score = Math.min(m.score, floor)
+  return {
+    ...m,
+    score,
+    status: statusOf(score),
+    readout: 'Racket never falls',
+    insight: cue(copy.insight.low),
+    fix: cue(copy.fix.low),
+  }
 }
 
 /**

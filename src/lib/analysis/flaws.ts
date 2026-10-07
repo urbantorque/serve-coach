@@ -17,6 +17,7 @@
  */
 import type { BodyAxis } from './axes'
 import {
+  CAMERA_ALLOWANCE,
   NOISE_FLOOR,
   SEVERITY_RANK,
   SIGNALS,
@@ -269,8 +270,15 @@ export function evaluateFlaws(
      * severity goes with it: a finding that says `detected: false` and
      * `severity: 'high'` is two answers to one question, and `triage` sorts on
      * the second.
+     *
+     * And outside it by more than the phone's position alone can move it
+     * (`CAMERA_ALLOWANCE`). Real clips come from wherever the player could prop
+     * a phone, and the same serve reads a different contact height from the
+     * side than from the back fence; a fault named inside that spread would be
+     * a fault in the camera.
      */
-    const resolvable = miss >= (NOISE_FLOOR[spec.signal] ?? 0)
+    const resolvable =
+      miss >= Math.max(NOISE_FLOOR[spec.signal] ?? 0, CAMERA_ALLOWANCE[spec.signal] ?? 0)
 
     /*
      * A racket that never fell is a shallow drop, whatever the depth says.

@@ -394,27 +394,35 @@ export const METRICS: Record<string, MetricCopy> = {
     unit: '×',
     phase: 'drop',
     weight: 1.2,
-    ideal: [0.16, 0.34],
-    range: [0, 0.5],
+    // The hand, not the racket: this is how far the racket hand sits below the
+    // shoulder at the bottom of the drop. A real drop leaves it near shoulder
+    // height while the racket head falls behind the back — Fleisig 2003's
+    // maximum external rotation, and the Bath motion capture, which reads −0.01
+    // to −0.06 here (ANALYSIS-REVIEW.md §9). The band used to want 0.16–0.34,
+    // the hand between the shoulder blades, and scored every real serve low.
+    // Wide at both ends on purpose: only a hand that stays well above the
+    // shoulder means the racket never laid back.
+    ideal: [-0.1, 0.3],
+    range: [-0.25, 0.5],
     decimals: 3,
     insight: {
-      low: 'Your racket **never falls** behind your back, so the swing starts half finished.',
-      ok: 'Your racket **falls down your back** before it fires, and that fall is where racket speed comes from.',
-      high: 'A **deep drop**, with plenty of runway to accelerate.',
+      low: 'Your hand **stays high** at the bottom of the swing, so the racket never lays back behind you.',
+      ok: 'The racket **lays back behind you** before it fires, and that fall is where racket speed comes from.',
+      high: 'Your hand drops **well down your back**, which can leave the racket by your side instead of behind you.',
     },
     fix: {
-      low: '**Let the racket fall** until you could scratch between your shoulder blades. Loose grip, no lifting.',
+      low: '**Let the racket head fall** behind you while your elbow stays up at shoulder height. Keep the grip loose.',
       high: '**Keep the elbow up** so the racket stays behind your back, not down by your side.',
     },
     drill: {
       // Named for what the body does, not for the coaching shorthand. "Back
       // scratch" is a phrase you have to already know to picture, and it now
       // reaches the player through the largest heading on the report — the
-      // triage layer routes a shallow drop straight here. The instruction
-      // underneath already says where the racket goes, in words that need no
-      // translation.
+      // triage layer routes a shallow drop straight here. It is also wrong about
+      // where the hand goes: the racket head falls, the hand stays near the
+      // shoulder, so the instruction says that in words that need no translation.
       name: 'Let the racket fall',
-      how: 'Serve at half pace and let the racket fall between your shoulder blades before firing.',
+      how: 'Serve at half pace. Let the racket head fall behind your back, elbow up, then swing up.',
       reps: '20 serves',
     },
   },
@@ -541,7 +549,13 @@ export const METRICS: Record<string, MetricCopy> = {
     unit: '×',
     phase: 'contact',
     weight: 1.3,
-    ideal: [1.28, 1.5],
+    // The wrist, not the ball. Published impact heights put a beginner's wrist
+    // at about 1.20 in these units and an elite server's at about 1.27 (see
+    // `contact_height_ratio` in tiers.ts for the arithmetic); the floor sits
+    // `CAMERA_ALLOWANCE` below the first of those, because the same serve reads
+    // up to 0.12 apart from different phone positions. It was 1.28 — above the
+    // elite mean — and scored ordinary club contact as short.
+    ideal: [1.14, 1.5],
     range: [0.9, 1.7],
     decimals: 2,
     insight: {
@@ -965,14 +979,11 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
       // serve could be badged "Solid" under a readout naming a fault, or under
       // one naming the flat serve's target.
       contactAhead: [0, 8],
-      // Lower than a flat serve, and lower by a whole rung rather than by the
-      // couple of hundredths a kick is really struck below one. The card speaks
-      // in rungs, so a floor at 1.22 sat inside "struck below full reach" and
-      // praised the top of that rung while correcting the bottom of it: two kick
-      // serves, one readout, opposite verdicts. The ceiling stays where the flat
-      // serve's is, because a kick reached for at the very top of the stretch has
-      // been driven through rather than brushed up.
-      contactHeight: [1.1, 1.5],
+      // No contact-height band of its own any more. It sat a whole rung below the
+      // flat serve's, which only made sense while that band started at 1.28;
+      // published kick and flat impact heights are within a centimetre of each
+      // other (Vacek 2023: 1.50 and 1.51 statures, professional men), and the
+      // flat band now starts at 1.14, already lower than this one used to.
       // More cartwheel: the hitting shoulder drops further under the ball, and
       // this band starts where the flat one stops. The steep tilt the flat card
       // calls arching is the tilt a kick is hit with — the flat serve's fault is

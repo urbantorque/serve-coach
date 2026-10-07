@@ -181,8 +181,13 @@ check('posture collapse is caught, and a shallow drop is told from a real one', 
   const collapsed = run({ spineLean: 26, tossWobble: 0.09 }, 5).diagnosis
   assert(flagged(collapsed).includes('posture_collapse'), 'collapse missed')
 
-  const shallow = run({ dropBelowShoulder: 0.05 }, 5).diagnosis
+  // A hand left 25 cm above the shoulder: the racket never lays back. A hand
+  // that stops level with the shoulder is a full drop on real motion
+  // (ANALYSIS-REVIEW.md §9), so that is no longer the pose for this.
+  const shallow = run({ dropBelowShoulder: -0.25 }, 5).diagnosis
   assert(flagged(shallow).includes('shallow_drop'), 'a hand that never fell was read as a drop')
+  const level = run({ dropBelowShoulder: -0.1 }, 5).diagnosis
+  assert(!flagged(level).includes('shallow_drop'), 'a hand stopping near the shoulder was called shallow')
   const deep = run({}, 5).diagnosis
   assert(!flagged(deep).includes('shallow_drop'), 'a real drop was called shallow')
 })
@@ -225,7 +230,7 @@ check('a low contact off a low toss is blamed on the toss', () => {
     samples: [],
     confidence: 0.9,
   }
-  const { diagnosis } = run({ contactReach: 1.15 }, 5, ball)
+  const { diagnosis } = run({ contactReach: 1.0 }, 5, ball)
   const contact = findingFor(diagnosis, 'low_contact')
   assert(Boolean(contact?.detected), 'a low contact was not caught')
   assert(
@@ -239,7 +244,7 @@ check('a low contact off a low toss is blamed on the toss', () => {
 })
 
 check('a low contact off a good toss is left as a contact fault', () => {
-  const { diagnosis } = run({ contactReach: 1.15 }, 5)
+  const { diagnosis } = run({ contactReach: 1.0 }, 5)
   const contact = findingFor(diagnosis, 'low_contact')
   assert(Boolean(contact?.detected), 'a low contact was not caught')
   assert(!contact?.caused_by, 'a contact fault was blamed on a toss nobody measured')
@@ -277,12 +282,15 @@ check('root causes are listed ahead of the symptoms they explain', () => {
   // floor is one re-derivation away from testing the floor instead of the
   // ordering it is here for.
   // The pair used to be early rotation and arming the ball; arming is no
-  // longer named, so the elbow and the drop it shortens stand in — the same
-  // causal link, measured on the same serve.
-  const { diagnosis } = run({ dropBelowShoulder: 0.05 }, 5)
+  // longer named, so the elbow and the drop stood in. They cannot any more: a
+  // shallow drop is now a hand left high, and the rig solves its elbow from the
+  // hand, so it cannot drop the elbow and hold the hand up in the same serve.
+  // The drifting toss and the spine that chases it are the same kind of link,
+  // posed together above.
+  const { diagnosis } = run({ spineLean: 26, tossWobble: 0.09 }, 5)
   const order = diagnosis.flaws.filter((f) => f.detected).map((f) => f.flaw)
-  const cause = order.indexOf('collapsed_elbow')
-  const symptom = order.indexOf('shallow_drop')
+  const cause = order.indexOf('toss_drift')
+  const symptom = order.indexOf('posture_collapse')
   assert(cause >= 0 && symptom >= 0, 'the pair under test did not both fire')
   assert(cause < symptom, 'the symptom was listed ahead of its own cause')
 })
@@ -298,10 +306,16 @@ check('the same serve is asked for more at each level up', () => {
     flagged(nine).length >= flagged(four).length,
     'a stronger player was asked for no more than a beginner',
   )
+  // Contact height, not the racket drop, which used to carry this check: hand
+  // depth does not separate levels on real motion, so its band is the same at
+  // every rung on purpose (`drop_depth_ratio` in tiers.ts).
+  const reachAtFour = findingFor(four, 'low_contact')!.target[0]
+  const reachAtNine = findingFor(nine, 'low_contact')!.target[0]
+  assert(reachAtNine > reachAtFour, 'the contact height asked of a 9 was no higher than for a 4')
+  note(`contact target ${reachAtFour.toFixed(2)} at tier 4, ${reachAtNine.toFixed(2)} at tier 9`)
   const dropAtFour = findingFor(four, 'shallow_drop')!.target[0]
   const dropAtNine = findingFor(nine, 'shallow_drop')!.target[0]
-  assert(dropAtNine > dropAtFour, 'the racket drop asked of a 9 was no deeper than for a 4')
-  note(`drop target ${dropAtFour.toFixed(2)} at tier 4, ${dropAtNine.toFixed(2)} at tier 9`)
+  assert(dropAtNine === dropAtFour, 'the racket drop band moved with the level again')
 })
 
 check('every finding carries the tier its target came from', () => {

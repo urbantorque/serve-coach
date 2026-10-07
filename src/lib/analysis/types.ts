@@ -53,7 +53,11 @@ export interface Frame {
 // 3: the knee-bend band reopened to the 27-study meta-analysis, and the two ball
 // bands — toss peak and fall before contact — re-anchored to published toss
 // heights. Each moves a score a saved report already carries.
-export const SCORING_VERSION = 3
+// 4: re-anchored on real serve motion (ANALYSIS-REVIEW.md §9) — a hand near the
+// shoulder is a full racket drop, contact height starts at what published
+// impact heights put a club wrist at, and arm extension is the straightest the
+// arm gets near contact rather than one frame-rate-dependent sample.
+export const SCORING_VERSION = 4
 
 /**
  * What a report saved before the stamp existed is worth.

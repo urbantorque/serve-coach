@@ -137,8 +137,28 @@ export const SIGNALS: Record<string, SignalSpec> = {
     unit: 'ratio',
     direction: 'higher',
     // Racket hand below the hitting shoulder at the bottom of the drop, in
-    // standing heights.
-    anchors: { 3: [0.08, 0.52], 5: [0.13, 0.52], 7: [0.18, 0.52], 9: [0.23, 0.52] },
+    // standing heights; negative is the hand above it.
+    //
+    // RE-ANCHORED ON REAL MOTION (ANALYSIS-REVIEW.md §9). The old ladder asked
+    // for the hand 0.08–0.23 below the shoulder — the "hand between the shoulder
+    // blades" image the rig was posed to — and named `shallow_drop` as the first
+    // fix on all 40 real serves in the Bath motion capture, from every phone
+    // position. At a real racket drop the arm is at maximum external rotation:
+    // upper arm about level with the shoulder, forearm laid back (Fleisig 2003:
+    // 101° abduction, 104° elbow flexion), so the racket head falls and the hand
+    // stays near shoulder height. The Bath serves read −0.01 to −0.06 here while
+    // their racket heads fell 35–44 cm.
+    //
+    // So the floor now catches only a hand that stays well above the shoulder —
+    // a forearm still mostly upright, a racket that never lays back — at about
+    // 18 cm on an adult. The same floor at every rung, deliberately: how deep the
+    // hand goes does not separate levels, so it should not move with them, and a
+    // flat band leaves this signal out of `inferTier` by that function's own rule.
+    // Lenient on purpose as well, because the rung a real clip needs to clear here
+    // has to survive odd angles and rough footage; a racket that never fell at
+    // all is named structurally (`racketNeverFell` in `flaws.ts`) whatever this
+    // number says.
+    anchors: { 3: [-0.1, 0.52], 5: [-0.1, 0.52], 7: [-0.1, 0.52], 9: [-0.1, 0.52] },
     seriousMiss: 0.09,
   },
   elbow_lift_ratio: {
@@ -208,7 +228,15 @@ export const SIGNALS: Record<string, SignalSpec> = {
     id: 'contact_height_ratio',
     unit: 'ratio',
     direction: 'higher',
-    anchors: { 3: [1.16, 1.62], 5: [1.23, 1.62], 7: [1.29, 1.62], 9: [1.33, 1.62] },
+    // The racket wrist at contact. Re-anchored on the literature and real motion
+    // (ANALYSIS-REVIEW.md §9): ball impact is 1.43 statures for beginners and
+    // 1.49 for elite servers (Girard 2005), and the racket head peaks 0.26
+    // statures above the wrist (the Bath capture, 0.46 m on a 1.80 m player), so
+    // the wrist reaches about 1.17 to 1.23 statures. In this engine's units —
+    // heights from the ankle line, over nose height ÷ 0.93, which reads stature
+    // about 8% short — that is about 1.20 to 1.27. The old ladder topped out at
+    // 1.33 and started at 1.16, above most of that range.
+    anchors: { 3: [1.08, 1.62], 5: [1.14, 1.62], 7: [1.2, 1.62], 9: [1.25, 1.62] },
     seriousMiss: 0.12,
   },
   toss_peak_ratio: {
@@ -372,6 +400,32 @@ export const NOISE_FLOOR: Record<string, number> = {
   toss_peak_ratio: 0.02,
   // One and a half of its ensemble deviation, 0.006, rounded up to the next hundredth.
   leg_drive_rise_ratio: 0.01,
+}
+
+/**
+ * How far the phone's position alone moves a signal, filming the same serve.
+ *
+ * Not the same thing as `NOISE_FLOOR`, and kept apart because it acts in only
+ * one of the two places that table is read. A noise floor is how far one camera
+ * wobbles between two takes; this is how far two cameras disagree about one
+ * take, which no amount of repeat filming from the same spot reveals. A player
+ * cannot be told their contact is low by a number the angle could have made.
+ *
+ * Measured, not assumed: the 40 Bath serves filmed by a virtual phone from five
+ * places players stand one (`npm run bench:mocap`). Perspective is the cause —
+ * from the left side or the back fence the hitting hand meets the ball further
+ * from the lens than the hips the body is measured by, so it reads small — and
+ * the medians spread from 1.11 to 1.23 for the same serves. Half that spread,
+ * since a reading sits somewhere inside it rather than at one end.
+ *
+ * Applied where a fault is named (`evaluateFlaws`), never to the rating
+ * (`inferTier`), for the reason `rungStep` gives: there a wider allowance would
+ * let a signal claim a higher rung and hand the player a harder target.
+ * Signals read from world joint angles show no spread here and have no entry;
+ * that says the angle does not move them, not that MediaPipe's depth is exact.
+ */
+export const CAMERA_ALLOWANCE: Record<string, number> = {
+  contact_height_ratio: 0.06,
 }
 
 /**
@@ -1042,10 +1096,13 @@ export function severityOf(signal: string, value: number, band: [number, number]
  * this cannot tell rung 5 from rung 6 — whichever rung it reports is the noise
  * talking — so `inferTier` drops it rather than averaging it in, the same way
  * `metrics.ts` drops a value it could not compute instead of defaulting one.
- * Currently that excludes `hip_lead_ms` (76 ms floor against a 7 ms rung) and
- * `separation_deg` (9° against 2.8°), leaving the two signals read from x and y,
- * which the camera genuinely saw. Both excluded signals are still measured, still
- * shown and still graded for flaws; what they no longer do is guess a rating.
+ * Currently that excludes every one of the four: `hip_lead_ms` (76 ms floor
+ * against a 7 ms rung), `separation_deg` (9° against 2.8°), `drop_depth_ratio`,
+ * whose band no longer moves with the rung at all — real motion showed hand
+ * depth does not separate levels — and `contact_height_ratio`, which the phone's
+ * position moves by four rungs (`CAMERA_ALLOWANCE`). The excluded signals are
+ * still measured, still shown and still graded for flaws; what they no longer do
+ * is guess a rating, and a player who is not at the default can say so.
  *
  * A rule rather than a list, so that re-deriving `NOISE_FLOOR` from real footage
  * puts a signal back to work by itself. If a floor comes down below its rung the
@@ -1066,7 +1123,14 @@ function rungStep(signal: string): number {
 export function inferTier(signals: Record<string, number>): number {
   const used = ['contact_height_ratio', 'drop_depth_ratio', 'separation_deg', 'hip_lead_ms']
     .filter((s) => Number.isFinite(signals[s]))
-    .filter((s) => (NOISE_FLOOR[s] ?? 0) < rungStep(s))
+    // Both kinds of spread, because a rating has to survive both: the same
+    // phone filming twice, and two phones filming once. Contact height is the
+    // signal the second half removes — the phone's position moves it 0.12
+    // (`CAMERA_ALLOWANCE`) on a ladder whose rungs are 0.03 apart — so on real
+    // footage no signal rates a player, and the answer is the stated default
+    // until the player moves it. The same serve then meets the same targets
+    // wherever the phone stood.
+    .filter((s) => Math.max(NOISE_FLOOR[s] ?? 0, CAMERA_ALLOWANCE[s] ?? 0) < rungStep(s))
   if (!used.length) return 4
 
   // Capped one below the top of the ladder. An inferred rating is a guess, and a

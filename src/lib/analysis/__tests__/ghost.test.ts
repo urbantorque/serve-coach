@@ -76,7 +76,7 @@ const ghostAtContact = (dials: Partial<ServeDials> = {}) => {
  * silently passing on a serve that needs no correction.
  */
 function lowServe() {
-  for (const contactReach of [1.15, 1.18, 1.2, 1.24, 1.28]) {
+  for (const contactReach of [1.0, 1.04, 1.06, 1.08, 1.1, 1.12]) {
     const g = ghostAtContact({ contactReach })
     if (g.ghost && g.metric) return { ...g, contactReach }
   }
@@ -153,7 +153,7 @@ check('the gap line is the miss, not the miss plus half a band', () => {
    * so the ratio is on the record rather than argued about.
    */
   let worst = 0
-  for (const contactReach of [1.15, 1.2, 1.24, 1.26, 1.27]) {
+  for (const contactReach of [1.0, 1.06, 1.1, 1.11, 1.115]) {
     const g2 = ghostAtContact({ contactReach })
     if (!g2.ghost || !g2.metric) continue
     const near2 = (g2.scale.groundY - g2.ghost.reachY) / g2.scale.bodyHeight

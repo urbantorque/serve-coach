@@ -44,7 +44,10 @@ const MESSY: Partial<ServeDials> = {
   palmToSky: 80,
   trophyForearmDrop: 0.22,
   tossWobble: 0.09,
-  dropBelowShoulder: 0.05,
+  // A racket that never lays back: the hand held 25 cm above the shoulder. A hand
+  // stopping level with the shoulder is a full drop on real motion
+  // (ANALYSIS-REVIEW.md §9), so the old 0.05 no longer broke anything here.
+  dropBelowShoulder: -0.25,
   hipLead: -0.09,
   spineLean: 26,
 }

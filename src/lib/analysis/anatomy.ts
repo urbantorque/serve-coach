@@ -109,11 +109,14 @@ const LADDERS: Record<string, Stop[]> = {
   ],
 
   /* ------------------------------------------------------------------ swing */
+  // Named for the hand, because the hand is what is measured. These said
+  // "racket stays at the shoulder" for a hand at shoulder height, which is
+  // where the hand sits on a real full drop while the racket falls behind it.
   dropDepth: [
-    { under: 0.06, tag: 'Racket stays at the shoulder' },
-    { under: 0.16, tag: 'Racket half drops' },
-    { under: 0.34, tag: 'Racket falls down the back' },
-    { under: Infinity, tag: 'Racket falls past the back' },
+    { under: -0.1, tag: 'Hand stays above the shoulder' },
+    { under: 0.1, tag: 'Hand level with the shoulder' },
+    { under: 0.3, tag: 'Hand below the shoulder' },
+    { under: Infinity, tag: 'Hand far down the back' },
   ],
   elbowAtDrop: [
     { under: 40, tag: 'Racket jammed on the back' },
@@ -144,8 +147,8 @@ const LADDERS: Record<string, Stop[]> = {
 
   /* ---------------------------------------------------------------- contact */
   contactHeight: [
-    { under: 1.1, tag: 'Struck at head height' },
-    { under: 1.28, tag: 'Struck below full reach' },
+    { under: 1.04, tag: 'Struck at head height' },
+    { under: 1.14, tag: 'Struck below full reach' },
     { under: 1.5, tag: 'Struck at full racket reach' },
     { under: Infinity, tag: 'Struck at the top of the reach' },
   ],

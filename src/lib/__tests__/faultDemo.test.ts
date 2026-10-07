@@ -112,7 +112,7 @@ check('a left-hander sees the racket arm on their own side', () => {
 })
 
 check('the ball, the pancake and the faults with no shape are not offered', () => {
-  for (const flaw of ['toss_height', 'pancake_contact', 'arming_the_ball', 'early_shoulder_rotation', 'toss_drift'] as const) {
+  for (const flaw of ['toss_height', 'pancake_contact', 'arming_the_ball', 'early_shoulder_rotation', 'toss_drift', 'shallow_drop'] as const) {
     assert(!hasDemo(flaw), `${flaw} is offered a demonstration it cannot show`)
   }
   assert(!hasDemo(undefined), 'a report with no named fault offered a demo')

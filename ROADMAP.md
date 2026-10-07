@@ -476,7 +476,12 @@ within 20 ms. Three things do not, and each is pinned as a KNOWN check in
 Every item is proven against the Bath set (the KNOWN checks flip) and anchored
 to the literature, never re-derived from one player.
 
-- [ ] **D7.1 Re-anchor the drop** · M. Grade the racket's fall by what a camera
+- [x] **D7.1 Re-anchor the drop** · M. *Done (2026-10-07): a hand near the
+      shoulder is a full drop, one floor at every level, and a racket that
+      never fell is scored and read out as such on the card. The elbow-angle
+      grading was not used: this set's elbow angles carry a marker offset
+      (`ANALYSIS-REVIEW.md` §9). The rig's drop pose is left as it was, because
+      the new band holds it. Original plan:* Grade the racket's fall by what a camera
       can see of it: the elbow folded (interior angle at the low point; WTA
       top-40 67°, lower-ranked 52°, Gao 2026) and the hand behind the head.
       Stop asking the hand to drop below the shoulder. Re-pose the rig's drop
@@ -490,11 +495,18 @@ to the literature, never re-derived from one player.
       routing against it. *Proof:* the guide placement is filed as side and
       reports `contactAhead`; the back fence is not; the rig and the Bath set
       agree on which is which.
-- [ ] **D7.3 Toss from the hand** · S. Take release from the tossing hand's own
+- [ ] **D7.3 Toss from the hand** · M, was S. *Blocked on the rig: its tossing
+      hand rises after the toss as the body lifts under a held arm, so a
+      hand-peak toss lands 0.5 s late on every rig serve. Re-pose the rig's
+      tossing arm first. Original plan:* Take release from the tossing hand's own
       path (its peak, or its upward speed falling away), not from wrist-over-
       shoulder. *Proof:* toss keyframe within ±40 ms of the hand's peak on the
       Bath set; rig toss readings re-checked.
-- [ ] **D7.4 Contact height that does not depend on the phone** · M. Correct for
+- [~] **D7.4 Contact height that does not depend on the phone** · M. *Leniency
+      done (2026-10-07): bands re-anchored to published impact heights, a
+      measured `CAMERA_ALLOWANCE` before `low_contact` is named, and contact
+      height no longer rates the player, since the phone moves it four rungs.
+      The perspective correction itself is still open. Original plan:* Correct for
       the hand's depth against the body plane, or report the height only from
       placements where it holds, and cite the wrist band (D2.2). *Proof:* the
       five placements agree within the noise floor on the Bath set.

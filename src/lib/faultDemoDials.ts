@@ -20,15 +20,15 @@ import type { PhaseId } from './analysis/types'
  *     is the shape the fault makes (`trophyForearmDrop`'s own comment);
  *   · the spine lean is dialled without the toss wobble the flaw suite pairs it
  *     with, so the picture is the collapse and not its cause;
- *   · a collapsed elbow and a shallow drop share one dial, because the elbow
- *     falling is what makes the drop shallow (`flaws.ts`).
+ *   · a collapsed elbow is the hand stopping near the shoulder with the elbow
+ *     fallen beside it, which the stick figure shows.
  *
  * The moment is the keyframe the fault's own signal is read at in
  * `diagnose.ts` — where the picture parks for a player who has asked for less
  * motion, so the still they see is the instant the app judged.
  *
  * ONLY FAULTS A STICK FIGURE CAN SHOW. Every entry must differ from its fix by
- * `DEMO_MIN_DIFFERENCE` at that moment (`faultDemo.test.ts`). Three named faults
+ * `DEMO_MIN_DIFFERENCE` at that moment (`faultDemo.test.ts`). Four named faults
  * were built and measured and did not, and two people standing side by side
  * looking the same under "this fault" and "the fix" teaches nothing:
  *
@@ -41,14 +41,20 @@ import type { PhaseId } from './analysis/types'
  *     hand's own wander is 0.08, and the trail follows the racket hand rather
  *     than the tossing one.
  *
+ *   · `shallow_drop` is the racket failing to lay back behind the player, and
+ *     the picture draws no racket. Since the drop band was re-anchored on real
+ *     motion (ANALYSIS-REVIEW.md §9) the fault is a hand left high above the
+ *     shoulder against a hand near it, and at the moment the fault is read —
+ *     the trophy, for a racket that never fell — the two bodies were measured
+ *     0.000 apart. Withdrawn rather than shown as two identical figures.
+ *
  * `toss_height` is the ball too, and the pancake is never named (`flaws.ts`).
  */
 export const DEMOS: Partial<Record<FlawId, { dials: Partial<ServeDials>; moment: PhaseId }>> = {
   waiters_tray: { dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, moment: 'trophy' },
   posture_collapse: { dials: { spineLean: 26 }, moment: 'contact' },
   collapsed_elbow: { dials: { dropBelowShoulder: 0.05 }, moment: 'drop' },
-  shallow_drop: { dials: { dropBelowShoulder: 0.05 }, moment: 'drop' },
-  low_contact: { dials: { contactReach: 1.15 }, moment: 'contact' },
+  low_contact: { dials: { contactReach: 1.0 }, moment: 'contact' },
 }
 
 /**

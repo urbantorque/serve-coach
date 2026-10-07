@@ -638,3 +638,72 @@ alone. Every change above should be anchored to the literature cited in
 `.scratch/research-biomech.md`, with this set as the check that real motion
 passes. Each of the first three is pinned in `mocap.test.ts` as a **KNOWN**
 check, so the change that fixes it goes red and has to say so.
+
+### Fixed, with leniency for real footage (2026-10-07, scoring version 4)
+
+The owner asked for these to be applied, and for grading that copes with
+imperfect clips from different angles. The approach throughout is the one
+`LOOP.md` asks for: no threshold is lowered just to admit clips. Each band moves
+to what the evidence supports, and where the phone's position alone can move a
+reading, that spread is measured and allowed for.
+
+- **The racket drop.** `drop_depth_ratio` and the `dropDepth` card now take a
+  hand near the shoulder as a full drop. Only a hand left well above it is
+  flagged: about 18 cm, the forearm still upright. The floor is the same at
+  every level, because depth does not separate levels. A racket that never
+  falls is still named structurally (`racketNeverFell`), and the card now says
+  so too: on a collapsed drop it is scored at the curve's floor and reads out
+  "Racket never falls", where before it only agreed by accident of the old
+  band. The readouts describe the hand, which is what is measured. The "Show
+  me" demonstration of a shallow drop is withdrawn: the stick figure draws no
+  racket, and the hand differs from the fix by nothing at the judged moment.
+- **Contact height.** Re-anchored to published impact heights (Girard 2005)
+  less the racket head's height above the wrist (0.26 statures on the Bath
+  serves): a club wrist sits at about 1.20–1.27 in the engine's units, so the
+  card's old 1.28 floor was above the elite mean. A new `CAMERA_ALLOWANCE`
+  (0.06, half the 0.12 spread the same serves show between phone positions)
+  must be cleared before `low_contact` is named. The kick serve's lower band is
+  gone, since published kick and flat impact heights are within a centimetre.
+- **The rating.** Contact height had become the only signal rating a player.
+  The phone's position moves it across four rungs, so the same serve was set
+  different targets from the two sides of the baseline. 36 of 40 were told
+  their shoulders opened early from one side and 5 of 40 from the other. By
+  `inferTier`'s own rule a signal whose spread is wider than a rung does not
+  vote, so with no voter left the rating is the stated default until the player
+  moves it. The report already says the rating is a mark the player can change.
+- **Arm extension.** It was read at the contact sample with its neighbours
+  averaged in, ±33 ms through impact at 30 fps. The same real serve read a
+  median 6.8° (up to 16°) apart at 30 and 60 fps, on a band 20° wide. It is now
+  the straightest the arm gets within ±50 ms of contact: 2.1° apart (worst
+  5.7°), and within 2.1° of the same quantity in 3D.
+- **Found on the way:**
+  - The rig could not pose a contact below about 1.14. Its follow-through was a
+    fixed height, so a low reach peaked after contact. That is fixed, and the
+    default serve is bit-identical.
+  - A stored report with a malformed focus crashed the report screen instead of
+    being repaired on load (`usableFocus`). This was hidden while every stored
+    serve also named a fault.
+
+**After the fixes, on the 40 Bath serves.** From every placement and frame rate,
+37–40 of 40 are given no named fault. The exception is a handful of
+`low_contact` from the rear-oblique left placement, where contact reads lowest.
+`shallow_drop` and `early_shoulder_rotation` are named on none. Before, every
+serve was given a fault to fix first.
+
+**Not fixed yet, and why.**
+- **The toss keyframe (D7.3).** Taking release from the hand's own peak is
+  right for real motion and wrong for the rig. The rig's tossing hand keeps
+  rising after the toss as the body lifts under a held arm, peaking at 1.5 s
+  against a toss at 1.0 s. The rig's tossing arm needs re-posing first, which
+  moves every toss reading, so it gets its own round.
+- **The camera model (D7.2).** Untouched. The rating change above removes its
+  largest effect on verdicts; `contactAhead` from the guide's placement still
+  waits on it.
+
+**A caution about this set's elbow angles.** The elbow centres are averages of
+skin markers on the back of the joint. Swapping between the candidate centres
+moves an angle ±3–4°, but a shared offset of 3 cm would read a straight arm
+about 12° bent. The tossing arm reads 146° and the hitting arm about 135° at
+contact, against published 150–166°. These are not used to judge any
+elbow-angle band. Only relative findings, such as frame-rate agreement, are
+drawn from them.

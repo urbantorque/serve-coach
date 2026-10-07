@@ -1244,11 +1244,15 @@ check('a signal too coarse to tell one rung from the next does not rate a player
     `an unresolvable signal rated a player on its own: ${inferTier({ hip_lead_ms: -30 })}`,
   )
 
-  // And the signals that *can* resolve a rung still do, or the fix is a deletion.
+  // And contact height no longer rates a player either. It used to be the one
+  // signal left that could, on the rig — where every serve is filmed from the
+  // same place. Real serve motion filmed from five places reads the same serves
+  // 0.12 apart (`CAMERA_ALLOWANCE`), wider than four rungs of its ladder, so a
+  // strong-looking contact may only be a phone on the near side.
   assert(
-    inferTier({ contact_height_ratio: 1.34, drop_depth_ratio: 0.25 }) >
+    inferTier({ contact_height_ratio: 1.34, drop_depth_ratio: 0.25 }) ===
       inferTier({ contact_height_ratio: 1.17, drop_depth_ratio: 0.09 }),
-    'the two signals read from x and y stopped separating a strong serve from a weak one',
+    'a contact height the camera position can move by four rungs rated a player',
   )
 })
 
@@ -1561,8 +1565,9 @@ check('a symptom is still attributed to a cause too small to name', () => {
     {
       // Tier-4 target for a 5: [1.3, 1.86]. Just under, by less than the floor.
       toss_peak_ratio: { value: 1.285, confidence: 0.9 },
-      // Target [1.23, 1.62]. Clearly under, by more than the floor.
-      contact_height_ratio: { value: 1.19, confidence: 0.9 },
+      // Target [1.14, 1.62]. Clearly under, by more than the floor and the
+      // camera allowance both.
+      contact_height_ratio: { value: 1.0, confidence: 0.9 },
     },
     4,
   )

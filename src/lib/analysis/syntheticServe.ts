@@ -864,7 +864,14 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
           // The hand leaves contact immediately. Without this key the smoothstep
           // either side of contact makes a flat plateau, and a plateau has no
           // well-defined peak for anything to find.
-          [1.1, -0.95],
+          //
+          // At least 0.44 m under contact, which is where the default serve puts
+          // it. A fixed height let a low reach sit *under* its own follow-through
+          // — below about 1.19 the hand peaked after contact — so no dial could
+          // pose a contact lower than about 1.14 body heights. That was invisible
+          // while the contact band started at 1.28. Clamped with `min` so the
+          // default serve's key is the same number it always was.
+          [1.1, -Math.min(0.95, reachAboveHip - 0.44)],
           [1.35, 0.1],
         ],
         u,

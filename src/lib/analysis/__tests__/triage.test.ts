@@ -392,9 +392,9 @@ check('exactly one flaw and one drill come back, whatever was found', () => {
     trophyForearmDrop: 0.22,
     tossWobble: 0.09,
     spineLean: 26,
-    dropBelowShoulder: 0.05,
+    dropBelowShoulder: -0.25,
     hipLead: -0.09,
-    contactReach: 1.15,
+    contactReach: 1.0,
   })
   const out = messy.result
   assert(out.status === 'ok', `a readable clip was refused: ${out.reason}`)

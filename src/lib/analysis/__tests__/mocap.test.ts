@@ -13,7 +13,8 @@
  * - the engine's timing on real motion, against the 180 Hz capture;
  * - KNOWN — disagreements with reality this suite pins rather than hides. Each
  *   is a defect found by this data (ANALYSIS-REVIEW.md §9) and asserted as it
- *   stands, so the change that fixes it goes red here and has to say so.
+ *   stands, so the change that fixes it goes red here and has to say so. A fixed
+ *   one becomes a check that real motion passes.
  *
  * The full 40-serve picture, every placement and rate, is `npm run bench:mocap`.
  */
@@ -172,17 +173,18 @@ for (const fps of [30, 60, 120]) {
 
 heading('Real serve motion: KNOWN disagreements (ANALYSIS-REVIEW.md §9)')
 
-check('KNOWN: every real serve is told its racket drop is shallow', () => {
-  // The hand stays level with the shoulder at a real drop (checked above), and
-  // `drop_depth_ratio` / the `dropDepth` card band want it 0.08–0.52 and
-  // 0.16–0.34 body heights below. So `shallow_drop` fires on a serve whose
-  // racket head fell 30–50 cm behind the back. When the band is re-anchored
-  // this goes red: replace it with a check that real drops pass.
-  for (const bearing of [90, 180]) {
+check('a real racket drop is not called shallow, from any placement', () => {
+  // Was pinned as KNOWN: all 40 Bath serves were told their drop was shallow,
+  // because the bands wanted the hand down the back. Re-anchored to the hand
+  // near the shoulder (`drop_depth_ratio`, `dropDepth`), so real drops pass —
+  // and with room to spare, since a phone at an odd angle moves this reading.
+  for (const bearing of [90, 180, 270, 135, 225]) {
     const runs = readAll({ bearing })
     for (const { serve, run } of runs) {
-      const found = run.diagnosis.flaws.some((f) => f.flaw === 'shallow_drop' && f.detected)
-      assert(found, `${serve.id} from bearing ${bearing}: shallow_drop no longer fires`)
+      const found = run.diagnosis.flaws.find((f) => f.flaw === 'shallow_drop')
+      assert(found?.detected !== true, `${serve.id} from bearing ${bearing}: shallow_drop named`)
+      const card = run.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === 'dropDepth')
+      assert(card?.status === 'great' || card?.status === 'good', `${serve.id} drop card is ${card?.status}`)
     }
   }
 })
