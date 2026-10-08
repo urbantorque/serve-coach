@@ -238,7 +238,18 @@ this first.
       from 7–12 ms to under 2 at 60, 120 and 240 fps, and widens the drop's
       spread from 1–2 ms to 2.5–10, because the drop's smoothing is counted in
       samples sized from the clip's average rate and a dense window shrinks it in
-      time. The browser pass waits on the drop being smoothed in seconds.* *Partly delivered by D1.3: a stretched clip's window is now read four or eight times wider, so its swing is sampled that much denser. Real-time high-frame-rate files are still capped at 32 fps. Original plan:* Keep 32 fps for
+      time. The browser pass waits on the drop being smoothed in seconds.*
+      *Engine half held (2026-10-09), and that wait retired: smoothing the
+      drop over a span of time was built and measured against the rig's posed
+      instants, and made it no better (9.1 ms against 8.3 at 120 fps, 15.0
+      against 11.7 at 240). The dense drop spreads because its bottom is flat
+      for tens of milliseconds and more samples land on it, and it stays inside
+      one 32 fps sample, where nothing read at the drop can tell.
+      `swingDensity.test.ts` holds it: contact 11.9 → 1.5 ms (60 fps), 10.4 →
+      2.6 (120) and 6.5 → 3.5 (240) inside the 120-frame budget. Still open:
+      the browser pass that reads those frames. It needs a real-time MP4 of a
+      serve at 50 fps or more to prove MediaPipe's video tracking across a
+      third pass, and none is in the repo or the bench.* *Partly delivered by D1.3: a stretched clip's window is now read four or eight times wider, so its swing is sampled that much denser. Real-time high-frame-rate files are still capped at 32 fps. Original plan:* Keep 32 fps for
       ready → trophy; read trophy → contact + 0.1 s at 60/120/240 inside the
       existing frame budget. *Proof:* `buildServe(dials, fps)` at 30/60/120/240,
       keyframe error against the rig's true instants, ensemble at each rate.
