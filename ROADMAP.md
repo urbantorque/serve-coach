@@ -809,11 +809,23 @@ to the literature, never re-derived from one player.
       roll before the full skeleton exists, as the note on R14 in
       `triage.test.ts` describes. *Proof:* rolled clips get a camera-angle
       refusal.
-- [~] **D7.4 Contact height that does not depend on the phone** · M. *Leniency
+- [x] **D7.4 Contact height that does not depend on the phone** · M. *Leniency
       done (2026-10-07): bands re-anchored to published impact heights, a
       measured `CAMERA_ALLOWANCE` before `low_contact` is named, and contact
       height no longer rates the player, since the phone moves it four rungs.
-      The perspective correction itself is still open. Original plan:* Correct for
+      Perspective done (2026-10-09), without a camera model. The hips' height
+      still comes from the picture: they sit in the body's plane. The hand's
+      height above them now comes from the world skeleton, which is metric and
+      has no perspective, over the stature that skeleton gives
+      (`handHeight.ts`), the same move D7.7 made for the hand's order. On the
+      forty Bath serves the five placements' medians went from 1.112–1.267 to
+      1.211–1.234, within the noise floor of their midpoint, and every serve
+      reads 1.174–1.246 from every place. The rig, drawn without perspective,
+      moves by at most 0.013. `CAMERA_ALLOWANCE` re-derived to 0.012 (was
+      0.06). The KNOWN exception in `bands.test.ts` flipped and is gone. A
+      zoom drift now reaches half as much of the reading. The band's floor
+      stays at 1.14, now because every real serve sits above it.
+      `handHeight.test.ts`. Original plan:* Correct for
       the hand's depth against the body plane, or report the height only from
       placements where it holds, and cite the wrist band (D2.2). *Proof:* the
       five placements agree within the noise floor on the Bath set.

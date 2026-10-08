@@ -4,6 +4,7 @@ import { readoutOf, targetOf } from './anatomy'
 import { FUNDAMENTALS, METRICS, READINGS, metricCopy } from './coaching'
 import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
 import { assessSpatial } from './spatial'
+import { handHeightAt } from './handHeight'
 import { cue } from './voice'
 import {
   LM,
@@ -564,7 +565,8 @@ export function measure(
   }
 
   /* -------------------------------------------------------------- contact */
-  values.contactHeight = above(fContact, R.wrist)
+  // Without the lens's perspective in it — see `handHeight.ts` (D7.4).
+  values.contactHeight = handHeightAt(frames, skel, fContact, R.wrist)
   values.armExtension =
     straightestArm(frames, skel.times.contact, R) ??
     steadyAngle(frames, keys.contact, R.shoulder, R.elbow, R.wrist)

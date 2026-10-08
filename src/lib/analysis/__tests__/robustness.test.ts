@@ -1727,21 +1727,27 @@ check('height-normalised readings inflate with the zoom; angle readings do not m
   // A fifth of the frame by the end of the clip — a phone that visibly
   // drifts closer over one serve, not an extreme dial value.
   const zoomed = zoomedServe(0.2)
-  assert(
-    zoomed.contactHeight! > clean.contactHeight! * 1.05,
-    `a 20% zoom drift did not meaningfully inflate contactHeight: ${clean.contactHeight} -> ${zoomed.contactHeight}`,
-  )
+  // Less than it did. Since D7.4 only the hips' height comes from the picture
+  // and the hand's height above them from the world skeleton, which a zoom does
+  // not touch (`handHeight.ts`), so the drift reaches about half the reading:
+  // 4.3% here, where it used to pass 5%. Still a confident wrong number, and
+  // still pinned, because the hips' part is real.
+  const inflation = zoomed.contactHeight! / clean.contactHeight!
+  note(`contactHeight under a 20% zoom drift: ${clean.contactHeight?.toFixed(3)} -> ${zoomed.contactHeight?.toFixed(3)}`)
+  assert(inflation > 1.02, `a 20% zoom drift stopped inflating contactHeight at all: ${inflation.toFixed(3)}`)
+  assert(inflation < 1.05, `a 20% zoom drift inflated contactHeight by ${((inflation - 1) * 100).toFixed(1)}%, as before D7.4`)
   // Angles are scale-invariant by construction — the one class of
   // measurement this failure mode cannot touch, whatever the zoom.
   near(zoomed.kneeBend!, clean.kneeBend!, 1e-6, 'kneeBend under a 20% zoom drift')
 })
 
-check('a realistic-looking zoom is enough to flip a fundamental\'s status band', () => {
+check('a realistic-looking zoom no longer flips contact height\'s badge', () => {
   // Swept against this rig: 15% apparent growth over one serve — a phone
   // drifting closer during the swing, well short of the 80%-of-frame pan
-  // needed to flip `contactAhead`'s sign above — already moves contactHeight
-  // from a fair reading into a good one, on a serve whose technique has not
-  // changed at all.
+  // needed to flip `contactAhead`'s sign above — used to move contactHeight
+  // from a fair reading into a good one, on a serve whose technique had not
+  // changed at all. Since D7.4 halved its exposure (above) the badge holds; the
+  // reading still rises, and that is what this pins.
   const clean = zoomedServe(0)
   const zoomed = zoomedServe(0.15)
   note(`contactHeight status: clean=${clean.contactStatus} (${clean.contactHeight?.toFixed(3)}), zoomed=${zoomed.contactStatus} (${zoomed.contactHeight?.toFixed(3)})`)
@@ -1750,8 +1756,8 @@ check('a realistic-looking zoom is enough to flip a fundamental\'s status band',
     `expected the zoomed reading to read higher, got ${zoomed.contactHeight} vs clean ${clean.contactHeight}`,
   )
   assert(
-    zoomed.contactStatus !== clean.contactStatus,
-    `a 15% zoom drift did not move contactHeight's status band at all: stayed ${clean.contactStatus}`,
+    zoomed.contactStatus === clean.contactStatus,
+    `a 15% zoom drift moved contactHeight from ${clean.contactStatus} to ${zoomed.contactStatus}`,
   )
 })
 

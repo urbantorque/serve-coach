@@ -306,9 +306,9 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // about 8% short — that is about 1.20 to 1.27. The old ladder topped out at
     // 1.33 and started at 1.16, above most of that range.
     //
-    // It then climbed 1.08 to 1.25 with the rung, and that gap is under what the
-    // phone's position alone moves this reading (`CAMERA_ALLOWANCE`). One band
-    // now, the card's (`CARD_SIGNAL`): the beginners' figure less that allowance.
+    // It then climbed 1.08 to 1.25 with the rung, and that gap was under what
+    // the phone's position alone moved this reading until D7.4. One band now,
+    // the card's (`CARD_SIGNAL`), where its floor's reasons are written.
     anchors: cardBand('contactHeight'),
     seriousMiss: 0.12,
   },
@@ -552,6 +552,13 @@ export const NOISE_FLOOR: Record<string, number> = {
  * the medians spread from 1.11 to 1.23 for the same serves. Half that spread,
  * since a reading sits somewhere inside it rather than at one end.
  *
+ * MOSTLY GONE SINCE D7.4. The hand's height above the hips now comes from the
+ * world skeleton, which has no perspective in it (`handHeight.ts`), and the
+ * same forty serves agree from all five places to 0.023 (medians 1.211 to
+ * 1.234). Half of that is 0.012, the signal's own noise floor, so the allowance
+ * no longer widens anything; it stays as the measured figure, so a change that
+ * brings the spread back shows up here first. It was 0.06.
+ *
  * Applied where a fault is named (`evaluateFlaws`), never to the rating
  * (`inferTier`), for the reason `rungStep` gives: there a wider allowance would
  * let a signal claim a higher rung and hand the player a harder target.
@@ -559,7 +566,7 @@ export const NOISE_FLOOR: Record<string, number> = {
  * that says the angle does not move them, not that MediaPipe's depth is exact.
  */
 export const CAMERA_ALLOWANCE: Record<string, number> = {
-  contact_height_ratio: 0.06,
+  contact_height_ratio: 0.012,
 }
 
 /**
@@ -1416,8 +1423,8 @@ export function severityOf(signal: string, value: number, band: [number, number]
  * Currently that excludes every one of the four: `hip_lead_ms` (76 ms floor
  * against a 7 ms rung), `separation_deg` (30° against 2.8°), `drop_depth_ratio`,
  * whose band no longer moves with the rung at all — real motion showed hand
- * depth does not separate levels — and `contact_height_ratio`, which the phone's
- * position moves by four rungs (`CAMERA_ALLOWANCE`). The excluded signals are
+ * depth does not separate levels — and `contact_height_ratio`, whose band is
+ * the card's at every rung (`CARD_SIGNAL`). The excluded signals are
  * still measured, still shown and still graded for flaws; what they no longer do
  * is guess a rating, and a player who is not at the default can say so.
  *
@@ -1441,12 +1448,11 @@ export function inferTier(signals: Record<string, number>): number {
   const used = ['contact_height_ratio', 'drop_depth_ratio', 'separation_deg', 'hip_lead_ms']
     .filter((s) => Number.isFinite(signals[s]))
     // Both kinds of spread, because a rating has to survive both: the same
-    // phone filming twice, and two phones filming once. Contact height is the
-    // signal the second half removes — the phone's position moves it 0.12
-    // (`CAMERA_ALLOWANCE`) on a ladder whose rungs are 0.03 apart — so on real
-    // footage no signal rates a player, and the answer is the stated default
-    // until the player moves it. The same serve then meets the same targets
-    // wherever the phone stood.
+    // phone filming twice, and two phones filming once. Contact height was the
+    // signal the second half removed — the phone's position moved it 0.12 on a
+    // ladder whose rungs were 0.03 apart — and since D2.3 its band does not move
+    // with the rung at all. So on real footage no signal rates a player, and the
+    // answer is the stated default until the player moves it.
     .filter((s) => Math.max(NOISE_FLOOR[s] ?? 0, CAMERA_ALLOWANCE[s] ?? 0) < rungStep(s))
   if (!used.length) return 4
 

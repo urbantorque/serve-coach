@@ -80,7 +80,9 @@ export interface Frame {
 // from 15–38 to 8–38 and opened the top of the leg drive's; and every band
 // now stands on a study or on real serve motion (D2.1): release height, shoulder
 // tilt, arm extension and contact in front were re-anchored, and the tossing
-// arm, body extension, motion length and arm sync stopped being scored.
+// arm, body extension, motion length and arm sync stopped being scored; and the
+// hand's height at contact is read without the lens's perspective (D7.4), which
+// moves it on every real clip by up to 0.1 depending on where the phone stood.
 export const SCORING_VERSION = 5
 
 /**

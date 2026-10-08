@@ -22,6 +22,7 @@ import { readStance, type Stance } from './stance'
 import { readTossPlacement, type TossPlacement } from './tossPlacement'
 import { readHitch, type Hitch } from './hitch'
 import { readChestTurn, type ChestTurn } from './chestTurn'
+import { handHeightAt } from './handHeight'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -981,7 +982,8 @@ export function diagnose(
   // down the back with the elbow gone — the shape that looks like a drop on a
   // still and produces none of the racket speed.
   const elbowLift = (fDrop.image[R.shoulder].y - fDrop.image[R.elbow].y) / bodyHeight
-  const contactHeight = (groundY - fContact.image[R.wrist].y) / bodyHeight
+  // The card's own reading of the same number (`handHeight.ts`, D7.4).
+  const contactHeight = handHeightAt(frames, skel, fContact, R.wrist)
 
   const tossPeak = options.ball ? (groundY - options.ball.apex.y) / bodyHeight : undefined
 

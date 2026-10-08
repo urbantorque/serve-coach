@@ -653,9 +653,12 @@ export const METRICS: Record<string, MetricCopy> = {
     // The wrist, not the ball. Published impact heights put a beginner's wrist
     // at about 1.20 in these units and an elite server's at about 1.27 (see
     // `contact_height_ratio` in tiers.ts for the arithmetic); the floor sits
-    // `CAMERA_ALLOWANCE` below the first of those, because the same serve reads
-    // up to 0.12 apart from different phone positions. It was 1.28 — above the
-    // elite mean — and scored ordinary club contact as short.
+    // 0.06 below the first of those, because the same serve read up to 0.12
+    // apart from different phone positions. It was 1.28 — above the elite mean —
+    // and scored ordinary club contact as short. Since D7.4 the reading has no
+    // perspective in it (`handHeight.ts`) and the floor is held for a different
+    // reason: the forty Bath serves read 1.174–1.246 from every placement, and
+    // the beginners' 1.20 would call a sixth of a competent server's serves low.
     ideal: [1.14, 1.5],
     range: [0.9, 1.7],
     decimals: 2,

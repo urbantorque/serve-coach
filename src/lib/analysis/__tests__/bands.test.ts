@@ -32,8 +32,8 @@ const MOTION_FAULTS: Record<string, { dials: Partial<ServeDials>; side: 'low' | 
  * fixes it. The check below fails when one is fixed, so the entry goes with it.
  */
 const KNOWN: Record<string, string> = {
-  contactHeight:
-    'D7.4: from the guide placement the hand meets the ball further from the lens than the hips, so perspective reads it short',
+  // Empty since D7.4 took the perspective out of the hand's height at contact,
+  // which was the one entry here and flipped on its own.
 }
 
 const graded = (dials: Partial<ServeDials>, id: string, sideView: boolean) => {

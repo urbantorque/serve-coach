@@ -981,3 +981,24 @@ of four. The roll is now read only from frames where the shoulders and the feet
 or hips were seen, and gives no verdict when fewer than half the clip qualifies,
 so that clip is "not a serve" again. Real serves keep R at 0.98 or above from
 every placement, so a seen body that reads turned is a turned picture.
+
+### Contact height without perspective (2026-10-09, still scoring version 5)
+
+Read straight off the picture, the hand's height at contact is scaled by its
+distance from the lens. At contact the hand is well off the body's plane, so
+from the guide's side it reads short and from the other side tall. The forty
+Bath serves' medians ran from 1.112 to 1.267 across the five placements: four
+rungs of the old ladder, set by where the phone stood.
+
+No camera model is needed to take that out. The hips sit in the body's plane,
+so their height stays a picture reading. The hand's height above them comes
+from the world skeleton, which is metric and has no perspective, divided by
+the stature that skeleton gives. The medians now run from 1.211 to 1.234,
+within the noise floor of their midpoint, and every serve reads 1.174–1.246
+from every place. The rig is drawn without perspective, so its picture and
+its skeleton already agreed, and it moves by at most 0.013.
+
+The camera allowance this signal carried (0.06) re-derives the same way to
+0.012, its own noise floor, so it no longer widens anything. The known
+exception that held hand height outside its band on real serves from the
+guide's placement flipped and is gone.
