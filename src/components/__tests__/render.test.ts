@@ -38,7 +38,9 @@ import ConsistencyPanel from '../ConsistencyPanel'
 import Glance from '../../screens/Glance'
 import Home from '../../screens/Home'
 import Report from '../../screens/Report'
-import { sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
+import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
+import { CHECK_SERVES, progressionFor } from '../../lib/analysis/progressions'
+import { causalPlan } from '../../lib/analysis/verdict'
 import { buildConsistency } from '../../lib/analysis/consistency'
 import { normalise, type Session } from '../../lib/storage/db'
 import type { Analysis } from '../../lib/analysis/types'
@@ -261,6 +263,56 @@ check('the home screen renders with a history behind it', () => {
     }),
   )
   assert(out.includes('best '), 'the form card never reached the page')
+})
+
+check("the home screen carries this week's plan, in the report's order, on the player's own rung", () => {
+  // D4.4. A report with two fixes in it: the grip, and the spine.
+  const last = stored(sampleAnalysis(DEMO_DIALS.injury))
+  const plan = causalPlan(last.triage, last.diagnosis)
+  assert(plan.length >= 2, `the fixture report ranked ${plan.length} fix(es); the check needs two`)
+  const home = (sessions: Session[], ladder?: Partial<Record<string, number>>) =>
+    html(
+      createElement(Home, {
+        sessions,
+        offlineReady: true,
+        sessionsLoaded: true,
+        onPick: noop,
+        onOpen: noop,
+        ladder,
+        onShowGuide: noop,
+        onShowHistory: noop,
+        onShowSettings: noop,
+        onShowProgress: noop,
+        onGuideThen: noop,
+        onShowExample: noop,
+        needsHandedness: false,
+        onMakeOffline: noop,
+      }),
+    )
+  const escaped = (s: string) => s.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
+  const out = home([last])
+  assert(out.includes('This week'), 'no plan on the home screen')
+  const at = plan.map((p) => out.indexOf(escaped(p.title)))
+  assert(at.every((i) => i >= 0), `a fix the report ranked is missing: ${plan.map((p) => p.title).join(' / ')}`)
+  assert(at.every((i, k) => k === 0 || i > at[k - 1]), 'the plan is not in the order the report ranked it')
+  assert(out.includes(`Film a basket of ${CHECK_SERVES} on this step`), 'nothing says what to film to check it')
+
+  // The rung the player moved to, not the report's.
+  const ladder = progressionFor(plan[0].flaw!, plan[0].axis)!
+  const moved = home([last], { [plan[0].flaw!]: 1 })
+  assert(
+    moved.includes(escaped(ladder.steps[1].name)) && moved.includes(`step 2 of ${ladder.steps.length}`),
+    'the plan ignored the rung the player had moved to',
+  )
+
+  // A refused clip filmed since does not blank it.
+  const refused: Session = {
+    ...stored(sampleAnalysis()),
+    id: 'serve-refused-0',
+    createdAt: last.createdAt + 1,
+    triage: { ...last.triage!, status: 'rejected', reason: 'too_blurry' },
+  }
+  assert(home([refused, last]).includes(escaped(plan[0].title)), 'a refused clip blanked the plan')
 })
 
 /* ------------------------------------------- every stored shape, one at a time */

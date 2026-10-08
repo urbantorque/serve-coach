@@ -381,7 +381,14 @@ the coaching around it.
       measurement is scored against its pass mark, serve by serve. Pass moves
       you up a step; a miss offers the easier version. Extends the `practice`
       store with the step. *Proof:* seeded sessions through every transition.
-- [ ] **D4.4 A weekly plan on Home** · S. The current step of each of the 2–4
+- [x] **D4.4 A weekly plan on Home** · S. *Done (2026-10-09): "This week" on
+      Home lists the last report's ranked fixes (`causalPlan`, so the order is
+      the report's), each on the rung of its ladder the player has moved to,
+      with the basket that checks it. It replaces the one-line "last drill"
+      reminder; the R57b objection to repeating the report does not apply,
+      because the rung and the check are what the report's later fixes never
+      show. A refused clip filmed since does not blank it. Render checks in
+      `render.test.ts`. Original plan:* The current step of each of the 2–4
       ranked fixes, in `HIERARCHY` order, with what to film to check it. No
       notifications. *Proof:* render test; plan follows triage order.
 - [ ] **D4.5 Your best serve as the model** · S. The ghost overlay is the

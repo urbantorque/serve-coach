@@ -4,6 +4,7 @@ import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing, Sheet } from '../components/primitives'
 import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
+import { weekPlan } from '../lib/weekPlan'
 import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 
@@ -30,6 +31,8 @@ interface Props {
    */
   openFraming?: number
   onOpen: (session: Session) => void
+  /** Which rung of each fault's ladder the player is on — see `Prefs.ladder`. */
+  ladder?: Partial<Record<string, number>>
   onShowGuide: () => void
   onShowHistory: () => void
   /** Hand, backup and the device check — see the settings sheet in `App.tsx`. */
@@ -94,6 +97,7 @@ export default function Home({
   onRecorded,
   openFraming = 0,
   onOpen,
+  ladder,
   onShowGuide,
   onShowHistory,
   onShowSettings,
@@ -108,24 +112,17 @@ export default function Home({
   const recordRef = useRef<HTMLInputElement>(null)
   const recent = sessions.slice(0, 3)
   /*
-   * The newest report that actually named something to work on.
+   * This week's plan: the last report's ranked fixes, each on the rung of its
+   * ladder the player is on, with what to film to check it (`weekPlan`).
    *
-   * Newest-first, and it walks rather than taking `sessions[0]`: a refused clip
-   * has no focus, and one bad clip must not blank a reminder the player was
-   * given last week. It stops at the first report that has one, which is the
-   * last thing they were actually told.
-   *
-   * `focus` is on every stored report — it is the ranked plan's first rung,
-   * saved with the row — so this costs a walk over a list already in memory and
-   * no second opinion about what the plan was.
+   * It replaces a single line naming the last drill, which stood here because a
+   * second copy of the report's queue was refused (R57b): the report already
+   * says what was found and in what order. What it never says is where the
+   * player has got to on each ladder since, or what basket would move them on,
+   * and that is what this carries. Newest report first, walking past a refused
+   * clip, so one bad clip does not blank the plan.
    */
-  const lastPlan = useMemo(() => {
-    for (const session of sessions) {
-      const drill = session.focus?.drill?.name
-      if (drill) return { drill, session }
-    }
-    return undefined
-  }, [sessions])
+  const week = useMemo(() => weekPlan(sessions, ladder), [sessions, ladder])
   const progress = useMemo(() => buildProgress(sessions), [sessions])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
   const streak = useMemo(() => streakLine(sessions), [sessions])
@@ -312,39 +309,39 @@ export default function Home({
         )}
       </div>
 
-      {/*
-        What you were last asked to work on, without opening the report.
-        R57b — placement, not content.
-        
-        R57 asked for the drills as a page and was refused: the ranked plan on
-        the report already IS that session, in causal order with doses, and the
-        progress sheet renders the recurring one the same way. A third rendering
-        would be more screen and no more help.
-        
-        WHAT WAS ACTUALLY MISSING IS THAT NEITHER IS REACHABLE FROM HERE. The
-        report says in its own header that it is the wrong screen for somebody
-        holding a basket, and the practice card lives two taps away on the
-        progress sheet. So this is one line and a way in — the drill's name, and
-        the report it came from.
-        
-        ONE DRILL, NOT THE QUEUE, and that is the test round 48 set: it must not
-        say anything the report already says in the same words. A queue here
-        would be the refused page in a smaller box. The name is a reminder; the
-        method, the dose and the order stay where they are.
-        
-        Nothing new in the stylesheet: `.strap` is the shape immediately below
-        this — icon, title, subtitle, chevron — and it is already a button that
-        goes somewhere.
-      */}
-      {lastPlan && (
-        <button className="strap" onClick={() => onOpen(lastPlan.session)}>
-          <Icon name="target" size={17} />
-          <span>
-            <strong>{lastPlan.drill}</strong>
-            Last time you were working on this.
-          </span>
-          <Icon name="chevron" size={16} />
-        </button>
+      {/* Numbered, in the report's causal order, with the report's own queue
+          styles: the order is the instruction. The rung and the check are
+          what the report does not say. */}
+      {week && (
+        <section className="block week" aria-labelledby="week-title">
+          <div className="block-head">
+            <h2 className="block-title" id="week-title">
+              This week
+            </h2>
+            <button className="week-open" onClick={() => onOpen(week.from)}>
+              Last report
+              <Icon name="chevron" size={14} />
+            </button>
+          </div>
+          <ol className="week-list">
+            {week.items.map((item, i) => (
+              <li className="focus-next-item" key={item.flaw ?? item.drill.name}>
+                <span className="focus-next-rank">{i + 1}</span>
+                <div className="focus-next-body">
+                  <h3 className="focus-next-title">{item.title}</h3>
+                  <p className="focus-next-drill">
+                    <Icon name="target" size={14} />
+                    <span>
+                      <strong>{item.drill.name}</strong>
+                      {item.step && `, step ${item.step.at} of ${item.step.of}`}
+                    </span>
+                  </p>
+                  <p className="focus-next-why">{item.check}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
 
       <button className="strap" onClick={onShowGuide}>

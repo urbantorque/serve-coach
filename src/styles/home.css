@@ -408,3 +408,28 @@ button.badge[disabled] {
   display: inline-flex;
   gap: 4px;
 }
+
+/* The way back to the report the plan came from, as quiet as the Details link
+   on the form card, with a tap target taller than its text. */
+.week-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 32px;
+  font-size: 12px;
+  color: var(--fg-faint);
+  transition: color var(--fast) var(--ease);
+}
+
+.week-open:hover {
+  color: var(--fg-muted);
+}
+
+/* This week's plan. The rows are the report's queue rows (`.focus-next-*`),
+   so the two read as one pattern; only the box around them is new. */
+.week-list {
+  padding: 16px 17px 4px;
+  border-radius: var(--r-md);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+}

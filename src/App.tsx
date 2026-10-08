@@ -1250,6 +1250,7 @@ export default function App() {
               onRecorded={(f) => void openClip(f, true)}
               openFraming={framingNonce}
               onOpen={openSaved}
+              ladder={prefs.ladder}
               onShowGuide={() => setSheet('guide')}
               onShowHistory={() => setSheet('history')}
               onShowSettings={() => setSheet('settings')}
