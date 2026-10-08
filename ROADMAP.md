@@ -576,7 +576,17 @@ to the literature, never re-derived from one player.
       Original plan:* A capture that
       ends before the racket comes over is told it looks left-handed.
       *Proof:* the two unfinished Bath serves get a no-contact refusal.
-- [ ] **D7.6 Noise ensembles on real motion** · S. `filmMocap` takes the rig's
+- [x] **D7.6 Noise ensembles on real motion** · S. *Done (2026-10-08):
+      `realiseReal` films the six fixture serves sixty times each with the
+      rig's noise, scaled to the player's size in the picture, and
+      `depth.test.ts` holds every floor against both ensembles and prints the
+      table. Real motion asked for more on five signals, all read from depth or
+      at a fast moment: palm-to-sky 11 → 18, lean 7 → 10, elbow lift 0.012 →
+      0.017, pronation 31 → 76, and the coil 9 → 30, now `UNDER_RESOLVED`.
+      At 9 the coil named early shoulder rotation on 28% of real takes, and
+      every one of the forty serves flickered; at 30 it names none, and an open
+      chest is still caught 85% of the time from a corner. Forty serves agree with the six
+      (`ANALYSIS-REVIEW.md` §9). Original plan:* `filmMocap` takes the rig's
       `noise`, `depthNoise` and `depthBias`, so the ensembles behind every
       `NOISE_FLOOR` can be re-run on real serves and the self-referential
       floors (`ANALYSIS-REVIEW.md` F1) checked. *Proof:* a floor table, rig

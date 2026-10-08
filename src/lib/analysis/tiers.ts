@@ -296,6 +296,28 @@ export const SIGNALS: Record<string, SignalSpec> = {
  * such clips — `fixtures/index.ts` is empty. So these are provisional: the right
  * order of magnitude, honestly derived, and not yet confirmed against a real
  * camera. Re-derive them the moment there is footage.
+ *
+ * THE MOTION IS REAL NOW, THOUGH THE CAMERA IS NOT. Until D7.6 every figure
+ * here came from noise on the rig's serve, and the rig was written beside the
+ * bands, so the floors could only show the engine agreeing with itself
+ * (`ANALYSIS-REVIEW.md` F1). The same noise now runs on six real serves from
+ * the Bath motion capture as well (`realiseReal`, sixty takes each, scaled to
+ * the player's size in the picture), and every floor has to cover both. Real
+ * motion asked for more on five signals, all of them read from depth or at a
+ * moment the body is moving fast through, and those five floors rose:
+ *
+ *                      rig sd   real sd   floor was   floor now
+ *   pronation_deg       18.3     50.1        31          76
+ *   palm_to_sky_deg      4.2     11.7        11          18
+ *   separation_deg        —       8.8         9          30  (UNDER_RESOLVED)
+ *   spine_lean_deg       4.0      6.6         7          10
+ *   elbow_lift_ratio    0.006    0.011     0.012       0.017
+ *
+ * The others held. `hip_lead_ms` moves more on real motion (42 ms against 37)
+ * and its 76 still covers that, and every signal read from the picture plane
+ * is as steady on real motion as on the rig, or steadier. Confirmed on all
+ * forty Bath serves at sixty takes each, which agree with the six to within a
+ * rounding step.
  */
 export const NOISE_FLOOR: Record<string, number> = {
   // Two peak-finds on a smoothed derivative, differenced. Still the least
@@ -331,16 +353,25 @@ export const NOISE_FLOOR: Record<string, number> = {
   hip_lead_ms: 76,
   // Forearm rotation between two sampled instants, from the palm normal — a
   // 3D orientation recovered from landmarks the network placed in depth, on the
-  // smallest structure in the skeleton. The deviation is 20.2°, so 1.5 × that is
-  // 30.4, which rounds up to 31. Was 16, clipped to `seriousMiss`.
+  // smallest structure in the skeleton. The rig's deviation is 18.3°; real
+  // motion's is 50.1°, because a real hand turns fast through contact and the
+  // keyframe lands a sample either side of the turn, so 1.5 × that rounds up to
+  // 76. Was 31 from the rig alone, and 16 before that, clipped to `seriousMiss`.
   //
   // Nothing is graded against this floor any longer — `pancake_contact` is
   // measured and never named, for the reasons in `UNDER_RESOLVED` — but the
   // figure stays, because it is the measurement, and the day a better pronation
   // estimator arrives this is the number it has to beat.
-  pronation_deg: 31,
-  // Same normal, read on one frame near the trophy. Deviation 6.8°, so 1.5×
-  // rounds up to 11.
+  pronation_deg: 76,
+  // Same normal, read on one frame near the trophy. 18 since D7.6: real motion
+  // moves it 11.7° between takes of one serve against the rig's 4.2°, so 1.5×
+  // rounds up to 18. The cost, at sixty takes: the tray demonstration's dial is
+  // named on 93% rather than 97%, and a milder tray (60° rather than 80°) on 70%
+  // rather than 98%. What it buys is that no real serve is told it carries a
+  // tray because of the camera — 0 of 2,400 takes, from 0.2%.
+  //
+  // The rig's deviation was 6.8° when the paragraph below was written; the rig
+  // has since been re-posed on real motion (D7.2) and reads 4.2°.
   //
   // Was 10, and that one degree is worth the comment it costs. Nobody capped
   // this on purpose: 1.5 × 6.783 is 10.17, and somebody wrote down the round
@@ -349,9 +380,13 @@ export const NOISE_FLOOR: Record<string, number> = {
   // against the one-and-a-half this file documents. A rounded-down floor is a
   // cap however small and however accidental, and this is a signal that names a
   // grip fault, so it now rounds the way floors have to round — up.
-  palm_to_sky_deg: 11,
-  // A yaw difference. Hedged already by the camera check, and still this wide.
-  separation_deg: 9,
+  palm_to_sky_deg: 18,
+  // A yaw difference. Hedged already by the camera check, and wider than its
+  // own serious miss on real motion: see `UNDER_RESOLVED.separation_deg` for
+  // why it sits at 30 and not at the 14 its deviation asks for. Was 9, from a
+  // rig whose default camera cannot read the coil at all, so nothing had ever
+  // checked it.
+  separation_deg: 30,
   /*
    * Lateral spine angle, differenced against the ready position — so it carries
    * the error of two frames rather than one.
@@ -390,7 +425,18 @@ export const NOISE_FLOOR: Record<string, number> = {
    * continues. Nobody should move it on a 24-seed reading in either direction,
    * and 60 is now known not to be enough either.
    */
-  spine_lean_deg: 7,
+  //
+  // REAL MOTION MOVED IT AGAIN, AND THE ABOVE STILL HOLDS FOR THE RIG. The
+  // same noise on the Bath serves moves the lean 6.6° between takes, against
+  // the rig's 4.0°, so 1.5× rounds up to 10 — level with the 10° serious miss,
+  // not over it, so the signal is still resolved. It cost what the paragraph
+  // above priced, again: at sixty takes the rig's 26° collapse is named on 20%
+  // rather than 43%, a 30° one on 50% rather than 78%. What it bought is on
+  // real serves. At 7, 37 of 40 Bath serves were told their posture collapses
+  // on some takes and not others, 3.8% of all takes; at 10, 22 serves and 1.3%.
+  // The tail is long — 16 still leaves 0.2% — so the floor stops where its own
+  // rule puts it rather than chasing zero into a detector that never fires.
+  spine_lean_deg: 10,
   // The rest are read from x and y, which the camera genuinely saw, and are an
   // order of magnitude steadier for it.
   //
@@ -400,7 +446,10 @@ export const NOISE_FLOOR: Record<string, number> = {
   // took the deviation to about 0.0045, which 1.5× rounds up past 0.006.
   toss_drift_ratio: 0.007,
   drop_depth_ratio: 0.012,
-  elbow_lift_ratio: 0.012,
+  // 0.017 since D7.6: the rig's elbow moves 0.006 between takes and a real one
+  // 0.011. The back-scratch dial is named on every take either way, and no real
+  // serve was named at either floor.
+  elbow_lift_ratio: 0.017,
   contact_height_ratio: 0.012,
   toss_peak_ratio: 0.02,
   // One and a half of its ensemble deviation, 0.006, rounded up to the next hundredth.
@@ -460,6 +509,10 @@ export const CAMERA_ALLOWANCE: Record<string, number> = {
  * are runnable from that file as written; the suite runs the twenty-four, since
  * sixty is slow enough that it would stop being run at all. They are model
  * figures — see the caveat above `NOISE_FLOOR`.
+ *
+ * Since D7.6 a signal also lands here when real motion cannot resolve it —
+ * `realiseReal`, the same noise on the Bath serves — and `separation_deg` is
+ * the first to arrive that way: the rig's default camera never read it at all.
  */
 export const UNDER_RESOLVED: Record<string, string> = {
 
@@ -550,6 +603,48 @@ export const UNDER_RESOLVED: Record<string, string> = {
     'armed ones, and 57% of genuinely armed ones against 50% before',
 
   /*
+   * Kept, at a floor well above its deviation, because only an open chest
+   * survives the noise — and an open chest is the fault.
+   *
+   * Never checked until D7.6. The rig's default camera is side-on, outside the
+   * window `assessSpatial` reads depth in, so its ensemble drops the coil and
+   * the floor of 9 was never held to anything. Real motion from the guide's
+   * placement is read in depth, and there the coil moves 8.8° between takes of
+   * one serve (all forty Bath serves at sixty takes: 8.6°), so 1.5× asks for 14
+   * against a 12° serious miss. Under-resolved.
+   *
+   * At 9 the camera was naming the fault on its own. The Bath server's coil
+   * reads 12° without noise (6° to 17° across the forty serves), just under the
+   * tier-5 band's 13, and the noise pushes it over:
+   *
+   *                       real serves             rig, from a corner
+   *   floor       takes named  serves flicker   no coil left  open chest
+   *     9            27.8%         40 / 40          63%          100%
+   *    14            12.7%         40 / 40          30%          100%
+   *    20             4.4%         38 / 40           3%           97%
+   *    25             1.0%         15 / 40           2%           93%
+   *    30             0.0%          0 / 40           0%           85%
+   *
+   * Forty serves, sixty takes each, from the guide's placement at 50 fps; the
+   * rig cases over sixty seeds at a 45° camera. Not one Bath serve is named
+   * without the noise, so every naming in the first column is the camera's.
+   *
+   * 30 is the first floor that names none of them, which is the call
+   * `hip_lead_ms` made above for the same reason: the engine may miss a fault
+   * and may not invent one. What it gives up is the middle — shoulders and hips
+   * turned level, no coil left, is no longer named — and what it keeps is an
+   * open chest, shoulders already past the hips at the trophy, on 85%. That is
+   * the shape `FLAW_COPY.early_shoulder_rotation` describes. As with the hip
+   * lead, every finding now arrives at severity 'high'.
+   *
+   * `inferTier` already ignored this signal: 9° was wider than its 2.8° rung.
+   */
+  separation_deg:
+    'kept: floor 30, far above its 14 — the first floor that names no real ' +
+    'serve from the noise (0 of 2,400 takes, from 28% at 9), and an open ' +
+    'chest is still named on 85%',
+
+  /*
    * Not named. `pancake_contact` is measured and never reported to a player.
    *
    * Deviation 20.2° against a 16° serious miss, and unlike the hip lead there is
@@ -572,6 +667,10 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * still appearing in the code, which is the one outcome worse than removing
    * it.
    *
+   * Real motion settled it further (D7.6). The same noise on the Bath serves
+   * moves this reading 50.1° between takes of one serve, so the floor is now 76
+   * — twice the band's lower edge at any rung.
+   *
    * Both roads end in the same place, so this takes the one that says so. The
    * signal stays: `signals.pronation_deg` still carries the measured value, and
    * the `wrist_strain_forced_pronation` injury flag still reads it against an
@@ -591,7 +690,7 @@ export const UNDER_RESOLVED: Record<string, string> = {
    */
   pronation_deg:
     'not named: `pancake_contact` fires on 10% of clean serves against 35% of ' +
-    'genuine pancakes, and an unsigned angle cannot miss its band by 31°',
+    'genuine pancakes, and an unsigned angle cannot miss its band by 76°',
 }
 
 /**
@@ -1110,7 +1209,7 @@ export function severityOf(signal: string, value: number, band: [number, number]
  * talking — so `inferTier` drops it rather than averaging it in, the same way
  * `metrics.ts` drops a value it could not compute instead of defaulting one.
  * Currently that excludes every one of the four: `hip_lead_ms` (76 ms floor
- * against a 7 ms rung), `separation_deg` (9° against 2.8°), `drop_depth_ratio`,
+ * against a 7 ms rung), `separation_deg` (30° against 2.8°), `drop_depth_ratio`,
  * whose band no longer moves with the rung at all — real motion showed hand
  * depth does not separate levels — and `contact_height_ratio`, which the phone's
  * position moves by four rungs (`CAMERA_ALLOWANCE`). The excluded signals are

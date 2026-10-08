@@ -23,11 +23,21 @@
  * This is a model of camera noise, not a measurement of one. See the caveat at
  * the end of `depth.test.ts`; nothing here is confirmed against real footage,
  * because there is none.
+ *
+ * The motion is no longer only the rig's. `realiseReal` runs the same noise on
+ * six real serves (the Bath motion capture), and every floor has to cover both
+ * — the rig's motion was written beside the bands, so a floor derived from it
+ * alone only showed the engine agreeing with itself (`ANALYSIS-REVIEW.md` F1).
+ * Real motion asked for wider floors on four signals; see `NOISE_FLOOR`.
  */
+import fixture from './fixtures/bath-serves.json'
 import { diagnose, type Diagnosis } from '../diagnose'
+import { LM } from '../geometry'
+import { filmMocap, unpackMocap, type MocapServe, type PackedMocapServe } from '../mocapServe'
 import { detectServe } from '../phases'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { NOISE_FLOOR, SIGNALS, UNDER_RESOLVED } from '../tiers'
+import type { Frame } from '../types'
 import type { FlawId } from '../flaws'
 
 /**
@@ -155,9 +165,25 @@ export function realise(
   over: readonly number[] = SEEDS,
   fps = FPS,
 ): Realisation[] {
+  return realiseFilmed((seed) => buildServe({ ...DEPTH_AWARE, ...dials, seed }, fps), tier, over, fps)
+}
+
+/**
+ * The same ensemble on any filming of a serve: one clip per seed, read once.
+ *
+ * `realise` is this with the rig doing the filming; `realiseReal` is this with
+ * the virtual phone filming real motion. One reader for both, so the two
+ * tables in `depth.test.ts` cannot differ by anything but the serve.
+ */
+export function realiseFilmed(
+  film: (seed: number) => Frame[],
+  tier = 5,
+  over: readonly number[] = SEEDS,
+  fps = FPS,
+): Realisation[] {
   const out: Realisation[] = []
   for (const seed of over) {
-    const frames = buildServe({ ...DEPTH_AWARE, ...dials, seed }, fps)
+    const frames = film(seed)
     let skel
     try {
       skel = detectServe(frames, fps)
@@ -175,6 +201,65 @@ export function realise(
     })
   }
   return out
+}
+
+/**
+ * The six real serves in `fixtures/bath-serves.json` — the Bath motion
+ * capture, CC BY 4.0, attribution in that file and in `src/dev/mocap/bath.ts`.
+ */
+export const REAL_SERVES: MocapServe[] = (fixture.serves as PackedMocapServe[]).map((p) =>
+  unpackMocap(p, (text) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0))),
+)
+
+/**
+ * How tall the player stands in the picture, ankle line to the top of the
+ * head, in frame heights — nose height over 0.93, as `phases.ts` reads it.
+ */
+function statureInPicture(frame: Frame): number {
+  const ankle = Math.max(frame.image[LM.leftAnkle].y, frame.image[LM.rightAnkle].y)
+  return (ankle - frame.image[LM.nose].y) / 0.93
+}
+
+/** The rig's player in its own picture, which every noise figure here is sized against. */
+const RIG_STATURE = statureInPicture(buildServe({}, FPS)[0])
+
+/**
+ * Real serve motion, filmed by the virtual phone from the guide's placement
+ * with the rig's own camera noise: one ensemble per serve.
+ *
+ * The noise is scaled to the player rather than to the frame. The guide's
+ * phone at 4.5 m puts a 1.8 m server at about 0.31 of the picture, the rig's
+ * player fills 0.54, and the pose model reads a crop around the player
+ * (`pose/extract.ts`), so its error follows the body's size and not the
+ * frame's. Unscaled, the same jitter would land on real motion 1.7 times as
+ * large and the two tables would differ by the zoom instead of the serve.
+ *
+ * Kept per serve rather than pooled into one list, because a floor is about
+ * one serve filmed twice: six serves read as one population would add the
+ * player's serve-to-serve spread to the camera's.
+ */
+export function realiseReal(
+  serves: readonly MocapServe[] = REAL_SERVES,
+  over: readonly number[] = SEEDS,
+  fps = FPS,
+  tier = 5,
+): Realisation[][] {
+  return serves.map((serve) => {
+    const scale = statureInPicture(filmMocap(serve, { fps })[0]) / RIG_STATURE
+    return realiseFilmed(
+      (seed) =>
+        filmMocap(serve, {
+          fps,
+          seed,
+          noise: IN_PLANE * scale,
+          depthNoise: DEPTH_MULTIPLIER,
+          depthBias: DEPTH_BIAS * scale,
+        }),
+      tier,
+      over,
+      fps,
+    )
+  })
 }
 
 /**
@@ -248,7 +333,10 @@ export interface SignalDeviation {
   id: string
   /** Standard deviation across the ensemble, in the signal's own units. */
   sd: number
-  /** Full max-minus-min range, for a reader. Never used to set a threshold. */
+  /**
+   * Full max-minus-min range, for a reader — the widest any one serve's takes
+   * ran, when several serves are pooled. Never used to set a threshold.
+   */
   range: number
   /** How many realisations produced this signal at all. */
   n: number
@@ -270,7 +358,20 @@ export interface SignalDeviation {
  * ratios in one table sort meaninglessly any other way.
  */
 export function deviations(reals: Realisation[]): SignalDeviation[] {
-  return spreadOf(reals, (r) => r.signals)
+  return spreadOf([reals], (r) => r.signals)
+}
+
+/**
+ * The same, over several serves each filmed many times: the camera's spread
+ * within a serve, pooled across serves.
+ *
+ * Within-serve variances averaged, weighted by how many takes each serve
+ * produced, and never the spread of every take thrown into one list — that
+ * would add the player's own serve-to-serve variation to the camera's, and a
+ * floor is about the same serve filmed twice.
+ */
+export function pooledDeviations(groups: Realisation[][]): SignalDeviation[] {
+  return spreadOf(groups, (r) => r.signals)
 }
 
 /**
@@ -284,25 +385,34 @@ export function deviations(reals: Realisation[]): SignalDeviation[] {
  * beside signals measured in degrees.
  */
 export function chainDeviations(reals: Realisation[]): SignalDeviation[] {
-  return spreadOf(reals, (r) => r.chain)
+  return spreadOf([reals], (r) => r.chain)
 }
 
 function spreadOf(
-  reals: Realisation[],
+  groups: Realisation[][],
   pick: (r: Realisation) => Record<string, number>,
 ): SignalDeviation[] {
-  const ids = new Set(reals.flatMap((r) => Object.keys(pick(r))))
+  const all = groups.flat()
+  const ids = new Set(all.flatMap((r) => Object.keys(pick(r))))
   return [...ids]
     .map((id) => {
-      const xs = reals.map((r) => pick(r)[id]).filter((v) => Number.isFinite(v))
-      const mu = xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
-      const variance = xs.reduce((a, b) => a + (b - mu) ** 2, 0) / Math.max(1, xs.length)
+      let squares = 0
+      let n = 0
+      let range = 0
+      for (const reals of groups) {
+        const xs = reals.map((r) => pick(r)[id]).filter((v) => Number.isFinite(v))
+        if (!xs.length) continue
+        const mu = xs.reduce((a, b) => a + b, 0) / xs.length
+        squares += xs.reduce((a, b) => a + (b - mu) ** 2, 0)
+        n += xs.length
+        range = Math.max(range, Math.max(...xs) - Math.min(...xs))
+      }
       return {
         id,
-        sd: Math.sqrt(variance),
-        range: xs.length ? Math.max(...xs) - Math.min(...xs) : 0,
-        n: xs.length,
-        confidence: Math.min(...reals.map((r) => r.bySignal[id]?.confidence ?? 1)),
+        sd: Math.sqrt(squares / Math.max(1, n)),
+        range,
+        n,
+        confidence: Math.min(...all.map((r) => r.bySignal[id]?.confidence ?? 1)),
       }
     })
     .sort(
@@ -351,7 +461,16 @@ export interface FloorVerdict extends SignalDeviation {
 
 /** Every signal's floor, set beside what its own repeatability asks of it. */
 export function floorVerdicts(reals: Realisation[]): FloorVerdict[] {
-  return deviations(reals).map((d) => {
+  return verdictsOf(deviations(reals))
+}
+
+/** The same, for several serves each filmed many times — see `pooledDeviations`. */
+export function pooledFloorVerdicts(groups: Realisation[][]): FloorVerdict[] {
+  return verdictsOf(pooledDeviations(groups))
+}
+
+function verdictsOf(devs: SignalDeviation[]): FloorVerdict[] {
+  return devs.map((d) => {
     const floor = NOISE_FLOOR[d.id]
     const wanted = floorWanted(d.sd, d.id)
     const seriousMiss = SIGNALS[d.id]?.seriousMiss ?? Number.POSITIVE_INFINITY

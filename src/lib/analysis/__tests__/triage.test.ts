@@ -406,7 +406,7 @@ check('exactly one flaw and one drill come back, whatever was found', () => {
     palmToSky: 80,
     trophyForearmDrop: 0.22,
     tossWobble: 0.09,
-    spineLean: 26,
+    spineLean: 34,
     dropBelowShoulder: -0.25,
     hipLead: -0.09,
     contactReach: 1.0,
@@ -436,7 +436,7 @@ check('a bad toss outranks the swing faults underneath it', () => {
 })
 
 check('a player with a terrible toss is not lectured on sequencing', () => {
-  const { result } = pipeline({ tossWobble: 0.09, spineLean: 26, hipLead: -0.09 })
+  const { result } = pipeline({ tossWobble: 0.09, spineLean: 34, hipLead: -0.09 })
   assert(
     result.primary_flaw?.flaw !== 'arming_the_ball',
     'sequencing was named while the toss was still wrong',
@@ -473,8 +473,9 @@ check('a symptom is never chosen over the cause it was attributed to', () => {
 check('the swing is reached once the foundations are sound', () => {
   // From a corner: the guide's own camera sees a real server's shoulders
   // square, so the coil is hedged there and nothing in this group can be named
-  // from it (`flaws.test.ts`, "a trunk with no coil left at the trophy").
-  const { result } = pipeline({ shoulderYaw: 60, hipYaw: 56, cameraYaw: 45 })
+  // from it (`flaws.test.ts`, "a chest already open at the trophy"). An open
+  // chest, because a level trunk is under the floor real motion set.
+  const { result } = pipeline({ shoulderYaw: 82, hipYaw: 108, cameraYaw: 45 })
   assert(result.primary_flaw?.group === 'sequence', `chose ${result.primary_flaw?.group}`)
 })
 
@@ -537,7 +538,7 @@ check('an injury flag survives triage even when its flaw is not the one chosen',
   const { result } = pipeline({
     palmToSky: 80,
     trophyForearmDrop: 0.4,
-    spineLean: 30,
+    spineLean: 34,
     tossWobble: 0.09,
   })
   assert(result.primary_flaw?.group === 'grip', 'the grip did not win the hierarchy')

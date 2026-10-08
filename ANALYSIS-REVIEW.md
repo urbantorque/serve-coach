@@ -65,6 +65,9 @@ will immediately justify, then a model upgrade confined to the swing window.
 - Every `NOISE_FLOOR` (`tiers.ts:237-338`), and so every UNDER_RESOLVED and
   UNCALIBRATED verdict, comes from a rig ensemble with "modelled MediaPipe
   depth error" whose source is not cited.
+  *Since D7.6 the same noise also runs on real serve motion (the Bath set), and
+  every floor has to cover both; five rose (§9, "Noise floors on real
+  motion"). The camera noise is still modelled.*
 - The rig's noise is independent per landmark per frame. Real pose error is
   temporally correlated, biased under occlusion and blur, and occasionally
   swaps left and right — none of which the robustness suite can see. Its
@@ -864,3 +867,56 @@ about 12° bent. The tossing arm reads 146° and the hitting arm about 135° at
 contact, against published 150–166°. These are not used to judge any
 elbow-angle band. Only relative findings, such as frame-rate agreement, are
 drawn from them.
+
+### Noise floors on real motion (2026-10-08, still scoring version 5)
+
+**The question.** Every `NOISE_FLOOR` came from one ensemble: the rig's serve
+filmed many times with modelled tracker noise. The rig was written beside the
+bands, so a floor derived from it could only show the engine agreeing with
+itself (F1). `realiseReal` now runs the same noise on the Bath serves, each one
+filmed sixty times from the guide's placement at 50 fps. The jitter is scaled
+to the player's size in the picture, because the pose model reads a crop
+around the player. The floor is the camera's spread within one serve, pooled
+across serves. It never includes the spread from one serve to the next.
+
+| Signal | Rig sd | Real sd | Floor was | Floor now |
+| --- | --- | --- | --- | --- |
+| `pronation_deg` | 18.3° | 50.1° | 31 | 76 (not named, as before) |
+| `palm_to_sky_deg` | 4.2° | 11.7° | 11 | 18 |
+| `separation_deg` | — | 8.8° | 9 | 30 (`UNDER_RESOLVED`) |
+| `spine_lean_deg` | 4.0° | 6.6° | 7 | 10 |
+| `elbow_lift_ratio` | 0.006 | 0.011 | 0.012 | 0.017 |
+| `hip_lead_ms` | 37 ms | 42 ms | 76 | 76 |
+| picture-plane ratios | — | as steady or steadier | — | unchanged |
+
+The six fixture serves and all forty agree to within a rounding step. Real
+motion is noisier wherever the reading is taken from depth, or at a moment the
+body moves fast through. A real hand turns fast through contact, so a keyframe
+one sample either side reads a different forearm.
+
+**What the old floors were doing on real serves.** Naming rates on the forty
+serves, 2,400 takes. Not one serve is named without noise, so every naming is
+the camera's:
+
+| Fault | At the old floor | At the new floor | Rig fault, old → new |
+| --- | --- | --- | --- |
+| `early_shoulder_rotation` | 27.8%, all 40 serves flicker | 0.0% | open chest 100% → 85%; level trunk 63% → 0% |
+| `posture_collapse` | 3.8%, 37 flicker | 1.3%, 22 flicker | 30° lean 78% → 50% |
+| `waiters_tray` | 0.2% | 0.0% | demo tray 97% → 93% |
+| `collapsed_elbow` | 0.0% | 0.0% | back scratch 100% → 100% |
+
+**The coil is under-resolved on real motion.** Its deviation asks for a 14°
+floor against a 12° serious miss. It is kept at 30, the first floor that names
+no real serve, for the reason `hip_lead_ms` stopped at 76: the engine may miss
+a fault and may not invent one. What it now names is a chest already open at
+the trophy, shoulders past the hips. A level trunk is no longer named. The
+rig's default camera never read the coil at all, so the old floor of 9 had
+never been held to anything.
+
+**The lean's tail is long.** A floor of 16 still names 0.2% of real takes, so
+the floor stops at 10, where its own rule puts it. It is level with the
+serious miss, not over it. Every named collapse is now 'high' severity.
+
+**Still a model of the camera.** The motion is real; the noise is the same
+modelled MediaPipe error as before. These figures move again the moment there
+is footage through this app.

@@ -169,21 +169,33 @@ check('both rotation peaks land before contact, where the swing is', () => {
   assert(sequence.shoulder_peak_ms <= 0, `shoulders peaked after contact`)
 })
 
-check('a trunk with no coil left at the trophy is caught', () => {
+check('a chest already open at the trophy is caught, and a level one no longer is', () => {
   // From a corner. The rig's default camera is the guide's own placement, and a
   // real server has their back to it at the ready — shoulders square to the
   // lens, the turn happening towards and away from it — so the coil is hedged
   // there and the fault cannot be named from it, which is the hedge working
   // (`engine.test.ts`, `CORNER`).
-  const flat = run({ shoulderYaw: 60, hipYaw: 56, cameraYaw: 45 }, 5).diagnosis
+  //
+  // Shoulders turned past the hips is named. Shoulders and hips turned level —
+  // no coil left, but not open — was, until real motion showed the camera
+  // naming that on its own (`UNDER_RESOLVED.separation_deg`): the floor that
+  // names no real serve from the noise is above it.
+  const open = run({ shoulderYaw: 82, hipYaw: 108, cameraYaw: 45 }, 5).diagnosis
   assert(
-    flagged(flat).includes('early_shoulder_rotation'),
-    `early rotation missed: ${flagged(flat).join(', ')}`,
+    flagged(open).includes('early_shoulder_rotation'),
+    `early rotation missed: ${flagged(open).join(', ')}`,
+  )
+  const level = run({ shoulderYaw: 60, hipYaw: 56, cameraYaw: 45 }, 5).diagnosis
+  assert(
+    !flagged(level).includes('early_shoulder_rotation'),
+    'a level trunk was named, under the floor real motion set',
   )
 })
 
 check('posture collapse is caught, and a shallow drop is told from a real one', () => {
-  const collapsed = run({ spineLean: 26, tossWobble: 0.09 }, 5).diagnosis
+  // 34°, not 26°: real motion raised the lean's floor to 10 (`NOISE_FLOOR`),
+  // and a 26° lean reads a 6° miss.
+  const collapsed = run({ spineLean: 34, tossWobble: 0.09 }, 5).diagnosis
   assert(flagged(collapsed).includes('posture_collapse'), 'collapse missed')
 
   // A hand left 25 cm above the shoulder: the racket never lays back. A hand
@@ -256,7 +268,7 @@ check('a low contact off a good toss is left as a contact fault', () => {
 })
 
 check('a collapsing spine is traced to the toss that caused it', () => {
-  const { diagnosis } = run({ spineLean: 26, tossWobble: 0.09 }, 5)
+  const { diagnosis } = run({ spineLean: 34, tossWobble: 0.09 }, 5)
   assert(
     findingFor(diagnosis, 'posture_collapse')?.caused_by === 'toss_drift',
     'a spine chasing a drifting toss was reported as a posture problem on its own',
@@ -292,7 +304,12 @@ check('root causes are listed ahead of the symptoms they explain', () => {
   // hand, so it cannot drop the elbow and hold the hand up in the same serve.
   // The drifting toss and the spine that chases it are the same kind of link,
   // posed together above.
-  const { diagnosis } = run({ spineLean: 26, tossWobble: 0.09 }, 5)
+  //
+  // The toss drifts 0.15 here rather than 0.09. The ordering holds at equal
+  // severity, and since real motion put the lean's floor level with its serious
+  // miss (`NOISE_FLOOR.spine_lean_deg`) a named collapse is always 'high', so
+  // the toss has to be a serious miss too or the sort is by severity instead.
+  const { diagnosis } = run({ spineLean: 34, tossWobble: 0.15 }, 5)
   const order = diagnosis.flaws.filter((f) => f.detected).map((f) => f.flaw)
   const cause = order.indexOf('toss_drift')
   const symptom = order.indexOf('posture_collapse')

@@ -64,8 +64,10 @@ export interface Frame {
 // 30 fps, which moves the drop keyframe and every reading taken at it. Then,
 // before any of it shipped, the court angle moved to the swing's direction, so
 // a clip from a corner is filed as one — which readings it carries, and which
-// axis a toss drift is named for, moved with it; and the toss moved onto the
-// tossing hand's peak, which moves every reading taken at or from it.
+// axis a toss drift is named for, moved with it; the toss moved onto the
+// tossing hand's peak, which moves every reading taken at or from it; and five
+// noise floors rose when re-derived on real motion, which changes which faults
+// a saved report would name (early shoulder rotation now needs an open chest).
 export const SCORING_VERSION = 5
 
 /**

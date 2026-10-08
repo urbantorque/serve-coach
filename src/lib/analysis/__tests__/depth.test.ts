@@ -69,7 +69,11 @@ import {
   flattenUngraded,
   floorVerdicts,
   namedOn,
+  pooledDeviations,
+  pooledFloorVerdicts,
   realise,
+  realiseReal,
+  seeds,
   type Realisation,
 } from './repeatability'
 import { evaluateFlaws } from '../flaws'
@@ -186,6 +190,34 @@ for (const s of deviations(deep.reads).slice(0, 6)) {
   )
 }
 
+/*
+ * The same camera noise on real motion: six Bath serves, each filmed sixty
+ * times from the guide's placement (`realiseReal`). The rig's motion was
+ * written beside the bands, so floors taken from it alone could only show the
+ * engine agreeing with itself (ANALYSIS-REVIEW.md F1). Every floor below has
+ * to cover both.
+ *
+ * Sixty takes a serve rather than the rig's twenty-four, because two of the
+ * real figures sit within a rounding step of their serious miss and twenty-four
+ * did not hold them still: separation read 7.4° at twenty-four, 8.4° at sixty
+ * and 8.5° at a hundred and twenty, and all forty serves at sixty agree. The
+ * engine reads these clips in about two milliseconds each, so it is cheap.
+ */
+const REAL_SEEDS = seeds(60)
+const real = realiseReal(undefined, REAL_SEEDS)
+
+note(`real motion — ${real.length} serves × ${REAL_SEEDS.length} takes, against the rig's one serve × ${deep.reads.length}:`)
+{
+  const rigSd = new Map(deviations(deep.reads).map((d) => [d.id, d.sd]))
+  for (const d of pooledDeviations(real)) {
+    const rig = rigSd.get(d.id)
+    note(
+      `  ${d.id}: floor ${NOISE_FLOOR[d.id] ?? '—'} — rig sd ${rig === undefined ? '—' : rig.toFixed(3)}, ` +
+        `real sd ${d.sd.toFixed(3)}`,
+    )
+  }
+}
+
 check('depth error moves the coil reading further than in-plane error does', () => {
   // The point of the whole file. If these came out equal, the rig would still be
   // asserting that a monocular estimate resolves depth as well as it resolves
@@ -206,11 +238,16 @@ check('every signal has a noise floor, and it covers what the signal does', () =
   // no exception now: every floor covers its signal, and a floor that cannot is
   // a decision somebody has to write down rather than a case this waves through.
   const uncovered: string[] = []
-  for (const s of deviations(deep.reads)) {
-    const floor = NOISE_FLOOR[s.id]
-    if (floor === undefined) uncovered.push(`${s.id} has no floor at all`)
-    else if (floor < s.sd) {
-      uncovered.push(`${s.id}: floor ${floor} under its deviation ${s.sd.toFixed(3)}`)
+  for (const [motion, devs] of [
+    ['rig', deviations(deep.reads)],
+    ['real motion', pooledDeviations(real)],
+  ] as const) {
+    for (const s of devs) {
+      const floor = NOISE_FLOOR[s.id]
+      if (floor === undefined) uncovered.push(`${s.id} has no floor at all`)
+      else if (floor < s.sd) {
+        uncovered.push(`${s.id}: floor ${floor} under its ${motion} deviation ${s.sd.toFixed(3)}`)
+      }
     }
   }
   assert(uncovered.length === 0, uncovered.join('; '))
@@ -248,10 +285,16 @@ check('no floor is quietly set below what its own repeatability asks for', () =>
   const capped: string[] = []
   const measured = new Set<string>()
 
-  for (const v of floorVerdicts(deep.reads)) {
+  // Both motions, and the stricter answer wins: a floor has to hold for the
+  // rig's serve and for a real one, and a signal either of them cannot resolve
+  // is under-resolved.
+  for (const [motion, v] of [
+    ...floorVerdicts(deep.reads).map((v) => ['rig', v] as const),
+    ...pooledFloorVerdicts(real).map((v) => ['real motion', v] as const),
+  ]) {
     if (v.floor !== undefined && v.capped) {
       capped.push(
-        `${v.id}: floor ${v.floor} below the ${v.wanted} its deviation of ${v.sd.toFixed(1)} asks for`,
+        `${v.id}: floor ${v.floor} below the ${v.wanted} its ${motion} deviation of ${v.sd.toFixed(1)} asks for`,
       )
     }
     if (v.floor !== undefined && v.floor > v.seriousMiss && !v.declared) {
@@ -274,7 +317,7 @@ check('no floor is quietly set below what its own repeatability asks for', () =>
 
   for (const id of Object.keys(UNDER_RESOLVED)) {
     if (!measured.has(id)) {
-      capped.push(`${id} is declared under-resolved but this ensemble resolves it — re-check it`)
+      capped.push(`${id} is declared under-resolved but neither ensemble resolves it — re-check it`)
     }
   }
 
@@ -292,7 +335,9 @@ check('no floor is quietly set below what its own repeatability asks for', () =>
    * reading as a passing one is the shape of problem this whole file exists to
    * stop, so it prints.
    */
-  const unchecked = Object.keys(NOISE_FLOOR).filter((id) => !deep.reads.some((r) => id in r.signals))
+  const unchecked = Object.keys(NOISE_FLOOR).filter(
+    (id) => !deep.reads.some((r) => id in r.signals) && !real.flat().some((r) => id in r.signals),
+  )
   if (unchecked.length) note(`  floors this ensemble never exercised: ${unchecked.join(', ')}`)
 })
 
@@ -1517,7 +1562,16 @@ check('the trunk lead moves with the camera, and is noisiest where the guide put
 
 /* ================================================== what is still missing == */
 
-const underResolved = floorVerdicts(deep.reads).filter((v) => v.underResolved)
+// The rig's verdict, or real motion's where the rig cannot read the signal or
+// reads it as steadier — the same stricter-wins rule the floor check uses.
+const underResolved = (() => {
+  const byId = new Map(floorVerdicts(deep.reads).map((v) => [v.id, v]))
+  for (const v of pooledFloorVerdicts(real)) {
+    const rig = byId.get(v.id)
+    if (!rig || (v.underResolved && !rig.underResolved)) byId.set(v.id, v)
+  }
+  return [...byId.values()].filter((v) => v.underResolved)
+})()
 
 if (underResolved.length) {
   console.log(
