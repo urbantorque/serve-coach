@@ -136,6 +136,13 @@ const ALLOWED: (Site & { why: string })[] = [
       '`npm run setup:bench`. Not part of the app a player downloads.',
   },
   {
+    file: 'dev/footprint/main.ts',
+    pattern: 'fetch',
+    why:
+      'The dev-only model footprint check (D6.7), reached through `footprint.html`, which the ' +
+      'production build never bundles. Reads a refinement model from the dev server. Same origin.',
+  },
+  {
     file: 'dev/bench/main.ts',
     pattern: 'Image()',
     why:
