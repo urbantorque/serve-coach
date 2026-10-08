@@ -202,6 +202,8 @@ const HISTORY_CONSUMERS = [
   'byServeNumber',
   'clearedStrainOf',
   'faultMoveOnTrip',
+  // Each named fault across the recent serves (D6.6).
+  'faultTrends',
   'findPracticeFocus',
   'glanceStrain',
   'inRateByType',

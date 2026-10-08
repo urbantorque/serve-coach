@@ -1434,6 +1434,7 @@ export default function App() {
             <Progress
               sessions={sessions}
               tags={serveTags}
+              ladder={prefs.ladder}
               practice={practice}
               onLogDrill={logDrill}
               onUndoDrill={undoDrill}

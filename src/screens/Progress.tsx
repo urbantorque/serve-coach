@@ -11,6 +11,7 @@ import type { PracticeFocus } from '../lib/practice'
 import {
   MIN_OUTCOMES_FOR_RATE,
   byServeNumber,
+  faultTrends,
   inRateByType,
   servesPerWeek,
   weekJumpLine,
@@ -36,6 +37,8 @@ interface Props {
   sessions: Session[]
   /** What the player said about each serve — see `ServeTag`. */
   tags?: ServeTag[]
+  /** Which rung of each fault's ladder the player is on — see `Prefs.ladder`. */
+  ladder?: Partial<Record<string, number>>
   practice?: PracticeFocus
   onLogDrill: () => void
   onUndoDrill: () => void
@@ -64,7 +67,16 @@ interface Props {
  * was usually closed; the two the rest of the app also needs (`practice`, and
  * the streak) are recomputed or passed in rather than shared.
  */
-export default function Progress({ sessions, tags = [], practice, onLogDrill, onUndoDrill, seeded, onBack }: Props) {
+export default function Progress({
+  sessions,
+  tags = [],
+  ladder,
+  practice,
+  onLogDrill,
+  onUndoDrill,
+  seeded,
+  onBack,
+}: Props) {
   const logDrill = onLogDrill
   const undoDrill = onUndoDrill
 
@@ -82,6 +94,8 @@ export default function Progress({ sessions, tags = [], practice, onLogDrill, on
   const inRates = useMemo(() => inRateByType(sessions, tags), [sessions, tags])
   const weeks = useMemo(() => servesPerWeek(sessions), [sessions])
   const weekJump = useMemo(() => weekJumpLine(weeks), [weeks])
+  // Each named fault over the recent serves, and the step of its ladder (D6.6).
+  const faults = useMemo(() => faultTrends(sessions, ladder, form?.serveType), [sessions, ladder, form])
   const longestStreakText = useMemo(() => longestStreakLine(sessions), [sessions])
   // Not type-restricted and not era-restricted — see `recurringStrainOf`. A
   // joint has the same range whatever the serve was aiming at.
@@ -234,6 +248,22 @@ export default function Progress({ sessions, tags = [], practice, onLogDrill, on
               {streak && <p className="progress-foot">{streak}</p>}
               {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
               {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
+            </section>
+          )}
+
+          {/* The faults themselves, beside the measurements the charts below are
+              about: whether the thing the reports keep naming is being named
+              less. Counted only on serves that could be judged for it. */}
+          {faults.length > 0 && (
+            <section className="block">
+              <h2 className="block-title">Faults over your last serves</h2>
+              {faults.map((f) => (
+                <p key={f.flaw} className="progress-foot">
+                  <strong>{f.title}</strong>: named on {f.named} of {f.judged} serves
+                  {f.direction === 'fewer' ? ', less often lately' : f.direction === 'more' ? ', more often lately' : ''}
+                  {f.step ? `. On step ${f.step.at} of ${f.step.of}.` : '.'}
+                </p>
+              ))}
             </section>
           )}
 

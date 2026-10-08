@@ -18,6 +18,9 @@ import {
 import { INJURY_INPUTS, type InjuryFlag } from './analysis/triage'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
 import { NOISE_FLOOR } from './analysis/tiers'
+import { MIN_EVIDENCE, type FlawId } from './analysis/flaws'
+import { progressionFor } from './analysis/progressions'
+import { VERDICT_TABLES } from './analysis/verdict'
 import { cue } from './analysis/voice'
 import type { ServeOutcome, ServeTag, Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
@@ -1370,4 +1373,72 @@ export function weekJumpLine(weeks: WeekCount[]): string | undefined {
   return cue(
     `You have filmed ${current} serves this week, against about ${Math.round(usual)} in each of the four before.`,
   )
+}
+
+/* ------------------------------------------------- progress by fault (D6.6) */
+
+/** How many recent serves a fault's trend is read across. */
+export const FAULT_WINDOW = 10
+
+export interface FaultTrend {
+  flaw: FlawId
+  /** The fault as the report names it. */
+  title: string
+  /** Serves in the window it was named on, and how many could be judged on it. */
+  named: number
+  judged: number
+  /** Named less often in the newer half of the window than the older, or more. */
+  direction: 'fewer' | 'same' | 'more'
+  /** The ladder step the player is on for it, when it has a ladder. */
+  step?: { at: number; of: number }
+}
+
+/**
+ * Each fault the engine named in the player's recent serves, and whether it is
+ * being named less (D6.6).
+ *
+ * A fault counts on a serve only when the serve could be judged on it — the
+ * finding exists and its evidence cleared the bar — so a clip where the hand was
+ * never seen does not count as a clean serve, the same rule `checkDrill` keeps.
+ * One serve type, one rubric era, the last `FAULT_WINDOW` serves. "Fewer" and
+ * "more" need the two halves of the window to differ by two serves or more;
+ * one serve either way is a coin.
+ */
+export function faultTrends(
+  sessions: Session[],
+  rungs?: Partial<Record<string, number>>,
+  serveType?: ServeType,
+): FaultTrend[] {
+  const type = serveType ?? dominantType(sessions)
+  const recent = currentRubricEra(
+    sessions
+      .filter((s) => typeOf(s) === type && s.triage?.status === 'ok' && s.diagnosis)
+      .sort((a, b) => a.createdAt - b.createdAt),
+  ).slice(-FAULT_WINDOW)
+  const flaws = new Set(recent.flatMap((s) => s.diagnosis!.flaws.filter((f) => f.detected).map((f) => f.flaw)))
+  const out: FaultTrend[] = []
+  for (const flaw of flaws) {
+    const verdicts = recent
+      .map((s) => s.diagnosis!.flaws.find((f) => f.flaw === flaw))
+      .filter((f) => f !== undefined && f.confidence >= MIN_EVIDENCE)
+      .map((f) => f!.detected)
+    if (!verdicts.length) continue
+    const half = Math.floor(verdicts.length / 2)
+    const older = verdicts.slice(0, half).filter(Boolean).length
+    const newer = verdicts.slice(verdicts.length - half).filter(Boolean).length
+    const ladder = progressionFor(flaw)
+    const stored = rungs?.[flaw]
+    out.push({
+      flaw,
+      title: VERDICT_TABLES.flaws[flaw].title,
+      named: verdicts.filter(Boolean).length,
+      judged: verdicts.length,
+      direction: newer <= older - 2 ? 'fewer' : newer >= older + 2 ? 'more' : 'same',
+      step:
+        ladder && stored !== undefined && Number.isInteger(stored) && stored >= 0 && stored < ladder.steps.length
+          ? { at: stored + 1, of: ladder.steps.length }
+          : undefined,
+    })
+  }
+  return out.sort((a, b) => b.named - a.named)
 }

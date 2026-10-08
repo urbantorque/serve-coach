@@ -468,7 +468,11 @@ The outcome taps already exist and nothing reads them.
       and before/after can be played side by side. *Proof:* storage tests at
       each pressure tier; nothing written without the opt-in.
 - [!] **D6.5 Suggest the serve type** — dropped with D3.7.
-- [ ] **D6.6 Progress by fault** · S. Trends per named fault and per
+- [x] **D6.6 Progress by fault** · S. *Done (2026-10-09): "Faults over your
+      last serves" on Progress — each fault named in the last ten serves of
+      one type and era, on how many of the serves that could be judged for it,
+      whether it is named less or more often lately (two serves either way),
+      and the ladder step the player is on. Original plan:* Trends per named fault and per
       progression step, beside the per-measurement charts. *Proof:* seeded
       history.
 - [ ] **D6.7 RTMPose-m for the swing window** · M, optional. Adopt only if
