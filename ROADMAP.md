@@ -316,7 +316,16 @@ Clean up the judgement before new readings are added to it.
 Each reading lands ungraded, then graded once D2.1 gives it a source. The rig
 already has dials for D3.2–D3.4; until now nothing read them.
 
-- [ ] **D3.1 Toss placement relative to the front foot** · M. Where the ball
+- [x] **D3.1 Toss placement relative to the front foot** · M. *Done
+      (2026-10-09), measured and not graded: `readTossPlacement` sets the top
+      of the toss against the front ankle — ahead of it from the side, across it
+      from behind, neither from a corner — from the ball's apex when tracked and
+      the tossing hand's release at half the confidence when not, on
+      `Diagnosis.tossPlacement`. A rig ball (`rigBall`), filmed through the
+      rig's own camera, reads back linearly on both axes with only the camera's
+      angle off square leaking between them. Declared `UNCALIBRATED`: the
+      published distances (Connolly 2021, Vacek 2023) are for contact, and
+      turning them into a toss band is D2.1's to cite. Original plan:* Where the ball
       peaks, in body heights from the front ankle: front/back on a side view,
       left/right on a back view. Fall back to the tossing hand's release
       direction when there is no ball, hedged. The most useful single reading

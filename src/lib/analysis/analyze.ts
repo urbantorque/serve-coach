@@ -1161,7 +1161,12 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
   // stay the fault the report asks the player to fix. The tier the player gave
   // is kept; an inferred one is inferred again, to the same answer.
   const stated = analysis.diagnosis?.tier.source === 'stated' ? analysis.diagnosis.tier.current : undefined
-  const diagnosis = diagnose(frames, skel, { tier: stated, ball: servedBall, serveType })
+  const diagnosis = diagnose(frames, skel, {
+    tier: stated,
+    ball: servedBall,
+    serveType,
+    aspect: analysis.video.width / Math.max(1, analysis.video.height),
+  })
   const verdict = triage(diagnosis, resilience)
 
   // The keyframes and the tracked ball are unchanged by a serve-type rescore —
@@ -1230,6 +1235,7 @@ export function rediagnose(analysis: Analysis, tier: number | undefined): Analys
     tier,
     ball: servedBall,
     serveType: analysis.serveType,
+    aspect: analysis.video.width / Math.max(1, analysis.video.height),
   })
   const verdict = triage(diagnosis, assessResilience(frames, skel))
 
@@ -1776,7 +1782,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // used. A second pass over data already in memory rather than a second pass
   // over the video — it costs about a millisecond, which is why it is not
   // behind a flag.
-  const diagnosis = diagnose(engine(), skel, { tier: opts.tier, ball: servedBall, serveType })
+  const diagnosis = diagnose(engine(), skel, { tier: opts.tier, ball: servedBall, serveType, aspect })
 
   // What the clip itself was worth, and the single thing to work on — or the
   // reason there is nothing worth saying. Carried as data rather than acted on

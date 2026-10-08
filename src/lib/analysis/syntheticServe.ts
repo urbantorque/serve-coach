@@ -1490,3 +1490,78 @@ function crossOf(a: { x: number; y: number; z: number }, b: { x: number; y: numb
   return unitOf(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x)
 }
 
+
+/* --------------------------------------------------------------- the ball */
+
+/** Where the rig's tossed ball goes, relative to the front foot at the ready. */
+export interface RigToss {
+  /** Metres towards the net from the front ankle, at the top of the toss. */
+  forward: number
+  /** Metres towards the hitting side from the front ankle, at the top. */
+  sideways: number
+  /** Height of the top above the ground, in statures. 1.75 by default. */
+  apex?: number
+}
+
+/**
+ * A ball for the rig, which throws none: released from the tossing hand at
+ * the top of its lift, rising to `toss`'s apex, and falling for a third of a
+ * second after it (D3.1).
+ *
+ * Built in the court's frame from the frames the rig already made — the front
+ * ankle and the release point are read back out of them — and filmed through
+ * the same camera turn and the same picture scale, so a forward toss moves
+ * along image x from the side and barely at all from behind, as a real one
+ * does. The rig films without perspective, at an aspect of one, so the
+ * ball's x and a landmark's x share a unit. Every sample is on the arc.
+ */
+export function rigBall(frames: Frame[], toss: RigToss, dials: Partial<ServeDials> = {}): import('../vision/ballTrack').BallFlight {
+  const d = { ...CLEAN_SERVE, ...dials }
+  const cam = rad(90 - d.cameraYaw)
+  const cos = Math.cos(cam)
+  const sin = Math.sin(cam)
+  // Back from the camera's turn to the court's, hip-relative: x away from the
+  // net, z towards the player's right.
+  const court = (p: Landmark) => ({ x: p.x * cos + p.z * sin, z: -p.x * sin + p.z * cos })
+  const height = (p: Landmark) => (GROUND_Y - p.y) / SCALE
+
+  // The tossing hand is the left one on this right-handed rig; it lets go at
+  // the top of its lift, in the first two thirds of the clip.
+  const searchTo = Math.floor(frames.length * 0.66)
+  let release = 0
+  for (let i = 1; i < searchTo; i++) {
+    if (frames[i].image[LM.leftWrist].y < frames[release].image[LM.leftWrist].y) release = i
+  }
+  const from = court(frames[release].world[LM.leftWrist])
+  const fromH = height(frames[release].image[LM.leftWrist])
+  const foot = court(frames[0].world[LM.leftAnkle])
+  // The hitting side across the court, from which way the racket shoulder sits
+  // of the tossing one at the ready — not a fixed axis, since the stance turns.
+  const hitting = Math.sign(court(frames[0].world[LM.rightShoulder]).z - court(frames[0].world[LM.leftShoulder]).z) || 1
+  const to = { x: foot.x - toss.forward, z: foot.z + toss.sideways * hitting }
+  const apexH = (toss.apex ?? 1.75) * HEIGHT_M
+  const g = 9.81
+  const rise = Math.sqrt((2 * Math.max(0.05, apexH - fromH)) / g)
+  const t0 = frames[release].t
+  const ta = t0 + rise
+
+  const at = (t: number) => {
+    const u = (t - t0) / rise
+    const x = from.x + (to.x - from.x) * u
+    const z = from.z + (to.z - from.z) * u
+    return {
+      x: 0.5 + (x * cos - z * sin) * SCALE,
+      y: GROUND_Y - (apexH - (g / 2) * (t - ta) ** 2) * SCALE,
+    }
+  }
+  const samples = frames.filter((f) => f.t >= t0 && f.t <= ta + 0.33).map((f) => ({ t: f.t, ...at(f.t) }))
+  const k = (g / 2) * SCALE
+  const c0 = GROUND_Y - apexH * SCALE
+  return {
+    // y = c0 + k (t − ta)², expanded in powers of t.
+    coefficients: [c0 + k * ta * ta, -2 * k * ta, k],
+    apex: { t: ta, ...at(ta) },
+    samples,
+    confidence: 0.9,
+  }
+}

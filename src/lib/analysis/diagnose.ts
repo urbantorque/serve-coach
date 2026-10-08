@@ -19,6 +19,7 @@ import { imageXSplitFrom, readImageX } from './axes'
 import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED } from './confidence'
 import { assessSpatial, viewFromCourtYaw } from './spatial'
 import { readStance, type Stance } from './stance'
+import { readTossPlacement, type TossPlacement } from './tossPlacement'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -176,6 +177,12 @@ export interface Diagnosis {
    * and on reports from before it existed.
    */
   armCock?: ArmCock
+  /**
+   * Where the toss went from the front foot (`readTossPlacement`, D3.1): ahead
+   * of it from the side, across it from behind. Data only; absent from a
+   * corner and on reports from before it existed.
+   */
+  tossPlacement?: TossPlacement
   flaws: FlawFinding[]
   /** What the pass cost, so a slow device can be seen rather than guessed at. */
   cost: { frames: number; series: number; ms: number }
@@ -364,6 +371,11 @@ export interface DiagnoseOptions {
    * for it (`SERVE_TYPE_SHIFT`). Flat when unsaid, as on the card.
    */
   serveType?: ServeType
+  /**
+   * Frame width over height, so the ball's width-normalised x can be set
+   * against landmarks, whose x is in frame heights. One when unsaid.
+   */
+  aspect?: number
 }
 
 const now = () =>
@@ -1072,6 +1084,13 @@ export function diagnose(
     legDrive,
     landing,
     armCock,
+    tossPlacement: readTossPlacement(
+      frames,
+      skel,
+      viewFromCourtYaw(spatial.court_yaw_deg),
+      options.ball,
+      options.aspect,
+    ),
     stance: readStance(frames, skel, viewFromCourtYaw(spatial.court_yaw_deg)),
     flaws,
     cost: {

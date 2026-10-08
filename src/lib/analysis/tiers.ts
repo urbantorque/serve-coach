@@ -1000,6 +1000,31 @@ export const UNCALIBRATED: Record<string, string> = {
    * the side the research calls the fault. A band drawn from it would grade
    * the signature as normal; a band drawn from the study would be invented.
    */
+  /*
+   * Where the toss peaked from the front foot (D3.1): ahead of it, read from
+   * the side, and across it towards the hitting side, read from behind. One
+   * axis per camera; a corner mixes them and reads neither.
+   *
+   * WAITING FOR ITS BAND, WHICH EXISTS FOR CONTACT RATHER THAN THE TOSS. Flat
+   * serves are struck 0.30–0.37 statures in front of the front foot and kick
+   * serves 0.23–0.24 (Connolly 2021, elite boys), 56 against 51 cm in
+   * professional men (Vacek 2023); kick contact sits 47 cm further to the left
+   * for a right-hander against 16 (Vacek 2023). The ball barely moves forward
+   * as it falls, so those are the right scale — but they are contact, and this
+   * is the top of the toss, and turning one into the other is D2.1's citation
+   * to make. On the rig's ball (`rigBall`) it reads its dial linearly — 0.3 m
+   * reads 0.173 body heights from the side — and the other axis leaks only the
+   * camera's angle off square.
+   */
+  toss_ahead_ratio:
+    'measured and not named: the published distances are for contact (Connolly ' +
+    '2021, Vacek 2023), not the top of the toss; reads its rig dial linearly from ' +
+    'the side, and from the ball when there is one, the hand when not',
+  toss_across_ratio:
+    'measured and not named: read only from behind, and the same contact-not-toss ' +
+    'gap as its partner; the kick-against-flat difference it will one day carry is ' +
+    'published for contact (Vacek 2023)',
+
   arm_cock_ratio:
     'measured and not named: the published signature is an angle (Gao 2026) and ' +
     'no study gives it as a hand height; tracks its dial from 0.156 to 0.044 at ' +

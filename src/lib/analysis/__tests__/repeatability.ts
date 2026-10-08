@@ -310,6 +310,12 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   // Dimensionless, read off image y.
   const cock = d.armCock?.ratio
   if (typeof cock === 'number' && Number.isFinite(cock)) out.arm_cock_ratio = cock
+  // Where the toss went from the front foot (D3.1): one axis from the side and
+  // the other from behind, so a clip carries at most one of the two.
+  const ahead = d.tossPlacement?.ahead
+  if (typeof ahead === 'number' && Number.isFinite(ahead)) out.toss_ahead_ratio = ahead
+  const across = d.tossPlacement?.across
+  if (typeof across === 'number' && Number.isFinite(across)) out.toss_across_ratio = across
   return out
 }
 
