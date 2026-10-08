@@ -1025,6 +1025,31 @@ export const UNCALIBRATED: Record<string, string> = {
     'gap as its partner; the kick-against-flat difference it will one day carry is ' +
     'published for contact (Vacek 2023)',
 
+  /*
+   * The landing from each foot (D3.3). R64 measured that the ankle-centre
+   * reading loses up to half a fall to a back foot swinging through, and that
+   * the front ankle alone is immune; read from contact, the stance no longer
+   * sits in the baseline. On the rig from behind the server the front reading
+   * tracks `landingLean` exactly — 0.028 and 0.057 body heights for 0.06 and
+   * 0.12 m — at every `landingBackFootDrag`, and the follow reads that dial
+   * exactly at every lean: the two kept apart.
+   *
+   * NO BAND FOR EITHER. The research names the landing — the front foot lands
+   * and brakes in the foot-up pattern (Kovacs; Martin 2015) — and gives no
+   * numbers for how far a body may fall across it, nor how far a back foot
+   * should trail (`.scratch/research-biomech.md` §2.13: "no numeric norms").
+   * The roadmap's grading was to be for a fall across the front foot; there is
+   * nothing yet to grade it against.
+   */
+  landing_front_ratio:
+    "measured and not named: tracks the rig's lean exactly from behind and is " +
+    'immune to the back foot; read a third as large from the side; no published ' +
+    'norm for how far a body may fall across its front foot',
+  back_foot_follow_ratio:
+    "measured and not named: reads the rig's back-foot dial exactly at every lean; " +
+    'needs the hips to have moved to mean anything; no norm for how far a back ' +
+    'foot should trail',
+
   arm_cock_ratio:
     'measured and not named: the published signature is an angle (Gao 2026) and ' +
     'no study gives it as a hand height; tracks its dial from 0.156 to 0.044 at ' +

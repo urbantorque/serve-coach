@@ -316,6 +316,11 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   if (typeof ahead === 'number' && Number.isFinite(ahead)) out.toss_ahead_ratio = ahead
   const across = d.tossPlacement?.across
   if (typeof across === 'number' && Number.isFinite(across)) out.toss_across_ratio = across
+  // The landing from each foot (D3.3).
+  const front = d.landingFeet?.front
+  if (typeof front === 'number' && Number.isFinite(front)) out.landing_front_ratio = front
+  const follow = d.landingFeet?.backFollow
+  if (typeof follow === 'number' && Number.isFinite(follow)) out.back_foot_follow_ratio = follow
   return out
 }
 

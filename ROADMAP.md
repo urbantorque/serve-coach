@@ -342,7 +342,16 @@ already has dials for D3.2–D3.4; until now nothing read them.
       ready → trophy (dial `pinpointSlide`, R60's blocked round). Information,
       not a fault: both stances are correct. *Proof:* pinpoint sweep, noise
       ensemble.
-- [ ] **D3.3 Landing and balance** · M. Front-ankle landing (R64), hip travel
+- [x] **D3.3 Landing and balance** · M. *Done (2026-10-09), measured and not
+      graded: `Diagnosis.landingFeet` reads how far the hips moved off the
+      front ankle between contact and the finish (R64's front-ankle reading,
+      with the stance out of the baseline by starting at contact) and how far
+      the back foot followed. From behind, the first tracks `landingLean`
+      exactly at every `landingBackFootDrag` and the second reads the drag
+      exactly at every lean. Hip travel is not read: the rig films with its
+      hips fixed in the picture, so nothing here could validate it. Ungraded,
+      because the research has no numeric norm for a fall across the front
+      foot. Original plan:* Front-ankle landing (R64), hip travel
       after contact, back-foot drag (dials `landingLean`, `landingBackFootDrag`).
       Graded only for a fall across the front foot, which also loads the back.
       *Proof:* both dials swept, the two kept apart.

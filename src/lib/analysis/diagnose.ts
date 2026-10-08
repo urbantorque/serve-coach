@@ -178,6 +178,11 @@ export interface Diagnosis {
    */
   armCock?: ArmCock
   /**
+   * The landing read from each foot (`readLandingFeet`, D3.3). Data only;
+   * absent whenever `landing` refused.
+   */
+  landingFeet?: LandingFeet
+  /**
    * Where the toss went from the front foot (`readTossPlacement`, D3.1): ahead
    * of it from the side, across it from behind. Data only; absent from a
    * corner and on reports from before it existed.
@@ -186,6 +191,31 @@ export interface Diagnosis {
   flaws: FlawFinding[]
   /** What the pass cost, so a slow device can be seen rather than guessed at. */
   cost: { frames: number; series: number; ms: number }
+}
+
+/**
+ * The landing, from each foot (D3.3).
+ *
+ * `LandingBalance.offset` reads the hips against the ankle CENTRE, which R64
+ * found loses up to half a fall to a back leg that swings through with it. Read
+ * from the front ankle instead — the foot a serve lands on — the fall is the
+ * same at every back-foot setting. And from contact rather than from the ready,
+ * since a fall across the front foot does not begin until contact: that is
+ * what removes the stance from the baseline, the thing R64 was blocked on.
+ */
+export interface LandingFeet {
+  /**
+   * How far the hips moved off the front ankle between contact and the finish,
+   * in body heights. Unsigned, as `LandingBalance.offset` is, for its reason.
+   * Read in full from behind the server and about a third of it from the side.
+   */
+  front: number
+  /**
+   * How far the back foot followed the hips, 0 planted to 1 travelling with
+   * them, against the front foot's own shift. Absent when the hips did not move
+   * off the front foot far enough to follow.
+   */
+  backFollow: number | null
 }
 
 /** The racket hand at the knee trough — see `Diagnosis.armCock`. */
@@ -872,6 +902,7 @@ export function diagnose(
     at(keys.finish).t - contactT,
     motionSeconds,
   )
+  const landingFeet = landing.offset === null ? undefined : readLandingFeet(at(keys.contact), at(keys.finish), skel, bodyHeight)
 
   /* --- the toss --------------------------------------------------------- */
   const liftFrom = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
@@ -1084,6 +1115,7 @@ export function diagnose(
     legDrive,
     landing,
     armCock,
+    landingFeet,
     tossPlacement: readTossPlacement(
       frames,
       skel,
@@ -1369,6 +1401,27 @@ export const CHAIN_RATIO_PER_SECOND = 0.0223
  * motion — the body is still travelling at the finish, so a window either side
  * would average away part of the very thing being measured.
  */
+/** Below this shift there is nothing for the back foot to have followed. */
+const FOLLOW_FROM = 0.01
+
+function readLandingFeet(
+  contact: Frame,
+  finish: Frame,
+  skel: Pick<Skeleton, 'racket' | 'toss'>,
+  bodyHeight: number,
+): LandingFeet {
+  const front = sided(skel.toss).ankle
+  const back = sided(skel.racket).ankle
+  const hip = (f: Frame) => (f.image[LM.leftHip].x + f.image[LM.rightHip].x) / 2
+  const offset = (f: Frame, ankle: number) => f.image[ankle].x - hip(f)
+  const shift = (offset(finish, front) - offset(contact, front)) / bodyHeight
+  const trailed = (offset(finish, back) - offset(contact, back)) / bodyHeight
+  return {
+    front: round3(Math.abs(shift)),
+    backFollow: Math.abs(shift) < FOLLOW_FROM ? null : round2(Math.min(1, Math.max(0, 1 - Math.abs(trailed) / Math.abs(shift)))),
+  }
+}
+
 function readLandingBalance(
   f: Frame,
   bodyHeight: number,
