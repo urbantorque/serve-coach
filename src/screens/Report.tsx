@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import ConsistencyPanel from '../components/ConsistencyPanel'
 import TossMap from '../components/TossMap'
 import FiringTimeline from '../components/FiringTimeline'
+import KeptVideo from '../components/KeptVideo'
 import type { TossMap as TossMapData } from '../lib/tossMap'
 import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
@@ -93,6 +94,11 @@ interface Props {
   onGlance?: () => void
   /** Every toss in this basket, when two or more were read — see `tossMapFor`. */
   tossMap?: TossMapData
+  /**
+   * The clip this report came from, kept on this device (D6.4), and the best
+   * serve's when it was kept too — object URLs, on a reopened report only.
+   */
+  kept?: { url: string; bestUrl?: string }
   onBack: () => void
   onAnalyzeAnother: () => void
   onFlipHandedness?: () => void
@@ -227,6 +233,7 @@ export default function Report({
   onTagOutcome,
   onGlance,
   tossMap,
+  kept,
   onBack,
   onAnalyzeAnother,
   onFlipHandedness,
@@ -1073,11 +1080,35 @@ export default function Report({
         </section>
       )}
 
+      {/* The same slot, for a reopened report whose clip the player kept on
+          this phone (D6.4): the real video, which carries the ball, the racket
+          and the court that a tracked body cannot. It takes the replay's place
+          rather than sitting beside it, for the reason the replay gives. */}
+      {!live && kept && (
+        <section className="block">
+          <h2 className="block-title">Your serve, as you filmed it</h2>
+          <KeptVideo
+            url={kept.url}
+            phases={analysis.phases}
+            aspect={analysis.video.width / Math.max(1, analysis.video.height)}
+            beside={
+              kept.bestUrl && best
+                ? { url: kept.bestUrl, phases: best.phases, aspect: best.video.width / Math.max(1, best.video.height) }
+                : undefined
+            }
+          />
+          <p className="player-note">
+            You kept this clip on this phone. It goes when you delete this report, or first when space
+            runs short.
+          </p>
+        </section>
+      )}
+
       {/* The same slot, for a report whose clip is gone. Never both: `live`
           means there is a video to draw over, and where there is one the
           photograph wins — a replay is what a report has instead, not a second
           opinion beside it. */}
-      {!live && replay && analysis.track && (
+      {!live && !kept && replay && analysis.track && (
         <section className="block">
           <h2 className="block-title">Your serve, played back</h2>
           <TrackPlayer

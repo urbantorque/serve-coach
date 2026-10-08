@@ -2,6 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
 import StoragePanel from './components/StoragePanel'
+import KeepClipsPanel from './components/KeepClipsPanel'
 import DeviceCheck from './components/DeviceCheck'
 import CorpusIngest from './components/CorpusIngest'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
@@ -61,7 +62,8 @@ import {
 } from './lib/storage/db'
 import { requestPersistence } from './lib/storage/backup'
 import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage/prefs'
-import { sessionKeyFor } from './lib/storage/sessionKey'
+import { clipIdOf, sessionKeyFor } from './lib/storage/sessionKey'
+import { clipFor, keepClip } from './lib/storage/clipStore'
 import { applyWhenIdle, onUpdateWaiting } from './lib/updates'
 import Analyzing, { type SweepProgress } from './screens/Analyzing'
 import Glance from './screens/Glance'
@@ -215,6 +217,8 @@ export default function App() {
    * right way round: `ServeGap` says the same thing in words and does survive.
    */
   const [pair, setPair] = useState<ServePairFrames>()
+  /** The kept clip on screen for a reopened report — see the effect beside `shownReport`. */
+  const [keptMedia, setKeptMedia] = useState<{ id: string; url: string; bestUrl?: string }>()
   // The saved reports, the practice log and the serve tags, loaded and
   // refreshed together — see `useHistory` (W5.2).
   const {
@@ -721,6 +725,11 @@ export default function App() {
         // so flicking between the serves in the clip is still instant; it just
         // never becomes part of the record.
         void trySave(analysis)
+        // The clip itself, on this phone, when the player keeps them (D6.4).
+        // Not for a refused clip, which never enters the record either.
+        if (prefs.keepClips && analysis.triage?.status !== 'rejected') {
+          void keepClip(clipIdOf(analysis.id), file, { optedIn: true })
+        }
         recheckOffline()
 
         // Ask the browser not to evict the history, once, at the first moment
@@ -776,6 +785,7 @@ export default function App() {
       prefs.serveType,
       prefs.tier,
       prefs.askedToPersist,
+      prefs.keepClips,
       recheckOffline,
     ],
   )
@@ -1098,6 +1108,35 @@ export default function App() {
   // — see the single `<Report>` below (W5.3).
   const liveReport = view.kind === 'report' ? view : undefined
   const shownReport = liveReport?.analysis ?? (view.kind === 'saved' && !view.example ? view.session : undefined)
+  // A reopened report's kept clip, and its best serve's (D6.4) — read from the
+  // device as object URLs, and revoked when the report changes.
+  const reopenedId = liveReport ? undefined : shownReport?.id
+  const reopenedBestId = shownReport && !liveReport
+    ? bestPriorTo(sessions, shownReport.createdAt, typeOf(shownReport), scoringVersionOf(shownReport))?.id
+    : undefined
+  useEffect(() => {
+    if (!reopenedId) return
+    let cancelled = false
+    const urls: string[] = []
+    void (async () => {
+      const own = await clipFor(clipIdOf(reopenedId))
+      if (!own || cancelled) return
+      // The best serve may come from the same basket video, which then plays
+      // twice from one file, each copy from its own toss.
+      const sameClip = reopenedBestId !== undefined && clipIdOf(reopenedBestId) === clipIdOf(reopenedId)
+      const best = reopenedBestId && !sameClip ? await clipFor(clipIdOf(reopenedBestId)) : undefined
+      if (cancelled) return
+      const url = URL.createObjectURL(own)
+      const bestUrl = sameClip ? url : best ? URL.createObjectURL(best) : undefined
+      urls.push(url, ...(bestUrl && bestUrl !== url ? [bestUrl] : []))
+      setKeptMedia({ id: reopenedId, url, bestUrl })
+    })()
+    return () => {
+      cancelled = true
+      for (const u of urls) URL.revokeObjectURL(u)
+      setKeptMedia(undefined)
+    }
+  }, [reopenedId, reopenedBestId])
 
   return (
     <div className="app">
@@ -1213,6 +1252,7 @@ export default function App() {
               onTagServe={(n) => void applyServeTag(shownReport.id, { serveNumber: n })}
               onTagOutcome={(o) => void applyServeTag(shownReport.id, { outcome: o })}
               tossMap={tossMapFor(shownReport, sessions, serveTags)}
+              kept={keptMedia?.id === shownReport.id ? { url: keptMedia.url, bestUrl: keptMedia.bestUrl } : undefined}
               fixtureExport={FIXTURE_EXPORT}
               onBack={goHome}
               onAnalyzeAnother={goHome}
@@ -1521,6 +1561,7 @@ export default function App() {
           onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
         />
         <StoragePanel count={sessions.length} onImported={refreshSessions} />
+        <KeepClipsPanel keep={Boolean(prefs.keepClips)} onChange={(keepClips) => setPrefs(writePrefs({ keepClips }))} />
         <h3 className="t-overline settings-head">This phone</h3>
         <button className="btn btn--ghost btn--full" onClick={() => setSheet('check')}>
           <Icon name="info" size={17} />

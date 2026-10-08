@@ -7,6 +7,30 @@ no new colours, no re-skin, no confident nonsense, nothing leaves the device.
 
 ## Where it stands
 
+*Refreshed 2026-10-09, at the end of the depth programme. The 2026-09-23
+picture follows it, for the record.*
+
+- **Every graded band says what it stands on.** A published study, or a
+  re-derivation on real serve motion with its fault dialled into the rig; four
+  measurements with neither are shown and not scored (D2.1). Card and diagnosis
+  judge each shared reading against one band (D2.3).
+- **Real motion is the check, not the rig.** The forty Bath serves run through
+  every floor, band and new reading from five phone placements; contact height
+  no longer depends on where the phone stood (D7.4).
+- **New readings, all data before they are faults:** stance, arm cock, toss
+  placement, landing feet, the hitch, the firing order, the chest's turn from
+  the side — which now names an early turn on the recommended angle (D3.6).
+- **The report shows its evidence:** the measurement on the keyframe stills,
+  the toss map, the firing order, what the camera angle could not see, and the
+  player's own video if they keep it (D4.6, D3.9, D6.4).
+- **`App.tsx` is 1,586 lines**, history and the offline warm-up in hooks and
+  one report render for live and reopened serves (W5.2, W5.3).
+- **Still open:** D1.2's browser pass (needs a real-time 60 fps clip), the
+  research questions under D7.2 (a second mocap set), W5.4 and W6.3–W6.5, the
+  fixture shoot. And still **no git remote.**
+
+### As it stood on 2026-09-23
+
 The engine is the strongest part of the product and the least visible. Twenty
 measurements, six keyframes, an honest confidence model, a causal fault graph,
 1,200+ checks. What surrounds it was built one round at a time and it shows:
@@ -633,7 +657,22 @@ The outcome taps already exist and nothing reads them.
       basket on one top-down plot, coloured by outcome when tagged. A view
       coaches use constantly. Existing tokens only. *Proof:* render test;
       preview at phone size.
-- [ ] **D6.4 Keep the clip if you want to** · M. Opt-in, on-device (OPFS), under
+- [x] **D6.4 Keep the clip if you want to** · M. *Done (2026-10-09). "Your
+      videos" in Settings turns it on (`Prefs.keepClips`, off by default), and
+      `storage/clipStore.ts` refuses to write without it. Clips live in the
+      origin-private file system, one per video, named by the clip part of its
+      reports' ids, so a basket's serves share one file. They are bounded at
+      12 clips and half the space the browser offers, oldest first, and a clip
+      is refused rather than the store emptied for it. Kept videos are the
+      first rung when the disk pushes back, before any still or report. A clip
+      goes with its last report: deleted by hand, by the routine bound, or by
+      clearing. A reopened report plays the real video in the replay's slot,
+      with buttons for the six moments. It plays beside the best earlier
+      serve's video, from each toss at half speed, when that one was kept too.
+      `clipStore.test.ts` covers every tier and the opt-in against an
+      in-memory directory. In the preview, a Commons clip analysed with the
+      setting on was kept (962 kB) and played back from a reopened report,
+      its Contact button landing on 16.08 s.* Opt-in, on-device (OPFS), under
       the existing storage pressure rules, so a saved report replays real video
       and before/after can be played side by side. *Proof:* storage tests at
       each pressure tier; nothing written without the opt-in.

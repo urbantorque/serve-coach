@@ -403,3 +403,47 @@
   line-height: 1.45;
   color: var(--fg-faint);
 }
+
+/* --- a kept clip (D6.4) ----------------------------------------------------- */
+
+/* The player's own video on a reopened report: the stage's frame and black,
+   without a canvas over it, and one or two of them. */
+.kept-video,
+.kept-one video {
+  display: block;
+  width: 100%;
+  max-height: 68svh;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--hairline);
+  background: #000;
+}
+
+.kept-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.kept-one {
+  margin: 0;
+  min-width: 0;
+}
+
+.kept-one video {
+  border-radius: var(--r-md);
+  max-height: 52svh;
+}
+
+.kept-one figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--fg-muted);
+  text-align: center;
+}
+
+.kept-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}

@@ -1,4 +1,6 @@
 import { keyframesFromTrack, readKeyframePoses, readSwingTrack } from './poseTrack'
+import { forgetAllClips, forgetClip } from './clipStore'
+import { clipIdOf } from './sessionKey'
 import { readoutOf, targetOf } from '../analysis/anatomy'
 // The table the screens index by `serveType`. Imported rather than restated as
 // a list of three names, so a fourth serve type cannot be readable on the
@@ -324,6 +326,13 @@ async function prune(level: PruneLevel = 'routine'): Promise<void> {
   for (const doomed of toDelete) {
     await safely(() => tx('readwrite', (store) => store.delete(doomed)), undefined)
   }
+  // And the video a deleted report came from, once no report left shares it.
+  const deleted = new Set(toDelete.map(String))
+  const stillUsed = new Set(ordered.filter((k) => !deleted.has(String(k))).map((k) => clipIdOf(String(k))))
+  for (const doomed of toDelete) {
+    const clip = clipIdOf(String(doomed))
+    if (!stillUsed.has(clip)) await safely(() => forgetClip(clip), undefined)
+  }
 
   /*
    * Only the band between the two limits is read back at all: the newest
@@ -450,12 +459,30 @@ export async function saveSession(
     profileId: (rest as Partial<Session>).profileId ?? profileId,
   }
 
+  const put = () => tx('readwrite', (s) => s.put(session))
   try {
-    await tx('readwrite', (s) => s.put(session))
+    await put()
   } catch (err) {
     if (!isQuotaError(err)) throw err
     /*
-     * Out of room. Free the cheap bytes first, and only the cheap bytes.
+     * Out of room. Kept videos first, if the player keeps any (D6.4).
+     *
+     * A video is tens of megabytes against a report's tens of kilobytes, and
+     * the player chose to keep it as a convenience on top of the report rather
+     * than as the record itself. So every kept clip goes before a single still
+     * does, and the save is tried again before the ladder below is touched.
+     */
+    if ((await safely(() => forgetAllClips(), 0)) > 0) {
+      try {
+        await put()
+        if (bound) await safely(() => prune(), undefined)
+        return
+      } catch (clipsGone) {
+        if (!isQuotaError(clipsGone)) throw clipsGone
+      }
+    }
+    /*
+     * Still out of room. Free the cheap bytes first, and only the cheap bytes.
      *
      * The recovery used to go in one shot: strip stills back to five reports
      * *and* delete every report past the newest twenty-five. But
@@ -1075,10 +1102,15 @@ export async function getSession(id: string): Promise<Session | undefined> {
 
 export async function deleteSession(id: string): Promise<void> {
   await tx('readwrite', (s) => s.delete(id))
+  // The kept video goes with its last report: a basket's serves share one.
+  const clip = clipIdOf(id)
+  const keys = await safely(() => tx<IDBValidKey[]>('readonly', (s) => s.getAllKeys() as IDBRequest<IDBValidKey[]>), [])
+  if (!keys.some((k) => clipIdOf(String(k)) === clip)) await safely(() => forgetClip(clip), undefined)
 }
 
 export async function clearSessions(): Promise<void> {
   await tx('readwrite', (s) => s.clear())
+  await safely(() => forgetAllClips(), 0)
 }
 
 /* ------------------------------------------------------ what the player did */

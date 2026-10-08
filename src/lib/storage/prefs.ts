@@ -44,6 +44,12 @@ export interface Prefs {
    * (`lib/speech.ts`). Off until the player turns it on, from the glance.
    */
   speakGlance?: boolean
+  /**
+   * Keep each analysed clip on this device, so a reopened report plays the
+   * real video (`storage/clipStore.ts`, D6.4). Off until the player turns it
+   * on, in Settings; the store refuses to write without it.
+   */
+  keepClips?: boolean
 }
 
 const KEY = 'serve-coach-prefs'
