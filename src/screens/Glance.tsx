@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/analysis/verdict'
 import type { FaultMove, RotationMove } from '../lib/analysis/carryForward'
 import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
 import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
+import { hasLocalVoice, onVoicesChanged, speakLocally, stopSpeaking } from '../lib/speech'
 
 /**
  * What the serve was, in one number and one line, without leaving the court.
@@ -28,6 +30,9 @@ import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
  */
 interface Props {
   analysis: Analysis
+  /** Read this screen aloud on arrival — `Prefs.speakGlance`. */
+  speak?: boolean
+  onToggleSpeak?: (on: boolean) => void
   /** Straight back to the viewfinder, which is the point of this screen. */
   onRecordAnother?: () => void
   onOpenReport: () => void
@@ -94,6 +99,8 @@ export default function Glance({
   move,
   rotation,
   strain,
+  speak = false,
+  onToggleSpeak,
 }: Props) {
   const refusal = refusalFor(analysis.triage)
   const plan = causalPlan(analysis.triage, analysis.diagnosis)
@@ -125,12 +132,34 @@ export default function Glance({
    */
   const rotationLine = rotation ? rotationMoveLine(rotation) : undefined
 
+  /*
+   * The same screen, read aloud (D6.2), for a phone propped on a fence that
+   * nobody is looking at. What a sighted glance reads first: the refusal, or
+   * the score and the one fix. Only with a voice on this device — see
+   * `lib/speech.ts` — and the toggle only appears when there is one.
+   */
+  const spoken = refusal
+    ? refusal.title
+    : `${analysis.overall}. ${first ? `${first.title}. ${first.why}` : 'Nothing stood out on that one. Hit another.'}`
+  const [voiced, setVoiced] = useState(() => hasLocalVoice())
+  useEffect(() => onVoicesChanged(() => setVoiced(hasLocalVoice())), [])
+  useEffect(() => {
+    if (!speak || !voiced) return
+    speakLocally(spoken)
+    return stopSpeaking
+  }, [speak, voiced, spoken])
+
   return (
     <div className="screen glance">
       <header className="glance-top">
         <button className="icon-btn" onClick={onBack} aria-label="Back">
           <Icon name="back" size={20} />
         </button>
+        {onToggleSpeak && voiced && (
+          <button className="chip chip--button glance-speak" aria-pressed={speak} onClick={() => onToggleSpeak(!speak)}>
+            Read aloud
+          </button>
+        )}
       </header>
 
       {refusal ? (

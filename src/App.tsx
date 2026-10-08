@@ -1289,6 +1289,8 @@ export default function App() {
               // `glanceStrain`. Same reasoning as `move` above: it needs the
               // session list, which this screen has no business holding.
               strain={glanceStrainLine(view.analysis)}
+              speak={prefs.speakGlance}
+              onToggleSpeak={(on) => setPrefs(writePrefs({ speakGlance: on }))}
               onBack={goHome}
               // Home owns the viewfinder sheet, so going back and reopening it is
               // the honest route — and it releases this clip's object URL on the

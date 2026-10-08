@@ -450,7 +450,13 @@ The outcome taps already exist and nothing reads them.
       In `screenFlow.ts` as `report → glance`. Original plan:* Not only
       in-app recordings (was W4).
       *Proof:* `screenFlow` table and test.
-- [ ] **D6.2 A spoken summary after each glance** · S. `speechSynthesis` with
+- [x] **D6.2 A spoken summary after each glance** · S. *Done (2026-10-09):
+      "Read aloud" on the glance, off until the player turns it on and then
+      remembered (`Prefs.speakGlance`). It reads the refusal, or the score and
+      the one fix, through `lib/speech.ts`, which speaks only with a
+      `localService` voice and is silent otherwise; the toggle only appears
+      when the device has one. `egress.test.ts` now counts speech as a request
+      and holds it to that file. Original plan:* `speechSynthesis` with
       on-device voices only (`localService`); silent otherwise, so §7 holds.
       *Proof:* egress test extended; voice choice unit-tested.
 - [ ] **D6.3 The toss map** · M, after D3.1. Every serve's toss peak in a

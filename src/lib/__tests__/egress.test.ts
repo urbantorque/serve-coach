@@ -68,6 +68,9 @@ const NETWORK_PATTERNS: { name: string; re: RegExp }[] = [
   { name: 'WebSocket', re: /\bnew\s+WebSocket\b/ },
   { name: 'EventSource', re: /\bnew\s+EventSource\b/ },
   { name: 'Image()', re: /\bnew\s+Image\s*\(/ },
+  // A remote voice sends the text it reads to a server, so speech is a request
+  // like any other here (D6.2).
+  { name: 'speechSynthesis', re: /\bspeechSynthesis\b|\bSpeechSynthesisUtterance\b/ },
 ]
 
 interface Site {
@@ -116,6 +119,14 @@ const ALLOWED: (Site & { why: string })[] = [
       'on the list so a future change that swaps in a real URL here has to touch this file too.',
   },
   {
+    file: 'lib/speech.ts',
+    pattern: 'speechSynthesis',
+    why:
+      'The glance read aloud, opt-in. Speaks only through a voice that reports ' +
+      '`localService` (it runs on the phone) and is silent otherwise, never falling back to ' +
+      'the default voice, which can be a remote one that sends the text to a server.',
+  },
+  {
     file: 'dev/bench/main.ts',
     pattern: 'fetch',
     why:
@@ -155,6 +166,17 @@ check('every network-capable call site in the app is a named, justified one', ()
     unlisted.length === 0,
     `not on the allow list: ${unlisted.map((f) => `${f.pattern}() in ${f.file}`).join(', ')}`,
   )
+})
+
+check('speech goes only through a voice on the device', () => {
+  // The allow list says why `lib/speech.ts` may speak; this says it still only
+  // speaks the way that justification claims. A voice that is not filtered on
+  // `localService`, or an utterance spoken without a voice chosen from that
+  // filter, would be the browser's default voice — which can be remote.
+  const speech = fs.readFileSync(path.join(SRC, 'lib', 'speech.ts'), 'utf8')
+  assert(speech.includes('filter((v) => v.localService)'), 'speech.ts no longer keeps to local voices')
+  assert(speech.includes('utterance.voice = voice'), 'an utterance is spoken without the chosen local voice')
+  assert(speech.includes('if (!voice) return false'), 'speech.ts speaks with no local voice found')
 })
 
 check('every entry on the allow list is still real', () => {

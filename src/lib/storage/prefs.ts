@@ -39,6 +39,11 @@ export interface Prefs {
    * own drill sits on. Moved only by the player, from the report.
    */
   ladder?: Partial<Record<string, number>>
+  /**
+   * Read the glance aloud after each serve, with a voice on this device
+   * (`lib/speech.ts`). Off until the player turns it on, from the glance.
+   */
+  speakGlance?: boolean
 }
 
 const KEY = 'serve-coach-prefs'
