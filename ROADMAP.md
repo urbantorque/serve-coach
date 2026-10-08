@@ -422,7 +422,8 @@ The outcome taps already exist and nothing reads them.
       in, said only with five tagged serves on each side, one serve type and
       one rubric era, a gap wider than the reading's `NOISE_FLOOR` and at
       least twice its own standard error. A planted difference is found; a
-      null history, a thin one and a mixed-type one say nothing.* Across tagged serves,
+      null history, a thin one and a mixed-type one say nothing. Original
+      plan:* Across tagged serves,
       compare each measurement between serves that went in and serves that
       missed. Say it only when the gap clears that signal's `NOISE_FLOOR` and
       enough serves sit on each side: "Your serves into the net had the toss
