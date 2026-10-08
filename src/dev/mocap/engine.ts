@@ -7,6 +7,7 @@
  * with the same arguments: detect, level if the phone was rolled, detect
  * again, resilience, quality, measure, diagnose, triage. The ball and the
  * racket detector are absent, as they are on any clip where neither is found.
+ * A picture on its side is refused before any of it, as there.
  *
  * Kept in step with `runAnalysis` by hand. If that function gains a pure step,
  * this should gain it too, or the mocap bench measures an engine the player
@@ -16,7 +17,7 @@ import { assessQuality } from '../../lib/analysis/analyze'
 import { diagnose, type Diagnosis } from '../../lib/analysis/diagnose'
 import { measure } from '../../lib/analysis/metrics'
 import { detectServe, type Skeleton } from '../../lib/analysis/phases'
-import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot } from '../../lib/analysis/spatial'
+import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot, turnedPicture } from '../../lib/analysis/spatial'
 import { assessResilience, triage, type Resilience, type Triage } from '../../lib/analysis/triage'
 import { NotAServeError, type Frame, type Fundamental, type Quality } from '../../lib/analysis/types'
 import type { ServeType } from '../../lib/storage/prefs'
@@ -49,6 +50,8 @@ function detect(frames: Frame[], fps: number): Skeleton {
 export function runEngine(input: Frame[], fps: number, serveType: ServeType = 'flat'): EngineResult {
   let frames = input
   let skel: Skeleton
+  const turned = turnedPicture(frames)
+  if (turned) return { ok: false, refusal: turned.message }
   try {
     skel = detect(frames, fps)
     const tilt = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)

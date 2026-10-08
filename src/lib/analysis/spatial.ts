@@ -23,7 +23,7 @@
  * not precision.
  */
 import { LM, clamp, mean, median } from './geometry'
-import type { Frame } from './types'
+import { NotAServeError, type Frame } from './types'
 
 export interface Spatial {
   /**
@@ -119,6 +119,19 @@ const SHOULDER_SPAN_RATIO = 0.21
 
 /** Past this roll the phone was not level and the correction earns its keep. */
 export const NOTABLE_ROLL = 4
+
+/**
+ * Past this roll the picture is refused, before a serve is looked for in it.
+ *
+ * `estimateRoll` levels a roll fully up to 25° and stops there, because past
+ * it a body is not trusted as a plumb line — so a clip rolled 40° was levelled
+ * by 25 and measured with 15° still in it, and passed. Read over the whole
+ * clip (`turnedPicture`) the server's standing axis is a steadier plumb line
+ * than the stance alone: on level clips it stays within 5.3° of upright, on the
+ * forty Bath serves from seven placements and on the rig. So 30 leaves at most
+ * five degrees of roll unlevelled, about `NOTABLE_ROLL`, and refuses the rest.
+ */
+export const MAX_PICTURE_ROLL = 30
 
 /**
  * Outside this window, one axis of the player's depth is pointing at the lens.
@@ -432,6 +445,54 @@ function rotateFrames(frames: Frame[], theta: number, pivot: { cx: number; cy: n
       y: p.x * sin + p.y * cos,
     })),
   }))
+}
+
+/**
+ * A clip filmed with the phone tilted past levelling, on its side or upside
+ * down, refused for that.
+ *
+ * Asked before a serve is looked for, because the search needs the picture
+ * upright. A clip rolled 90–110° used to be read anyway: the keyframes found in
+ * a sideways picture put contact on the toss, so the player was told the clip
+ * ended before the racket reached the ball, and went to film a longer clip of
+ * the same sideways picture. Past 110° it was refused as not a serve. Both were
+ * true that the clip was refused and false as to why. Under 30° the clip goes
+ * on to be levelled (`assessSpatial`, `levelFrames`).
+ *
+ * The roll is the circular mean of the ankles-to-shoulders direction over every
+ * frame, hips standing in for ankles out of shot, so a clip upside down averages
+ * to 180° rather than to the 0° a median of ±179° would give.
+ */
+export function turnedPicture(frames: Frame[]): NotAServeError | undefined {
+  let sx = 0
+  let sy = 0
+  for (const f of frames) {
+    const shoulder = midXY(f, LM.leftShoulder, LM.rightShoulder)
+    const feetSeen = Math.min(f.image[LM.leftAnkle]?.visibility ?? 0, f.image[LM.rightAnkle]?.visibility ?? 0)
+    const base = feetSeen > 0.5 ? midXY(f, LM.leftAnkle, LM.rightAnkle) : midXY(f, LM.leftHip, LM.rightHip)
+    const dx = shoulder.x - base.x
+    const dy = shoulder.y - base.y
+    const length = Math.hypot(dx, dy)
+    if (length < 1e-4) continue
+    // Upright is up the picture, which is negative y.
+    sx += dx / length
+    sy += -dy / length
+  }
+  if (Math.hypot(sx, sy) < 1e-6) return undefined
+  const roll = Math.abs((Math.atan2(sx, sy) * 180) / Math.PI)
+  if (roll < MAX_PICTURE_ROLL) return undefined
+  const place = 'Rest it on something steady at about waist height, ten steps to your side.'
+  if (roll < 45) {
+    return new NotAServeError('The phone was tilted too far to measure.', [
+      'Stand the phone upright and level before you film.',
+      'A small tilt is fine, and I straighten it out. This one leans too far to trust.',
+      place,
+    ])
+  }
+  return new NotAServeError(roll > 135 ? 'The video is upside down.' : 'The video is on its side.', [
+    'Hold the phone upright, so you stand up in the picture.',
+    place,
+  ])
 }
 
 /** Mean visibility of the landmarks a spatial read depends on. */

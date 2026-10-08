@@ -558,8 +558,15 @@ to the literature, never re-derived from one player.
       separate a real drop from none at the low end. Decide whether to
       withdraw its grade or move it to a placement-aware floor. *Proof:* no
       real drop from any bench placement reads under the floor.
-- [ ] **D7.8 Say a rotated phone, not a missing contact** · S. *Found while
-      checking D7.3, already true before it.* A clip rolled 89–110° is refused
+- [x] **D7.8 Say a rotated phone, not a missing contact** · S. *Done
+      (2026-10-08): `turnedPicture` reads the roll off the whole clip before a
+      serve is looked for, from the ankles-to-shoulders direction averaged
+      round the circle, which on level clips stays within 5.3° of upright from
+      every placement. Past 30° the clip is refused as tilted, on its side or
+      upside down. It also closed a gap the sweep found: a clip rolled 30–40°
+      used to be levelled by `estimateRoll`'s 25° clamp and measured with the
+      rest still in it. `?demo=turned` shows the screen. Found while checking
+      D7.3, already true before it.* A clip rolled 89–110° is refused
       as "The clip ends before the racket reaches the ball", because the
       keyframes found in a sideways picture put contact on the toss. Estimate
       roll before the full skeleton exists, as the note on R14 in

@@ -935,3 +935,17 @@ picture, and free of perspective. Neither half of it is depth. The forty serves
 read 6.5–8.9% at the lowest and 12–13% at the median from all five placements
 at 30, 60 and 120 fps, so the 4% floor sits under every real drop. The rig
 films without perspective and reads identically either way.
+
+### A phone on its side is told so (2026-10-08)
+
+A clip rolled 89–110° was refused as "The clip ends before the racket reaches
+the ball", because the keyframes found in a sideways picture put contact on the
+toss; past 110° it was "not a serve". The roll is now read before a serve is
+looked for, from the ankles-to-shoulders direction averaged round the circle
+over the whole clip (`turnedPicture`). On level clips that stays within 5.3° of
+upright, on the forty Bath serves from seven placements and on the rig. Past
+30° the clip is refused as tilted, on its side or upside down.
+
+The sweep found a second gap. `estimateRoll` levels up to 25° and stops, so a
+clip rolled 40° was levelled by 25, measured with 15° still in it, and passed.
+It is now refused for the tilt; under 30° at most five degrees stay unlevelled.

@@ -18,7 +18,7 @@ import { metricConfidence, SOFT_MEASUREMENT } from '../confidence'
 import { diagnose } from '../diagnose'
 import { evaluateFlaws, type FlawId } from '../flaws'
 import { detectServe } from '../phases'
-import { assessSpatial, courtYawFrom, levelFrames, NOTABLE_ROLL } from '../spatial'
+import { MAX_PICTURE_ROLL, assessSpatial, courtYawFrom, levelFrames, NOTABLE_ROLL } from '../spatial'
 import { stabilise } from '../kalman'
 import {
   FLAW_DRILL,
@@ -32,6 +32,8 @@ import {
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { NotAServeError } from '../types'
 import { runEngine } from '../../../dev/mocap/engine'
+import { filmMocap } from '../mocapServe'
+import { REAL_SERVES } from './repeatability'
 import { assert, check, heading, near, note, report } from './harness'
 
 const FPS = 50
@@ -171,14 +173,12 @@ check('a severely rotated clip is refused, not measured through a 25° clamp', (
  * like a serve" rather than anything about their camera angle -- true that
  * the clip was refused (it fails safe; no numbers are ever shown), false as
  * to why, which sends a player who filmed a real service motion looking for
- * the wrong fix. Not corrected here: closing the gap properly means teaching
- * the pipeline to estimate roll before it has a full skeleton to measure
- * `keys.ready` from, which is a real change to `analyze.ts`'s own detect ->
- * assess -> level sequence rather than a one-line fix, and this suite's own
- * standing rule is to decline a change to calibrated pipeline sequencing
- * rather than force one through un-investigated. What is pinned instead is
- * the guarantee that already holds: every angle in the gap still fails
- * safely, with a real NotAServeError and never a crash or invented numbers.
+ * the wrong fix. Closing that gap meant estimating roll before there is a
+ * skeleton to read `keys.ready` from, which was declined here at the time as a
+ * change to `analyze.ts`'s detect -> assess -> level sequence. It has since
+ * been made (D7.8, `turnedPicture`): the roll is read off the whole clip
+ * first, and the check after the next one holds the reason. This one keeps
+ * the older guarantee, that every angle fails safely and never crashes.
  */
 check('past the point detectServe fails on its own, it still fails safely rather than crashing', () => {
   /*
@@ -187,9 +187,9 @@ check('past the point detectServe fails on its own, it still fails safely rather
    * a "serve" in a clip rolled 110° where it used to throw; what the guarantee
    * is about is the player, and the pipeline still refuses every one of these
    * — the keyframes it found put contact on the toss, which is refused before
-   * anything is measured. The reason that refusal gives (the clip ends before
-   * the racket reaches the ball) is the wrong one for a rotated phone, and was
-   * already what a 90–100° roll got; that is the gap described above.
+   * anything is measured. The reason that refusal gave (the clip ends before
+   * the racket reaches the ball) was the wrong one for a rotated phone, and is
+   * now `turnedPicture`'s, before the detector runs.
    */
   for (const deg of [110, 135, 165, 179, 180, 181]) {
     const level = buildServe({}, FPS)
@@ -203,6 +203,37 @@ check('past the point detectServe fails on its own, it still fails safely rather
     }
     assert(outcome === 'refused' || outcome === 'rejected', `${deg}° did not fail safely: ${outcome}`)
   }
+})
+
+check('a phone tilted past levelling is told so, from a lean to upside down', () => {
+  // D7.8. Under 30° the clip is levelled and measured; past it the player is
+  // told what was wrong with the picture rather than with the serve. A clip
+  // rolled 30–40° used to be levelled by 25° — `estimateRoll`'s clamp — and
+  // measured with the rest still in it, and 89–110° was told it ended before
+  // contact. The real serve is filmed from the guide's placement; its own
+  // standing axis reads a few degrees off upright, so its sweep starts higher.
+  const reason = (frames: ReturnType<typeof buildServe>, fps: number) => {
+    const r = runEngine(frames, fps)
+    return r.ok ? `measured (${r.run.verdict.status})` : r.refusal
+  }
+  const real = filmMocap(REAL_SERVES[0], { fps: 30 })
+  const picture = /tilted|on its side|upside down/
+  for (const deg of [-90, -45, 35, 40, 50, 60, 75, 89, 90, 100, 110, 135, 165, 180]) {
+    const rig = reason(rollFrames(buildServe({}, FPS), deg), FPS)
+    assert(picture.test(rig), `rig rolled ${deg}°: "${rig}"`)
+    if (Math.abs(deg) >= 40) {
+      const motion = reason(rollFrames(real, deg), 30)
+      assert(picture.test(motion), `real serve rolled ${deg}°: "${motion}"`)
+    }
+  }
+  for (const deg of [0, 10, 20, -20]) {
+    const rig = reason(rollFrames(buildServe({}, FPS), deg), FPS)
+    assert(rig.startsWith('measured'), `a ${deg}° roll, which levelling handles, was refused: "${rig}"`)
+  }
+  note(
+    `refused from ${MAX_PICTURE_ROLL}°: ${reason(rollFrames(buildServe({}, FPS), 40), FPS)} / ` +
+      `${reason(rollFrames(buildServe({}, FPS), 90), FPS)} / ${reason(rollFrames(buildServe({}, FPS), 180), FPS)}`,
+  )
 })
 
 check('the camera angle is recovered from the shoulder line', () => {

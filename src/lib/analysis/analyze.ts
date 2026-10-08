@@ -66,6 +66,7 @@ import {
   levelFrames,
   levelPivot,
   rotateImagePoint,
+  turnedPicture,
   unlevelFrames,
   viewFromCourtYaw,
   type Tilt,
@@ -1539,6 +1540,14 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         throw err
       }
     }
+  }
+
+  // A picture on its side is refused for that before a serve is looked for in
+  // it — see `turnedPicture`.
+  const turned = turnedPicture(frames)
+  if (turned) {
+    if (opts.captureOnFailure) turned.capture = { frames, fps }
+    throw turned
   }
 
   let skel = detect()

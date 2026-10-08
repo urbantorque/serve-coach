@@ -71,6 +71,27 @@ export async function runDemoRoute(
     seedHistory(sampleHistory())
     return
   }
+  // A clip filmed with the phone on its side, refused by the same check the
+  // app runs (`turnedPicture`) on the rig's serve turned a quarter. `&turn=40`
+  // or `&turn=180` shows the other two wordings.
+  if (demo === 'turned') {
+    const [{ buildServe }, { turnedPicture }] = await Promise.all([
+      import('../lib/analysis/syntheticServe'),
+      import('../lib/analysis/spatial'),
+    ])
+    const turn = (Number(new URLSearchParams(location.search).get('turn') ?? 90) * Math.PI) / 180
+    const frames = buildServe({}, 30).map((f) => ({
+      ...f,
+      image: f.image.map((p) => ({
+        ...p,
+        x: 0.5 + (p.x - 0.5) * Math.cos(turn) - (p.y - 0.5) * Math.sin(turn),
+        y: 0.5 + (p.x - 0.5) * Math.sin(turn) + (p.y - 0.5) * Math.cos(turn),
+      })),
+    }))
+    const refused = turnedPicture(frames)
+    if (refused) setView({ kind: 'error', title: refused.message, hints: refused.hints })
+    return
+  }
   // The two screens that are otherwise unreachable without going out and
   // filming a bad serve: the injury banner, which needs a spine folding
   // under load, and the refusal, which needs a clip the engine throws out.
