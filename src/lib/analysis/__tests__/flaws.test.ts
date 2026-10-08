@@ -13,7 +13,9 @@ import { diagnose } from '../diagnose'
 import { evaluateFlaws, MIN_EVIDENCE, type FlawId } from '../flaws'
 import { detectServe } from '../phases'
 import {
+  CARD_SIGNAL,
   MAX_TIER,
+  MIN_TIER,
   SERVE_TYPE_SHIFT,
   SIGNALS,
   bandFor,
@@ -25,8 +27,10 @@ import {
 } from '../tiers'
 import type { BallFlight } from '../../vision/ballTrack'
 import type { ServeType } from '../../storage/prefs'
-import { METRICS, SERVE_TYPES } from '../coaching'
+import { METRICS, SERVE_TYPES, metricCopy } from '../coaching'
+import { measure } from '../metrics'
 import { buildServe, type ServeDials } from '../syntheticServe'
+import { tossedBall } from './tossedBall'
 import { assert, check, heading, near, note, report } from './harness'
 
 const FPS = 50
@@ -301,6 +305,56 @@ check('the serve type moves a diagnosis band exactly where it moves the card', (
   }
 })
 
+heading('One serve, judged once')
+
+check('a card row and its diagnosis signal read one band, at every rung and serve type', () => {
+  for (const [card, signal] of Object.entries(CARD_SIGNAL)) {
+    for (const type of Object.keys(SERVE_TYPES) as ServeType[]) {
+      const want = metricCopy(card, type).ideal
+      for (let tier = MIN_TIER; tier <= MAX_TIER; tier++) {
+        const have = targetFor(signal, tier, type)
+        assert(
+          Math.abs(want[0] - have[0]) < 1e-9 && Math.abs(want[1] - have[1]) < 1e-9,
+          `${card} on a ${type} serve at rung ${tier}: the card reads ${want}, the diagnosis ${have}`,
+        )
+      }
+    }
+  }
+})
+
+check('every card row that carries a diagnosis signal is listed as sharing its band', () => {
+  // Found by reading, not by name: every card row and every signal off rig
+  // serves from the side and from a corner, with the ball followed. A pair whose
+  // numbers agree on every serve, to the rounding `diagnose` applies, is one
+  // quantity measured twice, and two bands on it would judge one serve twice.
+  const serves: [Partial<ServeDials>, boolean][] = [
+    [{}, true],
+    [{ trophyKneeAngle: 150, contactReach: 1.05, seed: 3, noise: 0.004 }, true],
+    [{ cameraYaw: 30, shoulderYaw: 10 }, false],
+    [{ cameraYaw: 45, shoulderYaw: 35, spineLean: 26 }, false],
+    [{ cameraYaw: 60, shoulderYaw: 20 }, false],
+  ]
+  const rows = serves.map(([dials, side]) => {
+    const { frames, skel } = run(dials)
+    const ball = tossedBall(frames, skel, frames[skel.keys.contact].t)
+    const card = Object.fromEntries(measure(frames, skel, side, { ball }).flatMap((f) => f.metrics.map((m) => [m.id, m.value])))
+    const signals = diagnose(frames, skel, { ball }).signals
+    return { card, signals }
+  })
+  const found: string[] = []
+  for (const card of Object.keys(METRICS)) {
+    for (const signal of Object.keys(SIGNALS)) {
+      const both = rows.filter((r) => Number.isFinite(r.card[card]) && Number.isFinite(r.signals[signal]))
+      const same = both.every((r) => Math.abs(r.card[card] - r.signals[signal]) <= (Math.abs(r.signals[signal]) >= 10 ? 0.5 : 5e-4))
+      if (both.length >= 2 && same) found.push(`${card}=${signal}`)
+    }
+  }
+  note(`shared: ${found.join(', ')}`)
+  const listed = Object.entries(CARD_SIGNAL).map(([card, signal]) => `${card}=${signal}`)
+  for (const pair of found) assert(listed.includes(pair), `${pair} carry one number and are not in CARD_SIGNAL`)
+  for (const pair of listed) assert(found.includes(pair), `${pair} is listed but the two did not read the same number`)
+})
+
 check('a low contact off a good toss is left as a contact fault', () => {
   const { diagnosis } = run({ contactReach: 1.0 }, 5)
   const contact = findingFor(diagnosis, 'low_contact')
@@ -369,16 +423,18 @@ check('the same serve is asked for more at each level up', () => {
     flagged(nine).length >= flagged(four).length,
     'a stronger player was asked for no more than a beginner',
   )
-  // Contact height, not the racket drop, which used to carry this check: hand
-  // depth does not separate levels on real motion, so its band is the same at
-  // every rung on purpose (`drop_depth_ratio` in tiers.ts).
-  const reachAtFour = findingFor(four, 'low_contact')!.target[0]
-  const reachAtNine = findingFor(nine, 'low_contact')!.target[0]
-  assert(reachAtNine > reachAtFour, 'the contact height asked of a 9 was no higher than for a 4')
-  note(`contact target ${reachAtFour.toFixed(2)} at tier 4, ${reachAtNine.toFixed(2)} at tier 9`)
-  const dropAtFour = findingFor(four, 'shallow_drop')!.target[0]
-  const dropAtNine = findingFor(nine, 'shallow_drop')!.target[0]
-  assert(dropAtNine === dropAtFour, 'the racket drop band moved with the level again')
+  // The toss's drift, which still climbs. Contact height carried this check
+  // until D2.3 and the racket drop before it; both bands are the same at every
+  // rung on purpose now — the drop because hand depth does not separate levels
+  // on real motion, contact because it shares the card's one band
+  // (`CARD_SIGNAL` in tiers.ts).
+  const driftAtFour = findingFor(four, 'toss_drift')!.target[1]
+  const driftAtNine = findingFor(nine, 'toss_drift')!.target[1]
+  assert(driftAtNine < driftAtFour, 'the toss asked of a 9 was no steadier than for a 4')
+  note(`toss drift target ${driftAtFour.toFixed(3)} at tier 4, ${driftAtNine.toFixed(3)} at tier 9`)
+  for (const flat of ['shallow_drop', 'low_contact'] as FlawId[]) {
+    assert(findingFor(nine, flat)!.target[0] === findingFor(four, flat)!.target[0], `the ${flat} band moved with the level again`)
+  }
 })
 
 check('every finding carries the tier its target came from', () => {

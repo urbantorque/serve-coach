@@ -22,6 +22,7 @@
  */
 
 import type { ServeType } from '../storage/prefs'
+import { METRICS, SERVE_TYPES } from './coaching'
 import { clamp, lerp } from './geometry'
 
 /** Which direction on this axis is better, which decides how a band is read. */
@@ -39,6 +40,45 @@ export interface SignalSpec {
    * degrees and one in milliseconds.
    */
   seriousMiss: number
+}
+
+/**
+ * Card rows that read the same number as a ladder signal, and so share its band.
+ *
+ * ONE SERVE, JUDGED ONCE (D2.3). The card scores these five against a fixed
+ * band, and the diagnosis used to name their faults against a ladder of its own,
+ * so one serve could be judged twice and judged differently: a toss the plan
+ * let pass under a card row that called it low, or a real server's coil read
+ * short on the card at a floor the diagnosis never asked for. Each now has one
+ * band, written once on the card (`coaching.ts`, beside its sources), and the
+ * ladder reads it at every rung. The diagnosis still names a fault only past its
+ * noise floor (`NOISE_FLOOR`, `CAMERA_ALLOWANCE`), so whatever it names is out of
+ * band on the card as well. The card can call a near miss the diagnosis
+ * forgives, and never the other way round.
+ *
+ * Flat, not laddered, because none of the five has a figure per level the
+ * camera can resolve. Contact's beginner-to-elite gap (Girard 2005) is half of
+ * what the phone's position moves it; the toss has no club data; the hips' rise
+ * and the coil have one professional figure each; and the drop was flattened on
+ * real motion before this. So none of them rates a player either: a flat band's
+ * `rungStep` is zero.
+ *
+ * Complete by test, not by care: `flaws.test.ts` reads every card row and every
+ * signal off rig serves, and fails on any pair carrying the same number that is
+ * missing here.
+ */
+export const CARD_SIGNAL: Record<string, string> = {
+  tossPeakHeight: 'toss_peak_ratio',
+  hipShoulderSeparation: 'separation_deg',
+  legDrive: 'leg_drive_rise_ratio',
+  dropDepth: 'drop_depth_ratio',
+  contactHeight: 'contact_height_ratio',
+}
+
+/** A card row's band, as a ladder that does not move. */
+function cardBand(card: string): SignalSpec['anchors'] {
+  const [lo, hi] = METRICS[card].ideal
+  return { 3: [lo, hi], 5: [lo, hi], 7: [lo, hi], 9: [lo, hi] }
 }
 
 /**
@@ -79,8 +119,9 @@ export const SIGNALS: Record<string, SignalSpec> = {
     direction: 'higher',
     // Hip-to-shoulder coil at the trophy. A tour serve reaches the fifties; a
     // healthy club torso does not, and demanding it produces back pain rather
-    // than racket-head speed.
-    anchors: { 3: [8, 46], 5: [13, 48], 7: [19, 52], 9: [25, 55] },
+    // than racket-head speed. The card's band (`CARD_SIGNAL`), where the reasons
+    // for its edges are written.
+    anchors: cardBand('hipShoulderSeparation'),
     seriousMiss: 12,
   },
 
@@ -159,7 +200,11 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // has to survive odd angles and rough footage; a racket that never fell at
     // all is named structurally (`racketNeverFell` in `flaws.ts`) whatever this
     // number says.
-    anchors: { 3: [-0.1, 0.52], 5: [-0.1, 0.52], 7: [-0.1, 0.52], 9: [-0.1, 0.52] },
+    //
+    // The card's band (`CARD_SIGNAL`). Only the ceiling moved, 0.52 to 0.3, and
+    // on a signal graded from below it is a plausibility cap that nothing read
+    // once the band stopped moving with the rung.
+    anchors: cardBand('dropDepth'),
     seriousMiss: 0.09,
   },
   elbow_lift_ratio: {
@@ -208,9 +253,11 @@ export const SIGNALS: Record<string, SignalSpec> = {
    *
    * ITS ZERO IS 0.0457 (`LEG_DRIVE_FLOOR`). A player who never leaves the ground
    * still rises, because straightening out of the knee bend lifts the hips. So
-   * the bottom rung sits just above that floor — the serve that only
-   * straightens — and every rung stays below the professional mean less one
-   * deviation (0.124): nobody here is asked for a tour jump.
+   * the floor, 0.10, sits clear of that zero and below the professional mean
+   * less one deviation (0.124): nobody here is asked for a tour jump. It used to
+   * climb from 0.05 to 0.11 with the rung while the card asked for 0.10 at every
+   * rung. One band now, the card's (`CARD_SIGNAL`). The rig's clean serve rises
+   * 0.12–0.14 and every Bath serve at least 0.13, so neither is named.
    *
    * IT TRACKS ITS DIAL. Swept against `contactHipHeight` across eight seeds: 0.95
    * (planted) reads 0.0457, 1.02 reads 0.0866, 1.10 reads 0.1333, 1.18 reads
@@ -222,7 +269,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     id: 'leg_drive_rise_ratio',
     unit: 'ratio',
     direction: 'higher',
-    anchors: { 3: [0.05, 0.4], 5: [0.07, 0.4], 7: [0.09, 0.4], 9: [0.11, 0.4] },
+    anchors: cardBand('legDrive'),
     seriousMiss: 0.04,
   },
   contact_height_ratio: {
@@ -237,7 +284,11 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // heights from the ankle line, over nose height ÷ 0.93, which reads stature
     // about 8% short — that is about 1.20 to 1.27. The old ladder topped out at
     // 1.33 and started at 1.16, above most of that range.
-    anchors: { 3: [1.08, 1.62], 5: [1.14, 1.62], 7: [1.2, 1.62], 9: [1.25, 1.62] },
+    //
+    // It then climbed 1.08 to 1.25 with the rung, and that gap is under what the
+    // phone's position alone moves this reading (`CAMERA_ALLOWANCE`). One band
+    // now, the card's (`CARD_SIGNAL`): the beginners' figure less that allowance.
+    anchors: cardBand('contactHeight'),
     seriousMiss: 0.12,
   },
   toss_peak_ratio: {
@@ -248,7 +299,11 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // published toss peak in skilled servers (1.82–2.08 from the ankle line; see
     // `tossPeakHeight` in coaching.ts). A better server is not asked to toss
     // lower than the best servers do, so the ceiling is the card's at every rung.
-    anchors: { 3: [1.24, 2.15], 5: [1.3, 2.1], 7: [1.36, 2.1], 9: [1.4, 2.1] },
+    //
+    // And now the floor is too (`CARD_SIGNAL`). It climbed 1.24 to 1.40 with the
+    // rung, on no club data, and a toss that peaks at 1.30 tops out under where
+    // a beginner meets the ball (1.49 in these units), so no rung should pass it.
+    anchors: cardBand('tossPeakHeight'),
     seriousMiss: 0.18,
   },
 }
@@ -1203,13 +1258,23 @@ export function bandFor(signal: string, tier: number): [number, number] {
  * moves down by the same 0.18. Contact height has no entry because the card
  * has none: published kick and flat impact heights are within a centimetre of
  * each other (Vacek 2023). Slice has no overrides on the card either.
- * `flaws.test.ts` holds the two tables to each other.
+ *
+ * Read off the card's overrides for every row in `CARD_SIGNAL` rather than
+ * typed a second time, so the two tables cannot drift; `flaws.test.ts` still
+ * holds them to each other.
  */
-export const SERVE_TYPE_SHIFT: Record<ServeType, Partial<Record<string, [number, number]>>> = {
-  flat: {},
-  kick: { toss_peak_ratio: [-0.18, 0] },
-  slice: {},
-}
+export const SERVE_TYPE_SHIFT = Object.fromEntries(
+  (Object.keys(SERVE_TYPES) as ServeType[]).map((type) => [
+    type,
+    Object.fromEntries(
+      Object.entries(CARD_SIGNAL).flatMap(([card, signal]) => {
+        const moved = SERVE_TYPES[type].overrides[card]
+        const [lo, hi] = METRICS[card].ideal
+        return moved ? [[signal, [moved[0] - lo, moved[1] - hi]]] : []
+      }),
+    ),
+  ]),
+) as Record<ServeType, Partial<Record<string, [number, number]>>>
 
 /**
  * The band to aim at: the one belonging to the tier above this player, moved

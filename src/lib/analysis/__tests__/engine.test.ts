@@ -703,7 +703,11 @@ check('a trunk yawed past the wrap point measures the coil it actually held', ()
   const b = metric(plain.fundamentals, 'hipShoulderSeparation')
   note(`coil ${b.value.toFixed(1)}° at 82°, ${a.value.toFixed(1)}° with the same trunk yawed past the wrap`)
   near(a.value, 26, 8, 'coil across the wrap point')
-  assert(a.status === b.status, `the same trophy was badged ${a.status} past the wrap and ${b.status} under it`)
+  // The same verdict, not the same badge: the band's middle sits at 23 since it
+  // became the diagnosis's band too (D2.3), and four degrees either side of 27
+  // straddle the line between "Strong" and "Solid" without either being wrong.
+  const praised = (m: typeof a) => m.value >= m.ideal[0] && m.value <= m.ideal[1] && !m.fix
+  assert(praised(a) && praised(b), `the same trophy read ${a.display} past the wrap and ${b.display} under it, and was not praised both times`)
 })
 
 check('a trunk that barely rotates is not handed a coil sign by noise', () => {

@@ -75,7 +75,9 @@ export interface Frame {
 // is read from the hand and the ball together, which moves it on a clip whose
 // hand peaked after the hit and hedges contact readings when the two disagree;
 // and with the ball followed to the racket, the Contact card reads the ball's
-// height at contact in place of the hand's.
+// height at contact in place of the hand's; and the card and the diagnosis
+// share one band wherever they read one number, which moved the coil's band
+// from 15–38 to 8–38 and opened the top of the leg drive's.
 export const SCORING_VERSION = 5
 
 /**

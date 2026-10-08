@@ -298,7 +298,20 @@ Clean up the judgement before new readings are added to it.
       plan:* "Ball height at contact" when D1.4 has
       the ball; otherwise "wrist height", labelled as such, with its own band.
       *Proof:* rig with the ball found and not found.
-- [ ] **D2.3 Merge card and diagnosis bands** · M. Contact height and toss peak
+- [x] **D2.3 Merge card and diagnosis bands** · M. *Done (2026-10-09), on five
+      pairs, not two: `flaws.test.ts` reads every card row and every signal off
+      rig serves and found the coil and the racket drop carrying one number as
+      well. `CARD_SIGNAL` lists them, the ladder reads each card row's band at
+      every rung, and the serve-type shift is read off the card's own overrides.
+      A check holds them at every rung and serve type, and fails on any unlisted
+      pair. Flat, because none of the five has a per-level figure the camera can
+      resolve. The diagnosis still names a fault only past its noise floor, so
+      whatever it names the card calls out of band too. Two card bands moved,
+      each to a readout rung edge: the coil's floor from 15 to 8, which had called
+      nearly every Bath serve short (they coil 5–16°), and leg drive's top opened,
+      which had told the highest Bath serves (up to 0.26) to drive less. Leg drive
+      is graded since D2.5, so it keeps its grade. No fault the diagnosis names
+      on the forty Bath serves changed. Original plan:* Contact height and toss peak
       each get one band. Leg drive is not graded on the card while its signal is
       `UNCALIBRATED` in the diagnosis. *Proof:* a check that every signal shared
       by card and diagnosis reads one band.

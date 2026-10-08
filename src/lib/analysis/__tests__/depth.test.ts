@@ -1664,9 +1664,10 @@ check('a symptom is still attributed to a cause too small to name', () => {
    */
   const findings = evaluateFlaws(
     {
-      // Tier-4 target for a 5: [1.3, 1.86]. Just under, by less than the floor.
-      toss_peak_ratio: { value: 1.285, confidence: 0.9 },
-      // Target [1.14, 1.62]. Clearly under, by more than the floor and the
+      // Target [1.38, 2.1], the card's band at every rung (`CARD_SIGNAL`).
+      // Just under, by less than the floor.
+      toss_peak_ratio: { value: 1.37, confidence: 0.9 },
+      // Target [1.14, 1.5]. Clearly under, by more than the floor and the
       // camera allowance both.
       contact_height_ratio: { value: 1.0, confidence: 0.9 },
     },

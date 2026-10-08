@@ -306,7 +306,15 @@ export const METRICS: Record<string, MetricCopy> = {
     unit: '°',
     phase: 'trophy',
     weight: 1,
-    ideal: [15, 38],
+    // One band with the diagnosis's `separation_deg` (`CARD_SIGNAL` in
+    // tiers.ts). The floor was 15, and the forty Bath serves coil 5–16° here
+    // from every placement, median 11, so it called nearly all of them short at
+    // a level the diagnosis never asked for. It is 8 now, the bottom of the
+    // readout's "Slight coil": a coil the camera can tell from none, and under
+    // the 10.5 the diagnosis asked of rung 4, where every clip starts. The
+    // ceiling stays at 38, where "Extreme coil" begins; the ladder's ceilings,
+    // up to 55, only capped a signal graded from below.
+    ideal: [8, 38],
     // Below zero the chest has unwound past the hips before the racket has even
     // dropped, which is a different fault from failing to coil and reads
     // differently on the card. The axis has to reach far enough down to show it.
@@ -318,16 +326,15 @@ export const METRICS: Record<string, MetricCopy> = {
     missSpan: 55,
     decimals: 0,
     insight: {
-      // Below the band now covers two different faults — a chest that opened
-      // ahead of the hips, and a real but shallow coil the ladder calls "Slight
-      // coil" — and `build()` has one string for the pair, because it picks by
-      // band and not by rung. So this names what both share, the stretch that
-      // never got stored, and leaves the direction to the readout beside it.
-      // Saying "turns open with your hips" instead denied the readout outright
-      // for every player between eight and fifteen degrees, which is most of
-      // them.
+      // Below the band covers two different faults — a chest that opened ahead
+      // of the hips, and hips and chest turning together — and `build()` has
+      // one string for the pair, because it picks by band and not by rung. So
+      // this names what both share, the stretch that never got stored, and
+      // leaves the direction to the readout beside it.
       low: 'You reach the trophy with **too little coil** between hips and chest, so the arm swings on its own.',
-      ok: 'Your hips **lead** and the shoulders lag. That stretch whips the arm through.',
+      // Over two rungs since the floor came down to 8: a slight coil and hips
+      // well ahead are both hips turning first, and neither is denied by it.
+      ok: 'Your hips **turn ahead** of your chest. That stretch whips the arm through.',
       high: 'A **big coil** between hips and shoulders.',
     },
     fix: {
@@ -379,7 +386,15 @@ export const METRICS: Record<string, MetricCopy> = {
     unit: '×',
     phase: 'contact',
     weight: 1,
-    ideal: [0.1, 0.24],
+    // The hips' rise from the deepest load to contact. One band with the
+    // diagnosis's `leg_drive_rise_ratio` (`CARD_SIGNAL` in tiers.ts), whose
+    // comment has the sources. The floor is where the readout's "Strong drive
+    // up" begins. The ceiling was 0.24 and told the highest of the forty Bath
+    // serves to drive less: they rise 0.13–0.26 from every placement, beside a
+    // professional 0.158 ± 0.034 (Deghaies 2026), and no study names a rise too
+    // big. So the band runs to the end of the axis, as `handUnderElbow`'s does,
+    // and the line above it is blank.
+    ideal: [0.1, 0.36],
     range: [0, 0.36],
     decimals: 3,
     insight: {
@@ -389,7 +404,9 @@ export const METRICS: Record<string, MetricCopy> = {
     },
     fix: {
       low: '**Explode up** and land inside the baseline. Drive up at the ball, not forward at it.',
-      high: '**Drive up**, not out. Landing deep in the court means the toss sits too far ahead.',
+      // Empty while the band runs to the end of its own axis. It used to say a
+      // big rise meant landing deep, which the hips' height cannot tell.
+      high: '',
     },
     drill: {
       name: 'Land inside',

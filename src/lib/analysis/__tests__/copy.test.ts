@@ -312,19 +312,15 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Athletic load', high: 'Athletic load' },
   },
   hipShoulderSeparation: {
-    stamp: 'dcbbacf6',
+    stamp: '4101fb98',
     insight: {
-      // Four rungs, two faults: a chest that opened ahead of the hips and a coil
-      // too shallow to unwind. The one string below the band names the shortfall
-      // they share and asserts no direction, which is the only way one sentence
-      // covers both without denying the readout at one end or the other.
-      low: [
-        'Chest opens ahead of the hips',
-        'Chest leads the hips',
-        'Hips and chest locked',
-        'Slight coil',
-      ],
-      ok: ['Hips lead the chest'],
+      // Three rungs, two faults: a chest that opened ahead of the hips and hips
+      // and chest turning as one. The one string below the band names the
+      // shortfall they share and asserts no direction, which is the only way one
+      // sentence covers both without denying the readout at one end or the other.
+      low: ['Chest opens ahead of the hips', 'Chest leads the hips', 'Hips and chest locked'],
+      // A slight coil is praised since the band came down to 8 (D2.3).
+      ok: ['Slight coil', 'Hips lead the chest'],
       high: ['Extreme coil'],
     },
     aim: { low: 'Hips lead the chest', high: 'Hips lead the chest' },
@@ -350,10 +346,11 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Hitting shoulder under the ball', high: 'Hitting shoulder under the ball' },
   },
   legDrive: {
-    stamp: '358b59d4',
+    stamp: '06237713',
     insight: {
       low: ['No push off the court', 'Light push'],
-      ok: ['Strong drive up'],
+      // A big launch is praised since the band ran to the end of its axis (D2.3).
+      ok: ['Strong drive up', 'Big launch'],
       high: ['Big launch'],
     },
     aim: { low: 'Strong drive up', high: 'Strong drive up' },
