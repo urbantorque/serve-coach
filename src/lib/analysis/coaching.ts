@@ -1083,7 +1083,10 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
   kick: {
     label: 'Kick / topspin',
     word: 'kick',
-    blurb: 'Judged as a kick serve, so contact belongs over your head.',
+    // Since D2.1: published kicks are struck in front of the toe too, a little
+    // nearer than flat serves or no nearer at all, so the blurb says what the
+    // bands actually move — a lower contact floor and a steeper tilt.
+    blurb: 'Judged as a kick serve, so contact may sit over your head and the shoulders tilt further.',
     overrides: {
       // A kick may be struck over the head, where a flat serve may not, so its
       // floor is the bottom of the "struck over the head" rung. It used to stop
