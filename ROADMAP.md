@@ -272,7 +272,13 @@ Clean up the judgement before new readings are added to it.
       each get one band. Leg drive is not graded on the card while its signal is
       `UNCALIBRATED` in the diagnosis. *Proof:* a check that every signal shared
       by card and diagnosis reads one band.
-- [ ] **D2.4 Serve type reaches the diagnosis** · S. `diagnose()` takes
+- [x] **D2.4 Serve type reaches the diagnosis** · S. *Done (2026-10-08):
+      `diagnose()` takes `serveType`, and `SERVE_TYPE_SHIFT` moves a diagnosis
+      band exactly where the card moves its band for the same number — today
+      the kick toss's floor, 0.18 lower, and nothing for contact height, which
+      the card no longer separates (Vacek 2023). A check holds the two tables
+      to each other. Changing the serve type on a report now judges it again
+      rather than carrying the flat verdict over. Original plan:* `diagnose()` takes
       `serveType`, so a good kick contact cannot become a `low_contact` focus.
       *Proof:* rig kick serve, flat and kick verdicts compared.
 - [x] **D2.5 Replace the strict hips-first rule** · S. *Done differently, on the

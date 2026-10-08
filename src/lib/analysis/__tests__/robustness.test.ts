@@ -1151,6 +1151,34 @@ check('the in-session cache keeps what is being used and drops what is not', () 
   assert(cacheSize() === 0, 'a new clip did not clear the cache')
 })
 
+check('re-scoring as a kick re-judges the toss the kick card allows', () => {
+  // D2.4. The serve type moves the diagnosis band for the toss as it moves the
+  // card's, so a re-score has to judge again rather than carry the verdict
+  // over: a flat serve's "toss higher" stays on a kick tossed where kicks are
+  // hit from. Same answer as a full run with the kick said from the start.
+  const ball = {
+    coefficients: [0, 0, 0] as [number, number, number],
+    apex: { t: 0, x: 0.5, y: 0.95 - 1.22 * 0.54 },
+    samples: [],
+    confidence: 0.9,
+  }
+  const base = { ...analysisFrom('flat'), ball }
+  const named = (a: ReturnType<typeof rescore>) =>
+    (a?.diagnosis?.flaws ?? []).filter((f) => f.detected).map((f) => f.flaw)
+  const flat = rescore(base, 'flat')
+  const kick = rescore(base, 'kick')
+  note(`flat: ${named(flat).join(', ') || 'nothing'} · kick: ${named(kick).join(', ') || 'nothing'}`)
+  assert(named(flat).includes('toss_height'), 'a flat serve tossed to racket reach was not told')
+  assert(!named(kick).includes('toss_height'), "the kick re-score kept the flat serve's toss fault")
+  const frames = base.frames
+  const skel = detectServe(frames, FPS)
+  const direct = diagnose(frames, skel, { ball, serveType: 'kick' })
+  assert(
+    JSON.stringify(direct.flaws.filter((f) => f.detected).map((f) => f.flaw)) === JSON.stringify(named(kick)),
+    'a re-score to kick disagrees with a kick read from the start',
+  )
+})
+
 check('a report with no frames cannot be re-scored, and says so', () => {
   // A saved report kept its numbers but not the landmarks behind them, so there
   // is nothing to re-measure. Returning undefined is what makes the caller fall

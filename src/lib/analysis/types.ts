@@ -68,8 +68,9 @@ export interface Frame {
 // tossing hand's peak, which moves every reading taken at or from it; and five
 // noise floors rose when re-derived on real motion, which changes which faults
 // a saved report would name (early shoulder rotation now needs an open chest);
-// and hand-under-elbow reads its order from the world landmarks, which moves
-// the share on any real clip filmed with perspective.
+// hand-under-elbow reads its order from the world landmarks, which moves the
+// share on any real clip filmed with perspective; and the serve type reaches
+// the diagnosis, so a kick's toss is judged against a kick's floor.
 export const SCORING_VERSION = 5
 
 /**

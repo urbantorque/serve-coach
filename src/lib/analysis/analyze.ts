@@ -1152,6 +1152,14 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     fundamentals.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
   )
 
+  // Judged again, because the serve type moves the diagnosis bands the card
+  // moves (`SERVE_TYPE_SHIFT`): a kick toss the card now calls fine must not
+  // stay the fault the report asks the player to fix. The tier the player gave
+  // is kept; an inferred one is inferred again, to the same answer.
+  const stated = analysis.diagnosis?.tier.source === 'stated' ? analysis.diagnosis.tier.current : undefined
+  const diagnosis = diagnose(frames, skel, { tier: stated, ball: servedBall, serveType })
+  const verdict = triage(diagnosis, resilience)
+
   // The keyframes and the tracked ball are unchanged by a serve-type rescore —
   // only the target bands moved — so this recomputes to the same values every
   // time. Redone here anyway rather than carried over from `analysis`, so a
@@ -1169,11 +1177,9 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     fundamentals,
     overall,
     overallStatus: statusOf(overall),
-    // The diagnosis is untouched by a serve-type rescore — it is judged against
-    // the tier ladder, not the serve-type bands — so the named fault and its
-    // drill carry straight over through the spread above, and the focus keeps
-    // coming from the fault rather than reverting to the ranking on a rescore.
-    focus: causalFocus(analysis.triage) ?? pickFocus(fundamentals),
+    diagnosis,
+    triage: verdict,
+    focus: causalFocus(verdict) ?? pickFocus(fundamentals),
     tossFlight,
     serveType,
     // Restamped, not inherited through the spread: every score above has just
@@ -1214,7 +1220,11 @@ export function rediagnose(analysis: Analysis, tier: number | undefined): Analys
     return undefined
   }
 
-  const diagnosis = diagnose(frames, skel, { tier, ball: retimeFlight(analysis.ball, factor) })
+  const diagnosis = diagnose(frames, skel, {
+    tier,
+    ball: retimeFlight(analysis.ball, factor),
+    serveType: analysis.serveType,
+  })
   const verdict = triage(diagnosis, assessResilience(frames, skel))
 
   return {
@@ -1742,7 +1752,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // used. A second pass over data already in memory rather than a second pass
   // over the video — it costs about a millisecond, which is why it is not
   // behind a flag.
-  const diagnosis = diagnose(engine(), skel, { tier: opts.tier, ball: servedBall })
+  const diagnosis = diagnose(engine(), skel, { tier: opts.tier, ball: servedBall, serveType })
 
   // What the clip itself was worth, and the single thing to work on — or the
   // reason there is nothing worth saying. Carried as data rather than acted on

@@ -78,7 +78,7 @@ export function runEngine(input: Frame[], fps: number, serveType: ServeType = 'f
       blur: resilience.blur,
     },
   })
-  const diagnosis = diagnose(frames, skel, {})
+  const diagnosis = diagnose(frames, skel, { serveType })
   const verdict = triage(diagnosis, resilience)
   return { ok: true, run: { frames, skel, resilience, quality, fundamentals, diagnosis, verdict } }
 }

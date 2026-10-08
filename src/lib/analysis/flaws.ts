@@ -15,6 +15,7 @@
  * fault, and sending somebody away to reach higher off a ball that never got
  * there is the single most common way an automated analysis wastes a season.
  */
+import type { ServeType } from '../storage/prefs'
 import type { BodyAxis } from './axes'
 import {
   CAMERA_ALLOWANCE,
@@ -242,6 +243,7 @@ export function evaluateFlaws(
   readings: Record<string, SignalReading | undefined>,
   currentTier: number,
   structural: StructuralEvidence = {},
+  serveType: ServeType = 'flat',
 ): FlawFinding[] {
   const target_tier = nextTier(currentTier)
   const found: FlawFinding[] = []
@@ -251,7 +253,7 @@ export function evaluateFlaws(
     if (!reading || !Number.isFinite(reading.value)) continue
     if (reading.confidence < MIN_EVIDENCE) continue
 
-    const target = targetFor(spec.signal, currentTier)
+    const target = targetFor(spec.signal, currentTier, serveType)
     const miss = missBy(spec.signal, reading.value, target)
 
     /*

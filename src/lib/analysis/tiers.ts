@@ -21,6 +21,7 @@
  * from the serve itself when the player has not said.
  */
 
+import type { ServeType } from '../storage/prefs'
 import { clamp, lerp } from './geometry'
 
 /** Which direction on this axis is better, which decides how a band is read. */
@@ -1101,9 +1102,34 @@ export function bandFor(signal: string, tier: number): [number, number] {
   return [...spec.anchors[9]]
 }
 
-/** The band to aim at: the one belonging to the tier above this player. */
-export const targetFor = (signal: string, currentTier: number): [number, number] =>
-  bandFor(signal, nextTier(currentTier))
+/**
+ * Where a serve type moves a diagnosis band, added to both edges.
+ *
+ * Only where the card moves its band for the same quantity: the card and the
+ * diagnosis read the same number, and a kick toss the card calls fine must not
+ * come back as the fault the report asks the player to fix. Today that is one
+ * entry. The card lets a kick toss peak at racket reach, 1.20 against the flat
+ * serve's 1.38 (`SERVE_TYPES.kick` in coaching.ts), and the ladder's floor
+ * moves down by the same 0.18. Contact height has no entry because the card
+ * has none: published kick and flat impact heights are within a centimetre of
+ * each other (Vacek 2023). Slice has no overrides on the card either.
+ * `flaws.test.ts` holds the two tables to each other.
+ */
+export const SERVE_TYPE_SHIFT: Record<ServeType, Partial<Record<string, [number, number]>>> = {
+  flat: {},
+  kick: { toss_peak_ratio: [-0.18, 0] },
+  slice: {},
+}
+
+/**
+ * The band to aim at: the one belonging to the tier above this player, moved
+ * for the serve they said they hit (`SERVE_TYPE_SHIFT`).
+ */
+export function targetFor(signal: string, currentTier: number, serveType: ServeType = 'flat'): [number, number] {
+  const band = bandFor(signal, nextTier(currentTier))
+  const shift = SERVE_TYPE_SHIFT[serveType]?.[signal]
+  return shift ? [band[0] + shift[0], band[1] + shift[1]] : band
+}
 
 /** Whether a measured value sits inside a band, respecting the axis direction. */
 export function insideBand(signal: string, value: number, band: [number, number]): boolean {

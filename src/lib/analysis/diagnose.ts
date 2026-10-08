@@ -40,6 +40,7 @@ import { inferTier, nextTier, clampTier } from './tiers'
 import { ANKLES_SEEN_FLOOR, type Skeleton } from './phases'
 import type { Frame } from './types'
 import type { BallFlight } from '../vision/ballTrack'
+import type { ServeType } from '../storage/prefs'
 
 export interface Diagnosis {
   /** Bumped when the shape changes, so stored diagnoses can be read or dropped. */
@@ -338,6 +339,11 @@ export interface DiagnoseOptions {
   tier?: number
   /** The tracked ball, when the pixels gave one up. Two signals need it. */
   ball?: BallFlight
+  /**
+   * The serve the player said they hit, which moves the bands the card moves
+   * for it (`SERVE_TYPE_SHIFT`). Flat when unsaid, as on the card.
+   */
+  serveType?: ServeType
 }
 
 const now = () =>
@@ -999,9 +1005,12 @@ export function diagnose(
     mean(dropWindow.map((f) => f.image[R.wrist]?.visibility ?? 0)) >= DROP_VISIBLE &&
     !swungIntoTheLens
 
-  const flaws = evaluateFlaws(readings, current, {
-    racketNeverFell: skel.derivation.dropOnTrophy && sawTheDrop,
-  })
+  const flaws = evaluateFlaws(
+    readings,
+    current,
+    { racketNeverFell: skel.derivation.dropOnTrophy && sawTheDrop },
+    options.serveType,
+  )
 
   const gripFinding = flaws.find((f) => f.flaw === 'waiters_tray')
 

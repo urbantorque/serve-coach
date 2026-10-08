@@ -14,6 +14,7 @@ import { evaluateFlaws, MIN_EVIDENCE, type FlawId } from '../flaws'
 import { detectServe } from '../phases'
 import {
   MAX_TIER,
+  SERVE_TYPE_SHIFT,
   SIGNALS,
   bandFor,
   inferTier,
@@ -23,15 +24,17 @@ import {
   targetFor,
 } from '../tiers'
 import type { BallFlight } from '../../vision/ballTrack'
+import type { ServeType } from '../../storage/prefs'
+import { METRICS, SERVE_TYPES } from '../coaching'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, near, note, report } from './harness'
 
 const FPS = 50
 
-function run(dials: Partial<ServeDials> = {}, tier?: number, ball?: BallFlight) {
+function run(dials: Partial<ServeDials> = {}, tier?: number, ball?: BallFlight, serveType?: ServeType) {
   const frames = buildServe(dials, FPS)
   const skel = detectServe(frames, FPS)
-  return { frames, skel, diagnosis: diagnose(frames, skel, { tier, ball }) }
+  return { frames, skel, diagnosis: diagnose(frames, skel, { tier, ball, serveType }) }
 }
 
 const flagged = (d: ReturnType<typeof run>['diagnosis']): FlawId[] =>
@@ -258,6 +261,44 @@ check('a low contact off a low toss is blamed on the toss', () => {
     contact?.caused_by === 'toss_height',
     `the contact fault was not traced to the toss: ${contact?.caused_by ?? 'nothing'}`,
   )
+})
+
+check('a kick toss the card calls fine is not the fault a flat serve would be told', () => {
+  // D2.4. The card lets a kick toss peak at racket reach, 0.18 lower than a
+  // flat one, and the diagnosis reads the same number — so the same toss, at
+  // a height a kick is hit from, is a fault only when the serve was flat.
+  const ball: BallFlight = {
+    coefficients: [0, 0, 0],
+    apex: { t: 0, x: 0.5, y: 0.95 - 1.22 * 0.54 },
+    samples: [],
+    confidence: 0.9,
+  }
+  const flat = run({}, 4, ball, 'flat').diagnosis
+  const kick = run({}, 4, ball, 'kick').diagnosis
+  note(`toss peak ${flat.signals.toss_peak_ratio}: flat ${flagged(flat).join(', ') || 'nothing'}, kick ${flagged(kick).join(', ') || 'nothing'}`)
+  assert(flagged(flat).includes('toss_height'), 'a flat serve tossed to racket reach was not told')
+  assert(!flagged(kick).includes('toss_height'), 'a kick tossed where a kick is hit from was told to toss higher')
+  // And nothing else moved: the serve type touches only the toss band.
+  const others = (d: typeof flat) => flagged(d).filter((f) => f !== 'toss_height').join(',')
+  assert(others(flat) === others(kick), `the serve type moved other verdicts: ${others(flat)} / ${others(kick)}`)
+})
+
+check('the serve type moves a diagnosis band exactly where it moves the card', () => {
+  // The two tables live apart — the card's in coaching.ts, the ladder's in
+  // tiers.ts — and read the same numbers, so they are held to each other here.
+  const shared: Record<string, string> = { contactHeight: 'contact_height_ratio', tossPeakHeight: 'toss_peak_ratio' }
+  for (const type of Object.keys(SERVE_TYPES) as ServeType[]) {
+    for (const [card, signal] of Object.entries(shared)) {
+      const base = METRICS[card].ideal
+      const moved = SERVE_TYPES[type].overrides[card] ?? base
+      const want: [number, number] = [moved[0] - base[0], moved[1] - base[1]]
+      const have = SERVE_TYPE_SHIFT[type][signal] ?? [0, 0]
+      assert(
+        Math.abs(want[0] - have[0]) < 1e-9 && Math.abs(want[1] - have[1]) < 1e-9,
+        `${type} moves the card's ${card} by ${want} and the diagnosis's ${signal} by ${have}`,
+      )
+    }
+  }
 })
 
 check('a low contact off a good toss is left as a contact fault', () => {
