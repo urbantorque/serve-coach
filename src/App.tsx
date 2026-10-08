@@ -1094,6 +1094,11 @@ export default function App() {
     setSheet(null)
   }
 
+  // The report on screen, live or reopened, and the live one when there is one
+  // — see the single `<Report>` below (W5.3).
+  const liveReport = view.kind === 'report' ? view : undefined
+  const shownReport = liveReport?.analysis ?? (view.kind === 'saved' && !view.example ? view.session : undefined)
+
   return (
     <div className="app">
       <main className="shell">
@@ -1176,7 +1181,16 @@ export default function App() {
             />
           )}
 
-          {view.kind === 'report' && (
+          {/*
+           * One report, live or reopened (W5.3). Everything a report shows from
+           * the history — the last serve, the best, the toss map, the tags, the
+           * records, the practice — is passed the same way to both, so a
+           * reopened report cannot fall a prop behind a live one again. What
+           * only a live report can do — re-read the clip, rescore it, re-judge
+           * it, compare a basket — needs the frames, so it is passed only when
+           * there are frames.
+           */}
+          {shownReport && (
             <Report
               /*
                * Keyed, so the report's own state cannot outlive the report.
@@ -1189,100 +1203,102 @@ export default function App() {
                * remounted, and serve three's override silently applies to serve
                * two's refusal.
                */
-              key={view.analysis.id}
-              analysis={view.analysis}
-              videoUrl={view.videoUrl}
-              previous={priorTo(view.analysis.createdAt, typeOf(view.analysis))}
-              best={bestPriorTo(
-                sessions,
-                view.analysis.createdAt,
-                typeOf(view.analysis),
-                scoringVersionOf(view.analysis),
-              )}
-              serveNumber={tagsById(serveTags).get(view.analysis.id)?.serveNumber}
-              outcome={tagsById(serveTags).get(view.analysis.id)?.outcome}
-              onTagServe={(n) => void applyServeTag(view.analysis.id, { serveNumber: n })}
-              onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
-              onGlance={() => setView({ kind: 'glance', analysis: view.analysis, videoUrl: view.videoUrl })}
-              tossMap={tossMapFor(view.analysis, sessions, serveTags)}
+              key={shownReport.id}
+              analysis={shownReport}
+              videoUrl={liveReport?.videoUrl}
+              previous={priorTo(shownReport.createdAt, typeOf(shownReport))}
+              best={bestPriorTo(sessions, shownReport.createdAt, typeOf(shownReport), scoringVersionOf(shownReport))}
+              serveNumber={tagsById(serveTags).get(shownReport.id)?.serveNumber}
+              outcome={tagsById(serveTags).get(shownReport.id)?.outcome}
+              onTagServe={(n) => void applyServeTag(shownReport.id, { serveNumber: n })}
+              onTagOutcome={(o) => void applyServeTag(shownReport.id, { outcome: o })}
+              tossMap={tossMapFor(shownReport, sessions, serveTags)}
               fixtureExport={FIXTURE_EXPORT}
               onBack={goHome}
               onAnalyzeAnother={goHome}
-              onFlipHandedness={
-                lastFileRef.current
-                  ? () => {
-                      // Correcting the badge is the player stating which hand they
-                      // serve with, so it is remembered rather than being asked
-                      // again on the next clip.
-                      const flipped = view.analysis.handedness === 'right' ? 'left' : 'right'
-                      setPrefs(writePrefs({ handedness: flipped }))
-                      void run(lastFileRef.current!, flipped, view.analysis.serves.index)
-                    }
-                  : undefined
-              }
-              onPickServe={
-                lastFileRef.current
-                  ? (i) => void run(lastFileRef.current!, view.analysis.handedness, i)
-                  : undefined
-              }
-              onPickServeType={(serveType) => {
-                // Remembered, because a player working on their kick serve is
-                // going to film several of them in a row.
-                setPrefs(writePrefs({ serveType }))
-                // The serve type moves target bands and nothing measured, so this
-                // is arithmetic on frames already in memory rather than another
-                // pass over the video. Instant, where re-running would be half a
-                // minute to arrive at the same numbers.
-                const rescored = rescore(view.analysis, serveType)
-                if (rescored) {
-                  remember(
-                    { sessionKey: rescored.id, handedness: rescored.handedness },
-                    rescored,
-                  )
-                  setView({ kind: 'report', analysis: rescored, videoUrl: view.videoUrl })
-                  void trySave(rescored)
-                } else if (lastFileRef.current) {
-                  void run(
-                    lastFileRef.current,
-                    view.analysis.handedness,
-                    view.analysis.serves.index,
-                    serveType,
-                  )
-                }
-              }}
-              statedTier={prefs.tier}
-              onPickTier={(tier) => {
-                // Remembered for the next clip, and applied to this one without
-                // touching the video: the tier moves which band every signal is
-                // judged against and nothing that was measured, so re-reading the
-                // clip would spend half a minute arriving at the same landmarks.
-                setPrefs(writePrefs({ tier }))
-                const rejudged = rediagnose(view.analysis, tier)
-                if (!rejudged) return
-                remember(
-                  { sessionKey: rejudged.id, handedness: rejudged.handedness },
-                  rejudged,
-                )
-                setView({ kind: 'report', analysis: rejudged, videoUrl: view.videoUrl })
-                void trySave(rejudged)
-              }}
-              onCheckConsistency={
-                lastFileRef.current && view.analysis.serves.count > 1
-                  ? () => void compareServes(view.analysis)
-                  : undefined
-              }
-              servePair={pair}
-              bestGap={bestGapFor(typeOf(view.analysis))}
-              basketGapDelta={gapDeltaForView(view.analysis.id, typeOf(view.analysis))}
-              bestScore={bestScoreFor(typeOf(view.analysis))}
+              bestGap={bestGapFor(typeOf(shownReport))}
+              basketGapDelta={gapDeltaForView(shownReport.id, typeOf(shownReport))}
+              bestScore={bestScoreFor(typeOf(shownReport))}
               streak={streak}
-              strainBehind={strainBehindFor(view.analysis.createdAt)}
-              saveWarning={saveWarning}
+              strainBehind={strainBehindFor(shownReport.createdAt)}
               practice={practice}
               onLogDrill={logDrill}
               onUndoDrill={practice?.drilled ? undoDrill : undefined}
               ladder={prefs.ladder}
               onLadderStep={moveLadder}
+              onGlance={
+                liveReport
+                  ? () => setView({ kind: 'glance', analysis: liveReport.analysis, videoUrl: liveReport.videoUrl })
+                  : undefined
+              }
+              onFlipHandedness={
+                liveReport && lastFileRef.current
+                  ? () => {
+                      // Correcting the badge is the player stating which hand they
+                      // serve with, so it is remembered rather than being asked
+                      // again on the next clip.
+                      const flipped = liveReport.analysis.handedness === 'right' ? 'left' : 'right'
+                      setPrefs(writePrefs({ handedness: flipped }))
+                      void run(lastFileRef.current!, flipped, liveReport.analysis.serves.index)
+                    }
+                  : undefined
+              }
+              onPickServe={
+                liveReport && lastFileRef.current
+                  ? (i) => void run(lastFileRef.current!, liveReport.analysis.handedness, i)
+                  : undefined
+              }
+              onPickServeType={
+                liveReport
+                  ? (serveType) => {
+                      // Remembered, because a player working on their kick serve is
+                      // going to film several of them in a row.
+                      setPrefs(writePrefs({ serveType }))
+                      // The serve type moves target bands and nothing measured, so
+                      // this is arithmetic on frames already in memory rather than
+                      // another pass over the video. Instant, where re-running would
+                      // be half a minute to arrive at the same numbers.
+                      const rescored = rescore(liveReport.analysis, serveType)
+                      if (rescored) {
+                        remember({ sessionKey: rescored.id, handedness: rescored.handedness }, rescored)
+                        setView({ kind: 'report', analysis: rescored, videoUrl: liveReport.videoUrl })
+                        void trySave(rescored)
+                      } else if (lastFileRef.current) {
+                        void run(
+                          lastFileRef.current,
+                          liveReport.analysis.handedness,
+                          liveReport.analysis.serves.index,
+                          serveType,
+                        )
+                      }
+                    }
+                  : undefined
+              }
+              statedTier={liveReport ? prefs.tier : undefined}
+              onPickTier={
+                liveReport
+                  ? (tier) => {
+                      // Remembered for the next clip, and applied to this one
+                      // without touching the video: the tier moves which band every
+                      // signal is judged against and nothing that was measured, so
+                      // re-reading the clip would spend half a minute arriving at
+                      // the same landmarks.
+                      setPrefs(writePrefs({ tier }))
+                      const rejudged = rediagnose(liveReport.analysis, tier)
+                      if (!rejudged) return
+                      remember({ sessionKey: rejudged.id, handedness: rejudged.handedness }, rejudged)
+                      setView({ kind: 'report', analysis: rejudged, videoUrl: liveReport.videoUrl })
+                      void trySave(rejudged)
+                    }
+                  : undefined
+              }
+              onCheckConsistency={
+                liveReport && lastFileRef.current && liveReport.analysis.serves.count > 1
+                  ? () => void compareServes(liveReport.analysis)
+                  : undefined
+              }
+              servePair={liveReport ? pair : undefined}
+              saveWarning={liveReport ? saveWarning : undefined}
             />
           )}
 
@@ -1306,33 +1322,6 @@ export default function App() {
               example
               onBack={goHome}
               onAnalyzeAnother={goHome}
-            />
-          )}
-
-          {view.kind === 'saved' && !view.example && (
-            <Report
-              key={view.session.id}
-              analysis={view.session}
-              previous={priorTo(view.session.createdAt, typeOf(view.session))}
-              best={bestPriorTo(sessions, view.session.createdAt, typeOf(view.session), scoringVersionOf(view.session))}
-              tossMap={tossMapFor(view.session, sessions, serveTags)}
-              serveNumber={tagsById(serveTags).get(view.session.id)?.serveNumber}
-              outcome={tagsById(serveTags).get(view.session.id)?.outcome}
-              onTagServe={(n) => void applyServeTag(view.session.id, { serveNumber: n })}
-              onTagOutcome={(o) => void applyServeTag(view.session.id, { outcome: o })}
-              fixtureExport={FIXTURE_EXPORT}
-              onBack={goHome}
-              onAnalyzeAnother={goHome}
-              bestGap={bestGapFor(typeOf(view.session))}
-              basketGapDelta={gapDeltaForView(view.session.id, typeOf(view.session))}
-              bestScore={bestScoreFor(typeOf(view.session))}
-              streak={streak}
-              strainBehind={strainBehindFor(view.session.createdAt)}
-              practice={practice}
-              onLogDrill={logDrill}
-              onUndoDrill={practice?.drilled ? undoDrill : undefined}
-              ladder={prefs.ladder}
-              onLadderStep={moveLadder}
             />
           )}
 

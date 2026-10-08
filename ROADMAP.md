@@ -142,7 +142,13 @@ the end of the first run (1,223 before it).
       log, the serve tags, the refresh and the demo seed; `useOfflineWarmup.ts`
       the badge and the download. `App.tsx` is 168 lines shorter; the seeded
       home and the offline badge checked in the preview.*
-- [ ] **W5.3** One `Report` render instead of two (report / saved).
+- [x] **W5.3** One `Report` render instead of two (report / saved). *Done
+      (2026-10-09): one `<Report>` for a live or a reopened report. Everything
+      drawn from the history is passed the same way to both. What needs the
+      frames (re-reading, rescoring, re-judging, comparing a basket) is passed
+      only for a live one. The example keeps its own bare render. Checked in
+      the preview on `?demo=report` and `?demo=basket`, which also surfaced
+      and fixed a passive line in `practice.ts`.*
 - [ ] **W5.4** Pose inference in a Web Worker — spike first, and it needs a
       phone to measure, so it pairs with the court trip.
 

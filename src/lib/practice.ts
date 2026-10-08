@@ -390,7 +390,7 @@ export function practiceHeadline(f: PracticeFocus): string {
     return cue(`You have drilled your ${it} ${times(f.drilled)} and it has not moved. Take this one to a coach.`)
   }
   if (f.drilled === 0 && f.timesWeakest >= 2) {
-    return cue(`Your ${it} has lost ${f.timesWeakest} serves and no drill is logged against it. Start there.`)
+    return cue(`Your ${it} has lost ${f.timesWeakest} serves and you have logged no drill for it. Start there.`)
   }
   if (f.timesWeakest >= Math.ceil(f.sessionsConsidered / 2)) {
     return cue(`Your ${it} lost ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD(f.serveType)} serves and has not shifted. Spend your time here.`)
