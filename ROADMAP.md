@@ -416,7 +416,13 @@ The outcome taps already exist and nothing reads them.
       takes no tags. Original plan:* First/second and In/Long/Net/Wide on every
       report and on each serve chip in a basket, not only in Glance.
       *Proof:* render tests; tags survive backup round-trip.
-- [ ] **D5.2 What your misses have in common** · M. Across tagged serves,
+- [x] **D5.2 What your misses have in common** · M. *Done (2026-10-09), data
+      only as planned: `missesInCommon` in `progress.ts`. Per kind of miss, the
+      graded reading that best separates those serves from the ones that went
+      in, said only with five tagged serves on each side, one serve type and
+      one rubric era, a gap wider than the reading's `NOISE_FLOOR` and at
+      least twice its own standard error. A planted difference is found; a
+      null history, a thin one and a mixed-type one say nothing.* Across tagged serves,
       compare each measurement between serves that went in and serves that
       missed. Say it only when the gap clears that signal's `NOISE_FLOOR` and
       enough serves sit on each side: "Your serves into the net had the toss

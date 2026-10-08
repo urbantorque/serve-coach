@@ -17,7 +17,9 @@ import {
 } from './analysis/strain'
 import { INJURY_INPUTS, type InjuryFlag } from './analysis/triage'
 import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
-import type { Session } from './storage/db'
+import { NOISE_FLOOR } from './analysis/tiers'
+import { cue } from './analysis/voice'
+import type { ServeOutcome, ServeTag, Session } from './storage/db'
 import type { ServeType } from './storage/prefs'
 import { clipIdOf } from './storage/sessionKey'
 
@@ -1118,4 +1120,112 @@ export function tripSummary(trip: Session[], history: Session[]): TripSummary | 
     focus: byTime[byTime.length - 1].focus?.title,
     strain: recurringStrainOf(history).filter((r) => raised.has(r.flag)),
   }
+}
+
+/* ------------------------------------------------ what the misses share (D5.2) */
+
+/** Serves needed on each side before a difference between them is worth a sentence. */
+export const MIN_SERVES_EACH_SIDE = 5
+
+/**
+ * How each graded reading reads when the misses had more of it, and less.
+ *
+ * Only the readings the engine grades and names faults from. The hip lead and
+ * the forearm turn are measured and never named (`UNDER_RESOLVED`), so a gap in
+ * them would be the first thing the app ever said about either, arriving
+ * through a side door.
+ */
+const MISS_PHRASE: Record<string, { more: string; less: string }> = {
+  toss_drift_ratio: { more: 'the toss wandering further', less: 'the toss steadier' },
+  toss_peak_ratio: { more: 'the toss higher', less: 'the toss lower' },
+  contact_height_ratio: { more: 'contact higher', less: 'contact lower' },
+  drop_depth_ratio: { more: 'the racket hand lower behind you', less: 'the racket hand higher behind you' },
+  elbow_lift_ratio: { more: 'the elbow higher at the drop', less: 'the elbow lower at the drop' },
+  leg_drive_rise_ratio: { more: 'more push from the legs', less: 'less push from the legs' },
+  spine_lean_deg: { more: 'more sideways lean', less: 'less sideways lean' },
+  palm_to_sky_deg: { more: 'the palm turned further up', less: 'the palm turned less' },
+  separation_deg: { more: 'more coil at the trophy', less: 'less coil at the trophy' },
+}
+
+const MISS_WHERE: Record<Exclude<ServeOutcome, 'in'>, string> = {
+  net: 'into the net',
+  long: 'that went long',
+  wide: 'that went wide',
+}
+
+export interface MissPattern {
+  /** The miss the serves were tagged with. */
+  miss: Exclude<ServeOutcome, 'in'>
+  signal: string
+  /** Mean over the misses minus mean over the serves that went in, in the signal's units. */
+  gap: number
+  /** The gap over its own standard error: how far past chance it sits. */
+  strength: number
+  inServes: number
+  missServes: number
+  /** One sentence, in the copy rules' voice. */
+  line: string
+}
+
+/**
+ * What the player's serves of one kind of miss have in common, against the
+ * serves they tagged as in.
+ *
+ * Said only when it would survive a sceptic, because R56 named the trap when
+ * the taps were added: "your toss drifts more on the serves you miss" is a
+ * correlation, and over six points it is noise with a sentence attached. So,
+ * for each graded reading and each kind of miss:
+ *
+ *   - at least `MIN_SERVES_EACH_SIDE` tagged serves on each side;
+ *   - one serve type, and one rubric era, so neither the bands nor the engine
+ *     moved under the comparison;
+ *   - a gap wider than that reading's `NOISE_FLOOR`, so it is bigger than the
+ *     camera alone moves it between takes of one serve; and
+ *   - a gap at least twice its own standard error, so it is bigger than the
+ *     player's own serve-to-serve spread would make it by chance.
+ *
+ * The strongest pattern per kind of miss, strongest first. Nothing at all is
+ * the common answer, and the right one, for most histories.
+ */
+export function missesInCommon(
+  sessions: Session[],
+  tags: readonly ServeTag[],
+  serveType?: ServeType,
+): MissPattern[] {
+  const type = serveType ?? dominantType(sessions)
+  const tagged = new Map(tags.map((t) => [t.id, t.outcome]))
+  const era = currentRubricEra(
+    sessions
+      .filter((s) => typeOf(s) === type && s.triage?.status !== 'rejected' && s.diagnosis)
+      .sort((a, b) => a.createdAt - b.createdAt),
+  ).filter((s) => tagged.get(s.id) !== undefined)
+
+  const inServes = era.filter((s) => tagged.get(s.id) === 'in')
+  const out: MissPattern[] = []
+  for (const miss of ['net', 'long', 'wide'] as const) {
+    const missed = era.filter((s) => tagged.get(s.id) === miss)
+    let best: MissPattern | undefined
+    for (const [signal, phrase] of Object.entries(MISS_PHRASE)) {
+      const a = inServes.map((s) => s.diagnosis!.signals[signal]).filter(Number.isFinite)
+      const b = missed.map((s) => s.diagnosis!.signals[signal]).filter(Number.isFinite)
+      if (a.length < MIN_SERVES_EACH_SIDE || b.length < MIN_SERVES_EACH_SIDE) continue
+      const gap = mean(b) - mean(a)
+      const variance = (xs: number[]) => xs.reduce((s, x) => s + (x - mean(xs)) ** 2, 0) / (xs.length - 1)
+      const error = Math.sqrt(variance(a) / a.length + variance(b) / b.length)
+      const strength = Math.abs(gap) / Math.max(error, 1e-9)
+      if (Math.abs(gap) < (NOISE_FLOOR[signal] ?? Number.POSITIVE_INFINITY) || strength < 2) continue
+      if (best && strength <= best.strength) continue
+      best = {
+        miss,
+        signal,
+        gap,
+        strength: Math.round(strength * 10) / 10,
+        inServes: a.length,
+        missServes: b.length,
+        line: cue(`Your serves ${MISS_WHERE[miss]} had ${gap > 0 ? phrase.more : phrase.less}.`),
+      }
+    }
+    if (best) out.push(best)
+  }
+  return out.sort((x, y) => y.strength - x.strength)
 }
