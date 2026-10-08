@@ -1430,6 +1430,7 @@ export default function App() {
           {view.kind === 'progress' && (
             <Progress
               sessions={sessions}
+              tags={serveTags}
               practice={practice}
               onLogDrill={logDrill}
               onUndoDrill={undoDrill}

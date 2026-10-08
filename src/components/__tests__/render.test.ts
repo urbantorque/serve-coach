@@ -37,6 +37,7 @@ import { renderToStaticMarkup } from 'react-dom/server.browser'
 import ConsistencyPanel from '../ConsistencyPanel'
 import Glance from '../../screens/Glance'
 import Home from '../../screens/Home'
+import Progress from '../../screens/Progress'
 import Report from '../../screens/Report'
 import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
 import { CHECK_SERVES, progressionFor } from '../../lib/analysis/progressions'
@@ -339,6 +340,37 @@ check("the home screen carries this week's plan, in the report's order, on the p
     triage: { ...last.triage!, status: 'rejected', reason: 'too_blurry' },
   }
   assert(home([refused, last]).includes(escaped(plan[0].title)), 'a refused clip blanked the plan')
+})
+
+check('progress keeps first and second serves apart, and counts the weeks (D5.3, D5.4)', () => {
+  const day = 86_400_000
+  const history = Array.from({ length: 8 }, (_, i) => {
+    const s = stored(sampleAnalysis())
+    return { ...s, id: `serve-p-${i}`, overall: 70 + i, createdAt: Date.now() - (7 - i) * 4 * day }
+  })
+  const tags = history.map((s, i) => ({
+    id: s.id,
+    serveNumber: (i % 2 ? 2 : 1) as 1 | 2,
+    outcome: i < 6 ? ('in' as const) : ('net' as const),
+    taggedAt: s.createdAt,
+  }))
+  const out = html(
+    createElement(Progress, {
+      sessions: history,
+      tags,
+      onLogDrill: noop,
+      onUndoDrill: noop,
+      seeded: false,
+      onBack: noop,
+    }),
+  )
+  assert(out.includes('First and second serves'), 'no serve-number block')
+  assert(out.includes('First serves: 4 tagged'), 'first serves were not counted on their own')
+  assert(out.includes('Second serves: 4 tagged'), 'second serves were not counted on their own')
+  assert(out.includes('in on 6 of 8 tagged'), 'no in-rate for the serve type')
+  assert(out.includes('Serves per week'), 'no weekly count')
+  const bare = html(createElement(Progress, { sessions: history, onLogDrill: noop, onUndoDrill: noop, seeded: false, onBack: noop }))
+  assert(!bare.includes('First and second serves'), 'a serve-number block with no taps behind it')
 })
 
 /* ------------------------------------------- every stored shape, one at a time */

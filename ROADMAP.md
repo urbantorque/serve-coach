@@ -429,9 +429,17 @@ The outcome taps already exist and nothing reads them.
       enough serves sit on each side: "Your serves into the net had the toss
       further in front." Computed in `progress.ts`, data only. *Proof:* seeded
       tags with a planted difference, and a null history that must say nothing.
-- [ ] **D5.3 First and second serves apart** · S. Progress splits by serve
-      number. In-rate from tags per serve type. *Proof:* seeded sessions.
-- [ ] **D5.4 Serve count per week** · S. Serves detected per week and a plain
+- [x] **D5.3 First and second serves apart** · S. *Done (2026-10-09): Progress
+      lists first and second serves on their own — count and average score of
+      the tagged ones, one serve type and rubric era — and each serve type's
+      in-rate from the player's taps, once there are five. Original plan:*
+      Progress splits by serve number. In-rate from tags per serve type.
+      *Proof:* seeded sessions.
+- [x] **D5.4 Serve count per week** · S. *Done (2026-10-09): Progress shows
+      this week's serves beside the four before, and one plain line when a
+      week is half again the recent average and ten serves over it, with a
+      baseline of four weeks that had serves. A count; nothing about load or
+      injury. Original plan:* Serves detected per week and a plain
       note when a week jumps well above the last four. A count, not a medical
       claim. *Proof:* seeded history; copy lint.
 

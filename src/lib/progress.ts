@@ -1229,3 +1229,145 @@ export function missesInCommon(
   }
   return out.sort((x, y) => y.strength - x.strength)
 }
+
+/* -------------------------------------- first and second serves apart (D5.3) */
+
+/** Outcome taps needed before an in-rate is printed: below this it is anecdote. */
+export const MIN_OUTCOMES_FOR_RATE = 5
+
+export interface ServeNumberSummary {
+  serveNumber: 1 | 2
+  /** Reports tagged with this serve number, of this type, in this rubric era. */
+  serves: number
+  /** Their mean overall score. */
+  average: number
+  /** Of those with an outcome tapped, how many went in. */
+  inServes: number
+  outcomes: number
+}
+
+/**
+ * First serves and second serves, kept apart (D5.3).
+ *
+ * A second serve is meant to be safer, slower and spun, so its score and its
+ * in-rate answer a different question from a first serve's; averaged together
+ * they answer neither. Only the serves the player tagged with a number, one
+ * serve type, one rubric era — the same rules every other figure on the
+ * progress screen keeps.
+ */
+export function byServeNumber(
+  sessions: Session[],
+  tags: readonly ServeTag[],
+  serveType?: ServeType,
+): ServeNumberSummary[] {
+  const type = serveType ?? dominantType(sessions)
+  const byId = new Map(tags.map((t) => [t.id, t]))
+  const era = currentRubricEra(
+    sessions
+      .filter((s) => typeOf(s) === type && s.triage?.status !== 'rejected')
+      .sort((a, b) => a.createdAt - b.createdAt),
+  )
+  const out: ServeNumberSummary[] = []
+  for (const n of [1, 2] as const) {
+    const these = era.filter((s) => byId.get(s.id)?.serveNumber === n)
+    if (!these.length) continue
+    const outcomes = these.map((s) => byId.get(s.id)?.outcome).filter((o) => o !== undefined)
+    out.push({
+      serveNumber: n,
+      serves: these.length,
+      average: Math.round(mean(these.map((s) => s.overall))),
+      inServes: outcomes.filter((o) => o === 'in').length,
+      outcomes: outcomes.length,
+    })
+  }
+  return out
+}
+
+export interface InRate {
+  serveType: ServeType
+  inServes: number
+  outcomes: number
+}
+
+/**
+ * How often each serve type went in, from the player's own taps (D5.3).
+ *
+ * Every era, unlike the scores: where the ball landed does not change when the
+ * rubric does. A type appears only once it has `MIN_OUTCOMES_FOR_RATE` taps.
+ */
+export function inRateByType(sessions: Session[], tags: readonly ServeTag[]): InRate[] {
+  const outcome = new Map(tags.map((t) => [t.id, t.outcome]))
+  const out: InRate[] = []
+  for (const type of ['flat', 'kick', 'slice'] as const) {
+    const said = sessions
+      .filter((s) => typeOf(s) === type)
+      .map((s) => outcome.get(s.id))
+      .filter((o) => o !== undefined)
+    if (said.length < MIN_OUTCOMES_FOR_RATE) continue
+    out.push({ serveType: type, inServes: said.filter((o) => o === 'in').length, outcomes: said.length })
+  }
+  return out
+}
+
+/* ----------------------------------------------- serves per week (D5.4) */
+
+export const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+export interface WeekCount {
+  /** Start of the week, local midnight on Monday. */
+  start: number
+  serves: number
+}
+
+/** Local midnight on the Monday of the week holding `t`. */
+function weekStart(t: number): number {
+  const d = new Date(t)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return d.getTime()
+}
+
+/**
+ * Serves filmed in each of the last `weeks` weeks, oldest first, this week
+ * last — empty weeks included, because a week off is part of the count.
+ *
+ * Every report is a serve, refused ones too: the arm served whether or not the
+ * camera could read it.
+ */
+export function servesPerWeek(sessions: Session[], now: number = Date.now(), weeks = 8): WeekCount[] {
+  const thisWeek = weekStart(now)
+  const out: WeekCount[] = []
+  for (let k = weeks - 1; k >= 0; k--) {
+    const d = new Date(thisWeek)
+    d.setDate(d.getDate() - 7 * k)
+    out.push({ start: d.getTime(), serves: 0 })
+  }
+  for (const s of sessions) {
+    const w = weekStart(s.createdAt)
+    const slot = out.find((o) => o.start === w)
+    if (slot) slot.serves++
+  }
+  return out
+}
+
+/**
+ * One plain sentence when this week's count is well above the four before it.
+ *
+ * A count and nothing more: the app cannot see how hard anybody served, how
+ * long they rested or what their shoulder feels like, and a load warning built
+ * from a tally of clips would be a medical claim it has no business making.
+ * Said when the week is at least half again the recent average and at least
+ * ten serves over it, so a jump from two to four is not news; and only with
+ * four earlier weeks that had any serves at all to be a baseline.
+ */
+export function weekJumpLine(weeks: WeekCount[]): string | undefined {
+  if (weeks.length < 5) return undefined
+  const current = weeks[weeks.length - 1].serves
+  const before = weeks.slice(-5, -1).map((w) => w.serves)
+  if (before.some((n) => n === 0)) return undefined
+  const usual = mean(before)
+  if (current < usual * 1.5 || current - usual < 10) return undefined
+  return cue(
+    `You have filmed ${current} serves this week, against about ${Math.round(usual)} in each of the four before.`,
+  )
+}

@@ -9,6 +9,11 @@ import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { strainClearedLine, strainLine } from '../lib/analysis/verdict'
 import type { PracticeFocus } from '../lib/practice'
 import {
+  MIN_OUTCOMES_FOR_RATE,
+  byServeNumber,
+  inRateByType,
+  servesPerWeek,
+  weekJumpLine,
   bestConsistencyGap,
   bestGapEverLine,
   bestOverallScore,
@@ -24,10 +29,13 @@ import {
   streakLine,
   thenAndNow,
 } from '../lib/progress'
-import { KEEP_STILLS, getSession, safely, type Session } from '../lib/storage/db'
+import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
+import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 
 interface Props {
   sessions: Session[]
+  /** What the player said about each serve — see `ServeTag`. */
+  tags?: ServeTag[]
   practice?: PracticeFocus
   onLogDrill: () => void
   onUndoDrill: () => void
@@ -56,7 +64,7 @@ interface Props {
  * was usually closed; the two the rest of the app also needs (`practice`, and
  * the streak) are recomputed or passed in rather than shared.
  */
-export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, seeded, onBack }: Props) {
+export default function Progress({ sessions, tags = [], practice, onLogDrill, onUndoDrill, seeded, onBack }: Props) {
   const logDrill = onLogDrill
   const undoDrill = onUndoDrill
 
@@ -67,6 +75,13 @@ export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, 
   // Not type-restricted: a streak is about showing up at all, across every
   // serve type, the same choice `Home.tsx` makes with its own copy.
   const streak = useMemo(() => streakLine(sessions), [sessions])
+  // First and second serves apart, and how often each serve type went in
+  // (D5.3), from the player's own taps. Serves per week, and one plain line
+  // when a week jumps (D5.4).
+  const numbers = useMemo(() => byServeNumber(sessions, tags, form?.serveType), [sessions, tags, form])
+  const inRates = useMemo(() => inRateByType(sessions, tags), [sessions, tags])
+  const weeks = useMemo(() => servesPerWeek(sessions), [sessions])
+  const weekJump = useMemo(() => weekJumpLine(weeks), [weeks])
   const longestStreakText = useMemo(() => longestStreakLine(sessions), [sessions])
   // Not type-restricted and not era-restricted — see `recurringStrainOf`. A
   // joint has the same range whatever the serve was aiming at.
@@ -219,6 +234,46 @@ export default function Progress({ sessions, practice, onLogDrill, onUndoDrill, 
               {streak && <p className="progress-foot">{streak}</p>}
               {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
               {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
+            </section>
+          )}
+
+          {/* Kept apart because a second serve is meant to be safer, slower
+              and spun: averaged with first serves, its score and its in-rate
+              answer neither question. Only serves the player tagged. */}
+          {(numbers.length > 0 || inRates.length > 0) && (
+            <section className="block">
+              <h2 className="block-title">First and second serves</h2>
+              {numbers.map((n) => (
+                <p key={n.serveNumber} className="progress-foot">
+                  {SERVE_NUMBER_LABEL[n.serveNumber]}s: {n.serves} tagged, averaging {n.average}
+                  {n.outcomes >= MIN_OUTCOMES_FOR_RATE
+                    ? `, in on ${n.inServes} of the ${n.outcomes} you said where they landed.`
+                    : '.'}
+                </p>
+              ))}
+              {inRates.map((r) => (
+                <p key={r.serveType} className="progress-foot">
+                  {SERVE_TYPES[r.serveType].label}: in on {r.inServes} of {r.outcomes} tagged.
+                </p>
+              ))}
+            </section>
+          )}
+
+          {/* A count, never a load warning: the app cannot see how hard anybody
+              served or what their shoulder feels like. Shown once there are two
+              weeks of serves to set side by side. */}
+          {weeks.filter((w) => w.serves > 0).length >= 2 && (
+            <section className="block">
+              <h2 className="block-title">Serves per week</h2>
+              <p className="progress-foot tnum">
+                This week {weeks[weeks.length - 1].serves}. The four before:{' '}
+                {weeks
+                  .slice(-5, -1)
+                  .map((w) => w.serves)
+                  .join(', ')}
+                .
+              </p>
+              {weekJump && <p className="sheet-note">{weekJump}</p>}
             </section>
           )}
 

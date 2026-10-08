@@ -198,13 +198,18 @@ const HISTORY_CONSUMERS = [
   'bestPriorTo',
   'buildConsistencyTrend',
   'buildProgress',
+  // First and second serves apart, and the in-rate per serve type (D5.3).
+  'byServeNumber',
   'clearedStrainOf',
   'faultMoveOnTrip',
   'findPracticeFocus',
   'glanceStrain',
+  'inRateByType',
   'longestStreakLine',
   'recurringStrainOf',
   'rotationMoveOnTrip',
+  // Serves per week (D5.4).
+  'servesPerWeek',
   'strainBehindOf',
   'streakLine',
   'thenAndNow',
