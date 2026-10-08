@@ -73,7 +73,9 @@ export interface Frame {
 // share on any real clip filmed with perspective; and the serve type reaches
 // the diagnosis, so a kick's toss is judged against a kick's floor; and contact
 // is read from the hand and the ball together, which moves it on a clip whose
-// hand peaked after the hit and hedges contact readings when the two disagree.
+// hand peaked after the hit and hedges contact readings when the two disagree;
+// and with the ball followed to the racket, the Contact card reads the ball's
+// height at contact in place of the hand's.
 export const SCORING_VERSION = 5
 
 /**
