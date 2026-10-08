@@ -1,0 +1,125 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  listPracticeLogs,
+  listServeTags,
+  listSummaries,
+  safely,
+  tagServe,
+  untagServe,
+  withServeTag,
+  type PracticeLog,
+  type ServeTag,
+  type Session,
+} from '../lib/storage/db'
+
+/**
+ * The player's history, as the app holds it: the saved reports, the practice
+ * log and the serve tags, loaded together and refreshed together (W5.2).
+ *
+ * Out of `App.tsx`, where it was a dozen pieces of state and three callbacks
+ * threaded through a 1,700-line component. Held at the top rather than fetched
+ * by each screen, for the reason the glance gave: a component that fetches on
+ * mount refetches on every remount, and the glance remounts on every serve of a
+ * basket.
+ */
+export function useHistory() {
+  const [sessions, setSessions] = useState<Session[]>([])
+  /**
+   * Whether storage has answered yet.
+   *
+   * `sessions` starts empty and a returning player's list arrives a beat later,
+   * so without this the home screen spent that beat telling somebody with sixty
+   * serves that they had none — an example-report invitation that flashed and
+   * vanished on every cold open. Home holds its first-run straps until this is
+   * true.
+   */
+  const [sessionsLoaded, setSessionsLoaded] = useState(false)
+  /**
+   * Logged practice, or `undefined` when storage could not be read.
+   *
+   * The two are different answers and stay different all the way to the card:
+   * empty means nothing has been logged, missing means this app cannot say. A
+   * player on a browser with no IndexedDB must not be told they have not been
+   * practising.
+   */
+  const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
+  /** What the player has said about their own serves, by report id. */
+  const [serveTags, setServeTags] = useState<ServeTag[]>([])
+
+  /**
+   * A seeded history, held in place of the real one. `?demo=history`, dev only.
+   *
+   * A ref rather than a branch at every read site: `refresh` is the one door
+   * into `sessions` and `drillLogs`, and it is called again on every save,
+   * every delete and every trip back to the home screen — so a seed that only
+   * set state once would survive until the first navigation and then vanish,
+   * which is worse than not having it. Nothing writes to storage, deliberately:
+   * a dev's own history is real data and fifteen fabricated reports in it is a
+   * mess somebody has to clean up by hand.
+   */
+  const seededHistory = useRef<{ sessions: Session[]; practice: PracticeLog[] }>()
+
+  const refresh = useCallback(() => {
+    if (seededHistory.current) {
+      setSessions(seededHistory.current.sessions)
+      setDrillLogs(seededHistory.current.practice)
+      setSessionsLoaded(true)
+      return
+    }
+    void safely(listSummaries, []).then((list) => {
+      // A read started before `?demo=history` seeded itself can land after
+      // it, and used to replace the season with the empty real store.
+      if (seededHistory.current) return
+      setSessions(list)
+      setSessionsLoaded(true)
+    })
+    void safely(listServeTags, []).then(setServeTags)
+    // `undefined` on failure rather than `[]` — see `drillLogs`.
+    void safely<PracticeLog[] | undefined>(listPracticeLogs, undefined).then(setDrillLogs)
+  }, [])
+
+  useEffect(() => refresh(), [refresh])
+
+  /*
+   * One tap, applied to the row that holds both of them.
+   *
+   * Optimistic in the same shape the rest of the app is: the merge is pure and
+   * the local list is updated from its result, so the screen answers the tap
+   * immediately and a failed write leaves the list and the store agreeing on
+   * the next refresh rather than the screen showing a tag that was never
+   * stored.
+   */
+  const applyServeTag = useCallback(
+    async (id: string, patch: Partial<Pick<ServeTag, 'serveNumber' | 'outcome'>>) => {
+      let next: ServeTag | undefined
+      setServeTags((tags) => {
+        next = withServeTag(tags.find((t) => t.id === id), id, patch, Date.now())
+        const rest = tags.filter((t) => t.id !== id)
+        return next ? [...rest, next] : rest
+      })
+      await safely(() => (next ? tagServe(next) : untagServe(id)), undefined)
+    },
+    [],
+  )
+
+  /** Hold a seeded history in place of storage, and show it now. */
+  const seed = useCallback(
+    (history: { sessions: Session[]; practice: PracticeLog[] }) => {
+      seededHistory.current = history
+      refresh()
+    },
+    [refresh],
+  )
+
+  return {
+    sessions,
+    sessionsLoaded,
+    drillLogs,
+    serveTags,
+    refresh,
+    applyServeTag,
+    seed,
+    /** Whether the history on screen is a dev seed rather than storage. */
+    seeded: seededHistory.current !== undefined,
+  }
+}

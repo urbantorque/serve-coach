@@ -137,7 +137,11 @@ the end of the first run (1,223 before it).
 
 ### Wave 5 — architecture
 - [x] **W5.1** Demo routes → `dev/demoRoutes.ts`. `App.tsx` 1,948 → ~1,630 lines.
-- [ ] **W5.2** `useHistory` and `useOfflineWarmup` hooks out of `App.tsx`.
+- [x] **W5.2** `useHistory` and `useOfflineWarmup` hooks out of `App.tsx`. *Done
+      (2026-10-09): `components/useHistory.ts` holds the reports, the practice
+      log, the serve tags, the refresh and the demo seed; `useOfflineWarmup.ts`
+      the badge and the download. `App.tsx` is 168 lines shorter; the seeded
+      home and the offline badge checked in the preview.*
 - [ ] **W5.3** One `Report` render instead of two (report / saved).
 - [ ] **W5.4** Pose inference in a Web Worker — spike first, and it needs a
       phone to measure, so it pairs with the court trip.

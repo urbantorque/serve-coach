@@ -7,6 +7,8 @@ import CorpusIngest from './components/CorpusIngest'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { useBackLayer } from './components/useBackLayer'
 import { useWakeLock } from './components/useWakeLock'
+import { useHistory } from './components/useHistory'
+import { useOfflineWarmup } from './components/useOfflineWarmup'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import type { InjuryFlag } from './lib/analysis/triage'
 import {
@@ -47,25 +49,14 @@ import {
   type NotAServeError,
 } from './lib/analysis/types'
 import { Cancelled, looksLikeNonVideo } from './lib/pose/extract'
-import { isCachedOffline, loadEngine } from './lib/pose/poseEngine'
-import { isObjectModelCached, loadObjectEngine } from './lib/vision/objectEngine'
-import { isRefineModelCached, loadRefineEngine } from './lib/pose/refineEngine'
 import {
   deleteSession,
   getSession,
-  listPracticeLogs,
-  listServeTags,
-  listSummaries,
   logPractice,
   safely,
   saveSession,
   unlogPractice,
-  type PracticeLog,
-  tagServe,
   tagsById,
-  untagServe,
-  withServeTag,
-  type ServeTag,
   type Session,
 } from './lib/storage/db'
 import { requestPersistence } from './lib/storage/backup'
@@ -74,7 +65,7 @@ import { sessionKeyFor } from './lib/storage/sessionKey'
 import { applyWhenIdle, onUpdateWaiting } from './lib/updates'
 import Analyzing, { type SweepProgress } from './screens/Analyzing'
 import Glance from './screens/Glance'
-import Home, { type OfflineWarmup } from './screens/Home'
+import Home from './screens/Home'
 /*
  * Split off the entry chunk. The progress screen, with its charts, share cards
  * and then-and-now pictures, is opened by a returning player a few times a
@@ -224,36 +215,18 @@ export default function App() {
    * right way round: `ServeGap` says the same thing in words and does survive.
    */
   const [pair, setPair] = useState<ServePairFrames>()
-  /**
-   * The drills the player has marked done, or `undefined` when storage could not
-   * be read.
-   *
-   * The two are different answers and stay different all the way to the card:
-   * empty means nothing has been logged, missing means this app cannot say. A
-   * player on a browser with no IndexedDB must not be told they have not been
-   * practising.
-   */
-  const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
-  const [sessions, setSessions] = useState<Session[]>([])
-  /**
-   * Whether storage has answered yet.
-   *
-   * `sessions` starts empty and a returning player's list arrives a beat later,
-   * so without this the home screen spent that beat telling somebody with sixty
-   * serves that they had none — an example-report invitation that flashed and
-   * vanished on every cold open. Home holds its first-run straps until this is
-   * true.
-   */
-  const [sessionsLoaded, setSessionsLoaded] = useState(false)
-  /*
-   * What the player has said about their own serves, by report id.
-   *
-   * Held here rather than fetched by the glance, for the reason every other
-   * store-backed list on this screen is: a component that fetches on mount
-   * refetches on every remount, and the glance is remounted on every serve of a
-   * basket. Loaded once beside the sessions and refreshed by the same call.
-   */
-  const [serveTags, setServeTags] = useState<ServeTag[]>([])
+  // The saved reports, the practice log and the serve tags, loaded and
+  // refreshed together — see `useHistory` (W5.2).
+  const {
+    sessions,
+    sessionsLoaded,
+    drillLogs,
+    serveTags,
+    refresh: refreshSessions,
+    applyServeTag,
+    seed: seedHistory,
+    seeded: historySeeded,
+  } = useHistory()
   const [sheet, setSheet] = useState<
     'guide' | 'guide-first' | 'history' | 'settings' | 'check' | 'corpus' | null
   >(null)
@@ -271,9 +244,8 @@ export default function App() {
    * all — seeing R15 in `NEXT.md` for how that surfaced.
    */
   const [firstRunIntent, setFirstRunIntent] = useState<'pick' | 'record' | 'check'>('pick')
-  /** `undefined` until the cache has been asked, so the badge does not flash "Download now" at a player who already has. */
-  const [offlineReady, setOfflineReady] = useState<boolean>()
-  const [warming, setWarming] = useState<OfflineWarmup>()
+  // The offline badge and the download behind it — see `useOfflineWarmup` (W5.2).
+  const { offlineReady, warming, makeOffline, recheck: recheckOffline } = useOfflineWarmup()
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
 
   /** The player moving a fault's ladder a rung, from the report. */
@@ -322,62 +294,6 @@ export default function App() {
   }, [])
 
   /**
-   * Whether the *whole* offline footprint is in the cache — the pose model
-   * and its WASM runtime, and the object model the racket detector needs.
-   * Two separate cache checks because the two engines vendor into separate
-   * `caches.match` entries; the WASM runtime is not checked twice, since both
-   * engines load it from the same URL and `isCachedOffline` already covers
-   * it (see the note on `isObjectModelCached`).
-   */
-  const checkOfflineReady = useCallback(
-    () =>
-      Promise.all([isCachedOffline(), isObjectModelCached(), isRefineModelCached()]).then(
-        ([pose, object, refine]) => pose && object && refine,
-      ),
-    [],
-  )
-
-  /**
-   * Fetch both engines now rather than during the first analysis.
-   *
-   * The same `loadEngine`/`loadObjectEngine` every analysis calls, so this is
-   * a warm-up and not a second download path: whatever it caches is what the
-   * next analysis skips. The cache is re-read afterwards rather than assumed,
-   * because a browser that declined to store 57 MB should leave the badge
-   * saying so.
-   */
-  const makeOffline = useCallback(async () => {
-    setWarming({ stage: 'downloading', ratio: 0 })
-    try {
-      await loadEngine((p) => {
-        if (p.stage === 'downloading') setWarming({ stage: 'downloading', ratio: p.ratio })
-        else if (p.stage === 'starting') setWarming({ stage: 'starting' })
-      })
-      // Sequential, not `Promise.all`, so the progress bar reads as one
-      // download finishing after another rather than two competing ratios
-      // fighting over the same number.
-      await loadObjectEngine((p) => {
-        if (p.stage === 'downloading') setWarming({ stage: 'downloading', ratio: p.ratio })
-        else if (p.stage === 'starting') setWarming({ stage: 'starting' })
-      })
-      // The swing refinement, last and largest. No byte progress of its own:
-      // it reports as setting up, which is what the player needs to know.
-      setWarming({ stage: 'starting' })
-      await loadRefineEngine()
-    } catch {
-      setWarming({ stage: 'failed' })
-      return
-    }
-    // Downloading and keeping are separate questions, and only the cache
-    // answers the second one. A browser that will not store the download —
-    // an iOS private window, service workers turned off — has just loaded
-    // both engines for this session and will have nothing after a reload.
-    const cached = await checkOfflineReady()
-    setOfflineReady(cached)
-    setWarming(cached ? undefined : { stage: 'unkept' })
-  }, [checkOfflineReady])
-
-  /**
    * Open the guide, remembering which of the three reasons for opening it
    * this is — see `firstRunIntent`.
    */
@@ -410,62 +326,6 @@ export default function App() {
    * the one report actually being looked at.
    */
   const practiceRef = useRef<PracticeFocus | undefined>(undefined)
-
-  /**
-   * A seeded history, held in place of the real one. `?demo=history`, dev only.
-   *
-   * A ref rather than a branch at every read site: `refreshSessions` is the one
-   * door into `sessions` and `drillLogs`, and it is called again on every save,
-   * every delete and every trip back to the home screen — so a seed that only
-   * set state once would survive until the first navigation and then vanish,
-   * which is worse than not having it. Nothing writes to storage, deliberately:
-   * a dev's own history is real data and fifteen fabricated reports in it is a
-   * mess somebody has to clean up by hand.
-   */
-  const demoHistory = useRef<{ sessions: Session[]; practice: PracticeLog[] }>()
-
-  /*
-   * One tap, applied to the row that holds both of them.
-   *
-   * Optimistic in the same shape the rest of this file is: the merge is pure
-   * and the local list is updated from its result, so the screen answers the
-   * tap immediately and a failed write leaves the list and the store agreeing
-   * on the next refresh rather than the screen showing a tag that was never
-   * stored.
-   */
-  const applyServeTag = useCallback(
-    async (id: string, patch: Partial<Pick<ServeTag, 'serveNumber' | 'outcome'>>) => {
-      let next: ServeTag | undefined
-      setServeTags((tags) => {
-        next = withServeTag(tags.find((t) => t.id === id), id, patch, Date.now())
-        const rest = tags.filter((t) => t.id !== id)
-        return next ? [...rest, next] : rest
-      })
-      await safely(() => (next ? tagServe(next) : untagServe(id)), undefined)
-    },
-    [],
-  )
-  const refreshSessions = useCallback(() => {
-    if (demoHistory.current) {
-      setSessions(demoHistory.current.sessions)
-      setDrillLogs(demoHistory.current.practice)
-      setSessionsLoaded(true)
-      return
-    }
-    void safely(listSummaries, []).then((list) => {
-      // A read started before `?demo=history` seeded itself can land after
-      // it, and used to replace the season with the empty real store.
-      if (demoHistory.current) return
-      setSessions(list)
-      setSessionsLoaded(true)
-    })
-    void safely(listServeTags, []).then(setServeTags)
-    // `undefined` on failure rather than `[]`, and the difference is the whole
-    // point of the field it feeds: an empty list is "nothing has been logged"
-    // and a missing one is "this app cannot say", and the card says different
-    // things about a player in each case.
-    void safely<PracticeLog[] | undefined>(listPracticeLogs, undefined).then(setDrillLogs)
-  }, [])
 
   /**
    * Save a report and say so when it did not work.
@@ -636,9 +496,6 @@ export default function App() {
   )
 
   useEffect(() => {
-    refreshSessions()
-    void checkOfflineReady().then(setOfflineReady)
-
     // `?check` opens the device report. Deliberately NOT dev-only, unlike
     // `?demo` below: its whole purpose is to be run on a phone, and a dev build
     // is the one place it can tell nobody anything. It is a URL rather than a
@@ -669,17 +526,14 @@ export default function App() {
         runDemoRoute(demo, {
           setView,
           setPair,
-          seedHistory: (history) => {
-            demoHistory.current = history
-            refreshSessions()
-          },
+          seedHistory,
           keepVideoUrl: (url) => {
             urlRef.current = url
           },
         }),
       )
     }
-  }, [refreshSessions, checkOfflineReady])
+  }, [seedHistory])
 
   /*
    * Take a waiting version the moment nothing would be lost by it.
@@ -867,7 +721,7 @@ export default function App() {
         // so flicking between the serves in the clip is still instant; it just
         // never becomes part of the record.
         void trySave(analysis)
-        void checkOfflineReady().then(setOfflineReady)
+        recheckOffline()
 
         // Ask the browser not to evict the history, once, at the first moment
         // there is a history to lose. Asking on first load would be asking
@@ -922,7 +776,7 @@ export default function App() {
       prefs.serveType,
       prefs.tier,
       prefs.askedToPersist,
-      checkOfflineReady,
+      recheckOffline,
     ],
   )
 
@@ -1440,7 +1294,7 @@ export default function App() {
               practice={practice}
               onLogDrill={logDrill}
               onUndoDrill={undoDrill}
-              seeded={demoHistory.current !== undefined}
+              seeded={historySeeded}
               onBack={goHome}
             />
           )}
