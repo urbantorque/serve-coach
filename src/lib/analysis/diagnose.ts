@@ -189,6 +189,11 @@ export interface Diagnosis {
    */
   hitch?: Hitch
   /**
+   * Whether the legs, the elbow and the hand peaked in that order
+   * (`readFiringOrder`, D3.8). Absent below 60 fps or with a link unseen.
+   */
+  firingOrder?: FiringOrder
+  /**
    * Where the toss went from the front foot (`readTossPlacement`, D3.1): ahead
    * of it from the side, across it from behind. Data only; absent from a
    * corner and on reports from before it existed.
@@ -222,6 +227,42 @@ export interface LandingFeet {
    * off the front foot far enough to follow.
    */
   backFollow: number | null
+}
+
+/**
+ * The order the body fired in (D3.8): legs, then the arm, then the hand.
+ *
+ * Fleisig 2003 sets the sequence proximal to distal, and the chain already
+ * times every link. Checked on three of them, not five. The hips and the
+ * shoulders are read from inferred depth and drift tens of milliseconds
+ * between takes; and the shoulders' peak lands with or after the elbow's on
+ * the rig and on the Bath serves alike, so a check that put the trunk before
+ * the arm would accuse real servers of the fault it names. Legs before elbow
+ * before hand holds on every real serve here and is read from the picture.
+ *
+ * A link counts as late only by more than `ORDER_SLACK` — twice the legs'
+ * own deviation between takes — so a near-tie is never called a swap. Only at
+ * 60 fps and above: at 30 a sample is 33 ms, wider than the slack.
+ */
+export interface FiringOrder {
+  inOrder: boolean
+  /** The link that fired out of turn, when one did. */
+  late?: 'legs' | 'elbow'
+}
+
+/** How far a link may peak past its successor and still count as in order, ms. */
+export const ORDER_SLACK = 15
+
+function readFiringOrder(frames: Frame[], chain: ChainTiming): FiringOrder | undefined {
+  const span = frames[frames.length - 1].t - frames[0].t
+  if (!(span > 0) || (frames.length - 1) / span < 55) return undefined
+  const legs = chain.legs.ms
+  const elbow = chain.elbow.ms
+  const wrist = chain.wrist.ms
+  if (legs === null || elbow === null || wrist === null) return undefined
+  if (legs > elbow + ORDER_SLACK) return { inOrder: false, late: 'legs' }
+  if (elbow > wrist + ORDER_SLACK) return { inOrder: false, late: 'elbow' }
+  return { inOrder: true }
 }
 
 /** The racket hand at the knee trough — see `Diagnosis.armCock`. */
@@ -1123,6 +1164,7 @@ export function diagnose(
     armCock,
     landingFeet,
     hitch: readHitch(frames, skel),
+    firingOrder: readFiringOrder(frames, chain),
     tossPlacement: readTossPlacement(
       frames,
       skel,

@@ -96,7 +96,8 @@ export async function runDemoRoute(
   // filming a bad serve: the injury banner, which needs a spine folding
   // under load, and the refusal, which needs a clip the engine throws out.
   // Both were built and neither could be looked at.
-  const analysis = sampleAnalysis(DEMO_DIALS[demo] ?? {})
+  // `&fps=60` builds the example at a rate the firing-order timeline reads (D3.8).
+  const analysis = sampleAnalysis(DEMO_DIALS[demo] ?? {}, undefined, Number(new URLSearchParams(location.search).get('fps')) || 32)
   if (demo === 'basket' || demo === 'live') {
     const url = await sampleClip(analysis.window.end - analysis.window.start + 0.4)
     keepVideoUrl(url)

@@ -348,8 +348,7 @@ export function sampleHistory(now = Date.now()): {
   return { sessions, practice }
 }
 
-export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number): Analysis {
-  const fps = 32
+export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number, fps = 32): Analysis {
   // A recognisably club-level serve: stiff legs, shallow drop, arm dropping early.
   const frames = buildServe(
     { trophyKneeAngle: 165, dropBelowShoulder: 0.08, tossArmHold: 0.2, contactReach: 1.2, ...dials },

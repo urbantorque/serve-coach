@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import ConsistencyPanel from '../components/ConsistencyPanel'
 import TossMap from '../components/TossMap'
+import FiringTimeline from '../components/FiringTimeline'
 import type { TossMap as TossMapData } from '../lib/tossMap'
 import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
@@ -1243,6 +1244,14 @@ export default function Report({
           ))}
         </div>
       </section>
+
+      {/* The order the body fired in (D3.8), at 60 fps and above. */}
+      {analysis.diagnosis?.firingOrder && (
+        <section className="block">
+          <h2 className="block-title">The order you fired in</h2>
+          <FiringTimeline chain={analysis.diagnosis.chain} order={analysis.diagnosis.firingOrder} />
+        </section>
+      )}
 
       <footer className="report-foot">
         <button className="btn btn--primary btn--full" onClick={onAnalyzeAnother}>

@@ -1498,3 +1498,14 @@
   align-items: center;
   gap: 6px;
 }
+
+/* The firing-order timeline (D3.8): labels in the muted ink, never the marks'. */
+.firing-label {
+  fill: var(--fg-muted);
+  font-size: 10px;
+  font-family: var(--font);
+}
+
+.firing-note {
+  font-size: 12px;
+}

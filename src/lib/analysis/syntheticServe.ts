@@ -227,6 +227,15 @@ export interface ServeDials {
    */
   lateArmCock: number
   /**
+   * How late the legs drive, 0–1 (D3.8): the hips and knees hold their trophy
+   * load for this share of the trophy-to-contact span before rising, so the
+   * rise is later and shorter. Zero is the rig as it always was; at one the legs
+   * peak after the elbow, the arm-first order Fleisig 2003 describes as
+   * the chain broken. Applied by adding a hold key, skipped at zero, so a rig
+   * built without it is bit-identical.
+   */
+  lateLegDrive: number
+  /**
    * External rotation of the racket shoulder at the trophy, in degrees.
    *
    * The one thing this rig could not pose, and the reason a whole investigation
@@ -566,6 +575,7 @@ export const CLEAN_SERVE: ServeDials = {
   palmToSky: 6,
   trophyForearmDrop: 0,
   lateArmCock: 0,
+  lateLegDrive: 0,
   trophyExternalRotation: 0,
   pronation: 95,
   hipLead: 0.07,
@@ -671,10 +681,14 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     const u = warp((t - preroll) / motion)
 
     /* --- trunk ---------------------------------------------------------- */
+    // The legs' hold, when `lateLegDrive` asks for one: the trophy load kept
+    // until this point, then the rise. Absent at zero, so nothing moves.
+    const legHold = d.lateLegDrive > 0 ? U.trophy + (U.contact - U.trophy) * Math.min(0.9, d.lateLegDrive * 0.8) : 0
     const hipHeight = track(
       [
         [U.ready, HIP_M],
         [U.trophy, HIP_M - 0.08],
+        ...(legHold ? ([[legHold, HIP_M - 0.08]] as Key[]) : []),
         [U.contact, d.contactHipHeight],
         [1.35, HIP_M - 0.02],
       ],
@@ -684,6 +698,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       [
         [U.ready, 6],
         [U.trophy, kneeBendDeg],
+        ...(legHold ? ([[legHold, kneeBendDeg]] as Key[]) : []),
         [U.contact, 4],
         [1.35, 22],
       ],

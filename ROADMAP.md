@@ -394,7 +394,16 @@ already has dials for D3.2–D3.4; until now nothing read them.
       (`.scratch/research-methods.md` §9; Sheets 2011) puts the kick-vs-flat
       difference in the racket's sideways path, which is depth on a side-on
       camera. Kick is cued from toss and contact placement instead.
-- [ ] **D3.8 The order the body fires in** · M, after D1.2. Legs → trunk → arm
+- [x] **D3.8 The order the body fires in** · M, after D1.2. *Done
+      (2026-10-09), at 60 fps and above: "The order you fired in" draws the
+      legs, trunk, elbow and hand against contact, and `Diagnosis.firingOrder`
+      checks legs before elbow before hand, with 15 ms of slack. The trunk is
+      drawn and not checked: its peak is read from inferred depth and lands with
+      or after the elbow's on the rig and on real serves, so putting it in the
+      check would accuse real servers. A new rig dial, `lateLegDrive`, swaps
+      the order; 24 noisy clean serves never read out of order; every Bath
+      serve read is in order. Said on the report in words; not a named fault in
+      the plan. Original plan:* Legs → trunk → arm
       peak times (`legs_peak_ms`, `wrist_peak_ms`, `chain_span_ms`, all
       `UNCALIBRATED` today) drawn as a timeline. Graded on order only, per
       Fleisig 2003, and only at ≥ 60 fps. *Proof:* dialled order swaps.
