@@ -1050,6 +1050,22 @@ export const UNCALIBRATED: Record<string, string> = {
     'needs the hips to have moved to mean anything; no norm for how far a back ' +
     'foot should trail',
 
+  /*
+   * The body held still at the trophy (D3.4) — see `hitch.ts` for how tempo,
+   * which reverted R52, is kept out of it. On the rig with tracker noise, no
+   * hitch reads 0.015 at the median and 0.061 at the 95th percentile across
+   * three tempos at 60 fps; a 0.15 s hitch reads 0.107 at its 5th percentile.
+   * The six fixture Bath serves read 0.000. Read only at 60 fps and above.
+   *
+   * NO BAND. R52 calls the hitch one of the most common club faults and one of
+   * the most visible on video; nothing measured gives a length of pause a serve
+   * may carry before it costs anything.
+   */
+  hitch_share_ratio:
+    'measured and not named: separates a hitch from a slow serve on the rig at ' +
+    '60 fps and above, every real serve reads zero, and no study gives a pause ' +
+    'length to grade against',
+
   arm_cock_ratio:
     'measured and not named: the published signature is an angle (Gao 2026) and ' +
     'no study gives it as a hand height; tracks its dial from 0.156 to 0.044 at ' +

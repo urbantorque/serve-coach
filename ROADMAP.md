@@ -230,7 +230,13 @@ this first.
       (`mdhd` timescale, `stts` deltas, the capture-rate metadata iOS and
       Android write for slow motion). *Proof:* byte-built box fixtures in the
       test suite, including variable-rate `stts`.
-- [~] **D1.2 Sample the swing at the source rate** · M. *Partly delivered by D1.3: a stretched clip's window is now read four or eight times wider, so its swing is sampled that much denser. Real-time high-frame-rate files are still capped at 32 fps. Original plan:* Keep 32 fps for
+- [~] **D1.2 Sample the swing at the source rate** · M. *Measured
+      (2026-10-09), not yet wired: re-reading a 32 fps clip's trophy-to-contact
+      at the file's own rate, inside the 120-frame budget, takes contact's bias
+      from 7–12 ms to under 2 at 60, 120 and 240 fps, and widens the drop's
+      spread from 1–2 ms to 2.5–10, because the drop's smoothing is counted in
+      samples sized from the clip's average rate and a dense window shrinks it in
+      time. The browser pass waits on the drop being smoothed in seconds.* *Partly delivered by D1.3: a stretched clip's window is now read four or eight times wider, so its swing is sampled that much denser. Real-time high-frame-rate files are still capped at 32 fps. Original plan:* Keep 32 fps for
       ready → trophy; read trophy → contact + 0.1 s at 60/120/240 inside the
       existing frame budget. *Proof:* `buildServe(dials, fps)` at 30/60/120/240,
       keyframe error against the rig's true instants, ensemble at each rate.
@@ -355,7 +361,14 @@ already has dials for D3.2–D3.4; until now nothing read them.
       after contact, back-foot drag (dials `landingLean`, `landingBackFootDrag`).
       Graded only for a fall across the front foot, which also loads the back.
       *Proof:* both dials swept, the two kept apart.
-- [ ] **D3.4 The hitch at the trophy** · M, after D1.2. A pause measured
+- [x] **D3.4 The hitch at the trophy** · M, after D1.2. *Done (2026-10-09),
+      measured and not graded, without waiting on D1.2: the rig films at any
+      rate, and the reading is refused below 60 fps anyway. `readHitch` times
+      the WHOLE body (both hands and the hips) under 6% of its own peak speed
+      between the toss and the drop, as a share of the motion, which is what
+      keeps tempo out — R52's confound. At 60 and 120 fps a 0.15 s hitch reads
+      apart from none at tempos 1.0–2.0 s, and every Bath serve reads 0.000.
+      No band: no study gives a pause length. Original plan:* A pause measured
       against the player's own swing tempo — what reverted R52 lacked — at native
       rate (dial `trophyHitchSeconds`). *Proof:* hitch and tempo dialled
       together, kept separate at 60 fps and above; refused below.

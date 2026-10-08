@@ -20,6 +20,7 @@ import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED } from './confidence'
 import { assessSpatial, viewFromCourtYaw } from './spatial'
 import { readStance, type Stance } from './stance'
 import { readTossPlacement, type TossPlacement } from './tossPlacement'
+import { readHitch, type Hitch } from './hitch'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -182,6 +183,11 @@ export interface Diagnosis {
    * absent whenever `landing` refused.
    */
   landingFeet?: LandingFeet
+  /**
+   * The body held still at the trophy (`readHitch`, D3.4), against the
+   * player's own peak speed and motion. Data only; absent below 60 fps.
+   */
+  hitch?: Hitch
   /**
    * Where the toss went from the front foot (`readTossPlacement`, D3.1): ahead
    * of it from the side, across it from behind. Data only; absent from a
@@ -1116,6 +1122,7 @@ export function diagnose(
     landing,
     armCock,
     landingFeet,
+    hitch: readHitch(frames, skel),
     tossPlacement: readTossPlacement(
       frames,
       skel,

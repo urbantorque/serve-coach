@@ -974,7 +974,8 @@ check('every chain link is measured and none of them grades anybody', () => {
   // (`toss_across_ratio`, D3.1), and a back foot can only follow hips that
   // moved (`back_foot_follow_ratio`, D3.3). The side-on ensemble above, landing
   // square, produces neither — a fact about the camera and the dial, not the code.
-  const fromBehind = chainDeviations(realise({ cameraYaw: 8, landingLean: 0.1 }, 5, seeds(4))).map((d) => d.id)
+  // At 60 fps, too: the hitch (`hitch_share_ratio`, D3.4) is refused below it.
+  const fromBehind = chainDeviations(realise({ cameraYaw: 8, landingLean: 0.1 }, 5, seeds(4), 60)).map((d) => d.id)
   const produced = new Set([...chainDeviations(deep.reads).map((d) => d.id), ...fromBehind])
   const problems: string[] = []
 
