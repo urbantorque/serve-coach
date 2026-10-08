@@ -444,7 +444,11 @@ The outcome taps already exist and nothing reads them.
       claim. *Proof:* seeded history; copy lint.
 
 ### Wave D6 — Richer surfaces for what already works
-- [ ] **D6.1 Glance for any clip** · S. Not only in-app recordings (was W4).
+- [x] **D6.1 Glance for any clip** · S. *Done (2026-10-09): every live report
+      has "At a glance" under its verdict, so a clip picked from the camera
+      roll reaches the glance too; the glance's "Show me everything" returns.
+      In `screenFlow.ts` as `report → glance`. Original plan:* Not only
+      in-app recordings (was W4).
       *Proof:* `screenFlow` table and test.
 - [ ] **D6.2 A spoken summary after each glance** · S. `speechSynthesis` with
       on-device voices only (`localService`); silent otherwise, so §7 holds.

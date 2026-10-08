@@ -1346,6 +1346,7 @@ export default function App() {
               outcome={tagsById(serveTags).get(view.analysis.id)?.outcome}
               onTagServe={(n) => void applyServeTag(view.analysis.id, { serveNumber: n })}
               onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
+              onGlance={() => setView({ kind: 'glance', analysis: view.analysis, videoUrl: view.videoUrl })}
               fixtureExport={FIXTURE_EXPORT}
               onBack={goHome}
               onAnalyzeAnother={goHome}

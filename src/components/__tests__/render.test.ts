@@ -110,6 +110,13 @@ check('any report can be tagged, and shows what was tagged (D5.1)', () => {
   assert(!bare.includes('Tag this serve'), 'tag controls rendered with nothing to save them')
 })
 
+check('a live report offers its glance, whatever the clip came from (D6.1)', () => {
+  const live = html(createElement(Report, { analysis: sampleAnalysis(), onGlance: noop, onBack: noop, onAnalyzeAnother: noop }))
+  assert(live.includes('At a glance'), 'a report with a glance to open offered none')
+  const saved = html(createElement(Report, { analysis: stored(sampleAnalysis()), onBack: noop, onAnalyzeAnother: noop }))
+  assert(!saved.includes('At a glance'), 'a glance was offered with nothing to open it')
+})
+
 check('the report renders from a reopened one, with no frames behind it', () => {
   const out = html(
     createElement(Report, {

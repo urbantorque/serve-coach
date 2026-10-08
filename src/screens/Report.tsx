@@ -82,6 +82,11 @@ interface Props {
   outcome?: ServeOutcome
   onTagServe?: (n: 1 | 2 | undefined) => void
   onTagOutcome?: (o: ServeOutcome | undefined) => void
+  /**
+   * Show this clip as the glance (D6.1): the one-screen read the app lands on
+   * after a serve recorded in it, reachable from any clip's report.
+   */
+  onGlance?: () => void
   onBack: () => void
   onAnalyzeAnother: () => void
   onFlipHandedness?: () => void
@@ -214,6 +219,7 @@ export default function Report({
   outcome,
   onTagServe,
   onTagOutcome,
+  onGlance,
   onBack,
   onAnalyzeAnother,
   onFlipHandedness,
@@ -583,6 +589,12 @@ export default function Report({
         {bestScore && <p>{bestOverallScoreLine(bestScore, analysis.createdAt)}</p>}
         <h1>{verdict.title}</h1>
         <p>{verdict.sub}</p>
+        {onGlance && (
+          <button className="drill-show hero-glance" onClick={onGlance}>
+            At a glance
+            <Icon name="chevron" size={13} />
+          </button>
+        )}
       </section>
 
       {analysis.serves && analysis.serves.count > 1 && (

@@ -890,6 +890,12 @@
 
 /* The same quiet lime text button as "Change" on the level line, with the
    same 44px hit area grown from the middle — see `.levelled-btn::after`. */
+/* The way from a report to its glance, under the verdict it summarises. */
+.hero-glance {
+  margin-top: 12px;
+  min-height: 32px;
+}
+
 .drill-show {
   display: inline-flex;
   align-items: center;

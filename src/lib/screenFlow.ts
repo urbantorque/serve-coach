@@ -90,6 +90,8 @@ export const MOVES: Record<Screen, Move[]> = {
     // `Report` is keyed on `analysis.id`, so its own state cannot outlive the
     // report it belongs to.
     { to: 'report', via: 'onPickServeType / onPickTier / cache hit' },
+    // The glance for any clip, not only one recorded in the app (D6.1).
+    { to: 'glance', via: 'onGlance' },
     { to: 'analyzing', via: 'onFlipHandedness / onPickServe → run' },
     { to: 'analyzing', via: 'onCheckConsistency → compareServes' },
     { to: 'error', via: 'run (too large, or not a video)' },
