@@ -22,6 +22,9 @@ import {
   type PackedFrames,
 } from '../groundTruth'
 import { buildServe } from '../syntheticServe'
+import { detectServe } from '../phases'
+import { measure } from '../metrics'
+import { tossedBall } from './tossedBall'
 import { buildFixtureDraft, buildRejectedDraft, draftGaps } from '../../../dev/exportFixture'
 import { sampleAnalysis } from '../../../dev/sampleAnalysis'
 import { MINIMUM_RECORDED, RECORDED, fixtureGate } from './fixtures'
@@ -475,6 +478,66 @@ check('a clean fixture still records every comparison it made', () => {
 })
 
 /* ------------------------------------------------------- the coverage gate */
+
+heading('The ball in a replay')
+
+check('a fixture carrying the ball replays the two ball measurements', () => {
+  // D1.5. Fixtures stored the pose and nothing else, so `tossPeakHeight` and
+  // `contactBelowPeak` escaped every replay. The rig throws no ball, so the
+  // fixture's is built: a gravity-true toss struck 20 ms after the hand's top.
+  const frames = buildServe({}, FPS)
+  const skel = detectServe(frames, FPS)
+  const ball = tossedBall(frames, skel, skel.times.contact + 0.02)
+  const measured = measure(frames, skel, true, { ball }).flatMap((f) => f.metrics)
+  const value = (id: string) => measured.find((m) => m.id === id)?.value
+  const peak = value('tossPeakHeight')
+  const below = value('contactBelowPeak')
+  assert(peak !== undefined && below !== undefined, 'the rig with a ball measured no ball readings')
+
+  const labelled: Fixture = {
+    ...good(),
+    frames: packFrames(frames),
+    ball,
+    expect: {
+      handedness: 'right',
+      metrics: { tossPeakHeight: peak! + 0.02, contactBelowPeak: below! - 0.02 },
+      metricSource: {
+        tossPeakHeight: 'ball apex off a wall mark behind the server, paused on the top frame',
+        contactBelowPeak: 'apex and contact frames against the same wall mark, by hand',
+      },
+    },
+  }
+  const result = validateFixture(labelled)
+  note(`replayed: ${result.checks.map((c) => `${c.what} ${c.ok ? 'ok' : 'off'}`).join(', ')}`)
+  for (const id of ['tossPeakHeight', 'contactBelowPeak']) {
+    const seen = result.checks.find((c) => c.what === `metric ${id}`)
+    assert(Boolean(seen) && seen!.ok, `${id} did not replay: ${JSON.stringify(seen)}`)
+  }
+
+  // And without the ball the same labels have nothing to be checked against,
+  // which is said rather than passed.
+  const blind = validateFixture({ ...labelled, ball: undefined })
+  assert(!blind.passed, 'ball readings passed a replay that had no ball')
+  assert(
+    blind.issues.some((i) => i.actual === 'not produced'),
+    'a ball reading with no ball was not reported as missing',
+  )
+})
+
+check('a ball that is not a flight is refused before the engine runs', () => {
+  raises({ ...good(), ball: { samples: [] } }, 'ball', 'a ball with no fit')
+  raises({ ...good(), ball: { ...tossedBall(buildServe({}, FPS), detectServe(buildServe({}, FPS), FPS), 1.7), confidence: Number.NaN } }, 'ball', 'a ball with no confidence')
+})
+
+check('the draft the app exports carries the ball it found', () => {
+  const analysis = sampleAnalysis()
+  const frames = analysis.frames
+  const skel = detectServe(frames, 32)
+  const ball = tossedBall(frames, skel, skel.times.contact)
+  const draft = buildFixtureDraft({ ...analysis, ball }, DESCRIBED)
+  assert(draft.ball === ball, 'the export dropped the ball')
+  assert(!('ball' in buildFixtureDraft(analysis, DESCRIBED)), 'a clip with no ball was exported with one')
+})
 
 heading('Recorded-footage gate')
 

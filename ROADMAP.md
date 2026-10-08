@@ -255,7 +255,12 @@ this first.
       the ball-arc break and the racket box crossing the ball. Record which one
       decided; disagreement lowers confidence instead of picking a winner.
       *Proof:* rig with ball, wrist lag and dropped wrist frames dialled.
-- [ ] **D1.5 The ball in fixture replay** · S. `groundTruth.ts` calls
+- [x] **D1.5 The ball in fixture replay** · S. *Done (2026-10-09): a fixture
+      carries the ball the report stored (schema-checked), the export writes
+      it, and replay takes `runAnalysis`'s landmark steps in order — the
+      sideways-picture refusal, contact from the hand and the ball, then
+      `measure()` with the ball. Clipbench prints both ball readings and which
+      cue decided contact. Original plan:* `groundTruth.ts` calls
       `measure()` without a ball, so the ball metrics escape every replay.
       *Proof:* the replay suite and clipbench carry `tossPeakHeight` and
       `contactBelowPeak`.
@@ -277,7 +282,14 @@ Clean up the judgement before new readings are added to it.
       `ANALYSIS-REVIEW.md` §3.5 (Fleisig 2003, the 27-study meta-analysis,
       Kovacs & Ellenbecker). A band nothing supports becomes ungraded.
       *Proof:* a check fails on any graded band without a `source`.
-- [ ] **D2.2 Define contact height** · S. "Ball height at contact" when D1.4 has
+- [x] **D2.2 Define contact height** · S. *Done (2026-10-09): "Ball height at
+      contact" (`ballContactHeight`) when the ball was followed to the racket,
+      read at the ball's own moment, on a band from published impact heights
+      (Girard 2005, Vacek 2023) — 1.43 to 1.80 in the engine's units. Otherwise
+      "Hand height at contact", the old reading relabelled. One row, never both,
+      each with its own id so neither trend mixes two quantities. The diagnosis
+      still grades the hand's height, whose ladder is calibrated. Original
+      plan:* "Ball height at contact" when D1.4 has
       the ball; otherwise "wrist height", labelled as such, with its own band.
       *Proof:* rig with the ball found and not found.
 - [ ] **D2.3 Merge card and diagnosis bands** · M. Contact height and toss peak

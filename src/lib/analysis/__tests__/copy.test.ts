@@ -420,6 +420,16 @@ const CLAIMED: Record<string, Claimed> = {
     },
     aim: { low: 'Struck at full racket reach', high: 'Struck at full racket reach' },
   },
+  // The ball's height at contact, on the hand's rungs raised by the racket.
+  ballContactHeight: {
+    stamp: '57b7fc35',
+    insight: {
+      low: ['Struck at head height', 'Struck below full reach'],
+      ok: ['Struck at full racket reach'],
+      high: ['Struck at full racket reach', 'Struck at the top of the reach'],
+    },
+    aim: { low: 'Struck at full racket reach', high: 'Struck at full racket reach' },
+  },
   armExtension: {
     stamp: '857d8f5d',
     insight: {
@@ -528,6 +538,11 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { high: 'Straight lift' },
   },
 
+  'kick.ballContactHeight': {
+    stamp: '2fbaab92',
+    insight: { ok: ['Struck at full racket reach'] },
+    aim: { high: 'Struck at full racket reach' },
+  },
   'kick.shoulderTilt': {
     stamp: 'aa740cb6',
     insight: {
@@ -1007,7 +1022,9 @@ check('no two measurements share a drill name by accident', () => {
   const seen = new Map<string, string>()
   for (const m of Object.values(METRICS)) {
     const clash = seen.get(m.drill.name)
-    assert(!clash, `${m.id} and ${clash} both use "${m.drill.name}"`)
+    // The same object is a share on purpose: one quantity read two ways, the
+    // hand's and the ball's contact height, never both on one card.
+    assert(!clash || METRICS[clash].drill === m.drill, `${m.id} and ${clash} both use "${m.drill.name}"`)
     seen.set(m.drill.name, m.id)
   }
 })

@@ -1,4 +1,5 @@
 import type { ServeType } from '../storage/prefs'
+import type { ContactRead } from './contact'
 import { readoutOf, targetOf } from './anatomy'
 import { FUNDAMENTALS, METRICS, metricCopy, type MetricCopy } from './coaching'
 import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
@@ -32,7 +33,7 @@ import { flightHeightAt, type BallFlight } from '../vision/ballTrack'
 import type { Frame, Fundamental, FundamentalId, Metric } from './types'
 
 /** Measurements that only exist when the ball was found in the pixels. */
-const BALL_METRICS = new Set(['tossPeakHeight', 'contactBelowPeak'])
+const BALL_METRICS = new Set(['tossPeakHeight', 'contactBelowPeak', 'ballContactHeight'])
 
 /**
  * Samples the toss-to-contact window needs before a share of it means anything.
@@ -279,6 +280,12 @@ export interface MeasureOptions {
   confidence?: ConfidenceContext
   /** Which serve this is, which shifts a handful of target bands. */
   serveType?: ServeType
+  /**
+   * When contact was, from the hand and the ball (`readContact`). With the
+   * ball's own moment in it, the Contact card reports the ball's height at
+   * contact in place of the hand's (D2.2).
+   */
+  contact?: ContactRead
 }
 
 export function measure(
@@ -287,7 +294,7 @@ export function measure(
   sideView: boolean,
   options: MeasureOptions = {},
 ): Fundamental[] {
-  const { ball, confidence: confidenceCtx, serveType = 'flat' } = options
+  const { ball, confidence: confidenceCtx, serveType = 'flat', contact } = options
   // Every horizontal ratio is normalised by body height rather than shoulder
   // width. Shoulder width is the more natural yardstick but it foreshortens to
   // almost nothing side-on, which would inflate those ratios exactly when the
@@ -568,6 +575,14 @@ export function measure(
       0,
       (flightHeightAt(ball, fContact.t) - ball.apex.y) / bodyHeight,
     )
+    // The ball's own height when it was struck: the quantity published impact
+    // heights are about, rather than the hand standing in for it. Only when the
+    // ball was followed to within a racket's reach (`ContactRead.ball`), and
+    // read at the ball's moment rather than the hand's, which comes 5–45 ms
+    // earlier on real serves while the ball is still falling.
+    if (contact?.ball !== undefined) {
+      values.ballContactHeight = (groundY - flightHeightAt(ball, contact.ball)) / bodyHeight
+    }
   }
 
   /* --------------------------------------------------------------- rhythm */
@@ -591,6 +606,10 @@ export function measure(
       .filter((m) => (m === 'contactAhead' ? sideView && netwards.certain : true))
       // The ball measurements exist only when the ball was tracked.
       .filter((m) => (BALL_METRICS.has(m) ? m in values : true))
+      // And contact height is the ball's when the ball was there to read, the
+      // hand's otherwise — one row, never both (D2.2). The two are different
+      // quantities with different bands, so each keeps its own id.
+      .filter((m) => (m === 'contactHeight' ? !('ballContactHeight' in values) : true))
       // And the drop-to-contact interval exists only when the drop did. On a
       // serve whose racket never falls, the drop keyframe lands on the trophy
       // (`dropOnTrophy`), so this stops timing the acceleration window and

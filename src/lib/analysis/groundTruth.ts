@@ -17,10 +17,12 @@
  * DOM-free by construction, so the test runner can import it directly.
  */
 
+import { detectWithContact, type ContactRead } from './contact'
 import { measure } from './metrics'
 import { detectServe } from './phases'
-import { assessSpatial, viewFromCourtYaw } from './spatial'
+import { assessSpatial, turnedPicture, viewFromCourtYaw } from './spatial'
 import type { Frame, Landmark, PhaseId, Quality } from './types'
+import type { BallFlight } from '../vision/ballTrack'
 
 /* ------------------------------------------------------------------ packing */
 
@@ -138,6 +140,13 @@ export interface Fixture {
   /** Sampled frames per second, as `extractFrames` reported it. */
   fps: number
   frames: PackedFrames
+  /**
+   * The tossed ball, when the app found one — as the report carries it, in the
+   * same levelled space and on the same clock as `frames`. Without it the two
+   * ball measurements and the ball's say in contact (`readContact`) escaped
+   * every replay (D1.5). Absent is fine: most clips have no ball.
+   */
+  ball?: BallFlight
   expect: FixtureExpectation
   tolerance?: Partial<Tolerance>
 }
@@ -406,6 +415,28 @@ export function validateFixtureSchema(input: unknown): FixtureSchemaIssue[] {
       }
       lane('image')
       lane('world')
+    }
+  }
+
+  /* -- the ball, when there is one ---------------------------------------- */
+
+  if (f.ball !== undefined) {
+    const b = f.ball as Partial<BallFlight> | null
+    const finite = (v: unknown) => typeof v === 'number' && Number.isFinite(v)
+    const point = (p: unknown) =>
+      typeof p === 'object' && p !== null && ['t', 'x', 'y'].every((k) => finite((p as Record<string, unknown>)[k]))
+    if (
+      typeof b !== 'object' ||
+      b === null ||
+      !Array.isArray(b.coefficients) ||
+      b.coefficients.length !== 3 ||
+      !b.coefficients.every(finite) ||
+      !point(b.apex) ||
+      !Array.isArray(b.samples) ||
+      !b.samples.every(point) ||
+      !finite(b.confidence)
+    ) {
+      bad('ball', 'not a ball flight — coefficients, apex, samples and confidence, as the report stores it', true)
     }
   }
 
@@ -715,9 +746,15 @@ export function validateFixture(fixture: Fixture): FixtureResult {
 
   const frames = unpackFrames(fixture.frames)
 
+  // The steps `runAnalysis` takes on landmarks, in its order: a picture on its
+  // side is refused before a serve is looked for, and contact is read from the
+  // hand and the ball together.
   let skel: ReturnType<typeof detectServe>
+  let contact: ContactRead
   try {
-    skel = detectServe(frames, fixture.fps)
+    const turned = turnedPicture(frames)
+    if (turned) throw turned
+    ;({ skel, contact } = detectWithContact(frames, fixture.fps, undefined, fixture.ball))
   } catch (err) {
     // A clip labelled as not-a-serve *should* land here.
     if (fixture.expect.rejected) {
@@ -773,7 +810,7 @@ export function validateFixture(fixture: Fixture): FixtureResult {
     const sideView = fixture.expect.view
       ? fixture.expect.view === 'side'
       : viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight, skel).court_yaw_deg) === 'side'
-    const produced = measure(frames, skel, sideView).flatMap((f) => f.metrics)
+    const produced = measure(frames, skel, sideView, { ball: fixture.ball, contact }).flatMap((f) => f.metrics)
 
     for (const [id, expected] of Object.entries(expectedMetrics)) {
       const m = produced.find((x) => x.id === id)

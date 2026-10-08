@@ -33,7 +33,7 @@ export const SOFT_MEASUREMENT = 0.55
  * actually failed. Named here so that softening them and explaining why they are
  * soft cannot drift apart.
  */
-const BALL_MEASUREMENTS = new Set(['tossPeakHeight', 'contactBelowPeak'])
+const BALL_MEASUREMENTS = new Set(['tossPeakHeight', 'contactBelowPeak', 'ballContactHeight'])
 
 /**
  * What each measurement rests on beyond the landmarks it reads directly.
@@ -129,6 +129,7 @@ const DEPENDENCIES: Record<string, Dependency[]> = {
   // ball disagree about when that was (`readContact`), so do these.
   contactHeight: ['scale', 'contact'],
   contactBelowPeak: ['scale', 'contact'],
+  ballContactHeight: ['scale', 'contact'],
   armExtension: ['contact'],
   bodyExtension: ['scale', 'trophy', 'contact'],
   contactAhead: ['scale', 'depth', 'contact'],
@@ -162,6 +163,7 @@ const LANDMARKS: Record<string, (racket: Side) => number[]> = {
   handUnderElbow: (r) => [sided(r).elbow, sided(r).wrist, LM.leftHip, LM.rightHip],
   contactHeight: (r) => [sided(r).wrist],
   contactBelowPeak: () => [],
+  ballContactHeight: () => [],
   armExtension: (r) => armOf(r),
   bodyExtension: () => [LM.leftAnkle, LM.rightAnkle],
   contactAhead: (r) => [sided(r).wrist, LM.leftHip, LM.rightHip],

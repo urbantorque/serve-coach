@@ -1139,6 +1139,7 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
   const fundamentals = measure(frames, skel, analysis.quality.view === 'side', {
     ball: servedBall,
     serveType,
+    contact,
     confidence: {
       frames,
       skel,
@@ -1758,6 +1759,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   const fundamentals = measure(engine(), skel, quality.view === 'side', {
     ball: servedBall,
     serveType,
+    contact,
     confidence: {
       frames: engine(),
       skel,

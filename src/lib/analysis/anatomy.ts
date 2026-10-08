@@ -152,6 +152,14 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 1.5, tag: 'Struck at full racket reach' },
     { under: Infinity, tag: 'Struck at the top of the reach' },
   ],
+  // The same rungs as the hand's, raised by the racket (0.26 statures, about
+  // 0.28 in these units) — the ball sits at the strings, not in the hand.
+  ballContactHeight: [
+    { under: 1.32, tag: 'Struck at head height' },
+    { under: 1.43, tag: 'Struck below full reach' },
+    { under: 1.8, tag: 'Struck at full racket reach' },
+    { under: Infinity, tag: 'Struck at the top of the reach' },
+  ],
   armExtension: [
     { under: 140, tag: 'Elbow bent at contact' },
     { under: 160, tag: 'Arm short of straight' },

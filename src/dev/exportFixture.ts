@@ -97,6 +97,9 @@ export function buildFixtureDraft(analysis: Analysis, label: string): Draft {
       `engine confidence ${(analysis.quality.confidence * 100).toFixed(0)}%.`,
     fps: analysis.quality.sampledFps,
     frames: packFrames(analysis.frames),
+    // The ball as the report has it, so the two ball measurements and the
+    // ball's say in contact replay too. Absent when none was found.
+    ...(analysis.ball ? { ball: analysis.ball } : {}),
     expect: {
       handedness: analysis.handedness,
       view: analysis.quality.view,

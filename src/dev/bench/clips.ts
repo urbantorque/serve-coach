@@ -59,7 +59,8 @@ function describe(a: Analysis): Omit<Row, 'clip' | 'mode' | 'ms'> {
     cropped: a.cost?.cropped,
     refined: a.cost?.refined,
     tracked: `${a.frames.length}/${expected}`,
-    contact: contact ? contact.t.toFixed(2) : undefined,
+    // Which cue decided contact (`readContact`), beside when it was.
+    contact: contact ? `${contact.t.toFixed(2)}${a.contact ? ` ${a.contact.from}` : ''}` : undefined,
     overall: a.overall,
     focus: a.focus?.title,
     metrics: {
@@ -67,6 +68,9 @@ function describe(a: Analysis): Omit<Row, 'clip' | 'mode' | 'ms'> {
       dropDepth: pick('dropDepth'),
       kneeBend: pick('kneeBend'),
       armExtension: pick('armExtension'),
+      // The two read off the ball, absent when it was not found.
+      tossPeakHeight: pick('tossPeakHeight'),
+      contactBelowPeak: pick('contactBelowPeak'),
     },
   }
 }

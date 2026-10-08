@@ -11,32 +11,13 @@
 import { detectWithContact, readContact, CONTACT_LAG_MAX } from '../contact'
 import { metricConfidence, softnessReason, type ConfidenceContext } from '../confidence'
 import { detectServe, type Skeleton } from '../phases'
+import { measure } from '../metrics'
 import { buildServe } from '../syntheticServe'
 import type { Frame } from '../types'
-import type { BallFlight } from '../../vision/ballTrack'
 import { assert, check, heading, near, note, report, within } from './harness'
+import { tossedBall } from './tossedBall'
 
 const WRIST = 16 // the rig serves right-handed
-
-/**
- * A tossed ball that meets the racket at `impact`, seconds, on the frames' own
- * samples: it falls 0.35 body heights from its apex to a point 0.2 above the
- * hand, under the gravity `findBall` expects, and every sample up to the impact
- * is on the arc.
- */
-function tossedBall(frames: Frame[], skel: Skeleton, impact: number, lastSeen = impact): BallFlight {
-  const g = (9.81 * skel.bodyHeight) / 1.78
-  const hand = frames[skel.keys.contact].image[WRIST]
-  const atImpact = hand.y - 0.2 * skel.bodyHeight
-  const apexY = atImpact - 0.35 * skel.bodyHeight
-  const apexT = impact - Math.sqrt((2 * (atImpact - apexY)) / g)
-  const coefficients: [number, number, number] = [apexY + (g / 2) * apexT * apexT, -g * apexT, g / 2]
-  const y = (t: number) => coefficients[0] + coefficients[1] * t + coefficients[2] * t * t
-  const samples = frames
-    .filter((f) => f.t >= apexT - 0.4 && f.t <= lastSeen + 1e-9)
-    .map((f) => ({ t: f.t, x: hand.x, y: y(f.t) }))
-  return { coefficients, apex: { t: apexT, x: hand.x, y: apexY }, samples, confidence: 0.9 }
-}
 
 /**
  * The rig's serve with the racket hand misplaced after the hit: from 80 ms
@@ -155,6 +136,40 @@ check('a hand that stops short of the top is kept, and the disagreement hedges w
   near(metricConfidence('kneeBend', ctx(0.5)), metricConfidence('kneeBend', ctx(1)), 1e-9, 'the knee at the trophy')
   const why = softnessReason('contactHeight', ctx(0.5)) ?? ''
   assert(/hand and the ball/.test(why), `a soft contact reading was explained as "${why}"`)
+})
+
+heading('Contact height: the ball when it was there, the hand otherwise (D2.2)')
+
+check('the card reads the ball at contact when the ball was followed to the racket', () => {
+  const frames = buildServe({}, 30)
+  const skel = detectServe(frames, 30)
+  const ball = tossedBall(frames, skel, skel.times.contact + 0.02)
+  const contact = readContact(frames, skel, ball)
+  const card = measure(frames, skel, true, { ball, contact }).flatMap((f) => f.metrics)
+  const ballRow = card.find((m) => m.id === 'ballContactHeight')
+  const handRow = measure(frames, skel, true).flatMap((f) => f.metrics).find((m) => m.id === 'contactHeight')
+  note(`ball at contact ${ballRow?.display} (${ballRow?.label}) · hand ${handRow?.display} (${handRow?.label})`)
+  assert(Boolean(ballRow), 'a ball followed to the racket gave no ball height')
+  assert(!card.some((m) => m.id === 'contactHeight'), 'the hand height stayed beside the ball height')
+  assert(ballRow!.label === 'Ball height at contact', `the ball row is labelled "${ballRow!.label}"`)
+  // The rig's ball meets the racket 0.2 body heights above the hand.
+  near(ballRow!.value - handRow!.value, 0.2, 0.03, 'ball over hand at contact (body heights)')
+})
+
+check('without the ball, or with one lost out of reach, the hand is read and says so', () => {
+  const frames = buildServe({}, 30)
+  const skel = detectServe(frames, 30)
+  for (const [what, ball] of [
+    ['no ball', undefined],
+    ['a ball lost high', tossedBall(frames, skel, skel.times.contact, skel.times.contact - 0.3)],
+  ] as const) {
+    const contact = readContact(frames, skel, ball)
+    const card = measure(frames, skel, true, { ball, contact }).flatMap((f) => f.metrics)
+    const hand = card.find((m) => m.id === 'contactHeight')
+    assert(Boolean(hand), `${what}: no contact height at all`)
+    assert(hand!.label === 'Hand height at contact', `${what}: the hand row is labelled "${hand!.label}"`)
+    assert(!card.some((m) => m.id === 'ballContactHeight'), `${what}: a ball height with no ball at the racket`)
+  }
 })
 
 report()

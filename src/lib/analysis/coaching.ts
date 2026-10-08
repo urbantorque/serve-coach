@@ -42,6 +42,17 @@ export interface MetricCopy {
   drill: Drill
 }
 
+/**
+ * Contact height's exercise, held once because two rows use it: the hand's
+ * height and the ball's, which are one quantity read two ways and never on
+ * the same card.
+ */
+const HEELS_UP_BASKET: Drill = {
+  name: 'Heels-up basket',
+  how: 'Serve a full basket with your heels off the ground from start to finish.',
+  reps: '15 serves',
+}
+
 export const METRICS: Record<string, MetricCopy> = {
   /* ------------------------------------------------------------------- toss */
   tossArmExtension: {
@@ -556,7 +567,9 @@ export const METRICS: Record<string, MetricCopy> = {
   /* ---------------------------------------------------------------- contact */
   contactHeight: {
     id: 'contactHeight',
-    label: 'Contact height',
+    // The hand's height, said so: it is what this card reads when the ball was
+    // not followed to the racket, and the ball's own height has its row below.
+    label: 'Hand height at contact',
     unit: '×',
     phase: 'contact',
     weight: 1.3,
@@ -578,11 +591,38 @@ export const METRICS: Record<string, MetricCopy> = {
       low: '**Reach up** and hit at the top. Serve a basket with your heels off the ground.',
       high: '**Keep the toss in front** so you never lean back to reach it.',
     },
-    drill: {
-      name: 'Heels-up basket',
-      how: 'Serve a full basket with your heels off the ground from start to finish.',
-      reps: '15 serves',
+    drill: HEELS_UP_BASKET,
+  },
+  ballContactHeight: {
+    id: 'ballContactHeight',
+    label: 'Ball height at contact',
+    unit: '×',
+    phase: 'contact',
+    weight: 1.3,
+    /*
+     * The ball itself, which is what published impact heights measure: 1.43
+     * statures for beginners and 1.49 for elite servers (Girard 2005), 1.50–
+     * 1.51 for professional men (Vacek 2023). In this engine's units — heights
+     * from the ankle line, about 0.06 statures up, over a stature that reads
+     * about 8% short — those are 1.49, 1.55 and 1.58. The floor sits
+     * `CAMERA_ALLOWANCE` under the beginners' figure, as the hand's band does
+     * under its own, and the ceiling the same distance over the hand's, raised
+     * by the racket's 0.26 statures (the Bath capture). Shown in place of the
+     * hand's height whenever the ball was followed to the racket (D2.2).
+     */
+    ideal: [1.43, 1.8],
+    range: [1.1, 2.1],
+    decimals: 2,
+    insight: {
+      low: 'You meet the ball **below full reach**, so it has less room to clear the net and still land in.',
+      ok: 'You meet the ball at **full stretch**, exactly where your margin over the net lives.',
+      high: 'You meet the ball at the **top of your reach**.',
     },
+    fix: {
+      low: '**Reach up** and hit at the top. Serve a basket with your heels off the ground.',
+      high: '**Keep the toss in front** so you never lean back to reach it.',
+    },
+    drill: HEELS_UP_BASKET,
   },
   armExtension: {
     id: 'armExtension',
@@ -1022,6 +1062,12 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
       contactHeight: {
         ok: 'You strike at **kick height**: high enough for margin, low enough to brush up the ball.',
       },
+      // The ball's height says the same thing the hand's does, and has to say
+      // it the same way: a kick card that swapped rows when the ball was found
+      // must not swap its advice with them.
+      ballContactHeight: {
+        ok: 'You meet the ball at **kick height**: high enough for margin, low enough to brush up it.',
+      },
       shoulderTilt: {
         // The kick band starts a whole rung above the flat one, so everything
         // the ladder calls "hitting shoulder under the ball" falls below it. The
@@ -1042,6 +1088,9 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
         // they read second. A kick struck above the band was reached for and
         // driven through, so the correction is depth of brush, never toss
         // position: the toss stays exactly where the other line just put it.
+        high: '**Brush up the back of the ball** instead of reaching through it. Let contact sit under the top of your stretch.',
+      },
+      ballContactHeight: {
         high: '**Brush up the back of the ball** instead of reaching through it. Let contact sit under the top of your stretch.',
       },
       shoulderTilt: {
@@ -1196,7 +1245,7 @@ export const FUNDAMENTALS: Record<
     blurb: 'Where you meet the ball, and how much of you is behind it.',
     phase: 'contact',
     weight: 24,
-    metrics: ['contactHeight', 'contactBelowPeak', 'armExtension', 'bodyExtension', 'contactAhead'],
+    metrics: ['contactHeight', 'ballContactHeight', 'contactBelowPeak', 'armExtension', 'bodyExtension', 'contactAhead'],
     drill: {
       name: 'Heels up',
       how: 'Serve a whole basket with your heels off the ground, so you reach up to the ball instead of out.',
