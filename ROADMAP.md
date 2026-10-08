@@ -341,7 +341,15 @@ already has dials for D3.2–D3.4; until now nothing read them.
       against the player's own swing tempo — what reverted R52 lacked — at native
       rate (dial `trophyHitchSeconds`). *Proof:* hitch and tempo dialled
       together, kept separate at 60 fps and above; refused below.
-- [ ] **D3.5 Early arm cocking** · S. Racket-wrist height against the shoulder
+- [x] **D3.5 Early arm cocking** · S. *Done (2026-10-09), measured and not
+      graded: `Diagnosis.armCock` is the racket hand over the shoulder at the
+      knee trough, read off image y. A new rig dial, `lateArmCock`, reads back
+      in step from 0.156 to 0.044 at 20°, 45° and 82° alike, with 0.024 of
+      deviation (0.009 on real motion). It is declared in `UNCALIBRATED`, and
+      does not join the sequence group yet: the study gives a shoulder angle,
+      no study gives it as a hand height, and the forty Bath serves read
+      0.10–0.17, the cocked end the research calls the amateur signature. A band
+      drawn from them would grade the signature as normal. Original plan:* Racket-wrist height against the shoulder
       at the knee trough — the published amateur signature (WTA 2026), readable
       side-on. Joins the sequence group. *Proof:* new rig dial for arm timing,
       ensemble.

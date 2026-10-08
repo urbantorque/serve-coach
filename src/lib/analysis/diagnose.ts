@@ -170,9 +170,22 @@ export interface Diagnosis {
    * the hips, and on reports from before it existed.
    */
   stance?: Stance
+  /**
+   * The racket hand over the shoulder at the knee trough (D3.5). Data only, on
+   * the same terms as `legDrive`; absent when the trophy came from the arms,
+   * and on reports from before it existed.
+   */
+  armCock?: ArmCock
   flaws: FlawFinding[]
   /** What the pass cost, so a slow device can be seen rather than guessed at. */
   cost: { frames: number; series: number; ms: number }
+}
+
+/** The racket hand at the knee trough — see `Diagnosis.armCock`. */
+export interface ArmCock {
+  /** Hand over the racket shoulder, in body heights; higher is cocked earlier. */
+  ratio: number
+  confidence: number
 }
 
 /**
@@ -826,6 +839,21 @@ export function diagnose(
   const externalRotation = readExternalRotation(at(keys.trophy), R)
   // The first reading in this engine taken past contact. See LandingBalance.
   const legDrive = readLegDrive(at(keys.trophy), at(keys.contact), bodyHeight)
+  /*
+   * Where the racket hand is at the knee trough (D3.5): how far above the
+   * shoulder, in body heights, read off image y so every camera sees it the
+   * same. The published amateur signature is an arm already cocked at maximum
+   * knee flexion (Gao 2026). Only when the trophy came from the legs: a trophy
+   * found from the arms is not the knee trough, and reading the arm there would
+   * measure the rule that placed it. Measured and not named — see
+   * `UNCALIBRATED.arm_cock_ratio`.
+   */
+  const armCock: ArmCock | undefined = skel.derivation.trophyFromArms
+    ? undefined
+    : {
+        ratio: round3((at(keys.trophy).image[R.shoulder].y - at(keys.trophy).image[R.wrist].y) / bodyHeight),
+        confidence: round2(windowVisibility(frames, keys.trophy - 1, keys.trophy + 1, [R.wrist, R.shoulder])),
+      }
   const landing = readLandingBalance(
     at(keys.finish),
     bodyHeight,
@@ -1043,6 +1071,7 @@ export function diagnose(
     externalRotation,
     legDrive,
     landing,
+    armCock,
     stance: readStance(frames, skel, viewFromCourtYaw(spatial.court_yaw_deg)),
     flaws,
     cost: {

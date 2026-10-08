@@ -306,6 +306,10 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   // ungraded reading nothing held to account.
   const ext = d.legDrive?.extensionDeg
   if (typeof ext === 'number' && Number.isFinite(ext)) out.knee_extension_deg = ext
+  // The sixth: the racket hand over the shoulder at the knee trough (D3.5).
+  // Dimensionless, read off image y.
+  const cock = d.armCock?.ratio
+  if (typeof cock === 'number' && Number.isFinite(cock)) out.arm_cock_ratio = cock
   return out
 }
 

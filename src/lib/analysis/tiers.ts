@@ -982,6 +982,30 @@ export const UNCALIBRATED: Record<string, string> = {
    * image x points depends on which side the camera stood, so a sign would be a
    * fact about the filming. Nothing here knows which direction is worse anyway.
    */
+  /*
+   * The racket hand over the shoulder at the knee trough (D3.5) — the amateur
+   * signature in the WTA comparison: lower-ranked players were already rotated
+   * back at maximum knee flexion, 95° of external rotation against the top
+   * 40's 38° (Gao 2026). Read off image y, so the camera does not move it: on
+   * the rig's `lateArmCock` dial it reads 0.156 cocked to 0.044 forward,
+   * identically at 20°, 45° and 82°.
+   *
+   * STEADY ENOUGH, AND NO BAND. The deviation is 0.024 on the rig and 0.009 on
+   * real motion, against a 0.11 span. What it lacks is a scale in these units:
+   * the study gives a shoulder angle, and an angle a camera cannot read (2D has
+   * no forearm rotation) does not convert to a hand height without a forearm
+   * and an elbow angle nobody measured. The forty Bath serves read 0.10–0.17,
+   * the cocked end — by the WTA finding the amateur end, on a capture of one
+   * experienced player — so the one real population this engine has sits on
+   * the side the research calls the fault. A band drawn from it would grade
+   * the signature as normal; a band drawn from the study would be invented.
+   */
+  arm_cock_ratio:
+    'measured and not named: the published signature is an angle (Gao 2026) and ' +
+    'no study gives it as a hand height; tracks its dial from 0.156 to 0.044 at ' +
+    'every camera angle, deviation 0.024 rig and 0.009 real, and the one real ' +
+    'population sits on the end the research calls the fault',
+
   landing_offset_ratio:
     'measured and not named: well conditioned from behind the server — 0.0035 ' +
     'square against 0.0657 landed, on a 0.0045 deviation — and a quarter of that ' +

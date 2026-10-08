@@ -210,6 +210,23 @@ export interface ServeDials {
    */
   trophyForearmDrop: number
   /**
+   * How late the racket arm cocks, 0–1: where the hand is at the deepest knee
+   * bend (D3.5).
+   *
+   * Zero is the Bath server, and this rig's default: by the knee trough the
+   * forearm is already up, the hand about 0.15 body heights over the shoulder —
+   * which is the amateur signature in the WTA comparison (Gao 2026), where the
+   * lower-ranked players were already rotated back at maximum knee flexion (95°
+   * of external rotation against the top 40's 38°). One keeps the forearm
+   * pointing forward at the knee trough, the hand at about shoulder height in
+   * front of the elbow, as the top 40 do; the arm then cocks on the way to the
+   * drop, which is untouched.
+   *
+   * Applied as an offset to the trophy key and zero at zero, so a rig built
+   * without it is bit-identical.
+   */
+  lateArmCock: number
+  /**
    * External rotation of the racket shoulder at the trophy, in degrees.
    *
    * The one thing this rig could not pose, and the reason a whole investigation
@@ -548,6 +565,7 @@ export const CLEAN_SERVE: ServeDials = {
   cameraYaw: 82,
   palmToSky: 6,
   trophyForearmDrop: 0,
+  lateArmCock: 0,
   trophyExternalRotation: 0,
   pronation: 95,
   hipLead: 0.07,
@@ -918,7 +936,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
         [
           [U.ready, 0.24],
           [U.toss, 0.72],
-          [U.trophy, 0.45 + d.trophyForearmDrop * 0.6],
+          [U.trophy, 0.45 + d.trophyForearmDrop * 0.6 - d.lateArmCock * 0.35],
           [U.drop, 0.31],
           [U.contact, -0.29],
         ],
@@ -930,7 +948,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
           [U.toss, SHOULDER_DROP + 0.05],
           // A flattening arm drops the hand towards shoulder height, which is
           // the shape that lets a palm face the sky at all.
-          [U.trophy, SHOULDER_DROP - 0.2 + d.trophyForearmDrop],
+          [U.trophy, SHOULDER_DROP - 0.2 + d.trophyForearmDrop + d.lateArmCock * 0.2],
           [U.drop, SHOULDER_DROP + d.dropBelowShoulder],
           [U.contact, -reachAboveHip],
           // The hand leaves contact immediately. Without this key the smoothstep
