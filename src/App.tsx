@@ -27,6 +27,7 @@ import {
   scoringVersionOf,
 } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
+import { tossMapFor } from './lib/tossMap'
 import {
   analyzeAllServes,
   analyzeServe,
@@ -1349,6 +1350,7 @@ export default function App() {
               onTagServe={(n) => void applyServeTag(view.analysis.id, { serveNumber: n })}
               onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
               onGlance={() => setView({ kind: 'glance', analysis: view.analysis, videoUrl: view.videoUrl })}
+              tossMap={tossMapFor(view.analysis, sessions, serveTags)}
               fixtureExport={FIXTURE_EXPORT}
               onBack={goHome}
               onAnalyzeAnother={goHome}
@@ -1459,6 +1461,7 @@ export default function App() {
               analysis={view.session}
               previous={priorTo(view.session.createdAt, typeOf(view.session))}
               best={bestPriorTo(sessions, view.session.createdAt, typeOf(view.session), scoringVersionOf(view.session))}
+              tossMap={tossMapFor(view.session, sessions, serveTags)}
               serveNumber={tagsById(serveTags).get(view.session.id)?.serveNumber}
               outcome={tagsById(serveTags).get(view.session.id)?.outcome}
               onTagServe={(n) => void applyServeTag(view.session.id, { serveNumber: n })}

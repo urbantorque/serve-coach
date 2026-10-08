@@ -483,7 +483,15 @@ The outcome taps already exist and nothing reads them.
       and holds it to that file. Original plan:* `speechSynthesis` with
       on-device voices only (`localService`); silent otherwise, so §7 holds.
       *Proof:* egress test extended; voice choice unit-tested.
-- [ ] **D6.3 The toss map** · M, after D3.1. Every serve's toss peak in a
+- [x] **D6.3 The toss map** · M, after D3.1. *Done (2026-10-09), as a strip
+      rather than a top-down map, because one camera reads one axis: "Your
+      tosses, front to back" from the side, "side to side" from behind. Each
+      serve in the basket against the front foot; a dot for in, a diamond for a
+      miss, an empty ring untagged, so identity is never colour alone, with a
+      touch readout and a list for screen readers. Existing tokens only
+      (`--great`, `--work`): they pass colour-blind separation and contrast
+      and sit above the dataviz lightness band, as every token in this skin
+      does. `?demo=basket` shows it. Original plan:* Every serve's toss peak in a
       basket on one top-down plot, coloured by outcome when tagged. A view
       coaches use constantly. Existing tokens only. *Proof:* render test;
       preview at phone size.

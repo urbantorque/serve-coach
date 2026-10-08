@@ -1482,3 +1482,19 @@
   color: var(--lime);
   margin-top: 1px;
 }
+
+/* The toss map's key (D6.3): shape and word beside each colour, never colour
+   alone. Text in the muted ink, the marks carry the identity. */
+.toss-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.toss-map-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

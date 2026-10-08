@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import ConsistencyPanel from '../components/ConsistencyPanel'
+import TossMap from '../components/TossMap'
+import type { TossMap as TossMapData } from '../lib/tossMap'
 import FundamentalCard from '../components/FundamentalCard'
 import LevelPicker from '../components/LevelPicker'
 import PosePlayer from '../components/PosePlayer'
@@ -87,6 +89,8 @@ interface Props {
    * after a serve recorded in it, reachable from any clip's report.
    */
   onGlance?: () => void
+  /** Every toss in this basket, when two or more were read — see `tossMapFor`. */
+  tossMap?: TossMapData
   onBack: () => void
   onAnalyzeAnother: () => void
   onFlipHandedness?: () => void
@@ -220,6 +224,7 @@ export default function Report({
   onTagServe,
   onTagOutcome,
   onGlance,
+  tossMap,
   onBack,
   onAnalyzeAnother,
   onFlipHandedness,
@@ -897,6 +902,17 @@ export default function Report({
           bestGap={bestGap}
           gapDelta={basketGapDelta}
         />
+      )}
+
+      {/* Where every toss in this basket peaked, against the front foot
+          (D6.3). One axis, the one this camera reads, and said so. */}
+      {tossMap && (
+        <section className="block">
+          <h2 className="block-title">
+            {tossMap.axis === 'ahead' ? 'Your tosses, front to back' : 'Your tosses, side to side'}
+          </h2>
+          <TossMap map={tossMap} />
+        </section>
       )}
 
       {!example && analysis.quality.warnings.length > 0 && (

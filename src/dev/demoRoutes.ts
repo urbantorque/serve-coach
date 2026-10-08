@@ -116,6 +116,25 @@ export async function runDemoRoute(
       fitted.serves = { count: 5, index: 4 }
       const basket = sampleBasket()
       fitted.consistency = buildConsistency(basket, 5)
+      // The toss map (D6.3) reads the basket's other serves from history, as
+      // one clip, so the demo files them as one. The rig throws the same toss
+      // every time, which would stack every mark on one spot; the placements
+      // are spread by hand here, dev-only, so the strip has something to show.
+      const spread = [0.18, 0.31, 0.24, 0.36]
+      fitted.id = 'serve-demobasket-4'
+      if (fitted.diagnosis) fitted.diagnosis.tossPlacement = { ahead: 0.29, from: 'hand', confidence: 0.5 }
+      seedHistory({
+        sessions: basket.map((a, i) => {
+          const { frames: _f, ...rest } = a
+          void _f
+          const session = { ...rest, id: `serve-demobasket-${a.serves.index}` } as Session
+          if (session.diagnosis) {
+            session.diagnosis = { ...session.diagnosis, tossPlacement: { ahead: spread[i], from: 'hand', confidence: 0.5 } }
+          }
+          return session
+        }),
+        practice: [],
+      })
       // The drill check, worked out from the swept serves exactly as the app
       // does after a real sweep. `&passed` checks against a basket of clean
       // serves instead, so the "Move up a step" state can be looked at too.
