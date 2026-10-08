@@ -442,7 +442,7 @@ check('the scan cost is bounded however long the clip is', () => {
 
 check('coarse sampling still finds every serve in a basket', () => {
   // The reason the refinement pass exists. Coarse samples under-read the peaks,
-  // and `findServes` discards any peak more than REACH_TOLERANCE below the best —
+  // and `findServes` discards any peak more than REACH_TOLERANCE_SHARE below the best —
   // so without refinement an under-read serve is dropped, not just imprecise.
   const duration = 180
   const plan = planScan(duration)

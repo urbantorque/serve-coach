@@ -445,6 +445,21 @@ check('ignores a practice swing that never reaches full height', () => {
   near(found[1], 9, 0.2, 'second serve')
 })
 
+check('the same basket is read the same at any size in the frame', () => {
+  // The tolerance is a share of the player's own reach (D1.6). It was 0.12 of
+  // the frame, which at a third of this size is wider than the gap between a
+  // serve and the practice swing, so a far player's half swing was a serve.
+  const basket = [
+    { t: 3, height: 0.9 },
+    { t: 6, height: 0.55 },
+    { t: 9, height: 0.86 },
+  ]
+  for (const size of [1, 0.6, 0.3]) {
+    const found = findServes(reachTrace(basket).map((s) => ({ t: s.t, height: s.height * size })))
+    assert(found.length === 2, `at ${size} of the frame: ${found.length} serves, ${found.map((n) => n.toFixed(1)).join(', ')}`)
+  }
+})
+
 check('copes with an empty trace', () => {
   assert(findServes([]).length === 0, 'empty trace produced serves')
 })

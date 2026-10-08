@@ -272,7 +272,15 @@ this first.
       `measure()` without a ball, so the ball metrics escape every replay.
       *Proof:* the replay suite and clipbench carry `tossPeakHeight` and
       `contactBelowPeak`.
-- [~] **D1.6 The small engine defects** (`ANALYSIS-REVIEW.md` F8) · M.
+- [x] **D1.6 The small engine defects** (`ANALYSIS-REVIEW.md` F8) · M.
+      *Finished (2026-10-09).* The serve finder's tolerance is a quarter of
+      the clip's own reach, from the resting hand to the highest point
+      (`REACH_TOLERANCE_SHARE`), not 0.12 of the frame. It keeps the old
+      figure for a player filling 60% of the frame. At a third of that size
+      the old one counted a practice swing as a serve, which a new check in
+      `engine.test.ts` holds at three sizes. One yaw formula was already
+      true: since D7.2, `estimateYaw` alone feeds the view, the `axes.ts`
+      routing and the framing advice, all through `court_yaw_deg`.
       *Gap fill — done:* a lost sample is now filled by a cubic through two
       measured samples either side. One lost sample at the drop or contact at
       30 fps: 0.07 → 0.014 body heights. Making the filter coast, as F8
@@ -280,7 +288,7 @@ this first.
       fine:* the ball tracker accepts ±55% of the expected gravity, so the
       1.78 m assumption moves nothing. *Blur window — left alone:* the
       whole-serve median is a deliberate, measured choice (`triage.ts`), not
-      an oversight. Still open: serve-finder tolerance, one yaw formula.
+      an oversight.
 
 ### Wave D2 — One serve, judged once, by cited standards
 Clean up the judgement before new readings are added to it.

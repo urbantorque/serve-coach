@@ -67,7 +67,7 @@ export function planScan(duration: number, budget = SCAN_BUDGET): ScanPlan {
  * Sampling coarsely does not move a serve, but it does under-read how high the
  * hand got — the reach is only near its maximum for a few tenths of a second, so
  * a sample landing half a second off the peak reports a lower one. That matters
- * because `findServes` keeps only peaks within `REACH_TOLERANCE` of the best, so
+ * because `findServes` keeps only peaks within `REACH_TOLERANCE_SHARE` of the best, so
  * an under-read serve is not merely imprecise, it is discarded, and the player is
  * told one of their serves could not be read.
  *
@@ -160,8 +160,21 @@ export function peakCandidates(samples: ReachSample[], count = MAX_SERVES): numb
   return picked.sort((a, b) => a - b)
 }
 
-/** How far below the best reach a peak may sit and still count as a serve. */
-export const REACH_TOLERANCE = 0.12
+/**
+ * How far below the best reach a peak may sit and still count as a serve, as a
+ * share of the clip's own reach — from the resting hand (the median height) to
+ * the highest point in it.
+ *
+ * It was 0.12 of the frame's height whoever was in it (`ANALYSIS-REVIEW.md`
+ * F8), which is half the height of a player filmed small from the back fence
+ * and an eighth of one filling the frame. So a far player's practice toss
+ * counted as a serve, and a near player's slightly lower second serve risked
+ * not counting. A share of their own reach is the same distance on their body
+ * at any size. A quarter keeps the old figure for a player filling about 60% of
+ * the frame, whose hand rises about 0.5 of the frame from rest to the hit, and
+ * it is the quarter `restingFloor` already uses.
+ */
+export const REACH_TOLERANCE_SHARE = 0.25
 
 export interface ReachSample {
   t: number
@@ -182,7 +195,7 @@ export interface ReachSample {
  * Kept free of any video or MediaPipe dependency so it can be tested directly.
  *
  * Requires a peak to clear `restingFloor` as well as sit within
- * `REACH_TOLERANCE` of the best sample — without it, a clip nobody ever
+ * `REACH_TOLERANCE_SHARE` of the best sample — without it, a clip nobody ever
  * swings in (camera left running, a whole idle basket) has no real peak at
  * all, and this function used to hand back its noisiest resting instant as a
  * "located" serve instead of reporting that nothing stood out. That silently
@@ -199,10 +212,12 @@ export function findServes(samples: ReachSample[]): number[] {
 
   const ranked = [...samples].sort((a, b) => b.height - a.height)
   const bestHeight = ranked[0].height
+  const resting = ranked[ranked.length >> 1].height
+  const tolerance = REACH_TOLERANCE_SHARE * (bestHeight - resting)
   const picked: number[] = []
 
   for (const s of ranked) {
-    if (s.height < bestHeight - REACH_TOLERANCE) break
+    if (s.height < bestHeight - tolerance) break
     if (s.height < floor) break
     if (picked.some((t) => Math.abs(t - s.t) < MIN_SERVE_GAP)) continue
     picked.push(s.t)
