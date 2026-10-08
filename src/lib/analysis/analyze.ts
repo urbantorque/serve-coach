@@ -34,7 +34,9 @@ import {
   objectEngineResident,
 } from '../vision/objectEngine'
 import { isRefineModelCached, loadRefineEngine, readPose, refineEngineResident } from '../pose/refineEngine'
-import { drawSkeleton, fitContain } from '../pose/skeleton'
+import { drawSkeleton, fitContain, ghostFor, tossMarkFor } from '../pose/skeleton'
+import { placeLine } from '../tossPlaceCopy'
+import type { TossPlacement } from './tossPlacement'
 import { racketFromBox, type DetectedBox, type RacketEstimate } from './racket'
 import { FUNDAMENTALS } from './coaching'
 import { SOFT_MEASUREMENT } from './confidence'
@@ -85,6 +87,7 @@ import {
   type Analysis,
   type Frame,
   type Fundamental,
+  type Metric,
   type Quality,
 } from './types'
 
@@ -1305,10 +1308,55 @@ export function keyframeOverlay(opts: {
   racket: 'right' | 'left'
   bodyHeight: number
   bands: Record<string, [number, number]>
+  /**
+   * The evidence each still carries for what the card measured on it (D4.6):
+   * the card's rows and the serve's scale, for the height targets `ghostFor`
+   * draws on the toss and contact stills, and where the toss peaked against
+   * the front foot, for the toss still. Each refuses on a levelled clip.
+   */
+  evidence?: {
+    metrics: Metric[]
+    scale: { bodyHeight: number; groundY: number }
+    rolled: boolean
+    tossPlacement?: TossPlacement
+  }
 }): (ctx: CanvasRenderingContext2D, index: number, size: { w: number; h: number }) => void {
-  const { frames, ball, phases, aspect, racket, bodyHeight, bands } = opts
+  const { frames, ball, phases, aspect, racket, bodyHeight, bands, evidence } = opts
+  const frameOf = (id: Analysis['phases'][number]['id']) => phases.find((p) => p.id === id)?.frame
+  // Worked out once rather than on every still: both are a function of the
+  // report, and `captureThumbnails` calls back once per keyframe.
+  const ghosts = phases.map((p) =>
+    evidence
+      ? ghostFor({
+          phase: p.id,
+          frame: frames[p.frame],
+          metrics: evidence.metrics,
+          racket,
+          scale: evidence.scale,
+          rolled: evidence.rolled,
+        })
+      : undefined,
+  )
+  const ready = frameOf('ready')
+  const toss = frameOf('toss')
+  const tossMark =
+    evidence && ready !== undefined && toss !== undefined
+      ? tossMarkFor({
+          frames,
+          readyFrame: ready,
+          tossFrame: toss,
+          racket,
+          ball,
+          aspect,
+          placement: evidence.tossPlacement,
+          rolled: evidence.rolled,
+          label: placeLine,
+        })
+      : undefined
   return (ctx, i, size) => {
     drawSkeleton(ctx, {
+      ghost: ghosts[i],
+      tossMark: phases[i].id === 'toss' ? tossMark : undefined,
       frame: frames[phases[i].frame],
       aspect,
       rect: fitContain(size.w, size.h, aspect),
@@ -1380,6 +1428,12 @@ export async function captureServeStills(
       racket: analysis.handedness,
       bodyHeight: analysis.scale?.bodyHeight ?? 0,
       bands: bandsFor(analysis.fundamentals),
+      evidence: analysis.scale && {
+        metrics: analysis.fundamentals.flatMap((f) => f.metrics),
+        scale: analysis.scale,
+        rolled: Boolean(analysis.tilt),
+        tossPlacement: analysis.diagnosis?.tossPlacement,
+      },
     }),
     undefined,
     signal,
@@ -1813,6 +1867,12 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         racket: skel.racket,
         bodyHeight: skel.bodyHeight,
         bands,
+        evidence: {
+          metrics: fundamentals.flatMap((f) => f.metrics),
+          scale: { bodyHeight: skel.bodyHeight, groundY: skel.groundY },
+          rolled: Boolean(applied),
+          tossPlacement: diagnosis.tossPlacement,
+        },
       }),
       // Positional `undefined` so `maxWidth` keeps its default — restating 420
       // here would be two places to change the day it moves.

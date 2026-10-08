@@ -10,6 +10,7 @@
  * of it reaches the production bundle.
  */
 import type { View } from '../App'
+import { bandsFor, keyframeOverlay } from '../lib/analysis/analyze'
 import type { FaultMove } from '../lib/analysis/carryForward'
 import { buildConsistency, pairStills, type ServePairFrames } from '../lib/analysis/consistency'
 import { checkDrill } from '../lib/analysis/progressions'
@@ -50,6 +51,42 @@ function placeholderStill(label: string): string {
   ctx.textAlign = 'center'
   ctx.fillText(label, canvas.width / 2, canvas.height / 2)
   return canvas.toDataURL('image/png')
+}
+
+/**
+ * The rig's keyframes, drawn exactly as the analysis draws its stills, on a
+ * dark tile standing in for the video the rig does not have
+ * (`?demo=report&stills`, D4.6). The body, the arcs and the evidence are the
+ * real overlay; only the footage under them is missing.
+ */
+function rigStills(a: Analysis): void {
+  if (!a.frames?.length || !a.scale) return
+  const draw = keyframeOverlay({
+    frames: a.frames,
+    ball: undefined,
+    phases: a.phases,
+    aspect: 1,
+    racket: a.handedness,
+    bodyHeight: a.scale.bodyHeight,
+    bands: bandsFor(a.fundamentals),
+    evidence: {
+      metrics: a.fundamentals.flatMap((f) => f.metrics),
+      scale: a.scale,
+      rolled: false,
+      tossPlacement: a.diagnosis?.tossPlacement,
+    },
+  })
+  a.phases.forEach((p, i) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 300
+    canvas.height = 400
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.fillStyle = '#12202a'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    draw(ctx, i, { w: canvas.width, h: canvas.height })
+    p.thumbnail = canvas.toDataURL('image/jpeg', 0.85)
+  })
 }
 
 export async function runDemoRoute(
@@ -240,6 +277,7 @@ export async function runDemoRoute(
       videoUrl: '',
     })
   } else {
+    if (new URLSearchParams(location.search).has('stills')) rigStills(analysis)
     const { frames: _f, ...session } = analysis
     void _f
     setView({ kind: 'saved', session })

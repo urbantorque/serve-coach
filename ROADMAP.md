@@ -522,7 +522,19 @@ the coaching around it.
       player's best serve of the same type (score, then repeatability), not
       their last. Add "closer to your best" deltas on the focus measurements.
       *Proof:* seeded history picks the right serve; type never mixed.
-- [ ] **D4.6 Evidence on the frame** · M. "Watch this moment" draws the
+- [x] **D4.6 Evidence on the frame** · M. *Done (2026-10-09), on the stills,
+      which are the only picture a reopened report keeps. `keyframeOverlay`
+      now draws the live player's height targets (`ghostFor`) on the toss and
+      contact stills: the target zone, the gap to it and "Aim for". It also
+      draws where the toss peaked against the front foot on the toss still, in
+      the toss map's own sentence (`tossMarkFor`, `tossPlaceCopy.ts`). Both are
+      refused on a levelled clip. The knee arc was already there.
+      `stillEvidence.ts` says, fault by fault, what its still shows (low
+      contact: the target; toss height: the flight; collapsed elbow: the arc),
+      or why one frame cannot: a rise is two moments, a wander is a path, a
+      turn towards the lens moves nothing. `stillEvidence.test.ts` renders
+      every entry through the real overlay. `?demo=shapes&stills` draws the
+      rig's stills on dark tiles to look at. Original plan:* "Watch this moment" draws the
       measurement itself — knee arc, contact-height line, toss-placement
       marker — on the keyframe still. *Proof:* render test per fault; preview.
 

@@ -556,6 +556,128 @@ export interface SkeletonOptions {
    * which has no video, and `ghost` on `PosePlayer`, which does.
    */
   paired?: readonly ({ x: number; y: number } | null)[]
+  /**
+   * Where the toss peaked against the front foot, for the toss still (D4.6).
+   * Build it with `tossMarkFor`, which refuses a picture that is not upright.
+   */
+  tossMark?: TossMark
+}
+
+/**
+ * Where the toss peaked against the front foot, drawn on the toss still (D4.6).
+ *
+ * The toss placement reading (`readTossPlacement`) said as a picture: a line up
+ * from the front ankle to the height of the toss's top, and across to where the
+ * top was, under the toss map's own sentence. Both points are in the same
+ * normalised image space as `Frame.image`.
+ */
+export interface TossMark {
+  /** The front ankle at the ready position, where the reading is measured from. */
+  foot: { x: number; y: number }
+  /** The toss's top: the ball's apex, or the hand at release standing in for it. */
+  peak: { x: number; y: number }
+  /** The toss map's phrase for the same number (`placeLine`). */
+  label: string
+}
+
+/** The overline on the toss marker's plate. */
+const TOSS_OVERLINE = 'TOSS PEAK'
+
+/**
+ * The toss mark for a still, or nothing.
+ *
+ * Nothing on a levelled clip, for the reason `ghostFor` gives: a still is raw
+ * video, and the line up from the foot is only "up" in an upright picture.
+ */
+export function tossMarkFor(o: {
+  frames: Frame[]
+  readyFrame: number
+  tossFrame: number
+  racket: 'right' | 'left'
+  /** The flight in the stills' own space, x width-normalised as `BallFlight` keeps it. */
+  ball?: { apex: { x: number; y: number } }
+  aspect: number
+  placement?: { ahead?: number; across?: number; from: 'ball' | 'hand' }
+  rolled: boolean
+  label: (axis: 'ahead' | 'across', value: number) => string
+}): TossMark | undefined {
+  const p = o.placement
+  if (!p || o.rolled) return undefined
+  const value = p.ahead ?? p.across
+  if (value === undefined) return undefined
+  const T = sided(o.racket === 'right' ? 'left' : 'right')
+  const foot = o.frames[o.readyFrame]?.image[T.ankle]
+  const hand = o.frames[o.tossFrame]?.image[T.wrist]
+  const peak = p.from === 'ball' && o.ball ? { x: o.ball.apex.x * o.aspect, y: o.ball.apex.y } : hand
+  if (!foot || !peak) return undefined
+  return {
+    foot: { x: foot.x, y: foot.y },
+    peak: { x: peak.x, y: peak.y },
+    label: o.label(p.ahead !== undefined ? 'ahead' : 'across', value),
+  }
+}
+
+function drawTossMark(
+  ctx: CanvasRenderingContext2D,
+  m: TossMark,
+  rect: DrawRect,
+  aspect: number,
+  scale: number,
+): void {
+  const { ox, oy, dw, dh } = rect
+  const at = (p: { x: number; y: number }) => ({ x: ox + (p.x / aspect) * dw, y: oy + p.y * dh })
+  const foot = at(m.foot)
+  const peak = at(m.peak)
+  const corner = { x: foot.x, y: peak.y }
+
+  // The ghost's two-stroke ink, dashed up from the foot because the foot line
+  // is a reference, and solid across because the gap across is the reading.
+  const stroke = (dashed: boolean, colour: string) => {
+    ctx.setLineDash(dashed ? [6 * scale, 5 * scale] : [])
+    ctx.strokeStyle = PALETTE.under
+    ctx.lineWidth = 4.4 * scale
+    ctx.stroke()
+    ctx.strokeStyle = colour
+    ctx.lineWidth = 2 * scale
+    ctx.stroke()
+  }
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.moveTo(foot.x, foot.y)
+  ctx.lineTo(corner.x, corner.y)
+  stroke(true, PALETTE.ghost)
+  ctx.beginPath()
+  ctx.moveTo(corner.x, corner.y)
+  ctx.lineTo(peak.x, peak.y)
+  stroke(false, PALETTE.ball)
+  ctx.setLineDash([])
+  ctx.beginPath()
+  ctx.arc(peak.x, peak.y, 5 * scale, 0, Math.PI * 2)
+  stroke(false, PALETTE.ball)
+
+  // The ghost's plate, so the still speaks in one voice: the sentence, and an
+  // overline saying what it is about.
+  const labelSize = 9.5 * scale
+  const valueSize = 12.5 * scale
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `620 ${valueSize}px ${UI_FONT}`
+  const valueW = ctx.measureText(m.label).width
+  ctx.font = `500 ${labelSize}px ${UI_FONT}`
+  const w = Math.min(dw - 8 * scale, Math.max(valueW, ctx.measureText(TOSS_OVERLINE).width) + 22 * scale)
+  const h = 36 * scale
+  const mid = (foot.x + peak.x) / 2
+  const lx = Math.min(Math.max(mid, ox + w / 2 + 4 * scale), ox + dw - w / 2 - 4 * scale)
+  const ly = Math.min(Math.max(peak.y - h, oy + h / 2 + 4 * scale), oy + dh - h / 2 - 4 * scale)
+  roundRectPath(ctx, lx - w / 2, ly - h / 2, w, h, Math.min(9 * scale, h / 2))
+  ctx.fillStyle = PALETTE.plate
+  ctx.fill()
+  ctx.font = `620 ${valueSize}px ${UI_FONT}`
+  ctx.fillStyle = PALETTE.limb
+  ctx.fillText(m.label, lx, ly - 5 * scale, w - 12 * scale)
+  ctx.font = `500 ${labelSize}px ${UI_FONT}`
+  ctx.fillStyle = PALETTE.plateLabel
+  ctx.fillText(TOSS_OVERLINE, lx, ly + 9 * scale)
 }
 
 /**
@@ -590,6 +712,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   if (o.paired) drawPairedGhost(ctx, o.paired, rect, aspect, scale)
 
   if (o.ghost) drawGhost(ctx, o.ghost, rect, aspect, scale)
+  if (o.tossMark) drawTossMark(ctx, o.tossMark, rect, aspect, scale)
 
   if (o.trail && o.trail.to > o.trail.from + 1) {
     const { frames, from, to } = o.trail

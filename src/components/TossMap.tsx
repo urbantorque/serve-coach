@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { TossMap as TossMapData, TossMapPoint } from '../lib/tossMap'
 import { OUTCOME_LABEL } from '../lib/serveTagCopy'
+import { placeLine } from '../lib/tossPlaceCopy'
 
 /*
  * Every serve's toss in a basket, along the one axis this camera reads (D6.3).
@@ -23,13 +24,6 @@ const R = 6
 
 const MISS = new Set(['long', 'net', 'wide'])
 
-const shareOf = (v: number) => `${Math.round(Math.abs(v) * 100)}% of your height`
-
-function placeLine(axis: TossMapData['axis'], v: number): string {
-  if (Math.abs(v) < 0.01) return 'over your front foot'
-  if (axis === 'ahead') return `${shareOf(v)} ${v > 0 ? 'in front of' : 'behind'} your front foot`
-  return `${shareOf(v)} to your ${v > 0 ? 'hitting' : 'tossing'} side`
-}
 
 function Mark({ p, x, y, on }: { p: TossMapPoint; x: number; y: number; on: boolean }) {
   const r = on || p.current ? R + 1.5 : R
