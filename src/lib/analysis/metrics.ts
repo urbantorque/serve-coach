@@ -484,14 +484,24 @@ export function measure(
   // difference lands on the player. Anchored at the toss it reads 28.6% for
   // both.
   //
-  // It counts nothing but the vertical order of three landmarks in the frame, so
-  // there is no `imageXAxis` question to get wrong and no depth to infer: which
-  // of two points sits higher in the picture is the same fact from every camera
-  // angle. Measured across the rig at 20°, 45°, 60° and 89° of yaw it does not
-  // move at all. Real motion is less kind: perspective tips the vertical order
-  // near the swing's turning points, and the same Bath serves read 10.5% from
-  // the guide's placement and 17.6% from the other side of the baseline — one
-  // reason the card's weight for it stays low.
+  // It counts nothing but the vertical order of three landmarks, so there is no
+  // `imageXAxis` question to get wrong and no depth to infer. The order is read
+  // from the world landmarks, which are metric, levelled with the picture by
+  // `levelFrames`, and carry no perspective, and that last part is the reason.
+  // Read off the picture, a lens at waist height looks up at a hand and an
+  // elbow only a few centimetres apart in height and at different distances,
+  // and the nearer one rises. Two of the forty Bath serves read 0% from the
+  // guide's placement at 30 fps, a full drop told it "never gets under your
+  // elbow", and the medians ran from 8% at the guide's placement to 15% from the
+  // other baseline. From the world landmarks the lowest of the forty is
+  // 6.5–8.9% and the median 12–13% from every placement and frame rate tried.
+  // The rig films without perspective and reads the same either way, which is
+  // why it never showed this: across 20°, 45°, 60° and 89° of yaw it does not
+  // move at all.
+  //
+  // Neither half of that order is depth: world y is the pose model's height, on
+  // the picture's own vertical. A frame without world landmarks, such as a
+  // stored track rebuilt for drawing, falls back to the picture's order.
   //
   // And the hand has to be up off the hip line as well as under the elbow. A
   // racket left hanging by the thigh also puts the elbow above the hand — that
@@ -511,10 +521,12 @@ export function measure(
       let hung = 0
       for (let i = from; i <= to; i++) {
         const f = frames[i]
-        const hip = midpoint(f.image[LM.leftHip], f.image[LM.rightHip])
-        // Image y grows downwards, so "above" is the smaller number: the elbow
+        const seen = [R.elbow, R.wrist, LM.leftHip, LM.rightHip].every((k) => f.world[k])
+        const pts = seen ? f.world : f.image
+        const hip = midpoint(pts[LM.leftHip], pts[LM.rightHip])
+        // y grows downwards in both, so "above" is the smaller number: the elbow
         // sits above the hand, and the hand sits above the hips.
-        if (f.image[R.elbow].y < f.image[R.wrist].y && f.image[R.wrist].y < hip.y) hung++
+        if (pts[R.elbow].y < pts[R.wrist].y && pts[R.wrist].y < hip.y) hung++
       }
       values.handUnderElbow = (hung / samples) * 100
     }

@@ -544,8 +544,14 @@ to the literature, never re-derived from one player.
       upward speed falling away), not from wrist-over-shoulder. *Proof:* toss
       keyframe within ±40 ms of the hand's peak on the Bath set; rig toss
       readings re-checked.
-- [ ] **D7.7 Hand-under-elbow from the guide's placement** · S. *Found while
-      checking D7.3.* Two of the 40 real full drops read 0% from the guide's
+- [x] **D7.7 Hand-under-elbow from the guide's placement** · S. *Done
+      (2026-10-08), with neither option below: the reading was wrong rather
+      than its grade. Read off the picture, a lens at waist height tips the
+      order of a hand and an elbow a few centimetres apart. The order now comes
+      from the world landmarks, which carry no perspective, and the forty Bath
+      serves read 6.5–8.9% at the lowest and 12–13% at the median from every
+      placement and rate (were 0% and 8–15%). The rig reads the same either
+      way. Found while checking D7.3.* Two of the 40 real full drops read 0% from the guide's
       placement at 30 fps. This was already true before D7.3. The 4% floor sits
       at that placement's lowest tenth, so a real drop can be read out as
       "Hand never gets under the elbow". From that camera the reading cannot

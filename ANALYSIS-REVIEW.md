@@ -920,3 +920,18 @@ serious miss, not over it. Every named collapse is now 'high' severity.
 **Still a model of the camera.** The motion is real; the noise is the same
 modelled MediaPipe error as before. These figures move again the moment there
 is footage through this app.
+
+### Hand under the elbow, without perspective (2026-10-08, still scoring version 5)
+
+The share of the swing the racket hand spends under its elbow was read from the
+vertical order of the two in the picture. From the guide's placement, a lens at
+waist height looks up at a hand and an elbow a few centimetres apart in height,
+and whichever is nearer the lens rises. Two of the forty Bath serves read 0% at
+30 fps and were told their hand "never gets under your elbow". The medians ran
+from 8% at the guide's placement to 15% from the far baseline.
+
+The order is now read from the world landmarks: metric, levelled with the
+picture, and free of perspective. Neither half of it is depth. The forty serves
+read 6.5–8.9% at the lowest and 12–13% at the median from all five placements
+at 30, 60 and 120 fps, so the 4% floor sits under every real drop. The rig
+films without perspective and reads identically either way.

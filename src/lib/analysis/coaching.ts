@@ -475,6 +475,15 @@ export const METRICS: Record<string, MetricCopy> = {
      * none. It is still uncited — no study measures this — which is why the
      * weight above stays low.
      *
+     * Those figures were read off the picture, where perspective put two real
+     * drops at 0% from the guide's own placement. Since D7.7 the order is read
+     * from the world landmarks (`metrics.ts`), and the same forty serves read a
+     * median of 12–13% from every placement, with the lowest at 6.5–8.9%. The
+     * floor of 4 now sits under every real drop rather than at the bottom of
+     * them, and the toss moving onto the hand's peak (D7.3) lengthened the
+     * window these shares are taken over, which is why the medians are lower
+     * than the 14–18% the old reading gave from the far side.
+     *
      * The ceiling is the end of the axis because naming a fault above the band
      * would be inventing one. Hanging under the elbow for a very long share of
      * the swing is probably a pause at the trophy — probably, and this app does

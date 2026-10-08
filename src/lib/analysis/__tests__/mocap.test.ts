@@ -20,6 +20,7 @@
  */
 import fixture from './fixtures/bath-serves.json'
 import { runEngine } from '../../../dev/mocap/engine'
+import { METRICS } from '../coaching'
 import {
   GUIDE_PHONE,
   filmMocap,
@@ -250,6 +251,26 @@ check('the toss keyframe lands on the tossing hand\'s peak, from every placement
     note(`bearing ${bearing}: toss keyframe minus the hand's peak, ms: ${fmt(off)}`)
     for (const r of runs) assert(r.run.skel.derivation.tossFromHand, `${r.serve.id}: fell back to the posture toss`)
     for (const v of off) within(v, -40, 40, `toss against the hand's peak from bearing ${bearing} (ms)`)
+  }
+})
+
+check('a real racket drop gets the hand under the elbow, from every placement and rate', () => {
+  // Found while checking D7.3: read off the picture, two of the forty Bath
+  // serves reported 0% from the guide's own placement at 30 fps, a full drop
+  // told "Your hand never gets under your elbow". A lens at waist height tips
+  // the order of a hand and elbow a few centimetres apart in height. The order
+  // is now read from the world landmarks, which carry no perspective (D7.7).
+  const floor = METRICS.handUnderElbow.ideal[0]
+  for (const bearing of [90, 270, 180, 135, 225]) {
+    for (const fps of [30, 60]) {
+      const shares = readAll({ bearing, fps }).map(({ serve, run }) => {
+        const m = run.fundamentals.flatMap((f) => f.metrics).find((x) => x.id === 'handUnderElbow')
+        assert(Boolean(m), `${serve.id} from bearing ${bearing} at ${fps} fps: no hand-under-elbow reading`)
+        assert(m!.value >= floor, `${serve.id} from bearing ${bearing} at ${fps} fps: ${m!.value.toFixed(1)}%, under the ${floor}% floor`)
+        return m!.value
+      })
+      if (fps === 30) note(`bearing ${bearing}: ${fmt(shares)}%`)
+    }
   }
 })
 
