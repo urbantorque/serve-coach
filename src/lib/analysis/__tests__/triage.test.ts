@@ -236,6 +236,22 @@ check('a phone tilted past levelling is told so, from a lean to upside down', ()
   )
 })
 
+check('a body the tracker barely saw is not called upside down', () => {
+  // The Commons table-tennis clip: its "shoulders" sit below its "hips" in
+  // every frame, steadily, at visibility under a half in three frames of four.
+  // A picture the pose model cannot read is not a phone on its side, so it gets
+  // no verdict from the roll and goes on to be refused as no serve.
+  const garbled = rollFrames(buildServe({}, FPS), 165).map((f, i) =>
+    i % 4 === 0
+      ? f
+      : { ...f, image: f.image.map((p, k) => (k >= 11 && k <= 28 ? { ...p, visibility: 0.3 } : p)) },
+  )
+  const r = runEngine(garbled, FPS)
+  const said = r.ok ? `measured (${r.run.verdict.status})` : r.refusal
+  note(`a body seen in a quarter of the frames: ${said}`)
+  assert(!/upside down|on its side|tilted/.test(said), `a garbled track was blamed on the phone: "${said}"`)
+})
+
 check('the camera angle is recovered from the shoulder line', () => {
   const sideOn = pipeline({ cameraYaw: 88 })
   const angled = pipeline({ cameraYaw: 45 })

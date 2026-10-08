@@ -974,6 +974,13 @@ check('a multi-paragraph answer is cut to two sentences', () => {
   assert(got === 'Your toss drifts. Fix it with a fence drill.', `got "${got}"`)
 })
 
+check('a decimal point is not the end of a sentence', () => {
+  // The cut used to split on every stop, so a line quoting a reading — "this
+  // one 1.9%" — was printed as "this one 1." and lost its number.
+  const got = command('Your best serve read 0.3% here, this one 1.9%. Closer than last time.')
+  assert(got === 'Your best serve read 0.3% here, this one 1.9%. Closer than last time.', `got "${got}"`)
+})
+
 check('an over-long sentence is cut at a word boundary and closed off', () => {
   const long = `Keep ${Array.from({ length: 40 }, () => 'word').join(' ')}`
   const got = command(long)

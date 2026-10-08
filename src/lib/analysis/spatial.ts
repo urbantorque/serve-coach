@@ -459,17 +459,33 @@ function rotateFrames(frames: Frame[], theta: number, pivot: { cx: number; cy: n
  * true that the clip was refused and false as to why. Under 30° the clip goes
  * on to be levelled (`assessSpatial`, `levelFrames`).
  *
- * The roll is the circular mean of the ankles-to-shoulders direction over every
- * frame, hips standing in for ankles out of shot, so a clip upside down averages
- * to 180° rather than to the 0° a median of ±179° would give.
+ * The roll is the circular mean of the ankles-to-shoulders direction, hips
+ * standing in for ankles out of shot, so a clip upside down averages to 180°
+ * rather than to the 0° a median of ±179° would give.
+ *
+ * ONLY OVER FRAMES WHERE THAT BODY WAS SEEN, AND ONLY WHEN MOST OF THEM WERE.
+ * The Commons table-tennis clip (`/clipbench.html`) tracks something with its
+ * "shoulders" below its "hips" in every frame, steady to an R of 0.997, at
+ * visibility under a half in three frames of four. It was refused as upside
+ * down, which is the wrong reason for a clip with no serve in it — the same
+ * failure this function exists to remove, in the other direction. A phone on
+ * its side does not hide the body from the pose model; a picture it cannot
+ * read does. So under half the clip seen, there is no verdict here, and the
+ * search for a serve gives its own.
  */
 export function turnedPicture(frames: Frame[]): NotAServeError | undefined {
   let sx = 0
   let sy = 0
+  let seen = 0
+  const vis = (f: Frame, a: number, b: number) =>
+    Math.min(f.image[a]?.visibility ?? 0, f.image[b]?.visibility ?? 0)
   for (const f of frames) {
+    const feetSeen = vis(f, LM.leftAnkle, LM.rightAnkle) > 0.5
+    if (vis(f, LM.leftShoulder, LM.rightShoulder) <= 0.5) continue
+    if (!feetSeen && vis(f, LM.leftHip, LM.rightHip) <= 0.5) continue
+    seen++
     const shoulder = midXY(f, LM.leftShoulder, LM.rightShoulder)
-    const feetSeen = Math.min(f.image[LM.leftAnkle]?.visibility ?? 0, f.image[LM.rightAnkle]?.visibility ?? 0)
-    const base = feetSeen > 0.5 ? midXY(f, LM.leftAnkle, LM.rightAnkle) : midXY(f, LM.leftHip, LM.rightHip)
+    const base = feetSeen ? midXY(f, LM.leftAnkle, LM.rightAnkle) : midXY(f, LM.leftHip, LM.rightHip)
     const dx = shoulder.x - base.x
     const dy = shoulder.y - base.y
     const length = Math.hypot(dx, dy)
@@ -478,7 +494,7 @@ export function turnedPicture(frames: Frame[]): NotAServeError | undefined {
     sx += dx / length
     sy += -dy / length
   }
-  if (Math.hypot(sx, sy) < 1e-6) return undefined
+  if (seen < Math.max(8, frames.length / 2) || Math.hypot(sx, sy) < 1e-6) return undefined
   const roll = Math.abs((Math.atan2(sx, sy) * 180) / Math.PI)
   if (roll < MAX_PICTURE_ROLL) return undefined
   const place = 'Rest it on something steady at about waist height, ten steps to your side.'

@@ -972,3 +972,12 @@ moment (`detectServe`'s `contactBy`).
 **Disagreement hedges.** Past a real serve's lag (60 ms) or a sample the other
 way, every reading taken at contact loses confidence, down to half, and a soft
 one says the hand and the ball disagreed. The report keeps which cue decided.
+
+**Then the bench caught it the other way (2026-10-09).** The Commons
+table-tennis clip, refused as "not a serve" in every earlier run, came back
+"The video is upside down". Its tracked "shoulders" sit below its "hips" in
+every frame, steady to an R of 0.997, at visibility under a half in three frames
+of four. The roll is now read only from frames where the shoulders and the feet
+or hips were seen, and gives no verdict when fewer than half the clip qualifies,
+so that clip is "not a serve" again. Real serves keep R at 0.98 or above from
+every placement, so a seen body that reads turned is a turned picture.

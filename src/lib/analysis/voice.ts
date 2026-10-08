@@ -128,12 +128,12 @@ export function command(text: string | undefined): string {
 
 /** Keep the first `MAX_SENTENCES`, punctuation included. */
 function clampSentences(s: string): string {
-  const parts = s.match(/[^.!?]+[.!?]*/g)
-  if (!parts || parts.length <= MAX_SENTENCES) return s
-  return parts
-    .slice(0, MAX_SENTENCES)
-    .join('')
-    .trim()
+  // A sentence ends at a stop followed by a space or the end, the same rule
+  // `sentenceCount` counts by. Splitting on every stop cut "this one 1.4%" at
+  // the decimal point and printed "this one 1."
+  const parts = s.split(/(?<=[.!?])\s+/)
+  if (parts.length <= MAX_SENTENCES) return s
+  return parts.slice(0, MAX_SENTENCES).join(' ').trim()
 }
 
 /** Hard word ceiling, cut at a word boundary and closed off cleanly. */
