@@ -535,7 +535,17 @@ function clockOf(frames: Frame[], fps: number) {
  * found by searching backwards from it inside windows sized in real seconds,
  * so the detector behaves the same at 30 fps and at 120 fps.
  */
-export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): Skeleton {
+export function detectServe(
+  frames: Frame[],
+  fps: number,
+  forceRacket?: Side,
+  /**
+   * `contactBy`: contact is no later than this, seconds on the frames' clock.
+   * Set by `detectWithContact` when the ball left its arc well before the
+   * racket hand's highest point, which puts that point after the hit.
+   */
+  bounds: { contactBy?: number } = {},
+): Skeleton {
   if (frames.length < 8) {
     throw new NotAServeError('That clip is too short to read.', [
       'Record from a couple of steps before the toss through to the landing.',
@@ -576,7 +586,11 @@ export function detectServe(frames: Frame[], fps: number, forceRacket?: Side): S
   const racketPostureSharp = posture(frames, R.wrist, R.shoulder, 1).map((v) => -v)
   const tossPostureSharp = posture(frames, T.wrist, T.shoulder, 1)
 
-  const contact = sharpen(racketHeightSharp, argMaxIn(racketHeight, 0, frames.length - 1))
+  let lastContact = frames.length - 1
+  if (bounds.contactBy !== undefined) {
+    while (lastContact > 0 && frames[lastContact].t > bounds.contactBy) lastContact--
+  }
+  const contact = Math.min(lastContact, sharpen(racketHeightSharp, argMaxIn(racketHeight, 0, lastContact)))
 
   const beforeContact = Math.max(0, contact - 1)
 

@@ -239,7 +239,19 @@ this first.
       and lift the 0.3 hedge. Keep the motion-based detector (E9) as the
       fallback when metadata is absent. *Proof:* the same rig serve, stretched
       2×/4×/8×, returns the same timings.
-- [ ] **D1.4 Fuse the contact instant** · M. Take contact from the wrist peak,
+- [x] **D1.4 Fuse the contact instant** · M. *Done (2026-10-09), with two
+      of the three cues: `readContact` takes the ball's moment as half a sample
+      after the last time it was on its arc, within a racket's reach of the
+      hand. The hand decides unless its peak came 100 ms or more after the ball
+      had left its arc. A hand can be tracked late but a ball cannot be hit
+      before the racket arrives, so the earliest cue wins there and every
+      keyframe is found again from the ball's moment. A gap wider than a real
+      serve's lag (60 ms, from the Bath capture) hedges every reading taken at
+      contact, and says why. The racket box does not vote: it is drawn, never
+      tested on footage (F7). The report stores which cue decided
+      (`Analysis.contact`). `contact.test.ts` dials a gravity-true ball, a
+      0–40 ms lag, a hand tracked after the hit and a hand lost before the top.
+      Original plan:* Take contact from the wrist peak,
       the ball-arc break and the racket box crossing the ball. Record which one
       decided; disagreement lowers confidence instead of picking a winner.
       *Proof:* rig with ball, wrist lag and dropped wrist frames dialled.

@@ -49,6 +49,7 @@ const BALL_MEASUREMENTS = new Set(['tossPeakHeight', 'contactBelowPeak'])
 type Dependency =
   | 'scale'
   | 'trophy'
+  | 'contact'
   | 'swingTiming'
   | 'depth'
   | 'handedness'
@@ -101,7 +102,7 @@ const DEPENDENCIES: Record<string, Dependency[]> = {
   // Swing
   dropDepth: ['scale'],
   elbowAtDrop: [],
-  dropToContact: ['swingTiming', 'realTime'],
+  dropToContact: ['swingTiming', 'realTime', 'contact'],
   // Empty, and worth spelling out rather than leaving as an absence, because
   // the emptiness is the point of the measurement.
   //
@@ -124,15 +125,17 @@ const DEPENDENCIES: Record<string, Dependency[]> = {
   // `blur`, which applies because `LANDMARKS` names the racket elbow and wrist.
   handUnderElbow: [],
   // Contact
-  contactHeight: ['scale'],
-  contactBelowPeak: ['scale'],
-  armExtension: [],
-  bodyExtension: ['scale', 'trophy'],
-  contactAhead: ['scale', 'depth'],
+  // `contact`: read at the contact instant, so when the racket hand and the
+  // ball disagree about when that was (`readContact`), so do these.
+  contactHeight: ['scale', 'contact'],
+  contactBelowPeak: ['scale', 'contact'],
+  armExtension: ['contact'],
+  bodyExtension: ['scale', 'trophy', 'contact'],
+  contactAhead: ['scale', 'depth', 'contact'],
   // Rhythm
   // In the file's own seconds, which slow motion stretches. `loadRatio` below
   // is a share of the motion and survives a stretch, so it carries no such cost.
-  totalTime: ['realTime'],
+  totalTime: ['realTime', 'contact'],
   loadRatio: ['trophy'],
   syncAtRelease: ['scale'],
 }
@@ -279,6 +282,11 @@ export interface ConfidenceContext {
    * trophy untouched.
    */
   blur?: number
+  /**
+   * How far the racket hand and the ball agree about when contact was, 0.5–1
+   * (`ContactRead.agreement`). Absent, or one, when only the hand was seen.
+   */
+  contactAgreement?: number
 }
 
 /**
@@ -414,6 +422,11 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
       // hedged, never scored as the player's rhythm — see `looksSlowedDown`.
       c *= SLOWED_TIMING
     }
+    if (dep === 'contact') {
+      // Not a cost of either cue — each may be fine on its own — but of their
+      // disagreeing: one of them is wrong about the moment these are read at.
+      c *= clamp(ctx.contactAgreement ?? 1, 0.5, 1)
+    }
     if (dep === 'swingTiming') {
       // Four samples across a ~150 ms window leaves ±30 ms of quantisation on a
       // measurement whose whole target band is 120 ms wide.
@@ -539,6 +552,15 @@ export function softnessReason(id: string, ctx: ConfidenceContext): string | und
     causes.push({
       cost: clamp(ctx.swingSamples / 5, 0.3, 1),
       say: cue('Your camera caught few frames through the swing. Film in slow motion to sharpen this.'),
+    })
+  }
+  // Named only once the disagreement is large enough to have cost something
+  // real — a fifth of the reading — so a slight one cannot claim a soft
+  // reading that something else broke.
+  if (deps.includes('contact') && (ctx.contactAgreement ?? 1) < 0.8) {
+    causes.push({
+      cost: clamp(ctx.contactAgreement ?? 1, 0.5, 1),
+      say: cue('Your racket hand and the ball disagree about when you hit it. Read this one loosely.'),
     })
   }
   if (deps.includes('trophy') && ctx.skel.derivation.trophyFromArms) {

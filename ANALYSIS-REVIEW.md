@@ -949,3 +949,26 @@ upright, on the forty Bath serves from seven placements and on the rig. Past
 The sweep found a second gap. `estimateRoll` levels up to 25° and stops, so a
 clip rolled 40° was levelled by 25, measured with 15° still in it, and passed.
 It is now refused for the tilt; under 30° at most five degrees stay unlevelled.
+
+### Contact from the hand and the ball (2026-10-09, still scoring version 5)
+
+F7 asked for contact from the earliest of three cues, with disagreement
+lowering confidence rather than a winner picked silently. Two cues are used.
+The racket box is drawn, never tested on footage, and does not vote.
+
+**The ball's moment** is half a sample after the last time the tracked ball was
+on its arc. It counts only when the ball was then within a racket's reach above
+the hand (0–0.45 body heights; the racket head sits 0.26 above the wrist on the
+Bath serves). A ball lost higher up was lost, not hit.
+
+**The hand still decides on a well-read clip.** Its peak comes 5–45 ms before
+the racket head's highest point on real serves, and every band is defined on
+it, so the ball sits a little after the hand by design. The ball takes over
+only when the hand's peak came at least 100 ms (or two samples) after the ball
+had left its arc. A tracker can put the hand late; the ball cannot meet a
+racket that has not arrived. The keyframes are then found again from the ball's
+moment (`detectServe`'s `contactBy`).
+
+**Disagreement hedges.** Past a real serve's lag (60 ms) or a sample the other
+way, every reading taken at contact loses confidence, down to half, and a soft
+one says the hand and the ball disagreed. The report keeps which cue decided.

@@ -76,6 +76,7 @@ import { swingTrack } from '../storage/poseTrack'
 import { causalFocus } from './verdict'
 import { cue } from './voice'
 import { buildPhases, detectServe, looksSlowedDown, type Skeleton } from './phases'
+import { detectWithContact, type ContactRead } from './contact'
 import { fileTimes, probeWorthRunning, retimeFlight, retimeFrames, stretchNote, type Stretch } from './slowMotion'
 import type { BallStretch } from './slowMotionProbe'
 import {
@@ -1118,8 +1119,9 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
   const servedBall = retimeFlight(analysis.ball, factor)
 
   let skel: Skeleton
+  let contact: ContactRead
   try {
-    skel = detectServe(frames, analysis.quality.sampledFps, analysis.handedness)
+    ;({ skel, contact } = detectWithContact(frames, analysis.quality.sampledFps, analysis.handedness, servedBall))
   } catch {
     return undefined
   }
@@ -1143,6 +1145,7 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
       swingSamples: analysis.quality.swingSamples,
       view: analysis.quality.view,
       ballConfidence: servedBall?.confidence,
+      contactAgreement: contact.agreement,
       depthUnreliable,
       blur: resilience.blur,
     },
@@ -1182,6 +1185,7 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     focus: causalFocus(verdict) ?? pickFocus(fundamentals),
     tossFlight,
     serveType,
+    contact,
     // Restamped, not inherited through the spread: every score above has just
     // been recomputed by this build, whatever rubric the report arrived under.
     scoringVersion: SCORING_VERSION,
@@ -1212,17 +1216,18 @@ export function rediagnose(analysis: Analysis, tier: number | undefined): Analys
   // The serve's clock, exactly as `rescore` reads it.
   const factor = analysis.stretch?.factor ?? 1
   const frames = retimeFrames(analysis.frames, factor)
+  const servedBall = retimeFlight(analysis.ball, factor)
 
   let skel: Skeleton
   try {
-    skel = detectServe(frames, analysis.quality.sampledFps, analysis.handedness)
+    ;({ skel } = detectWithContact(frames, analysis.quality.sampledFps, analysis.handedness, servedBall))
   } catch {
     return undefined
   }
 
   const diagnosis = diagnose(frames, skel, {
     tier,
-    ball: retimeFlight(analysis.ball, factor),
+    ball: servedBall,
     serveType: analysis.serveType,
   })
   const verdict = triage(diagnosis, assessResilience(frames, skel))
@@ -1644,6 +1649,42 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     applied = { roll_deg: tilt.roll_deg, ...pivot }
   }
 
+  // Skipped when sweeping a basket: it is a second pass over the video per
+  // serve, and the comparison only uses measurements every serve shares.
+  // Tracked against the *raw* frames — the ball is found in unrotated pixels,
+  // so the shoulder exclusion line has to be drawn in the same space.
+  let ball: BallFlight | undefined
+  if (!opts.skipBall) {
+    onProgress({ step: 'measuring', ratio: 0.4, detail: 'Looking for the ball' })
+    ball = await findBall(video, extracted.frames, skel, signal, stretch.factor)
+  }
+
+  // What the pixels saw, kept for drawing over them; `ball` itself moves into
+  // the levelled space every measurement lives in.
+  const rawBall = ball
+  if (ball && applied) {
+    ball = levelFlight(ball, applied.roll_deg, { cx: applied.cx, cy: applied.cy }, aspect)
+  }
+
+  // The ball on the serve's clock, as the engine's frames are; `ball` itself
+  // stays on the file's, for drawing over the video.
+  const servedBall = retimeFlight(ball, stretch.factor)
+
+  // Contact from the racket hand and the ball together (`readContact`). Here,
+  // above everything that reads the keyframes, because when the ball overrules
+  // a hand peak that came after the hit, every keyframe is found again from the
+  // ball's moment, and the camera, the quality and every measurement below
+  // have to read that skeleton rather than the one it replaced.
+  const fused = detectWithContact(
+    engine(),
+    fps * stretch.factor,
+    opts.handedness ?? (skel.racket !== skel.detectedRacket ? skel.racket : undefined),
+    servedBall,
+    skel,
+  )
+  skel = fused.skel
+  const contact = fused.contact
+
   // Read before anything is measured, not after. `assessResilience` used to sit
   // down beside the triage call it feeds, which put the one module that actually
   // measures the camera angle *after* the measurements that depend on it — so
@@ -1680,23 +1721,6 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     )
   }
 
-  // Skipped when sweeping a basket: it is a second pass over the video per
-  // serve, and the comparison only uses measurements every serve shares.
-  // Tracked against the *raw* frames — the ball is found in unrotated pixels,
-  // so the shoulder exclusion line has to be drawn in the same space.
-  let ball: BallFlight | undefined
-  if (!opts.skipBall) {
-    onProgress({ step: 'measuring', ratio: 0.4, detail: 'Looking for the ball' })
-    ball = await findBall(video, extracted.frames, skel, signal, stretch.factor)
-  }
-
-  // What the pixels saw, kept for drawing over them; `ball` itself moves into
-  // the levelled space every measurement lives in.
-  const rawBall = ball
-  if (ball && applied) {
-    ball = levelFlight(ball, applied.roll_deg, { cx: applied.cx, cy: applied.cy }, aspect)
-  }
-
   // Same shape as the ball above: found in raw pixels, so it is skipped when
   // sweeping a basket and rotated into the levelled space afterwards — the
   // live overlay draws `sequence.frames`, which is levelled, and a racket
@@ -1731,9 +1755,6 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   onProgress({ step: 'measuring', ratio: 0.55, detail: 'Measuring the fundamentals' })
   const serveType = opts.serveType ?? 'flat'
-  // The ball on the serve's clock, as the engine's frames are; `ball` itself
-  // stays on the file's, for drawing over the video.
-  const servedBall = retimeFlight(ball, stretch.factor)
   const fundamentals = measure(engine(), skel, quality.view === 'side', {
     ball: servedBall,
     serveType,
@@ -1743,6 +1764,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       swingSamples: quality.swingSamples,
       view: quality.view,
       ballConfidence: servedBall?.confidence,
+      contactAgreement: contact.agreement,
       depthUnreliable: resilience.spatial.depth_unreliable,
       blur: resilience.blur,
     },
@@ -1855,6 +1877,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     tilt: applied,
     ball,
     racketBoxes,
+    contact,
     tossFlight,
     serveType,
     // Stamped here, where the scores are produced, rather than on the way into

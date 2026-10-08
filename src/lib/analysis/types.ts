@@ -8,6 +8,7 @@ import type { Stretch } from './slowMotion'
 import type { DrillCheck } from './progressions'
 import type { RacketEstimate } from './racket'
 import type { Triage as TriageResult } from './triage'
+import type { ContactRead } from './contact'
 import type { KeyframePoses, SwingTrack } from '../storage/poseTrack'
 
 /** A single pose landmark. */
@@ -70,7 +71,9 @@ export interface Frame {
 // a saved report would name (early shoulder rotation now needs an open chest);
 // hand-under-elbow reads its order from the world landmarks, which moves the
 // share on any real clip filmed with perspective; and the serve type reaches
-// the diagnosis, so a kick's toss is judged against a kick's floor.
+// the diagnosis, so a kick's toss is judged against a kick's floor; and contact
+// is read from the hand and the ball together, which moves it on a clip whose
+// hand peaked after the hit and hedges contact readings when the two disagree.
 export const SCORING_VERSION = 5
 
 /**
@@ -273,6 +276,11 @@ export interface Analysis {
    * reason: `frame` indexes are into `frames` below, which is levelled.
    */
   racketBoxes?: { frame: number; estimate: RacketEstimate }[]
+  /**
+   * When contact was, which cue said so, and how far the racket hand and the
+   * ball agreed (`readContact`). Absent on reports from before it existed.
+   */
+  contact?: ContactRead
   /**
    * The toss, boiled down to three points — release, apex, and where the ball
    * had fallen to by contact — and the two ratios that come from them, in the
