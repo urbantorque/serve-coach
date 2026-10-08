@@ -322,7 +322,14 @@ already has dials for D3.2–D3.4; until now nothing read them.
       direction when there is no ball, hedged. The most useful single reading
       for a club player, and the base for kick vs flat. *Proof:* rig toss
       offsets on both axes, both camera yaws, with and without the ball.
-- [ ] **D3.2 Stance: platform or pinpoint** · S. Ankle separation across
+- [x] **D3.2 Stance: platform or pinpoint** · S. *Done (2026-10-09):
+      `readStance` reads how much of the ready gap between the feet closes by
+      the trophy, on the diagnosis as context and on the report as a chip. It
+      reads the `pinpointSlide` dial to two hundredths from the guide's
+      placement, holds all 24 noise seeds, calls every Bath serve a platform
+      from the side and from behind, and refuses a corner camera, where the
+      feet's projection moves with the hips. 0.25–0.4 is no call. Original
+      plan:* Ankle separation across
       ready → trophy (dial `pinpointSlide`, R60's blocked round). Information,
       not a fault: both stances are correct. *Proof:* pinpoint sweep, noise
       ensemble.

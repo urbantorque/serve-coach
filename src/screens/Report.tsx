@@ -957,6 +957,13 @@ export default function Report({
           <span className={`chip${analysis.quality.confidence < SOFT_READ ? ' chip--warn' : ''}`}>
             {readQuality(analysis.quality.confidence)}
           </span>
+          {/* Which of two correct stances, not a verdict on either (D3.2).
+              Absent when the camera stood where the feet could not be read. */}
+          {analysis.diagnosis?.stance && (
+            <span className="chip">
+              {analysis.diagnosis.stance.kind === 'pinpoint' ? 'Pinpoint stance' : 'Platform stance'}
+            </span>
+          )}
         </div>
 
         <div className="judged">

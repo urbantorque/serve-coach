@@ -17,7 +17,8 @@
 import { LM, clamp, jointAngle, mean, sided, trunkCoilReading } from './geometry'
 import { imageXSplitFrom, readImageX } from './axes'
 import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED } from './confidence'
-import { assessSpatial } from './spatial'
+import { assessSpatial, viewFromCourtYaw } from './spatial'
+import { readStance, type Stance } from './stance'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -163,6 +164,12 @@ export interface Diagnosis {
    * `LandingBalance.offset`, whose zero is 0.0035 for a different reason.
    */
   legDrive: LegDrive
+  /**
+   * Platform or pinpoint (`readStance`, D3.2): context like the serve type,
+   * never graded. Absent from a corner, where the feet's projection moves with
+   * the hips, and on reports from before it existed.
+   */
+  stance?: Stance
   flaws: FlawFinding[]
   /** What the pass cost, so a slow device can be seen rather than guessed at. */
   cost: { frames: number; series: number; ms: number }
@@ -1036,6 +1043,7 @@ export function diagnose(
     externalRotation,
     legDrive,
     landing,
+    stance: readStance(frames, skel, viewFromCourtYaw(spatial.court_yaw_deg)),
     flaws,
     cost: {
       frames: frames.length,
