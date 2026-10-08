@@ -24,6 +24,7 @@ import { FIXTURE_PLAN } from '../lib/fixturePlan'
 import { useShareState } from '../components/useShareState'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
+import { unseenLines } from '../lib/analysis/angleReach'
 import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { InjuryFlag } from '../lib/analysis/triage'
@@ -982,6 +983,15 @@ export default function Report({
             </span>
           )}
         </div>
+
+        {/* What this angle could not see, and where to stand to see it (D3.9).
+            Read off the findings this clip has rather than the angle's name, so
+            a corner that caught one axis of the toss hears only of the other. */}
+        {unseenLines(analysis.diagnosis).map((line) => (
+          <p key={line} className="reading-unseen">
+            {line}
+          </p>
+        ))}
 
         <div className="judged">
           <span className="t-overline judged-lead">Judged as</span>

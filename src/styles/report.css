@@ -1402,6 +1402,17 @@
   gap: 7px;
 }
 
+/* What the camera angle could not see (D3.9): a quiet note under the chips,
+   in the same ink as the serve-type note below it. */
+.reading-unseen {
+  margin-top: 11px;
+  max-width: var(--measure);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
 /* --- which serve ---------------------------------------------------------- */
 
 .judged {

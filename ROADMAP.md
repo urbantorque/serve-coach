@@ -461,7 +461,19 @@ already has dials for D3.2–D3.4; until now nothing read them.
       peak times (`legs_peak_ms`, `wrist_peak_ms`, `chain_span_ms`, all
       `UNCALIBRATED` today) drawn as a timeline. Graded on order only, per
       Fleisig 2003, and only at ≥ 60 fps. *Proof:* dialled order swaps.
-- [ ] **D3.9 The back view as a full mode** · M. Sideways toss drift, shoulder
+- [x] **D3.9 The back view as a full mode** · M. *Done (2026-10-09). With
+      D3.6 every named fault is read from the side, from behind and from a
+      corner, except the toss drift's two axes. The side sees it front-to-back
+      only, the back fence sideways only, a 30° corner sideways, a 45° corner
+      neither. `angleReach.ts` lists those, with where to film from. The report
+      says, under "How I read this clip", what this clip could not see and
+      where to stand: "From this angle I could not see whether your toss drifts
+      sideways. Film from behind the baseline to check it." It is read off the
+      findings the clip has, not the angle's name. From behind, at 0°, 8° and
+      15° under noise, sideways drift, sideways trunk lean and shoulder tilt
+      each separate their dialled fault from none. The six real serves from
+      the back fence are read sideways, and none names toss drift or posture
+      collapse. Original plan:* Sideways toss drift, shoulder
       tilt and sideways trunk lean read where a back camera sees them best. Each
       report says which faults its angle could not see ("film from the back
       fence to check your shoulder turn"). *Proof:* `cameraYaw` 0–15° rig
