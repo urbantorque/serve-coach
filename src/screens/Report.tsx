@@ -14,6 +14,9 @@ import { CHECK_SERVES, drillCheckLine, progressionFor } from '../lib/analysis/pr
 import TrackPlayer from '../components/TrackPlayer'
 import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
 import { pairTracks } from '../lib/trackPair'
+import { focusAgainstBest } from '../lib/bestServe'
+import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
+import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
 import { FIXTURE_PLAN } from '../lib/fixturePlan'
 import { useShareState } from '../components/useShareState'
 import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
@@ -65,6 +68,20 @@ interface Props {
   videoUrl?: string
   /** The report filed before this one, if any — what the deltas compare against. */
   previous?: Session
+  /**
+   * The player's best earlier serve of this type, under this rubric — see
+   * `bestPriorTo`. The ghost's first choice, and what the focus is set against.
+   */
+  best?: Session
+  /**
+   * What the player said about this serve, and the taps that change it (D5.1)
+   * — the same store and the same rule as the glance: a tap on one fact never
+   * clears the other, and tapping the chosen one again takes it back.
+   */
+  serveNumber?: 1 | 2
+  outcome?: ServeOutcome
+  onTagServe?: (n: 1 | 2 | undefined) => void
+  onTagOutcome?: (o: ServeOutcome | undefined) => void
   onBack: () => void
   onAnalyzeAnother: () => void
   onFlipHandedness?: () => void
@@ -192,6 +209,11 @@ export default function Report({
   analysis,
   videoUrl,
   previous,
+  best,
+  serveNumber,
+  outcome,
+  onTagServe,
+  onTagOutcome,
   onBack,
   onAnalyzeAnother,
   onFlipHandedness,
@@ -306,11 +328,21 @@ export default function Report({
    * Nothing on this screen explains them: an extra picture that does not appear
    * is not a failure a player needs an account of.
    */
+  //
+  // The best earlier serve first (D4.5): what good looks like for this player
+  // is a more useful thing to draw under them than whatever they did last. The
+  // last serve when the best cannot be paired — usually a camera that moved.
   const ghost = useMemo(() => {
-    if (!previous) return undefined
-    const paired = pairTracks(analysis, previous)
-    return paired.ok ? paired.pair : undefined
-  }, [analysis, previous])
+    for (const [who, other] of [
+      ['best', best],
+      ['last', previous],
+    ] as const) {
+      if (!other) continue
+      const paired = pairTracks(analysis, other)
+      if (paired.ok) return { pair: paired.pair, who }
+    }
+    return undefined
+  }, [analysis, best, previous])
   // "Nothing happened" when the player backs out of the share sheet is
   // handled inside `useShareState` itself (cancelled/failed both read as
   // idle, only shared/downloaded count as done) — the button says nothing
@@ -368,6 +400,12 @@ export default function Report({
   // The basket swept from this report, judged against this fault's bar.
   const check = analysis.drillCheck?.flaw === plan[0].flaw ? analysis.drillCheck : undefined
   const suppressed = suppressedNote(analysis.triage, plan.length)
+  const againstBest = focusAgainstBest(
+    plan[0].flaw,
+    analysis,
+    best,
+    previous && scoringVersionOf(previous) === rubric ? previous : undefined,
+  )
   const levelled = tierLabel(analysis.triage)
 
   /*
@@ -596,6 +634,13 @@ export default function Report({
         <p>
           <Cue text={plan[0].why} />
         </p>
+        {/* The same reading on the player's own best serve: the model they can
+            reach. Silent for a fault with no row on the cards. */}
+        {againstBest && (
+          <p className="focus-best">
+            <Cue text={againstBest} />
+          </p>
+        )}
 
         {/* A count, never a list. Whatever the plan did not print is held back
             on purpose — but saying nothing at all means a fault appearing on the
@@ -930,6 +975,51 @@ export default function Report({
         </div>
       </section>
 
+      {/* What the player says about this serve, on every report and not only
+          after a recorded one (D5.1): which serve it was and where it went. The
+          app never sees the court, so these are taps and nothing else, stored
+          exactly as given. Built from the "Judged as" row above, so it adds
+          no styles. */}
+      {(onTagServe || onTagOutcome) && (
+        <section className="reading" aria-label="What you said about this serve">
+          <h2 className="t-overline reading-title">Tag this serve</h2>
+          {onTagServe && (
+            <div className="judged">
+              <span className="t-overline judged-lead">Which serve</span>
+              <div className="judged-options">
+                {([1, 2] as const).map((n) => (
+                  <button
+                    key={n}
+                    className={`serve-chip${serveNumber === n ? ' is-on' : ''}`}
+                    aria-pressed={serveNumber === n}
+                    onClick={() => onTagServe(serveNumber === n ? undefined : n)}
+                  >
+                    {SERVE_NUMBER_LABEL[n]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {onTagOutcome && (
+            <div className="judged">
+              <span className="t-overline judged-lead">Where it landed</span>
+              <div className="judged-options">
+                {SERVE_OUTCOMES.map((o) => (
+                  <button
+                    key={o}
+                    className={`serve-chip${outcome === o ? ' is-on' : ''}`}
+                    aria-pressed={outcome === o}
+                    onClick={() => onTagOutcome(outcome === o ? undefined : o)}
+                  >
+                    {OUTCOME_LABEL[o]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {live && (
         <section className="block" ref={playerRef}>
           <h2 className="block-title">Your serve, frame by frame</h2>
@@ -949,7 +1039,7 @@ export default function Report({
             replay={replay}
             phases={analysis.phases}
             racket={analysis.handedness}
-            paired={ghost}
+            paired={ghost?.pair}
           />
           {/* Says what it is before a player decides it is a broken video.
               Two sentences, and the first one is the good news: the clip is
@@ -963,7 +1053,9 @@ export default function Report({
               player's fault or the player's problem. */}
           {ghost && (
             <p className="player-note">
-              The dashed body is your last serve, lined up at the moment you hit the ball.
+              {ghost.who === 'best'
+                ? 'The dashed body is your best serve so far, lined up at the moment you hit the ball.'
+                : 'The dashed body is your last serve, lined up at the moment you hit the ball.'}
             </p>
           )}
         </section>

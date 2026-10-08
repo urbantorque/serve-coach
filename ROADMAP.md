@@ -391,7 +391,13 @@ the coaching around it.
       `render.test.ts`. Original plan:* The current step of each of the 2–4
       ranked fixes, in `HIERARCHY` order, with what to film to check it. No
       notifications. *Proof:* render test; plan follows triage order.
-- [ ] **D4.5 Your best serve as the model** · S. The ghost overlay is the
+- [x] **D4.5 Your best serve as the model** · S. *Done (2026-10-09):
+      `bestPriorTo` picks the best earlier serve of the same type and rubric
+      (score, then the steadier basket, then the newer), never a refused clip.
+      The ghost draws it, falling back to the last serve when the best cannot
+      be paired, and says which it is. The focus card adds one line setting the
+      fault's card reading against the best serve's, and closer or further than
+      last time. It stays silent for faults with no card row. Original plan:* The ghost overlay is the
       player's best serve of the same type (score, then repeatability), not
       their last. Add "closer to your best" deltas on the focus measurements.
       *Proof:* seeded history picks the right serve; type never mixed.
@@ -402,7 +408,12 @@ the coaching around it.
 ### Wave D5 — Connect technique to results
 The outcome taps already exist and nothing reads them.
 
-- [ ] **D5.1 Tag any serve** · S. First/second and In/Long/Net/Wide on every
+- [x] **D5.1 Tag any serve** · S. *Done (2026-10-09): "Tag this serve" on
+      every report, reopened ones included, through the glance's own store and
+      rule (a tap never clears the other fact; tapping again takes it back).
+      A basket's serves are tagged from each serve's own report, which the
+      chips already open. Backup already carried tags (R56). The example report
+      takes no tags. Original plan:* First/second and In/Long/Net/Wide on every
       report and on each serve chip in a basket, not only in Glance.
       *Proof:* render tests; tags survive backup round-trip.
 - [ ] **D5.2 What your misses have in common** · M. Across tagged serves,

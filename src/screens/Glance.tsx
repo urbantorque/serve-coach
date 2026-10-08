@@ -3,6 +3,7 @@ import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/
 import type { FaultMove, RotationMove } from '../lib/analysis/carryForward'
 import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
+import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 
 /**
  * What the serve was, in one number and one line, without leaving the court.
@@ -79,20 +80,6 @@ interface Props {
    * raising the same flag. The screen must render identically without it.
    */
   strain?: string
-}
-
-/**
- * The four outcomes as the player would say them.
- *
- * Sentence case and one word each, because these are chips in a row and not
- * sentences. 'In' rather than 'Went in' for the same reason the serve-number
- * buttons say 'First serve' and not 'It was a first serve'.
- */
-const OUTCOME_LABEL: Record<ServeOutcome, string> = {
-  in: 'In',
-  long: 'Long',
-  net: 'Net',
-  wide: 'Wide',
 }
 
 export default function Glance({
@@ -282,7 +269,7 @@ export default function Glance({
               aria-pressed={serveNumber === n}
               onClick={() => onTagServe(serveNumber === n ? undefined : n)}
             >
-              {n === 1 ? 'First serve' : 'Second serve'}
+              {SERVE_NUMBER_LABEL[n]}
             </button>
           ))}
         </div>

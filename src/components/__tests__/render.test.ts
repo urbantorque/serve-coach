@@ -83,6 +83,32 @@ check('the report renders from a live analysis', () => {
   assert(out.includes('Every area we scored'), 'the fundamentals never reached the page')
 })
 
+check('any report can be tagged, and shows what was tagged (D5.1)', () => {
+  // Every report, reopened ones included — not only the glance after a
+  // recording. The chosen tags render pressed; a report with no handlers, such
+  // as the example, renders no controls at all.
+  const out = html(
+    createElement(Report, {
+      analysis: stored(sampleAnalysis()),
+      serveNumber: 2,
+      outcome: 'net',
+      onTagServe: noop,
+      onTagOutcome: noop,
+      onBack: noop,
+      onAnalyzeAnother: noop,
+    }),
+  )
+  assert(out.includes('Tag this serve'), 'a reopened report offered no way to tag it')
+  for (const label of ['First serve', 'Second serve', 'In', 'Long', 'Net', 'Wide']) {
+    assert(out.includes(`>${label}</button>`), `no "${label}" control`)
+  }
+  assert(/aria-pressed="true"[^>]*>Second serve</.test(out), 'the second-serve tag was not shown as chosen')
+  assert(/aria-pressed="true"[^>]*>Net</.test(out), 'the net tag was not shown as chosen')
+  assert(!/aria-pressed="true"[^>]*>In</.test(out), 'an outcome nobody chose was shown as chosen')
+  const bare = html(createElement(Report, { analysis: stored(sampleAnalysis()), onBack: noop, onAnalyzeAnother: noop }))
+  assert(!bare.includes('Tag this serve'), 'tag controls rendered with nothing to save them')
+})
+
 check('the report renders from a reopened one, with no frames behind it', () => {
   const out = html(
     createElement(Report, {

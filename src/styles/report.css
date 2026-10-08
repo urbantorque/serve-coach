@@ -1103,7 +1103,8 @@
  * so that a second fault surfacing on the next clip does not read as the app
  * changing its mind — not to compete with the one thing to work on.
  */
-.focus-suppressed {
+.focus-suppressed,
+.focus-best {
   position: relative;
   margin-top: 10px;
   max-width: var(--measure);
@@ -1401,6 +1402,14 @@
   margin-top: 4px;
   padding-top: 15px;
   border-top: 1px solid var(--hairline-soft);
+}
+
+/* The rule divides one row from the row above it. Straight under the section's
+   own heading, as the first tag row sits, it would only underline the title. */
+.reading-title + .judged {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .judged-lead {

@@ -194,6 +194,8 @@ heading('Every place a history is read, which is what R55 has to get right')
  */
 const HISTORY_CONSUMERS = [
   'bestOverallScore',
+  // The best earlier serve the ghost and the focus are set against (D4.5).
+  'bestPriorTo',
   'buildConsistencyTrend',
   'buildProgress',
   'clearedStrainOf',

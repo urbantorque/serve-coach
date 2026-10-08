@@ -24,7 +24,9 @@ import {
   strainBehindOf,
   streakLine,
   typeOf,
+  scoringVersionOf,
 } from './lib/progress'
+import { bestPriorTo } from './lib/bestServe'
 import {
   analyzeAllServes,
   analyzeServe,
@@ -1334,6 +1336,16 @@ export default function App() {
               analysis={view.analysis}
               videoUrl={view.videoUrl}
               previous={priorTo(view.analysis.createdAt, typeOf(view.analysis))}
+              best={bestPriorTo(
+                sessions,
+                view.analysis.createdAt,
+                typeOf(view.analysis),
+                scoringVersionOf(view.analysis),
+              )}
+              serveNumber={tagsById(serveTags).get(view.analysis.id)?.serveNumber}
+              outcome={tagsById(serveTags).get(view.analysis.id)?.outcome}
+              onTagServe={(n) => void applyServeTag(view.analysis.id, { serveNumber: n })}
+              onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
               fixtureExport={FIXTURE_EXPORT}
               onBack={goHome}
               onAnalyzeAnother={goHome}
@@ -1441,6 +1453,11 @@ export default function App() {
               key={view.session.id}
               analysis={view.session}
               previous={priorTo(view.session.createdAt, typeOf(view.session))}
+              best={bestPriorTo(sessions, view.session.createdAt, typeOf(view.session), scoringVersionOf(view.session))}
+              serveNumber={tagsById(serveTags).get(view.session.id)?.serveNumber}
+              outcome={tagsById(serveTags).get(view.session.id)?.outcome}
+              onTagServe={(n) => void applyServeTag(view.session.id, { serveNumber: n })}
+              onTagOutcome={(o) => void applyServeTag(view.session.id, { outcome: o })}
               fixtureExport={FIXTURE_EXPORT}
               onBack={goHome}
               onAnalyzeAnother={goHome}
