@@ -645,7 +645,18 @@ The outcome taps already exist and nothing reads them.
       and the ladder step the player is on. Original plan:* Trends per named fault and per
       progression step, beside the per-measurement charts. *Proof:* seeded
       history.
-- [ ] **D6.7 RTMPose-m for the swing window** · M, optional. Adopt only if
+- [!] **D6.7 RTMPose-m for the swing window** · M, optional. *Measured and
+      not adopted (2026-10-09). The footprint check, run in the browser
+      (`footprint.html?model=s|m`), reads the WASM heap where
+      `lib/footprint.ts` cannot. RTMPose-s holds 73 MB after loading and 30
+      reads, at 54 ms a read. RTMPose-m holds 150 MB at 137 ms a read, on
+      desktop Chrome, one thread, the app's own settings. Memory passes: 150 MB
+      sits well inside the 500 MB rule beside the pose engine and the video.
+      Time does not. The refinement has 6 s for about 30 crops
+      (`REFINE_BUDGET_MS`), and RTMPose-m takes 4.1 s of it on a desktop. On a
+      phone several times slower, `refineSwing` would stop at its budget and
+      refine nothing, which is worse than RTMPose-s refining everything. Worth
+      revisiting with WebGPU, which this build does not ship.* Adopt only if
       `/bench.html` beats RTMPose-s on wrists and elbows and the memory
       footprint test still passes; try WebGPU for `onnxruntime-web` alongside.
       *Proof:* the benchmark table in `ANALYSIS-REVIEW.md` §7, re-run.
