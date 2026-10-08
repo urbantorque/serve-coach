@@ -23,7 +23,7 @@
  * carries the numbers.
  */
 import { LM } from './geometry'
-import type { Frame } from './types'
+import { NotAServeError, type Frame } from './types'
 
 /*
  * The two lines `framingIssues` draws, named and exported.
@@ -122,3 +122,77 @@ export function framingIssues(frames: Frame[]): string[] {
  * far baseline came in at zero.
  */
 export const HANDS_SEEN_FLOOR = 0.3
+
+/**
+ * Which framing problems are worth stopping for, and which are worth a caveat.
+ *
+ * A clip can fail in one of three ways, and the app has separate machinery for
+ * each. Deciding which one a problem belongs in is the whole job here:
+ *
+ *   1. REFUSE — there is nothing to measure at all. A thrown error, a terminal
+ *      screen, no numbers, because there are none. This tier is small on
+ *      purpose: it should hold only "no player", "no pixels", "no swing".
+ *   2. DISTRUST — measurable, but the numbers may be wrong enough to mislead.
+ *      `triage` marks the analysis `rejected`, the report leads with the reason
+ *      and offers to show the numbers anyway, and nothing is filed to history.
+ *      The player is never left with a dead end.
+ *   3. HEDGE — readable with caveats. The analysis runs, `metricConfidence`
+ *      discounts whatever the problem touches, and anything below
+ *      `SOFT_MEASUREMENT` is marked on screen and barred from the headline.
+ *
+ * This gate is the earliest of the three and runs before a single frame has
+ * been tracked, so anything it stops for can never reach the other two. That is
+ * why it now stops for almost nothing.
+ *
+ * It previously refused three ways, and two of them were shadowing softer
+ * checks further down that were never given the chance to fire. `body-unclear`
+ * is the same statistic `triage` rejects at `LIMITS.visibility`, which offers
+ * the override; and a player small in frame breaks no measurement here, because
+ * every one of them is a ratio of that player's own body height rather than of
+ * anything in the room. Both now fall through to be hedged or distrusted on the
+ * evidence rather than guessed at from six preview frames.
+ *
+ * Head *and* feet both outside the shot is the one that still stops: standing
+ * height falls back to the torso, but the ground line is derived from the head,
+ * so with neither end visible the ruler every height is measured against has no
+ * fixed point. Numbers would still come out. They would be wrong in a way
+ * nothing downstream could detect, which is the one failure this app refuses to
+ * ship. Either end alone is survivable and always was.
+ */
+export function blockingFramingIssue(issues: string[]): NotAServeError | undefined {
+  if (issues.includes('nobody-visible')) {
+    return new NotAServeError('I found no player in that clip.', [
+      'Put one person fully in frame, well lit.',
+      'Stand the phone side-on, four metres back, level with the baseline.',
+      'Fit head to feet in the shot, with room above the racket.',
+    ])
+  }
+  if (issues.includes('feet-cropped') && issues.includes('head-cropped')) {
+    return new NotAServeError('Your body does not fit the shot.', [
+      'Turn the phone upright and step back until head and feet both fit.',
+      'Every height uses your own body as the ruler, so show both ends.',
+    ])
+  }
+  // No wrist ever found, so there is no swing here to measure whatever else is
+  // in shot. Almost always distance, and said that way when the framing agrees,
+  // because "move closer" is something the player can act on and "I could not
+  // see your hand" on its own sounds like a fault in the app.
+  //
+  // Worth saying plainly why this is a refusal when standing small in frame is
+  // not: a clip filmed from the far baseline still produces a full set of
+  // numbers, assembled from a hand the model placed by inference. They are not
+  // rough, they are invented, and nothing downstream can tell the difference —
+  // which is the one failure this app will not ship.
+  if (issues.includes('hands-unseen')) {
+    return new NotAServeError(
+      issues.includes('too-far-away')
+        ? 'You stand too far from the camera to measure.'
+        : 'I could not see your racket hand.',
+      [
+        'Move the phone to about four metres, so your body fills the frame height.',
+        'Every swing measurement comes off your racket hand, so it has to be visible.',
+      ],
+    )
+  }
+  return undefined
+}

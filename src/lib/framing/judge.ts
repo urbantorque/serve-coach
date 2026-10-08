@@ -27,7 +27,7 @@
  * a ranking and the ranking is the deliverable.
  */
 import { imageXSplit } from '../analysis/axes'
-import { blockingFramingIssue } from '../analysis/analyze'
+import { blockingFramingIssue } from '../analysis/framingIssues'
 import { LM, median } from '../analysis/geometry'
 import { framingIssues } from '../analysis/framingIssues'
 import { ANKLES_SEEN_FLOOR, MIN_STANDING_HEIGHT, NOSE_SHARE_OF_HEIGHT } from '../analysis/phases'

@@ -31,15 +31,15 @@ import {
 } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
 import { tossMapFor } from './lib/tossMap'
-import {
-  analyzeAllServes,
-  analyzeServe,
-  rediagnose,
-  rescore,
-  sweepWindow,
-  throttleProgress,
-  type AnalyzeProgress,
-} from './lib/analysis/analyze'
+import type { AnalyzeProgress } from './lib/analysis/analyze'
+/*
+ * The engine, loaded when there is a serve to read or re-judge and not before.
+ * Statically imported it was most of the entry chunk, which every player
+ * parses before the home screen draws — including one who only opens a saved
+ * report. Each call site below awaits it; after the first analysis it is a
+ * resolved module and costs nothing.
+ */
+const loadAnalysis = () => import('./lib/analysis/analyze')
 import { forgetAll, recall, remember } from './lib/analysisCache'
 import type { FaultMove } from './lib/analysis/carryForward'
 import type { ServePairFrames } from './lib/analysis/consistency'
@@ -638,7 +638,7 @@ export default function App() {
       if (isSameClip && serveIndex !== undefined && handedness) {
         const hit = recall({ sessionKey: wanted, handedness })
         if (hit && urlRef.current) {
-          const shown = hit.serveType === serveType ? hit : rescore(hit, serveType) ?? hit
+          const shown = hit.serveType === serveType ? hit : (await loadAnalysis()).rescore(hit, serveType) ?? hit
           setView({ kind: 'report', analysis: shown, videoUrl: urlRef.current })
           if (shown !== hit) {
             // Put the rescored copy back, or the cache keeps handing out the old
@@ -673,6 +673,7 @@ export default function App() {
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
 
       try {
+        const { analyzeServe, throttleProgress } = await loadAnalysis()
         const analysis = await analyzeServe({
           videoUrl: url,
           fileName: file.name || 'Your serve',
@@ -813,6 +814,7 @@ export default function App() {
       // labelled with the serve numbers that will end up on the chips. Working
       // it out separately here is how a screen ends up counting from one while
       // the sweep measures serves five through ten.
+      const { analyzeAllServes, sweepWindow, throttleProgress } = await loadAnalysis()
       const { first, total } = sweepWindow(analysis.serves.count)
       setSweep({ total, firstNumber: first + 1, done: [] })
       setProgress({ step: 'engine', ratio: 0, detail: 'Comparing your serves' })
@@ -1290,7 +1292,7 @@ export default function App() {
               }
               onPickServeType={
                 liveReport
-                  ? (serveType) => {
+                  ? async (serveType) => {
                       // Remembered, because a player working on their kick serve is
                       // going to film several of them in a row.
                       setPrefs(writePrefs({ serveType }))
@@ -1298,7 +1300,7 @@ export default function App() {
                       // this is arithmetic on frames already in memory rather than
                       // another pass over the video. Instant, where re-running would
                       // be half a minute to arrive at the same numbers.
-                      const rescored = rescore(liveReport.analysis, serveType)
+                      const rescored = (await loadAnalysis()).rescore(liveReport.analysis, serveType)
                       if (rescored) {
                         remember({ sessionKey: rescored.id, handedness: rescored.handedness }, rescored)
                         setView({ kind: 'report', analysis: rescored, videoUrl: liveReport.videoUrl })
@@ -1317,14 +1319,14 @@ export default function App() {
               statedTier={liveReport ? prefs.tier : undefined}
               onPickTier={
                 liveReport
-                  ? (tier) => {
+                  ? async (tier) => {
                       // Remembered for the next clip, and applied to this one
                       // without touching the video: the tier moves which band every
                       // signal is judged against and nothing that was measured, so
                       // re-reading the clip would spend half a minute arriving at
                       // the same landmarks.
                       setPrefs(writePrefs({ tier }))
-                      const rejudged = rediagnose(liveReport.analysis, tier)
+                      const rejudged = (await loadAnalysis()).rediagnose(liveReport.analysis, tier)
                       if (!rejudged) return
                       remember({ sessionKey: rejudged.id, handedness: rejudged.handedness }, rejudged)
                       setView({ kind: 'report', analysis: rejudged, videoUrl: liveReport.videoUrl })
