@@ -173,12 +173,17 @@ check('the target reads as a body position, and moves with the serve type', () =
       assert(target.length > 0, `${id} has no target phrase for a ${type} serve`)
     }
   }
-  // The one that must genuinely differ: a kick is struck over the head, a flat
-  // serve in front of the body. If these ever collapse to the same phrase the
-  // serve-type picker has stopped meaning anything on screen.
-  const flat = targetOf('contactAhead', metricCopy('contactAhead', 'flat').ideal)
-  const kick = targetOf('contactAhead', metricCopy('contactAhead', 'kick').ideal)
-  assert(flat !== kick, `flat and kick ask for the same contact point: "${flat}"`)
+  // What a kick changes on screen. Its contact target used to be "over the
+  // head", and published kicks are struck in front of the toe, a little nearer
+  // than flat serves or no nearer at all (Connolly 2021, Vacek 2023, Campbell
+  // 2013). So since D2.1 a kick only lowers the contact floor, and the target
+  // that has to differ is the shoulders': a kick tilts further. If that ever
+  // collapses the serve-type picker has stopped meaning anything on screen.
+  const reach = (type: ServeType) => metricCopy('contactAhead', type).ideal[0]
+  assert(reach('kick') < reach('flat'), 'a kick may no longer be struck over the head')
+  const flat = targetOf('shoulderTilt', metricCopy('shoulderTilt', 'flat').ideal)
+  const kick = targetOf('shoulderTilt', metricCopy('shoulderTilt', 'kick').ideal)
+  assert(flat !== kick, `flat and kick ask for the same shoulders: "${flat}"`)
 })
 
 check('a value outside the axis still lands somewhere', () => {
@@ -237,19 +242,15 @@ interface Claimed {
 }
 
 const CLAIMED: Record<string, Claimed> = {
-  tossArmExtension: {
-    stamp: 'e2ea3dd9',
-    insight: { low: ['Elbow folded', 'Elbow soft'], ok: ['Arm straight'], high: ['Arm straight'] },
-    aim: { low: 'Arm straight', high: 'Arm straight' },
-  },
   releaseHeight: {
-    stamp: 'e1c5c11a',
+    stamp: '07b4fcac',
     insight: {
-      low: ['Let go at head height', 'Let go above the head'],
-      ok: ['Let go at full stretch'],
+      low: ['Let go below the eyes'],
+      // Re-anchored on the coaching standard (D2.1): eye level and up is praised.
+      ok: ['Let go at head height', 'Let go above the head'],
       high: ['Let go past full stretch'],
     },
-    aim: { low: 'Let go at full stretch', high: 'Let go at full stretch' },
+    aim: { low: 'Let go above the head', high: 'Let go above the head' },
   },
   tossArmHold: {
     stamp: 'c62244b5',
@@ -431,46 +432,21 @@ const CLAIMED: Record<string, Claimed> = {
     stamp: '857d8f5d',
     insight: {
       low: ['Elbow bent at contact', 'Arm short of straight'],
-      ok: ['Arm dead straight'],
+      // Published elbows are flexed 14–30° at impact (D2.1), so a long arm short
+      // of dead straight is praised too.
+      ok: ['Arm long at contact', 'Arm dead straight'],
       high: ['Arm dead straight'],
     },
-    aim: { low: 'Arm dead straight', high: 'Arm dead straight' },
-  },
-  bodyExtension: {
-    // Re-stamped when `fix.low` stopped saying "proves the sequence fired". The
-    // insight beside it had already been plain-languaged to "your legs, body and
-    // arm fired in the right order", so one card was carrying both registers —
-    // the description in English and the correction in shorthand. The rung this
-    // fix aims at, "up off the court", is unchanged.
-    stamp: '2016d48c',
-    insight: {
-      low: ['Feet stay on the court'],
-      ok: ['Up off the court'],
-      high: ['Big jump'],
-    },
-    aim: { low: 'Up off the court', high: 'Up off the court' },
+    aim: { low: 'Arm long at contact', high: 'Arm long at contact' },
   },
   contactAhead: {
     stamp: 'e993b3fb',
     insight: {
       low: ['Struck behind the head', 'Struck over the head'],
-      ok: ['Struck in front of the body', 'Struck far in front'],
+      ok: ['Struck in front of the body'],
       high: ['Struck far in front'],
     },
     aim: { low: 'Struck in front of the body', high: 'Struck in front of the body' },
-  },
-  totalTime: {
-    // Re-stamped when `ok` stopped claiming "unhurried into the trophy, fast out
-    // of it". This measurement times the first move to the ball and cannot see
-    // where the trophy fell inside that, so the old line asserted a split it
-    // never measured. The rungs claimed below are unchanged by the rewrite.
-    stamp: 'ab8674d5',
-    insight: {
-      low: ['Rushed motion'],
-      ok: ['Even tempo'],
-      high: ['Long motion', 'Stalled motion'],
-    },
-    aim: { low: 'Even tempo', high: 'Even tempo' },
   },
   loadRatio: {
     stamp: 'd5633430',
@@ -481,23 +457,16 @@ const CLAIMED: Record<string, Claimed> = {
     },
     aim: { low: 'Slow build, fast finish', high: 'Slow build, fast finish' },
   },
-  syncAtRelease: {
-    stamp: '60d2b726',
-    insight: {
-      low: ['Racket still by the leg'],
-      ok: ['Arms rise together'],
-      high: ['Racket up early'],
-    },
-    aim: { low: 'Arms rise together', high: 'Arms rise together' },
-  },
 
   /* The lines a serve type replaces, claimed where they are written. */
   'kick.contactAhead': {
-    stamp: 'bf5b00fa',
+    stamp: '6242295b',
     insight: {
       low: ['Struck behind the head'],
-      ok: ['Struck over the head'],
-      high: ['Struck in front of the body', 'Struck far in front'],
+      // Over the head or in front since D2.1: published kicks are struck in
+      // front of the toe, a little nearer than flat serves or no nearer at all.
+      ok: ['Struck over the head', 'Struck in front of the body'],
+      high: ['Struck far in front'],
     },
     aim: { low: 'Struck over the head', high: 'Struck over the head' },
   },

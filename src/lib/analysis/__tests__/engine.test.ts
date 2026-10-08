@@ -92,6 +92,12 @@ const metric = (fundamentals: Fundamental[], id: string): Metric => {
   if (!m) throw new Error(`metric "${id}" was not produced`)
   return m
 }
+/** A value off the card, graded or not: a row since D2.1 can be a reading. */
+const measured = (fundamentals: Fundamental[], id: string): { value: number; confidence: number } => {
+  const m = fundamentals.flatMap((f) => [...f.metrics, ...(f.readings ?? [])]).find((x) => x.id === id)
+  if (!m) throw new Error(`"${id}" was not measured`)
+  return m
+}
 const area = (fundamentals: Fundamental[], id: string): Fundamental => {
   const f = fundamentals.find((x) => x.id === id)
   if (!f) throw new Error(`fundamental "${id}" missing`)
@@ -175,9 +181,9 @@ check('identifies a left-hander, and measures them the same', () => {
     'shoulderTilt',
     'hipShoulderSeparation',
   ]) {
-    const expected = metric(right.fundamentals, id).value
+    const expected = measured(right.fundamentals, id).value
     near(
-      metric(left, id).value,
+      measured(left, id).value,
       expected,
       Math.max(0.04, Math.abs(expected) * 0.08),
       `${id} for a left-hander`,
@@ -952,7 +958,7 @@ check('reads back contact height', () => {
 
 check('reads back the tossing-arm elbow angle', () => {
   const { fundamentals } = run({ tossElbow: 172 })
-  near(metric(fundamentals, 'tossArmExtension').value, 172, 10, 'toss elbow')
+  near(measured(fundamentals, 'tossArmExtension').value, 172, 10, 'toss elbow')
 })
 
 check('measures leg drive when the player leaves the ground', () => {
@@ -1022,7 +1028,7 @@ check('a slow-motion clip hedges its timings instead of coaching a slow rhythm',
     const skel = detectServe(frames, 60)
     const all = measure(frames, skel, true, {
       confidence: { frames, skel, swingSamples: 8, view: 'side' },
-    }).flatMap((f) => f.metrics)
+    }).flatMap((f) => [...f.metrics, ...(f.readings ?? [])])
     return { slowed: looksSlowedDown(frames, skel), m: (id: string) => all.find((x) => x.id === id)! }
   }
   const real = read(1.35)

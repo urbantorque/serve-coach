@@ -1,7 +1,7 @@
 import type { ServeType } from '../storage/prefs'
 import type { ContactRead } from './contact'
 import { readoutOf, targetOf } from './anatomy'
-import { FUNDAMENTALS, METRICS, metricCopy, type MetricCopy } from './coaching'
+import { FUNDAMENTALS, METRICS, READINGS, metricCopy } from './coaching'
 import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
 import { assessSpatial } from './spatial'
 import { cue } from './voice'
@@ -30,7 +30,7 @@ import {
 } from './confidence'
 import type { Skeleton } from './phases'
 import { flightHeightAt, type BallFlight } from '../vision/ballTrack'
-import type { Frame, Fundamental, FundamentalId, Metric } from './types'
+import type { Frame, Fundamental, FundamentalId, Metric, Reading } from './types'
 
 /** Measurements that only exist when the ball was found in the pixels. */
 const BALL_METRICS = new Set(['tossPeakHeight', 'contactBelowPeak', 'ballContactHeight'])
@@ -53,7 +53,7 @@ const BALL_METRICS = new Set(['tossPeakHeight', 'contactBelowPeak', 'ballContact
  */
 const HAND_HANG_MIN_SAMPLES = 10
 
-function format(value: number, copy: MetricCopy): string {
+function format(value: number, copy: { unit: string; decimals: number }): string {
   if (copy.unit === 'ms') return `${Math.round(value)} ms`
   const n = value.toFixed(copy.decimals)
   return copy.unit === '°' || copy.unit === '%' || copy.unit === '×' ? `${n}${copy.unit}` : n
@@ -147,6 +147,30 @@ function build(
     confidence,
     softness:
       ctx && confidence < SOFT_MEASUREMENT ? softnessReason(id, ctx) : undefined,
+  }
+}
+
+/**
+ * A measurement with no band (`READINGS`, D2.1): the number and its words, with
+ * the confidence a graded row would carry, and nothing that grades it — no
+ * score, no badge, no order and no drill.
+ */
+function reading(id: string, value: number, ctx?: ConfidenceContext): Reading | undefined {
+  const copy = READINGS[id]
+  if (!copy) throw new Error(`no reading copy for "${id}"`)
+  if (!Number.isFinite(value)) return undefined
+  const confidence = ctx ? metricConfidence(id, ctx) : 1
+  return {
+    id,
+    label: copy.label,
+    value,
+    unit: copy.unit,
+    display: format(value, copy),
+    readout: readoutOf(id, value),
+    decimals: copy.decimals,
+    phase: copy.phase,
+    confidence,
+    softness: ctx && confidence < SOFT_MEASUREMENT ? softnessReason(id, ctx) : undefined,
   }
 }
 
@@ -676,6 +700,9 @@ export function measure(
       metrics.map((m) => ({ score: m.score, weight: effectiveWeight(m) })),
       metrics.filter((m) => m.confidence >= SOFT_MEASUREMENT),
     )
+    const readings = (def.readings ?? [])
+      .map((r) => reading(r, values[r], confidenceCtx))
+      .filter((r): r is Reading => r !== undefined)
     return {
       id,
       label: def.label,
@@ -685,6 +712,7 @@ export function measure(
       status: statusOf(score),
       headline: headlineFor(metrics, def.label, score),
       metrics,
+      ...(readings.length ? { readings } : {}),
       drill: def.drill,
     }
   })

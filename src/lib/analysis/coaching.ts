@@ -37,10 +37,28 @@ export interface MetricCopy {
    */
   missSpan?: number
   decimals: number
+  /** What the band stands on. A row with nothing to cite is a reading instead (`READINGS`). */
+  source: BandSource
   insight: { low: string; ok: string; high: string }
   fix: { low: string; high: string }
   drill: Drill
 }
+
+/**
+ * What a graded band stands on (D2.1). One of two things, and nothing else:
+ *
+ * - `study`: published figures the band is drawn from, converted to this
+ *   engine's units, from the sources in `ANALYSIS-REVIEW.md` §3.5 and the
+ *   research brief behind it.
+ * - `motion`: no study gives a figure, so the band was re-derived on real
+ *   serve motion — the forty Bath serves read inside it from every placement —
+ *   and the fault it names was dialled into the rig and reads outside it.
+ *   `bands.test.ts` re-checks both halves.
+ *
+ * A band with neither is a guess, and a guess is not graded: the measurement
+ * moves to `READINGS` and is shown without a band.
+ */
+export type BandSource = { study: string } | { motion: string }
 
 /**
  * Contact height's exercise, held once because two rows use it: the hand's
@@ -55,46 +73,33 @@ const HEELS_UP_BASKET: Drill = {
 
 export const METRICS: Record<string, MetricCopy> = {
   /* ------------------------------------------------------------------- toss */
-  tossArmExtension: {
-    id: 'tossArmExtension',
-    label: 'Tossing arm extension',
-    unit: '°',
-    phase: 'toss',
-    weight: 1,
-    ideal: [163, 180],
-    range: [90, 180],
-    decimals: 0,
-    insight: {
-      low: 'Your tossing elbow **bends** at release, so the ball leaves from a new spot every serve.',
-      ok: 'Tossing arm **straight** at release. That is what makes a toss repeat.',
-      high: 'Tossing arm **fully long** at release.',
-    },
-    fix: {
-      low: 'Lift from the shoulder with a **straight arm**. Place the ball on a high shelf, never throw it.',
-      high: 'Keep the arm long but **loose**. Locking the elbow adds tension you do not need.',
-    },
-    drill: {
-      name: 'Straight-arm shelf',
-      how: 'Toss with the elbow locked long and place the ball on an imaginary high shelf.',
-      reps: '20 tosses',
-    },
-  },
   releaseHeight: {
     id: 'releaseHeight',
     label: 'Release height',
     unit: '×',
     phase: 'toss',
+    source: {
+      study:
+        'Kovacs Academy 2022: the ball leaves the hand between eye level and the top of the head. Gao 2026: 1.72–1.75 m in WTA players about 1.72 m tall.',
+    },
     weight: 1,
-    ideal: [1.12, 1.36],
+    // The floor is eye level, the low end of the coaching standard: 0.936 of
+    // stature, which in this engine's units — heights from the ankle line over
+    // a stature that reads about 8% short — is 0.96. The release keyframe is the
+    // top of the hand's lift (D7.3), at or after the ball leaves it, so a hand
+    // that tops out under eye level let the ball go lower still. The floor was
+    // 1.12, and the forty Bath serves read 1.11–1.16 (up to fifteen of them
+    // under it) and the rig 1.11.
+    ideal: [0.96, 1.36],
     range: [0.7, 1.6],
     decimals: 2,
     insight: {
-      low: 'You let the ball go **below full stretch**, so it drifts longer and you chase it.',
-      ok: 'You release at **full stretch**, the shortest path up for the ball.',
+      low: 'You let the ball go **below eye level**, so it climbs further and wanders more on the way.',
+      ok: 'You let go **at head height or higher**, so the ball has a short, steady climb.',
       high: 'You release at the **top** of your reach.',
     },
     fix: {
-      low: 'Hold the ball until the arm **locks out overhead**. Roll it off the fingertips, not the palm.',
+      low: 'Lift with a long arm and **let go at head height** or higher. Roll the ball off the fingertips.',
       high: 'Stay **flat-footed** until the legs load. Release tall, not early.',
     },
     drill: {
@@ -108,6 +113,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Tossing arm stays up',
     unit: '%',
     phase: 'trophy',
+    source: {
+      motion:
+        "No study gives a share. The forty Bath serves hold the arm up for 72–79% of the window from every placement, and the rig's dropped arm reads under 55.",
+    },
     weight: 1.1,
     ideal: [55, 100],
     range: [0, 100],
@@ -132,6 +141,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Toss path steadiness',
     unit: '%',
     phase: 'toss',
+    source: {
+      motion:
+        "No study measures the hand's line. The forty Bath serves drift 0.2–1.6% of height from every placement, and the rig's wandering hand reads over 3.",
+    },
     weight: 0.9,
     /*
      * Drift of the tossing hand off its own line, as a share of standing height,
@@ -195,6 +208,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Toss height',
     unit: '×',
     phase: 'toss',
+    source: {
+      study:
+        'Newton 2025, Vacek 2025, Gao 2026: skilled toss peaks of 1.82–2.08 statures from the ankle line.',
+    },
     weight: 1.2,
     // Peak of the ball above the court, in body heights.
     //
@@ -231,6 +248,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'How far the ball falls first',
     unit: '×',
     phase: 'contact',
+    source: {
+      study:
+        'Newton 2025, Vacek 2025, Connolly 2021, Gao 2026: the ball falls 0.56–0.94 m from its apex before impact.',
+    },
     weight: 1.1,
     // How far the ball has fallen from its apex by the moment of contact.
     //
@@ -267,6 +288,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Knee bend at trophy',
     unit: '°',
     phase: 'trophy',
+    source: {
+      study:
+        'Jacquier-Bret & Gorce 2024, 27 studies: knee flexion at the trophy of 64.5 ± 9.7° (front) and 67.4 ± 16.4° (back).',
+    },
     weight: 1.1,
     /*
      * Anchored to published serves rather than to the rig. A meta-analysis of
@@ -305,6 +330,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Hip–shoulder separation',
     unit: '°',
     phase: 'trophy',
+    source: {
+      motion:
+        "No study gives serve X-factor norms. The forty Bath serves coil 5–16° from every placement, and the rig's open chest reads below zero.",
+    },
     weight: 1,
     // One band with the diagnosis's `separation_deg` (`CARD_SIGNAL` in
     // tiers.ts). The floor was 15, and the forty Bath serves coil 5–16° here
@@ -352,8 +381,15 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Shoulder tilt',
     unit: '°',
     phase: 'trophy',
+    source: {
+      study:
+        'Jacquier-Bret & Gorce 2024: trunk inclination at the trophy of 25.0 ± 7.1° pooled. The band is 1.5 deviations either side.',
+    },
     weight: 1,
-    ideal: [14, 32],
+    // 1.5 deviations either side of the pooled 25.0°. The ceiling was 32, and
+    // the forty Bath serves tilt 24–34° here, so it called up to seven of them
+    // arched.
+    ideal: [14, 36],
     // Below zero the cartwheel runs the wrong way: hitting shoulder high,
     // tossing shoulder dropped. It is a common recreational fault and it pulls
     // the racket down across the ball, so the axis has to be able to show it
@@ -385,6 +421,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Leg drive',
     unit: '×',
     phase: 'contact',
+    source: {
+      study:
+        'Deghaies 2026: the centre of mass rises 15.8 ± 3.4% of height in professionals. Reid 2008: no leg drive cost a tenth of racket speed.',
+    },
     weight: 1,
     // The hips' rise from the deepest load to contact. One band with the
     // diagnosis's `leg_drive_rise_ratio` (`CARD_SIGNAL` in tiers.ts), whose
@@ -421,6 +461,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Racket drop',
     unit: '×',
     phase: 'drop',
+    source: {
+      study:
+        'Fleisig 2003: at full external rotation the upper arm sits near shoulder level and the racket falls behind. The forty Bath serves read −0.06 to −0.01.',
+    },
     weight: 1.2,
     // The hand, not the racket: this is how far the racket hand sits below the
     // shoulder at the bottom of the drop. A real drop leaves it near shoulder
@@ -459,6 +503,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Hitting elbow at drop',
     unit: '°',
     phase: 'drop',
+    source: {
+      study:
+        "Fleisig 2003: 104° of elbow flexion at full external rotation, 76° at the joint. Gao 2026: 52° and 67° at the racket's low point.",
+    },
     weight: 1,
     ideal: [40, 95],
     range: [20, 170],
@@ -483,6 +531,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Hand under the elbow',
     unit: '%',
     phase: 'drop',
+    source: {
+      motion:
+        "No study measures it. The forty Bath serves read 6.5–16% from every placement, and the rig's racket that never falls reads 0.",
+    },
     // Under every other measurement on this card, and deliberately so. The band
     // below is provisional in a way none of the others are, and weight is the
     // one honest lever for that: it holds down the vote a guessed band gets in
@@ -561,6 +613,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Drop to contact',
     unit: 'ms',
     phase: 'contact',
+    source: {
+      study:
+        "Newton 2025: the forward swing from the racket's low point takes 13.2 ± 2.1% of 0.97 s, about 128 ms, in high-performance men.",
+    },
     weight: 1,
     ideal: [110, 230],
     range: [50, 450],
@@ -589,6 +645,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Hand height at contact',
     unit: '×',
     phase: 'contact',
+    source: {
+      study:
+        'Girard 2005: impact at 1.43 statures for beginners and 1.49 for elite servers, with the racket head 0.26 statures over the wrist (Bath).',
+    },
     weight: 1.3,
     // The wrist, not the ball. Published impact heights put a beginner's wrist
     // at about 1.20 in these units and an elite server's at about 1.27 (see
@@ -615,6 +675,10 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Ball height at contact',
     unit: '×',
     phase: 'contact',
+    source: {
+      study:
+        'Girard 2005, Vacek 2023: impact at 1.43 statures for beginners and 1.49–1.51 for elite and professional servers.',
+    },
     weight: 1.3,
     /*
      * The ball itself, which is what published impact heights measure: 1.43
@@ -646,8 +710,19 @@ export const METRICS: Record<string, MetricCopy> = {
     label: 'Arm extension at contact',
     unit: '°',
     phase: 'contact',
+    source: {
+      study:
+        'Fleisig 2003, Fett 2021, Newton 2025, Jacquier-Bret & Gorce 2024: the elbow is flexed 14–30° at impact.',
+    },
     weight: 1.2,
-    ideal: [160, 180],
+    // The elbow at impact is flexed 20 ± 4° in Olympic servers (Fleisig, via
+    // Kovacs), 18 ± 8° in elite juniors (Fett), 14° in high-performance men
+    // (Newton: 166 ± 5° of extension) and 30.1 ± 15.9° pooled over 27 studies:
+    // 150–166° at the joint. The floor of 160 called most of them short. 145 is
+    // 35° of flexion, the research brief's club edge, with room for a camera's
+    // error. The Bath serves read 144–154° here, but their elbow markers sit off
+    // the joint (ANALYSIS-REVIEW.md §9), so they cannot settle it.
+    ideal: [145, 180],
     range: [100, 180],
     decimals: 0,
     insight: {
@@ -665,43 +740,29 @@ export const METRICS: Record<string, MetricCopy> = {
       reps: '12 serves',
     },
   },
-  bodyExtension: {
-    id: 'bodyExtension',
-    label: 'Body extension',
-    unit: '×',
-    phase: 'contact',
-    weight: 0.9,
-    ideal: [0.02, 0.16],
-    range: [0, 0.28],
-    decimals: 3,
-    insight: {
-      low: 'You stay **flat-footed** at contact, so the load never left the ground.',
-      ok: 'You **extend up** off the court into the ball, so your legs, body and arm fired in the right order.',
-      high: 'You get **well off the ground** into contact.',
-    },
-    fix: {
-      low: '**Let the drive lift you** off the court. Leaving the ground at all proves your legs fed the swing.',
-      high: '**Jump up** and a touch forward, then land on the front foot inside the baseline.',
-    },
-    drill: {
-      name: 'Off the court',
-      how: 'Serve so both feet leave the court and you land on the front foot.',
-      reps: '15 serves',
-    },
-  },
   contactAhead: {
     id: 'contactAhead',
     label: 'Contact point in front',
     unit: '%',
     phase: 'contact',
+    source: {
+      study:
+        'Vacek 2023, Connolly 2021, Fett 2021: flat contact 50–62 cm ahead of the front toe, 0.28–0.37 of height; kick contact the same or nearer.',
+    },
     weight: 1,
     // How far in front of the hips contact happens, as a share of height. The
     // floor sits on the ladder's own boundary between "struck over the head" and
     // "struck in front of the body": a band opening at 5 spent three points of
     // its width praising a contact the readout beside it still called over the
     // head, which is the fault this measurement exists to name.
-    ideal: [8, 20],
-    range: [-10, 34],
+    //
+    // The ceiling was 20. Published flat serves meet the ball 0.28–0.37 of
+    // height ahead of the front toe; this reads the wrist against the hips,
+    // which the forty Bath serves put at 15–34 from the side, and 20 called most
+    // of them too far in front. 40 is over every one of them and every
+    // published mean.
+    ideal: [8, 40],
+    range: [-10, 50],
     decimals: 1,
     insight: {
       low: 'You strike **over or behind** your head, which drops serves into the net and arches your back.',
@@ -720,40 +781,15 @@ export const METRICS: Record<string, MetricCopy> = {
   },
 
   /* ----------------------------------------------------------------- rhythm */
-  totalTime: {
-    id: 'totalTime',
-    label: 'Motion length',
-    unit: 'ms',
-    phase: 'contact',
-    weight: 0.8,
-    ideal: [900, 1800],
-    range: [400, 3000],
-    decimals: 0,
-    insight: {
-      low: 'You **rush** the whole motion, so the legs never load.',
-      // Says only what this measurement can see. It times the whole motion from
-      // the first move to the ball and knows nothing about where the trophy fell
-      // inside it, so the old wording ("unhurried into the trophy, fast out of
-      // it") claimed a split it never measured — and printed a Strong badge
-      // three lines above `loadRatio` saying the back half drifts.
-      ok: '**Well paced** from first move to ball, neither rushed nor drawn out.',
-      high: 'A **long motion**. Usually the ball goes up and then you wait for it.',
-    },
-    fix: {
-      low: '**Slow the first half**. Only the last third of a serve moves fast.',
-      high: '**Cut the pause**. Toss and takeback start together and never stop until contact.',
-    },
-    drill: {
-      name: 'Three count',
-      how: 'Say one going down, two at the trophy, three at contact. Only three is fast.',
-      reps: '2 baskets',
-    },
-  },
   loadRatio: {
     id: 'loadRatio',
     label: 'Time from trophy to contact',
     unit: '%',
     phase: 'trophy',
+    source: {
+      study:
+        'Tubez 2021: trophy to impact takes 0.33–0.36 s in skilled servers and 0.54 s in children. Newton 2025: about 35% of release to impact.',
+    },
     weight: 0.8,
     // share of the motion spent between the trophy and contact — about 400 ms
     // out of ~1300 ms in a well-timed serve
@@ -775,30 +811,40 @@ export const METRICS: Record<string, MetricCopy> = {
       reps: '20 serves',
     },
   },
-  syncAtRelease: {
-    id: 'syncAtRelease',
-    label: 'Arms in sync',
-    unit: '×',
-    phase: 'toss',
-    weight: 1,
-    ideal: [-0.05, 0.28],
-    range: [-0.4, 0.5],
-    decimals: 2,
-    insight: {
-      low: 'Your racket is still **down by your leg** when you release the ball, so everything after it happens in a rush.',
-      ok: '**Down together, up together**: both arms reach the top at once.',
-      high: 'Your racket is already **high** when the ball leaves your hand.',
-    },
-    fix: {
-      low: '**Start both hands down together** and lift them together, arriving at the top as one.',
-      high: '**Stop lifting the racket early**. Waiting at the top kills the rhythm.',
-    },
-    drill: {
-      name: 'Mirror hands',
-      how: 'Start both hands together at your thigh and lift them together to the top.',
-      reps: '15 serves',
-    },
-  },
+}
+
+/**
+ * Measurements with no band (D2.1): measured, shown in body language, never
+ * graded.
+ *
+ * Each was a card row until its band was asked what it stood on and nothing
+ * answered. The tossing arm's straightness is a coaching standard (Kovacs) with
+ * no published angle, and the one set of real serves here carries a marker
+ * offset in its elbow angles, so it cannot set one either. Body extension — the
+ * feet's rise off the court — has no published figure at contact, and the
+ * fault it named, legs that never drove, is `legDrive`'s. The motion's length
+ * has no published figure from the first move, and its ceiling told a slow
+ * serve it paused, which the hitch reading (`hitch.ts`) showed tempo is not.
+ * Arm sync at release has no published figure and no rig fault that moves it,
+ * so nothing showed which side of its edges a fault falls.
+ *
+ * Kept in `Fundamental.readings`, apart from `metrics`, so no score, plan,
+ * focus or drawing can grade one by accident. A reading earns a row back on
+ * the card the day something supports a band for it.
+ */
+export interface ReadingCopy {
+  id: string
+  label: string
+  unit: string
+  phase: PhaseId
+  decimals: number
+}
+
+export const READINGS: Record<string, ReadingCopy> = {
+  tossArmExtension: { id: 'tossArmExtension', label: 'Tossing arm extension', unit: '°', phase: 'toss', decimals: 0 },
+  bodyExtension: { id: 'bodyExtension', label: 'Body extension', unit: '×', phase: 'contact', decimals: 3 },
+  totalTime: { id: 'totalTime', label: 'Motion length', unit: 'ms', phase: 'contact', decimals: 0 },
+  syncAtRelease: { id: 'syncAtRelease', label: 'Arms in sync', unit: '×', phase: 'toss', decimals: 2 },
 }
 
 /* -------------------------------------------------------------- body axes */
@@ -1036,30 +1082,27 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
     word: 'kick',
     blurb: 'Judged as a kick serve, so contact belongs over your head.',
     overrides: {
-      // The racket travels up the back of the ball, so contact sits much closer
-      // to over the head — and slightly lower, because you are brushing up it
-      // rather than reaching through it.
-      //
-      // The band is exactly the ladder's "struck over the head" rung, floor and
-      // ceiling both. It used to run from -2 to 12, which put its bottom two
-      // points inside the rung the readout calls struck behind the head and its
-      // top four inside the one it calls struck in front of the body: a kick
-      // serve could be badged "Solid" under a readout naming a fault, or under
-      // one naming the flat serve's target.
-      contactAhead: [0, 8],
+      // A kick may be struck over the head, where a flat serve may not, so its
+      // floor is the bottom of the "struck over the head" rung. It used to stop
+      // at the top of that rung too, and published kicks are struck in front:
+      // 0.15–0.28 of height ahead of the front toe in elite adolescents
+      // (Connolly 2021), 51 cm against the flat serve's 56 in professional men
+      // (Vacek 2023), and no different at all in Campbell 2013. So the ceiling
+      // is the flat serve's.
+      contactAhead: [0, 40],
       // No contact-height band of its own any more. It sat a whole rung below the
       // flat serve's, which only made sense while that band started at 1.28;
       // published kick and flat impact heights are within a centimetre of each
       // other (Vacek 2023: 1.50 and 1.51 statures, professional men), and the
       // flat band now starts at 1.14, already lower than this one used to.
       // More cartwheel: the hitting shoulder drops further under the ball, and
-      // this band starts where the flat one stops. The steep tilt the flat card
+      // this band starts where the flat one stops, 36. The steep tilt the flat card
       // calls arching is the tilt a kick is hit with — the flat serve's fault is
       // this serve's intent — so the two meet at the rung boundary instead of
       // overlapping. Running from 20 to 40 split both rungs it touched: a
       // shoulder the readout called under the ball was praised at 21 and
       // corrected at 19.
-      shoulderTilt: [32, 50],
+      shoulderTilt: [36, 50],
       // A kick is tossed a little lower and further back than a flat serve, so
       // the toss is allowed to peak at racket reach. The ceiling holds at the
       // flat serve's — see its own comment for why that is 2.1.
@@ -1067,14 +1110,13 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
     },
     insight: {
       contactAhead: {
-        // All three, because the kick band sits a whole rung below the flat one
-        // and every region around it therefore describes a different position.
-        // Under the band a kick is behind the head, not over it; over the band it
-        // is where a flat serve wants it, which is too far forward to brush up
-        // the back of the ball.
+        // All three, because the kick band starts a rung below the flat one.
+        // Under it a kick is behind the head, which arches the back; inside it
+        // the racket can still brush up the ball; over it, as for a flat serve,
+        // the player is reaching far out in front.
         low: 'You strike **behind your head**, so your back arches and the racket cannot brush up the ball.',
-        ok: 'You strike **over your head**, where a kick wants it. Keep it from drifting behind you.',
-        high: 'You strike **in front of your body**, so the racket drives through the ball rather than up its back.',
+        ok: 'You strike **over or in front of** your head, where a kick can brush up the back of the ball.',
+        high: 'You strike **far in front** of your body, so the racket drives through the ball rather than up its back.',
       },
       contactHeight: {
         ok: 'You strike at **kick height**: high enough for margin, low enough to brush up the ball.',
@@ -1208,14 +1250,24 @@ function merge<T extends object>(first?: Partial<T>, second?: Partial<T>): Parti
 
 export const FUNDAMENTALS: Record<
   FundamentalId,
-  { label: string; blurb: string; phase: PhaseId; weight: number; metrics: string[]; drill: Drill }
+  {
+    label: string
+    blurb: string
+    phase: PhaseId
+    weight: number
+    metrics: string[]
+    /** Measured and shown without a band (`READINGS`). */
+    readings?: string[]
+    drill: Drill
+  }
 > = {
   toss: {
     label: 'Toss',
     blurb: 'Everything downstream is built on where the ball goes.',
     phase: 'toss',
     weight: 22,
-    metrics: ['tossPeakHeight', 'tossArmExtension', 'releaseHeight', 'tossArmHold', 'tossPathWobble'],
+    metrics: ['tossPeakHeight', 'releaseHeight', 'tossArmHold', 'tossPathWobble'],
+    readings: ['tossArmExtension'],
     drill: {
       name: 'Fence toss',
       how: 'Stand side-on a racket from a fence and toss so the ball brushes past it, landing on one spot.',
@@ -1262,7 +1314,8 @@ export const FUNDAMENTALS: Record<
     blurb: 'Where you meet the ball, and how much of you is behind it.',
     phase: 'contact',
     weight: 24,
-    metrics: ['contactHeight', 'ballContactHeight', 'contactBelowPeak', 'armExtension', 'bodyExtension', 'contactAhead'],
+    metrics: ['contactHeight', 'ballContactHeight', 'contactBelowPeak', 'armExtension', 'contactAhead'],
+    readings: ['bodyExtension'],
     drill: {
       name: 'Heels up',
       how: 'Serve a whole basket with your heels off the ground, so you reach up to the ball instead of out.',
@@ -1274,7 +1327,8 @@ export const FUNDAMENTALS: Record<
     blurb: 'Where each piece lands against the others.',
     phase: 'ready',
     weight: 12,
-    metrics: ['totalTime', 'loadRatio', 'syncAtRelease'],
+    metrics: ['loadRatio'],
+    readings: ['totalTime', 'syncAtRelease'],
     drill: {
       name: 'Count the serve',
       how: 'Say one as both hands drop, two at the trophy, three at contact. One and two stay slow.',

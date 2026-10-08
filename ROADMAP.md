@@ -184,13 +184,15 @@ ledger.
       inside a 6 s budget, arms/knees/ankles only. Benchmark on the same crop:
       elbows 2.35% → 1.59% of height, wrists 2.02% → 1.72%. Offline download
       24 → 57 MB.
-- [ ] **E8** Read the real frame rate (MP4 `stts`) and sample the swing at the
-      source rate on high-frame-rate files.
+- [~] **E8** Read the real frame rate (MP4 `stts`) and sample the swing at the
+      source rate on high-frame-rate files. *Carried into D1.1 (done) and D1.2
+      (measured, not yet wired).*
 - [x] **E9** Slow motion detected from the motion itself (drop→contact ≥ 320 ms with a ≥ 2.6 s motion); timings hedged and said so, ratios still scored. Rescaling left until a stretch factor can be measured rather than assumed.
 - [x] **E10** Ball tracker on a native-resolution crop above the tossing
       shoulder instead of a 256-px whole frame.
-- [ ] **E11** Cite or re-derive the other 20 card bands (contact height needs a
-      definition first: wrist, not ball). *Carried into D13.*
+- [x] **E11** Cite or re-derive the other 20 card bands (contact height needs a
+      definition first: wrist, not ball). *Carried into D2.1 and D2.2, both
+      done.*
 
 ---
 
@@ -283,7 +285,27 @@ this first.
 ### Wave D2 — One serve, judged once, by cited standards
 Clean up the judgement before new readings are added to it.
 
-- [ ] **D2.1 Cite or re-derive the remaining bands** (was E11) · L. One citation
+- [x] **D2.1 Cite or re-derive the remaining bands** (was E11) · L. *Done
+      (2026-10-09). `MetricCopy.source` is compulsory: a published `study`
+      (from `.scratch/research-biomech.md`, converted to engine units) or a
+      `motion` re-derivation. Thirteen bands cite studies and four are
+      motion-derived; four measurements stopped being scored and show as
+      "Measured, not scored" on their card (`READINGS`, `Fundamental.readings`):
+      the tossing arm (a coaching standard with no angle), body extension and
+      motion length (no figure; the latter's ceiling told slow serves they
+      paused, which D3.4 showed tempo is not), and arm sync (no figure, no rig
+      fault). Four bands were re-anchored where the research or the forty Bath
+      serves contradicted them. Release height's floor moved 1.12 → 0.96, eye
+      level (Kovacs), after flagging up to 15 real serves. Shoulder tilt's
+      ceiling moved 32 → 36, 1.5 SD over the pooled 25°. Arm extension's floor
+      moved 160 → 145, where the 14–30° of published elbow flexion had all read
+      short. Contact in front's ceiling moved 20 → 40 after calling most real
+      serves too far forward, and the kick's band went from over the head to
+      0–40, since published kicks are struck in front. `bands.test.ts` checks
+      that every motion band holds the rig's dialled fault outside it, and that
+      the six fixture serves read inside every graded band from the guide's
+      placement. The exception is hand height at contact, pinned to D7.4.
+      Original plan:* One citation
       per band in `coaching.ts`, from the sources already in
       `ANALYSIS-REVIEW.md` §3.5 (Fleisig 2003, the 27-study meta-analysis,
       Kovacs & Ellenbecker). A band nothing supports becomes ungraded.

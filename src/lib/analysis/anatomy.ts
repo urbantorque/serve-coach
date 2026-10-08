@@ -34,9 +34,9 @@ const LADDERS: Record<string, Stop[]> = {
     { under: Infinity, tag: 'Arm straight' },
   ],
   releaseHeight: [
-    { under: 1.0, tag: 'Let go at head height' },
-    { under: 1.12, tag: 'Let go above the head' },
-    { under: 1.36, tag: 'Let go at full stretch' },
+    { under: 0.96, tag: 'Let go below the eyes' },
+    { under: 1.04, tag: 'Let go at head height' },
+    { under: 1.36, tag: 'Let go above the head' },
     { under: Infinity, tag: 'Let go past full stretch' },
   ],
   tossArmHold: [
@@ -98,7 +98,7 @@ const LADDERS: Record<string, Stop[]> = {
     { under: -3, tag: 'Hitting shoulder sits high' },
     { under: 7, tag: 'Shoulders level' },
     { under: 14, tag: 'Shoulders near level' },
-    { under: 32, tag: 'Hitting shoulder under the ball' },
+    { under: 36, tag: 'Hitting shoulder under the ball' },
     { under: Infinity, tag: 'Hitting shoulder far below' },
   ],
   legDrive: [
@@ -161,8 +161,9 @@ const LADDERS: Record<string, Stop[]> = {
     { under: Infinity, tag: 'Struck at the top of the reach' },
   ],
   armExtension: [
-    { under: 140, tag: 'Elbow bent at contact' },
-    { under: 160, tag: 'Arm short of straight' },
+    { under: 130, tag: 'Elbow bent at contact' },
+    { under: 145, tag: 'Arm short of straight' },
+    { under: 165, tag: 'Arm long at contact' },
     { under: Infinity, tag: 'Arm dead straight' },
   ],
   bodyExtension: [
@@ -178,16 +179,17 @@ const LADDERS: Record<string, Stop[]> = {
     // on its edges rather than inside it: a band that ended mid-rung praised a
     // contact the readout printed beside it still called a fault.
     { under: 8, tag: 'Struck over the head' },
-    { under: 20, tag: 'Struck in front of the body' },
+    { under: 40, tag: 'Struck in front of the body' },
     { under: Infinity, tag: 'Struck far in front' },
   ],
 
   /* ----------------------------------------------------------------- rhythm */
+  // A reading now (`READINGS`), so the words describe and do not judge.
   totalTime: [
-    { under: 900, tag: 'Rushed motion' },
+    { under: 900, tag: 'Quick motion' },
     { under: 1800, tag: 'Even tempo' },
     { under: 2400, tag: 'Long motion' },
-    { under: Infinity, tag: 'Stalled motion' },
+    { under: Infinity, tag: 'Very long motion' },
   ],
   loadRatio: [
     { under: 22, tag: 'Crammed finish' },
@@ -197,7 +199,7 @@ const LADDERS: Record<string, Stop[]> = {
   syncAtRelease: [
     { under: -0.05, tag: 'Racket still by the leg' },
     { under: 0.28, tag: 'Arms rise together' },
-    { under: Infinity, tag: 'Racket up early' },
+    { under: Infinity, tag: 'Racket up first' },
   ],
 }
 

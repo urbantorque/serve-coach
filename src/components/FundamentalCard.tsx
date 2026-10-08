@@ -132,6 +132,27 @@ export default function FundamentalCard({
             ))}
           </ul>
 
+          {/* Measured with no band to hold them to (D2.1). Plainer than a
+              graded row on purpose — no bar, no colour, no order — because a
+              reading dressed in a verdict's colour would be a verdict. */}
+          {f.readings?.length ? (
+            <div className="unscored">
+              <p className="unscored-title">Measured, not scored</p>
+              <ul className="unscored-list">
+                {f.readings.map((r) => (
+                  <li key={r.id} className={`unscored-row${r.softness ? ' unscored-row--soft' : ''}`}>
+                    <span className="metric-label">
+                      {r.label}
+                      {r.softness && <em className="metric-approx">approximate</em>}
+                    </span>
+                    <span className="unscored-read">{r.readout}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="unscored-note">Nothing published gives a target for these yet, so they carry no score.</p>
+            </div>
+          ) : null}
+
           {onSeek && (
             <button className="btn btn--ghost btn--full" onClick={() => onSeek(f.phase)}>
               <Icon name="film" size={17} />

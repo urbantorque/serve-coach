@@ -215,23 +215,15 @@ type ShapeSpec = JointSpec | TiltSpec | CoilSpec | HeightSpec
  * Every measurement this file can draw, and — by omission — every one it cannot.
  *
  * Absent is the safe answer and the common one. Twenty-odd measurements reach
- * the report and nine are here; the rest are timings, shares of a window, and
- * drifts along a body axis, none of which is a posture and all of which would
- * have to be drawn as some invented pictogram. A measurement gets a figure when
+ * the report and eight are here. The tossing arm left with its band (D2.1): a
+ * figure is drawn against a target, and a reading has none. The rest are
+ * timings, shares of a window, and drifts along a body axis, none of which is a
+ * posture and all of which would have to be drawn as some invented pictogram. A measurement gets a figure when
  * the figure is the measurement seen from the right side, and never because a
  * card looked bare without one.
  */
 const SHAPES: Record<string, ShapeSpec> = {
   /* ------------------------------------------------------------------- toss */
-  tossArmExtension: {
-    kind: 'joint',
-    view: 'Your tossing arm, from the side',
-    ends: ['shoulder', 'hand'],
-    fromStraight: false,
-    limbs: [UPPER_ARM, FOREARM],
-    bisector: 180,
-    sign: 1,
-  },
   releaseHeight: {
     kind: 'height',
     view: 'Where the ball leaves your hand, against your own height',

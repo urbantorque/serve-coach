@@ -163,8 +163,10 @@ check('a four-times clip retimed reads the timings of the serve, not the file', 
   assert(!looksSlowedDown(retimed, skel), 'the retimed clip still looks like slow motion')
   const read = measure(retimed, skel, true)
   for (const id of ['dropToContact', 'totalTime', 'loadRatio']) {
-    const want = truth.flatMap((f) => f.metrics).find((m) => m.id === id)!.value
-    const got = read.flatMap((f) => f.metrics).find((m) => m.id === id)!.value
+    // `totalTime` is a reading since D2.1, so both lists are searched.
+    const all = (areas: typeof read) => areas.flatMap((f) => [...f.metrics, ...(f.readings ?? [])])
+    const want = all(truth).find((m) => m.id === id)!.value
+    const got = all(read).find((m) => m.id === id)!.value
     note(`${id}: real ${want.toFixed(1)}, retimed ${got.toFixed(1)}`)
     near(got, want, Math.abs(want) * 0.01 + 1e-6, id)
   }

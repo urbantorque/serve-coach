@@ -77,7 +77,10 @@ export interface Frame {
 // and with the ball followed to the racket, the Contact card reads the ball's
 // height at contact in place of the hand's; and the card and the diagnosis
 // share one band wherever they read one number, which moved the coil's band
-// from 15–38 to 8–38 and opened the top of the leg drive's.
+// from 15–38 to 8–38 and opened the top of the leg drive's; and every band
+// now stands on a study or on real serve motion (D2.1): release height, shoulder
+// tilt, arm extension and contact in front were re-anchored, and the tossing
+// arm, body extension, motion length and arm sync stopped being scored.
 export const SCORING_VERSION = 5
 
 /**
@@ -168,7 +171,29 @@ export interface Fundamental {
   status: Status
   headline: string
   metrics: Metric[]
+  /**
+   * Measured and shown, never graded: what the body did, with no band to hold
+   * it to because nothing published or measured on real serves supports one
+   * (D2.1). Kept out of `metrics` on purpose, so no score, focus, plan or
+   * drawing can grade them by accident. Absent on reports saved before it.
+   */
+  readings?: Reading[]
   drill: Drill
+}
+
+/** A measurement with no band: the number, its words, and how far to trust it. */
+export interface Reading {
+  id: string
+  label: string
+  value: number
+  unit: string
+  display: string
+  /** What the body did, in the same body language as a graded row. */
+  readout: string
+  decimals: number
+  phase: PhaseId
+  confidence: number
+  softness?: string
 }
 
 export interface Quality {

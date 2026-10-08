@@ -108,7 +108,8 @@ function analyse(dials: Partial<ServeDials>): Sample {
   for (const [k, idx] of Object.entries(skel.keys)) keys[k] = frames[idx].t
 
   const metrics: Record<string, number> = {}
-  for (const m of fundamentals.flatMap((f) => f.metrics)) metrics[m.id] = m.value
+  // Readings too (D2.1): a measurement with no band still has to hold still.
+  for (const m of fundamentals.flatMap((f) => [...f.metrics, ...(f.readings ?? [])])) metrics[m.id] = m.value
 
   const totalWeight = fundamentals.reduce((s, f) => s + f.score, 0)
   return {
@@ -1220,10 +1221,11 @@ check('a kick serve is judged against kick bands, not flat ones', () => {
 })
 
 check('the shoulder tilt a kick serve needs is not marked down', () => {
-  // 30° of cartwheel is a good kick serve and a slightly steep flat one.
-  const flat = measureAs({ shoulderTilt: 36 }, 'flat').metric('shoulderTilt')
-  const kick = measureAs({ shoulderTilt: 36 }, 'kick').metric('shoulderTilt')
-  note(`36° of tilt scores ${flat.score} as a flat serve, ${kick.score} as a kick`)
+  // 42° of cartwheel is a good kick serve and a steep flat one: the flat band
+  // stops at 36, 1.5 deviations over the published 25° (D2.1).
+  const flat = measureAs({ shoulderTilt: 42 }, 'flat').metric('shoulderTilt')
+  const kick = measureAs({ shoulderTilt: 42 }, 'kick').metric('shoulderTilt')
+  note(`42° of tilt scores ${flat.score} as a flat serve, ${kick.score} as a kick`)
   assert(kick.score > flat.score, 'a kick serve got no credit for the tilt it requires')
 })
 
@@ -1770,6 +1772,9 @@ function measured(dials: Partial<ServeDials>, mutate?: (f: Frame[]) => Frame[]) 
     quality,
     fundamentals,
     metric: (id: string) => fundamentals.flatMap((f) => f.metrics).find((m) => m.id === id),
+    /** Graded or not: a reading carries a confidence too. */
+    measurement: (id: string) =>
+      fundamentals.flatMap((f) => [...f.metrics, ...(f.readings ?? [])]).find((m) => m.id === id),
   }
 }
 
@@ -1811,10 +1816,11 @@ check('cropped feet soften the heights and leave the angles alone', () => {
 })
 
 check('rigid legs soften only what is read at the trophy', () => {
-  const { skel, metric } = measured({ trophyKneeAngle: 174 })
+  const { skel, measurement } = measured({ trophyKneeAngle: 174 })
   assert(skel.derivation.trophyFromArms, 'the arm fallback did not fire on rigid legs')
-  const atTrophy = metric('loadRatio')!
-  const elsewhere = metric('totalTime')!
+  const atTrophy = measurement('loadRatio')!
+  // A reading since D2.1, and still the one that never looks at the trophy.
+  const elsewhere = measurement('totalTime')!
   note(`load ratio ${atTrophy.confidence.toFixed(2)}, motion length ${elsewhere.confidence.toFixed(2)}`)
   assert(
     atTrophy.confidence < elsewhere.confidence,
