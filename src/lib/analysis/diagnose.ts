@@ -21,6 +21,7 @@ import { assessSpatial, viewFromCourtYaw } from './spatial'
 import { readStance, type Stance } from './stance'
 import { readTossPlacement, type TossPlacement } from './tossPlacement'
 import { readHitch, type Hitch } from './hitch'
+import { readChestTurn, type ChestTurn } from './chestTurn'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -172,6 +173,12 @@ export interface Diagnosis {
    * the hips, and on reports from before it existed.
    */
   stance?: Stance
+  /**
+   * When the shoulders and the hips passed half-turned to the net, against the
+   * racket's low point (`readChestTurn`, D3.6). From the side only, where the
+   * coil's depth cannot be read; the shoulders' instant is `chest_open_ms`.
+   */
+  chestTurn?: ChestTurn
   /**
    * The racket hand over the shoulder at the knee trough (D3.5). Data only, on
    * the same terms as `legDrive`; absent when the trophy came from the arms,
@@ -998,6 +1005,9 @@ export function diagnose(
   //
   // The camera this rests on is recovered once, above the toss block, because
   // the toss drift needs the same angle to answer a different question.
+  // And from the side, where that depth is not there to read, the chest's turn
+  // is read from the shoulder line's width instead (`chestTurn.ts`, D3.6).
+  const chestTurn = readChestTurn(frames, skel, viewFromCourtYaw(spatial.court_yaw_deg))
   const depthUnreliable = spatial.depth_unreliable
   const separationConfidence =
     trunkVisibility *
@@ -1058,6 +1068,15 @@ export function diagnose(
     // Graded since the research gave it a scale — see its band in `tiers.ts`.
     leg_drive_rise_ratio:
       legDrive.rise === null ? undefined : { value: legDrive.rise, confidence: legDrive.confidence },
+    // When the chest was half turned to the net, against the racket's low point:
+    // the side camera's reading of the fault `separation_deg` names from depth.
+    chest_open_ms:
+      chestTurn === undefined
+        ? undefined
+        : {
+            value: chestTurn.shouldersMs,
+            confidence: windowVisibility(frames, keys.trophy, keys.contact, [LM.leftShoulder, LM.rightShoulder]),
+          },
   }
 
   const signals: Record<string, number> = {}
@@ -1173,6 +1192,7 @@ export function diagnose(
       options.aspect,
     ),
     stance: readStance(frames, skel, viewFromCourtYaw(spatial.court_yaw_deg)),
+    ...(chestTurn ? { chestTurn } : {}),
     flaws,
     cost: {
       frames: frames.length,

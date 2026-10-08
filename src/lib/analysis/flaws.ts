@@ -85,6 +85,14 @@ interface FlawSpec {
   flaw: FlawId
   signal: string
   /**
+   * The signal the side camera reads this flaw from, without the depth
+   * `signal` needs. Present only on a side-on clip, and judged on in
+   * preference there: on the coil it resolves a chest a third as open as the
+   * coil's own floor can (D3.6). The finding says which one it was judged on,
+   * so a comparison between two serves never sets one against the other.
+   */
+  sideOn?: string
+  /**
    * Which other flaw explains this one away when both fire.
    *
    * Not a general dependency graph — a chain of causes long enough to need one
@@ -119,7 +127,9 @@ interface FlawSpec {
  */
 export const FLAWS: FlawSpec[] = [
   { flaw: 'waiters_tray', signal: 'palm_to_sky_deg' },
-  { flaw: 'early_shoulder_rotation', signal: 'separation_deg' },
+  // From a corner, the coil at the trophy; from the side, when the chest turned
+  // against the racket's low point (D3.6).
+  { flaw: 'early_shoulder_rotation', signal: 'separation_deg', sideOn: 'chest_open_ms' },
   // Arming is the timing fault. When the coil is already gone at the trophy,
   // the shoulders firing first is that same collapse showing up a moment later
   // rather than a second thing to fix.
@@ -239,6 +249,15 @@ export interface StructuralEvidence {
  */
 const NO_FALL_SEVERITY: Severity = 'medium'
 
+/** Whether a reading can name a flaw: present, finite and seen well enough. */
+const usable = (r: SignalReading | undefined) =>
+  r !== undefined && Number.isFinite(r.value) && r.confidence >= MIN_EVIDENCE
+
+/** The signal a flaw is judged on for this clip: the side camera's where it read one, its own otherwise. */
+function signalFor(spec: FlawSpec, readings: Record<string, SignalReading | undefined>): string {
+  return spec.sideOn && usable(readings[spec.sideOn]) ? spec.sideOn : spec.signal
+}
+
 export function evaluateFlaws(
   readings: Record<string, SignalReading | undefined>,
   currentTier: number,
@@ -249,12 +268,13 @@ export function evaluateFlaws(
   const found: FlawFinding[] = []
 
   for (const spec of FLAWS) {
-    const reading = readings[spec.signal]
+    const signal = signalFor(spec, readings)
+    const reading = readings[signal]
     if (!reading || !Number.isFinite(reading.value)) continue
     if (reading.confidence < MIN_EVIDENCE) continue
 
-    const target = targetFor(spec.signal, currentTier, serveType)
-    const miss = missBy(spec.signal, reading.value, target)
+    const target = targetFor(signal, currentTier, serveType)
+    const miss = missBy(signal, reading.value, target)
 
     /*
      * Outside the band, and outside it by more than the signal can resolve.
@@ -280,7 +300,7 @@ export function evaluateFlaws(
      * a fault in the camera.
      */
     const resolvable =
-      miss >= Math.max(NOISE_FLOOR[spec.signal] ?? 0, CAMERA_ALLOWANCE[spec.signal] ?? 0)
+      miss >= Math.max(NOISE_FLOOR[signal] ?? 0, CAMERA_ALLOWANCE[signal] ?? 0)
 
     /*
      * A racket that never fell is a shallow drop, whatever the depth says.
@@ -317,28 +337,28 @@ export function evaluateFlaws(
     const named = spec.notNamed === undefined
 
     const detected =
-      named && (neverFell || (!insideBand(spec.signal, reading.value, target) && resolvable))
+      named && (neverFell || (!insideBand(signal, reading.value, target) && resolvable))
 
     const graded: Severity = neverFell
       ? worseSeverity(
-          resolvable ? severityOf(spec.signal, reading.value, target) : 'none',
+          resolvable ? severityOf(signal, reading.value, target) : 'none',
           NO_FALL_SEVERITY,
         )
       : resolvable
-        ? severityOf(spec.signal, reading.value, target)
+        ? severityOf(signal, reading.value, target)
         : 'none'
 
     found.push({
       flaw: spec.flaw,
       detected,
-      signal: spec.signal,
-      value: round(reading.value, spec.signal),
-      unit: SIGNALS[spec.signal].unit,
+      signal,
+      value: round(reading.value, signal),
+      unit: SIGNALS[signal].unit,
       // Reported as measured either way. The floor decides whether the miss is
       // worth acting on, not whether it happened — and a consumer that wants to
       // show a near miss should be able to see one.
-      miss: round(miss, spec.signal),
-      target: [round(target[0], spec.signal), round(target[1], spec.signal)],
+      miss: round(miss, signal),
+      target: [round(target[0], signal), round(target[1], signal)],
       target_tier,
       severity: named ? graded : 'none',
       confidence: Math.round(reading.confidence * 100) / 100,

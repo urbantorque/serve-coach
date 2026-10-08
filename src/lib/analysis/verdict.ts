@@ -372,7 +372,10 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
   },
   early_shoulder_rotation: {
     title: 'Your shoulders open too early',
-    low: 'Your chest turns to the court before your hips do, so the legs and trunk add nothing to the swing.',
+    // True of both readings (D3.6): a chest open past the hips at the trophy,
+    // from a corner, and a chest half turned before the racket's low point,
+    // from the side. "Before your hips do" was true of the first only.
+    low: 'Your chest turns to the court before the racket drops, so the legs and trunk add nothing to the swing.',
   },
   no_leg_drive: {
     title: 'Your legs sit the serve out',

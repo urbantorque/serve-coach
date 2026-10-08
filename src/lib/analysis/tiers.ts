@@ -272,6 +272,27 @@ export const SIGNALS: Record<string, SignalSpec> = {
     anchors: cardBand('legDrive'),
     seriousMiss: 0.04,
   },
+  /*
+   * When the chest was half turned to the net, ms against the racket's low
+   * point, read from the shoulder line's width from the side (`chestTurn.ts`,
+   * D3.6). The side camera's reading of the fault `separation_deg` names from
+   * depth everywhere else.
+   *
+   * THE FLOOR IS THE LOW POINT, at every rung. The upper trunk turns fastest
+   * 58 ms before impact (Fleisig 2003) and the low point comes about 130 ms
+   * before it (Newton 2025), so a sound serve is half turned after the racket
+   * has dropped, as the forty Bath serves are from both sides of the court. A
+   * chest half turned before it is unwinding ahead of the swing. No study gives
+   * the turn per level, so the band does not move with the rung, and its
+   * ceiling only caps a reading that cannot be one.
+   */
+  chest_open_ms: {
+    id: 'chest_open_ms',
+    unit: 'ms',
+    direction: 'higher',
+    anchors: { 3: [0, 400], 5: [0, 400], 7: [0, 400], 9: [0, 400] },
+    seriousMiss: 100,
+  },
   contact_height_ratio: {
     id: 'contact_height_ratio',
     unit: 'ratio',
@@ -510,6 +531,9 @@ export const NOISE_FLOOR: Record<string, number> = {
   toss_peak_ratio: 0.02,
   // One and a half of its ensemble deviation, 0.006, rounded up to the next hundredth.
   leg_drive_rise_ratio: 0.01,
+  // Real motion asks for more than the rig (13.5 ms against 7.5): one and a
+  // half of the real deviation, from `realiseReal` (D3.6).
+  chest_open_ms: 21,
 }
 
 /**

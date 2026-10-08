@@ -38,6 +38,8 @@ interface Row {
   cropped?: boolean
   tracked?: string
   contact?: string
+  /** Shoulders/hips half turned, ms from the racket drop (D3.6); side-on only. */
+  chest?: string
   overall?: number
   focus?: string
   metrics?: Record<string, number | undefined>
@@ -61,6 +63,7 @@ function describe(a: Analysis): Omit<Row, 'clip' | 'mode' | 'ms'> {
     tracked: `${a.frames.length}/${expected}`,
     // Which cue decided contact (`readContact`), beside when it was.
     contact: contact ? `${contact.t.toFixed(2)}${a.contact ? ` ${a.contact.from}` : ''}` : undefined,
+    chest: a.diagnosis?.chestTurn ? `${a.diagnosis.chestTurn.shouldersMs}/${a.diagnosis.chestTurn.hipsMs}` : undefined,
     overall: a.overall,
     focus: a.focus?.title,
     metrics: {
@@ -101,11 +104,11 @@ async function run() {
   }
   ;(window as unknown as { __clips: Row[] }).__clips = rows
   document.getElementById('table')!.innerHTML =
-    '<table><tr><th>clip</th><th>mode</th><th>outcome</th><th>crop</th><th>refined</th><th>tracked</th><th>contact s</th><th>overall</th><th>focus</th><th>metrics</th><th>ms</th></tr>' +
+    '<table><tr><th>clip</th><th>mode</th><th>outcome</th><th>crop</th><th>refined</th><th>tracked</th><th>contact s</th><th>chest ms</th><th>overall</th><th>focus</th><th>metrics</th><th>ms</th></tr>' +
     rows
       .map(
         (r) =>
-          `<tr><td>${r.clip}</td><td>${r.mode}</td><td>${r.outcome}</td><td>${r.cropped ?? ''}</td><td>${r.refined ?? ''}</td><td>${r.tracked ?? ''}</td><td>${r.contact ?? ''}</td><td>${r.overall ?? ''}</td><td>${r.focus ?? ''}</td><td>${r.metrics ? JSON.stringify(r.metrics) : ''}</td><td>${r.ms.toFixed(0)}</td></tr>`,
+          `<tr><td>${r.clip}</td><td>${r.mode}</td><td>${r.outcome}</td><td>${r.cropped ?? ''}</td><td>${r.refined ?? ''}</td><td>${r.tracked ?? ''}</td><td>${r.contact ?? ''}</td><td>${r.chest ?? ''}</td><td>${r.overall ?? ''}</td><td>${r.focus ?? ''}</td><td>${r.metrics ? JSON.stringify(r.metrics) : ''}</td><td>${r.ms.toFixed(0)}</td></tr>`,
       )
       .join('') +
     '</table>'

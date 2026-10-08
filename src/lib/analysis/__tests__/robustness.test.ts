@@ -2256,9 +2256,15 @@ check('a camera that cannot see depth cannot name the coil fault either', () => 
   const d = diagnose(frames, skel)
   note(`card ${coil.confidence.toFixed(2)}, diagnosis ${d.flaws.filter((f) => f.flaw === 'early_shoulder_rotation').length} finding(s)`)
   assert(
-    !d.flaws.some((f) => f.flaw === 'early_shoulder_rotation'),
+    !d.flaws.some((f) => f.flaw === 'early_shoulder_rotation' && f.signal === 'separation_deg'),
     'named the sequence fault off depth the report had already hedged',
   )
+  // From the side the fault is read from the chest's turn instead (D3.6), and
+  // this trunk turns on time: the shoulders are where the clean serve's are,
+  // and only the hips were wound further back.
+  const sideOn = d.flaws.find((f) => f.flaw === 'early_shoulder_rotation')
+  assert(sideOn?.signal === 'chest_open_ms', 'the side camera did not read the chest turn in its place')
+  assert(!sideOn?.detected, `a chest that turned ${sideOn?.value} ms after the drop was named early`)
   assert(
     d.signals.separation_deg === undefined,
     `stated a coil of ${d.signals.separation_deg} as evidence for the tier and the injury flags`,

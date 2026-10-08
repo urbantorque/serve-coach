@@ -419,7 +419,26 @@ already has dials for D3.2–D3.4; until now nothing read them.
       at the knee trough — the published amateur signature (WTA 2026), readable
       side-on. Joins the sequence group. *Proof:* new rig dial for arm timing,
       ensemble.
-- [ ] **D3.6 Side-on trunk rotation** · M. *Research caution:* no published
+- [x] **D3.6 Side-on trunk rotation** · M. *Done (2026-10-09), as timing,
+      never degrees. `chestTurn.ts` reads how wide the shoulder and hip lines
+      look against their own length from the world skeleton, with the tilt
+      taken out. It reports when each passed half-turned to the net, against
+      the racket's low point. The width cannot tell a coil past side-on from
+      the same turn the other way, which is the caution below, so the instant
+      used is the last half-open crossing before contact. From the side,
+      `early_shoulder_rotation` is judged on `chest_open_ms`: half turned
+      before the drop is a chest unwinding ahead of the swing (trunk fastest
+      58 ms before impact, Fleisig 2003; low point about 130 ms before,
+      Newton 2025). From a corner it still uses the coil. The forty Bath serves
+      turn 75–200 ms after the drop from both sides, and none is named. The
+      rig's open chest reads up to 280 ms early from 82°, 86° and 90°.
+      Twenty-four noisy clean serves are never named. The noise floor is 21 ms,
+      from real motion. Timing against the hips was rejected: that is the order
+      `hip_lead_ms` retired. Limit: an 8° camera change moves a borderline
+      chest across the line. The bench clips gave no real-pixel check. None
+      of the five Commons clips is filmed from the side, and the reading
+      declined on all three that were measured. Original plan:* *Research
+      caution:* no published
       validation, and the width ratio is least sensitive at the trophy. Report
       timing and order, never degrees. Shoulder span over hip span through
       trophy → contact needs no depth, so `early_shoulder_rotation` can fire on

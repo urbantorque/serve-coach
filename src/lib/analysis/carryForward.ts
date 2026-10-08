@@ -159,6 +159,11 @@ export function faultMove(
    */
   if (before.target_tier !== after.target_tier) return undefined
 
+  // And it has to have been read the same way. A flaw read from depth on one
+  // serve and from the side camera on the next (`FlawSpec.sideOn`) carries two
+  // misses in two units, and no arithmetic sets one against the other.
+  if (before.signal !== after.signal) return undefined
+
   // Both readings have to be evidence. `evaluateFlaws` already drops anything
   // under this bar before it builds a finding, so in practice this catches a
   // report restored from a backup written by an older build.
