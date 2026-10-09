@@ -291,8 +291,8 @@ export default function App() {
    * the first load already has a pose model to fetch.
    */
   const showExample = useCallback(async () => {
-    const { sampleAnalysis } = await import('./dev/sampleAnalysis')
-    const { frames: _f, ...session } = sampleAnalysis()
+    const { DEMO_DIALS, sampleAnalysis } = await import('./dev/sampleAnalysis')
+    const { frames: _f, ...session } = sampleAnalysis(DEMO_DIALS.example)
     void _f
     setView({ kind: 'saved', session, example: true })
   }, [])

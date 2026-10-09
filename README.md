@@ -1221,6 +1221,22 @@ Two display changes go with it:
   line) between the two scores. The demo basket's third serve keeps its racket
   high, so the demo still has a best and a worst to show.
 
+**The rig's hips follow its knees, and the example report shows a plan.** The
+rig dipped its hips 8 cm at the trophy and raised them to `contactHipHeight`
+whatever its knees did. So a serve dialled to straight legs still drove up
+hard, and the example report — the first one a new player opens — printed
+"Legs straight" and "Strong drive up" on one card.
+
+The dip and the rise above standing now scale with the knee bend, as a share
+of the clean serve's bend (`loadShare` in `syntheticServe.ts`). The default
+and anything deeper move nothing, and leg drive falls from 0.128 to 0.014 as
+the knees straighten from 133° to 175°.
+
+The example also took the fallback path, with no ranked plan, ladder or
+"Then, in this order". It is now built from `DEMO_DIALS.example`, a racket that
+stays above the shoulder, and ranks two fixes in causal order: the legs, then
+the drop. Pinned in `collapsedSwing.test.ts`.
+
 **The report's focus ranks over every measurement, not over the areas.** An area
 score is an average, so the weakest area is not reliably where the worst fault
 lives — a player with rigid legs could otherwise be told to work on their tempo

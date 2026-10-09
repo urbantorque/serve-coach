@@ -1084,7 +1084,14 @@ Small items, and everything after builds on them.
         not 100.
       - *Proof:* a basket of one Bath serve under pure noise never gives a
         "changes serve to serve" headline.
-- [ ] **L1.9 An example report a coach would sign** · S.
+- [x] **L1.9 An example report a coach would sign** · S. *Done
+      (2026-10-09). The rig's hip dip and rise scale with its knee bend
+      (`loadShare`); the default is unchanged. Only two tests moved, both
+      because straight legs now honestly name `no_leg_drive`. The example uses
+      `DEMO_DIALS.example`, which adds a racket that stays above the shoulder:
+      two fixes, legs then drop, overall 74. The example's headline still says
+      "A solid, repeatable serve" off one serve, which is L3's to fix. Original
+      plan:*
       - **What:** the rig's hip rise is coupled to its knee bend, so straight
         legs cannot drive hard. The example is rebuilt on the real plan path:
         ranked fixes, the ladder, and Show me.

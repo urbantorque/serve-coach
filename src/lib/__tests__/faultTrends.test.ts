@@ -3,13 +3,17 @@
  */
 import { FAULT_WINDOW, faultTrends } from '../progress'
 import { DEMO_DIALS, sampleAnalysis } from '../../dev/sampleAnalysis'
+import { CLEAN_SERVE } from '../analysis/syntheticServe'
 import { progressionFor } from '../analysis/progressions'
 import type { Analysis } from '../analysis/types'
 import type { Session } from '../storage/db'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
 const FAULTY = sampleAnalysis(DEMO_DIALS.injury)
-const CLEAN = sampleAnalysis()
+// The sample serve with a clean load. The sample's own straight legs name
+// `no_leg_drive` since the rig's hips follow its knees (L1.9), so it is not a
+// clean history any more.
+const CLEAN = sampleAnalysis({ trophyKneeAngle: CLEAN_SERVE.trophyKneeAngle })
 
 function at(a: Analysis, i: number): Session {
   const { frames: _f, ...rest } = a

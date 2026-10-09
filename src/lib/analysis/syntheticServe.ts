@@ -676,6 +676,23 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
 
   const kneeBendDeg = 180 - d.trophyKneeAngle
 
+  /*
+   * How much of a full load the knees made, which is how much the hips can sink
+   * and then rise (L1.9).
+   *
+   * The hips used to dip 8 cm at the trophy and rise to `contactHipHeight`
+   * whatever the knees did, so a serve dialled to straight legs still drove up
+   * hard. The example report then printed "Legs straight" and "Strong drive up"
+   * on one card, which a coach would read as the app contradicting itself, on
+   * the first report a new player sees. Hips cannot sink without the knees
+   * bending, and they cannot rise above standing without having sunk first.
+   * Proportional to the clean serve's own bend, so the default and anything
+   * deeper move nothing.
+   */
+  const loadShare = clamp(kneeBendDeg / (180 - CLEAN_SERVE.trophyKneeAngle), 0, 1)
+  const trophyHip = HIP_M - 0.08 * loadShare
+  const contactHip = HIP_M + (d.contactHipHeight - HIP_M) * loadShare
+
   for (let i = 0; i < count; i++) {
     const t = i / fps
     const u = warp((t - preroll) / motion)
@@ -687,9 +704,9 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     const hipHeight = track(
       [
         [U.ready, HIP_M],
-        [U.trophy, HIP_M - 0.08],
-        ...(legHold ? ([[legHold, HIP_M - 0.08]] as Key[]) : []),
-        [U.contact, d.contactHipHeight],
+        [U.trophy, trophyHip],
+        ...(legHold ? ([[legHold, trophyHip]] as Key[]) : []),
+        [U.contact, contactHip],
         [1.35, HIP_M - 0.02],
       ],
       u,

@@ -29,6 +29,8 @@ import { readoutOf } from '../anatomy'
 import { weightedScore } from '../geometry'
 import { deltasAgainst } from '../../progress'
 import { assert, check, heading, note, report, within } from './harness'
+import { DEMO_DIALS, sampleAnalysis } from '../../../dev/sampleAnalysis'
+import { causalPlan } from '../verdict'
 import type { Fundamental, Metric } from '../types'
 
 const FPS = 50
@@ -172,6 +174,43 @@ check('a report saved before the rule reads the same way', () => {
   // scores under the curve's floor of 30.
   assert(!isMeasured({ score: 0, metrics: [] }), 'a stored empty area at 0 reads as measured')
   assert(isMeasured({ score: 64, metrics: [] }), 'a stored area with a score reads as not measured')
+})
+
+heading('Legs that never bend cannot drive (L1.9)')
+
+check('the rig drives up less as its knees straighten', () => {
+  // The hips used to dip and rise the same whatever the knees did.
+  const drive = [133, 145, 155, 165, 175].map((trophyKneeAngle) => analyse({ trophyKneeAngle }).get('legDrive')!.value)
+  note(`leg drive at knees 133 / 145 / 155 / 165 / 175° → ${drive.map((v) => v.toFixed(3)).join(' / ')}`)
+  for (let i = 1; i < drive.length; i++) {
+    assert(drive[i] <= drive[i - 1] + 1e-9, `straighter knees drove higher: ${drive[i - 1]} → ${drive[i]}`)
+  }
+  assert(drive[drive.length - 1] < drive[0] / 2, 'straight legs still drove up most of the way')
+})
+
+check('no serve reads straight legs beside a strong drive', () => {
+  for (const trophyKneeAngle of [150, 160, 165, 170, 175]) {
+    const { get } = analyse({ trophyKneeAngle })
+    const knee = get('kneeBend')?.readout
+    const drive = get('legDrive')?.readout
+    if (knee === readoutOf('kneeBend', 175)) {
+      assert(
+        drive !== 'Strong drive up' && drive !== 'Big launch',
+        `knees at ${trophyKneeAngle}° read "${knee}" beside "${drive}"`,
+      )
+    }
+  }
+})
+
+check('the example report shows a ranked plan, and agrees with itself', () => {
+  const a = sampleAnalysis(DEMO_DIALS.example)
+  const plan = causalPlan(a.triage, a.diagnosis)
+  note(`example: ${plan.map((p) => p.title).join(' / ')} · overall ${a.overall}`)
+  assert(plan.length >= 2, `the example ranks ${plan.length} fix(es)`)
+  const rows = a.fundamentals.flatMap((f) => f.metrics)
+  const knee = rows.find((m) => m.id === 'kneeBend')?.readout
+  const drive = rows.find((m) => m.id === 'legDrive')?.readout
+  assert(!(knee === 'Legs straight' && drive === 'Strong drive up'), 'the example still reads straight legs beside a strong drive')
 })
 
 heading('What the share is actually reading')

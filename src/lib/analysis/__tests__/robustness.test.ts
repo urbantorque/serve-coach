@@ -317,9 +317,15 @@ check('a dialled-in fault is still named as the thing to work on', () => {
   // A serve with one obvious fault: almost no knee bend. Noise must not promote
   // some other measurement above it, or the player is sent off to fix the wrong
   // thing — the single worst failure this app has.
+  //
+  // The legs, any of three ways: the card's knee bend, its leg drive, or since
+  // the rig's hips follow its knees (L1.9) the named fault that straight legs
+  // cause, "Your legs sit the serve out". All send the player to the legs.
   const { runs } = ensemble({ trophyKneeAngle: 172 }, TYPICAL_NOISE, TYPICAL_DROPOUT)
-  const named = runs.filter((r) => /knee/i.test(r.focus)).length
-  note(`knee bend named in ${named}/${SEEDS} noisy realisations`)
+  const named = runs.filter((r) => /knee|\blegs?\b/i.test(r.focus)).length
+  note(`the legs named in ${named}/${SEEDS} noisy realisations`)
+  const others = runs.filter((r) => !/knee|\blegs?\b/i.test(r.focus)).map((r) => r.focus)
+  if (others.length) note(`otherwise: ${[...new Set(others)].join(' / ')}`)
   assert(named >= SEEDS - 2, `focus flipped away from the knee bend in ${SEEDS - named} runs`)
 })
 

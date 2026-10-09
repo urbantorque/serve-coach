@@ -121,6 +121,12 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
   // `too_blurry` is measuring. Nothing here says "reject"; the resilience pass
   // decides that on its own.
   refused: { noise: 0.05, dropout: 0.35 },
+  // The example report a new player opens from the home screen (L1.9): the
+  // club serve below with a racket that stays above the shoulder, so the
+  // report shows what it is for — a ranked plan of two fixes in causal order,
+  // a ladder under the first — rather than the fallback a serve with nothing
+  // named gets. Legs first, then the drop.
+  example: { dropBelowShoulder: -0.2 },
   // The modal club serve — rigid legs and a racket that never falls — on which
   // the trophy lands on the toss and Rhythm has nothing left to grade (L1.1):
   // `?demo=collapsed` shows the area as not measured rather than as a 0.
@@ -365,7 +371,10 @@ export function sampleHistory(now = Date.now()): {
 }
 
 export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number, fps = 32): Analysis {
-  // A recognisably club-level serve: stiff legs, shallow drop, arm dropping early.
+  // A recognisably club-level serve: stiff legs, a racket hand that stops at
+  // the shoulder, and a tossing arm that comes down early. Since D7.1 a hand
+  // level with the shoulder is a full drop, so this serve names its legs only;
+  // the example report adds a shallow drop (`DEMO_DIALS.example`).
   const frames = buildServe(
     { trophyKneeAngle: 165, dropBelowShoulder: 0.08, tossArmHold: 0.2, contactReach: 1.2, ...dials },
     fps,
