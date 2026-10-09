@@ -1277,6 +1277,20 @@ accepts". It is not: the 400 MB limit admits about seven minutes of 1080p and
 a minute of 4K at 60 fps, and the refusal now says so in terms a session filmer
 can act on — L2.2.)
 
+**A change of side is not a change of server.** From the guide's placement the
+deuce and ad sides lie about 1.75 m apart along the lens, so the same body
+reads 44% taller on the near side. That crossed the 18% hand-off line, and
+every basket that changed sides was told "someone else served".
+
+One body further away shrinks, and its feet rise towards the horizon in step.
+The ground line moves by the camera's height over the player's stature for
+every unit the standing height moves: 0.52 for the guide's waist-high phone on
+the Bath serves. Somebody else on the same spot changes the height and leaves
+the feet where they were. So `possibleHandoff` flags a pair of serves past the
+threshold only when the feet did not move with them (`SAME_BODY_SLOPE`,
+0.15–1.2). Somebody a fifth shorter on the same spot is still flagged; a
+difference under the 18% line never was.
+
 **A comparison says which serves it covered.** The basket sweep reads the last
 six serves of a clip. The panel said "Across 6 serves" and the chips numbered
 five to ten with no word about one to four. Now the panel says "This clip

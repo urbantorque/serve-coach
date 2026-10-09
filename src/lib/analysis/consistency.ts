@@ -67,11 +67,46 @@ export const IMPLAUSIBLE_HEIGHT_SPREAD = 0.18
  * checks below are the guard.
  */
 export function possibleHandoff(analyses: readonly Pick<Analysis, 'scale'>[]): boolean {
-  const heights = analyses.map((a) => a.scale?.bodyHeight).filter((h): h is number => (h ?? 0) > 1e-6)
-  if (heights.length < 2) return false
-  const spread = Math.max(...heights) - Math.min(...heights)
-  return spread / Math.min(...heights) > IMPLAUSIBLE_HEIGHT_SPREAD
+  const read = analyses
+    .map((a) => a.scale)
+    .filter((s): s is NonNullable<typeof s> => !!s && s.bodyHeight > 1e-6 && Number.isFinite(s.groundY))
+  if (read.length < 2) return false
+
+  /*
+   * A player on the other side of the centre mark is not somebody else (L2.3).
+   *
+   * From the guide's placement the deuce and ad sides lie about 1.75 m apart
+   * along the lens — four metres and nearly six — so the same body reads 44%
+   * taller on one side than the other, well past the threshold, and every
+   * basket that changed sides was told "someone else served".
+   *
+   * One body further from the lens shrinks, and its feet rise towards the
+   * horizon in step: both are proportional to one over the distance, so the
+   * ground line moves by the camera's height over the player's stature for
+   * every unit the standing height moves (`SAME_BODY_SLOPE`). Somebody else on
+   * the same spot changes the height and leaves the feet where they were. So a
+   * pair of serves whose heights disagree past the threshold is a hand-off only
+   * when the feet did not move with them.
+   */
+  for (const a of read) {
+    for (const b of read) {
+      if (b.bodyHeight <= a.bodyHeight) continue
+      if ((b.bodyHeight - a.bodyHeight) / a.bodyHeight <= IMPLAUSIBLE_HEIGHT_SPREAD) continue
+      const slope = (b.groundY - a.groundY) / (b.bodyHeight - a.bodyHeight)
+      if (!(slope >= SAME_BODY_SLOPE[0] && slope <= SAME_BODY_SLOPE[1])) return true
+    }
+  }
+  return false
 }
+
+/**
+ * How far the ground line moves per unit of standing height when one body
+ * walks along the lens: the phone's height over the player's stature. A phone
+ * on a bench at 0.3 m for a 2 m player is 0.15; one on the back fence at
+ * 1.8 m for a 1.5 m player is 1.2. Outside that, the feet did not move the
+ * way a change of distance moves them (L2.3).
+ */
+export const SAME_BODY_SLOPE: [number, number] = [0.15, 1.2]
 
 export interface MetricSpread {
   id: string

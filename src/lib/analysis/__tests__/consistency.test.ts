@@ -16,8 +16,10 @@ import {
   BEST_WORST_GAP,
   CARD_NOISE_SD,
   RANGE_OF_SIX,
+  SAME_BODY_SLOPE,
   buildConsistency,
   consistencyHeadline,
+  possibleHandoff,
   servedSpread,
 } from '../consistency'
 import { overallOf } from '../coaching'
@@ -202,6 +204,46 @@ check('best against worst needs a gap the score can tell apart', () => {
     ({ fundamentals: [{ id: 'toss', metrics: [] }], overall, serves: { count: 2, index: i } }) as unknown as Analysis
   assert(buildConsistency([mk(78, 0), mk(76, 1)], 2)!.gap === undefined, 'two serves two points apart were called best and worst')
   assert(buildConsistency([mk(80, 0), mk(70, 1)], 2)!.gap !== undefined, 'a ten-point gap was hidden')
+})
+
+heading('A change of side is not a change of server (L2.3)')
+
+/** What a sweep reads of one serve's scale, from the virtual phone. */
+const scaleOf = (frames: Frame[]) => {
+  const skel = detectServe(frames, 30)
+  return { scale: { bodyHeight: skel.bodyHeight, groundY: skel.groundY } } as unknown as Analysis
+}
+
+/** The same frames with somebody `k` times the height standing on the same spot. */
+function otherBody(frames: Frame[], k: number): Frame[] {
+  const f0 = frames[0]
+  const ground = Math.max(f0.image[LM.leftAnkle].y, f0.image[LM.rightAnkle].y)
+  const cx = (f0.image[LM.leftAnkle].x + f0.image[LM.rightAnkle].x) / 2
+  return frames.map((fr) => ({
+    ...fr,
+    image: fr.image.map((l) => ({ ...l, x: cx + (l.x - cx) * k, y: ground + (l.y - ground) * k })),
+  }))
+}
+
+check('the deuce and ad sides from the guide\'s placement are one server', () => {
+  // Four metres and nearly six along the lens: the same body reads 44% taller
+  // on the near side, and used to be told someone else served.
+  for (const serve of REAL_SERVES) {
+    const near = scaleOf(filmMocap(serve, { distance: 4 }))
+    const far = scaleOf(filmMocap(serve, { distance: 5.75 }))
+    const slope = (near.scale!.groundY - far.scale!.groundY) / (near.scale!.bodyHeight - far.scale!.bodyHeight)
+    assert(slope >= SAME_BODY_SLOPE[0] && slope <= SAME_BODY_SLOPE[1], `${serve.id}: the feet moved ${slope.toFixed(2)} per unit of height`)
+    assert(!possibleHandoff([near, far, near, far]), `${serve.id}: a change of side was called a hand-off`)
+  }
+})
+
+check('somebody a fifth shorter on the same spot is still flagged', () => {
+  for (const serve of REAL_SERVES) {
+    const frames = filmMocap(serve, { distance: 4 })
+    const player = scaleOf(frames)
+    const other = scaleOf(otherBody(frames, 0.8))
+    assert(possibleHandoff([player, player, other]), `${serve.id}: a shorter body on the same spot was not flagged`)
+  }
 })
 
 report()

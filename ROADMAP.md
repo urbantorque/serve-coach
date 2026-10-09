@@ -1157,7 +1157,13 @@ L2.4 onward is session mode.
         and the report. Refusal copy that knows about sessions. README
         `:156` and `:1076` corrected.
       - *Proof:* render tests and the copy lint.
-- [ ] **L2.3 Sides are not strangers** · S.
+- [x] **L2.3 Sides are not strangers** · S. *Done (2026-10-09), without
+      clustering. A pair past the 18% line is a hand-off only when its ground
+      line did not move with its height; the slope for one body is camera
+      height over stature (`SAME_BODY_SLOPE`). The six Bath serves at 4 m and
+      5.75 m read 0.52 and are never flagged. Someone 20% shorter on the same
+      spot is flagged. The plan said 15%, but the 18% line never caught that
+      and was not moved. Original plan:*
       - **What:** the "someone else served" check runs within each position
         cluster, so a change of side no longer trips it.
       - *Proof:* `filmMocap` at 4 m and at 5.75 m is not flagged; a real 15%
