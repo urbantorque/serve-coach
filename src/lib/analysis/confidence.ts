@@ -253,7 +253,45 @@ function readsRacketArm(id: string, racket: Side): boolean {
  * `pickFocus`, and down-weighted in the score, rather than either refused
  * outright or reported as though the camera had held still.
  */
-const blurTrust = (blur: number) => clamp(1 - blur * 0.85, 0.2, 1)
+export const blurTrust = (blur: number) => clamp(1 - blur * 0.85, 0.2, 1)
+
+/**
+ * The costs a reading pays for what it rests on, which the diagnosis pays too
+ * (L1.2).
+ *
+ * Three of `DEPENDENCIES` describe the clip rather than the camera, and the
+ * diagnosis reads the same numbers off the same clip:
+ * - `scale`: the height came from the torso because the feet were out of frame.
+ * - `trophy`: the trophy was found from the arms because the legs never loaded.
+ * - `contact`: the hand and the ball disagree about when contact was.
+ *
+ * Until this existed the card multiplied these in and the flaw pass did not. So
+ * with the feet cropped, the card called contact height approximate and kept it
+ * out of the headline, while the plan named `low_contact` as the first fix at
+ * full confidence — the pairing `DEPTH_COLLAPSED` was exported to stop,
+ * arriving through three other doors.
+ *
+ * One function, called from both places, so the amounts cannot drift apart.
+ */
+export type SharedDependency = 'scale' | 'trophy' | 'contact'
+
+export function restingTrust(
+  deps: readonly SharedDependency[],
+  skel: Pick<Skeleton, 'derivation'>,
+  contactAgreement?: number,
+): number {
+  let c = 1
+  // Torso length is about 30% of standing height, so the ratio that recovers
+  // height from it multiplies the torso's own error by more than three.
+  if (deps.includes('scale') && skel.derivation.scaleFromTorso) c *= 0.5
+  // The arm fallback puts the trophy in a sensible place, but a place found
+  // from a different cue than the one the measurement assumes.
+  if (deps.includes('trophy') && skel.derivation.trophyFromArms) c *= 0.7
+  // Not a cost of either cue — each may be fine on its own — but of their
+  // disagreeing: one of them is wrong about the moment these are read at.
+  if (deps.includes('contact')) c *= clamp(contactAgreement ?? 1, 0.5, 1)
+  return c
+}
 
 export interface ConfidenceContext {
   frames: Frame[]
@@ -409,25 +447,14 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
   let c = 1
 
   for (const dep of DEPENDENCIES[id] ?? []) {
-    if (dep === 'scale' && skel.derivation.scaleFromTorso) {
-      // Torso length is about 30% of standing height, so the ratio that recovers
-      // height from it multiplies the torso's own error by more than three.
-      c *= 0.5
-    }
-    if (dep === 'trophy' && skel.derivation.trophyFromArms) {
-      // The arm fallback puts the trophy in a sensible place, but a place found
-      // from a different cue than the one the measurement assumes.
-      c *= 0.7
+    if (dep === 'scale' || dep === 'trophy' || dep === 'contact') {
+      // The three the diagnosis pays as well, priced in one place.
+      c *= restingTrust([dep], skel, ctx.contactAgreement)
     }
     if (dep === 'realTime' && looksSlowedDown(ctx.frames, skel)) {
       // A slowed clip's timings are real numbers about a stretched clock. Shown
       // hedged, never scored as the player's rhythm — see `looksSlowedDown`.
       c *= SLOWED_TIMING
-    }
-    if (dep === 'contact') {
-      // Not a cost of either cue — each may be fine on its own — but of their
-      // disagreeing: one of them is wrong about the moment these are read at.
-      c *= clamp(ctx.contactAgreement ?? 1, 0.5, 1)
     }
     if (dep === 'swingTiming') {
       // Four samples across a ~150 ms window leaves ±30 ms of quantisation on a

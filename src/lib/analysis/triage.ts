@@ -21,6 +21,7 @@
  * tracker could not see the hand, and the only safe output is a reason the clip
  * could not be read.
  */
+import { SOFT_MEASUREMENT } from './confidence'
 import { blurOf, capturedSamples, frozenThroughSwing, stabilise } from './kalman'
 import { assessSpatial, spatialVisibility, type Spatial } from './spatial'
 import { clamp, keyVisibility, mean, sided } from './geometry'
@@ -397,9 +398,22 @@ export function triage(diagnosis: Diagnosis, resilience: Resilience): Triage {
   const detected = diagnosis.flaws.filter((f) => f.detected)
   const attributed = new Set(detected.filter((f) => f.caused_by).map((f) => f.flaw))
 
+  /*
+   * The first fix stands on a reading the card would call firm (L1.2).
+   *
+   * `pickFocus` has always set soft measurements aside and only reached for
+   * them when nothing else was left, because sending a player away to rebuild
+   * something on a number the card itself marks approximate is worse than
+   * saying nothing about it. The plan did not, so it could lead on exactly the
+   * number the card had hedged. The same rule now, in the same order: the
+   * hierarchy over the firm findings, and over the soft ones only when there
+   * is no firm finding at all.
+   */
+  const firm = detected.filter(isFirm)
+  const pool = firm.length ? firm : detected
   let primary: { finding: FlawFinding; group: string } | undefined
   for (const level of HIERARCHY) {
-    const here = detected
+    const here = pool
       .filter((f) => level.flaws.includes(f.flaw))
       .filter((f) => !attributed.has(f.flaw))
       .sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity])
@@ -454,6 +468,15 @@ export function triage(diagnosis: Diagnosis, resilience: Resilience): Triage {
     suppressed_count: Math.max(0, detected.length - 1),
   }
 }
+
+/**
+ * Whether a finding stands on a reading firm enough to lead the plan.
+ *
+ * `SOFT_MEASUREMENT`, the card's own line, rather than `MIN_EVIDENCE`, which
+ * asks only whether a fault may be named at all. A finding between the two is
+ * real enough to list and too rough to start with.
+ */
+export const isFirm = (f: Pick<FlawFinding, 'confidence'>): boolean => f.confidence >= SOFT_MEASUREMENT
 
 /**
  * Mechanics that risk a joint rather than a point.

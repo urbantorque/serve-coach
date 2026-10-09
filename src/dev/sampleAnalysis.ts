@@ -113,7 +113,10 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
   // the wrist flag's 45° — so without it the flag came up on 13 of 24 noise
   // realisations and not at all on the clean serve this route draws. At 120°
   // it is raised on 22 of 24, and on the clean one.
-  injury: { spineLean: 34, palmToSky: 80, trophyForearmDrop: 0.25, pronation: 120 },
+  //
+  // Filmed from behind the baseline, where the sideways fold lies across the
+  // picture; from the side it runs along the lens and is hedged out (L1.2).
+  injury: { spineLean: 34, palmToSky: 80, trophyForearmDrop: 0.25, pronation: 120, cameraYaw: 8 },
   // Heavy tracker noise smears the racket hand through the swing, which is what
   // `too_blurry` is measuring. Nothing here says "reject"; the resilience pass
   // decides that on its own.
@@ -275,7 +278,7 @@ export function sampleHistory(now = Date.now()): {
       // report. `injury` sets both at once; this history needs them apart.
       const sore =
         serve.sore === 'back'
-          ? { spineLean: DEMO_DIALS.injury.spineLean }
+          ? { spineLean: DEMO_DIALS.injury.spineLean, cameraYaw: DEMO_DIALS.injury.cameraYaw }
           : serve.sore === 'wrist'
             ? {
                 palmToSky: DEMO_DIALS.injury.palmToSky,

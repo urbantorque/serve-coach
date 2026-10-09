@@ -1076,6 +1076,33 @@ rows can only be an empty one. Reports saved before the rule therefore read
 the same way, with no migration. The change folds into scoring version 5.
 Pinned in `collapsedSwing.test.ts`.
 
+**The plan pays the confidence costs the card pays.** The card marks a number
+down for what it rests on beyond its landmarks:
+- the height recovered from the torso, when the feet were cropped;
+- a trophy found from the arms;
+- a hand and a ball that disagree about contact;
+- a smeared swing.
+
+The diagnosis read the same numbers off the same frames priced on visibility
+alone. So the card could call contact height approximate while the plan named
+`low_contact` as the first fix at full confidence. Now every diagnosis signal
+that shares a quantity with a card row pays that row's costs. `restingTrust`
+and `blurTrust` in `confidence.ts` serve both places, so the two cannot drift
+apart.
+
+`triage` then leads on a firm finding whenever one exists. That is the card's
+`SOFT_MEASUREMENT` line, the same rule `pickFocus` has always applied. The rest
+of the plan lists firm findings before soft ones, each group in causal order.
+
+The sideways lean is the other half. It is read from the world skeleton across
+the hip line, and by contact the hips face the net. So from the side that line
+runs along the lens and the reading is a guess at depth: it is hedged by
+`DEPTH_COLLAPSED` there and no longer names `posture_collapse` or raises the
+lower-back flag. From behind the baseline it lies across the picture and is
+read as before. `angleReach.ts` now sends a side-on player behind the baseline
+to check it. Pinned in `robustness.test.ts`, `flaws.test.ts` and
+`angleReach.test.ts`.
+
 **The report's focus ranks over every measurement, not over the areas.** An area
 score is an average, so the weakest area is not reliably where the worst fault
 lives — a player with rigid legs could otherwise be told to work on their tempo

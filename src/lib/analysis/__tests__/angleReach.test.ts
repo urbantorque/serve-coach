@@ -64,7 +64,13 @@ check('the report says what this angle missed, and where to stand, in the voice'
   const corner = line(45)
   note(`side: ${side.join(' ')}`)
   note(`behind: ${behind.join(' ')}`)
-  assert(side.length === 1 && side[0].includes('sideways') && side[0].includes('behind the baseline'), 'the side clip did not send the player behind the baseline')
+  // Two from the side since L1.2: the toss's sideways drift, and the body's
+  // sideways fold, which from there runs along the lens.
+  assert(
+    side.length === 2 && side.every((l) => l.includes('sideways') && l.includes('behind the baseline')),
+    'the side clip did not send the player behind the baseline for both sideways readings',
+  )
+  assert(side.some((l) => l.includes('toss')) && side.some((l) => l.includes('body folds')), `the side clip said: ${side.join(' ')}`)
   assert(behind.length === 1 && behind[0].includes('forward or back') && behind[0].includes('side-on'), 'the back clip did not send the player to the side')
   assert(corner.length === 2, `a 45° corner reads neither drift and said ${corner.length} lines`)
   for (const l of [...side, ...behind, ...corner]) assert(cueIssues(l).length === 0, `"${l}": ${cueIssues(l).join(', ')}`)

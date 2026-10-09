@@ -27,7 +27,8 @@ import {
   type ConfidenceContext,
 } from '../confidence'
 import { CHAIN_WINDOW_SECONDS, diagnose } from '../diagnose'
-import { assessResilience, rejectionFor, LIMITS } from '../triage'
+import { CARD_SIGNAL } from '../tiers'
+import { assessResilience, isFirm, rejectionFor, triage, LIMITS } from '../triage'
 import { cueIssues } from '../voice'
 import { cacheSize, forgetAll, recall, remember } from '../../analysisCache'
 import { normalise, normalisePracticeLog, type Session } from '../../storage/db'
@@ -1861,6 +1862,70 @@ check('the headline advice is never built on a measurement it distrusts', () => 
   if (chosen) {
     note(`focus: ${chosen.label} (confidence ${chosen.confidence.toFixed(2)})`)
     within(chosen.confidence, SOFT_MEASUREMENT, 1, 'confidence of the measurement chosen as the focus')
+  }
+})
+
+/**
+ * The card and the plan read off one clip the way `analyze.ts` reads it: the
+ * card with every confidence input, the diagnosis with the blur it now pays.
+ */
+function cardAndPlan(dials: Partial<ServeDials>, mutate?: (frames: Frame[]) => Frame[]) {
+  const frames = mutate ? mutate(buildServe(dials, FPS)) : buildServe(dials, FPS)
+  const skel = detectServe(frames, FPS)
+  const resilience = assessResilience(frames, skel)
+  const quality = assessQuality(frames, skel, FPS, resilience.blur)
+  const fundamentals = measure(frames, skel, quality.view === 'side', {
+    confidence: {
+      frames,
+      skel,
+      swingSamples: quality.swingSamples,
+      view: quality.view,
+      depthUnreliable: resilience.spatial.depth_unreliable,
+      blur: resilience.blur,
+    },
+  })
+  const diagnosis = diagnose(frames, skel, { tier: 5, blur: resilience.blur })
+  return { skel, fundamentals, diagnosis, verdict: triage(diagnosis, resilience) }
+}
+
+check('the plan prices a shared number no higher than the card does (L1.2)', () => {
+  // Cropped feet and rigid legs: the two clip faults the card hedges heights
+  // and the trophy for. Before L1.2 the card called contact height approximate
+  // while the plan named a low contact from it at full confidence.
+  for (const [what, dials, mutate] of [
+    ['cropped feet, low contact', { contactReach: 1.1 }, cropFeet],
+    ['cropped feet, no drop', { dropBelowShoulder: -0.25 }, cropFeet],
+    ['rigid legs', { trophyKneeAngle: 174 }, undefined],
+  ] as const) {
+    const { fundamentals, diagnosis } = cardAndPlan(dials, mutate)
+    const rows = fundamentals.flatMap((f) => f.metrics)
+    for (const [card, signal] of Object.entries(CARD_SIGNAL)) {
+      const row = rows.find((m) => m.id === card)
+      const finding = diagnosis.flaws.find((f) => f.signal === signal)
+      if (!row || !finding) continue
+      note(`${what}: ${card} ${row.confidence.toFixed(2)} on the card, ${finding.flaw} ${finding.confidence.toFixed(2)} in the plan`)
+      assert(
+        finding.confidence <= row.confidence + 0.05,
+        `${what}: ${finding.flaw} stands at ${finding.confidence} on a number the card prices at ${row.confidence.toFixed(2)}`,
+      )
+    }
+  }
+})
+
+check('the first fix stands on a firm reading whenever there is one (L1.2)', () => {
+  for (const [what, dials, mutate] of [
+    ['cropped feet, low contact', { contactReach: 1.1 }, cropFeet],
+    ['cropped feet, no drop', { dropBelowShoulder: -0.25 }, cropFeet],
+    ['rigid legs, no drop', { trophyKneeAngle: 174, dropBelowShoulder: -0.25 }, undefined],
+  ] as const) {
+    const { diagnosis, verdict } = cardAndPlan(dials, mutate)
+    const named = diagnosis.flaws.filter((f) => f.detected)
+    const firm = named.filter(isFirm)
+    const primary = named.find((f) => f.flaw === verdict.primary_flaw?.flaw)
+    note(`${what}: ${named.map((f) => `${f.flaw} ${f.confidence}`).join(', ') || 'nothing named'} → ${primary?.flaw ?? 'no fix'}`)
+    if (firm.length && primary) {
+      assert(isFirm(primary), `${what}: the plan leads on ${primary.flaw} at ${primary.confidence} with a firm finding beside it`)
+    }
   }
 })
 

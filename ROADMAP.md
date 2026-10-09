@@ -951,7 +951,17 @@ Small items, and everything after builds on them.
         Rhythm area the engine never measured. *Proof:*
         `collapsedSwing.test.ts` asserts the overall is the weighted mean of
         the non-empty areas (71, not 62).
-- [ ] **L1.2 One confidence for card and plan** · S–M.
+- [x] **L1.2 One confidence for card and plan** · S–M. *Done (2026-10-09):
+      `restingTrust` and `blurTrust` price six diagnosis signals as their card
+      rows are priced; the card and the plan now read 0.50/0.50 with the feet
+      cropped and 0.70/0.70 on rigid legs. `triage` and `causalPlan` lead on
+      firm findings (`isFirm`) and fall back to soft ones only when nothing
+      firm was named, which is the rule `pickFocus` already followed. Spine lean
+      is hedged from the side only, not on `depth_unreliable`, since that flag
+      also fires from behind, where the lean is read best. So `posture_collapse`
+      joins `ANGLE_BOUND`, and the posture tests and the injury demo now film
+      from behind. Left open: a soft lead, when it is all there is, carries no
+      "read this loosely" line on the focus card. Original plan:*
       - **What:** diagnosis signals take their confidence from
         `metricConfidence`, which covers:
         - scale from the torso;

@@ -202,8 +202,16 @@ check('a chest already open at the trophy is caught, and a level one no longer i
 check('posture collapse is caught, and a shallow drop is told from a real one', () => {
   // 34°, not 26°: real motion raised the lean's floor to 10 (`NOISE_FLOOR`),
   // and a 26° lean reads a 6° miss.
-  const collapsed = run({ spineLean: 34, tossWobble: 0.09 }, 5).diagnosis
+  //
+  // From behind the baseline (L1.2). By contact the hips face the net, so from
+  // the side the sideways lean runs along the lens and is a guess at depth:
+  // hedged under `MIN_EVIDENCE` there, and `angleReach.ts` sends the player
+  // behind the baseline to check it.
+  const collapsed = run({ spineLean: 34, tossWobble: 0.09, cameraYaw: 8 }, 5).diagnosis
   assert(flagged(collapsed).includes('posture_collapse'), 'collapse missed')
+  const fromTheSide = run({ spineLean: 34, tossWobble: 0.09 }, 5).diagnosis
+  assert(!flagged(fromTheSide).includes('posture_collapse'), 'a lean read along the lens was named from the side')
+  assert(fromTheSide.signals.spine_lean_deg === undefined, 'a lean read along the lens reached the signals')
 
   // A hand left 25 cm above the shoulder: the racket never lays back. A hand
   // that stops level with the shoulder is a full drop on real motion
@@ -363,7 +371,8 @@ check('a low contact off a good toss is left as a contact fault', () => {
 })
 
 check('a collapsing spine is traced to the toss that caused it', () => {
-  const { diagnosis } = run({ spineLean: 34, tossWobble: 0.09 }, 5)
+  // From behind, where both the lean and a sideways toss are read (L1.2).
+  const { diagnosis } = run({ spineLean: 34, tossWobbleLateral: 0.09, cameraYaw: 8 }, 5)
   assert(
     findingFor(diagnosis, 'posture_collapse')?.caused_by === 'toss_drift',
     'a spine chasing a drifting toss was reported as a posture problem on its own',
@@ -404,7 +413,10 @@ check('root causes are listed ahead of the symptoms they explain', () => {
   // severity, and since real motion put the lean's floor level with its serious
   // miss (`NOISE_FLOOR.spine_lean_deg`) a named collapse is always 'high', so
   // the toss has to be a serious miss too or the sort is by severity instead.
-  const { diagnosis } = run({ spineLean: 34, tossWobble: 0.15 }, 5)
+  //
+  // From behind with a sideways toss since L1.2, for the reason given at the
+  // posture check above.
+  const { diagnosis } = run({ spineLean: 34, tossWobbleLateral: 0.15, cameraYaw: 8 }, 5)
   const order = diagnosis.flaws.filter((f) => f.detected).map((f) => f.flaw)
   const cause = order.indexOf('toss_drift')
   const symptom = order.indexOf('posture_collapse')

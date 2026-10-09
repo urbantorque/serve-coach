@@ -16,7 +16,7 @@
  */
 import { LM, clamp, jointAngle, mean, sided, trunkCoilReading } from './geometry'
 import { imageXSplitFrom, readImageX } from './axes'
-import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED } from './confidence'
+import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED, blurTrust, restingTrust } from './confidence'
 import { assessSpatial, viewFromCourtYaw } from './spatial'
 import { readStance, type Stance } from './stance'
 import { readTossPlacement, type TossPlacement } from './tossPlacement'
@@ -461,6 +461,14 @@ export interface DiagnoseOptions {
    * against landmarks, whose x is in frame heights. One when unsaid.
    */
   aspect?: number
+  /**
+   * How smeared the racket hand's track is, 0–1 (`Resilience.blur`), and how
+   * far the hand and the ball agree about contact (`ContactRead.agreement`).
+   * The card pays both on the readings it shares with this pass, so this pass
+   * pays them too (L1.2). Unsaid, neither costs anything, as on the card.
+   */
+  blur?: number
+  contactAgreement?: number
 }
 
 const now = () =>
@@ -1014,7 +1022,36 @@ export function diagnose(
   const separationConfidence =
     trunkVisibility *
     (depthUnreliable ? DEPTH_COLLAPSED : 1) *
-    (coil.resolved ? 1 : SWEEP_UNRESOLVED)
+    (coil.resolved ? 1 : SWEEP_UNRESOLVED) *
+    restingTrust(['trophy'], skel)
+
+  /*
+   * One confidence for card and plan (L1.2).
+   *
+   * The card prices a number for what it rests on beyond its landmarks — the
+   * height from the torso when the feet were cropped, a trophy found from the
+   * arms, a hand and a ball that disagree about contact, a smeared swing — and
+   * this pass read the same numbers off the same frames priced on visibility
+   * alone. So the card called contact height approximate and kept it out of
+   * the headline while the plan named `low_contact` first, at full confidence.
+   * Each signal below that shares a quantity with a card row now pays what
+   * that row pays, through the same functions (`restingTrust`, `blurTrust`).
+   */
+  const smear = options.blur === undefined ? 1 : blurTrust(options.blur)
+  const rests = (deps: Parameters<typeof restingTrust>[0]) =>
+    restingTrust(deps, skel, options.contactAgreement)
+
+  /*
+   * And the sideways lean, which is read from the world skeleton across the
+   * hip line. By contact the hips face the net, so from the side — the
+   * placement the guide asks for — that line runs along the lens and the lean
+   * is the pose model's guess at depth (ANALYSIS-REVIEW.md §9, the withdrawn
+   * posture demo). From behind the baseline it lies across the picture and is
+   * read cleanly. Hedged by `DEPTH_COLLAPSED` from the side only, not on
+   * `depth_unreliable`, which also fires from behind, where this reading is
+   * at its best. `angleReach.ts` sends the player behind the baseline for it.
+   */
+  const leanAlongLens = viewFromCourtYaw(spatial.court_yaw_deg) === 'side'
 
   /* --- assemble --------------------------------------------------------- */
   const readings: Record<string, SignalReading | undefined> = {
@@ -1039,7 +1076,7 @@ export function diagnose(
         : {
             value: drift.value,
             confidence:
-              windowVisibility(frames, liftFrom, keys.toss, [T.wrist]) * drift.confidence,
+              windowVisibility(frames, liftFrom, keys.toss, [T.wrist]) * drift.confidence * rests(['scale']),
             // The axis travels with the number. Recovering it here and then
             // dropping it was the half-fix: the metric card said "forwards and
             // back" while the largest heading on the same report still said
@@ -1047,29 +1084,37 @@ export function diagnose(
             // Everything that writes a sentence about this flaw reads this.
             axis: driftAxis,
           },
-    spine_lean_deg: { value: spineLean, confidence: trunkVisibility },
+    spine_lean_deg: {
+      value: spineLean,
+      confidence: trunkVisibility * (leanAlongLens ? DEPTH_COLLAPSED : 1),
+    },
     drop_depth_ratio: {
       value: dropDepth,
-      confidence: windowVisibility(frames, keys.drop - 1, keys.drop + 1, [R.wrist, R.shoulder]),
+      confidence:
+        windowVisibility(frames, keys.drop - 1, keys.drop + 1, [R.wrist, R.shoulder]) * rests(['scale']) * smear,
     },
     elbow_lift_ratio: {
       value: elbowLift,
-      confidence: windowVisibility(frames, keys.drop - 1, keys.drop + 1, [R.elbow, R.shoulder]),
+      confidence:
+        windowVisibility(frames, keys.drop - 1, keys.drop + 1, [R.elbow, R.shoulder]) * rests(['scale']) * smear,
     },
     pronation_deg: { value: pronation, confidence: contactHandConfidence },
     contact_height_ratio: {
       value: contactHeight,
-      confidence: windowVisibility(frames, keys.contact - 1, keys.contact + 1, [R.wrist]),
+      confidence:
+        windowVisibility(frames, keys.contact - 1, keys.contact + 1, [R.wrist]) * rests(['scale', 'contact']) * smear,
     },
     toss_peak_ratio:
       tossPeak === undefined
         ? undefined
-        : { value: tossPeak, confidence: clamp(options.ball?.confidence ?? 0, 0, 1) },
+        : { value: tossPeak, confidence: clamp(options.ball?.confidence ?? 0, 0, 1) * rests(['scale']) },
     // The hips rising from the deepest load to contact: the legs' share of the
     // serve, read from image y, which is vertical at every angle the app takes.
     // Graded since the research gave it a scale — see its band in `tiers.ts`.
     leg_drive_rise_ratio:
-      legDrive.rise === null ? undefined : { value: legDrive.rise, confidence: legDrive.confidence },
+      legDrive.rise === null
+        ? undefined
+        : { value: legDrive.rise, confidence: legDrive.confidence * rests(['scale', 'trophy']) },
     // When the chest was half turned to the net, against the racket's low point:
     // the side camera's reading of the fault `separation_deg` names from depth.
     chest_open_ms:

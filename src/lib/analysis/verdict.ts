@@ -31,6 +31,7 @@ import type { BodyAxis } from './axes'
 import {
   HIERARCHY,
   drillIdFor,
+  isFirm,
   type InjuryFlag,
   type RejectReason,
   type Triage,
@@ -517,17 +518,24 @@ export function causalPlan(
   const detected = (diagnosis?.flaws ?? []).filter((f) => f.detected)
   const attributed = new Set(detected.filter((f) => f.caused_by).map((f) => f.flaw))
 
-  for (const level of HIERARCHY) {
-    if (out.length >= MAX_PLAN) break
-    const here = detected
-      .filter((f) => level.flaws.includes(f.flaw))
-      .filter((f) => f.flaw !== triage.primary_flaw!.flaw && !attributed.has(f.flaw))
-      .sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity])
-
-    for (const f of here) {
+  // Firm findings in causal order, then the soft ones in causal order (L1.2):
+  // the card's rule that a reading it calls approximate comes after the ones
+  // it stands behind, applied to the rest of the plan as `triage` applies it
+  // to the first fix.
+  for (const firm of [true, false]) {
+    for (const level of HIERARCHY) {
       if (out.length >= MAX_PLAN) break
-      const entry = focusFor(f.flaw, f.value, f.target, f.axis)
-      if (entry) out.push(entry)
+      const here = detected
+        .filter((f) => isFirm(f) === firm)
+        .filter((f) => level.flaws.includes(f.flaw))
+        .filter((f) => f.flaw !== triage.primary_flaw!.flaw && !attributed.has(f.flaw))
+        .sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity])
+
+      for (const f of here) {
+        if (out.length >= MAX_PLAN) break
+        const entry = focusFor(f.flaw, f.value, f.target, f.axis)
+        if (entry) out.push(entry)
+      }
     }
   }
 

@@ -1891,8 +1891,13 @@ check('and the bound covers the shift the arm actually had', () => {
   // coefficient. It stopped being one number when the arm was re-posed — 0.5 on
   // the old arm, 0.2 on the Bath-shaped one — and no consumer subtracts it:
   // `carryForward.ts` and `consistency.ts` both use it to size a bound.
+  //
+  // Filmed from behind the baseline since L1.2: from the side the lean runs
+  // along the lens, is hedged out of `signals`, and the consumers refuse the
+  // comparison for want of it. Behind, the rotation reads the same (probed:
+  // 28/47/66/85° upright at both placements).
   const at = (er: number, lean: number) => {
-    const frames = buildServe({ ...REF_CLEAN, trophyExternalRotation: er, spineLean: lean }, FPS)
+    const frames = buildServe({ ...REF_CLEAN, cameraYaw: 8, trophyExternalRotation: er, spineLean: lean }, FPS)
     const d = diagnose(frames, detectServe(frames, FPS), { tier: 5 })
     return { deg: d.externalRotation.deg!, lean: d.signals.spine_lean_deg }
   }

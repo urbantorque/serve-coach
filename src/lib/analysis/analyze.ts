@@ -1097,6 +1097,8 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     ball: servedBall,
     serveType,
     aspect: analysis.video.width / Math.max(1, analysis.video.height),
+    blur: resilience.blur,
+    contactAgreement: contact.agreement,
   })
   const verdict = triage(diagnosis, resilience)
 
@@ -1156,19 +1158,23 @@ export function rediagnose(analysis: Analysis, tier: number | undefined): Analys
   const servedBall = retimeFlight(analysis.ball, factor)
 
   let skel: Skeleton
+  let contact: ContactRead
   try {
-    ;({ skel } = detectWithContact(frames, analysis.quality.sampledFps, analysis.handedness, servedBall))
+    ;({ skel, contact } = detectWithContact(frames, analysis.quality.sampledFps, analysis.handedness, servedBall))
   } catch {
     return undefined
   }
 
+  const resilience = assessResilience(frames, skel)
   const diagnosis = diagnose(frames, skel, {
     tier,
     ball: servedBall,
     serveType: analysis.serveType,
     aspect: analysis.video.width / Math.max(1, analysis.video.height),
+    blur: resilience.blur,
+    contactAgreement: contact.agreement,
   })
-  const verdict = triage(diagnosis, assessResilience(frames, skel))
+  const verdict = triage(diagnosis, resilience)
 
   return {
     ...analysis,
@@ -1764,7 +1770,14 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // used. A second pass over data already in memory rather than a second pass
   // over the video — it costs about a millisecond, which is why it is not
   // behind a flag.
-  const diagnosis = diagnose(engine(), skel, { tier: opts.tier, ball: servedBall, serveType, aspect })
+  const diagnosis = diagnose(engine(), skel, {
+    tier: opts.tier,
+    ball: servedBall,
+    serveType,
+    aspect,
+    blur: resilience.blur,
+    contactAgreement: contact.agreement,
+  })
 
   // What the clip itself was worth, and the single thing to work on — or the
   // reason there is nothing worth saying. Carried as data rather than acted on

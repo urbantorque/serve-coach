@@ -36,6 +36,11 @@ export interface AngleBound {
 export const ANGLE_BOUND: AngleBound[] = [
   { flaw: 'toss_drift', axis: 'lateral', filmFrom: 'front-back', what: 'whether your toss drifts sideways' },
   { flaw: 'toss_drift', axis: 'depth', filmFrom: 'side', what: 'whether your toss drifts forward or back' },
+  // The sideways lean runs along the lens from the side by contact, where the
+  // hips face the net, so from there it is a guess at depth and is hedged out
+  // of naming (L1.2, `leanAlongLens` in diagnose.ts). From behind the baseline
+  // it lies across the picture.
+  { flaw: 'posture_collapse', filmFrom: 'front-back', what: 'whether your body folds sideways' },
 ]
 
 const WHERE: Record<AngleBound['filmFrom'], string> = {

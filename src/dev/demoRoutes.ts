@@ -239,7 +239,7 @@ export async function runDemoRoute(
     seedHistory(sampleHistory())
     setView({
       kind: 'glance',
-      analysis: sampleAnalysis({ spineLean: DEMO_DIALS.injury.spineLean }),
+      analysis: sampleAnalysis({ spineLean: DEMO_DIALS.injury.spineLean, cameraYaw: DEMO_DIALS.injury.cameraYaw }),
       videoUrl: '',
     })
   } else if (demo?.startsWith('glance-move')) {
