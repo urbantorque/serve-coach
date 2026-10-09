@@ -28,6 +28,9 @@ picture follows it, for the record.*
 - **Still open:** D1.2's browser pass (needs a real-time 60 fps clip), the
   research questions under D7.2 (a second mocap set), W5.4 and W6.3–W6.5, the
   fixture shoot. And still **no git remote.**
+- **Next:** the Level-up programme at the end of this file (L1–L6). It covers
+  trust fixes, every serve in a session, a score that can show progress, and
+  seeing what good looks like. The reasoning is in `LEVEL-UP-REVIEW.md`.
 
 ### As it stood on 2026-09-23
 
@@ -913,3 +916,522 @@ to the literature, never re-derived from one player.
       `NOISE_FLOOR` can be re-run on real serves and the self-referential
       floors (`ANALYSIS-REVIEW.md` F1) checked. *Proof:* a floor table, rig
       against real motion.
+
+---
+
+## Level-up programme (2026-10-09) — trust, sessions, progress, seeing good
+
+This programme came from a six-area review: coaching and ease of use, visuals,
+engine accuracy, grading and progression, long sessions, and everyday pain
+points. `LEVEL-UP-REVIEW.md` holds the reasoning and the `file:line` evidence.
+This section is the ledger.
+
+The Depth programme's rules still hold:
+- every item is proven by machine (the rig, the Bath bench, the open-data
+  benches, a published study, or the browser preview);
+- `LOOP.md`'s eight constraints apply throughout;
+- nothing changes a colour or sends data off the device.
+
+Items that change the score fold into the unshipped scoring version 5, so a
+player's history breaks only once.
+
+### Wave L1 — Stop saying wrong things
+Small items, and everything after builds on them.
+
+- [ ] **L1.1 Score only what was measured** · S.
+      - **What:** an area with no graded rows leaves the overall and the share
+        card. Its card says "Not measured on this clip" instead of drawing a 0
+        ring. No area delta is shown when one side of it is empty.
+      - **Why:** today the commonest club serve loses about 9 points to a
+        Rhythm area the engine never measured. *Proof:*
+        `collapsedSwing.test.ts` asserts the overall is the weighted mean of
+        the non-empty areas (71, not 62).
+- [ ] **L1.2 One confidence for card and plan** · S–M.
+      - **What:** diagnosis signals take their confidence from
+        `metricConfidence`, which covers:
+        - scale from the torso;
+        - a trophy found from the arms;
+        - the hand and the ball disagreeing about contact;
+        - blur;
+        - depth.
+      - Spine lean also gets `DEPTH_COLLAPSED`.
+      - *Proof:* the rig's `cropFeet`, rigid-leg and contact-lag cases, plus a
+        check that no named fault rests on a signal whose card twin is soft.
+- [ ] **L1.3 Injury flags on measured footing** · M.
+      - **Wrist:** drop the pronation half of the flag (it is under-resolved),
+        or replace it with the cocking signature. Require palm-to-sky past the
+        tray's own floor.
+      - **Lower back:** cite a threshold (Gao 2026).
+      - **Both:** a flag must clear the noise floor before it is raised. Card
+        copy claims only what is measured.
+      - *Proof:* zero false flags across `realiseReal` on the six Bath serves
+        (60 takes each) and across the rig's noise ensembles. The rig's
+        injury dials still flag at least 90% of the time.
+- [ ] **L1.4 Retire the hold and pause drills; one drill source** · S.
+      - **What:** when a reading maps to a fault, `PracticeCard` and
+        `pickFocus` hand out the ladder rung the player is on
+        (`progressionFor`). The pause at the drop, "slow sink hold", "freeze
+        at the trophy", "reach and freeze" and the heels-up basket are
+        replaced. Kick servers get the kick drill.
+      - *Proof:*
+        - no reachable drill text matches freeze, hold, pause or stop dead;
+        - a practice test with a kick history;
+        - no two drill cards on a page share a name.
+- [ ] **L1.5 Copy truth pass, and the lint's blind spots** · S.
+      - **What:** the rewrites in `LEVEL-UP-REVIEW.md` §1. The worst offenders:
+        - focus titles taken from readouts rather than from the target;
+        - `practiceHeadline`'s grammar;
+        - the best-serve line said in words;
+        - toss placement in foot-lengths.
+      - **The lint** is extended to drill names, labels, fault titles, phase
+        captions, runtime-built sentences, and "drop" used for anything but
+        the racket.
+      - *Proof:* `copy.test.ts` walks a registry of every string a player can
+        see, and renders each template with every label.
+- [ ] **L1.6 One "start here"** · S.
+      - **What:** the basket headline sits below the plan. `PracticeCard` is
+        hidden when it repeats the focus. Home's "Working on" comes from the
+        same plan, or at least from confidence-filtered rows.
+      - *Proof:* render tests in the `?demo=basket` shape, and a practice test
+        with soft rows excluded.
+- [ ] **L1.7 Never trade a report for an error** · S.
+      - **What:**
+        - A failed sweep falls back to the single report already saved, with
+          a note.
+        - No automatic sweep when the clip's own read was refused.
+        - A refused serve inside a sweep counts as "too unclear".
+        - The report's own serve is reused, not read again.
+        - The wrong-hand error gets a "Read it left-handed" button.
+      - *Proof:* the `sweepServes` harness with a stub `measure`, and an App
+        flow test that lands on the report.
+- [ ] **L1.8 Honest basket statistics** · S.
+      - **What:** spread becomes a standard deviation or MAD with the camera's
+        own noise subtracted, soft rows excluded, and scaled to today's
+        six-serve scores. Best-against-worst is hidden when the gap is under
+        the noise. A steady fault row says "steady, but outside the target",
+        not 100.
+      - *Proof:* a basket of one Bath serve under pure noise never gives a
+        "changes serve to serve" headline.
+- [ ] **L1.9 An example report a coach would sign** · S.
+      - **What:** the rig's hip rise is coupled to its knee bend, so straight
+        legs cannot drive hard. The example is rebuilt on the real plan path:
+        ranked fixes, the ladder, and Show me.
+      - *Proof:*
+        - the rig's leg drive falls as `trophyKneeAngle` straightens;
+        - the example's triage names at least two faults;
+        - a coherence check: knee "straight" never appears beside leg drive
+          "strong".
+- [ ] **L1.10 One placement everywhere** · S.
+      - **What:** one `PLACEMENT` constant feeds the guide, the live check, the
+        refusals and the tips. The live check accepts what the guide draws.
+        "Film from behind" appears only when the unseen axis matters to the
+        faults named.
+      - *Proof:* the rig at the drawn placement passes the live check and
+        still measures contact in front. A string test checks every hint uses
+        the constant.
+
+### Wave L2 — Every serve in a session
+Today a clip over 400 MB is refused, and a clip that gets in yields about 8
+serves, effectively at random. L2.1–L2.3 correct the basket path that exists.
+L2.4 onward is session mode.
+
+- [ ] **L2.1 Find every serve** · S–M.
+      - **What:**
+        - re-read every candidate, not 8;
+        - a density floor with adaptive coarse sampling;
+        - a rolling reach reference over ±2 min;
+        - `MAX_SERVES`' comment corrected.
+      - *Proof:*
+        - rig-shaped timelines are all found: 10 serves in 2 min, 50 in 10,
+          120 in 30;
+        - a cost-formula test;
+        - the wide-parabola test replaced.
+- [ ] **L2.2 Say what was read** · S.
+      - **What:** "Found 50 serves · compared 45–50" on the analysing screen
+        and the report. Refusal copy that knows about sessions. README
+        `:156` and `:1076` corrected.
+      - *Proof:* render tests and the copy lint.
+- [ ] **L2.3 Sides are not strangers** · S.
+      - **What:** the "someone else served" check runs within each position
+        cluster, so a change of side no longer trips it.
+      - *Proof:* `filmMocap` at 4 m and at 5.75 m is not flagged; a real 15%
+        height difference still is.
+- [ ] **L2.4 Session intake and the plan sheet** · S.
+      - **What:**
+        - clips are routed by duration;
+        - the session path skips `MAX_BYTES` and never copies the file to
+          OPFS;
+        - a calibration on the file itself gives the time estimate;
+        - the player picks a sample of 12 or every serve.
+      - *Proof:* the estimator on a fake clock, and a byte-built 30-minute
+        60 fps `moov` parsed in under 32 MB. After L2.1.
+- [ ] **L2.5 Checkpointed runner and session stores** · M.
+      - **What:**
+        - one `ServeLine` row per serve, its frames dropped at once;
+        - the run pauses when the page is hidden and resumes when the same
+          file is matched;
+        - a pause when the phone is warm;
+        - new stores in DB v4, carried in the backup.
+      - *Proof:*
+        - the footprint does not grow with the number of serves;
+        - `planResume` tests;
+        - a fake-video sweep of 120 serves.
+      - After L2.4.
+- [ ] **L2.6 The light read** · M.
+      - **What:** only the readings that hold at 16 fps, within `NOISE_FLOOR`
+        of the 32 fps read: toss placement from the hand, contact height,
+        knee bend, tempo, landing.
+      - *Proof:* noise ensembles on the rig and on Bath. After L2.5.
+- [ ] **L2.7 Session statistics and a basket verdict** · M.
+      - **What, as data only:**
+        - a robust spread;
+        - side clusters and camera segments;
+        - early against late, by D5.2's rule;
+        - fault frequency ranked by `HIERARCHY`;
+        - the representative 8.
+      - **The verdict:** a fault is named for a basket by how often it appears
+        and how far past its floor.
+      - *Proof:*
+        - seeded timelines with planted drift, a side change and a bump;
+        - a null session says nothing;
+        - the 40 Bath serves as one player's basket under `realiseReal` give
+          fewer false positives than judging single serves.
+      - After L2.6.
+- [ ] **L2.8 The session dashboard** · M.
+      - **What:** the nine sections in `LEVEL-UP-REVIEW.md` §5, and
+        `?demo=session`. Serves per week counts sessions, not reports.
+      - *Proof:* render tests, the copy lint, and a 375×812 preview. After L2.7.
+- [ ] **L2.9 Hear the serves** · L.
+      - **What:**
+        - read the audio sample tables and decode the audio in ADTS chunks;
+        - detect onsets and fuse them with the reach peaks;
+        - learn the audio-to-video offset rather than assume it;
+        - use WebCodecs where present, and fall back to the visual scan.
+      - *Proof:*
+        - onsets found in synthetic PCM;
+        - byte-built audio boxes;
+        - a Commons clip decoded in the preview, with its speed recorded.
+      - After L2.4.
+- [ ] **L2.10 Who is serving** · M.
+      - **What:** a crop per segment, and a serve accepted only when four
+        things agree:
+        - the player is still at the line;
+        - the tossing arm rises;
+        - the reach peaks;
+        - an impact is heard.
+      - Anything else goes to a "not sure" list.
+      - *Proof:* timelines with distractors. After L2.1 and L2.5.
+- [ ] **L2.11 Session highlights** · S.
+      - **What:** the best 3 and worst 3 stored as mm:ss ranges and replayed
+        when the same file is opened again. A multi-GB file is never copied.
+      - *Proof:* `clipStore` and file-identity tests. After L2.8.
+- [ ] **L2.12 Play-scan locate** · M, optional.
+      - **What:** muted playback at 2–4× with frame callbacks instead of seeks,
+        chosen per device from the calibration.
+      - *Proof:* a fake-video logic test, and the frame rate measured in the
+        preview.
+
+### Wave L3 — A score that can show progress
+On club serves, noise moves the headline number more than fixing a fault
+does, and nothing marks a fault as fixed.
+
+- [ ] **L3.1 Calibrate "real change" on club serves** · S–M.
+      - **What:** run ensembles on the weighted overall and on each area, for
+        the modal club serve, the fault family and Bath. Set thresholds from
+        the p90 drift. Gate on them every delta chip, the Progress hero and the
+        spoken glance. A keyframe collapse that flips under noise is reported
+        as soft.
+      - *Proof:* the noise ensembles. After L1.1.
+- [ ] **L3.2 A trip score with a range** · M.
+      - **What:** the headline becomes the trip median with its range, as in
+        "Tuesday: 71, your serves ran 66–75". The trend plots trip medians,
+        and the best and the six-week line come from trips of three or more
+        serves.
+      - *Proof:* seeded histories, and in the ensemble the trip median drifts
+        less than a single serve. After L3.1.
+- [ ] **L3.3 A season ledger that outlives pruning** · S–M.
+      - **What:** about 0.5 kB per trip in its own store and in the backup,
+        with the ladder steps. Reports are capped by their stills, not by
+        count. A restore returns how many it pruned.
+      - *Proof:* `planPrune` with 300 synthetic reports, the footprint test, and
+        a backup round-trip.
+- [ ] **L3.4 Graduation and re-test** · S–M.
+      - **What:**
+        - `checkDrill` runs against the fault being drilled;
+        - a fixed fault gets one line, e.g. "Racket drop: clean on 5 of your
+          last 6 serves, over two trips. Next: the toss.";
+        - the week plan advances in hierarchy order;
+        - a re-check every fourth trip;
+        - "take it to a coach" only after a full rung cycle.
+      - *Proof:* seeded histories and `weekPlan` tests. After L3.3.
+- [ ] **L3.5 The serve path** · M.
+      - **What:** each of the six hierarchy groups is one of: not seen yet,
+        working on (step k of n), holding, or locked in. The headline is said
+        in words, e.g. "4 of 6 parts holding". A relapse moves a group back
+        and says so plainly.
+      - *Proof:* seeded diagnoses, rig sequences with a fault turned on and
+        off, and a render test. After L3.4.
+- [ ] **L3.6 Attendance at the player's own cadence** · S.
+      - **What:** the cadence is inferred from the median gap between trips, or
+        set in Settings. It is counted forgivingly, and only analysed trips
+        count.
+      - *Proof:* seeded fortnightly trips show a streak.
+- [ ] **L3.7 Sets from the player's own tags** · S–M.
+      - **What:** "Start a set of 10" on the glance. The target is the
+        player's own in-rate plus one. First and second serves are kept
+        apart, and the best set is a record.
+      - *Proof:* tag fixtures and a glance render test.
+- [ ] **L3.8 Personal bests as body positions** · S.
+      - **What:** fires when a trip median crosses a readout rung and beats
+        the old best by more than the noise floor, e.g. "first trip with a full
+        racket drop".
+      - *Proof:* seeded histories and the rig.
+- [ ] **L3.9 Say what the level does, and let it order the plan** · S.
+      - **What:**
+        - the legend asks "Which faults should I point out?" and says "Your
+          score is the same at every level";
+        - at rung 4 and below, the arm action comes before the legs;
+        - the leg-drive floor is re-derived against a full extension with no
+          jump, by sweeping `contactHipHeight` against `trophyKneeAngle`.
+      - *Proof:* a `jsxCopy` test and a plan-order check per rung.
+- [ ] **L3.10 Why this score** · S.
+      - **What:** a folded line per area giving its weight, how far the weakest
+        row pulled it down, and which rows were dropped or approximate.
+      - *Proof:* the contributions sum to the overall; the copy lint.
+- [ ] **L3.11 Re-score in place when only the bands move** · M.
+      - **What:** a scoring-version bump is classed as band-only or as a
+        measurement change. A band-only bump re-scores the stored values
+        instead of starting a new era.
+      - *Proof:* a v4 history re-scored equals a fresh v5 score.
+- [ ] **L3.12 Serve profile and the graduation card** · M.
+      - **What:** an ungraded "how you serve" card per trip. When a fault is
+        retired, its then-and-now pair becomes a share image. Nothing leaves
+        the device except through the share button.
+      - *Proof:* distinct rig dials give distinct profiles; a render test for
+        the share card.
+
+### Wave L4 — See what good looks like
+Everything here is built from `primitives.tsx` and the existing tokens.
+
+- [ ] **L4.1 A shorter report** · M.
+      - **What:** hero → focus → plan → video and six moments → one folded
+        "More about this clip". The folded part holds the basket, toss map, how
+        the clip was read, tagging, areas and firing order.
+      - *Proof:* a DOM-order render test and a preview at 375×812.
+- [ ] **L4.2 A ladder that starts where the player is** · S.
+      - **What:**
+        - the starting rung comes from the fault's severity;
+        - each step declares an engine check or a self-check;
+        - the feel cue is shown unfolded;
+        - plan items 2–4 expand to show how.
+      - *Proof:* seeded severities map to rungs, type-level totality over
+        checks, and render tests.
+- [ ] **L4.3 A model serve to watch** · S.
+      - **What:** the clean rig serve looped with the moment pills and the
+        checkpoint captions, in the guide, on the analysing screen and in the
+        example.
+      - *Proof:* a render test.
+- [ ] **L4.4 A figure worth looking at** · M.
+      - **What:** one renderer for every model and skeleton, with:
+        - limb weight and joint dots;
+        - a racket from the forearm, with a rig lay-back dial;
+        - the ball's flight;
+        - the wrong segment in `--work`;
+        - the target dashed.
+      - *Proof:* drawing tests and preview stills. Unlocks L4.5 and L4.6.
+- [ ] **L4.5 Show me for the faults players get** · M.
+      - **What:** shallow drop, toss height, toss drift and the legs. The
+        landmark that differs is highlighted and named.
+      - *Proof:* in `faultDemo.test`, the difference is at least
+        `DEMO_MIN_DIFFERENCE` and the engine names the fault on exactly one of
+        the pair. After L4.4.
+- [ ] **L4.6 Your frame beside the model's** · M.
+      - **What:** at the focus fault's moment, and later all six, the player's
+        still sits beside the clean serve's, scaled and mirrored for the hand,
+        with 2–3 ticks from the readouts. The six moments' captions become
+        "what to look for", each with a tick or a cross.
+      - *Proof:* the ticks equal band membership; a left-handed mirror test.
+        After L4.4.
+- [ ] **L4.7 Targets on the toss map, in foot-lengths** · S.
+      - **What:** a target band from the cited contact-in-front figures, or
+        re-derived on Bath under D2.1's rule.
+      - *Proof:* a bands test: Bath inside, the rig's drift outside.
+- [ ] **L4.8 The ghost that stays** · S.
+      - **What:** AIM FOR uses the ball's contact height when the ball was
+        tracked. The best-serve ghost also shows on a live report.
+      - *Proof:* a `stillEvidence` test with a tracked ball.
+- [ ] **L4.9 Progress as a dashboard** · M.
+      - **What:**
+        - tiles for form (trip median and range), records, the serve path and
+          the chart;
+        - then-and-now one moment at a time;
+        - repeatability drawn so that a longer bar means steadier;
+        - one share button.
+      - *Proof:* render tests and preview screenshots. After L3.2 and L3.5.
+- [ ] **L4.10 Home that knows the player** · S.
+      - **What:** once there is history, a compact hero, with This week and
+        the player's form in the first viewport.
+      - *Proof:* a render test with seeded history, and the preview.
+- [ ] **L4.11 Words in the chrome** · S.
+      - **What:**
+        - trophy, racket drop, stance and firing order are defined on a tap;
+        - "Hip–shoulder separation" is renamed;
+        - the app speaks with one narrator voice;
+        - no text a player must read is under about 11 px.
+      - *Proof:* a `jsxCopy` test and a CSS floor check.
+
+### Wave L5 — Engine depth for the club serve
+
+- [ ] **L5.1 Sources for the diagnosis ladders** · M.
+      - **What:** D2.1's rule and `bands.test.ts` are extended to the
+        diagnosis. Tray, posture, toss drift and collapsed elbow are each
+        cited, re-derived on Bath with a rig fault, or moved to
+        `UNCALIBRATED`. Toss drift and the card's toss path are judged as one.
+      - *Proof:* the extended test fails on any graded signal without a
+        source.
+- [ ] **L5.2 A second witness for the tray** · M.
+      - **What:** shoulder abduction during cocking under about 70°
+        (Touzard 2019) is required beside palm-to-sky.
+      - *Proof:* the rig's arm-lay-over and palm dials; none of the 40 Bath
+        serves is named. After L5.1.
+- [ ] **L5.3 Contact behind the head, named** · S–M.
+      - **What:** `contact_behind` in the toss group, from the cited
+        contact-in-front band, with toss placement as its cause. Side view
+        only, and the kick's floor is 0.
+      - *Proof:* the rig's contact and ball offsets; Bath reads 15–34, inside
+        the band.
+- [ ] **L5.4 Tossing arm, named** · S.
+      - **What:** `tossArmHold` is promoted into the toss group.
+      - *Proof:* the rig's dropped-arm dial; Bath reads 72–79%.
+- [ ] **L5.5 A camera that stays still, or says it didn't** · M.
+      - **What:** a vertical-tilt dial on the rig. Drift in the ground line and
+        in apparent size between the ready and contact is detected, and any
+        reading built on image height is hedged when the camera moved.
+      - *Proof:* the zoom KNOWN check flips from wrong to hedged.
+- [ ] **L5.6 The ball's height from its fall** · S.
+      - **What:** Δh = ½g·t² from apex to contact, which needs no scale and
+        has no perspective.
+      - *Proof:* the rig ball at every placement; the five Bath placements
+        agree within the noise floor.
+- [ ] **L5.7 Falling back, signed** · S–M.
+      - **What:** the landing is signed by the swing's net direction. Falling
+        backwards is an `UNCALIBRATED` reading first.
+      - *Proof:* a negative `landingLean` on the rig; every Bath serve lands
+        forward.
+- [ ] **L5.8 The second serve that slows down** · M.
+      - **What:** with tagged first and second serves, compare drop-to-contact
+        time. Say so when the second is slower past the noise bound
+        (Chow 2003, Sheets 2011).
+      - *Proof:* the rig's tempo dials, with the bound from `realiseReal`.
+        After L2.7, or a tagged basket.
+- [ ] **L5.9 Noise that behaves like a tracker** · M.
+      - **What:** fit drift and left/right swaps from MediaPipe's disagreement
+        with RTMPose on the bench, then re-run every floor. This closes
+        `ANALYSIS-REVIEW.md` Tier 1.8.
+      - *Proof:* the floor table, before and after.
+- [ ] **L5.10 The ball pass in sweeps** · S–M.
+      - **What:** sweeps keep the ball pass, so `checkDrill` can judge toss
+        height in a basket and session full reads keep the ball.
+      - *Proof:* the sweep harness with a rig ball, and the footprint test.
+- [ ] **L5.11 Benchmark the racket box** · M.
+      - **What:** score EfficientDet against COCO's racket boxes. Only if it
+        holds up, use the racket head under the shoulder as a witness for the
+        drop.
+      - *Proof:* the `/bench.html` table.
+- [ ] **L5.12 The 60 fps hint** · S.
+      - **What:** until D1.2 is wired, the too-few-frames refusal recommends
+        slow motion only.
+      - *Proof:* a copy test.
+
+### Wave L6 — Field reliability
+
+- [ ] **L6.1 One honest download** · M.
+      - **What:**
+        - a build-time manifest of every engine file;
+        - one "x of 57 MB" bar across all of them;
+        - a stall timeout that rejects and clears `pending`;
+        - a warning on saveData or a cellular connection.
+      - *Proof:* fake streaming fetches, a fetch that never resolves, and fake
+        timers.
+- [ ] **L6.2 Offline errors that say so** · S.
+      - **What:** a failed engine load gets its own hints instead of
+        video-format advice. Home's footer follows `offlineReady`.
+      - *Proof:* a failure-classification test, and a Home render with
+        `offlineReady=false`.
+- [ ] **L6.3 Record at the camera's best** · M.
+      - **What:** the recording constraints come from a pure function (1080p
+        ideal, 60 fps ideal). `getSettings()` is stamped on the analysis and
+        into `?check`.
+      - *Proof:* a constraints test and a fake-MediaStream recorder test.
+- [ ] **L6.4 Interruptions** · S–M.
+      - **What:**
+        - `useWakeLock` returns its status, and a refused lock shows one line;
+        - an interrupted analysis leaves a marker in `sessionStorage`, read on
+          the next load;
+        - seeks wait for the page to be visible again instead of timing out.
+      - *Proof:* render tests, and extract tests with a fake
+        `document.hidden`.
+- [ ] **L6.5 iOS storage safety** · S–M.
+      - **What:**
+        - after the first save on iOS Safari: "Export, add to Home Screen,
+          then restore";
+        - an installed app with no history offers a restore;
+        - `lastExportedAt` is stored, with a reminder after N serves.
+      - *Proof:* render tests with `isIOS` and `isInstalled` stubbed.
+- [ ] **L6.6 An engine cache that follows the version** · S.
+      - **What:** the cache name comes through a Vite define, the readiness
+        check looks in that cache only, and older engine caches are deleted.
+      - *Proof:* a fake CacheStorage test.
+- [ ] **L6.7 Keep videos only where it works** · S.
+      - **What:** check for `createWritable` before offering the setting, tell
+        the player when a keep fails, and make the "never saved" copy follow
+        the setting.
+      - *Proof:* a `clipStore` test with a handle that lacks `createWritable`,
+        and a render test of a reopened report with a kept clip.
+- [ ] **L6.8 A crash screen that backs up first** · S.
+      - **What:** "Save a backup first", using plain IndexedDB with no React,
+        and a confirmation before anything is cleared.
+      - *Proof:* a render test.
+- [ ] **L6.9 A time estimate** · S.
+      - **What:** an estimate taken from this device's past `Analysis.cost`.
+      - *Proof:* a unit test.
+- [ ] **L6.10 The small platform fixes** · S.
+      - **What:**
+        - `goHome` releases the video, so updates can land;
+        - the glance's speech is primed on the record tap;
+        - `?check` gains probes for wake lock, `createWritable`, rVFC, a local
+          voice and installed status.
+      - *Proof:* an App test and the `selfCheck` text tests.
+- [ ] **L6.11 `useAnalysisRun`** · M.
+      - **What:** `run`, `compareServes` and `openClip` move out of `App.tsx`
+        with their refs, so the idle and sweep decisions can be tested.
+      - *Proof:* hook tests, and `App.tsx` under 1,200 lines.
+- [ ] **L6.12 Ledgers that agree** · S.
+      - **What:** `LOOP.md` points at this branch and at `ROADMAP.md`.
+        `NEXT.md` and `PROGRESS.md` are marked historical. The test cache is
+        set per run by default.
+
+### Order of play
+
+1. **L1 first.** Every item is small, and the waves after it build on it:
+   - the plan's confidence (L1.2) feeds the basket verdict;
+   - the score fix (L1.1) feeds every delta;
+   - one drill source (L1.4) feeds graduation.
+2. **Then L2.1–L2.3 and L3.1.** The first three correct the basket path that is
+   wrong today. L3.1 decides what counts as a change.
+3. **Then four tracks side by side:**
+   - sessions (L2.4–L2.8);
+   - progression (L3.2–L3.5);
+   - seeing good (L4.1–L4.6);
+   - reliability (L6.1–L6.5).
+4. **Last: engine depth (L5) and audio (L2.9),** because each is a measurement
+   round of its own.
+
+Out of scope, because they need a person or data leaving the device:
+- a git remote;
+- level norms from population data;
+- leaderboards and coach sharing;
+- phone timing (W5.4);
+- the fixture shoot.
+
+`LEVEL-UP-REVIEW.md` lists them as the owner's call.
