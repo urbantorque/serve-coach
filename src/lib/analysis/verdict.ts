@@ -128,13 +128,18 @@ export interface InjuryNote {
 }
 
 const INJURIES: Record<InjuryFlag, { title: string; body: string }> = {
+  // Only what is measured (L1.3): the palm facing the sky under the racket.
+  // The turn through the ball the old body described cannot be read. The
+  // loads are Touzard 2019's: elbow and wrist, at the same ball speed.
   wrist_strain_forced_pronation: {
-    title: 'Watch your wrist',
-    body: 'Your palm starts flat and then turns hard through the ball, so the wrist takes a load the forearm should carry.',
+    title: 'Watch your elbow and wrist',
+    body: 'Your palm faces the sky under the racket. Serving that way loads your elbow and wrist more, for no extra speed.',
   },
+  // Campbell 2013: larger sideways forces on the lower back in players with
+  // back pain. No study gives a count of serves, so the body gives none.
   lumbar_load_posture_collapse: {
     title: 'Watch your lower back',
-    body: 'Your spine folds sideways under the swing. A hundred of those in a session is where back pain starts.',
+    body: 'Your upper body tips sideways as you hit. That bend loads your lower back, serve after serve.',
   },
   shoulder_load_no_drop: {
     title: 'Watch your shoulder',
@@ -185,7 +190,7 @@ export function injuryNotes(triage: Triage | undefined): InjuryNote[] {
  * having to go and reopen a report from three weeks ago.
  */
 const RECURRING: Record<InjuryFlag, string> = {
-  wrist_strain_forced_pronation: 'Your wrist has turned hard through the ball',
+  wrist_strain_forced_pronation: 'Your palm has faced the sky under the racket',
   lumbar_load_posture_collapse: 'Your lower back has folded under the swing',
   shoulder_load_no_drop: 'Your shoulder has covered a high reach',
 }
@@ -218,7 +223,7 @@ export function strainLine(record: Pick<StrainRecord, 'flag' | 'trips' | 'of'>):
  * reports what it counted and the player can decide how pleased to be.
  */
 const CLEARED: Record<InjuryFlag, string> = {
-  wrist_strain_forced_pronation: 'Your wrist has stopped turning hard through the ball',
+  wrist_strain_forced_pronation: 'Your palm has stopped facing the sky under the racket',
   lumbar_load_posture_collapse: 'Your lower back has held straight under the swing',
   shoulder_load_no_drop: 'Your racket has fallen behind you before you reach',
 }
@@ -248,7 +253,7 @@ export function strainClearedLine(record: Pick<StrainCleared, 'flag' | 'since'>)
  * a fourth flag fails in one file.
  */
 const JOINT: Record<InjuryFlag, string> = {
-  wrist_strain_forced_pronation: 'your wrist',
+  wrist_strain_forced_pronation: 'your elbow and wrist',
   lumbar_load_posture_collapse: 'your lower back',
   shoulder_load_no_drop: 'your shoulder',
 }

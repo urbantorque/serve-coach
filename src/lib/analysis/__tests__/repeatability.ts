@@ -33,7 +33,8 @@
 import fixture from './fixtures/bath-serves.json'
 import { diagnose, type Diagnosis } from '../diagnose'
 import { LM } from '../geometry'
-import { filmMocap, unpackMocap, type MocapServe, type PackedMocapServe } from '../mocapServe'
+import { filmMocap, unpackMocap, type MocapServe, type PackedMocapServe, type VirtualPhone } from '../mocapServe'
+import { injuriesIn, type InjuryFlag } from '../triage'
 import { detectServe } from '../phases'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { NOISE_FLOOR, SIGNALS, UNDER_RESOLVED } from '../tiers'
@@ -138,6 +139,8 @@ export interface Realisation {
   named: Set<FlawId>
   /** Every flaw finding, named or not, keyed by the signal that proves it. */
   bySignal: Record<string, { detected: boolean; miss: number; confidence: number }>
+  /** The joint warnings this realisation would raise (`injuriesIn`, L1.3). */
+  injuries: InjuryFlag[]
 }
 
 /**
@@ -198,6 +201,7 @@ export function realiseFilmed(
       bySignal: Object.fromEntries(
         d.flaws.map((f) => [f.signal, { detected: f.detected, miss: f.miss, confidence: f.confidence }]),
       ),
+      injuries: injuriesIn(d).map((r) => r.flag),
     })
   }
   return out
@@ -243,12 +247,15 @@ export function realiseReal(
   over: readonly number[] = SEEDS,
   fps = FPS,
   tier = 5,
+  /** Where the virtual phone stands, when not the guide's placement. */
+  phone: Partial<VirtualPhone> = {},
 ): Realisation[][] {
   return serves.map((serve) => {
-    const scale = statureInPicture(filmMocap(serve, { fps })[0]) / RIG_STATURE
+    const scale = statureInPicture(filmMocap(serve, { ...phone, fps })[0]) / RIG_STATURE
     return realiseFilmed(
       (seed) =>
         filmMocap(serve, {
+          ...phone,
           fps,
           seed,
           noise: IN_PLANE * scale,

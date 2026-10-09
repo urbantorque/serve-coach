@@ -256,6 +256,28 @@ silence, because this screen has no room for a caveat. Nothing is stored, counte
 or rewarded: it is one observation about two serves, and it goes when the trip
 does. `?demo=glance-move`, and `-cleared`/`-same`/`-wider`, show the four states.
 
+**A joint warning stands on its own fault, named.** The three flags used to
+read raw signals against thresholds of their own, below the faults they warn
+about, and with no noise floor. So "Watch your wrist" could sit above a report
+that never named the grip. Its second witness, the forearm's turn through the
+ball, is under-resolved: a 76° floor, where real serves turn about 93°. That
+made it true on every real serve and proof of nothing.
+
+Since L1.3, each flag needs its fault named on a firm reading:
+- the tray for the elbow and wrist;
+- `posture_collapse` for the lower back;
+- `shallow_drop` for the shoulder.
+
+The tray card now claims only the palm facing the sky. It cites Touzard 2019:
+higher elbow and wrist loads for the same ball speed. The back card cites
+Campbell 2013, and no longer gives a count of serves no study gives.
+
+On the six real Bath serves under noise, nothing is raised from the guide's
+placement (0 of 144 takes), and the rig's clean serve raises nothing. From the
+back fence the fold's own take-to-take noise, about ±10° on a real serve,
+reaches its 29° line on 4 of 144 takes. That is pinned as a KNOWN check in
+`triage.test.ts` rather than hidden behind a threshold of the warning's own.
+
 **A joint warning that keeps coming back is counted, and the denominator is the
 hard part.** `triage` has always raised injury flags on the serve in front of it
 and the report has always printed them, but a wrist is not hurt by one serve, and

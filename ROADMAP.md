@@ -972,7 +972,21 @@ Small items, and everything after builds on them.
       - Spine lean also gets `DEPTH_COLLAPSED`.
       - *Proof:* the rig's `cropFeet`, rigid-leg and contact-lag cases, plus a
         check that no named fault rests on a signal whose card twin is soft.
-- [ ] **L1.3 Injury flags on measured footing** · M.
+- [x] **L1.3 Injury flags on measured footing** · M. *Done (2026-10-09),
+      with one departure. Each flag now needs its own fault named on a firm
+      reading: the tray, `posture_collapse` or `shallow_drop`. That puts the
+      noise floor, the camera allowance and `isFirm` under every warning
+      without a second threshold. The wrist flag reads the palm alone. The tray
+      card says "Watch your elbow and wrist" (Touzard 2019), and the back card
+      gives no count of serves.
+      Measured on the six Bath serves × 24 noisy takes:
+      - from the guide's placement, 0 of 144 takes raise a warning;
+      - the rig's clean serve raises none;
+      - the tray is caught on 96% of takes and a 40° fold on 100%.
+      The departure: from the back fence the fold's own noise reaches its line
+      on 4 of 144 real takes, so "zero false flags" holds from the side only.
+      That is pinned as a KNOWN check, for a floor re-derived from behind or
+      L2.7's basket verdict to close. Original plan:*
       - **Wrist:** drop the pronation half of the flag (it is under-resolved),
         or replace it with the cocking signature. Require palm-to-sky past the
         tray's own floor.

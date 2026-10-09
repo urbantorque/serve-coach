@@ -33,7 +33,7 @@ import { buildServe, type ServeDials } from '../syntheticServe'
 import { NotAServeError } from '../types'
 import { runEngine } from '../../../dev/mocap/engine'
 import { filmMocap } from '../mocapServe'
-import { REAL_SERVES } from './repeatability'
+import { REAL_SERVES, SEEDS, realise, realiseReal } from './repeatability'
 import { assert, check, heading, near, note, report } from './harness'
 
 const FPS = 50
@@ -558,11 +558,10 @@ check('every flaw the engine can name has a drill that exists', () => {
 
 heading('Mechanics that risk a joint')
 
-check('a hard-rotated tray grip is flagged as a wrist risk', () => {
-  // The hard rotation is dialled, not assumed. The rig's default turn through
-  // contact reads 33–39° since its arm was re-posed — under the rule's 45° —
-  // where the forty Bath serves read a median of 93°, so the rig under-turns
-  // the hand (ROADMAP D7.2) and a check about a hard turn has to ask for one.
+check('a tray grip is flagged as an elbow and wrist risk', () => {
+  // The turn through contact is still dialled, but since L1.3 the flag no
+  // longer reads it: the forearm's turn is under-resolved, and the flag stands
+  // on the named tray alone.
   const { result } = pipeline({ palmToSky: 80, trophyForearmDrop: 0.22, pronation: 120 })
   const risks = result.injury_risk.map((r) => r.flag)
   note(risks.join(', ') || 'none')
@@ -590,6 +589,88 @@ check('an injury flag survives triage even when its flaw is not the one chosen',
   })
   assert(result.primary_flaw?.group === 'grip', 'the grip did not win the hierarchy')
   assert(result.injury_risk.length > 0, 'the injury flag was suppressed along with its flaw')
+})
+
+heading('Joint warnings stand on measured footing (L1.3)')
+
+const rate = (runs: { injuries: string[] }[], flag: string) =>
+  runs.filter((r) => r.injuries.includes(flag)).length / Math.max(1, runs.length)
+
+check("no joint warning is raised on real serves from the guide's placement", () => {
+  // The six Bath serves, twenty-four noisy takes each. Before L1.3 the wrist
+  // flag's second witness was true on every real serve, and the lower back
+  // was warned about from a lean the side camera reads along its lens.
+  const runs = realiseReal(REAL_SERVES, SEEDS, 50, 5).flat()
+  const raised = runs.filter((r) => r.injuries.length)
+  note(`the guide: ${raised.length} of ${runs.length} real takes raised a warning`)
+  assert(runs.length > 100, `only ${runs.length} takes were readable`)
+  assert(raised.length === 0, `${raised.map((r) => r.injuries.join('+')).join(', ')}`)
+})
+
+check("KNOWN: from the back fence, the fold's own noise reaches the lower-back warning", () => {
+  /*
+   * The warning stands on `posture_collapse`, and that fault's reading moves
+   * about ±10° between takes of one real serve from behind (p10–p90 of 1–24°
+   * on a serve whose median is 12°). It is named at 29°, and the noisiest
+   * takes reach 28–30°. So the fault, and the warning with it, is named on
+   * about one take in thirty-six of a real serve that does not fold. Measured
+   * on 2026-10-09: 4 of 144.
+   *
+   * Not hidden by a threshold of the warning's own, which would be a second,
+   * uncited line above a cited one. The fix belongs to the fault: a floor
+   * re-derived from behind, or a basket verdict that names a fold on how often
+   * it appears (L2.7). Either should flip this.
+   */
+  const runs = realiseReal(REAL_SERVES, SEEDS, 50, 5, { bearing: 180, distance: 6 }).flat()
+  const raised = runs.filter((r) => r.injuries.length)
+  note(`the back fence: ${raised.length} of ${runs.length} real takes raised a warning`)
+  assert(raised.every((r) => r.injuries.every((i) => i === 'lumbar_load_posture_collapse')), 'a warning other than the back was raised from behind')
+  assert(raised.length <= 6, `${raised.length} of ${runs.length} real takes raised a warning, worse than the 4 measured`)
+  assert(raised.length > 0, 'KNOWN gap closed: no real take from behind raises the lower-back warning — flip this')
+})
+
+check('the clean rig serve raises none through the noise', () => {
+  for (const cameraYaw of [82, 8]) {
+    const runs = realise({ cameraYaw })
+    const raised = runs.filter((r) => r.injuries.length)
+    note(`clean rig at ${cameraYaw}°: ${raised.length} of ${runs.length}`)
+    assert(raised.length === 0, `a clean serve at ${cameraYaw}° raised ${raised.map((r) => r.injuries.join('+')).join(', ')}`)
+  }
+})
+
+check('a dialled tray and a dialled fold are still caught through the noise', () => {
+  // Filmed where each can be read: the fold from behind the baseline. A 40°
+  // fold, which reads 31–39° through the noise and clears the 29° line on every
+  // take. Nearer the line it is caught less often, as the noise floor intends: a
+  // 34° fold on 83% of takes, a 30° one on about half.
+  const tray = realise({ palmToSky: 80, trophyForearmDrop: 0.25 })
+  const fold = realise({ spineLean: 40, cameraYaw: 8 })
+  const trayRate = rate(tray, 'wrist_strain_forced_pronation')
+  const foldRate = rate(fold, 'lumbar_load_posture_collapse')
+  note(`tray flagged on ${Math.round(trayRate * 100)}%, fold on ${Math.round(foldRate * 100)}%`)
+  assert(trayRate >= 0.9, `a dialled tray was flagged on only ${Math.round(trayRate * 100)}% of takes`)
+  assert(foldRate >= 0.9, `a dialled fold was flagged on only ${Math.round(foldRate * 100)}% of takes`)
+})
+
+check('a joint warning never stands on less than its own fault', () => {
+  // Every warning raised in these ensembles has its fault named beside it.
+  const pairs: [string, string][] = [
+    ['wrist_strain_forced_pronation', 'waiters_tray'],
+    ['lumbar_load_posture_collapse', 'posture_collapse'],
+    ['shoulder_load_no_drop', 'shallow_drop'],
+  ]
+  const runs = [
+    ...realise({ palmToSky: 80, trophyForearmDrop: 0.25 }),
+    ...realise({ spineLean: 34, cameraYaw: 8 }),
+    ...realise({ dropBelowShoulder: -0.25 }),
+  ]
+  for (const r of runs) {
+    for (const [flag, flaw] of pairs) {
+      if (r.injuries.includes(flag as never)) {
+        assert(r.named.has(flaw as FlawId), `${flag} was raised without ${flaw} named`)
+      }
+    }
+  }
 })
 
 /* ========================================================= scrappy clips == */

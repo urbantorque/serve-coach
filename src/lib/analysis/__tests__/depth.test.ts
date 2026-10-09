@@ -49,6 +49,7 @@
  */
 import { LM } from '../geometry'
 import { ER_DEVIATION_DEG, ER_LEAN_SENSITIVITY, LANDING_SQUARE_FLOOR, LEG_DRIVE_FLOOR, diagnose } from '../diagnose'
+import { injuriesIn } from '../triage'
 import { measure } from '../metrics'
 import { detectServe } from '../phases'
 import { assessSpatial } from '../spatial'
@@ -139,6 +140,7 @@ function readOnce(dials: Partial<ServeDials>): Read | undefined {
         { detected: f.detected, miss: f.miss, confidence: f.confidence },
       ]),
     ),
+    injuries: injuriesIn(diagnosis).map((r) => r.flag),
   }
 }
 

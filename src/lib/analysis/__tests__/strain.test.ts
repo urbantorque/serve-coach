@@ -123,8 +123,9 @@ check('a trip whose spine was never readable is not a clean trip', () => {
 check('the denominator is per flag, not shared', () => {
   // The spine is readable on every trip; the wrist is readable on only two of
   // them. Two flags, two different denominators, from one history.
+  // The palm, which is all the wrist flag reads since L1.3.
   const noWrist = { ...cleanSignals() }
-  delete noWrist.pronation_deg
+  delete noWrist.palm_to_sky_deg
   const trips: StrainSource[][] = [
     [serve([BACK, WRIST])],
     [serve([BACK], { signals: noWrist })],

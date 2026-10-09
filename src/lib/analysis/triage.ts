@@ -501,7 +501,10 @@ export const isFirm = (f: Pick<FlawFinding, 'confidence'>): boolean => f.confide
  * measured from is, by construction, what a reader is told it needs.
  */
 export const INJURY_INPUTS: Record<InjuryFlag, readonly string[]> = {
-  wrist_strain_forced_pronation: ['palm_to_sky_deg', 'pronation_deg'],
+  // The palm alone since L1.3. The forearm's turn through contact is
+  // `UNDER_RESOLVED` (a 76° floor, and real serves turn about 93°), so as the
+  // flag's second witness it was true on every real serve and proved nothing.
+  wrist_strain_forced_pronation: ['palm_to_sky_deg'],
   lumbar_load_posture_collapse: ['spine_lean_deg'],
   shoulder_load_no_drop: ['drop_depth_ratio', 'contact_height_ratio'],
 }
@@ -523,26 +526,45 @@ export function injuryInputsRead(
 /** The racket-drop band's floor — the same at every level — below which the hand never laid back. */
 const NO_DROP = bandFor('drop_depth_ratio', 5)[0]
 
-function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
+/*
+ * Each flag stands on its own fault, named (L1.3).
+ *
+ * The flags used to read raw signals against thresholds of their own, below
+ * the faults they warn about and with no noise floor, because floors are never
+ * applied to flags. So "Watch your wrist" could sit above a report that never
+ * named the grip, and a lean the camera could not resolve could raise the
+ * lower-back card. Now a flag needs the fault it is about to be named: past its
+ * noise floor and the camera allowance (`evaluateFlaws`), on a reading firm
+ * enough to lead the plan (`isFirm`). Then it adds what makes it a joint
+ * question rather than a technique one. The flag is still never suppressed by
+ * the hierarchy, which is the point of it; it just cannot be raised on less
+ * evidence than the fault itself.
+ */
+export function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
   const out: { flag: InjuryFlag; severity: Severity }[] = []
   const sig = (id: string) => d.signals[id] ?? Number.NaN
   const has = (flag: InjuryFlag) => injuryInputsRead(d.signals, flag)
+  const named = (flaw: FlawId) => d.flaws.some((f) => f.flaw === flaw && f.detected && isFirm(f))
 
-  // A tray grip that is nevertheless being rotated hard through the ball. The
-  // forearm starts at the end of its range instead of the beginning, so the
-  // rotation has to come from the wrist joint itself — which is where club
-  // players pick up the wrist and elbow pain they blame on their strings.
-  if (has('wrist_strain_forced_pronation')) {
-    if (sig('palm_to_sky_deg') >= 45 && sig('pronation_deg') >= 45) {
-      out.push({
-        flag: 'wrist_strain_forced_pronation',
-        severity: sig('palm_to_sky_deg') >= 65 ? 'high' : 'medium',
-      })
-    }
+  // A tray grip. At the moment the racket lies flat behind the back, a
+  // waiter's serve carries higher shoulder and elbow loads and wrist forces
+  // for the same ball speed, with an elbow-injury trend (Touzard 2019). The
+  // forearm's turn through the ball used to be the second half of this rule;
+  // it cannot be measured (`INJURY_INPUTS` above), so the card no longer
+  // claims it.
+  if (has('wrist_strain_forced_pronation') && named('waiters_tray')) {
+    out.push({
+      flag: 'wrist_strain_forced_pronation',
+      severity: sig('palm_to_sky_deg') >= 65 ? 'high' : 'medium',
+    })
   }
 
-  // A spine folding sideways under load, a hundred times a session.
-  if (has('lumbar_load_posture_collapse') && sig('spine_lean_deg') >= 22) {
+  // A trunk that tips sideways as the ball is struck. Players with low-back
+  // pain carry larger lateral-flexion forces through the serve (Campbell
+  // 2013), and lower-ranked servers bend sideways far more through the swing
+  // than the best (about 43° against 18°, Gao 2026). From behind the baseline
+  // or a corner only: from the side the lean runs along the lens (L1.2).
+  if (has('lumbar_load_posture_collapse') && named('posture_collapse')) {
     out.push({
       flag: 'lumbar_load_posture_collapse',
       severity: sig('spine_lean_deg') >= 30 ? 'high' : 'medium',
@@ -558,7 +580,9 @@ function injuriesIn(d: Diagnosis): { flag: InjuryFlag; severity: Severity }[] {
   // belief the drop band was re-anchored away from: on real serve motion the
   // hand sits at the shoulder on a full drop, so that rule warned every player
   // with a high contact about a shoulder they were using correctly.
-  if (has('shoulder_load_no_drop')) {
+  //
+  // And since L1.3, only once `shallow_drop` itself is named, past its floor.
+  if (has('shoulder_load_no_drop') && named('shallow_drop')) {
     if (sig('drop_depth_ratio') < NO_DROP && sig('contact_height_ratio') >= 1.3) {
       out.push({ flag: 'shoulder_load_no_drop', severity: 'medium' })
     }
