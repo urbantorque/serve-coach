@@ -948,6 +948,8 @@ Everything is in `src/lib`:
 | `share/reportCard.ts` | renders a report as one shareable image |
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
 | `session/plan.ts` | a practice session: which clips are one, which serves a sample reads, and what reading it costs |
+| `session/session.ts` | a practice session as stored: one small line per serve read, and the repair a stored row goes through |
+| `session/runner.ts` | reads a session a serve at a time, saving after each, so a stop loses only the serve in flight |
 | `placement.ts` | where the phone goes, said one way for every sentence that places it |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
 | `analysis/carryForward.ts` | whether the fault the last serve was told about actually moved on this one |
@@ -1298,6 +1300,23 @@ six serves of a clip. The panel said "Across 6 serves" and the chips numbered
 five to ten with no word about one to four. Now the panel says "This clip
 holds 10 serves. I compared 6 of them, serves 5 to 10." (`coverageLine`), and
 the analysing screen says "Found 10 serves · comparing 5–10" while it works.
+
+**A clip past two and a half minutes is a session, read a serve at a time and
+kept as one row.** A basket holds one whole `Analysis` per serve and files a
+report for each. Fifty serves of frames is past a phone's memory, and fifty
+reports would push the rest of the history out of the sixty the store keeps.
+So a session (`session/plan.ts`) reads either a sample of twelve, five from
+each end and two from the middle, or every serve. Each serve read is boiled
+down to a `ServeLine` of about 1.2 kB: the graded readings with their
+confidence, the faults named and the faults that could be judged, the toss, the
+footing. Its frames are let go before the next serve is read. The runner
+(`session/runner.ts`) takes the video work as two functions, `locate` and
+`read`, so everything it decides is tested in Node. It saves the row after the
+scan and after every serve, which makes the row its own checkpoint. A stop, a
+locked phone or a killed page loses at most the serve in flight, and the same
+row run again reads only the serves still missing. A hundred and twenty serves
+is 143 kB in one row. A serve that cannot be read becomes an "unclear" line and
+costs nothing else.
 
 The scan now spends a fixed number of frames however long the clip is, in two
 passes. A coarse pass spread across the whole clip finds roughly where the reach

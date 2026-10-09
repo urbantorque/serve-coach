@@ -1177,7 +1177,21 @@ L2.4 onward is session mode.
         - the player picks a sample of 12 or every serve.
       - *Proof:* the estimator on a fake clock, and a byte-built 30-minute
         60 fps `moov` parsed in under 32 MB. After L2.1.
+      - *Progress (Oct 9):* the planner is in (`session/plan.ts`): the
+        routing rule, the 5/2/5 sample, the cost in seeks and the per-seek
+        calibration, all tested on a fake clock. The screens are not.
 - [ ] **L2.5 Checkpointed runner and session stores** · M.
+      - *Progress (Oct 9):* the engine half is in.
+        - `session/session.ts` holds the row and the line, about 1.2 kB a serve.
+        - `session/runner.ts` saves after the scan and after every serve.
+        - DB v4 adds a `practiceSessions` store, carried in the backup with
+          newest-edit-wins.
+        - Tested: a stop between serves and mid-serve; a resume that reads only
+          what is left without scanning again; unreadable and refused serves
+          become unclear lines; 120 serves make one 143 kB row that grows by at
+          most 1,216 bytes a serve.
+        - Not yet: the pause when the page is hidden and the warm-phone pause.
+          Both belong to the wiring in L2.4's screens.
       - **What:**
         - one `ServeLine` row per serve, its frames dropped at once;
         - the run pauses when the page is hidden and resumes when the same

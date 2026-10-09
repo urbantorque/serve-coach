@@ -30,6 +30,7 @@ import {
 import { DEFAULTS, type Prefs } from '../prefs'
 import type { PracticeLog, ServeTag, Session } from '../db'
 import type { Analysis } from '../../analysis/types'
+import { sessionIdFor, type PracticeSession } from '../../session/session'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
 
 /** A report as it appears in a backup file. */
@@ -78,11 +79,14 @@ function memoryStore(
     prefs?: Partial<Prefs>
     /** Make every preference write throw, as a private window does. */
     prefsReadOnly?: boolean
+    /** Practice sessions already on this device; `false` for a store from before they existed. */
+    practiceSessions?: PracticeSession[] | false
   } = {},
 ) {
   const sessions = new Map((opts.sessions ?? []).map((s) => [s.id, s]))
   const logs = new Map((opts.logs ?? []).map((l) => [l.id, l]))
   const tags = new Map((opts.tags ?? []).map((t) => [t.id, t]))
+  const practiceSessions = new Map((opts.practiceSessions || []).map((p) => [p.id, p]))
   const refuse = new Set(opts.refuse ?? [])
   let prefs: Prefs = { ...DEFAULTS, ...opts.prefs }
   let prunes = 0
@@ -110,8 +114,16 @@ function memoryStore(
       prefs = { ...prefs, ...patch }
       return { ...prefs }
     },
+    ...(opts.practiceSessions === false
+      ? {}
+      : {
+          listPracticeSessions: async () => [...practiceSessions.values()],
+          savePracticeSession: async (p: PracticeSession) => {
+            practiceSessions.set(p.id, p)
+          },
+        }),
   }
-  return { store, sessions, logs, prunes: () => prunes, prefs: () => prefs }
+  return { store, sessions, logs, practiceSessions, prunes: () => prunes, prefs: () => prefs }
 }
 
 const fileOf = (sessions: Session[], practice?: PracticeLog[]) =>
@@ -631,6 +643,63 @@ await check('a malformed tap costs that tap and nothing else', async () => {
     assert(r.added === 2, `a bad tap cost the player ${2 - r.added} reports`)
     assert(r.tags === 1 && r.skippedTags === 1, `${r.tags} stored, ${r.skippedTags} skipped`)
   })
+})
+
+/* ------------------------------------------------------- practice sessions */
+
+heading('Practice sessions (L2.5)')
+
+const practice = (key: string, updatedAt: number, lines = 2): PracticeSession => ({
+  id: sessionIdFor(key),
+  createdAt: 100,
+  updatedAt,
+  fileName: `${key}.mov`,
+  duration: 600,
+  serveType: 'flat',
+  handedness: 'right',
+  mode: 'sample',
+  found: [5, 17, 29, 41],
+  chosen: [0, 1, 2, 3],
+  lines: Array.from({ length: lines }, (_, i) => ({ number: i + 1, t: 5 + 12 * i, status: 'read' as const, overall: 60 })),
+  phase: lines === 4 ? 'done' : 'stopped',
+})
+
+await check('a practice session survives the round trip, place and all', async () => {
+  const from = memoryStore({ sessions: [session('a', 1_000)], practiceSessions: [practice('k1', 500)] })
+  const b = await buildBackup(from.store)
+  assert(b.practiceSessions?.length === 1, `the export carried ${b.practiceSessions?.length ?? 0} sessions`)
+  const to = memoryStore()
+  const r = await importBackup(JSON.stringify(b), to.store)
+  assert(r.practiceSessions === 1, `${r.practiceSessions} sessions restored`)
+  const landed = to.practiceSessions.get(sessionIdFor('k1'))
+  assert(landed?.lines.length === 2 && landed.phase === 'stopped', 'the session lost its lines or its place')
+  assert(r.added === 1, 'carrying a session cost a report')
+})
+
+await check('the newer session wins, and a malformed one costs only itself', async () => {
+  const to = memoryStore({ practiceSessions: [practice('k1', 900, 3)] })
+  const file = JSON.stringify({
+    format: 'serve-coach-backup',
+    version: 1,
+    exportedAt: 1,
+    sessions: [session('a', 1_000)],
+    practiceSessions: [practice('k1', 800, 1), { id: 'practice-bad', createdAt: 'yesterday' }, practice('k2', 50, 4)],
+  })
+  const r = await importBackup(file, to.store)
+  assert(r.practiceSessions === 1, `${r.practiceSessions} stored, expected only the new one`)
+  assert(to.practiceSessions.get(sessionIdFor('k1'))!.lines.length === 3, 'an older session overwrote a newer one')
+  assert(to.practiceSessions.has(sessionIdFor('k2')), 'the good session beside a bad one was lost')
+  assert(r.added === 1, 'a bad session cost a report')
+})
+
+await check('a store from before sessions existed still exports and restores', async () => {
+  const from = memoryStore({ sessions: [session('a', 1_000)], practiceSessions: false })
+  const b = await buildBackup(from.store)
+  assert(b.practiceSessions === undefined, 'a store with no sessions wrote an empty list as if it had looked')
+  const to = memoryStore({ practiceSessions: false })
+  const file = JSON.stringify({ ...b, practiceSessions: [practice('k1', 500)] })
+  const r = await importBackup(file, to.store)
+  assert(r.added === 1 && r.practiceSessions === 0, `added ${r.added}, sessions ${r.practiceSessions}`)
 })
 
 report()

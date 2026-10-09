@@ -1,6 +1,7 @@
 import { keyframesFromTrack, readKeyframePoses, readSwingTrack } from './poseTrack'
 import { forgetAllClips, forgetClip } from './clipStore'
 import { clipIdOf } from './sessionKey'
+import { normalisePracticeSession, type PracticeSession } from '../session/session'
 import { readoutOf, targetOf } from '../analysis/anatomy'
 // The table the screens index by `serveType`. Imported rather than restated as
 // a list of three names, so a fourth serve type cannot be readable on the
@@ -56,7 +57,7 @@ export type Session = Omit<Analysis, 'frames'> & {
 export const DEFAULT_PROFILE = 'me'
 
 const DB_NAME = 'serve-coach'
-const DB_VERSION = 3
+const DB_VERSION = 4
 const STORE = 'sessions'
 
 /**
@@ -110,6 +111,17 @@ const PRACTICE_STORE = 'practice'
  */
 const TAG_STORE = 'serveTags'
 
+/**
+ * Practice sessions: one row per long clip, holding a line per serve read
+ * (`session/session.ts`, L2.5).
+ *
+ * Not reports. A session's serves are boiled down to about a kilobyte each and
+ * kept together, so fifty serves are one row rather than fifty reports pushing
+ * the rest of the history past `MAX_SESSIONS`. Rewritten after every serve,
+ * which makes the row the checkpoint a stopped reading carries on from.
+ */
+const PRACTICE_SESSION_STORE = 'practiceSessions'
+
 let dbPromise: Promise<IDBDatabase> | null = null
 
 function open(): Promise<IDBDatabase> {
@@ -133,6 +145,10 @@ function open(): Promise<IDBDatabase> {
       // one; a fresh install gets all three in a single upgrade.
       if (!db.objectStoreNames.contains(TAG_STORE)) {
         db.createObjectStore(TAG_STORE, { keyPath: 'id' })
+      }
+      // Version 4, the same existence guard.
+      if (!db.objectStoreNames.contains(PRACTICE_SESSION_STORE)) {
+        db.createObjectStore(PRACTICE_SESSION_STORE, { keyPath: 'id' })
       }
     }
     req.onsuccess = () => {
@@ -1385,6 +1401,30 @@ export function normaliseServeTag(raw: unknown): ServeTag | undefined {
   // something, and they did not.
   if (serveNumber === undefined && outcome === undefined) return undefined
   return { id: t.id, serveNumber, outcome, taggedAt: t.taggedAt }
+}
+
+/* ------------------------------------------------------- practice sessions */
+
+export async function savePracticeSession(session: PracticeSession): Promise<void> {
+  await tx('readwrite', (s) => s.put(session), PRACTICE_SESSION_STORE)
+}
+
+/** Newest first, repaired on the way out. */
+export async function listPracticeSessions(): Promise<PracticeSession[]> {
+  const rows = await tx<unknown[]>('readonly', (s) => s.getAll() as IDBRequest<unknown[]>, PRACTICE_SESSION_STORE)
+  return rows
+    .map(normalisePracticeSession)
+    .filter((s): s is PracticeSession => s !== undefined)
+    .sort((a, b) => b.createdAt - a.createdAt)
+}
+
+export async function getPracticeSession(id: string): Promise<PracticeSession | undefined> {
+  const row = await tx<unknown>('readonly', (s) => s.get(id) as IDBRequest<unknown>, PRACTICE_SESSION_STORE)
+  return normalisePracticeSession(row)
+}
+
+export async function deletePracticeSession(id: string): Promise<void> {
+  await tx('readwrite', (s) => s.delete(id), PRACTICE_SESSION_STORE)
 }
 
 export async function listServeTags(): Promise<ServeTag[]> {

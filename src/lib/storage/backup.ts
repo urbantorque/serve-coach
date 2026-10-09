@@ -17,6 +17,7 @@
  */
 import {
   listPracticeLogs,
+  listPracticeSessions,
   listServeTags,
   listSessions,
   logPractice,
@@ -25,6 +26,7 @@ import {
   normaliseServeTag,
   pruneSessions,
   safely,
+  savePracticeSession,
   saveSession,
   tagServe,
   type PracticeLog,
@@ -32,6 +34,7 @@ import {
   type Session,
 } from './db'
 import { SERVE_TYPES } from '../analysis/coaching'
+import { normalisePracticeSession, type PracticeSession } from '../session/session'
 import { DEFAULTS, readPrefs, writePrefs, type Prefs } from './prefs'
 import type { Analysis } from '../analysis/types'
 
@@ -97,6 +100,11 @@ export interface Backup {
    * the same lifetime rule `TAG_STORE` states in `db.ts`.
    */
   tags?: ServeTag[]
+  /**
+   * Practice sessions (L2.5): one row per long clip, a line per serve read.
+   * Optional and no version bump, for the reason `practice` gives above.
+   */
+  practiceSessions?: PracticeSession[]
 }
 
 /**
@@ -203,6 +211,9 @@ export interface BackupStore {
    */
   readPrefs(): Prefs
   writePrefs(patch: Partial<Prefs>): Prefs
+  /** Optional on the seam, so a store written before sessions existed still drives the file. */
+  listPracticeSessions?(): Promise<PracticeSession[]>
+  savePracticeSession?(session: PracticeSession): Promise<void>
 }
 
 const REAL_STORE: BackupStore = {
@@ -215,6 +226,8 @@ const REAL_STORE: BackupStore = {
   pruneSessions,
   readPrefs,
   writePrefs,
+  listPracticeSessions,
+  savePracticeSession,
 }
 
 export async function buildBackup(store: BackupStore = REAL_STORE): Promise<Backup> {
@@ -225,6 +238,7 @@ export async function buildBackup(store: BackupStore = REAL_STORE): Promise<Back
     sessions: await store.listSessions(),
     practice: await store.listPracticeLogs(),
     tags: await store.listServeTags(),
+    ...(store.listPracticeSessions ? { practiceSessions: await store.listPracticeSessions() } : {}),
     // Read through the store like everything else here, so a test can drive the
     // whole file without a `localStorage`.
     prefs: portablePrefs(store.readPrefs()),
@@ -288,6 +302,8 @@ export interface ImportResult {
    */
   tags: number
   skippedTags: number
+  /** Practice sessions brought in (L2.5). */
+  practiceSessions: number
   /**
    * Whether the file filled in a preference this device did not have.
    *
@@ -335,6 +351,7 @@ export async function importBackup(
     skippedLogs: 0,
     tags: 0,
     skippedTags: 0,
+    practiceSessions: 0,
   }
 
   for (const raw of backup.sessions) {
@@ -426,6 +443,25 @@ export async function importBackup(
    * the reports are the history, and losing a tap must never be why somebody
    * cannot restore their serves.
    */
+  /*
+   * Practice sessions, newest edit wins, the rule tags follow. Best-effort for
+   * the same reason: the reports are the history.
+   */
+  const practiceSessions = Array.isArray(backup.practiceSessions) ? backup.practiceSessions : []
+  if (practiceSessions.length && store.listPracticeSessions && store.savePracticeSession) {
+    await safely(async () => {
+      const here = new Map((await store.listPracticeSessions!()).map((p) => [p.id, p]))
+      for (const raw of practiceSessions) {
+        const session = normalisePracticeSession(raw)
+        if (!session) continue
+        const mine = here.get(session.id)
+        if (mine && mine.updatedAt >= session.updatedAt) continue
+        await store.savePracticeSession!(session)
+        result.practiceSessions++
+      }
+    }, undefined)
+  }
+
   const tags = Array.isArray(backup.tags) ? backup.tags : []
   if (tags.length) {
     await safely(async () => {
