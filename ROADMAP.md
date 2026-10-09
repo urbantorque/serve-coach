@@ -938,7 +938,12 @@ player's history breaks only once.
 ### Wave L1 — Stop saying wrong things
 Small items, and everything after builds on them.
 
-- [ ] **L1.1 Score only what was measured** · S.
+- [x] **L1.1 Score only what was measured** · S. *Done (2026-10-09):
+      `overallOf` and `isMeasured` in `coaching.ts`. On the modal club serve the
+      overall moved 63 → 72. The card, the share image, the trend and the deltas
+      all skip the empty area. History reads the same way with no migration,
+      because an empty area is read off its shape. `?demo=collapsed` shows the
+      card. Original plan:*
       - **What:** an area with no graded rows leaves the overall and the share
         card. Its card says "Not measured on this clip" instead of drawing a 0
         ring. No area delta is shown when one side of it is empty.

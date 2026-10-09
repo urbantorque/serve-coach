@@ -211,6 +211,9 @@
 .tag--good  { background: var(--good-dim);  color: var(--good); }
 .tag--fair  { background: var(--fair-dim);  color: var(--fair); }
 .tag--work  { background: var(--work-dim);  color: var(--work); }
+/* No verdict: an area the clip could not grade (L1.1). Off the status ramp on
+   purpose — every status colour is a judgement on the player. */
+.tag--none  { background: var(--ink-3);     color: var(--fg-muted); }
 
 /* ============================================================================
    Score ring

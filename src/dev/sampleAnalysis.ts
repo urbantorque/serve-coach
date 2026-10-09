@@ -12,11 +12,11 @@
 import { pickFocus } from '../lib/analysis/analyze'
 import { measure } from '../lib/analysis/metrics'
 import { buildPhases, detectServe } from '../lib/analysis/phases'
-import { statusOf, weightedScore } from '../lib/analysis/geometry'
+import { statusOf } from '../lib/analysis/geometry'
 import { diagnose } from '../lib/analysis/diagnose'
 import { assessResilience, triage } from '../lib/analysis/triage'
 import { causalFocus } from '../lib/analysis/verdict'
-import { FUNDAMENTALS } from '../lib/analysis/coaching'
+import { overallOf } from '../lib/analysis/coaching'
 import { buildConsistency } from '../lib/analysis/consistency'
 import { swingTrack } from '../lib/storage/poseTrack'
 import { findPracticeFocus } from '../lib/practice'
@@ -118,6 +118,10 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
   // `too_blurry` is measuring. Nothing here says "reject"; the resilience pass
   // decides that on its own.
   refused: { noise: 0.05, dropout: 0.35 },
+  // The modal club serve — rigid legs and a racket that never falls — on which
+  // the trophy lands on the toss and Rhythm has nothing left to grade (L1.1):
+  // `?demo=collapsed` shows the area as not measured rather than as a 0.
+  collapsed: { trophyKneeAngle: 170, dropBelowShoulder: -0.25 },
   // A recognisable club serve: legs nearly straight, trunk barely coiled,
   // shoulders flat, arm folded at contact and the ball met below full reach.
   // Every one of those lands outside its band, which is the only state in which
@@ -370,9 +374,7 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number, f
   const diagnosis = diagnose(frames, skel, { tier })
   const verdict = triage(diagnosis, assessResilience(frames, skel))
 
-  const overall = weightedScore(
-    fundamentals.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
-  )
+  const overall = overallOf(fundamentals)
 
   return {
     id: 'demo',

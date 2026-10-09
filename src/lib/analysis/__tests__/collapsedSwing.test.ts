@@ -24,8 +24,10 @@
 import { measure } from '../metrics'
 import { detectServe } from '../phases'
 import { buildServe, type ServeDials } from '../syntheticServe'
-import { METRICS } from '../coaching'
+import { FUNDAMENTALS, METRICS, isMeasured, overallOf } from '../coaching'
 import { readoutOf } from '../anatomy'
+import { weightedScore } from '../geometry'
+import { deltasAgainst } from '../../progress'
 import { assert, check, heading, note, report, within } from './harness'
 import type { Fundamental, Metric } from '../types'
 
@@ -126,6 +128,50 @@ check('the racket drop still leads the swing card, and still owns the fix', () =
     `the racket drop (${depth.score}) no longer scores worst on a serve that has none (${hang.score})`,
   )
   assert(swing.headline === depth.insight, `the swing card leads with "${swing.headline}"`)
+})
+
+heading('An area with nothing graded scores nothing, not zero (L1.1)')
+
+check('Rhythm is not measured on this serve, and says so', () => {
+  // Rhythm grades only `loadRatio`, and the collapse takes it away. The card
+  // used to draw a 0 ring badged "Needs work" with a blank headline.
+  const { area } = analyse(COLLAPSED)
+  const rhythm = area('rhythm')
+  assert(rhythm.metrics.length === 0, `rhythm kept ${rhythm.metrics.length} graded row(s)`)
+  assert(!isMeasured(rhythm), 'an area with nothing graded counts as measured')
+  assert(rhythm.headline.includes('Not measured'), `the empty card opens on "${rhythm.headline}"`)
+  for (const f of analyse(COLLAPSED).fundamentals.filter((f) => f.id !== 'rhythm')) {
+    assert(isMeasured(f), `${f.id} was graded and still reads as not measured`)
+  }
+})
+
+check('the overall is the weighted mean of the areas that were graded', () => {
+  const { fundamentals } = analyse(COLLAPSED)
+  const graded = fundamentals.filter((f) => f.metrics.length > 0)
+  const expected = weightedScore(graded.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })))
+  const zeroCounted = weightedScore(
+    fundamentals.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
+  )
+  note(`overall ${overallOf(fundamentals)} (was ${zeroCounted} with the empty area counted as 0)`)
+  assert(overallOf(fundamentals) === expected, `overall ${overallOf(fundamentals)}, expected ${expected}`)
+  assert(overallOf(fundamentals) > zeroCounted, 'leaving the empty area out did not lift the score')
+})
+
+check('no area delta is drawn into or out of an empty area', () => {
+  // The next serve with the row back used to report "Rhythm +83".
+  const collapsed = analyse(COLLAPSED).fundamentals
+  const clean = analyse({}).fundamentals
+  const previous = { fundamentals: collapsed } as unknown as Parameters<typeof deltasAgainst>[1]
+  const deltas = deltasAgainst(clean, previous)
+  assert(!('rhythm' in deltas), `a rhythm delta of ${deltas.rhythm} was drawn from an empty area`)
+  assert('toss' in deltas, 'the areas both serves graded lost their deltas')
+})
+
+check('a report saved before the rule reads the same way', () => {
+  // Read off the shape, so history needs no migration: a graded row never
+  // scores under the curve's floor of 30.
+  assert(!isMeasured({ score: 0, metrics: [] }), 'a stored empty area at 0 reads as measured')
+  assert(isMeasured({ score: 64, metrics: [] }), 'a stored area with a score reads as not measured')
 })
 
 heading('What the share is actually reading')

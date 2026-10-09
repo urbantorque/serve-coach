@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { isMeasured } from '../lib/analysis/coaching'
 import type { Fundamental, Metric } from '../lib/analysis/types'
 import TargetShape from './TargetShape'
 import { DeltaChip } from './Trend'
@@ -48,20 +49,39 @@ export default function FundamentalCard({
    * somebody who never reads the comment saying not to.
    */
   const [open, setOpen] = useState(false)
+  /*
+   * An area this clip graded nothing in (L1.1). No ring, because a ring is a
+   * score and there is none; no status colour, because every status is a
+   * verdict on the player; no delta, because there is nothing to move from.
+   * The headline says why the card is here at all.
+   */
+  const measured = isMeasured(f)
 
   return (
-    <section className={`fcard fcard--${f.status}${open ? ' is-open' : ''}`}>
+    <section className={`fcard fcard--${measured ? f.status : 'unmeasured'}${open ? ' is-open' : ''}`}>
       <button
         className="fcard-head"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <ScoreRing score={f.score} status={f.status} size={54} animate={false} />
+        {measured ? (
+          <ScoreRing score={f.score} status={f.status} size={54} animate={false} />
+        ) : (
+          <span className="fcard-ring-empty" aria-hidden="true">
+            –
+          </span>
+        )}
         <span className="fcard-title">
           <span className="fcard-name">
             {f.label}
-            <em className={`tag tag--${f.status}`}>{STATUS_LABEL[f.status]}</em>
-            <DeltaChip delta={delta} compact />
+            {measured ? (
+              <>
+                <em className={`tag tag--${f.status}`}>{STATUS_LABEL[f.status]}</em>
+                <DeltaChip delta={delta} compact />
+              </>
+            ) : (
+              <em className="tag tag--none">Not measured</em>
+            )}
           </span>
           <span className="fcard-headline">
             <Cue text={f.headline} />

@@ -1,5 +1,5 @@
 import { readoutOf } from '../analysis/anatomy'
-import { SERVE_TYPES } from '../analysis/coaching'
+import { SERVE_TYPES, isMeasured } from '../analysis/coaching'
 import { consistencyHeadline, type Consistency } from '../analysis/consistency'
 import type { Analysis } from '../analysis/types'
 import { plain } from '../analysis/voice'
@@ -318,10 +318,13 @@ export async function renderReportCard(
     roundRect(ctx, x, barY, barW, 74, 14)
     ctx.fill()
 
-    ctx.fillStyle = STATUS_COLOR[f.status] ?? LIME
+    // A dash and no status colour for an area the clip could not grade
+    // (L1.1): the image outlives the report, and a 0 on it is a verdict.
+    const measured = isMeasured(f)
+    ctx.fillStyle = measured ? (STATUS_COLOR[f.status] ?? LIME) : FAINT
     ctx.font = font(660, 30)
     ctx.textAlign = 'center'
-    ctx.fillText(String(f.score), x + barW / 2, barY + 38)
+    ctx.fillText(measured ? String(f.score) : '–', x + barW / 2, barY + 38)
     ctx.font = font(500, 15)
     ctx.fillStyle = FAINT
     ctx.fillText(f.label, x + barW / 2, barY + 60)

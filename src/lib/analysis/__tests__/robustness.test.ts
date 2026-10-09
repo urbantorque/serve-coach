@@ -902,7 +902,7 @@ check('an unbroken history still compares exactly as it always did', () => {
 })
 
 check('the report page can refuse a cross-rubric comparison too', () => {
-  const fundamentals = [{ id: 'swing' as const, score: 80 }]
+  const fundamentals = [{ id: 'swing' as const, score: 80, metrics: [] }]
   const oldReport = scoredUnder(1, 50, 1)
   assert(deltasAgainst(fundamentals, oldReport, 1).swing === 30, 'refused a like-for-like comparison')
   assert(

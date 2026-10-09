@@ -1,6 +1,7 @@
 import type { ServeType } from '../storage/prefs'
 import type { BodyAxis } from './axes'
-import type { Drill, FundamentalId, PhaseId } from './types'
+import { weightedScore } from './geometry'
+import type { Drill, Fundamental, FundamentalId, PhaseId } from './types'
 
 /**
  * Copy for every measurement the app makes.
@@ -1341,4 +1342,36 @@ export const FUNDAMENTALS: Record<
       reps: '2 baskets · out loud',
     },
   },
+}
+
+/**
+ * Whether this clip graded anything in an area at all (L1.1).
+ *
+ * An area can lose every row it grades for a reason that is about the clip and
+ * not the player: Rhythm grades only the share of the motion after the trophy,
+ * and that row leaves the card whenever the trophy lands on the toss — which is
+ * the commonest club serve, legs straight and no drop. `chainScore` returns 0
+ * for an empty list, and that 0 used to be weighted into the overall, drawn as
+ * a ring badged "Needs work" and then reported as "Rhythm +83" the next time
+ * the row was there. A measurement that could not be taken is not a bad one.
+ *
+ * Read off the shape rather than a stored flag, so every report saved before
+ * this rule reads the same way: a graded row never scores under the curve's
+ * floor of 30, so an area at 0 with no rows can only be one nothing was graded
+ * in. An area with rows, or any score above 0, was measured.
+ */
+export function isMeasured(f: Pick<Fundamental, 'score' | 'metrics'>): boolean {
+  return f.metrics.length > 0 || f.score > 0
+}
+
+/**
+ * The overall score: the five areas by weight, leaving out any this clip could
+ * not grade (`isMeasured`). The weights of the rest are renormalised rather
+ * than the missing area being counted as a zero, so a serve whose rhythm could
+ * not be read is scored on the four areas that were.
+ */
+export function overallOf(fundamentals: Pick<Fundamental, 'id' | 'score' | 'metrics'>[]): number {
+  return weightedScore(
+    fundamentals.filter(isMeasured).map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
+  )
 }

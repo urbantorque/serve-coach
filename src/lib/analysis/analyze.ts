@@ -38,7 +38,7 @@ import { drawSkeleton, fitContain, ghostFor, tossMarkFor } from '../pose/skeleto
 import { placeLine } from '../tossPlaceCopy'
 import type { TossPlacement } from './tossPlacement'
 import { racketFromBox, type DetectedBox, type RacketEstimate } from './racket'
-import { FUNDAMENTALS } from './coaching'
+import { overallOf } from './coaching'
 import { SOFT_MEASUREMENT } from './confidence'
 import {
   IMPLAUSIBLE_JUMP,
@@ -50,7 +50,6 @@ import {
   median,
   sided,
   statusOf,
-  weightedScore,
 } from './geometry'
 import {
   buildConsistency,
@@ -1086,9 +1085,7 @@ export function rescore(analysis: Analysis, serveType: ServeType): Analysis | un
     },
   })
 
-  const overall = weightedScore(
-    fundamentals.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
-  )
+  const overall = overallOf(fundamentals)
 
   // Judged again, because the serve type moves the diagnosis bands the card
   // moves (`SERVE_TYPE_SHIFT`): a kick toss the card now calls fine must not
@@ -1817,9 +1814,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     })
   }
 
-  const overall = weightedScore(
-    fundamentals.map((f) => ({ score: f.score, weight: FUNDAMENTALS[f.id].weight })),
-  )
+  const overall = overallOf(fundamentals)
 
   const tossFlight = ball
     ? summariseToss(ball, frames[skel.keys.toss].t, frames[skel.keys.contact].t, {

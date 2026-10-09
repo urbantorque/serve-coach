@@ -1059,6 +1059,23 @@ that most often ends in "I could not find a serve in that clip". Pinned in
 `robustness.test.ts` by a check written to go red if a located window ever starts
 binding the budget, which is the condition that would make it worth revisiting.
 
+**An area with nothing graded is left out, not scored 0.** Rhythm grades a
+single row, the share of the motion after the trophy. That row leaves the card
+whenever the trophy lands on the toss, which happens on the commonest club
+serve: straight legs and no racket drop. The empty area used to score 0 and be
+weighted into the overall, about 9 points on that serve. It was also drawn as a
+ring badged "Needs work", and the next serve that had the row reported "Rhythm
++83". Now the overall is the weighted mean of the areas that were graded
+(`overallOf`). The card says "Not measured on this clip" with no ring or status
+colour, and no trend or delta is drawn into or out of the empty area
+(`isMeasured`).
+
+`isMeasured` reads the shape of the stored area rather than a stored flag: a
+graded row never scores under the curve's floor of 30, so an area at 0 with no
+rows can only be an empty one. Reports saved before the rule therefore read
+the same way, with no migration. The change folds into scoring version 5.
+Pinned in `collapsedSwing.test.ts`.
+
 **The report's focus ranks over every measurement, not over the areas.** An area
 score is an average, so the weakest area is not reliably where the worst fault
 lives — a player with rigid legs could otherwise be told to work on their tempo

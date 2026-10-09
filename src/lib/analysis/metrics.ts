@@ -767,7 +767,9 @@ function neverFell(m: Metric): Metric {
  */
 function headlineFor(metrics: Metric[], label: string, areaScore: number): string {
   const weakest = [...metrics].sort((a, b) => a.score - b.score)[0]
-  if (!weakest) return ''
+  // Nothing graded here on this clip, which is a fact about the clip (L1.1,
+  // `isMeasured`) — said as one, so the card does not open on a blank.
+  if (!weakest) return cue('Not measured on this clip, so it does not count towards your score.')
   const area = label.toLowerCase()
   const weak = weakest.label.toLowerCase()
   if (weakest.score >= 85) return cue(`Your ${area} holds up. Leave it alone.`)

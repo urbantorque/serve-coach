@@ -2311,7 +2311,7 @@ check('treats a change under the threshold as noise', () => {
 })
 
 check('report deltas need a previous report to compare against', () => {
-  const fundamentals = [{ id: 'toss', score: 80 }] as unknown as Parameters<typeof deltasAgainst>[0]
+  const fundamentals = [{ id: 'toss', score: 80, metrics: [] }] as unknown as Parameters<typeof deltasAgainst>[0]
   assert(Object.keys(deltasAgainst(fundamentals, undefined)).length === 0, 'compared against nothing')
   const prev = progressSession(DAY, 70, { toss: 66 })
   assert(deltasAgainst(fundamentals, prev).toss === 14, 'wrong per-area delta on the report')

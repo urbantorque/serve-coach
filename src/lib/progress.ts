@@ -6,7 +6,7 @@ import {
   type FaultMove,
   type RotationMove,
 } from './analysis/carryForward'
-import { FUNDAMENTALS } from './analysis/coaching'
+import { FUNDAMENTALS, isMeasured } from './analysis/coaching'
 import { mean, statusOf } from './analysis/geometry'
 import {
   clearedStrain,
@@ -16,7 +16,7 @@ import {
   type StrainRecord,
 } from './analysis/strain'
 import { INJURY_INPUTS, type InjuryFlag } from './analysis/triage'
-import { LEGACY_SCORING_VERSION, type FundamentalId, type Status } from './analysis/types'
+import { LEGACY_SCORING_VERSION, type Fundamental, type FundamentalId, type Status } from './analysis/types'
 import { NOISE_FLOOR } from './analysis/tiers'
 import { MIN_EVIDENCE, type FlawId } from './analysis/flaws'
 import { progressionFor } from './analysis/progressions'
@@ -198,7 +198,9 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
       createdAt: s.createdAt,
       overall: s.overall,
       status: s.overallStatus,
-      byArea: Object.fromEntries(s.fundamentals.map((f) => [f.id, f.score])),
+      // An area the clip could not grade has no score to chart (L1.1), so it
+      // is absent here rather than a 0 the next serve would 'gain' from.
+      byArea: Object.fromEntries(s.fundamentals.filter(isMeasured).map((f) => [f.id, f.score])),
       scoringVersion: scoringVersionOf(s),
     }))
 
@@ -437,16 +439,18 @@ export function buildConsistencyTrend(
  * test or a tool than the report page.
  */
 export function deltasAgainst(
-  fundamentals: { id: FundamentalId; score: number }[],
+  fundamentals: Pick<Fundamental, 'id' | 'score' | 'metrics'>[],
   previous?: Session,
   scoringVersion?: number,
 ): Record<string, number> {
   if (!previous) return {}
   if (scoringVersion !== undefined && scoringVersionOf(previous) !== scoringVersion) return {}
-  const before = Object.fromEntries(previous.fundamentals.map((f) => [f.id, f.score]))
+  // Only between two areas that were both graded (L1.1): a delta out of or
+  // into an empty area is the clip changing, not the serve.
+  const before = Object.fromEntries(previous.fundamentals.filter(isMeasured).map((f) => [f.id, f.score]))
   const out: Record<string, number> = {}
   for (const f of fundamentals) {
-    if (f.id in before) out[f.id] = f.score - before[f.id]
+    if (isMeasured(f) && f.id in before) out[f.id] = f.score - before[f.id]
   }
   return out
 }

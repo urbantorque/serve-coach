@@ -30,6 +30,21 @@
   text-align: left;
 }
 
+/* Where the ring sits on an area this clip graded nothing in: the ring's own
+   empty track at the ring's own size, with no fill and no number (L1.1). */
+.fcard-ring-empty {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 5px solid var(--ink-3);
+  color: var(--fg-faint);
+  font-size: 17px;
+  font-weight: var(--wt-key);
+}
+
 .fcard-title {
   display: flex;
   flex-direction: column;
