@@ -947,6 +947,8 @@ Everything is in `src/lib`:
 | `framing/record.ts` | records off the viewfinder's own stream, and picks the container |
 | `share/reportCard.ts` | renders a report as one shareable image |
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
+| `session/plan.ts` | a practice session: which clips are one, which serves a sample reads, and what reading it costs |
+| `placement.ts` | where the phone goes, said one way for every sentence that places it |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
 | `analysis/carryForward.ts` | whether the fault the last serve was told about actually moved on this one |
 | `analysis/strain.ts` | which joint warnings keep recurring across recent trips, and over how many that could have answered |
