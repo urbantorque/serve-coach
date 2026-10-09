@@ -1,3 +1,5 @@
+import { hearPeaks } from '../audio/fuse'
+
 /** Two peaks closer together than this are one serve, not two. */
 export const MIN_SERVE_GAP = 1.6
 
@@ -337,6 +339,8 @@ export interface ServeFinds {
   serves: number[]
   /** Overheads that were not served: a smash on the move, a swing with no toss (L2.10). */
   unsure: number[]
+  /** Seconds from a reach peak to its impact, when the clip's sound was believed (L2.9). */
+  offset?: number
 }
 
 /**
@@ -350,7 +354,7 @@ export interface ServeFinds {
  * not-sure list when its shape says otherwise. Below the bar it is a practice
  * swing or a toss, and is left out as before.
  */
-export function classifyServes(samples: ReachSample[]): ServeFinds {
+export function classifyServes(samples: ReachSample[], onsets?: readonly number[]): ServeFinds {
   if (!samples.length) return { serves: [], unsure: [] }
 
   const floor = restingFloor(samples)
@@ -367,6 +371,21 @@ export function classifyServes(samples: ReachSample[]): ServeFinds {
     peaks.push(s)
   }
   const read = new Map(peaks.map((p) => [p, shapeAt(byTime, p)]))
+  /*
+   * The fourth agreement, an impact heard (L2.9). Believed only when the
+   * offset could be learned and most peaks were heard at it: a phone too far
+   * away, or a windy court, hears too few, and the sound then says nothing.
+   * Where it is believed, a peak with no impact is not a serve (a shadow
+   * swing, a caught toss), and a heard peak the picture could not judge is.
+   */
+  const hearing = onsets?.length ? hearPeaks(peaks.map((p) => p.t), onsets) : undefined
+  const listened = hearing !== undefined && hearing.heard.filter(Boolean).length * 2 >= peaks.length
+  if (listened) {
+    peaks.forEach((p, i) => {
+      if (!hearing.heard[i]) read.set(p, 'other')
+      else if (read.get(p) === 'unknown') read.set(p, 'serve')
+    })
+  }
   const judged = [...read.values()].filter((s) => s !== 'unknown')
   const shaped = judged.filter((s) => s === 'serve').length
   const trusted = shaped >= MIN_SHAPED && shaped * 2 >= judged.length
@@ -385,7 +404,11 @@ export function classifyServes(samples: ReachSample[]): ServeFinds {
     else serves.push(p.t)
   }
 
-  return { serves: serves.sort((a, b) => a - b), unsure: unsure.sort((a, b) => a - b) }
+  return {
+    serves: serves.sort((a, b) => a - b),
+    unsure: unsure.sort((a, b) => a - b),
+    ...(listened ? { offset: hearing.offset } : {}),
+  }
 }
 
 /**

@@ -177,6 +177,8 @@ export interface AnalyzeOptions {
   onServesLocated?: (times: number[]) => void
   /** Peaks that reached like a serve without a serve's shape: a smash, a swing with no toss (L2.10). */
   onUnsureServes?: (times: number[]) => void
+  /** Impacts heard in the clip's sound, for the scan to look closer at and to confirm by (L2.9). */
+  onsets?: readonly number[]
   /** Which serve this is meant to be, which shifts a handful of target bands. */
   serveType?: ServeType
   /**
@@ -603,6 +605,7 @@ export async function locateServes(
     return await scanForServes(video, landmarker, {
       signal: opts.signal,
       onUnsure: opts.onUnsureServes,
+      onsets: opts.onsets,
       people: opts.skipPlayerCrop ? undefined : await peopleFinder(),
       onProgress: (ratio) =>
         opts.onProgress?.({ step: 'scanning', ratio, detail: 'Finding every serve' }),

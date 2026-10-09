@@ -473,7 +473,15 @@ check('the scan reads the budget, or three samples a second past it, and nothing
  * smash, the other arm up to point at the ball and the feet moving under it,
  * as a smash is hit on the move; for a practice swing, no toss.
  */
-function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: number | number[], shake = 0) {
+function sessionTrace(
+  serves: number,
+  minutes: number,
+  seed = 3,
+  overhead?: number | number[],
+  shake = 0,
+  /** Shadow serves: the whole motion, toss and all, with no ball (L2.9). */
+  shadow: number[] = [],
+) {
   const asked = overhead === undefined ? [] : typeof overhead === 'number' ? [overhead] : overhead
   const frames = buildServe({}, 60)
   const reach = frames.map((fr) => ({ t: fr.t, h: -Math.min(fr.image[15].y, fr.image[16].y) }))
@@ -492,6 +500,11 @@ function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: numb
     if (after <= 0) return o
     return (peaks[after - 1] + peaks[after]) / 2
   })
+  // Two seconds past the middle of a gap, clear of the practice swing there.
+  const shadows = shadow.map((o) => {
+    const after = peaks.findIndex((p) => p > o)
+    return after <= 0 ? o : (peaks[after - 1] + peaks[after]) / 2 + 2
+  })
   const scaleOf = (i: number) => (1 - 0.2 * (i / Math.max(1, serves - 1))) * (i % 4 === 3 ? 0.9 : 1)
   // Practice swings to about shoulder height, and one overhead well above the serves.
   const swings = Array.from({ length: Math.round(serves / 3) }, (_, i) => peaks[i] + gap * 0.5)
@@ -503,6 +516,12 @@ function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: numb
       const k = Math.min(reach.length - 1, Math.max(0, Math.round(local * 60)))
       h = Math.max(h, rest + (reach[k].h - rest) * scaleOf(i))
     })
+    for (const p of shadows) {
+      const local = time - p + top.t
+      if (local < 0 || local > length) continue
+      const k = Math.min(reach.length - 1, Math.max(0, Math.round(local * 60)))
+      h = Math.max(h, rest + (reach[k].h - rest) * 0.95)
+    }
     for (const w of swings) {
       const d = Math.abs(time - w)
       if (d < 0.6) h = Math.max(h, rest + (top.h - rest) * 0.55 * (1 - d / 0.6))
@@ -526,7 +545,7 @@ function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: numb
     shake ? { ...pose, feetX: (pose.feetX ?? 0) + shake * Math.sin(time * 9) } : pose
   const poseAt = (time: number): NonNullable<ReachSample['pose']> => swayed(time, poseOfMoment(time))
   const poseOfMoment = (time: number): NonNullable<ReachSample['pose']> => {
-    for (const p of peaks) {
+    for (const p of [...peaks, ...shadows]) {
       const local = time - p + top.t
       if (local < 0 || local > length) continue
       return poseOf(frames[Math.min(frames.length - 1, Math.max(0, Math.round(local * 60)))].image)
@@ -547,7 +566,23 @@ function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: numb
     }
     return poseOf(stance)
   }
-  return { at, peaks, span, poseAt, overheads }
+  /**
+   * The clip's impacts, as `findOnsets` would hear them: every serve and smash
+   * `offset` after its reach peak, give or take a few milliseconds, and a
+   * landing a second after each serve and the ball bounced before each toss.
+   * `heard` keeps that share of the serves, for a phone too far to hear them.
+   */
+  const impacts = (offset = 0.035, heard = 1) => {
+    let j = seed * 7
+    const jitter = () => ((j = (j * 1103515245 + 12345) % 2 ** 31), (j / 2 ** 31 - 0.5) * 0.01)
+    return [
+      ...peaks.filter((_, i) => (i * 37) % 100 < heard * 100).map((p) => p + offset + jitter()),
+      ...overheads.map((o) => o + offset + jitter()),
+      ...peaks.map((p) => p + 1.1),
+      ...peaks.map((p) => p - 3.2),
+    ].sort((a, b) => a - b)
+  }
+  return { at, peaks, span, poseAt, overheads, shadows, impacts }
 }
 
 /**
@@ -555,7 +590,7 @@ function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: numb
  * `withPose` gives every sample the rest of the pose as well, as the scan does
  * since L2.10; without it, the finder judges on reach alone, as it did before.
  */
-function locate(trace: ReturnType<typeof sessionTrace>, withPose = false) {
+function locate(trace: ReturnType<typeof sessionTrace>, withPose = false, onsets?: number[]) {
   const plan = planScan(trace.span)
   const sample = (time: number): ReachSample => ({
     t: time,
@@ -566,8 +601,13 @@ function locate(trace: ReturnType<typeof sessionTrace>, withPose = false) {
   const refine = plan.coarse ? planRefinement(peakCandidates(samples), trace.span) : []
   for (const time of refine) samples.push(sample(time))
   samples.sort((a, b) => a.t - b.t)
-  const finds = classifyServes(samples)
-  return { found: findServes(samples), unsure: finds.unsure, read: plan.times.length + refine.length }
+  const finds = classifyServes(samples, onsets)
+  return {
+    found: onsets ? finds.serves : findServes(samples),
+    unsure: finds.unsure,
+    offset: finds.offset,
+    read: plan.times.length + refine.length,
+  }
 }
 
 check('every serve in a basket or a session is found, and nothing else is (L2.1)', () => {
@@ -663,6 +703,36 @@ check('the serve’s shape keeps every serve of a plain session (L2.10)', () => 
     assert(matched.length === serves, `${serves - matched.length} of ${serves} serves lost their shape`)
     assert(unsure.length === 0, `${unsure.length} peaks were called not sure in a session with only serves`)
   }
+})
+
+check('a shadow serve has every shape of a serve but the sound, and is set aside when the clip is heard (L2.9)', () => {
+  /*
+   * The whole motion with no ball: toss, load and reach, still feet and all.
+   * The picture cannot tell it from a serve. The sound can: every serve and
+   * smash is heard 35 ms after its reach, and the shadows are silent.
+   */
+  const trace = sessionTrace(30, 6, 5, [100, 250], 0, [60, 160, 280])
+  const seen = locate(trace, true)
+  const heard = locate(trace, true, trace.impacts())
+  const matched = (found: number[]) => trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25)).length
+  const shadowsIn = (times: number[]) => trace.shadows.filter((s) => times.some((t) => Math.abs(t - s) < 0.25)).length
+  note(`without the sound: ${matched(seen.found)} of 30, ${shadowsIn(seen.found)} shadows called serves`)
+  note(`with it: ${matched(heard.found)} of 30, ${shadowsIn(heard.unsure)} shadows set aside, offset ${((heard.offset ?? NaN) * 1000).toFixed(0)} ms`)
+  assert(shadowsIn(seen.found) === trace.shadows.length, 'the picture alone told a shadow from a serve, so this check shows nothing')
+  assert(matched(heard.found) === 30, `${30 - matched(heard.found)} serves were lost to the sound`)
+  assert(shadowsIn(heard.found) === 0 && shadowsIn(heard.unsure) === trace.shadows.length, 'a shadow serve was still called a serve')
+  // Within half a sample of the 35 ms planted: the reach peak is the tallest
+  // sample on the scan's grid, so the offset learned carries that grid with it.
+  assert(Math.abs((heard.offset ?? 0) - 0.035) <= 0.5 / SCAN_FPS, `learned an offset of ${heard.offset}`)
+})
+
+check('a phone too far to hear most serves is not believed, and loses none (L2.9)', () => {
+  const trace = sessionTrace(30, 6, 5, [100, 250], 0, [60, 160, 280])
+  const faint = locate(trace, true, trace.impacts(0.035, 0.3))
+  const matched = trace.peaks.filter((p) => faint.found.some((f) => Math.abs(f - p) < 0.25)).length
+  note(`hearing three serves in ten: ${matched} of 30 found, offset ${faint.offset === undefined ? 'not believed' : faint.offset}`)
+  assert(faint.offset === undefined, 'a sound that missed most serves was believed')
+  assert(matched === 30, `${30 - matched} serves were lost to a faint sound`)
 })
 
 check('a long clip is cropped a minute at a time, a basket once (L2.10)', () => {

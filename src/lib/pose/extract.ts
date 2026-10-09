@@ -408,6 +408,11 @@ export async function scanForServes(
     people?: FindPeople
     /** Peaks that reached like a serve without a serve's shape (L2.10). */
     onUnsure?: (times: number[]) => void
+    /**
+     * Impacts heard in the clip's sound (L2.9): the fourth thing a serve has
+     * to agree with, once the offset to the swing is learned.
+     */
+    onsets?: readonly number[]
   } = {},
 ): Promise<number[]> {
   const { onProgress = () => {}, signal } = opts
@@ -475,6 +480,9 @@ export async function scanForServes(
   }
 
   if (plan.coarse) {
+    // Around the reach peaks only. Impacts are not looked at closer: the coarse
+    // pass already reads every serve's rise (L2.1), and refining around every
+    // impact doubled the scan on a rally clip, 111 impacts in 140 seconds (L2.9).
     const refine = planRefinement(peakCandidates(samples), video.duration)
     for (let i = 0; i < refine.length; i++) {
       await sampleAt(refine[i])
@@ -486,7 +494,7 @@ export async function scanForServes(
     samples.sort((a, b) => a.t - b.t)
   }
 
-  const finds = classifyServes(samples)
+  const finds = classifyServes(samples, opts.onsets)
   if (finds.unsure.length) opts.onUnsure?.(finds.unsure)
   return finds.serves
 }

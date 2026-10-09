@@ -41,7 +41,8 @@ const MAX_MOOV_BYTES = 32 * 1024 * 1024
 /** The capture-rate key Android's recorder writes into the `mdta` metadata. */
 export const CAPTURE_FPS_KEY = 'com.android.capture.fps'
 
-interface Box {
+/** A box: its type, and where its payload starts and ends. Exported for `audio/mp4Audio.ts`. */
+export interface Box {
   type: string
   /** Offset of the payload, after the header. */
   start: number
@@ -49,11 +50,11 @@ interface Box {
   end: number
 }
 
-const fourcc = (view: DataView, at: number) =>
+export const fourcc = (view: DataView, at: number) =>
   String.fromCharCode(view.getUint8(at), view.getUint8(at + 1), view.getUint8(at + 2), view.getUint8(at + 3))
 
 /** The boxes directly inside `[from, to)`, stopping at the first malformed one. */
-function children(view: DataView, from: number, to: number): Box[] {
+export function children(view: DataView, from: number, to: number): Box[] {
   const out: Box[] = []
   let at = from
   while (at + 8 <= to) {
@@ -74,7 +75,7 @@ function children(view: DataView, from: number, to: number): Box[] {
   return out
 }
 
-const child = (view: DataView, box: Box, type: string) =>
+export const child = (view: DataView, box: Box, type: string) =>
   children(view, box.start, box.end).find((b) => b.type === type)
 
 /** The video track's frame rate, from `mdhd`'s timescale and `stts`'s sample deltas. */
@@ -187,6 +188,17 @@ export function parseMoov(bytes: ArrayBuffer): ContainerTiming {
  * WebM from the in-app recorder among them, which has no stretch to find.
  */
 export async function readContainerTiming(file: Blob): Promise<ContainerTiming | undefined> {
+  const moov = await readMoov(file)
+  return moov ? parseMoov(moov) : undefined
+}
+
+/**
+ * The file's `moov` box, header included, wherever the phone put it: walked to
+ * by box headers alone, so the media is never read. `undefined` for anything
+ * that is not an MP4 or MOV, or a `moov` past `MAX_MOOV_BYTES`. Exported for
+ * the audio track reader (`audio/mp4Audio.ts`, L2.9).
+ */
+export async function readMoov(file: Blob): Promise<ArrayBuffer | undefined> {
   try {
     let at = 0
     while (at + 8 <= file.size) {
@@ -206,7 +218,7 @@ export async function readContainerTiming(file: Blob): Promise<ContainerTiming |
       if (at === 0 && !['ftyp', 'moov', 'wide', 'free', 'mdat', 'skip'].includes(type)) return undefined
       if (type === 'moov') {
         if (size > MAX_MOOV_BYTES) return undefined
-        return parseMoov(await file.slice(at, at + size).arrayBuffer())
+        return await file.slice(at, at + size).arrayBuffer()
       }
       at += size
     }

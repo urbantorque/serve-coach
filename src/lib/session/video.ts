@@ -15,6 +15,7 @@ import { analyzeServe, captureServeStills, locateServes, type AnalyzeProgress } 
 import { isNotAServeError, type Analysis } from '../analysis/types'
 import type { Stretch } from '../analysis/slowMotion'
 import { readContainerTiming, stretchFromContainer } from '../pose/container'
+import { hearImpacts } from '../audio/decode'
 import { loadVideo, timeScanSamples } from '../pose/extract'
 import { loadEngine } from '../pose/poseEngine'
 import type { ServeType } from '../storage/prefs'
@@ -74,6 +75,15 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
 
     locate: async (signal, onProgress) => {
       let unsure: number[] = []
+      /*
+       * The sound first (L2.9): seconds against the scan's minutes. Where it
+       * can be read, its impacts are the fourth thing a serve agrees with;
+       * where it cannot, the scan stands on the picture.
+       */
+      const heard = await hearImpacts(file, signal).catch((err) => {
+        if (signal?.aborted) throw err
+        return undefined
+      })
       const found = await locateServes(
         {
           videoUrl,
@@ -85,6 +95,7 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
           onUnsureServes: (times) => {
             unsure = times
           },
+          onsets: heard?.onsets,
         },
         video,
       )

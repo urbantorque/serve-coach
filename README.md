@@ -952,6 +952,10 @@ Everything is in `src/lib`:
 | `session/runner.ts` | reads a session a serve at a time, saving after each, so a stop loses only the serve in flight |
 | `session/line.ts` | one serve's analysis boiled down to the line a session keeps |
 | `session/stats.ts` | a session's serves read together: spread, sides, a moved phone, start against end, fault counts and the session's own faults |
+| `audio/onsets.ts` | where the ball was hit, from the sound: a crack far above the court's level, rising at once |
+| `audio/mp4Audio.ts` | a phone video's AAC frames, found in its `moov` without touching the picture, and the ADTS header for one |
+| `audio/decode.ts` | the impacts in a video's sound, decoded a stretch at a time by WebCodecs or as ADTS |
+| `audio/fuse.ts` | which reach peaks were heard, with the offset between swing and sound learned on the clip |
 | `analysis/between.ts` | readings taken between two samples: a pose on the line between them, and the top of a peak |
 | `session/video.ts` | a session's video work: timing the file, finding the serves, reading one through a shared element |
 | `session/length.ts`, `probe.ts` | which clips are sessions, and a clip's length read from its metadata alone |
@@ -1350,6 +1354,26 @@ reads 2.47 apart. The moment is the cause there: `refineExtremum` places it
 up to 12 ms differently at the two rates, and the hand crosses the body at
 about seven metres a second. That one is pinned as a known limit rather than
 hidden.
+
+**A session listens for the ball as well as watching the swing** (`audio/`,
+L2.9). Before the scan, the clip's AAC frames are found in its `moov` and read
+with `file.slice` twenty seconds at a time, decoded by WebCodecs where it can
+and as an ADTS stream by `decodeAudioData` where it cannot, and only the
+impacts are kept: a jump in the energy of the signal's fast changes, 18 dB over
+the level around it and risen 10 dB within 7.5 ms. A ball bouncing, a footstep
+and a voice do not pass. A file whose sound is not AAC in an MP4 or MOV is
+decoded whole up to 200 MB, and otherwise not heard. The offset between a reach
+peak and its impact is learned on the clip (the median over pairs within 0.35
+s) rather than assumed, because the hand's top is not quite contact, a phone's
+sound and picture are not quite in step, and sound takes 30 ms to cross ten
+metres. Where at least three pairs teach it and most peaks are heard at it, a
+peak with no impact within 80 ms of its moment fails the fourth agreement: a
+shadow serve, the whole motion with no ball, which no picture can tell from a
+serve. In Chromium an AAC MP4 built from a synthetic court was heard 10 of 10
+with nothing extra, at 168 times real time through WebCodecs and 189 as ADTS;
+the bench's 37 MB Wikimedia clip decoded whole at 171 times real time. Impacts
+are not used to propose places to look: refining around every one doubled the
+scan on a rally clip, and the coarse pass already reads every serve's rise.
 
 **A serve is told from a smash by how it is hit, where the picture allows**
 (`shapeAt`, `classifyServes`, L2.10). The scan now keeps the pose it already

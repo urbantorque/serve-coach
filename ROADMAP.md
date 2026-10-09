@@ -1306,7 +1306,35 @@ L2.4 onward is session mode.
       - **What:** the nine sections in `LEVEL-UP-REVIEW.md` §5, and
         `?demo=session`. Serves per week counts sessions, not reports.
       - *Proof:* render tests, the copy lint, and a 375×812 preview. After L2.7.
-- [ ] **L2.9 Hear the serves** · L.
+- [x] **L2.9 Hear the serves** · L.
+      - *Delta (Oct 9):* done.
+        - `audio/mp4Audio.ts` reads the AAC track's frames from the `moov`
+          sample tables (ISO and QuickTime entries, `stco` and `co64`) and
+          builds ADTS headers.
+        - `audio/decode.ts` decodes twenty seconds at a time with WebCodecs,
+          or as ADTS with `decodeAudioData`, carrying a second across each
+          seam. A non-AAC file of up to 200 MB is decoded whole.
+        - `audio/onsets.ts` finds impacts; `audio/fuse.ts` learns the
+          offset and marks each peak heard or not. `classifyServes` uses it
+          as the fourth agreement, only where the sound is believed.
+        - Proof:
+          - synthetic PCM: 6 of 6 impacts within 3 ms, with no bounces, steps
+            or voices heard, and the same at three levels of hiss;
+          - byte-built audio boxes;
+          - fusion tests;
+          - the session fixture with shadow serves: picture alone, 3 shadows
+            called serves; with the sound, all 3 set aside, 30 of 30 serves
+            kept, the offset learned within half a scan step;
+          - a faint sound (3 serves in 10 heard) is not believed and loses
+            nothing;
+          - in Chromium, an AAC MP4 encoded from a synthetic court was heard
+            10 of 10 with nothing extra, at 168× real time via WebCodecs and
+            189× as ADTS; the bench's Wikimedia WebM decoded whole at 171× real
+            time (111 impacts in 140 s).
+        - Departure: impacts do not propose places to look. Refining around
+          all 111 rally impacts took the bench scan from 132 s to 241 s, and
+          the coarse pass already reads every serve's rise. Hearing adds about
+          a second.
       - **What:**
         - read the audio sample tables and decode the audio in ADTS chunks;
         - detect onsets and fuse them with the reach peaks;
