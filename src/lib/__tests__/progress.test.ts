@@ -32,6 +32,9 @@ import {
   longestStreak,
   longestStreakLine,
   sameTrip,
+  scoreMoveAgainst,
+  scoreMoveCaption,
+  scoreMoveWords,
   sixWeekMilestone,
   thenAndNow,
   tripStreak,
@@ -43,6 +46,8 @@ import { cueIssues, wordCount } from '../analysis/voice'
 import type { InjuryFlag } from '../analysis/triage'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 import type { Session } from '../storage/db'
+import { GAP_CHANGE, MILESTONE_CHANGE, REAL_CHANGE } from '../analysis/realChange'
+import type { Analysis, Fundamental } from '../analysis/types'
 
 declare const process: { hrtime: { bigint(): bigint } }
 
@@ -172,6 +177,17 @@ check('a flat six weeks reads as flat, not as a manufactured direction', () => {
   const line = sixWeekMilestone(progress)
   assert(line !== undefined, 'a flat six weeks produced nothing')
   assert(!/from your first serve|now\./.test(line!), `a one-point drift was read as a real direction: "${line}"`)
+})
+
+check('a six-week move the camera could make on its own is "about where you started"', () => {
+  // Three serves against one: the camera alone moves that up to
+  // `MILESTONE_CHANGE` - 1 points nine times in ten (L3.1).
+  const under = MILESTONE_CHANGE - 1
+  const sessions = [savedServe(0, 'first', 70), ...recentCluster(6 * WEEK, 70 + under, 'r')]
+  const line = sixWeekMilestone(buildProgress(sessions)!)
+  assert(line !== undefined && line.includes('about where you started'), `a ${under}-point move was called a direction: "${line}"`)
+  const past = [savedServe(0, 'first', 70), ...recentCluster(6 * WEEK, 70 + MILESTONE_CHANGE, 'r')]
+  assert(!sixWeekMilestone(buildProgress(past)!)!.includes('about where'), 'a move past the line was called flat')
 })
 
 check('a recalibration cannot be quietly used as the "before"', () => {
@@ -407,10 +423,13 @@ check('a widening gap reads as "wider"', () => {
   assert(line!.includes('25'), `wrong magnitude: "${line}"`)
 })
 
-check('a noise-level change says nothing, the same floor every other delta in this file uses', () => {
+check('a noise-level change says nothing, on a floor measured for the gap', () => {
   const sessions = [basketServe(0, 'a', [60, 65]), basketServe(DAY, 'b', [61, 65])] // gap 5 -> gap 4
   const trend = buildConsistencyTrend(sessions)!
   assert(gapDeltaLine(trend.gapDelta) === undefined, 'a one-point change was read as a real one')
+  // The gap is two extremes, where noise lands, so its floor is wide (L3.1).
+  assert(gapDeltaLine(GAP_CHANGE - 1) === undefined, 'a gap change the camera makes was read as real')
+  assert(gapDeltaLine(-GAP_CHANGE) !== undefined, 'a gap change past the floor was silent')
 })
 
 check('one basket has nothing to compare against, same as bestConsistencyGap', () => {
@@ -887,6 +906,42 @@ check('every repeatability note answers to the editor', () => {
   // And the empty case is empty rather than a sentence about nothing.
   assert(repeatabilityNote(focusFor({})) === '', 'a focus with no repeatability produced a note')
   note(`${lines.length} notes, longest ${Math.max(...lines.map(wordCount))} words`)
+})
+
+heading('The glance against the last serve (L3.1)')
+
+/** A report with the given overall and the same rows graded, unless told otherwise. */
+const scored = (overall: number, rows = ['releaseHeight', 'tossArmHold']): Pick<Analysis, 'overall' | 'fundamentals'> => ({
+  overall,
+  fundamentals: [{ id: 'toss', score: 70, metrics: rows.map((id) => ({ id, score: 70 })) }] as unknown as Fundamental[],
+})
+const before = (overall: number, rows?: string[], scoringVersion = 5): Session =>
+  ({ ...savedServe(DAY, 'before', overall), ...scored(overall, rows), scoringVersion }) as unknown as Session
+
+check('a move the camera makes on its own is said as about the same, with no number', () => {
+  const move = scoreMoveAgainst(scored(74), 5, before(74 - (REAL_CHANGE.overall - 1)))!
+  const words = scoreMoveWords(move)
+  note(`74 after ${74 - (REAL_CHANGE.overall - 1)}: "${words}"`)
+  assert(words === 'about the same as your last serve', `said "${words}"`)
+  assert(!/d/.test(words), 'a digit was said for a move the chip would not print')
+  assert(scoreMoveCaption(move) === 'vs your last serve', 'the caption changed for a plain move')
+})
+
+check('a real move is said with its size and direction', () => {
+  assert(scoreMoveWords(scoreMoveAgainst(scored(80), 5, before(70))!) === 'up 10 on your last serve', 'a gain was not said')
+  assert(scoreMoveWords(scoreMoveAgainst(scored(60), 5, before(70))!) === 'down 10 on your last serve', 'a fall was not said')
+})
+
+check('two serves measured on different rows are not compared, in words or on the chip', () => {
+  const move = scoreMoveAgainst(scored(80), 5, before(70, ['releaseHeight']))!
+  assert(move.alike === false, 'different rows read alike')
+  assert(scoreMoveWords(move) === 'measured differently from your last serve', `said "${scoreMoveWords(move)}"`)
+  assert(scoreMoveCaption(move) === 'measured differently from your last serve', 'the caption still said "vs"')
+})
+
+check('no last serve, or one on another rubric, says nothing', () => {
+  assert(scoreMoveAgainst(scored(80), 5, undefined) === undefined, 'compared against nothing')
+  assert(scoreMoveAgainst(scored(80), 5, before(60, undefined, 4)) === undefined, 'compared across a recalibration')
 })
 
 report()

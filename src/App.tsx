@@ -21,6 +21,7 @@ import {
   bestOverallScore,
   faultMoveOnTrip,
   rotationMoveOnTrip,
+  scoreMoveAgainst,
   buildConsistencyTrend,
   gapDeltaFor,
   glanceStrain,
@@ -1480,6 +1481,14 @@ export default function App() {
               // feeds is only ever mounted one at a time.
               move={view.move ?? faultMoveOnTrip(sessions, view.analysis)}
               rotation={rotationMoveOnTrip(sessions, view.analysis)}
+              // Against the serve the report's hero sets it beside, so "your
+              // last serve" is one serve on both screens. A glance is always a
+              // fresh analysis, so its rubric is this build's.
+              scoreMove={scoreMoveAgainst(
+                view.analysis,
+                view.analysis.scoringVersion ?? SCORING_VERSION,
+                priorTo(view.analysis.createdAt, typeOf(view.analysis)),
+              )}
               // The one recurring joint warning this serve raised — see
               // `glanceStrain`. Same reasoning as `move` above: it needs the
               // session list, which this screen has no business holding.

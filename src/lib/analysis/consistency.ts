@@ -7,6 +7,7 @@ import {
 } from './diagnose'
 import { SOFT_MEASUREMENT } from './confidence'
 import { clamp, mean, statusOf } from './geometry'
+import { bestWorstGap, readAlike } from './realChange'
 import type { Analysis, Metric, PhaseId, Status } from './types'
 import { cue } from './voice'
 
@@ -393,14 +394,6 @@ export const CARD_NOISE_SD: Record<string, number> = {
  */
 export const RANGE_OF_SIX = 2.534
 
-/**
- * The smallest gap between two overall scores worth calling one serve better
- * than another: the report's own line for noise (`MEANINGFUL_DELTA` in
- * progress.ts, held equal by a test). Under it, "your best serve against your
- * worst" was two serves the score could not tell apart (L1.8).
- */
-export const BEST_WORST_GAP = 3
-
 /** Sample standard deviation; zero for fewer than two readings. */
 function stdev(xs: number[]): number {
   if (xs.length < 2) return 0
@@ -536,7 +529,12 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
     metrics: ranked,
     weakest: ranked[0],
     steadiest: ranked[ranked.length - 1],
-    gap: buildGap(metrics, overallScores, serveNumbers),
+    gap: buildGap(
+      metrics,
+      overallScores,
+      serveNumbers,
+      analyses.map((a) => a.fundamentals),
+    ),
     score,
     status: statusOf(score),
     skipped: Math.max(0, attempted - analyses.length),
@@ -727,6 +725,7 @@ function buildGap(
   metrics: MetricSpread[],
   overallScores: number[],
   serveNumbers: number[],
+  cards: Analysis['fundamentals'][],
 ): ServeGap | undefined {
   if (overallScores.length < MIN_COMPARABLE_SERVES) return undefined
 
@@ -743,8 +742,15 @@ function buildGap(
   // whichever measurements happened to differ under a heading claiming one of
   // them was the good serve.
   if (overallScores[bestAt] === overallScores[worstAt]) return undefined
-  // Two serves the overall score cannot tell apart are not a best and a worst.
-  if (overallScores[bestAt] - overallScores[worstAt] < BEST_WORST_GAP) return undefined
+  // Two serves the overall score cannot tell apart are not a best and a worst
+  // (L3.1). The bar is how far the camera alone spreads that many takes of one
+  // serve, which grows with the basket: the highest and lowest of six are
+  // further apart than any two picked in advance. And the two have to have
+  // been graded on the same rows — a drop found on one and not the other moves
+  // the score by itself, and the panel would then point at a difference in the
+  // measuring as the difference between the serves.
+  if (overallScores[bestAt] - overallScores[worstAt] < bestWorstGap(overallScores.length)) return undefined
+  if (cards[bestAt] && cards[worstAt] && !readAlike(cards[bestAt], cards[worstAt])) return undefined
 
   const differences: ServeDifference[] = metrics
     .map((m) => ({

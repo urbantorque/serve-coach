@@ -1410,7 +1410,65 @@ L2.4 onward is session mode.
 On club serves, noise moves the headline number more than fixing a fault
 does, and nothing marks a fault as fixed.
 
-- [ ] **L3.1 Calibrate "real change" on club serves** · S–M.
+- [x] **L3.1 Calibrate "real change" on club serves** · S–M.
+      - *Delta (Oct 9):* done.
+        - `analysis/realChange.ts` holds a floor for every score comparison,
+          and `realChange.test.ts` measures each one. The ensembles are:
+          - the modal club serve;
+          - ten club faults dialled one at a time (the "fault family");
+          - the six Bath serves.
+          Each serve is filmed 24 and 60 times, at 30 and 50 fps. A floor is
+          one past the largest p90 drift of any single serve.
+        - Like-for-like floors (both serves graded on the same rows):
+          - overall 6;
+          - toss 7, swing 6, loading 18, contact 21, rhythm 36;
+          - form (3 serves against 2–3) 8;
+          - the six-week milestone 9;
+          - the basket gap 14;
+          - best against worst 6–9, by basket size.
+          The old line was 3 everywhere.
+        - Read differently. The modal serve's takes straddle the drop collapse
+          on 3 pairs in 5. Between serves graded on different rows, a change
+          is soft up to 14 overall and 42 on the swing; past that, it counts.
+          Other areas never flip in the ensembles, so a change there between
+          serves read differently is always soft.
+        - Gated:
+          - the report hero and the area cards;
+          - the Progress hero and its bars;
+          - Home's form chip;
+          - the milestone and the gap line;
+          - best against worst, which now also needs the two serves graded
+            alike;
+          - the practice card's verdict, on per-row floors at 1–3 serves a
+            side;
+          - the glance. It has a new chip, and the spoken line says "about
+            the same as your last serve". It compares against the same last
+            serve as the report.
+        - Soft is drawn as the neutral chip with "≈", captioned "measured
+          differently from your last serve".
+        - Proof:
+          - the derivation: no serve shows a noise-only change as real more
+            than one time in ten;
+          - fixes still show: full reach (+9) and a held toss arm (+6) read as
+            up, and the modal serve fixed outright reads as soft, never same;
+          - render tests and progress tests;
+          - the preview, at `?demo=glance-score`, `-same` and `-soft`.
+        - Departures:
+          - The worst single serve sets each floor, not a pooled population.
+            Pooling let steady serves cover for a wobbly toss's own noise.
+          - Row means do not shrink by √n. Scores pile up at 100 on the toss
+            path, and leg drive takes few values. So the row floors are
+            measured at 1–3 serves a side, and the 3-a-side floor holds past
+            that.
+          - The demo basket's worst serve is now a low reach rather than a
+            high racket. A collapsed drop no longer pairs with a full one.
+        - KNOWN:
+          - The ensembles have no ball, so the ball rows take their area's
+            floor.
+          - Fixing the modal club serve outright (+13) is soft, because the
+            collapse changes the rows. Until L3.4, the credit comes from the
+            fault line.
+          - The scale is still compressed: one fix moves the overall 6–9.
       - **What:** run ensembles on the weighted overall and on each area, for
         the modal club serve, the fault family and Bath. Set thresholds from
         the p90 drift. Gate on them every delta chip, the Progress hero and the

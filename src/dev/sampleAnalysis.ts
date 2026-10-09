@@ -165,12 +165,15 @@ export function sampleBasket(): Analysis[] {
   // from that rather than from their position in the list, so a basket of
   // `serves.index: 0` reports would render as several serves all numbered one.
   const indices = [0, 2, 3, 4]
-  // The third serve read here also keeps its racket high, so the basket has a
-  // best and a worst the overall score can tell apart: since L1.8 two serves
-  // under `BEST_WORST_GAP` apart are not called a best and a worst.
+  // The third serve read here is met low, so the basket has a best and a
+  // worst the overall score can tell apart: since L3.1 a basket's two ends
+  // have to be further apart than the camera spreads that many takes of one
+  // serve (`bestWorstGap`, 8 points for four), and graded on the same rows.
+  // It used to keep its racket high as well, which collapses the drop and
+  // takes rows off its Swing card, so the pair stopped being comparable.
   const dials: Partial<ServeDials>[] = [
     { contactReach: 1.38 },
-    { contactReach: 1.19, dropBelowShoulder: -0.25 },
+    { contactReach: 1.0 },
     { contactReach: 1.44 },
     { contactReach: 1.28 },
   ]

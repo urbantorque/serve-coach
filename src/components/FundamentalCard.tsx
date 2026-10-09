@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { isMeasured } from '../lib/analysis/coaching'
 import type { Fundamental, Metric } from '../lib/analysis/types'
+import type { AreaChange } from '../lib/progress'
 import TargetShape from './TargetShape'
 import { DeltaChip } from './Trend'
 import { Cue, Icon, MetricBar, ScoreRing } from './primitives'
@@ -8,8 +9,8 @@ import { STATUS_LABEL } from './statusLabels'
 
 interface Props {
   fundamental: Fundamental
-  /** Change in this area's score since the previous serve. */
-  delta?: number
+  /** Change in this area's score since the previous serve, and whether the two were graded alike. */
+  change?: AreaChange
   /** Jump the video to the keyframe this area is measured on. */
   onSeek?: (phase: Fundamental['phase']) => void
 }
@@ -31,7 +32,7 @@ interface Props {
  */
 export default function FundamentalCard({
   fundamental: f,
-  delta,
+  change,
   onSeek,
 }: Props) {
   /*
@@ -77,7 +78,7 @@ export default function FundamentalCard({
             {measured ? (
               <>
                 <em className={`tag tag--${f.status}`}>{STATUS_LABEL[f.status]}</em>
-                <DeltaChip delta={delta} compact />
+                <DeltaChip delta={change?.delta} scope={f.id} alike={change?.alike} compact />
               </>
             ) : (
               <em className="tag tag--none">Not measured</em>

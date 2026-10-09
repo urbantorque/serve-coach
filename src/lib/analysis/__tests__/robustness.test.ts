@@ -32,7 +32,8 @@ import { assessResilience, isFirm, rejectionFor, triage, LIMITS } from '../triag
 import { cueIssues } from '../voice'
 import { cacheSize, forgetAll, recall, remember } from '../../analysisCache'
 import { normalise, normalisePracticeLog, type Session } from '../../storage/db'
-import { MEANINGFUL_DELTA, buildProgress, deltasAgainst, tripsOf } from '../../progress'
+import { buildProgress, deltasAgainst, tripsOf } from '../../progress'
+import { REAL_CHANGE } from '../realChange'
 import { findPracticeFocus, practiceHeadline } from '../../practice'
 import { statusOf } from '../geometry'
 import { DEFAULT_TOLERANCE, packFrames, unpackFrames, validateFixture, type Fixture } from '../groundTruth'
@@ -1111,7 +1112,7 @@ const scoredUnder = (createdAt: number, overall: number, scoringVersion?: number
  * the decay outside a band softened — and a saved report keeps no frames, so the
  * old scores can never be recomputed. Both rubrics therefore sit on one trend
  * line forever. Refilming the identical serve after the update lifted the total
- * far past MEANINGFUL_DELTA, and the app congratulated the player on progress
+ * far past the report's line for a real change, and the app congratulated the player on progress
  * that did not exist. The trend is the whole reason they came back to it.
  */
 check('a change of rubric breaks the series rather than inventing a gain', () => {
@@ -1126,7 +1127,7 @@ check('a change of rubric breaks the series rather than inventing a gain', () =>
   // The honest comparison is the two serves scored the same way.
   assert(progress.overallDelta === 2, `delta was ${progress.overallDelta}, expected 2`)
   assert(
-    (progress.overallDelta ?? 0) < MEANINGFUL_DELTA,
+    (progress.overallDelta ?? 0) < REAL_CHANGE.overall,
     'the recalibration was still reported as a real change',
   )
   // The old serves stay on the chart — they happened — with the break marked so
@@ -1214,7 +1215,7 @@ check('an unbroken history still compares exactly as it always did', () => {
 check('the report page can refuse a cross-rubric comparison too', () => {
   const fundamentals = [{ id: 'swing' as const, score: 80, metrics: [] }]
   const oldReport = scoredUnder(1, 50, 1)
-  assert(deltasAgainst(fundamentals, oldReport, 1).swing === 30, 'refused a like-for-like comparison')
+  assert(deltasAgainst(fundamentals, oldReport, 1).swing?.delta === 30, 'refused a like-for-like comparison')
   assert(
     Object.keys(deltasAgainst(fundamentals, oldReport, 2)).length === 0,
     'compared a fresh report against one scored under the old rubric',

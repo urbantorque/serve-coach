@@ -165,8 +165,20 @@ check('no area delta is drawn into or out of an empty area', () => {
   const clean = analyse({}).fundamentals
   const previous = { fundamentals: collapsed } as unknown as Parameters<typeof deltasAgainst>[1]
   const deltas = deltasAgainst(clean, previous)
-  assert(!('rhythm' in deltas), `a rhythm delta of ${deltas.rhythm} was drawn from an empty area`)
+  assert(!('rhythm' in deltas), `a rhythm delta of ${deltas.rhythm?.delta} was drawn from an empty area`)
   assert('toss' in deltas, 'the areas both serves graded lost their deltas')
+})
+
+check('a swing delta across the collapse is marked as measured differently', () => {
+  // The collapse takes rows off the Swing card, so the two Swing scores are
+  // two measurements (L3.1). The toss is read the same on both.
+  const collapsed = analyse(COLLAPSED).fundamentals
+  const clean = analyse({}).fundamentals
+  const previous = { fundamentals: collapsed } as unknown as Parameters<typeof deltasAgainst>[1]
+  const deltas = deltasAgainst(clean, previous)
+  note(`swing ${deltas.swing?.delta} (alike ${deltas.swing?.alike}), toss ${deltas.toss?.delta} (alike ${deltas.toss?.alike})`)
+  assert(deltas.swing?.alike === false, 'the swing across the collapse read as one measurement')
+  assert(deltas.toss?.alike === true, 'the toss read differently when only the swing changed')
 })
 
 check('a report saved before the rule reads the same way', () => {

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
+import { DeltaChip } from '../components/Trend'
 import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/analysis/verdict'
 import type { FaultMove, RotationMove } from '../lib/analysis/carryForward'
 import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
 import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 import { hasLocalVoice, onVoicesChanged, speakLocally, stopSpeaking } from '../lib/speech'
+import { scoreMoveCaption, scoreMoveWords, type ScoreMove } from '../lib/progress'
 
 /**
  * What the serve was, in one number and one line, without leaving the court.
@@ -85,6 +87,13 @@ interface Props {
    * raising the same flag. The screen must render identically without it.
    */
   strain?: string
+  /**
+   * This serve's overall against the last one's (L3.1), held to the camera's
+   * own line so that a move it makes on its own is said as no change. Absent
+   * on a first serve, or across a change of rubric; the screen must render
+   * identically without it.
+   */
+  scoreMove?: ScoreMove
 }
 
 export default function Glance({
@@ -99,6 +108,7 @@ export default function Glance({
   move,
   rotation,
   strain,
+  scoreMove,
   speak = false,
   onToggleSpeak,
 }: Props) {
@@ -140,7 +150,7 @@ export default function Glance({
    */
   const spoken = refusal
     ? refusal.title
-    : `${analysis.overall}. ${first ? `${first.title}. ${first.why}` : 'Nothing stood out on that one. Hit another.'}`
+    : `${analysis.overall}${scoreMove ? `, ${scoreMoveWords(scoreMove)}` : ''}. ${first ? `${first.title}. ${first.why}` : 'Nothing stood out on that one. Hit another.'}`
   const [voiced, setVoiced] = useState(() => hasLocalVoice())
   useEffect(() => onVoicesChanged(() => setVoiced(hasLocalVoice())), [])
   useEffect(() => {
@@ -192,6 +202,17 @@ export default function Glance({
           <div role="img" aria-label={`Score ${analysis.overall} out of 100`}>
             <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={132} />
           </div>
+
+          {/* Against the last serve, as the report's hero puts it — the same
+              chip, held to the same line (L3.1). Without it a player reads 68
+              and then 74 and takes the six points home, and six is a move the
+              camera makes on its own. */}
+          {scoreMove && (
+            <span className="hero-delta">
+              <DeltaChip delta={scoreMove.delta} scope="overall" alike={scoreMove.alike} />
+              <span>{scoreMoveCaption(scoreMove)}</span>
+            </span>
+          )}
 
           {/* Above the fix, not under it, and it is the only thing on this
               screen that outranks the instruction. Everything below answers

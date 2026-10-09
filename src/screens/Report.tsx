@@ -27,6 +27,7 @@ import { MAX_CONSISTENCY_SERVES } from '../lib/analysis/analyze'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { unseenLines } from '../lib/analysis/angleReach'
 import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
+import { readAlike } from '../lib/analysis/realChange'
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { InjuryFlag } from '../lib/analysis/triage'
 import type { PracticeFocus } from '../lib/practice'
@@ -34,6 +35,7 @@ import type { ServeType } from '../lib/storage/prefs'
 import {
   bestOverallScoreLine,
   deltasAgainst,
+  scoreMoveCaption,
   scoringVersionOf,
   type BestGap,
   type BestScore,
@@ -321,6 +323,9 @@ export default function Report({
     () => deltasAgainst(analysis.fundamentals, previous, rubric),
     [analysis.fundamentals, previous, rubric],
   )
+  // Whether this serve and the last were graded on the same rows, which sets
+  // the floor the hero's chip is held to (L3.1).
+  const heroAlike = previous ? readAlike(analysis.fundamentals, previous.fundamentals) : true
   // The filmstrip's bodies, from whichever form this report is carrying — a
   // stored swing, or the six keyframes a quota-pruned one was left with. Memoed
   // because lifting six rows out of a track on every render would repeat the
@@ -588,8 +593,12 @@ export default function Report({
         {previous &&
           (comparable ? (
             <span className="hero-delta">
-              <DeltaChip delta={analysis.overall - previous.overall} />
-              <span>vs your last serve</span>
+              <DeltaChip delta={analysis.overall - previous.overall} scope="overall" alike={heroAlike} />
+              {/* Said in words when the chip is the soft one: the two serves
+                  were measured on different rows, and "vs your last serve"
+                  beside a mark that declines to compare them would read as a
+                  verdict of no change. */}
+              <span>{scoreMoveCaption({ delta: analysis.overall - previous.overall, alike: heroAlike })}</span>
             </span>
           ) : (
             <span className="hero-delta">
@@ -1283,7 +1292,7 @@ export default function Report({
             <FundamentalCard
               key={f.id}
               fundamental={f}
-              delta={deltas[f.id]}
+              change={deltas[f.id]}
               onSeek={live ? goToPhase : undefined}
             />
           ))}

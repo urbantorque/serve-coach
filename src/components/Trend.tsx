@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
+import type { ChangeScope } from '../lib/analysis/realChange'
 import {
-  MEANINGFUL_DELTA,
   deltaStatus,
   shortDate,
   type AreaDelta,
@@ -24,10 +24,24 @@ const strokeOf = (stale: boolean) => (stale ? 'var(--fg-faint)' : 'var(--lime)')
  * Colour is never the only channel here — the sign and the arrow carry the same
  * meaning, which is what keeps this readable for a colourblind reader and in
  * forced-colours mode.
+ *
+ * `scope` says what the change is a change of, which sets how far it has to
+ * go to be the serve rather than the camera (`REAL_CHANGE`, L3.1). `alike`
+ * says whether the two serves were graded on the same rows.
  */
-export function DeltaChip({ delta, compact = false }: { delta?: number; compact?: boolean }) {
+export function DeltaChip({
+  delta,
+  scope,
+  alike = true,
+  compact = false,
+}: {
+  delta?: number
+  scope: ChangeScope
+  alike?: boolean
+  compact?: boolean
+}) {
   if (delta === undefined) return null
-  const state = deltaStatus(delta)
+  const state = deltaStatus(delta, scope, alike)
 
   // A noise-level change shows the dash alone. Printing the digit as well reads
   // as a negative number when it sits beside a score — "92" then "–1" looks
@@ -38,6 +52,20 @@ export function DeltaChip({ delta, compact = false }: { delta?: number; compact?
       <span className={`delta delta--flat${compact ? ' delta--compact' : ''}`}>
         <span aria-hidden="true">–</span>
         <span className="sr-only">no real change</span>
+      </span>
+    )
+  }
+
+  // Past the line, but the two serves were measured on different rows — the
+  // drop found on one and not the other, say — so the gap is partly the
+  // measuring. The neutral chip, with a mark that says "about" rather than the
+  // dash that says "nothing", and no digit for the same reason the dash has
+  // none.
+  if (state === 'soft') {
+    return (
+      <span className={`delta delta--flat${compact ? ' delta--compact' : ''}`} title="Measured differently, so not compared">
+        <span aria-hidden="true">≈</span>
+        <span className="sr-only">measured differently, so not compared</span>
       </span>
     )
   }
@@ -284,7 +312,7 @@ export function DeltaBars({ deltas }: { deltas: AreaDelta[] }) {
   return (
     <ul className="dbars">
       {deltas.map((d) => {
-        const state = deltaStatus(d.delta)
+        const state = deltaStatus(d.delta, d.id, d.alike)
         const pct = (Math.abs(d.delta) / widest) * 50
         return (
           <li key={d.id} className="dbar">
@@ -292,7 +320,7 @@ export function DeltaBars({ deltas }: { deltas: AreaDelta[] }) {
             <span className="dbar-track">
               <span className="dbar-axis" />
               <span
-                className={`dbar-fill dbar-fill--${state}`}
+                className={`dbar-fill dbar-fill--${state === 'soft' ? 'flat' : state}`}
                 style={
                   d.delta >= 0
                     ? { left: '50%', width: `${pct}%` }
@@ -302,14 +330,17 @@ export function DeltaBars({ deltas }: { deltas: AreaDelta[] }) {
             </span>
             <span className="dbar-value tnum">
               {d.to}
-              <DeltaChip delta={d.delta} compact />
+              <DeltaChip delta={d.delta} scope={d.id} alike={d.alike} compact />
             </span>
           </li>
         )
       })}
       <li className="dbars-note">
-        Anything under {MEANINGFUL_DELTA} points is serve-to-serve noise rather than a
-        change in technique.
+        A dash is a change the camera alone could make filming the same serve
+        twice. Each area has its own line, because the camera moves some far more
+        than others.
+        {deltas.some((d) => deltaStatus(d.delta, d.id, d.alike) === 'soft') &&
+          ' ≈ marks an area measured differently on the two serves, so its change is not counted.'}
       </li>
     </ul>
   )

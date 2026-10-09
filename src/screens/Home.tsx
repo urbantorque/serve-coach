@@ -434,7 +434,7 @@ export default function Home({
                   filmed since — and the line directly below already says so. */}
               last {Math.min(3, eraCount)} {Math.min(3, eraCount) === 1 ? 'serve' : 'serves'}
             </span>
-            <DeltaChip delta={progress.formDelta} />
+            <DeltaChip delta={progress.formDelta} scope="form" />
           </div>
           <Sparkline points={progress.points} />
           {/* The older serves are still on the sparkline above, greyed and

@@ -340,8 +340,8 @@ export const SIGNALS: Record<string, SignalSpec> = {
  * `__tests__/repeatability.ts`, which is where every figure in this comment and
  * in `UNDER_RESOLVED` can be re-derived, and `__tests__/depth.test.ts` prints
  * them and fails if they drift. A miss smaller than the figure here is reported
- * as no fault at all, for the same reason `MEANINGFUL_DELTA` refuses to call a
- * two-point move on the trend chart progress.
+ * as no fault at all, for the same reason `REAL_CHANGE` refuses to call a move
+ * the camera makes on its own progress.
  *
  * Read in two places, and the direction of harm is opposite in each: see
  * `rungStep` under `inferTier` before widening one of these.

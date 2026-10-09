@@ -16,10 +16,23 @@ import {
   type StrainRecord,
 } from './analysis/strain'
 import { INJURY_INPUTS, type InjuryFlag } from './analysis/triage'
-import { LEGACY_SCORING_VERSION, type Fundamental, type FundamentalId, type Status } from './analysis/types'
+import {
+  LEGACY_SCORING_VERSION,
+  type Analysis,
+  type Fundamental,
+  type FundamentalId,
+  type Status,
+} from './analysis/types'
 import { NOISE_FLOOR } from './analysis/tiers'
 import { MIN_EVIDENCE, type FlawId } from './analysis/flaws'
 import { progressionFor } from './analysis/progressions'
+import {
+  GAP_CHANGE,
+  MILESTONE_CHANGE,
+  changeOf,
+  readAlike,
+  type ChangeScope,
+} from './analysis/realChange'
 import { VERDICT_TABLES } from './analysis/verdict'
 import { cue } from './analysis/voice'
 import type { ServeOutcome, ServeTag, Session } from './storage/db'
@@ -37,12 +50,24 @@ export interface TrendPoint {
   scoringVersion: number
 }
 
+/** One area's change against the report before, and whether the two were graded alike. */
+export interface AreaChange {
+  delta: number
+  alike: boolean
+}
+
 export interface AreaDelta {
   id: FundamentalId
   label: string
   from: number
   to: number
   delta: number
+  /**
+   * Whether the two serves graded the same rows in this area (`readAlike`).
+   * When they did not — the drop collapsed on one of them, say — the delta is
+   * two measurements rather than one taken twice, and is held to a wider floor.
+   */
+  alike: boolean
 }
 
 export interface Progress {
@@ -64,6 +89,8 @@ export interface Progress {
   first: TrendPoint
   /** Change in overall score against the session before it. */
   overallDelta?: number
+  /** Whether those two were graded on the same rows — see `AreaDelta.alike`. */
+  overallAlike?: boolean
   areaDeltas: AreaDelta[]
   best: number
   /** Mean of the three most recent, which is steadier than any single serve. */
@@ -192,18 +219,17 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
   if (matching.length === 0) return undefined
 
   // `listSessions` hands back newest first; charts want the opposite.
-  const points: TrendPoint[] = [...matching]
-    .sort((a, b) => a.createdAt - b.createdAt)
-    .map((s) => ({
-      id: s.id,
-      createdAt: s.createdAt,
-      overall: s.overall,
-      status: s.overallStatus,
-      // An area the clip could not grade has no score to chart (L1.1), so it
-      // is absent here rather than a 0 the next serve would 'gain' from.
-      byArea: Object.fromEntries(s.fundamentals.filter(isMeasured).map((f) => [f.id, f.score])),
-      scoringVersion: scoringVersionOf(s),
-    }))
+  const oldestFirst = [...matching].sort((a, b) => a.createdAt - b.createdAt)
+  const points: TrendPoint[] = oldestFirst.map((s) => ({
+    id: s.id,
+    createdAt: s.createdAt,
+    overall: s.overall,
+    status: s.overallStatus,
+    // An area the clip could not grade has no score to chart (L1.1), so it
+    // is absent here rather than a 0 the next serve would 'gain' from.
+    byArea: Object.fromEntries(s.fundamentals.filter(isMeasured).map((f) => [f.id, f.score])),
+    scoringVersion: scoringVersionOf(s),
+  }))
 
   const latest = points[points.length - 1]
 
@@ -215,8 +241,8 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
    * scoring is recalibrated the old numbers stay as they were computed, and the
    * two rubrics have to coexist in one history permanently. Subtracting across
    * that boundary measures the recalibration, not the player. Refilming the
-   * identical serve after an update moved the total by far more than
-   * `MEANINGFUL_DELTA`, so the app congratulated somebody on a gain that did not
+   * identical serve after an update moved the total by far more than the
+   * camera does (`REAL_CHANGE`), so the app congratulated somebody on a gain that did not
    * happen — which is the one lie a coaching app cannot afford, because the
    * trend is the whole reason to come back.
    *
@@ -225,6 +251,12 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
    */
   const era = currentRubricEra(points)
   const previous = era.length > 1 ? era[era.length - 2] : undefined
+
+  // The two reports themselves, for whether they were graded on the same rows
+  // (L3.1). The points keep only the scores.
+  const cards = new Map(oldestFirst.map((s) => [s.id, s.fundamentals]))
+  const alikeOn = (scope: 'overall' | FundamentalId) =>
+    previous ? readAlike(cards.get(latest.id) ?? [], cards.get(previous.id) ?? [], scope) : true
 
   const areaDeltas: AreaDelta[] = previous
     ? (Object.keys(FUNDAMENTALS) as FundamentalId[])
@@ -235,6 +267,7 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
           from: previous.byArea[id],
           to: latest.byArea[id],
           delta: latest.byArea[id] - previous.byArea[id],
+          alike: alikeOn(id),
         }))
     : []
 
@@ -252,6 +285,7 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
     previous,
     first: era[0],
     overallDelta: previous ? latest.overall - previous.overall : undefined,
+    overallAlike: previous ? alikeOn('overall') : undefined,
     areaDeltas,
     best: Math.max(...scores),
     recentAverage: Math.round(mean(recent)),
@@ -296,7 +330,9 @@ export function sixWeekMilestone(progress: Progress): string | undefined {
 
   const weeks = Math.floor((latest.createdAt - first.createdAt) / (7 * 24 * 60 * 60 * 1000))
   const delta = recentAverage - first.overall
-  if (Math.abs(delta) < MEANINGFUL_DELTA) {
+  // Three serves against one, which the camera moves further than one against
+  // one, and which cannot be kept to serves read alike (`MILESTONE_CHANGE`).
+  if (Math.abs(delta) < MILESTONE_CHANGE) {
     return `${weeks} weeks in, averaging ${recentAverage} — about where you started.`
   }
   return delta > 0
@@ -438,25 +474,29 @@ export function buildConsistencyTrend(
  * rubric because defaulting would silently blank the deltas on every report
  * saved before stamping, and a caller passing nothing is more likely to be a
  * test or a tool than the report page.
+ *
+ * Each delta carries whether the two graded the same rows in that area
+ * (`readAlike`, L3.1), which decides the floor its chip is held to.
  */
 export function deltasAgainst(
   fundamentals: Pick<Fundamental, 'id' | 'score' | 'metrics'>[],
   previous?: Session,
   scoringVersion?: number,
-): Record<string, number> {
+): Record<string, AreaChange> {
   if (!previous) return {}
   if (scoringVersion !== undefined && scoringVersionOf(previous) !== scoringVersion) return {}
   // Only between two areas that were both graded (L1.1): a delta out of or
   // into an empty area is the clip changing, not the serve.
   const before = Object.fromEntries(previous.fundamentals.filter(isMeasured).map((f) => [f.id, f.score]))
-  const out: Record<string, number> = {}
+  const out: Record<string, AreaChange> = {}
   for (const f of fundamentals) {
-    if (isMeasured(f) && f.id in before) out[f.id] = f.score - before[f.id]
+    if (isMeasured(f) && f.id in before) {
+      out[f.id] = { delta: f.score - before[f.id], alike: readAlike(fundamentals, previous.fundamentals, f.id) }
+    }
   }
   return out
 }
 
-/** A change smaller than this is serve-to-serve noise, not a trend. */
 /**
  * The oldest serve still worth putting beside today's, and today's.
  *
@@ -883,12 +923,10 @@ export function bestGapEverLine(record: BestGap): string {
  * `buildConsistencyTrend` has computed `gapDelta` since it was written and
  * nothing has ever said it aloud.
  *
- * Silent below `MEANINGFUL_DELTA`, the same noise floor every other score-
- * point comparison in this file already uses. Reusing it here is not a new
- * number: `gapDelta` is a difference of two differences of overall scores,
- * the same point scale `MEANINGFUL_DELTA` was calibrated against, so the
- * existing threshold is being asked a second question, not invented for
- * this one.
+ * Silent below `GAP_CHANGE`, how far the camera alone moves one basket's gap
+ * against another's (L3.1). Its own floor and a wide one: a gap is the
+ * difference of the two most extreme serves in a basket, and the extremes are
+ * where noise lands.
  *
  * Negative is the improvement — a shrinking gap — the opposite sign
  * convention from every other delta in this app, where positive is always
@@ -904,7 +942,7 @@ export function bestGapEverLine(record: BestGap): string {
  * when the basket on screen happens to be the newest one.
  */
 export function gapDeltaLine(delta: number | undefined): string | undefined {
-  if (delta === undefined || Math.abs(delta) < MEANINGFUL_DELTA) return undefined
+  if (delta === undefined || Math.abs(delta) < GAP_CHANGE) return undefined
   return delta < 0
     ? `${Math.abs(delta)} points tighter than your last basket.`
     : `${delta} points wider than your last basket.`
@@ -1009,10 +1047,68 @@ export function bestOverallScoreEverLine(record: BestScore): string {
   return `Your best serve yet scored ${record.score}, set ${shortDate(record.createdAt)}.`
 }
 
-export const MEANINGFUL_DELTA = 3
+/**
+ * A score change as the chips draw it (L3.1): a status colour past the floor
+ * for its scope, `flat` for a change the camera alone could have made, and
+ * `soft` for one between two serves graded on different rows that is not
+ * past the wider floor for that — see `changeOf`.
+ *
+ * The scope is required. An area's floor is not the overall's: the camera
+ * moves contact and loading three times as far as it moves the overall, so a
+ * chip that defaulted to the overall's line would call noise a change there.
+ */
+export const deltaStatus = (delta: number, scope: ChangeScope, alike = true): Status | 'flat' | 'soft' => {
+  const change = changeOf(delta, scope, alike)
+  return change === 'same' ? 'flat' : change === 'soft' ? 'soft' : change === 'up' ? 'great' : 'work'
+}
 
-export const deltaStatus = (delta: number): Status | 'flat' =>
-  Math.abs(delta) < MEANINGFUL_DELTA ? 'flat' : delta > 0 ? 'great' : 'work'
+/** One serve's overall against the last one's, and whether the two were graded alike. */
+export type ScoreMove = AreaChange
+
+/**
+ * This serve's overall against the serve before it, for the glance (L3.1).
+ *
+ * The same `previous` the report's hero is handed, so the two screens never
+ * disagree about which serve "your last serve" is. Refused across a change of
+ * rubric for the reason `buildProgress` refuses one: the difference would be
+ * the recalibration.
+ */
+export function scoreMoveAgainst(
+  current: Pick<Analysis, 'overall' | 'fundamentals'>,
+  rubric: number,
+  previous: Session | undefined,
+): ScoreMove | undefined {
+  if (!previous || scoringVersionOf(previous) !== rubric) return undefined
+  return { delta: current.overall - previous.overall, alike: readAlike(current.fundamentals, previous.fundamentals) }
+}
+
+/**
+ * What goes beside the overall's chip: the soft chip declines to compare, and
+ * "vs your last serve" beside it would read as a verdict of no change.
+ */
+export const scoreMoveCaption = (move: ScoreMove): string =>
+  deltaStatus(move.delta, 'overall', move.alike) === 'soft'
+    ? 'measured differently from your last serve'
+    : 'vs your last serve'
+
+/**
+ * The same move in words, for the glance read aloud. A digit is said only
+ * when the chip would print one: "about the same" for a move the camera makes
+ * on its own, which is what stops a player on a fence hearing 68 and then 74
+ * and taking the six points home.
+ */
+export function scoreMoveWords(move: ScoreMove): string {
+  switch (deltaStatus(move.delta, 'overall', move.alike)) {
+    case 'great':
+      return `up ${move.delta} on your last serve`
+    case 'work':
+      return `down ${-move.delta} on your last serve`
+    case 'soft':
+      return 'measured differently from your last serve'
+    default:
+      return 'about the same as your last serve'
+  }
+}
 
 export { statusOf }
 

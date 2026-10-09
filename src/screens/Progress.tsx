@@ -192,7 +192,7 @@ export default function Progress({
             <span className="progress-hero tnum">{form.latest.overall}</span>
             <span className="progress-unit">
               latest {SERVE_TYPES[form.serveType].word} serve
-              <DeltaChip delta={form.overallDelta} />
+              <DeltaChip delta={form.overallDelta} scope="overall" alike={form.overallAlike} />
             </span>
           </div>
 

@@ -289,6 +289,28 @@ export async function runDemoRoute(
       analysis: sampleAnalysis({ spineLean: DEMO_DIALS.injury.spineLean, cameraYaw: DEMO_DIALS.injury.cameraYaw }),
       videoUrl: '',
     })
+  } else if (demo?.startsWith('glance-score')) {
+    // The score against the last serve (L3.1), in its three states:
+    // `?demo=glance-score` is a move past the camera's line, `-same` one
+    // inside it, and `-soft` one between two serves measured on different
+    // rows (the earlier one with its drop collapsed). The earlier serve's
+    // overall is set by hand, dev-only, so each state lands where it is named.
+    const variant = demo.split('glance-score-')[1]
+    const { frames: _f, ...earlier } = sampleAnalysis(variant === 'soft' ? DEMO_DIALS.collapsed : {})
+    void _f
+    seedHistory({
+      sessions: [
+        {
+          ...earlier,
+          id: 'serve-demoearlier-0',
+          createdAt: analysis.createdAt - 90_000,
+          overall: analysis.overall - (variant === 'same' ? 4 : 9),
+          scoringVersion: SCORING_VERSION,
+        } as Session,
+      ],
+      practice: [],
+    })
+    setView({ kind: 'glance', analysis, videoUrl: '' })
   } else if (demo?.startsWith('glance-move')) {
     // The carry-forward line, on each of its four verdicts —
     // `?demo=glance-move`, or `-cleared`/`-same`/`-wider`.

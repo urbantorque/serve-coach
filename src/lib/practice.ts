@@ -2,10 +2,10 @@ import { FUNDAMENTALS, SERVE_TYPES, metricCopy } from './analysis/coaching'
 import { drillForMetric } from './analysis/progressions'
 import { SOFT_MEASUREMENT } from './analysis/confidence'
 import { mean } from './analysis/geometry'
+import { rowChange } from './analysis/realChange'
 import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
 import {
-  MEANINGFUL_DELTA,
   buildConsistencyTrend,
   currentRubricEra,
   dominantType,
@@ -250,8 +250,11 @@ export function findPracticeFocus(
   const newer = pick.scores.slice(pick.scores.length - half)
   const trend = half >= 1 ? Math.round(mean(newer) - mean(older)) : undefined
 
+  // Held to how far the camera alone moves this row's mean over that many
+  // serves a side (L3.1). One row moves much further than a whole area does,
+  // and some rows far further than others, so the line is the row's own.
   const verdict: Verdict =
-    trend === undefined || Math.abs(trend) < MEANINGFUL_DELTA
+    trend === undefined || Math.abs(trend) < rowChange(pick.id, pick.fundamentalId, half)
       ? 'stuck'
       : trend > 0
         ? 'improving'

@@ -13,7 +13,6 @@
  * "steady", and checks a real difference is still found.
  */
 import {
-  BEST_WORST_GAP,
   CARD_NOISE_SD,
   RANGE_OF_SIX,
   SAME_BODY_SLOPE,
@@ -30,7 +29,7 @@ import { assessSpatial, viewFromCourtYaw } from '../spatial'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { LM } from '../geometry'
 import type { Analysis, Frame } from '../types'
-import { MEANINGFUL_DELTA } from '../../progress'
+import { REAL_CHANGE, bestWorstGap } from '../realChange'
 import { DEPTH_AWARE, DEPTH_BIAS, DEPTH_MULTIPLIER, FPS, IN_PLANE, REAL_SERVES, SEEDS } from './repeatability'
 import { assert, check, heading, note, report } from './harness'
 
@@ -199,11 +198,35 @@ check('a steady fault is marked off target, not praised', () => {
 })
 
 check('best against worst needs a gap the score can tell apart', () => {
-  assert(BEST_WORST_GAP === MEANINGFUL_DELTA, `the gap is ${BEST_WORST_GAP}, the report's noise line ${MEANINGFUL_DELTA}`)
-  const mk = (overall: number, i: number) =>
-    ({ fundamentals: [{ id: 'toss', metrics: [] }], overall, serves: { count: 2, index: i } }) as unknown as Analysis
-  assert(buildConsistency([mk(78, 0), mk(76, 1)], 2)!.gap === undefined, 'two serves two points apart were called best and worst')
+  // Two serves are held to the report's own line between two scores (L3.1).
+  assert(
+    bestWorstGap(2) === REAL_CHANGE.overall,
+    `two serves need ${bestWorstGap(2)}, the report's line is ${REAL_CHANGE.overall}`,
+  )
+  const mk = (overall: number, i: number, rows: string[] = []) =>
+    ({
+      fundamentals: [
+        {
+          id: 'toss',
+          score: rows.length ? 70 : 0,
+          metrics: rows.map((id) => ({ id, label: id, unit: '%', decimals: 0, value: 50, ideal: [40, 60], range: [0, 100], confidence: 1, score: 70 })),
+        },
+      ],
+      overall,
+      serves: { count: 2, index: i },
+    }) as unknown as Analysis
+  const under = REAL_CHANGE.overall - 1
+  assert(
+    buildConsistency([mk(78, 0), mk(78 - under, 1)], 2)!.gap === undefined,
+    `two serves ${under} points apart were called best and worst`,
+  )
   assert(buildConsistency([mk(80, 0), mk(70, 1)], 2)!.gap !== undefined, 'a ten-point gap was hidden')
+  // Six takes of one serve spread further than two, so six need more.
+  const six = [80, 79, 78, 77, 76, 80 - bestWorstGap(6) + 1].map((o, i) => mk(o, i))
+  assert(buildConsistency(six, 6)!.gap === undefined, 'a six-serve spread the camera makes was called best and worst')
+  // Graded on different rows, the gap is partly the measuring: not a pair.
+  const apart = [mk(84, 0, ['releaseHeight', 'tossArmHold']), mk(70, 1, ['releaseHeight'])]
+  assert(buildConsistency(apart, 2)!.gap === undefined, 'a best and worst measured on different rows were paired')
 })
 
 heading('A change of side is not a change of server (L2.3)')

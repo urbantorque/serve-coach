@@ -328,6 +328,26 @@ check('the glance renders', () => {
   assert(out.includes('Show me everything'), 'the glance lost its way out')
 })
 
+check('the glance sets the score against the last serve, on the line the camera sets', () => {
+  // Inside the camera's own move: the dash, and the plain caption.
+  const same = html(
+    createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, scoreMove: { delta: 4, alike: true } }),
+  )
+  assert(same.includes('vs your last serve'), 'the glance did not say what the chip is against')
+  assert(same.includes('no real change'), 'a four-point move was shown as a change')
+  // Past it, an arrow and the number.
+  const up = html(
+    createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, scoreMove: { delta: 9, alike: true } }),
+  )
+  assert(up.includes('delta--great') && up.includes('>9<'), 'a nine-point gain was not shown')
+  // Measured differently: the soft mark, and words that do not compare.
+  const soft = html(
+    createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, scoreMove: { delta: 9, alike: false } }),
+  )
+  assert(soft.includes('measured differently from your last serve'), 'the soft move was captioned as a comparison')
+  assert(!soft.includes('delta--great'), 'a move between serves read differently was coloured as a gain')
+})
+
 check('the glance refuses rather than scoring an unreadable clip', () => {
   const refused: Analysis = {
     ...sampleAnalysis(),

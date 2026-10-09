@@ -44,7 +44,7 @@ export interface Frame {
  * by side in a history for as long as that history lasts, and a trend drawn
  * straight across them reports the recalibration as the player improving:
  * refilm the identical serve after an update and it "gains" far more than
- * `MEANINGFUL_DELTA`. Stamping the rubric is what lets `progress.ts` refuse.
+ * the camera does (`REAL_CHANGE`). Stamping the rubric is what lets `progress.ts` refuse.
  *
  * Bump this whenever a change would move the number a saved report already
  * carries — `scoreAgainst`, a target band, or how an area score is combined.

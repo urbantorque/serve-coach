@@ -7,7 +7,8 @@
  * reported as having that fault and not some other one.
  */
 import { findPracticeFocus, practiceHeadline, repeatabilityNote } from '../../practice'
-import { MEANINGFUL_DELTA, buildProgress, deltaStatus, deltasAgainst } from '../../progress'
+import { buildProgress, deltaStatus, deltasAgainst } from '../../progress'
+import { REAL_CHANGE } from '../realChange'
 import { normalise } from '../../storage/db'
 import { sessionKeyFor } from '../../storage/sessionKey'
 import {
@@ -2342,18 +2343,22 @@ check('skips an area the previous session did not measure', () => {
 })
 
 check('treats a change under the threshold as noise', () => {
-  assert(deltaStatus(0) === 'flat', '0 was not flat')
-  assert(deltaStatus(MEANINGFUL_DELTA - 1) === 'flat', 'just under the threshold was not flat')
-  assert(deltaStatus(-(MEANINGFUL_DELTA - 1)) === 'flat', 'small decline was not flat')
-  assert(deltaStatus(MEANINGFUL_DELTA) === 'great', 'a real gain was called noise')
-  assert(deltaStatus(-MEANINGFUL_DELTA) === 'work', 'a real decline was called noise')
+  const line = REAL_CHANGE.overall
+  assert(deltaStatus(0, 'overall') === 'flat', '0 was not flat')
+  assert(deltaStatus(line - 1, 'overall') === 'flat', 'just under the threshold was not flat')
+  assert(deltaStatus(-(line - 1), 'overall') === 'flat', 'small decline was not flat')
+  assert(deltaStatus(line, 'overall') === 'great', 'a real gain was called noise')
+  assert(deltaStatus(-line, 'overall') === 'work', 'a real decline was called noise')
+  assert(deltaStatus(line, 'overall', false) === 'soft', 'a gain between serves read differently was claimed')
+  // Each area is held to its own line, not the overall's.
+  assert(deltaStatus(line, 'contact') === 'flat', 'a contact change the camera makes was called real')
 })
 
 check('report deltas need a previous report to compare against', () => {
   const fundamentals = [{ id: 'toss', score: 80, metrics: [] }] as unknown as Parameters<typeof deltasAgainst>[0]
   assert(Object.keys(deltasAgainst(fundamentals, undefined)).length === 0, 'compared against nothing')
   const prev = progressSession(DAY, 70, { toss: 66 })
-  assert(deltasAgainst(fundamentals, prev).toss === 14, 'wrong per-area delta on the report')
+  assert(deltasAgainst(fundamentals, prev).toss?.delta === 14, 'wrong per-area delta on the report')
 })
 
 /* ------------------------------------------------------ stored reports ---- */
@@ -2565,9 +2570,19 @@ check('counts how often it was the weakest link', () => {
 })
 
 check('reads a genuine improvement as improving', () => {
-  const f = findPracticeFocus(persistentWeakness([30, 34, 42, 52, 58]))
+  // Past the racket drop's own line for two serves a side (`ROW_CHANGE`):
+  // the camera moves that row a long way on a serve whose drop collapses.
+  const f = findPracticeFocus(persistentWeakness([20, 24, 50, 70, 80]))
   assert(f!.verdict === 'improving', `verdict was ${f!.verdict} (trend ${f!.trend})`)
   assert(practiceHeadline(f!).includes('right direction'), 'headline does not acknowledge progress')
+})
+
+check('a move the camera makes on its own is not progress', () => {
+  // 32 against 55 on two serves a side: twenty-three points, which this row's
+  // mean moves on noise alone one time in ten (L3.1).
+  const f = findPracticeFocus(persistentWeakness([30, 34, 42, 52, 58]))
+  assert(f!.trend === 23, `trend ${f!.trend}`)
+  assert(f!.verdict === 'stuck', `a move inside the row's noise read as ${f!.verdict}`)
 })
 
 /**
@@ -2712,7 +2727,7 @@ check('reads a flat run as stuck', () => {
 })
 
 check('reads a decline as slipping', () => {
-  const f = findPracticeFocus(persistentWeakness([62, 58, 50, 42, 38]))
+  const f = findPracticeFocus(persistentWeakness([80, 74, 50, 30, 20]))
   assert(f!.verdict === 'slipping', `verdict was ${f!.verdict} (trend ${f!.trend})`)
   assert(practiceHeadline(f!).includes('backwards'), 'headline does not flag the decline')
 })
