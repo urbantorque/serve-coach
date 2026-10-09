@@ -45,8 +45,9 @@
 import { DRILLS } from './coaching'
 import type { BodyAxis } from './axes'
 import type { Diagnosis } from './diagnose'
-import { MIN_EVIDENCE, type FlawId } from './flaws'
-import type { Triage } from './triage'
+import { FLAWS, MIN_EVIDENCE, type FlawId } from './flaws'
+import { CARD_SIGNAL } from './tiers'
+import { FLAW_DRILL, type Triage } from './triage'
 import type { Drill } from './types'
 
 export interface Progression {
@@ -206,11 +207,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         how: 'Start with the racket already hanging down your back on a loose grip, then swing up from there.',
         reps: '10 swings',
       },
-      {
-        name: 'Ball in a sock',
-        how: 'Swing a ball in a sock, or a towel, through the whole motion without stopping.',
-        reps: '15 swings',
-      },
+      DRILLS.ball_in_a_sock,
       DRILLS.back_scratch_drop,
       {
         name: 'Swing, then serve',
@@ -281,11 +278,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
   no_leg_drive: {
     cue: 'Send the ball all the way to the back fence and let your body throw your arm.',
     steps: [
-      {
-        name: 'Push throws',
-        how: 'From side-on with your knees bent, push a ball up and out to full reach, legs and hips first.',
-        reps: '10 throws',
-      },
+      DRILLS.push_throws,
       DRILLS.back_leg_serve,
       {
         name: 'Long serves',
@@ -401,6 +394,53 @@ export function progressionFor(flaw: FlawId, axis?: BodyAxis): Progression | und
   if (flaw !== 'toss_drift' || !axis) return base
   const first = axis === 'depth' ? DRILLS.baseline_drop_toss : DRILLS.fence_line_toss
   return { ...base, steps: [first, ...base.steps.slice(1)] }
+}
+
+/**
+ * The fault a card row reads the same number as, through the signal they
+ * share (`CARD_SIGNAL`): contact height is `low_contact`'s, the racket drop
+ * `shallow_drop`'s. Undefined for a row no fault is judged on.
+ */
+export function faultForMetric(metricId: string): FlawId | undefined {
+  const signal = CARD_SIGNAL[metricId]
+  if (!signal) return undefined
+  return FLAWS.find((s) => s.signal === signal || s.sideOn === signal)?.flaw
+}
+
+/**
+ * The rung of a fault's ladder the player is on: the one they moved to, when
+ * this ladder has it, or else the rung the report's own drill sits on.
+ */
+export function rungFor(
+  flaw: FlawId,
+  ladder: Progression,
+  rungs?: Partial<Record<string, number>>,
+): number {
+  const stored = rungs?.[flaw]
+  if (stored !== undefined && Number.isInteger(stored) && stored >= 0 && stored < ladder.steps.length) {
+    return stored
+  }
+  return Math.max(0, stepOf(ladder, DRILLS[FLAW_DRILL[flaw]]))
+}
+
+/**
+ * The drill for a card row, from one source (L1.4).
+ *
+ * A row that reads the same number as a fault hands out that fault's ladder,
+ * on the player's rung, so the practice card, the fallback focus and the
+ * report's plan cannot give three exercises for one fault. A row with no
+ * fault keeps its own drill, which the caller passes in already resolved for
+ * the serve type.
+ */
+export function drillForMetric(
+  metricId: string,
+  own: Drill,
+  rungs?: Partial<Record<string, number>>,
+): { drill: Drill; flaw?: FlawId } {
+  const flaw = faultForMetric(metricId)
+  const ladder = flaw ? progressionFor(flaw) : undefined
+  if (!flaw || !ladder) return { drill: own }
+  return { drill: ladder.steps[rungFor(flaw, ladder, rungs)], flaw }
 }
 
 /** Which rung a drill is on, by identity — `-1` when it is on none. */

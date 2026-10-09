@@ -22,6 +22,7 @@ import {
   type SweepServe,
 } from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
+import { progressionFor, rungFor } from '../progressions'
 import {
   IMPLAUSIBLE_HEIGHT_SPREAD,
   MIN_COMPARABLE_SERVES,
@@ -2489,6 +2490,34 @@ check('prefers the lowest average over whoever lost the latest report', () => {
   ]
   const f = findPracticeFocus(sessions)
   assert(f!.metricId === 'dropDepth', `latest bad serve hijacked the advice: got ${f!.metricId}`)
+})
+
+check('the practice card hands out the rung of the ladder the plan would (L1.4)', () => {
+  // The racket drop is `shallow_drop`'s number, so its drill is that ladder's,
+  // on the rung the report's plan starts at, or the one the player moved to.
+  const ladder = progressionFor('shallow_drop')!
+  const start = findPracticeFocus(persistentWeakness([42, 45, 41, 44, 43]))!
+  assert(start.drill === ladder.steps[rungFor('shallow_drop', ladder)], `handed out ${start.drill.name}`)
+  const moved = findPracticeFocus(persistentWeakness([42, 45, 41, 44, 43]), undefined, undefined, undefined, {
+    shallow_drop: 1,
+  })!
+  assert(moved.drill === ladder.steps[1], `ignored the rung the player moved to: ${moved.drill.name}`)
+})
+
+check('a kick history is handed the kick drill (L1.4)', () => {
+  // Contact in front has its own kick exercise; the flat one walks contact
+  // forward, which a kick struck too far in front does not need.
+  const kick = [0, 1, 2].map((i) => ({
+    ...sessionWith(i * DAY, [
+      ['contactAhead', 'Contact point in front', 'contact', 40],
+      ['kneeBend', 'Knee bend at trophy', 'loading', 90],
+    ]),
+    serveType: 'kick' as const,
+  }))
+  const f = findPracticeFocus(kick)!
+  assert(f.metricId === 'contactAhead', `focus was ${f.metricId}`)
+  assert(f.drill === metricCopy('contactAhead', 'kick').drill, `a kick player got "${f.drill.name}"`)
+  assert(f.drill !== METRICS.contactAhead.drill, 'the flat drill reached a kick history')
 })
 
 check('counts how often it was the weakest link', () => {

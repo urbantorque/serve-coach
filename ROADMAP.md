@@ -996,7 +996,15 @@ Small items, and everything after builds on them.
       - *Proof:* zero false flags across `realiseReal` on the six Bath serves
         (60 takes each) and across the rig's noise ensembles. The rig's
         injury dials still flag at least 90% of the time.
-- [ ] **L1.4 Retire the hold and pause drills; one drill source** · S.
+- [x] **L1.4 Retire the hold and pause drills; one drill source** · S. *Done
+      (2026-10-09): seven stopping drills replaced by shared flowing ones (push
+      throws, a ball in a sock, overhead throws, hit up and out, shoulder over
+      shoulder), each one object across rows, areas and ladders.
+      `drillForMetric` hands a fault's number its ladder rung on the practice
+      card and the fallback focus, and the practice card takes the player's
+      rung and the serve type's drill. The check reads 224 reachable drills and
+      finds none that stops the swing. The duplicate card on one page is
+      L1.6's. Original plan:*
       - **What:** when a reading maps to a fault, `PracticeCard` and
         `pickFocus` hand out the ladder rung the player is on
         (`progressionFor`). The pause at the drop, "slow sink hold", "freeze

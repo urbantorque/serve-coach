@@ -126,7 +126,10 @@ export default function Home({
   const progress = useMemo(() => buildProgress(sessions), [sessions])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
   const streak = useMemo(() => streakLine(sessions), [sessions])
-  const practice = useMemo(() => findPracticeFocus(sessions), [sessions])
+  const practice = useMemo(
+    () => findPracticeFocus(sessions, undefined, undefined, undefined, ladder),
+    [sessions, ladder],
+  )
   // `best` is era-only by construction, so a count taken over all of `points`
   // puts the two halves of one sentence on different sets of serves: after a
   // recalibration the personal best drops while the total still counts the

@@ -79,6 +79,7 @@ import { cue } from './voice'
 import { blockingFramingIssue } from './framingIssues'
 import { buildPhases, detectServe, looksSlowedDown, type Skeleton } from './phases'
 import { detectWithContact, type ContactRead } from './contact'
+import { drillForMetric } from './progressions'
 import { fileTimes, probeWorthRunning, retimeFlight, retimeFrames, stretchNote, type Stretch } from './slowMotion'
 import type { BallStretch } from './slowMotionProbe'
 import {
@@ -1021,11 +1022,13 @@ export function pickFocus(fundamentals: Fundamental[]): Analysis['focus'] {
 
   // The drill comes from the losing measurement when it carries its own — one
   // fault, one exercise — and falls back to the area's broader session only for
-  // the handful of measurements that share a correction.
+  // the handful of measurements that share a correction. A row that is a
+  // fault's number hands out that fault's ladder (L1.4), so this card and the
+  // practice card give one exercise for one thing.
   return {
     title: worst.metric.label,
     why: worst.metric.fix ?? worst.metric.insight,
-    drill: worst.metric.drill ?? worst.area.drill,
+    drill: drillForMetric(worst.metric.id, worst.metric.drill ?? worst.area.drill).drill,
   }
 }
 

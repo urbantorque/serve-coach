@@ -1,4 +1,5 @@
-import { FUNDAMENTALS, METRICS, SERVE_TYPES } from './analysis/coaching'
+import { FUNDAMENTALS, SERVE_TYPES, metricCopy } from './analysis/coaching'
+import { drillForMetric } from './analysis/progressions'
 import { mean } from './analysis/geometry'
 import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
@@ -135,6 +136,8 @@ export function findPracticeFocus(
    * `PracticeFocus.drilled`.
    */
   logs?: PracticeLog[],
+  /** Which rung of each fault's ladder the player is on (`Prefs.ladder`). */
+  rungs?: Partial<Record<string, number>>,
 ): PracticeFocus | undefined {
   if (sessions.length === 0) return undefined
 
@@ -264,7 +267,10 @@ export function findPracticeFocus(
     // The measurement's own corrective first. A player told for three weeks to
     // work on their racket drop should be handed the drop drill, not the area's
     // general swing session that also spends reps on things they already do.
-    drill: METRICS[pick.id]?.drill ?? fundamental.drill,
+    // From one source since L1.4: a row that is a fault's number hands out that
+    // fault's ladder on the player's rung, the same step the report's plan
+    // shows, and the serve type's own drill where it has one.
+    drill: drillForMetric(pick.id, metricCopy(pick.id, type)?.drill ?? fundamental.drill, rungs).drill,
     scores: pick.scores,
     average: Math.round(pick.average),
     timesWeakest: pick.weakest,

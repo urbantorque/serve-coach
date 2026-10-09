@@ -2,7 +2,21 @@
  * The drill ladders, held to the same rules as every other line a player reads,
  * and tied to the drill the report already hands out.
  */
-import { CHECK_SERVES, checkDrill, drillCheckLine, everyProgression, progressionFor, stepOf } from '../progressions'
+import {
+  CHECK_SERVES,
+  checkDrill,
+  drillCheckLine,
+  drillForMetric,
+  everyProgression,
+  faultForMetric,
+  progressionFor,
+  rungFor,
+  stepOf,
+} from '../progressions'
+import { DRILLS, FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from '../coaching'
+import { CARD_SIGNAL } from '../tiers'
+import type { Drill } from '../types'
+import type { ServeType } from '../../storage/prefs'
 import { FLAWS, type FlawFinding, type FlawId } from '../flaws'
 import type { Diagnosis } from '../diagnose'
 import type { Triage } from '../triage'
@@ -120,6 +134,64 @@ check('serves the fault could not be judged on count for nothing either way', ()
 
 check('a fault with no ladder has no check', () => {
   assert(checkDrill('pancake_contact', basket('pancake_contact', 'clean')) === undefined, 'the pancake was checked')
+})
+
+heading('No drill stops the swing, and one source per fault (L1.4)')
+
+/**
+ * Whether a drill asks the player to stop the motion: a freeze, a pause, a held
+ * position counted in seconds or in holds, or a basket on the toes. A pause
+ * practised is a pause learned, which is how a hitch is taught. "Without a
+ * single pause" is the opposite instruction and is set aside first.
+ */
+function stopsTheSwing(d: Drill): boolean {
+  const how = d.how.replace(/without (a single )?pause/gi, '')
+  return (
+    /\b(freeze|frozen|pause|stop dead)\b/i.test(how) ||
+    /\bhold\b[^.]*\bseconds?\b/i.test(how) ||
+    /heels off/i.test(how) ||
+    /\bholds\b/i.test(d.reps)
+  )
+}
+
+check('no drill the app can hand out asks the swing to stop', () => {
+  const reachable: [string, Drill][] = [
+    ...Object.entries(DRILLS).map(([k, d]) => [`DRILLS.${k}`, d] as [string, Drill]),
+    ...Object.entries(FUNDAMENTALS).map(([k, f]) => [`area ${k}`, f.drill] as [string, Drill]),
+    ...everyProgression().flatMap(([flaw, p]) => p.steps.map((s) => [`${flaw} ladder`, s] as [string, Drill])),
+  ]
+  for (const id of Object.keys(METRICS)) {
+    for (const type of Object.keys(SERVE_TYPES) as ServeType[]) {
+      for (const axis of [undefined, 'depth', 'lateral'] as const) {
+        const copy = metricCopy(id, type, axis)
+        if (copy?.drill) reachable.push([`${id} (${type}${axis ? `, ${axis}` : ''})`, copy.drill])
+      }
+    }
+  }
+  const stopping = reachable.filter(([, d]) => stopsTheSwing(d))
+  note(`${reachable.length} drills read`)
+  assert(stopping.length === 0, stopping.map(([where, d]) => `${where}: "${d.name}"`).join('; '))
+  // The detector itself, against the drills it was written for.
+  assert(stopsTheSwing({ name: 'x', how: 'Pause at the drop with the elbow high.', reps: '10 holds' }), 'missed a pause')
+  assert(stopsTheSwing({ name: 'x', how: 'Sink, hold two seconds, drive up.', reps: '8' }), 'missed a timed hold')
+  assert(!stopsTheSwing({ name: 'x', how: 'Accelerate without a single pause until the ball leaves.', reps: '5' }), 'flagged the cure')
+})
+
+check("a card row that is a fault's number hands out that fault's ladder", () => {
+  for (const card of Object.keys(CARD_SIGNAL)) {
+    const flaw = faultForMetric(card)
+    assert(flaw !== undefined, `${card} reads a fault's number and maps to none`)
+    const ladder = progressionFor(flaw!)
+    if (!ladder) continue
+    const own = { name: 'own', how: 'own', reps: 'own' }
+    const { drill } = drillForMetric(card, own)
+    // With no rung stored, the rung the report's plan starts at.
+    assert(drill === ladder.steps[rungFor(flaw!, ladder)], `${card}: "${drill.name}"`)
+    assert(drill === DRILLS[drillIdFor(flaw!)] || stepOf(ladder, DRILLS[drillIdFor(flaw!)]) < 0, `${card}: not the plan's drill`)
+  }
+  // And a row no fault is judged on keeps its own.
+  const own = { name: 'own', how: 'own', reps: 'own' }
+  assert(drillForMetric('armExtension', own).drill === own, 'a row with no fault lost its own drill')
 })
 
 check('every line a check can print passes the copy rules', () => {

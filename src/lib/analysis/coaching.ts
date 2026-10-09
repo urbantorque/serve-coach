@@ -61,15 +61,44 @@ export interface MetricCopy {
  */
 export type BandSource = { study: string } | { motion: string }
 
-/**
- * Contact height's exercise, held once because two rows use it: the hand's
- * height and the ball's, which are one quantity read two ways and never on
- * the same card.
+/*
+ * Drills that more than one place hands out, held once so a card row, an area
+ * and a fault's ladder give the player the same object (L1.4). None of them
+ * stops the swing: a pause practised is a pause learned, which is how a hitch
+ * at the trophy is taught (`progressions.ts`).
  */
-const HEELS_UP_BASKET: Drill = {
-  name: 'Heels-up basket',
-  how: 'Serve a full basket with your heels off the ground from start to finish.',
-  reps: '15 serves',
+
+/** The legs and hips starting the throw; the loading area's, and the first rung for the legs. */
+const PUSH_THROWS: Drill = {
+  name: 'Push throws',
+  how: 'From side-on with your knees bent, push a ball up and out to full reach, legs and hips first.',
+  reps: '10 throws',
+}
+
+/** The throwing arm's own action; the collapsed elbow's first rung and the drop elbow's row. */
+const OVERHEAD_THROW: Drill = {
+  name: 'Overhead throws',
+  how: 'Throw an old ball high and far, so it peaks well above net height. The throw puts the elbow where it belongs.',
+  reps: '15 throws',
+}
+
+/** A whole swing with nothing to stop at: the racket drop's second rung. */
+const BALL_IN_A_SOCK: Drill = {
+  name: 'Ball in a sock',
+  how: 'Swing a ball in a sock, or a towel, through the whole motion without stopping.',
+  reps: '15 swings',
+}
+
+/**
+ * Reaching up for the ball. Contact height's exercise, for the hand's height
+ * and the ball's (one quantity read two ways, never on the same card), arm
+ * extension's, and the contact area's. It replaced a basket on the toes, which
+ * takes away the leg load that lifts the contact.
+ */
+const UP_AND_OUT: Drill = {
+  name: 'Hit up and out',
+  how: 'From the service line, swing up and out towards the back fence and let the racket bring the ball down.',
+  reps: '20 serves',
 }
 
 export const METRICS: Record<string, MetricCopy> = {
@@ -317,14 +346,10 @@ export const METRICS: Record<string, MetricCopy> = {
       high: 'You **sink deep** into the load.',
     },
     fix: {
-      low: '**Sink** until the knees sit over your toes, then drive up. Shadow serve and hold the bottom.',
+      low: '**Sink** until the knees sit over your toes, then drive straight up out of it.',
       high: '**Trim the bend**. Speed out of the bottom beats depth at the bottom.',
     },
-    drill: {
-      name: 'Slow sink hold',
-      how: 'Shadow serve, sink until the knees sit over your toes, hold two seconds, drive up.',
-      reps: '3 sets of 8',
-    },
+    drill: PUSH_THROWS,
   },
   hipShoulderSeparation: {
     id: 'hipShoulderSeparation',
@@ -412,9 +437,9 @@ export const METRICS: Record<string, MetricCopy> = {
       high: '**Tilt from the shoulders**, not the lower back. Arching moves contact behind you.',
     },
     drill: {
-      name: 'Cartwheel shoulders',
-      how: 'Freeze at the trophy with the hitting shoulder dropped under the tossing shoulder.',
-      reps: '10 holds',
+      name: 'Shoulder over shoulder',
+      how: 'Shadow serve with the tossing arm pointing high, so your hitting shoulder dips under it, then swing through without stopping.',
+      reps: '15 swings',
     },
   },
   legDrive: {
@@ -521,11 +546,9 @@ export const METRICS: Record<string, MetricCopy> = {
       low: '**Give the racket room**. Jammed against your back it cannot swing free into the drop.',
       high: '**Bend the elbow** and lead with it. Racket head down, elbow up, arm coiled.',
     },
-    drill: {
-      name: 'Elbow-up L',
-      how: 'Pause at the drop with the elbow high and the racket head hanging down your back.',
-      reps: '10 holds',
-    },
+    // The throwing arm's own action, which bends and leads with the elbow
+    // without being told to. Was a pause at the drop.
+    drill: OVERHEAD_THROW,
   },
   handUnderElbow: {
     id: 'handUnderElbow',
@@ -603,11 +626,7 @@ export const METRICS: Record<string, MetricCopy> = {
       // other end for the same reason.
       high: '',
     },
-    drill: {
-      name: 'Hang under the elbow',
-      how: 'Shadow serve slowly and hold the hand hanging under a high elbow before the arm fires.',
-      reps: '12 shadow serves',
-    },
+    drill: BALL_IN_A_SOCK,
   },
   dropToContact: {
     id: 'dropToContact',
@@ -672,7 +691,7 @@ export const METRICS: Record<string, MetricCopy> = {
       low: '**Reach up** and hit at the top. Serve a basket with your heels off the ground.',
       high: '**Keep the toss in front** so you never lean back to reach it.',
     },
-    drill: HEELS_UP_BASKET,
+    drill: UP_AND_OUT,
   },
   ballContactHeight: {
     id: 'ballContactHeight',
@@ -707,7 +726,7 @@ export const METRICS: Record<string, MetricCopy> = {
       low: '**Reach up** and hit at the top. Serve a basket with your heels off the ground.',
       high: '**Keep the toss in front** so you never lean back to reach it.',
     },
-    drill: HEELS_UP_BASKET,
+    drill: UP_AND_OUT,
   },
   armExtension: {
     id: 'armExtension',
@@ -738,11 +757,9 @@ export const METRICS: Record<string, MetricCopy> = {
       low: '**Chase the ball up** with a long arm. Toss higher so you stretch instead of pulling down.',
       high: '**Stay loose** through the elbow. A locked arm stops the racket head releasing.',
     },
-    drill: {
-      name: 'Reach and freeze',
-      how: 'Serve and freeze at contact with the hitting arm locked long above you.',
-      reps: '12 serves',
-    },
+    // Was "freeze at contact with the arm locked long", beside a fix saying a
+    // locked arm stops the racket head releasing.
+    drill: UP_AND_OUT,
   },
   contactAhead: {
     id: 'contactAhead',
@@ -970,10 +987,9 @@ export const DRILLS: Record<string, Drill> = {
   baseline_drop_toss: BASELINE_DROP_TOSS,
   one_line_toss: METRICS.tossPathWobble.drill,
   back_scratch_drop: METRICS.dropDepth.drill,
-  elbow_up_l: METRICS.elbowAtDrop.drill,
   hip_lead_turn: METRICS.hipShoulderSeparation.drill,
-  slow_sink_hold: METRICS.kneeBend.drill,
-  heels_up_basket: METRICS.contactHeight.drill,
+  push_throws: PUSH_THROWS,
+  ball_in_a_sock: BALL_IN_A_SOCK,
 
   edge_first_serve: {
     name: 'Edge-first serve',
@@ -991,29 +1007,20 @@ export const DRILLS: Record<string, Drill> = {
     reps: '20 serves',
   },
 
-  // Three that replaced a drill a coach would not hand out. Each of the old ones
-  // asked for a hold or a stance the serve never has: a pause at the drop
-  // (elbow_up_l), a two-second sink at the bottom (slow_sink_hold) and a whole
-  // basket on the toes (heels_up_basket). A pause practised is a pause learned —
-  // the hitch, which every coaching source in `progressions.ts` warns holds
-  // teach — and serving on the toes takes away the leg load that lifts the
-  // contact. The old three stay above, because the per-measurement cards still
-  // use two of them; only the fault's answer moved.
-  overhead_throw: {
-    name: 'Overhead throws',
-    how: 'Throw an old ball high and far, so it peaks well above net height. The throw puts the elbow where it belongs.',
-    reps: '15 throws',
-  },
+  // Replacements for drills a coach would not hand out. The old ones asked for
+  // a hold or a stance the serve never has: a pause at the drop, a two-second
+  // sink at the bottom, a freeze at the trophy or at contact, a basket on the
+  // toes. A pause practised is a pause learned — the hitch, which every
+  // coaching source in `progressions.ts` warns holds teach — and serving on the
+  // toes takes away the leg load that lifts the contact. Since L1.4 no card row
+  // or area hands any of them out either; the shared drills are at the top.
+  overhead_throw: OVERHEAD_THROW,
   back_leg_serve: {
     name: 'Back-leg serves',
     how: 'Serve with your weight on your back leg only, letting the hips turn before the arm swings.',
     reps: '15 serves',
   },
-  up_and_out: {
-    name: 'Hit up and out',
-    how: 'From the service line, swing up and out towards the back fence and let the racket bring the ball down.',
-    reps: '20 serves',
-  },
+  up_and_out: UP_AND_OUT,
 }
 
 /* ------------------------------------------------------------- serve types */
@@ -1287,11 +1294,7 @@ export const FUNDAMENTALS: Record<
     phase: 'trophy',
     weight: 22,
     metrics: ['kneeBend', 'hipShoulderSeparation', 'shoulderTilt', 'legDrive'],
-    drill: {
-      name: 'Freeze at the trophy',
-      how: 'Shadow serve and stop dead at the trophy: knees bent, arm pointing, hitting shoulder dropped, chest up.',
-      reps: '3 sets of 8 · then 10 live serves',
-    },
+    drill: PUSH_THROWS,
   },
   swing: {
     label: 'Swing',
@@ -1323,11 +1326,7 @@ export const FUNDAMENTALS: Record<
     weight: 24,
     metrics: ['contactHeight', 'ballContactHeight', 'contactBelowPeak', 'armExtension', 'contactAhead'],
     readings: ['bodyExtension'],
-    drill: {
-      name: 'Heels up',
-      how: 'Serve a whole basket with your heels off the ground, so you reach up to the ball instead of out.',
-      reps: '15 serves · then 15 normal',
-    },
+    drill: UP_AND_OUT,
   },
   rhythm: {
     label: 'Rhythm',

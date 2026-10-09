@@ -835,6 +835,17 @@ Writing them replaced three drills a coach would not hand out:
 - a two-second sink at the bottom, now Kovacs's back-leg serve;
 - a whole basket on tiptoe, now "hit up and out".
 
+Those three survived on the area cards, the practice card and the fallback
+focus, along with "freeze at the trophy", "reach and freeze" and a held hang
+under the elbow. Since L1.4 none of them can reach a player; the check now
+reads every drill any surface can hand out, 224 of them, every serve type and
+axis included.
+
+There is also one source per fault. A card row that reads the same number as
+a fault (`CARD_SIGNAL`) hands out that fault's ladder, on the rung the player
+is on (`drillForMetric`). So the practice card and the plan can no longer give
+two exercises for one fault, and a kick history gets the kick drill.
+
 **A basket checks the step.** When a basket is swept from a report, the serves
 just read are counted against the top fix's ladder (`checkDrill`). A serve is
 clean when the fault was looked for, could be seen, and was not named. A serve

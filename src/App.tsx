@@ -412,8 +412,8 @@ export default function App() {
   // already makes with its own copy of this same call.
   const streak = useMemo(() => streakLine(sessions), [sessions])
   const practice = useMemo(
-    () => findPracticeFocus(sessions, undefined, undefined, drillLogs),
-    [sessions, drillLogs],
+    () => findPracticeFocus(sessions, undefined, undefined, drillLogs, prefs.ladder),
+    [sessions, drillLogs, prefs.ladder],
   )
 
   // Read by `logDrill`, which is declared above this and would otherwise have to
