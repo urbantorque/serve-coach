@@ -104,6 +104,11 @@ export interface PracticeSession {
    * number: JPEG data URLs, the only pictures a session keeps (L2.8).
    */
   stills?: Record<number, string>
+  /**
+   * The best and worst serves as stretches of the file, in seconds (L2.11),
+   * replayed from the same video when it is picked again.
+   */
+  highlights?: { number: number; kind: 'best' | 'worst'; from: number; to: number }[]
 }
 
 /** The id a session for this file is stored under. */
@@ -158,6 +163,7 @@ export function normalisePracticeSession(raw: unknown): PracticeSession | undefi
     phase,
     ...(typeof s.scoringVersion === 'number' ? { scoringVersion: s.scoringVersion } : {}),
     ...(stillsOf(s.stills) ? { stills: stillsOf(s.stills) } : {}),
+    ...(highlightsIn(s.highlights) ? { highlights: highlightsIn(s.highlights) } : {}),
   }
 }
 
@@ -178,4 +184,20 @@ function stillsOf(raw: unknown): Record<number, string> | undefined {
     if (/^\d+$/.test(k) && typeof v === 'string' && /^data:image\/(jpeg|png);/.test(v)) out[Number(k)] = v
   }
   return Object.keys(out).length ? out : undefined
+}
+
+/** Stored highlights, keeping only stretches with a serve, a kind and a forward range. */
+function highlightsIn(raw: unknown): PracticeSession['highlights'] {
+  if (!Array.isArray(raw)) return undefined
+  const out = raw.filter(
+    (h): h is NonNullable<PracticeSession['highlights']>[number] =>
+      !!h &&
+      typeof h === 'object' &&
+      Number.isInteger(h.number) &&
+      (h.kind === 'best' || h.kind === 'worst') &&
+      Number.isFinite(h.from) &&
+      Number.isFinite(h.to) &&
+      h.to > h.from,
+  )
+  return out.length ? out : undefined
 }

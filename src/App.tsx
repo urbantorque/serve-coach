@@ -1456,6 +1456,7 @@ export default function App() {
             <SessionScreen
               session={view.session}
               previous={previousSession}
+              videoUrl={view.canRead ? urlRef.current : undefined}
               stage={view.stage}
               canRead={view.canRead}
               onStart={(mode) => void startSession(mode)}

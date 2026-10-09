@@ -475,11 +475,50 @@
   gap: 8px;
 }
 
-.session-picks li {
+.session-pick {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: baseline;
   gap: 6px 4px;
+  width: 100%;
+  text-align: left;
+  border-radius: var(--r-xs);
+}
+
+button.session-pick:active {
+  transform: scale(0.98);
+}
+
+/* Says the still plays, without covering the body in it. */
+.session-pick-play {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  color: var(--lime);
+}
+
+.session-watch-again {
+  align-self: flex-start;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lime);
+}
+
+.session-replay {
+  display: block;
+  width: 100%;
+  max-height: 62svh;
+  border-radius: var(--r-sm);
+  background: var(--scrim);
 }
 
 .session-picks img,

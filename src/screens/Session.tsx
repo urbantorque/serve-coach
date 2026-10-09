@@ -11,6 +11,8 @@ interface Props {
   session: PracticeSession
   /** The last finished session of the same serve type and rubric (L2.8). */
   previous?: PracticeSession
+  /** The session's video, when it is open here, for watching its best and worst serves (L2.11). */
+  videoUrl?: string
   stage: SessionStage
   /**
    * Whether the video is open, so a reading can start or carry on.
@@ -39,7 +41,17 @@ const timeOf = (seconds: number | undefined) => {
   return m[0].toUpperCase() + m.slice(1)
 }
 
-export default function Session({ session, previous, stage, canRead, onStart, onStop, onPickAgain, onLeave }: Props) {
+export default function Session({
+  session,
+  previous,
+  videoUrl,
+  stage,
+  canRead,
+  onStart,
+  onStop,
+  onPickAgain,
+  onLeave,
+}: Props) {
   const label = clipLabel(session.fileName)
   const length = minutesOf(session.duration).replace(/^about /, '')
   const chosen = session.chosen?.length
@@ -167,7 +179,12 @@ export default function Session({ session, previous, stage, canRead, onStart, on
             </p>
           </>
         ) : (
-          <SessionDashboard session={session} previous={previous} />
+          <SessionDashboard
+            session={session}
+            previous={previous}
+            videoUrl={canRead ? videoUrl : undefined}
+            onPickAgain={onPickAgain}
+          />
         )}
         <button className="btn btn--ghost btn--full" onClick={onLeave}>
           Back home

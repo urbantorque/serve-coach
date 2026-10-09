@@ -10,10 +10,11 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import Session, { type SessionStage } from '../../screens/Session'
+import SessionDashboard from '../SessionDashboard'
 import { sampleAnalysis } from '../../dev/sampleAnalysis'
 import { lineOf } from '../../lib/session/line'
 import { normalisePracticeSession, type PracticeSession } from '../../lib/session/session'
-import { driftLine, fixCountLine, goneLine, headlineOf, sinceLine } from '../../lib/session/sessionCopy'
+import { driftLine, fixCountLine, goneLine, headlineOf, noFixLine, sinceLine } from '../../lib/session/sessionCopy'
 import { sessionStats } from '../../lib/session/stats'
 import { servesPerWeek } from '../../lib/progress'
 import { FLAWS } from '../../lib/analysis/flaws'
@@ -107,6 +108,14 @@ check('a stored session comes back with its stills and rubric, and nothing that 
   assert(JSON.stringify(Object.keys(back.stills!)) === '["1"]', `kept stills ${JSON.stringify(back.stills)}`)
 })
 
+check('with the video open the best and worst serves play; without it, the player is asked for it', () => {
+  const open = renderToStaticMarkup(createElement(SessionDashboard, { session, videoUrl: 'blob:session' }))
+  assert((open.match(/Watch the serve at/g) ?? []).length === 6, 'not every pick could be watched')
+  const closed = renderToStaticMarkup(createElement(SessionDashboard, { session, onPickAgain: noop }))
+  assert(!closed.includes('Watch the serve at'), 'a pick offered to play with no video open')
+  assert(closed.includes('Pick the same video again to watch these serves'), 'the way to watch them was not offered')
+})
+
 heading('What the dashboard says')
 
 check('every sentence it can build passes the copy rules', () => {
@@ -130,6 +139,8 @@ check('every sentence it can build passes the copy rules', () => {
     )
   }
   said.push(headlineOf({ ...stats, read: 0 }), headlineOf({ ...stats, drifts: [], faults: [] }))
+  said.push(headlineOf({ ...stats, read: 1, drifts: [], faults: [] }), noFixLine(1), noFixLine(20))
+  assert(!headlineOf({ ...stats, read: 1, drifts: [], faults: [] }).includes('most of them'), 'one serve was said to be most of them')
   const failing = said.filter((s) => cueIssues(s).length).map((s) => `"${s}": ${cueIssues(s).join('; ')}`)
   assert(failing.length === 0, failing.slice(0, 4).join('\n'))
 })

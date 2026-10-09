@@ -10,7 +10,7 @@ import { METRICS } from '../analysis/coaching'
 import type { FlawId } from '../analysis/flaws'
 import { VERDICT_TABLES } from '../analysis/verdict'
 import { cue } from '../analysis/voice'
-import type { Drift, FaultCount, SessionStats } from './stats'
+import { MIN_JUDGED, type Drift, type FaultCount, type SessionStats } from './stats'
 
 /** A fault's name as the report heads it. */
 export const flawTitle = (flaw: FlawId): string => VERDICT_TABLES.flaws[flaw]?.title ?? flaw
@@ -37,6 +37,8 @@ export function headlineOf(stats: SessionStats): string {
   if (stats.drifts.length) return cue(`${count} ${driftLine(stats.drifts[0])}`)
   const top = stats.faults.find((f) => f.verdict)
   if (top) return cue(`${count} ${flawTitle(top.flaw)} on ${top.named} of them.`)
+  // Under the verdict's own minimum, "most of them" is a claim about too few.
+  if (stats.read < MIN_JUDGED) return cue(`${count} Too few to say what the session as a whole shows.`)
   return cue(`${count} No fault showed on most of them.`)
 }
 
@@ -59,3 +61,7 @@ export function sinceLine(now: number, before: number): string {
 /** A fault the last session had on most serves and this one does not. */
 export const goneLine = (flaw: FlawId): string =>
   cue(`Gone from most serves since last time: ${flawTitle(flaw).toLowerCase()}.`)
+
+/** What the fixes say when there are none to give. */
+export const noFixLine = (read: number): string =>
+  cue(read < MIN_JUDGED ? 'Too few serves read to name a fault for the session.' : 'No fault showed on most of your serves.')

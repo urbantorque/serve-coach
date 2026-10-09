@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { Icon } from './primitives'
+import { useMemo, useRef, useState } from 'react'
+import { Icon, Sheet } from './primitives'
 import { readoutOf } from '../lib/analysis/anatomy'
 import { METRICS } from '../lib/analysis/coaching'
 import { statusOf } from '../lib/analysis/geometry'
@@ -7,8 +7,8 @@ import { FLAW_DRILL } from '../lib/analysis/triage'
 import { drillFor } from '../lib/analysis/verdict'
 import { cue } from '../lib/analysis/voice'
 import { clockOf, toRead, type PracticeSession, type ServeLine } from '../lib/session/session'
-import { driftLine, fixCountLine, flawTitle, goneLine, headlineOf, sinceLine } from '../lib/session/sessionCopy'
-import { extremes, sessionStats } from '../lib/session/stats'
+import { driftLine, fixCountLine, flawTitle, goneLine, headlineOf, noFixLine, sinceLine } from '../lib/session/sessionCopy'
+import { extremes, highlightsOf, sessionStats, type Highlight } from '../lib/session/stats'
 
 /*
  * A finished practice session, read together (L2.8): the nine parts of
@@ -22,9 +22,22 @@ interface Props {
   session: PracticeSession
   /** The last finished session of the same serve type and rubric, to set this one against. */
   previous?: PracticeSession
+  /**
+   * The session's own video, when it is open here, so the best and worst
+   * serves can be watched again from it (L2.11). Never a copy: the object URL
+   * of the file the player picked.
+   */
+  videoUrl?: string
+  /** Pick the video again, for a session opened without it. */
+  onPickAgain?: () => void
 }
 
-export default function SessionDashboard({ session, previous }: Props) {
+export default function SessionDashboard({ session, previous, videoUrl, onPickAgain }: Props) {
+  const [watching, setWatching] = useState<Highlight>()
+  const highlights = useMemo(
+    () => new Map((session.highlights ?? highlightsOf(session.lines, session.duration)).map((h) => [h.number, h])),
+    [session.highlights, session.lines, session.duration],
+  )
   const stats = useMemo(() => sessionStats(session.lines), [session.lines])
   const before = useMemo(() => (previous ? sessionStats(previous.lines) : undefined), [previous])
   const picks = useMemo(() => extremes(session.lines), [session.lines])
@@ -78,7 +91,7 @@ export default function SessionDashboard({ session, previous }: Props) {
             })}
           </ol>
         ) : (
-          <p className="session-meta">{cue('No fault showed on most of your serves.')}</p>
+          <p className="session-meta">{noFixLine(stats.read)}</p>
         )}
       </section>
 
@@ -114,11 +127,38 @@ export default function SessionDashboard({ session, previous }: Props) {
           <h2 className="block-title" id="session-picks">
             Best and worst
           </h2>
-          <Picks title="Best" numbers={picks.best} byNumber={byNumber} stills={session.stills} />
+          <Picks
+            title="Best"
+            numbers={picks.best}
+            byNumber={byNumber}
+            stills={session.stills}
+            onWatch={videoUrl ? (n) => setWatching(highlights.get(n)) : undefined}
+          />
           {picks.worst.length > 0 && (
-            <Picks title="Worst" numbers={picks.worst} byNumber={byNumber} stills={session.stills} />
+            <Picks
+              title="Worst"
+              numbers={picks.worst}
+              byNumber={byNumber}
+              stills={session.stills}
+              onWatch={videoUrl ? (n) => setWatching(highlights.get(n)) : undefined}
+            />
+          )}
+          {!videoUrl && onPickAgain && (
+            <button className="session-watch-again" onClick={onPickAgain}>
+              Pick the same video again to watch these serves
+            </button>
           )}
         </section>
+      )}
+
+      {videoUrl && (
+        <Sheet
+          open={watching !== undefined}
+          onClose={() => setWatching(undefined)}
+          title={watching ? `The serve at ${clockOf(byNumber.get(watching.number)?.t ?? watching.from)}` : ''}
+        >
+          {watching && <Replay url={videoUrl} from={watching.from} to={watching.to} />}
+        </Sheet>
       )}
 
       {before && stats.overall && before.overall && (
@@ -157,11 +197,14 @@ function Picks({
   numbers,
   byNumber,
   stills,
+  onWatch,
 }: {
   title: string
   numbers: number[]
   byNumber: Map<number, ServeLine>
   stills?: Record<number, string>
+  /** Watch a serve again, when the video is open. */
+  onWatch?: (number: number) => void
 }) {
   return (
     <div className="session-picks">
@@ -169,20 +212,71 @@ function Picks({
       <ul>
         {numbers.map((n) => {
           const line = byNumber.get(n)!
-          return (
-            <li key={n}>
+          const at = clockOf(line.t)
+          const face = (
+            <>
               {stills?.[n] ? (
-                <img src={stills[n]} alt={`Contact, serve at ${clockOf(line.t)}`} width={120} height={160} />
+                <img src={stills[n]} alt={`Contact, serve at ${at}`} width={120} height={160} />
               ) : (
                 <span className="session-pick-blank" aria-hidden="true" />
               )}
-              <span className="session-pick-at tnum">{clockOf(line.t)}</span>
+              <span className="session-pick-at tnum">{at}</span>
               <span className={`session-pick-score tnum is-${statusOf(line.overall ?? 0)}`}>{line.overall}</span>
+            </>
+          )
+          return (
+            <li key={n}>
+              {onWatch ? (
+                <button className="session-pick" onClick={() => onWatch(n)} aria-label={`Watch the serve at ${at}`}>
+                  {face}
+                  <span className="session-pick-play" aria-hidden="true">
+                    <Icon name="play" size={14} />
+                  </span>
+                </button>
+              ) : (
+                <div className="session-pick">{face}</div>
+              )}
             </li>
           )
         })}
       </ul>
     </div>
+  )
+}
+
+/**
+ * One serve, played from the session's own file and held to its stretch: the
+ * fragment starts it there, and it goes back to the start when it passes the
+ * end, so the player can watch it as many times as they like.
+ */
+function Replay({ url, from, to }: { url: string; from: number; to: number }) {
+  // Started by hand once it can play: a fragment URL does not always
+  // autoplay, and a play() before the fragment's seek lands is dropped. Once
+  // only, so a pause the player chose is not undone by the loop's own seek.
+  const started = useRef(false)
+  return (
+    <video
+      className="session-replay"
+      onCanPlay={(e) => {
+        if (started.current) return
+        started.current = true
+        void e.currentTarget.play().catch(() => {})
+      }}
+      // The start only: a fragment with an end pauses there, before the loop
+      // below can take it back.
+      src={`${url}#t=${from.toFixed(2)}`}
+      muted
+      playsInline
+      autoPlay
+      controls
+      onTimeUpdate={(e) => {
+        const v = e.currentTarget
+        if (v.currentTime >= to || v.currentTime < from - 0.25) {
+          v.currentTime = from
+          if (v.paused) void v.play().catch(() => {})
+        }
+      }}
+    />
   )
 }
 

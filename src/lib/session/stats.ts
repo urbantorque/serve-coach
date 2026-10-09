@@ -414,3 +414,33 @@ export function extremes(lines: readonly ServeLine[], k = PICTURED): { best: num
     .map((l) => l.number)
   return { best, worst }
 }
+
+/** Seconds of a highlight before the serve's reach peak: the toss and the load. */
+export const HIGHLIGHT_BEFORE = 2
+
+/** And after it: contact and the follow-through. */
+export const HIGHLIGHT_AFTER = 1
+
+export interface Highlight {
+  number: number
+  kind: 'best' | 'worst'
+  /** Seconds into the file. */
+  from: number
+  to: number
+}
+
+/**
+ * The best and worst serves as stretches of the file (L2.11): what is kept so
+ * they can be watched again when the same video is picked. Times only; the
+ * file itself is never copied.
+ */
+export function highlightsOf(lines: readonly ServeLine[], duration?: number): Highlight[] {
+  const at = new Map(lines.map((l) => [l.number, l.t]))
+  const { best, worst } = extremes(lines)
+  const range = (n: number, kind: Highlight['kind']): Highlight => {
+    const t = at.get(n) ?? 0
+    const end = t + HIGHLIGHT_AFTER
+    return { number: n, kind, from: Math.max(0, t - HIGHLIGHT_BEFORE), to: duration ? Math.min(duration, end) : end }
+  }
+  return [...best.map((n) => range(n, 'best')), ...worst.map((n) => range(n, 'worst'))]
+}

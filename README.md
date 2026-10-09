@@ -1351,6 +1351,20 @@ up to 12 ms differently at the two rates, and the hand crosses the body at
 about seven metres a second. That one is pinned as a known limit rather than
 hidden.
 
+**A session keeps its best and worst serves as times, not as video**
+(`highlightsOf`, L2.11). Each is two seconds before the serve's reach peak and
+one after, inside the file. When the same video is picked again, the session is
+found by the file's identity (name, size and modified time) and the six picks
+become buttons that play their stretch from the player's own file, looping
+inside it. Without the file, the dashboard asks for it. A test scans the
+session's code and App's session functions for anything that writes or loads a
+whole file (`keepClip`, OPFS, `arrayBuffer`), so a multi-gigabyte video is
+never copied. In Chromium the 280-second clip's pick played 239.5 to 242.5 s
+on a loop. Two browser behaviours shaped the player: a media fragment with an
+end time pauses there before a loop can take it back, so only the start is in
+the URL; and a `play()` before the fragment's seek lands is dropped, so play
+starts on the first `canplay`.
+
 **A finished session is one screen, said from its lines** (`SessionDashboard`,
 `?demo=session`). A headline (how many were read, and either the strongest
 change from start to end or the fault most serves showed), the counts, two to

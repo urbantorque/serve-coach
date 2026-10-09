@@ -1326,7 +1326,22 @@ L2.4 onward is session mode.
         - an impact is heard.
       - Anything else goes to a "not sure" list.
       - *Proof:* timelines with distractors. After L2.1 and L2.5.
-- [ ] **L2.11 Session highlights** · S.
+- [x] **L2.11 Session highlights** · S.
+      - *Delta (Oct 9):* done.
+        - Highlights are `{number, kind, from, to}` stretches (2 s before the
+          reach peak to 1 s after), saved when a session finishes. For older
+          rows they are derived from the lines.
+        - Picking the same file again finds the session and plays each pick
+          from the player's own file, looping inside its stretch.
+        - Proof:
+          - range and stored-row tests;
+          - file-identity tests (`fileKeyOf`);
+          - a source scan showing nothing on the session path writes or loads
+            the whole file;
+          - render tests with and without the file;
+          - played in Chromium on the 280 s clip.
+        - Also fixed: a one-serve session was told "No fault showed on most of
+          them". Under five serves read it now says there are too few.
       - **What:** the best 3 and worst 3 stored as mm:ss ranges and replayed
         when the same file is opened again. A multi-GB file is never copied.
       - *Proof:* `clipStore` and file-identity tests. After L2.8.

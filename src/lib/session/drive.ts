@@ -15,7 +15,7 @@ import { Cancelled } from '../pose/extract'
 import { guessServes, sampleServes, sessionCost } from './plan'
 import { runSession } from './runner'
 import type { PracticeSession, SessionStage } from './session'
-import { extremes } from './stats'
+import { extremes, highlightsOf } from './stats'
 import type { SessionVideo } from './video'
 
 export interface Drive {
@@ -115,10 +115,15 @@ export async function driveSession(d: Drive): Promise<void> {
       }
       kept.delete(n)
     }
-    if (Object.keys(stills).length) {
-      finished = { ...result, stills, updatedAt: Date.now() }
-      await d.save(finished)
+    // The stretches to watch again from the same file (L2.11), saved with the
+    // stills whatever happened to them.
+    finished = {
+      ...result,
+      ...(Object.keys(stills).length ? { stills } : {}),
+      highlights: highlightsOf(result.lines, result.duration),
+      updatedAt: Date.now(),
     }
+    await d.save(finished)
   }
   if (!d.current()) return
   show(
