@@ -1100,7 +1100,16 @@ Small items, and everything after builds on them.
         - the example's triage names at least two faults;
         - a coherence check: knee "straight" never appears beside leg drive
           "strong".
-- [ ] **L1.10 One placement everywhere** · S.
+- [x] **L1.10 One placement everywhere** · S. *Done (2026-10-09).
+      `lib/placement.ts` feeds ten placement sentences, and
+      `placement.test.ts` scans the source for a distance given anywhere
+      else; it found the guide diagram's own label. The live check's dead
+      side-on row is gone, so the guide's placement reads "ready", and the
+      judge test that said reconciling the two "is a job for a person" now
+      asserts that they agree. One departure: the angle lines are merged per
+      place to film from rather than shown only when a named fault makes them
+      matter, because a fault the camera cannot see is never named. Original
+      plan:*
       - **What:** one `PLACEMENT` constant feeds the guide, the live check, the
         refusals and the tips. The live check accepts what the guide draws.
         "Film from behind" appears only when the unseen axis matters to the

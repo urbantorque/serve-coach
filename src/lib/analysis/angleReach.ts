@@ -55,8 +55,20 @@ export function unseenBy(diagnosis: Pick<Diagnosis, 'flaws'>): AngleBound[] {
   )
 }
 
-/** One line per unseen fault, in the player's words: what, and where to stand. */
+/**
+ * One line per place to film from, in the player's words: what this angle
+ * missed, and where to stand. Faults that send the player to the same place
+ * share a sentence (L1.10): since the sideways fold joined the toss's sideways
+ * drift, every side-on report printed two lines saying "film from behind the
+ * baseline".
+ */
 export function unseenLines(diagnosis: Pick<Diagnosis, 'flaws'> | undefined): string[] {
   if (!diagnosis) return []
-  return unseenBy(diagnosis).map((b) => cue(`From this angle I could not see ${b.what}. Film ${WHERE[b.filmFrom]} to check it.`))
+  const byPlace = new Map<AngleBound['filmFrom'], string[]>()
+  for (const b of unseenBy(diagnosis)) byPlace.set(b.filmFrom, [...(byPlace.get(b.filmFrom) ?? []), b.what])
+  return [...byPlace.entries()].map(([place, whats]) =>
+    whats.length === 1
+      ? cue(`From this angle I could not see ${whats[0]}. Film ${WHERE[place]} to check it.`)
+      : cue(`From this angle I could not see ${whats.join(' or ')}. Film ${WHERE[place]} to check.`),
+  )
 }

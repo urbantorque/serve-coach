@@ -40,6 +40,7 @@ import { STRAIN_WINDOW, type StrainCleared, type StrainRecord } from './strain'
 import { SEVERITY_RANK, rungName, type Severity } from './tiers'
 import type { Analysis, Drill } from './types'
 import { cue } from './voice'
+import { PLACEMENT } from '../placement'
 
 /* --------------------------------------------------------------- refusal -- */
 
@@ -81,7 +82,7 @@ const REFUSALS: Record<RejectReason, { title: string; hints: string[] }> = {
   camera_unusable: {
     title: 'I could not work out where the camera was',
     hints: [
-      'Rest the phone on something steady at about waist height, ten steps to your side.',
+      `Rest the phone on something steady ${PLACEMENT.height}, ${PLACEMENT.distance} to your side.`,
       'Keep it still. A hand-held pan moves the reference every measurement is taken against.',
     ],
   },
@@ -110,7 +111,7 @@ export function refusalFor(triage: Triage | undefined): Refusal | undefined {
       reason: triage.reason ?? 'camera_unusable',
       title: 'I could not read that clip',
       hints: [
-        'Film side-on from about ten steps away, with your whole body in frame.',
+        `Film side-on from ${PLACEMENT.distance} away, with your whole body in frame.`,
         'Bright light and slow motion fix most of what goes wrong.',
       ],
     }

@@ -91,6 +91,7 @@ import {
   type Metric,
   type Quality,
 } from './types'
+import { PLACEMENT } from '../placement'
 
 /**
  * Wall clock, where there is one.
@@ -1567,7 +1568,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         // here to tap: the retry above already did what the badge would do.
         if (err instanceof NotAServeError && err.suggestedHand) {
           const neither = new NotAServeError('I could not follow your racket arm in that clip.', [
-            'Film side-on from about four metres, with your whole body and the racket in frame.',
+            `Film side-on from ${PLACEMENT.distance} away, with your whole body and the racket in frame.`,
             'Front cameras often mirror the picture, so use the back camera if you can.',
           ])
           if (opts.captureOnFailure) neither.capture = { frames, fps }
@@ -1581,7 +1582,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
           const missed = new NotAServeError('I could not find a serve in that clip.', [
             'Trim the video to a single serve and try again.',
             'This app scans long clips for the serve first, and nothing in this one stood out.',
-            'Filming from the side or behind, four metres back, makes the swing easier to pick out.',
+            `Filming from the side or behind, ${PLACEMENT.distance} back, makes the swing easier to pick out.`,
           ])
           if (opts.captureOnFailure) missed.capture = { frames, fps }
           throw missed

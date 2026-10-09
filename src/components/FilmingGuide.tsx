@@ -1,3 +1,5 @@
+import { PLACEMENT } from '../lib/placement'
+
 /**
  * Filming instructions. Deliberately opinionated and short — the difference
  * between a usable clip and a useless one is four decisions, and every extra
@@ -5,7 +7,7 @@
  */
 const RULES = [
   {
-    title: 'Stand side-on, four metres back',
+    title: `Phone side-on, ${PLACEMENT.distance} away`,
     body:
       'Line the phone up with the baseline, looking across at the player. Only a side view sees how far in front contact happens.',
   },
@@ -48,7 +50,7 @@ function PlacementDiagram() {
       className="guide-diagram"
       viewBox="0 0 320 156"
       role="img"
-      aria-label="Seen from above: the phone stands four to five metres to your side, level with the baseline, looking across at you."
+      aria-label={`Seen from above: the phone stands ${PLACEMENT.distance} to your side, ${PLACEMENT.where}, looking across at you.`}
     >
       {/* The court, from the baseline up to the service line. */}
       <g stroke="var(--fg-faint)" strokeWidth="1.5" fill="none" strokeOpacity="0.45">

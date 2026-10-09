@@ -3,6 +3,7 @@ import { Icon } from '../components/primitives'
 import type { AnalyzeProgress, Step } from '../lib/analysis/analyze'
 import { MIN_COMPARABLE_SERVES } from '../lib/analysis/consistency'
 import { clipLabel } from '../lib/clipLabel'
+import { PLACEMENT } from '../lib/placement'
 
 const STEPS: { id: Step; label: string }[] = [
   { id: 'engine', label: 'Loading the coach' },
@@ -25,7 +26,7 @@ const ASIDES = [
   'The racket hand’s highest point marks contact.',
   'The lowest point of your bend is what gets measured.',
   'Your hips and shoulders are tracked as they turn.',
-  'Filming side-on, four or five metres away, gives the sharpest read.',
+  `Filming side-on, ${PLACEMENT.distance} away, gives the sharpest read.`,
   'Every height counts against your own body, not in metres.',
 ]
 

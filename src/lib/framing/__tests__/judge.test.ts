@@ -207,8 +207,9 @@ check('the rig sweep lands where DEPTH_YAW_RANGE says it should', () => {
     const call = judgeFraming(r).call
     seen.push(`${dialled}→${yaw}:${call}`)
 
+    // Past the top of the window is the guide's own placement, and since L1.10
+    // the check accepts it: what side-on cannot see, the report says.
     if (yaw < DEPTH_YAW_RANGE[0]) assert(call === 'turn-off-square', `${yaw} said ${call}`)
-    else if (yaw > DEPTH_YAW_RANGE[1]) assert(call === 'turn-off-side', `${yaw} said ${call}`)
     else assert(call === 'ready', `${yaw} said ${call}`)
   }
   note(`dialled→recovered:call — ${seen.join('  ')}`)
@@ -221,17 +222,16 @@ check('a corner camera is the one the check leaves alone', () => {
   }
 })
 
-check('the guide angle and the engine window do not agree, and the check follows the engine', () => {
-  // Worth pinning down rather than leaving as folklore. The filming guide's first
-  // rule is "stand side-on"; the rig's own default camera is 82°, which comes
-  // back as 90° to the court — pinned there, because a real server has their
-  // back to that camera and the shoulders read square; and `DEPTH_YAW_RANGE`
-  // stops accepting the lateral axis above 78°. So a player who follows the written instruction to the letter is told
-  // here to move a step round. The check reports what the engine will actually
-  // do with the clip. Reconciling the two sentences is a job for a person.
+check('the guide angle and the live check agree (L1.10)', () => {
+  // They did not. The guide's first rule is side-on; the rig's default camera
+  // is 82°, which comes back as 90° to the court, past `DEPTH_YAW_RANGE`'s
+  // 78° for the sideways axis — so a player who followed the guide to the
+  // letter was told here to move a step round. Side-on is the view the engine
+  // needs most, and what it cannot see the report says, with where to film to
+  // check it (`angleReach.ts`). So the check accepts the guide's placement.
   const r = readFraming(standing(82))
   within(r.spatial!.court_yaw_deg, 80, 90, 'recovered angle to the court at the rig default')
-  assert(judgeFraming(r).call === 'turn-off-side', 'dead side-on was waved through')
+  assert(judgeFraming(r).call === 'ready', `the guide's own placement was told to ${judgeFraming(r).call}`)
 })
 
 heading('A body that is not upright in the picture')

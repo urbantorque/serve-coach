@@ -13,6 +13,7 @@ import {
   type Side,
 } from './geometry'
 import { NotAServeError, type Frame, type Phase, type PhaseId } from './types'
+import { PLACEMENT } from '../placement'
 
 /*
  * The three numbers that define the ruler every height in this report is a
@@ -847,7 +848,7 @@ function assertPlausible(
   context: { otherArm: number[]; racket: Side; stated: boolean },
 ): void {
   const filming = [
-    'Film from the side or from behind, 4–5 metres back.',
+    `Film from the side or from behind, ${PLACEMENT.distance} back.`,
     'Keep the whole body in frame from feet to racket.',
     'Hold the phone steady — prop it on the fence if you can.',
   ]

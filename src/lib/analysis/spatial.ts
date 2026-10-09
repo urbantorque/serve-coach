@@ -24,6 +24,7 @@
  */
 import { LM, clamp, mean, median } from './geometry'
 import { NotAServeError, type Frame } from './types'
+import { PLACEMENT } from '../placement'
 
 export interface Spatial {
   /**
@@ -497,7 +498,7 @@ export function turnedPicture(frames: Frame[]): NotAServeError | undefined {
   if (seen < Math.max(8, frames.length / 2) || Math.hypot(sx, sy) < 1e-6) return undefined
   const roll = Math.abs((Math.atan2(sx, sy) * 180) / Math.PI)
   if (roll < MAX_PICTURE_ROLL) return undefined
-  const place = 'Rest it on something steady at about waist height, ten steps to your side.'
+  const place = `Rest it on something steady ${PLACEMENT.height}, ${PLACEMENT.distance} to your side.`
   if (roll < 45) {
     return new NotAServeError('The phone was tilted too far to measure.', [
       'Stand the phone upright and level before you film.',

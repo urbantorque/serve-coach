@@ -272,7 +272,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       },
       POINTS,
     ],
-    easier: 'Throw a ball overhead from side-on, letting your hips turn before your shoulders.',
+    easier: 'Throw a ball overhead from side-on, letting your chest turn only as your arm comes through.',
     mistake: 'Hearing "stay sideways" as "never turn". Your chest still turns through the ball, only later.',
     pass: 4,
   },

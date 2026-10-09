@@ -1237,6 +1237,24 @@ The example also took the fallback path, with no ranked plan, ladder or
 stays above the shoulder, and ranks two fixes in causal order: the legs, then
 the drop. Pinned in `collapsedSwing.test.ts`.
 
+**One placement, said one way.** On a first afternoon the same phone was
+placed four ways:
+- the guide said "four metres";
+- the tips said "four or five";
+- one refusal said "4–5 metres back";
+- two others said "ten steps to your side", which is nearer seven or eight.
+
+The live framing check then told a player standing exactly where the guide put
+them to "move a step round", because dead side-on cannot see a toss drifting
+sideways.
+
+Now every sentence that places the phone reads `PLACEMENT` in
+`lib/placement.ts`: four to five metres, the guide's diagram and the virtual
+phone's 4.5 m. `placement.test.ts` fails on any player-facing string that gives
+a distance of its own. The live check accepts the guide's placement. Side-on is
+the view the engine needs most, and what it cannot see the report says once,
+in one sentence per place to film from (`unseenLines`).
+
 **The report's focus ranks over every measurement, not over the areas.** An area
 score is an average, so the weakest area is not reliably where the worst fault
 lives — a player with rigid legs could otherwise be told to work on their tempo

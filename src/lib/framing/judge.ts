@@ -97,7 +97,6 @@ export type FramingCall =
   | 'head-cropped'
   | 'feet-cropped'
   | 'too-far'
-  | 'turn-off-side'
   | 'turn-off-square'
   | 'off-vertical'
   | 'ready'
@@ -202,16 +201,15 @@ const RANKING: {
     say: '**Move the phone closer** until your body fills the frame height.',
     fires: (r) => r.issues.includes('too-far-away'),
   },
-  {
-    // Dead side-on, past the top of DEPTH_YAW_RANGE. The shoulder line points at
-    // the lens, so the across-the-body axis foreshortens to nothing — at 85
-    // degrees a sideways drift survives into image x at a gain of 0.087, and
-    // recovering it would multiply the reading and all its jitter by 11.5.
-    call: 'turn-off-side',
-    grade: 'hedged',
-    say: '**Move the phone a step round** so it sees you from a corner. Dead side-on hides a toss drifting sideways.',
-    fires: (r) => collapsed(r) === 'lateral',
-  },
+  /*
+   * No row for dead side-on (L1.10). There was one — "Move the phone a step
+   * round" — and it fired at exactly the placement the filming guide draws,
+   * so a player who followed the guide to the letter was told to move. Side-on
+   * is the view the engine needs most: contact in front, the toss front to
+   * back, the chest's turn. What it cannot see — a toss or a body drifting
+   * sideways — every report from that angle says, with where to film to check
+   * (`angleReach.ts`). The live check now accepts the guide's own placement.
+   */
   {
     // Front or back on, below the bottom of DEPTH_YAW_RANGE. The clip still
     // works — the filming guide says so — but how far in front of the body

@@ -24,6 +24,7 @@
  */
 import { LM } from './geometry'
 import { NotAServeError, type Frame } from './types'
+import { PLACEMENT } from '../placement'
 
 /*
  * The two lines `framingIssues` draws, named and exported.
@@ -163,7 +164,7 @@ export function blockingFramingIssue(issues: string[]): NotAServeError | undefin
   if (issues.includes('nobody-visible')) {
     return new NotAServeError('I found no player in that clip.', [
       'Put one person fully in frame, well lit.',
-      'Stand the phone side-on, four metres back, level with the baseline.',
+      `Stand the phone side-on, ${PLACEMENT.distance} away, ${PLACEMENT.where}.`,
       'Fit head to feet in the shot, with room above the racket.',
     ])
   }
@@ -189,7 +190,7 @@ export function blockingFramingIssue(issues: string[]): NotAServeError | undefin
         ? 'You stand too far from the camera to measure.'
         : 'I could not see your racket hand.',
       [
-        'Move the phone to about four metres, so your body fills the frame height.',
+        `Move the phone to ${PLACEMENT.distance} away, so your body fills the frame height.`,
         'Every swing measurement comes off your racket hand, so it has to be visible.',
       ],
     )
