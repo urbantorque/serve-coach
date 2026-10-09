@@ -50,7 +50,7 @@ export async function driveSession(d: Drive): Promise<void> {
   const detailOf = (s: PracticeSession) =>
     s.chosen === undefined
       ? undefined
-      : `Reading serve ${Math.min(s.lines.length + 1, s.chosen.length)} of ${s.chosen.length}`
+      : `Reading serve ${Math.min(s.lines.length + 1, s.chosen.length)} of ${s.chosen.length}…`
   const show = (session: PracticeSession, stage: SessionStage) => {
     if (d.current()) d.show(session, stage)
   }
@@ -105,7 +105,7 @@ export async function driveSession(d: Drive): Promise<void> {
       show(result, {
         state: 'running',
         ratio: scanShare + readShare + (1 - scanShare - readShare) * (i / wanted.length),
-        detail: 'Taking pictures of your best and worst serves',
+        detail: 'Taking pictures of your best and worst serves…',
       })
       try {
         const still = await reader.still(n - 1, result.found, readOpts, kept.get(n))

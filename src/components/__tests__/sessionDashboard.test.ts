@@ -70,7 +70,7 @@ heading('Every stage draws')
 check('the plan, before the file is timed and after', () => {
   const fresh = { found: undefined, chosen: undefined, lines: [], phase: 'locating' as const, duration: 600 }
   const timing = draw(fresh, { state: 'planning', timed: false })
-  assert(timing.includes('Timing your phone on this video.'), 'the timing line is missing')
+  assert(timing.includes('Timing your phone on this video…'), 'the timing line is missing')
   const priced = draw(fresh, { state: 'planning', timed: true, perSampleMs: 120 })
   assert(priced.includes('A sample of 12') && priced.includes('Every serve'), 'a choice is missing')
   assert(/About \d+ minutes|About a minute/.test(priced), 'no time was quoted on a timed file')
@@ -98,6 +98,8 @@ check('the finished session draws every part it has data for', () => {
   const withUnsure = draw({ unsure: [40, 90] }, { state: 'done' }, false)
   assert(withUnsure.includes('2 overheads reached like a serve'), 'the overheads left out were not counted')
   assert(done.includes('session-pick-blank'), 'a serve with no still did not get a blank')
+  const one = draw({ lines: lines.slice(0, 1) }, { state: 'done' })
+  assert(!one.includes('Every serve'), 'a section with nothing to draw kept its heading')
   const none = draw({ found: [], chosen: [], lines: [] }, { state: 'done' })
   assert(none.includes('I could not find a serve in this video.'), 'a session with no serves said something else')
 })

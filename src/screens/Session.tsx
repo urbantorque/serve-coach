@@ -115,7 +115,7 @@ export default function Session({
             <div className="progress-fill" style={{ transform: `scaleX(${stage.ratio})` }} />
           </div>
           <p className="analyzing-detail" role="status" aria-live="polite">
-            {stage.detail ?? (locating ? 'Finding every serve in the video' : 'Reading')}
+            {stage.detail ?? (locating ? 'Finding every serve in the video…' : 'Reading…')}
           </p>
           {!locating && <ServeGrid session={session} />}
           <p className="analyzing-aside">
@@ -124,7 +124,7 @@ export default function Session({
               : 'Each serve is saved as it is read, so stopping loses none of them.'}
           </p>
           <button className="btn btn--ghost" onClick={onStop}>
-            {stage.stopping ? 'Stopping' : 'Stop and keep what is read'}
+            {stage.stopping ? 'Stopping…' : 'Stop and keep what is read'}
           </button>
         </div>
       </div>
@@ -217,7 +217,7 @@ function Choices({
       </p>
       <p className="session-meta" role="status" aria-live="polite">
         {!timed
-          ? 'Timing your phone on this video.'
+          ? 'Timing your phone on this video…'
           : perSampleMs === undefined
             ? 'I could not time your phone on this video, so I cannot say how long it will take.'
             : 'Times are from your phone, on this video.'}

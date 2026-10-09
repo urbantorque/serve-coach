@@ -126,13 +126,15 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
         )}
       </section>
 
-      <section className="block" aria-labelledby="session-every">
-        <h2 className="block-title" id="session-every">
-          Every serve
-        </h2>
-        <ServeStrip lines={session.lines} id="contactHeight" />
-        <TossStrip lines={session.lines} />
-      </section>
+      {(contactPoints(session.lines).length >= 2 || tossPoints(session.lines).points.length >= 2) && (
+        <section className="block" aria-labelledby="session-every">
+          <h2 className="block-title" id="session-every">
+            Every serve
+          </h2>
+          <ServeStrip lines={session.lines} id="contactHeight" />
+          <TossStrip lines={session.lines} />
+        </section>
+      )}
 
       {picks.best.length > 0 && (
         <section className="block" aria-labelledby="session-picks">
@@ -228,7 +230,14 @@ function Picks({
           const face = (
             <>
               {stills?.[n] ? (
-                <img src={stills[n]} alt={`Contact, serve at ${at}`} width={120} height={160} />
+                <img
+                  src={stills[n]}
+                  alt={`Contact, serve at ${at}`}
+                  width={120}
+                  height={160}
+                  loading="lazy"
+                  decoding="async"
+                />
               ) : (
                 <span className="session-pick-blank" aria-hidden="true" />
               )}
@@ -301,10 +310,24 @@ const PAD = 14
  * Dots and nothing joining them: the serves are separate, and a line between
  * them would draw a trend the start-against-end rule has not agreed to.
  */
-function ServeStrip({ lines, id }: { lines: readonly ServeLine[]; id: string }) {
-  const points = lines
+/** A reading's confident values, serve by serve: what a strip draws. */
+const contactPoints = (lines: readonly ServeLine[], id = 'contactHeight') =>
+  lines
     .filter((l) => l.status === 'read' && l.readings?.[id] && l.readings[id].confidence >= 0.55)
     .map((l) => ({ n: l.number, v: l.readings![id].value }))
+
+/** The confident tosses, along the axis most of them were read on. */
+function tossPoints(lines: readonly ServeLine[]) {
+  const read = lines.filter((l) => l.status === 'read' && l.toss && l.toss.confidence >= 0.55)
+  const across = read.filter((l) => l.toss!.across !== undefined).length > read.length / 2
+  const points = read
+    .map((l) => ({ n: l.number, v: across ? l.toss!.across : l.toss!.ahead }))
+    .filter((p): p is { n: number; v: number } => p.v !== undefined)
+  return { across, points }
+}
+
+function ServeStrip({ lines, id }: { lines: readonly ServeLine[]; id: string }) {
+  const points = contactPoints(lines, id)
   if (points.length < 2) return null
   const ideal = METRICS[id]?.ideal
   const values = points.map((p) => p.v)
@@ -346,11 +369,7 @@ function ServeStrip({ lines, id }: { lines: readonly ServeLine[]; id: string }) 
  * camera reads (`TossMap`'s rule), as a strip over the session.
  */
 function TossStrip({ lines }: { lines: readonly ServeLine[] }) {
-  const read = lines.filter((l) => l.status === 'read' && l.toss && l.toss.confidence >= 0.55)
-  const across = read.filter((l) => l.toss!.across !== undefined).length > read.length / 2
-  const points = read
-    .map((l) => ({ n: l.number, v: across ? l.toss!.across : l.toss!.ahead }))
-    .filter((p): p is { n: number; v: number } => p.v !== undefined)
+  const { across, points } = tossPoints(lines)
   if (points.length < 2) return null
   const label = across ? 'Toss across your front foot' : 'Toss in front of your front foot'
   const values = points.map((p) => p.v)

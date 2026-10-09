@@ -586,3 +586,13 @@ button.session-pick:active {
   font-size: 14.5px;
   font-weight: 600;
 }
+
+/* A pick that plays: its still answers the pointer as the other rows do. */
+button.session-pick:hover img,
+button.session-pick:hover .session-pick-blank {
+  border-color: var(--hairline);
+}
+
+button.session-pick:hover .session-pick-play {
+  border-color: var(--lime);
+}
