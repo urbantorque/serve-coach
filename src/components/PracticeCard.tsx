@@ -42,9 +42,18 @@ interface Props {
   onLogDrill?: () => void
   /** Take back the most recent one. A tap on a phone is easy to make by accident. */
   onUndoDrill?: () => void
+  /**
+   * The card above it already gives this fix and this drill (L1.6).
+   *
+   * Then the season's word on it stays — how it has moved, how often it was
+   * the weakest, the log — and the instruction and the drill are not printed a
+   * second time, one scroll under the first. Two identical drill cards on one
+   * page read as two things to do.
+   */
+  sameAsFocus?: boolean
 }
 
-export default function PracticeCard({ focus, onLogDrill, onUndoDrill }: Props) {
+export default function PracticeCard({ focus, onLogDrill, onUndoDrill, sameAsFocus = false }: Props) {
   const v = VERDICT[focus.verdict]
   const note = repeatabilityNote(focus)
 
@@ -88,7 +97,7 @@ export default function PracticeCard({ focus, onLogDrill, onUndoDrill }: Props) 
         </span>
       </div>
 
-      {focus.fix && (
+      {focus.fix && !sameAsFocus && (
         <p className="practice-fix">
           <Cue text={focus.fix} />
         </p>
@@ -104,10 +113,16 @@ export default function PracticeCard({ focus, onLogDrill, onUndoDrill }: Props) 
       )}
 
       <div className="drill">
-        <span className="drill-kicker">Drill · {focus.fundamentalLabel}</span>
-        <h4>{focus.drill.name}</h4>
-        <p>{focus.drill.how}</p>
-        <span className="drill-reps">{focus.drill.reps}</span>
+        {sameAsFocus ? (
+          <span className="drill-kicker">The drill above · {focus.drill.name}</span>
+        ) : (
+          <>
+            <span className="drill-kicker">Drill · {focus.fundamentalLabel}</span>
+            <h4>{focus.drill.name}</h4>
+            <p>{focus.drill.how}</p>
+            <span className="drill-reps">{focus.drill.reps}</span>
+          </>
+        )}
 
         {/*
           * One tap, and no reward for it.

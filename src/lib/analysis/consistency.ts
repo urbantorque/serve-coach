@@ -640,7 +640,15 @@ export function consistencyHeadline(c: Consistency): string {
   if (c.weakest.score >= 70) {
     return cue(`Your motion repeats well across ${c.serves} serves. ${c.weakest.label} drifts.`)
   }
-  return cue(`Your ${c.weakest.label.toLowerCase()} changes serve to serve. Groove that one thing before anything else.`)
+  /*
+   * After the first fix, not before it (L1.6). This line sits beside the serve
+   * chips, directly above "Work on this next", and it used to say "groove that
+   * one thing before anything else" about a different thing — two first
+   * instructions on one screen. The plan's order is causal; a spread is worth
+   * working on once the cause above it holds. The label leads, never after
+   * "Your", for the reason `repeatabilityNote` gives.
+   */
+  return cue(`${c.weakest.label} changes most from serve to serve. Groove it once your first fix holds.`)
 }
 
 /**

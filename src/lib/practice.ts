@@ -1,5 +1,6 @@
 import { FUNDAMENTALS, SERVE_TYPES, metricCopy } from './analysis/coaching'
 import { drillForMetric } from './analysis/progressions'
+import { SOFT_MEASUREMENT } from './analysis/confidence'
 import { mean } from './analysis/geometry'
 import { cue } from './analysis/voice'
 import type { Drill, FundamentalId } from './analysis/types'
@@ -213,6 +214,11 @@ export function findPracticeFocus(
     const all = session.fundamentals
       .filter((f) => f.id in FUNDAMENTALS)
       .flatMap((f) => f.metrics.map((m) => ({ metric: m, fundamentalId: f.id })))
+      // Only readings the card stood behind (L1.6), the rule `pickFocus` and
+      // the plan follow: a number marked approximate on a serve is not evidence
+      // that it is the season's weakest. A reading soft on any serve in the
+      // window then fails the every-serve rule below and drops out.
+      .filter(({ metric }) => (metric.confidence ?? 1) >= SOFT_MEASUREMENT)
     if (!all.length) continue
 
     const weakestId = [...all].sort((a, b) => a.metric.score - b.metric.score)[0].metric.id

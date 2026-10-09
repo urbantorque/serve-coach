@@ -1034,7 +1034,13 @@ Small items, and everything after builds on them.
         the racket.
       - *Proof:* `copy.test.ts` walks a registry of every string a player can
         see, and renders each template with every label.
-- [ ] **L1.6 One "start here"** · S.
+- [x] **L1.6 One "start here"** · S. *Done (2026-10-09). The basket line
+      stays by the chips, which README §"Consistency across a basket" chose on
+      purpose, but now defers to the first fix. `PracticeCard` gained
+      `sameAsFocus`: the season's line and the log stay, and the drill is not
+      printed twice. Home's "Working on" shows only when it agrees with the
+      week's plan. `findPracticeFocus` skips readings under
+      `SOFT_MEASUREMENT`. Original plan:*
       - **What:** the basket headline sits below the plan. `PracticeCard` is
         hidden when it repeats the focus. Home's "Working on" comes from the
         same plan, or at least from confidence-filtered rows.

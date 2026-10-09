@@ -40,6 +40,7 @@ import Home from '../../screens/Home'
 import Progress from '../../screens/Progress'
 import Report from '../../screens/Report'
 import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
+import { findPracticeFocus, type PracticeFocus } from '../../lib/practice'
 import { CHECK_SERVES, progressionFor } from '../../lib/analysis/progressions'
 import { causalPlan } from '../../lib/analysis/verdict'
 import { buildConsistency } from '../../lib/analysis/consistency'
@@ -191,6 +192,73 @@ check('a stored basket with half a gap renders without the gap', () => {
   )
   assert(!out.includes('best serve against your worst'), 'half a gap was drawn rather than dropped')
   assert(out.includes('Overall, serve by serve'), 'the rest of the comparison went with the gap')
+})
+
+heading('One place to start (L1.6)')
+
+check('a practice card that repeats the focus does not print the drill twice', () => {
+  const a = sampleAnalysis()
+  const practice: PracticeFocus = {
+    metricId: 'tossArmHold',
+    label: a.focus.title,
+    fundamentalId: 'toss',
+    fundamentalLabel: 'Toss',
+    drill: a.focus.drill,
+    scores: [40, 42, 41],
+    average: 41,
+    timesWeakest: 3,
+    sessionsConsidered: 3,
+    verdict: 'stuck',
+    serveType: 'flat',
+    fix: a.focus.why,
+    drilled: 0,
+  }
+  const out = html(createElement(Report, { analysis: a, practice, onLogDrill: noop, onBack: noop, onAnalyzeAnother: noop }))
+  const escaped = (s: string) => s.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
+  const times = out.split(escaped(a.focus.drill.how)).length - 1
+  assert(times === 1, `the drill's instruction is on the page ${times} times`)
+  assert(out.includes('Practise this'), 'the season card went entirely, log and all')
+  assert(out.includes('I did this drill'), 'the log button went with the duplicate')
+})
+
+check('the basket line beside the chips defers to the first fix', () => {
+  const out = html(createElement(Report, { analysis: basket(), onBack: noop, onAnalyzeAnother: noop }))
+  assert(!out.includes('before anything else'), 'the basket still claims to come first')
+  assert(out.includes('once your first fix holds'), 'the basket line does not say where it sits in the order')
+})
+
+check('home does not name a second thing to work on beside this week\'s plan', () => {
+  // Two trips on the injury demo: the plan leads on the grip and the fold, and
+  // the season's weakest reading is the tossing arm, which no fault in the
+  // plan reads: two answers, one screen.
+  const DAY = 86_400_000
+  const now = Date.now()
+  const sessions = [0, 2].map((d) => ({
+    ...stored(sampleAnalysis(DEMO_DIALS.injury)),
+    id: `serve-week-${d}-0`,
+    createdAt: now - d * DAY,
+  }))
+  const out = html(
+    createElement(Home, {
+      sessions,
+      offlineReady: true,
+      sessionsLoaded: true,
+      onPick: noop,
+      onOpen: noop,
+      onShowGuide: noop,
+      onShowHistory: noop,
+      onShowSettings: noop,
+      onShowProgress: noop,
+      onGuideThen: noop,
+      onShowExample: noop,
+      needsHandedness: false,
+      onMakeOffline: noop,
+    }),
+  )
+  assert(out.includes('This week'), 'the seeded season has no plan to compare against')
+  const season = findPracticeFocus(sessions)
+  assert(season !== undefined, 'the seeded season has no practice focus, so this checks nothing')
+  assert(!out.includes('Working on'), 'home named a working-on that is not in this week\'s plan')
 })
 
 check('the refusal screen renders instead of a score', () => {

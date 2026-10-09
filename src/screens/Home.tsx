@@ -5,6 +5,7 @@ import { Icon, ScoreRing, Sheet } from '../components/primitives'
 import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
 import { weekPlan } from '../lib/weekPlan'
+import { faultForMetric } from '../lib/analysis/progressions'
 import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 
@@ -130,6 +131,13 @@ export default function Home({
     () => findPracticeFocus(sessions, undefined, undefined, undefined, ladder),
     [sessions, ladder],
   )
+  const agreesWithWeek =
+    !week ||
+    (practice !== undefined &&
+      week.items.some(
+        (item) =>
+          item.title === practice.label || (item.flaw !== undefined && item.flaw === faultForMetric(practice.metricId)),
+      ))
   // `best` is era-only by construction, so a count taken over all of `points`
   // puts the two halves of one sentence on different sets of serves: after a
   // recalibration the personal best drops while the total still counts the
@@ -447,8 +455,12 @@ export default function Home({
           {streak && <span className="progress-foot tnum">{streak}</span>}
 
           {/* The one actionable thing the app knows, on the first screen rather
-              than two taps inside it. */}
-          {practice && (
+              than two taps inside it — when it agrees with "This week" above
+              (L1.6). The season's weakest reading and the last report's plan
+              are different questions, and printing both answers on one screen
+              when they differ gave the player two things they were "working
+              on". The plan wins; the season's word stays on Progress. */}
+          {practice && agreesWithWeek && (
             <span className={`progress-practice progress-practice--${practice.verdict}`}>
               <Icon name="target" size={14} />
               <span>

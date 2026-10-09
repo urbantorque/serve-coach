@@ -1155,6 +1155,24 @@ read as before. `angleReach.ts` now sends a side-on player behind the baseline
 to check it. Pinned in `robustness.test.ts`, `flaws.test.ts` and
 `angleReach.test.ts`.
 
+**One place to start.** A basket report used to give three different first
+instructions on one screen:
+- the basket's line beside the serve chips said "groove that one thing before
+  anything else";
+- "Work on this next" directly under it named something else;
+- the practice card under that could repeat the focus drill word for word.
+
+Home did the same, with "Working on" from the season's weakest reading beside
+"This week" from the last report's plan.
+
+Since L1.6:
+- the basket line defers to the plan ("groove it once your first fix holds");
+- the practice card keeps its season line and its log but prints no second
+  copy of a drill the focus already gives (`sameAsFocus`);
+- Home shows "Working on" only when it agrees with the week's plan;
+- the season's pick ignores readings the card marked approximate, as the plan
+  and `pickFocus` do.
+
 **The report's focus ranks over every measurement, not over the areas.** An area
 score is an average, so the weakest area is not reliably where the worst fault
 lives — a player with rigid legs could otherwise be told to work on their tempo

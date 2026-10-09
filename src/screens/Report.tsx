@@ -871,6 +871,9 @@ export default function Report({
           focus={practice}
           onLogDrill={onLogDrill}
           onUndoDrill={practice.drilled ? onUndoDrill : undefined}
+          // The season and this serve agreeing on the fix (L1.6): the card
+          // keeps its trend and its log and does not print the drill twice.
+          sameAsFocus={practice.drill.name === drill.name || practice.label === plan[0].title}
         />
       )}
 
