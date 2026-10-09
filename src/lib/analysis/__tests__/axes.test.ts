@@ -330,7 +330,7 @@ check('a toss that wanders front-to-back is named front-to-back, and drilled tha
     `a depth-axis drift was described sideways: "${focus!.title}" / "${focus!.why}"`,
   )
   assert(
-    focus!.drill.name === 'Baseline drop toss',
+    focus!.drill.name === 'Baseline toss',
     `a depth-axis drift was answered with "${focus!.drill.name}", which constrains the other axis`,
   )
   note(`side-on: "${focus!.title}" → ${focus!.drill.name}`)

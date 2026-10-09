@@ -45,7 +45,7 @@ check('each outcome is drawn as its own shape and word, not colour alone', () =>
   assert(/<circle[^>]*fill="var\(--great\)"/.test(html), 'a serve that went in was not a filled dot')
   assert(/<path[^>]*fill="var\(--work\)"/.test(html), 'a missed serve was not a diamond')
   assert(/<circle[^>]*fill="var\(--ink-1\)"[^>]*stroke="var\(--fg-faint\)"/.test(html), 'an untagged serve was not an empty ring')
-  assert(html.includes('Serve 3: 30% of your height in front of your front foot, net.'), 'the list does not read the strip out')
+  assert(html.includes('Serve 3: about two foot-lengths in front of your front foot, net.'), 'the list does not read the strip out')
   assert(html.includes('Not tagged'), 'the legend does not name the empty ring')
 })
 

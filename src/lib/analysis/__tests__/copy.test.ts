@@ -28,6 +28,10 @@ import { VERDICT_TABLES, causalFocus, everyVerdictCue, refusalFor, rotationMoveL
 import { FLAWS, type FlawId } from '../flaws'
 import { FLAW_DRILL, FLAW_DRILL_BY_AXIS, drillIdFor } from '../triage'
 import { uncalibratedLine } from '../../../components/statusLabels'
+import { PHASE_COPY } from '../phases'
+import { everyProgression } from '../progressions'
+import { practiceHeadline, type PracticeFocus } from '../../practice'
+import { FOOT_SHARE, placeLine } from '../../tossPlaceCopy'
 import { assert, check, report } from './harness'
 import { DEMO_DIALS, sampleAnalysis } from '../../../dev/sampleAnalysis'
 import type { ServeType } from '../../storage/prefs'
@@ -253,9 +257,9 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Let go above the head', high: 'Let go above the head' },
   },
   tossArmHold: {
-    stamp: 'c62244b5',
+    stamp: '1f8ea683',
     insight: {
-      low: ['Arm drops at once', 'Arm drops early'],
+      low: ['Arm comes down at once', 'Arm comes down early'],
       ok: ['Arm holds to the swing', 'Arm holds through contact'],
       high: ['Arm holds through contact'],
     },
@@ -304,7 +308,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { high: 'Struck as it starts to fall' },
   },
   kneeBend: {
-    stamp: 'a73b0a2d',
+    stamp: '5fb1b2e6',
     insight: {
       low: ['Legs straight', 'Legs barely bent'],
       ok: ['Athletic load'],
@@ -347,7 +351,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Hitting shoulder under the ball', high: 'Hitting shoulder under the ball' },
   },
   legDrive: {
-    stamp: '06237713',
+    stamp: '766fef27',
     insight: {
       low: ['No push off the court', 'Light push'],
       // A big launch is praised since the band ran to the end of its axis (D2.3).
@@ -360,7 +364,7 @@ const CLAIMED: Record<string, Claimed> = {
     // Re-stamped when the band moved from the hand down the back (0.16–0.34) to
     // the hand near the shoulder (−0.1–0.3), on real serve motion — and the rungs
     // were renamed for the hand, which is what is measured.
-    stamp: '7bc4dc23',
+    stamp: 'ac988acd',
     insight: {
       low: ['Hand stays above the shoulder'],
       ok: ['Hand level with the shoulder', 'Hand below the shoulder'],
@@ -401,7 +405,7 @@ const CLAIMED: Record<string, Claimed> = {
     // vocabulary that clears the voice lint (it is not on the jargon list) and
     // still loses a player who has never met the term. The rungs claimed below
     // are unchanged: a racket that fires with no pause is an explosive swing.
-    stamp: '396a3a7c',
+    stamp: '8e65b13f',
     insight: {
       low: ['Swing snaps through'],
       ok: ['Explosive swing'],
@@ -440,7 +444,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Arm long at contact', high: 'Arm long at contact' },
   },
   contactAhead: {
-    stamp: 'e993b3fb',
+    stamp: '91a9dbaa',
     insight: {
       low: ['Struck behind the head', 'Struck over the head'],
       ok: ['Struck in front of the body'],
@@ -449,7 +453,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Struck in front of the body', high: 'Struck in front of the body' },
   },
   loadRatio: {
-    stamp: 'd5633430',
+    stamp: 'a701f8ed',
     insight: {
       low: ['Crammed finish'],
       ok: ['Slow build, fast finish'],
@@ -494,7 +498,7 @@ const CLAIMED: Record<string, Claimed> = {
    * started describing a different amount of drift.
    */
   'depth.tossPathWobble': {
-    stamp: '595419a2',
+    stamp: '0109a6d6',
     insight: { high: ['Drifts a hand off line', 'Wanders off line'] },
     aim: { high: 'Straight lift' },
   },
@@ -510,7 +514,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { high: 'Struck at full racket reach' },
   },
   'kick.shoulderTilt': {
-    stamp: 'aa740cb6',
+    stamp: '2593fa48',
     insight: {
       // Every rung below the kick band, and the top one is the point: a shoulder
       // the ladder calls under the ball is still short of what a kick asks for.
@@ -1269,6 +1273,112 @@ check('every area headline, assembled at runtime, passes the editor', () => {
     }
   }
   assert(failures.length === 0, failures.join('\n'))
+})
+
+/* ------------------------------------------------ what the lint missed ---- */
+
+console.log('\n\x1b[1mThe lines the editor used to miss (L1.5)\x1b[0m')
+
+/**
+ * Names, labels and captions: short, but on screen, and the place "Cartwheel
+ * shoulders" and "Baseline drop toss" lived because nothing read them.
+ */
+function everyName(): { where: string; text: string }[] {
+  const out: { where: string; text: string }[] = []
+  const types = Object.keys(SERVE_TYPES) as ServeType[]
+  for (const id of Object.keys(METRICS)) {
+    out.push({ where: `${id}.label`, text: METRICS[id].label })
+    for (const type of types) {
+      for (const axis of [undefined, 'depth', 'lateral'] as const) {
+        const drill = metricCopy(id, type, axis)?.drill
+        if (drill) out.push({ where: `${id}.${type}${axis ? `.${axis}` : ''}.drill.name`, text: drill.name })
+      }
+    }
+  }
+  for (const [id, f] of Object.entries(FUNDAMENTALS)) {
+    out.push({ where: `${id}.label`, text: f.label })
+    out.push({ where: `${id}.drill.name`, text: f.drill.name })
+  }
+  for (const [id, d] of Object.entries(DRILLS)) out.push({ where: `DRILLS.${id}.name`, text: d.name })
+  for (const [flaw, p] of everyProgression()) {
+    out.push({ where: `ladder.${flaw}.cue`, text: p.cue })
+    out.push({ where: `ladder.${flaw}.easier`, text: p.easier })
+    out.push({ where: `ladder.${flaw}.mistake`, text: p.mistake })
+    p.steps.forEach((s, i) => {
+      out.push({ where: `ladder.${flaw}.${i}.name`, text: s.name })
+      out.push({ where: `ladder.${flaw}.${i}.how`, text: s.how })
+    })
+  }
+  for (const [flaw, copy] of Object.entries(VERDICT_TABLES.flaws)) {
+    out.push({ where: `flaw.${flaw}.title`, text: copy.title })
+  }
+  for (const [flag, copy] of Object.entries(VERDICT_TABLES.injuries)) {
+    out.push({ where: `injury.${flag}.title`, text: copy.title })
+  }
+  for (const [id, copy] of Object.entries(PHASE_COPY)) {
+    out.push({ where: `phase.${id}.label`, text: copy.label })
+    out.push({ where: `phase.${id}.caption`, text: copy.caption })
+  }
+  return out
+}
+
+check('every name, label, ladder line and caption passes the editor', () => {
+  const bad = everyName()
+    .map((c) => ({ ...c, issues: cueIssues(c.text) }))
+    .filter((c) => c.issues.length > 0)
+  assert(
+    bad.length === 0,
+    bad.map((b) => `      ${b.where}: ${b.issues.join('; ')}\n        "${b.text}"`).join('\n'),
+  )
+})
+
+check('"drop" is held to the racket, and the rule does not catch the racket', () => {
+  for (const wrong of ['Your tossing arm drops early.', 'Let the ball drop on the line.', 'Your hitting shoulder dropped.']) {
+    assert(cueIssues(wrong).some((i) => i.includes('racket drop')), `missed: "${wrong}"`)
+  }
+  for (const right of ['Let the racket drop behind you.', 'Hold the hip until the racket drops.', 'Your racket drop is short.', 'The racket head dropped late.']) {
+    assert(!cueIssues(right).some((i) => i.includes('racket drop')), `flagged the racket: "${right}"`)
+  }
+})
+
+check('every practice headline passes the editor, for every label and every branch', () => {
+  // The sentence is built round the label at runtime, so the table check above
+  // never saw it. Every label against every branch, at the longest counts.
+  const branches: Partial<PracticeFocus>[] = [
+    { verdict: 'improving', drilled: 3 },
+    { verdict: 'improving', drilled: 0 },
+    { verdict: 'slipping' },
+    { verdict: 'stuck', drilled: 2 },
+    { verdict: 'stuck', drilled: 9 },
+    { verdict: 'stuck', drilled: 0, timesWeakest: 5 },
+    { verdict: 'stuck', drilled: undefined, timesWeakest: 5 },
+    { verdict: 'stuck', drilled: undefined, timesWeakest: 1 },
+  ]
+  const failures: string[] = []
+  for (const m of Object.values(METRICS)) {
+    for (const type of Object.keys(SERVE_TYPES) as ServeType[]) {
+      for (const b of branches) {
+        const f = { label: m.label, sessionsConsidered: 5, timesWeakest: 1, serveType: type, ...b } as PracticeFocus
+        const line = practiceHeadline(f)
+        const issues = cueIssues(line)
+        if (issues.length) failures.push(`${m.id} ${type} ${JSON.stringify(b)}: ${issues.join('; ')}\n        "${line}"`)
+        if (/^Your [a-z]/.test(line)) failures.push(`${m.id}: the label is behind a possessive: "${line}"`)
+      }
+    }
+  }
+  assert(failures.length === 0, failures.slice(0, 6).join('\n'))
+})
+
+check('a toss is placed in foot-lengths, never as a share of height', () => {
+  for (const axis of ['ahead', 'across'] as const) {
+    for (const v of [-0.6, -0.31, -0.18, -0.05, 0, 0.02, 0.07, 0.15, 0.22, 0.3, 0.45, 0.6]) {
+      const line = placeLine(axis, v)
+      assert(cueIssues(line).length === 0, `"${line}": ${cueIssues(line).join('; ')}`)
+      assert(!/%|height/.test(line), `a share of height reached the player: "${line}"`)
+    }
+  }
+  assert(placeLine('ahead', FOOT_SHARE) === 'about one foot-length in front of your front foot', placeLine('ahead', FOOT_SHARE))
+  assert(placeLine('ahead', 0.01) === 'over your front foot', 'a toss over the foot was placed off it')
 })
 
 report()

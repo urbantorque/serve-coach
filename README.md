@@ -1049,6 +1049,25 @@ pleasantry fails the build. Copy marks its instruction with `**double
 asterisks**`, which is the only thing rendered in bold and is flattened for the
 share card.
 
+Since L1.5 the editor also reads what it used to miss: drill names, labels,
+fault and injury titles, ladder cues and phase captions, plus the sentences
+built at runtime. That means every practice headline for every label and
+branch, and every toss placement.
+
+It also holds "drop" to the racket. A verb form is caught unless it follows
+"racket", and so is the noun bolted to anything else ("the ball drop").
+
+The pass it came with rewrote lines a twice-a-month player tripped on:
+- "Tossing arm stays up" is now the label "Tossing arm timing", since it read
+  as praise at the head of the plan;
+- the racket drop no longer asks for the hand "down your back";
+- the best-serve line speaks in readouts, not figures;
+- tosses are placed in foot-lengths (a foot is about 15% of stature);
+- a stuck reading is sent to a coach only after four logged sessions of its
+  drill, not two;
+- the early-turn cue no longer asks for no turn before contact;
+- the kick drill tosses above the head, not over the hitting shoulder.
+
 **Joint angles come from the 3D world landmarks, not the image.** An angle
 measured in the image plane changes when the camera moves. Shoulder tilt is the
 clearest case: filmed side-on the shoulder line points nearly at the camera, its

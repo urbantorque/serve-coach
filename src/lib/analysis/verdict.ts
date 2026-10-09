@@ -334,8 +334,10 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     low: 'Your hand sits flat under the handle, so the strings face the sky and the arm cannot turn through the ball.',
   },
   toss_height: {
-    title: 'Your toss lands short',
-    low: 'The ball never gets to the top of your reach, so you strike it on the way down.',
+    // "Short" means depth in tennis, and every good serve is struck on the way
+    // down, so neither said what is wrong (L1.5).
+    title: 'Your toss is too low',
+    low: 'The ball peaks below your full reach, so you bend your arm or rush the swing to meet it.',
     highTitle: 'Your toss goes too high',
     high: 'The ball hangs above your reach, so you wait for it and the swing loses its rhythm.',
   },
@@ -370,11 +372,13 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
   },
   collapsed_elbow: {
     title: 'Your hitting elbow falls',
-    low: 'Your elbow drops below your shoulder, so the arm swings from the elbow instead of unwinding from the shoulder.',
+    low: 'Your elbow sinks below your shoulder, so the arm swings from the elbow instead of unwinding from the shoulder.',
   },
   shallow_drop: {
     title: 'The racket stops short behind you',
-    low: 'Your racket hand never gets far enough down your back, so the swing starts halfway and arrives slow.',
+    // The racket head falls; the hand stays near the shoulder (D7.1). The old
+    // line asked for the hand down the back, the picture the band dropped.
+    low: 'Your racket head never falls behind your back, so the swing starts halfway up and arrives slow.',
   },
   early_shoulder_rotation: {
     title: 'Your shoulders open too early',
@@ -566,8 +570,8 @@ export function suppressedNote(
   if (n < 1) return undefined
   return cue(
     n === 1
-      ? 'One other thing shows up in this serve. It sits downstream of these, so start here.'
-      : `${n} other things show up in this serve. They sit downstream of these, so start here.`,
+      ? 'One other thing shows up in this serve. It often clears once these are fixed, so start here.'
+      : `${n} other things show up in this serve. They often clear once these are fixed, so start here.`,
   )
 }
 

@@ -944,10 +944,11 @@ function assertPlausible(
   }
 }
 
-const PHASE_COPY: Record<PhaseId, { label: string; caption: string }> = {
+/** The six moments in words. Exported for the copy lint (L1.5). */
+export const PHASE_COPY: Record<PhaseId, { label: string; caption: string }> = {
   ready: { label: 'Ready', caption: 'Stance set, weight balanced, hands together' },
   toss: { label: 'Toss', caption: 'Tossing arm at full stretch, ball released' },
-  trophy: { label: 'Trophy', caption: 'Deepest leg load, racket cocked, chest to the sky' },
+  trophy: { label: 'Trophy', caption: 'Deepest leg load, racket up behind you, tossing arm reaching up' },
   drop: { label: 'Racket drop', caption: 'Racket head falls behind the back' },
   contact: { label: 'Contact', caption: 'Full extension, highest point of the swing' },
   finish: { label: 'Finish', caption: 'Swing across the body, landing inside the court' },

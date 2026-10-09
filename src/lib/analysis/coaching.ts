@@ -140,7 +140,10 @@ export const METRICS: Record<string, MetricCopy> = {
   },
   tossArmHold: {
     id: 'tossArmHold',
-    label: 'Tossing arm stays up',
+    // A name, not a sentence (L1.5). "Tossing arm stays up" read as praise at
+    // the head of the plan ("Work on this next: Tossing arm stays up") and broke
+    // every sentence built round it ("Your tossing arm stays up has lost…").
+    label: 'Tossing arm timing',
     unit: '%',
     phase: 'trophy',
     source: {
@@ -152,7 +155,7 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 100],
     decimals: 0,
     insight: {
-      low: 'Your tossing arm **drops early**, the front shoulder falls with it, and contact drops too.',
+      low: 'Your tossing arm **comes down early**, your front shoulder follows it, and you meet the ball lower.',
       ok: 'You **hold** the tossing arm up into the swing, so the chest stays open.',
       high: 'You hold the tossing arm up **through** the swing.',
     },
@@ -341,7 +344,7 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [0, 110],
     decimals: 0,
     insight: {
-      low: 'Your legs stay **straight**, so the serve runs on arm alone.',
+      low: 'Your knees **barely bend** before the swing, so there is little spring to push up from.',
       ok: 'An **athletic load** — deep enough to store power, shallow enough to launch.',
       high: 'You **sink deep** into the load.',
     },
@@ -469,14 +472,14 @@ export const METRICS: Record<string, MetricCopy> = {
       high: 'A **big launch** upward.',
     },
     fix: {
-      low: '**Explode up** and land inside the baseline. Drive up at the ball, not forward at it.',
+      low: '**Push up** off the ground into the ball, so you land inside the baseline: up first, forward second.',
       // Empty while the band runs to the end of its own axis. It used to say a
       // big rise meant landing deep, which the hips' height cannot tell.
       high: '',
     },
     drill: {
       name: 'Land inside',
-      how: 'Serve and jump so you land a stride inside the baseline every time.',
+      how: 'Serve and push up off the ground into the ball, so you land inside the baseline every time.',
       reps: '15 serves',
     },
   },
@@ -506,7 +509,7 @@ export const METRICS: Record<string, MetricCopy> = {
     insight: {
       low: 'Your hand **stays high** at the bottom of the swing, so the racket never lays back behind you.',
       ok: 'The racket **lays back behind you** before it fires, and that fall is where racket speed comes from.',
-      high: 'Your hand drops **well down your back**, which can leave the racket by your side instead of behind you.',
+      high: 'Your hand sinks **well below your shoulder**, which can leave the racket by your side instead of behind you.',
     },
     fix: {
       low: '**Let the racket head fall** behind you while your elbow stays up at shoulder height. Keep the grip loose.',
@@ -642,7 +645,7 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [50, 450],
     decimals: 0,
     insight: {
-      low: 'You **snap** from drop to ball. That is either explosive, or a sign the racket never fell far enough.',
+      low: 'Your swing from the racket drop to the ball is **short**. Check the racket falls fully behind you first.',
       ok: 'Your racket **fires** from drop to ball, with no pause to slow it down.',
       high: 'Your racket **crawls** from drop to ball, so you are guiding the swing.',
     },
@@ -786,17 +789,17 @@ export const METRICS: Record<string, MetricCopy> = {
     range: [-10, 50],
     decimals: 1,
     insight: {
-      low: 'You strike **over or behind** your head, which drops serves into the net and arches your back.',
+      low: 'You strike **over or behind** your head, which sends serves into the net and arches your back.',
       ok: 'You strike **in front** of your body, with your weight moving into the court.',
       high: 'You strike **far in front** of your body.',
     },
     fix: {
-      low: '**Toss a stride inside the baseline** so you move up and forward. Contact belongs ahead of the front foot.',
+      low: '**Toss further in front**, so you move up and forward into the ball. Contact belongs ahead of your front foot.',
       high: '**Rein the toss back** if you fall into the court. Ahead is good, falling is not.',
     },
     drill: {
       name: 'Step-in toss',
-      how: 'Toss a stride inside the baseline and let it pull you forward into contact.',
+      how: "Toss so the ball would land about a racket's length inside the baseline, and let it pull you up into contact.",
       reps: '15 serves',
     },
   },
@@ -819,7 +822,7 @@ export const METRICS: Record<string, MetricCopy> = {
     decimals: 0,
     insight: {
       low: 'You spend the motion **before the trophy**, then cram everything into the finish.',
-      ok: 'A **clean split** between the slow build and the explosive finish.',
+      ok: 'A **clean split** between the slow build and the fast finish.',
       high: 'You **linger after the trophy**, so the back half drifts instead of firing.',
     },
     fix: {
@@ -909,8 +912,8 @@ export interface AxisCopy {
  * name.
  */
 const BASELINE_DROP_TOSS: Drill = {
-  name: 'Baseline drop toss',
-  how: 'Toss from behind the baseline and let the ball drop on the line, not in front of it or behind.',
+  name: 'Baseline toss',
+  how: 'Toss from behind the baseline without swinging, and let the ball fall onto the line every time.',
   reps: '20 tosses',
 }
 
@@ -935,7 +938,7 @@ export const AXIS_COPY: Record<string, Partial<Record<BodyAxis, AxisCopy>>> = {
         high: 'Your tossing hand **drifts forwards and back**, so the ball finishes nearer or further out each serve.',
       },
       fix: {
-        high: '**Keep the toss on one line** and let the ball drop back onto the baseline every serve.',
+        high: '**Keep the toss on one line** and let the ball fall back onto the baseline every serve.',
       },
       drill: BASELINE_DROP_TOSS,
     },
@@ -1017,7 +1020,7 @@ export const DRILLS: Record<string, Drill> = {
   overhead_throw: OVERHEAD_THROW,
   back_leg_serve: {
     name: 'Back-leg serves',
-    how: 'Serve with your weight on your back leg only, letting the hips turn before the arm swings.',
+    how: 'Serve with your weight on your back leg, then push up off it into the ball.',
     reps: '15 serves',
   },
   up_and_out: UP_AND_OUT,
@@ -1146,7 +1149,7 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
         // the ladder calls "hitting shoulder under the ball" falls below it. The
         // flat wording — the shoulder sits level or high — would deny that
         // readout outright for every kick between the two.
-        low: 'Your hitting shoulder **drops too little** for a kick, so the racket goes through the ball instead of up it.',
+        low: 'Your hitting shoulder **dips too little** for a kick, so the racket goes through the ball instead of up it.',
       },
     },
     fix: {
@@ -1179,8 +1182,10 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
       // The flat serve's step-in toss walks contact forward, which is the last
       // thing a kick serve struck too far in front needs.
       contactAhead: {
-        name: 'Kick toss over the shoulder',
-        how: 'Toss over your hitting shoulder and brush the racket up the back of the ball.',
+        // Above the head, as the kick's own fixes say. "Over the hitting
+        // shoulder" is where a flat or slice toss goes.
+        name: 'Kick toss above your head',
+        how: 'Toss above your head, not out to the side, and brush the racket up the back of the ball.',
         reps: '15 serves',
       },
     },
@@ -1337,7 +1342,7 @@ export const FUNDAMENTALS: Record<
     readings: ['totalTime', 'syncAtRelease'],
     drill: {
       name: 'Count the serve',
-      how: 'Say one as both hands drop, two at the trophy, three at contact. One and two stay slow.',
+      how: 'Say one as both hands go down, two at the trophy, three at contact. One and two stay slow.',
       reps: '2 baskets · out loud',
     },
   },

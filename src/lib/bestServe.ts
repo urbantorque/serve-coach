@@ -94,7 +94,13 @@ export function focusAgainstBest(
         : before && gap(here) > gap(before) + 1e-9
           ? ' Further than last time.'
           : ''
-    return cue(`Your best serve read ${there.display} here, this one ${here.display}.${trend}`)
+    // In body positions, the card's own readouts (L1.5). `display` is the
+    // engine's figure ("0.050×", "2.1%") and was never meant to reach a player.
+    const say = (m: Metric) => `**${m.readout.charAt(0).toLowerCase()}${m.readout.slice(1)}**`
+    if (here.readout === there.readout) {
+      return cue(`Your best serve read the same here: ${say(here)}.${trend}`)
+    }
+    return cue(`Your best serve read ${say(there)} here, this one ${say(here)}.${trend}`)
   }
   return undefined
 }

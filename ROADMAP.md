@@ -1014,7 +1014,16 @@ Small items, and everything after builds on them.
         - no reachable drill text matches freeze, hold, pause or stop dead;
         - a practice test with a kick history;
         - no two drill cards on a page share a name.
-- [ ] **L1.5 Copy truth pass, and the lint's blind spots** · S.
+- [x] **L1.5 Copy truth pass, and the lint's blind spots** · S. *Done
+      (2026-10-09). About 30 lines were rewritten across nine files, and four of
+      the seven technical conflicts were fixed: the early-turn cue, the kick
+      toss, the stride and the back-leg hips. The focus title stays the label;
+      the one label that was a sentence became "Tossing arm timing". The coach
+      referral now waits for four logged sessions of a drill.
+      `voice.ts` holds "drop" to the racket. The editor now reads names,
+      labels, titles, ladder lines, captions, every practice headline and every
+      toss placement. The posture ladder's head-up framing for a sideways fold
+      is left as it was. Original plan:*
       - **What:** the rewrites in `LEVEL-UP-REVIEW.md` §1. The worst offenders:
         - focus titles taken from readouts rather than from the target;
         - `practiceHeadline`'s grammar;

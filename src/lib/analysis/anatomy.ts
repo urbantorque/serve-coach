@@ -40,8 +40,8 @@ const LADDERS: Record<string, Stop[]> = {
     { under: Infinity, tag: 'Let go past full stretch' },
   ],
   tossArmHold: [
-    { under: 25, tag: 'Arm drops at once' },
-    { under: 55, tag: 'Arm drops early' },
+    { under: 25, tag: 'Arm comes down at once' },
+    { under: 55, tag: 'Arm comes down early' },
     { under: 85, tag: 'Arm holds to the swing' },
     { under: Infinity, tag: 'Arm holds through contact' },
   ],

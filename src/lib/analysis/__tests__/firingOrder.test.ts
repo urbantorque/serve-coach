@@ -56,7 +56,7 @@ check('the timeline names every link it draws and says the order in words', () =
   const d = read({ lateLegDrive: 1 }, 60)
   const html = renderToStaticMarkup(createElement(FiringTimeline, { chain: d.chain, order: d.firingOrder! }))
   for (const label of ['Legs', 'Trunk', 'Elbow', 'Hand']) assert(html.includes(`>${label}</text>`), `no ${label} label`)
-  assert(html.includes('before your legs had finished'), 'the out-of-order case was not said')
+  assert(html.includes('before your legs finished'), 'the out-of-order case was not said')
 })
 
 report()

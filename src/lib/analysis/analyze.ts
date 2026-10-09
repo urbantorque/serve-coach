@@ -1715,7 +1715,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
 
   if (video.duration > LONG_CLIP_SECONDS) {
     quality.warnings.push(
-      cue('Long clip, so most of the wait went on finding the serves. Trim to the serves before you upload.'),
+      cue('Long clip, so most of the wait went on finding the serves. Trim the clip to the serves before you pick it.'),
     )
   }
 

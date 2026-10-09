@@ -8,10 +8,27 @@
  */
 export type TossAxis = 'ahead' | 'across'
 
-const shareOf = (v: number) => `${Math.round(Math.abs(v) * 100)}% of your height`
+/**
+ * A foot's length as a share of standing height. Adult foot length runs at
+ * about 15% of stature, so a distance in statures becomes one in the player's
+ * own feet without anything knowing how tall they are (L1.5). "18% of your
+ * height" was a number with no target that a player could not picture.
+ */
+export const FOOT_SHARE = 0.15
+
+/** A distance in statures, said in foot-lengths to the nearest half. */
+function feetOf(v: number): string {
+  const halves = Math.round((Math.abs(v) / FOOT_SHARE) * 2)
+  if (halves <= 1) return 'about half a foot-length'
+  if (halves === 2) return 'about one foot-length'
+  if (halves === 3) return 'about one and a half foot-lengths'
+  if (halves === 4) return 'about two foot-lengths'
+  return `about ${Math.round(halves / 2)} foot-lengths`
+}
 
 export function placeLine(axis: TossAxis, v: number): string {
-  if (Math.abs(v) < 0.01) return 'over your front foot'
-  if (axis === 'ahead') return `${shareOf(v)} ${v > 0 ? 'in front of' : 'behind'} your front foot`
-  return `${shareOf(v)} to your ${v > 0 ? 'hitting' : 'tossing'} side`
+  // Under a quarter of a foot-length either way is over the foot.
+  if (Math.abs(v) < FOOT_SHARE / 4) return 'over your front foot'
+  if (axis === 'ahead') return `${feetOf(v)} ${v > 0 ? 'in front of' : 'behind'} your front foot`
+  return `${feetOf(v)} to your ${v > 0 ? 'hitting' : 'tossing'} side`
 }

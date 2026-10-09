@@ -365,19 +365,25 @@ const times = (n: number): string =>
 /** The line at the top of the practice card. */
 export function practiceHeadline(f: PracticeFocus): string {
   const across = `across your last ${f.sessionsConsidered} ${SERVE_WORD(f.serveType)} serves`
-  const it = f.label.toLowerCase()
+  /*
+   * The label leads, in its own capitalisation, and never after "Your" (L1.5).
+   * The fix `repeatabilityNote` below made for the same bug, which this
+   * function kept: "Your tossing arm stays up has lost 4 serves" was on
+   * screen, and "lost serves" never said what had happened.
+   */
+  const it = f.label
 
   if (f.verdict === 'improving') {
     // Said differently when the player has been putting the work in, because
     // "keep going" to somebody who has logged four sessions of it is the app
     // failing to notice.
     if (f.drilled) {
-      return cue(`Your ${it} is moving, and you have drilled it ${times(f.drilled)}. That is the drill working.`)
+      return cue(`${it} is moving, and you have drilled it ${times(f.drilled)}. That is the drill working.`)
     }
-    return cue(`Your ${it} still trails ${across}, but it moves in the right direction. Keep going.`)
+    return cue(`${it} still trails ${across}, but it moves in the right direction. Keep going.`)
   }
   if (f.verdict === 'slipping') {
-    return cue(`Your ${it} has gone backwards ${across}. Take it back to basics now.`)
+    return cue(`${it} has gone backwards ${across}. Take it back to basics now.`)
   }
 
   /*
@@ -392,14 +398,26 @@ export function practiceHeadline(f: PracticeFocus): string {
    * neither branch, because the app not having been asked to keep any is not
    * evidence that the player has not been drilling.
    */
+  /*
+   * A coach only once the drill has had a fair go (L1.5). Two logged sessions
+   * is a week of practice, and sending somebody away after it gives up on the
+   * ladder before its easier steps were tried; slowing the drill down is what a
+   * coach would say first anyway.
+   */
+  if (f.drilled && f.drilled >= COACH_AFTER_DRILLS) {
+    return cue(`${it} has not moved after ${times(f.drilled)} of its drill. Take this one to a coach.`)
+  }
   if (f.drilled) {
-    return cue(`You have drilled your ${it} ${times(f.drilled)} and it has not moved. Take this one to a coach.`)
+    return cue(`${it} has not moved after ${times(f.drilled)} of its drill. Do it at half pace, then film again.`)
   }
   if (f.drilled === 0 && f.timesWeakest >= 2) {
-    return cue(`Your ${it} has lost ${f.timesWeakest} serves and you have logged no drill for it. Start there.`)
+    return cue(`${it} was your weakest reading on ${f.timesWeakest} serves, and you have not logged its drill. Start there.`)
   }
   if (f.timesWeakest >= Math.ceil(f.sessionsConsidered / 2)) {
-    return cue(`Your ${it} lost ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD(f.serveType)} serves and has not shifted. Spend your time here.`)
+    return cue(`${it} was your weakest reading on ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD(f.serveType)} serves. Start here.`)
   }
-  return cue(`Your ${it} scores lowest ${across} and has not moved. Spend your time here.`)
+  return cue(`${it} scores lowest ${across} and has not moved. Start here.`)
 }
+
+/** Logged sessions of a drill before a stuck reading is sent to a coach. */
+export const COACH_AFTER_DRILLS = 4

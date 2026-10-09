@@ -64,6 +64,16 @@ const JARGON =
 const COACH_JARGON =
   /\b(windmill\w*|cartwheel\w*|back[- ]?scratch\w*|kinetic chain|the chain|head speed|the brake)\b/i
 
+/**
+ * "Drop" is the racket drop and nothing else (LOOP.md §4), which is the only
+ * way a player can tell "your racket drop" from a tossing arm that "drops
+ * early" or a ball left to "drop on the line". The noun is fine wherever it
+ * stands; what is caught is the verb, and the noun bolted to something that is
+ * not the racket (L1.5).
+ */
+const MISUSED_DROP =
+  /(?<!racket )(?<!racket head )\b(drops|dropped|dropping)\b|\b(ball|toss|arm|hands?|head|legs?|elbow|shoulders?|contact|it)\s+drop\b/i
+
 /** Passive construction, close enough for copy this short. */
 const PASSIVE =
   /\b(is|are|was|were|be|been|being)\s+(\w+ed|shown|taken|seen|given|held|kept|made|done|found|read)\b/i
@@ -185,6 +195,9 @@ export function cueIssues(text: string): string[] {
 
   const coach = s.match(COACH_JARGON)
   if (coach) issues.push(`coach jargon: ${coach[0]}`)
+
+  const drop = s.match(MISUSED_DROP)
+  if (drop) issues.push(`"drop" is the racket drop: ${drop[0]}`)
 
   const passive = s.match(PASSIVE)
   if (passive) issues.push(`passive voice: ${passive[0]}`)

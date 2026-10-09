@@ -74,7 +74,7 @@ export const FIXTURE_PLAN: readonly PlannedClip[] = [
   {
     n: 3,
     what: 'The same player again, this time face-on or from behind.',
-    why: 'Says whether the app drops the readings it cannot take, rather than guessing them.',
+    why: 'Says whether the app leaves out the readings it cannot take, rather than guessing them.',
     handedness: 'right',
     view: 'front',
     fps: 30,

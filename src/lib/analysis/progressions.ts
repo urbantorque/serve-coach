@@ -144,7 +144,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
   },
 
   toss_drift: {
-    cue: 'Toss up a line towards the net post, so the ball would land in front of your front foot.',
+    cue: 'Lift the ball up one straight line, so it would land on the same spot in front of your front foot.',
     steps: [
       // Replaced by the axis drill where the diagnosis knows which way the toss
       // wandered — see `progressionFor`. This is the axis-blind one.
@@ -168,7 +168,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     ],
     easier: 'Start with the tossing arm already at shoulder height and lift only the last part.',
     mistake:
-      'Swinging the tossing arm across your body, which sends the ball behind your head. Keep it pointing at the net post.',
+      'Swinging the tossing arm across your body, which sends the ball behind your head. Keep it pointing up at the ball.',
     pass: 5,
   },
 
@@ -204,7 +204,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     steps: [
       {
         name: 'Start it hanging',
-        how: 'Start with the racket already hanging down your back on a loose grip, then swing up from there.',
+        how: 'Start with the racket already hanging behind you on a loose grip, then swing up from there.',
         reps: '10 swings',
       },
       DRILLS.ball_in_a_sock,
@@ -243,14 +243,16 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       },
       POINTS,
     ],
-    easier: 'Kneel on one knee and serve from the racket-up position, so your legs drop out of it.',
+    easier: 'Kneel on one knee and serve from the racket-up position, so only your arm is working.',
     mistake:
       'Hoisting the elbow high and early to look right. Throw the racket head at the ball and let the elbow sort itself out.',
     pass: 4,
   },
 
   early_shoulder_rotation: {
-    cue: 'Keep your chest towards the side fence until you hear the strings hit the ball.',
+    // Not "until you hear the strings hit the ball", which asked for no trunk
+    // turn before contact and argued with this ladder's own "Turn late" (L1.5).
+    cue: 'Keep the logo on your shirt facing the side fence until the racket starts up, then turn to the net.',
     steps: [
       {
         name: 'Seated serves',
@@ -310,7 +312,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       POINTS,
     ],
     easier: 'If your toss is low, fix that first. You cannot reach high for a ball that never got there.',
-    mistake: 'Dropping your head, or reaching forwards for a toss that went too far in front. Toss up, then hit up.',
+    mistake: 'Ducking your head, or reaching forwards for a toss that went too far in front. Toss up, then hit up.',
     pass: 5,
   },
 }

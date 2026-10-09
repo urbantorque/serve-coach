@@ -29,8 +29,9 @@ const LINKS: Link[] = [
 
 function firingLine(order: FiringOrder): string {
   if (order.inOrder) return cue('Legs, then elbow, then hand: the order that hands the speed up to the racket.')
-  if (order.late === 'legs') return cue('Your elbow got going before your legs had finished pushing up.')
-  return cue('Your hand peaked before your elbow did, so the arm unwound out of turn.')
+  // Each with the one move that answers it, not only what happened (L1.5).
+  if (order.late === 'legs') return cue('Your elbow got going before your legs finished pushing up. Let the legs start the swing.')
+  return cue('Your hand whipped through before your elbow led. Lead up with the elbow and let the hand follow.')
 }
 
 export default function FiringTimeline({ chain, order }: { chain: ChainTiming; order: FiringOrder }) {
@@ -86,7 +87,7 @@ export default function FiringTimeline({ chain, order }: { chain: ChainTiming; o
       <figcaption className="chart-readout">
         <span>{firingLine(order)}</span>
       </figcaption>
-      <p className="chart-hint firing-note">I draw the trunk but leave it out of the check: the camera has to guess its turn from depth.</p>
+      <p className="chart-hint firing-note">I show the trunk without checking it, because one camera cannot see its turn clearly.</p>
     </figure>
   )
 }
