@@ -732,6 +732,23 @@ function buildGap(
   }
 }
 
+/**
+ * Which serves a comparison covered, when it did not cover the clip (L2.2).
+ *
+ * The sweep reads the last `MAX_CONSISTENCY_SERVES` serves of a clip, and the
+ * panel said only "Across 6 serves" — so a player who filmed ten read the
+ * comparison as being about all ten, and the chips numbered five to ten
+ * without saying why one to four were missing. Undefined when every serve in
+ * the clip was at least attempted: the panel's own count and its "too unclear"
+ * note already say everything then.
+ */
+export function coverageLine(c: Pick<Consistency, 'serves' | 'skipped' | 'serveNumbers'>, clipServes: number): string | undefined {
+  if (!(clipServes > c.serves + c.skipped) || !c.serveNumbers?.length) return undefined
+  const from = Math.min(...c.serveNumbers)
+  const to = Math.max(...c.serveNumbers)
+  return cue(`This clip holds ${clipServes} serves. I compared ${c.serves} of them, serves ${from} to ${to}.`)
+}
+
 /** A sentence for the top of the consistency panel. */
 export function consistencyHeadline(c: Consistency): string {
   if (!c.weakest) return ''

@@ -5,6 +5,7 @@ import { useShareState } from './useShareState'
 import { readoutOf } from '../lib/analysis/anatomy'
 import {
   consistencyHeadline,
+  coverageLine,
   type Consistency,
   type MetricSpread,
   type ServeGap,
@@ -190,9 +191,12 @@ interface Props {
    * comparison in this app holds.
    */
   gapDelta?: number
+  /** Serves in the clip, when the comparison covered fewer (`coverageLine`, L2.2). */
+  clipServes?: number
 }
 
-export default function ConsistencyPanel({ consistency: c, onDismiss, pair, createdAt, bestGap, gapDelta }: Props) {
+export default function ConsistencyPanel({ consistency: c, onDismiss, pair, createdAt, bestGap, gapDelta, clipServes }: Props) {
+  const coverage = clipServes ? coverageLine(c, clipServes) : undefined
   const gapDeltaText = gapDeltaLine(gapDelta)
   const { sharing, trigger: share } = useShareState(() =>
     shareBasketCard(c, createdAt, bestGap && bestGapLine(bestGap, createdAt), gapDeltaText),
@@ -216,6 +220,8 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
         <h2 className="t-subhead">Across {c.serves} serves</h2>
         <p>{consistencyHeadline(c)}</p>
       </div>
+
+      {coverage && <p className="note">{coverage}</p>}
 
       {c.skipped > 0 && (
         <p className="note">

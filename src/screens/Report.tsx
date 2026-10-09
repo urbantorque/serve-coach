@@ -913,6 +913,7 @@ export default function Report({
           createdAt={analysis.createdAt}
           bestGap={bestGap}
           gapDelta={basketGapDelta}
+          clipServes={analysis.serves?.count}
         />
       )}
 

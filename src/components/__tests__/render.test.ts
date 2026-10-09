@@ -39,6 +39,7 @@ import Glance from '../../screens/Glance'
 import Home from '../../screens/Home'
 import Progress from '../../screens/Progress'
 import Report from '../../screens/Report'
+import Analyzing from '../../screens/Analyzing'
 import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
 import { findPracticeFocus, type PracticeFocus } from '../../lib/practice'
 import { CHECK_SERVES, progressionFor } from '../../lib/analysis/progressions'
@@ -271,6 +272,37 @@ check('the refusal screen renders instead of a score', () => {
   )
   assert(out.includes('No score for this clip'), 'a rejected clip rendered as an ordinary report')
   assert(!out.includes('Work on this next'), 'a rejected clip still offered an instruction')
+})
+
+check('the panel says which serves it compared when it did not compare them all (L2.2)', () => {
+  const c = basket().consistency!
+  // The demo basket read four of five, one too unclear: every serve attempted.
+  const whole = html(createElement(ConsistencyPanel, { consistency: c, onDismiss: noop, createdAt: 0, clipServes: 5 }))
+  assert(!whole.includes('This clip holds'), 'a comparison that tried every serve claimed to have skipped some')
+  // The same serves out of a clip of twelve: six were never read.
+  const part = html(createElement(ConsistencyPanel, { consistency: c, onDismiss: noop, createdAt: 0, clipServes: 12 }))
+  assert(part.includes('This clip holds 12 serves. I compared 4 of them'), 'the panel did not say which serves it covered')
+})
+
+check('the analysing screen names the serves a sweep is comparing (L2.2)', () => {
+  const out = html(
+    createElement(Analyzing, {
+      progress: { step: 'engine', ratio: 0.2 },
+      fileName: 'IMG_0001.MOV',
+      onCancel: noop,
+      sweep: { total: 6, firstNumber: 5, done: [] },
+    }),
+  )
+  assert(out.includes('Found 10 serves · comparing 5–'), 'the sweep did not say which serves it was reading')
+  const all = html(
+    createElement(Analyzing, {
+      progress: { step: 'engine', ratio: 0.2 },
+      fileName: 'IMG_0001.MOV',
+      onCancel: noop,
+      sweep: { total: 4, firstNumber: 1, done: [] },
+    }),
+  )
+  assert(!all.includes('Found'), 'a sweep of every serve claimed to be comparing a subset')
 })
 
 check('the consistency panel renders on its own', () => {

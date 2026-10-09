@@ -589,9 +589,13 @@ export default function App() {
       if (file.size > MAX_BYTES) {
         setView({
           kind: 'error',
-          title: 'That video is very large',
+          // Said for a session as well as a single serve (L2.2). "Three to
+          // five seconds is all it needs" told somebody who filmed a whole
+          // practice that it was the wrong thing to have done.
+          title: 'That video is too large to read here',
           hints: [
-            'Trim the clip to just the serve — three to five seconds is all it needs.',
+            'For one serve, trim the clip to a few seconds around it.',
+            'For a whole session, trim it into clips of a few minutes, or film at 1080p rather than 4K.',
             'Most phones let you trim in the photo library before sharing.',
           ],
         })

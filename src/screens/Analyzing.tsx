@@ -147,6 +147,15 @@ export default function Analyzing({ progress, fileName, sweep, onCancel }: Props
 
         <h1>{sweep ? 'Comparing your serves' : 'Reading your serve'}</h1>
         <p className="analyzing-file">{clipLabel(fileName)}</p>
+        {/* Which serves, when the sweep reads fewer than the clip holds (L2.2).
+            The window is the clip's last serves, so its count is the last
+            number in it. */}
+        {sweep && sweep.firstNumber > 1 && (
+          <p className="analyzing-file">
+            Found {sweep.firstNumber + sweep.total - 1} serves · comparing {sweep.firstNumber}–
+            {sweep.firstNumber + sweep.total - 1}
+          </p>
+        )}
 
         <div
           className="progress"

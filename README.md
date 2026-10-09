@@ -1270,9 +1270,18 @@ the total work for a three-serve comparison.
 sample is a video seek plus a pose detection, roughly 55 ms, and that floor is set
 by decoding rather than by anything here. Sampling the whole clip at a fixed rate
 therefore cost 55 ms for every 83 ms of footage: a three-minute basket spent over
-two minutes finding serves before it measured one, and a ten-minute clip — well
-inside the size the app accepts — spent seven. Since the app actively suggests
-filming a basket, that had to be bounded.
+two minutes finding serves before it measured one, and a ten-minute clip spent
+seven. Since the app actively suggests filming a basket, that had to be bounded.
+(This paragraph used to say a ten-minute clip was "well inside the size the app
+accepts". It is not: the 400 MB limit admits about seven minutes of 1080p and
+a minute of 4K at 60 fps, and the refusal now says so in terms a session filmer
+can act on — L2.2.)
+
+**A comparison says which serves it covered.** The basket sweep reads the last
+six serves of a clip. The panel said "Across 6 serves" and the chips numbered
+five to ten with no word about one to four. Now the panel says "This clip
+holds 10 serves. I compared 6 of them, serves 5 to 10." (`coverageLine`), and
+the analysing screen says "Found 10 serves · comparing 5–10" while it works.
 
 The scan now spends a fixed number of frames however long the clip is, in two
 passes. A coarse pass spread across the whole clip finds roughly where the reach

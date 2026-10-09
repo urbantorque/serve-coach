@@ -1145,7 +1145,14 @@ L2.4 onward is session mode.
           120 in 30;
         - a cost-formula test;
         - the wide-parabola test replaced.
-- [ ] **L2.2 Say what was read** · S.
+- [x] **L2.2 Say what was read** · S. *Done (2026-10-09):
+      - `coverageLine` on the panel ("This clip holds 10 serves. I compared 6
+        of them, serves 5 to 10"), only when serves were never attempted;
+      - "Found 10 serves · comparing 5–10" on the analysing screen;
+      - the size refusal now speaks to a session as well as a serve;
+      - README's "well inside the size the app accepts" is corrected, since the
+        limit admits about 7 min of 1080p.
+      Original plan:*
       - **What:** "Found 50 serves · compared 45–50" on the analysing screen
         and the report. Refusal copy that knows about sessions. README
         `:156` and `:1076` corrected.
