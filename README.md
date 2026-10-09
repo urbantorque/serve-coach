@@ -950,6 +950,11 @@ Everything is in `src/lib`:
 | `session/plan.ts` | a practice session: which clips are one, which serves a sample reads, and what reading it costs |
 | `session/session.ts` | a practice session as stored: one small line per serve read, and the repair a stored row goes through |
 | `session/runner.ts` | reads a session a serve at a time, saving after each, so a stop loses only the serve in flight |
+| `session/line.ts` | one serve's analysis boiled down to the line a session keeps |
+| `session/video.ts` | a session's video work: timing the file, finding the serves, reading one through a shared element |
+| `session/length.ts`, `probe.ts` | which clips are sessions, and a clip's length read from its metadata alone |
+| `session/warmth.ts` | pauses a reading when the phone reports it is running hot, where the browser can say |
+| `screens/Session.tsx` | a practice session's screen: the plan, the reading, the pause and the result |
 | `placement.ts` | where the phone goes, said one way for every sentence that places it |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
 | `analysis/carryForward.ts` | whether the fault the last serve was told about actually moved on this one |
@@ -1317,6 +1322,24 @@ locked phone or a killed page loses at most the serve in flight, and the same
 row run again reads only the serves still missing. A hundred and twenty serves
 is 143 kB in one row. A serve that cannot be read becomes an "unclear" line and
 costs nothing else.
+
+**A session is priced on the player's own phone before it starts.** A picked
+clip's length is read from its metadata first (`probe.ts`), and a clip past
+`SESSION_SECONDS` never reaches the report path, so it is not refused for its
+size and never copied into the clip store. Eight seeks with a pose detection
+each are timed on the file (`timeScanSamples`); the first is dropped and the
+median of the rest prices the two choices, a sample of twelve or every serve.
+On a desktop, a 280-second WebM made from the bench footage priced at about 9
+and 12 minutes. A file that cannot be timed is offered the same choices with
+no time, and is told why. The reading stops, with its place kept, when the
+player presses stop, when the page is hidden, and when Chrome reports the CPU
+as `critical` (Safari has no such signal). A screen wake lock is held while
+it runs. A stored session reopened after a reload has no file to read, so its
+row on the home screen asks for the same video again. Picking it finds the row
+by the file's identity (`fileKeyOf`) and carries on without scanning again.
+The session's code loads only when a long clip is picked (`session/live.ts`),
+and `session.ts`, which the store reads, has no runtime imports, so the entry
+bundle grew by about 2 kB.
 
 The scan now spends a fixed number of frames however long the clip is, in two
 passes. A coarse pass spread across the whole clip finds roughly where the reach

@@ -80,3 +80,23 @@
   font-size: 12px;
   color: var(--fg-faint);
 }
+
+/* A practice session on the home screen: a mark the size of a report's ring, so
+   the two kinds of row line up. Paused ones carry the accent, as the next
+   thing to do. */
+.session-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  color: var(--fg-muted);
+}
+
+.session-mark.is-paused {
+  border-color: var(--lime);
+  color: var(--lime);
+}

@@ -8,8 +8,12 @@
  * store keeps. So each serve is read, boiled down to a `ServeLine` of about a
  * kilobyte (1.2 kB on the rig) — the graded readings with their confidence, the
  * faults named and the ones that could be judged, where the player stood — and
- * its frames are let go before the next one is read. Resident memory does not grow with the
- * number of serves, and the whole session is one row.
+ * its frames are let go before the next one is read (`line.ts`). Resident
+ * memory does not grow with the number of serves, and the whole session is one
+ * row.
+ *
+ * Types and plain functions only, with no runtime imports: the store reads
+ * this module (`db.ts`), and the store is in the bundle every cold open parses.
  *
  * One row that is rewritten as the reading goes, which is what makes it a
  * checkpoint. A phone that locks, a call, the page killed in the background:
@@ -18,9 +22,7 @@
  */
 import type { FlawId } from '../analysis/flaws'
 import type { TossPlacement } from '../analysis/tossPlacement'
-import type { Analysis } from '../analysis/types'
 import type { ServeType } from '../storage/prefs'
-import { MIN_EVIDENCE } from '../analysis/flaws'
 
 /** One graded card reading, as a session keeps it. */
 export interface LineReading {
@@ -77,46 +79,6 @@ export interface PracticeSession {
 export const sessionIdFor = (fileKey: string): string => `practice-${fileKey}`
 
 /**
- * One serve's analysis, boiled down to what a session keeps.
- *
- * Only the graded rows: an ungraded reading has no band to be read against
- * across a session either. A finding counts as judged at `MIN_EVIDENCE`, the bar
- * `checkDrill` already uses, so "named on 9 of 31 serves it could be judged on"
- * means the same thing here as on a basket.
- */
-export function lineOf(analysis: Analysis, number: number, t: number): ServeLine {
-  if (analysis.triage?.status === 'rejected') return { number, t, status: 'unclear' }
-  const readings: Record<string, LineReading> = {}
-  for (const m of analysis.fundamentals.flatMap((f) => f.metrics)) {
-    readings[m.id] = { value: round(m.value), confidence: round(m.confidence ?? 1), score: m.score }
-  }
-  const findings = analysis.diagnosis?.flaws ?? []
-  const placement = analysis.diagnosis?.tossPlacement
-  return {
-    number,
-    t,
-    status: 'read',
-    overall: analysis.overall,
-    readings,
-    named: findings.filter((f) => f.detected).map((f) => f.flaw),
-    judged: findings.filter((f) => f.confidence >= MIN_EVIDENCE).map((f) => f.flaw),
-    ...(placement
-      ? {
-          toss: {
-            ...(placement.ahead !== undefined ? { ahead: round(placement.ahead) } : {}),
-            ...(placement.across !== undefined ? { across: round(placement.across) } : {}),
-            confidence: round(placement.confidence),
-          },
-        }
-      : {}),
-    ...(analysis.scale ? { scale: { bodyHeight: round(analysis.scale.bodyHeight), groundY: round(analysis.scale.groundY) } } : {}),
-  }
-}
-
-/** Four places, which is finer than any reading here is resolved to and keeps a line small. */
-const round = (v: number): number => Math.round(v * 1e4) / 1e4
-
-/**
  * The serves still to read, as indexes into `found`, in the order to read them.
  * Empty before the scan has run and when every chosen serve has a line.
  */
@@ -164,4 +126,13 @@ export function normalisePracticeSession(raw: unknown): PracticeSession | undefi
     lines,
     phase,
   }
+}
+
+/** A place in the video as a player scrubs to it: "3:24", "1:02:05". */
+export function clockOf(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const ss = String(s % 60).padStart(2, '0')
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`
 }

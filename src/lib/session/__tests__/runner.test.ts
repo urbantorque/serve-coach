@@ -6,8 +6,10 @@
  * serves and one pressed mid-serve, and a resume from the row a stop saved.
  */
 import { runSession, type SessionIO } from '../runner'
-import { lineOf, normalisePracticeSession, sessionIdFor, toRead, type PracticeSession } from '../session'
+import { lineOf } from '../line'
+import { normalisePracticeSession, sessionIdFor, toRead, type PracticeSession } from '../session'
 import { sampleServes } from '../plan'
+import { watchWarmth } from '../warmth'
 import { sampleAnalysis } from '../../../dev/sampleAnalysis'
 import { NotAServeError, type Analysis } from '../../analysis/types'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
@@ -145,6 +147,43 @@ await check('running a stopped session again reads only what is left, without sc
   assert(second.reads.length === 7, `read ${second.reads.length} serves on resume`)
   assert(second.result.phase === 'done' && second.result.lines.length === 12, 'the resumed session did not finish')
   assert(new Set(second.result.lines.map((l) => l.number)).size === 12, 'a serve was read twice')
+})
+
+heading('A phone running hot')
+
+check('a critical reading stops the reading once, and anything less does not', () => {
+  let tell: (records: { state: string }[]) => void = () => {}
+  let source = ''
+  let disconnected = false
+  class FakeObserver {
+    constructor(callback: (records: { state: string }[]) => void) {
+      tell = callback
+    }
+    observe(s: string) {
+      source = s
+      return Promise.resolve()
+    }
+    disconnect() {
+      disconnected = true
+    }
+  }
+  let hot = 0
+  const stop = watchWarmth(() => hot++, { PressureObserver: FakeObserver })
+  assert(source === 'cpu', `watched ${source}`)
+  tell([{ state: 'fair' }, { state: 'serious' }])
+  assert(hot === 0, 'a phone working hard was treated as one too hot to go on')
+  tell([{ state: 'critical' }])
+  tell([{ state: 'critical' }])
+  assert(hot === 1, `stopped ${hot} times`)
+  stop()
+  assert(disconnected, 'the watch outlived the reading')
+})
+
+check('a browser with no pressure signal reads on', () => {
+  const stop = watchWarmth(() => {
+    throw new Error('fired with nothing to watch')
+  }, {})
+  stop()
 })
 
 heading('What a line keeps')

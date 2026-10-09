@@ -484,6 +484,34 @@ export async function scanForServes(
 }
 
 /**
+ * What one scan sample costs on this clip, on this device: `count` seeks and
+ * pose detections spread across it, each timed in milliseconds (L2.4).
+ *
+ * The same seek and the same detection `scanForServes` pays per sample, so the
+ * time a session is quoted is measured on the work it describes rather than
+ * assumed from a desktop. A seek that does not land is not timed, the way the
+ * scan does not count it. The first timing includes the decoder and the model
+ * warming up, which `perSampleMs` drops.
+ */
+export async function timeScanSamples(
+  video: HTMLVideoElement,
+  landmarker: PoseLandmarker,
+  count: number,
+  signal?: AbortSignal,
+): Promise<number[]> {
+  const out: number[] = []
+  for (let k = 0; k < count; k++) {
+    if (signal?.aborted) throw new Cancelled()
+    const started = performance.now()
+    const at = await seekTo(video, (video.duration * (k + 0.5)) / count)
+    if (at === false) continue
+    landmarker.detectForVideo(video, nextVideoTimestamp(landmarker, video.currentTime))
+    out.push(performance.now() - started)
+  }
+  return out
+}
+
+/**
  * Sample the video and run pose detection on each sampled frame.
  *
  * Long clips get a cheap low-rate scan first to find where the racket hand

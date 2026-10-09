@@ -1,0 +1,129 @@
+/**
+ * A practice session's video work: timing the file, finding the serves, reading
+ * one (L2.4, L2.5).
+ *
+ * The runner (`runner.ts`) takes this as two functions so it can be tested in
+ * Node; this is those functions against a real decoder. One video element for
+ * the whole session, for the reason `analyzeAllServes` keeps one for a basket:
+ * the file is demuxed and a decoder set up once, not once per serve.
+ *
+ * Nothing here keeps the file. It is read through an object URL the caller
+ * owns, and a session never copies it into the clip store (`clipStore.ts`),
+ * which is why a long clip is not refused for its size the way a basket is.
+ */
+import { analyzeServe, locateServes, type AnalyzeProgress } from '../analysis/analyze'
+import { isNotAServeError, type Analysis } from '../analysis/types'
+import type { Stretch } from '../analysis/slowMotion'
+import { readContainerTiming, stretchFromContainer } from '../pose/container'
+import { loadVideo, timeScanSamples } from '../pose/extract'
+import { loadEngine } from '../pose/poseEngine'
+import type { ServeType } from '../storage/prefs'
+
+/** Seeks timed to price the session: the first is dropped, so seven count. */
+export const CALIBRATION_SAMPLES = 8
+
+export interface ReadOptions {
+  handedness: 'right' | 'left'
+  serveType: ServeType
+  tier?: number
+  signal?: AbortSignal
+  onProgress?: (p: AnalyzeProgress) => void
+}
+
+export interface SessionVideo {
+  /** Milliseconds per seek-and-detect on this file, `CALIBRATION_SAMPLES` of them. */
+  calibrate: (signal?: AbortSignal) => Promise<number[]>
+  /** Where every serve in the file is, seconds. Throws when the scan could not run at all. */
+  locate: (signal?: AbortSignal, onProgress?: (ratio: number) => void) => Promise<number[]>
+  /** One serve, light: no ball, no racket boxes, no stills, no second pose model. */
+  read: (index: number, found: number[], opts: ReadOptions) => Promise<Analysis>
+  /** Let the decoder go. */
+  close: () => void
+}
+
+export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
+  const video = document.createElement('video')
+  video.crossOrigin = 'anonymous'
+  /*
+   * The file's own slow-motion stretch, read once. Each serve would otherwise
+   * read the container again, which on a long clip is a walk past a gigabyte of
+   * media boxes per serve for an answer that cannot change.
+   */
+  let stretch: Promise<Stretch> | undefined
+  const stretchOf = () =>
+    (stretch ??= readContainerTiming(file).then((timing): Stretch => {
+      const factor = stretchFromContainer(timing)
+      return factor ? { factor, source: 'file' } : { factor: 1, source: 'none' }
+    }))
+
+  return {
+    calibrate: async (signal) => {
+      const landmarker = await loadEngine()
+      await loadVideo(video, videoUrl)
+      return timeScanSamples(video, landmarker, CALIBRATION_SAMPLES, signal)
+    },
+
+    locate: async (signal, onProgress) => {
+      const found = await locateServes(
+        {
+          videoUrl,
+          fileName: 'session',
+          signal,
+          onProgress: (p) => {
+            if (p.step === 'scanning') onProgress?.(p.ratio)
+          },
+        },
+        video,
+      )
+      // `locateServes` hands back nothing when the scan failed, so that a single
+      // serve can fall back to scanning for itself. A session has no such
+      // fallback: every serve it reads is one this scan found.
+      if (!found) throw new Error('I could not look through that video for serves.')
+      return found
+    },
+
+    read: async (index, found, opts) => {
+      const knownStretch = await stretchOf()
+      const once = (handedness: 'right' | 'left') =>
+        analyzeServe(
+          {
+            videoUrl,
+            fileName: 'session',
+            handedness,
+            serveType: opts.serveType,
+            serveIndex: index,
+            knownServeTimes: found,
+            tier: opts.tier,
+            signal: opts.signal,
+            onProgress: opts.onProgress,
+            // The sweep's light read, and for the sweep's reasons: the framing
+            // was passed when the session was planned, and the ball, the boxes,
+            // the stills and the second pose model are not what a session line
+            // keeps (`lineOf`).
+            skipFramingCheck: true,
+            skipBall: true,
+            skipThumbnails: true,
+            skipRacketBoxes: true,
+            skipPoseRefine: true,
+            knownStretch,
+          },
+          video,
+        )
+      try {
+        return await once(opts.handedness)
+      } catch (err) {
+        // The swing was found on the other arm: read it again on that arm
+        // rather than file a serve that is there as unclear.
+        if (isNotAServeError(err) && err.suggestedHand && err.suggestedHand !== opts.handedness) {
+          return once(err.suggestedHand)
+        }
+        throw err
+      }
+    },
+
+    close: () => {
+      video.removeAttribute('src')
+      video.load()
+    },
+  }
+}

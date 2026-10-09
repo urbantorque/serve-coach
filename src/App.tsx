@@ -62,12 +62,18 @@ import {
 } from './lib/storage/db'
 import { requestPersistence } from './lib/storage/backup'
 import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage/prefs'
-import { clipIdOf, sessionKeyFor } from './lib/storage/sessionKey'
+import { clipIdOf, fileKeyOf, sessionKeyFor } from './lib/storage/sessionKey'
+import { getPracticeSession, savePracticeSession } from './lib/storage/db'
+import { isSession } from './lib/session/length'
+import { probeDuration } from './lib/session/probe'
+import { sessionIdFor, type PracticeSession } from './lib/session/session'
+import type { SessionVideo } from './lib/session/video'
 import { clipFor, keepClip } from './lib/storage/clipStore'
 import { applyWhenIdle, onUpdateWaiting } from './lib/updates'
 import Analyzing, { type SweepProgress } from './screens/Analyzing'
 import Glance from './screens/Glance'
 import Home from './screens/Home'
+import type { SessionStage } from './screens/Session'
 /*
  * Split off the entry chunk. The progress screen, with its charts, share cards
  * and then-and-now pictures, is opened by a returning player a few times a
@@ -84,6 +90,13 @@ const Progress = lazy(() => import('./screens/Progress'))
  */
 const loadReport = () => import('./screens/Report')
 const Report = lazy(loadReport)
+/*
+ * A practice session (L2.4): the screen, and the video work behind it, which
+ * brings the engine with it. Both fetched when a long clip is picked.
+ */
+const loadSessionScreen = () => import('./screens/Session')
+const SessionScreen = lazy(loadSessionScreen)
+const loadSessionLive = () => import('./lib/session/live')
 
 /**
  * The screen, and the fellow-travellers that are stages of the same machine
@@ -171,6 +184,12 @@ export type View =
   | { kind: 'error'; title: string; hints: string[]; capture?: FailedCapture; fileName?: string }
   /** Every serve so far — see `screens/Progress.tsx`. A screen, not a sheet. */
   | { kind: 'progress' }
+  /**
+   * A practice session: a clip past `SESSION_SECONDS`, read a serve at a time
+   * (L2.4). `canRead` is whether the file is open here; a session reopened
+   * from home after a reload is not, and carrying on means picking it again.
+   */
+  | { kind: 'session'; session: PracticeSession; stage: SessionStage; canRead: boolean }
 
 const MAX_BYTES = 400 * 1024 * 1024
 
@@ -228,6 +247,7 @@ export default function App() {
     serveTags,
     refresh: refreshSessions,
     applyServeTag,
+    practiceSessions,
     seed: seedHistory,
     seeded: historySeeded,
   } = useHistory()
@@ -282,6 +302,17 @@ export default function App() {
    */
   const serveTimesRef = useRef<number[]>()
   const firstRunPickRef = useRef<HTMLInputElement>(null)
+  /**
+   * A practice session's reading: its own stop, its open video, and why it last
+   * stopped. Separate from `abortRef` because a session and a single serve
+   * never run together and stopping one must not be read as stopping the other.
+   */
+  const sessionAbortRef = useRef<AbortController>()
+  const sessionVideoRef = useRef<SessionVideo>()
+  const stopReasonRef = useRef<'player' | 'hidden' | 'warm'>('player')
+  /** The session view as last rendered, for the callbacks that start and stop it. */
+  const sessionViewRef = useRef<Extract<View, { kind: 'session' }>>()
+  sessionViewRef.current = view.kind === 'session' ? view : undefined
 
   /**
    * Show a report built from a simulated serve.
@@ -946,6 +977,208 @@ export default function App() {
    * The comparison button stays on the report for the cases this does not cover:
    * a sweep the player stopped, and a report reached by any other route.
    */
+  /** Let a session's video go, and stop whatever it was doing. */
+  const closeSessionVideo = useCallback(() => {
+    sessionAbortRef.current?.abort()
+    sessionAbortRef.current = undefined
+    sessionVideoRef.current?.close()
+    sessionVideoRef.current = undefined
+  }, [])
+
+  /** A session's video failed; say so in the words the decoder's errors carry. */
+  const sessionFailed = useCallback(
+    (err: unknown) => {
+      closeSessionVideo()
+      releaseVideo()
+      const hints = hintsOf(err)
+      if (!hints) console.error(err)
+      setView({
+        kind: 'error',
+        title: hints ? (err as Error).message : 'Something went wrong reading that video',
+        hints: hints ?? [
+          'Try it again. A long video can stall when the phone is busy.',
+          'If it fails again, trim it into clips of a few minutes and pick one.',
+        ],
+      })
+    },
+    [closeSessionVideo, releaseVideo],
+  )
+
+  /**
+   * A long clip, opened as a practice session (L2.4).
+   *
+   * Not refused for its size, and never kept on the phone: the file is read
+   * through an object URL and nothing copies it. The same file picked again
+   * finds its stored row and carries on from it. Before anything is offered,
+   * eight seeks on this file time this device, so the choices are priced from
+   * the phone in the player's hand rather than from a desktop.
+   */
+  const openSessionClip = useCallback(
+    async (file: File, duration: number) => {
+      abortRef.current?.abort()
+      closeSessionVideo()
+      setPair(undefined)
+      setSweep(undefined)
+      forgetAll()
+      serveTimesRef.current = undefined
+      releaseVideo()
+      const url = URL.createObjectURL(file)
+      urlRef.current = url
+      lastFileRef.current = file
+      void loadSessionScreen()
+
+      const id = sessionIdFor(fileKeyOf(file))
+      const stored = await safely(() => getPracticeSession(id), undefined)
+      const now = Date.now()
+      const session: PracticeSession = stored ?? {
+        id,
+        createdAt: now,
+        updatedAt: now,
+        fileName: file.name || 'Your session',
+        duration,
+        serveType: prefs.serveType,
+        handedness: prefs.handedness ?? 'right',
+        mode: 'sample',
+        lines: [],
+        phase: 'locating',
+      }
+      if (session.phase === 'done') {
+        setView({ kind: 'session', session, stage: { state: 'done' }, canRead: true })
+        return
+      }
+      setView({ kind: 'session', session, stage: { state: 'planning', timed: false }, canRead: true })
+
+      const controller = new AbortController()
+      sessionAbortRef.current = controller
+      try {
+        const { openSessionVideo, perSampleMs: perSampleOf } = await loadSessionLive()
+        if (sessionAbortRef.current !== controller) return
+        const reader = openSessionVideo(url, file)
+        sessionVideoRef.current = reader
+        const timings = await reader.calibrate(controller.signal)
+        if (sessionAbortRef.current !== controller) return
+        const perSampleMs = perSampleOf(timings)
+        setView((v) =>
+          v.kind === 'session' && v.session.id === id
+            ? { ...v, stage: { state: 'planning', timed: true, perSampleMs } }
+            : v,
+        )
+      } catch (err) {
+        if (sessionAbortRef.current !== controller || err instanceof Cancelled) return
+        sessionFailed(err)
+      }
+    },
+    [closeSessionVideo, releaseVideo, sessionFailed, prefs.serveType, prefs.handedness],
+  )
+
+  /**
+   * Read the session on screen, or carry on reading it (L2.5).
+   *
+   * Every serve read is saved before the next starts (`runSession`), so a stop
+   * of any kind keeps what was read and its place. The bar is the work in
+   * seeks: the scan's share first, then the reads, so it never runs backwards
+   * between the two.
+   */
+  const startSession = useCallback(
+    async (mode: 'sample' | 'every') => {
+      const shown = sessionViewRef.current
+      const reader = sessionVideoRef.current
+      if (!shown || !reader || !shown.canRead) return
+      const perSampleMs =
+        shown.stage.state === 'planning' || shown.stage.state === 'paused' ? shown.stage.perSampleMs : undefined
+      const start: PracticeSession = { ...shown.session, mode: shown.session.found ? shown.session.mode : mode }
+
+      sessionAbortRef.current?.abort()
+      const controller = new AbortController()
+      sessionAbortRef.current = controller
+      stopReasonRef.current = 'player'
+      // Already loaded by `openSessionClip`, so this is a resolved module.
+      const { guessServes, runSession, sampleServes, sessionCost } = await loadSessionLive()
+      if (sessionAbortRef.current !== controller) return
+
+      const located = start.found !== undefined
+      const serves = start.found?.length ?? guessServes(start.duration)
+      const reading = start.chosen?.length ?? (start.mode === 'every' ? serves : sampleServes(serves).length)
+      const cost = sessionCost({ duration: start.duration, serves, reading, perSampleMs: 1, located })
+      const scanShare = cost.locate / Math.max(1, cost.locate + cost.read)
+      const ratioOf = (s: PracticeSession, scan = 1) =>
+        s.chosen === undefined
+          ? scanShare * scan
+          : scanShare + (1 - scanShare) * (s.lines.length / Math.max(1, s.chosen.length))
+      const detailOf = (s: PracticeSession) =>
+        s.chosen === undefined
+          ? undefined
+          : `Reading serve ${Math.min(s.lines.length + 1, s.chosen.length)} of ${s.chosen.length}`
+
+      let latest = start
+      const show = (session: PracticeSession, stage: SessionStage) => {
+        if (sessionAbortRef.current === controller) setView({ kind: 'session', session, stage, canRead: true })
+      }
+      show(start, { state: 'running', ratio: ratioOf(start, 0), detail: detailOf(start) })
+
+      try {
+        const result = await runSession(start, {
+          locate: () =>
+            reader.locate(controller.signal, (scan) => show(latest, { state: 'running', ratio: ratioOf(latest, scan) })),
+          read: (index) =>
+            reader.read(index, latest.found!, {
+              handedness: latest.handedness,
+              serveType: latest.serveType,
+              tier: prefs.tier,
+              signal: controller.signal,
+            }),
+          choose: (count) =>
+            start.mode === 'every' ? Array.from({ length: count }, (_, i) => i) : sampleServes(count),
+          save: (s) => safely(() => savePracticeSession(s), undefined),
+          signal: controller.signal,
+          onChange: (s) => {
+            latest = s
+            if (s.phase === 'locating' || s.phase === 'reading') {
+              show(s, { state: 'running', ratio: ratioOf(s), detail: detailOf(s) })
+            }
+          },
+        })
+        if (sessionAbortRef.current !== controller) return
+        show(
+          result,
+          result.phase === 'done' ? { state: 'done' } : { state: 'paused', reason: stopReasonRef.current, perSampleMs },
+        )
+        refreshSessions()
+      } catch (err) {
+        if (sessionAbortRef.current !== controller) return
+        sessionFailed(err)
+      }
+    },
+    [prefs.tier, refreshSessions, sessionFailed],
+  )
+
+  /** Stop the reading and keep its place. The screen answers the press at once. */
+  const stopSession = useCallback((reason: 'player' | 'hidden' | 'warm') => {
+    stopReasonRef.current = reason
+    sessionAbortRef.current?.abort()
+    setView((v) =>
+      v.kind === 'session' && v.stage.state === 'running' ? { ...v, stage: { ...v.stage, stopping: true } } : v,
+    )
+  }, [])
+
+  /**
+   * A stored session, from the home screen. Its file is not open here, so a
+   * finished one is shown and an unfinished one asks for the video again.
+   */
+  const openPracticeSession = useCallback(
+    (session: PracticeSession) => {
+      closeSessionVideo()
+      setView({
+        kind: 'session',
+        session,
+        stage: session.phase === 'done' ? { state: 'done' } : { state: 'paused', reason: 'player' },
+        canRead: false,
+      })
+      void loadSessionScreen()
+    },
+    [closeSessionVideo],
+  )
+
   const openClip = useCallback(
     async (
       file: File,
@@ -958,6 +1191,20 @@ export default function App() {
        */
       glance = false,
     ) => {
+      /*
+       * A long clip is a practice session (L2.4), decided by its length before
+       * anything else, so a session is never refused for its size the way a
+       * basket is. A file whose length cannot be read takes the ordinary path,
+       * whose refusals already explain an unreadable video.
+       */
+      if (!looksLikeNonVideo(file.type)) {
+        const duration = await probeDuration(file)
+        if (duration !== undefined && isSession(duration)) {
+          await openSessionClip(file, duration)
+          return
+        }
+      }
+
       // Positional `undefined` so the defaults on `run` still apply — restating
       // them here would be two places to change the day one of them moves.
       const analysis = await run(file, undefined, undefined, undefined, 'sweep')
@@ -1007,7 +1254,7 @@ export default function App() {
       }
       show()
     },
-    [compareServes, run],
+    [compareServes, run, openSessionClip],
   )
 
   const cancel = () => {
@@ -1043,6 +1290,40 @@ export default function App() {
     refreshSessions()
   }
 
+  /** Off the session screen: the reading stops with its place kept, and the video goes. */
+  const leaveSession = () => {
+    closeSessionVideo()
+    releaseVideo()
+    lastFileRef.current = undefined
+    goHome()
+  }
+
+  /*
+   * A session pauses when the page is hidden or the phone runs hot (L2.5).
+   *
+   * Hidden first: a backgrounded tab gets no frames, so every seek would wait
+   * out its timeout and the reading would crawl. Stopping keeps the place, and
+   * the screen says why when the player comes back.
+   */
+  const sessionRunning = view.kind === 'session' && view.stage.state === 'running'
+  useEffect(() => {
+    if (!sessionRunning) return
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') stopSession('hidden')
+    }
+    document.addEventListener('visibilitychange', onHide)
+    let live = true
+    let unwatch = () => {}
+    void loadSessionLive().then((m) => {
+      if (live) unwatch = m.watchWarmth(() => stopSession('warm'))
+    })
+    return () => {
+      live = false
+      document.removeEventListener('visibilitychange', onHide)
+      unwatch()
+    }
+  }, [sessionRunning, stopSession])
+
   /*
    * Back from any screen but home comes home, the way the on-screen back
    * arrow does. Analysing is the exception with two meanings: a single serve
@@ -1064,9 +1345,15 @@ export default function App() {
   }, [view.kind])
 
   // A locked screen stalls the analysis; see `useWakeLock`.
-  useWakeLock(view.kind === 'analyzing')
+  useWakeLock(view.kind === 'analyzing' || sessionRunning)
 
   useBackLayer(view.kind !== 'home', () => {
+    // Back stops a session that is reading and keeps it; from anywhere else it leaves.
+    if (view.kind === 'session') {
+      if (view.stage.state === 'running') stopSession('player')
+      else leaveSession()
+      return
+    }
     if (view.kind === 'analyzing') {
       if (sweep) stopSweep()
       else cancel()
@@ -1165,6 +1452,8 @@ export default function App() {
               needsHandedness={!prefs.handedness}
               onGuideThen={onGuideThen}
               onShowExample={() => void showExample()}
+              practiceSessions={practiceSessions}
+              onOpenPracticeSession={openPracticeSession}
               onMakeOffline={() => void makeOffline()}
               warming={warming}
             />
@@ -1176,6 +1465,21 @@ export default function App() {
               fileName={view.fileName}
               sweep={sweep}
               onCancel={sweep ? stopSweep : cancel}
+            />
+          )}
+
+          {view.kind === 'session' && (
+            <SessionScreen
+              session={view.session}
+              stage={view.stage}
+              canRead={view.canRead}
+              onStart={(mode) => void startSession(mode)}
+              onStop={() => stopSession('player')}
+              onPickAgain={() => {
+                setFirstRunIntent('pick')
+                setTimeout(() => firstRunPickRef.current?.click(), 0)
+              }}
+              onLeave={leaveSession}
             />
           )}
 

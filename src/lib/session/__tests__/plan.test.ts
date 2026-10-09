@@ -7,10 +7,12 @@ import {
   LIGHT_READ_SAMPLES,
   SESSION_SAMPLE,
   SESSION_SECONDS,
+  costLeft,
   guessServes,
   isSession,
   minutesOf,
   perSampleMs,
+  planChoices,
   sampleServes,
   sessionCost,
 } from '../plan'
@@ -85,6 +87,37 @@ check('the time is said in whole minutes a player can read', () => {
     assert(cueIssues(line).length === 0, `"${line}": ${cueIssues(line).join('; ')}`)
   }
   assert(minutesOf(20) === 'about a minute', minutesOf(20))
+})
+
+heading('The plan sheet')
+
+check('a long session is offered a sample or every serve, a short one only every serve', () => {
+  const long = planChoices({ duration: 600, serves: 50, perSampleMs: 100 })
+  assert(long.map((c) => c.mode).join() === 'sample,every', `offered ${long.map((c) => c.mode).join()}`)
+  assert(long[0].reading === SESSION_SAMPLE && long[1].reading === 50, 'the choices read the wrong number of serves')
+  assert(long[0].seconds! < long[1].seconds!, 'the sample was not the quicker choice')
+  const short = planChoices({ duration: 160, serves: 9, perSampleMs: 100 })
+  assert(short.length === 1 && short[0].mode === 'every' && short[0].reading === 9, 'nine serves were offered a sample of twelve')
+})
+
+check('a file that could not be timed is offered the choices without a time', () => {
+  const untimed = planChoices({ duration: 600, serves: 50 })
+  assert(untimed.length === 2 && untimed.every((c) => c.seconds === undefined), 'a time was quoted that nothing measured')
+})
+
+check('a stopped session is priced for what is left, without the scan', () => {
+  const chosen = sampleServes(50)
+  const session = {
+    duration: 600,
+    found: Array.from({ length: 50 }, (_, i) => 5 + 12 * i),
+    chosen,
+    lines: chosen.slice(0, 8).map((i) => ({ number: i + 1 })),
+  }
+  const left = costLeft(session, 100)!
+  const four = sessionCost({ duration: 600, serves: 50, reading: 4, perSampleMs: 100, located: true }).seconds
+  assert(Math.abs(left - four) < 1e-9, `priced ${left} s, four serves cost ${four} s`)
+  assert(costLeft({ duration: 600, lines: [] }, 100)! > costLeft(session, 100)!, 'a session not yet scanned was priced below one nearly read')
+  assert(costLeft(session, undefined) === undefined, 'an untimed file was priced')
 })
 
 report()

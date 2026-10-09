@@ -5,7 +5,7 @@
  * it, so the reader is checked against the layout rather than against itself.
  */
 import { CAPTURE_FPS_KEY, parseMoov, readContainerTiming, stretchFromContainer } from '../container'
-import { assert, check, heading, near, report } from '../../analysis/__tests__/harness'
+import { assert, check, heading, near, note, report } from '../../analysis/__tests__/harness'
 
 const u32 = (n: number) => {
   const b = new Uint8Array(4)
@@ -135,6 +135,53 @@ await check('a moov after a large media box is found by walking headers', async 
   const t = await readContainerTiming(new Blob([head, mdat, tail]))
   near(t!.fileFps!, 30, 1e-9, 'file rate')
   near(stretchFromContainer(t)!, 8, 1e-6, 'stretch')
+})
+
+await check('a thirty-minute 60 fps session is timed from its moov, reading under 32 MB of a 2 GB file', async () => {
+  /*
+   * The session path (L2.4) takes files no basket would: a practice filmed at
+   * 60 fps runs to gigabytes. The reader must walk past the media by its
+   * headers and read the `moov` alone, whose sample tables grow with the
+   * frame count: 108,000 frames is 432 kB of sizes and 864 kB of offsets.
+   *
+   * The file is Blob-shaped rather than a Blob: two gigabytes of media are
+   * never made, and every byte the reader asks for is counted.
+   */
+  const frames = 30 * 60 * 60
+  const stts = box('stts', FLAGS, u32(1), u32(frames), u32(10))
+  const stsz = box('stsz', FLAGS, u32(0), u32(frames), new Uint8Array(frames * 4))
+  const co64 = box('co64', FLAGS, u32(frames), new Uint8Array(frames * 8))
+  const mdhd = box('mdhd', FLAGS, u32(0), u32(0), u32(600), u32(0), u32(0))
+  const hdlr = box('hdlr', FLAGS, u32(0), ascii('vide'), u32(0), u32(0), u32(0), ascii('\0'))
+  const tail = moov(box('trak', box('mdia', mdhd, hdlr, box('minf', box('stbl', stts, stsz, co64)))))
+  const head = box('ftyp', ascii('isom'), u32(0), ascii('isom'))
+  const media = 2 * 1024 ** 3
+  // A 64-bit box size, as a phone writes for media past four gigabytes and
+  // some write regardless.
+  const mdat = cat(u32(1), ascii('mdat'), u64(media))
+  const parts = [
+    { at: 0, bytes: head },
+    { at: head.length, bytes: mdat },
+    { at: head.length + media, bytes: tail },
+  ]
+  const size = head.length + media + tail.length
+  let read = 0
+  const slice = (from: number, to = size) => {
+    const end = Math.min(to, size)
+    const out = new Uint8Array(Math.max(0, end - from))
+    for (const p of parts) {
+      const a = Math.max(from, p.at)
+      const b = Math.min(end, p.at + p.bytes.length)
+      if (b > a) out.set(p.bytes.subarray(a - p.at, b - p.at), a - from)
+    }
+    read += out.length
+    return { arrayBuffer: async () => buffer(out) }
+  }
+  const file = { size, slice } as unknown as Blob
+  const t = await readContainerTiming(file)
+  near(t!.fileFps!, 60, 1e-9, 'file rate')
+  note(`moov ${(tail.length / 1e6).toFixed(2)} MB; read ${(read / 1e6).toFixed(2)} MB of ${(size / 1e9).toFixed(2)} GB`)
+  assert(read < 32 * 1024 * 1024, `read ${read} bytes`)
 })
 
 await check('a file that is not MP4 or MOV comes back as nothing', async () => {

@@ -11,7 +11,8 @@
  * flight. Running it again with the stored row reads only what is left
  * (`toRead`).
  */
-import { lineOf, toRead, type PracticeSession } from './session'
+import { lineOf } from './line'
+import { toRead, type PracticeSession } from './session'
 import type { Analysis } from '../analysis/types'
 
 export interface SessionIO {

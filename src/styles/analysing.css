@@ -238,3 +238,163 @@
     transform: translateY(4px);
   }
 }
+
+/* ============================================================================
+   Practice session (L2.4): the plan, the reading, the pause and the result.
+   The reading reuses the analysing screen above; the rest is one column with
+   the same type ramp, so a session reads as the same app at a longer length.
+   ========================================================================= */
+
+.session-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding-top: 8px;
+}
+
+.session-inner h1 {
+  font-size: 25px;
+  font-weight: 640;
+  letter-spacing: -0.028em;
+}
+
+.session-inner .analyzing-file {
+  margin-top: -8px;
+  max-width: none;
+}
+
+.session-lede {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.session-meta {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+  margin-top: -6px;
+}
+
+.session-note {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
+}
+
+.session-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 4px 0;
+}
+
+/* The `.recent` row's shape and surface, so a choice reads as something to tap. */
+.session-choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 17px;
+  border-radius: var(--r-md);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+  text-align: left;
+  color: var(--fg-muted);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    transform var(--fast) var(--ease), opacity var(--fast) var(--ease);
+}
+
+.session-choice:hover:not(:disabled) {
+  background: var(--ink-2);
+  border-color: var(--hairline);
+}
+
+.session-choice:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* Waiting on the timing, not refused: dimmed, and back the moment the times are in. */
+.session-choice:disabled {
+  opacity: 0.55;
+}
+
+.session-choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.session-choice-text strong {
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.session-choice-time {
+  font-size: 13px;
+  color: var(--lime);
+  white-space: nowrap;
+}
+
+/* One tile per serve chosen. Small enough that a hundred still fit a phone. */
+.session-serves {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 420px;
+  margin: 4px 0;
+}
+
+.session-serve {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 4px 6px;
+  border-radius: var(--r-xs);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+}
+
+.session-serve-at {
+  font-size: 10.5px;
+  color: var(--fg-faint);
+}
+
+.session-serve-score {
+  display: grid;
+  place-items: center;
+  min-height: 19px;
+  font-size: 15px;
+  font-weight: 640;
+  color: var(--fg-faint);
+}
+
+.session-serve.is-next {
+  border-color: var(--lime);
+}
+
+.session-serve.is-great .session-serve-score {
+  color: var(--great);
+}
+
+.session-serve.is-good .session-serve-score {
+  color: var(--good);
+}
+
+.session-serve.is-fair .session-serve-score {
+  color: var(--fair);
+}
+
+.session-serve.is-work .session-serve-score {
+  color: var(--work);
+}

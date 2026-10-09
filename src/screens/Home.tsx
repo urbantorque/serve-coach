@@ -8,6 +8,8 @@ import { weekPlan } from '../lib/weekPlan'
 import { faultForMetric } from '../lib/analysis/progressions'
 import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
+import { clipLabel } from '../lib/clipLabel'
+import type { PracticeSession } from '../lib/session/session'
 
 interface Props {
   sessions: Session[]
@@ -71,6 +73,9 @@ interface Props {
   onMakeOffline: () => void
   /** How that download is going, while it is going. */
   warming?: OfflineWarmup
+  /** Long clips read as practice sessions (L2.4), newest first. */
+  practiceSessions?: PracticeSession[]
+  onOpenPracticeSession?: (session: PracticeSession) => void
 }
 
 /**
@@ -108,6 +113,8 @@ export default function Home({
   onShowExample,
   onMakeOffline,
   warming,
+  practiceSessions = [],
+  onOpenPracticeSession,
 }: Props) {
   const pickRef = useRef<HTMLInputElement>(null)
   const recordRef = useRef<HTMLInputElement>(null)
@@ -473,6 +480,36 @@ export default function Home({
         </button>
       )}
 
+      {practiceSessions.length > 0 && (
+        <section className="block" aria-labelledby="sessions-title">
+          <div className="block-head">
+            <h2 className="block-title" id="sessions-title">
+              Practice sessions
+            </h2>
+          </div>
+          <ul className="recents">
+            {practiceSessions.slice(0, 3).map((p) => (
+              <li key={p.id}>
+                <button className="recent" onClick={() => onOpenPracticeSession?.(p)}>
+                  <span className={`session-mark${p.phase === 'done' ? '' : ' is-paused'}`} aria-hidden="true">
+                    <Icon name={p.phase === 'done' ? 'film' : 'pause'} size={18} />
+                  </span>
+                  <span className="recent-text">
+                    <strong>{clipLabel(p.fileName) === 'Your clip' ? 'Practice session' : clipLabel(p.fileName)}</strong>
+                    <span className="tnum">
+                      {new Date(p.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                      {' · '}
+                      {sessionLine(p)}
+                    </span>
+                  </span>
+                  <Icon name="chevron" size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {recent.length > 0 && (
         <section className="block">
           <div className="block-head">
@@ -591,4 +628,14 @@ export default function Home({
       </Sheet>
     </div>
   )
+}
+
+/** Where a practice session got to, for its row on the home screen. */
+function sessionLine(p: PracticeSession): string {
+  const read = p.lines.filter((l) => l.status === 'read').length
+  if (p.phase === 'done') {
+    const found = p.found?.length ?? 0
+    return found === 0 ? 'no serves found' : `${read} of ${found} serves read`
+  }
+  return p.chosen ? `paused at ${p.lines.length} of ${p.chosen.length}` : 'paused while finding serves'
 }

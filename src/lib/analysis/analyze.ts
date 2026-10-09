@@ -582,8 +582,13 @@ async function poseReader(): Promise<ReadPose | undefined> {
   }
 }
 
-/** One scan of the clip. Borrows the caller's element when given one. */
-async function locateServes(
+/**
+ * One scan of the clip. Borrows the caller's element when given one.
+ *
+ * Exported for a practice session (`session/video.ts`), which scans once and
+ * reads each serve through the same element.
+ */
+export async function locateServes(
   opts: AnalyzeOptions,
   shared?: HTMLVideoElement,
 ): Promise<number[] | undefined> {

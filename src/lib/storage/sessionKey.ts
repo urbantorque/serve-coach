@@ -27,7 +27,15 @@ function hash(input: string): string {
  * id, because that is a different serve.
  */
 export function sessionKeyFor(clip: ClipIdentity, serveIndex: number): string {
-  return `serve-${hash(`${clip.name}|${clip.size}|${clip.lastModified}`)}-${serveIndex}`
+  return `serve-${fileKeyOf(clip)}-${serveIndex}`
+}
+
+/**
+ * The file itself, for what is keyed by clip rather than by serve: a practice
+ * session (L2.4), which the same file picked again has to find.
+ */
+export function fileKeyOf(clip: ClipIdentity): string {
+  return hash(`${clip.name}|${clip.size}|${clip.lastModified}`)
 }
 
 /**

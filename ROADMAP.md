@@ -1168,7 +1168,25 @@ L2.4 onward is session mode.
         cluster, so a change of side no longer trips it.
       - *Proof:* `filmMocap` at 4 m and at 5.75 m is not flagged; a real 15%
         height difference still is.
-- [ ] **L2.4 Session intake and the plan sheet** · S.
+- [x] **L2.4 Session intake and the plan sheet** · S.
+      - *Delta (Oct 9):* done.
+        - A clip's length is read from its metadata (`probe.ts`) before
+          `run`, and a clip past 150 s opens the session screen, unrefused for
+          size and never copied to the clip store.
+        - Eight seeks on the file time the device; the plan offers a sample
+          of 12 or every serve, priced in minutes, or unpriced and saying why.
+        - Proof: `planChoices` and `costLeft` on fixed numbers; a 30-minute
+          60 fps `moov` behind a 2 GB Blob-shaped file is read in 1.3 MB.
+        - Run in Chromium on a 280-second WebM looped from the bench footage:
+          priced at about 9 and 12 minutes. The scan found 14 serves, and the
+          sample read 12. The page was hidden at serve 9, which paused it; it
+          carried on without scanning again. Picking the file again opened the
+          finished session.
+        - Two departures, both recorded as limits:
+          - a stop during the scan loses the scan, because only finished serves
+            are checkpointed;
+          - the estimate charges three full reads for pictures that L2.8 has
+            not added yet, so it runs about a minute long.
       - **What:**
         - clips are routed by duration;
         - the session path skips `MAX_BYTES` and never copies the file to
@@ -1180,7 +1198,16 @@ L2.4 onward is session mode.
       - *Progress (Oct 9):* the planner is in (`session/plan.ts`): the
         routing rule, the 5/2/5 sample, the cost in seeks and the per-seek
         calibration, all tested on a fake clock. The screens are not.
-- [ ] **L2.5 Checkpointed runner and session stores** · M.
+- [x] **L2.5 Checkpointed runner and session stores** · M.
+      - *Delta (Oct 9):* done, wired through L2.4's screen.
+        - The pause when the page is hidden was run in Chromium.
+        - The pause when the phone runs hot uses Chrome's Compute Pressure at
+          `critical` (`warmth.ts`), tested with a fake observer. Safari has
+          no such signal, so there the reading runs on.
+        - A wake lock is held while it reads.
+        - `lineOf` moved to `line.ts` so the store adds nothing to the entry
+          bundle. The entry bundle is 128.3 kB against a 130 kB budget; it was
+          125.1 kB before L2.
       - *Progress (Oct 9):* the engine half is in.
         - `session/session.ts` holds the row and the line, about 1.2 kB a serve.
         - `session/runner.ts` saves after the scan and after every serve.
@@ -1190,8 +1217,7 @@ L2.4 onward is session mode.
           what is left without scanning again; unreadable and refused serves
           become unclear lines; 120 serves make one 143 kB row that grows by at
           most 1,216 bytes a serve.
-        - Not yet: the pause when the page is hidden and the warm-phone pause.
-          Both belong to the wiring in L2.4's screens.
+        - The two pauses followed with L2.4's screens (above).
       - **What:**
         - one `ServeLine` row per serve, its frames dropped at once;
         - the run pauses when the page is hidden and resumes when the same

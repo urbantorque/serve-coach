@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   listPracticeLogs,
+  listPracticeSessions,
   listServeTags,
   listSummaries,
   safely,
@@ -11,6 +12,7 @@ import {
   type ServeTag,
   type Session,
 } from '../lib/storage/db'
+import type { PracticeSession } from '../lib/session/session'
 
 /**
  * The player's history, as the app holds it: the saved reports, the practice
@@ -45,6 +47,8 @@ export function useHistory() {
   const [drillLogs, setDrillLogs] = useState<PracticeLog[]>()
   /** What the player has said about their own serves, by report id. */
   const [serveTags, setServeTags] = useState<ServeTag[]>([])
+  /** Practice sessions (L2.4), newest first: long clips read a serve at a time. */
+  const [practiceSessions, setPracticeSessions] = useState<PracticeSession[]>([])
 
   /**
    * A seeded history, held in place of the real one. `?demo=history`, dev only.
@@ -57,12 +61,13 @@ export function useHistory() {
    * a dev's own history is real data and fifteen fabricated reports in it is a
    * mess somebody has to clean up by hand.
    */
-  const seededHistory = useRef<{ sessions: Session[]; practice: PracticeLog[] }>()
+  const seededHistory = useRef<{ sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[] }>()
 
   const refresh = useCallback(() => {
     if (seededHistory.current) {
       setSessions(seededHistory.current.sessions)
       setDrillLogs(seededHistory.current.practice)
+      setPracticeSessions(seededHistory.current.practiceSessions ?? [])
       setSessionsLoaded(true)
       return
     }
@@ -74,6 +79,9 @@ export function useHistory() {
       setSessionsLoaded(true)
     })
     void safely(listServeTags, []).then(setServeTags)
+    void safely(listPracticeSessions, []).then((list) => {
+      if (!seededHistory.current) setPracticeSessions(list)
+    })
     // `undefined` on failure rather than `[]` — see `drillLogs`.
     void safely<PracticeLog[] | undefined>(listPracticeLogs, undefined).then(setDrillLogs)
   }, [])
@@ -104,7 +112,7 @@ export function useHistory() {
 
   /** Hold a seeded history in place of storage, and show it now. */
   const seed = useCallback(
-    (history: { sessions: Session[]; practice: PracticeLog[] }) => {
+    (history: { sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[] }) => {
       seededHistory.current = history
       refresh()
     },
@@ -116,6 +124,7 @@ export function useHistory() {
     sessionsLoaded,
     drillLogs,
     serveTags,
+    practiceSessions,
     refresh,
     applyServeTag,
     seed,

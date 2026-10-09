@@ -15,8 +15,7 @@
  */
 import { MIN_SERVE_GAP, SCAN_FPS, planScan } from '../analysis/serves'
 
-/** Clips longer than this are read as a session rather than a basket. */
-export const SESSION_SECONDS = 150
+export { SESSION_SECONDS, isSession } from './length'
 
 /** How many serves a sampled session reads. */
 export const SESSION_SAMPLE = 12
@@ -50,8 +49,6 @@ const REFINE_SAMPLES = Math.round(1.8 * SCAN_FPS)
  */
 export const guessServes = (duration: number): number => Math.max(1, Math.round(duration / 12))
 
-/** Whether a clip of this length is read as a session. */
-export const isSession = (duration: number): boolean => Number.isFinite(duration) && duration > SESSION_SECONDS
 
 /**
  * Which of `count` located serves a sample reads, as zero-based indexes in time
@@ -134,6 +131,52 @@ export function perSampleMs(timings: readonly number[]): number | undefined {
   if (usable.length < 3) return undefined
   const sorted = [...usable].sort((a, b) => a - b)
   return sorted[sorted.length >> 1]
+}
+
+/** One way to read a session, priced for the plan sheet. */
+export interface PlanChoice {
+  mode: 'sample' | 'every'
+  /** Serves it reads: a count once the scan has run, a guess before. */
+  reading: number
+  /** Seconds, or nothing when this file could not be timed. */
+  seconds?: number
+}
+
+/**
+ * The ways to read a session, priced (L2.4).
+ *
+ * A sample of `SESSION_SAMPLE`, or every serve. When there are no more serves
+ * than the sample, the two are the same reading and only "every" is offered.
+ * `serves` is the scan's count when it has run (`located`), else the guess.
+ */
+export function planChoices(opts: {
+  duration: number
+  serves: number
+  perSampleMs?: number
+  located?: boolean
+}): PlanChoice[] {
+  const price = (reading: number) =>
+    opts.perSampleMs === undefined
+      ? undefined
+      : sessionCost({ ...opts, reading, perSampleMs: opts.perSampleMs }).seconds
+  const every: PlanChoice = { mode: 'every', reading: opts.serves, seconds: price(opts.serves) }
+  if (opts.serves <= SESSION_SAMPLE) return [every]
+  return [{ mode: 'sample', reading: SESSION_SAMPLE, seconds: price(SESSION_SAMPLE) }, every]
+}
+
+/**
+ * What is left of a session that was stopped, in seconds, or nothing when the
+ * file could not be timed. The scan is spent once it has found the serves.
+ */
+export function costLeft(
+  session: { duration: number; found?: number[]; chosen?: number[]; lines: { number: number }[] },
+  perSampleMs: number | undefined,
+): number | undefined {
+  if (perSampleMs === undefined) return undefined
+  const done = new Set(session.lines.map((l) => l.number))
+  const serves = session.found?.length ?? guessServes(session.duration)
+  const left = session.chosen ? session.chosen.filter((i) => !done.has(i + 1)).length : serves
+  return sessionCost({ duration: session.duration, serves, reading: left, perSampleMs, located: !!session.found }).seconds
 }
 
 /** A duration in whole minutes, for a sentence: "about 7 minutes", never "about 0". */

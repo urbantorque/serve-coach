@@ -30,7 +30,7 @@
  * fails if one is missing here, so a new screen cannot be added without
  * arriving in this table.
  */
-export const SCREENS = ['home', 'analyzing', 'report', 'glance', 'saved', 'error', 'progress'] as const
+export const SCREENS = ['home', 'analyzing', 'report', 'glance', 'saved', 'error', 'progress', 'session'] as const
 
 export type Screen = (typeof SCREENS)[number]
 
@@ -75,6 +75,10 @@ export const MOVES: Record<Screen, Move[]> = {
     { to: 'saved', via: 'openSaved' },
     { to: 'saved', via: 'showExample' },
     { to: 'progress', via: 'onShowProgress' },
+    // A clip past `SESSION_SECONDS`, routed by its length before `run` is
+    // reached, and a stored session reopened from its row (L2.4).
+    { to: 'session', via: 'openClip → openSessionClip' },
+    { to: 'session', via: 'onOpenPracticeSession' },
   ],
   analyzing: [
     { to: 'report', via: 'run (success)' },
@@ -105,6 +109,12 @@ export const MOVES: Record<Screen, Move[]> = {
   error: [{ to: 'home', via: 'goHome' }],
   // Was a sheet over home until it outgrew one; see `screens/Progress.tsx`.
   progress: [{ to: 'home', via: 'goHome' }],
+  session: [
+    // Planning, reading, paused and done are one screen's stages, not screens.
+    { to: 'session', via: 'startSession / stopSession' },
+    { to: 'error', via: 'sessionFailed (the video could not be read or scanned)' },
+    { to: 'home', via: 'leaveSession' },
+  ],
 }
 
 /** Every screen reachable from `start`, including `start` itself. */
