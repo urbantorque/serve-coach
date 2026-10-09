@@ -951,6 +951,7 @@ Everything is in `src/lib`:
 | `session/session.ts` | a practice session as stored: one small line per serve read, and the repair a stored row goes through |
 | `session/runner.ts` | reads a session a serve at a time, saving after each, so a stop loses only the serve in flight |
 | `session/line.ts` | one serve's analysis boiled down to the line a session keeps |
+| `session/stats.ts` | a session's serves read together: spread, sides, a moved phone, start against end, fault counts and the session's own faults |
 | `analysis/between.ts` | readings taken between two samples: a pose on the line between them, and the top of a peak |
 | `session/video.ts` | a session's video work: timing the file, finding the serves, reading one through a shared element |
 | `session/length.ts`, `probe.ts` | which clips are sessions, and a clip's length read from its metadata alone |
@@ -1321,7 +1322,7 @@ footing. Its frames are let go before the next serve is read. The runner
 scan and after every serve, which makes the row its own checkpoint. A stop, a
 locked phone or a killed page loses at most the serve in flight, and the same
 row run again reads only the serves still missing. A hundred and twenty serves
-is 143 kB in one row. A serve that cannot be read becomes an "unclear" line and
+is 147 kB in one row. A serve that cannot be read becomes an "unclear" line and
 costs nothing else.
 
 **A session reads every serve at the report's rate, and the contact height
@@ -1346,6 +1347,27 @@ reads 2.47 apart. The moment is the cause there: `refineExtremum` places it
 up to 12 ms differently at the two rates, and the hand crosses the body at
 about seven metres a second. That one is pinned as a known limit rather than
 hidden.
+
+**A session's faults are the ones most of its serves show** (`session/stats.ts`).
+One serve can be read either side of a floor by the camera alone; a majority of
+thirty cannot. A fault belongs to the session when it was named on at least half
+the serves that could show it, or on a third of them at twice its floor or more,
+and at least five could. Each line keeps how far past its floor every named fault
+was for the second rule. On the six Bath serves filmed twenty-four times from the
+guide and from the back fence, single takes named four faults in 288 (the back
+fence's posture alarms) and the twelve baskets named none. A planted missing leg
+drive, named on every take, is the basket's.
+
+The same file finds where the player stood and whether the phone moved. Two sides
+are told apart by size from the side (44% from the guide) and by place across the
+picture from behind; a size change the footing does not follow by one body's
+slope is not a side. A knocked phone is a lasting step in the footing, placed by
+the split whose two runs differ most against their scatter. The start of the
+session is compared with the end only within the largest group on one side and
+one footing, by D5.2's rule: five serves at each end, a gap past 1.5 of the
+camera's deviations, and three standard errors. On 200 seeded steady sessions of
+forty serves that found a change three times; a drop that moved three deviations
+over the last third was found in 100 of 100.
 
 **A session is priced on the player's own phone before it starts.** A picked
 clip's length is read from its metadata first (`probe.ts`), and a clip past

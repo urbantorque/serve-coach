@@ -1215,8 +1215,8 @@ L2.4 onward is session mode.
           newest-edit-wins.
         - Tested: a stop between serves and mid-serve; a resume that reads only
           what is left without scanning again; unreadable and refused serves
-          become unclear lines; 120 serves make one 143 kB row that grows by at
-          most 1,216 bytes a serve.
+          become unclear lines; 120 serves make one 147 kB row that grows by at
+          most 1,250 bytes a serve (with L2.7's fields).
         - The two pauses followed with L2.4's screens (above).
       - **What:**
         - one `ServeLine` row per serve, its frames dropped at once;
@@ -1251,7 +1251,21 @@ L2.4 onward is session mode.
         of the 32 fps read: toss placement from the hand, contact height,
         knee bend, tempo, landing.
       - *Proof:* noise ensembles on the rig and on Bath. After L2.5.
-- [ ] **L2.7 Session statistics and a basket verdict** · M.
+- [x] **L2.7 Session statistics and a basket verdict** · M.
+      - *Delta (Oct 9):* done, in `session/stats.ts`.
+        - Each line now keeps `past` (each named fault's miss, in floors) and
+          the player's place across the picture (`scale.x`).
+        - Seeded timelines of forty lines with the camera's noise:
+          - steady sessions: a change found in 3 of 200, never split, never
+            moved, never given a fault named on a fifth of serves;
+          - a drop moved by three deviations: found in 100 of 100;
+          - sides split cleanly from the guide and from behind in 50 of 50;
+          - a knocked phone was placed at the right serve in 50 of 50.
+        - Bath, as twelve baskets of 24 noisy takes: single takes named 4
+          faults in 288; the baskets named none. A planted missing leg drive is
+          the basket's.
+        - Departure: the representative set is spread by score, not chosen to
+          cover sides and segments as well.
       - **What, as data only:**
         - a robust spread;
         - side clusters and camera segments;

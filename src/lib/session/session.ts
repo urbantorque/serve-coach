@@ -49,8 +49,13 @@ export interface ServeLine {
   judged?: FlawId[]
   /** Where the toss peaked against the front foot. */
   toss?: Pick<TossPlacement, 'ahead' | 'across' | 'confidence'>
-  /** The player's size and footing in the picture, for telling the sides apart. */
-  scale?: { bodyHeight: number; groundY: number }
+  /**
+   * The player's size, footing and place across the picture, for telling the
+   * sides apart and noticing the phone move (`stats.ts`).
+   */
+  scale?: { bodyHeight: number; groundY: number; x?: number }
+  /** How far past its floor each named fault was, in floors (`line.ts`). */
+  past?: Partial<Record<FlawId, number>>
 }
 
 export type SessionPhase = 'locating' | 'reading' | 'done' | 'stopped'
