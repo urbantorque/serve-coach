@@ -1351,6 +1351,35 @@ up to 12 ms differently at the two rates, and the hand crosses the body at
 about seven metres a second. That one is pinned as a known limit rather than
 hidden.
 
+**A serve is told from a smash by how it is hit, where the picture allows**
+(`shapeAt`, `classifyServes`, L2.10). The scan now keeps the pose it already
+detected: both wrists, the nose, the feet. A reach peak has a serve's shape when
+the other hand went above the head before it (the toss) and the feet held still
+through the load: under 0.6 body heights a second, from a straight line through
+them. A smash is hit on the move, a body length a second or more; its other arm
+goes up too, to point at the ball, so the toss alone does not tell them apart.
+The best reach a peak is held to now comes only from serve-shaped peaks, so a
+smash no longer mutes the serves around it; a peak that reaches like a serve
+without a serve's shape goes to a not-sure list, which a session keeps and
+counts ("2 overheads reached like a serve but were hit on the move").
+
+The shape reads the picture, and a picture can fail it on its own: a camera held
+by hand or panning to follow play moves the feet in the frame. So the shape is
+believed only when at least two peaks and most of the peaks it could judge pass
+it; otherwise every peak is judged on reach alone, as before. On the rig's
+timelines: a basket with a smash, 10 of 10 serves found and the smash put aside
+(on reach alone, 3 of 10); 50 serves with 5 smashes in ten minutes, all 50, none
+stray, all 5 put aside; a swaying camera, 10 of 10 and nothing put aside. On the
+NCAA broadcast clip in the bench, the panning camera fails most shapes, and the
+clip is read on reach alone with nothing put aside.
+
+The scan also places its player crop once a minute in a long clip rather than
+once for the whole of it (`cropSegment`): a session changes sides, the
+sightings for one crop then disagree, and a declined crop let the pose model read
+the whole frame and the player on the next court. Moving the two things
+`App.tsx` needed from `pose/extract.ts` into `pose/errors.ts` took the
+extractor and the serve finder out of the entry bundle, which is now 124.9 kB.
+
 **A session keeps its best and worst serves as times, not as video**
 (`highlightsOf`, L2.11). Each is two seconds before the serve's reach peak and
 one after, inside the file. When the same video is picked again, the session is
@@ -1455,8 +1484,9 @@ The same timelines now give:
 Cost is proportional to the clip again past 140 seconds, and that is the price
 of finding every serve. Sessions get their own path with an estimate up front
 (L2.4). Two known limits, each pinned:
-- a smash within two minutes of the serves still mutes them, because height
-  alone cannot tell the two apart (L2.10);
+- a smash within two minutes of the serves muted them, because height alone
+  cannot tell the two apart. Fixed by L2.10, below, wherever the picture lets
+  the serve's shape be believed;
 - `MAX_SERVES` no longer caps the scan, only how many whole analyses are held
   at once.
 

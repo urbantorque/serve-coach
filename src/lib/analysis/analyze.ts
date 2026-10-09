@@ -175,6 +175,8 @@ export interface AnalyzeOptions {
    * them pays the entire scan again the moment the player taps a serve chip.
    */
   onServesLocated?: (times: number[]) => void
+  /** Peaks that reached like a serve without a serve's shape: a smash, a swing with no toss (L2.10). */
+  onUnsureServes?: (times: number[]) => void
   /** Which serve this is meant to be, which shifts a handful of target bands. */
   serveType?: ServeType
   /**
@@ -600,6 +602,7 @@ export async function locateServes(
     opts.onProgress?.({ step: 'scanning', ratio: 0, detail: 'Finding every serve' })
     return await scanForServes(video, landmarker, {
       signal: opts.signal,
+      onUnsure: opts.onUnsureServes,
       people: opts.skipPlayerCrop ? undefined : await peopleFinder(),
       onProgress: (ratio) =>
         opts.onProgress?.({ step: 'scanning', ratio, detail: 'Finding every serve' }),

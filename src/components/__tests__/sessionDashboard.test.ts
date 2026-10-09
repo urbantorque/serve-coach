@@ -14,7 +14,7 @@ import SessionDashboard from '../SessionDashboard'
 import { sampleAnalysis } from '../../dev/sampleAnalysis'
 import { lineOf } from '../../lib/session/line'
 import { normalisePracticeSession, type PracticeSession } from '../../lib/session/session'
-import { driftLine, fixCountLine, goneLine, headlineOf, noFixLine, sinceLine } from '../../lib/session/sessionCopy'
+import { driftLine, fixCountLine, goneLine, headlineOf, noFixLine, sinceLine, unsureLine } from '../../lib/session/sessionCopy'
 import { sessionStats } from '../../lib/session/stats'
 import { servesPerWeek } from '../../lib/progress'
 import { FLAWS } from '../../lib/analysis/flaws'
@@ -95,6 +95,8 @@ check('the finished session draws every part it has data for', () => {
     assert(done.includes(part), `"${part}" is missing`)
   }
   assert(done.includes('data:image/jpeg;base64,AAAA'), 'the kept still was not drawn')
+  const withUnsure = draw({ unsure: [40, 90] }, { state: 'done' }, false)
+  assert(withUnsure.includes('2 overheads reached like a serve'), 'the overheads left out were not counted')
   assert(done.includes('session-pick-blank'), 'a serve with no still did not get a blank')
   const none = draw({ found: [], chosen: [], lines: [] }, { state: 'done' })
   assert(none.includes('I could not find a serve in this video.'), 'a session with no serves said something else')
@@ -140,6 +142,7 @@ check('every sentence it can build passes the copy rules', () => {
   }
   said.push(headlineOf({ ...stats, read: 0 }), headlineOf({ ...stats, drifts: [], faults: [] }))
   said.push(headlineOf({ ...stats, read: 1, drifts: [], faults: [] }), noFixLine(1), noFixLine(20))
+  said.push(unsureLine(1), unsureLine(4))
   assert(!headlineOf({ ...stats, read: 1, drifts: [], faults: [] }).includes('most of them'), 'one serve was said to be most of them')
   const failing = said.filter((s) => cueIssues(s).length).map((s) => `"${s}": ${cueIssues(s).join('; ')}`)
   assert(failing.length === 0, failing.slice(0, 4).join('\n'))

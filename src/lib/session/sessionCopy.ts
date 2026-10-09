@@ -62,6 +62,14 @@ export function sinceLine(now: number, before: number): string {
 export const goneLine = (flaw: FlawId): string =>
   cue(`Gone from most serves since last time: ${flawTitle(flaw).toLowerCase()}.`)
 
+/** The overheads left out, said once under the counts (L2.10). */
+export const unsureLine = (n: number): string =>
+  cue(
+    n === 1
+      ? 'One overhead reached like a serve but was hit on the move, so I left it out.'
+      : `${n} overheads reached like a serve but were hit on the move, so I left them out.`,
+  )
+
 /** What the fixes say when there are none to give. */
 export const noFixLine = (read: number): string =>
   cue(read < MIN_JUDGED ? 'Too few serves read to name a fault for the session.' : 'No fault showed on most of your serves.')

@@ -33,8 +33,11 @@ export interface ReadOptions {
 export interface SessionVideo {
   /** Milliseconds per seek-and-detect on this file, `CALIBRATION_SAMPLES` of them. */
   calibrate: (signal?: AbortSignal) => Promise<number[]>
-  /** Where every serve in the file is, seconds. Throws when the scan could not run at all. */
-  locate: (signal?: AbortSignal, onProgress?: (ratio: number) => void) => Promise<number[]>
+  /**
+   * Where every serve in the file is, seconds, and the overheads that reached
+   * like one without being served (L2.10). Throws when the scan could not run.
+   */
+  locate: (signal?: AbortSignal, onProgress?: (ratio: number) => void) => Promise<{ found: number[]; unsure: number[] }>
   /** One serve, light: no ball, no racket boxes, no stills, no second pose model. */
   read: (index: number, found: number[], opts: ReadOptions) => Promise<Analysis>
   /**
@@ -70,6 +73,7 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
     },
 
     locate: async (signal, onProgress) => {
+      let unsure: number[] = []
       const found = await locateServes(
         {
           videoUrl,
@@ -78,6 +82,9 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
           onProgress: (p) => {
             if (p.step === 'scanning') onProgress?.(p.ratio)
           },
+          onUnsureServes: (times) => {
+            unsure = times
+          },
         },
         video,
       )
@@ -85,7 +92,7 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
       // serve can fall back to scanning for itself. A session has no such
       // fallback: every serve it reads is one this scan found.
       if (!found) throw new Error('I could not look through that video for serves.')
-      return found
+      return { found, unsure }
     },
 
     read: async (index, found, opts) => {

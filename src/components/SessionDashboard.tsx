@@ -7,7 +7,16 @@ import { FLAW_DRILL } from '../lib/analysis/triage'
 import { drillFor } from '../lib/analysis/verdict'
 import { cue } from '../lib/analysis/voice'
 import { clockOf, toRead, type PracticeSession, type ServeLine } from '../lib/session/session'
-import { driftLine, fixCountLine, flawTitle, goneLine, headlineOf, noFixLine, sinceLine } from '../lib/session/sessionCopy'
+import {
+  driftLine,
+  fixCountLine,
+  flawTitle,
+  goneLine,
+  headlineOf,
+  noFixLine,
+  sinceLine,
+  unsureLine,
+} from '../lib/session/sessionCopy'
 import { extremes, highlightsOf, sessionStats, type Highlight } from '../lib/session/stats'
 
 /*
@@ -69,6 +78,9 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
           </div>
         )}
       </dl>
+      {session.unsure && session.unsure.length > 0 && (
+        <p className="session-meta">{unsureLine(session.unsure.length)}</p>
+      )}
 
       <section className="block" aria-labelledby="session-fixes">
         <h2 className="block-title" id="session-fixes">

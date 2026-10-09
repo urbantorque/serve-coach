@@ -92,6 +92,11 @@ export interface PracticeSession {
   found?: number[]
   /** Which of them to read, as zero-based indexes into `found`. */
   chosen?: number[]
+  /**
+   * Overheads that reached like a serve and were not hit like one, seconds:
+   * a smash on the move, a swing with no toss (L2.10). Left out, and counted.
+   */
+  unsure?: number[]
   lines: ServeLine[]
   phase: SessionPhase
   /**
@@ -159,6 +164,7 @@ export function normalisePracticeSession(raw: unknown): PracticeSession | undefi
     mode: s.mode === 'every' ? 'every' : 'sample',
     ...(found ? { found } : {}),
     ...(chosen ? { chosen } : {}),
+    ...(numbers(s.unsure)?.length ? { unsure: numbers(s.unsure) } : {}),
     lines,
     phase,
     ...(typeof s.scoringVersion === 'number' ? { scoringVersion: s.scoringVersion } : {}),

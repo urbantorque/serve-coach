@@ -46,6 +46,9 @@ import {
   SCAN_BUDGET,
   SCAN_FLOOR_FPS,
   SCAN_FPS,
+  CROP_SEGMENT_SECONDS,
+  classifyServes,
+  cropSegment,
   findServes,
   peakCandidates,
   planRefinement,
@@ -463,9 +466,15 @@ check('the scan reads the budget, or three samples a second past it, and nothing
  * ready height. Every serve in the session reaches a little less than the one
  * before (a fifth less by the end), every fourth is a kick a little lower
  * again, and practice swings to shoulder height sit among them. `overhead`
- * puts a smash 30% above the first serve at that time, in seconds.
+ * puts a smash 30% above the first serve at each of those times, in seconds.
+ *
+ * `poseAt` is the rest of what the scan sees (L2.10): during a serve, the rig's
+ * own wrists, nose and ankles at that moment; at rest, its ready stance; for a
+ * smash, the other arm up to point at the ball and the feet moving under it,
+ * as a smash is hit on the move; for a practice swing, no toss.
  */
-function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: number) {
+function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: number | number[], shake = 0) {
+  const asked = overhead === undefined ? [] : typeof overhead === 'number' ? [overhead] : overhead
   const frames = buildServe({}, 60)
   const reach = frames.map((fr) => ({ t: fr.t, h: -Math.min(fr.image[15].y, fr.image[16].y) }))
   const rest = reach[0].h
@@ -476,6 +485,13 @@ function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: numb
   const span = minutes * 60
   const gap = (span - 10) / serves
   const peaks = Array.from({ length: serves }, (_, i) => 5 + i * gap + (rand() - 0.5) * gap * 0.4)
+  // Each smash in the middle of the gap between the serves either side of where
+  // it was asked for: two overheads a second apart is not a thing that happens.
+  const overheads = asked.map((o) => {
+    const after = peaks.findIndex((p) => p > o)
+    if (after <= 0) return o
+    return (peaks[after - 1] + peaks[after]) / 2
+  })
   const scaleOf = (i: number) => (1 - 0.2 * (i / Math.max(1, serves - 1))) * (i % 4 === 3 ? 0.9 : 1)
   // Practice swings to about shoulder height, and one overhead well above the serves.
   const swings = Array.from({ length: Math.round(serves / 3) }, (_, i) => peaks[i] + gap * 0.5)
@@ -491,23 +507,67 @@ function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: numb
       const d = Math.abs(time - w)
       if (d < 0.6) h = Math.max(h, rest + (top.h - rest) * 0.55 * (1 - d / 0.6))
     }
-    if (overhead !== undefined) {
-      const d = Math.abs(time - overhead)
+    for (const o of overheads) {
+      const d = Math.abs(time - o)
       if (d < 0.5) h = Math.max(h, rest + (top.h - rest) * 1.3 * (1 - d / 0.5))
     }
     return h + (rand() - 0.5) * 0.004
   }
-  return { at, peaks, span }
+  const stance = frames[0].image
+  const poseOf = (image: typeof stance) => ({
+    left: -image[15].y,
+    right: -image[16].y,
+    head: -image[0].y,
+    feetX: (image[27].x + image[28].x) / 2,
+    feetY: (image[27].y + image[28].y) / 2,
+  })
+  // A camera held by hand: the whole picture sways, feet and all.
+  const swayed = (time: number, pose: NonNullable<ReachSample['pose']>) =>
+    shake ? { ...pose, feetX: (pose.feetX ?? 0) + shake * Math.sin(time * 9) } : pose
+  const poseAt = (time: number): NonNullable<ReachSample['pose']> => swayed(time, poseOfMoment(time))
+  const poseOfMoment = (time: number): NonNullable<ReachSample['pose']> => {
+    for (const p of peaks) {
+      const local = time - p + top.t
+      if (local < 0 || local > length) continue
+      return poseOf(frames[Math.min(frames.length - 1, Math.max(0, Math.round(local * 60)))].image)
+    }
+    for (const o of overheads) {
+      const d = time - o
+      if (d < -1.2 || d > 0.5) continue
+      // Moving a body length a second under the ball, the other arm up to
+      // point at it, and the racket arm making the peak.
+      const still = poseOf(stance)
+      const size = still.feetY + still.head
+      return {
+        ...still,
+        left: still.head + 0.1,
+        right: d > -0.2 ? still.head + 0.3 : still.right,
+        feetX: still.feetX + size * (d + 1.2),
+      }
+    }
+    return poseOf(stance)
+  }
+  return { at, peaks, span, poseAt, overheads }
 }
 
-/** The scan `scanForServes` runs, with the trace standing in for the video. */
-function locate(trace: ReturnType<typeof sessionTrace>) {
+/**
+ * The scan `scanForServes` runs, with the trace standing in for the video.
+ * `withPose` gives every sample the rest of the pose as well, as the scan does
+ * since L2.10; without it, the finder judges on reach alone, as it did before.
+ */
+function locate(trace: ReturnType<typeof sessionTrace>, withPose = false) {
   const plan = planScan(trace.span)
-  const samples: ReachSample[] = plan.times.map((time) => ({ t: time, height: trace.at(time) }))
+  const sample = (time: number): ReachSample => ({
+    t: time,
+    height: trace.at(time),
+    ...(withPose ? { pose: trace.poseAt(time) } : {}),
+  })
+  const samples: ReachSample[] = plan.times.map(sample)
   const refine = plan.coarse ? planRefinement(peakCandidates(samples), trace.span) : []
-  for (const time of refine) samples.push({ t: time, height: trace.at(time) })
+  for (const time of refine) samples.push(sample(time))
   samples.sort((a, b) => a.t - b.t)
-  return { found: findServes(samples), read: plan.times.length + refine.length }
+  const finds = classifyServes(samples)
+  return { found: findServes(samples), unsure: finds.unsure, read: plan.times.length + refine.length }
 }
 
 check('every serve in a basket or a session is found, and nothing else is (L2.1)', () => {
@@ -536,19 +596,84 @@ check('an overhead early on does not mute the serves after it (L2.1)', () => {
   assert(lateFound.length === late.length, `${late.length - lateFound.length} of the last ${late.length} serves were muted`)
 })
 
-check('KNOWN: an overhead within two minutes still mutes the serves near it', () => {
+check('on reach alone, an overhead within two minutes still mutes the serves near it', () => {
   /*
-   * Reach height alone cannot tell a smash from a serve, and the smash is the
-   * higher of the two, so the serves within `ROLLING_REACH_SECONDS` of it are
-   * judged against it and the tired ones fall below the tolerance. Telling
-   * them apart needs the serve's own shape — still at the line, the tossing
-   * arm rising before the reach — which is L2.10. Flip this when it lands.
+   * Kept as the case the shape below exists for. Reach height alone cannot
+   * tell a smash from a serve, and the smash is the higher of the two, so on
+   * reach alone the serves within `ROLLING_REACH_SECONDS` of it are judged
+   * against it and the tired ones fall below the tolerance.
    */
   const trace = sessionTrace(10, 2, 3, 40)
   const { found } = locate(trace)
   const matched = trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
-  note(`with a smash in the basket: ${matched.length} of 10 serves found`)
-  assert(matched.length < 10, 'KNOWN gap closed: a smash in the basket no longer mutes its serves — flip this')
+  note(`with a smash in the basket, judged on reach alone: ${matched.length} of 10 serves found`)
+  assert(matched.length < 10, 'reach alone now tells a smash apart, and this check no longer shows why the shape is needed')
+})
+
+check('with the serve’s shape, a smash among the serves mutes nothing and is not called a serve (L2.10)', () => {
+  /*
+   * Was KNOWN since L2.1. The smash's other arm goes up, as a serve's toss
+   * does, but it is hit on the move; a serve is hit from a still stance. So
+   * the smash leaves the reference the serves are held to, and goes to the
+   * not-sure list rather than the serves.
+   */
+  const trace = sessionTrace(10, 2, 3, 40)
+  const { found, unsure } = locate(trace, true)
+  const matched = trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
+  note(`with a smash in the basket and the shape read: ${matched.length} of 10 serves, ${unsure.length} not sure`)
+  assert(matched.length === 10, `${10 - matched.length} serves were still muted`)
+  assert(!found.some((f) => Math.abs(f - trace.overheads[0]) < 0.5), 'the smash was called a serve')
+  assert(unsure.some((u) => Math.abs(u - trace.overheads[0]) < 0.5), 'the smash was not put on the not-sure list')
+})
+
+check('a session with smashes through it finds every serve and only the serves (L2.10)', () => {
+  const trace = sessionTrace(50, 10, 7, [33, 150, 151.9 + 60, 400, 590])
+  const { found, unsure } = locate(trace, true)
+  const matched = trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
+  const stray = found.filter((f) => !trace.peaks.some((p) => Math.abs(f - p) < 0.25))
+  const smashes = trace.overheads.filter((o) => unsure.some((u) => Math.abs(u - o) < 0.5))
+  note(`50 serves and 5 smashes in 10 min: ${matched.length} found, ${stray.length} stray, ${smashes.length} smashes not sure`)
+  assert(matched.length === 50 && stray.length === 0, `found ${matched.length} of 50 with ${stray.length} stray`)
+  assert(smashes.length === trace.overheads.length, `${trace.overheads.length - smashes.length} smashes were missed from the not-sure list`)
+})
+
+check('a camera held by hand keeps every serve, judged on reach as before (L2.10)', () => {
+  /*
+   * The sway moves the feet in the picture by most of a body length, so no
+   * serve passes the still-feet test, the shape is not believed, and the clip
+   * is read on reach alone: every serve found, nothing put aside.
+   */
+  const trace = sessionTrace(10, 2, 3, undefined, 0.3)
+  const { found, unsure } = locate(trace, true)
+  const matched = trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
+  note(`a swaying camera: ${matched.length} of 10 serves, ${unsure.length} not sure`)
+  assert(matched.length === 10 && unsure.length === 0, `${matched.length} found, ${unsure.length} put aside`)
+})
+
+check('the serve’s shape keeps every serve of a plain session (L2.10)', () => {
+  // The shape must not cost a serve that has it: a session with nothing but
+  // serves and practice swings, read with the pose, finds what reach did.
+  for (const [serves, minutes] of [
+    [10, 2],
+    [120, 30],
+  ] as const) {
+    const trace = sessionTrace(serves, minutes)
+    const { found, unsure } = locate(trace, true)
+    const matched = trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
+    assert(matched.length === serves, `${serves - matched.length} of ${serves} serves lost their shape`)
+    assert(unsure.length === 0, `${unsure.length} peaks were called not sure in a session with only serves`)
+  }
+})
+
+check('a long clip is cropped a minute at a time, a basket once (L2.10)', () => {
+  const basket = cropSegment(70, 110)
+  assert(basket.index === 0 && basket.from === 0 && basket.to === 110, `a basket was split: ${JSON.stringify(basket)}`)
+  const half = 30 * 60
+  const segs = [0, 59.9, 60, 61, half - 0.1].map((t) => cropSegment(t, half))
+  assert(JSON.stringify(segs.map((s) => s.index)) === JSON.stringify([0, 0, 1, 1, 29]), `segments: ${segs.map((s) => s.index)}`)
+  assert(segs.every((s, i) => s.from <= [0, 59.9, 60, 61, half - 0.1][i] && s.to - s.from <= CROP_SEGMENT_SECONDS), 'a moment fell outside its segment')
+  const tail = cropSegment(half + 5, half + 10)
+  assert(tail.to === half + 10, 'the last segment ran past the clip')
 })
 
 check('the memory cap stays above what the sweep holds', () => {

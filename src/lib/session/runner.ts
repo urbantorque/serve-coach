@@ -16,8 +16,11 @@ import { toRead, type PracticeSession } from './session'
 import type { Analysis } from '../analysis/types'
 
 export interface SessionIO {
-  /** Where every serve in the file is, seconds. */
-  locate: () => Promise<number[]>
+  /**
+   * Where every serve in the file is, seconds; with the overheads the scan was
+   * not sure of, when it says (L2.10).
+   */
+  locate: () => Promise<number[] | { found: number[]; unsure?: number[] }>
   /** One serve read, by its index in `found`. A throw is a serve too unclear to read. */
   read: (index: number, t: number) => Promise<Analysis>
   /** Which serves to read, of this many found, as indexes. */
@@ -47,9 +50,11 @@ export async function runSession(start: PracticeSession, io: SessionIO): Promise
   try {
     if (!session.found) {
       await commit({ phase: 'locating' })
-      const found = await io.locate()
+      const located = await io.locate()
       if (io.signal?.aborted) throw new Error('stopped')
-      await commit({ found, chosen: io.choose(found.length), phase: 'reading' })
+      const found = Array.isArray(located) ? located : located.found
+      const unsure = Array.isArray(located) ? undefined : located.unsure
+      await commit({ found, ...(unsure?.length ? { unsure } : {}), chosen: io.choose(found.length), phase: 'reading' })
     } else if (session.phase !== 'done') {
       await commit({ phase: 'reading' })
     }

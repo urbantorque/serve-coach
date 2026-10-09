@@ -217,6 +217,93 @@ export interface ReachSample {
   t: number
   /** How high the higher hand got, in image units, larger being higher. */
   height: number
+  /**
+   * The rest of the pose the scan already detected, for telling a serve from
+   * another overhead (L2.10). Heights are negated image y, like `height`; the
+   * feet are the ankles' midpoint in image units. Absent where the scan could
+   * not see them, and then the shape is not judged.
+   */
+  pose?: { left: number; right: number; head: number; feetX?: number; feetY?: number }
+}
+
+/**
+ * The shape of a serve, before its reach peak (L2.10): a player who stands
+ * still through the load, and a tossing arm that goes up above the head.
+ *
+ * A smash reaches as high as a serve, often higher, and in a match clip it
+ * sits among them. Its other arm goes up too, to point at the ball, so the
+ * toss alone does not tell them apart; but a smash is hit on the move, and a
+ * serve from a still stance. A practice swing with no toss fails the other test.
+ */
+export const SHAPE_WINDOW: [number, number] = [-0.9, -0.25]
+
+/** The part of that window the feet must hold still through: the load, before the push-off. */
+export const STILL_WINDOW: [number, number] = [-0.9, -0.35]
+
+/**
+ * How fast the feet may travel there, in body heights a second. Generous on
+ * purpose: a pinpoint stance brings the back foot up, about a fifth of a body
+ * a second, and the tracker jitters; a smash is hit on the move, a body length
+ * a second or more. A phone held by hand moves the whole picture too, which is
+ * what `MIN_SHAPED` is for.
+ */
+export const STILL_SPEED = 0.6
+
+/**
+ * When a clip's shapes are believed at all: at least this many peaks with a
+ * serve's shape, and most of the peaks the shape could judge.
+ *
+ * The test reads the picture, and a picture can fail it for reasons of its own:
+ * a camera held by hand, or panning to follow play, moves the feet in the frame
+ * when the player stood still. A swaying camera passes a serve now and then, on
+ * the turn of the sway, and fails the rest; a basket with a smash in it passes
+ * nearly every serve. When most judged peaks fail, the shape says more about
+ * the camera than the server, and every peak is judged on its reach alone, as
+ * before L2.10. So the shape can only ever take a smash out of a clip that is
+ * mostly serves; it cannot take the serves out of a shaky one.
+ */
+export const MIN_SHAPED = 2
+
+/** What the shape of a peak says: a serve, something else, or nothing to judge it by. */
+export type Shape = 'serve' | 'other' | 'unknown'
+
+/**
+ * The shape of the peak at `t`, from the samples before it. The racket hand is
+ * whichever was higher at the peak; the tossing hand is the other one.
+ */
+export function shapeAt(samples: readonly ReachSample[], peak: ReachSample): Shape {
+  if (!peak.pose) return 'unknown'
+  const racket: 'left' | 'right' = peak.pose.left >= peak.pose.right ? 'left' : 'right'
+  const toss = racket === 'left' ? 'right' : 'left'
+  const before = samples.filter(
+    (s) => s.pose && s.t >= peak.t + SHAPE_WINDOW[0] && s.t <= peak.t + SHAPE_WINDOW[1],
+  )
+  if (before.length < 3) return 'unknown'
+  const tossed = before.some((s) => s.pose![toss] > s.pose!.head)
+
+  const footed = before.filter(
+    (s) => s.t <= peak.t + STILL_WINDOW[1] && s.pose!.feetX !== undefined && s.pose!.feetY !== undefined,
+  )
+  let still: boolean | undefined
+  const span = footed.length ? footed[footed.length - 1].t - footed[0].t : 0
+  if (footed.length >= 3 && span >= 0.2) {
+    // The body's height in the picture: from the nose (minus its height) to the feet.
+    const size = footed.map((s) => s.pose!.feetY! + s.pose!.head).sort((a, b) => a - b)[footed.length >> 1]
+    // How fast the feet travel, from a straight line through them rather than
+    // the farthest two: a speed does not depend on how much of the window the
+    // scan happened to sample, and a line through jitter is nearly flat.
+    const slope = (pick: (s: ReachSample) => number) => {
+      const mt = footed.reduce((a, s) => a + s.t, 0) / footed.length
+      const mv = footed.reduce((a, s) => a + pick(s), 0) / footed.length
+      const num = footed.reduce((a, s) => a + (s.t - mt) * (pick(s) - mv), 0)
+      const den = footed.reduce((a, s) => a + (s.t - mt) ** 2, 0)
+      return den > 0 ? num / den : 0
+    }
+    const speed = Math.hypot(slope((s) => s.pose!.feetX!), slope((s) => s.pose!.feetY!))
+    still = size > 0 && speed <= STILL_SPEED * size
+  }
+  if (!tossed || still === false) return 'other'
+  return 'serve'
 }
 
 /**
@@ -242,47 +329,104 @@ export interface ReachSample {
  * finding nothing to aim at.
  */
 export function findServes(samples: ReachSample[]): number[] {
-  if (!samples.length) return []
+  return classifyServes(samples).serves
+}
 
-  const floor = restingFloor(samples)
-  if (floor === null) return []
-
-  const ranked = [...samples].sort((a, b) => b.height - a.height)
-  const resting = ranked[ranked.length >> 1].height
-  const localBest = rollingBest(samples, ROLLING_REACH_SECONDS)
-  const picked: number[] = []
-
-  for (const s of ranked) {
-    if (s.height < floor) break
-    // Against the best reach near it, not the best in the clip (L2.1).
-    const best = localBest.get(s) ?? ranked[0].height
-    if (s.height < best - REACH_TOLERANCE_SHARE * (best - resting)) continue
-    if (picked.some((t) => Math.abs(t - s.t) < MIN_SERVE_GAP)) continue
-    picked.push(s.t)
-  }
-
-  return picked.sort((a, b) => a - b)
+/** The serves a scan found, and the peaks that reached like one without the shape of one. */
+export interface ServeFinds {
+  serves: number[]
+  /** Overheads that were not served: a smash on the move, a swing with no toss (L2.10). */
+  unsure: number[]
 }
 
 /**
- * The highest reach within `radius` seconds of each sample, by a sliding
- * window over time — linear in the samples, which a half-hour session at the
- * scan floor has about six thousand of.
+ * Every peak that reaches like a serve, sorted into serves and the rest.
+ *
+ * Peaks first, tallest first, one per `MIN_SERVE_GAP`. Each is then judged
+ * against the best reach near it (L2.1), and that best is taken only from
+ * peaks with the shape of a serve (L2.10): a smash, however high, no longer
+ * sets the bar the serves around it are held to. A peak within the bar goes
+ * to the serves when it has a serve's shape, or no shape to judge, and to the
+ * not-sure list when its shape says otherwise. Below the bar it is a practice
+ * swing or a toss, and is left out as before.
  */
-function rollingBest(samples: ReachSample[], radius: number): Map<ReachSample, number> {
+export function classifyServes(samples: ReachSample[]): ServeFinds {
+  if (!samples.length) return { serves: [], unsure: [] }
+
+  const floor = restingFloor(samples)
+  if (floor === null) return { serves: [], unsure: [] }
+
+  const ranked = [...samples].sort((a, b) => b.height - a.height)
+  const resting = ranked[ranked.length >> 1].height
   const byTime = [...samples].sort((a, b) => a.t - b.t)
+
+  const peaks: ReachSample[] = []
+  for (const s of ranked) {
+    if (s.height < floor) break
+    if (peaks.some((p) => Math.abs(p.t - s.t) < MIN_SERVE_GAP)) continue
+    peaks.push(s)
+  }
+  const read = new Map(peaks.map((p) => [p, shapeAt(byTime, p)]))
+  const judged = [...read.values()].filter((s) => s !== 'unknown')
+  const shaped = judged.filter((s) => s === 'serve').length
+  const trusted = shaped >= MIN_SHAPED && shaped * 2 >= judged.length
+  const shapes = new Map(peaks.map((p) => [p, trusted ? read.get(p)! : ('unknown' as Shape)]))
+  const reference = peaks.filter((p) => shapes.get(p) !== 'other').sort((a, b) => a.t - b.t)
+  const localBest = rollingBest(reference, peaks, ROLLING_REACH_SECONDS)
+
+  const serves: number[] = []
+  const unsure: number[] = []
+  for (const p of peaks) {
+    // Against the best serve-shaped reach near it, not the best in the clip.
+    const best = Math.max(localBest.get(p) ?? -Infinity, shapes.get(p) === 'other' ? -Infinity : p.height)
+    const bar = Number.isFinite(best) ? best : p.height
+    if (p.height < bar - REACH_TOLERANCE_SHARE * (bar - resting)) continue
+    if (shapes.get(p) === 'other') unsure.push(p.t)
+    else serves.push(p.t)
+  }
+
+  return { serves: serves.sort((a, b) => a - b), unsure: unsure.sort((a, b) => a - b) }
+}
+
+/**
+ * The highest of `reference` within `radius` seconds of each of `at`, by a
+ * sliding window over time — linear in the peaks, which a half-hour session
+ * has a few hundred of. `reference` is sorted by time.
+ */
+function rollingBest(reference: ReachSample[], at: ReachSample[], radius: number): Map<ReachSample, number> {
   const out = new Map<ReachSample, number>()
-  // Indices into `byTime`, heights decreasing from the front.
+  // Indices into `reference`, heights decreasing from the front.
   const deque: number[] = []
   let ahead = 0
-  for (let i = 0; i < byTime.length; i++) {
-    while (ahead < byTime.length && byTime[ahead].t <= byTime[i].t + radius) {
-      while (deque.length && byTime[deque[deque.length - 1]].height <= byTime[ahead].height) deque.pop()
+  for (const p of [...at].sort((a, b) => a.t - b.t)) {
+    while (ahead < reference.length && reference[ahead].t <= p.t + radius) {
+      while (deque.length && reference[deque[deque.length - 1]].height <= reference[ahead].height) deque.pop()
       deque.push(ahead)
       ahead++
     }
-    while (deque.length && byTime[deque[0]].t < byTime[i].t - radius) deque.shift()
-    out.set(byTime[i], byTime[deque[0]].height)
+    while (deque.length && reference[deque[0]].t < p.t - radius) deque.shift()
+    if (deque.length) out.set(p, reference[deque[0]].height)
   }
   return out
+}
+
+/**
+ * How much of a long clip one player crop covers (L2.10).
+ *
+ * The scan points the pose model at the server (`pose/playerCrop.ts`), and it
+ * used to place that crop once for the whole clip from five sightings. A
+ * session changes sides, and the sightings then disagree and the crop is
+ * declined, so the model reads the whole frame and can pick the player on the
+ * next court. One crop per minute follows the player; a basket under two
+ * minutes keeps the one crop it always had.
+ */
+export const CROP_SEGMENT_SECONDS = 60
+
+/** The stretch of the clip whose crop a moment is read with. */
+export function cropSegment(t: number, duration: number): { index: number; from: number; to: number } {
+  const span = Math.max(0, duration)
+  if (span <= 2 * CROP_SEGMENT_SECONDS) return { index: 0, from: 0, to: span }
+  const last = Math.ceil(span / CROP_SEGMENT_SECONDS) - 1
+  const index = Math.min(last, Math.max(0, Math.floor(t / CROP_SEGMENT_SECONDS)))
+  return { index, from: index * CROP_SEGMENT_SECONDS, to: Math.min(span, (index + 1) * CROP_SEGMENT_SECONDS) }
 }

@@ -1317,7 +1317,34 @@ L2.4 onward is session mode.
         - byte-built audio boxes;
         - a Commons clip decoded in the preview, with its speed recorded.
       - After L2.4.
-- [ ] **L2.10 Who is serving** · M.
+- [x] **L2.10 Who is serving** · M.
+      - *Delta (Oct 9):* done for three of the four agreements; the fourth, an
+        impact heard, waits on L2.9.
+        - The scan keeps the pose it already detected. `shapeAt` calls a peak
+          serve-shaped when the other hand went above the head before it and
+          the feet held under 0.6 body heights a second through the load.
+        - The reach reference comes only from serve-shaped peaks. Others go to
+          a not-sure list, stored and counted on the dashboard.
+        - The shape is believed only with at least two shaped peaks that are
+          also a majority of those judged, so a shaky or panning camera falls
+          back to reach alone.
+        - The player crop is placed per minute of a long clip.
+        - Proof:
+          - L2.1's KNOWN smash check flipped: 10 of 10 serves with the shape,
+            3 of 10 on reach alone, kept as the reason;
+          - 50 serves with 5 smashes: all found, no strays, all 5 smashes put
+            aside;
+          - a swaying camera keeps all 10;
+          - plain sessions are unchanged;
+          - `cropSegment` tests;
+          - the bench's NCAA broadcast clip is read on reach alone with nothing
+            put aside.
+        - Departure: "still at the line" is measured as still feet, not as a
+          place on the court. A smash hit standing still still counts as a
+          serve.
+        - Also: `Cancelled` and `looksLikeNonVideo` moved to
+          `pose/errors.ts`, which took the extractor out of the entry bundle
+          (129.4 to 124.9 kB).
       - **What:** a crop per segment, and a serve accepted only when four
         things agree:
         - the player is still at the line;

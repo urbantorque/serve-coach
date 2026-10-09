@@ -123,6 +123,20 @@ await check('every serve of a thirty-minute session is one row that grows a line
   assert(previous < 200 * 1024, `the row is ${previous} bytes`)
 })
 
+await check('the overheads the scan was not sure of are kept with the session, and counted apart (L2.10)', async () => {
+  const io: SessionIO = {
+    locate: async () => ({ found: [5, 17, 29], unsure: [11.5] }),
+    read: async () => SERVE,
+    choose: (n) => sampleServes(n),
+    save: async () => {},
+  }
+  const result = await runSession(fresh(), io)
+  assert(JSON.stringify(result.unsure) === '[11.5]', `kept ${JSON.stringify(result.unsure)}`)
+  assert(result.found!.length === 3 && result.lines.length === 3, 'a not-sure overhead was read as a serve')
+  const back = normalisePracticeSession(JSON.parse(JSON.stringify(result)))!
+  assert(JSON.stringify(back.unsure) === '[11.5]', 'the not-sure list did not survive the store')
+})
+
 heading('Stopping, and carrying on')
 
 await check('a stop between serves keeps what was read and where it was', async () => {

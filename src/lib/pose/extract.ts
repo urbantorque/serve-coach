@@ -1,6 +1,7 @@
 import type { PoseLandmarker } from '@mediapipe/tasks-vision'
 import {
-  findServes,
+  classifyServes,
+  cropSegment,
   peakCandidates,
   planRefinement,
   planScan,
@@ -9,6 +10,10 @@ import {
 import { bridgeDetectionGaps, type PoseSample } from '../analysis/kalman'
 import { UnreadableVideoError, type Frame, type Landmark } from '../analysis/types'
 import { nextVideoTimestamp } from './poseEngine'
+import { Cancelled } from './errors'
+
+// In their own module so the app can name them without the extractor (L2.10).
+export { Cancelled, looksLikeNonVideo } from './errors'
 import { choosePlayerCrop, uncrop, type Crop, type PersonBox } from './playerCrop'
 import { boxFromFrame, refineFrame, type Pt } from './rtmpose'
 import { FINE_FPS, MAX_FINE_FRAMES, samplingRateFor } from './rate'
@@ -108,12 +113,6 @@ export interface ExtractProgress {
 }
 
 
-export class Cancelled extends Error {
-  constructor() {
-    super('Cancelled')
-    this.name = 'Cancelled'
-  }
-}
 
 
 /* ------------------------------------------------------------------- seeking */
@@ -152,32 +151,6 @@ export function supportsHEVC(): boolean {
   }
 }
 
-/**
- * Whether a file's own declared type already rules out its being a video,
- * before the decoder is ever asked to explain a failure it did not have.
- *
- * `describeDecodeFailure` below reads one `MediaError` code for two very
- * different situations — a genuine video this browser cannot decode, and a
- * file that was never a video at all — and on a browser with no HEVC
- * support it guesses the first for both, because that is the one it is
- * actually built to help with. A photo or a document picked by mistake then
- * comes back as "this is most likely HEVC" with hints about an iPhone
- * camera setting that have nothing to do with the actual file — confidently
- * wrong, not merely unhelpful, and on exactly the browsers most likely to
- * lack HEVC support and so most likely to hit this path.
- *
- * `type` is a container MIME type, not a codec, so a real HEVC `.mov` or
- * `.mp4` still reports `video/quicktime` or `video/mp4` and is untouched by
- * this — only a type the browser has already positively named as something
- * else is caught here. `false` for an empty type or an `audio/*` one, on
- * purpose: an empty type is a browser declining to guess, not evidence the
- * file is not a video, and an audio-only file already gets a more specific
- * answer once the decoder has actually looked at it ("There is no picture
- * in that file", in `loadVideo` below).
- */
-export function looksLikeNonVideo(type: string): boolean {
-  return type !== '' && !type.startsWith('video/') && !type.startsWith('audio/')
-}
 
 /**
  * Turn a media error into something the player can act on.
@@ -429,20 +402,41 @@ function poseInput(video: HTMLVideoElement, crop: Crop | undefined) {
 export async function scanForServes(
   video: HTMLVideoElement,
   landmarker: PoseLandmarker,
-  opts: { onProgress?: (ratio: number) => void; signal?: AbortSignal; people?: FindPeople } = {},
+  opts: {
+    onProgress?: (ratio: number) => void
+    signal?: AbortSignal
+    people?: FindPeople
+    /** Peaks that reached like a serve without a serve's shape (L2.10). */
+    onUnsure?: (times: number[]) => void
+  } = {},
 ): Promise<number[]> {
   const { onProgress = () => {}, signal } = opts
   const samples: ReachSample[] = []
-  // One crop for the whole clip. A player who changes sides between serves
-  // gives sightings that disagree, and `choosePlayerCrop` then declines.
-  const crop = await findCrop(video, opts.people, 0, video.duration, () => {
+  const check = () => {
     if (signal?.aborted) throw new Cancelled()
-  })
-  const input = poseInput(video, crop)
+  }
+  /*
+   * One crop per minute of a long clip, found the first time a sample lands
+   * in that minute (`cropSegment`, L2.10). A basket keeps one crop for the
+   * whole clip. A player who changes sides inside one minute still gives
+   * sightings that disagree, and `choosePlayerCrop` then declines.
+   */
+  const inputs = new Map<number, ReturnType<typeof poseInput>>()
+  const inputFor = async (t: number) => {
+    const seg = cropSegment(t, video.duration)
+    let input = inputs.get(seg.index)
+    if (!input) {
+      input = poseInput(video, await findCrop(video, opts.people, seg.from, seg.to, check))
+      inputs.set(seg.index, input)
+    }
+    return input
+  }
+  const aspect = video.videoWidth / Math.max(1, video.videoHeight)
 
-  /** Read the highest either hand gets at one moment. */
+  /** Read the highest either hand gets at one moment, and the pose around it. */
   const sampleAt = async (t: number) => {
-    if (signal?.aborted) throw new Cancelled()
+    check()
+    const input = await inputFor(t)
     // A seek that never landed would put this reach reading at a moment the
     // player was somewhere else, and a scan is nothing but a ranking of those.
     const at = await seekTo(video, t)
@@ -451,9 +445,21 @@ export async function scanForServes(
     const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker, video.currentTime))
     const image = res.landmarks?.[0]?.map((l) => input.back(toLandmark(l)))
     if (image) {
-      // Image y grows downwards, so negate it. Only y is compared here, so no
-      // aspect correction is needed.
-      samples.push({ t: at, height: -Math.min(image[15].y, image[16].y) })
+      // Image y grows downwards, so negate it. The feet's x is put on the same
+      // scale as y, because the shape test measures a distance with both.
+      const feetSeen = image[27].visibility > 0.5 && image[28].visibility > 0.5
+      samples.push({
+        t: at,
+        height: -Math.min(image[15].y, image[16].y),
+        pose: {
+          left: -image[15].y,
+          right: -image[16].y,
+          head: -image[0].y,
+          ...(feetSeen
+            ? { feetX: ((image[27].x + image[28].x) / 2) * aspect, feetY: (image[27].y + image[28].y) / 2 }
+            : {}),
+        },
+      })
     }
   }
 
@@ -480,7 +486,9 @@ export async function scanForServes(
     samples.sort((a, b) => a.t - b.t)
   }
 
-  return findServes(samples)
+  const finds = classifyServes(samples)
+  if (finds.unsure.length) opts.onUnsure?.(finds.unsure)
+  return finds.serves
 }
 
 /**

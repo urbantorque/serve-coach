@@ -50,7 +50,7 @@ import {
   type FailedCapture,
   type NotAServeError,
 } from './lib/analysis/types'
-import { Cancelled, looksLikeNonVideo } from './lib/pose/extract'
+import { Cancelled, looksLikeNonVideo } from './lib/pose/errors'
 import {
   deleteSession,
   getSession,
