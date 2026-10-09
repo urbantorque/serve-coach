@@ -5,6 +5,7 @@ import {
   CHAIN_RATIO_DEVIATION,
   CHAIN_RATIO_PER_SECOND,
 } from './diagnose'
+import { SOFT_MEASUREMENT } from './confidence'
 import { clamp, mean, statusOf } from './geometry'
 import type { Analysis, Metric, PhaseId, Status } from './types'
 import { cue } from './voice'
@@ -90,6 +91,13 @@ export interface MetricSpread {
   status: Status
   ideal: [number, number]
   range: [number, number]
+  /**
+   * Every serve read outside the target band (L1.8). A row this steady scores
+   * high for repeating itself, and repeating a fault is not praise, so the
+   * panel says "steady, but outside the target" rather than leaving a 100
+   * beside "Legs straight". Absent on reports from before it existed.
+   */
+  offTarget?: boolean
 }
 
 /**
@@ -312,6 +320,90 @@ export interface UncalibratedDelta {
 export const MIN_COMPARABLE_SERVES = 2
 
 /**
+ * How far each card reading moves between takes of one serve, from the camera
+ * alone: the standard deviation over twenty-four noisy takes, the larger of the
+ * worst real serve (the six Bath serves, filmed from the guide's placement and
+ * the back fence, `realiseReal`'s noise) and the rig's clean serve. Measured
+ * 2026-10-09; `consistency.test.ts` re-measures it and fails if the camera
+ * now moves a reading further than this says (L1.8).
+ *
+ * A reading missing here has no measured noise, and none is subtracted from it:
+ * the ball readings, which the mocap bench has no ball for.
+ */
+export const CARD_NOISE_SD: Record<string, number> = {
+  releaseHeight: 0.0069,
+  tossArmHold: 1.53,
+  tossPathWobble: 0.224,
+  kneeBend: 3.77,
+  hipShoulderSeparation: 8.74,
+  shoulderTilt: 2.59,
+  legDrive: 0.0081,
+  dropDepth: 0.0074,
+  elbowAtDrop: 5.29,
+  handUnderElbow: 2.43,
+  dropToContact: 18.5,
+  contactHeight: 0.0099,
+  armExtension: 9.63,
+  contactAhead: 1.97,
+  loadRatio: 4.59,
+}
+
+/**
+ * The expected range of six draws from a normal distribution, in standard
+ * deviations. The spread used to be max − min, and a range grows with how many
+ * serves are in it — 1.1σ for two, 2.5σ for six, 4.5σ for fifty — so the same
+ * player looked less steady in a bigger basket. A standard deviation does not
+ * grow with the count, and multiplying it by this keeps every score on the
+ * scale six serves were read on, which is the scale the bands were written for.
+ */
+export const RANGE_OF_SIX = 2.534
+
+/**
+ * The smallest gap between two overall scores worth calling one serve better
+ * than another: the report's own line for noise (`MEANINGFUL_DELTA` in
+ * progress.ts, held equal by a test). Under it, "your best serve against your
+ * worst" was two serves the score could not tell apart (L1.8).
+ */
+export const BEST_WORST_GAP = 3
+
+/** Sample standard deviation; zero for fewer than two readings. */
+function stdev(xs: number[]): number {
+  if (xs.length < 2) return 0
+  const m = mean(xs)
+  return Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1))
+}
+
+/**
+ * How far a sample variance of `n` draws of pure camera noise can reach, as a
+ * multiple of the noise's own variance, ninety-nine times in a hundred:
+ * χ²₀.₉₉(n − 1) / (n − 1), by Wilson and Hilferty's approximation (within 1%
+ * of the tables from n = 2). At six serves it is 3.0 — six draws of noise
+ * alone give a standard deviation up to 1.7 times the camera's, so taking out
+ * only the camera's average still called a still serve wandering on about one
+ * basket in fifty. Ninety-nine in a hundred per reading, because the panel
+ * reads fifteen of them and names the worst: the engine may miss a wander and
+ * may not invent one.
+ */
+function noiseReach(n: number): number {
+  const k = Math.max(1, n - 1)
+  const z = 2.326
+  const h = 2 / (9 * k)
+  return (1 - h + z * Math.sqrt(h)) ** 3
+}
+
+/**
+ * How much of a basket's spread is the serve rather than the camera (L1.8): the
+ * standard deviation with as much camera noise taken out as six (or however
+ * many) takes of one serve could show by chance (`noiseReach`), on the
+ * six-serve range's scale. A conservative reading of the wander, on purpose.
+ */
+export function servedSpread(id: string, values: number[]): number {
+  const sd = stdev(values)
+  const noise = CARD_NOISE_SD[id] ?? 0
+  return Math.sqrt(Math.max(0, sd * sd - noiseReach(values.length) * noise * noise)) * RANGE_OF_SIX
+}
+
+/**
  * How consistent is this element, given how much it moved?
  *
  * Judged against the width of its own target band rather than an absolute
@@ -346,7 +438,9 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
 
     for (const a of analyses) {
       const m = a.fundamentals.flatMap((f) => f.metrics).find((x) => x.id === id)
-      if (!m) break
+      // A reading the card marked approximate on any serve is not compared
+      // (L1.8): its spread would be the hedge as much as the serve.
+      if (!m || (m.confidence ?? 1) < SOFT_MEASUREMENT) break
       template = template ?? m
       readings.push(m.value)
     }
@@ -359,8 +453,12 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
   const metrics: MetricSpread[] = [...byId.values()].map(({ metric, values }) => {
     const min = Math.min(...values)
     const max = Math.max(...values)
+    // Kept for the bar, which draws where the serves actually landed.
     const spread = max - min
-    const score = consistencyScore(spread, metric.ideal)
+    // Scored on what the serve moved, not the camera, and not on how many
+    // serves were filmed (L1.8, `servedSpread`).
+    const served = servedSpread(metric.id, values)
+    const score = consistencyScore(served, metric.ideal)
     return {
       id: metric.id,
       label: metric.label,
@@ -371,11 +469,12 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
       min,
       max,
       spread,
-      volatility: spread / Math.max(1e-9, Math.abs(metric.ideal[1] - metric.ideal[0])),
+      volatility: served / Math.max(1e-9, Math.abs(metric.ideal[1] - metric.ideal[0])),
       score,
       status: statusOf(score),
       ideal: metric.ideal,
       range: metric.range,
+      ...(values.every((v) => v < metric.ideal[0] || v > metric.ideal[1]) ? { offTarget: true } : {}),
     }
   })
 
@@ -609,6 +708,8 @@ function buildGap(
   // whichever measurements happened to differ under a heading claiming one of
   // them was the good serve.
   if (overallScores[bestAt] === overallScores[worstAt]) return undefined
+  // Two serves the overall score cannot tell apart are not a best and a worst.
+  if (overallScores[bestAt] - overallScores[worstAt] < BEST_WORST_GAP) return undefined
 
   const differences: ServeDifference[] = metrics
     .map((m) => ({

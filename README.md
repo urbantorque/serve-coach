@@ -1191,6 +1191,36 @@ The report's own serve is still read again by the sweep. The full read has the
 ball and the refinement that swept serves skip, so putting it in the spread
 would compare unlike numbers.
 
+**A basket's spread is what the serve moved, not the camera.** The comparison
+used to score each reading on max − min across the basket, and that went wrong
+twice:
+- it counted the camera's take-to-take noise as the player's;
+- it grew with the number of serves, so the same player looked less steady in
+  a bigger basket.
+
+A real serve filmed six times could be told its hip–shoulder separation
+"changes serve to serve" from noise alone.
+
+Each reading now scores its standard deviation with the camera taken out.
+`CARD_NOISE_SD` was measured on the six Bath serves from two placements and on
+the rig, and `consistency.test.ts` re-measures it. What is taken out is as much
+noise as that many takes could show by chance, ninety-nine times in a hundred
+(`noiseReach`). The result is put back on the six-serve range's scale
+(`RANGE_OF_SIX`).
+
+Measured results:
+- no noise-only basket of a real serve, from either placement, is called
+  wandering;
+- a contact that really moves is still flagged;
+- a reading the card marked approximate on any serve is not compared.
+
+Two display changes go with it:
+- A row that held still outside its band says "steady, but outside the target"
+  in the amber of a near miss, rather than a green 100 beside "Legs straight".
+- Best against worst needs `BEST_WORST_GAP` (the report's own 3-point noise
+  line) between the two scores. The demo basket's third serve keeps its racket
+  high, so the demo still has a best and a worst to show.
+
 **The report's focus ranks over every measurement, not over the areas.** An area
 score is an average, so the weakest area is not reliably where the worst fault
 lives — a player with rigid legs could otherwise be told to work on their tempo

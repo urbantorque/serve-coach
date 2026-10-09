@@ -279,6 +279,16 @@ check('the consistency panel renders on its own', () => {
   assert(out.includes('Overall, serve by serve'), 'the panel rendered nothing recognisable')
 })
 
+check('a steady fault in a basket is called off target, not praised (L1.8)', () => {
+  // Every demo serve keeps its legs straight: the knee row holds still and is
+  // outside its band on every serve.
+  const c = basket().consistency!
+  const knee = c.metrics.find((m) => m.id === 'kneeBend')
+  assert(knee?.offTarget === true, 'the straight-legged basket did not mark the knee off target')
+  const out = html(createElement(ConsistencyPanel, { consistency: c, onDismiss: noop, createdAt: 0 }))
+  assert(out.includes('steady, but outside the target'), 'a steady fault was shown without saying it is off target')
+})
+
 check('the glance renders', () => {
   const out = html(
     createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop }),

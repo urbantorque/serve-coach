@@ -1065,7 +1065,18 @@ Small items, and everything after builds on them.
         - The wrong-hand error gets a "Read it left-handed" button.
       - *Proof:* the `sweepServes` harness with a stub `measure`, and an App
         flow test that lands on the report.
-- [ ] **L1.8 Honest basket statistics** · S.
+- [x] **L1.8 Honest basket statistics** · S. *Done (2026-10-09). The spread
+      is now the standard deviation less as much camera noise as that many
+      takes could show at the 99th percentile (`noiseReach`, Wilson–Hilferty
+      χ²), on the six-serve scale. `CARD_NOISE_SD` holds 15 readings measured
+      on Bath × 2 placements and the rig, and is re-measured by
+      `consistency.test.ts`. Measured: zero false "changes most" lines on 48
+      real noise-only baskets, and a planted contact wander is still flagged
+      (46). Removing only the average noise still flagged arm extension on one
+      basket in fifty, which is why the bound is the 99th percentile.
+      Off-target steady rows show in amber with a note. Best against worst
+      needs 3 points. The share card's spread rows are unchanged. Original
+      plan:*
       - **What:** spread becomes a standard deviation or MAD with the camera's
         own noise subtracted, soft rows excluded, and scaled to today's
         six-serve scores. Best-against-worst is hidden when the gap is under

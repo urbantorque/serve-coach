@@ -30,19 +30,22 @@ function SpreadRow({ m }: { m: MetricSpread }) {
   const bandWidth = Math.max(2, pct(m.ideal[1]) - bandLeft)
   const low = readoutOf(m.id, m.min)
   const high = readoutOf(m.id, m.max)
+  // Steady, and outside the target on every serve (L1.8). The score is still
+  // about repeating, so it stays; its colour does not say "good" about a fault.
+  const tone = m.offTarget ? 'fair' : m.status
 
   return (
     <li className="spread">
       <div className="spread-top">
         <span className="spread-label">{m.label}</span>
-        <span className={`spread-score tnum spread-score--${m.status}`}>{m.score}</span>
+        <span className={`spread-score tnum spread-score--${tone}`}>{m.score}</span>
       </div>
 
       <div className="bar">
         <div className="bar-track" />
         <div className="bar-band" style={{ left: `${bandLeft}%`, width: `${bandWidth}%` }} />
         <div
-          className={`spread-fill spread-fill--${m.status}`}
+          className={`spread-fill spread-fill--${tone}`}
           style={{ left: `${left}%`, width: `${width}%` }}
         />
       </div>
@@ -52,7 +55,16 @@ function SpreadRow({ m }: { m: MetricSpread }) {
           head height to full reach across six serves. */}
       <p className="spread-detail">
         {low === high ? (
-          <>Every serve: {low}</>
+          <>
+            Every serve: {low}
+            {m.offTarget && ' · steady, but outside the target'}
+          </>
+        ) : m.offTarget ? (
+          <>
+            {low}
+            <span className="spread-sep">→</span>
+            {high} · outside the target every time
+          </>
         ) : (
           <>
             {low}

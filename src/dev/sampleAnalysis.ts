@@ -159,8 +159,17 @@ export function sampleBasket(): Analysis[] {
   // from that rather than from their position in the list, so a basket of
   // `serves.index: 0` reports would render as several serves all numbered one.
   const indices = [0, 2, 3, 4]
-  return [1.38, 1.19, 1.44, 1.28].map((contactReach, i) => {
-    const a = sampleAnalysis({ contactReach })
+  // The third serve read here also keeps its racket high, so the basket has a
+  // best and a worst the overall score can tell apart: since L1.8 two serves
+  // under `BEST_WORST_GAP` apart are not called a best and a worst.
+  const dials: Partial<ServeDials>[] = [
+    { contactReach: 1.38 },
+    { contactReach: 1.19, dropBelowShoulder: -0.25 },
+    { contactReach: 1.44 },
+    { contactReach: 1.28 },
+  ]
+  return dials.map((d, i) => {
+    const a = sampleAnalysis(d)
     a.serves = { count: 5, index: indices[i] }
     return a
   })
