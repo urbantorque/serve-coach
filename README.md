@@ -1173,6 +1173,24 @@ Since L1.6:
 - the season's pick ignores readings the card marked approximate, as the plan
   and `pickFocus` do.
 
+**A report is never traded for an error.**
+- **A failed sweep keeps the report.** A basket sweep that found too few
+  readable serves used to replace the report it started from with "I could
+  only read one of those serves". That first serve had already been read,
+  judged and saved. Now the report stays, with one line saying why there is no
+  comparison (`withoutComparison`).
+- **A refused clip is not swept.** Its own read was not believed, so the app no
+  longer spends a minute on six more passes over the same footage.
+- **A refused serve inside a sweep counts as unclear.** It reaches no chip,
+  spread or best-against-worst.
+- **The wrong-hand error no longer points at a missing badge.** The app retries
+  a wrong-hand clip with the other hand on its own, so when both hands fail the
+  player is no longer told to tap a badge on a report that does not exist.
+
+The report's own serve is still read again by the sweep. The full read has the
+ball and the refinement that swept serves skip, so putting it in the spread
+would compare unlike numbers.
+
 **The report's focus ranks over every measurement, not over the areas.** An area
 score is an average, so the weakest area is not reliably where the worst fault
 lives — a player with rigid legs could otherwise be told to work on their tempo

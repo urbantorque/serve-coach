@@ -1046,7 +1046,16 @@ Small items, and everything after builds on them.
         same plan, or at least from confidence-filtered rows.
       - *Proof:* render tests in the `?demo=basket` shape, and a practice test
         with soft rows excluded.
-- [ ] **L1.7 Never trade a report for an error** · S.
+- [x] **L1.7 Never trade a report for an error** · S. *Done (2026-10-09),
+      with two departures:
+      - The report's serve is still read again, because the full read carries
+        the ball and the refinement that swept serves skip, and the spread
+        would mix unlike readings.
+      - No "Read it left-handed" button. The engine already retries with the
+        other hand, so the both-hands failure now says so instead of pointing
+        at a badge that is not there.
+      `withoutComparison` keeps the report. A refused clip is not swept, and a
+      refused serve in a sweep is counted unclear. Original plan:*
       - **What:**
         - A failed sweep falls back to the single report already saved, with
           a note.

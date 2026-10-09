@@ -18,10 +18,12 @@ import {
   pickFocus,
   sweepServes,
   sweepWindow,
+  withoutComparison,
   type SweepRun,
   type SweepServe,
 } from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
+import { sampleAnalysis } from '../../../dev/sampleAnalysis'
 import { progressionFor, rungFor } from '../progressions'
 import {
   IMPLAUSIBLE_HEIGHT_SPREAD,
@@ -1851,6 +1853,8 @@ interface SweepProbe {
 async function sweepOf(opts: {
   count: number
   unreadable?: number[]
+  /** Serves read to the end and then refused by triage (L1.7). */
+  refused?: number[]
   stopAfter?: number
   stopDuring?: number
   stopBefore?: boolean
@@ -1887,7 +1891,11 @@ async function sweepOf(opts: {
       if (opts.unreadable?.includes(serveIndex)) {
         throw new NotAServeError('I could not find a serve there.', ['Trim the clip.'])
       }
-      return measuredServe(serveIndex, opts.count)
+      const serve = measuredServe(serveIndex, opts.count)
+      if (opts.refused?.includes(serveIndex)) {
+        return { ...serve, triage: { ...serve.triage, status: 'rejected', reason: 'too_blurry' } as Analysis['triage'] }
+      }
+      return serve
     },
   )
   settled = true
@@ -1898,6 +1906,7 @@ async function sweepOf(opts: {
 const wholeBasket = await sweepOf({ count: 4 })
 const longBasket = await sweepOf({ count: 10 })
 const withUnreadable = await sweepOf({ count: 5, unreadable: [2] })
+const withRefused = await sweepOf({ count: 5, refused: [1, 3] })
 const stoppedBetweenServes = await sweepOf({ count: 6, stopAfter: 4 })
 const stoppedMidServe = await sweepOf({ count: 6, stopDuring: 4 })
 const stoppedAtOnce = await sweepOf({ count: 6, stopBefore: true })
@@ -1951,6 +1960,35 @@ check('one unreadable serve costs one serve, not the sweep', () => {
   assert(empty[0].number === 3, `the empty slot was labelled serve ${empty[0].number}, expected 3`)
   const c = buildConsistency(withUnreadable.result.serves, withUnreadable.result.attempted)
   assert(c!.skipped === 1, `reported ${c!.skipped} serves as too unclear, expected 1`)
+})
+
+check('a serve the engine refused is an unclear one, not a score (L1.7)', () => {
+  // Read to the end and then refused by triage. Its numbers were not believed,
+  // so they must reach no chip, spread or best-against-worst.
+  assert(withRefused.result.serves.length === 3, `kept ${withRefused.result.serves.length} of 5, expected 3`)
+  assert(withRefused.result.attempted === 5, `attempted ${withRefused.result.attempted}, expected 5`)
+  assert(
+    withRefused.result.serves.every((s) => s.triage?.status !== 'rejected'),
+    'a refused serve reached the comparison',
+  )
+  const empty = withRefused.streamed.filter((s) => s.analysis === undefined).map((s) => s.number)
+  assert(JSON.stringify(empty) === JSON.stringify([2, 4]), `the empty slots were ${JSON.stringify(empty)}, expected [2,4]`)
+  const c = buildConsistency(withRefused.result.serves, withRefused.result.attempted)
+  assert(c!.skipped === 2, `reported ${c!.skipped} serves as too unclear, expected 2`)
+})
+
+check('a sweep with nothing to compare leaves the report, with one line saying why (L1.7)', () => {
+  const a = sampleAnalysis()
+  for (const readable of [0, 1]) {
+    const kept = withoutComparison(a, readable)
+    assert(kept.id === a.id && kept.overall === a.overall, 'the report was replaced')
+    assert(kept.consistency === undefined, 'a comparison appeared from nowhere')
+    const added = kept.quality.warnings.slice(a.quality.warnings.length)
+    assert(added.length === 1, `added ${added.length} lines`)
+    assert(cueIssues(added[0]).length === 0, `"${added[0]}": ${cueIssues(added[0]).join('; ')}`)
+    assert(added[0].includes('compare') || added[0].includes('alone'), `the line does not say why: "${added[0]}"`)
+  }
+  assert(a.quality.warnings.length === sampleAnalysis().quality.warnings.length, 'the original report was changed')
 })
 
 /*

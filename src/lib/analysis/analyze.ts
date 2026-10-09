@@ -373,6 +373,14 @@ export async function sweepServes(
     try {
       const analysis = await measure(first + n, n, total)
       attempted++
+      // A serve the engine read and then refused is an unclear one, the same
+      // as a serve it could not read at all (L1.7). Its numbers were not
+      // believed, so they must not reach a chip, a spread or a best-against-
+      // worst; it is counted as attempted, so the panel says one was left out.
+      if (analysis.triage?.status === 'rejected') {
+        opts.onServe?.({ number: (analysis.serves?.index ?? first + n) + 1 })
+        continue
+      }
       serves.push(analysis)
       opts.onServe?.({ number: (analysis.serves?.index ?? first + n) + 1, analysis })
     } catch (err) {
@@ -391,6 +399,24 @@ export async function sweepServes(
   }
 
   return { serves, attempted, cancelled }
+}
+
+/**
+ * The report a sweep started from, when the sweep found nothing to compare it
+ * with (L1.7).
+ *
+ * The sweep used to replace the report with an error screen — "I could only
+ * read one of those serves" — about a clip whose first serve had already been
+ * read, judged and saved. Now the player keeps that report, with one line
+ * saying why there is no comparison under it. Not saved: the note is about
+ * this run of the sweep, not about the serve.
+ */
+export function withoutComparison(analysis: Analysis, readable: number): Analysis {
+  const note =
+    readable === 1
+      ? 'I could read only this serve in the clip, so there is nothing to compare it with.'
+      : 'I could not read the other serves in this clip, so this report covers this serve alone.'
+  return { ...analysis, quality: { ...analysis.quality, warnings: [...analysis.quality.warnings, cue(note)] } }
 }
 
 /**
@@ -1535,6 +1561,17 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         if (err instanceof NotAServeError && err.suggestedHand && attempt === 0) {
           hand = err.suggestedHand
           continue
+        }
+        // Both hands have now been tried (L1.7). The detector's own message
+        // says to tap the hand badge on the report, and there is no report
+        // here to tap: the retry above already did what the badge would do.
+        if (err instanceof NotAServeError && err.suggestedHand) {
+          const neither = new NotAServeError('I could not follow your racket arm in that clip.', [
+            'Film side-on from about four metres, with your whole body and the racket in frame.',
+            'Front cameras often mirror the picture, so use the back camera if you can.',
+          ])
+          if (opts.captureOnFailure) neither.capture = { frames, fps }
+          throw neither
         }
         // The window was chosen blind, so a serve failing to turn up in it says
         // far more about the scan than about the player. Told "that does not

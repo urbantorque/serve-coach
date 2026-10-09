@@ -814,7 +814,7 @@ export default function App() {
       // labelled with the serve numbers that will end up on the chips. Working
       // it out separately here is how a screen ends up counting from one while
       // the sweep measures serves five through ten.
-      const { analyzeAllServes, sweepWindow, throttleProgress } = await loadAnalysis()
+      const { analyzeAllServes, sweepWindow, throttleProgress, withoutComparison } = await loadAnalysis()
       const { first, total } = sweepWindow(analysis.serves.count)
       setSweep({ total, firstNumber: first + 1, done: [] })
       setProgress({ step: 'engine', ratio: 0, detail: 'Comparing your serves' })
@@ -876,20 +876,11 @@ export default function App() {
             setView({ kind: 'report', analysis, videoUrl: url })
             return
           }
-          setView({
-            kind: 'error',
-            // Said as it happened. The sweep can come back with one readable
-            // serve or with none, and a fixed "only one" told the second player
-            // about a serve that was never read.
-            title:
-              swept.serves.length === 1
-                ? 'I could only read one of those serves'
-                : 'I could not read the serves in that clip',
-            hints: [
-              'Comparing serves needs at least two clear ones in the same clip.',
-              'Keep the whole body in frame for every serve, and avoid anyone walking behind you.',
-            ],
-          })
+          // Too few readable serves to compare. The report it started from was
+          // read and saved already, so it stays on screen with a line saying
+          // why there is no comparison, rather than an error screen in its
+          // place (L1.7, `withoutComparison`).
+          setView({ kind: 'report', analysis: withoutComparison(analysis, swept.serves.length), videoUrl: url })
           return
         }
 
@@ -997,7 +988,16 @@ export default function App() {
        * unit is a pass per serve; what a pass costs on a phone is step 8 of
        * `COURT-CHECK.md` and has never been run.
        */
-      if (!glance && analysis.serves.count > 1 && lastFileRef.current && urlRef.current) {
+      // Not on a clip the engine refused (L1.7): its own read was not
+      // believed, and up to six more passes over the same footage would cost a
+      // minute to fill a comparison with serves it believes no better.
+      if (
+        !glance &&
+        analysis.serves.count > 1 &&
+        analysis.triage?.status !== 'rejected' &&
+        lastFileRef.current &&
+        urlRef.current
+      ) {
         await compareServes(analysis)
         return
       }
