@@ -21,7 +21,8 @@
  *
  * Falls back to the picture alone when the world skeleton gives no stature.
  */
-import { LM, median } from './geometry'
+import { peakBetween } from './between'
+import { LM, clamp, median } from './geometry'
 import type { Skeleton } from './phases'
 import type { Frame } from './types'
 
@@ -50,4 +51,26 @@ export function handHeightAt(
   const hipsWorld = (frame.world[LM.leftHip].y + frame.world[LM.rightHip].y) / 2
   const above = (hipsWorld - frame.world[wrist].y) / stature
   return Number.isFinite(above) ? (groundY - hips) / bodyHeight + above : pictured
+}
+
+/**
+ * The hand's height at contact: the top of its reach between samples, not the
+ * nearest sample's (`between.ts`, L2.6). The card and the diagnosis both read
+ * it here, so the two cannot come apart.
+ *
+ * Read at 32 fps against 50 on the rig and the six Bath serves from two
+ * placements, the nearest sample sat up to 1.58 of the reading's own noise
+ * deviations away; this sits 0.68.
+ */
+export function contactHeightOf(
+  frames: Frame[],
+  skel: Pick<Skeleton, 'keys' | 'bodyHeight' | 'groundY'>,
+  wrist: number,
+): number {
+  const near = [-1, 0, 1].map((d) => clamp(skel.keys.contact + d, 0, frames.length - 1))
+  return peakBetween(
+    near.map((i) => handHeightAt(frames, skel, frames[i], wrist)),
+    near.map((i) => frames[i].t),
+    1,
+  )
 }

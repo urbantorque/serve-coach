@@ -84,7 +84,10 @@ export interface Frame {
 // hand's height at contact is read without the lens's perspective (D7.4), which
 // moves it on every real clip by up to 0.1 depending on where the phone stood;
 // and an area with nothing graded on the clip leaves the overall instead of
-// counting as a 0 (L1.1, `overallOf`), about 9 points on the commonest club serve.
+// counting as a 0 (L1.1, `overallOf`), about 9 points on the commonest club serve;
+// and contact height is the top of the reach between samples rather than the
+// nearest sample's, and contact in front is read at the contact moment itself
+// (L2.6, `between.ts`), which raises contact height slightly at lower frame rates.
 export const SCORING_VERSION = 5
 
 /**

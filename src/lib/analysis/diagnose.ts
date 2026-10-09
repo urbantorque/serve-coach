@@ -22,7 +22,7 @@ import { readStance, type Stance } from './stance'
 import { readTossPlacement, type TossPlacement } from './tossPlacement'
 import { readHitch, type Hitch } from './hitch'
 import { readChestTurn, type ChestTurn } from './chestTurn'
-import { handHeightAt } from './handHeight'
+import { contactHeightOf } from './handHeight'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -983,15 +983,14 @@ export function diagnose(
 
   /* --- depth, lift and height ------------------------------------------- */
   const fDrop = at(keys.drop)
-  const fContact = at(keys.contact)
   const dropDepth = (fDrop.image[R.wrist].y - fDrop.image[R.shoulder].y) / bodyHeight
   // Image y grows downwards, so an elbow above the shoulder line is a positive
   // lift. This is what separates a real external rotation from a hand hanging
   // down the back with the elbow gone — the shape that looks like a drop on a
   // still and produces none of the racket speed.
   const elbowLift = (fDrop.image[R.shoulder].y - fDrop.image[R.elbow].y) / bodyHeight
-  // The card's own reading of the same number (`handHeight.ts`, D7.4).
-  const contactHeight = handHeightAt(frames, skel, fContact, R.wrist)
+  // The card's own reading of the same number (`handHeight.ts`, D7.4, L2.6).
+  const contactHeight = contactHeightOf(frames, skel, R.wrist)
 
   const tossPeak = options.ball ? (groundY - options.ball.apex.y) / bodyHeight : undefined
 

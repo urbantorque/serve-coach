@@ -4,7 +4,8 @@ import { readoutOf, targetOf } from './anatomy'
 import { FUNDAMENTALS, METRICS, READINGS, metricCopy } from './coaching'
 import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
 import { assessSpatial } from './spatial'
-import { handHeightAt } from './handHeight'
+import { contactHeightOf } from './handHeight'
+import { poseAt } from './between'
 import { cue } from './voice'
 import {
   LM,
@@ -566,7 +567,8 @@ export function measure(
 
   /* -------------------------------------------------------------- contact */
   // Without the lens's perspective in it — see `handHeight.ts` (D7.4).
-  values.contactHeight = handHeightAt(frames, skel, fContact, R.wrist)
+  // The top of the reach between samples, not the nearest sample's (L2.6).
+  values.contactHeight = contactHeightOf(frames, skel, R.wrist)
   values.armExtension =
     straightestArm(frames, skel.times.contact, R) ??
     steadyAngle(frames, keys.contact, R.shoulder, R.elbow, R.wrist)
@@ -581,10 +583,12 @@ export function measure(
   // between the trophy and contact is what defines it — no assumption about
   // which way the player happens to face the camera.
   const netwards = forwardDirection(frames, keys.trophy, keys.contact, R.wrist, bodyHeight)
+  // At the contact moment itself, between samples (`between.ts`, L2.6): the
+  // hand crosses the body fastest here, so the nearest sample moved this most.
   {
-    const hip = midpoint(fContact.image[LM.leftHip], fContact.image[LM.rightHip])
-    values.contactAhead =
-      (((fContact.image[R.wrist].x - hip.x) * netwards.sign) / bodyHeight) * 100
+    const at = poseAt(frames, skel.times.contact)
+    const hip = midpoint(at.image[LM.leftHip], at.image[LM.rightHip])
+    values.contactAhead = (((at.image[R.wrist].x - hip.x) * netwards.sign) / bodyHeight) * 100
   }
 
   /* ------------------------------------------------------------- the ball */

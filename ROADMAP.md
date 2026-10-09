@@ -1229,7 +1229,24 @@ L2.4 onward is session mode.
         - `planResume` tests;
         - a fake-video sweep of 120 serves.
       - After L2.4.
-- [ ] **L2.6 The light read** · M.
+- [x] **L2.6 The light read** · M.
+      - *Delta (Oct 9):* measured, and the light read declined; the measuring
+        fixed contact height instead.
+        - At 16 fps, 54 of 312 noisy takes were refused (rig plus the six Bath
+          serves from two placements, 24 seeds each).
+        - At 20 fps none were refused, and seven readings held within one noise
+          deviation of the 32 fps read. Drop depth (1.21), contact height
+          (1.64) and toss-arm hold (3.30) did not.
+        - Sessions read at 32 fps with the sweep's skips.
+        - `frameRate.test.ts` pins the verdict and fails the day those three
+          hold.
+        - Contact height was read off the nearest sample. It is now the top of
+          the reach between samples (`between.ts`), and its distance between
+          32 and 50 fps fell from 1.58 to 0.68 deviations. Folded into
+          `SCORING_VERSION` 5, unshipped.
+        - KNOWN: contact in front still moves 2.47 deviations between 32 and
+          50 fps, because the contact moment moves up to 12 ms.
+      - *Original plan:*
       - **What:** only the readings that hold at 16 fps, within `NOISE_FLOOR`
         of the 32 fps read: toss placement from the hand, contact height,
         knee bend, tempo, landing.

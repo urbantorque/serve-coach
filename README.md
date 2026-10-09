@@ -951,6 +951,7 @@ Everything is in `src/lib`:
 | `session/session.ts` | a practice session as stored: one small line per serve read, and the repair a stored row goes through |
 | `session/runner.ts` | reads a session a serve at a time, saving after each, so a stop loses only the serve in flight |
 | `session/line.ts` | one serve's analysis boiled down to the line a session keeps |
+| `analysis/between.ts` | readings taken between two samples: a pose on the line between them, and the top of a peak |
 | `session/video.ts` | a session's video work: timing the file, finding the serves, reading one through a shared element |
 | `session/length.ts`, `probe.ts` | which clips are sessions, and a clip's length read from its metadata alone |
 | `session/warmth.ts` | pauses a reading when the phone reports it is running hot, where the browser can say |
@@ -1322,6 +1323,29 @@ locked phone or a killed page loses at most the serve in flight, and the same
 row run again reads only the serves still missing. A hundred and twenty serves
 is 143 kB in one row. A serve that cannot be read becomes an "unclear" line and
 costs nothing else.
+
+**A session reads every serve at the report's rate, and the contact height
+no longer depends on it.** The plan for sessions was a light read at 16 fps,
+keeping only the readings that stayed within their noise of the 32 fps read.
+Measured on the rig and the six Bath serves from two placements, twenty-four
+noisy takes each, 16 fps refused 54 of 312 takes. At 20 fps none were refused,
+and seven readings held. The drop depth (1.2 noise deviations), the contact
+height (1.6) and the tossing arm's hold (3.3) did not, and a session's fault
+counts are made of those. So a session reads at 32 fps, without the ball, the
+racket boxes, the stills or the second pose model, and `frameRate.test.ts`
+says so until the three hold.
+
+The measuring found something nearer home. Between the app's own 32 fps and the
+suite's 50, contact height sat 1.58 deviations apart and contact in front 2.57:
+both were read off the nearest sampled frame while the contact moment had been
+placed between samples for some time. Contact height is now the top of the
+reach between samples (`peakBetween`, a parabola: exact for a rounded peak, a
+little low for a sharp one, so it never invents height), and reads 0.68 apart.
+Contact in front is read at the contact moment itself (`poseAt`), and still
+reads 2.47 apart. The moment is the cause there: `refineExtremum` places it
+up to 12 ms differently at the two rates, and the hand crosses the body at
+about seven metres a second. That one is pinned as a known limit rather than
+hidden.
 
 **A session is priced on the player's own phone before it starts.** A picked
 clip's length is read from its metadata first (`probe.ts`), and a clip past
