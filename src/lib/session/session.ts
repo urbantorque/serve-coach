@@ -60,6 +60,22 @@ export interface ServeLine {
 
 export type SessionPhase = 'locating' | 'reading' | 'done' | 'stopped'
 
+/**
+ * Where a practice session is, as its screen draws it (L2.4).
+ *
+ * `phase` says where the reading got to and survives a reload. This says what
+ * the screen is doing about it right now: pricing the file before anything
+ * starts, reading, paused and why, or finished. It lives in the view, not in
+ * the row, because none of it means anything once the page is gone.
+ */
+export type SessionStage =
+  /** Before reading: the file is being timed, then the choices are priced. */
+  | { state: 'planning'; timed: boolean; perSampleMs?: number }
+  | { state: 'running'; ratio: number; detail?: string; stopping?: boolean }
+  /** Stopped with its place kept: by the player, by the app being hidden, or by heat. */
+  | { state: 'paused'; reason: 'player' | 'hidden' | 'warm'; perSampleMs?: number }
+  | { state: 'done' }
+
 export interface PracticeSession {
   /** `practice-` and the file's identity, so the same file picked again finds it. */
   id: string
@@ -78,6 +94,16 @@ export interface PracticeSession {
   chosen?: number[]
   lines: ServeLine[]
   phase: SessionPhase
+  /**
+   * The rubric the lines were scored on (`SCORING_VERSION`), so a session is
+   * only ever set against another scored the same way (L2.8).
+   */
+  scoringVersion?: number
+  /**
+   * A still of the contact moment for the best and worst serves, by line
+   * number: JPEG data URLs, the only pictures a session keeps (L2.8).
+   */
+  stills?: Record<number, string>
 }
 
 /** The id a session for this file is stored under. */
@@ -130,6 +156,8 @@ export function normalisePracticeSession(raw: unknown): PracticeSession | undefi
     ...(chosen ? { chosen } : {}),
     lines,
     phase,
+    ...(typeof s.scoringVersion === 'number' ? { scoringVersion: s.scoringVersion } : {}),
+    ...(stillsOf(s.stills) ? { stills: stillsOf(s.stills) } : {}),
   }
 }
 
@@ -140,4 +168,14 @@ export function clockOf(seconds: number): string {
   const m = Math.floor((s % 3600) / 60)
   const ss = String(s % 60).padStart(2, '0')
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`
+}
+
+/** Stored stills, keeping only entries that are a line number and a JPEG or PNG. */
+function stillsOf(raw: unknown): Record<number, string> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const out: Record<number, string> = {}
+  for (const [k, v] of Object.entries(raw)) {
+    if (/^\d+$/.test(k) && typeof v === 'string' && /^data:image\/(jpeg|png);/.test(v)) out[Number(k)] = v
+  }
+  return Object.keys(out).length ? out : undefined
 }

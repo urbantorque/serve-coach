@@ -23,6 +23,7 @@ import { progressionFor } from './analysis/progressions'
 import { VERDICT_TABLES } from './analysis/verdict'
 import { cue } from './analysis/voice'
 import type { ServeOutcome, ServeTag, Session } from './storage/db'
+import type { PracticeSession } from './session/session'
 import type { ServeType } from './storage/prefs'
 import { clipIdOf } from './storage/sessionKey'
 
@@ -1339,9 +1340,15 @@ function weekStart(t: number): number {
  * last — empty weeks included, because a week off is part of the count.
  *
  * Every report is a serve, refused ones too: the arm served whether or not the
- * camera could read it.
+ * camera could read it. So is every serve a practice session found, read or
+ * not (L2.8): a forty-serve session is forty serves, not one report.
  */
-export function servesPerWeek(sessions: Session[], now: number = Date.now(), weeks = 8): WeekCount[] {
+export function servesPerWeek(
+  sessions: Session[],
+  now: number = Date.now(),
+  weeks = 8,
+  practice: readonly Pick<PracticeSession, 'createdAt' | 'found'>[] = [],
+): WeekCount[] {
   const thisWeek = weekStart(now)
   const out: WeekCount[] = []
   for (let k = weeks - 1; k >= 0; k--) {
@@ -1353,6 +1360,10 @@ export function servesPerWeek(sessions: Session[], now: number = Date.now(), wee
     const w = weekStart(s.createdAt)
     const slot = out.find((o) => o.start === w)
     if (slot) slot.serves++
+  }
+  for (const p of practice) {
+    const slot = out.find((o) => o.start === weekStart(p.createdAt))
+    if (slot) slot.serves += p.found?.length ?? 0
   }
   return out
 }

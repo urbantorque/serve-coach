@@ -16,13 +16,16 @@ import { buildConsistency, pairStills, type ServePairFrames } from '../lib/analy
 import { checkDrill } from '../lib/analysis/progressions'
 import type { Analysis } from '../lib/analysis/types'
 import type { PracticeLog, Session } from '../lib/storage/db'
+import type { PracticeSession } from '../lib/session/session'
+import { SCORING_VERSION } from '../lib/analysis/types'
+import type { ServeDials } from '../lib/analysis/syntheticServe'
 import { DEMO_DIALS, fitToClip, sampleAnalysis, sampleBasket, sampleClip, sampleHistory } from './sampleAnalysis'
 
 export interface DemoContext {
   setView: (view: View) => void
   setPair: (pair: ServePairFrames | undefined) => void
   /** Hold a seeded history in place of storage — see `demoHistory` in `App.tsx`. */
-  seedHistory: (history: { sessions: Session[]; practice: PracticeLog[] }) => void
+  seedHistory: (history: { sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[] }) => void
   /** The object URL of a generated clip, so `App.tsx` can release it with the rest. */
   keepVideoUrl: (url: string) => void
 }
@@ -106,6 +109,50 @@ export async function runDemoRoute(
    */
   if (demo === 'history') {
     seedHistory(sampleHistory())
+    return
+  }
+  // A finished practice session (L2.8): twenty-six serves found, two too
+  // unclear, a racket that stays high on most of them and a reach that sags
+  // over the last third, set against an earlier session. The rig has no
+  // camera, so the stills are labelled stand-ins.
+  if (demo === 'session') {
+    const [{ lineOf }, { extremes }] = await Promise.all([import('../lib/session/line'), import('../lib/session/stats')])
+    const build = (count: number, unclear: number[], dial: (i: number) => Partial<ServeDials>, createdAt: number) => {
+      const found = Array.from({ length: count }, (_, i) => 6 + i * 13.5)
+      const lines = found.map((t, i) =>
+        unclear.includes(i)
+          ? { number: i + 1, t, status: 'unclear' as const }
+          : lineOf(sampleAnalysis({ seed: 9100 + i, ...dial(i) }), i + 1, t),
+      )
+      const session: PracticeSession = {
+        id: `practice-demo-${createdAt}`,
+        createdAt,
+        updatedAt: createdAt,
+        fileName: 'Tuesday basket.mov',
+        duration: 6 + count * 13.5 + 20,
+        serveType: 'flat',
+        handedness: 'right',
+        mode: 'every',
+        found,
+        chosen: found.map((_, i) => i),
+        lines,
+        phase: 'done',
+        scoringVersion: SCORING_VERSION,
+      }
+      const { best, worst } = extremes(lines)
+      session.stills = Object.fromEntries([...best, ...worst].map((n) => [n, placeholderStill('Contact')]))
+      return session
+    }
+    const now = Date.now()
+    const previous = build(14, [3], (i) => ({ dropBelowShoulder: -0.2, contactReach: 1.3 + (i % 3) * 0.04 }), now - 7 * 864e5)
+    const session = build(
+      26,
+      [4, 17],
+      (i) => ({ dropBelowShoulder: -0.2, contactReach: i >= 17 ? 1.16 + (i % 2) * 0.02 : 1.34 + (i % 3) * 0.03 }),
+      now,
+    )
+    seedHistory({ sessions: [], practice: [], practiceSessions: [session, previous] })
+    setView({ kind: 'session', session, stage: { state: 'done' }, canRead: false })
     return
   }
   // A clip filmed with the phone on its side, refused by the same check the

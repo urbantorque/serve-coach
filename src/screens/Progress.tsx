@@ -31,10 +31,13 @@ import {
   thenAndNow,
 } from '../lib/progress'
 import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
+import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 
 interface Props {
   sessions: Session[]
+  /** Practice sessions, whose serves count in the weekly tally (L2.8). */
+  practiceSessions?: PracticeSession[]
   /** What the player said about each serve — see `ServeTag`. */
   tags?: ServeTag[]
   /** Which rung of each fault's ladder the player is on — see `Prefs.ladder`. */
@@ -69,6 +72,7 @@ interface Props {
  */
 export default function Progress({
   sessions,
+  practiceSessions,
   tags = [],
   ladder,
   practice,
@@ -92,7 +96,10 @@ export default function Progress({
   // when a week jumps (D5.4).
   const numbers = useMemo(() => byServeNumber(sessions, tags, form?.serveType), [sessions, tags, form])
   const inRates = useMemo(() => inRateByType(sessions, tags), [sessions, tags])
-  const weeks = useMemo(() => servesPerWeek(sessions), [sessions])
+  const weeks = useMemo(
+    () => servesPerWeek(sessions, undefined, undefined, practiceSessions),
+    [sessions, practiceSessions],
+  )
   const weekJump = useMemo(() => weekJumpLine(weeks), [weeks])
   // Each named fault over the recent serves, and the step of its ladder (D6.6).
   const faults = useMemo(() => faultTrends(sessions, ladder, form?.serveType), [sessions, ladder, form])

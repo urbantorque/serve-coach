@@ -1280,7 +1280,29 @@ L2.4 onward is session mode.
         - the 40 Bath serves as one player's basket under `realiseReal` give
           fewer false positives than judging single serves.
       - After L2.6.
-- [ ] **L2.8 The session dashboard** · M.
+- [x] **L2.8 The session dashboard** · M.
+      - *Delta (Oct 9):* done.
+        - Seven of the nine sections from §5: the headline, the counts, 2–4
+          fixes, a strip per serve for contact height and the toss, start
+          against end, best and worst with contact stills, and since last
+          session.
+        - `?demo=session` added.
+        - Serves per week now counts every serve a session found.
+        - Proof: render tests at every stage; every sentence the dashboard can
+          build passes `cueIssues` (that check caught one passive); a
+          375×812 preview with no console errors.
+        - Departures:
+          - first and second serves, and bulk tagging, are left out, because a
+            session has no tagging yet;
+          - the counts leave out swings with no hit and time on camera, which
+            need L2.9 and L2.10;
+          - no serve from a session joins the report history.
+        - The stills use the kept light reads plus the report's overlay, six
+          seeks a serve. The plan's three full reads (600 seeks) are charged in
+          full only when a pause dropped the kept analyses, so otherwise the
+          estimate runs about a minute long.
+        - The run moved out of `App.tsx` into `session/drive.ts` to keep
+          the entry bundle at 128.5 kB.
       - **What:** the nine sections in `LEVEL-UP-REVIEW.md` §5, and
         `?demo=session`. Serves per week counts sessions, not reports.
       - *Proof:* render tests, the copy lint, and a 375×812 preview. After L2.7.

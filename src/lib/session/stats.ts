@@ -393,3 +393,24 @@ export function sessionStats(lines: readonly ServeLine[]): SessionStats {
     representative: [...picks].sort((a, b) => a - b),
   }
 }
+
+/** How many of the best and of the worst serves a session pictures (L2.8). */
+export const PICTURED = 3
+
+/**
+ * The best and worst serves read, by line number: the ones a session keeps a
+ * still of and the dashboard shows. Best first, then worst first; a serve is in
+ * only one list, so a short session pictures each serve once.
+ */
+export function extremes(lines: readonly ServeLine[], k = PICTURED): { best: number[]; worst: number[] } {
+  const scored = lines
+    .filter((l) => l.status === 'read' && l.overall !== undefined)
+    .sort((a, b) => b.overall! - a.overall! || a.number - b.number)
+  const best = scored.slice(0, k).map((l) => l.number)
+  const worst = scored
+    .slice(k)
+    .reverse()
+    .slice(0, k)
+    .map((l) => l.number)
+  return { best, worst }
+}

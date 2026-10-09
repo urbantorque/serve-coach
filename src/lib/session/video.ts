@@ -11,7 +11,7 @@
  * owns, and a session never copies it into the clip store (`clipStore.ts`),
  * which is why a long clip is not refused for its size the way a basket is.
  */
-import { analyzeServe, locateServes, type AnalyzeProgress } from '../analysis/analyze'
+import { analyzeServe, captureServeStills, locateServes, type AnalyzeProgress } from '../analysis/analyze'
 import { isNotAServeError, type Analysis } from '../analysis/types'
 import type { Stretch } from '../analysis/slowMotion'
 import { readContainerTiming, stretchFromContainer } from '../pose/container'
@@ -37,6 +37,12 @@ export interface SessionVideo {
   locate: (signal?: AbortSignal, onProgress?: (ratio: number) => void) => Promise<number[]>
   /** One serve, light: no ball, no racket boxes, no stills, no second pose model. */
   read: (index: number, found: number[], opts: ReadOptions) => Promise<Analysis>
+  /**
+   * A still of one serve's contact moment, skeleton drawn as the report draws
+   * it (L2.8): from the analysis already in hand, or from a fresh read. Empty
+   * when the seek did not land.
+   */
+  still: (index: number, found: number[], opts: ReadOptions, kept?: Analysis) => Promise<string>
   /** Let the decoder go. */
   close: () => void
 }
@@ -56,7 +62,7 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
       return factor ? { factor, source: 'file' } : { factor: 1, source: 'none' }
     }))
 
-  return {
+  const reader: SessionVideo = {
     calibrate: async (signal) => {
       const landmarker = await loadEngine()
       await loadVideo(video, videoUrl)
@@ -121,9 +127,16 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
       }
     },
 
+    still: async (index, found, opts, kept) => {
+      const analysis = kept ?? (await reader.read(index, found, opts))
+      await captureServeStills(video, analysis, video.videoWidth / Math.max(1, video.videoHeight), opts.signal)
+      return analysis.phases.find((p) => p.id === 'contact')?.thumbnail ?? ''
+    },
+
     close: () => {
       video.removeAttribute('src')
       video.load()
     },
   }
+  return reader
 }

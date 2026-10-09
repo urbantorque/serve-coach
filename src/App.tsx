@@ -44,6 +44,7 @@ import { forgetAll, recall, remember } from './lib/analysisCache'
 import type { FaultMove } from './lib/analysis/carryForward'
 import type { ServePairFrames } from './lib/analysis/consistency'
 import {
+  SCORING_VERSION,
   hintsOf,
   type Analysis,
   type FailedCapture,
@@ -66,14 +67,14 @@ import { clipIdOf, fileKeyOf, sessionKeyFor } from './lib/storage/sessionKey'
 import { getPracticeSession, savePracticeSession } from './lib/storage/db'
 import { isSession } from './lib/session/length'
 import { probeDuration } from './lib/session/probe'
-import { sessionIdFor, type PracticeSession } from './lib/session/session'
+import { sessionIdFor, type PracticeSession, type SessionStage } from './lib/session/session'
 import type { SessionVideo } from './lib/session/video'
 import { clipFor, keepClip } from './lib/storage/clipStore'
 import { applyWhenIdle, onUpdateWaiting } from './lib/updates'
 import Analyzing, { type SweepProgress } from './screens/Analyzing'
 import Glance from './screens/Glance'
 import Home from './screens/Home'
-import type { SessionStage } from './screens/Session'
+
 /*
  * Split off the entry chunk. The progress screen, with its charts, share cards
  * and then-and-now pictures, is opened by a returning player a few times a
@@ -1041,6 +1042,7 @@ export default function App() {
         mode: 'sample',
         lines: [],
         phase: 'locating',
+        scoringVersion: SCORING_VERSION,
       }
       if (session.phase === 'done') {
         setView({ kind: 'session', session, stage: { state: 'done' }, canRead: true })
@@ -1072,12 +1074,10 @@ export default function App() {
   )
 
   /**
-   * Read the session on screen, or carry on reading it (L2.5).
-   *
-   * Every serve read is saved before the next starts (`runSession`), so a stop
-   * of any kind keeps what was read and its place. The bar is the work in
-   * seeks: the scan's share first, then the reads, so it never runs backwards
-   * between the two.
+   * Read the session on screen, or carry on reading it (L2.5): `driveSession`,
+   * handed the video, the screen and the store. Every serve read is saved
+   * before the next starts, so a stop of any kind keeps what was read and its
+   * place.
    */
   const startSession = useCallback(
     async (mode: 'sample' | 'every') => {
@@ -1093,56 +1093,21 @@ export default function App() {
       sessionAbortRef.current = controller
       stopReasonRef.current = 'player'
       // Already loaded by `openSessionClip`, so this is a resolved module.
-      const { guessServes, runSession, sampleServes, sessionCost } = await loadSessionLive()
+      const { driveSession } = await loadSessionLive()
       if (sessionAbortRef.current !== controller) return
-
-      const located = start.found !== undefined
-      const serves = start.found?.length ?? guessServes(start.duration)
-      const reading = start.chosen?.length ?? (start.mode === 'every' ? serves : sampleServes(serves).length)
-      const cost = sessionCost({ duration: start.duration, serves, reading, perSampleMs: 1, located })
-      const scanShare = cost.locate / Math.max(1, cost.locate + cost.read)
-      const ratioOf = (s: PracticeSession, scan = 1) =>
-        s.chosen === undefined
-          ? scanShare * scan
-          : scanShare + (1 - scanShare) * (s.lines.length / Math.max(1, s.chosen.length))
-      const detailOf = (s: PracticeSession) =>
-        s.chosen === undefined
-          ? undefined
-          : `Reading serve ${Math.min(s.lines.length + 1, s.chosen.length)} of ${s.chosen.length}`
-
-      let latest = start
-      const show = (session: PracticeSession, stage: SessionStage) => {
-        if (sessionAbortRef.current === controller) setView({ kind: 'session', session, stage, canRead: true })
-      }
-      show(start, { state: 'running', ratio: ratioOf(start, 0), detail: detailOf(start) })
-
       try {
-        const result = await runSession(start, {
-          locate: () =>
-            reader.locate(controller.signal, (scan) => show(latest, { state: 'running', ratio: ratioOf(latest, scan) })),
-          read: (index) =>
-            reader.read(index, latest.found!, {
-              handedness: latest.handedness,
-              serveType: latest.serveType,
-              tier: prefs.tier,
-              signal: controller.signal,
-            }),
-          choose: (count) =>
-            start.mode === 'every' ? Array.from({ length: count }, (_, i) => i) : sampleServes(count),
-          save: (s) => safely(() => savePracticeSession(s), undefined),
+        await driveSession({
+          start,
+          reader,
+          tier: prefs.tier,
+          perSampleMs,
           signal: controller.signal,
-          onChange: (s) => {
-            latest = s
-            if (s.phase === 'locating' || s.phase === 'reading') {
-              show(s, { state: 'running', ratio: ratioOf(s), detail: detailOf(s) })
-            }
-          },
+          show: (session: PracticeSession, stage: SessionStage) =>
+            setView({ kind: 'session', session, stage, canRead: true }),
+          save: (s) => safely(() => savePracticeSession(s), undefined),
+          stopReason: () => stopReasonRef.current,
+          current: () => sessionAbortRef.current === controller,
         })
-        if (sessionAbortRef.current !== controller) return
-        show(
-          result,
-          result.phase === 'done' ? { state: 'done' } : { state: 'paused', reason: stopReasonRef.current, perSampleMs },
-        )
         refreshSessions()
       } catch (err) {
         if (sessionAbortRef.current !== controller) return
@@ -1397,6 +1362,25 @@ export default function App() {
     setSheet(null)
   }
 
+  /*
+   * The session before this one, to set it against (L2.8): finished, the same
+   * serve type and scored on the same rubric, so the two are read alike.
+   */
+  const previousSession =
+    view.kind === 'session'
+      ? practiceSessions
+          .filter(
+            (p) =>
+              p.id !== view.session.id &&
+              p.phase === 'done' &&
+              p.serveType === view.session.serveType &&
+              p.scoringVersion !== undefined &&
+              p.scoringVersion === view.session.scoringVersion &&
+              p.createdAt < view.session.createdAt,
+          )
+          .sort((a, b) => b.createdAt - a.createdAt)[0]
+      : undefined
+
   // The report on screen, live or reopened, and the live one when there is one
   // — see the single `<Report>` below (W5.3).
   const liveReport = view.kind === 'report' ? view : undefined
@@ -1471,6 +1455,7 @@ export default function App() {
           {view.kind === 'session' && (
             <SessionScreen
               session={view.session}
+              previous={previousSession}
               stage={view.stage}
               canRead={view.canRead}
               onStart={(mode) => void startSession(mode)}
@@ -1655,6 +1640,7 @@ export default function App() {
           {view.kind === 'progress' && (
             <Progress
               sessions={sessions}
+              practiceSessions={practiceSessions}
               tags={serveTags}
               ladder={prefs.ladder}
               practice={practice}

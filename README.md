@@ -957,6 +957,9 @@ Everything is in `src/lib`:
 | `session/length.ts`, `probe.ts` | which clips are sessions, and a clip's length read from its metadata alone |
 | `session/warmth.ts` | pauses a reading when the phone reports it is running hot, where the browser can say |
 | `screens/Session.tsx` | a practice session's screen: the plan, the reading, the pause and the result |
+| `components/SessionDashboard.tsx` | a finished session: the headline, what to work on, start against end, every serve, best and worst, since last time |
+| `session/sessionCopy.ts` | how a session's findings are said, held to the copy rules in Node |
+| `session/drive.ts` | one run of a session against its video: the reading, the pictures, and what the screen shows at each step |
 | `placement.ts` | where the phone goes, said one way for every sentence that places it |
 | `analysis/consistency.ts` | compares the same measurements across a basket |
 | `analysis/carryForward.ts` | whether the fault the last serve was told about actually moved on this one |
@@ -1347,6 +1350,19 @@ reads 2.47 apart. The moment is the cause there: `refineExtremum` places it
 up to 12 ms differently at the two rates, and the hand crosses the body at
 about seven metres a second. That one is pinned as a known limit rather than
 hidden.
+
+**A finished session is one screen, said from its lines** (`SessionDashboard`,
+`?demo=session`). A headline (how many were read, and either the strongest
+change from start to end or the fault most serves showed), the counts, two to
+four fixes in the hierarchy's order with how often each showed and its drill,
+start against end or "Held steady", a dot per serve for the contact height
+against its band and for the toss against the front foot, the best three and
+worst three with a still of contact, and the typical score against the last
+session of the same serve type and rubric. The stills are the session's only
+pictures: the best and worst serves' analyses are kept whole while reading
+(never more than six) and drawn with the report's overlay at the end, or read
+again if a pause dropped them. The weekly serve count now counts every serve a
+session found (`servesPerWeek`), so forty serves are forty and not one.
 
 **A session's faults are the ones most of its serves show** (`session/stats.ts`).
 One serve can be read either side of a floor by the camera alone; a majority of

@@ -398,3 +398,152 @@
 .session-serve.is-work .session-serve-score {
   color: var(--work);
 }
+
+/* --- the finished session (L2.8) ------------------------------------------- */
+
+.session-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Four counts in a row: found, read, unclear and the middle score. */
+.session-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: 6px;
+}
+
+.session-figures > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+}
+
+.session-figures dt {
+  font-size: 11.5px;
+  color: var(--fg-faint);
+}
+
+.session-figures dd {
+  font-size: 22px;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.session-figure--great { color: var(--great); }
+.session-figure--good { color: var(--good); }
+.session-figure--fair { color: var(--fair); }
+.session-figure--work { color: var(--work); }
+
+.session-dash .session-meta {
+  margin-top: 0;
+}
+
+.session-strip {
+  padding: 12px 14px 10px;
+  border-radius: var(--r-md);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline-soft);
+}
+
+.session-strip .chart-svg {
+  cursor: default;
+}
+
+/* Three serves a row: the still, its place in the video, its score. */
+.session-picks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-picks-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.session-picks ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.session-picks li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 6px 4px;
+}
+
+.session-picks img,
+.session-pick-blank {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--r-xs);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline-soft);
+}
+
+.session-pick-at {
+  font-size: 11.5px;
+  color: var(--fg-faint);
+}
+
+.session-pick-score {
+  font-size: 15px;
+  font-weight: 660;
+}
+
+.session-pick-score.is-great { color: var(--great); }
+.session-pick-score.is-good { color: var(--good); }
+.session-pick-score.is-fair { color: var(--fair); }
+.session-pick-score.is-work { color: var(--work); }
+
+/* Every serve, folded away: the grid the reading drew, kept for looking back. */
+.session-all summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.session-all summary::-webkit-details-marker {
+  display: none;
+}
+
+.session-all summary svg {
+  transition: transform var(--fast) var(--ease);
+}
+
+.session-all[open] summary svg {
+  transform: rotate(90deg);
+}
+
+/* The strip's name over its readout: a long reading name and a sentence do
+   not share a phone's width. */
+.session-strip .chart-readout {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.session-strip .chart-readout strong {
+  font-size: 14.5px;
+  font-weight: 600;
+}

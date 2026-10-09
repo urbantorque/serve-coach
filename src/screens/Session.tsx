@@ -1,28 +1,16 @@
 import { Icon } from '../components/primitives'
-import { statusOf } from '../lib/analysis/geometry'
+import SessionDashboard, { ServeGrid } from '../components/SessionDashboard'
 import { clipLabel } from '../lib/clipLabel'
 import { PLACEMENT } from '../lib/placement'
 import { SESSION_SAMPLE, costLeft, guessServes, minutesOf, planChoices, type PlanChoice } from '../lib/session/plan'
-import { clockOf, toRead, type PracticeSession, type ServeLine } from '../lib/session/session'
+import { toRead, type PracticeSession, type SessionStage } from '../lib/session/session'
 
-/**
- * Where a practice session is, as this screen draws it (L2.4).
- *
- * `session.phase` says where the reading got to and survives a reload. This
- * says what the screen is doing about it right now: pricing the file before
- * anything starts, reading, paused and why, or finished. It lives in the view,
- * not in the row, because none of it means anything once the page is gone.
- */
-export type SessionStage =
-  /** Before reading: the file is being timed, then the choices are priced. */
-  | { state: 'planning'; timed: boolean; perSampleMs?: number }
-  | { state: 'running'; ratio: number; detail?: string; stopping?: boolean }
-  /** Stopped with its place kept: by the player, by the app being hidden, or by heat. */
-  | { state: 'paused'; reason: 'player' | 'hidden' | 'warm'; perSampleMs?: number }
-  | { state: 'done' }
+export type { SessionStage }
 
 interface Props {
   session: PracticeSession
+  /** The last finished session of the same serve type and rubric (L2.8). */
+  previous?: PracticeSession
   stage: SessionStage
   /**
    * Whether the video is open, so a reading can start or carry on.
@@ -51,11 +39,9 @@ const timeOf = (seconds: number | undefined) => {
   return m[0].toUpperCase() + m.slice(1)
 }
 
-export default function Session({ session, stage, canRead, onStart, onStop, onPickAgain, onLeave }: Props) {
+export default function Session({ session, previous, stage, canRead, onStart, onStop, onPickAgain, onLeave }: Props) {
   const label = clipLabel(session.fileName)
   const length = minutesOf(session.duration).replace(/^about /, '')
-  const read = session.lines.filter((l) => l.status === 'read').length
-  const unclear = session.lines.length - read
   const chosen = session.chosen?.length
   const begun = session.found !== undefined || session.lines.length > 0
 
@@ -181,17 +167,7 @@ export default function Session({ session, stage, canRead, onStart, onStop, onPi
             </p>
           </>
         ) : (
-          <>
-            <p className="session-lede tnum">
-              {read === found ? `Read all ${found} serves.` : `Read ${read} of the ${found} serves in the video.`}
-            </p>
-            {unclear > 0 && (
-              <p className="session-meta tnum">
-                {unclear === 1 ? 'One serve was' : `${unclear} serves were`} too unclear to read.
-              </p>
-            )}
-            <ServeGrid session={session} />
-          </>
+          <SessionDashboard session={session} previous={previous} />
         )}
         <button className="btn btn--ghost btn--full" onClick={onLeave}>
           Back home
@@ -262,41 +238,5 @@ function Resume({ session, perSampleMs }: { session: PracticeSession; perSampleM
         : `${session.lines.length} of ${chosen} serves read, ${toRead(session).length} to go.`}
       {left && ` ${left} left.`}
     </p>
-  )
-}
-
-/**
- * One tile per serve chosen, filling in as each is read.
- *
- * Its place in the video rather than its number, because the place is what a
- * player can find again by scrubbing. A tile for a serve too unclear to read
- * says so rather than staying blank, so an empty tile always means "not yet".
- */
-function ServeGrid({ session }: { session: PracticeSession }) {
-  const found = session.found ?? []
-  const byNumber = new Map(session.lines.map((l) => [l.number, l]))
-  const next = toRead(session)[0]
-  return (
-    <ol className="session-serves" aria-label="Serves">
-      {(session.chosen ?? []).map((index) => {
-        const line: ServeLine | undefined = byNumber.get(index + 1)
-        const at = clockOf(line?.t ?? found[index] ?? 0)
-        const status = line?.overall !== undefined ? statusOf(line.overall) : undefined
-        const state = !line ? (index === next ? ' is-next' : '') : line.status === 'unclear' ? ' is-unclear' : ` is-${status}`
-        const spoken = !line
-          ? `Serve at ${at}, not read yet`
-          : line.status === 'unclear'
-            ? `Serve at ${at}, too unclear to read`
-            : `Serve at ${at}, ${line.overall}`
-        return (
-          <li key={index} className={`session-serve${state}`} aria-label={spoken}>
-            <span className="session-serve-at tnum">{at}</span>
-            <span className="session-serve-score tnum" aria-hidden="true">
-              {!line ? '' : line.status === 'unclear' ? <Icon name="close" size={13} /> : line.overall}
-            </span>
-          </li>
-        )
-      })}
-    </ol>
   )
 }
