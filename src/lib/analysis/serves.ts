@@ -17,6 +17,23 @@ export const SCAN_FPS = 12
  */
 export const SCAN_BUDGET = 420
 
+/**
+ * The fewest samples a second the locating scan may take, however long the clip
+ * (L2.1).
+ *
+ * The budget above used to be the whole rule, so a ten-minute clip was read
+ * once every 1.43 s. A serve's hand stays above the clip's resting height for
+ * about 0.9 s — less at a real serve's pace — so a third of the serves in a
+ * long session were never sampled at all, and the eight the refinement then
+ * re-read were whichever the coarse pass happened to land near. Three a second
+ * puts two or three samples into every serve's rise. Past the budget the scan
+ * now costs time in proportion to the clip again — about a minute and a half
+ * of seeks for ten minutes of footage on a desktop — and that is the honest
+ * price of finding every serve: a session gets its own path, with an estimate
+ * up front, rather than a scan that is quick because it looked at less.
+ */
+export const SCAN_FLOOR_FPS = 3
+
 /** Seconds either side of a candidate that the refinement pass re-reads. */
 const REFINE_RADIUS = 0.9
 
@@ -53,9 +70,11 @@ export function planScan(duration: number, budget = SCAN_BUDGET): ScanPlan {
     }
   }
 
-  const step = span / budget
+  // Spread across the budget, but never thinner than `SCAN_FLOOR_FPS`.
+  const step = Math.min(span / budget, 1 / SCAN_FLOOR_FPS)
+  const count = Math.max(budget, Math.ceil(span / step))
   return {
-    times: Array.from({ length: budget }, (_, i) => i * step),
+    times: Array.from({ length: count }, (_, i) => i * step),
     step,
     coarse: true,
   }
@@ -78,7 +97,10 @@ export function planScan(duration: number, budget = SCAN_BUDGET): ScanPlan {
 export function planRefinement(
   candidates: number[],
   duration: number,
-  maxCandidates = 8,
+  // Every candidate (L2.1). It was the first eight, so in a long session the
+  // serves past the eighth were never re-read and `findServes` dropped them as
+  // under-read.
+  maxCandidates = Infinity,
 ): number[] {
   const span = Math.max(0, duration)
   // Snapped to one grid across the whole clip rather than laid out from each
@@ -104,14 +126,18 @@ export function planRefinement(
  * read closest to its peak, and never looks at the others at all.
  */
 /**
- * The most serves one clip is ever broken into.
+ * The most serves whose whole analyses are ever held at once.
  *
- * A cap on the scan, and therefore a cap on memory: a sweep holds one whole
- * `Analysis` per serve so the comparison can be built from them, so this
- * multiplies `MAX_FINE_FRAMES` into the resident cost of a basket. It was a
- * default argument with no name, which meant the number that bounds the biggest
- * allocation in the app was written down in one place and understood in none.
- * `footprint.ts` reads it.
+ * A cap on memory, not on the scan. A sweep holds one whole `Analysis` per serve
+ * so the comparison can be built from them, so this multiplies
+ * `MAX_FINE_FRAMES` into the resident cost of a basket, and `footprint.ts`
+ * reads it. The sweep itself holds `MAX_CONSISTENCY_SERVES`, which a test keeps
+ * at or under this.
+ *
+ * It used to cap the scan too — `peakCandidates` returned eight and the
+ * refinement re-read eight — and so it decided, without saying so, that a
+ * clip held at most eight serves (L2.1). The scan now finds every serve; how
+ * many are then read in full is the caller's choice, bounded here.
  */
 export const MAX_SERVES = 8
 
@@ -138,7 +164,7 @@ function restingFloor(samples: ReachSample[]): number | null {
   return middle + (highest - middle) * 0.25
 }
 
-export function peakCandidates(samples: ReachSample[], count = MAX_SERVES): number[] {
+export function peakCandidates(samples: ReachSample[], count = Infinity): number[] {
   if (!samples.length) return []
 
   // Only samples that stand out from the resting height are worth a second look.
@@ -176,6 +202,17 @@ export function peakCandidates(samples: ReachSample[], count = MAX_SERVES): numb
  */
 export const REACH_TOLERANCE_SHARE = 0.25
 
+/**
+ * How far either side of a peak the best reach it is judged against is taken
+ * from, in seconds (L2.1).
+ *
+ * It was the whole clip. In a basket that is the same thing; in a session it is
+ * not — one overhead smash early on, or a first serve a fifth higher than the
+ * tired ones forty minutes later, set a best that muted every serve after it.
+ * Two minutes either side covers a basket whole, so nothing changes for one.
+ */
+export const ROLLING_REACH_SECONDS = 120
+
 export interface ReachSample {
   t: number
   /** How high the higher hand got, in image units, larger being higher. */
@@ -211,17 +248,41 @@ export function findServes(samples: ReachSample[]): number[] {
   if (floor === null) return []
 
   const ranked = [...samples].sort((a, b) => b.height - a.height)
-  const bestHeight = ranked[0].height
   const resting = ranked[ranked.length >> 1].height
-  const tolerance = REACH_TOLERANCE_SHARE * (bestHeight - resting)
+  const localBest = rollingBest(samples, ROLLING_REACH_SECONDS)
   const picked: number[] = []
 
   for (const s of ranked) {
-    if (s.height < bestHeight - tolerance) break
     if (s.height < floor) break
+    // Against the best reach near it, not the best in the clip (L2.1).
+    const best = localBest.get(s) ?? ranked[0].height
+    if (s.height < best - REACH_TOLERANCE_SHARE * (best - resting)) continue
     if (picked.some((t) => Math.abs(t - s.t) < MIN_SERVE_GAP)) continue
     picked.push(s.t)
   }
 
   return picked.sort((a, b) => a - b)
+}
+
+/**
+ * The highest reach within `radius` seconds of each sample, by a sliding
+ * window over time — linear in the samples, which a half-hour session at the
+ * scan floor has about six thousand of.
+ */
+function rollingBest(samples: ReachSample[], radius: number): Map<ReachSample, number> {
+  const byTime = [...samples].sort((a, b) => a.t - b.t)
+  const out = new Map<ReachSample, number>()
+  // Indices into `byTime`, heights decreasing from the front.
+  const deque: number[] = []
+  let ahead = 0
+  for (let i = 0; i < byTime.length; i++) {
+    while (ahead < byTime.length && byTime[ahead].t <= byTime[i].t + radius) {
+      while (deque.length && byTime[deque[deque.length - 1]].height <= byTime[ahead].height) deque.pop()
+      deque.push(ahead)
+      ahead++
+    }
+    while (deque.length && byTime[deque[0]].t < byTime[i].t - radius) deque.shift()
+    out.set(byTime[i], byTime[deque[0]].height)
+  }
+  return out
 }

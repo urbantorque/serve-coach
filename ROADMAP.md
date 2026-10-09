@@ -1123,7 +1123,18 @@ Today a clip over 400 MB is refused, and a clip that gets in yields about 8
 serves, effectively at random. L2.1–L2.3 correct the basket path that exists.
 L2.4 onward is session mode.
 
-- [ ] **L2.1 Find every serve** · S–M.
+- [x] **L2.1 Find every serve** · S–M. *Done (2026-10-09). A 3-sample-a-second
+      floor under the scan budget, every candidate refined, and each peak
+      judged against the best reach within two minutes. On rig-trace sessions
+      the finder went from 7/10, 8/50 and 8/120 to 10/10, 50/50 and 120/120,
+      with no practice swing counted, at 804, 3,663 and 9,855 samples.
+      Departures:
+      - Adaptive sampling, sparse while the player walks, moves to L2.12; the
+        floor alone does the job.
+      - The report's serve is still read twice; see L1.7.
+      - A smash within two minutes still mutes nearby serves. That is a KNOWN
+        check, for L2.10.
+      Original plan:*
       - **What:**
         - re-read every candidate, not 8;
         - a density floor with adaptive coarse sampling;

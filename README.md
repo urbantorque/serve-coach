@@ -1286,6 +1286,37 @@ heights than a uniform scan at four times the cost. A thirty-minute clip went
 from 21,600 frames to at most 596: 420 for the coarse pass, plus the twenty-odd
 frames the refinement spends on each of up to eight candidates.
 
+**That cap lost most of a session, and since L2.1 there is a floor under it.**
+A serve's hand stays above the clip's resting height for under a second, and
+within the finder's tolerance of its peak for under a tenth. At 420 samples a
+ten-minute clip was read once every 1.43 s, so a third of its serves were never
+sampled at all. The refinement then re-read only eight candidates, the ones the
+coarse pass happened to land near.
+
+On session timelines built from the rig's own hand trace (fatigue, kicks and
+practice swings included), the bounded scan found:
+- 7 of 10 serves in two minutes;
+- 8 of 50 in ten minutes;
+- 8 of 120 in thirty.
+
+Now the coarse pass never drops below `SCAN_FLOOR_FPS` (three samples a
+second) and every candidate is refined. Each peak is judged against the best
+reach within two minutes of it (`ROLLING_REACH_SECONDS`), not the best in the
+clip, so a tired arm or an early smash cannot mute the serves an hour later.
+The same timelines now give:
+- 10 of 10 in 804 samples;
+- 50 of 50 in 3,663;
+- 120 of 120 in 9,855;
+- no practice swing counted as a serve.
+
+Cost is proportional to the clip again past 140 seconds, and that is the price
+of finding every serve. Sessions get their own path with an estimate up front
+(L2.4). Two known limits, each pinned:
+- a smash within two minutes of the serves still mutes them, because height
+  alone cannot tell the two apart (L2.10);
+- `MAX_SERVES` no longer caps the scan, only how many whole analyses are held
+  at once.
+
 Both passes land on one grid across the whole clip rather than being laid out from
 each candidate, so windows around two serves close together genuinely share their
 frames instead of each paying for the same instants.

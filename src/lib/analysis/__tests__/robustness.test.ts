@@ -17,7 +17,7 @@
  * They are a ratchet: if a change makes the pipeline noticeably noisier, this
  * goes red even though every accuracy test still passes.
  */
-import { assessQuality, blockingFramingIssue, pickFocus, rescore } from '../analyze'
+import { MAX_CONSISTENCY_SERVES, assessQuality, blockingFramingIssue, pickFocus, rescore } from '../analyze'
 import { FINE_FPS, MAX_FINE_FRAMES, readWindow, samplingRateFor } from '../../pose/extract'
 import { assessSpatial, DEPTH_YAW_RANGE, viewFromCourtYaw } from '../spatial'
 import {
@@ -41,8 +41,10 @@ import { IMPLAUSIBLE_JUMP, LM, MIN_OPENING_SWEEP_DEG, maxTrackingJump, median, t
 import { planarSpeedSeries, sampleRadius, timeline } from '../kinematics'
 import { measure } from '../metrics'
 import {
+  MAX_SERVES,
   MIN_SERVE_GAP,
   SCAN_BUDGET,
+  SCAN_FLOOR_FPS,
   SCAN_FPS,
   findServes,
   peakCandidates,
@@ -434,17 +436,123 @@ check('a short clip is sampled exactly as it always was', () => {
   assert(plan.times.length === 48, `sampled ${plan.times.length} times, expected 48`)
 })
 
-check('the scan cost is bounded however long the clip is', () => {
-  // The failure this replaces: cost proportional to duration. A ten-minute clip
-  // is inside the 400 MB the app accepts, and used to cost 7200 seeks — roughly
-  // seven minutes of waiting before the first measurement.
-  for (const minutes of [1, 3, 10, 30]) {
-    const plan = planScan(minutes * 60)
-    const refine = plan.coarse ? planRefinement(peakCandidates(basketSamples(6, 8, plan.step, minutes * 60).samples), minutes * 60) : []
-    const total = plan.times.length + refine.length
-    note(`${minutes} min: ${plan.times.length} coarse + ${refine.length} refine = ${total} samples`)
-    assert(total <= SCAN_BUDGET + 200, `${minutes} min clip would read ${total} frames`)
+check('the scan reads the budget, or three samples a second past it, and nothing more (L2.1)', () => {
+  // Bounded at the budget until L2.1, which is what made a long session lose a
+  // third of its serves. Now: the budget up to 140 s, then `SCAN_FLOOR_FPS` —
+  // cost in proportion to the clip, at the least density that still puts two
+  // or three samples into every serve's rise.
+  for (const minutes of [0.5, 1, 2, 3, 10, 30]) {
+    const duration = minutes * 60
+    const plan = planScan(duration)
+    const expected = duration <= SCAN_BUDGET / SCAN_FPS ? Math.max(2, Math.floor(duration * SCAN_FPS)) : Math.max(SCAN_BUDGET, Math.ceil(duration * SCAN_FLOOR_FPS))
+    note(`${minutes} min: ${plan.times.length} coarse samples, one every ${plan.step.toFixed(2)} s`)
+    assert(Math.abs(plan.times.length - expected) <= 1, `${minutes} min read ${plan.times.length}, expected ${expected}`)
+    assert(plan.step <= 1 / SCAN_FLOOR_FPS + 1e-9, `${minutes} min was read every ${plan.step.toFixed(2)} s`)
   }
+})
+
+/**
+ * A practice session as a hand-height trace, made from the rig's own serve
+ * rather than a parabola (L2.1).
+ *
+ * The parabola the checks above use is 0.9 s wide at its base and wide at its
+ * top, which is why the bounded scan looked fine against it. The rig's real
+ * reach stays within the finder's tolerance of its peak for under a tenth of a
+ * second. So the trace here is the rig's serve itself, read off its wrists at
+ * 60 fps, played at each serve time; between serves the hand rests at the
+ * ready height. Every serve in the session reaches a little less than the one
+ * before (a fifth less by the end), every fourth is a kick a little lower
+ * again, and practice swings to shoulder height sit among them. `overhead`
+ * puts a smash 30% above the first serve at that time, in seconds.
+ */
+function sessionTrace(serves: number, minutes: number, seed = 3, overhead?: number) {
+  const frames = buildServe({}, 60)
+  const reach = frames.map((fr) => ({ t: fr.t, h: -Math.min(fr.image[15].y, fr.image[16].y) }))
+  const rest = reach[0].h
+  const top = reach.reduce((b, s) => (s.h > b.h ? s : b))
+  const length = reach[reach.length - 1].t
+  let s = seed
+  const rand = () => ((s = (s * 1103515245 + 12345) % 2 ** 31), s / 2 ** 31)
+  const span = minutes * 60
+  const gap = (span - 10) / serves
+  const peaks = Array.from({ length: serves }, (_, i) => 5 + i * gap + (rand() - 0.5) * gap * 0.4)
+  const scaleOf = (i: number) => (1 - 0.2 * (i / Math.max(1, serves - 1))) * (i % 4 === 3 ? 0.9 : 1)
+  // Practice swings to about shoulder height, and one overhead well above the serves.
+  const swings = Array.from({ length: Math.round(serves / 3) }, (_, i) => peaks[i] + gap * 0.5)
+  const at = (time: number): number => {
+    let h = rest
+    peaks.forEach((p, i) => {
+      const local = time - p + top.t
+      if (local < 0 || local > length) return
+      const k = Math.min(reach.length - 1, Math.max(0, Math.round(local * 60)))
+      h = Math.max(h, rest + (reach[k].h - rest) * scaleOf(i))
+    })
+    for (const w of swings) {
+      const d = Math.abs(time - w)
+      if (d < 0.6) h = Math.max(h, rest + (top.h - rest) * 0.55 * (1 - d / 0.6))
+    }
+    if (overhead !== undefined) {
+      const d = Math.abs(time - overhead)
+      if (d < 0.5) h = Math.max(h, rest + (top.h - rest) * 1.3 * (1 - d / 0.5))
+    }
+    return h + (rand() - 0.5) * 0.004
+  }
+  return { at, peaks, span }
+}
+
+/** The scan `scanForServes` runs, with the trace standing in for the video. */
+function locate(trace: ReturnType<typeof sessionTrace>) {
+  const plan = planScan(trace.span)
+  const samples: ReachSample[] = plan.times.map((time) => ({ t: time, height: trace.at(time) }))
+  const refine = plan.coarse ? planRefinement(peakCandidates(samples), trace.span) : []
+  for (const time of refine) samples.push({ t: time, height: trace.at(time) })
+  samples.sort((a, b) => a.t - b.t)
+  return { found: findServes(samples), read: plan.times.length + refine.length }
+}
+
+check('every serve in a basket or a session is found, and nothing else is (L2.1)', () => {
+  for (const [serves, minutes] of [
+    [10, 2],
+    [50, 10],
+    [120, 30],
+  ] as const) {
+    const trace = sessionTrace(serves, minutes)
+    const { found, read } = locate(trace)
+    const matched = trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
+    const stray = found.filter((f) => !trace.peaks.some((p) => Math.abs(f - p) < 0.25))
+    note(`${serves} serves in ${minutes} min: found ${matched.length}, ${stray.length} stray, ${read} samples read`)
+    assert(matched.length === serves, `${serves - matched.length} of ${serves} serves were not found in ${minutes} min`)
+    assert(stray.length === 0, `${stray.length} serves were found that were not there: ${stray.map((x) => x.toFixed(1)).join(', ')}s`)
+  }
+})
+
+check('an overhead early on does not mute the serves after it (L2.1)', () => {
+  // The smash at 40 s reaches 30% above the first serve. Judged against the
+  // clip's best, the tired serves half an hour later sat below its tolerance.
+  const trace = sessionTrace(120, 30, 11, 40)
+  const late = trace.peaks.filter((p) => p > 20 * 60)
+  const { found } = locate(trace)
+  const lateFound = late.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
+  assert(lateFound.length === late.length, `${late.length - lateFound.length} of the last ${late.length} serves were muted`)
+})
+
+check('KNOWN: an overhead within two minutes still mutes the serves near it', () => {
+  /*
+   * Reach height alone cannot tell a smash from a serve, and the smash is the
+   * higher of the two, so the serves within `ROLLING_REACH_SECONDS` of it are
+   * judged against it and the tired ones fall below the tolerance. Telling
+   * them apart needs the serve's own shape — still at the line, the tossing
+   * arm rising before the reach — which is L2.10. Flip this when it lands.
+   */
+  const trace = sessionTrace(10, 2, 3, 40)
+  const { found } = locate(trace)
+  const matched = trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
+  note(`with a smash in the basket: ${matched.length} of 10 serves found`)
+  assert(matched.length < 10, 'KNOWN gap closed: a smash in the basket no longer mutes its serves — flip this')
+})
+
+check('the memory cap stays above what the sweep holds', () => {
+  assert(MAX_CONSISTENCY_SERVES <= MAX_SERVES, `the sweep holds ${MAX_CONSISTENCY_SERVES}, the cap is ${MAX_SERVES}`)
 })
 
 check('coarse sampling still finds every serve in a basket', () => {
