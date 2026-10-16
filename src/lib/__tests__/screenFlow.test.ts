@@ -207,6 +207,8 @@ const HISTORY_CONSUMERS = [
   'findPracticeFocus',
   'glanceStrain',
   'inRateByType',
+  // A set's aim, from the player's own taps (L3.7).
+  'inRateFor',
   'longestStreakLine',
   'recurringStrainOf',
   'rotationMoveOnTrip',

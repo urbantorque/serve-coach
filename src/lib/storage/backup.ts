@@ -84,7 +84,7 @@ export interface Backup {
    * Optional, and `version` is not bumped, for the reason `practice` gives above
    * its own field: nothing about the old shape became unreadable.
    */
-  prefs?: Pick<Prefs, 'handedness' | 'tier' | 'serveType'>
+  prefs?: Pick<Prefs, 'handedness' | 'tier' | 'serveType' | 'sets'>
   /**
    * What the player said about individual serves — which serve it was, and
    * where it landed.
@@ -126,7 +126,8 @@ export interface Backup {
  * player.
  */
 export function portablePrefs(p: Prefs): Backup['prefs'] {
-  return { handedness: p.handedness, tier: p.tier, serveType: p.serveType }
+  // Finished sets travel too (L3.7): a record is about the player, not the phone.
+  return { handedness: p.handedness, tier: p.tier, serveType: p.serveType, ...(p.sets?.length ? { sets: p.sets } : {}) }
 }
 
 /**
@@ -566,6 +567,16 @@ export async function importBackup(
         prefs.serveType in SERVE_TYPES
       ) {
         patch.serveType = prefs.serveType
+      }
+      // Sets merged by when they began, so neither phone's records are lost.
+      if (Array.isArray(prefs.sets) && prefs.sets.length) {
+        const mine = here.sets ?? []
+        const seen = new Set(mine.map((s) => s.startedAt))
+        const theirs = prefs.sets.filter(
+          (s) =>
+            s && typeof s.startedAt === 'number' && typeof s.inServes === 'number' && (s.serveNumber === 1 || s.serveNumber === 2) && !seen.has(s.startedAt),
+        )
+        if (theirs.length) patch.sets = [...mine, ...theirs].sort((a, b) => a.startedAt - b.startedAt)
       }
       if (Object.keys(patch).length) {
         store.writePrefs(patch)

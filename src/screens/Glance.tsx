@@ -94,6 +94,14 @@ interface Props {
    * identically without it.
    */
   scoreMove?: ScoreMove
+  /**
+   * A set of serves (L3.7): the running count while one is under way, or the
+   * line a set just finished on this serve earned. Absent otherwise.
+   */
+  set?: { line: string; running: boolean }
+  /** Start a set of ten of one serve number. Absent where taps cannot be stored. */
+  onStartSet?: (serveNumber: 1 | 2) => void
+  onStopSet?: () => void
 }
 
 export default function Glance({
@@ -109,6 +117,9 @@ export default function Glance({
   rotation,
   strain,
   scoreMove,
+  set,
+  onStartSet,
+  onStopSet,
   speak = false,
   onToggleSpeak,
 }: Props) {
@@ -360,6 +371,40 @@ export default function Glance({
                 onClick={() => onTagOutcome(outcome === o ? undefined : o)}
               >
                 {OUTCOME_LABEL[o]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/*
+        A set of ten from the player's own taps (L3.7). Under the landing
+        chips, because a set counts nothing until a landing is tapped, and in
+        the same chips and asides the screen already has — nothing new to read
+        on a fence.
+      */}
+      {onTagOutcome && set && (
+        <div className="glance-actions">
+          <p className="glance-move">
+            <Icon name={set.running ? 'target' : 'check'} size={15} />
+            <span>{set.line}</span>
+          </p>
+          {set.running && onStopSet && (
+            <div className="reading-chips">
+              <button className="chip chip--button" onClick={onStopSet}>
+                Stop this set
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {onTagOutcome && onStartSet && !set?.running && (
+        <div className="glance-actions">
+          <span className="t-overline">Start a set of 10</span>
+          <div className="reading-chips">
+            {([1, 2] as const).map((n) => (
+              <button key={n} className="chip chip--button" onClick={() => onStartSet(n)}>
+                {n === 1 ? 'First serves' : 'Second serves'}
               </button>
             ))}
           </div>

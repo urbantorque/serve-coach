@@ -63,6 +63,15 @@ import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage
 import { clipIdOf, fileKeyOf, sessionKeyFor } from './lib/storage/sessionKey'
 import { getPracticeSession, savePracticeSession } from './lib/storage/db'
 import { drilledFault } from './lib/weekPlan'
+import {
+  SETS_KEPT,
+  finishedSet,
+  inRateFor,
+  setDoneLine,
+  setRunningLine,
+  setServes,
+  setTarget,
+} from './lib/sets'
 import { isSession } from './lib/session/length'
 import { probeDuration } from './lib/session/probe'
 import { sessionIdFor, type PracticeSession, type SessionStage } from './lib/session/session'
@@ -465,6 +474,36 @@ export default function App() {
   // be redefined every time the focus changes — and it is handed to a button
   // that must not be replaced under the player's finger.
   practiceRef.current = practice
+
+  /*
+   * Sets from the player's own taps (L3.7). A set finishes the moment its
+   * tenth landing is tapped: the result moves into the records and the glance
+   * that took it says so.
+   */
+  const startSet = useCallback(
+    (serveNumber: 1 | 2) =>
+      setPrefs(
+        writePrefs({
+          activeSet: { startedAt: Date.now(), serveNumber, target: setTarget(inRateFor(sessions, serveTags, serveNumber)) },
+        }),
+      ),
+    [sessions, serveTags],
+  )
+  useEffect(() => {
+    const active = prefs.activeSet
+    if (!active) return
+    const done = finishedSet(active, sessions, serveTags)
+    if (done) setPrefs(writePrefs({ activeSet: undefined, sets: [...(prefs.sets ?? []), done].slice(-SETS_KEPT) }))
+  }, [prefs.activeSet, prefs.sets, sessions, serveTags])
+  const glanceSet = (analysis: Analysis): { line: string; running: boolean } | undefined => {
+    const active = prefs.activeSet
+    if (active) {
+      const counted = setServes(active, sessions, serveTags)
+      return { line: setRunningLine(active, counted.length, counted.filter((c) => c.isIn).length), running: true }
+    }
+    const just = (prefs.sets ?? []).find((r) => r.endedAt === analysis.createdAt)
+    return just ? { line: setDoneLine(just, prefs.sets ?? []), running: false } : undefined
+  }
   // Read by the sweep, which is declared once and would otherwise judge a
   // basket against the history it was created with (L3.4).
   historyRef.current = { sessions, ladder: prefs.ladder }
@@ -1544,6 +1583,9 @@ export default function App() {
               outcome={tagsById(serveTags).get(view.analysis.id)?.outcome}
               onTagServe={(n) => void applyServeTag(view.analysis.id, { serveNumber: n })}
               onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
+              set={glanceSet(view.analysis)}
+              onStartSet={startSet}
+              onStopSet={() => setPrefs(writePrefs({ activeSet: undefined }))}
             />
           )}
 

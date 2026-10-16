@@ -1662,7 +1662,27 @@ does, and nothing marks a fault as fixed.
         set in Settings. It is counted forgivingly, and only analysed trips
         count.
       - *Proof:* seeded fortnightly trips show a streak.
-- [ ] **L3.7 Sets from the player's own tags** · S–M.
+- [x] **L3.7 Sets from the player's own tags** · S–M.
+      - *Delta (Oct 17):* done.
+        - The glance offers "Start a set of 10" for first or for second
+          serves, under the landing chips.
+        - A set (`sets.ts`) counts the next ten serves whose landing was
+          tapped, of its serve number or of none. Serves tagged as the other
+          number do not count.
+        - The aim is the player's own in-rate for that serve number (the
+          newest 40 taps) over ten, plus one, at most ten. Below 5 taps there
+          is no aim: the first set is "your mark to beat next time".
+        - The running line counts as it goes. On the tenth landing the set
+          moves into the records (`Prefs.sets`, newest 60), and the glance
+          says, e.g., "Set of 10 first serves: 8 in. You reached your aim of
+          7. Your best set of first serves yet." A shortfall is said as
+          plainly.
+        - Sets travel in the backup and merge by start time.
+        - Proof:
+          - tag fixtures for the aim, the serve numbers kept apart, what a
+            set counts, records and the backup merge;
+          - glance render tests;
+          - the preview, starting and stopping a set.
       - **What:** "Start a set of 10" on the glance. The target is the
         player's own in-rate plus one. First and second serves are kept
         apart, and the best set is a record.

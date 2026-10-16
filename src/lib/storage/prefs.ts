@@ -15,6 +15,8 @@
 export type Handedness = 'right' | 'left'
 export type ServeType = 'flat' | 'kick' | 'slice'
 
+import type { ActiveSet, SetResult } from '../sets'
+
 /** How often a player gets to a court. */
 export type Cadence = 'weekly' | 'fortnightly' | 'monthly'
 
@@ -58,6 +60,10 @@ export interface Prefs {
    * streak is counted at this pace; absent, it is read off their visits.
    */
   cadence?: Cadence
+  /** A set of serves under way on the glance (L3.7). */
+  activeSet?: ActiveSet
+  /** Finished sets, oldest first, the newest `SETS_KEPT`: the records live here. */
+  sets?: SetResult[]
 }
 
 const KEY = 'serve-coach-prefs'
