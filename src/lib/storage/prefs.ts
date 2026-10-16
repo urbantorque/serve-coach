@@ -15,6 +15,9 @@
 export type Handedness = 'right' | 'left'
 export type ServeType = 'flat' | 'kick' | 'slice'
 
+/** How often a player gets to a court. */
+export type Cadence = 'weekly' | 'fortnightly' | 'monthly'
+
 export interface Prefs {
   /** Which hand holds the racket. Asked once; the detector then cross-checks it. */
   handedness?: Handedness
@@ -50,6 +53,11 @@ export interface Prefs {
    * on, in Settings; the store refuses to write without it.
    */
   keepClips?: boolean
+  /**
+   * How often the player gets to a court, when they have said (L3.6). The
+   * streak is counted at this pace; absent, it is read off their visits.
+   */
+  cadence?: Cadence
 }
 
 const KEY = 'serve-coach-prefs'

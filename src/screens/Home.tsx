@@ -9,6 +9,7 @@ import { faultForMetric } from '../lib/analysis/progressions'
 import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine, tripDay } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
+import type { Cadence } from '../lib/storage/prefs'
 import { clipLabel } from '../lib/clipLabel'
 import type { PracticeSession } from '../lib/session/session'
 
@@ -22,6 +23,8 @@ interface Props {
    * trend, the records and the streaks. Empty for a seeded history.
    */
   ledger?: TripRecord[]
+  /** How often the player gets to a court, when they have said (L3.6). */
+  cadence?: Cadence
   /** `undefined` while the cache is still being asked. */
   offlineReady: boolean | undefined
   /** Whether storage has answered; until then `sessions` being empty means nothing. */
@@ -107,6 +110,7 @@ const coarsePointer = () =>
 export default function Home({
   sessions,
   ledger = NO_TRIPS,
+  cadence,
   offlineReady,
   sessionsLoaded,
   onPick,
@@ -143,7 +147,10 @@ export default function Home({
   const week = useMemo(() => weekPlan(sessions, ladder), [sessions, ladder])
   const progress = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
-  const streak = useMemo(() => streakLine(sessions, Date.now(), ledger), [sessions, ledger])
+  const streak = useMemo(
+    () => streakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }),
+    [sessions, ledger, cadence, practiceSessions],
+  )
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, undefined, ladder),
     [sessions, ladder],

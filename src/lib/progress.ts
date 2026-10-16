@@ -38,7 +38,7 @@ import { cue } from './analysis/voice'
 import type { ServeOutcome, ServeTag, Session } from './storage/db'
 import type { TripRecord } from './storage/ledger'
 import type { PracticeSession } from './session/session'
-import type { ServeType } from './storage/prefs'
+import type { Cadence, ServeType } from './storage/prefs'
 import { clipIdOf } from './storage/sessionKey'
 
 export interface TrendPoint {
@@ -959,6 +959,68 @@ export function clearedStrainOf(
  */
 export const STREAK_GAP_MS = 9 * 24 * 60 * 60 * 1000
 
+/** What a practice session needs to count as a visit. */
+export interface Visitable {
+  createdAt: number
+  updatedAt: number
+  lines: readonly unknown[]
+}
+
+/**
+ * The longest gap that keeps a streak, by how often the player plays (L3.6):
+ * the cadence and a few days over, so a trip moved by a weekend does not break
+ * it. Weekly is the nine days the streak always allowed.
+ */
+export const CADENCE_GAP_MS: Record<Cadence, number> = {
+  weekly: STREAK_GAP_MS,
+  fortnightly: 18 * 24 * 60 * 60 * 1000,
+  monthly: 38 * 24 * 60 * 60 * 1000,
+}
+
+/** The cadence as the streak line says it. */
+export const CADENCE_WORDS: Record<Cadence, string> = {
+  weekly: 'roughly weekly',
+  fortnightly: 'roughly every two weeks',
+  monthly: 'roughly monthly',
+}
+
+/** How a streak is counted: the ledger and practice sessions beside the reports, and the cadence. */
+export interface StreakContext {
+  ledger?: readonly TripRecord[]
+  /** Set in Settings; inferred from the visits when absent. */
+  cadence?: Cadence
+  practice?: readonly Visitable[]
+}
+
+/** Visits the cadence is read off, at most: the player's habit now, not last year's. */
+const CADENCE_WINDOW = 8
+
+/**
+ * How often this player gets to a court, from the median gap between their
+ * last visits (L3.6). A median, so one missed fortnight does not turn a weekly
+ * player monthly. Weekly until there are three visits to read a gap from.
+ */
+export function inferCadence(
+  sessions: Session[],
+  ledger: readonly TripRecord[] = [],
+  practice: readonly Visitable[] = [],
+): Cadence {
+  const visits = visitSpans(sessions, ledger, practice).slice(-CADENCE_WINDOW)
+  if (visits.length < 3) return 'weekly'
+  const gaps = visits.slice(1).map((v, i) => v.from - visits[i].from).sort((a, b) => a - b)
+  const median = gaps[Math.floor(gaps.length / 2)]
+  const days = median / (24 * 60 * 60 * 1000)
+  return days <= 10 ? 'weekly' : days <= 21 ? 'fortnightly' : 'monthly'
+}
+
+function streakTerms(sessions: Session[], ctx: StreakContext) {
+  const ledger = ctx.ledger ?? []
+  const practice = ctx.practice ?? []
+  // A stored value this build does not know is no answer at all.
+  const cadence = ctx.cadence && ctx.cadence in CADENCE_GAP_MS ? ctx.cadence : inferCadence(sessions, ledger, practice)
+  return { cadence, gap: CADENCE_GAP_MS[cadence], ledger, practice }
+}
+
 /**
  * How many trips to the court in a row have landed within `STREAK_GAP_MS` of
  * the one before, counting back from the most recent — and zero once the
@@ -983,8 +1045,10 @@ export function tripStreak(
   gapMs = STREAK_GAP_MS,
   /** The season ledger (L3.3): visits whose reports were pruned still count. */
   ledger: readonly TripRecord[] = [],
+  /** Practice sessions (L3.6): a long clip read is a visit too. */
+  practice: readonly Visitable[] = [],
 ): number {
-  const visits = visitSpans(sessions, ledger)
+  const visits = visitSpans(sessions, ledger, practice)
   if (visits.length === 0) return 0
   const latest = visits[visits.length - 1]
   if (now - latest.to > gapMs) return 0
@@ -1004,7 +1068,11 @@ export function tripStreak(
  * type, so recorded trips of two types on one afternoon are one visit,
  * chained by the same gap `tripsOf` uses.
  */
-function visitSpans(sessions: Session[], ledger: readonly TripRecord[]): { from: number; to: number }[] {
+function visitSpans(
+  sessions: Session[],
+  ledger: readonly TripRecord[],
+  practice: readonly Visitable[] = [],
+): { from: number; to: number }[] {
   const live = tripsOf(sessions, MIN_THEN_AND_NOW_GAP_MS).map((t) => ({
     from: t[0].createdAt,
     to: t[t.length - 1].createdAt,
@@ -1012,7 +1080,12 @@ function visitSpans(sessions: Session[], ledger: readonly TripRecord[]): { from:
   const gone = ledger
     .filter((r) => !live.some((v) => v.from <= r.to && r.from <= v.to))
     .map((r) => ({ from: r.from, to: r.to }))
-  const spans = [...live, ...gone].sort((a, b) => a.from - b.from)
+  // Only a session that read a serve is a visit: a clip opened and stopped
+  // before anything was read is not evidence of a trip (L3.6).
+  const sessionsRead = practice
+    .filter((p) => p.lines.length > 0)
+    .map((p) => ({ from: p.createdAt, to: Math.max(p.createdAt, p.updatedAt) }))
+  const spans = [...live, ...gone, ...sessionsRead].sort((a, b) => a.from - b.from)
   const out: { from: number; to: number }[] = []
   for (const s of spans) {
     const last = out[out.length - 1]
@@ -1039,8 +1112,9 @@ export function longestStreak(
   sessions: Session[],
   gapMs = STREAK_GAP_MS,
   ledger: readonly TripRecord[] = [],
+  practice: readonly Visitable[] = [],
 ): number {
-  const visits = visitSpans(sessions, ledger)
+  const visits = visitSpans(sessions, ledger, practice)
   if (visits.length === 0) return 0
   let longest = 1
   let current = 1
@@ -1062,11 +1136,12 @@ export function longestStreak(
 export function longestStreakLine(
   sessions: Session[],
   now: number = Date.now(),
-  ledger: readonly TripRecord[] = [],
+  ctx: StreakContext = {},
 ): string | undefined {
-  const longest = longestStreak(sessions, STREAK_GAP_MS, ledger)
+  const { gap, ledger, practice } = streakTerms(sessions, ctx)
+  const longest = longestStreak(sessions, gap, ledger, practice)
   if (longest < 2) return undefined
-  const current = tripStreak(sessions, now, STREAK_GAP_MS, ledger)
+  const current = tripStreak(sessions, now, gap, ledger, practice)
   return current === longest
     ? `Your longest run yet — ${longest} trips in a row.`
     : `Your longest run was ${longest} trips in a row.`
@@ -1203,11 +1278,12 @@ export function gapDeltaFor(trend: ConsistencyTrend | undefined, viewedId: strin
 export function streakLine(
   sessions: Session[],
   now: number = Date.now(),
-  ledger: readonly TripRecord[] = [],
+  ctx: StreakContext = {},
 ): string | undefined {
-  const n = tripStreak(sessions, now, STREAK_GAP_MS, ledger)
+  const { gap, cadence, ledger, practice } = streakTerms(sessions, ctx)
+  const n = tripStreak(sessions, now, gap, ledger, practice)
   if (n < 2) return undefined
-  return `${n} trips to the court in a row, roughly weekly.`
+  return `${n} trips to the court in a row, ${CADENCE_WORDS[cadence]}.`
 }
 
 /**

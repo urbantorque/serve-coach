@@ -34,6 +34,7 @@ import {
 } from '../lib/progress'
 import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
+import type { Cadence } from '../lib/storage/prefs'
 import { partLabel, servePath, type PartState } from '../lib/servePath'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
@@ -56,6 +57,8 @@ interface Props {
    * trend, the records and the streaks. Empty for a seeded history.
    */
   ledger?: TripRecord[]
+  /** How often the player gets to a court, when they have said (L3.6). */
+  cadence?: Cadence
   /** Practice sessions, whose serves count in the weekly tally (L2.8). */
   practiceSessions?: PracticeSession[]
   /** What the player said about each serve — see `ServeTag`. */
@@ -93,6 +96,7 @@ interface Props {
 export default function Progress({
   sessions,
   ledger = NO_TRIPS,
+  cadence,
   practiceSessions,
   tags = [],
   ladder,
@@ -113,7 +117,10 @@ export default function Progress({
   const sheetMilestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
   // Not type-restricted: a streak is about showing up at all, across every
   // serve type, the same choice `Home.tsx` makes with its own copy.
-  const streak = useMemo(() => streakLine(sessions, Date.now(), ledger), [sessions, ledger])
+  const streak = useMemo(
+    () => streakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }),
+    [sessions, ledger, cadence, practiceSessions],
+  )
   // First and second serves apart, and how often each serve type went in
   // (D5.3), from the player's own taps. Serves per week, and one plain line
   // when a week jumps (D5.4).
@@ -126,7 +133,10 @@ export default function Progress({
   const weekJump = useMemo(() => weekJumpLine(weeks), [weeks])
   // Each named fault over the recent serves, and the step of its ladder (D6.6).
   const faults = useMemo(() => faultTrends(sessions, ladder, form?.serveType), [sessions, ladder, form])
-  const longestStreakText = useMemo(() => longestStreakLine(sessions, Date.now(), ledger), [sessions, ledger])
+  const longestStreakText = useMemo(
+    () => longestStreakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }),
+    [sessions, ledger, cadence, practiceSessions],
+  )
   // Not type-restricted and not era-restricted — see `recurringStrainOf`. A
   // joint has the same range whatever the serve was aiming at.
   const strain = useMemo(() => recurringStrainOf(sessions), [sessions])

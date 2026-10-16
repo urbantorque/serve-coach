@@ -31,6 +31,9 @@ import {
   glanceStrain,
   longestStreak,
   longestStreakLine,
+  inferCadence,
+  streakLine,
+  CADENCE_GAP_MS,
   sameTrip,
   shortDate,
   tripDay,
@@ -264,6 +267,51 @@ heading('The longest streak ever, not just the one still standing')
 
 check('no history has no longest streak', () => {
   assert(longestStreak([]) === 0, 'an empty history produced a nonzero longest streak')
+})
+
+heading('Attendance at the player\'s own pace (L3.6)')
+
+/** One serve a trip, `every` days apart, ending at day `last`. */
+const everyFew = (every: number, trips: number, last = 100) =>
+  Array.from({ length: trips }, (_, i) => savedServe((last - (trips - 1 - i) * every) * DAY, `c${every}-${i}`))
+
+check('seeded fortnightly trips show a streak, said at their pace', () => {
+  const fortnightly = everyFew(14, 6)
+  const now = 103 * DAY
+  // The fixed nine days used to break this every time.
+  assert(tripStreak(fortnightly, now) <= 1, 'the fixture is not one the old rule broke')
+  assert(inferCadence(fortnightly) === 'fortnightly', `inferred ${inferCadence(fortnightly)}`)
+  const line = streakLine(fortnightly, now)
+  note(line ?? 'no line')
+  assert(line === '6 trips to the court in a row, roughly every two weeks.', `"${line}"`)
+})
+
+check('a weekly player is read as weekly, and one missed week does not make them fortnightly', () => {
+  const weekly = everyFew(7, 8)
+  assert(inferCadence(weekly) === 'weekly', `inferred ${inferCadence(weekly)}`)
+  const missed = weekly.filter((_, i) => i !== 4)
+  assert(inferCadence(missed) === 'weekly', 'one missed week changed the cadence')
+  assert(inferCadence(everyFew(30, 5)) === 'monthly', 'a monthly player was not read as monthly')
+  assert(inferCadence(everyFew(30, 2)) === 'weekly', 'two visits were enough to read a pace from')
+})
+
+check('the cadence a player sets wins over the one read off their visits', () => {
+  const fortnightly = everyFew(14, 6)
+  const now = 103 * DAY
+  assert(streakLine(fortnightly, now, { cadence: 'weekly' }) === undefined, 'a weekly player was let off a fortnight')
+  assert(/roughly monthly/.test(streakLine(fortnightly, now, { cadence: 'monthly' }) ?? ''), 'the set cadence was not used')
+  // A value this build does not know is ignored, not trusted.
+  const odd = streakLine(fortnightly, now, { cadence: 'daily' as never })
+  assert(/every two weeks/.test(odd ?? ''), `an unknown cadence was used: "${odd}"`)
+  assert(CADENCE_GAP_MS.weekly === STREAK_GAP_MS, 'the weekly allowance moved from the nine days it always had')
+})
+
+check('a practice session that read serves is a visit; one that read nothing is not', () => {
+  const serves = everyFew(7, 2, 100)
+  const now = 101 * DAY
+  const session = (at: number, lines: number) => ({ createdAt: at, updatedAt: at + HOUR, lines: Array.from({ length: lines }) })
+  assert(tripStreak(serves, now, STREAK_GAP_MS, [], [session(86 * DAY, 12)]) === 3, 'a practice session did not count')
+  assert(tripStreak(serves, now, STREAK_GAP_MS, [], [session(86 * DAY, 0)]) === 2, 'an unread session counted as a trip')
 })
 
 check('a run that has since lapsed is still the longest streak, unlike tripStreak itself', () => {

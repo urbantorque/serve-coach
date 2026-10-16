@@ -103,6 +103,7 @@ const loadSessionLive = () => import('./lib/session/live')
  */
 const StoragePanel = lazy(() => import('./components/StoragePanel'))
 const KeepClipsPanel = lazy(() => import('./components/KeepClipsPanel'))
+const CadencePicker = lazy(() => import('./components/CadencePicker'))
 const DeviceCheck = lazy(() => import('./components/DeviceCheck'))
 const CorpusIngest = lazy(() => import('./components/CorpusIngest'))
 
@@ -451,7 +452,10 @@ export default function App() {
   // Not type-restricted, unlike `bestGapFor` below — a streak is about
   // showing up at all, across every serve type, the same choice `Home.tsx`
   // already makes with its own copy of this same call.
-  const streak = useMemo(() => streakLine(sessions, Date.now(), tripLedger), [sessions, tripLedger])
+  const streak = useMemo(
+    () => streakLine(sessions, Date.now(), { ledger: tripLedger, cadence: prefs.cadence, practice: practiceSessions }),
+    [sessions, tripLedger, prefs.cadence, practiceSessions],
+  )
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs, prefs.ladder),
     [sessions, drillLogs, prefs.ladder],
@@ -1440,6 +1444,7 @@ export default function App() {
             <Home
               sessions={sessions}
               ledger={tripLedger}
+              cadence={prefs.cadence}
               offlineReady={offlineReady}
               sessionsLoaded={sessionsLoaded}
               onPick={(f) => void openClip(f)}
@@ -1668,6 +1673,7 @@ export default function App() {
             <Progress
               sessions={sessions}
               ledger={tripLedger}
+              cadence={prefs.cadence}
               practiceSessions={practiceSessions}
               tags={serveTags}
               ladder={prefs.ladder}
@@ -1885,6 +1891,7 @@ export default function App() {
           onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
         />
         <Suspense fallback={null}>
+          <CadencePicker value={prefs.cadence} onChange={(cadence) => setPrefs(writePrefs({ cadence }))} />
           <StoragePanel count={sessions.length} onImported={refreshSessions} />
           <KeepClipsPanel keep={Boolean(prefs.keepClips)} onChange={(keepClips) => setPrefs(writePrefs({ keepClips }))} />
         </Suspense>

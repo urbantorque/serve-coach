@@ -1635,7 +1635,29 @@ does, and nothing marks a fault as fixed.
         and says so plainly.
       - *Proof:* seeded diagnoses, rig sequences with a fault turned on and
         off, and a render test. After L3.4.
-- [ ] **L3.6 Attendance at the player's own cadence** · S.
+- [x] **L3.6 Attendance at the player's own cadence** · S.
+      - *Delta (Oct 17):* done.
+        - The cadence is inferred (`inferCadence`) from the median gap
+          between the last 8 visits, or set in Settings (`CadencePicker`,
+          `Prefs.cadence`). It reads as weekly up to 10 days, fortnightly up
+          to 21, and monthly after that. It is weekly until there are three
+          visits.
+        - Counted forgivingly: a streak keeps across up to 9 / 18 / 38 days
+          (`CADENCE_GAP_MS`), and the line says the pace, e.g. "6 trips to
+          the court in a row, roughly every two weeks."
+        - A visit is:
+          - a trip of analysed reports;
+          - a ledger trip whose reports were pruned;
+          - or a practice session that read at least one serve.
+          A session stopped before any serve was read does not count.
+        - A stored cadence this build does not know is ignored.
+        - Proof:
+          - seeded fortnightly trips show a 6-trip streak that the old 9-day
+            rule broke;
+          - weekly, missed-week and monthly inference;
+          - a set cadence wins;
+          - a read and an unread practice session.
+          The Settings picker was checked in the preview.
       - **What:** the cadence is inferred from the median gap between trips, or
         set in Settings. It is counted forgivingly, and only analysed trips
         count.
