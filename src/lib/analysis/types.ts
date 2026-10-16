@@ -91,6 +91,43 @@ export interface Frame {
 export const SCORING_VERSION = 5
 
 /**
+ * What each scoring version changed (L3.11): only the card's bands or its
+ * curve, or a measurement.
+ *
+ * A saved report keeps every reading it was scored on, so a bump that only
+ * moved the bands a reading is judged against can be applied to the readings
+ * already stored — re-scored in place, no break in the player's chart. A bump
+ * that changed what a reading measures cannot: the stored number is a
+ * different measurement, and only a new clip can be scored the new way.
+ *
+ * `card-bands` must mean the card alone: a stored report keeps its verdict as
+ * judged, so a bump that moved a diagnosis band is a `measurement` here.
+ *
+ * Every version from 2 on is listed, and `types.test` holds the table to
+ * `SCORING_VERSION` so the next bump has to say which kind it is.
+ */
+export const SCORING_KINDS: Record<number, 'card-bands' | 'measurement'> = {
+  // The score curve's floor moved from 6 to 30 and its decay softened.
+  2: 'card-bands',
+  // The knee-bend and ball bands re-anchored; nothing measured moved.
+  3: 'card-bands',
+  // Arm extension became the straightest near contact: a new measurement.
+  4: 'measurement',
+  // The camera, the keyframes and five noise floors: see above.
+  5: 'measurement',
+}
+
+/**
+ * Whether a report scored under `from` can be re-scored in place to the
+ * current rubric: every bump since it was only to the card's bands.
+ */
+export function rescorable(from: number, kinds: Record<number, string> = SCORING_KINDS): boolean {
+  if (from >= SCORING_VERSION) return false
+  for (let v = from + 1; v <= SCORING_VERSION; v++) if (kinds[v] !== 'card-bands') return false
+  return true
+}
+
+/**
  * What a report saved before the stamp existed is worth.
  *
  * Old-rubric by definition — there was only one rubric to be scored against

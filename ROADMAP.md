@@ -1788,7 +1788,29 @@ does, and nothing marks a fault as fixed.
       - **What:** a folded line per area giving its weight, how far the weakest
         row pulled it down, and which rows were dropped or approximate.
       - *Proof:* the contributions sum to the overall; the copy lint.
-- [ ] **L3.11 Re-score in place when only the bands move** · M.
+- [x] **L3.11 Re-score in place when only the bands move** · M.
+      - *Delta (Oct 17):* done.
+        - `SCORING_KINDS` (types.ts) classes every bump as `card-bands` or
+          `measurement`:
+          - 2 and 3 moved only the curve and the bands;
+          - 4 and 5 changed measurements.
+          `rescorable(from)` holds when every bump since was `card-bands`.
+        - `rescoreStoredCard` (metrics.ts) rebuilds each stored row from its
+          value against today's bands. It keeps the row's confidence,
+          softness and axis, and a "Racket never falls" override. It then
+          sums the area and the overall the way `measure` does.
+        - `useHistory` runs `rescoreStoredSession` (a lazy chunk, 0.4 kB) on
+          the reports that qualify, once per load, and re-reads the list.
+        - Proof:
+          - with a table where the last bump was band-only, a v4 report of
+            three demo serves re-scored equals a fresh v5 score, row by row
+            and overall;
+          - the never-fell drop survives;
+          - the re-scored history has no break.
+          On the real table a v4 report is not re-scored, and every version
+          must be classed.
+        - Today nothing qualifies, because v4→v5 changed measurements. The
+          machinery is for the next band-only bump.
       - **What:** a scoring-version bump is classed as band-only or as a
         measurement change. A band-only bump re-scores the stored values
         instead of starting a new era.

@@ -740,6 +740,43 @@ export function measure(
  * and read out as what happened rather than as a position the value would
  * otherwise be given a name for.
  */
+/**
+ * A stored report's card, re-scored from the readings it already holds (L3.11).
+ *
+ * Each row is rebuilt from its stored value against the bands this build
+ * would use, keeping what the stored row knew that a value cannot say again:
+ * how far it was believed (`confidence`, `softness`) and the axis it was read
+ * along. A row the engine overrode on the day — the racket that never fell —
+ * keeps that verdict. Then each area and the overall are summed as `measure`
+ * sums them, so the result is the score a fresh read would give these values.
+ */
+export function rescoreStoredCard(
+  fundamentals: readonly Fundamental[],
+  serveType: ServeType,
+): Fundamental[] {
+  return fundamentals.map((f) => {
+    const metrics = f.metrics.map((stored) => {
+      const axis = (stored as Metric & { axis?: BodyAxis }).axis
+      const overridden = stored.id === 'dropDepth' && stored.readout === 'Racket never falls'
+      const fresh = build(stored.id, stored.value, undefined, serveType, axis)
+      if (!fresh) return stored
+      const rebuilt: Metric = {
+        ...fresh,
+        confidence: stored.confidence,
+        softness: stored.softness,
+        ...(axis ? { axis } : {}),
+      } as Metric
+      return overridden ? neverFell(rebuilt) : rebuilt
+    })
+    if (!metrics.length) return f
+    const score = chainScore(
+      metrics.map((m) => ({ score: m.score, weight: effectiveWeight(m) })),
+      metrics.filter((m) => m.confidence >= SOFT_MEASUREMENT),
+    )
+    return { ...f, metrics, score, status: statusOf(score), headline: headlineFor(metrics, f.label, score) }
+  })
+}
+
 function neverFell(m: Metric): Metric {
   const copy = METRICS.dropDepth
   // The score curve's floor — the whole miss, since a drop that never happened

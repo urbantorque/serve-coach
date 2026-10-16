@@ -3,9 +3,11 @@ import {
   listPracticeLogs,
   listPracticeSessions,
   listServeTags,
+  getSession,
   listSummaries,
   listTripRecords,
   safely,
+  saveSession,
   tagServe,
   untagServe,
   withServeTag,
@@ -15,6 +17,8 @@ import {
 } from '../lib/storage/db'
 import type { PracticeSession } from '../lib/session/session'
 import type { TripRecord } from '../lib/storage/ledger'
+import { rescorable } from '../lib/analysis/types'
+import { scoringVersionOf } from '../lib/progress'
 
 /**
  * The player's history, as the app holds it: the saved reports, the practice
@@ -67,6 +71,26 @@ export function useHistory() {
    */
   const seededHistory = useRef<{ sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[] }>()
 
+  /*
+   * Reports brought onto the current rubric in place (L3.11): those saved
+   * before bumps that only moved the card's bands. Tried once per report per
+   * load, so a save that fails cannot loop, and loaded only when one qualifies.
+   */
+  const tried = useRef(new Set<string>())
+  const restamp = useCallback(async (list: Session[]) => {
+    const due = list.filter((s) => !tried.current.has(s.id) && rescorable(scoringVersionOf(s)))
+    if (!due.length) return false
+    due.forEach((s) => tried.current.add(s.id))
+    const { rescoreStoredSession } = await import('../lib/analysis/rescoreStored')
+    for (const summary of due) {
+      // The whole row, stills and all, so the rewrite keeps them.
+      const full = await safely(() => getSession(summary.id), undefined)
+      const rescored = full && rescoreStoredSession(full)
+      if (rescored) await safely(() => saveSession(rescored as Parameters<typeof saveSession>[0], false), undefined)
+    }
+    return true
+  }, [])
+
   const refresh = useCallback(() => {
     if (seededHistory.current) {
       setSessions(seededHistory.current.sessions)
@@ -85,6 +109,10 @@ export function useHistory() {
       if (seededHistory.current) return
       setSessions(list)
       setSessionsLoaded(true)
+      // Re-read once if anything was brought onto the current rubric.
+      void restamp(list).then((changed) => {
+        if (changed && !seededHistory.current) void safely(listSummaries, []).then(setSessions)
+      })
     })
     void safely(listServeTags, []).then(setServeTags)
     void safely(listPracticeSessions, []).then((list) => {
@@ -92,7 +120,7 @@ export function useHistory() {
     })
     // `undefined` on failure rather than `[]` — see `drillLogs`.
     void safely<PracticeLog[] | undefined>(listPracticeLogs, undefined).then(setDrillLogs)
-  }, [])
+  }, [restamp])
 
   useEffect(() => refresh(), [refresh])
 
