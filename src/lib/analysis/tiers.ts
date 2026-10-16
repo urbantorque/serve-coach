@@ -252,12 +252,14 @@ export const SIGNALS: Record<string, SignalSpec> = {
    * centre tracks the centre of mass closely through a vertical drive.
    *
    * ITS ZERO IS 0.0457 (`LEG_DRIVE_FLOOR`). A player who never leaves the ground
-   * still rises, because straightening out of the knee bend lifts the hips. So
-   * the floor, 0.10, sits clear of that zero and below the professional mean
-   * less one deviation (0.124): nobody here is asked for a tour jump. It used to
-   * climb from 0.05 to 0.11 with the rung while the card asked for 0.10 at every
-   * rung. One band now, the card's (`CARD_SIGNAL`). The rig's clean serve rises
-   * 0.12–0.14 and every Bath serve at least 0.13, so neither is named.
+   * still rises, because straightening out of the knee bend lifts the hips.
+   * The floor was 0.10, the professional mean less a deviation, and that asked
+   * for a jump: a full bend straightened with both feet down was named on every
+   * take. It is now 0.032 (L3.9), a full extension with no jump from the least
+   * knee bend the card calls good — see `legDrive` in coaching.ts and the sweep
+   * in `bands.test.ts`. One band, the card's (`CARD_SIGNAL`). The rig's clean
+   * serve rises 0.12–0.14 and every Bath serve at least 0.13, so neither is
+   * named; legs that stay straight, which cannot rise, are.
    *
    * IT TRACKS ITS DIAL. Swept against `contactHipHeight` across eight seeds: 0.95
    * (planted) reads 0.0457, 1.02 reads 0.0866, 1.10 reads 0.1333, 1.18 reads

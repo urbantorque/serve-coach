@@ -130,7 +130,7 @@ check('off for two trips, it holds', () => {
   const path = servePath([...on, ...off])!
   note(path.parts.map((p) => `${p.group} ${p.state}`).join(', '))
   assert(part(path, 'drop').state === 'holding', `the drop is ${part(path, 'drop').state}`)
-  // The rig's legs never drive, so that part never stopped being worked on.
+  // The sample serve's straight legs never drive, so that part never stopped being worked on.
   assert(part(path, 'legs').state === 'working', 'the legs, named throughout, stopped being worked on')
 })
 

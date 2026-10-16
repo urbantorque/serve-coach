@@ -101,8 +101,11 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 36, tag: 'Hitting shoulder under the ball' },
     { under: Infinity, tag: 'Hitting shoulder far below' },
   ],
+  // The second rung is the floor of the band (L3.9): legs straightened out of
+  // the load with both feet down, which is a drive, if not a jump.
   legDrive: [
-    { under: 0.04, tag: 'No push off the court' },
+    { under: 0.032, tag: 'No push off the court' },
+    { under: 0.06, tag: 'Legs straighten up' },
     { under: 0.1, tag: 'Light push' },
     { under: 0.24, tag: 'Strong drive up' },
     { under: Infinity, tag: 'Big launch' },

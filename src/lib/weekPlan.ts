@@ -105,10 +105,12 @@ export function weekPlan(
       ...carried.filter((c) => c.entry.flaw && !fresh.has(c.entry.flaw)).map((c) => ({ ...c, kept: true })),
     ]
   }
+  // The order at the player's level, as the newest report was judged (L3.9).
+  const tier = bearing[0].session.triage?.tier?.current
   const open = carried
     .filter((c) => !c.entry.flaw || !fixed.has(c.entry.flaw))
     // Stable: the hierarchy decides, and within a part the newest plan's order.
-    .sort((a, b) => hierarchyIndex(a.entry.flaw) - hierarchyIndex(b.entry.flaw))
+    .sort((a, b) => hierarchyIndex(a.entry.flaw, tier) - hierarchyIndex(b.entry.flaw, tier))
     .slice(0, MAX_PLAN)
 
   const items = open.map((c) => {
@@ -130,7 +132,7 @@ export function weekPlan(
   const recent = trips.length >= 2 ? trips[trips.length - 2][0].createdAt : 0
   const graduated = [...fixed.values()]
     .filter((g) => g.since >= recent)
-    .sort((a, b) => hierarchyIndex(a.flaw) - hierarchyIndex(b.flaw))
+    .sort((a, b) => hierarchyIndex(a.flaw, tier) - hierarchyIndex(b.flaw, tier))
     .map((g) => ({ flaw: g.flaw, line: graduationLine(g, next) }))
 
   const due = recheckDue(sessions, [...fixed.values()], now)

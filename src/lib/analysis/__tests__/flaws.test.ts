@@ -165,9 +165,12 @@ check('the order the two lines fire in is measured, and no longer named', () => 
 check('legs that never lift the body are caught from the hips', () => {
   const clean = run({}, 5).diagnosis
   assert(!flagged(clean).includes('no_leg_drive'), 'a driving serve was told its legs sat out')
+  const straight = run({ trophyKneeAngle: 170, contactHipHeight: 0.95 }, 5).diagnosis
+  assert(flagged(straight).includes('no_leg_drive'), `straight legs missed: ${flagged(straight).join(', ')}`)
+  // A full extension with both feet down is a drive, if not a jump (L3.9).
   const planted = run({ contactHipHeight: 0.95 }, 5).diagnosis
-  assert(flagged(planted).includes('no_leg_drive'), `planted serve missed: ${flagged(planted).join(', ')}`)
-  note(`rise ${clean.signals.leg_drive_rise_ratio} driving, ${planted.signals.leg_drive_rise_ratio} planted`)
+  assert(!flagged(planted).includes('no_leg_drive'), 'a full extension with no jump was told its legs sat out')
+  note(`rise ${clean.signals.leg_drive_rise_ratio} driving, ${planted.signals.leg_drive_rise_ratio} planted, ${straight.signals.leg_drive_rise_ratio} straight`)
 })
 
 check('both rotation peaks land before contact, where the swing is', () => {

@@ -55,6 +55,7 @@ import { detectServe } from '../phases'
 import { assessSpatial } from '../spatial'
 import { peakTimeInside } from '../kinematics'
 import { SOFT_MEASUREMENT } from '../confidence'
+import { METRICS } from '../coaching'
 import { NOISE_FLOOR, SIGNALS, UNCALIBRATED, UNDER_RESOLVED, inferTier } from '../tiers'
 import { CLEAN_SERVE, buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
@@ -361,19 +362,48 @@ check('the sequencing detector that was dropped stays measured and stays silent'
   assert(measured >= gross.length * 0.8, `hip lead measured on only ${measured} of ${gross.length}`)
 })
 
-check('the leg-drive detector tells a serve that drives from one that only straightens', () => {
+check('the leg-drive detector names legs that never drive, and not a full extension with no jump', () => {
   /*
    * What earns `no_leg_drive` its place, stated as rates the way the retired
-   * detector was. Planted at contact (`contactHipHeight: 0.95`) is a serve that
-   * straightens out of the knee bend and never lifts the body; the clean rig
-   * drives the hips to 1.09. At a club level the first must be named most of
-   * the time and the second almost never.
+   * detector was (L3.9). A serve that loads and straightens with both feet
+   * down (`contactHipHeight: 0.95`) has used its legs, and is no longer named:
+   * the floor used to ask for a jump. Straight legs with planted hips cannot
+   * rise, and legs that stay bent at contact (`contactHipHeight: 0.87`,
+   * the load's own depth) never straighten; those two are the fault.
    */
-  const clean = namedOn(realise(), 'no_leg_drive')
-  const planted = namedOn(realise({ contactHipHeight: 0.95 }), 'no_leg_drive')
-  note(`  no leg drive named on ${(clean * 100).toFixed(0)}% clean, ${(planted * 100).toFixed(0)}% planted`)
+  const rate = (dials: Partial<ServeDials>) => namedOn(realise(dials), 'no_leg_drive')
+  const clean = rate({})
+  const planted = rate({ contactHipHeight: 0.95 })
+  const straight = rate({ trophyKneeAngle: 170, contactHipHeight: 0.95 })
+  const bent = rate({ contactHipHeight: 0.87 })
+  note(
+    `  no leg drive named on ${(clean * 100).toFixed(0)}% clean, ${(planted * 100).toFixed(0)}% straightened with no jump, ` +
+      `${(straight * 100).toFixed(0)}% straight legs, ${(bent * 100).toFixed(0)}% still bent`,
+  )
   assert(clean <= 0.05, `a driving serve was told its legs sat out on ${(clean * 100).toFixed(0)}%`)
-  assert(planted >= 0.8, `a planted serve was caught only ${(planted * 100).toFixed(0)}% of the time`)
+  assert(planted <= 0.1, `a full extension with no jump was told its legs sat out on ${(planted * 100).toFixed(0)}%`)
+  assert(straight >= 0.8, `straight legs were caught only ${(straight * 100).toFixed(0)}% of the time`)
+  assert(bent >= 0.8, `legs still bent at contact were caught only ${(bent * 100).toFixed(0)}% of the time`)
+})
+
+check('the leg-drive floor is a full extension with no jump from the least knee bend the card calls good', () => {
+  /*
+   * The derivation behind the band's floor (L3.9), swept rather than asserted
+   * from a comment: hip height at contact against knee bend at the trophy.
+   * Planted (0.95) is a full extension with no jump; 35° of flexion — a
+   * trophy knee angle of 145° — is the floor of `kneeBend`'s band.
+   */
+  const rise = (dials: Partial<ServeDials>) => {
+    const v = realise(dials).map((r) => r.signals.leg_drive_rise_ratio).filter((x): x is number => Number.isFinite(x))
+    return v.reduce((a, b) => a + b, 0) / v.length
+  }
+  const rows = [133, 145, 160, 170].map((k) => ({ k, planted: rise({ trophyKneeAngle: k, contactHipHeight: 0.95 }) }))
+  note(rows.map((r) => `knees ${r.k}°: ${r.planted.toFixed(4)}`).join(' · '))
+  const floor = METRICS.legDrive.ideal[0]
+  const atBandFloor = rows.find((r) => r.k === 145)!.planted
+  assert(Math.abs(atBandFloor - floor) < 0.004, `a full extension from 35° rises ${atBandFloor.toFixed(4)}, and the floor is ${floor}`)
+  assert(rows.find((r) => r.k === 133)!.planted > floor, 'a full load straightened sits under the floor')
+  assert(rows.find((r) => r.k === 170)!.planted < floor - NOISE_FLOOR.leg_drive_rise_ratio, 'straight legs are not clear of the floor')
 })
 
 check('the contact detector that was dropped stays measured and stays silent', () => {

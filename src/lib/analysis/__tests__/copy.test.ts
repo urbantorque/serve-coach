@@ -351,11 +351,13 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Hitting shoulder under the ball', high: 'Hitting shoulder under the ball' },
   },
   legDrive: {
-    stamp: '766fef27',
+    // Re-stamped when the floor became a full extension with no jump (L3.9):
+    // legs straightened out of the load are in band, and said so.
+    stamp: 'a72ea67f',
     insight: {
-      low: ['No push off the court', 'Light push'],
+      low: ['No push off the court'],
       // A big launch is praised since the band ran to the end of its axis (D2.3).
-      ok: ['Strong drive up', 'Big launch'],
+      ok: ['Legs straighten up', 'Light push', 'Strong drive up', 'Big launch'],
       high: ['Big launch'],
     },
     aim: { low: 'Strong drive up', high: 'Strong drive up' },

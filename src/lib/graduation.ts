@@ -16,7 +16,7 @@
  * named again on enough of its newest serves — undoes a graduation by itself.
  */
 import { CHECK_SERVES, judgeServe, progressionFor } from './analysis/progressions'
-import { HIERARCHY } from './analysis/triage'
+import { HIERARCHY, hierarchyFor } from './analysis/triage'
 import type { FlawId } from './analysis/flaws'
 import { MIN_THEN_AND_NOW_GAP_MS, currentRubricEra, sameTrip, tripsOf } from './progress'
 import type { Session } from './storage/db'
@@ -53,10 +53,11 @@ export const PART_NAME: Record<string, string> = {
   contact: 'contact',
 }
 
-/** Where a fault sits in the hierarchy: grip first, contact last. */
-export const hierarchyIndex = (flaw: FlawId | undefined): number => {
-  const i = flaw ? HIERARCHY.findIndex((g) => g.flaws.includes(flaw)) : -1
-  return i < 0 ? HIERARCHY.length : i
+/** Where a fault sits in the hierarchy at a level: grip first, contact last (L3.9). */
+export const hierarchyIndex = (flaw: FlawId | undefined, tier?: number): number => {
+  const order = hierarchyFor(tier)
+  const i = flaw ? order.findIndex((g) => g.flaws.includes(flaw)) : -1
+  return i < 0 ? order.length : i
 }
 
 export interface Graduation {

@@ -52,7 +52,7 @@ export type ChangeScope = 'overall' | 'trip' | FundamentalId
 export const REAL_CHANGE: Record<ChangeScope, number> = {
   overall: 6,
   toss: 7,
-  loading: 18,
+  loading: 17,
   swing: 6,
   contact: 21,
   rhythm: 36,
@@ -83,7 +83,7 @@ export const READ_DIFFERENTLY: Partial<Record<ChangeScope, number>> = {
 }
 
 /** One basket's best-to-worst gap against another's, for `gapDeltaLine`, on six serves each. */
-export const GAP_CHANGE = 14
+export const GAP_CHANGE = 13
 
 /**
  * The smallest best-to-worst gap that is two different serves, by how many
@@ -121,7 +121,7 @@ export const ROW_CHANGE: Record<string, readonly [number, number, number]> = {
   kneeBend: [15, 10, 8],
   hipShoulderSeparation: [43, 29, 24],
   shoulderTilt: [16, 12, 10],
-  legDrive: [5, 4, 3],
+  legDrive: [6, 4, 4],
   dropDepth: [52, 34, 23],
   elbowAtDrop: [23, 18, 9],
   dropToContact: [39, 25, 12],

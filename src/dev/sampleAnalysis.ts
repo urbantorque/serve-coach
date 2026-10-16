@@ -125,7 +125,7 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
   // club serve below with a racket that stays above the shoulder, so the
   // report shows what it is for — a ranked plan of two fixes in causal order,
   // a ladder under the first — rather than the fallback a serve with nothing
-  // named gets. Legs first, then the drop.
+  // named gets. At club level the arm comes first (L3.9): the drop, then the legs.
   example: { dropBelowShoulder: -0.2 },
   // The modal club serve — rigid legs and a racket that never falls — on which
   // the trophy lands on the toss and Rhythm has nothing left to grade (L1.1):
@@ -168,12 +168,13 @@ export function sampleBasket(): Analysis[] {
   // The third serve read here is met low, so the basket has a best and a
   // worst the overall score can tell apart: since L3.1 a basket's two ends
   // have to be further apart than the camera spreads that many takes of one
-  // serve (`bestWorstGap`, 8 points for four), and graded on the same rows.
+  // serve (`bestWorstGap`, 8 points for four), and graded on the same rows —
+  // a reach of 0.97 since the demo serve's legs were straightened (L3.9).
   // It used to keep its racket high as well, which collapses the drop and
   // takes rows off its Swing card, so the pair stopped being comparable.
   const dials: Partial<ServeDials>[] = [
     { contactReach: 1.38 },
-    { contactReach: 1.0 },
+    { contactReach: 0.97 },
     { contactReach: 1.44 },
     { contactReach: 1.28 },
   ]
@@ -379,7 +380,10 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number, f
   // level with the shoulder is a full drop, so this serve names its legs only;
   // the example report adds a shallow drop (`DEMO_DIALS.example`).
   const frames = buildServe(
-    { trophyKneeAngle: 165, dropBelowShoulder: 0.08, tossArmHold: 0.2, contactReach: 1.2, ...dials },
+    // Straight knees and planted hips: since the leg-drive floor became a full
+    // extension with no jump (L3.9), 165° straightened out was a drive, and this
+    // serve named nothing.
+    { trophyKneeAngle: 170, contactHipHeight: 0.95, dropBelowShoulder: 0.08, tossArmHold: 0.2, contactReach: 1.2, ...dials },
     fps,
   )
   const skel = detectServe(frames, fps)

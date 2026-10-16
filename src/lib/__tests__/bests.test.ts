@@ -77,14 +77,17 @@ function rigTrip(day: number, dials: Partial<ServeDials>): Session[] {
   })
 }
 
-const before = rigTrip(0, { dropBelowShoulder: -0.25 })
-const after = rigTrip(3, { dropBelowShoulder: 0.35 })
+// Knees that bend, so the trophy is its own moment and the hand's lowest point
+// is read at the drop rather than where a collapsed trophy put it.
+const LOADED: Partial<ServeDials> = { trophyKneeAngle: 133, contactHipHeight: 1.09 }
+const before = rigTrip(0, { ...LOADED, dropBelowShoulder: -0.25 })
+const after = rigTrip(3, { ...LOADED, dropBelowShoulder: 0.35 })
 
 check('a racket that starts falling sets the best, on its own rung', () => {
   const bests = bodyBests([...before, ...after])
   note(bests.map(bodyBestLine).join(' | ') || 'none')
   assert(bests.some((b) => b.metricId === 'dropDepth' && b.tag === 'Hand below the shoulder'), 'the rig\'s drop did not set its best')
-  assert(bodyBests([...before, ...rigTrip(3, { dropBelowShoulder: -0.25 })]).length === 0, 'the same serve again set a best')
+  assert(bodyBests([...before, ...rigTrip(3, { ...LOADED, dropBelowShoulder: -0.25 })]).length === 0, 'the same serve again set a best')
 })
 
 check('the progress screen lists it with the records', () => {

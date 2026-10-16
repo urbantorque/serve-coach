@@ -1716,7 +1716,45 @@ does, and nothing marks a fault as fixed.
         the old best by more than the noise floor, e.g. "first trip with a full
         racket drop".
       - *Proof:* seeded histories and the rig.
-- [ ] **L3.9 Say what the level does, and let it order the plan** · S.
+- [x] **L3.9 Say what the level does, and let it order the plan** · S.
+      - *Delta (Oct 17):* done.
+        - The picker now asks "Which faults should I point out?" and says
+          "Your score is the same at every level". The report's line reads
+          "Faults pointed out for club level, aiming one step above it".
+        - `hierarchyFor(tier)`: at rung 4 and below (`ARM_FIRST_AT`), the
+          drop group comes before the legs (Whiteside 2013, Reid 2008), and
+          Kovacs's order holds above that. Triage, `causalPlan`, the week
+          plan and the graduation lines all use it. The example report now
+          reads drop, then legs.
+        - The leg-drive floor is now 0.032, down from 0.10. That is a full
+          extension with no jump from 35° of knee bend, the floor of
+          `kneeBend`'s band. The sweep of `contactHipHeight` against
+          `trophyKneeAngle`:
+          - 133° rises 0.0435 and was named on every take;
+          - 145° rises 0.032 ± 0.006;
+          - 170° rises 0.0086.
+          In the ensemble a full extension with no jump is named on 10% of
+          takes or fewer, while straight planted legs and legs still bent at
+          contact are named on 80% or more. The card has a new "Legs
+          straighten up" rung, and the in-band line says "straighten up"
+          rather than "drive up hard".
+        - Knock-ons:
+          - the demo serve is now planted on straight legs, so it still
+            names its legs;
+          - the demo basket's worst reach is 0.97;
+          - `realChange` re-derived: loading 17, the basket gap 13, leg-drive
+            rows [6, 4, 4];
+          - the trip-against-one-serve check is ≤ per serve (Bath 3 ties at
+            4) and < on the worst.
+        - Proof:
+          - a plan-order check at rungs 2–8 and on the two orders;
+          - the floor sweep, now a test in `depth.test.ts`;
+          - the leg detector's rates;
+          - copy claims re-stamped;
+          - the preview of the example report.
+        - KNOWN: a club player with barely bent knees who still pushes a
+          little (170° at the rig's default hips, 0.016–0.032) is not named
+          for the legs. `kneeBend`'s card row still flags the shallow load.
       - **What:**
         - the legend asks "Which faults should I point out?" and says "Your
           score is the same at every level";

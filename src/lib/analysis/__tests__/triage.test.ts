@@ -21,6 +21,8 @@ import { detectServe } from '../phases'
 import { MAX_PICTURE_ROLL, assessSpatial, courtYawFrom, levelFrames, NOTABLE_ROLL } from '../spatial'
 import { stabilise } from '../kalman'
 import {
+  ARM_FIRST_AT,
+  hierarchyFor,
   FLAW_DRILL,
   HIERARCHY,
   LIMITS,
@@ -526,11 +528,26 @@ check('the swing is reached once the foundations are sound', () => {
   assert(result.primary_flaw?.group === 'sequence', `chose ${result.primary_flaw?.group}`)
 })
 
-check('legs come straight after the toss, ahead of the drop', () => {
+check('above club level, legs come straight after the toss, ahead of the drop', () => {
   // Kovacs's order: the release, then the load. A serve that never drives and
   // also drops short is sent to its legs first.
-  const { result } = pipeline({ contactHipHeight: 0.95, dropBelowShoulder: 0.05 })
+  const { result } = pipeline({ trophyKneeAngle: 170, contactHipHeight: 0.95, dropBelowShoulder: -0.25 }, FPS, 6)
   assert(result.primary_flaw?.group === 'legs', `chose ${result.primary_flaw?.group}`)
+})
+
+check('at club level and below, the arm comes before the legs (L3.9)', () => {
+  // The arm action matures first and leg drive last (Whiteside 2013), and a
+  // serve with no leg drive costs speed but adds no load to the shoulder
+  // (Reid 2008). The same serve, at each rung: the order turns at rung 4.
+  for (const tier of [2, 3, 4, 5, 6, 8]) {
+    const { result } = pipeline({ trophyKneeAngle: 170, contactHipHeight: 0.95, dropBelowShoulder: -0.25 }, FPS, tier)
+    const want = tier <= ARM_FIRST_AT ? 'drop' : 'legs'
+    note(`rung ${tier}: ${result.primary_flaw?.group}`)
+    assert(result.primary_flaw?.group === want, `at rung ${tier} the plan led with ${result.primary_flaw?.group}, not ${want}`)
+  }
+  const order = (tier: number) => hierarchyFor(tier).map((g) => g.group).join(' > ')
+  assert(order(4) === 'grip > toss > drop > legs > posture > sequence > contact', order(4))
+  assert(order(5) === 'grip > toss > legs > posture > drop > sequence > contact', order(5))
 })
 
 check('a clean serve at its own level is handed nothing to fix', () => {

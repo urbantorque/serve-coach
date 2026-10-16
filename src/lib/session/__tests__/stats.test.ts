@@ -334,9 +334,9 @@ check('the Bath serves as baskets name fewer faults than the same takes judged o
 })
 
 check('a planted fault the takes name on most serves is the basket’s too', () => {
-  // A serve that never leaves the ground: `depth.test.ts`'s planted missing leg drive.
+  // Straight legs and planted hips, which cannot drive: `depth.test.ts`'s missing leg drive.
   const lines = seeds(24)
-    .map((seed, i) => lineFrom(buildServe({ ...DEPTH_AWARE, seed, contactHipHeight: 0.95 } as Partial<ServeDials>, 50), i + 1))
+    .map((seed, i) => lineFrom(buildServe({ ...DEPTH_AWARE, seed, trophyKneeAngle: 170, contactHipHeight: 0.95 } as Partial<ServeDials>, 50), i + 1))
     .filter((l): l is ServeLine => l !== undefined)
   const rate = lines.filter((l) => l.named?.includes('no_leg_drive')).length / lines.length
   const st = sessionStats(lines)

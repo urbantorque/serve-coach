@@ -29,8 +29,8 @@ import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
 import type { BodyAxis } from './axes'
 import {
-  HIERARCHY,
   drillIdFor,
+  hierarchyFor,
   isFirm,
   type InjuryFlag,
   type RejectReason,
@@ -533,7 +533,7 @@ export function causalPlan(
   // it stands behind, applied to the rest of the plan as `triage` applies it
   // to the first fix.
   for (const firm of [true, false]) {
-    for (const level of HIERARCHY) {
+    for (const level of hierarchyFor(triage.tier?.current)) {
       if (out.length >= MAX_PLAN) break
       const here = detected
         .filter((f) => isFirm(f) === firm)
@@ -587,7 +587,9 @@ export function suppressedNote(
  */
 export function tierLabel(triage: Triage | undefined): string | undefined {
   if (!triage?.tier) return undefined
-  return `Marked as ${rungName(triage.tier.current)}, aiming one step above it`
+  // What the level does, said plainly (L3.9): it chooses the faults the plan
+  // names. The score is the same at every level, and "marked" said otherwise.
+  return `Faults pointed out for ${rungName(triage.tier.current)}, aiming one step above it`
 }
 
 /* --------------------------------------------------- did the last one move -- */

@@ -457,18 +457,27 @@ export const METRICS: Record<string, MetricCopy> = {
     weight: 1,
     // The hips' rise from the deepest load to contact. One band with the
     // diagnosis's `leg_drive_rise_ratio` (`CARD_SIGNAL` in tiers.ts), whose
-    // comment has the sources. The floor is where the readout's "Strong drive
-    // up" begins. The ceiling was 0.24 and told the highest of the forty Bath
-    // serves to drive less: they rise 0.13–0.26 from every placement, beside a
-    // professional 0.158 ± 0.034 (Deghaies 2026), and no study names a rise too
-    // big. So the band runs to the end of the axis, as `handUnderElbow`'s does,
-    // and the line above it is blank.
-    ideal: [0.1, 0.36],
+    // comment has the sources. The ceiling was 0.24 and told the highest of the
+    // forty Bath serves to drive less: they rise 0.13–0.26 from every placement,
+    // beside a professional 0.158 ± 0.034 (Deghaies 2026), and no study names a
+    // rise too big. So the band runs to the end of the axis, as
+    // `handUnderElbow`'s does, and the line above it is blank.
+    //
+    // THE FLOOR IS A FULL EXTENSION WITH NO JUMP (L3.9), from the least knee
+    // bend this card calls good. It was 0.10, the professional mean less a
+    // deviation, which asked a club player to leave the ground: a full bend
+    // straightened out with both feet down rises 0.0435 on the rig and was
+    // named "legs sit the serve out" on every take. Swept against
+    // `contactHipHeight` and `trophyKneeAngle` (`bands.test.ts`), a full
+    // extension from 35° of knee bend, the floor of `kneeBend`'s band, rises
+    // 0.032 ± 0.006. A player who loads in band and straightens is not told
+    // their legs sat out; straight legs, which cannot rise, still are.
+    ideal: [0.032, 0.36],
     range: [0, 0.36],
     decimals: 3,
     insight: {
       low: 'You loaded the legs and **never cashed it in**.',
-      ok: 'You **drive up** hard out of the load, and the legs feed the swing.',
+      ok: 'You **straighten up** out of the load, and the legs feed the swing.',
       high: 'A **big launch** upward.',
     },
     fix: {

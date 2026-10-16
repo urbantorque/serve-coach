@@ -71,6 +71,29 @@ export const HIERARCHY: { group: string; flaws: FlawId[] }[] = [
 ]
 
 /**
+ * The rung at and below which the arm comes before the legs (L3.9).
+ */
+export const ARM_FIRST_AT = 4
+
+/**
+ * The hierarchy at a player's level (L3.9).
+ *
+ * Kovacs's order puts the legs straight after the toss, and for a serve that
+ * already has an arm action that is right. Below club level it is not: the arm
+ * action matures first and leg drive last (Whiteside 2013), and a serve with
+ * no leg drive costs racket speed while adding no load to the shoulder (Reid
+ * 2008). So at rung 4 and below the racket drop and the elbow come before the
+ * legs; above it the order is Kovacs's.
+ */
+export function hierarchyFor(tier?: number): typeof HIERARCHY {
+  if (tier === undefined || tier > ARM_FIRST_AT) return HIERARCHY
+  const arm = HIERARCHY.find((g) => g.group === 'drop')!
+  const rest = HIERARCHY.filter((g) => g.group !== 'drop')
+  const legs = rest.findIndex((g) => g.group === 'legs')
+  return [...rest.slice(0, legs), arm, ...rest.slice(legs)]
+}
+
+/**
  * The one drill for each flaw. Identifiers only; the copy lives in coaching.
  *
  * `pronation_snap` is unreachable for as long as `pancake_contact` is not named.
@@ -412,7 +435,7 @@ export function triage(diagnosis: Diagnosis, resilience: Resilience): Triage {
   const firm = detected.filter(isFirm)
   const pool = firm.length ? firm : detected
   let primary: { finding: FlawFinding; group: string } | undefined
-  for (const level of HIERARCHY) {
+  for (const level of hierarchyFor(diagnosis.tier.current)) {
     const here = pool
       .filter((f) => level.flaws.includes(f.flaw))
       .filter((f) => !attributed.has(f.flaw))

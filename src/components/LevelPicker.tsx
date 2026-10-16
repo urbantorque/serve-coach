@@ -34,7 +34,7 @@ interface Props {
 export default function LevelPicker({ value, onChange, estimated }: Props) {
   return (
     <fieldset className="level-pick">
-      <legend>How hard should I mark you?</legend>
+      <legend>Which faults should I point out?</legend>
       <div className="level-pick-options">
         <button
           type="button"
@@ -63,8 +63,8 @@ export default function LevelPicker({ value, onChange, estimated }: Props) {
         ))}
       </div>
       <p className="level-pick-note">
-        Targets sit one step above where you are, never a professional's. Set this too high and you
-        get asked for more than you have.
+        Your score is the same at every level. This only picks which faults the plan points out, one
+        step above where you are.
       </p>
     </fieldset>
   )
