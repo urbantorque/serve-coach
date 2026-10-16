@@ -1762,7 +1762,29 @@ does, and nothing marks a fault as fixed.
         - the leg-drive floor is re-derived against a full extension with no
           jump, by sweeping `contactHipHeight` against `trophyKneeAngle`.
       - *Proof:* a `jsxCopy` test and a plan-order check per rung.
-- [ ] **L3.10 Why this score** · S.
+- [x] **L3.10 Why this score** · S.
+      - *Delta (Oct 17):* done.
+        - `analysis/breakdown.ts` reads each measured area off the score's
+          own sums:
+          - its share of the overall, among the areas measured;
+          - its points (score × share);
+          - the weakest row and how far `chainScore`'s weakest-link term
+            pulled the area down;
+          - the rows this clip could not grade;
+          - the rows graded only approximately.
+        - A folded "Why this score" opens under each card's blurb, one short
+          sentence a line, e.g. "Counts for about a fifth of your overall. /
+          Tossing arm timing, at 47, pulled this area down 9 points. / Not
+          graded on this clip: Toss height."
+        - Shares are said as fractions in words, because the copy lint keeps
+          raw percentages off the screen.
+        - Proof:
+          - the contributions sum to the overall on five demo serves,
+            including one with an unmeasured area;
+          - the pull matches the weakest-link term on a worked example;
+          - dropped and approximate rows are named;
+          - every line passes `cueIssues`;
+          - the preview of the example report.
       - **What:** a folded line per area giving its weight, how far the weakest
         row pulled it down, and which rows were dropped or approximate.
       - *Proof:* the contributions sum to the overall; the copy lint.

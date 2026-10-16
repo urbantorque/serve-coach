@@ -29,6 +29,7 @@ import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { unseenLines } from '../lib/analysis/angleReach'
 import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
 import { readAlike } from '../lib/analysis/realChange'
+import { scoreBreakdown } from '../lib/analysis/breakdown'
 import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
 import type { InjuryFlag } from '../lib/analysis/triage'
 import type { PracticeFocus } from '../lib/practice'
@@ -326,6 +327,11 @@ export default function Report({
   // Whether this serve and the last were graded on the same rows, which sets
   // the floor the hero's chip is held to (L3.1).
   const heroAlike = previous ? readAlike(analysis.fundamentals, previous.fundamentals) : true
+  // Each area's share of the overall and what pulled it down (L3.10).
+  const breakdowns = useMemo(
+    () => new Map(scoreBreakdown(analysis.fundamentals).map((b) => [b.id, b])),
+    [analysis.fundamentals],
+  )
   // The filmstrip's bodies, from whichever form this report is carrying — a
   // stored swing, or the six keyframes a quota-pruned one was left with. Memoed
   // because lifting six rows out of a track on every render would repeat the
@@ -1324,6 +1330,7 @@ export default function Report({
               key={f.id}
               fundamental={f}
               change={deltas[f.id]}
+              breakdown={breakdowns.get(f.id)}
               onSeek={live ? goToPhase : undefined}
             />
           ))}

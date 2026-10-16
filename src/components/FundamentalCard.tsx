@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { isMeasured } from '../lib/analysis/coaching'
 import type { Fundamental, Metric } from '../lib/analysis/types'
 import type { AreaChange } from '../lib/progress'
+import { breakdownLines, type AreaBreakdown } from '../lib/analysis/breakdown'
 import TargetShape from './TargetShape'
 import { DeltaChip } from './Trend'
 import { Cue, Icon, MetricBar, ScoreRing } from './primitives'
@@ -13,6 +14,8 @@ interface Props {
   change?: AreaChange
   /** Jump the video to the keyframe this area is measured on. */
   onSeek?: (phase: Fundamental['phase']) => void
+  /** Why this area scored what it did (L3.10). */
+  breakdown?: AreaBreakdown
 }
 
 /**
@@ -34,6 +37,7 @@ export default function FundamentalCard({
   fundamental: f,
   change,
   onSeek,
+  breakdown,
 }: Props) {
   /*
    * Closed, always, and not a prop.
@@ -96,6 +100,17 @@ export default function FundamentalCard({
       {open && (
         <div className="fcard-body">
           <p className="fcard-blurb">{f.blurb}</p>
+
+          {/* Why this score (L3.10): folded, because it is for the player who
+              asks, and every number in it comes from the score's own sums. */}
+          {breakdown && (
+            <details className="fcard-why">
+              <summary>Why this score</summary>
+              {breakdownLines(breakdown).map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </details>
+          )}
 
           <ul className="metrics">
             {f.metrics.map((m) => (

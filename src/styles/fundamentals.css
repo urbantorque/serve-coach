@@ -104,6 +104,29 @@
   border-bottom: 1px solid var(--hairline-soft);
 }
 
+/* Why this score (L3.10): one folded line under the blurb, quiet until asked. */
+.fcard-why {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.fcard-why summary {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.fcard-why p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+  text-wrap: pretty;
+}
+
 /* --- metrics --------------------------------------------------------------- */
 
 /* Generous, and deliberately so: each of these is a separate instruction, and
