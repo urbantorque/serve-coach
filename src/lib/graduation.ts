@@ -43,7 +43,7 @@ export const FAULT_NAME: Record<FlawId, string> = {
 }
 
 /** Each part of the serve path, as "Next:" names it. */
-const PART_NAME: Record<string, string> = {
+export const PART_NAME: Record<string, string> = {
   grip: 'the grip',
   toss: 'the toss',
   legs: 'the legs',
@@ -96,9 +96,36 @@ function tripsIn(run: { at: number }[]): number {
  * and the bands each type is judged against are already in the verdicts.
  */
 export function graduation(sessions: readonly Session[], flaw: FlawId): Graduation | undefined {
+  return standing(sessions, flaw).held
+}
+
+/** Where a fault stands, for the serve path (L3.5). */
+export interface Standing {
+  flaw: FlawId
+  /** Serves it could be judged on, in the current rubric era. */
+  judged: number
+  /** Of its last `CHECK_SERVES` judged serves, how many named it. */
+  namedLately: number
+  /** How many those were — fewer than `CHECK_SERVES` early on. */
+  lately: number
+  /** Holding now: the graduation, when it has one. */
+  held?: Graduation
+  /** It held at some point and does not now: a relapse. */
+  heldBefore: boolean
+}
+
+export function standing(sessions: readonly Session[], flaw: FlawId): Standing {
   const oldestFirst = currentRubricEra([...sessions].sort((a, b) => a.createdAt - b.createdAt))
   const serves = judged(oldestFirst, flaw)
-  if (serves.length < CHECK_SERVES) return undefined
+  const recent = serves.slice(-CHECK_SERVES)
+  const base = {
+    flaw,
+    judged: serves.length,
+    namedLately: recent.filter((s) => !s.clean).length,
+    lately: recent.length,
+    heldBefore: false,
+  }
+  if (serves.length < CHECK_SERVES) return base
   const pass = progressionFor(flaw)?.pass ?? CHECK_SERVES - 1
   const window = (end: number) => serves.slice(end - CHECK_SERVES + 1, end + 1)
   const holds = (end: number) => {
@@ -106,12 +133,23 @@ export function graduation(sessions: readonly Session[], flaw: FlawId): Graduati
     return w.filter((s) => s.clean).length >= pass && tripsIn(w) >= GRADUATION_TRIPS
   }
   const last = serves.length - 1
-  if (!holds(last)) return undefined
+  if (!holds(last)) {
+    let before = false
+    for (let end = CHECK_SERVES - 1; end < last && !before; end++) before = holds(end)
+    return { ...base, heldBefore: before }
+  }
   let first = last
   while (first - 1 >= CHECK_SERVES - 1 && holds(first - 1)) first--
   const w = window(last)
-  return { flaw, clean: w.filter((s) => s.clean).length, read: w.length, trips: tripsIn(w), since: serves[first].at }
+  return {
+    ...base,
+    held: { flaw, clean: w.filter((s) => s.clean).length, read: w.length, trips: tripsIn(w), since: serves[first].at },
+  }
 }
+
+/** Trips begun after a moment, chained the way `tripsOf` chains them. */
+export const tripsAfter = (sessions: readonly Session[], at: number): number =>
+  tripsOf([...sessions]).filter((t) => t[0].createdAt > at && !sameTrip(t[0], { createdAt: at })).length
 
 const COUNT_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
 const count = (n: number) => COUNT_WORDS[n] ?? String(n)
@@ -146,7 +184,7 @@ export function recheckDue(
   const latest = trips[trips.length - 1]
   const playing = latest !== undefined && now - latest[latest.length - 1].createdAt < MIN_THEN_AND_NOW_GAP_MS
   const due = retired.filter((g) => {
-    const after = trips.filter((t) => t[0].createdAt > g.since && !sameTrip(t[0], { createdAt: g.since })).length
+    const after = tripsAfter(sessions, g.since)
     const upcoming = playing ? after : after + 1
     return upcoming >= RECHECK_EVERY && upcoming % RECHECK_EVERY === 0
   })

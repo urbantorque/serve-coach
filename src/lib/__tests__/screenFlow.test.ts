@@ -212,6 +212,8 @@ const HISTORY_CONSUMERS = [
   'rotationMoveOnTrip',
   // Serves per week (D5.4).
   'servesPerWeek',
+  // The serve path (L3.5).
+  'servePath',
   'strainBehindOf',
   'streakLine',
   'thenAndNow',

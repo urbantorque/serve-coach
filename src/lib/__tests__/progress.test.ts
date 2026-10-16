@@ -778,14 +778,26 @@ check('a full history walks in a small fraction of a frame', () => {
   // Warm, so the first call's compile does not become the measurement.
   for (let i = 0; i < 20; i++) tripSummary(tripsOf(full)[0], full)
 
-  const started = now()
+  /*
+   * The best of five batches, not one. A walk is tens of microseconds, and on a
+   * loaded machine a single batch of the small history caught a scheduler hiccup
+   * often enough to read 12× for 4× the reports on code nobody had touched. The
+   * fastest batch is the walk; the slower ones are the machine.
+   */
   const rounds = 200
-  for (let i = 0; i < rounds; i++) {
-    const trips = tripsOf(full)
-    const last = trips[trips.length - 1]
-    tripSummary(last, full)
+  const timed = (history: Session[]) => {
+    let best = Number.POSITIVE_INFINITY
+    for (let batch = 0; batch < 5; batch++) {
+      const t0 = now()
+      for (let i = 0; i < rounds; i++) {
+        const trips = tripsOf(history)
+        tripSummary(trips[trips.length - 1], history)
+      }
+      best = Math.min(best, (now() - t0) / rounds)
+    }
+    return best
   }
-  const per = (now() - started) / rounds
+  const per = timed(full)
   note(`${per.toFixed(3)}ms per walk of 60 reports — ${((per / FRAME_MS) * 100).toFixed(1)}% of a 60 FPS frame`)
 
   assert(
@@ -796,10 +808,7 @@ check('a full history walks in a small fraction of a frame', () => {
   // And the shape, not just the time: 60 reports must not cost more than four
   // times what 15 do, or the walk is quadratic and the timing above only looks
   // safe because the cap is small.
-  const quarter = full.slice(0, 15)
-  const t0 = now()
-  for (let i = 0; i < rounds; i++) tripSummary(tripsOf(quarter)[0], quarter)
-  const perQuarter = (now() - t0) / rounds
+  const perQuarter = timed(full.slice(0, 15))
   const growth = per / Math.max(perQuarter, 1e-6)
   note(`${growth.toFixed(1)}× the cost for 4× the reports`)
   assert(growth < 8, `60 reports cost ${growth.toFixed(1)}× what 15 do, which is worse than linear`)

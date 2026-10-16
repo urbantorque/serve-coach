@@ -34,11 +34,20 @@ import {
 } from '../lib/progress'
 import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
+import { partLabel, servePath, type PartState } from '../lib/servePath'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
+
+/** A part's state as the status tags colour it: a part being worked on is not a failing grade. */
+const PART_TAG: Record<PartState, string> = {
+  locked: 'great',
+  holding: 'good',
+  working: 'fair',
+  not_seen: 'none',
+}
 
 interface Props {
   sessions: Session[]
@@ -97,6 +106,8 @@ export default function Progress({
   const undoDrill = onUndoDrill
 
   const form = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
+  // Each part of the serve as holding or still being worked on (L3.5).
+  const path = useMemo(() => servePath(sessions, ladder), [sessions, ladder])
   // Read straight off `form`, the same object Home.tsx's own copy of this call
   // is read off — a fact about the score trend this screen already draws.
   const sheetMilestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
@@ -226,6 +237,25 @@ export default function Progress({
               )}
             </span>
           </div>
+
+          {/* The serve path (L3.5): progress as parts that hold, rather than
+              as points the camera moves by as much. Under the headline score
+              because it is the other half of the same answer. */}
+          {path && (
+            <section className="block">
+              <h2 className="block-title">Your serve path</h2>
+              <p className="path-headline">{path.headline}</p>
+              <ol className="path">
+                {path.parts.map((part) => (
+                  <li key={part.group} className={`path-part path-part--${part.state}`}>
+                    <span className="path-name">{part.name.charAt(0).toUpperCase() + part.name.slice(1)}</span>
+                    <em className={`tag tag--${PART_TAG[part.state]}`}>{partLabel(part)}</em>
+                    {part.slipped && <span className="path-slipped">{part.slipped}</span>}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
           {/* Above the records rather than below them, and above the charts,
               because it is the one thing on this sheet that is about the

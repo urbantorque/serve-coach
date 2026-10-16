@@ -1604,7 +1604,31 @@ does, and nothing marks a fault as fixed.
         - a re-check every fourth trip;
         - "take it to a coach" only after a full rung cycle.
       - *Proof:* seeded histories and `weekPlan` tests. After L3.3.
-- [ ] **L3.5 The serve path** · M.
+- [x] **L3.5 The serve path** · M.
+      - *Delta (Oct 17):* done.
+        - `servePath.ts` gives each part of the hierarchy one of four states:
+          not seen yet, working on (step k of n), holding (graduated), or
+          locked in (holding for 4 trips or more). It reads `standing`
+          (`graduation.ts`), so the path, the week plan and the graduation
+          lines cannot disagree.
+        - The headline is said in words: "5 of 7 parts holding." A relapse
+          moves the part back and says so: "The racket drop has slipped back:
+          the fault came back on 3 of your last 6 serves."
+        - It is shown on Progress under the score, using the report's own
+          tags.
+        - Proof:
+          - seeded diagnoses for every state;
+          - a rig sequence with the drop turned on, off for two trips, and
+            on again: working, then holding, then slipped back, while the
+            rig's legs stay worked on throughout;
+          - a render test;
+          - the preview on `?demo=history`.
+        - Departure: seven parts, not six. Every hierarchy group has a fault
+          the engine names, the swing's timing included. Faults marked
+          `notNamed` are left off.
+        - Also: `progress.test.ts`'s history-walk timing now takes the best
+          of five batches. It was reading 1.5–12× for 4× the reports on code
+          nobody had changed, because the machine was loaded.
       - **What:** each of the six hierarchy groups is one of: not seen yet,
         working on (step k of n), holding, or locked in. The headline is said
         in words, e.g. "4 of 6 parts holding". A relapse moves a group back

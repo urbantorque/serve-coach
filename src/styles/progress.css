@@ -441,6 +441,44 @@
   font-size: 12.5px;
 }
 
+/* The serve path (L3.5): a part a row, its state as the report's own tags. */
+.path-headline {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--fg);
+}
+
+.path {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.path-part {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.path-name {
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.path-slipped {
+  flex-basis: 100%;
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+}
+
 .progress-table summary {
   font-size: 12.5px;
   color: var(--fg-muted);
