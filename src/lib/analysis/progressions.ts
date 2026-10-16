@@ -338,9 +338,10 @@ export interface DrillCheck {
 }
 
 /** A serve's verdict on one fault: clean, named, or not judged at all. */
-type Judged = 'clean' | 'named' | 'unread'
+export type Judged = 'clean' | 'named' | 'unread'
 
-function judge(
+/** One serve against one fault — exported for graduation (L3.4), which counts the same way. */
+export function judgeServe(
   serve: { diagnosis?: Diagnosis; triage?: Triage },
   flaw: FlawId,
 ): Judged {
@@ -364,7 +365,7 @@ export function checkDrill(
 ): DrillCheck | undefined {
   const ladder = PROGRESSIONS[flaw]
   if (!ladder) return undefined
-  const verdicts = serves.map((s) => judge(s, flaw))
+  const verdicts = serves.map((s) => judgeServe(s, flaw))
   const clean = verdicts.filter((v) => v === 'clean').length
   const named = verdicts.filter((v) => v === 'named').length
   const read = clean + named

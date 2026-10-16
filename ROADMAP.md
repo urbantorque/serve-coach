@@ -1558,7 +1558,44 @@ does, and nothing marks a fault as fixed.
         count. A restore returns how many it pruned.
       - *Proof:* `planPrune` with 300 synthetic reports, the footprint test, and
         a backup round-trip.
-- [ ] **L3.4 Graduation and re-test** · S–M.
+- [x] **L3.4 Graduation and re-test** · S–M.
+      - *Delta (Oct 17):* done.
+        - A fault graduates (`graduation.ts`) when, of its last 6 judged
+          serves, at least the ladder's `pass` are clean, across two trips or
+          more. `judgeServe` is `checkDrill`'s own rule. Graduation is
+          worked out from the history each time, so a relapse undoes it.
+        - The week plan (`weekPlan.ts`):
+          - folds the last 12 plan-bearing reports, oldest first;
+          - keeps each fault until it graduates, marked "Not seen on your
+            last serve. Stay on this step until it holds across two trips.";
+          - orders the plan by the hierarchy;
+          - gives each fault fixed on the last two trips one line, e.g.
+            "Racket drop: clean on 6 of your last 6 serves, over two trips.
+            Next: the toss.";
+          - asks for a re-check on the fourth trip after graduation, and
+            every fourth after that, including while that trip is being
+            played.
+        - `checkDrill` now runs against `drilledFault`, the top of the plan
+          before the report. The report shows that check under the fault's
+          name, with its own move up, when it is no longer the top fix.
+        - "Take this one to a coach" is said only from the top rung
+          (`rungsLeft` 0) or for a row with no ladder. Below that the card
+          says "Work through the rest of its ladder before you take it to a
+          coach."
+        - The settings and device-check sheets now load lazily. The entry
+          was at 129.5 kB of its 130 budget and is now 125.7.
+        - Proof: `weekPlan.test.ts` on seeded histories covers:
+          - a kept fault, ordered by the hierarchy;
+          - one trip not counting;
+          - graduation and its line;
+          - a relapse;
+          - the third trip against the fourth, and the fourth while it is
+            played;
+          - the drilled fault and its passing basket;
+          - the coach rule.
+          Home was checked in the preview.
+        - Departure: no stored state. Graduation, the carried plan and the
+          re-check are all derived, so they cannot drift from the history.
       - **What:**
         - `checkDrill` runs against the fault being drilled;
         - a fixed fault gets one line, e.g. "Racket drop: clean on 5 of your

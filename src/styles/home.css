@@ -425,6 +425,30 @@ button.badge[disabled] {
   color: var(--fg-muted);
 }
 
+/* A fault fixed lately, or a retired one's re-check (L3.4): a sentence
+   above the plan, in the glance's aside voice, the tick in the colour the app
+   gives a good outcome. */
+.week-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.week-note svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--great);
+}
+
+.week-note--recheck svg {
+  color: var(--fg-faint);
+}
+
 /* This week's plan. The rows are the report's queue rows (`.focus-next-*`),
    so the two read as one pattern; only the box around them is new. */
 .week-list {

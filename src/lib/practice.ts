@@ -1,5 +1,5 @@
 import { FUNDAMENTALS, SERVE_TYPES, metricCopy } from './analysis/coaching'
-import { drillForMetric } from './analysis/progressions'
+import { drillForMetric, progressionFor, rungFor } from './analysis/progressions'
 import { SOFT_MEASUREMENT } from './analysis/confidence'
 import { mean } from './analysis/geometry'
 import { rowChange } from './analysis/realChange'
@@ -75,6 +75,12 @@ export interface PracticeFocus {
    * somebody from its own missing feature.
    */
   drilled?: number
+  /**
+   * Steps above the player's on this row's fault ladder: 0 on the top rung,
+   * absent when the row has no ladder. A stuck reading is sent to a coach only
+   * from the top rung (L3.4) — before that, the ladder has steps not yet tried.
+   */
+  rungsLeft?: number
 }
 
 /**
@@ -268,6 +274,9 @@ export function findPracticeFocus(
   // the player can hold open at once.
   const recurring = buildConsistencyTrend(sessions, type)?.recurring
 
+  const forRow = drillForMetric(pick.id, metricCopy(pick.id, type)?.drill ?? fundamental.drill, rungs)
+  const rowLadder = forRow.flaw ? progressionFor(forRow.flaw) : undefined
+
   return {
     metricId: pick.id,
     label: pick.label,
@@ -279,7 +288,8 @@ export function findPracticeFocus(
     // From one source since L1.4: a row that is a fault's number hands out that
     // fault's ladder on the player's rung, the same step the report's plan
     // shows, and the serve type's own drill where it has one.
-    drill: drillForMetric(pick.id, metricCopy(pick.id, type)?.drill ?? fundamental.drill, rungs).drill,
+    drill: forRow.drill,
+    rungsLeft: rowLadder && forRow.flaw ? rowLadder.steps.length - 1 - rungFor(forRow.flaw, rowLadder, rungs) : undefined,
     scores: pick.scores,
     average: Math.round(pick.average),
     timesWeakest: pick.weakest,
@@ -413,8 +423,16 @@ export function practiceHeadline(f: PracticeFocus): string {
    * ladder before its easier steps were tried; slowing the drill down is what a
    * coach would say first anyway.
    */
-  if (f.drilled && f.drilled >= COACH_AFTER_DRILLS) {
+  /*
+   * And only from the top of its ladder (L3.4). A fault with steps the player
+   * has not reached yet has more to try at home; a coach is for the one the
+   * whole ladder did not move.
+   */
+  if (f.drilled && f.drilled >= COACH_AFTER_DRILLS && !f.rungsLeft) {
     return cue(`${it} has not moved after ${times(f.drilled)} of its drill. Take this one to a coach.`)
+  }
+  if (f.drilled && f.drilled >= COACH_AFTER_DRILLS) {
+    return cue(`${it} has not moved after ${times(f.drilled)} of its drill. Work through the rest of its ladder before you take it to a coach.`)
   }
   if (f.drilled) {
     return cue(`${it} has not moved after ${times(f.drilled)} of its drill. Do it at half pace, then film again.`)

@@ -14,7 +14,8 @@ import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
 import FaultDemoPanel from '../components/FaultDemoPanel'
 import { hasDemo } from '../lib/faultDemoDials'
-import { CHECK_SERVES, drillCheckLine, progressionFor } from '../lib/analysis/progressions'
+import { CHECK_SERVES, drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
+import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
 import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
 import { pairTracks } from '../lib/trackPair'
@@ -423,6 +424,14 @@ export default function Report({
   const drill = ladder && rung >= 0 ? ladder.steps[rung] : plan[0].drill
   // The basket swept from this report, judged against this fault's bar.
   const check = analysis.drillCheck?.flaw === plan[0].flaw ? analysis.drillCheck : undefined
+  /*
+   * The basket judged against the fault the player was drilling, when that is
+   * no longer this report's top fix (L3.4) — usually because it has cleared.
+   * Said under its own name, with its own move up the ladder.
+   */
+  const drilledCheck = analysis.drillCheck && !check ? analysis.drillCheck : undefined
+  const drilledLadder = drilledCheck ? progressionFor(drilledCheck.flaw) : undefined
+  const drilledRung = drilledCheck && drilledLadder ? rungFor(drilledCheck.flaw, drilledLadder, rungs) : -1
   const suppressed = suppressedNote(analysis.triage, plan.length)
   const againstBest = focusAgainstBest(
     plan[0].flaw,
@@ -757,6 +766,29 @@ export default function Report({
                   )}
                 </>
               )}
+            </div>
+          )}
+          {drilledCheck && drilledLadder && drilledRung >= 0 && (
+            <div className="drill-check">
+              <p>
+                {movedTo === undefined
+                  ? `${FAULT_NAME[drilledCheck.flaw]}, which you were drilling: ${drillCheckLine(drilledCheck)}`
+                  : `${FAULT_NAME[drilledCheck.flaw]}: now on step ${movedTo + 1} of ${drilledLadder.steps.length}, ${drilledLadder.steps[movedTo].name}.`}
+              </p>
+              {onLadderStep &&
+                movedTo === undefined &&
+                drilledCheck.outcome === 'passed' &&
+                drilledRung < drilledLadder.steps.length - 1 && (
+                  <button
+                    className="drill-show"
+                    onClick={() => {
+                      onLadderStep(drilledCheck.flaw, drilledRung + 1)
+                      setMovedTo(drilledRung + 1)
+                    }}
+                  >
+                    Move up a step
+                  </button>
+                )}
             </div>
           )}
           {showingFault && hasDemo(plan[0].flaw) && (

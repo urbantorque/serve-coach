@@ -355,6 +355,22 @@ export default function Home({
               <Icon name="chevron" size={14} />
             </button>
           </div>
+          {/* A fault fixed lately, and what comes next; then a retired
+              fault's re-check when this is its trip (L3.4). Above the list,
+              because they say why the list is what it is. */}
+          {week.graduated.map((g) => (
+            <p className="week-note" key={g.flaw}>
+              <Icon name="check" size={15} />
+              <span>{g.line}</span>
+            </p>
+          ))}
+          {week.recheck && (
+            <p className="week-note week-note--recheck">
+              <Icon name="info" size={15} />
+              <span>{week.recheck.line}</span>
+            </p>
+          )}
+          {week.items.length > 0 && (
           <ol className="week-list">
             {week.items.map((item, i) => (
               <li className="focus-next-item" key={item.flaw ?? item.drill.name}>
@@ -373,6 +389,7 @@ export default function Home({
               </li>
             ))}
           </ol>
+          )}
         </section>
       )}
 

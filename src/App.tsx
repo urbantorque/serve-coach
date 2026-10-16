@@ -1,10 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
-import StoragePanel from './components/StoragePanel'
-import KeepClipsPanel from './components/KeepClipsPanel'
-import DeviceCheck from './components/DeviceCheck'
-import CorpusIngest from './components/CorpusIngest'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { useBackLayer } from './components/useBackLayer'
 import { useWakeLock } from './components/useWakeLock'
@@ -66,6 +62,7 @@ import { requestPersistence } from './lib/storage/backup'
 import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage/prefs'
 import { clipIdOf, fileKeyOf, sessionKeyFor } from './lib/storage/sessionKey'
 import { getPracticeSession, savePracticeSession } from './lib/storage/db'
+import { drilledFault } from './lib/weekPlan'
 import { isSession } from './lib/session/length'
 import { probeDuration } from './lib/session/probe'
 import { sessionIdFor, type PracticeSession, type SessionStage } from './lib/session/session'
@@ -99,6 +96,15 @@ const Report = lazy(loadReport)
 const loadSessionScreen = () => import('./screens/Session')
 const SessionScreen = lazy(loadSessionScreen)
 const loadSessionLive = () => import('./lib/session/live')
+/*
+ * The settings and the device check: sheets opened on demand, and the backup
+ * code and the device probes behind them. Out of the entry, which had come
+ * within half a kilobyte of its budget (L3.4).
+ */
+const StoragePanel = lazy(() => import('./components/StoragePanel'))
+const KeepClipsPanel = lazy(() => import('./components/KeepClipsPanel'))
+const DeviceCheck = lazy(() => import('./components/DeviceCheck'))
+const CorpusIngest = lazy(() => import('./components/CorpusIngest'))
 
 /**
  * The screen, and the fellow-travellers that are stages of the same machine
@@ -364,6 +370,7 @@ export default function App() {
    * the one report actually being looked at.
    */
   const practiceRef = useRef<PracticeFocus | undefined>(undefined)
+  const historyRef = useRef<{ sessions: Session[]; ladder?: Partial<Record<string, number>> }>({ sessions: [] })
 
   /**
    * Save a report and say so when it did not work.
@@ -454,6 +461,9 @@ export default function App() {
   // be redefined every time the focus changes — and it is handed to a button
   // that must not be replaced under the player's finger.
   practiceRef.current = practice
+  // Read by the sweep, which is declared once and would otherwise judge a
+  // basket against the history it was created with (L3.4).
+  historyRef.current = { sessions, ladder: prefs.ladder }
   /**
    * The tightest best-vs-worst gap swept, for whichever serve type is on
    * screen — see `bestConsistencyGap`.
@@ -940,13 +950,18 @@ export default function App() {
         // They still go no further than the screen.
         setPair(swept.pair)
 
-        // The basket against the top fix's ladder, from the serves just read —
-        // see `checkDrill`. Only when the report names a fault to check.
+        // The basket against the ladder of the fault the player was drilling
+        // — the top of the week plan before this report (L3.4) — and only
+        // when there was none, the fault this report names. Judged against
+        // the new report's fault, a drilled fault that cleared could never
+        // show "passed".
         const primary = analysis.triage?.status === 'ok' ? analysis.triage.primary_flaw?.flaw : undefined
+        const drilled = drilledFault(historyRef.current.sessions, analysis.createdAt, historyRef.current.ladder)
+        const target = drilled ?? primary
         // Loaded here rather than with the app: the ladders are a page of copy,
         // and only a finished sweep ever reads them.
-        const drillCheck = primary
-          ? (await import('./lib/analysis/progressions')).checkDrill(primary, swept.serves)
+        const drillCheck = target
+          ? (await import('./lib/analysis/progressions')).checkDrill(target, swept.serves)
           : undefined
         const measured: Analysis = { ...analysis, consistency: result, ...(drillCheck ? { drillCheck } : {}) }
         remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)
@@ -1869,8 +1884,10 @@ export default function App() {
           value={prefs.handedness}
           onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
         />
-        <StoragePanel count={sessions.length} onImported={refreshSessions} />
-        <KeepClipsPanel keep={Boolean(prefs.keepClips)} onChange={(keepClips) => setPrefs(writePrefs({ keepClips }))} />
+        <Suspense fallback={null}>
+          <StoragePanel count={sessions.length} onImported={refreshSessions} />
+          <KeepClipsPanel keep={Boolean(prefs.keepClips)} onChange={(keepClips) => setPrefs(writePrefs({ keepClips }))} />
+        </Suspense>
         <h3 className="t-overline settings-head">This phone</h3>
         <button className="btn btn--ghost btn--full" onClick={() => setSheet('check')}>
           <Icon name="info" size={17} />
@@ -1879,14 +1896,18 @@ export default function App() {
       </Sheet>
 
       <Sheet open={sheet === 'check'} onClose={() => setSheet(null)} title="What this phone can do">
-        <DeviceCheck />
+        <Suspense fallback={null}>
+          <DeviceCheck />
+        </Suspense>
       </Sheet>
 
       {/* Dev only. The import is dynamic so neither the ingest nor the pipeline
           it drives reaches the production bundle. */}
       {import.meta.env.DEV && sheet === 'corpus' && (
         <Sheet open onClose={() => setSheet(null)} title="Build a corpus">
-          <CorpusIngest />
+          <Suspense fallback={null}>
+            <CorpusIngest />
+          </Suspense>
         </Sheet>
       )}
 
