@@ -4,6 +4,7 @@ import {
   listPracticeSessions,
   listServeTags,
   listSummaries,
+  listTripRecords,
   safely,
   tagServe,
   untagServe,
@@ -13,6 +14,7 @@ import {
   type Session,
 } from '../lib/storage/db'
 import type { PracticeSession } from '../lib/session/session'
+import type { TripRecord } from '../lib/storage/ledger'
 
 /**
  * The player's history, as the app holds it: the saved reports, the practice
@@ -49,6 +51,8 @@ export function useHistory() {
   const [serveTags, setServeTags] = useState<ServeTag[]>([])
   /** Practice sessions (L2.4), newest first: long clips read a serve at a time. */
   const [practiceSessions, setPracticeSessions] = useState<PracticeSession[]>([])
+  /** The season ledger (L3.3): a row per trip, kept after its reports are pruned. */
+  const [tripLedger, setTripLedger] = useState<TripRecord[]>([])
 
   /**
    * A seeded history, held in place of the real one. `?demo=history`, dev only.
@@ -68,9 +72,13 @@ export function useHistory() {
       setSessions(seededHistory.current.sessions)
       setDrillLogs(seededHistory.current.practice)
       setPracticeSessions(seededHistory.current.practiceSessions ?? [])
+      setTripLedger([])
       setSessionsLoaded(true)
       return
     }
+    void safely(listTripRecords, []).then((list) => {
+      if (!seededHistory.current) setTripLedger(list)
+    })
     void safely(listSummaries, []).then((list) => {
       // A read started before `?demo=history` seeded itself can land after
       // it, and used to replace the season with the empty real store.
@@ -125,6 +133,7 @@ export function useHistory() {
     drillLogs,
     serveTags,
     practiceSessions,
+    tripLedger,
     refresh,
     applyServeTag,
     seed,

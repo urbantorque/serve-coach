@@ -2427,10 +2427,20 @@ callouts drawn onto it, the shape `captureThumbnails` actually writes — runs
 costliest on a portrait one. A stored report is six of those plus **31.3 KB** of
 everything else a `Session` carries — 21.3 KB of swing track and 10.0 KB of
 measurements and captions — so one report is **193–511 KB**, stills still nearly
-all of it. `KEEP_STILLS = 20` reports keep theirs; the rest, up to
-`MAX_SESSIONS = 60`, keep only their numbers at 31.3 KB each — so a full history
-is **5.1–11.5 MB**, and which end of that a player lands on is decided by their
-camera orientation, not by anything the app does.
+all of it. `KEEP_STILLS = 20` reports keep theirs; the next forty, up to
+`KEEP_TRACKS = 60`, keep their numbers and their swing at 31.3 KB each — so the
+newest sixty are **5.1–11.5 MB**, and which end of that a player lands on is
+decided by their camera orientation, not by anything the app does.
+
+**And nothing is deleted by count (L3.3).** Past sixty a report keeps its words
+and the six keyframe poses inside its track, **11.3 KB**, so a thousand serves
+is about 14 MB. Reports are deleted only when the device refuses a write, oldest
+first — and before any is, its trip is folded into the season ledger
+(`storage/ledger.ts`): one row per trip, about **0.4 KB**, with the trip's
+median, range, areas, the faults it was told about and the ladder steps. The
+trend, the best trip, the six-week line and the streaks read the ledger beside
+the reports, so a pruned season still draws the same chart, and the backup
+carries it.
 
 That paragraph said 15 KB until an audit measured it. The figure was true when it
 was written and the swing track was written afterwards: 21.3 KB, kept on every

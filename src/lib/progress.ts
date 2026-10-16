@@ -36,6 +36,7 @@ import {
 import { VERDICT_TABLES } from './analysis/verdict'
 import { cue } from './analysis/voice'
 import type { ServeOutcome, ServeTag, Session } from './storage/db'
+import type { TripRecord } from './storage/ledger'
 import type { PracticeSession } from './session/session'
 import type { ServeType } from './storage/prefs'
 import { clipIdOf } from './storage/sessionKey'
@@ -237,7 +238,12 @@ export function dominantType(sessions: Session[]): ServeType {
  * this also reports a rolling three-serve average, which is what a player should
  * actually judge a change of technique by.
  */
-export function buildProgress(sessions: Session[], serveType?: ServeType): Progress | undefined {
+export function buildProgress(
+  sessions: Session[],
+  serveType?: ServeType,
+  /** The season ledger (L3.3), any serve type: trips whose reports were pruned. */
+  ledger: readonly TripRecord[] = [],
+): Progress | undefined {
   if (sessions.length === 0) return undefined
 
   /*
@@ -313,7 +319,10 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
 
   // Trips (L3.2), and the headline, its change and the best from the era's.
   // A best set under the old rubric is not a bar this one can be held to.
-  const trips = tripPoints(oldestFirst)
+  const trips = tripPoints(
+    oldestFirst,
+    ledger.filter((r) => r.serveType === type),
+  )
   const tripEra = currentRubricEra(trips)
   const latestTrip = tripEra[tripEra.length - 1]
   const previousTrip = tripEra.length > 1 ? tripEra[tripEra.length - 2] : undefined
@@ -353,42 +362,95 @@ function medianOf(xs: number[]): number {
  * the median over the serves that graded them, so an area a serve could not
  * grade neither drags the trip down nor props it up.
  */
-export function tripPoints(oldestFirst: Session[]): TripPoint[] {
-  const out: TripPoint[] = []
+export function tripPoints(oldestFirst: Session[], ledger: readonly TripRecord[] = []): TripPoint[] {
+  const live = tripRuns(oldestFirst).map(pointOf)
+  return ledger.length ? withLedger(live, ledger) : live
+}
+
+/**
+ * `tripsOf`'s visits, each split where the rubric changed: the serves behind
+ * each trip point. `oldestFirst` must be one serve type, in time order.
+ */
+export function tripRuns(oldestFirst: Session[]): Session[][] {
+  const runs: Session[][] = []
   for (const trip of tripsOf(oldestFirst)) {
     let run: Session[] = []
-    const flush = () => {
-      if (!run.length) return
-      const scores = run.map((r) => r.overall)
-      const overall = medianOf(scores)
-      const byArea: Record<string, number> = {}
-      for (const id of Object.keys(FUNDAMENTALS)) {
-        const graded = run.flatMap((r) =>
-          r.fundamentals.filter((f) => f.id === id && isMeasured(f)).map((f) => f.score),
-        )
-        if (graded.length) byArea[id] = medianOf(graded)
-      }
-      out.push({
-        id: run[0].id,
-        createdAt: run[0].createdAt,
-        to: run[run.length - 1].createdAt,
-        overall,
-        status: statusOf(overall),
-        byArea,
-        scoringVersion: scoringVersionOf(run[0]),
-        serves: run.length,
-        low: Math.min(...scores),
-        high: Math.max(...scores),
-      })
-      run = []
-    }
     for (const s of trip) {
-      if (run.length && scoringVersionOf(run[0]) !== scoringVersionOf(s)) flush()
+      if (run.length && scoringVersionOf(run[0]) !== scoringVersionOf(s)) {
+        runs.push(run)
+        run = []
+      }
       run.push(s)
     }
-    flush()
+    if (run.length) runs.push(run)
   }
-  return out
+  return runs
+}
+
+/** One run of serves as a trip point. */
+export function pointOf(run: Session[]): TripPoint {
+  const scores = run.map((r) => r.overall)
+  const overall = medianOf(scores)
+  const byArea: Record<string, number> = {}
+  for (const id of Object.keys(FUNDAMENTALS)) {
+    const graded = run.flatMap((r) =>
+      r.fundamentals.filter((f) => f.id === id && isMeasured(f)).map((f) => f.score),
+    )
+    if (graded.length) byArea[id] = medianOf(graded)
+  }
+  return {
+    id: run[0].id,
+    createdAt: run[0].createdAt,
+    to: run[run.length - 1].createdAt,
+    overall,
+    status: statusOf(overall),
+    byArea,
+    scoringVersion: scoringVersionOf(run[0]),
+    serves: run.length,
+    low: Math.min(...scores),
+    high: Math.max(...scores),
+  }
+}
+
+/**
+ * Whether two trips, live or recorded, are the same visit: one rubric, and
+ * their spans touching. The serve type is the caller's to match.
+ */
+export const sameVisit = (
+  a: { scoringVersion: number; from: number; to: number },
+  b: { scoringVersion: number; from: number; to: number },
+): boolean => a.scoringVersion === b.scoringVersion && a.from <= b.to && b.from <= a.to
+
+/**
+ * Live trips with the season ledger's (L3.3) folded in, oldest first.
+ *
+ * A recorded trip whose reports are all gone joins as it was written. Where a
+ * record and live reports describe one visit, the one with more serves wins,
+ * and live on a tie: the record is the whole trip when the oldest of its
+ * reports were pruned, and the live serves are the truth when nothing was.
+ * `ledger` must already be the caller's serve type.
+ */
+export function withLedger(live: TripPoint[], ledger: readonly TripRecord[]): TripPoint[] {
+  const span = (t: TripPoint) => ({ scoringVersion: t.scoringVersion, from: t.createdAt, to: t.to })
+  const out = [...live]
+  for (const r of ledger) {
+    const clashes = out.filter((t) => sameVisit(span(t), r))
+    if (clashes.some((t) => t.serves >= r.serves)) continue
+    for (const t of clashes) out.splice(out.indexOf(t), 1)
+    out.push({
+      id: r.id,
+      createdAt: r.from,
+      to: r.to,
+      overall: r.median,
+      status: statusOf(r.median),
+      byArea: { ...r.byArea } as Record<string, number>,
+      scoringVersion: r.scoringVersion,
+      serves: r.serves,
+      low: r.low,
+      high: r.high,
+    })
+  }
+  return out.sort((a, b) => a.createdAt - b.createdAt)
 }
 
 /**
@@ -919,20 +981,45 @@ export function tripStreak(
   sessions: Session[],
   now: number = Date.now(),
   gapMs = STREAK_GAP_MS,
+  /** The season ledger (L3.3): visits whose reports were pruned still count. */
+  ledger: readonly TripRecord[] = [],
 ): number {
-  if (sessions.length === 0) return 0
-  const trips = tripsOf(sessions, MIN_THEN_AND_NOW_GAP_MS)
-  const tripEnd = (trip: Session[]) => trip[trip.length - 1].createdAt
-  const latest = trips[trips.length - 1]
-  if (now - tripEnd(latest) > gapMs) return 0
+  const visits = visitSpans(sessions, ledger)
+  if (visits.length === 0) return 0
+  const latest = visits[visits.length - 1]
+  if (now - latest.to > gapMs) return 0
 
   let streak = 1
-  for (let i = trips.length - 1; i > 0; i--) {
-    const gap = trips[i][0].createdAt - tripEnd(trips[i - 1])
+  for (let i = visits.length - 1; i > 0; i--) {
+    const gap = visits[i].from - visits[i - 1].to
     if (gap > gapMs) break
     streak++
   }
   return streak
+}
+
+/**
+ * Every visit to the court as a span, oldest first, for the streaks: the live
+ * trips, and the ledger's trips whose reports are gone (L3.3). Any serve
+ * type, so recorded trips of two types on one afternoon are one visit,
+ * chained by the same gap `tripsOf` uses.
+ */
+function visitSpans(sessions: Session[], ledger: readonly TripRecord[]): { from: number; to: number }[] {
+  const live = tripsOf(sessions, MIN_THEN_AND_NOW_GAP_MS).map((t) => ({
+    from: t[0].createdAt,
+    to: t[t.length - 1].createdAt,
+  }))
+  const gone = ledger
+    .filter((r) => !live.some((v) => v.from <= r.to && r.from <= v.to))
+    .map((r) => ({ from: r.from, to: r.to }))
+  const spans = [...live, ...gone].sort((a, b) => a.from - b.from)
+  const out: { from: number; to: number }[] = []
+  for (const s of spans) {
+    const last = out[out.length - 1]
+    if (last && s.from - last.to < MIN_THEN_AND_NOW_GAP_MS) last.to = Math.max(last.to, s.to)
+    else out.push({ ...s })
+  }
+  return out
 }
 
 /**
@@ -948,14 +1035,17 @@ export function tripStreak(
  * every point in time: the same trip boundaries, counted for the longest
  * unbroken run anywhere in them, not only the run touching `now`.
  */
-export function longestStreak(sessions: Session[], gapMs = STREAK_GAP_MS): number {
-  if (sessions.length === 0) return 0
-  const trips = tripsOf(sessions, MIN_THEN_AND_NOW_GAP_MS)
-  const tripEnd = (trip: Session[]) => trip[trip.length - 1].createdAt
+export function longestStreak(
+  sessions: Session[],
+  gapMs = STREAK_GAP_MS,
+  ledger: readonly TripRecord[] = [],
+): number {
+  const visits = visitSpans(sessions, ledger)
+  if (visits.length === 0) return 0
   let longest = 1
   let current = 1
-  for (let i = 1; i < trips.length; i++) {
-    const gap = trips[i][0].createdAt - tripEnd(trips[i - 1])
+  for (let i = 1; i < visits.length; i++) {
+    const gap = visits[i].from - visits[i - 1].to
     current = gap > gapMs ? 1 : current + 1
     longest = Math.max(longest, current)
   }
@@ -969,10 +1059,14 @@ export function longestStreak(sessions: Session[], gapMs = STREAK_GAP_MS): numbe
  * has long since lapsed and `tripStreak` itself has fallen back to zero.
  * Silent below two trips, the same floor `tripStreak`'s own line holds.
  */
-export function longestStreakLine(sessions: Session[], now: number = Date.now()): string | undefined {
-  const longest = longestStreak(sessions)
+export function longestStreakLine(
+  sessions: Session[],
+  now: number = Date.now(),
+  ledger: readonly TripRecord[] = [],
+): string | undefined {
+  const longest = longestStreak(sessions, STREAK_GAP_MS, ledger)
   if (longest < 2) return undefined
-  const current = tripStreak(sessions, now)
+  const current = tripStreak(sessions, now, STREAK_GAP_MS, ledger)
   return current === longest
     ? `Your longest run yet — ${longest} trips in a row.`
     : `Your longest run was ${longest} trips in a row.`
@@ -1106,8 +1200,12 @@ export function gapDeltaFor(trend: ConsistencyTrend | undefined, viewedId: strin
  * "1 trip in a row" the moment somebody's history stops being empty reads as
  * the app congratulating a null result.
  */
-export function streakLine(sessions: Session[], now: number = Date.now()): string | undefined {
-  const n = tripStreak(sessions, now)
+export function streakLine(
+  sessions: Session[],
+  now: number = Date.now(),
+  ledger: readonly TripRecord[] = [],
+): string | undefined {
+  const n = tripStreak(sessions, now, STREAK_GAP_MS, ledger)
   if (n < 2) return undefined
   return `${n} trips to the court in a row, roughly weekly.`
 }
@@ -1156,11 +1254,22 @@ export interface BestTrip {
  * again — and on club serves the camera moves one serve further than a fixed
  * fault does.
  */
-export function bestTrip(sessions: Session[], serveType: ServeType): BestTrip | undefined {
+export function bestTrip(
+  sessions: Session[],
+  serveType: ServeType,
+  ledger: readonly TripRecord[] = [],
+): BestTrip | undefined {
   const oldestFirst = sessions
     .filter((s) => typeOf(s) === serveType)
     .sort((a, b) => a.createdAt - b.createdAt)
-  const best = bestOf(currentRubricEra(tripPoints(oldestFirst)))
+  const best = bestOf(
+    currentRubricEra(
+      tripPoints(
+        oldestFirst,
+        ledger.filter((r) => r.serveType === serveType),
+      ),
+    ),
+  )
   return best && { score: best.overall, from: best.createdAt, to: best.to }
 }
 

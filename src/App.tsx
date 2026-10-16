@@ -250,6 +250,7 @@ export default function App() {
     refresh: refreshSessions,
     applyServeTag,
     practiceSessions,
+    tripLedger,
     seed: seedHistory,
     seeded: historySeeded,
   } = useHistory()
@@ -443,7 +444,7 @@ export default function App() {
   // Not type-restricted, unlike `bestGapFor` below — a streak is about
   // showing up at all, across every serve type, the same choice `Home.tsx`
   // already makes with its own copy of this same call.
-  const streak = useMemo(() => streakLine(sessions), [sessions])
+  const streak = useMemo(() => streakLine(sessions, Date.now(), tripLedger), [sessions, tripLedger])
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, drillLogs, prefs.ladder),
     [sessions, drillLogs, prefs.ladder],
@@ -505,8 +506,8 @@ export default function App() {
     [sessions],
   )
   const bestScoreFor = useCallback(
-    (serveType: ServeType) => bestTrip(sessions, serveType),
-    [sessions],
+    (serveType: ServeType) => bestTrip(sessions, serveType, tripLedger),
+    [sessions, tripLedger],
   )
   // Same reasoning as bestGapFor: recomputed for whichever type is actually
   // on screen rather than read off `spread`, which is pinned to the
@@ -1423,6 +1424,7 @@ export default function App() {
           {view.kind === 'home' && (
             <Home
               sessions={sessions}
+              ledger={tripLedger}
               offlineReady={offlineReady}
               sessionsLoaded={sessionsLoaded}
               onPick={(f) => void openClip(f)}
@@ -1650,6 +1652,7 @@ export default function App() {
           {view.kind === 'progress' && (
             <Progress
               sessions={sessions}
+              ledger={tripLedger}
               practiceSessions={practiceSessions}
               tags={serveTags}
               ladder={prefs.ladder}

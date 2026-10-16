@@ -20,6 +20,9 @@ import {
   listPracticeSessions,
   listServeTags,
   listSessions,
+  listTripRecords,
+  recordTrips,
+  saveTripRecords,
   logPractice,
   normalise,
   normalisePracticeLog,
@@ -36,6 +39,7 @@ import {
 import { SERVE_TYPES } from '../analysis/coaching'
 import { normalisePracticeSession, type PracticeSession } from '../session/session'
 import { DEFAULTS, readPrefs, writePrefs, type Prefs } from './prefs'
+import { normaliseTripRecord, type TripRecord } from './ledger'
 import type { Analysis } from '../analysis/types'
 
 const FORMAT = 'serve-coach-backup'
@@ -105,6 +109,12 @@ export interface Backup {
    * Optional and no version bump, for the reason `practice` gives above.
    */
   practiceSessions?: PracticeSession[]
+  /**
+   * The season ledger (L3.3): one row per trip, including the trips whose
+   * reports this phone has already pruned. Optional and no version bump, for
+   * the reason `practice` gives above.
+   */
+  trips?: TripRecord[]
 }
 
 /**
@@ -199,7 +209,8 @@ export interface BackupStore {
   logPractice(log: PracticeLog): Promise<void>
   listServeTags(): Promise<ServeTag[]>
   tagServe(tag: ServeTag): Promise<void>
-  pruneSessions(): Promise<void>
+  /** Resolves to how many reports it deleted, where the store can say. */
+  pruneSessions(): Promise<number | void>
   /**
    * The two halves of preferences, on the same seam as the rest.
    *
@@ -214,6 +225,11 @@ export interface BackupStore {
   /** Optional on the seam, so a store written before sessions existed still drives the file. */
   listPracticeSessions?(): Promise<PracticeSession[]>
   savePracticeSession?(session: PracticeSession): Promise<void>
+  /** The season ledger (L3.3), optional on the seam for the same reason. */
+  listTripRecords?(): Promise<TripRecord[]>
+  saveTripRecords?(records: readonly TripRecord[]): Promise<void>
+  /** Fold the trips of the reports on file into the ledger. */
+  recordTrips?(sessions: readonly Session[]): Promise<void>
 }
 
 const REAL_STORE: BackupStore = {
@@ -228,6 +244,9 @@ const REAL_STORE: BackupStore = {
   writePrefs,
   listPracticeSessions,
   savePracticeSession,
+  listTripRecords,
+  saveTripRecords,
+  recordTrips,
 }
 
 export async function buildBackup(store: BackupStore = REAL_STORE): Promise<Backup> {
@@ -239,6 +258,7 @@ export async function buildBackup(store: BackupStore = REAL_STORE): Promise<Back
     practice: await store.listPracticeLogs(),
     tags: await store.listServeTags(),
     ...(store.listPracticeSessions ? { practiceSessions: await store.listPracticeSessions() } : {}),
+    ...(store.listTripRecords ? { trips: await store.listTripRecords() } : {}),
     // Read through the store like everything else here, so a test can drive the
     // whole file without a `localStorage`.
     prefs: portablePrefs(store.readPrefs()),
@@ -304,6 +324,15 @@ export interface ImportResult {
   skippedTags: number
   /** Practice sessions brought in (L2.5). */
   practiceSessions: number
+  /** Trips in the season ledger the file added or filled in (L3.3). */
+  trips: number
+  /**
+   * Reports on this phone, old or restored, that the store deleted to make
+   * room while the file was read in (L3.3). Their trips stay in the ledger.
+   * Counted rather than left for the player to find: a restore that said
+   * "60 added" and then quietly kept forty is the gap this closes.
+   */
+  pruned: number
   /**
    * Whether the file filled in a preference this device did not have.
    *
@@ -343,6 +372,8 @@ export async function importBackup(
 
   const existing = new Map((await store.listSessions()).map((s) => [s.id, s]))
   const result: ImportResult = {
+    trips: 0,
+    pruned: 0,
     added: 0,
     updated: 0,
     skipped: 0,
@@ -543,8 +574,28 @@ export async function importBackup(
     }, undefined)
   }
 
-  // Once, over the store the import actually left behind.
+  /*
+   * The season (L3.3): the file's ledger rows, then every trip of the reports
+   * now on file, both merged on the ledger's own rule — more serves wins — so
+   * a row from a phone that had pruned a trip survives a restore onto a phone
+   * holding only part of it. Best-effort: the reports are the history.
+   */
+  const trips = Array.isArray(backup.trips) ? backup.trips : []
+  await safely(async () => {
+    if (store.listTripRecords && store.saveTripRecords && trips.length) {
+      const before = (await store.listTripRecords()).length
+      const rows = trips.map(normaliseTripRecord).filter((r): r is TripRecord => r !== undefined)
+      await store.saveTripRecords(rows)
+      result.trips = Math.max(0, (await store.listTripRecords()).length - before)
+    }
+    if (store.recordTrips) await store.recordTrips(await store.listSessions())
+  }, undefined)
+
+  // Once, over the store the import actually left behind — and what was
+  // deleted along the way, by the quota ladder inside a save or by this.
   await store.pruneSessions()
+  const after = await safely(async () => (await store.listSessions()).length, existing.size + result.added)
+  result.pruned = Math.max(0, existing.size + result.added - after)
 
   return result
 }

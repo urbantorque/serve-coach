@@ -1509,7 +1509,50 @@ does, and nothing marks a fault as fixed.
         serves.
       - *Proof:* seeded histories, and in the ensemble the trip median drifts
         less than a single serve. After L3.1.
-- [ ] **L3.3 A season ledger that outlives pruning** · S–M.
+- [x] **L3.3 A season ledger that outlives pruning** · S–M.
+      - *Delta (Oct 17):* done.
+        - `storage/ledger.ts` holds one row per trip (serve type and rubric),
+          in DB v5's `tripLedger`. A row carries the median, the range, the
+          area medians, how often each fault was named and the ladder steps.
+          A busy row measures 373 bytes.
+        - Rows are written:
+          - by `saveSession`, after each save, reading only the reports within
+            three days by the `createdAt` index;
+          - by a quota prune, which folds every trip in before deleting
+            anything, so older histories are covered;
+          - by `deleteSession`, which rewrites the trip when its row knew
+            exactly one serve more;
+          - and `clearSessions` clears the ledger.
+        - The merge rule is `sameVisit` plus "more serves wins": a pruned
+          trip keeps the row that knew all of it.
+        - Reports are no longer deleted by count. Stills stay on the newest
+          20 and tracks on the newest 60, and past that a report is 11.3 kB
+          of words and poses. Deletion happens only under quota pressure.
+          A routine prune looks only `ROUTINE_BAND` (8) past each limit.
+        - Readers of the ledger:
+          - the trend (`tripPoints` via `withLedger`);
+          - `bestTrip`;
+          - the six-week line;
+          - both streaks.
+        - The backup carries `trips`. A restore merges them and folds in the
+          restored reports' trips, and `ImportResult.pruned` counts the
+          reports it lost, which the storage panel says.
+        - Proof:
+          - `planPrune` on 300 keys at every level;
+          - `ledger.test.ts`: rows, the merge rule, normalising, a 90-serve
+            season pruned to 25 that draws the same trips, best, six-week line
+            and streaks, and backup round-trips;
+          - the footprint test, which prices the horizon report and the
+            ledger row;
+          - a live IndexedDB probe in the preview: v5 upgrade, save, delete,
+            clear.
+        - KNOWN:
+          - A trip chained across more than three days is recorded from the
+            part read.
+          - A serve deleted from an already-pruned trip keeps its place in
+            that trip's median.
+          - `listSummaries` still reads every report on open. A thousand
+            serves is about 14 MB.
       - **What:** about 0.5 kB per trip in its own store and in the backup,
         with the ladder steps. Reports are capped by their stills, not by
         count. A restore returns how many it pruned.

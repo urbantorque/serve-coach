@@ -34,8 +34,10 @@ import { measure } from '../analysis/metrics'
 import {
   KEEP_ALL_UNDER_PRESSURE,
   KEEP_STILLS,
-  MAX_SESSIONS,
+  KEEP_TRACKS,
 } from '../storage/db'
+import { tripRecordsOf } from '../storage/ledger'
+import type { Session } from '../storage/db'
 import { keyframePoses } from '../storage/poseTrack'
 import type { Frame } from '../analysis/types'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
@@ -516,14 +518,17 @@ const storeWorstCase = (sessions: number, trackBytes: number) =>
   sessions * RIG_REST_BYTES
 
 check('a track on every kept report stays inside the store ratchet', () => {
-  const today = storeWorstCase(MAX_SESSIONS, RIG_POSES_BYTES)
-  const withTracks = storeWorstCase(MAX_SESSIONS, RIG_TRACK_BYTES)
+  // Since L3.3 the store keeps every report, and `KEEP_TRACKS` is how many
+  // of them carry a track: the media-bearing part of the store, which this
+  // ratchet bounds. What lies past it is priced below, per report.
+  const today = storeWorstCase(KEEP_TRACKS, RIG_POSES_BYTES)
+  const withTracks = storeWorstCase(KEEP_TRACKS, RIG_TRACK_BYTES)
   assert(
     withTracks < STORE_RATCHET_BYTES,
     `a full history with tracks is ${mb(withTracks)} MB, past the ${mb(STORE_RATCHET_BYTES)} MB ratchet`,
   )
   note(
-    `full history: ${mb(today)} MB today, ${mb(withTracks)} MB with a track on each of ${MAX_SESSIONS} — stills ${mb(KEEP_STILLS * STILLS_PER_REPORT)} MB of it`,
+    `newest ${KEEP_TRACKS}: ${mb(today)} MB with poses, ${mb(withTracks)} MB with a track on each — stills ${mb(KEEP_STILLS * STILLS_PER_REPORT)} MB of it`,
   )
   note(`per report the track costs ${((RIG_TRACK_BYTES - RIG_POSES_BYTES) / 1024).toFixed(1)} kB more than the six poses it replaces, and ${(STILLS_PER_REPORT / 1024).toFixed(0)} kB less than the photographs it outlives`)
 })
@@ -579,16 +584,16 @@ check('the ratchet keeps the headroom its own comment claims for it', () => {
    * alone it would have fired on the next stored boolean and told nobody
    * anything. The two canaries below are what prove it is still a gate.
    */
-  const headroom = STORE_RATCHET_BYTES / storeWorstCase(MAX_SESSIONS, RIG_TRACK_BYTES)
+  const headroom = STORE_RATCHET_BYTES / storeWorstCase(KEEP_TRACKS, RIG_TRACK_BYTES)
   assert(
     headroom > 1.2 && headroom < 1.5,
     `the ratchet now sits at ${headroom.toFixed(2)}× the whole-report worst case, ` +
       'not the third its own comment claims — re-derive it or change the comment',
   )
   note(
-    `full history counted whole: ${mb(storeWorstCase(MAX_SESSIONS, RIG_TRACK_BYTES))} MB against ` +
+    `newest ${KEEP_TRACKS} counted whole: ${mb(storeWorstCase(KEEP_TRACKS, RIG_TRACK_BYTES))} MB against ` +
       `the ${mb(STORE_RATCHET_BYTES)} MB ratchet — ${headroom.toFixed(2)}× headroom, ` +
-      `and the words are ${mb(MAX_SESSIONS * (RIG_WORDS_BYTES + RIG_PHASES_BYTES))} MB of it`,
+      `and the words are ${mb(KEEP_TRACKS * (RIG_WORDS_BYTES + RIG_PHASES_BYTES))} MB of it`,
   )
 })
 
@@ -605,8 +610,8 @@ check('the fields Phase 8 added are inside the noise, and here is the number', (
   const added = yawMeasured + oneDelta
   note(`Phase 8's stored fields: ${yawMeasured} bytes for the camera flag, ${oneDelta} for one delta`)
   assert(
-    added * MAX_SESSIONS < RIG_TRACK_BYTES,
-    `${added} bytes a report over ${MAX_SESSIONS} reports is ${(added * MAX_SESSIONS / 1024).toFixed(1)} kB — ` +
+    added * KEEP_TRACKS < RIG_TRACK_BYTES,
+    `${added} bytes a report over ${KEEP_TRACKS} reports is ${(added * KEEP_TRACKS / 1024).toFixed(1)} kB — ` +
       'past a single track, which is no longer a rounding error',
   )
 })
@@ -651,18 +656,59 @@ check('a report with no pictures left costs what README.md says it costs', () =>
 
 check('and a longer history is what would breach it', () => {
   /*
-   * The teeth. `MAX_SESSIONS` is the one constant here a future round is likely
+   * The teeth. `KEEP_TRACKS` is the one constant here a future round is likely
    * to want raised, and the point of the ratchet is that raising it has to be
    * argued rather than typed.
    */
   assert(
-    storeWorstCase(MAX_SESSIONS * 2, RIG_TRACK_BYTES) > STORE_RATCHET_BYTES,
-    'twice the history did not breach the ratchet — it is set too loose to catch anything',
+    storeWorstCase(KEEP_TRACKS * 2, RIG_TRACK_BYTES) > STORE_RATCHET_BYTES,
+    'twice the tracks did not breach the ratchet — it is set too loose to catch anything',
   )
   assert(
-    storeWorstCase(MAX_SESSIONS, RIG_TRACK_BYTES * 4) > STORE_RATCHET_BYTES,
+    storeWorstCase(KEEP_TRACKS, RIG_TRACK_BYTES * 4) > STORE_RATCHET_BYTES,
     'a track four times as wide did not breach the ratchet',
   )
+})
+
+heading('Past the track horizon, and the season ledger (L3.3)')
+
+/** What a report costs once it has lost its stills and its track: the six poses and the words. */
+const PAST_HORIZON_BYTES = RIG_POSES_BYTES + RIG_REST_BYTES
+
+check('a report past the track horizon costs its words and six poses, and no more', () => {
+  /*
+   * Reports are no longer deleted by count, so this is the figure a long
+   * history grows by. A season of a thousand serves is the newest sixty with
+   * their media plus nine hundred and forty of these.
+   */
+  const season = storeWorstCase(KEEP_TRACKS, RIG_TRACK_BYTES) + (1000 - KEEP_TRACKS) * PAST_HORIZON_BYTES
+  note(
+    `past the horizon: ${(PAST_HORIZON_BYTES / 1024).toFixed(1)} kB a report — a thousand serves is ${mb(season)} MB, ` +
+      `against ${mb(1000 * (STILLS_PER_REPORT + RIG_TRACK_BYTES + RIG_REST_BYTES))} MB kept whole`,
+  )
+  assert(PAST_HORIZON_BYTES < 16 * 1024, `a horizon report is ${(PAST_HORIZON_BYTES / 1024).toFixed(1)} kB, past 16`)
+  assert(PAST_HORIZON_BYTES * 3 < RIG_TRACK_BYTES + RIG_REST_BYTES + STILLS_PER_REPORT, 'the horizon saves less than two thirds of a report')
+})
+
+check('a trip in the season ledger is about half a kilobyte', () => {
+  /*
+   * The roadmap's figure, measured on a busy row rather than a quiet one:
+   * every area graded, four faults named, a ladder step on each.
+   */
+  const trip = Array.from({ length: 12 }, (_, i) => ({
+    id: `serve-${i}`,
+    createdAt: 1_760_000_000_000 + i * 60_000,
+    overall: 60 + i,
+    serveType: 'flat',
+    scoringVersion: 5,
+    fundamentals: rigFundamentals,
+    triage: { status: 'ok', primary_flaw: { flaw: ['shallow_drop', 'toss_height', 'low_contact', 'waiters_tray'][i % 4] } },
+  })) as unknown as Session[]
+  const [row] = tripRecordsOf(trip, { shallow_drop: 2, toss_height: 1, low_contact: 3, waiters_tray: 0 })
+  const bytes = sizeOf(row)
+  note(`one trip row: ${bytes} bytes; a year of three trips a week is ${((bytes * 156) / 1024).toFixed(0)} kB`)
+  assert(bytes < 640, `a trip row is ${bytes} bytes, past the half a kilobyte the ledger is sized on`)
+  assert(row.serves === 12, 'the fixture was not one trip')
 })
 
 report()

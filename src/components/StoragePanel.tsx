@@ -80,6 +80,11 @@ export default function StoragePanel({ count, onImported }: Props) {
           // is not on the device.
           (r.failed
             ? ` ${r.failed} could not be saved — your device is out of storage. Free up space and import this file again.`
+            : '') +
+          // Said rather than left to be found (L3.3): the restore counted these
+          // in, and the store then had to make room.
+          (r.pruned
+            ? ` ${r.pruned} of your oldest ${r.pruned === 1 ? 'report was' : 'reports were'} removed to make room; ${r.pruned === 1 ? 'its trip stays' : 'their trips stay'} on your progress chart.`
             : ''),
       )
       onImported()

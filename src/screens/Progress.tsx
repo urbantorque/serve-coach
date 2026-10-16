@@ -33,11 +33,20 @@ import {
   tripRangeLine,
 } from '../lib/progress'
 import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
+import type { TripRecord } from '../lib/storage/ledger'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 
+/** One empty ledger for every render, so a memo keyed on it holds. */
+const NO_TRIPS: TripRecord[] = []
+
 interface Props {
   sessions: Session[]
+  /**
+   * The season ledger (L3.3): trips whose reports were pruned, folded into the
+   * trend, the records and the streaks. Empty for a seeded history.
+   */
+  ledger?: TripRecord[]
   /** Practice sessions, whose serves count in the weekly tally (L2.8). */
   practiceSessions?: PracticeSession[]
   /** What the player said about each serve — see `ServeTag`. */
@@ -74,6 +83,7 @@ interface Props {
  */
 export default function Progress({
   sessions,
+  ledger = NO_TRIPS,
   practiceSessions,
   tags = [],
   ladder,
@@ -86,13 +96,13 @@ export default function Progress({
   const logDrill = onLogDrill
   const undoDrill = onUndoDrill
 
-  const form = useMemo(() => buildProgress(sessions), [sessions])
+  const form = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
   // Read straight off `form`, the same object Home.tsx's own copy of this call
   // is read off — a fact about the score trend this screen already draws.
   const sheetMilestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
   // Not type-restricted: a streak is about showing up at all, across every
   // serve type, the same choice `Home.tsx` makes with its own copy.
-  const streak = useMemo(() => streakLine(sessions), [sessions])
+  const streak = useMemo(() => streakLine(sessions, Date.now(), ledger), [sessions, ledger])
   // First and second serves apart, and how often each serve type went in
   // (D5.3), from the player's own taps. Serves per week, and one plain line
   // when a week jumps (D5.4).
@@ -105,7 +115,7 @@ export default function Progress({
   const weekJump = useMemo(() => weekJumpLine(weeks), [weeks])
   // Each named fault over the recent serves, and the step of its ladder (D6.6).
   const faults = useMemo(() => faultTrends(sessions, ladder, form?.serveType), [sessions, ladder, form])
-  const longestStreakText = useMemo(() => longestStreakLine(sessions), [sessions])
+  const longestStreakText = useMemo(() => longestStreakLine(sessions, Date.now(), ledger), [sessions, ledger])
   // Not type-restricted and not era-restricted — see `recurringStrainOf`. A
   // joint has the same range whatever the serve was aiming at.
   const strain = useMemo(() => recurringStrainOf(sessions), [sessions])
@@ -118,8 +128,8 @@ export default function Progress({
   )
   const sheetBestGap = useMemo(() => bestConsistencyGap(spread), [spread])
   const sheetBestScore = useMemo(
-    () => (form ? bestTrip(sessions, form.serveType) : undefined),
-    [sessions, form],
+    () => (form ? bestTrip(sessions, form.serveType, ledger) : undefined),
+    [sessions, form, ledger],
   )
   const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread.gapDelta) : undefined), [spread])
   // The same facts this screen renders, worded the same way, handed to the

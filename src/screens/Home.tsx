@@ -8,11 +8,20 @@ import { weekPlan } from '../lib/weekPlan'
 import { faultForMetric } from '../lib/analysis/progressions'
 import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine, tripDay } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
+import type { TripRecord } from '../lib/storage/ledger'
 import { clipLabel } from '../lib/clipLabel'
 import type { PracticeSession } from '../lib/session/session'
 
+/** One empty ledger for every render, so a memo keyed on it holds. */
+const NO_TRIPS: TripRecord[] = []
+
 interface Props {
   sessions: Session[]
+  /**
+   * The season ledger (L3.3): trips whose reports were pruned, folded into the
+   * trend, the records and the streaks. Empty for a seeded history.
+   */
+  ledger?: TripRecord[]
   /** `undefined` while the cache is still being asked. */
   offlineReady: boolean | undefined
   /** Whether storage has answered; until then `sessions` being empty means nothing. */
@@ -97,6 +106,7 @@ const coarsePointer = () =>
 
 export default function Home({
   sessions,
+  ledger = NO_TRIPS,
   offlineReady,
   sessionsLoaded,
   onPick,
@@ -131,9 +141,9 @@ export default function Home({
    * clip, so one bad clip does not blank the plan.
    */
   const week = useMemo(() => weekPlan(sessions, ladder), [sessions, ladder])
-  const progress = useMemo(() => buildProgress(sessions), [sessions])
+  const progress = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
-  const streak = useMemo(() => streakLine(sessions), [sessions])
+  const streak = useMemo(() => streakLine(sessions, Date.now(), ledger), [sessions, ledger])
   const practice = useMemo(
     () => findPracticeFocus(sessions, undefined, undefined, undefined, ladder),
     [sessions, ladder],

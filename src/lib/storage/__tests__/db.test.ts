@@ -10,7 +10,8 @@ import {
   KEEP_ALL_UNDER_PRESSURE,
   KEEP_STILLS,
   KEEP_STILLS_UNDER_PRESSURE,
-  MAX_SESSIONS,
+  KEEP_TRACKS,
+  ROUTINE_BAND,
   type Session,
   DEFAULT_PROFILE,
   forProfile,
@@ -43,79 +44,77 @@ function assertPartition(total: number, toDelete: unknown[], toStrip: unknown[],
 }
 
 heading('The constants the ladder is built from')
-note(`routine: keep ${KEEP_STILLS} with stills, ${MAX_SESSIONS} at all`)
-note(`under pressure: keep ${KEEP_STILLS_UNDER_PRESSURE} with stills, ${KEEP_ALL_UNDER_PRESSURE} at all`)
+note(`routine: stills on the newest ${KEEP_STILLS}, tracks on the newest ${KEEP_TRACKS}, no report deleted`)
+note(`under pressure: keep ${KEEP_STILLS_UNDER_PRESSURE} with stills and tracks, ${KEEP_ALL_UNDER_PRESSURE} at all`)
 
-check('under pressure keeps fewer of both kinds than routine does', () => {
-  // The ladder only makes sense if pressure tightens it. Read off the constants
-  // themselves, so a change to either turns this red rather than the ladder
-  // quietly inverting.
+check('the limits nest: stills inside tracks, and pressure tighter than routine', () => {
+  assert(KEEP_STILLS < KEEP_TRACKS, 'the stills outlive the tracks they sit beside')
   assert(KEEP_STILLS_UNDER_PRESSURE < KEEP_STILLS, 'pressure did not tighten the stills limit')
-  assert(KEEP_ALL_UNDER_PRESSURE < MAX_SESSIONS, 'pressure did not tighten the session limit')
+  assert(KEEP_ALL_UNDER_PRESSURE < KEEP_TRACKS, 'pressure keeps more whole reports than routine keeps tracks')
 })
 
-heading('Routine pruning — after every save')
+heading('Routine pruning — after every save (L3.3)')
+
+check('three hundred reports: nothing deleted, stills and tracks capped', () => {
+  /*
+   * The roadmap's own proof. The store used to delete everything past sixty;
+   * reports are now capped by what they carry, not by how many there are.
+   */
+  const all = keys(300)
+  const { toDelete, toStrip, toDowngrade } = planPrune(all, 'routine')
+  assert(toDelete.length === 0, `routine pruning deleted ${toDelete.length} of 300`)
+  assert(toStrip.length === 300 - KEEP_STILLS, `stripped ${toStrip.length}, expected ${300 - KEEP_STILLS}`)
+  assert(toDowngrade.length === 300 - KEEP_TRACKS, `downgraded ${toDowngrade.length}, expected ${300 - KEEP_TRACKS}`)
+  assert(toStrip.every((k, i) => k === all[i]), 'stripped something other than the oldest')
+  assert(toDowngrade.every((k, i) => k === all[i]), 'downgraded something other than the oldest')
+  // The newest keep everything, and the band between keeps its replay.
+  assert(!toStrip.includes(all[299 - KEEP_STILLS + 1]), 'the newest stills were stripped')
+  assert(!toDowngrade.includes(all[299 - KEEP_TRACKS + 1]), 'the newest tracks were downgraded')
+})
+
+check('after one save, only the reports it pushed over a limit are looked at', () => {
+  /*
+   * With no count cap the band past each limit grows for ever, and reading
+   * all of it back on every serve made each save slower than the last. A save
+   * moves one report over each limit; the band is a margin over that one.
+   */
+  const all = keys(300)
+  const { toDelete, toStrip, toDowngrade } = planPrune(all, 'routine', 'recent')
+  assert(toDelete.length === 0, 'a routine save deleted a report')
+  assert(toStrip.length === ROUTINE_BAND && toDowngrade.length === ROUTINE_BAND, `looked at ${toStrip.length} and ${toDowngrade.length}`)
+  assert(toStrip[ROUTINE_BAND - 1] === all[300 - KEEP_STILLS - 1], 'the report just past the stills limit was not in the band')
+  assert(toDowngrade[ROUTINE_BAND - 1] === all[300 - KEEP_TRACKS - 1], 'the report just past the track limit was not in the band')
+})
 
 check('a history well under both limits is untouched', () => {
-  const { toDelete, toStrip } = planPrune(keys(10), 'routine')
-  assert(toDelete.length === 0, `deleted ${toDelete.length} of 10`)
-  assert(toStrip.length === 0, `stripped ${toStrip.length} of 10`)
+  const { toDelete, toStrip, toDowngrade } = planPrune(keys(10), 'routine')
+  assert(toDelete.length + toStrip.length + toDowngrade.length === 0, 'planned work on ten reports')
 })
 
-check('exactly at the stills limit strips nothing', () => {
-  const { toStrip } = planPrune(keys(KEEP_STILLS), 'routine')
-  assert(toStrip.length === 0, `stripped ${toStrip.length} at exactly the limit`)
-})
-
-check('one past the stills limit strips exactly the oldest one', () => {
+check('one past the stills limit strips exactly the oldest one, and keeps its track', () => {
   const all = keys(KEEP_STILLS + 1)
-  const { toDelete, toStrip } = planPrune(all, 'routine')
-  assert(toDelete.length === 0, 'routine pruning deleted a report under MAX_SESSIONS')
+  const { toDelete, toStrip, toDowngrade } = planPrune(all, 'routine')
+  assert(toDelete.length === 0, 'routine pruning deleted a report')
   assert(toStrip.length === 1 && toStrip[0] === all[0], `stripped ${JSON.stringify(toStrip)}`)
-})
-
-check('past MAX_SESSIONS the oldest are deleted, not just stripped', () => {
-  const all = keys(MAX_SESSIONS + 5)
-  const { toDelete, toStrip } = planPrune(all, 'routine')
-  assert(toDelete.length === 5, `deleted ${toDelete.length}, expected 5`)
-  assert(
-    toDelete.every((k, i) => k === all[i]),
-    'deleted something other than the oldest five',
-  )
-  assert(toStrip.length === MAX_SESSIONS - KEEP_STILLS, `stripped ${toStrip.length}`)
-  assertPartition(all.length, toDelete, toStrip, 'past MAX_SESSIONS')
+  assert(toDowngrade.length === 0, 'a track went with the stills on a routine prune')
 })
 
 heading('Under real pressure — quota already refused a write')
 
-check('stills-level pressure strips almost everything before it deletes anything', () => {
-  // `keepAll` does not move at this level — see `planPrune` — only `keepStills`
-  // does, which is the point: the cheap bytes go first, across the whole
-  // history, before a single report is deleted.
-  const all = keys(MAX_SESSIONS)
-  const { toDelete, toStrip } = planPrune(all, 'stills')
+check('stills-level pressure strips and downgrades almost everything, and deletes nothing', () => {
+  const all = keys(300)
+  const { toDelete, toStrip, toDowngrade } = planPrune(all, 'stills')
   assert(toDelete.length === 0, `stills-level pressure deleted ${toDelete.length} reports`)
-  assert(
-    toStrip.length === MAX_SESSIONS - KEEP_STILLS_UNDER_PRESSURE,
-    `stripped ${toStrip.length}, expected ${MAX_SESSIONS - KEEP_STILLS_UNDER_PRESSURE}`,
-  )
+  assert(toStrip.length === 300 - KEEP_STILLS_UNDER_PRESSURE, `stripped ${toStrip.length}`)
+  assert(toDowngrade.length === toStrip.length, 'the tracks did not go with the stills under pressure')
 })
 
-check('hard-level pressure deletes down to KEEP_ALL_UNDER_PRESSURE', () => {
-  const all = keys(MAX_SESSIONS)
+check('hard-level pressure deletes down to KEEP_ALL_UNDER_PRESSURE, oldest first', () => {
+  const all = keys(300)
   const { toDelete, toStrip } = planPrune(all, 'hard')
-  assert(
-    toDelete.length === MAX_SESSIONS - KEEP_ALL_UNDER_PRESSURE,
-    `deleted ${toDelete.length}, expected ${MAX_SESSIONS - KEEP_ALL_UNDER_PRESSURE}`,
-  )
-  assert(
-    toDelete.every((k, i) => k === all[i]),
-    'hard pruning did not delete the oldest reports first',
-  )
-  assert(
-    toStrip.length === KEEP_ALL_UNDER_PRESSURE - KEEP_STILLS_UNDER_PRESSURE,
-    `stripped ${toStrip.length}`,
-  )
+  assert(toDelete.length === 300 - KEEP_ALL_UNDER_PRESSURE, `deleted ${toDelete.length}`)
+  assert(toDelete.every((k, i) => k === all[i]), 'hard pruning did not delete the oldest reports first')
+  assert(toStrip.length === KEEP_ALL_UNDER_PRESSURE - KEEP_STILLS_UNDER_PRESSURE, `stripped ${toStrip.length}`)
   assertPartition(all.length, toDelete, toStrip, 'hard pressure')
 })
 
@@ -123,48 +122,16 @@ check('a history already inside KEEP_ALL_UNDER_PRESSURE loses no reports even un
   // The whole point of the retry order in `saveSession`: a phone whose disk was
   // filled by something else must not have a thin history destroyed to reclaim
   // bytes that were never the problem.
-  const all = keys(KEEP_ALL_UNDER_PRESSURE - 2)
-  const { toDelete } = planPrune(all, 'hard')
+  const { toDelete } = planPrune(keys(KEEP_ALL_UNDER_PRESSURE - 2), 'hard')
   assert(toDelete.length === 0, `deleted ${toDelete.length} from a history already under the floor`)
 })
 
 check('an empty store plans nothing at any level', () => {
   for (const level of ['routine', 'stills', 'hard'] as const) {
-    const { toDelete, toStrip, toDowngrade } = planPrune([], level)
-    assert(
-      toDelete.length === 0 && toStrip.length === 0 && toDowngrade.length === 0,
-      `${level} planned work against zero rows`,
-    )
-  }
-})
-
-check('routine pruning never takes a stored swing off a report', () => {
-  /*
-   * The rung's whole shape. A track is 21 kB against 24–48 kB of photographs on
-   * the same report and it is the thing that survives them — taking it off
-   * everything past `KEEP_STILLS` would cost a player the replay on reports
-   * nowhere near a quota problem, and hand them a second horizon to learn on top
-   * of the one the pictures already have.
-   */
-  const { toStrip, toDowngrade } = planPrune(keys(MAX_SESSIONS), 'routine')
-  assert(toStrip.length > 0, 'the fixture did not reach the stills limit, so this proves nothing')
-  assert(toDowngrade.length === 0, `routine pruning downgraded ${toDowngrade.length} tracks`)
-})
-
-check('under pressure the swing goes with the pictures, on the same band', () => {
-  /*
-   * One limit rather than a third constant to keep in agreement with the other
-   * two. Checked as identity with `toStrip` rather than by recomputing the
-   * arithmetic, which would only restate `planPrune` back at itself.
-   */
-  for (const level of ['stills', 'hard'] as const) {
-    const { toStrip, toDowngrade } = planPrune(keys(MAX_SESSIONS), level)
-    assert(toDowngrade.length === toStrip.length, `${level}: ${toDowngrade.length} downgraded, ${toStrip.length} stripped`)
-    assert(
-      toDowngrade.every((k, i) => k === toStrip[i]),
-      `${level} downgraded a different band from the one it stripped`,
-    )
-    assert(toDowngrade.length > 0, `${level} found nothing to downgrade at a full store`)
+    for (const sweep of ['all', 'recent'] as const) {
+      const { toDelete, toStrip, toDowngrade } = planPrune([], level, sweep)
+      assert(toDelete.length + toStrip.length + toDowngrade.length === 0, `${level}/${sweep} planned work against zero rows`)
+    }
   }
 })
 

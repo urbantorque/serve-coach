@@ -1,6 +1,8 @@
 import { keyframesFromTrack, readKeyframePoses, readSwingTrack } from './poseTrack'
 import { forgetAllClips, forgetClip } from './clipStore'
 import { clipIdOf } from './sessionKey'
+import { mergeTripRecords, normaliseTripRecord, tripRecordsOf, type TripRecord } from './ledger'
+import { readPrefs } from './prefs'
 import { normalisePracticeSession, type PracticeSession } from '../session/session'
 import { readoutOf, targetOf } from '../analysis/anatomy'
 // The table the screens index by `serveType`. Imported rather than restated as
@@ -57,7 +59,7 @@ export type Session = Omit<Analysis, 'frames'> & {
 export const DEFAULT_PROFILE = 'me'
 
 const DB_NAME = 'serve-coach'
-const DB_VERSION = 4
+const DB_VERSION = 5
 const STORE = 'sessions'
 
 /**
@@ -122,6 +124,12 @@ const TAG_STORE = 'serveTags'
  */
 const PRACTICE_SESSION_STORE = 'practiceSessions'
 
+/**
+ * The season ledger (L3.3): one small row per trip, kept after its reports are
+ * gone — see `ledger.ts`. Version 5.
+ */
+const TRIP_STORE = 'tripLedger'
+
 let dbPromise: Promise<IDBDatabase> | null = null
 
 function open(): Promise<IDBDatabase> {
@@ -149,6 +157,10 @@ function open(): Promise<IDBDatabase> {
       // Version 4, the same existence guard.
       if (!db.objectStoreNames.contains(PRACTICE_SESSION_STORE)) {
         db.createObjectStore(PRACTICE_SESSION_STORE, { keyPath: 'id' })
+      }
+      // Version 5, the same again.
+      if (!db.objectStoreNames.contains(TRIP_STORE)) {
+        db.createObjectStore(TRIP_STORE, { keyPath: 'id' })
       }
     }
     req.onsuccess = () => {
@@ -210,10 +222,28 @@ function tx<T>(
   )
 }
 
-/** Reports kept in full. Beyond this the oldest are dropped entirely. */
-export const MAX_SESSIONS = 60
 /** Reports that keep their keyframe stills. Older ones keep only their numbers. */
 export const KEEP_STILLS = 20
+
+/**
+ * Reports that keep their swing track (L3.3). Past this a report keeps the six
+ * keyframe poses inside it — the filmstrip is unchanged, only the replay goes
+ * — which takes it from about 31 kB to about 13.
+ *
+ * Sixty, the number of reports the store used to keep at all. Reports are no
+ * longer deleted by count: they lose their stills, then their tracks, and are
+ * deleted only when the device runs out of room, with the season ledger
+ * keeping their trips (`ledger.ts`).
+ */
+export const KEEP_TRACKS = 60
+
+/**
+ * How far past each limit a prune after a single save looks: the reports that
+ * save just pushed over it. With no count cap the band past a limit grows for
+ * ever, and reading all of it back on every serve would make each save slower
+ * than the last. A restore, and the quota recovery, sweep the whole band.
+ */
+export const ROUTINE_BAND = 8
 
 const isQuotaError = (err: unknown) =>
   err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22)
@@ -271,35 +301,35 @@ export const KEEP_ALL_UNDER_PRESSURE = 25
 export function planPrune(
   orderedOldestFirst: readonly IDBValidKey[],
   level: PruneLevel,
+  /** `recent` looks only `ROUTINE_BAND` past each limit — the reports one save moved. */
+  sweep: 'all' | 'recent' = 'all',
 ): { toDelete: IDBValidKey[]; toStrip: IDBValidKey[]; toDowngrade: IDBValidKey[] } {
   const keepStills = level === 'routine' ? KEEP_STILLS : KEEP_STILLS_UNDER_PRESSURE
-  const keepAll = level === 'hard' ? KEEP_ALL_UNDER_PRESSURE : MAX_SESSIONS
+  /*
+   * The swing track keeps its own, longer horizon in routine pruning (L3.3).
+   *
+   * A track is 21 kB against the 24–48 kB of photographs on the same report,
+   * and it is the only thing here that survives them, so it is not taken with
+   * the stills: a player keeps the replay on their last sixty serves. Under
+   * pressure it is the same band as the stills, deliberately — one limit, one
+   * decision, when the disk has actually pushed back.
+   */
+  const keepTracks = level === 'routine' ? KEEP_TRACKS : KEEP_STILLS_UNDER_PRESSURE
+  // Reports are deleted only when the disk is full (L3.3), never by count.
+  const keepAll = level === 'hard' ? KEEP_ALL_UNDER_PRESSURE : Number.POSITIVE_INFINITY
   const n = orderedOldestFirst.length
-  const toStrip = orderedOldestFirst.slice(
-    Math.max(0, n - keepAll),
-    Math.max(0, n - keepStills),
-  )
+  const deleted = Math.max(0, n - keepAll)
+  // Everything past `keepAll` is already in `toDelete`, and everything within
+  // a limit of the newest keeps what that limit protects.
+  const band = (keep: number) => {
+    const end = Math.max(deleted, n - keep)
+    const start = sweep === 'recent' ? Math.max(deleted, end - ROUTINE_BAND) : deleted
+    return orderedOldestFirst.slice(start, end)
+  }
   return {
-    toDelete: orderedOldestFirst.slice(0, Math.max(0, n - keepAll)),
-    // Only the band between the two limits: everything past `keepAll` is
-    // already in `toDelete`, and everything within `keepStills` of the end
-    // keeps its images.
-    toStrip,
-    /*
-     * The swing track goes only once the disk has actually pushed back.
-     *
-     * A track is 21 kB against the 24–48 kB of photographs on the same report,
-     * and it is the only thing here that survives them — so taking it off
-     * everything past `KEEP_STILLS` would cost a player the replay on reports
-     * that are nowhere near a quota problem, and give them a second horizon to
-     * learn on top of the one the pictures already have. Routine pruning
-     * therefore leaves it alone entirely.
-     *
-     * Under pressure it is the same band as the stills rather than a band of its
-     * own, deliberately: one limit, one decision, and no third constant to keep
-     * in agreement with the other two.
-     */
-    toDowngrade: level === 'routine' ? [] : toStrip,
+    toDelete: orderedOldestFirst.slice(0, deleted),
+    toStrip: band(keepStills),
+    toDowngrade: band(keepTracks),
   }
 }
 
@@ -312,7 +342,7 @@ export function planPrune(
  * the measurements survive far longer, which is the opposite of what deleting
  * whole reports oldest-first would do.
  */
-async function prune(level: PruneLevel = 'routine'): Promise<void> {
+async function prune(level: PruneLevel = 'routine', sweep: 'all' | 'recent' = 'all'): Promise<number> {
   /*
    * Oldest first, as keys alone.
    *
@@ -336,11 +366,32 @@ async function prune(level: PruneLevel = 'routine'): Promise<void> {
 
   if (level !== 'routine') await dropUnreadable()
 
-  const { toDelete, toStrip, toDowngrade } = planPrune(ordered, level)
+  const { toDelete, toStrip, toDowngrade } = planPrune(ordered, level, sweep)
+  const stripping = new Set(toStrip.map(String))
   const downgrading = new Set(toDowngrade.map(String))
 
+  /*
+   * The season first (L3.3). Every trip the store knows is folded into the
+   * ledger before a report is deleted — normally a no-op, since each save
+   * keeps its own trip's row current, but a history from before the ledger
+   * existed arrives here with none. The ledger write is tiny and may itself
+   * be refused on a full disk, so one report goes first to make room for it.
+   */
+  let deletedCount = 0
+  if (toDelete.length) {
+    const fold = async () => recordTrips(await readAll(stripStills))
+    try {
+      await fold()
+    } catch {
+      await safely(() => tx('readwrite', (store) => store.delete(toDelete[0])), undefined)
+      await safely(fold, undefined)
+    }
+  }
   for (const doomed of toDelete) {
-    await safely(() => tx('readwrite', (store) => store.delete(doomed)), undefined)
+    await safely(async () => {
+      await tx('readwrite', (store) => store.delete(doomed))
+      deletedCount++
+    }, undefined)
   }
   // And the video a deleted report came from, once no report left shares it.
   const deleted = new Set(toDelete.map(String))
@@ -366,19 +417,22 @@ async function prune(level: PruneLevel = 'routine'): Promise<void> {
    *
    * Freeing less than hoped for is survivable. Not getting to the retry is not.
    */
-  for (const key of toStrip) {
+  const touched = ordered.filter((k) => stripping.has(String(k)) || downgrading.has(String(k)))
+  for (const key of touched) {
     await safely(async () => {
       const row = await tx<unknown>('readonly', (store) => store.get(key) as IDBRequest<unknown>)
       const s = normalise(row)
       if (!s) return
+      const wantsStrip = stripping.has(String(key)) && s.phases.some((p) => p.thumbnail)
       const wantsDowngrade = downgrading.has(String(key)) && !!s.track
       // Nothing to free is not the same as a free write: a `put` rewrites a
       // whole record, and this loop's other caller is already out of room.
-      if (!s.phases.some((p) => p.thumbnail) && !wantsDowngrade) return
-      const stripped = stripStills(s)
+      if (!wantsStrip && !wantsDowngrade) return
+      const stripped = wantsStrip ? stripStills(s) : s
       await tx('readwrite', (store) => store.put(wantsDowngrade ? downgradeTrack(stripped) : stripped))
     }, undefined)
   }
+  return deletedCount
 }
 
 /**
@@ -408,8 +462,9 @@ async function dropUnreadable(): Promise<void> {
 /**
  * Bring the store back inside its limits. Exported for `importBackup`, which
  * writes a whole history in one go and must not pay for this per report.
+ * Resolves to how many reports it deleted, which a restore reports (L3.3).
  */
-export const pruneSessions = (): Promise<void> => prune()
+export const pruneSessions = (): Promise<number> => prune()
 
 export async function saveSession(
   analysis: Analysis,
@@ -476,6 +531,17 @@ export async function saveSession(
   }
 
   const put = () => tx('readwrite', (s) => s.put(session))
+  /*
+   * After a durable write: the trip's ledger row (L3.3), then the store's
+   * bounds. Both housekeeping, not part of the save — a failure in either must
+   * not turn a report that is already written into a rejected promise the
+   * caller reports to the player as a lost save.
+   */
+  const settle = async () => {
+    if (!bound) return
+    await safely(() => recordTripAround(session.createdAt), undefined)
+    await safely(() => prune('routine', 'recent'), undefined)
+  }
   try {
     await put()
   } catch (err) {
@@ -491,7 +557,7 @@ export async function saveSession(
     if ((await safely(() => forgetAllClips(), 0)) > 0) {
       try {
         await put()
-        if (bound) await safely(() => prune(), undefined)
+        await settle()
         return
       } catch (clipsGone) {
         if (!isQuotaError(clipsGone)) throw clipsGone
@@ -524,10 +590,52 @@ export async function saveSession(
     }
   }
 
-  // Bounding the store is housekeeping, not part of the save. A failure here
-  // must not turn a report that is already durably written into a rejected
-  // promise the caller reports to the player as a lost save.
-  if (bound) await safely(() => prune(), undefined)
+  await settle()
+}
+
+/** How far either side of a serve the store is read to find its trip. */
+const TRIP_READ_MS = 3 * 24 * 60 * 60 * 1000
+
+/**
+ * Bring the ledger row of the trip a serve belongs to up to date (L3.3).
+ *
+ * Reads only the reports filed within `TRIP_READ_MS` of it, by the
+ * `createdAt` index — a trip is an afternoon, and reading the whole history
+ * back on every save is the cost the prune band exists to avoid. A trip
+ * chained across more than three days is recorded from the part read; the
+ * merge keeps whichever row knew more of it.
+ */
+async function recordTripAround(at: number): Promise<void> {
+  const near = await readAll(stripStills, IDBKeyRange.bound(at - TRIP_READ_MS, at + TRIP_READ_MS))
+  const own = tripRecordsOf(near, readPrefs().ladder).filter((r) => r.from <= at && at <= r.to)
+  await writeTrips(own)
+}
+
+/** Fold every trip in `sessions` into the ledger. Exported for the restore. */
+export async function recordTrips(sessions: readonly Session[]): Promise<void> {
+  await writeTrips(tripRecordsOf(sessions, readPrefs().ladder))
+}
+
+/** Merge rows into the ledger: more serves wins (`mergeTripRecords`). */
+async function writeTrips(incoming: readonly TripRecord[]): Promise<void> {
+  if (!incoming.length) return
+  const { write, drop } = mergeTripRecords(await listTripRecords(), incoming)
+  for (const id of drop) await tx('readwrite', (s) => s.delete(id), TRIP_STORE)
+  for (const r of write) await tx('readwrite', (s) => s.put(r), TRIP_STORE)
+}
+
+/** The season ledger, oldest trip first. Rows that do not read back are left out. */
+export async function listTripRecords(): Promise<TripRecord[]> {
+  const rows = await tx<unknown[]>('readonly', (s) => s.getAll() as IDBRequest<unknown[]>, TRIP_STORE)
+  return rows
+    .map(normaliseTripRecord)
+    .filter((r): r is TripRecord => r !== undefined)
+    .sort((a, b) => a.from - b.from)
+}
+
+/** Rows from a restore, merged on the ledger's own rule. */
+export async function saveTripRecords(records: readonly TripRecord[]): Promise<void> {
+  await writeTrips(records)
 }
 
 /**
@@ -1074,12 +1182,13 @@ function usableGap(raw: unknown): NonNullable<Session['consistency']>['gap'] {
  * JPEGs into one array first and only then let us drop them, which is the peak
  * we are trying to avoid on a mid-range phone.
  */
-function readAll(shape: (s: Session) => Session): Promise<Session[]> {
+function readAll(shape: (s: Session) => Session, created?: IDBKeyRange): Promise<Session[]> {
   return open().then(
     (db) =>
       new Promise<Session[]>((resolve, reject) => {
         const out: Session[] = []
-        const req = db.transaction(STORE, 'readonly').objectStore(STORE).openCursor()
+        const store = db.transaction(STORE, 'readonly').objectStore(STORE)
+        const req = created ? store.index('createdAt').openCursor(created) : store.openCursor()
         req.onsuccess = () => {
           const cursor = req.result
           if (!cursor) {
@@ -1117,7 +1226,9 @@ export async function getSession(id: string): Promise<Session | undefined> {
 }
 
 export async function deleteSession(id: string): Promise<void> {
+  const gone = normalise(await safely(() => tx<unknown>('readonly', (s) => s.get(id) as IDBRequest<unknown>), undefined))
   await tx('readwrite', (s) => s.delete(id))
+  if (gone) await safely(() => forgetTripServe(gone), undefined)
   // The kept video goes with its last report: a basket's serves share one.
   const clip = clipIdOf(id)
   const keys = await safely(() => tx<IDBValidKey[]>('readonly', (s) => s.getAllKeys() as IDBRequest<IDBValidKey[]>), [])
@@ -1127,6 +1238,34 @@ export async function deleteSession(id: string): Promise<void> {
 export async function clearSessions(): Promise<void> {
   await tx('readwrite', (s) => s.clear())
   await safely(() => forgetAllClips(), 0)
+  // Clearing the history clears the season: the player asked for it gone.
+  await safely(() => tx('readwrite', (s) => s.clear(), TRIP_STORE), undefined)
+}
+
+/**
+ * Take a serve the player deleted back out of its trip's ledger row (L3.3).
+ *
+ * The row is rewritten from the reports still on file when it knew exactly
+ * one serve more than they do — the one just deleted. A row that knew more
+ * than that is a trip whose oldest reports were pruned, and the reports left
+ * cannot rebuild it, so it stays as it was: a deleted serve on a pruned trip
+ * keeps its place in that trip's median.
+ */
+async function forgetTripServe(gone: Session): Promise<void> {
+  const near = await readAll(stripStills, IDBKeyRange.bound(gone.createdAt - TRIP_READ_MS, gone.createdAt + TRIP_READ_MS))
+  const live = tripRecordsOf(near, readPrefs().ladder)
+  const type = gone.serveType ?? 'flat'
+  const rubric = gone.scoringVersion ?? LEGACY_SCORING_VERSION
+  const point = { scoringVersion: rubric, from: gone.createdAt, to: gone.createdAt }
+  for (const row of await listTripRecords()) {
+    if (row.serveType !== type || row.scoringVersion !== point.scoringVersion) continue
+    if (!(row.from <= point.to && point.from <= row.to)) continue
+    const remaining = live.filter((r) => r.serveType === type && r.scoringVersion === rubric && r.from <= row.to && row.from <= r.to)
+    const left = remaining.reduce((n, r) => n + r.serves, 0)
+    if (row.serves !== left + 1) continue
+    await tx('readwrite', (s) => s.delete(row.id), TRIP_STORE)
+    for (const r of remaining) await tx('readwrite', (s) => s.put(r), TRIP_STORE)
+  }
 }
 
 /* ------------------------------------------------------ what the player did */
