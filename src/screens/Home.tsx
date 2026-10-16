@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import FramingCheck from '../components/FramingCheck'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing, Sheet } from '../components/primitives'
 import { previewSupported } from '../lib/framing/access'
@@ -13,6 +12,9 @@ import type { Cadence } from '../lib/storage/prefs'
 import { bodyBestLine, bodyBests } from '../lib/bests'
 import { clipLabel } from '../lib/clipLabel'
 import type { PracticeSession } from '../lib/session/session'
+
+/** The viewfinder, a sheet opened on demand: out of the first screen's bundle. */
+const FramingCheck = lazy(() => import('../components/FramingCheck'))
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
@@ -664,15 +666,17 @@ export default function Home({
             the sheet first, so the camera is released before the analysis asks
             the same device for the GPU — and so the player is not left looking
             at a viewfinder while the screen behind it starts working. */}
-        <FramingCheck
-          onRecorded={
-            onRecorded &&
-            ((file) => {
-              setChecking(false)
-              onRecorded(file)
-            })
-          }
-        />
+        <Suspense fallback={null}>
+          <FramingCheck
+            onRecorded={
+              onRecorded &&
+              ((file) => {
+                setChecking(false)
+                onRecorded(file)
+              })
+            }
+          />
+        </Suspense>
       </Sheet>
     </div>
   )

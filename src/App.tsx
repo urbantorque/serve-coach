@@ -1,5 +1,4 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import FilmingGuide from './components/FilmingGuide'
 import HandednessPicker from './components/HandednessPicker'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { useBackLayer } from './components/useBackLayer'
@@ -79,7 +78,6 @@ import type { SessionVideo } from './lib/session/video'
 import { clipFor, keepClip } from './lib/storage/clipStore'
 import { applyWhenIdle, onUpdateWaiting } from './lib/updates'
 import Analyzing, { type SweepProgress } from './screens/Analyzing'
-import Glance from './screens/Glance'
 import Home from './screens/Home'
 
 /*
@@ -105,6 +103,15 @@ const Report = lazy(loadReport)
 const loadSessionScreen = () => import('./screens/Session')
 const SessionScreen = lazy(loadSessionScreen)
 const loadSessionLive = () => import('./lib/session/live')
+/*
+ * The glance, fetched when an analysis starts the way the report is: it is
+ * only ever drawn after one. And the filming guide, a sheet opened on demand.
+ * Both out of the entry, which the level-up work had brought to within two
+ * kilobytes of its budget.
+ */
+const loadGlance = () => import('./screens/Glance')
+const Glance = lazy(loadGlance)
+const FilmingGuide = lazy(() => import('./components/FilmingGuide'))
 /*
  * The settings and the device check: sheets opened on demand, and the backup
  * code and the device probes behind them. Out of the entry, which had come
@@ -761,6 +768,7 @@ export default function App() {
       // the progress bar of an unrelated clip.
       setSweep(undefined)
       void loadReport()
+      void loadGlance()
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
 
       try {
@@ -910,6 +918,7 @@ export default function App() {
       setSweep({ total, firstNumber: first + 1, done: [] })
       setProgress({ step: 'engine', ratio: 0, detail: 'Comparing your serves' })
       void loadReport()
+      void loadGlance()
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
 
       try {
@@ -1790,7 +1799,9 @@ export default function App() {
         }}
         title="How to film your serve"
       >
-        <FilmingGuide />
+        <Suspense fallback={null}>
+          <FilmingGuide />
+        </Suspense>
       </Sheet>
 
       {/* The same guide, shown once before the very first clip, with the hand
@@ -1819,7 +1830,11 @@ export default function App() {
             twice was R17's fix. Handedness still has to be asked either way,
             which is why this sheet opens at all: `needsHandedness` in
             `Home.tsx` gates on the hand, not on the rules. */}
-        {!prefs.seenFilmingGuide && <FilmingGuide />}
+        {!prefs.seenFilmingGuide && (
+          <Suspense fallback={null}>
+            <FilmingGuide />
+          </Suspense>
+        )}
         {/* The hand is the one thing that has to be right before the first clip:
             every swing measurement is read off the racket arm, and the detector
             cross-checks a stated hand rather than being overridden by it. */}
