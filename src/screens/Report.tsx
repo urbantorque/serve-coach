@@ -33,12 +33,12 @@ import type { InjuryFlag } from '../lib/analysis/triage'
 import type { PracticeFocus } from '../lib/practice'
 import type { ServeType } from '../lib/storage/prefs'
 import {
-  bestOverallScoreLine,
+  bestTripLine,
   deltasAgainst,
   scoreMoveCaption,
   scoringVersionOf,
   type BestGap,
-  type BestScore,
+  type BestTrip,
 } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
 import { SCORING_VERSION, type Analysis, type PhaseId, type Status } from '../lib/analysis/types'
@@ -149,12 +149,11 @@ interface Props {
    */
   basketGapDelta?: number
   /**
-   * The single highest score any one serve of this type has earned — see
-   * `bestOverallScore`. A different record from `bestGap` above: that is
-   * about repeatability across a basket, this is about the one best serve
-   * this report's own `analysis.overall` is compared against.
+   * The best trip of this serve type so far, by its median — see
+   * `bestTrip` (L3.2). A different record from `bestGap` above: that is
+   * about repeatability across a basket, this is about the best visit.
    */
-  bestScore?: BestScore
+  bestScore?: BestTrip
   /**
    * The trip streak line, already worded by `streakLine` in `App.tsx` —
    * carried onto the share card `share()` below builds, unmodified.
@@ -373,7 +372,7 @@ export default function Report({
   // idle, only shared/downloaded count as done) — the button says nothing
   // happened rather than claiming the card was saved.
   const { sharing, trigger: share } = useShareState(() =>
-    shareReportCard(analysis, streak, bestScore && bestOverallScoreLine(bestScore, analysis.createdAt)),
+    shareReportCard(analysis, streak, bestScore && bestTripLine(bestScore, analysis.createdAt)),
   )
 
   const goToPhase = (phase: PhaseId) => {
@@ -609,7 +608,7 @@ export default function Report({
             reason `bestGap` below sits apart from the numbers it is a record
             among. Ungameable the same way: the only way to move it is to
             actually serve a higher score. */}
-        {bestScore && <p>{bestOverallScoreLine(bestScore, analysis.createdAt)}</p>}
+        {bestScore && <p>{bestTripLine(bestScore, analysis.createdAt)}</p>}
         <h1>{verdict.title}</h1>
         <p>{verdict.sub}</p>
         {onGlance && (

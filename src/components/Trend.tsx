@@ -6,6 +6,7 @@ import {
   type AreaDelta,
   type ConsistencyPoint,
   type TrendPoint,
+  type TripPoint,
 } from '../lib/progress'
 import { VB_W, chartGeometry, labelX } from './trendGeometry'
 
@@ -159,11 +160,13 @@ export function Sparkline({ points }: { points: TrendPoint[] }) {
 const fmtDate = shortDate
 
 /**
- * Overall score across sessions. One series, so no legend — the heading says
- * what is plotted. Only the latest point is labelled; the rest are carried by
- * the axis and the hover tooltip rather than a number on every dot.
+ * The typical score across trips (L3.2): each dot a trip's median, with a
+ * faint bar for the range its serves ran over. One series, so no legend — the
+ * heading says what is plotted. Only the latest point is labelled; the rest
+ * are carried by the axis and the hover tooltip rather than a number on
+ * every dot.
  */
-export function ScoreTrend({ points }: { points: TrendPoint[] }) {
+export function ScoreTrend({ points }: { points: TripPoint[] }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [hover, setHover] = useState<number>()
   const h = 150
@@ -192,7 +195,7 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
         className="chart-svg"
         viewBox={`0 0 ${VB_W} ${h}`}
         role="img"
-        aria-label={`Overall serve score across ${points.length} sessions, most recent ${last.overall}${broken ? ', split where the scoring changed' : ''}`}
+        aria-label={`Typical serve score across ${points.length} trips, most recent ${last.overall}${broken ? ', split where the scoring changed' : ''}`}
         onPointerMove={track}
         onPointerDown={track}
         onPointerLeave={() => setHover(undefined)}
@@ -253,6 +256,25 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
           />
         )}
 
+        {/* What each trip's serves ran over, under its dot: the spread is
+            part of the reading, and a median drawn alone looks as sure as
+            one serve. */}
+        {points.map((p, i) =>
+          p.high > p.low ? (
+            <line
+              key={`range-${p.id}`}
+              x1={g.x(i)}
+              x2={g.x(i)}
+              y1={g.y(p.high)}
+              y2={g.y(p.low)}
+              stroke={strokeOf(stale(p))}
+              strokeWidth="2"
+              strokeLinecap="round"
+              opacity="0.35"
+            />
+          ) : null,
+        )}
+
         {points.map((p, i) => (
           <circle
             key={p.id}
@@ -279,12 +301,13 @@ export function ScoreTrend({ points }: { points: TrendPoint[] }) {
                 reading one old score off the tooltip is the likeliest moment to
                 take it for a figure comparable to today's. */}
             <span>
-              overall · {fmtDate(active.createdAt)}
+              typical · {fmtDate(active.createdAt)} ·{' '}
+              {active.serves === 1 ? 'one serve' : `${active.serves} serves, ${active.low}–${active.high}`}
               {stale(active) ? ' · scored the old way' : ''}
             </span>
           </>
         ) : (
-          <span className="chart-hint">Touch the chart to read any session</span>
+          <span className="chart-hint">Touch the chart to read any trip</span>
         )}
       </figcaption>
 
@@ -358,22 +381,23 @@ export function DeltaBars({ deltas }: { deltas: AreaDelta[] }) {
  * scales. Marked per row rather than as a rule between rows, because a table is
  * read a cell at a time and a separator two rows up is long gone by then.
  */
-export function TrendTable({ points }: { points: TrendPoint[] }) {
+export function TrendTable({ points }: { points: TripPoint[] }) {
   const current = points[points.length - 1]?.scoringVersion
-  const stale = (p: TrendPoint) => p.scoringVersion !== current
+  const stale = (p: TripPoint) => p.scoringVersion !== current
   const broken = points.some(stale)
 
   return (
     <>
       <table className="dtable">
         <caption className="sr-only">
-          Overall serve score by session
-          {broken ? ', with the serves scored the old way marked' : ''}
+          Typical serve score by trip, with the range the serves ran over
+          {broken ? ', and the trips scored the old way marked' : ''}
         </caption>
         <thead>
           <tr>
             <th scope="col">Date</th>
-            <th scope="col">Overall</th>
+            <th scope="col">Typical</th>
+            <th scope="col">Serves</th>
           </tr>
         </thead>
         <tbody>
@@ -386,6 +410,9 @@ export function TrendTable({ points }: { points: TrendPoint[] }) {
                     so the two surfaces cannot be read as saying different
                     things about one serve. */}
                 {stale(p) && <span className="chart-hint"> · scored the old way</span>}
+              </td>
+              <td className="tnum">
+                {p.serves === 1 ? '1' : `${p.serves}, ${p.low}–${p.high}`}
               </td>
             </tr>
           ))}

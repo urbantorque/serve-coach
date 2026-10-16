@@ -1475,7 +1475,34 @@ does, and nothing marks a fault as fixed.
         spoken glance. A keyframe collapse that flips under noise is reported
         as soft.
       - *Proof:* the noise ensembles. After L1.1.
-- [ ] **L3.2 A trip score with a range** · M.
+- [x] **L3.2 A trip score with a range** · M.
+      - *Delta (Oct 17):* done.
+        - `tripPoints` turns one serve type's history into trips: `tripsOf`'s
+          visits, split where the rubric changed. Each carries its median, its
+          low–high range and its serve count.
+        - Headlines:
+          - the Progress hero reads "71 · typical flat serve, Tuesday · your 5
+            serves ran 66–75";
+          - Home's form tile reads the same, compactly.
+          - Both chips compare against the previous trip, and only when both
+            trips had three serves or more (`MIN_TRIP_SERVES`).
+        - The trend chart plots trip medians with a faint range bar, and the
+          table lists trips with their serves and range.
+        - The best record (`bestTrip`) and the six-week line both come from
+          trips of three or more serves, median against median. The single
+          first serve is no longer the "before".
+        - The trip floor is measured (`REAL_CHANGE.trip`, 10). A trip median
+          of three moves at most 9 on noise, against 10 for one serve, and it
+          moves less than a single serve on every serve in the ensembles.
+          This floor replaces the form floor and the milestone floor.
+        - Proof:
+          - progress, engine, robustness and comparisons tests on seeded trips;
+          - the derivation in `realChange.test.ts`;
+          - a render test of the range bars;
+          - the preview of Home and Progress on `?demo=history`.
+        - KNOWN: on the collapse-border serve, a median of three helps
+          little (9 against 10), because the flips are bimodal. Bigger trips
+          help more.
       - **What:** the headline becomes the trip median with its range, as in
         "Tuesday: 71, your serves ran 66–75". The trend plots trip medians,
         and the best and the six-week line come from trips of three or more

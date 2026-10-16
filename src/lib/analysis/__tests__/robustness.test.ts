@@ -957,7 +957,7 @@ check('a specific serve type can be asked for', () => {
   const flat = buildProgress(sessions, 'flat')!
   assert(flat.serveType === 'flat', 'ignored the requested serve type')
   assert(flat.points.length === 2, `plotted ${flat.points.length} flat points, expected 2`)
-  assert(flat.best === 46, `best flat score was ${flat.best}, expected 46`)
+  assert(flat.latestTrip.overall === 40, `the flat headline was ${flat.latestTrip.overall}, expected the newest flat serve, 40`)
 })
 
 check('reports saved before serve types existed count as flat', () => {
@@ -1138,8 +1138,11 @@ check('a change of rubric breaks the series rather than inventing a gain', () =>
     `break marked at ${progress.rubricBreakAt}, expected the first report of the new rubric`,
   )
   // And nothing derived reaches back across it.
-  assert(progress.best === 74, `best of ${progress.best} was taken from the old rubric`)
-  assert(progress.recentAverage === 73, `rolling average ${progress.recentAverage} mixed rubrics`)
+  // The headline trip and the one before it are both new-rubric serves
+  // (L3.2), and no best is taken from trips of one.
+  assert(progress.latestTrip.overall === 74, `headline ${progress.latestTrip.overall}`)
+  assert(progress.previousTrip?.overall === 72, `previous trip ${progress.previousTrip?.overall} crossed the break`)
+  assert(progress.best === undefined, `best of ${progress.best} from trips of one serve`)
 })
 
 check('the first report under a new rubric has nothing to compare against', () => {
@@ -1153,7 +1156,8 @@ check('the first report under a new rubric has nothing to compare against', () =
   ])!
   assert(progress.overallDelta === undefined, `invented a delta of ${progress.overallDelta}`)
   assert(progress.areaDeltas.length === 0, 'invented per-area deltas across a change of rubric')
-  assert(progress.formDelta === undefined, 'reported a change in form across a change of rubric')
+  assert(progress.tripDelta === undefined, 'reported a change between trips across a change of rubric')
+  assert(progress.previousTrip === undefined, 'found a previous trip across a change of rubric')
   assert(progress.points.length === 3, 'lost the history behind the change')
 })
 

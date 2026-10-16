@@ -28,7 +28,7 @@ import { MIN_EVIDENCE, type FlawId } from './analysis/flaws'
 import { progressionFor } from './analysis/progressions'
 import {
   GAP_CHANGE,
-  MILESTONE_CHANGE,
+  REAL_CHANGE,
   changeOf,
   readAlike,
   type ChangeScope,
@@ -51,6 +51,34 @@ export interface TrendPoint {
 }
 
 /** One area's change against the report before, and whether the two were graded alike. */
+/**
+ * One trip to the court, as the trend draws it (L3.2): the median of its
+ * serves, with the range they ran over. A single serve is too noisy to be the
+ * headline — on club serves the camera moves it further than fixing a fault
+ * does — and the median of a trip moves less than any one of them
+ * (`realChange.test.ts`).
+ *
+ * Only one serve type and one rubric: a trip that straddles an update is two
+ * points, one either side of the break.
+ */
+export interface TripPoint extends TrendPoint {
+  /** When its last serve was filed. `createdAt` is when its first was. */
+  to: number
+  /** Serves of this type, under this rubric, on the trip. */
+  serves: number
+  /** The trip's lowest and highest overall. */
+  low: number
+  high: number
+}
+
+/**
+ * How many serves a trip needs before its median stands for it: in a chip,
+ * a record, or the six-week line (L3.2). The trip floor in `REAL_CHANGE` is
+ * measured on three a side; a trip of two is a pair, and its middle is
+ * whichever of the two the camera favoured.
+ */
+export const MIN_TRIP_SERVES = 3
+
 export interface AreaChange {
   delta: number
   alike: boolean
@@ -92,11 +120,23 @@ export interface Progress {
   /** Whether those two were graded on the same rows — see `AreaDelta.alike`. */
   overallAlike?: boolean
   areaDeltas: AreaDelta[]
-  best: number
-  /** Mean of the three most recent, which is steadier than any single serve. */
-  recentAverage: number
-  /** Change in that rolling average against the three before it. */
-  formDelta?: number
+  /**
+   * Every trip, oldest first, one point each — what the charts plot (L3.2).
+   * Like `points`, it keeps the trips from before a recalibration.
+   */
+  trips: TripPoint[]
+  /** The newest trip in the current rubric era: the headline. */
+  latestTrip: TripPoint
+  /** The trip before it in the era. */
+  previousTrip?: TripPoint
+  /**
+   * The newest trip's median against the previous trip's, when both had
+   * `MIN_TRIP_SERVES`. Absent otherwise: a trip of one or two serves is not
+   * steadier than a serve, so its "change" would be the camera.
+   */
+  tripDelta?: number
+  /** The best trip median in the era, among trips of `MIN_TRIP_SERVES` — see `bestTrip`. */
+  best?: number
   /** Which serve these points all are. */
   serveType: ServeType
   /** Reports set aside because they were a different serve. */
@@ -271,13 +311,13 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
         }))
     : []
 
-  // The rolling average and the personal best come from the era too. A best set
-  // under the old rubric is not a bar this one can be held to, and an average
-  // taken across the break is part old scoring and part new — a number that
-  // describes neither the player's form nor anything else.
-  const scores = era.map((p) => p.overall)
-  const recent = scores.slice(-3)
-  const priorWindow = scores.slice(-6, -3)
+  // Trips (L3.2), and the headline, its change and the best from the era's.
+  // A best set under the old rubric is not a bar this one can be held to.
+  const trips = tripPoints(oldestFirst)
+  const tripEra = currentRubricEra(trips)
+  const latestTrip = tripEra[tripEra.length - 1]
+  const previousTrip = tripEra.length > 1 ? tripEra[tripEra.length - 2] : undefined
+  const full = (t?: TripPoint) => t !== undefined && t.serves >= MIN_TRIP_SERVES
 
   return {
     points,
@@ -287,14 +327,101 @@ export function buildProgress(sessions: Session[], serveType?: ServeType): Progr
     overallDelta: previous ? latest.overall - previous.overall : undefined,
     overallAlike: previous ? alikeOn('overall') : undefined,
     areaDeltas,
-    best: Math.max(...scores),
-    recentAverage: Math.round(mean(recent)),
-    formDelta:
-      priorWindow.length >= 2 ? Math.round(mean(recent) - mean(priorWindow)) : undefined,
+    trips,
+    latestTrip,
+    previousTrip,
+    tripDelta: full(latestTrip) && full(previousTrip) ? latestTrip.overall - previousTrip!.overall : undefined,
+    best: bestOf(tripEra)?.overall,
     serveType: type,
     setAside: sessions.length - matching.length,
     rubricBreakAt: era.length < points.length ? era[0].createdAt : undefined,
   }
+}
+
+/** The middle score; for an even count, the two middle ones' mean, rounded. */
+function medianOf(xs: number[]): number {
+  const sorted = [...xs].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+}
+
+/**
+ * A history of one serve type as trips (L3.2), oldest first: `tripsOf`'s
+ * visits, each split where the rubric changed, each one point.
+ *
+ * `oldestFirst` must already be one serve type and in time order. Areas are
+ * the median over the serves that graded them, so an area a serve could not
+ * grade neither drags the trip down nor props it up.
+ */
+export function tripPoints(oldestFirst: Session[]): TripPoint[] {
+  const out: TripPoint[] = []
+  for (const trip of tripsOf(oldestFirst)) {
+    let run: Session[] = []
+    const flush = () => {
+      if (!run.length) return
+      const scores = run.map((r) => r.overall)
+      const overall = medianOf(scores)
+      const byArea: Record<string, number> = {}
+      for (const id of Object.keys(FUNDAMENTALS)) {
+        const graded = run.flatMap((r) =>
+          r.fundamentals.filter((f) => f.id === id && isMeasured(f)).map((f) => f.score),
+        )
+        if (graded.length) byArea[id] = medianOf(graded)
+      }
+      out.push({
+        id: run[0].id,
+        createdAt: run[0].createdAt,
+        to: run[run.length - 1].createdAt,
+        overall,
+        status: statusOf(overall),
+        byArea,
+        scoringVersion: scoringVersionOf(run[0]),
+        serves: run.length,
+        low: Math.min(...scores),
+        high: Math.max(...scores),
+      })
+      run = []
+    }
+    for (const s of trip) {
+      if (run.length && scoringVersionOf(run[0]) !== scoringVersionOf(s)) flush()
+      run.push(s)
+    }
+    flush()
+  }
+  return out
+}
+
+/**
+ * The best trip among those of `MIN_TRIP_SERVES` or more, once there are two
+ * to choose between. Ties go to the earlier trip: the record was set the
+ * first time it was reached.
+ */
+function bestOf(eraTrips: TripPoint[]): TripPoint | undefined {
+  const full = eraTrips.filter((t) => t.serves >= MIN_TRIP_SERVES)
+  if (full.length < 2) return undefined
+  return full.reduce((a, b) => (b.overall > a.overall ? b : a))
+}
+
+/**
+ * The day a trip is named by in a headline: "today", a weekday within the
+ * last week, or a date beyond that, where a weekday would be ambiguous.
+ */
+export function tripDay(at: number, now: number = Date.now()): string {
+  const day = (t: number) => new Date(t).toDateString()
+  if (day(at) === day(now)) return 'today'
+  if (now - at < 6 * 24 * 60 * 60 * 1000) return new Date(at).toLocaleDateString(undefined, { weekday: 'long' })
+  return shortDate(at)
+}
+
+/**
+ * What a trip's serves ran over, in words — or nothing for a trip of one,
+ * which has no range to give.
+ */
+export function tripRangeLine(trip: Pick<TripPoint, 'serves' | 'low' | 'high'>): string | undefined {
+  if (trip.serves < 2) return undefined
+  return trip.low === trip.high
+    ? `your ${trip.serves} serves all scored ${trip.low}`
+    : `your ${trip.serves} serves ran ${trip.low}–${trip.high}`
 }
 
 /**
@@ -319,25 +446,29 @@ export const MILESTONE_SPAN_MS = 6 * 7 * 24 * 60 * 60 * 1000
  * still gets a sentence — a milestone that only ever appears on good news is
  * a quieter version of the same lie a badge would tell.
  *
- * Confined to `progress.first`, the current rubric era's oldest point, for
- * the reason every other comparison in this file is: the score on the far
- * side of a recalibration is not a fair "before" for the score it produced.
+ * Confined to the current rubric era, for the reason every other comparison
+ * in this file is: the score on the far side of a recalibration is not a fair
+ * "before" for the score it produced.
+ *
+ * Trip against trip (L3.2): the era's first trip of `MIN_TRIP_SERVES` or more
+ * against its latest, each by its median. A single first serve as the
+ * "before" let one lucky or unlucky take decide the whole sentence.
  */
 export function sixWeekMilestone(progress: Progress): string | undefined {
-  const { first, latest, recentAverage } = progress
-  if (first.id === latest.id) return undefined
+  const full = currentRubricEra(progress.trips).filter((t) => t.serves >= MIN_TRIP_SERVES)
+  if (full.length < 2) return undefined
+  const first = full[0]
+  const latest = full[full.length - 1]
   if (latest.createdAt - first.createdAt < MILESTONE_SPAN_MS) return undefined
 
   const weeks = Math.floor((latest.createdAt - first.createdAt) / (7 * 24 * 60 * 60 * 1000))
-  const delta = recentAverage - first.overall
-  // Three serves against one, which the camera moves further than one against
-  // one, and which cannot be kept to serves read alike (`MILESTONE_CHANGE`).
-  if (Math.abs(delta) < MILESTONE_CHANGE) {
-    return `${weeks} weeks in, averaging ${recentAverage} — about where you started.`
+  const delta = latest.overall - first.overall
+  if (Math.abs(delta) < REAL_CHANGE.trip) {
+    return `${weeks} weeks in, a typical serve scores ${latest.overall} — about where you started.`
   }
   return delta > 0
-    ? `${weeks} weeks in: your first serve scored ${first.overall}, and you're averaging ${recentAverage} now.`
-    : `${weeks} weeks in: averaging ${recentAverage}, down from your first serve's ${first.overall}.`
+    ? `${weeks} weeks in: a typical serve scored ${first.overall} on ${shortDate(first.createdAt)}, and ${latest.overall} on ${shortDate(latest.createdAt)}.`
+    : `${weeks} weeks in: a typical serve scores ${latest.overall}, down from ${first.overall} on ${shortDate(first.createdAt)}.`
 }
 
 /* ------------------------------------------------- consistency, over time -- */
@@ -807,7 +938,7 @@ export function tripStreak(
 /**
  * The longest run of trips ever kept, not just the one still standing —
  * `tripStreak`'s all-time counterpart, the same "durable fact, not a live
- * one" distinction `bestConsistencyGap`/`bestOverallScore`
+ * one" distinction `bestConsistencyGap`/`bestTrip`
  * already draw against their own per-report readings. A current streak
  * resets to zero the moment a gap runs long; this never does, which is
  * exactly what makes it worth stating on its own during a slump rather
@@ -982,7 +1113,7 @@ export function streakLine(sessions: Session[], now: number = Date.now()): strin
 }
 
 /**
- * The single highest score any one serve has earned, for a given serve type.
+ * The best trip so far, for a given serve type.
  *
  * Scoped by type for the same reason `bestConsistencyGap` is: the
  * fundamentals are judged against a different target band per serve type
@@ -995,7 +1126,7 @@ export function streakLine(sessions: Session[], now: number = Date.now()): strin
  * `thenAndNow` confines its pair — and this one walked the whole history. The
  * consequence was on screen in two places at once: the home card prints
  * `progress.best`, which is era-confined, and the report prints
- * `bestOverallScoreLine` off this, which was not. A player whose top score was
+ * the record line off this, which was not. A player whose top score was
  * set under the old rubric therefore saw "best 72" on the home screen and "your
  * best serve so far scored 88" on the report, two numbers for one fact,
  * disagreeing — which is exactly the reading this app treats as a bug rather
@@ -1006,45 +1137,51 @@ export function streakLine(sessions: Session[], now: number = Date.now()): strin
  * from the newest backwards and is documented as requiring time order, and
  * `listSummaries` hands back newest first.
  *
- * `undefined` below two reports of the type *in the era*, the same floor every
- * other cross-session record in this file holds — one score is just that score,
- * not a record yet.
+ * `undefined` below two trips of `MIN_TRIP_SERVES` of the type *in the era*, the
+ * same floor every other cross-session record in this file holds — one trip is
+ * just that trip, not a record yet.
  */
-export interface BestScore {
+export interface BestTrip {
+  /** The trip's median overall. */
   score: number
-  createdAt: number
-}
-
-export function bestOverallScore(sessions: Session[], serveType: ServeType): BestScore | undefined {
-  const usable = currentRubricEra(
-    sessions.filter((s) => typeOf(s) === serveType).sort((a, b) => a.createdAt - b.createdAt),
-  )
-  if (usable.length < 2) return undefined
-  // Ties go to the earlier report, which the oldest-first order above makes
-  // true rather than accidental: the record was set the first time it was hit,
-  // and `bestOverallScoreLine` prints that date.
-  const best = usable.reduce((a, b) => (b.overall > a.overall ? b : a))
-  return { score: best.overall, createdAt: best.createdAt }
+  /** When its first and last serves were filed. */
+  from: number
+  to: number
 }
 
 /**
- * The sentence a best-score record becomes, matching `bestGapLine`'s own
+ * The best trip so far (L3.2): the highest median among the era's trips of
+ * `MIN_TRIP_SERVES` or more, once there are two such trips. A record used to
+ * be one serve, so a noise outlier became a record the player never saw
+ * again — and on club serves the camera moves one serve further than a fixed
+ * fault does.
+ */
+export function bestTrip(sessions: Session[], serveType: ServeType): BestTrip | undefined {
+  const oldestFirst = sessions
+    .filter((s) => typeOf(s) === serveType)
+    .sort((a, b) => a.createdAt - b.createdAt)
+  const best = bestOf(currentRubricEra(tripPoints(oldestFirst)))
+  return best && { score: best.overall, from: best.createdAt, to: best.to }
+}
+
+/**
+ * The sentence a best-trip record becomes, matching `bestGapLine`'s own
  * restraint — the number is left to say whether it was good, not told to.
+ * `viewedAt` is the report on screen; inside the record trip, the trip is
+ * this one.
  */
-export function bestOverallScoreLine(record: BestScore, viewedAt: number): string {
-  return record.createdAt === viewedAt
-    ? `Your best serve yet — ${record.score}.`
-    : `Your best serve so far scored ${record.score}, set ${shortDate(record.createdAt)}.`
+export function bestTripLine(record: BestTrip, viewedAt: number): string {
+  return viewedAt >= record.from && viewedAt <= record.to
+    ? `Your best trip yet: a typical serve scored ${record.score}.`
+    : `Your best trip so far: a typical serve scored ${record.score}, on ${shortDate(record.from)}.`
 }
 
 /**
- * The best-score record stated plainly, for `bestGapEverLine`'s reason: the
- * progress sheet has no single report on screen to ask "did *this* one set
- * it", so `bestOverallScoreLine`'s two-branch question has nothing to
- * compare against here.
+ * The best-trip record stated plainly, for `bestGapEverLine`'s reason: the
+ * progress sheet has no single report on screen to ask "is *this* the one".
  */
-export function bestOverallScoreEverLine(record: BestScore): string {
-  return `Your best serve yet scored ${record.score}, set ${shortDate(record.createdAt)}.`
+export function bestTripEverLine(record: BestTrip): string {
+  return `Your best trip yet: a typical serve scored ${record.score}, on ${shortDate(record.from)}.`
 }
 
 /**

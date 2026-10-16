@@ -33,9 +33,10 @@
  */
 import {
   bestConsistencyGap,
-  bestOverallScore,
+  bestTrip,
   buildConsistencyTrend,
   buildProgress,
+  currentRubricEra,
   gapDeltaFor,
   longestStreak,
   thenAndNow,
@@ -120,13 +121,21 @@ function serve(
  */
 const CLEAN: Session[] = [
   serve(60, 62, { basket: [58, 66] }),
+  // Three-serve trips (L3.2), so the trip records and the trip change have
+  // something to say: serves an hour apart are one visit.
+  serve(59.96, 63),
+  serve(59.92, 61),
   serve(58, 64),
   serve(44, 66, { basket: [62, 70] }),
   serve(42, 65),
   serve(30, 68),
   serve(16, 70, { basket: [67, 73] }),
+  serve(15.96, 71),
+  serve(15.92, 69),
   serve(14, 69),
   serve(2, 72),
+  serve(1.96, 73),
+  serve(1.92, 71),
 ]
 
 /**
@@ -162,17 +171,19 @@ const GUARDED: { name: string; answer: (h: Session[]) => unknown }[] = [
         best: p.best,
         latest: p.latest.overall,
         previous: p.previous?.overall,
-        recentAverage: p.recentAverage,
         overallDelta: p.overallDelta,
-        formDelta: p.formDelta,
+        // The chart keeps old-rubric trips, greyed; the figures are the era's.
+        trips: currentRubricEra(p.trips).map((t) => [t.overall, t.serves, t.low, t.high]),
+        latestTrip: p.latestTrip.overall,
+        tripDelta: p.tripDelta,
         first: p.first.overall,
         areaDeltas: p.areaDeltas.map((d) => d.delta),
       }
     },
   },
   {
-    name: 'bestOverallScore — the record on the report and the season card',
-    answer: (h) => bestOverallScore(h, 'flat'),
+    name: 'bestTrip — the record on the report and the season card',
+    answer: (h) => bestTrip(h, 'flat'),
   },
   {
     name: 'buildConsistencyTrend — the repeatability chart',
@@ -187,7 +198,7 @@ const GUARDED: { name: string; answer: (h: Session[]) => unknown }[] = [
   },
   {
     name: 'gapDeltaFor — this basket against the one before it',
-    answer: (h) => gapDeltaFor(buildConsistencyTrend(h, 'flat'), CLEAN[5].id),
+    answer: (h) => gapDeltaFor(buildConsistencyTrend(h, 'flat'), CLEAN.filter((s) => s.consistency)[2].id),
   },
   {
     name: 'thenAndNow — the paired keyframe stills',

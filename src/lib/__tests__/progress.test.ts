@@ -23,15 +23,18 @@ import {
   gapDeltaFor,
   gapDeltaLine,
   bestGapLine,
-  bestOverallScore,
-  bestOverallScoreEverLine,
-  bestOverallScoreLine,
+  bestTrip,
+  bestTripEverLine,
+  bestTripLine,
   buildConsistencyTrend,
   buildProgress,
   glanceStrain,
   longestStreak,
   longestStreakLine,
   sameTrip,
+  shortDate,
+  tripDay,
+  tripRangeLine,
   scoreMoveAgainst,
   scoreMoveCaption,
   scoreMoveWords,
@@ -46,7 +49,7 @@ import { cueIssues, wordCount } from '../analysis/voice'
 import type { InjuryFlag } from '../analysis/triage'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 import type { Session } from '../storage/db'
-import { GAP_CHANGE, MILESTONE_CHANGE, REAL_CHANGE } from '../analysis/realChange'
+import { GAP_CHANGE, REAL_CHANGE } from '../analysis/realChange'
 import type { Analysis, Fundamental } from '../analysis/types'
 
 declare const process: { hrtime: { bigint(): bigint } }
@@ -146,48 +149,48 @@ check('a single report has nothing to be a milestone about', () => {
   assert(sixWeekMilestone(progress) === undefined, 'produced a milestone from one report')
 })
 
-// Three sessions clustered at "now" rather than one, so `recentAverage` — a
-// three-serve rolling mean, deliberately steadier than any single serve —
-// reflects the recent cluster cleanly instead of blending in the one from
-// six weeks ago.
-const recentCluster = (start: number, score: number, prefix: string): Session[] =>
-  [0, 1, 2].map((i) => savedServe(start + i * DAY, `${prefix}${i}`, score))
+const HOUR = 60 * 60 * 1000
 
-check('an improvement over six weeks is said, with both numbers', () => {
-  const sessions = [savedServe(0, 'first', 52), ...recentCluster(6 * WEEK, 71, 'r')]
-  const progress = buildProgress(sessions)!
-  const line = sixWeekMilestone(progress)
+/** One trip to the court: serves an hour apart, from `start`, with these overalls. */
+const trip = (start: number, scores: number[], prefix: string, extra: Partial<Session> = {}): Session[] =>
+  scores.map((overall, i) => ({ ...savedServe(start + i * HOUR, `${prefix}${i}`, overall), ...extra }) as Session)
+
+check('an improvement over six weeks is said, trip against trip, with both numbers', () => {
+  const sessions = [...trip(0, [50, 52, 54], 'f'), ...trip(6 * WEEK, [70, 71, 72], 'r')]
+  const line = sixWeekMilestone(buildProgress(sessions)!)
   assert(line !== undefined, 'six real weeks of improvement produced nothing')
-  assert(line!.includes('52') && line!.includes('71'), `neither number appeared in "${line}"`)
+  assert(line!.includes('52') && line!.includes('71'), `the two trip medians did not appear in "${line}"`)
 })
 
 check('a stretch that went backwards is still reported, not hidden', () => {
   // The whole point: a milestone that only speaks up on good news is a
   // quieter version of the badge this feature is built to not be.
-  const sessions = [savedServe(0, 'first', 78), ...recentCluster(6 * WEEK, 55, 'r')]
-  const progress = buildProgress(sessions)!
-  const line = sixWeekMilestone(progress)
+  const sessions = [...trip(0, [76, 78, 80], 'f'), ...trip(6 * WEEK, [54, 55, 56], 'r')]
+  const line = sixWeekMilestone(buildProgress(sessions)!)
   assert(line !== undefined, 'a regression over six real weeks said nothing at all')
-  assert(line!.includes('78') && line!.includes('55'), `neither number appeared in "${line}"`)
-})
-
-check('a flat six weeks reads as flat, not as a manufactured direction', () => {
-  const sessions = [savedServe(0, 'first', 70), ...recentCluster(6 * WEEK, 71, 'r')]
-  const progress = buildProgress(sessions)!
-  const line = sixWeekMilestone(progress)
-  assert(line !== undefined, 'a flat six weeks produced nothing')
-  assert(!/from your first serve|now\./.test(line!), `a one-point drift was read as a real direction: "${line}"`)
+  assert(line!.includes('78') && line!.includes('55'), `the two trip medians did not appear in "${line}"`)
 })
 
 check('a six-week move the camera could make on its own is "about where you started"', () => {
-  // Three serves against one: the camera alone moves that up to
-  // `MILESTONE_CHANGE` - 1 points nine times in ten (L3.1).
-  const under = MILESTONE_CHANGE - 1
-  const sessions = [savedServe(0, 'first', 70), ...recentCluster(6 * WEEK, 70 + under, 'r')]
-  const line = sixWeekMilestone(buildProgress(sessions)!)
+  // A trip's median against a trip's: the camera alone moves that up to
+  // `REAL_CHANGE.trip` - 1 points nine times in ten (L3.1, L3.2).
+  const under = REAL_CHANGE.trip - 1
+  const flat = [...trip(0, [69, 70, 71], 'f'), ...trip(6 * WEEK, [69 + under, 70 + under, 71 + under], 'r')]
+  const line = sixWeekMilestone(buildProgress(flat)!)
   assert(line !== undefined && line.includes('about where you started'), `a ${under}-point move was called a direction: "${line}"`)
-  const past = [savedServe(0, 'first', 70), ...recentCluster(6 * WEEK, 70 + MILESTONE_CHANGE, 'r')]
+  const t = REAL_CHANGE.trip
+  const past = [...trip(0, [69, 70, 71], 'f'), ...trip(6 * WEEK, [69 + t, 70 + t, 71 + t], 'r')]
   assert(!sixWeekMilestone(buildProgress(past)!)!.includes('about where'), 'a move past the line was called flat')
+})
+
+check('a first serve on its own is not the "before"', () => {
+  // One lucky or unlucky take used to decide the whole sentence (L3.2). The
+  // stretch has to run between two trips of three serves or more.
+  const sessions = [savedServe(0, 'lone', 40), ...trip(DAY * 2, [60, 61, 62], 'a'), ...trip(6 * WEEK, [62, 63, 64], 'b')]
+  assert(sixWeekMilestone(buildProgress(sessions)!) === undefined, 'a stretch short of six weeks between full trips spoke')
+  const enough = [savedServe(0, 'lone', 40), ...trip(DAY, [60, 61, 62], 'a'), ...trip(7 * WEEK, [62, 63, 64], 'b')]
+  const line = sixWeekMilestone(buildProgress(enough)!)
+  assert(line !== undefined && !line.includes('40'), `the lone first serve was used: "${line}"`)
 })
 
 check('a recalibration cannot be quietly used as the "before"', () => {
@@ -471,94 +474,92 @@ check('no trend at all — the serve type has no history yet — produces nothin
   assert(gapDeltaFor(undefined, 'a') === undefined, 'a missing trend produced a comparison')
 })
 
-heading('The single highest score any one serve of a type has earned')
+heading('The best trip so far (L3.2)')
 
-check('the highest-scoring session of the matching type sets the record', () => {
+check('the trip with the highest median sets the record, among trips of three', () => {
   const sessions = [
-    basketServe(0, 'a', [60, 70]), // overall 70
-    basketServe(DAY, 'b', [85, 90]), // overall 90
-    basketServe(DAY * 2, 'c', [40, 50]), // overall 50
+    ...trip(0, [60, 70, 65], 'a'), // median 65
+    ...trip(2 * DAY, [85, 90, 80], 'b'), // median 85
+    ...trip(4 * DAY, [40, 50, 45], 'c'), // median 45
+    savedServe(6 * DAY, 'lone', 99), // one serve: never a record
   ]
-  const record = bestOverallScore(sessions, 'flat')
-  assert(record !== undefined, 'no record produced across three same-type sessions')
-  assert(record!.score === 90, `wrong score picked as the record: ${record!.score}`)
-  assert(record!.createdAt === DAY, 'the record was not attributed to the session that actually set it')
+  const record = bestTrip(sessions, 'flat')
+  assert(record !== undefined, 'no record produced across three full trips')
+  assert(record!.score === 85, `wrong trip picked as the record: ${record!.score}`)
+  assert(record!.from === 2 * DAY && record!.to === 2 * DAY + 2 * HOUR, 'the record was not dated to its trip')
 })
 
-check('a higher-scoring session of a different serve type is not counted, the same rubric guard bestConsistencyGap uses', () => {
-  const flatA = basketServe(0, 'a', [60, 70])
-  const flatB = basketServe(DAY, 'b', [55, 65])
-  const kick = { ...basketServe(DAY * 2, 'c', [95, 99]), serveType: 'kick' } as Session
-  const record = bestOverallScore([flatA, flatB, kick], 'flat')
-  assert(record !== undefined, 'two flat sessions produced no record at all')
+check('a better trip of another serve type is not counted', () => {
+  const sessions = [
+    ...trip(0, [60, 70, 65], 'a'),
+    ...trip(2 * DAY, [55, 65, 60], 'b'),
+    ...trip(4 * DAY, [95, 99, 97], 'k', { serveType: 'kick' }),
+  ]
+  const record = bestTrip(sessions, 'flat')
+  assert(record?.score === 65, `a kick trip leaked into the flat record: got ${record?.score}`)
+})
+
+check('one full trip has nothing to be a record against yet', () => {
+  assert(bestTrip([...trip(0, [60, 75, 70], 'a')], 'flat') === undefined, 'a single trip produced a record')
   assert(
-    record!.score === 70,
-    `a kick-serve score (99) leaked into the flat-serve record: got ${record!.score}`,
+    bestTrip([...trip(0, [60, 75, 70], 'a'), savedServe(2 * DAY, 'x', 90), savedServe(4 * DAY, 'y', 91)], 'flat') === undefined,
+    'trips of one serve were counted towards a record',
   )
 })
 
-check('one session of the type has nothing to be a record against yet', () => {
-  const record = bestOverallScore([basketServe(0, 'a', [60, 75])], 'flat')
-  assert(record === undefined, 'a single session produced a record')
-})
-
-check('a higher score from before a recalibration is not this rubric\'s record', () => {
-  // The failure this pins: the home card reads `progress.best`, which is
-  // confined to the era, and the report read this, which was not — so one
-  // history printed two different "best" figures on two screens.
-  const old = { ...basketServe(0, 'a', [88, 88]), scoringVersion: 1 } as Session
-  const now = [
-    { ...basketServe(DAY, 'b', [60, 70]), scoringVersion: 2 } as Session,
-    { ...basketServe(DAY * 2, 'c', [72, 72]), scoringVersion: 2 } as Session,
+check('a better trip from before a recalibration is not this rubric\'s record', () => {
+  const sessions = [
+    ...trip(0, [88, 88, 88], 'old', { scoringVersion: 1 }),
+    ...trip(2 * DAY, [60, 70, 65], 'a', { scoringVersion: 2 }),
+    ...trip(4 * DAY, [72, 72, 72], 'b', { scoringVersion: 2 }),
   ]
-  const record = bestOverallScore([old, ...now], 'flat')
-  assert(record !== undefined, 'two same-rubric sessions produced no record at all')
-  assert(
-    record!.score === 72,
-    `an old-rubric score (88) was reported as the current record: got ${record!.score}`,
-  )
+  const record = bestTrip(sessions, 'flat')
+  assert(record?.score === 72, `an old-rubric trip was reported as the current record: got ${record?.score}`)
+  // Handed over newest first, as `listSummaries` does: the sort is load-bearing.
+  assert(bestTrip([...sessions].reverse(), 'flat')?.score === 72, 'newest-first input moved the record')
 })
 
-check('one report in the current era has nothing to be a record against either', () => {
-  const old = { ...basketServe(0, 'a', [88, 88]), scoringVersion: 1 } as Session
-  const fresh = { ...basketServe(DAY, 'b', [70, 70]), scoringVersion: 2 } as Session
-  assert(
-    bestOverallScore([old, fresh], 'flat') === undefined,
-    'a single post-recalibration report was credited with a record',
-  )
+check('the report on screen reads as part of the record trip when it is', () => {
+  const record = { score: 88, from: DAY, to: DAY + 2 * HOUR }
+  const inside = bestTripLine(record, DAY + HOUR)
+  assert(inside.includes('yet') && inside.includes('88'), `a report on the record trip was not read as current: "${inside}"`)
+  const outside = bestTripLine(record, 0)
+  assert(!outside.includes('yet') && outside.includes('so far'), `a report off the record trip was credited: "${outside}"`)
+  assert(bestTripEverLine(record).includes('88') && bestTripEverLine(record).includes(' on '), 'the season line lost its score or date')
 })
 
-check('the record survives a history handed over newest first', () => {
-  // `listSummaries` hands back newest first and `currentRubricEra` requires
-  // time order, so the sort inside `bestOverallScore` is load-bearing.
-  const newestFirst = [
-    { ...basketServe(DAY * 2, 'c', [72, 72]), scoringVersion: 2 } as Session,
-    { ...basketServe(DAY, 'b', [60, 70]), scoringVersion: 2 } as Session,
-    { ...basketServe(0, 'a', [88, 88]), scoringVersion: 1 } as Session,
-  ]
-  const record = bestOverallScore(newestFirst, 'flat')
-  assert(record?.score === 72, `newest-first input produced ${record?.score}, expected 72`)
+heading('The headline trip (L3.2)')
+
+check('the headline is the latest trip: its median, its range, and its count', () => {
+  const p = buildProgress([...trip(0, [40, 44, 50], 'a'), ...trip(2 * DAY, [66, 75, 71, 69, 72], 'b')])!
+  assert(p.latestTrip.overall === 71, `median ${p.latestTrip.overall}`)
+  assert(p.latestTrip.low === 66 && p.latestTrip.high === 75 && p.latestTrip.serves === 5, 'the range or count was wrong')
+  assert(tripRangeLine(p.latestTrip) === 'your 5 serves ran 66–75', `range read "${tripRangeLine(p.latestTrip)}"`)
+  assert(tripRangeLine({ serves: 1, low: 70, high: 70 }) === undefined, 'a trip of one was given a range')
+  assert(p.trips.length === 2 && p.points.length === 8, 'the trips or the serves behind them went missing')
 })
 
-check('the session on screen reads as current when it set the record, by its own createdAt', () => {
-  const line = bestOverallScoreLine({ score: 88, createdAt: DAY }, DAY)
-  assert(line.includes('yet'), `the record-setting session was not read as current: "${line}"`)
-  assert(line.includes('88'), `the score itself did not appear: "${line}"`)
+check('a change between trips is reported only when both had three serves', () => {
+  const both = buildProgress([...trip(0, [50, 52, 54], 'a'), ...trip(2 * DAY, [70, 72, 74], 'b')])!
+  assert(both.tripDelta === 20, `expected +20 between two full trips, got ${both.tripDelta}`)
+  const short = buildProgress([...trip(0, [50, 52, 54], 'a'), ...trip(2 * DAY, [80, 82], 'b')])!
+  assert(short.tripDelta === undefined, `a trip of two was compared: ${short.tripDelta}`)
 })
 
-check('a different session on screen reads as "so far", dated, not as current', () => {
-  const line = bestOverallScoreLine({ score: 88, createdAt: DAY }, 0)
-  assert(!line.includes('yet'), `a non-record session was still credited with the record: "${line}"`)
-  assert(line.includes('so far'), `a non-record session did not read as "so far": "${line}"`)
+check('a trip that straddles an update is two points, one either side of the break', () => {
+  const sessions = [...trip(0, [60, 61], 'a', { scoringVersion: 1 }), ...trip(2 * HOUR, [80, 81, 82], 'b', { scoringVersion: 2 })]
+  const p = buildProgress(sessions)!
+  assert(p.trips.length === 2, `${p.trips.length} trip points`)
+  assert(p.latestTrip.overall === 81 && p.previousTrip === undefined, 'the old-rubric run leaked into the headline')
 })
 
-heading('The best-score record, stated with no report on screen to compare it against')
-
-check('states the record plainly, dated, in bestOverallScoreEverLine\'s own phrasing', () => {
-  const line = bestOverallScoreEverLine({ score: 88, createdAt: DAY })
-  assert(line.includes('88'), `the score itself did not appear: "${line}"`)
-  assert(line.includes('set '), `no date attached: "${line}"`)
-  assert(!line.includes('yet —'), `used bestOverallScoreLine's per-report phrasing: "${line}"`)
+check('a trip is named by its day: today, a weekday this week, or a date', () => {
+  const now = new Date(2026, 9, 17, 18).getTime()
+  assert(tripDay(now - HOUR, now) === 'today', tripDay(now - HOUR, now))
+  const tuesday = new Date(2026, 9, 13, 10).getTime()
+  assert(tripDay(tuesday, now) === new Date(tuesday).toLocaleDateString(undefined, { weekday: 'long' }), 'a trip this week was not named by its weekday')
+  const old = new Date(2026, 8, 1).getTime()
+  assert(tripDay(old, now) === shortDate(old), 'an old trip was not named by its date')
 })
 
 heading('The one warning worth saying on a court')

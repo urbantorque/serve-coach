@@ -133,7 +133,7 @@ export async function renderReportCard(
    */
   streak?: string,
   /**
-   * The best-score record line, already worded by `bestOverallScoreLine` —
+   * The best-score record line, already worded by `bestTripLine` —
    * see the progress sheet's own `sheetBestScore`. Grouped with `streak`
    * above rather than beside the score ring, the same "whole journey, not
    * this one serve" reasoning that groups the two on the progress sheet.
@@ -810,7 +810,7 @@ export async function shareBasketCard(
 
 /**
  * The cross-session records, already worded by their own `*EverLine`
- * functions — see `bestGapEverLine`/`bestOverallScoreEverLine`/
+ * functions — see `bestGapEverLine`/`bestTripEverLine`/
  * `streakLine` in `progress.ts`. Every field
  * optional for the same reason each already is on its own screen: a player
  * with one trip, or one basket, has none of these yet.

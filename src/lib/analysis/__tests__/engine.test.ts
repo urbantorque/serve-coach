@@ -2292,33 +2292,25 @@ check('has no delta to report from a single session', () => {
   assert(p!.areaDeltas.length === 0, 'invented per-area deltas from one session')
 })
 
-check('tracks the best score, not just the latest', () => {
-  const p = buildProgress([
-    progressSession(DAY, 62),
-    progressSession(2 * DAY, 88),
-    progressSession(3 * DAY, 71),
-  ])
+/** A trip of serves a minute apart, on the `day`th visit, two days after the last (L3.2). */
+const tripOf = (day: number, scores: number[]) => scores.map((s, i) => progressSession(day * 2 * DAY + i * 60_000, s))
+
+check('tracks the best trip, not just the latest', () => {
+  const p = buildProgress([...tripOf(1, [60, 62, 64]), ...tripOf(2, [86, 88, 90]), ...tripOf(3, [70, 71, 72])])
   assert(p!.best === 88, `best was ${p!.best}`)
-  assert(p!.latest.overall === 71, 'latest was overwritten by best')
+  assert(p!.latestTrip.overall === 71, 'the latest trip was overwritten by the best')
 })
 
-check('averages the recent few rather than trusting one serve', () => {
-  const p = buildProgress([
-    progressSession(DAY, 40),
-    progressSession(2 * DAY, 70),
-    progressSession(3 * DAY, 74),
-    progressSession(4 * DAY, 78),
-  ])
-  // mean of the last three: 70, 74, 78
-  assert(p!.recentAverage === 74, `expected 74, got ${p!.recentAverage}`)
+check('heads with the latest trip rather than trusting one serve', () => {
+  const p = buildProgress([progressSession(0, 40), ...tripOf(2, [70, 78, 74])])
+  // The median of the trip, not its last serve and not the lone one before.
+  assert(p!.latestTrip.overall === 74, `expected 74, got ${p!.latestTrip.overall}`)
+  assert(p!.latest.overall === 74 && p!.latestTrip.serves === 3, 'the trip lost a serve')
 })
 
-check('reads real improvement in the rolling average', () => {
-  const p = buildProgress(
-    [50, 52, 68, 72, 76].map((s, i) => progressSession((i + 1) * DAY, s)),
-  )
-  // last three (68,72,76) against the two before (50,52)
-  assert(p!.formDelta === 21, `expected +21, got ${p!.formDelta}`)
+check('reads real improvement between trips', () => {
+  const p = buildProgress([...tripOf(1, [50, 52, 51]), ...tripOf(2, [68, 72, 76])])
+  assert(p!.tripDelta === 21, `expected +21, got ${p!.tripDelta}`)
 })
 
 check('per-area deltas compare like with like', () => {

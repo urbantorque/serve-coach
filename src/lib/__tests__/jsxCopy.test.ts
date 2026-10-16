@@ -110,14 +110,9 @@ interface Ruling {
 const RULINGS: Ruling[] = [
   /* ------------------------------------------------------------- exempt -- */
   {
-    text: 'Overall score by session',
-    verdict: 'exempt',
-    why: 'A chart label, not a cue. `voice.ts` reads a leading "overall" as a preamble, which it is in a sentence and is not in a heading.',
-  },
-  {
     text: 'Overall, serve by serve',
     verdict: 'exempt',
-    why: 'The same label on the basket panel, flagged for the same wrong reason.',
+    why: 'A chart label on the basket panel, not a cue. `voice.ts` reads a leading "overall" as a preamble, which it is in a sentence and is not in a heading.',
   },
   {
     text: 'Every clip in the folder is analysed here',

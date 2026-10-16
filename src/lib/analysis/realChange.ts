@@ -32,8 +32,11 @@
 import { isMeasured } from './coaching'
 import type { Fundamental, FundamentalId } from './types'
 
-/** What a score change is a change of. `form` is three serves against the two or three before. */
-export type ChangeScope = 'overall' | 'form' | FundamentalId
+/**
+ * What a score change is a change of. `trip` is one visit's median serve
+ * against another's, three serves or more on each (L3.2).
+ */
+export type ChangeScope = 'overall' | 'trip' | FundamentalId
 
 /**
  * The smallest change that is the serve rather than the camera, in points:
@@ -53,7 +56,7 @@ export const REAL_CHANGE: Record<ChangeScope, number> = {
   swing: 6,
   contact: 21,
   rhythm: 36,
-  form: 8,
+  trip: 10,
 }
 
 /**
@@ -78,14 +81,6 @@ export const READ_DIFFERENTLY: Partial<Record<ChangeScope, number>> = {
   overall: 14,
   swing: 42,
 }
-
-/**
- * The newest three serves' mean against the era's first serve, for
- * `sixWeekMilestone`. Wider than a single comparison because the first serve
- * is one take, and because the mean cannot be held to rows read alike: three
- * serves will often straddle the collapse.
- */
-export const MILESTONE_CHANGE = 9
 
 /** One basket's best-to-worst gap against another's, for `gapDeltaLine`, on six serves each. */
 export const GAP_CHANGE = 14

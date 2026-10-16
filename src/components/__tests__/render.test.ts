@@ -35,6 +35,8 @@ import { createElement } from 'react'
 // out, and `renderToStaticMarkup` is not the streaming half.
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import ConsistencyPanel from '../ConsistencyPanel'
+import { ScoreTrend, TrendTable } from '../Trend'
+import type { TripPoint } from '../../lib/progress'
 import Glance from '../../screens/Glance'
 import Home from '../../screens/Home'
 import Progress from '../../screens/Progress'
@@ -346,6 +348,28 @@ check('the glance sets the score against the last serve, on the line the camera 
   )
   assert(soft.includes('measured differently from your last serve'), 'the soft move was captioned as a comparison')
   assert(!soft.includes('delta--great'), 'a move between serves read differently was coloured as a gain')
+})
+
+check('the trip chart draws each trip with the range its serves ran over (L3.2)', () => {
+  const tripAt = (i: number, overall: number, low: number, high: number, serves: number): TripPoint => ({
+    id: `t${i}`,
+    createdAt: i * 3 * 86_400_000,
+    to: i * 3 * 86_400_000 + 3_600_000,
+    overall,
+    status: 'good',
+    byArea: {},
+    scoringVersion: 5,
+    serves,
+    low,
+    high,
+  })
+  const trips = [tripAt(0, 62, 55, 70, 5), tripAt(1, 71, 71, 71, 1), tripAt(2, 74, 66, 80, 6)]
+  const chart = html(createElement(ScoreTrend, { points: trips }))
+  // A range bar for each trip with a spread, and none for the trip of one.
+  assert((chart.match(/opacity="0.35"/g) ?? []).length === 2, 'the range bars were not one per spread trip')
+  assert(chart.includes('across 3 trips, most recent 74'), 'the chart did not name what it plots')
+  const table = html(createElement(TrendTable, { points: trips }))
+  assert(table.includes('6, 66–80') && table.includes('>1<'), 'the table lost the serves or the range')
 })
 
 check('the glance refuses rather than scoring an unreadable clip', () => {

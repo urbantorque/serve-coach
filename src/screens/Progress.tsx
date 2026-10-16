@@ -17,8 +17,8 @@ import {
   weekJumpLine,
   bestConsistencyGap,
   bestGapEverLine,
-  bestOverallScore,
-  bestOverallScoreEverLine,
+  bestTrip,
+  bestTripEverLine,
   buildConsistencyTrend,
   buildProgress,
   clearedStrainOf,
@@ -29,6 +29,8 @@ import {
   sixWeekMilestone,
   streakLine,
   thenAndNow,
+  tripDay,
+  tripRangeLine,
 } from '../lib/progress'
 import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
 import type { PracticeSession } from '../lib/session/session'
@@ -116,7 +118,7 @@ export default function Progress({
   )
   const sheetBestGap = useMemo(() => bestConsistencyGap(spread), [spread])
   const sheetBestScore = useMemo(
-    () => (form ? bestOverallScore(sessions, form.serveType) : undefined),
+    () => (form ? bestTrip(sessions, form.serveType) : undefined),
     [sessions, form],
   )
   const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread.gapDelta) : undefined), [spread])
@@ -126,7 +128,7 @@ export default function Progress({
     () => ({
       streak,
       longestStreak: longestStreakText,
-      bestScore: sheetBestScore && bestOverallScoreEverLine(sheetBestScore),
+      bestScore: sheetBestScore && bestTripEverLine(sheetBestScore),
       bestGap: sheetBestGap && bestGapEverLine(sheetBestGap),
     }),
     [streak, longestStreakText, sheetBestScore, sheetBestGap],
@@ -188,11 +190,30 @@ export default function Progress({
 
       {form && form.points.length > 1 ? (
         <div className="progress-sheet">
+          {/* The latest trip, not the latest serve (L3.2): its median, the
+              range its serves ran over, and the change against the trip
+              before when both had enough serves to stand for themselves. One
+              serve moves further on camera noise than a fixed fault moves
+              it, so a single serve was a headline that could not show
+              progress. */}
           <div className="progress-summary">
-            <span className="progress-hero tnum">{form.latest.overall}</span>
+            <span className="progress-hero tnum">{form.latestTrip.overall}</span>
             <span className="progress-unit">
-              latest {SERVE_TYPES[form.serveType].word} serve
-              <DeltaChip delta={form.overallDelta} scope="overall" alike={form.overallAlike} />
+              <span>
+                typical {SERVE_TYPES[form.serveType].word} serve, {tripDay(form.latestTrip.createdAt)}
+                {tripRangeLine(form.latestTrip) && (
+                  <>
+                    <br />
+                    {tripRangeLine(form.latestTrip)}
+                  </>
+                )}
+              </span>
+              {form.tripDelta !== undefined && (
+                <span className="hero-delta">
+                  <DeltaChip delta={form.tripDelta} scope="trip" />
+                  <span>vs your last trip</span>
+                </span>
+              )}
             </span>
           </div>
 
@@ -254,7 +275,7 @@ export default function Progress({
               <h2 className="block-title">Your records</h2>
               {streak && <p className="progress-foot">{streak}</p>}
               {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
-              {sheetBestScore && <p className="progress-foot">{bestOverallScoreEverLine(sheetBestScore)}</p>}
+              {sheetBestScore && <p className="progress-foot">{bestTripEverLine(sheetBestScore)}</p>}
             </section>
           )}
 
@@ -358,8 +379,8 @@ export default function Progress({
           )}
 
           <section className="block">
-            <h2 className="block-title">Overall score by session</h2>
-            <ScoreTrend points={form.points} />
+            <h2 className="block-title">Typical score by trip</h2>
+            <ScoreTrend points={form.trips} />
             {/* The sentence the chart above never states in words: `form`
                 already carries everything `sixWeekMilestone` needs, and
                 the home card already shows this same sentence — this
@@ -409,7 +430,7 @@ export default function Progress({
 
           <details className="progress-table">
             <summary>See the numbers as a table</summary>
-            <TrendTable points={form.points} />
+            <TrendTable points={form.trips} />
           </details>
         </div>
       ) : (

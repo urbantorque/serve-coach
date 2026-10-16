@@ -6,7 +6,7 @@ import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
 import { weekPlan } from '../lib/weekPlan'
 import { faultForMetric } from '../lib/analysis/progressions'
-import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine } from '../lib/progress'
+import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine, tripDay } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 import { clipLabel } from '../lib/clipLabel'
 import type { PracticeSession } from '../lib/session/session'
@@ -154,6 +154,10 @@ export default function Home({
   // `rubricBreakAt`, so this cannot drift from whatever `best` was taken over.
   const eraCount = useMemo(
     () => (progress ? currentRubricEra(progress.points).length : 0),
+    [progress],
+  )
+  const eraTrips = useMemo(
+    () => (progress ? currentRubricEra(progress.trips).length : 0),
     [progress],
   )
   const [dragging, setDragging] = useState(false)
@@ -424,26 +428,29 @@ export default function Home({
             </span>
           </div>
           <div className="progress-figures">
-            <span className="progress-hero tnum">{progress.recentAverage}</span>
+            {/* The latest trip's median and what its serves ran over
+                (L3.2), against the trip before when both had enough serves
+                for the median to stand for them. */}
+            <span className="progress-hero tnum">{progress.latestTrip.overall}</span>
             <span className="progress-unit">
-              average of your
+              typical serve, {tripDay(progress.latestTrip.createdAt)}
               <br />
-              {/* Counted over the era, because `recentAverage` is. Taken over all
-                  of `points` it claimed three serves right after a
-                  recalibration, when the average behind it was of the one serve
-                  filmed since — and the line directly below already says so. */}
-              last {Math.min(3, eraCount)} {Math.min(3, eraCount) === 1 ? 'serve' : 'serves'}
+              {progress.latestTrip.serves === 1
+                ? 'one serve'
+                : progress.latestTrip.low === progress.latestTrip.high
+                  ? `${progress.latestTrip.serves} serves, all ${progress.latestTrip.low}`
+                  : `${progress.latestTrip.serves} serves, ${progress.latestTrip.low}–${progress.latestTrip.high}`}
             </span>
-            <DeltaChip delta={progress.formDelta} scope="form" />
+            <DeltaChip delta={progress.tripDelta} scope="trip" />
           </div>
-          <Sparkline points={progress.points} />
+          <Sparkline points={progress.trips} />
           {/* The older serves are still on the sparkline above, greyed and
               labelled, so the clause explains a figure that shrank rather than
               claiming the history is gone. */}
           <span className="progress-foot tnum">
-            {progress.rubricBreakAt
-              ? `${eraCount} serves since we changed how we mark · best ${progress.best}`
-              : `${eraCount} serves · best ${progress.best}`}
+            {`${eraCount} ${eraCount === 1 ? 'serve' : 'serves'} on ${eraTrips} ${eraTrips === 1 ? 'trip' : 'trips'}`}
+            {progress.rubricBreakAt ? ' since we changed how we mark' : ''}
+            {progress.best !== undefined ? ` · best trip ${progress.best}` : ''}
           </span>
 
           {/* A fact about the training block, not a reward for one — see

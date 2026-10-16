@@ -21,7 +21,6 @@ import { filmMocap } from '../mocapServe'
 import { detectServe } from '../phases'
 import {
   GAP_CHANGE,
-  MILESTONE_CHANGE,
   READ_DIFFERENTLY,
   REAL_CHANGE,
   ROW_CHANGE,
@@ -126,6 +125,7 @@ function p90(xs: number[]): number {
 }
 
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
+const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]
 const scoreOf = (t: Take, scope: 'overall' | FundamentalId) =>
   scope === 'overall' ? t.overall : t.fundamentals.find((f) => f.id === scope && isMeasured(f))?.score
 
@@ -152,6 +152,8 @@ interface Worst {
   where: string
 }
 const worst: Record<string, Worst> = {}
+/** Per serve: how far a trip median moves, beside how far one serve does. */
+const tripAgainstOne: { where: string; trip: number; one: number }[] = []
 function keep(key: string, value: number, where: string) {
   if (!Number.isFinite(value)) return
   if (!worst[key] || value > worst[key].value) worst[key] = { value, where }
@@ -179,8 +181,8 @@ for (const { fps, serves } of byRate) {
 
     // The comparisons that are averages or baskets, drawn without replacement.
     const shuffle = shuffler()
-    const form: number[] = []
-    const milestone: number[] = []
+    const trip: number[] = []
+    const single: number[] = []
     const gap: number[] = []
     const range: Record<number, number[]> = {}
     const rowMeans: Record<string, number[]> = {}
@@ -191,11 +193,12 @@ for (const { fps, serves } of byRate) {
       const drawn = shuffle(order)
       const basket = drawn.map((i) => takes[i])
       const s = basket.map((t) => t.overall)
-      // `buildProgress`: the newest three against the two before them, the
-      // smaller window it accepts and so the noisier.
-      form.push(Math.abs(Math.round(mean(s.slice(0, 3)) - mean(s.slice(3, 5)))))
-      // `sixWeekMilestone`: the rounded mean of three against one serve.
-      milestone.push(Math.abs(Math.round(mean(s.slice(0, 3))) - s[3]))
+      // `tripPoints`: one trip's median against another's, three serves
+      // each — the smallest trip a chip, a record or the six-week line will
+      // stand on (L3.2). Taken over every take, collapse or not: a trip's
+      // serves cannot be held to rows read alike.
+      trip.push(Math.abs(median(s.slice(0, 3)) - median(s.slice(3, 6))))
+      single.push(Math.abs(s[0] - s[1]))
       const spread = (xs: number[]) => Math.max(...xs) - Math.min(...xs)
       gap.push(Math.abs(spread(s.slice(0, 6)) - spread(s.slice(6, 12))))
       for (let n = 2; n <= 6; n++) {
@@ -218,8 +221,8 @@ for (const { fps, serves } of byRate) {
         }
       }
     }
-    keep('form', p90(form), where)
-    keep('milestone', p90(milestone), where)
+    keep('trip', p90(trip), where)
+    tripAgainstOne.push({ where, trip: p90(trip), one: p90(single) })
     keep('gap', p90(gap), where)
     for (const [n, xs] of Object.entries(range)) keep(`best–worst of ${n}`, p90(xs), where)
     for (const [key, xs] of Object.entries(rowMeans)) keep(`row mean ${key}`, p90(xs), where)
@@ -276,10 +279,8 @@ check('the collapse does flip under noise on the serve this is for', () => {
 })
 
 check('the averages and baskets sit under their floors', () => {
-  note(`form (3 against 2): moves ${said('form')}, floor ${REAL_CHANGE.form}`)
-  assert(served('form')! < REAL_CHANGE.form, `form moves ${said('form')}`)
-  note(`six-week milestone (3 against 1): moves ${said('milestone')}, floor ${MILESTONE_CHANGE}`)
-  assert(served('milestone')! < MILESTONE_CHANGE, `the milestone moves ${said('milestone')}`)
+  note(`trip (median of 3 against 3): moves ${said('trip')}, floor ${REAL_CHANGE.trip}`)
+  assert(served('trip')! < REAL_CHANGE.trip, `a trip median moves ${said('trip')}`)
   note(`basket gap (6 against 6): moves ${said('gap')}, floor ${GAP_CHANGE}`)
   assert(served('gap')! < GAP_CHANGE, `the gap moves ${said('gap')}`)
   for (let n = 2; n <= 6; n++) {
@@ -287,6 +288,18 @@ check('the averages and baskets sit under their floors', () => {
     note(`${key}, read alike: ${said(key)}, floor ${bestWorstGap(n)}`)
     assert(served(key)! < bestWorstGap(n), `${key} reaches ${said(key)}`)
   }
+})
+
+check('a trip median drifts less than a single serve, on every serve', () => {
+  // The reason the headline is a trip and not a serve (L3.2). Measured on
+  // every take, so a serve whose drop collapses on some of them counts its
+  // flips in both columns.
+  for (const { where, trip, one } of tripAgainstOne) {
+    assert(trip < one, `${where}: a trip median moves ${trip}, one serve ${one}`)
+  }
+  const worstOne = Math.max(...tripAgainstOne.map((t) => t.one))
+  note(`worst serve: a trip median moves ${said('trip')}, one serve up to ${worstOne}`)
+  assert(served('trip')! < worstOne, 'the trip floor is no tighter than a single serve')
 })
 
 check('every card row has a floor, and its mean over one to three serves a side stays under it', () => {

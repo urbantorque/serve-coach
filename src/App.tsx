@@ -18,7 +18,7 @@ import {
 } from './lib/analysis/verdict'
 import {
   bestConsistencyGap,
-  bestOverallScore,
+  bestTrip,
   faultMoveOnTrip,
   rotationMoveOnTrip,
   scoreMoveAgainst,
@@ -469,8 +469,8 @@ export default function App() {
     [sessions],
   )
   /**
-   * The single highest score any one serve of this type has earned — see
-   * `bestOverallScore`. Same reasoning as `bestGapFor`: recomputed per
+   * The best trip of this serve type so far, by its median — see
+   * `bestTrip` (L3.2). Same reasoning as `bestGapFor`: recomputed per
    * viewed type rather than pinned to the sheet's dominant one, so a report
    * open on a type the player rarely films still shows its own record and
    * not a mismatched one.
@@ -505,7 +505,7 @@ export default function App() {
     [sessions],
   )
   const bestScoreFor = useCallback(
-    (serveType: ServeType) => bestOverallScore(sessions, serveType),
+    (serveType: ServeType) => bestTrip(sessions, serveType),
     [sessions],
   )
   // Same reasoning as bestGapFor: recomputed for whichever type is actually
