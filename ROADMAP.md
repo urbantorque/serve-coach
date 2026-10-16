@@ -1687,7 +1687,31 @@ does, and nothing marks a fault as fixed.
         player's own in-rate plus one. First and second serves are kept
         apart, and the best set is a record.
       - *Proof:* tag fixtures and a glance render test.
-- [ ] **L3.8 Personal bests as body positions** · S.
+- [x] **L3.8 Personal bests as body positions** · S.
+      - *Delta (Oct 17):* done.
+        - `bests.ts` works per card row with a readout ladder and a measured
+          camera noise. A best fires when the newest trip's median reading:
+          - comes from 3 or more readings the card stood behind;
+          - lands on a rung no earlier trip reached;
+          - and sits closer to the band than every earlier trip by more than
+            1.5 deviations of camera noise.
+          It is said as the body position, e.g. 'Racket drop: first trip at
+          "Hand below the shoulder".'
+        - Shown in Progress's records and as one line on Home's form tile.
+        - `CARD_NOISE_SD` moved to `analysis/cardNoise.ts`, re-exported from
+          `consistency.ts`, so Home does not pull in the diagnosis.
+        - Proof:
+          - seeded readings: a first trip, a new rung, a rung reached before,
+            a crossing inside the noise, moving away from the band,
+            approximate readings, a trip of two;
+          - the rig's drop from above the shoulder to below it, which also
+            sets "Hand hangs under the elbow" (the same motion seen by a
+            second row);
+          - a Progress render.
+        - Departure: the band decides the direction, not a target rung. A
+          band can span two rungs, and its midpoint can fall a hair under a
+          rung edge: the drop's band [-0.1, 0.3] reads "level with the
+          shoulder" in floating point.
       - **What:** fires when a trip median crosses a readout rung and beats
         the old best by more than the noise floor, e.g. "first trip with a full
         racket drop".

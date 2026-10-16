@@ -36,6 +36,7 @@ import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '..
 import type { TripRecord } from '../lib/storage/ledger'
 import type { Cadence } from '../lib/storage/prefs'
 import { partLabel, servePath, type PartState } from '../lib/servePath'
+import { bodyBestLine, bodyBests } from '../lib/bests'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 
@@ -112,6 +113,8 @@ export default function Progress({
   const form = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
   // Each part of the serve as holding or still being worked on (L3.5).
   const path = useMemo(() => servePath(sessions, ladder), [sessions, ladder])
+  // Bests as body positions the newest trip reached (L3.8).
+  const bests = useMemo(() => bodyBests(sessions, form?.serveType), [sessions, form])
   // Read straight off `form`, the same object Home.tsx's own copy of this call
   // is read off — a fact about the score trend this screen already draws.
   const sheetMilestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
@@ -320,9 +323,14 @@ export default function Progress({
               order, same conditions. Guarded on the whole cluster so a
               player short of every record never sees a heading over
               nothing. */}
-          {(streak || longestStreakText || sheetBestScore) && (
+          {(streak || longestStreakText || sheetBestScore || bests.length > 0) && (
             <section className="block">
               <h2 className="block-title">Your records</h2>
+              {bests.map((b) => (
+                <p key={b.metricId} className="progress-foot">
+                  {bodyBestLine(b)}
+                </p>
+              ))}
               {streak && <p className="progress-foot">{streak}</p>}
               {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
               {sheetBestScore && <p className="progress-foot">{bestTripEverLine(sheetBestScore)}</p>}

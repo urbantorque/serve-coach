@@ -194,6 +194,8 @@ heading('Every place a history is read, which is what R55 has to get right')
  */
 const HISTORY_CONSUMERS = [
   'bestTrip',
+  // Bests as body positions (L3.8).
+  'bodyBests',
   // The best earlier serve the ghost and the focus are set against (D4.5).
   'bestPriorTo',
   'buildConsistencyTrend',

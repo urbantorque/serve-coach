@@ -10,6 +10,7 @@ import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine, tripDay 
 import type { Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
 import type { Cadence } from '../lib/storage/prefs'
+import { bodyBestLine, bodyBests } from '../lib/bests'
 import { clipLabel } from '../lib/clipLabel'
 import type { PracticeSession } from '../lib/session/session'
 
@@ -147,6 +148,8 @@ export default function Home({
   const week = useMemo(() => weekPlan(sessions, ladder), [sessions, ladder])
   const progress = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
+  // The newest trip's first body-position best, if it set one (L3.8).
+  const bodyBest = useMemo(() => bodyBests(sessions, progress?.serveType)[0], [sessions, progress])
   const streak = useMemo(
     () => streakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }),
     [sessions, ledger, cadence, practiceSessions],
@@ -493,6 +496,10 @@ export default function Home({
               same way whichever direction the number moved: nothing here
               can be produced by a tap, so nothing here is a badge for one. */}
           {milestone && <span className="progress-foot tnum">{milestone}</span>}
+
+          {/* A body position the newest trip reached for the first time
+              (L3.8): a best a player can picture, rather than a score. */}
+          {bodyBest && <span className="progress-foot">{bodyBestLine(bodyBest)}</span>}
 
           {/* A fact about attendance, counted the same way `sixWeekMilestone`
               insists a fact has to be: nothing here can be produced by a tap,
