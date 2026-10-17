@@ -26,14 +26,10 @@ import type { PhaseId } from './analysis/types'
  *     and the fault starts past 0.11. Nothing real comes near that either: the
  *     forty Bath serves hold the elbow between 0.00 and 0.04 *above* the line.
  *
- * The moment is the keyframe the fault's own signal is read at in
- * `diagnose.ts` — where the picture parks for a player who has asked for less
- * motion, so the still they see is the instant the app judged.
- *
  * ONLY FAULTS A STICK FIGURE CAN SHOW. Every entry must differ from its fix by
- * `DEMO_MIN_DIFFERENCE` at that moment (`faultDemo.test.ts`). Four named faults
- * were built and measured and did not, and two people standing side by side
- * looking the same under "this fault" and "the fix" teaches nothing:
+ * `DEMO_MIN_DIFFERENCE` (`faultDemo.test.ts`), measured on the part it names.
+ * Two people side by side looking the same under "this fault" and "the fix"
+ * teach nothing, so two faults stay out:
  *
  *   · `arming_the_ball` is the order the hips and shoulders fire in. Dialled at
  *     a 90 ms lead, the two bodies are never more than 0.016 body heights apart
@@ -42,35 +38,64 @@ import type { PhaseId } from './analysis/types'
  *     the side-on camera is a turn towards the lens: 0.04 at its widest.
  *   · `posture_collapse` is the spine bending sideways across the hips, and by
  *     contact the hips face the net — so the bend runs along the baseline, which
- *     is the line the guide's camera looks down. It was shown while the rig
- *     reached contact still side-on; re-posed on the Bath serves' trunk turn,
- *     a 26° collapse moves the picture 0.035 body heights. The engine still
- *     names it, because it reads the lean from the depth the pose model infers,
- *     and the picture draws only what the lens sees.
- *   · `toss_drift` is where the ball goes, and the picture draws no ball; the
- *     hand's own wander is 0.08, and the trail follows the racket hand rather
- *     than the tossing one.
+ *     is the line the guide's camera looks down. Re-posed on the Bath serves'
+ *     trunk turn, a 26° collapse moves the picture 0.035 body heights. The
+ *     engine still names it, because it reads the lean from the depth the pose
+ *     model infers, and the picture draws only what the lens sees.
  *
- *   · `shallow_drop` is the racket failing to lay back behind the player, and
- *     the picture draws no racket. Since the drop band was re-anchored on real
- *     motion (ANALYSIS-REVIEW.md §9) the fault is a hand left high above the
- *     shoulder against a hand near it, and at the moment the fault is read —
- *     the trophy, for a racket that never fell — the two bodies were measured
- *     0.000 apart. Withdrawn rather than shown as two identical figures.
+ * Four came back once the figure carried a racket and a ball (L4.4, L4.5):
  *
- * `toss_height` is the ball too, and the pancake is never named (`flaws.ts`).
+ *   · `shallow_drop` is the racket failing to fall behind the player: the hand
+ *     left high and the racket held up, head to the sky (a negative
+ *     `racketLayBack`, drawing only). Measured where a clean racket has
+ *     fallen; `faultDemo.test.ts` prints how far apart the two heads are.
+ *   · `toss_height` is a choice of apex for the drawn ball, here a toss that
+ *     goes too high: 2.45 statures against the model's 1.8.
+ *   · `toss_drift` is the tossing hand wandering on its way up, dialled to
+ *     0.2 m so the hand itself moves a tenth of a body height.
+ *   · the legs: straight at the trophy and no rise to contact. No instant of
+ *     it is a tenth apart once both bodies stand on the same hips, because the
+ *     fault IS the hips' travel — so its measure is that travel, from the
+ *     trophy to contact, on the same ground.
+ *
+ * `pancake_contact` is never named (`flaws.ts`).
+ *
+ * The moment is a keyframe of the CLEAN serve: where the picture parks, and
+ * where the fault body shows it. A racket that never falls has its own drop
+ * found at its trophy, and parking there showed two identical bodies.
  */
-/**
- * The racket arm's segment a dial moves, painted in `--work` on the faulty
- * body with the fixed one dashed beside it (L4.4). The upper arm, the
- * forearm, or both.
- */
-export type DemoLimb = 'upperArm' | 'forearm' | 'arm'
 
-export const DEMOS: Partial<Record<FlawId, { dials: Partial<ServeDials>; moment: PhaseId; limb: DemoLimb }>> = {
-  waiters_tray: { dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, moment: 'trophy', limb: 'forearm' },
-  collapsed_elbow: { dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, moment: 'drop', limb: 'upperArm' },
-  low_contact: { dials: { contactReach: 1.0 }, moment: 'contact', limb: 'arm' },
+/**
+ * What a demonstration asks the player to watch (L4.5), named under the
+ * picture and painted in `--work` on the faulty body, with the fix's own
+ * dashed beside it.
+ */
+export type DemoPart = 'racket' | 'elbow' | 'tossingHand' | 'ball' | 'hips'
+
+export const PART_NAME: Record<DemoPart, string> = {
+  racket: 'the racket head',
+  elbow: 'the hitting elbow',
+  tossingHand: 'the tossing hand',
+  ball: 'the ball',
+  hips: 'the hips',
+}
+
+export interface DemoSpec {
+  dials: Partial<ServeDials>
+  moment: PhaseId
+  part: DemoPart
+  /** Where the drawn toss peaks, in statures; the model's own when absent. */
+  apex?: number
+}
+
+export const DEMOS: Partial<Record<FlawId, DemoSpec>> = {
+  waiters_tray: { dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, moment: 'trophy', part: 'racket' },
+  collapsed_elbow: { dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, moment: 'drop', part: 'elbow' },
+  low_contact: { dials: { contactReach: 1.0 }, moment: 'contact', part: 'racket' },
+  shallow_drop: { dials: { dropBelowShoulder: -0.25, racketLayBack: -60 }, moment: 'drop', part: 'racket' },
+  toss_height: { dials: {}, apex: 2.45, moment: 'trophy', part: 'ball' },
+  toss_drift: { dials: { tossWobble: 0.2 }, moment: 'toss', part: 'tossingHand' },
+  no_leg_drive: { dials: { trophyKneeAngle: 175, contactHipHeight: 0.95 }, moment: 'contact', part: 'hips' },
 }
 
 /**

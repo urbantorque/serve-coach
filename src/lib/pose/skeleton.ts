@@ -596,12 +596,23 @@ export interface SkeletonOptions {
    * one limb its dial moved, and nothing else on screen has a claim to it.
    */
   work?: [number, number][]
+  /** The racket in `--work`, for a fault in the racket itself (L4.5). */
+  workRacket?: boolean
+  /** The ball in `--work`, for a fault in the toss (L4.5). */
+  workBall?: boolean
   /**
    * Where those bones should be, as segments in the same normalised image
    * space as `Frame.image`, stroked dashed under the body (L4.4). Dashed for
    * the reason the ghost is: a target must never read as a measurement.
    */
   target?: { a: { x: number; y: number }; b: { x: number; y: number } }[]
+  /**
+   * Draw the target over the body rather than under it (L4.5). For a model
+   * only: on a demonstration the dashed shape is the instruction, and the
+   * hips' target sits on the body it is a target for. A player's own body is
+   * never drawn under anything, which is why this is not the default.
+   */
+  targetOver?: boolean
 }
 
 /**
@@ -753,7 +764,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   if (o.paired) drawPairedGhost(ctx, o.paired, rect, aspect, scale)
 
   if (o.ghost) drawGhost(ctx, o.ghost, rect, aspect, scale)
-  if (o.target?.length) drawTarget(ctx, o.target, rect, aspect, scale)
+  if (o.target?.length && !o.targetOver) drawTarget(ctx, o.target, rect, aspect, scale)
   if (o.tossMark) drawTossMark(ctx, o.tossMark, rect, aspect, scale)
 
   if (o.trail && o.trail.to > o.trail.from + 1) {
@@ -917,7 +928,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       ctx.strokeStyle = PALETTE.under
       ctx.lineWidth = 6 * scale
       ctx.stroke()
-      ctx.strokeStyle = PALETTE.activeSoft
+      ctx.strokeStyle = o.workRacket ? PALETTE.work : PALETTE.activeSoft
       ctx.lineWidth = 2.6 * scale
       ctx.stroke()
 
@@ -931,7 +942,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       ctx.strokeStyle = PALETTE.under
       ctx.lineWidth = 5.6 * scale
       ctx.stroke()
-      ctx.strokeStyle = PALETTE.activeSoft
+      ctx.strokeStyle = o.workRacket ? PALETTE.work : PALETTE.activeSoft
       ctx.lineWidth = 2.2 * scale
       ctx.stroke()
       ctx.restore()
@@ -996,7 +1007,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       }
     }
     const b = toPoint(o.ball)
-    ctx.fillStyle = PALETTE.ball
+    ctx.fillStyle = o.workBall ? PALETTE.work : PALETTE.ball
     ctx.strokeStyle = PALETTE.under
     ctx.lineWidth = 2.8 * scale
     ctx.beginPath()
@@ -1054,6 +1065,8 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   }
   ctx.fill()
   ctx.stroke()
+
+  if (o.target?.length && o.targetOver) drawTarget(ctx, o.target, rect, aspect, scale)
 
   const annotation = o.annotation ? ANNOTATIONS[o.annotation] : undefined
   if (annotation) {

@@ -8,14 +8,16 @@
  * bodies that look the same under "this fault" and "the fix" are measured here
  * and fail, rather than reaching a report.
  */
-import { DEMO_FPS, demoFrames, faultDemo, type DemoServe } from '../faultDemo'
-import { DEMOS, DEMO_MIN_DIFFERENCE, hasDemo } from '../faultDemoDials'
+import { DEMO_FPS, demoRig, faultDemo, type DemoServe, type FaultDemo } from '../faultDemo'
+import { DEMOS, DEMO_MIN_DIFFERENCE, PART_NAME, hasDemo, type DemoPart } from '../faultDemoDials'
+import { ballOn, highlightOf } from '../demoDraw'
 import { diagnose } from '../analysis/diagnose'
 import { detectServe } from '../analysis/phases'
 import { CLEAN_SERVE } from '../analysis/syntheticServe'
 import { FLAWS, type FlawId } from '../analysis/flaws'
-import { LM } from '../analysis/geometry'
+import { LM, sided } from '../analysis/geometry'
 import type { Frame } from '../analysis/types'
+import type { BallFlight } from '../vision/ballTrack'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
 /** A club player, where the flaw suite dials these same faults. */
@@ -26,10 +28,11 @@ const RIG_BODY_HEIGHT = 0.54
 
 const shown = Object.keys(DEMOS) as FlawId[]
 
-function finding(flaw: FlawId, frames: Frame[] | undefined, racket: 'left' | 'right') {
-  assert(frames !== undefined, `${flaw}: the rig serve could not be built`)
-  const skel = detectServe(frames!, DEMO_FPS, racket)
-  return diagnose(frames!, skel, { tier: TIER }).flaws.find((f) => f.flaw === flaw)
+/** The engine's verdict on a demo serve, read with the ball the picture draws. */
+function finding(flaw: FlawId, rig: { frames: Frame[]; ball?: BallFlight } | undefined, racket: 'left' | 'right') {
+  assert(rig !== undefined, `${flaw}: the rig serve could not be built`)
+  const skel = detectServe(rig!.frames, DEMO_FPS, racket)
+  return diagnose(rig!.frames, skel, { tier: TIER, ball: rig!.ball }).flaws.find((f) => f.flaw === flaw)
 }
 
 heading('Each fault is shown on a serve the engine names with it')
@@ -37,9 +40,10 @@ heading('Each fault is shown on a serve the engine names with it')
 for (const racket of ['right', 'left'] as const) {
   for (const flaw of shown) {
     check(`${flaw}, ${racket}-handed: named on the fault, not on the fix`, () => {
-      const fault = finding(flaw, demoFrames(DEMOS[flaw]!.dials, racket), racket)
+      const spec = DEMOS[flaw]!
+      const fault = finding(flaw, demoRig(spec.dials, racket, spec.apex), racket)
       assert(fault?.detected === true, `${flaw}: the engine does not name it on the demo serve`)
-      const clean = finding(flaw, demoFrames({ ...CLEAN_SERVE }, racket), racket)
+      const clean = finding(flaw, demoRig({ ...CLEAN_SERVE }, racket), racket)
       assert(clean?.detected !== true, `${flaw}: the fix is named with the fault too`)
     })
   }
@@ -53,34 +57,105 @@ function nearest(s: DemoServe, fromContact: number): Frame {
   return s.frames.reduce((a, b) => (Math.abs(b.t - want) < Math.abs(a.t - want) ? b : a))
 }
 
-/** The landmark that moved most, once both bodies stand on the same hips. */
-function widestGap(a: Frame, b: Frame): number {
+type Pt = { x: number; y: number }
+
+/**
+ * Every point the picture draws on one instant of a serve, by name: the
+ * landmarks, the racket head and the ball (L4.5) — a fault in the racket or
+ * the toss is a difference in those, not in the body.
+ */
+function points(s: DemoServe, f: Frame): Map<string, Pt> {
+  const out = new Map<string, Pt>()
+  f.image.forEach((p, i) => out.set(String(i), p))
+  if (f.racket) out.set('racketHead', f.racket.head)
+  const ball = ballOn(s, f, 'right')
+  if (ball) out.set('ball', ball)
+  return out
+}
+
+/** Which named points belong to each part a demo can name, right-handed. */
+const PART_POINTS: Record<Exclude<DemoPart, 'hips'>, string[]> = {
+  racket: ['racketHead'],
+  elbow: [String(sided('right').elbow)],
+  tossingHand: [LM.leftWrist, LM.leftIndex, LM.leftPinky, LM.leftThumb].map(String),
+  ball: ['ball'],
+}
+
+/**
+ * At the clean serve's own moment, both bodies on the same hips: how far each
+ * drawn point moved, in body heights, widest first.
+ */
+function gapsAt(demo: FaultDemo): [string, number][] {
+  const fixFrame = demo.fix.frames[demo.fix.phases.find((p) => p.id === demo.moment)!.frame]
+  const faultFrame = nearest(demo.fault, fixFrame.t - demo.fix.contactT)
   const hip = (f: Frame) => ({
     x: (f.image[LM.leftHip].x + f.image[LM.rightHip].x) / 2,
     y: (f.image[LM.leftHip].y + f.image[LM.rightHip].y) / 2,
   })
-  const ha = hip(a)
-  const hb = hip(b)
-  let most = 0
-  for (let i = 0; i < a.image.length; i++) {
-    const dx = a.image[i].x - ha.x - (b.image[i].x - hb.x)
-    const dy = a.image[i].y - ha.y - (b.image[i].y - hb.y)
-    most = Math.max(most, Math.hypot(dx, dy))
+  const ha = hip(faultFrame)
+  const hb = hip(fixFrame)
+  const a = points(demo.fault, faultFrame)
+  const b = points(demo.fix, fixFrame)
+  const rows: [string, number][] = []
+  for (const [name, p] of a) {
+    const q = b.get(name)
+    if (q) rows.push([name, Math.hypot(p.x - ha.x - (q.x - hb.x), p.y - ha.y - (q.y - hb.y)) / RIG_BODY_HEIGHT])
   }
-  return most / RIG_BODY_HEIGHT
+  return rows.sort((x, y) => y[1] - x[1])
+}
+
+/**
+ * The hips' rise from the trophy to contact: the legs' fault is a travel, not
+ * a pose, so no instant of it shows a tenth once both bodies stand on the same
+ * hips. Read in picture height, which the fixed camera ties to the court —
+ * not against the ankles, which leave the ground with the hips on a serve that
+ * drives up. Difference between the two serves, in body heights.
+ */
+function hipTravelGap(demo: FaultDemo): number {
+  const rise = (s: DemoServe) => {
+    const at = (id: 'trophy' | 'contact') => s.frames[s.phases.find((p) => p.id === id)!.frame]
+    const hipY = (f: Frame) => (f.image[LM.leftHip].y + f.image[LM.rightHip].y) / 2
+    return hipY(at('trophy')) - hipY(at('contact'))
+  }
+  return Math.abs(rise(demo.fix) - rise(demo.fault)) / RIG_BODY_HEIGHT
 }
 
 for (const flaw of shown) {
-  check(`${flaw}: the two bodies differ at the moment it is read`, () => {
+  check(`${flaw}: the part it names is the widest difference, and at least a tenth`, () => {
     const demo = faultDemo(flaw, 'right')
     assert(demo !== undefined, `${flaw}: no demo`)
-    const at = demo!.fault.phases.find((p) => p.id === demo!.moment)!
-    const fromContact = demo!.fault.frames[at.frame].t - demo!.fault.contactT
-    const gap = widestGap(demo!.fault.frames[at.frame], nearest(demo!.fix, fromContact))
-    note(`${flaw} at ${demo!.moment}: ${gap.toFixed(3)} body heights apart`)
-    assert(gap >= DEMO_MIN_DIFFERENCE, `${flaw}: only ${gap.toFixed(3)} apart, under ${DEMO_MIN_DIFFERENCE}`)
+    if (demo!.part === 'hips') {
+      const travel = hipTravelGap(demo!)
+      note(`${flaw}: the hips rise ${travel.toFixed(3)} body heights less from the trophy to contact`)
+      assert(travel >= DEMO_MIN_DIFFERENCE, `${flaw}: only ${travel.toFixed(3)}, under ${DEMO_MIN_DIFFERENCE}`)
+      return
+    }
+    const rows = gapsAt(demo!)
+    const own = Math.max(...rows.filter(([n]) => PART_POINTS[demo!.part as Exclude<DemoPart, 'hips'>].includes(n)).map(([, g]) => g))
+    note(`${flaw} at ${demo!.moment}: ${PART_NAME[demo!.part]} ${own.toFixed(3)}; widest ${rows[0][0]} ${rows[0][1].toFixed(3)}`)
+    assert(own >= DEMO_MIN_DIFFERENCE, `${flaw}: only ${own.toFixed(3)} apart, under ${DEMO_MIN_DIFFERENCE}`)
+    assert(own >= rows[0][1] - 1e-9, `${flaw}: names ${PART_NAME[demo!.part]}, but ${rows[0][0]} moved more`)
   })
 }
+
+check('each demonstration paints what it names, and dashes the fix beside it', () => {
+  for (const flaw of shown) {
+    const demo = faultDemo(flaw, 'right')!
+    const fixFrame = demo.fix.frames[demo.fix.phases.find((p) => p.id === demo.moment)!.frame]
+    const faultFrame = nearest(demo.fault, fixFrame.t - demo.fix.contactT)
+    const h = highlightOf(
+      demo.part,
+      'right',
+      faultFrame,
+      fixFrame,
+      ballOn(demo.fault, faultFrame, 'right'),
+      ballOn(demo.fix, fixFrame, 'right'),
+    )
+    const painted = (h.work?.length ?? 0) > 0 || h.workRacket === true || h.workBall === true
+    assert(painted, `${flaw}: nothing painted for ${demo.part}`)
+    assert(h.target.length > 0, `${flaw}: no dashed fix for ${demo.part}`)
+  }
+})
 
 heading('The demonstration itself')
 
@@ -111,8 +186,8 @@ check('a left-hander sees the racket arm on their own side', () => {
   assert(up('left') === 'left', 'left-hander: the left hand is not the one up at contact')
 })
 
-check('the ball, the pancake and the faults with no shape are not offered', () => {
-  for (const flaw of ['toss_height', 'pancake_contact', 'arming_the_ball', 'early_shoulder_rotation', 'toss_drift', 'shallow_drop'] as const) {
+check('the pancake and the faults with no shape are not offered', () => {
+  for (const flaw of ['pancake_contact', 'arming_the_ball', 'early_shoulder_rotation', 'posture_collapse'] as const) {
     assert(!hasDemo(flaw), `${flaw} is offered a demonstration it cannot show`)
   }
   assert(!hasDemo(undefined), 'a report with no named fault offered a demo')

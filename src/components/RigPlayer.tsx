@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DemoServe } from '../lib/faultDemo'
-import type { Frame, PhaseId } from '../lib/analysis/types'
-import { drawSkeleton, type DrawRect, type SkeletonOptions } from '../lib/pose/skeleton'
-import { ballMarkerAt } from '../lib/vision/ballTrack'
+import type { DemoPart } from '../lib/faultDemoDials'
+import type { PhaseId } from '../lib/analysis/types'
+import { drawSkeleton, type DrawRect } from '../lib/pose/skeleton'
+import { ballOn, highlightOf } from '../lib/demoDraw'
 import { Icon } from './primitives'
 
 /** The same three speeds the report's players offer, named the same way. */
@@ -40,28 +41,17 @@ interface Props {
    */
   maxFps?: number
   /**
-   * The first body is a fault and the second its fix (L4.4): these bones are
-   * painted in `--work` on the first, with the fix's same bones dashed beside
-   * them, hung from the same joint.
+   * The first body is a fault and the second its fix (L4.4, L4.5): the part
+   * named is painted in `--work` on the first, with the fix's own dashed
+   * beside it — see `highlightOf`.
    */
-  fault?: { segment: [number, number][] }
-}
-
-/** The ball between the toss and the strings, and none before or after it. */
-function ballFor(serve: DemoServe, frame: Frame): SkeletonOptions['ball'] {
-  const flight = serve.ball
-  if (!flight?.samples.length) return undefined
-  if (frame.t < flight.samples[0].t || frame.t > serve.contactT + 1e-6) return undefined
-  return ballMarkerAt(flight, frame.t)
-}
-
-/** The fix's bones, moved so the first of them starts at the fault's own joint. */
-function targetFor(segment: [number, number][], fault: Frame, fix: Frame): SkeletonOptions['target'] {
-  const root = segment[0][0]
-  const dx = fault.image[root].x - fix.image[root].x
-  const dy = fault.image[root].y - fix.image[root].y
-  const moved = (i: number) => ({ x: fix.image[i].x + dx, y: fix.image[i].y + dy })
-  return segment.map(([a, b]) => ({ a: moved(a), b: moved(b) }))
+  fault?: { part: DemoPart }
+  /**
+   * Fit the stage to the ball's whole flight too. Off by default, because the
+   * toss peaks far above everything else and the bodies shrink by a third;
+   * on where the ball is the thing to watch (L4.5).
+   */
+  fitBall?: boolean
 }
 
 /** Seconds from contact, for a frame of one serve. */
@@ -76,7 +66,7 @@ function frameAt(s: DemoServe, tau: number): number {
 }
 
 /** The box a serve's body moves through, in image units. */
-function extent(s: DemoServe) {
+function extent(s: DemoServe, fitBall = false) {
   let x0 = Infinity
   let x1 = -Infinity
   let y0 = Infinity
@@ -95,6 +85,10 @@ function extent(s: DemoServe) {
   for (const f of s.frames) {
     for (const p of f.image) take(p)
     if (f.racket) take(f.racket.head)
+  }
+  if (fitBall && s.ball) {
+    for (const b of s.ball.samples) take(b)
+    take(s.ball.apex)
   }
   return { x0, x1, y0, y1 }
 }
@@ -124,6 +118,7 @@ export default function RigPlayer({
   speeds = true,
   maxFps,
   fault,
+  fitBall = false,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -139,17 +134,22 @@ export default function RigPlayer({
     return { lo, hi }
   }, [serves])
 
-  /** Where each keyframe of the first serve sits on the shared clock. */
-  const marks = useMemo(
-    () =>
-      serves[0].phases.map((p) => ({
-        id: p.id,
-        label: p.label,
-        caption: p.caption,
-        tau: fromContact(serves[0], p.frame),
-      })),
-    [serves],
-  )
+  /**
+   * Where each keyframe sits on the shared clock — the LAST serve's, which on
+   * a demonstration is the fix. A fault's own keyframes can be where its fault
+   * hides: a racket that never falls has its drop found at the trophy, and
+   * "Racket drop" there showed two bodies the same. The clean serve's drop is
+   * where the faulty racket can be seen not to have fallen.
+   */
+  const marks = useMemo(() => {
+    const ref = serves[serves.length - 1]
+    return ref.phases.map((p) => ({
+      id: p.id,
+      label: p.label,
+      caption: p.caption,
+      tau: fromContact(ref, p.frame),
+    }))
+  }, [serves])
 
   const parkedAt = marks.find((m) => m.id === moment)?.tau ?? span.lo
   const [tau, setTau] = useState(still ? parkedAt : span.lo)
@@ -159,7 +159,7 @@ export default function RigPlayer({
 
   /** One scale for every body, so a difference in height is a difference in the serve. */
   const layout = useMemo(() => {
-    const boxes = serves.map(extent)
+    const boxes = serves.map((s) => extent(s, fitBall))
     const w = Math.max(...boxes.map((b) => b.x1 - b.x0)) * PAD_X
     const top = Math.min(...boxes.map((b) => b.y0))
     const bottom = Math.max(...boxes.map((b) => b.y1))
@@ -170,7 +170,7 @@ export default function RigPlayer({
       midY: (top + bottom) / 2,
       midX: boxes.map((b) => (b.x0 + b.x1) / 2),
     }
-  }, [serves])
+  }, [serves, fitBall])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -180,6 +180,7 @@ export default function RigPlayer({
     const s = canvas.height / layout.h
     const part = canvas.width / serves.length
     const shown = serves.map((serve) => serve.frames[frameAt(serve, tauRef.current)])
+    const balls = serves.map((serve, k) => ballOn(serve, shown[k], racket))
     serves.forEach((serve, k) => {
       const i = frameAt(serve, tauRef.current)
       const rect: DrawRect = {
@@ -198,9 +199,9 @@ export default function RigPlayer({
         rect,
         racket,
         trail: { frames: serve.frames, from: Math.max(0, i - TRAIL), to: i },
-        ball: ballFor(serve, serve.frames[i]),
+        ball: balls[k],
         ...(fault && k === 0 && shown[1]
-          ? { work: fault.segment, target: targetFor(fault.segment, shown[0], shown[1]) }
+          ? highlightOf(fault.part, racket, shown[0], shown[1], balls[0], balls[1])
           : {}),
       })
       ctx.restore()

@@ -10,7 +10,8 @@ import { detectServe } from '../phases'
 import { drawSkeleton, fitContain } from '../../pose/skeleton'
 import { buildServe, rigStrikeFlight } from '../syntheticServe'
 import { ballMarkerAt } from '../../vision/ballTrack'
-import { faultDemo, modelServe, segmentOf } from '../../faultDemo'
+import { faultDemo, modelServe } from '../../faultDemo'
+import { highlightOf } from '../../demoDraw'
 import type { Frame } from '../types'
 import { assert, check, heading, note, report } from './harness'
 
@@ -233,8 +234,12 @@ check('the model ball leaves the tossing hand and meets the middle of the string
   note(`${flight!.samples.length} samples; apex ${flight!.apex.y.toFixed(3)} against contact ${head.y.toFixed(3)}`)
   assert(Math.abs(last.t - frames[skel.keys.contact].t) < 1e-9, 'the flight ends somewhere other than contact')
   assert(dist(last, head) < 1e-9, 'the ball misses the strings')
+  // Let go where the hand comes closest to the arc (L4.5): within a hand's
+  // width of the wrist, which is a ball leaving fingers, not appearing in air.
   const release = frames.find((f) => f.t === first.t)!
-  assert(dist(first, release.image[LM.leftWrist]) < 1e-9, 'the ball does not leave the tossing hand')
+  const handGap = dist(first, release.image[LM.leftWrist]) / 0.54
+  note(`the ball leaves ${handGap.toFixed(3)} body heights from the wrist`)
+  assert(handGap < 0.05, 'the ball does not leave the tossing hand')
   assert(flight!.apex.y < Math.min(first.y, head.y), 'the ball never rises above the hand or the strings')
   // Drawn as a flight and a marker.
   const { ops } = draw(frames[skel.keys.drop], { ball: ballMarkerAt(flight, frames[skel.keys.drop].t) })
@@ -276,18 +281,25 @@ check('the target is dashed, drawn under the body, and the dash is put back', ()
   const lastDash = rec.ops.map((o) => o.dashed).lastIndexOf(true)
   assert(lastDash < firstLimb, 'the target was drawn over the body')
   assert(rec.dash().length === 0, 'the dash leaked past the target')
+  // On a model it goes over the body (L4.5): the dashed shape is the instruction.
+  const over = draw(frame, { target, targetOver: true })
+  const overLimb = over.ops.findIndex((o) => o.op === 'fill' && o.style === 'rgba(238, 242, 246, 0.82)')
+  const firstDash = over.ops.findIndex((o) => o.dashed)
+  assert(firstDash > overLimb, 'a target asked for on top went under the body')
+  assert(over.dash().length === 0, 'the dash leaked past a target on top')
 })
 
-check('a fault demonstration names the limb its dial moved, on the player own side', () => {
+check('a demonstration paints its part on the faulty body, with the fix hung dashed from the same joint', () => {
   for (const racket of ['right', 'left'] as const) {
     const arm = sided(racket)
     const demo = faultDemo('collapsed_elbow', racket)!
-    assert(
-      JSON.stringify(demo.segment) === JSON.stringify([[arm.shoulder, arm.elbow]]),
-      `${racket}: the collapsed elbow marks ${JSON.stringify(demo.segment)}`,
-    )
+    assert(demo.part === 'elbow', `${racket}: the collapsed elbow names ${demo.part}`)
+    const at = (s: typeof demo.fault) => s.frames[s.phases.find((p) => p.id === 'drop')!.frame]
+    const h = highlightOf(demo.part, racket, at(demo.fault), at(demo.fix))
+    assert(JSON.stringify(h.work) === JSON.stringify([[arm.shoulder, arm.elbow]]), `${racket}: marks ${JSON.stringify(h.work)}`)
+    const shoulder = at(demo.fault).image[arm.shoulder]
+    assert(dist(h.target[0].a, shoulder) < 1e-9, `${racket}: the dashed arm does not hang from the fault's shoulder`)
   }
-  assert(segmentOf('arm', 'right').length === 2, 'the whole arm is not two bones')
 })
 
 report()

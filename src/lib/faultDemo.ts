@@ -32,14 +32,13 @@
  * Built on the device, on demand: `buildServe` is a few milliseconds and the
  * module is loaded only when somebody asks to see a fault.
  */
-import { CLEAN_SERVE, buildServe, rigStrikeFlight, type ServeDials } from './analysis/syntheticServe'
+import { CLEAN_SERVE, MODEL_TOSS_APEX, buildServe, rigStrikeFlight, type ServeDials } from './analysis/syntheticServe'
 import { buildPhases, detectServe } from './analysis/phases'
 import { mirrorFrames } from './analysis/mirror'
-import { sided } from './analysis/geometry'
 import type { FlawId } from './analysis/flaws'
 import type { Frame, Phase, PhaseId } from './analysis/types'
 import type { BallFlight } from './vision/ballTrack'
-import { DEMOS, type DemoLimb } from './faultDemoDials'
+import { DEMOS, type DemoPart } from './faultDemoDials'
 
 /**
  * The rate the demonstration serves are built at. Faster than any clip the app
@@ -57,60 +56,71 @@ export interface DemoServe {
   phases: Phase[]
   /** Seconds into its own clip that contact happens — the shared zero. */
   contactT: number
-  /** The ball this serve hits, from the toss to the strings (L4.4). */
+  /** The ball this serve hits, from the release to the strings (L4.4). */
   ball?: BallFlight
 }
 
 export interface FaultDemo {
-  /** The keyframe the fault is read at, where the picture parks. */
+  /** The clean serve's keyframe where the fault shows, and where the picture parks. */
   moment: PhaseId
   /** The serve with the fault in it. */
   fault: DemoServe
   /** The same serve without it. */
   fix: DemoServe
   racket: 'left' | 'right'
-  /** The bones the dial moved, as landmark pairs on the player's own side (L4.4). */
-  segment: [number, number][]
+  /** What to watch, named under the picture and painted on the faulty body (L4.5). */
+  part: DemoPart
 }
 
-/** A limb of the racket arm as the landmark pairs the renderer paints. */
-export function segmentOf(limb: DemoLimb, racket: 'left' | 'right'): [number, number][] {
-  const arm = sided(racket)
-  const upper: [number, number] = [arm.shoulder, arm.elbow]
-  const fore: [number, number] = [arm.elbow, arm.wrist]
-  return limb === 'upperArm' ? [upper] : limb === 'forearm' ? [fore] : [upper, fore]
-}
+/** A flight reflected with the body, for a left-hander. */
+const mirrorFlight = (f: BallFlight): BallFlight => ({
+  ...f,
+  apex: { ...f.apex, x: DEMO_ASPECT - f.apex.x },
+  samples: f.samples.map((s) => ({ ...s, x: DEMO_ASPECT - s.x })),
+})
 
-function built(dials: Partial<ServeDials>, racket: 'left' | 'right'): DemoServe | undefined {
+/**
+ * A rig serve and the ball it hits, on the player's own side: what a
+ * demonstration draws, and what its test diagnoses, ball and all.
+ *
+ * The rig builds right-handed serves. A left-hander is shown their own side,
+ * because a mirror image of somebody else's arm is one more translation to do
+ * while trying to picture a fault. The ball is built on the rig's own frames
+ * and mirrored with the body.
+ */
+export function demoRig(
+  dials: Partial<ServeDials>,
+  racket: 'left' | 'right',
+  apex = MODEL_TOSS_APEX,
+): { frames: Frame[]; ball?: BallFlight } | undefined {
   const rig = buildServe({ ...dials, noise: 0, dropout: 0 }, DEMO_FPS)
-  // The rig builds right-handed serves. A left-hander is shown their own side,
-  // because a mirror image of somebody else's arm is one more translation to do
-  // while trying to picture a fault.
   const frames = racket === 'left' ? mirrorFrames(rig, DEMO_ASPECT) : rig
   try {
     const skel = detectServe(frames, DEMO_FPS, racket)
-    const phases = buildPhases(frames, skel.keys)
+    const flight = rigStrikeFlight(rig, skel.keys.contact, apex)
+    const ball = flight && racket === 'left' ? mirrorFlight(flight) : flight
+    return ball ? { frames, ball } : { frames }
+  } catch {
+    return undefined
+  }
+}
+
+function built(dials: Partial<ServeDials>, racket: 'left' | 'right', apex?: number): DemoServe | undefined {
+  const rig = demoRig(dials, racket, apex)
+  if (!rig) return undefined
+  try {
+    const skel = detectServe(rig.frames, DEMO_FPS, racket)
+    const phases = buildPhases(rig.frames, skel.keys)
     // Ready to finish only: the rig's lead-in and follow-through are a body
     // standing still, and a loop that spends half its time there is a loop the
-    // eye stops watching.
-    const span = frames.slice(phases[0].frame, phases[phases.length - 1].frame + 1)
+    // eye stops watching. Times are the clip's own, so the ball still finds them.
+    const span = rig.frames.slice(phases[0].frame, phases[phases.length - 1].frame + 1)
     const shift = phases[0].frame
-    // The ball, built on the rig's own right-handed frames and mirrored with
-    // the body. Times are the clip's own, so the trimmed frames still find it.
-    const flight = rigStrikeFlight(rig, skel.keys.contact)
-    const ball =
-      flight && racket === 'left'
-        ? {
-            ...flight,
-            apex: { ...flight.apex, x: DEMO_ASPECT - flight.apex.x },
-            samples: flight.samples.map((s) => ({ ...s, x: DEMO_ASPECT - s.x })),
-          }
-        : flight
     return {
       frames: span,
       phases: phases.map((p) => ({ ...p, frame: p.frame - shift })),
-      contactT: frames[skel.keys.contact].t,
-      ...(ball ? { ball } : {}),
+      contactT: rig.frames[skel.keys.contact].t,
+      ...(rig.ball ? { ball: rig.ball } : {}),
     }
   } catch {
     return undefined
@@ -127,12 +137,12 @@ function built(dials: Partial<ServeDials>, racket: 'left' | 'right'): DemoServe 
 export function faultDemo(flaw: FlawId, racket: 'left' | 'right'): FaultDemo | undefined {
   const demo = DEMOS[flaw]
   if (!demo) return undefined
-  const fault = built(demo.dials, racket)
+  const fault = built(demo.dials, racket, demo.apex)
   // `CLEAN_SERVE` spelled out rather than `{}`, so a reader sees which serve
   // the fault is being measured against.
   const fix = built({ ...CLEAN_SERVE }, racket)
   if (!fault || !fix) return undefined
-  return { moment: demo.moment, fault, fix, racket, segment: segmentOf(demo.limb, racket) }
+  return { moment: demo.moment, fault, fix, racket, part: demo.part }
 }
 
 /**
@@ -146,10 +156,8 @@ export function modelServe(racket: 'left' | 'right'): DemoServe | undefined {
 }
 
 /** Exposed for the test, which has to diagnose the same frames the picture is drawn from. */
-export const demoFrames = (dials: Partial<ServeDials>, racket: 'left' | 'right'): Frame[] | undefined => {
-  const rig = buildServe({ ...dials, noise: 0, dropout: 0 }, DEMO_FPS)
-  return racket === 'left' ? mirrorFrames(rig, DEMO_ASPECT) : rig
-}
+export const demoFrames = (dials: Partial<ServeDials>, racket: 'left' | 'right'): Frame[] | undefined =>
+  demoRig(dials, racket)?.frames
 
 /** The rate the frames from `demoFrames` are built at, for whoever detects on them. */
 export { DEMO_FPS }

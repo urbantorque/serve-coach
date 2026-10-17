@@ -174,9 +174,11 @@ export interface ServeDials {
    * For the picture only. The rig places a racket on every frame
    * (`Frame.racket`) so a model serve can be drawn holding one, and nothing
    * the engine measures reads it: the landmarks are the same at any value.
-   * The lay-back is a turn in the swing plane, away from the net when the
-   * forearm points up, and it rides a track through the serve — a little at the
-   * ready, more at the trophy, this much at the drop, almost none at contact.
+   * The lay-back turns the racket off the forearm towards down-and-back, the
+   * way lag pulls the head, and rides a track through the serve — a little at
+   * the ready, more at the trophy, this much at the drop, almost none at
+   * contact. Negative turns it towards up-and-back instead: a racket held up
+   * at the drop, the shallow drop's shape (L4.5).
    */
   racketLayBack: number
   /**
@@ -1186,9 +1188,11 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // head: wherever the forearm points — up at the trophy, out to the side
     // at the drop — the lay-back drops the racket behind it, never past that
     // direction itself.
-    const lag = unitOf(LAG_BACK, 1, 0)
+    // A negative lay-back turns the head towards the sky instead: the racket
+    // held up rather than let fall, which is what a shallow drop looks like.
+    const lag = layBack >= 0 ? unitOf(LAG_BACK, 1, 0) : unitOf(LAG_BACK, -1, 0)
     const apart = Math.acos(clamp(fore.x * lag.x + fore.y * lag.y + fore.z * lag.z, -1, 1))
-    const turn = Math.min(layBack, apart)
+    const turn = Math.min(Math.abs(layBack), apart)
     const wFore = apart > 1e-6 ? Math.sin(apart - turn) / Math.sin(apart) : 1
     const wLag = apart > 1e-6 ? Math.sin(turn) / Math.sin(apart) : 0
     const racketDir = unitOf(
@@ -1671,42 +1675,57 @@ export function rigBall(frames: Frame[], toss: RigToss, dials: Partial<ServeDial
 }
 
 /**
- * The ball a model serve hits (L4.4): let go from the tossing hand at the top
- * of its lift and met in the middle of the strings at contact, under gravity
- * at the rig's own picture scale.
+ * Where a model serve's toss peaks by default, in statures above the ground:
+ * inside the toss band (`tossPeakHeight`, 1.38–2.1) and a little over the
+ * strings at contact, so the ball falls a short way into the racket.
+ */
+export const MODEL_TOSS_APEX = 1.8
+
+/**
+ * The ball a model serve hits (L4.4, L4.5): carried in the tossing hand, let
+ * go where the hand meets its arc, peaking at `apex` statures and falling
+ * into the middle of the strings at contact, under gravity at the rig's own
+ * picture scale.
  *
  * Unlike `rigBall`, which is a toss placed for the engine to read, this one
  * is placed for the eye: whatever the dials did to the arm and the legs, the
- * drawn ball arrives where the drawn racket is. Right-handed, as the rig
- * builds; mirror the result for a left-hander. Undefined for frames with no
- * racket or a contact before the release.
+ * drawn ball arrives where the drawn racket is, and a toss fault is a choice
+ * of apex. The samples start at the release; before it the ball is in the
+ * hand, which a player draws from the wrist. Right-handed, as the rig builds;
+ * mirror the result for a left-hander. Undefined for frames with no racket.
  */
-export function rigStrikeFlight(frames: Frame[], contact: number): import('../vision/ballTrack').BallFlight | undefined {
+export function rigStrikeFlight(
+  frames: Frame[],
+  contact: number,
+  apex: number = MODEL_TOSS_APEX,
+): import('../vision/ballTrack').BallFlight | undefined {
   const hit = frames[contact]?.racket
   if (!hit) return undefined
-  let release = 0
-  for (let i = 1; i < contact; i++) {
-    if (frames[i].image[LM.leftWrist].y < frames[release].image[LM.leftWrist].y) release = i
-  }
-  const t0 = frames[release].t
   const t1 = frames[contact].t
-  const span = t1 - t0
-  if (!(span > 0.1)) return undefined
-  const from = frames[release].image[LM.leftWrist]
-  const to = hit.head
-  // y = y0 + v·s + k·s², with s from the release and k gravity in picture units.
   const k = (9.81 / 2) * SCALE
-  const v = (to.y - from.y - k * span * span) / span
-  const at = (t: number) => {
-    const s = t - t0
-    return { x: from.x + ((to.x - from.x) * s) / span, y: from.y + v * s + k * s * s }
+  // The top, never below the strings: a ball has to come down to be hit.
+  const yA = Math.min(GROUND_Y - apex * HEIGHT_M * SCALE, hit.head.y - 1e-3)
+  const ta = t1 - Math.sqrt((hit.head.y - yA) / k)
+  const arcY = (t: number) => yA + k * (t - ta) ** 2
+  // Let go where the tossing hand comes closest to the arc on its way up.
+  let release = -1
+  let gap = Infinity
+  for (let i = 0; i < contact && frames[i].t < ta; i++) {
+    const d = Math.abs(frames[i].image[LM.leftWrist].y - arcY(frames[i].t))
+    if (d < gap) {
+      gap = d
+      release = i
+    }
   }
-  const ta = t0 - v / (2 * k)
-  const samples = frames.filter((f) => f.t >= t0 && f.t <= t1).map((f) => ({ t: f.t, ...at(f.t) }))
+  if (release < 0) return undefined
+  const t0 = frames[release].t
+  const from = frames[release].image[LM.leftWrist]
+  const x = (t: number) => from.x + ((hit.head.x - from.x) * (t - t0)) / (t1 - t0)
+  const samples = frames.filter((f) => f.t >= t0 && f.t <= t1).map((f) => ({ t: f.t, x: x(f.t), y: arcY(f.t) }))
   return {
-    // Expanded in powers of t from y0 + v(t − t0) + k(t − t0)².
-    coefficients: [from.y - v * t0 + k * t0 * t0, v - 2 * k * t0, k],
-    apex: { t: ta, ...at(ta) },
+    // yA + k(t − ta)², expanded in powers of t.
+    coefficients: [yA + k * ta * ta, -2 * k * ta, k],
+    apex: { t: ta, x: x(ta), y: yA },
     samples,
     confidence: 1,
   }

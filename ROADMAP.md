@@ -2012,7 +2012,55 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - the wrong segment in `--work`;
         - the target dashed.
       - *Proof:* drawing tests and preview stills. Unlocks L4.5 and L4.6.
-- [ ] **L4.5 Show me for the faults players get** · M.
+- [x] **L4.5 Show me for the faults players get** · M.
+      - *Delta (Oct 17):* done. Seven faults now have a demo; four are new.
+        - Shallow drop: the hand is left high and the racket held up, using a
+          new negative `racketLayBack` that turns the head to the sky. At the
+          clean drop the two racket heads are 0.68 body heights apart.
+        - Toss height: a toss that goes too high, 2.45 statures against the
+          model's 1.8. The balls are 0.76 apart at the trophy, and the stage
+          fits the ball when the ball is the part to watch.
+        - Toss drift: the tossing hand wanders 0.2 m on its way up. The hands
+          are 0.13 apart at the toss.
+        - The legs: straight at the trophy, with no rise to contact.
+          - No single instant is a tenth apart on matched hips, because the
+            fault is the hips' travel.
+          - Its measure is therefore that travel, trophy to contact, in the
+            fixed camera's picture height: 0.117 apart.
+          - Measured against the ankles it read 0.04, because a clean serve
+            leaves the ground.
+        - Each demo names one part to watch: the racket head, the hitting
+          elbow, the tossing hand, the ball or the hips.
+          - The panel says "Watch the racket head."
+          - `highlightOf` paints that part in `--work` on the faulty body and
+            hangs the fix's own version from the point the part moves from,
+            dashed and drawn over the body (`targetOver`).
+          - For the hips, the dashed version keeps its own height, because
+            the rise is the fault.
+        - Drawn balls:
+          - `rigStrikeFlight` is now built around a chosen apex (default 1.8,
+            inside the toss band [1.38, 2.1]). The ball rides the tossing hand,
+            leaves where the hand meets its arc (0.018 body heights from the
+            wrist), and falls into the strings;
+          - the L4.4 ball peaked at 2.21, which would have read as a too-high
+            toss;
+          - the engine now diagnoses each demo with the ball the picture
+            draws.
+        - The player's moment pills come from the clean serve's keyframes. A
+          racket that never falls has its drop found at the trophy, and
+          parking there showed two identical bodies.
+        - Proof: in `faultDemo.test` (25 checks), on both hands:
+          - each demo is named on the fault and not on the fix, read with the
+            drawn ball;
+          - the part it names is the widest difference among landmarks,
+            racket head and ball, and at least `DEMO_MIN_DIFFERENCE` (the hips
+            by their travel);
+          - every demo paints something and dashes a target.
+          `figure.test` adds a check for the target drawn on top. Preview: a
+          grid of all seven at their moments, and the shallow drop in the app.
+        - Not shown, with the measurements in `faultDemoDials.ts`: arming
+          the ball, early shoulder rotation and the sideways posture
+          collapse.
       - **What:** shallow drop, toss height, toss drift and the legs. The
         landmark that differs is highlighted and named.
       - *Proof:* in `faultDemo.test`, the difference is at least

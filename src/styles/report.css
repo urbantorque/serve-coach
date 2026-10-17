@@ -1121,6 +1121,14 @@
   color: var(--fg-muted);
 }
 
+/* What to look at in the demonstration (L4.5): the one part the two bodies
+   differ in, named in the voice of an instruction, above the small print. */
+.fault-demo-watch {
+  font-size: 13.5px;
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
 /* Holds the player's place while the rig is loading, so the box below the
    drill does not jump when the picture arrives. Square, as the rig draws. */
 .fault-demo-wait {

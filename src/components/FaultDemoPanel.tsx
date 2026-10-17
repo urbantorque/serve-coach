@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FlawId } from '../lib/analysis/flaws'
 import type { FaultDemo } from '../lib/faultDemo'
+import { PART_NAME } from '../lib/faultDemoDials'
 import RigPlayer from './RigPlayer'
 
 interface Props {
@@ -38,13 +39,16 @@ export default function FaultDemoPanel({ flaw, racket }: Props) {
           labels={['This fault', 'The fix']}
           moment={demo.moment}
           racket={demo.racket}
-          fault={{ segment: demo.segment }}
+          fault={{ part: demo.part }}
+          fitBall={demo.part === 'ball'}
           groupLabel="A model serve with this fault, beside the same serve fixed."
           canvasLabel="Two stick figures serving side by side: on the left with this fault, on the right without it."
         />
       ) : (
         <div className="fault-demo-wait" aria-busy="true" />
       )}
+      {/* What to look at, named (L4.5): the one part the two bodies differ in. */}
+      {demo && <p className="fault-demo-watch">Watch {PART_NAME[demo.part]}.</p>}
       <p className="player-note">
         A model serve, not yours. On the left the fault shows in red with its fix dashed, and the
         right body serves it fixed.
