@@ -384,6 +384,38 @@ function linearAt(pts: { t: number; x: number }[], t: number): number {
 export const flightXAt = (flight: BallFlight, t: number): number => linearAt(flight.samples, t)
 
 /**
+ * Where the ball was at a given moment, for drawing.
+ *
+ * Read off the fitted curve rather than the nearest detection, so the marker
+ * lands somewhere sensible on frames where the ball was not itself detected —
+ * behind the player's arm, lost against a bright sky. The path is only drawn
+ * over the stretch that was actually tracked, so the dashes never imply
+ * knowledge the fit does not have.
+ */
+export function ballMarkerAt(
+  ball: BallFlight | undefined,
+  t: number,
+): { x: number; y: number; path?: { x: number; y: number }[] } | undefined {
+  if (!ball || !ball.samples.length) return undefined
+  const first = ball.samples[0].t
+  const last = ball.samples[ball.samples.length - 1].t
+  if (t < first - 0.1 || t > last + 0.1) return undefined
+
+  const at = (u: number) => ({
+    x: flightXAt(ball, u),
+    y: flightHeightAt(ball, u),
+  })
+
+  // Fine enough that drawing straight segments between consecutive points
+  // reads as one continuous curve rather than a jointed polyline — the curve
+  // is already smooth (it's the fitted quadratic, not raw detections), the
+  // old coarse sampling was just hiding that.
+  const steps = 32
+  const path = Array.from({ length: steps + 1 }, (_, i) => at(first + ((last - first) * i) / steps))
+  return { ...at(t), path }
+}
+
+/**
  * The toss boiled down to what a picture needs: three points on the fitted
  * arc — where the ball left the hand, where it topped out, and where it had
  * fallen to by the moment of contact — plus the two ratios a coach actually

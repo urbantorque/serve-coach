@@ -38,6 +38,7 @@ export default function FaultDemoPanel({ flaw, racket }: Props) {
           labels={['This fault', 'The fix']}
           moment={demo.moment}
           racket={demo.racket}
+          fault={{ segment: demo.segment }}
           groupLabel="A model serve with this fault, beside the same serve fixed."
           canvasLabel="Two stick figures serving side by side: on the left with this fault, on the right without it."
         />
@@ -45,7 +46,8 @@ export default function FaultDemoPanel({ flaw, racket }: Props) {
         <div className="fault-demo-wait" aria-busy="true" />
       )}
       <p className="player-note">
-        A model serve, not yours. The left body has this fault and the right body has the fix.
+        A model serve, not yours. On the left the fault shows in red with its fix dashed, and the
+        right body serves it fixed.
       </p>
     </div>
   )

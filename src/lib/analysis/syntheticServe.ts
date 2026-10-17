@@ -169,6 +169,17 @@ export interface ServeDials {
    */
   palmToSky: number
   /**
+   * How far the racket lays back off the forearm at the drop, in degrees (L4.4).
+   *
+   * For the picture only. The rig places a racket on every frame
+   * (`Frame.racket`) so a model serve can be drawn holding one, and nothing
+   * the engine measures reads it: the landmarks are the same at any value.
+   * The lay-back is a turn in the swing plane, away from the net when the
+   * forearm points up, and it rides a track through the serve — a little at the
+   * ready, more at the trophy, this much at the drop, almost none at contact.
+   */
+  racketLayBack: number
+  /**
    * How far the trophy arm flattens out of its cocked position, in metres.
    *
    * The tray is not only a wrist rotation. A cocked arm holds the forearm near
@@ -573,6 +584,7 @@ export const CLEAN_SERVE: ServeDials = {
   motionSeconds: 1.35,
   cameraYaw: 82,
   palmToSky: 6,
+  racketLayBack: 80,
   trophyForearmDrop: 0,
   lateArmCock: 0,
   lateLegDrive: 0,
@@ -1149,6 +1161,50 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     placeHand(world, 'right', palmAt)
     placeHand(world, 'left', 10)
 
+    // The racket, for the picture (L4.4): off the forearm, laid back in the
+    // swing plane — a turn about the court's sideways axis — and as long as the
+    // estimate `racket.ts` draws for a tracked serve, so the two read alike.
+    // Built in the court's frame, before the camera turn below, and projected
+    // with the landmarks.
+    const layBack = rad(
+      track(
+        [
+          [U.ready, 10],
+          [U.toss, 25],
+          [U.trophy, 35],
+          [U.drop, d.racketLayBack],
+          [U.contact, 5],
+          [1.12, 15],
+        ],
+        u,
+      ),
+    )
+    const rElbow = world[LM.rightElbow]
+    const rWrist = world[LM.rightWrist]
+    const fore = unitOf(rWrist.x - rElbow.x, rWrist.y - rElbow.y, rWrist.z - rElbow.z)
+    // Turned off the forearm towards down-and-back, the way lag pulls the
+    // head: wherever the forearm points — up at the trophy, out to the side
+    // at the drop — the lay-back drops the racket behind it, never past that
+    // direction itself.
+    const lag = unitOf(LAG_BACK, 1, 0)
+    const apart = Math.acos(clamp(fore.x * lag.x + fore.y * lag.y + fore.z * lag.z, -1, 1))
+    const turn = Math.min(layBack, apart)
+    const wFore = apart > 1e-6 ? Math.sin(apart - turn) / Math.sin(apart) : 1
+    const wLag = apart > 1e-6 ? Math.sin(turn) / Math.sin(apart) : 0
+    const racketDir = unitOf(
+      fore.x * wFore + lag.x * wLag,
+      fore.y * wFore + lag.y * wLag,
+      fore.z * wFore + lag.z * wLag,
+    )
+    const racketWorld = {
+      grip: { x: rWrist.x, y: rWrist.y, z: rWrist.z },
+      head: {
+        x: rWrist.x + racketDir.x * RACKET_REACH_M,
+        y: rWrist.y + racketDir.y * RACKET_REACH_M,
+        z: rWrist.z + racketDir.z * RACKET_REACH_M,
+      },
+    }
+
     /* --- project -------------------------------------------------------- */
     const cam = rad(90 - d.cameraYaw)
     // Gaussian-ish jitter from the sum of two uniforms, cheap and good enough.
@@ -1240,7 +1296,17 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       for (const k of limb) image[k] = { ...image[k], visibility: 0.15 }
     }
 
-    frames.push({ index: i, t, image, world, visibility: 1 })
+    // The racket through the same camera, picture scale, pan and zoom as the
+    // landmarks, without their jitter: it is drawn, never measured.
+    const racketAt = (p: { x: number; y: number; z: number }) => {
+      const x = p.x * cosCam - p.z * sinCam
+      const rawX = 0.5 + x * SCALE
+      const rawY = GROUND_Y - (hipHeight - p.y) * SCALE
+      return { x: 0.5 + (rawX - 0.5) * zoom + pan, y: GROUND_Y + (rawY - GROUND_Y) * zoom }
+    }
+    const racket = { grip: racketAt(racketWorld.grip), head: racketAt(racketWorld.head) }
+
+    frames.push({ index: i, t, image, world, visibility: 1, racket })
   }
 
   return frames
@@ -1442,6 +1508,12 @@ function solveElbow(sh: Landmark, wr: Landmark, side: 1 | -1, straighten?: numbe
   }
 }
 
+/** Grip to the middle of the strings, as `racket.ts`'s `RACKET_REACH` of a stature. */
+const RACKET_REACH_M = 0.31 * HEIGHT_M
+
+/** How far back from straight down the lagging racket head is pulled: away from the net. */
+const LAG_BACK = 0.4
+
 const HAND_LENGTH = 0.09
 const KNUCKLE_HALF_SPAN = 0.042
 
@@ -1595,5 +1667,47 @@ export function rigBall(frames: Frame[], toss: RigToss, dials: Partial<ServeDial
     apex: { t: ta, ...at(ta) },
     samples,
     confidence: 0.9,
+  }
+}
+
+/**
+ * The ball a model serve hits (L4.4): let go from the tossing hand at the top
+ * of its lift and met in the middle of the strings at contact, under gravity
+ * at the rig's own picture scale.
+ *
+ * Unlike `rigBall`, which is a toss placed for the engine to read, this one
+ * is placed for the eye: whatever the dials did to the arm and the legs, the
+ * drawn ball arrives where the drawn racket is. Right-handed, as the rig
+ * builds; mirror the result for a left-hander. Undefined for frames with no
+ * racket or a contact before the release.
+ */
+export function rigStrikeFlight(frames: Frame[], contact: number): import('../vision/ballTrack').BallFlight | undefined {
+  const hit = frames[contact]?.racket
+  if (!hit) return undefined
+  let release = 0
+  for (let i = 1; i < contact; i++) {
+    if (frames[i].image[LM.leftWrist].y < frames[release].image[LM.leftWrist].y) release = i
+  }
+  const t0 = frames[release].t
+  const t1 = frames[contact].t
+  const span = t1 - t0
+  if (!(span > 0.1)) return undefined
+  const from = frames[release].image[LM.leftWrist]
+  const to = hit.head
+  // y = y0 + v·s + k·s², with s from the release and k gravity in picture units.
+  const k = (9.81 / 2) * SCALE
+  const v = (to.y - from.y - k * span * span) / span
+  const at = (t: number) => {
+    const s = t - t0
+    return { x: from.x + ((to.x - from.x) * s) / span, y: from.y + v * s + k * s * s }
+  }
+  const ta = t0 - v / (2 * k)
+  const samples = frames.filter((f) => f.t >= t0 && f.t <= t1).map((f) => ({ t: f.t, ...at(f.t) }))
+  return {
+    // Expanded in powers of t from y0 + v(t − t0) + k(t − t0)².
+    coefficients: [from.y - v * t0 + k * t0 * t0, v - 2 * k * t0, k],
+    apex: { t: ta, ...at(ta) },
+    samples,
+    confidence: 1,
   }
 }

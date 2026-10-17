@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DemoServe } from '../lib/faultDemo'
-import type { PhaseId } from '../lib/analysis/types'
-import { drawSkeleton, type DrawRect } from '../lib/pose/skeleton'
+import type { Frame, PhaseId } from '../lib/analysis/types'
+import { drawSkeleton, type DrawRect, type SkeletonOptions } from '../lib/pose/skeleton'
+import { ballMarkerAt } from '../lib/vision/ballTrack'
 import { Icon } from './primitives'
 
 /** The same three speeds the report's players offer, named the same way. */
@@ -38,6 +39,29 @@ interface Props {
    * take frames from it.
    */
   maxFps?: number
+  /**
+   * The first body is a fault and the second its fix (L4.4): these bones are
+   * painted in `--work` on the first, with the fix's same bones dashed beside
+   * them, hung from the same joint.
+   */
+  fault?: { segment: [number, number][] }
+}
+
+/** The ball between the toss and the strings, and none before or after it. */
+function ballFor(serve: DemoServe, frame: Frame): SkeletonOptions['ball'] {
+  const flight = serve.ball
+  if (!flight?.samples.length) return undefined
+  if (frame.t < flight.samples[0].t || frame.t > serve.contactT + 1e-6) return undefined
+  return ballMarkerAt(flight, frame.t)
+}
+
+/** The fix's bones, moved so the first of them starts at the fault's own joint. */
+function targetFor(segment: [number, number][], fault: Frame, fix: Frame): SkeletonOptions['target'] {
+  const root = segment[0][0]
+  const dx = fault.image[root].x - fix.image[root].x
+  const dy = fault.image[root].y - fix.image[root].y
+  const moved = (i: number) => ({ x: fix.image[i].x + dx, y: fix.image[i].y + dy })
+  return segment.map(([a, b]) => ({ a: moved(a), b: moved(b) }))
 }
 
 /** Seconds from contact, for a frame of one serve. */
@@ -57,13 +81,20 @@ function extent(s: DemoServe) {
   let x1 = -Infinity
   let y0 = Infinity
   let y1 = -Infinity
+  const take = (p: { x: number; y: number }) => {
+    if (p.x < x0) x0 = p.x
+    if (p.x > x1) x1 = p.x
+    if (p.y < y0) y0 = p.y
+    if (p.y > y1) y1 = p.y
+  }
+  // The racket too (L4.4): it reaches past the body, and a box fitted to the
+  // landmarks alone cut its head off at contact. Not the ball, whose top is
+  // far above everything else: fitted to it the bodies shrank by a third, and
+  // a toss rising out of the top of the picture is what footage shows anyway.
+  // It comes back down to the strings, which are inside.
   for (const f of s.frames) {
-    for (const p of f.image) {
-      if (p.x < x0) x0 = p.x
-      if (p.x > x1) x1 = p.x
-      if (p.y < y0) y0 = p.y
-      if (p.y > y1) y1 = p.y
-    }
+    for (const p of f.image) take(p)
+    if (f.racket) take(f.racket.head)
   }
   return { x0, x1, y0, y1 }
 }
@@ -92,6 +123,7 @@ export default function RigPlayer({
   canvasLabel,
   speeds = true,
   maxFps,
+  fault,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -147,6 +179,7 @@ export default function RigPlayer({
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     const s = canvas.height / layout.h
     const part = canvas.width / serves.length
+    const shown = serves.map((serve) => serve.frames[frameAt(serve, tauRef.current)])
     serves.forEach((serve, k) => {
       const i = frameAt(serve, tauRef.current)
       const rect: DrawRect = {
@@ -165,10 +198,14 @@ export default function RigPlayer({
         rect,
         racket,
         trail: { frames: serve.frames, from: Math.max(0, i - TRAIL), to: i },
+        ball: ballFor(serve, serve.frames[i]),
+        ...(fault && k === 0 && shown[1]
+          ? { work: fault.segment, target: targetFor(fault.segment, shown[0], shown[1]) }
+          : {}),
       })
       ctx.restore()
     })
-  }, [serves, layout, racket])
+  }, [serves, layout, racket, fault])
 
   /** Match the bitmap to the box, at the screen's own density. */
   useEffect(() => {

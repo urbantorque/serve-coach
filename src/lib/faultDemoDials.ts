@@ -60,10 +60,17 @@ import type { PhaseId } from './analysis/types'
  *
  * `toss_height` is the ball too, and the pancake is never named (`flaws.ts`).
  */
-export const DEMOS: Partial<Record<FlawId, { dials: Partial<ServeDials>; moment: PhaseId }>> = {
-  waiters_tray: { dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, moment: 'trophy' },
-  collapsed_elbow: { dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, moment: 'drop' },
-  low_contact: { dials: { contactReach: 1.0 }, moment: 'contact' },
+/**
+ * The racket arm's segment a dial moves, painted in `--work` on the faulty
+ * body with the fixed one dashed beside it (L4.4). The upper arm, the
+ * forearm, or both.
+ */
+export type DemoLimb = 'upperArm' | 'forearm' | 'arm'
+
+export const DEMOS: Partial<Record<FlawId, { dials: Partial<ServeDials>; moment: PhaseId; limb: DemoLimb }>> = {
+  waiters_tray: { dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, moment: 'trophy', limb: 'forearm' },
+  collapsed_elbow: { dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, moment: 'drop', limb: 'upperArm' },
+  low_contact: { dials: { contactReach: 1.0 }, moment: 'contact', limb: 'arm' },
 }
 
 /**

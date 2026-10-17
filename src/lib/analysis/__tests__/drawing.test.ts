@@ -12,6 +12,7 @@ import { LM } from '../geometry'
 import { detectServe } from '../phases'
 import { drawSkeleton, fitContain } from '../../pose/skeleton'
 import { buildServe } from '../syntheticServe'
+import type { Frame } from '../types'
 import { assert, check, heading, note, report } from './harness'
 
 const FPS = 50
@@ -105,11 +106,16 @@ function recordingContext() {
   return { ctx, strokes, arcs, texts, passes, calls: () => ({ strokeCalls, pathsBegun }) }
 }
 
+/** Rig frames as a tracker reports them: no racket of their own. */
+const tracked = (frames: Frame[]): Frame[] => frames.map(({ racket: _racket, ...f }) => (void _racket, f))
+
 const W = 480
 const H = 640
 
 function drawOnce(options: Partial<Parameters<typeof drawSkeleton>[1]> = {}) {
-  const frames = buildServe({}, FPS)
+  // Stands in for a tracked serve, so without the racket the rig places for
+  // drawing models (L4.4): a tracked frame has to have its racket estimated.
+  const frames = tracked(buildServe({}, FPS))
   const skel = detectServe(frames, FPS)
   const { ctx, strokes, arcs, texts, passes, calls } = recordingContext()
   drawSkeleton(ctx as unknown as CanvasRenderingContext2D, {
@@ -324,7 +330,7 @@ check('the racket is drawn when the hand is visible', () => {
 })
 
 check('no racket is drawn when the knuckles are lost', () => {
-  const frames = buildServe({}, FPS).map((f) => ({
+  const frames = tracked(buildServe({}, FPS)).map((f) => ({
     ...f,
     image: f.image.map((l, i) =>
       ([LM.leftIndex, LM.rightIndex, LM.leftPinky, LM.rightPinky] as number[]).includes(i)

@@ -92,7 +92,12 @@ export function mirrorFrame(f: Frame, aspect: number): Frame {
     image[to] = reflect(f.image[i], aspect)
     world[to] = reflect(f.world[i], 0)
   }
-  return { ...f, image, world }
+  // The rig's racket goes with the hand that holds it (L4.4).
+  const racket = f.racket && {
+    grip: { x: aspect - f.racket.grip.x, y: f.racket.grip.y },
+    head: { x: aspect - f.racket.head.x, y: f.racket.head.y },
+  }
+  return racket ? { ...f, image, world, racket } : { ...f, image, world }
 }
 
 /** A whole tracked serve, reflected. Timestamps and indices are untouched. */

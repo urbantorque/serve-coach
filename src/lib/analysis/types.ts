@@ -33,6 +33,12 @@ export interface Frame {
   image: Landmark[]
   world: Landmark[]
   visibility: number
+  /**
+   * The racket, on rig frames only (L4.4): grip and the middle of the
+   * strings, in the picture's units. A model serve is drawn holding it; a
+   * tracked frame has none, and the renderer estimates one from the hand.
+   */
+  racket?: { grip: { x: number; y: number }; head: { x: number; y: number } }
 }
 
 /**

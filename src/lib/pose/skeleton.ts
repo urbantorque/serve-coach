@@ -35,6 +35,9 @@ const PALETTE = {
   /** Torso and legs: tracked, but not what any of the six positions is judged on. */
   neutral: 'rgba(238, 242, 246, 0.82)',
 
+  /** The trunk's own area, the same neutral held right back: weight, not a shape to read. */
+  torso: 'rgba(238, 242, 246, 0.1)',
+
   /** Head outline and the joint dots on it — the same body at full strength. */
   limb: '#eef2f6',
 
@@ -70,6 +73,17 @@ const PALETTE = {
    * reaches for the accent to mean "worst rung of the ramp".
    */
   risk: '#ff7a6b',
+
+  /**
+   * The segment a fault is in (L4.4), in `--work`: the app's colour for
+   * something to work on. The same hue as `risk`, because on a body the two
+   * are one claim — this part of you is where the trouble is — and a drawn
+   * figure has room for one warning colour, not two.
+   */
+  work: '#ff7a6b',
+
+  /** Where the faulty segment should be, stroked dashed: a target, never a measurement. */
+  target: 'rgba(238, 242, 246, 0.8)',
 
   /**
    * The ball marker: warm amber, not the accent.
@@ -121,18 +135,33 @@ const TRAIL_ACTIVE_RGB = '205, 249, 74'
    page it was captured from. The app ships no webfonts. */
 const UI_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif'
 
-const BONES: [number, number][] = [
-  [LM.leftShoulder, LM.rightShoulder],
-  [LM.leftShoulder, LM.leftHip],
-  [LM.rightShoulder, LM.rightHip],
-  [LM.leftHip, LM.rightHip],
-  [LM.leftHip, LM.leftKnee],
-  [LM.leftKnee, LM.leftAnkle],
-  [LM.leftAnkle, LM.leftToe],
-  [LM.rightHip, LM.rightKnee],
-  [LM.rightKnee, LM.rightAnkle],
-  [LM.rightAnkle, LM.rightToe],
+/**
+ * A bone with weight (L4.4): two landmarks and the band's width at each, in
+ * the overlay's own units (`scale`). Wider at the joint nearer the trunk —
+ * a thigh is heavier than a shin, an upper arm than a forearm — so a figure
+ * reads as a body with mass rather than as wire, while every band still runs
+ * through the landmark it was measured from.
+ */
+type Bone = readonly [number, number, number, number]
+
+const BONES: Bone[] = [
+  [LM.leftShoulder, LM.rightShoulder, 3.4, 3.4],
+  [LM.leftShoulder, LM.leftHip, 3.8, 3.4],
+  [LM.rightShoulder, LM.rightHip, 3.8, 3.4],
+  [LM.leftHip, LM.rightHip, 3.4, 3.4],
+  [LM.leftHip, LM.leftKnee, 5.6, 4.2],
+  [LM.leftKnee, LM.leftAnkle, 4.2, 3],
+  [LM.leftAnkle, LM.leftToe, 3, 2.4],
+  [LM.rightHip, LM.rightKnee, 5.6, 4.2],
+  [LM.rightKnee, LM.rightAnkle, 4.2, 3],
+  [LM.rightAnkle, LM.rightToe, 3, 2.4],
 ]
+
+/** Upper arm and forearm, by side; the racket arm a step heavier than the tossing one. */
+const ARM_WEIGHT = { racket: [5.4, 4.4, 3.4], toss: [4.8, 3.8, 3] } as const
+
+/** How far the dark edge reaches past every band, in the overlay's units. */
+const UNDER_GROW = 3.6
 
 /**
  * Which joint each keyframe is judged on, for the on-image callout.
@@ -561,6 +590,18 @@ export interface SkeletonOptions {
    * Build it with `tossMarkFor`, which refuses a picture that is not upright.
    */
   tossMark?: TossMark
+  /**
+   * The bones a fault is in, as landmark pairs, painted in `--work` over the
+   * body (L4.4). The caller decides which: a fault demonstration knows the
+   * one limb its dial moved, and nothing else on screen has a claim to it.
+   */
+  work?: [number, number][]
+  /**
+   * Where those bones should be, as segments in the same normalised image
+   * space as `Frame.image`, stroked dashed under the body (L4.4). Dashed for
+   * the reason the ghost is: a target must never read as a measurement.
+   */
+  target?: { a: { x: number; y: number }; b: { x: number; y: number } }[]
 }
 
 /**
@@ -712,6 +753,7 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   if (o.paired) drawPairedGhost(ctx, o.paired, rect, aspect, scale)
 
   if (o.ghost) drawGhost(ctx, o.ghost, rect, aspect, scale)
+  if (o.target?.length) drawTarget(ctx, o.target, rect, aspect, scale)
   if (o.tossMark) drawTossMark(ctx, o.tossMark, rect, aspect, scale)
 
   if (o.trail && o.trail.to > o.trail.from + 1) {
@@ -763,66 +805,99 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   }
 
   /*
-   * A chain is one path with a subpath per bone, stroked twice: dark and wide,
-   * then its own colour.
+   * Limbs with weight (L4.4): each bone a tapered band with a round end at
+   * each joint, built as one path per colour and FILLED once.
    *
-   * Both halves of that matter. Two strokes of one path is half the path
-   * construction of building it again for the underlay — and the underlay has
-   * to cover the whole chain before any colour lands on it, because drawn bone
-   * by bone the next bone's dark edge would cut a notch out of the one already
-   * painted, at the joints, which are exactly what is being measured.
+   * Filled rather than stroked bone by bone because a colour with any
+   * transparency would land twice where two bones meet, and the joints are
+   * exactly what is measured. One fill of one path paints the union once. Every
+   * shape winds the same way — quads and circles both positive — so where they
+   * overlap the winding adds rather than cancels, and no joint comes out as a
+   * hole. The underlay is the same shapes grown by the dark edge, filled
+   * first, so it covers the whole limb before any colour lands on it.
    */
-  const chain = (pairs: [number, number][], under: number, color: string, width: number) => {
-    ctx.lineCap = 'round'
+  const bonePath = (bones: readonly Bone[], grow: number) => {
     ctx.beginPath()
-    for (const [a, b] of pairs) {
+    for (const [a, b, wa, wb] of bones) {
       const p = at(a)
       const q = at(b)
-      ctx.moveTo(p.x, p.y)
-      ctx.lineTo(q.x, q.y)
+      const ra = (wa * scale + grow) / 2
+      const rb = (wb * scale + grow) / 2
+      const len = Math.hypot(q.x - p.x, q.y - p.y) || 1
+      const nx = -(q.y - p.y) / len
+      const ny = (q.x - p.x) / len
+      ctx.moveTo(p.x - nx * ra, p.y - ny * ra)
+      ctx.lineTo(q.x - nx * rb, q.y - ny * rb)
+      ctx.lineTo(q.x + nx * rb, q.y + ny * rb)
+      ctx.lineTo(p.x + nx * ra, p.y + ny * ra)
+      ctx.closePath()
+      ctx.moveTo(p.x + ra, p.y)
+      ctx.arc(p.x, p.y, ra, 0, Math.PI * 2)
+      ctx.moveTo(q.x + rb, q.y)
+      ctx.arc(q.x, q.y, rb, 0, Math.PI * 2)
     }
-    ctx.strokeStyle = PALETTE.under
-    ctx.lineWidth = under * scale
-    ctx.stroke()
-    ctx.strokeStyle = color
-    ctx.lineWidth = width * scale
-    ctx.stroke()
+  }
+  const limbs = (bones: readonly Bone[], color: string) => {
+    bonePath(bones, UNDER_GROW * scale)
+    ctx.fillStyle = PALETTE.under
+    ctx.fill()
+    bonePath(bones, 0)
+    ctx.fillStyle = color
+    ctx.fill()
   }
 
-  chain(BONES, 7, PALETTE.neutral, 3.4)
+  // The trunk's area first, faint, so the figure has a body between its lines.
+  {
+    const corners = [LM.leftShoulder, LM.rightShoulder, LM.rightHip, LM.leftHip].map(at)
+    ctx.beginPath()
+    ctx.moveTo(corners[0].x, corners[0].y)
+    for (const c of corners.slice(1)) ctx.lineTo(c.x, c.y)
+    ctx.closePath()
+    ctx.fillStyle = PALETTE.torso
+    ctx.fill()
+  }
 
-  chain(
-    [
-      [tossArm.shoulder, tossArm.elbow],
-      [tossArm.elbow, tossArm.wrist],
-    ],
-    8,
-    PALETTE.toss,
-    4,
-  )
+  limbs(BONES, PALETTE.neutral)
+
+  const armBones = (side: Limb, w: readonly [number, number, number]): Bone[] => [
+    [side.shoulder, side.elbow, w[0], w[1]],
+    [side.elbow, side.wrist, w[1], w[2]],
+  ]
+  limbs(armBones(tossArm, ARM_WEIGHT.toss), PALETTE.toss)
 
   // The racket arm last and in the accent: it is drawn over the tossing arm on
   // purpose, because when the two cross it is the hitting arm you are watching.
-  chain(
-    [
-      [arm.shoulder, arm.elbow],
-      [arm.elbow, arm.wrist],
-    ],
-    9,
-    PALETTE.active,
-    4.6,
-  )
+  limbs(armBones(arm, ARM_WEIGHT.racket), PALETTE.active)
+
+  // The bones the fault is in, over everything else on the body (L4.4), each
+  // at the weight that bone already has.
+  if (o.work?.length) {
+    const weighted = [...BONES, ...armBones(arm, ARM_WEIGHT.racket), ...armBones(tossArm, ARM_WEIGHT.toss)]
+    limbs(
+      o.work.map(([a, b]): Bone => {
+        const known = weighted.find(([p, q]) => (p === a && q === b) || (p === b && q === a))
+        return known ? [a, b, known[a === known[0] ? 2 : 3], known[a === known[0] ? 3 : 2]] : [a, b, 5, 4]
+      }),
+      PALETTE.work,
+    )
+  }
 
   // The racket, where the hand can be seen well enough to point it. Drawn under
   // the joint dots so the hand still reads as the anchor, and skipped silently
   // when the knuckles are lost — a racket swinging off at a guessed angle is
   // worse than no racket at all.
-  if (o.bodyHeight && o.bodyHeight > 0) {
-    const sequence = o.sequence
-    const bodyHeight = o.bodyHeight
-    const est = racketToDraw(o.racketBoxes?.get(sequence?.index ?? -1), () =>
-      sequence ? smoothedRacket(sequence.frames, sequence.index, o.racket, bodyHeight) : undefined,
-    )
+  // A rig frame carries the racket it was built with (L4.4) — a model serve is
+  // drawn holding exactly that. A tracked frame's is estimated from the hand.
+  const sequence = o.sequence
+  const bodyHeight = o.bodyHeight
+  const est =
+    f.racket ??
+    (bodyHeight && bodyHeight > 0
+      ? racketToDraw(o.racketBoxes?.get(sequence?.index ?? -1), () =>
+          sequence ? smoothedRacket(sequence.frames, sequence.index, o.racket, bodyHeight) : undefined,
+        )
+      : undefined)
+  {
     if (est) {
       const grip = { x: ox + (est.grip.x / aspect) * dw, y: oy + est.grip.y * dh }
       const head = { x: ox + (est.head.x / aspect) * dw, y: oy + est.head.y * dh }
@@ -1003,6 +1078,52 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       band && { metric: annotation.metric, value, band },
     )
   }
+}
+
+/**
+ * Where a faulty segment should be, dashed (L4.4): a dark dashed edge, the
+ * target ink dashed over it, and an open ring where the far joint belongs.
+ * The dash is reset before returning, so nothing drawn after inherits it.
+ */
+function drawTarget(
+  ctx: CanvasRenderingContext2D,
+  segments: NonNullable<SkeletonOptions['target']>,
+  rect: DrawRect,
+  aspect: number,
+  scale: number,
+): void {
+  const at = (p: { x: number; y: number }) => ({ x: rect.ox + (p.x / aspect) * rect.dw, y: rect.oy + p.y * rect.dh })
+  ctx.save()
+  ctx.lineCap = 'butt'
+  ctx.setLineDash([7 * scale, 6 * scale])
+  ctx.beginPath()
+  for (const s of segments) {
+    const a = at(s.a)
+    const b = at(s.b)
+    ctx.moveTo(a.x, a.y)
+    ctx.lineTo(b.x, b.y)
+  }
+  ctx.strokeStyle = PALETTE.under
+  ctx.lineWidth = 6.4 * scale
+  ctx.stroke()
+  ctx.strokeStyle = PALETTE.target
+  ctx.lineWidth = 3 * scale
+  ctx.stroke()
+  ctx.setLineDash([])
+  const r = 5 * scale
+  ctx.beginPath()
+  for (const s of segments) {
+    const b = at(s.b)
+    ctx.moveTo(b.x + r, b.y)
+    ctx.arc(b.x, b.y, r, 0, Math.PI * 2)
+  }
+  ctx.strokeStyle = PALETTE.under
+  ctx.lineWidth = 4.4 * scale
+  ctx.stroke()
+  ctx.strokeStyle = PALETTE.target
+  ctx.lineWidth = 2 * scale
+  ctx.stroke()
+  ctx.restore()
 }
 
 /* ------------------------------------------------------------------ callout */

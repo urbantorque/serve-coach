@@ -1952,7 +1952,59 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         checkpoint captions, in the guide, on the analysing screen and in the
         example.
       - *Proof:* a render test.
-- [ ] **L4.4 A figure worth looking at** · M.
+- [x] **L4.4 A figure worth looking at** · M.
+      - *Delta (Oct 17):* done.
+        - Every body already went through `drawSkeleton`: the stills, the
+          players, the share cards and the rig players. L4.4 made that one
+          renderer better rather than merging renderers.
+        - Limb weight:
+          - each bone is a tapered band, heavier at the joint nearer the
+            trunk, with a faint torso area;
+          - the racket arm is a step heavier than the tossing arm;
+          - each colour is one filled path, so a joint is never painted
+            twice, and every shape winds one way, so no joint is punched out;
+          - the joint dots stay.
+        - The racket:
+          - the rig places one on every frame (`Frame.racket`). It is turned
+            off the forearm towards down-and-back by a lay-back that rides a
+            track through the serve, and the drop value is the new dial
+            `racketLayBack` (default 80°);
+          - it is drawing-only: a test checks that no landmark moves with the
+            dial;
+          - it is mirrored with the hand, and a tracked frame still has its
+            racket estimated from the hand.
+        - The ball: `rigStrikeFlight` throws it from the tossing hand at its
+          top to the middle of the strings at contact, under gravity at the
+          rig's scale. Every model serve carries one. `ballMarkerAt` moved
+          beside the flight it reads, so the model player does not pull in
+          the analysis pipeline.
+        - The fault and its target:
+          - `work` paints the named bones in `--work`, at their own weight;
+          - `target` strokes the fix's same bones dashed, under the body,
+            hung from the fault's own joint, and resets the dash afterwards;
+          - each demo now names the limb its dial moves (`DemoLimb`).
+        - The player box fits the racket but not the ball, which rises out of
+          the top as it does in footage. Fitted to the apex, the bodies shrank
+          by a third.
+        - Proof: `figure.test.ts` (11 checks) covers:
+          - the thigh's taper and the arm weights;
+          - one fill per ink and one winding;
+          - the dots;
+          - the rig racket drawn where placed, and none invented for a tracked
+            frame;
+          - the dial turning the racket 30° more at the drop and under 3° at
+            contact;
+          - the mirror;
+          - the ball meeting the strings;
+          - work ink only when asked, and the dashed target under the body;
+          - the demo limb on both hands.
+          Preview stills cover the model's six moments, the tray demo at the
+          trophy, and the example's stills.
+        - Left as it was:
+          - `TargetShape` is still its own SVG. It draws one joint's two
+            segments, not a body.
+          - The stored-pose stills still draw no racket, because they keep no
+            hand sequence to estimate one from.
       - **What:** one renderer for every model and skeleton, with:
         - limb weight and joint dots;
         - a racket from the forearm, with a rig lay-back dial;

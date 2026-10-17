@@ -80,11 +80,13 @@ await check('the card renders its name, its line and both dates', async () => {
   const card = graduationCard(history, graduation(history, 'shallow_drop')!)!
   const texts: string[] = []
   let strokes = 0
+  let fills = 0
   const ctx = new Proxy({} as Record<string, unknown>, {
     get(target, key) {
       if (key === 'fillText') return (t: string) => texts.push(String(t))
       if (key === 'measureText') return (t: string) => ({ width: String(t).length * 14 })
       if (key === 'stroke') return () => strokes++
+      if (key === 'fill') return () => fills++
       if (key in target) return target[key as string]
       return () => {}
     },
@@ -107,7 +109,8 @@ await check('the card renders its name, its line and both dates', async () => {
   assert(texts.includes('FIXED') && texts.includes(card.name), 'the heading or the fault is missing')
   assert(/THEN · \d{4}-\d{2}-\d{2}/.test(all) && /NOW · \d{4}-\d{2}-\d{2}/.test(all), 'a half is undated')
   assert(/clean on/.test(all), 'the graduation line is missing')
-  assert(strokes > 10, `only ${strokes} strokes: the figures were not drawn`)
+  // Limbs are filled bands since L4.4, the racket and the ball stroked.
+  assert(strokes + fills > 10, `only ${strokes} strokes and ${fills} fills: the figures were not drawn`)
 })
 
 check('the progress screen offers the card, and the profile, without a grade in either', () => {

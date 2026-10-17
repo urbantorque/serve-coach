@@ -32,12 +32,14 @@
  * Built on the device, on demand: `buildServe` is a few milliseconds and the
  * module is loaded only when somebody asks to see a fault.
  */
-import { CLEAN_SERVE, buildServe, type ServeDials } from './analysis/syntheticServe'
+import { CLEAN_SERVE, buildServe, rigStrikeFlight, type ServeDials } from './analysis/syntheticServe'
 import { buildPhases, detectServe } from './analysis/phases'
 import { mirrorFrames } from './analysis/mirror'
+import { sided } from './analysis/geometry'
 import type { FlawId } from './analysis/flaws'
 import type { Frame, Phase, PhaseId } from './analysis/types'
-import { DEMOS } from './faultDemoDials'
+import type { BallFlight } from './vision/ballTrack'
+import { DEMOS, type DemoLimb } from './faultDemoDials'
 
 /**
  * The rate the demonstration serves are built at. Faster than any clip the app
@@ -55,6 +57,8 @@ export interface DemoServe {
   phases: Phase[]
   /** Seconds into its own clip that contact happens — the shared zero. */
   contactT: number
+  /** The ball this serve hits, from the toss to the strings (L4.4). */
+  ball?: BallFlight
 }
 
 export interface FaultDemo {
@@ -65,6 +69,16 @@ export interface FaultDemo {
   /** The same serve without it. */
   fix: DemoServe
   racket: 'left' | 'right'
+  /** The bones the dial moved, as landmark pairs on the player's own side (L4.4). */
+  segment: [number, number][]
+}
+
+/** A limb of the racket arm as the landmark pairs the renderer paints. */
+export function segmentOf(limb: DemoLimb, racket: 'left' | 'right'): [number, number][] {
+  const arm = sided(racket)
+  const upper: [number, number] = [arm.shoulder, arm.elbow]
+  const fore: [number, number] = [arm.elbow, arm.wrist]
+  return limb === 'upperArm' ? [upper] : limb === 'forearm' ? [fore] : [upper, fore]
 }
 
 function built(dials: Partial<ServeDials>, racket: 'left' | 'right'): DemoServe | undefined {
@@ -81,10 +95,22 @@ function built(dials: Partial<ServeDials>, racket: 'left' | 'right'): DemoServe 
     // eye stops watching.
     const span = frames.slice(phases[0].frame, phases[phases.length - 1].frame + 1)
     const shift = phases[0].frame
+    // The ball, built on the rig's own right-handed frames and mirrored with
+    // the body. Times are the clip's own, so the trimmed frames still find it.
+    const flight = rigStrikeFlight(rig, skel.keys.contact)
+    const ball =
+      flight && racket === 'left'
+        ? {
+            ...flight,
+            apex: { ...flight.apex, x: DEMO_ASPECT - flight.apex.x },
+            samples: flight.samples.map((s) => ({ ...s, x: DEMO_ASPECT - s.x })),
+          }
+        : flight
     return {
       frames: span,
       phases: phases.map((p) => ({ ...p, frame: p.frame - shift })),
       contactT: frames[skel.keys.contact].t,
+      ...(ball ? { ball } : {}),
     }
   } catch {
     return undefined
@@ -106,7 +132,7 @@ export function faultDemo(flaw: FlawId, racket: 'left' | 'right'): FaultDemo | u
   // the fault is being measured against.
   const fix = built({ ...CLEAN_SERVE }, racket)
   if (!fault || !fix) return undefined
-  return { moment: demo.moment, fault, fix, racket }
+  return { moment: demo.moment, fault, fix, racket, segment: segmentOf(demo.limb, racket) }
 }
 
 /**
