@@ -469,3 +469,30 @@
 .guide-model .model-serve .fault-demo-wait {
   max-height: 46svh;
 }
+
+/* What to look for at each moment, with its tick or cross (L4.6). The mark
+   leads the line so it can be scanned down the strip. */
+.strip-look {
+  display: inline;
+}
+
+.strip-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  margin-right: 5px;
+  border-radius: var(--r-pill);
+  vertical-align: -3px;
+}
+
+/* Past `.strip-item span`, which would otherwise grey the mark out. */
+.strip-item .strip-mark--tick {
+  background: var(--lime-glow);
+  color: var(--lime);
+}
+
+.strip-item .strip-mark--cross {
+  background: var(--work-dim);
+  color: var(--work);
+}

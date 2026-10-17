@@ -2066,7 +2066,44 @@ Everything here is built from `primitives.tsx` and the existing tokens.
       - *Proof:* in `faultDemo.test`, the difference is at least
         `DEMO_MIN_DIFFERENCE` and the engine names the fault on exactly one of
         the pair. After L4.4.
-- [ ] **L4.6 Your frame beside the model's** · M.
+- [x] **L4.6 Your frame beside the model's** · M.
+      - *Delta (Oct 17):* done.
+        - `lookFor.ts` holds three things:
+          - `LOOK_FOR`, a line per moment saying what to check;
+          - `momentChecks`, the confident readouts measured at a moment, at
+            most three, off target first;
+          - `momentMark`, which ticks a moment when every confident reading
+            at it is inside its band and crosses it when one is not. Hedged
+            readings never count, and a moment with no reading gets no mark.
+        - `faultMoment` finds where the top fault shows: the moment its own
+          card row is read.
+        - `MomentPair` sits in the top fix, under its reason:
+          - "Your racket drop beside the model's" shows the player's tracked
+            body and the clean model at that moment;
+          - both are fitted to the same box by their own extent
+            (`fitBody`), so they are one size whatever the filming distance;
+          - the model is mirrored for a left-hander and holds its racket and
+            ball;
+          - under them sit two or three readouts, each ticked or crossed;
+          - it draws nothing for a report that kept no poses.
+        - The six moments' captions are now the look-for lines, each led by
+          its tick or cross, with screen-reader words.
+        - `modelFrameAt` lives in `demoDraw.ts`, beside the other light
+          helpers.
+        - Proof (`lookFor.test.ts`, 7 checks):
+          - across 6 sample reports, every mark equals band membership
+            recomputed from the rows (10 ticks and 14 crosses);
+          - every check is from its own moment, banded and trusted;
+          - the example's drop shows at the drop;
+          - the look-for copy passes the lint;
+          - a left-handed model swings with the left hand and holds a racket;
+          - render checks cover the pair, its absence with no poses, and its
+            place in the top fix;
+          - the strip carries one mark per moment with a reading;
+          - the example was previewed at 375×812.
+        - Departure: both halves are drawn bodies, never the photograph
+          beside a figure. A photo and a drawing at two scales would make the
+          difference look like the camera.
       - **What:** at the focus fault's moment, and later all six, the player's
         still sits beside the clean serve's, scaled and mirrored for the hand,
         with 2–3 ticks from the readouts. The six moments' captions become

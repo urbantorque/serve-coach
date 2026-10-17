@@ -14,6 +14,8 @@ import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
 import FaultDemoPanel from '../components/FaultDemoPanel'
 import ModelServe from '../components/ModelServe'
+import MomentPair from '../components/MomentPair'
+import { LOOK_FOR, faultMoment, momentChecks, momentMark } from '../lib/lookFor'
 import { hasDemo } from '../lib/faultDemoDials'
 import { CHECK_SERVES, drillCheckLine, progressionFor, rungFor, stepCheckLine } from '../lib/analysis/progressions'
 import { FAULT_NAME } from '../lib/graduation'
@@ -464,6 +466,24 @@ export default function Report({
     previous && scoringVersionOf(previous) === rubric ? previous : undefined,
   )
   const levelled = tierLabel(analysis.triage)
+  // The moment the top fault shows at, for the player's frame beside the
+  // model's (L4.6), and each moment's tick or cross for the strip.
+  const focusMoment = faultMoment(analysis.fundamentals, plan[0].flaw)
+  const focusIndex = focusMoment ? analysis.phases.findIndex((p) => p.id === focusMoment) : -1
+  const look = (id: PhaseId) => {
+    const mark = momentMark(analysis.fundamentals, id)
+    return (
+      <span className="strip-look">
+        {mark && (
+          <span className={`strip-mark strip-mark--${mark}`}>
+            <Icon name={mark === 'tick' ? 'check' : 'close'} size={11} />
+            <span className="sr-only">{mark === 'tick' ? 'On target.' : 'Off target here.'}</span>
+          </span>
+        )}
+        {LOOK_FOR[id]}
+      </span>
+    )
+  }
 
   /*
    * Injuries lead, above the score and above everything else on the page.
@@ -707,6 +727,18 @@ export default function Report({
           <p className="focus-best">
             <Cue text={againstBest} />
           </p>
+        )}
+
+        {/* Your frame beside the model's, at the moment this fault shows. */}
+        {focusMoment && focusIndex >= 0 && (
+          <MomentPair
+            poses={stripPoses}
+            index={focusIndex}
+            phase={focusMoment}
+            label={analysis.phases[focusIndex].label}
+            racket={analysis.handedness}
+            checks={momentChecks(analysis.fundamentals, focusMoment)}
+          />
         )}
 
         {/* A count, never a list. Whatever the plan did not print is held back
@@ -1075,7 +1107,7 @@ export default function Report({
                 )}
                 <span className="strip-caption">
                   <strong>{p.label}</strong>
-                  <span>{p.caption}</span>
+                  {look(p.id)}
                 </span>
               </button>
             ) : (
@@ -1087,7 +1119,7 @@ export default function Report({
                 )}
                 <figcaption className="strip-caption">
                   <strong>{p.label}</strong>
-                  <span>{p.caption}</span>
+                  {look(p.id)}
                 </figcaption>
               </figure>
             ),

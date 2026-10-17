@@ -517,6 +517,21 @@ export function fitContain(boxW: number, boxH: number, videoAspect: number): Dra
   return { ox: (boxW - dw) / 2, oy: (boxH - dh) / 2, dw, dh }
 }
 
+/**
+ * A body fitted to a box by its own extent (L4.6), centred, at a share of the
+ * box's height — so two bodies filmed at different distances, or one filmed
+ * and one built, are drawn the same size beside each other. Landmarks only:
+ * a racket or a ball may reach past the fit, as they do past a body.
+ */
+export function fitBody(frame: Frame, aspect: number, w: number, h: number, fill = 0.78): DrawRect {
+  const xs = frame.image.map((l) => l.x / aspect).filter(Number.isFinite)
+  const ys = frame.image.map((l) => l.y).filter(Number.isFinite)
+  const [x0, x1] = [Math.min(...xs), Math.max(...xs)]
+  const [y0, y1] = [Math.min(...ys), Math.max(...ys)]
+  const d = Math.min((w * 0.9) / Math.max(1e-3, x1 - x0), (h * fill) / Math.max(1e-3, y1 - y0))
+  return { ox: w / 2 - ((x0 + x1) / 2) * d, oy: h / 2 - ((y0 + y1) / 2) * d, dw: d, dh: d }
+}
+
 export interface SkeletonOptions {
   frame: Frame
   /** Video width ÷ height. Image landmark x is pre-multiplied by this. */

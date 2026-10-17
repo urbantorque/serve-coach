@@ -7,7 +7,7 @@
  * reads a frame and a flight and nothing else.
  */
 import { LM, sided } from './analysis/geometry'
-import type { Frame } from './analysis/types'
+import type { Frame, PhaseId } from './analysis/types'
 import type { DemoServe } from './faultDemo'
 import type { DemoPart } from './faultDemoDials'
 import { ballMarkerAt } from './vision/ballTrack'
@@ -30,6 +30,12 @@ export function ballOn(serve: DemoServe, frame: Frame, racket: Side): (Pt & { pa
     return { x: hand.x, y: hand.y }
   }
   return ballMarkerAt(flight, frame.t)
+}
+
+/** The clean serve's frame at a moment, on the player's own side (L4.6). */
+export function modelFrameAt(model: DemoServe, phase: PhaseId): Frame | undefined {
+  const at = model.phases.find((p) => p.id === phase)
+  return at ? model.frames[at.frame] : undefined
 }
 
 /** What to paint on the faulty body at one instant. */

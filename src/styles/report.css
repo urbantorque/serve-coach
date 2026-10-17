@@ -1602,3 +1602,87 @@
 .firing-note {
   font-size: 12px;
 }
+
+/* ============================================================================
+   Your frame beside the model's (L4.6)
+   ========================================================================= */
+
+.moment-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0 4px;
+}
+
+.moment-pair-title {
+  color: var(--fg-faint);
+}
+
+.moment-pair-stills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.moment-pair-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* The same box for both bodies, so the fit makes them the same size. */
+.moment-pair-canvas,
+.moment-pair-wait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-md);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
+}
+
+.moment-pair-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.moment-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.moment-checks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.moment-checks li svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.moment-checks li.is-in svg {
+  color: var(--lime);
+}
+
+.moment-checks li.is-out svg {
+  color: var(--work);
+}
+
+.moment-checks strong {
+  font-weight: 600;
+  color: var(--fg);
+}
