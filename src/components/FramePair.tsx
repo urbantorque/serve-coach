@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { PhaseId } from '../lib/analysis/types'
 import { pairRankModifier } from './statusLabels'
 
@@ -52,6 +53,12 @@ interface Props {
    * nothing honest to say says nothing rather than defaulting to a guess.
    */
   leftIsBetter?: boolean
+  /**
+   * One moment at a time, picked from pills (L4.9). Six pairs stacked was a
+   * scroll of twelve photographs; one pair at a size a phone can show is the
+   * comparison a player actually makes, moment by moment.
+   */
+  oneAtATime?: boolean
 }
 
 export default function FramePair({
@@ -60,12 +67,30 @@ export default function FramePair({
   rightCaption,
   positions,
   leftIsBetter,
+  oneAtATime = false,
 }: Props) {
+  const [at, setAt] = useState(0)
+  const shown = oneAtATime ? positions.slice(at, at + 1) : positions
   return (
     <div className="pair-frames">
       <span className="t-overline consistency-label">{heading}</span>
-      <ul className="pair-list">
-        {positions.map((p) => (
+      {oneAtATime && positions.length > 1 && (
+        <div className="phase-pills" role="group" aria-label="Which moment">
+          {positions.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              className={`phase-pill${i === at ? ' is-active' : ''}`}
+              aria-pressed={i === at}
+              onClick={() => setAt(i)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <ul className={`pair-list${oneAtATime ? ' pair-list--one' : ''}`}>
+        {shown.map((p) => (
           <li key={p.id}>
             <span className="pair-label">{p.label}</span>
             <div className={`pair-shots ${pairRankModifier(leftIsBetter)}`.trimEnd()}>

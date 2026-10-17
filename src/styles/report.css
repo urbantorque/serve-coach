@@ -1701,3 +1701,9 @@
   font-weight: 600;
   color: var(--fg);
 }
+
+/* Then and now one moment at a time (L4.9): the pills choose, and the one pair
+   gets the room six used to share. */
+.pair-list--one .pair-label {
+  display: none;
+}

@@ -8,7 +8,7 @@ import {
   type TrendPoint,
   type TripPoint,
 } from '../lib/progress'
-import { VB_W, chartGeometry, labelX } from './trendGeometry'
+import { VB_W, chartGeometry, labelX, steadyWidth } from './trendGeometry'
 
 /**
  * The colour of a run: the old rubric is drawn as background, not as series.
@@ -445,9 +445,12 @@ export function TrendTable({ points }: { points: TripPoint[] }) {
  */
 export function GapTrend({ points }: { points: ConsistencyPoint[] }) {
   if (!points.length) return null
-  // Floored at 20 so a genuinely tight run of baskets does not get magnified
-  // into a wall of full-width bars by its own best case.
-  const widest = Math.max(20, ...points.map((p) => p.gap))
+  // A longer bar is a steadier clip (L4.9): every other bar on this sheet
+  // grows with the good direction, and this one used to grow with the gap,
+  // which a player reads the wrong way round once and then never trusts. The
+  // bar is the room left before the widest gap shown plus a margin — floored
+  // at 40, so one tight run does not stretch a near-miss into a full bar.
+  const span = Math.max(40, ...points.map((p) => p.gap)) + 5
   // Newest first, and capped. This block sits under a hero score, a sparkline
   // and a set of delta bars, and every row it adds is another number competing
   // with those. Six baskets is a season of sweeps for anybody filming them.
@@ -459,7 +462,7 @@ export function GapTrend({ points }: { points: ConsistencyPoint[] }) {
         <li key={p.id} className="gap">
           <span className="gap-date">{fmtDate(p.createdAt)}</span>
           <span className="gap-track">
-            <span className="gap-fill" style={{ width: `${Math.max(2, (p.gap / widest) * 100)}%` }} />
+            <span className="gap-fill" style={{ width: `${steadyWidth(p.gap, span)}%` }} />
           </span>
           <span className="gap-value tnum">{p.gap}</span>
         </li>
@@ -467,7 +470,8 @@ export function GapTrend({ points }: { points: ConsistencyPoint[] }) {
       {/* "Points" read as tennis points here, and "gap" was already doing duty
           for the scoring break two blocks up in the same sheet. */}
       <li className="gaps-note">
-        The score gap between your best and worst serve in one clip. Smaller is steadier
+        Longer is steadier: the bar grows as your best and worst serve in one clip close up. The
+        number is the points between them
         {points.length > shown.length ? ` — showing your last ${shown.length}` : ''}.
       </li>
     </ul>

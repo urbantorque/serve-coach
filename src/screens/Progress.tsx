@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import FramePair, { type PairPosition } from '../components/FramePair'
 import PracticeCard from '../components/PracticeCard'
-import SeasonShareButton from '../components/SeasonShareButton'
-import TripShareButton from '../components/TripShareButton'
-import { DeltaBars, DeltaChip, GapTrend, ScoreTrend, TrendTable } from '../components/Trend'
+import ProgressShare from '../components/ProgressShare'
+import ProgressTiles from '../components/ProgressTiles'
+import { DeltaBars, GapTrend, ScoreTrend, TrendTable } from '../components/Trend'
 import { Icon } from '../components/primitives'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { strainClearedLine, strainLine } from '../lib/analysis/verdict'
@@ -31,7 +31,6 @@ import {
   thenAndNow,
   tripDay,
   tripsOf,
-  tripRangeLine,
 } from '../lib/progress'
 import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
@@ -42,7 +41,6 @@ import { serveProfile } from '../lib/serveProfile'
 import { graduation } from '../lib/graduation'
 import { graduationCard } from '../lib/graduationCard'
 import { weekPlan } from '../lib/weekPlan'
-import GraduationShareButton from '../components/GraduationShareButton'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 
@@ -253,32 +251,16 @@ export default function Progress({
               serve moves further on camera noise than a fixed fault moves
               it, so a single serve was a headline that could not show
               progress. */}
-          <div className="progress-summary">
-            <span className="progress-hero tnum">{form.latestTrip.overall}</span>
-            <span className="progress-unit">
-              <span>
-                typical {SERVE_TYPES[form.serveType].word} serve, {tripDay(form.latestTrip.createdAt)}
-                {tripRangeLine(form.latestTrip) && (
-                  <>
-                    <br />
-                    {tripRangeLine(form.latestTrip)}
-                  </>
-                )}
-              </span>
-              {form.tripDelta !== undefined && (
-                <span className="hero-delta">
-                  <DeltaChip delta={form.tripDelta} scope="trip" />
-                  <span>vs your last trip</span>
-                </span>
-              )}
-            </span>
-          </div>
+          {/* At a glance (L4.9): the form, the records, the path and the
+              chart as four tiles in the first screen, each a door to its
+              section below. */}
+          <ProgressTiles form={form} path={path} best={sheetBestScore} bests={bests.length} />
 
           {/* The serve path (L3.5): progress as parts that hold, rather than
               as points the camera moves by as much. Under the headline score
               because it is the other half of the same answer. */}
           {path && (
-            <section className="block">
+            <section className="block" id="progress-path">
               <h2 className="block-title">Your serve path</h2>
               <p className="path-headline">{path.headline}</p>
               <ol className="path">
@@ -290,11 +272,6 @@ export default function Progress({
                   </li>
                 ))}
               </ol>
-              {/* A fault fixed lately, then and now, for the player to send if
-                  they choose (L3.12). The tap is the only way it leaves. */}
-              {fixedCards.map((card) => (
-                <GraduationShareButton key={card.flaw} card={card} />
-              ))}
             </section>
           )}
 
@@ -368,7 +345,7 @@ export default function Progress({
               player short of every record never sees a heading over
               nothing. */}
           {(streak || longestStreakText || sheetBestScore || bests.length > 0) && (
-            <section className="block">
+            <section className="block" id="progress-records">
               <h2 className="block-title">Your records</h2>
               {bests.map((b) => (
                 <p key={b.metricId} className="progress-foot">
@@ -437,16 +414,15 @@ export default function Progress({
             </section>
           )}
 
-          {/* Every record this sheet already shows, in one image — see
-              `renderSeasonCard`. Placed with the records it shares rather
-              than at the bottom of the sheet with the table, so the
-              button sits next to the exact facts it is about. */}
-          <SeasonShareButton records={seasonRecords} />
-          {/* The last trip, as one image. Beside the season card rather than
-              on the report, because a trip is a run of serves and the report
-              is one — and because this is where the spread and the strain
-              line the card draws are already on screen. */}
-          <TripShareButton sessions={sessions} strainLine={strain.map(strainLine).find(Boolean) ?? undefined} />
+          {/* One share button (L4.9): the season, the last trip and each
+              fault fixed lately, chosen inside it. Each card leaves the phone
+              only on its own tap. */}
+          <ProgressShare
+            records={seasonRecords}
+            sessions={sessions}
+            strainLine={strain.map(strainLine).find(Boolean) ?? undefined}
+            fixed={fixedCards}
+          />
 
           {/* Said out loud rather than left as a gap in the chart. Somebody who
               has filmed twenty serves and sees eleven plotted will assume the
@@ -477,10 +453,11 @@ export default function Progress({
               leftCaption={shortDate(thenNow.then.createdAt)}
               rightCaption={shortDate(thenNow.now.createdAt)}
               positions={thenNow.positions}
+              oneAtATime
             />
           )}
 
-          <section className="block">
+          <section className="block" id="progress-chart">
             <h2 className="block-title">Typical score by trip</h2>
             <ScoreTrend points={form.trips} />
             {/* The sentence the chart above never states in words: `form`

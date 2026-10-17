@@ -118,7 +118,8 @@ check('the progress screen offers the card, and the profile, without a grade in 
   const html = renderToStaticMarkup(
     createElement(Progress, { sessions, onBack: () => {}, onLogDrill: () => {}, onUndoDrill: () => {}, seeded: false }),
   )
-  assert(html.includes('Share: Racket drop fixed'), 'the share button for the fixed drop is missing')
+  // Inside the one share button since L4.9.
+  assert(html.includes('Share your progress') && html.includes('Racket drop fixed'), 'the share for the fixed drop is missing')
   assert(html.includes('How you served'), 'the profile is missing')
 })
 

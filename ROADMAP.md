@@ -2171,7 +2171,35 @@ Everything here is built from `primitives.tsx` and the existing tokens.
       - **What:** AIM FOR uses the ball's contact height when the ball was
         tracked. The best-serve ghost also shows on a live report.
       - *Proof:* a `stillEvidence` test with a tracked ball.
-- [ ] **L4.9 Progress as a dashboard** · M.
+- [x] **L4.9 Progress as a dashboard** · M.
+      - *Delta (Oct 17):* done.
+        - `ProgressTiles` is four tiles in the first screen, two by two:
+          - the typical serve on the latest trip, with its day, its range and
+            its trip-on-trip chip;
+          - records: the best trip and the count of body bests;
+          - the serve path: "5/7 parts holding" with a dot per part in its
+            state's colour;
+          - a sparkline of the last ten trips.
+          The last three are buttons that scroll to their sections, and the
+          form tile stays a fact.
+        - Then and now (`FramePair oneAtATime`): pills choose the moment and
+          one pair gets the room. The basket comparison still shows all six.
+        - Repeatability: a longer bar is now steadier, the room left before
+          the widest gap plus a margin (`steadyWidth`). The note says "Longer
+          is steadier".
+        - One share button (`ProgressShare`): "Share your progress" opens
+          onto the season card, this trip, and each fault fixed lately. Each
+          card leaves only on its own tap, and the old rules for when a card
+          is offered still hold.
+        - Proof: `progressDashboard.test.ts` (4 checks) covers:
+          - the tiles before every section, with the trip median, the path
+            count and one dot per part, and each door's target present;
+          - one moment with a pill for each, while the basket comparison is
+            unchanged;
+          - bars that grow as the gap closes, rendered newest first;
+          - exactly one share button with the cards inside.
+          Preview of the seeded history at 375×812: tiles, share menu,
+          then-and-now, and bars at 80, 78 and 64%.
       - **What:**
         - tiles for form (trip median and range), records, the serve path and
           the chart;

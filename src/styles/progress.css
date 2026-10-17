@@ -570,3 +570,144 @@
   gap: 8px;
   padding-top: 16vh;
 }
+
+/* ============================================================================
+   Progress at a glance (L4.9)
+   ========================================================================= */
+
+/* Four tiles, two by two at a phone's width: the first screen answers "how am
+   I doing" before any chart is scrolled to. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  min-height: 118px;
+  padding: 14px 14px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
+  color: var(--fg);
+  text-align: left;
+  font: inherit;
+}
+
+button.tile {
+  cursor: pointer;
+  transition: border-color var(--fast) var(--ease);
+}
+
+@media (hover: hover) {
+  button.tile:hover {
+    border-color: var(--fg-faint);
+  }
+}
+
+.tile--form {
+  border-color: var(--lime-deep);
+}
+
+.tile-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.tile-figure {
+  font-size: 34px;
+  font-weight: 680;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.tile-of {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg-faint);
+}
+
+.tile-note {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--fg-muted);
+}
+
+.tile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.tile-dots {
+  display: flex;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.tile-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-pill);
+  background: var(--ink-3);
+}
+
+.tile-dot--work { background: var(--work); }
+.tile-dot--good { background: var(--good); }
+.tile-dot--great { background: var(--great); }
+
+.tile-spark {
+  width: 100%;
+  max-width: 120px;
+  height: 40px;
+  margin: 2px 0;
+}
+
+/* One share button (L4.9): a disclosure whose summary is the button, opening
+   onto the cards there are to share. */
+.share-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.share-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.share-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.share-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 560;
+  text-align: left;
+  cursor: pointer;
+}
+
+.share-option:disabled {
+  cursor: default;
+  color: var(--fg-muted);
+}

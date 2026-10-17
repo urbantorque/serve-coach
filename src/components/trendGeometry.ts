@@ -108,3 +108,8 @@ export function chartGeometry(
   const breaks = segments.slice(1).map((s) => (x(s.from - 1) + x(s.from)) / 2)
   return { x, y, segments, breaks }
 }
+
+/** A repeatability bar's length, in percent: longer as the gap closes (L4.9). */
+export function steadyWidth(gap: number, span: number): number {
+  return Math.max(2, Math.min(100, (1 - gap / span) * 100))
+}
