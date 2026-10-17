@@ -111,6 +111,13 @@ export async function runDemoRoute(
     seedHistory(sampleHistory())
     return
   }
+  // The crash screen (L6.8): a stored report with nothing in it, which the
+  // report cannot render, so the boundary catches it as it would a record an
+  // older version wrote.
+  if (demo === 'crash') {
+    setView({ kind: 'saved', session: { id: 'broken' } as never })
+    return
+  }
   // A finished practice session (L2.8): twenty-six serves found, two too
   // unclear, a racket that stays high on most of them and a reach that sags
   // over the last third, set against an earlier session. The rig has no

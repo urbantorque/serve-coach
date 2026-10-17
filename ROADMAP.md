@@ -2964,7 +2964,32 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         the setting.
       - *Proof:* a `clipStore` test with a handle that lacks `createWritable`,
         and a render test of a reopened report with a kept clip.
-- [ ] **L6.8 A crash screen that backs up first** · S.
+- [x] **L6.8 A crash screen that backs up first** · S.
+      - *Delta (Oct 17):* done.
+        - The crash screen offers "Save a backup first" before any way out
+          that deletes.
+          - `rawBackup.ts` opens the database with plain IndexedDB, takes every
+            store as it lies, unchecked, and writes a file in the backup's own
+            shape, so a restore reads it through the ordinary import.
+          - It touches no React and no storage layer, either of which may be
+            what crashed. It loads only when the button is pressed, as its own
+            chunk.
+        - "Clear saved reports and reload" now asks first: "This deletes every
+          saved report on this phone, and any videos kept with them." It
+          offers Delete them and reload, or Keep them, and acknowledges a
+          saved backup. The old fine print saying videos were never stored is
+          gone.
+        - The screen is `CrashScreen`, apart from the boundary, so it can be
+          rendered in a test. A dev-only `?demo=crash` route shows it.
+        - Proof: two checks in `crashScreen.test.ts`.
+          - The backup is offered and clearing takes two taps, in every state
+            of each.
+          - A rescue file built from raw stores restores through
+            `importBackup`: the readable report comes back, the unreadable
+            record that crashed the app does not, an unknown store is not
+            carried, and the hand travels.
+        - Seen at 375×812 on `?demo=crash`. The only console errors are the
+          deliberate render error. The entry bundle is 129.0 kB.
       - **What:** "Save a backup first", using plain IndexedDB with no React,
         and a confirmation before anything is cleared.
       - *Proof:* a render test.
