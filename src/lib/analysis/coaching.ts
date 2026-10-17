@@ -279,7 +279,10 @@ export const METRICS: Record<string, MetricCopy> = {
   contactBelowPeak: {
     id: 'contactBelowPeak',
     label: 'How far the ball falls first',
-    unit: '×',
+    // Metres, from the clock (L5.6): `ballFallMetres`, ½·g·t² from the apex to
+    // contact, which needs no scale and has no perspective. The published
+    // drops are in metres too, so the band is theirs with no conversion.
+    unit: 'm',
     phase: 'contact',
     source: {
       study:
@@ -296,9 +299,12 @@ export const METRICS: Record<string, MetricCopy> = {
     // past 0.55 — over a metre for most adults, a ball left to drop well below
     // where the serve wants it. Measured on the ball, so the published drops
     // apply directly, unlike the wrist-based contact height.
-    ideal: [0, 0.55],
-    range: [0, 1],
-    decimals: 3,
+    //
+    // In metres since L5.6: the old 0.55 of standing height is about a metre on
+    // an adult, and a metre is where the band now stops.
+    ideal: [0, 1],
+    range: [0, 1.8],
+    decimals: 2,
     insight: {
       low: 'You strike the ball at the **top** of its flight, where it barely moves.',
       ok: 'The ball **falls into your swing** from its peak, the way strong servers time it.',

@@ -128,7 +128,8 @@ const DEPENDENCIES: Record<string, Dependency[]> = {
   // `contact`: read at the contact instant, so when the racket hand and the
   // ball disagree about when that was (`readContact`), so do these.
   contactHeight: ['scale', 'contact'],
-  contactBelowPeak: ['scale', 'contact'],
+  // No `scale` since L5.6: read from the clock, not the picture.
+  contactBelowPeak: ['contact'],
   ballContactHeight: ['scale', 'contact'],
   armExtension: ['contact'],
   bodyExtension: ['scale', 'trophy', 'contact'],

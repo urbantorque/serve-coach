@@ -66,10 +66,11 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 2.1, tag: 'Peaks well above the racket' },
     { under: Infinity, tag: 'Peaks far above the racket' },
   ],
+  // In metres since L5.6 (the old statures times an adult's 1.8 m).
   contactBelowPeak: [
-    { under: 0.03, tag: 'Struck at the peak' },
-    { under: 0.15, tag: 'Struck as it starts to fall' },
-    { under: 0.55, tag: 'Struck as the ball falls' },
+    { under: 0.05, tag: 'Struck at the peak' },
+    { under: 0.27, tag: 'Struck as it starts to fall' },
+    { under: 1, tag: 'Struck as the ball falls' },
     { under: Infinity, tag: 'Struck well past the peak' },
   ],
 

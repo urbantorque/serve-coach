@@ -2486,7 +2486,35 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         in apparent size between the ready and contact is detected, and any
         reading built on image height is hedged when the camera moved.
       - *Proof:* the zoom KNOWN check flips from wrong to hedged.
-- [ ] **L5.6 The ball's height from its fall** · S.
+- [x] **L5.6 The ball's height from its fall** · S.
+      - *Delta (Oct 17):* done.
+        - `ballFallMetres` in `ballTrack.ts` is ½·g·t², with t from the fitted
+          arc's apex to contact. A ball struck before its top fell nothing.
+        - `contactBelowPeak` now reads it, in metres. It is timed from the
+          ball's own contact where the ball was followed to the racket, and
+          from the hand's contact otherwise.
+          - It used to be a picture height over the stance's standing height.
+          - The band is the studies' own, with no conversion: ideal 0–1 m,
+            range 0–1.8 m. The ladder is 0.05 / 0.27 / 1 m, the old statures
+            times an adult's 1.8 m.
+          - Its confidence no longer rests on `scale`, only on `contact`.
+            A camera that moved, or a standing height guessed from the torso,
+            costs it nothing.
+          - The card prints "0.56 m".
+        - Departure: Bath has no ball, so "the five Bath placements" cannot be
+          read. Placement and camera independence are shown on the rig ball
+          instead.
+        - Proof: four checks in `ballFall.test.ts`.
+          - Four toss placements (straight up, forward, forward and wide,
+            forward and in), each filmed from yaws 82, 60, 45, 30 and 8. Every
+            reading is ½·g·t² exactly, and the five cameras agree to 0.0 cm.
+          - The rig's fall prints "0.56 m" and reads "Struck as the ball
+            falls", the bottom of the published 0.56–0.94 m.
+          - Under a drifting zoom the toss peak's confidence drops from 0.90 to
+            0.36, and the fall stays above the soft line.
+          - With the feet out of frame, the fall is unchanged and unhedged.
+        - The example clip has no ball, so its contact area still lists the
+          fall as not graded. The entry bundle is 125.7 kB.
       - **What:** Δh = ½g·t² from apex to contact, which needs no scale and
         has no perspective.
       - *Proof:* the rig ball at every placement; the five Bath placements

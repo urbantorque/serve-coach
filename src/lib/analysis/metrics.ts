@@ -31,7 +31,7 @@ import {
   type ConfidenceContext,
 } from './confidence'
 import type { Skeleton } from './phases'
-import { flightHeightAt, type BallFlight } from '../vision/ballTrack'
+import { ballFallMetres, flightHeightAt, type BallFlight } from '../vision/ballTrack'
 import type { Frame, Fundamental, FundamentalId, Metric, Reading } from './types'
 
 /** Measurements that only exist when the ball was found in the pixels. */
@@ -57,6 +57,7 @@ const HAND_HANG_MIN_SAMPLES = 10
 
 function format(value: number, copy: { unit: string; decimals: number }): string {
   if (copy.unit === 'ms') return `${Math.round(value)} ms`
+  if (copy.unit === 'm') return `${value.toFixed(copy.decimals)} m`
   const n = value.toFixed(copy.decimals)
   return copy.unit === '°' || copy.unit === '%' || copy.unit === '×' ? `${n}${copy.unit}` : n
 }
@@ -530,12 +531,10 @@ export function measure(
   // than reporting none.
   if (ball) {
     values.tossPeakHeight = (groundY - ball.apex.y) / bodyHeight
-    // How far it had fallen by the moment of contact. Image y grows downwards,
-    // so a ball below its apex sits at a larger y.
-    values.contactBelowPeak = Math.max(
-      0,
-      (flightHeightAt(ball, fContact.t) - ball.apex.y) / bodyHeight,
-    )
+    // How far it had fallen by the moment of contact, in metres, from the
+    // clock rather than the picture (L5.6): at the ball's own moment of contact
+    // where it was followed to the racket, the hand's otherwise.
+    values.contactBelowPeak = ballFallMetres(ball, contact?.ball ?? fContact.t)
     // The ball's own height when it was struck: the quantity published impact
     // heights are about, rather than the hand standing in for it. Only when the
     // ball was followed to within a racket's reach (`ContactRead.ball`), and

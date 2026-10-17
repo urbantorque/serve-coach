@@ -383,6 +383,24 @@ function linearAt(pts: { t: number; x: number }[], t: number): number {
  */
 export const flightXAt = (flight: BallFlight, t: number): number => linearAt(flight.samples, t)
 
+/** Gravity, metres per second squared. */
+const G = 9.81
+
+/**
+ * How far the ball fell from its top before it was struck, in metres, from
+ * time alone (L5.6): ½·g·t², t from the apex to contact.
+ *
+ * No scale and no perspective in it. The picture's fall is a height divided by
+ * a standing height measured in the stance, so a camera at an angle, a player
+ * further from the lens, or one that moved all bend it; the clock bends none
+ * of them. The apex time is the fitted arc's own, and a ball struck before
+ * its top fell nothing.
+ */
+export function ballFallMetres(flight: BallFlight, contactT: number): number {
+  const t = Math.max(0, contactT - flight.apex.t)
+  return 0.5 * G * t * t
+}
+
 /**
  * Where the ball was at a given moment, for drawing.
  *
