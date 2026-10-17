@@ -26,6 +26,22 @@ function feetOf(v: number): string {
   return `about ${Math.round(halves / 2)} foot-lengths`
 }
 
+/** One end of a target band, said as a place. */
+function endOf(axis: TossAxis, v: number): string {
+  if (Math.abs(v) < FOOT_SHARE / 4) return 'over your front foot'
+  const feet = feetOf(v).replace(/^about /, '')
+  if (axis === 'ahead') return `${feet} ${v > 0 ? 'in front' : 'behind'}`
+  return `${feet} to your ${v > 0 ? 'hitting' : 'tossing'} side`
+}
+
+/**
+ * The toss map's target, in foot-lengths, and how many tosses peaked in it
+ * (L4.7).
+ */
+export function targetLine(axis: TossAxis, band: [number, number], inside: number, total: number): string {
+  return `Aim inside the dashed band: ${endOf(axis, band[0])} to ${endOf(axis, band[1])}. ${inside} of ${total} tosses peaked there.`
+}
+
 export function placeLine(axis: TossAxis, v: number): string {
   // Under a quarter of a foot-length either way is over the foot.
   if (Math.abs(v) < FOOT_SHARE / 4) return 'over your front foot'

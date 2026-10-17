@@ -34,6 +34,40 @@ export interface TossPlacement {
   confidence: number
 }
 
+/**
+ * Where a toss should peak, for the toss map's target band (L4.7), in statures
+ * from the front ankle — the reading's own units.
+ *
+ * RE-DERIVED ON REAL MOTION (D2.1), NOT CITED. The published distances are
+ * for contact and measured from the toe (`contactAhead`'s source: 0.28–0.37
+ * of height for flat serves), and this is the top of the toss from the ankle,
+ * read from the tossing hand wherever no ball was tracked — which is every
+ * Bath serve, so the band has to hold what a hand-read real serve does. Each
+ * band holds all six Bath serves at 30 and 60 fps and holds the rig's toss,
+ * dialled off line, outside it (`tossTarget.test.ts`). A ball-read toss
+ * sits a little further on than the hand that let it go; the rig's clean
+ * ball reads inside both.
+ *
+ * For the picture only. Nothing is named from it: the reading stays in
+ * `UNCALIBRATED` until a band for the toss itself is published.
+ */
+export const TOSS_TARGET: Record<'ahead' | 'across', { band: [number, number]; source: { motion: string } }> = {
+  ahead: {
+    band: [0, 0.3],
+    source: {
+      motion:
+        'Bath serves from the side read 0.04 to 0.16 from the hand; the rig toss 0.2 m behind reads -0.12 and 0.9 m in front 0.52',
+    },
+  },
+  across: {
+    band: [-0.075, 0.15],
+    source: {
+      motion:
+        'Bath serves from behind and in front read -0.004 to 0.072 from the hand; the rig toss 0.2 m to the tossing side reads -0.14 and 0.4 m to the hitting side 0.20',
+    },
+  },
+}
+
 /** A hand-only reading is worth this much of a ball one. */
 const HAND_ONLY = 0.5
 

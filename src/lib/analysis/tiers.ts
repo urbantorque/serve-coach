@@ -1103,6 +1103,10 @@ export const UNCALIBRATED: Record<string, string> = {
    * to make. On the rig's ball (`rigBall`) it reads its dial linearly — 0.3 m
    * reads 0.173 body heights from the side — and the other axis leaks only the
    * camera's angle off square.
+   *
+   * The toss map draws a target from it all the same (L4.7): `TOSS_TARGET`,
+   * re-derived on the Bath serves with the rig's off-line toss held outside.
+   * A picture of where to aim, not a fault — nothing is named from it.
    */
   toss_ahead_ratio:
     'measured and not named: the published distances are for contact (Connolly ' +

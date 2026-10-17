@@ -2110,7 +2110,34 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         "what to look for", each with a tick or a cross.
       - *Proof:* the ticks equal band membership; a left-handed mirror test.
         After L4.4.
-- [ ] **L4.7 Targets on the toss map, in foot-lengths** · S.
+- [x] **L4.7 Targets on the toss map, in foot-lengths** · S.
+      - *Delta (Oct 17):* done.
+        - The band is re-derived on Bath, not cited. The published figures
+          are for contact, measured from the toe (0.28–0.37 of height). This
+          reading is the top of the toss, from the ankle, and from the hand
+          wherever no ball was tracked, which is every Bath serve.
+        - `TOSS_TARGET` in `tossPlacement.ts`, each band with its `motion`
+          footing:
+          - in front: 0 to 0.3 statures, from over the front foot to two
+            foot-lengths. Bath reads 0.04–0.16 from the side at 30 and 60 fps;
+          - across: −0.075 to 0.15, from half a foot-length to the tossing
+            side to one foot-length to the hitting side. Bath reads −0.004 to
+            0.072 from behind and from in front.
+        - The rig's toss, dialled off line, falls outside both bands:
+          - 0.2 m behind reads −0.12, and 0.9 m in front reads 0.52;
+          - 0.2 m to the tossing side reads −0.14, and 0.4 m to the hitting
+            side reads 0.20.
+        - The clean rig toss reads inside both.
+        - On the map:
+          - a dashed, faint zone sits under the marks;
+          - under the strip: "Aim inside the dashed band: over your front
+            foot to two foot-lengths in front. 3 of 4 tosses peaked there."
+        - The reading stays in `UNCALIBRATED`. The band is a picture of where
+          to aim, and no fault is named from it.
+        - Proof: `tossTarget.test.ts` (5 checks) covers Bath inside on both
+          axes, the rig's drift outside with the clean toss inside, the map's
+          count and copy, and the band drawn. The basket demo was previewed at
+          375×812.
       - **What:** a target band from the cited contact-in-front figures, or
         re-derived on Bath under D2.1's rule.
       - *Proof:* a bands test: Bath inside, the rig's drift outside.

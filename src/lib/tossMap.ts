@@ -6,7 +6,7 @@
  * far across, and from behind the reverse (`readTossPlacement`). So the map is
  * a strip along whichever axis this clip was filmed for, and says which.
  */
-import type { TossPlacement } from './analysis/tossPlacement'
+import { TOSS_TARGET, type TossPlacement } from './analysis/tossPlacement'
 import type { ServeOutcome, ServeTag, Session } from './storage/db'
 import { clipIdOf } from './storage/sessionKey'
 
@@ -25,6 +25,10 @@ export interface TossMap {
   /** In front of the foot (filmed from the side), or across it (from behind). */
   axis: 'ahead' | 'across'
   points: TossMapPoint[]
+  /** Where to aim, in the same units (L4.7): `TOSS_TARGET` for this axis. */
+  target: [number, number]
+  /** How many of the tosses peaked inside it. */
+  inTarget: number
 }
 
 type Serve = Pick<Session, 'id'> & { diagnosis?: { tossPlacement?: TossPlacement } }
@@ -53,5 +57,7 @@ export function tossMapFor(current: Serve, sessions: readonly Serve[], tags: rea
     points.push({ serve, value, outcome: outcome.get(s.id), from: placed.from, current: s.id === current.id })
   }
   points.sort((a, b) => a.serve - b.serve)
-  return points.length >= 2 ? { axis, points } : undefined
+  const target = TOSS_TARGET[axis].band
+  const inTarget = points.filter((p) => p.value >= target[0] && p.value <= target[1]).length
+  return points.length >= 2 ? { axis, points, target, inTarget } : undefined
 }

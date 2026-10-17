@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { TossMap as TossMapData, TossMapPoint } from '../lib/tossMap'
 import { OUTCOME_LABEL } from '../lib/serveTagCopy'
-import { placeLine } from '../lib/tossPlaceCopy'
+import { placeLine, targetLine } from '../lib/tossPlaceCopy'
 
 /*
  * Every serve's toss in a basket, along the one axis this camera reads (D6.3).
@@ -50,9 +50,9 @@ export default function TossMap({ map }: { map: TossMapData }) {
 
   const geom = useMemo(() => {
     const values = map.points.map((p) => p.value)
-    // Always show the foot, and a little either side of the tosses.
-    const lo = Math.min(0, ...values) - 0.12
-    const hi = Math.max(0, ...values) + 0.05
+    // Always show the foot and the target, and a little either side of the tosses.
+    const lo = Math.min(0, map.target[0], ...values) - 0.12
+    const hi = Math.max(0, map.target[1], ...values) + 0.05
     const x = (v: number) => PAD + ((v - lo) / (hi - lo)) * (W - 2 * PAD)
     // Stack serves that would sit on top of each other, so every one shows.
     const placed: { p: TossMapPoint; cx: number; cy: number }[] = []
@@ -94,6 +94,16 @@ export default function TossMap({ map }: { map: TossMapData }) {
         onPointerDown={track}
         onPointerLeave={() => setHover(undefined)}
       >
+        {/* Where to aim (L4.7): dashed, as every target in the app is, and
+            under the marks so each toss still reads on top of it. */}
+        <rect
+          className="toss-map-target"
+          x={geom.x(map.target[0])}
+          y={6}
+          width={geom.x(map.target[1]) - geom.x(map.target[0])}
+          height={BASE + R + 6 - 6}
+          rx="4"
+        />
         <line x1={PAD} x2={W - PAD} y1={BASE + R + 6} y2={BASE + R + 6} stroke="var(--hairline)" strokeWidth="1" />
         <line
           x1={geom.x(0)}
@@ -138,6 +148,8 @@ export default function TossMap({ map }: { map: TossMapData }) {
           <span className="chart-hint">Touch the strip to read any serve</span>
         )}
       </figcaption>
+
+      <p className="toss-map-aim">{targetLine(map.axis, map.target, map.inTarget, map.points.length)}</p>
 
       {/* The strip as a list, for anyone not looking at it. */}
       <ol className="sr-only">

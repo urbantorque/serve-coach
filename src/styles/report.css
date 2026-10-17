@@ -1592,6 +1592,21 @@
   gap: 6px;
 }
 
+/* Where to aim (L4.7): the target's own vocabulary — a faint zone with a
+   dashed edge, never a solid shape that could read as a measurement. */
+.toss-map-target {
+  fill: var(--hairline-soft);
+  stroke: var(--fg-faint);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.toss-map-aim {
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
 /* The firing-order timeline (D3.8): labels in the muted ink, never the marks'. */
 .firing-label {
   fill: var(--fg-muted);
