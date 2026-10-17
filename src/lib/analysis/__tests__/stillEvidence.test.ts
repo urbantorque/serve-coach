@@ -3,7 +3,8 @@
  * same `keyframeOverlay` the analysis captures stills with, and either carries
  * the measurement or is listed with why one frame cannot.
  */
-import { keyframeOverlay } from '../analyze'
+import { ballInFrame, keyframeOverlay } from '../analyze'
+import { readContact } from '../contact'
 import { diagnose } from '../diagnose'
 import type { FlawId } from '../flaws'
 import { measure } from '../metrics'
@@ -11,7 +12,7 @@ import { buildPhases, detectServe } from '../phases'
 import { STILL_EVIDENCE } from '../stillEvidence'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import type { PhaseId } from '../types'
-import { ANNOTATIONS } from '../../pose/skeleton'
+import { ANNOTATIONS, ghostFor } from '../../pose/skeleton'
 import { placeLine } from '../../tossPlaceCopy'
 import { tossedBall } from './tossedBall'
 import { assert, check, heading, note, report } from './harness'
@@ -40,8 +41,10 @@ function recorder() {
 function still(dials: Partial<ServeDials>, phase: PhaseId, opts: { ball?: boolean; rolled?: boolean } = {}) {
   const frames = buildServe(dials, FPS)
   const skel = detectServe(frames, FPS)
-  const ball = opts.ball ? tossedBall(frames, skel, frames[skel.keys.contact].t) : undefined
-  const fundamentals = measure(frames, skel, true, { ball })
+  const ball = opts.ball ? tossedBall(frames, skel, skel.times.contact + 0.02) : undefined
+  // As the pipeline does: the ball followed to the racket is read at contact.
+  const contact = ball ? readContact(frames, skel, ball) : undefined
+  const fundamentals = measure(frames, skel, true, { ball, contact })
   const diagnosis = diagnose(frames, skel, { ball, aspect: 1 })
   const phases = buildPhases(frames, skel.keys, skel.times)
   const draw = keyframeOverlay({
@@ -101,6 +104,35 @@ check('every fault either shows its measurement on its still or says why one fra
 check('a contact inside its band carries no target, and a low one does', () => {
   assert(!still({}, 'contact').texts.includes('AIM FOR'), 'a clean contact was given a target to aim for')
   assert(still({ contactReach: 1.0 }, 'contact').texts.includes('AIM FOR'), 'a low contact was given none')
+})
+
+check('a low contact keeps its target when the ball was tracked, measured at the ball (L4.8)', () => {
+  // With the ball followed to the racket the card swaps the hand's height for
+  // the ball's, and the target used to vanish with the hand's row.
+  const dials = { contactReach: 1.0 }
+  const frames = buildServe(dials, FPS)
+  const skel = detectServe(frames, FPS)
+  const ball = tossedBall(frames, skel, skel.times.contact + 0.02)
+  const metrics = measure(frames, skel, true, { ball, contact: readContact(frames, skel, ball) }).flatMap((f) => f.metrics)
+  assert(metrics.some((m) => m.id === 'ballContactHeight'), 'the ball was not read at contact')
+  assert(!metrics.some((m) => m.id === 'contactHeight'), "the hand's row stayed beside the ball's")
+  const { texts } = still(dials, 'contact', { ball: true })
+  assert(texts.includes('AIM FOR'), 'a low contact with a tracked ball carries no target')
+  const t = frames[skel.keys.contact].t
+  const at = ballInFrame(ball, t, 1)!
+  const ghost = ghostFor({
+    phase: 'contact',
+    frame: frames[skel.keys.contact],
+    metrics,
+    racket: skel.racket,
+    scale: { bodyHeight: skel.bodyHeight, groundY: skel.groundY },
+    ball: at,
+  })
+  assert(ghost !== undefined, 'no ghost from the ball')
+  note(`measured at the ball (${at.x.toFixed(3)}, ${at.y.toFixed(3)}), band ${ghost!.label}`)
+  assert(ghost!.from.x === at.x && ghost!.from.y === at.y, 'the ghost was measured from the hand, not the ball')
+  const row = metrics.find((m) => m.id === 'ballContactHeight')!
+  assert(ghost!.label === row.target, "the ghost wears a label other than the ball row's target")
 })
 
 check('the toss still says where the toss peaked, in the toss map\'s words', () => {

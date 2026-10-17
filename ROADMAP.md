@@ -2141,7 +2141,33 @@ Everything here is built from `primitives.tsx` and the existing tokens.
       - **What:** a target band from the cited contact-in-front figures, or
         re-derived on Bath under D2.1's rule.
       - *Proof:* a bands test: Bath inside, the rig's drift outside.
-- [ ] **L4.8 The ghost that stays** · S.
+- [x] **L4.8 The ghost that stays** · S.
+      - *Delta (Oct 17):* done.
+        - The bug: when the ball is followed to the racket, the card swaps
+          the hand's contact height for the ball's (`ballContactHeight`). The
+          contact ghost was looking for the hand's row, so AIM FOR vanished on
+          exactly the clips the app read best.
+        - The fix: `HEIGHT_TARGETS.contact` names a `ballMetric`. When that
+          row exists and the ball's position is passed in, `ghostFor`
+          measures from the ball, against the ball's band, and wears its
+          target phrase. The plate still hangs off the hand.
+        - `ballInFrame` gives the ball in landmark space, and both callers
+          pass it: the stills in `analyze.ts` and `PosePlayer`.
+        - The best serve on a live report: `PosePlayer` takes the same
+          `TrackPair` the replay draws.
+          - It runs on the video's clock, with the contact as the shared
+            zero.
+          - It is never drawn on a frame that has an AIM FOR target, and
+            never on a roll-corrected clip.
+          - The report says what the dashed body is under the video too.
+        - Proof:
+          - a `stillEvidence` check with a tracked ball and the pipeline's
+            own contact read: a low contact keeps its AIM FOR, the ghost is
+            measured from the ball, and it wears the ball row's target;
+          - a render check: a live report with a pairable best serve says so,
+            and one without promises nothing;
+          - preview: a real clip analysed twice (two files, one camera) shows
+            the note under the live video.
       - **What:** AIM FOR uses the ball's contact height when the ball was
         tracked. The best-serve ghost also shows on a live report.
       - *Proof:* a `stillEvidence` test with a tracked ball.

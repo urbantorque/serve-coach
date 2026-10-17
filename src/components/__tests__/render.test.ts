@@ -433,6 +433,15 @@ check('a model serve to watch: the clean serve looped with its moments and check
   )
 })
 
+check('a live report draws the best serve under the video, and says so (L4.8)', () => {
+  const analysis = sampleAnalysis(DEMO_DIALS.example)
+  const best = { ...stored(sampleAnalysis()), id: 'serve-best-0', createdAt: analysis.createdAt - 86_400_000 }
+  const live = html(createElement(Report, { analysis, videoUrl: 'blob:clip', best, onBack: noop, onAnalyzeAnother: noop }))
+  assert(live.includes('The dashed body is your best serve so far'), 'the live report does not draw the best serve')
+  const alone = html(createElement(Report, { analysis, videoUrl: 'blob:clip', onBack: noop, onAnalyzeAnother: noop }))
+  assert(!alone.includes('The dashed body is'), 'a dashed body was promised with no serve to draw')
+})
+
 check('the glance renders', () => {
   const out = html(
     createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop }),

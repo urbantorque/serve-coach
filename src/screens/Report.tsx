@@ -1017,7 +1017,15 @@ export default function Report({
       {live && (
         <section className="block" ref={playerRef}>
           <h2 className="block-title">Your serve, frame by frame</h2>
-          <PosePlayer videoUrl={videoUrl!} analysis={analysis as Analysis} seek={seek} />
+          <PosePlayer videoUrl={videoUrl!} analysis={analysis as Analysis} seek={seek} paired={ghost?.pair} />
+          {/* The same sentence the replay carries, when the same body is drawn (L4.8). */}
+          {ghost && !analysis.tilt && (
+            <p className="player-note">
+              {ghost.who === 'best'
+                ? 'The dashed body is your best serve so far, lined up at the moment you hit the ball.'
+                : 'The dashed body is your last serve, lined up at the moment you hit the ball.'}
+            </p>
+          )}
         </section>
       )}
 

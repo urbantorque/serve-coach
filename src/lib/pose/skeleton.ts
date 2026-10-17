@@ -276,10 +276,14 @@ export const ANNOTATIONS: Partial<
  * compare against" as the reason it exists).
  */
 const HEIGHT_TARGETS: Partial<
-  Record<PhaseId, { metric: string; landmark: (racket: Limb, toss: Limb) => number }>
+  Record<PhaseId, { metric: string; landmark: (racket: Limb, toss: Limb) => number; ballMetric?: string }>
 > = {
   toss: { metric: 'releaseHeight', landmark: (_r, t) => t.wrist },
-  contact: { metric: 'contactHeight', landmark: (r) => r.wrist },
+  // With the ball followed to the racket the card reads the ball's own height
+  // and drops the hand's (`metrics.ts`), so the target does too (L4.8): it is
+  // measured at the ball, against the ball's band. Before, the hand's row was
+  // gone and so was the ghost, on exactly the clips the app read best.
+  contact: { metric: 'contactHeight', landmark: (r) => r.wrist, ballMetric: 'ballContactHeight' },
 }
 
 /**
@@ -380,6 +384,12 @@ export interface GhostInput {
   /** Standing height and the court surface, in image units. */
   scale?: { bodyHeight: number; groundY: number }
   /**
+   * Where the ball was on this keyframe, in the same space as `Frame.image`
+   * (x pre-multiplied by the aspect), when it was tracked. A height measured at
+   * the ball is measured from here.
+   */
+  ball?: { x: number; y: number }
+  /**
    * Whether the report carries a roll correction.
    *
    * `scale.groundY` and `scale.bodyHeight` are quantities of the *levelled*
@@ -411,7 +421,9 @@ export function ghostFor(o: GhostInput): Ghost | undefined {
   const { bodyHeight, groundY } = o.scale ?? { bodyHeight: 0, groundY: 0 }
   if (!(bodyHeight > 0) || !Number.isFinite(groundY)) return undefined
 
-  const m = o.metrics.find((x) => x.id === spec.metric)
+  const ballRow = spec.ballMetric ? o.metrics.find((x) => x.id === spec.ballMetric) : undefined
+  const atBall = ballRow !== undefined && o.ball !== undefined && Number.isFinite(o.ball.y)
+  const m = atBall ? ballRow : o.metrics.find((x) => x.id === spec.metric)
   // Absent is absent. `metrics.ts` drops a measurement it could not take rather
   // than flooring it, so a missing card here means the app never had the number
   // — and a ghost is a claim about a number.
@@ -449,7 +461,10 @@ export function ghostFor(o: GhostInput): Ghost | undefined {
 
   const arm = sided(o.racket)
   const anchor = spec.landmark(arm, sided(o.racket === 'right' ? 'left' : 'right'))
-  const actual = o.frame.image[anchor]
+  // The point the height was measured at: the ball where the card read the
+  // ball, the landmark where it read the hand. The plate still hangs off the
+  // hand (`anchor`), which is where a player looks for their own arm.
+  const actual = atBall ? o.ball : o.frame.image[anchor]
   if (!actual || !Number.isFinite(actual.y)) return undefined
 
   // Image y grows downwards, so a taller target is a smaller y.

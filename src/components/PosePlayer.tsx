@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ballMarkerAt } from '../lib/analysis/analyze'
+import { ballInFrame, ballMarkerAt } from '../lib/analysis/analyze'
 import { nearestFrameIndex } from '../lib/analysis/geometry'
 import { rotateImagePoint, unlevelFrames } from '../lib/analysis/spatial'
 import type { RacketEstimate } from '../lib/analysis/racket'
@@ -7,6 +7,7 @@ import type { Analysis, Frame, PhaseId } from '../lib/analysis/types'
 import { levelFlight } from '../lib/vision/ballTrack'
 import { type Ghost, drawSkeleton, fitContain, ghostFor } from '../lib/pose/skeleton'
 import { SkeletonSmoother } from '../lib/pose/smoothing'
+import { pairedLookup, type TrackPair } from '../lib/trackPair'
 import { Icon } from './primitives'
 
 /** Playback speeds, named rather than written as multipliers. */
@@ -21,6 +22,13 @@ interface Props {
   analysis: Analysis
   /** Bump `n` to jump to a keyframe from elsewhere on the page. */
   seek?: { phase: PhaseId; n: number }
+  /**
+   * The player's best earlier serve, lined up at contact (L4.8) — the same
+   * pair the replay draws under a reopened report, drawn here over the video
+   * too. Dashed, from the hips up, and never on a frame that has a target to
+   * aim for: the two are the same ink saying different things.
+   */
+  paired?: TrackPair
 }
 
 /**
@@ -31,7 +39,7 @@ interface Props {
  * to find the toss. The racket hand leaves a trail so the swing path reads at a
  * glance, and each keyframe annotates the joint angle it is judged on.
  */
-export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
+export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -141,6 +149,7 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
         racket: analysis.handedness,
         scale: analysis.scale,
         rolled: Boolean(analysis.tilt),
+        ball: ballInFrame(drawBall, p.t, aspect),
       })
       if (ghost) found[p.id] = ghost
     }
@@ -151,8 +160,24 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
     analysis.scale,
     analysis.tilt,
     drawFrames,
+    drawBall,
+    aspect,
     phases,
   ])
+
+  /*
+   * The best serve, on the video's own clock: the pair is timed from the
+   * replay's contact, so the video's contact is the shared zero. Not on a
+   * roll-corrected clip — the pair is in the levelled space the track was
+   * stored in, and the video under it is not — for the reason `ghostFor` gives.
+   */
+  const pairedAt = useMemo(() => {
+    if (!paired || analysis.tilt) return undefined
+    const contact = phases.find((p) => p.id === 'contact')?.t
+    if (contact === undefined) return undefined
+    const lookup = pairedLookup(paired)
+    return (t: number) => lookup(t - contact + paired.contactAt)
+  }, [paired, analysis.tilt, phases])
 
   // The search itself lives in `geometry.ts`, where it can be tested — see
   // `nearestFrameIndex` for why nearest beats next-lowest here.
@@ -226,8 +251,9 @@ export default function PosePlayer({ videoUrl, analysis, seek }: Props) {
       racketBoxes: drawRacketBoxes,
       ball: ballMarkerAt(drawBall, t),
       ghost,
+      paired: ghost ? undefined : pairedAt?.(t),
     })
-  }, [activePhase, drawBall, drawRacketBoxes, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start])
+  }, [activePhase, drawBall, drawRacketBoxes, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start, pairedAt])
 
   /**
    * The latest `draw`, reachable from effects that must not re-run when it changes.

@@ -1308,6 +1308,7 @@ export function keyframeOverlay(opts: {
           racket,
           scale: evidence.scale,
           rolled: evidence.rolled,
+          ball: ballInFrame(ball, p.t, aspect),
         })
       : undefined,
   )
@@ -1951,6 +1952,19 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     // Absent on a real-time clip, which is what every older report already is.
     ...(stretch.factor > 1 ? { stretch } : {}),
   }
+}
+
+/**
+ * The ball on a keyframe in the landmarks' own space — x times the aspect —
+ * for a height measured at the ball (L4.8). Undefined where it was not tracked.
+ */
+export function ballInFrame(
+  ball: BallFlight | undefined,
+  t: number,
+  aspect: number,
+): { x: number; y: number } | undefined {
+  const at = ballMarkerAt(ball, t)
+  return at ? { x: at.x * aspect, y: at.y } : undefined
 }
 
 // Moved beside the flight it reads (L4.4); re-exported for its callers.
