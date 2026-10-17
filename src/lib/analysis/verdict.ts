@@ -70,7 +70,11 @@ const REFUSALS: Record<RejectReason, { title: string; hints: string[] }> = {
     title: 'That clip is too short to read',
     hints: [
       'The swing lasts about a fifth of a second, so a normal clip only catches it two or three times.',
-      'Film in slow motion, or set the camera to 60 frames per second.',
+      // Slow motion only (L5.12). A real-time 60 fps clip is still read at 32
+      // samples a second until the swing is sampled at the source rate (D1.2),
+      // so "set the camera to 60" would send a player to film again for
+      // nothing. Slow motion is read on the file's own frames.
+      'Film in slow motion, which catches the swing many times over.',
     ],
   },
   too_blurry: {

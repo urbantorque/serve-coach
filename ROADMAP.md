@@ -2699,7 +2699,20 @@ Everything here is built from `primitives.tsx` and the existing tokens.
             head below the racket shoulder or not.
         - On today's data it says the labels are missing and how to get them.
         - The witness stays unused until that table says it holds up.
-- [ ] **L5.12 The 60 fps hint** · S.
+- [x] **L5.12 The 60 fps hint** · S.
+      - *Delta (Oct 17):* done.
+        - The too-few-frames refusal's second hint is now "Film in slow
+          motion, which catches the swing many times over." It used to add
+          "or set the camera to 60 frames per second", which a real-time
+          60 fps clip read at 32 samples a second would not have honoured.
+        - Proof: two checks in `fpsHint.test.ts`.
+          - The refusal recommends slow motion and no frame rate, and the
+            pattern is shown to catch the old line.
+          - No string literal in the screens, the components or the engine's
+            player copy tells anyone to film at 60 (98 files, comments
+            stripped). The fixture plan's 60 fps clip is the developer's shoot
+            list for D1.2 itself and lies outside them.
+        - Seen at 375×812 on `?demo=glance-refused`, with no console errors.
       - **What:** until D1.2 is wired, the too-few-frames refusal recommends
         slow motion only.
       - *Proof:* a copy test.
