@@ -80,7 +80,7 @@ import { sessionIdFor, type PracticeSession, type SessionStage } from './lib/ses
 import type { SessionVideo } from './lib/session/video'
 import { clipFor, keepClip } from './lib/storage/clipStore'
 import { applyWhenIdle, onUpdateWaiting } from './lib/updates'
-import Analyzing, { type SweepProgress } from './screens/Analyzing'
+import type { SweepProgress } from './screens/Analyzing'
 import Home from './screens/Home'
 
 /*
@@ -97,6 +97,13 @@ const Progress = lazy(() => import('./screens/Progress'))
  * needs it, and `run` starts fetching it the moment an analysis begins, so it
  * has half a minute to arrive before the report is drawn.
  */
+/*
+ * The analysing screen, fetched the moment a clip is picked rather than with
+ * the home screen (L6.8's bundle note): nobody sees it before choosing a file,
+ * and the entry chunk is held under its budget.
+ */
+const loadAnalyzing = () => import('./screens/Analyzing')
+const Analyzing = lazy(loadAnalyzing)
 const loadReport = () => import('./screens/Report')
 const Report = lazy(loadReport)
 /*
@@ -786,6 +793,7 @@ export default function App() {
       // sweep stopped a moment ago would otherwise leave its serve rows under
       // the progress bar of an unrelated clip.
       setSweep(undefined)
+      void loadAnalyzing()
       void loadReport()
       void loadGlance()
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
