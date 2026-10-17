@@ -3127,3 +3127,220 @@ Out of scope, because they need a person or data leaving the device:
 - the fixture shoot.
 
 `LEVEL-UP-REVIEW.md` lists them as the owner's call.
+
+---
+
+## Lift programme (2026-10-17) — faster, truer, ready to ship
+
+Waves L1–L6 are done apart from L5.11, which waits on a download. A whole-app
+rating on 2026-10-17 gave **6/10 as a product and 8.5/10 as an engineering
+prototype**.
+
+| Area | Score |
+|---|---|
+| Privacy | 9.5 |
+| Engineering | 8.5 |
+| Speed | 6 |
+| Engine truth on club footage | 5.5 |
+| Field reliability | 5 |
+| Market readiness | 2 |
+
+This programme takes the low scores a machine can lift, highest value first.
+The same rules hold:
+- every item is proven by machine: the rig, the Bath bench, the open-data
+  benches, the browser preview, or a throttled preview standing in for a
+  phone;
+- nothing re-skins;
+- nothing sends data off the device.
+
+What only a person can lift is listed at the end as the owner's call.
+
+**What the engines weigh today, which shapes M1:**
+
+| Engine | Size |
+|---|---|
+| MediaPipe pose (model and runtime) | 19.1 MB |
+| Object detector | 4.6 MB |
+| RTMPose refine (model and ONNX Runtime) | 33.1 MB |
+
+ONNX Runtime asks for threads. But no build serves the cross-origin isolation
+headers that threads need, so it always runs on one. All inference runs on the
+main thread.
+
+### Wave M0 — Keep the work safe
+- [ ] **M0.1 A backup on demand** · S, needs the owner's OK on the folder.
+      - **Why:** 450 commits, the vendored models and the benches exist on one
+        OneDrive-synced disk with no remote.
+      - **What:** `npm run backup` writes a timestamped `git bundle --all` to
+        a folder outside OneDrive. It keeps the last five and checks each one
+        with `git bundle verify`.
+      - *Proof:* the bundle verifies, and a clone made from it passes
+        `npm run typecheck`.
+      - Choosing a remote stays with the owner.
+
+### Wave M1 — The first analysis, sooner and smoother
+- [ ] **M1.1 Threads for the swing read** · S.
+      - **What:** COOP `same-origin` and COEP `require-corp` headers in the dev
+        server, in `vite preview`, and in a shipped `public/_headers` for
+        static hosts.
+      - Every asset is already same-origin. The checks prove that no request
+        is blocked; nobody has to assume it.
+      - *Proof:*
+        - the preview reports `crossOriginIsolated`;
+        - no request is blocked on any screen or demo route;
+        - RTMPose's swing pass on the Bath clips is timed on one thread and
+          on four, and both times are recorded;
+        - the egress test is unchanged.
+- [ ] **M1.2 Pose inference off the main thread** (W5.4, re-scoped) · L.
+      - **What:**
+        - MediaPipe's landmarker and RTMPose run in one module worker, and
+          frames reach it as transferred `ImageBitmap`s;
+        - the main thread keeps the video, the seeking and the screen;
+        - where workers or `OffscreenCanvas` are missing, the current
+          main-thread path runs unchanged.
+      - **Spike first:** does `tasks-vision` 0.10.18 load inside a worker from
+        this app's own origin?
+      - *Proof:*
+        - the bench clips read the same through both paths: the same
+          keyframes, the same faults, and landmarks within 1e-4;
+        - during a Bath clip analysis in the preview, the longest main-thread
+          task and the count of long tasks are measured before and after;
+        - a test with no `Worker` takes the fallback.
+- [ ] **M1.3 A first read before the whole download** · M.
+      - **What:**
+        - on a cold first analysis, the serve is read as soon as the 19 MB
+          pose set is in;
+        - the refine and racket passes are skipped (`skipPoseRefine` and
+          `skipRacketBoxes` already exist);
+        - the rest keeps downloading behind the report;
+        - the report says it is a first read, and offers the full read once
+          the engines are in.
+      - *Proof:*
+        - a test with a stubbed cache shows the first read waits only on the
+          pose files and is marked as a first read;
+        - the copy lint passes;
+        - in the preview with the cache cleared, the time to the first report
+          is measured before and after.
+- [ ] **M1.4 A phone-shaped timing, without a phone** · S.
+      - **What:**
+        - the preview runs at 4× and 6× CPU throttle through CDP;
+        - a Bath clip, a basket and a session-length clip are timed;
+        - every budget built on the "2.5× desktop" guess is checked against
+          the throttled figures.
+      - *Proof:* the measured table goes in `ANALYSIS-REVIEW.md`. A budget
+        the table breaks is fixed, or its reason restated, in the same commit.
+
+### Wave M2 — Engine truth on club footage
+- [ ] **M2.1 Noise floors per tracker** · M.
+      - **What:**
+        - each floor is keyed to the tracker that produced the reading:
+          MediaPipe across the clip, RTMPose in the swing window;
+        - the floors come from the fits `trackerNoise.ts` measured in L5.9,
+          replacing the shared 0.45%;
+        - two lists record the change: faults the old floors could never name
+          that can now be named, and any that can no longer be named.
+      - *Proof:*
+        - every fault is falsely named on 2% or fewer of the noisy Bath bench
+          tries;
+        - the rig still finds its dialled-in faults at today's rates, or each
+          change is listed with its reason;
+        - the change folds into one scoring version.
+- [ ] **M2.2 L5.11, the racket benchmark** — waits on the owner's OK for
+      the COCO annotation download (241 MB).
+
+### Wave M3 — Reasons to come back, without a server
+- [ ] **M3.1 The week plan in the calendar** · S.
+      - **What:**
+        - "Add to calendar" on the week plan writes an `.ics` file;
+        - it holds one event per planned session, with the drills in its
+          notes and an alarm an hour before;
+        - the file goes out through the share sheet or a download, so it
+          leaves the device only if the player sends it.
+      - *Proof:*
+        - checks against RFC 5545: CRLF line endings, folding at 75 octets,
+          escaped text, valid `DTSTART` and `VALARM`;
+        - stable UIDs, so a re-export updates events rather than duplicating
+          them;
+        - the download is checked in the preview.
+- [ ] **M3.2 A report a coach can open** · M.
+      - **What:**
+        - "Send to my coach" builds one self-contained HTML file and shares it
+          the way the report card already is;
+        - it holds the stills with their measurements drawn on, the named
+          faults, the drills, and the numbers with their bands;
+        - it has no scripts and no network references;
+        - the player chooses who gets it.
+      - *Proof:*
+        - a test parses the file and finds no `<script>` and no `src` or
+          `href` leaving it;
+        - the copy lint passes;
+        - the file opens and renders offline in the preview.
+
+### Wave M4 — Ready to ship
+- [ ] **M4.1 A release that checks itself** · M.
+      - **What:** `npm run release`:
+        1. runs typecheck, lint, the suite, the build and the size budgets;
+        2. serves `dist/` with production headers (M1.1). Hashed assets are
+           immutable; the service worker and `index.html` are never cached;
+        3. drives Playwright to check that the manifest is valid, the service
+           worker is active, and a reload with the network off still opens
+           home and the example report.
+      - *Proof:* the script passes from a clean checkout, and fails when any
+        one gate is broken on purpose.
+- [ ] **M4.2 Install-sheet screenshots** (W6.5, re-scoped) · S.
+      - **What:** the real screens are captured from the production build at
+        1080×2340: home, the example report, progress and the glance. One wide
+        shot is added, and all are listed in the manifest `screenshots` with
+        `form_factor`.
+      - W6.5 asked for phone captures; these are the same screens, drawn by
+        the same code.
+      - *Proof:* the manifest test checks each entry's size against its file,
+        and the entry bundle is unchanged.
+- [ ] **M4.3 Every control named, reachable and in order** · M.
+      - **What:**
+        - every screen and demo route is rendered, and each button, link and
+          input is checked for an accessible name;
+        - the focus order is checked against reading order;
+        - the players and charts follow `prefers-reduced-motion`.
+      - *Proof:*
+        - a render test fails on any unnamed control;
+        - Playwright accessibility snapshots of each screen at 375×812;
+        - a keyboard-only pass in the preview.
+
+### Wave M5 — Code that stays easy to change
+- [ ] **M5.1 Behaviour checks instead of source checks** · S.
+      - **What:**
+        - where a check reads `App.tsx` or `useAnalysisRun.ts` off disk with
+          a regex, and a behaviour exists to test instead, the behaviour is
+          tested. This covers the update gate, letting go of the clip on going
+          home, and the early refusals;
+        - the screen-graph table and the history-consumer list stay as they
+          are, marked as deliberately structural.
+      - *Proof:* each replaced check fails when its behaviour is broken by
+        hand.
+- [ ] **M5.2 One status file** · S.
+      - **What:**
+        - a short `STATUS.md` says what works, what is open and what is the
+          owner's call;
+        - the finished ledgers move to `docs/history/`;
+        - `LOOP.md` and the handover check point at the new paths.
+      - *Proof:* the handover test and every link check pass.
+
+### Order of play
+1. **M0.1** as soon as the owner names a folder.
+2. **M1.1, then M1.4.** Both are cheap and give real numbers that every later
+   speed claim is measured against.
+3. **M1.2 and M1.3,** the two biggest gains a player will feel.
+4. **M2.1,** then **M3.1 and M3.2** side by side.
+5. **M4 and M5** last. M4.1 is the gate a first public build passes through.
+
+### The owner's call — what a machine cannot lift
+- **Real club players.** Five to ten, filmed by a club coach and sent through
+  the existing `?fixture` export. Every engine score in the rating is capped
+  until this happens.
+- **A git remote** and a first tagged release (W6.3).
+- **Hosting.** M4.1 makes the build ready. Where it lives, and publishing it,
+  is the owner's decision.
+- **Anything that sends data off the device:** opt-in data donation for
+  level norms, coach links, leaderboards.
+- **The COCO download** for L5.11.
