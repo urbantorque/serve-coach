@@ -381,6 +381,26 @@ export interface ServeDials {
    */
   landingBackFootDrag: number
   /**
+   * How far the hips travel TOWARDS THE NET after contact, in metres, with the
+   * feet planted (L5.7). Negative is falling back, away from the net.
+   *
+   * `landingLean` cannot pose this. It moves the hips along the hip line,
+   * which by the finish runs across the court, so from the side it reads a
+   * third as large and changes sign with the camera's angle. A fall back is
+   * along the line from the baseline to the net, and so is the travel every
+   * real serve makes into the court.
+   *
+   * THE WHOLE BODY MOVES IN THE PICTURE, and nothing else in this rig does:
+   * every other dial holds the hips at one place in the frame and moves the
+   * limbs about them. A serve travels, and one reading this travel off the
+   * hips needs the hips to go somewhere. The feet stay where they were for as
+   * long as the legs can reach, and are carried along past that.
+   *
+   * Weighted after contact only, as `landingLean` is, so every reading
+   * through contact is untouched.
+   */
+  landingTravel: number
+  /**
    * How far the BACK foot slides up to the front one before contact, 0–1.
    *
    * PLATFORM AGAINST PINPOINT, WHICH THIS RIG COULD NOT PRODUCE. Every serve it
@@ -627,6 +647,8 @@ export const CLEAN_SERVE: ServeDials = {
   trophyHitchSeconds: 0,
   // Both feet planted, which is what the landing did before this dial existed.
   landingBackFootDrag: 0,
+  // No travel, so the hips hold their place in the picture as they always have.
+  landingTravel: 0,
   pinpointSlide: 0,
   noSwing: false,
   noise: 0,
@@ -887,6 +909,14 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       ],
       u,
     )
+    // Netwards, in the court's frame, where +x is away from the net (L5.7).
+    const travelled = track(
+      [
+        [U.contact, 0],
+        [1.35, d.landingTravel],
+      ],
+      u,
+    )
     /*
      * How much of the slide has happened by now, 0 at `ready` and 1 by the
      * trophy — and flat at 1 from there on.
@@ -975,6 +1005,14 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
         const follows = side === 'right' ? d.landingBackFootDrag : 0
         const shift = clamp(landingShift * (1 - follows), -room, room)
         ankle = lm(ankle.x - acrossHips.x * shift, ankle.y, ankle.z - acrossHips.z * shift)
+        knee = solveKnee(h, ankle)
+      }
+      // The hips going netwards over planted feet is the feet going the other
+      // way against the hips (L5.7), within the same reach.
+      if (travelled !== 0) {
+        const drop = Math.abs(ankle.y - h.y)
+        const room = Math.sqrt(Math.max(0, (THIGH + SHIN - 1e-3) ** 2 - drop * drop))
+        ankle = lm(ankle.x + clamp(travelled, -room, room), ankle.y, ankle.z)
         knee = solveKnee(h, ankle)
       }
 
@@ -1264,6 +1302,9 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // calibration taken early drifting out of date, not a symmetric wobble.
     const zoom = 1 + d.cameraZoom * (i / Math.max(1, count - 1))
     const camTilt = d.cameraTilt * (i / Math.max(1, count - 1))
+    // The whole body's travel after contact, through the camera (L5.7): the
+    // court's -x turned the way the pose is turned below. Zero adds nothing.
+    const bodyX = -travelled * Math.cos(cam)
 
     /*
      * World landmarks in the CAMERA's frame, as MediaPipe reports them: x
@@ -1294,7 +1335,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       // Already turned to the camera above, so the picture is the world with
       // depth dropped.
       const heightAboveGround = hipHeight - p.y
-      const rawX = 0.5 + p.x * SCALE
+      const rawX = 0.5 + (p.x + bodyX) * SCALE
       const rawY = GROUND_Y - heightAboveGround * SCALE
       // Scaled about the player's own ground anchor, not the frame centre —
       // a pan-like image-position shift would otherwise ride along with
@@ -1339,7 +1380,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // landmarks, without their jitter: it is drawn, never measured.
     const racketAt = (p: { x: number; y: number; z: number }) => {
       const x = p.x * cosCam - p.z * sinCam
-      const rawX = 0.5 + x * SCALE
+      const rawX = 0.5 + (x + bodyX) * SCALE
       const rawY = GROUND_Y - (hipHeight - p.y) * SCALE
       return { x: 0.5 + (rawX - 0.5) * zoom + pan, y: GROUND_Y + (rawY - GROUND_Y) * zoom + camTilt }
     }

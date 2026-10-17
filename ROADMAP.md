@@ -2519,7 +2519,45 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         has no perspective.
       - *Proof:* the rig ball at every placement; the five Bath placements
         agree within the noise floor.
-- [ ] **L5.7 Falling back, signed** · S–M.
+- [x] **L5.7 Falling back, signed** · S–M.
+      - *Delta (Oct 17):* done.
+        - `landingTravel.ts` reads how far the hip centre travelled across the
+          picture from contact to the finish, in standing heights.
+          - It is signed by the swing's net direction, the sign
+            `contactAhead` already reads with: positive is into the court,
+            negative is falling back.
+          - It is read from the side only. From in front or behind, the net is
+            along the lens.
+          - It refuses a finish under 0.1 s past contact, so a clip that stops
+            at the ball does not read as a player who stood still.
+        - `Diagnosis.landingTravel` carries it, and `landing_travel_ratio` is
+          in `UNCALIBRATED`: measured, and falling back is not named, because
+          no study gives a distance to grade against.
+        - Departure: the proof's "negative `landingLean`" cannot carry it.
+          - That dial moves the hips along the hip line, which by the finish
+            runs across the court. From the side it reads a third as large and
+            changes sign with the camera's angle.
+          - The rig gained `landingTravel` instead: the hips go netwards after
+            contact (negative is back) with the feet planted while the legs
+            reach. It is the first dial that moves the whole body in the
+            picture.
+        - Departure: the hips are read in the picture, not against the feet.
+          - The Bath serves leave the ground, and their hips against the
+            ankles read either sign by the side filmed from.
+          - The cost is that a panning phone reads as travel: a 0.05-frame pan
+            reads 0.019.
+        - Proof: seven checks in `landingTravel.test.ts`.
+          - From yaw 82 the rig reads -0.167 / -0.084 / 0 / 0.084 / 0.167 for
+            -0.3 to 0.3 m of travel, which is the dial over 1.8 m. From yaw 60
+            it reads the cosine of the turn.
+          - With tracker noise at 30 fps, five seeds keep the sign at ±0.15 m.
+          - Every Bath serve from either side at 30 and 60 fps reads forward:
+            24 reads, 0.077–0.233.
+          - Nothing is read from yaw 30 or 8, nor from Bath bearings 0 and 180.
+          - A clip cut at contact reads nothing.
+          - The dial leaves every frame through contact bit-identical.
+        - Data only, so nothing a player sees changed. The entry bundle is
+          125.9 kB.
       - **What:** the landing is signed by the swing's net direction. Falling
         backwards is an `UNCALIBRATED` reading first.
       - *Proof:* a negative `landingLean` on the rig; every Bath serve lands

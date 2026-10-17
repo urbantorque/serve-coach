@@ -26,6 +26,7 @@ import { contactHeightOf } from './handHeight'
 import { tossPathSpread } from './tossPath'
 import { contactAheadOf } from './contactAhead'
 import { tossArmHoldOf } from './tossArm'
+import { landingTravelOf, type LandingTravel } from './landingTravel'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -194,6 +195,12 @@ export interface Diagnosis {
    * absent whenever `landing` refused.
    */
   landingFeet?: LandingFeet
+  /**
+   * Which way the hips went after contact, signed by the swing's own net
+   * direction (`landingTravelOf`, L5.7): into the court or falling back.
+   * Data only, from the side only; absent when the clip ends at contact.
+   */
+  landingTravel?: LandingTravel
   /**
    * The body held still at the trophy (`readHitch`, D3.4), against the
    * player's own peak speed and motion. Data only; absent below 60 fps.
@@ -1024,6 +1031,8 @@ export function diagnose(
   const chestTurn = readChestTurn(frames, skel, viewFromCourtYaw(spatial.court_yaw_deg))
   const contactAhead =
     viewFromCourtYaw(spatial.court_yaw_deg) === 'side' ? contactAheadOf(frames, skel, R.wrist, bodyHeight) : undefined
+  const landingTravel =
+    viewFromCourtYaw(spatial.court_yaw_deg) === 'side' ? landingTravelOf(frames, skel, R.wrist, bodyHeight) : undefined
   const depthUnreliable = spatial.depth_unreliable
   const separationConfidence =
     trunkVisibility *
@@ -1280,6 +1289,7 @@ export function diagnose(
     landing,
     armCock,
     landingFeet,
+    ...(landingTravel ? { landingTravel } : {}),
     hitch: readHitch(frames, skel),
     firingOrder: readFiringOrder(frames, chain),
     tossPlacement: readTossPlacement(

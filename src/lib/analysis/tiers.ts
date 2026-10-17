@@ -1232,6 +1232,23 @@ export const UNCALIBRATED: Record<string, string> = {
     'foot should trail',
 
   /*
+   * Which way the body went after contact (L5.7), signed by the swing's net
+   * direction. On the rig from the side it reads `landingTravel` at the
+   * picture's own scale, either sign; every Bath serve from either side reads
+   * forward, 0.08–0.22 standing heights by the time its recording stops.
+   *
+   * NO BAND, AND FALLING BACK IS NOT NAMED. Coaches call a fall back a fault
+   * (it goes with a toss behind the head), and no study gives a distance a
+   * body should travel in, nor one past which a fall back costs anything. The
+   * Bath serves are six skilled servers, all forward; a club player standing
+   * still and a player falling back have nothing measured to be put against.
+   */
+  landing_travel_ratio:
+    "measured and not named: signed by the swing's net direction and read from " +
+    "the side only; reads the rig's travel dial either sign, every real serve " +
+    'travels forward, and no study gives a distance to grade a fall back against',
+
+  /*
    * The body held still at the trophy (D3.4) — see `hitch.ts` for how tempo,
    * which reverted R52, is kept out of it. On the rig with tracker noise, no
    * hitch reads 0.015 at the median and 0.061 at the 95th percentile across

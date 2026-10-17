@@ -328,6 +328,9 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   if (typeof front === 'number' && Number.isFinite(front)) out.landing_front_ratio = front
   const follow = d.landingFeet?.backFollow
   if (typeof follow === 'number' && Number.isFinite(follow)) out.back_foot_follow_ratio = follow
+  // Which way the hips went after contact, signed (L5.7). From the side only.
+  const travel = d.landingTravel?.forward
+  if (typeof travel === 'number' && Number.isFinite(travel)) out.landing_travel_ratio = travel
   // The body held still at the trophy (D3.4), read only at 60 fps and above.
   const hitch = d.hitch?.share
   if (typeof hitch === 'number' && Number.isFinite(hitch)) out.hitch_share_ratio = hitch
