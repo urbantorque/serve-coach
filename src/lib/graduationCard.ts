@@ -32,6 +32,7 @@ const MOMENT: Record<FlawId, PhaseId> = {
   pancake_contact: 'contact',
   low_contact: 'contact',
   contact_behind: 'contact',
+  toss_arm_drops: 'trophy',
 }
 
 /** The moment a fault is judged at: its still's, where it has one. */

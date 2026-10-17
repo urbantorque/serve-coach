@@ -7,6 +7,7 @@ import { assessSpatial } from './spatial'
 import { contactHeightOf } from './handHeight'
 import { tossPathSpread } from './tossPath'
 import { contactAheadOf, forwardDirection } from './contactAhead'
+import { tossArmHoldOf } from './tossArm'
 import { cue } from './voice'
 import {
   LM,
@@ -346,15 +347,8 @@ export function measure(
 
   // How much of the toss→contact window the tossing hand spends above its own
   // shoulder. Dropping it early is the most common fault in club serves.
-  {
-    const span = Math.max(1, keys.contact - keys.toss)
-    let held = 0
-    for (let i = keys.toss; i <= keys.contact; i++) {
-      const f = at(i)
-      if (f.image[T.wrist].y < f.image[T.shoulder].y) held++
-    }
-    values.tossArmHold = (held / (span + 1)) * 100
-  }
+  // The same reading the diagnosis names the dropped arm by (L5.4, `tossArm.ts`).
+  values.tossArmHold = tossArmHoldOf(frames, keys, T.wrist, T.shoulder)
 
   // Wobble of the tossing hand on the way up, along whichever body axis this
   // camera laid across image x. The straight line from the start of the lift to

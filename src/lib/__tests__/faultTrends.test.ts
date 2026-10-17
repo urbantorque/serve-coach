@@ -13,7 +13,9 @@ const FAULTY = sampleAnalysis(DEMO_DIALS.injury)
 // The sample serve with a clean load. The sample's own straight legs name
 // `no_leg_drive` since the rig's hips follow its knees (L1.9), so it is not a
 // clean history any more.
-const CLEAN = sampleAnalysis({ trophyKneeAngle: CLEAN_SERVE.trophyKneeAngle })
+// And a clean tossing arm since L5.4, when the sample's early arm became a
+// named fault.
+const CLEAN = sampleAnalysis({ trophyKneeAngle: CLEAN_SERVE.trophyKneeAngle, tossArmHold: CLEAN_SERVE.tossArmHold })
 
 function at(a: Analysis, i: number): Session {
   const { frames: _f, ...rest } = a

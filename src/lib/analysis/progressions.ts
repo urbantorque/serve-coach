@@ -97,6 +97,30 @@ const THREE_DEPTHS: Step = {
 }
 
 const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
+  // The tossing arm let down early (L5.4): held up with no swing first, then
+  // into the swing at the pace the arm can keep.
+  toss_arm_drops: {
+    cue: 'Keep pointing at the ball with your tossing hand until the racket starts up to it.',
+    steps: [
+      {
+        name: 'Toss and point',
+        how: 'Toss, keep a finger pointing at the ball as it rises and falls, and catch it without swinging.',
+        reps: '15 tosses',
+        check: { by: 'self', bar: 'Move up when you point all the way to the catch on twelve of fifteen.' },
+      },
+      served(DRILLS.point_and_hold),
+      {
+        name: 'Half pace, arm up',
+        how: 'From the service line at half pace, let the racket start up before the tossing arm tucks in.',
+        reps: '20 serves',
+        check: ENGINE,
+      },
+      POINTS,
+    ],
+    easier: 'Hold a second ball in your tossing hand after the toss, so the hand has a reason to stay up.',
+    mistake: 'Pulling the arm down to start the swing. The racket starts the swing, and the arm follows it in.',
+    pass: 4,
+  },
   // A ball met over or behind the head (L5.3): the toss sent in front, then
   // the serve that follows it into the court.
   contact_behind: {

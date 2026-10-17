@@ -2410,7 +2410,37 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         only, and the kick's floor is 0.
       - *Proof:* the rig's contact and ball offsets; Bath reads 15–34, inside
         the band.
-- [ ] **L5.4 Tossing arm, named** · S.
+- [x] **L5.4 Tossing arm, named** · S.
+      - *Delta (Oct 17):* done.
+        - `tossArmHoldOf` (`tossArm.ts`) is the one reading of how long the
+          tossing hand stays above its shoulder, toss to contact. The card's
+          "Tossing arm timing" row and the new `toss_arm_hold_pct` signal both
+          call it.
+        - The signal pairs in `CARD_SIGNAL`:
+          - it is read on the card's band [55, 100], which was re-derived on
+            Bath with the rig's dropped arm held under it;
+          - it is graded from below and read from every angle;
+          - its noise floor is 2, from Bath's 1.15 deviation.
+        - `toss_arm_drops` is a new fault in the toss group:
+          - "Your tossing arm comes down early" ("drops" is the racket's word);
+          - a four-step ladder: toss and point, point and hold, half pace with
+            the arm up, then points;
+          - its moment is the trophy, and its still says why one frame cannot
+            hold it.
+        - Rig: the dropped-arm dial (`tossArmHold: 0.2`) reads 33% and is named
+          from the side and from behind. Clean reads 86% and is not.
+        - Bath reads 70–81% from every side at 30 and 60 fps, and none is
+          named.
+        - The sample serve was built with an early tossing arm, so the example
+          report now leads with it, as the hierarchy puts the toss before the
+          drop.
+          - The look-for tests now follow whichever fault leads, and still
+            check the drop shows at the drop.
+          - The fault-trend test's clean history holds its arm up.
+        - Proof: two checks in `flaws.test.ts` cover the rig at both angles,
+          and Bath inside and unnamed. The example was previewed at 375×812,
+          leading with the arm, with the trophy pair, the ticks and step 1 of
+          4. The entry bundle is 125.2 kB.
       - **What:** `tossArmHold` is promoted into the toss group.
       - *Proof:* the rig's dropped-arm dial; Bath reads 72–79%.
 - [ ] **L5.5 A camera that stays still, or says it didn't** · M.

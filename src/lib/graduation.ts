@@ -41,6 +41,7 @@ export const FAULT_NAME: Record<FlawId, string> = {
   pancake_contact: 'The racket face',
   low_contact: 'Contact height',
   contact_behind: 'Contact in front',
+  toss_arm_drops: 'Tossing arm',
 }
 
 /** Each part of the serve path, as "Next:" names it. */

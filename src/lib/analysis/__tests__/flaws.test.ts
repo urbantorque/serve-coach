@@ -724,4 +724,38 @@ check('no Bath serve is named, and each reads inside the cited band', () => {
   assert(Math.min(...reads) >= 8 && Math.max(...reads) <= 40, 'a Bath serve read outside the cited band')
 })
 
+
+/* ================================================== tossing arm (L5.4) === */
+
+heading('The tossing arm, named (L5.4)')
+
+check('the rig arm let down early is named from the side and from behind; a held arm is not', () => {
+  for (const cameraYaw of [82, 8]) {
+    const arm = (dials: Partial<ServeDials>) =>
+      run({ ...dials, cameraYaw }, 5).diagnosis.flaws.find((f) => f.flaw === 'toss_arm_drops')!
+    const dropped = arm({ tossArmHold: 0.2 })
+    const held = arm({})
+    note(`yaw ${cameraYaw}: held ${held.value}%, dropped ${dropped.value}%, against ${dropped.target.join('–')}`)
+    assert(dropped.detected, `yaw ${cameraYaw}: the dropped arm was not named`)
+    assert(!held.detected, `yaw ${cameraYaw}: a held arm was named`)
+  }
+  assert(HIERARCHY.find((h) => h.group === 'toss')!.flaws.includes('toss_arm_drops'), 'not in the toss group')
+})
+
+check('no Bath serve is named, and each holds the arm inside the band', () => {
+  const reads: number[] = []
+  for (const fps of [30, 60]) {
+    for (const bearing of [90, 0, 180]) {
+      for (const serve of REAL_SERVES) {
+        const frames = filmMocap(serve, { fps, bearing })
+        const f = diagnose(frames, detectServe(frames, fps), { tier: 9 }).flaws.find((x) => x.flaw === 'toss_arm_drops')!
+        assert(!f.detected, `a Bath serve was named at ${fps} fps from ${bearing}°`)
+        reads.push(f.value)
+      }
+    }
+  }
+  note(`Bath holds the arm up for ${Math.min(...reads).toFixed(0)}–${Math.max(...reads).toFixed(0)}% of the window`)
+  assert(Math.min(...reads) >= 55, 'a Bath arm read under the band')
+})
+
 report()

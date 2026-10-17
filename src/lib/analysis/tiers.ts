@@ -90,6 +90,8 @@ export const CARD_SIGNAL: Record<string, string> = {
   tossPathWobble: 'toss_drift_ratio',
   // And contact in front since L5.3, through `contactAheadOf`.
   contactAhead: 'contact_ahead_pct',
+  // And the tossing arm since L5.4, through `tossArmHoldOf`.
+  tossArmHold: 'toss_arm_hold_pct',
   hipShoulderSeparation: 'separation_deg',
   legDrive: 'leg_drive_rise_ratio',
   dropDepth: 'drop_depth_ratio',
@@ -373,6 +375,21 @@ export const SIGNALS: Record<string, SignalSpec> = {
    * the head. The kick's floor is 0 through `SERVE_TYPE_SHIFT`, because a kick
    * may be met over the head.
    */
+  /*
+   * How long the tossing arm stays up, toss to contact, in percent of the
+   * window (L5.4): the card's "Tossing arm timing" row against the card's band,
+   * which was re-derived on the Bath serves (72–79% from every placement) with
+   * the rig's dropped arm held under it. Graded from below: an arm held up
+   * through the swing is the card's to mention, not a fault.
+   */
+  toss_arm_hold_pct: {
+    id: 'toss_arm_hold_pct',
+    unit: 'pct',
+    direction: 'higher',
+    anchors: cardBand('tossArmHold'),
+    seriousMiss: 20,
+    source: { card: 'tossArmHold' },
+  },
   contact_ahead_pct: {
     id: 'contact_ahead_pct',
     unit: 'pct',
@@ -601,6 +618,8 @@ export const NOISE_FLOOR: Record<string, number> = {
   // One and a half of the Bath serves' deviation between takes, 1.5, rounded
   // up (L5.3); the rig moves it a third as far.
   contact_ahead_pct: 3,
+  // One and a half of the Bath serves' deviation, 1.15, rounded up (L5.4).
+  toss_arm_hold_pct: 2,
   // One and a half of its ensemble deviation, 0.006, rounded up to the next hundredth.
   leg_drive_rise_ratio: 0.01,
   // Real motion asks for more than the rig (13.5 ms against 7.5): one and a

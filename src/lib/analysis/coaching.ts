@@ -1036,6 +1036,7 @@ export const DRILLS: Record<string, Drill> = {
   },
   up_and_out: UP_AND_OUT,
   step_in_toss: METRICS.contactAhead.drill,
+  point_and_hold: METRICS.tossArmHold.drill,
 }
 
 /* ------------------------------------------------------------- serve types */

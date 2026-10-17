@@ -44,6 +44,7 @@ export type FlawId =
   | 'low_contact'
   | 'toss_height'
   | 'contact_behind'
+  | 'toss_arm_drops'
 
 /** One breakdown, measured. Pure data — no sentence is ever built from this. */
 export interface FlawFinding {
@@ -203,6 +204,9 @@ export const FLAWS: FlawSpec[] = [
   // toss that goes up over the player, or behind, leaves nowhere in front to
   // meet it — and the fix is where the ball is sent, not the arm.
   { flaw: 'contact_behind', signal: 'contact_ahead_pct' },
+  // The tossing arm let down before the swing (L5.4): "the most common fault in
+  // club serves" on the card since it was written, and named now.
+  { flaw: 'toss_arm_drops', signal: 'toss_arm_hold_pct' },
   { flaw: 'low_contact', signal: 'contact_height_ratio', causedBy: 'toss_height' },
 ]
 

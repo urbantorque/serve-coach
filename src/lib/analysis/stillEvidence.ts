@@ -29,6 +29,7 @@ export type StillEvidence =
 
 export const STILL_EVIDENCE: Record<FlawId, StillEvidence> = {
   low_contact: { phase: 'contact', shows: 'target' },
+  toss_arm_drops: { none: 'How long the arm stays up runs from the toss to the hit, and a still holds one moment of it.' },
   contact_behind: {
     none: 'Which way the net is comes from the whole swing, so one frame cannot say in front from behind.',
   },

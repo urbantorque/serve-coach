@@ -413,6 +413,10 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     title: 'You strike the ball low',
     low: 'You meet the ball below full reach, so the serve has to climb before it can come down.',
   },
+  toss_arm_drops: {
+    title: 'Your tossing arm comes down early',
+    low: 'Your tossing arm comes down before the swing, your front shoulder follows it, and you meet the ball lower.',
+  },
   contact_behind: {
     title: 'You hit the ball over your head',
     low: 'You meet the ball over or behind your head, because the toss goes up over you instead of in front.',

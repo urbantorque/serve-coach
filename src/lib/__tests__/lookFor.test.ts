@@ -15,6 +15,7 @@ import MomentPair from '../../components/MomentPair'
 import Report from '../../screens/Report'
 import { DEMO_DIALS, sampleAnalysis } from '../../dev/sampleAnalysis'
 import { causalPlan } from '../analysis/verdict'
+import { faultForMetric } from '../analysis/progressions'
 import { SOFT_MEASUREMENT } from '../analysis/confidence'
 import { LM } from '../analysis/geometry'
 import { cueIssues } from '../analysis/voice'
@@ -69,7 +70,10 @@ check('the top fault is shown at the moment its own row is read', () => {
   const plan = causalPlan(a.triage, a.diagnosis)
   const moment = faultMoment(a.fundamentals, plan[0].flaw)
   note(`${plan[0].flaw} shows at the ${moment}`)
-  assert(plan[0].flaw === 'shallow_drop' && moment === 'drop', `the drop showed at ${moment}`)
+  const row = a.fundamentals.flatMap((f) => f.metrics).find((m) => faultForMetric(m.id) === plan[0].flaw)
+  assert(row !== undefined && moment === row.phase, `${plan[0].flaw} showed at ${moment}, its row is read at ${row?.phase}`)
+  // And a drop shows at the drop, whichever fault leads.
+  assert(faultMoment(a.fundamentals, 'shallow_drop') === 'drop', 'the drop does not show at the drop')
   assert(faultMoment(a.fundamentals, undefined) === undefined, 'a moment for no fault')
 })
 
@@ -120,7 +124,10 @@ check('the report sets the pair in the top fix, and every moment says what to lo
   const a = sampleAnalysis(DEMO_DIALS.example)
   const html = renderToStaticMarkup(createElement(Report, { analysis: a, onBack: () => {}, onAnalyzeAnother: () => {} }))
   const focus = html.slice(html.indexOf('class="focus"'), html.indexOf('class="focus-drill"'))
-  assert(focus.includes('Your racket drop beside the model’s'), 'the pair is not in the top fix')
+  const top = causalPlan(a.triage, a.diagnosis)[0]
+  const moment = faultMoment(a.fundamentals, top.flaw)!
+  const label = a.phases.find((p) => p.id === moment)!.label.toLowerCase()
+  assert(focus.includes(`Your ${label} beside the model’s`), `the pair at the ${label} is not in the top fix`)
   const escaped = (s: string) => s.replace(/'/g, '&#x27;')
   for (const phase of PHASES) assert(html.includes(escaped(LOOK_FOR[phase])), `${phase} does not say what to look for`)
   const marks = (html.match(/strip-mark--(tick|cross)/g) ?? []).length
