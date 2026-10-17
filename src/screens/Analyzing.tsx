@@ -1,9 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/primitives'
 import type { AnalyzeProgress, Step } from '../lib/analysis/analyze'
 import { MIN_COMPARABLE_SERVES } from '../lib/analysis/consistency'
 import { clipLabel } from '../lib/clipLabel'
 import { PLACEMENT } from '../lib/placement'
+
+// Its own chunk, shared with the report's fault demonstrations: the entry
+// bundle carries none of the rig player.
+const ModelServe = lazy(() => import('../components/ModelServe'))
 
 const STEPS: { id: Step; label: string }[] = [
   { id: 'engine', label: 'Loading the coach' },
@@ -81,9 +85,11 @@ interface Props {
   fileName: string
   sweep?: SweepProgress
   onCancel: () => void
+  /** Which hand the model serve swings with. Right when the player has not said. */
+  racket?: 'left' | 'right'
 }
 
-export default function Analyzing({ progress, fileName, sweep, onCancel }: Props) {
+export default function Analyzing({ progress, fileName, sweep, onCancel, racket = 'right' }: Props) {
   const aside = useTicker(ASIDES.length, ASIDE_MS)
   // 'done' is past the end of the list, so every step reads as complete —
   // findIndex would return −1 and light step one under a full bar.
@@ -249,6 +255,17 @@ export default function Analyzing({ progress, fileName, sweep, onCancel }: Props
               ? `Stop and compare these ${measured}`
               : 'Cancel'}
         </button>
+
+        {/* Something worth watching while the clip is read (L4.3): the clean
+            serve, its six moments and what each should look like. Under the
+            status and the one control, so neither moves off the first screen,
+            and drawn at a capped rate so it takes no frames from the tracker. */}
+        <section className="analyzing-model" aria-label="A model serve to watch">
+          <h2 className="t-overline">While you wait, a model serve</h2>
+          <Suspense fallback={null}>
+            <ModelServe racket={racket} quiet />
+          </Suspense>
+        </section>
       </div>
     </div>
   )

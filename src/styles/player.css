@@ -447,3 +447,25 @@
   gap: 7px;
   margin-top: 12px;
 }
+
+/* ============================================================================
+   Model serve (L4.3)
+   ========================================================================= */
+
+.model-serve {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Capped on the busy screens, where the model is beside the point rather
+   than the point: the drawing scales to the height and centres itself. */
+.model-serve--quiet .player-stage,
+.model-serve--quiet .fault-demo-wait {
+  max-height: 240px;
+}
+
+.guide-model .model-serve .player-stage,
+.guide-model .model-serve .fault-demo-wait {
+  max-height: 46svh;
+}

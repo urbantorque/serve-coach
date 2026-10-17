@@ -13,6 +13,7 @@ import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
 import FaultDemoPanel from '../components/FaultDemoPanel'
+import ModelServe from '../components/ModelServe'
 import { hasDemo } from '../lib/faultDemoDials'
 import { CHECK_SERVES, drillCheckLine, progressionFor, rungFor, stepCheckLine } from '../lib/analysis/progressions'
 import { FAULT_NAME } from '../lib/graduation'
@@ -1093,6 +1094,16 @@ export default function Report({
           )}
         </div>
       </section>
+
+      {/* The model to watch, on the example only (L4.3): a first look at
+          what a report is for, beside what the serve is aiming at. A player's
+          own report has the fault demonstration under its drill instead. */}
+      {example && (
+        <section className="block">
+          <h2 className="block-title">A model serve to watch</h2>
+          <ModelServe racket={analysis.handedness} />
+        </section>
+      )}
 
       {/*
        * More about this clip (L4.1), folded. The report reads hero, the one

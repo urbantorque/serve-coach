@@ -245,3 +245,34 @@
   fill: var(--fg);
   font-weight: var(--wt-key);
 }
+
+/* The model serve, one tap down at the end of the guide (L4.3). Closed, the
+   summary reads as one more line of the guide; open, the player sits under it. */
+.guide-model {
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.guide-model-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+.guide-model-head::-webkit-details-marker {
+  display: none;
+}
+
+.guide-model-head svg {
+  color: var(--fg-faint);
+  transition: transform var(--fast) var(--ease);
+}
+
+.guide-model[open] .guide-model-head svg {
+  transform: rotate(90deg);
+}

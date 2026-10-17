@@ -42,6 +42,10 @@ import Home from '../../screens/Home'
 import Progress from '../../screens/Progress'
 import Report from '../../screens/Report'
 import Analyzing from '../../screens/Analyzing'
+import FilmingGuide from '../FilmingGuide'
+import ModelServe from '../ModelServe'
+import { faultDemo, modelServe } from '../../lib/faultDemo'
+import { PHASE_COPY } from '../../lib/analysis/phases'
 import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
 import { findPracticeFocus, type PracticeFocus } from '../../lib/practice'
 import { progressionFor, stepCheckLine } from '../../lib/analysis/progressions'
@@ -385,6 +389,48 @@ check('the feel shows without a tap, the step says how it is passed, and later f
     assert(!fold.startsWith(' open'), `fix ${i + 2} started open`)
     assert(fold.includes(escaped(item.drill.how)), `fix ${i + 2} does not open to its how`)
   })
+})
+
+check('a model serve to watch: the clean serve looped with its moments and checkpoints, in three places (L4.3)', () => {
+  const serve = modelServe('right')
+  assert(serve !== undefined, 'the clean serve could not be built')
+  // The same serve every fault demonstration draws its fix from.
+  const fix = faultDemo('low_contact', 'right')!.fix
+  assert(
+    fix.frames.length === serve!.frames.length && fix.frames[0].image[16].x === serve!.frames[0].image[16].x,
+    'the model is not the fix the demonstrations draw',
+  )
+  const player = html(createElement(ModelServe, { racket: 'right', serve }))
+  // Six moment pills, in the serve's order, each a button.
+  const at = Object.values(PHASE_COPY).map((p) => player.indexOf(`>${p.label}</button>`))
+  assert(at.every((i) => i >= 0), `a moment pill is missing: ${at.join(', ')}`)
+  assert(at.every((i, k) => k === 0 || i > at[k - 1]), 'the moments are out of order')
+  // A checkpoint under them, and a way to stop the loop.
+  assert(Object.values(PHASE_COPY).some((p) => player.includes(p.caption)), 'no checkpoint caption')
+  assert(player.includes('aria-label="Pause"') || player.includes('aria-label="Play"'), 'a loop with no pause')
+  assert(player.includes('Half speed'), 'the full player lost its speeds')
+  const quiet = html(createElement(ModelServe, { racket: 'right', serve, quiet: true }))
+  assert(!quiet.includes('Half speed') && quiet.includes('model-serve--quiet'), 'the quiet player is not quiet')
+
+  // In the guide, one tap down and closed.
+  const guide = html(createElement(FilmingGuide, { racket: 'left' }))
+  assert(/<details class="guide-model">/.test(guide) && guide.includes('Watch a model serve'), 'the guide has no model serve')
+  // On the analysing screen, under the status.
+  const reading = html(createElement(Analyzing, { progress: { step: 'tracking', ratio: 0.4 }, fileName: 'serve.mp4', onCancel: noop }))
+  assert(
+    reading.indexOf('While you wait, a model serve') > reading.indexOf('role="progressbar"'),
+    'the analysing screen has no model serve under its status',
+  )
+  // On the example, and not on a player's own report.
+  const example = html(createElement(Report, { analysis: sampleAnalysis(DEMO_DIALS.example), example: true, onBack: noop, onAnalyzeAnother: noop }))
+  const own = html(createElement(Report, { analysis: sampleAnalysis(DEMO_DIALS.example), onBack: noop, onAnalyzeAnother: noop }))
+  assert(example.includes('A model serve to watch'), 'the example has no model serve')
+  assert(!own.includes('A model serve to watch'), "a player's own report carries the model serve")
+  assert(
+    example.indexOf('A model serve to watch') > example.indexOf('Six moments in your serve') &&
+      example.indexOf('A model serve to watch') < example.indexOf('More about this clip'),
+    'the model serve is not between the six moments and the fold',
+  )
 })
 
 check('the glance renders', () => {

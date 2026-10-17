@@ -1520,6 +1520,7 @@ export default function App() {
               fileName={view.fileName}
               sweep={sweep}
               onCancel={sweep ? stopSweep : cancel}
+              racket={prefs.handedness ?? 'right'}
             />
           )}
 
@@ -1800,7 +1801,7 @@ export default function App() {
         title="How to film your serve"
       >
         <Suspense fallback={null}>
-          <FilmingGuide />
+          <FilmingGuide racket={prefs.handedness ?? 'right'} />
         </Suspense>
       </Sheet>
 
@@ -1832,7 +1833,7 @@ export default function App() {
             `Home.tsx` gates on the hand, not on the rules. */}
         {!prefs.seenFilmingGuide && (
           <Suspense fallback={null}>
-            <FilmingGuide />
+            <FilmingGuide racket={prefs.handedness ?? 'right'} />
           </Suspense>
         )}
         {/* The hand is the one thing that has to be right before the first clip:

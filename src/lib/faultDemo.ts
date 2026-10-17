@@ -109,6 +109,16 @@ export function faultDemo(flaw: FlawId, racket: 'left' | 'right'): FaultDemo | u
   return { moment: demo.moment, fault, fix, racket }
 }
 
+/**
+ * The clean serve on its own, as a model to watch (L4.3): the guide, the
+ * analysing screen and the example report loop it with its six moments. The
+ * same `CLEAN_SERVE` every fault demonstration's fix is, so the model a player
+ * watches first is the serve every fix is drawn towards.
+ */
+export function modelServe(racket: 'left' | 'right'): DemoServe | undefined {
+  return built({ ...CLEAN_SERVE }, racket)
+}
+
 /** Exposed for the test, which has to diagnose the same frames the picture is drawn from. */
 export const demoFrames = (dials: Partial<ServeDials>, racket: 'left' | 'right'): Frame[] | undefined => {
   const rig = buildServe({ ...dials, noise: 0, dropout: 0 }, DEMO_FPS)

@@ -1920,7 +1920,34 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - plan items 2–4 expand to show how.
       - *Proof:* seeded severities map to rungs, type-level totality over
         checks, and render tests.
-- [ ] **L4.3 A model serve to watch** · S.
+- [x] **L4.3 A model serve to watch** · S.
+      - *Delta (Oct 17):* done.
+        - The fault demo's player is now `RigPlayer`: one body or several on
+          one clock, with play/pause, optional speeds, the six moment pills,
+          and `PHASE_COPY`'s checkpoint caption for the active moment. It has
+          an optional redraw cap.
+        - `modelServe(racket)` builds the clean serve, the same
+          `CLEAN_SERVE` every fault demo draws its fix from.
+        - `ModelServe` loads it on mount, in a 2.3 kB chunk shared with the
+          fault demos.
+        - Where it shows:
+          - in the filming guide, as a closed "Watch a model serve" that
+            mounts the player only once opened;
+          - on the analysing screen, under the status and the cancel button.
+            This copy has no speeds and draws at most 15 times a second, so
+            it takes no frames from pose estimation. It is lazy, so the entry
+            grows by 0.1 kB;
+          - on the example report, between the six moments and the fold.
+        - Each copy uses the player's own hand.
+        - Proof:
+          - a render test checks that the model is the demos' fix, with six
+            pills in order, a checkpoint caption, a pause control, and a quiet
+            variant;
+          - the same test finds it closed in the guide, under the progress bar
+            while analysing, and on the example but not on a player's own
+            report;
+          - all three were previewed at 375×812. A real clip analysed in 36 s
+            with the model looping, and no new console errors.
       - **What:** the clean rig serve looped with the moment pills and the
         checkpoint captions, in the guide, on the analysing screen and in the
         example.

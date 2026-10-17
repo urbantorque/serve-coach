@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { PLACEMENT } from '../lib/placement'
+import ModelServe from './ModelServe'
+import { Icon } from './primitives'
 
 /**
  * Filming instructions. Deliberately opinionated and short — the difference
@@ -98,7 +101,10 @@ function PlacementDiagram() {
   )
 }
 
-export default function FilmingGuide() {
+export default function FilmingGuide({ racket = 'right' }: { racket?: 'left' | 'right' }) {
+  // The model serve mounts on the tap (L4.3): the guide is read in a sheet
+  // on the way to filming, and a loop nobody opened is work for nothing.
+  const [watching, setWatching] = useState(false)
   return (
     <div className="guide">
       <PlacementDiagram />
@@ -127,6 +133,14 @@ export default function FilmingGuide() {
         A front or back view still works. You lose one reading: how far in front of you the
         ball is hit.
       </p>
+
+      <details className="guide-model" onToggle={(e) => setWatching((e.currentTarget as HTMLDetailsElement).open)}>
+        <summary className="guide-model-head">
+          <span>Watch a model serve</span>
+          <Icon name="chevron" size={15} />
+        </summary>
+        {watching && <ModelServe racket={racket} />}
+      </details>
     </div>
   )
 }

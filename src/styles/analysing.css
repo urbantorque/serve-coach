@@ -596,3 +596,20 @@ button.session-pick:hover .session-pick-blank {
 button.session-pick:hover .session-pick-play {
   border-color: var(--lime);
 }
+
+/* A model serve under the status (L4.3): the full column wide, left to read
+   like the report's players, and a short stage so it stays a side dish. */
+.analyzing-model {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline-soft);
+  text-align: left;
+}
+
+.analyzing-model h2 {
+  color: var(--fg-faint);
+}
