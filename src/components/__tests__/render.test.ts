@@ -44,7 +44,7 @@ import Report from '../../screens/Report'
 import Analyzing from '../../screens/Analyzing'
 import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
 import { findPracticeFocus, type PracticeFocus } from '../../lib/practice'
-import { CHECK_SERVES, progressionFor } from '../../lib/analysis/progressions'
+import { progressionFor, stepCheckLine } from '../../lib/analysis/progressions'
 import { causalPlan } from '../../lib/analysis/verdict'
 import { buildConsistency } from '../../lib/analysis/consistency'
 import { normalise, type Session } from '../../lib/storage/db'
@@ -361,6 +361,32 @@ check('the report reads hero, fix, plan, the serve, then one fold for the rest (
   assert(!/<details class="report-more"[^>]*open/.test(out), 'the fold starts open')
 })
 
+check('the feel shows without a tap, the step says how it is passed, and later fixes open to their how (L4.2)', () => {
+  const analysis = sampleAnalysis(DEMO_DIALS.injury)
+  const out = html(createElement(Report, { analysis, onBack: noop, onAnalyzeAnother: noop, onLadderStep: noop }))
+  const escaped = (s: string) => s.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
+  const plan = causalPlan(analysis.triage, analysis.diagnosis)
+  assert(plan.length >= 2, `the fixture ranked ${plan.length} fix(es); the check needs two`)
+  const ladder = progressionFor(plan[0].flaw!, plan[0].axis)!
+  const step = ladder.steps.find((s) => s.name === plan[0].drill.name)!
+  // The ladder itself starts folded; the feel does not.
+  assert(!out.includes('class="drill-ladder"'), 'the ladder started open')
+  assert(out.includes(escaped(ladder.cue)), 'the feel is folded away')
+  assert(out.includes(escaped(stepCheckLine(ladder, step))), 'the step does not say how it is passed')
+  assert(
+    out.includes('I can do this') === (step.check.by === 'self'),
+    `a ${step.check.by}-checked step ${step.check.by === 'self' ? 'has no' : 'has a'} self-pass button`,
+  )
+  // Every later fix is a closed disclosure holding its how.
+  const folds = out.split('<details class="focus-next-how"').slice(1)
+  assert(folds.length === plan.length - 1, `${folds.length} folded fixes for ${plan.length - 1} later fixes`)
+  plan.slice(1).forEach((item, i) => {
+    const fold = folds[i].slice(0, folds[i].indexOf('</details>'))
+    assert(!fold.startsWith(' open'), `fix ${i + 2} started open`)
+    assert(fold.includes(escaped(item.drill.how)), `fix ${i + 2} does not open to its how`)
+  })
+})
+
 check('the glance renders', () => {
   const out = html(
     createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop }),
@@ -521,7 +547,12 @@ check("the home screen carries this week's plan, in the report's order, on the p
   const at = plan.map((p) => out.indexOf(escaped(p.title)))
   assert(at.every((i) => i >= 0), `a fix the report ranked is missing: ${plan.map((p) => p.title).join(' / ')}`)
   assert(at.every((i, k) => k === 0 || i > at[k - 1]), 'the plan is not in the order the report ranked it')
-  assert(out.includes(`Film a basket of ${CHECK_SERVES} on this step`), 'nothing says what to film to check it')
+  // Each fix says how its step is passed: a basket to film, or the player's own bar (L4.2).
+  for (const p of plan) {
+    const own = progressionFor(p.flaw!, p.axis)!
+    const step = own.steps.find((s) => s.name === p.drill.name)!
+    assert(out.includes(escaped(stepCheckLine(own, step))), `"${p.title}" does not say how its step is passed`)
+  }
 
   // The rung the player moved to, not the report's.
   const ladder = progressionFor(plan[0].flaw!, plan[0].axis)!

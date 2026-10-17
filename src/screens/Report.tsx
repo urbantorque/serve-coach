@@ -14,7 +14,7 @@ import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
 import FaultDemoPanel from '../components/FaultDemoPanel'
 import { hasDemo } from '../lib/faultDemoDials'
-import { CHECK_SERVES, drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
+import { CHECK_SERVES, drillCheckLine, progressionFor, rungFor, stepCheckLine } from '../lib/analysis/progressions'
 import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
 import { filmstripPoses, replayFrom } from '../lib/storage/poseTrack'
@@ -278,6 +278,9 @@ export default function Report({
   const [showingSteps, setShowingSteps] = useState(false)
   /** The rung the player just moved to from this report, so the button is spent. */
   const [movedTo, setMovedTo] = useState<number>()
+  // A move up off a step the player checks themselves (L4.2), kept apart from
+  // `movedTo` so the drilled fault's line never reads this ladder's move.
+  const [selfMoved, setSelfMoved] = useState<number>()
   /*
    * Hiding the spreads, not deleting them.
    *
@@ -436,6 +439,12 @@ export default function Report({
       ? storedRung
       : ownRung
   const drill = ladder && rung >= 0 ? ladder.steps[rung] : plan[0].drill
+  // How a later plan item's step is passed, off its own ladder (L4.2).
+  const nextCheck = (item: Analysis['focus']) => {
+    const own = item.flaw ? progressionFor(item.flaw, item.axis) : undefined
+    const step = own?.steps.find((s) => s.name === item.drill.name)
+    return own && step ? stepCheckLine(own, step) : undefined
+  }
   // The basket swept from this report, judged against this fault's bar.
   const check = analysis.drillCheck?.flaw === plan[0].flaw ? analysis.drillCheck : undefined
   /*
@@ -714,6 +723,13 @@ export default function Report({
           </span>
           <h3 className="t-subhead">{drill.name}</h3>
           <p>{drill.how}</p>
+          {/* The feel, unfolded (L4.2): it is what to think about during the
+              drill, so it belongs with the drill rather than under a tap. */}
+          {ladder && (
+            <p className="drill-feel">
+              <strong>Feel:</strong> {ladder.cue}
+            </p>
+          )}
           <div className="focus-drill-foot">
             <span className="focus-reps">{drill.reps}</span>
             <span className="drill-actions">
@@ -782,6 +798,33 @@ export default function Report({
               )}
             </div>
           )}
+          {/* How this step is passed, when no basket has judged it yet
+              (L4.2). A step the app cannot read — a toss, a throw, a swing
+              with no ball — is the player's to pass, so it gets its own tap. */}
+          {!check && ladder && rung >= 0 && (
+            <div className="drill-check">
+              <p>
+                {selfMoved === undefined
+                  ? stepCheckLine(ladder, ladder.steps[rung])
+                  : `Now on step ${selfMoved + 1} of ${ladder.steps.length}: ${ladder.steps[selfMoved].name}.`}
+              </p>
+              {onLadderStep &&
+                plan[0].flaw &&
+                selfMoved === undefined &&
+                ladder.steps[rung].check.by === 'self' &&
+                rung < ladder.steps.length - 1 && (
+                  <button
+                    className="drill-show"
+                    onClick={() => {
+                      onLadderStep(plan[0].flaw!, rung + 1)
+                      setSelfMoved(rung + 1)
+                    }}
+                  >
+                    I can do this
+                  </button>
+                )}
+            </div>
+          )}
           {drilledCheck && drilledLadder && drilledRung >= 0 && (
             <div className="drill-check">
               <p>
@@ -813,9 +856,6 @@ export default function Report({
               — the drill is the instruction, and this is the plan around it. */}
           {showingSteps && ladder && rung >= 0 && (
             <div className="drill-ladder">
-              <p className="drill-feel">
-                <strong>Feel:</strong> {ladder.cue}
-              </p>
               <ol className="drill-steps">
                 {ladder.steps.map((step, i) => (
                   <li key={step.name} className={i === rung ? 'is-now' : undefined} aria-current={i === rung ? 'step' : undefined}>
@@ -824,7 +864,9 @@ export default function Report({
                       {i === rung && <span className="drill-step-now">Now</span>}
                     </span>
                     <span className="drill-step-how">{step.how}</span>
-                    <span className="drill-step-reps">{step.reps}</span>
+                    <span className="drill-step-reps">
+                      {step.reps} · {step.check.by === 'engine' ? 'film it to check' : 'check it yourself'}
+                    </span>
                   </li>
                 ))}
               </ol>
@@ -835,7 +877,7 @@ export default function Report({
                 <strong>Watch for:</strong> {ladder.mistake}
               </p>
               <p className="drill-note">
-                Move up a step when {ladder.pass} of your next {CHECK_SERVES} serves come back without this fault.
+                A step you film moves up when {ladder.pass} of {CHECK_SERVES} serves come back without this fault.
               </p>
             </div>
           )}
@@ -862,12 +904,20 @@ export default function Report({
                   <p className="focus-next-why">
                     <Cue text={item.why} />
                   </p>
-                  <p className="focus-next-drill">
-                    <Icon name="target" size={14} />
-                    <span>
-                      <strong>{item.drill.name}</strong> — {item.drill.reps}
-                    </span>
-                  </p>
+                  {/* Folded to the drill's name, and open to its how and its
+                      check on a tap (L4.2): these are the queue, so the first
+                      fix keeps the page, but each one is a plan of its own. */}
+                  <details className="focus-next-how">
+                    <summary className="focus-next-drill">
+                      <Icon name="target" size={14} />
+                      <span>
+                        <strong>{item.drill.name}</strong> — {item.drill.reps}
+                      </span>
+                      <Icon name="chevron" size={13} />
+                    </summary>
+                    <p className="focus-next-how-text">{item.drill.how}</p>
+                    {nextCheck(item) && <p className="focus-next-how-text">{nextCheck(item)}</p>}
+                  </details>
                 </div>
               </li>
             ))}

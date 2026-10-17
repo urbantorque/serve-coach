@@ -9,9 +9,13 @@ import {
   drillForMetric,
   everyProgression,
   faultForMetric,
+  lastSeverity,
   progressionFor,
   rungFor,
+  startingRung,
+  stepCheckLine,
   stepOf,
+  type Step,
 } from '../progressions'
 import { DRILLS, FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from '../coaching'
 import { CARD_SIGNAL } from '../tiers'
@@ -21,7 +25,8 @@ import { FLAWS, type FlawFinding, type FlawId } from '../flaws'
 import type { Diagnosis } from '../diagnose'
 import type { Triage } from '../triage'
 import { drillIdFor } from '../triage'
-import { drillFor } from '../verdict'
+import { causalPlan, drillFor } from '../verdict'
+import type { Severity } from '../tiers'
 import { cueIssues } from '../voice'
 import { assert, check, heading, note, report } from './harness'
 
@@ -187,7 +192,11 @@ check("a card row that is a fault's number hands out that fault's ladder", () =>
     const { drill } = drillForMetric(card, own)
     // With no rung stored, the rung the report's plan starts at.
     assert(drill === ladder.steps[rungFor(flaw!, ladder)], `${card}: "${drill.name}"`)
-    assert(drill === DRILLS[drillIdFor(flaw!)] || stepOf(ladder, DRILLS[drillIdFor(flaw!)]) < 0, `${card}: not the plan's drill`)
+    // And at the newest report's severity, the very step that report's plan started on (L4.2).
+    for (const severity of ['high', 'medium', 'low'] as const) {
+      const at = drillForMetric(card, own, undefined, severity).drill
+      assert(at === ladder.steps[startingRung(ladder, severity)], `${card} (${severity}): "${at.name}"`)
+    }
   }
   // And a row no fault is judged on keeps its own.
   const own = { name: 'own', how: 'own', reps: 'own' }
@@ -203,6 +212,97 @@ check('every line a check can print passes the copy rules', () => {
   for (const line of lines) {
     const issues = cueIssues(line)
     assert(issues.length === 0, `"${line}": ${issues.join('; ')}`)
+  }
+})
+
+heading('A ladder that starts where the player is (L4.2)')
+
+/** A report naming one fault at one severity, as the plan reads it. */
+function namedAt(flaw: FlawId, severity: Severity) {
+  const triage = {
+    status: 'ok',
+    primary_flaw: { flaw, group: 'x', signal: 'x', value: 0, unit: 'ratio', target: [1, 2], target_tier: 3, severity },
+    injury_risk: [],
+    suppressed_count: 0,
+  } as unknown as Triage
+  const diagnosis = {
+    flaws: [{ flaw, detected: true, severity, confidence: 0.9, value: 0, target: [1, 2] } as unknown as FlawFinding],
+  } as unknown as Diagnosis
+  return { triage, diagnosis }
+}
+
+check('a serious fault starts on the most guided step, a slight one nearer the match, never on the last', () => {
+  const rows: string[] = []
+  for (const [flaw, p] of everyProgression()) {
+    const [high, medium, low] = (['high', 'medium', 'low'] as const).map((s) => startingRung(p, s))
+    assert(high === 0, `${flaw}: a serious fault starts on step ${high + 1}`)
+    assert(high < medium && medium <= low, `${flaw}: ${high}, ${medium}, ${low} is not in order`)
+    assert(low <= p.steps.length - 2, `${flaw}: a slight fault starts on the match step`)
+    assert(startingRung(p) === medium && startingRung(p, 'none') === medium, `${flaw}: no grade did not start at medium`)
+    rows.push(`${flaw} ${high + 1}/${medium + 1}/${low + 1} of ${p.steps.length}`)
+  }
+  note(rows.join(' · '))
+})
+
+check('seeded severities map to the rung the plan hands out, and a moved rung wins', () => {
+  for (const flaw of named) {
+    const ladder = progressionFor(flaw)!
+    for (const severity of ['high', 'medium', 'low'] as const) {
+      const { triage, diagnosis } = namedAt(flaw, severity)
+      const plan = causalPlan(triage, diagnosis)
+      const want = ladder.steps[startingRung(ladder, severity)]
+      assert(plan[0]?.drill.name === want.name, `${flaw} (${severity}): "${plan[0]?.drill.name}", not "${want.name}"`)
+      assert(rungFor(flaw, ladder, undefined, severity) === stepOf(ladder, plan[0].drill), `${flaw}: the rung and the plan disagree`)
+    }
+    assert(rungFor(flaw, ladder, { [flaw]: ladder.steps.length - 1 }, 'high') === ladder.steps.length - 1, `${flaw}: a moved rung lost`)
+  }
+})
+
+check('the season card starts from the newest report that named the fault', () => {
+  const at = (createdAt: number, severity: Severity, detected = true) => ({
+    createdAt,
+    diagnosis: { flaws: [{ flaw: 'shallow_drop', detected, severity }] } as unknown as Diagnosis,
+  })
+  assert(lastSeverity([at(1, 'low'), at(3, 'high'), at(2, 'medium')], 'shallow_drop') === 'high', 'not the newest')
+  assert(lastSeverity([at(1, 'low'), at(5, 'high', false)], 'shallow_drop') === 'low', 'a clean report set the grade')
+  assert(lastSeverity([], 'shallow_drop') === undefined, 'a grade out of nothing')
+})
+
+check('every step declares how it is passed: the app on served balls, the player on the rest', () => {
+  // Type-level: a drill that does not say how it is passed is not a step.
+  // @ts-expect-error — `check` is required.
+  const bare: Step = { name: 'x', how: 'x', reps: 'x' }
+  void bare
+  // Steps whose serve the engine cannot read as a serve: seated, or started
+  // with the racket already up behind the back.
+  const MODIFIED = new Set(['Seated serves', 'Racket-up serves'])
+  const failures: string[] = []
+  let engine = 0
+  let self = 0
+  for (const flaw of named) {
+    for (const axis of [undefined, 'depth', 'lateral'] as const) {
+      const p = progressionFor(flaw, axis)!
+      for (const s of p.steps) {
+        const by = s.check?.by
+        if (by !== 'engine' && by !== 'self') {
+          failures.push(`${flaw}: "${s.name}" has no check`)
+          continue
+        }
+        const balls = /\b(serves|points|rounds|pairs)\b/.test(s.reps) && !MODIFIED.has(s.name)
+        if (balls !== (by === 'engine')) failures.push(`${flaw}: "${s.name}" (${s.reps}) is checked by ${by}`)
+        const line = stepCheckLine(p, s)
+        const issues = cueIssues(line)
+        if (issues.length) failures.push(`${flaw}: "${line}" — ${issues.join('; ')}`)
+        if (axis === undefined && by === 'engine') engine++
+        else if (axis === undefined) self++
+      }
+    }
+  }
+  note(`${engine} steps the app checks, ${self} the player checks`)
+  assert(failures.length === 0, failures.join('\n'))
+  // And the most like a match is always the app's to judge.
+  for (const [flaw, p] of everyProgression()) {
+    assert(p.steps[p.steps.length - 1].check.by === 'engine', `${flaw}: the last step is self-checked`)
   }
 })
 

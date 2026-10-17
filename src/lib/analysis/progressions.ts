@@ -46,15 +46,30 @@ import { DRILLS } from './coaching'
 import type { BodyAxis } from './axes'
 import type { Diagnosis } from './diagnose'
 import { FLAWS, MIN_EVIDENCE, type FlawId } from './flaws'
-import { CARD_SIGNAL } from './tiers'
-import { FLAW_DRILL, type Triage } from './triage'
+import { CARD_SIGNAL, type Severity } from './tiers'
+import type { Triage } from './triage'
 import type { Drill } from './types'
+
+/**
+ * How a step is passed (L4.2). By the app, when the step is a served ball it
+ * can film and judge for the fault: a basket of `CHECK_SERVES`, at the
+ * ladder's own bar. By the player, when it is a toss, a throw or a swing with
+ * no ball, which the engine has nothing to read in, against a bar they can see.
+ */
+export type StepCheck = { by: 'engine' } | { by: 'self'; bar: string }
+
+/** A rung: a drill that says how it is passed. The type is what makes every step declare one. */
+export type Step = Drill & { check: StepCheck }
+
+const ENGINE: StepCheck = { by: 'engine' }
+const served = (drill: Drill): Step => ({ ...drill, check: ENGINE })
+const selfChecked = (drill: Drill, bar: string): Step => ({ ...drill, check: { by: 'self', bar } })
 
 export interface Progression {
   /** One thing to feel, about the ball, the racket or the court. */
   cue: string
   /** Most guided first, most like a match last. Three to five. */
-  steps: Drill[]
+  steps: Step[]
   /** The way in for somebody who cannot do the first step yet. */
   easier: string
   /** What usually goes wrong while doing these. */
@@ -67,16 +82,18 @@ export interface Progression {
 export const CHECK_SERVES = 6
 
 /** Steps that close several ladders, written once. */
-const POINTS: Drill = {
+const POINTS: Step = {
   name: 'Play it out',
   how: 'Play ten points with two serves each, keeping the same feel on every one.',
   reps: '10 points',
+  check: ENGINE,
 }
 
-const THREE_DEPTHS: Drill = {
+const THREE_DEPTHS: Step = {
   name: 'Box, line, fence',
   how: 'Serve two into the box, two past the service line and two to the back fence. Repeat three times.',
   reps: '3 rounds',
+  check: ENGINE,
 }
 
 const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
@@ -87,22 +104,26 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         name: 'Edge bounces',
         how: 'With a hammer grip, bounce a ball on the racket edge, then alternate edge and strings.',
         reps: '50 bounces',
+        check: { by: 'self', bar: 'Move up when you can swap edge and strings twenty times without losing the ball.' },
       },
       {
         name: 'Edge-first swings',
         how: 'No ball. Swing slowly and let the racket edge lead down your back and up to the ball.',
         reps: '15 swings',
+        check: { by: 'self', bar: 'Move up when the edge leads on every swing. A window or your shadow shows it.' },
       },
       {
         name: 'Service line edge serves',
         how: 'From the service line, swing edge first and let the strings turn to the ball only at the end.',
         reps: '25 serves',
+        check: ENGINE,
       },
-      DRILLS.edge_first_serve,
+      served(DRILLS.edge_first_serve),
       {
         name: 'Grip check points',
         how: 'Play ten points and check your hammer grip before every serve, first and second.',
         reps: '10 points',
+        check: ENGINE,
       },
     ],
     easier:
@@ -119,22 +140,26 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         name: 'Lift and let go',
         how: 'Lift with a straight arm and open fingers, let the ball go between eye level and the top of your head, and catch it.',
         reps: '15 tosses',
+        check: { by: 'self', bar: 'Move up when the ball leaves your fingers above your head on twelve of fifteen.' },
       },
-      DRILLS.rail_height_toss,
+      selfChecked(DRILLS.rail_height_toss, 'Move up when sixteen of twenty tosses peak level with the rail.'),
       {
         name: 'Swing at every toss',
         how: 'From the service line at half pace, swing at every toss, even the bad ones. The ball should feel still when you hit it.',
         reps: '20 serves',
+        check: ENGINE,
       },
       {
         name: 'Same height, full serve',
         how: 'From the baseline at your normal pace, toss to the same height every time.',
         reps: '20 serves',
+        check: ENGINE,
       },
       {
         name: 'One-serve points',
         how: 'Play ten points with one serve each, so every toss has to count.',
         reps: '10 points',
+        check: ENGINE,
       },
     ],
     easier: 'Toss something heavier, like a small water bottle, to feel a slow lift instead of a flick.',
@@ -148,21 +173,24 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     steps: [
       // Replaced by the axis drill where the diagnosis knows which way the toss
       // wandered — see `progressionFor`. This is the axis-blind one.
-      DRILLS.one_line_toss,
+      selfChecked(DRILLS.one_line_toss, 'Move up when you catch sixteen of twenty without moving your feet.'),
       {
         name: 'Racket on the court',
         how: 'Lay your racket on the court in front of your front foot. Toss without swinging and let the ball land on the strings.',
         reps: '20 tosses',
+        check: { by: 'self', bar: 'Move up when sixteen of twenty tosses land on the strings.' },
       },
       {
         name: 'Swing at every toss',
         how: 'From the service line at half pace, swing at every toss, even the bad ones.',
         reps: '20 serves',
+        check: ENGINE,
       },
       {
         name: 'One toss, two targets',
         how: 'From the baseline, alternate serves down the middle and out wide with the same toss for both.',
         reps: '20 serves',
+        check: ENGINE,
       },
       POINTS,
     ],
@@ -179,17 +207,20 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         name: 'Toss and look',
         how: 'Toss, keep your eyes and your tossing arm up for a count of one, then catch.',
         reps: '15 tosses',
+        check: { by: 'self', bar: 'Move up when your eyes stay on the ball for the count on every toss.' },
       },
-      DRILLS.head_up_hold,
+      served(DRILLS.head_up_hold),
       {
         name: 'Listen for the bounce',
         how: 'From the baseline at half pace, keep looking up at the contact spot until you hear the ball bounce.',
         reps: '20 serves',
+        check: ENGINE,
       },
       {
         name: 'Eyes up on big points',
         how: 'Play ten points and keep your eyes up until the bounce on every first serve.',
         reps: '10 points',
+        check: ENGINE,
       },
     ],
     easier:
@@ -206,13 +237,15 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         name: 'Start it hanging',
         how: 'Start with the racket already hanging behind you on a loose grip, then swing up from there.',
         reps: '10 swings',
+        check: { by: 'self', bar: 'Move up when every swing starts from the hang in one smooth go.' },
       },
-      DRILLS.ball_in_a_sock,
-      DRILLS.back_scratch_drop,
+      selfChecked(DRILLS.ball_in_a_sock, 'Move up when the sock swings all the way through on all fifteen.'),
+      served(DRILLS.back_scratch_drop),
       {
         name: 'Swing, then serve',
         how: 'From the baseline, alternate one swing without a ball and one serve, keeping the racket falling as deep.',
         reps: '10 pairs',
+        check: ENGINE,
       },
       THREE_DEPTHS,
     ],
@@ -225,21 +258,24 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
   collapsed_elbow: {
     cue: 'Throw the racket head up at the ball, as if lobbing it over a high fence.',
     steps: [
-      DRILLS.overhead_throw,
+      selfChecked(DRILLS.overhead_throw, 'Move up when twelve of fifteen throws peak well above the net.'),
       {
         name: 'Double throw',
         how: 'Hold a ball in each hand. Lift one with the tossing hand while the other hand throws its ball into the box.',
         reps: '20 throws',
+        check: { by: 'self', bar: 'Move up when sixteen of twenty throws land in the box.' },
       },
       {
         name: 'Racket-up serves',
         how: 'From the service line, start with the racket already up behind you and serve from there.',
         reps: '20 serves',
+        check: { by: 'self', bar: 'Move up when sixteen of twenty land in the box with your elbow at shoulder height.' },
       },
       {
         name: 'Half-pace serves',
         how: 'From the baseline at half pace, use the full motion and hit up and out.',
         reps: '20 serves',
+        check: ENGINE,
       },
       POINTS,
     ],
@@ -258,17 +294,20 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         name: 'Seated serves',
         how: 'Sit side-on on a bench and serve into the fence with the racket already up.',
         reps: '15 serves',
+        check: { by: 'self', bar: 'Move up when twelve of fifteen reach the fence from the bench.' },
       },
-      DRILLS.hip_lead_turn,
+      selfChecked(DRILLS.hip_lead_turn, 'Move up when your hips turn before your chest on all ten. A window shows it.'),
       {
         name: 'Sideways longer',
         how: 'From the service line, serve into the box while staying sideways for longer than feels natural.',
         reps: '20 serves',
+        check: ENGINE,
       },
       {
         name: 'Turn late',
         how: 'From the baseline at half pace, let your chest turn only as the racket comes up to the ball.',
         reps: '20 serves',
+        check: ENGINE,
       },
       POINTS,
     ],
@@ -280,12 +319,13 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
   no_leg_drive: {
     cue: 'Send the ball all the way to the back fence and let your body throw your arm.',
     steps: [
-      DRILLS.push_throws,
-      DRILLS.back_leg_serve,
+      selfChecked(DRILLS.push_throws, 'Move up when your legs start every throw before your arm does.'),
+      served(DRILLS.back_leg_serve),
       {
         name: 'Long serves',
         how: 'From the service line, serve so the ball travels as far as it can past its first bounce.',
         reps: '15 serves',
+        check: ENGINE,
       },
       THREE_DEPTHS,
       POINTS,
@@ -302,12 +342,14 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         name: 'Find your top',
         how: 'Hold the racket at full stretch with a ball on the strings, then roll it off upwards to feel your highest point.',
         reps: '10 reps',
+        check: { by: 'self', bar: 'Move up when the ball rolls off at the same top point ten times running.' },
       },
-      DRILLS.up_and_out,
+      served(DRILLS.up_and_out),
       {
         name: 'Land past the line',
         how: 'From the baseline at most of your pace, serve and land past a line a step inside the court.',
         reps: '20 serves',
+        check: ENGINE,
       },
       POINTS,
     ],
@@ -386,6 +428,12 @@ export function drillCheckLine(check: DrillCheck): string {
   return `Only ${check.read} of those serves showed this clearly. Film a few more to check the step.`
 }
 
+/** The toss-drift ladder's first rung where the diagnosis knows which way the toss wandered. */
+const AXIS_FIRST: Record<BodyAxis, Step> = {
+  depth: selfChecked(DRILLS.baseline_drop_toss, 'Move up when sixteen of twenty tosses fall onto the line.'),
+  lateral: selfChecked(DRILLS.fence_line_toss, 'Move up when sixteen of twenty tosses brush the fence going up.'),
+}
+
 /**
  * The ladder for one fault, with the axis drill on its first rung where the
  * toss had an axis — the same choice `drillIdFor` makes for the report, so the
@@ -395,8 +443,51 @@ export function progressionFor(flaw: FlawId, axis?: BodyAxis): Progression | und
   const base = PROGRESSIONS[flaw]
   if (!base) return undefined
   if (flaw !== 'toss_drift' || !axis) return base
-  const first = axis === 'depth' ? DRILLS.baseline_drop_toss : DRILLS.fence_line_toss
-  return { ...base, steps: [first, ...base.steps.slice(1)] }
+  return { ...base, steps: [AXIS_FIRST[axis], ...base.steps.slice(1)] }
+}
+
+/**
+ * Where a ladder starts for a fault this bad (L4.2), until the player moves.
+ *
+ * A fault the engine calls serious starts on the most guided step, a medium
+ * one a step up, a slight one two steps up. Never on the last step: that one
+ * is the match, and a ladder that started there would be no ladder. The grade
+ * is the engine's own (`severityOf`: the miss against the signal's serious
+ * miss), the same one the plan is ordered by. With no grade to go on — a
+ * card row no report has named lately — it starts where a medium fault does.
+ */
+export const START_BY_SEVERITY: Record<Exclude<Severity, 'none'>, number> = { high: 0, medium: 1, low: 2 }
+
+export function startingRung(ladder: Progression, severity?: Severity): number {
+  const at = START_BY_SEVERITY[severity && severity !== 'none' ? severity : 'medium']
+  return Math.max(0, Math.min(at, ladder.steps.length - 2))
+}
+
+/**
+ * The grade a fault was last named at, on the newest report that named it.
+ * What the season's cards start its ladder from, so they start where that
+ * report's plan did.
+ */
+export function lastSeverity(
+  sessions: readonly { createdAt: number; diagnosis?: Diagnosis }[],
+  flaw: FlawId,
+): Severity | undefined {
+  let at = -Infinity
+  let out: Severity | undefined
+  for (const s of sessions) {
+    const f = s.diagnosis?.flaws.find((x) => x.flaw === flaw && x.detected)
+    if (f && s.createdAt > at) {
+      at = s.createdAt
+      out = f.severity
+    }
+  }
+  return out
+}
+
+/** How a step is passed, in the player's words. */
+export function stepCheckLine(ladder: Progression, step: Step): string {
+  if (step.check.by === 'self') return step.check.bar
+  return `Film a basket of ${CHECK_SERVES} on this step. Move up when ${ladder.pass} come back without this fault.`
 }
 
 /**
@@ -412,18 +503,19 @@ export function faultForMetric(metricId: string): FlawId | undefined {
 
 /**
  * The rung of a fault's ladder the player is on: the one they moved to, when
- * this ladder has it, or else the rung the report's own drill sits on.
+ * this ladder has it, or else where the fault's severity starts it (L4.2).
  */
 export function rungFor(
   flaw: FlawId,
   ladder: Progression,
   rungs?: Partial<Record<string, number>>,
+  severity?: Severity,
 ): number {
   const stored = rungs?.[flaw]
   if (stored !== undefined && Number.isInteger(stored) && stored >= 0 && stored < ladder.steps.length) {
     return stored
   }
-  return Math.max(0, stepOf(ladder, DRILLS[FLAW_DRILL[flaw]]))
+  return startingRung(ladder, severity)
 }
 
 /**
@@ -439,16 +531,21 @@ export function drillForMetric(
   metricId: string,
   own: Drill,
   rungs?: Partial<Record<string, number>>,
+  severity?: Severity,
 ): { drill: Drill; flaw?: FlawId } {
   const flaw = faultForMetric(metricId)
   const ladder = flaw ? progressionFor(flaw) : undefined
   if (!flaw || !ladder) return { drill: own }
-  return { drill: ladder.steps[rungFor(flaw, ladder, rungs)], flaw }
+  return { drill: ladder.steps[rungFor(flaw, ladder, rungs, severity)], flaw }
 }
 
-/** Which rung a drill is on, by identity — `-1` when it is on none. */
+/**
+ * Which rung a drill is on, by name — `-1` when it is on none. By name since
+ * L4.2: a shared drill on a ladder is wrapped with its check, and a stored
+ * report's drill has been through storage, so neither is the same object.
+ */
 export const stepOf = (progression: Progression, drill: Drill): number =>
-  progression.steps.indexOf(drill)
+  progression.steps.findIndex((s) => s.name === drill.name)
 
 /** Every ladder, for the tests that walk the copy. */
 export const everyProgression = (): [FlawId, Progression][] =>

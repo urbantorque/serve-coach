@@ -16,7 +16,7 @@
  * hierarchy, and a fault that graduates earns one line saying so, and what is
  * next. Every fourth trip after, it is re-checked.
  */
-import { CHECK_SERVES, progressionFor } from './analysis/progressions'
+import { progressionFor, stepCheckLine } from './analysis/progressions'
 import { MAX_PLAN, causalPlan } from './analysis/verdict'
 import { cue } from './analysis/voice'
 import type { FlawId } from './analysis/flaws'
@@ -170,9 +170,9 @@ function itemFor(entry: Entry, rungs?: Partial<Record<string, number>>): WeekIte
     flaw: entry.flaw,
     drill: ladder.steps[rung],
     step: { at: rung + 1, of: ladder.steps.length },
-    check: cue(
-      `Film a basket of ${CHECK_SERVES} on this step. Move up when ${ladder.pass} come back without this fault.`,
-    ),
+    // The step's own check (L4.2): a filmed basket, or the bar the player
+    // checks themselves on a step the app has nothing to read in.
+    check: cue(stepCheckLine(ladder, ladder.steps[rung])),
   }
 }
 

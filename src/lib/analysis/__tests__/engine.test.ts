@@ -25,7 +25,7 @@ import {
 } from '../analyze'
 import { METRICS, metricCopy } from '../coaching'
 import { sampleAnalysis } from '../../../dev/sampleAnalysis'
-import { progressionFor, rungFor } from '../progressions'
+import { progressionFor, rungFor, startingRung } from '../progressions'
 import {
   IMPLAUSIBLE_HEIGHT_SPREAD,
   MIN_COMPARABLE_SERVES,
@@ -1218,7 +1218,13 @@ check('the commonest club serve is told about its drop, not its tempo', () => {
     focus.title === METRICS.dropDepth.label,
     `the player is sent away to work on "${focus.title}" instead of their racket drop`,
   )
-  assert(focus.drill.name === METRICS.dropDepth.drill.name, 'the focus carries the wrong drill')
+  // The drop's own ladder, at the rung a fault with no grade behind it starts
+  // on (L4.2): this focus is ranked from the card, not named by a diagnosis.
+  const dropLadder = progressionFor('shallow_drop')!
+  assert(
+    focus.drill.name === dropLadder.steps[startingRung(dropLadder)].name,
+    `the focus carries the wrong drill: "${focus.drill.name}"`,
+  )
 })
 
 check('a drop that did happen is still timed', () => {

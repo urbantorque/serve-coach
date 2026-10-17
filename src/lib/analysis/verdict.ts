@@ -36,6 +36,7 @@ import {
   type RejectReason,
   type Triage,
 } from './triage'
+import { progressionFor, startingRung } from './progressions'
 import { STRAIN_WINDOW, type StrainCleared, type StrainRecord } from './strain'
 import { SEVERITY_RANK, rungName, type Severity } from './tiers'
 import type { Analysis, Drill } from './types'
@@ -442,15 +443,16 @@ export const drillFor = (id: string | undefined): Drill | undefined =>
 export function causalFocus(triage: Triage | undefined): Analysis['focus'] | undefined {
   if (!triage || triage.status !== 'ok' || !triage.primary_flaw) return undefined
 
-  const { flaw, value, target, axis } = triage.primary_flaw
-  return focusFor(flaw, value, target, axis)
+  const { flaw, value, target, axis, severity } = triage.primary_flaw
+  return focusFor(flaw, value, target, axis, severity)
 }
 
 /**
  * One flaw, turned into a title, a reason and the exercise that corrects it.
  *
- * The drill is resolved from `drillIdFor` rather than from `triage.drill_id`,
- * which only ever names the primary's. Returns undefined where either table has
+ * The drill is the rung of the fault's ladder its severity starts on (L4.2),
+ * or, for a fault with no ladder, `drillIdFor`'s — never `triage.drill_id`,
+ * which only ever names the primary's fixed drill. Returns undefined where either table has
  * no entry, so a flaw the copy database has not caught up with is left out of a
  * plan rather than printed as a blank heading.
  *
@@ -465,6 +467,7 @@ function focusFor(
   value: number,
   target: [number, number],
   axis?: BodyAxis,
+  severity?: Severity,
 ): Analysis['focus'] | undefined {
   const base = FLAW_COPY[flaw]
   if (!base) return undefined
@@ -473,7 +476,11 @@ function focusFor(
   // by axis, and `high`/`highTitle` stay whatever the base said.
   const copy = { ...base, ...(axis ? base.byAxis?.[axis] : undefined) }
 
-  const drill = drillFor(drillIdFor(flaw, axis))
+  // The rung of the fault's ladder its severity starts on (L4.2), so a
+  // serious fault gets the most guided step and a slight one a step nearer the
+  // match. A fault with no ladder keeps its one drill.
+  const ladder = progressionFor(flaw, axis)
+  const drill = ladder ? ladder.steps[startingRung(ladder, severity)] : drillFor(drillIdFor(flaw, axis))
   if (!drill) return undefined
 
   // Which half of the sentence applies: a signal past the top of its band is a
@@ -543,7 +550,7 @@ export function causalPlan(
 
       for (const f of here) {
         if (out.length >= MAX_PLAN) break
-        const entry = focusFor(f.flaw, f.value, f.target, f.axis)
+        const entry = focusFor(f.flaw, f.value, f.target, f.axis, f.severity)
         if (entry) out.push(entry)
       }
     }

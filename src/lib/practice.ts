@@ -1,5 +1,5 @@
 import { FUNDAMENTALS, SERVE_TYPES, metricCopy } from './analysis/coaching'
-import { drillForMetric, progressionFor, rungFor } from './analysis/progressions'
+import { drillForMetric, faultForMetric, lastSeverity, progressionFor, rungFor } from './analysis/progressions'
 import { SOFT_MEASUREMENT } from './analysis/confidence'
 import { mean } from './analysis/geometry'
 import { rowChange } from './analysis/realChange'
@@ -274,7 +274,10 @@ export function findPracticeFocus(
   // the player can hold open at once.
   const recurring = buildConsistencyTrend(sessions, type)?.recurring
 
-  const forRow = drillForMetric(pick.id, metricCopy(pick.id, type)?.drill ?? fundamental.drill, rungs)
+  // Started where the newest report that named the fault started its plan (L4.2).
+  const rowFault = faultForMetric(pick.id)
+  const severity = rowFault ? lastSeverity(sameServe, rowFault) : undefined
+  const forRow = drillForMetric(pick.id, metricCopy(pick.id, type)?.drill ?? fundamental.drill, rungs, severity)
   const rowLadder = forRow.flaw ? progressionFor(forRow.flaw) : undefined
 
   return {
@@ -289,7 +292,7 @@ export function findPracticeFocus(
     // fault's ladder on the player's rung, the same step the report's plan
     // shows, and the serve type's own drill where it has one.
     drill: forRow.drill,
-    rungsLeft: rowLadder && forRow.flaw ? rowLadder.steps.length - 1 - rungFor(forRow.flaw, rowLadder, rungs) : undefined,
+    rungsLeft: rowLadder && forRow.flaw ? rowLadder.steps.length - 1 - rungFor(forRow.flaw, rowLadder, rungs, severity) : undefined,
     scores: pick.scores,
     average: Math.round(pick.average),
     timesWeakest: pick.weakest,

@@ -1872,7 +1872,47 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         "More about this clip". The folded part holds the basket, toss map, how
         the clip was read, tagging, areas and firing order.
       - *Proof:* a DOM-order render test and a preview at 375×812.
-- [ ] **L4.2 A ladder that starts where the player is** · S.
+- [x] **L4.2 A ladder that starts where the player is** · S.
+      - *Delta (Oct 17):* done.
+        - `startingRung` picks the start from the engine's own severity:
+          high → step 1, medium → step 2, low → step 3. It never starts on
+          the last step, which is the match. A moved rung still wins.
+        - The plan's drill (`focusFor`) is now that rung of the fault's ladder.
+          It is no longer `FLAW_DRILL`'s fixed drill, which had started a
+          serious tray on step 4 of 5.
+        - The season card and the serve path start from the newest report
+          that named the fault (`lastSeverity`), so they show the step that
+          report's plan showed. With no grade, a ladder starts where a medium
+          fault does.
+        - Every rung is a `Step`: a drill plus a `StepCheck`.
+          - `engine` means a served ball: film a basket of six.
+          - `self` means a toss, a throw, a swing with no ball, or a seated or
+            racket-up serve. These carry a bar the player can see.
+          - That makes 27 app-checked steps and 16 self-checked ones. The last
+            step is always the app's.
+        - On the report:
+          - the feel cue sits under the drill, unfolded;
+          - the step says how it is passed;
+          - a self-checked step offers "I can do this" to move up;
+          - the folded ladder tags each step "film it to check" or "check it
+            yourself";
+          - plan items 2–4 are closed `<details>` that open to the how and
+            the check.
+        - The week plan prints each step's own check.
+        - Proof:
+          - every ladder maps high/medium/low to rungs 1/2/3 in order;
+          - a seeded severity gives that rung in `causalPlan`, and
+            `drillForMetric` agrees;
+          - `@ts-expect-error` on a step with no check is the type-level
+            proof, and a runtime walk covers every ladder and axis: served
+            reps go to the app, the rest to the player, every bar passes the
+            copy lint;
+          - render tests cover the feel unfolded, the check line and button,
+            and later fixes folded with their how;
+          - the injury demo was previewed at 375×812, with the self-pass
+            moving to step 2 of 5.
+        - `stepOf` now matches by name, since wrapped and stored drills are
+          different objects.
       - **What:**
         - the starting rung comes from the fault's severity;
         - each step declares an engine check or a self-check;

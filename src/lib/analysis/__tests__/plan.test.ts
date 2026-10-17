@@ -12,11 +12,11 @@
  * started, never grows past the cap, never lists a symptom of something it is
  * already listing, and never names a drill that does not exist.
  */
-import { DRILLS } from '../coaching'
 import { diagnose } from '../diagnose'
 import type { FlawId } from '../flaws'
 import { detectServe } from '../phases'
-import { FLAW_DRILL, FLAW_DRILL_BY_AXIS, HIERARCHY, assessResilience, triage } from '../triage'
+import { progressionFor, startingRung } from '../progressions'
+import { HIERARCHY, assessResilience, triage } from '../triage'
 import { MAX_PLAN, causalPlan, suppressedNote } from '../verdict'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
@@ -75,17 +75,16 @@ check('the plan opens on the same fault triage chose', () => {
   // so its first entry has to be the fault the stored verdict already named. If
   // these two ever disagree the report is arguing with its own database.
   //
-  // Compared against `verdict.drill_id` — what triage actually stored — rather
-  // than against `FLAW_DRILL[flaw]`. Those stopped being the same thing when
-  // `toss_drift` started choosing its drill by the axis the toss wandered along:
-  // re-deriving from the flaw alone dropped the axis and this test asserted the
-  // plan had gone wrong when the two halves in fact agreed. A check on the
-  // stored value cannot drift out of step with the thing it is checking.
-  const primaryDrill = DRILLS[verdict.drill_id!]
-  assert(
-    plan[0].drill.name === primaryDrill.name,
-    `plan opens on "${plan[0].drill.name}", triage chose "${primaryDrill.name}"`,
-  )
+  //
+  // Compared by the fault, and then by the drill the stored verdict implies:
+  // the rung of that fault's ladder, on the axis triage read, that its stored
+  // severity starts on (L4.2). Not against `verdict.drill_id` any more, which
+  // names the fault's one fixed drill and is no longer what the plan hands out.
+  const primary = verdict.primary_flaw!
+  assert(plan[0].flaw === primary.flaw, `plan opens on ${plan[0].flaw}, triage chose ${primary.flaw}`)
+  const ladder = progressionFor(primary.flaw, primary.axis)!
+  const want = ladder.steps[startingRung(ladder, primary.severity)]
+  assert(plan[0].drill.name === want.name, `plan opens on "${plan[0].drill.name}", the ${primary.severity} start is "${want.name}"`)
 })
 
 check('nothing is listed twice', () => {
@@ -108,17 +107,11 @@ heading('Causes before the things they cause')
 check('the plan runs down the hierarchy, never back up it', () => {
   const { diagnosis, verdict, plan } = pipeline(MESSY)
   const detected = diagnosis.flaws.filter((f) => f.detected)
-  // Map each planned item back to the flaw that produced it, by its drill —
-  // including the drills a flaw hands out per axis. The toss drift on this
-  // serve is read front-to-back, so its entry is the baseline drill rather
-  // than `FLAW_DRILL`'s axis-blind one, and a lookup that only knew the latter
-  // filed it on no rung at all.
-  const drillsOf = (f: FlawId) => [FLAW_DRILL[f], ...Object.values(FLAW_DRILL_BY_AXIS[f] ?? {})]
-  const flawOf = (name: string) =>
-    (Object.keys(FLAW_DRILL) as FlawId[]).find((f) => drillsOf(f).some((id) => DRILLS[id].name === name))
-
-  const rungs = plan.map((p) => rung(flawOf(p.drill.name)!))
-  assert(rungs.every((r) => r >= 0), `a planned drill maps to no rung: ${plan.map((p) => p.drill.name).join(', ')}`)
+  // Each planned item carries the fault that produced it. Read off that
+  // rather than mapped back from the drill, since the drill is now a rung of
+  // the fault's ladder chosen by severity (L4.2) and no fixed table names it.
+  const rungs = plan.map((p) => (p.flaw ? rung(p.flaw) : -1))
+  assert(rungs.every((r) => r >= 0), `a planned item maps to no rung: ${plan.map((p) => p.flaw).join(', ')}`)
   note(`rungs ${rungs.join(' → ')} of ${HIERARCHY.length}`)
   for (let i = 1; i < rungs.length; i++) {
     assert(rungs[i] >= rungs[i - 1], `plan went back up the hierarchy at position ${i + 1}`)
@@ -128,13 +121,11 @@ check('the plan runs down the hierarchy, never back up it', () => {
 
 check('a symptom of something already in the plan is left out of it', () => {
   const { diagnosis, plan } = pipeline(MESSY)
-  const attributed = diagnosis.flaws
-    .filter((f) => f.detected && f.caused_by)
-    .map((f) => DRILLS[FLAW_DRILL[f.flaw]].name)
+  const attributed = diagnosis.flaws.filter((f) => f.detected && f.caused_by).map((f) => f.flaw)
 
   note(attributed.length ? `attributed: ${attributed.join(', ')}` : 'nothing was attributed')
-  for (const name of plan.map((p) => p.drill.name)) {
-    assert(!attributed.includes(name), `"${name}" is a symptom and was planned anyway`)
+  for (const flaw of plan.map((p) => p.flaw)) {
+    assert(!flaw || !attributed.includes(flaw), `${flaw} is a symptom and was planned anyway`)
   }
 })
 

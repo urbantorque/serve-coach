@@ -16,7 +16,7 @@
  * held once and does not now; the path moves its part back and says so.
  */
 import { HIERARCHY } from './analysis/triage'
-import { progressionFor, rungFor } from './analysis/progressions'
+import { lastSeverity, progressionFor, rungFor } from './analysis/progressions'
 import { FLAWS, type FlawId } from './analysis/flaws'
 import { PART_NAME, RECHECK_EVERY, standing, tripsAfter, type Standing } from './graduation'
 import type { Session } from './storage/db'
@@ -87,7 +87,7 @@ export function servePath(
       part.flaw = working.flaw
       const ladder = progressionFor(working.flaw)
       if (ladder) {
-        const rung = rungFor(working.flaw, ladder, rungs)
+        const rung = rungFor(working.flaw, ladder, rungs, lastSeverity(sessions, working.flaw))
         part.step = { at: rung + 1, of: ladder.steps.length }
       }
       if (working.heldBefore) {
