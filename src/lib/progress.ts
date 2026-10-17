@@ -24,6 +24,7 @@ import {
   type Status,
 } from './analysis/types'
 import { NOISE_FLOOR } from './analysis/tiers'
+import { CARD_NOISE_SD } from './analysis/cardNoise'
 import { MIN_EVIDENCE, type FlawId } from './analysis/flaws'
 import { progressionFor } from './analysis/progressions'
 import {
@@ -1707,6 +1708,77 @@ export function byServeNumber(
     })
   }
   return out
+}
+
+/* --------------------------------------- the second serve that slows (L5.8) */
+
+export interface SecondServeTempo {
+  /** Mean racket-drop-to-contact time over the tagged first serves, ms. */
+  firstMs: number
+  /** The same over the tagged second serves, ms. */
+  secondMs: number
+  firstServes: number
+  secondServes: number
+  /** One sentence, in the copy rules' voice. */
+  line: string
+}
+
+/**
+ * Whether the player swings their second serve slower than their first, from
+ * the racket drop to the ball (L5.8).
+ *
+ * Good servers do not: the racket travels about as fast on a second serve as
+ * on a first, and the safety comes from the spin and the path (Chow 2003;
+ * Sheets 2011). A club player's second serve that is safer because it is
+ * slower is pushed in, the habit that ball is meant to replace.
+ *
+ * Said only past the camera and the player's own spread, the rules
+ * `missesInCommon` keeps:
+ *
+ *   - `MIN_SERVES_EACH_SIDE` tagged serves of each number, each with a
+ *     drop-to-contact time the card trusts;
+ *   - one rubric era, so the engine did not move under the comparison. Every
+ *     serve type, unlike the rest of this screen: a time is not judged on a
+ *     type's band, and a second serve is usually a different type;
+ *   - slower by more than one take's camera noise on this reading
+ *     (`CARD_NOISE_SD.dropToContact`, measured on the Bath serves by
+ *     `realiseReal`); and
+ *   - slower by twice the gap's standard error, with each side's spread held
+ *     to at least that noise, so a few lucky-steady serves cannot shrink it.
+ *
+ * A faster second serve is not a fault and says nothing.
+ */
+export function secondServeSlower(sessions: Session[], tags: readonly ServeTag[]): SecondServeTempo | undefined {
+  const number = new Map(tags.map((t) => [t.id, t.serveNumber]))
+  const era = currentRubricEra(
+    sessions.filter((s) => s.triage?.status !== 'rejected').sort((a, b) => a.createdAt - b.createdAt),
+  )
+  const timeOf = (s: Session) => {
+    const row = s.fundamentals.flatMap((f) => f.metrics ?? []).find((m) => m.id === 'dropToContact')
+    return row && Number.isFinite(row.value) && (row.confidence ?? 0) >= MIN_EVIDENCE ? row.value : undefined
+  }
+  const times = (n: 1 | 2) =>
+    era.filter((s) => number.get(s.id) === n).map(timeOf).filter((v): v is number => v !== undefined)
+  const first = times(1)
+  const second = times(2)
+  if (first.length < MIN_SERVES_EACH_SIDE || second.length < MIN_SERVES_EACH_SIDE) return undefined
+
+  const noise = CARD_NOISE_SD.dropToContact
+  const spread = (xs: number[]) => Math.max(noise ** 2, xs.reduce((s, x) => s + (x - mean(xs)) ** 2, 0) / (xs.length - 1))
+  const gap = mean(second) - mean(first)
+  const error = Math.sqrt(spread(first) / first.length + spread(second) / second.length)
+  if (gap < noise || gap < 2 * error) return undefined
+  return {
+    firstMs: Math.round(mean(first)),
+    secondMs: Math.round(mean(second)),
+    firstServes: first.length,
+    secondServes: second.length,
+    line: cue(
+      // No number: the copy rules keep raw measurements off the screen. The
+      // two times are on the result for anything that wants to draw them.
+      'Your second serve swings **a beat slower** from the racket drop to the ball. Swing it as fast as your first; spin keeps it in.',
+    ),
+  }
 }
 
 export interface InRate {

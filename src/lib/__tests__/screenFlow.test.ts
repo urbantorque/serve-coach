@@ -213,6 +213,8 @@ const HISTORY_CONSUMERS = [
   'inRateFor',
   'longestStreakLine',
   'recurringStrainOf',
+  // A second serve swung slower than the first (L5.8).
+  'secondServeSlower',
   'rotationMoveOnTrip',
   // Serves per week (D5.4).
   'servesPerWeek',

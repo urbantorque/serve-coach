@@ -2562,7 +2562,37 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         backwards is an `UNCALIBRATED` reading first.
       - *Proof:* a negative `landingLean` on the rig; every Bath serve lands
         forward.
-- [ ] **L5.8 The second serve that slows down** · M.
+- [x] **L5.8 The second serve that slows down** · M.
+      - *Delta (Oct 17):* done.
+        - `secondServeSlower` in `progress.ts` compares the card's
+          drop-to-contact time across serves tagged first and second.
+          - It needs five tagged serves of each number
+            (`MIN_SERVES_EACH_SIDE`), each with a reading the card trusts,
+            and one rubric era.
+          - It counts every serve type, unlike the rest of the block: a time is
+            not judged on a type's band, and a second serve is usually a
+            different type.
+          - It speaks when the second serve is slower by more than one take's
+            camera noise on this reading, `CARD_NOISE_SD.dropToContact`
+            (18.5 ms, from `realiseReal` on the Bath serves).
+          - It also needs the gap to be twice its standard error, with each
+            side's spread held to at least that noise.
+          - A faster second serve is not a fault and says nothing.
+        - The Progress screen's "First and second serves" block carries the
+          line: "Your second serve swings **a beat slower** from the racket
+          drop to the ball. Swing it as fast as your first; spin keeps it in."
+          - There is no number in it, because the copy rules keep raw
+            measurements off the screen. The two means are on the result.
+          - Registered as a whole-history reader for R55.
+        - Proof: six checks in `secondServe.test.ts` on the rig's
+          `motionSeconds` tempo dial, with tracker noise.
+          - 1.35 s first against 1.9 s second reads 165 against 207 ms, and is
+            said.
+          - The same tempo tagged both ways, a 10 ms gap (1.35 against 1.65 s),
+            a faster second serve, and four second serves all say nothing.
+          - Untagged serves do not move the first-serve time.
+        - Seen at 375×812 on twelve seeded serves: the line sits under the two
+          counts, with no console errors. The entry bundle is 126.1 kB.
       - **What:** with tagged first and second serves, compare drop-to-contact
         time. Say so when the second is slower past the noise bound
         (Chow 2003, Sheets 2011).

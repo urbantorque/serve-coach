@@ -4,13 +4,14 @@ import PracticeCard from '../components/PracticeCard'
 import ProgressShare from '../components/ProgressShare'
 import ProgressTiles from '../components/ProgressTiles'
 import { DeltaBars, GapTrend, ScoreTrend, TrendTable } from '../components/Trend'
-import { Icon } from '../components/primitives'
+import { Cue, Icon } from '../components/primitives'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { strainClearedLine, strainLine } from '../lib/analysis/verdict'
 import type { PracticeFocus } from '../lib/practice'
 import {
   MIN_OUTCOMES_FOR_RATE,
   byServeNumber,
+  secondServeSlower,
   faultTrends,
   inRateByType,
   servesPerWeek,
@@ -150,6 +151,8 @@ export default function Progress({
   // when a week jumps (D5.4).
   const numbers = useMemo(() => byServeNumber(sessions, tags, form?.serveType), [sessions, tags, form])
   const inRates = useMemo(() => inRateByType(sessions, tags), [sessions, tags])
+  // A second serve swung slower than the first, past the camera's noise (L5.8).
+  const slowSecond = useMemo(() => secondServeSlower(sessions, tags), [sessions, tags])
   const weeks = useMemo(
     () => servesPerWeek(sessions, undefined, undefined, practiceSessions),
     [sessions, practiceSessions],
@@ -377,7 +380,7 @@ export default function Progress({
           {/* Kept apart because a second serve is meant to be safer, slower
               and spun: averaged with first serves, its score and its in-rate
               answer neither question. Only serves the player tagged. */}
-          {(numbers.length > 0 || inRates.length > 0) && (
+          {(numbers.length > 0 || inRates.length > 0 || slowSecond) && (
             <section className="block">
               <h2 className="block-title">First and second serves</h2>
               {numbers.map((n) => (
@@ -393,6 +396,11 @@ export default function Progress({
                   {SERVE_TYPES[r.serveType].label}: in on {r.inServes} of {r.outcomes} tagged.
                 </p>
               ))}
+              {slowSecond && (
+                <p className="progress-foot">
+                  <Cue text={slowSecond.line} />
+                </p>
+              )}
             </section>
           )}
 
