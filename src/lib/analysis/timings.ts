@@ -108,3 +108,35 @@ export function coldTimingLine(t: Timings | undefined): string | undefined {
   if (!t?.coldMedianMs) return undefined
   return `${seconds(t.coldMedianMs)} on a cold start, which includes the 57 MB download`
 }
+
+/**
+ * Seconds a player can hold in their head: to the second under twenty, to
+ * the nearest five above it, since the spread between passes is wider than
+ * that anyway.
+ */
+export function roughSeconds(ms: number): number {
+  const s = ms / 1000
+  return s < 20 ? Math.max(1, Math.round(s)) : Math.round(s / 5) * 5
+}
+
+/**
+ * How long this analysis will take, from this phone's own past ones (L6.9),
+ * or nothing.
+ *
+ * Nothing below `MIN_TIMINGS` warm passes, for the reason `timingsOf` gives.
+ * A cold engine is a download as well as a read: its own median when there is
+ * one, said as including the download, and otherwise the warm figure with the
+ * download named as extra, since nothing here can price somebody's signal. A
+ * basket is that figure per serve.
+ */
+export function estimateLine(t: Timings | undefined, o: { cold?: boolean; serves?: number } = {}): string | undefined {
+  if (!t) return undefined
+  const serves = Math.max(1, o.serves ?? 1)
+  const each = o.cold && t.coldMedianMs ? t.coldMedianMs : t.medianMs
+  const total = serves === 1 ? each : t.medianMs * serves + (o.cold ? each - t.medianMs : 0)
+  const s = roughSeconds(total)
+  const said = s >= 90 ? `${Math.round(s / 60)} minutes` : `${s} seconds`
+  const what = serves > 1 ? `About ${said} for ${serves} serves on this phone` : `About ${said} on this phone`
+  if (!o.cold) return `${what}.`
+  return t.coldMedianMs ? `${what}, with the first download.` : `${what}, plus the first download.`
+}

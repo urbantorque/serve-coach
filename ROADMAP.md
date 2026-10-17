@@ -2993,7 +2993,32 @@ Everything here is built from `primitives.tsx` and the existing tokens.
       - **What:** "Save a backup first", using plain IndexedDB with no React,
         and a confirmation before anything is cleared.
       - *Proof:* a render test.
-- [ ] **L6.9 A time estimate** · S.
+- [x] **L6.9 A time estimate** · S.
+      - *Delta (Oct 17):* done.
+        - `estimateLine` in `timings.ts` builds on `timingsOf`, which keeps
+          warm and cold passes apart and says nothing below three warm ones.
+          - The warm median, rounded to the second under 20 s and to five
+            above: "About 25 seconds on this phone."
+          - A cold engine uses this phone's cold median when it has one ("with
+            the first download"). Otherwise it names the download as extra
+            ("plus the first download"), since nothing here can price
+            somebody's signal.
+          - A basket is the per-serve figure times its serves, in minutes past
+            90 s.
+        - The analysing screen shows it under the file name, wrapping. It is
+          computed there from the history App hands in, so the timings stay
+          out of the entry chunk.
+        - The analysing screen itself became lazy, fetched when a clip is
+          picked (99c646c). That took 3 kB off the entry chunk, which had
+          reached 129.0 of 130.
+        - Proof: five checks in `estimate.test.ts`: nothing below three
+          passes, the rounding, cold passes kept out of the warm figure, the
+          two download sentences, a basket's figure, and the screen render.
+        - Seen at 375×812 on a real run, with three seeded warm timings: "About
+          20 seconds on this phone, plus the first download." An ellipsis cut
+          the first version short; the line was given its own wrapping class.
+          The console showed only MediaPipe's INFO line. The entry bundle is
+          126.1 kB.
       - **What:** an estimate taken from this device's past `Analysis.cost`.
       - *Proof:* a unit test.
 - [ ] **L6.10 The small platform fixes** · S.

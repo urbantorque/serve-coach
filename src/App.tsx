@@ -1577,6 +1577,8 @@ export default function App() {
               onCancel={sweep ? stopSweep : cancel}
               racket={prefs.handedness ?? 'right'}
               screenLine={wakeLockLine(wakeLock)}
+              history={sessions}
+              cold={offlineReady === false}
             />
           )}
 

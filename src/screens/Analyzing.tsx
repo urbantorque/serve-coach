@@ -1,8 +1,10 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '../components/primitives'
 import type { AnalyzeProgress, Step } from '../lib/analysis/analyze'
 import { MIN_COMPARABLE_SERVES } from '../lib/analysis/consistency'
 import { clipLabel } from '../lib/clipLabel'
+import { estimateLine, timingsOf } from '../lib/analysis/timings'
+import type { Session } from '../lib/storage/db'
 import { PLACEMENT } from '../lib/placement'
 
 // Its own chunk, shared with the report's fault demonstrations: the entry
@@ -89,9 +91,18 @@ interface Props {
   racket?: 'left' | 'right'
   /** Said once when the screen could not be kept on (L6.4). */
   screenLine?: string
+  /** This phone's past analyses, for how long this one will take (L6.9). */
+  history?: readonly Session[]
+  /** The engine is not cached, so this pass downloads it too. */
+  cold?: boolean
 }
 
-export default function Analyzing({ progress, fileName, sweep, onCancel, racket = 'right', screenLine }: Props) {
+export default function Analyzing({ progress, fileName, sweep, onCancel, racket = 'right', screenLine, history, cold }: Props) {
+  // From this phone's own past passes, or nothing until there are enough (L6.9).
+  const estimate = useMemo(
+    () => estimateLine(timingsOf(history ?? []), { cold, serves: sweep?.total }),
+    [history, cold, sweep?.total],
+  )
   const aside = useTicker(ASIDES.length, ASIDE_MS)
   // 'done' is past the end of the list, so every step reads as complete —
   // findIndex would return −1 and light step one under a full bar.
@@ -155,6 +166,7 @@ export default function Analyzing({ progress, fileName, sweep, onCancel, racket 
 
         <h1>{sweep ? 'Comparing your serves' : 'Reading your serve'}</h1>
         <p className="analyzing-file">{clipLabel(fileName)}</p>
+        {estimate && <p className="analyzing-estimate">{estimate}</p>}
         {/* Which serves, when the sweep reads fewer than the clip holds (L2.2).
             The window is the clip's last serves, so its count is the last
             number in it. */}

@@ -31,6 +31,16 @@
   margin-top: -10px;
 }
 
+/* How long it will take (L6.9): under the file name, wrapping, never cut off. */
+.analyzing-estimate {
+  font-size: 12.5px;
+  color: var(--fg-faint);
+  max-width: 34ch;
+  line-height: 1.55;
+  text-wrap: balance;
+  margin-top: -10px;
+}
+
 .pulse {
   position: relative;
   width: 92px;
