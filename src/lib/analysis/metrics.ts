@@ -5,6 +5,7 @@ import { FUNDAMENTALS, METRICS, READINGS, metricCopy } from './coaching'
 import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
 import { assessSpatial } from './spatial'
 import { contactHeightOf } from './handHeight'
+import { tossPathSpread } from './tossPath'
 import { poseAt } from './between'
 import { cue } from './voice'
 import {
@@ -17,9 +18,7 @@ import {
   scoreAgainst,
   sided,
   signedElevationFromHorizontal,
-  smooth,
   statusOf,
-  stdev,
   steadyWorld,
   trunkCoil,
 } from './geometry'
@@ -420,16 +419,8 @@ export function measure(
   // constrains the one axis the reading barely contained.
   {
     const from = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
-    const seg = frames.slice(from, keys.toss + 1)
-    let wobbleImageX = 0
-    if (seg.length >= 3) {
-      // Smoothed first, so landmark jitter does not masquerade as a wobbly toss.
-      const xs = smooth(seg.map((f) => f.image[T.wrist].x), 2)
-      const x0 = xs[0]
-      const x1 = xs[xs.length - 1]
-      const residual = xs.map((x, i) => x - (x0 + ((x1 - x0) * i) / (xs.length - 1)))
-      wobbleImageX = (stdev(residual) / bodyHeight) * 100
-    }
+    // The same reading the diagnosis judges toss drift by (L5.1, `tossPath.ts`).
+    const wobbleImageX = tossPathSpread(frames, from, keys.toss, T.wrist, bodyHeight)
 
     // `dominant` is null only where the two axes are laid across image x in
     // equal measure, at which point naming either one is a coin toss wearing a

@@ -23,6 +23,7 @@ import { readTossPlacement, type TossPlacement } from './tossPlacement'
 import { readHitch, type Hitch } from './hitch'
 import { readChestTurn, type ChestTurn } from './chestTurn'
 import { contactHeightOf } from './handHeight'
+import { tossPathSpread } from './tossPath'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -975,7 +976,9 @@ export function diagnose(
   // the sentence and the fence drill under that flaw — asserted a direction
   // nothing had measured. On the side-on framing this app recommends, the number
   // is front-to-back drift almost entirely.
-  const driftImageX = offLineDrift(frames, liftFrom, keys.toss, T.wrist, bodyHeight)
+  // The card's own reading of the same window (L5.1, `tossPath.ts`), in percent
+  // of standing height, judged against the card's band: one toss, judged once.
+  const driftImageX = tossPathSpread(frames, liftFrom, keys.toss, T.wrist, bodyHeight)
   const driftAxis = imageX.dominant
   const drift = driftAxis
     ? readImageX(driftImageX, driftAxis, imageX)
@@ -1278,46 +1281,6 @@ function windowVisibility(frames: Frame[], from: number, to: number, landmarks: 
   return n ? sum / n : 0
 }
 
-/**
- * Travel of a landmark along IMAGE X across a window, in body heights, with the
- * straight line through it removed first.
- *
- * The subtraction is the whole measurement. A player walking their hand up and
- * forward through the toss is not drifting — that is the motion — and without
- * removing the trend, every serve filmed from anywhere but dead side-on would
- * report a wandering toss.
- *
- * Called `lateralDrift` until now, and the name was the bug. Image x is not
- * sideways; it is the player's front/back axis and their sideways axis mixed in
- * a proportion set by where the phone stood, and side-on — the framing this app
- * recommends — it is 99% front/back. Naming the axis is `axes.ts`'s job and the
- * caller's; this function's job stops at the image, and its name now says so.
- */
-function offLineDrift(
-  frames: Frame[],
-  from: number,
-  to: number,
-  landmark: number,
-  bodyHeight: number,
-): number {
-  const lo = clamp(Math.min(from, to), 0, frames.length - 1)
-  const hi = clamp(Math.max(from, to), 0, frames.length - 1)
-  const n = hi - lo + 1
-  if (n < 3 || !(bodyHeight > 0)) return 0
-
-  const xs = new Float32Array(n)
-  for (let i = 0; i < n; i++) xs[i] = frames[lo + i].image[landmark].x
-  const smoothed = smoothF32(xs, 2)
-
-  const x0 = smoothed[0]
-  const x1 = smoothed[n - 1]
-  let worst = 0
-  for (let i = 0; i < n; i++) {
-    const expected = x0 + ((x1 - x0) * i) / (n - 1)
-    worst = Math.max(worst, Math.abs(smoothed[i] - expected))
-  }
-  return worst / bodyHeight
-}
 
 const round2 = (v: number) => Math.round(v * 100) / 100
 const round3 = (v: number) => Math.round(v * 1000) / 1000

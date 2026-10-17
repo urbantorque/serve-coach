@@ -30,7 +30,8 @@ export type Direction = 'higher' | 'lower' | 'band'
 
 export interface SignalSpec {
   id: string
-  unit: 'deg' | 'ms' | 'ratio'
+  /** `pct`: percent of standing height, where the signal reads a card row that does (L5.1). */
+  unit: 'deg' | 'ms' | 'ratio' | 'pct'
   direction: Direction
   /** Acceptable band at ratings 3, 5, 7 and 9. Interpolated in between. */
   anchors: { 3: [number, number]; 5: [number, number]; 7: [number, number]; 9: [number, number] }
@@ -40,6 +41,22 @@ export interface SignalSpec {
    * degrees and one in milliseconds.
    */
   seriousMiss: number
+  /**
+   * What the band stands on (L5.1): D2.1's rule, extended from the card to the
+   * diagnosis, so no fault is named against a number nobody can account for.
+   *
+   *   · `card` — it reads a card row's own number against that row's band
+   *     (`CARD_SIGNAL`), which names its footing beside it in `coaching.ts`;
+   *   · `study` — published figures, with the year;
+   *   · `motion` — re-derived on real serve motion: the Bath serves read inside
+   *     the club band and are named at no rung, and the rig's fault is named at
+   *     every rung (`bands.test.ts`, `MOTION_SIGNALS`);
+   *   · `unnamed` — read, but no fault is named from it (`flaws.ts`), so no
+   *     band of it reaches a player.
+   *
+   * Compulsory, so a new signal cannot arrive without one.
+   */
+  source: { card: string } | { study: string } | { motion: string } | { unnamed: string }
 }
 
 /**
@@ -69,6 +86,8 @@ export interface SignalSpec {
  */
 export const CARD_SIGNAL: Record<string, string> = {
   tossPeakHeight: 'toss_peak_ratio',
+  // Judged as one since L5.1: both read `tossPathSpread`, the card's number.
+  tossPathWobble: 'toss_drift_ratio',
   hipShoulderSeparation: 'separation_deg',
   legDrive: 'leg_drive_rise_ratio',
   dropDepth: 'drop_depth_ratio',
@@ -100,6 +119,10 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // flat under the racket. Nobody is asked for a perfect zero.
     anchors: { 3: [0, 58], 5: [0, 45], 7: [0, 32], 9: [0, 24] },
     seriousMiss: 22,
+    source: {
+      motion:
+        'Six Bath serves read 21–35° at the trophy from every side, inside the club band and named at no rung; the rig tray (palm 80, forearm laid over) reads 74 and is named at every rung',
+    },
   },
 
   /* --- sequencing --------------------------------------------------------- */
@@ -112,6 +135,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // it is capped so a mis-detection cannot read as a virtue.
     anchors: { 3: [8, 220], 5: [22, 220], 7: [36, 220], 9: [50, 220] },
     seriousMiss: 45,
+    source: { unnamed: 'arming_the_ball is not named: see UNDER_RESOLVED.hip_lead_ms and van Trigt 2024' },
   },
   separation_deg: {
     id: 'separation_deg',
@@ -123,6 +147,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // for its edges are written.
     anchors: cardBand('hipShoulderSeparation'),
     seriousMiss: 12,
+    source: { card: 'hipShoulderSeparation' },
   },
 
   /* --- posture ------------------------------------------------------------ */
@@ -134,6 +159,10 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // is the shot; a lot of it is chasing a toss that went somewhere else.
     anchors: { 3: [0, 24], 5: [0, 19], 7: [0, 15], 9: [0, 12] },
     seriousMiss: 10,
+    source: {
+      motion:
+        'Six Bath serves read 8–18° from behind and in front, inside the club band and named at no rung; the rig spine bent 40° sideways reads past the band and is named at every rung',
+    },
   },
   toss_drift_ratio: {
     id: 'toss_drift_ratio',
@@ -169,8 +198,15 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // target to re-derive against — nothing here has ever filmed a lateral
     // wobble, and a second band would be a number invented to fill a column.
     // Pinned in `depth.test.ts` so a change that fixes it goes red.
-    anchors: { 3: [0, 0.09], 5: [0, 0.07], 7: [0, 0.05], 9: [0, 0.038] },
-    seriousMiss: 0.05,
+    //
+    // ONE TOSS, JUDGED ONCE (L5.1). It now reads the card's toss-path number,
+    // the spread of the hand's path in percent of height (`tossPath.ts`),
+    // against the card's band, where the motion it was re-derived on is
+    // written. The ladder above was this signal's own, on the worst single
+    // point of the same window; the id stays so nothing that names it moves.
+    anchors: cardBand('tossPathWobble'),
+    seriousMiss: 2,
+    source: { card: 'tossPathWobble' },
   },
 
   /* --- the drop and contact ---------------------------------------------- */
@@ -206,6 +242,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // once the band stopped moving with the rung.
     anchors: cardBand('dropDepth'),
     seriousMiss: 0.09,
+    source: { card: 'dropDepth' },
   },
   elbow_lift_ratio: {
     id: 'elbow_lift_ratio',
@@ -222,6 +259,10 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // for it to be close to level.
     anchors: { 3: [-0.13, 0.3], 5: [-0.11, 0.3], 7: [-0.08, 0.3], 9: [-0.05, 0.3] },
     seriousMiss: 0.05,
+    source: {
+      motion:
+        'Six Bath serves hold the elbow 0.00–0.08 above the shoulder line at the drop from every side, named at no rung; the rig back scratch reads -0.14 and is named at every rung',
+    },
   },
   pronation_deg: {
     id: 'pronation_deg',
@@ -238,6 +279,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // actually reads rather than to what a forearm can do.
     anchors: { 3: [12, 200], 5: [20, 200], 7: [28, 200], 9: [36, 200] },
     seriousMiss: 16,
+    source: { unnamed: 'pancake_contact is not named: see UNDER_RESOLVED.pronation_deg' },
   },
   /*
    * How far the hips rise from the deepest load to contact, in standing
@@ -273,6 +315,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     direction: 'higher',
     anchors: cardBand('legDrive'),
     seriousMiss: 0.04,
+    source: { card: 'legDrive' },
   },
   /*
    * When the chest was half turned to the net, ms against the racket's low
@@ -294,6 +337,10 @@ export const SIGNALS: Record<string, SignalSpec> = {
     direction: 'higher',
     anchors: { 3: [0, 400], 5: [0, 400], 7: [0, 400], 9: [0, 400] },
     seriousMiss: 100,
+    source: {
+      study:
+        'Fleisig 2003: the upper trunk turns fastest 58 ms before impact; Newton 2025: the low point comes about 130 ms before it, so a sound serve is half turned after the drop',
+    },
   },
   contact_height_ratio: {
     id: 'contact_height_ratio',
@@ -312,6 +359,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // the phone's position alone moved this reading until D7.4. One band now,
     // the card's (`CARD_SIGNAL`), where its floor's reasons are written.
     anchors: cardBand('contactHeight'),
+    source: { card: 'contactHeight' },
     seriousMiss: 0.12,
   },
   toss_peak_ratio: {
@@ -328,6 +376,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // a beginner meets the ball (1.49 in these units), so no rung should pass it.
     anchors: cardBand('tossPeakHeight'),
     seriousMiss: 0.18,
+    source: { card: 'tossPeakHeight' },
   },
 }
 
@@ -519,11 +568,10 @@ export const NOISE_FLOOR: Record<string, number> = {
   // The rest are read from x and y, which the camera genuinely saw, and are an
   // order of magnitude steadier for it.
   //
-  // 0.007 rather than 0.006 since the toss keyframe moved onto the tossing
-  // hand's peak (`findRelease`): the drift is read from the start of the lift
-  // to that keyframe, and ending it at the peak rather than 150 ms after it
-  // took the deviation to about 0.0045, which 1.5× rounds up past 0.006.
-  toss_drift_ratio: 0.007,
+  // In percent of height since L5.1, when the drift became the card's spread
+  // (`tossPath.ts`): the rig moves it 0.143 between takes and the Bath serves
+  // 0.128, and one and a half of the rig's rounds up to 0.22.
+  toss_drift_ratio: 0.22,
   drop_depth_ratio: 0.012,
   // 0.017 since D7.6: the rig's elbow moves 0.006 between takes and a real one
   // 0.011. The back-scratch dial is named on every take either way, and no real

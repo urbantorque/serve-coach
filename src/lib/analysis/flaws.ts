@@ -79,7 +79,7 @@ export interface FlawFinding {
   axis?: BodyAxis
 }
 
-type SIGNAL_UNIT = 'deg' | 'ms' | 'ratio'
+type SIGNAL_UNIT = 'deg' | 'ms' | 'ratio' | 'pct'
 
 interface FlawSpec {
   flaw: FlawId
@@ -409,6 +409,6 @@ export function evaluateFlaws(
  */
 function round(v: number, signal: string): number {
   const unit = SIGNALS[signal]?.unit
-  if (unit === 'ratio') return Math.round(v * 1000) / 1000
+  if (unit === 'ratio' || unit === 'pct') return Math.round(v * 1000) / 1000
   return Math.round(v)
 }

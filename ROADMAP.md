@@ -2267,7 +2267,53 @@ Everything here is built from `primitives.tsx` and the existing tokens.
 
 ### Wave L5 — Engine depth for the club serve
 
-- [ ] **L5.1 Sources for the diagnosis ladders** · M.
+- [x] **L5.1 Sources for the diagnosis ladders** · M.
+      - *Delta (Oct 17):* done.
+        - Every `SignalSpec` now carries a compulsory `source`, one of:
+          - `card`: the signal reads a card row's number against that row's
+            band;
+          - `study`: published, with a year;
+          - `motion`: re-derived on Bath with a rig fault;
+          - `unnamed`: no fault is named from it.
+        - Sources by signal:
+          - card: separation, drop, legs, contact, toss peak, and now toss
+            drift;
+          - study: chest-open (Fleisig 2003, Newton 2025);
+          - motion: tray, posture and collapsed elbow;
+          - unnamed: hip lead and pronation, whose faults are already never
+            named.
+        - None needed `UNCALIBRATED`.
+        - The three motion bands stand without moving, under the engine's own
+          naming rule. Bath sits inside the club (rung-5) band, nothing on Bath
+          is named even at rung 9, the rig's fault is named at rung 3, and the
+          clean rig is named at no rung.
+          - Tray: Bath 21–35°; the rig's tray reads 74.
+          - Posture: Bath 8–18° from behind and in front; the rig's 40° lean
+            reads 39.
+          - Elbow: Bath −0.002 to 0.079; the rig's back scratch reads −0.144.
+        - Toss drift and toss path are judged as one:
+          - both now call `tossPathSpread` (the spread of the hand's path, in
+            percent of height). The diagnosis used to read the worst single
+            point of the same window;
+          - drift reads the card's band ([0, 3] %), pairs with
+            `tossPathWobble` in `CARD_SIGNAL`, and gains a `pct` unit, so the
+            "one serve, judged once" test holds it to the card's number;
+          - its noise floor was re-derived on the new scale: the rig moves 0.143
+            and Bath 0.128, so 0.22.
+        - Fixtures moved because a smaller wobble now sits inside the card's
+          band:
+          - the posture-attribution fixture: 0.09 to 0.15 m;
+          - the cause-before-symptom fixture: 0.15 to 0.2 m;
+          - the toss-outranks-swing fixture: 0.09 to 0.15 m;
+          - the climbing-band check now rides the palm, with drift among the
+            flat bands.
+        - Proof: two checks in `bands.test.ts`.
+          - Every signal names its footing: card pairs read the card's band at
+            every rung, studies name a year, motion signals have a rig fault,
+            and `unnamed` feeds only unnamed faults. A signal without a source
+            fails the type and the check.
+          - The motion bands hold Bath in and the rig fault out, at 30 and
+            60 fps, from every view each is read from.
       - **What:** D2.1's rule and `bands.test.ts` are extended to the
         diagnosis. Tray, posture, toss drift and collapsed elbow are each
         cited, re-derived on Bath with a rig fault, or moved to

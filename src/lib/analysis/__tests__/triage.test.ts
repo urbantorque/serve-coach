@@ -480,7 +480,8 @@ check('the grip outranks everything below it', () => {
 })
 
 check('a bad toss outranks the swing faults underneath it', () => {
-  const { result } = pipeline({ tossWobble: 0.09, dropBelowShoulder: 0.05, hipLead: -0.09 })
+  // 0.15 since L5.1: the toss is judged on the card's band, and 0.09 sits in it.
+  const { result } = pipeline({ tossWobble: 0.15, dropBelowShoulder: 0.05, hipLead: -0.09 })
   assert(result.primary_flaw?.group === 'toss', `chose ${result.primary_flaw?.group}`)
 })
 

@@ -223,7 +223,7 @@ export interface Triage {
     group: string
     signal: string
     value: number
-    unit: 'deg' | 'ms' | 'ratio'
+    unit: 'deg' | 'ms' | 'ratio' | 'pct'
     target: [number, number]
     target_tier: number
     severity: Severity

@@ -375,7 +375,9 @@ check('a low contact off a good toss is left as a contact fault', () => {
 
 check('a collapsing spine is traced to the toss that caused it', () => {
   // From behind, where both the lean and a sideways toss are read (L1.2).
-  const { diagnosis } = run({ spineLean: 34, tossWobbleLateral: 0.09, cameraYaw: 8 }, 5)
+  // 0.15 since L5.1: the drift reads the card's spread against the card's
+  // band, and 0.09 now sits inside it.
+  const { diagnosis } = run({ spineLean: 34, tossWobbleLateral: 0.15, cameraYaw: 8 }, 5)
   assert(
     findingFor(diagnosis, 'posture_collapse')?.caused_by === 'toss_drift',
     'a spine chasing a drifting toss was reported as a posture problem on its own',
@@ -412,14 +414,14 @@ check('root causes are listed ahead of the symptoms they explain', () => {
   // The drifting toss and the spine that chases it are the same kind of link,
   // posed together above.
   //
-  // The toss drifts 0.15 here rather than 0.09. The ordering holds at equal
+  // The toss drifts 0.2 here (0.15 before L5.1, 0.09 before that). The ordering holds at equal
   // severity, and since real motion put the lean's floor level with its serious
   // miss (`NOISE_FLOOR.spine_lean_deg`) a named collapse is always 'high', so
   // the toss has to be a serious miss too or the sort is by severity instead.
   //
   // From behind with a sideways toss since L1.2, for the reason given at the
   // posture check above.
-  const { diagnosis } = run({ spineLean: 34, tossWobbleLateral: 0.15, cameraYaw: 8 }, 5)
+  const { diagnosis } = run({ spineLean: 34, tossWobbleLateral: 0.2, cameraYaw: 8 }, 5)
   const order = diagnosis.flaws.filter((f) => f.detected).map((f) => f.flaw)
   const cause = order.indexOf('toss_drift')
   const symptom = order.indexOf('posture_collapse')
@@ -438,16 +440,16 @@ check('the same serve is asked for more at each level up', () => {
     flagged(nine).length >= flagged(four).length,
     'a stronger player was asked for no more than a beginner',
   )
-  // The toss's drift, which still climbs. Contact height carried this check
-  // until D2.3 and the racket drop before it; both bands are the same at every
-  // rung on purpose now — the drop because hand depth does not separate levels
-  // on real motion, contact because it shares the card's one band
-  // (`CARD_SIGNAL` in tiers.ts).
-  const driftAtFour = findingFor(four, 'toss_drift')!.target[1]
-  const driftAtNine = findingFor(nine, 'toss_drift')!.target[1]
-  assert(driftAtNine < driftAtFour, 'the toss asked of a 9 was no steadier than for a 4')
-  note(`toss drift target ${driftAtFour.toFixed(3)} at tier 4, ${driftAtNine.toFixed(3)} at tier 9`)
-  for (const flat of ['shallow_drop', 'low_contact'] as FlawId[]) {
+  // The palm's turn, which still climbs. The toss's drift carried this check
+  // until L5.1, contact height until D2.3 and the racket drop before that; all
+  // three bands are the same at every rung on purpose now — the drop because
+  // hand depth does not separate levels on real motion, contact and the toss
+  // because each shares its card row's one band (`CARD_SIGNAL` in tiers.ts).
+  const palmAtFour = findingFor(four, 'waiters_tray')!.target[1]
+  const palmAtNine = findingFor(nine, 'waiters_tray')!.target[1]
+  assert(palmAtNine < palmAtFour, 'the grip asked of a 9 was no stricter than for a 4')
+  note(`palm target ${palmAtFour.toFixed(0)}° at tier 4, ${palmAtNine.toFixed(0)}° at tier 9`)
+  for (const flat of ['shallow_drop', 'low_contact', 'toss_drift'] as FlawId[]) {
     assert(findingFor(nine, flat)!.target[0] === findingFor(four, flat)!.target[0], `the ${flat} band moved with the level again`)
   }
 })

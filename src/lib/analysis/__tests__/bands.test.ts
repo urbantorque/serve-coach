@@ -10,6 +10,9 @@
  */
 import { runEngine } from '../../../dev/mocap/engine'
 import { FUNDAMENTALS, METRICS, READINGS } from '../coaching'
+import { diagnose } from '../diagnose'
+import { FLAWS, type FlawId } from '../flaws'
+import { CARD_SIGNAL, SIGNALS } from '../tiers'
 import { measure } from '../metrics'
 import { filmMocap } from '../mocapServe'
 import { detectServe } from '../phases'
@@ -107,6 +110,77 @@ check('real serves read inside every graded band from the guide placement', () =
       if (id in KNOWN) assert(wrong, `${id} now holds on real serves: ${KNOWN[id].split(':')[0]} fixed it, so drop it from KNOWN`)
       else assert(!wrong, `${id} calls ${out[id]} of ${n} real serves out of band at ${fps} fps`)
     }
+  }
+})
+
+/* ================================================= the diagnosis (L5.1) === */
+
+heading('What every diagnosis band stands on (L5.1)')
+
+/**
+ * The fault each motion-derived signal names, dialled into the rig, the views
+ * it is read from, and the flaw it feeds. Bath is filmed from the same views.
+ */
+const MOTION_SIGNALS: Record<string, { flaw: FlawId; dials: Partial<ServeDials>; bearings: number[]; yaw: number }> = {
+  palm_to_sky_deg: { flaw: 'waiters_tray', dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, bearings: [90, 0, 180], yaw: 82 },
+  spine_lean_deg: { flaw: 'posture_collapse', dials: { spineLean: 40 }, bearings: [0, 180], yaw: 8 },
+  elbow_lift_ratio: { flaw: 'collapsed_elbow', dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, bearings: [90, 0, 180], yaw: 82 },
+}
+
+check('every diagnosis signal names what its band stands on', () => {
+  for (const [id, spec] of Object.entries(SIGNALS)) {
+    const src = spec.source
+    assert(src !== undefined, `${id} has no source`)
+    if ('card' in src) {
+      assert(CARD_SIGNAL[src.card] === id, `${id} claims ${src.card}'s band and is not paired with it`)
+      const [lo, hi] = METRICS[src.card].ideal
+      for (const tier of [3, 5, 7, 9] as const) {
+        const [a, b] = spec.anchors[tier]
+        assert(a === lo && b === hi, `${id} at rung ${tier} is not ${src.card}'s band`)
+      }
+    } else if ('study' in src) {
+      assert(/\b(19|20)\d\d\b/.test(src.study), `${id} claims a study and names no year`)
+    } else if ('motion' in src) {
+      assert(id in MOTION_SIGNALS, `${id} is re-derived on real motion with no rig fault to hold outside it`)
+    } else {
+      const feeds = FLAWS.filter((f) => f.signal === id || f.sideOn === id)
+      assert(feeds.length > 0 && feeds.every((f) => f.notNamed), `${id} is called unnamed and feeds a named fault`)
+    }
+  }
+  // And every card pairing is a declared footing.
+  for (const [card, signal] of Object.entries(CARD_SIGNAL)) {
+    const src = SIGNALS[signal].source
+    assert('card' in src && src.card === card, `${signal} reads ${card}'s number and does not say so`)
+  }
+})
+
+check('a re-derived diagnosis band holds real serves in and the rig fault out', () => {
+  for (const [id, sig] of Object.entries(MOTION_SIGNALS)) {
+    const club = SIGNALS[id].anchors[5]
+    const reads: number[] = []
+    for (const fps of [30, 60]) {
+      for (const bearing of sig.bearings) {
+        for (const serve of REAL_SERVES) {
+          const frames = filmMocap(serve, { fps, bearing })
+          const skel = detectServe(frames, fps)
+          const at9 = diagnose(frames, skel, { tier: 9 }).flaws.find((f) => f.flaw === sig.flaw)
+          assert(!at9?.detected, `${id}: a Bath serve was named ${sig.flaw} at the strictest rung (${fps} fps, bearing ${bearing})`)
+          const v = diagnose(frames, skel, { tier: 5 }).signals[id]
+          if (Number.isFinite(v)) reads.push(v)
+        }
+      }
+    }
+    assert(reads.length >= REAL_SERVES.length, `${id} was read on too few Bath takes`)
+    const outside = reads.filter((v) => v < club[0] || v > club[1])
+    assert(outside.length === 0, `${id}: Bath read ${outside.join(', ')} outside the club band ${club.join(' to ')}`)
+    const rig = (dials: Partial<ServeDials>, tier: number) => {
+      const frames = buildServe({ ...dials, cameraYaw: sig.yaw }, 50)
+      return diagnose(frames, detectServe(frames, 50), { tier }).flaws.find((f) => f.flaw === sig.flaw)
+    }
+    const fault = rig(sig.dials, 3)
+    note(`${id}: Bath ${Math.min(...reads).toFixed(3)} to ${Math.max(...reads).toFixed(3)} against ${club.join(' to ')}; rig fault ${fault?.value}`)
+    assert(fault?.detected === true, `${id}: the rig's ${sig.flaw} is not named at the most lenient rung`)
+    assert(!rig({}, 9)?.detected, `${id}: the rig's clean serve is named at the strictest rung`)
   }
 })
 
