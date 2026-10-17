@@ -798,7 +798,8 @@ check('every field on the card survives a report with no clip left', () => {
 /**
  * Walking the whole history, at the cap, timed.
  *
- * WHY THIS EXISTS. R76 shipped `TripShareButton` calling `tripsOf(sessions)` and
+ * WHY THIS EXISTS. R76 shipped `TripShareButton` (now inside `ProgressShare`,
+ * L4.9, memoised the same way) calling `tripsOf(sessions)` and
  * `tripSummary(trip, sessions)` straight in its body — no memo — on a sheet that
  * also draws a chart. `tripsOf` copies the history and sorts it, `tripSummary`
  * walks it again, and both allocate, so the summary was a fresh identity on
