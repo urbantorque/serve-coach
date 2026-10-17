@@ -525,6 +525,13 @@ export interface ServeDials {
    * expectation in the suite are untouched.
    */
   cameraZoom: number
+  /**
+   * How far the picture slides up or down across the clip, in frame heights
+   * (L5.5): a phone tipping on its stand, or a hand lowering it. Zero at the
+   * first frame, true to the stance calibration, ramping linearly; positive
+   * moves the player down the picture. Zero by default.
+   */
+  cameraTilt: number
   /** Chance per frame that a limb is partly lost, as happens behind the body. */
   dropout: number
   /**
@@ -629,6 +636,7 @@ export const CLEAN_SERVE: ServeDials = {
   depthNoise: 1,
   depthBias: 0,
   cameraPan: 0,
+  cameraTilt: 0,
   cameraZoom: 0,
   dropout: 0,
   occlusionSeconds: 0,
@@ -1255,6 +1263,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
     // than centred like `pan`, because the thing under test is a
     // calibration taken early drifting out of date, not a symmetric wobble.
     const zoom = 1 + d.cameraZoom * (i / Math.max(1, count - 1))
+    const camTilt = d.cameraTilt * (i / Math.max(1, count - 1))
 
     /*
      * World landmarks in the CAMERA's frame, as MediaPipe reports them: x
@@ -1292,7 +1301,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       // the zoom and confound the two dials' own separate questions.
       return lm(
         0.5 + (rawX - 0.5) * zoom + jitter() + pan,
-        GROUND_Y + (rawY - GROUND_Y) * zoom + jitter(),
+        GROUND_Y + (rawY - GROUND_Y) * zoom + jitter() + camTilt,
         p.z + zJitter(),
       )
     })
@@ -1332,7 +1341,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       const x = p.x * cosCam - p.z * sinCam
       const rawX = 0.5 + x * SCALE
       const rawY = GROUND_Y - (hipHeight - p.y) * SCALE
-      return { x: 0.5 + (rawX - 0.5) * zoom + pan, y: GROUND_Y + (rawY - GROUND_Y) * zoom }
+      return { x: 0.5 + (rawX - 0.5) * zoom + pan, y: GROUND_Y + (rawY - GROUND_Y) * zoom + camTilt }
     }
     const racket = { grip: racketAt(racketWorld.grip), head: racketAt(racketWorld.head) }
 

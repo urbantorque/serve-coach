@@ -2443,7 +2443,45 @@ Everything here is built from `primitives.tsx` and the existing tokens.
           4. The entry bundle is 125.2 kB.
       - **What:** `tossArmHold` is promoted into the toss group.
       - *Proof:* the rig's dropped-arm dial; Bath reads 72–79%.
-- [ ] **L5.5 A camera that stays still, or says it didn't** · M.
+- [x] **L5.5 A camera that stays still, or says it didn't** · M.
+      - *Delta (Oct 17):* done.
+        - `cameraMotion.ts` reads two things that do not depend on the pose:
+          - the picture's scale, as the body's segments in the picture against
+            the same segments in the world skeleton's picture plane;
+          - the ground line, as the lowest the feet sit in the picture.
+        - Both are read across the stance before the toss, where the player
+          stands still, and the drift rate is carried to contact. It is not
+          read across the swing:
+          - over the swing a still camera reads 4–15% scale and 2–7% ground
+            drift on the Bath serves, because the player travels towards or
+            away from the lens and lands a foot nearer or further;
+          - a phone stepping back looks exactly like a player stepping
+            forward, so only the stance can tell them apart.
+        - The limits are 7% scale and 3% of standing height.
+          - Bath reads at most 2.1% and 0.2%.
+          - The rig's heavy tracker noise reads 4.6% and 1.7%.
+          - A 10% zoom reads 8%, and a 5% tilt reads 8.4%.
+          - A phone that lurches once mid-swing is not caught; one drifting
+            steadily in a hand, or sliding on a stand, is.
+        - The skeleton carries `derivation.cameraMoved`. `restingTrust`, which
+          prices the scale cost for the card and the diagnosis alike,
+          multiplies every reading resting on the stance's scale by
+          `CAMERA_MOVED` (0.4).
+          - That is under the soft line, so the card says "approximate".
+          - It is under the evidence floor, so the plan names no fault from
+            it.
+          - The reason given is "Your camera moved during the serve, so
+            heights here are a guess."
+        - The rig gained `cameraTilt`, the picture sliding up or down across
+          the clip.
+        - Proof: four checks in `robustness.test.ts`.
+          - The zoom check flips from a confident wrong number to a hedged
+            one: contact height 1.428 at confidence 1.00 becomes 1.488 at
+            0.40, with the camera reason, while angles are untouched.
+          - A tilt is seen.
+          - Noise and pan are not; a low contact named from a still camera is
+            not named from a zooming one.
+          - No Bath serve, from any side at 30 or 60 fps, reads as moved.
       - **What:** a vertical-tilt dial on the rig. Drift in the ground line and
         in apparent size between the ready and contact is detected, and any
         reading built on image height is hedged when the camera moved.

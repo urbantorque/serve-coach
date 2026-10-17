@@ -288,6 +288,11 @@ export function restingTrust(
   // Torso length is about 30% of standing height, so the ratio that recovers
   // height from it multiplies the torso's own error by more than three.
   if (deps.includes('scale') && skel.derivation.scaleFromTorso) c *= 0.5
+  // A camera that drifted after the stance was calibrated (L5.5): every height
+  // read from the picture is a fraction of a scale that has since changed.
+  // Below both the soft line and the evidence floor, so the card says
+  // "approximate" and the plan names no fault from it.
+  if (deps.includes('scale') && skel.derivation.cameraMoved) c *= CAMERA_MOVED
   // The arm fallback puts the trophy in a sensible place, but a place found
   // from a different cue than the one the measurement assumes.
   if (deps.includes('trophy') && skel.derivation.trophyFromArms) c *= 0.7
@@ -349,6 +354,9 @@ export interface ConfidenceContext {
  * separate literals would drift into it again.
  */
 export const DEPTH_COLLAPSED = 0.35
+
+/** What a reading on the stance's scale is worth once the camera moved (L5.5). */
+export const CAMERA_MOVED = 0.4
 
 /**
  * What a timing is worth on a clip that looks slowed down: well under
@@ -573,6 +581,12 @@ export function softnessReason(id: string, ctx: ConfidenceContext): string | und
         ctx.skel.detectedRacket !== ctx.skel.racket
           ? cue('This clip looks like your other hand, so this reading may sit backwards. Check the hand badge before you trust it.')
           : cue('I could not lock which hand holds your racket, so this reading may sit backwards. Set the hand badge yourself.'),
+    })
+  }
+  if (deps.includes('scale') && ctx.skel.derivation.cameraMoved) {
+    causes.push({
+      cost: CAMERA_MOVED,
+      say: cue('Your camera moved during the serve, so heights here are a guess. Stand the phone on something solid.'),
     })
   }
   if (deps.includes('scale') && ctx.skel.derivation.scaleFromTorso) {

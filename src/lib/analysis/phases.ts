@@ -1,3 +1,4 @@
+import { cameraMotion } from './cameraMotion'
 import {
   LM,
   argMaxIn,
@@ -134,6 +135,13 @@ export interface Skeleton {
      * the trophy's *position in time* is then describing the toss instead.
      */
     trophyOnToss: boolean
+    /**
+     * The camera drifted across the stance — closer, further, or tipping —
+     * at a rate that carries past `cameraMotion`'s limits by contact (L5.5).
+     * Everything resting on the stance's scale is hedged when it did.
+     * Optional so a skeleton built before it existed reads as still.
+     */
+    cameraMoved?: boolean
     /**
      * The toss was read from the hand's own lift (`findRelease`). False when
      * nothing rose far enough to be one and it fell back to the tossing hand
@@ -824,7 +832,14 @@ export function detectServe(
     handednessConfidence: confidence,
     detectedRacket: guess.racket,
     detectionConfidence: guess.confidence,
-    derivation: { scaleFromTorso, trophyFromArms: found.fromArms, dropOnTrophy, trophyOnToss, tossFromHand },
+    derivation: {
+      scaleFromTorso,
+      trophyFromArms: found.fromArms,
+      dropOnTrophy,
+      trophyOnToss,
+      tossFromHand,
+      cameraMoved: cameraMotion(frames, keys, bodyHeight).moved,
+    },
   }
 }
 

@@ -18,6 +18,8 @@
  * goes red even though every accuracy test still passes.
  */
 import { MAX_CONSISTENCY_SERVES, assessQuality, blockingFramingIssue, pickFocus, rescore } from '../analyze'
+import { filmMocap } from '../mocapServe'
+import { REAL_SERVES } from './repeatability'
 import { FINE_FPS, MAX_FINE_FRAMES, readWindow, samplingRateFor } from '../../pose/extract'
 import { assessSpatial, DEPTH_YAW_RANGE, viewFromCourtYaw } from '../spatial'
 import {
@@ -2045,8 +2047,9 @@ check('height-normalised readings inflate with the zoom; angle readings do not m
   // Less than it did. Since D7.4 only the hips' height comes from the picture
   // and the hand's height above them from the world skeleton, which a zoom does
   // not touch (`handHeight.ts`), so the drift reaches about half the reading:
-  // 4.3% here, where it used to pass 5%. Still a confident wrong number, and
-  // still pinned, because the hips' part is real.
+  // 4.3% here, where it used to pass 5%. Still a wrong number, pinned because
+  // the hips' part is real — but no longer a confident one: since L5.5 the
+  // stance shows the camera drifting and the reading is hedged (below).
   const inflation = zoomed.contactHeight! / clean.contactHeight!
   note(`contactHeight under a 20% zoom drift: ${clean.contactHeight?.toFixed(3)} -> ${zoomed.contactHeight?.toFixed(3)}`)
   assert(inflation > 1.02, `a 20% zoom drift stopped inflating contactHeight at all: ${inflation.toFixed(3)}`)
@@ -2074,6 +2077,65 @@ check('a realistic-looking zoom no longer flips contact height\'s badge', () => 
     zoomed.contactStatus === clean.contactStatus,
     `a 15% zoom drift moved contactHeight from ${clean.contactStatus} to ${zoomed.contactStatus}`,
   )
+})
+
+heading('A camera that moved says so (L5.5)')
+
+/*
+ * The zoom above was pinned as a confident wrong number. It is still wrong —
+ * nothing here can recover the true scale — but it is no longer confident: the
+ * stance shows the camera drifting, and every reading on the stance's scale is
+ * hedged and says why.
+ */
+check('a zoom drift is seen, and contact height is hedged with the reason, not stated', () => {
+  const clean = measured({ cameraZoom: 0 })
+  const zoomed = measured({ cameraZoom: 0.2 })
+  assert(!clean.skel.derivation.cameraMoved, 'a still camera was called moved')
+  assert(zoomed.skel.derivation.cameraMoved === true, 'a 20% zoom drift was not seen')
+  const before = clean.measurement('contactHeight')!
+  const after = zoomed.measurement('contactHeight')!
+  note(`contact height ${before.value.toFixed(3)} at ${before.confidence.toFixed(2)} → ${after.value.toFixed(3)} at ${after.confidence.toFixed(2)}`)
+  assert(before.confidence >= SOFT_MEASUREMENT, 'the still camera hedged its own contact height')
+  assert(after.confidence < SOFT_MEASUREMENT, 'the zoomed contact height is still stated as firm')
+  const why = softnessReason('contactHeight', {
+    frames: buildServe({ cameraZoom: 0.2 }, FPS),
+    skel: zoomed.skel,
+    swingSamples: zoomed.quality.swingSamples,
+    view: zoomed.quality.view,
+  })
+  assert(/camera moved/.test(why ?? ''), `the hedge does not say the camera moved: "${why}"`)
+  // Angles do not depend on the scale, so they are not hedged by it.
+  assert(zoomed.measurement('kneeBend')!.confidence === clean.measurement('kneeBend')!.confidence, 'an angle paid for the zoom')
+})
+
+check('a camera tipping on its stand is seen through the ground line', () => {
+  const tipped = measured({ cameraTilt: 0.05 })
+  assert(tipped.skel.derivation.cameraMoved === true, 'a 5% tilt was not seen')
+  assert(tipped.measurement('contactHeight')!.confidence < SOFT_MEASUREMENT, 'heights stayed firm under a tilt')
+})
+
+check('tracker noise and a pan are not a moving camera, and the plan names nothing from a moved one', () => {
+  for (const dials of [{ noise: 0.008, seed: 5 }, { noise: 0.006, depthNoise: 3, seed: 7 }, { cameraPan: 0.2 }]) {
+    assert(!measured(dials).skel.derivation.cameraMoved, `${JSON.stringify(dials)} was called a moved camera`)
+  }
+  // A low contact the plan would name from a still camera goes unnamed from a moving one.
+  const plan = (dials: Partial<ServeDials>) => {
+    const frames = buildServe(dials, FPS)
+    return diagnose(frames, detectServe(frames, FPS), { tier: 5 }).flaws.find((f) => f.flaw === 'low_contact')
+  }
+  assert(plan({ contactReach: 1.0 })?.detected === true, 'the still low contact was not named')
+  assert(plan({ contactReach: 1.0, cameraZoom: 0.2 })?.detected !== true, 'a low contact was named off a moving camera')
+})
+
+check('no Bath serve, filmed from a still phone, reads as a moving camera', () => {
+  for (const fps of [30, 60]) {
+    for (const bearing of [90, 0, 180]) {
+      for (const serve of REAL_SERVES) {
+        const frames = filmMocap(serve, { fps, bearing })
+        assert(!detectServe(frames, fps).derivation.cameraMoved, `a still Bath camera was called moved at ${fps} fps from ${bearing}°`)
+      }
+    }
+  }
 })
 
 /* ------------------------------------------------------ per-metric confidence */
