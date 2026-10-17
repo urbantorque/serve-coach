@@ -140,8 +140,8 @@ export interface AnalyzeOptions {
    *     sweep was launched from, and refusing serve four of a clip already
    *     being reported on would be the app arguing with itself.
    *   · `skipBall` — a whole second pass over the video, per serve. This is the
-   *     expensive one, and the comparison only uses measurements every serve
-   *     shares, which the toss reading is not.
+   *     expensive one. A session's light read skips it; a basket sweep keeps
+   *     it since L5.10, because a drill check judges the toss from the ball.
    *   · `skipThumbnails` — six seeks. Genuinely six seeks.
    *   · `skipRacketBoxes` — a third pass, shorter than the ball's (trophy to
    *     contact only) but the same shape of cost for the same reason: a sweep
@@ -361,6 +361,24 @@ export interface SweepOptions {
  * sweep, so the caller's progress text counts "serve 2 of 4" from the same
  * window this loop is walking rather than working it out again.
  */
+/**
+ * What a basket sweep leaves out of each serve's read (L5.10), and so what it
+ * keeps: everything not named here, the ball pass among it.
+ *
+ * The ball used to be left out too, as a whole second pass over the video per
+ * serve for two measurements the comparison does not use. But a basket is
+ * also what a drill step is checked against (`checkDrill`), and the toss
+ * height can only be judged from the ball: a basket filmed to pass the toss
+ * height step came back "only 0 of those serves showed this clearly", every
+ * time. The ball is what the step is about, so it is read.
+ */
+export const SWEEP_SKIPS = {
+  skipFramingCheck: true,
+  skipThumbnails: true,
+  skipRacketBoxes: true,
+  skipPoseRefine: true,
+} as const
+
 export async function sweepServes(
   opts: SweepOptions,
   measure: (serveIndex: number, position: number, total: number) => Promise<Analysis>,
@@ -481,11 +499,11 @@ export async function analyzeAllServes(
           ...opts,
           serveIndex,
           /*
-           * All three skipped, and the third one is new.
+           * `SWEEP_SKIPS`, which keeps the ball since L5.10.
            *
            * The preflight is a check this clip already passed on the serve the
            * sweep was launched from. The ball is a whole second pass over the
-           * video per serve, for two measurements the comparison does not use.
+           * video per serve, kept because a drill check judges the toss from it.
            *
            * The stills used to be kept, on the reasoning that they are what
            * lets the best serve be shown beside the worst as pictures rather
@@ -498,11 +516,7 @@ export async function analyzeAllServes(
            * has said which two serves it names. Same twelve pictures on screen,
            * a third of the seeks.
            */
-          skipFramingCheck: true,
-          skipBall: true,
-          skipThumbnails: true,
-          skipRacketBoxes: true,
-          skipPoseRefine: true,
+          ...SWEEP_SKIPS,
           knownServeTimes,
           onProgress: (p) =>
             opts.onProgress?.({
@@ -1628,7 +1642,10 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
    * again with a window sized for the real motion: the first window was sized
    * for a real-time serve, which on a four-times clip is under a second of it.
    */
-  if (stretch.source === 'none' && !opts.skipBall) {
+  // Not when the clock was handed down: a sweep reads every serve on the
+  // one its first serve settled, and asking again per serve would be a pixel
+  // pass each for an answer that cannot change (L5.10).
+  if (stretch.source === 'none' && !opts.skipBall && !opts.knownStretch) {
     const swing = skel.times.contact - skel.times.drop
     const motion = skel.times.contact - frames[skel.keys.ready].t
     if (probeWorthRunning(swing, motion)) {
@@ -1702,8 +1719,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     applied = { roll_deg: tilt.roll_deg, ...pivot }
   }
 
-  // Skipped when sweeping a basket: it is a second pass over the video per
-  // serve, and the comparison only uses measurements every serve shares.
+  // Skipped by a session's light read: it is a second pass over the video
+  // per serve. A basket sweep keeps it, for the drill check (L5.10).
   // Tracked against the *raw* frames — the ball is found in unrotated pixels,
   // so the shoulder exclusion line has to be drawn in the same space.
   let ball: BallFlight | undefined

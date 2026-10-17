@@ -24,6 +24,7 @@
  * reading. That is a limit on the number, not a reason not to have one.
  */
 import type { Analysis, Frame } from './analysis/types'
+import type { BallFlight } from './vision/ballTrack'
 
 /** MediaPipe Pose returns 33 landmarks, image and world. */
 export const LANDMARKS_PER_FRAME = 33
@@ -47,6 +48,17 @@ export const BYTES_PER_LANDMARK = 120
  */
 export const BYTES_PER_FRAME = 980
 
+/**
+ * One tracked ball sample, `{ t, x, y }`, on the heap: three boxed doubles and
+ * the object round them (L5.10). Measured by `footprint.test.ts` at 98 bytes
+ * in a bare script and 162 in the suite's bundle, which boxes the doubles the
+ * way the landmark's note describes; 130 sits inside both.
+ */
+export const BYTES_PER_BALL_SAMPLE = 130
+
+/** A flight's own object, its arc and its apex, without the samples. */
+export const BYTES_PER_FLIGHT = 300
+
 /** A string's own cost, on top of one byte per character for Latin-1 content. */
 export const BYTES_PER_STRING = 24
 
@@ -67,9 +79,16 @@ export interface Footprint {
   /** Bytes on the JavaScript heap, counted from the objects themselves. */
   frames: number
   stills: number
+  /** The tracked ball, where the read kept one (L5.10: a basket sweep now does). */
+  ball: number
   total: number
   /** How many sampled frames the total is over, so a number can be read per frame. */
   frameCount: number
+}
+
+/** The heap cost of a tracked flight, from its sample count. */
+export function ballBytes(flight: Pick<BallFlight, 'samples'> | undefined): number {
+  return flight ? BYTES_PER_FLIGHT + flight.samples.length * BYTES_PER_BALL_SAMPLE : 0
 }
 
 /** The heap cost of a run of sampled frames, from the count alone. */
@@ -98,10 +117,11 @@ export function canvasBytes(width: number, height: number): number {
 }
 
 /** What a finished analysis is holding. */
-export function footprintOf(a: Pick<Analysis, 'frames' | 'phases'>): Footprint {
+export function footprintOf(a: Pick<Analysis, 'frames' | 'phases' | 'ball'>): Footprint {
   const frames = frameBytes(a.frames.length)
   const stills = stillBytes(a.phases.map((p) => p.thumbnail))
-  return { frames, stills, total: frames + stills, frameCount: a.frames.length }
+  const ball = ballBytes(a.ball)
+  return { frames, stills, ball, total: frames + stills + ball, frameCount: a.frames.length }
 }
 
 /** Megabytes, rounded the way the rest of the app counts storage. */
@@ -114,11 +134,12 @@ export const mb = (bytes: number) => Math.round((bytes / 1e6) * 10) / 10
  * eight of them are not, and the sweep keeps every one so the comparison can be
  * built from them.
  */
-export function sweepFootprint(analyses: readonly Pick<Analysis, 'frames' | 'phases'>[]): Footprint {
+export function sweepFootprint(analyses: readonly Pick<Analysis, 'frames' | 'phases' | 'ball'>[]): Footprint {
   const each = analyses.map(footprintOf)
   return {
     frames: each.reduce((n, f) => n + f.frames, 0),
     stills: each.reduce((n, f) => n + f.stills, 0),
+    ball: each.reduce((n, f) => n + f.ball, 0),
     total: each.reduce((n, f) => n + f.total, 0),
     frameCount: each.reduce((n, f) => n + f.frameCount, 0),
   }
@@ -154,7 +175,10 @@ export function worstCase(maxFrames: number, maxServes: number, stillChars: numb
   // Six keyframes a serve. The paired strip holds two serves' worth again, and
   // those are the same strings rather than copies, so they are not counted twice.
   const stills = maxServes * 6 * (stillChars + BYTES_PER_STRING)
-  return { frames, stills, total: frames + stills, frameCount: maxFrames * maxServes }
+  // A ball for every serve since a sweep keeps it (L5.10), followed at most
+  // once per sampled frame.
+  const ball = maxServes * (BYTES_PER_FLIGHT + maxFrames * BYTES_PER_BALL_SAMPLE)
+  return { frames, stills, ball, total: frames + stills + ball, frameCount: maxFrames * maxServes }
 }
 
 /** A frame shaped like the real thing, for measuring and for tests. */

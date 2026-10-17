@@ -11,7 +11,7 @@
  * owns, and a session never copies it into the clip store (`clipStore.ts`),
  * which is why a long clip is not refused for its size the way a basket is.
  */
-import { analyzeServe, captureServeStills, locateServes, type AnalyzeProgress } from '../analysis/analyze'
+import { SWEEP_SKIPS, analyzeServe, captureServeStills, locateServes, type AnalyzeProgress } from '../analysis/analyze'
 import { isNotAServeError, type Analysis } from '../analysis/types'
 import type { Stretch } from '../analysis/slowMotion'
 import { readContainerTiming, stretchFromContainer } from '../pose/container'
@@ -29,6 +29,8 @@ export interface ReadOptions {
   tier?: number
   signal?: AbortSignal
   onProgress?: (p: AnalyzeProgress) => void
+  /** Read the ball too: a full read, for a picture (L5.10). */
+  withBall?: boolean
 }
 
 export interface SessionVideo {
@@ -39,7 +41,11 @@ export interface SessionVideo {
    * like one without being served (L2.10). Throws when the scan could not run.
    */
   locate: (signal?: AbortSignal, onProgress?: (ratio: number) => void) => Promise<{ found: number[]; unsure: number[] }>
-  /** One serve, light: no ball, no racket boxes, no stills, no second pose model. */
+  /**
+   * One serve, light: no ball, no racket boxes, no stills, no second pose
+   * model. With `withBall`, the full read the plan prices for a picture
+   * (L5.10): the ball pass as well.
+   */
   read: (index: number, found: number[], opts: ReadOptions) => Promise<Analysis>
   /**
    * A still of one serve's contact moment, skeleton drawn as the report draws
@@ -124,11 +130,8 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
             // was passed when the session was planned, and the ball, the boxes,
             // the stills and the second pose model are not what a session line
             // keeps (`lineOf`).
-            skipFramingCheck: true,
-            skipBall: true,
-            skipThumbnails: true,
-            skipRacketBoxes: true,
-            skipPoseRefine: true,
+            ...SWEEP_SKIPS,
+            skipBall: !opts.withBall,
             knownStretch,
           },
           video,
@@ -146,7 +149,10 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
     },
 
     still: async (index, found, opts, kept) => {
-      const analysis = kept ?? (await reader.read(index, found, opts))
+      // A full read, as the plan prices it (L5.10): the ball's pass too, so
+      // the picture shows it. The light read kept from the session's pass has
+      // none, so it is read again rather than drawn without it.
+      const analysis = kept?.ball ? kept : await reader.read(index, found, { ...opts, withBall: true })
       await captureServeStills(video, analysis, video.videoWidth / Math.max(1, video.videoHeight), opts.signal)
       return analysis.phases.find((p) => p.id === 'contact')?.thumbnail ?? ''
     },

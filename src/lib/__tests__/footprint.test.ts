@@ -13,7 +13,9 @@
  * somebody to discover.
  */
 import {
+  BYTES_PER_BALL_SAMPLE,
   BYTES_PER_LANDMARK,
+  ballBytes,
   blankFrame,
   canvasBytes,
   footprintOf,
@@ -120,6 +122,18 @@ check('a landmark costs about what the constant says', () => {
   )
 })
 
+const ballSampleBytes = perItem(200_000, (i) => ({ t: i / 30 + 0.1, x: 0.5 + i * 1e-7, y: 0.3 + i * 1e-7 }))
+note(`one ball sample: ${ballSampleBytes.toFixed(1)} bytes (constant says ${BYTES_PER_BALL_SAMPLE})`)
+
+check('a ball sample costs about what the constant says', () => {
+  // The same ratchet as the landmark's (L5.10): a basket sweep keeps a ball
+  // per serve now, so its cost is counted rather than assumed small.
+  assert(
+    ballSampleBytes > BYTES_PER_BALL_SAMPLE / 2 && ballSampleBytes < BYTES_PER_BALL_SAMPLE * 2,
+    `a ball sample measured ${ballSampleBytes.toFixed(1)} against a stated ${BYTES_PER_BALL_SAMPLE}`,
+  )
+})
+
 check('a frame costs about what the arithmetic says', () => {
   const stated = frameBytes(1)
   assert(
@@ -161,13 +175,28 @@ note(
     `${mb(oneServe.stills)} MB of stills`,
 )
 
+// With a ball per serve, which a sweep keeps since L5.10: followed on every
+// sampled frame, which is more than the ball is ever in the air for.
+const ballOf = () => ({
+  samples: Array.from({ length: WORST_SERVE_FRAMES }, (_, i) => ({ t: i / 30, x: 0.5, y: 0.3 })),
+})
 const basket = sweepFootprint(
   Array.from({ length: 8 }, () => ({
     frames: Array.from({ length: WORST_SERVE_FRAMES }, (_, i) => blankFrame(i)),
     phases: Array.from({ length: 6 }, () => ({ thumbnail: STILL })) as never,
+    ball: ballOf() as never,
   })),
 )
-note(`a swept basket of eight: ${mb(basket.total)} MB over ${basket.frameCount} frames`)
+note(
+  `a swept basket of eight: ${mb(basket.total)} MB over ${basket.frameCount} frames, ` +
+    `${mb(basket.ball)} MB of it the balls`,
+)
+
+check('a basket that keeps its balls stays inside the budget, and the balls are a sliver of it', () => {
+  assert(basket.total < HEAP_BUDGET_BYTES, `${mb(basket.total)} MB against ${mb(HEAP_BUDGET_BYTES)} MB`)
+  assert(basket.ball > 0 && basket.ball < basket.total * 0.02, `the balls are ${mb(basket.ball)} of ${mb(basket.total)} MB`)
+  assert(ballBytes(undefined) === 0, 'a serve with no ball was charged for one')
+})
 // The extractor never opens a full-size canvas: the ball pass runs at 256 px
 // wide and the stills at 420, both scaled down from whatever was filmed. So the
 // canvases are the smallest thing here, and a 4K clip does not make them bigger.

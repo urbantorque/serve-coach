@@ -2648,7 +2648,32 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         with RTMPose on the bench, then re-run every floor. This closes
         `ANALYSIS-REVIEW.md` Tier 1.8.
       - *Proof:* the floor table, before and after.
-- [ ] **L5.10 The ball pass in sweeps** · S–M.
+- [x] **L5.10 The ball pass in sweeps** · S–M.
+      - *Delta (Oct 17):* done.
+        - `SWEEP_SKIPS` in `analyze.ts` is the one list of what a basket sweep
+          leaves out: the framing check, the stills, the racket boxes and the
+          second pose model. The ball pass is no longer on it.
+          - A basket filmed to pass the toss-height step used to come back
+            "only 0 of those serves showed this clearly", every time.
+        - The slow-motion probe is skipped whenever the clock was handed down
+          (`knownStretch`). A swept serve with the ball would otherwise run it
+          per serve, for an answer the first serve already settled.
+        - A session's light read still skips the ball. Its full reads (the
+          best and worst serves' pictures) read it, as the plan already priced
+          them (`withBall`), so the still draws the ball.
+        - `footprint.ts` counts a ball flight (`ballBytes`,
+          `BYTES_PER_BALL_SAMPLE`), and `worstCase` carries one per serve.
+        - Proof:
+          - Two checks in `sweepBall.test.ts`: the sweep keeps the ball, and
+            `sweepServes` over six rig serves with the rig's ball is judged by
+            `checkDrill('toss_height')`. Low tosses come back "not yet" (0 of
+            6 clean), good ones "passed" (6 of 6), and the same basket with no
+            ball reads nothing.
+          - Two in `footprint.test.ts`: a ball sample measures 162 bytes
+            against a stated 130. A swept basket of eight with a ball each is
+            10.9 MB, 0.1 MB of it the balls, inside the 64 MB ratchet.
+        - Nothing on screen changed that a preview can show without a filmed
+          basket. The entry bundle is 126.1 kB.
       - **What:** sweeps keep the ball pass, so `checkDrill` can judge toss
         height in a basket and session full reads keep the ball.
       - *Proof:* the sweep harness with a rig ball, and the footprint test.
