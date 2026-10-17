@@ -84,11 +84,12 @@ check('nothing on the session path writes the file anywhere', () => {
     .readdirSync(dir)
     .filter((f) => f.endsWith('.ts'))
     .map((f) => [f, fs.readFileSync(path.join(dir, f), 'utf8')] as const)
-  const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8')
+  // Moved out of App.tsx with the rest of the reading (L6.11).
+  const app = fs.readFileSync(path.join(root, 'src', 'components', 'useAnalysisRun.ts'), 'utf8')
   const from = app.indexOf('const closeSessionVideo')
   const to = app.indexOf('const openClip = useCallback(')
-  assert(from > 0 && to > from, 'the session functions in App.tsx were not found')
-  sources.push(['App.tsx (session functions)', app.slice(from, to)])
+  assert(from > 0 && to > from, 'the session functions in useAnalysisRun.ts were not found')
+  sources.push(['useAnalysisRun.ts (session functions)', app.slice(from, to)])
   const writes = /keepClip\(|getDirectory\(|createWritable\(|\.arrayBuffer\(\)/
   for (const [name, text] of sources) {
     assert(!writes.test(text), `${name} writes or loads the whole file: ${text.match(writes)?.[0]}`)

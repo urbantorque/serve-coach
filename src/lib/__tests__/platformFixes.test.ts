@@ -19,7 +19,9 @@ check('going home lets go of the clip, which is what the update gate waits for',
   const app = fs.readFileSync('src/App.tsx', 'utf8')
   const goHome = app.slice(app.indexOf('const goHome = () => {'), app.indexOf('}', app.indexOf('const goHome = () => {') + 30) + 200)
   assert(/releaseVideo\(\)/.test(goHome.slice(0, goHome.indexOf("setView({ kind: 'home' })") + 1)), 'home keeps the clip, so an update waits for the next analysis')
-  assert(/const idle = \(\) => view\.kind === 'home' && !urlRef\.current/.test(app), 'the update gate no longer waits for the clip to go')
+  // The gate moved out with the reading (L6.11); it asks whether a clip is held.
+  const run = fs.readFileSync('src/components/useAnalysisRun.ts', 'utf8')
+  assert(/updateMayLand\(\{ view: view\.kind, holdsVideo: Boolean\(urlRef\.current\)/.test(run), 'the update gate no longer waits for the clip to go')
 })
 
 check('the record tap unlocks the voice, through a voice on the phone or not at all', () => {

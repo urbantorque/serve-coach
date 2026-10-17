@@ -3049,7 +3049,40 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - `?check` gains probes for wake lock, `createWritable`, rVFC, a local
           voice and installed status.
       - *Proof:* an App test and the `selfCheck` text tests.
-- [ ] **L6.11 `useAnalysisRun`** · M.
+- [x] **L6.11 `useAnalysisRun`** · M.
+      - *Delta (Oct 17):* done. `App.tsx` went from 2,051 lines to 1,147.
+        - `components/useAnalysisRun.ts` holds the whole reading, moved by
+          exact anchors with the bodies unchanged:
+          - `run`, `compareServes`, the practice session's reading,
+            `openClip`, `cancel` and `stopSweep`;
+          - their refs, the progress and sweep state;
+          - the update gate and the session's pause effect.
+          - App hands it twelve things by the names the code used, and gets
+            back what it renders from.
+        - `appLoaders.ts` holds the lazy screens' loaders, which both
+          files need.
+        - Three small hooks took the rest: `useSets`, `useHistoryLookups`
+          (records, strain, deltas and the serve before) and
+          `usePendingDelete`.
+        - `runDecisions.ts` holds the two decisions worth testing, as pure
+          functions the hook now asks:
+          - `updateMayLand`: home, no clip held, no sweep;
+          - `sweepAfterRead`: a basket, a believed read, the clip still open,
+            and not on the glance.
+        - The tests that read `App.tsx` source now read the code where it
+          lives: the screen graph and history readers, the session path's
+          write check, and L6.10's gate check.
+        - Proof: five checks in `analysisRun.test.ts`.
+          - Both decisions' truth tables, the gate across every view kind.
+          - `useAnalysisRun` mounted by itself through a probe: every action
+            handed back, nothing in flight, and a running session seen as one.
+          - `useHistoryLookups` and `useSets` mounted and read.
+          - `App.tsx` under 1,200 lines.
+        - Seen in the preview after the move:
+          - a refused clip reached the error screen;
+          - a good one reached its report, and back went home with it filed;
+          - the only console line was MediaPipe's INFO.
+        - The entry bundle is 126.8 kB.
       - **What:** `run`, `compareServes` and `openClip` move out of `App.tsx`
         with their refs, so the idle and sweep decisions can be tested.
       - *Proof:* hook tests, and `App.tsx` under 1,200 lines.

@@ -25,12 +25,23 @@ import { assert, check, heading, note, report } from '../analysis/__tests__/harn
 const fs: { readFileSync: (path: string, encoding: 'utf8') => string } = fsUntyped
 const path: { join: (...parts: string[]) => string } = pathUntyped
 
-const APP = fs.readFileSync(path.join(process.cwd(), 'src', 'App.tsx'), 'utf8')
+const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), 'src', ...p), 'utf8')
 /**
- * Where a whole history is read. `App.tsx`, and the progress screen, which took
- * its selectors with it when it stopped being a sheet over home.
+ * The work of reading a clip, which moved out of `App.tsx` whole (L6.11):
+ * every view it sets is a move on the screen graph as much as one in App.
  */
-const HISTORY_READERS = APP + fs.readFileSync(path.join(process.cwd(), 'src', 'screens', 'Progress.tsx'), 'utf8')
+const RUN = read('components', 'useAnalysisRun.ts')
+const APP = read('App.tsx') + '\n' + RUN
+/**
+ * Where a whole history is read. `App.tsx` and the hooks it hands its history
+ * to (L6.11), and the progress screen, which took its selectors with it when it
+ * stopped being a sheet over home.
+ */
+const HISTORY_READERS =
+  APP +
+  read('components', 'useSets.ts') +
+  read('components', 'useHistoryLookups.ts') +
+  read('screens', 'Progress.tsx')
 
 heading('Nowhere the player can get stuck')
 
@@ -123,7 +134,7 @@ check('the error screen is reachable without passing through analyzing', () => {
   }
   // And the code still does it, checked rather than remembered: both refusals
   // set the view and return before the analysing screen is ever shown.
-  const early = APP.slice(0, APP.indexOf("setView({ kind: 'analyzing'"))
+  const early = RUN.slice(0, RUN.indexOf("setView({ kind: 'analyzing'"))
   const refusals = [...early.matchAll(/kind: 'error'/g)].length
   assert(refusals >= 2, `expected run's two early refusals before 'analyzing', found ${refusals}`)
 })
