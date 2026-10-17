@@ -18,6 +18,8 @@ import { readContainerTiming, stretchFromContainer } from '../pose/container'
 import { hearImpacts } from '../audio/decode'
 import { loadVideo, timeScanSamples } from '../pose/extract'
 import { loadEngine } from '../pose/poseEngine'
+import { EngineLoadError } from '../engineDownload'
+import { engineMegabytes } from '../engineManifest'
 import type { ServeType } from '../storage/prefs'
 
 /** Seeks timed to price the session: the first is dropped, so seven count. */
@@ -74,7 +76,11 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
 
   const reader: SessionVideo = {
     calibrate: async (signal) => {
-      const landmarker = await loadEngine()
+      // The first thing a session loads, so the one that says why the coach
+      // could not start (L6.2).
+      const landmarker = await loadEngine().catch((err: unknown) => {
+        throw new EngineLoadError(err, undefined, engineMegabytes())
+      })
       await loadVideo(video, videoUrl)
       return timeScanSamples(video, landmarker, CALIBRATION_SAMPLES, signal)
     },

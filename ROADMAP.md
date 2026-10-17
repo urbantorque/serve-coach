@@ -2771,7 +2771,28 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - a warning on saveData or a cellular connection.
       - *Proof:* fake streaming fetches, a fetch that never resolves, and fake
         timers.
-- [ ] **L6.2 Offline errors that say so** · S.
+- [x] **L6.2 Offline errors that say so** · S.
+      - *Delta (Oct 17):* done.
+        - An engine that will not load used to reach the player as "Something
+          went wrong reading that video", with advice about MP4 files and the
+          camera roll.
+        - It now throws `EngineLoadError`, where an analysis and a session
+          first load the pose engine. Its title and `hints` come from
+          `engineFailureOf`, so the existing error screen shows them through
+          `hintsOf`:
+          - stalled (by class or by name): "The coach's download stopped";
+          - no signal: "The coach is not on this phone yet", saying the
+            download is 57 MB;
+          - otherwise: "I could not start the coach".
+        - Home's footer says "with or without a signal" only once the coach is
+          cached. Before that it says "works without a signal once it is
+          downloaded", and nothing about the signal until the cache answers.
+        - Proof: three checks in `engineFailure.test.ts`: the
+          classification, the copy of all three cases (none of it about the
+          video file), and the Home render at `offlineReady` true, false and
+          unknown.
+        - Seen at 375×812 on the dev server, with no console errors. The entry
+          bundle is 127.4 kB.
       - **What:** a failed engine load gets its own hints instead of
         video-format advice. Home's footer follows `offlineReady`.
       - *Proof:* a failure-classification test, and a Home render with

@@ -157,3 +157,64 @@ export function meteredConnection(nav: {
   if (c.type === 'cellular') return 'cellular'
   return undefined
 }
+
+/* ------------------------------------------------- when the engine fails (L6.2) */
+
+/** Why the coach could not be started, as the player needs to hear it. */
+export type EngineFailure = 'offline' | 'stalled' | 'failed'
+
+/**
+ * Which of the three a failed engine load was: a download that stopped
+ * arriving, no connection to download it over, or something else. By name as
+ * well as class, for the reason `isNotAServeError` gives: a class duplicated
+ * across chunks fails `instanceof` silently.
+ */
+export function engineFailureOf(cause: unknown, online: boolean): EngineFailure {
+  if (cause instanceof DownloadStalled || (cause as { name?: unknown } | null)?.name === 'DownloadStalled') return 'stalled'
+  if (!online) return 'offline'
+  return 'failed'
+}
+
+const FAILURE_COPY: Record<EngineFailure, (mb: number) => { title: string; hints: string[] }> = {
+  offline: (mb) => ({
+    title: 'The coach is not on this phone yet',
+    hints: [
+      `Connect to the internet once, on Wi-Fi if you can, and the coach downloads (${mb} MB).`,
+      'After that it works with no signal at all.',
+    ],
+  }),
+  stalled: (mb) => ({
+    title: "The coach's download stopped",
+    hints: ['Check your connection and try again.', `On Wi-Fi the ${mb} MB takes a minute or two.`],
+  }),
+  failed: () => ({
+    title: 'I could not start the coach',
+    hints: [
+      'Reload the page and try again.',
+      'If it happens again, check this browser is allowed to store data for this site.',
+    ],
+  }),
+}
+
+/**
+ * An engine that would not load, carrying its own advice (L6.2).
+ *
+ * It used to reach the player as "Something went wrong reading that video",
+ * with tips about MP4 files and the camera roll: the right advice for a file
+ * the decoder refused, and no use at all to somebody whose phone has no signal
+ * and no downloaded coach. `hints` is what `hintsOf` reads, so the error
+ * screen shows this copy without knowing the class.
+ */
+export class EngineLoadError extends Error {
+  readonly hints: string[]
+  readonly kind: EngineFailure
+  constructor(cause: unknown, online = globalThis.navigator?.onLine !== false, megabytes = 57) {
+    const kind = engineFailureOf(cause, online)
+    const copy = FAILURE_COPY[kind](megabytes)
+    super(copy.title)
+    this.name = 'EngineLoadError'
+    this.kind = kind
+    this.hints = copy.hints
+    this.cause = cause
+  }
+}

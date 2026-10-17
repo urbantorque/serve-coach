@@ -78,6 +78,8 @@ import { cue } from './voice'
 import { blockingFramingIssue } from './framingIssues'
 import { buildPhases, detectServe, looksSlowedDown, type Skeleton } from './phases'
 import { unswapFrames } from './swapGuard'
+import { EngineLoadError } from '../engineDownload'
+import { engineMegabytes } from '../engineManifest'
 import { detectWithContact, type ContactRead } from './contact'
 import { drillForMetric } from './progressions'
 import { fileTimes, probeWorthRunning, retimeFlight, retimeFrames, stretchNote, type Stretch } from './slowMotion'
@@ -1497,6 +1499,10 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
             ? 'Warming up the pose engine'
             : 'Loading the pose engine',
     })
+    // An engine that would not load says so in its own words (L6.2), not as
+    // a video the decoder refused.
+  }).catch((err: unknown) => {
+    throw new EngineLoadError(err, undefined, engineMegabytes())
   })
 
   onProgress({ step: 'reading', ratio: 0, detail: 'Reading your video' })

@@ -693,9 +693,15 @@ export default function Home({
                   : 'Downloaded, but this browser will not keep it.'}
           </p>
         )}
+        {/* The signal half follows the cache (L6.2): "with or without a signal"
+            was printed under a button offering the download it depends on. */}
         <p>
-          Your video stays on this device and never leaves it. Everything runs in your
-          browser, with or without a signal.
+          Your video stays on this device and never leaves it. Everything runs in your browser
+          {offlineReady
+            ? ', with or without a signal.'
+            : offlineReady === false
+              ? ', and works without a signal once it is downloaded.'
+              : '.'}
         </p>
       </footer>
 
