@@ -2719,7 +2719,51 @@ Everything here is built from `primitives.tsx` and the existing tokens.
 
 ### Wave L6 — Field reliability
 
-- [ ] **L6.1 One honest download** · M.
+- [x] **L6.1 One honest download** · M.
+      - *Delta (Oct 17):* done.
+        - The manifest is `engineManifest.ts`. It lists seven files (the
+          SIMD runtime only), and `scripts/engine-manifest.mjs` reads their
+          sizes off `public/`. The build and the test runner define them as
+          `__ENGINE_MANIFEST__`.
+          - 56.8 MB in all, said as 57 MB.
+          - The home button's size now comes from it.
+        - `engineDownload.ts`:
+          - `fetchStreamed` rejects with `DownloadStalled` after
+            `STALL_MS` (30 s) with nothing arriving: before the response,
+            between chunks, or never answered. It aborts the request.
+          - `downloadEngines` fetches every manifest file through the service
+            worker's cache onto one bar, totalled from the manifest, never
+            past its end.
+          - `meteredConnection` reads Save-Data and cellular.
+        - All three engines download through `fetchStreamed`. A stall rejects,
+          the loader's catch clears `pending`, and the next attempt starts
+          again.
+          - The egress allow list's three engine entries became one, for
+            `engineDownload.ts`, which calls `fetch(` literally so the scan
+            still sees it.
+        - The warm-up runs `downloadEngines`, then builds the engines from the
+          cache. The button reads "Downloading… 23 of 57 MB", moving a
+          megabyte at a time.
+          - A stall reads "The download stopped. Tap to try again."
+          - On a metered connection, before the tap: "You are on mobile data.
+            The download is 57 MB, so wait for Wi-Fi if you can." With Data
+            Saver on, it opens "Data Saver is on" instead.
+        - Proof: seven checks in `engineDownload.test.ts`, with fake streams
+          and a fake clock.
+          - The manifest matches the files on disk.
+          - The bar is one bar across three files, in order, and never runs
+            past its end.
+          - A fetch that never answers stalls at exactly 30 s, and is aborted.
+          - A stream that stops mid-file stalls. One that keeps arriving just
+            inside the limit is not cut off.
+          - The real pose engine's stalled attempt clears the way for a second
+            fetch.
+          - The metered cases, and the Home render of every label.
+        - Seen at 375×812 on the dev server: the bar ran "2 of 57 MB" …
+          "21 of 57 MB" to "Downloaded, but this browser will not keep it".
+          Dev has no service worker. The console showed no errors beyond
+          MediaPipe's own GL lines.
+        - The entry bundle is 127.0 kB.
       - **What:**
         - a build-time manifest of every engine file;
         - one "x of 57 MB" bar across all of them;

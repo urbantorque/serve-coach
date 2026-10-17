@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing, Sheet } from '../components/primitives'
+import { engineMegabytes } from '../lib/engineManifest'
 import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
 import { weekPlan } from '../lib/weekPlan'
@@ -88,6 +89,11 @@ interface Props {
   onMakeOffline: () => void
   /** How that download is going, while it is going. */
   warming?: OfflineWarmup
+  /**
+   * The connection costs money per megabyte, as far as the browser says
+   * (`meteredConnection`, L6.1): said beside the button, before the tap.
+   */
+  metered?: 'saveData' | 'cellular'
   /** Long clips read as practice sessions (L2.4), newest first. */
   practiceSessions?: PracticeSession[]
   onOpenPracticeSession?: (session: PracticeSession) => void
@@ -105,6 +111,11 @@ interface Props {
 export type OfflineWarmup = {
   stage: 'downloading' | 'starting' | 'failed' | 'unkept'
   ratio?: number
+  /** Whole megabytes in so far, and in all, on the one bar across every file (L6.1). */
+  loadedMb?: number
+  totalMb?: number
+  /** Failed because nothing arrived for a while, rather than refused. */
+  stalled?: boolean
 }
 
 const coarsePointer = () =>
@@ -115,6 +126,7 @@ export default function Home({
   ledger = NO_TRIPS,
   cadence,
   offlineReady,
+  metered,
   sessionsLoaded,
   onPick,
   onRecorded,
@@ -640,15 +652,27 @@ export default function Home({
           >
             <Icon name="offline" size={15} />
             {warming?.stage === 'downloading'
-              ? `Downloading… ${Math.round((warming.ratio ?? 0) * 100)}%`
+              ? warming.totalMb
+                ? `Downloading… ${warming.loadedMb ?? 0} of ${warming.totalMb} MB`
+                : `Downloading… ${Math.round((warming.ratio ?? 0) * 100)}%`
               : warming?.stage === 'starting'
                 ? 'Setting up…'
                 : warming?.stage === 'failed'
-                  ? 'Download failed. Tap to try again'
+                  ? warming.stalled
+                    ? 'The download stopped. Tap to try again'
+                    : 'Download failed. Tap to try again'
                   : warming?.stage === 'unkept'
                     ? 'Downloaded, but this browser will not keep it'
-                    : 'Download now to use offline · 57 MB'}
+                    : `Download now to use offline · ${engineMegabytes()} MB`}
           </button>
+        )}
+        {/* Before the tap, on a connection the browser says is metered (L6.1). */}
+        {offlineReady === false && metered && (warming === undefined || warming.stage === 'failed') && (
+          <p className="home-foot-warn">
+            {metered === 'saveData'
+              ? `Data Saver is on. The download is ${engineMegabytes()} MB, so wait for Wi-Fi if you can.`
+              : `You are on mobile data. The download is ${engineMegabytes()} MB, so wait for Wi-Fi if you can.`}
+          </p>
         )}
         {/* A second, quieter copy of the same news for a screen reader.
             `onProgress` below fires once a network chunk, tens of times over a
@@ -663,7 +687,9 @@ export default function Home({
               : warming.stage === 'starting'
                 ? 'Setting up the coach.'
                 : warming.stage === 'failed'
-                  ? 'Download failed.'
+                  ? warming.stalled
+                    ? 'The download stopped.'
+                    : 'Download failed.'
                   : 'Downloaded, but this browser will not keep it.'}
           </p>
         )}

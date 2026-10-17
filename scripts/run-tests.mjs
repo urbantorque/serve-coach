@@ -7,6 +7,7 @@
  * stop the others, and so a crash is attributed to the file that caused it.
  */
 import { build } from 'esbuild'
+import { engineManifest } from './engine-manifest.mjs'
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -73,6 +74,7 @@ if (files.length === 0) {
 }
 
 let failed = 0
+const MANIFEST = JSON.stringify(engineManifest(root))
 
 for (const file of files) {
   const name = path.relative(root, file).replace(/[\\/]/g, '-').replace(/\.ts$/, '')
@@ -109,6 +111,8 @@ for (const file of files) {
      */
     define: {
       'import.meta.env': JSON.stringify({ DEV: false, PROD: true, MODE: 'test', BASE_URL: '/' }),
+      // The engine files and their sizes, as the build defines them (L6.1).
+      __ENGINE_MANIFEST__: MANIFEST,
     },
     /*
      * Vite's virtual modules, which exist only during a Vite build.

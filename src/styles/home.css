@@ -368,6 +368,12 @@
   max-width: 46ch;
 }
 
+/* A metered connection, said before the download (L6.1): the caution colour
+   the warning chips use, at the footer's own size. */
+.home-foot p.home-foot-warn {
+  color: var(--fair-ink);
+}
+
 .badge {
   display: inline-flex;
   align-items: center;

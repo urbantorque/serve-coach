@@ -2,6 +2,9 @@ import { existsSync, readFileSync } from 'node:fs'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { fileURLToPath } from 'node:url'
+// @ts-expect-error - a plain .mjs helper shared with the test runner
+import { engineManifest } from './scripts/engine-manifest.mjs'
 
 /**
  * The wasm runtime must match the @mediapipe/tasks-vision JS that drives it.
@@ -101,6 +104,11 @@ function serveOrtRaw(): Plugin {
 
 export default defineConfig({
   base,
+  // Every engine file and its size, read off `public/` now (L6.1): the one
+  // download bar and the size the home screen states both come from this.
+  define: {
+    __ENGINE_MANIFEST__: JSON.stringify(engineManifest(fileURLToPath(new URL('.', import.meta.url)))),
+  },
   plugins: [
     serveOrtRaw(),
     react(),

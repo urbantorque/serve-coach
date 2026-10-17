@@ -7,6 +7,8 @@
  * download of the library itself.
  */
 import type { FilesetResolver, ObjectDetector } from '@mediapipe/tasks-vision'
+import { fetchStreamed } from '../engineDownload'
+import { ENGINE_MANIFEST } from '../engineManifest'
 import type { PersonBox } from '../pose/playerCrop'
 
 type WasmFileset = Awaited<ReturnType<(typeof FilesetResolver)['forVisionTasks']>>
@@ -47,35 +49,22 @@ let pending: Promise<ObjectDetector> | null = null
 
 /** Same streamed download as `poseEngine.ts`'s, for the same reason: a real progress bar on first run. */
 async function downloadModel(onProgress: (p: EngineProgress) => void): Promise<Uint8Array> {
-  const res = await fetch(MODEL_URL)
-  if (!res.ok) throw new Error(`Could not load the object model (HTTP ${res.status}).`)
-
-  const totalBytes = Number(res.headers.get('content-length')) || 0
-  if (!res.body) return new Uint8Array(await res.arrayBuffer())
-
-  const reader = res.body.getReader()
-  const chunks: Uint8Array[] = []
+  // Streamed through `fetchStreamed`, which rejects a download that stops
+  // arriving (L6.1): the catch in the loader then clears `pending`, so the
+  // next attempt starts again instead of joining a dead one.
+  const totalBytes = ENGINE_MANIFEST.find((f) => MODEL_URL.endsWith(f.path))?.bytes ?? 0
   let loadedBytes = 0
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    chunks.push(value)
-    loadedBytes += value.length
-    onProgress({
-      stage: 'downloading',
-      loadedBytes,
-      totalBytes,
-      ratio: totalBytes ? loadedBytes / totalBytes : undefined,
-    })
-  }
-
-  const out = new Uint8Array(loadedBytes)
-  let offset = 0
-  for (const c of chunks) {
-    out.set(c, offset)
-    offset += c.length
-  }
-  return out
+  return fetchStreamed(MODEL_URL, {
+    onChunk: (bytes) => {
+      loadedBytes += bytes
+      onProgress({
+        stage: 'downloading',
+        loadedBytes,
+        totalBytes,
+        ratio: totalBytes ? Math.min(1, loadedBytes / totalBytes) : undefined,
+      })
+    },
+  })
 }
 
 const visionRuntime = () => import('@mediapipe/tasks-vision')

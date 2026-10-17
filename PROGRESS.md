@@ -3471,7 +3471,7 @@ R49·3 is the round that draws.
 
 **This loop has ended.** Work since 2026-09-23 is on `roadmap/market-ready`, and
 its ledger is `ROADMAP.md`. The rest of this section is the August record. On
-that branch the suite runs **1,749 checks** (2026-10-17, wave L5).
+that branch the suite runs **1,756 checks** (2026-10-17, wave L5).
 
 The loop is designed to be picked up cold, and everything a fresh session needs
 is on disk:

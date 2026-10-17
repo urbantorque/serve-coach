@@ -5,6 +5,7 @@ import { useBackLayer } from './components/useBackLayer'
 import { useWakeLock } from './components/useWakeLock'
 import { useHistory } from './components/useHistory'
 import { useOfflineWarmup } from './components/useOfflineWarmup'
+import { meteredConnection } from './lib/engineDownload'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import type { InjuryFlag } from './lib/analysis/triage'
 import {
@@ -296,6 +297,9 @@ export default function App() {
   const [firstRunIntent, setFirstRunIntent] = useState<'pick' | 'record' | 'check'>('pick')
   // The offline badge and the download behind it — see `useOfflineWarmup` (W5.2).
   const { offlineReady, warming, makeOffline, recheck: recheckOffline } = useOfflineWarmup()
+  // Read once: a connection that turns metered mid-visit is rare, and the line
+  // it drives is advice before a tap, not a guard (L6.1).
+  const [metered] = useState(() => meteredConnection(navigator as Navigator & { connection?: { saveData?: boolean; type?: string } }))
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
 
   /** The player moving a fault's ladder a rung, from the report. */
@@ -1494,6 +1498,7 @@ export default function App() {
               ledger={tripLedger}
               cadence={prefs.cadence}
               offlineReady={offlineReady}
+              metered={metered}
               sessionsLoaded={sessionsLoaded}
               onPick={(f) => void openClip(f)}
               onRecorded={(f) => void openClip(f, true)}

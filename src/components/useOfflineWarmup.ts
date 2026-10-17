@@ -3,6 +3,10 @@ import { isCachedOffline, loadEngine } from '../lib/pose/poseEngine'
 import { isRefineModelCached, loadRefineEngine } from '../lib/pose/refineEngine'
 import { isObjectModelCached, loadObjectEngine } from '../lib/vision/objectEngine'
 import type { OfflineWarmup } from '../screens/Home'
+import { DownloadStalled, downloadEngines } from '../lib/engineDownload'
+import { ENGINE_MANIFEST } from '../lib/engineManifest'
+
+const BASE = import.meta.env?.BASE_URL || '/'
 
 /**
  * Whether the *whole* offline footprint is in the cache — the pose model and
@@ -50,23 +54,25 @@ export function useOfflineWarmup() {
   const makeOffline = useCallback(async () => {
     setWarming({ stage: 'downloading', ratio: 0 })
     try {
-      await loadEngine((p) => {
-        if (p.stage === 'downloading') setWarming({ stage: 'downloading', ratio: p.ratio })
-        else if (p.stage === 'starting') setWarming({ stage: 'starting' })
+      // Every engine file on one bar first (L6.1), through the service
+      // worker's cache, then the engines built from what it holds. The bar
+      // moves a megabyte at a time, not a chunk at a time, so the screen is
+      // not redrawn hundreds of times a second.
+      let shown = -1
+      await downloadEngines(ENGINE_MANIFEST, BASE, {
+        onProgress: ({ loaded, total }) => {
+          const loadedMb = Math.floor(loaded / 1e6)
+          if (loadedMb === shown) return
+          shown = loadedMb
+          setWarming({ stage: 'downloading', ratio: total ? loaded / total : 0, loadedMb, totalMb: Math.round(total / 1e6) })
+        },
       })
-      // Sequential, not `Promise.all`, so the progress bar reads as one
-      // download finishing after another rather than two competing ratios
-      // fighting over the same number.
-      await loadObjectEngine((p) => {
-        if (p.stage === 'downloading') setWarming({ stage: 'downloading', ratio: p.ratio })
-        else if (p.stage === 'starting') setWarming({ stage: 'starting' })
-      })
-      // The swing refinement, last and largest. No byte progress of its own:
-      // it reports as setting up, which is what the player needs to know.
       setWarming({ stage: 'starting' })
+      await loadEngine()
+      await loadObjectEngine()
       await loadRefineEngine()
-    } catch {
-      setWarming({ stage: 'failed' })
+    } catch (err) {
+      setWarming({ stage: 'failed', stalled: err instanceof DownloadStalled })
       return
     }
     // Downloading and keeping are separate questions, and only the cache
