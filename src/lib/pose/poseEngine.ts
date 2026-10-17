@@ -5,6 +5,7 @@
 import type { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
 import { fetchStreamed } from '../engineDownload'
 import { ENGINE_MANIFEST } from '../engineManifest'
+import { inEngineCache } from '../engineCache'
 
 /**
  * What `FilesetResolver.forVisionTasks` hands back.
@@ -266,15 +267,11 @@ export async function isCachedOffline(): Promise<boolean> {
   // `false` every other failure here returns. Nothing reached it until
   // `runAnalysis` began asking whether the engine was cold; found then rather
   // than by a crash, and fixed at the source rather than guarded at the call.
-  if (!('caches' in globalThis)) return false
-  try {
-    const [model, simd, nosimd] = await Promise.all([
-      caches.match(MODEL_URL),
-      caches.match(`${WASM_DIR}/vision_wasm_internal.wasm`),
-      caches.match(`${WASM_DIR}/vision_wasm_nosimd_internal.wasm`),
-    ])
-    return Boolean(model && (simd || nosimd))
-  } catch {
-    return false
-  }
+  // In this build's engine cache only (L6.6): an older version's files are
+  // not this version's, and an upgrade would fetch these on first use.
+  const [simd, nosimd] = await Promise.all([
+    inEngineCache([MODEL_URL, `${WASM_DIR}/vision_wasm_internal.wasm`]),
+    inEngineCache([MODEL_URL, `${WASM_DIR}/vision_wasm_nosimd_internal.wasm`]),
+  ])
+  return simd || nosimd
 }

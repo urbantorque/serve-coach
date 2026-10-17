@@ -27,3 +27,13 @@ export function engineManifest(root) {
     }
   })
 }
+
+/**
+ * The service worker's engine cache name, from the two libraries it holds
+ * runtimes for (L6.6). The worker's route, the app's readiness check and the
+ * test runner all read it from here, so they cannot name different caches.
+ */
+export function engineCacheName(root) {
+  const version = (pkg) => JSON.parse(readFileSync(path.join(root, 'node_modules', pkg, 'package.json'), 'utf8')).version
+  return `serve-coach-pose-engine-${version('@mediapipe/tasks-vision')}-ort-${version('onnxruntime-web')}`
+}

@@ -4,23 +4,17 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
 // @ts-expect-error - a plain .mjs helper shared with the test runner
-import { engineManifest } from './scripts/engine-manifest.mjs'
+import { engineCacheName, engineManifest } from './scripts/engine-manifest.mjs'
 
 /**
- * The wasm runtime must match the @mediapipe/tasks-vision JS that drives it.
- * That JS is precached and updates with every deploy, while the runtime cache
- * below holds entries for up to a year and CacheFirst never revalidates — so
- * the cache is named by the library version, and upgrading the package makes
- * existing installs fetch a matching runtime instead of reviving a stale one.
+ * The wasm runtimes must match the JavaScript that drives them. That JS is
+ * precached and updates with every deploy, while the engine cache below never
+ * revalidates (CacheFirst) — so the cache is named by the MediaPipe and ONNX
+ * Runtime versions (`engineCacheName`), and upgrading either makes existing
+ * installs fetch a matching runtime instead of reviving a stale one. The app
+ * reads the same name (`__ENGINE_CACHE__`) to check readiness and to delete
+ * the caches older versions left (L6.6).
  */
-const engineVersion: string = JSON.parse(
-  readFileSync(new URL('./node_modules/@mediapipe/tasks-vision/package.json', import.meta.url), 'utf8'),
-).version
-
-/** The same, for the ONNX Runtime the swing refinement runs on (`public/ort/`). */
-const ortVersion: string = JSON.parse(
-  readFileSync(new URL('./node_modules/onnxruntime-web/package.json', import.meta.url), 'utf8'),
-).version
 
 /**
  * Where the app is served from.
@@ -108,6 +102,8 @@ export default defineConfig({
   // download bar and the size the home screen states both come from this.
   define: {
     __ENGINE_MANIFEST__: JSON.stringify(engineManifest(fileURLToPath(new URL('.', import.meta.url)))),
+    // The one name the worker's route and the readiness check share (L6.6).
+    __ENGINE_CACHE__: JSON.stringify(engineCacheName(fileURLToPath(new URL('.', import.meta.url)))),
   },
   plugins: [
     serveOrtRaw(),
@@ -162,7 +158,7 @@ export default defineConfig({
             urlPattern: ENGINE_ASSET_RE,
             handler: 'CacheFirst',
             options: {
-              cacheName: `serve-coach-pose-engine-${engineVersion}-ort-${ortVersion}`,
+              cacheName: engineCacheName(fileURLToPath(new URL('.', import.meta.url))),
               /*
                * No `maxAgeSeconds`. There was a one-year limit here, which
                * quietly un-installed offline support: an app opened regularly

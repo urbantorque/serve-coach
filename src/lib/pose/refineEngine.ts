@@ -19,6 +19,7 @@
 import type { InferenceSession } from 'onnxruntime-web'
 import { RTM_INPUT, RTM_MEAN, RTM_STD, decodeSimcc, rtmCrop, type Pt } from './rtmpose'
 import { fetchStreamed } from '../engineDownload'
+import { inEngineCache } from '../engineCache'
 
 const BASE = import.meta.env?.BASE_URL || '/'
 const MODEL_URL = `${BASE}models/rtmpose-s.onnx`
@@ -33,16 +34,8 @@ export const refineEngineResident = (): boolean => session !== null
 
 /** True once the refinement model and its runtime are cached, beside the pose engine's own check. */
 export async function isRefineModelCached(): Promise<boolean> {
-  if (!('caches' in globalThis)) return false
-  try {
-    const [model, runtime] = await Promise.all([
-      caches.match(MODEL_URL),
-      caches.match(`${ORT_DIR}ort-wasm-simd-threaded.wasm`),
-    ])
-    return Boolean(model && runtime)
-  } catch {
-    return false
-  }
+  // This build's engine cache only (L6.6).
+  return inEngineCache([MODEL_URL, `${ORT_DIR}ort-wasm-simd-threaded.wasm`])
 }
 
 /** Load the refinement model. Safe to call repeatedly; the work happens once. */

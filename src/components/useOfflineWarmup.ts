@@ -5,6 +5,7 @@ import { isObjectModelCached, loadObjectEngine } from '../lib/vision/objectEngin
 import type { OfflineWarmup } from '../screens/Home'
 import { DownloadStalled, downloadEngines } from '../lib/engineDownload'
 import { ENGINE_MANIFEST } from '../lib/engineManifest'
+import { pruneEngineCaches } from '../lib/engineCache'
 
 const BASE = import.meta.env?.BASE_URL || '/'
 
@@ -38,6 +39,12 @@ export function useOfflineWarmup() {
   /** Ask the cache again: on opening, and after an analysis has loaded whatever it needed. */
   const recheck = useCallback(() => {
     void checkOfflineReady().then(setOfflineReady)
+  }, [])
+
+  // Older versions' engine caches, deleted once per load (L6.6): every upgrade
+  // used to leave the last 57 MB behind.
+  useEffect(() => {
+    void pruneEngineCaches()
   }, [])
 
   useEffect(() => recheck(), [recheck])

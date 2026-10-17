@@ -9,6 +9,7 @@
 import type { FilesetResolver, ObjectDetector } from '@mediapipe/tasks-vision'
 import { fetchStreamed } from '../engineDownload'
 import { ENGINE_MANIFEST } from '../engineManifest'
+import { inEngineCache } from '../engineCache'
 import type { PersonBox } from '../pose/playerCrop'
 
 type WasmFileset = Awaited<ReturnType<(typeof FilesetResolver)['forVisionTasks']>>
@@ -143,12 +144,8 @@ export const objectEnginePaths = () => ({ model: MODEL_URL })
  * A combined "ready offline" answer needs both checks; see `App.tsx`.
  */
 export async function isObjectModelCached(): Promise<boolean> {
-  if (!('caches' in globalThis)) return false
-  try {
-    return Boolean(await caches.match(MODEL_URL))
-  } catch {
-    return false
-  }
+  // This build's engine cache only (L6.6).
+  return inEngineCache([MODEL_URL])
 }
 
 /**

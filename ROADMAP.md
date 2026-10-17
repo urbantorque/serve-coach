@@ -2902,7 +2902,32 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - an installed app with no history offers a restore;
         - `lastExportedAt` is stored, with a reminder after N serves.
       - *Proof:* render tests with `isIOS` and `isInstalled` stubbed.
-- [ ] **L6.6 An engine cache that follows the version** · S.
+- [x] **L6.6 An engine cache that follows the version** · S.
+      - *Delta (Oct 17):* done.
+        - `engineCacheName` in `scripts/engine-manifest.mjs` names the
+          worker's engine cache from the MediaPipe and ONNX Runtime versions.
+          The worker's route, the `__ENGINE_CACHE__` define and the test
+          runner all read it there.
+        - `engineCache.ts`:
+          - `inEngineCache` asks that cache alone. It checks `has` first,
+            because `open` would create it.
+          - `pruneEngineCaches` deletes every older
+            `serve-coach-pose-engine-*` cache and nothing else.
+        - The pose, object and refine engines check readiness through it.
+          `caches.match` searched every cache, so after an upgrade last
+          version's files answered "ready to use offline".
+        - The warm-up hook prunes once per load. Every upgrade used to leave
+          the last 57 MB behind.
+        - Proof: four checks in `engineCache.test.ts`, against a fake
+          CacheStorage.
+          - The name matches the installed versions.
+          - Old-version files are not ready, and asking creates nothing.
+          - The engines' own checks agree.
+          - Older engine caches are deleted, while this one and the workbox
+            precache stay.
+        - The built `sw.js` and the entry chunk name the same cache,
+          `serve-coach-pose-engine-0.10.18-ort-1.22.0`. The entry bundle is
+          128.5 kB.
       - **What:** the cache name comes through a Vite define, the readiness
         check looks in that cache only, and older engine caches are deleted.
       - *Proof:* a fake CacheStorage test.
