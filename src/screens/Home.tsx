@@ -452,7 +452,7 @@ export default function Home({
               claiming the history is gone. */}
           <span className="progress-foot tnum">
             {`${eraCount} ${eraCount === 1 ? 'serve' : 'serves'} on ${eraTrips} ${eraTrips === 1 ? 'trip' : 'trips'}`}
-            {progress.rubricBreakAt ? ' since we changed how we mark' : ''}
+            {progress.rubricBreakAt ? ' since the scoring changed' : ''}
             {progress.best !== undefined ? ` · best trip ${progress.best}` : ''}
           </span>
 

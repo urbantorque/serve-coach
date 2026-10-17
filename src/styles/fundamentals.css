@@ -222,7 +222,7 @@
 
 .metric-aim-key {
   flex: none;
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
@@ -284,7 +284,7 @@
 
 .unscored-title {
   margin-bottom: 12px;
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
@@ -344,7 +344,7 @@
   border-radius: 999px;
   background: var(--ink-3);
   border: 1px solid var(--hairline);
-  font-size: 10px;
+  font-size: 11px;
   font-style: normal;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -386,7 +386,7 @@
    carries its rank in size, weight and tracking rather than in colour alone,
    which is what lets it move up a step without competing with the heading. */
 .drill-kicker {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -585,7 +585,7 @@
 
 .tshape-key-label {
   flex: none;
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
@@ -604,7 +604,7 @@
    that assumption is wrong by ninety degrees. */
 .tshape-view {
   margin-top: 2px;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: var(--lh-snug);
   color: var(--fg-faint);
   text-wrap: pretty;

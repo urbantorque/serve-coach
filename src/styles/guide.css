@@ -235,7 +235,7 @@
 
 .guide-diagram-label {
   font-family: var(--font);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: var(--wt-label);
   letter-spacing: 0.02em;
   fill: var(--fg-faint);

@@ -15,6 +15,7 @@ import PoseStill from '../components/PoseStill'
 import FaultDemoPanel from '../components/FaultDemoPanel'
 import ModelServe from '../components/ModelServe'
 import MomentPair from '../components/MomentPair'
+import Term from '../components/Term'
 import { LOOK_FOR, faultMoment, momentChecks, momentMark } from '../lib/lookFor'
 import { hasDemo } from '../lib/faultDemoDials'
 import { CHECK_SERVES, drillCheckLine, progressionFor, rungFor, stepCheckLine } from '../lib/analysis/progressions'
@@ -1089,6 +1090,13 @@ export default function Report({
 
       <section className="block">
         <h2 className="block-title">Six moments in your serve</h2>
+        {/* The two moment names a club player is least likely to know,
+            defined on a tap (L4.11). */}
+        <p className="terms-row">
+          <span>Tap a word:</span>
+          <Term id="trophy" />
+          <Term id="racketDrop" />
+        </p>
         <div className="strip">
           {/* `i` is the row `keyframePoses` wrote — position in this same array,
               so a drawn keyframe can never be captioned as a different one. */}
@@ -1277,7 +1285,9 @@ export default function Report({
                 Absent when the camera stood where the feet could not be read. */}
             {analysis.diagnosis?.stance && (
               <span className="chip">
-                {analysis.diagnosis.stance.kind === 'pinpoint' ? 'Pinpoint stance' : 'Platform stance'}
+                <Term id="stance">
+                  {analysis.diagnosis.stance.kind === 'pinpoint' ? 'Pinpoint stance' : 'Platform stance'}
+                </Term>
               </span>
             )}
           </div>
@@ -1365,7 +1375,7 @@ export default function Report({
         )}
 
         <section className="block">
-          <h2 className="block-title">Every area we scored</h2>
+          <h2 className="block-title">Every area I scored</h2>
           <div className="fcards">
             {/* Nothing opens by itself. `defaultOpen={i === 0}` opened whatever
                 sat first in the array, and that order is hard-coded in
@@ -1391,7 +1401,9 @@ export default function Report({
         {/* The order the body fired in (D3.8), at 60 fps and above. */}
         {analysis.diagnosis?.firingOrder && (
           <section className="block">
-            <h2 className="block-title">The order you fired in</h2>
+            <h2 className="block-title">
+              <Term id="firingOrder">The order you fired in</Term>
+            </h2>
             <FiringTimeline chain={analysis.diagnosis.chain} order={analysis.diagnosis.firingOrder} />
           </section>
         )}

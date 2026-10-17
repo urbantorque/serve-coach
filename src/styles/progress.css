@@ -152,7 +152,7 @@
 
 .delta--compact {
   padding: 2px 6px;
-  font-size: 10.5px;
+  font-size: 11px;
 }
 
 .sr-only {
@@ -186,7 +186,7 @@
 .chart-tick,
 .chart-axis {
   fill: var(--fg-faint);
-  font-size: 9px;
+  font-size: 11px;
   font-family: var(--font);
   font-variant-numeric: tabular-nums;
 }
@@ -301,7 +301,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -525,7 +525,7 @@
 }
 
 .dtable th {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 660;
   letter-spacing: 0.08em;
   text-transform: uppercase;

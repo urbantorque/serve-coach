@@ -49,8 +49,8 @@ export default function ModelServe({ racket, serve: given, quiet = false }: Prop
         <div className="fault-demo-wait" aria-busy="true" />
       )}
       <p className="player-note">
-        A model serve drawn by the app, not a player. Tap a moment to stop on it and read what to
-        look for.
+        A drawn model serve, not a real player. Tap a moment to stop on it and read what to look
+        for.
       </p>
     </div>
   )

@@ -199,7 +199,7 @@
 
 .tag {
   font-style: normal;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -259,9 +259,64 @@
 
 .ring-label {
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--fg-faint);
+}
+
+/* A word defined on a tap (L4.11): dotted underneath, so it reads as a word
+   with more to it rather than a link that leaves; the meaning opens under it. */
+.term {
+  position: relative;
+  display: inline;
+}
+
+.term-word {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--fg-faint);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+.term-word[aria-expanded='true'] {
+  text-decoration-color: var(--lime);
+}
+
+.term-meaning {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 5;
+  width: max-content;
+  max-width: min(260px, 72vw);
+  padding: 9px 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--hairline);
+  background: var(--ink-3);
+  color: var(--fg);
+  font-size: 12.5px;
+  font-weight: 450;
+  line-height: var(--lh-snug);
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: normal;
+}
+
+.terms-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: -4px 0 10px;
+  font-size: 12.5px;
+  color: var(--fg-muted);
 }

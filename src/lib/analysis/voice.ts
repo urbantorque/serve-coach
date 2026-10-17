@@ -74,6 +74,15 @@ const COACH_JARGON =
 const MISUSED_DROP =
   /(?<!racket )(?<!racket head )\b(drops|dropped|dropping)\b|\b(ball|toss|arm|hands?|head|legs?|elbow|shoulders?|contact|it)\s+drop\b/i
 
+/**
+ * One narrator (L4.11): the coach says "I". "We" was the app's second voice,
+ * in a handful of lines, and a player reading "we changed how we mark" on the
+ * screen that says "How I read this clip" meets two speakers. The software
+ * itself is still "the app" where a line is about the program — a version,
+ * the background — which is a thing, not a speaker.
+ */
+const NARRATOR = /\b(we|our|ours|us)\b/i
+
 /** Passive construction, close enough for copy this short. */
 const PASSIVE =
   /\b(is|are|was|were|be|been|being)\s+(\w+ed|shown|taken|seen|given|held|kept|made|done|found|read)\b/i
@@ -198,6 +207,9 @@ export function cueIssues(text: string): string[] {
 
   const drop = s.match(MISUSED_DROP)
   if (drop) issues.push(`"drop" is the racket drop: ${drop[0]}`)
+
+  const narrator = s.match(NARRATOR)
+  if (narrator) issues.push(`two narrators: the coach says I, not "${narrator[0]}"`)
 
   const passive = s.match(PASSIVE)
   if (passive) issues.push(`passive voice: ${passive[0]}`)

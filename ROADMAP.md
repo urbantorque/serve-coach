@@ -2225,7 +2225,39 @@ Everything here is built from `primitives.tsx` and the existing tokens.
       - **What:** once there is history, a compact hero, with This week and
         the player's form in the first viewport.
       - *Proof:* a render test with seeded history, and the preview.
-- [ ] **L4.11 Words in the chrome** · S.
+- [x] **L4.11 Words in the chrome** · S.
+      - *Delta (Oct 17):* done.
+        - Defined on a tap: `glossary.ts` holds one linted sentence each for
+          trophy, racket drop, stance and firing order. `Term` makes the word
+          itself the control, dotted underneath with `aria-expanded`, and the
+          meaning opens under it until the next tap anywhere. On the report it
+          appears in three places:
+          - a "Tap a word" row under the six moments, for trophy and racket
+            drop;
+          - the stance chip;
+          - the firing-order heading.
+        - "Hip–shoulder separation" is now "Shoulders turned past the hips".
+        - One narrator: the coach says "I". The voice lint has a `NARRATOR`
+          rule, and "we", "our" and "us" now fail every linted line. The two
+          that remained were changed: "Every area I scored", and "since the
+          scoring changed". "The app" stays only where a line means the
+          program itself, such as an older version or the app going to the
+          background. The model serve's note no longer calls the drawing the
+          app's.
+        - The type floor: 20 declarations under 11 px went to 11, covering
+          kickers, tags, compact chips, chart axes, table heads and the
+          target-shape keys.
+        - Proof: `wordsInChrome.test.ts` (7 checks) covers:
+          - every meaning passes the copy rules;
+          - a term is a closed disclosure;
+          - all four terms are reachable on a 60 fps report;
+          - the rename;
+          - the narrator rule, plus a scan of every string in every component
+            for "we", "our" and "us";
+          - a CSS floor over all 12 stylesheets, with nothing under 11 px.
+          Preview: the Trophy meaning open under the six moments at 375×812.
+        - Left as it was: the on-image callouts size their own canvas text
+          with the picture, so the stylesheet floor does not reach them.
       - **What:**
         - trophy, racket drop, stance and firing order are defined on a tap;
         - "Hip–shoulder separation" is renamed;

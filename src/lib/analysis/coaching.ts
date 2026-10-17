@@ -356,7 +356,9 @@ export const METRICS: Record<string, MetricCopy> = {
   },
   hipShoulderSeparation: {
     id: 'hipShoulderSeparation',
-    label: 'Hip–shoulder separation',
+    // Renamed for the player (L4.11): "separation" is the coach's word for
+    // what the row shows, which is the shoulders turned further than the hips.
+    label: 'Shoulders turned past the hips',
     unit: '°',
     phase: 'trophy',
     source: {

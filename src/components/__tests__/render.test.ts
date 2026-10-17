@@ -89,7 +89,7 @@ check('the report renders from a live analysis', () => {
     }),
   )
   assert(out.includes('Work on this next'), 'the focus card never reached the page')
-  assert(out.includes('Every area we scored'), 'the fundamentals never reached the page')
+  assert(out.includes('Every area I scored'), 'the fundamentals never reached the page')
 })
 
 check('any report can be tagged, and shows what was tagged (D5.1)', () => {
@@ -351,7 +351,7 @@ check('the report reads hero, fix, plan, the serve, then one fold for the rest (
     ['the basket', 'best serve against your worst'],
     ['how it was read', 'How I read this clip'],
     ['tagging', 'Tag this serve'],
-    ['the areas', 'Every area we scored'],
+    ['the areas', 'Every area I scored'],
   ] as const
   for (let i = 1; i < order.length; i++) {
     assert(
