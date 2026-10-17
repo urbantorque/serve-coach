@@ -453,6 +453,7 @@ heading('One thing to work on')
 check('exactly one flaw and one drill come back, whatever was found', () => {
   const messy = pipeline({
     palmToSky: 80,
+    trophyArmLayOver: 1,
     trophyForearmDrop: 0.22,
     tossWobble: 0.09,
     spineLean: 34,
@@ -471,6 +472,7 @@ check('exactly one flaw and one drill come back, whatever was found', () => {
 check('the grip outranks everything below it', () => {
   const { result } = pipeline({
     palmToSky: 80,
+    trophyArmLayOver: 1,
     trophyForearmDrop: 0.22,
     dropBelowShoulder: 0.05,
     hipLead: -0.09,
@@ -580,7 +582,7 @@ check('a tray grip is flagged as an elbow and wrist risk', () => {
   // The turn through contact is still dialled, but since L1.3 the flag no
   // longer reads it: the forearm's turn is under-resolved, and the flag stands
   // on the named tray alone.
-  const { result } = pipeline({ palmToSky: 80, trophyForearmDrop: 0.22, pronation: 120 })
+  const { result } = pipeline({ palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.22, pronation: 120 })
   const risks = result.injury_risk.map((r) => r.flag)
   note(risks.join(', ') || 'none')
   assert(
@@ -601,7 +603,11 @@ check('an injury flag survives triage even when its flaw is not the one chosen',
   // the engine could tell from a clean grip on a real camera.
   const { result } = pipeline({
     palmToSky: 80,
-    trophyForearmDrop: 0.4,
+    // Laid over since L5.2, and the forearm at 0.3 rather than 0.4: with the
+    // arm let down as well, 0.4 stretches it until it cocks at 74°, too high to
+    // be a tray.
+    trophyArmLayOver: 1,
+    trophyForearmDrop: 0.3,
     spineLean: 34,
     tossWobble: 0.09,
   })
@@ -661,7 +667,7 @@ check('a dialled tray and a dialled fold are still caught through the noise', ()
   // fold, which reads 31–39° through the noise and clears the 29° line on every
   // take. Nearer the line it is caught less often, as the noise floor intends: a
   // 34° fold on 83% of takes, a 30° one on about half.
-  const tray = realise({ palmToSky: 80, trophyForearmDrop: 0.25 })
+  const tray = realise({ palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.25 })
   const fold = realise({ spineLean: 40, cameraYaw: 8 })
   const trayRate = rate(tray, 'wrist_strain_forced_pronation')
   const foldRate = rate(fold, 'lumbar_load_posture_collapse')
@@ -678,7 +684,7 @@ check('a joint warning never stands on less than its own fault', () => {
     ['shoulder_load_no_drop', 'shallow_drop'],
   ]
   const runs = [
-    ...realise({ palmToSky: 80, trophyForearmDrop: 0.25 }),
+    ...realise({ palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.25 }),
     ...realise({ spineLean: 34, cameraYaw: 8 }),
     ...realise({ dropBelowShoulder: -0.25 }),
   ]
@@ -876,7 +882,7 @@ check('a degenerate clip is refused rather than throwing', () => {
 })
 
 check('the output is still raw data, with no prose anywhere in it', () => {
-  const { result } = pipeline({ palmToSky: 80, trophyForearmDrop: 0.22 })
+  const { result } = pipeline({ palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.22 })
   const strings: string[] = []
   const walk = (v: unknown) => {
     if (typeof v === 'string') strings.push(v)

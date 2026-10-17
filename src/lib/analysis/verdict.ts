@@ -578,8 +578,8 @@ export function suppressedNote(
   if (n < 1) return undefined
   return cue(
     n === 1
-      ? 'One other thing shows up in this serve. It often clears once these are fixed, so start here.'
-      : `${n} other things show up in this serve. They often clear once these are fixed, so start here.`,
+      ? 'One other thing shows up in this serve. It often clears once you fix these, so start here.'
+      : `${n} other things show up in this serve. They often clear once you fix these, so start here.`,
   )
 }
 

@@ -10,7 +10,9 @@
  * about it — a detector that flags everything for everybody is not a coach.
  */
 import { diagnose } from '../diagnose'
-import { evaluateFlaws, MIN_EVIDENCE, type FlawId } from '../flaws'
+import { evaluateFlaws, MIN_EVIDENCE, TRAY_ABDUCTION_MAX, type FlawId } from '../flaws'
+import { filmMocap } from '../mocapServe'
+import { REAL_SERVES } from './repeatability'
 import { detectServe } from '../phases'
 import {
   CARD_SIGNAL,
@@ -144,7 +146,7 @@ check('the waiter’s tray is caught, and the grip flag follows it', () => {
   const clean = run({}, 5).diagnosis
   assert(clean.grip.continental_grip_detected, 'a neutral hand was not read as continental')
 
-  const tray = run({ palmToSky: 80, trophyForearmDrop: 0.22 }, 5).diagnosis
+  const tray = run({ palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.22 }, 5).diagnosis
   assert(flagged(tray).includes('waiters_tray'), `tray missed: ${flagged(tray).join(', ')}`)
   assert(!tray.grip.continental_grip_detected, 'a palm-up hand still read as continental')
   note(`palm elevation ${clean.grip.palm_to_sky_deg} clean, ${tray.grip.palm_to_sky_deg} tray`)
@@ -531,7 +533,7 @@ check('a dialled fault survives the jitter that hides it', () => {
    * `syntheticServe.ts`'s `palmToSky` comment.
    */
   for (const seed of [3, 19, 47]) {
-    const noisy = flagged(run({ palmToSky: 80, trophyForearmDrop: 0.22, noise: 0.006, seed }, 7).diagnosis)
+    const noisy = flagged(run({ palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.22, noise: 0.006, seed }, 7).diagnosis)
     assert(noisy.includes('waiters_tray'), `seed ${seed} lost the tray: ${noisy.join(', ')}`)
   }
 })
@@ -621,6 +623,49 @@ check('a real drop is left alone', () => {
     (f) => f.flaw === 'shallow_drop',
   )!
   assert(!finding.detected, 'a healthy drop was called shallow')
+})
+
+/* ================================================= the tray's witness ==== */
+
+heading('A tray needs its arm as well as its palm (L5.2)')
+
+check('the palm alone, the arm alone and both: only both are named, at every rung', () => {
+  const palm = { palmToSky: 80, trophyForearmDrop: 0.22 }
+  const arm = { trophyArmLayOver: 1 }
+  for (const tier of [3, 9]) {
+    const tray = (dials: Partial<ServeDials>) => run(dials, tier).diagnosis.flaws.find((f) => f.flaw === 'waiters_tray')!
+    const palmOnly = tray(palm)
+    const armOnly = tray(arm)
+    const both = tray({ ...palm, ...arm })
+    note(`rung ${tier}: palm alone ${palmOnly.value}° on an arm at ${palmOnly.witness?.abductionDeg}°, arm alone ${armOnly.witness?.abductionDeg}°, both ${both.value}° at ${both.witness?.abductionDeg}°`)
+    assert(!palmOnly.detected && palmOnly.severity === 'none', `rung ${tier}: a palm on a high arm was named a tray`)
+    assert(palmOnly.witness!.abductionDeg >= TRAY_ABDUCTION_MAX, 'the palm-only arm was not cocked high')
+    assert(!armOnly.detected, `rung ${tier}: a laid-over arm with a sound palm was named a tray`)
+    assert(both.detected && both.witness!.abductionDeg < TRAY_ABDUCTION_MAX, `rung ${tier}: the tray with its arm was not named`)
+  }
+})
+
+check('no Bath serve is named a tray, from any side, and every one cocks above the line', () => {
+  const arms: number[] = []
+  for (const fps of [30, 60]) {
+    for (const bearing of [90, 0, 180]) {
+      for (const serve of REAL_SERVES) {
+        const frames = filmMocap(serve, { fps, bearing })
+        const tray = diagnose(frames, detectServe(frames, fps), { tier: 9 }).flaws.find((f) => f.flaw === 'waiters_tray')!
+        assert(!tray.detected, `a Bath serve was named a tray at ${fps} fps from ${bearing}°`)
+        assert(tray.witness !== undefined, 'a Bath arm was not read')
+        arms.push(tray.witness!.abductionDeg)
+      }
+    }
+  }
+  note(`Bath cocks at ${Math.min(...arms)}–${Math.max(...arms)}° against the ${TRAY_ABDUCTION_MAX}° line`)
+  assert(Math.min(...arms) > TRAY_ABDUCTION_MAX + 15, 'a Bath arm cocked near the line')
+})
+
+check('an arm nobody saw leaves the tray unnamed, whatever the palm says', () => {
+  const readings = { palm_to_sky_deg: { value: 80, confidence: 0.95 } }
+  assert(!evaluateFlaws(readings, 5).find((f) => f.flaw === 'waiters_tray')!.detected, 'a tray was named with no arm read')
+  assert(evaluateFlaws(readings, 5, { cockingAbductionDeg: 55 }).find((f) => f.flaw === 'waiters_tray')!.detected, 'a tray with its arm read low was not named')
 })
 
 report()

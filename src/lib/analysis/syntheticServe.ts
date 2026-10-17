@@ -223,6 +223,15 @@ export interface ServeDials {
    */
   trophyForearmDrop: number
   /**
+   * How far the racket arm is laid over through the cocking, 0–1 (L5.2): the
+   * elbow let down towards the ribs from the trophy to the drop, so the upper
+   * arm rises well short of the shoulder line. The second half of a waiter's
+   * tray beside the palm (`palmToSky`): Touzard 2019 finds the tray's arm
+   * abducted under about 70° while cocking, where a sound serve's sits near or
+   * past 90. Zero leaves every default serve byte-identical.
+   */
+  trophyArmLayOver: number
+  /**
    * How late the racket arm cocks, 0–1: where the hand is at the deepest knee
    * bend (D3.5).
    *
@@ -588,6 +597,7 @@ export const CLEAN_SERVE: ServeDials = {
   palmToSky: 6,
   racketLayBack: 80,
   trophyForearmDrop: 0,
+  trophyArmLayOver: 0,
   lateArmCock: 0,
   lateLegDrive: 0,
   trophyExternalRotation: 0,
@@ -994,7 +1004,8 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
           [U.toss, SHOULDER_DROP + 0.05],
           // A flattening arm drops the hand towards shoulder height, which is
           // the shape that lets a palm face the sky at all.
-          [U.trophy, SHOULDER_DROP - 0.2 + d.trophyForearmDrop + d.lateArmCock * 0.2],
+          // A laid-over arm (L5.2) carries the hand down to the shoulder line too.
+          [U.trophy, SHOULDER_DROP - 0.2 + d.trophyForearmDrop + d.lateArmCock * 0.2 + 0.22 * d.trophyArmLayOver],
           [U.drop, SHOULDER_DROP + d.dropBelowShoulder],
           [U.contact, -reachAboveHip],
           // The hand leaves contact immediately. Without this key the smoothstep
@@ -1096,6 +1107,14 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
       x: track([[U.ready, 0.2], [U.toss, 1], [U.trophy, 1], [U.drop, 0.6], [U.contact, -0.4]], u),
       y: track([[U.ready, 1], [U.toss, 0.5], [U.trophy, 0], [U.drop, -d.dropElbowLift], [U.contact, -0.8]], u),
       z: track([[U.ready, 0.3], [U.toss, 0], [U.trophy, 0], [U.drop, 0.65], [U.contact, 0.45]], u),
+    }
+    // The arm laid over (L5.2): the elbow pulled down towards the ribs through
+    // the cocking, by a hint that outweighs the others at full dial. Skipped at
+    // zero so the default serve is untouched.
+    if (d.trophyArmLayOver !== 0) {
+      const over = d.trophyArmLayOver * track([[U.toss, 0], [U.trophy, 1], [U.drop, 1], [U.contact, 0]], u)
+      elbowHint.y += 3 * over
+      elbowHint.z -= 1.5 * over
     }
     world[LM.rightElbow] = solveElbowToward(rSh, world[LM.rightWrist], elbowHint)
     world[LM.leftElbow] = solveElbow(lSh, world[LM.leftWrist], -1, rad(180 - d.tossElbow))

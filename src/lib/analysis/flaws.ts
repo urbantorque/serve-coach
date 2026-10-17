@@ -58,6 +58,8 @@ export interface FlawFinding {
   severity: Severity
   /** 0–1, inherited from how well the landmarks this rests on were seen. */
   confidence: number
+  /** The tray's second witness (L5.2): the arm's abduction while cocking, against its limit. */
+  witness?: { abductionDeg: number; limit: number }
   /** Set when this flaw is a symptom of another detected one. */
   caused_by?: FlawId
   /**
@@ -237,7 +239,20 @@ export interface StructuralEvidence {
    * keyframe landed on the trophy rather than on an event of its own.
    */
   racketNeverFell?: boolean
+  /**
+   * The racket arm's highest abduction while cocking, trophy to drop, in
+   * degrees (L5.2). The waiter's tray's second witness; absent when the
+   * shoulder, elbow and hip were not seen, which leaves the tray unnamed.
+   */
+  cockingAbductionDeg?: number
 }
+
+/**
+ * A palm turned to the sky is only a waiter's tray on an arm laid over (L5.2):
+ * abducted under about 70° while cocking (Touzard 2019). The six Bath serves
+ * cock at 91–104°; a sound arm is nowhere near the line.
+ */
+export const TRAY_ABDUCTION_MAX = 70
 
 /**
  * A serve with no fall in it is at least this bad.
@@ -336,10 +351,22 @@ export function evaluateFlaws(
      */
     const named = spec.notNamed === undefined
 
-    const detected =
-      named && (neverFell || (!insideBand(signal, reading.value, target) && resolvable))
+    /*
+     * A second witness, where the fault needs one (L5.2). The tray's palm is
+     * read from a few hand landmarks; the arm it comes with is read from the
+     * shoulder, the elbow and the hip, which the tracker sees far better. Both
+     * have to say tray, and an arm nobody saw says nothing.
+     */
+    const witnessed =
+      spec.flaw !== 'waiters_tray' ||
+      (structural.cockingAbductionDeg !== undefined && structural.cockingAbductionDeg < TRAY_ABDUCTION_MAX)
 
-    const graded: Severity = neverFell
+    const detected =
+      named && witnessed && (neverFell || (!insideBand(signal, reading.value, target) && resolvable))
+
+    const graded: Severity = !witnessed
+      ? 'none'
+      : neverFell
       ? worseSeverity(
           resolvable ? severityOf(signal, reading.value, target) : 'none',
           NO_FALL_SEVERITY,
@@ -366,6 +393,10 @@ export function evaluateFlaws(
       // reading was taken along; it only has to stop the fact getting lost
       // between the pass that measured it and the pass that writes the sentence.
       ...(reading.axis ? { axis: reading.axis } : {}),
+      // The second witness, as read, so a finding says why it was or was not named.
+      ...(spec.flaw === 'waiters_tray' && structural.cockingAbductionDeg !== undefined
+        ? { witness: { abductionDeg: Math.round(structural.cockingAbductionDeg), limit: TRAY_ABDUCTION_MAX } }
+        : {}),
     })
   }
 

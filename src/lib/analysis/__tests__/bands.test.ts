@@ -122,7 +122,7 @@ heading('What every diagnosis band stands on (L5.1)')
  * it is read from, and the flaw it feeds. Bath is filmed from the same views.
  */
 const MOTION_SIGNALS: Record<string, { flaw: FlawId; dials: Partial<ServeDials>; bearings: number[]; yaw: number }> = {
-  palm_to_sky_deg: { flaw: 'waiters_tray', dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, bearings: [90, 0, 180], yaw: 82 },
+  palm_to_sky_deg: { flaw: 'waiters_tray', dials: { palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.22 }, bearings: [90, 0, 180], yaw: 82 },
   spine_lean_deg: { flaw: 'posture_collapse', dials: { spineLean: 40 }, bearings: [0, 180], yaw: 8 },
   elbow_lift_ratio: { flaw: 'collapsed_elbow', dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, bearings: [90, 0, 180], yaw: 82 },
 }

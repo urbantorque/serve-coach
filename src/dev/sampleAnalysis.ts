@@ -116,7 +116,9 @@ export const DEMO_DIALS: Record<string, Partial<ServeDials>> = {
   //
   // Filmed from behind the baseline, where the sideways fold lies across the
   // picture; from the side it runs along the lens and is hedged out (L1.2).
-  injury: { spineLean: 34, palmToSky: 80, trophyForearmDrop: 0.25, pronation: 120, cameraYaw: 8 },
+  // The arm laid over and the knees loaded since L5.2: a tray is named only on an arm
+  // cocked low, and the sample's straight legs found the trophy before the lay-over.
+  injury: { spineLean: 34, palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.25, trophyKneeAngle: 150, pronation: 120, cameraYaw: 8 },
   // Heavy tracker noise smears the racket hand through the swing, which is what
   // `too_blurry` is measuring. Nothing here says "reject"; the resilience pass
   // decides that on its own.

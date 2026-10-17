@@ -89,7 +89,8 @@ export interface DemoSpec {
 }
 
 export const DEMOS: Partial<Record<FlawId, DemoSpec>> = {
-  waiters_tray: { dials: { palmToSky: 80, trophyForearmDrop: 0.22 }, moment: 'trophy', part: 'racket' },
+  // The arm laid over too since L5.2: a palm alone on a high arm is not named.
+  waiters_tray: { dials: { palmToSky: 80, trophyForearmDrop: 0.22, trophyArmLayOver: 1 }, moment: 'trophy', part: 'racket' },
   collapsed_elbow: { dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, moment: 'drop', part: 'elbow' },
   low_contact: { dials: { contactReach: 1.0 }, moment: 'contact', part: 'racket' },
   shallow_drop: { dials: { dropBelowShoulder: -0.25, racketLayBack: -60 }, moment: 'drop', part: 'racket' },

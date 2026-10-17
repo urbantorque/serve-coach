@@ -16,8 +16,9 @@ import { diagnose } from '../diagnose'
 import type { FlawId } from '../flaws'
 import { detectServe } from '../phases'
 import { progressionFor, startingRung } from '../progressions'
-import { HIERARCHY, assessResilience, triage } from '../triage'
+import { HIERARCHY, assessResilience, triage, type Triage } from '../triage'
 import { MAX_PLAN, causalPlan, suppressedNote } from '../verdict'
+import { cueIssues } from '../voice'
 import { buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
 
@@ -42,6 +43,7 @@ const rung = (flaw: FlawId) => HIERARCHY.findIndex((l) => l.flaws.includes(flaw)
  */
 const MESSY: Partial<ServeDials> = {
   palmToSky: 80,
+  trophyArmLayOver: 1,
   trophyForearmDrop: 0.22,
   tossWobble: 0.09,
   // A racket that never lays back: the hand held 25 cm above the shoulder. A hand
@@ -200,6 +202,17 @@ check('the queue does not repeat a drill, which would read as one long instructi
   const { plan } = pipeline(MESSY)
   const names = plan.map((p) => p.drill.name)
   assert(new Set(names).size === names.length, `the plan repeats a drill: ${names.join(', ')}`)
+})
+
+
+check('the held-back note passes the copy rules, one thing or several', () => {
+  // It said "once these are fixed" until a demo held enough back to print it.
+  for (const held of [1, 2, 3]) {
+    const triage = { status: 'ok', suppressed_count: held } as Triage
+    const line = suppressedNote(triage)
+    const issues = line ? cueIssues(line) : ['no note']
+    assert(issues.length === 0, `${held} held back: "${line}" — ${issues.join('; ')}`)
+  }
 })
 
 report()

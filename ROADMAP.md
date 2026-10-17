@@ -2320,7 +2320,44 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         `UNCALIBRATED`. Toss drift and the card's toss path are judged as one.
       - *Proof:* the extended test fails on any graded signal without a
         source.
-- [ ] **L5.2 A second witness for the tray** · M.
+- [x] **L5.2 A second witness for the tray** · M.
+      - *Delta (Oct 17):* done.
+        - The witness: `diagnose` reads the racket arm's abduction while
+          cocking. That is the angle between the upper arm and the trunk in
+          world space, trophy to drop, read only where the shoulder, elbow and
+          hip were seen.
+          - It is the median across the window, not the peak. On straight legs
+            the trophy is found early, mid-backswing, and the peak there read
+            88° on a laid-over arm.
+        - It reaches `evaluateFlaws` as structural evidence. `waiters_tray` is
+          named only when the palm is out of band and the arm cocks under 70°
+          (`TRAY_ABDUCTION_MAX`, Touzard 2019).
+          - An arm nobody saw leaves the tray unnamed.
+          - The finding carries the witness as read.
+        - The rig gained `trophyArmLayOver` (0–1). It lets the elbow down
+          towards the ribs from the trophy to the drop and carries the hand to
+          the shoulder line. Zero leaves every default serve byte-identical.
+        - Measured on the rig:
+          - clean: palm 6°, arm 121°;
+          - palm alone: 74° on a 96° arm, not named;
+          - lay-over alone: arm 66°, not named;
+          - both: 76° on a 57° arm, named at rungs 3 and 9.
+        - Bath cocks at 91–103° from the side, behind and in front, at 30 and
+          60 fps, and none of the six is named.
+        - Fixtures now lay the arm over wherever they mean a tray: the demos,
+          the tests, and the injury demo. The injury demo also loads its knees
+          (150°), because the sample's straight legs found the trophy before
+          the lay-over. One triage fixture's forearm drop went from 0.4 to 0.3:
+          with the arm let down too, 0.4 stretches it to cock at 74°.
+        - Found in the preview: with more faults now named, the injury demo
+          printed the held-back note, which was passive ("once these are
+          fixed"). It now reads "once you fix these", with a copy check.
+        - Proof: three checks in `flaws.test.ts` cover the palm, arm and both
+          cases at rungs 3 and 9; Bath never named from any side, cocking at
+          least 15° above the line; and a tray with no arm read never named.
+          The tray's "Show me" was previewed.
+        - Departure: the six Bath serves in the repo stand in for the forty.
+          The forty run only through `npm run bench:mocap`, outside the suite.
       - **What:** shoulder abduction during cocking under about 70°
         (Touzard 2019) is required beside palm-to-sky.
       - *Proof:* the rig's arm-lay-over and palm dials; none of the 40 Bath

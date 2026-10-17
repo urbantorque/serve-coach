@@ -14,7 +14,7 @@
  * call, and the returned object holds numbers only — never a frame, never a
  * landmark, nothing that would pin the clip in memory behind a saved report.
  */
-import { LM, clamp, jointAngle, mean, sided, trunkCoilReading } from './geometry'
+import { LM, clamp, jointAngle, mean, median, sided, trunkCoilReading } from './geometry'
 import { imageXSplitFrom, readImageX } from './axes'
 import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED, blurTrust, restingTrust } from './confidence'
 import { assessSpatial, viewFromCourtYaw } from './spatial'
@@ -1198,10 +1198,34 @@ export function diagnose(
     mean(dropWindow.map((f) => f.image[R.wrist]?.visibility ?? 0)) >= DROP_VISIBLE &&
     !swungIntoTheLens
 
+  /*
+   * The tray's second witness (L5.2): how high the racket arm's upper arm rose
+   * while cocking, trophy to drop, as the angle between it and the trunk.
+   * Touzard 2019 finds a waiter's tray cocked with the arm under about 70° of
+   * abduction; a palm turned up on an arm cocked high is the grip seen
+   * through a few hand landmarks, not the fault. Read in world space, where the angle
+   * between two segments does not depend on the camera, and only where the
+   * shoulder, elbow and hip were seen.
+   */
+  const cockingFrames = frames.slice(keys.trophy, keys.drop + 1)
+  const cockingSeen =
+    cockingFrames.length > 0 &&
+    mean(cockingFrames.map((f) => Math.min(f.image[R.shoulder]?.visibility ?? 0, f.image[R.elbow]?.visibility ?? 0, f.image[R.hip]?.visibility ?? 0))) >=
+      MIN_EVIDENCE
+  // The median across the window rather than its peak: the trophy is found at
+  // the deepest knee bend, and on straight legs that lands early, while the arm
+  // is still lifting through the backswing. One frame of that is not the cocking.
+  const cockingAbductionDeg = cockingSeen
+    ? median(cockingFrames.map((f) => jointAngle(f.world[R.elbow], f.world[R.shoulder], f.world[R.hip])))
+    : undefined
+
   const flaws = evaluateFlaws(
     readings,
     current,
-    { racketNeverFell: skel.derivation.dropOnTrophy && sawTheDrop },
+    {
+      racketNeverFell: skel.derivation.dropOnTrophy && sawTheDrop,
+      ...(cockingAbductionDeg !== undefined ? { cockingAbductionDeg } : {}),
+    },
     options.serveType,
   )
 
