@@ -94,6 +94,8 @@ interface Props {
    * (`meteredConnection`, L6.1): said beside the button, before the tap.
    */
   metered?: 'saveData' | 'cellular'
+  /** The last analysis the page did not live to finish, said once (L6.4). */
+  interrupted?: string
   /** Long clips read as practice sessions (L2.4), newest first. */
   practiceSessions?: PracticeSession[]
   onOpenPracticeSession?: (session: PracticeSession) => void
@@ -127,6 +129,7 @@ export default function Home({
   cadence,
   offlineReady,
   metered,
+  interrupted,
   sessionsLoaded,
   onPick,
   onRecorded,
@@ -278,6 +281,13 @@ export default function Home({
           </button>
         </span>
       </header>
+
+      {/* An analysis the page reloaded under (L6.4): the first thing said, once. */}
+      {interrupted && (
+        <p className="note home-interrupted" role="status">
+          {interrupted}
+        </p>
+      )}
 
       {/* Once there is history the pitch has done its job (L4.10): the hero
           shrinks to one line, so what this player is working on and how they

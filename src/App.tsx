@@ -2,10 +2,11 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import HandednessPicker from './components/HandednessPicker'
 import { Icon, ScoreRing, Sheet } from './components/primitives'
 import { useBackLayer } from './components/useBackLayer'
-import { useWakeLock } from './components/useWakeLock'
+import { useWakeLock, wakeLockLine } from './components/useWakeLock'
 import { useHistory } from './components/useHistory'
 import { useOfflineWarmup } from './components/useOfflineWarmup'
 import { meteredConnection } from './lib/engineDownload'
+import { interruptedLine, markRead, markReading, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import type { InjuryFlag } from './lib/analysis/triage'
 import {
@@ -123,6 +124,15 @@ const KeepClipsPanel = lazy(() => import('./components/KeepClipsPanel'))
 const CadencePicker = lazy(() => import('./components/CadencePicker'))
 const DeviceCheck = lazy(() => import('./components/DeviceCheck'))
 const CorpusIngest = lazy(() => import('./components/CorpusIngest'))
+
+
+/**
+ * The analysis the last page load did not live to finish (L6.4), read once
+ * when the app's code loads. Not in a state initializer: development's strict
+ * mode runs those twice, and the first run would take the marker from the
+ * second, which then says nothing.
+ */
+const INTERRUPTED_AT_LOAD = takeInterrupted()
 
 /**
  * The screen, and the fellow-travellers that are stages of the same machine
@@ -299,6 +309,8 @@ export default function App() {
   const { offlineReady, warming, makeOffline, recheck: recheckOffline } = useOfflineWarmup()
   // Read once: a connection that turns metered mid-visit is rare, and the line
   // it drives is advice before a tap, not a guard (L6.1).
+  // An analysis the last load did not finish, said once on the home screen (L6.4).
+  const [interrupted, setInterrupted] = useState(INTERRUPTED_AT_LOAD)
   const [metered] = useState(() => meteredConnection(navigator as Navigator & { connection?: { saveData?: boolean; type?: string } }))
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
 
@@ -774,6 +786,10 @@ export default function App() {
       void loadReport()
       void loadGlance()
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
+      // Cleared in `finally` below however this ends; still set on the next
+      // load means the page did not live to finish it (L6.4).
+      markReading(file.name || 'Your serve')
+      setInterrupted(undefined)
 
       try {
         const { analyzeServe, throttleProgress } = await loadAnalysis()
@@ -877,6 +893,8 @@ export default function App() {
             ],
           })
         }
+      } finally {
+        markRead()
       }
     },
     // `sessions` is read to preserve the original filing date of a re-analysis;
@@ -1383,7 +1401,7 @@ export default function App() {
   }, [view.kind])
 
   // A locked screen stalls the analysis; see `useWakeLock`.
-  useWakeLock(view.kind === 'analyzing' || sessionRunning)
+  const wakeLock = useWakeLock(view.kind === 'analyzing' || sessionRunning)
 
   useBackLayer(view.kind !== 'home', () => {
     // Back stops a session that is reading and keeps it; from anywhere else it leaves.
@@ -1499,6 +1517,7 @@ export default function App() {
               cadence={prefs.cadence}
               offlineReady={offlineReady}
               metered={metered}
+              interrupted={interrupted ? interruptedLine() : undefined}
               sessionsLoaded={sessionsLoaded}
               onPick={(f) => void openClip(f)}
               onRecorded={(f) => void openClip(f, true)}
@@ -1526,6 +1545,7 @@ export default function App() {
               sweep={sweep}
               onCancel={sweep ? stopSweep : cancel}
               racket={prefs.handedness ?? 'right'}
+              screenLine={wakeLockLine(wakeLock)}
             />
           )}
 

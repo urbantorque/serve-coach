@@ -2830,7 +2830,40 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         ideal, 60 fps ideal). `getSettings()` is stamped on the analysis and
         into `?check`.
       - *Proof:* a constraints test and a fake-MediaStream recorder test.
-- [ ] **L6.4 Interruptions** · S–M.
+- [x] **L6.4 Interruptions** · S–M.
+      - *Delta (Oct 17):* done.
+        - `useWakeLock` returns `held`, `refused`, `unsupported` or `off`.
+          When the screen may lock, the analysing screen says once: "Keep the
+          screen on until this finishes. If it locks, the reading pauses until
+          you come back."
+        - `interrupted.ts` leaves a marker in `sessionStorage` while an
+          analysis runs, cleared in `run`'s `finally` however it ends.
+          - One still there when the app's code loads is an analysis the page
+            did not live to finish. Home says so once at the top: "Your last
+            reading stopped part way, most likely because the screen locked.
+            Pick the clip again to read it."
+          - It is read at module load rather than in a state initializer,
+            which strict mode runs twice. That was found in the preview,
+            where the first run ate the marker.
+        - `visibleWait.ts`: `timeoutWhileVisible` runs out only while the page
+          is visible. When it falls due while hidden, it waits for the page to
+          come back and then allows its whole time again.
+          - `waitFor` in `extract.ts` uses it, so a seek on a locked screen
+            waits instead of carrying on without the frame.
+          - `waitFor` is exported, with its document and clock injectable.
+        - Proof: five checks in `interruptions.test.ts`, with a fake page and
+          a fake clock.
+          - The timeout survives a minute hidden and then gives its full 6 s.
+            On a visible page it is ordinary, and a cancelled wait leaves
+            nothing behind.
+          - A seek on a hidden page lands once the page returns. One that never
+            lands on a visible page still ends.
+          - The marker is said once, and a damaged one is ignored.
+          - The line shows only for a refused or unsupported lock.
+          - The analysing screen and Home render both.
+        - Seen at 375×812 by leaving the marker and reloading: the note shows
+          and the marker clears, with no console errors. The entry bundle is
+          127.8 kB.
       - **What:**
         - `useWakeLock` returns its status, and a refused lock shows one line;
         - an interrupted analysis leaves a marker in `sessionStorage`, read on

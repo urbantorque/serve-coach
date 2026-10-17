@@ -87,9 +87,11 @@ interface Props {
   onCancel: () => void
   /** Which hand the model serve swings with. Right when the player has not said. */
   racket?: 'left' | 'right'
+  /** Said once when the screen could not be kept on (L6.4). */
+  screenLine?: string
 }
 
-export default function Analyzing({ progress, fileName, sweep, onCancel, racket = 'right' }: Props) {
+export default function Analyzing({ progress, fileName, sweep, onCancel, racket = 'right', screenLine }: Props) {
   const aside = useTicker(ASIDES.length, ASIDE_MS)
   // 'done' is past the end of the list, so every step reads as complete —
   // findIndex would return −1 and light step one under a full bar.
@@ -233,6 +235,10 @@ export default function Analyzing({ progress, fileName, sweep, onCancel, racket 
                 </li>
               ))}
         </ul>
+
+        {/* Above the rotating notes, and not one of them: the one thing on this
+            screen the player has to do something about (L6.4). */}
+        {screenLine && <p className="analyzing-screen">{screenLine}</p>}
 
         <p className="analyzing-aside" key={sweep ? 'sweep' : aside}>
           {sweep

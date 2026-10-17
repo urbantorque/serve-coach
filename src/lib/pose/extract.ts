@@ -1,4 +1,5 @@
 import type { PoseLandmarker } from '@mediapipe/tasks-vision'
+import { pageVisibility, timeoutWhileVisible, type TimerClock, type VisibilityLike } from './visibleWait'
 import {
   classifyServes,
   cropSegment,
@@ -117,21 +118,34 @@ export interface ExtractProgress {
 
 /* ------------------------------------------------------------------- seeking */
 
-function waitFor(video: HTMLVideoElement, event: string, timeoutMs = 6000): Promise<void> {
+/**
+ * Wait for one of the video's events, or for the timeout, whichever is first.
+ *
+ * The timeout counts only while the page is visible (L6.4): a locked screen
+ * or a background tab stops the decoder, and a seek given up on while it
+ * slept came back somewhere else. `env` is for the tests, which hide a fake
+ * page and run a fake clock.
+ */
+export function waitFor(
+  video: Pick<HTMLVideoElement, 'addEventListener' | 'removeEventListener'> & Partial<HTMLVideoElement>,
+  event: string,
+  timeoutMs = 6000,
+  env: { doc?: VisibilityLike; clock?: TimerClock } = {},
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const done = () => {
-      clearTimeout(timer)
+      cancel()
       video.removeEventListener(event, done)
       video.removeEventListener('error', fail)
       resolve()
     }
     const fail = () => {
-      clearTimeout(timer)
+      cancel()
       video.removeEventListener(event, done)
       video.removeEventListener('error', fail)
-      reject(describeDecodeFailure(video))
+      reject(describeDecodeFailure(video as HTMLVideoElement))
     }
-    const timer = setTimeout(done, timeoutMs)
+    const cancel = timeoutWhileVisible(done, timeoutMs, env.doc ?? pageVisibility(), env.clock)
     video.addEventListener(event, done, { once: true })
     video.addEventListener('error', fail, { once: true })
   })
