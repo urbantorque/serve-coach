@@ -312,4 +312,85 @@ function render(s: Record<string, VariantSummary>, views: { view: View; images: 
   log('done')
 }
 
-main().catch((e) => log(`FAILED: ${(e as Error).stack ?? e}`))
+/* --------------------------------------------- the tracker as the app runs it */
+
+/**
+ * `?video=1`: MediaPipe in VIDEO mode over each labelled sequence, the way
+ * `extract.ts` reads a clip (L5.9). The labels are consecutive frames of real
+ * serves about a tenth of a second apart (`BENCH_SPACING_S` in
+ * `trackerNoise.ts`), so each sequence is fed as a clip at that spacing: one
+ * fixed square round the union of the detector's boxes (`playerCrop.ts`
+ * points the model at one crop per window, never a moving one) and a fresh
+ * landmarker per sequence, so nothing is carried from one serve into the next.
+ * The same crop is also read in IMAGE mode, so what the tracker's own
+ * smoothing does can be told apart from what the crop does.
+ */
+async function mainVideo() {
+  const coco: CocoFile = await (await fetch(`${DATA}/serve.json`)).json()
+  const byImage = new Map(coco.annotations.map((a) => [a.image_id, a]))
+  const items = coco.images
+    .filter((im) => byImage.has(im.id))
+    .sort((a, b) => a.file_name.localeCompare(b.file_name))
+    .slice(0, LIMIT)
+  const num = (f: string) => Number(f.replace(/D/g, ''))
+  const sequences: (typeof items)[] = []
+  for (let i = 0; i < items.length; i++) {
+    const b = byImage.get(items[i].id)!.bbox
+    const prev = i > 0 ? byImage.get(items[i - 1].id)!.bbox : undefined
+    const jump = prev
+      ? Math.hypot(b[0] + b[2] / 2 - (prev[0] + prev[2] / 2), b[1] + b[3] - (prev[1] + prev[3])) > 0.5 * b[3]
+      : true
+    if (jump || num(items[i].file_name) !== num(items[i - 1].file_name) + 1) sequences.push([])
+    sequences[sequences.length - 1].push(items[i])
+  }
+  log(`${items.length} labelled frames in ${sequences.length} sequences from ${SET}`)
+  const det = await personDetector()
+  const fileset = await FilesetResolver.forVisionTasks('/wasm')
+  const landmarker = (runningMode: 'VIDEO' | 'IMAGE') =>
+    PoseLandmarker.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: '/models/pose_landmarker_full.task', delegate: 'GPU' },
+      runningMode,
+      numPoses: 1,
+      minPoseDetectionConfidence: 0.5,
+      minPosePresenceConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    })
+  const still = await landmarker('IMAGE')
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  const perImage: Record<string, { file: string; pred: Prediction }[]> = { 'det-mp-video': [], 'det-mp-fixed': [] }
+  for (const seq of sequences) {
+    const imgs = await Promise.all(seq.map((im) => loadImage(`${DATA}/serve/${im.file_name}`)))
+    const boxes = imgs.map((img) => tallestPerson(det, img)).filter((b): b is [number, number, number, number] => b !== undefined)
+    if (!boxes.length) {
+      for (const im of seq) for (const k of Object.keys(perImage)) perImage[k].push({ file: im.file_name, pred: undefined })
+      continue
+    }
+    const x0 = Math.min(...boxes.map((b) => b[0]))
+    const y0 = Math.min(...boxes.map((b) => b[1]))
+    const x1 = Math.max(...boxes.map((b) => b[0] + b[2]))
+    const y1 = Math.max(...boxes.map((b) => b[1] + b[3]))
+    const side = Math.max(x1 - x0, y1 - y0) * 1.5
+    const cx = (x0 + x1) / 2 - side / 2
+    const cy = (y0 + y1) / 2 - side / 2
+    const video = await landmarker('VIDEO')
+    for (let k = 0; k < seq.length; k++) {
+      ctx.fillStyle = '#000'
+      ctx.fillRect(0, 0, size, size)
+      ctx.drawImage(imgs[k], cx, cy, side, side, 0, 0, size, size)
+      const back = (pose: { x: number; y: number }[] | undefined): Prediction =>
+        pose ? MEDIAPIPE_TO_COCO.map((i) => ({ x: cx + pose[i].x * side, y: cy + pose[i].y * side })) : undefined
+      perImage['det-mp-video'].push({ file: seq[k].file_name, pred: back(video.detectForVideo(canvas, 1 + k * 100).landmarks[0]) })
+      perImage['det-mp-fixed'].push({ file: seq[k].file_name, pred: back(still.detect(canvas).landmarks[0]) })
+    }
+    video.close()
+    log(`  ${perImage['det-mp-video'].length} / ${items.length}`)
+  }
+  ;(window as unknown as { __bench: unknown }).__bench = { set: SET, video: true, perImage }
+  log('done')
+}
+
+;(params.get('video') ? mainVideo() : main()).catch((e) => log(`FAILED: ${(e as Error).stack ?? e}`))

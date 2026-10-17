@@ -77,6 +77,7 @@ import { causalFocus } from './verdict'
 import { cue } from './voice'
 import { blockingFramingIssue } from './framingIssues'
 import { buildPhases, detectServe, looksSlowedDown, type Skeleton } from './phases'
+import { unswapFrames } from './swapGuard'
 import { detectWithContact, type ContactRead } from './contact'
 import { drillForMetric } from './progressions'
 import { fileTimes, probeWorthRunning, retimeFlight, retimeFrames, stretchNote, type Stretch } from './slowMotion'
@@ -1512,8 +1513,10 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     if (fromFile) stretch = { factor: fromFile, source: 'file' }
   }
 
-  const extract = (knownServeTimes: number[] | undefined) =>
-    extractFrames(video, landmarker, {
+  // Every read comes back with left and right put back where a tracker
+  // traded them (`swapGuard.ts`, L5.9), before anything is measured from it.
+  const extract = async (knownServeTimes: number[] | undefined) => {
+    const read = await extractFrames(video, landmarker, {
       signal,
       serveIndex: opts.serveIndex,
       knownServeTimes,
@@ -1526,6 +1529,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
           detail: p.phase === 'scanning' ? 'Finding the serve' : 'Tracking your body',
         }),
     })
+    return { ...read, frames: unswapFrames(read.frames).frames }
+  }
   let extracted = await extract(opts.knownServeTimes)
 
   let { fps, window, serves, located } = extracted
@@ -1670,7 +1675,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       onProgress({ step: 'measuring', ratio: 0.3, detail: 'Sharpening the swing' })
       const pass = await refineSwing(video, frames, skel.keys.toss - 2, skel.keys.contact + 3, read, { signal })
       if (pass.refined) {
-        frames = pass.frames
+        // The second model can trade a pair too.
+        frames = unswapFrames(pass.frames).frames
         for (const f of frames) f.visibility = keyVisibility(f)
         skel = detect()
         refined = pass.refined

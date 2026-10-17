@@ -329,7 +329,9 @@ engineer familiar with the codebase.
 8. **Make the rig honest about real error.** Add temporally correlated noise
    (AR(1) per landmark), occlusion bias, blur-dependent wrist lag and
    occasional left/right swaps, with parameters fitted to the Tier 0
-   residuals — so the noise floors stop being self-referential.
+   residuals — so the noise floors stop being self-referential. *Done
+   (2026-10-17): fitted on the bench, with a swap guard; see "Noise that
+   behaves like a tracker" in §9.*
 9. **The small defects in F8**: skip (don't fake) missing Kalman
    measurements; measure blur in a window around contact; scale the serve
    finder's tolerance to body height; give the view classifier and yaw one
@@ -1002,3 +1004,73 @@ The camera allowance this signal carried (0.06) re-derives the same way to
 0.012, its own noise floor, so it no longer widens anything. The known
 exception that held hand height outside its band on real serves from the
 guide's placement flipped and is gone.
+
+### Noise that behaves like a tracker (2026-10-17, still scoring version 5)
+
+This closes Tier 1.8. Every noise floor came from a jitter the suite chose:
+0.45% of standing height per axis, independent from frame to frame, never
+swapping a left for a right. The 500 bench frames turn out to be consecutive
+frames of real serves, about a tenth of a second apart. So the tracker's error
+can be measured with a history as well as a size.
+
+**Measured.** A model's residual against the labels mixes the model's error
+with the labeller's. MediaPipe and RTMPose on the same frames give three
+pairwise differences, which split three ways. Per axis, in standing heights,
+about each sequence's own mean:
+
+| Part | MediaPipe | RTMPose-s | Labeller | MediaPipe swaps |
+| --- | --- | --- | --- | --- |
+| Shoulders | 0.87% | 0.71% | 1.44% | 1.2% of frames |
+| Elbows | 2.05% | 0.73% | 1.59% | 1.0% |
+| Wrists | 1.74% | 1.40% | 1.70% | 1.4% |
+| Hips | 1.07% | 0.80% | 1.60% | 1.2% |
+| Knees | 1.37% | 0.60% | 1.20% | 1.6% |
+| Ankles | 1.24% | 0.87% | 1.05% | 3.7% |
+
+- MediaPipe's error is two to four times the jitter the floors were set on,
+  and a floor on it, since what the two models get wrong together lands in the
+  labeller's column.
+- MediaPipe in VIDEO mode on the app's fixed crop (`bench.html?video=1`) reads
+  the same, to a few hundredths.
+- Frame to frame the error is correlated 0.0–0.4 at the bench's spacing, which
+  is 0.4–0.85 at 50 fps.
+
+**What it does to the floors.** `trackerNoise.ts` films the six Bath serves
+under the fitted model. Every floor holds against the old jitter. Under the
+fitted noise, several ask for more:
+- contact-ahead asks for 6–7 against 3;
+- palm-to-sky for 29–34 against 18;
+- elbow lift for 0.029–0.052 against 0.017;
+- toss drift for 0.39–0.42 against 0.22.
+
+**What it does to the faults, which is what a floor is for.** At today's floors
+under the fitted MediaPipe noise, the skilled Bath serves were named:
+- a toss drift on 5.3% of takes, on every serve;
+- contact behind on 1.9%;
+- a shallow drop on 1.4%;
+- posture and the chest on 0.8% each.
+
+Without the swaps the toss drift went to zero and the rest below 1%. A
+left/right swap at contact reads the racket wrist off the tossing hand.
+
+**So the swaps were fixed, not the floors raised.** `swapGuard.ts` puts a pair
+back when both landmarks jump to where the other was headed, and the limb is
+seen coming back within three frames.
+- It touches no clean clip: the rig and the Bath serves from eight sides at
+  30–120 fps.
+- From the side it puts back every arm swap, and 65–85% of the leg and hip
+  swaps, where side-on the pair nearly overlaps.
+- The app runs it on every read and the suite's ensembles run it too.
+
+With it, the only fault named on a skilled serve is contact behind:
+- 1.1–1.4% under MediaPipe's noise;
+- none under RTMPose's, which is the model the app re-reads the swing with.
+
+**The floors stay.** They are the camera-only floors on the modelled jitter, and
+the false-naming gate in `trackerNoise.test.ts` now holds them to the measured
+tracker: no fault on more than 1% of skilled takes under RTMPose's noise, none
+on more than 2.5% under MediaPipe's, and no toss drift at all.
+
+**Still a model.** The spacing is inferred from the wrist's travel, and
+carrying the correlation to 50 fps assumes it decays exponentially. Everything
+here moves again with labelled footage at a phone's frame rate.

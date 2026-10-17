@@ -37,6 +37,7 @@ import { filmMocap, unpackMocap, type MocapServe, type PackedMocapServe, type Vi
 import { injuriesIn, type InjuryFlag } from '../triage'
 import { detectServe } from '../phases'
 import { buildServe, type ServeDials } from '../syntheticServe'
+import { unswapFrames } from '../swapGuard'
 import { NOISE_FLOOR, SIGNALS, UNDER_RESOLVED } from '../tiers'
 import type { Frame } from '../types'
 import type { FlawId } from '../flaws'
@@ -186,7 +187,9 @@ export function realiseFilmed(
 ): Realisation[] {
   const out: Realisation[] = []
   for (const seed of over) {
-    const frames = film(seed)
+    // Through the swap guard, as the app reads every clip (L5.9). A filming
+    // with no swaps in it comes back unchanged.
+    const frames = unswapFrames(film(seed)).frames
     let skel
     try {
       skel = detectServe(frames, fps)

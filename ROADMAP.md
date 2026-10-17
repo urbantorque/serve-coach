@@ -2598,7 +2598,52 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         (Chow 2003, Sheets 2011).
       - *Proof:* the rig's tempo dials, with the bound from `realiseReal`.
         After L2.7, or a tagged basket.
-- [ ] **L5.9 Noise that behaves like a tracker** · M.
+- [x] **L5.9 Noise that behaves like a tracker** · M.
+      - *Delta (Oct 17):* done. The full account is in ANALYSIS-REVIEW.md,
+        "Noise that behaves like a tracker".
+        - The bench's 500 frames are consecutive frames of serves, about 0.1 s
+          apart. Labels, MediaPipe (`det-mp-crop`) and RTMPose-s
+          (`det-rtm-s`) on the same frames split three ways.
+          - MediaPipe's own error is 0.87–2.05% of standing height per axis,
+            RTMPose's 0.60–1.40%, and the labeller's 1.05–1.70%. The old
+            jitter was 0.45%.
+          - Frame-to-frame correlation is 0.0–0.43 at the bench's spacing.
+          - MediaPipe swaps a pair on 1.0–3.7% of frames.
+          - A new `bench.html?video=1` reads MediaPipe in VIDEO mode on a
+            fixed crop per sequence, as the app does. It agrees to a few
+            hundredths.
+        - `trackerNoise.ts` holds the fits (`MEDIAPIPE_FIT`, `RTMPOSE_FIT`).
+          `withTrackerNoise` puts them on a clean filming: per-landmark
+          AR(1) error, carried to the clip's rate, and whole-limb swaps.
+        - The floor table, before and after, is printed by
+          `trackerNoise.test.ts` (old jitter / MediaPipe / RTMPose):
+          - contact-ahead 2 / 7 / 6 against a floor of 3;
+          - palm-to-sky 20 / 32 / 30 against 18;
+          - elbow lift 0.018 / 0.052 / 0.029 against 0.017;
+          - toss drift 0.21 / 0.42 / 0.39 against 0.22.
+        - The decider was the faults. At today's floors, the skilled Bath
+          serves under MediaPipe's noise were named:
+          - a toss drift on 5.3% of takes, on all six serves;
+          - contact behind on 1.9%, and a shallow drop on 1.4%.
+          - Nearly all of that came from swaps: without them toss drift went
+            to zero.
+        - Departure: so the swaps were fixed and the floors kept.
+          - `swapGuard.ts` trades a pair back when both landmarks jump to
+            where the other was headed, and the limb is seen returning within
+            three frames.
+          - It touches no clean clip, and puts back every arm swap from the
+            side, plus 65–85% of the leg and hip swaps.
+          - `analyze.ts` runs it on every read and after the RTMPose pass.
+            The suite's ensembles run it too.
+        - Proof: five checks in `trackerNoise.test.ts`.
+          - The model reproduces its fitted spread, correlation and swap rate.
+          - The guard leaves the rig and the Bath serves alone from eight
+            sides at 30–120 fps, and puts back what the model traded.
+          - The gate: under RTMPose's noise no fault is named on more than 1%
+            of skilled takes, under MediaPipe's none on more than 2.5%, and no
+            toss drift at all. Contact behind is named on 1.4% under MediaPipe
+            and 0.0% under RTMPose; nothing else is named.
+        - The entry bundle is 126.1 kB.
       - **What:** fit drift and left/right swaps from MediaPipe's disagreement
         with RTMPose on the bench, then re-run every floor. This closes
         `ANALYSIS-REVIEW.md` Tier 1.8.
