@@ -5,6 +5,7 @@ import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
 import type { BodyAxis } from './axes'
 import type { Stretch } from './slowMotion'
+import type { CameraSettings } from '../framing/camera'
 import type { DrillCheck } from './progressions'
 import type { RacketEstimate } from './racket'
 import type { Triage as TriageResult } from './triage'
@@ -280,6 +281,12 @@ export interface Analysis {
    * clock for drawing and seeking; the measurements were read on the serve's.
    */
   stretch?: Stretch
+  /**
+   * What the camera delivered, when the app recorded the clip itself (L6.3):
+   * the track's own `getSettings()`, read as recording started. Absent for a
+   * picked file, whose camera nobody here saw.
+   */
+  capture?: CameraSettings
   /**
    * How the basket swept from this report did against the top fix's ladder —
    * see `progressions.ts`. Absent until a basket has been swept.

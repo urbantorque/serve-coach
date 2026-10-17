@@ -27,6 +27,7 @@
  * encoder and no decode of the result has been exercised. What is tested below
  * is the choosing, which is all that can be.
  */
+import { cameraSettingsOf, rememberCamera } from './camera'
 
 /**
  * Containers to try, best first.
@@ -228,4 +229,55 @@ export function recordingFileName(type: string, at: Date): string {
     `${at.getFullYear()}-${p(at.getMonth() + 1)}-${p(at.getDate())}` +
     `-${p(at.getHours())}${p(at.getMinutes())}${p(at.getSeconds())}`
   return `serve-${stamp}.${ext}`
+}
+
+/* ------------------------------------------------------------ one recording */
+
+/** The part of `MediaRecorder` a recording uses, so a fake can stand in. */
+export interface RecorderLike {
+  state: string
+  ondataavailable: ((e: { data?: Blob }) => void) | null
+  onstop: (() => void) | null
+  onerror: (() => void) | null
+  start: () => void
+  stop: () => void
+}
+
+/** The part of a `MediaStream` a recording reads. */
+export interface StreamLike {
+  getVideoTracks?: () => { getSettings?: () => Partial<MediaTrackSettings> }[]
+}
+
+/**
+ * Record one clip from the camera stream (L6.3).
+ *
+ * Reads what the camera actually gave as the recording starts, and when it
+ * stops hands back the file with those settings remembered against it
+ * (`rememberCamera`), with how many chunks arrived so the caller can tell a
+ * recording from an empty stop (`recordingOutcome`). Throws when the recorder
+ * cannot be built or started, which the caller treats as "do not offer".
+ * Out of `FramingCheck.tsx` so it can be driven with a fake stream and a fake
+ * recorder.
+ */
+export function recordClip(
+  stream: StreamLike,
+  type: string,
+  Recorder: new (stream: never, options: { mimeType: string }) => RecorderLike,
+  on: { stopped: (file: File, chunks: number) => void; failed: () => void },
+  now: () => Date = () => new Date(),
+): RecorderLike {
+  const recorder = new Recorder(stream as never, { mimeType: type })
+  const camera = cameraSettingsOf(stream.getVideoTracks?.()[0]?.getSettings?.())
+  const chunks: Blob[] = []
+  recorder.ondataavailable = (e) => {
+    if (e.data?.size) chunks.push(e.data)
+  }
+  recorder.onstop = () => {
+    const file = new File([new Blob(chunks, { type })], recordingFileName(type, now()), { type })
+    rememberCamera(file, camera)
+    on.stopped(file, chunks.length)
+  }
+  recorder.onerror = () => on.failed()
+  recorder.start()
+  return recorder
 }

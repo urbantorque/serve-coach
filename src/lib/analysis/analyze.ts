@@ -79,6 +79,7 @@ import { blockingFramingIssue } from './framingIssues'
 import { buildPhases, detectServe, looksSlowedDown, type Skeleton } from './phases'
 import { unswapFrames } from './swapGuard'
 import { EngineLoadError } from '../engineDownload'
+import { cameraOf, storeLastCamera } from '../framing/camera'
 import { engineMegabytes } from '../engineManifest'
 import { detectWithContact, type ContactRead } from './contact'
 import { drillForMetric } from './progressions'
@@ -1923,6 +1924,10 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // Read the metadata before the finally block detaches the source: `load()`
   // resets duration to NaN and the dimensions to zero, and a zero-sized video
   // takes the player's aspect ratio and letterbox maths down with it.
+  // Read off the file the in-app recorder handed over, and kept for `?check`
+  // (L6.3). Here rather than in the app shell, so the shell never loads it.
+  const capture = opts.file ? cameraOf(opts.file) : undefined
+  if (capture) storeLastCamera(capture)
   return {
     id: `serve-${Date.now().toString(36)}`,
     createdAt: Date.now(),
@@ -1980,6 +1985,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     // Kept so a rescore reads the same clock, and so a sweep can hand it down.
     // Absent on a real-time clip, which is what every older report already is.
     ...(stretch.factor > 1 ? { stretch } : {}),
+    // What the camera gave, when the app recorded the clip (L6.3).
+    ...(capture ? { capture } : {}),
   }
 }
 

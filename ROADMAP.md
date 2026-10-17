@@ -2797,7 +2797,35 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         video-format advice. Home's footer follows `offlineReady`.
       - *Proof:* a failure-classification test, and a Home render with
         `offlineReady=false`.
-- [ ] **L6.3 Record at the camera's best** · M.
+- [x] **L6.3 Record at the camera's best** · M.
+      - *Delta (Oct 17):* done.
+        - `framing/camera.ts` builds the constraints the framing preview and
+          the recorder open the camera with (`recordingConstraints`): 1920 ×
+          1080 at 60 fps, back camera, all as `ideal`s.
+          - The recorder films through the preview's stream, which had been
+            opened at 640 px wide, so every serve recorded in the app was a
+            640-wide clip.
+        - The recording itself moved out of `FramingCheck.tsx` into
+          `recordClip` in `record.ts`. It reads the track's
+          `getSettings()` as recording starts and remembers them against the
+          file it hands over.
+          - `analyzeServe` stamps them on the analysis as `capture` and keeps
+            them for `?check`. That happens in the lazily loaded analysis, so
+            the app shell never loads the module.
+        - `?check` prints "camera last 1920×1080 at 60 fps", or "camera last
+          none", from the last recording rather than by opening the camera.
+          The device report's vocabulary test gained the new words
+          deliberately.
+        - Proof: six checks in `framing/__tests__/camera.test.ts`.
+          - The constraints: ideals only, no `exact` and no `min`.
+          - The settings reader rounds and drops nonsense.
+          - A fake MediaStream and a fake MediaRecorder: the file carries
+            1920×1080 at 60, a 720p 30 fps phone is recorded as what it gave,
+            empty chunks are not counted, and a refused recorder throws to the
+            caller.
+          - The stored last camera reaches the pasted block.
+        - Seen on `?check` at 375×812 with nothing kept and with a kept
+          camera, with no console errors. The entry bundle is 127.4 kB.
       - **What:** the recording constraints come from a pure function (1080p
         ideal, 60 fps ideal). `getSettings()` is stamped on the analysis and
         into `?check`.

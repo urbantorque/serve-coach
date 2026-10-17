@@ -26,6 +26,7 @@
  */
 import { RECORDING_TYPES, playbackQuery, recordingType } from './framing/record'
 import { previewSupported } from './framing/access'
+import { cameraLine, lastCamera, type CameraSettings } from './framing/camera'
 
 /**
  * What `canPlayType` said, in three words rather than its own two-and-a-blank.
@@ -291,6 +292,8 @@ export interface DeviceReport {
     api: boolean
     /** Whether this is a secure context, which is why it would not exist. */
     secure: boolean
+    /** What the camera gave the last recording made in the app (L6.3). */
+    last?: CameraSettings
   }
   storage: StorageVerdict
   hardware: HardwareVerdict
@@ -336,6 +339,7 @@ export function deviceReportText(r: DeviceReport): string {
     ),
     ...DECODE_PROBES.map((p, i) => `  opens ${p.type} ${r.decode[i]?.plays ?? 'no'}`),
     `camera ${r.camera.api ? 'yes' : 'no'} secure ${r.camera.secure ? 'yes' : 'no'}`,
+    cameraLine(r.camera.last),
     // The replay's own recording path. Separate from `records` above because it
     // is a separate API — see `canvasRecordVerdict`.
     `canvas ${r.canvasRecord.api ? 'yes' : 'no'} track ${r.canvasRecord.track ? 'yes' : 'no'}`,
@@ -394,6 +398,10 @@ export async function readDeviceReport(offline: () => Promise<boolean>): Promise
     camera: {
       api: previewSupported(),
       secure: typeof window === 'undefined' ? false : window.isSecureContext === true,
+      // Read back from the last recording, not by opening the camera here:
+      // a diagnostic screen asking for the camera would be a permission
+      // prompt for a check.
+      ...(lastCamera() ? { last: lastCamera() } : {}),
     },
     storage: await storageVerdict(),
     hardware: hardwareVerdict(),

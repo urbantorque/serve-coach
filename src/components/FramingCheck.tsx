@@ -9,13 +9,9 @@ import {
   readFraming,
   type FramingVerdict,
 } from '../lib/framing/judge'
-import {
-  MAX_RECORDING_SECONDS,
-  recordingFileName,
-  recordingOutcome,
-  recordingType,
-} from '../lib/framing/record'
+import { MAX_RECORDING_SECONDS, recordClip, recordingOutcome, recordingType } from '../lib/framing/record'
 import { loadEngine, nextVideoTimestamp } from '../lib/pose/poseEngine'
+import { recordingConstraints } from '../lib/framing/camera'
 import type { Frame } from '../lib/analysis/types'
 
 /**
@@ -73,16 +69,6 @@ const DETECT_INTERVAL_MS = 400
  * to be, and degrades to a longer settling time rather than to a hot phone.
  */
 const MAX_POSE_DUTY = 0.5
-
-/**
- * What to ask the camera for.
- *
- * A request, not a guarantee — a browser is free to hand back whatever it likes,
- * and several do. It costs nothing if ignored: every landmark MediaPipe returns
- * is normalised to the frame, so the recovered angle is the same at any
- * resolution and only the pixels being pushed around change.
- */
-const PREVIEW_WIDTH = 640
 
 /** A glyph per grade, so the verdict survives being read without colour. */
 const BADGE: Record<FramingVerdict['grade'], string> = {
@@ -213,13 +199,12 @@ export default function FramingCheck({ onRecorded }: Props) {
 
     void (async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          // `ideal`, not `exact`: a laptop has no environment-facing camera and
-          // an `exact` constraint would fail outright rather than fall back to
-          // the one camera there is.
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: PREVIEW_WIDTH } },
-          audio: false,
-        })
+        // The recording's constraints, not a preview's (L6.3): the recorder
+        // films through this same stream, which used to be opened at 640 px
+        // wide, so every serve recorded here was a 640-wide clip. The preview
+        // reads it every 400 ms at most, and MediaPipe's landmarks are
+        // normalised to the frame, so the bigger picture costs it nothing.
+        stream = await navigator.mediaDevices.getUserMedia(recordingConstraints())
       } catch (err) {
         if (live) setBlock(previewBlockFor(err))
         return
@@ -366,50 +351,30 @@ export default function FramingCheck({ onRecorded }: Props) {
     const stream = streamRef.current
     if (!stream || !type || !onRecorded) return
 
+    let capped = 0
+    const settle = () => {
+      clearTimeout(capped)
+      recorderRef.current = null
+      recordingRef.current = false
+      setRecording(false)
+    }
     let recorder: MediaRecorder
     try {
-      recorder = new MediaRecorder(stream, { mimeType: type })
+      recorder = recordClip(stream, type, MediaRecorder as never, {
+        stopped: (file, chunks) => {
+          settle()
+          // Stopped by the button, or stopped by the sheet closing underneath it?
+          // The recorder cannot say, and the two mean opposite things — see
+          // `recordingOutcome`, which is where that is reasoned about and tested.
+          if (recordingOutcome({ previewLive: liveRef.current, chunks }) !== 'analyse') return
+          onRecorded(file)
+        },
+        failed: settle,
+      }) as unknown as MediaRecorder
     } catch {
       // A browser that passed `isTypeSupported` and then refused the same type
-      // at construction. Nothing to say about it that the player can act on, so
-      // the control simply stops offering.
-      recorderRef.current = null
-      setRecording(false)
-      return
-    }
-
-    const chunks: Blob[] = []
-    let capped = 0
-
-    recorder.ondataavailable = (e) => {
-      if (e.data?.size) chunks.push(e.data)
-    }
-    recorder.onstop = () => {
-      clearTimeout(capped)
-      recorderRef.current = null
-      recordingRef.current = false
-      setRecording(false)
-      // Stopped by the button, or stopped by the sheet closing underneath it?
-      // The recorder cannot say, and the two mean opposite things — see
-      // `recordingOutcome`, which is where that is reasoned about and tested.
-      if (recordingOutcome({ previewLive: liveRef.current, chunks: chunks.length }) !== 'analyse') {
-        return
-      }
-      const file = new File([new Blob(chunks, { type })], recordingFileName(type, new Date()), {
-        type,
-      })
-      onRecorded(file)
-    }
-    recorder.onerror = () => {
-      clearTimeout(capped)
-      recorderRef.current = null
-      recordingRef.current = false
-      setRecording(false)
-    }
-
-    try {
-      recorder.start()
-    } catch {
+      // at construction or at start. Nothing to say about it that the player
+      // can act on, so the control simply stops offering.
       recorderRef.current = null
       setRecording(false)
       return
