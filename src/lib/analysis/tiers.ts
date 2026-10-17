@@ -88,6 +88,8 @@ export const CARD_SIGNAL: Record<string, string> = {
   tossPeakHeight: 'toss_peak_ratio',
   // Judged as one since L5.1: both read `tossPathSpread`, the card's number.
   tossPathWobble: 'toss_drift_ratio',
+  // And contact in front since L5.3, through `contactAheadOf`.
+  contactAhead: 'contact_ahead_pct',
   hipShoulderSeparation: 'separation_deg',
   legDrive: 'leg_drive_rise_ratio',
   dropDepth: 'drop_depth_ratio',
@@ -362,6 +364,23 @@ export const SIGNALS: Record<string, SignalSpec> = {
     source: { card: 'contactHeight' },
     seriousMiss: 0.12,
   },
+  /*
+   * Contact in front of the hips, in percent of height, towards the net (L5.3):
+   * the card's row read from the side, against the card's cited band — flat
+   * serves meet the ball 0.28–0.37 of height ahead of the front toe (Vacek 2023,
+   * Connolly 2021, Fett 2021). Graded from below only: "far in front" is the
+   * card's to say, and `contact_behind` names only a ball met over or behind
+   * the head. The kick's floor is 0 through `SERVE_TYPE_SHIFT`, because a kick
+   * may be met over the head.
+   */
+  contact_ahead_pct: {
+    id: 'contact_ahead_pct',
+    unit: 'pct',
+    direction: 'higher',
+    anchors: cardBand('contactAhead'),
+    seriousMiss: 8,
+    source: { card: 'contactAhead' },
+  },
   toss_peak_ratio: {
     id: 'toss_peak_ratio',
     unit: 'ratio',
@@ -579,6 +598,9 @@ export const NOISE_FLOOR: Record<string, number> = {
   elbow_lift_ratio: 0.017,
   contact_height_ratio: 0.012,
   toss_peak_ratio: 0.02,
+  // One and a half of the Bath serves' deviation between takes, 1.5, rounded
+  // up (L5.3); the rig moves it a third as far.
+  contact_ahead_pct: 3,
   // One and a half of its ensemble deviation, 0.006, rounded up to the next hundredth.
   leg_drive_rise_ratio: 0.01,
   // Real motion asks for more than the rig (13.5 ms against 7.5): one and a

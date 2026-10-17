@@ -77,6 +77,12 @@ export interface ServeDials {
   /** Wrist height at contact as a multiple of standing height. */
   contactReach: number
   /**
+   * How far behind its default the racket hand meets the ball, metres away
+   * from the net (L5.3). The default meets it 0.29 m in front of the hips; a
+   * dial past that puts contact over or behind the head.
+   */
+  contactBehind: number
+  /**
    * How far the racket wrist falls below the shoulder at the drop, metres;
    * negative is above it.
    *
@@ -581,6 +587,7 @@ export const CLEAN_SERVE: ServeDials = {
   trunkRotationSign: 1,
   contactHipHeight: 1.09,
   contactReach: 1.38,
+  contactBehind: 0,
   dropBelowShoulder: -0.05,
   dropElbowLift: 0.4,
   tossElbow: 172,
@@ -994,7 +1001,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
           [U.toss, 0.72],
           [U.trophy, 0.45 + d.trophyForearmDrop * 0.6 - d.lateArmCock * 0.35],
           [U.drop, 0.31],
-          [U.contact, -0.29],
+          [U.contact, -0.29 + d.contactBehind],
         ],
         u,
       ),

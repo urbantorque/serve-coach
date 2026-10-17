@@ -47,7 +47,9 @@ export const HIERARCHY: { group: string; flaws: FlawId[] }[] = [
   { group: 'grip', flaws: ['waiters_tray'] },
   // Then where the ball is. Every fault below this can be caused by a toss in
   // the wrong place, and several of them usually are.
-  { group: 'toss', flaws: ['toss_height', 'toss_drift'] },
+  // A ball met over the head is the toss seen at contact (L5.3), so it sits
+  // here rather than with the contact faults below.
+  { group: 'toss', flaws: ['toss_height', 'toss_drift', 'contact_behind'] },
   // Then the legs. Kovacs's order puts the load straight after the release:
   // his team finds most serve faults in those two stages, and a serve whose
   // legs never lift the body has nothing under the swing for the drop to use.
@@ -118,6 +120,7 @@ export const FLAW_DRILL: Record<FlawId, string> = {
   no_leg_drive: 'back_leg_serve',
   pancake_contact: 'pronation_snap',
   low_contact: 'up_and_out',
+  contact_behind: 'step_in_toss',
 }
 
 /**

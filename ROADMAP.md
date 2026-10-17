@@ -2362,7 +2362,49 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         (Touzard 2019) is required beside palm-to-sky.
       - *Proof:* the rig's arm-lay-over and palm dials; none of the 40 Bath
         serves is named. After L5.1.
-- [ ] **L5.3 Contact behind the head, named** · S–M.
+- [x] **L5.3 Contact behind the head, named** · S–M.
+      - *Delta (Oct 17):* done.
+        - `contactAheadOf` (its own module, `contactAhead.ts`) is the one
+          reading of where the hand met the ball against the hips, towards
+          the net. The card's `contactAhead` row and the new
+          `contact_ahead_pct` signal both call it.
+        - The signal pairs with the card in `CARD_SIGNAL`:
+          - it is read on the card's cited band (Vacek 2023, Connolly 2021,
+            Fett 2021) and graded from below only;
+          - the kick's floor of 0 comes through `SERVE_TYPE_SHIFT`;
+          - it is read from the side only, and only when the swing settles
+            which way the net is;
+          - its noise floor is 3, from Bath's 1.5 deviation between takes.
+        - `contact_behind` is a new fault in the toss group, because a ball
+          met over the head starts with where the toss went. Its sentence
+          says so, its drill ladder starts with the toss sent in front, and
+          its card drill is the step-in toss. The angle-reach note says "where
+          you hit the ball" when the camera stood behind. The still evidence
+          says one frame cannot tell in front from behind.
+        - The rig gained `contactBehind` (metres back from the default
+          contact).
+          - Clean reads 16.7.
+          - 0.25 m back reads 2.4: named on a flat serve, not on a kick.
+          - 0.35 m back reads −3.4: named on both.
+          - From behind there is no reading.
+        - Bath reads 12.6–26.1, inside the band, and is named at no rung. (The
+          ledger's 15–34 is the forty from every placement; these are the six
+          from the guide's spot.)
+        - Fixed on the way:
+          - The card priced this row through an inferred-depth cost, which
+            made every reading from the guide's side-on placement
+            "approximate" and left the fault unnameable. Read along the court's
+            length from the side, no depth enters it, so the cost is gone.
+          - A kick history's practice card keeps the kick's own drill over the
+            fault's ladder.
+          - Sharing the reading through `metrics.ts` pulled the card scorer
+            into the entry bundle (129.2 kB). The reading moved to its own
+            module, and the entry is 124.7 kB.
+        - Proof: three checks in `flaws.test.ts` cover the rig's contact
+          offsets on flat and kick, side-only reading with the toss group and
+          copy, and Bath inside and unnamed at 30 and 60 fps. The
+          "one serve, judged once" and plan-pricing checks hold the pair to one
+          number and one confidence.
       - **What:** `contact_behind` in the toss group, from the cited
         contact-in-front band, with toss placement as its cause. Side view
         only, and the kick's floor is 0.

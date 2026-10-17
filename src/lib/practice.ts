@@ -1,4 +1,4 @@
-import { FUNDAMENTALS, SERVE_TYPES, metricCopy } from './analysis/coaching'
+import { FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from './analysis/coaching'
 import { drillForMetric, faultForMetric, lastSeverity, progressionFor, rungFor } from './analysis/progressions'
 import { SOFT_MEASUREMENT } from './analysis/confidence'
 import { mean } from './analysis/geometry'
@@ -277,7 +277,15 @@ export function findPracticeFocus(
   // Started where the newest report that named the fault started its plan (L4.2).
   const rowFault = faultForMetric(pick.id)
   const severity = rowFault ? lastSeverity(sameServe, rowFault) : undefined
-  const forRow = drillForMetric(pick.id, metricCopy(pick.id, type)?.drill ?? fundamental.drill, rungs, severity)
+  // A serve type's own exercise for the row wins over the fault's ladder
+  // (L1.4's kick rule, kept when L5.3 gave contact in front a fault of its own):
+  // the flat ladder walks contact forward, which a kick met over the head does
+  // not need.
+  const typed = metricCopy(pick.id, type)?.drill
+  const forRow =
+    typed && typed !== METRICS[pick.id]?.drill
+      ? { drill: typed, flaw: undefined }
+      : drillForMetric(pick.id, typed ?? fundamental.drill, rungs, severity)
   const rowLadder = forRow.flaw ? progressionFor(forRow.flaw) : undefined
 
   return {

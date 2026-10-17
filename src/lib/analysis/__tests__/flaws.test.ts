@@ -12,6 +12,8 @@
 import { diagnose } from '../diagnose'
 import { evaluateFlaws, MIN_EVIDENCE, TRAY_ABDUCTION_MAX, type FlawId } from '../flaws'
 import { filmMocap } from '../mocapServe'
+import { HIERARCHY, type Triage } from '../triage'
+import { causalPlan } from '../verdict'
 import { REAL_SERVES } from './repeatability'
 import { detectServe } from '../phases'
 import {
@@ -666,6 +668,60 @@ check('an arm nobody saw leaves the tray unnamed, whatever the palm says', () =>
   const readings = { palm_to_sky_deg: { value: 80, confidence: 0.95 } }
   assert(!evaluateFlaws(readings, 5).find((f) => f.flaw === 'waiters_tray')!.detected, 'a tray was named with no arm read')
   assert(evaluateFlaws(readings, 5, { cockingAbductionDeg: 55 }).find((f) => f.flaw === 'waiters_tray')!.detected, 'a tray with its arm read low was not named')
+})
+
+
+/* ================================================== contact behind (L5.3) === */
+
+heading('A ball met over the head, named (L5.3)')
+
+/** The report's own sentence for a fault, read through the plan as the report reads it. */
+const FLAW_COPY_FOR = (flaw: FlawId) =>
+  causalPlan(
+    {
+      status: 'ok',
+      primary_flaw: { flaw, group: 'toss', signal: 'x', value: 0, unit: 'pct', target: [8, 40], target_tier: 5, severity: 'high' },
+      injury_risk: [],
+      suppressed_count: 0,
+    } as unknown as Triage,
+    undefined,
+  )[0]?.why ?? ''
+
+const behindFinding = (dials: Partial<ServeDials>, serveType: ServeType = 'flat', tier = 5) =>
+  run(dials, tier, undefined, serveType).diagnosis.flaws.find((f) => f.flaw === 'contact_behind')
+
+check('the rig met 0.25 m back is named on a flat serve and not a kick; 0.35 m on both; clean on neither', () => {
+  const clean = behindFinding({})
+  const flat25 = behindFinding({ contactBehind: 0.25 })
+  const kick25 = behindFinding({ contactBehind: 0.25 }, 'kick')
+  const flat35 = behindFinding({ contactBehind: 0.35 })
+  const kick35 = behindFinding({ contactBehind: 0.35 }, 'kick')
+  note(`clean ${clean?.value}, 0.25 m back ${flat25?.value} (kick floor ${kick25?.target[0]}), 0.35 m back ${flat35?.value}`)
+  assert(clean !== undefined && !clean.detected, 'the clean serve was named or not read')
+  assert(flat25?.detected === true, 'a flat serve met 0.25 m back was not named')
+  assert(kick25?.detected === false && kick25.target[0] === 0, 'a kick met over the head was named against a floor above 0')
+  assert(flat35?.detected === true && kick35?.detected === true, 'a ball met behind the head was not named')
+})
+
+check('read from the side only, filed with the toss, and its copy names the toss', () => {
+  const behind = run({ contactBehind: 0.35, cameraYaw: 8 }).diagnosis.flaws.find((f) => f.flaw === 'contact_behind')
+  assert(behind === undefined, 'contact in front was read from behind the baseline')
+  assert(HIERARCHY.find((h) => h.group === 'toss')!.flaws.includes('contact_behind'), 'not in the toss group')
+  assert(/toss/.test(FLAW_COPY_FOR('contact_behind')), 'the copy does not say where it starts')
+})
+
+check('no Bath serve is named, and each reads inside the cited band', () => {
+  const reads: number[] = []
+  for (const fps of [30, 60]) {
+    for (const serve of REAL_SERVES) {
+      const frames = filmMocap(serve, { fps })
+      const f = diagnose(frames, detectServe(frames, fps), { tier: 9 }).flaws.find((x) => x.flaw === 'contact_behind')!
+      assert(f !== undefined && !f.detected, `a Bath serve was named at ${fps} fps`)
+      reads.push(f.value)
+    }
+  }
+  note(`Bath meets the ball ${Math.min(...reads).toFixed(1)}–${Math.max(...reads).toFixed(1)}% of height in front of the hips`)
+  assert(Math.min(...reads) >= 8 && Math.max(...reads) <= 40, 'a Bath serve read outside the cited band')
 })
 
 report()

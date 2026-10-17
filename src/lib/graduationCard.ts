@@ -31,6 +31,7 @@ const MOMENT: Record<FlawId, PhaseId> = {
   arming_the_ball: 'contact',
   pancake_contact: 'contact',
   low_contact: 'contact',
+  contact_behind: 'contact',
 }
 
 /** The moment a fault is judged at: its still's, where it has one. */

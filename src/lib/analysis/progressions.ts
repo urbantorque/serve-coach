@@ -97,6 +97,37 @@ const THREE_DEPTHS: Step = {
 }
 
 const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
+  // A ball met over or behind the head (L5.3): the toss sent in front, then
+  // the serve that follows it into the court.
+  contact_behind: {
+    cue: 'Send the ball up in front of you, so it would land a racket length inside the baseline.',
+    steps: [
+      {
+        name: 'Toss in front',
+        how: 'Toss without swinging and let the ball land about a racket length in front of your front foot.',
+        reps: '15 tosses',
+        check: { by: 'self', bar: 'Move up when twelve of fifteen land in front of your front foot.' },
+      },
+      {
+        name: 'Racket ahead on the court',
+        how: 'Lay your racket a racket length in front of your front foot, and toss so the ball lands on the strings.',
+        reps: '20 tosses',
+        check: { by: 'self', bar: 'Move up when sixteen of twenty land on the strings.' },
+      },
+      served(DRILLS.step_in_toss),
+      {
+        name: 'Into the court',
+        how: 'From the baseline, serve and let every toss pull you a step into the court.',
+        reps: '20 serves',
+        check: ENGINE,
+      },
+      POINTS,
+    ],
+    easier: 'Stand a step inside the baseline and toss so you have to lean forward to reach the ball.',
+    mistake: 'Leaning back to reach a toss that went behind you. Move the toss, not your body.',
+    pass: 5,
+  },
+
   waiters_tray: {
     cue: 'Hold the racket like a hammer and let the edge lead the way up to the ball.',
     steps: [

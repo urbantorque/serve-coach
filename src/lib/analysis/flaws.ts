@@ -43,6 +43,7 @@ export type FlawId =
   | 'pancake_contact'
   | 'low_contact'
   | 'toss_height'
+  | 'contact_behind'
 
 /** One breakdown, measured. Pure data — no sentence is ever built from this. */
 export interface FlawFinding {
@@ -197,6 +198,11 @@ export const FLAWS: FlawSpec[] = [
     notNamed: 'see UNDER_RESOLVED.pronation_deg',
   },
   { flaw: 'toss_height', signal: 'toss_peak_ratio' },
+  // A ball met over or behind the head (L5.3), read from the side against the
+  // card's cited band. Filed with the toss, because that is where it starts: a
+  // toss that goes up over the player, or behind, leaves nowhere in front to
+  // meet it — and the fix is where the ball is sent, not the arm.
+  { flaw: 'contact_behind', signal: 'contact_ahead_pct' },
   { flaw: 'low_contact', signal: 'contact_height_ratio', causedBy: 'toss_height' },
 ]
 

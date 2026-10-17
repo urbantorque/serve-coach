@@ -1035,6 +1035,7 @@ export const DRILLS: Record<string, Drill> = {
     reps: '15 serves',
   },
   up_and_out: UP_AND_OUT,
+  step_in_toss: METRICS.contactAhead.drill,
 }
 
 /* ------------------------------------------------------------- serve types */

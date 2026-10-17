@@ -41,6 +41,9 @@ export const ANGLE_BOUND: AngleBound[] = [
   // of naming (L1.2, `leanAlongLens` in diagnose.ts). From behind the baseline
   // it lies across the picture.
   { flaw: 'posture_collapse', filmFrom: 'front-back', what: 'whether your body folds sideways' },
+  // In front or behind is the court's length, which only the side camera lays
+  // across the picture (L5.3).
+  { flaw: 'contact_behind', filmFrom: 'side', what: 'where you hit the ball' },
 ]
 
 const WHERE: Record<AngleBound['filmFrom'], string> = {

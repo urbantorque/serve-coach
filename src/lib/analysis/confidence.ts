@@ -132,7 +132,11 @@ const DEPENDENCIES: Record<string, Dependency[]> = {
   ballContactHeight: ['scale', 'contact'],
   armExtension: ['contact'],
   bodyExtension: ['scale', 'trophy', 'contact'],
-  contactAhead: ['scale', 'depth', 'contact'],
+  // No `depth` since L5.3. The row is shown from the side only, where it is
+  // read along the picture's horizontal — the court's length — and no inferred
+  // depth enters it; the depth cost made every reading from the guide's own
+  // placement "approximate", and left the fault it feeds unnameable.
+  contactAhead: ['scale', 'contact'],
   // Rhythm
   // In the file's own seconds, which slow motion stretches. `loadRatio` below
   // is a share of the motion and survives a stretch, so it carries no such cost.

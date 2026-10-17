@@ -24,6 +24,7 @@ import { readHitch, type Hitch } from './hitch'
 import { readChestTurn, type ChestTurn } from './chestTurn'
 import { contactHeightOf } from './handHeight'
 import { tossPathSpread } from './tossPath'
+import { contactAheadOf } from './contactAhead'
 import {
   palmNormalSeries,
   palmSkyElevation,
@@ -1020,6 +1021,8 @@ export function diagnose(
   // And from the side, where that depth is not there to read, the chest's turn
   // is read from the shoulder line's width instead (`chestTurn.ts`, D3.6).
   const chestTurn = readChestTurn(frames, skel, viewFromCourtYaw(spatial.court_yaw_deg))
+  const contactAhead =
+    viewFromCourtYaw(spatial.court_yaw_deg) === 'side' ? contactAheadOf(frames, skel, R.wrist, bodyHeight) : undefined
   const depthUnreliable = spatial.depth_unreliable
   const separationConfidence =
     trunkVisibility *
@@ -1126,6 +1129,21 @@ export function diagnose(
             value: chestTurn.shouldersMs,
             confidence: windowVisibility(frames, keys.trophy, keys.contact, [LM.leftShoulder, LM.rightShoulder]),
           },
+    // Where the hand met the ball against the hips, towards the net (L5.3): the
+    // card's own number, from the side only, where the picture's horizontal is
+    // the court's length, and only when the swing settled which way the net is.
+    contact_ahead_pct:
+      contactAhead?.certain
+        ? {
+            value: contactAhead.value,
+            // Priced as the card prices it (`confidence.ts`), so the plan never
+            // stands on this number more firmly than the row it shares.
+            confidence:
+              windowVisibility(frames, keys.contact - 1, keys.contact + 1, [R.wrist, LM.leftHip, LM.rightHip]) *
+              rests(['scale', 'contact']) *
+              smear,
+          }
+        : undefined,
   }
 
   const signals: Record<string, number> = {}
