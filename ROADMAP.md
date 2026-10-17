@@ -2207,7 +2207,21 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - repeatability drawn so that a longer bar means steadier;
         - one share button.
       - *Proof:* render tests and preview screenshots. After L3.2 and L3.5.
-- [ ] **L4.10 Home that knows the player** · S.
+- [x] **L4.10 Home that knows the player** · S.
+      - *Delta (Oct 17):* done.
+        - Once there is history, the pitch ("World-class eyes on your serve")
+          shrinks to one line, "Your next serve".
+        - The form card moved up to sit straight after This week, above the
+          help straps a returning player has already read. A new player sees
+          the full hero and the example strap as before.
+        - Proof:
+          - a render test with seeded history checks the compact hero, then
+            This week, then the form, then the straps, and that an empty
+            history keeps the full pitch;
+          - at 375×812 the seeded history shows the hero at 92 px, This week
+            at 310 and the form card at 616, all in the first screen. On a
+            phone, "Record now" adds about 67 px and the form still starts
+            near 683.
       - **What:** once there is history, a compact hero, with This week and
         the player's form in the first viewport.
       - *Proof:* a render test with seeded history, and the preview.

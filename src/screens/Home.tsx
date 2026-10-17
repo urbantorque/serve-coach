@@ -244,6 +244,9 @@ export default function Home({
     }
   }, [needsHandedness, onGuideThen, onPick])
 
+  // A returning player (L4.10): history loaded and not empty.
+  const known = sessionsLoaded && sessions.length > 0
+
   return (
     <div className="screen home">
       <header className="home-top">
@@ -264,17 +267,27 @@ export default function Home({
         </span>
       </header>
 
-      <section className="home-hero">
-        <h1>
-          World-class eyes
-          <br />
-          on your serve.
-        </h1>
-        <p>
-          Film one serve. Get the toss, the load, the swing and the contact measured frame by
-          frame — with the fix that matters most.
-        </p>
-      </section>
+      {/* Once there is history the pitch has done its job (L4.10): the hero
+          shrinks to one line, so what this player is working on and how they
+          are doing reach the first screen instead of a promise they have
+          already taken up. */}
+      {known ? (
+        <section className="home-hero home-hero--compact">
+          <h1>Your next serve</h1>
+        </section>
+      ) : (
+        <section className="home-hero">
+          <h1>
+            World-class eyes
+            <br />
+            on your serve.
+          </h1>
+          <p>
+            Film one serve. Get the toss, the load, the swing and the contact measured frame by
+            frame — with the fix that matters most.
+          </p>
+        </section>
+      )}
 
       <div
         className={`dropzone${dragging ? ' is-dragging' : ''}`}
@@ -405,58 +418,9 @@ export default function Home({
         </section>
       )}
 
-      <button className="strap" onClick={onShowGuide}>
-        <Icon name="info" size={17} />
-        <span>
-          <strong>How to film it</strong>
-          Thirty seconds of setup makes the numbers far sharper.
-        </span>
-        <Icon name="chevron" size={16} />
-      </button>
-
-      {/* The guide's four rules, checked against the camera the player is
-          actually holding. Everything the engine gives up on because of where
-          the phone was — the depth axis outside eighteen to seventy-eight
-          degrees of yaw, a body with one end out of shot, a hand it never found
-          — is decided by the framing and knowable before the serve. Until this
-          existed the earliest anyone could learn it was half a minute after
-          they had finished filming. Offered rather than imposed: it sits below
-          both ways in, and both still work without ever opening it.
-
-          Desktop only. On a phone this is what "Record now" above already
-          opens — a second control here would be the same destination twice,
-          one of them mislabelled as a mere preview. A laptop has no "Record
-          now" at all, coarse-pointer-gated as it is, so this strap stays its
-          only way to the live check. */}
-      {canPreview && !coarse && (
-        <button
-          className="strap"
-          onClick={() => (needsHandedness ? onGuideThen('check') : setChecking(true))}
-        >
-          <Icon name="camera" size={17} />
-          <span>
-            <strong>Check your framing first</strong>
-            Point the phone at your spot and see what the coach can read.
-          </span>
-          <Icon name="chevron" size={16} />
-        </button>
-      )}
-
-      {/* Somebody who has never used this has no serve video on their phone, so
-          the only thing the app can currently show them is a file picker. An
-          example report is the difference between understanding what this does
-          and having to go and film something to find out. */}
-      {sessionsLoaded && sessions.length === 0 && (
-        <button className="strap strap--quiet" onClick={onShowExample}>
-          <Icon name="target" size={17} />
-          <span>
-            <strong>See an example report</strong>
-            What you get back, on a sample serve. No video needed.
-          </span>
-          <Icon name="chevron" size={16} />
-        </button>
-      )}
-
+      {/* The player's form beside This week (L4.10): both in the first screen
+          once there is history, above the help straps a returning player has
+          already read. */}
       {progress && progress.points.length > 1 && (
         <button className="progress-card" onClick={onShowProgress}>
           <div className="progress-head">
@@ -527,6 +491,58 @@ export default function Home({
               </span>
             </span>
           )}
+        </button>
+      )}
+
+      <button className="strap" onClick={onShowGuide}>
+        <Icon name="info" size={17} />
+        <span>
+          <strong>How to film it</strong>
+          Thirty seconds of setup makes the numbers far sharper.
+        </span>
+        <Icon name="chevron" size={16} />
+      </button>
+
+      {/* The guide's four rules, checked against the camera the player is
+          actually holding. Everything the engine gives up on because of where
+          the phone was — the depth axis outside eighteen to seventy-eight
+          degrees of yaw, a body with one end out of shot, a hand it never found
+          — is decided by the framing and knowable before the serve. Until this
+          existed the earliest anyone could learn it was half a minute after
+          they had finished filming. Offered rather than imposed: it sits below
+          both ways in, and both still work without ever opening it.
+
+          Desktop only. On a phone this is what "Record now" above already
+          opens — a second control here would be the same destination twice,
+          one of them mislabelled as a mere preview. A laptop has no "Record
+          now" at all, coarse-pointer-gated as it is, so this strap stays its
+          only way to the live check. */}
+      {canPreview && !coarse && (
+        <button
+          className="strap"
+          onClick={() => (needsHandedness ? onGuideThen('check') : setChecking(true))}
+        >
+          <Icon name="camera" size={17} />
+          <span>
+            <strong>Check your framing first</strong>
+            Point the phone at your spot and see what the coach can read.
+          </span>
+          <Icon name="chevron" size={16} />
+        </button>
+      )}
+
+      {/* Somebody who has never used this has no serve video on their phone, so
+          the only thing the app can currently show them is a file picker. An
+          example report is the difference between understanding what this does
+          and having to go and film something to find out. */}
+      {sessionsLoaded && sessions.length === 0 && (
+        <button className="strap strap--quiet" onClick={onShowExample}>
+          <Icon name="target" size={17} />
+          <span>
+            <strong>See an example report</strong>
+            What you get back, on a sample serve. No video needed.
+          </span>
+          <Icon name="chevron" size={16} />
         </button>
       )}
 

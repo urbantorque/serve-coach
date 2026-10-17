@@ -37,6 +37,14 @@
   color: transparent;
 }
 
+/* A returning player's hero (L4.10): one line, so the plan and the form reach
+   the first screen. Same face and gradient as the full one, at heading size. */
+.home-hero--compact h1 {
+  font-size: 26px;
+  line-height: 1.15;
+  margin-bottom: 0;
+}
+
 .home-hero p {
   font-size: 16px;
   line-height: 1.6;

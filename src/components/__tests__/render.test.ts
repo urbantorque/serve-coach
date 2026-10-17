@@ -442,6 +442,34 @@ check('a live report draws the best serve under the video, and says so (L4.8)', 
   assert(!alone.includes('The dashed body is'), 'a dashed body was promised with no serve to draw')
 })
 
+check('home knows a returning player: a compact hero, then This week and the form, before the straps (L4.10)', () => {
+  const last = stored(sampleAnalysis(DEMO_DIALS.injury))
+  const older = (n: number) => ({ ...stored(sampleAnalysis({ seed: 40 + n })), id: `serve-old${n}-0`, createdAt: last.createdAt - n * 3 * 86_400_000 })
+  const props = (sessions: Session[]) => ({
+    sessions,
+    offlineReady: true,
+    sessionsLoaded: true,
+    onPick: noop,
+    onOpen: noop,
+    onShowGuide: noop,
+    onShowHistory: noop,
+    onShowSettings: noop,
+    onShowProgress: noop,
+    onGuideThen: noop,
+    onShowExample: noop,
+    needsHandedness: false,
+    onMakeOffline: noop,
+  })
+  const known = html(createElement(Home, props([last, older(1), older(2), older(3)])))
+  assert(known.includes('home-hero--compact') && !known.includes('World-class eyes'), 'a returning player got the full pitch')
+  const at = (s: string) => known.indexOf(s)
+  assert(at('This week') > at('Your next serve'), 'This week is above the hero')
+  assert(at('Your form') > at('This week'), 'the form is above This week')
+  assert(at('How to film it') > at('Your form'), 'the help straps come before the form')
+  const fresh = html(createElement(Home, props([])))
+  assert(fresh.includes('World-class eyes') && !fresh.includes('home-hero--compact'), 'a new player lost the pitch')
+})
+
 check('the glance renders', () => {
   const out = html(
     createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop }),
