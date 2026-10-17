@@ -1815,7 +1815,33 @@ does, and nothing marks a fault as fixed.
         measurement change. A band-only bump re-scores the stored values
         instead of starting a new era.
       - *Proof:* a v4 history re-scored equals a fresh v5 score.
-- [ ] **L3.12 Serve profile and the graduation card** · M.
+- [x] **L3.12 Serve profile and the graduation card** · M.
+      - *Delta (Oct 17):* done.
+        - `serveProfile.ts` gives the newest trip's median on eleven rows,
+          said only as the readout's body position. It has no status, colour
+          or target, and a row needs half the trip's serves to have a reading.
+          On Progress it reads "How you served, Tuesday".
+        - `graduationCard.ts` builds each recent graduation from the keyframe
+          poses every report keeps, at the moment the fault is judged:
+          - the newest serve before the fix that showed the fault;
+          - the newest serve since that was clean on it.
+          `renderGraduationCard` draws "FIXED", the fault, its line, and the
+          two figures at one shared scale with their dates.
+        - Progress offers "Share: Racket drop fixed" under the serve path. It
+          is the only way the card leaves the phone.
+        - Proof:
+          - five rig dial sets give five distinct profiles;
+          - profiles carry words, not grades;
+          - the card picks its two halves on the right sides of the fix and
+            refuses a history with no poses;
+          - a recording-canvas render test (heading, line, both dates,
+            figures stroked);
+          - a Progress render;
+          - the card drawn on a real canvas in the preview.
+        - Departure: figures, not photographs. The stills survive on the
+          newest 20 reports only, and the "then" is usually older than that.
+          Shared cards have so far carried no images of the person except the
+          single-report card.
       - **What:** an ungraded "how you serve" card per trip. When a fault is
         retired, its then-and-now pair becomes a share image. Nothing leaves
         the device except through the share button.

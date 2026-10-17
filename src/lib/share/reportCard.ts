@@ -6,6 +6,8 @@ import { plain } from '../analysis/voice'
 import { SOFT_READ, readQuality } from '../../components/statusLabels'
 import type { Session } from '../storage/db'
 import type { TripSummary } from '../progress'
+import { drawSkeleton, type DrawRect } from '../pose/skeleton'
+import type { CardPose, GraduationCard } from '../graduationCard'
 
 type Report = Analysis | Session
 
@@ -1066,4 +1068,99 @@ export async function shareTripCard(
   const blob = await renderTripCard(trip, strainLine)
   if (!blob) return 'failed'
   return shareBlob(blob, `trip-${dateStamp(trip.from)}.png`, 'My trip')
+}
+
+/* ------------------------------------------------ a fault, fixed (L3.12) -- */
+
+/** A tracked body's extent in normalised frame units, x divided back out of the aspect. */
+function extent(pose: CardPose) {
+  const xs = pose.frame.image.map((l) => l.x / pose.aspect).filter(Number.isFinite)
+  const ys = pose.frame.image.map((l) => l.y).filter(Number.isFinite)
+  return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) }
+}
+
+/**
+ * The largest scale, in pixels per normalised x, at which every figure fits
+ * its panel. One scale for both, so the two bodies are drawn the same size
+ * and the difference between them is the serve, not the fit.
+ */
+function sharedScale(poses: CardPose[], w: number, h: number): number {
+  return Math.min(
+    ...poses.map((p) => {
+      const e = extent(p)
+      return Math.min((w * 0.8) / Math.max(1e-3, e.x1 - e.x0), (h * 0.82 * p.aspect) / Math.max(1e-3, e.y1 - e.y0))
+    }),
+  )
+}
+
+/** A figure centred in its panel at a given scale; y gets it over the aspect, so nothing stretches. */
+function figureRect(pose: CardPose, dw: number, x: number, y: number, w: number, h: number): DrawRect {
+  const e = extent(pose)
+  const dh = dw / pose.aspect
+  return { ox: x + w / 2 - ((e.x0 + e.x1) / 2) * dw, oy: y + h / 2 - ((e.y0 + e.y1) / 2) * dh, dw, dh }
+}
+
+/**
+ * The graduation card: the fault's name, the line it earned, and the body at
+ * the moment the fault is judged — a serve that showed it beside the newest
+ * that did not, each dated. Figures, not photographs: see `graduationCard`.
+ */
+export async function renderGraduationCard(card: GraduationCard): Promise<Blob | undefined> {
+  const W = 1080
+  const PAD = 64
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return undefined
+
+  ctx.font = font(400, 30)
+  const lines = layoutLines(ctx, plain(card.line), W - PAD * 2)
+  const panelTop = 236 + lines.length * 42 + 28
+  const panelH = 600
+  const gap = 24
+  const panelW = (W - PAD * 2 - gap) / 2
+  const H = panelTop + panelH + 72 + PAD
+  canvas.height = H
+  ctx.fillStyle = INK
+  ctx.fillRect(0, 0, W, H)
+
+  ctx.fillStyle = LIME
+  ctx.font = font(700, 24)
+  ctx.fillText('FIXED', PAD, 96)
+  ctx.fillStyle = FG
+  ctx.font = font(700, 64)
+  ctx.fillText(card.name, PAD, 176)
+  ctx.fillStyle = MUTED
+  ctx.font = font(400, 30)
+  drawLines(ctx, lines, PAD, 236, 42)
+
+  const scale = sharedScale([card.then, card.now], panelW, panelH)
+  const panel = (i: number, pose: CardPose, caption: string) => {
+    const x = PAD + i * (panelW + gap)
+    ctx.fillStyle = INK_2
+    roundRect(ctx, x, panelTop, panelW, panelH, 24)
+    ctx.fill()
+    drawSkeleton(ctx, {
+      frame: pose.frame,
+      aspect: pose.aspect,
+      racket: pose.racket,
+      rect: figureRect(pose, scale, x, panelTop, panelW, panelH),
+    })
+    ctx.fillStyle = FAINT
+    ctx.font = font(700, 22)
+    ctx.fillText(caption, x + 8, panelTop + panelH + 44)
+  }
+  panel(0, card.then, `THEN · ${dateStamp(card.then.at)}`)
+  panel(1, card.now, `NOW · ${dateStamp(card.now.at)}`)
+
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
+}
+
+/** The graduation card, handed to the share sheet — the only way it leaves the phone. */
+export async function shareGraduationCard(
+  card: GraduationCard,
+): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+  const blob = await renderGraduationCard(card)
+  if (!blob) return 'failed'
+  return shareBlob(blob, `fixed-${card.flaw}-${dateStamp(card.now.at)}.png`, `${card.name}: fixed`)
 }

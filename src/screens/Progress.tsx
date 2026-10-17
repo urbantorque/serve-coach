@@ -30,6 +30,7 @@ import {
   streakLine,
   thenAndNow,
   tripDay,
+  tripsOf,
   tripRangeLine,
 } from '../lib/progress'
 import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
@@ -37,6 +38,11 @@ import type { TripRecord } from '../lib/storage/ledger'
 import type { Cadence } from '../lib/storage/prefs'
 import { partLabel, servePath, type PartState } from '../lib/servePath'
 import { bodyBestLine, bodyBests } from '../lib/bests'
+import { serveProfile } from '../lib/serveProfile'
+import { graduation } from '../lib/graduation'
+import { graduationCard } from '../lib/graduationCard'
+import { weekPlan } from '../lib/weekPlan'
+import GraduationShareButton from '../components/GraduationShareButton'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 
@@ -115,6 +121,23 @@ export default function Progress({
   const path = useMemo(() => servePath(sessions, ladder), [sessions, ladder])
   // Bests as body positions the newest trip reached (L3.8).
   const bests = useMemo(() => bodyBests(sessions, form?.serveType), [sessions, form])
+  // The newest trip of this serve type, described rather than graded (L3.12).
+  const profile = useMemo(() => {
+    if (!form) return undefined
+    const trips = tripsOf(sessions.filter((s) => (s.serveType ?? 'flat') === form.serveType))
+    const trip = trips[trips.length - 1]
+    return trip ? { at: trip[0].createdAt, lines: serveProfile(trip) } : undefined
+  }, [sessions, form])
+  // A card for each fault fixed lately, where the history can draw both halves.
+  const fixedCards = useMemo(() => {
+    const week = weekPlan(sessions, ladder)
+    return (week?.graduated ?? [])
+      .map((x) => {
+        const g = graduation(sessions, x.flaw)
+        return g ? graduationCard(sessions, g, week?.items[0]?.flaw) : undefined
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== undefined)
+  }, [sessions, ladder])
   // Read straight off `form`, the same object Home.tsx's own copy of this call
   // is read off — a fact about the score trend this screen already draws.
   const sheetMilestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
@@ -267,6 +290,27 @@ export default function Progress({
                   </li>
                 ))}
               </ol>
+              {/* A fault fixed lately, then and now, for the player to send if
+                  they choose (L3.12). The tap is the only way it leaves. */}
+              {fixedCards.map((card) => (
+                <GraduationShareButton key={card.flaw} card={card} />
+              ))}
+            </section>
+          )}
+
+          {/* How you serve (L3.12): the newest trip described, not graded — the
+              readout's body position for each row, with no colour or target. */}
+          {profile && profile.lines.length > 0 && (
+            <section className="block">
+              <h2 className="block-title">How you served, {tripDay(profile.at)}</h2>
+              <ul className="profile">
+                {profile.lines.map((l) => (
+                  <li key={l.id} className="profile-line">
+                    <span className="path-name">{l.label}</span>
+                    <span className="profile-tag">{l.tag}</span>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
 

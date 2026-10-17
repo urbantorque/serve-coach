@@ -221,6 +221,11 @@ const HISTORY_CONSUMERS = [
   'strainBehindOf',
   'streakLine',
   'thenAndNow',
+  // The graduation card and what it is built from (L3.12).
+  'graduation',
+  'graduationCard',
+  'tripsOf',
+  'weekPlan',
 ]
 
 check('every function that reads a whole history is on the list R55 must cover', () => {
