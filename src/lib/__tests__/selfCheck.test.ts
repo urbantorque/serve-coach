@@ -161,6 +161,7 @@ const full: DeviceReport = {
   storage: { quotaMb: 2945, usedMb: 41, persisted: false },
   hardware: { screen: '390×844', dpr: 3, cores: 8, memoryGb: 4 },
   offline: true,
+  platform: { wakeLock: true, keepClips: false, frameCallback: true, localVoice: true, installed: false },
 }
 
 /** Every string anywhere in a value, with the path that reached it. */
@@ -192,6 +193,12 @@ const KEYWORDS = [
   'persisted',
   // What the last recording got (L6.3), fixed words around three numbers.
   'unknown',
+  // What the platform does for the app (L6.10), five fixed words.
+  'installed',
+  'frames',
+  'clips',
+  'voice',
+  'wake',
   'last',
   'size',
   'fps',

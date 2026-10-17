@@ -74,3 +74,24 @@ export function onVoicesChanged(then: () => void): () => void {
   synth.addEventListener('voiceschanged', then)
   return () => synth.removeEventListener('voiceschanged', then)
 }
+
+/**
+ * Unlock speech for later, from inside a tap (L6.10).
+ *
+ * iOS lets `speechSynthesis` start only from a user gesture, and the glance
+ * reads itself aloud when an analysis finishes, with no tap anywhere near it,
+ * so on an iPhone it was silent. Speaking a silent utterance from the record
+ * tap opens the way for the real one. Through a local voice only, as
+ * everything here is; with none, there is nothing to unlock.
+ */
+export function primeSpeech(lang?: string): boolean {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false
+  if (typeof SpeechSynthesisUtterance === 'undefined') return false
+  const voice = pickLocalVoice(window.speechSynthesis.getVoices(), lang ?? navigator.language ?? 'en')
+  if (!voice) return false
+  const utterance = new SpeechSynthesisUtterance(' ')
+  utterance.voice = voice
+  utterance.volume = 0
+  window.speechSynthesis.speak(utterance)
+  return true
+}

@@ -3021,7 +3021,28 @@ Everything here is built from `primitives.tsx` and the existing tokens.
           126.1 kB.
       - **What:** an estimate taken from this device's past `Analysis.cost`.
       - *Proof:* a unit test.
-- [ ] **L6.10 The small platform fixes** · S.
+- [x] **L6.10 The small platform fixes** · S.
+      - *Delta (Oct 17):* done.
+        - `goHome` releases the clip's object URL. The update gate waits for
+          home with no video held, and home kept the last report's, so a
+          waiting update never landed until the next analysis.
+        - `primeSpeech` in `speech.ts` speaks a silent utterance from the
+          record tap. iOS lets speech start only from a gesture, and the glance
+          speaks when the analysis ends. It goes through a local voice only;
+          with none it does nothing.
+        - `?check` gains a `platformVerdict` line: "wake yes clips yes frames
+          yes voice no installed no", covering wake lock, writable clips,
+          `requestVideoFrameCallback`, a local voice and installed status. The
+          report's vocabulary test gained the five words deliberately.
+        - Proof:
+          - Three checks in `platformFixes.test.ts`: an App source check that
+            home releases the clip and the gate waits for it; priming against a
+            fake `speechSynthesis`, silent and local, refused with only a
+            remote voice; and the verdict and its line.
+          - The `selfCheck` text tests pass with the fixture's new
+            `platform` field.
+        - Seen on `?check` in the preview, with no console errors. The entry
+          bundle is 126.1 kB.
       - **What:**
         - `goHome` releases the video, so updates can land;
         - the glance's speech is primed on the record tap;

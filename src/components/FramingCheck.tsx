@@ -12,6 +12,7 @@ import {
 import { MAX_RECORDING_SECONDS, recordClip, recordingOutcome, recordingType } from '../lib/framing/record'
 import { loadEngine, nextVideoTimestamp } from '../lib/pose/poseEngine'
 import { recordingConstraints } from '../lib/framing/camera'
+import { primeSpeech } from '../lib/speech'
 import type { Frame } from '../lib/analysis/types'
 
 /**
@@ -358,6 +359,8 @@ export default function FramingCheck({ onRecorded }: Props) {
       recordingRef.current = false
       setRecording(false)
     }
+    // This tap is the gesture iOS wants before the glance can speak (L6.10).
+    primeSpeech()
     let recorder: MediaRecorder
     try {
       recorder = recordClip(stream, type, MediaRecorder as never, {

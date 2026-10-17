@@ -27,6 +27,9 @@
 import { RECORDING_TYPES, playbackQuery, recordingType } from './framing/record'
 import { previewSupported } from './framing/access'
 import { cameraLine, lastCamera, type CameraSettings } from './framing/camera'
+import { clipStoreAvailable } from './storage/clipStore'
+import { hasLocalVoice } from './speech'
+import { isInstalled } from './storage/backup'
 
 /**
  * What `canPlayType` said, in three words rather than its own two-and-a-blank.
@@ -242,6 +245,37 @@ export async function storageVerdict(
   return out
 }
 
+/**
+ * What the platform does for the app (L6.10): keeping the screen on, keeping a
+ * clip, presenting a decoded frame on time, a voice on the phone, and running
+ * installed. Each one changes what the app can do on this phone, and each was
+ * a guess until now.
+ */
+export interface PlatformVerdict {
+  wakeLock: boolean
+  keepClips: boolean
+  frameCallback: boolean
+  localVoice: boolean
+  installed: boolean
+}
+
+/** The five answers, from what was found rather than from a user agent. Pure, for the tests. */
+export function platformVerdict(env: {
+  navigator?: object
+  videoPrototype?: object
+  keepClips: boolean
+  localVoice: boolean
+  installed: boolean
+}): PlatformVerdict {
+  return {
+    wakeLock: Boolean(env.navigator && 'wakeLock' in env.navigator),
+    keepClips: env.keepClips,
+    frameCallback: Boolean(env.videoPrototype && 'requestVideoFrameCallback' in env.videoPrototype),
+    localVoice: env.localVoice,
+    installed: env.installed,
+  }
+}
+
 export interface HardwareVerdict {
   /** CSS pixels, as the layout sees them. */
   screen?: string
@@ -297,6 +331,8 @@ export interface DeviceReport {
   }
   storage: StorageVerdict
   hardware: HardwareVerdict
+  /** What the platform does for the app (L6.10). Optional, for reports built before it. */
+  platform?: PlatformVerdict
   /** Whether the model and runtime are cached, so the app works with no signal. */
   offline: boolean
 }
@@ -350,6 +386,11 @@ export function deviceReportText(r: DeviceReport): string {
     `screen ${r.hardware.screen ?? '?'} dpr ${r.hardware.dpr ?? '?'} cores ${
       r.hardware.cores ?? '?'
     } memory ${r.hardware.memoryGb ?? '?'}`,
+    r.platform
+      ? `wake ${r.platform.wakeLock ? 'yes' : 'no'} clips ${r.platform.keepClips ? 'yes' : 'no'} frames ${
+          r.platform.frameCallback ? 'yes' : 'no'
+        } voice ${r.platform.localVoice ? 'yes' : 'no'} installed ${r.platform.installed ? 'yes' : 'no'}`
+      : '',
   ]
   return lines.filter(Boolean).join('\n')
 }
@@ -405,6 +446,13 @@ export async function readDeviceReport(offline: () => Promise<boolean>): Promise
     },
     storage: await storageVerdict(),
     hardware: hardwareVerdict(),
+    platform: platformVerdict({
+      navigator: typeof navigator === 'undefined' ? undefined : navigator,
+      videoPrototype: typeof HTMLVideoElement === 'undefined' ? undefined : HTMLVideoElement.prototype,
+      keepClips: clipStoreAvailable(),
+      localVoice: hasLocalVoice(),
+      installed: isInstalled(),
+    }),
     offline: await offline().catch(() => false),
   }
 }

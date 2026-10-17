@@ -1358,6 +1358,11 @@ export default function App() {
   }
 
   const goHome = () => {
+    // The clip goes with the report (L6.10). Home holding its object URL kept
+    // the update gate above shut — it waits for no video to be held — so a
+    // player who had looked at a report never got a waiting update until
+    // they analysed again.
+    releaseVideo()
     setView({ kind: 'home' })
     refreshSessions()
   }
